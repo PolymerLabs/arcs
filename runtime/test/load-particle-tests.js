@@ -8,9 +8,12 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-// TODO: delete this file
+var loader = require("../load-particle.js");
+let assert = require('chai').assert;
 
-var loader = require("./load-particle.js");
-
-var TestParticle = loader.loadParticle("TestParticle");
-console.log(TestParticle);
+describe('particle loader', function() {
+  it('can load a particle', function() {
+    var particle = loader.loadParticle("TestParticle");
+    assert.isNotNull(particle);
+  });
+});
