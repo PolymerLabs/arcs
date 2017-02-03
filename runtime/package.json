@@ -1,0 +1,8 @@
+{
+ "name": "arcs-runtime",
+ "version": "0.0.0",
+ "private": "true",
+ "devDependencies": {
+  "pegjs": "^0.10.0"
+ }
+}

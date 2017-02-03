@@ -1,0 +1,24 @@
+Particle
+  = type: Type _ "(" _ args: Arguments? _ ")" {
+      return {type: type, args: args};
+  }
+  
+Type
+  = [A-Z][a-zA-Z]* { return text() }
+  
+Arguments
+  = head:Argument tail:(_ "," _ Argument)* {
+  	  return [head].concat(tail.map(a => a[3]));
+  }
+
+Argument = dir:Direction? _ tn:Type? _ name:Name? {
+
+	  return {direction: dir, type: tn, name: name}
+    }
+
+Direction = "in" / "out" / "inout"
+
+Name = [a-z][a-zA-Z]* { return Text() }
+
+_ "whitespace"
+  = [ \t\n\r]* 
