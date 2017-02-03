@@ -8,6 +8,10 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
+ParticleFile = Comment particle:Particle _ { return particle }
+
+Comment = "/*" (! "*/" .)* "*/" _
+
 Particle
   = type: Type _ "(" _ args: Arguments? _ ")" {
       return {type: type, args: args};
