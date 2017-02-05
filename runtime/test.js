@@ -14,3 +14,6 @@ var loader = require("./load-particle.js");
 
 var TestParticle = loader.loadParticle("TestParticle");
 console.log(TestParticle);
+
+TestParticle.foo = "a foo";
+TestParticle.dataUpdated();

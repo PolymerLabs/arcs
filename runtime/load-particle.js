@@ -15,11 +15,16 @@ var fs = require("fs");
 function loadParticle(name) {
 
   // TODO: don't assume that the particle will be in the top-level directory
-  let definition = "../" + name + "/" + name + ".ptcl";
+  let definition = `../${name}/${name}.ptcl`
   let data = fs.readFileSync(definition, "utf-8");
-  let result = parser.parse(data);
+  definition = parser.parse(data);
 
-  return result;
+  let clazz = `../${name}/${name}.js`
+  clazz = require(clazz)[name];
+
+  var particle = new clazz();
+  particle.setDefinition(definition);
+  return particle;
 }
 
 exports.loadParticle = loadParticle;
