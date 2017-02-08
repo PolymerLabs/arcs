@@ -8,4 +8,4 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-TestParticle(in Foo, out Bar)
+TestParticle(in Foo foo, out Bar bar)

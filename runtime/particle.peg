@@ -32,7 +32,7 @@ Argument = dir:Direction? _ tn:Type? _ name:Name? {
 
 Direction = "in" / "out" / "inout"
 
-Name = [a-z][a-zA-Z]* { return Text() }
+Name = [a-z][a-zA-Z]* { return text() }
 
 _ "whitespace"
   = [ \t\n\r]* 
