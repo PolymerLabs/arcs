@@ -11,9 +11,14 @@
 // TODO: delete this file
 
 var loader = require("./load-particle.js");
+var data = require("./data-layer.js");
+
+data.viewFor("Foo").store("preloaded foo");
 
 var TestParticle = loader.loadParticle("TestParticle");
 console.log(TestParticle);
+TestParticle.dataUpdated();
 
-TestParticle.foo = "a foo";
+data.viewFor("Foo").store("a foo");
+
 TestParticle.dataUpdated();
