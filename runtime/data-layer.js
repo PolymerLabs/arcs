@@ -30,9 +30,7 @@ class View {
   }
 } 
 
-if (global.views == undefined)
-  global.views = {}
-var views = global.views;
+var views = {}
 
 function viewFor(type) {
   if (views[type] == undefined) {
