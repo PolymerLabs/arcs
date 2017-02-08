@@ -28,7 +28,7 @@ class Particle {
     this.definition.args.forEach(arg => {
       if (arg.direction == "out")
         data.viewFor(arg.type).store(this[arg.name]);
-    });
+    }); 
   }
 
 }

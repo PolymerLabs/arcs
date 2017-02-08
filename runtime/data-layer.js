@@ -18,6 +18,8 @@ class View {
 
   register(observer) {
     this.observers.push(observer);
+    for (var data of this.data)
+      observer(data);
   }
 
   store(item) {

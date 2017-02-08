@@ -13,8 +13,11 @@
 var loader = require("./load-particle.js");
 var data = require("./data-layer.js");
 
+data.viewFor("Foo").store("preloaded foo");
+
 var TestParticle = loader.loadParticle("TestParticle");
 console.log(TestParticle);
+TestParticle.dataUpdated();
 
 data.viewFor("Foo").store("a foo");
 
