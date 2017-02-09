@@ -19,9 +19,16 @@ class Particle {
       if (arg.direction == "in") {
         // TODO this isn't quite correct. Need to manage updates better, have notion
         // of combinatorial set or something.
-        data.viewFor(arg.type).register(d => this[arg.name] = d);
+        data.viewFor(arg.type).register(d => this.useIterator(d, arg.name));
       }
     });
+  }
+
+  useIterator(iter, name) {
+    // this is wrong! Probably won't have useIterator on Particle directly once
+    // the coordinator is implemented. Specifically, this doesn't deal properly
+    // with more than a single piece of data in the iterator.
+    this[name] = iter.next();
   }
 
   commitData() {
