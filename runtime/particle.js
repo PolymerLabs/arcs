@@ -28,7 +28,7 @@ class Particle {
     // this is wrong! Probably won't have useIterator on Particle directly once
     // the coordinator is implemented. Specifically, this doesn't deal properly
     // with more than a single piece of data in the iterator.
-    this[name] = iter.next();
+    this[name] = iter.next().value;
   }
 
   commitData() {

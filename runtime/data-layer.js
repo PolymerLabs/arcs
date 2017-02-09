@@ -9,20 +9,6 @@
  */
 "use strict";
 
-class ViewIterator {
-  constructor(view, current, high) {
-    this.view = view;
-    this.high = high;
-    this.current = current;
-  }
-
-  next() {
-    if (this.current >= this.high)
-      return undefined;
-    return this.view.data[this.current++];
-  }
-}
-
 class View {
   constructor(type) {
     this.type = type;
@@ -30,16 +16,21 @@ class View {
     this.observers = [];
   }
 
+  *iterator(start, end) {
+    while (start < end)
+      yield this.data[start++];
+  }
+
   register(observer) {
     this.observers.push(observer);
-    observer(new ViewIterator(this, 0, this.data.length));
+    observer(this.iterator(0, this.data.length));
   }
 
   store(item) {
     console.log("storing", item, "for", this.type);
     this.data.push(item);
     for (var observer of this.observers)
-      observer(new ViewIterator(this, this.data.length - 1, this.data.length));
+      observer(this.iterator(this.data.length - 1, this.data.length));
   }
 } 
 
