@@ -1,0 +1,13 @@
+{
+ "name": "arcs-runtime",
+ "version": "0.0.0",
+ "private": "true",
+ "scripts": {
+  "test": "mocha"
+ },
+ "devDependencies": {
+  "chai": "^3.5.0",
+  "mocha": "^3.2.0",
+  "pegjs": "^0.10.0"
+ }
+}
