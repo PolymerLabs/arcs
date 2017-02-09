@@ -16,17 +16,21 @@ class View {
     this.observers = [];
   }
 
+  *iterator(start, end) {
+    while (start < end)
+      yield this.data[start++];
+  }
+
   register(observer) {
     this.observers.push(observer);
-    for (var data of this.data)
-      observer(data);
+    observer(this.iterator(0, this.data.length));
   }
 
   store(item) {
     console.log("storing", item, "for", this.type);
     this.data.push(item);
     for (var observer of this.observers)
-      observer(item);
+      observer(this.iterator(this.data.length - 1, this.data.length));
   }
 } 
 
