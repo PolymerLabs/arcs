@@ -19,7 +19,7 @@ class Particle {
       if (arg.direction == "in") {
         // TODO this isn't quite correct. Need to manage updates better, have notion
         // of combinatorial set or something.
-        data.viewFor(arg.type).register(d => this.useIterator(d, arg.name));
+        data.internals.viewFor(arg.type).register(d => this.useIterator(d, arg.name));
       }
     });
   }
@@ -34,8 +34,8 @@ class Particle {
   commitData() {
     this.definition.args.forEach(arg => {
       if (arg.direction == "out")
-        data.viewFor(arg.type).store(this[arg.name]);
-    }); 
+        data.internals.viewFor(arg.type).store(this[arg.name]);
+    });
   }
 
 }
