@@ -68,7 +68,7 @@ class View {
     });
     for (var observer of this.observers) {
       let clone = Entity.fromLiteral(id, cloneData(data));
-      observer([clone][Symbol.iterator]);
+      observer([clone][Symbol.iterator]());
     }
   }
 }
@@ -165,6 +165,13 @@ class BasicEntity extends Entity {
 }
 BasicEntity.type = Type.generate();
 
+function testEntityClass(type) {
+  class TestEntity extends BasicEntity {
+  }
+  TestEntity.type = type;
+  return TestEntity;
+}
+
 // TODO: Should relations normalized by another layer, or here?
 class Relation extends Entity {
   constructor(...entities) {
@@ -219,10 +226,13 @@ Object.assign(exports, {
   Entity,
   BasicEntity,
   Relation,
+  testing: {
+    testEntityClass,
+    trash,
+  },
   internals: {
     viewFor,
     identifier,
     commit,
-    trash,
   }
 });

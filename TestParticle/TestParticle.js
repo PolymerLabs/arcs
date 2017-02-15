@@ -10,11 +10,14 @@
 "use strict";
 
 var Particle = require("../runtime/particle.js").Particle;
+var data = require("../runtime/data-layer.js");
+
+var Bar = data.testing.testEntityClass("Bar");
 
 class TestParticle extends Particle {
 
   dataUpdated() {
-    this.bar = this.foo + 1;
+    this.bar = new Bar(this.foo.data + 1);
     this.commitData();
   }
 }

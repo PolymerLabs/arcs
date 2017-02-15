@@ -13,47 +13,53 @@ var data = require("../data-layer.js");
 var coordinator = require("../coordinator.js");
 let assert = require('chai').assert;
 
+var Foo = data.testing.testEntityClass('Foo');
+var Bar = data.testing.testEntityClass('Bar');
+var Far = data.testing.testEntityClass('Far');
+
 describe('Coordinator', function() {
 
-  beforeEach(function() { data.trash(); });
+  beforeEach(function() { data.testing.trash(); });
 
   it('applies existing data to a particle', function() {
     var coord = new coordinator.Coordinator();
-    data.viewFor("Foo").store("a Foo");
+    
+    data.internals.viewFor(Foo.type).store(new Foo("a Foo"));
     var particle = loader.loadParticle("TestParticle", coord);
     coord.tick();
-    assert.equal(data.viewFor("Bar").data.length, 1);
-    assert.equal(data.viewFor("Bar").data[0], "a Foo1");
+    assert.equal(data.internals.viewFor(Bar.type).data.length, 1);          
+    assert.equal(data.internals.viewFor(Bar.type).data[0].data, "a Foo1");
   });
 
   it('applies new data to a particle', function() {
     var coord = new coordinator.Coordinator();
     var particle = loader.loadParticle("TestParticle", coord);
-    data.viewFor("Foo").store("not a Bar");
+    data.internals.viewFor(Foo.type).store(new Foo("not a Bar"));
     coord.tick();
-    assert.equal(data.viewFor("Bar").data.length, 1);
-    assert.equal(data.viewFor("Bar").data[0], "not a Bar1");
+    assert.equal(data.internals.viewFor(Bar.type).data.length, 1);
+    assert.equal(data.internals.viewFor(Bar.type).data[0].data, "not a Bar1");
   });
 
   it('applies two preloaded inputs combinatorially', function() {
     var coord = new coordinator.Coordinator();
-    ['a', 'b', 'c'].map(a => data.viewFor("Foo").store(a));
-    ['x', 'y', 'z'].map(a => data.viewFor("Bar").store(a));
+    ['a', 'b', 'c'].map(a => data.internals.viewFor(Foo.type).store(new Foo(a)));
+    ['x', 'y', 'z'].map(a => data.internals.viewFor(Bar.type).store(new Bar(a)));
     var particle = loader.loadParticle("TwoInputTestParticle", coord);
     coord.tick();
-    assert.equal(data.viewFor("Far").data.length, 9);
-    assert.deepEqual(data.viewFor("Far").data, ['a x', 'a y', 'a z', 'b x', 'b y', 'b z', 'c x', 'c y', 'c z']);
+    assert.equal(data.internals.viewFor(Far.type).data.length, 9);
+    assert.deepEqual(data.internals.viewFor(Far.type).data.map(a => a.data), ['a x', 'a y', 'a z', 'b x', 'b y', 'b z', 'c x', 'c y', 'c z']);
   });
 
   it('applies a new input to a preloaded input combinatorially', function() {
     var coord = new coordinator.Coordinator();
-    ['a', 'b', 'c'].map(a => data.viewFor("Foo").store(a));
+    ['a', 'b', 'c'].map(a => data.internals.viewFor(Foo.type).store(new Foo(a)));
     var particle = loader.loadParticle("TwoInputTestParticle", coord);
     coord.tick();
-    assert.equal(data.viewFor("Far").data.length, 0);
-    ['x', 'y', 'z'].map(a => data.viewFor("Bar").store(a));
+    assert.equal(data.internals.viewFor(Far.type).data.length, 0);
+    ['x', 'y', 'z'].map(a => data.internals.viewFor(Bar.type).store(new Bar(a)));
     coord.tick();
-    assert.equal(data.viewFor("Far").data.length, 9);
+    assert.equal(data.internals.viewFor(Far.type).data.length, 9);
+    assert.deepEqual(data.internals.viewFor(Far.type).data.map(a => a.data), ['a x', 'a y', 'a z', 'b x', 'b y', 'b z', 'c x', 'c y', 'c z']);
   });
 
 });

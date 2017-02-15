@@ -10,11 +10,14 @@
 "use strict";
 
 var Particle = require("../runtime/particle.js").Particle;
+var data = require("../runtime/data-layer.js");
+
+var Far = data.testing.testEntityClass("Far");
 
 class TwoInputTestParticle extends Particle {
 
   dataUpdated() {
-    this.far = this.foo + ' ' + this.bar;
+    this.far = new Far(this.foo.data + ' ' + this.bar.data);
     this.commitData();
   }
 }

@@ -17,7 +17,7 @@ class CoordinatorView {
     this.type = type;
     this.pending = [];
     this.data = [];
-    data.viewFor(type).register(iter => this.pending.push(iter));
+    data.internals.viewFor(type).register(iter => this.pending.push(iter));
   }
 
   expandInputs() {
