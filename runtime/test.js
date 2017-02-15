@@ -12,13 +12,13 @@
 
 var loader = require("./load-particle.js");
 var data = require("./data-layer.js");
+var coordinator = new (require("./coordinator.js").Coordinator);
 
 data.viewFor("Foo").store("preloaded foo");
 
-var TestParticle = loader.loadParticle("TestParticle");
+var TestParticle = loader.loadParticle("TestParticle", coordinator);
 console.log(TestParticle);
-TestParticle.dataUpdated();
+coordinator.tick();
 
 data.viewFor("Foo").store("a foo");
-
-TestParticle.dataUpdated();
+coordinator.tick();

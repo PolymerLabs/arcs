@@ -54,7 +54,8 @@ class View {
 
   register(observer) {
     this.observers.push(observer);
-    observer(this.iterator(0, this.data.length));
+    if (this.data.length > 0)
+      observer(this.iterator(0, this.data.length));
   }
 
   store(entity) {
@@ -210,6 +211,10 @@ function commit(entities) {
   }
 }
 
+function trash() {
+  views = new Map();
+}
+
 Object.assign(exports, {
   Entity,
   BasicEntity,
@@ -218,5 +223,6 @@ Object.assign(exports, {
     viewFor,
     identifier,
     commit,
+    trash,
   }
 });

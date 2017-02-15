@@ -12,6 +12,10 @@
 var data = require("./data-layer.js");
 
 class Particle {
+  constructor(coordinator) {
+    this.coordinator = coordinator;
+    this.inputs = [];
+  }
 
   setDefinition(definition) {
     this.definition = definition;
@@ -19,16 +23,10 @@ class Particle {
       if (arg.direction == "in") {
         // TODO this isn't quite correct. Need to manage updates better, have notion
         // of combinatorial set or something.
-        data.internals.viewFor(arg.type).register(d => this.useIterator(d, arg.name));
+        this.inputs.push(arg);
       }
     });
-  }
-
-  useIterator(iter, name) {
-    // this is wrong! Probably won't have useIterator on Particle directly once
-    // the coordinator is implemented. Specifically, this doesn't deal properly
-    // with more than a single piece of data in the iterator.
-    this[name] = iter.next().value;
+    this.coordinator.register(this);
   }
 
   commitData() {

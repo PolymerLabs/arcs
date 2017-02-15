@@ -7,16 +7,5 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-"use strict";
 
-var Particle = require("../runtime/particle.js").Particle;
-
-class TestParticle extends Particle {
-
-  dataUpdated() {
-    this.bar = this.foo + 1;
-    this.commitData();
-  }
-}
-
-exports.TestParticle = TestParticle;
+TestParticle(in Foo foo, in Bar bar, out Far far)
