@@ -11,6 +11,8 @@
 
 var data = require("./data-layer.js");
 
+var particles = [];
+
 class Particle {
   constructor(coordinator) {
     this.coordinator = coordinator;
@@ -28,6 +30,7 @@ class Particle {
       }
     });
     this.coordinator.register(this);
+    particles.push(this);
   }
 
   commitData() {
@@ -40,3 +43,4 @@ class Particle {
 }
 
 exports.Particle = Particle;
+exports.particles = particles;

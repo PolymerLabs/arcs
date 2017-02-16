@@ -190,8 +190,12 @@ class Relation extends Entity {
 }
 
 let views = new Map();
-function viewFor(type) {
-  var result = views.get(type);
+function viewFor(type, coordinator) {
+  var result = undefined;
+  if (coordinator)
+    result = coordinator.views.get(type)
+  if (!result)
+    result = views.get(type);
   if (!result) {
     console.log("constructing new view for", type);
     result = new View(type);
