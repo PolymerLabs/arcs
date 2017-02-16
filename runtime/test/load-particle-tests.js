@@ -9,13 +9,13 @@
  */
 
 var loader = require("../load-particle.js");
-var Coordinator = require("../coordinator.js");
+var Arc = require("../arc.js");
 let assert = require('chai').assert;
 
 describe('particle loader', function() {
   it('can load a particle', function() {
-    var coord = new Coordinator();
-    var particle = loader.loadParticle("TestParticle", coord);
+    var arc = new Arc();
+    var particle = loader.loadParticle("TestParticle", arc);
     assert.isNotNull(particle);
   });
 });

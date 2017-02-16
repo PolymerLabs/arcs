@@ -11,7 +11,7 @@
 
 var data = require("./data-layer.js");
 
-class CoordinatorView {
+class ArcView {
   constructor(name, type) {
     this.name = name;
     this.type = type;
@@ -44,10 +44,10 @@ class CoordinatorView {
   }
 }
 
-class CoordinatorParticle {
+class ArcParticle {
   constructor(particle) {
     this.particle = particle;
-    this.inputs = particle.inputs.map(a => new CoordinatorView(a.name, a.type));
+    this.inputs = particle.inputs.map(a => new ArcView(a.name, a.type));
   }
 
   process() {
@@ -85,13 +85,13 @@ class CoordinatorParticle {
 }
 
 
-class Coordinator {
+class Arc {
   constructor() {
     this.particles = [];
   }
 
   register(particle) {
-    this.particles.push(new CoordinatorParticle(particle));
+    this.particles.push(new ArcParticle(particle));
   }
 
   tick() {
@@ -100,4 +100,4 @@ class Coordinator {
   }
 }
 
-module.exports = Coordinator;
+module.exports = Arc;
