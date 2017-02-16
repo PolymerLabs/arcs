@@ -12,14 +12,14 @@
 var Particle = require("../runtime/particle.js").Particle;
 var data = require("../runtime/data-layer.js");
 
-var Bar = data.testing.testEntityClass("Bar");
+var Far = data.testing.testEntityClass("Far");
 
-class TestParticle extends Particle {
+class TwoInputTestParticle extends Particle {
 
   dataUpdated() {
-    this.bar = new Bar(this.foo.data + 1);
+    this.far = new Far(this.foo.data + ' ' + this.bar.data);
     this.commitData();
   }
 }
 
-exports.TestParticle = TestParticle;
+exports.TwoInputTestParticle = TwoInputTestParticle

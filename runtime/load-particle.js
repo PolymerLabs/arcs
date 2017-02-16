@@ -12,7 +12,7 @@
 var parser = require("./parser.js");
 var fs = require("fs");
 
-function loadParticle(name) {
+function loadParticle(name, coordinator) {
 
   // TODO: don't assume that the particle will be in the top-level directory
   let definition = `../${name}/${name}.ptcl`
@@ -22,7 +22,7 @@ function loadParticle(name) {
   let clazz = `../${name}/${name}.js`
   clazz = require(clazz)[name];
 
-  var particle = new clazz();
+  var particle = new clazz(coordinator);
   particle.setDefinition(definition);
   return particle;
 }
