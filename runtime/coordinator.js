@@ -12,12 +12,12 @@
 var data = require("./data-layer.js");
 
 class CoordinatorView {
-  constructor(name, type) {
+  constructor(coordinator, name, type) {
     this.name = name;
     this.type = type;
     this.pending = [];
     this.data = [];
-    data.internals.viewFor(type).register(iter => this.pending.push(iter));
+    data.internals.viewFor(type, coordinator).register(iter => this.pending.push(iter));
   }
 
   expandInputs() {
@@ -45,9 +45,9 @@ class CoordinatorView {
 }
 
 class CoordinatorParticle {
-  constructor(particle) {
+  constructor(particle, coordinator) {
     this.particle = particle;
-    this.inputs = particle.inputs.map(a => new CoordinatorView(a.name, a.type));
+    this.inputs = particle.inputs.map(a => new CoordinatorView(coordinator, a.name, a.type));
   }
 
   process() {
@@ -88,10 +88,15 @@ class CoordinatorParticle {
 class Coordinator {
   constructor() {
     this.particles = [];
+    this.views = new Map();
   }
 
   register(particle) {
-    this.particles.push(new CoordinatorParticle(particle));
+    this.particles.push(new CoordinatorParticle(particle, this));
+  }
+
+  addView(view) {
+    this.views.set(view.type, view);
   }
 
   tick() {
