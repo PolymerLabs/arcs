@@ -100,4 +100,4 @@ class Coordinator {
   }
 }
 
-exports.Coordinator = Coordinator;
+module.exports = Coordinator;

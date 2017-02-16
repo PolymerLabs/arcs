@@ -9,12 +9,12 @@
  */
 
 var loader = require("../load-particle.js");
-var coordinator = require("../coordinator.js");
+var Coordinator = require("../coordinator.js");
 let assert = require('chai').assert;
 
 describe('particle loader', function() {
   it('can load a particle', function() {
-    var coord = new coordinator.Coordinator();
+    var coord = new Coordinator();
     var particle = loader.loadParticle("TestParticle", coord);
     assert.isNotNull(particle);
   });

@@ -10,7 +10,7 @@
 
 var loader = require("../load-particle.js");
 var data = require("../data-layer.js");
-var coordinator = require("../coordinator.js");
+var Coordinator = require("../coordinator.js");
 let assert = require('chai').assert;
 
 var Foo = data.testing.testEntityClass('Foo');
@@ -22,7 +22,7 @@ describe('Coordinator', function() {
   beforeEach(function() { data.testing.trash(); });
 
   it('applies existing data to a particle', function() {
-    var coord = new coordinator.Coordinator();
+    var coord = new Coordinator();
     
     data.internals.viewFor(Foo.type).store(new Foo("a Foo"));
     var particle = loader.loadParticle("TestParticle", coord);
@@ -32,7 +32,7 @@ describe('Coordinator', function() {
   });
 
   it('applies new data to a particle', function() {
-    var coord = new coordinator.Coordinator();
+    var coord = new Coordinator();
     var particle = loader.loadParticle("TestParticle", coord);
     data.internals.viewFor(Foo.type).store(new Foo("not a Bar"));
     coord.tick();
@@ -41,7 +41,7 @@ describe('Coordinator', function() {
   });
 
   it('applies two preloaded inputs combinatorially', function() {
-    var coord = new coordinator.Coordinator();
+    var coord = new Coordinator();
     ['a', 'b', 'c'].map(a => data.internals.viewFor(Foo.type).store(new Foo(a)));
     ['x', 'y', 'z'].map(a => data.internals.viewFor(Bar.type).store(new Bar(a)));
     var particle = loader.loadParticle("TwoInputTestParticle", coord);
@@ -51,7 +51,7 @@ describe('Coordinator', function() {
   });
 
   it('applies a new input to a preloaded input combinatorially', function() {
-    var coord = new coordinator.Coordinator();
+    var coord = new Coordinator();
     ['a', 'b', 'c'].map(a => data.internals.viewFor(Foo.type).store(new Foo(a)));
     var particle = loader.loadParticle("TwoInputTestParticle", coord);
     coord.tick();

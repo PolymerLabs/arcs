@@ -168,7 +168,7 @@ BasicEntity.type = Type.generate();
 function testEntityClass(type) {
   class TestEntity extends BasicEntity {
   }
-  TestEntity.type = type;
+  TestEntity.type = new Type(type);
   return TestEntity;
 }
 
@@ -234,5 +234,6 @@ Object.assign(exports, {
     viewFor,
     identifier,
     commit,
+    Type,
   }
 });
