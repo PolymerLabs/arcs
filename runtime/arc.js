@@ -11,7 +11,7 @@
 
 var data = require("./data-layer.js");
 
-class ArcView {
+class ParticleSlot {
   constructor(name, type) {
     this.name = name;
     this.type = type;
@@ -61,8 +61,8 @@ class ArcParticle {
   constructor(particle) {
     this.particle = particle;
     particle.arcParticle = this;
-    this.inputs = particle.inputs.map(a => new ArcView(a.name, a.type));
-    this.outputs = particle.outputs.map(a => new ArcView(a.name, a.type));
+    this.inputs = particle.inputs.map(a => new ParticleSlot(a.name, a.type));
+    this.outputs = particle.outputs.map(a => new ParticleSlot(a.name, a.type));
   }
 
   process() {
