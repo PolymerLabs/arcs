@@ -26,7 +26,7 @@ describe('Arc', function() {
     
     data.internals.viewFor(Foo.type).store(new Foo("a Foo"));
     var particle = loader("TestParticle", arc);
-    arc.autoconnect();
+    particle.autoconnect();
     arc.tick();
     assert.equal(data.internals.viewFor(Bar.type).data.length, 1);          
     assert.equal(data.internals.viewFor(Bar.type).data[0].data, "a Foo1");
@@ -35,7 +35,7 @@ describe('Arc', function() {
   it('applies new data to a particle', function() {
     var arc = new Arc();
     var particle = loader("TestParticle", arc);
-    arc.autoconnect();
+    particle.autoconnect();
     data.internals.viewFor(Foo.type).store(new Foo("not a Bar"));
     arc.tick();
     assert.equal(data.internals.viewFor(Bar.type).data.length, 1);
@@ -47,7 +47,7 @@ describe('Arc', function() {
     ['a', 'b', 'c'].map(a => data.internals.viewFor(Foo.type).store(new Foo(a)));
     ['x', 'y', 'z'].map(a => data.internals.viewFor(Bar.type).store(new Bar(a)));
     var particle = loader("TwoInputTestParticle", arc);
-    arc.autoconnect();
+    particle.autoconnect();
     arc.tick();
     assert.equal(data.internals.viewFor(Far.type).data.length, 9);
     assert.deepEqual(data.internals.viewFor(Far.type).data.map(a => a.data), ['a x', 'a y', 'a z', 'b x', 'b y', 'b z', 'c x', 'c y', 'c z']);
@@ -57,7 +57,7 @@ describe('Arc', function() {
     var arc = new Arc();
     ['a', 'b', 'c'].map(a => data.internals.viewFor(Foo.type).store(new Foo(a)));
     var particle = loader("TwoInputTestParticle", arc);
-    arc.autoconnect();
+    particle.autoconnect();
     arc.tick();
     assert.equal(data.internals.viewFor(Far.type).data.length, 0);
     ['x', 'y', 'z'].map(a => data.internals.viewFor(Bar.type).store(new Bar(a)));
