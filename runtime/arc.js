@@ -116,11 +116,6 @@ class Arc {
     this.views = new Map();
   }
 
-  // TODO: we'll probably remove this at some point
-  autoconnect() {
-    this.particles.map(a => a.autoconnect());
-  }
-
   register(particle) {
     this.particles.push(new ArcParticle(particle));
   }
