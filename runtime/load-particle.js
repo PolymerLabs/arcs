@@ -27,4 +27,4 @@ function loadParticle(name, arc) {
   return particle;
 }
 
-exports.loadParticle = loadParticle;
+module.exports = loadParticle;

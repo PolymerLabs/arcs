@@ -17,7 +17,20 @@ class ArcView {
     this.type = type;
     this.pending = [];
     this.data = [];
-    data.internals.viewFor(type).register(iter => this.pending.push(iter));
+  }
+
+  // TODO: we'll probably remove this at some point
+  autoconnect() {
+    this.connect(data.internals.viewFor(this.type));
+  }
+
+  connect(view) {
+    this.view = view;
+    view.register(iter => this.pending.push(iter));
+  }
+
+  commit(source) {
+    this.view.store(source[this.name]);
   }
 
   expandInputs() {
@@ -47,7 +60,9 @@ class ArcView {
 class ArcParticle {
   constructor(particle) {
     this.particle = particle;
+    particle.arcParticle = this;
     this.inputs = particle.inputs.map(a => new ArcView(a.name, a.type));
+    this.outputs = particle.outputs.map(a => new ArcView(a.name, a.type));
   }
 
   process() {
@@ -82,12 +97,28 @@ class ArcParticle {
       this.runParticle(particle, inputs, inputList, idxs.concat([i]));
     }
   }
+
+  commitData() {
+    this.outputs.map(a => a.commit(this.particle));
+  }
+
+  // TODO: we'll probably remove this at some point
+  autoconnect() {
+    this.inputs.map(a => a.autoconnect());
+    this.outputs.map(a => a.autoconnect());
+  }
 }
 
 
 class Arc {
   constructor() {
     this.particles = [];
+    this.views = new Map();
+  }
+
+  // TODO: we'll probably remove this at some point
+  autoconnect() {
+    this.particles.map(a => a.autoconnect());
   }
 
   register(particle) {
@@ -97,6 +128,11 @@ class Arc {
   tick() {
     for (var particle of this.particles)
       particle.process();
+  }
+
+  addView(view) {
+    view.arc = this;
+    this.views.set(view.type, view);
   }
 }
 
