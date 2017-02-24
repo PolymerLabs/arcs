@@ -15,7 +15,7 @@ let assert = require('chai').assert;
 describe('particle loader', function() {
   it('can load a particle', function() {
     var arc = new Arc();
-    var particle = loader.loadParticle("TestParticle", arc);
+    var particle = loader("TestParticle", arc);
     assert.isNotNull(particle);
   });
 });

@@ -15,6 +15,7 @@ class Particle {
   constructor(arc) {
     this.arc = arc;
     this.inputs = [];
+    this.outputs = [];
   }
 
   setDefinition(definition) {
@@ -22,19 +23,17 @@ class Particle {
     this.definition = definition;
     definition.args.forEach(arg => {
       if (arg.direction == "in") {
-        // TODO this isn't quite correct. Need to manage updates better, have notion
-        // of combinatorial set or something.
         this.inputs.push(arg);
+      }
+      else if (arg.direction == "out") {
+        this.outputs.push(arg);
       }
     });
     this.arc.register(this);
   }
 
   commitData() {
-    this.definition.args.forEach(arg => {
-      if (arg.direction == "out")
-        data.internals.viewFor(arg.type).store(this[arg.name]);
-    });
+    this.arcParticle.commitData();
   }
 
 }
