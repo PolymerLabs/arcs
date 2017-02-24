@@ -11,6 +11,13 @@
 
 var loader = require("./load-particle.js"); 
 
+class Connection {
+  constructor(name, view) {
+    this.name = name;
+    this.view = view;
+  }
+}
+
 class Suggestion {
   constructor(particleName, connections) {
     this.particleName = particleName;
@@ -18,7 +25,13 @@ class Suggestion {
   }
 
   instantiate(arc) {
-    loader(this.particleName, arc);
+    var particle = loader(this.particleName, arc);
+    for (var connection of this.connections) {
+      var slot = particle.inputs.get(connection.name);
+      if (!slot)
+        slot = particle.outputs.get(connection.name);
+      slot.connect(connection.view);
+    }
   }
 }
 
@@ -30,3 +43,13 @@ class Suggestinator {
   suggestinate(arc) {
 
   }
+
+  load(arc, suggestions) {
+    suggestions.forEach(suggestion => suggestion.instantiate(arc));
+  }
+}
+
+Suggestinator.Suggestion = Suggestion;
+Suggestinator.Connection = Connection;
+
+module.exports = Suggestinator;
