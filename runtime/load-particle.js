@@ -22,9 +22,11 @@ function loadParticle(name, arc) {
   let clazz = `../${name}/${name}.js`
   clazz = require(clazz)[name];
 
-  var particle = new clazz(arc);
-  particle.setDefinition(definition);
-  return particle;
+  // TODO looks like the particle swizzling should maybe happen inside arc.js
+  // eventually.
+  var rawParticle = new clazz(arc);
+  rawParticle.setDefinition(definition);
+  return rawParticle.arcParticle;
 }
 
 module.exports = loadParticle;
