@@ -61,20 +61,30 @@ class ArcParticle {
   constructor(particle) {
     this.particle = particle;
     particle.arcParticle = this;
-    this.inputs = particle.inputs.map(a => new ParticleSlot(a.name, a.type));
-    this.outputs = particle.outputs.map(a => new ParticleSlot(a.name, a.type));
+    this.inputs = new Map();
+    particle.inputs.map(a => this.inputs.set(a.name, new ParticleSlot(a.name, a.type)));
+    this.outputs = new Map();
+    particle.outputs.map(a => this.outputs.set(a.name, new ParticleSlot(a.name, a.type)));
+  }
+
+  inputList() {
+    return Array.from(this.inputs.values());
+  }
+
+  outputList() {
+    return Array.from(this.outputs.values());
   }
 
   process() {
-    var missingInputs = this.inputs.filter(a => a.missingData());
+    var missingInputs = this.inputList().filter(a => a.missingData());
     if (missingInputs.length > 0)
       return;
 
-    var pendingInputs = this.inputs.filter(a => a.hasPending());
+    var pendingInputs = this.inputList().filter(a => a.hasPending());
     if (pendingInputs.length == 0)
       return;
 
-    var storedDataInputs = this.inputs.filter(a => !a.hasPending());
+    var storedDataInputs = this.inputList().filter(a => !a.hasPending());
 
     let allInputs = {}
     for (let pendingInput of pendingInputs)
@@ -99,13 +109,13 @@ class ArcParticle {
   }
 
   commitData() {
-    this.outputs.map(a => a.commit(this.particle));
+    this.outputList().map(a => a.commit(this.particle));
   }
 
   // TODO: we'll probably remove this at some point
   autoconnect() {
-    this.inputs.map(a => a.autoconnect());
-    this.outputs.map(a => a.autoconnect());
+    this.inputList().map(a => a.autoconnect());
+    this.outputList().map(a => a.autoconnect());
   }
 }
 
