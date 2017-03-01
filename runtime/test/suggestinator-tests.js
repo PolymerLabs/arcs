@@ -35,4 +35,19 @@ describe('suggestinator', function() {
     assert.equal(data.internals.viewFor(Bar.type).data.length, 1);
     assert.equal(data.internals.viewFor(Bar.type).data[0].data, "not a Bar1");
   });
+
+  it('can load a partially constructed recipe', function() {
+    var arc = new Arc();
+    var suggestinator = new Suggestinator();
+    var suggestion = new recipe.RecipeBuilder()
+        .suggest("TestParticle")
+            .connect("foo", Foo.type)
+            .connect("bar", Bar.type)
+        .build();
+    suggestinator.load(arc, suggestion);
+    data.internals.viewFor(Foo.type).store(new Foo("not a Bar"));
+    arc.tick();
+    assert.equal(data.internals.viewFor(Bar.type).data.length, 1);
+    assert.equal(data.internals.viewFor(Bar.type).data[0].data, "not a Bar1");
+  });
 });

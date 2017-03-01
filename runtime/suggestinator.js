@@ -9,8 +9,11 @@
  */
 "use strict";
 
+var Resolver = require('./resolver.js')
+
 class Suggestinator {
   constructor() {
+    this.resolver = new Resolver();
   }
 
   // TODO: implement me!
@@ -19,6 +22,7 @@ class Suggestinator {
   }
 
   load(arc, recipe) {
+    this.resolver.resolve(recipe, arc);
     recipe.suggestions.forEach(suggestion => suggestion.instantiate(arc));
   }
 }
