@@ -10,11 +10,17 @@
 "use strict";
 
 var loader = require("./load-particle.js"); 
+var data = require("./data-layer.js");
 
 class Connection {
-  constructor(name, view) {
+  constructor(name, viewOrType) {
     this.name = name;
-    this.view = view;
+    if (viewOrType instanceof data.internals.View) {
+      this.view = viewOrType;
+      this.type = viewOrType.type;
+    } else {
+      this.type = viewOrType;
+    }
   }
 }
 

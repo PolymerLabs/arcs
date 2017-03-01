@@ -235,5 +235,6 @@ Object.assign(exports, {
     identifier,
     commit,
     Type,
+    View
   }
 });
