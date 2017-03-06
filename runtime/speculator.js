@@ -14,7 +14,7 @@ class Speculator {
   speculate(arc, plan) {
     arc.checkpoint();
     arc.resetRelevance();
-    plan.suggestions.forEach(suggestion => suggestion.instantiate(arc));
+    plan.instantiate(arc);
     while (arc.tick());
     var relevance = arc.relevance;
     arc.revert();

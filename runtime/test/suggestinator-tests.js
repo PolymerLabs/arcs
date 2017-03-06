@@ -11,43 +11,43 @@
 var data = require("../data-layer.js");
 var Suggestinator = require("../suggestinator.js");
 var Arc = require("../arc.js");
+var Resolver = require("../resolver.js");
 var recipe = require("../recipe.js");
 let assert = require('chai').assert;
 
 
 var Foo = data.testing.testEntityClass('Foo');
 var Bar = data.testing.testEntityClass('Bar');
+var Far = data.testing.testEntityClass('Far');
 
 describe('suggestinator', function() {
   beforeEach(function() { data.testing.trash(); });
 
-  it('can load a recipe', function() {
-    var arc = new Arc();
-    var suggestinator = new Suggestinator();
-    var suggestion = new recipe.RecipeBuilder()
-        .suggest("TestParticle")
-            .connect("foo", data.internals.viewFor(Foo.type))
-            .connect("bar", data.internals.viewFor(Bar.type))
-        .build();
-    suggestinator.load(arc, suggestion);
-    data.internals.viewFor(Foo.type).store(new Foo("not a Bar"));
-    arc.tick();
-    assert.equal(data.internals.viewFor(Bar.type).data.length, 1);
-    assert.equal(data.internals.viewFor(Bar.type).data[0].data, "not a Bar1");
-  });
+  it('suggests a ranked list of recipes', function() {
 
-  it('can load a partially constructed recipe', function() {
-    var arc = new Arc();
-    var suggestinator = new Suggestinator();
-    var suggestion = new recipe.RecipeBuilder()
+    var suggestion1 = new recipe.RecipeBuilder()
         .suggest("TestParticle")
             .connect("foo", Foo.type)
             .connect("bar", Bar.type)
         .build();
-    suggestinator.load(arc, suggestion);
-    data.internals.viewFor(Foo.type).store(new Foo("not a Bar"));
-    arc.tick();
-    assert.equal(data.internals.viewFor(Bar.type).data.length, 1);
-    assert.equal(data.internals.viewFor(Bar.type).data[0].data, "not a Bar1");
+
+    var suggestion2 = new recipe.RecipeBuilder()
+        .suggest("TwoInputTestParticle")
+            .connect("foo", Foo.type)
+            .connect("bar", Bar.type)
+            .connect("far", Far.type)
+        .build();
+
+    var suggestinator = new Suggestinator();
+    suggestinator._getSuggestions = a => [suggestion1, suggestion2];
+    data.internals.viewFor(Foo.type).store(new Foo("a Foo"));
+    data.internals.viewFor(Bar.type).store(new Bar("a Bar"));
+
+    var results = suggestinator.suggestinate(new Arc());
+    assert.equal(results[0].rank, 0.6);
+    assert.equal(results[1].rank, 1.8);
+    assert.equal(results[0].suggestions[0].particleName, "TwoInputTestParticle");
+    assert.equal(results[1].suggestions[0].particleName, "TestParticle");
   });
+
 });

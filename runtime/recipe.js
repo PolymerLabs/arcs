@@ -45,6 +45,10 @@ class Recipe {
   constructor(...suggestions) {
     this.suggestions = suggestions;
   }
+
+  instantiate(arc) {
+    this.suggestions.forEach(suggestion => suggestion.instantiate(arc));
+  }
 }
 
 class RecipeBuilder {
