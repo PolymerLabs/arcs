@@ -10,20 +10,27 @@
 "use strict";
 
 var Resolver = require('./resolver.js')
+var Speculator = require('./speculator.js')
 
 class Suggestinator {
   constructor() {
     this.resolver = new Resolver();
+    this.speculator = new Speculator();
   }
 
   // TODO: implement me!
-  suggestinate(arc) {
+  _getSuggestions(arc) {
 
   }
 
-  load(arc, recipe) {
-    this.resolver.resolve(recipe, arc);
-    recipe.suggestions.forEach(suggestion => suggestion.instantiate(arc));
+  suggestinate(arc) {
+    var suggestions = this._getSuggestions(arc);
+    suggestions.map(suggestion => this.resolver.resolve(suggestion, arc));
+    var rankings = suggestions.map(suggestion => this.speculator.speculate(arc, suggestion));
+    for (var i = 0; i < suggestions.length; i++)
+      suggestions[i].rank = rankings[i];
+    suggestions.sort((a,b) => a.rank - b.rank);
+    return suggestions;
   }
 }
 

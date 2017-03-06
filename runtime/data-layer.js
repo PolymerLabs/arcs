@@ -55,15 +55,15 @@ class View {
   }
 
   checkpoint() {
-    if (this.checkpoint == undefined)
-      this.checkpoint = this.data.length;
+    if (this._checkpoint == undefined)
+      this._checkpoint = this.data.length;
   }
 
   revert() {
-    if (this.checkpoint == undefined)
+    if (this._checkpoint == undefined)
       return;
-    this.data.splice(this.checkpoint);
-    this.checkpoint = undefined;
+    this.data.splice(this._checkpoint);
+    this._checkpoint = undefined;
   }
 
   register(observer) {

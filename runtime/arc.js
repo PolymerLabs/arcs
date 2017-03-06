@@ -27,7 +27,7 @@ class ParticleSlot {
 
   connect(view) {
     this.view = view;
-    if (this.checkpoint !== undefined)
+    if (this._checkpoint !== undefined)
       this.view.checkpoint();
     this.rid = view.register(iter => this.pending.push(iter));
   }
@@ -37,14 +37,14 @@ class ParticleSlot {
   }
 
   checkpoint() {
-    this.checkpoint = this.data.length;
+    this._checkpoint = this.data.length;
     if (this.view)
       this.view.checkpoint();
   }
 
   revert() {
-    this.data.splice(this.checkpoint);
-    this.checkpoint = undefined;
+    this.data.splice(this._checkpoint);
+    this._checkpoint = undefined;
     this.pending = [];
     this.view.revert();
   }

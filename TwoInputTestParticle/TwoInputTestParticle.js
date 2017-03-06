@@ -18,7 +18,7 @@ class TwoInputTestParticle extends Particle {
 
   dataUpdated() {
     this.far = new Far(this.foo.data + ' ' + this.bar.data);
-    this.commitData();
+    this.commitData(3);
   }
 }
 
