@@ -31,6 +31,8 @@ function restore(entry) {
   return entity;
 }
 
+function emptyRegistrationSlot() {};
+
 class View {
   constructor(type) {
     this.type = type;
@@ -52,10 +54,34 @@ class View {
     }
   }
 
+  checkpoint() {
+    if (this.checkpoint == undefined)
+      this.checkpoint = this.data.length;
+  }
+
+  revert() {
+    if (this.checkpoint == undefined)
+      return;
+    this.data.splice(this.checkpoint);
+    this.checkpoint = undefined;
+  }
+
   register(observer) {
+    var rid = this.observers.length;
     this.observers.push(observer);
     if (this.data.length > 0)
       observer(this.iterator(0, this.data.length));
+    return rid;
+  }
+
+  unregister(rid) {
+    for (var i = rid + 1; i < this.observers.length; i++) {
+      if (this.observers[i] !== emptyRegistrationSlot) {
+        this.observers[rid] = emptyRegistrationSlot;
+        return;
+      }
+    }
+    this.observers.splice(rid);
   }
 
   store(entity) {

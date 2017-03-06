@@ -9,17 +9,18 @@
  */
 "use strict";
 
-var Particle = require("../runtime/particle.js").Particle;
-var data = require("../runtime/data-layer.js");
+class Speculator {
 
-var Bar = data.testing.testEntityClass("Bar");
-
-class TestParticle extends Particle {
-
-  dataUpdated() {
-    this.bar = new Bar(this.foo.data + 1);
-    this.commitData(9);
+  speculate(arc, plan) {
+    arc.checkpoint();
+    arc.resetRelevance();
+    plan.suggestions.forEach(suggestion => suggestion.instantiate(arc));
+    while (arc.tick());
+    var relevance = arc.relevance;
+    arc.revert();
+    return relevance;
   }
+
 }
 
-exports.TestParticle = TestParticle;
+module.exports = Speculator;
