@@ -32,8 +32,12 @@ class Particle {
     this.arc.register(this);
   }
 
-  commitData() {
-    this.arcParticle.commitData();
+  // Override this to do stuff
+  dataUpdated() { 
+  }
+
+  commitData(relevance) {
+    this.arcParticle.commitData(relevance);
   }
 
 }

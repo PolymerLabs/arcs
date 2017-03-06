@@ -10,6 +10,7 @@
 "use strict";
 
 var data = require("./data-layer.js");
+var assert = require("assert");
 
 class ParticleSlot {
   constructor(name, type) {
@@ -26,11 +27,31 @@ class ParticleSlot {
 
   connect(view) {
     this.view = view;
-    view.register(iter => this.pending.push(iter));
+    if (this.checkpoint !== undefined)
+      this.view.checkpoint();
+    this.rid = view.register(iter => this.pending.push(iter));
   }
 
   commit(source) {
     this.view.store(source[this.name]);
+  }
+
+  checkpoint() {
+    this.checkpoint = this.data.length;
+    if (this.view)
+      this.view.checkpoint();
+  }
+
+  revert() {
+    this.data.splice(this.checkpoint);
+    this.checkpoint = undefined;
+    this.pending = [];
+    this.view.revert();
+  }
+
+  shutdown() {
+    if (this.view)
+      this.view.unregister(this.rid);
   }
 
   expandInputs() {
@@ -58,13 +79,29 @@ class ParticleSlot {
 }
 
 class ArcParticle {
-  constructor(particle) {
+  constructor(particle, arc) {
     this.particle = particle;
+    this.arc = arc;
     particle.arcParticle = this;
     this.inputs = new Map();
     particle.inputs.map(a => this.inputs.set(a.name, new ParticleSlot(a.name, a.type)));
     this.outputs = new Map();
     particle.outputs.map(a => this.outputs.set(a.name, new ParticleSlot(a.name, a.type)));
+  }
+
+  checkpoint() {
+    this.inputList().forEach(i => i.checkpoint());
+    this.outputList().forEach(o => o.checkpoint());
+  }
+
+  revert() {
+    this.inputList().forEach(i => i.revert());
+    this.outputList().forEach(o => o.revert());    
+  }
+
+  shutdown() {
+    this.inputList().forEach(i => i.shutdown());
+    this.outputList().forEach(o => o.shutdown());
   }
 
   inputList() {
@@ -77,12 +114,12 @@ class ArcParticle {
 
   process() {
     var missingInputs = this.inputList().filter(a => a.missingData());
-    if (missingInputs.length > 0)
-      return;
+    if (missingInputs.length > 0) 
+      return false;
 
     var pendingInputs = this.inputList().filter(a => a.hasPending());
     if (pendingInputs.length == 0)
-      return;
+      return false;
 
     var storedDataInputs = this.inputList().filter(a => !a.hasPending());
 
@@ -94,6 +131,7 @@ class ArcParticle {
       allInputs[storedDataInput.name] = storedDataInput.data
 
     this.runParticle(this.particle, allInputs, Object.keys(allInputs), []);
+    return true;
   }
 
   runParticle(particle, inputs, inputList, idxs) {
@@ -108,8 +146,9 @@ class ArcParticle {
     }
   }
 
-  commitData() {
+  commitData(relevance) {
     this.outputList().map(a => a.commit(this.particle));
+    this.arc.updateRelevance(relevance);
   }
 
   // TODO: we'll probably remove this at some point
@@ -124,15 +163,56 @@ class Arc {
   constructor() {
     this.particles = [];
     this.views = new Map();
+    this.checkpointed = false;
+    this.temporaryParticles = [];
+    this.relevance = 1;
+  }
+
+  updateRelevance(relevance) {
+    if (relevance == undefined) {
+      relevance = 5;
+    }
+    relevance = Math.max(0, Math.min(relevance, 10));
+    // TODO: might want to make this geometric or something instead;
+    relevance /= 5;
+    this.relevance *= relevance;
+  }
+
+  resetRelevance() {
+    this.relevance = 1;
+  }
+
+  checkpoint() {
+    assert(!this.checkpointed);
+    this.checkpointed = true;
+    this.particles.forEach(p => p.checkpoint());
+  }
+
+  revert() {
+    assert(this.checkpointed);
+    this.checkpointed = false;
+    this.temporaryParticles.forEach(p => {p.revert(); p.shutdown()});
+    this.temporaryParticles = [];
+    this.particles.forEach(p => p.revert());
   }
 
   register(particle) {
-    this.particles.push(new ArcParticle(particle));
+    if (this.checkpointed) {
+      var p = new ArcParticle(particle, this);
+      p.checkpoint();
+      this.temporaryParticles.push(p);
+      return;
+    }
+    this.particles.push(new ArcParticle(particle, this));
   }
 
   tick() {
+    var moreTicks = false;
     for (var particle of this.particles)
-      particle.process();
+      moreTicks |= particle.process();
+    for (var particle of this.temporaryParticles)
+      moreTicks |= particle.process();
+    return moreTicks;
   }
 
   addView(view) {
