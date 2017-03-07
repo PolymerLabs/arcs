@@ -46,8 +46,8 @@ describe('suggestinator', function() {
     var results = suggestinator.suggestinate(new Arc());
     assert.equal(results[0].rank, 0.6);
     assert.equal(results[1].rank, 1.8);
-    assert.equal(results[0].suggestions[0].particleName, "TwoInputTestParticle");
-    assert.equal(results[1].suggestions[0].particleName, "TestParticle");
+    assert.equal(results[0].components[0].particleName, "TwoInputTestParticle");
+    assert.equal(results[1].components[0].particleName, "TestParticle");
   });
 
 });

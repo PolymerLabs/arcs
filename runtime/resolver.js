@@ -14,16 +14,16 @@ var data = require('./data-layer.js');
 class Resolver {
 
   resolve(recipe, context) {
-    for (var suggestion of recipe.suggestions)
-      this.resolveSuggestion(suggestion, context);
+    for (var component of recipe.components)
+      this.resolveComponent(component, context);
   }
 
-  resolveSuggestion(suggestion, context) {
-    for (var connection of suggestion.connections)
-      this.resolveConnection(suggestion, connection, context);
+  resolveComponent(component, context) {
+    for (var connection of component.connections)
+      this.resolveConnection(component, connection, context);
   }
 
-  resolveConnection(suggestion, connection, context) {
+  resolveConnection(component, connection, context) {
     // connection already has a view
     if (connection.view !== undefined)
       return;
