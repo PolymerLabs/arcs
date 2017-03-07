@@ -24,7 +24,7 @@ class Connection {
   }
 }
 
-class Suggestion {
+class RecipeComponent {
   constructor(particleName, connections) {
     this.particleName = particleName;
     this.connections = connections;
@@ -42,37 +42,37 @@ class Suggestion {
 }
 
 class Recipe {
-  constructor(...suggestions) {
-    this.suggestions = suggestions;
+  constructor(...components) {
+    this.components = components;
   }
 
   instantiate(arc) {
-    this.suggestions.forEach(suggestion => suggestion.instantiate(arc));
+    this.components.forEach(component => component.instantiate(arc));
   }
 }
 
 class RecipeBuilder {
   constructor() {
-    this.suggestions = [];
-    this.currentSuggestion = undefined;
+    this.components = [];
+    this.currentComponent = undefined;
   }
   suggest(particleName) {
-    if (this.currentSuggestion !== undefined) {
-      this.suggestions.push(new Suggestion(this.currentSuggestion.name, this.currentSuggestion.connections));
+    if (this.currentComponent !== undefined) {
+      this.components.push(new RecipeComponent(this.currentComponent.name, this.currentComponent.connections));
     }
-    this.currentSuggestion = {name: particleName, connections: []};
+    this.currentComponent = {name: particleName, connections: []};
     return this;
   }
   connect(name, view) {
-    this.currentSuggestion.connections.push(new Connection(name, view));
+    this.currentComponent.connections.push(new Connection(name, view));
     return this;
   }
   build() {
-    if (this.currentSuggestion !== undefined) {
-      this.suggestions.push(new Suggestion(this.currentSuggestion.name, this.currentSuggestion.connections));
+    if (this.currentComponent !== undefined) {
+      this.components.push(new RecipeComponent(this.currentComponent.name, this.currentComponent.connections));
     }
-    return new Recipe(...this.suggestions)  
+    return new Recipe(...this.components)  
   }
 }
 
-module.exports = { Recipe, Suggestion, Connection, RecipeBuilder }
+module.exports = { Recipe, RecipeComponent, Connection, RecipeBuilder }
