@@ -9,17 +9,12 @@
  */
 "use strict";
 
-var Particle = require("../runtime/particle.js").Particle;
-var data = require("../runtime/data-layer.js");
+var Particle = require("../../runtime/particle.js").Particle;
 
-var Bar = data.testing.testEntityClass("Bar");
-
-class TestParticle extends Particle {
+class Recommend extends Particle {
 
   dataUpdated() {
-    this.bar = new Bar(this.foo.data + 1);
-    this.commitData(9);
   }
 }
 
-exports.TestParticle = TestParticle;
+module.exports = Recommend;

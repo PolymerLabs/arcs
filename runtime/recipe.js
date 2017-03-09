@@ -9,7 +9,7 @@
  */
 "use strict";
 
-var loader = require("./load-particle.js"); 
+var Loader = require("./loader.js"); 
 var data = require("./data-layer.js");
 
 class Connection {
@@ -31,7 +31,7 @@ class RecipeComponent {
   }
 
   instantiate(arc) {
-    var particle = loader(this.particleName, arc);
+    var particle = Loader.loadParticle(this.particleName, arc);
     for (var connection of this.connections) {
       var slot = particle.inputs.get(connection.name);
       if (!slot)
@@ -56,7 +56,7 @@ class RecipeBuilder {
     this.components = [];
     this.currentComponent = undefined;
   }
-  suggest(particleName) {
+  addParticle(particleName) {
     if (this.currentComponent !== undefined) {
       this.components.push(new RecipeComponent(this.currentComponent.name, this.currentComponent.connections));
     }
