@@ -10,6 +10,8 @@
 
 var data = require("../data-layer.js");
 var Arc = require("../arc.js");
+var loader = require("../loader.js");
+var Suggestinator = require("../suggestinator.js");
 
 class Person extends data.Entity {
   constructor(name) {
@@ -42,5 +44,10 @@ function prepareExtensionArc() {
 describe('demo flow', function() {
   it('flows like a demo', function() {
     prepareExtensionArc();
+    var recipes = ["Create", "Recommend", "Save"].map(loader.loadRecipe);
+    var suggestinator = new Suggestinator();
+    suggestinator._getSuggestions = a => recipes;
+    var results = suggestinator.suggestinate(new Arc());
+    console.log(results);
   });
 });

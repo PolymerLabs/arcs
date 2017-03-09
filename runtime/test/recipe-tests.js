@@ -23,13 +23,13 @@ describe('recipe', function() {
   it('recipes can load', function() {
     let scope = new data.Scope();
     var arc = new Arc(scope);
-    var suggestion = new recipe.RecipeBuilder()
-        .suggest("TestParticle")
+    var r = new recipe.RecipeBuilder()
+        .addParticle("TestParticle")
             .connect("foo", data.testing.viewFor(Foo, scope))
             .connect("bar", data.testing.viewFor(Bar, scope))
         .build();
 
-    suggestion.instantiate(arc);
+    r.instantiate(arc);
     scope.commit([new Foo("not a Bar")]);
     arc.tick();
     assert.equal(data.testing.viewFor(Bar, scope).data.length, 1);

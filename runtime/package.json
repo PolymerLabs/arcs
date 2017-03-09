@@ -3,7 +3,8 @@
  "version": "0.0.0",
  "private": "true",
  "scripts": {
-  "test": "mocha"
+  "test": "mocha",
+  "peg": "node node_modules\\pegjs\\bin\\pegjs -o parser.js particle.peg"
  },
  "devDependencies": {
   "chai": "^3.5.0",

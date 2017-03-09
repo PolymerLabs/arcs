@@ -13,24 +13,29 @@ ParticleFile = Comment particle:Particle _ { return particle }
 Comment = "/*" (! "*/" .)* "*/" _
 
 Particle
-  = type: Type _ "(" _ args: Arguments? _ ")" {
+  = type: PrimitiveType _ "(" _ args: Arguments? _ ")" {
       return {type: type, args: args};
   }
   
-Type
-  = [A-Z][a-zA-Z]* { return text() }
+Type = (PrimitiveType / ListType)
+
+ListType = "[" pt:PrimitiveType "]" { return {tag: 'list', type: pt } }
+
+PrimitiveType = [A-Z][a-zA-Z]* { return text() }
   
 Arguments
   = head:Argument tail:(_ "," _ Argument)* {
-  	  return [head].concat(tail.map(a => a[3]));
+      return [head].concat(tail.map(a => a[3]));
   }
 
 Argument = dir:Direction? _ tn:Type? _ name:Name? {
-
-	  return {direction: dir, type: tn, name: name}
+    var tags = dir.ephemeral ? ["ephemeral"] : []
+    return {direction: dir.direction, tags: tags, type: tn, name: name}
     }
 
-Direction = "in" / "out" / "inout"
+Direction = e: "ephemeral"? _ dir: ("in" / "out" / "inout" / "create") {
+    return {direction: dir, ephemeral: e};
+    }
 
 Name = [a-z][a-zA-Z]* { return text() }
 

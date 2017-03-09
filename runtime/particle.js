@@ -25,7 +25,7 @@ class Particle {
       if (arg.direction == "in") {
         this.inputs.push(arg);
       }
-      else if (arg.direction == "out") {
+      else if (arg.direction == "out" || arg.direction == "create") {
         this.outputs.push(arg);
       }
     });

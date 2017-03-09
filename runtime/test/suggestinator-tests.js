@@ -25,21 +25,21 @@ describe('suggestinator', function() {
   it('suggests a ranked list of recipes', function() {
     let scope = new data.Scope();
 
-    var suggestion1 = new recipe.RecipeBuilder()
-        .suggest("TestParticle")
+    var recipe1 = new recipe.RecipeBuilder()
+        .addParticle("TestParticle")
             .connect("foo", scope.typeFor(Foo))
             .connect("bar", scope.typeFor(Bar))
         .build();
 
-    var suggestion2 = new recipe.RecipeBuilder()
-        .suggest("TwoInputTestParticle")
+    var recipe2 = new recipe.RecipeBuilder()
+        .addParticle("TwoInputTestParticle")
             .connect("foo", scope.typeFor(Foo))
             .connect("bar", scope.typeFor(Bar))
             .connect("far", scope.typeFor(Far))
         .build();
 
     var suggestinator = new Suggestinator();
-    suggestinator._getSuggestions = a => [suggestion1, suggestion2];
+    suggestinator._getSuggestions = a => [recipe1, recipe2];
     scope.commit([new Foo("a Foo"), new Bar("a Bar")]);
 
     var results = suggestinator.suggestinate(new Arc(scope));

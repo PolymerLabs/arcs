@@ -9,8 +9,8 @@
  */
 "use strict";
 
-var Particle = require("../runtime/particle.js").Particle;
-var data = require("../runtime/data-layer.js");
+var Particle = require("../../runtime/particle.js").Particle;
+var data = require("../../runtime/data-layer.js");
 
 var Far = data.testing.testEntityClass("Far");
 
@@ -22,4 +22,4 @@ class TwoInputTestParticle extends Particle {
   }
 }
 
-exports.TwoInputTestParticle = TwoInputTestParticle
+module.exports = TwoInputTestParticle

@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-var loader = require("../load-particle.js");
+var loader = require("../loader.js");
 var data = require("../data-layer.js");
 var Arc = require("../arc.js");
 let assert = require('chai').assert;
@@ -24,7 +24,7 @@ describe('Arc', function() {
     let arc = new Arc(scope);
 
     scope.commit([new Foo('a Foo')]);
-    var particle = loader("TestParticle", arc);
+    var particle = loader.loadParticle("TestParticle", arc);
     particle.autoconnect();
     arc.tick();
     assert.equal(data.testing.viewFor(Bar, scope).data.length, 1);
@@ -34,7 +34,7 @@ describe('Arc', function() {
   it('applies new data to a particle', function() {
     let scope = new data.Scope();
     let arc = new Arc(scope);
-    var particle = loader("TestParticle", arc);
+    var particle = loader.loadParticle("TestParticle", arc);
     particle.autoconnect();
     scope.commit([new Foo("not a Bar")]);
     arc.tick();
@@ -47,7 +47,7 @@ describe('Arc', function() {
     let arc = new Arc(scope);
     ['a', 'b', 'c'].map(a => scope.commit([new Foo(a)]));
     ['x', 'y', 'z'].map(a => scope.commit([new Bar(a)]));
-    var particle = loader("TwoInputTestParticle", arc);
+    var particle = loader.loadParticle("TwoInputTestParticle", arc);
     particle.autoconnect();
     arc.tick();
     assert.equal(data.testing.viewFor(Far, scope).data.length, 9);
@@ -58,7 +58,7 @@ describe('Arc', function() {
     var scope = new data.Scope();
     var arc = new Arc(scope);
     ['a', 'b', 'c'].map(a => scope.commit([new Foo(a)]));
-    var particle = loader("TwoInputTestParticle", arc);
+    var particle = loader.loadParticle("TwoInputTestParticle", arc);
     particle.autoconnect();
     arc.tick();
     assert.equal(data.testing.viewFor(Far, scope).data.length, 0);
