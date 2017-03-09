@@ -20,7 +20,7 @@ var Bar = data.testing.testEntityClass('Bar');
 describe('speculator', function() {
   it('can speculatively produce a relevance', function() {
     let scope = new data.Scope();
-    var arc = new Arc();
+    var arc = new Arc(scope);
     var r = new recipe.RecipeBuilder()
         .addParticle("TestParticle")
             .connect("foo", data.testing.viewFor(Foo, scope))

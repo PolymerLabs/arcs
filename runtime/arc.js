@@ -161,6 +161,7 @@ class ArcParticle {
 
 class Arc {
   constructor(scope) {
+    assert(scope instanceof data.Scope, "Arc constructor requires a scope");
     this.scope = scope;
     this.particles = [];
     this.views = new Map();

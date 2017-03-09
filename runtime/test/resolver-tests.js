@@ -31,7 +31,7 @@ describe('resolver', function() {
         .build();
     var resolver = new Resolver();
     resolver.resolve(r, arc);
-    suggestion.instantiate(arc);
+    r.instantiate(arc);
     scope.commit([new Foo("not a Bar")]);
     arc.tick();
     assert.equal(data.testing.viewFor(Bar, scope).data.length, 1);
@@ -39,14 +39,15 @@ describe('resolver', function() {
   });
 
   it('can resolve a recipe loaded from a .ptcl file', function() {
-    var arc = new Arc();
-    var r = loader.loadRecipe('TestParticle');
+    let scope = new data.Scope();
+    var arc = new Arc(scope);
+    var r = loader.loadRecipe('TestParticle', scope);
     var resolver = new Resolver();
-    resolver.resolve(r);
+    resolver.resolve(r, arc);
     r.instantiate(arc);
     scope.commit([new Foo("not a Bar")]);
     arc.tick();
-    assert.equal(data.internals.viewFor(Bar.type).data.length, 1);
-    assert.equal(data.internals.viewFor(Bar.type).data[0].data, "not a Bar1");    
+    assert.equal(data.testing.viewFor(Bar, scope).data.length, 1);
+    assert.equal(data.testing.viewFor(Bar, scope).data[0].data, "not a Bar1");    
   });
 });

@@ -10,10 +10,12 @@
 "use strict";
 
 var data = require('./data-layer.js');
+var assert = require('assert');
 
 class Resolver {
 
   resolve(recipe, context) {
+    assert(context, "resolve requires an arc");
     for (var component of recipe.components)
       this.resolveComponent(component, context);
   }

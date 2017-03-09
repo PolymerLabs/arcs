@@ -38,16 +38,17 @@ function prepareExtensionArc() {
   var productView = data.testing.viewFor(Product, scope);
   arc.addView(personView);
   arc.addView(productView);
-  scope.commit([new Person("Claire"), new Product("Tea Pot"), new Product("Bee Hive"), new Product("Denim Jeans")])
+  scope.commit([new Person("Claire"), new Product("Tea Pot"), new Product("Bee Hive"), new Product("Denim Jeans")]);
+  return arc;
 }
 
 describe('demo flow', function() {
   it('flows like a demo', function() {
-    prepareExtensionArc();
-    var recipes = ["Create", "Recommend", "Save"].map(loader.loadRecipe);
+    let arc = prepareExtensionArc();
+    var recipes = ["Create", "Recommend", "Save"].map(a => loader.loadRecipe(a, arc.scope));
     var suggestinator = new Suggestinator();
     suggestinator._getSuggestions = a => recipes;
-    var results = suggestinator.suggestinate(new Arc());
+    var results = suggestinator.suggestinate(arc);
     console.log(results);
   });
 });
