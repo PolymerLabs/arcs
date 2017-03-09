@@ -61,11 +61,11 @@ describe('Arc', function() {
     var particle = loader("TwoInputTestParticle", arc);
     particle.autoconnect();
     arc.tick();
-    assert.equal(data.testing.viewFor(Far, scope).data.length, 0);
+    assert.equal(data.testing.viewFor(scope.typeFor(Far), scope).data.length, 0);
     ['x', 'y', 'z'].map(a => scope.commit([new Bar(a)]));
     arc.tick();
-    assert.equal(data.testing.viewFor(Far, scope).data.length, 9);
-    assert.deepEqual(data.testing.viewFor(Far, scope).data.map(a => a.data), ['a x', 'a y', 'a z', 'b x', 'b y', 'b z', 'c x', 'c y', 'c z']);
+    assert.equal(data.testing.viewFor(scope.typeFor(Far), scope).data.length, 9);
+    assert.deepEqual(data.testing.viewFor(scope.typeFor(Far), scope).data.map(a => a.data), ['a x', 'a y', 'a z', 'b x', 'b y', 'b z', 'c x', 'c y', 'c z']);
   });
 
 });

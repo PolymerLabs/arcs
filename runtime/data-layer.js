@@ -113,7 +113,7 @@ class Scope {
   }
 
   _viewFor(type) {
-    assert(type);
+    assert(type instanceof Type);
     var result = this._views.get(type);
     if (!result) {
       console.log("constructing new view for", type);
@@ -143,8 +143,8 @@ class Scope {
     return this._types.get(classOrInstance);
   }
 
-  newIdentifier(view, type) {
-    return new Identifier(view, type, this.nextIdentifier++);
+  _newIdentifier(view, type) {
+    return new Identifier(view, type, this._nextIdentifier++);
   }
 
   commit(entities) {
@@ -224,7 +224,7 @@ class Entity {
       // assert view correct?
       return;
     }
-    this[identifier] = scope.newIdentifier(view, scope.typeFor(this));
+    this[identifier] = scope._newIdentifier(view, scope.typeFor(this));
   }
   toLiteral() {
     return this.data;
