@@ -23,21 +23,21 @@ var Far = data.testing.testEntityClass('Far');
 describe('suggestinator', function() {
 
   it('suggests a ranked list of recipes', function() {
+    let scope = new data.Scope();
 
     var suggestion1 = new recipe.RecipeBuilder()
         .suggest("TestParticle")
-            .connect("foo", Foo.type)
-            .connect("bar", Bar.type)
+            .connect("foo", scope.typeFor(Foo))
+            .connect("bar", scope.typeFor(Bar))
         .build();
 
     var suggestion2 = new recipe.RecipeBuilder()
         .suggest("TwoInputTestParticle")
-            .connect("foo", Foo.type)
-            .connect("bar", Bar.type)
-            .connect("far", Far.type)
+            .connect("foo", scope.typeFor(Foo))
+            .connect("bar", scope.typeFor(Bar))
+            .connect("far", scope.typeFor(Far))
         .build();
 
-    let scope = new data.Scope();
     var suggestinator = new Suggestinator();
     suggestinator._getSuggestions = a => [suggestion1, suggestion2];
     scope.commit([new Foo("a Foo"), new Bar("a Bar")]);
