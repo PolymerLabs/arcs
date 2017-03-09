@@ -35,17 +35,14 @@ function loadDefinition(name) {
   return parser.parse(data);
 }
 
-// TODO: this function should not take a scope,
-// and should register types as string literals.
-function loadRecipe(name, scope) {
-  assert(scope, "loadRecipe currently requires a scope");
+function loadRecipe(name) {
   let definition = loadDefinition(name);
   var builder = new recipe.RecipeBuilder();
   builder.addParticle(definition.type);
   for (var arg of definition.args) {
     // this is using a type name hack to "find" the right internal
     // type. We need to fix this at some point.
-    builder.connect(arg.name, data.internals.Type.fromLiteral(arg.type, scope));
+    builder.connect(arg.name, arg.type);
   }
   return builder.build();
 }
