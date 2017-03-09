@@ -32,8 +32,8 @@ class Product extends data.Entity {
 function prepareExtensionArc() {
   let scope = new data.Scope();
   var arc = new Arc(scope);
-  var personView = data.testing.viewFor(scope.typeFor(Person));
-  var productView = data.testing.viewFor(scope.typeFor(Product));
+  var personView = data.testing.viewFor(scope.typeFor(Person), scope);
+  var productView = data.testing.viewFor(scope.typeFor(Product), scope);
   arc.addView(personView);
   arc.addView(productView);
   scope.commit([new Person("Claire"), new Product("Tea Pot"), new Product("Bee Hive"), new Product("Denim Jeans")])

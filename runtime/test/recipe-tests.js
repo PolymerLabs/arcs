@@ -19,20 +19,20 @@ var Foo = data.testing.testEntityClass('Foo');
 var Bar = data.testing.testEntityClass('Bar');
 
 describe('recipe', function() {
-  beforeEach(function() { data.testing.trash(); });
 
   it('recipes can load', function() {
-    var arc = new Arc();
+    let scope = new data.Scope();
+    var arc = new Arc(scope);
     var suggestion = new recipe.RecipeBuilder()
         .suggest("TestParticle")
-            .connect("foo", data.internals.viewFor(Foo.type))
-            .connect("bar", data.internals.viewFor(Bar.type))
+            .connect("foo", data.testing.viewFor(scope.typeFor(Foo), scope))
+            .connect("bar", data.testing.viewFor(scope.typeFor(Bar), scope))
         .build();
 
     suggestion.instantiate(arc);
-    data.internals.viewFor(Foo.type).store(new Foo("not a Bar"));
+    scope.commit([new Foo("not a Bar")]);
     arc.tick();
-    assert.equal(data.internals.viewFor(Bar.type).data.length, 1);
-    assert.equal(data.internals.viewFor(Bar.type).data[0].data, "not a Bar1");
+    assert.equal(data.testing.viewFor(scope.typeFor(Bar), scope).data.length, 1);
+    assert.equal(data.testing.viewFor(scope.typeFor(Bar), scope).data[0].data, "not a Bar1");
   });
 });
