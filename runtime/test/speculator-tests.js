@@ -18,19 +18,18 @@ var Foo = data.testing.testEntityClass('Foo');
 var Bar = data.testing.testEntityClass('Bar');
 
 describe('speculator', function() {
-  beforeEach(function() { data.testing.trash(); });
-
   it('can speculatively produce a relevance', function() {
-    var arc = new Arc();
+    let scope = new data.Scope();
+    let arc = new Arc(scope);
     var suggestion = new recipe.RecipeBuilder()
         .suggest("TestParticle")
-            .connect("foo", data.internals.viewFor(Foo.type))
-            .connect("bar", data.internals.viewFor(Bar.type))
+            .connect("foo", data.testing.viewFor(scope.typeFor(Foo), scope))
+            .connect("bar", data.testing.viewFor(scope.typeFor(Bar), scope))
         .build();
     var speculator = new Speculator();
-    data.internals.viewFor(Foo.type).store(new Foo("not a Bar"));
+    data.testing.viewFor(scope.typeFor(Foo), scope).store(new Foo("not a Bar"));
     var relevance = speculator.speculate(arc, suggestion);
     assert.equal(relevance, 1.8);
-    assert.equal(data.internals.viewFor(Bar.type).data.length, 0);
+    assert.equal(data.testing.viewFor(scope.typeFor(Bar), scope).data.length, 0);
   });
 });

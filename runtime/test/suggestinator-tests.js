@@ -21,7 +21,6 @@ var Bar = data.testing.testEntityClass('Bar');
 var Far = data.testing.testEntityClass('Far');
 
 describe('suggestinator', function() {
-  beforeEach(function() { data.testing.trash(); });
 
   it('suggests a ranked list of recipes', function() {
 
@@ -38,12 +37,12 @@ describe('suggestinator', function() {
             .connect("far", Far.type)
         .build();
 
+    let scope = new data.Scope();
     var suggestinator = new Suggestinator();
     suggestinator._getSuggestions = a => [suggestion1, suggestion2];
-    data.internals.viewFor(Foo.type).store(new Foo("a Foo"));
-    data.internals.viewFor(Bar.type).store(new Bar("a Bar"));
+    scope.commit([new Foo("a Foo"), new Bar("a Bar")]);
 
-    var results = suggestinator.suggestinate(new Arc());
+    var results = suggestinator.suggestinate(new Arc(scope));
     assert.equal(results[0].rank, 0.6);
     assert.equal(results[1].rank, 1.8);
     assert.equal(results[0].components[0].particleName, "TwoInputTestParticle");

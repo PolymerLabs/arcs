@@ -10,11 +10,12 @@
 
 var loader = require("../load-particle.js");
 var Arc = require("../arc.js");
+var data = require("../data-layer.js");
 let assert = require('chai').assert;
 
 describe('particle loader', function() {
   it('can load a particle', function() {
-    var arc = new Arc();
+    var arc = new Arc(new data.Scope());
     var particle = loader("TestParticle", arc);
     assert.isNotNull(particle);
   });

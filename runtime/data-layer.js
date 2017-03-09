@@ -16,13 +16,14 @@ function cloneData(data) {
   return JSON.parse(JSON.stringify(data));
 }
 
-function restore(entry) {
+function restore(entry, scope) {
+  assert(scope);
   let {id, data} = entry;
   var entity = Entity.fromLiteral(id, cloneData(data));
   // TODO: Relation magic should happen elsewhere, and be better.
-  if (entity.type.isRelation) {
-    let ids = data.map(literal => Identifier.fromLiteral(literal));
-    let entities = ids.map(id => viewFor(id.type).get(id));
+  if (scope.typeFor(entity).isRelation) {
+    let ids = data.map(literal => Identifier.fromLiteral(literal, scope));
+    let entities = ids.map(id => scope._viewFor(id.type).get(id));
     assert(!entities.includes(undefined));
     entity = new Relation(...entities);
     entity.entities = entities;
@@ -34,22 +35,24 @@ function restore(entry) {
 function emptyRegistrationSlot() {};
 
 class View {
-  constructor(type) {
+  constructor(type, scope) {
+    assert(scope);
     this.type = type;
+    this._scope = scope;
     this.data = [];
     this.observers = [];
   }
 
   *iterator(start, end) {
     while (start < end) {
-      yield restore(this.data[start++]);
+      yield restore(this.data[start++], this._scope);
     }
   }
 
   get(id) {
     for (let entry of this.data) {
       if (JSON.stringify(entry.id.toLiteral()) == JSON.stringify(id.toLiteral())) {
-        return restore(entry);
+        return restore(entry, this._scope);
       }
     }
   }
@@ -99,19 +102,83 @@ class View {
   }
 }
 
+class Scope {
+  constructor() {
+    this._types = new Map();
+    // TODO: more elaborate type keys
+    this._nextType = 1;
+    // TODO: more elaborate identifier keys
+    this._nextIdentifier = 1;
+    this._views = new Map();
+  }
+
+  _viewFor(type) {
+    assert(type);
+    var result = this._views.get(type);
+    if (!result) {
+      console.log("constructing new view for", type);
+      result = new View(type, this);
+      this._views.set(type, result);
+    }
+    return result;
+  }
+
+  typeFor(classOrInstance) {
+    if (classOrInstance instanceof Entity) {
+      if (classOrInstance[identifier]) {
+        assert(classOrInstance[identifier].type);
+        return classOrInstance[identifier].type;
+      }
+
+      if (classOrInstance instanceof Relation) {
+        return Relation.typeFor(classOrInstance, this);
+      }
+
+      return this.typeFor(classOrInstance.constructor);
+    }
+    if (!this._types.has(classOrInstance)) {
+      let key = classOrInstance.key || this.nextType++;
+      this._types.set(classOrInstance, new Type(key, this));
+    }
+    return this._types.get(classOrInstance);
+  }
+
+  newIdentifier(view, type) {
+    return new Identifier(view, type, this.nextIdentifier++);
+  }
+
+  commit(entities) {
+    let view = null; // TODO: pass the correct view identifiers.
+    for (let entity of entities) {
+      if (entity instanceof Relation) {
+        entity.entities.forEach(entity => entity.identify(view, this));
+      }
+    }
+    for (let entity of entities) {
+      entity.identify(view, this);
+    }
+    for (let entity of entities) {
+      if (entity instanceof Relation) {
+        entity.entities.forEach(entity => this._viewFor(this.typeFor(entity)).store(entity));
+      }
+      this._viewFor(this.typeFor(entity)).store(entity);
+    }
+  }
+}
+
 let types = new Map();
-// TODO: more elaborate type keys
 var nextType = 1;
 
 class Type {
-  constructor(key) {
+  constructor(key, scope) {
+    assert(scope);
     let normalized = JSON.stringify(key);
-    let type = types.get(normalized);
+    let type = scope._types.get(normalized);
     if (type) {
       return type;
     }
     this.key = key;
-    types.set(normalized, this);
+    scope._types.set(normalized, this);
   }
   get isRelation() {
     return Array.isArray(this.key);
@@ -119,16 +186,12 @@ class Type {
   toLiteral() {
     return this.key;
   }
-  static fromLiteral(literal) {
-    return new Type(literal);
-  }
-  static generate() {
-    return new Type(nextType++);
+  static fromLiteral(literal, scope) {
+    assert(scope);
+    return new Type(literal, scope);
   }
 }
 
-// TODO: more elaborate identifier keys
-var nextIdentifier = 1;
 // TODO: relation identifier should incorporate key/value identifiers
 class Identifier {
   constructor(view, type, key) {
@@ -139,12 +202,10 @@ class Identifier {
   toLiteral() {
     return [this.view, this.type.toLiteral(), this.key];
   }
-  static fromLiteral(data) {
+  static fromLiteral(data, scope) {
+    assert(scope);
     let [view, literalType, key] = data;
-    return new Identifier(view, Type.fromLiteral(literalType), key);
-  }
-  static generate(view, type) {
-    return new Identifier(view, type, nextIdentifier++);
+    return new Identifier(view, Type.fromLiteral(literalType, scope), key);
   }
 }
 
@@ -156,18 +217,14 @@ class Entity {
   get data() {
     return undefined;
   }
-  get type() {
-    return this[identifier]
-        ? this[identifier].type
-        : this.constructor.type;
-  }
   // TODO: clean up internal glue
-  identify(view) {
+  identify(view, scope) {
+    assert(scope);
     if (this[identifier]) {
       // assert view correct?
       return;
     }
-    this[identifier] = Identifier.generate(view, this.type);
+    this[identifier] = scope.newIdentifier(view, scope.typeFor(this));
   }
   toLiteral() {
     return this.data;
@@ -189,13 +246,13 @@ class BasicEntity extends Entity {
     return this.rawData;
   }
 }
-BasicEntity.type = Type.generate();
 
 function testEntityClass(type) {
-  class TestEntity extends BasicEntity {
-  }
-  TestEntity.type = new Type(type);
-  return TestEntity;
+  return class TestEntity extends BasicEntity {
+    static get key() {
+      return type;
+    }
+  };
 }
 
 // TODO: Should relations normalized by another layer, or here?
@@ -207,45 +264,10 @@ class Relation extends Entity {
   get data() {
     return this.entities.map(entity => entity[identifier].toLiteral());
   }
-  get type() {
-    if (this[identifier]) {
-      return this[identifier].type;
-    }
-    return new Type(this.entities.map(entity => entity.type));
+  static typeFor(relation, scope) {
+    assert(scope);
+    return new Type(relation.entities.map(entity => scope.typeFor(entity)), scope);
   }
-}
-
-let views = new Map();
-function viewFor(type) {
-  var result = views.get(type);
-  if (!result) {
-    console.log("constructing new view for", type);
-    result = new View(type);
-    views.set(type, result);
-  }
-  return result;
-}
-
-function commit(entities) {
-  let view = null; // TODO: pass the correct view identifiers.
-  for (let entity of entities) {
-    if (entity instanceof Relation) {
-      entity.entities.forEach(entity => entity.identify(view));
-    }
-  }
-  for (let entity of entities) {
-    entity.identify(view);
-  }
-  for (let entity of entities) {
-    if (entity instanceof Relation) {
-      entity.entities.forEach(entity => viewFor(entity.type).store(entity));
-    }
-    viewFor(entity.type).store(entity);
-  }
-}
-
-function trash() {
-  views = new Map();
 }
 
 Object.assign(exports, {
@@ -254,12 +276,13 @@ Object.assign(exports, {
   Relation,
   testing: {
     testEntityClass,
-    trash,
+    viewFor(type, scope) {
+      return scope._viewFor(type);
+    },
   },
+  Scope,
   internals: {
-    viewFor,
     identifier,
-    commit,
     Type,
     View
   }

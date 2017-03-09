@@ -19,7 +19,6 @@ class Person extends data.Entity {
 
   get data() { return this._data; }
 }
-Person.type = data.internals.Type.generate();
 
 class Product extends data.Entity {
     constructor(name) {
@@ -29,15 +28,15 @@ class Product extends data.Entity {
 
   get data() { return this._data; }
 }
-Product.type = data.internals.Type.generate();
 
 function prepareExtensionArc() {
-  var arc = new Arc();
-  var personView = data.internals.viewFor(Person.type);
-  var productView = data.internals.viewFor(Product.type);
+  let scope = new data.Scope();
+  var arc = new Arc(scope);
+  var personView = data.testing.viewFor(scope.typeFor(Person));
+  var productView = data.testing.viewFor(scope.typeFor(Product));
   arc.addView(personView);
   arc.addView(productView);
-  data.internals.commit([new Person("Claire"), new Product("Tea Pot"), new Product("Bee Hive"), new Product("Denim Jeans")])
+  scope.commit([new Person("Claire"), new Product("Tea Pot"), new Product("Bee Hive"), new Product("Denim Jeans")])
 }
 
 describe('demo flow', function() {

@@ -29,7 +29,7 @@ class Resolver {
       return;
 
     // TODO: More complex resolution logic should go here.
-    connection.view = data.internals.viewFor(connection.type);
+    connection.view = context.scope._viewFor(connection.type);
   }
 
 }
