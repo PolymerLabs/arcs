@@ -13,6 +13,7 @@ var parser = require("./parser.js");
 var fs = require("fs");
 var recipe = require("./recipe.js");
 var data = require("./data-layer.js");
+var assert = require("assert");
 
 function locationFor(name, type) {
   return `../particles/${name}/${name}.${type}`
@@ -34,14 +35,17 @@ function loadDefinition(name) {
   return parser.parse(data);
 }
 
-function loadRecipe(name) {
+// TODO: this function should not take a scope,
+// and should register types as string literals.
+function loadRecipe(name, scope) {
+  assert(scope, "loadRecipe currently requires a scope");
   let definition = loadDefinition(name);
   var builder = new recipe.RecipeBuilder();
   builder.addParticle(definition.type);
   for (var arg of definition.args) {
     // this is using a type name hack to "find" the right internal
     // type. We need to fix this at some point.
-    builder.connect(arg.name, new data.internals.Type(arg.type));
+    builder.connect(arg.name, data.internals.Type.fromLiteral(arg.type, scope));
   }
   return builder.build();
 }
