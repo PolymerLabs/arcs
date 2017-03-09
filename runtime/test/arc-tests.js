@@ -27,8 +27,8 @@ describe('Arc', function() {
     var particle = loader("TestParticle", arc);
     particle.autoconnect();
     arc.tick();
-    assert.equal(data.testing.viewFor(scope.typeFor(Bar), scope).data.length, 1);
-    assert.equal(data.testing.viewFor(scope.typeFor(Bar), scope).data[0].data, "a Foo1");
+    assert.equal(data.testing.viewFor(Bar, scope).data.length, 1);
+    assert.equal(data.testing.viewFor(Bar, scope).data[0].data, "a Foo1");
   });
 
   it('applies new data to a particle', function() {
@@ -38,8 +38,8 @@ describe('Arc', function() {
     particle.autoconnect();
     scope.commit([new Foo("not a Bar")]);
     arc.tick();
-    assert.equal(data.testing.viewFor(scope.typeFor(Bar), scope).data.length, 1);
-    assert.equal(data.testing.viewFor(scope.typeFor(Bar), scope).data[0].data, "not a Bar1");
+    assert.equal(data.testing.viewFor(Bar, scope).data.length, 1);
+    assert.equal(data.testing.viewFor(Bar, scope).data[0].data, "not a Bar1");
   });
 
   it('applies two preloaded inputs combinatorially', function() {
@@ -50,8 +50,8 @@ describe('Arc', function() {
     var particle = loader("TwoInputTestParticle", arc);
     particle.autoconnect();
     arc.tick();
-    assert.equal(data.testing.viewFor(scope.typeFor(Far), scope).data.length, 9);
-    assert.deepEqual(data.testing.viewFor(scope.typeFor(Far), scope).data.map(a => a.data), ['a x', 'a y', 'a z', 'b x', 'b y', 'b z', 'c x', 'c y', 'c z']);
+    assert.equal(data.testing.viewFor(Far, scope).data.length, 9);
+    assert.deepEqual(data.testing.viewFor(Far, scope).data.map(a => a.data), ['a x', 'a y', 'a z', 'b x', 'b y', 'b z', 'c x', 'c y', 'c z']);
   });
 
   it('applies a new input to a preloaded input combinatorially', function() {
@@ -61,11 +61,11 @@ describe('Arc', function() {
     var particle = loader("TwoInputTestParticle", arc);
     particle.autoconnect();
     arc.tick();
-    assert.equal(data.testing.viewFor(scope.typeFor(Far), scope).data.length, 0);
+    assert.equal(data.testing.viewFor(Far, scope).data.length, 0);
     ['x', 'y', 'z'].map(a => scope.commit([new Bar(a)]));
     arc.tick();
-    assert.equal(data.testing.viewFor(scope.typeFor(Far), scope).data.length, 9);
-    assert.deepEqual(data.testing.viewFor(scope.typeFor(Far), scope).data.map(a => a.data), ['a x', 'a y', 'a z', 'b x', 'b y', 'b z', 'c x', 'c y', 'c z']);
+    assert.equal(data.testing.viewFor(Far, scope).data.length, 9);
+    assert.deepEqual(data.testing.viewFor(Far, scope).data.map(a => a.data), ['a x', 'a y', 'a z', 'b x', 'b y', 'b z', 'c x', 'c y', 'c z']);
   });
 
 });

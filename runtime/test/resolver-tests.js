@@ -33,7 +33,7 @@ describe('resolver', function() {
     suggestion.instantiate(arc);
     scope.commit([new Foo("not a Bar")]);
     arc.tick();
-    assert.equal(data.testing.viewFor(scope.typeFor(Bar), scope).data.length, 1);
-    assert.equal(data.testing.viewFor(scope.typeFor(Bar), scope).data[0].data, "not a Bar1");
+    assert.equal(data.testing.viewFor(Bar, scope).data.length, 1);
+    assert.equal(data.testing.viewFor(Bar, scope).data[0].data, "not a Bar1");
   });
 });
