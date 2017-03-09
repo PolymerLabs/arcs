@@ -19,7 +19,7 @@ class Particle {
   }
 
   setDefinition(definition) {
-    definition.args = definition.args.map(a => { return {direction: a.direction, name: a.name, type: new data.internals.Type(a.type)}});
+    definition.args = definition.args.map(a => { return {direction: a.direction, name: a.name, type: new data.internals.Type(a.type, this.arc.scope)}});
     this.definition = definition;
     definition.args.forEach(arg => {
       if (arg.direction == "in") {

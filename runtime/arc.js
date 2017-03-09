@@ -21,8 +21,8 @@ class ParticleSlot {
   }
 
   // TODO: we'll probably remove this at some point
-  autoconnect() {
-    this.connect(data.internals.viewFor(this.type));
+  autoconnect(scope) {
+    this.connect(scope._viewFor(this.type));
   }
 
   connect(view) {
@@ -153,14 +153,15 @@ class ArcParticle {
 
   // TODO: we'll probably remove this at some point
   autoconnect() {
-    this.inputList().map(a => a.autoconnect());
-    this.outputList().map(a => a.autoconnect());
+    this.inputList().map(a => a.autoconnect(this.arc.scope));
+    this.outputList().map(a => a.autoconnect(this.arc.scope));
   }
 }
 
 
 class Arc {
-  constructor() {
+  constructor(scope) {
+    this.scope = scope;
     this.particles = [];
     this.views = new Map();
     this.checkpointed = false;
