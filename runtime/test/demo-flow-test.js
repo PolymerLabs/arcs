@@ -45,7 +45,7 @@ function prepareExtensionArc() {
 describe('demo flow', function() {
   it('flows like a demo', function() {
     let arc = prepareExtensionArc();
-    var recipes = ["Create", "Recommend", "Save"].map(a => loader.loadRecipe(a, arc.scope));
+    var recipes = ["Create", "Recommend", "Save"].map(loader.loadRecipe);
     var suggestinator = new Suggestinator();
     suggestinator._getSuggestions = a => recipes;
     var results = suggestinator.suggestinate(arc);

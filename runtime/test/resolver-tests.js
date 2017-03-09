@@ -26,8 +26,8 @@ describe('resolver', function() {
     var arc = new Arc(scope);
     var r = new recipe.RecipeBuilder()
         .addParticle("TestParticle")
-            .connect("foo", scope.typeFor(Foo))
-            .connect("bar", scope.typeFor(Bar))
+            .connect("foo", "Foo")
+            .connect("bar", "Bar")
         .build();
     var resolver = new Resolver();
     resolver.resolve(r, arc);
@@ -41,7 +41,7 @@ describe('resolver', function() {
   it('can resolve a recipe loaded from a .ptcl file', function() {
     let scope = new data.Scope();
     var arc = new Arc(scope);
-    var r = loader.loadRecipe('TestParticle', scope);
+    var r = loader.loadRecipe('TestParticle');
     var resolver = new Resolver();
     resolver.resolve(r, arc);
     r.instantiate(arc);

@@ -14,24 +14,25 @@ var assert = require('assert');
 
 class Resolver {
 
-  resolve(recipe, context) {
-    assert(context, "resolve requires an arc");
+  resolve(recipe, arc) {
+    assert(arc, "resolve requires an arc");
     for (var component of recipe.components)
-      this.resolveComponent(component, context);
+      this.resolveComponent(component, arc);
+    recipe.arc = arc;
   }
 
-  resolveComponent(component, context) {
+  resolveComponent(component, arc) {
     for (var connection of component.connections)
-      this.resolveConnection(component, connection, context);
+      this.resolveConnection(component, connection, arc);
   }
 
-  resolveConnection(component, connection, context) {
+  resolveConnection(component, connection, arc) {
     // connection already has a view
     if (connection.view !== undefined)
       return;
 
     // TODO: More complex resolution logic should go here.
-    connection.view = context.scope._viewFor(connection.type);
+    connection.view = arc.scope._viewFor(data.internals.Type.fromLiteral(connection.type, arc.scope));
   }
 
 }

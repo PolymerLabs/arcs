@@ -27,15 +27,15 @@ describe('suggestinator', function() {
 
     var recipe1 = new recipe.RecipeBuilder()
         .addParticle("TestParticle")
-            .connect("foo", scope.typeFor(Foo))
-            .connect("bar", scope.typeFor(Bar))
+            .connect("foo", "Foo")
+            .connect("bar", "Bar")
         .build();
 
     var recipe2 = new recipe.RecipeBuilder()
         .addParticle("TwoInputTestParticle")
-            .connect("foo", scope.typeFor(Foo))
-            .connect("bar", scope.typeFor(Bar))
-            .connect("far", scope.typeFor(Far))
+            .connect("foo", "Foo")
+            .connect("bar", "Bar")
+            .connect("far", "Far")
         .build();
 
     var suggestinator = new Suggestinator();
