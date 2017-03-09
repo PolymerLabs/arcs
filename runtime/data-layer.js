@@ -166,9 +166,6 @@ class Scope {
   }
 }
 
-let types = new Map();
-var nextType = 1;
-
 class Type {
   constructor(key, scope) {
     assert(scope);
