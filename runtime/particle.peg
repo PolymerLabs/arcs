@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-ParticleFile = Comment particle:Particle _ { return particle }
+ParticleFile = Comment? particle:Particle _ { return particle }
 
 Comment = "/*" (! "*/" .)* "*/" _
 

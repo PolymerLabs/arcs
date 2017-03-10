@@ -68,4 +68,18 @@ describe('Arc', function() {
     assert.deepEqual(data.testing.viewFor(Far, scope).data.map(a => a.data), ['a x', 'a y', 'a z', 'b x', 'b y', 'b z', 'c x', 'c y', 'c z']);
   });
 
+  it('works with inline particle definitions', () => {
+    let scope = new data.Scope();
+    let arc = new Arc(scope);
+    let particleClass = require('../particle').define('P(in Foo foo, out Bar bar)', ({foo}) => {
+      return {bar: new Bar(123)};
+    });
+    scope.commit([new Foo(1)]);
+    // TODO: maybe arc.register(particleClass) => arcParticle
+    let instance = new particleClass(arc);
+    instance.arcParticle.autoconnect();
+    arc.tick();
+    assert.equal(data.testing.viewFor(Bar, scope).data.length, 1);
+  });
+
 });

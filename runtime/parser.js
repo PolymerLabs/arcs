@@ -333,6 +333,9 @@ function peg$parse(input, options) {
 
     s0 = peg$currPos;
     s1 = peg$parseComment();
+    if (s1 === peg$FAILED) {
+      s1 = null;
+    }
     if (s1 !== peg$FAILED) {
       s2 = peg$parseParticle();
       if (s2 !== peg$FAILED) {

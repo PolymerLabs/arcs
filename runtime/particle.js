@@ -9,13 +9,39 @@
  */
 "use strict";
 
+var parser = require("./parser.js");
 var data = require("./data-layer.js");
+
+function define(def, update) {
+  let definition = parser.parse(def);
+  return class extends Particle {
+    static get definition() {
+      return definition;
+    }
+    static get name() {
+      return this.definition.type;
+    }
+    constructor(arc) {
+      super(arc);
+    }
+    dataUpdated() {
+      let inputs = {};
+      for (let input of this.inputs) {
+        inputs[input.name] = this[input.name];
+      }
+      let outputs = update(inputs);
+      Object.assign(this, update(inputs));
+      this.commitData(this.relevance);
+    }
+  };
+}
 
 class Particle {
   constructor(arc) {
     this.arc = arc;
     this.inputs = [];
     this.outputs = [];
+    this.constructor.definition && this.setDefinition(this.constructor.definition);
   }
 
   setDefinition(definition) {
@@ -33,7 +59,7 @@ class Particle {
   }
 
   // Override this to do stuff
-  dataUpdated() { 
+  dataUpdated() {
   }
 
   commitData(relevance) {
@@ -42,4 +68,5 @@ class Particle {
 
 }
 
+exports.define = define;
 exports.Particle = Particle;
