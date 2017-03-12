@@ -10,7 +10,12 @@
 "use strict";
 
 var parser = require("./parser.js");
+<<<<<<< HEAD
 var runtime = require("./runtime.js");
+=======
+var data = require("./data-layer.js");
+var ParticleSpec = require("./particle-spec.js");
+>>>>>>> Allow recipes to suspend resolution of types.
 
 function define(def, update) {
   let definition = parser.parse(def);
@@ -38,22 +43,12 @@ function define(def, update) {
 class Particle {
   constructor(arc) {
     this.arc = arc;
-    this.inputs = [];
-    this.outputs = [];
     this.constructor.definition && this.setDefinition(this.constructor.definition);
   }
 
   setDefinition(definition) {
-    definition.args = definition.args.map(a => { return {direction: a.direction, name: a.name, type: new runtime.internals.Type(a.type, this.arc.scope)}});
-    this.definition = definition;
-    definition.args.forEach(arg => {
-      if (arg.direction == "in") {
-        this.inputs.push(arg);
-      }
-      else if (arg.direction == "out" || arg.direction == "create") {
-        this.outputs.push(arg);
-      }
-    });
+    this.definition = new ParticleSpec(definition);
+    this.definition.resolve(this.arc.scope);
     this.arc.register(this);
   }
 
@@ -63,6 +58,14 @@ class Particle {
 
   commitData(relevance) {
     this.arcParticle.commitData(relevance);
+  }
+
+  inputs() {
+    return this.definition.inputs;
+  }
+
+  outputs() {
+    return this.definition.outputs;
   }
 
 }

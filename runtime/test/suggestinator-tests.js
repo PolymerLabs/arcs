@@ -27,15 +27,15 @@ describe('suggestinator', function() {
 
     var recipe1 = new recipe.RecipeBuilder()
         .addParticle("TestParticle")
-            .connect("foo", "Foo")
-            .connect("bar", "Bar")
+            .connect("foo", {atomicTypeName: "Foo", mustCreate: false})
+            .connect("bar", {atomicTypeName: "Bar", mustCreate: false})
         .build();
 
     var recipe2 = new recipe.RecipeBuilder()
         .addParticle("TwoInputTestParticle")
-            .connect("foo", "Foo")
-            .connect("bar", "Bar")
-            .connect("far", "Far")
+            .connect("foo", {atomicTypeName: "Foo", mustCreate: false})
+            .connect("bar", {atomicTypeName: "Bar", mustCreate: false})
+            .connect("far", {atomicTypeName: "Far", mustCreate: true})
         .build();
 
     var suggestinator = new Suggestinator();
@@ -43,6 +43,7 @@ describe('suggestinator', function() {
     scope.commit([new Foo("a Foo"), new Bar("a Bar")]);
 
     var results = suggestinator.suggestinate(new Arc(scope));
+    assert.equal(results.length, 2);
     assert.equal(results[0].rank, 0.6);
     assert.equal(results[1].rank, 1.8);
     assert.equal(results[0].components[0].particleName, "TwoInputTestParticle");

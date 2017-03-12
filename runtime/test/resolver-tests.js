@@ -26,13 +26,12 @@ describe('resolver', function() {
     var arc = new Arc(scope);
     var r = new recipe.RecipeBuilder()
         .addParticle("TestParticle")
-            .connect("foo", "Foo")
-            .connect("bar", "Bar")
+            .connect("foo", {atomicTypeName: "Foo", mustCreate: false})
+            .connect("bar", {atomicTypeName: "Bar", mustCreate: true})
         .build();
-    var resolver = new Resolver();
-    resolver.resolve(r, arc);
-    r.instantiate(arc);
     scope.commit([new Foo("not a Bar")]);
+    new Resolver().resolve(r, arc);
+    r.instantiate(arc);
     arc.tick();
     assert.equal(runtime.testing.viewFor(Bar, scope).data.length, 1);
     assert.equal(runtime.testing.viewFor(Bar, scope).data[0].data, "not a Bar1");
@@ -42,10 +41,10 @@ describe('resolver', function() {
     let scope = new runtime.Scope();
     var arc = new Arc(scope);
     var r = loader.loadRecipe('TestParticle');
-    var resolver = new Resolver();
-    resolver.resolve(r, arc);
-    r.instantiate(arc);
     scope.commit([new Foo("not a Bar")]);
+    scope.createViewForTesting(scope.typeFor(Bar));
+    new Resolver().resolve(r, arc);
+    r.instantiate(arc);
     arc.tick();
     assert.equal(runtime.testing.viewFor(Bar, scope).data.length, 1);
     assert.equal(runtime.testing.viewFor(Bar, scope).data[0].data, "not a Bar1");    

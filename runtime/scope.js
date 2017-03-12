@@ -27,6 +27,14 @@ class Scope {
     this._views = new Map();
   }
 
+  viewExists(type) {
+    return this._views.get(type) !== undefined;
+  }
+
+  createViewForTesting(type) {
+    this._viewFor(type);
+  }
+
   _viewFor(type) {
     assert(type instanceof Type);
     var result = this._views.get(type);
