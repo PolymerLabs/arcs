@@ -13,13 +13,14 @@ var Loader = require("./loader.js");
 var runtime = require("./runtime.js");
 
 class Connection {
-  constructor(name, viewOrType) {
+  constructor(name, viewOrSpec) {
     this.name = name;
-    if (viewOrType instanceof runtime.internals.View) {
-      this.view = viewOrType;
-      this.type = viewOrType.type;
+
+    if (viewOrSpec instanceof runtime.internals.View) {
+      this.view = viewOrSpec;
+      this.type = viewOrSpec.type;
     } else {
-      this.type = viewOrType;
+      this.spec = viewOrSpec;
     }
   }
 }
@@ -36,6 +37,8 @@ class RecipeComponent {
       var slot = particle.inputs.get(connection.name);
       if (!slot)
         slot = particle.outputs.get(connection.name);
+      if (typeof connection.view == 'function')
+        connection.view = connection.view();
       slot.connect(connection.view);
     }
   }
@@ -63,8 +66,8 @@ class RecipeBuilder {
     this.currentComponent = {name: particleName, connections: []};
     return this;
   }
-  connect(name, view) {
-    this.currentComponent.connections.push(new Connection(name, view));
+  connect(name, viewOrSpec) {
+    this.currentComponent.connections.push(new Connection(name, viewOrSpec));
     return this;
   }
   build() {
@@ -75,4 +78,4 @@ class RecipeBuilder {
   }
 }
 
-module.exports = { Recipe, RecipeComponent, Connection, RecipeBuilder }
+Object.assign(module.exports, { Recipe, RecipeComponent, Connection, RecipeBuilder });

@@ -14,6 +14,7 @@ var fs = require("fs");
 var recipe = require("./recipe.js");
 var runtime = require("./runtime.js");
 var assert = require("assert");
+var ParticleSpec = require("./particle-spec.js");
 
 function locationFor(name, type) {
   return `../particles/${name}/${name}.${type}`
@@ -37,14 +38,7 @@ function loadDefinition(name) {
 
 function loadRecipe(name) {
   let definition = loadDefinition(name);
-  var builder = new recipe.RecipeBuilder();
-  builder.addParticle(definition.type);
-  for (var arg of definition.args) {
-    // this is using a type name hack to "find" the right internal
-    // type. We need to fix this at some point.
-    builder.connect(arg.name, arg.type);
-  }
-  return builder.build();
+  return new ParticleSpec(definition).buildRecipe();
 }
 
 Object.assign(exports, { loadParticle, loadDefinition, loadRecipe })

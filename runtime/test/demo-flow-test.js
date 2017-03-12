@@ -20,6 +20,8 @@ class Person extends runtime.Entity {
   }
 
   get data() { return this._data; }
+
+  static get key() { return "Person"; }
 }
 
 class Product extends runtime.Entity {
@@ -29,6 +31,8 @@ class Product extends runtime.Entity {
   }
 
   get data() { return this._data; }
+
+  static get key() { return "Product"; }
 }
 
 function prepareExtensionArc() {

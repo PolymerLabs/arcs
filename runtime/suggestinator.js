@@ -25,7 +25,7 @@ class Suggestinator {
 
   suggestinate(arc) {
     var suggestions = this._getSuggestions(arc);
-    suggestions.map(suggestion => this.resolver.resolve(suggestion, arc));
+    suggestions = suggestions.filter(suggestion => this.resolver.resolve(suggestion, arc));
     var rankings = suggestions.map(suggestion => this.speculator.speculate(arc, suggestion));
     for (var i = 0; i < suggestions.length; i++)
       suggestions[i].rank = rankings[i];

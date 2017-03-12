@@ -84,9 +84,9 @@ class ArcParticle {
     this.arc = arc;
     particle.arcParticle = this;
     this.inputs = new Map();
-    particle.inputs.map(a => this.inputs.set(a.name, new ParticleSlot(a.name, a.type)));
+    particle.inputs().map(a => this.inputs.set(a.name, new ParticleSlot(a.name, a.type)));
     this.outputs = new Map();
-    particle.outputs.map(a => this.outputs.set(a.name, new ParticleSlot(a.name, a.type)));
+    particle.outputs().map(a => this.outputs.set(a.name, new ParticleSlot(a.name, a.type)));
   }
 
   checkpoint() {

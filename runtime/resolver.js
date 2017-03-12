@@ -16,23 +16,38 @@ class Resolver {
 
   resolve(recipe, arc) {
     assert(arc, "resolve requires an arc");
+    var success = true;
     for (var component of recipe.components)
-      this.resolveComponent(component, arc);
+      success &= this.resolveComponent(component, arc);
     recipe.arc = arc;
+    return success;
   }
 
   resolveComponent(component, arc) {
+    var success = true;
+    console.log(component.particleName);
     for (var connection of component.connections)
-      this.resolveConnection(component, connection, arc);
+      success &= this.resolveConnection(component, connection, arc);
+    return success;
   }
 
   resolveConnection(component, connection, arc) {
     // connection already has a view
     if (connection.view !== undefined)
-      return;
+      return true;
 
+    // TODO this is *not* the right way to deal with singleton vs. list connections :)
+    var typeName = connection.spec.atomicTypeName;
+    var type = runtime.internals.Type.fromLiteral(typeName, arc.scope);
+    console.log(arc.scope.viewExists(type));
+
+    if (connection.spec.mustCreate == arc.scope.viewExists(type))
+      return false;
+  
     // TODO: More complex resolution logic should go here.
-    connection.view = arc.scope._viewFor(runtime.internals.Type.fromLiteral(connection.type, arc.scope));
+    connection.view = () => arc.scope._viewFor(type);
+    connection.type = type;
+    return true;
   }
 
 }
