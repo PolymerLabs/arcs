@@ -29,7 +29,6 @@ function define(def, update) {
       for (let input of this.inputs) {
         inputs[input.name] = this[input.name];
       }
-      let outputs = update(inputs);
       Object.assign(this, update(inputs));
       this.commitData(this.relevance);
     }
