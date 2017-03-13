@@ -69,7 +69,7 @@ describe('Arc', function() {
     assert.deepEqual(runtime.testing.viewFor(Far, scope).data.map(a => a.data), ['a x', 'a y', 'a z', 'b x', 'b y', 'b z', 'c x', 'c y', 'c z']);
   });
 
-  it('works with inline particle specs', () => {
+  it('works with inline particle defintions', () => {
     let scope = new runtime.Scope();
     let arc = new Arc(scope);
     let particleClass = require('../particle').define('P(in Foo foo, out Bar bar)', ({foo}) => {
