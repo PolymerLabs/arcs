@@ -13,6 +13,7 @@ var Arc = require("../arc.js");
 var Resolver = require("../resolver.js");
 var recipe = require("../recipe.js");
 let assert = require('chai').assert;
+let particles = require('./test-particles.js');
 
 
 var Foo = runtime.testing.testEntityClass('Foo');

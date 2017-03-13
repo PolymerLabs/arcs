@@ -12,11 +12,11 @@ var loader = require("../loader.js");
 var Arc = require("../arc.js");
 var runtime = require("../runtime.js");
 let assert = require('chai').assert;
+let particles = require('./test-particles.js');
 
 describe('particle loader', function() {
   it('can load a particle', function() {
     var arc = new Arc(new runtime.Scope());
-    var particle = loader.loadParticle("TestParticle", arc);
-    assert.isNotNull(particle);
+    var particle = new particles.TestParticle(arc).arcParticle;
   });
 });
