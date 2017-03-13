@@ -14,13 +14,13 @@ var runtime = require("./runtime.js");
 var ParticleSpec = require("./particle-spec.js");
 
 function define(def, update) {
-  let definition = new ParticleSpec(parser.parse(def));
+  let spec = new ParticleSpec(parser.parse(def));
   return class extends Particle {
-    static get definition() {
-      return definition;
+    static get spec() {
+      return spec;
     }
     static get name() {
-      return this.definition.type;
+      return this.spec.type;
     }
     constructor(arc) {
       super(arc);
@@ -39,7 +39,7 @@ function define(def, update) {
 class Particle {
   constructor(arc) {
     this.arc = arc;
-    this.definition = this.constructor.definition.resolve(arc.scope);
+    this.spec = this.constructor.spec.resolve(arc.scope);
     arc.register(this);
   }
 
@@ -52,11 +52,11 @@ class Particle {
   }
 
   inputs() {
-    return this.definition.inputs;
+    return this.spec.inputs;
   }
 
   outputs() {
-    return this.definition.outputs;
+    return this.spec.outputs;
   }
 
 }

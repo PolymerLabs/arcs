@@ -39,11 +39,11 @@ describe('resolver', function() {
     assert.equal(runtime.testing.viewFor(Bar, scope).data[0].data, "not a Bar1");
   });
 
-  it('can resolve a recipe from a particles definition', function() {
+  it('can resolve a recipe from a particles spec', function() {
     let scope = new runtime.Scope();
     particles.register(scope);
     var arc = new Arc(scope);
-    var r = particles.TestParticle.definition.buildRecipe();
+    var r = particles.TestParticle.spec.buildRecipe();
     scope.commit([new Foo("not a Bar")]);
     scope.createViewForTesting(scope.typeFor(Bar));
     new Resolver().resolve(r, arc);
