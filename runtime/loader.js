@@ -23,12 +23,8 @@ function locationFor(name, type) {
 function loadParticle(name, arc) {
   let definition = loadDefinition(name);
   let clazz = require(locationFor(name, 'js'));
-
-  // TODO looks like the particle swizzling should maybe happen inside arc.js
-  // eventually.
-  var rawParticle = new clazz(arc);
-  rawParticle.setDefinition(definition);
-  return rawParticle.arcParticle;
+  clazz.definition = new ParticleSpec(definition);
+  return clazz;
 }
 
 function loadDefinition(name) {

@@ -13,6 +13,7 @@ var runtime = require("../runtime.js");
 var Arc = require("../arc.js");
 var recipe = require("../recipe.js");
 let assert = require('chai').assert;
+let particles = require('./test-particles.js');
 
 var Foo = runtime.testing.testEntityClass('Foo');
 var Bar = runtime.testing.testEntityClass('Bar');
@@ -20,6 +21,7 @@ var Bar = runtime.testing.testEntityClass('Bar');
 describe('speculator', function() {
   it('can speculatively produce a relevance', function() {
     let scope = new runtime.Scope();
+    particles.register(scope);
     var arc = new Arc(scope);
     var r = new recipe.RecipeBuilder()
         .addParticle("TestParticle")

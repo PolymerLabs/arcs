@@ -49,7 +49,11 @@ function prepareExtensionArc() {
 describe('demo flow', function() {
   it('flows like a demo', function() {
     let arc = prepareExtensionArc();
-    var recipes = ["Create", "Recommend", "Save"].map(loader.loadRecipe);
+    let recipes = ['Create', 'Recommend', 'Save'].map(name => {
+      let particleClass = loader.loadParticle(name);
+      arc.scope.registerParticle(particleClass);
+      return particleClass.definition.buildRecipe();
+    });
     var suggestinator = new Suggestinator();
     suggestinator._getSuggestions = a => recipes;
     var results = suggestinator.suggestinate(arc);
