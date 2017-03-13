@@ -31,7 +31,7 @@ function define(def, update) {
     }
     dataUpdated() {
       let inputs = {};
-      for (let input of this.inputs) {
+      for (let input of this.inputs()) {
         inputs[input.name] = this[input.name];
       }
       Object.assign(this, update(inputs));
