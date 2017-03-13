@@ -9,7 +9,7 @@
  */
 "use strict";
 
-var data = require("./data-layer.js");
+var runtime = require("./runtime.js");
 var recipe = require("./recipe.js");
 
 class ConnectionSpec {
@@ -21,7 +21,7 @@ class ConnectionSpec {
   }
 
   resolve(scope) {
-    this.type = new data.internals.Type(this.typeName, scope)
+    this.type = new runtime.internals.Type(this.typeName, scope)
   }
 
   get atomicTypeName() {

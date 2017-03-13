@@ -10,12 +10,8 @@
 "use strict";
 
 var parser = require("./parser.js");
-<<<<<<< HEAD
 var runtime = require("./runtime.js");
-=======
-var data = require("./data-layer.js");
 var ParticleSpec = require("./particle-spec.js");
->>>>>>> Allow recipes to suspend resolution of types.
 
 function define(def, update) {
   let definition = parser.parse(def);
