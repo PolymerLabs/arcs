@@ -25,6 +25,7 @@ describe('suggestinator', function() {
 
   it('suggests a ranked list of recipes', function() {
     let scope = new runtime.Scope();
+    particles.register(scope);
 
     var recipe1 = new recipe.RecipeBuilder()
         .addParticle("TestParticle")

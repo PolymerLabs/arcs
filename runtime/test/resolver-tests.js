@@ -14,6 +14,7 @@ var Resolver = require("../resolver.js");
 var recipe = require("../recipe.js");
 var loader = require("../loader.js");
 let assert = require('chai').assert;
+let particles = require('./test-particles.js');
 
 
 var Foo = runtime.testing.testEntityClass('Foo');
@@ -23,6 +24,7 @@ describe('resolver', function() {
 
   it('can resolve a partially constructed recipe', function() {
     let scope = new runtime.Scope();
+    particles.register(scope);
     var arc = new Arc(scope);
     var r = new recipe.RecipeBuilder()
         .addParticle("TestParticle")
@@ -37,10 +39,11 @@ describe('resolver', function() {
     assert.equal(runtime.testing.viewFor(Bar, scope).data[0].data, "not a Bar1");
   });
 
-  it('can resolve a recipe loaded from a .ptcl file', function() {
+  it('can resolve a recipe from a particles definition', function() {
     let scope = new runtime.Scope();
+    particles.register(scope);
     var arc = new Arc(scope);
-    var r = loader.loadRecipe('TestParticle');
+    var r = particles.TestParticle.definition.buildRecipe();
     scope.commit([new Foo("not a Bar")]);
     scope.createViewForTesting(scope.typeFor(Bar));
     new Resolver().resolve(r, arc);

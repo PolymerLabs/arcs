@@ -23,6 +23,7 @@ describe('recipe', function() {
 
   it('recipes can load', function() {
     let scope = new runtime.Scope();
+    particles.register(scope);
     var arc = new Arc(scope);
     var r = new recipe.RecipeBuilder()
         .addParticle("TestParticle")

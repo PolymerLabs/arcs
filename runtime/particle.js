@@ -14,7 +14,7 @@ var runtime = require("./runtime.js");
 var ParticleSpec = require("./particle-spec.js");
 
 function define(def, update) {
-  let definition = parser.parse(def);
+  let definition = new ParticleSpec(parser.parse(def));
   return class extends Particle {
     static get definition() {
       return definition;
@@ -39,13 +39,8 @@ function define(def, update) {
 class Particle {
   constructor(arc) {
     this.arc = arc;
-    this.constructor.definition && this.setDefinition(this.constructor.definition);
-  }
-
-  setDefinition(definition) {
-    this.definition = new ParticleSpec(definition);
-    this.definition.resolve(this.arc.scope);
-    this.arc.register(this);
+    this.definition = this.constructor.definition.resolve(arc.scope);
+    arc.register(this);
   }
 
   // Override this to do stuff

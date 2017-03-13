@@ -25,6 +25,7 @@ class Scope {
     // TODO: more elaborate identifier keys
     this._nextIdentifier = 1;
     this._views = new Map();
+    this._particles = new Map();
   }
 
   viewExists(type) {
@@ -87,6 +88,19 @@ class Scope {
       console.log(entity, this.typeFor(entity));
       this._viewFor(this.typeFor(entity)).store(entity);
     }
+  }
+
+  registerParticle(clazz) {
+    this._particles.set(clazz.name, clazz);
+  }
+
+  instantiateParticle(name, arc) {
+    let particleClass = this._particles.get(name);
+    assert(particleClass, name);
+    let particle = new particleClass(arc);
+    assert(particle);
+    assert(particle.arcParticle);
+    return particle.arcParticle;
   }
 }
 

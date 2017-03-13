@@ -9,7 +9,6 @@
  */
 "use strict";
 
-var Loader = require("./loader.js"); 
 var runtime = require("./runtime.js");
 
 class Connection {
@@ -32,7 +31,7 @@ class RecipeComponent {
   }
 
   instantiate(arc) {
-    var particle = Loader.loadParticle(this.particleName, arc);
+    var particle = arc.scope.instantiateParticle(this.particleName, arc);
     for (var connection of this.connections) {
       var slot = particle.inputs.get(connection.name);
       if (!slot)

@@ -53,7 +53,9 @@ class ParticleSpec {
   }
 
   resolve(scope) {
-    this.connections.forEach(connection => connection.resolve(scope));
+    let result = new ParticleSpec(this.rawData);
+    result.connections.forEach(connection => connection.resolve(scope));
+    return result;
   }
 
   buildRecipe() {
