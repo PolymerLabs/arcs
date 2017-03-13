@@ -101,12 +101,15 @@ class SingletonParticleSlot extends ParticleSlotBase {
 }
 
 class ViewParticleSlot extends ParticleSlotBase {
+  constructor(name, type) {
+    super(name, type);
+    this.checkpointedSize = undefined;
+  }
   connect(view) {
     super.connect(view);
     // TODO fix this up with a genuine ability to register for updates
     // on the view. Use that in the SingletonParticleSlot too.
     this.deliveredSize = 0;
-    this.dataSize = view.data.length;
   }
 
   commit(source) {
@@ -121,10 +124,11 @@ class ViewParticleSlot extends ParticleSlotBase {
   revert() {
     super.revert();
     this.deliveredSize = this.checkpointedSize;
+    this.checkpointedSize = undefined;
   }
 
   hasPending() {
-    return this.deliveredSize < this.dataSize;
+    return this.deliveredSize < this.view.data.length;
   }
 
   expandInputs() {
