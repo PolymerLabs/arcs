@@ -39,7 +39,6 @@ class Resolver {
     // TODO this is *not* the right way to deal with singleton vs. list connections :)
     var typeName = connection.spec.atomicTypeName;
     var type = runtime.internals.Type.fromLiteral(typeName, arc.scope);
-    console.log(arc.scope.viewExists(type));
 
     if (connection.spec.mustCreate == arc.scope.viewExists(type))
       return false;

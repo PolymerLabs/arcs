@@ -12,12 +12,10 @@
 var runtime = require("./runtime.js");
 var assert = require("assert");
 
-class ParticleSlot {
+class ParticleSlotBase {
   constructor(name, type) {
     this.name = name;
     this.type = type;
-    this.pending = [];
-    this.data = [];
   }
 
   // TODO: we'll probably remove this at some point
@@ -29,6 +27,31 @@ class ParticleSlot {
     this.view = view;
     if (this._checkpoint !== undefined)
       this.view.checkpoint();
+  }
+
+  checkpoint() {
+    if (this.view)
+      this.view.checkpoint();
+  }
+
+  revert() {
+    this.view.revert();
+  }
+
+  shutdown() {
+  }
+
+}
+
+class SingletonParticleSlot extends ParticleSlotBase {
+  constructor(name, type) {
+    super(name, type);
+    this.pending = [];
+    this.data = [];
+  }
+
+  connect(view) {
+    super.connect(view);
     this.rid = view.register(iter => this.pending.push(iter));
   }
 
@@ -38,15 +61,14 @@ class ParticleSlot {
 
   checkpoint() {
     this._checkpoint = this.data.length;
-    if (this.view)
-      this.view.checkpoint();
+    super.checkpoint();
   }
 
   revert() {
     this.data.splice(this._checkpoint);
-    this._checkpoint = undefined;
     this.pending = [];
-    this.view.revert();
+    this._checkpoint = undefined;
+    super.revert();
   }
 
   shutdown() {
@@ -78,15 +100,59 @@ class ParticleSlot {
   }
 }
 
+class ViewParticleSlot extends ParticleSlotBase {
+  connect(view) {
+    super.connect(view);
+    // TODO fix this up with a genuine ability to register for updates
+    // on the view. Use that in the SingletonParticleSlot too.
+    this.deliveredSize = 0;
+    this.dataSize = view.data.length;
+  }
+
+  commit(source) {
+    source[this.name].map(this.view.store);
+  }
+
+  checkpoint() {
+    this.checkpointedSize = this.deliveredSize;
+    super.checkpoint();
+  }
+
+  revert() {
+    super.revert();
+    this.deliveredSize = this.checkpointedSize;
+  }
+
+  hasPending() {
+    return this.deliveredSize < this.dataSize;
+  }
+
+  expandInputs() {
+    this.deliveredSize = this.view.data.length;
+    return [this.view];
+  }
+
+  missingData() {
+    return false;
+  }
+
+}
+
+function particleSlot(name, type, spec) {
+  if (typeof spec == "object")
+    return new ViewParticleSlot(name, type);
+  return new SingletonParticleSlot(name, type);
+}
+
 class ArcParticle {
   constructor(particle, arc) {
     this.particle = particle;
     this.arc = arc;
     particle.arcParticle = this;
     this.inputs = new Map();
-    particle.inputs().map(a => this.inputs.set(a.name, new ParticleSlot(a.name, a.type)));
+    particle.inputs().map(a => this.inputs.set(a.name, particleSlot(a.name, a.type, a.typeName)));
     this.outputs = new Map();
-    particle.outputs().map(a => this.outputs.set(a.name, new ParticleSlot(a.name, a.type)));
+    particle.outputs().map(a => this.outputs.set(a.name, particleSlot(a.name, a.type, a.typeName)));
   }
 
   checkpoint() {
