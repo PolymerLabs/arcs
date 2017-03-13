@@ -12,6 +12,7 @@ var loader = require("../loader.js");
 var runtime = require("../runtime.js");
 var Arc = require("../arc.js");
 let assert = require('chai').assert;
+let particles = require('./test-particles.js');
 
 var Foo = runtime.testing.testEntityClass('Foo');
 var Bar = runtime.testing.testEntityClass('Bar');
@@ -24,7 +25,7 @@ describe('Arc', function() {
     let arc = new Arc(scope);
 
     scope.commit([new Foo('a Foo')]);
-    var particle = loader.loadParticle("TestParticle", arc);
+    var particle = new particles.TestParticle(arc).arcParticle;
     particle.autoconnect();
     arc.tick();
     assert.equal(runtime.testing.viewFor(Bar, scope).data.length, 1);
@@ -34,7 +35,7 @@ describe('Arc', function() {
   it('applies new runtime to a particle', function() {
     let scope = new runtime.Scope();
     let arc = new Arc(scope);
-    var particle = loader.loadParticle("TestParticle", arc);
+    var particle = new particles.TestParticle(arc).arcParticle;
     particle.autoconnect();
     scope.commit([new Foo("not a Bar")]);
     arc.tick();
@@ -47,7 +48,7 @@ describe('Arc', function() {
     let arc = new Arc(scope);
     ['a', 'b', 'c'].map(a => scope.commit([new Foo(a)]));
     ['x', 'y', 'z'].map(a => scope.commit([new Bar(a)]));
-    var particle = loader.loadParticle("TwoInputTestParticle", arc);
+    var particle = new particles.TwoInputTestParticle(arc).arcParticle;
     particle.autoconnect();
     arc.tick();
     assert.equal(runtime.testing.viewFor(Far, scope).data.length, 9);
@@ -58,7 +59,7 @@ describe('Arc', function() {
     var scope = new runtime.Scope();
     var arc = new Arc(scope);
     ['a', 'b', 'c'].map(a => scope.commit([new Foo(a)]));
-    var particle = loader.loadParticle("TwoInputTestParticle", arc);
+    var particle = new particles.TwoInputTestParticle(arc).arcParticle;
     particle.autoconnect();
     arc.tick();
     assert.equal(runtime.testing.viewFor(Far, scope).data.length, 0);
