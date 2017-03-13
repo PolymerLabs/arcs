@@ -21,9 +21,9 @@ function locationFor(name, type) {
 }
 
 function loadParticle(name, arc) {
-  let definition = loadDefinition(name);
+  let spec = loadDefinition(name);
   let clazz = require(locationFor(name, 'js'));
-  clazz.definition = new ParticleSpec(definition);
+  clazz.spec = new ParticleSpec(spec);
   return clazz;
 }
 
@@ -33,8 +33,8 @@ function loadDefinition(name) {
 }
 
 function loadRecipe(name) {
-  let definition = loadDefinition(name);
-  return new ParticleSpec(definition).buildRecipe();
+  let spec = loadDefinition(name);
+  return new ParticleSpec(spec).buildRecipe();
 }
 
 Object.assign(exports, { loadParticle, loadDefinition, loadRecipe })

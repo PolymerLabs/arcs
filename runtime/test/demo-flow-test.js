@@ -52,7 +52,7 @@ describe('demo flow', function() {
     let recipes = ['Create', 'Recommend', 'Save'].map(name => {
       let particleClass = loader.loadParticle(name);
       arc.scope.registerParticle(particleClass);
-      return particleClass.definition.buildRecipe();
+      return particleClass.spec.buildRecipe();
     });
     var suggestinator = new Suggestinator();
     suggestinator._getSuggestions = a => recipes;
