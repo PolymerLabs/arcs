@@ -10,7 +10,7 @@
 "use strict";
 
 var parser = require("./parser.js");
-var data = require("./data-layer.js");
+var runtime = require("./runtime.js");
 
 function define(def, update) {
   let definition = parser.parse(def);
@@ -44,7 +44,7 @@ class Particle {
   }
 
   setDefinition(definition) {
-    definition.args = definition.args.map(a => { return {direction: a.direction, name: a.name, type: new data.internals.Type(a.type, this.arc.scope)}});
+    definition.args = definition.args.map(a => { return {direction: a.direction, name: a.name, type: new runtime.internals.Type(a.type, this.arc.scope)}});
     this.definition = definition;
     definition.args.forEach(arg => {
       if (arg.direction == "in") {

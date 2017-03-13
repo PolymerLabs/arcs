@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-var data = require("../data-layer.js");
+var runtime = require("../runtime.js");
 var Suggestinator = require("../suggestinator.js");
 var Arc = require("../arc.js");
 var Resolver = require("../resolver.js");
@@ -16,14 +16,14 @@ var recipe = require("../recipe.js");
 let assert = require('chai').assert;
 
 
-var Foo = data.testing.testEntityClass('Foo');
-var Bar = data.testing.testEntityClass('Bar');
-var Far = data.testing.testEntityClass('Far');
+var Foo = runtime.testing.testEntityClass('Foo');
+var Bar = runtime.testing.testEntityClass('Bar');
+var Far = runtime.testing.testEntityClass('Far');
 
 describe('suggestinator', function() {
 
   it('suggests a ranked list of recipes', function() {
-    let scope = new data.Scope();
+    let scope = new runtime.Scope();
 
     var recipe1 = new recipe.RecipeBuilder()
         .addParticle("TestParticle")

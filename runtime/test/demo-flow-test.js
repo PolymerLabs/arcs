@@ -8,12 +8,12 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-var data = require("../data-layer.js");
+var runtime = require("../runtime.js");
 var Arc = require("../arc.js");
 var loader = require("../loader.js");
 var Suggestinator = require("../suggestinator.js");
 
-class Person extends data.Entity {
+class Person extends runtime.Entity {
   constructor(name) {
     super();
     this._data = {name};
@@ -22,7 +22,7 @@ class Person extends data.Entity {
   get data() { return this._data; }
 }
 
-class Product extends data.Entity {
+class Product extends runtime.Entity {
     constructor(name) {
     super();
     this._data = {name};
@@ -32,10 +32,10 @@ class Product extends data.Entity {
 }
 
 function prepareExtensionArc() {
-  let scope = new data.Scope();
+  let scope = new runtime.Scope();
   var arc = new Arc(scope);
-  var personView = data.testing.viewFor(Person, scope);
-  var productView = data.testing.viewFor(Product, scope);
+  var personView = runtime.testing.viewFor(Person, scope);
+  var productView = runtime.testing.viewFor(Product, scope);
   arc.addView(personView);
   arc.addView(productView);
   scope.commit([new Person("Claire"), new Product("Tea Pot"), new Product("Bee Hive"), new Product("Denim Jeans")]);

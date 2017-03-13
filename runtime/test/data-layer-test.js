@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-let {Relation, Entity, BasicEntity, Scope, internals} = require('../data-layer.js');
+let {Relation, Entity, BasicEntity, Scope, internals} = require('../runtime.js');
 let assert = require('chai').assert;
 
 describe('entity', function() {
