@@ -9,7 +9,7 @@
  */
 "use strict";
 
-var data = require('./data-layer.js');
+var runtime = require('./runtime.js');
 var assert = require('assert');
 
 class Resolver {
@@ -32,7 +32,7 @@ class Resolver {
       return;
 
     // TODO: More complex resolution logic should go here.
-    connection.view = arc.scope._viewFor(data.internals.Type.fromLiteral(connection.type, arc.scope));
+    connection.view = arc.scope._viewFor(runtime.internals.Type.fromLiteral(connection.type, arc.scope));
   }
 
 }

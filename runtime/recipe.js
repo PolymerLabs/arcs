@@ -10,12 +10,12 @@
 "use strict";
 
 var Loader = require("./loader.js"); 
-var data = require("./data-layer.js");
+var runtime = require("./runtime.js");
 
 class Connection {
   constructor(name, viewOrType) {
     this.name = name;
-    if (viewOrType instanceof data.internals.View) {
+    if (viewOrType instanceof runtime.internals.View) {
       this.view = viewOrType;
       this.type = viewOrType.type;
     } else {

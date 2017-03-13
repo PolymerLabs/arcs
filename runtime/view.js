@@ -14,7 +14,7 @@ const Entity = require('./entity.js');
 const Relation = require('./relation.js');
 let identifier = Symbols.identifier;
 
-// TODO: This won't be needed once data is transferred between contexts.
+// TODO: This won't be needed once runtime is transferred between contexts.
 function cloneData(data) {
   return JSON.parse(JSON.stringify(data));
 }

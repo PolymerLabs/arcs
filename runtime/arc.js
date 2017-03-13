@@ -9,7 +9,7 @@
  */
 "use strict";
 
-var data = require("./data-layer.js");
+var runtime = require("./runtime.js");
 var assert = require("assert");
 
 class ParticleSlot {
@@ -161,7 +161,7 @@ class ArcParticle {
 
 class Arc {
   constructor(scope) {
-    assert(scope instanceof data.Scope, "Arc constructor requires a scope");
+    assert(scope instanceof runtime.Scope, "Arc constructor requires a scope");
     this.scope = scope;
     this.particles = [];
     this.views = new Map();

@@ -12,7 +12,7 @@
 var parser = require("./parser.js");
 var fs = require("fs");
 var recipe = require("./recipe.js");
-var data = require("./data-layer.js");
+var runtime = require("./runtime.js");
 var assert = require("assert");
 
 function locationFor(name, type) {

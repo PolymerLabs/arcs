@@ -9,27 +9,27 @@
  */
 
 var Speculator = require("../speculator.js");
-var data = require("../data-layer.js");
+var runtime = require("../runtime.js");
 var Arc = require("../arc.js");
 var recipe = require("../recipe.js");
 let assert = require('chai').assert;
 
-var Foo = data.testing.testEntityClass('Foo');
-var Bar = data.testing.testEntityClass('Bar');
+var Foo = runtime.testing.testEntityClass('Foo');
+var Bar = runtime.testing.testEntityClass('Bar');
 
 describe('speculator', function() {
   it('can speculatively produce a relevance', function() {
-    let scope = new data.Scope();
+    let scope = new runtime.Scope();
     var arc = new Arc(scope);
     var r = new recipe.RecipeBuilder()
         .addParticle("TestParticle")
-            .connect("foo", data.testing.viewFor(Foo, scope))
-            .connect("bar", data.testing.viewFor(Bar, scope))
+            .connect("foo", runtime.testing.viewFor(Foo, scope))
+            .connect("bar", runtime.testing.viewFor(Bar, scope))
         .build();
     var speculator = new Speculator();
     scope.commit([new Foo("not a Bar")])
     var relevance = speculator.speculate(arc, r);
     assert.equal(relevance, 1.8);
-    assert.equal(data.testing.viewFor(Bar, scope).data.length, 0);
+    assert.equal(runtime.testing.viewFor(Bar, scope).data.length, 0);
   });
 });
