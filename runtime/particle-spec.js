@@ -11,7 +11,6 @@
 
 var runtime = require("./runtime.js");
 var recipe = require("./recipe.js");
-var typeString = require("./type-string.js");
 
 class ConnectionSpec {
   constructor(rawData) {

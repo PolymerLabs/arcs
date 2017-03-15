@@ -142,9 +142,9 @@ class ViewParticleSlot extends ParticleSlotBase {
 
 }
 
-function particleSlot(name, type, spec) {
+function particleSlot(name, type, scope) {
   if (type.isView)
-    return new ViewParticleSlot(name, type.primitiveType);
+    return new ViewParticleSlot(name, type.primitiveType(scope));
   return new SingletonParticleSlot(name, type);
 }
 
@@ -154,9 +154,9 @@ class ArcParticle {
     this.arc = arc;
     particle.arcParticle = this;
     this.inputs = new Map();
-    particle.inputs().map(a => this.inputs.set(a.name, particleSlot(a.name, a.type, a.typeName)));
+    particle.inputs().map(a => this.inputs.set(a.name, particleSlot(a.name, a.type, arc.scope)));
     this.outputs = new Map();
-    particle.outputs().map(a => this.outputs.set(a.name, particleSlot(a.name, a.type, a.typeName)));
+    particle.outputs().map(a => this.outputs.set(a.name, particleSlot(a.name, a.type, arc.scope)));
   }
 
   checkpoint() {

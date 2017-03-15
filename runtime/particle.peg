@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 {
-  var typeString = require("./type-string.js");
+  var typeLiteral = require("./type-literal.js");
 }
 
 
@@ -23,7 +23,7 @@ Particle
   
 Type = (PrimitiveType / ListType)
 
-ListType = "[" pt:PrimitiveType "]" { return typeString.viewOf(pt); }
+ListType = "[" pt:PrimitiveType "]" { return typeLiteral.viewOf(pt); }
 
 PrimitiveType = [A-Z][a-zA-Z]* { return text() }
   
