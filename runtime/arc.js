@@ -143,8 +143,8 @@ class ViewParticleSlot extends ParticleSlotBase {
 }
 
 function particleSlot(name, type, spec) {
-  if (typeof spec == "object")
-    return new ViewParticleSlot(name, type);
+  if (type.isView)
+    return new ViewParticleSlot(name, type.primitiveType);
   return new SingletonParticleSlot(name, type);
 }
 

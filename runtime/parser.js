@@ -158,7 +158,7 @@ function peg$parse(input, options) {
       peg$c12 = peg$literalExpectation("[", false),
       peg$c13 = "]",
       peg$c14 = peg$literalExpectation("]", false),
-      peg$c15 = function(pt) { return {tag: 'list', type: pt } },
+      peg$c15 = function(pt) { return typeString.viewOf(pt); },
       peg$c16 = /^[A-Z]/,
       peg$c17 = peg$classExpectation([["A", "Z"]], false, false),
       peg$c18 = /^[a-zA-Z]/,
@@ -936,6 +936,10 @@ function peg$parse(input, options) {
 
     return s0;
   }
+
+
+    var typeString = require("./type-string.js");
+
 
   peg$result = peg$startRuleFunction();
 
