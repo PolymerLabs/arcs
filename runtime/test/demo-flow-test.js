@@ -59,5 +59,6 @@ describe('demo flow', function() {
     suggestinator._getSuggestions = a => recipes;
     var results = suggestinator.suggestinate(arc);
     console.log(results);
+    console.log(results.map(a => a.components))
   });
 });
