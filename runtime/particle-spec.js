@@ -11,6 +11,7 @@
 
 var runtime = require("./runtime.js");
 var recipe = require("./recipe.js");
+var typeString = require("./type-string.js");
 
 class ConnectionSpec {
   constructor(rawData) {
@@ -22,12 +23,6 @@ class ConnectionSpec {
 
   resolve(scope) {
     this.type = new runtime.internals.Type(this.typeName, scope)
-  }
-
-  get atomicTypeName() {
-    if (typeof this.typeName == "object")
-      return this.typeName.type;
-    return this.typeName;
   }
 
   get mustCreate() {

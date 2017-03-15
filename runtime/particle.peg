@@ -7,6 +7,10 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
+{
+  var typeString = require("./type-string.js");
+}
+
 
 ParticleFile = Comment? particle:Particle _ { return particle }
 
@@ -19,7 +23,7 @@ Particle
   
 Type = (PrimitiveType / ListType)
 
-ListType = "[" pt:PrimitiveType "]" { return {tag: 'list', type: pt } }
+ListType = "[" pt:PrimitiveType "]" { return typeString.viewOf(pt); }
 
 PrimitiveType = [A-Z][a-zA-Z]* { return text() }
   

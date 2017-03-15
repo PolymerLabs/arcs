@@ -28,8 +28,8 @@ describe('resolver', function() {
     var arc = new Arc(scope);
     var r = new recipe.RecipeBuilder()
         .addParticle("TestParticle")
-            .connect("foo", {atomicTypeName: "Foo", mustCreate: false})
-            .connect("bar", {atomicTypeName: "Bar", mustCreate: true})
+            .connect("foo", {typeName: "Foo", mustCreate: false})
+            .connect("bar", {typeName: "Bar", mustCreate: true})
         .build();
     scope.commit([new Foo("not a Bar")]);
     new Resolver().resolve(r, arc);

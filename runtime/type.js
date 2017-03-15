@@ -8,6 +8,7 @@
 'use strict';
 
 const assert = require('assert');
+const typeString = require('./type-string.js');
 
 class Type {
   constructor(key, scope) {
@@ -21,7 +22,16 @@ class Type {
     scope._types.set(normalized, this);
   }
   get isRelation() {
-    return Array.isArray(this.key);
+    return typeString.isRelation(this.key);
+  }
+  get isView() {
+    return typeString.isView(this.key);
+  }
+  get isVariable() {
+    return typeString.isVariable(this.key);
+  }
+  get primitiveType() {
+    return typeString.primitiveType(this.key);
   }
   toLiteral() {
     return this.key;
@@ -29,6 +39,14 @@ class Type {
   static fromLiteral(literal, scope) {
     assert(scope);
     return new Type(literal, scope);
+  }
+
+  viewOf(scope) {
+    return new Type(typeString.viewOf(this.key), scope);
+  }
+
+  static typeVariable() {
+    return typeString.typeVariable();
   }
 }
 

@@ -38,6 +38,8 @@ class Scope {
 
   _viewFor(type) {
     assert(type instanceof Type);
+    if (type.isView)
+      type = type.primitiveType;
     var result = this._views.get(type);
     if (!result) {
       console.log("constructing new view for", type);
