@@ -8,15 +8,18 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-var loader = require("../loader.js");
 var Arc = require("../arc.js");
 var runtime = require("../runtime.js");
 let assert = require('chai').assert;
 let particles = require('./test-particles.js');
 
+var Foo = runtime.testing.testEntityClass('Foo');
+var Bar = runtime.testing.testEntityClass('Bar');
+
 describe('particle loader', function() {
   it('can load a particle', function() {
     var arc = new Arc(new runtime.Scope());
+    [Foo, Bar].map(a => arc.scope.registerEntityClass(a));
     var particle = new particles.TestParticle(arc).arcParticle;
   });
 });

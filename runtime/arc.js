@@ -46,28 +46,34 @@ class ParticleSlotBase {
 class SingletonParticleSlot extends ParticleSlotBase {
   constructor(name, type) {
     super(name, type);
-    this.pending = [];
-    this.data = [];
+    this.data = undefined;
+    this.pending = undefined;
   }
 
   connect(view) {
     super.connect(view);
-    this.rid = view.register(iter => this.pending.push(iter));
+    this.rid = view.register(iter => this.pending = iter);
   }
 
   commit(source) {
-    this.view.store(source[this.name]);
+    assert(source[this.name] !== undefined);
+    this.outData = source[this.name];
+  }
+
+  writeback() {
+    this.view.store(this.outData);
+    this.outData = undefined;
   }
 
   checkpoint() {
-    this._checkpoint = this.data.length;
+    this._checkpoint = this.data;
     super.checkpoint();
   }
 
   revert() {
-    this.data.splice(this._checkpoint);
-    this.pending = [];
+    this.data = this._checkpoint;
     this._checkpoint = undefined;
+    this.pending = undefined;
     super.revert();
   }
 
@@ -77,26 +83,17 @@ class SingletonParticleSlot extends ParticleSlotBase {
   }
 
   expandInputs() {
-    var newData = [];
-    for (let pending of this.pending) {
-      while (true) {
-        var elem = pending.next().value;
-        if (elem == undefined)
-          break;
-        newData.push(elem);
-      }
-    }
-    this.data = this.data.concat(newData);
-    this.pending = [];
-    return newData;
+    this.data = this.pending;
+    this.pending = undefined;
+    return this.data;
   }
 
   hasPending() {
-    return this.pending.length > 0;
+    return this.pending !== undefined;
   }
 
   missingData() {
-    return (this.pending.length == 0) && (this.data.length == 0);
+    return (this.pending == undefined) && (this.data == undefined);
   }
 }
 
@@ -133,7 +130,7 @@ class ViewParticleSlot extends ParticleSlotBase {
 
   expandInputs() {
     this.deliveredSize = this.view.data.length;
-    return [this.view];
+    return this.view;
   }
 
   missingData() {
@@ -144,7 +141,7 @@ class ViewParticleSlot extends ParticleSlotBase {
 
 function particleSlot(name, type, scope) {
   if (type.isView)
-    return new ViewParticleSlot(name, type.primitiveType(scope));
+    return new ViewParticleSlot(name, type);
   return new SingletonParticleSlot(name, type);
 }
 
@@ -183,42 +180,46 @@ class ArcParticle {
   }
 
   process() {
+    console.log("considering", this.particle.constructor.name);
+    if (this.particle.extraData == true) {
+      this.particle.dataUpdated(true);
+      console.log("\tgenerator in-flight");
+      return true;
+    }
+
     var missingInputs = this.inputList().filter(a => a.missingData());
-    if (missingInputs.length > 0) 
+    if (missingInputs.length > 0) {
+      console.log("\tmissing inputs");
       return false;
+    }
 
     var pendingInputs = this.inputList().filter(a => a.hasPending());
-    if (pendingInputs.length == 0)
+    if (pendingInputs.length == 0) {
+      console.log("\tno pending inputs");
       return false;
+    }
 
     var storedDataInputs = this.inputList().filter(a => !a.hasPending());
 
     let allInputs = {}
     for (let pendingInput of pendingInputs)
-      allInputs[pendingInput.name] = pendingInput.expandInputs();
+      this.particle[pendingInput.name] = pendingInput.expandInputs();
     
     for (let storedDataInput of storedDataInputs)
-      allInputs[storedDataInput.name] = storedDataInput.data
+      this.particle[storedDataInput.name] = storedDataInput.data
 
-    this.runParticle(this.particle, allInputs, Object.keys(allInputs), []);
+    console.log("\texecuting");
+    this.particle.dataUpdated();
     return true;
-  }
-
-  runParticle(particle, inputs, inputList, idxs) {
-    if (idxs.length == inputList.length) {
-      particle.dataUpdated();
-      return;
-    }
-    var thisLevelInputs = inputs[inputList[idxs.length]];
-    for (var i = 0; i < thisLevelInputs.length; i++) {
-      particle[inputList[idxs.length]] = thisLevelInputs[i];
-      this.runParticle(particle, inputs, inputList, idxs.concat([i]));
-    }
   }
 
   commitData(relevance) {
     this.outputList().map(a => a.commit(this.particle));
     this.arc.updateRelevance(relevance);
+  }
+
+  writeback() {
+    this.outputList().map(a => a.writeback());
   }
 
   // TODO: we'll probably remove this at some point
@@ -279,12 +280,10 @@ class Arc {
   }
 
   tick() {
-    var moreTicks = false;
-    for (var particle of this.particles)
-      moreTicks |= particle.process();
-    for (var particle of this.temporaryParticles)
-      moreTicks |= particle.process();
-    return moreTicks;
+    var executedParticles = this.particles.filter(p => p.process());
+    executedParticles.concat(this.temporaryParticles.filter(p => p.process()));
+    executedParticles.map(p => p.writeback());
+    return executedParticles.length > 0;
   }
 
   addView(view) {

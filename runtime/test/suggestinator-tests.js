@@ -25,6 +25,7 @@ describe('suggestinator', function() {
 
   it('suggests a ranked list of recipes', function() {
     let scope = new runtime.Scope();
+    [Foo, Bar, Far].map(a => scope.registerEntityClass(a));
     particles.register(scope);
 
     var recipe1 = new recipe.RecipeBuilder()
@@ -42,7 +43,7 @@ describe('suggestinator', function() {
 
     var suggestinator = new Suggestinator();
     suggestinator._getSuggestions = a => [recipe1, recipe2];
-    scope.commit([new Foo("a Foo"), new Bar("a Bar")]);
+    scope.commitSingletons([new Foo("a Foo"), new Bar("a Bar")]);
 
     var results = suggestinator.suggestinate(new Arc(scope));
     assert.equal(results.length, 2);

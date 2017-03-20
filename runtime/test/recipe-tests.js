@@ -23,6 +23,7 @@ describe('recipe', function() {
 
   it('recipes can load', function() {
     let scope = new runtime.Scope();
+    [Foo, Bar].map(a => scope.registerEntityClass(a));
     particles.register(scope);
     var arc = new Arc(scope);
     var r = new recipe.RecipeBuilder()
@@ -32,9 +33,8 @@ describe('recipe', function() {
         .build();
 
     r.instantiate(arc);
-    scope.commit([new Foo("not a Bar")]);
+    scope.commitSingletons([new Foo("not a Bar")]);
     arc.tick();
-    assert.equal(runtime.testing.viewFor(Bar, scope).data.length, 1);
-    assert.equal(runtime.testing.viewFor(Bar, scope).data[0].data, "not a Bar1");
+    assert.equal(runtime.testing.viewFor(Bar, scope).data.data, "not a Bar1");
   });
 });

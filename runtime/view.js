@@ -23,10 +23,12 @@ function restore(entry, scope) {
   assert(scope);
   let {id, data} = entry;
   var entity = Entity.fromLiteral(id, cloneData(data));
+  var type = scope.typeFor(entity);
+  entity.constructor = type.entityClass;
   // TODO: Relation magic should happen elsewhere, and be better.
   if (scope.typeFor(entity).isRelation) {
     let ids = data.map(literal => Identifier.fromLiteral(literal, scope));
-    let entities = ids.map(id => scope._viewFor(id.type).get(id));
+    let entities = ids.map(id => scope._viewFor(id.type.viewOf(scope)).get(id));
     assert(!entities.includes(undefined));
     entity = new Relation(...entities);
     entity.entities = entities;
@@ -37,19 +39,70 @@ function restore(entry, scope) {
 
 function emptyRegistrationSlot() {};
 
-class View {
+class ViewBase {
   constructor(type, scope) {
     assert(scope);
     this.type = type;
     this._scope = scope;
-    this.data = [];
     this.observers = [];
   }
 
-  *iterator(start, end) {
-    while (start < end) {
-      yield restore(this.data[start++], this._scope);
+  register(observer) {
+    var rid = this.observers.length;
+    this.observers.push(observer);
+    this.update();
+    return rid;
+  }
+
+  unregister(rid) {
+    for (var i = rid + 1; i < this.observers.length; i++) {
+      if (this.observers[i] !== emptyRegistrationSlot) {
+        this.observers[rid] = emptyRegistrationSlot;
+        return;
+      }
     }
+    this.observers.splice(rid);
+  }
+}
+
+class SingletonView extends ViewBase {
+  constructor(type, scope) {
+    super(type, scope);
+    this.data = undefined;
+    this._pendingData = [];
+  }
+
+  checkpoint() {
+    this._checkpoint = {data: this.data};
+  }
+
+  revert() {
+    if (this._checkpoint == undefined)
+      return;
+    this.data = this._checkpoint.data;
+    this._checkpoint = undefined;
+  }
+
+  store(entity) {
+    let id = entity[identifier];
+    let data = cloneData(entity.toLiteral());
+    this.data = { id, data };
+    this.update();
+  }
+
+  update() {
+    if (this.data == undefined)
+      return;
+    for (var observer of this.observers)
+      observer(restore(this.data, this._scope));
+  }
+}
+
+class View extends ViewBase {
+  constructor(type, scope) {
+    super(type, scope);
+    this.data = [];
+    this.deliveredTo = 0;
   }
 
   get(id) {
@@ -58,6 +111,14 @@ class View {
         return restore(entry, this._scope);
       }
     }
+  }
+
+  asList() {
+    return this.data.map(entry => restore(entry, this._scope));
+  }
+
+  slice(start, end) {
+    return this.data.slice(start, end).map(entry => restore(entry, this._scope));
   }
 
   checkpoint() {
@@ -72,24 +133,6 @@ class View {
     this._checkpoint = undefined;
   }
 
-  register(observer) {
-    var rid = this.observers.length;
-    this.observers.push(observer);
-    if (this.data.length > 0)
-      observer(this.iterator(0, this.data.length));
-    return rid;
-  }
-
-  unregister(rid) {
-    for (var i = rid + 1; i < this.observers.length; i++) {
-      if (this.observers[i] !== emptyRegistrationSlot) {
-        this.observers[rid] = emptyRegistrationSlot;
-        return;
-      }
-    }
-    this.observers.splice(rid);
-  }
-
   store(entity) {
     console.log("storing", entity, entity[identifier]);
     let id = entity[identifier];
@@ -98,11 +141,17 @@ class View {
       id,
       data: data,
     });
+    this.update();
+  }
+
+  update() {
+    if (this.deliveredTo == this.data.length)
+      return;
     for (var observer of this.observers) {
-      let clone = Entity.fromLiteral(id, cloneData(data));
-      observer([clone][Symbol.iterator]());
+      observer(this.slice(this.deliveredTo));
     }
+    this.deliveredTo = this.data.length;
   }
 }
 
-module.exports = View;
+Object.assign(module.exports, { ViewBase, View, SingletonView });

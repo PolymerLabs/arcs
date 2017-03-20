@@ -10,7 +10,7 @@
 "use strict";
 
 const assert = require('assert');
-const View = require('./view.js');
+const view = require('./view.js');
 const Symbols = require('./symbols.js');
 const Entity = require('./entity.js');
 const Type = require('./type.js');
@@ -49,6 +49,8 @@ Object.assign(exports, {
   internals: {
     identifier: Symbols.identifier,
     Type,
-    View
+    View: view.View,
+    ViewBase: view.ViewBase,
+    SingletonView: view.SingletonView
   }
 });

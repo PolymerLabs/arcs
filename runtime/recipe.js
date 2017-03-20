@@ -15,7 +15,7 @@ class Connection {
   constructor(name, viewOrSpec) {
     this.name = name;
 
-    if (viewOrSpec instanceof runtime.internals.View) {
+    if (viewOrSpec instanceof runtime.internals.ViewBase) {
       this.view = viewOrSpec;
       this.type = viewOrSpec.type;
     } else {
