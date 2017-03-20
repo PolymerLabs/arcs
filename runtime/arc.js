@@ -272,7 +272,6 @@ class Arc {
   }
 
   revert() {
-    debugger;
     assert(this.checkpointed);
     this.checkpointed = false;
     this.temporaryParticles.forEach(p => {p.revert(); p.shutdown()});
