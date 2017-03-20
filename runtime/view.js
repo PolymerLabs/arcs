@@ -79,6 +79,7 @@ class SingletonView extends ViewBase {
   revert() {
     if (this._checkpoint == undefined)
       return;
+    console.log("Reverting singleton view")
     this.data = this._checkpoint.data;
     this._checkpoint = undefined;
   }

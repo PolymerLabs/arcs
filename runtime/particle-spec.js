@@ -19,9 +19,7 @@ class ConnectionSpec {
     this.direction = rawData.direction;
     this.name = rawData.name;
     this.typeName = rawData.type;
-    console.log("constructed connection for", this.typeName);
     this.typeName = typeLiteral.convertNamedVariablesToVariables(this.typeName, typeVarMap);
-    console.log("..and converting to", this.typeName);
   }
 
   resolve(scope) {
