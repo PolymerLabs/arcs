@@ -29,7 +29,6 @@ describe('Arc', function() {
     var particle = new particles.TestParticle(arc).arcParticle;
     particle.autoconnect();
     arc.tick();
-    //assert.equal(runtime.testing.viewFor(Bar, scope).data.length, 1);
     assert.equal(runtime.testing.viewFor(Bar, scope).data.data, "a Foo1");
   });
 

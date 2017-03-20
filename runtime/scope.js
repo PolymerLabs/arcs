@@ -32,7 +32,6 @@ class Scope {
   viewExists(type) {
     if (type.isView)
       type = type.primitiveType(this);
-    console.log("viewExists", type, this._views.keys());
     return this._views.get(type) !== undefined;
   }
 

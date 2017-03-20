@@ -22,7 +22,6 @@ class Type {
     this.key = key;
     if (!(this.isVariable || this.isView)) {
       assert(entityClass, `type ${this.toString()} requires an entity class`);
-      console.log(`associating entityClass with ${typeLiteral.stringFor(key)}`);
       this.entityClass = entityClass;
     }
     scope._types.set(normalized, this);

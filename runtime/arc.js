@@ -16,6 +16,7 @@ class ParticleSlotBase {
   constructor(name, type) {
     this.name = name;
     this.type = type;
+    this._checkpointed = false;
   }
 
   // TODO: we'll probably remove this at some point
@@ -25,16 +26,18 @@ class ParticleSlotBase {
 
   connect(view) {
     this.view = view;
-    if (this._checkpoint !== undefined)
+    if (this._checkpointed)
       this.view.checkpoint();
   }
 
   checkpoint() {
+    this._checkpointed = true;
     if (this.view)
       this.view.checkpoint();
   }
 
   revert() {
+    this._checkpointed = false;
     this.view.revert();
   }
 
@@ -82,7 +85,7 @@ class SingletonParticleSlot extends ParticleSlotBase {
       this.view.unregister(this.rid);
   }
 
-  expandInputs() {
+  applyInputs() {
     this.data = this.pending;
     this.pending = undefined;
     return this.data;
@@ -110,7 +113,14 @@ class ViewParticleSlot extends ParticleSlotBase {
   }
 
   commit(source) {
-    source[this.name].map(this.view.store);
+    this.outData = source[this.name];
+    console.log("outData is:", this.outData);
+  }
+
+  writeback() {
+    if (this.outData !== undefined)
+      this.outData.map(this.view.store);
+    this.outData = undefined;
   }
 
   checkpoint() {
@@ -128,7 +138,7 @@ class ViewParticleSlot extends ParticleSlotBase {
     return this.deliveredSize < this.view.data.length;
   }
 
-  expandInputs() {
+  applyInputs() {
     this.deliveredSize = this.view.data.length;
     return this.view;
   }
@@ -203,7 +213,7 @@ class ArcParticle {
 
     let allInputs = {}
     for (let pendingInput of pendingInputs)
-      this.particle[pendingInput.name] = pendingInput.expandInputs();
+      this.particle[pendingInput.name] = pendingInput.applyInputs();
     
     for (let storedDataInput of storedDataInputs)
       this.particle[storedDataInput.name] = storedDataInput.data
@@ -262,6 +272,7 @@ class Arc {
   }
 
   revert() {
+    debugger;
     assert(this.checkpointed);
     this.checkpointed = false;
     this.temporaryParticles.forEach(p => {p.revert(); p.shutdown()});
@@ -281,7 +292,7 @@ class Arc {
 
   tick() {
     var executedParticles = this.particles.filter(p => p.process());
-    executedParticles.concat(this.temporaryParticles.filter(p => p.process()));
+    executedParticles = executedParticles.concat(this.temporaryParticles.filter(p => p.process()));
     executedParticles.map(p => p.writeback());
     return executedParticles.length > 0;
   }
