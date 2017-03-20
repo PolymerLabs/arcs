@@ -40,7 +40,7 @@ class Resolver {
     var typeName = connection.spec.typeName;
     var type = runtime.internals.Type.fromLiteral(typeName, arc.scope);
 
-    if (connection.spec.mustCreate == arc.scope.viewExists(type))
+    if ((type.isView || type.isRelation) && connection.spec.mustCreate == arc.scope.viewExists(type))
       return false;
   
     // TODO: More complex resolution logic should go here.

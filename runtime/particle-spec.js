@@ -11,13 +11,17 @@
 
 var runtime = require("./runtime.js");
 var recipe = require("./recipe.js");
+var typeLiteral = require("./type-literal.js");
 
 class ConnectionSpec {
-  constructor(rawData) {
+  constructor(rawData, typeVarMap) {
     this.rawData = rawData;
     this.direction = rawData.direction;
     this.name = rawData.name;
     this.typeName = rawData.type;
+    console.log("constructed connection for", this.typeName);
+    this.typeName = typeLiteral.convertNamedVariablesToVariables(this.typeName, typeVarMap);
+    console.log("..and converting to", this.typeName);
   }
 
   resolve(scope) {
@@ -41,7 +45,8 @@ class ParticleSpec {
   constructor(rawData) {
     this.rawData = rawData;
     this.type = rawData.type;
-    this.connections = this.rawData.args.map(a => new ConnectionSpec(a))
+    var typeVarMap = new Map();
+    this.connections = this.rawData.args.map(a => new ConnectionSpec(a, typeVarMap))
     this.inputs = this.connections.filter(a => a.isInput);
     this.outputs = this.connections.filter(a => a.isOutput);
   }

@@ -14,7 +14,7 @@ var runtime = require("../runtime.js");
 var Bar = runtime.testing.testEntityClass("Bar");
 
 exports.TestParticle = particle.define('TestParticle(in Foo foo, out Bar bar)', ({foo}) => {
-  return {bar: new Bar(foo.data + 1), relevance: 9};
+  console.log("TestParticle"); return {bar: new Bar(foo.data + 1), relevance: 9};
 });
 
 var Far = runtime.testing.testEntityClass("Far");

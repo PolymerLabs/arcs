@@ -21,11 +21,15 @@ Particle
       return {type: type, args: args};
   }
   
-Type = (PrimitiveType / ListType)
+Type = (VariableType / PrimitiveType / ListType)
 
-ListType = "[" pt:PrimitiveType "]" { return typeLiteral.viewOf(pt); }
+ListType = "[" pt:Type "]" { return typeLiteral.viewOf(pt); }
 
-PrimitiveType = [A-Z][a-zA-Z]* { return text() }
+VariableType = "~" name: VariableTypeName { return typeLiteral.namedTypeVariable(name); }
+
+VariableTypeName = [a-z][a-zA-Z0-9]* { return text() }
+
+PrimitiveType = [A-Z][a-zA-Z0-9]* { return text() }
   
 Arguments
   = head:Argument tail:(_ "," _ Argument)* {
@@ -41,7 +45,7 @@ Direction = e: "ephemeral"? _ dir: ("in" / "out" / "inout" / "create") {
     return {direction: dir, ephemeral: e};
     }
 
-Name = [a-z][a-zA-Z]* { return text() }
+Name = [a-z][a-zA-Z0-9]* { return text() }
 
 _ "whitespace"
   = [ \t\n\r]* 

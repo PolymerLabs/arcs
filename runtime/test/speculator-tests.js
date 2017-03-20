@@ -29,9 +29,9 @@ describe('speculator', function() {
             .connect("bar", runtime.testing.viewFor(Bar, scope))
         .build();
     var speculator = new Speculator();
-    scope.commit([new Foo("not a Bar")])
+    scope.commitSingletons([new Foo("not a Bar")])
     var relevance = speculator.speculate(arc, r);
     assert.equal(relevance, 1.8);
-    assert.equal(runtime.testing.viewFor(Bar, scope).data.length, 0);
+    assert.equal(runtime.testing.viewFor(Bar, scope).data, undefined);
   });
 });

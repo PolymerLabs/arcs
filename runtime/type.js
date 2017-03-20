@@ -11,14 +11,20 @@ const assert = require('assert');
 const typeLiteral = require('./type-literal.js');
 
 class Type {
-  constructor(key, scope) {
+  constructor(key, scope, entityClass) {
     assert(scope);
+    assert(!typeLiteral.isNamedVariable(key));
     let normalized = JSON.stringify(key);
     let type = scope._types.get(normalized);
     if (type) {
       return type;
     }
     this.key = key;
+    if (!(this.isVariable || this.isView)) {
+      assert(entityClass, `type ${this.toString()} requires an entity class`);
+      console.log(`associating entityClass with ${typeLiteral.stringFor(key)}`);
+      this.entityClass = entityClass;
+    }
     scope._types.set(normalized, this);
   }
   get isRelation() {
@@ -30,6 +36,11 @@ class Type {
   get isVariable() {
     return typeLiteral.isVariable(this.key);
   }
+
+  get isValid() {
+    return !typeLiteral.isNamedVariable(this.key);
+  }
+
   primitiveType(scope) {
     assert(scope);
     return new Type(typeLiteral.primitiveType(this.key), scope);
@@ -39,6 +50,7 @@ class Type {
   }
   static fromLiteral(literal, scope) {
     assert(scope);
+
     return new Type(literal, scope);
   }
 
@@ -46,8 +58,16 @@ class Type {
     return new Type(typeLiteral.viewOf(this.key), scope);
   }
 
-  static typeVariable() {
-    return typeLiteral.typeVariable();
+  get variableID() {
+    return typeLiteral.variableID(this.key);
+  }
+
+  static typeVariable(name, scope) {
+    return new Type(typeLiteral.typeVariable(name), scope);
+  }
+
+  toString() {
+    return typeLiteral.stringFor(this.key);
   }
 }
 
