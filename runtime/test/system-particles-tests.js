@@ -65,6 +65,5 @@ describe('system particles', function() {
     assert.equal(runtime.testing.viewFor(Far, arc.scope).data.data, "3 b");
     arc.tick();
     assert.equal(runtime.testing.viewFor(Far, arc.scope).data.data, "3 c");
-
   });
 });
