@@ -1,0 +1,10 @@
+{
+ "name": "tracelib",
+ "version": "0.0.0",
+ "private": "true",
+ "dependencies": {
+  "minimist": "*",
+  "mkdirp": "*",
+  "pegjs": "^0.10.0"
+ }
+}

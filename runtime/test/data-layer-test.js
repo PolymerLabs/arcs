@@ -31,8 +31,6 @@ describe('relation', function() {
     let relation = new Relation(new BasicEntity('thing1'), new BasicEntity('thing2'));
     assert.isDefined(relation);
     scope.commit([relation]);
-    console.log(relation[internals.identifier]);
-    console.log(scope._viewFor(scope.typeFor(relation)));
     let clone = scope._viewFor(scope.typeFor(relation)).get(relation[internals.identifier]);
     assert.isDefined(clone);
     assert.equal(clone.entities[0].data, 'thing1');

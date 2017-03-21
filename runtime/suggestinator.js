@@ -9,8 +9,9 @@
  */
 "use strict";
 
-var Resolver = require('./resolver.js')
-var Speculator = require('./speculator.js')
+var Resolver = require('./resolver.js');
+var Speculator = require('./speculator.js');
+var tracing = require('../tracelib/trace.js');
 
 class Suggestinator {
   constructor() {
@@ -24,12 +25,15 @@ class Suggestinator {
   }
 
   suggestinate(arc) {
+    var trace = tracing.start({cat: "suggestinator", name: "Suggestinator::suggestinate"});
     var suggestions = this._getSuggestions(arc);
+    trace.update({suggestions: suggestions.length});
     suggestions = suggestions.filter(suggestion => this.resolver.resolve(suggestion, arc));
     var rankings = suggestions.map(suggestion => this.speculator.speculate(arc, suggestion));
     for (var i = 0; i < suggestions.length; i++)
       suggestions[i].rank = rankings[i];
     suggestions.sort((a,b) => a.rank - b.rank);
+    trace.end({args: {resolved: suggestions.length}});
     return suggestions;
   }
 }

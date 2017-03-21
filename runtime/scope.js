@@ -48,7 +48,6 @@ class Scope {
 
   _viewFor(type) {
     assert(type instanceof Type);
-    console.log("Request to retrieve view for type", type.key);
     assert(type.isValid, "invalid type specifier");
     if (type.isRelation)
       return this._viewForRelation(type);
@@ -82,7 +81,6 @@ class Scope {
 
     var result = this._views.get(type);
     if (!result) {
-      console.log("constructing new singleton view for", type);
       result = new view.SingletonView(type, this);
       this._views.set(type, result);
     }
@@ -97,7 +95,6 @@ class Scope {
     var type = type.viewOf(this);
     var result = this._views.get(type);
     if (!result) {
-      console.log("constructing new view for", type);
       result = new view.View(type, this);
       this._views.set(type, result);
     }
@@ -152,7 +149,6 @@ class Scope {
       if (entity instanceof Relation) {
         entity.entities.forEach(entity => this._viewFor(this.typeFor(entity).viewOf(this)).store(entity));
       }
-      console.log(entity, this.typeFor(entity));
       this._viewFor(this.typeFor(entity).viewOf(this)).store(entity);
     }
   }

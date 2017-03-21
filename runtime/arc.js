@@ -11,6 +11,7 @@
 
 var runtime = require("./runtime.js");
 var assert = require("assert");
+var tracing = require("../tracelib/trace.js");
 
 class ParticleSlotBase {
   constructor(name, type) {
@@ -59,11 +60,16 @@ class SingletonParticleSlot extends ParticleSlotBase {
   }
 
   commit(source) {
+    this._flow = tracing.flow({cat: "arc", name: "commit"}).start();    
     assert(source[this.name] !== undefined);
     this.outData = source[this.name];
   }
 
   writeback() {
+    if (this._flow) {
+      this._flow.end();
+      this._flow = undefined;
+    }
     this.view.store(this.outData);
     this.outData = undefined;
   }
@@ -113,11 +119,15 @@ class ViewParticleSlot extends ParticleSlotBase {
   }
 
   commit(source) {
+    this._flow = tracing.flow({cat: "arc", name: "commit"}).start();
     this.outData = source[this.name];
-    console.log("outData is:", this.outData);
   }
 
   writeback() {
+    if (this._flow) {
+      this._flow.end();
+      this._flow = undefined;
+    }
     if (this.outData !== undefined)
       this.outData.map(this.view.store);
     this.outData = undefined;
@@ -190,22 +200,22 @@ class ArcParticle {
   }
 
   process() {
-    console.log("considering", this.particle.constructor.name);
+    var trace = tracing.start({cat: "arc", name: "ArcParticle::process " + this.particle.constructor.name});
     if (this.particle.extraData == true) {
       this.particle.dataUpdated(true);
-      console.log("\tgenerator in-flight");
+      trace.end({args: {reason: "generator", processed: true}});
       return true;
     }
 
     var missingInputs = this.inputList().filter(a => a.missingData());
     if (missingInputs.length > 0) {
-      console.log("\tmissing inputs");
+      trace.end({args: {reason: "missing inputs", missingInputs: missingInputs.length, processed: false}});
       return false;
     }
 
     var pendingInputs = this.inputList().filter(a => a.hasPending());
     if (pendingInputs.length == 0) {
-      console.log("\tno pending inputs");
+      trace.end({args: {reason: "no pending inputs", processed: false}});
       return false;
     }
 
@@ -218,8 +228,8 @@ class ArcParticle {
     for (let storedDataInput of storedDataInputs)
       this.particle[storedDataInput.name] = storedDataInput.data
 
-    console.log("\texecuting");
     this.particle.dataUpdated();
+    trace.end({args: {pendingInputs: pendingInputs.length, storedDataInputs: storedDataInputs.length, processed: true}});
     return true;
   }
 
@@ -290,9 +300,13 @@ class Arc {
   }
 
   tick() {
+    var trace = tracing.start({cat: "arc", name: "Arc::tick"})
     var executedParticles = this.particles.filter(p => p.process());
     executedParticles = executedParticles.concat(this.temporaryParticles.filter(p => p.process()));
+    var writebackTrace = tracing.start({cat: "arc", name: "writeback phase"});
     executedParticles.map(p => p.writeback());
+    writebackTrace.end();
+    trace.end({args: {executedParticles: executedParticles.length}});
     return executedParticles.length > 0;
   }
 

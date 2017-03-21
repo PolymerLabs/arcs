@@ -13,6 +13,7 @@ const Symbols = require('./symbols.js');
 const Entity = require('./entity.js');
 const Relation = require('./relation.js');
 let identifier = Symbols.identifier;
+const tracing = require("../tracelib/trace.js");
 
 // TODO: This won't be needed once runtime is transferred between contexts.
 function cloneData(data) {
@@ -79,23 +80,26 @@ class SingletonView extends ViewBase {
   revert() {
     if (this._checkpoint == undefined)
       return;
-    console.log("Reverting singleton view")
     this.data = this._checkpoint.data;
     this._checkpoint = undefined;
   }
 
   store(entity) {
+    var trace = tracing.start({cat: "view", name: "SingletonView::store", args: {type: this.type.key}});
     let id = entity[identifier];
     let data = cloneData(entity.toLiteral());
     this.data = { id, data };
     this.update();
+    trace.end();
   }
 
   update() {
-    if (this.data == undefined)
+    if (this.data == undefined || this.observers.length == 0)
       return;
+    var trace = tracing.start({cat: "view", name: "SingletonView::update", args: {type: this.type.key}});
     for (var observer of this.observers)
       observer(restore(this.data, this._scope));
+    trace.end({args:{observers: this.observers.length}});
   }
 }
 
@@ -135,7 +139,7 @@ class View extends ViewBase {
   }
 
   store(entity) {
-    console.log("storing", entity, entity[identifier]);
+    var trace = tracing.start({cat: "view", name: "View::store", args: {type: this.type.key}}); 
     let id = entity[identifier];
     let data = cloneData(entity.toLiteral());
     this.data.push({
@@ -143,15 +147,18 @@ class View extends ViewBase {
       data: data,
     });
     this.update();
+    trace.end();
   }
 
   update() {
-    if (this.deliveredTo == this.data.length)
+    if (this.deliveredTo == this.data.length || this.observers.length == 0)
       return;
+    var trace = tracing.start({cat: "view", name: "View::update", args: {type: this.type.key}});
     for (var observer of this.observers) {
       observer(this.slice(this.deliveredTo));
     }
     this.deliveredTo = this.data.length;
+    trace.end({args: {observers: this.observers.length}});
   }
 }
 

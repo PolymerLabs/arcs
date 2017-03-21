@@ -25,7 +25,6 @@ class Resolver {
 
   resolveComponent(component, arc) {
     var success = true;
-    console.log(component.particleName);
     for (var connection of component.connections)
       success &= this.resolveConnection(component, connection, arc);
     return success;
