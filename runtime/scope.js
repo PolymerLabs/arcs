@@ -24,7 +24,7 @@ class Scope {
     this._nextType = 1;
     // TODO: more elaborate identifier keys
     this._nextIdentifier = 1;
-    this._views = new Map();
+    this._viewsByType = new Map();
     this._particles = new Map();
     this._variableBindings = new Map();
   }
@@ -32,7 +32,7 @@ class Scope {
   viewExists(type) {
     if (type.isView)
       type = type.primitiveType(this);
-    return this._views.get(type) !== undefined;
+    return this._viewsByType.get(type) !== undefined;
   }
 
   createViewForTesting(type) {
@@ -66,10 +66,10 @@ class Scope {
   _viewForRelation(type) {
     type = type.viewOf(this);
     // TODO: deal with variables
-    var result = this._views.get(type);
+    var result = (this._viewsByType.get(type) || [])[0];
     if (!result) {
       result = new view.View(type, this);
-      this._views.set(type, result);
+      this.registerView(result);
     }
     return result;
   }
@@ -79,10 +79,10 @@ class Scope {
       return this._singletonView(this._getResolvedType(type));
     }
 
-    var result = this._views.get(type);
+    var result = (this._viewsByType.get(type) || [])[0];
     if (!result) {
       result = new view.SingletonView(type, this);
-      this._views.set(type, result);
+      this.registerView(result);
     }
     return result;
   }
@@ -93,10 +93,10 @@ class Scope {
     }
 
     var type = type.viewOf(this);
-    var result = this._views.get(type);
+    var result = (this._viewsByType.get(type) || [])[0];
     if (!result) {
       result = new view.View(type, this);
-      this._views.set(type, result);
+      this.registerView(result);
     }
     return result;
   }
@@ -151,6 +151,14 @@ class Scope {
       }
       this._viewFor(this.typeFor(entity).viewOf(this)).store(entity);
     }
+  }
+
+  registerView(view) {
+    let views = this._viewsByType.get(view.type) || [];
+    if (!views.length) {
+      this._viewsByType.set(view.type, views);
+    }
+    views.push(view);
   }
 
   registerEntityClass(clazz) {
