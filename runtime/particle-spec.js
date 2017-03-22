@@ -58,7 +58,7 @@ class ParticleSpec {
   buildRecipe() {
     var builder = new recipe.RecipeBuilder();
     builder.addParticle(this.type);
-    this.connections.forEach(connection => builder.connect(connection.name, connection));
+    this.connections.forEach(connection => builder.connectSpec(connection.name, connection));
     return builder.build();
   }
 }

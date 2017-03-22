@@ -25,8 +25,8 @@ describe('speculator', function() {
     var arc = new Arc(scope);
     var r = new recipe.RecipeBuilder()
         .addParticle("TestParticle")
-            .connect("foo", runtime.testing.viewFor(Foo, scope))
-            .connect("bar", runtime.testing.viewFor(Bar, scope))
+            .connectView("foo", runtime.testing.viewFor(Foo, scope))
+            .connectView("bar", runtime.testing.viewFor(Bar, scope))
         .build();
     var speculator = new Speculator();
     scope.commitSingletons([new Foo("not a Bar")])

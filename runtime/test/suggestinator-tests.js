@@ -30,15 +30,15 @@ describe('suggestinator', function() {
 
     var recipe1 = new recipe.RecipeBuilder()
         .addParticle("TestParticle")
-            .connect("foo", {typeName: "Foo", mustCreate: false})
-            .connect("bar", {typeName: "Bar", mustCreate: false})
+            .connectSpec("foo", {typeName: "Foo", mustCreate: false})
+            .connectSpec("bar", {typeName: "Bar", mustCreate: false})
         .build();
 
     var recipe2 = new recipe.RecipeBuilder()
         .addParticle("TwoInputTestParticle")
-            .connect("foo", {typeName: "Foo", mustCreate: false})
-            .connect("bar", {typeName: "Bar", mustCreate: false})
-            .connect("far", {typeName: "Far", mustCreate: true})
+            .connectSpec("foo", {typeName: "Foo", mustCreate: false})
+            .connectSpec("bar", {typeName: "Bar", mustCreate: false})
+            .connectSpec("far", {typeName: "Far", mustCreate: true})
         .build();
 
     var suggestinator = new Suggestinator();

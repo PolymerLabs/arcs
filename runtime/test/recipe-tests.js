@@ -28,8 +28,8 @@ describe('recipe', function() {
     var arc = new Arc(scope);
     var r = new recipe.RecipeBuilder()
         .addParticle("TestParticle")
-            .connect("foo", runtime.testing.viewFor(Foo, scope))
-            .connect("bar", runtime.testing.viewFor(Bar, scope))
+            .connectView("foo", runtime.testing.viewFor(Foo, scope))
+            .connectView("bar", runtime.testing.viewFor(Bar, scope))
         .build();
 
     r.instantiate(arc);
