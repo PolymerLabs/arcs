@@ -112,11 +112,11 @@ class Resolver {
     var type = runtime.internals.Type.fromLiteral(typeName, context.arc.scope);
 
     if (type.isView || type.isRelation) {
-      if (connection.spec.mustCreate && context.arc.scope.viewExists(type) == false) {
+      if (connection.spec.mustCreate && context.arc.scope.viewExists(type) == true) {
         trace.end({args: {resolved: false, reason: "creation required but view exists"}});
         return false;
       }
-      if (!connection.spec.mustCreate && context.arc.scope.viewExists(type) == true) {
+      if (!connection.spec.mustCreate && context.arc.scope.viewExists(type) == false) {
         trace.end({args: {resolved: false, reason: "creation forbidden but view doesn't exist"}});
         return false;
       }
