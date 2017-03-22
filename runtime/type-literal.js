@@ -27,6 +27,11 @@ function isVariable(t) {
   return (typeof t == "object" && t.tag == "variable");
 }
 
+// TODO: clauses for relations too 
+function hasVariable(t) {
+  return isVariable(t) || (isView(t) && hasVariable(primitiveType(t)));
+}
+
 function primitiveType(t) {
   return isView(t) ? t.type : undefined;
 }
@@ -70,7 +75,12 @@ function convertNamedVariablesToVariables(variable, typeMap) {
   return variable;
 }
 
-// TODO might want a nicer pretty printer.
+// TODO: we can do better than this. 
+function equal(t1, t2) {
+  return stringFor(t1) == stringFor(t2);
+}
+
+// TODO: might want a nicer pretty printer.
 function stringFor(t) {
   if (isRelation(t))
     return t.toString();
@@ -81,5 +91,5 @@ function stringFor(t) {
 }
 
 Object.assign(module.exports, { isRelation, isView, isNamedVariable, isVariable, primitiveType, viewOf,
-                                namedTypeVariable, typeVariable, variableID, 
-                                convertNamedVariablesToVariables, stringFor });
+                                namedTypeVariable, typeVariable, variableID, hasVariable,
+                                convertNamedVariablesToVariables, stringFor, equal });

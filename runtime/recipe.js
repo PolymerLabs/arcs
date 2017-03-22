@@ -27,6 +27,13 @@ class RecipeSpecConnection {
   }
 }
 
+class RecipeConstraintConnection {
+  constructor(name, constraintName) {
+    this.name = name;
+    this.constraintName = constraintName;
+  }
+}
+
 class RecipeComponent {
   constructor(particleName, connections) {
     this.particleName = particleName;
@@ -80,6 +87,10 @@ class RecipeBuilder {
     this.currentComponent.connections.push(new RecipeViewConnection(name, view));
     return this;
   }
+  connectConstraint(name, constraintName) {
+    this.currentComponent.connections.push(new RecipeConstraintConnection(name, constraintName));
+    return this;
+  }
   build() {
     if (this.currentComponent !== undefined) {
       this.components.push(new RecipeComponent(this.currentComponent.name, this.currentComponent.connections));
@@ -88,4 +99,4 @@ class RecipeBuilder {
   }
 }
 
-Object.assign(module.exports, { Recipe, RecipeComponent, RecipeSpecConnection, RecipeViewConnection, RecipeBuilder });
+Object.assign(module.exports, { Recipe, RecipeComponent, RecipeSpecConnection, RecipeViewConnection, RecipeConstraintConnection, RecipeBuilder });

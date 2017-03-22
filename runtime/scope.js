@@ -27,6 +27,7 @@ class Scope {
     this._viewsByType = new Map();
     this._particles = new Map();
     this._variableBindings = new Map();
+    this._pendingViewChecks = [];
   }
 
   findViews(type, options) {
@@ -35,9 +36,12 @@ class Scope {
   }
 
   viewExists(type) {
-    if (type.isView)
-      type = type.primitiveType(this);
-    return this.findViews(type).length > 0;
+    var resolved = this._resolveType(type);
+    if (resolved == undefined) {
+      this._pendingViewChecks.push(type);
+      return -1;
+    }
+    return this.findViews(resolved).length > 0;
   }
 
   createViewForTesting(type) {
@@ -49,23 +53,41 @@ class Scope {
     assert(this._variableBindings.get(typeVar.variableID) == undefined);
     // TODO: check for circularity of references?
     this._variableBindings.set(typeVar.variableID, type);
+    // TODO: this should drop pending view checks as they actually return true
+    if (this._pendingViewChecks.map(a => this.viewExists(a)).reduce((a,b) => a && b, true) == false) {
+      this._variableBindings.remove(typeVar.variableID);
+      return false;
+    }
+    return true;
   }
 
   _viewFor(type) {
     assert(type instanceof Type);
     assert(type.isValid, "invalid type specifier");
+    type = this._resolveType(type);
+    if (type == undefined)
+      return undefined;
     if (type.isRelation)
       return this._viewForRelation(type);
     if (type.isView)
-      return this._viewForPrimitive(type.primitiveType(this));
+      return this._viewForList(type);
     return this._singletonView(type);
   }
 
-  _getResolvedType(type) {
-    assert(type.isVariable);
-    var t = this._variableBindings.get(type.variableID);
-    assert(t !== undefined, `no resolved type known for type variable ${type.toString}`);
-    return t;
+  _resolveType(type) {
+    if (type.isView) {
+      var resolved = this._resolveType(type.primitiveType(this));
+      if (resolved == undefined) 
+        return undefined;
+      return resolved.viewOf(this);
+    }
+    
+    if (type.isVariable) {
+      var t = this._variableBindings.get(type.variableID);
+      return t;
+    }
+
+    return type;
   }
 
   _viewForRelation(type) {
@@ -80,11 +102,7 @@ class Scope {
   }
 
   _singletonView(type) {
-    if (type.isVariable) {
-      return this._singletonView(this._getResolvedType(type));
-    }
-
-    var result = this.findViews(type)[0];
+    var result = this._views.get(type);
     if (!result) {
       result = new view.SingletonView(type, this);
       this.registerView(result);
@@ -92,12 +110,7 @@ class Scope {
     return result;
   }
 
-  _viewForPrimitive(type) {
-    if (type.isVariable) {
-      return this._viewForPrimitive(this._getResolvedType(type));
-    }
-
-    var type = type.viewOf(this);
+  _viewForList(type) {
     var result = this.findViews(type)[0];
     if (!result) {
       result = new view.View(type, this);

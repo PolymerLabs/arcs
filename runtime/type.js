@@ -36,6 +36,10 @@ class Type {
     return typeLiteral.isVariable(this.key);
   }
 
+  get hasVariable() {
+    return typeLiteral.hasVariable(this.key);
+  }
+
   get isValid() {
     return !typeLiteral.isNamedVariable(this.key);
   }
