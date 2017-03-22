@@ -29,8 +29,8 @@ describe('resolver', function() {
     var arc = new Arc(scope);
     var r = new recipe.RecipeBuilder()
         .addParticle("TestParticle")
-            .connect("foo", {typeName: "Foo", mustCreate: false})
-            .connect("bar", {typeName: "Bar", mustCreate: true})
+            .connectSpec("foo", {typeName: "Foo", mustCreate: false})
+            .connectSpec("bar", {typeName: "Bar", mustCreate: true})
         .build();
     scope.commitSingletons([new Foo("not a Bar")]);
     assert(new Resolver().resolve(r, arc), "recipe resolves");

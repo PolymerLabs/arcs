@@ -11,16 +11,19 @@
 
 var runtime = require("./runtime.js");
 
-class Connection {
-  constructor(name, viewOrSpec) {
+class RecipeViewConnection {
+  constructor(name, view) {
     this.name = name;
+    this.view = view;
+    this.type = view.type;
+  }
+}
 
-    if (viewOrSpec instanceof runtime.internals.ViewBase) {
-      this.view = viewOrSpec;
-      this.type = viewOrSpec.type;
-    } else {
-      this.spec = viewOrSpec;
-    }
+
+class RecipeSpecConnection {
+  constructor(name, spec) {
+    this.name = name;
+    this.spec = spec;
   }
 }
 
@@ -65,8 +68,12 @@ class RecipeBuilder {
     this.currentComponent = {name: particleName, connections: []};
     return this;
   }
-  connect(name, viewOrSpec) {
-    this.currentComponent.connections.push(new Connection(name, viewOrSpec));
+  connectSpec(name, spec) {
+    this.currentComponent.connections.push(new RecipeSpecConnection(name, spec));
+    return this;
+  }
+  connectView(name, view) {
+    this.currentComponent.connections.push(new RecipeViewConnection(name, view));
     return this;
   }
   build() {
@@ -77,4 +84,4 @@ class RecipeBuilder {
   }
 }
 
-Object.assign(module.exports, { Recipe, RecipeComponent, Connection, RecipeBuilder });
+Object.assign(module.exports, { Recipe, RecipeComponent, RecipeSpecConnection, RecipeViewConnection, RecipeBuilder });
