@@ -51,4 +51,27 @@ describe('resolver', function() {
     arc.tick();
     assert.equal(runtime.testing.viewFor(Bar, scope).data.data, "not a Bar1");    
   });
+
+  it('can resolve a recipe that is just a particle name', function() {
+    let scope = new runtime.Scope();
+    particles.register(scope);
+    var arc = new Arc(scope);
+    var r = new recipe.RecipeBuilder().addParticle("TestParticle").build();
+    scope.commitSingletons([new Foo("not a Bar")]);
+    scope.createViewForTesting(scope.typeFor(Bar));
+    new Resolver().resolve(r, arc);
+    r.instantiate(arc);
+    arc.tick();
+    assert.equal(runtime.testing.viewFor(Bar, scope).data.data, "not a Bar1");
+  });
+
+  it("won't resolve a recipe that mentions connections that are not in a particle's connection list", function() {
+    particles.register(scope);
+    var arc = new Arc(scope);
+    var r = new recipe.RecipeBuilder()
+        .addParticle("TestParticle")
+            .connectSpec("herp", {typeName: "Foo", mustCreate: false})
+        .build();
+    assert(!new Resolver().resolve(r, arc), "recipe should not resolve");
+  });
 });

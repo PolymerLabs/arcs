@@ -161,6 +161,11 @@ class Scope {
     this._particles.set(clazz.name, clazz);
   }
 
+  particleSpec(name) {
+    if (this._particles.has(name))
+      return this._particles.get(name).spec.resolve(this);
+  }
+
   instantiateParticle(name, arc) {
     let particleClass = this._particles.get(name);
     assert(particleClass, name);
