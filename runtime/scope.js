@@ -29,10 +29,15 @@ class Scope {
     this._variableBindings = new Map();
   }
 
+  findViews(type, options) {
+    // TODO: use options (location, labels, etc.) somehow.
+    return this._viewsByType.get(type) || [];
+  }
+
   viewExists(type) {
     if (type.isView)
       type = type.primitiveType(this);
-    return this._viewsByType.get(type) !== undefined;
+    return this.findViews(view.type).length > 0;
   }
 
   createViewForTesting(type) {
@@ -66,7 +71,7 @@ class Scope {
   _viewForRelation(type) {
     type = type.viewOf(this);
     // TODO: deal with variables
-    var result = (this._viewsByType.get(type) || [])[0];
+    var result = this.findViews(type)[0];
     if (!result) {
       result = new view.View(type, this);
       this.registerView(result);
@@ -79,7 +84,7 @@ class Scope {
       return this._singletonView(this._getResolvedType(type));
     }
 
-    var result = (this._viewsByType.get(type) || [])[0];
+    var result = this.findViews(type)[0];
     if (!result) {
       result = new view.SingletonView(type, this);
       this.registerView(result);
@@ -93,7 +98,7 @@ class Scope {
     }
 
     var type = type.viewOf(this);
-    var result = (this._viewsByType.get(type) || [])[0];
+    var result = this.findViews(type)[0];
     if (!result) {
       result = new view.View(type, this);
       this.registerView(result);
@@ -125,36 +130,39 @@ class Scope {
     return new Identifier(view, type, this._nextIdentifier++);
   }
 
+  // TODO: move commitSingletons and commit to testing.
   commitSingletons(entities) {
-    let view = null;
+    let entityMap = new Map();
     for (let entity of entities) {
-      entity.identify(view, this);
+      entityMap.set(entity, this._viewFor(this.typeFor(entity)));
     }
-    for (let entity of entities) {
-      this._viewFor(this.typeFor(entity)).store(entity);
-    }
+    this.newCommit(entityMap);
   }
 
   commit(entities) {
-    let view = null; // TODO: pass the correct view identifiers.
+    let entityMap = new Map();
     for (let entity of entities) {
-      if (entity instanceof Relation) {
-        entity.entities.forEach(entity => entity.identify(view, this));
-      }
+      entityMap.set(entity, this._viewFor(this.typeFor(entity).viewOf(this)));
     }
     for (let entity of entities) {
+      if (entity instanceof Relation) {
+        entity.entities.forEach(entity => entityMap.set(entity, this._viewFor(this.typeFor(entity).viewOf(this))));
+      }
+    }
+    this.newCommit(entityMap);
+  }
+
+  newCommit(entityMap) {
+    for (let [entity, view] of entityMap.entries()) {
       entity.identify(view, this);
     }
-    for (let entity of entities) {
-      if (entity instanceof Relation) {
-        entity.entities.forEach(entity => this._viewFor(this.typeFor(entity).viewOf(this)).store(entity));
-      }
-      this._viewFor(this.typeFor(entity).viewOf(this)).store(entity);
+    for (let [entity, view] of entityMap.entries()) {
+      view.store(entity);
     }
   }
 
   registerView(view) {
-    let views = this._viewsByType.get(view.type) || [];
+    let views = this.findViews(view.type);
     if (!views.length) {
       this._viewsByType.set(view.type, views);
     }
