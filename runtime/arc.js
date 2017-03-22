@@ -65,12 +65,12 @@ class SingletonParticleSlot extends ParticleSlotBase {
     this.outData = source[this.name];
   }
 
-  writeback() {
+  writeback(writeMap) {
     if (this._flow) {
       this._flow.end();
       this._flow = undefined;
     }
-    this.view.store(this.outData);
+    writeMap.set(this.outData, this.view);
     this.outData = undefined;
   }
 
@@ -123,13 +123,13 @@ class ViewParticleSlot extends ParticleSlotBase {
     this.outData = source[this.name];
   }
 
-  writeback() {
+  writeback(writeMap) {
     if (this._flow) {
       this._flow.end();
       this._flow = undefined;
     }
     if (this.outData !== undefined)
-      this.outData.map(this.view.store);
+      this.outData.map(data => writeMap.set(data, this.view));
     this.outData = undefined;
   }
 
@@ -238,8 +238,8 @@ class ArcParticle {
     this.arc.updateRelevance(relevance);
   }
 
-  writeback() {
-    this.outputList().map(a => a.writeback());
+  writeback(writeMap) {
+    this.outputList().forEach(a => a.writeback(writeMap));
   }
 
   // TODO: we'll probably remove this at some point
@@ -304,7 +304,9 @@ class Arc {
     var executedParticles = this.particles.filter(p => p.process());
     executedParticles = executedParticles.concat(this.temporaryParticles.filter(p => p.process()));
     var writebackTrace = tracing.start({cat: "arc", name: "writeback phase"});
-    executedParticles.map(p => p.writeback());
+    let writeMap = new Map();
+    executedParticles.map(p => p.writeback(writeMap));
+    this.scope.newCommit(writeMap);
     writebackTrace.end();
     trace.end({args: {executedParticles: executedParticles.length}});
     return executedParticles.length > 0;
