@@ -37,7 +37,7 @@ class Scope {
   viewExists(type) {
     if (type.isView)
       type = type.primitiveType(this);
-    return this.findViews(view.type).length > 0;
+    return this.findViews(type).length > 0;
   }
 
   createViewForTesting(type) {
