@@ -11,6 +11,7 @@
 
 var runtime = require('./runtime.js');
 var assert = require('assert');
+var recipe = require('./recipe.js');
 
 class Resolver {
 
@@ -31,6 +32,17 @@ class Resolver {
   }
 
   resolveConnection(component, connection, arc) {
+    switch (connection.constructor) {
+      case recipe.RecipeViewConnection:
+        return true;
+      case recipe.RecipeSpecConnection:
+        return this.resolveSpecConnection(component, connection, arc);
+      default:
+        return false;
+    }
+  }
+
+  resolveSpecConnection(component, connection, arc) {
     // connection already has a view
     if (connection.view !== undefined)
       return true;
