@@ -102,7 +102,7 @@ class Scope {
   }
 
   _singletonView(type) {
-    var result = this._views.get(type);
+    var result = this.findViews(type)[0];
     if (!result) {
       result = new view.SingletonView(type, this);
       this.registerView(result);
