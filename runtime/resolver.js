@@ -12,6 +12,7 @@
 var runtime = require('./runtime.js');
 var assert = require('assert');
 var recipe = require('./recipe.js');
+var tracing = require('../tracelib/trace.js');
 
 class Resolver {
 
@@ -24,10 +25,36 @@ class Resolver {
     return success;
   }
 
+  matches(authority, spec) {
+    if (authority == undefined)
+      return false;
+    // TODO: better matching enforcement goes here
+    return true;
+  }
+
   resolveComponent(component, arc) {
+    var trace = tracing.start({cat: "resolver", name: "Resolver::resolverComponent", args: {name: component.particleName}});
+    var componentSpec = arc.scope.particleSpec(component.particleName);
+    if (componentSpec == undefined) {
+      trace.end({args: {resolved: false, reason: "no such particle"}});
+      return false;
+    }
+    var connections = new Map();
+    for (var connection of componentSpec.connections)
+      connections.set(connection.name, connection);
+    trace.update({args: {components: component.connections.length, specifiedComponents: componentSpec.connections.length}});    
     var success = true;
-    for (var connection of component.connections)
+    for (var connection of component.connections) {
+      success &= this.matches(connections.get(connection.name), connection);
+      connections.delete(connection.name);
       success &= this.resolveConnection(component, connection, arc);
+    }
+    for (var connection of connections.values()) {
+      var newConnection = new recipe.RecipeSpecConnection(connection.name, connection)
+      component.addConnection(newConnection);
+      success &= this.resolveConnection(component, newConnection, arc);
+    }
+    trace.end({args: {resolved: success}});
     return success;
   }
 

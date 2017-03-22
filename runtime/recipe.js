@@ -33,6 +33,10 @@ class RecipeComponent {
     this.connections = connections;
   }
 
+  addConnection(connection) {
+    this.connections.push(connection);
+  }
+
   instantiate(arc) {
     var particle = arc.scope.instantiateParticle(this.particleName, arc);
     for (var connection of this.connections) {
