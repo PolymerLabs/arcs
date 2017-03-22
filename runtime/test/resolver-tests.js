@@ -15,6 +15,9 @@ var recipe = require("../recipe.js");
 var loader = require("../loader.js");
 let assert = require('chai').assert;
 let particles = require('./test-particles.js');
+let systemParticles = require('../system-particles.js');
+
+require("./trace-setup.js");
 
 let scope = new runtime.Scope();
 var Foo = runtime.testing.testEntityClass('Foo');
@@ -23,7 +26,6 @@ var Bar = runtime.testing.testEntityClass('Bar');
 [Foo, Bar].map(a => scope.registerEntityClass(a));
 
 describe('resolver', function() {
-
   it('can resolve a partially constructed recipe', function() {
     particles.register(scope);
     var arc = new Arc(scope);
@@ -74,4 +76,24 @@ describe('resolver', function() {
         .build();
     assert(!new Resolver().resolve(r, arc), "recipe should not resolve");
   });
+
+  it("will match particle constraints to build a multi-particle arc", function() {
+    particles.register(scope);
+    systemParticles.register(scope);
+    var arc = new Arc(scope);
+    var r = new recipe.RecipeBuilder()
+        .addParticle("Demuxer")
+            .connectConstraint("singleton", "shared")
+        .addParticle("TestParticle")
+            .connectConstraint("foo", "shared")
+        .build();
+    scope.commit([new Foo(1), new Foo(2), new Foo(3)]);
+    assert(new Resolver().resolve(r, arc), "recipe should resolve");
+    r.instantiate(arc);
+    arc.tick(); arc.tick();
+    assert.equal(runtime.testing.viewFor(Bar, scope).data.data, 2);
+    arc.tick();
+    assert.equal(runtime.testing.viewFor(Bar, scope).data.data, 3);
+
+  })
 });

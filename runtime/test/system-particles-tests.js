@@ -21,11 +21,13 @@ var Far = runtime.testing.testEntityClass('Far');
 describe('system particles', function() {
   it('can load the system particles', function() {
     var arc = new Arc(new runtime.Scope());
+    particles.register(arc.scope);
+    testParticles.register(arc.scope);
     [Foo, Bar].map(a => arc.scope.registerEntityClass(a));
-    var particle = new particles.Demuxer(arc).arcParticle;
+    var particle = arc.scope.instantiateParticle("Demuxer", arc);
     arc.scope.resolve(particle.outputs.get("singleton").type, arc.scope.typeFor(Foo));
     particle.autoconnect();
-    var particle2 = new testParticles.TestParticle(arc).arcParticle;
+    var particle2 = arc.scope.instantiateParticle("TestParticle", arc);
     particle2.autoconnect();
     arc.scope.commit([new Foo("1"), new Foo("2")]);
     arc.tick();

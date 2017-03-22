@@ -27,3 +27,9 @@ exports.Demuxer2 = particle.define('Demuxer2(in [~a] view1, in [~b] view2, out ~
         yield {singleton1: list1[i], singleton2: list2[j], relevance: 5};
   };
 });
+
+exports.register = function(scope) {
+  scope.registerParticle(exports.Demuxer);
+  scope.registerParticle(exports.Demuxer2);
+};
+
