@@ -31,8 +31,12 @@ class Scope {
   }
 
   findViews(type, options) {
+    var resolved = this._resolveType(type);
+    if (resolved == undefined) {
+      return undefined;
+    }
     // TODO: use options (location, labels, etc.) somehow.
-    return this._viewsByType.get(type) || [];
+    return this._viewsByType.get(resolved) || [];
   }
 
   viewExists(type) {
@@ -42,6 +46,21 @@ class Scope {
       return -1;
     }
     return this.findViews(resolved).length > 0;
+  }
+
+  createView(type) {
+    assert(type instanceof Type);
+    type = this._resolveType(type);
+    assert(type !== undefined);
+    if (type.isRelation)
+      type = type.viewOf(this);
+    if (type.isView) {
+      var v = new view.View(type, this);
+    } else {
+      var v = new view.SingletonView(type, this);
+    }
+    this.registerView(v);
+    return v;
   }
 
   createViewForTesting(type) {

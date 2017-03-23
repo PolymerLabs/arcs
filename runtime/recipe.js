@@ -50,8 +50,6 @@ class RecipeComponent {
       var slot = particle.inputs.get(connection.name);
       if (!slot)
         slot = particle.outputs.get(connection.name);
-      if (typeof connection.view == 'function')
-        connection.view = connection.view();
       slot.connect(connection.view);
     }
   }

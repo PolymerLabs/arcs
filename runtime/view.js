@@ -139,7 +139,7 @@ class View extends ViewBase {
   }
 
   store(entity) {
-    var trace = tracing.start({cat: "view", name: "View::store", args: {type: this.type.key}}); 
+    var trace = tracing.start({cat: "view", name: "View::store", args: {type: this.type.key, observers: this.observers.length}}); 
     let id = entity[identifier];
     let data = cloneData(entity.toLiteral());
     this.data.push({
