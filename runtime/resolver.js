@@ -18,14 +18,18 @@ var typeLiteral = require('./type-literal.js');
 class Resolver {
 
   resolve(recipe, arc) {
-    var constraintNames = new Map();
     assert(arc, "resolve requires an arc");
-    var success = true;
-    var context = {arc: arc, constraintNames: constraintNames};
-    for (var component of recipe.components)
-      success &= this.resolveComponent(context, component);
+    var context = {arc: arc, constraintNames: new Map()};
+    var resolve; var reject;
+    context.afterResolution = [];
+    for (var component of recipe.components) {
+      if (!this.resolveComponent(context, component)) {
+        return false;
+      }
+    }
     recipe.arc = arc;
-    return success;
+    context.afterResolution.forEach(f => f());
+    return true;
   }
 
   matchVariableReference(context, variable, other) {
@@ -112,18 +116,18 @@ class Resolver {
     var type = runtime.internals.Type.fromLiteral(typeName, context.arc.scope);
 
     if (type.isView || type.isRelation) {
-      if (connection.spec.mustCreate && context.arc.scope.viewExists(type) == true) {
-        trace.end({args: {resolved: false, reason: "creation required but view exists"}});
-        return false;
-      }
       if (!connection.spec.mustCreate && context.arc.scope.viewExists(type) == false) {
-        trace.end({args: {resolved: false, reason: "creation forbidden but view doesn't exist"}});
+        trace.end({args: {resolved: false, reason: "creation forbidden but no view exists"}});
         return false;
       }
     }
   
     // TODO: More complex resolution logic should go here.
-    connection.view = () => context.arc.scope._viewFor(type);
+    if (connection.spec.mustCreate)
+      context.afterResolution.push(() => { connection.view = context.arc.scope.createView(type); });
+    else
+      context.afterResolution.push(() => { connection.view = context.arc.scope.findViews(type)[0]; });
+      connection.view = () => context.arc.scope.findViews(type)[0];
     connection.type = type;
     trace.end({resolved: true});
     return true;
@@ -138,16 +142,20 @@ class Resolver {
         trace.end({args: {resolved: false, reason: "could not match existing constraint"}});
         return false;
       }
-      connection.view = constrainedConnection.view;
-      connection.type = constrainedConnection.type;
+      context.afterResolution.push(() => {
+        connection.view = constrainedConnection.view;
+        connection.type = constrainedConnection.type;
+      });
       trace.end({args: {resolved: true}})
       return true;
     }
     constrainedConnection = new recipe.RecipeSpecConnection(connection.name, context.connectionSpec);
     if (this.resolveSpecConnection(context, constrainedConnection)) {
       context.constraintNames.set(connection.constraintName, constrainedConnection);
-      connection.view = constrainedConnection.view;
-      connection.type = constrainedConnection.type;
+      context.afterResolution.push(() => {
+        connection.view = constrainedConnection.view;
+        connection.type = constrainedConnection.type;
+      });
       trace.end({args: {resolved: true}});
       return true;
     }

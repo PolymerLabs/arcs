@@ -70,6 +70,8 @@ class SingletonParticleSlot extends ParticleSlotBase {
       this._flow.end();
       this._flow = undefined;
     }
+    if (this.outData == undefined)
+      return;
     writeMap.set(this.outData, this.view);
     this.outData = undefined;
   }
@@ -118,6 +120,10 @@ class ViewParticleSlot extends ParticleSlotBase {
     this.deliveredSize = 0;
   }
 
+  get data() {
+    return this.view;
+  }
+
   commit(source) {
     this._flow = tracing.flow({cat: "arc", name: "commit"}).start();
     this.outData = source[this.name];
@@ -129,7 +135,7 @@ class ViewParticleSlot extends ParticleSlotBase {
       this._flow = undefined;
     }
     if (this.outData !== undefined)
-      this.outData.map(data => writeMap.set(data, this.view));
+      this.outData.map(data => {assert(data !== undefined, this.name + " has undefined output data"); writeMap.set(data, this.view)});
     this.outData = undefined;
   }
 

@@ -59,6 +59,8 @@ class Particle {
   constructor(arc) {
     this.arc = arc;
     this.spec = this.constructor.spec.resolve(arc.scope);
+    if (this.spec.inputs.length == 0)
+      this.extraData = true;
     arc.register(this);
   }
 

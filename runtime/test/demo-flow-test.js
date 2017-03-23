@@ -12,6 +12,10 @@ var runtime = require("../runtime.js");
 var Arc = require("../arc.js");
 var loader = require("../loader.js");
 var Suggestinator = require("../suggestinator.js");
+var recipe = require('../recipe.js');
+var systemParticles = require('../system-particles.js');
+
+require("./trace-setup.js");
 
 class Person extends runtime.Entity {
   constructor(name) {
@@ -37,6 +41,7 @@ class Product extends runtime.Entity {
 
 function prepareExtensionArc() {
   let scope = new runtime.Scope();
+  systemParticles.register(scope);
   var arc = new Arc(scope);
   var personView = runtime.testing.viewFor(Person, scope);
   var productView = runtime.testing.viewFor(Product, scope);
@@ -50,13 +55,27 @@ describe('demo flow', function() {
   it('flows like a demo', function() {
     let arc = prepareExtensionArc();
     // TODO: add a loader to the scope so this fallback can happen automatically.
-    let recipes = ['Create', 'Recommend', 'Save'].map(name => {
+    ['Create', 'Recommend', 'Save', 'WishlistFor'].forEach(name => {
       let particleClass = loader.loadParticle(name);
       arc.scope.registerParticle(particleClass);
-      return particleClass.spec.buildRecipe();
     });
+    var r = new recipe.RecipeBuilder()
+      .addParticle("Create")
+        .connectConstraint("newList", "list")
+      .addParticle("WishlistFor")
+        .connectConstraint("wishlist", "wishlist")
+        .connectConstraint("person", "person")
+      .addParticle("Recommend")
+        .connectConstraint("known", "list")
+        .connectConstraint("population", "wishlist")
+        .connectConstraint("recommendations", "list")
+      .addParticle("Save")
+        .connectConstraint("list", "list")
+      .addParticle("Choose")
+        .connectConstraint("singleton", "person")
+      .build();
     var suggestinator = new Suggestinator();
-    suggestinator._getSuggestions = a => recipes;
+    suggestinator._getSuggestions = a => [r];
     var results = suggestinator.suggestinate(arc);
   });
 });

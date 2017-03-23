@@ -7,15 +7,5 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-"use strict";
 
-var Particle = require("../../runtime/particle.js").Particle;
-
-class Create extends Particle {
-
-  dataUpdated() {
-    this.extraData = false;
-  }
-}
-
-module.exports = Create;
+WishlistFor(in Person person, create [Product] wishlist)
