@@ -23,13 +23,15 @@ describe('speculator', function() {
     let scope = new runtime.Scope();
     particles.register(scope);
     var arc = new Arc(scope);
+    let fooView = scope.createView(scope.typeFor(Foo));
+    let barView = scope.createView(scope.typeFor(Bar));
     var r = new recipe.RecipeBuilder()
         .addParticle("TestParticle")
-            .connectView("foo", runtime.testing.viewFor(Foo, scope))
-            .connectView("bar", runtime.testing.viewFor(Bar, scope))
+            .connectView("foo", fooView)
+            .connectView("bar", barView)
         .build();
     var speculator = new Speculator();
-    scope.commitSingletons([new Foo("not a Bar")])
+    fooView.set(new Foo("not a Bar"));
     var relevance = speculator.speculate(arc, r);
     assert.equal(relevance, 1.8);
     assert.equal(runtime.testing.viewFor(Bar, scope).data, undefined);
