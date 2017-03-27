@@ -49,7 +49,7 @@ class ViewBase {
   }
   on(kind, callback, trigger) {
     let listeners = this._listeners.get(kind) || new Map();
-    listeners.set(callback, this._version);
+    listeners.set(callback, -Infinity);
     this._listeners.set(kind, listeners);
     if (trigger) {
       this._fire(kind);
@@ -59,7 +59,7 @@ class ViewBase {
     this._version++;
   }
   _fire(kind, details) {
-    let listeners = Array.from(this._listeners.get(kind) || []);
+    let listeners = Array.from((this._listeners.get(kind) || new Map()).keys())
     Promise.resolve().then(() => {
       let listenerVersions = this._listeners.get(kind);
       for (let listener of listeners) {

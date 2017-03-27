@@ -32,7 +32,7 @@ describe('Arc', function() {
     var particle = new particles.TestParticle(arc);
     arc.connectParticleToView(particle, 'foo', fooView);
     arc.connectParticleToView(particle, 'bar', barView);
-    barView.on('change', () => { console.log(barView.get().data); assert.equal(barView.get().data, "a Foo1"); done() }); 
+    barView.on('change', () => { assert.equal(barView.get().data, "a Foo1"); done() }); 
   });
 
   it('applies new runtime to a particle', function() {
