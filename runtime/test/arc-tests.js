@@ -35,26 +35,31 @@ describe('Arc', function() {
     barView.on('change', () => { assert.equal(barView.get().data, "a Foo1"); done() }); 
   });
 
-  it('applies new runtime to a particle', function() {
+  it('applies new runtime to a particle', function(done) {
     let arc = new Arc(scope);
-    var particle = new particles.TestParticle(arc).arcParticle;
-    particle.autoconnect();
-    scope.commitSingletons([new Foo("not a Bar")]);
-    arc.tick();
-    assert.equal(runtime.testing.viewFor(Bar, scope).data.data, "not a Bar1");
+    let fooView = scope.createView(scope.typeFor(Foo));
+    let barView = scope.createView(scope.typeFor(Bar));
+    var particle = new particles.TestParticle(arc);
+    arc.connectParticleToView(particle, 'foo', fooView);
+    arc.connectParticleToView(particle, 'bar', barView);
+    fooView.set(new Foo('a Foo'));
+    barView.on('change', () => { assert.equal(barView.get().data, "a Foo1"); done() });  
   });
 
-  it('works with inline particle defintions', () => {
+  it('works with inline particle defintions', (done) => {
     let arc = new Arc(scope);
-    let particleClass = require('../particle').define('P(in Foo foo, out Bar bar)', ({foo}) => {
-      return {bar: new Bar(123)};
+    let particleClass = require('../particle').define('P(in Foo foo, out Bar bar)', (views) => {
+      views.get("bar").set(new Bar(123));
+      return 5;
     });
-    scope.commit([new Foo(1)]);
-    // TODO: maybe arc.register(particleClass) => arcParticle
+
+    let fooView = scope.createView(scope.typeFor(Foo));
+    fooView.set(new Foo(1));
+    let barView = scope.createView(scope.typeFor(Bar));
     let instance = new particleClass(arc);
-    instance.arcParticle.autoconnect();
-    arc.tick();
-    assert.equal(runtime.testing.viewFor(Bar, scope).data.data, 123);
+    arc.connectParticleToView(instance, 'foo', fooView);
+    arc.connectParticleToView(instance, 'bar', barView);
+    barView.on('change', () => { assert.equal(barView.get().data, 123); done() }); 
   });
 
 });
