@@ -124,9 +124,11 @@ class Variable extends ViewBase {
   }
   // HACK: this should be async
   get() {
-    return this._restore(this._value);
+    return this._restore(this._stored);
   }
   set(entity) {
+    if (entity[identifier] == undefined)
+      entity[identifier] = this._scope._newIdentifier(this, this._scope.typeFor(entity));
     this._stored = this._serialize(entity);
     this._mutate();
     this._fire('change');

@@ -24,7 +24,7 @@ let scope = new runtime.Scope();
 
 describe('Arc', function() {
 
-  it('applies existing runtime to a particle', function() {
+  it('applies existing runtime to a particle', (done) => {
     let arc = new Arc(scope);
     let fooView = scope.createView(scope.typeFor(Foo));
     fooView.set(new Foo('a Foo'));
@@ -32,7 +32,7 @@ describe('Arc', function() {
     var particle = new particles.TestParticle(arc);
     arc.connectParticleToView(particle, 'foo', fooView);
     arc.connectParticleToView(particle, 'bar', barView);
-    assert.equal(barView.get().data, "a Foo1");
+    barView.on('change', () => { console.log(barView.get().data); assert.equal(barView.get().data, "a Foo1"); done() }); 
   });
 
   it('applies new runtime to a particle', function() {
