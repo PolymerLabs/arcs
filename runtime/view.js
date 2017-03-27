@@ -42,7 +42,10 @@ class ViewBase {
     this._type = type;
     this._scope = scope;
     this._listeners = new Map();
+    this._listenersCheckpoint = null;
     this._version = 0;
+    this._versionCheckpoint = null;
+    this._checkpointed = false;
   }
   get type() {
     return this._type;
@@ -83,12 +86,29 @@ class ViewBase {
   _restore(entry) {
     return restore(entry, this._scope);
   }
+  checkpoint() {
+    assert(!this._checkpointed);
+    this._versionCheckpoint = this._version;
+    this._checkpointed = true;
+    this._listenersCheckpoint = new Map(this._listeners.entries().map(([kind, listenerVersions]) => {
+      return [kind, new Map(listenerVersions.entries())];
+    }));
+  }
+  revert() {
+    assert(this._checkpointed);
+    this._version = this._versionCheckpoint;
+    this._versionCheckpoint = null;
+    this._listeners = this._listenersCheckpoint;
+    this._listenersCheckpoint = null;
+    this._checkpointed = false;
+  }
 }
 
 class View extends ViewBase {
   constructor(type, scope) {
     super(type, scope);
     this._items = [];
+    this._itemsCheckpoint = null;
   }
   get(id) {
     for (let entry of this._items) {
@@ -116,12 +136,22 @@ class View extends ViewBase {
   }
   // TODO: Something about iterators??
   // TODO: Something about changing order?
+  checkpoint() {
+    super.checkpoint();
+    this._itemsCheckpoint = this._items.concat();
+  }
+  revert() {
+    super.revert();
+    this._items = this._itemsCheckpoint;
+    this._itemsCheckpoint = null;
+  }
 }
 
 class Variable extends ViewBase {
   constructor(type, scope) {
     super(type, scope);
     this._stored = null;
+    this._storedCheckpoint = null;
   }
   // HACK: this should be async
   get() {
@@ -137,6 +167,15 @@ class Variable extends ViewBase {
   on(kind, callback) {
     let trigger = kind == 'change';
     super.on(kind, callback, trigger);
+  }
+  checkpoint() {
+    super.checkpoint();
+    this._storedCheckpoint = this._stored;
+  }
+  revert() {
+    super.revert();
+    this._stored = this._storedCheckpoint;
+    this._storedCheckpoint = null;
   }
 }
 
