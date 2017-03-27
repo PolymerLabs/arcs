@@ -47,6 +47,7 @@ class ViewBase {
   get type() {
     return this._type;
   }
+  // TODO: add 'once' which returns a promise.
   on(kind, callback, trigger) {
     let listeners = this._listeners.get(kind) || new Map();
     listeners.set(callback, -Infinity);
