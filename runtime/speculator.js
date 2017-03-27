@@ -9,18 +9,43 @@
  */
 "use strict";
 
+let assert = require('assert');
+
 class Speculator {
 
   speculate(arc, plan) {
     arc.checkpoint();
-    arc.resetRelevance();
-    plan.instantiate(arc);
-    while (arc.tick());
-    var relevance = arc.relevance;
-    arc.revert();
-    return relevance;
-  }
+    return new Promise((resolve, reject) => {
+      arc.resetRelevance();
+      let views = [].concat(...Array.from(arc.scope._viewsByType.values()));
 
+      var dirtyCount = 0;
+      function clean() {
+        assert(dirtyCount > 0);
+        dirtyCount--;
+        if (dirtyCount == 0) {
+          views.forEach(view => {
+            view._clean = null;
+            view._dirty = null;
+          });
+          var relevance = arc.relevance;
+          arc.revert();
+          resolve(relevance);
+        }
+      }
+
+      function dirty() {
+        dirtyCount++;
+      }
+
+      views.forEach(view => {
+        view._clean = clean;
+        view._dirty = dirty;
+      });
+
+      plan.instantiate(arc);
+    });
+  }
 }
 
 module.exports = Speculator;

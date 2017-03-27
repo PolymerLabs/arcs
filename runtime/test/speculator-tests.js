@@ -19,7 +19,7 @@ var Foo = runtime.testing.testEntityClass('Foo');
 var Bar = runtime.testing.testEntityClass('Bar');
 
 describe('speculator', function() {
-  it('can speculatively produce a relevance', function() {
+  it('can speculatively produce a relevance', async () => {
     let scope = new runtime.Scope();
     particles.register(scope);
     var arc = new Arc(scope);
@@ -32,7 +32,7 @@ describe('speculator', function() {
         .build();
     var speculator = new Speculator();
     fooView.set(new Foo("not a Bar"));
-    var relevance = speculator.speculate(arc, r);
+    var relevance = await speculator.speculate(arc, r);
     assert.equal(relevance, 1.8);
     assert.equal(runtime.testing.viewFor(Bar, scope).data, undefined);
   });

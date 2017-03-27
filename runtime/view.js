@@ -46,6 +46,7 @@ class ViewBase {
     this._version = 0;
     this._versionCheckpoint = null;
     this._checkpointed = false;
+    this._pendingCallbacks = 0;
   }
   get type() {
     return this._type;
@@ -64,6 +65,10 @@ class ViewBase {
   }
   _fire(kind, details) {
     let listeners = Array.from((this._listeners.get(kind) || new Map()).keys())
+    if (this._pendingCallbacks == 0 && this._dirty) {
+      this._dirty();
+    }
+    this._pendingCallbacks++;
     Promise.resolve().then(() => {
       let listenerVersions = this._listeners.get(kind);
       for (let listener of listeners) {
@@ -72,6 +77,10 @@ class ViewBase {
           listenerVersions.set(listener, this._version);
           listener(this, details);
         }
+      }
+      this._pendingCallbacks--;
+      if (this._pendingCallbacks == 0 && this._clean) {
+        this._clean();
       }
     });
   }
