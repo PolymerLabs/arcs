@@ -51,9 +51,9 @@ class ViewBase {
     this._listeners.set(kind, listeners);
     listeners.push(callback);
   }
-  _fire(kind, details) {
+  _fire(kind, details, defaultListeners) {
     Promise.resolve().then(() => {
-      let listeners = Array.from(this._listeners.get(kind) || []);
+      let listeners = defaultListeners || Array.from(this._listeners.get(kind) || []);
       for (let listener of listeners) {
         listener(this, details);
       }
@@ -116,6 +116,10 @@ class Variable extends ViewBase {
   set(entity) {
     this._stored = this._serialize(entity);
     this._fire('change');
+  }
+  on(kind, callback) {
+    super.on(kind, callback);
+    this._fire('change', {}, [callback]);
   }
 }
 
