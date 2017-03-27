@@ -52,8 +52,8 @@ class ViewBase {
     listeners.push(callback);
   }
   _fire(kind, details, defaultListeners) {
+    let listeners = defaultListeners || Array.from(this._listeners.get(kind) || []);
     Promise.resolve().then(() => {
-      let listeners = defaultListeners || Array.from(this._listeners.get(kind) || []);
       for (let listener of listeners) {
         listener(this, details);
       }
