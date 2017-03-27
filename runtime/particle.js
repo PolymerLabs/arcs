@@ -60,6 +60,14 @@ class Particle {
     this.arcParticle.commitData(relevance);
   }
 
+  checkpoint() {
+    this.spec.connections.forEach(c => c.view.checkpoint());
+  }
+
+  revert() {
+    this.spec.connections.forEach(c => c.view.revert());
+  }
+
   inputs() {
     return this.spec.inputs;
   }
