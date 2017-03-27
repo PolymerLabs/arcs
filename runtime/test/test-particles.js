@@ -20,8 +20,10 @@ exports.TestParticle = particle.define('TestParticle(in Foo foo, out Bar bar)', 
 
 var Far = runtime.testing.testEntityClass("Far");
 
-exports.TwoInputTestParticle = particle.define('TwoInputTestParticle(in Foo foo, in Bar bar, out Far far)', ({foo, bar}) => {
-  return {far: new Far(foo.data + ' ' + bar.data), relevance: 3};
+exports.TwoInputTestParticle = particle.define('TwoInputTestParticle(in Foo foo, in Bar bar, out Far far)', map => {
+  console.log('hello', map.get('foo').get(), map.get('bar').get());
+  map.get('far').set(new Far(map.get('foo').get().data + ' ' + map.get('bar').get().data));
+  return 3;
 });
 
 exports.register = function(scope) {

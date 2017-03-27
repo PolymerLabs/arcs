@@ -9,18 +9,8 @@
  */
 "use strict";
 
-let assert2 = require('assert');
+let assert = require('assert');
 var tracing = require('../tracelib/trace.js');
-
-function assert(test, message) {
-  if (!test) {
-    try {
-      var r = a.v.c;
-    } catch (e) {
-      assert2(test, message + '\n' + e.stack)
-    }
-  }
-}
 
 class Speculator {
 
@@ -57,6 +47,9 @@ class Speculator {
       }
 
       views.forEach(view => {
+        if (view._pendingCallbacks > 0) {
+          dirtyCount++;
+        }
         view._clean = clean;
         view._dirty = dirty;
       });
