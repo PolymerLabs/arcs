@@ -21,7 +21,6 @@ function cloneData(data) {
 }
 
 function restore(entry, scope) {
-  assert(scope);
   let {id, data} = entry;
   var entity = Entity.fromLiteral(id, cloneData(data));
   var type = scope.typeFor(entity);
@@ -79,7 +78,11 @@ class View extends ViewBase {
     this._items = [];
   }
   get(id) {
-    // TODO
+    for (let entry of this._items) {
+      if (JSON.stringify(entry.id) == JSON.stringify(id)) {
+        return this._restore(entry);
+      }
+    }
   }
   query() {
     // TODO
