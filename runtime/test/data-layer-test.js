@@ -18,7 +18,7 @@ describe('entity', function() {
     assert.isDefined(entity);
     scope.commit([entity]);
 
-    let clone = scope._viewFor(scope.typeFor(entity).viewOf(scope)).get(entity[internals.identifier]);
+    let clone = scope._viewFor(scope.typeFor(entity).viewOf(scope)).toList()[0];
     assert.isDefined(clone);
     assert.equal(clone.data, 'hello world');
     assert.notEqual(entity, clone);
@@ -31,7 +31,7 @@ describe('relation', function() {
     let relation = new Relation(new BasicEntity('thing1'), new BasicEntity('thing2'));
     assert.isDefined(relation);
     scope.commit([relation]);
-    let clone = scope._viewFor(scope.typeFor(relation)).get(relation[internals.identifier]);
+    let clone = scope._viewFor(scope.typeFor(relation)).toList()[0];
     assert.isDefined(clone);
     assert.equal(clone.entities[0].data, 'thing1');
     assert.notEqual(relation, clone);
