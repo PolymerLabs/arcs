@@ -55,9 +55,9 @@ class Arc {
 
   connectParticleToView(particle, name, view) {
     var viewMap = this.particleViewMaps.get(particle);
-    assert(particle.connections[name] !== undefined);
+    assert(particle.spec.connectionMap.get(name) !== undefined);
     viewMap.set(name, view);
-    if (viewMap.keys().length == Object.keys(particle.connections).length)
+    if (viewMap.keys().length == Object.keys(particle.spec.connections).length)
       particle.setViews(viewMap);
   }
 
