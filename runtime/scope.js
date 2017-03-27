@@ -49,9 +49,9 @@ class Scope {
   }
 
   createView(type) {
-    assert(type instanceof Type);
+    assert(type instanceof Type, "can't createView with a type that isn't a Type");
     type = this._resolveType(type);
-    assert(type !== undefined);
+    assert(type !== undefined, "couldn't resolve type when creating view");
     if (type.isRelation)
       type = type.viewOf(this);
     if (type.isView) {
@@ -68,8 +68,8 @@ class Scope {
   }
 
   resolve(typeVar, type) {
-    assert(typeVar.isVariable);
-    assert(this._variableBindings.get(typeVar.variableID) == undefined);
+    assert(typeVar.isVariable, "can't resolve a type variable that isn't a type variable");
+    assert(this._variableBindings.get(typeVar.variableID) == undefined, "can't re-resolve an already resolved type variable");
     // TODO: check for circularity of references?
     this._variableBindings.set(typeVar.variableID, type);
     // TODO: this should drop pending view checks as they actually return true
@@ -81,7 +81,7 @@ class Scope {
   }
 
   _viewFor(type) {
-    assert(type instanceof Type);
+    assert(type instanceof Type, "can't _viewFor a type that isn't a Type");
     assert(type.isValid, "invalid type specifier");
     type = this._resolveType(type);
     if (type == undefined)
@@ -141,7 +141,7 @@ class Scope {
   typeFor(classOrInstance) {
     if (classOrInstance instanceof Entity) {
       if (classOrInstance[Symbols.identifier]) {
-        assert(classOrInstance[Symbols.identifier].type);
+        assert(classOrInstance[Symbols.identifier].type, "Identifier must have a type");
         return classOrInstance[Symbols.identifier].type;
       }
 
@@ -209,7 +209,7 @@ class Scope {
     let particleClass = this._particles.get(name);
     assert(particleClass, name);
     let particle = new particleClass(arc);
-    assert(particle);
+    assert(particle, "that wasn't a constructor");
     return particle;
   }
 }

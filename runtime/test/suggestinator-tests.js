@@ -23,10 +23,13 @@ var Far = runtime.testing.testEntityClass('Far');
 
 describe('suggestinator', function() {
 
-  it('suggests a ranked list of recipes', function() {
+  it('suggests a ranked list of recipes', async () => {
     let scope = new runtime.Scope();
     [Foo, Bar, Far].map(a => scope.registerEntityClass(a));
     particles.register(scope);
+
+    var fooView = scope.createView(scope.typeFor(Foo));
+    var barView = scope.createView(scope.typeFor(Bar));
 
     var recipe1 = new recipe.RecipeBuilder()
         .addParticle("TestParticle")
@@ -43,9 +46,11 @@ describe('suggestinator', function() {
 
     var suggestinator = new Suggestinator();
     suggestinator._getSuggestions = a => [recipe1, recipe2];
-    scope.commitSingletons([new Foo("a Foo"), new Bar("a Bar")]);
+    fooView.set(new Foo("a Foo"));
+    barView.set(new Bar("a Bar"));
 
-    var results = suggestinator.suggestinate(new Arc(scope));
+    var results = await suggestinator.suggestinate(new Arc(scope));
+    console.log(results);
     assert.equal(results.length, 2);
     assert.equal(results[0].rank, 0.6);
     assert.equal(results[1].rank, 1.8);
