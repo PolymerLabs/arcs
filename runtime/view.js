@@ -65,7 +65,7 @@ class ViewBase {
       for (let listener of listeners) {
         let version = listenerVersions.get(listener);
         if (version < this._version) {
-          this._listeners.get(kind).set(listener, this._version);
+          listenerVersions.set(listener, this._version);
           listener(this, details);
         }
       }
