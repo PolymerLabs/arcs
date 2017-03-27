@@ -162,15 +162,6 @@ class Scope {
     return new Identifier(view, type, this._nextIdentifier++);
   }
 
-  // TODO: move commitSingletons and commit to testing.
-  commitSingletons(entities) {
-    let entityMap = new Map();
-    for (let entity of entities) {
-      entityMap.set(entity, this._viewFor(this.typeFor(entity)));
-    }
-    this.newCommit(entityMap);
-  }
-
   commit(entities) {
     let entityMap = new Map();
     for (let entity of entities) {
