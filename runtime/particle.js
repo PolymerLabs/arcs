@@ -52,20 +52,16 @@ class Particle {
 
   }
 
+  set relevance(r) {
+    this.arc.updateRelevance(r);
+  }
+
   // Override this to do stuff
   dataUpdated() {
   }
 
   commitData(relevance) {
     this.arcParticle.commitData(relevance);
-  }
-
-  checkpoint() {
-    this.spec.connections.forEach(c => c.view.checkpoint());
-  }
-
-  revert() {
-    this.spec.connections.forEach(c => c.view.revert());
   }
 
   inputs() {

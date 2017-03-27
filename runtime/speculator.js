@@ -10,12 +10,16 @@
 "use strict";
 
 let assert = require('assert');
+var tracing = require('../tracelib/trace.js');
 
 class Speculator {
 
   speculate(arc, plan) {
+    var callTrace = tracing.start({cat: "speculator", name: "Speculator::speculate"});
+    var trace = tracing.flow({cat: "speculator", name: "Speculator::speculate"}).start();
     arc.checkpoint();
     return new Promise((resolve, reject) => {
+      var internalTrace = tracing.start({cat: "speculator", name: "Speculator::speculate internal"});
       arc.resetRelevance();
       let views = [].concat(...Array.from(arc.scope._viewsByType.values()));
 
@@ -31,11 +35,15 @@ class Speculator {
           var relevance = arc.relevance;
           arc.revert();
           resolve(relevance);
+          trace.end();
+        } else {
+          trace.step();
         }
       }
 
       function dirty() {
         dirtyCount++;
+        trace.step();
       }
 
       views.forEach(view => {
@@ -44,7 +52,9 @@ class Speculator {
       });
 
       plan.instantiate(arc);
+      internalTrace.end();
     });
+    callTrace.end();
   }
 }
 

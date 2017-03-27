@@ -15,6 +15,8 @@ var recipe = require("../recipe.js");
 let assert = require('chai').assert;
 let particles = require('./test-particles.js');
 
+require("./trace-setup.js");
+
 var Foo = runtime.testing.testEntityClass('Foo');
 var Bar = runtime.testing.testEntityClass('Bar');
 
@@ -34,6 +36,6 @@ describe('speculator', function() {
     fooView.set(new Foo("not a Bar"));
     var relevance = await speculator.speculate(arc, r);
     assert.equal(relevance, 1.8);
-    assert.equal(runtime.testing.viewFor(Bar, scope).data, undefined);
+    assert.equal(barView.get(), undefined);
   });
 });
