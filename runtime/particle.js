@@ -25,32 +25,15 @@ function define(def, update) {
     constructor(arc) {
       super(arc);
     }
-    dataUpdated(dataFlag) {
-      if (dataFlag) {
-        var result = this._pendingValue;
-      } else {
-        let inputs = {};
-        for (let input of this.inputs()) {  
-          inputs[input.name] = this[input.name];
-        }
-        var result = update(inputs);
-        if (typeof result == 'function') {
-          this._generator = result();
-          result = this._generator.next().value;
-        }
+    setViews(views) {
+      var inputViews = new Map();
+      for (let input of this.inputs()) {
+        views.get(input.name).registerChangeHandler(e => {
+            var relevance = update(views, e);
+            if (relevance !== undefined)
+              this.relevance = relevance;
+        });
       }
-      if (this._generator !== undefined) {
-        this._pendingValue = this._generator.next().value;
-        if (this._pendingValue !== undefined) {
-          this.extraData = true;
-        } else {
-          this.extraData = false;
-          this._generator = undefined;
-        }
-      }
-      Object.assign(this, result);
-      this.commitData(this.relevance);
-
     }
   };
 }
@@ -62,6 +45,11 @@ class Particle {
     if (this.spec.inputs.length == 0)
       this.extraData = true;
     arc.register(this);
+  }
+
+  // Override this to do stuff
+  setViews(views) {
+
   }
 
   // Override this to do stuff

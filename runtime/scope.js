@@ -219,8 +219,7 @@ class Scope {
     assert(particleClass, name);
     let particle = new particleClass(arc);
     assert(particle);
-    assert(particle.arcParticle);
-    return particle.arcParticle;
+    return particle;
   }
 }
 

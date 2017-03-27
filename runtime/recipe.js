@@ -46,12 +46,8 @@ class RecipeComponent {
 
   instantiate(arc) {
     var particle = arc.scope.instantiateParticle(this.particleName, arc);
-    for (var connection of this.connections) {
-      var slot = particle.inputs.get(connection.name);
-      if (!slot)
-        slot = particle.outputs.get(connection.name);
-      slot.connect(connection.view);
-    }
+    for (var connection of this.connections)
+      arc.connectParticleToView(particle, connection.name, connection.view);
   }
 }
 
