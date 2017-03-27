@@ -41,9 +41,6 @@ Object.assign(exports, {
   Relation,
   testing: {
     testEntityClass,
-    viewFor(clazz, scope) {
-      return scope._viewFor(scope.typeFor(clazz));
-    },
   },
   Scope,
   internals: {
