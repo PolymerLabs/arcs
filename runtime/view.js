@@ -90,8 +90,8 @@ class View extends ViewBase {
   }
   // thing()
 
-  append(entity) {
-    this._items.push(this._serialize(value));
+  store(entity) {
+    this._items.push(this._serialize(entity));
     this._fire('change');
   }
   remove(id) {
