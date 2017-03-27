@@ -42,15 +42,27 @@ class Arc {
   checkpoint() {
     assert(!this.checkpointed);
     this.checkpointed = true;
-    this.particles.forEach(p => p.checkpoint());
+    this.particles.forEach(p => {
+      var viewMap = this.particleViewMaps.get(p);
+      for (var v of viewMap.values())
+        v.checkpoint();
+    });
   }
 
   revert() {
     assert(this.checkpointed);
     this.checkpointed = false;
-    this.temporaryParticles.forEach(p => {p.revert(); p.shutdown()});
+    this.temporaryParticles.forEach(p => {
+      var viewMap = this.particleViewMaps.get(p);
+      for (var v of viewMap.values())
+        v.revert();
+    });
     this.temporaryParticles = [];
-    this.particles.forEach(p => p.revert());
+    this.particles.forEach(p => {
+      var viewMap = this.particleViewMaps.get(p);
+      for (var v of viewMap.values())
+        v.revert();
+    });
   }
 
   connectParticleToView(particle, name, view) {

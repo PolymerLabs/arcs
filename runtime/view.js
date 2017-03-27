@@ -64,12 +64,18 @@ class ViewBase {
     this._version++;
   }
   _fire(kind, details) {
-    let listeners = Array.from((this._listeners.get(kind) || new Map()).keys())
+    var callTrace = tracing.start({cat: 'view', name: 'ViewBase::_fire', args: {kind, type: this._type.key, pending: this._pendingCallbacks}});
+    let listeners = Array.from((this._listeners.get(kind) || new Map()).keys());
+    callTrace.update({args: {listeners: listeners.length}});
     if (this._pendingCallbacks == 0 && this._dirty) {
+      callTrace.update({args: {dirty: true}});
       this._dirty();
     }
     this._pendingCallbacks++;
+    var trace = tracing.flow({cat: 'view', name: 'ViewBase::_fire flow'}).start();
     Promise.resolve().then(() => {
+      var resolveTrace = tracing.start({cat: 'view', name: 'ViewBase::_fire resolve'});
+      trace.end({args: {listeners: listeners.length}});
       let listenerVersions = this._listeners.get(kind);
       for (let listener of listeners) {
         let version = listenerVersions.get(listener);
@@ -80,9 +86,12 @@ class ViewBase {
       }
       this._pendingCallbacks--;
       if (this._pendingCallbacks == 0 && this._clean) {
+        resolveTrace.update({args: {clean: true}});
         this._clean();
       }
+      resolveTrace.end();
     });
+    callTrace.end();
   }
   _serialize(entity) {
     let id = entity[identifier];
@@ -166,6 +175,8 @@ class Variable extends ViewBase {
   }
   // HACK: this should be async
   get() {
+    if (this._stored == null)
+      return undefined;
     return this._restore(this._stored);
   }
   set(entity) {
