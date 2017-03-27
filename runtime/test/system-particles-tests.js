@@ -18,7 +18,7 @@ var Foo = runtime.testing.testEntityClass('Foo');
 var Bar = runtime.testing.testEntityClass('Bar');
 var Far = runtime.testing.testEntityClass('Far');
 
-describe('system particles', function() {
+describe.skip('system particles', function() {
   it('can load the system particles', function() {
     var arc = new Arc(new runtime.Scope());
     particles.register(arc.scope);
