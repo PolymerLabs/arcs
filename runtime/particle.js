@@ -26,7 +26,6 @@ function define(def, update) {
       super(arc);
     }
     setViews(views) {
-      console.log("setViews called!", views);
       var inputViews = new Map();
       for (let input of this.inputs()) {
         views.get(input.name).on('change', e => {
