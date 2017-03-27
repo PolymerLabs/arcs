@@ -43,8 +43,8 @@ function prepareExtensionArc() {
   let scope = new runtime.Scope();
   systemParticles.register(scope);
   var arc = new Arc(scope);
-  var personView = runtime.testing.viewFor(Person, scope);
-  var productView = runtime.testing.viewFor(Product, scope);
+  var personView = scope.createView(scope.typeFor(Person));
+  var productView = scope.createView(scope.typeFor(Product));
   arc.addView(personView);
   arc.addView(productView);
   scope.commit([new Person("Claire"), new Product("Tea Pot"), new Product("Bee Hive"), new Product("Denim Jeans")]);
