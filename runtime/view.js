@@ -42,20 +42,32 @@ class ViewBase {
     this._type = type;
     this._scope = scope;
     this._listeners = new Map();
+    this._version = 0;
   }
   get type() {
     return this._type;
   }
-  on(kind, callback) {
-    let listeners = this._listeners.get(kind) || [];
+  on(kind, callback, trigger) {
+    let listeners = this._listeners.get(kind) || new Map();
+    listeners.set(callback, this._version);
     this._listeners.set(kind, listeners);
-    listeners.push(callback);
+    if (trigger) {
+      this._fire(kind);
+    }
   }
-  _fire(kind, details, defaultListeners) {
-    let listeners = defaultListeners || Array.from(this._listeners.get(kind) || []);
+  _mutate() {
+    this._version++;
+  }
+  _fire(kind, details) {
+    let listeners = Array.from(this._listeners.get(kind) || []);
     Promise.resolve().then(() => {
+      let listenerVersions = this._listeners.get(kind);
       for (let listener of listeners) {
-        listener(this, details);
+        let version = listenerVersions.get(listener);
+        if (version < this._version) {
+          this._listeners.get(kind).set(listener, this._version);
+          listener(this, details);
+        }
       }
     });
   }
@@ -95,6 +107,7 @@ class View extends ViewBase {
 
   store(entity) {
     this._items.push(this._serialize(entity));
+    this._mutate();
     this._fire('change');
   }
   remove(id) {
@@ -115,11 +128,12 @@ class Variable extends ViewBase {
   }
   set(entity) {
     this._stored = this._serialize(entity);
+    this._mutate();
     this._fire('change');
   }
   on(kind, callback) {
-    super.on(kind, callback);
-    this._fire('change', {}, [callback]);
+    let trigger = kind == 'change';
+    super.on(kind, callback, trigger);
   }
 }
 
