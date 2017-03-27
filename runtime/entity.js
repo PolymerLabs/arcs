@@ -19,7 +19,7 @@ class Entity {
   }
   // TODO: clean up internal glue
   identify(view, scope) {
-    assert(scope);
+    assert(scope, "need a scope to identify entity");
     if (this[Symbols.identifier]) {
       // assert view correct?
       return;

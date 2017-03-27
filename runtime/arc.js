@@ -40,7 +40,7 @@ class Arc {
   }
 
   checkpoint() {
-    assert(!this.checkpointed);
+    assert(!this.checkpointed, "checkpoint called on arc, but arc already checkpointed");
     this.checkpointed = true;
     this.particles.forEach(p => {
       var viewMap = this.particleViewMaps.get(p);
@@ -50,7 +50,7 @@ class Arc {
   }
 
   revert() {
-    assert(this.checkpointed);
+    assert(this.checkpointed, "revert called on arc, but arc isn't checkpointed");
     this.checkpointed = false;
     this.temporaryParticles.forEach(p => {
       var viewMap = this.particleViewMaps.get(p);
@@ -67,7 +67,7 @@ class Arc {
 
   connectParticleToView(particle, name, view) {
     var viewMap = this.particleViewMaps.get(particle);
-    assert(particle.spec.connectionMap.get(name) !== undefined);
+    assert(particle.spec.connectionMap.get(name) !== undefined, "can't connect view to a view slot that doesn't exist");
     viewMap.set(name, view);
     if (viewMap.size == particle.spec.connectionMap.size)
       particle.setViews(viewMap);

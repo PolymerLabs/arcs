@@ -24,14 +24,15 @@ class Suggestinator {
 
   }
 
-  suggestinate(arc) {
+  async suggestinate(arc) {
     var trace = tracing.start({cat: "suggestinator", name: "Suggestinator::suggestinate"});
     var suggestions = this._getSuggestions(arc);
     trace.update({suggestions: suggestions.length});
     suggestions = suggestions.filter(suggestion => this.resolver.resolve(suggestion, arc));
-    var rankings = suggestions.map(suggestion => this.speculator.speculate(arc, suggestion));
-    for (var i = 0; i < suggestions.length; i++)
-      suggestions[i].rank = rankings[i];
+    
+    for (var suggestion of suggestions)
+      suggestion.rank = await this.speculator.speculate(arc, suggestion);
+  
     suggestions.sort((a,b) => a.rank - b.rank);
     trace.end({args: {resolved: suggestions.length}});
     return suggestions;

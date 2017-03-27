@@ -42,7 +42,7 @@ class Resolver {
     // can't match directly against a constraint - that comes later.
     if (spec.constructor == recipe.RecipeConstraintConnection)
       return true;  
-    assert(spec.constructor == recipe.RecipeSpecConnection);
+    assert(spec.constructor == recipe.RecipeSpecConnection, "Should only match RecipeSpecConnections in Resolver::matches");
     authority = authority;
     spec = spec.spec;
     // TODO: better matching enforcement goes here
