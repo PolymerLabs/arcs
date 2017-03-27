@@ -44,7 +44,9 @@ class ParticleSpec {
     this.rawData = rawData;
     this.type = rawData.type;
     var typeVarMap = new Map();
-    this.connections = this.rawData.args.map(a => new ConnectionSpec(a, typeVarMap))
+    this.connections = this.rawData.args.map(a => new ConnectionSpec(a, typeVarMap));
+    this.connectionMap = new Map();
+    this.connections.forEach(a => this.connectionMap.set(a.name, a));
     this.inputs = this.connections.filter(a => a.isInput);
     this.outputs = this.connections.filter(a => a.isOutput);
   }

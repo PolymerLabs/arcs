@@ -13,6 +13,7 @@ var runtime = require("../runtime.js");
 var Arc = require("../arc.js");
 let assert = require('chai').assert;
 let particles = require('./test-particles.js');
+let view = require('../view.js');
 
 var Foo = runtime.testing.testEntityClass('Foo');
 var Bar = runtime.testing.testEntityClass('Bar');
@@ -25,11 +26,13 @@ describe('Arc', function() {
 
   it('applies existing runtime to a particle', function() {
     let arc = new Arc(scope);
-    scope.commitSingletons([new Foo('a Foo')]);
-    var particle = new particles.TestParticle(arc).arcParticle;
-    particle.autoconnect();
-    arc.tick();
-    assert.equal(runtime.testing.viewFor(Bar, scope).data.data, "a Foo1");
+    let fooView = scope.createView(scope.typeFor(Foo));
+    fooView.set(new Foo('a Foo'));
+    let barView = scope.createView(scope.typeFor(Bar));
+    var particle = new particles.TestParticle(arc);
+    arc.connectParticleToView(particle, 'foo', fooView);
+    arc.connectParticleToView(particle, 'bar', barView);
+    assert.equal(barView.get().data, "a Foo1");
   });
 
   it('applies new runtime to a particle', function() {

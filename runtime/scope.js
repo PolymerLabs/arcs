@@ -57,7 +57,7 @@ class Scope {
     if (type.isView) {
       var v = new view.View(type, this);
     } else {
-      var v = new view.SingletonView(type, this);
+      var v = new view.Variable(type, this);
     }
     this.registerView(v);
     return v;
