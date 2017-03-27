@@ -73,6 +73,7 @@ class ViewBase {
     }
     this._pendingCallbacks++;
     var trace = tracing.flow({cat: 'view', name: 'ViewBase::_fire flow'}).start();
+
     Promise.resolve().then(() => {
       var resolveTrace = tracing.start({cat: 'view', name: 'ViewBase::_fire resolve'});
       trace.end({args: {listeners: listeners.length}});
