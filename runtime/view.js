@@ -38,128 +38,85 @@ function restore(entry, scope) {
   return entity;
 }
 
-function emptyRegistrationSlot() {};
-
 class ViewBase {
   constructor(type, scope) {
-    assert(scope);
-    this.type = type;
+    this._type = type;
     this._scope = scope;
-    this.observers = [];
+    this._listeners = new Map();
   }
-
-  register(observer) {
-    var rid = this.observers.length;
-    this.observers.push(observer);
-    this.update();
-    return rid;
+  get type() {
+    return this._type;
   }
-
-  unregister(rid) {
-    for (var i = rid + 1; i < this.observers.length; i++) {
-      if (this.observers[i] !== emptyRegistrationSlot) {
-        this.observers[rid] = emptyRegistrationSlot;
-        return;
+  on(kind, callback) {
+    let listeners = this._listeners.get(kind) || [];
+    this._listeners.set(kind, listeners);
+    listeners.push(callback);
+  }
+  _fire(kind, details) {
+    Promise.resolve().then(() => {
+      let listeners = Array.from(this._listeners.get(kind) || []);
+      for (let listener of listeners) {
+        listener(this, details);
       }
-    }
-    this.observers.splice(rid);
+    });
   }
-}
-
-class SingletonView extends ViewBase {
-  constructor(type, scope) {
-    super(type, scope);
-    this.data = undefined;
-    this._pendingData = [];
-  }
-
-  checkpoint() {
-    this._checkpoint = {data: this.data};
-  }
-
-  revert() {
-    if (this._checkpoint == undefined)
-      return;
-    this.data = this._checkpoint.data;
-    this._checkpoint = undefined;
-  }
-
-  store(entity) {
-    var trace = tracing.start({cat: "view", name: "SingletonView::store", args: {type: this.type.key}});
+  _serialize(entity) {
     let id = entity[identifier];
     let data = cloneData(entity.toLiteral());
-    this.data = { id, data };
-    this.update();
-    trace.end();
+    return {
+      id,
+      data: data,
+    };
   }
-
-  update() {
-    if (this.data == undefined || this.observers.length == 0)
-      return;
-    var trace = tracing.start({cat: "view", name: "SingletonView::update", args: {type: this.type.key}});
-    for (var observer of this.observers)
-      observer(restore(this.data, this._scope));
-    trace.end({args:{observers: this.observers.length}});
+  _restore(entry) {
+    return restore(entry, this._scope);
   }
 }
 
 class View extends ViewBase {
   constructor(type, scope) {
     super(type, scope);
-    this.data = [];
-    this.deliveredTo = 0;
+    this._items = [];
   }
-
   get(id) {
-    for (let entry of this.data) {
-      if (JSON.stringify(entry.id.toLiteral()) == JSON.stringify(id.toLiteral())) {
-        return restore(entry, this._scope);
-      }
-    }
+    // TODO
   }
-
-  asList() {
-    return this.data.map(entry => restore(entry, this._scope));
+  query() {
+    // TODO
   }
-
-  slice(start, end) {
-    return this.data.slice(start, end).map(entry => restore(entry, this._scope));
+  // HACK: replace this with some kind of iterator thing?
+  toList() {
+    return this._items.map(entry => this._restore(entry));
   }
+  // thing()
 
-  checkpoint() {
-    if (this._checkpoint == undefined)
-      this._checkpoint = this.data.length;
+  append(entity) {
+    this._items.push(this._serialize(value));
+    this._fire('change');
   }
-
-  revert() {
-    if (this._checkpoint == undefined)
-      return;
-    this.data.splice(this._checkpoint);
-    this._checkpoint = undefined;
+  remove(id) {
+    // TODO
   }
+  // TODO: Something about iterators??
+  // TODO: Something about changing order?
+}
 
-  store(entity) {
-    var trace = tracing.start({cat: "view", name: "View::store", args: {type: this.type.key, observers: this.observers.length}}); 
-    let id = entity[identifier];
-    let data = cloneData(entity.toLiteral());
-    this.data.push({
-      id,
-      data: data,
-    });
-    this.update();
-    trace.end();
+class Variable extends ViewBase {
+  constructor(type, scope) {
+    super(type, scope);
+    this._stored = null;
   }
-
-  update() {
-    if (this.deliveredTo == this.data.length || this.observers.length == 0)
-      return;
-    var trace = tracing.start({cat: "view", name: "View::update", args: {type: this.type.key}});
-    for (var observer of this.observers) {
-      observer(this.slice(this.deliveredTo));
-    }
-    this.deliveredTo = this.data.length;
-    trace.end({args: {observers: this.observers.length}});
+  // HACK: this should be async
+  get() {
+    return this._restore(this._value);
+  }
+  set(entity) {
+    this._stored = this._serialize(entity);
+    this._fire('change');
   }
 }
 
-Object.assign(module.exports, { ViewBase, View, SingletonView });
+Object.assign(module.exports, {
+  View,
+  Variable,
+});
