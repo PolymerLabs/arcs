@@ -192,10 +192,12 @@ class Variable extends ViewBase {
   }
   checkpoint() {
     super.checkpoint();
+    console.log('cp', this._stored);
     this._storedCheckpoint = this._stored;
   }
   revert() {
     super.revert();
+    console.log('revert', this._storedCheckpoint);
     this._stored = this._storedCheckpoint;
     this._storedCheckpoint = null;
   }
