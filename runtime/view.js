@@ -105,22 +105,26 @@ class ViewBase {
     return restore(entry, this._scope);
   }
   checkpoint() {
-    if (this._checkpointed);
-      return;
+    console.log('super checkpoint', this._checkpointed, this._type.key);
+    if (this._checkpointed)
+      return false;
     this._versionCheckpoint = this._version;
     this._checkpointed = true;
     this._listenersCheckpoint = new Map(this._listeners.entries().map(([kind, listenerVersions]) => {
       return [kind, new Map(listenerVersions.entries())];
     }));
+    return true;
   }
   revert() {
+    console.log('super revert', this._checkpointed, this._type.key);
     if (!this._checkpointed)
-      return;
+      return false;
     this._version = this._versionCheckpoint;
     this._versionCheckpoint = null;
     this._listeners = this._listenersCheckpoint;
     this._listenersCheckpoint = null;
     this._checkpointed = false;
+    return true;
   }
 }
 
@@ -157,11 +161,13 @@ class View extends ViewBase {
   // TODO: Something about iterators??
   // TODO: Something about changing order?
   checkpoint() {
-    super.checkpoint();
+    if (!super.checkpoint())
+      return;
     this._itemsCheckpoint = this._items.concat();
   }
   revert() {
-    super.revert();
+    if (!super.revert())
+      return;
     this._items = this._itemsCheckpoint;
     this._itemsCheckpoint = null;
   }
@@ -191,12 +197,16 @@ class Variable extends ViewBase {
     super.on(kind, callback, trigger);
   }
   checkpoint() {
-    super.checkpoint();
+    console.log('try cp');
+    if (!super.checkpoint())
+      return;
     console.log('cp', this._stored);
     this._storedCheckpoint = this._stored;
   }
   revert() {
-    super.revert();
+    console.log('try revert');
+    if (!super.revert())
+      return;
     console.log('revert', this._storedCheckpoint);
     this._stored = this._storedCheckpoint;
     this._storedCheckpoint = null;

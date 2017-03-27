@@ -69,6 +69,8 @@ class Arc {
     var viewMap = this.particleViewMaps.get(particle);
     assert(particle.spec.connectionMap.get(name) !== undefined, "can't connect view to a view slot that doesn't exist");
     viewMap.set(name, view);
+    if (this.checkpointed)
+      view.checkpoint();
     if (viewMap.size == particle.spec.connectionMap.size)
       particle.setViews(viewMap);
   }
