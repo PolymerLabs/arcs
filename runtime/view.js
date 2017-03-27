@@ -87,7 +87,8 @@ class ViewBase {
     return restore(entry, this._scope);
   }
   checkpoint() {
-    assert(!this._checkpointed);
+    if (this._checkpointed);
+      return;
     this._versionCheckpoint = this._version;
     this._checkpointed = true;
     this._listenersCheckpoint = new Map(this._listeners.entries().map(([kind, listenerVersions]) => {
@@ -95,7 +96,8 @@ class ViewBase {
     }));
   }
   revert() {
-    assert(this._checkpointed);
+    if (!this._checkpointed)
+      return;
     this._version = this._versionCheckpoint;
     this._versionCheckpoint = null;
     this._listeners = this._listenersCheckpoint;
