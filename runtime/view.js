@@ -105,18 +105,16 @@ class ViewBase {
     return restore(entry, this._scope);
   }
   checkpoint() {
-    console.log('super checkpoint', this._checkpointed, this._type.key);
     if (this._checkpointed)
       return false;
     this._versionCheckpoint = this._version;
     this._checkpointed = true;
-    this._listenersCheckpoint = new Map(this._listeners.entries().map(([kind, listenerVersions]) => {
+    this._listenersCheckpoint = new Map(Array.from(this._listeners.entries()).map(([kind, listenerVersions]) => {
       return [kind, new Map(listenerVersions.entries())];
     }));
     return true;
   }
   revert() {
-    console.log('super revert', this._checkpointed, this._type.key);
     if (!this._checkpointed)
       return false;
     this._version = this._versionCheckpoint;
@@ -197,17 +195,13 @@ class Variable extends ViewBase {
     super.on(kind, callback, trigger);
   }
   checkpoint() {
-    console.log('try cp');
     if (!super.checkpoint())
       return;
-    console.log('cp', this._stored);
     this._storedCheckpoint = this._stored;
   }
   revert() {
-    console.log('try revert');
     if (!super.revert())
       return;
-    console.log('revert', this._storedCheckpoint);
     this._stored = this._storedCheckpoint;
     this._storedCheckpoint = null;
   }
