@@ -26,45 +26,46 @@ var Bar = runtime.testing.testEntityClass('Bar');
 [Foo, Bar].map(a => scope.registerEntityClass(a));
 
 describe('resolver', function() {
-  it('can resolve a partially constructed recipe', function() {
+  it('can resolve a partially constructed recipe', function(done) {
     particles.register(scope);
     var arc = new Arc(scope);
+    let fooView = scope.createView(scope.typeFor(Foo));
     var r = new recipe.RecipeBuilder()
         .addParticle("TestParticle")
             .connectSpec("foo", {typeName: "Foo", mustCreate: false})
             .connectSpec("bar", {typeName: "Bar", mustCreate: true})
         .build();
-    scope.commitSingletons([new Foo("not a Bar")]);
+    fooView.set(new Foo("not a Bar"));
     assert(new Resolver().resolve(r, arc), "recipe resolves");
     r.instantiate(arc);
-    arc.tick();
-    assert.equal(runtime.testing.viewFor(Bar, scope).data.data, "not a Bar1");
+    var barView = scope.findViews(scope.typeFor(Bar))[0];
+    barView.on('change', () => {assert.equal(barView.get().data, "not a Bar1"); done();});
   });
 
-  it('can resolve a recipe from a particles spec', function() {
+  it("can resolve a recipe from a particle's spec", function(done) {
     let scope = new runtime.Scope();
     particles.register(scope);
     var arc = new Arc(scope);
     var r = particles.TestParticle.spec.buildRecipe();
-    scope.commitSingletons([new Foo("not a Bar")]);
-    scope.createViewForTesting(scope.typeFor(Bar));
+    let fooView = scope.createView(scope.typeFor(Foo));
+    let barView = scope.createView(scope.typeFor(Bar));
+    fooView.set(new Foo("not a Bar"));
     new Resolver().resolve(r, arc);
     r.instantiate(arc);
-    arc.tick();
-    assert.equal(runtime.testing.viewFor(Bar, scope).data.data, "not a Bar1");    
+    barView.on('change', () => {assert.equal(barView.get().data, "not a Bar1"); done();});
   });
 
-  it('can resolve a recipe that is just a particle name', function() {
+  it('can resolve a recipe that is just a particle name', function(done) {
     let scope = new runtime.Scope();
     particles.register(scope);
     var arc = new Arc(scope);
     var r = new recipe.RecipeBuilder().addParticle("TestParticle").build();
-    scope.commitSingletons([new Foo("not a Bar")]);
-    scope.createViewForTesting(scope.typeFor(Bar));
+    let fooView = scope.createView(scope.typeFor(Foo));
+    let barView = scope.createView(scope.typeFor(Bar));
+    fooView.set(new Foo("not a Bar"));
     new Resolver().resolve(r, arc);
     r.instantiate(arc);
-    arc.tick();
-    assert.equal(runtime.testing.viewFor(Bar, scope).data.data, "not a Bar1");
+    barView.on('change', () => {assert.equal(barView.get().data, "not a Bar1"); done();});
   });
 
   it("won't resolve a recipe that mentions connections that are not in a particle's connection list", function() {
@@ -77,7 +78,7 @@ describe('resolver', function() {
     assert(!new Resolver().resolve(r, arc), "recipe should not resolve");
   });
 
-  it("will match particle constraints to build a multi-particle arc", function() {
+  it.skip("will match particle constraints to build a multi-particle arc", function() {
     particles.register(scope);
     systemParticles.register(scope);
     var arc = new Arc(scope);
