@@ -21,20 +21,22 @@ var Bar = runtime.testing.testEntityClass('Bar');
 
 describe('recipe', function() {
 
-  it('recipes can load', function() {
+  it('recipes can load', function(done) {
     let scope = new runtime.Scope();
     [Foo, Bar].map(a => scope.registerEntityClass(a));
     particles.register(scope);
     var arc = new Arc(scope);
+    let fooView = scope.createView(scope.typeFor(Foo));
+    let barView = scope.createView(scope.typeFor(Bar));
+
     var r = new recipe.RecipeBuilder()
         .addParticle("TestParticle")
-            .connectView("foo", runtime.testing.viewFor(Foo, scope))
-            .connectView("bar", runtime.testing.viewFor(Bar, scope))
+            .connectView("foo", fooView)
+            .connectView("bar", barView)
         .build();
 
     r.instantiate(arc);
-    scope.commitSingletons([new Foo("not a Bar")]);
-    arc.tick();
-    assert.equal(runtime.testing.viewFor(Bar, scope).data.data, "not a Bar1");
+    fooView.set(new Foo("not a Bar"));
+    barView.on("change", () => { assert.equal(barView.get().data, "not a Bar1"); done();})
   });
 });

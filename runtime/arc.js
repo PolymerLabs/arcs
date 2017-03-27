@@ -69,19 +69,6 @@ class Arc {
     this.particleViewMaps.set(particle, new Map());
   }
 
-  tick() {
-    var trace = tracing.start({cat: "arc", name: "Arc::tick"})
-    var executedParticles = this.particles.filter(p => p.process());
-    executedParticles = executedParticles.concat(this.temporaryParticles.filter(p => p.process()));
-    var writebackTrace = tracing.start({cat: "arc", name: "writeback phase"});
-    let writeMap = new Map();
-    executedParticles.map(p => p.writeback(writeMap));
-    this.scope.newCommit(writeMap);
-    writebackTrace.end();
-    trace.end({args: {executedParticles: executedParticles.length}});
-    return executedParticles.length > 0;
-  }
-
   addView(view) {
     view.arc = this;
     this.views.set(view.type, view);
