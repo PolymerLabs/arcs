@@ -13,12 +13,11 @@ var Particle = require("../../runtime/particle.js").Particle;
 
 class Recommend extends Particle {
 
-  dataUpdated() {
-    if (this.hasRun == undefined && this.population.data.length > 2) {
-      this.recommendations = [this.population.asList()[1]];
-      this.commitData(5);
-      this.hasRun = true;
-    }
+  setViews(views) {
+    this.on(views, 'population', 'change', e => {
+      console.log("storing", e.toList()[1]);
+      views.get('recommendations').store(e.toList()[1])
+    });
   }
 }
 

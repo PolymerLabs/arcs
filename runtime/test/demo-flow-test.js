@@ -43,16 +43,18 @@ function prepareExtensionArc() {
   let scope = new runtime.Scope();
   systemParticles.register(scope);
   var arc = new Arc(scope);
-  var personView = scope.createView(scope.typeFor(Person));
-  var productView = scope.createView(scope.typeFor(Product));
+  var personView = scope.createView(scope.typeFor(Person).viewOf(scope), "peopleFromWebpage");
+  var productView = scope.createView(scope.typeFor(Product).viewOf(scope), "productsFromWebpage");
+  var personSlot = scope.createView(scope.typeFor(Person), "personSlot");
   arc.addView(personView);
   arc.addView(productView);
+  arc.addView(personSlot);
   scope.commit([new Person("Claire"), new Product("Tea Pot"), new Product("Bee Hive"), new Product("Denim Jeans")]);
   return arc;
 }
 
 describe('demo flow', function() {
-  it('flows like a demo', function() {
+  it('flows like a demo', function(done) {
     let arc = prepareExtensionArc();
     // TODO: add a loader to the scope so this fallback can happen automatically.
     ['Create', 'Recommend', 'Save', 'WishlistFor'].forEach(name => {
@@ -77,5 +79,6 @@ describe('demo flow', function() {
     var suggestinator = new Suggestinator();
     suggestinator._getSuggestions = a => [r];
     var results = suggestinator.suggestinate(arc);
+    results.then(r => { console.log(r); done(); })
   });
 });

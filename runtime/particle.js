@@ -12,6 +12,7 @@
 var parser = require("./parser.js");
 var runtime = require("./runtime.js");
 var ParticleSpec = require("./particle-spec.js");
+var tracing = require('../tracelib/trace.js');
 
 function define(def, update) {
   let spec = new ParticleSpec(parser.parse(def));
@@ -28,7 +29,7 @@ function define(def, update) {
     setViews(views) {
       var inputViews = new Map();
       for (let input of this.inputs()) {
-        views.get(input.name).on('change', e => {
+        this.on(views, input.name, 'change', e => {
             var relevance = update(views, e);
             if (relevance !== undefined)
               this.relevance = relevance;
@@ -72,6 +73,12 @@ class Particle {
     return this.spec.outputs;
   }
 
+
+  on(views, name, action, f) {
+    var trace = tracing.start({cat: 'particle', name: this.constructor.name + "::on", args: {view: name, event: action}});
+    views.get(name).on(action, tracing.wrap({cat: 'particle', name: this.constructor.name, args: {view: name, event: action}}, f));
+    trace.end();
+  }
 }
 
 exports.define = define;

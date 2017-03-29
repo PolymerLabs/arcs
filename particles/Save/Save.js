@@ -13,15 +13,15 @@ var Particle = require("../../runtime/particle.js").Particle;
 
 class Save extends Particle {
 
-  dataUpdated() {
-    var list = this.inputs.asList();
-    if (this.watermark == undefined)
-      this.watermark = 0;
-    if (list.length > this.watermark) {
-      this.list = list.slice(this.watermark);
-      this.watermark = list.length;
-      this.commitData(5);
-    }
+  setViews(views) {
+    var list = views.get("list");
+    var watermark = 0;
+    this.on(views, 'inputs', 'change', e => {
+      var inputList = e.toList();
+      console.log("Saving", inputList.slice(watermark));
+      inputList.slice(watermark).map(a => list.store(a));
+      watermark = inputList.length;
+    });
   }
 }
 
