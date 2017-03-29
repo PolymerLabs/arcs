@@ -124,7 +124,7 @@ class Resolver {
   
     // TODO: More complex resolution logic should go here.
     if (connection.spec.mustCreate)
-      context.afterResolution.push(() => { connection.view = context.arc.scope.createView(type); });
+      context.afterResolution.push(() => { connection.view = context.arc.scope.createView(type, connection.constraintName); });
     else
       context.afterResolution.push(() => { connection.view = context.arc.scope.findViews(type)[0]; });
       connection.view = () => context.arc.scope.findViews(type)[0];
@@ -150,6 +150,7 @@ class Resolver {
       return true;
     }
     constrainedConnection = new recipe.RecipeSpecConnection(connection.name, context.connectionSpec);
+    constrainedConnection.constraintName = connection.constraintName;
     if (this.resolveSpecConnection(context, constrainedConnection)) {
       context.constraintNames.set(connection.constraintName, constrainedConnection);
       context.afterResolution.push(() => {

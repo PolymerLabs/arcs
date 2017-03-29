@@ -38,7 +38,8 @@ function restore(entry, scope) {
 }
 
 class ViewBase {
-  constructor(type, scope) {
+  constructor(type, scope, name) {
+    var trace = tracing.start({cat: 'view', name: 'ViewBase::constructor', args: {type: type.key, name: name}});
     this._type = type;
     this._scope = scope;
     this._listeners = new Map();
@@ -47,6 +48,8 @@ class ViewBase {
     this._versionCheckpoint = null;
     this._checkpointed = false;
     this._pendingCallbacks = 0;
+    this.name = name;
+    trace.end();
   }
   get type() {
     return this._type;
@@ -64,30 +67,36 @@ class ViewBase {
     this._version++;
   }
   _fire(kind, details) {
-    var callTrace = tracing.start({cat: 'view', name: 'ViewBase::_fire', args: {kind, type: this._type.key, pending: this._pendingCallbacks}});
     let listeners = Array.from((this._listeners.get(kind) || new Map()).keys());
-    callTrace.update({args: {listeners: listeners.length}});
+    if (listeners.length == 0)
+      return;
+    var callTrace = tracing.start({cat: 'view', name: 'ViewBase::_fire', args: {kind, type: this._type.key, pending: this._pendingCallbacks, name: this.name}});
+    callTrace.update({listeners: listeners.length});
     if (this._pendingCallbacks == 0 && this._dirty) {
-      callTrace.update({args: {dirty: true}});
+      callTrace.update({dirty: true});
       this._dirty();
     }
     this._pendingCallbacks++;
     var trace = tracing.flow({cat: 'view', name: 'ViewBase::_fire flow'}).start();
 
     Promise.resolve().then(() => {
-      var resolveTrace = tracing.start({cat: 'view', name: 'ViewBase::_fire resolve'});
+      var resolveTrace = tracing.start({cat: 'view', name: 'ViewBase::_fire resolve', args: {type: this._type.key, name: this.name}});
       trace.end({args: {listeners: listeners.length}});
       let listenerVersions = this._listeners.get(kind);
+      var versions = [];
       for (let listener of listeners) {
         let version = listenerVersions.get(listener);
+        versions.push(version);
         if (version < this._version) {
           listenerVersions.set(listener, this._version);
           listener(this, details);
         }
       }
+      resolveTrace.update({version: this._version, listenerVersions: versions});
+      resolveTrace.update(this.traceInfo());
       this._pendingCallbacks--;
       if (this._pendingCallbacks == 0 && this._clean) {
-        resolveTrace.update({args: {clean: true}});
+        resolveTrace.update({clean: true});
         this._clean();
       }
       resolveTrace.end();
@@ -128,8 +137,8 @@ class ViewBase {
 }
 
 class View extends ViewBase {
-  constructor(type, scope) {
-    super(type, scope);
+  constructor(type, scope, name) {
+    super(type, scope, name);
     this._items = [];
     this._itemsCheckpoint = null;
   }
@@ -139,6 +148,9 @@ class View extends ViewBase {
         return this._restore(entry);
       }
     }
+  }
+  traceInfo() {
+    return {items: this._items.length};
   }
   query() {
     // TODO
@@ -150,10 +162,20 @@ class View extends ViewBase {
   // thing()
 
   store(entity) {
-    this._items.push(this._serialize(entity));
+    var trace = tracing.start({cat: "view", name: "View::store", args: {name: this.name}});
+    var serialization = this._serialize(entity);
+    this._items.push(serialization);
+    trace.update({entity: serialization});
     this._mutate();
     this._fire('change');
+    trace.end();
   }
+
+  on(kind, callback) {
+    let trigger = kind == 'change';
+    super.on(kind, callback, trigger);
+  }
+
   remove(id) {
     // TODO
   }
@@ -173,10 +195,13 @@ class View extends ViewBase {
 }
 
 class Variable extends ViewBase {
-  constructor(type, scope) {
-    super(type, scope);
+  constructor(type, scope, name) {
+    super(type, scope, name);
     this._stored = null;
     this._storedCheckpoint = null;
+  }
+  traceInfo() {
+    return {stored: this._stored !== null};
   }
   // HACK: this should be async
   get() {

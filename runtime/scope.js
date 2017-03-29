@@ -48,16 +48,16 @@ class Scope {
     return this.findViews(resolved).length > 0;
   }
 
-  createView(type) {
+  createView(type, name) {
     assert(type instanceof Type, "can't createView with a type that isn't a Type");
     type = this._resolveType(type);
     assert(type !== undefined, "couldn't resolve type when creating view");
     if (type.isRelation)
       type = type.viewOf(this);
     if (type.isView) {
-      var v = new view.View(type, this);
+      var v = new view.View(type, this, name);
     } else {
-      var v = new view.Variable(type, this);
+      var v = new view.Variable(type, this, name);
     }
     this.registerView(v);
     return v;
