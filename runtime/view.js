@@ -56,9 +56,9 @@ class ViewBase {
     return this._type;
   }
   // TODO: add 'once' which returns a promise.
-  on(kind, callback, trigger) {
+  on(kind,  callback, target, trigger) {
     let listeners = this._listeners.get(kind) || new Map();
-    listeners.set(callback, -Infinity);
+    listeners.set(callback, {version: -Infinity, target: null});
     this._listeners.set(kind, listeners);
     if (trigger) {
       this._fire(kind);
@@ -81,11 +81,11 @@ class ViewBase {
     this._pendingCallbacks++;
 
     // TODO: wire up a target (particle)
-    let target = null;
     let version = this._version;
     let eventRecords = [];
 
-    for (let callback of listenerMap.keys()) {
+    for (let [callback, registration] of listenerMap.entries()) {
+      let target = registration.target;
       eventRecords.push({target, version, callback, kind, details});
     }
 
@@ -97,10 +97,11 @@ class ViewBase {
   dispatch({kind, callback, version, details}) {
     // TODO: We're currently dropping events.
     version = this._version;
-    if (version <= this._listeners.get(kind).get(callback)) {
+    let registration = this._listeners.get(kind).get(callback);
+    if (version <= registration.version) {
       return;
     }
-    this._listeners.get(kind).set(callback, version);
+    registration.version = version;
     callback(this, details);
   }
 
@@ -128,7 +129,7 @@ class ViewBase {
     this._versionCheckpoint = this._version;
     this._checkpointed = true;
     this._listenersCheckpoint = new Map(Array.from(this._listeners.entries()).map(([kind, listenerVersions]) => {
-      return [kind, new Map(listenerVersions.entries())];
+      return [kind, new Map(listenerVersions.entries().map(([callback, {version, target}]) => [callback, {version, target}]))];
     }));
     return true;
   }
@@ -179,9 +180,9 @@ class View extends ViewBase {
     trace.end();
   }
 
-  on(kind, callback) {
+  on(kind, callback, target) {
     let trigger = kind == 'change';
-    super.on(kind, callback, trigger);
+    super.on(kind, callback, target, trigger);
   }
 
   remove(id) {
@@ -224,9 +225,9 @@ class Variable extends ViewBase {
     this._mutate();
     this._fire('change');
   }
-  on(kind, callback) {
+  on(kind, callback, target) {
     let trigger = kind == 'change';
-    super.on(kind, callback, trigger);
+    super.on(kind, callback, target, trigger);
   }
   checkpoint() {
     if (!super.checkpoint())
