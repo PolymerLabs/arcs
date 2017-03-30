@@ -32,7 +32,7 @@ describe('Arc', function() {
     var particle = new particles.TestParticle(arc);
     arc.connectParticleToView(particle, 'foo', fooView);
     arc.connectParticleToView(particle, 'bar', barView);
-    barView.on('change', () => { assert.equal(barView.get().data, "a Foo1"); done() }); 
+    barView.on('change', () => { assert.equal(barView.get().data, "a Foo1"); done() }, this); 
   });
 
   it('applies new runtime to a particle', function(done) {
@@ -43,7 +43,7 @@ describe('Arc', function() {
     arc.connectParticleToView(particle, 'foo', fooView);
     arc.connectParticleToView(particle, 'bar', barView);
     fooView.set(new Foo('a Foo'));
-    barView.on('change', () => { assert.equal(barView.get().data, "a Foo1"); done() });  
+    barView.on('change', () => { assert.equal(barView.get().data, "a Foo1"); done() }, this);
   });
 
   it('works with inline particle defintions', (done) => {
@@ -59,7 +59,7 @@ describe('Arc', function() {
     let instance = new particleClass(arc);
     arc.connectParticleToView(instance, 'foo', fooView);
     arc.connectParticleToView(instance, 'bar', barView);
-    barView.on('change', () => { assert.equal(barView.get().data, 123); done() }); 
+    barView.on('change', () => { assert.equal(barView.get().data, 123); done() }, this); 
   });
 
 });

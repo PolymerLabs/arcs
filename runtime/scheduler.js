@@ -8,36 +8,60 @@
 'use strict';
 
 const tracing = require("../tracelib/trace.js");
+const assert = require('assert');
 
 class Scheduler {
   constructor() {
     this.frameQueue = [];
+    this.targetMap = new Map();
   }
 
   enqueue(view, eventRecords) {
     var trace = tracing.flow({cat: 'view', name: 'ViewBase::_fire flow'}).start();
-    if (this.frameQueue.length == 0)
+    if (this.frameQueue.length == 0 && eventRecords.length > 0)
       this._asyncProcess();
-    this.frameQueue.push({view, eventRecords, trace});
+    for (var record of eventRecords) {
+      var frame = this.targetMap.get(record.target);
+      if (frame == undefined) {
+        frame = {target: record.target, views: new Map(), traces: []};
+        this.frameQueue.push(frame);
+        this.targetMap.set(record.target, frame);
+      }
+      frame.traces.push(trace);
+      var viewEvents = frame.views.get(view);
+      if (viewEvents == undefined) {
+        viewEvents = [];
+        frame.views.set(view, viewEvents);
+      }
+      viewEvents.push(record);
+    }
   }
 
   _asyncProcess() {
     Promise.resolve().then(() => {
-      let context = this.frameQueue.shift();
+      assert(this.frameQueue.length > 0, "_asyncProcess should not be invoked with 0 length queue");
+      let frame = this.frameQueue.shift();
+      this.targetMap.delete(frame.target);
       if (this.frameQueue.length > 0)
         this._asyncProcess();
-      this._applyFrame(context);
+      this._applyFrame(frame);
     });
   }
 
-  _applyFrame(frameContext) {
-    var trace = tracing.start({cat: 'view', name: 'applyFrame', args: {type: frameContext.view._type.key, name: frameContext.name}});
-    frameContext.trace.end({args: {records: frameContext.eventRecords.length}});
-    for (let record of frameContext.eventRecords) {
-      frameContext.view.dispatch(record);
+  _applyFrame(frame) {
+    var trace = tracing.start({cat: 'scheduler', name: 'Scheduler::_applyFrame', args: {target: frame.target ? frame.target.constructor.name : "NULL TARGET"}});
+
+    var totalRecords = 0;
+    for (var view of frame.views.keys()) {
+      totalRecords += frame.views.get(view).length;
+      for (var record of frame.views.get(view)) {
+        view.dispatch(record);
+        view.pendingCallbackCompleted();
+      }
     }
-    trace.update(frameContext.view.traceInfo());
-    frameContext.view.pendingCallbackCompleted();
+
+    frame.traces.forEach(trace => trace.end({args: {records: totalRecords}}));
+
     trace.end();
   }
 }
