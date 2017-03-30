@@ -27,20 +27,20 @@ class Scheduler {
   enqueue(listenerMap, view, details) {
     var trace = tracing.flow({cat: 'view', name: 'ViewBase::_fire flow'}).start();
     if (this.frameQueue.length == 0)
-      this.asyncProcess();
+      this._asyncProcess();
     this.frameQueue.push(new FrameContext(listenerMap, view, details, trace));
   }
 
-  asyncProcess() {
+  _asyncProcess() {
     Promise.resolve().then(() => {
       let context = this.frameQueue.shift();
       if (this.frameQueue.length > 0)
-        this.asyncProcess();
-      this.applyFrame(context);
+        this._asyncProcess();
+      this._applyFrame(context);
     });
   }
 
-  applyFrame(frameContext) {
+  _applyFrame(frameContext) {
     var trace = tracing.start({cat: 'view', name: 'applyFrame', args: {type: frameContext.view._type.key, name: frameContext.name}});
     frameContext.trace.end({args: {listeners: frameContext.listeners.length}});
     for (let listener of frameContext.listeners) {
