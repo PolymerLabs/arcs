@@ -72,7 +72,7 @@ class ViewBase {
     if (!listenerMap || listenerMap.size == 0)
       return;
 
-    var callTrace = tracing.start({cat: 'view', name: 'ViewBase::_fire', args: {kind, type: this._type.key, 
+    var callTrace = tracing.start({cat: 'view', name: 'ViewBase::_fire', args: {kind, type: this._type.key,
         pending: this._pendingCallbacks, name: this.name, listeners: listenerMap.size}});
 
     if (this._pendingCallbacks == 0 && this._dirty) {
@@ -80,8 +80,28 @@ class ViewBase {
     }
     this._pendingCallbacks++;
 
-    scheduler.enqueue(listenerMap, this, details);
+    // TODO: wire up a target (particle)
+    let target = null;
+    let version = this._version;
+    let eventRecords = [];
+
+    for (let callback of listenerMap.keys()) {
+      eventRecords.push({target, version, callback, kind, details});
+    }
+
+    scheduler.enqueue(this, eventRecords);
+ 
     callTrace.end();
+  }
+
+  dispatch({kind, callback, version, details}) {
+    // TODO: We're currently dropping events.
+    version = this._version;
+    if (version <= this._listeners.get(kind).get(callback)) {
+      return;
+    }
+    this._listeners.get(kind).set(callback, version);
+    callback(this, details);
   }
 
   pendingCallbackCompleted() {
