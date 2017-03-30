@@ -14,6 +14,7 @@ const Entity = require('./entity.js');
 const Relation = require('./relation.js');
 let identifier = Symbols.identifier;
 const tracing = require("../tracelib/trace.js");
+const scheduler = require('./scheduler.js');
 
 // TODO: This won't be needed once runtime is transferred between contexts.
 function cloneData(data) {
@@ -67,42 +68,29 @@ class ViewBase {
     this._version++;
   }
   _fire(kind, details) {
-    let listeners = Array.from((this._listeners.get(kind) || new Map()).keys());
-    if (listeners.length == 0)
+    var listenerMap = this._listeners.get(kind);
+    if (!listenerMap || listenerMap.size == 0)
       return;
-    var callTrace = tracing.start({cat: 'view', name: 'ViewBase::_fire', args: {kind, type: this._type.key, pending: this._pendingCallbacks, name: this.name}});
-    callTrace.update({listeners: listeners.length});
+
+    var callTrace = tracing.start({cat: 'view', name: 'ViewBase::_fire', args: {kind, type: this._type.key, 
+        pending: this._pendingCallbacks, name: this.name, listeners: listenerMap.size}});
+
     if (this._pendingCallbacks == 0 && this._dirty) {
-      callTrace.update({dirty: true});
       this._dirty();
     }
     this._pendingCallbacks++;
-    var trace = tracing.flow({cat: 'view', name: 'ViewBase::_fire flow'}).start();
 
-    Promise.resolve().then(() => {
-      var resolveTrace = tracing.start({cat: 'view', name: 'ViewBase::_fire resolve', args: {type: this._type.key, name: this.name}});
-      trace.end({args: {listeners: listeners.length}});
-      let listenerVersions = this._listeners.get(kind);
-      var versions = [];
-      for (let listener of listeners) {
-        let version = listenerVersions.get(listener);
-        versions.push(version);
-        if (version < this._version) {
-          listenerVersions.set(listener, this._version);
-          listener(this, details);
-        }
-      }
-      resolveTrace.update({version: this._version, listenerVersions: versions});
-      resolveTrace.update(this.traceInfo());
-      this._pendingCallbacks--;
-      if (this._pendingCallbacks == 0 && this._clean) {
-        resolveTrace.update({clean: true});
-        this._clean();
-      }
-      resolveTrace.end();
-    });
+    scheduler.enqueue(listenerMap, this, details);
     callTrace.end();
   }
+
+  pendingCallbackCompleted() {
+    this._pendingCallbacks--;
+    if (this._pendingCallbacks == 0 && this._clean) {
+      this._clean();
+    }
+  }
+
   _serialize(entity) {
     let id = entity[identifier];
     let data = cloneData(entity.toLiteral());
