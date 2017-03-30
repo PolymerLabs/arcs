@@ -37,6 +37,6 @@ describe('recipe', function() {
 
     r.instantiate(arc);
     fooView.set(new Foo("not a Bar"));
-    barView.on("change", () => { assert.equal(barView.get().data, "not a Bar1"); done();})
+    barView.on("change", () => { assert.equal(barView.get().data, "not a Bar1"); done();}, this);
   });
 });

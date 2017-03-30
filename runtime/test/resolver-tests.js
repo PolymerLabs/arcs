@@ -39,7 +39,7 @@ describe('resolver', function() {
     assert(new Resolver().resolve(r, arc), "recipe resolves");
     r.instantiate(arc);
     var barView = scope.findViews(scope.typeFor(Bar))[0];
-    barView.on('change', () => {assert.equal(barView.get().data, "not a Bar1"); done();});
+    barView.on('change', () => {assert.equal(barView.get().data, "not a Bar1"); done();}, this);
   });
 
   it("can resolve a recipe from a particle's spec", function(done) {
@@ -52,7 +52,7 @@ describe('resolver', function() {
     fooView.set(new Foo("not a Bar"));
     new Resolver().resolve(r, arc);
     r.instantiate(arc);
-    barView.on('change', () => {assert.equal(barView.get().data, "not a Bar1"); done();});
+    barView.on('change', () => {assert.equal(barView.get().data, "not a Bar1"); done();}, this);
   });
 
   it('can resolve a recipe that is just a particle name', function(done) {
@@ -65,7 +65,7 @@ describe('resolver', function() {
     fooView.set(new Foo("not a Bar"));
     new Resolver().resolve(r, arc);
     r.instantiate(arc);
-    barView.on('change', () => {assert.equal(barView.get().data, "not a Bar1"); done();});
+    barView.on('change', () => {assert.equal(barView.get().data, "not a Bar1"); done();}, this);
   });
 
   it("won't resolve a recipe that mentions connections that are not in a particle's connection list", function() {
