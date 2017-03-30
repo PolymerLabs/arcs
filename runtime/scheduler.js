@@ -14,6 +14,7 @@ class Scheduler {
   constructor() {
     this.frameQueue = [];
     this.targetMap = new Map();
+    this._finishNotifiers = [];
   }
 
   enqueue(view, eventRecords) {
@@ -37,6 +38,13 @@ class Scheduler {
     }
   }
 
+  finish() {
+    assert(this.frameQueue.length > 0);
+    return new Promise((resolve, reject) => {
+      this._finishNotifiers.push(resolve);
+    });
+  }
+
   _asyncProcess() {
     Promise.resolve().then(() => {
       assert(this.frameQueue.length > 0, "_asyncProcess should not be invoked with 0 length queue");
@@ -45,6 +53,10 @@ class Scheduler {
       if (this.frameQueue.length > 0)
         this._asyncProcess();
       this._applyFrame(frame);
+      if (this.frameQueue.length == 0) {
+        this._finishNotifiers.forEach(f => f());
+        this._finishNotifiers = [];
+      }
     });
   }
 
@@ -56,7 +68,6 @@ class Scheduler {
       totalRecords += frame.views.get(view).length;
       for (var record of frame.views.get(view)) {
         view.dispatch(record);
-        view.pendingCallbackCompleted();
       }
     }
 

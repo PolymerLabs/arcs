@@ -11,6 +11,7 @@
 
 let assert = require('assert');
 var tracing = require('../tracelib/trace.js');
+const scheduler = require('./scheduler.js');
 
 class Speculator {
 
@@ -23,38 +24,14 @@ class Speculator {
       arc.resetRelevance();
       let views = [].concat(...Array.from(arc.scope._viewsByType.values()));
 
-      var dirtyCount = 0;
-      function clean() {
-        assert(dirtyCount > 0, "clean called but I'm not dirty");
-        dirtyCount--;
-        if (dirtyCount == 0) {
-          views.forEach(view => {
-            view._clean = null;
-            view._dirty = null;
-          });
-          var relevance = arc.relevance;
-          arc.revert();
-          resolve(relevance);
-          trace.end();
-        } else {
-          trace.step();
-        }
-      }
-
-      function dirty() {
-        dirtyCount++;
-        trace.step();
-      }
-
-      views.forEach(view => {
-        if (view._pendingCallbacks > 0) {
-          dirtyCount++;
-        }
-        view._clean = clean;
-        view._dirty = dirty;
-      });
-
       plan.instantiate(arc);
+      scheduler.finish().then(() => {
+
+        var relevance = arc.relevance;
+        arc.revert();
+        resolve(relevance);
+        trace.end();
+      });
       internalTrace.end();
     });
     callTrace.end();

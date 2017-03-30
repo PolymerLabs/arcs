@@ -48,7 +48,6 @@ class ViewBase {
     this._version = 0;
     this._versionCheckpoint = null;
     this._checkpointed = false;
-    this._pendingCallbacks = 0;
     this.name = name;
     trace.end();
   }
@@ -74,12 +73,7 @@ class ViewBase {
       return;
 
     var callTrace = tracing.start({cat: 'view', name: 'ViewBase::_fire', args: {kind, type: this._type.key,
-        pending: this._pendingCallbacks, name: this.name, listeners: listenerMap.size}});
-
-    if (this._pendingCallbacks == 0 && this._dirty) {
-      this._dirty();
-    }
-    this._pendingCallbacks++;
+        name: this.name, listeners: listenerMap.size}});
 
     // TODO: wire up a target (particle)
     let version = this._version;
@@ -104,13 +98,6 @@ class ViewBase {
     }
     registration.version = version;
     callback(this, details);
-  }
-
-  pendingCallbackCompleted() {
-    this._pendingCallbacks--;
-    if (this._pendingCallbacks == 0 && this._clean) {
-      this._clean();
-    }
   }
 
   _serialize(entity) {
