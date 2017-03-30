@@ -9,26 +9,16 @@
 
 const tracing = require("../tracelib/trace.js");
 
-class FrameContext {
-  constructor(listenerMap, view, details, trace) {
-    this.listeners = Array.from(listenerMap.keys());
-    this.listenerVersions = listenerMap;
-    this.view = view;
-    this.details = details;
-    this.trace = trace;
-  }
-}
-
 class Scheduler {
   constructor() {
     this.frameQueue = [];
   }
 
-  enqueue(listenerMap, view, details) {
+  enqueue(view, eventRecords) {
     var trace = tracing.flow({cat: 'view', name: 'ViewBase::_fire flow'}).start();
     if (this.frameQueue.length == 0)
       this._asyncProcess();
-    this.frameQueue.push(new FrameContext(listenerMap, view, details, trace));
+    this.frameQueue.push({view, eventRecords, trace});
   }
 
   _asyncProcess() {
@@ -42,13 +32,9 @@ class Scheduler {
 
   _applyFrame(frameContext) {
     var trace = tracing.start({cat: 'view', name: 'applyFrame', args: {type: frameContext.view._type.key, name: frameContext.name}});
-    frameContext.trace.end({args: {listeners: frameContext.listeners.length}});
-    for (let listener of frameContext.listeners) {
-      let version = frameContext.listenerVersions.get(listener);
-      if (version < frameContext.view._version) {
-        frameContext.listenerVersions.set(listener, frameContext.view._version);
-        listener(frameContext.view, frameContext.details);
-      }
+    frameContext.trace.end({args: {records: frameContext.eventRecords.length}});
+    for (let record of frameContext.eventRecords) {
+      frameContext.view.dispatch(record);
     }
     trace.update(frameContext.view.traceInfo());
     frameContext.view.pendingCallbackCompleted();
