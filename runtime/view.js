@@ -59,7 +59,7 @@ class ViewBase {
     listeners.set(callback, {version: -Infinity, target});
     this._listeners.set(kind, listeners);
     if (trigger) {
-      this._fire(kind);
+      scheduler.enqueue(this, [{target, callback, kind}])
     }
   }
 

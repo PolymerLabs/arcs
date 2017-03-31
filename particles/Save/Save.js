@@ -17,7 +17,7 @@ class Save extends Particle {
     var list = views.get("list");
     var watermark = 0;
     this.on(views, 'inputs', 'change', e => {
-      var inputList = e.toList();
+      var inputList = views.get('inputs').toList();
       console.log("Saving", inputList.slice(watermark));
       inputList.slice(watermark).map(a => list.store(a));
       watermark = inputList.length;
