@@ -31,10 +31,15 @@ class Scheduler {
       frame.traces.push(trace);
       var viewEvents = frame.views.get(view);
       if (viewEvents == undefined) {
-        viewEvents = [];
+        viewEvents = new Map();
         frame.views.set(view, viewEvents);
       }
-      viewEvents.push(record);
+      var kindEvents = viewEvents.get(record.kind);
+      if (kindEvents == undefined) {
+        kindEvents = [];
+        viewEvents.set(record.kind, kindEvents);
+      }
+      kindEvents.push(record);
     }
   }
 
@@ -65,13 +70,15 @@ class Scheduler {
 
     var totalRecords = 0;
     for (var view of frame.views.keys()) {
-      totalRecords += frame.views.get(view).length;
-      for (var record of frame.views.get(view)) {
-        view.dispatch(record);
+      var kinds = frame.views.get(view);
+      for (var kind of kinds.keys()) {
+        var records = kinds.get(kind);
+        var record = records[records.length - 1];
+        record.callback(record.details);
       }
     }
 
-    frame.traces.forEach(trace => trace.end({args: {records: totalRecords}}));
+    frame.traces.forEach(trace => trace.end());
 
     trace.end();
   }
