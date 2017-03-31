@@ -45,8 +45,6 @@ class ViewBase {
     this._scope = scope;
     this._listeners = new Map();
     this._listenersCheckpoint = null;
-    this._version = 0;
-    this._versionCheckpoint = null;
     this._checkpointed = false;
     this.name = name;
     trace.end();
@@ -64,9 +62,7 @@ class ViewBase {
       this._fire(kind);
     }
   }
-  _mutate() {
-    this._version++;
-  }
+
   _fire(kind, details) {
     var listenerMap = this._listeners.get(kind);
     if (!listenerMap || listenerMap.size == 0)
@@ -76,28 +72,16 @@ class ViewBase {
         name: this.name, listeners: listenerMap.size}});
 
     // TODO: wire up a target (particle)
-    let version = this._version;
     let eventRecords = [];
 
     for (let [callback, registration] of listenerMap.entries()) {
       let target = registration.target;
-      eventRecords.push({target, version, callback, kind, details});
+      eventRecords.push({target, callback, kind, details});
     }
 
     scheduler.enqueue(this, eventRecords);
  
     callTrace.end();
-  }
-
-  dispatch({kind, callback, version, details}) {
-    // TODO: We're currently dropping events.
-    version = this._version;
-    let registration = this._listeners.get(kind).get(callback);
-    if (version <= registration.version) {
-      return;
-    }
-    registration.version = version;
-    callback(this, details);
   }
 
   _serialize(entity) {
@@ -114,7 +98,6 @@ class ViewBase {
   checkpoint() {
     if (this._checkpointed)
       return false;
-    this._versionCheckpoint = this._version;
     this._checkpointed = true;
     this._listenersCheckpoint = new Map(Array.from(this._listeners.entries()).map(([kind, listenerVersions]) => {
       return [kind, new Map(listenerVersions.entries().map(([callback, {version, target}]) => [callback, {version, target}]))];
@@ -124,8 +107,6 @@ class ViewBase {
   revert() {
     if (!this._checkpointed)
       return false;
-    this._version = this._versionCheckpoint;
-    this._versionCheckpoint = null;
     this._listeners = this._listenersCheckpoint;
     this._listenersCheckpoint = null;
     this._checkpointed = false;
@@ -163,7 +144,6 @@ class View extends ViewBase {
     var serialization = this._serialize(entity);
     this._items.push(serialization);
     trace.update({entity: serialization});
-    this._mutate();
     this._fire('change');
     trace.end();
   }
@@ -210,7 +190,6 @@ class Variable extends ViewBase {
     if (entity[identifier] == undefined)
       entity[identifier] = this._scope._newIdentifier(this, this._scope.typeFor(entity));
     this._stored = this._serialize(entity);
-    this._mutate();
     this._fire('change');
   }
   on(kind, callback, target) {
