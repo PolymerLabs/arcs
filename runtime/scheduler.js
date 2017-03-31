@@ -69,10 +69,8 @@ class Scheduler {
     var trace = tracing.start({cat: 'scheduler', name: 'Scheduler::_applyFrame', args: {target: frame.target ? frame.target.constructor.name : "NULL TARGET"}});
 
     var totalRecords = 0;
-    for (var view of frame.views.keys()) {
-      var kinds = frame.views.get(view);
-      for (var kind of kinds.keys()) {
-        var records = kinds.get(kind);
+    for (let [view, kinds] of frame.views.entries()) {
+      for (let [kind, records] of kinds.entries()) {
         var record = records[records.length - 1];
         record.callback(record.details);
       }
