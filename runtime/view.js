@@ -57,7 +57,7 @@ class ViewBase {
   }
   // TODO: add 'once' which returns a promise.
   on(kind,  callback, target, trigger) {
-    assert(target !== undefined);
+    assert(target !== undefined, "must provide a target to register a view event handler");
     let listeners = this._listeners.get(kind) || new Map();
     listeners.set(callback, {version: -Infinity, target});
     this._listeners.set(kind, listeners);
