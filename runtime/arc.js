@@ -24,8 +24,6 @@ class Arc {
     this.particles = [];
     this.views = new Set();
     this._viewsByType = new Map();
-    this.checkpointed = false;
-    this.temporaryParticles = [];
     this._relevance = 1;
     this.particleViewMaps = new Map();
   }
@@ -46,10 +44,6 @@ class Arc {
       p.relevances.forEach(r => this.updateRelevance(r));
       p.relevances = [];
     });
-    this.temporaryParticles.forEach(p => {
-      p.relevances.forEach(r => this.updateRelevance(r));
-      p.relevances = [];
-    });
     return this._relevance;
   }
 
@@ -66,33 +60,6 @@ class Arc {
   resetRelevance() {
     this._relevance = 1;
     this.particles.forEach(p => p.relevances = []);
-    this.temporaryParticles.forEach(p => p.relevances = []);
-  }
-
-  checkpoint() {
-    assert(!this.checkpointed, "checkpoint called on arc, but arc already checkpointed");
-    this.checkpointed = true;
-    this.particles.forEach(p => {
-      var viewMap = this.particleViewMaps.get(p);
-      for (var v of viewMap.values())
-        v.checkpoint();
-    });
-  }
-
-  revert() {
-    assert(this.checkpointed, "revert called on arc, but arc isn't checkpointed");
-    this.checkpointed = false;
-    this.temporaryParticles.forEach(p => {
-      var viewMap = this.particleViewMaps.get(p);
-      for (var v of viewMap.values())
-        v.revert();
-    });
-    this.temporaryParticles = [];
-    this.particles.forEach(p => {
-      var viewMap = this.particleViewMaps.get(p);
-      for (var v of viewMap.values())
-        v.revert();
-    });
   }
 
   connectParticleToView(particle, name, view) {
@@ -118,9 +85,6 @@ class Arc {
   }
 
   register(particle) {
-    if (this.checkpointed) {
-      this.temporaryParticles.push(particle);
-    }
     this.particles.push(particle);
     this.particleViewMaps.set(particle, new Map());
   }
