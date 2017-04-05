@@ -43,13 +43,10 @@ function prepareExtensionArc() {
   let scope = new runtime.Scope();
   systemParticles.register(scope);
   var arc = new Arc(scope);
-  var personView = scope.createView(scope.typeFor(Person).viewOf(scope), "peopleFromWebpage");
-  var productView = scope.createView(scope.typeFor(Product).viewOf(scope), "productsFromWebpage");
-  var personSlot = scope.createView(scope.typeFor(Person), "personSlot");
-  arc.addView(personView);
-  arc.addView(productView);
-  arc.addView(personSlot);
-  scope.commit([new Person("Claire"), new Product("Tea Pot"), new Product("Bee Hive"), new Product("Denim Jeans")]);
+  var personView = arc.createView(scope.typeFor(Person).viewOf(scope), "peopleFromWebpage");
+  var productView = arc.createView(scope.typeFor(Product).viewOf(scope), "productsFromWebpage");
+  var personSlot = arc.createView(scope.typeFor(Person), "personSlot");
+  arc.commit([new Person("Claire"), new Product("Tea Pot"), new Product("Bee Hive"), new Product("Denim Jeans")]);
   return arc;
 }
 

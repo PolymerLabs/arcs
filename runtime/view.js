@@ -49,6 +49,7 @@ class ViewBase {
     this.name = name;
     trace.end();
   }
+
   get type() {
     return this._type;
   }
@@ -120,6 +121,13 @@ class View extends ViewBase {
     this._items = [];
     this._itemsCheckpoint = null;
   }
+
+  clone() {
+    var view = new View(this._type, this._scope, this.name);
+    view._items = this._items;
+    return view;
+  }
+
   get(id) {
     for (let entry of this._items) {
       if (JSON.stringify(entry.id) == JSON.stringify(id)) {
@@ -177,6 +185,13 @@ class Variable extends ViewBase {
     this._stored = null;
     this._storedCheckpoint = null;
   }
+
+  clone() {
+    var variable = new Variable(this._type, this._scope, this.name);
+    variable._stored = this._stored;
+    return variable;
+  }
+
   traceInfo() {
     return {stored: this._stored !== null};
   }
