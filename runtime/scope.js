@@ -26,32 +26,15 @@ class Scope {
     this._nextIdentifier = 1;
     this._viewsByType = new Map();
     this._particles = new Map();
-    this._variableBindings = new Map();
-    this._pendingViewChecks = [];
   }
 
   findViews(type, options) {
-    var resolved = this._resolveType(type);
-    if (resolved == undefined) {
-      return undefined;
-    }
     // TODO: use options (location, labels, etc.) somehow.
-    return this._viewsByType.get(resolved) || [];
-  }
-
-  viewExists(type) {
-    var resolved = this._resolveType(type);
-    if (resolved == undefined) {
-      this._pendingViewChecks.push(type);
-      return -1;
-    }
-    return this.findViews(resolved).length > 0;
+    return this._viewsByType.get(type) || [];
   }
 
   createView(type, name) {
     assert(type instanceof Type, "can't createView with a type that isn't a Type");
-    type = this._resolveType(type);
-    assert(type !== undefined, "couldn't resolve type when creating view");
     if (type.isRelation)
       type = type.viewOf(this);
     if (type.isView) {
@@ -67,23 +50,9 @@ class Scope {
     this._viewFor(type);
   }
 
-  resolve(typeVar, type) {
-    assert(typeVar.isVariable, "can't resolve a type variable that isn't a type variable");
-    assert(this._variableBindings.get(typeVar.variableID) == undefined, "can't re-resolve an already resolved type variable");
-    // TODO: check for circularity of references?
-    this._variableBindings.set(typeVar.variableID, type);
-    // TODO: this should drop pending view checks as they actually return true
-    if (this._pendingViewChecks.map(a => this.viewExists(a)).reduce((a,b) => a && b, true) == false) {
-      this._variableBindings.remove(typeVar.variableID);
-      return false;
-    }
-    return true;
-  }
-
   _viewFor(type) {
     assert(type instanceof Type, "can't _viewFor a type that isn't a Type");
     assert(type.isValid, "invalid type specifier");
-    type = this._resolveType(type);
     if (type == undefined)
       return undefined;
     if (type.isRelation)
@@ -91,22 +60,6 @@ class Scope {
     if (type.isView)
       return this._viewForList(type);
     return this._singletonView(type);
-  }
-
-  _resolveType(type) {
-    if (type.isView) {
-      var resolved = this._resolveType(type.primitiveType(this));
-      if (resolved == undefined) 
-        return undefined;
-      return resolved.viewOf(this);
-    }
-    
-    if (type.isVariable) {
-      var t = this._variableBindings.get(type.variableID);
-      return t;
-    }
-
-    return type;
   }
 
   _viewForRelation(type) {
