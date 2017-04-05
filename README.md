@@ -14,6 +14,8 @@ $ (cd tracelib && npm install)
 $ (cd runtime && npm test)
 ```
 
+If there are unhandled promise exceptions without stack traces, use `./node_modules/.bin/mocha --trace-warnings`.
+
 ## Trace
 ```
 $ cd runtime
