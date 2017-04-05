@@ -128,7 +128,7 @@ class Resolver {
       context.pendingViewChecks.push(type);
       return -1;
     }
-    return context.arc.scope.findViews(resolved).length > 0;
+    return context.arc.findViews(resolved).length > 0;
   }
 
   _resolveType(context, type) {

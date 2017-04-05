@@ -22,7 +22,6 @@ class Speculator {
     return new Promise((resolve, reject) => {
       var internalTrace = tracing.start({cat: "speculator", name: "Speculator::speculate internal"});
       newArc.resetRelevance();
-      let views = [].concat(...Array.from(newArc.scope._viewsByType.values()));
 
       plan.instantiate(newArc);
       scheduler.finish().then(() => {

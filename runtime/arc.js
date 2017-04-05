@@ -14,6 +14,7 @@ var assert = require("assert");
 var tracing = require("../tracelib/trace.js");
 const Type = require('./type.js');
 const view = require('./view.js');
+const Relation = require('./relation.js');
 var PEC = require('./particle-execution-context.js');
 
 class Arc {
@@ -27,6 +28,17 @@ class Arc {
     this.temporaryParticles = [];
     this._relevance = 1;
     this.particleViewMaps = new Map();
+  }
+
+  clone() {
+    var arc = new Arc(this.scope.clone());
+    var viewMap = new Map();
+    this.views.forEach(v => viewMap.set(v, v.clone()));
+    arc.particles = this.particles.map(p => p.clone(viewMap));
+    for (let v of viewMap.values())
+      arc.registerView(v);
+    arc._viewMap = viewMap;
+    return arc;
   }
 
   get relevance() {
@@ -57,15 +69,6 @@ class Arc {
     this.temporaryParticles.forEach(p => p.relevances = []);
   }
 
-  clone() {
-    var arc = new Arc(this.scope.clone());
-    var viewMap = new Map();
-    this.views.forEach(v => viewMap.set(v, v.clone()));
-    arc.particles = this.particles.map(p => p.clone(viewMap));
-    arc.views = new Set(viewMap.values());
-    return arc;
-  }
-
   checkpoint() {
     assert(!this.checkpointed, "checkpoint called on arc, but arc already checkpointed");
     this.checkpointed = true;
@@ -93,6 +96,11 @@ class Arc {
   }
 
   connectParticleToView(particle, name, view) {
+    // If speculatively executing then we need to translate the view
+    // in the plan to its clone.
+    if (this._viewMap) {
+      view = this._viewMap.get(view);
+    }
     assert(this.views.has(view), "view of type " + view.type.key + " not visible to arc");
     var viewMap = this.particleViewMaps.get(particle);
     assert(particle.spec.connectionMap.get(name) !== undefined, "can't connect view to a view slot that doesn't exist");
@@ -149,6 +157,37 @@ class Arc {
     view.arc = this;
     this.views.add(view);
   }
+
+  _viewFor(type) {
+    let views = this.findViews(type);
+    if (views.length > 0) {
+      return views[0];
+    }
+
+    return this.createView(type, "automatically created for _viewFor");
+  }
+
+  commit(entities) {
+    let entityMap = new Map();
+    for (let entity of entities) {
+      entityMap.set(entity, this._viewFor(this.scope.typeFor(entity).viewOf(this.scope)));
+    }
+    for (let entity of entities) {
+      if (entity instanceof Relation) {
+        entity.entities.forEach(entity => entityMap.set(entity, this._viewFor(this.scope.typeFor(entity).viewOf(this.scope))));
+      }
+    }
+    this.newCommit(entityMap);
+  }
+
+  newCommit(entityMap) {
+    for (let [entity, view] of entityMap.entries()) {
+      entity.identify(view, this.scope);
+    }
+    for (let [entity, view] of entityMap.entries()) {
+      view.store(entity);
+    }
+  }  
 }
 
 module.exports = Arc;

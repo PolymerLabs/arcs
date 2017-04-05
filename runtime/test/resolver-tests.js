@@ -38,7 +38,7 @@ describe('resolver', function() {
     fooView.set(new Foo("not a Bar"));
     assert(Resolver.resolve(r, arc), "recipe resolves");
     r.instantiate(arc);
-    var barView = scope.findViews(scope.typeFor(Bar))[0];
+    var barView = arc.findViews(scope.typeFor(Bar))[0];
     barView.on('change', () => {assert.equal(barView.get().data, "not a Bar1"); done();}, this);
   });
 
