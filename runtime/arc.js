@@ -12,6 +12,8 @@
 var runtime = require("./runtime.js");
 var assert = require("assert");
 var tracing = require("../tracelib/trace.js");
+const Type = require('./type.js');
+const view = require('./view.js');
 var PEC = require('./particle-execution-context.js');
 
 class Arc {
@@ -20,6 +22,7 @@ class Arc {
     this.scope = scope;
     this.particles = [];
     this.views = new Set();
+    this._viewsByType = new Map();
     this.checkpointed = false;
     this.temporaryParticles = [];
     this._relevance = 1;
@@ -55,10 +58,12 @@ class Arc {
   }
 
   clone() {
-    var arc = new arc(this.scope.clone());
+    var arc = new Arc(this.scope.clone());
     var viewMap = new Map();
     this.views.forEach(v => viewMap.set(v, v.clone()));
-    this.particles.forEach()
+    arc.particles = this.particles.map(p => p.clone(viewMap));
+    arc.views = new Set(viewMap.values());
+    return arc;
   }
 
   checkpoint() {
@@ -113,9 +118,31 @@ class Arc {
   }
 
   createView(type, name) {
-    var view = this.scope.createView(type, name);
+    assert(type instanceof Type, "can't createView with a type that isn't a Type");
+    if (type.isRelation)
+      type = type.viewOf(this);
+    if (type.isView) {
+      var v = new view.View(type, this.scope, name);
+    } else {
+      var v = new view.Variable(type, this.scope, name);
+    }
+    this.registerView(v);
+    return v;
+  }
+
+  registerView(view) {
+    let views = this.findViews(view.type);
+    if (!views.length) {
+      this._viewsByType.set(view.type, views);
+    }
+    views.push(view);
+
     this.addView(view);
-    return view;
+  }
+
+  findViews(type, options) {
+    // TODO: use options (location, labels, etc.) somehow.
+    return this._viewsByType.get(type) || [];
   }
 
   addView(view) {
