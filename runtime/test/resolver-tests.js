@@ -36,7 +36,7 @@ describe('resolver', function() {
             .connectSpec("bar", {typeName: "Bar", mustCreate: true})
         .build();
     fooView.set(new Foo("not a Bar"));
-    assert(new Resolver().resolve(r, arc), "recipe resolves");
+    assert(Resolver.resolve(r, arc), "recipe resolves");
     r.instantiate(arc);
     var barView = scope.findViews(scope.typeFor(Bar))[0];
     barView.on('change', () => {assert.equal(barView.get().data, "not a Bar1"); done();}, this);
@@ -50,7 +50,7 @@ describe('resolver', function() {
     let fooView = scope.createView(scope.typeFor(Foo));
     let barView = scope.createView(scope.typeFor(Bar));
     fooView.set(new Foo("not a Bar"));
-    new Resolver().resolve(r, arc);
+    Resolver.resolve(r, arc);
     r.instantiate(arc);
     barView.on('change', () => {assert.equal(barView.get().data, "not a Bar1"); done();}, this);
   });
@@ -63,7 +63,7 @@ describe('resolver', function() {
     let fooView = scope.createView(scope.typeFor(Foo));
     let barView = scope.createView(scope.typeFor(Bar));
     fooView.set(new Foo("not a Bar"));
-    new Resolver().resolve(r, arc);
+    Resolver.resolve(r, arc);
     r.instantiate(arc);
     barView.on('change', () => {assert.equal(barView.get().data, "not a Bar1"); done();}, this);
   });
@@ -75,7 +75,7 @@ describe('resolver', function() {
         .addParticle("TestParticle")
             .connectSpec("herp", {typeName: "Foo", mustCreate: false})
         .build();
-    assert(!new Resolver().resolve(r, arc), "recipe should not resolve");
+    assert(!Resolver.resolve(r, arc), "recipe should not resolve");
   });
 
   it.skip("will match particle constraints to build a multi-particle arc", function() {
@@ -89,7 +89,7 @@ describe('resolver', function() {
             .connectConstraint("foo", "shared")
         .build();
     scope.commit([new Foo(1), new Foo(2), new Foo(3)]);
-    assert(new Resolver().resolve(r, arc), "recipe should resolve");
+    assert(Resolver.resolve(r, arc), "recipe should resolve");
     r.instantiate(arc);
     arc.tick(); arc.tick();
     assert.equal(runtime.testing.viewFor(Bar, scope).data.data, 2);

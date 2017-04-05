@@ -15,7 +15,6 @@ var tracing = require('../tracelib/trace.js');
 
 class Suggestinator {
   constructor() {
-    this.resolver = new Resolver();
     this.speculator = new Speculator();
   }
 
@@ -28,7 +27,7 @@ class Suggestinator {
     var trace = tracing.start({cat: "suggestinator", name: "Suggestinator::suggestinate"});
     var suggestions = this._getSuggestions(arc);
     trace.update({suggestions: suggestions.length});
-    suggestions = suggestions.filter(suggestion => this.resolver.resolve(suggestion, arc));
+    suggestions = suggestions.filter(suggestion => Resolver.resolve(suggestion, arc));
     
     for (var suggestion of suggestions)
       suggestion.rank = await this.speculator.speculate(arc, suggestion);
