@@ -24,8 +24,16 @@ class Scope {
     this._nextType = 1;
     // TODO: more elaborate identifier keys
     this._nextIdentifier = 1;
-    this._viewsByType = new Map();
     this._particles = new Map();
+  }
+
+  clone() {
+    assert(this._pendingViewChecks.length == 0);
+    var scope = new Scope();
+    for (let [key, value] of this._types.entries())
+      scope._types.set(key, value);
+    scope._nextType = this._nextType;
+    scope._nextIdentifier = this._nextIdentifier;
   }
 
   findViews(type, options) {

@@ -169,7 +169,7 @@ class Resolver {
     if (connection.spec.mustCreate)
       context.afterResolution.push(() => { connection.view = context.arc.createView(type, connection.constraintName); });
     else
-      context.afterResolution.push(() => { connection.view = context.arc.scope.findViews(type)[0]; });
+      context.afterResolution.push(() => { connection.view = context.arc.findViews(type)[0]; });
       connection.view = () => context.arc.scope.findViews(type)[0];
     connection.type = type;
     trace.end({resolved: true});
