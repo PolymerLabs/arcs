@@ -25,8 +25,8 @@ describe('speculator', function() {
     let scope = new runtime.Scope();
     particles.register(scope);
     var arc = new Arc(scope);
-    let fooView = scope.createView(scope.typeFor(Foo));
-    let barView = scope.createView(scope.typeFor(Bar));
+    let fooView = arc.createView(scope.typeFor(Foo));
+    let barView = arc.createView(scope.typeFor(Bar));
     var r = new recipe.RecipeBuilder()
         .addParticle("TestParticle")
             .connectView("foo", fooView)

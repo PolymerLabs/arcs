@@ -29,7 +29,7 @@ describe('resolver', function() {
   it('can resolve a partially constructed recipe', function(done) {
     particles.register(scope);
     var arc = new Arc(scope);
-    let fooView = scope.createView(scope.typeFor(Foo));
+    let fooView = arc.createView(scope.typeFor(Foo));
     var r = new recipe.RecipeBuilder()
         .addParticle("TestParticle")
             .connectSpec("foo", {typeName: "Foo", mustCreate: false})
@@ -47,8 +47,8 @@ describe('resolver', function() {
     particles.register(scope);
     var arc = new Arc(scope);
     var r = particles.TestParticle.spec.buildRecipe();
-    let fooView = scope.createView(scope.typeFor(Foo));
-    let barView = scope.createView(scope.typeFor(Bar));
+    let fooView = arc.createView(scope.typeFor(Foo));
+    let barView = arc.createView(scope.typeFor(Bar));
     fooView.set(new Foo("not a Bar"));
     Resolver.resolve(r, arc);
     r.instantiate(arc);
@@ -60,8 +60,8 @@ describe('resolver', function() {
     particles.register(scope);
     var arc = new Arc(scope);
     var r = new recipe.RecipeBuilder().addParticle("TestParticle").build();
-    let fooView = scope.createView(scope.typeFor(Foo));
-    let barView = scope.createView(scope.typeFor(Bar));
+    let fooView = arc.createView(scope.typeFor(Foo));
+    let barView = arc.createView(scope.typeFor(Bar));
     fooView.set(new Foo("not a Bar"));
     Resolver.resolve(r, arc);
     r.instantiate(arc);

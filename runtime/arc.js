@@ -12,17 +12,30 @@
 var runtime = require("./runtime.js");
 var assert = require("assert");
 var tracing = require("../tracelib/trace.js");
+var PEC = require('./particle-execution-context.js');
 
 class Arc {
   constructor(scope) {
     assert(scope instanceof runtime.Scope, "Arc constructor requires a scope");
     this.scope = scope;
     this.particles = [];
-    this.views = new Map();
+    this.views = new Set();
     this.checkpointed = false;
     this.temporaryParticles = [];
-    this.relevance = 1;
+    this._relevance = 1;
     this.particleViewMaps = new Map();
+  }
+
+  get relevance() {
+    this.particles.forEach(p => {
+      p.relevances.forEach(r => this.updateRelevance(r));
+      p.relevances = [];
+    });
+    this.temporaryParticles.forEach(p => {
+      p.relevances.forEach(r => this.updateRelevance(r));
+      p.relevances = [];
+    });
+    return this._relevance;
   }
 
   updateRelevance(relevance) {
@@ -32,11 +45,20 @@ class Arc {
     relevance = Math.max(0, Math.min(relevance, 10));
     // TODO: might want to make this geometric or something instead;
     relevance /= 5;
-    this.relevance *= relevance;
+    this._relevance *= relevance;
   }
 
   resetRelevance() {
-    this.relevance = 1;
+    this._relevance = 1;
+    this.particles.forEach(p => p.relevances = []);
+    this.temporaryParticles.forEach(p => p.relevances = []);
+  }
+
+  clone() {
+    var arc = new arc(this.scope.clone());
+    var viewMap = new Map();
+    this.views.forEach(v => viewMap.set(v, v.clone()));
+    this.particles.forEach()
   }
 
   checkpoint() {
@@ -66,6 +88,7 @@ class Arc {
   }
 
   connectParticleToView(particle, name, view) {
+    assert(this.views.has(view), "view of type " + view.type.key + " not visible to arc");
     var viewMap = this.particleViewMaps.get(particle);
     assert(particle.spec.connectionMap.get(name) !== undefined, "can't connect view to a view slot that doesn't exist");
     viewMap.set(name, view);
@@ -73,6 +96,12 @@ class Arc {
       view.checkpoint();
     if (viewMap.size == particle.spec.connectionMap.size)
       particle.setViews(viewMap);
+  }
+
+  constructParticle(particleClass) {
+    var particle = new particleClass(this.scope);
+    this.register(particle);
+    return particle;
   }
 
   register(particle) {
@@ -83,9 +112,15 @@ class Arc {
     this.particleViewMaps.set(particle, new Map());
   }
 
+  createView(type, name) {
+    var view = this.scope.createView(type, name);
+    this.addView(view);
+    return view;
+  }
+
   addView(view) {
     view.arc = this;
-    this.views.set(view.type, view);
+    this.views.add(view);
   }
 }
 
