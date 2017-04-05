@@ -13,6 +13,7 @@ var parser = require("./parser.js");
 var runtime = require("./runtime.js");
 var ParticleSpec = require("./particle-spec.js");
 var tracing = require('../tracelib/trace.js');
+var assert = require('assert');   
 
 function define(def, update) {
   let spec = new ParticleSpec(parser.parse(def));
@@ -23,8 +24,8 @@ function define(def, update) {
     static get name() {
       return this.spec.type;
     }
-    constructor(arc) {
-      super(arc);
+    constructor(scope) {
+      super(scope);
     }
     setViews(views) {
       var inputViews = new Map();
@@ -40,12 +41,11 @@ function define(def, update) {
 }
 
 class Particle {
-  constructor(arc) {
-    this.arc = arc;
-    this.spec = this.constructor.spec.resolve(arc.scope);
+  constructor(scope) {
+    this.spec = this.constructor.spec.resolve(scope);
     if (this.spec.inputs.length == 0)
       this.extraData = true;
-    arc.register(this);
+    this.relevances = [];
   }
 
   // Override this to do stuff
@@ -54,15 +54,11 @@ class Particle {
   }
 
   set relevance(r) {
-    this.arc.updateRelevance(r);
+    this.relevances.push(r);
   }
 
   // Override this to do stuff
   dataUpdated() {
-  }
-
-  commitData(relevance) {
-    this.arcParticle.commitData(relevance);
   }
 
   inputs() {

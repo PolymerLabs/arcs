@@ -167,7 +167,7 @@ class Resolver {
 
     // TODO: More complex resolution logic should go here.
     if (connection.spec.mustCreate)
-      context.afterResolution.push(() => { connection.view = context.arc.scope.createView(type, connection.constraintName); });
+      context.afterResolution.push(() => { connection.view = context.arc.createView(type, connection.constraintName); });
     else
       context.afterResolution.push(() => { connection.view = context.arc.scope.findViews(type)[0]; });
       connection.view = () => context.arc.scope.findViews(type)[0];

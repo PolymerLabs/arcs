@@ -28,8 +28,10 @@ describe('suggestinator', function() {
     [Foo, Bar, Far].map(a => scope.registerEntityClass(a));
     particles.register(scope);
 
-    var fooView = scope.createView(scope.typeFor(Foo));
-    var barView = scope.createView(scope.typeFor(Bar));
+    var arc = new Arc(scope);
+
+    var fooView = arc.createView(scope.typeFor(Foo));
+    var barView = arc.createView(scope.typeFor(Bar));
 
     var recipe1 = new recipe.RecipeBuilder()
         .addParticle("TestParticle")
@@ -49,7 +51,7 @@ describe('suggestinator', function() {
     fooView.set(new Foo("a Foo"));
     barView.set(new Bar("a Bar"));
 
-    var results = await suggestinator.suggestinate(new Arc(scope));
+    var results = await suggestinator.suggestinate(arc);
     assert.equal(results.length, 2);
     // This is 0.36 because 2 views get updated & therefore TITP gets called twice.
     // That's probably wrong.

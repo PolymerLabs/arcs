@@ -161,7 +161,7 @@ class Scope {
   instantiateParticle(name, arc) {
     let particleClass = this._particles.get(name);
     assert(particleClass, name);
-    let particle = new particleClass(arc);
+    let particle = arc.constructParticle(particleClass);
     assert(particle, "that wasn't a constructor");
     return particle;
   }
