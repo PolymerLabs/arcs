@@ -26,6 +26,7 @@ class Arc {
     this._viewsByType = new Map();
     this._relevance = 1;
     this.particleViewMaps = new Map();
+
   }
 
   clone() {
@@ -72,21 +73,15 @@ class Arc {
     var viewMap = this.particleViewMaps.get(particle);
     assert(particle.spec.connectionMap.get(name) !== undefined, "can't connect view to a view slot that doesn't exist");
     viewMap.set(name, view);
-    if (this.checkpointed)
-      view.checkpoint();
     if (viewMap.size == particle.spec.connectionMap.size)
       particle.setViews(viewMap);
   }
 
   constructParticle(particleClass) {
     var particle = new particleClass(this.scope);
-    this.register(particle);
-    return particle;
-  }
-
-  register(particle) {
     this.particles.push(particle);
     this.particleViewMaps.set(particle, new Map());
+    return particle;
   }
 
   createView(type, name) {
