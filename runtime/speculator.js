@@ -27,7 +27,7 @@ class Speculator {
       if (newArc.pec.busy) {
         return newArc.pec.idle.then(awaitCompletion);
       }
-      return Promise.resolve(newArc.relevance);
+      return newArc.relevance;
     }
     return awaitCompletion();
 
