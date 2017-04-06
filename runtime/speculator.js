@@ -20,7 +20,16 @@ class Speculator {
     var newArc = arc.clone();
     plan.instantiate(newArc);
     callTrace.end();
-    return scheduler.idle.then(() => newArc.relevance);
+    function awaitCompletion() {
+      if (scheduler.busy) {
+        return scheduler.idle.then(awaitCompletion);
+      }
+      if (newArc.pec.busy) {
+        return newArc.pec.idle.then(awaitCompletion);
+      }
+      return Promise.resolve(newArc.relevance);
+    }
+    return awaitCompletion();
 
   }
 }
