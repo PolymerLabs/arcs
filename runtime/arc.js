@@ -16,6 +16,7 @@ const Type = require('./type.js');
 const view = require('./view.js');
 const Relation = require('./relation.js');
 var PEC = require('./particle-execution-context.js');
+let viewlet = require('./viewlet');
 
 class LocalPEC extends PEC {
   constructor(scope) {
@@ -79,18 +80,26 @@ class Arc {
     return relevance / 5;
   }
 
-  connectParticleToView(particle, name, view) {
+  connectParticleToView(particle, name, targetView) {
     // If speculatively executing then we need to translate the view
     // in the plan to its clone.
     if (this._viewMap) {
-      view = this._viewMap.get(view);
+      targetView = this._viewMap.get(targetView);
     }
-    assert(this.views.has(view), "view of type " + view.type.key + " not visible to arc");
+    assert(this.views.has(targetView), "view of type " + targetView.type.key + " not visible to arc");
     var viewMap = this.particleViewMaps.get(particle);
     assert(viewMap.clazz.spec.connectionMap.get(name) !== undefined, "can't connect view to a view slot that doesn't exist");
-    viewMap.views.set(name, view);
+    viewMap.views.set(name, targetView);
     if (viewMap.views.size == viewMap.clazz.spec.connectionMap.size) {
-      var particle = this.pec.instantiate(viewMap.clazz, viewMap.views)
+      let viewletMap = new Map(Array.from(viewMap.views.entries()).map(([key, value]) => {
+        if (value instanceof view.Variable) {
+          value = new viewlet.Variable(value);
+        } else {
+          value = new viewlet.View(value);
+        }
+        return [key, value];
+      }));
+      var particle = this.pec.instantiate(viewMap.clazz, viewletMap)
       this.particles.push(particle);
     } 
   }
