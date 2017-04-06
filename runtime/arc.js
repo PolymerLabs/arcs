@@ -26,7 +26,7 @@ class LocalPEC extends PEC {
   }
 
   instantiate(particle, views, mutateCallback) {
-    var p = new particle(this._scope);  
+    var p = new particle(this._scope);
     p.setViews(views);
     this._particles.push(p);
     return p;
@@ -35,6 +35,20 @@ class LocalPEC extends PEC {
     var rMap = new Map();
     this._particles.forEach(p => { rMap.set(p, p.relevances); p.relevances = []; });
     return Promise.resolve(rMap);
+  }
+  get busy() {
+    for (let particle of this._particles) {
+      if (particle.busy) {
+        return true;
+      }
+    }
+    return false;
+  }
+  get idle() {
+    if (!this.busy) {
+      return Promise.resolve();
+    }
+    return Promise.all(this._particles.map(particle => particle.idle)).then(() => this.idle());
   }
 }
 
