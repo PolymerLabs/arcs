@@ -20,7 +20,7 @@ class Speculator {
     var newArc = arc.clone();
     plan.instantiate(newArc);
     callTrace.end();
-    return scheduler.finish().then(() => newArc.relevance);
+    return scheduler.idle.then(() => newArc.relevance);
 
   }
 }

@@ -15,12 +15,17 @@ class Scheduler {
     this.frameQueue = [];
     this.targetMap = new Map();
     this._finishNotifiers = [];
+    this._idle = Promise.resolve();
+    this._idleResolver = null;
   }
 
   enqueue(view, eventRecords) {
     var trace = tracing.flow({cat: 'view', name: 'ViewBase::_fire flow'}).start();
     if (this.frameQueue.length == 0 && eventRecords.length > 0)
       this._asyncProcess();
+    if (!this._idleResolver) {
+      this._idle = new Promise((resolve, reject) => this._idleResolver = resolve);
+    }
     for (var record of eventRecords) {
       var frame = this.targetMap.get(record.target);
       if (frame == undefined) {
@@ -43,11 +48,12 @@ class Scheduler {
     }
   }
 
-  finish() {
-    assert(this.frameQueue.length > 0);
-    return new Promise((resolve, reject) => {
-      this._finishNotifiers.push(resolve);
-    });
+  get busy() {
+    return this.frameQueue.length > 0;
+  }
+
+  get idle() {
+    return this._idle;
   }
 
   _asyncProcess() {
@@ -59,8 +65,8 @@ class Scheduler {
         this._asyncProcess();
       this._applyFrame(frame);
       if (this.frameQueue.length == 0) {
-        this._finishNotifiers.forEach(f => f());
-        this._finishNotifiers = [];
+        this._idleResolver();
+        this._idleResolver = null;
       }
     });
   }
