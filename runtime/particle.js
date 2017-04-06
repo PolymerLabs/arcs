@@ -46,11 +46,36 @@ class Particle {
     if (this.spec.inputs.length == 0)
       this.extraData = true;
     this.relevances = [];
+    this._idle = Promise.resolve();
+    this._idleResolver = null;
+    this._busy = false;
   }
 
   // Override this to do stuff
   setViews(views) {
 
+  }
+
+  get busy() {
+    return this._busy;
+  }
+
+  get idle() {
+    return this._idle;
+  }
+
+  setBusy() {
+    assert(!this._busy);
+    this._busy = true;
+    this._idle = new Promise((resolve, reject) => {
+      this._idleResolver = resolve;
+    });
+  }
+
+  setIdle() {
+    assert(this._busy);
+    this._busy = false;
+    this._idleResolver();
   }
 
   set relevance(r) {
@@ -71,9 +96,11 @@ class Particle {
 
 
   on(views, name, action, f) {
+    this.setBusy();
     var trace = tracing.start({cat: 'particle', name: this.constructor.name + "::on", args: {view: name, event: action}});
     views.get(name).on(action, tracing.wrap({cat: 'particle', name: this.constructor.name, args: {view: name, event: action}}, f), this);
     trace.end();
+    this.setIdle();
   }
 }
 
