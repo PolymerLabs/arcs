@@ -16,6 +16,7 @@ var loader = require("../loader.js");
 let assert = require('chai').assert;
 let particles = require('./test-particles.js');
 let systemParticles = require('../system-particles.js');
+let util = require('./test-util.js');
 
 require("./trace-setup.js");
 
@@ -25,8 +26,8 @@ var Bar = runtime.testing.testEntityClass('Bar');
 
 [Foo, Bar].map(a => scope.registerEntityClass(a));
 
-describe('resolver', function() {
-  it('can resolve a partially constructed recipe', function(done) {
+describe('resolver', () => {
+  it('can resolve a partially constructed recipe', async () => {
     particles.register(scope);
     var arc = new Arc(scope);
     let fooView = arc.createView(scope.typeFor(Foo));
@@ -39,10 +40,10 @@ describe('resolver', function() {
     assert(Resolver.resolve(r, arc), "recipe resolves");
     r.instantiate(arc);
     var barView = arc.findViews(scope.typeFor(Bar))[0];
-    barView.on('change', () => {assert.equal(barView.get().data, "not a Bar1"); done();}, this);
+    await util.assertSingletonHas(barView, "not a Bar1");
   });
 
-  it("can resolve a recipe from a particle's spec", function(done) {
+  it("can resolve a recipe from a particle's spec", async () => {
     let scope = new runtime.Scope();
     particles.register(scope);
     var arc = new Arc(scope);
@@ -52,10 +53,10 @@ describe('resolver', function() {
     fooView.set(new Foo("not a Bar"));
     Resolver.resolve(r, arc);
     r.instantiate(arc);
-    barView.on('change', () => {assert.equal(barView.get().data, "not a Bar1"); done();}, this);
+    await util.assertSingletonHas(barView, "not a Bar1");
   });
 
-  it('can resolve a recipe that is just a particle name', function(done) {
+  it('can resolve a recipe that is just a particle name', async () => {
     let scope = new runtime.Scope();
     particles.register(scope);
     var arc = new Arc(scope);
@@ -65,7 +66,7 @@ describe('resolver', function() {
     fooView.set(new Foo("not a Bar"));
     Resolver.resolve(r, arc);
     r.instantiate(arc);
-    barView.on('change', () => {assert.equal(barView.get().data, "not a Bar1"); done();}, this);
+    await util.assertSingletonHas(barView, "not a Bar1");
   });
 
   it("won't resolve a recipe that mentions connections that are not in a particle's connection list", function() {

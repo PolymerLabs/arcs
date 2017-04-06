@@ -14,6 +14,7 @@ var Arc = require("../arc.js");
 let assert = require('chai').assert;
 let particles = require('./test-particles.js');
 let view = require('../view.js');
+let util = require('./test-util.js');
 
 var Foo = runtime.testing.testEntityClass('Foo');
 var Bar = runtime.testing.testEntityClass('Bar');
@@ -24,7 +25,7 @@ let scope = new runtime.Scope();
 
 describe('Arc', function() {
 
-  it('applies existing runtime to a particle', (done) => {
+  it('applies existing runtime to a particle', async () => {
     let arc = new Arc(scope);
     let fooView = arc.createView(scope.typeFor(Foo));
     fooView.set(new Foo('a Foo'));
@@ -32,10 +33,10 @@ describe('Arc', function() {
     var particle = arc.constructParticle(particles.TestParticle);
     arc.connectParticleToView(particle, 'foo', fooView);
     arc.connectParticleToView(particle, 'bar', barView);
-    barView.on('change', () => { assert.equal(barView.get().data, "a Foo1"); done() }, this); 
+    await util.assertSingletonHas(barView, "a Foo1");
   });
 
-  it('applies new runtime to a particle', (done) => {
+  it('applies new runtime to a particle', async () => {
     let arc = new Arc(scope);
     let fooView = arc.createView(scope.typeFor(Foo));
     let barView = arc.createView(scope.typeFor(Bar));
@@ -43,10 +44,10 @@ describe('Arc', function() {
     arc.connectParticleToView(particle, 'foo', fooView);
     arc.connectParticleToView(particle, 'bar', barView);
     fooView.set(new Foo('a Foo'));
-    barView.on('change', () => { assert.equal(barView.get().data, "a Foo1"); done() }, this);
+    await util.assertSingletonHas(barView, "a Foo1");
   });
 
-  it('works with inline particle definitions', (done) => {
+  it('works with inline particle definitions', async () => {
     let arc = new Arc(scope);
     let particleClass = require('../particle').define('P(in Foo foo, out Bar bar)', (views) => {
       views.get("bar").set(new Bar(123));
@@ -59,7 +60,7 @@ describe('Arc', function() {
     let instance = arc.constructParticle(particleClass);
     arc.connectParticleToView(instance, 'foo', fooView);
     arc.connectParticleToView(instance, 'bar', barView);
-    barView.on('change', () => { assert.equal(barView.get().data, 123); done() }, this); 
+    await util.assertSingletonHas(barView, 123);
   });
 
 });
