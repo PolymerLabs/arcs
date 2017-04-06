@@ -17,22 +17,11 @@ class Speculator {
 
   speculate(arc, plan) {
     var callTrace = tracing.start({cat: "speculator", name: "Speculator::speculate"});
-    var trace = tracing.flow({cat: "speculator", name: "Speculator::speculate"}).start();
     var newArc = arc.clone();
-    return new Promise((resolve, reject) => {
-      var internalTrace = tracing.start({cat: "speculator", name: "Speculator::speculate internal"});
-      newArc.resetRelevance();
-
-      plan.instantiate(newArc);
-      scheduler.finish().then(() => {
-
-        var relevance = newArc.relevance;
-        resolve(relevance);
-        trace.end();
-      });
-      internalTrace.end();
-    });
+    plan.instantiate(newArc);
     callTrace.end();
+    return scheduler.finish().then(() => newArc.relevance);
+
   }
 }
 

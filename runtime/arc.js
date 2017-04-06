@@ -17,6 +17,26 @@ const view = require('./view.js');
 const Relation = require('./relation.js');
 var PEC = require('./particle-execution-context.js');
 
+class LocalPEC extends PEC {
+  constructor(scope) {
+    super();
+    this._scope = scope;
+    this._particles = [];
+  }
+
+  instantiate(particle, views, mutateCallback) {
+    var p = new particle(this._scope);  
+    p.setViews(views);
+    this._particles.push(p);
+    return p;
+  }
+  get relevance() {
+    var rMap = new Map();
+    this._particles.forEach(p => { rMap.set(p, p.relevances); p.relevances = []; });
+    return Promise.resolve(rMap);
+  }
+}
+
 class Arc {
   constructor(scope) {
     assert(scope instanceof runtime.Scope, "Arc constructor requires a scope");
@@ -24,8 +44,8 @@ class Arc {
     this.particles = [];
     this.views = new Set();
     this._viewsByType = new Map();
-    this._relevance = 1;
     this.particleViewMaps = new Map();
+    this.pec = new LocalPEC(scope);
     var nextParticleHandle = 0;
   }
 
@@ -41,26 +61,22 @@ class Arc {
   }
 
   get relevance() {
-    this.particles.forEach(p => {
-      p.relevances.forEach(r => this.updateRelevance(r));
-      p.relevances = [];
+    return this.pec.relevance.then(rMap => {
+      let relevance = 1;
+      for (let rList of rMap.values())
+        for (let r of rList)
+          relevance *= Arc.scaleRelevance(r);
+      return relevance;
     });
-    return this._relevance;
   }
 
-  updateRelevance(relevance) {
+  static scaleRelevance(relevance) {
     if (relevance == undefined) {
       relevance = 5;
     }
     relevance = Math.max(0, Math.min(relevance, 10));
     // TODO: might want to make this geometric or something instead;
-    relevance /= 5;
-    this._relevance *= relevance;
-  }
-
-  resetRelevance() {
-    this._relevance = 1;
-    this.particles.forEach(p => p.relevances = []);
+    return relevance / 5;
   }
 
   connectParticleToView(particle, name, view) {
@@ -74,9 +90,8 @@ class Arc {
     assert(viewMap.clazz.spec.connectionMap.get(name) !== undefined, "can't connect view to a view slot that doesn't exist");
     viewMap.views.set(name, view);
     if (viewMap.views.size == viewMap.clazz.spec.connectionMap.size) {
-      var particle = new viewMap.clazz(this.scope);
+      var particle = this.pec.instantiate(viewMap.clazz, viewMap.views)
       this.particles.push(particle);
-      particle.setViews(viewMap.views);
     } 
   }
 
