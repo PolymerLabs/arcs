@@ -14,6 +14,7 @@ var Arc = require("../arc.js");
 var recipe = require("../recipe.js");
 let assert = require('chai').assert;
 let particles = require('./test-particles.js');
+let util = require('./test-util.js');
 
 require("./trace-setup.js");
 
@@ -36,6 +37,6 @@ describe('speculator', function() {
     fooView.set(new Foo("not a Bar"));
     var relevance = await speculator.speculate(arc, r);
     assert.equal(relevance, 1.8);
-    assert.equal(barView.get(), undefined);
+    await util.assertSingletonEmpty(barView);
   });
 });

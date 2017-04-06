@@ -14,6 +14,7 @@ var Resolver = require("../resolver.js");
 var recipe = require("../recipe.js");
 let assert = require('chai').assert;
 let particles = require('./test-particles.js');
+let util = require('./test-util.js');
 
 
 var Foo = runtime.testing.testEntityClass('Foo');
@@ -21,7 +22,7 @@ var Bar = runtime.testing.testEntityClass('Bar');
 
 describe('recipe', function() {
 
-  it('recipes can load', function(done) {
+  it('recipes can load', async () => {
     let scope = new runtime.Scope();
     [Foo, Bar].map(a => scope.registerEntityClass(a));
     particles.register(scope);
@@ -37,6 +38,6 @@ describe('recipe', function() {
 
     r.instantiate(arc);
     fooView.set(new Foo("not a Bar"));
-    barView.on("change", () => { assert.equal(barView.get().data, "not a Bar1"); done();}, this);
+    await util.assertSingletonHas(barView, "not a Bar1");
   });
 });

@@ -160,18 +160,20 @@ class Variable extends ViewBase {
   traceInfo() {
     return {stored: this._stored !== null};
   }
-  // HACK: this should be async
+
   get() {
     if (this._stored == null)
-      return undefined;
-    return this._restore(this._stored);
+      return Promise.resolve(undefined);
+    return Promise.resolve(this._restore(this._stored));
   }
+
   set(entity) {
     if (entity[identifier] == undefined)
       entity[identifier] = this._scope._newIdentifier(this, this._scope.typeFor(entity));
     this._stored = this._serialize(entity);
     this._fire('change');
   }
+
   on(kind, callback, target) {
     let trigger = kind == 'change';
     super.on(kind, callback, target, trigger);
