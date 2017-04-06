@@ -26,7 +26,7 @@ class Arc {
     this._viewsByType = new Map();
     this._relevance = 1;
     this.particleViewMaps = new Map();
-
+    var nextParticleHandle = 0;
   }
 
   clone() {
@@ -71,19 +71,21 @@ class Arc {
     }
     assert(this.views.has(view), "view of type " + view.type.key + " not visible to arc");
     var viewMap = this.particleViewMaps.get(particle);
-    assert(particle.spec.connectionMap.get(name) !== undefined, "can't connect view to a view slot that doesn't exist");
-    viewMap.set(name, view);
-    if (viewMap.size == particle.spec.connectionMap.size)
-      particle.setViews(viewMap);
+    assert(viewMap.clazz.spec.connectionMap.get(name) !== undefined, "can't connect view to a view slot that doesn't exist");
+    viewMap.views.set(name, view);
+    if (viewMap.views.size == viewMap.clazz.spec.connectionMap.size) {
+      var particle = new viewMap.clazz(this.scope);
+      this.particles.push(particle);
+      particle.setViews(viewMap.views);
+    } 
   }
 
   constructParticle(particleClass) {
-    var particle = new particleClass(this.scope);
-    this.particles.push(particle);
-    this.particleViewMaps.set(particle, new Map());
-    return particle;
+    var handle = this.nextParticleHandle++;
+    this.particleViewMaps.set(handle, {clazz: particleClass, views: new Map()});
+    return handle;
   }
-
+ 
   createView(type, name) {
     assert(type instanceof Type, "can't createView with a type that isn't a Type");
     if (type.isRelation)
