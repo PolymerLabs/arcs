@@ -118,9 +118,6 @@ class View extends ViewBase {
   traceInfo() {
     return {items: this._items.length};
   }
-  query() {
-    // TODO
-  }
   // HACK: replace this with some kind of iterator thing?
   toList() {
     return this._items.map(entry => this._restore(entry));
