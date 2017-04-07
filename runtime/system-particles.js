@@ -28,8 +28,8 @@ exports.Demuxer2 = particle.define('Demuxer2(in [~a] view1, in [~b] view2, out ~
   };
 });
 
-exports.Choose = particle.define('Choose(in [~a] view, out ~a singleton)', views => {
-  var list = views.get("view").toList();
+exports.Choose = particle.define('Choose(in [~a] view, out ~a singleton)', async views => {
+  var list = await views.get("view").toList();
   if (list.length == 0)
     return 1;
   if (list.length == 1) {

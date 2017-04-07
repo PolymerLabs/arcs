@@ -13,14 +13,15 @@ let assert = require('chai').assert;
 let Arc = require('../arc.js');
 
 describe('entity', function() {
-  it('can be created, stored, and restored', function() {
+  it('can be created, stored, and restored', async() => {
     let scope = new Scope();
     let arc = new Arc(scope);
     let entity = new BasicEntity('hello world');
     assert.isDefined(entity);
     arc.commit([entity]);
 
-    let clone = arc.findViews(scope.typeFor(entity).viewOf(scope))[0].toList()[0];
+    let list = await arc.findViews(scope.typeFor(entity).viewOf(scope))[0].toList();
+    let clone = list[0];
     assert.isDefined(clone);
     assert.equal(clone.data, 'hello world');
     assert.notEqual(entity, clone);

@@ -120,7 +120,7 @@ class View extends ViewBase {
   }
   // HACK: replace this with some kind of iterator thing?
   toList() {
-    return this._items.map(entry => this._restore(entry));
+    return Promise.resolve(this._items.map(entry => this._restore(entry)));
   }
   // thing()
 
