@@ -11,10 +11,12 @@
  "use strict";
 
 let assert = require('chai').assert;
+let viewlet = require('../viewlet.js');
 
 function assertSingletonHas(view, expectation) {
   return new Promise((resolve, reject) => {
-    view.on('change', () => view.get().then(result => {
+    var variable = new viewlet.Variable(view);
+    variable.on('change', () => variable.get().then(result => {
       if (result == undefined)
         return;
 
@@ -26,7 +28,8 @@ function assertSingletonHas(view, expectation) {
 
 function assertSingletonEmpty(view) {
   return new Promise((resolve, reject) => {
-    view.get().then(result => {
+    var variable = new viewlet.Variable(view);
+    variable.get().then(result => {
       assert.equal(result, undefined);
       resolve();
     });
