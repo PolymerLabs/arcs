@@ -184,7 +184,7 @@ class Arc {
       entity.identify(view, this.scope);
     }
     for (let [entity, view] of entityMap.entries()) {
-      view.store(entity);
+      new viewlet.View(view).store(entity);
     }
   }  
 }

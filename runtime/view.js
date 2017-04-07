@@ -1,4 +1,4 @@
-// @license
+// @
 // Copyright (c) 2017 Google Inc. All rights reserved.
 // This code may only be used under the BSD style license found at
 // http://polymer.github.io/LICENSE.txt
@@ -8,35 +8,8 @@
 'use strict';
 
 const assert = require('assert');
-const Identifier = require('./identifier.js');
-const Symbols = require('./symbols.js');
-const Entity = require('./entity.js');
-const Relation = require('./relation.js');
-let identifier = Symbols.identifier;
 const tracing = require("../tracelib/trace.js");
 const scheduler = require('./scheduler.js');
-
-// TODO: This won't be needed once runtime is transferred between contexts.
-function cloneData(data) {
-  return JSON.parse(JSON.stringify(data));
-}
-
-function restore(entry, scope) {
-  let {id, data} = entry;
-  var entity = Entity.fromLiteral(id, cloneData(data));
-  var type = scope.typeFor(entity);
-  entity.constructor = type.entityClass;
-  // TODO: Relation magic should happen elsewhere, and be better.
-  if (scope.typeFor(entity).isRelation) {
-    let ids = data.map(literal => Identifier.fromLiteral(literal, scope));
-    let entities = ids.map(id => scope._viewFor(id.type.viewOf(scope)).get(id));
-    assert(!entities.includes(undefined));
-    entity = new Relation(...entities);
-    entity.entities = entities;
-    entity[identifier] = id;
-  }
-  return entity;
-}
 
 class ViewBase {
   constructor(type, scope, name) {
@@ -82,18 +55,6 @@ class ViewBase {
  
     callTrace.end();
   }
-
-  _serialize(entity) {
-    let id = entity[identifier];
-    let data = cloneData(entity.toLiteral());
-    return {
-      id,
-      data: data,
-    };
-  }
-  _restore(entry) {
-    return restore(entry, this._scope);
-  }
 }
 
 class View extends ViewBase {
@@ -111,7 +72,7 @@ class View extends ViewBase {
   get(id) {
     for (let entry of this._items) {
       if (JSON.stringify(entry.id) == JSON.stringify(id)) {
-        return this._restore(entry);
+        return entry;
       }
     }
   }
@@ -120,15 +81,14 @@ class View extends ViewBase {
   }
   // HACK: replace this with some kind of iterator thing?
   toList() {
-    return Promise.resolve(this._items.map(entry => this._restore(entry)));
+    return this._items;
   }
   // thing()
 
   store(entity) {
     var trace = tracing.start({cat: "view", name: "View::store", args: {name: this.name}});
-    var serialization = this._serialize(entity);
-    this._items.push(serialization);
-    trace.update({entity: serialization});
+    this._items.push(entity);
+    trace.update({ entity });
     this._fire('change');
     trace.end();
   }
@@ -162,15 +122,11 @@ class Variable extends ViewBase {
   }
 
   get() {
-    if (this._stored == null)
-      return Promise.resolve(undefined);
-    return Promise.resolve(this._restore(this._stored));
+    return this._stored;
   }
 
   set(entity) {
-    if (entity[identifier] == undefined)
-      entity[identifier] = this._scope._newIdentifier(this, this._scope.typeFor(entity));
-    this._stored = this._serialize(entity);
+    this._stored = entity;
     this._fire('change');
   }
 

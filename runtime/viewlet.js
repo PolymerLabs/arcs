@@ -7,12 +7,53 @@
 // http://polymer.github.io/PATENTS.txt
 'use strict';
 
+const Identifier = require('./identifier.js');
+const Entity = require('./entity.js');
+const Relation = require('./relation.js');
+const Symbols = require('./symbols.js');
+let identifier = Symbols.identifier;
+
+// TODO: This won't be needed once runtime is transferred between contexts.
+function cloneData(data) {
+  return JSON.parse(JSON.stringify(data));
+}
+
+function restore(entry, scope) {
+  let {id, data} = entry;
+  var entity = Entity.fromLiteral(id, cloneData(data));
+  var type = scope.typeFor(entity);
+  entity.constructor = type.entityClass;
+  // TODO: Relation magic should happen elsewhere, and be better.
+  if (scope.typeFor(entity).isRelation) {
+    let ids = data.map(literal => Identifier.fromLiteral(literal, scope));
+    let entities = ids.map(id => scope._viewFor(id.type.viewOf(scope)).get(id));
+    assert(!entities.includes(undefined));
+    entity = new Relation(...entities);
+    entity.entities = entities;
+    entity[identifier] = id;
+  }
+  return entity;
+}
+
 class Viewlet {
   constructor(view) {
     this._view = view;
   }
   on(kind, callback, target) {
     return this._view.on(kind, callback, target);
+  }
+
+  _serialize(entity) {
+    let id = entity[identifier];
+    let data = cloneData(entity.toLiteral());
+    return {
+      id,
+      data: data,
+    };
+  }
+
+  _restore(entry) {
+    return restore(entry, this._view._scope);
   }
 }
 
@@ -26,10 +67,11 @@ class View extends Viewlet {
   }
   toList() {
     // TODO: remove this and use query instead
-    return this._view.toList();
+    return Promise.resolve(this._view.toList().map(a => this._restore(a)));
   }
   store(entity) {
-    return this._view.store(entity);
+    var serialization = this._serialize(entity);
+    return this._view.store(serialization);
   }
 }
 
@@ -38,13 +80,17 @@ class Variable extends Viewlet {
     super(variable);
   }
   get() {
-    return this._view.get();
+    var result = this._view.get();
+    var data = result == null ? undefined : this._restore(result);
+    return Promise.resolve(data);
   }
-  // TODO: this should be async
   set(entity) {
-    return this._view.set(entity);
+    // TODO: this should happen on entity creation, not here
+    if (entity[identifier] == undefined)
+      entity[identifier] = this._view._scope._newIdentifier(this._view, this._view._scope.typeFor(entity));
+
+    return this._view.set(this._serialize(entity));
   }
 }
 
-exports.View = View;
-exports.Variable = Variable;
+module.exports = { View, Variable };
