@@ -30,8 +30,10 @@ function define(def, update) {
     setViews(views) {
       var inputViews = new Map();
       for (let input of this.inputs()) {
-        this.on(views, input.name, 'change', e => {
-            var relevance = update(views, e);
+        this.on(views, input.name, 'change', async e => {
+            this.setBusy();
+            var relevance = await update(views, e);
+            this.setIdle();
             if (relevance !== undefined)
               this.relevance = relevance;
         });
@@ -48,7 +50,7 @@ class Particle {
     this.relevances = [];
     this._idle = Promise.resolve();
     this._idleResolver = null;
-    this._busy = false;
+    this._busy = 0;
   }
 
   // Override this to do stuff
@@ -57,7 +59,7 @@ class Particle {
   }
 
   get busy() {
-    return this._busy;
+    return this._busy > 0;
   }
 
   get idle() {
@@ -65,17 +67,18 @@ class Particle {
   }
 
   setBusy() {
-    assert(!this._busy);
-    this._busy = true;
+    if (this._busy == 0)
     this._idle = new Promise((resolve, reject) => {
       this._idleResolver = resolve;
     });
+    this._busy++;
   }
 
   setIdle() {
-    assert(this._busy);
-    this._busy = false;
-    this._idleResolver();
+    assert(this._busy > 0);
+    this._busy--;
+    if (this._busy == 0)
+      this._idleResolver();
   }
 
   set relevance(r) {
@@ -96,11 +99,9 @@ class Particle {
 
 
   on(views, name, action, f) {
-    this.setBusy();
     var trace = tracing.start({cat: 'particle', name: this.constructor.name + "::on", args: {view: name, event: action}});
     views.get(name).on(action, tracing.wrap({cat: 'particle', name: this.constructor.name, args: {view: name, event: action}}, f), this);
     trace.end();
-    this.setIdle();
   }
 }
 

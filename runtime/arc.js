@@ -48,7 +48,7 @@ class LocalPEC extends PEC {
     if (!this.busy) {
       return Promise.resolve();
     }
-    return Promise.all(this._particles.map(particle => particle.idle)).then(() => this.idle());
+    return Promise.all(this._particles.map(particle => particle.idle)).then(() => this.idle);
   }
 }
 
