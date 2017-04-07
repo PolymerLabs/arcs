@@ -13,7 +13,7 @@ let assert = require('chai').assert;
 let Arc = require('../arc.js');
 
 describe('entity', function() {
-  it('can be created, stored, and restored', async() => {
+  it('can be created, stored, and restored', async () => {
     let scope = new Scope();
     let arc = new Arc(scope);
     let entity = new BasicEntity('hello world');
