@@ -52,10 +52,16 @@ class OuterPEC extends PEC {
         this._viewOn(e.data.messageBody);
         return;
       case "ViewGet":
-        this._viewGet(e.data.messageBody);
+        this._viewRetrieve(e.data.messageBody, "ViewGetResponse", v => v.get());
         return;
       case "ViewSet":
-        this._viewSet(e.data.messageBody);
+        this._viewSave(e.data.messageBody, (v, d) => v.set(d));
+        return;
+      case "ViewStore":
+        this._viewSave(e.data.messageBody, (v, d) => v.store(d));
+        return;
+      case "ViewToList":
+        this._viewRetrieve(e.data.messageBody, "ViewToListResponse", v => v.toList());
         return;
       default:
         assert(false, "don't know how to handle message of type " + e.data.messageType);
@@ -67,20 +73,20 @@ class OuterPEC extends PEC {
     view.on(message.type, e => this._forwardCallback(message.callback, e), this._thingForIdentifier(message.target));
   }
 
-  _viewGet(message) {
+  _viewRetrieve(message, messageType, f) {
     var view = this._thingForIdentifier(message.view);
     this._port.postMessage({
-      messageType: "ViewGetResponse",
+      messageType,
       messageBody: {
         callback: message.callback,
-        data: view.get()
+        data: f(view)
       }
     })
   }
 
-  _viewSet(message) {
+  _viewSave(message, f) {
     var view = this._thingForIdentifier(message.view);
-    view.set(message.data);
+    f(view, message.data);
   }
 
   _forwardCallback(cid, e) {
@@ -121,14 +127,8 @@ class OuterPEC extends PEC {
         views: serializedViewMap
       }
     });
-
-    /*
-    var p = new particle(this._scope);
-    p.setViews(views);
-    this._particles.push(p);
-    return p;
-    */
   }
+
   get relevance() {
     var rMap = new Map();
     this._particles.forEach(p => { rMap.set(p, p.relevances); p.relevances = []; });
@@ -278,7 +278,7 @@ class Arc {
       entity.identify(view, this.scope);
     }
     for (let [entity, view] of entityMap.entries()) {
-      new viewlet.View(view).store(entity);
+      new viewlet.viewletFor(view).store(entity);
     }
   }  
 }
