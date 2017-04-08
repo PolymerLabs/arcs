@@ -17,7 +17,7 @@ var assert = require('assert');
 
 function define(def, update) {
   let spec = new ParticleSpec(parser.parse(def));
-  return class extends Particle {
+  let clazz = class extends Particle {
     static get spec() {
       return spec;
     }
@@ -40,6 +40,10 @@ function define(def, update) {
       }
     }
   };
+  clazz._isInline = true;
+  clazz._inlineDefinition = def;
+  clazz._inlineUpdateFunction = update;
+  return clazz;
 }
 
 class Particle {

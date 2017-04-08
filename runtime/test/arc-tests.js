@@ -23,7 +23,7 @@ entities.register(scope);
 
 describe('Arc', function() {
 
-  it.only('applies existing runtime to a particle', async () => {
+  it('applies existing runtime to a particle', async () => {
     let arc = new Arc(scope);
     let fooView = arc.createView(scope.typeFor(entities.Foo));
     fooView.set(new entities.Foo('a Foo'));

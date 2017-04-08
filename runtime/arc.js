@@ -39,6 +39,16 @@ class OuterPEC extends PEC {
       types.add(view.type.toLiteral());
     }
 
+    if (particle._isInline) {
+      this._port.postMessage({
+        messageType: "DefineParticle",
+        messageBody: {
+          particleDefinition: particle._inlineDefinition,
+          particleFunction: particle._inlineUpdateFunction.toString()
+        }
+      })
+    }
+
     this._port.postMessage({
       messageType: "InstantiateParticle",
       messageBody: {
