@@ -16,6 +16,7 @@ const Type = require('./type.js');
 const viewlet = require('./viewlet.js');
 const define = require('./particle.js').define;
 const assert = require('assert');
+const typeLiteral = require('./type-literal.js');
 
 class InnerPEC {
   constructor(port) {
@@ -73,12 +74,25 @@ class InnerPEC {
       this._scope.registerParticle(clazz);
     }
 
+
     for (let type of data.types) {
+      /*
+       * This section ensures that the relevant types are known
+       * in the scope object, because otherwise we can't do
+       * particleSpec resolution, which is currently a necessary
+       * part of particle construction.
+       *
+       * Possibly we should eventually consider having particle
+       * specifications separated from particle classes - and
+       * only keeping type information on the arc side.
+       */
+      if (typeLiteral.isView(type)) {
+        type = typeLiteral.primitiveType(type);
+      }
       // TODO: This is a dodgy hack based on possibly unintended
       // behavior in Type's constructor.
       if (!this._scope._types.has(JSON.stringify(type))) {
         this._scope.typeFor(loader.loadEntity(type));
-        this._types.add(type);
       }
     }
 
