@@ -20,14 +20,23 @@ class Speculator {
     var newArc = arc.clone();
     plan.instantiate(newArc);
     callTrace.end();
+    let relevance = new Map();
     async function awaitCompletion() {
       await scheduler.idle;
       newArc.pec.incomingViewFlag = false;
-      await newArc.pec.idle;
+      let newRelevance = await newArc.pec.idle;
+
+      for (let key in newRelevance) {
+        if (relevance.has(key))
+          relevance.set(key, relevance.get(key).concat(newRelevance[key]));
+        else
+          relevance.set(key, newRelevance[key]);
+      }
+      
       if (newArc.pec.incomingViewFlag)
         return awaitCompletion();
       else {
-        return newArc.relevance;
+        return arc.relevanceFor(relevance);
       }
     }
 
