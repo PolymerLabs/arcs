@@ -76,6 +76,8 @@ class OuterPEC extends PEC {
   }
 
   _handle(e) {
+    if (e.data.messageType !== "Idle")
+      this.incomingViewFlag = true;
     switch (e.data.messageType) {
       case "ViewOn":
         this._viewOn(e.data.messageBody);
