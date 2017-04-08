@@ -210,8 +210,13 @@ class InnerPEC {
   }
 
   get relevance() {
-    var rMap = new Map();
-    this._particles.forEach(p => { rMap.set(p, p.relevances); p.relevances = []; });
+    var rMap = {};
+    this._particles.forEach(p => {
+      if (p.relevances.length == 0)
+        return;
+      rMap[this._identifierForThing(p)] = p.relevances;
+      p.relevances = [];
+    });
     return rMap;
   }
 
@@ -228,7 +233,7 @@ class InnerPEC {
     this.idle.then(() => {
       this._port.postMessage({
         messageType: "Idle",
-        messageBody: {version: message.version }
+        messageBody: {version: message.version, relevance: this.relevance }
       });
     });
   } 

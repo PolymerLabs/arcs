@@ -34,14 +34,6 @@ class OuterPEC extends PEC {
     this._reverseIdMap = new Map();
   }
 
-
-  /*
-   * NOTE THAT THIS IS CHEATING!
-   */
-  get relevance() {
-    return Promise.resolve(this._innerPEC.relevance);
-  }
-
   get idle() {
     if (this._idlePromise == undefined) {
       this._idlePromise = new Promise((resolve, reject) => {
@@ -59,7 +51,7 @@ class OuterPEC extends PEC {
   _idle(message) {
     if (message.version == this._idleVersion) {
       this._idlePromise = undefined;
-      this._idleResolve();
+      this._idleResolve(message.relevance);
     }
   }
 
@@ -187,15 +179,13 @@ class Arc {
     return arc;
   }
 
-  get relevance() {
-    return this.pec.relevance.then(rMap => {
-      let relevance = 1;
-      for (let rList of rMap.values()) {
-        for (let r of rList)
-          relevance *= Arc.scaleRelevance(r);
-      }
-      return relevance;
-    });
+  relevanceFor(rMap) {
+    let relevance = 1;
+    for (let rList of rMap.values()) {
+      for (let r of rList)
+        relevance *= Arc.scaleRelevance(r);
+    }
+    return relevance;
   }
 
   static scaleRelevance(relevance) {
