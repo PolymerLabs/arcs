@@ -18,6 +18,54 @@ const define = require('./particle.js').define;
 const assert = require('assert');
 const typeLiteral = require('./type-literal.js');
 
+class RemoteView {
+  constructor(id, port, pec) {
+    this._id = id;
+    this._port = port;
+    this._pec = pec;
+    this._scope = pec._scope;
+  }
+
+  on(type, callback, target) {
+    var cid = this._pec._newLocalID();
+    this._pec._establishThingMapping(cid, callback)
+    this._port.postMessage({
+      messageType: "ViewOn",
+      messageBody: {
+        view: this._id,
+        type: type,
+        callback: cid,
+        target: this._pec._identifierForThing(target)
+      }
+    });
+  }
+
+  get() {
+    var rid = this._pec._newLocalID();
+    var result = new Promise((resolve, reject) => this._pec._establishThingMapping(rid, (d) => resolve(d)));
+    
+    this._port.postMessage({
+      messageType: "ViewGet",
+      messageBody: {
+        view: this._id,
+        callback: rid
+      }
+    });
+
+    return result;
+  }
+
+  set(entity) {
+    this._port.postMessage({
+      messageType: "ViewSet",
+      messageBody: {
+        view: this._id,
+        data: entity
+      }
+    });
+  }
+}
+
 class InnerPEC {
   constructor(port) {
     this._port = port;
@@ -29,6 +77,11 @@ class InnerPEC {
     this._views = new Map();
     this._reverseIdMap = new Map();
     this._idMap = new Map();
+    this._nextLocalID = 0;
+  }
+
+  _newLocalID() {
+    return "l" + this._nextLocalID++;
   }
 
   _establishThingMapping(id, thing) {
@@ -52,13 +105,29 @@ class InnerPEC {
       case "DefineParticle":
         this._defineParticle(e.data.messageBody);
         return;
+      case "ViewCallback":
+        this._viewCallback(e.data.messageBody);
+        return;
+      case "ViewGetResponse":
+        this._promiseResponse(e.data.messageBody);
+        return;
       default:
-        assert(false, "Don't know how to handle messages of type". e.data.messageType);
+        assert(false, "Don't know how to handle messages of type " + e.data.messageType);
     }
   }
 
+  _viewCallback(data) {
+    var callback = this._thingForIdentifier(data.callback);
+    callback(data.data);
+  }
+
+  _promiseResponse(data) {
+    var resolve = this._thingForIdentifier(data.callback);
+    resolve(data.data);
+  }
+
   _defineParticle(data) {
-    var particle = define(data.particleDefinition, eval(data.particleUpdateFunction));
+    var particle = define(data.particleDefinition, eval(data.particleFunction));
     this._scope.registerParticle(particle);
   }
 
@@ -69,26 +138,11 @@ class InnerPEC {
   _remoteViewFor(id, isView) {
     var v = this._thingForIdentifier(id);
     if (v == undefined) {
-      if (isView) {
-        v = {
-          on: function() { console.log('on', arguments); },
-          store: function() { console.log('store', arguments); },
-          toList: function() { console.log('toList', arguments); }
-        }
-      } else {
-        v = {
-          on: function() { console.log('on', arguments); },
-          get: function() { console.log('get', arguments); },
-          set: function() { console.log('set', arguments); }
-        }
-      }
+      v = new RemoteView(id, this._port, this);
       this._establishThingMapping(id, v);
     }
-    if (isView) {
-      return new viewlet.View(v);
-    }
-    return new viewlet.Variable(v);
-  }
+    return viewlet.viewletFor(v);
+ }
 
   _remoteVariableFor(id) {
     var viewlet = this._thingForIdentifier(id);
@@ -126,9 +180,8 @@ class InnerPEC {
       }
     }
 
-    this._establishThingMapping(data.particleIdentifier, data.particleName);
-
     var particle = this._scope.instantiateParticle(data.particleName, this);
+    this._establishThingMapping(data.particleIdentifier, particle);
 
     var viewMap = new Map();
 

@@ -15,11 +15,10 @@ let viewlet = require('../viewlet.js');
 
 function assertSingletonHas(view, expectation) {
   return new Promise((resolve, reject) => {
-    var variable = new viewlet.Variable(view);
+    var variable = viewlet.viewletFor(view);
     variable.on('change', () => variable.get().then(result => {
       if (result == undefined)
         return;
-
       assert.equal(result.data, expectation);
       resolve();
     }), {});

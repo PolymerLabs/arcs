@@ -11,11 +11,13 @@ const Identifier = require('./identifier.js');
 const Entity = require('./entity.js');
 const Relation = require('./relation.js');
 const Symbols = require('./symbols.js');
+const underlyingView = require('./view.js');
 let identifier = Symbols.identifier;
 
 // TODO: This won't be needed once runtime is transferred between contexts.
 function cloneData(data) {
-  return JSON.parse(JSON.stringify(data));
+  return data;
+  //return JSON.parse(JSON.stringify(data));
 }
 
 function restore(entry, scope) {
@@ -39,6 +41,9 @@ class Viewlet {
   constructor(view) {
     this._view = view;
   }
+  underlyingView() {
+    return this._view;
+  }  
   on(kind, callback, target) {
     return this._view.on(kind, callback, target);
   }
@@ -69,9 +74,9 @@ class View extends Viewlet {
   query() {
     // TODO: things
   }
-  toList() {
+  async toList() {
     // TODO: remove this and use query instead
-    return Promise.resolve(this._view.toList().map(a => this._restore(a)));
+    return await this._view.toList().map(a => this._restore(a));
   }
   store(entity) {
     var serialization = this._serialize(entity);
@@ -83,10 +88,10 @@ class Variable extends Viewlet {
   constructor(variable) {
     super(variable);
   }
-  get() {
-    var result = this._view.get();
+  async get() {
+    var result = await this._view.get();
     var data = result == null ? undefined : this._restore(result);
-    return Promise.resolve(data);
+    return data;
   }
   set(entity) {
     // TODO: this should happen on entity creation, not here
@@ -97,4 +102,12 @@ class Variable extends Viewlet {
   }
 }
 
-module.exports = { View, Variable };
+function viewletFor(view) {
+  if (view instanceof underlyingView.View)
+    view = new View(view);
+  else
+    view = new Variable(view);
+  return view;
+}
+
+module.exports = { viewletFor };
