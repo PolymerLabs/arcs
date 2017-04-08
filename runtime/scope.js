@@ -92,6 +92,10 @@ class Scope {
     this._particles.set(clazz.name, clazz);
   }
 
+  particleRegistered(name) {
+    return this._particles.get(name) !== undefined;
+  }
+
   particleSpec(name) {
     if (this._particles.has(name))
       return this._particles.get(name).spec.resolve(this);
