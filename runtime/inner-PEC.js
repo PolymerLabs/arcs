@@ -39,6 +39,22 @@ class InnerPEC {
     return new clazz(this._scope);
   }
 
+  _remoteViewFor(id) {
+    return {
+      on: () => console.log(arguments),
+      store: () => console.log(arguments),
+      toList: () => console.log(arguments)
+    }
+  }
+
+  _remoteVariableFor(id) {
+    return {
+      on: () => console.log(arguments),
+      get: () => console.log(arguments),
+      set: () => console.log(arguments)
+    }
+  }
+
   _instantiateParticle(data) {
     if (!scope.particleRegistered(data.particleName)) {
       var clazz = loader.loadParticle(data.particleName);
@@ -76,3 +92,5 @@ class InnerPEC {
     particle.setViews(viewMap);
   }
 }
+
+module.exports = InnerPEC;
