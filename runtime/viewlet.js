@@ -55,6 +55,10 @@ class Viewlet {
   _restore(entry) {
     return restore(entry, this._view._scope);
   }
+
+  get type() {
+    return this._view._type;
+  }
 }
 
 class View extends Viewlet {
