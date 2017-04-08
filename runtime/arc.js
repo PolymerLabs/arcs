@@ -16,13 +16,18 @@ const Type = require('./type.js');
 const view = require('./view.js');
 const Relation = require('./relation.js');
 var PEC = require('./particle-execution-context.js');
-let viewlet = require('./viewlet');
+let viewlet = require('./viewlet.js');
+const InnerPEC = require('./inner-PEC.js');
+const MessageChannel = require('./message-channel.js');
 
 class OuterPEC extends PEC {
   constructor(scope) {
     super();
     this._scope = scope;
     this._particles = [];
+    var channel = new MessageChannel();
+    this._innerPEC = new InnerPEC(channel.port1);
+    this._port = channel.port2;
   }
 
   instantiate(particle, views, mutateCallback) {

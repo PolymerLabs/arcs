@@ -9,46 +9,43 @@
  */
 "use strict";
 
-if (!MessageChannel) {
-
-  class MessagePort {
-    constructor(channel, id, other) {
-      this._channel = channel;
-      this._id = id;
-      this._other = other;
-      this._onmessage = undefined;
-    }
-
-    postMessage(message) {
-      this._channel._post(this._other, message);
-    }
-
-    set onmessage(f) {
-      this._onmessage = f;
-    }
+class MessagePort {
+  constructor(channel, id, other) {
+    this._channel = channel;
+    this._id = id;
+    this._other = other;
+    this._onmessage = undefined;
   }
 
-  class MessageEvent {
-    constructor(message) {
-      this.data = message;
-    }
+  postMessage(message) {
+    this._channel._post(this._other, message);
   }
 
-  class MessageChannel {
-    constructor() {
-      this.port1 = new MessagePort(this, 0, 1);
-      this.port2 = new MessagePort(this, 1, 0);
-      this._ports = [port1, port2];
-    }
+  set onmessage(f) {
+    this._onmessage = f;
+  }
+}
 
-    _post(id, message) {
-      message = JSON.parse(JSON.stringify(message));
-      Promise.resolve().then(() => {
-        if (this._ports[id]._onmessage) {
-          this._ports[id]._onmessage(new MessageEvent(message));
-        }
-      });
-    }
+class MessageEvent {
+  constructor(message) {
+    this.data = message;
+  }
+}
+
+class MessageChannel {
+  constructor() {
+    this.port1 = new MessagePort(this, 0, 1);
+    this.port2 = new MessagePort(this, 1, 0);
+    this._ports = [this.port1, this.port2];
+  }
+
+  _post(id, message) {
+    message = JSON.parse(JSON.stringify(message));
+    Promise.resolve().then(() => {
+      if (this._ports[id]._onmessage) {
+        this._ports[id]._onmessage(new MessageEvent(message));
+      }
+    });
   }
 }
 
