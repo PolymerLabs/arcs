@@ -94,6 +94,7 @@ class InnerPEC {
     this._reverseIdMap = new Map();
     this._idMap = new Map();
     this._nextLocalID = 0;
+    this._particles = [];
   }
 
   _newLocalID() {
@@ -127,6 +128,9 @@ class InnerPEC {
       case "ViewGetResponse":
       case "ViewToListResponse":
         this._promiseResponse(e.data.messageBody);
+        return;
+      case "AwaitIdle":
+        this._awaitIdle(e.data.messageBody);
         return;
       default:
         assert(false, "Don't know how to handle messages of type " + e.data.messageType);
@@ -191,6 +195,7 @@ class InnerPEC {
 
     var particle = this._scope.instantiateParticle(data.particleName, this);
     this._establishThingMapping(data.particleIdentifier, particle);
+    this._particles.push(particle);
 
     var viewMap = new Map();
 
@@ -202,6 +207,37 @@ class InnerPEC {
     }
 
     particle.setViews(viewMap);
+  }
+
+  get relevance() {
+    var rMap = new Map();
+    this._particles.forEach(p => { rMap.set(p, p.relevances); p.relevances = []; });
+    return rMap;
+  }
+
+  get busy() {
+    for (let particle of this._particles) {
+      if (particle.busy) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  _awaitIdle(message) {
+    this.idle.then(() => {
+      this._port.postMessage({
+        messageType: "Idle",
+        messageBody: {version: message.version }
+      });
+    });
+  } 
+
+  get idle() {
+    if (!this.busy) {
+      return Promise.resolve();
+    }
+    return Promise.all(this._particles.map(particle => particle.idle)).then(() => this.idle);
   }
 }
 

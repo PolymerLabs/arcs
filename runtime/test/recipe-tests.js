@@ -15,6 +15,7 @@ var recipe = require("../recipe.js");
 let assert = require('chai').assert;
 let particles = require('./test-particles.js');
 let util = require('./test-util.js');
+let viewlet = require('../viewlet.js');
 
 
 var Foo = runtime.testing.testEntityClass('Foo');
@@ -37,7 +38,7 @@ describe('recipe', function() {
         .build();
 
     r.instantiate(arc);
-    fooView.set(new Foo("not a Bar"));
+    viewlet.viewletFor(fooView).set(new Foo("not a Bar"));
     await util.assertSingletonHas(barView, "not a Bar1");
   });
 });
