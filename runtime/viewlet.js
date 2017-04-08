@@ -82,6 +82,10 @@ class View extends Viewlet {
     var serialization = this._serialize(entity);
     return this._view.store(serialization);
   }
+  async debugString() {
+    var list = await this.toList();
+    return this._view.name + '=' + list.map(p => p.debugString).join(", ");
+  }
 }
 
 class Variable extends Viewlet {

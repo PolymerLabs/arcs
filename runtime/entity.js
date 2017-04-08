@@ -43,6 +43,9 @@ class Entity {
     entity[Symbols.identifier] = id;
     return entity;
   }
+  get debugString() {
+    return JSON.stringify(this.data);
+  }
 }
 
 module.exports = Entity;
