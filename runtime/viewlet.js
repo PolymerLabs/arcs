@@ -76,7 +76,7 @@ class View extends Viewlet {
   }
   async toList() {
     // TODO: remove this and use query instead
-    return await this._view.toList().map(a => this._restore(a));
+    return (await this._view.toList()).map(a => this._restore(a));
   }
   store(entity) {
     var serialization = this._serialize(entity);
@@ -102,8 +102,8 @@ class Variable extends Viewlet {
   }
 }
 
-function viewletFor(view) {
-  if (view instanceof underlyingView.View)
+function viewletFor(view, isView) {
+  if (isView || (isView == undefined && view instanceof underlyingView.View))
     view = new View(view);
   else
     view = new Variable(view);

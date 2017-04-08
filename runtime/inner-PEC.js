@@ -41,11 +41,19 @@ class RemoteView {
   }
 
   get() {
+    return this.postPromise("ViewGet");
+  }
+
+  toList() {
+    return this.postPromise("ViewToList");
+  }
+
+  postPromise(messageType) {
     var rid = this._pec._newLocalID();
     var result = new Promise((resolve, reject) => this._pec._establishThingMapping(rid, (d) => resolve(d)));
     
     this._port.postMessage({
-      messageType: "ViewGet",
+      messageType,
       messageBody: {
         view: this._id,
         callback: rid
@@ -56,8 +64,16 @@ class RemoteView {
   }
 
   set(entity) {
+    this.postSend(entity, "ViewSet");
+  }
+
+  store(entity) {
+    this.postSend(entity, "ViewStore");
+  }
+
+  postSend(entity, messageType) {
     this._port.postMessage({
-      messageType: "ViewSet",
+      messageType,
       messageBody: {
         view: this._id,
         data: entity
@@ -109,6 +125,7 @@ class InnerPEC {
         this._viewCallback(e.data.messageBody);
         return;
       case "ViewGetResponse":
+      case "ViewToListResponse":
         this._promiseResponse(e.data.messageBody);
         return;
       default:
@@ -141,16 +158,8 @@ class InnerPEC {
       v = new RemoteView(id, this._port, this);
       this._establishThingMapping(id, v);
     }
-    return viewlet.viewletFor(v);
+    return viewlet.viewletFor(v, isView);
  }
-
-  _remoteVariableFor(id) {
-    var viewlet = this._thingForIdentifier(id);
-    if (viewlet == undefined) {
-      this._establishThingMapping(id, viewlet);
-    }
-    return viewlet;      
-  }
 
   _instantiateParticle(data) {
     if (!this._scope.particleRegistered(data.particleName)) {
