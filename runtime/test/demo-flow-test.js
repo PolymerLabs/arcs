@@ -17,29 +17,9 @@ var systemParticles = require('../system-particles.js');
 
 require("./trace-setup.js");
 
-class Person extends runtime.Entity {
-  constructor(name) {
-    super();
-    this._data = {name};
-  }
-
-  get data() { return this._data; }
-
-  static get key() { return "Person"; }
-}
-
-class Product extends runtime.Entity {
-    constructor(name) {
-    super();
-    this._data = {name};
-  }
-
-  get data() { return this._data; }
-
-  static get key() { return "Product"; }
-}
-
 function prepareExtensionArc() {
+  let Person = loader.loadEntity("Person");
+  let Product = loader.loadEntity("Product");
   let scope = new runtime.Scope();
   systemParticles.register(scope);
   var arc = new Arc(scope);

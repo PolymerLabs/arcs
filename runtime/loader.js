@@ -16,19 +16,23 @@ var runtime = require("./runtime.js");
 var assert = require("assert");
 var ParticleSpec = require("./particle-spec.js");
 
-function locationFor(name, type) {
-  return `../particles/${name}/${name}.${type}`
+function particleLocationFor(name, type) {
+  return `../particles/${name}/${name}.${type}`;
+}
+
+function entityLocationFor(name, type) {
+  return `../entities/${name}.${type}`;
 }
 
 function loadParticle(name) {
   let definition = loadDefinition(name);
-  let clazz = require(locationFor(name, 'js'));
+  let clazz = require(particleLocationFor(name, 'js'));
   clazz.spec = new ParticleSpec(definition);
   return clazz;
 }
 
 function loadDefinition(name) {
-  let data = fs.readFileSync(locationFor(name, 'ptcl'), "utf-8");
+  let data = fs.readFileSync(particleLocationFor(name, 'ptcl'), "utf-8");
   return parser.parse(data);
 }
 
@@ -37,4 +41,9 @@ function loadRecipe(name) {
   return new ParticleSpec(definition).buildRecipe();
 }
 
-Object.assign(exports, { loadParticle, loadDefinition, loadRecipe })
+function loadEntity(name) {
+  let clazz = require(entityLocationFor(name, 'js'));
+  return clazz;
+}
+
+Object.assign(exports, { loadParticle, loadDefinition, loadRecipe, loadEntity })
