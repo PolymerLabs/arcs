@@ -10,18 +10,15 @@
 
 var particle = require("../particle.js");
 var runtime = require("../runtime.js");
-
-var Bar = runtime.testing.testEntityClass("Bar");
+var testEntities = require("./test-entities.js");
 
 exports.TestParticle = particle.define('TestParticle(in Foo foo, out Bar bar)', (map) => {
-  map.get('foo').get().then(result => map.get('bar').set(new Bar(result.data + 1)));
+  map.get('foo').get().then(result => map.get('bar').set(new testEntities.Bar(result.data + 1)));
   return 9;
 });
 
-var Far = runtime.testing.testEntityClass("Far");
-
 exports.TwoInputTestParticle = particle.define('TwoInputTestParticle(in Foo foo, in Bar bar, out Far far)', map => {
-  map.get('far').set(new Far(map.get('foo').get().data + ' ' + map.get('bar').get().data));
+  map.get('far').set(new testEntities.Far(map.get('foo').get().data + ' ' + map.get('bar').get().data));
   return 3;
 });
 

@@ -28,6 +28,7 @@ class OuterPEC extends PEC {
     var channel = new MessageChannel();
     this._innerPEC = new InnerPEC(channel.port1);
     this._port = channel.port2;
+    this._port.onmessage = e => this._handle(e);
     this._nextIdentifier = 0;
     this._idMap = new Map();
     this._reverseIdMap = new Map();
@@ -45,12 +46,59 @@ class OuterPEC extends PEC {
     return this._idMap.get(id);
   }
 
+  _handle(e) {
+    switch (e.data.messageType) {
+      case "ViewOn":
+        this._viewOn(e.data.messageBody);
+        return;
+      case "ViewGet":
+        this._viewGet(e.data.messageBody);
+        return;
+      case "ViewSet":
+        this._viewSet(e.data.messageBody);
+        return;
+      default:
+        assert(false, "don't know how to handle message of type " + e.data.messageType);
+    }
+  }
+
+  _viewOn(message) {
+    var view = this._thingForIdentifier(message.view);    
+    view.on(message.type, e => this._forwardCallback(message.callback, e), this._thingForIdentifier(message.target));
+  }
+
+  _viewGet(message) {
+    var view = this._thingForIdentifier(message.view);
+    this._port.postMessage({
+      messageType: "ViewGetResponse",
+      messageBody: {
+        callback: message.callback,
+        data: view.get()
+      }
+    })
+  }
+
+  _viewSet(message) {
+    var view = this._thingForIdentifier(message.view);
+    view.set(message.data);
+  }
+
+  _forwardCallback(cid, e) {
+    this._port.postMessage({
+      messageType: "ViewCallback",
+      messageBody: {
+        callback: cid,
+        data: e
+      }
+    });
+  }
+
   instantiate(particle, views, mutateCallback) {
 
     var serializedViewMap = {};
     var types = new Set();
     for (let [name, view] of views.entries()) {
-      serializedViewMap[name] = { viewIdentifier: this._identifierForThing(view._view), viewType: view.type.toLiteral() };
+      serializedViewMap[name] = { viewIdentifier: this._identifierForThing(view.underlyingView()), viewType: view.type.toLiteral() };
       types.add(view.type.toLiteral());
     }
 
@@ -74,10 +122,12 @@ class OuterPEC extends PEC {
       }
     });
 
+    /*
     var p = new particle(this._scope);
     p.setViews(views);
     this._particles.push(p);
     return p;
+    */
   }
   get relevance() {
     var rMap = new Map();
@@ -154,11 +204,7 @@ class Arc {
     viewMap.views.set(name, targetView);
     if (viewMap.views.size == viewMap.clazz.spec.connectionMap.size) {
       let viewletMap = new Map(Array.from(viewMap.views.entries()).map(([key, value]) => {
-        if (value instanceof view.Variable) {
-          value = new viewlet.Variable(value);
-        } else {
-          value = new viewlet.View(value);
-        }
+        value = viewlet.viewletFor(value);
         return [key, value];
       }));
       var particle = this.pec.instantiate(viewMap.clazz, viewletMap)
