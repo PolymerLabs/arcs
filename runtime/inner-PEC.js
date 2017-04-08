@@ -26,8 +26,22 @@ class InnerPEC {
     // TODO: really should have a nicer approach for loading
     // default particles & types.
     testEntities.register(this._scope);
-    this.particleMap = new Map();
     this._views = new Map();
+    this._reverseIdMap = new Map();
+    this._idMap = new Map();
+  }
+
+  _establishThingMapping(id, thing) {
+    this._reverseIdMap.set(thing, id);
+    this._idMap.set(id, thing);
+  }
+
+  _identifierForThing(thing) {
+    return this._reverseIdMap.get(thing);
+  }
+
+  _thingForIdentifier(id) {
+    return this._idMap.get(id);
   }
 
   _handle(e) {
@@ -52,20 +66,36 @@ class InnerPEC {
     return new clazz(this._scope);
   }
 
-  _remoteViewFor(id) {
-    return {
-      on: function() { console.log('on', arguments); },
-      store: function() { console.log('store', arguments); },
-      toList: function() { console.log('toList', arguments); }
+  _remoteViewFor(id, isView) {
+    var v = this._thingForIdentifier(id);
+    if (v == undefined) {
+      if (isView) {
+        v = {
+          on: function() { console.log('on', arguments); },
+          store: function() { console.log('store', arguments); },
+          toList: function() { console.log('toList', arguments); }
+        }
+      } else {
+        v = {
+          on: function() { console.log('on', arguments); },
+          get: function() { console.log('get', arguments); },
+          set: function() { console.log('set', arguments); }
+        }
+      }
+      this._establishThingMapping(id, v);
     }
+    if (isView) {
+      return new viewlet.View(v);
+    }
+    return new viewlet.Variable(v);
   }
 
   _remoteVariableFor(id) {
-    return {
-      on: function() { console.log('on', arguments); },
-      get: function() { console.log('get', arguments); },
-      set: function() { console.log('set', arguments); }
+    var viewlet = this._thingForIdentifier(id);
+    if (viewlet == undefined) {
+      this._establishThingMapping(id, viewlet);
     }
+    return viewlet;      
   }
 
   _instantiateParticle(data) {
@@ -96,8 +126,7 @@ class InnerPEC {
       }
     }
 
-    // do we need this?
-    this.particleMap.set(data.particleIdentifier, data.particleName);
+    this._establishThingMapping(data.particleIdentifier, data.particleName);
 
     var particle = this._scope.instantiateParticle(data.particleName, this);
 
@@ -105,16 +134,9 @@ class InnerPEC {
 
     for (let connectionName in data.views) {
       let {viewIdentifier, viewType} = data.views[connectionName];
-      if (!this._views.has(viewIdentifier)) {
-        var type = Type.fromLiteral(viewType, this._scope);
-        if (type.isView) {
-          var view = new viewlet.View(this._remoteViewFor(viewIdentifier));
-        } else {
-          var view = new viewlet.Variable(this._remoteVariableFor(viewIdentifier));
-        }
-        this._views.set(viewIdentifier, view);
-      }
-      viewMap.set(connectionName, this._views.get(viewIdentifier));
+      let type = Type.fromLiteral(viewType, this._scope);
+      var view = this._remoteViewFor(viewIdentifier, type.isView);
+      viewMap.set(connectionName, view);
     }
 
     particle.setViews(viewMap);

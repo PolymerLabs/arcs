@@ -28,6 +28,21 @@ class OuterPEC extends PEC {
     var channel = new MessageChannel();
     this._innerPEC = new InnerPEC(channel.port1);
     this._port = channel.port2;
+    this._nextIdentifier = 0;
+    this._idMap = new Map();
+    this._reverseIdMap = new Map();
+  }
+
+  _identifierForThing(thing) {
+    if (!this._reverseIdMap.has(thing)) {
+      this._idMap.set(this._nextIdentifier, thing);
+      this._reverseIdMap.set(thing, this._nextIdentifier++);
+    }
+    return this._reverseIdMap.get(thing);
+  }
+
+  _thingForIdentifier(id) {
+    return this._idMap.get(id);
   }
 
   instantiate(particle, views, mutateCallback) {
@@ -35,7 +50,7 @@ class OuterPEC extends PEC {
     var serializedViewMap = {};
     var types = new Set();
     for (let [name, view] of views.entries()) {
-      serializedViewMap[name] = { viewIdentifier: "dummy", viewType: view.type.toLiteral() };
+      serializedViewMap[name] = { viewIdentifier: this._identifierForThing(view._view), viewType: view.type.toLiteral() };
       types.add(view.type.toLiteral());
     }
 
@@ -53,7 +68,7 @@ class OuterPEC extends PEC {
       messageType: "InstantiateParticle",
       messageBody: {
         particleName: particle.name,
-        particleIdentifier: "dummy",
+        particleIdentifier: this._identifierForThing(particle),
         types: [...types.values()],
         views: serializedViewMap
       }
