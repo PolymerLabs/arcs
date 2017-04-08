@@ -10,12 +10,12 @@
 "use strict";
 
 const Scope = require('./scope.js');
-const systemParticles = require('./system-particles.js');
-const testParticles = require('./test/test-particles.js');
 const testEntities = require('./test/test-entities.js');
 const loader = require('./loader.js');
 const Type = require('./type.js');
 const viewlet = require('./viewlet.js');
+const define = require('./particle.js').define;
+const assert = require('assert');
 
 class InnerPEC {
   constructor(port) {
@@ -24,8 +24,6 @@ class InnerPEC {
     this._scope = new Scope();
     // TODO: really should have a nicer approach for loading
     // default particles & types.
-    systemParticles.register(this._scope);
-    testParticles.register(this._scope);
     testEntities.register(this._scope);
     this.particleMap = new Map();
     this._views = new Map();
@@ -36,9 +34,17 @@ class InnerPEC {
       case "InstantiateParticle":
         this._instantiateParticle(e.data.messageBody);
         return;
+      case "DefineParticle":
+        this._defineParticle(e.data.messageBody);
+        return;
       default:
-        assert(false);
+        assert(false, "Don't know how to handle messages of type". e.data.messageType);
     }
+  }
+
+  _defineParticle(data) {
+    var particle = define(data.particleDefinition, eval(data.particleUpdateFunction));
+    this._scope.registerParticle(particle);
   }
 
   constructParticle(clazz) {
@@ -47,17 +53,17 @@ class InnerPEC {
 
   _remoteViewFor(id) {
     return {
-      on: () => console.log(arguments),
-      store: () => console.log(arguments),
-      toList: () => console.log(arguments)
+      on: function() { console.log('on', arguments); },
+      store: function() { console.log('store', arguments); },
+      toList: function() { console.log('toList', arguments); }
     }
   }
 
   _remoteVariableFor(id) {
     return {
-      on: () => console.log(arguments),
-      get: () => console.log(arguments),
-      set: () => console.log(arguments)
+      on: function() { console.log('on', arguments); },
+      get: function() { console.log('get', arguments); },
+      set: function() { console.log('set', arguments); }
     }
   }
 
