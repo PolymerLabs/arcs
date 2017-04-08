@@ -12,6 +12,7 @@
 var Particle = require("../../runtime/particle.js").Particle;
 var runtime = require("../../runtime/runtime.js");
 var tracing = require("../../tracelib/trace.js");
+let util = require("../../runtime/test/test-util.js");
 
 class Product extends runtime.Entity {
     constructor(name) {
@@ -30,6 +31,7 @@ class WishlistFor extends Particle {
     var trace = tracing.start({cat: "Product", name: "Product::setViews"});
     var wishlist = views.get('wishlist');
     ["a new bike!", "Fresh Puppies", "A packet of Tim Loh that never runs out"].map(p => wishlist.store(new Product(p)));
+    util.logDebug("WishlistFor", "create", "wishlist", wishlist);
     trace.end();
   }
 }
