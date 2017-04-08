@@ -18,7 +18,7 @@ const Relation = require('./relation.js');
 var PEC = require('./particle-execution-context.js');
 let viewlet = require('./viewlet');
 
-class LocalPEC extends PEC {
+class OuterPEC extends PEC {
   constructor(scope) {
     super();
     this._scope = scope;
@@ -60,7 +60,7 @@ class Arc {
     this.views = new Set();
     this._viewsByType = new Map();
     this.particleViewMaps = new Map();
-    this.pec = new LocalPEC(scope);
+    this.pec = new OuterPEC(scope);
     var nextParticleHandle = 0;
   }
 
