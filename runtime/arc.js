@@ -34,6 +34,35 @@ class OuterPEC extends PEC {
     this._reverseIdMap = new Map();
   }
 
+
+  /*
+   * NOTE THAT THIS IS CHEATING!
+   */
+  get relevance() {
+    return Promise.resolve(this._innerPEC.relevance);
+  }
+
+  get idle() {
+    if (this._idlePromise == undefined) {
+      this._idlePromise = new Promise((resolve, reject) => {
+        this._idleResolve = resolve;
+      });
+    }
+    this._idleVersion = this._nextIdentifier;
+    this._port.postMessage({
+      messageType: "AwaitIdle",
+      messageBody: {version: this._nextIdentifier++}
+    });
+    return this._idlePromise;
+  }
+
+  _idle(message) {
+    if (message.version == this._idleVersion) {
+      this._idlePromise = undefined;
+      this._idleResolve();
+    }
+  }
+
   _identifierForThing(thing) {
     if (!this._reverseIdMap.has(thing)) {
       this._idMap.set(this._nextIdentifier, thing);
@@ -62,6 +91,9 @@ class OuterPEC extends PEC {
         return;
       case "ViewToList":
         this._viewRetrieve(e.data.messageBody, "ViewToListResponse", v => v.toList());
+        return;
+      case "Idle":
+        this._idle(e.data.messageBody);
         return;
       default:
         assert(false, "don't know how to handle message of type " + e.data.messageType);
@@ -128,26 +160,6 @@ class OuterPEC extends PEC {
       }
     });
   }
-
-  get relevance() {
-    var rMap = new Map();
-    this._particles.forEach(p => { rMap.set(p, p.relevances); p.relevances = []; });
-    return Promise.resolve(rMap);
-  }
-  get busy() {
-    for (let particle of this._particles) {
-      if (particle.busy) {
-        return true;
-      }
-    }
-    return false;
-  }
-  get idle() {
-    if (!this.busy) {
-      return Promise.resolve();
-    }
-    return Promise.all(this._particles.map(particle => particle.idle)).then(() => this.idle);
-  }
 }
 
 class Arc {
@@ -176,9 +188,10 @@ class Arc {
   get relevance() {
     return this.pec.relevance.then(rMap => {
       let relevance = 1;
-      for (let rList of rMap.values())
+      for (let rList of rMap.values()) {
         for (let r of rList)
           relevance *= Arc.scaleRelevance(r);
+      }
       return relevance;
     });
   }

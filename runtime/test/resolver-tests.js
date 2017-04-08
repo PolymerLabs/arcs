@@ -17,6 +17,7 @@ let assert = require('chai').assert;
 let particles = require('./test-particles.js');
 let systemParticles = require('../system-particles.js');
 let util = require('./test-util.js');
+var viewlet = require('../viewlet.js');
 
 require("./trace-setup.js");
 
@@ -36,7 +37,7 @@ describe('resolver', () => {
             .connectSpec("foo", {typeName: "Foo", mustCreate: false})
             .connectSpec("bar", {typeName: "Bar", mustCreate: true})
         .build();
-    fooView.set(new Foo("not a Bar"));
+    viewlet.viewletFor(fooView).set(new Foo("not a Bar"));
     assert(Resolver.resolve(r, arc), "recipe resolves");
     r.instantiate(arc);
     var barView = arc.findViews(scope.typeFor(Bar))[0];
@@ -50,7 +51,7 @@ describe('resolver', () => {
     var r = particles.TestParticle.spec.buildRecipe();
     let fooView = arc.createView(scope.typeFor(Foo));
     let barView = arc.createView(scope.typeFor(Bar));
-    fooView.set(new Foo("not a Bar"));
+    viewlet.viewletFor(fooView).set(new Foo("not a Bar"));
     Resolver.resolve(r, arc);
     r.instantiate(arc);
     await util.assertSingletonHas(barView, "not a Bar1");
@@ -63,7 +64,7 @@ describe('resolver', () => {
     var r = new recipe.RecipeBuilder().addParticle("TestParticle").build();
     let fooView = arc.createView(scope.typeFor(Foo));
     let barView = arc.createView(scope.typeFor(Bar));
-    fooView.set(new Foo("not a Bar"));
+    viewlet.viewletFor(fooView).set(new Foo("not a Bar"));
     Resolver.resolve(r, arc);
     r.instantiate(arc);
     await util.assertSingletonHas(barView, "not a Bar1");

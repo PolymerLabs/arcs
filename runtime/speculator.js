@@ -20,15 +20,17 @@ class Speculator {
     var newArc = arc.clone();
     plan.instantiate(newArc);
     callTrace.end();
-    function awaitCompletion() {
-      if (scheduler.busy) {
-        return scheduler.idle.then(awaitCompletion);
+    async function awaitCompletion() {
+      await scheduler.idle;
+      newArc.pec.incomingViewFlag = false;
+      await newArc.pec.idle;
+      if (newArc.pec.incomingViewFlag)
+        return awaitCompletion();
+      else {
+        return newArc.relevance;
       }
-      if (newArc.pec.busy) {
-        return newArc.pec.idle.then(awaitCompletion);
-      }
-      return newArc.relevance;
     }
+
     return awaitCompletion();
 
   }

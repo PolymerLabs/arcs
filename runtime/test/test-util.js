@@ -27,7 +27,7 @@ function assertSingletonHas(view, expectation) {
 
 function assertSingletonEmpty(view) {
   return new Promise((resolve, reject) => {
-    var variable = new viewlet.Variable(view);
+    var variable = new viewlet.viewletFor(view);
     variable.get().then(result => {
       assert.equal(result, undefined);
       resolve();
