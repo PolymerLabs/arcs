@@ -11,23 +11,29 @@
 
 const Scope = require('./scope.js');
 const systemParticles = require('./system-particles.js');
+const testParticles = require('./test/test-particles.js');
+const testEntities = require('./test/test-entities.js');
 const loader = require('./loader.js');
 const Type = require('./type.js');
+const viewlet = require('./viewlet.js');
 
 class InnerPEC {
   constructor(port) {
     this._port = port;
     this._port.onmessage = e => this._handle(e);
     this._scope = new Scope();
+    // TODO: really should have a nicer approach for loading
+    // default particles & types.
     systemParticles.register(this._scope);
+    testParticles.register(this._scope);
+    testEntities.register(this._scope);
     this.particleMap = new Map();
-    this._types = new Set();
     this._views = new Map();
   }
 
   _handle(e) {
     switch (e.data.messageType) {
-      case InstantiateParticle:
+      case "InstantiateParticle":
         this._instantiateParticle(e.data.messageBody);
         return;
       default:
@@ -56,13 +62,15 @@ class InnerPEC {
   }
 
   _instantiateParticle(data) {
-    if (!scope.particleRegistered(data.particleName)) {
+    if (!this._scope.particleRegistered(data.particleName)) {
       var clazz = loader.loadParticle(data.particleName);
       this._scope.registerParticle(clazz);
     }
 
     for (let type of data.types) {
-      if (!this._types.has(type)) {
+      // TODO: This is a dodgy hack based on possibly unintended
+      // behavior in Type's constructor.
+      if (!this._scope._types.has(JSON.stringify(type))) {
         this._scope.typeFor(loader.loadEntity(type));
         this._types.add(type);
       }
@@ -76,10 +84,10 @@ class InnerPEC {
     var viewMap = new Map();
 
     for (let connectionName in data.views) {
-      let {viewIdentifier, viewType} = data.view[connectionName];
+      let {viewIdentifier, viewType} = data.views[connectionName];
       if (!this._views.has(viewIdentifier)) {
         var type = Type.fromLiteral(viewType, this._scope);
-        if (type.isView()) {
+        if (type.isView) {
           var view = new viewlet.View(this._remoteViewFor(viewIdentifier));
         } else {
           var view = new viewlet.Variable(this._remoteVariableFor(viewIdentifier));

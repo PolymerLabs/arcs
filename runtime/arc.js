@@ -31,6 +31,24 @@ class OuterPEC extends PEC {
   }
 
   instantiate(particle, views, mutateCallback) {
+
+    var serializedViewMap = {};
+    var types = new Set();
+    for (let [name, view] of views.entries()) {
+      serializedViewMap[name] = { viewIdentifier: "dummy", viewType: view.type.toLiteral() };
+      types.add(view.type.toLiteral());
+    }
+
+    this._port.postMessage({
+      messageType: "InstantiateParticle",
+      messageBody: {
+        particleName: particle.name,
+        particleIdentifier: "dummy",
+        types: [...types.values()],
+        views: serializedViewMap
+      }
+    });
+
     var p = new particle(this._scope);
     p.setViews(views);
     this._particles.push(p);
