@@ -104,6 +104,10 @@ class Variable extends Viewlet {
 
     return this._view.set(this._serialize(entity));
   }
+  async debugString() {
+    var value = await this.get();
+    return this._view.name + '=' + value.debugString;
+  }
 }
 
 function viewletFor(view, isView) {
