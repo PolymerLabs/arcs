@@ -36,7 +36,7 @@ exports.Choose = particle.define('Choose(in [~a] view, out ~a singleton)', async
     return 1;
   if (list.length == 1) {
     views.get("singleton").set(list[0]);
-    // util.logDebug("Choose", "out", "singleton", views.get("singleton"));
+    util.logDebug("Choose", "out", "singleton", views.get("singleton"));
     return 10;
   }
   assert(false);
