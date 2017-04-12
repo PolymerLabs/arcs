@@ -21,17 +21,16 @@ const InnerPEC = require('./inner-PEC.js');
 const MessageChannel = require('./message-channel.js');
 
 class OuterPEC extends PEC {
-  constructor(scope) {
+  constructor(scope, port) {
     super();
     this._scope = scope;
     this._particles = [];
-    var channel = new MessageChannel();
-    this._innerPEC = new InnerPEC(channel.port1);
-    this._port = channel.port2;
+    this._port = port;
     this._port.onmessage = e => this._handle(e);
     this._nextIdentifier = 0;
     this._idMap = new Map();
     this._reverseIdMap = new Map();
+    this.messageCount = 0;
   }
 
   get idle() {
@@ -68,8 +67,7 @@ class OuterPEC extends PEC {
   }
 
   _handle(e) {
-    if (e.data.messageType !== "Idle")
-      this.incomingViewFlag = true;
+    this.messageCount++;
     switch (e.data.messageType) {
       case "ViewOn":
         this._viewOn(e.data.messageBody);
@@ -130,7 +128,7 @@ class OuterPEC extends PEC {
     var serializedViewMap = {};
     var types = new Set();
     for (let [name, view] of views.entries()) {
-      serializedViewMap[name] = { viewIdentifier: this._identifierForThing(view.underlyingView()), viewType: view.type.toLiteral() };
+      serializedViewMap[name] = { viewIdentifier: this._identifierForThing(view), viewType: view.type.toLiteral() };
       types.add(view.type.toLiteral());
     }
 
@@ -164,7 +162,9 @@ class Arc {
     this.views = new Set();
     this._viewsByType = new Map();
     this.particleViewMaps = new Map();
-    this.pec = new OuterPEC(scope);
+    var channel = new MessageChannel();
+    this.pec = new OuterPEC(scope, channel.port2);
+    this._innerPEC = new InnerPEC(channel.port1);
     var nextParticleHandle = 0;
   }
 
@@ -208,11 +208,7 @@ class Arc {
     assert(viewMap.clazz.spec.connectionMap.get(name) !== undefined, "can't connect view to a view slot that doesn't exist");
     viewMap.views.set(name, targetView);
     if (viewMap.views.size == viewMap.clazz.spec.connectionMap.size) {
-      let viewletMap = new Map(Array.from(viewMap.views.entries()).map(([key, value]) => {
-        value = viewlet.viewletFor(value);
-        return [key, value];
-      }));
-      var particle = this.pec.instantiate(viewMap.clazz, viewletMap)
+      var particle = this.pec.instantiate(viewMap.clazz, viewMap.views)
       this.particles.push(particle);
     } 
   }
