@@ -23,7 +23,7 @@ class Speculator {
     let relevance = new Map();
     async function awaitCompletion() {
       await scheduler.idle;
-      newArc.pec.incomingViewFlag = false;
+      var messageCount = newArc.pec.messageCount;
       let newRelevance = await newArc.pec.idle;
 
       for (let key in newRelevance) {
@@ -33,7 +33,7 @@ class Speculator {
           relevance.set(key, newRelevance[key]);
       }
       
-      if (newArc.pec.incomingViewFlag)
+      if (newArc.pec.messageCount !== messageCount + 1)
         return awaitCompletion();
       else {
         return arc.relevanceFor(relevance);
