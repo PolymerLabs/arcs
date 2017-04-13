@@ -61,7 +61,7 @@ class Arc {
     this._viewsByType = new Map();
     this.particleViewMaps = new Map();
     this.pec = new LocalPEC(scope);
-    var nextParticleHandle = 0;
+    this.nextParticleHandle = 0;
   }
 
   clone() {

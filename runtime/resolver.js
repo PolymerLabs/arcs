@@ -63,6 +63,8 @@ class Resolver {
     // TODO: better matching enforcement goes here
     if (typeLiteral.equal(spec.typeName, authority.typeName))
       return true;
+    assert(spec.type, '_matches requires spec.type');
+    assert(authority.type, '_matches requires authority.type');
     if (spec.type.isVariable && !authority.type.isVariable)
       return this._matchVariableReference(context, spec.type, authority.type);
     if (authority.type.isVariable && !spec.type.isVariable)
@@ -152,6 +154,7 @@ class Resolver {
     var trace = tracing.start({cat: "resolver", name: "Resolver::resolveSpecConnection",
       args: {name: connection.name}});
     // TODO this is *not* the right way to deal with singleton vs. list connections :)
+    assert(connection.spec, "_resolveSpecConnection requires connection spec.");
     var typeName = connection.spec.typeName;
     trace.update({args: {type: typeName}});
     var type = runtime.internals.Type.fromLiteral(typeName, context.arc.scope);
