@@ -1,14 +1,19 @@
 {
- "name": "arcs-runtime",
- "version": "0.0.0",
- "private": "true",
- "scripts": {
-  "test": "mocha",
-  "peg": "node node_modules\\pegjs\\bin\\pegjs -o parser.js particle.peg"
- },
- "devDependencies": {
-  "chai": "^3.5.0",
-  "mocha": "^3.2.0",
-  "pegjs": "^0.10.0"
- }
+  "name": "arcs-runtime",
+  "version": "0.0.0",
+  "private": "true",
+  "scripts": {
+    "test": "mocha",
+    "peg": "node node_modules\\pegjs\\bin\\pegjs -o parser.js particle.peg",
+    "browserify": "./node_modules/.bin/browserify test/browser-test.js -o test/browser-test-ified.js"
+  },
+  "devDependencies": {
+    "browserify": "^14.3.0",
+    "chai": "^3.5.0",
+    "mocha": "^3.2.0",
+    "pegjs": "^0.10.0"
+  },
+  "browser": {
+    "./loader.js": "./browser-loader.js"
+  }
 }
