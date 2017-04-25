@@ -112,6 +112,7 @@ class InnerPEC {
         return;
       case "ViewGetResponse":
       case "ViewToListResponse":
+      case "HaveASlot":
         this._promiseResponse(e.data.messageBody);
         return;
       case "AwaitIdle":
@@ -200,9 +201,9 @@ class InnerPEC {
       viewMap.set(connectionName, view);
     }
 
-    particle.setSlotCallback(state => {
-      console.log(particle, state);
+    particle.setSlotCallback(async state => {
       if (state == "Need") {
+        var data = await this.postPromise("GetSlot", {particle: this._identifierForThing(particle)})
         var slot = {
           render: (content) => {
             this._port.postMessage({

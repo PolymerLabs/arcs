@@ -95,9 +95,16 @@ class OuterPEC extends PEC {
       case "Idle":
         this._idle(e.data.messageBody);
         return;
+      case "GetSlot":
+        this._getSlot(e.data.messageBody);
+        return;
       default:
         assert(false, "don't know how to handle message of type " + e.data.messageType);
     }
+  }
+
+  _getSlot(message) {
+    this._port.postMessage({messageType: "HaveASlot", messageBody: { callback: message.callback }})
   }
 
   _viewOn(message) {
