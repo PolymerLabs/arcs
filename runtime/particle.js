@@ -62,10 +62,6 @@ class Particle {
 
   }
 
-  setSlot(slot) {
-    this.slot = slot;
-  }
-
   get busy() {
     return this._busy > 0;
   }
@@ -105,13 +101,34 @@ class Particle {
     return this.spec.outputs;
   }
 
+  setSlotCallback(callback) {
+    this._slotCallback = callback;
+  }
+
+  setSlot(slot) {
+    this.slot = slot;
+    this.slotPromise = null;
+    if (this.slotResolver) {
+      this.slotResolver(this.slot); 
+    }    
+    this.slotResolver = undefined;
+  }
+
   releaseSlot() {
+    this._slotCallback("No");
+    this.slot = undefined;
   }
 
   async requireSlot() {
     if (this.slot)
       return this.slot;
-
+    if (!this.slotPromise) {
+      this.slotPromise = new Promise((resolve, reject) => {
+        this.slotResolver = resolve;
+        this._slotCallback("Need");
+      });
+    }
+    return this.slotPromise;
   }
 
   on(views, name, action, f) {
