@@ -13,9 +13,22 @@ var Particle = require("../../runtime/particle.js").Particle;
 var tracing = require("../../tracelib/trace.js");
 
 class ListView extends Particle {
-  async setViews(views) {
-    let slot = await this.requireSlot('root');
-    slot.render('hello from list view');
+  setViews(views) {
+    this.on(views, 'list', 'change', async e => {
+      var inputList = await views.get('list').toList();
+      if (inputList.length > 0) {
+        // say that I need an 'root' slot to continue
+        var slot = await this.requireSlot('root');
+        slot.render(`
+    
+hello from list view<br>
+<div slotid="action"></div>
+
+`.trim());
+      } else {
+        this.releaseSlot('root');
+      }
+    });
   }
 }
 

@@ -19,6 +19,7 @@ var PEC = require('./particle-execution-context.js');
 let viewlet = require('./viewlet.js');
 const InnerPEC = require('./inner-PEC.js');
 const MessageChannel = require('./message-channel.js');
+const SlotManager = require('./SlotManager.js');
 
 class OuterPEC extends PEC {
   constructor(scope, port) {
@@ -67,8 +68,11 @@ class OuterPEC extends PEC {
   }
 
   _renderSlot({particle, content}) {
-    // TODO: Talk to the slot manager?
     console.log(particle, content);
+    let slotid = particle === 10 ? 'root' : 'action';
+    // TODO(sjmiles): OuterPEC needs a map of particles to slot id's
+    // e.g. let slotid = this._slotIdFromParticle(particle);
+    SlotManager.renderSlot(slotid, content);
   }
 
   _handle(e) {

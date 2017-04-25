@@ -119,9 +119,11 @@ class Particle {
     this.slot = undefined;
   }
 
-  async requireSlot() {
-    if (this.slot)
+  async requireSlot(id) {
+    if (this.slot) {
+      this.slot.id = id;
       return this.slot;
+    }
     if (!this.slotPromise) {
       this.slotPromise = new Promise((resolve, reject) => {
         this.slotResolver = resolve;
