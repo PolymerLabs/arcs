@@ -4,3 +4,4 @@
 **/*.swo
 **/*~
 **/trace.json
+runtime/test/browser-test-ified.js
