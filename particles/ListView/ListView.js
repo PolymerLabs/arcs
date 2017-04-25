@@ -13,8 +13,9 @@ var Particle = require("../../runtime/particle.js").Particle;
 var tracing = require("../../tracelib/trace.js");
 
 class ListView extends Particle {
-  setViews(views) {
-    this.slot.render('hello from list view');
+  async setViews(views) {
+    let slot = await this.requireSlot('root');
+    slot.render('hello from list view');
   }
 }
 
