@@ -66,9 +66,17 @@ class OuterPEC extends PEC {
     return this._idMap.get(id);
   }
 
+  _renderSlot({particle, content}) {
+    // TODO: Talk to the slot manager?
+    console.log(particle, content);
+  }
+
   _handle(e) {
     this.messageCount++;
     switch (e.data.messageType) {
+      case "RenderSlot":
+        this._renderSlot(e.data.messageBody);
+        return;
       case "ViewOn":
         this._viewOn(e.data.messageBody);
         return;

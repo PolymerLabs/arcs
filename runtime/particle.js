@@ -62,6 +62,10 @@ class Particle {
 
   }
 
+  setSlot(slot) {
+    this.slot = slot;
+  }
+
   get busy() {
     return this._busy > 0;
   }

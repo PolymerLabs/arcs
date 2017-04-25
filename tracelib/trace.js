@@ -18,9 +18,16 @@ var zlib = require('zlib');
 var options = require('./options');
 
 var events = [];
-var now = function() {
-  var t = process.hrtime();
-  return t[0] * 1000000 + t[1] / 1000;
+if (global.document) {
+  var now = function() {
+    var t = performance.now();
+    return t;
+  }
+} else {
+  var now = function() {
+    var t = process.hrtime();
+    return t[0] * 1000000 + t[1] / 1000;
+  }
 }
 
 var asyncId = 0;
@@ -201,6 +208,19 @@ function init() {
         return this;
       },
     };
+  };
+  module.exports.save = function() {
+    events.forEach(function(event) {
+      event.pid = process.pid || 42;
+      event.tid = 0;
+      if (!event.args) {
+        delete event.args;
+      }
+      if (!event.cat) {
+        event.cat = '';
+      }
+    });
+    return {traceEvents: events};
   };
   module.exports.dump = function() {
     events.forEach(function(event) {
