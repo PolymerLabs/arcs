@@ -106,11 +106,12 @@ class Particle {
   }
 
   releaseSlot() {
-    
   }
 
-  requireSlot() {
-    
+  async requireSlot() {
+    if (this.slot)
+      return this.slot;
+
   }
 
   on(views, name, action, f) {
