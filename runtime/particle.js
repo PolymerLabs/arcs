@@ -105,6 +105,13 @@ class Particle {
     return this.spec.outputs;
   }
 
+  releaseSlot() {
+    
+  }
+
+  requireSlot() {
+    
+  }
 
   on(views, name, action, f) {
     var trace = tracing.start({cat: 'particle', name: this.constructor.name + "::on", args: {view: name, event: action}});
