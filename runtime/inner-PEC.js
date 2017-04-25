@@ -41,26 +41,11 @@ class RemoteView {
   }
 
   get() {
-    return this.postPromise("ViewGet");
+    return this._pec.postPromise("ViewGet", {view: this._id});
   }
 
   toList() {
-    return this.postPromise("ViewToList");
-  }
-
-  postPromise(messageType) {
-    var rid = this._pec._newLocalID();
-    var result = new Promise((resolve, reject) => this._pec._establishThingMapping(rid, (d) => resolve(d)));
-    
-    this._port.postMessage({
-      messageType,
-      messageBody: {
-        view: this._id,
-        callback: rid
-      }
-    });
-
-    return result;
+    return this._pec.postPromise("ViewToList", {view: this._id});
   }
 
   set(entity) {
@@ -142,6 +127,15 @@ class InnerPEC {
     callback(data.data);
   }
 
+  postPromise(messageType, messageBody) {
+    var rid = this._newLocalID();
+    var result = new Promise((resolve, reject) => this._establishThingMapping(rid, (d) => resolve(d)));
+    messageBody.callback = rid;
+
+    this._port.postMessage({ messageType, messageBody });
+    return result;
+  }
+
   _promiseResponse(data) {
     var resolve = this._thingForIdentifier(data.callback);
     resolve(data.data);
@@ -208,7 +202,7 @@ class InnerPEC {
 
     particle.setSlotCallback(state => {
       console.log(particle, state);
-      if (state == "Need") {      
+      if (state == "Need") {
         var slot = {
           render: (content) => {
             this._port.postMessage({
