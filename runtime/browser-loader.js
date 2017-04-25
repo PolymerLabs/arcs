@@ -24,6 +24,7 @@ var _cp = require("../particles/Create/Create.js");
 var _rp = require("../particles/Recommend/Recommend.js");
 var _sp = require("../particles/Save/Save.js");
 var _wp = require("../particles/WishlistFor/WishlistFor.js");
+var _lv = require("../particles/ListView/ListView.js");
 //var _slp = require("../particles/StackingLayout/StackingLayout.js");
 //
 var _pne = require("../entities/Person.js");

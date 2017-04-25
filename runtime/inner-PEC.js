@@ -206,6 +206,18 @@ class InnerPEC {
       viewMap.set(connectionName, view);
     }
 
+    var slot = {
+      render: (content) => {
+        this._port.postMessage({
+          messageType: 'RenderSlot',
+          messageBody: {
+            content,
+            particle: this._identifierForThing(particle),
+          }
+        });
+      }
+    };
+    particle.setSlot(slot);
     particle.setViews(viewMap);
   }
 

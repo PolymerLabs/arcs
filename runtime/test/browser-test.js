@@ -14,6 +14,14 @@ var loader = require("../loader.js");
 var Suggestinator = require("../suggestinator.js");
 var recipe = require('../recipe.js');
 var systemParticles = require('../system-particles.js');
+var tracing = require('../../tracelib/trace.js');
+tracing.enable();
+
+class SlotManager {
+  renderSlot(slotId, content) {
+    document.body.textContent = content;
+  }
+}
 
 function prepareExtensionArc() {
   let Person = loader.loadEntity("Person");
@@ -30,7 +38,7 @@ function prepareExtensionArc() {
 
 let arc = prepareExtensionArc();
 // TODO: add a loader to the scope so this fallback can happen automatically.
-['Create', 'Recommend', 'Save', 'WishlistFor'].forEach(name => {
+['Create', 'Recommend', 'Save', 'WishlistFor', 'ListView'].forEach(name => {
   let particleClass = loader.loadParticle(name);
   arc.scope.registerParticle(particleClass);
 });
@@ -48,8 +56,12 @@ var r = new recipe.RecipeBuilder()
     .connectConstraint("list", "list")
   .addParticle("Choose")
     .connectConstraint("singleton", "person")
+  .addParticle("ListView")
+    .connectConstraint("list", "list")
   .build();
 var suggestinator = new Suggestinator();
 suggestinator._getSuggestions = a => [r];
 var results = suggestinator.suggestinate(arc);
 results.then(r => { console.log(r); })
+
+window.trace = tracing.save();
