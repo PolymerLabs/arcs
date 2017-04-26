@@ -49,6 +49,8 @@ class ParticleSpec {
     this.connections.forEach(a => this.connectionMap.set(a.name, a));
     this.inputs = this.connections.filter(a => a.isInput);
     this.outputs = this.connections.filter(a => a.isOutput);
+    this.exposes = rawData.exposes;
+    this.renders = rawData.renders;
   }
 
   resolve(scope) {
