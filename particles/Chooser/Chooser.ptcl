@@ -9,3 +9,5 @@
  */
 
 Chooser(in [Product] choices, out [Product] resultList)
+
+renders: action none-need

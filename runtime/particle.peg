@@ -12,7 +12,44 @@
 }
 
 
-ParticleFile = Comment? particle:Particle _ { return particle }
+ParticleFile = Comment? particle:Particle _ renders:Renders? _ exposes:Exposes? _ { 
+  if (renders) {
+    particle.renders = renders;
+  } else {
+    particle.renders = [];
+  }
+  if (exposes) {
+    particle.exposes = exposes;
+  } else {
+    particle.exposes = [];
+  }
+  return particle;
+}
+
+Renders = "renders:" _ first:RenderDescriptor rest:(_ "," _ RenderDescriptor)* {
+  return [first].concat(rest.map(a => a[3]));
+}
+
+RenderDescriptor = name:VariableTypeName _ min:RenderLevel? max:(_ "-" _ RenderLevel)? {
+  if (max == undefined) {
+    max = "can";
+  } else {
+    max = max[3];
+  }
+  
+  if (min == undefined) {
+    min = "none";
+  }
+  return {name, min, max};
+}
+
+RenderLevel = "none" / "can" / "need"
+
+Exposes = "exposes:" _ first:ExposeDescriptor rest:(_ "," _ ExposeDescriptor)* {
+  return [first].concat(rest.map(a => a[3]));
+}
+
+ExposeDescriptor = VariableTypeName
 
 Comment = "/*" (! "*/" .)* "*/" _
 

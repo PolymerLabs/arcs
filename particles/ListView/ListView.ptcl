@@ -9,3 +9,6 @@
  */
 
 ListView(in [Product] list, out [Product] sameList)
+
+renders: root none-need
+exposes: action
