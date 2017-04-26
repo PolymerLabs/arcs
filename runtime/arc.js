@@ -108,7 +108,7 @@ class OuterPEC extends PEC {
   }
 
   _getSlot(message) {
-    this._port.postMessage({messageType: "HaveASlot", messageBody: { callback: message.callback }})
+    this._port.postMessage({messageType: "HaveASlot", messageBody: { callback: message.callback }});
   }
 
   _viewOn(message) {
