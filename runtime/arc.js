@@ -69,7 +69,7 @@ class OuterPEC extends PEC {
 
   _renderSlot({particle, content}) {
     console.log(particle, content);
-    SlotManager.renderSlot(particle, content);
+    SlotManager.renderSlot(this._thingForIdentifier(particle), content);
   }
 
   _handle(e) {
@@ -106,13 +106,8 @@ class OuterPEC extends PEC {
 
   _getSlot(message) {
     var particleSpec = this._thingForIdentifier(message.particle);
-    var renders = particleSpec.particle.spec.renders;
-    var renderMap = new Map();
-    for (var render of renders) {
-      renderMap.set(render.name.name, particleSpec.views.get(render.name.view));
-    }
-    assert(renderMap.has(message.name));
-    SlotManager.registerSlot(message.particle, message.name, renderMap.get(message.name)).then(() => {
+    assert(particleSpec.renderMap.has(message.name));
+    SlotManager.registerSlot(particleSpec, message.name, particleSpec.renderMap.get(message.name)).then(() => {
       this._port.postMessage({messageType: "HaveASlot", messageBody: { callback: message.callback }});
     });
   }
@@ -167,7 +162,19 @@ class OuterPEC extends PEC {
       })
     }
 
-    var particleSpec = {particle, views}
+    var renders = particle.spec.renders;
+    var renderMap = new Map();
+    for (var render of renders) {
+      renderMap.set(render.name.name, views.get(render.name.view));
+    }
+
+    var exposes = particle.spec.exposes;
+    var exposeMap = new Map();
+    for (var expose of exposes) {
+      exposeMap.set(expose.name, views.get(expose.view));
+    }
+
+    var particleSpec = {particle, views, renderMap, exposeMap }
 
     this._port.postMessage({
       messageType: "InstantiateParticle",
