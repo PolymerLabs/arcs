@@ -58,6 +58,7 @@ class SlotManager {
     if (slot !== undefined) {
       slot.innerHTML = content;
       this._findSlots(particleid, slot);
+      this._findEventGenerators(particleid, slot);
     }
   }
   _findSlots(particleSpec, dom) {
@@ -86,6 +87,18 @@ class SlotManager {
         this._findSlots(slot);
       } else this._provideSlot(slotid);
     });
+  }
+  _findEventGenerators(particleSpec, dom) {
+    var eventGenerators = dom.querySelectorAll("[events]");
+    for (var eventGenerator of eventGenerators) {
+      var attributes = eventGenerator.attributes;
+      for (var {name, value} of attributes) {
+        if (name.startsWith("on-")) {
+          var event = name.substring(3);
+          eventGenerator.addEventListener(event, e => this._pec.sendEvent(particleSpec, value));
+        }
+      }
+    }
   }
   _provideSlot(slotid) {
     let pending = this._pendingSlotRequests[slotid];

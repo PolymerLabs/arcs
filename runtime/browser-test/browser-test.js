@@ -39,6 +39,8 @@ let arc = prepareExtensionArc();
 var r = new recipe.RecipeBuilder()
   .addParticle("Create")
     .connectConstraint("newList", "list")
+  .addParticle("Create")
+    .connectConstraint("newList", "recommended")
   .addParticle("WishlistFor")
     .connectConstraint("wishlist", "wishlist")
     .connectConstraint("person", "person")

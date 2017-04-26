@@ -16,10 +16,12 @@ class Chooser extends Particle {
   setViews(views) {
     this.on(views, 'choices', 'change', async e => {
       var inputList = await views.get('choices').toList();
+      console.log(inputList);
       if (inputList.length > 0) {
         // say that I need an 'action' slot to continue
         var slot = await this.requireSlot('action'); // vs. this.whenSlot('action')
-        slot.render('OMG CHOOSER');
+        slot.render(inputList[0].data.name + '<button events on-click=clack>CLICK ME YO</button>');
+        slot.registerEventHandler('clack', a => views.get('resultList').store(inputList[0]));
       } else {
         this.releaseSlot('action');
       }
