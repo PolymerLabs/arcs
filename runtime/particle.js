@@ -147,6 +147,10 @@ class Particle {
     views.get(name).on(action, tracing.wrap({cat: 'particle', name: this.constructor.name, args: {view: name, event: action}}, f), this);
     trace.end();
   }
+
+  fireEvent(eventName) {
+    this.slot.fireEvent(eventName);
+  }
 }
 
 exports.define = define;
