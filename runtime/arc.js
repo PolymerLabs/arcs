@@ -19,7 +19,7 @@ var PEC = require('./particle-execution-context.js');
 let viewlet = require('./viewlet.js');
 const InnerPEC = require('./inner-PEC.js');
 const MessageChannel = require('./message-channel.js');
-const SlotManager = require('./SlotManager.js');
+const SlotManager = require('./slot-manager.js');
 
 class OuterPEC extends PEC {
   constructor(scope, port) {
@@ -105,7 +105,14 @@ class OuterPEC extends PEC {
   }
 
   _getSlot(message) {
-    SlotManager.registerSlot(message.particle).then(() => {
+    var particleSpec = this._thingForIdentifier(message.particle);
+    var renders = particleSpec.particle.spec.renders;
+    var renderMap = new Map();
+    for (var render of renders) {
+      renderMap.set(render.name.name, particleSpec.views.get(render.name.view));
+    }
+    assert(renderMap.has(message.name));
+    SlotManager.registerSlot(message.particle, message.name, renderMap.get(message.name)).then(() => {
       this._port.postMessage({messageType: "HaveASlot", messageBody: { callback: message.callback }});
     });
   }
@@ -160,11 +167,13 @@ class OuterPEC extends PEC {
       })
     }
 
+    var particleSpec = {particle, views}
+
     this._port.postMessage({
       messageType: "InstantiateParticle",
       messageBody: {
         particleName: particle.name,
-        particleIdentifier: this._identifierForThing(particle),
+        particleIdentifier: this._identifierForThing(particleSpec),
         types: [...types.values()],
         views: serializedViewMap
       }

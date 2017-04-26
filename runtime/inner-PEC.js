@@ -201,9 +201,9 @@ class InnerPEC {
       viewMap.set(connectionName, view);
     }
 
-    particle.setSlotCallback(async state => {
+    particle.setSlotCallback(async (name, state) => {
       if (state == "Need") {
-        var data = await this.postPromise("GetSlot", {particle: this._identifierForThing(particle)})
+        var data = await this.postPromise("GetSlot", {name, particle: this._identifierForThing(particle)})
         var slot = {
           render: (content) => {
             this._port.postMessage({
