@@ -69,7 +69,6 @@ class OuterPEC extends PEC {
   }
 
   _renderSlot({particle, content}) {
-    console.log(particle, content);
     SlotManager.renderSlot(this._thingForIdentifier(particle), content);
   }
 

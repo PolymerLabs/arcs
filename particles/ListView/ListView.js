@@ -14,12 +14,15 @@ var tracing = require("../../tracelib/trace.js");
 
 class ListView extends Particle {
   setViews(views) {
+    // TODO(sjmiles): code to test slot dynamics
+    /*
     setTimeout(() => {
       this.releaseSlot('root');
       setTimeout(() => {
         this._renderViews(views);
       }, 2000);
     }, 3000);
+    */
     this.on(views, 'list', 'change', async e => {
       this._renderViews(views);
     });
