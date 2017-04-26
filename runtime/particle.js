@@ -115,7 +115,8 @@ class Particle {
   }
 
   releaseSlot() {
-    this._slotCallback("No");
+    if (this.slot)
+      this._slotCallback(this.slot.id, "No");
     this.slot = undefined;
   }
 
@@ -127,7 +128,7 @@ class Particle {
     if (!this.slotPromise) {
       this.slotPromise = new Promise((resolve, reject) => {
         this.slotResolver = resolve;
-        this._slotCallback("Need");
+        this._slotCallback(id, "Need");
       });
     }
     return this.slotPromise;
