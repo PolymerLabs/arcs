@@ -11,15 +11,11 @@
 
 const assert = require('assert');
 
-// TODO(sjmiles): SlotManager 
-// - needs a new name, 
-// - needs better function names,
-// - needs better data design. 
-// Above are blocked on deeper functionality: 
-// - slot ownership tracking
-// - slot/particle mapping
-// - release slot
-// - make into class
+// TODO(sjmiles): SlotManager
+// - needs a new name
+// - needs better function names
+// - needs better data design
+
 class SlotManager {
   constructor() {
     this._content = {};
@@ -27,13 +23,7 @@ class SlotManager {
       this._slotDom = {root: {insertion: document.body, view: undefined}};
     } else {
       this._slotDom = {root: {insertion: {}, view: undefined}};
-    };
-    /*
-    this._slotDom = {root: {
-      insertion: global.document ? global.document.body : null, 
-      view: undefined
-    }};
-    */
+    }
     this._slotOwners = {};
     this._targetSlots = new Map();
     this._pendingSlotRequests = {};
@@ -103,15 +93,16 @@ class SlotManager {
   }
   releaseSlot(particle) {
     console.log('releaseSlot', particle);
+    // TODO(sjmiles): handle release for a particle whose slot is pending
     let slotid = this._getSlotId(particle);
     if (slotid) {
       this._releaseSlotData(particle, slotid);
       let dom = this._slotDom[slotid];
-      let slots = Array.prototype.slice.call(dom.querySelectorAll("[slotid]"));
+      let slots = Array.prototype.slice.call(dom.insertion.querySelectorAll("[slotid]"));
       slots = slots.map(s => s.getAttribute('slotid'));
       let particles = slots.map(s => this._getParticle(s));
       slots.forEach(this._releaseChildSlot, this);
-      dom.textContent = '';
+      dom.insertion.innerHTML = '';
       return particles;
     }
   }

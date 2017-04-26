@@ -116,8 +116,10 @@ class OuterPEC extends PEC {
   }
 
   _releaseSlot(message) {
-    let affectedParticles = SlotManager.releaseSlot(message.particle);
+    let particleSpec = this._thingForIdentifier(message.particle);
+    let affectedParticles = SlotManager.releaseSlot(particleSpec);
     if (affectedParticles) {
+      affectedParticles = affectedParticles.map(p => this._identifierForThing(p));
       this._port.postMessage({messageType: "LostSlots", messageBody: affectedParticles});
     }
   }
@@ -135,7 +137,7 @@ class OuterPEC extends PEC {
         callback: message.callback,
         data: f(view)
       }
-    })
+    });
   }
 
   _viewSave(message, f) {

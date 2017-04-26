@@ -116,7 +116,7 @@ class Particle {
 
   releaseSlot() {
     if (this.slot)
-      this._slotCallback("No");
+      this._slotCallback(this.slot.id, "No");
     this._clearSlot();
   }
   
