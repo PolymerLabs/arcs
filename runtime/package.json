@@ -5,7 +5,7 @@
   "scripts": {
     "test": "mocha",
     "peg": "node node_modules\\pegjs\\bin\\pegjs -o parser.js particle.peg",
-    "browserify": "./node_modules/.bin/browserify test/browser-test.js --debug -o test/browser-test-ified.js"
+    "browserify": "./node_modules/.bin/browserify browser-test/browser-test.js --debug -o browser-test/browser-test-ified.js"
   },
   "devDependencies": {
     "browserify": "^14.3.0",
