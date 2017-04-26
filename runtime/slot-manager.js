@@ -84,7 +84,7 @@ class SlotManager {
       this._slotDom[slotid] = { insertion: slot, view: particleSpec.exposeMap.get(slotid) };
       if (this._content[slotid]) {
         slot.innerHTML = this._content[slotid];
-        this._findSlots(slot);
+        this._findSlots(particleSpec, slot);
       } else this._provideSlot(slotid);
     });
   }
