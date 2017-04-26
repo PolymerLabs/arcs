@@ -152,10 +152,15 @@ class Particle {
     views.get(name).on(action, tracing.wrap({cat: 'particle', name: this.constructor.name, args: {view: name, event: action}}, f), this);
     trace.end();
   }
+
   logDebug(tag, view) {
     let direction = this.spec.connectionMap.get(tag).direction;
     view.debugString().then(v => console.log(
        `[${this.spec.type}][${direction}][${tag}]: [${view.connectionName}]`, v));
+  }
+
+  fireEvent(eventName) {
+    this.slot.fireEvent(eventName);
   }
 }
 
