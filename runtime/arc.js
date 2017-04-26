@@ -69,10 +69,7 @@ class OuterPEC extends PEC {
 
   _renderSlot({particle, content}) {
     console.log(particle, content);
-    let slotid = particle === 10 ? 'root' : 'action';
-    // TODO(sjmiles): OuterPEC needs a map of particles to slot id's
-    // e.g. let slotid = this._slotIdFromParticle(particle);
-    SlotManager.renderSlot(slotid, content);
+    SlotManager.renderSlot(particle, content);
   }
 
   _handle(e) {
@@ -108,7 +105,9 @@ class OuterPEC extends PEC {
   }
 
   _getSlot(message) {
-    this._port.postMessage({messageType: "HaveASlot", messageBody: { callback: message.callback }});
+    SlotManager.registerSlot(message.particle).then(() => {
+      this._port.postMessage({messageType: "HaveASlot", messageBody: { callback: message.callback }});
+    });
   }
 
   _viewOn(message) {
