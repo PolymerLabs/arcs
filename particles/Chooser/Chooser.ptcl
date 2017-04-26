@@ -10,4 +10,4 @@
 
 Chooser(in [Product] choices, out [Product] resultList)
 
-renders: action none-need
+renders: action(resultList) none-need
