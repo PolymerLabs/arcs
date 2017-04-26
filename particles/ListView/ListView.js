@@ -17,13 +17,14 @@ class ListView extends Particle {
     this.on(views, 'list', 'change', async e => {
       var inputList = await views.get('list').toList();
       if (inputList.length > 0) {
+        let names = inputList.map(entity => entity.data.name);
         // say that I need an 'root' slot to continue
         var slot = await this.requireSlot('root');
         slot.render(`
-    
-hello from list view<br>
-<div slotid="action"></div>
-
+<div style="border: 1px solid silver; padding: 4px;">    
+  ${names.join('<br>')}
+  <div slotid="action" style="border: 1px solid gray; padding: 2px;"></div>
+</div>
 `.trim());
       } else {
         this.releaseSlot('root');

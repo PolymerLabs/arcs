@@ -1,20 +1,17 @@
 SlotManager = {
   init() {
     if (global.document) {
-      this._contentPending = {};
+      this._content = {};
       this._slotDom = {root: document.body};
     }
   },
   renderSlot(slotid, content) {
     if (global.document) {
       let slot = this._slotDom[slotid];
+      // TODO(sjmiles): cache the content in case the containing
+      // particle re-renders
       this._content[slotid] = content;
-      if (!slot) {
-        // TODO(sjmiles): shouldn't get here as the slot will not be
-        // assigned before it's available. All the `pending` is a 
-        // stopgap for early code that assigns slots aggressively.
-        this._content[slotid] = content;
-      } else {
+      if (slot) {
         slot.innerHTML = content;
         this._findSlots(slot);
       }
@@ -25,8 +22,8 @@ SlotManager = {
     Array.prototype.forEach.call(slots, slot => {
       let slotid = slot.getAttribute('slotid');
       this._slotDom[slotid] = slot;
-      if (this._contentPending[slotid]) {
-        slot.innerHTML = this._contentPending[slotid];
+      if (this._content[slotid]) {
+        slot.innerHTML = this._content[slotid];
         this._findSlots(slot);
       }
     });
