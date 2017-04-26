@@ -233,6 +233,9 @@ class InnerPEC {
         }
         this._handlers.get(name).push(f);
       }
+      clearEventHandlers(name) {
+        this._handlers.set(name, []);
+      }
       fireEvent(name) {
         for (var handler of this._handlers.get(name) || []) {
           handler();
@@ -260,6 +263,7 @@ class InnerPEC {
   _lostSlots(particleIds) {
     // clean up slots that disappeared
     particleIds.forEach(pid => {
+      console.log(pid);
       let particle = this._thingForIdentifier(pid);
       particle.slotReleased();
     });
