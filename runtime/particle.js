@@ -55,6 +55,9 @@ class Particle {
     this._idle = Promise.resolve();
     this._idleResolver = null;
     this._busy = 0;
+    this.slotHandlers = [];
+    this.stateHandlers = new Map();
+    this.states = new Map();
   }
 
   // Override this to do stuff
@@ -112,6 +115,7 @@ class Particle {
       this.slotResolver(this.slot); 
     }    
     this.slotResolver = undefined;
+    this.slotHandlers.forEach(f => f(true));
   }
 
   releaseSlot() {
@@ -126,7 +130,10 @@ class Particle {
   }
 
   _clearSlot() {
-    this.slot = undefined;
+    if (this.slot !== undefined) {
+      this.slot = undefined;
+      this.slotHandlers.forEach(f => f(false));
+    }
   }
   
   async requireSlot(id) {
@@ -142,12 +149,76 @@ class Particle {
     return this.slotPromise;
   }
 
-  on(views, name, action, f) {
+  addSlotHandler(f) {
+    this.slotHandlers.push(f);
+  }
+
+  addStateHandler(states, f) {
+    states.forEach(state => {
+      if (!this.stateHandlers.has(state)) {
+        this.stateHandlers.set(state, []);
+      }
+      this.stateHandlers.get(state).push(f);
+    });
+  }
+
+  emit(state, value) {
+    this.states.set(state, value);
+    this.stateHandlers.get(state).forEach(f => f(value));
+  }
+
+  on(views, names, action, f) {
+    if (typeof names == "string")
+      names = [names];
     var trace = tracing.start({cat: 'particle', name: this.constructor.name + "::on", args: {view: name, event: action}});
-    views.get(name).on(action, tracing.wrap({cat: 'particle', name: this.constructor.name, args: {view: name, event: action}}, f), this);
+    names.forEach(name => views.get(name).on(action, tracing.wrap({cat: 'particle', name: this.constructor.name, args: {view: name, event: action}}, f), this));
     trace.end();
+  }
+
+  when(changes, f) {
+    changes.forEach(change => change.register(this, f));
+  }
+
+  fireEvent(eventName) {
+    this.slot.fireEvent(eventName);
+  }
+}
+
+class ViewChanges {
+  constructor(views, names, type) {
+    if (typeof names == "string")
+      names = [names];
+    this.names = names;
+    this.views = views;
+    this.type = type;
+  }
+  register(particle, f) {
+    particle.on(this.views, this.names, this.type, f);
+  }
+}
+
+class SlotChanges {
+  constructor() {
+
+  }
+  register(particle, f) {
+    particle.addSlotHandler(f);
+  }
+}
+
+class StateChanges {
+  constructor(states) {
+    if (typeof states == "string")
+      states = [states];
+    this.states = states;
+  }
+  register(particle, f) {
+    particle.addStateHandler(this.states, f);
   }
 }
 
 exports.define = define;
 exports.Particle = Particle;
+exports.ViewChanges = ViewChanges;
+exports.SlotChanges = SlotChanges;
+exports.StateChanges = StateChanges;

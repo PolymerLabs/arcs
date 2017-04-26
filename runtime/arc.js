@@ -32,6 +32,7 @@ class OuterPEC extends PEC {
     this._idMap = new Map();
     this._reverseIdMap = new Map();
     this.messageCount = 0;
+    SlotManager._pec = this;
   }
 
   get idle() {
@@ -153,6 +154,11 @@ class OuterPEC extends PEC {
         data: e
       }
     });
+  }
+
+  sendEvent(particleSpec, eventName) {
+    var particle = this._identifierForThing(particleSpec);
+    this._port.postMessage({messageType: "UIEvent", messageBody: { particle, eventName }});
   }
 
   instantiate(particle, views, mutateCallback) {

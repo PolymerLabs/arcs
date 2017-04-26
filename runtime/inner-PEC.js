@@ -121,6 +121,9 @@ class InnerPEC {
       case "AwaitIdle":
         this._awaitIdle(e.data.messageBody);
         return;
+      case "UIEvent":
+        this._uiEvent(e.data.messageBody);
+        return;
       default:
         assert(false, "Don't know how to handle messages of type " + e.data.messageType);
     }
@@ -148,6 +151,11 @@ class InnerPEC {
   _defineParticle(data) {
     var particle = define(data.particleDefinition, eval(data.particleFunction));
     this._scope.registerParticle(particle);
+  }
+
+  _uiEvent(data) {
+    var particle = this._thingForIdentifier(data.particle);
+    particle.fireEvent(data.eventName);
   }
 
   constructParticle(clazz) {
@@ -204,21 +212,42 @@ class InnerPEC {
       viewMap.set(connectionName, view);
     }
 
+    class Slotlet {
+      constructor(pec, particle) {
+        this._identifier = pec._identifierForThing(particle);
+        this._handlers = new Map();
+        this._pec = pec;
+      }
+      render(content) {
+        this._pec._port.postMessage({
+          messageType: 'RenderSlot',
+          messageBody: {
+            content,
+            particle: this._identifier,
+          }
+        });
+      }
+      registerEventHandler(name, f) {
+        if (!this._handlers.has(name)) {
+          this._handlers.set(name, []);
+        }
+        this._handlers.get(name).push(f);
+      }
+      clearEventHandlers(name) {
+        this._handlers.set(name, []);
+      }
+      fireEvent(name) {
+        for (var handler of this._handlers.get(name) || []) {
+          handler();
+        }
+      }
+    }
+
     particle.setSlotCallback(async (name, state) => {
       switch (state) {
         case "Need":
           var data = await this.postPromise("GetSlot", {name, particle: this._identifierForThing(particle)})
-          var slot = {
-            render: (content) => {
-              this._port.postMessage({
-                messageType: 'RenderSlot',
-                messageBody: {
-                  content,
-                  particle: this._identifierForThing(particle),
-                }
-              });
-            }
-          };
+          var slot = new Slotlet(this, particle);
           particle.setSlot(slot);
           break;
         
@@ -234,6 +263,7 @@ class InnerPEC {
   _lostSlots(particleIds) {
     // clean up slots that disappeared
     particleIds.forEach(pid => {
+      console.log(pid);
       let particle = this._thingForIdentifier(pid);
       particle.slotReleased();
     });
