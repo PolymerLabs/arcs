@@ -115,6 +115,9 @@ class InnerPEC {
       case "HaveASlot":
         this._promiseResponse(e.data.messageBody);
         return;
+      case "LostSlots":
+        this._lostSlots(e.data.messageBody);
+        return;
       case "AwaitIdle":
         this._awaitIdle(e.data.messageBody);
         return;
@@ -202,24 +205,40 @@ class InnerPEC {
     }
 
     particle.setSlotCallback(async (name, state) => {
-      if (state == "Need") {
-        var data = await this.postPromise("GetSlot", {name, particle: this._identifierForThing(particle)})
-        var slot = {
-          render: (content) => {
-            this._port.postMessage({
-              messageType: 'RenderSlot',
-              messageBody: {
-                content,
-                particle: this._identifierForThing(particle),
-              }
-            });
-          }
-        };
-        particle.setSlot(slot);
+      switch (state) {
+        case "Need":
+          var data = await this.postPromise("GetSlot", {name, particle: this._identifierForThing(particle)})
+          var slot = {
+            render: (content) => {
+              this._port.postMessage({
+                messageType: 'RenderSlot',
+                messageBody: {
+                  content,
+                  particle: this._identifierForThing(particle),
+                }
+              });
+            }
+          };
+          particle.setSlot(slot);
+          break;
+        
+        case "No":
+          console.log('no: ReleaseSlot');
+          this._port.postMessage({ messageType: "ReleaseSlot", messageBody: {particle: this._identifierForThing(particle)}});
+          break;
       }
     });
 
     particle.setViews(viewMap);
+  }
+
+  _lostSlots(particleIds) {
+    // clean up slots that disappeared
+    console.log('_lostSlots', particleIds);
+    particleIds.forEach(pid => {
+      let particle = this._particles.find(p => pid === this._identifierForThing(p));
+      particle.slotReleased();
+    });
   }
 
   get relevance() {
