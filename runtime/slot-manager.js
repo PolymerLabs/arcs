@@ -92,7 +92,6 @@ class SlotManager {
     pending && pending();
   }
   releaseSlot(particle) {
-    console.log('releaseSlot', particle);
     // TODO(sjmiles): handle release for a particle whose slot is pending
     let slotid = this._getSlotId(particle);
     if (slotid) {

@@ -223,7 +223,6 @@ class InnerPEC {
           break;
         
         case "No":
-          console.log('no: ReleaseSlot');
           this._port.postMessage({ messageType: "ReleaseSlot", messageBody: {particle: this._identifierForThing(particle)}});
           break;
       }
@@ -234,9 +233,8 @@ class InnerPEC {
 
   _lostSlots(particleIds) {
     // clean up slots that disappeared
-    console.log('_lostSlots', particleIds);
     particleIds.forEach(pid => {
-      let particle = this._particles.find(p => pid === this._identifierForThing(p));
+      let particle = this._thingForIdentifier(pid);
       particle.slotReleased();
     });
   }
