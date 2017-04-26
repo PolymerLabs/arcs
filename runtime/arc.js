@@ -99,6 +99,9 @@ class OuterPEC extends PEC {
       case "GetSlot":
         this._getSlot(e.data.messageBody);
         return;
+      case "ReleaseSlot":
+        this._releaseSlot(e.data.messageBody);
+        return;
       default:
         assert(false, "don't know how to handle message of type " + e.data.messageType);
     }
@@ -110,6 +113,13 @@ class OuterPEC extends PEC {
     SlotManager.registerSlot(particleSpec, message.name, particleSpec.renderMap.get(message.name)).then(() => {
       this._port.postMessage({messageType: "HaveASlot", messageBody: { callback: message.callback }});
     });
+  }
+
+  _releaseSlot(message) {
+    let affectedParticles = SlotManager.releaseSlot(message.particle);
+    if (affectedParticles) {
+      this._port.postMessage({messageType: "LostSlots", messageBody: affectedParticles});
+    }
   }
 
   _viewOn(message) {

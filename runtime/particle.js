@@ -116,13 +116,21 @@ class Particle {
 
   releaseSlot() {
     if (this.slot)
-      this._slotCallback(this.slot.id, "No");
-    this.slot = undefined;
+      this._slotCallback("No");
+    this._clearSlot();
+  }
+  
+  // our slot was released involuntarily
+  slotReleased() {
+    this._clearSlot();
   }
 
+  _clearSlot() {
+    this.slot = undefined;
+  }
+  
   async requireSlot(id) {
     if (this.slot) {
-      this.slot.id = id;
       return this.slot;
     }
     if (!this.slotPromise) {
