@@ -1,3 +1,5 @@
+const assert = require('assert');
+
 SlotManager = {
   init() {
     this._content = {};
@@ -6,7 +8,7 @@ SlotManager = {
     } else {
       this._slotDom = {root: {insertion: {}, view: undefined}};
     }
-    this._targetSlots = {};
+    this._targetSlots = new Map();
     this._pendingSlotRequests = {};
   },
   registerSlot(particleid, slotid, view) {
@@ -17,24 +19,24 @@ SlotManager = {
         this._pendingSlotRequests[slotid] = resolve;
       }
     }).then(() => {
-      this._targetSlots[particleid] = { slotid, view };
+      this._targetSlots.set(particleid, { slotid, view });
     });
   },
   renderSlot(particleid, content) {
-    let { slotid, view } = this._targetSlots[particleid];
+    let { slotid, view } = this._targetSlots.get(particleid);
     let slot = this._slotDom[slotid].insertion;
     let slotView = this._slotDom[slotid].view;
-    // TODO(shans): slot should match slotView
+    assert(view == slotView);
 
     // TODO(sjmiles): cache the content in case the containing
     // particle re-renders
     this._content[slotid] = content;
     if (slot !== undefined) {
       slot.innerHTML = content;
-      this._findSlots(slot);
+      this._findSlots(particleid, slot);
     }
   },
-  _findSlots(dom) {
+  _findSlots(particleSpec, dom) {
     var slots;
     if (global.document) {
       slots = dom.querySelectorAll("[slotid]");
@@ -52,8 +54,8 @@ SlotManager = {
       } else {
         var slotid = slot;
       }
-      // TODO(shans): should extract view from .. somewhere
-      this._slotDom[slotid] = { insertion: slot, view: undefined };
+
+      this._slotDom[slotid] = { insertion: slot, view: particleSpec.exposeMap.get(slotid) };
       if (this._content[slotid]) {
         slot.innerHTML = this._content[slotid];
         this._findSlots(slot);
