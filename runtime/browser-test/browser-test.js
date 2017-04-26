@@ -17,12 +17,6 @@ var systemParticles = require('../system-particles.js');
 var tracing = require('../../tracelib/trace.js');
 tracing.enable();
 
-class SlotManager {
-  renderSlot(slotId, content) {
-    document.body.textContent = content;
-  }
-}
-
 function prepareExtensionArc() {
   let Person = loader.loadEntity("Person");
   let Product = loader.loadEntity("Product");
@@ -65,6 +59,7 @@ var r = new recipe.RecipeBuilder()
 var suggestinator = new Suggestinator();
 suggestinator._getSuggestions = a => [r];
 var results = suggestinator.suggestinate(arc);
-results.then(r => { console.log(r); })
-
-window.trace = tracing.save();
+results.then(r => {
+  console.log(r);
+  window.trace = tracing.save();
+})
