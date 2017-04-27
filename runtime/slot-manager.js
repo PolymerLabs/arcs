@@ -41,8 +41,7 @@ class SlotManager {
     });
   }
   _getSlotId(particleid) {
-    let {slotid} = this._targetSlots.get(particleid);
-    return slotid;
+    return this._targetSlots.get(particleid).slotid;
   }
   _getParticle(slotid) {
     return this._slotOwners[slotid];
@@ -64,23 +63,17 @@ class SlotManager {
   _findSlots(particleSpec, dom) {
     var slots;
     if (global.document) {
-      slots = dom.querySelectorAll("[slotid]");
-      slots = Array.prototype.slice.call(slots);
+      slots = Array.from(dom.querySelectorAll("[slotid]"));
     } else {
       slots = [];
       var slot;
       var RE = /slotid="([^"]*)"/g;
-      while (slot = RE.exec(dom.innerHTML)) {
-        slots.push(slot[1]);
+      while ((slot = RE.exec(dom.innerHTML))) {
+        slots.push({id:slot[1]});
       }
     }
     slots.forEach(slot => {
-      var slotid;
-      if (global.document) {
-        slotid = slot.getAttribute('slotid');
-      } else {
-        slotid = slot;
-      }
+      let slotid = global.document ? slot.getAttribute('slotid') : slot.id;
       this._slotDom[slotid] = { insertion: slot, view: particleSpec.exposeMap.get(slotid) };
       if (this._content[slotid]) {
         slot.innerHTML = this._content[slotid];
@@ -105,17 +98,20 @@ class SlotManager {
     pending && pending();
   }
   releaseSlot(particle) {
-    // TODO(sjmiles): handle release for a particle whose slot is pending
+    // TODO(sjmiles): need to handle the case where particle's slot is pending
     let slotid = this._getSlotId(particle);
     if (slotid) {
       this._releaseSlotData(particle, slotid);
       let dom = this._slotDom[slotid];
-      let slots = Array.prototype.slice.call(dom.insertion.querySelectorAll("[slotid]"));
-      slots = slots.map(s => s.getAttribute('slotid'));
-      let particles = slots.map(s => this._getParticle(s));
-      slots.forEach(this._releaseChildSlot, this);
-      dom.insertion.innerHTML = '';
-      return particles;
+      // TODO(sjmiles): missing mock-DOM version
+      if (global.document) {
+        let slots = Array.from(dom.insertion.querySelectorAll("[slotid]"));
+        slots = slots.map(s => s.getAttribute('slotid'));
+        let particles = slots.map(s => this._getParticle(s));
+        slots.forEach(this._releaseChildSlot, this);
+        dom.insertion.innerHTML = '';
+        return particles;
+      }
     }
   }
   _releaseSlotData(particle, slotid) {
