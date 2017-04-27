@@ -35,10 +35,5 @@ function assertSingletonEmpty(view) {
   });
 }
 
-function logDebug(particleName, paramType, paramName, view) {
-  view.debugString().then(v => console.log(`[${particleName}][${paramType}][${paramName}]:`, v));
-}
-
 exports.assertSingletonHas = assertSingletonHas;
 exports.assertSingletonEmpty = assertSingletonEmpty;
-exports.logDebug = logDebug;

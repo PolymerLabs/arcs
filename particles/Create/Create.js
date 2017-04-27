@@ -11,7 +11,6 @@
 
 var Particle = require("../../runtime/particle.js").Particle;
 var tracing = require("../../tracelib/trace.js");
-let util = require("../../runtime/test/test-util.js");
 
 class Create extends Particle {
 
@@ -19,7 +18,7 @@ class Create extends Particle {
     var trace = tracing.start({cat: "Create", name: "Create::setViews"})
     this.relevance = 1;
     trace.end();
-    util.logDebug("Create", "create", "newList", views.get("newList"));
+    this.logDebug("newList", views.get("newList"));
   }
 
 }

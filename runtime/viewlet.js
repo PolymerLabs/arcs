@@ -64,6 +64,9 @@ class Viewlet {
   get type() {
     return this._view._type;
   }
+  get connectionName() {
+    return this._view.connectionName;
+  }
 }
 
 class View extends Viewlet {
@@ -83,8 +86,8 @@ class View extends Viewlet {
     return this._view.store(serialization);
   }
   async debugString() {
-    var list = await this.toList();
-    return this._view.name + '=' + list.map(p => p.debugString).join(", ");
+   var list = await this.toList();
+    return list.map(p => p.debugString).join(", ");
   }
 }
 
@@ -106,7 +109,7 @@ class Variable extends Viewlet {
   }
   async debugString() {
     var value = await this.get();
-    return this._view.name + '=' + value.debugString;
+    return value.debugString;
   }
 }
 

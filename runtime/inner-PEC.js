@@ -19,8 +19,9 @@ const assert = require('assert');
 const typeLiteral = require('./type-literal.js');
 
 class RemoteView {
-  constructor(id, port, pec) {
+  constructor(id, connectionName, port, pec) {
     this._id = id;
+    this._connectionName = connectionName;
     this._port = port;
     this._pec = pec;
     this._scope = pec._scope;
@@ -64,6 +65,10 @@ class RemoteView {
         data: entity
       }
     });
+  }
+
+  get connectionName() {
+    return this._connectionName;
   }
 }
 
@@ -154,10 +159,10 @@ class InnerPEC {
     return new clazz(this._scope);
   }
 
-  _remoteViewFor(id, isView) {
+  _remoteViewFor(id, isView, connectionName) {
     var v = this._thingForIdentifier(id);
     if (v == undefined) {
-      v = new RemoteView(id, this._port, this);
+      v = new RemoteView(id, connectionName, this._port, this);
       this._establishThingMapping(id, v);
     }
     return viewlet.viewletFor(v, isView);
@@ -200,7 +205,7 @@ class InnerPEC {
     for (let connectionName in data.views) {
       let {viewIdentifier, viewType} = data.views[connectionName];
       let type = Type.fromLiteral(viewType, this._scope);
-      var view = this._remoteViewFor(viewIdentifier, type.isView);
+      var view = this._remoteViewFor(viewIdentifier, type.isView, connectionName);
       viewMap.set(connectionName, view);
     }
 
