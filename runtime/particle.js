@@ -39,6 +39,11 @@ function define(def, update) {
         });
       }
     }
+    logDebug(tag, view) {
+      let direction = this.spec.connectionMap.get(tag).direction;
+      view.debugString().then(v => console.log(
+         `[${this.spec.type}][${direction}][${tag}]: [${view.connectionName}]`, v));
+    }
   };
   clazz._isInline = true;
   clazz._inlineDefinition = def;
@@ -146,6 +151,11 @@ class Particle {
     var trace = tracing.start({cat: 'particle', name: this.constructor.name + "::on", args: {view: name, event: action}});
     views.get(name).on(action, tracing.wrap({cat: 'particle', name: this.constructor.name, args: {view: name, event: action}}, f), this);
     trace.end();
+  }
+  logDebug(tag, view) {
+    let direction = this.spec.connectionMap.get(tag).direction;
+    view.debugString().then(v => console.log(
+       `[${this.spec.type}][${direction}][${tag}]: [${view.connectionName}]`, v));
   }
 }
 

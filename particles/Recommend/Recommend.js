@@ -10,18 +10,17 @@
 "use strict";
 
 var Particle = require("../../runtime/particle.js").Particle;
-let util = require("../../runtime/test/test-util.js");
 
 class Recommend extends Particle {
 
   setViews(views) {
     this.on(views, 'population', 'change', e => {
+      this.logDebug("known", views.get("known"));
       var populationView = views.get("population");
-      populationView.toList().then(data => { 
-        util.logDebug("Recommend", "in", "population", populationView);
-        util.logDebug("Recommend", "in", "known", views.get("known"));
-        views.get('recommendations').store(data[1])
-        util.logDebug("Recommend", "out", "recommendations", views.get("recommendations"));
+      this.logDebug("population", populationView);
+      populationView.toList().then(data => {
+        views.get('recommendations').store(data[1]);
+        this.logDebug("recommendations", views.get('recommendations'));
       });
     });
   }

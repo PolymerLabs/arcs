@@ -10,21 +10,18 @@
 "use strict";
 
 var Particle = require("../../runtime/particle.js").Particle;
-let util = require("../../runtime/test/test-util.js");
 
 class Save extends Particle {
 
   setViews(views) {
     var list = views.get("list");
     var watermark = 0;
-
     this.on(views, 'inputs', 'change', async e => {
-      var inputsView = views.get('inputs');
-      util.logDebug("Save", "ephemeral in", "inputs", inputsView);
-      var inputList = await inputsView.toList();
+      var inputList = await views.get('inputs').toList();
+      this.logDebug('inputs', views.get('inputs'));
       inputList.slice(watermark).map(a => list.store(a));
       watermark = inputList.length;
-      util.logDebug("Save", "out", "list", list);
+      this.logDebug('list', list);
     });
   }
 }
