@@ -32,25 +32,18 @@ class Chooser extends Particle {
     this.when([new StateChanges('values'), new SlotChanges()], async e => {
       if (this.states.get('values').length > 0) {
         var slot = await this.requireSlot('action');
-        slot.render(this.states.get('values')[0].data.name + '<button events on-click=clack>CLICK ME YO</button>');
-        slot.clearEventHandlers('clack');
-        slot.registerEventHandler('clack', a => views.get('resultList').store(this.states.get('values')[0]));        
-        if (inputList.length > 0) {
-          // say that I need an 'action' slot to continue
-          var slot = await this.requireSlot('action'); // vs. this.whenSlot('action')
-          let names = inputList.map(entity => entity.data.name);
-          slot.render(`
-<div>
-Choose one:<br>
-  <div style="padding-left: 12px">
-  ${names.join('<br>')}
-  </div>
-</div>
-        `.trim());
-        } else {
-          this.releaseSlot('action');
-        }
-      }        
+        var content = 'Choose:<br>';
+        for (var i in this.states.get('values')) {
+          let value = this.states.get('values')[i];
+          let eventName = `clack${i}`;
+          content += `${value.data.name} <button events on-click=${eventName}>Choose me!</button><br>`;
+          slot.clearEventHandlers(eventName);
+          slot.registerEventHandler(eventName, a => views.get('resultList').store(value));
+         }
+        slot.render(content);
+      } else {
+        this.releaseSlot('action');
+      }
     });
   }
 }
