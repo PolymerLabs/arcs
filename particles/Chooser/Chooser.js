@@ -47,9 +47,10 @@ Choose one:<br>
   </div>
 </div>
         `.trim());
-      } else {
-        this.releaseSlot('action');
-      }
+        } else {
+          this.releaseSlot('action');
+        }
+      }        
     });
   }
 }
