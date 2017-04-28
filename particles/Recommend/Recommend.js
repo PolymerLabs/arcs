@@ -19,6 +19,7 @@ class Recommend extends Particle {
       var populationView = views.get("population");
       this.logDebug("population", populationView);
       populationView.toList().then(data => {
+        views.get('recommendations').store(data[0]);
         views.get('recommendations').store(data[1]);
         this.logDebug("recommendations", views.get('recommendations'));
       });

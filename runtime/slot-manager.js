@@ -88,7 +88,7 @@ class SlotManager {
       for (var {name, value} of attributes) {
         if (name.startsWith("on-")) {
           var event = name.substring(3);
-          eventGenerator.addEventListener(event, e => this._pec.sendEvent(particleSpec, value));
+          (function(v) {eventGenerator.addEventListener(event, e => this._pec.sendEvent(particleSpec, v));}).call(this, value);
         }
       }
     }
