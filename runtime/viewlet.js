@@ -86,8 +86,8 @@ class View extends Viewlet {
     return this._view.store(serialization);
   }
   async debugString() {
-   var list = await this.toList();
-    return list.map(p => p.debugString).join(", ");
+    var list = await this.toList();
+    return list ? list.map(p => p.debugString).join(", ") : 'undefined';
   }
 }
 
@@ -109,7 +109,7 @@ class Variable extends Viewlet {
   }
   async debugString() {
     var value = await this.get();
-    return value.debugString;
+    return value ? value.debugString : 'undefined';
   }
 }
 

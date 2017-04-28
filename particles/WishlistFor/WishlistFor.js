@@ -28,12 +28,10 @@ class WishlistFor extends Particle {
 
   setViews(views) {
     var trace = tracing.start({cat: "Product", name: "Product::setViews"});
+    this.logDebug("person", views.get("person"));
     var wishlist = views.get('wishlist');
     ["a new bike!", "Fresh Puppies", "A packet of Tim Loh that never runs out"].map(p => wishlist.store(new Product(p)));
     this.logDebug("wishlist", wishlist);
-    // TODO(mmandlis): Fix resolver, so that Choose could run before Wishlist,
-    // and so Person would not be undefined.
-    // this.logDebug("person", views.get("person"));
     trace.end();
   }
 }
