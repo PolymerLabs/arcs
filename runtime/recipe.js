@@ -9,6 +9,7 @@
  */
 "use strict";
 
+var assert = require("assert");
 var runtime = require("./runtime.js");
 
 class RecipeViewConnection {
@@ -46,8 +47,10 @@ class RecipeComponent {
 
   instantiate(arc) {
     var particle = arc.scope.instantiateParticle(this.particleName, arc);
-    for (var connection of this.connections)
+    for (var connection of this.connections) {
+      assert(connection.view, 'cannot connect particle ' + this.particleName + ' to NULL view ' + connection.name);
       arc.connectParticleToView(particle, connection.name, connection.view);
+    }
   }
 }
 

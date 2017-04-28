@@ -51,6 +51,16 @@ class Resolver {
     return true;
   }
 
+  _matchViewReference(context, typeView, type) {
+    let typeViewPrimitiveType = typeView.primitiveType(context.arc.scope);
+    let typePrimitiveType = type.primitiveType(context.arc.scope);
+    if (typeViewPrimitiveType.isVariable && !typePrimitiveType.isVariable)
+      return this._matchVariableReference(context, typeViewPrimitiveType, typePrimitiveType);
+    if (typePrimitiveType.isVariable && !typeViewPrimitiveType.isVariable)
+      return this._matchVariableReference(context, typePrimitiveType, typeViewPrimitiveType);
+    return false;
+  }
+
   _matches(context, authority, spec) {
     if (authority == undefined)
       return false;
@@ -63,10 +73,18 @@ class Resolver {
     // TODO: better matching enforcement goes here
     if (typeLiteral.equal(spec.typeName, authority.typeName))
       return true;
+    assert(spec.type, '_matches requires spec.type');
+    assert(authority.type, '_matches requires authority.type');
+    let resolvedSpecType = this._resolveType(context, spec.type);
+    let resolvedAuthorityType = this._resolveType(context, authority.type);
+    if (resolvedSpecType != undefined && resolvedSpecType == resolvedAuthorityType)
+      return true;
     if (spec.type.isVariable && !authority.type.isVariable)
       return this._matchVariableReference(context, spec.type, authority.type);
     if (authority.type.isVariable && !spec.type.isVariable)
       return this._matchVariableReference(context, authority.type, spec.type);
+    if (authority.type.isView && spec.type.isView)
+      return this._matchViewReference(context, spec.type, authority.type);
     return false;
   }
 
@@ -152,6 +170,7 @@ class Resolver {
     var trace = tracing.start({cat: "resolver", name: "Resolver::resolveSpecConnection",
       args: {name: connection.name}});
     // TODO this is *not* the right way to deal with singleton vs. list connections :)
+    assert(connection.spec, "cannot resolve an undefined spec connection");
     var typeName = connection.spec.typeName;
     trace.update({args: {type: typeName}});
     var type = runtime.internals.Type.fromLiteral(typeName, context.arc.scope);

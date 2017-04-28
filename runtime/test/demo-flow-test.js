@@ -34,7 +34,7 @@ describe('demo flow', function() {
   it('flows like a demo', function(done) {
     let arc = prepareExtensionArc();
     // TODO: add a loader to the scope so this fallback can happen automatically.
-    ['Create', 'Recommend', 'Save', 'WishlistFor', 'ListView', 'Chooser'].forEach(name => {
+    ['Create', 'Recommend', 'WishlistFor', 'ListView', 'Chooser'].forEach(name => {
       let particleClass = loader.loadParticle(name);
       arc.scope.registerParticle(particleClass);
     });
@@ -48,7 +48,7 @@ describe('demo flow', function() {
         .connectConstraint("known", "list")
         .connectConstraint("population", "wishlist")
         .connectConstraint("recommendations", "recommended")
-      .addParticle("Save")
+      .addParticle("SaveList")
         .connectConstraint("list", "list")
       .addParticle("Choose")
         .connectConstraint("singleton", "person")

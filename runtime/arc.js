@@ -217,7 +217,7 @@ class Arc {
     var channel = new MessageChannel();
     this.pec = new OuterPEC(scope, channel.port2);
     this._innerPEC = new InnerPEC(channel.port1);
-    var nextParticleHandle = 0;
+    this.nextParticleHandle = 0;
   }
 
   clone() {

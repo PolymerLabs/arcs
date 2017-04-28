@@ -175,7 +175,7 @@ class Particle {
   on(views, names, action, f) {
     if (typeof names == "string")
       names = [names];
-    var trace = tracing.start({cat: 'particle', name: this.constructor.name + "::on", args: {view: name, event: action}});
+    var trace = tracing.start({cat: 'particle', names: this.constructor.name + "::on", args: {view: names, event: action}});
     names.forEach(name => views.get(name).on(action, tracing.wrap({cat: 'particle', name: this.constructor.name, args: {view: name, event: action}}, f), this));
     trace.end();
   }
