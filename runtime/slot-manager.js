@@ -79,7 +79,7 @@ class SlotManager {
     });
   }
   _findEventGenerators(particleSpec, dom) {
-    var eventGenerators;
+    var eventGenerators = [];
     if (global.document) {
       eventGenerators = dom.querySelectorAll("[events]");
     }
