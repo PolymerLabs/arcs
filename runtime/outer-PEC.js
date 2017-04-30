@@ -11,6 +11,7 @@
 
 const PEC = require('./particle-execution-context.js');
 const SlotManager = require('./slot-manager.js');
+const assert = require('assert');
 
 class OuterPEC extends PEC {
   constructor(scope, port) {
