@@ -17,13 +17,9 @@ const assert = require('assert');
 // - needs better data design
 
 class SlotManager {
-  constructor() {
+  constructor(domRoot) {
     this._content = {};
-    if (global.document) {
-      this._slotDom = {root: {insertion: document.body, view: undefined}};
-    } else {
-      this._slotDom = {root: {insertion: {}, view: undefined}};
-    }
+    this._slotDom = {root: {insertion: domRoot, view: undefined}};
     this._slotOwners = {};
     this._targetSlots = new Map();
     this._pendingSlotRequests = {};
@@ -129,4 +125,4 @@ class SlotManager {
   }
 }
 
-module.exports = new SlotManager();
+module.exports = SlotManager;

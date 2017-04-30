@@ -15,7 +15,6 @@ var tracing = require("../tracelib/trace.js");
 const Type = require('./type.js');
 const view = require('./view.js');
 const Relation = require('./relation.js');
-var PEC = require('./particle-execution-context.js');
 let viewlet = require('./viewlet.js');
 const InnerPEC = require('./inner-PEC.js');
 const MessageChannel = require('./message-channel.js');
