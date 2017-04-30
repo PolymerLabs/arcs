@@ -24,8 +24,7 @@ class OuterPEC extends PEC {
     this._reverseIdMap = new Map();
     this.messageCount = 0;
     var domRoot = global.document ? document.body : {};
-    this.slotManager = new SlotManager(domRoot);
-    this.slotManager._pec = this;
+    this.slotManager = new SlotManager(domRoot, this);
   }
 
   get idle() {

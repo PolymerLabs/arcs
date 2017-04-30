@@ -17,12 +17,13 @@ const assert = require('assert');
 // - needs better data design
 
 class SlotManager {
-  constructor(domRoot) {
+  constructor(domRoot, pec) {
     this._content = {};
     this._slotDom = {root: {insertion: domRoot, view: undefined}};
     this._slotOwners = {};
     this._targetSlots = new Map();
     this._pendingSlotRequests = {};
+    this._pec = pec;
   }
   registerSlot(particleid, slotid, view) {
     return new Promise((resolve, reject) => {
