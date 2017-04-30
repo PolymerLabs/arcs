@@ -49,15 +49,27 @@ class OuterPEC extends PEC {
     }
   }
 
-  _identifierForThing(thing) {
-    if (!this._reverseIdMap.has(thing)) {
-      this._idMap.set(this._nextIdentifier, thing);
-      this._reverseIdMap.set(thing, this._nextIdentifier++);
+  _createMappingForThing(thing) {
+    assert(!this._reverseIdMap.has(thing));
+    this._idMap.set(this._nextIdentifier, thing);
+    this._reverseIdMap.set(thing, this._nextIdentifier);
+    return this._nextIdentifier++;
+  }
+
+  _maybeCreateMappingForThing(thing) {
+    if (this._reverseIdMap.has(thing)) {
+      return this._identifierForThing(thing);
     }
+    return this._createMappingForThing(thing);
+  }
+
+  _identifierForThing(thing) {
+    assert(this._reverseIdMap.has(thing));
     return this._reverseIdMap.get(thing);
   }
 
   _thingForIdentifier(id) {
+    assert(this._idMap.has(id));
     return this._idMap.get(id);
   }
 
@@ -158,7 +170,7 @@ class OuterPEC extends PEC {
     var serializedViewMap = {};
     var types = new Set();
     for (let [name, view] of views.entries()) {
-      serializedViewMap[name] = { viewIdentifier: this._identifierForThing(view), viewType: view.type.toLiteral() };
+      serializedViewMap[name] = { viewIdentifier: this._maybeCreateMappingForThing(view), viewType: view.type.toLiteral() };
       types.add(view.type.toLiteral());
     }
 
@@ -190,7 +202,7 @@ class OuterPEC extends PEC {
       messageType: "InstantiateParticle",
       messageBody: {
         particleName: particle.name,
-        particleIdentifier: this._identifierForThing(particleSpec),
+        particleIdentifier: this._createMappingForThing(particleSpec),
         types: [...types.values()],
         views: serializedViewMap
       }
