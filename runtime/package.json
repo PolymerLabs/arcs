@@ -9,7 +9,7 @@
     "b": "./node_modules/.bin/browserify browser-test/browser-test.js --debug -o browser-test/browser-test-ified.js"
   },
   "dependencies": {
-    "tracelib": "../tracelib"
+    "tracelib": "file:../tracelib"
   },
   "devDependencies": {
     "browserify": "^14.3.0",
