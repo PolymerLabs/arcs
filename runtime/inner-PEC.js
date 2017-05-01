@@ -19,9 +19,9 @@ const assert = require('assert');
 const typeLiteral = require('./type-literal.js');
 
 class RemoteView {
-  constructor(id, connectionName, port, pec) {
+  constructor(id, type, port, pec) {
     this._id = id;
-    this._connectionName = connectionName;
+    this.type = type;
     this._port = port;
     this._pec = pec;
     this._scope = pec._scope;
@@ -66,10 +66,6 @@ class RemoteView {
       }
     });
   }
-
-  get connectionName() {
-    return this._connectionName;
-  }
 }
 
 class InnerPEC {
@@ -106,6 +102,9 @@ class InnerPEC {
 
   _handle(e) {
     switch (e.data.messageType) {
+      case "DefineView":
+        this._defineView(e.data.messageBody);
+        return;
       case "InstantiateParticle":
         this._instantiateParticle(e.data.messageBody);
         return;
@@ -167,41 +166,42 @@ class InnerPEC {
     return new clazz(this._scope);
   }
 
-  _remoteViewFor(id, isView, connectionName) {
+  _remoteViewletFor(id) {
     var v = this._thingForIdentifier(id);
-    if (v == undefined) {
-      v = new RemoteView(id, connectionName, this._port, this);
-      this._establishThingMapping(id, v);
-    }
-    return viewlet.viewletFor(v, isView);
+    return viewlet.viewletFor(v, v.type.isView);
  }
+
+  _defineView(data) {
+    /*
+     * This code ensures that the relevant types are known
+     * in the scope object, because otherwise we can't do
+     * particleSpec resolution, which is currently a necessary
+     * part of particle construction.
+     *
+     * Possibly we should eventually consider having particle
+     * specifications separated from particle classes - and
+     * only keeping type information on the arc side.
+     */
+    var type = data.viewType;
+    
+    if (typeLiteral.isView(type))
+      type = typeLiteral.primitiveType(type);
+
+    // TODO: This is a dodgy hack based on possibly unintended
+    // behavior in Type's constructor.
+    if (!this._scope._types.has(JSON.stringify(type)))
+      this._scope.typeFor(loader.loadEntity(type));
+
+    var v = new RemoteView(data.viewIdentifier, 
+      Type.fromLiteral(data.viewType, this._scope), this._port, this);
+    this._establishThingMapping(data.viewIdentifier, v);
+
+  }
 
   _instantiateParticle(data) {
     if (!this._scope.particleRegistered(data.particleName)) {
       var clazz = loader.loadParticle(data.particleName);
       this._scope.registerParticle(clazz);
-    }
-
-
-    for (let type of data.types) {
-      /*
-       * This section ensures that the relevant types are known
-       * in the scope object, because otherwise we can't do
-       * particleSpec resolution, which is currently a necessary
-       * part of particle construction.
-       *
-       * Possibly we should eventually consider having particle
-       * specifications separated from particle classes - and
-       * only keeping type information on the arc side.
-       */
-      if (typeLiteral.isView(type)) {
-        type = typeLiteral.primitiveType(type);
-      }
-      // TODO: This is a dodgy hack based on possibly unintended
-      // behavior in Type's constructor.
-      if (!this._scope._types.has(JSON.stringify(type))) {
-        this._scope.typeFor(loader.loadEntity(type));
-      }
     }
 
     var particle = this._scope.instantiateParticle(data.particleName, this);
@@ -211,10 +211,9 @@ class InnerPEC {
     var viewMap = new Map();
 
     for (let connectionName in data.views) {
-      let {viewIdentifier, viewType} = data.views[connectionName];
-      let type = Type.fromLiteral(viewType, this._scope);
-      var view = this._remoteViewFor(viewIdentifier, type.isView, connectionName);
-      viewMap.set(connectionName, view);
+      let viewIdentifier = data.views[connectionName];
+      var viewlet = this._remoteViewletFor(viewIdentifier);
+      viewMap.set(connectionName, viewlet);
     }
 
     class Slotlet {
