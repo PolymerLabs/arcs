@@ -10,14 +10,11 @@
 "use strict";
 
 var Particle = require("../../runtime/particle.js").Particle;
-var tracing = require("../../tracelib/trace.js");
 
 class Create extends Particle {
 
   setViews(views) {
-    var trace = tracing.start({cat: "Create", name: "Create::setViews"})
     this.relevance = 1;
-    trace.end();
     this.logDebug("newList", views.get("newList"));
   }
 

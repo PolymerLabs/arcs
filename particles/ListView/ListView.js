@@ -10,7 +10,6 @@
 "use strict";
 
 var Particle = require("../../runtime/particle.js").Particle;
-var tracing = require("../../tracelib/trace.js");
 
 class ListView extends Particle {
   setViews(views) {
