@@ -14,7 +14,7 @@ var loader = require("../loader.js");
 var Suggestinator = require("../suggestinator.js");
 var recipe = require('../recipe.js');
 var systemParticles = require('../system-particles.js');
-var tracing = require('../../tracelib/trace.js');
+var tracing = require('tracelib');
 tracing.enable();
 
 function prepareExtensionArc() {

@@ -9,13 +9,12 @@
  */
 "use strict";
 
-let tracing = require('../../tracelib/trace.js');
-let options = require('../../tracelib/options.js');
+let tracing = require('tracelib');
 let assert = require("assert");
 
 var traceFile = process.env.traceFile;
 if (traceFile !== undefined) {
-  options.traceFile = traceFile;
+  tracing.options.traceFile = traceFile;
   tracing.enable();
 }
 

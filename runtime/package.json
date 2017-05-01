@@ -8,6 +8,9 @@
     "browserify": "./node_modules/.bin/browserify browser-test/browser-test.js --debug -o browser-test/browser-test-ified.js",
     "b": "./node_modules/.bin/browserify browser-test/browser-test.js --debug -o browser-test/browser-test-ified.js"
   },
+  "dependencies": {
+    "tracelib": "../tracelib"
+  },
   "devDependencies": {
     "browserify": "^14.3.0",
     "chai": "^3.5.0",

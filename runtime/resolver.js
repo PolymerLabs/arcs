@@ -12,7 +12,7 @@
 var runtime = require('./runtime.js');
 var assert = require('assert');
 var recipe = require('./recipe.js');
-var tracing = require('../tracelib/trace.js');
+var tracing = require('tracelib');
 var typeLiteral = require('./type-literal.js');
 
 class Resolver {

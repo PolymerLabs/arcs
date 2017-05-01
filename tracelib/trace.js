@@ -47,6 +47,7 @@ function parseInfo(info) {
   return info;
 }
 
+module.exports.options = options;
 var enabled = Boolean(options.traceFile);
 
 function init() {

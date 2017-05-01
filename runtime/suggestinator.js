@@ -11,7 +11,7 @@
 
 var Resolver = require('./resolver.js');
 var Speculator = require('./speculator.js');
-var tracing = require('../tracelib/trace.js');
+var tracing = require('tracelib');
 
 class Suggestinator {
   constructor() {

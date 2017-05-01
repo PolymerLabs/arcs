@@ -7,7 +7,7 @@
 // http://polymer.github.io/PATENTS.txt
 'use strict';
 
-const tracing = require("../tracelib/trace.js");
+const tracing = require("tracelib");
 const assert = require('assert');
 
 class Scheduler {
