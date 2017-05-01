@@ -2,6 +2,7 @@
  "name": "tracelib",
  "version": "0.0.0",
  "private": "true",
+ "main": "trace.js",
  "dependencies": {
   "minimist": "*",
   "mkdirp": "*",

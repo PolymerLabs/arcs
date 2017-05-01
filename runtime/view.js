@@ -8,7 +8,7 @@
 'use strict';
 
 const assert = require('assert');
-const tracing = require("../tracelib/trace.js");
+const tracing = require("tracelib");
 const scheduler = require('./scheduler.js');
 
 class ViewBase {
