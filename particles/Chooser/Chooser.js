@@ -10,7 +10,6 @@
 "use strict";
 
 var { Particle, ViewChanges, StateChanges, SlotChanges } = require("../../runtime/particle.js");
-var tracing = require("../../tracelib/trace.js");
 
 function difference(a, b) {
   var result = new Map();
