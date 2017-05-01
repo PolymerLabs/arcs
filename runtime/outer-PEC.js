@@ -56,11 +56,8 @@ class OuterPEC extends PEC {
     return this._nextIdentifier++;
   }
 
-  _maybeCreateMappingForThing(thing) {
-    if (this._reverseIdMap.has(thing)) {
-      return this._identifierForThing(thing);
-    }
-    return this._createMappingForThing(thing);
+  _hasMappingForThing(thing) {
+    return this._reverseIdMap.has(thing);
   }
 
   _identifierForThing(thing) {
@@ -170,8 +167,18 @@ class OuterPEC extends PEC {
     var serializedViewMap = {};
     var types = new Set();
     for (let [name, view] of views.entries()) {
-      serializedViewMap[name] = { viewIdentifier: this._maybeCreateMappingForThing(view), viewType: view.type.toLiteral() };
-      types.add(view.type.toLiteral());
+      if (!this._hasMappingForThing(view)) {
+        var id = this._createMappingForThing(view);
+        this._port.postMessage({
+          messageType: "DefineView",
+          messageBody: {
+            viewIdentifier: id,
+            viewType: view.type.toLiteral()
+          }});
+      } else {
+        var id = this._identifierForThing(view);
+      }
+      serializedViewMap[name] = id;
     }
 
     if (particle._isInline) {
@@ -203,7 +210,6 @@ class OuterPEC extends PEC {
       messageBody: {
         particleName: particle.name,
         particleIdentifier: this._createMappingForThing(particleSpec),
-        types: [...types.values()],
         views: serializedViewMap
       }
     });
