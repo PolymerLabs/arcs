@@ -192,9 +192,9 @@ class InnerPEC {
     if (!this._scope._types.has(JSON.stringify(type)))
       this._scope.typeFor(loader.loadEntity(type));
 
-    var v = new RemoteView(data.viewIdentifier, 
+    var v = new RemoteView(data.identifier, 
       Type.fromLiteral(data.viewType, this._scope), this._port, this);
-    this._establishThingMapping(data.viewIdentifier, v);
+    this._establishThingMapping(data.identifier, v);
 
   }
 
@@ -205,7 +205,7 @@ class InnerPEC {
     }
 
     var particle = this._scope.instantiateParticle(data.particleName, this);
-    this._establishThingMapping(data.particleIdentifier, particle);
+    this._establishThingMapping(data.identifier, particle);
     this._particles.push(particle);
 
     var viewMap = new Map();
