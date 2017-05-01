@@ -172,7 +172,7 @@ class OuterPEC extends PEC {
         this._port.postMessage({
           messageType: "DefineView",
           messageBody: {
-            viewIdentifier: id,
+            identifier: id,
             viewType: view.type.toLiteral()
           }});
       } else {
@@ -209,7 +209,7 @@ class OuterPEC extends PEC {
       messageType: "InstantiateParticle",
       messageBody: {
         particleName: particle.name,
-        particleIdentifier: this._createMappingForThing(particleSpec),
+        identifier: this._createMappingForThing(particleSpec),
         views: serializedViewMap
       }
     });
