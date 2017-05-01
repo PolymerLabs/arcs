@@ -185,4 +185,10 @@ class PECOuterPort extends APIPort {
   }
 }
 
-module.exports = { PECOuterPort };
+class PECInnerPort extends APIPort {
+  constructor(messagePort) {
+    super(messagePort, 'i');
+  }
+}
+
+module.exports = { PECOuterPort, PECInnerPort };

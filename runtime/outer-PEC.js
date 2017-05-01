@@ -19,8 +19,7 @@ class OuterPEC extends PEC {
     super();
     this._scope = scope;
     this._particles = [];
-    this._port = port;
-    this._apiPort = new PECOuterPort(this._port);
+    this._apiPort = new PECOuterPort(port);
     this._nextIdentifier = 0;
     this._idMap = new Map();
     this._reverseIdMap = new Map();
@@ -58,14 +57,12 @@ class OuterPEC extends PEC {
       this.slotManager.registerSlot(particle, name, particle.renderMap.get(name)).then(() =>
         this._apiPort.PromiseResponse({callback}));
     }
-  }
 
-  _releaseSlot(message) {
-    let particleSpec = this._thingForIdentifier(message.particle);
-    let affectedParticles = this.slotManager.releaseSlot(particleSpec);
-    if (affectedParticles) {
-      affectedParticles = affectedParticles.map(p => this._identifierForThing(p));
-      this._port.postMessage({messageType: "LostSlots", messageBody: affectedParticles});
+    this._apiPort.onReleaseSlot = ({particle}) => {
+      let affectedParticles = this.slotManager.releaseSlot(particle);
+      if (affectedParticles) {
+        this._apiPort.LostSlots(affectedParticles);
+      }
     }
   }
 
