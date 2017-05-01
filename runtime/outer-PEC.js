@@ -12,6 +12,7 @@
 const PEC = require('./particle-execution-context.js');
 const SlotManager = require('./slot-manager.js');
 const assert = require('assert');
+const PECOuterPort = require('./api-channel.js').PECOuterPort;
 
 class OuterPEC extends PEC {
   constructor(scope, port) {
@@ -19,102 +20,44 @@ class OuterPEC extends PEC {
     this._scope = scope;
     this._particles = [];
     this._port = port;
-    this._port.onmessage = e => this._handle(e);
+    this._apiPort = new PECOuterPort(this._port);
     this._nextIdentifier = 0;
     this._idMap = new Map();
     this._reverseIdMap = new Map();
-    this.messageCount = 0;
     var domRoot = global.document ? document.body : {};
     this.slotManager = new SlotManager(domRoot, this);
-  }
 
-  get idle() {
-    if (this._idlePromise == undefined) {
-      this._idlePromise = new Promise((resolve, reject) => {
-        this._idleResolve = resolve;
-      });
+    this._apiPort.onRenderSlot = ({particle, content}) => {
+      this.slotManager.renderSlot(particle, content);
+    };
+
+    this._apiPort.onViewOn = ({view, target, callback, type}) => {
+      view.on(type, data => this._apiPort.ViewCallback({callback, data}), target);
+    };
+
+    this._apiPort.onViewGet = ({view, callback}) => {
+      this._apiPort.PromiseResponse({callback, data: view.get()});
     }
-    this._idleVersion = this._nextIdentifier;
-    this._port.postMessage({
-      messageType: "AwaitIdle",
-      messageBody: {version: this._nextIdentifier++}
-    });
-    return this._idlePromise;
-  }
 
-  _idle(message) {
-    if (message.version == this._idleVersion) {
-      this._idlePromise = undefined;
-      this._idleResolve(message.relevance);
+    this._apiPort.onViewToList = ({view, callback}) => {
+      this._apiPort.PromiseResponse({callback, data: view.toList()});
     }
-  }
 
-  _createMappingForThing(thing) {
-    assert(!this._reverseIdMap.has(thing));
-    this._idMap.set(this._nextIdentifier, thing);
-    this._reverseIdMap.set(thing, this._nextIdentifier);
-    return this._nextIdentifier++;
-  }
+    this._apiPort.onViewSet = ({view, data}) => view.set(data);
+    this._apiPort.onViewStore = ({view, data}) => view.store(data);
 
-  _hasMappingForThing(thing) {
-    return this._reverseIdMap.has(thing);
-  }
-
-  _identifierForThing(thing) {
-    assert(this._reverseIdMap.has(thing));
-    return this._reverseIdMap.get(thing);
-  }
-
-  _thingForIdentifier(id) {
-    assert(this._idMap.has(id));
-    return this._idMap.get(id);
-  }
-
-  _renderSlot({particle, content}) {
-    this.slotManager.renderSlot(this._thingForIdentifier(particle), content);
-  }
-
-  _handle(e) {
-    this.messageCount++;
-    switch (e.data.messageType) {
-      case "RenderSlot":
-        this._renderSlot(e.data.messageBody);
-        return;
-      case "ViewOn":
-        this._viewOn(e.data.messageBody);
-        return;
-      case "ViewGet":
-        this._viewRetrieve(e.data.messageBody, "ViewGetResponse", v => v.get());
-        return;
-      case "ViewSet":
-        this._viewSave(e.data.messageBody, (v, d) => v.set(d));
-        return;
-      case "ViewStore":
-        this._viewSave(e.data.messageBody, (v, d) => v.store(d));
-        return;
-      case "ViewToList":
-        this._viewRetrieve(e.data.messageBody, "ViewToListResponse", v => v.toList());
-        return;
-      case "Idle":
-        this._idle(e.data.messageBody);
-        return;
-      case "GetSlot":
-        this._getSlot(e.data.messageBody);
-        return;
-      case "ReleaseSlot":
-        this._releaseSlot(e.data.messageBody);
-        return;
-      default:
-        assert(false, "don't know how to handle message of type " + e.data.messageType);
+    this._apiPort.onIdle = ({version, relevance}) => {
+      if (version == this._idleVersion) {
+        this._idlePromise = undefined;
+        this._idleResolve(relevance);
+      }
     }
-  }
 
-  _getSlot(message) {
-    var particleSpec = this._thingForIdentifier(message.particle);
-    assert(particleSpec.renderMap.has(message.name));
-    this.slotManager.registerSlot(particleSpec, message.name, particleSpec.renderMap.get(message.name)).then(() => {
-      this._port.postMessage({messageType: "HaveASlot", messageBody: { callback: message.callback }});
-    });
+    this._apiPort.onGetSlot = ({particle, name, callback}) => {
+      assert(particle.renderMap.has(name));
+      this.slotManager.registerSlot(particle, name, particle.renderMap.get(name)).then(() =>
+        this._apiPort.PromiseResponse({callback}));
+    }
   }
 
   _releaseSlot(message) {
@@ -126,93 +69,46 @@ class OuterPEC extends PEC {
     }
   }
 
-  _viewOn(message) {
-    var view = this._thingForIdentifier(message.view);    
-    view.on(message.type, e => this._forwardCallback(message.callback, e), this._thingForIdentifier(message.target));
+  get idle() {
+    if (this._idlePromise == undefined) {
+      this._idlePromise = new Promise((resolve, reject) => {
+        this._idleResolve = resolve;
+      });
+    }
+    this._idleVersion = this._nextIdentifier;
+    this._apiPort.AwaitIdle({version: this._nextIdentifier++});
+    return this._idlePromise;
   }
 
-  _viewRetrieve(message, messageType, f) {
-    var view = this._thingForIdentifier(message.view);
-    this._port.postMessage({
-      messageType,
-      messageBody: {
-        callback: message.callback,
-        data: f(view)
-      }
-    });
+  get messageCount() {
+    return this._apiPort.messageCount;
   }
 
-  _viewSave(message, f) {
-    var view = this._thingForIdentifier(message.view);
-    f(view, message.data);
-  }
-
-  _forwardCallback(cid, e) {
-    this._port.postMessage({
-      messageType: "ViewCallback",
-      messageBody: {
-        callback: cid,
-        data: e
-      }
-    });
-  }
-
-  sendEvent(particleSpec, eventName) {
-    var particle = this._identifierForThing(particleSpec);
-    this._port.postMessage({messageType: "UIEvent", messageBody: { particle, eventName }});
+  sendEvent(particle, eventName) {
+    this._apiPort.UIEvent({particle, eventName})
   }
 
   instantiate(particle, views, mutateCallback) {
-
-    var serializedViewMap = {};
-    var types = new Set();
-    for (let [name, view] of views.entries()) {
-      if (!this._hasMappingForThing(view)) {
-        var id = this._createMappingForThing(view);
-        this._port.postMessage({
-          messageType: "DefineView",
-          messageBody: {
-            identifier: id,
-            viewType: view.type.toLiteral()
-          }});
-      } else {
-        var id = this._identifierForThing(view);
-      }
-      serializedViewMap[name] = id;
-    }
+    views.forEach(view => this._apiPort.DefineView(view, {viewType: view.type.toLiteral()}));
 
     if (particle._isInline) {
-      this._port.postMessage({
-        messageType: "DefineParticle",
-        messageBody: {
-          particleDefinition: particle._inlineDefinition,
-          particleFunction: particle._inlineUpdateFunction.toString()
-        }
-      })
+      this._apiPort.DefineParticle({
+        particleDefinition: particle._inlineDefinition,
+        particleFunction: particle._inlineUpdateFunction
+      });
     }
 
-    var renders = particle.spec.renders;
     var renderMap = new Map();
-    for (var render of renders) {
-      renderMap.set(render.name.name, views.get(render.name.view));
-    }
+    particle.spec.renders.forEach(
+      render => renderMap.set(render.name.name, views.get(render.name.view)));
 
-    var exposes = particle.spec.exposes;
     var exposeMap = new Map();
-    for (var expose of exposes) {
-      exposeMap.set(expose.name, views.get(expose.view));
-    }
-
+    particle.spec.exposes.forEach(
+      expose => exposeMap.set(expose.name, views.get(expose.view)));
+    
     var particleSpec = {particle, views, renderMap, exposeMap }
 
-    this._port.postMessage({
-      messageType: "InstantiateParticle",
-      messageBody: {
-        particleName: particle.name,
-        identifier: this._createMappingForThing(particleSpec),
-        views: serializedViewMap
-      }
-    });
+    this._apiPort.InstantiateParticle(particleSpec, { particleName: particle.name, views })
   }
 }
 

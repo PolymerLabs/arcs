@@ -117,6 +117,7 @@ class InnerPEC {
       case "ViewGetResponse":
       case "ViewToListResponse":
       case "HaveASlot":
+      case "PromiseResponse":
         this._promiseResponse(e.data.messageBody);
         return;
       case "LostSlots":
@@ -264,9 +265,9 @@ class InnerPEC {
     particle.setViews(viewMap);
   }
 
-  _lostSlots(particleIds) {
+  _lostSlots({ particles }) {
     // clean up slots that disappeared
-    particleIds.forEach(pid => {
+    particles.forEach(pid => {
       console.log(pid);
       let particle = this._thingForIdentifier(pid);
       particle.slotReleased();
