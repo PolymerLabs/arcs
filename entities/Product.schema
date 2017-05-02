@@ -1,0 +1,2 @@
+schema Product extends Thing {
+}

@@ -4,7 +4,7 @@
   "private": "true",
   "scripts": {
     "test": "mocha",
-    "peg": "node node_modules\\pegjs\\bin\\pegjs -o parser.js particle.peg",
+    "peg": "node node_modules/pegjs/bin/pegjs -o parser.js particle.peg && node node_modules/pegjs/bin/pegjs -o schema-parser.js schema.peg",
     "browserify": "./node_modules/.bin/browserify browser-test/browser-test.js --debug -o browser-test/browser-test-ified.js",
     "b": "./node_modules/.bin/browserify browser-test/browser-test.js --debug -o browser-test/browser-test-ified.js"
   },
