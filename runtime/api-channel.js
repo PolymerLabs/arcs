@@ -31,6 +31,18 @@ class ThingMapper {
     return id;
   }
 
+  maybeCreateMappingForThing(thing) {
+    if (this.hasMappingForThing(thing)) {
+      return this.identifierForThing(thing);
+    }
+    return this.createMappingForThing(thing);
+  }
+
+  establishThingMapping(id, thing) {
+    this._idMap.set(id, thing);
+    this._reverseIdMap.set(thing, id);    
+  }
+
   hasMappingForThing(thing) {
     return this._reverseIdMap.has(thing);
   }
@@ -61,7 +73,13 @@ class APIPort {
     }
 
     this.Stringify = {
-      convert: a => a.toString()
+      convert: a => a.toString(),
+      unconvert: a => eval(a)
+    }
+
+    this.LocalMapped = {
+      convert: a => this._mapper.maybeCreateMappingForThing(a),
+      unconvert: a => this._mapper.thingForIdentifier(a)      
     }
 
     this.Mapped = {
@@ -81,11 +99,17 @@ class APIPort {
       }
     }
 
-    this.Map = function(primitive) {
+    this.Map = function(keyprimitive, valueprimitive) {
       return {
         convert: a => {
           var r = {};
-          a.forEach((value, key) => r[key] = primitive.convert(value));
+          a.forEach((value, key) => r[keyprimitive.convert(key)] = valueprimitive.convert(value));
+          return r;
+        },
+        unconvert: a => {
+          var r = new Map();
+          for (var key in a)
+            r.set(keyprimitive.unconvert(key), valueprimitive.unconvert(a[key]));
           return r;
         }
       }
@@ -93,7 +117,8 @@ class APIPort {
 
     this.List = function(primitive) {
       return {
-        convert: a => a.map(v => primitive.convert(v))
+        convert: a => a.map(v => primitive.convert(v)),
+        unconvert: a => a.map(v => primitive.unconvert(v))
       }
     }
   }
@@ -108,12 +133,15 @@ class APIPort {
     }
     var handler = this._messageMap.get(e.data.messageType);
     var args = this._unprocessArguments(handler, e.data.messageBody);
-    this["on" + e.data.messageType](args);
+    var r = this["on" + e.data.messageType](args);
+    if (r && args.identifier) {
+      this._mapper.establishThingMapping(args.identifier, r);
+    }
   }
 
   _processArguments(argumentTypes, args) {
     var messageBody = {};
-    for (var argument in argumentTypes)
+    for (var argument in argumentTypes) 
       messageBody[argument] = argumentTypes[argument].convert(args[argument]);
     return messageBody;
   }
@@ -133,6 +161,11 @@ class APIPort {
   }
 
   registerHandler(name, argumentTypes) {
+    this._messageMap.set(name, argumentTypes);
+  }
+
+  registerInitializerHandler(name, argumentTypes) {
+    argumentTypes.identifier = this.Direct;
     this._messageMap.set(name, argumentTypes);
   }
 
@@ -161,14 +194,12 @@ class PECOuterPort extends APIPort {
 
     this.registerCall("DefineParticle", 
       {particleDefinition: this.Direct, particleFunction: this.Stringify});
-    this.registerRedundantInitializer("DefineView",
-      {viewType: this.Direct})
+    this.registerRedundantInitializer("DefineView", {viewType: this.Direct})
     this.registerInitializer("InstantiateParticle",
-      {particleName: this.Direct, views: this.Map(this.Mapped)});
+      {particleName: this.Direct, views: this.Map(this.Direct, this.Mapped)});
 
     this.registerCall("UIEvent", {particle: this.Mapped, eventName: this.Direct});
     this.registerCall("ViewCallback", {callback: this.Direct, data: this.Direct});
-    this.registerCall("PromiseResponse", {callback: this.Direct, data: this.Direct});
     this.registerCall("AwaitIdle", {version: this.Direct});
     this.registerCall("LostSlots", {particles: this.List(this.Mapped)});
 
@@ -179,7 +210,7 @@ class PECOuterPort extends APIPort {
     this.registerHandler("ViewToList", {view: this.Mapped, callback: this.Direct});
     this.registerHandler("ViewSet", {view: this.Mapped, data: this.Direct});
     this.registerHandler("ViewStore", {view: this.Mapped, data: this.Direct});
-    this.registerHandler("Idle", {version: this.Direct, relevance: this.Direct});
+    this.registerHandler("Idle", {version: this.Direct, relevance: this.Map(this.Mapped, this.Direct)});
     this.registerHandler("GetSlot", {particle: this.Mapped, name: this.Direct, callback: this.Direct});
     this.registerHandler("ReleaseSlot", {particle: this.Mapped});
   }
@@ -188,6 +219,29 @@ class PECOuterPort extends APIPort {
 class PECInnerPort extends APIPort {
   constructor(messagePort) {
     super(messagePort, 'i');
+
+    // particleFunction needs to be eval'd in context or it won't work.
+    this.registerHandler("DefineParticle",
+      {particleDefinition: this.Direct, particleFunction: this.Direct});
+    this.registerInitializerHandler("DefineView", {viewType: this.Direct});
+    this.registerInitializerHandler("InstantiateParticle",
+      {particleName: this.Direct, views: this.Map(this.Direct, this.Mapped)});
+
+    this.registerHandler("UIEvent", {particle: this.Mapped, eventName: this.Direct});
+    this.registerHandler("ViewCallback", {callback: this.LocalMapped, data: this.Direct});
+    this.registerHandler("AwaitIdle", {version: this.Direct});
+    this.registerHandler("LostSlots", {particles: this.List(this.Mapped)});
+
+    this.registerCall("RenderSlot", {particle: this.Mapped, content: this.Direct});
+    this.registerCall("ViewOn", {view: this.Mapped, target: this.Mapped,
+                                 type: this.Direct, callback: this.LocalMapped});
+    this.registerCall("ViewGet", {view: this.Mapped, callback: this.LocalMapped});
+    this.registerCall("ViewToList", {view: this.Mapped, callback: this.LocalMapped});
+    this.registerCall("ViewSet", {view: this.Mapped, data: this.Direct});
+    this.registerCall("ViewStore", {view: this.Mapped, data: this.Direct});
+    this.registerCall("Idle", {version: this.Direct, relevance: this.Map(this.Mapped, this.Direct)});
+    this.registerCall("GetSlot", {particle: this.Mapped, name: this.Direct, callback: this.LocalMapped});
+    this.registerCall("ReleaseSlot", {particle: this.Mapped});
   }
 }
 

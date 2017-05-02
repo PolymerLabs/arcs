@@ -26,11 +26,11 @@ class Speculator {
       var messageCount = newArc.pec.messageCount;
       let newRelevance = await newArc.pec.idle;
 
-      for (let key in newRelevance) {
+      for (let key of newRelevance.keys()) {
         if (relevance.has(key))
-          relevance.set(key, relevance.get(key).concat(newRelevance[key]));
+          relevance.set(key, relevance.get(key).concat(newRelevance.get(key)));
         else
-          relevance.set(key, newRelevance[key]);
+          relevance.set(key, newRelevance.get(key));
       }
       
       if (newArc.pec.messageCount !== messageCount + 1)
