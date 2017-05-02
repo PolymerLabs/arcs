@@ -124,13 +124,10 @@ class APIPort {
   }
 
   _handle(e) {
+    assert(this._messageMap.has(e.data.messageType));
+
     this.messageCount++;
 
-    // assert(this._messageMap.has(e.data.messageType));
-    if (!this._messageMap.has(e.data.messageType)) {
-      console.log(e.data.messageType, "Unimplemented");
-      return;
-    }
     var handler = this._messageMap.get(e.data.messageType);
     var args = this._unprocessArguments(handler, e.data.messageBody);
     var r = this["on" + e.data.messageType](args);
