@@ -17,6 +17,7 @@ const viewlet = require('./viewlet.js');
 const define = require('./particle.js').define;
 const assert = require('assert');
 const typeLiteral = require('./type-literal.js');
+const PECInnerPort = require('./api-channel.js').PECInnerPort;
 
 class RemoteView {
   constructor(id, type, port, pec) {
@@ -28,50 +29,34 @@ class RemoteView {
   }
 
   on(type, callback, target) {
-    var cid = this._pec._newLocalID();
-    this._pec._establishThingMapping(cid, callback)
-    this._port.postMessage({
-      messageType: "ViewOn",
-      messageBody: {
-        view: this._id,
-        type: type,
-        callback: cid,
-        target: this._pec._identifierForThing(target)
-      }
-    });
+    // var cid = this._pec._newLocalID();
+    // this._pec._establishThingMapping(cid, callback)
+    this._port.ViewOn({view: this, callback, target, type});
+    //target: this._pec._identifierForThing(target)
   }
 
   get() {
-    return this._pec.postPromise("ViewGet", {view: this._id});
+    return new Promise((resolve, reject) =>
+      this._port.ViewGet({ callback: r => resolve(r), view: this }));
   }
 
   toList() {
-    return this._pec.postPromise("ViewToList", {view: this._id});
+    return new Promise((resolve, reject) =>
+      this._port.ViewToList({ callback: r => resolve(r), view: this }));
   }
 
   set(entity) {
-    this.postSend(entity, "ViewSet");
+    this._port.ViewSet({data: entity, view: this});
   }
 
   store(entity) {
-    this.postSend(entity, "ViewStore");
-  }
-
-  postSend(entity, messageType) {
-    this._port.postMessage({
-      messageType,
-      messageBody: {
-        view: this._id,
-        data: entity
-      }
-    });
+    this._port.ViewStore({data: entity, view: this});
   }
 }
 
 class InnerPEC {
   constructor(port) {
-    this._port = port;
-    this._port.onmessage = e => this._handle(e);
+    this._apiPort = new PECInnerPort(port);
     this._scope = new Scope();
     // TODO: really should have a nicer approach for loading
     // default particles & types.
@@ -81,98 +66,7 @@ class InnerPEC {
     this._idMap = new Map();
     this._nextLocalID = 0;
     this._particles = [];
-  }
 
-  _newLocalID() {
-    return "l" + this._nextLocalID++;
-  }
-
-  _establishThingMapping(id, thing) {
-    this._reverseIdMap.set(thing, id);
-    this._idMap.set(id, thing);
-  }
-
-  _identifierForThing(thing) {
-    return this._reverseIdMap.get(thing);
-  }
-
-  _thingForIdentifier(id) {
-    return this._idMap.get(id);
-  }
-
-  _handle(e) {
-    switch (e.data.messageType) {
-      case "DefineView":
-        this._defineView(e.data.messageBody);
-        return;
-      case "InstantiateParticle":
-        this._instantiateParticle(e.data.messageBody);
-        return;
-      case "DefineParticle":
-        this._defineParticle(e.data.messageBody);
-        return;
-      case "ViewCallback":
-        this._viewCallback(e.data.messageBody);
-        return;
-      case "ViewGetResponse":
-      case "ViewToListResponse":
-      case "HaveASlot":
-      case "PromiseResponse":
-        this._promiseResponse(e.data.messageBody);
-        return;
-      case "LostSlots":
-        this._lostSlots(e.data.messageBody);
-        return;
-      case "AwaitIdle":
-        this._awaitIdle(e.data.messageBody);
-        return;
-      case "UIEvent":
-        this._uiEvent(e.data.messageBody);
-        return;
-      default:
-        assert(false, "Don't know how to handle messages of type " + e.data.messageType);
-    }
-  }
-
-  _viewCallback(data) {
-    var callback = this._thingForIdentifier(data.callback);
-    callback(data.data);
-  }
-
-  postPromise(messageType, messageBody) {
-    var rid = this._newLocalID();
-    var result = new Promise((resolve, reject) => this._establishThingMapping(rid, (d) => resolve(d)));
-    messageBody.callback = rid;
-
-    this._port.postMessage({ messageType, messageBody });
-    return result;
-  }
-
-  _promiseResponse(data) {
-    var resolve = this._thingForIdentifier(data.callback);
-    resolve(data.data);
-  }
-
-  _defineParticle(data) {
-    var particle = define(data.particleDefinition, eval(data.particleFunction));
-    this._scope.registerParticle(particle);
-  }
-
-  _uiEvent(data) {
-    var particle = this._thingForIdentifier(data.particle);
-    particle.fireEvent(data.eventName);
-  }
-
-  constructParticle(clazz) {
-    return new clazz(this._scope);
-  }
-
-  _remoteViewletFor(id) {
-    var v = this._thingForIdentifier(id);
-    return viewlet.viewletFor(v, v.type.isView);
- }
-
-  _defineView(data) {
     /*
      * This code ensures that the relevant types are known
      * in the scope object, because otherwise we can't do
@@ -183,54 +77,61 @@ class InnerPEC {
      * specifications separated from particle classes - and
      * only keeping type information on the arc side.
      */
-    var type = data.viewType;
+    this._apiPort.onDefineView = ({viewType, identifier}) => {
+      var type = (typeLiteral.isView(viewType) ? typeLiteral.primitiveType(viewType) : viewType);
+
+      // TODO: This is a dodgy hack based on possibly unintended
+      // behavior in Type's constructor.
+      if (!this._scope._types.has(JSON.stringify(type)))
+        this._scope.typeFor(loader.loadEntity(type));
     
-    if (typeLiteral.isView(type))
-      type = typeLiteral.primitiveType(type);
+      return new RemoteView(identifier, Type.fromLiteral(viewType, this._scope), this._apiPort, this);
+    };
 
-    // TODO: This is a dodgy hack based on possibly unintended
-    // behavior in Type's constructor.
-    if (!this._scope._types.has(JSON.stringify(type)))
-      this._scope.typeFor(loader.loadEntity(type));
+    this._apiPort.onDefineParticle = ({particleDefinition, particleFunction}) => {
+      var particle = define(particleDefinition, eval(particleFunction));
+      this._scope.registerParticle(particle);
+    };
 
-    var v = new RemoteView(data.identifier, 
-      Type.fromLiteral(data.viewType, this._scope), this._port, this);
-    this._establishThingMapping(data.identifier, v);
+    this._apiPort.onInstantiateParticle = 
+      ({particleName, views}) => this._instantiateParticle(particleName, views);
 
+    this._apiPort.onViewCallback = ({callback, data}) => callback(data);
+
+    this._apiPort.onAwaitIdle = ({version}) => 
+      this.idle.then(a => this._apiPort.Idle({version, relevance: this.relevance}));
+
+    this._apiPort.onLostSlots = ({particles}) => particles.forEach(particle => particle.slotReleased());
+
+    this._apiPort.onUIEvent = ({particle, eventName}) => particle.fireEvent(eventName);
   }
 
-  _instantiateParticle(data) {
-    if (!this._scope.particleRegistered(data.particleName)) {
-      var clazz = loader.loadParticle(data.particleName);
+  constructParticle(clazz) {
+    return new clazz(this._scope);
+  }
+
+  _instantiateParticle(particleName, views) {
+    if (!this._scope.particleRegistered(particleName)) {
+      var clazz = loader.loadParticle(particleName);
       this._scope.registerParticle(clazz);
     }
 
-    var particle = this._scope.instantiateParticle(data.particleName, this);
-    this._establishThingMapping(data.identifier, particle);
+    var particle = this._scope.instantiateParticle(particleName, this);
     this._particles.push(particle);
 
     var viewMap = new Map();
-
-    for (let connectionName in data.views) {
-      let viewIdentifier = data.views[connectionName];
-      var viewlet = this._remoteViewletFor(viewIdentifier);
-      viewMap.set(connectionName, viewlet);
-    }
+    views.forEach((value, key) => {
+      viewMap.set(key, viewlet.viewletFor(value, value.type.isView)); 
+    })
 
     class Slotlet {
       constructor(pec, particle) {
-        this._identifier = pec._identifierForThing(particle);
+        this._particle = particle;
         this._handlers = new Map();
         this._pec = pec;
       }
       render(content) {
-        this._pec._port.postMessage({
-          messageType: 'RenderSlot',
-          messageBody: {
-            content,
-            particle: this._identifier,
-          }
-        });
+        this._pec._apiPort.RenderSlot({content, particle: this._particle});
       }
       registerEventHandler(name, f) {
         if (!this._handlers.has(name)) {
@@ -251,35 +152,31 @@ class InnerPEC {
     particle.setSlotCallback(async (name, state) => {
       switch (state) {
         case "Need":
-          var data = await this.postPromise("GetSlot", {name, particle: this._identifierForThing(particle)})
+          var data = await new Promise(
+            (resolve, reject) => this._apiPort.GetSlot({name, particle, callback: r => resolve(r)}));
           var slot = new Slotlet(this, particle);
           particle.setSlot(slot);
           break;
         
         case "No":
-          this._port.postMessage({ messageType: "ReleaseSlot", messageBody: {particle: this._identifierForThing(particle)}});
+          this._apiPort.ReleaseSlot({particle})
           break;
       }
     });
 
-    particle.setViews(viewMap);
-  }
+    // the problem with doing this here is that it's only after we return particle below
+    // that the target mapping gets established.
+    Promise.resolve().then(() => particle.setViews(viewMap));
 
-  _lostSlots({ particles }) {
-    // clean up slots that disappeared
-    particles.forEach(pid => {
-      console.log(pid);
-      let particle = this._thingForIdentifier(pid);
-      particle.slotReleased();
-    });
+    return particle;
   }
 
   get relevance() {
-    var rMap = {};
+    var rMap = new Map();
     this._particles.forEach(p => {
       if (p.relevances.length == 0)
         return;
-      rMap[this._identifierForThing(p)] = p.relevances;
+      rMap.set(p, p.relevances);
       p.relevances = [];
     });
     return rMap;
@@ -293,15 +190,6 @@ class InnerPEC {
     }
     return false;
   }
-
-  _awaitIdle(message) {
-    this.idle.then(() => {
-      this._port.postMessage({
-        messageType: "Idle",
-        messageBody: {version: message.version, relevance: this.relevance }
-      });
-    });
-  } 
 
   get idle() {
     if (!this.busy) {

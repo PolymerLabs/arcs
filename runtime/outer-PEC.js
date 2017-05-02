@@ -35,11 +35,11 @@ class OuterPEC extends PEC {
     };
 
     this._apiPort.onViewGet = ({view, callback}) => {
-      this._apiPort.PromiseResponse({callback, data: view.get()});
+      this._apiPort.ViewCallback({callback, data: view.get()});
     }
 
     this._apiPort.onViewToList = ({view, callback}) => {
-      this._apiPort.PromiseResponse({callback, data: view.toList()});
+      this._apiPort.ViewCallback({callback, data: view.toList()});
     }
 
     this._apiPort.onViewSet = ({view, data}) => view.set(data);
@@ -55,13 +55,13 @@ class OuterPEC extends PEC {
     this._apiPort.onGetSlot = ({particle, name, callback}) => {
       assert(particle.renderMap.has(name));
       this.slotManager.registerSlot(particle, name, particle.renderMap.get(name)).then(() =>
-        this._apiPort.PromiseResponse({callback}));
+        this._apiPort.ViewCallback({callback}));
     }
 
     this._apiPort.onReleaseSlot = ({particle}) => {
       let affectedParticles = this.slotManager.releaseSlot(particle);
       if (affectedParticles) {
-        this._apiPort.LostSlots(affectedParticles);
+        this._apiPort.LostSlots({particles: affectedParticles});
       }
     }
   }
