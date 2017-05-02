@@ -10,11 +10,13 @@
 "use strict";
 
 var parser = require("./parser.js");
+const schemaParser = require("./schema-parser.js");
 var fs = require("fs");
 var recipe = require("./recipe.js");
 var runtime = require("./runtime.js");
 var assert = require("assert");
 var ParticleSpec = require("./particle-spec.js");
+const Schema = require("./schema.js");
 
 function particleLocationFor(name, type) {
   return `../particles/${name}/${name}.${type}`;
@@ -22,6 +24,10 @@ function particleLocationFor(name, type) {
 
 function entityLocationFor(name, type) {
   return `../entities/${name}.${type}`;
+}
+
+function schemaLocationFor(name) {
+  return `../entities/${name}.schema`;
 }
 
 function loadParticle(name) {
@@ -46,4 +52,15 @@ function loadEntity(name) {
   return clazz;
 }
 
-Object.assign(exports, { loadParticle, loadDefinition, loadRecipe, loadEntity })
+function loadSchema(name) {
+  let data = fs.readFileSync(schemaLocationFor(name), "utf-8");
+  var parsed = schemaParser.parse(data);
+  if (parsed.parent) {
+    var parent = loadSchema(parsed.parent);
+  } else {
+    var parent = undefined;
+  }
+  return new Schema(parsed, parent);
+}
+
+Object.assign(exports, { loadParticle, loadDefinition, loadRecipe, loadEntity, loadSchema })
