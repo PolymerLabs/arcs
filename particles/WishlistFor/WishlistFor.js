@@ -12,23 +12,16 @@
 var Particle = require("../../runtime/particle.js").Particle;
 var runtime = require("../../runtime/runtime.js");
 
-class Product extends runtime.Entity {
-    constructor(name) {
-    super();
-    this._data = {name};
-  }
-
-  get data() { return this._data; }
-
-  static get key() { return "Product"; }
-}
+const loader = require("../../runtime/loader.js");
+const Product = loader.loadEntity("Product");
 
 class WishlistFor extends Particle {
 
   setViews(views) {
     this.logDebug("person", views.get("person"));
     var wishlist = views.get('wishlist');
-    ["a new bike!", "Fresh Puppies", "A packet of Tim Loh that never runs out"].map(p => wishlist.store(new Product(p)));
+    ["a new bike!", "Fresh Puppies", "A packet of Tim Loh that never runs out"].map(p => wishlist.store(
+      new Product({name: p})));
     this.logDebug("wishlist", wishlist);
   }
 }

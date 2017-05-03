@@ -27,7 +27,7 @@ class Entity {
     this[Symbols.identifier] = scope._newIdentifier(view, scope.typeFor(this));
   }
   toLiteral() {
-    return this.data;
+    return this.rawData;
   }
   static fromLiteral(id, literal) {
     // TODO: restore as the appropriate type from type registry (scope)?

@@ -48,7 +48,8 @@ function loadRecipe(name) {
 }
 
 function loadEntity(name) {
-  let clazz = require(entityLocationFor(name, 'js'));
+  let clazz = loadSchema(name).entityClass();
+  // let clazz = require(entityLocationFor(name, 'js'));
   return clazz;
 }
 
