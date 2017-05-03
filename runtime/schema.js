@@ -25,15 +25,13 @@ class Schema {
 
   get normative() {
     var dict = this.parent ? this.parent.normative : {};
-    for (var key in this._normative)
-      dict[key] = this._normative[key];
+    Object.assign(dict, this._normative);
     return dict;
   }
 
   get optional() {
     var dict = this.parent ? this.parent.optional : {};
-    for (var key in this._optional)
-      dict[key] = this._optional[key];
+    Object.assign(dict, this._optional);
     return dict;
   }  
 }
