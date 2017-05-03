@@ -38,10 +38,15 @@ class Schema {
   } 
 
   entityClass() {
+    const name = this.name;
     var clazz = class extends Entity {
       constructor(data) {
         super();
         this.rawData = data;
+      }
+
+      static get key() {
+        return name;
       }
     }
     Object.defineProperty(clazz, 'name', {value: this.name});

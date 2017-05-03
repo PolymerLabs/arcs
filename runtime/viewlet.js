@@ -64,8 +64,8 @@ class Viewlet {
   get type() {
     return this._view._type;
   }
-  get connectionName() {
-    return this._view.connectionName;
+  get name() {
+    return this._view.name;
   }
 }
 

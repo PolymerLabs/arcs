@@ -191,7 +191,7 @@ class PECOuterPort extends APIPort {
 
     this.registerCall("DefineParticle", 
       {particleDefinition: this.Direct, particleFunction: this.Stringify});
-    this.registerRedundantInitializer("DefineView", {viewType: this.Direct})
+    this.registerRedundantInitializer("DefineView", {viewType: this.Direct, name: this.Direct})
     this.registerInitializer("InstantiateParticle",
       {particleName: this.Direct, views: this.Map(this.Direct, this.Mapped)});
 
@@ -220,7 +220,7 @@ class PECInnerPort extends APIPort {
     // particleFunction needs to be eval'd in context or it won't work.
     this.registerHandler("DefineParticle",
       {particleDefinition: this.Direct, particleFunction: this.Direct});
-    this.registerInitializerHandler("DefineView", {viewType: this.Direct});
+    this.registerInitializerHandler("DefineView", {viewType: this.Direct, name: this.Direct});
     this.registerInitializerHandler("InstantiateParticle",
       {particleName: this.Direct, views: this.Map(this.Direct, this.Mapped)});
 

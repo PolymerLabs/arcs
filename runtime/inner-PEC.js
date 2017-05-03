@@ -20,19 +20,17 @@ const typeLiteral = require('./type-literal.js');
 const PECInnerPort = require('./api-channel.js').PECInnerPort;
 
 class RemoteView {
-  constructor(id, type, port, pec) {
+  constructor(id, type, port, pec, name) {
     this._id = id;
     this.type = type;
     this._port = port;
     this._pec = pec;
     this._scope = pec._scope;
+    this.name = name;
   }
 
   on(type, callback, target) {
-    // var cid = this._pec._newLocalID();
-    // this._pec._establishThingMapping(cid, callback)
     this._port.ViewOn({view: this, callback, target, type});
-    //target: this._pec._identifierForThing(target)
   }
 
   get() {
@@ -77,7 +75,7 @@ class InnerPEC {
      * specifications separated from particle classes - and
      * only keeping type information on the arc side.
      */
-    this._apiPort.onDefineView = ({viewType, identifier}) => {
+    this._apiPort.onDefineView = ({viewType, identifier, name}) => {
       var type = (typeLiteral.isView(viewType) ? typeLiteral.primitiveType(viewType) : viewType);
 
       // TODO: This is a dodgy hack based on possibly unintended
@@ -85,7 +83,7 @@ class InnerPEC {
       if (!this._scope._types.has(JSON.stringify(type)))
         this._scope.typeFor(loader.loadEntity(type));
     
-      return new RemoteView(identifier, Type.fromLiteral(viewType, this._scope), this._apiPort, this);
+      return new RemoteView(identifier, Type.fromLiteral(viewType, this._scope), this._apiPort, this, name);
     };
 
     this._apiPort.onDefineParticle = ({particleDefinition, particleFunction}) => {

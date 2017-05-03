@@ -29,7 +29,7 @@ class ListView extends Particle {
   async _renderViews(views) {
     var inputList = await views.get('list').toList();
     if (inputList.length > 0) {
-      let names = inputList.map(entity => entity.data.name);
+      let names = inputList.map(entity => entity.name);
       // say that I need an 'root' slot to continue
       var slot = await this.requireSlot('root');
       slot.render(`
