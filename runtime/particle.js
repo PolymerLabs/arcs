@@ -42,7 +42,7 @@ function define(def, update) {
     logDebug(tag, view) {
       let direction = this.spec.connectionMap.get(tag).direction;
       view.debugString().then(v => console.log(
-         `[${this.spec.type}][${direction}][${tag}]: [${view.name}]`, v));
+         `(${this.spec.type})(${direction})(${tag}): (${view.name})`, v));
     }
   };
   clazz._isInline = true;
@@ -183,7 +183,7 @@ class Particle {
   logDebug(tag, view) {
     let direction = this.spec.connectionMap.get(tag).direction;
     view.debugString().then(v => console.log(
-       `[${this.spec.type}][${direction}][${tag}]: [${view.connectionName}]`, v));
+       `(${this.spec.type})(${direction})(${tag}]: (${view.name})`, v));
   }
 
   when(changes, f) {

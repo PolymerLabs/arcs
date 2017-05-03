@@ -44,7 +44,7 @@ class Entity {
     return entity;
   }
   get debugString() {
-    return JSON.stringify(this.data);
+    return JSON.stringify(this.data.name);
   }
 }
 

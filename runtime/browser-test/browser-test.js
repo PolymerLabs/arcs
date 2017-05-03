@@ -26,7 +26,8 @@ function prepareExtensionArc() {
   var personView = arc.createView(scope.typeFor(Person).viewOf(scope), "peopleFromWebpage");
   var productView = arc.createView(scope.typeFor(Product).viewOf(scope), "productsFromWebpage");
   var personSlot = arc.createView(scope.typeFor(Person), "personSlot");
-  arc.commit([new Person("Claire"), new Product("Tea Pot"), new Product("Bee Hive"), new Product("Denim Jeans")]);
+  arc.commit([new Person({name: "Claire"}), new Product({name: "Tea Pot"}), new Product({name: "Bee Hive"}),
+              new Product({name: "Denim Jeans"})]);
   return arc;
 }
 
