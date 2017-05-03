@@ -20,4 +20,15 @@ describe('schema', function() {
     assert.equal(schema.name, "Product");
     assert.equal(schema.parent.name, "Thing");
   });
+
+  it('constructs an appropriate entity subclass', function() {
+    var schema = loader.loadSchema("Product");
+    var Product = schema.entityClass();
+    assert.equal(Product.name, "Product");
+    var product = new Product({name: "Pickled Chicken Sandwich", description: "A sandwich with pickles and chicken"});
+    assert(product instanceof Product);
+    assert.equal(product.name, "Pickled Chicken Sandwich");
+    assert.equal(product.description, "A sandwich with pickles and chicken");
+    assert.equal(product.image, undefined);
+  })
 });
