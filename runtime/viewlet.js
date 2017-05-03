@@ -87,7 +87,7 @@ class View extends Viewlet {
   }
   async debugString() {
     var list = await this.toList();
-    return list ? list.map(p => p.debugString).join(", ") : 'undefined';
+    return list ? ('[' + list.map(p => p.debugString).join(", ") + ']') : 'undefined';
   }
 }
 
