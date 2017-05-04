@@ -30,7 +30,7 @@ class SlotManager {
       if (this._slotDom[slotid] && !this._slotOwners[slotid]) {
         resolve();
       } else {
-        this._pendingSlotRequests[slotid] = resolve;
+        this._addPendingSlot(slotid, resolve);
       }
     }).then(() => {
       this._targetSlots.set(particleid, { slotid, view });
@@ -38,7 +38,10 @@ class SlotManager {
     });
   }
   _getSlotId(particleid) {
-    return this._targetSlots.get(particleid).slotid;
+    if (this._targetSlots.has(particleid)) {
+      return this._targetSlots.get(particleid).slotid;
+    }
+    return undefined;
   }
   _getParticle(slotid) {
     return this._slotOwners[slotid];
@@ -101,35 +104,53 @@ class SlotManager {
     }
   }
   _provideSlot(slotid) {
-    let pending = this._pendingSlotRequests[slotid];
+    let pending = this._removePendingSlot(slotid);
     pending && pending();
   }
   releaseSlot(particle) {
-    // TODO(sjmiles): need to handle the case where particle's slot is pending
     let slotid = this._getSlotId(particle);
     if (slotid) {
       this._releaseSlotData(particle, slotid);
       let dom = this._slotDom[slotid];
+      var affectedParticles = [];
       // TODO(sjmiles): missing mock-DOM version
       if (global.document) {
         let slots = Array.from(dom.insertion.querySelectorAll("[slotid]"));
         slots = slots.map(s => s.getAttribute('slotid'));
-        let particles = slots.map(s => this._getParticle(s));
+        affectedParticles = slots.map(s => this._getParticle(s));
         slots.forEach(this._releaseChildSlot, this);
         dom.insertion.innerHTML = '';
-        return particles;
       }
+      this._provideSlot(slotid);
+      return affectedParticles;
     }
   }
   _releaseSlotData(particle, slotid) {
     this._content[slotid] = null;
-    this._targetSlots[particle] = null;
+    this._targetSlots.delete(particle);
     this._slotOwners[slotid] = null;
   }
   _releaseChildSlot(slotid) {
     let particle = this._slotOwners[slotid];
     this._releaseSlotData(particle, slotid);
     this._slotDom[slotid] = null;
+  }
+  _addPendingSlot(slotid, handler) {
+    if (!this._pendingSlotRequests[slotid]) {
+      this._pendingSlotRequests[slotid] = [];
+    }
+    this._pendingSlotRequests[slotid].push(handler);
+  }
+  _removePendingSlot(slotid) {
+    var handler = undefined;
+    if (this._pendingSlotRequests[slotid]) {
+      handler = this._pendingSlotRequests[slotid][0];
+      this._pendingSlotRequests[slotid].splice(0, 1);
+      if (this._pendingSlotRequests[slotid].length == 0) {
+        delete this._pendingSlotRequests[slotid];
+      }
+    }
+    return handler;
   }
 }
 
