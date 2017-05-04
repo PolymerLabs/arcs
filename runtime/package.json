@@ -18,6 +18,7 @@
     "pegjs": "^0.10.0"
   },
   "browser": {
-    "./loader.js": "./browser-loader.js"
+    "./loader.js": "./browser-loader.js",
+    "../../runtime/loader.js": "../../runtime/browser-loader.js"
   }
 }

@@ -18,8 +18,8 @@ let util = require('./test-util.js');
 
 require("./trace-setup.js");
 
-var Foo = runtime.testing.testEntityClass('Foo');
-var Bar = runtime.testing.testEntityClass('Bar');
+const Foo = runtime.loader.loadEntity("Foo");
+const Bar = runtime.loader.loadEntity("Bar");
 
 describe('speculator', function() {
   it('can speculatively produce a relevance', async () => {
@@ -34,7 +34,8 @@ describe('speculator', function() {
             .connectView("bar", barView)
         .build();
     var speculator = new Speculator();
-    fooView.set(new Foo("not a Bar"));
+    console.log(new Foo({value: "not a Bar"}));
+    fooView.set(new Foo({value: "not a Bar"}));
     var relevance = await speculator.speculate(arc, r);
     assert.equal(relevance, 1.8);
     await util.assertSingletonEmpty(barView);

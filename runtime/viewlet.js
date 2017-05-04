@@ -13,6 +13,7 @@ const Relation = require('./relation.js');
 const Symbols = require('./symbols.js');
 const underlyingView = require('./view.js');
 let identifier = Symbols.identifier;
+const assert = require("assert");
 
 // TODO: This won't be needed once runtime is transferred between contexts.
 function cloneData(data) {
@@ -20,11 +21,12 @@ function cloneData(data) {
   //return JSON.parse(JSON.stringify(data));
 }
 
-function restore(entry, scope) {
-  let {id, data} = entry;
-  var entity = Entity.fromLiteral(id, cloneData(data));
+function restore(entry, scope, entityClass) {
+  let {id, rawData} = entry;
+  var entity = new entityClass(cloneData(rawData));
+  // var entity = Entity.fromLiteral(id, cloneData(data));
   var type = scope.typeFor(entity);
-  entity.constructor = type.entityClass;
+  // entity.constructor = type.entityClass;
   // TODO: Relation magic should happen elsewhere, and be better.
   if (scope.typeFor(entity).isRelation) {
     let ids = data.map(literal => Identifier.fromLiteral(literal, scope));
@@ -50,15 +52,16 @@ class Viewlet {
 
   _serialize(entity) {
     let id = entity[identifier];
-    let data = cloneData(entity.toLiteral());
+    let rawData = cloneData(entity.toLiteral());
     return {
       id,
-      data: data,
+      rawData
     };
   }
 
   _restore(entry) {
-    return restore(entry, this._view._scope);
+    assert(this.entityClass, "Viewlets need entity classes for deserialization");
+    return restore(entry, this._view._scope, this.entityClass);
   }
 
   get type() {

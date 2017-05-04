@@ -13,8 +13,8 @@ var { Particle, ViewChanges, StateChanges, SlotChanges } = require("../../runtim
 
 function difference(a, b) {
   var result = new Map();
-  a.forEach(value => result.set(JSON.stringify(value.data), value));
-  b.map(a => JSON.stringify(a.data)).forEach(value => result.delete(value));
+  a.forEach(value => result.set(JSON.stringify(value.name), value));
+  b.map(a => JSON.stringify(a.name)).forEach(value => result.delete(value));
   return result.values();
 }
 
@@ -35,7 +35,7 @@ class Chooser extends Particle {
         for (var i in this.states.get('values')) {
           let value = this.states.get('values')[i];
           let eventName = `clack${i}`;
-          content += `${value.data.name} <button events on-click=${eventName}>Choose me!</button><br>`;
+          content += `${value.name} <button events on-click=${eventName}>Choose me!</button><br>`;
           slot.clearEventHandlers(eventName);
           slot.registerEventHandler(eventName, a => views.get('resultList').store(value));
          }
