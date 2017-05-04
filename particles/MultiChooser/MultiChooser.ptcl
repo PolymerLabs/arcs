@@ -8,4 +8,6 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-Save(ephemeral in [Product] inputs, out [Product] list)
+MultiChooser(in [Product] choices, out [Product] resultList)
+
+renders: action(resultList) none-need
