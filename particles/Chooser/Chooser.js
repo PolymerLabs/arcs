@@ -23,27 +23,48 @@ class Chooser extends Particle {
     this.when([new ViewChanges(views, ['choices', 'resultList'], 'change')], async e => {
       var inputList = await views.get('choices').toList();
       var outputList = await views.get('resultList').toList();
-
       var result = [...difference(inputList, outputList)];
       this.emit('values', result);
     });
-
     this.when([new StateChanges('values'), new SlotChanges()], async e => {
-      if (this.states.get('values').length > 0) {
-        var slot = await this.requireSlot('action');
-        var content = 'Choose:<br>';
-        for (var i in this.states.get('values')) {
-          let value = this.states.get('values')[i];
-          let eventName = `clack${i}`;
-          content += `${value.name} <button events on-click=${eventName}>Choose me!</button><br>`;
-          slot.clearEventHandlers(eventName);
-          slot.registerEventHandler(eventName, a => views.get('resultList').store(value));
-         }
-        slot.render(content);
-      } else {
+      let values = this.states.get('values');
+      if (values.length <= 0) {
         this.releaseSlot('action');
+      } else {
+        let slot = await this.requireSlot('action');
+        this._render(slot, {
+          values,
+          chooseValue: event => views.get('resultList').store(values[event.data.key])
+        });
       }
     });
+  }
+  _render(slot, model) {
+    let html = 'Choose:<br>';
+    html = model.values.reduce((html, value, i) => {
+      return `${html}${value.name} <button events key="${i}" on-click="chooseValue">Choose me!</button><br>`;
+    }, html);
+    slot.render(html);
+    // TODO(sjmiles): experimenting with automatic event setup
+    // _listen and _findHandlerNames are tentative    
+    //this._listen(slot, model, 'chooseValue');
+    this._listen(slot, model, this._findHandlerNames(html));
+  }
+  _listen(slot, model, handlers) {
+    handlers.forEach(name => {
+      console.log('eventHandler: ', name);
+      slot.clearEventHandlers(name);
+      slot.registerEventHandler(name, model[name]);
+    });
+  }
+  _findHandlerNames(html) {
+    let handlers = new Map();
+    let m;
+    let re = /on-.*?=\"([^\"]*)"/gmi;
+    while ((m = re.exec(html)) !== null) {
+      handlers.set(m[1], true);
+    }
+    return Array.from(handlers.keys());
   }
 }
 

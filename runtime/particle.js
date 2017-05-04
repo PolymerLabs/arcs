@@ -202,8 +202,8 @@ class Particle {
     changes.forEach(change => change.register(this, f));
   }
 
-  fireEvent(eventName) {
-    this.slot.fireEvent(eventName);
+  fireEvent(event) {
+    this.slot.fireEvent(event);
   }
 }
 

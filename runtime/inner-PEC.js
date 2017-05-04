@@ -101,7 +101,7 @@ class InnerPEC {
 
     this._apiPort.onLostSlots = ({particles}) => particles.forEach(particle => particle.slotReleased());
 
-    this._apiPort.onUIEvent = ({particle, eventName}) => particle.fireEvent(eventName);
+    this._apiPort.onUIEvent = ({particle, event}) => particle.fireEvent(event);
   }
 
   constructParticle(clazz) {
@@ -140,9 +140,9 @@ class InnerPEC {
       clearEventHandlers(name) {
         this._handlers.set(name, []);
       }
-      fireEvent(name) {
-        for (var handler of this._handlers.get(name) || []) {
-          handler();
+      fireEvent(event) {
+        for (var handler of this._handlers.get(event.handler) || []) {
+          handler(event);
         }
       }
     }
