@@ -66,21 +66,6 @@ class Particle {
     this.states = new Map();
   }
 
-  /*
-  entityClassFor(name) {
-    console.log("get entity class!", name);
-    var typeName = this.spec.connectionMap.get(name).typeName;
-    if (typeLiteral.isView(typeName)) {
-      typeName = typeLiteral.primitiveType(typeName);
-    }
-    if (typeLiteral.isVariable(typeName)) {
-
-    }
-    console.log(typeName);
-    return runtime.loader.loadEntity(typeName);
-  }
-  */
-
   _setViews(views) {
     for (var view of views.values()) {
       var type = view.underlyingView().type.toLiteral();
