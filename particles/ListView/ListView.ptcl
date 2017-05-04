@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-ListView(in [Product] list, out [Product] sameList)
+ListView(in [Product] list)
 
 renders: root none-need
 exposes: action(list)
