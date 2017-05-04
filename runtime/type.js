@@ -11,7 +11,7 @@ const assert = require('assert');
 const typeLiteral = require('./type-literal.js');
 
 class Type {
-  constructor(key, scope, entityClass) {
+  constructor(key, scope) {
     assert(scope);
     assert(!typeLiteral.isNamedVariable(key));
     let normalized = JSON.stringify(key);
@@ -20,10 +20,6 @@ class Type {
       return type;
     }
     this.key = key;
-    if (!(this.isVariable || this.isView)) {
-      assert(entityClass, `type ${this.toString()} requires an entity class`);
-      this.entityClass = entityClass;
-    }
     scope._types.set(normalized, this);
   }
   get isRelation() {

@@ -18,14 +18,13 @@ let util = require('./test-util.js');
 let viewlet = require('../viewlet.js');
 
 
-var Foo = runtime.testing.testEntityClass('Foo');
-var Bar = runtime.testing.testEntityClass('Bar');
+const Foo = runtime.loader.loadEntity("Foo");
+const Bar = runtime.loader.loadEntity("Bar");
 
 describe('recipe', function() {
 
   it('recipes can load', async () => {
     let scope = new runtime.Scope();
-    [Foo, Bar].map(a => scope.registerEntityClass(a));
     particles.register(scope);
     var arc = new Arc(scope);
     let fooView = arc.createView(scope.typeFor(Foo));
@@ -38,7 +37,7 @@ describe('recipe', function() {
         .build();
 
     r.instantiate(arc);
-    viewlet.viewletFor(fooView).set(new Foo("not a Bar"));
-    await util.assertSingletonHas(barView, "not a Bar1");
+    viewlet.viewletFor(fooView).set(new Foo({value: "not a Bar"}));
+    await util.assertSingletonHas(barView, Bar, "not a Bar1");
   });
 });

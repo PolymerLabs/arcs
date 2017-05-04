@@ -13,13 +13,14 @@
 let assert = require('chai').assert;
 let viewlet = require('../viewlet.js');
 
-function assertSingletonHas(view, expectation) {
+function assertSingletonHas(view, entityClass, expectation) {
   return new Promise((resolve, reject) => {
     var variable = viewlet.viewletFor(view);
+    variable.entityClass = entityClass;
     variable.on('change', () => variable.get().then(result => {
       if (result == undefined)
         return;
-      assert.equal(result.data, expectation);
+      assert.equal(result.value, expectation);
       resolve();
     }), {});
   });

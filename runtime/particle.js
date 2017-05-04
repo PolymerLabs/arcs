@@ -13,7 +13,8 @@ var parser = require("./parser.js");
 var runtime = require("./runtime.js");
 var ParticleSpec = require("./particle-spec.js");
 var tracing = require('tracelib');
-var assert = require('assert');   
+var assert = require('assert');
+const typeLiteral = require('./type-literal.js');
 
 function define(def, update) {
   let spec = new ParticleSpec(parser.parse(def));
@@ -63,6 +64,32 @@ class Particle {
     this.slotHandlers = [];
     this.stateHandlers = new Map();
     this.states = new Map();
+  }
+
+  /*
+  entityClassFor(name) {
+    console.log("get entity class!", name);
+    var typeName = this.spec.connectionMap.get(name).typeName;
+    if (typeLiteral.isView(typeName)) {
+      typeName = typeLiteral.primitiveType(typeName);
+    }
+    if (typeLiteral.isVariable(typeName)) {
+
+    }
+    console.log(typeName);
+    return runtime.loader.loadEntity(typeName);
+  }
+  */
+
+  _setViews(views) {
+    for (var view of views.values()) {
+      var type = view.underlyingView().type.toLiteral();
+      if (typeLiteral.isView(type)) {
+        type = typeLiteral.primitiveType(type);
+      }
+      view.entityClass = runtime.loader.loadEntity(type);
+    }
+    this.setViews(views);
   }
 
   // Override this to do stuff

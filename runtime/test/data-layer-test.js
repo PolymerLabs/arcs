@@ -23,7 +23,7 @@ describe('entity', function() {
     let list = await arc.findViews(scope.typeFor(entity).viewOf(scope))[0].toList();
     let clone = list[0];
     assert.isDefined(clone);
-    assert.equal(clone.data, 'hello world');
+    assert.equal(clone.rawData, 'hello world');
     assert.notEqual(entity, clone);
   });
 });

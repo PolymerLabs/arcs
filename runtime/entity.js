@@ -29,22 +29,9 @@ class Entity {
   toLiteral() {
     return this.rawData;
   }
-  static fromLiteral(id, literal) {
-    // TODO: restore as the appropriate type from type registry (scope)?
-    let entity = new (class BasicEntity extends Entity {
-        constructor(rawData) {
-        super();
-        this.rawData = rawData;
-      }
-      get data() {
-        return this.rawData;
-      }
-    })(literal);
-    entity[Symbols.identifier] = id;
-    return entity;
-  }
+
   get debugString() {
-    return JSON.stringify(this.data.name);
+    return JSON.stringify(this.rawData);
   }
 }
 

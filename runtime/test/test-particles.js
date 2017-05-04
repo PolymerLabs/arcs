@@ -13,12 +13,16 @@ var runtime = require("../runtime.js");
 var testEntities = require("./test-entities.js");
 
 exports.TestParticle = particle.define('TestParticle(in Foo foo, out Bar bar)', (map) => {
-  map.get('foo').get().then(result => map.get('bar').set(new testEntities.Bar(result.data + 1)));
+  const Bar = loader.loadEntity("Bar");
+  map.get('foo').get().then(result => {
+    var bar = map.get('bar');
+    bar.set(new bar.entityClass({value: result.value + 1}))
+  });
   return 9;
 });
 
 exports.TwoInputTestParticle = particle.define('TwoInputTestParticle(in Foo foo, in Bar bar, out Far far)', map => {
-  map.get('far').set(new testEntities.Far(map.get('foo').get().data + ' ' + map.get('bar').get().data));
+  map.get('far').set(new testEntities.Far({value: map.get('foo').get().value + ' ' + map.get('bar').get().value}));
   return 3;
 });
 

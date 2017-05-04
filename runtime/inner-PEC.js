@@ -35,7 +35,7 @@ class RemoteView {
 
   get() {
     return new Promise((resolve, reject) =>
-      this._port.ViewGet({ callback: r => resolve(r), view: this }));
+      this._port.ViewGet({ callback: r => {resolve(r)}, view: this }));
   }
 
   toList() {
@@ -164,7 +164,7 @@ class InnerPEC {
 
     // the problem with doing this here is that it's only after we return particle below
     // that the target mapping gets established.
-    Promise.resolve().then(() => particle.setViews(viewMap));
+    Promise.resolve().then(() => particle._setViews(viewMap));
 
     return particle;
   }

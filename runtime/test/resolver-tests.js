@@ -22,10 +22,8 @@ var viewlet = require('../viewlet.js');
 require("./trace-setup.js");
 
 let scope = new runtime.Scope();
-var Foo = runtime.testing.testEntityClass('Foo');
-var Bar = runtime.testing.testEntityClass('Bar');
-
-[Foo, Bar].map(a => scope.registerEntityClass(a));
+const Foo = loader.loadEntity("Foo");
+const Bar = loader.loadEntity("Bar");
 
 describe('resolver', () => {
   it('can resolve a partially constructed recipe', async () => {
@@ -37,11 +35,11 @@ describe('resolver', () => {
             .connectSpec("foo", {typeName: "Foo", mustCreate: false})
             .connectSpec("bar", {typeName: "Bar", mustCreate: true})
         .build();
-    viewlet.viewletFor(fooView).set(new Foo("not a Bar"));
+    viewlet.viewletFor(fooView).set(new Foo({value: "not a Bar"}));
     assert(Resolver.resolve(r, arc), "recipe resolves");
     r.instantiate(arc);
     var barView = arc.findViews(scope.typeFor(Bar))[0];
-    await util.assertSingletonHas(barView, "not a Bar1");
+    await util.assertSingletonHas(barView, Bar, "not a Bar1");
   });
 
   it("can resolve a recipe from a particle's spec", async () => {
@@ -51,10 +49,10 @@ describe('resolver', () => {
     var r = particles.TestParticle.spec.buildRecipe();
     let fooView = arc.createView(scope.typeFor(Foo));
     let barView = arc.createView(scope.typeFor(Bar));
-    viewlet.viewletFor(fooView).set(new Foo("not a Bar"));
+    viewlet.viewletFor(fooView).set(new Foo({value: "not a Bar"}));
     Resolver.resolve(r, arc);
     r.instantiate(arc);
-    await util.assertSingletonHas(barView, "not a Bar1");
+    await util.assertSingletonHas(barView, Bar, "not a Bar1");
   });
 
   it('can resolve a recipe that is just a particle name', async () => {
@@ -64,10 +62,10 @@ describe('resolver', () => {
     var r = new recipe.RecipeBuilder().addParticle("TestParticle").build();
     let fooView = arc.createView(scope.typeFor(Foo));
     let barView = arc.createView(scope.typeFor(Bar));
-    viewlet.viewletFor(fooView).set(new Foo("not a Bar"));
+    viewlet.viewletFor(fooView).set(new Foo({value: "not a Bar"}));
     Resolver.resolve(r, arc);
     r.instantiate(arc);
-    await util.assertSingletonHas(barView, "not a Bar1");
+    await util.assertSingletonHas(barView, Bar, "not a Bar1");
   });
 
   it("won't resolve a recipe that mentions connections that are not in a particle's connection list", function() {
@@ -90,7 +88,7 @@ describe('resolver', () => {
         .addParticle("TestParticle")
             .connectConstraint("foo", "shared")
         .build();
-    scope.commit([new Foo(1), new Foo(2), new Foo(3)]);
+    scope.commit([new Foo({value: 1}), new Foo({value: 2}), new Foo({value: 3})]);
     assert(Resolver.resolve(r, arc), "recipe should resolve");
     r.instantiate(arc);
     arc.tick(); arc.tick();

@@ -10,11 +10,13 @@
 "use strict";
 
 var parser = require("./parser.js");
+var schemaParser = require("./schema-parser.js");
 //var fs = require("fs");
 //var recipe = require("../../runtime/recipe.js");
 //var runtime = require("../../runtime/runtime.js");
 //var assert = require("assert");
 var ParticleSpec = require("./particle-spec.js");
+var Schema = require("./schema.js");
 
 // dynamic loading not so bueno under browserify ...
 // preload these here so they:
@@ -28,8 +30,6 @@ var _lv = require("../particles/ListView/ListView.js");
 var _c = require("../particles/Chooser/Chooser.js");
 //var _slp = require("../particles/StackingLayout/StackingLayout.js");
 //
-var _pne = require("../entities/Person.js");
-var _pre = require("../entities/Product.js");
 
 let fs = {
   readFileSync: name => {
@@ -66,8 +66,19 @@ function loadRecipe(name) {
 }
 
 function loadEntity(name) {
-  let clazz = require(entityLocationFor(name, 'js'));
+  let clazz = loadSchema(name).entityClass();
   return clazz;
+}
+
+function loadSchema(name) {
+  let data = fs.readFileSync('../' + entityLocationFor(name, 'schema'), "utf-8");
+  var parsed = schemaParser.parse(data);
+  if (parsed.parent) {
+    var parent = loadSchema(parsed.parent);
+  } else {
+    var parent = undefined;
+  }
+  return new Schema(parsed, parent);
 }
 
 Object.assign(exports, { loadParticle, loadDefinition, loadRecipe, loadEntity })

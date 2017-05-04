@@ -12,12 +12,11 @@
 var Particle = require("../../runtime/particle.js").Particle;
 var runtime = require("../../runtime/runtime.js");
 
-const loader = require("../../runtime/loader.js");
-const Product = loader.loadEntity("Product");
-
 class WishlistFor extends Particle {
 
   setViews(views) {
+    // TODO: Don't let this stay here.
+    const Product = runtime.loader.loadEntity("Product");
     this.logDebug("person", views.get("person"));
     var wishlist = views.get('wishlist');
     ["a new bike!", "Fresh Puppies", "A packet of Tim Loh that never runs out"].map(p => wishlist.store(
