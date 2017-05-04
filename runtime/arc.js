@@ -21,17 +21,23 @@ const MessageChannel = require('./message-channel.js');
 const OuterPEC = require('./outer-PEC.js');
 
 class Arc {
-  constructor(scope) {
+  constructor(scope, id) {
     assert(scope instanceof runtime.Scope, "Arc constructor requires a scope");
     this.scope = scope;
+    this.id = id;
+    this.nextLocalID = 0;
     this.particles = [];
     this.views = new Set();
     this._viewsByType = new Map();
     this.particleViewMaps = new Map();
     var channel = new MessageChannel();
-    this.pec = new OuterPEC(scope, channel.port2);
-    this._innerPEC = new InnerPEC(channel.port1);
+    this.pec = new OuterPEC(scope, channel.port2, this.generateID());
+    this._innerPEC = new InnerPEC(channel.port1, this.generateID());
     this.nextParticleHandle = 0;
+  }
+
+  generateID() {
+    return `${this.id}:${this.nextLocalID++}`;
   }
 
   clone() {
@@ -142,7 +148,7 @@ class Arc {
 
   newCommit(entityMap) {
     for (let [entity, view] of entityMap.entries()) {
-      entity.identify(view, this.scope);
+      entity.identify(this.generateID());
     }
     for (let [entity, view] of entityMap.entries()) {
       new viewlet.viewletFor(view).store(entity);

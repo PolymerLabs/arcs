@@ -48,7 +48,13 @@ class Viewlet {
     return this._view.on(kind, callback, target);
   }
 
+  generateID() {
+    return this._view.generateID();
+  }
+
   _serialize(entity) {
+    if (!entity.isIdentified())
+      entity.identify(this.generateID());
     let id = entity[identifier];
     let rawData = cloneData(entity.toLiteral());
     return {

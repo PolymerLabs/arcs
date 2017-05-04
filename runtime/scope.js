@@ -58,32 +58,6 @@ class Scope {
     return this._types.get(classOrInstance);
   }
 
-  _newIdentifier(view, type) {
-    return new Identifier(view, type, this._nextIdentifier++);
-  }
-
-  commit(entities) {
-    let entityMap = new Map();
-    for (let entity of entities) {
-      entityMap.set(entity, this._viewFor(this.typeFor(entity).viewOf(this)));
-    }
-    for (let entity of entities) {
-      if (entity instanceof Relation) {
-        entity.entities.forEach(entity => entityMap.set(entity, this._viewFor(this.typeFor(entity).viewOf(this))));
-      }
-    }
-    this.newCommit(entityMap);
-  }
-
-  newCommit(entityMap) {
-    for (let [entity, view] of entityMap.entries()) {
-      entity.identify(view, this);
-    }
-    for (let [entity, view] of entityMap.entries()) {
-      view.store(entity);
-    }
-  }
-
   registerEntityClass(clazz) {
     this.typeFor(clazz);
   }
