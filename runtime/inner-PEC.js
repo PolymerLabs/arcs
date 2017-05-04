@@ -76,13 +76,6 @@ class InnerPEC {
      * only keeping type information on the arc side.
      */
     this._apiPort.onDefineView = ({viewType, identifier, name}) => {
-      var type = (typeLiteral.isView(viewType) ? typeLiteral.primitiveType(viewType) : viewType);
-
-      // TODO: This is a dodgy hack based on possibly unintended
-      // behavior in Type's constructor.
-      if (!this._scope._types.has(JSON.stringify(type)))
-        this._scope.typeFor(loader.loadEntity(type));
-    
       return new RemoteView(identifier, Type.fromLiteral(viewType, this._scope), this._apiPort, this, name);
     };
 
