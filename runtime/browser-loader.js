@@ -24,10 +24,10 @@ var Schema = require("./schema.js");
 // (2) have ids (paths) that browserify can resolve from this module
 var _cp = require("../particles/Create/Create.js");
 var _rp = require("../particles/Recommend/Recommend.js");
-var _sp = require("../particles/Save/Save.js");
 var _wp = require("../particles/WishlistFor/WishlistFor.js");
 var _lv = require("../particles/ListView/ListView.js");
 var _c = require("../particles/Chooser/Chooser.js");
+var _mc = require("../particles/MultiChooser/MultiChooser.js");
 //var _slp = require("../particles/StackingLayout/StackingLayout.js");
 //
 

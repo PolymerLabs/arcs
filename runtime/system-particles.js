@@ -43,23 +43,6 @@ exports.Choose = particle.define('Choose(in [~a] view, out ~a singleton)', async
   assert(false, "Cannot choose a single element from a list.");
 });
 
-exports.ChooseMany = particle.define('ChooseMany(in [~a] inView, create [~a] outView)', async views => {
-  var list = await views.get("inView").toList();
-  let thisParticle = this._particles.filter(p => p.spec.type=="ChooseMany")[0];
-  thisParticle.logDebug("inView", views.get("inView"));
-  if (list.length == 0)
-    return 1;
-  if (list.length == 1) {
-    views.get("outView").store(list[0]);
-    thisParticle.logDebug("outView", views.get("outView"));
-    return 5;
-  }
-  views.get("outView").store(list[0]);
-  views.get("outView").store(list[1]);
-  thisParticle.logDebug("outView", views.get("outView"));
-  return 10;
-});
-
 exports.SaveList = particle.define('SaveList(ephemeral in [~a] inputs, out [~a] list)', async views => {
   var inputsView = views.get('inputs');
   let thisParticle = this._particles.filter(p => p.spec.type=="SaveList")[0];
@@ -79,6 +62,5 @@ exports.register = function(scope) {
   scope.registerParticle(exports.Demuxer);
   scope.registerParticle(exports.Demuxer2);
   scope.registerParticle(exports.Choose);
-  scope.registerParticle(exports.ChooseMany);
   scope.registerParticle(exports.SaveList);
 };

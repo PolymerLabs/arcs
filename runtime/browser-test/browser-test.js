@@ -33,7 +33,7 @@ function prepareExtensionArc() {
 
 let arc = prepareExtensionArc();
 // TODO: add a loader to the scope so this fallback can happen automatically.
-['Create', 'Recommend', 'Save', 'WishlistFor', 'ListView', 'Chooser'].forEach(name => {
+['Create', 'Recommend', 'WishlistFor', 'ListView', 'Chooser', 'MultiChooser'].forEach(name => {
   let particleClass = loader.loadParticle(name);
   arc.scope.registerParticle(particleClass);
 });
@@ -49,7 +49,7 @@ var r = new recipe.RecipeBuilder()
     .connectConstraint("known", "list")
     .connectConstraint("population", "wishlist")
     .connectConstraint("recommendations", "recommended")
-  .addParticle("Save")
+  .addParticle("SaveList")
     .connectConstraint("list", "list")
   .addParticle("Choose")
     .connectConstraint("singleton", "person")
@@ -58,6 +58,10 @@ var r = new recipe.RecipeBuilder()
   .addParticle("Chooser")
     .connectConstraint("choices", "recommended")
     .connectConstraint("resultList", "list")
+  // Uncomment this to test MultiChooser particle.
+  // .addParticle("MultiChooser")
+  //   .connectConstraint("choices", "wishlist")
+  //   .connectConstraint("resultList", "list")
   .build();
 var suggestinator = new Suggestinator();
 suggestinator._getSuggestions = a => [r];

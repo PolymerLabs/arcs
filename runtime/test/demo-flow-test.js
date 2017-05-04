@@ -35,7 +35,7 @@ describe('demo flow', function() {
   it('flows like a demo', function(done) {
     let arc = prepareExtensionArc();
     // TODO: add a loader to the scope so this fallback can happen automatically.
-    ['Create', 'Recommend', 'WishlistFor', 'ListView', 'Chooser'].forEach(name => {
+    ['Create', 'Recommend', 'WishlistFor', 'ListView', 'Chooser', 'MultiChooser'].forEach(name => {
       let particleClass = loader.loadParticle(name);
       arc.scope.registerParticle(particleClass);
     });
