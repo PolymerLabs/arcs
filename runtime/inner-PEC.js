@@ -29,6 +29,10 @@ class RemoteView {
     this.name = name;
   }
 
+  generateID() {
+    return this._pec.generateID();
+  }
+
   on(type, callback, target) {
     this._port.ViewOn({view: this, callback, target, type});
   }
@@ -53,17 +57,16 @@ class RemoteView {
 }
 
 class InnerPEC {
-  constructor(port) {
+  constructor(port, idBase) {
     this._apiPort = new PECInnerPort(port);
     this._scope = new Scope();
     // TODO: really should have a nicer approach for loading
     // default particles & types.
     testEntities.register(this._scope);
     this._views = new Map();
-    this._reverseIdMap = new Map();
-    this._idMap = new Map();
-    this._nextLocalID = 0;
     this._particles = [];
+    this._idBase = idBase;
+    this._nextLocalID = 0;
 
     /*
      * This code ensures that the relevant types are known
@@ -95,6 +98,10 @@ class InnerPEC {
     this._apiPort.onLostSlots = ({particles}) => particles.forEach(particle => particle.slotReleased());
 
     this._apiPort.onUIEvent = ({particle, event}) => particle.fireEvent(event);
+  }
+
+  generateID() {
+    return `${this._idBase}:${this._nextLocalID++}`;
   }
 
   constructParticle(clazz) {

@@ -17,14 +17,13 @@ class Entity {
   get data() {
     return undefined;
   }
-  // TODO: clean up internal glue
-  identify(view, scope) {
-    assert(scope, "need a scope to identify entity");
-    if (this[Symbols.identifier]) {
-      // assert view correct?
-      return;
-    }
-    this[Symbols.identifier] = scope._newIdentifier(view, scope.typeFor(this));
+
+  isIdentified() {
+    return this[Symbols.identifier] !== undefined;
+  }
+  identify(identifier) {
+    assert(!this.isIdentified());
+    this[Symbols.identifier] = identifier;
   }
   toLiteral() {
     return this.rawData;
