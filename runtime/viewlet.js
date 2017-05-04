@@ -24,9 +24,7 @@ function cloneData(data) {
 function restore(entry, scope, entityClass) {
   let {id, rawData} = entry;
   var entity = new entityClass(cloneData(rawData));
-  // var entity = Entity.fromLiteral(id, cloneData(data));
   var type = scope.typeFor(entity);
-  // entity.constructor = type.entityClass;
   // TODO: Relation magic should happen elsewhere, and be better.
   if (scope.typeFor(entity).isRelation) {
     let ids = data.map(literal => Identifier.fromLiteral(literal, scope));
