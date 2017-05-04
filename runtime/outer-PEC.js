@@ -23,7 +23,7 @@ class OuterPEC extends PEC {
     this._nextIdentifier = 0;
     this._idMap = new Map();
     this._reverseIdMap = new Map();
-    var domRoot = global.document ? document.body : {};
+    var domRoot = global.document ? document.querySelector('[particle-container]') || document.body : {};
     this.slotManager = new SlotManager(domRoot, this);
 
     this._apiPort.onRenderSlot = ({particle, content}) => {
@@ -81,8 +81,8 @@ class OuterPEC extends PEC {
     return this._apiPort.messageCount;
   }
 
-  sendEvent(particle, eventName) {
-    this._apiPort.UIEvent({particle, eventName})
+  sendEvent(particle, event) {
+    this._apiPort.UIEvent({particle, event})
   }
 
   instantiate(particle, views, mutateCallback) {

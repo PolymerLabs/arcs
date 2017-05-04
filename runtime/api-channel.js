@@ -40,7 +40,7 @@ class ThingMapper {
 
   establishThingMapping(id, thing) {
     this._idMap.set(id, thing);
-    this._reverseIdMap.set(thing, id);    
+    this._reverseIdMap.set(thing, id);
   }
 
   hasMappingForThing(thing) {
@@ -59,7 +59,7 @@ class ThingMapper {
 }
 
 
-class APIPort {  
+class APIPort {
   constructor(messagePort, prefix) {
     this._port = messagePort;
     this._mapper = new ThingMapper(prefix);
@@ -79,7 +79,7 @@ class APIPort {
 
     this.LocalMapped = {
       convert: a => this._mapper.maybeCreateMappingForThing(a),
-      unconvert: a => this._mapper.thingForIdentifier(a)      
+      unconvert: a => this._mapper.thingForIdentifier(a)
     }
 
     this.Mapped = {
@@ -138,7 +138,7 @@ class APIPort {
 
   _processArguments(argumentTypes, args) {
     var messageBody = {};
-    for (var argument in argumentTypes) 
+    for (var argument in argumentTypes)
       messageBody[argument] = argumentTypes[argument].convert(args[argument]);
     return messageBody;
   }
@@ -181,7 +181,7 @@ class APIPort {
       var call = { messageType: name, messageBody: this._processArguments(argumentTypes, args) };
       call.messageBody.identifier = this._mapper.createMappingForThing(thing);
       this._port.postMessage(call);
-    }; 
+    };
   }
 }
 
@@ -189,19 +189,19 @@ class PECOuterPort extends APIPort {
   constructor(messagePort) {
     super(messagePort, 'o');
 
-    this.registerCall("DefineParticle", 
+    this.registerCall("DefineParticle",
       {particleDefinition: this.Direct, particleFunction: this.Stringify});
     this.registerRedundantInitializer("DefineView", {viewType: this.Direct, name: this.Direct})
     this.registerInitializer("InstantiateParticle",
       {particleName: this.Direct, views: this.Map(this.Direct, this.Mapped)});
 
-    this.registerCall("UIEvent", {particle: this.Mapped, eventName: this.Direct});
+    this.registerCall("UIEvent", {particle: this.Mapped, event: this.Direct});
     this.registerCall("ViewCallback", {callback: this.Direct, data: this.Direct});
     this.registerCall("AwaitIdle", {version: this.Direct});
     this.registerCall("LostSlots", {particles: this.List(this.Mapped)});
 
     this.registerHandler("RenderSlot", {particle: this.Mapped, content: this.Direct});
-    this.registerHandler("ViewOn", {view: this.Mapped, target: this.Mapped, 
+    this.registerHandler("ViewOn", {view: this.Mapped, target: this.Mapped,
                                     type: this.Direct, callback: this.Direct});
     this.registerHandler("ViewGet", {view: this.Mapped, callback: this.Direct});
     this.registerHandler("ViewToList", {view: this.Mapped, callback: this.Direct});
@@ -224,7 +224,7 @@ class PECInnerPort extends APIPort {
     this.registerInitializerHandler("InstantiateParticle",
       {particleName: this.Direct, views: this.Map(this.Direct, this.Mapped)});
 
-    this.registerHandler("UIEvent", {particle: this.Mapped, eventName: this.Direct});
+    this.registerHandler("UIEvent", {particle: this.Mapped, event: this.Direct});
     this.registerHandler("ViewCallback", {callback: this.LocalMapped, data: this.Direct});
     this.registerHandler("AwaitIdle", {version: this.Direct});
     this.registerHandler("LostSlots", {particles: this.List(this.Mapped)});

@@ -79,16 +79,23 @@ class SlotManager {
     });
   }
   _findEventGenerators(particleSpec, dom) {
-    var eventGenerators = [];
+    let eventGenerators = [];
     if (global.document) {
-      eventGenerators = dom.querySelectorAll("[events]");
+      eventGenerators = dom.querySelectorAll('[events]');
     }
-    for (var eventGenerator of eventGenerators) {
-      var attributes = eventGenerator.attributes;
-      for (var {name, value} of attributes) {
+    for (let eventGenerator of eventGenerators) {
+      let attributes = eventGenerator.attributes;
+      let data = {
+        key: eventGenerator.getAttribute('key'),
+        value: eventGenerator.value
+      };
+      for (let {name, value} of attributes) {
         if (name.startsWith("on-")) {
-          var event = name.substring(3);
-          (function(v) {eventGenerator.addEventListener(event, e => this._pec.sendEvent(particleSpec, v));}).call(this, value);
+          let event = name.substring(3);
+          let handler = value;
+          eventGenerator.addEventListener(event, e =>
+            this._pec.sendEvent(particleSpec, {handler, data})
+          );
         }
       }
     }
