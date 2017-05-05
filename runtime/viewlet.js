@@ -24,16 +24,9 @@ function cloneData(data) {
 function restore(entry, scope, entityClass) {
   let {id, rawData} = entry;
   var entity = new entityClass(cloneData(rawData));
-  var type = scope.typeFor(entity);
-  // TODO: Relation magic should happen elsewhere, and be better.
-  if (scope.typeFor(entity).isRelation) {
-    let ids = data.map(literal => Identifier.fromLiteral(literal, scope));
-    let entities = ids.map(id => scope._viewFor(id.type.viewOf(scope)).get(id));
-    assert(!entities.includes(undefined));
-    entity = new Relation(...entities);
-    entity.entities = entities;
-    entity[identifier] = id;
-  }
+
+  // TODO some relation magic, somewhere, at some point.
+
   return entity;
 }
 
@@ -108,10 +101,6 @@ class Variable extends Viewlet {
     return data;
   }
   set(entity) {
-    // TODO: this should happen on entity creation, not here
-    if (entity[identifier] == undefined)
-      entity[identifier] = this._view._scope._newIdentifier(this._view, this._view._scope.typeFor(entity));
-
     return this._view.set(this._serialize(entity));
   }
   async debugString() {

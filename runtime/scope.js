@@ -39,21 +39,12 @@ class Scope {
   }
 
   typeFor(classOrInstance) {
-    if (classOrInstance instanceof Entity) {
-      if (classOrInstance[Symbols.identifier]) {
-        assert(classOrInstance[Symbols.identifier].type, "Identifier must have a type");
-        return classOrInstance[Symbols.identifier].type;
-      }
-
-      if (classOrInstance instanceof Relation) {
-        return Relation.typeFor(classOrInstance, this);
-      }
-
+    if (classOrInstance instanceof Entity)
       return this.typeFor(classOrInstance.constructor);
-    }
+    
     if (!this._types.has(classOrInstance)) {
       let key = classOrInstance.key || this._nextType++;
-      this._types.set(classOrInstance, new Type(key, this, classOrInstance));
+      this._types.set(classOrInstance, new Type(key, this));
     }
     return this._types.get(classOrInstance);
   }

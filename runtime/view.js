@@ -12,13 +12,17 @@ const tracing = require("tracelib");
 const scheduler = require('./scheduler.js');
 
 class ViewBase {
-  constructor(type, scope, name) {
+  constructor(type, arc, name) {
     var trace = tracing.start({cat: 'view', name: 'ViewBase::constructor', args: {type: type.key, name: name}});
     this._type = type;
-    this._scope = scope;
+    this._arc = arc;
     this._listeners = new Map();
     this.name = name;
     trace.end();
+  }
+
+  generateID() {
+    return this._arc.generateID();
   }
 
   get type() {
@@ -58,13 +62,13 @@ class ViewBase {
 }
 
 class View extends ViewBase {
-  constructor(type, scope, name) {
-    super(type, scope, name);
+  constructor(type, arc, name) {
+    super(type, arc, name);
     this._items = [];
   }
 
   clone() {
-    var view = new View(this._type, this._scope, this.name);
+    var view = new View(this._type, this._arc, this.name);
     view._items = this._items;
     return view;
   }
@@ -106,13 +110,13 @@ class View extends ViewBase {
 }
 
 class Variable extends ViewBase {
-  constructor(type, scope, name) {
-    super(type, scope, name);
+  constructor(type, arc, name) {
+    super(type, arc, name);
     this._stored = null;
   }
 
   clone() {
-    var variable = new Variable(this._type, this._scope, this.name);
+    var variable = new Variable(this._type, this._arc, this.name);
     variable._stored = this._stored;
     return variable;
   }
