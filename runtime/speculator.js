@@ -12,6 +12,7 @@
 let assert = require('assert');
 var tracing = require('tracelib');
 const scheduler = require('./scheduler.js');
+const Relevance = require('./relevance.js');
 
 class Speculator {
 
@@ -20,23 +21,16 @@ class Speculator {
     var newArc = arc.clone();
     plan.instantiate(newArc);
     callTrace.end();
-    let relevance = new Map();
+    let relevance = new Relevance();
     async function awaitCompletion() {
       await scheduler.idle;
       var messageCount = newArc.pec.messageCount;
-      let newRelevance = await newArc.pec.idle;
+      relevance.apply(await newArc.pec.idle);
 
-      for (let key of newRelevance.keys()) {
-        if (relevance.has(key))
-          relevance.set(key, relevance.get(key).concat(newRelevance.get(key)));
-        else
-          relevance.set(key, newRelevance.get(key));
-      }
-      
       if (newArc.pec.messageCount !== messageCount + 1)
         return awaitCompletion();
       else {
-        return arc.relevanceFor(relevance);
+        return relevance.relevanceScore();
       }
     }
 
