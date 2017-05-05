@@ -51,24 +51,6 @@ class Arc {
     return arc;
   }
 
-  relevanceFor(rMap) {
-    let relevance = 1;
-    for (let rList of rMap.values()) {
-      for (let r of rList)
-        relevance *= Arc.scaleRelevance(r);
-    }
-    return relevance;
-  }
-
-  static scaleRelevance(relevance) {
-    if (relevance == undefined) {
-      relevance = 5;
-    }
-    relevance = Math.max(0, Math.min(relevance, 10));
-    // TODO: might want to make this geometric or something instead;
-    return relevance / 5;
-  }
-
   connectParticleToView(particle, name, targetView) {
     // If speculatively executing then we need to translate the view
     // in the plan to its clone.
