@@ -96,9 +96,9 @@ class Arc {
     if (type.isRelation)
       type = type.viewOf(this);
     if (type.isView) {
-      var v = new view.View(type, this.scope, name);
+      var v = new view.View(type, this, name);
     } else {
-      var v = new view.Variable(type, this.scope, name);
+      var v = new view.Variable(type, this, name);
     }
     this.registerView(v);
     return v;

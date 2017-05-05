@@ -11,19 +11,28 @@
 let {Relation, Entity, BasicEntity, Scope, internals} = require('../runtime.js');
 let assert = require('chai').assert;
 let Arc = require('../arc.js');
+let Schema = require('../schema.js');
+
 
 describe('entity', function() {
   it('can be created, stored, and restored', async () => {
+    let schema = new Schema({name: 'TestSchema', sections: [{
+        sectionType: 'normative',
+        fields: [{
+            'value': 'Text'
+        }]
+    }]});
+
     let scope = new Scope();
     let arc = new Arc(scope);
-    let entity = new BasicEntity('hello world');
+    let entity = new (schema.entityClass())({value: 'hello world'});
     assert.isDefined(entity);
     arc.commit([entity]);
 
     let list = await arc.findViews(scope.typeFor(entity).viewOf(scope))[0].toList();
     let clone = list[0];
     assert.isDefined(clone);
-    assert.equal(clone.rawData, 'hello world');
+    assert.deepEqual(clone.rawData, {value: 'hello world'});
     assert.notEqual(entity, clone);
   });
 });
