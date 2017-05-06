@@ -11,81 +11,145 @@
 
 const assert = require('assert');
 
-// TODO(sjmiles): SlotManager
-// - needs a new name
-// - needs better function names
-// - needs better data design
+class Slot {
+  constructor(slotid) {
+    this._slotid = slotid;
+    this._dom = undefined;
+    this._exposedView = undefined;
+    this._particleSpec = undefined;
+    this._pendingRequestsHandlers = [];
+  }
+  get slotid() { return this._slotid; }
+  get particleSpec() { return this._particleSpec; }
+  associateWithParticle(particleSpec) {
+    assert(!this._particleSpec, "Particle spec already set, cannot associate slot");
+    assert(!this._exposedView ||
+           this._particleSpec.renderMap.get(this._slotid) == this._exposedView,
+           "Cannot associate particle-spec with an unmatching view.");
+
+    this._particleSpec = particleSpec;
+  }
+  disassociateParticle() {
+    assert(this._particleSpec, "Particle spec is not set, cannot disassociate slot");
+    this._particleSpec = undefined;
+  }
+  isAssociated() {
+    return !!this._particleSpec;
+  }
+  clearDom() {
+    this._dom = null;
+  }
+  initializeDom(dom, exposedView) {
+    this._dom = dom;
+    this.exposedView = exposedView;
+  }
+  isDomInitialized() {
+    return !!this._dom;
+  }
+  get domContent() {
+    return this._dom ? this._dom.innerHTML : undefined;
+  }
+  setDomContent(content) {
+    assert(!!this._dom, "Dom isn't initialized, cannot set content");
+    this._dom.innerHTML = content;
+  }
+  findInnerSlots() {
+    if (global.document) {
+      return Array.from(this._dom.querySelectorAll("[slotid]"));
+    } else {
+      var slots = [];
+      var slot;
+      var RE = /slotid="([^"]*)"/g;
+      while ((slot = RE.exec(this._dom.innerHTML))) {
+        slots.push({id:slot[1]});
+      }
+      return slots;
+    }
+  }
+  findEventGenerators() {
+    if (global.document) {
+      return this._dom.querySelectorAll('[events]');
+    }
+    // TODO(mmandlis): missing mock-DOM version
+    return [];
+  }
+
+  addPendingRequest(handler) {
+    this._pendingRequestsHandlers.push(handler);
+  }
+  providePendingSlot() {
+    assert(!this.isAssociated(), "Cannot provide associated slot.");
+    if (this._pendingRequestsHandlers.length > 0) {
+      this._pendingRequestsHandlers[0]();
+      this._pendingRequestsHandlers.splice(0, 1);
+    }
+  }
+}
 
 class SlotManager {
   constructor(domRoot, pec) {
-    this._content = {};
-    this._slotDom = {root: {insertion: domRoot, view: undefined}};
-    this._slotOwners = {};
-    this._targetSlots = new Map();
-    this._pendingSlotRequests = {};
+    this._slotsMap = new Map();
+    this._getOrCreateSlot('root').initializeDom(domRoot, /* exposedView= */ undefined);
+
+    this._reverseSlotMap = new Map();  // slotid by particle-spec.
     this._pec = pec;
   }
-  registerSlot(particleid, slotid, view) {
+  registerSlot(particleSpec, slotid) {
     return new Promise((resolve, reject) => {
-      if (this._slotDom[slotid] && !this._slotOwners[slotid]) {
+      let slot = this._getOrCreateSlot(slotid);
+      if (slot.isDomInitialized() && !slot.isAssociated()) {
         resolve();
       } else {
-        this._addPendingSlot(slotid, resolve);
+        slot.addPendingRequest(resolve);
       }
     }).then(() => {
-      this._targetSlots.set(particleid, { slotid, view });
-      this._slotOwners[slotid] = particleid;
+      let slot = this._slotsMap.get(slotid);
+      slot.associateWithParticle(particleSpec);
+      this._reverseSlotMap.set(particleSpec, slotid);
     });
   }
-  _getSlotId(particleid) {
-    if (this._targetSlots.has(particleid)) {
-      return this._targetSlots.get(particleid).slotid;
-    }
-    return undefined;
+  _getSlotId(particleSpec) {
+    return this._reverseSlotMap.get(particleSpec);
   }
   _getParticle(slotid) {
-    return this._slotOwners[slotid];
-  }
-  renderSlot(particleid, content) {
-    let { slotid, view } = this._targetSlots.get(particleid);
-    let slot = this._slotDom[slotid].insertion;
-    let slotView = this._slotDom[slotid].view;
-    assert(view == slotView);
-    // TODO(sjmiles): cache the content in case the containing
-    // particle re-renders
-    this._content[slotid] = content;
-    if (slot !== undefined) {
-      slot.innerHTML = content;
-      this._findSlots(particleid, slot);
-      this._findEventGenerators(particleid, slot);
+    if (this._slotsMap.has(slotid)) {
+      return this._slotsMap.get(slotid)._particleSpec;
     }
   }
-  _findSlots(particleSpec, dom) {
-    var slots;
-    if (global.document) {
-      slots = Array.from(dom.querySelectorAll("[slotid]"));
-    } else {
-      slots = [];
-      var slot;
-      var RE = /slotid="([^"]*)"/g;
-      while ((slot = RE.exec(dom.innerHTML))) {
-        slots.push({id:slot[1]});
-      }
+  _getSlot(slotid) {
+    assert(this._slotsMap.has(slotid));
+    return this._slotsMap.get(slotid);
+  }
+  _getOrCreateSlot(slotid) {
+    if (!this._slotsMap.has(slotid)) {
+      this._slotsMap.set(slotid, new Slot(slotid));
     }
-    slots.forEach(slot => {
-      let slotid = global.document ? slot.getAttribute('slotid') : slot.id;
-      this._slotDom[slotid] = { insertion: slot, view: particleSpec.exposeMap.get(slotid) };
-      if (this._content[slotid]) {
-        slot.innerHTML = this._content[slotid];
-        this._findSlots(particleSpec, slot);
-      } else this._provideSlot(slotid);
+    return this._slotsMap.get(slotid);
+  }
+  renderSlot(particleSpec, content) {
+    let slotid = this._reverseSlotMap.get(particleSpec);
+    let slot = this._getSlot(slotid);
+
+    if (slot.isDomInitialized()) {
+      slot.setDomContent(content);
+      this._provideInnerSlots(particleSpec, slot);
+      this._addEventListeners(particleSpec, slot.findEventGenerators());
+    }
+  }
+  _provideInnerSlots(particleSpec, slot) {
+    var innerDomSlots = slot.findInnerSlots();
+    innerDomSlots.forEach(domSlot => {
+      let slotid = global.document ? domSlot.getAttribute('slotid') : domSlots.id;
+      let slot = this._getOrCreateSlot(slotid);
+      let originalDomContent = slot.domContent;
+      slot.initializeDom(domSlot, particleSpec.exposeMap.get(slotid));
+      if (originalDomContent) {
+        slot.setDomContent(originalDomContent);
+        this._provideInnerSlots(particleSpec, slot);
+      } else slot.providePendingSlot();
     });
   }
-  _findEventGenerators(particleSpec, dom) {
-    let eventGenerators = [];
-    if (global.document) {
-      eventGenerators = dom.querySelectorAll('[events]');
-    }
+  _addEventListeners(particleSpec, eventGenerators) {
     for (let eventGenerator of eventGenerators) {
       let attributes = eventGenerator.attributes;
       let data = {
@@ -103,54 +167,33 @@ class SlotManager {
       }
     }
   }
-  _provideSlot(slotid) {
-    let pending = this._removePendingSlot(slotid);
-    pending && pending();
-  }
-  releaseSlot(particle) {
-    let slotid = this._getSlotId(particle);
+  releaseSlot(particleSpec) {
+    let slotid = this._getSlotId(particleSpec);
     if (slotid) {
-      this._releaseSlotData(particle, slotid);
-      let dom = this._slotDom[slotid];
+      this._disassociateSlotFromParticle(slotid);
+      let slot = this._getSlot(slotid);
       var affectedParticles = [];
       // TODO(sjmiles): missing mock-DOM version
       if (global.document) {
-        let slots = Array.from(dom.insertion.querySelectorAll("[slotid]"));
+        let slots = slot.findInnerSlots();
         slots = slots.map(s => s.getAttribute('slotid'));
         affectedParticles = slots.map(s => this._getParticle(s));
         slots.forEach(this._releaseChildSlot, this);
-        dom.insertion.innerHTML = '';
+        slot.setDomContent('');
       }
-      this._provideSlot(slotid);
+      slot.providePendingSlot();
       return affectedParticles;
     }
   }
-  _releaseSlotData(particle, slotid) {
-    this._content[slotid] = null;
-    this._targetSlots.delete(particle);
-    this._slotOwners[slotid] = null;
+  _disassociateSlotFromParticle(slotid) {
+    let slot = this._slotsMap.get(slotid);
+    this._reverseSlotMap.delete(slot.particleSpec);
+    slot.disassociateParticle();
   }
+  // Disassociate child slot and clear its DOM.
   _releaseChildSlot(slotid) {
-    let particle = this._slotOwners[slotid];
-    this._releaseSlotData(particle, slotid);
-    this._slotDom[slotid] = null;
-  }
-  _addPendingSlot(slotid, handler) {
-    if (!this._pendingSlotRequests[slotid]) {
-      this._pendingSlotRequests[slotid] = [];
-    }
-    this._pendingSlotRequests[slotid].push(handler);
-  }
-  _removePendingSlot(slotid) {
-    var handler = undefined;
-    if (this._pendingSlotRequests[slotid]) {
-      handler = this._pendingSlotRequests[slotid][0];
-      this._pendingSlotRequests[slotid].splice(0, 1);
-      if (this._pendingSlotRequests[slotid].length == 0) {
-        delete this._pendingSlotRequests[slotid];
-      }
-    }
-    return handler;
+    this._disassociateSlotFromParticle(slotid);
+    this._slotsMap(slotid).clearDom();
   }
 }
 

@@ -55,8 +55,6 @@ describe('slot manager', function() {
     // verify registered and pending slots.
     assert.equal(rootSlotid, slotManager._getSlotId(particleid));
     assert.equal(particleid, slotManager._getParticle(rootSlotid));
-    assert.equal(1, Object.keys(slotManager._pendingSlotRequests).length);
-    assert.equal(2, Object.keys(slotManager._pendingSlotRequests[rootSlotid]).length);
     // verify pending promises are still pending.
     assert.isFalse(pendingPromise1.done);
     assert.isFalse(pendingPromise2.done);
