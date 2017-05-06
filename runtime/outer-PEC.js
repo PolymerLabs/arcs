@@ -54,7 +54,7 @@ class OuterPEC extends PEC {
 
     this._apiPort.onGetSlot = ({particle, name, callback}) => {
       assert(particle.renderMap.has(name));
-      this.slotManager.registerSlot(particle, name, particle.renderMap.get(name)).then(() =>
+      this.slotManager.registerSlot(particle, name).then(() =>
         this._apiPort.ViewCallback({callback}));
     }
 
