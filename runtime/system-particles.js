@@ -31,7 +31,7 @@ exports.Demuxer2 = particle.define('Demuxer2(in [~a] view1, in [~b] view2, out ~
 
 exports.Choose = particle.define('Choose(in [~a] view, out ~a singleton)', async views => {
   var list = await views.get("view").toList();
-  let thisParticle = this._particles.filter(p => p.spec.type=="Choose")[0];
+  let thisParticle = this._particles.filter(p => p.spec.name=="Choose")[0];
   thisParticle.logDebug("view", views.get("view"));
   if (list.length == 0)
     return 1;
@@ -45,7 +45,7 @@ exports.Choose = particle.define('Choose(in [~a] view, out ~a singleton)', async
 
 exports.SaveList = particle.define('SaveList(ephemeral in [~a] inputs, out [~a] list)', async views => {
   var inputsView = views.get('inputs');
-  let thisParticle = this._particles.filter(p => p.spec.type=="SaveList")[0];
+  let thisParticle = this._particles.filter(p => p.spec.name=="SaveList")[0];
   thisParticle.logDebug("inputs", inputsView);
   var inputList = await inputsView.toList();
 

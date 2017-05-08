@@ -23,7 +23,7 @@ function define(def, update) {
       return spec;
     }
     static get name() {
-      return this.spec.type;
+      return this.spec.name;
     }
     constructor(scope) {
       super(scope);
@@ -195,7 +195,7 @@ class Particle {
   logDebug(tag, view) {
     let direction = this.spec.connectionMap.get(tag).direction;
     view.debugString().then(v => console.log(
-       `(${this.spec.type})(${direction})(${tag}]: (${view.name})`, v));
+       `(${this.name})(${direction})(${tag}]: (${view.name})`, v));
   }
 
   when(changes, f) {

@@ -197,8 +197,8 @@ function peg$parse(input, options) {
       peg$c24 = "*/",
       peg$c25 = peg$literalExpectation("*/", false),
       peg$c26 = peg$anyExpectation(),
-      peg$c27 = function(type, args) {
-            return {type: type, args: args};
+      peg$c27 = function(name, args) {
+            return {name: name, args: args};
         },
       peg$c28 = "[",
       peg$c29 = peg$literalExpectation("[", false),
