@@ -21,9 +21,7 @@ const MessageChannel = require('./message-channel.js');
 const OuterPEC = require('./outer-PEC.js');
 
 class Arc {
-  constructor(scope, id) {
-    assert(scope instanceof runtime.Scope, "Arc constructor requires a scope");
-    this.scope = scope;
+  constructor(id) {
     this.id = id;
     this.nextLocalID = 0;
     this.particles = [];
@@ -31,7 +29,7 @@ class Arc {
     this._viewsByType = new Map();
     this.particleViewMaps = new Map();
     var channel = new MessageChannel();
-    this.pec = new OuterPEC(scope, channel.port2, this.generateID());
+    this.pec = new OuterPEC(channel.port2, this.generateID());
     this._innerPEC = new InnerPEC(channel.port1, this.generateID());
     this.nextParticleHandle = 0;
     this._particlesByName = {};
@@ -60,7 +58,7 @@ class Arc {
   }
 
   clone() {
-    var arc = new Arc(this.scope.clone());
+    var arc = new Arc();
     var viewMap = new Map();
     this.views.forEach(v => viewMap.set(v, v.clone()));
     arc.particles = this.particles.map(p => p.clone(viewMap));
@@ -134,11 +132,11 @@ class Arc {
   commit(entities) {
     let entityMap = new Map();
     for (let entity of entities) {
-      entityMap.set(entity, this._viewFor(entity.constructor.type.viewOf(this.scope)));
+      entityMap.set(entity, this._viewFor(entity.constructor.type.viewOf()));
     }
     for (let entity of entities) {
       if (entity instanceof Relation) {
-        entity.entities.forEach(entity => entityMap.set(entity, this._viewFor(entity.constructor.type.viewOf(this.scope))));
+        entity.entities.forEach(entity => entityMap.set(entity, this._viewFor(entity.constructor.type.viewOf())));
       }
     }
     this.newCommit(entityMap);

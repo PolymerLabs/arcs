@@ -24,8 +24,7 @@ const Bar = runtime.loader.loadEntity("Bar");
 describe('recipe', function() {
 
   it('recipes can load', async () => {
-    let scope = new runtime.Scope();
-    var arc = new Arc(scope);
+    var arc = new Arc();
     particles.register(arc);
     let fooView = arc.createView(Foo.type);
     let barView = arc.createView(Bar.type);

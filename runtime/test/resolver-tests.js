@@ -21,13 +21,12 @@ var viewlet = require('../viewlet.js');
 
 require("./trace-setup.js");
 
-let scope = new runtime.Scope();
 const Foo = loader.loadEntity("Foo");
 const Bar = loader.loadEntity("Bar");
 
 describe('resolver', () => {
   it('can resolve a partially constructed recipe', async () => {
-    var arc = new Arc(scope);
+    var arc = new Arc();
     particles.register(arc);
     let fooView = arc.createView(Foo.type);
     var r = new recipe.RecipeBuilder()
@@ -43,8 +42,7 @@ describe('resolver', () => {
   });
 
   it("can resolve a recipe from a particle's spec", async () => {
-    let scope = new runtime.Scope();
-    var arc = new Arc(scope);
+    var arc = new Arc();
     particles.register(arc);
     var r = particles.TestParticle.spec.buildRecipe();
     let fooView = arc.createView(Foo.type);
@@ -56,8 +54,7 @@ describe('resolver', () => {
   });
 
   it('can resolve a recipe that is just a particle name', async () => {
-    let scope = new runtime.Scope();
-    var arc = new Arc(scope);
+    var arc = new Arc();
     particles.register(arc);
     var r = new recipe.RecipeBuilder().addParticle("TestParticle").build();
     let fooView = arc.createView(Foo.type);
@@ -69,7 +66,7 @@ describe('resolver', () => {
   });
 
   it("won't resolve a recipe that mentions connections that are not in a particle's connection list", function() {
-    var arc = new Arc(scope);
+    var arc = new Arc();
     particles.register(arc);
     var r = new recipe.RecipeBuilder()
         .addParticle("TestParticle")
@@ -81,20 +78,20 @@ describe('resolver', () => {
   it.skip("will match particle constraints to build a multi-particle arc", function() {
     systemParticles.register(arc);
     particles.register(arc);
-    var arc = new Arc(scope);
+    var arc = new Arc();
     var r = new recipe.RecipeBuilder()
         .addParticle("Demuxer")
             .connectConstraint("singleton", "shared")
         .addParticle("TestParticle")
             .connectConstraint("foo", "shared")
         .build();
-    scope.commit([new Foo({value: 1}), new Foo({value: 2}), new Foo({value: 3})]);
+    arc.commit([new Foo({value: 1}), new Foo({value: 2}), new Foo({value: 3})]);
     assert(Resolver.resolve(r, arc), "recipe should resolve");
     r.instantiate(arc);
     arc.tick(); arc.tick();
-    assert.equal(runtime.testing.viewFor(Bar, scope).data.data, 2);
+    assert.equal(runtime.testing.viewFor(Bar).data.data, 2);
     arc.tick();
-    assert.equal(runtime.testing.viewFor(Bar, scope).data.data, 3);
+    assert.equal(runtime.testing.viewFor(Bar).data.data, 3);
 
   })
 });

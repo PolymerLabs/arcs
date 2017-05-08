@@ -22,8 +22,8 @@ function define(def, update) {
     static get spec() {
       return spec;
     }
-    constructor(scope) {
-      super(scope);
+    constructor() {
+      super();
     }
     setViews(views) {
       var inputViews = new Map();
@@ -53,8 +53,8 @@ function define(def, update) {
 }
 
 class Particle {
-  constructor(scope) {
-    this.spec = this.constructor.spec.resolve(scope);
+  constructor() {
+    this.spec = this.constructor.spec.resolve();
     if (this.spec.inputs.length == 0)
       this.extraData = true;
     this.relevances = [];

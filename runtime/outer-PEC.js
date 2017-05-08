@@ -15,9 +15,8 @@ const assert = require('assert');
 const PECOuterPort = require('./api-channel.js').PECOuterPort;
 
 class OuterPEC extends PEC {
-  constructor(scope, port) {
+  constructor(port) {
     super();
-    this._scope = scope;
     this._particles = [];
     this._apiPort = new PECOuterPort(port);
     this._nextIdentifier = 0;

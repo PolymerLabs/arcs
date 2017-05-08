@@ -23,8 +23,7 @@ const Bar = runtime.loader.loadEntity("Bar");
 
 describe('speculator', function() {
   it('can speculatively produce a relevance', async () => {
-    let scope = new runtime.Scope();
-    var arc = new Arc(scope);
+    var arc = new Arc();
     particles.register(arc);
     let fooView = arc.createView(Foo.type);
     let barView = arc.createView(Bar.type);

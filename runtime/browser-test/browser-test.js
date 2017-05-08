@@ -20,12 +20,11 @@ tracing.enable();
 function prepareExtensionArc() {
   let Person = loader.loadEntity("Person");
   let Product = loader.loadEntity("Product");
-  let scope = new runtime.Scope();
-  systemParticles.register(scope);
-  var arc = new Arc(scope);
-  var personView = arc.createView(scope.typeFor(Person).viewOf(scope), "peopleFromWebpage");
-  var productView = arc.createView(scope.typeFor(Product).viewOf(scope), "productsFromWebpage");
-  var personSlot = arc.createView(scope.typeFor(Person), "personSlot");
+  systemParticles.register();
+  var arc = new Arc();
+  var personView = arc.createView(Person.type.viewOf(), "peopleFromWebpage");
+  var productView = arc.createView(Product.type.viewOf(), "productsFromWebpage");
+  var personSlot = arc.createView(Person.type, "personSlot");
   arc.commit([new Person({name: "Claire"}), new Product({name: "Tea Pot"}), new Product({name: "Bee Hive"}),
               new Product({name: "Denim Jeans"})]);
   return arc;
@@ -35,7 +34,7 @@ let arc = prepareExtensionArc();
 // TODO: add a loader to the scope so this fallback can happen automatically.
 ['Create', 'Recommend', 'WishlistFor', 'ListView', 'Chooser', 'MultiChooser'].forEach(name => {
   let particleClass = loader.loadParticle(name);
-  arc.scope.registerParticle(particleClass);
+  arc.registerParticle(particleClass);
 });
 var r = new recipe.RecipeBuilder()
   .addParticle("Create")
