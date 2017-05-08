@@ -42,7 +42,7 @@ class ConnectionSpec {
 class ParticleSpec {
   constructor(rawData) {
     this.rawData = rawData;
-    this.type = rawData.type;
+    this.name = rawData.name;
     var typeVarMap = new Map();
     this.connections = this.rawData.args.map(a => new ConnectionSpec(a, typeVarMap));
     this.connectionMap = new Map();
@@ -61,7 +61,7 @@ class ParticleSpec {
 
   buildRecipe() {
     var builder = new recipe.RecipeBuilder();
-    builder.addParticle(this.type);
+    builder.addParticle(this.name);
     this.connections.forEach(connection => builder.connectSpec(connection.name, connection));
     return builder.build();
   }

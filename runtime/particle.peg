@@ -60,8 +60,8 @@ SlotDescriptor = name:VariableTypeName view:("(" _ VariableTypeName _ ")")? {
 Comment = "/*" (! "*/" .)* "*/" _
 
 Particle
-  = type: PrimitiveType _ "(" _ args: Arguments? _ ")" {
-      return {type: type, args: args};
+  = name: PrimitiveType _ "(" _ args: Arguments? _ ")" {
+      return {name: name, args: args};
   }
   
 Type = (VariableType / PrimitiveType / ListType)
