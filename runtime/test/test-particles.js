@@ -10,7 +10,6 @@
 
 var particle = require("../particle.js");
 var runtime = require("../runtime.js");
-var testEntities = require("./test-entities.js");
 
 exports.TestParticle = particle.define('TestParticle(in Foo foo, out Bar bar)', (map) => {
   const Bar = loader.loadEntity("Bar");
@@ -22,7 +21,10 @@ exports.TestParticle = particle.define('TestParticle(in Foo foo, out Bar bar)', 
 });
 
 exports.TwoInputTestParticle = particle.define('TwoInputTestParticle(in Foo foo, in Bar bar, out Far far)', map => {
-  map.get('far').set(new testEntities.Far({value: map.get('foo').get().value + ' ' + map.get('bar').get().value}));
+  let farView = map.get('far');
+  let fooView = map.get('bar');
+  let barView = map.get('bar');
+  farView.set(new farView.entityClass({value: fooView.get().value + ' ' + barView.get().value}));
   return 3;
 });
 

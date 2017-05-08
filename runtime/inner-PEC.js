@@ -10,7 +10,6 @@
 "use strict";
 
 const Scope = require('./scope.js');
-const testEntities = require('./test/test-entities.js');
 const loader = require('./loader.js');
 const Type = require('./type.js');
 const viewlet = require('./viewlet.js');
@@ -60,9 +59,6 @@ class InnerPEC {
   constructor(port, idBase) {
     this._apiPort = new PECInnerPort(port);
     this._scope = new Scope();
-    // TODO: really should have a nicer approach for loading
-    // default particles & types.
-    testEntities.register(this._scope);
     this._views = new Map();
     this._particles = [];
     this._idBase = idBase;

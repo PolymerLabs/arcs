@@ -25,7 +25,6 @@ describe('suggestinator', function() {
 
   it('suggests a ranked list of recipes', async () => {
     let scope = new runtime.Scope();
-    [Foo, Bar, Far].map(a => scope.registerEntityClass(a));
     particles.register(scope);
 
     var arc = new Arc(scope);

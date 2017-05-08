@@ -19,7 +19,6 @@ var Bar = runtime.testing.testEntityClass('Bar');
 describe('particle loader', function() {
   it('can load a particle', function() {
     var arc = new Arc(new runtime.Scope());
-    [Foo, Bar].map(a => arc.scope.registerEntityClass(a));
     var particle = new particles.TestParticle(arc.scope).arcParticle;
   });
 });

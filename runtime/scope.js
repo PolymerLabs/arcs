@@ -49,10 +49,6 @@ class Scope {
     return this._types.get(classOrInstance);
   }
 
-  registerEntityClass(clazz) {
-    this.typeFor(clazz);
-  }
-
   registerParticle(clazz) {
     this._particles.set(clazz.name, clazz);
   }
