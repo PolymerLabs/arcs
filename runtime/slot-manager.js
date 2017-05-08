@@ -139,7 +139,7 @@ class SlotManager {
   _provideInnerSlots(particleSpec, slot) {
     var innerDomSlots = slot.findInnerSlots();
     innerDomSlots.forEach(domSlot => {
-      let slotid = global.document ? domSlot.getAttribute('slotid') : domSlots.id;
+      let slotid = global.document ? domSlot.getAttribute('slotid') : domSlot.id;
       let slot = this._getOrCreateSlot(slotid);
       let originalDomContent = slot.domContent;
       slot.initializeDom(domSlot, particleSpec.exposeMap.get(slotid));
