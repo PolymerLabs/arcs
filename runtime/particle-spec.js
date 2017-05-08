@@ -20,10 +20,7 @@ class ConnectionSpec {
     this.name = rawData.name;
     this.typeName = rawData.type;
     this.typeName = typeLiteral.convertNamedVariablesToVariables(this.typeName, typeVarMap);
-  }
-
-  resolve(scope) {
-    this.type = new runtime.internals.Type(this.typeName, scope)
+    this.type = new runtime.internals.Type(this.typeName);
   }
 
   get mustCreate() {
@@ -53,9 +50,9 @@ class ParticleSpec {
     this.renders = rawData.renders;
   }
 
-  resolve(scope) {
+  resolve() {
     let result = new ParticleSpec(this.rawData);
-    result.connections.forEach(connection => connection.resolve(scope));
+    // FIXME: do we need this now?
     return result;
   }
 

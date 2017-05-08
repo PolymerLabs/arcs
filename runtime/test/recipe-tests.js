@@ -25,10 +25,10 @@ describe('recipe', function() {
 
   it('recipes can load', async () => {
     let scope = new runtime.Scope();
-    particles.register(scope);
     var arc = new Arc(scope);
-    let fooView = arc.createView(scope.typeFor(Foo));
-    let barView = arc.createView(scope.typeFor(Bar));
+    particles.register(arc);
+    let fooView = arc.createView(Foo.type);
+    let barView = arc.createView(Bar.type);
 
     var r = new recipe.RecipeBuilder()
         .addParticle("TestParticle")

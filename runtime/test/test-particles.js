@@ -28,7 +28,7 @@ exports.TwoInputTestParticle = particle.define('TwoInputTestParticle(in Foo foo,
   return 3;
 });
 
-exports.register = function(scope) {
-  scope.registerParticle(exports.TestParticle);
-  scope.registerParticle(exports.TwoInputTestParticle);
+exports.register = function(arc) {
+  arc.registerParticle(exports.TestParticle);
+  arc.registerParticle(exports.TwoInputTestParticle);
 };

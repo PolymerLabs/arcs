@@ -25,12 +25,12 @@ describe('suggestinator', function() {
 
   it('suggests a ranked list of recipes', async () => {
     let scope = new runtime.Scope();
-    particles.register(scope);
 
     var arc = new Arc(scope);
+    particles.register(arc);
 
-    var fooView = arc.createView(scope.typeFor(Foo));
-    var barView = arc.createView(scope.typeFor(Bar));
+    var fooView = arc.createView(Foo.type);
+    var barView = arc.createView(Bar.type);
 
     var recipe1 = new recipe.RecipeBuilder()
         .addParticle("TestParticle")

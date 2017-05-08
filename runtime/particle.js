@@ -22,9 +22,6 @@ function define(def, update) {
     static get spec() {
       return spec;
     }
-    static get name() {
-      return this.spec.name;
-    }
     constructor(scope) {
       super(scope);
     }
@@ -43,9 +40,12 @@ function define(def, update) {
     logDebug(tag, view) {
       let direction = this.spec.connectionMap.get(tag).direction;
       view.debugString().then(v => console.log(
-         `(${this.spec.type})(${direction})(${tag}): (${view.name})`, v));
+         `(${this.spec.name})(${direction})(${tag}): (${view.name})`, v));
     }
   };
+  Object.defineProperty(clazz, 'name', {
+    value: spec.name,
+  });
   clazz._isInline = true;
   clazz._inlineDefinition = def;
   clazz._inlineUpdateFunction = update;

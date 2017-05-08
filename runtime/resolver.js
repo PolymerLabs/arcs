@@ -44,7 +44,7 @@ class Resolver {
     // TODO: check for circularity of references?
     context.variableBindings.set(typeVar.variableID, type);
     // TODO: this should drop pending view checks as they actually return true
-    if (context.pendingViewChecks.map(a => this._viewExists(context, a)).reduce((a,b) => a && b, true) == false) {
+    if (!context.pendingViewChecks.map(a => this._viewExists(context, a)).reduce((a,b) => a && b, true)) {
       context.variableBindings.remove(typeVar.variableID);
       return false;
     }
@@ -77,7 +77,7 @@ class Resolver {
     assert(authority.type, '_matches requires authority.type');
     let resolvedSpecType = this._resolveType(context, spec.type);
     let resolvedAuthorityType = this._resolveType(context, authority.type);
-    if (resolvedSpecType != undefined && resolvedSpecType == resolvedAuthorityType)
+    if (resolvedSpecType != undefined && resolvedAuthorityType != undefined && resolvedSpecType.equals(resolvedAuthorityType))
       return true;
     if (spec.type.isVariable && !authority.type.isVariable)
       return this._matchVariableReference(context, spec.type, authority.type);
@@ -90,7 +90,7 @@ class Resolver {
 
   _resolveComponent(context, component) {
     var trace = tracing.start({cat: "resolver", name: "Resolver::resolveComponent", args: {name: component.particleName}});
-    var componentSpec = context.arc.scope.particleSpec(component.particleName);
+    var componentSpec = context.arc.particleSpec(component.particleName);
     if (componentSpec == undefined) {
       trace.end({args: {resolved: false, reason: "no such particle"}});
       return false;
@@ -176,7 +176,7 @@ class Resolver {
     var type = runtime.internals.Type.fromLiteral(typeName, context.arc.scope);
 
     if (type.isView || type.isRelation) {
-      if (!connection.spec.mustCreate && this._viewExists(context, type) == false) {
+      if (!connection.spec.mustCreate && !this._viewExists(context, type)) {
         trace.end({args: {resolved: false, reason: "creation forbidden but no view exists"}});
         return false;
       }
