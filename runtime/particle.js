@@ -195,7 +195,7 @@ class Particle {
   logDebug(tag, view) {
     let direction = this.spec.connectionMap.get(tag).direction;
     view.debugString().then(v => console.log(
-       `(${this.spec.name})(${direction})(${tag}]: (${view.name})`, v));
+       `(${this.spec.name})(${direction})(${tag}): (${view.name})`, v));
   }
 
   when(changes, f) {
