@@ -34,6 +34,25 @@ class Arc {
     this.pec = new OuterPEC(scope, channel.port2, this.generateID());
     this._innerPEC = new InnerPEC(channel.port1, this.generateID());
     this.nextParticleHandle = 0;
+    this._particlesByName = {};
+  }
+
+  registerParticle(particleClass) {
+    assert(particleClass instanceof Function);
+    assert(!this._particlesByName[particleClass.name]);
+    this._particlesByName[particleClass.name] = particleClass;
+  }
+
+  instantiateParticle(name) {
+    let particleClass = this._particlesByName[name];
+    assert(particleClass, `can't find particle ${name}`);
+    var handle = this.nextParticleHandle++;
+    this.particleViewMaps.set(handle, {clazz: particleClass, views: new Map()});
+    return handle;
+  }
+
+  particleSpec(name) {
+    return this._particlesByName[name].spec;
   }
 
   generateID() {
@@ -45,6 +64,9 @@ class Arc {
     var viewMap = new Map();
     this.views.forEach(v => viewMap.set(v, v.clone()));
     arc.particles = this.particles.map(p => p.clone(viewMap));
+    for (let name in this._particlesByName) {
+      arc.registerParticle(this._particlesByName[name]);
+    }
     for (let v of viewMap.values())
       arc.registerView(v);
     arc._viewMap = viewMap;
@@ -67,12 +89,6 @@ class Arc {
     } 
   }
 
-  constructParticle(particleClass) {
-    var handle = this.nextParticleHandle++;
-    this.particleViewMaps.set(handle, {clazz: particleClass, views: new Map()});
-    return handle;
-  }
- 
   createView(type, name) {
     assert(type instanceof Type, "can't createView with a type that isn't a Type");
     if (type.isRelation)
@@ -89,7 +105,7 @@ class Arc {
   registerView(view) {
     let views = this.findViews(view.type);
     if (!views.length) {
-      this._viewsByType.set(view.type, views);
+      this._viewsByType.set(JSON.stringify(view.type.toLiteral()), views);
     }
     views.push(view);
 
@@ -98,7 +114,7 @@ class Arc {
 
   findViews(type, options) {
     // TODO: use options (location, labels, etc.) somehow.
-    return this._viewsByType.get(type) || [];
+    return this._viewsByType.get(JSON.stringify(type.toLiteral())) || [];
   }
 
   addView(view) {
@@ -118,11 +134,11 @@ class Arc {
   commit(entities) {
     let entityMap = new Map();
     for (let entity of entities) {
-      entityMap.set(entity, this._viewFor(this.scope.typeFor(entity).viewOf(this.scope)));
+      entityMap.set(entity, this._viewFor(entity.constructor.type.viewOf(this.scope)));
     }
     for (let entity of entities) {
       if (entity instanceof Relation) {
-        entity.entities.forEach(entity => entityMap.set(entity, this._viewFor(this.scope.typeFor(entity).viewOf(this.scope))));
+        entity.entities.forEach(entity => entityMap.set(entity, this._viewFor(entity.constructor.type.viewOf(this.scope))));
       }
     }
     this.newCommit(entityMap);

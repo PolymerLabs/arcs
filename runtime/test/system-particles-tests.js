@@ -24,7 +24,7 @@ describe.skip('system particles', function() {
     particles.register(arc.scope);
     testParticles.register(arc.scope);
     var particle = arc.scope.instantiateParticle("Demuxer", arc);
-    arc.scope.resolve(particle.outputs.get("singleton").type, arc.scope.typeFor(Foo));
+    arc.scope.resolve(particle.outputs.get("singleton").type, Foo.type);
     particle.autoconnect();
     var particle2 = arc.scope.instantiateParticle("TestParticle", arc);
     particle2.autoconnect();
@@ -40,8 +40,8 @@ describe.skip('system particles', function() {
   it('muxer2 combinatorially demuxes', function() {
     var arc = new Arc(new runtime.Scope());
     var particle = new particles.Demuxer2(arc).arcParticle;
-    arc.scope.resolve(particle.outputs.get("singleton1").type, arc.scope.typeFor(Foo));
-    arc.scope.resolve(particle.outputs.get("singleton2").type, arc.scope.typeFor(Bar));
+    arc.scope.resolve(particle.outputs.get("singleton1").type, Foo.type);
+    arc.scope.resolve(particle.outputs.get("singleton2").type, Bar.type);
     particle.autoconnect();
     var particle2 = new testParticles.TwoInputTestParticle(arc).arcParticle;
     particle2.autoconnect();

@@ -11,16 +11,12 @@ const assert = require('assert');
 const typeLiteral = require('./type-literal.js');
 
 class Type {
-  constructor(key, scope) {
-    assert(scope);
+  constructor(key) {
     assert(!typeLiteral.isNamedVariable(key));
-    let normalized = JSON.stringify(key);
-    let type = scope._types.get(normalized);
-    if (type) {
-      return type;
-    }
     this.key = key;
-    scope._types.set(normalized, this);
+  }
+  equals(type) {
+    return typeLiteral.equal(type.toLiteral(), this.toLiteral());
   }
   get isRelation() {
     return typeLiteral.isRelation(this.key);

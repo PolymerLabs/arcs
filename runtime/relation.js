@@ -23,7 +23,7 @@ class Relation extends Entity {
   }
   static typeFor(relation, scope) {
     assert(scope);
-    var result = new Type(relation.entities.map(entity => scope.typeFor(entity)), scope, relation.constructor);
+    var result = new Type(relation.entities.map(entity => entity.constructor.type), scope, relation.constructor);
     return result;
   }
 }

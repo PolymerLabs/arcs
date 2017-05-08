@@ -9,6 +9,7 @@
 
 const assert = require('assert');
 const Symbols = require('./symbols.js');
+const Type = require('./type.js');
 
 class Entity {
   constructor() {
@@ -31,6 +32,10 @@ class Entity {
 
   get debugString() {
     return JSON.stringify(this.rawData);
+  }
+
+  static get type() {
+    return new Type(this.key);
   }
 }
 

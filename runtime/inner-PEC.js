@@ -63,6 +63,7 @@ class InnerPEC {
     this._particles = [];
     this._idBase = idBase;
     this._nextLocalID = 0;
+    this._particlesByName = {};
 
     /*
      * This code ensures that the relevant types are known
@@ -80,7 +81,7 @@ class InnerPEC {
 
     this._apiPort.onDefineParticle = ({particleDefinition, particleFunction}) => {
       var particle = define(particleDefinition, eval(particleFunction));
-      this._scope.registerParticle(particle);
+      this._particlesByName[particle.name] = particle;
     };
 
     this._apiPort.onInstantiateParticle = 
@@ -100,17 +101,15 @@ class InnerPEC {
     return `${this._idBase}:${this._nextLocalID++}`;
   }
 
-  constructParticle(clazz) {
-    return new clazz(this._scope);
-  }
-
-  _instantiateParticle(particleName, views) {
-    if (!this._scope.particleRegistered(particleName)) {
-      var clazz = loader.loadParticle(particleName);
-      this._scope.registerParticle(clazz);
+  _instantiateParticle(name, views) {
+    if (!this._particlesByName[name]) {
+      let clazz = loader.loadParticle(name);
+      this._particlesByName[clazz.name] = clazz;
     }
 
-    var particle = this._scope.instantiateParticle(particleName, this);
+    let particleClass = this._particlesByName[name];
+    assert(particleClass);
+    let particle = new particleClass();
     this._particles.push(particle);
 
     var viewMap = new Map();

@@ -24,10 +24,10 @@ const Bar = runtime.loader.loadEntity("Bar");
 describe('speculator', function() {
   it('can speculatively produce a relevance', async () => {
     let scope = new runtime.Scope();
-    particles.register(scope);
     var arc = new Arc(scope);
-    let fooView = arc.createView(scope.typeFor(Foo));
-    let barView = arc.createView(scope.typeFor(Bar));
+    particles.register(arc);
+    let fooView = arc.createView(Foo.type);
+    let barView = arc.createView(Bar.type);
     var r = new recipe.RecipeBuilder()
         .addParticle("TestParticle")
             .connectView("foo", fooView)

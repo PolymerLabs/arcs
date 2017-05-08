@@ -27,9 +27,9 @@ const Bar = loader.loadEntity("Bar");
 
 describe('resolver', () => {
   it('can resolve a partially constructed recipe', async () => {
-    particles.register(scope);
     var arc = new Arc(scope);
-    let fooView = arc.createView(scope.typeFor(Foo));
+    particles.register(arc);
+    let fooView = arc.createView(Foo.type);
     var r = new recipe.RecipeBuilder()
         .addParticle("TestParticle")
             .connectSpec("foo", {typeName: "Foo", mustCreate: false})
@@ -38,17 +38,17 @@ describe('resolver', () => {
     viewlet.viewletFor(fooView).set(new Foo({value: "not a Bar"}));
     assert(Resolver.resolve(r, arc), "recipe resolves");
     r.instantiate(arc);
-    var barView = arc.findViews(scope.typeFor(Bar))[0];
+    var barView = arc.findViews(Bar.type)[0];
     await util.assertSingletonHas(barView, Bar, "not a Bar1");
   });
 
   it("can resolve a recipe from a particle's spec", async () => {
     let scope = new runtime.Scope();
-    particles.register(scope);
     var arc = new Arc(scope);
+    particles.register(arc);
     var r = particles.TestParticle.spec.buildRecipe();
-    let fooView = arc.createView(scope.typeFor(Foo));
-    let barView = arc.createView(scope.typeFor(Bar));
+    let fooView = arc.createView(Foo.type);
+    let barView = arc.createView(Bar.type);
     viewlet.viewletFor(fooView).set(new Foo({value: "not a Bar"}));
     Resolver.resolve(r, arc);
     r.instantiate(arc);
@@ -57,11 +57,11 @@ describe('resolver', () => {
 
   it('can resolve a recipe that is just a particle name', async () => {
     let scope = new runtime.Scope();
-    particles.register(scope);
     var arc = new Arc(scope);
+    particles.register(arc);
     var r = new recipe.RecipeBuilder().addParticle("TestParticle").build();
-    let fooView = arc.createView(scope.typeFor(Foo));
-    let barView = arc.createView(scope.typeFor(Bar));
+    let fooView = arc.createView(Foo.type);
+    let barView = arc.createView(Bar.type);
     viewlet.viewletFor(fooView).set(new Foo({value: "not a Bar"}));
     Resolver.resolve(r, arc);
     r.instantiate(arc);
@@ -69,8 +69,8 @@ describe('resolver', () => {
   });
 
   it("won't resolve a recipe that mentions connections that are not in a particle's connection list", function() {
-    particles.register(scope);
     var arc = new Arc(scope);
+    particles.register(arc);
     var r = new recipe.RecipeBuilder()
         .addParticle("TestParticle")
             .connectSpec("herp", {typeName: "Foo", mustCreate: false})
@@ -79,8 +79,8 @@ describe('resolver', () => {
   });
 
   it.skip("will match particle constraints to build a multi-particle arc", function() {
-    particles.register(scope);
-    systemParticles.register(scope);
+    systemParticles.register(arc);
+    particles.register(arc);
     var arc = new Arc(scope);
     var r = new recipe.RecipeBuilder()
         .addParticle("Demuxer")

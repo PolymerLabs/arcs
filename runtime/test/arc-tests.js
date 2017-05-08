@@ -27,10 +27,11 @@ describe('Arc', function() {
 
   it('applies existing runtime to a particle', async () => {
     let arc = new Arc(scope);
-    let fooView = arc.createView(scope.typeFor(Foo));
+    let fooView = arc.createView(Foo.type);
     viewlet.viewletFor(fooView).set(new Foo({value: 'a Foo'}));
-    let barView = arc.createView(scope.typeFor(Bar));
-    var particle = arc.constructParticle(particles.TestParticle);
+    let barView = arc.createView(Bar.type);
+    arc.registerParticle(particles.TestParticle);
+    var particle = arc.instantiateParticle('TestParticle');
     arc.connectParticleToView(particle, 'foo', fooView);
     arc.connectParticleToView(particle, 'bar', barView);
     await util.assertSingletonHas(barView, Bar, "a Foo1");
@@ -38,9 +39,10 @@ describe('Arc', function() {
 
   it('applies new runtime to a particle', async () => {
     let arc = new Arc(scope);
-    let fooView = arc.createView(scope.typeFor(Foo));
-    let barView = arc.createView(scope.typeFor(Bar));
-    var particle = arc.constructParticle(particles.TestParticle);
+    let fooView = arc.createView(Foo.type);
+    let barView = arc.createView(Bar.type);
+    arc.registerParticle(particles.TestParticle);
+    var particle = arc.instantiateParticle('TestParticle');
     arc.connectParticleToView(particle, 'foo', fooView);
     arc.connectParticleToView(particle, 'bar', barView);
     viewlet.viewletFor(fooView).set(new Foo({value: 'a Foo'}));
@@ -55,10 +57,11 @@ describe('Arc', function() {
       return 5;
     });
 
-    let fooView = arc.createView(scope.typeFor(Foo));
+    let fooView = arc.createView(Foo.type);
     viewlet.viewletFor(fooView).set(new Foo({value: 1}));
-    let barView = arc.createView(scope.typeFor(Bar));
-    let instance = arc.constructParticle(particleClass);
+    let barView = arc.createView(Bar.type);
+    arc.registerParticle(particleClass);
+    let instance = arc.instantiateParticle('P');
     arc.connectParticleToView(instance, 'foo', fooView);
     arc.connectParticleToView(instance, 'bar', barView);
     await util.assertSingletonHas(barView, Bar, 123);

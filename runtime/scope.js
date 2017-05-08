@@ -9,64 +9,13 @@
  */
 "use strict";
 
-const assert = require('assert');
-const view = require('./view.js');
-const Identifier = require('./identifier.js');
-const Symbols = require('./symbols.js');
-const Entity = require('./entity.js');
-const Type = require('./type.js');
-const Relation = require('./relation.js');
-
 class Scope {
   constructor() {
-    this._types = new Map();
-    // TODO: more elaborate type keys
-    this._nextType = 1;
-    // TODO: more elaborate identifier keys
-    this._nextIdentifier = 1;
-    this._particles = new Map();
   }
 
   clone() {
     var scope = new Scope();
-    for (let [key, value] of this._types.entries())
-      scope._types.set(key, value);
-    scope._nextType = this._nextType;
-    scope._nextIdentifier = this._nextIdentifier;
-    for (let [key, value] of this._particles.entries())
-      scope._particles.set(key, value);
     return scope;
-  }
-
-  typeFor(classOrInstance) {
-    if (classOrInstance instanceof Entity)
-      return this.typeFor(classOrInstance.constructor);
-    
-    if (!this._types.has(classOrInstance)) {
-      let key = classOrInstance.key || this._nextType++;
-      this._types.set(classOrInstance, new Type(key, this));
-    }
-    return this._types.get(classOrInstance);
-  }
-
-  registerParticle(clazz) {
-    this._particles.set(clazz.name, clazz);
-  }
-
-  particleRegistered(name) {
-    return this._particles.get(name) !== undefined;
-  }
-
-  particleSpec(name) {
-    if (this._particles.has(name))
-      return this._particles.get(name).spec.resolve(this);
-  }
-
-  instantiateParticle(name, arc) {
-    let particleClass = this._particles.get(name);
-    assert(particleClass, name);
-    let particle = arc.constructParticle(particleClass);
-    return particle;
   }
 }
 

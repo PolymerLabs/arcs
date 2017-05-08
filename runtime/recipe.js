@@ -46,7 +46,7 @@ class RecipeComponent {
   }
 
   instantiate(arc) {
-    var particle = arc.scope.instantiateParticle(this.particleName, arc);
+    var particle = arc.instantiateParticle(this.particleName);
     for (var connection of this.connections) {
       assert(connection.view, 'cannot connect particle ' + this.particleName + ' to NULL view ' + connection.name);
       arc.connectParticleToView(particle, connection.name, connection.view);
