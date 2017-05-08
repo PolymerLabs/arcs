@@ -36,29 +36,26 @@ class Type {
     return !typeLiteral.isNamedVariable(this.key);
   }
 
-  primitiveType(scope) {
-    assert(scope);
-    return new Type(typeLiteral.primitiveType(this.key), scope);
+  primitiveType() {
+    return new Type(typeLiteral.primitiveType(this.key));
   }
   toLiteral() {
     return this.key;
   }
-  static fromLiteral(literal, scope) {
-    assert(scope);
-
-    return new Type(literal, scope);
+  static fromLiteral(literal) {
+    return new Type(literal);
   }
 
-  viewOf(scope) {
-    return new Type(typeLiteral.viewOf(this.key), scope);
+  viewOf() {
+    return new Type(typeLiteral.viewOf(this.key));
   }
 
   get variableID() {
     return typeLiteral.variableID(this.key);
   }
 
-  static typeVariable(name, scope) {
-    return new Type(typeLiteral.typeVariable(name), scope);
+  static typeVariable(name) {
+    return new Type(typeLiteral.typeVariable(name));
   }
 
   toString() {

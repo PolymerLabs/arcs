@@ -24,9 +24,8 @@ var Far = runtime.testing.testEntityClass('Far');
 describe('suggestinator', function() {
 
   it('suggests a ranked list of recipes', async () => {
-    let scope = new runtime.Scope();
 
-    var arc = new Arc(scope);
+    var arc = new Arc();
     particles.register(arc);
 
     var fooView = arc.createView(Foo.type);

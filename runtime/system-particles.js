@@ -58,9 +58,9 @@ exports.SaveList = particle.define('SaveList(ephemeral in [~a] inputs, out [~a] 
   thisParticle.logDebug("list", list);
 });
 
-exports.register = function(scope) {
-  scope.registerParticle(exports.Demuxer);
-  scope.registerParticle(exports.Demuxer2);
-  scope.registerParticle(exports.Choose);
-  scope.registerParticle(exports.SaveList);
+exports.register = function(arc) {
+  arc.registerParticle(exports.Demuxer);
+  arc.registerParticle(exports.Demuxer2);
+  arc.registerParticle(exports.Choose);
+  arc.registerParticle(exports.SaveList);
 };

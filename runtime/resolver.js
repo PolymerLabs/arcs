@@ -52,8 +52,8 @@ class Resolver {
   }
 
   _matchViewReference(context, typeView, type) {
-    let typeViewPrimitiveType = typeView.primitiveType(context.arc.scope);
-    let typePrimitiveType = type.primitiveType(context.arc.scope);
+    let typeViewPrimitiveType = typeView.primitiveType();
+    let typePrimitiveType = type.primitiveType();
     if (typeViewPrimitiveType.isVariable && !typePrimitiveType.isVariable)
       return this._matchVariableReference(context, typeViewPrimitiveType, typePrimitiveType);
     if (typePrimitiveType.isVariable && !typeViewPrimitiveType.isVariable)
@@ -151,11 +151,11 @@ class Resolver {
 
   _resolveType(context, type) {
     if (type.isView) {
-      var resolved = this._resolveType(context, type.primitiveType(context.arc.scope));
+      var resolved = this._resolveType(context, type.primitiveType());
       if (resolved == undefined) {
         return undefined;
       }
-      return resolved.viewOf(context.arc.scope);
+      return resolved.viewOf();
     }
 
     if (type.isVariable) {
@@ -173,7 +173,7 @@ class Resolver {
     assert(connection.spec, "cannot resolve an undefined spec connection");
     var typeName = connection.spec.typeName;
     trace.update({args: {type: typeName}});
-    var type = runtime.internals.Type.fromLiteral(typeName, context.arc.scope);
+    var type = runtime.internals.Type.fromLiteral(typeName);
 
     if (type.isView || type.isRelation) {
       if (!connection.spec.mustCreate && !this._viewExists(context, type)) {
@@ -189,7 +189,6 @@ class Resolver {
       context.afterResolution.push(() => { connection.view = context.arc.createView(type, connection.constraintName); });
     else
       context.afterResolution.push(() => { connection.view = context.arc.findViews(type)[0]; });
-      connection.view = () => context.arc.scope.findViews(type)[0];
     connection.type = type;
     trace.end({resolved: true});
     return true;

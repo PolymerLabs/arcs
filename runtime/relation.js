@@ -21,9 +21,8 @@ class Relation extends Entity {
   get data() {
     return this.entities.map(entity => entity[Symbols.identifier].toLiteral());
   }
-  static typeFor(relation, scope) {
-    assert(scope);
-    var result = new Type(relation.entities.map(entity => entity.constructor.type), scope, relation.constructor);
+  static typeFor(relation) {
+    var result = new Type(relation.entities.map(entity => entity.constructor.type), relation.constructor);
     return result;
   }
 }

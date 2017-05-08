@@ -9,7 +9,6 @@
  */
 "use strict";
 
-const Scope = require('./scope.js');
 const loader = require('./loader.js');
 const Type = require('./type.js');
 const viewlet = require('./viewlet.js');
@@ -24,7 +23,6 @@ class RemoteView {
     this.type = type;
     this._port = port;
     this._pec = pec;
-    this._scope = pec._scope;
     this.name = name;
   }
 
@@ -58,7 +56,6 @@ class RemoteView {
 class InnerPEC {
   constructor(port, idBase) {
     this._apiPort = new PECInnerPort(port);
-    this._scope = new Scope();
     this._views = new Map();
     this._particles = [];
     this._idBase = idBase;
@@ -76,7 +73,7 @@ class InnerPEC {
      * only keeping type information on the arc side.
      */
     this._apiPort.onDefineView = ({viewType, identifier, name}) => {
-      return new RemoteView(identifier, Type.fromLiteral(viewType, this._scope), this._apiPort, this, name);
+      return new RemoteView(identifier, Type.fromLiteral(viewType), this._apiPort, this, name);
     };
 
     this._apiPort.onDefineParticle = ({particleDefinition, particleFunction}) => {

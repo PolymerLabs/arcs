@@ -21,7 +21,7 @@ function cloneData(data) {
   //return JSON.parse(JSON.stringify(data));
 }
 
-function restore(entry, scope, entityClass) {
+function restore(entry, entityClass) {
   let {id, rawData} = entry;
   var entity = new entityClass(cloneData(rawData));
 
@@ -58,7 +58,7 @@ class Viewlet {
 
   _restore(entry) {
     assert(this.entityClass, "Viewlets need entity classes for deserialization");
-    return restore(entry, this._view._scope, this.entityClass);
+    return restore(entry, this.entityClass);
   }
 
   get type() {

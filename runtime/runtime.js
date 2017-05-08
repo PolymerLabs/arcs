@@ -15,7 +15,6 @@ const Symbols = require('./symbols.js');
 const Entity = require('./entity.js');
 const Type = require('./type.js');
 const Relation = require('./relation.js');
-const Scope = require('./scope.js');
 const loader = require("./loader.js");
 
 class BasicEntity extends Entity {
@@ -44,7 +43,6 @@ Object.assign(exports, {
   testing: {
     testEntityClass,
   },
-  Scope,
   internals: {
     identifier: Symbols.identifier,
     Type,

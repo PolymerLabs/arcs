@@ -20,10 +20,9 @@ class Identifier {
   toLiteral() {
     return [this.view, this.type.toLiteral(), this.key];
   }
-  static fromLiteral(data, scope) {
-    assert(scope, "need a scope to convert data frmo literal");
+  static fromLiteral(data) {
     let [view, literalType, key] = data;
-    return new Identifier(view, Type.fromLiteral(literalType, scope), key);
+    return new Identifier(view, Type.fromLiteral(literalType), key);
   }
 }
 
