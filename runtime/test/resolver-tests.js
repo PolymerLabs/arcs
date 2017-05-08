@@ -76,9 +76,9 @@ describe('resolver', () => {
   });
 
   it.skip("will match particle constraints to build a multi-particle arc", function() {
+    var arc = new Arc();
     systemParticles.register(arc);
     particles.register(arc);
-    var arc = new Arc();
     var r = new recipe.RecipeBuilder()
         .addParticle("Demuxer")
             .connectConstraint("singleton", "shared")

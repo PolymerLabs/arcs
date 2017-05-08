@@ -20,8 +20,8 @@ tracing.enable();
 function prepareExtensionArc() {
   let Person = loader.loadEntity("Person");
   let Product = loader.loadEntity("Product");
-  systemParticles.register();
   var arc = new Arc();
+  systemParticles.register(arc);
   var personView = arc.createView(Person.type.viewOf(), "peopleFromWebpage");
   var productView = arc.createView(Product.type.viewOf(), "productsFromWebpage");
   var personSlot = arc.createView(Person.type, "personSlot");
