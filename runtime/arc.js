@@ -61,6 +61,32 @@ class Arc {
       arc.registerView(v);
     arc._viewMap = viewMap;
     return arc;
+  }    
+
+  serialize() {
+    var s = { views: [], particles: []};
+
+    // 1. serialize entities
+    var entities = new Set();
+    for (var view of this.views)
+      view.extractEntities(entities);
+
+    s.entities = [...entities.values()];
+
+    // 2. serialize views
+    for (var view of this.views)
+      view.serialize(s.views);
+
+    // 3. serialize particles
+    for (var particle of this.particleViewMaps.values()) {
+      var name = particle.clazz.name;
+      var serializedParticle = { name, views: {}};
+      for (let [key, value] of particle.views) {
+        serializedParticle.views[key] = value.id;
+      }
+      s.particles.push(serializedParticle);
+    }
+    return s;
   }
 
   connectParticleToView(particle, name, targetView) {

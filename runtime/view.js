@@ -18,7 +18,11 @@ class ViewBase {
     this._arc = arc;
     this._listeners = new Map();
     this.name = name;
+<<<<<<< HEAD
     this._version = 0;
+=======
+    this.id = this._arc.generateID();
+>>>>>>> Serialize function for arc.
     trace.end();
   }
 
@@ -105,6 +109,18 @@ class View extends ViewBase {
   }
   // TODO: Something about iterators??
   // TODO: Something about changing order?
+
+  extractEntities(set) {
+    this._items.forEach(a => set.add(a));
+  }
+
+  serialize(list) {
+    list.push({
+      id: this.id,
+      type: 'view',
+      values: this._items.map(a => a.id)
+    });
+  }
 }
 
 class Variable extends ViewBase {
@@ -136,6 +152,18 @@ class Variable extends ViewBase {
   on(kind, callback, target) {
     let trigger = kind == 'change';
     super.on(kind, callback, target, trigger);
+  }
+
+  extractEntities(set) {
+    set.add(this._stored);
+  }
+
+  serialize(list) {
+    list.push({
+      id: this.id,
+      type: 'variable',
+      value: this._stored.id
+    });
   }
 }
 
