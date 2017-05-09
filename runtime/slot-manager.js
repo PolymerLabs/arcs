@@ -173,15 +173,17 @@ class SlotManager {
       this._disassociateSlotFromParticle(slotid);
       let slot = this._getSlot(slotid);
       var affectedParticles = [];
-      // TODO(sjmiles): missing mock-DOM version
-      if (global.document) {
-        let slots = slot.findInnerSlots();
-        slots = slots.map(s => s.getAttribute('slotid'));
-        affectedParticles = slots.map(s => this._getParticle(s));
-        slots.forEach(this._releaseChildSlot, this);
-        slot.setDomContent('');
-      }
+
+      // Release inner slots.
+      let slots = slot.findInnerSlots();
+      slots = slots.map(s => global.document ? s.getAttribute('slotid') : s.id);
+      affectedParticles = slots.map(s => this._getParticle(s));
+      slots.forEach(this._releaseChildSlot, this);
+      slot.setDomContent('');
+
       slot.providePendingSlot();
+      // Returns affected (i.e. released) inner slots' particles, in order
+      // to notify them that they were released.
       return affectedParticles;
     }
   }
@@ -192,8 +194,9 @@ class SlotManager {
   }
   // Disassociate child slot and clear its DOM.
   _releaseChildSlot(slotid) {
+    this._getSlot(slotid).clearDom();
     this._disassociateSlotFromParticle(slotid);
-    this._slotsMap(slotid).clearDom();
+    this._slotsMap.delete(slotid);
   }
 }
 
