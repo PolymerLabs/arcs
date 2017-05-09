@@ -159,6 +159,8 @@ class Variable extends ViewBase {
   }
 
   serialize(list) {
+    if (this._stored == undefined)
+      return;
     list.push({
       id: this.id,
       type: 'variable',

@@ -48,6 +48,7 @@ class ParticleSpec {
     this.outputs = this.connections.filter(a => a.isOutput);
     this.exposes = rawData.exposes;
     this.renders = rawData.renders;
+    this.transient = rawData.transient;
   }
 
   resolve() {
