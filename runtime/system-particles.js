@@ -43,7 +43,7 @@ exports.Choose = particle.define('Choose(in [~a] view, out ~a singleton)', async
   assert(false, "Cannot choose a single element from a list.");
 });
 
-exports.SaveList = particle.define('SaveList(ephemeral in [~a] inputs, out [~a] list)', async views => {
+exports.SaveList = particle.define('transient SaveList(ephemeral in [~a] inputs, out [~a] list)', async views => {
   var inputsView = views.get('inputs');
   let thisParticle = this._particles.filter(p => p.spec.name=="SaveList")[0];
   thisParticle.logDebug("inputs", inputsView);

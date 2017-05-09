@@ -60,10 +60,15 @@ SlotDescriptor = name:VariableTypeName view:("(" _ VariableTypeName _ ")")? {
 Comment = "/*" (! "*/" .)* "*/" _
 
 Particle
-  = name: PrimitiveType _ "(" _ args: Arguments? _ ")" {
-      return {name: name, args: args};
+  = transient:Transient _ name: PrimitiveType _ "(" _ args: Arguments? _ ")" {
+      return { name, args, transient };
   }
-  
+
+Transient = "transient"? {
+  if (text().length > 0)
+    return true;
+}
+
 Type = (VariableType / PrimitiveType / ListType)
 
 ListType = "[" pt:Type "]" { return typeLiteral.viewOf(pt); }

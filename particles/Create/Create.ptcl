@@ -8,4 +8,4 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-Create(create [Product] newList)
+transient Create(create [Product] newList)

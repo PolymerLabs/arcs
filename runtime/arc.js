@@ -79,6 +79,8 @@ class Arc {
 
     // 3. serialize particles
     for (var particle of this.particleViewMaps.values()) {
+      if (particle.clazz.spec.transient)
+        continue;
       var name = particle.clazz.name;
       var serializedParticle = { name, views: {}};
       for (let [key, value] of particle.views) {
