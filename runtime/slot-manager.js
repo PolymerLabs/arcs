@@ -10,193 +10,125 @@
 "use strict";
 
 const assert = require('assert');
+const Slot = require('./slot-dom.js');
 
-class Slot {
-  constructor(slotid) {
-    this._slotid = slotid;
-    this._dom = undefined;
-    this._exposedView = undefined;
-    this._particleSpec = undefined;
-    this._pendingRequestsHandlers = [];
-  }
-  get slotid() { return this._slotid; }
-  get particleSpec() { return this._particleSpec; }
-  associateWithParticle(particleSpec) {
-    assert(!this._particleSpec, "Particle spec already set, cannot associate slot");
-    assert(!this._exposedView ||
-           this._particleSpec.renderMap.get(this._slotid) == this._exposedView,
-           "Cannot associate particle-spec with an unmatching view.");
-
-    this._particleSpec = particleSpec;
-  }
-  disassociateParticle() {
-    assert(this._particleSpec, "Particle spec is not set, cannot disassociate slot");
-    this._particleSpec = undefined;
-  }
-  isAssociated() {
-    return !!this._particleSpec;
-  }
-  clearDom() {
-    this._dom = null;
-  }
-  initializeDom(dom, exposedView) {
-    this._dom = dom;
-    this.exposedView = exposedView;
-  }
-  isDomInitialized() {
-    return !!this._dom;
-  }
-  get domContent() {
-    return this._dom ? this._dom.innerHTML : undefined;
-  }
-  setDomContent(content) {
-    assert(!!this._dom, "Dom isn't initialized, cannot set content");
-    this._dom.innerHTML = content;
-  }
-  findInnerSlots() {
-    if (global.document) {
-      return Array.from(this._dom.querySelectorAll("[slotid]"));
-    } else {
-      var slots = [];
-      var slot;
-      var RE = /slotid="([^"]*)"/g;
-      while ((slot = RE.exec(this._dom.innerHTML))) {
-        slots.push({id:slot[1]});
-      }
-      return slots;
-    }
-  }
-  findEventGenerators() {
-    if (global.document) {
-      return this._dom.querySelectorAll('[events]');
-    }
-    // TODO(mmandlis): missing mock-DOM version
-    return [];
-  }
-
-  addPendingRequest(handler) {
-    this._pendingRequestsHandlers.push(handler);
-  }
-  providePendingSlot() {
-    assert(!this.isAssociated(), "Cannot provide associated slot.");
-    if (this._pendingRequestsHandlers.length > 0) {
-      this._pendingRequestsHandlers[0]();
-      this._pendingRequestsHandlers.splice(0, 1);
-    }
-  }
-}
+let log = !global.document || (global.logging === false) ? () => {} : (...args) => { console.log.apply(console, args); };
 
 class SlotManager {
   constructor(domRoot, pec) {
-    this._slotsMap = new Map();
-    this._getOrCreateSlot('root').initializeDom(domRoot, /* exposedView= */ undefined);
-
-    this._reverseSlotMap = new Map();  // slotid by particle-spec.
+    this._slotBySlotId = new Map();
+    this._slotIdByParticleSpec = new Map();
     this._pec = pec;
+    this._getOrCreateSlot('root').initialize(domRoot, /* exposedView= */ undefined);
+  }
+  _getOrCreateSlot(slotid) {
+    if (!this._slotBySlotId.has(slotid)) {
+      this._slotBySlotId.set(slotid, this._createSlot(slotid));
+    }
+    return this._slotBySlotId.get(slotid);
+  }
+  _createSlot(slotid) {
+    return new Slot(slotid);
   }
   registerSlot(particleSpec, slotid) {
     return new Promise((resolve, reject) => {
-      let slot = this._getOrCreateSlot(slotid);
-      if (slot.isDomInitialized() && !slot.isAssociated()) {
-        resolve();
-      } else {
-        slot.addPendingRequest(resolve);
+      try {
+        let slot = this._getOrCreateSlot(slotid);
+        // TODO(sjmiles): is "initialized but not associated" a single condition that should have a getter (e.g. `isAvailable()`)?
+        if (slot.isInitialized() && !slot.isAssociated()) {
+          resolve(slot);
+        } else {
+          slot.addPendingRequest(resolve);
+        }
+      } catch(x) {
+        // TODO(sjmiles): my Promise-fu is not strong, probably should do something else
+        reject(x);
       }
-    }).then(() => {
-      let slot = this._slotsMap.get(slotid);
+    }).then(slot => {
       slot.associateWithParticle(particleSpec);
-      this._reverseSlotMap.set(particleSpec, slotid);
+      this._slotIdByParticleSpec.set(particleSpec, slotid);
     });
   }
   _getSlotId(particleSpec) {
-    return this._reverseSlotMap.get(particleSpec);
+    return this._slotIdByParticleSpec.get(particleSpec);
   }
   _getParticle(slotid) {
-    if (this._slotsMap.has(slotid)) {
-      return this._slotsMap.get(slotid)._particleSpec;
+    if (this._slotBySlotId.has(slotid)) {
+      return this._slotBySlotId.get(slotid)._particleSpec;
     }
   }
   _getSlot(slotid) {
-    assert(this._slotsMap.has(slotid));
-    return this._slotsMap.get(slotid);
+    assert(this._slotBySlotId.has(slotid));
+    return this._slotBySlotId.get(slotid);
   }
-  _getOrCreateSlot(slotid) {
-    if (!this._slotsMap.has(slotid)) {
-      this._slotsMap.set(slotid, new Slot(slotid));
-    }
-    return this._slotsMap.get(slotid);
+  _getParticleSlot(particleSpec) {
+    return this._getSlot(this._getSlotId(particleSpec))
   }
+  _makeEventletHandler(particleSpec) {
+    return eventlet => {
+      this._pec.sendEvent(particleSpec, eventlet)
+    };
+  }
+  // TODO(sjmiles): should be `renderParticle`?
   renderSlot(particleSpec, content) {
-    let slotid = this._reverseSlotMap.get(particleSpec);
-    let slot = this._getSlot(slotid);
-
-    if (slot.isDomInitialized()) {
-      slot.setDomContent(content);
-      this._provideInnerSlots(particleSpec, slot);
-      this._addEventListeners(particleSpec, slot.findEventGenerators());
+    let slot = this._getParticleSlot(particleSpec);
+    let handler = this._makeEventletHandler(particleSpec);
+    // returns slot(id)s rendered by the particle
+    let innerSlotInfos = slot.render(content, handler);
+    if (innerSlotInfos) {
+      // the `innerSlotInfos` identify available slot-contexts, make them available for composition
+      this._provideInnerSlots(innerSlotInfos, particleSpec);
     }
   }
-  _provideInnerSlots(particleSpec, slot) {
-    var innerDomSlots = slot.findInnerSlots();
-    innerDomSlots.forEach(domSlot => {
-      let slotid = global.document ? domSlot.getAttribute('slotid') : domSlot.id;
-      let slot = this._getOrCreateSlot(slotid);
-      let originalDomContent = slot.domContent;
-      slot.initializeDom(domSlot, particleSpec.exposeMap.get(slotid));
-      if (originalDomContent) {
-        slot.setDomContent(originalDomContent);
-        this._provideInnerSlots(particleSpec, slot);
-      } else slot.providePendingSlot();
+  _provideInnerSlots(innerSlotInfos, particleSpec) {
+    innerSlotInfos.forEach(info => {
+      let inner = this._getOrCreateSlot(info.id);
+      // TODO(sjmiles): initialization will destroy content for DomSlot subclass, so we must cache it first
+      // ... this is a leaky implementation detail
+      let originalContent = inner.content;
+      inner.initialize(info.context, particleSpec.exposeMap.get(info.id));
+      if (originalContent) {
+        // TODO(sjmiles): recurses
+        this.renderSlot(this._getParticle(info.id), originalContent);
+      } else {
+        // TODO(sjmiles): falsey test for originalContent is an implicit signal, really don't we want `isAvailable()`?
+        inner.providePendingSlot();
+      }
     });
   }
-  _addEventListeners(particleSpec, eventGenerators) {
-    for (let eventGenerator of eventGenerators) {
-      let attributes = eventGenerator.attributes;
-      let data = {
-        key: eventGenerator.getAttribute('key'),
-        value: eventGenerator.value
-      };
-      for (let {name, value} of attributes) {
-        if (name.startsWith("on-")) {
-          let event = name.substring(3);
-          let handler = value;
-          eventGenerator.addEventListener(event, e =>
-            this._pec.sendEvent(particleSpec, {handler, data})
-          );
-        }
-      }
-    }
-  }
+  // particleSpec is relinquishing ownership of it's slot
+  // TODO(sjmiles): should be `releaseParticle`?
   releaseSlot(particleSpec) {
     let slotid = this._getSlotId(particleSpec);
     if (slotid) {
-      this._disassociateSlotFromParticle(slotid);
-      let slot = this._getSlot(slotid);
-      var affectedParticles = [];
-
-      // Release inner slots.
-      let slots = slot.findInnerSlots();
-      slots = slots.map(s => global.document ? s.getAttribute('slotid') : s.id);
-      affectedParticles = slots.map(s => this._getParticle(s));
-      slots.forEach(this._releaseChildSlot, this);
-      slot.setDomContent('');
-
-      slot.providePendingSlot();
-      // Returns affected (i.e. released) inner slots' particles, in order
-      // to notify them that they were released.
-      return affectedParticles;
+      return this._releaseSlot(slotid);
     }
   }
+  _releaseSlot(slotid) {
+    this._disassociateSlotFromParticle(slotid);
+    let slot = this._getSlot(slotid);
+    // teardown rendering
+    let lostInfos = slot.derender();
+    // memoize list of particles who lost slots
+    let affectedParticles = lostInfos.map(s => this._getParticle(s.id));
+    // remove lost slots
+    lostInfos.forEach(s => this._removeSlot(s.id));
+    log(`slot-manager::_releaseSlotId("${slotid}"):`, affectedParticles);
+    // released slot is now available for another requester
+    slot.providePendingSlot();
+    // return list of particles who lost slots
+    return affectedParticles;
+  }
   _disassociateSlotFromParticle(slotid) {
-    let slot = this._slotsMap.get(slotid);
-    this._reverseSlotMap.delete(slot.particleSpec);
+    let slot = this._slotBySlotId.get(slotid);
+    this._slotIdByParticleSpec.delete(slot.particleSpec);
     slot.disassociateParticle();
   }
-  // Disassociate child slot and clear its DOM.
-  _releaseChildSlot(slotid) {
-    this._getSlot(slotid).clearDom();
+  // `remove` means to evacipate the slot context (`release` otoh means only to mark the slot as unused)
+  _removeSlot(slotid) {
     this._disassociateSlotFromParticle(slotid);
-    this._slotsMap.delete(slotid);
+    this._getSlot(slotid).uninitialize();
+    this._slotBySlotId.delete(slotid);
   }
 }
 
