@@ -25,7 +25,7 @@ class Arc {
   constructor({id, loader}) {
     assert(loader);
     this._loader = loader;
-    this.id = 1;
+    this.id = id;
     this.nextLocalID = 0;
     this.particles = [];
     this.views = new Set();
@@ -33,6 +33,7 @@ class Arc {
     this.particleViewMaps = new Map();
     var channel = new MessageChannel();
     this.pec = new OuterPEC(channel.port2, this.generateID());
+    // TODO: Once there's real isolation, innerPec should have its own loader.
     this._innerPEC = new InnerPEC(channel.port1, this.generateID(), loader);
     this.nextParticleHandle = 0;
     this._particlesByName = {};
@@ -54,8 +55,8 @@ class Arc {
     return `${this.id}:${this.nextLocalID++}`;
   }
 
-  clone() {
-    var arc = new Arc({loader: this._loader});
+  clone(id) {
+    var arc = new Arc({loader: this._loader, id});
     var viewMap = new Map();
     this.views.forEach(v => viewMap.set(v, v.clone()));
     arc.particles = this.particles.map(p => p.clone(viewMap));

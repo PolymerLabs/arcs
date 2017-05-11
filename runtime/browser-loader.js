@@ -23,6 +23,10 @@ module.exports = class BrowserLoader extends Loader {
     return xhr.responseText;
   }
   requireParticle(name) {
+    // dynamic loading not so bueno under browserify ...
+    // preload these here so they:
+    // (1) are in the browserify bundle
+    // (2) have ids (paths) that browserify can resolve from this module
     switch (name) {
       case 'Create':
         return require("../particles/Create/Create.js");
@@ -40,10 +44,4 @@ module.exports = class BrowserLoader extends Loader {
   }
 }
 
-// dynamic loading not so bueno under browserify ...
-// preload these here so they:
-// (1) are in the browserify bundle
-// (2) have ids (paths) that browserify can resolve from this module
-//var _slp = require("../particles/StackingLayout/StackingLayout.js");
-//
 
