@@ -9,7 +9,6 @@
  */
  "use strict";
 
-var loader = require("../loader.js");
 var runtime = require("../runtime.js");
 var Arc = require("../arc.js");
 let assert = require('chai').assert;
@@ -19,17 +18,18 @@ let util = require('./test-util.js');
 let viewlet = require('../viewlet.js');
 
 
+let loader = new (require('../loader'));
+loader.registerParticle(particles.TestParticle);
 const Foo = loader.loadEntity("Foo");
 const Bar = loader.loadEntity("Bar");
 
 describe('Arc', function() {
 
   it('applies existing runtime to a particle', async () => {
-    let arc = new Arc();
+    let arc = new Arc({loader});
     let fooView = arc.createView(Foo.type);
     viewlet.viewletFor(fooView).set(new Foo({value: 'a Foo'}));
     let barView = arc.createView(Bar.type);
-    arc.registerParticle(particles.TestParticle);
     var particle = arc.instantiateParticle('TestParticle');
     arc.connectParticleToView(particle, 'foo', fooView);
     arc.connectParticleToView(particle, 'bar', barView);
@@ -37,10 +37,9 @@ describe('Arc', function() {
   });
 
   it('applies new runtime to a particle', async () => {
-    let arc = new Arc();
+    let arc = new Arc({loader});
     let fooView = arc.createView(Foo.type);
     let barView = arc.createView(Bar.type);
-    arc.registerParticle(particles.TestParticle);
     var particle = arc.instantiateParticle('TestParticle');
     arc.connectParticleToView(particle, 'foo', fooView);
     arc.connectParticleToView(particle, 'bar', barView);
@@ -49,7 +48,7 @@ describe('Arc', function() {
   });
 
   it('works with inline particle definitions', async () => {
-    let arc = new Arc();
+    let arc = new Arc({loader});
     let particleClass = require('../particle').define('P(in Foo foo, out Bar bar)', (views) => {
       var view = views.get("bar");
       view.set(new view.entityClass({value: 123}));
@@ -59,7 +58,7 @@ describe('Arc', function() {
     let fooView = arc.createView(Foo.type);
     viewlet.viewletFor(fooView).set(new Foo({value: 1}));
     let barView = arc.createView(Bar.type);
-    arc.registerParticle(particleClass);
+    loader.registerParticle(particleClass);
     let instance = arc.instantiateParticle('P');
     arc.connectParticleToView(instance, 'foo', fooView);
     arc.connectParticleToView(instance, 'bar', barView);

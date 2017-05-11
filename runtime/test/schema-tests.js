@@ -9,12 +9,12 @@
  */
 
 const assert = require('chai').assert;
-const loader = require('../loader.js');
+const Loader = require('../loader.js');
 
 describe('schema', function() {
 
   it('schemas load recursively', function() {
-    var schema = loader.loadSchema("Product");
+    var schema = new Loader().loadSchema("Product");
     assert.deepEqual(schema.normative, {name: 'Text'});
     assert.deepEqual(schema.optional, {description: 'Text', image: 'URL'});
     assert.equal(schema.name, "Product");
@@ -22,7 +22,7 @@ describe('schema', function() {
   });
 
   it('constructs an appropriate entity subclass', function() {
-    var schema = loader.loadSchema("Product");
+    var schema = new Loader().loadSchema("Product");
     var Product = schema.entityClass();
     assert.equal(Product.name, "Product");
     var product = new Product({name: "Pickled Chicken Sandwich", description: "A sandwich with pickles and chicken"});

@@ -10,7 +10,7 @@
 
 var runtime = require("../runtime.js");
 var Arc = require("../arc.js");
-var loader = require("../loader.js");
+var Loader = require("../loader.js");
 var Suggestinator = require("../suggestinator.js");
 var recipe = require('../recipe.js');
 var systemParticles = require('../system-particles.js');
@@ -18,10 +18,11 @@ var systemParticles = require('../system-particles.js');
 require("./trace-setup.js");
 
 function prepareExtensionArc() {
+  let loader = new Loader();
   let Person = loader.loadEntity("Person");
   let Product = loader.loadEntity("Product");
-  var arc = new Arc();
-  systemParticles.register(arc);
+  var arc = new Arc({loader});
+  systemParticles.register(loader);
   var personView = arc.createView(Person.type.viewOf(), "peopleFromWebpage");
   var productView = arc.createView(Product.type.viewOf(), "productsFromWebpage");
   var personSlot = arc.createView(Person.type, "personSlot");
@@ -33,11 +34,6 @@ function prepareExtensionArc() {
 describe('demo flow', function() {
   it('flows like a demo', function(done) {
     let arc = prepareExtensionArc();
-    // TODO: add a loader to the ?? so this fallback can happen automatically.
-    ['Create', 'Recommend', 'WishlistFor', 'ListView', 'Chooser', 'MultiChooser'].forEach(name => {
-      let particleClass = loader.loadParticle(name);
-      arc.registerParticle(particleClass);
-    });
     var r = new recipe.RecipeBuilder()
       .addParticle("Create")
         .connectConstraint("newList", "list")

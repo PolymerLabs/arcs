@@ -16,16 +16,17 @@ let assert = require('chai').assert;
 let particles = require('./test-particles.js');
 let util = require('./test-util.js');
 let viewlet = require('../viewlet.js');
-
-
-const Foo = runtime.loader.loadEntity("Foo");
-const Bar = runtime.loader.loadEntity("Bar");
+let Loader = require('../loader');
 
 describe('recipe', function() {
 
   it('recipes can load', async () => {
-    var arc = new Arc();
-    particles.register(arc);
+
+    let loader = new Loader();
+    const Foo = loader.loadEntity("Foo");
+    const Bar = loader.loadEntity("Bar");
+    particles.register(loader);
+    var arc = new Arc({loader});
     let fooView = arc.createView(Foo.type);
     let barView = arc.createView(Bar.type);
 

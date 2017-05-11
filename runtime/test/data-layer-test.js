@@ -12,6 +12,7 @@ let {Relation, Entity, BasicEntity, internals} = require('../runtime.js');
 let assert = require('chai').assert;
 let Arc = require('../arc.js');
 let Schema = require('../schema.js');
+let Loader = require('../loader');
 
 
 describe('entity', function() {
@@ -23,7 +24,7 @@ describe('entity', function() {
         }]
     }]});
 
-    let arc = new Arc();
+    let arc = new Arc({loader: new Loader()});
     let entity = new (schema.entityClass())({value: 'hello world'});
     assert.isDefined(entity);
     arc.commit([entity]);
@@ -38,7 +39,7 @@ describe('entity', function() {
 
 describe.skip('relation', function() {
   it('can be created, stored, and restored', function() {
-    let arc = new Arc();
+    let arc = new Arc({});
     let relation = new Relation(new BasicEntity('thing1'), new BasicEntity('thing2'));
     assert.isDefined(relation);
     arc.commit([relation]);

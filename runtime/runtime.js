@@ -15,7 +15,6 @@ const Symbols = require('./symbols.js');
 const Entity = require('./entity.js');
 const Type = require('./type.js');
 const Relation = require('./relation.js');
-const loader = require("./loader.js");
 
 class BasicEntity extends Entity {
   constructor(rawData) {
@@ -39,7 +38,6 @@ Object.assign(exports, {
   Entity,
   BasicEntity,
   Relation,
-  loader,
   testing: {
     testEntityClass,
   },

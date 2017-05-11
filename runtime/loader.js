@@ -22,46 +22,57 @@ function particleLocationFor(name, type) {
   return `../particles/${name}/${name}.${type}`;
 }
 
-function entityLocationFor(name, type) {
-  return `../entities/${name}.${type}`;
-}
-
 function schemaLocationFor(name) {
   return `../entities/${name}.schema`;
 }
 
-function loadParticle(name) {
-  let definition = loadDefinition(name);
-  let clazz = require(particleLocationFor(name, 'js'));
-  clazz.spec = new ParticleSpec(definition);
-  return clazz;
-}
-
-function loadDefinition(name) {
-  let data = fs.readFileSync(particleLocationFor(name, 'ptcl'), "utf-8");
-  return parser.parse(data);
-}
-
-function loadRecipe(name) {
-  let definition = loadDefinition(name);
-  return new ParticleSpec(definition).buildRecipe();
-}
-
-function loadEntity(name) {
-  let clazz = loadSchema(name).entityClass();
-  // let clazz = require(entityLocationFor(name, 'js'));
-  return clazz;
-}
-
-function loadSchema(name) {
-  let data = fs.readFileSync(schemaLocationFor(name), "utf-8");
-  var parsed = schemaParser.parse(data);
-  if (parsed.parent) {
-    var parent = loadSchema(parsed.parent);
-  } else {
-    var parent = undefined;
+class Loader {
+  constructor() {
+    this._particlesByName = {};
   }
-  return new Schema(parsed, parent);
+
+  loadFile(file) {
+    return fs.readFileSync(file, "utf-8");
+  }
+
+  loadSchema(name) {
+    let data = this.loadFile(schemaLocationFor(name));
+    var parsed = schemaParser.parse(data);
+    if (parsed.parent) {
+      var parent = this.loadSchema(parsed.parent);
+    } else {
+      var parent = undefined;
+    }
+    return new Schema(parsed, parent);
+  }
+
+  loadEntity(name) {
+    return this.loadSchema(name).entityClass();
+  }
+
+  registerParticle(particleClass) {
+    assert(particleClass instanceof Function);
+    if (this._particlesByName[particleClass.name])
+      console.warn(`${particleClass.name} is already registered`);
+    this._particlesByName[particleClass.name] = particleClass;
+  }
+
+  loadParticle(name) {
+    let particleClass = this._particlesByName[name];
+    if (particleClass) {
+      return particleClass;
+    }
+
+    let data = this.loadFile(particleLocationFor(name, 'ptcl'));
+    let definition = parser.parse(data);
+    let clazz = this.requireParticle(name);
+    clazz.spec = new ParticleSpec(definition);
+    this._particlesByName[name] = clazz;
+    return clazz;
+  }
+  requireParticle(name) {
+    return require(particleLocationFor(name, 'js'));
+  }
 }
 
-Object.assign(exports, { loadParticle, loadDefinition, loadRecipe, loadEntity, loadSchema })
+module.exports = Loader;

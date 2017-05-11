@@ -19,10 +19,13 @@ let viewlet = require('./viewlet.js');
 const InnerPEC = require('./inner-PEC.js');
 const MessageChannel = require('./message-channel.js');
 const OuterPEC = require('./outer-PEC.js');
+const Loader = require('./loader');
 
 class Arc {
-  constructor(id) {
-    this.id = id;
+  constructor({id, loader}) {
+    assert(loader);
+    this._loader = loader;
+    this.id = 1;
     this.nextLocalID = 0;
     this.particles = [];
     this.views = new Set();
@@ -30,19 +33,13 @@ class Arc {
     this.particleViewMaps = new Map();
     var channel = new MessageChannel();
     this.pec = new OuterPEC(channel.port2, this.generateID());
-    this._innerPEC = new InnerPEC(channel.port1, this.generateID());
+    this._innerPEC = new InnerPEC(channel.port1, this.generateID(), loader);
     this.nextParticleHandle = 0;
     this._particlesByName = {};
   }
 
-  registerParticle(particleClass) {
-    assert(particleClass instanceof Function);
-    assert(!this._particlesByName[particleClass.name]);
-    this._particlesByName[particleClass.name] = particleClass;
-  }
-
   instantiateParticle(name) {
-    let particleClass = this._particlesByName[name];
+    let particleClass = this._loader.loadParticle(name);
     assert(particleClass, `can't find particle ${name}`);
     var handle = this.nextParticleHandle++;
     this.particleViewMaps.set(handle, {clazz: particleClass, views: new Map()});
@@ -50,7 +47,7 @@ class Arc {
   }
 
   particleSpec(name) {
-    return this._particlesByName[name].spec;
+    return this._loader.loadParticle(name).spec;
   }
 
   generateID() {
@@ -58,13 +55,10 @@ class Arc {
   }
 
   clone() {
-    var arc = new Arc();
+    var arc = new Arc({loader: this._loader});
     var viewMap = new Map();
     this.views.forEach(v => viewMap.set(v, v.clone()));
     arc.particles = this.particles.map(p => p.clone(viewMap));
-    for (let name in this._particlesByName) {
-      arc.registerParticle(this._particlesByName[name]);
-    }
     for (let v of viewMap.values())
       arc.registerView(v);
     arc._viewMap = viewMap;

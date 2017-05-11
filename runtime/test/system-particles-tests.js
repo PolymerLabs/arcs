@@ -20,7 +20,7 @@ var Far = runtime.testing.testEntityClass('Far');
 
 describe.skip('system particles', function() {
   it('can load the system particles', function() {
-    var arc = new Arc();
+    var arc = new Arc({});
     particles.register(arc.scope);
     testParticles.register(arc.scope);
     var particle = arc.scope.instantiateParticle("Demuxer", arc);
@@ -38,7 +38,7 @@ describe.skip('system particles', function() {
   });
 
   it('muxer2 combinatorially demuxes', function() {
-    var arc = new Arc();
+    var arc = new Arc({});
     var particle = new particles.Demuxer2(arc).arcParticle;
     arc.scope.resolve(particle.outputs.get("singleton1").type, Foo.type);
     arc.scope.resolve(particle.outputs.get("singleton2").type, Bar.type);

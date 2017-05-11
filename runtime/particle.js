@@ -11,6 +11,7 @@
 
 var parser = require("./parser.js");
 var runtime = require("./runtime.js");
+var loader = require("./loader.js");
 var ParticleSpec = require("./particle-spec.js");
 var tracing = require('tracelib');
 var assert = require('assert');
@@ -64,17 +65,6 @@ class Particle {
     this.slotHandlers = [];
     this.stateHandlers = new Map();
     this.states = new Map();
-  }
-
-  _setViews(views) {
-    for (var view of views.values()) {
-      var type = view.underlyingView().type.toLiteral();
-      if (typeLiteral.isView(type)) {
-        type = typeLiteral.primitiveType(type);
-      }
-      view.entityClass = runtime.loader.loadEntity(type);
-    }
-    this.setViews(views);
   }
 
   // Override this to do stuff

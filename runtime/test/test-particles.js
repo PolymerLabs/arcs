@@ -12,7 +12,7 @@ var particle = require("../particle.js");
 var runtime = require("../runtime.js");
 
 exports.TestParticle = particle.define('TestParticle(in Foo foo, out Bar bar)', (map) => {
-  const Bar = loader.loadEntity("Bar");
+  const Bar = map.get('bar').entityClass;
   map.get('foo').get().then(result => {
     var bar = map.get('bar');
     bar.set(new bar.entityClass({value: result.value + 1}))
@@ -28,7 +28,7 @@ exports.TwoInputTestParticle = particle.define('TwoInputTestParticle(in Foo foo,
   return 3;
 });
 
-exports.register = function(arc) {
-  arc.registerParticle(exports.TestParticle);
-  arc.registerParticle(exports.TwoInputTestParticle);
+exports.register = function(loader) {
+  loader.registerParticle(exports.TestParticle);
+  loader.registerParticle(exports.TwoInputTestParticle);
 };

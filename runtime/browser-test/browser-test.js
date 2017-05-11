@@ -10,7 +10,7 @@
 
 var runtime = require("../runtime.js");
 var Arc = require("../arc.js");
-var loader = require("../loader.js");
+var BrowserLoader = require("../browser-loader.js");
 var Suggestinator = require("../suggestinator.js");
 var recipe = require('../recipe.js');
 var systemParticles = require('../system-particles.js');
@@ -18,10 +18,11 @@ var tracing = require('tracelib');
 tracing.enable();
 
 function prepareExtensionArc() {
+  let loader = new BrowserLoader('../');
+  systemParticles.register(loader);
   let Person = loader.loadEntity("Person");
   let Product = loader.loadEntity("Product");
-  var arc = new Arc();
-  systemParticles.register(arc);
+  var arc = new Arc({loader});
   var personView = arc.createView(Person.type.viewOf(), "peopleFromWebpage");
   var productView = arc.createView(Product.type.viewOf(), "productsFromWebpage");
   var personSlot = arc.createView(Person.type, "personSlot");
@@ -31,11 +32,6 @@ function prepareExtensionArc() {
 }
 
 let arc = prepareExtensionArc();
-// TODO: add a loader to the scope so this fallback can happen automatically.
-['Create', 'Recommend', 'WishlistFor', 'ListView', 'Chooser', 'MultiChooser'].forEach(name => {
-  let particleClass = loader.loadParticle(name);
-  arc.registerParticle(particleClass);
-});
 var r = new recipe.RecipeBuilder()
   .addParticle("Create")
     .connectConstraint("newList", "list")
