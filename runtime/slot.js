@@ -15,6 +15,7 @@ class Slot {
   constructor(slotid) {
     this._slotid = slotid;
     this._dom = null;
+    // The View exposed by Particle that hosts this slot.
     this._exposedView = null;
     this._particleSpec = null;
     this._pendingRequestsHandlers = [];
@@ -27,6 +28,8 @@ class Slot {
   }
   associateWithParticle(particleSpec) {
     assert(!this._particleSpec, "Particle spec already set, cannot associate slot");
+    // Verify that particle that hosts this slot exposes the same view that is
+    // being rendered by the particle that is being associated with it.
     assert(!this._exposedView ||
            this._particleSpec.renderMap.get(this._slotid) == this._exposedView,
            "Cannot associate particle-spec with an unmatching view.");

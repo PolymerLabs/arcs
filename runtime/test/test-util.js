@@ -47,6 +47,14 @@ function assertSingletonEmpty(view) {
   });
 }
 
+function initParticleSpec(name) {
+  var particleSpec = JSON.parse(`{"spec":{"name":"${name}"}}`);
+  particleSpec.exposeMap = new Map();
+  particleSpec.renderMap = new Map();
+  return particleSpec;
+}
+
 exports.assertSingletonHas = assertSingletonHas;
 exports.assertSingletonEmpty = assertSingletonEmpty;
 exports.assertViewHas = assertViewHas;
+exports.initParticleSpec = initParticleSpec;

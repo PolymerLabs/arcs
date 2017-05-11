@@ -11,16 +11,10 @@
 
 const assert = require('chai').assert;
 var SlotManager = require("../slot-manager.js");
+let util = require('./test-util.js');
 
-function initParticleSpec(name) {
-  var particleSpec = JSON.parse(`{"spec":{"name":"${name}"}}`);
-  particleSpec.exposeMap = new Map();
-  particleSpec.renderMap = new Map();
-  return particleSpec;
-}
-
-let particleSpec = initParticleSpec("RootParticle");
-let otherParticleSpec = initParticleSpec("OtherParticleSpec");
+let particleSpec = util.initParticleSpec("RootParticle");
+let otherParticleSpec = util.initParticleSpec("OtherParticleSpec");
 let rootSlotid = "root";
 let innerSlotid = "inner";
 
@@ -45,7 +39,7 @@ describe('slot manager', function() {
     // successfully register a slot.
     await slotManager.registerSlot(particleSpec, rootSlotid, "view");
     // register other particle for the same slot - added pending handler.
-    let otherParticleSpec1 = initParticleSpec("OtherParticleSpec1");
+    let otherParticleSpec1 = util.initParticleSpec("OtherParticleSpec1");
     let pendingPromise1 = slotManager.registerSlot(otherParticleSpec1, rootSlotid, "view");
     pendingPromise1.done = false;
     var verifyPromise = (pendingParticleId) => {
@@ -56,7 +50,7 @@ describe('slot manager', function() {
     };
     pendingPromise1.then(() => { verifyPromise(otherParticleSpec1); pendingPromise1.done=true });
 
-    let otherParticleSpec2 = initParticleSpec("OtherParticleSpec2");
+    let otherParticleSpec2 = util.initParticleSpec("OtherParticleSpec2");
     let pendingPromise2 = slotManager.registerSlot(otherParticleSpec2, rootSlotid, "view");
     pendingPromise2.done = false;
     pendingPromise2.then(() => { verifyPromise(otherParticleSpec2); pendingPromise2.done=true });
@@ -132,7 +126,7 @@ describe('slot manager', function() {
     let subInnerSlotid = "sub";
     let innerContent = `Bar<div slotid="${subInnerSlotid}"></div>`;
     slotManager.renderSlot(otherParticleSpec, innerContent);
-    let subParticleSpec = initParticleSpec("SubParticle");
+    let subParticleSpec = util.initParticleSpec("SubParticle");
     await slotManager.registerSlot(subParticleSpec, subInnerSlotid, "view");
     let subInnerContent = "Bazzzz";
     slotManager.renderSlot(subParticleSpec, subInnerContent);
