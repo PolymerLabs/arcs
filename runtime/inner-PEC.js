@@ -9,7 +9,6 @@
  */
 "use strict";
 
-const loader = require('./loader.js');
 const Type = require('./type.js');
 const viewlet = require('./viewlet.js');
 const define = require('./particle.js').define;
@@ -54,13 +53,13 @@ class RemoteView {
 }
 
 class InnerPEC {
-  constructor(port, idBase) {
+  constructor(port, idBase, loader) {
     this._apiPort = new PECInnerPort(port);
     this._views = new Map();
     this._particles = [];
     this._idBase = idBase;
     this._nextLocalID = 0;
-    this._particlesByName = {};
+    this._loader = loader;
 
     /*
      * This code ensures that the relevant types are known
@@ -78,7 +77,7 @@ class InnerPEC {
 
     this._apiPort.onDefineParticle = ({particleDefinition, particleFunction}) => {
       var particle = define(particleDefinition, eval(particleFunction));
-      this._particlesByName[particle.name] = particle;
+      this._loader.registerParticle(particle);
     };
 
     this._apiPort.onInstantiateParticle = 
@@ -99,20 +98,14 @@ class InnerPEC {
   }
 
   _instantiateParticle(name, views) {
-    if (!this._particlesByName[name]) {
-      let clazz = loader.loadParticle(name);
-      this._particlesByName[clazz.name] = clazz;
-    }
-
-    let particleClass = this._particlesByName[name];
-    assert(particleClass);
-    let particle = new particleClass();
+    let clazz = this._loader.loadParticle(name);
+    let particle = new clazz();
     this._particles.push(particle);
 
     var viewMap = new Map();
     views.forEach((value, key) => {
-      viewMap.set(key, viewlet.viewletFor(value, value.type.isView)); 
-    })
+      viewMap.set(key, viewlet.viewletFor(value, value.type.isView));
+    });
 
     class Slotlet {
       constructor(pec, particle) {
@@ -154,9 +147,18 @@ class InnerPEC {
       }
     });
 
+
+    for (var view of viewMap.values()) {
+      var type = view.underlyingView().type.toLiteral();
+      if (typeLiteral.isView(type)) {
+        type = typeLiteral.primitiveType(type);
+      }
+      view.entityClass = this._loader.loadEntity(type);
+    }
+
     // the problem with doing this here is that it's only after we return particle below
     // that the target mapping gets established.
-    Promise.resolve().then(() => particle._setViews(viewMap));
+    Promise.resolve().then(() => particle.setViews(viewMap));
 
     return particle;
   }

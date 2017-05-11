@@ -58,9 +58,9 @@ exports.SaveList = particle.define('SaveList(ephemeral in [~a] inputs, out [~a] 
   thisParticle.logDebug("list", list);
 });
 
-exports.register = function(arc) {
-  arc.registerParticle(exports.Demuxer);
-  arc.registerParticle(exports.Demuxer2);
-  arc.registerParticle(exports.Choose);
-  arc.registerParticle(exports.SaveList);
+exports.register = function(loader) {
+  loader.registerParticle(exports.Demuxer);
+  loader.registerParticle(exports.Demuxer2);
+  loader.registerParticle(exports.Choose);
+  loader.registerParticle(exports.SaveList);
 };

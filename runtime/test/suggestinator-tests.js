@@ -15,8 +15,11 @@ var Resolver = require("../resolver.js");
 var recipe = require("../recipe.js");
 let assert = require('chai').assert;
 let particles = require('./test-particles.js');
+let Loader = require('../loader');
 
 
+let loader = new Loader();
+particles.register(loader);
 var Foo = runtime.testing.testEntityClass('Foo');
 var Bar = runtime.testing.testEntityClass('Bar');
 var Far = runtime.testing.testEntityClass('Far');
@@ -25,8 +28,7 @@ describe('suggestinator', function() {
 
   it('suggests a ranked list of recipes', async () => {
 
-    var arc = new Arc();
-    particles.register(arc);
+    var arc = new Arc({loader});
 
     var fooView = arc.createView(Foo.type);
     var barView = arc.createView(Bar.type);

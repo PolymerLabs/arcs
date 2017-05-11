@@ -18,9 +18,5 @@
     "mocha": "^3.2.0",
     "pegjs": "^0.10.0",
     "watchify": "^3.9.0"
-  },
-  "browser": {
-    "./loader.js": "./browser-loader.js",
-    "../../runtime/loader.js": "../../runtime/browser-loader.js"
   }
 }
