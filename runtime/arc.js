@@ -38,6 +38,13 @@ class Arc {
     this.nextParticleHandle = 0;
     this._particlesByName = {};
   }
+  
+  static deserialize(json) {
+    var arc = new Arc(json.id);
+    for (var view in json.views) {
+      console.log(view);
+    }
+  }
 
   instantiateParticle(name) {
     let particleClass = this._loader.loadParticle(name);
