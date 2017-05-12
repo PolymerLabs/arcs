@@ -35,6 +35,13 @@ class Arc {
     this.pec = new OuterPec(innerPecPort, slotManager, `${pecId}:outer`);
     this.nextParticleHandle = 0;
   }
+  
+  static deserialize(json) {
+    var arc = new Arc(json.id);
+    for (var view in json.views) {
+      console.log(view);
+    }
+  }
 
   instantiateParticle(name) {
     let particleClass = this._loader.loadParticle(name, true);
@@ -64,7 +71,7 @@ class Arc {
   }    
 
   serialize() {
-    var s = { views: [], particles: []};
+    var s = { views: [], particles: [], id: this.id };
 
     // 1. serialize entities
     var entities = new Set();
