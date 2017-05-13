@@ -59,6 +59,8 @@ class Slot {
   }
   isInitialized() {
   }
+  isAvailable() {
+  }
   uninitialize() {
   }
   get content() {

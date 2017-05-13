@@ -34,8 +34,7 @@ class SlotManager {
     return new Promise((resolve, reject) => {
       try {
         let slot = this._getOrCreateSlot(slotid);
-        // TODO(sjmiles): is "initialized but not associated" a single condition that should have a getter (e.g. `isAvailable()`)?
-        if (slot.isInitialized() && !slot.isAssociated()) {
+        if (slot.isAvailable()) {
           resolve(slot);
         } else {
           slot.addPendingRequest(resolve);
