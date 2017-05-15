@@ -7,7 +7,8 @@
     "peg": "node node_modules/pegjs/bin/pegjs -o parser.js particle.peg && node node_modules/pegjs/bin/pegjs -o schema-parser.js schema.peg",
     "browserify": "./node_modules/.bin/browserify browser-test/browser-test.js --debug -o browser-test/browser-test-ified.js",
     "b": "./node_modules/.bin/browserify browser-test/browser-test.js --debug -o browser-test/browser-test-ified.js",
-    "watchify": "./node_modules/.bin/watchify browser-test/browser-test.js -v --debug -o browser-test/browser-test-ified.js"
+    "watchify": "./node_modules/.bin/watchify browser-test/browser-test.js -v --debug -o browser-test/browser-test-ified.js",
+    "watchdemo": "./node_modules/.bin/watchify browser-demo/browser-demo.js -v --debug -o browser-demo/browser-demo-bundle.js"
   },
   "dependencies": {
     "tracelib": "../tracelib"
