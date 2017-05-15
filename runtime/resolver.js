@@ -33,7 +33,12 @@ class Resolver {
       }
     }
     recipe.arc = arc;
-    context.afterResolution.forEach(f => f());
+
+    // We used to complete the afterResolution tasks here, but moved them
+    // to the recipe because they modify the state of the arc. Now the
+    // recipe needs to run them before instantiating into an arc.
+    recipe.beforeInstantiation = context.afterResolution;
+
     return true;
   }
 
@@ -185,10 +190,11 @@ class Resolver {
     type = this._resolveType(context, type);
 
     // TODO: More complex resolution logic should go here.
+    // Defer view creation until after resolution.
     if (connection.spec.mustCreate)
-      context.afterResolution.push(() => { connection.view = context.arc.createView(type, connection.constraintName); });
+      context.afterResolution.push(arc => { connection.view = arc.createView(type, connection.constraintName); });
     else
-      context.afterResolution.push(() => { connection.view = context.arc.findViews(type)[0]; });
+      connection.view = context.arc.findViews(type)[0];
     connection.type = type;
     trace.end({resolved: true});
     return true;
@@ -199,22 +205,35 @@ class Resolver {
       args: {name: connection.name, constraintName: connection.constraintName}});
     var constrainedConnection = context.constraintNames.get(connection.constraintName);
     if (constrainedConnection !== undefined) {
+      // We've encountered this name before, and made a spec connection for it.
+      // Attempt to match that with the information we have from this end.
       if (!this._matches(context, context.connectionSpec, constrainedConnection)) {
         trace.end({args: {resolved: false, reason: "could not match existing constraint"}});
         return false;
       }
-      context.afterResolution.push(() => {
+      // We deferred the connection we made when we first encountered this name (see
+      // below) so we need to defer here too.
+      context.afterResolution.push(arc => {
         connection.view = constrainedConnection.view;
         connection.type = constrainedConnection.type;
       });
       trace.end({args: {resolved: true}})
       return true;
     }
+
+    // This is the first time we've encountered this name. Construct a new spec based on
+    // the information we have (particularly the name and type of the connection as 
+    // exposed by the particle) and attempt to resolve it.
     constrainedConnection = new recipe.RecipeSpecConnection(connection.name, context.connectionSpec);
     constrainedConnection.constraintName = connection.constraintName;
     if (this._resolveSpecConnection(context, constrainedConnection)) {
+      // Resolution successful!
       context.constraintNames.set(connection.constraintName, constrainedConnection);
-      context.afterResolution.push(() => {
+      // It's possible that this connection is generic in type, so we won't be able to
+      // fully resolve until the other end is resolved too. Furthermore, spec connections
+      // can sometimes defer, if they need to create the view. Hence we need to defer this
+      // too.
+      context.afterResolution.push(arc => {
         connection.view = constrainedConnection.view;
         connection.type = constrainedConnection.type;
       });
