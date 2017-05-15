@@ -15,8 +15,11 @@
       const Product = views.get('wishlist').entityClass;
       this.logDebug("person", views.get("person"));
       var wishlist = views.get('wishlist');
-      ["a new bike!", "Fresh Puppies", "A packet of Tim Loh that never runs out"].map(p => wishlist.store(
-        new Product({name: p})));
+      [
+        "Book: How to Draw",
+        "Arduino",
+        "Field Hockey Stick"
+      ].map(p => wishlist.store(new Product({name: p})));
       this.logDebug("wishlist", wishlist);
     }
   };
