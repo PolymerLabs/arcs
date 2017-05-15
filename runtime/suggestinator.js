@@ -27,10 +27,8 @@ class Suggestinator {
     var trace = tracing.start({cat: "suggestinator", name: "Suggestinator::suggestinate"});
     var suggestions = this._getSuggestions(arc);
     trace.update({suggestions: suggestions.length});
-    var Product = arc._loader.loadEntity("Product");
 
     suggestions = suggestions.filter(suggestion => Resolver.resolve(suggestion, arc));
-
     for (var suggestion of suggestions)
       suggestion.rank = await this.speculator.speculate(arc, suggestion);
   
