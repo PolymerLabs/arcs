@@ -15,6 +15,7 @@ var Suggestinator = require("../suggestinator.js");
 var recipe = require('../recipe.js');
 var systemParticles = require('../system-particles.js');
 let assert = require('chai').assert;
+const testUtil = require('./test-util.js');
 
 require("./trace-setup.js");
 
@@ -29,7 +30,7 @@ function prepareExtensionArc() {
   var personSlot = arc.createView(Person.type, "personSlot");
   arc.commit([new Person({name: "Claire"}), new Product({name: "Tea Pot"}), new Product({name: "Bee Hive"}), 
               new Product({name: "Denim Jeans"})]);
-  return arc;
+  return {arc, Person, Product};
 }
 
 class FakeSlotManager {
@@ -101,7 +102,7 @@ class FakeSlotManager {
 
 describe('demo flow', function() {
   it('flows like a demo', function(done) {
-    let arc = prepareExtensionArc();
+    let {arc, Person, Product} = prepareExtensionArc();
     var r = new recipe.RecipeBuilder()
       .addParticle("Create")
         .connectConstraint("newList", "list")
@@ -124,18 +125,22 @@ describe('demo flow', function() {
         .connectConstraint("choices", "recommended")
         .connectConstraint("resultList", "list")
       .build();
+
+    var productViews = arc.findViews(Product.type.viewOf());
+    assert.equal(productViews.length, 1);
+
     var suggestinator = new Suggestinator();
     suggestinator._getSuggestions = a => [r];
     var results = suggestinator.suggestinate(arc);
     results.then(async r => {
       console.log(r);
+      var productViews = arc.findViews(Product.type.viewOf());
+      assert.equal(productViews.length, 1);
+      await testUtil.assertViewHas(productViews[0], Product, "name", ["Tea Pot", "Bee Hive", "Denim Jeans"]);
       var slotManager = new FakeSlotManager(arc.pec);
       slotManager.expectGetSlot("ListView", "root")
                  .expectGetSlot("Chooser", "action")
                  .expectRender("ListView")
-                 .expectRender("ListView")
-                 .expectRender("Chooser")
-                 .expectRender("Chooser")
                  .expectRender("Chooser")
                  .expectRender("Chooser")
                  .expectRender("Chooser")
@@ -146,6 +151,11 @@ describe('demo flow', function() {
       arc.pec.slotManager = slotManager;
       r[0].instantiate(arc);
       await slotManager.expectationsCompleted();
+      productViews = arc.findViews(Product.type.viewOf());
+      assert.equal(productViews.length, 4);
+      await testUtil.assertViewHas(productViews[1], Product, "name",
+          ["Tea Pot", "Bee Hive", "Denim Jeans", "Fresh Puppies"]);
+
       done();
     });
 

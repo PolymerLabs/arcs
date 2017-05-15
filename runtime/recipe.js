@@ -57,9 +57,11 @@ class RecipeComponent {
 class Recipe {
   constructor(...components) {
     this.components = components;
+    this.beforeInstantiation = [];
   }
 
   instantiate(arc) {
+    this.beforeInstantiation.forEach(f => f(arc));
     this.components.forEach(component => component.instantiate(arc));
   }
 }

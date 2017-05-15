@@ -26,6 +26,17 @@ function assertSingletonHas(view, entityClass, expectation) {
   });
 }
 
+function assertViewHas(view, entityClass, field, expectations) {
+  return new Promise((resolve, reject) => {
+    view = viewlet.viewletFor(view, true);
+    view.entityClass = entityClass;
+    view.toList().then(result => {
+      assert.deepEqual(result.map(a => a[field]), expectations);
+      resolve();
+    });
+  });
+}
+
 function assertSingletonEmpty(view) {
   return new Promise((resolve, reject) => {
     var variable = new viewlet.viewletFor(view);
@@ -38,3 +49,4 @@ function assertSingletonEmpty(view) {
 
 exports.assertSingletonHas = assertSingletonHas;
 exports.assertSingletonEmpty = assertSingletonEmpty;
+exports.assertViewHas = assertViewHas;

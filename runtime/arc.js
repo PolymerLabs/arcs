@@ -38,7 +38,7 @@ class Arc {
     this.nextParticleHandle = 0;
     this._particlesByName = {};
   }
-  
+
   static deserialize(json) {
     var arc = new Arc(json.id);
     for (var view in json.views) {
@@ -62,8 +62,8 @@ class Arc {
     return `${this.id}:${this.nextLocalID++}`;
   }
 
-  clone(id) {
-    var arc = new Arc({loader: this._loader, id});
+  clone() {
+    var arc = new Arc({loader: this._loader, id: this.generateID()});
     var viewMap = new Map();
     this.views.forEach(v => viewMap.set(v, v.clone()));
     arc.particles = this.particles.map(p => p.clone(viewMap));
@@ -77,8 +77,9 @@ class Arc {
     // If speculatively executing then we need to translate the view
     // in the plan to its clone.
     if (this._viewMap) {
-      targetView = this._viewMap.get(targetView);
+      targetView = this._viewMap.get(targetView) || targetView;
     }
+    assert(targetView, "no target view provided");
     assert(this.views.has(targetView), "view of type " + targetView.type.key + " not visible to arc");
     var viewMap = this.particleViewMaps.get(particle);
     assert(viewMap.clazz.spec.connectionMap.get(name) !== undefined, "can't connect view to a view slot that doesn't exist");
