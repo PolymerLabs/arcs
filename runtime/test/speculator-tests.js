@@ -35,7 +35,6 @@ describe('speculator', function() {
             .connectView("bar", barView)
         .build();
     var speculator = new Speculator();
-    console.log(new Foo({value: "not a Bar"}));
     fooView.set(new Foo({value: "not a Bar"}));
     var relevance = await speculator.speculate(arc, r);
     assert.equal(relevance, 1.8);
