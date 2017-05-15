@@ -17,6 +17,7 @@ var runtime = require("./runtime.js");
 var assert = require("assert");
 var ParticleSpec = require("./particle-spec.js");
 const Schema = require("./schema.js");
+const particle = require('./particle');
 
 function particleLocationFor(name, type) {
   return `../particles/${name}/${name}.${type}`;
@@ -71,7 +72,9 @@ class Loader {
     return clazz;
   }
   requireParticle(name) {
-    return require(particleLocationFor(name, 'js'));
+    let particleWrapper = eval(this.loadFile(particleLocationFor(name, 'js')));
+    let particleClass = particleWrapper({particle, Particle: particle.Particle});
+    return particleClass;
   }
 }
 
