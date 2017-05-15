@@ -11,7 +11,7 @@
 
 let assert = require('chai').assert;
 
-class FakeSlotManager {
+class MockSlotManager {
   constructor(pec) {
     this.pec = pec;
     this.expectQueue = [];
@@ -78,4 +78,4 @@ class FakeSlotManager {
   }
 }
 
-module.exports = FakeSlotManager;
+module.exports = MockSlotManager;

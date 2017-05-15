@@ -17,7 +17,7 @@ var recipe = require('../recipe.js');
 var systemParticles = require('../system-particles.js');
 let assert = require('chai').assert;
 const testUtil = require('./test-util.js');
-const FakeSlotManager = require('./fake-slot-manager.js');
+const MockSlotManager = require('./mock-slot-manager.js');
 
 require("./trace-setup.js");
 
@@ -72,7 +72,7 @@ describe('demo flow', function() {
       var productViews = arc.findViews(Product.type.viewOf());
       assert.equal(productViews.length, 1);
       await testUtil.assertViewHas(productViews[0], Product, "name", ["Tea Pot", "Bee Hive", "Denim Jeans"]);
-      var slotManager = new FakeSlotManager(arc.pec);
+      var slotManager = new MockSlotManager(arc.pec);
       slotManager.expectGetSlot("ListView", "root")
                  .expectGetSlot("Chooser", "action")
                  .expectRender("ListView")
