@@ -18,6 +18,7 @@
         populationView.toList().then(data => {
           views.get('recommendations').store(data[0]);
           views.get('recommendations').store(data[1]);
+          views.get('recommendations').store(data[2]);
           this.logDebug("recommendations", views.get('recommendations'));
         });
       });
