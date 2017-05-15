@@ -22,26 +22,4 @@ module.exports = class BrowserLoader extends Loader {
     xhr.send();
     return xhr.responseText;
   }
-  requireParticle(name) {
-    // dynamic loading not so bueno under browserify ...
-    // preload these here so they:
-    // (1) are in the browserify bundle
-    // (2) have ids (paths) that browserify can resolve from this module
-    switch (name) {
-      case 'Create':
-        return require("../particles/Create/Create.js");
-      case 'Recommend':
-        return require("../particles/Recommend/Recommend.js");
-      case 'WishlistFor':
-        return require("../particles/WishlistFor/WishlistFor.js");
-      case 'ListView':
-        return require("../particles/ListView/ListView.js");
-      case 'Chooser':
-        return require("../particles/Chooser/Chooser.js");
-      case 'MultiChooser':
-        return require("../particles/MultiChooser/MultiChooser.js");
-    }
-  }
-}
-
-
+};
