@@ -72,7 +72,6 @@
     }
     _listen(slot, model, handlers) {
       handlers.forEach(name => {
-        //console.log('eventHandler: ', name);
         slot.clearEventHandlers(name);
         slot.registerEventHandler(name, model[name]);
       });
