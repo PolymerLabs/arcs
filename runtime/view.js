@@ -117,7 +117,9 @@ class View extends ViewBase {
   serialize(list) {
     list.push({
       id: this.id,
-      type: 'view',
+      sort: 'view',
+      type: this.type.toLiteral(),
+      name: this.name,
       values: this._items.map(a => a.id)
     });
   }
@@ -163,7 +165,9 @@ class Variable extends ViewBase {
       return;
     list.push({
       id: this.id,
-      type: 'variable',
+      sort: 'variable',
+      type: this.type.toLiteral(),
+      name: this.name,
       value: this._stored.id
     });
   }

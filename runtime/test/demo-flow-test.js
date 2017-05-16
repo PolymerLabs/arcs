@@ -92,6 +92,11 @@ describe('demo flow', function() {
       await testUtil.assertViewHas(productViews[1], Product, "name",
           ["Tea Pot", "Bee Hive", "Denim Jeans", "Arduino"]);
 
+      var serialization = arc.serialize();
+      var loader = new Loader();
+      systemParticles.register(loader);
+      var newArc = Arc.deserialize(serialization, loader);
+
       done();
     });
 

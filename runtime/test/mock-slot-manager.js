@@ -42,7 +42,6 @@ class MockSlotManager {
 
   _sendEvent({slot, event, data}) {
     var spec = this.specs.get(slot);
-    console.log(slot);
     this.pec.sendEvent(spec, {handler: event, data});
   }
 
