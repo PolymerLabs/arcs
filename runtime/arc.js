@@ -36,11 +36,31 @@ class Arc {
     this.nextParticleHandle = 0;
   }
   
-  static deserialize(json) {
-    var arc = new Arc(json.id);
-    for (var view in json.views) {
-      console.log(view);
+  static deserialize(json, loader) {
+    var entityMap = {};
+    var viewMap = {};
+    json.entities.forEach(e => entityMap[e.id] = e);
+    var arc = new Arc({id: json.id, loader});
+    for (var serializedView of json.views) {
+      var view = arc.createView(new Type(serializedView.type), serializedView.name);
+      view.id = serializedView.id;
+      viewMap[serializedView.id] = view;
+      if (serializedView.sort == 'view') {
+        var values = serializedView.values.map(a => entityMap[a]);
+        view._items = values;
+      } else {
+        var value = entityMap[serializedView.value];
+        view._stored = value;
+      }
     }
+    for (var serializedParticle of json.particles) {
+      console.log(serializedParticle);
+      var particle = arc.instantiateParticle(serializedParticle.name);
+      for (var name in serializedParticle.views) {
+        arc.connectParticleToView(particle, name, viewMap[serializedParticle.views[name]]);
+      }
+    }
+    return arc;
   }
 
   instantiateParticle(name) {

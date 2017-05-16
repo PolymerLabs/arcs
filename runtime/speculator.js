@@ -30,7 +30,6 @@ class Speculator {
       if (newArc.pec.messageCount !== messageCount + 1)
         return awaitCompletion();
       else {
-        console.log(JSON.stringify(newArc.serialize()));
         return relevance.relevanceScore();
       }
     }
