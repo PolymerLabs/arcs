@@ -8,7 +8,7 @@
 
 "use strict";
 
-(({particle: {Particle, ViewChanges, StateChanges, SlotChanges}}) => {
+defineParticle(({particle: {Particle, ViewChanges, StateChanges, SlotChanges}}) => {
 
   function difference(a, b) {
     var result = new Map();

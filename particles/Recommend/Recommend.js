@@ -8,7 +8,7 @@
 
 "use strict";
 
-(({Particle}) => {
+defineParticle(({Particle}) => {
   return class Recommend extends Particle {
     setViews(views) {
       this.on(views, 'population', 'change', e => {

@@ -16,4 +16,4 @@ self.onmessage = function(e) {
   let {id, base} = e.data;
   console.log('starting worker', id);
   new InnerPec(e.ports[0], id, new Loader(base));
-}
+};

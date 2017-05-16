@@ -11,10 +11,10 @@
 const InnerPec = require('./inner-PEC.js');
 const OuterPec = require('./outer-PEC.js');
 const MessageChannel = require('./message-channel.js');
+const Loader = require('./loader.js');
 
 module.exports = function(loader, id) {
   var channel = new MessageChannel();
-  // TODO: innerPec should have its own loader.
-  new InnerPec(channel.port1, `${id}:inner`, loader);
+  new InnerPec(channel.port1, `${id}:inner`, new Loader());
   return new OuterPec(channel.port2, `${id}:outer`);
 };

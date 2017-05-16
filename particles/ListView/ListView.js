@@ -8,7 +8,7 @@
 
 "use strict";
 
-(({Particle}) => {
+defineParticle(({Particle}) => {
   return class ListView extends Particle {
     setViews(views) {
       this.on(views, 'list', 'change', async e => {

@@ -18,10 +18,8 @@ var assert = require("assert");
 var ParticleSpec = require("./particle-spec.js");
 const Schema = require("./schema.js");
 const particle = require('./particle');
+const vm = require('vm');
 
-function particleLocationFor(name, type) {
-  return `../particles/${name}/${name}.${type}`;
-}
 
 function schemaLocationFor(name) {
   return `../entities/${name}.schema`;
@@ -30,6 +28,10 @@ function schemaLocationFor(name) {
 class Loader {
   constructor() {
     this._particlesByName = {};
+  }
+
+  particleLocationFor(name, type) {
+    return `../particles/${name}/${name}.${type}`;
   }
 
   loadFile(file) {
@@ -58,23 +60,43 @@ class Loader {
     this._particlesByName[particleClass.name] = particleClass;
   }
 
-  loadParticle(name) {
+  loadParticleSpec(name) {
+    if (this._particlesByName[name])
+      return this._particlesByName[name].spec;
+    let data = this.loadFile(this.particleLocationFor(name, 'ptcl'));
+    return new ParticleSpec(parser.parse(data));
+  }
+
+  // TODO: onlyRegisteredScript is a hack for inline particles. remove it.
+  loadParticle(name, onlyRegisteredScript) {
     let particleClass = this._particlesByName[name];
     if (particleClass) {
       return particleClass;
     }
 
-    let data = this.loadFile(particleLocationFor(name, 'ptcl'));
-    let definition = parser.parse(data);
-    let clazz = this.requireParticle(name);
-    clazz.spec = new ParticleSpec(definition);
+    let clazz = onlyRegisteredScript ? {name} : this.requireParticle(name);
+    clazz.spec = this.loadParticleSpec(name);
     this._particlesByName[name] = clazz;
     return clazz;
   }
+
   requireParticle(name) {
-    let particleWrapper = eval(this.loadFile(particleLocationFor(name, 'js')));
-    let particleClass = particleWrapper({particle, Particle: particle.Particle});
-    return particleClass;
+    let filename = this.particleLocationFor(name, 'js');
+    let src = this.loadFile(filename);
+    // Note. This is not real isolation.
+    let script = new vm.Script(src, {filename});
+    let result = [];
+    let self = {
+      defineParticle(particleWrapper) {
+        result.push(particleWrapper);
+      },
+      console,
+    };
+    script.runInNewContext(self);
+    return this.unwrapParticle(result[0]);
+  }
+  unwrapParticle(particleWrapper) {
+    return particleWrapper({particle, Particle: particle.Particle});
   }
 }
 
