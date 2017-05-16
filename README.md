@@ -11,7 +11,7 @@ $ (cd tracelib && npm install)
 
 ## Test
 ```
-$ (cd runtime && npm test)
+$ (cd runtime && gulp)
 ```
 
 If there are unhandled promise exceptions without stack traces, use `./node_modules/.bin/mocha --trace-warnings`.
