@@ -8,13 +8,14 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-var runtime = require("../runtime.js");
-var Arc = require("../arc.js");
-var BrowserLoader = require("../browser-loader.js");
-var Suggestinator = require("../suggestinator.js");
-var recipe = require('../recipe.js');
-var systemParticles = require('../system-particles.js');
-var tracing = require('tracelib');
+const runtime = require("../runtime.js");
+const Arc = require("../arc.js");
+const BrowserLoader = require("../browser-loader.js");
+const Suggestinator = require("../suggestinator.js");
+const recipe = require('../recipe.js');
+const systemParticles = require('../system-particles.js');
+const tracing = require('tracelib');
+const OuterPec = require('../outer-PEC');
 tracing.enable();
 
 function prepareExtensionArc() {
@@ -22,7 +23,14 @@ function prepareExtensionArc() {
   systemParticles.register(loader);
   let Person = loader.loadEntity("Person");
   let Product = loader.loadEntity("Product");
-  var arc = new Arc({loader});
+  // TODO: Move this to a separate file.
+  let pecFactory = function(id) {
+    let channel = new MessageChannel();
+    let worker = new Worker('../build/worker-entry.js');
+    worker.postMessage({id: `${id}:inner`, base: '../'}, [channel.port1]);
+    return new OuterPec(channel.port2, `${id}:outer`);
+  }
+  var arc = new Arc({loader, pecFactory});
   var personView = arc.createView(Person.type.viewOf(), "peopleFromWebpage");
   var productView = arc.createView(Product.type.viewOf(), "productsFromWebpage");
   var personSlot = arc.createView(Person.type, "personSlot");
