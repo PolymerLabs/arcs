@@ -17,24 +17,49 @@ defineParticle(({particle: {Particle, ViewChanges, StateChanges, SlotChanges}}) 
     return result.values()
   }
 
-  return class Chooser extends Particle {
+  class DomParticle extends Particle {
+    async _renderViews(views, slotName) {
+      let model = this._buildViewModel(views);
+      if (!model) {
+        this.releaseSlot(slotName);
+      } else {
+        let html = this._render(slot, model);
+        let slot = await this.requireSlot(slotName);
+        slot.render(html);
+        this._listen(slot, model, this._findHandlerNames(html));
+      }
+    }
+    _listen(slot, model, handlers) {
+      handlers.forEach(name => {
+        slot.clearEventHandlers(name);
+        slot.registerEventHandler(name, model[name]);
+      });
+    }
+    _findHandlerNames(html) {
+      let handlers = new Map();
+      let m;
+      let re = /on-.*?=\"([^\"]*)"/gmi;
+      while ((m = re.exec(html)) !== null) {
+        handlers.set(m[1], true);
+      }
+      return Array.from(handlers.keys());
+    }
+  }
+
+  return class Chooser extends DomParticle {
     setViews(views) {
-      this.when([new ViewChanges(views, ['choices', 'resultList'], 'change')], async e => {
-        var inputList = await views.get('choices').toList();
-        var outputList = await views.get('resultList').toList();
-        var result = [...difference(inputList, outputList)];
-        this.emit('values', result);
+      this.when([new ViewChanges(views, ['choices', 'resultList'], 'change')], e => {
+        this._viewsUpdated(views);
       });
-      this.when([new StateChanges('values'), new SlotChanges()], async e => {
-        let slotName = 'action';
-        let model = this._buildViewModel(views);
-        if (!model) {
-          this.releaseSlot(slotName);
-        } else {
-          let slot = await this.requireSlot(slotName);
-          this._render(slot, model);
-        }
+      this.when([new StateChanges('values'), new SlotChanges()], e => {
+        this._renderViews(views, 'action');
       });
+    }
+    async _viewsUpdated(views) {
+      let choices = await views.get('choices').toList();
+      let resultList = await views.get('resultList').toList();
+      let result = [...difference(choices, resultList)];
+      this.emit('values', result);
     }
     _buildViewModel(views) {
       let values = this.states.get('values');
@@ -46,7 +71,7 @@ defineParticle(({particle: {Particle, ViewChanges, StateChanges, SlotChanges}}) 
       }
     }
     _render(slot, model) {
-      let html = `
+      return `
 <div style="border: 1px solid silver; padding: 4px;">
   <div>
     <div style="color: white; background-color: #00897B; display: flex; align-items: center; padding: 8px 16px;">
@@ -66,24 +91,6 @@ defineParticle(({particle: {Particle, ViewChanges, StateChanges, SlotChanges}}) 
   <div slotidXXX="action"></div>
 </div>
       `.trim();
-      slot.render(html);
-      // TODO(sjmiles): experimenting with automatic event setup
-      this._listen(slot, model, this._findHandlerNames(html));
-    }
-    _listen(slot, model, handlers) {
-      handlers.forEach(name => {
-        slot.clearEventHandlers(name);
-        slot.registerEventHandler(name, model[name]);
-      });
-    }
-    _findHandlerNames(html) {
-      let handlers = new Map();
-      let m;
-      let re = /on-.*?=\"([^\"]*)"/gmi;
-      while ((m = re.exec(html)) !== null) {
-        handlers.set(m[1], true);
-      }
-      return Array.from(handlers.keys());
     }
   };
 
