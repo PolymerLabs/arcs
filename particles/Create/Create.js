@@ -8,7 +8,7 @@
 
 "use strict";
 
-(({Particle}) => {
+defineParticle(({Particle}) => {
   return class Create extends Particle {
     setViews(views) {
       this.relevance = 1;

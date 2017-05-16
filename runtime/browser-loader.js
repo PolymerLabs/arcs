@@ -22,4 +22,14 @@ module.exports = class BrowserLoader extends Loader {
     xhr.send();
     return xhr.responseText;
   }
+  requireParticle(name) {
+    let filename = this._base + this.particleLocationFor(name, 'js');
+    let result = [];
+    self.defineParticle = function(particleWrapper) {
+      result.push(particleWrapper);
+    };
+    importScripts(filename);
+    delete self.defineParticle;
+    return this.unwrapParticle(result[0]);
+  }
 };

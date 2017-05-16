@@ -34,7 +34,7 @@ class Arc {
   }
 
   instantiateParticle(name) {
-    let particleClass = this._loader.loadParticle(name);
+    let particleClass = this._loader.loadParticle(name, true);
     assert(particleClass, `can't find particle ${name}`);
     var handle = this.nextParticleHandle++;
     this.particleViewMaps.set(handle, {clazz: particleClass, views: new Map()});
@@ -42,7 +42,7 @@ class Arc {
   }
 
   particleSpec(name) {
-    return this._loader.loadParticle(name).spec;
+    return this._loader.loadParticleSpec(name);
   }
 
   generateID() {

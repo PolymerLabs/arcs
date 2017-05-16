@@ -8,7 +8,7 @@
 
 "use strict";
 
-(({Particle}) => {
+defineParticle(({Particle}) => {
   return class WishlistFor extends Particle {
     setViews(views) {
       // TODO: Don't let this stay here.
