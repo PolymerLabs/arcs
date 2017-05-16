@@ -16,25 +16,19 @@ const Type = require('./type.js');
 const view = require('./view.js');
 const Relation = require('./relation.js');
 let viewlet = require('./viewlet.js');
-const InnerPEC = require('./inner-PEC.js');
-const MessageChannel = require('./message-channel.js');
-const OuterPEC = require('./outer-PEC.js');
-const Loader = require('./loader');
 
 class Arc {
-  constructor({id, loader}) {
+  constructor({id, loader, pecFactory}) {
     assert(loader);
     this._loader = loader;
+    this._pecFactory = pecFactory ||  require('./fake-pec-factory').bind(null, loader);
     this.id = id;
     this.nextLocalID = 0;
     this.particles = [];
     this.views = new Set();
     this._viewsByType = new Map();
     this.particleViewMaps = new Map();
-    var channel = new MessageChannel();
-    this.pec = new OuterPEC(channel.port2, this.generateID());
-    // TODO: Once there's real isolation, innerPec should have its own loader.
-    this._innerPEC = new InnerPEC(channel.port1, this.generateID(), loader);
+    this.pec = this._pecFactory(this.generateID());
     this.nextParticleHandle = 0;
     this._particlesByName = {};
   }
@@ -56,7 +50,7 @@ class Arc {
   }
 
   clone() {
-    var arc = new Arc({loader: this._loader, id: this.generateID()});
+    var arc = new Arc({loader: this._loader, id: this.generateID(), pecFactory: this._pecFactory});
     var viewMap = new Map();
     this.views.forEach(v => viewMap.set(v, v.clone()));
     arc.particles = this.particles.map(p => p.clone(viewMap));
