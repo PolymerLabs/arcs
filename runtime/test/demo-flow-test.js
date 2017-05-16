@@ -89,7 +89,7 @@ describe('demo flow', function() {
       productViews = arc.findViews(Product.type.viewOf());
       assert.equal(productViews.length, 4);
       await testUtil.assertViewHas(productViews[1], Product, "name",
-          ["Tea Pot", "Bee Hive", "Denim Jeans", "Fresh Puppies"]);
+          ["Tea Pot", "Bee Hive", "Denim Jeans", "Arduino"]);
 
       done();
     });
