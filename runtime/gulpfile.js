@@ -14,9 +14,6 @@ gulp.task('build', function() {
   const buffer = require('vinyl-buffer');
   const sourcemaps = require('gulp-sourcemaps');
 
-  function build(file) {
-  }
-
   for (let file of [
     'browser-test/browser-test.js',
     'browser-demo/browser-demo.js',
@@ -40,8 +37,7 @@ gulp.task('test', function() {
 });
 
 gulp.task('watch', function() {
-  // TODO: Move all src to src/ so we can glob recursively here.
-  gulp.watch(['*.js', 'test/**'], ['build', 'test']);
+  gulp.watch(['**', '!build/**'], ['build', 'test']);
 });
 
 gulp.task('default', ['build', 'test']);
