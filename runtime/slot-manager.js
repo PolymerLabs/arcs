@@ -63,15 +63,9 @@ class SlotManager {
   _getParticleSlot(particleSpec) {
     return this._getSlot(this._getSlotId(particleSpec))
   }
-  _makeEventletHandler(particleSpec) {
-    return eventlet => {
-      this._pec.sendEvent(particleSpec, eventlet)
-    };
-  }
   // TODO(sjmiles): should be `renderParticle`?
-  renderSlot(particleSpec, content) {
+  renderSlot(particleSpec, content, handler) {
     let slot = this._getParticleSlot(particleSpec);
-    let handler = this._makeEventletHandler(particleSpec);
     // returns slot(id)s rendered by the particle
     let innerSlotInfos = slot.render(content, handler);
     if (innerSlotInfos) {

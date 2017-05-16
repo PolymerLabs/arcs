@@ -14,26 +14,29 @@ const BrowserLoader = require("../browser-loader.js");
 const Suggestinator = require("../suggestinator.js");
 const recipe = require('../recipe.js');
 const systemParticles = require('../system-particles.js');
+const SlotManager = require('../slot-manager.js');
 const tracing = require('tracelib');
 tracing.enable();
 
-function prepareExtensionArc() {
+function prepareExtensionArc(slotManager) {
   let loader = new BrowserLoader('../');
   systemParticles.register(loader);
   let Person = loader.loadEntity("Person");
   let Product = loader.loadEntity("Product");
   // TODO: Move this to a separate file.
   let pecFactory = require('../worker-pec-factory').bind(null, '../');
-  var arc = new Arc({loader, pecFactory});
+  var domRoot = global.document ? document.querySelector('[particle-container]') || document.body : {};
+  var slotManager = new SlotManager(domRoot);
+  var arc = new Arc({loader, pecFactory, slotManager});
   var personView = arc.createView(Person.type.viewOf(), "peopleFromWebpage");
   var productView = arc.createView(Product.type.viewOf(), "productsFromWebpage");
   var personSlot = arc.createView(Person.type, "personSlot");
   arc.commit([new Person({name: "Claire"}), new Product({name: "Tea Pot"}), new Product({name: "Bee Hive"}),
               new Product({name: "Denim Jeans"})]);
-  return arc;
+  return {arc, slotManager};
 }
 
-let arc = prepareExtensionArc();
+let {arc, slotManager}  = prepareExtensionArc();
 var r = new recipe.RecipeBuilder()
   .addParticle("Create")
     .connectConstraint("newList", "list")
@@ -66,4 +69,7 @@ var results = suggestinator.suggestinate(arc);
 results.then(r => {
   console.log(r);
   window.trace = tracing.save();
+  // TODO(mmandlis): This causes all particle to re-render their slots.
+  // Should support speculative execution in SlotManager instead.
+  r[0].instantiate(arc);
 })

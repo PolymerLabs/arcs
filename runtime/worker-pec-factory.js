@@ -10,9 +10,9 @@
 
 const OuterPec = require('./outer-PEC');
 
-module.exports = function(base, id) {
+module.exports = function(base, id, slotManager) {
   let channel = new MessageChannel();
   let worker = new Worker('../build/worker-entry.js');
   worker.postMessage({id: `${id}:inner`, base}, [channel.port1]);
-  return new OuterPec(channel.port2, `${id}:outer`);
+  return new OuterPec(channel.port2, slotManager, `${id}:outer`);
 }

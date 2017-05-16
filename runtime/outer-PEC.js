@@ -10,23 +10,21 @@
 "use strict";
 
 const PEC = require('./particle-execution-context.js');
-const SlotManager = require('./slot-manager.js');
 const assert = require('assert');
 const PECOuterPort = require('./api-channel.js').PECOuterPort;
 
 class OuterPEC extends PEC {
-  constructor(port) {
+  constructor(port, slotManager) {
     super();
     this._particles = [];
     this._apiPort = new PECOuterPort(port);
     this._nextIdentifier = 0;
     this._idMap = new Map();
     this._reverseIdMap = new Map();
-    var domRoot = global.document ? document.querySelector('[particle-container]') || document.body : {};
-    this.slotManager = new SlotManager(domRoot, this);
+    this.slotManager = slotManager;
 
     this._apiPort.onRenderSlot = ({particle, content}) => {
-      this.slotManager.renderSlot(particle, content);
+      this.slotManager.renderSlot(particle, content, this._makeEventletHandler(particle));
     };
 
     this._apiPort.onViewOn = ({view, target, callback, type}) => {
@@ -106,6 +104,10 @@ class OuterPEC extends PEC {
     var particleSpec = {particle, views, renderMap, exposeMap }
 
     this._apiPort.InstantiateParticle(particleSpec, { particleName: particle.name, views })
+  }
+
+  _makeEventletHandler(particle) {
+    return eventlet => { this.sendEvent(particle, eventlet) };
   }
 }
 

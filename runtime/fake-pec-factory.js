@@ -15,8 +15,8 @@ const Loader = require('./loader.js');
 
 // TODO: Make this generic so that it can also be used in-browser, or add a
 // separate in-process browser pec-factory.
-module.exports = function(loader, id) {
+module.exports = function(loader, id, slotManager) {
   var channel = new MessageChannel();
   new InnerPec(channel.port1, `${id}:inner`, new Loader());
-  return new OuterPec(channel.port2, `${id}:outer`);
+  return new OuterPec(channel.port2, slotManager, `${id}:outer`);
 };

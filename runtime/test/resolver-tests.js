@@ -17,18 +17,20 @@ let particles = require('./test-particles.js');
 let systemParticles = require('../system-particles.js');
 let util = require('./test-util.js');
 var viewlet = require('../viewlet.js');
+let SlotManager = require('../slot-manager.js');
 
 require("./trace-setup.js");
 
 let loader = new (require('../loader'));
 systemParticles.register(loader);
 particles.register(loader);
+const slotManager = new SlotManager({});
 const Foo = loader.loadEntity("Foo");
 const Bar = loader.loadEntity("Bar");
 
 describe('resolver', () => {
   it('can resolve a partially constructed recipe', async () => {
-    var arc = new Arc({loader});
+    var arc = new Arc({loader, slotManager});
     let fooView = arc.createView(Foo.type);
     var r = new recipe.RecipeBuilder()
         .addParticle("TestParticle")
@@ -43,7 +45,7 @@ describe('resolver', () => {
   });
 
   it("can resolve a recipe from a particle's spec", async () => {
-    var arc = new Arc({loader});
+    var arc = new Arc({loader, slotManager});
     var r = particles.TestParticle.spec.buildRecipe();
     let fooView = arc.createView(Foo.type);
     let barView = arc.createView(Bar.type);
@@ -54,7 +56,7 @@ describe('resolver', () => {
   });
 
   it('can resolve a recipe that is just a particle name', async () => {
-    var arc = new Arc({loader});
+    var arc = new Arc({loader, slotManager});
     var r = new recipe.RecipeBuilder().addParticle("TestParticle").build();
     let fooView = arc.createView(Foo.type);
     let barView = arc.createView(Bar.type);
@@ -65,7 +67,7 @@ describe('resolver', () => {
   });
 
   it("won't resolve a recipe that mentions connections that are not in a particle's connection list", function() {
-    var arc = new Arc({loader});
+    var arc = new Arc({loader, slotManager});
     var r = new recipe.RecipeBuilder()
         .addParticle("TestParticle")
             .connectSpec("herp", {typeName: "Foo", mustCreate: false})
@@ -74,7 +76,7 @@ describe('resolver', () => {
   });
 
   it.skip("will match particle constraints to build a multi-particle arc", function() {
-    var arc = new Arc({loader});
+    var arc = new Arc({loader, slotManager});
     var r = new recipe.RecipeBuilder()
         .addParticle("Demuxer")
             .connectConstraint("singleton", "shared")
@@ -88,6 +90,5 @@ describe('resolver', () => {
     assert.equal(runtime.testing.viewFor(Bar).data.data, 2);
     arc.tick();
     assert.equal(runtime.testing.viewFor(Bar).data.data, 3);
-
   })
 });
