@@ -13,6 +13,8 @@ var runtime = require("../runtime.js");
 var Arc = require("../arc.js");
 let assert = require('chai').assert;
 let particles = require('./test-particles.js');
+const SlotManager = require('../slot-manager.js');
+
 let view = require('../view.js');
 let util = require('./test-util.js');
 let viewlet = require('../viewlet.js');
@@ -20,13 +22,14 @@ let viewlet = require('../viewlet.js');
 
 let loader = new (require('../loader'));
 loader.registerParticle(particles.TestParticle);
+const slotManager = new SlotManager({});
 const Foo = loader.loadEntity("Foo");
 const Bar = loader.loadEntity("Bar");
 
 describe('Arc', function() {
 
   it('applies existing runtime to a particle', async () => {
-    let arc = new Arc({loader});
+    let arc = new Arc({loader, slotManager});
     let fooView = arc.createView(Foo.type);
     viewlet.viewletFor(fooView).set(new Foo({value: 'a Foo'}));
     let barView = arc.createView(Bar.type);
@@ -37,7 +40,7 @@ describe('Arc', function() {
   });
 
   it('applies new runtime to a particle', async () => {
-    let arc = new Arc({loader});
+    let arc = new Arc({loader, slotManager});
     let fooView = arc.createView(Foo.type);
     let barView = arc.createView(Bar.type);
     var particle = arc.instantiateParticle('TestParticle');
@@ -48,7 +51,7 @@ describe('Arc', function() {
   });
 
   it('works with inline particle definitions', async () => {
-    let arc = new Arc({loader});
+    let arc = new Arc({loader, slotManager});
     let particleClass = require('../particle').define('P(in Foo foo, out Bar bar)', (views) => {
       var view = views.get("bar");
       view.set(new view.entityClass({value: 123}));

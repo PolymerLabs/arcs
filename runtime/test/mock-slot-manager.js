@@ -61,7 +61,7 @@ class MockSlotManager {
 
   registerSlot(particleSpec, slotId) {
     var expectation = this.expectQueue.shift();
-    assert(expectation, "Got a getSlot but not expecting anything further");
+    assert(expectation, `Got a getSlot '${slotId}' from '${particleSpec.particle.spec.name}' but not expecting anything further`);
     assert.equal('getSlot', expectation.type, `expecting a getSlot, not ${expectation.type}`);
     assert.equal(particleSpec.particle.spec.name, expectation.name,
         `expecting a getSlot from ${expectation.name}, not ${particleSpec.particle.spec.name}`);

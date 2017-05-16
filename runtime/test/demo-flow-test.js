@@ -14,6 +14,7 @@ var Arc = require("../arc.js");
 var Loader = require("../loader.js");
 var Suggestinator = require("../suggestinator.js");
 var recipe = require('../recipe.js');
+var SlotManager = require('../slot-manager.js');
 var systemParticles = require('../system-particles.js');
 let assert = require('chai').assert;
 const testUtil = require('./test-util.js');
@@ -25,7 +26,8 @@ function prepareExtensionArc() {
   let loader = new Loader();
   let Person = loader.loadEntity("Person");
   let Product = loader.loadEntity("Product");
-  var arc = new Arc({loader});
+  let slotManager = new SlotManager();
+  var arc = new Arc({loader, slotManager});
   systemParticles.register(loader);
   var personView = arc.createView(Person.type.viewOf(), "peopleFromWebpage");
   var productView = arc.createView(Product.type.viewOf(), "productsFromWebpage");
@@ -82,7 +84,6 @@ describe('demo flow', function() {
                  .thenSend("action", "chooseValue", {key: "1"})
                  .expectRender("ListView")
                  .expectRender("Chooser");
-
       arc.pec.slotManager = slotManager;
       r[0].instantiate(arc);
       await slotManager.expectationsCompleted();

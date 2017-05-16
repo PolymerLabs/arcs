@@ -18,8 +18,9 @@ const Relation = require('./relation.js');
 let viewlet = require('./viewlet.js');
 
 class Arc {
-  constructor({id, loader, pecFactory}) {
+  constructor({id, loader, pecFactory, slotManager}) {
     assert(loader);
+    assert(slotManager);
     this._loader = loader;
     this._pecFactory = pecFactory ||  require('./fake-pec-factory').bind(null, loader);
     this.id = id;
@@ -28,9 +29,9 @@ class Arc {
     this.views = new Set();
     this._viewsByType = new Map();
     this.particleViewMaps = new Map();
-    this.pec = this._pecFactory(this.generateID());
+    this._slotManager = slotManager;
+    this.pec = this._pecFactory(this.generateID(), this._slotManager);
     this.nextParticleHandle = 0;
-    this._particlesByName = {};
   }
 
   instantiateParticle(name) {
@@ -50,7 +51,7 @@ class Arc {
   }
 
   clone() {
-    var arc = new Arc({loader: this._loader, id: this.generateID(), pecFactory: this._pecFactory});
+    var arc = new Arc({loader: this._loader, id: this.generateID(), pecFactory: this._pecFactory, slotManager: this._slotManager});
     var viewMap = new Map();
     this.views.forEach(v => viewMap.set(v, v.clone()));
     arc.particles = this.particles.map(p => p.clone(viewMap));
