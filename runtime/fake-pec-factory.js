@@ -13,6 +13,8 @@ const OuterPec = require('./outer-PEC.js');
 const MessageChannel = require('./message-channel.js');
 const Loader = require('./loader.js');
 
+// TODO: Make this generic so that it can also be used in-browser, or add a
+// separate in-process browser pec-factory.
 module.exports = function(loader, id) {
   var channel = new MessageChannel();
   new InnerPec(channel.port1, `${id}:inner`, new Loader());
