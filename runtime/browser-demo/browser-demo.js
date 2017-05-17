@@ -13,6 +13,7 @@
 let Arc = require("../arc.js");
 let BrowserLoader = require("../browser-loader.js");
 let Resolver = require('../resolver.js');
+let SlotManager = require('../slot-manager.js');
 //let Suggestinator = require("../suggestinator.js");
 
 let recipe = require('../recipe.js');
@@ -27,7 +28,9 @@ function prepareExtensionArc() {
   let Person = loader.loadEntity("Person");
   let Product = loader.loadEntity("Product");
   let pecFactory = require('../worker-pec-factory').bind(null, '../');
-  let arc = new Arc({loader, pecFactory});
+  var domRoot = global.document ? document.querySelector('[particle-container]') || document.body : {};
+  var slotManager = new SlotManager(domRoot);
+  let arc = new Arc({loader, pecFactory, slotManager});
   arc.createView(Person.type.viewOf(), "peopleFromWebpage");
   arc.createView(Product.type.viewOf(), "productsFromWebpage");
   arc.createView(Person.type, "personSlot");
