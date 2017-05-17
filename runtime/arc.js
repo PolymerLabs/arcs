@@ -16,13 +16,15 @@ const Type = require('./type.js');
 const view = require('./view.js');
 const Relation = require('./relation.js');
 let viewlet = require('./viewlet.js');
+const OuterPec = require('./outer-PEC.js');
 
 class Arc {
   constructor({id, loader, pecFactory, slotManager}) {
     assert(loader);
     assert(slotManager);
     this._loader = loader;
-    this._pecFactory = pecFactory ||  require('./fake-pec-factory').bind(null, loader);
+    // TODO: pecFactory should not be optional. update all callers and fix here.
+    this._pecFactory = pecFactory ||  require('./fake-pec-factory').bind(null);
     this.id = id;
     this.nextLocalID = 0;
     this.particles = [];
@@ -30,7 +32,9 @@ class Arc {
     this._viewsByType = new Map();
     this.particleViewMaps = new Map();
     this._slotManager = slotManager;
-    this.pec = this._pecFactory(this.generateID(), this._slotManager);
+    let pecId = this.generateID();
+    let innerPecPort = this._pecFactory(pecId);
+    this.pec = new OuterPec(innerPecPort, slotManager, `${pecId}:outer`);
     this.nextParticleHandle = 0;
   }
 
