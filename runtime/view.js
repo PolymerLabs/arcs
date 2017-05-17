@@ -18,6 +18,7 @@ class ViewBase {
     this._arc = arc;
     this._listeners = new Map();
     this.name = name;
+    this._version = 0;
     trace.end();
   }
 
@@ -64,7 +65,7 @@ class ViewBase {
 class View extends ViewBase {
   constructor(type, arc, name) {
     super(type, arc, name);
-    this._items = [];
+    this._items = new Map();
   }
 
   clone() {
@@ -74,24 +75,21 @@ class View extends ViewBase {
   }
 
   get(id) {
-    for (let entry of this._items) {
-      if (JSON.stringify(entry.id) == JSON.stringify(id)) {
-        return entry;
-      }
-    }
+    return this._items.get(id);
   }
   traceInfo() {
-    return {items: this._items.length};
+    return {items: this._items.size};
   }
   // HACK: replace this with some kind of iterator thing?
   toList() {
-    return this._items;
+    return [...this._items.values()];
   }
   // thing()
 
   store(entity) {
     var trace = tracing.start({cat: "view", name: "View::store", args: {name: this.name}});
-    this._items.push(entity);
+    this._items.set(entity.id, entity);
+    this._version++;
     trace.update({ entity });
     this._fire('change');
     trace.end();
@@ -131,6 +129,7 @@ class Variable extends ViewBase {
 
   set(entity) {
     this._stored = entity;
+    this._version++;
     this._fire('change');
   }
 
