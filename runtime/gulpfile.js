@@ -17,6 +17,7 @@ gulp.task('build', function() {
   for (let file of [
     'browser-test/browser-test.js',
     'browser-demo/browser-demo.js',
+    'worker-entry.js',
   ]) {
     browserify({
       entries: file,

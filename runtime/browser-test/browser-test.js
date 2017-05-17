@@ -15,7 +15,6 @@ const Suggestinator = require("../suggestinator.js");
 const recipe = require('../recipe.js');
 const systemParticles = require('../system-particles.js');
 const tracing = require('tracelib');
-const OuterPec = require('../outer-PEC');
 tracing.enable();
 
 function prepareExtensionArc() {
@@ -24,12 +23,7 @@ function prepareExtensionArc() {
   let Person = loader.loadEntity("Person");
   let Product = loader.loadEntity("Product");
   // TODO: Move this to a separate file.
-  let pecFactory = function(id) {
-    let channel = new MessageChannel();
-    let worker = new Worker('../build/worker-entry.js');
-    worker.postMessage({id: `${id}:inner`, base: '../'}, [channel.port1]);
-    return new OuterPec(channel.port2, `${id}:outer`);
-  }
+  let pecFactory = require('../worker-pec-factory').bind(null, '../');
   var arc = new Arc({loader, pecFactory});
   var personView = arc.createView(Person.type.viewOf(), "peopleFromWebpage");
   var productView = arc.createView(Product.type.viewOf(), "productsFromWebpage");
