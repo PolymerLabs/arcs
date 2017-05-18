@@ -125,7 +125,7 @@ class Particle {
     if (this.slotResolver) {
       this.slotResolver(this.slot); 
     }    
-    this.slotResolver = undefined;
+    this.slotResolver = null;
     this.slotHandlers.forEach(f => f(true));
   }
 
@@ -141,8 +141,8 @@ class Particle {
   }
 
   _clearSlot() {
-    if (this.slot !== undefined) {
-      this.slot = undefined;
+    if (this.slot) {
+      this.slot = null;
       this.slotHandlers.forEach(f => f(false));
     }
   }
@@ -218,7 +218,6 @@ class ViewChanges {
 
 class SlotChanges {
   constructor() {
-
   }
   register(particle, f) {
     particle.addSlotHandler(f);

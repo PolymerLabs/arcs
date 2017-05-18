@@ -12,6 +12,8 @@
 const assert = require('assert');
 const Slot = require('./slot.js');
 
+let templates = new Map();
+
 class DomSlot extends Slot {
   constructor(slotid) {
     super(slotid);
@@ -33,13 +35,38 @@ class DomSlot extends Slot {
     this.exposedView = null;
   }
   get content() {
-    return this._dom ? this._dom._cachedContent : undefined;
+    return this._dom ? this._dom._cachedContent : null;
   }
   _setContent(content) {
-    // TODO(sjmiles): why assert intialized here but not in other public methods?
-    assert(this.isInitialized(), "Dom isn't initialized, cannot set content");
-    // TODO(sjmiles): innerHTML is mutable and cannot be used to memoize original content 
-    this._dom.innerHTML = this._dom._cachedContent = content;
+    let html = null;
+    if (typeof content === 'string') {
+      html = content;
+    } else {
+      let templateName = content.templateName || 'main';
+      if (content.template) {
+        templates[templateName] = Object.assign(document.createElement('template'), {
+          innerHTML: content.template
+        });
+      }
+      if (content.model) {
+        let template = templates[templateName];
+        let div = document.createElement('div');
+        div.appendChild(document.importNode(template.content, true));
+        html = div.innerHTML.replace(/{{[^}]*}}/g, match => {
+          let key = match.slice(2, -2);
+          return content.model[key] || '(no data)';
+        });
+      }
+      if (content.html) {
+        html = content.html;
+      }
+    }
+    if (typeof html === 'string') {
+      // TODO(sjmiles): why assert intialized here but not in other public methods?
+      assert(this.isInitialized(), "Dom isn't initialized, cannot set content");
+      // TODO(sjmiles): innerHTML is mutable and cannot be used to memoize original content 
+      this._dom.innerHTML = this._dom._cachedContent = html;
+    }
   }
   // TODO(sjmiles): a `slotInfo` contains an `id` and a device `context` (e.g. a dom node).
   _findInnerSlotInfos() {
@@ -70,7 +97,7 @@ class DomSlot extends Slot {
         if (name.startsWith("on-")) {
           let event = name.substring(3);
           let handler = value;
-          eventGenerator.addEventListener(event, e => {
+          eventGenerator.addEventListener(event, (/*e*/) => {
             // TODO(sjmiles): require configuration to control `stopPropagation`/`preventDefault`?
             // e.stopPropagation();
             eventHandler({handler, data});
