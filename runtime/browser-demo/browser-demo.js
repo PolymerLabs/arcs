@@ -14,7 +14,7 @@ let Arc = require("../arc.js");
 let BrowserLoader = require("../browser-loader.js");
 let Resolver = require('../resolver.js');
 let SlotManager = require('../slot-manager.js');
-//let Suggestinator = require("../suggestinator.js");
+let Suggestinator = require("../suggestinator.js");
 
 let recipe = require('../recipe.js');
 let systemParticles = require('../system-particles.js');
@@ -56,33 +56,25 @@ let buildRecipe = info => {
 
 let arc = prepareExtensionArc();
 
-let suggest = index => {
-  let r = buildRecipe(recipes[index]);
-  if (Resolver.resolve(r, arc)) {
-    r.instantiate(arc);
-  } 
-};
-
-let suggestions = recipes.map(r => r.name);
-
 let container = document.querySelector('suggestions');
-suggestions.forEach((s, i) => {
-  container.appendChild(
-    Object.assign(document.createElement("suggest"), {
-      index: i,
-      textContent: s,
-      onclick: e => suggest(e.currentTarget.index)
-    })
-  );
+let rs = recipes.map(r => {
+  let recipe = buildRecipe(r);
+  recipe.name = r.name;
+  return recipe;
 });
 
-/*
 let suggestinator = new Suggestinator();
-suggestinator._getSuggestions = a => [r];
+suggestinator._getSuggestions = a => rs;
 
 let results = suggestinator.suggestinate(arc);
 results.then(r => {
   console.log(r);
-  //window.trace = tracing.save();
+  r.forEach(recipe => {
+    container.appendChild(
+      Object.assign(document.createElement("suggest"), {
+        textContent: recipe.name,
+        onclick: e => recipe.instantiate(arc)
+      })
+    );
+  });
 });
-*/

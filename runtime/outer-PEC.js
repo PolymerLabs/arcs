@@ -24,7 +24,8 @@ class OuterPEC extends PEC {
     this.slotManager = slotManager;
 
     this._apiPort.onRenderSlot = ({particle, content}) => {
-      this.slotManager.renderSlot(particle, content, this._makeEventletHandler(particle));
+      if (this.slotManager)
+        this.slotManager.renderSlot(particle, content, this._makeEventletHandler(particle));
     };
 
     this._apiPort.onViewOn = ({view, target, callback, type}) => {
@@ -51,14 +52,17 @@ class OuterPEC extends PEC {
 
     this._apiPort.onGetSlot = ({particle, name, callback}) => {
       assert(particle.renderMap.has(name));
-      this.slotManager.registerSlot(particle, name).then(() =>
-        this._apiPort.ViewCallback({callback}));
+      if (this.slotManager)
+        this.slotManager.registerSlot(particle, name).then(() =>
+          this._apiPort.ViewCallback({callback}));
     }
 
     this._apiPort.onReleaseSlot = ({particle}) => {
-      let affectedParticles = this.slotManager.releaseSlot(particle);
-      if (affectedParticles) {
-        this._apiPort.LostSlots({particles: affectedParticles});
+      if (this.slotManager) {
+        let affectedParticles = this.slotManager.releaseSlot(particle);
+        if (affectedParticles) {
+          this._apiPort.LostSlots({particles: affectedParticles});
+        }
       }
     }
   }
