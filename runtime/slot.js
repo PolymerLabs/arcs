@@ -18,7 +18,8 @@ class Slot {
     // The View exposed by Particle that hosts this slot.
     this._exposedView = null;
     this._particleSpec = null;
-    this._pendingRequestsHandlers = [];
+    // A map of pending slot requests, mapping {resolve, reject} tuple by requesting particle name.
+    this._pendingRequests = new Map();
   }
   get slotid() { 
     return this._slotid; 
@@ -42,14 +43,26 @@ class Slot {
   isAssociated() {
     return !!this._particleSpec;
   }
-  addPendingRequest(handler) {
-    this._pendingRequestsHandlers.push(handler);
+  addPendingRequest(particleSpec, resolve, reject) {
+    if (!this._pendingRequests.has(particleSpec.particle.name)) {
+      this._pendingRequests.set(particleSpec.particle.name, {resolve, reject});
+    }
+  }
+  removePendingRequest(particleSpec) {
+    let particleName = particleSpec.particle.name;
+    assert(this._pendingRequests.has(particleName),
+      `Cannot remove pending request from particle ${particleSpec.particle.name} for slot ${this.slotid}`);
+    this._pendingRequests.get(particleName).reject();
+    this._pendingRequests.delete(particleName);
   }
   providePendingSlot() {
     assert(!this.isAssociated(), "Cannot provide associated slot.");
-    let handler = this._pendingRequestsHandlers.shift();
-    if (handler) {
-      handler(this);
+    if (this._pendingRequests.size > 0) {
+      let pendingRequest = this._pendingRequests.entries().next();
+      if (pendingRequest && pendingRequest.value[1].resolve) {
+        pendingRequest.value[1].resolve(this);
+        this._pendingRequests.delete(pendingRequest.value[0]);
+      }
     }
   }
   /*

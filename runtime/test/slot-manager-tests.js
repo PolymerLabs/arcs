@@ -100,6 +100,18 @@ describe('slot manager', function() {
     await innerSlotPromise;
   });
 
+  it('release pending inner slot', async () => {
+    let slotManager = new SlotManager(/* domRoot= */{}, /* pec= */ {});
+    // require inner slot
+    let innerSlotPromise = slotManager.registerSlot(otherParticleSpec, innerSlotid);
+    // release particle, while slot request is still pending.
+    slotManager.releaseSlot(otherParticleSpec);
+    innerSlotPromise.then(function() {
+      assert.fail('slot was released, promise should have been rejected.');
+    }, function() {
+    });
+  });
+
   it('release inner slot', async () => {
     let slotManager = new SlotManager(/* domRoot= */{}, /* pec= */ {});
     // Register and render slot
