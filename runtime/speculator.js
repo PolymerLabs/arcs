@@ -19,7 +19,6 @@ class Speculator {
   speculate(arc, plan) {
     var callTrace = tracing.start({cat: "speculator", name: "Speculator::speculate"});
     var newArc = arc.clone();
-    newArc.pec.slotManager = undefined;
 
     plan.instantiate(newArc);
     callTrace.end();

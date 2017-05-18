@@ -53,7 +53,7 @@ class Arc {
   }
 
   clone() {
-    var arc = new Arc({loader: this._loader, id: this.generateID(), pecFactory: this._pecFactory, slotManager: this.pec.slotManager});
+    var arc = new Arc({loader: this._loader, id: this.generateID(), pecFactory: this._pecFactory});
     var viewMap = new Map();
     this.views.forEach(v => viewMap.set(v, v.clone()));
     arc.particles = this.particles.map(p => p.clone(viewMap));
