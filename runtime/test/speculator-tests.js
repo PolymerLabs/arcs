@@ -16,19 +16,17 @@ let assert = require('chai').assert;
 let particles = require('./test-particles.js');
 let util = require('./test-util.js');
 let Loader = require('../loader');
-let SlotManager = require('../slot-manager.js');
 
 require("./trace-setup.js");
 
 let loader = new Loader();
 particles.register(loader);
-const slotManager = new SlotManager({});
 const Foo = loader.loadEntity("Foo");
 const Bar = loader.loadEntity("Bar");
 
 describe('speculator', function() {
   it('can speculatively produce a relevance', async () => {
-    var arc = new Arc({loader, slotManager});
+    var arc = new Arc({loader});
     let fooView = arc.createView(Foo.type);
     let barView = arc.createView(Bar.type);
     var r = new recipe.RecipeBuilder()

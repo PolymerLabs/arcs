@@ -83,7 +83,7 @@ class SlotManager {
       if (originalContent) {
         // TODO(sjmiles): recurses
         this.renderSlot(this._getParticle(info.id), originalContent);
-      } else {
+      } else if (!inner.isAssociated()) {
         // TODO(sjmiles): falsey test for originalContent is an implicit signal, really don't we want `isAvailable()`?
         inner.providePendingSlot();
       }

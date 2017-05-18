@@ -21,7 +21,6 @@ const OuterPec = require('./outer-PEC.js');
 class Arc {
   constructor({id, loader, pecFactory, slotManager}) {
     assert(loader);
-    assert(slotManager);
     this._loader = loader;
     // TODO: pecFactory should not be optional. update all callers and fix here.
     this._pecFactory = pecFactory ||  require('./fake-pec-factory').bind(null);
@@ -31,7 +30,6 @@ class Arc {
     this.views = new Set();
     this._viewsByType = new Map();
     this.particleViewMaps = new Map();
-    this._slotManager = slotManager;
     let pecId = this.generateID();
     let innerPecPort = this._pecFactory(pecId);
     this.pec = new OuterPec(innerPecPort, slotManager, `${pecId}:outer`);
@@ -55,7 +53,7 @@ class Arc {
   }
 
   clone() {
-    var arc = new Arc({loader: this._loader, id: this.generateID(), pecFactory: this._pecFactory, slotManager: this._slotManager});
+    var arc = new Arc({loader: this._loader, id: this.generateID(), pecFactory: this._pecFactory, slotManager: this.pec.slotManager});
     var viewMap = new Map();
     this.views.forEach(v => viewMap.set(v, v.clone()));
     arc.particles = this.particles.map(p => p.clone(viewMap));

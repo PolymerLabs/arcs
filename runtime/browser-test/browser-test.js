@@ -69,7 +69,5 @@ var results = suggestinator.suggestinate(arc);
 results.then(r => {
   console.log(r);
   window.trace = tracing.save();
-  // TODO(mmandlis): This causes all particle to re-render their slots.
-  // Should support speculative execution in SlotManager instead.
   r[0].instantiate(arc);
 })
