@@ -15,6 +15,7 @@ let BrowserLoader = require("../browser-loader.js");
 let Resolver = require('../resolver.js');
 let SlotManager = require('../slot-manager.js');
 let Suggestinator = require("../suggestinator.js");
+let SuggestionManager = require('../suggestion.js').SuggestionManager;
 
 let recipe = require('../recipe.js');
 let systemParticles = require('../system-particles.js');
@@ -56,7 +57,6 @@ let buildRecipe = info => {
 
 let arc = prepareExtensionArc();
 
-let container = document.querySelector('suggestions');
 let rs = recipes.map(r => {
   let recipe = buildRecipe(r);
   recipe.name = r.name;
@@ -66,15 +66,13 @@ let rs = recipes.map(r => {
 let suggestinator = new Suggestinator();
 suggestinator._getSuggestions = a => rs;
 
+let suggestionRoot = document.querySelector('suggestions');
+let suggestManager = new SuggestionManager(suggestionRoot);
+
 let results = suggestinator.suggestinate(arc);
 results.then(r => {
   console.log(r);
   r.forEach(recipe => {
-    container.appendChild(
-      Object.assign(document.createElement("suggest"), {
-        textContent: recipe.name,
-        onclick: e => recipe.instantiate(arc)
-      })
-    );
+    suggestManager.addSuggestion(recipe.name, recipe.rank, recipe.instantiate.bind(recipe, arc));
   });
 });
