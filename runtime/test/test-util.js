@@ -48,7 +48,7 @@ function assertSingletonEmpty(view) {
 }
 
 function initParticleSpec(name) {
-  var particleSpec = JSON.parse(`{"spec":{"name":"${name}"}}`);
+  var particleSpec = JSON.parse(`{"particle":{"name":"${name}"}}`);
   particleSpec.exposeMap = new Map();
   particleSpec.renderMap = new Map();
   return particleSpec;

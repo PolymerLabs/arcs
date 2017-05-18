@@ -29,15 +29,17 @@ describe('slot', function() {
     assert.throws(() => { slot.associateWithParticle(particleSpec); });
   });
 
-  it('pending handler', function() {
+  it('add and provide pending requests', function() {
     let slot = new Slot('slotid');
     assert.isFalse(slot.isAssociated());
 
     let count = 0;
     let handler = () => { count++; };
 
-    slot.addPendingRequest(handler);
-    slot.addPendingRequest(handler);
+    slot.addPendingRequest(util.initParticleSpec('particle1'), handler, {});
+    // Add request for the same particle, so it is ignored.
+    slot.addPendingRequest(util.initParticleSpec('particle1'), handler, {});
+    slot.addPendingRequest(util.initParticleSpec('particle2'), handler, {});
     slot.providePendingSlot();
     let expectedCount = 0;
     assert.equal(++expectedCount, count);
@@ -51,5 +53,13 @@ describe('slot', function() {
     slot.associateWithParticle(util.initParticleSpec('particle'));
     assert.throws(() => { slot.providePendingSlot(); });
     assert.equal(expectedCount, count);
+  });
+  it('remove pending request', function() {
+    let slot = new Slot('slotid');
+    let count = 0;
+    let reject = () => { count++; };
+    slot.addPendingRequest(util.initParticleSpec('particle1'), {}, reject);
+    slot.removePendingRequest(util.initParticleSpec('particle1'));
+    assert.equal(1, count);
   });
 });

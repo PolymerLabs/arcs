@@ -17,6 +17,7 @@ let log = !global.document || (global.logging === false) ? () => {} : (...args) 
 class SlotManager {
   constructor(domRoot, pec) {
     this._slotBySlotId = new Map();
+    // Contains both fulfilled slots and pending requests. 
     this._slotIdByParticleSpec = new Map();
     this._pec = pec;
     this._getOrCreateSlot('root').initialize(domRoot, /* exposedView= */ undefined);
@@ -34,10 +35,11 @@ class SlotManager {
     return new Promise((resolve, reject) => {
       try {
         let slot = this._getOrCreateSlot(slotid);
+        this._slotIdByParticleSpec.set(particleSpec, slotid);
         if (slot.isAvailable()) {
           resolve(slot);
         } else {
-          slot.addPendingRequest(resolve);
+          slot.addPendingRequest(particleSpec, resolve, reject);
         }
       } catch(x) {
         // TODO(sjmiles): my Promise-fu is not strong, probably should do something else
@@ -45,7 +47,6 @@ class SlotManager {
       }
     }).then(slot => {
       slot.associateWithParticle(particleSpec);
-      this._slotIdByParticleSpec.set(particleSpec, slotid);
     });
   }
   _getSlotId(particleSpec) {
@@ -94,7 +95,11 @@ class SlotManager {
   releaseSlot(particleSpec) {
     let slotid = this._getSlotId(particleSpec);
     if (slotid) {
-      return this._releaseSlot(slotid);
+      let slot = this._getSlot(slotid);
+      // particleSpec is mapped to slotid, hence it is either associated or pending.
+      if (slot.particleSpec == particleSpec)
+        return this._releaseSlot(slotid);
+      else slot.removePendingRequest(particleSpec);
     }
   }
   _releaseSlot(slotid) {
