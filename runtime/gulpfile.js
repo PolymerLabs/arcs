@@ -33,8 +33,20 @@ gulp.task('build', function() {
 
 gulp.task('test', function() {
   const mocha = require('gulp-mocha');
+  // OMG gulp, why are you so hideously, hideously bad?
+  // 
+  // Pass the test you want to run in as a --param,
+  // because that's basically the only way gulp lets
+  // you do it.
+  // e.g.
+  // > gulp test --demo
+  // to run tests that match "demo" 
+  var args = process.argv[3];
+  if (args !== undefined)
+    args = args.substring(2);
+
   return gulp.src(['test/*.js'], {read: false})
-    .pipe(mocha({reporter: 'list'}));
+    .pipe(mocha({reporter: 'list', grep: args}));
 });
 
 gulp.task('watch', function() {
