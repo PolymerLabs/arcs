@@ -67,4 +67,7 @@ module.exports = [{
       "list": "wishlist"
     }
   }]
+}, {
+  name: "Buying for <person>'s <occasion> in <timeframe>? Product <X> arrives too late.",
+  particles: []
 }];

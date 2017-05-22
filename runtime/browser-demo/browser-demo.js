@@ -56,25 +56,36 @@ let buildRecipe = info => {
 
 let arc = prepareExtensionArc();
 
-let container = document.querySelector('suggestions');
-let rs = recipes.map(r => {
-  let recipe = buildRecipe(r);
-  recipe.name = r.name;
-  return recipe;
-});
+let chooseSuggestion = index => {
+  let r = buildRecipe(recipes[index]);
+  if (Resolver.resolve(r, arc)) {
+    r.instantiate(arc);
+    suggest(stage++);
+  } 
+};
 
-let suggestinator = new Suggestinator();
-suggestinator._getSuggestions = a => rs;
+let demoRecipes = [[
+  recipes[0],
+  recipes[1],
+  recipes[2]
+],[
+  recipes[3]
+]];
 
-let results = suggestinator.suggestinate(arc);
-results.then(r => {
-  console.log(r);
-  r.forEach(recipe => {
+let suggest = (stage) => {
+  let suggestions = demoRecipes[stage].map(r => r.name);
+  let container = document.querySelector('suggestions');
+  container.textContent = '';
+  suggestions.forEach((s, i) => {
     container.appendChild(
       Object.assign(document.createElement("suggest"), {
-        textContent: recipe.name,
-        onclick: e => recipe.instantiate(arc)
+        index: i,
+        textContent: s,
+        onclick: e => chooseSuggestion(e.currentTarget.index)
       })
     );
   });
-});
+}
+
+let stage = 0;
+suggest(stage++);
