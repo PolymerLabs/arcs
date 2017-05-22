@@ -11,7 +11,7 @@
 
 var parser = require("./parser.js");
 var runtime = require("./runtime.js");
-var loader = require("./loader.js");
+//var loader = require("./loader.js");
 var ParticleSpec = require("./particle-spec.js");
 var tracing = require('tracelib');
 var assert = require('assert');

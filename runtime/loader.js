@@ -17,9 +17,9 @@ var runtime = require("./runtime.js");
 var assert = require("assert");
 var ParticleSpec = require("./particle-spec.js");
 const Schema = require("./schema.js");
-const particle = require('./particle');
+const particle = require("./particle.js");
+const DomParticle = require("./dom-particle.js");
 const vm = require('vm');
-
 
 function schemaLocationFor(name) {
   return `../entities/${name}.schema`;
@@ -95,9 +95,11 @@ class Loader {
     script.runInNewContext(self);
     return this.unwrapParticle(result[0]);
   }
+
   unwrapParticle(particleWrapper) {
-    return particleWrapper({particle, Particle: particle.Particle});
+    return particleWrapper({particle, Particle: particle.Particle, DomParticle});
   }
+
 }
 
 module.exports = Loader;
