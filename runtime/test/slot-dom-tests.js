@@ -10,10 +10,10 @@
 "use strict";
  
 const assert = require('chai').assert;
-var DomSlot = require("../slot-dom.js");
+var DomSlot = require("../dom-slot.js");
 let util = require('./test-util.js');
  
-describe('slot-dom', function() {
+describe('dom-slot', function() {
   it('initialize render derender and uninitialize', function() {
     let slot = new DomSlot('slotid');
     assert.isFalse(slot.isInitialized());

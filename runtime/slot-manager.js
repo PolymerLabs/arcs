@@ -10,7 +10,7 @@
 "use strict";
 
 const assert = require('assert');
-const Slot = require('./slot-dom.js');
+const Slot = require('./dom-slot.js');
 
 let log = !global.document || (global.logging === false) ? () => {} : (...args) => { console.log.apply(console, args); };
 

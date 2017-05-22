@@ -49,13 +49,7 @@ class DomSlot extends Slot {
         });
       }
       if (content.model) {
-        let template = templates[templateName];
-        let div = document.createElement('div');
-        div.appendChild(document.importNode(template.content, true));
-        html = div.innerHTML.replace(/{{[^}]*}}/g, match => {
-          let key = match.slice(2, -2);
-          return content.model[key] || '(no data)';
-        });
+        html = this._interpolateModel(templateName, content.model);
       }
       if (content.html) {
         html = content.html;
@@ -67,6 +61,37 @@ class DomSlot extends Slot {
       // TODO(sjmiles): innerHTML is mutable and cannot be used to memoize original content 
       this._dom.innerHTML = this._dom._cachedContent = html;
     }
+  }
+  _interpolateModel(templateName, model) {
+    // TODO(sjmiles): HTML-based impl is temporary
+    let template = templates[templateName];
+    // hack extract html from template
+    let div = document.createElement('div');
+    div.appendChild(document.importNode(template.content, true));
+    let html = div.innerHTML;
+    // hack template repeat support
+    html = this._interpolateRepeat(html, model);
+    // hack mustache interpolation
+    return this._interpolateHtml(html, model);
+  }
+  _interpolateRepeat(html, model) {
+    let re = /<template.*?repeat="(.*?)".*?>([\s\S]*?)<\/template>/;
+    html = html.replace(re, template => {
+      let [full, name, html] = template.match(re);
+      let items = model[name];
+      let result = '';
+      items.forEach(item => {
+        result += this._interpolateHtml(html, item);
+      });
+      return result;
+    });
+    return html;
+  }
+  _interpolateHtml(html, model) {
+    return html.replace(/{{[^}]*}}/g, match => {
+      let key = match.slice(2, -2);
+      return (key in model) ? model[key] : '(no data)';
+    });
   }
   // TODO(sjmiles): a `slotInfo` contains an `id` and a device `context` (e.g. a dom node).
   _findInnerSlotInfos() {
@@ -114,6 +139,10 @@ class DomSlot extends Slot {
 }
 
 class MockDomSlot extends DomSlot {
+  _setContent(content) {
+    let html = content.html || content;
+    this._dom.innerHTML = this._dom._cachedContent = html;
+  }
   _findInnerSlotInfos() {
     let slots = [];
     let slot;
