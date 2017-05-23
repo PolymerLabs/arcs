@@ -11,6 +11,13 @@
 
 const assert = require('assert');
 const Slot = require('./slot.js');
+const Template = require('./browser/xenon-template.js');
+
+// TODO(sjmiles): using Node syntax to import custom-elements (which only happens in browser context)
+if (global.document) {
+  require('./browser/x-list.js');
+  require('./browser/slot-container.js');
+}
 
 let templates = new Map();
 
@@ -34,10 +41,26 @@ class DomSlot extends Slot {
     this._dom = null;
     this.exposedView = null;
   }
+  derender() {
+    var infos = this._findInnerSlotInfos();
+    this._setContent('');
+    return infos;
+  }
+  // TODO(sjmiles): content getter vs setContent method
+  // this getter was used for rendering as html, hopefully
+  // will be evacipated soon
   get content() {
     return this._dom ? this._dom._cachedContent : null;
   }
-  _setContent(content) {
+  // TODO(sjmiles): SlotManager calls here
+  render(content, eventHandler) {
+    if (this.isInitialized()) {
+      this._setContent(content, eventHandler);
+      //this._addEventListeners(this._findEventGenerators(), eventHandler);
+      return this._findInnerSlotInfos();
+    }
+  }
+  _setContent(content, eventHandler) {
     let html = null;
     if (typeof content === 'string') {
       html = content;
@@ -48,20 +71,55 @@ class DomSlot extends Slot {
           innerHTML: content.template
         });
       }
-      if (content.model) {
+      /*
+      if (content.htmlModel) {
         html = this._interpolateModel(templateName, content.model);
+      }
+      */
+      if (content.model) {
+        if (!this._liveDom) {
+          this._stampTemplate(templates[templateName], eventHandler);
+        }
+        this._liveDom.set(content.model);
       }
       if (content.html) {
         html = content.html;
       }
     }
     if (typeof html === 'string') {
-      // TODO(sjmiles): why assert intialized here but not in other public methods?
-      assert(this.isInitialized(), "Dom isn't initialized, cannot set content");
       // TODO(sjmiles): innerHTML is mutable and cannot be used to memoize original content 
       this._dom.innerHTML = this._dom._cachedContent = html;
     }
   }
+  _stampTemplate(template, eventHandler) {
+    let eventMapper = this._eventMapper.bind(this, eventHandler);
+    this._liveDom = Template.stamp(template);
+    this._liveDom.mapEvents(eventMapper);
+    this._liveDom.appendTo(this._dom);
+    // TODO(sjmiles): hack to allow subtree elements (e.g. x-list) to marshal events
+    this._dom._eventMapper = eventMapper;
+  }
+  _eventMapper(eventHandler, node, eventName, handlerName) {
+    node.addEventListener(eventName, e => {
+      eventHandler({
+        handler: handlerName,
+        data: {
+          key: node.key, //getAttribute('key'),
+          value: node.value
+        }
+      });
+    });
+  }
+  _findInnerSlotInfos() {
+    return Array.from(this._dom.querySelectorAll("[slotid]")).map(s => {
+      return {
+        context: s,
+        id: s.getAttribute('slotid')
+      };
+    });
+  }
+
+  /*
   _interpolateModel(templateName, model) {
     // TODO(sjmiles): HTML-based impl is temporary
     let template = templates[templateName];
@@ -94,21 +152,6 @@ class DomSlot extends Slot {
     });
   }
   // TODO(sjmiles): a `slotInfo` contains an `id` and a device `context` (e.g. a dom node).
-  _findInnerSlotInfos() {
-    return Array.from(this._dom.querySelectorAll("[slotid]")).map(s => {
-      return {
-        context: s,
-        id: s.getAttribute('slotid')
-      }
-    });
-  }
-  render(content, eventHandler) {
-    if (this.isInitialized()) {
-      this._setContent(content);
-      this._addEventListeners(this._findEventGenerators(), eventHandler);
-      return this._findInnerSlotInfos();
-    }
-  }
   _findEventGenerators() {
     return this._dom.querySelectorAll('[events]');
   }
@@ -122,7 +165,7 @@ class DomSlot extends Slot {
         if (name.startsWith("on-")) {
           let event = name.substring(3);
           let handler = value;
-          eventGenerator.addEventListener(event, (/*e*/) => {
+          eventGenerator.addEventListener(event, e => {
             // TODO(sjmiles): require configuration to control `stopPropagation`/`preventDefault`?
             // e.stopPropagation();
             eventHandler({handler, data});
@@ -131,11 +174,7 @@ class DomSlot extends Slot {
       }
     }
   }
-  derender() {
-    var infos = this._findInnerSlotInfos();
-    this._setContent('');
-    return infos;
-  }
+  */
 }
 
 class MockDomSlot extends DomSlot {
@@ -162,4 +201,5 @@ class MockDomSlot extends DomSlot {
   }
 }
 
+// TODO(sjmiles): this decision should be elsewhere
 module.exports = global.document ? DomSlot : MockDomSlot;

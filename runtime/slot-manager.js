@@ -21,6 +21,20 @@ class SlotManager {
     this._slotIdByParticleSpec = new Map();
     this._pec = pec;
     this._getOrCreateSlot('root').initialize(domRoot, /* exposedView= */ undefined);
+    if (global.document) {
+      document.addEventListener('slot-container', e => {
+        this._slotMessage(e.detail);
+      });
+    }
+  }
+  _slotMessage(msg) {
+    switch (msg.kind) {
+      case 'connected':
+        let inner = this._getOrCreateSlot(msg.name);
+        inner.initialize(msg.node, null);
+        inner.providePendingSlot();
+        break;
+    }
   }
   _getOrCreateSlot(slotid) {
     if (!this._slotBySlotId.has(slotid)) {
@@ -62,7 +76,7 @@ class SlotManager {
     return this._slotBySlotId.get(slotid);
   }
   _getParticleSlot(particleSpec) {
-    return this._getSlot(this._getSlotId(particleSpec))
+    return this._getSlot(this._getSlotId(particleSpec));
   }
   // TODO(sjmiles): should be `renderParticle`?
   renderSlot(particleSpec, content, handler) {
@@ -71,7 +85,7 @@ class SlotManager {
     let innerSlotInfos = slot.render(content, handler);
     if (innerSlotInfos) {
       // the `innerSlotInfos` identify available slot-contexts, make them available for composition
-      this._provideInnerSlots(innerSlotInfos, particleSpec);
+      //this._provideInnerSlots(innerSlotInfos, particleSpec);
     }
   }
   _provideInnerSlots(innerSlotInfos, particleSpec) {

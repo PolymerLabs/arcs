@@ -9,9 +9,9 @@
  */
 "use strict";
 
-const particle = require("./particle.js");
+const {Particle, ViewChanges, StateChanges, SlotChanges} = require("./particle.js");
 
-class DomParticle extends particle.Particle {
+class DomParticle extends Particle {
   setViews(views) {
     this.when([new ViewChanges(views, this._watchedViews, 'change')], e => {
       this._viewsUpdated(views);
@@ -25,16 +25,15 @@ class DomParticle extends particle.Particle {
     if (!model) {
       this.releaseSlot(slotName);
     } else {
-      let html;// = this._render(model);
       let slot = await this.requireSlot(slotName);
       this._state = {
         model,
         views
       };
-      this._renderToSlot(slot, html, model);
+      this._renderToSlot(slot, model);
     }
   }
-  _renderToSlot(slot, html, model) {
+  _renderToSlot(slot, model) {
     this._initializeRender(slot);
     slot.render({
       model
@@ -47,9 +46,9 @@ class DomParticle extends particle.Particle {
       let handlers = this._findHandlerNames(this.template);
       handlers.forEach(name => {
         slot.clearEventHandlers(name);
-        slot.registerEventHandler(name, e => {
+        slot.registerEventHandler(name, eventlet => {
           if (this[name]) {
-            this[name](e, this._state.model, this._state.views);
+            this[name](eventlet, this._state.model, this._state.views);
           }
         });
       });
