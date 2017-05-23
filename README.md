@@ -25,6 +25,6 @@ $ traceFile=`pwd`/trace.json npm test
 
 ## Demo
 ```
-$ python -m SimpleHTTPServer 5001
+$ python -m SimpleHTTPServer 5001 &
 $ open 'http://localhost:5001/runtime/browser-demo/index.demo.html'
 ```
