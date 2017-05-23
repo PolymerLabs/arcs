@@ -70,4 +70,19 @@ module.exports = [{
 }, {
   name: "Buying for <person>'s <occasion> in <timeframe>? Product <X> arrives too late.",
   particles: []
+}, {
+  name: "Check for newer versions, e.g. there is a new version of <product>.",
+  particles: []
+}, {
+  name: "<Manufacturer> recommends <product> instead of <product> for 13 year olds.",
+  particles: []
+}, {
+  name: "See awards, e.g. <product> winning the <award>.",
+  particles: []
+}, {
+  name: "Recommendations based on Claire's interest in field hockey.",
+  particles: []
+}, {
+  name: "Profit",
+  particles: []
 }];

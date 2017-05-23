@@ -70,22 +70,33 @@ let demoRecipes = [[
   recipes[2]
 ],[
   recipes[3]
+],[
+  recipes[4],
+  recipes[5],
+  recipes[6],
+  recipes[7]
+],[
+  recipes[8]
 ]];
 
 let suggest = (stage) => {
-  let suggestions = demoRecipes[stage].map(r => r.name);
+  stage = Math.min(stage, demoRecipes.length-1);
   let container = document.querySelector('suggestions');
   container.textContent = '';
-  suggestions.forEach((s, i) => {
-    container.appendChild(
-      Object.assign(document.createElement("suggest"), {
-        index: i,
-        textContent: s,
-        onclick: e => chooseSuggestion(e.currentTarget.index)
-      })
-    );
-  });
-}
+  let recipes = demoRecipes[stage];
+  if (recipes) {
+    let suggestions = demoRecipes[stage].map(r => r.name);
+    suggestions.forEach((s, i) => {
+      container.appendChild(
+        Object.assign(document.createElement("suggest"), {
+          index: i,
+          textContent: s,
+          onclick: e => chooseSuggestion(e.currentTarget.index)
+        })
+      );
+    });
+  }
+};
 
 let stage = 0;
 suggest(stage++);
