@@ -52,9 +52,7 @@ class XList extends HTMLElement {
       props.eventMapper = p._eventMapper;
       p = p.parentElement;
     }
-    console.log('XList::_renderList ', props.eventMapper);
-
-    //console.log('_renderList:', props);
+    //console.log('XList::_renderList:', props);
     var child = container.firstElementChild, next;
     props.items && props.items.forEach((item,i)=>{
       // use existing node if possible

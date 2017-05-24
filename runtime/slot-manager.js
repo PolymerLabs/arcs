@@ -11,6 +11,7 @@
 
 const assert = require('assert');
 const Slot = require('./dom-slot.js');
+const SlotContainer = require('./browser/slot-container.js');
 
 let log = !global.document || (global.logging === false) ? () => {} : (...args) => { console.log.apply(console, args); };
 
@@ -21,11 +22,7 @@ class SlotManager {
     this._slotIdByParticleSpec = new Map();
     this._pec = pec;
     this._getOrCreateSlot('root').initialize(domRoot, /* exposedView= */ undefined);
-    if (global.document) {
-      document.addEventListener('slot-container', e => {
-        this._slotMessage(e.detail);
-      });
-    }
+    SlotContainer.subscribe(this._slotMessage.bind(this));
   }
   _slotMessage(msg) {
     switch (msg.kind) {
@@ -81,13 +78,17 @@ class SlotManager {
   // TODO(sjmiles): should be `renderParticle`?
   renderSlot(particleSpec, content, handler) {
     let slot = this._getParticleSlot(particleSpec);
+    slot.render(content, handler);
+    /*
     // returns slot(id)s rendered by the particle
     let innerSlotInfos = slot.render(content, handler);
     if (innerSlotInfos) {
       // the `innerSlotInfos` identify available slot-contexts, make them available for composition
-      //this._provideInnerSlots(innerSlotInfos, particleSpec);
+      this._provideInnerSlots(innerSlotInfos, particleSpec);
     }
+    */
   }
+  /*
   _provideInnerSlots(innerSlotInfos, particleSpec) {
     innerSlotInfos.forEach(info => {
       let inner = this._getOrCreateSlot(info.id);
@@ -104,6 +105,7 @@ class SlotManager {
       }
     });
   }
+  */ 
   // particleSpec is relinquishing ownership of it's slot
   // TODO(sjmiles): should be `releaseParticle`?
   releaseSlot(particleSpec) {

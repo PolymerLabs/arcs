@@ -115,13 +115,9 @@ let annotateTextNode = function(node, key, notes) {
 };
 
 let annotateElementNode = function(node, key, notes) {
-  let noted;
   if (node.hasAttributes()) {
-    for (
-      let a$ = node.attributes, i = a$.length - 1, a;
-      i >= 0 && (a = a$[i]);
-      i--
-    ) {
+    let noted = false;
+    for (let a$ = node.attributes, i = a$.length - 1, a; i >= 0 && (a = a$[i]); i--) {
       if (
         annotateEvent(node, key, notes, a.name, a.value) ||
         annotateMustache(node, key, notes, a.name, a.value)
@@ -170,16 +166,8 @@ let takeNote = function(notes, key, group, name, note) {
 let annotator = new Annotator(annotatorImpl);
 
 let annotate = function(root, key, opts) {
-  return (
-    root._notes ||
-    (root._notes = annotator.annotate(
-      root.content,
-      {
-        /*ids:{}*/
-      },
-      key,
-      opts
-    ))
+  return (root._notes ||
+    (root._notes = annotator.annotate(root.content, {/*ids:{}*/}, key, opts))
   );
 };
 

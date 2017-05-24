@@ -1,15 +1,29 @@
-'use strict';
+"use strict";
 
-class SlotContainer extends HTMLElement {
-  connectedCallback() {
-    document.dispatchEvent(new CustomEvent('slot-container', {
-      detail: {
-        kind: 'connected',
-        name: this.getAttribute('name'),
-        node: this
-      }
-    }));
+let SlotContainer;
+
+if (global.document) {
+  class SlotContainer extends HTMLElement {
+    static subscribe(cb) {
+      document.addEventListener("slot-container", e => {
+        cb(e.details);
+      });
+    }
+    connectedCallback() {
+      document.dispatchEvent(
+        new CustomEvent("slot-container", {
+          detail: {
+            kind: "connected",
+            name: this.getAttribute("name"),
+            node: this
+          }
+        })
+      );
+    }
   }
+  customElements.define("slot-container", SlotContainer);
+} else {
+  SlotContainer = { subscribe: () => null };
 }
 
-customElements.define('slot-container', SlotContainer);
+module.exports = SlotContainer;
