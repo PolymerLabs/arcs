@@ -37,7 +37,7 @@ class Slot {
     this._particleSpec = particleSpec;
   }
   disassociateParticle() {
-    assert(this._particleSpec, "Particle spec is not set, cannot disassociate slot");
+    assert(this._particleSpec, `Particle spec is not set, cannot disassociate slot ${this.slotid}`);
     this._particleSpec = null;
   }
   isAssociated() {

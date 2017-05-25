@@ -15,7 +15,7 @@ let BrowserLoader = require("../browser-loader.js");
 let Resolver = require('../resolver.js');
 let SlotManager = require('../slot-manager.js');
 let Suggestinator = require("../suggestinator.js");
-let SuggestionManager = require('../suggestion.js').SuggestionManager;
+let SuggestionComposer = require('../suggestion-composer.js');
 
 let recipe = require('../recipe.js');
 let systemParticles = require('../system-particles.js');
@@ -41,7 +41,7 @@ function prepareExtensionArc() {
     new Product({name: "Power Tool Set"}),
     new Product({name: "Guardians of the Galaxy Figure"})
   ]);
-  return arc;
+  return {arc: arc, slotManager: slotManager};
 }
 
 let buildRecipe = info => {
@@ -55,7 +55,7 @@ let buildRecipe = info => {
   return rb.build();
 };
 
-let arc = prepareExtensionArc();
+let {arc, slotManager} = prepareExtensionArc();
 
 let rs = recipes.map(r => {
   let recipe = buildRecipe(r);
@@ -67,12 +67,10 @@ let suggestinator = new Suggestinator();
 suggestinator._getSuggestions = a => rs;
 
 let suggestionRoot = document.querySelector('suggestions');
-let suggestManager = new SuggestionManager(suggestionRoot);
+let suggestComposer = new SuggestionComposer(suggestionRoot, slotManager);
 
 let results = suggestinator.suggestinate(arc);
 results.then(r => {
   console.log(r);
-  r.forEach(recipe => {
-    suggestManager.addSuggestion(recipe.name, recipe.rank, recipe.instantiate.bind(recipe, arc));
-  });
+  suggestComposer.setSuggestions(r, arc);
 });
