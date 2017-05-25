@@ -159,4 +159,23 @@ describe('slot manager', function() {
     assert.equal(undefined, slotManager._getSlotId(subParticleSpec));
     assert.equal(undefined, slotManager._getParticle(subInnerSlotid));
   });
+
+  it('register and free slots', async () => {
+   let slotManager = new SlotManager(/* domRoot= */{}, /* pec= */ {});
+    // successfully register slot and inner slot.
+    await slotManager.registerSlot(particleSpec, rootSlotid, "view");
+    slotManager.renderSlot(particleSpec, `Foo<div slotid="${innerSlotid}"></div>`);
+    await slotManager.registerSlot(otherParticleSpec, innerSlotid);
+    slotManager.renderSlot(otherParticleSpec, 'Bar');
+
+    // successfully release root slot.
+    slotManager.freeSlot(rootSlotid);
+    assert.isTrue(slotManager.hasSlot(rootSlotid));
+    assert.equal(undefined, slotManager._getSlotId(particleSpec));
+    assert.equal(undefined, slotManager._getParticle(rootSlotid));
+    assert.isFalse(slotManager.hasSlot(innerSlotid));
+    assert.equal(undefined, slotManager._getSlotId(otherParticleSpec));
+    assert.equal(undefined, slotManager._getParticle(innerSlotid));
+  });
+
 });
