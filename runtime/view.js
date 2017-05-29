@@ -18,11 +18,8 @@ class ViewBase {
     this._arc = arc;
     this._listeners = new Map();
     this.name = name;
-<<<<<<< HEAD
     this._version = 0;
-=======
     this.id = this._arc.generateID();
->>>>>>> Serialize function for arc.
     trace.end();
   }
 
@@ -120,7 +117,7 @@ class View extends ViewBase {
       sort: 'view',
       type: this.type.toLiteral(),
       name: this.name,
-      values: this._items.map(a => a.id)
+      values: this.toList().map(a => a.id)
     });
   }
 }

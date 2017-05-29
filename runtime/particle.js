@@ -17,6 +17,8 @@ var tracing = require('tracelib');
 var assert = require('assert');
 const typeLiteral = require('./type-literal.js');
 
+const DEBUGGING = false;
+
 function define(def, update) {
   let spec = new ParticleSpec(parser.parse(def));
   let clazz = class extends Particle {
@@ -39,6 +41,8 @@ function define(def, update) {
       }
     }
     logDebug(tag, view) {
+      if (!DEBUGGING)
+        return;
       let direction = this.spec.connectionMap.get(tag).direction;
       view.debugString().then(v => console.log(
          `(${this.spec.name})(${direction})(${tag}): (${view.name})`, v));
@@ -183,6 +187,8 @@ class Particle {
   }
 
   logDebug(tag, view) {
+    if (!DEBUGGING)
+      return;
     let direction = this.spec.connectionMap.get(tag).direction;
     view.debugString().then(v => console.log(
        `(${this.spec.name})(${direction})(${tag}): (${view.name})`, v));
