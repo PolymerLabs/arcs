@@ -70,7 +70,6 @@ describe('demo flow', function() {
     suggestinator._getSuggestions = a => [r];
     var results = suggestinator.suggestinate(arc);
     results.then(async r => {
-      console.log(r);
       var productViews = arc.findViews(Product.type.viewOf());
       assert.equal(productViews.length, 1);
       await testUtil.assertViewHas(productViews[0], Product, "name", ["Tea Pot", "Bee Hive", "Denim Jeans"]);
@@ -95,7 +94,22 @@ describe('demo flow', function() {
       var serialization = arc.serialize();
       var loader = new Loader();
       systemParticles.register(loader);
-      var newArc = Arc.deserialize(serialization, loader);
+      
+      slotManager.expectGetSlot("ListView", "root")
+                 .expectGetSlot("Chooser", "action")
+                 .expectRender("ListView")
+                 .expectRender("Chooser")
+                 .expectRender("Chooser")
+                 .expectRender("Chooser")
+                 .expectRender("Chooser")
+
+      var newArc = Arc.deserialize({serialization, loader, slotManager});
+      await slotManager.expectationsCompleted();
+
+      productViews = arc.findViews(Product.type.viewOf());
+      assert.equal(productViews.length, 4);      
+      await testUtil.assertViewHas(productViews[1], Product, "name",
+          ["Tea Pot", "Bee Hive", "Denim Jeans", "Arduino"]);      
 
       done();
     });
