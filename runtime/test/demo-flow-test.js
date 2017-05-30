@@ -14,11 +14,11 @@ var Arc = require("../arc.js");
 var Loader = require("../loader.js");
 var Suggestinator = require("../suggestinator.js");
 var recipe = require('../recipe.js');
-var SlotManager = require('../slot-manager.js');
+var SlotComposer = require('../slot-composer.js');
 var systemParticles = require('../system-particles.js');
 let assert = require('chai').assert;
 const testUtil = require('./test-util.js');
-const MockSlotManager = require('./mock-slot-manager.js');
+const MockSlotComposer = require('./mock-slot-composer.js');
 
 require("./trace-setup.js");
 
@@ -33,9 +33,9 @@ function prepareExtensionArc() {
   pageArc.commit([new Person({name: "Claire"}), new Product({name: "Tea Pot"}), new Product({name: "Bee Hive"}), 
               new Product({name: "Denim Jeans"})]);
 
-  let slotManager = new SlotManager();
+  let slotComposer = new SlotComposer();
 
-  var arc = new Arc({loader, slotManager, id: "mainArc"});
+  var arc = new Arc({loader, slotComposer, id: "mainArc"});
   systemParticles.register(loader);
   arc.mapView(personView);
   arc.mapView(productView);
@@ -80,8 +80,8 @@ describe('demo flow', function() {
       var productViews = arc.findViews(Product.type.viewOf());
       assert.equal(productViews.length, 1);
       await testUtil.assertViewHas(productViews[0], Product, "name", ["Tea Pot", "Bee Hive", "Denim Jeans"]);
-      var slotManager = new MockSlotManager(arc.pec);
-      slotManager.expectGetSlot("ListView", "root")
+      var slotComposer = new MockSlotComposer(arc.pec);
+      slotComposer.expectGetSlot("ListView", "root")
                  .expectGetSlot("Chooser", "action")
                  .expectRender("ListView")
                  .expectRender("Chooser")
@@ -89,9 +89,9 @@ describe('demo flow', function() {
                  .thenSend("action", "chooseValue", {key: "1"})
                  .expectRender("ListView")
                  .expectRender("Chooser");
-      arc.pec.slotManager = slotManager;
+      arc.pec.slotComposer = slotComposer;
       r[0].instantiate(arc);
-      await slotManager.expectationsCompleted();
+      await slotComposer.expectationsCompleted();
       productViews = arc.findViews(Product.type.viewOf());
       assert.equal(productViews.length, 4);
       await testUtil.assertViewHas(productViews[1], Product, "name",
@@ -100,16 +100,16 @@ describe('demo flow', function() {
       var serialization = arc.serialize();
       var loader = new Loader();
       systemParticles.register(loader);
-      
-      slotManager.expectGetSlot("ListView", "root")
+
+      slotComposer.expectGetSlot("ListView", "root")
                  .expectGetSlot("Chooser", "action")
                  .expectRender("ListView")
                  .expectRender("Chooser")
 
       var arcMap = new Map();
       arcMap.set(pageArc.id, pageArc);
-      var newArc = Arc.deserialize({serialization, loader, slotManager, arcMap});
-      await slotManager.expectationsCompleted();
+      var newArc = Arc.deserialize({serialization, loader, slotComposer, arcMap});
+      await slotComposer.expectationsCompleted();
 
       productViews = arc.findViews(Product.type.viewOf());
       assert.equal(productViews.length, 4);      
@@ -117,6 +117,5 @@ describe('demo flow', function() {
           ["Tea Pot", "Bee Hive", "Denim Jeans", "Arduino"]);      
       done();
     });
-
   });
 });

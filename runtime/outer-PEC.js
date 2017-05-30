@@ -14,18 +14,18 @@ const assert = require('assert');
 const PECOuterPort = require('./api-channel.js').PECOuterPort;
 
 class OuterPEC extends PEC {
-  constructor(port, slotManager) {
+  constructor(port, slotComposer) {
     super();
     this._particles = [];
     this._apiPort = new PECOuterPort(port);
     this._nextIdentifier = 0;
     this._idMap = new Map();
     this._reverseIdMap = new Map();
-    this.slotManager = slotManager;
+    this.slotComposer = slotComposer;
 
     this._apiPort.onRenderSlot = ({particle, content}) => {
-      if (this.slotManager)
-        this.slotManager.renderSlot(particle, content, this._makeEventletHandler(particle));
+      if (this.slotComposer)
+        this.slotComposer.renderSlot(particle, content, this._makeEventletHandler(particle));
     };
 
     this._apiPort.onSynchronize = ({view, target, callback, modelCallback, type}) => {
@@ -58,14 +58,14 @@ class OuterPEC extends PEC {
 
     this._apiPort.onGetSlot = ({particle, name, callback}) => {
       assert(particle.renderMap.has(name));
-      if (this.slotManager)
-        this.slotManager.registerSlot(particle, name).then(() =>
+      if (this.slotComposer)
+        this.slotComposer.registerSlot(particle, name).then(() =>
           this._apiPort.ViewCallback({callback}));
     }
 
     this._apiPort.onReleaseSlot = ({particle}) => {
-      if (this.slotManager) {
-        let affectedParticles = this.slotManager.releaseSlot(particle);
+      if (this.slotComposer) {
+        let affectedParticles = this.slotComposer.releaseSlot(particle);
         if (affectedParticles) {
           this._apiPort.LostSlots({particles: affectedParticles});
         }
