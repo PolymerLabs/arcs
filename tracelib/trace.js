@@ -14,7 +14,6 @@
 var fs = require('fs');
 var mkdirp = require('mkdirp');
 var path = require('path');
-var zlib = require('zlib');
 var options = require('./options');
 
 var events = [];
