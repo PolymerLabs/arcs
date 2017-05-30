@@ -9,14 +9,14 @@
  */
 "use strict";
 
-const assert = require('assert');
+//const assert = require('assert');
 const Slot = require('./slot.js');
 const Template = require('./browser/xenon-template.js');
 
 // TODO(sjmiles): using Node syntax to import custom-elements (which only happens in browser context)
 if (global.document) {
   require('./browser/x-list.js');
-  require('./browser/slot-container.js');
+  require('./browser/model-select.js');
 }
 
 let templates = new Map();
@@ -24,21 +24,17 @@ let templates = new Map();
 class DomSlot extends Slot {
   constructor(slotid) {
     super(slotid);
-    this._dom = null;
+    this.dom = null;
   }
   initialize(context, exposedView) {
-    this._dom = context;
+    this.dom = context;
     this.exposedView = exposedView;
   }
   isInitialized() {
-    return Boolean(this._dom);
-  }
-  // Returns true, if slot's DOM is initialized, and there is no Particle associated with it.
-  isAvailable() {
-    return this.isInitialized() && !this.isAssociated();
+    return Boolean(this.dom);
   }
   uninitialize() {
-    this._dom = null;
+    this.dom = null;
     this.exposedView = null;
   }
   derender() {
@@ -50,7 +46,7 @@ class DomSlot extends Slot {
   // this getter was used for rendering as html, hopefully
   // will be evacipated soon
   get content() {
-    return this._dom ? this._dom._cachedContent : null;
+    return this.dom ? this.dom._cachedContent : null;
   }
   // TODO(sjmiles): SlotManager calls here
   render(content, eventHandler) {
@@ -61,21 +57,23 @@ class DomSlot extends Slot {
     }
   }
   _setContent(content, eventHandler) {
+    // TODO(sjmiles): these signals are ad hoc
     let html = null;
-    if (typeof content === 'string') {
+    // falsey content is a request to teardown rendering
+    if (!content) {
+      this.dom.textContent = '';
+      this._liveDom = null;
+    } else if (typeof content === 'string') {
+      // legacy html content
       html = content;
     } else {
+      // handle multiplexed content object
       let templateName = content.templateName || 'main';
       if (content.template) {
         templates[templateName] = Object.assign(document.createElement('template'), {
           innerHTML: content.template
         });
       }
-      /*
-      if (content.htmlModel) {
-        html = this._interpolateModel(templateName, content.model);
-      }
-      */
       if (content.model) {
         if (!this._liveDom) {
           this._stampTemplate(templates[templateName], eventHandler);
@@ -83,21 +81,23 @@ class DomSlot extends Slot {
         this._liveDom.set(content.model);
       }
       if (content.html) {
+        // legacy html content (unused?)
         html = content.html;
       }
     }
+    // legacy html content
     if (typeof html === 'string') {
       // TODO(sjmiles): innerHTML is mutable and cannot be used to memoize original content 
-      this._dom.innerHTML = this._dom._cachedContent = html;
+      this.dom.innerHTML = /*this.dom._cachedContent =*/ html;
     }
   }
   _stampTemplate(template, eventHandler) {
     let eventMapper = this._eventMapper.bind(this, eventHandler);
     this._liveDom = Template.stamp(template);
     this._liveDom.mapEvents(eventMapper);
-    this._liveDom.appendTo(this._dom);
+    this._liveDom.appendTo(this.dom);
     // TODO(sjmiles): hack to allow subtree elements (e.g. x-list) to marshal events
-    this._dom._eventMapper = eventMapper;
+    this.dom._eventMapper = eventMapper;
   }
   _eventMapper(eventHandler, node, eventName, handlerName) {
     node.addEventListener(eventName, e => {
@@ -111,7 +111,7 @@ class DomSlot extends Slot {
     });
   }
   _findInnerSlotInfos() {
-    return Array.from(this._dom.querySelectorAll("[slotid]")).map(s => {
+    return Array.from(this.dom.querySelectorAll("[slotid]")).map(s => {
       return {
         context: s,
         id: s.getAttribute('slotid')
@@ -153,7 +153,7 @@ class DomSlot extends Slot {
   }
   // TODO(sjmiles): a `slotInfo` contains an `id` and a device `context` (e.g. a dom node).
   _findEventGenerators() {
-    return this._dom.querySelectorAll('[events]');
+    return this.dom.querySelectorAll('[events]');
   }
   _addEventListeners(eventGenerators, eventHandler) {
     for (let eventGenerator of eventGenerators) {
@@ -180,13 +180,13 @@ class DomSlot extends Slot {
 class MockDomSlot extends DomSlot {
   _setContent(content) {
     let html = content.html || content;
-    this._dom.innerHTML = this._dom._cachedContent = html;
+    this.dom.innerHTML = this.dom._cachedContent = html;
   }
   _findInnerSlotInfos() {
     let slots = [];
     let slot;
     let RE = /slotid="([^"]*)"/g;
-    while ((slot = RE.exec(this._dom.innerHTML))) {
+    while ((slot = RE.exec(this.dom.innerHTML))) {
       slots.push({
         context: {}, 
         id: slot[1]

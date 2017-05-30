@@ -9,56 +9,80 @@
  */
 "use strict";
 
-const {Particle, ViewChanges, StateChanges, SlotChanges} = require("./particle.js");
+const {
+  Particle,
+  ViewChanges,
+  StateChanges,
+  SlotChanges
+} = require("./particle.js");
 
-class DomParticle extends Particle {
-  setViews(views) {
-    this.when([new ViewChanges(views, this._watchedViews, 'change')], e => {
-      this._viewsUpdated(views);
-    });
-    this.when([new StateChanges(this._watchedStates), new SlotChanges()], e => {
-      this._renderViews(views, this._slotName);
-    });
+const XenonBase = require("./browser/xenon-base.js");
+
+class DomParticle extends XenonBase(Particle) {
+  get config() {
+    return {
+      template: '',
+      views: '',
+      slotName: 'root'
+    };
   }
-  async _renderViews(views, slotName) {
-    let model = this._buildRenderModel(views);
+  async setViews(views) {
+    let config = this.config;
+    this.when([new ViewChanges(views, config.views, 'change')], async e => {
+      // acquire all list data from views (async)
+      let data = await Promise.all(config.views.map(name => {
+        let view = views.get(name);
+        return view.toList ? view.toList() : view.name;
+      }));
+      // convert view data into props
+      let props = {};
+      config.views.forEach((name, i) => {
+        props[name] = data[i];
+      });
+      // assign props
+      this._viewsUpdated(props);
+    });
+    this._views = views;
+    await this.requireSlot(config.slotName);
+  }
+  setSlot(slot) {
+    this._setState({slot});
+    this._initializeRender(slot);
+    super.setSlot(slot);
+  }
+  _clearSlot() {
+    this._setState({slot: null});
+    super._clearSlot();
+  }
+  _update(props, state) {
+    this._renderModel(this._render(props, state));
+  }
+  _render(props, state) {
+  }
+  async _renderModel(model) {
+    let slotName = this.config.slotName;
     if (!model) {
       this.releaseSlot(slotName);
     } else {
-      let slot = await this.requireSlot(slotName);
-      this._state = {
-        model,
-        views
-      };
-      this._renderToSlot(slot, model);
+      (await this.requireSlot(slotName)).render({model});
     }
-  }
-  _renderToSlot(slot, model) {
-    this._initializeRender(slot);
-    slot.render({
-      model
-    });
   }
   _initializeRender(slot) {
-    if (!this._renderInitialized) {
-      this._renderInitialized = true;
-      slot.render({name: 'main', template: this.template});
-      let handlers = this._findHandlerNames(this.template);
-      handlers.forEach(name => {
-        slot.clearEventHandlers(name);
-        slot.registerEventHandler(name, eventlet => {
-          if (this[name]) {
-            this[name](eventlet, this._state.model, this._state.views);
-          }
-        });
+    let template = this.config.template;
+    this._findHandlerNames(template).forEach(name => {
+      slot.clearEventHandlers(name);
+      slot.registerEventHandler(name, eventlet => {
+        if (this[name]) {
+          this[name](eventlet, this._state, this._views);
+        }
       });
-    }
+    });
+    slot.render({name: 'main', template: template});
   }
   _findHandlerNames(html) {
     let handlers = new Map();
-    let m;
     let re = /on-.*?=\"([^\"]*)"/gmi;
-    while ((m = re.exec(html)) !== null) {
+    for (let m=re.exec(html); m; m=re.exec(html)) {
       handlers.set(m[1], true);
     }
     return Array.from(handlers.keys());

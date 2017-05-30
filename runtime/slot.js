@@ -70,11 +70,12 @@ class Slot {
   */
   initialize(context, exposedView) {
   }
+  uninitialize() {
+  }
   isInitialized() {
   }
   isAvailable() {
-  }
-  uninitialize() {
+    return this.isInitialized() && !this.isAssociated();
   }
   get content() {
   }

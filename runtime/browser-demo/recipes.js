@@ -44,6 +44,13 @@ module.exports = [{
       "choices": "recommended",
       "resultList": "list"
     }
+  },{
+    name: "GiftList",
+    constrain: {
+      "person": "person",
+      "list": "list",
+      "resultList": "list"
+    }
   }]
 }, {
   name: "Create shortlist with <product, ...>",
@@ -69,7 +76,14 @@ module.exports = [{
   }]
 }, {
   name: "Buying for <person>'s <occasion> in <timeframe>? Product <X> arrives too late.",
-  particles: []
+  particles: [{
+    name: "GiftList",
+    constrain: {
+      "person": "person",
+      "list": "list",
+      "resultList": "list"
+    }
+  }]
 }, {
   name: "Check for newer versions, e.g. there is a new version of <product>.",
   particles: []

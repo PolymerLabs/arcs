@@ -14,7 +14,7 @@ let Arc = require("../arc.js");
 let BrowserLoader = require("../browser-loader.js");
 let Resolver = require('../resolver.js');
 let SlotManager = require('../slot-manager.js');
-let Suggestinator = require("../suggestinator.js");
+//let Suggestinator = require("../suggestinator.js");
 
 let recipe = require('../recipe.js');
 let systemParticles = require('../system-particles.js');
@@ -55,6 +55,8 @@ let buildRecipe = info => {
 };
 
 let arc = prepareExtensionArc();
+
+let stage = 0;
 
 let chooseSuggestion = index => {
   let r = buildRecipe(recipes[index]);
@@ -98,5 +100,4 @@ let suggest = (stage) => {
   }
 };
 
-let stage = 0;
 suggest(stage++);

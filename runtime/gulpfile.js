@@ -63,4 +63,8 @@ gulp.task('watch', function() {
   gulp.watch(['**', '!build/**'], ['build', 'test']);
 });
 
+gulp.task('dev', function() {
+  gulp.watch(['**', '!build/**'], ['build']);
+});
+
 gulp.task('default', ['build', 'test']);

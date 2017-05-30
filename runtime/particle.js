@@ -115,38 +115,6 @@ class Particle {
     return this.spec.outputs;
   }
 
-  setSlotCallback(callback) {
-    this._slotCallback = callback;
-  }
-
-  setSlot(slot) {
-    this.slot = slot;
-    this.slotPromise = null;
-    if (this.slotResolver) {
-      this.slotResolver(this.slot); 
-    }    
-    this.slotResolver = null;
-    this.slotHandlers.forEach(f => f(true));
-  }
-
-  releaseSlot() {
-    if (this.slot)
-      this._slotCallback(this.slot.id, "No");
-    this._clearSlot();
-  }
-  
-  // our slot was released involuntarily
-  slotReleased() {
-    this._clearSlot();
-  }
-
-  _clearSlot() {
-    if (this.slot) {
-      this.slot = null;
-      this.slotHandlers.forEach(f => f(false));
-    }
-  }
-  
   async requireSlot(id) {
     if (this.slot) {
       return this.slot;
@@ -158,6 +126,39 @@ class Particle {
       });
     }
     return this.slotPromise;
+  }
+
+  setSlot(slot) {
+    this.slot = slot;
+    this.slotPromise = null;
+    if (this.slotResolver) {
+      this.slotResolver(this.slot); 
+    }
+    this.slotResolver = null;
+    this.slotHandlers.forEach(f => f(true));
+  }
+
+  releaseSlot() {
+    if (this.slot) {
+      this._slotCallback(this.slot.id, "No");
+    }
+    this._clearSlot();
+  }
+
+  // our slot was released involuntarily
+  slotReleased() {
+    this._clearSlot();
+  }
+
+  _clearSlot() {
+    if (this.slot) {
+      this.slot = null;
+      this.slotHandlers.forEach(f => f(false));
+    }
+  }
+
+  setSlotCallback(callback) {
+    this._slotCallback = callback;
   }
 
   addSlotHandler(f) {
