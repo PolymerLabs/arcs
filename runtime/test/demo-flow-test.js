@@ -26,20 +26,27 @@ function prepareExtensionArc() {
   let loader = new Loader();
   let Person = loader.loadEntity("Person");
   let Product = loader.loadEntity("Product");
-  let slotManager = new SlotManager();
-  var arc = new Arc({loader, slotManager});
-  systemParticles.register(loader);
-  var personView = arc.createView(Person.type.viewOf(), "peopleFromWebpage");
-  var productView = arc.createView(Product.type.viewOf(), "productsFromWebpage");
-  var personSlot = arc.createView(Person.type, "personSlot");
-  arc.commit([new Person({name: "Claire"}), new Product({name: "Tea Pot"}), new Product({name: "Bee Hive"}), 
+  var pageArc = new Arc({loader, id: "pageArc"});
+
+  var personView = pageArc.createView(Person.type.viewOf(), "peopleFromWebpage");
+  var productView = pageArc.createView(Product.type.viewOf(), "productsFromWebpage");
+  pageArc.commit([new Person({name: "Claire"}), new Product({name: "Tea Pot"}), new Product({name: "Bee Hive"}), 
               new Product({name: "Denim Jeans"})]);
-  return {arc, Person, Product};
+
+  let slotManager = new SlotManager();
+
+  var arc = new Arc({loader, slotManager, id: "mainArc"});
+  systemParticles.register(loader);
+  arc.mapView(personView);
+  arc.mapView(productView);
+  var personSlot = arc.createView(Person.type, "personSlot");
+
+  return {pageArc, arc, Person, Product};
 }
 
 describe('demo flow', function() {
   it('flows like a demo', function(done) {
-    let {arc, Person, Product} = prepareExtensionArc();
+    let {pageArc, arc, Person, Product} = prepareExtensionArc();
     var r = new recipe.RecipeBuilder()
       .addParticle("Create")
         .connectConstraint("newList", "list")
@@ -103,14 +110,15 @@ describe('demo flow', function() {
                  .expectRender("Chooser")
                  .expectRender("Chooser")
 
-      var newArc = Arc.deserialize({serialization, loader, slotManager});
+      var arcMap = new Map();
+      arcMap.set(pageArc.id, pageArc);
+      var newArc = Arc.deserialize({serialization, loader, slotManager, arcMap});
       await slotManager.expectationsCompleted();
 
       productViews = arc.findViews(Product.type.viewOf());
       assert.equal(productViews.length, 4);      
       await testUtil.assertViewHas(productViews[1], Product, "name",
           ["Tea Pot", "Bee Hive", "Denim Jeans", "Arduino"]);      
-
       done();
     });
 
