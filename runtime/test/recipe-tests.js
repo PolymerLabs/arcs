@@ -17,9 +17,9 @@ let particles = require('./test-particles.js');
 let util = require('./test-util.js');
 let viewlet = require('../viewlet.js');
 let Loader = require('../loader');
-let SlotManager = require('../slot-manager.js');
+let SlotComposer = require('../slot-composer.js');
 
-const slotManager = new SlotManager({});
+const slotComposer = new SlotComposer({});
 
 describe('recipe', function() {
 
@@ -29,7 +29,7 @@ describe('recipe', function() {
     const Foo = loader.loadEntity("Foo");
     const Bar = loader.loadEntity("Bar");
     particles.register(loader);
-    var arc = new Arc({loader, slotManager});
+    var arc = new Arc({loader, slotComposer});
     let fooView = arc.createView(Foo.type);
     let barView = arc.createView(Bar.type);
 

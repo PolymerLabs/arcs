@@ -16,11 +16,11 @@ var recipe = require("../recipe.js");
 let assert = require('chai').assert;
 let particles = require('./test-particles.js');
 let Loader = require('../loader');
-let SlotManager = require('../slot-manager.js');
+let SlotComposer = require('../slot-composer.js');
 
 let loader = new Loader();
 particles.register(loader);
-const slotManager = new SlotManager({});
+const slotComposer = new SlotComposer({});
 var Foo = runtime.testing.testEntityClass('Foo');
 var Bar = runtime.testing.testEntityClass('Bar');
 var Far = runtime.testing.testEntityClass('Far');
@@ -29,7 +29,7 @@ describe('suggestinator', function() {
 
   it('suggests a ranked list of recipes', async () => {
 
-    var arc = new Arc({loader, slotManager});
+    var arc = new Arc({loader, slotComposer});
 
     var fooView = arc.createView(Foo.type);
     var barView = arc.createView(Bar.type);

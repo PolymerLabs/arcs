@@ -14,7 +14,7 @@ const Slot = require('./slot-dom.js');
 
 let log = !global.document || (global.logging === false) ? () => {} : (...args) => { console.log.apply(console, args); };
 
-class SlotManager {
+class SlotComposer {
   constructor(domRoot, pec) {
     this._slotBySlotId = new Map();
     // Contains both fulfilled slots and pending requests. 
@@ -143,4 +143,4 @@ class SlotManager {
   }
 }
 
-module.exports = SlotManager;
+module.exports = SlotComposer;

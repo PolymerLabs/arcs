@@ -14,11 +14,11 @@ const BrowserLoader = require("../browser-loader.js");
 const Suggestinator = require("../suggestinator.js");
 const recipe = require('../recipe.js');
 const systemParticles = require('../system-particles.js');
-const SlotManager = require('../slot-manager.js');
+const SlotComposer = require('../slot-composer.js');
 const tracing = require('tracelib');
 tracing.enable();
 
-function prepareExtensionArc(slotManager) {
+function prepareExtensionArc() {
   let loader = new BrowserLoader('../');
   systemParticles.register(loader);
   let Person = loader.loadEntity("Person");
@@ -26,17 +26,17 @@ function prepareExtensionArc(slotManager) {
   // TODO: Move this to a separate file.
   let pecFactory = require('../worker-pec-factory').bind(null, '../');
   var domRoot = global.document ? document.querySelector('[particle-container]') || document.body : {};
-  var slotManager = new SlotManager(domRoot);
-  var arc = new Arc({loader, pecFactory, slotManager});
+  var slotComposer = new SlotComposer(domRoot);
+  var arc = new Arc({loader, pecFactory, slotComposer});
   var personView = arc.createView(Person.type.viewOf(), "peopleFromWebpage");
   var productView = arc.createView(Product.type.viewOf(), "productsFromWebpage");
   var personSlot = arc.createView(Person.type, "personSlot");
   arc.commit([new Person({name: "Claire"}), new Product({name: "Tea Pot"}), new Product({name: "Bee Hive"}),
               new Product({name: "Denim Jeans"})]);
-  return {arc, slotManager};
+  return {arc, slotComposer};
 }
 
-let {arc, slotManager}  = prepareExtensionArc();
+let {arc, slotComposer}  = prepareExtensionArc();
 var r = new recipe.RecipeBuilder()
   .addParticle("Create")
     .connectConstraint("newList", "list")

@@ -19,7 +19,7 @@ let viewlet = require('./viewlet.js');
 const OuterPec = require('./outer-PEC.js');
 
 class Arc {
-  constructor({id, loader, pecFactory, slotManager}) {
+  constructor({id, loader, pecFactory, slotComposer}) {
     assert(loader);
     this._loader = loader;
     // TODO: pecFactory should not be optional. update all callers and fix here.
@@ -39,15 +39,15 @@ class Arc {
     this.particleViewMaps = new Map();
     let pecId = this.generateID();
     let innerPecPort = this._pecFactory(pecId);
-    this.pec = new OuterPec(innerPecPort, slotManager, `${pecId}:outer`);
+    this.pec = new OuterPec(innerPecPort, slotComposer, `${pecId}:outer`);
     this.nextParticleHandle = 0;
   }
   
-  static deserialize({serialization, pecFactory, loader, slotManager, arcMap}) { 
+  static deserialize({serialization, pecFactory, loader, slotComposer, arcMap}) {
     var entityMap = {};
     var viewMap = {};
     serialization.entities.forEach(e => entityMap[e.id] = e);
-    var arc = new Arc({id: serialization.id, loader, slotManager});
+    var arc = new Arc({id: serialization.id, loader, slotComposer});
     for (var serializedView of serialization.views) {
       if (serializedView.arc) {
         var view = arcMap.get(serializedView.arc).viewById(serializedView.id);
