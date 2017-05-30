@@ -27,7 +27,14 @@ class Arc {
     this.id = id;
     this.nextLocalID = 0;
     this.particles = [];
+
+    // All the views as a set
     this.views = new Set();
+    // All the views, mapped by view ID
+    // TODO: derive this.views from this._viewMap instead 
+    //       of having 2 structures. 
+    this._viewMap = new Map();
+
     this._viewsByType = new Map();
     this.particleViewMaps = new Map();
     let pecId = this.generateID();
@@ -36,22 +43,28 @@ class Arc {
     this.nextParticleHandle = 0;
   }
   
-  static deserialize({serialization, pecFactory, loader, slotManager}) { 
+  static deserialize({serialization, pecFactory, loader, slotManager, arcMap}) { 
     var entityMap = {};
     var viewMap = {};
     serialization.entities.forEach(e => entityMap[e.id] = e);
     var arc = new Arc({id: serialization.id, loader, slotManager});
     for (var serializedView of serialization.views) {
-      var view = arc.createView(new Type(serializedView.type), serializedView.name);
-      view.id = serializedView.id;
-      viewMap[serializedView.id] = view;
-      if (serializedView.sort == 'view') {
-        var values = serializedView.values.map(a => entityMap[a]);
-        values.forEach(v => view._items.set(v.id, v));
+      if (serializedView.arc) {
+        var view = arcMap.get(serializedView.arc).viewById(serializedView.id);
+        arc.mapView(view);
       } else {
-        var value = entityMap[serializedView.value];
-        view._stored = value;
+        var view = arc.createView(new Type(serializedView.type), serializedView.name);
+        view.id = serializedView.id;
+
+        if (serializedView.sort == 'view') {
+          var values = serializedView.values.map(a => entityMap[a]);
+          values.forEach(v => view._items.set(v.id, v));
+        } else {
+          var value = entityMap[serializedView.value];
+          view._stored = value;
+        }
       }
+      viewMap[view.id] = view;
     }
     for (var serializedParticle of serialization.particles) {
       var particle = arc.instantiateParticle(serializedParticle.name);
@@ -100,8 +113,13 @@ class Arc {
     s.entities = [...entities.values()];
 
     // 2. serialize views
-    for (var view of this.views)
-      view.serialize(s.views);
+    for (var view of this.views) {
+      if (view._arc !== this) {
+        view.serializeMappingRecord(s.views);
+      } else {
+        view.serialize(s.views);
+      }
+    }
 
     // 3. serialize particles
     for (var particle of this.particleViewMaps.values()) {
@@ -147,6 +165,10 @@ class Arc {
     return v;
   }
 
+  mapView(view) {
+    this.registerView(view);
+  }
+
   registerView(view) {
     let views = this.findViews(view.type);
     if (!views.length) {
@@ -162,9 +184,13 @@ class Arc {
     return this._viewsByType.get(JSON.stringify(type.toLiteral())) || [];
   }
 
+  viewById(id) {
+    return this._viewMap.get(id);
+  }
+
   addView(view) {
-    view.arc = this;
     this.views.add(view);
+    this._viewMap.set(view.id, view);
   }
 
   _viewFor(type) {

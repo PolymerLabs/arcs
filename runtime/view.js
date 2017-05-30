@@ -117,8 +117,20 @@ class View extends ViewBase {
       sort: 'view',
       type: this.type.toLiteral(),
       name: this.name,
-      values: this.toList().map(a => a.id)
+      values: this.toList().map(a => a.id),
+      version: this._version
     });
+  }
+
+  serializeMappingRecord(list) {
+    list.push({
+      id: this.id,
+      sort: 'view',
+      type: this.type.toLiteral(),
+      name: this.name,
+      version: this._version,
+      arc: this._arc.id
+    })
   }
 }
 
@@ -165,9 +177,21 @@ class Variable extends ViewBase {
       sort: 'variable',
       type: this.type.toLiteral(),
       name: this.name,
-      value: this._stored.id
+      value: this._stored.id,
+      version: this._version
     });
   }
+
+  serializeMappingRecord(list) {
+    list.push({
+      id: this.id,
+      sort: 'variable',
+      type: this.type.toLiteral(),
+      name: this.name,
+      version: this._version,
+      arc: this._arc.id
+    })
+  }  
 }
 
 Object.assign(module.exports, {
