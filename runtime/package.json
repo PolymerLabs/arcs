@@ -9,15 +9,12 @@
     "tracelib": "../tracelib"
   },
   "devDependencies": {
-    "browserify": "^14.3.0",
     "chai": "^3.5.0",
     "gulp": "^3.9.1",
     "gulp-mocha": "^4.3.1",
-    "gulp-sourcemaps": "^2.6.0",
     "mocha": "^3.2.0",
     "pegjs": "^0.10.0",
-    "vinyl-buffer": "^1.0.0",
-    "vinyl-source-stream": "^1.1.0",
-    "watchify": "^3.9.0"
+    "watchify": "^3.9.0",
+    "webpack": "^2.6.1"
   }
 }

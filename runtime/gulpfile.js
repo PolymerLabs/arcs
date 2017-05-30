@@ -8,26 +8,36 @@
 
 const gulp = require('gulp');
 
-gulp.task('build', function() {
-  const browserify = require('browserify');
-  const source = require('vinyl-source-stream');
-  const buffer = require('vinyl-buffer');
-  const sourcemaps = require('gulp-sourcemaps');
+gulp.task('build', async function() {
+  const webpack = require('webpack');
+
+  let node = {
+    fs: 'empty',
+    mkdirp: 'empty',
+    minimist: 'empty',
+  };
 
   for (let file of [
-    'browser-test/browser-test.js',
-    'browser-demo/browser-demo.js',
-    'worker-entry.js',
+    './browser-test/browser-test.js',
+    './browser-demo/browser-demo.js',
+    './worker-entry.js',
   ]) {
-    browserify({
-      entries: file,
-      debug: true,
-    }).bundle()
-        .pipe(source(file))
-        .pipe(buffer())
-        .pipe(sourcemaps.init({loadMaps: true}))
-        .pipe(sourcemaps.write('./'))
-        .pipe(gulp.dest('./build/'));
+    await new Promise((resolve, reject) => {
+      webpack({
+        entry: file,
+        output: {
+          filename: 'build/' + file,
+        },
+        node,
+        devtool: 'sourcemap',
+      }, (err, stats) => {
+        if (err) {
+          reject(err);
+        }
+        console.log(stats.toString({colors: true, verbose: true}));
+        resolve();
+      });
+    });
   }
 });
 
