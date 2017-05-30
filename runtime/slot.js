@@ -27,20 +27,20 @@ class Slot {
   get particleSpec() { 
     return this._particleSpec; 
   }
-  associateWithParticle(particleSpec) {
-    assert(!this._particleSpec, "Particle spec already set, cannot associate slot");
+  assignParticle(particleSpec) {
+    assert(!this._particleSpec, "Particle spec already set, cannot assign slot");
     // Verify that particle that hosts this slot exposes the same view that is
-    // being rendered by the particle that is being associated with it.
+    // being rendered by the particle that is being assigned to it.
     assert(!this._exposedView ||
            this._particleSpec.renderMap.get(this._slotid) == this._exposedView,
-           "Cannot associate particle-spec with an unmatching view.");
+           "Cannot assign slot to particle-spec with an unmatching view.");
     this._particleSpec = particleSpec;
   }
-  disassociateParticle() {
-    assert(this._particleSpec, "Particle spec is not set, cannot disassociate slot");
+  unassignParticle() {
+    assert(this._particleSpec, "Particle spec is not set, cannot unassign slot");
     this._particleSpec = null;
   }
-  isAssociated() {
+  hasParticle() {
     return !!this._particleSpec;
   }
   addPendingRequest(particleSpec, resolve, reject) {
@@ -56,7 +56,7 @@ class Slot {
     this._pendingRequests.delete(particleName);
   }
   providePendingSlot() {
-    assert(!this.isAssociated(), "Cannot provide associated slot.");
+    assert(!this.hasParticle(), "Cannot provide assigned slot.");
     if (this._pendingRequests.size > 0) {
       let pendingRequest = this._pendingRequests.entries().next();
       if (pendingRequest && pendingRequest.value[1].resolve) {

@@ -14,24 +14,24 @@ var Slot = require("../slot.js");
 let util = require('./test-util.js');
 
 describe('slot', function() {
-  it('associate and disassociate slot', function() {
+  it('assign and unassign slot', function() {
     let slot = new Slot('slotid');
-    assert.isFalse(slot.isAssociated());
+    assert.isFalse(slot.hasParticle());
 
-    // cannot disassociate not associated slot.
-    assert.throws(() => { slot.disassociateParticle() });
+    // cannot unassign slot that wasn't assigned.
+    assert.throws(() => { slot.unassignParticle() });
 
-    // associate slot.
+    // assign slot.
     let particleSpec = util.initParticleSpec('particle');
-    slot.associateWithParticle(particleSpec);
-    assert.isTrue(slot.isAssociated());
-    // cannot associate slot that is already associated.
-    assert.throws(() => { slot.associateWithParticle(particleSpec); });
+    slot.assignParticle(particleSpec);
+    assert.isTrue(slot.hasParticle());
+    // cannot assign slot that is already assigned.
+    assert.throws(() => { slot.assignParticle(particleSpec); });
   });
 
   it('add and provide pending requests', function() {
     let slot = new Slot('slotid');
-    assert.isFalse(slot.isAssociated());
+    assert.isFalse(slot.hasParticle());
 
     let count = 0;
     let handler = () => { count++; };
@@ -49,8 +49,8 @@ describe('slot', function() {
     slot.providePendingSlot();
     assert.equal(expectedCount, count);
 
-    // Cannot provide not associated slot.
-    slot.associateWithParticle(util.initParticleSpec('particle'));
+    // Cannot provide unassigned slot.
+    slot.assignParticle(util.initParticleSpec('particle'));
     assert.throws(() => { slot.providePendingSlot(); });
     assert.equal(expectedCount, count);
   });
