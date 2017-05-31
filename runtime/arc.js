@@ -28,12 +28,8 @@ class Arc {
     this.nextLocalID = 0;
     this.particles = [];
 
-    // All the views as a set
-    this.views = new Set();
     // All the views, mapped by view ID
-    // TODO: derive this.views from this._viewMap instead 
-    //       of having 2 structures. 
-    this._viewMap = new Map();
+    this._viewsById = new Map();
 
     this._viewsByType = new Map();
     this.particleViewMaps = new Map();
@@ -53,8 +49,7 @@ class Arc {
         var view = arcMap.get(serializedView.arc).viewById(serializedView.id);
         arc.mapView(view);
       } else {
-        var view = arc.createView(new Type(serializedView.type), serializedView.name);
-        view.id = serializedView.id;
+        var view = arc.createView(new Type(serializedView.type), serializedView.name, serializedView.id);
 
         if (serializedView.sort == 'view') {
           var values = serializedView.values.map(a => entityMap[a]);
@@ -91,10 +86,14 @@ class Arc {
     return `${this.id}:${this.nextLocalID++}`;
   }
 
+  get _views() {
+    return [...this._viewsById.values()];
+  }
+
   clone() {
     var arc = new Arc({loader: this._loader, id: this.generateID(), pecFactory: this._pecFactory});
     var viewMap = new Map();
-    this.views.forEach(v => viewMap.set(v, v.clone()));
+    this._views.forEach(v => viewMap.set(v, v.clone()));
     arc.particles = this.particles.map(p => p.clone(viewMap));
     for (let v of viewMap.values())
       arc.registerView(v);
@@ -107,13 +106,13 @@ class Arc {
 
     // 1. serialize entities
     var entities = new Set();
-    for (var view of this.views)
+    for (var view of this._views)
       view.extractEntities(entities);
 
     s.entities = [...entities.values()];
 
     // 2. serialize views
-    for (var view of this.views) {
+    for (var view of this._views) {
       if (view._arc !== this) {
         view.serializeMappingRecord(s.views);
       } else {
@@ -142,7 +141,7 @@ class Arc {
       targetView = this._viewMap.get(targetView) || targetView;
     }
     assert(targetView, "no target view provided");
-    assert(this.views.has(targetView), "view of type " + targetView.type.key + " not visible to arc");
+    assert(this._viewsById.has(targetView.id), "view of type " + targetView.type.key + " not visible to arc");
     var viewMap = this.particleViewMaps.get(particle);
     assert(viewMap.clazz.spec.connectionMap.get(name) !== undefined, "can't connect view to a view slot that doesn't exist");
     viewMap.views.set(name, targetView);
@@ -152,14 +151,14 @@ class Arc {
     } 
   }
 
-  createView(type, name) {
+  createView(type, name, id) {
     assert(type instanceof Type, "can't createView with a type that isn't a Type");
     if (type.isRelation)
       type = type.viewOf(this);
     if (type.isView) {
-      var v = new view.View(type, this, name);
+      var v = new view.View(type, this, name, id);
     } else {
-      var v = new view.Variable(type, this, name);
+      var v = new view.Variable(type, this, name, id);
     }
     this.registerView(v);
     return v;
@@ -185,12 +184,11 @@ class Arc {
   }
 
   viewById(id) {
-    return this._viewMap.get(id);
+    return this._viewsById.get(id);
   }
 
   addView(view) {
-    this.views.add(view);
-    this._viewMap.set(view.id, view);
+    this._viewsById.set(view.id, view);
   }
 
   _viewFor(type) {
