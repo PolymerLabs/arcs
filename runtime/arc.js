@@ -30,8 +30,12 @@ class Arc {
 
     // All the views, mapped by view ID
     this._viewsById = new Map();
-
+    // .. and mapped by Type
     this._viewsByType = new Map();
+
+    // information about last-seen-versions of views
+    this._lastSeenVersion = new Map();
+
     this.particleViewMaps = new Map();
     let pecId = this.generateID();
     let innerPecPort = this._pecFactory(pecId);
@@ -49,7 +53,9 @@ class Arc {
         var view = arcMap.get(serializedView.arc).viewById(serializedView.id);
         arc.mapView(view);
       } else {
+        // TODO add a separate deserialize constructor for view?
         var view = arc.createView(new Type(serializedView.type), serializedView.name, serializedView.id);
+        view._version = serializedView._version;
 
         if (serializedView.sort == 'view') {
           var values = serializedView.values.map(a => entityMap[a]);
@@ -60,6 +66,7 @@ class Arc {
         }
       }
       viewMap[view.id] = view;
+      arc._lastSeenVersion.set(view.id, serializedView.version);
     }
     for (var serializedParticle of serialization.particles) {
       var particle = arc.instantiateParticle(serializedParticle.name);
