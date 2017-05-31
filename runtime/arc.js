@@ -55,7 +55,7 @@ class Arc {
       } else {
         // TODO add a separate deserialize constructor for view?
         var view = arc.createView(new Type(serializedView.type), serializedView.name, serializedView.id);
-        view._version = serializedView._version;
+        view._version = serializedView.version;
 
         if (serializedView.sort == 'view') {
           var values = serializedView.values.map(a => entityMap[a]);
@@ -153,7 +153,7 @@ class Arc {
     assert(viewMap.clazz.spec.connectionMap.get(name) !== undefined, "can't connect view to a view slot that doesn't exist");
     viewMap.views.set(name, targetView);
     if (viewMap.views.size == viewMap.clazz.spec.connectionMap.size) {
-      var particle = this.pec.instantiate(viewMap.clazz, viewMap.views)
+      var particle = this.pec.instantiate(viewMap.clazz, viewMap.views, this._lastSeenVersion);
       this.particles.push(particle);
     } 
   }

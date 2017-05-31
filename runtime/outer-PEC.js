@@ -86,9 +86,12 @@ class OuterPEC extends PEC {
     this._apiPort.UIEvent({particle, event})
   }
 
-  instantiate(particle, views, mutateCallback) {
-    views.forEach(view => this._apiPort.DefineView(view, 
-      { viewType: view.type.toLiteral(), name: view.name }));
+  instantiate(particle, views, lastSeenVersion) {
+    views.forEach(view => {
+      var version = lastSeenVersion.get(view.id) || 0;
+      this._apiPort.DefineView(view, { viewType: view.type.toLiteral(), name: view.name,
+                                       version });
+    });
 
     if (particle._isInline) {
       this._apiPort.DefineParticle({
