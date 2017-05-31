@@ -69,12 +69,8 @@ defineParticle(({DomParticle}) => {
     `.trim();
 
   return class Chooser extends DomParticle {
-    get config() {
-      return {
-        template,
-        slotName: 'action',
-        views: ['choices', 'resultList']
-      };
+    get template() {
+      return template;
     }
     _viewsUpdated(props) {
       this._setState({
@@ -89,7 +85,7 @@ defineParticle(({DomParticle}) => {
         };
       }
     }
-    _onChooseValue(e, state, views) {
+    _onChooseValue(e, state) {
       views.get('resultList').store(state.values[e.data.key]);
     }
   };

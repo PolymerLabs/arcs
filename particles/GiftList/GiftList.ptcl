@@ -10,4 +10,4 @@
 
 GiftList(in Person person, in [Product] list, out [Product] resultList)
 
-renders: root2(list) none-need
+renders: root(list) none-need

@@ -62,28 +62,26 @@ defineParticle(({DomParticle}) => {
             </span>
           </span>
           <span>{{name}}</span>
+          <div slotid$="{{itemSlotId}}"></div>
         </div>
       </template>
     </x-list>
   </div>
   <div slotid="action"></div>
-  <div slotid="root2"></div>
+  <div slotid="root"></div>
 </div>
 
     `.trim();
   return class ListView extends DomParticle {
-    get config() {
-      return {
-        template,
-        slotName: 'root',
-        views: ['list']
-      };
+    get template() {
+      return template;
     }
     _viewsUpdated(props) {
-      //list = await list.toList();
+      // TODO(sjmiles): `props` isn't really implemented yet, only chance to get 
+      // props is right here (must put render data into `state`)
       this._setState({
         // TODO(sjmiles): arcana: translates object-with-name-getter to POJO-with-name-property
-        items: props.list.map(({name}) => {return {name};})
+        items: props.list.map(({name}, i) => {return {name, itemSlotId: `action-${i}`};})
       });
     }
     _render(props, state) {

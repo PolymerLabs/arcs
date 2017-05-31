@@ -63,7 +63,7 @@ defineParticle(({DomParticle}) => {
             <img icon src="../assets/product.svg">
           </span>
           <span style="flex:1;">{{name}}</span>
-          <button events key="{{index}}" on-click="_onChooseValue">Add</button>
+          <button events key="{{index}}" on-click="_onChooseValue">Do</button>
         </div>
       </template>
     </x-list>
@@ -72,12 +72,8 @@ defineParticle(({DomParticle}) => {
     `.trim();
 
   return class extends DomParticle {
-    get config() {
-      return {
-        template,
-        slotName: 'root2',
-        views: ['person', 'list']
-      };
+    get template() {
+      return template;
     }
     _viewsUpdated(props) {
       this._setState({
@@ -89,6 +85,7 @@ defineParticle(({DomParticle}) => {
         return {
           person: 'Claire',
           people: [{value: 'Claire'}],
+          occasions: [{value: 'Birthday'}],
           items: state.values.map((value, index) => {return {name: value.name, index}})
         };
       }
@@ -97,12 +94,5 @@ defineParticle(({DomParticle}) => {
       //views.get('resultList').store(state.values[e.data.key]);
     }
   };
-
-  function difference(a, b) {
-    let result = new Map();
-    a.forEach(value => result.set(JSON.stringify(value.name), value));
-    b.map(a => JSON.stringify(a.name)).forEach(value => result.delete(value));
-    return result.values()
-  }
 
 });

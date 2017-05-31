@@ -19,11 +19,13 @@ const {
 const XenonBase = require("./browser/xenon-base.js");
 
 class DomParticle extends XenonBase(Particle) {
+  get template() {
+    return '';
+  }
   get config() {
     return {
-      template: '',
-      views: '',
-      slotName: 'root'
+      views: this.spec.inputs.map(i => i.name).concat(this.spec.outputs.map(o => o.name)),
+      slotName: this.spec.renders.length && this.spec.renders[0].name.name
     };
   }
   async setViews(views) {
@@ -44,6 +46,8 @@ class DomParticle extends XenonBase(Particle) {
     });
     this._views = views;
     await this.requireSlot(config.slotName);
+  }
+  _viewsUpdated(props) {
   }
   setSlot(slot) {
     this._setState({slot});
@@ -68,7 +72,7 @@ class DomParticle extends XenonBase(Particle) {
     }
   }
   _initializeRender(slot) {
-    let template = this.config.template;
+    let template = this.template;
     this._findHandlerNames(template).forEach(name => {
       slot.clearEventHandlers(name);
       slot.registerEventHandler(name, eventlet => {
