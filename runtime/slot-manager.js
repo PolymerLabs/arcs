@@ -13,6 +13,7 @@ const assert = require('assert');
 const Slot = require('./dom-slot.js');
 
 let log = !global.document || (global.logging === false) ? () => {} : (...args) => { console.log.apply(console, args); };
+//let log = console.log.call.bind(console);
 
 class SlotManager {
   constructor(domRoot, pec) {
@@ -50,7 +51,7 @@ class SlotManager {
     });
   }
   _assignSlot(slotid, slot, particleSpec) {
-    log(`slot-manager::_assignSlot("${slotid}")`);
+    log(`SlotManager::_assignSlot("${slotid}")`);
     slot.associateWithParticle(particleSpec);
     this._slotIdByParticleSpec.set(particleSpec, slotid);
   }
@@ -80,18 +81,17 @@ class SlotManager {
     }
   }
   _provideInnerSlots(innerSlotInfos, particleSpec) {
+    log(`SlotManager::_provideInnerSlots: [${innerSlotInfos.map(info=>info.id).join(',')}]`);
     innerSlotInfos.forEach(info => {
       let inner = this._getOrCreateSlot(info.id);
-      // TODO(sjmiles): initialization will destroy content for DomSlot subclass, so we must cache it first
-      // ... this is a leaky implementation detail
-      //let originalContent = inner.content;
-      inner.initialize(info.context, particleSpec.exposeMap.get(info.id));
-      //if (originalContent) {
-        // TODO(sjmiles): recurses
-        //this.renderSlot(this._getParticle(info.id), originalContent);
-      //} else 
+      if (inner.isInitialized()) {
+        //log(`SlotManager::_provideInnerSlots: slot [${info.id}] is already provisioned`)
+      } else {
+        log(`SlotManager::_provideInnerSlots: provisioning slot [${info.id}]`);
+        inner.initialize(info.context, particleSpec.exposeMap.get(info.id));
+      }
       if (!inner.isAssociated()) {
-        // TODO(sjmiles): falsey test for originalContent is an implicit signal, really don't we want `isAvailable()`?
+        log(`SlotManager::_provideInnerSlots: providing slot [${info.id}]`);
         inner.providePendingSlot();
       }
     });
@@ -117,7 +117,7 @@ class SlotManager {
     let affectedParticles = lostInfos.map(s => this._getParticle(s.id));
     // remove lost slots
     lostInfos.forEach(s => this._removeSlot(s.id));
-    log(`slot-manager::_releaseSlot("${slotid}"):`, affectedParticles);
+    log(`SlotManager::_releaseSlot("${slotid}"):`, affectedParticles);
     // released slot is now available
     slot.providePendingSlot();
     // return list of particles who lost slots

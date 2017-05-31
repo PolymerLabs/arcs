@@ -37,22 +37,16 @@ class DomSlot extends Slot {
     this.dom = null;
     this.exposedView = null;
   }
+  // TODO(sjmiles): name is weird, maybe `teardown` or something
   derender() {
     var infos = this._findInnerSlotInfos();
     this._setContent('');
     return infos;
   }
-  // TODO(sjmiles): content getter vs setContent method
-  // this getter was used for rendering as html, hopefully
-  // will be evacipated soon
-  get content() {
-    return this.dom ? this.dom._cachedContent : null;
-  }
   // TODO(sjmiles): SlotManager calls here
   render(content, eventHandler) {
     if (this.isInitialized()) {
       this._setContent(content, eventHandler);
-      //this._addEventListeners(this._findEventGenerators(), eventHandler);
       return this._findInnerSlotInfos();
     }
   }
@@ -80,31 +74,33 @@ class DomSlot extends Slot {
         }
         this._liveDom.set(content.model);
       }
+      /*
       if (content.html) {
         // legacy html content (unused?)
         html = content.html;
       }
+      */
     }
     // legacy html content
     if (typeof html === 'string') {
-      // TODO(sjmiles): innerHTML is mutable and cannot be used to memoize original content 
-      this.dom.innerHTML = /*this.dom._cachedContent =*/ html;
+      this.dom.innerHTML = html;
     }
   }
   _stampTemplate(template, eventHandler) {
     let eventMapper = this._eventMapper.bind(this, eventHandler);
+    // TODO(sjmiles): hack to allow subtree elements (e.g. x-list) to marshal events
+    this.dom._eventMapper = eventMapper;
+    // TODO(sjmiles): _liveDom needs new name
     this._liveDom = Template.stamp(template);
     this._liveDom.mapEvents(eventMapper);
     this._liveDom.appendTo(this.dom);
-    // TODO(sjmiles): hack to allow subtree elements (e.g. x-list) to marshal events
-    this.dom._eventMapper = eventMapper;
   }
   _eventMapper(eventHandler, node, eventName, handlerName) {
     node.addEventListener(eventName, e => {
       eventHandler({
         handler: handlerName,
         data: {
-          key: node.key, //getAttribute('key'),
+          key: node.key,
           value: node.value
         }
       });
@@ -118,63 +114,6 @@ class DomSlot extends Slot {
       };
     });
   }
-
-  /*
-  _interpolateModel(templateName, model) {
-    // TODO(sjmiles): HTML-based impl is temporary
-    let template = templates[templateName];
-    // hack extract html from template
-    let div = document.createElement('div');
-    div.appendChild(document.importNode(template.content, true));
-    let html = div.innerHTML;
-    // hack template repeat support
-    html = this._interpolateRepeat(html, model);
-    // hack mustache interpolation
-    return this._interpolateHtml(html, model);
-  }
-  _interpolateRepeat(html, model) {
-    let re = /<template.*?repeat="(.*?)".*?>([\s\S]*?)<\/template>/;
-    html = html.replace(re, template => {
-      let [full, name, html] = template.match(re);
-      let items = model[name];
-      let result = '';
-      items.forEach(item => {
-        result += this._interpolateHtml(html, item);
-      });
-      return result;
-    });
-    return html;
-  }
-  _interpolateHtml(html, model) {
-    return html.replace(/{{[^}]*}}/g, match => {
-      let key = match.slice(2, -2);
-      return (key in model) ? model[key] : '(no data)';
-    });
-  }
-  // TODO(sjmiles): a `slotInfo` contains an `id` and a device `context` (e.g. a dom node).
-  _findEventGenerators() {
-    return this.dom.querySelectorAll('[events]');
-  }
-  _addEventListeners(eventGenerators, eventHandler) {
-    for (let eventGenerator of eventGenerators) {
-      let data = {
-        key: eventGenerator.getAttribute('key'),
-        value: eventGenerator.value
-      };
-      for (let {name, value} of eventGenerator.attributes) {
-        if (name.startsWith("on-")) {
-          let event = name.substring(3);
-          let handler = value;
-          eventGenerator.addEventListener(event, e => {
-            // TODO(sjmiles): require configuration to control `stopPropagation`/`preventDefault`?
-            // e.stopPropagation();
-            eventHandler({handler, data});
-          });
-        }
-      }
-    }
-  }
-  */
 }
 
 class MockDomSlot extends DomSlot {
