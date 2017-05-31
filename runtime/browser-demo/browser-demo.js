@@ -21,6 +21,7 @@ let systemParticles = require('../system-particles.js');
 //require("./trace-setup.js");
 
 let recipes = require('./recipes.js');
+let domRoot = global.document ? document.querySelector('[particle-container]') || document.body : {};
 
 function prepareExtensionArc() {
   let loader = new BrowserLoader('../');
@@ -28,9 +29,8 @@ function prepareExtensionArc() {
   let Person = loader.loadEntity("Person");
   let Product = loader.loadEntity("Product");
   let pecFactory = require('../worker-pec-factory').bind(null, '../');
-  var domRoot = global.document ? document.querySelector('[particle-container]') || document.body : {};
   var slotManager = new SlotManager(domRoot);
-  let arc = new Arc({loader, pecFactory, slotManager});
+  let arc = new Arc({id: 'demo', loader, pecFactory, slotManager});
   arc.createView(Person.type.viewOf(), "peopleFromWebpage");
   arc.createView(Product.type.viewOf(), "productsFromWebpage");
   arc.createView(Person.type, "personSlot");
@@ -56,16 +56,6 @@ let buildRecipe = info => {
 
 let arc = prepareExtensionArc();
 
-let stage = 0;
-
-let chooseSuggestion = index => {
-  let r = buildRecipe(recipes[index]);
-  if (Resolver.resolve(r, arc)) {
-    r.instantiate(arc);
-    suggest(stage++);
-  } 
-};
-
 let demoRecipes = [[
   recipes[0],
   recipes[1],
@@ -81,13 +71,15 @@ let demoRecipes = [[
   recipes[8]
 ]];
 
+let contextRecipes;
+
 let suggest = (stage) => {
   stage = Math.min(stage, demoRecipes.length-1);
   let container = document.querySelector('suggestions');
   container.textContent = '';
-  let recipes = demoRecipes[stage];
-  if (recipes) {
-    let suggestions = demoRecipes[stage].map(r => r.name);
+  contextRecipes = demoRecipes[stage];
+  if (contextRecipes) {
+    let suggestions = contextRecipes.map(r => r.name);
     suggestions.forEach((s, i) => {
       container.appendChild(
         Object.assign(document.createElement("suggest"), {
@@ -100,4 +92,28 @@ let suggest = (stage) => {
   }
 };
 
+let stage = 0;
 suggest(stage++);
+
+let chooseSuggestion = index => {
+  document.querySelector('[particle-container]').textContent = '';
+  arc = cloneArc(arc); //arc.clone(); //prepareExtensionArc();
+  let r = buildRecipe(contextRecipes[index]);
+  if (Resolver.resolve(r, arc)) {
+    r.instantiate(arc);
+    suggest(stage++);
+  } 
+};
+
+let cloneArc = arc => {
+  return (function() {
+    let arc = new Arc({loader: this._loader, id: this.generateID(), pecFactory: this._pecFactory, slotManager: new SlotManager(domRoot)});
+    let viewMap = new Map();
+    this.views.forEach(v => viewMap.set(v, v.clone()));
+    //arc.particles = this.particles.map(p => p.clone(viewMap));
+    for (let v of viewMap.values())
+      arc.registerView(v);
+    arc._viewMap = viewMap;
+    return arc;
+  }).call(arc);
+}
