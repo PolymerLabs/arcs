@@ -64,6 +64,14 @@ class ParticleSpec {
     this.connections.forEach(connection => builder.connectSpec(connection.name, connection));
     return builder.build();
   }
+
+  isInput(param) {
+    for (let input of this.inputs) if (input.name == param) return true;
+  }
+
+  isOutput(param) {
+    for (let outputs of this.outputs) if (outputs.name == param) return true;
+  }
 }
 
 module.exports = ParticleSpec;

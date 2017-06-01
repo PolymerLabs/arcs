@@ -257,8 +257,8 @@ function peg$parse(input, options) {
         rest.forEach(a => { result[a[1][0]] = a[1][1]; });
         return result;
       },
-      peg$c69 = /^[a-zA-Z0-9'${} ]/,
-      peg$c70 = peg$classExpectation([["a", "z"], ["A", "Z"], ["0", "9"], "'", "$", "{", "}", " "], false, false),
+      peg$c69 = /^[a-zA-Z0-9~'${}[\] ]/,
+      peg$c70 = peg$classExpectation([["a", "z"], ["A", "Z"], ["0", "9"], "~", "'", "$", "{", "}", "[", "]", " "], false, false),
       peg$c71 = function() { return text().trim() },
       peg$c72 = ":",
       peg$c73 = peg$literalExpectation(":", false),

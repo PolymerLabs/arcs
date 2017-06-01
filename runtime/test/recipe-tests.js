@@ -24,7 +24,6 @@ const slotComposer = new SlotComposer({});
 describe('recipe', function() {
 
   it('recipes can load', async () => {
-
     let loader = new Loader();
     const Foo = loader.loadEntity("Foo");
     const Bar = loader.loadEntity("Bar");
@@ -42,5 +41,18 @@ describe('recipe', function() {
     r.instantiate(arc);
     viewlet.viewletFor(fooView).set(new Foo({value: "not a Bar"}));
     await util.assertSingletonHas(barView, Bar, "not a Bar1");
+  });
+
+  it('find connection', function() {
+    var r = new recipe.RecipeBuilder()
+        .addParticle("TestParticle")
+            .connectConstraint("foo", "fooView")
+            .connectConstraint("bar", "barView")
+        .build();
+    assert.equal("fooView", r.components[0].findConnectionByName("foo").constraintName);
+    assert.isUndefined(r.components[0].findConnectionByName("nonexistent"));
+
+    assert.equal("foo", r.components[0].findConnectionByConstraintName("fooView").name);
+    assert.isUndefined(r.components[0].findConnectionByConstraintName("nonexistent"));
   });
 });

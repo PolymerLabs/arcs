@@ -45,7 +45,6 @@ defineParticle(({DomParticle}) => {
     color: white;
   }
 </style>
-
 <div chooser>
   <div>
     <div head>
@@ -73,9 +72,11 @@ defineParticle(({DomParticle}) => {
       return template;
     }
     _willReceiveProps(props) {
+      let result = [...difference(props.choices, props.resultList)];
       this._setState({
-        values: [...difference(props.choices, props.resultList)]
+        values: result
       });
+      if (result.length > 0) this.relevance = 10
     }
     _render(props, state) {
       if (state.values && state.values.length) {

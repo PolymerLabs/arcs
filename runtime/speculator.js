@@ -30,7 +30,8 @@ class Speculator {
       if (newArc.pec.messageCount !== messageCount + 1)
         return awaitCompletion();
       else {
-        return relevance.relevanceScore();
+        relevance.newArc = newArc;
+        return relevance;
       }
     }
 

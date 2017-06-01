@@ -9,3 +9,8 @@
  */
 
 Recommend(in [Product] known, in [Product] population, out [Product] recommendations)
+
+Description {
+  pattern: Recommend Products from ${known} and ${population}
+  recommendations: Recommended products
+}

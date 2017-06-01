@@ -80,15 +80,18 @@ function equal(t1, t2) {
   return stringFor(t1) == stringFor(t2);
 }
 
-// TODO: might want a nicer pretty printer.
 function stringFor(t) {
   if (isRelation(t))
     return t.toString();
-  if (typeof t == "object") {
+  else if (isView(t))
+    return `${stringFor(primitiveType(t))} List`;
+  else if (isVariable(t) || isNamedVariable(t))
+    return `[${t.name}]`;
+  if (typeof t == "object")
     return JSON.stringify(t);
-  }
   return String(t);
 }
+
 
 Object.assign(module.exports, { isRelation, isView, isNamedVariable, isVariable, primitiveType, viewOf,
                                 namedTypeVariable, typeVariable, variableID, hasVariable,

@@ -26,8 +26,7 @@ class Relevance {
   relevanceScore() {
     let relevance = 1;
     for (let rList of this.relevanceMap.values()) {
-      for (let r of rList)
-        relevance *= Relevance.scaleRelevance(r);
+      relevance *= Relevance.particleRelevance(rList);
     }
     return relevance;
   }
@@ -39,6 +38,20 @@ class Relevance {
     relevance = Math.max(0, Math.min(relevance, 10));
     // TODO: might want to make this geometric or something instead;
     return relevance / 5;
+  }
+
+  static particleRelevance(relevanceList) {
+    let relevance = 1;
+    relevanceList.forEach(r => relevance *= Relevance.scaleRelevance(r));
+    return relevance;
+  }
+
+  getParticleRelevance(particleName) {
+    for (let key of this.relevanceMap.keys()) {
+      if (key.particle.name == particleName)
+        return Relevance.particleRelevance(this.relevanceMap.get(key));
+    }
+    return -1;
   }
 }
 module.exports = Relevance;

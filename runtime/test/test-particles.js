@@ -26,13 +26,22 @@ exports.TestParticle = particle.define(
 
 exports.TwoInputTestParticle = particle.define('TwoInputTestParticle(in Foo foo, in Bar bar, out Far far)', map => {
   let farView = map.get('far');
-  let fooView = map.get('bar');
+  let fooView = map.get('foo');
   let barView = map.get('bar');
   farView.set(new farView.entityClass({value: fooView.get().value + ' ' + barView.get().value}));
   return 3;
 });
 
+exports.ListTestParticle = particle.define('ListTestParticle(in Bar bar, out [Far] fars)', map => {
+  let barView = map.get('bar');
+  let farsView = map.get('fars');
+  farsView.store(new farsView.entityClass({value: barView.get().value + 1}));
+  farsView.store(new farsView.entityClass({value: barView.get().value + 2}));
+  return 5;
+});
+
 exports.register = function(loader) {
   loader.registerParticle(exports.TestParticle);
   loader.registerParticle(exports.TwoInputTestParticle);
+  loader.registerParticle(exports.ListTestParticle);
 };

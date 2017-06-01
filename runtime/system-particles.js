@@ -29,7 +29,11 @@ exports.Demuxer2 = particle.define('Demuxer2(in [~a] view1, in [~b] view2, out ~
   };
 });
 
-exports.Choose = particle.define('Choose(in [~a] view, out ~a singleton)', async views => {
+exports.Choose = particle.define('Choose(in [~a] view, out ~a singleton)\n' +
+  'Description { \n' +
+  '  pattern: Choose ${singleton} from ${view}\n' +
+  //'  view: magic ${[~a]}\n' +
+  '}', async views => {
   var list = await views.get("view").toList();
   let thisParticle = this._particles.filter(p => p.spec.name=="Choose")[0];
   thisParticle.logDebug("view", views.get("view"));
@@ -43,7 +47,11 @@ exports.Choose = particle.define('Choose(in [~a] view, out ~a singleton)', async
   assert(false, "Cannot choose a single element from a list.");
 });
 
-exports.SaveList = particle.define('transient SaveList(ephemeral in [~a] inputs, out [~a] list)', async views => {
+exports.SaveList = particle.define('transient SaveList(ephemeral in [~a] inputs, out [~a] list)\n' +
+  'Description { \n' +
+  '  pattern: Save ${list}\n' +
+  '  list: ${[~a]} from your browsing context\n' +
+  '}', async views => {
   var inputsView = views.get('inputs');
   let thisParticle = this._particles.filter(p => p.spec.name=="SaveList")[0];
   thisParticle.logDebug("inputs", inputsView);
@@ -55,6 +63,7 @@ exports.SaveList = particle.define('transient SaveList(ephemeral in [~a] inputs,
   }
   inputList.slice(this._watermark).map(a => list.store(a));
   this._watermark = inputList.length;
+  if (inputList > 0) this.relevance = 2;
   thisParticle.logDebug("list", list);
 });
 
