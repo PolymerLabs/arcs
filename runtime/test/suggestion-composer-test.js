@@ -18,11 +18,11 @@ describe('suggestion-composer', function() {
   it('add-suggestions', function() {
     let suggestComposer = new SuggestionComposer({});
     let recipes = [
-        {'name': 'A', 'rank': 10, 'components': []},
-        {'name': 'B', 'rank': 5, 'components': []},
-        {'name': 'C', 'rank': 100, 'components': []},
-        {'name': 'D', 'rank': 20, 'components': []},
-        {'name': 'E', 'rank': 7, 'components': []}];
+        {'description': 'A', 'rank': 10, 'components': []},
+        {'description': 'B', 'rank': 5, 'components': []},
+        {'description': 'C', 'rank': 100, 'components': []},
+        {'description': 'D', 'rank': 20, 'components': []},
+        {'description': 'E', 'rank': 7, 'components': []}];
     suggestComposer.setSuggestions(recipes, /* arc= */ {});
 
     assert.equal(4, suggestComposer._suggestions.length);

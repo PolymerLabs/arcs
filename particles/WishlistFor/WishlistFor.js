@@ -21,6 +21,7 @@ defineParticle(({Particle}) => {
         "Field Hockey Stick"
       ].map(p => wishlist.store(new Product({name: p})));
       this.logDebug("wishlist", wishlist);
+      this.relevance = 8;
     }
   };
 });

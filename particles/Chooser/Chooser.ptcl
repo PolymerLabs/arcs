@@ -11,3 +11,7 @@
 Chooser(in [Product] choices, out [Product] resultList)
 
 renders: action(resultList) none-need
+
+Description {
+  pattern: Choose from ${choices}
+}

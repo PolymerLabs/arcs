@@ -20,6 +20,7 @@ defineParticle(({Particle}) => {
           views.get('recommendations').store(data[1]);
           views.get('recommendations').store(data[2]);
           this.logDebug("recommendations", views.get('recommendations'));
+          this.relevance = 9;
         });
       });
     }

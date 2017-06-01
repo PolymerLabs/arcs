@@ -11,6 +11,9 @@
 
 var Resolver = require('./resolver.js');
 var Speculator = require('./speculator.js');
+var DescriptionGenerator = require('./description-generator.js');
+var Type = require('./type.js');
+var TypeLiteral = require('./type-literal.js');
 var tracing = require('tracelib');
 
 class Suggestinator {
@@ -29,8 +32,13 @@ class Suggestinator {
     trace.update({suggestions: suggestions.length});
 
     suggestions = suggestions.filter(suggestion => Resolver.resolve(suggestion, arc));
-    for (var suggestion of suggestions)
-      suggestion.rank = await this.speculator.speculate(arc, suggestion);
+
+    for (var suggestion of suggestions) {
+       let relevance = await this.speculator.speculate(arc, suggestion);
+       suggestion.rank = relevance.relevanceScore();
+
+       suggestion.description = new DescriptionGenerator(suggestion, relevance).getDescription();
+     }
   
     suggestions.sort((a,b) => a.rank - b.rank);
     trace.end({args: {resolved: suggestions.length}});

@@ -37,7 +37,7 @@ describe('speculator', function() {
     var speculator = new Speculator();
     fooView.set(new Foo({value: "not a Bar"}));
     var relevance = await speculator.speculate(arc, r);
-    assert.equal(relevance, 1.8);
+    assert.equal(relevance.relevanceScore(), 1.8);
     await util.assertSingletonEmpty(barView);
   });
 });

@@ -61,7 +61,7 @@ class SuggestionComposer {
       arc.particleSpec(p.particleName).renders.forEach(r => {if (r.name) slotids.push(r.name.name)})
     });
 
-    this._suggestions.push(new SuggestionDom(this._root, recipe.name, function() {
+    this._suggestions.push(new SuggestionDom(this._root, recipe.description, function() {
       // Free all slots required for the accepted suggestion.
       slotids.forEach(id => { if (this._slotManager.hasSlot(id)) this._slotManager.freeSlot(id) });
       recipe.instantiate(arc);

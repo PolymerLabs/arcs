@@ -211,11 +211,13 @@ class Resolver {
         trace.end({args: {resolved: false, reason: "could not match existing constraint"}});
         return false;
       }
+      constrainedConnection.rawType = context.connectionSpec.rawData.type.name;
       // We deferred the connection we made when we first encountered this name (see
       // below) so we need to defer here too.
       context.afterResolution.push(arc => {
         connection.view = constrainedConnection.view;
         connection.type = constrainedConnection.type;
+        connection.rawType = constrainedConnection.rawType;
       });
       trace.end({args: {resolved: true}})
       return true;
