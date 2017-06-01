@@ -12,7 +12,7 @@
 }
 
 
-ParticleFile = Comment? particle:Particle _ renders:Renders? _ exposes:Exposes? _ { 
+ParticleFile = Comment? particle:Particle _ renders:Renders? _ exposes:Exposes? _ description:Description? _ {
   if (renders) {
     particle.renders = renders;
   } else {
@@ -23,6 +23,8 @@ ParticleFile = Comment? particle:Particle _ renders:Renders? _ exposes:Exposes? 
   } else {
     particle.exposes = [];
   }
+  if (description)
+    particle.description = description;
   return particle;
 }
 
@@ -97,3 +99,11 @@ Name = [a-z][a-zA-Z0-9]* { return text() }
 
 _ "whitespace"
   = [ \t\n\r]* 
+
+Description = "Description {" _ "pattern:" first:DescriptionValue rest:(_ DescriptionToken)* _ "}" {
+  let result = {"pattern":first};
+  rest.forEach(a => { result[a[1][0]] = a[1][1]; });
+  return result;
+}
+DescriptionValue = [a-zA-Z0-9'$\{\} ]+ { return text().trim() }
+DescriptionToken = arg:Name ":" pattern:DescriptionValue { return [arg, pattern] }
