@@ -9,3 +9,8 @@
  */
 
 WishlistFor(in Person person, create [Product] wishlist)
+
+Description {
+  pattern: Get ${wishlist}
+  wishlist: ${person}'s wishlist
+}

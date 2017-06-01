@@ -49,6 +49,7 @@ class ParticleSpec {
     this.exposes = rawData.exposes;
     this.renders = rawData.renders;
     this.transient = rawData.transient;
+    this.description = rawData.description;
   }
 
   resolve() {

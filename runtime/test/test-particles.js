@@ -11,7 +11,11 @@
 var particle = require("../particle.js");
 var runtime = require("../runtime.js");
 
-exports.TestParticle = particle.define('TestParticle(in Foo foo, out Bar bar)', (map) => {
+exports.TestParticle = particle.define(
+  'TestParticle(in Foo foo, out Bar bar) \n' +
+  'Description { \n' +
+  '  pattern: test particle \n' +
+  '}', (map) => {
   const Bar = map.get('bar').entityClass;
   map.get('foo').get().then(result => {
     var bar = map.get('bar');

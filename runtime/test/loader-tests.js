@@ -18,6 +18,7 @@ var Bar = runtime.testing.testEntityClass('Bar');
 
 describe('particle loader', function() {
   it('can load a particle', function() {
-    var particle = new particles.TestParticle().arcParticle;
+    var particle = new particles.TestParticle();
+    assert.isDefined(particle.spec.description);
   });
 });
