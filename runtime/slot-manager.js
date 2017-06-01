@@ -20,18 +20,31 @@ class SlotManager {
     // Contains both fulfilled slots and pending requests. 
     this._slotIdByParticleSpec = new Map();
     this._pec = pec;
-    this._getOrCreateSlot('root').initialize(domRoot, /* exposedView= */ undefined);
+    this._createSlot('root').initialize(domRoot, /* exposedView= */ undefined);
   }
   _getOrCreateSlot(slotid) {
     if (!this._slotBySlotId.has(slotid)) {
-      this._slotBySlotId.set(slotid, this._createSlot(slotid));
+      return this._createSlot(slotid);
     }
     return this._slotBySlotId.get(slotid);
   }
   _createSlot(slotid) {
-    return new Slot(slotid);
+    let slot = new Slot(slotid);
+    this._slotBySlotId.set(slotid, slot);
+    return slot;
   }
-  registerSlot(particleSpec, slotid) {
+  hasSlot(slotid) {
+    return this._slotBySlotId.has(slotid);
+  }
+  _getSlot(slotid) {
+    assert(this._slotBySlotId.has(slotid));
+    return this._slotBySlotId.get(slotid);
+  }
+  _getParticleSlot(particleSpec) {
+    if (this._slotIdByParticleSpec.has(particleSpec))
+      return this._getSlot(this._slotIdByParticleSpec.get(particleSpec));
+  }
+  registerParticle(particleSpec, slotid) {
     return new Promise((resolve, reject) => {
       try {
         let slot = this._getOrCreateSlot(slotid);
@@ -45,27 +58,9 @@ class SlotManager {
         // TODO(sjmiles): my Promise-fu is not strong, probably should do something else
         reject(x);
       }
-    }).then(slot => {
-      slot.associateWithParticle(particleSpec);
-    });
+    }).then(slot => { slot.assignParticle(particleSpec); });
   }
-  _getSlotId(particleSpec) {
-    return this._slotIdByParticleSpec.get(particleSpec);
-  }
-  _getParticle(slotid) {
-    if (this._slotBySlotId.has(slotid)) {
-      return this._slotBySlotId.get(slotid)._particleSpec;
-    }
-  }
-  _getSlot(slotid) {
-    assert(this._slotBySlotId.has(slotid));
-    return this._slotBySlotId.get(slotid);
-  }
-  _getParticleSlot(particleSpec) {
-    return this._getSlot(this._getSlotId(particleSpec))
-  }
-  // TODO(sjmiles): should be `renderParticle`?
-  renderSlot(particleSpec, content, handler) {
+  renderContent(particleSpec, content, handler) {
     let slot = this._getParticleSlot(particleSpec);
     // returns slot(id)s rendered by the particle
     let innerSlotInfos = slot.render(content, handler);
@@ -81,52 +76,50 @@ class SlotManager {
       // ... this is a leaky implementation detail
       let originalContent = inner.content;
       inner.initialize(info.context, particleSpec.exposeMap.get(info.id));
-      if (originalContent) {
+      if (inner.hasParticle()) {
         // TODO(sjmiles): recurses
-        this.renderSlot(this._getParticle(info.id), originalContent);
-      } else if (!inner.isAssociated()) {
-        // TODO(sjmiles): falsey test for originalContent is an implicit signal, really don't we want `isAvailable()`?
+        this.renderContent(inner.particleSpec, originalContent);
+      } else {
         inner.providePendingSlot();
       }
     });
   }
   // particleSpec is relinquishing ownership of it's slot
-  // TODO(sjmiles): should be `releaseParticle`?
-  releaseSlot(particleSpec) {
-    let slotid = this._getSlotId(particleSpec);
-    if (slotid) {
-      let slot = this._getSlot(slotid);
-      // particleSpec is mapped to slotid, hence it is either associated or pending.
-      if (slot.particleSpec == particleSpec)
-        return this._releaseSlot(slotid);
-      else slot.removePendingRequest(particleSpec);
-    }
+  releaseParticle(particleSpec) {
+    let slot = this._getParticleSlot(particleSpec);
+    // particleSpec is mapped to slotid, hence it is either assigned or pending.
+    if (slot && slot.particleSpec == particleSpec) {
+      this._disassociateSlotFromParticle(slot);
+      return this._derenderContent(slot);
+    } else slot.removePendingRequest(particleSpec);
   }
-  _releaseSlot(slotid) {
-    this._disassociateSlotFromParticle(slotid);
-    let slot = this._getSlot(slotid);
+  _derenderContent(slot) {
     // teardown rendering
     let lostInfos = slot.derender();
-    // memoize list of particles who lost slots
-    let affectedParticles = lostInfos.map(s => this._getParticle(s.id));
-    // remove lost slots
-    lostInfos.forEach(s => this._removeSlot(s.id));
-    log(`slot-manager::_releaseSlotId("${slotid}"):`, affectedParticles);
+    // memoize list of particles who lost slots and remove old slots
+    let affectedParticles = lostInfos.map(s => {
+      let slot = this._getSlot(s.id);
+      let particleSpec = slot.particleSpec;  // keep particleSpec before it was destroyed by _removeSlot.
+      this._removeSlot(slot);
+      return particleSpec;
+    });
+    log(`slot-manager::_derenderContent("${slot.slotid}"):`, affectedParticles);
     // released slot is now available for another requester
     slot.providePendingSlot();
     // return list of particles who lost slots
     return affectedParticles;
   }
-  _disassociateSlotFromParticle(slotid) {
-    let slot = this._slotBySlotId.get(slotid);
+  _disassociateSlotFromParticle(slot) {
     this._slotIdByParticleSpec.delete(slot.particleSpec);
-    slot.disassociateParticle();
+    slot.unassignParticle();
   }
   // `remove` means to evacipate the slot context (`release` otoh means only to mark the slot as unused)
-  _removeSlot(slotid) {
-    this._disassociateSlotFromParticle(slotid);
-    this._getSlot(slotid).uninitialize();
-    this._slotBySlotId.delete(slotid);
+  _removeSlot(slot) {
+    if (slot.hasParticle()) {
+      this._disassociateSlotFromParticle(slot);
+    }
+    slot.uninitialize();
+    this._slotBySlotId.delete(slot.slotid);
   }
 }
 

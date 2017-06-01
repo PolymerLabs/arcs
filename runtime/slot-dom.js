@@ -24,9 +24,9 @@ class DomSlot extends Slot {
   isInitialized() {
     return Boolean(this._dom);
   }
-  // Returns true, if slot's DOM is initialized, and there is no Particle associated with it.
+  // Returns true, if slot's DOM is initialized, and there is no Particle assigned to it.
   isAvailable() {
-    return this.isInitialized() && !this.isAssociated();
+    return this.isInitialized() && !this.hasParticle();
   }
   uninitialize() {
     this._dom = null;

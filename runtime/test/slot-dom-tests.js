@@ -55,12 +55,12 @@ describe('slot-dom', function() {
     // Slot isn't initialized.
     assert.isFalse(slot.isAvailable());
 
-    // Slot is initialized and not associated with a Particle.
+    // Slot is initialized and unassigned to a Particle.
     slot.initialize(/* context= */{}, /* exposedView= */undefined);
     assert.isTrue(slot.isAvailable());
 
-    // Slot is associated with a Particle.
-    slot.associateWithParticle(util.initParticleSpec('particle'));
+    // Slot is assign to a Particle.
+    slot.assignParticle(util.initParticleSpec('particle'));
     assert.isFalse(slot.isAvailable());
 
 	// Slot isn't initialized.
