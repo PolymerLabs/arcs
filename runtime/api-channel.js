@@ -202,7 +202,8 @@ class PECOuterPort extends APIPort {
 
     this.registerHandler("RenderSlot", {particle: this.Mapped, content: this.Direct});
     this.registerHandler("ViewOn", {view: this.Mapped, target: this.Mapped,
-                                    type: this.Direct, callback: this.Direct});
+                                    type: this.Direct, callback: this.Direct,
+                                    modelCallback: this.Direct});
     this.registerHandler("ViewGet", {view: this.Mapped, callback: this.Direct});
     this.registerHandler("ViewToList", {view: this.Mapped, callback: this.Direct});
     this.registerHandler("ViewSet", {view: this.Mapped, data: this.Direct});
@@ -231,7 +232,8 @@ class PECInnerPort extends APIPort {
 
     this.registerCall("RenderSlot", {particle: this.Mapped, content: this.Direct});
     this.registerCall("ViewOn", {view: this.Mapped, target: this.Mapped,
-                                 type: this.Direct, callback: this.LocalMapped});
+                                 type: this.Direct, callback: this.LocalMapped,
+                                 modelCallback: this.LocalMapped});
     this.registerCall("ViewGet", {view: this.Mapped, callback: this.LocalMapped});
     this.registerCall("ViewToList", {view: this.Mapped, callback: this.LocalMapped});
     this.registerCall("ViewSet", {view: this.Mapped, data: this.Direct});
