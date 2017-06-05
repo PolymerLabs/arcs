@@ -1,0 +1,17 @@
+{
+  "manifest_version": 2,
+  "name": "arcs",
+  "version": "0",
+  "permissions": [
+    "sessions",
+    "tabs",
+    "<all_urls>"
+  ],
+  "background": {
+    "scripts": ["event-page.js"],
+    "persistent": false
+  },
+  "chrome_url_overrides" : {
+    "newtab": "new-tab.html"
+  }
+}
