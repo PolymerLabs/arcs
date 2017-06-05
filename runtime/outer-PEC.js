@@ -28,7 +28,7 @@ class OuterPEC extends PEC {
         this.slotManager.renderSlot(particle, content, this._makeEventletHandler(particle));
     };
 
-    this._apiPort.onViewOn = ({view, target, callback, modelCallback, type}) => {
+    this._apiPort.onSynchronize = ({view, target, callback, modelCallback, type}) => {
       if (view.constructor.name == 'Variable') {
         var model = view.get();
       } else {
