@@ -90,7 +90,7 @@ class View extends ViewBase {
     this._items.set(entity.id, entity);
     this._version++;
     trace.update({ entity });
-    this._fire('change');
+    this._fire('change', {add: [entity], version: this._version});
     trace.end();
   }
 
@@ -151,7 +151,7 @@ class Variable extends ViewBase {
   set(entity) {
     this._stored = entity;
     this._version++;
-    this._fire('change');
+    this._fire('change', {data: this._stored, version: this._version});
   }
 
   extractEntities(set) {
