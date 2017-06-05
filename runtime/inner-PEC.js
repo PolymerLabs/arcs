@@ -32,7 +32,8 @@ class RemoteView {
   }
 
   on(type, callback, target) {
-    this.synchronize(type, callback, callback, target);
+    var dataFreeCallback = (d) => callback();
+    this.synchronize(type, dataFreeCallback, dataFreeCallback, target);
   }
 
   synchronize(type, modelCallback, callback, target) {
