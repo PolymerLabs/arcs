@@ -31,14 +31,11 @@ class ViewBase {
     return this._type;
   }
   // TODO: add 'once' which returns a promise.
-  on(kind,  callback, target, trigger) {
+  on(kind,  callback, target) {
     assert(target !== undefined, "must provide a target to register a view event handler");
     let listeners = this._listeners.get(kind) || new Map();
     listeners.set(callback, {version: -Infinity, target});
     this._listeners.set(kind, listeners);
-    if (trigger) {
-      scheduler.enqueue(this, [{target, callback, kind}])
-    }
   }
 
   _fire(kind, details) {
@@ -95,11 +92,6 @@ class View extends ViewBase {
     trace.update({ entity });
     this._fire('change');
     trace.end();
-  }
-
-  on(kind, callback, target) {
-    let trigger = kind == 'change';
-    super.on(kind, callback, target, trigger);
   }
 
   remove(id) {
@@ -160,11 +152,6 @@ class Variable extends ViewBase {
     this._stored = entity;
     this._version++;
     this._fire('change');
-  }
-
-  on(kind, callback, target) {
-    let trigger = kind == 'change';
-    super.on(kind, callback, target, trigger);
   }
 
   extractEntities(set) {

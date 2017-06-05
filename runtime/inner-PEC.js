@@ -32,7 +32,7 @@ class RemoteView {
   }
 
   on(type, callback, target) {
-    this._port.ViewOn({view: this, modelCallback: model => console.log(model), callback, target, type});
+    this._port.ViewOn({view: this, modelCallback: callback, callback, target, type});
   }
 
   get() {
