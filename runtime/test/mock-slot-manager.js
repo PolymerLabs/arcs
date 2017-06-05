@@ -49,7 +49,8 @@ class MockSlotManager {
     var expectation = this.expectQueue.shift();
     assert(expectation, "Got a render but not expecting anything further.");
     assert.equal('render', expectation.type, `expecting a render, not ${expectation.type}`);
-    assert.equal(particleSpec.particle.spec.name, expectation.name, 
+    //console.log(`rendering ${particleSpec.particle.spec.name} expecting  ${expectation.name}`);
+    assert.equal(particleSpec.particle.spec.name, expectation.name,
         `expecting a render from ${expectation.name}, not ${particleSpec.particle.spec.name}`);
     if (expectation.then) {
       this._sendEvent(expectation.then);
@@ -61,7 +62,7 @@ class MockSlotManager {
   registerSlot(particleSpec, slotId) {
     var expectation = this.expectQueue.shift();
     assert(expectation, `Got a getSlot '${slotId}' from '${particleSpec.particle.spec.name}' but not expecting anything further`);
-    assert.equal('getSlot', expectation.type, `expecting a getSlot, not ${expectation.type}`);
+    assert.equal('getSlot', expectation.type, `expecting a ${expectation.type}, not a getSlot`);
     assert.equal(particleSpec.particle.spec.name, expectation.name,
         `expecting a getSlot from ${expectation.name}, not ${particleSpec.particle.spec.name}`);
     assert.equal(slotId, expectation.slotId,
@@ -72,8 +73,12 @@ class MockSlotManager {
         this._sendEvent(expectation.then);
       }
       if (this.expectQueue.length == 0)
-        this.onExpectationsComplete();      
+        this.onExpectationsComplete();
     });
+  }
+
+  releaseSlot() {
+    // TODO(sjmiles): do something?
   }
 }
 

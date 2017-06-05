@@ -12,8 +12,8 @@
 const {
   Particle,
   ViewChanges,
-  StateChanges,
-  SlotChanges
+  //StateChanges,
+  //SlotChanges
 } = require("./particle.js");
 
 const XenonBase = require("./browser/xenon-base.js");

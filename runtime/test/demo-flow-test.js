@@ -30,8 +30,12 @@ function prepareExtensionArc() {
 
   var personView = pageArc.createView(Person.type.viewOf(), "peopleFromWebpage");
   var productView = pageArc.createView(Product.type.viewOf(), "productsFromWebpage");
-  pageArc.commit([new Person({name: "Claire"}), new Product({name: "Tea Pot"}), new Product({name: "Bee Hive"}), 
-              new Product({name: "Denim Jeans"})]);
+  pageArc.commit([
+    new Person({name: "Claire"}),
+    new Product({name: "Tea Pot"}),
+    new Product({name: "Bee Hive"}),
+    new Product({name: "Denim Jeans"})
+  ]);
 
   let slotManager = new SlotManager();
 
@@ -51,7 +55,7 @@ describe('demo flow', function() {
       .addParticle("Create")
         .connectConstraint("newList", "list")
       .addParticle("Create")
-        .connectConstraint("newList", "recommended")        
+        .connectConstraint("newList", "recommended")
       .addParticle("WishlistFor")
         .connectConstraint("wishlist", "wishlist")
         .connectConstraint("person", "person")
@@ -85,11 +89,15 @@ describe('demo flow', function() {
                  .expectGetSlot("Chooser", "action")
                  .expectRender("ListView")
                  .expectRender("Chooser")
-                 .expectRender("Chooser")
-                 .expectRender("Chooser")
-                 .thenSend("action", "chooseValue", {key: "1"})
                  .expectRender("ListView")
-                 .expectRender("Chooser");
+                 .expectRender("ListView")
+                 .thenSend("action", "chooseValue", {key: "1"})
+                 .expectGetSlot("Chooser", "action")
+                 .expectRender("ListView")
+                 .expectRender("Chooser")
+                 .expectRender("Chooser")
+                 .expectRender("Chooser")
+                 ;
       arc.pec.slotManager = slotManager;
       r[0].instantiate(arc);
       await slotManager.expectationsCompleted();
@@ -101,7 +109,7 @@ describe('demo flow', function() {
       var serialization = arc.serialize();
       var loader = new Loader();
       systemParticles.register(loader);
-      
+
       slotManager.expectGetSlot("ListView", "root")
                  .expectGetSlot("Chooser", "action")
                  .expectRender("ListView")
@@ -116,9 +124,9 @@ describe('demo flow', function() {
       await slotManager.expectationsCompleted();
 
       productViews = arc.findViews(Product.type.viewOf());
-      assert.equal(productViews.length, 4);      
+      assert.equal(productViews.length, 4);
       await testUtil.assertViewHas(productViews[1], Product, "name",
-          ["Tea Pot", "Bee Hive", "Denim Jeans", "Arduino"]);      
+          ["Tea Pot", "Bee Hive", "Denim Jeans", "Arduino"]);
       done();
     });
 

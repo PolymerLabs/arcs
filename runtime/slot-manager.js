@@ -13,12 +13,11 @@ const assert = require('assert');
 const Slot = require('./dom-slot.js');
 
 let log = !global.document || (global.logging === false) ? () => {} : (...args) => { console.log.apply(console, args); };
-//let log = console.log.call.bind(console);
 
 class SlotManager {
   constructor(domRoot, pec) {
     this._slotBySlotId = new Map();
-    // Contains both fulfilled slots and pending requests. 
+    // Contains both fulfilled slots and pending requests.
     this._slotIdByParticleSpec = new Map();
     this._pec = pec;
     this._getOrCreateSlot('root').initialize(domRoot, /* exposedView= */ undefined);
@@ -97,7 +96,6 @@ class SlotManager {
     });
   }
   // particleSpec is relinquishing ownership of it's slot
-  // TODO(sjmiles): should be `releaseSlotForParticle`?
   releaseSlot(particleSpec) {
     let slotid = this._getSlotId(particleSpec);
     if (slotid) {

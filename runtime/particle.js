@@ -132,7 +132,7 @@ class Particle {
     this.slot = slot;
     this.slotPromise = null;
     if (this.slotResolver) {
-      this.slotResolver(this.slot); 
+      this.slotResolver(this.slot);
     }
     this.slotResolver = null;
     this.slotHandlers.forEach(f => f(true));
@@ -200,7 +200,10 @@ class Particle {
   }
 
   fireEvent(event) {
-    this.slot.fireEvent(event);
+    // TODO(sjmiles): tests can get here without a `this.slot`, maybe this needs to be fixed in MockSlotManager?
+    if (this.slot) {
+      this.slot.fireEvent(event);
+    }
   }
 }
 
