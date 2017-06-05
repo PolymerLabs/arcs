@@ -15,6 +15,7 @@ let BrowserLoader = require("../browser-loader.js");
 let Resolver = require('../resolver.js');
 let SlotManager = require('../slot-manager.js');
 //let Suggestinator = require("../suggestinator.js");
+//let SuggestionComposer = require('../suggestion-composer.js');
 
 let recipe = require('../recipe.js');
 let systemParticles = require('../system-particles.js');
@@ -35,12 +36,12 @@ function prepareExtensionArc() {
   arc.createView(Product.type.viewOf(), "productsFromWebpage");
   arc.createView(Person.type, "personSlot");
   arc.commit([
-    new Person({name: "Claire"}), 
-    new Product({name: "Book About Minecraft"}), 
+    new Person({name: "Claire"}),
+    new Product({name: "Book About Minecraft"}),
     new Product({name: "Power Tool Set"}),
     new Product({name: "Guardians of the Galaxy Figure"})
   ]);
-  return arc;
+  return {arc, slotManager};
 }
 
 let buildRecipe = info => {
@@ -54,7 +55,7 @@ let buildRecipe = info => {
   return rb.build();
 };
 
-let arc = prepareExtensionArc();
+let {arc, slotManager} = prepareExtensionArc();
 
 let demoRecipes = [[
   recipes[0],
@@ -102,7 +103,7 @@ let chooseSuggestion = index => {
   if (Resolver.resolve(r, arc)) {
     r.instantiate(arc);
     suggest(stage++);
-  } 
+  }
 };
 
 let cloneArc = arc => {
@@ -116,4 +117,15 @@ let cloneArc = arc => {
     arc._viewMap = viewMap;
     return arc;
   }).call(arc);
-}
+};
+
+/*
+let suggestionRoot = document.querySelector('suggestions');
+let suggestComposer = new SuggestionComposer(suggestionRoot, slotManager);
+
+let results = suggestinator.suggestinate(arc);
+results.then(r => {
+  console.log(r);
+  suggestComposer.setSuggestions(r, arc);
+});
+*/

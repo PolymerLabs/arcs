@@ -31,6 +31,9 @@ class SlotManager {
   _createSlot(slotid) {
     return new Slot(slotid);
   }
+  hasSlot(slotid) {
+    return this._slotBySlotId.has(slotid);
+  }
   registerSlot(particleSpec, slotid) {
     return new Promise((resolve, reject) => {
       try {
@@ -101,9 +104,10 @@ class SlotManager {
     if (slotid) {
       let slot = this._getSlot(slotid);
       // particleSpec is mapped to slotid, hence it is either associated or pending.
-      if (slot.particleSpec == particleSpec)
+      if (slot.particleSpec == particleSpec) {
+        //this._disassociateSlotFromParticle(slot);
         return this._releaseSlot(slotid);
-      else slot.removePendingRequest(particleSpec);
+      } else slot.removePendingRequest(particleSpec);
     }
   }
   _releaseSlot(slotid) {
@@ -114,23 +118,33 @@ class SlotManager {
     // acquire list of particles who lost slots
     let affectedParticles = lostInfos.map(s => this._getParticle(s.id));
     // remove lost slots
-    lostInfos.forEach(s => this._removeSlot(s.id));
-    log(`SlotManager::_releaseSlot("${slotid}"):`, affectedParticles);
-    // released slot is now available
+    lostInfos.forEach(s => this._removeSlot(this._getSlot(s.id)));
+    log(`slot-manager::_releaseSlotId("${slotid}"):`, affectedParticles);
+    // released slot is now available for another requester
     slot.providePendingSlot();
     // return list of particles who lost slots
     return affectedParticles;
+  }
+  // Force free slot contents and particles associated to free up the slot for user accepted suggestion.
+  freeSlot(slotid) {  // TODO: add tests for freeSlot
+    let slot = this._getSlot(slotid);
+    if (slot.isAssociated()) {
+      this._disassociateSlotFromParticle(slot);
+      slot._pendingRequests.clear();
+      this._releaseSlot(slotid);
+    }
   }
   _disassociateSlotFromParticle(slot) {
     this._slotIdByParticleSpec.delete(slot.particleSpec);
     slot.disassociateParticle();
   }
   // `remove` means to evacipate the slot context (`release` otoh means only to mark the slot as unused)
-  _removeSlot(slotid) {
-    let slot = this._getSlot(slotid);
-    this._disassociateSlotFromParticle(slotid);
+  _removeSlot(slot) {
+    if (slot.isAssociated()) {
+      this._disassociateSlotFromParticle(slot);
+    }
     slot.uninitialize();
-    this._slotBySlotId.delete(slotid);
+    this._slotBySlotId.delete(slot.slotid);
   }
 }
 
