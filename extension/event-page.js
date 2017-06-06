@@ -5,29 +5,14 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-let pageExtractorCallbacks = {};
-
-function handlePageEntities(sender, result) {
-  let callbacks = pageExtractorCallbacks[sender.tab.id];
-  if (!callbacks) {
-    return;
-  }
-  delete pageExtractorCallbacks[sender.tab.id];
-  if (result) {
-    callbacks.resolve(result);
-  } else {
-    callbacks.reject();
-  }
-}
-
 async function localExtractEntities(tab) {
   return new Promise((resolve, reject) => {
-    pageExtractorCallbacks[tab.id] = {resolve, reject};
     chrome.tabs.executeScript(tab.id, {file: 'page-extractor.js'}, result => {
       if (chrome.runtime.lastError) {
         // Can't access chrome: or other extension pages.
-        delete pageExtractorCallbacks[tab.id];
         reject();
+      } else {
+        chrome.tabs.sendMessage(tab.id, {method: 'extractEntities', args: []}, null, resolve);
       }
     });
   });
@@ -53,8 +38,5 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.method == 'extractEntities') {
     extractEntities(...request.args).then(x => sendResponse(x));
     return true;
-  }
-  if (request.method == 'handlePageEntities') {
-    handlePageEntities(sender, ...request.args);
   }
 });

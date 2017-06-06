@@ -5,17 +5,21 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-// TODO: Extract things.
-let microdata = extractMicrodata(document.documentElement);
-let result = {};
-if (microdata.length) {
-  result.microdata = microdata;
-}
-
-chrome.runtime.sendMessage(null, {
-  method: 'handlePageEntities',
-  args: [result],
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  if (request.method == 'extractEntities') {
+    extractEntities(...request.args).then(sendResponse);
+    return true;
+  }
 });
+
+async function extractEntities() {
+  let microdata = extractMicrodata(document.documentElement);
+  let result = {};
+  if (microdata.length) {
+    result.microdata = microdata;
+  }
+  return result;
+}
 
 // Extracts entities embedded in microdata from the page.
 // Mostly follows http://schema.org/docs/gs.html
