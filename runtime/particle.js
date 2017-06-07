@@ -141,8 +141,8 @@ class Particle {
   releaseSlot() {
     if (this.slot) {
       this._slotCallback(this.slot.id, "No");
+      this._clearSlot();
     }
-    this._clearSlot();
   }
 
   // our slot was released involuntarily
@@ -201,9 +201,8 @@ class Particle {
 
   fireEvent(event) {
     // TODO(sjmiles): tests can get here without a `this.slot`, maybe this needs to be fixed in MockSlotManager?
-    if (this.slot) {
-      this.slot.fireEvent(event);
-    }
+    assert(this.slot, 'Particle::fireEvent: require a slot for events (this.slot is falsey)');
+    this.slot.fireEvent(event);
   }
 }
 

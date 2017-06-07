@@ -12,7 +12,7 @@
 const assert = require('assert');
 const Slot = require('./dom-slot.js');
 
-let log = !global.document || (global.logging === false) ? () => {} : (...args) => { console.log.apply(console, args); };
+let log = !global.document || (global.logging === false) ? () => {} : console.log.bind(console, '---------- SlotComposer::');
 
 class SlotManager {
   constructor(domRoot, pec) {
@@ -53,7 +53,7 @@ class SlotManager {
     });
   }
   _assignSlot(slotid, slot, particleSpec) {
-    log(`SlotManager::_assignSlot("${slotid}")`);
+    log(`_assignSlot("${slotid}")`);
     slot.associateWithParticle(particleSpec);
     this._slotIdByParticleSpec.set(particleSpec, slotid);
   }
@@ -83,17 +83,17 @@ class SlotManager {
     }
   }
   _provideInnerSlots(innerSlotInfos, particleSpec) {
-    log(`SlotManager::_provideInnerSlots: [${innerSlotInfos.map(info=>info.id).join(',')}]`);
+    //log(`SlotManager::_provideInnerSlots: [${innerSlotInfos.map(info=>info.id).join(',')}]`);
     innerSlotInfos.forEach(info => {
       let inner = this._getOrCreateSlot(info.id);
       if (inner.isInitialized()) {
         //log(`SlotManager::_provideInnerSlots: slot [${info.id}] is already provisioned`)
       } else {
-        log(`SlotManager::_provideInnerSlots: provisioning slot [${info.id}]`);
+        //log(`SlotManager::_provideInnerSlots: provisioning slot [${info.id}]`);
         inner.initialize(info.context, particleSpec.exposeMap.get(info.id));
       }
       if (!inner.isAssociated()) {
-        log(`SlotManager::_provideInnerSlots: providing slot [${info.id}]`);
+        //log(`SlotManager::_provideInnerSlots: providing slot [${info.id}]`);
         inner.providePendingSlot();
       }
     });
@@ -119,7 +119,7 @@ class SlotManager {
     let affectedParticles = lostInfos.map(s => this._getParticle(s.id));
     // remove lost slots
     lostInfos.forEach(s => this._removeSlot(this._getSlot(s.id)));
-    log(`slot-manager::_releaseSlotId("${slotid}"):`, affectedParticles);
+    log(`_releaseSlotId("${slotid}"):`, affectedParticles);
     // released slot is now available for another requester
     slot.providePendingSlot();
     // return list of particles who lost slots
