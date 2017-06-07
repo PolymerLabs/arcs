@@ -20,6 +20,7 @@ gulp.task('build', async function() {
   for (let file of [
     './browser-test/browser-test.js',
     './browser-demo/browser-demo.js',
+    './browser-vr-demo/browser-vr-demo.js',
     './worker-entry.js',
   ]) {
     await new Promise((resolve, reject) => {
