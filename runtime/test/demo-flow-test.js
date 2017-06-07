@@ -86,7 +86,6 @@ describe('demo flow', function() {
                  .expectRender("ListView")
                  .expectRender("Chooser")
                  .expectRender("Chooser")
-                 .expectRender("Chooser")
                  .thenSend("action", "chooseValue", {key: "1"})
                  .expectRender("ListView")
                  .expectRender("Chooser");
@@ -105,9 +104,6 @@ describe('demo flow', function() {
       slotManager.expectGetSlot("ListView", "root")
                  .expectGetSlot("Chooser", "action")
                  .expectRender("ListView")
-                 .expectRender("Chooser")
-                 .expectRender("Chooser")
-                 .expectRender("Chooser")
                  .expectRender("Chooser")
 
       var arcMap = new Map();

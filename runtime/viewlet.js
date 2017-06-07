@@ -41,6 +41,10 @@ class Viewlet {
     return this._view.on(kind, callback, target);
   }
 
+  synchronize(kind, modelCallback, callback, target) {
+    return this._view.synchronize(kind, modelCallback, callback, target);
+  }
+
   generateID() {
     return this._view.generateID();
   }
@@ -66,6 +70,10 @@ class Viewlet {
   }
   get name() {
     return this._view.name;
+  }
+
+  get _id() {
+    return this._view._id;
   }
 }
 
