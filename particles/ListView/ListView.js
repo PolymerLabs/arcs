@@ -26,7 +26,7 @@ defineParticle(({DomParticle}) => {
     display: flex;
     align-items: center;
     padding: 8px 16px;
-  }  
+  }
   [list-view] [disc] {
     display: inline-block;
     margin-right: 16px;
@@ -48,7 +48,7 @@ defineParticle(({DomParticle}) => {
   }
 </style>
 
-<div list-view> 
+<div list-view>
   <div>
     <div header>
       <span>List</span>
@@ -76,18 +76,18 @@ defineParticle(({DomParticle}) => {
     get template() {
       return template;
     }
-    _viewsUpdated(props) {
-      // TODO(sjmiles): `props` isn't really implemented yet, only chance to get 
-      // props is right here (must put render data into `state`)
+    _willReceiveProps(props) {
       this._setState({
         // TODO(sjmiles): arcana: translates object-with-name-getter to POJO-with-name-property
         items: props.list.map(({name}, i) => {return {name, itemSlotId: `action-${i}`};})
       });
     }
     _render(props, state) {
-      return {
-        items: state.items
-      };
+      if (state.items && state.items.length) {
+        return {
+          items: state.items
+        };
+      }
     }
   };
 

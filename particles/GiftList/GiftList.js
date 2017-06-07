@@ -13,7 +13,7 @@ defineParticle(({DomParticle}) => {
   let template = `
 <style>
   [gift-list] {
-    border: 1px solid silver; 
+    border: 1px solid silver;
     padding: 4px;
   }
   [gift-list] [head] {
@@ -24,8 +24,8 @@ defineParticle(({DomParticle}) => {
     padding: 8px 16px;
   }
   [gift-list] [row] {
-    display: flex; 
-    align-items: center; 
+    display: flex;
+    align-items: center;
     padding: 8px 16px;
   }
   [gift-list] [disc] {
@@ -75,7 +75,7 @@ defineParticle(({DomParticle}) => {
     get template() {
       return template;
     }
-    _viewsUpdated(props) {
+    _willReceiveProps(props) {
       this._setState({
         values: props.list
       });

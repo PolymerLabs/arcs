@@ -13,7 +13,7 @@ defineParticle(({DomParticle}) => {
   let template = `
 <style>
   [chooser] {
-    border: 1px solid silver; 
+    border: 1px solid silver;
     padding: 4px;
   }
   [chooser] [head] {
@@ -24,8 +24,8 @@ defineParticle(({DomParticle}) => {
     padding: 8px 16px;
   }
   [chooser] [row] {
-    display: flex; 
-    align-items: center; 
+    display: flex;
+    align-items: center;
     padding: 8px 16px;
   }
   [chooser] [disc] {
@@ -72,7 +72,7 @@ defineParticle(({DomParticle}) => {
     get template() {
       return template;
     }
-    _viewsUpdated(props) {
+    _willReceiveProps(props) {
       this._setState({
         values: [...difference(props.choices, props.resultList)]
       });
@@ -86,7 +86,7 @@ defineParticle(({DomParticle}) => {
       }
     }
     _onChooseValue(e, state) {
-      views.get('resultList').store(state.values[e.data.key]);
+      this._views.get('resultList').store(state.values[e.data.key]);
     }
   };
 
@@ -94,7 +94,7 @@ defineParticle(({DomParticle}) => {
     let result = new Map();
     a.forEach(value => result.set(JSON.stringify(value.name), value));
     b.map(a => JSON.stringify(a.name)).forEach(value => result.delete(value));
-    return result.values()
+    return result.values();
   }
 
 });

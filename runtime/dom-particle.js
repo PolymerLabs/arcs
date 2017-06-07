@@ -18,11 +18,14 @@ const {
 
 const XenonBase = require("./browser/xenon-base.js");
 
+let log = !global.document || (global.logging === false) ? () => {} : console.log.bind(console, '---------- DomParticle::');
+
 class DomParticle extends XenonBase(Particle) {
   get template() {
     return '';
   }
   get config() {
+    // TODO(sjmiles): getter that does work is a bad idea, this is temporary
     return {
       views: this.spec.inputs.map(i => i.name).concat(this.spec.outputs.map(o => o.name)),
       slotName: this.spec.renders.length && this.spec.renders[0].name.name
@@ -42,34 +45,43 @@ class DomParticle extends XenonBase(Particle) {
         props[name] = data[i];
       });
       // assign props
-      this._viewsUpdated(props);
+      // TODO(sjmiles): add missing props handling to XenonBase
+      log('_willReceiveProps: ', this.spec.name, props);
+      this._willReceiveProps(props);
     });
     this._views = views;
-    await this.requireSlot(config.slotName);
+    //await this.requireSlot(config.slotName);
   }
-  _viewsUpdated(props) {
+  // abstract
+  _willReceiveProps(props) {
+  }
+  _render(props, state) {
+  }
+  //
+  _update(props, state) {
+    let viewModel = this._render(props, state);
+    this._renderModel(viewModel);
+  }
+  async _renderModel(model) {
+    let slotName = this.config.slotName;
+    if (!model) {
+      if (this.slot) {
+        //log('_renderModel about to releaseSlot: ', this.spec.name);
+        this.releaseSlot(slotName);
+      }
+    } else {
+      //log(_renderModel about to requireSlot: ', this.spec.name, Object.keys(model));
+      (await this.requireSlot(slotName)).render({model});
+    }
   }
   setSlot(slot) {
-    this._setState({slot});
     this._initializeRender(slot);
+    //this._setState({slot});
     super.setSlot(slot);
   }
   _clearSlot() {
     this._setState({slot: null});
     super._clearSlot();
-  }
-  _update(props, state) {
-    this._renderModel(this._render(props, state));
-  }
-  _render(props, state) {
-  }
-  async _renderModel(model) {
-    let slotName = this.config.slotName;
-    if (!model) {
-      this.releaseSlot(slotName);
-    } else {
-      (await this.requireSlot(slotName)).render({model});
-    }
   }
   _initializeRender(slot) {
     let template = this.template;
