@@ -87,10 +87,13 @@ class View extends ViewBase {
 
   store(entity) {
     var trace = tracing.start({cat: "view", name: "View::store", args: {name: this.name}});
+    var entityWasPresent = this._items.has(entity.id);
+
     this._items.set(entity.id, entity);
     this._version++;
     trace.update({ entity });
-    this._fire('change', {add: [entity], version: this._version});
+    if (!entityWasPresent)
+      this._fire('change', {add: [entity], version: this._version});
     trace.end();
   }
 

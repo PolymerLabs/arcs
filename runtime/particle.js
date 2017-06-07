@@ -212,7 +212,13 @@ class ViewChanges {
     this.type = type;
   }
   register(particle, f) {
-    particle.on(this.views, this.names, this.type, f);
+    var modelCount = 0;
+    var afterAllModels = () => { if (++modelCount == this.names.length) { f(); } };
+
+    for (var name of this.names) {
+      var view = this.views.get(name);
+      view.synchronize(this.type, afterAllModels, f, particle)
+    }
   }
 }
 

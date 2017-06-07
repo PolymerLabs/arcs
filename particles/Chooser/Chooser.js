@@ -25,7 +25,7 @@ defineParticle(({particle: {Particle, ViewChanges, StateChanges, SlotChanges}}) 
         var result = [...difference(inputList, outputList)];
         this.emit('values', result);
       });
-      this.when([new StateChanges('values'), new SlotChanges()], async e => {
+      this.when([new StateChanges('values')], async e => {
         let slotName = 'action';
         let model = this._buildViewModel(views);
         if (!model) {
