@@ -79,28 +79,32 @@ describe('demo flow', function() {
 
     var suggestinator = new Suggestinator();
     suggestinator._getSuggestions = a => [r];
+
     var results = suggestinator.suggestinate(arc);
     results.then(async r => {
       var productViews = arc.findViews(Product.type.viewOf());
       assert.equal(productViews.length, 1);
       await testUtil.assertViewHas(productViews[0], Product, "name", ["Tea Pot", "Bee Hive", "Denim Jeans"]);
       var slotManager = new MockSlotManager(arc.pec);
-      slotManager.expectGetSlot("ListView", "root")
+      slotManager
                  .expectGetSlot("Chooser", "action")
+                 .expectGetSlot("ListView", "root")
+
+                 .expectRender("Chooser")
                  .expectRender("ListView")
                  .expectRender("Chooser")
                  .expectRender("ListView")
+
+                 .thenSend("action", "_onChooseValue", {key: "1"})
+
                  .expectRender("ListView")
-                 .thenSend("action", "chooseValue", {key: "1"})
-                 .expectGetSlot("Chooser", "action")
-                 .expectRender("ListView")
-                 .expectRender("Chooser")
-                 .expectRender("Chooser")
                  .expectRender("Chooser")
                  ;
+
       arc.pec.slotManager = slotManager;
       r[0].instantiate(arc);
       await slotManager.expectationsCompleted();
+
       productViews = arc.findViews(Product.type.viewOf());
       assert.equal(productViews.length, 4);
       await testUtil.assertViewHas(productViews[1], Product, "name",
@@ -110,16 +114,19 @@ describe('demo flow', function() {
       var loader = new Loader();
       systemParticles.register(loader);
 
-      slotManager.expectGetSlot("ListView", "root")
+      slotManager
+                 .expectGetSlot("ListView", "root")
                  .expectGetSlot("Chooser", "action")
                  .expectRender("ListView")
                  .expectRender("Chooser")
+                 .expectRender("ListView")
                  .expectRender("Chooser")
                  .expectRender("Chooser")
-                 .expectRender("Chooser")
+                 ;
 
       var arcMap = new Map();
       arcMap.set(pageArc.id, pageArc);
+
       var newArc = Arc.deserialize({serialization, loader, slotManager, arcMap});
       await slotManager.expectationsCompleted();
 
@@ -127,6 +134,7 @@ describe('demo flow', function() {
       assert.equal(productViews.length, 4);
       await testUtil.assertViewHas(productViews[1], Product, "name",
           ["Tea Pot", "Bee Hive", "Denim Jeans", "Arduino"]);
+
       done();
     });
 
