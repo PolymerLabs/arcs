@@ -11,7 +11,8 @@
 
 let assert = require('chai').assert;
 
-let log = (global.logging === false) ? () => {} : console.log.bind(console, '---------- MockSlotManager::');
+let logging = false;
+let log = (!logging || global.logging === false) ? () => {} : console.log.bind(console, '---------- MockSlotComposer::');
 
 class MockSlotComposer {
   constructor(pec) {

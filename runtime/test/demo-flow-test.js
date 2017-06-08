@@ -121,7 +121,6 @@ describe('demo flow', function() {
                  .expectRender("Chooser")
                  .expectRender("ListView")
                  .expectRender("Chooser")
-                 .expectRender("Chooser")
                  ;
 
       var arcMap = new Map();

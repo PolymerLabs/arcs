@@ -12,7 +12,7 @@
 let Arc = require("../arc.js");
 let BrowserLoader = require("../browser-loader.js");
 let Resolver = require('../resolver.js');
-let SlotManager = require('../slot-manager.js');
+let SlotComposer = require('../slot-composer.js');
 //let Suggestinator = require("../suggestinator.js");
 let recipe = require('../recipe.js');
 let systemParticles = require('../system-particles.js');
@@ -27,8 +27,8 @@ function prepareExtensionArc() {
   let Person = loader.loadEntity("Person");
   let Product = loader.loadEntity("Product");
   let pecFactory = require('../worker-pec-factory').bind(null, '../');
-  var slotManager = new SlotManager(domRoot);
-  let arc = new Arc({id: 'demo', loader, pecFactory, slotManager});
+  var slotComposer = new SlotComposer(domRoot);
+  let arc = new Arc({id: 'demo', loader, pecFactory, slotComposer});
   arc.createView(Person.type.viewOf(), "peopleFromWebpage");
   arc.createView(Product.type.viewOf(), "productsFromWebpage");
   arc.createView(Person.type, "personSlot");
@@ -131,7 +131,7 @@ let chooseSuggestion = index => {
 
 let cloneArc = arc => {
   return (function() {
-    let arc = new Arc({loader: this._loader, id: this.generateID(), pecFactory: this._pecFactory, slotManager: new SlotManager(domRoot)});
+    let arc = new Arc({loader: this._loader, id: this.generateID(), pecFactory: this._pecFactory, slotComposer: new SlotComposer(domRoot)});
     let viewMap = new Map();
     this.views.forEach(v => viewMap.set(v, v.clone()));
     //arc.particles = this.particles.map(p => p.clone(viewMap));

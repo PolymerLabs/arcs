@@ -13,7 +13,7 @@
 let Arc = require("../arc.js");
 let BrowserLoader = require("../browser-loader.js");
 let Resolver = require('../resolver.js');
-let SlotManager = require('../slot-manager.js');
+let SlotComposer = require('../slot-composer.js');
 //let Suggestinator = require("../suggestinator.js");
 //let SuggestionComposer = require('../suggestion-composer.js');
 
@@ -33,8 +33,8 @@ let Product = loader.loadEntity("Product");
 let pecFactory = require('../worker-pec-factory').bind(null, '../');
 
 function prepareExtensionArc() {
-  let slotManager = new SlotManager(particleRoot);
-  let arc = new Arc({id: 'demo', loader, pecFactory, slotManager});
+  let slotComposer = new SlotComposer(particleRoot);
+  let arc = new Arc({id: 'demo', loader, pecFactory, slotComposer});
   //
   arc.createView(Person.type.viewOf(), "peopleFromWebpage");
   arc.createView(Product.type.viewOf(), "productsFromWebpage");
@@ -46,7 +46,7 @@ function prepareExtensionArc() {
     new Product({name: "Guardians of the Galaxy Figure"})
   ]);
   //
-  return {arc, slotManager};
+  return {arc, slotComposer};
 }
 
 let buildRecipe = info => {
