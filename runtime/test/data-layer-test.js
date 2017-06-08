@@ -13,7 +13,7 @@ let assert = require('chai').assert;
 let Arc = require('../arc.js');
 let Schema = require('../schema.js');
 let Loader = require('../loader');
-const SlotManager = require('../slot-manager.js');
+const SlotComposer = require('../slot-composer.js');
 
 describe('entity', function() {
   it('can be created, stored, and restored', async () => {
@@ -24,7 +24,7 @@ describe('entity', function() {
         }]
     }]});
 
-    let arc = new Arc({loader: new Loader(), slotManager: new SlotManager({})});
+    let arc = new Arc({loader: new Loader(), slotComposer: new SlotComposer({})});
     let entity = new (schema.entityClass())({value: 'hello world'});
     assert.isDefined(entity);
     arc.commit([entity]);

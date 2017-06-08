@@ -14,21 +14,27 @@ const assert = require('assert');
 const PECOuterPort = require('./api-channel.js').PECOuterPort;
 
 class OuterPEC extends PEC {
-  constructor(port, slotManager) {
+  constructor(port, slotComposer) {
     super();
     this._particles = [];
     this._apiPort = new PECOuterPort(port);
     this._nextIdentifier = 0;
     this._idMap = new Map();
     this._reverseIdMap = new Map();
-    this.slotManager = slotManager;
+    this.slotComposer = slotComposer;
 
     this._apiPort.onRenderSlot = ({particle, content}) => {
-      if (this.slotManager)
-        this.slotManager.renderSlot(particle, content, this._makeEventletHandler(particle));
+      if (this.slotComposer)
+        this.slotComposer.renderSlot(particle, content, this._makeEventletHandler(particle));
     };
 
-    this._apiPort.onViewOn = ({view, target, callback, type}) => {
+    this._apiPort.onSynchronize = ({view, target, callback, modelCallback, type}) => {
+      if (view.constructor.name == 'Variable') {
+        var model = view.get();
+      } else {
+        var model = view.toList();
+      }
+      this._apiPort.ViewCallback({callback: modelCallback, data: model}, target);
       view.on(type, data => this._apiPort.ViewCallback({callback, data}), target);
     };
 
@@ -52,14 +58,14 @@ class OuterPEC extends PEC {
 
     this._apiPort.onGetSlot = ({particle, name, callback}) => {
       assert(particle.renderMap.has(name));
-      if (this.slotManager)
-        this.slotManager.registerSlot(particle, name).then(() =>
+      if (this.slotComposer)
+        this.slotComposer.registerSlot(particle, name).then(() =>
           this._apiPort.ViewCallback({callback}));
     }
 
     this._apiPort.onReleaseSlot = ({particle}) => {
-      if (this.slotManager) {
-        let affectedParticles = this.slotManager.releaseSlot(particle);
+      if (this.slotComposer) {
+        let affectedParticles = this.slotComposer.releaseSlot(particle);
         if (affectedParticles) {
           this._apiPort.LostSlots({particles: affectedParticles});
         }
@@ -86,9 +92,12 @@ class OuterPEC extends PEC {
     this._apiPort.UIEvent({particle, event})
   }
 
-  instantiate(particle, views, mutateCallback) {
-    views.forEach(view => this._apiPort.DefineView(view, 
-      { viewType: view.type.toLiteral(), name: view.name }));
+  instantiate(particle, views, lastSeenVersion) {
+    views.forEach(view => {
+      var version = lastSeenVersion.get(view.id) || 0;
+      this._apiPort.DefineView(view, { viewType: view.type.toLiteral(), name: view.name,
+                                       version });
+    });
 
     if (particle._isInline) {
       this._apiPort.DefineParticle({

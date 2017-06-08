@@ -13,7 +13,7 @@ let assert = require('chai').assert;
 
 let log = (global.logging === false) ? () => {} : console.log.bind(console, '---------- MockSlotManager::');
 
-class MockSlotManager {
+class MockSlotComposer {
   constructor(pec) {
     this.pec = pec;
     this.expectQueue = [];
@@ -98,7 +98,6 @@ class MockSlotManager {
       this.onExpectationsComplete();
     }
   }
-
 }
 
-module.exports = MockSlotManager;
+module.exports = MockSlotComposer;

@@ -13,7 +13,7 @@
 let Arc = require("../arc.js");
 let BrowserLoader = require("../browser-loader.js");
 let Resolver = require('../resolver.js');
-let SlotManager = require('../slot-manager.js');
+let SlotComposer = require('../slot-composer.js');
 //let Suggestinator = require("../suggestinator.js");
 //let SuggestionComposer = require('../suggestion-composer.js');
 
@@ -30,8 +30,8 @@ function prepareExtensionArc() {
   let Person = loader.loadEntity("Person");
   let Product = loader.loadEntity("Product");
   let pecFactory = require('../worker-pec-factory').bind(null, '../');
-  var slotManager = new SlotManager(domRoot);
-  let arc = new Arc({id: 'demo', loader, pecFactory, slotManager});
+  var slotComposer = new SlotComposer(domRoot);
+  let arc = new Arc({id: 'demo', loader, pecFactory, slotComposer});
   arc.createView(Person.type.viewOf(), "peopleFromWebpage");
   arc.createView(Product.type.viewOf(), "productsFromWebpage");
   arc.createView(Person.type, "personSlot");
@@ -41,7 +41,7 @@ function prepareExtensionArc() {
     new Product({name: "Power Tool Set"}),
     new Product({name: "Guardians of the Galaxy Figure"})
   ]);
-  return {arc, slotManager};
+  return {arc, slotComposer};
 }
 
 let buildRecipe = info => {
@@ -143,7 +143,7 @@ nextStage();
 
 /*
 let suggestionRoot = document.querySelector('suggestions');
-let suggestComposer = new SuggestionComposer(suggestionRoot, slotManager);
+let suggestComposer = new SuggestionComposer(suggestionRoot, slotComposer);
 
 let results = suggestinator.suggestinate(arc);
 results.then(r => {

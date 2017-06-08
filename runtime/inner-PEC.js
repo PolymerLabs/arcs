@@ -17,12 +17,14 @@ const typeLiteral = require('./type-literal.js');
 const PECInnerPort = require('./api-channel.js').PECInnerPort;
 
 class RemoteView {
-  constructor(id, type, port, pec, name) {
+  constructor(id, type, port, pec, name, version) {
     this._id = id;
     this.type = type;
     this._port = port;
     this._pec = pec;
     this.name = name;
+    this._version = version;
+    this.state = 'outOfDate';
   }
 
   generateID() {
@@ -30,7 +32,12 @@ class RemoteView {
   }
 
   on(type, callback, target) {
-    this._port.ViewOn({view: this, callback, target, type});
+    var dataFreeCallback = (d) => callback();
+    this.synchronize(type, dataFreeCallback, dataFreeCallback, target);
+  }
+
+  synchronize(type, modelCallback, callback, target) {
+    this._port.Synchronize({view: this, modelCallback, callback, target, type});
   }
 
   get() {
@@ -71,8 +78,8 @@ class InnerPEC {
      * specifications separated from particle classes - and
      * only keeping type information on the arc side.
      */
-    this._apiPort.onDefineView = ({viewType, identifier, name}) => {
-      return new RemoteView(identifier, Type.fromLiteral(viewType), this._apiPort, this, name);
+    this._apiPort.onDefineView = ({viewType, identifier, name, version}) => {
+      return new RemoteView(identifier, Type.fromLiteral(viewType), this._apiPort, this, name, version);
     };
 
     this._apiPort.onDefineParticle = ({particleDefinition, particleFunction}) => {

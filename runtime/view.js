@@ -12,14 +12,14 @@ const tracing = require("tracelib");
 const scheduler = require('./scheduler.js');
 
 class ViewBase {
-  constructor(type, arc, name) {
+  constructor(type, arc, name, id) {
     var trace = tracing.start({cat: 'view', name: 'ViewBase::constructor', args: {type: type.key, name: name}});
     this._type = type;
     this._arc = arc;
     this._listeners = new Map();
     this.name = name;
     this._version = 0;
-    this.id = this._arc.generateID();
+    this.id = id || this._arc.generateID();
     trace.end();
   }
 
@@ -31,14 +31,11 @@ class ViewBase {
     return this._type;
   }
   // TODO: add 'once' which returns a promise.
-  on(kind,  callback, target, trigger) {
+  on(kind,  callback, target) {
     assert(target !== undefined, "must provide a target to register a view event handler");
     let listeners = this._listeners.get(kind) || new Map();
     listeners.set(callback, {version: -Infinity, target});
     this._listeners.set(kind, listeners);
-    if (trigger) {
-      scheduler.enqueue(this, [{target, callback, kind}])
-    }
   }
 
   _fire(kind, details) {
@@ -64,14 +61,15 @@ class ViewBase {
 }
 
 class View extends ViewBase {
-  constructor(type, arc, name) {
-    super(type, arc, name);
+  constructor(type, arc, name, id) {
+    super(type, arc, name, id);
     this._items = new Map();
   }
 
   clone() {
     var view = new View(this._type, this._arc, this.name);
     view._items = this._items;
+    view._version = this._version;
     return view;
   }
 
@@ -89,16 +87,14 @@ class View extends ViewBase {
 
   store(entity) {
     var trace = tracing.start({cat: "view", name: "View::store", args: {name: this.name}});
+    var entityWasPresent = this._items.has(entity.id);
+
     this._items.set(entity.id, entity);
     this._version++;
     trace.update({ entity });
-    this._fire('change');
+    if (!entityWasPresent)
+      this._fire('change', {add: [entity], version: this._version});
     trace.end();
-  }
-
-  on(kind, callback, target) {
-    let trigger = kind == 'change';
-    super.on(kind, callback, target, trigger);
   }
 
   remove(id) {
@@ -135,14 +131,15 @@ class View extends ViewBase {
 }
 
 class Variable extends ViewBase {
-  constructor(type, arc, name) {
-    super(type, arc, name);
+  constructor(type, arc, name, id) {
+    super(type, arc, name, id);
     this._stored = null;
   }
 
   clone() {
     var variable = new Variable(this._type, this._arc, this.name);
     variable._stored = this._stored;
+    variable._version = this._version;
     return variable;
   }
 
@@ -157,12 +154,7 @@ class Variable extends ViewBase {
   set(entity) {
     this._stored = entity;
     this._version++;
-    this._fire('change');
-  }
-
-  on(kind, callback, target) {
-    let trigger = kind == 'change';
-    super.on(kind, callback, target, trigger);
+    this._fire('change', {data: this._stored, version: this._version});
   }
 
   extractEntities(set) {
