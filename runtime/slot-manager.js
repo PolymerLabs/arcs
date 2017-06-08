@@ -77,7 +77,7 @@ class SlotManager {
     let slot = this._getParticleSlot(particleSpec);
     // returns slot(id)s rendered by the particle
     let innerSlotInfos = slot.render(content, handler);
-    if (innerSlotInfos) {
+    if (innerSlotInfos && innerSlotInfos.length > 0) {
       // the `innerSlotInfos` identify available slot-contexts, make them available for composition
       this._provideInnerSlots(innerSlotInfos, particleSpec);
     }
@@ -105,14 +105,13 @@ class SlotManager {
       let slot = this._getSlot(slotid);
       // particleSpec is mapped to slotid, hence it is either associated or pending.
       if (slot.particleSpec == particleSpec) {
-        //this._disassociateSlotFromParticle(slot);
+        this._disassociateSlotFromParticle(slot);
         return this._releaseSlot(slotid);
       } else slot.removePendingRequest(particleSpec);
     }
   }
   _releaseSlot(slotid) {
     let slot = this._getSlot(slotid);
-    this._disassociateSlotFromParticle(slot);
     // teardown rendering, retrieve info on lost slots
     let lostInfos = slot.derender();
     // acquire list of particles who lost slots
@@ -126,7 +125,7 @@ class SlotManager {
     return affectedParticles;
   }
   // Force free slot contents and particles associated to free up the slot for user accepted suggestion.
-  freeSlot(slotid) {  // TODO: add tests for freeSlot
+  freeSlot(slotid) {
     let slot = this._getSlot(slotid);
     if (slot.isAssociated()) {
       this._disassociateSlotFromParticle(slot);
