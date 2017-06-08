@@ -1,0 +1,16 @@
+{
+  "name": "arcs-suggestinator",
+  "version": "0.0.0",
+  "private": "true",
+  "scripts": {
+    "test": "mocha"
+  },
+  "dependencies": {
+    "tracelib": "../tracelib"
+  },
+  "devDependencies": {
+    "chai": "^3.5.0",
+    "edit-distance": "^1.0.1",
+    "mocha": "^3.2.0"
+  }
+}
