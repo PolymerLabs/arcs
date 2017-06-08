@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+
+  <title></title>
+
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+
+  <style>
+    body {
+      font-family: sans-serif;
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      flex-direction: row;
+      background-color: silver;
+      /*justify-content: center;*/
+    }
+    [surface] {
+      flex: 1;
+      max-width: 414px;
+      max-height: 736px;
+      display: flex;
+      flex-direction: column;
+      background-color: white;
+    }
+    [particle-container] {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      border: 3px solid gray;
+      box-sizing: border-box;
+    }
+    [particle-container] > * {
+      flex: 1;
+    }
+    [suggestion-container] {
+      padding: 2px;
+      background-color: whitesmoke;
+      border: 3px solid gray;
+      box-sizing: border-box;
+    }
+    #suggestions {
+      padding: 2px;
+      background-color: whitesmoke;
+      border: 3px solid gray;
+    }
+    suggest {
+      display: block;
+      box-shadow: 0px 1px 5px 0px rgba(102,102,102,0.21);
+      background-color: white;
+      color: #666666;
+      margin: 6px;
+      padding: 4px;
+      margin-bottom: 8px;
+      cursor: pointer;
+    }
+    suggest:hover {
+      background-color: rgba(86,255,86,0.25);
+      box-shadow: 0px 3px 11px 0px rgba(102,102,102,0.41);
+      padding-top: 6px;
+      margin-bottom: 6px;
+      color: black;
+    }
+    /**/
+    [inspector] {
+      padding: 16px;
+      flex: 1;
+      border: 2px solid lightblue;
+      background-color: white;
+    }
+  </style>
+
+</head>
+<body>
+
+  <div surface>
+    <div particle-container></div>
+  </div>
+  <div inspector>
+    <label>Particle name: <input id="name" value="ListView"></label>
+    <br><br>
+    <div>
+      Views: +
+      <ul>
+        <li>list</li>
+      </ul>
+    </div>
+  </div>
+
+  <script src="../build/particle-ui-tester/particle-ui-tester.js"></script>
+
+</body>

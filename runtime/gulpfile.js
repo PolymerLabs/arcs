@@ -21,6 +21,7 @@ gulp.task('build', async function() {
     './browser-test/browser-test.js',
     './browser-demo/browser-demo.js',
     './browser-vr-demo/browser-vr-demo.js',
+    './particle-ui-tester/particle-ui-tester.js',
     './worker-entry.js',
   ]) {
     await new Promise((resolve, reject) => {
