@@ -10,16 +10,29 @@ async function localExtractEntities(tab) {
     chrome.tabs.executeScript(tab.id, {file: 'page-extractor.js'}, result => {
       if (chrome.runtime.lastError) {
         // Can't access chrome: or other extension pages.
-        reject();
+        reject(chrome.runtime.lastError);
       } else {
         chrome.tabs.sendMessage(tab.id, {method: 'extractEntities', args: []}, null, resolve);
+        if (chrome.runtime.lastError) {
+          reject(chrome.runtime.lastError);
+        }
       }
     });
   });
 }
 
 async function remoteExtractEntities(tab) {
-  return {todo: `Use remote service to describe ${tab.url}`};
+  let pageEntity = {
+    '@type': 'http://schema.org/WebPage',
+    url: tab.url,
+  };
+  if (tab.title) {
+    pageEntity.name = tab.title;
+  }
+  if (tab.favIconUrl) {
+    pageEntity.image = tab.favIconUrl;
+  }
+  return [pageEntity];
 }
 
 async function extractEntities(tab) {
@@ -30,6 +43,7 @@ async function extractEntities(tab) {
       return await remoteExtractEntities(tab);
     }
   } catch (e) {
+    console.error(e);
     return null;
   }
 }

@@ -5,24 +5,47 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
+let output = document.createElement('div');
+output.style.whiteSpace = 'pre';
+output.style.fontFamily = 'monospace';
+document.body.appendChild(output);
+
+// TODO: Polymer.
+function print(...lines) {
+  for (let line of lines) {
+    output.appendChild(document.createTextNode(line + '\n'));
+  }
+}
+
+function prefix(str, print) {
+  return (...lines) => print(...lines.map(line => str + line));
+}
+
 (async () => {
   let devices = await new Promise((resolve) => chrome.sessions.getDevices(null, resolve));
   let tabs = [];
   for (let device of devices) {
     for (let session of device.sessions) {
       for (let tab of session.window.tabs) {
+        if (!/^https?/.test(tab.url)) {
+          continue;
+        }
         tabs.push({
           device: device.deviceName,
           group: session.window.sessionId,
           id: tab.sessionId,
           url: tab.url,
           title: tab.title,
+          favIconUrl: tab.favIconUrl,
         });
       }
     }
   }
   let currentTabs = await new Promise((resolve) => chrome.tabs.query({}, resolve));
   for (let tab of currentTabs) {
+    if (!/^https?/.test(tab.url)) {
+      continue;
+    }
     tabs.push({
       device: 'local',
       group: `local:${tab.windowId}`,
@@ -37,25 +60,59 @@
   });
   let groupElement = null;
   let lastGroup = null;
-  // TODO: Polymer.
+
+  // Trigger entity extraction.
+  let tabEntityMap = new Map();
   for (let tab of tabs) {
-    if (tab.group != lastGroup) {
-      let title = `${tab.device} / ${tab.group}`;
-      document.body.appendChild(groupElement = document.createElement('div'));
-      groupElement.style.whiteSpace = 'pre';
-      groupElement.style.fontFamily = 'monospace';
-      groupElement.style.margin = '5px';
-      groupElement.style.padding = '5px';
-      groupElement.style.border = 'solid silver 1px';
-      lastGroup = tab.group;
-      groupElement.appendChild(document.createTextNode(`${title}\n`));
-      groupElement.appendChild(document.createTextNode(`${title.replace(/./g, '=')}\n`));
-    }
-    let entities = await fetchEntities(tab);
-    groupElement.appendChild(document.createTextNode(`${tab.title}\n`));
-    groupElement.appendChild(document.createTextNode('  ' + JSON.stringify(entities) + '\n\n'));
+    tabEntityMap.set(tab, fetchEntities(tab));
   }
+
+  let groupTabMap = new Map();
+  for (let tab of tabs) {
+    if (!groupTabMap.has(tab.group)) {
+      groupTabMap.set(tab.group, []);
+    }
+    groupTabMap.get(tab.group).push(tab);
+  }
+
+  let detailPrint = prefix('  ', print);
+  for (let [group, tabs] of groupTabMap) {
+    let title = `${tabs[0].device} / ${group}`;
+    print(`${title}`, `${title.replace(/./g, '=')}`);
+    for (let tab of tabs) {
+      let entities = await tabEntityMap.get(tab);
+      detailPrint(`${tab.title}`);
+      for (let entity of entities) {
+        detailPrint(JSON.stringify(entity));
+      }
+      print('');
+    }
+    dumpEntities(detailPrint, [].concat(...await Promise.all(tabs.map(tab => tabEntityMap.get(tab)))));
+  }
+
 })();
+
+
+function dumpEntities(print, entities) {
+  let typeEntityMap = new Map();
+  for (let entity of entities) {
+    let type = entity['@type'] || 'unknown';
+    if (!typeEntityMap.has(type)) {
+      typeEntityMap.set(type, []);
+    }
+    typeEntityMap.get(type).push(entity);
+  }
+
+  for (let [type, entities] of typeEntityMap) {
+    print(type, type.replace(/./g, '='));
+    for (let entity of entities) {
+      let copy = Object.assign({}, entity);
+      delete copy['@type'];
+      print(JSON.stringify(copy));
+    }
+    print('');
+  }
+}
 
 async function fetchEntities(tab) {
   return new Promise((resolve, reject) => {

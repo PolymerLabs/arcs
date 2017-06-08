@@ -14,11 +14,21 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
 async function extractEntities() {
   let microdata = extractMicrodata(document.documentElement);
-  let result = {};
+  let results = [];
   if (microdata.length) {
-    result.microdata = microdata;
+    results.push(...microdata);
   }
-  return result;
+  let linkImage = document.querySelector('link[rel~="image_src"], link[rel~="icon"]')
+  let pageEntity = {
+    '@type': 'http://schema.org/WebPage',
+    name: document.title,
+    url: window.location.toString(),
+  };
+  if (linkImage && linkImage.href) {
+    pageEntity.image = linkImage.href;
+  }
+  results.push(pageEntity);
+  return results;
 }
 
 // Extracts entities embedded in microdata from the page.
