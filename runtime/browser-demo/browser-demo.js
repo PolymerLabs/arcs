@@ -55,32 +55,49 @@ let buildRecipe = info => {
   return rb.build();
 };
 
-let {arc, slotManager} = prepareExtensionArc();
+let {arc} = prepareExtensionArc();
 
-let demoRecipes = [[
-  recipes[0],
-  recipes[1],
-  recipes[2]
-],[
-  recipes[3]
-],[
-  recipes[4],
-  recipes[5],
-  recipes[6],
-  recipes[7]
-],[
-  recipes[8]
-]];
+let demoStages = [{
+  recipes: [
+    recipes[0],
+    recipes[1],
+    recipes[2]
+  ]
+}, {
+  retain: {list:1, personSlot:1},
+  recipes: [
+    recipes[3]
+  ]
+}, {
+  recipes: [
+    recipes[4],
+    recipes[5],
+    recipes[6],
+    recipes[7]
+  ]
+}, {
+  recipes: [
+    recipes[8]
+  ]
+}];
 
-let contextRecipes;
+let stage = 0;
+let demoStage;
 
-let suggest = (stage) => {
-  stage = Math.min(stage, demoRecipes.length-1);
+let nextStage = () => {
+  demoStage = demoStages[stage];
+  if (stage > 0) {
+    arc = cloneArc(arc);
+  }
+  stage = Math.min(++stage, demoStages.length-1);
+  suggest();
+};
+
+let suggest = () => {
   let container = document.querySelector('suggestions');
   container.textContent = '';
-  contextRecipes = demoRecipes[stage];
-  if (contextRecipes) {
-    let suggestions = contextRecipes.map(r => r.name);
+  if (demoStage.recipes) {
+    let suggestions = demoStage.recipes.map(r => r.name);
     suggestions.forEach((s, i) => {
       container.appendChild(
         Object.assign(document.createElement("suggest"), {
@@ -93,18 +110,14 @@ let suggest = (stage) => {
   }
 };
 
-let stage = 0;
-suggest(stage++);
-
 let chooseSuggestion = index => {
   document.querySelector('[particle-container]').textContent = '';
-  if (stage > 1) {
-    arc = cloneArc(arc);
-  }
-  let r = buildRecipe(contextRecipes[index]);
+  let r = buildRecipe(demoStage.recipes[index]);
   if (Resolver.resolve(r, arc)) {
     r.instantiate(arc);
-    suggest(stage++);
+    nextStage();
+  } else {
+    console.warn('Could not resolve recipe', r, arc);
   }
 };
 
@@ -115,23 +128,18 @@ let cloneArc = arc => {
     pecFactory: arc._pecFactory,
     slotManager: new SlotManager(domRoot)
   });
-  let needs = {list:1,personSlot:1};
+  let retain = demoStage.retain;
   arc.views.forEach(v => {
-    console.log(v.name);
-    if (needs[v.name]) {
+    if (retain && retain[v.name]) {
+      console.log('+', v.name);
       neo.mapView(v);
     }
+    else console.log(v.name);
   });
   return neo;
-  /*
-  let viewMap = new Map();
-  arc.views.forEach(v => viewMap.set(v, v.clone()));
-  //arc.particles = this.particles.map(p => p.clone(viewMap));
-  for (let v of viewMap.values())
-    arc.registerView(v);
-  arc._viewMap = viewMap;
-  */
 };
+
+nextStage();
 
 /*
 let suggestionRoot = document.querySelector('suggestions');
