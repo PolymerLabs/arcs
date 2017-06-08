@@ -81,11 +81,11 @@ describe('slot manager', function() {
     await slotManager.registerSlot(otherParticleSpec, innerSlotid);
     let innerSlotContent = "Bar";
     slotManager.renderSlot(otherParticleSpec, innerSlotContent);
-    assert.equal(innerSlotContent, slotManager._getSlot(innerSlotid)._dom.innerHTML);
+    assert.equal(innerSlotContent, slotManager._getSlot(innerSlotid).dom.innerHTML);
 
     // re-render content of the root slot, and verify the inner slot content is preserved.
     slotManager.renderSlot(particleSpec, `Not Foo<div slotid="${innerSlotid}"></div>`);
-    assert.equal(innerSlotContent, slotManager._getSlot(innerSlotid)._dom.innerHTML);
+    assert.equal(innerSlotContent, slotManager._getSlot(innerSlotid).dom.innerHTML);
   });
 
   it('provide pending inner slot', async () => {
@@ -144,11 +144,11 @@ describe('slot manager', function() {
     slotManager.renderSlot(subParticleSpec, subInnerContent);
 
     // Verify all 3 slots' content and mappings.
-    let rootDom = slotManager._getSlot(rootSlotid)._dom;
+    let rootDom = slotManager._getSlot(rootSlotid).dom;
     assert.equal(rootContent, rootDom.innerHTML);
-    let innerDom = slotManager._getSlot(innerSlotid)._dom;
+    let innerDom = slotManager._getSlot(innerSlotid).dom;
     assert.equal(innerContent, innerDom.innerHTML);
-    assert.equal(subInnerContent, slotManager._getSlot(subInnerSlotid)._dom.innerHTML);
+    assert.equal(subInnerContent, slotManager._getSlot(subInnerSlotid).dom.innerHTML);
 
     // release mid-layer slot.
     slotManager.releaseSlot(otherParticleSpec);

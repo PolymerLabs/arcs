@@ -52,17 +52,16 @@ class DomSlot extends Slot {
   }
   _setContent(content, eventHandler) {
     // TODO(sjmiles): these signals are ad hoc
-    let html = null;
     // falsey content is a request to teardown rendering
     if (!content) {
       this.dom.textContent = '';
       this._liveDom = null;
     } else if (typeof content === 'string') {
       // legacy html content
-      html = content;
+      this.dom.innerHTML = content;
     } else {
       // handle multiplexed content object
-      let templateName = content.templateName || 'main';
+      let templateName = content.name || 'main';
       if (content.template) {
         templates[templateName] = Object.assign(document.createElement('template'), {
           innerHTML: content.template
@@ -80,10 +79,6 @@ class DomSlot extends Slot {
         html = content.html;
       }
       */
-    }
-    // legacy html content
-    if (typeof html === 'string') {
-      this.dom.innerHTML = html;
     }
   }
   _stampTemplate(template, eventHandler) {
