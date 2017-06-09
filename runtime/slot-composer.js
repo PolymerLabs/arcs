@@ -55,7 +55,6 @@ class SlotComposer {
   _assignSlot(slotid, slot, particleSpec) {
     log(`_assignSlot("${slotid}")`);
     slot.associateWithParticle(particleSpec);
-    this._slotIdByParticleSpec.set(particleSpec, slotid);
   }
   _getSlotId(particleSpec) {
     return this._slotIdByParticleSpec.get(particleSpec);
