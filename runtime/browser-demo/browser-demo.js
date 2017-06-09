@@ -129,7 +129,7 @@ let cloneArc = arc => {
     slotComposer: new SlotComposer(domRoot)
   });
   let retain = demoStage.retain;
-  arc.views.forEach(v => {
+  arc._viewsById.forEach(v => {
     if (retain && retain[v.name]) {
       console.log('+', v.name);
       neo.mapView(v);
