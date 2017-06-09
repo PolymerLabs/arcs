@@ -5,7 +5,7 @@ DomParticle::(inner)
   setViews() => _renderViews()
   _renderViews() => _renderToSlot()
   _renderToSlot() => slot<let>.render() 
-  this._pec._apiPort.RenderSlot() => isolate => this.slotManager.renderSlot
+  this._pec._apiPort.RenderSlot() => isolate => this.slotComposer.renderSlot
 
 
 DomSlot::(outer)
@@ -48,7 +48,7 @@ and in `outer-PEC.js::OuterPEC`:
 
 ```js
   this._apiPort.onRenderSlot = ({particle, content}) => {
-    this.slotManager.renderSlot(particle, content);
+    this.slotComposer.renderSlot(particle, content);
   };
 ```
 
