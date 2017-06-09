@@ -126,7 +126,7 @@ let cloneArc = arc => {
     loader: arc._loader,
     id: 'demo',
     pecFactory: arc._pecFactory,
-    slotManager: new SlotManager(domRoot)
+    slotComposer: new SlotComposer(domRoot)
   });
   let retain = demoStage.retain;
   arc.views.forEach(v => {
