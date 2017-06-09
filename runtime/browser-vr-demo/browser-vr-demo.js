@@ -9,14 +9,11 @@
  */
 
 //let runtime = require("../runtime.js");
-
 let Arc = require("../arc.js");
 let BrowserLoader = require("../browser-loader.js");
 let Resolver = require('../resolver.js');
 let SlotComposer = require('../slot-composer.js');
 //let Suggestinator = require("../suggestinator.js");
-//let SuggestionComposer = require('../suggestion-composer.js');
-
 let recipe = require('../recipe.js');
 let systemParticles = require('../system-particles.js');
 //require("./trace-setup.js");
@@ -41,7 +38,7 @@ function prepareExtensionArc() {
     new Product({name: "Power Tool Set"}),
     new Product({name: "Guardians of the Galaxy Figure"})
   ]);
-  return {arc, slotComposer};
+  return arc;
 }
 
 let buildRecipe = info => {
@@ -55,99 +52,92 @@ let buildRecipe = info => {
   return rb.build();
 };
 
-let {arc} = prepareExtensionArc();
+let arc = prepareExtensionArc();
 
-let demoStages = [{
-  recipes: [
-    recipes[0],
-    recipes[1],
-    recipes[2]
-  ]
-}, {
-  retain: {list:1, personSlot:1},
-  recipes: [
-    recipes[3]
-  ]
-}, {
-  recipes: [
-    recipes[4],
-    recipes[5],
-    recipes[6],
-    recipes[7]
-  ]
-}, {
-  recipes: [
-    recipes[8]
-  ]
-}];
+let demoRecipes = [[
+  recipes[0],
+  recipes[1],
+  recipes[2]
+],[
+  recipes[3]
+],[
+  recipes[4],
+  recipes[5],
+  recipes[6],
+  recipes[7]
+],[
+  recipes[8]
+]];
 
-let stage = 0;
-let demoStage;
+let contextRecipes;
 
-let nextStage = () => {
-  demoStage = demoStages[stage];
-  if (stage > 0) {
-    arc = cloneArc(arc);
-  }
-  stage = Math.min(++stage, demoStages.length-1);
-  suggest();
+let createSuggestionDom = ((suggestion, index) => {
+  let html = `
+   <x3d-box z="-5" y="3" x="${index*2-2}">
+      <x3d-material color="${new THREE.Color(`hsl(${60*index},100%,50%)`).getHex()}"></x3d-material>
+      <x3d-physijs></x3d-physijs>
+    </x3d-box>
+  `;
+  return Object.assign(document.createElement("suggest"), {
+    index,
+    innerHTML: html,
+    onclick: e => chooseSuggestion(e.currentTarget.index)
+  });
+});
+
+let createSuggestionVr = (s, i) => {
+  let template = document.querySelector('template');
+  let scene = document.querySelector('a-scene');
+  let frag = document.importNode(template.content, true);
+  let box = frag.children[0];
+  box.setAttribute('square', `text:${s}`);
+  box.setAttribute('position', `${Math.random()*6-3} 2.5 ${Math.random()*0.2-2.3}`);
+  box.addEventListener('click', e => {
+    box.body.applyImpulse(
+      /* impulse */        new CANNON.Vec3(0, 1, -5),
+      /* world position */ new CANNON.Vec3().copy(box.getComputedAttribute('position'))
+    );
+  });
+  setTimeout(() => {
+    scene.appendChild(frag);
+  }, 1000*(i+1));
+  //return box;
 };
 
-let suggest = () => {
+let createSuggestion = (s, i) => {
+  createSuggestionVr(s, i);
+  return createSuggestionDom(s, i);
+};
+
+let suggest = stage => {
+  stage = Math.min(stage, demoRecipes.length-1);
   let container = document.querySelector('suggestions');
   container.textContent = '';
-  if (demoStage.recipes) {
-    let suggestions = demoStage.recipes.map(r => r.name);
-    suggestions.forEach((s, i) => {
-      container.appendChild(
-        Object.assign(document.createElement("suggest"), {
-          index: i,
-          textContent: s,
-          onclick: e => chooseSuggestion(e.currentTarget.index)
-        })
-      );
-    });
-  }
+  demoRecipes[stage].map(r => r.name).forEach((s,i) => container.appendChild(createSuggestion(s,i)));
 };
+
+let stage = 0;
+suggest(stage++);
 
 let chooseSuggestion = index => {
   document.querySelector('[particle-container]').textContent = '';
-  let r = buildRecipe(demoStage.recipes[index]);
+  arc = cloneArc(arc); //arc.clone(); //prepareExtensionArc();
+  let r = buildRecipe(contextRecipes[index]);
   if (Resolver.resolve(r, arc)) {
     r.instantiate(arc);
-    nextStage();
-  } else {
-    console.warn('Could not resolve recipe', r, arc);
+    suggest(stage++);
   }
 };
 
 let cloneArc = arc => {
-  let neo = new Arc({
-    loader: arc._loader,
-    id: 'demo',
-    pecFactory: arc._pecFactory,
-    slotComposer: new SlotComposer(domRoot)
-  });
-  let retain = demoStage.retain;
-  arc._viewsById.forEach(v => {
-    if (retain && retain[v.name]) {
-      console.log('+', v.name);
-      neo.mapView(v);
-    }
-    else console.log(v.name);
-  });
-  return neo;
+  return (function() {
+    let arc = new Arc({loader: this._loader, id: this.generateID(), pecFactory: this._pecFactory, slotComposer: new SlotComposer(domRoot)});
+    let viewMap = new Map();
+    this.views.forEach(v => viewMap.set(v, v.clone()));
+    //arc.particles = this.particles.map(p => p.clone(viewMap));
+    for (let v of viewMap.values())
+      arc.registerView(v);
+    arc._viewMap = viewMap;
+    return arc;
+  }).call(arc);
 };
-
-nextStage();
-
-/*
-let suggestionRoot = document.querySelector('suggestions');
-let suggestComposer = new SuggestionComposer(suggestionRoot, slotComposer);
-
-let results = suggestinator.suggestinate(arc);
-results.then(r => {
-  console.log(r);
-  suggestComposer.setSuggestions(r, arc);
-});
-*/

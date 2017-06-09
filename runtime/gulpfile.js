@@ -20,6 +20,8 @@ gulp.task('build', async function() {
   for (let file of [
     './browser-test/browser-test.js',
     './browser-demo/browser-demo.js',
+    './browser-vr-demo/browser-vr-demo.js',
+    './particle-ui-tester/particle-ui-tester.js',
     './worker-entry.js',
   ]) {
     await new Promise((resolve, reject) => {
@@ -44,13 +46,13 @@ gulp.task('build', async function() {
 gulp.task('test', function() {
   const mocha = require('gulp-mocha');
   // OMG gulp, why are you so hideously, hideously bad?
-  // 
+  //
   // Pass the test you want to run in as a --param,
   // because that's basically the only way gulp lets
   // you do it.
   // e.g.
   // > gulp test --demo
-  // to run tests that match "demo" 
+  // to run tests that match "demo"
   var args = process.argv[3];
   if (args !== undefined)
     args = args.substring(2);
@@ -64,3 +66,8 @@ gulp.task('watch', function() {
 });
 
 gulp.task('default', ['build', 'test']);
+
+gulp.task('dev', function() {
+  gulp.watch(['**', '!build/**'], ['build']);
+});
+

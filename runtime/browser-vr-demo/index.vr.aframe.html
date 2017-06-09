@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en">
+<head>
+
+  <title></title>
+
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+
+  <style>
+    body {
+      font-family: sans-serif;
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+    }
+    [surface] {
+      flex: 1;
+      max-width: 414px;
+      max-height: 736px;
+      display: flex;
+      flex-direction: column;
+      display: none;
+    }
+    [particle-container] {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      border: 3px solid gray;
+      box-sizing: border-box;
+    }
+    [particle-container] > * {
+      flex: 1;
+    }
+    [suggestion-container] {
+      padding: 2px;
+      background-color: whitesmoke;
+      border: 3px solid gray;
+      box-sizing: border-box;
+      z-index: 100;
+      position: absolute;
+    }
+    #suggestions {
+      padding: 2px;
+      background-color: whitesmoke;
+      border: 3px solid gray;
+    }
+    suggest {
+      display: block;
+      box-shadow: 0px 1px 5px 0px rgba(102,102,102,0.21);
+      background-color: white;
+      color: #666666;
+      margin: 6px;
+      padding: 4px;
+      margin-bottom: 8px;
+      cursor: pointer;
+    }
+    suggest:hover {
+      background-color: rgba(86,255,86,0.25);
+      box-shadow: 0px 3px 11px 0px rgba(102,102,102,0.41);
+      padding-top: 6px;
+      margin-bottom: 6px;
+      color: black;
+    }
+  </style>
+
+  <!--<script src="https://aframe.io/releases/0.5.0/aframe.min.js"></script>-->
+  <script src="https://rawgit.com/aframevr/aframe/f8cb168/dist/aframe-master.js"></script>
+  <script src="https://unpkg.com/aframe-event-set-component@3.0.3/dist/aframe-event-set-component.min.js"></script>
+  <script src="https://unpkg.com/aframe-physics-system@1.4.0/dist/aframe-physics-system.min.js"></script>
+  <script src="https://unpkg.com/aframe-draw-component@1.5.0/dist/aframe-draw-component.js"></script>
+  <script src="https://unpkg.com/aframe-htmltexture-component@0.2.1/dist/aframe-htmltexture-component.min.js"></script>
+
+</head>
+<body>
+
+  <script>
+    AFRAME.registerComponent("square", {
+      dependencies: ["draw"],
+      schema: {
+        text: {
+          default: "hello"
+        }
+      },
+      update: function() {
+        var draw = this.el.components.draw; //get access to the draw component
+        var ctx = draw.ctx;
+        var canvas = draw.canvas;
+        ctx.fillStyle = "#AFC5FF";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        //ctx.fillStyle = "blue";
+        //ctx.fillRect(0, 0, 256, 256);
+        ctx.fillStyle = "black";
+        ctx.font = "24px Roboto";
+        ctx.fillText(this.data.text, 16, 64);
+        draw.render(); //tell it to update the texture
+      }
+    });
+  </script>
+
+  <a-scene physics="debug: false">
+    <a-assets>
+      <img id="tokyo" src="assets/tokyo.jpg">
+      <div style="width:256px; height: 256px; background-color: white; display: flex; flex-direction: column; align-items: center; justify-content: center"
+          id="hello">
+        <div>Create shortlist with <product, ...> and suggest similar products from <person>'s wish list</div>
+      </div>
+    </a-assets>
+
+    <!--<a-entity position="0 1.5 -2" text="value: Hello World; color: black"></a-entity>-->
+    <!--
+    <a-box clickable dynamic-body position="-1 2.5 -3" rotation="0 45 0" color="#4CC3D9" shadow="cast: true"
+      event-set__enter="_event: mouseenter; color: #8FF7FF"
+      event-set__leave="_event: mouseleave; color: #4CC3D9"></a-box>
+    -->
+    <!--<a-sphere position="0 1.25 -5" radius="1.25" color="#EF2D5E"></a-sphere>
+    <a-cylinder position="1 0.75 -3" radius="0.5" height="1.5" color="#FFC65D"></a-cylinder>-->
+    <a-entity light="type:directional; castShadow: true;" position="1 1 1"></a-entity>
+    <a-plane static-body position="0 0 -4" rotation="-90 0 0" width="8" height="8" color="#7BC8A4" shadow="receive: true"></a-plane>
+    <a-sky color="#ECECEC" src="#tokyo"></a-sky>
+    <a-camera position="0 0 0">
+      <a-entity cursor="fuse: true; fuseTimeout: 750"
+        raycaster="objects: [clickable]"
+        position="0 0 -1"
+        scale="0.02 0.02 0.02"
+        geometry="primitive: ring"
+        material="color: black; shader: flat"
+        event-set__fuse="_event: fusing; material.color: red"
+        event-set__leave="_event: mouseleave; material.color: black; scale: 0.02 0.02 0.02"
+      >
+        <a-animation begin="cursor-fusing" easing="ease-in" attribute="scale"
+          fill="forwards" from="0.02 0.02 0.02" to="0.002 0.002 0.002" dur="700"></a-animation>
+        <a-animation begin="click" easing="ease-out-elastic" attribute="scale"
+          Xfill="backwards" from="0.002 0.002 0.002" to="0.02 0.02 0.02" dur="150"></a-animation>
+      </a-entity>
+    </a-camera>
+  </a-scene>
+
+  <template>
+    <a-box clickable dynamic-body
+        width="6"
+        scale="0.4 0.4 0.4"
+        position="-1 2.5 -3"
+        rotation="0 0 0"
+        color="#4CC3D9"
+        shadow="cast: true"
+        draw="width: 512; height: 128;"
+        xsquare="text:hello"
+        xhtmltexture="asset: #hello"
+        event-set__enter="_event: mouseenter; color: #8FF7FF"
+        event-set__leave="_event: mouseleave; color: #4CC3D9">
+      <!--<a-animation begin="click" easing="ease-in" attribute="position"
+          Xfill="forwards" to="0 0 500" dur="700"></a-animation>-->
+      <!--<a-animation begin="click" easing="ease-out-elastic" attribute="scale"
+          Xfill="backwards" from="0.002 0.002 0.002" to="0.02 0.02 0.02" dur="150"></a-animation>-->
+      <!--<a-entity position="0 0 0.5" text="value: Hello World; color: black"></a-entity>-->
+    </a-box>
+  </template>
+
+  <div surface>
+    <div particle-container></div>
+  </div>
+
+  <div suggestion-container>
+    <suggestions></suggestions>
+  </div>
+
+  <script src="../build/browser-vr-demo/browser-vr-demo.js"></script>
+
+</body>

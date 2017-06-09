@@ -8,12 +8,12 @@
  * http://polymer.github.io/PATENTS.txt
  */
 "use strict";
- 
+
 const assert = require('chai').assert;
-var DomSlot = require("../slot-dom.js");
+var DomSlot = require("../dom-slot.js");
 let util = require('./test-util.js');
- 
-describe('slot-dom', function() {
+
+describe('dom-slot', function() {
   it('initialize render derender and uninitialize', function() {
     let slot = new DomSlot('slotid');
     assert.isFalse(slot.isInitialized());
@@ -28,7 +28,7 @@ describe('slot-dom', function() {
     let content = 'foo';
     assert.deepEqual([], slot.render(content, /* eventHandler= */undefined));
     assert.isTrue(slot.isInitialized());
-    assert.equal(content, slot.content);
+    assert.equal(content, slot.dom._cachedContent);
 
     // render content with inner slots.
     content = 'foo<div slotid="action"></div>bar<div slotid="other"></div>';
@@ -37,17 +37,17 @@ describe('slot-dom', function() {
     assert.equal('action', innerSlotInfos[0].id);
     assert.equal('other', innerSlotInfos[1].id);
     assert.isTrue(slot.isInitialized());
-    assert.equal(content, slot.content);
+    assert.equal(content, slot.dom._cachedContent);
 
     // derender content.
     slot.derender();
     assert.isTrue(slot.isInitialized());
-    assert.equal('', slot.content);
+    //assert.equal('', slot.content);
 
     // uninitialize DOM.
     slot.uninitialize();
     assert.isFalse(slot.isInitialized());
-    assert.equal(undefined, slot.content);
+    //assert.equal(undefined, slot.content);
   });
 
   it('check availability', function() {
