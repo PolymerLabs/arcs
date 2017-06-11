@@ -81,11 +81,11 @@ describe('slot composer', function() {
     await slotComposer.registerSlot(otherParticleSpec, innerSlotid);
     let innerSlotContent = "Bar";
     slotComposer.renderSlot(otherParticleSpec, innerSlotContent);
-    assert.equal(innerSlotContent, slotComposer._getSlot(innerSlotid)._dom.innerHTML);
+    assert.equal(innerSlotContent, slotComposer._getSlot(innerSlotid).dom.innerHTML);
 
     // re-render content of the root slot, and verify the inner slot content is preserved.
     slotComposer.renderSlot(particleSpec, `Not Foo<div slotid="${innerSlotid}"></div>`);
-    assert.equal(innerSlotContent, slotComposer._getSlot(innerSlotid)._dom.innerHTML);
+    assert.equal(innerSlotContent, slotComposer._getSlot(innerSlotid).dom.innerHTML);
   });
 
   it('provide pending inner slot', async () => {
@@ -144,11 +144,11 @@ describe('slot composer', function() {
     slotComposer.renderSlot(subParticleSpec, subInnerContent);
 
     // Verify all 3 slots' content and mappings.
-    let rootDom = slotComposer._getSlot(rootSlotid)._dom;
+    let rootDom = slotComposer._getSlot(rootSlotid).dom;
     assert.equal(rootContent, rootDom.innerHTML);
-    let innerDom = slotComposer._getSlot(innerSlotid)._dom;
+    let innerDom = slotComposer._getSlot(innerSlotid).dom;
     assert.equal(innerContent, innerDom.innerHTML);
-    assert.equal(subInnerContent, slotComposer._getSlot(subInnerSlotid)._dom.innerHTML);
+    assert.equal(subInnerContent, slotComposer._getSlot(subInnerSlotid).dom.innerHTML);
 
     // release mid-layer slot.
     slotComposer.releaseSlot(otherParticleSpec);

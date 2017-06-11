@@ -10,14 +10,14 @@
 "use strict";
 
 const assert = require('assert');
-const Slot = require('./slot-dom.js');
+const Slot = require('./dom-slot.js');
 
-let log = !global.document || (global.logging === false) ? () => {} : (...args) => { console.log.apply(console, args); };
+let log = !global.document || (global.logging === false) ? () => {} : console.log.bind(console, '---------- SlotComposer::');
 
 class SlotComposer {
   constructor(domRoot, pec) {
     this._slotBySlotId = new Map();
-    // Contains both fulfilled slots and pending requests. 
+    // Contains both fulfilled slots and pending requests.
     this._slotIdByParticleSpec = new Map();
     this._pec = pec;
     this._getOrCreateSlot('root').initialize(domRoot, /* exposedView= */ undefined);
@@ -49,8 +49,12 @@ class SlotComposer {
         reject(x);
       }
     }).then(slot => {
-      slot.associateWithParticle(particleSpec);
+      this._assignSlot(slotid, slot, particleSpec);
     });
+  }
+  _assignSlot(slotid, slot, particleSpec) {
+    log(`_assignSlot("${slotid}")`);
+    slot.associateWithParticle(particleSpec);
   }
   _getSlotId(particleSpec) {
     return this._slotIdByParticleSpec.get(particleSpec);
@@ -65,36 +69,35 @@ class SlotComposer {
     return this._slotBySlotId.get(slotid);
   }
   _getParticleSlot(particleSpec) {
-    return this._getSlot(this._getSlotId(particleSpec))
+    return this._getSlot(this._getSlotId(particleSpec));
   }
   // TODO(sjmiles): should be `renderParticle`?
   renderSlot(particleSpec, content, handler) {
     let slot = this._getParticleSlot(particleSpec);
     // returns slot(id)s rendered by the particle
     let innerSlotInfos = slot.render(content, handler);
-    if (innerSlotInfos) {
+    if (innerSlotInfos && innerSlotInfos.length > 0) {
       // the `innerSlotInfos` identify available slot-contexts, make them available for composition
       this._provideInnerSlots(innerSlotInfos, particleSpec);
     }
   }
   _provideInnerSlots(innerSlotInfos, particleSpec) {
+    //log(`SlotManager::_provideInnerSlots: [${innerSlotInfos.map(info=>info.id).join(',')}]`);
     innerSlotInfos.forEach(info => {
       let inner = this._getOrCreateSlot(info.id);
-      // TODO(sjmiles): initialization will destroy content for DomSlot subclass, so we must cache it first
-      // ... this is a leaky implementation detail
-      let originalContent = inner.content;
-      inner.initialize(info.context, particleSpec.exposeMap.get(info.id));
-      if (originalContent) {
-        // TODO(sjmiles): recurses
-        this.renderSlot(this._getParticle(info.id), originalContent);
-      } else if (!inner.isAssociated()) {
-        // TODO(sjmiles): falsey test for originalContent is an implicit signal, really don't we want `isAvailable()`?
+      if (inner.isInitialized()) {
+        //log(`SlotManager::_provideInnerSlots: slot [${info.id}] is already provisioned`)
+      } else {
+        //log(`SlotManager::_provideInnerSlots: provisioning slot [${info.id}]`);
+        inner.initialize(info.context, particleSpec.exposeMap.get(info.id));
+      }
+      if (!inner.isAssociated()) {
+        //log(`SlotManager::_provideInnerSlots: providing slot [${info.id}]`);
         inner.providePendingSlot();
       }
     });
   }
   // particleSpec is relinquishing ownership of it's slot
-  // TODO(sjmiles): should be `releaseParticle`?
   releaseSlot(particleSpec) {
     let slotid = this._getSlotId(particleSpec);
     if (slotid) {
@@ -108,20 +111,20 @@ class SlotComposer {
   }
   _releaseSlot(slotid) {
     let slot = this._getSlot(slotid);
-    // teardown rendering
+    // teardown rendering, retrieve info on lost slots
     let lostInfos = slot.derender();
-    // memoize list of particles who lost slots
+    // acquire list of particles who lost slots
     let affectedParticles = lostInfos.map(s => this._getParticle(s.id));
     // remove lost slots
     lostInfos.forEach(s => this._removeSlot(this._getSlot(s.id)));
-    log(`slot-manager::_releaseSlotId("${slotid}"):`, affectedParticles);
+    log(`_releaseSlotId("${slotid}"):`, affectedParticles);
     // released slot is now available for another requester
     slot.providePendingSlot();
     // return list of particles who lost slots
     return affectedParticles;
   }
   // Force free slot contents and particles associated to free up the slot for user accepted suggestion.
-  freeSlot(slotid) {  // TODO: add tests for freeSlot
+  freeSlot(slotid) {
     let slot = this._getSlot(slotid);
     if (slot.isAssociated()) {
       this._disassociateSlotFromParticle(slot);

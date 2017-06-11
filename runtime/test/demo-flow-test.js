@@ -30,8 +30,12 @@ function prepareExtensionArc() {
 
   var personView = pageArc.createView(Person.type.viewOf(), "peopleFromWebpage");
   var productView = pageArc.createView(Product.type.viewOf(), "productsFromWebpage");
-  pageArc.commit([new Person({name: "Claire"}), new Product({name: "Tea Pot"}), new Product({name: "Bee Hive"}), 
-              new Product({name: "Denim Jeans"})]);
+  pageArc.commit([
+    new Person({name: "Claire"}),
+    new Product({name: "Tea Pot"}),
+    new Product({name: "Bee Hive"}),
+    new Product({name: "Denim Jeans"})
+  ]);
 
   let slotComposer = new SlotComposer();
 
@@ -51,7 +55,7 @@ describe('demo flow', function() {
       .addParticle("Create")
         .connectConstraint("newList", "list")
       .addParticle("Create")
-        .connectConstraint("newList", "recommended")        
+        .connectConstraint("newList", "recommended")
       .addParticle("WishlistFor")
         .connectConstraint("wishlist", "wishlist")
         .connectConstraint("person", "person")
@@ -75,23 +79,32 @@ describe('demo flow', function() {
 
     var suggestinator = new Suggestinator();
     suggestinator._getSuggestions = a => [r];
+
     var results = suggestinator.suggestinate(arc);
     results.then(async r => {
       var productViews = arc.findViews(Product.type.viewOf());
       assert.equal(productViews.length, 1);
       await testUtil.assertViewHas(productViews[0], Product, "name", ["Tea Pot", "Bee Hive", "Denim Jeans"]);
       var slotComposer = new MockSlotComposer(arc.pec);
-      slotComposer.expectGetSlot("ListView", "root")
+      slotComposer
                  .expectGetSlot("Chooser", "action")
+                 .expectGetSlot("ListView", "root")
+
+                 .expectRender("Chooser")
                  .expectRender("ListView")
                  .expectRender("Chooser")
-                 .expectRender("Chooser")
-                 .thenSend("action", "chooseValue", {key: "1"})
                  .expectRender("ListView")
-                 .expectRender("Chooser");
+
+                 .thenSend("action", "_onChooseValue", {key: "1"})
+
+                 .expectRender("ListView")
+                 .expectRender("Chooser")
+                 ;
+
       arc.pec.slotComposer = slotComposer;
       r[0].instantiate(arc);
       await slotComposer.expectationsCompleted();
+
       productViews = arc.findViews(Product.type.viewOf());
       assert.equal(productViews.length, 4);
       await testUtil.assertViewHas(productViews[1], Product, "name",
@@ -101,20 +114,26 @@ describe('demo flow', function() {
       var loader = new Loader();
       systemParticles.register(loader);
 
-      slotComposer.expectGetSlot("ListView", "root")
+      slotComposer
+                 .expectGetSlot("ListView", "root")
                  .expectGetSlot("Chooser", "action")
                  .expectRender("ListView")
                  .expectRender("Chooser")
+                 .expectRender("ListView")
+                 .expectRender("Chooser")
+                 ;
 
       var arcMap = new Map();
       arcMap.set(pageArc.id, pageArc);
+
       var newArc = Arc.deserialize({serialization, loader, slotComposer, arcMap});
       await slotComposer.expectationsCompleted();
 
       productViews = arc.findViews(Product.type.viewOf());
-      assert.equal(productViews.length, 4);      
+      assert.equal(productViews.length, 4);
       await testUtil.assertViewHas(productViews[1], Product, "name",
-          ["Tea Pot", "Bee Hive", "Denim Jeans", "Arduino"]);      
+          ["Tea Pot", "Bee Hive", "Denim Jeans", "Arduino"]);
+
       done();
     });
   });
