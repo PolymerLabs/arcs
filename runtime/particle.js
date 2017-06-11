@@ -11,7 +11,7 @@
 
 var parser = require("./parser.js");
 var runtime = require("./runtime.js");
-var loader = require("./loader.js");
+//var loader = require("./loader.js");
 var ParticleSpec = require("./particle-spec.js");
 var tracing = require('tracelib');
 var assert = require('assert');
@@ -115,38 +115,6 @@ class Particle {
     return this.spec.outputs;
   }
 
-  setSlotCallback(callback) {
-    this._slotCallback = callback;
-  }
-
-  setSlot(slot) {
-    this.slot = slot;
-    this.slotPromise = null;
-    if (this.slotResolver) {
-      this.slotResolver(this.slot); 
-    }    
-    this.slotResolver = undefined;
-    this.slotHandlers.forEach(f => f(true));
-  }
-
-  releaseSlot() {
-    if (this.slot)
-      this._slotCallback(this.slot.id, "No");
-    this._clearSlot();
-  }
-  
-  // our slot was released involuntarily
-  slotReleased() {
-    this._clearSlot();
-  }
-
-  _clearSlot() {
-    if (this.slot !== undefined) {
-      this.slot = undefined;
-      this.slotHandlers.forEach(f => f(false));
-    }
-  }
-  
   async requireSlot(id) {
     if (this.slot) {
       return this.slot;
@@ -158,6 +126,39 @@ class Particle {
       });
     }
     return this.slotPromise;
+  }
+
+  setSlot(slot) {
+    this.slot = slot;
+    this.slotPromise = null;
+    if (this.slotResolver) {
+      this.slotResolver(this.slot);
+    }
+    this.slotResolver = null;
+    this.slotHandlers.forEach(f => f(true));
+  }
+
+  releaseSlot() {
+    if (this.slot) {
+      this._slotCallback(this.slot.id, "No");
+      this._clearSlot();
+    }
+  }
+
+  // our slot was released involuntarily
+  slotReleased() {
+    this._clearSlot();
+  }
+
+  _clearSlot() {
+    if (this.slot) {
+      this.slot = null;
+      this.slotHandlers.forEach(f => f(false));
+    }
+  }
+
+  setSlotCallback(callback) {
+    this._slotCallback = callback;
   }
 
   addSlotHandler(f) {
@@ -199,6 +200,8 @@ class Particle {
   }
 
   fireEvent(event) {
+    // TODO(sjmiles): tests can get here without a `this.slot`, maybe this needs to be fixed in MockSlotManager?
+    assert(this.slot, 'Particle::fireEvent: require a slot for events (this.slot is falsey)');
     this.slot.fireEvent(event);
   }
 }
@@ -224,7 +227,6 @@ class ViewChanges {
 
 class SlotChanges {
   constructor() {
-
   }
   register(particle, f) {
     particle.addSlotHandler(f);
