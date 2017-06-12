@@ -8,23 +8,23 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-const runtime = require("../runtime.js");
-const Arc = require("../arc.js");
-const BrowserLoader = require("../browser-loader.js");
-const Suggestinator = require("../suggestinator.js");
-const recipe = require('../recipe.js');
-const systemParticles = require('../system-particles.js');
-const SlotComposer = require('../slot-composer.js');
+const runtime = require("../../runtime.js");
+const Arc = require("../../arc.js");
+const BrowserLoader = require("../../browser-loader.js");
+const Suggestinator = require("../../suggestinator.js");
+const recipe = require('../../recipe.js');
+const systemParticles = require('../../system-particles.js');
+const SlotComposer = require('../../slot-composer.js');
 const tracing = require('tracelib');
 tracing.enable();
 
 function prepareExtensionArc() {
-  let loader = new BrowserLoader('../');
+  let loader = new BrowserLoader('../../');
   systemParticles.register(loader);
   let Person = loader.loadEntity("Person");
   let Product = loader.loadEntity("Product");
   // TODO: Move this to a separate file.
-  let pecFactory = require('../worker-pec-factory').bind(null, '../');
+  let pecFactory = require('../worker-pec-factory.js').bind(null, '../');
   var domRoot = global.document ? document.querySelector('[particle-container]') || document.body : {};
   var slotComposer = new SlotComposer(domRoot);
   var arc = new Arc({loader, pecFactory, slotComposer});

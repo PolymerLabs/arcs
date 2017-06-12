@@ -8,8 +8,8 @@
 
 'use strict';
 
-const InnerPec = require('./inner-PEC.js');
-const Loader = require('./browser-loader.js');
+const InnerPec = require('../inner-PEC.js');
+const Loader = require('../browser-loader.js');
 
 self.onmessage = function(e) {
   self.onmessage = null;
