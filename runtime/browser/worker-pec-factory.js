@@ -10,7 +10,7 @@
 
 module.exports = function(base, id) {
   let channel = new MessageChannel();
-  let worker = new Worker('../build/worker-entry.js');
+  let worker = new Worker('../browser/build/worker-entry.js');
   worker.postMessage({id: `${id}:inner`, base}, [channel.port1]);
   return channel.port2;
 }

@@ -10,26 +10,26 @@
 
 //let runtime = require("../runtime.js");
 
-let Arc = require("../arc.js");
-let BrowserLoader = require("../browser-loader.js");
-let Resolver = require('../resolver.js');
-let SlotComposer = require('../slot-composer.js');
-//let Suggestinator = require("../suggestinator.js");
-//let SuggestionComposer = require('../suggestion-composer.js');
+let Arc = require("../../arc.js");
+let BrowserLoader = require("../../browser-loader.js");
+let Resolver = require('../../resolver.js');
+let SlotComposer = require('../../slot-composer.js');
+//let Suggestinator = require("../../suggestinator.js");
+//let SuggestionComposer = require('../../suggestion-composer.js');
 
-let recipe = require('../recipe.js');
-let systemParticles = require('../system-particles.js');
+let recipe = require('../../recipe.js');
+let systemParticles = require('../../system-particles.js');
 //require("./trace-setup.js");
 
 let recipes = require('./recipes.js');
 let domRoot = global.document ? document.querySelector('[particle-container]') || document.body : {};
 
 function prepareExtensionArc() {
-  let loader = new BrowserLoader('../');
+  let loader = new BrowserLoader('../../');
   systemParticles.register(loader);
   let Person = loader.loadEntity("Person");
   let Product = loader.loadEntity("Product");
-  let pecFactory = require('../worker-pec-factory').bind(null, '../');
+  let pecFactory = require('../worker-pec-factory.js').bind(null, '../');
   var slotComposer = new SlotComposer(domRoot);
   let arc = new Arc({id: 'demo', loader, pecFactory, slotComposer});
   arc.createView(Person.type.viewOf(), "peopleFromWebpage");

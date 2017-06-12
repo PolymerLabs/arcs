@@ -18,17 +18,17 @@ gulp.task('build', async function() {
   };
 
   for (let file of [
-    './browser-test/browser-test.js',
-    './browser-demo/browser-demo.js',
-    './browser-vr-demo/browser-vr-demo.js',
-    './particle-ui-tester/particle-ui-tester.js',
-    './worker-entry.js',
+    './browser/browser-test/browser-test.js',
+    './browser/browser-demo/browser-demo.js',
+    './browser/browser-vr-demo/browser-vr-demo.js',
+    './browser/particle-ui-tester/particle-ui-tester.js',
+    './browser/worker-entry.js',
   ]) {
     await new Promise((resolve, reject) => {
       webpack({
         entry: file,
         output: {
-          filename: 'build/' + file,
+          filename: 'browser/build/' + file,
         },
         node,
         devtool: 'sourcemap',
@@ -62,12 +62,12 @@ gulp.task('test', function() {
 });
 
 gulp.task('watch', function() {
-  gulp.watch(['**', '!build/**'], ['build', 'test']);
+  gulp.watch(['**', '!browser/build/**'], ['build', 'test']);
 });
 
 gulp.task('default', ['build', 'test']);
 
 gulp.task('dev', function() {
-  gulp.watch(['**', '!build/**'], ['build']);
+  gulp.watch(['**', '!browser/build/**'], ['build']);
 });
 
