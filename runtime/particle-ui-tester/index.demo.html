@@ -14,16 +14,21 @@
       height: 100vh;
       display: flex;
       flex-direction: row;
+      /*
       background-color: silver;
-      /*justify-content: center;*/
+      justify-content: center;
+      */
     }
     [surface] {
-      flex: 1;
-      max-width: 414px;
-      max-height: 736px;
+      Xflex: 1;
+      box-sizing: border-box;
+      width: 466px;
+      height: 950px;
       display: flex;
       flex-direction: column;
-      background-color: white;
+      background: url('pixel.png') top left no-repeat;
+      /*background-size: contain;*/
+      padding: 108px 30px 111px 25px;
     }
     [particle-container] {
       flex: 1;
@@ -67,7 +72,7 @@
     [inspector] {
       padding: 16px;
       flex: 1;
-      border: 2px solid lightblue;
+      /*border: 2px solid lightblue;*/
       background-color: white;
     }
   </style>
