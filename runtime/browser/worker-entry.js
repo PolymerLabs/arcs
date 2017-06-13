@@ -14,6 +14,6 @@ const Loader = require('../browser-loader.js');
 self.onmessage = function(e) {
   self.onmessage = null;
   let {id, base} = e.data;
-  console.log('starting worker', id);
+  console.log('starting worker', id, base);
   new InnerPec(e.ports[0], id, new Loader(base));
 };
