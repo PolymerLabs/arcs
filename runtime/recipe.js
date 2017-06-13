@@ -55,13 +55,13 @@ class RecipeComponent {
 
   findConnectionByName(name) {
     for (let connection of this.connections)
-      if (connection.name == name)
+      if (connection.name === name)
         return connection;
   }
 
   findConnectionByConstraintName(constraintName) {
     for (let connection of this.connections)
-      if (connection.constraintName == constraintName)
+      if (connection.constraintName === constraintName)
         return connection;
   }
 }

@@ -33,9 +33,9 @@ class Suggestinator {
 
     suggestions = suggestions.filter(suggestion => Resolver.resolve(suggestion, arc));
 
-    for (var suggestion of suggestions) {
+    for (let suggestion of suggestions) {
        let relevance = await this.speculator.speculate(arc, suggestion);
-       suggestion.rank = relevance.relevanceScore();
+       suggestion.rank = relevance.calcRelevanceScore();
 
        suggestion.description = new DescriptionGenerator(suggestion, relevance).getDescription();
      }
