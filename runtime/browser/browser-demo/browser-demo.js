@@ -14,8 +14,8 @@ let Arc = require("../../arc.js");
 let BrowserLoader = require("../../browser-loader.js");
 let Resolver = require('../../resolver.js');
 let SlotComposer = require('../../slot-composer.js');
-//let Suggestinator = require("../../suggestinator.js");
-//let SuggestionComposer = require('../../suggestion-composer.js');
+let Suggestinator = require("../../suggestinator.js");
+let SuggestionComposer = require('../../suggestion-composer.js');
 
 let recipe = require('../../recipe.js');
 let systemParticles = require('../../system-particles.js');
@@ -29,7 +29,7 @@ function prepareExtensionArc() {
   systemParticles.register(loader);
   let Person = loader.loadEntity("Person");
   let Product = loader.loadEntity("Product");
-  let pecFactory = require('../worker-pec-factory.js').bind(null, '../../');
+  let pecFactory = require('../worker-pec-factory').bind(null, '../../');
   var slotComposer = new SlotComposer(domRoot);
   let arc = new Arc({id: 'demo', loader, pecFactory, slotComposer});
   arc.createView(Person.type.viewOf(), "peopleFromWebpage");
@@ -97,28 +97,34 @@ let suggest = () => {
   let container = document.querySelector('suggestions');
   container.textContent = '';
   if (demoStage.recipes) {
-    let suggestions = demoStage.recipes.map(r => r.name);
-    suggestions.forEach((s, i) => {
-      container.appendChild(
-        Object.assign(document.createElement("suggest"), {
-          index: i,
-          textContent: s,
-          onclick: e => chooseSuggestion(e.currentTarget.index)
-        })
-      );
+    let rs = demoStage.recipes.map(r => {
+    let recipe = buildRecipe(r);
+      recipe.name = r.name;
+      return recipe;
+    });
+    let suggestinator = new Suggestinator();
+    suggestinator._getSuggestions = a => rs;
+    let results = suggestinator.suggestinate(arc);
+    results.then(async r => {
+      demoStage.plans = r;
+      let suggestions = r.map(r => r.description);
+      suggestions.forEach((s, i) => {
+        container.appendChild(
+          Object.assign(document.createElement("suggest"), {
+            index: i,
+            textContent: s,
+            onclick: e => chooseSuggestion(e.currentTarget.index)
+          })
+        );
+      });
     });
   }
 };
 
 let chooseSuggestion = index => {
   document.querySelector('[particle-container]').textContent = '';
-  let r = buildRecipe(demoStage.recipes[index]);
-  if (Resolver.resolve(r, arc)) {
-    r.instantiate(arc);
-    nextStage();
-  } else {
-    console.warn('Could not resolve recipe', r, arc);
-  }
+  demoStage.plans[index].instantiate(arc);
+  nextStage();
 };
 
 let cloneArc = arc => {

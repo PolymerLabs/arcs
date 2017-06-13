@@ -124,7 +124,7 @@ class DescriptionGenerator {
       let particleSpec = this.recipe.arc.particleSpec(recipeComponent.particleName);
       if (!connection || !particleSpec.isOutput(connection.name)) return curr;
       // Evaluate rank and use highest ranked description.
-      let rank = this.relevance.getParticleRelevance(particleSpec.name);
+      let rank = this.relevance.calcParticleRelevance(particleSpec.name);
       if (curr.rank < rank) {
         let description = this._resolveToken(connection.name, particleSpec, recipeComponent);
         if (description) {
@@ -152,6 +152,7 @@ class DescriptionGenerator {
       } else if (type.hasVariable) {  // Resolve list template type
         type = this._resolveTemplateTypeList(type, recipeComponent);
       }
+      if (!type) return null;
       // TODO(mmandlis): check that the value isn't too long; add support for list views.
       if (!type.isView) {
         let realValue = this._getViewValue(type);

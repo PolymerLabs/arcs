@@ -23,7 +23,7 @@ class Relevance {
     }
   }
 
-  relevanceScore() {
+  calcRelevanceScore() {
     let relevance = 1;
     for (let rList of this.relevanceMap.values()) {
       relevance *= Relevance.particleRelevance(rList);
@@ -46,7 +46,7 @@ class Relevance {
     return relevance;
   }
 
-  getParticleRelevance(particleName) {
+  calcParticleRelevance(particleName) {
     for (let key of this.relevanceMap.keys()) {
       if (key.particle.name == particleName)
         return Relevance.particleRelevance(this.relevanceMap.get(key));

@@ -76,7 +76,9 @@ defineParticle(({DomParticle}) => {
       this._setState({
         values: result
       });
-      if (result.length > 0) this.relevance = 10
+      if (result.length > 0) {
+        this.relevance = 10;
+      }
     }
     _render(props, state) {
       if (state.values && state.values.length) {
