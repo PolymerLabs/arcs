@@ -30,7 +30,7 @@ systemParticles.register(loader);
 let Person = loader.loadEntity("Person");
 let Product = loader.loadEntity("Product");
 
-let pecFactory = require('../worker-pec-factory.js').bind(null, '../');
+let pecFactory = require('../worker-pec-factory.js').bind(null, '../../');
 
 function prepareExtensionArc() {
   let slotComposer = new SlotComposer(particleRoot);

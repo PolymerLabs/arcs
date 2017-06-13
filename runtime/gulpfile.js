@@ -18,17 +18,17 @@ gulp.task('build', async function() {
   };
 
   for (let file of [
-    './browser/browser-test/browser-test.js',
-    './browser/browser-demo/browser-demo.js',
-    './browser/browser-vr-demo/browser-vr-demo.js',
-    './browser/particle-ui-tester/particle-ui-tester.js',
-    './browser/worker-entry.js',
+    'browser-test/browser-test.js',
+    'browser-demo/browser-demo.js',
+    'browser-vr-demo/browser-vr-demo.js',
+    'particle-ui-tester/particle-ui-tester.js',
+    'worker-entry.js',
   ]) {
     await new Promise((resolve, reject) => {
       webpack({
-        entry: file,
+        entry: `./browser/${file}`,
         output: {
-          filename: 'browser/build/' + file,
+          filename: `./browser/build/${file}`,
         },
         node,
         devtool: 'sourcemap',

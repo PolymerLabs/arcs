@@ -55,7 +55,7 @@ defineParticle(({DomParticle}) => {
       <template>
         <div row>
           <span disc>
-            <img icon src="../../particles/Chooser/product.svg">
+            <img icon src="../../../particles/Chooser/product.svg">
           </span>
           <span style="flex:1;">{{name}}</span>
           <button events key="{{index}}" on-click="_onChooseValue">Add</button>

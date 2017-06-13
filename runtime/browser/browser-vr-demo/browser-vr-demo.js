@@ -26,7 +26,7 @@ function prepareExtensionArc() {
   systemParticles.register(loader);
   let Person = loader.loadEntity("Person");
   let Product = loader.loadEntity("Product");
-  let pecFactory = require('../worker-pec-factory.js').bind(null, '../');
+  let pecFactory = require('../worker-pec-factory.js').bind(null, '../../');
   var slotComposer = new SlotComposer(domRoot);
   let arc = new Arc({id: 'demo', loader, pecFactory, slotComposer});
   arc.createView(Person.type.viewOf(), "peopleFromWebpage");
