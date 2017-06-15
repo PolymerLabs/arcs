@@ -98,8 +98,18 @@ class View extends ViewBase {
   }
 
   remove(id) {
-    // TODO
+    var trace = tracing.start({cat: "view", name: "View::remove", args: {name: this.name}});
+    if (!this._items.has(id)) {
+      return;
+    }
+    entity = this.items_.get(id);
+    assert(this._items.delete(id));
+    this._version++;
+    trace.update({ entity });
+    this._fire('change', {remove: [entity], version: this._version});
+    trace.end();
   }
+
   // TODO: Something about iterators??
   // TODO: Something about changing order?
 
