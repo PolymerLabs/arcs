@@ -66,22 +66,13 @@ describe('description generator', function() {
             .connectConstraint("bar", "barView")
         .addParticle("ListTestParticle")
             .connectConstraint("bar", "barView")
-            .connectConstraint("far", "farsView")
+            .connectConstraint("fars", "farsView")
         .build();
     r.arc = arc;
     particles.ListTestParticle.spec.renders = [{name : {name : "root"}}];
     particles.ListTestParticle.spec.description = {pattern : "Do ${fars} from ${bar}"};
     loader.registerParticle(particles.ListTestParticle);
     assert.equal("Do Far List from my bar and Increment my foo and return my bar",
-                 new DescriptionGenerator(r, relevance).getDescription());
-
-    // Use singleton value is a description.
-    const Bar = loader.loadEntity("Bar");
-    let barView = arc.createView(Bar.type);
-    viewlet.viewletFor(barView).set(new Bar({name: 'bar-value'}));
-    particles.TestParticle.spec.description.bar = null;
-    loader.registerParticle(particles.TestParticle);
-    assert.equal("Do Far List from bar-value and Increment my foo and return bar-value",
                  new DescriptionGenerator(r, relevance).getDescription());
   });
   // TODO(mmandlis): Test description generation for template types.

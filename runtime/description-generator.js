@@ -153,21 +153,45 @@ class DescriptionGenerator {
         type = this._resolveTemplateTypeList(type, recipeComponent);
       }
       if (!type) return null;
-      // TODO(mmandlis): check that the value isn't too long; add support for list views.
-      if (!type.isView) {
-        let realValue = this._getViewValue(type);
-        if (realValue) return realValue;
+
+      let result = type.toString();
+      if (type.isView) {
+        let realValue = this._getViewList(paramName, recipeComponent);
+        if (realValue) {
+          result = `${result} (${realValue})`;
+        }
+      } else {
+        // TODO(mmandlis): check that the value isn't too long.
+        let realValue = this._getViewValue(paramName, recipeComponent);
+        if (realValue) {
+          result = realValue;
+        }
       }
       // TODO(mmandlis): need to handle relations here?
-      return type.toString();  // regular type
+      return result;
     }
     return null;
   }
-  _getViewValue(type) {
-    let typedViews = this.relevance.newArc.findViews(type);
-    if (typedViews && typedViews.length == 1) {
-      // TODO(mmandlis): How do I make it a Person and use data getter?
-      return typedViews[0].get().rawData.name;
+  _getViewValue(paramName, recipeComponent) {
+    let view = this._getResolvedView(paramName, recipeComponent);
+    if (view) {
+      return view.get().rawData.name;
+    }
+  }
+  _getViewList(paramName, recipeComponent) {
+    // let connection = recipeComponent.findConnectionByName(paramName);
+    // if (connection && connection.view && connection.view.id) {
+    //   let view = this.relevance.newArc.viewById(connection.view.id);
+    let view = this._getResolvedView(paramName, recipeComponent);
+    if (view) {
+      return view.toList().map(v => v.rawData.name).join(", ");
+    }
+  }
+  _getResolvedView(paramName, recipeComponent) {
+    let connection = recipeComponent.findConnectionByName(paramName);
+    if (connection && connection.view) {
+      return this.relevance.newArc.viewById(connection.view.id) ||
+             this.relevance.newArc._viewMap.get(connection.view);
     }
   }
 }

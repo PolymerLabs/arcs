@@ -14,5 +14,5 @@ renders: root none-need
 exposes: action(list)
 
 Description {
-  pattern: Display ${list}
+  pattern: Show ${list}
 }

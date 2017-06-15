@@ -32,7 +32,7 @@ exports.TwoInputTestParticle = particle.define('TwoInputTestParticle(in Foo foo,
   return 3;
 });
 
-exports.ListTestParticle = particle.define('ListTestParticle(in Bar bar, out [Far] fars)', map => {
+exports.ListTestParticle = particle.define('ListTestParticle(in Bar bar, create [Far] fars)', map => {
   let barView = map.get('bar');
   let farsView = map.get('fars');
   farsView.store(new farsView.entityClass({value: barView.get().value + 1}));
