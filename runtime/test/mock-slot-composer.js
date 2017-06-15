@@ -37,6 +37,11 @@ class MockSlotComposer {
     return this;
   }
 
+  expectTemplate(name) {
+    this.expectQueue.push({type: 'template', name});
+    return this;
+  }
+
   thenSend(slot, event, data) {
     this.expectQueue[this.expectQueue.length - 1].then = {slot, event, data};
     return this;
@@ -55,10 +60,14 @@ class MockSlotComposer {
   }
 
   renderSlot(particleSpec, content) {
-    log(`renderSlot: ${particleSpec.particle.name}`, content && content.template ? 'TEMPLATE' : 'MODEL');
+    var isTemplate = content && content.template;
+    log(`renderSlot: ${particleSpec.particle.name}`, isTemplate ? 'TEMPLATE' : 'MODEL');
     var expectation = this.expectQueue.shift();
     assert(expectation, "Got a render but not expecting anything further.");
-    assert.equal('render', expectation.type, `expecting a render, not ${expectation.type}`);
+    if (isTemplate)
+      assert.equal('template', expectation.type, `expecting a template, not ${expectation.type}`);
+    else 
+      assert.equal('render', expectation.type, `expecting a render, not ${expectation.type}`);
     assert.equal(particleSpec.particle.spec.name, expectation.name,
         `expecting a render from ${expectation.name}, not ${particleSpec.particle.spec.name}`);
     this.expectationMet(expectation);

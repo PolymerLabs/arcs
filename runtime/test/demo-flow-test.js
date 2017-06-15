@@ -26,6 +26,7 @@ function prepareExtensionArc() {
   let loader = new Loader();
   let Person = loader.loadEntity("Person");
   let Product = loader.loadEntity("Product");
+  let ImportantDate = loader.loadEntity("ImportantDate");
   var pageArc = new Arc({loader, id: "pageArc"});
 
   var personView = pageArc.createView(Person.type.viewOf(), "peopleFromWebpage");
@@ -37,6 +38,13 @@ function prepareExtensionArc() {
     new Product({name: "Denim Jeans"})
   ]);
 
+  // TODO: make a wishlist arc at some point
+
+  var datesArc = new Arc({loader, id: "datesArc"});
+  var datesView = datesArc.createView(ImportantDate.type.viewOf(), "clairesEvents")
+
+  datesArc.commit([new ImportantDate({name: "Birthday", date: "July 1"})]);
+
   let slotComposer = new SlotComposer();
 
   var arc = new Arc({loader, slotComposer, id: "mainArc"});
@@ -45,12 +53,12 @@ function prepareExtensionArc() {
   arc.mapView(productView);
   var personSlot = arc.createView(Person.type, "personSlot");
 
-  return {pageArc, arc, Person, Product};
+  return {pageArc, arc, Person, Product, ImportantDate, datesArc};
 }
 
 describe('demo flow', function() {
   it('flows like a demo', function(done) {
-    let {pageArc, arc, Person, Product} = prepareExtensionArc();
+    let {pageArc, arc, Person, Product, ImportantDate, datesArc} = prepareExtensionArc();
     var r = new recipe.RecipeBuilder()
       .addParticle("Create")
         .connectConstraint("newList", "list")
@@ -90,8 +98,8 @@ describe('demo flow', function() {
                  .expectGetSlot("Chooser", "action")
                  .expectGetSlot("ListView", "root")
 
-                 .expectRender("Chooser")
-                 .expectRender("ListView")
+                 .expectTemplate("Chooser")
+                 .expectTemplate("ListView")
                  .expectRender("Chooser")
                  .expectRender("ListView")
 
@@ -117,8 +125,8 @@ describe('demo flow', function() {
       slotComposer
                  .expectGetSlot("ListView", "root")
                  .expectGetSlot("Chooser", "action")
-                 .expectRender("ListView")
-                 .expectRender("Chooser")
+                 .expectTemplate("ListView")
+                 .expectTemplate("Chooser")
                  .expectRender("ListView")
                  .expectRender("Chooser")
                  ;
@@ -133,6 +141,26 @@ describe('demo flow', function() {
       assert.equal(productViews.length, 4);
       await testUtil.assertViewHas(productViews[1], Product, "name",
           ["Tea Pot", "Bee Hive", "Denim Jeans", "Arduino"]);
+
+      var datesView = datesArc.findViews(ImportantDate.type.viewOf())[0];
+      newArc.mapView(datesView);
+
+      var tempDateOut = newArc.createView(ImportantDate.type, "tempDateOut");
+
+      var r2 = new recipe.RecipeBuilder()
+        .addParticle("BFOinator")
+          .connectView("importantDates", datesView)
+          .connectView("dueBy", tempDateOut)
+        .build();
+
+      slotComposer
+                 .expectGetSlot("BFOinator", "header")
+                 .expectTemplate("BFOinator")
+                 .expectRender("BFOinator");
+
+      r2.instantiate(newArc);
+
+      await slotComposer.expectationsCompleted();
 
       done();
     });

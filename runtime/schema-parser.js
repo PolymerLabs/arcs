@@ -181,9 +181,11 @@ function peg$parse(input, options) {
       peg$c26 = peg$literalExpectation("Text", false),
       peg$c27 = "URL",
       peg$c28 = peg$literalExpectation("URL", false),
-      peg$c29 = peg$otherExpectation("whitespace"),
-      peg$c30 = /^[ \t\n\r]/,
-      peg$c31 = peg$classExpectation([" ", "\t", "\n", "\r"], false, false),
+      peg$c29 = "Date",
+      peg$c30 = peg$literalExpectation("Date", false),
+      peg$c31 = peg$otherExpectation("whitespace"),
+      peg$c32 = /^[ \t\n\r]/,
+      peg$c33 = peg$classExpectation([" ", "\t", "\n", "\r"], false, false),
 
       peg$currPos          = 0,
       peg$savedPos         = 0,
@@ -657,6 +659,15 @@ function peg$parse(input, options) {
         s0 = peg$FAILED;
         if (peg$silentFails === 0) { peg$fail(peg$c28); }
       }
+      if (s0 === peg$FAILED) {
+        if (input.substr(peg$currPos, 4) === peg$c29) {
+          s0 = peg$c29;
+          peg$currPos += 4;
+        } else {
+          s0 = peg$FAILED;
+          if (peg$silentFails === 0) { peg$fail(peg$c30); }
+        }
+      }
     }
 
     return s0;
@@ -698,27 +709,27 @@ function peg$parse(input, options) {
 
     peg$silentFails++;
     s0 = [];
-    if (peg$c30.test(input.charAt(peg$currPos))) {
+    if (peg$c32.test(input.charAt(peg$currPos))) {
       s1 = input.charAt(peg$currPos);
       peg$currPos++;
     } else {
       s1 = peg$FAILED;
-      if (peg$silentFails === 0) { peg$fail(peg$c31); }
+      if (peg$silentFails === 0) { peg$fail(peg$c33); }
     }
     while (s1 !== peg$FAILED) {
       s0.push(s1);
-      if (peg$c30.test(input.charAt(peg$currPos))) {
+      if (peg$c32.test(input.charAt(peg$currPos))) {
         s1 = input.charAt(peg$currPos);
         peg$currPos++;
       } else {
         s1 = peg$FAILED;
-        if (peg$silentFails === 0) { peg$fail(peg$c31); }
+        if (peg$silentFails === 0) { peg$fail(peg$c33); }
       }
     }
     peg$silentFails--;
     if (s0 === peg$FAILED) {
       s1 = peg$FAILED;
-      if (peg$silentFails === 0) { peg$fail(peg$c29); }
+      if (peg$silentFails === 0) { peg$fail(peg$c31); }
     }
 
     return s0;

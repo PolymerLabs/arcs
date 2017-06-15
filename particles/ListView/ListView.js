@@ -52,6 +52,7 @@ defineParticle(({DomParticle}) => {
   <div>
     <div header>
       <span>List</span>
+      <div slotid="header"></div>
     </div>
     <x-list items="{{items}}">
       <template>

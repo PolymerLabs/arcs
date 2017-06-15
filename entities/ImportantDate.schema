@@ -1,0 +1,4 @@
+schema ImportantDate extends Thing {
+  normative:
+    Date date;
+}
