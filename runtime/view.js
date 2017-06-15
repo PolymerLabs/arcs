@@ -102,7 +102,7 @@ class View extends ViewBase {
     if (!this._items.has(id)) {
       return;
     }
-    entity = this.items_.get(id);
+    let entity = this._items.get(id);
     assert(this._items.delete(id));
     this._version++;
     trace.update({ entity });
@@ -165,6 +165,10 @@ class Variable extends ViewBase {
     this._stored = entity;
     this._version++;
     this._fire('change', {data: this._stored, version: this._version});
+  }
+  
+  clear() {
+    this.set(undefined);
   }
 
   extractEntities(set) {
