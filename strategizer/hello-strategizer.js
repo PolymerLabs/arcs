@@ -5,24 +5,24 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-let {Suggestinator, Strategy} = require('./suggestinator.js');
+let {Strategizer, Strategy} = require('./strategizer.js');
 
 class Seed extends Strategy {
-  async activate(suggestinator) {
-    return {generate: suggestinator.generation == 0 ? 1 : 0, evaluate: 0};
+  async activate(strategizer) {
+    return {generate: strategizer.generation == 0 ? 1 : 0, evaluate: 0};
   }
-  async generate(suggestinator, n) {
+  async generate(strategizer, n) {
     return [''];
   }
 }
 
 class Grow extends Strategy {
-  async activate(suggestinator) {
-    return {generate: suggestinator.population.length > 0 ? 1: 0, evaluate: 0};
+  async activate(strategizer) {
+    return {generate: strategizer.population.length > 0 ? 1: 0, evaluate: 0};
   }
-  async generate(suggestinator, n) {
+  async generate(strategizer, n) {
     const alphabet = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ.,! ';
-    let population = suggestinator.population;
+    let population = strategizer.population;
     let result = [];
     for (let i = 0; i < n; i++) {
       let source = population[Math.random() * population.length|0];
@@ -35,11 +35,11 @@ class Grow extends Strategy {
 }
 
 class Cross extends Strategy {
-  async activate(suggestinator) {
-    return {generate: suggestinator.population.length > 0 ? 1: 0, evaluate: 0};
+  async activate(strategizer) {
+    return {generate: strategizer.population.length > 0 ? 1: 0, evaluate: 0};
   }
-  async generate(suggestinator, n) {
-    let population = suggestinator.population.filter(str => str.length > 0);
+  async generate(strategizer, n) {
+    let population = strategizer.population.filter(str => str.length > 0);
     let result = [];
     while (population.length > 0 && result.length < n) {
       let p1 = population[Math.random() * population.length|0];
@@ -55,12 +55,12 @@ class Cross extends Strategy {
 }
 
 class Mutate extends Strategy {
-  async activate(suggestinator) {
+  async activate(strategizer) {
     // Returns estimated ability to generate/evaluate.
-    return {generate: suggestinator.population.length > 0 ? 1: 0, evaluate: 0};
+    return {generate: strategizer.population.length > 0 ? 1: 0, evaluate: 0};
   }
-  async generate(suggestinator, n) {
-    let population = suggestinator.population.filter(str => str.length > 2);
+  async generate(strategizer, n) {
+    let population = strategizer.population.filter(str => str.length > 2);
     let result = [];
     while (population.length > 0 && result.length < n) {
       let source = population[Math.random() * population.length|0];
@@ -84,10 +84,10 @@ class Eval extends Strategy {
     super();
     this._target = target;
   }
-  async activate(suggestinator) {
+  async activate(strategizer) {
     return {generate: 0, evaluate: 1};
   }
-  async evaluate(suggestinator, individuals) {
+  async evaluate(strategizer, individuals) {
     return individuals.map(str => {
       // Shrug. It seems to work. It basically penalises higher edit distances, but gives
       // credit for characters that could be moved somewhere else.
@@ -116,7 +116,7 @@ class Eval extends Strategy {
 }
 
 let target = 'Hello, world.';
-let suggestinator = new Suggestinator([new Seed(), new Grow(), new Mutate(), new Cross(), new Eval(target)], {
+let strategizer = new Strategizer([new Seed(), new Grow(), new Mutate(), new Cross(), new Eval(target)], {
   maxPopulation: 100,
   generationSize: 1000,
   discardSize: 20,
@@ -124,9 +124,9 @@ let suggestinator = new Suggestinator([new Seed(), new Grow(), new Mutate(), new
 
 (async () => {
   while (true) {
-    await suggestinator.generate();
-    console.log(suggestinator.population[0]);
-    if (suggestinator.population[0] == target) {
+    await strategizer.generate();
+    console.log(strategizer.population[0]);
+    if (strategizer.population[0] == target) {
       return;
     }
   }
