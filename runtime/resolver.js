@@ -192,9 +192,13 @@ class Resolver {
     // TODO: More complex resolution logic should go here.
     // Defer view creation until after resolution.
     if (connection.spec.mustCreate)
-      context.afterResolution.push(arc => { connection.view = arc.createView(type, connection.constraintName); });
+      context.afterResolution.push(arc => { 
+        connection.view = arc.createView(type, connection.constraintName);
+        if (connection.options && connection.options.tag)
+          arc.tagView(connection.view, connection.options.tag);
+      });
     else
-      connection.view = context.arc.findViews(type)[0];
+      connection.view = context.arc.findViews(type, connection.options)[0];
     connection.type = type;
     trace.end({resolved: true});
     return true;
@@ -228,6 +232,7 @@ class Resolver {
     // exposed by the particle) and attempt to resolve it.
     constrainedConnection = new recipe.RecipeSpecConnection(connection.name, context.connectionSpec);
     constrainedConnection.constraintName = connection.constraintName;
+    constrainedConnection.options = connection.options;
     if (this._resolveSpecConnection(context, constrainedConnection)) {
       // Resolution successful!
       context.constraintNames.set(connection.constraintName, constrainedConnection);

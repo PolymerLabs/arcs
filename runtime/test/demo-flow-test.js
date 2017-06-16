@@ -54,6 +54,7 @@ describe('demo flow', function() {
     var r = new recipe.RecipeBuilder()
       .addParticle("Create")
         .connectConstraint("newList", "list")
+        .tag("gift list")
       .addParticle("Create")
         .connectConstraint("newList", "recommended")
       .addParticle("WishlistFor")
@@ -111,7 +112,9 @@ describe('demo flow', function() {
 
       productViews = arc.findViews(Product.type.viewOf());
       assert.equal(productViews.length, 4);
-      await testUtil.assertViewHas(productViews[1], Product, "name",
+
+      var giftView = arc.findViews(Product.type.viewOf(), {tag: "gift list"})[0];
+      await testUtil.assertViewHas(giftView, Product, "name",
           ["Tea Pot", "Bee Hive", "Denim Jeans", "Arduino"]);
 
       var serialization = arc.serialize();
@@ -135,7 +138,8 @@ describe('demo flow', function() {
 
       productViews = arc.findViews(Product.type.viewOf());
       assert.equal(productViews.length, 4);
-      await testUtil.assertViewHas(productViews[1], Product, "name",
+      var giftView = arc.findViews(Product.type.viewOf(), {tag: "gift list"})[0];
+      await testUtil.assertViewHas(giftView, Product, "name",
           ["Tea Pot", "Bee Hive", "Denim Jeans", "Arduino"]);
 
       done();

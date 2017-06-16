@@ -41,6 +41,11 @@ class Arc {
     let innerPecPort = this._pecFactory(pecId);
     this.pec = new OuterPec(innerPecPort, slotComposer, `${pecId}:outer`);
     this.nextParticleHandle = 0;
+
+    // Dictionary from each tag string to a list of views
+    this._tags = {};
+    // Map from each view to a list of tags.
+    this._viewTags = new Map();
   }
   
   static deserialize({serialization, pecFactory, loader, slotComposer, arcMap}) {
@@ -158,7 +163,7 @@ class Arc {
     } 
   }
 
-  createView(type, name, id) {
+  createView(type, name, id, tags) {
     assert(type instanceof Type, "can't createView with a type that isn't a Type");
     if (type.isRelation)
       type = type.viewOf(this);
@@ -168,11 +173,23 @@ class Arc {
       var v = new view.Variable(type, this, name, id);
     }
     this.registerView(v);
+    if (tags && tags.length) {
+      tags.forEach(tag => this.tagView(v, tag));
+    }
     return v;
   }
 
   mapView(view) {
     this.registerView(view);
+  }
+
+  tagView(view, tag) {
+    assert (this.viewById(view.id) == view);
+    if (this._tags[tag] == undefined)
+      this._tags[tag] = [];
+    
+    this._tags[tag].push(view);
+    this._viewTags.get(view).add(tag);
   }
 
   registerView(view) {
@@ -185,9 +202,17 @@ class Arc {
     this.addView(view);
   }
 
+  tagsForView(view) {
+    return this._viewTags.get(view);
+  }
+
   findViews(type, options) {
     // TODO: use options (location, labels, etc.) somehow.
-    return this._viewsByType.get(JSON.stringify(type.toLiteral())) || [];
+    var views = this._viewsByType.get(JSON.stringify(type.toLiteral())) || [];
+    if (options && options.tag) {
+      views = views.filter(view => this.tagsForView(view).has(options.tag));
+    }
+    return views;
   }
 
   viewById(id) {
@@ -196,6 +221,7 @@ class Arc {
 
   addView(view) {
     this._viewsById.set(view.id, view);
+    this._viewTags.set(view, new Set());
   }
 
   _viewFor(type) {
