@@ -102,6 +102,10 @@ class RecipeBuilder {
     this.currentComponent.connections.push(new RecipeConstraintConnection(name, constraintName));
     return this;
   }
+  tag(tag) {
+    this.currentComponent.connections[this.currentComponent.connections.length - 1].options = { tag };
+    return this;
+  }
   build() {
     if (this.currentComponent !== undefined) {
       this.components.push(new RecipeComponent(this.currentComponent.name, this.currentComponent.connections));
