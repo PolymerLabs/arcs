@@ -7,7 +7,7 @@
 
 const assert = require('assert');
 
-class Suggestinator {
+class Strategizer {
   constructor(strategies, {maxPopulation, generationSize, discardSize}) {
     this._strategies = strategies;
     this._generation = 0;
@@ -63,7 +63,7 @@ class Suggestinator {
     let evaluations = await Promise.all(evaluators.map(({strategy}) => {
       return strategy.evaluate(this, generated);
     }));
-    let fitness = Suggestinator._mergeEvaluations(evaluations, generated);
+    let fitness = Strategizer._mergeEvaluations(evaluations, generated);
     assert(fitness.length == generated.length);
 
 
@@ -134,23 +134,23 @@ class Suggestinator {
 
 // TODO: Doc call convention, incl strategies are stateful.
 class Strategy {
-  async activate(suggestinator) {
+  async activate(strategizer) {
     // Returns estimated ability to generate/evaluate.
     // TODO: What do these numbers mean? Some sort of indication of the accuracy of the
     // generated individuals and evaluations.
     return {generate: 0, evaluate: 0};
   }
-  async generate(suggestinator, n) {
+  async generate(strategizer, n) {
     return [];
   }
   discard(individuals) {
   }
-  async evaluate(suggestinator, individuals) {
+  async evaluate(strategizer, individuals) {
     return individuals.map(() => NaN);
   }
 }
 
 Object.assign(module.exports, {
-  Suggestinator,
+  Strategizer,
   Strategy,
 });
