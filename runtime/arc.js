@@ -74,9 +74,9 @@ class Arc {
       arc._lastSeenVersion.set(view.id, serializedView.version);
     }
     for (var serializedParticle of serialization.particles) {
-      var particle = arc.instantiateParticle(serializedParticle.name);
+      var particleHandle = arc.instantiateParticle(serializedParticle.name);
       for (var name in serializedParticle.views) {
-        arc.connectParticleToView(particle, name, viewMap[serializedParticle.views[name]]);
+        arc.connectParticleToView(particleHandle, name, viewMap[serializedParticle.views[name]]);
       }
     }
     return arc;
@@ -102,11 +102,12 @@ class Arc {
     return [...this._viewsById.values()];
   }
 
-  clone() {
+  // Makes a copy of the arc used for speculative execution.
+  cloneForSpeculativeExecution() {
     var arc = new Arc({loader: this._loader, id: this.generateID(), pecFactory: this._pecFactory});
     var viewMap = new Map();
     this._views.forEach(v => viewMap.set(v, v.clone()));
-    arc.particles = this.particles.map(p => p.clone(viewMap));
+    // TODO: implement cloning of this.particles and this.particleViewMaps
     for (let v of viewMap.values())
       arc.registerView(v);
     arc._viewMap = viewMap;
@@ -146,7 +147,7 @@ class Arc {
     return s;
   }
 
-  connectParticleToView(particle, name, targetView) {
+  connectParticleToView(particleHandle, name, targetView) {
     // If speculatively executing then we need to translate the view
     // in the plan to its clone.
     if (this._viewMap) {
@@ -154,12 +155,12 @@ class Arc {
     }
     assert(targetView, "no target view provided");
     assert(this._viewsById.has(targetView.id), "view of type " + targetView.type.key + " not visible to arc");
-    var viewMap = this.particleViewMaps.get(particle);
+    var viewMap = this.particleViewMaps.get(particleHandle);
     assert(viewMap.clazz.spec.connectionMap.get(name) !== undefined, "can't connect view to a view slot that doesn't exist");
     viewMap.views.set(name, targetView);
     if (viewMap.views.size == viewMap.clazz.spec.connectionMap.size) {
-      var particle = this.pec.instantiate(viewMap.clazz, viewMap.views, this._lastSeenVersion);
-      this.particles.push(particle);
+      var particleSpec = this.pec.instantiate(viewMap.clazz, viewMap.views, this._lastSeenVersion);
+      this.particles.push(particleSpec);
     } 
   }
 

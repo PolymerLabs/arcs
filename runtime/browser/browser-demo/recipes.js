@@ -44,13 +44,6 @@ module.exports = [{
       "choices": "recommended",
       "resultList": "list"
     }
-  },{
-    name: "GiftList",
-    constrain: {
-      "person": "person",
-      "list": "list",
-      "resultList": "list"
-    }
   }]
 }, {
   name: "Create shortlist with <product, ...>",

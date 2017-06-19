@@ -86,9 +86,6 @@ let demoStage;
 
 let nextStage = () => {
   demoStage = demoStages[stage];
-  if (stage > 0) {
-    arc = cloneArc(arc);
-  }
   stage = Math.min(++stage, demoStages.length-1);
   suggest();
 };
@@ -123,26 +120,10 @@ let suggest = () => {
 
 let chooseSuggestion = index => {
   document.querySelector('[particle-container]').textContent = '';
+  // TODO: switch to using suggestion-composer that only frees the slots needed for rendering the chosen plan.
+  arc.pec.slotComposer.freeSlot("root");
   demoStage.plans[index].instantiate(arc);
   nextStage();
-};
-
-let cloneArc = arc => {
-  let neo = new Arc({
-    loader: arc._loader,
-    id: 'demo',
-    pecFactory: arc._pecFactory,
-    slotComposer: new SlotComposer(domRoot)
-  });
-  let retain = demoStage.retain;
-  arc._viewsById.forEach(v => {
-    if (retain && retain[v.name]) {
-      console.log('+', v.name);
-      neo.mapView(v);
-    }
-    else console.log(v.name);
-  });
-  return neo;
 };
 
 nextStage();
