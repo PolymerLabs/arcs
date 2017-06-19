@@ -114,9 +114,11 @@ class OuterPEC extends PEC {
     particle.spec.exposes.forEach(
       expose => exposeMap.set(expose.name, views.get(expose.view)));
     
-    var particleSpec = {particle, views, renderMap, exposeMap }
+    var particleSpec = {particle, views, renderMap, exposeMap };
 
-    this._apiPort.InstantiateParticle(particleSpec, { particleName: particle.name, views })
+    this._apiPort.InstantiateParticle(particleSpec, { particleName: particle.name, views });
+
+    return particleSpec;
   }
 
   _makeEventletHandler(particle) {

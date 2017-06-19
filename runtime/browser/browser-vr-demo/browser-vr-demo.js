@@ -121,23 +121,9 @@ suggest(stage++);
 
 let chooseSuggestion = index => {
   document.querySelector('[particle-container]').textContent = '';
-  arc = cloneArc(arc); //arc.clone(); //prepareExtensionArc();
   let r = buildRecipe(contextRecipes[index]);
   if (Resolver.resolve(r, arc)) {
     r.instantiate(arc);
     suggest(stage++);
   }
-};
-
-let cloneArc = arc => {
-  return (function() {
-    let arc = new Arc({loader: this._loader, id: this.generateID(), pecFactory: this._pecFactory, slotComposer: new SlotComposer(domRoot)});
-    let viewMap = new Map();
-    this.views.forEach(v => viewMap.set(v, v.clone()));
-    //arc.particles = this.particles.map(p => p.clone(viewMap));
-    for (let v of viewMap.values())
-      arc.registerView(v);
-    arc._viewMap = viewMap;
-    return arc;
-  }).call(arc);
 };

@@ -17,6 +17,18 @@ var typeLiteral = require('./type-literal.js');
 
 class Resolver {
 
+  static initConstraints(context, arc) {
+    arc._viewsById.forEach((view, id) => {
+      var constrainedConnection = new recipe.RecipeSpecConnection(view.name, {type:view.type, name:view.name});
+      constrainedConnection.constraintName = view.name;
+      // constrainedConnection.options = ???;
+      constrainedConnection.type = view.type;
+      constrainedConnection.typeName = view.type.key;
+      constrainedConnection.view = view;
+      context.constraintNames.set(view.name, constrainedConnection);
+    });
+  }
+
   static resolve(recipe, arc) {
     assert(arc, "resolve requires an arc");
     var context = {
@@ -25,6 +37,8 @@ class Resolver {
       variableBindings: new Map(),
       pendingViewChecks: [],
     };
+    Resolver.initConstraints(context, arc);
+
     var resolve; var reject;
     context.afterResolution = [];
     for (var component of recipe.components) {
