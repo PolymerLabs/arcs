@@ -27,11 +27,14 @@ class DomParticle extends XenonBase(Particle) {
   get config() {
     // TODO(sjmiles): getter that does work is a bad idea, this is temporary
     return {
+      // TODO(sjmiles): output views shouldn't be included here, but afaict, `inout`
+      // doesn't work yet in manifest, so we are using `out` views for `inout` views
       views: this.spec.inputs.map(i => i.name).concat(this.spec.outputs.map(o => o.name)),
       slotName: this.spec.renders.length && this.spec.renders[0].name.name
     };
   }
   async setViews(views) {
+    this._views = views;
     let config = this.config;
     this.when([new ViewChanges(views, config.views, 'change')], async e => {
       // acquire all list data from views (async)
@@ -44,13 +47,8 @@ class DomParticle extends XenonBase(Particle) {
       config.views.forEach((name, i) => {
         props[name] = data[i];
       });
-      // assign props
-      // TODO(sjmiles): add missing props handling to XenonBase
-      log('_willReceiveProps: ', this.spec.name, props);
-      this._willReceiveProps(props);
+      this._setProps(props);
     });
-    this._views = views;
-    //await this.requireSlot(config.slotName);
   }
   // abstract
   _willReceiveProps(props) {
@@ -76,7 +74,6 @@ class DomParticle extends XenonBase(Particle) {
   }
   setSlot(slot) {
     this._initializeRender(slot);
-    //this._setState({slot});
     super.setSlot(slot);
   }
   _clearSlot() {
