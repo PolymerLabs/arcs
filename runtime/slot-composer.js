@@ -16,25 +16,30 @@ let log = !global.document || (global.logging === false) ? () => {} : console.lo
 
 class SlotComposer {
   constructor(domRoot, pec) {
+    this._pec = pec;
     this._slotBySlotId = new Map();
     // Contains both fulfilled slots and pending requests.
     this._slotIdByParticleSpec = new Map();
-    this._pec = pec;
-    this._getOrCreateSlot('root').initialize(domRoot, /* exposedView= */ undefined);
-  }
-  _getOrCreateSlot(slotid) {
-    if (!this._slotBySlotId.has(slotid)) {
-      this._slotBySlotId.set(slotid, this._createSlot(slotid));
-    }
-    return this._slotBySlotId.get(slotid);
+    this._createSlot('root').initialize(domRoot, /* exposedView= */ undefined);
   }
   _createSlot(slotid) {
-    return new Slot(slotid);
+    let slot = new Slot(slotid);
+    this._slotBySlotId.set(slotid, slot);
+    return slot;
   }
+  getSlot(slotid) {
+    return this._slotBySlotId.get(slotid);
+  }
+  // TODO(sjmiles): is this necessary?
   hasSlot(slotid) {
-    return this._slotBySlotId.has(slotid);
+    return Boolean(this.getSlot(slotid));
   }
+  _getOrCreateSlot(slotid) {
+    return this.getSlot(slotid) || this._createSlot(slotid);
+  }
+  // TODO(sjmiles): this is a _request_ for a slot, it's mapped to `GetSlot` message
   registerSlot(particleSpec, slotid) {
+    log(`registerSlot("${particleSpec.particle.name}", "${slotid}")`);
     return new Promise((resolve, reject) => {
       try {
         let slot = this._getOrCreateSlot(slotid);

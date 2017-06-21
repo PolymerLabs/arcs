@@ -35,32 +35,38 @@ gulp.task('peg', function() {
     .pipe(gulp.dest(paths.build));
 });
 
-gulp.task('webpack', async function() {
-  const webpack = require('webpack');
+gulp.task('build', async function() {
+  try {
+    const webpack = require('webpack');
 
-  let node = {
-    fs: 'empty',
-    mkdirp: 'empty',
-    minimist: 'empty',
-  };
+    let node = {
+      fs: 'empty',
+      mkdirp: 'empty',
+      minimist: 'empty',
+    };
 
-  for (let file of sources.browser) {
-    await new Promise((resolve, reject) => {
-      webpack({
-        entry: `./browser/${file}`,
-        output: {
-          filename: `./browser/build/${file}`,
-        },
-        node,
-        devtool: 'sourcemap',
-      }, (err, stats) => {
-        if (err) {
-          reject(err);
-        }
-        console.log(stats.toString({colors: true, verbose: true}));
-        resolve();
+    for (let file of sources.browser) {
+      await new Promise((resolve, reject) => {
+        webpack({
+          entry: `./browser/${file}`,
+          output: {
+            filename: `./browser/build/${file}`,
+          },
+          node,
+          devtool: 'sourcemap',
+        }, (err, stats) => {
+          if (err) {
+            reject(err);
+          }
+          console.log(stats.toString({colors: true, verbose: true}));
+          resolve();
+        });
       });
-    });
+    }
+
+  } catch(x) {
+    // in case of emergency, break glass .. then stay calm and carry on (watching)
+    console.log(x);
   }
 });
 

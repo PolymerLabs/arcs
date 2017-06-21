@@ -87,12 +87,12 @@ class InnerPEC {
       this._loader.registerParticle(particle);
     };
 
-    this._apiPort.onInstantiateParticle = 
+    this._apiPort.onInstantiateParticle =
       ({particleName, views}) => this._instantiateParticle(particleName, views);
 
     this._apiPort.onViewCallback = ({callback, data}) => callback(data);
 
-    this._apiPort.onAwaitIdle = ({version}) => 
+    this._apiPort.onAwaitIdle = ({version}) =>
       this.idle.then(a => this._apiPort.Idle({version, relevance: this.relevance}));
 
     this._apiPort.onLostSlots = ({particles}) => particles.forEach(particle => particle.slotReleased());
@@ -142,12 +142,12 @@ class InnerPEC {
     particle.setSlotCallback(async (name, state) => {
       switch (state) {
         case "Need":
-          var data = await new Promise(
-            (resolve, reject) => this._apiPort.GetSlot({name, particle, callback: r => resolve(r)}));
-          var slot = new Slotlet(this, particle);
-          particle.setSlot(slot);
+          /*var data =*/ await new Promise((resolve/*, reject*/) =>
+            this._apiPort.GetSlot({name, particle, callback: r => resolve(r)})
+          );
+          particle.setSlot(new Slotlet(this, particle));
           break;
-        
+
         case "No":
           this._apiPort.ReleaseSlot({particle})
           break;

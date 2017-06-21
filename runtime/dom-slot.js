@@ -11,12 +11,14 @@
 
 //const assert = require('assert');
 const Slot = require('./slot.js');
-const Template = require('./browser/xenon-template.js');
+const Template = require('./browser/lib/xenon-template.js');
 
-// TODO(sjmiles): using Node syntax to import custom-elements (which only happens in browser context)
+// TODO(sjmiles): should be elsewhere
+// TODO(sjmiles): using Node syntax to import custom-elements in strictly-browser context
 if (global.document) {
-  require('./browser/x-list.js');
-  require('./browser/model-select.js');
+  require('./browser/lib/x-list.js');
+  require('./browser/lib/model-select.js');
+  require('./browser/lib/interleaved-list.js');
 }
 
 let templates = new Map();
@@ -51,16 +53,19 @@ class DomSlot extends Slot {
     }
   }
   _setContent(content, eventHandler) {
+    //console.log(`[${this._particleSpec.particle.name}]::dom-slot:_setContent:`, content);
+    //
     // TODO(sjmiles): these signals are ad hoc
-    // falsey content is a request to teardown rendering
+    //
     if (!content) {
+      // falsey content is a request to teardown rendering
       this.dom.textContent = '';
       this._liveDom = null;
     } else if (typeof content === 'string') {
       // legacy html content
       this.dom.innerHTML = content;
     } else {
-      // handle multiplexed content object
+      // content is multiplexed
       let templateName = content.name || 'main';
       if (content.template) {
         templates[templateName] = Object.assign(document.createElement('template'), {
@@ -73,12 +78,6 @@ class DomSlot extends Slot {
         }
         this._liveDom.set(content.model);
       }
-      /*
-      if (content.html) {
-        // legacy html content (unused?)
-        html = content.html;
-      }
-      */
     }
   }
   _stampTemplate(template, eventHandler) {
@@ -91,7 +90,7 @@ class DomSlot extends Slot {
     this._liveDom.appendTo(this.dom);
   }
   _eventMapper(eventHandler, node, eventName, handlerName) {
-    node.addEventListener(eventName, e => {
+    node.addEventListener(eventName, () => {
       eventHandler({
         handler: handlerName,
         data: {
@@ -122,7 +121,7 @@ class MockDomSlot extends DomSlot {
     let RE = /slotid="([^"]*)"/g;
     while ((slot = RE.exec(this.dom.innerHTML))) {
       slots.push({
-        context: {}, 
+        context: {},
         id: slot[1]
       });
     }
@@ -130,7 +129,7 @@ class MockDomSlot extends DomSlot {
   }
   _findEventGenerators() {
     // TODO(mmandlis): missing mock-DOM version
-    // TODO(sjmiles): mock-DOM is ill-defined, but one possibility is that it never generates events 
+    // TODO(sjmiles): mock-DOM is ill-defined, but one possibility is that it never generates events
     return [];
   }
 }

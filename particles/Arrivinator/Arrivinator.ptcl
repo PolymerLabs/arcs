@@ -8,10 +8,8 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-GiftList(in Person person)
+Arrivinator(in [Product] list)
 
-renders: preamble(list) none-need
+renders: annotation(list) none-need
 
-Description {
-  pattern: Buy gifts for ${person}'s {occasion} in {timeframe}
-}
+
