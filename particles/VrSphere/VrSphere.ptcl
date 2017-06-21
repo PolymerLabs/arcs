@@ -8,10 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-GiftList(in Person person)
+VrSphere(in Person person)
 
-renders: preamble(list) none-need
-
-Description {
-  pattern: Buy gifts for ${person}'s {occasion} in {timeframe}
-}
+renders: root none-need
+exposes: action(person)

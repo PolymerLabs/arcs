@@ -47,7 +47,7 @@ class Arc {
     // Map from each view to a list of tags.
     this._viewTags = new Map();
   }
-  
+
   static deserialize({serialization, pecFactory, loader, slotComposer, arcMap}) {
     var entityMap = {};
     var viewMap = {};
@@ -112,7 +112,7 @@ class Arc {
       arc.registerView(v);
     arc._viewMap = viewMap;
     return arc;
-  }    
+  }
 
   serialize() {
     var s = { views: [], particles: [], id: this.id };
@@ -161,7 +161,7 @@ class Arc {
     if (viewMap.views.size == viewMap.clazz.spec.connectionMap.size) {
       var particleSpec = this.pec.instantiate(viewMap.clazz, viewMap.views, this._lastSeenVersion);
       this.particles.push(particleSpec);
-    } 
+    }
   }
 
   createView(type, name, id, tags) {
@@ -188,7 +188,7 @@ class Arc {
     assert (this.viewById(view.id) == view);
     if (this._tags[tag] == undefined)
       this._tags[tag] = [];
-    
+
     this._tags[tag].push(view);
     this._viewTags.get(view).add(tag);
   }
@@ -254,7 +254,7 @@ class Arc {
     for (let [entity, view] of entityMap.entries()) {
       new viewlet.viewletFor(view).store(entity);
     }
-  }  
+  }
 }
 
 module.exports = Arc;

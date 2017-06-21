@@ -39,7 +39,7 @@ class Suggestinator {
 
        suggestion.description = new DescriptionGenerator(suggestion, relevance).getDescription();
      }
-  
+
     suggestions.sort((a,b) => a.rank - b.rank);
     trace.end({args: {resolved: suggestions.length}});
     return suggestions;
