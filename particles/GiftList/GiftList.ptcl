@@ -11,3 +11,7 @@
 GiftList(in Person person, in [Product] list, out [Product] resultList)
 
 renders: root(list) none-need
+
+Description {
+  pattern: Buy gifts for ${person}'s {occasion} in {timeframe}
+}

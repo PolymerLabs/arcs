@@ -173,25 +173,30 @@ class DescriptionGenerator {
     return null;
   }
   _getViewValue(paramName, recipeComponent) {
-    let view = this._getResolvedView(paramName, recipeComponent);
-    if (view) {
-      return view.get().rawData.name;
-    }
+    return this._getViewValueFromArc(paramName, recipeComponent, this.relevance.newArc) ||
+           this._getViewValueFromArc(paramName, recipeComponent, this.recipe.arc);
+  }
+  _getViewValueFromArc(paramName, recipeComponent, arc) {
+    let view = this._getViewFromArc(paramName, recipeComponent, arc);
+    let viewVar = view ? view.get() : null;
+    if (viewVar)
+      return viewVar.rawData.name;
   }
   _getViewList(paramName, recipeComponent) {
-    // let connection = recipeComponent.findConnectionByName(paramName);
-    // if (connection && connection.view && connection.view.id) {
-    //   let view = this.relevance.newArc.viewById(connection.view.id);
-    let view = this._getResolvedView(paramName, recipeComponent);
-    if (view) {
-      return view.toList().map(v => v.rawData.name).join(", ");
-    }
+    return this._getViewListFromArc(paramName, recipeComponent, this.relevance.newArc) ||
+           this._getViewListFromArc(paramName, recipeComponent, this.recipe.arc);
   }
-  _getResolvedView(paramName, recipeComponent) {
+  _getViewListFromArc(paramName, recipeComponent, arc) {
+    let view = this._getViewFromArc(paramName, recipeComponent, arc);
+    let viewList = view ? view.toList() : null;
+    if (viewList)
+      return viewList.map(v => v.rawData.name).join(", ");
+  }
+  _getViewFromArc(paramName, recipeComponent, arc) {
     let connection = recipeComponent.findConnectionByName(paramName);
     if (connection && connection.view) {
-      return this.relevance.newArc.viewById(connection.view.id) ||
-             this.relevance.newArc._viewMap.get(connection.view);
+      return arc.viewById(connection.view.id) ||
+             (arc._viewMap && arc._viewMap.get(connection.view));
     }
   }
 }
