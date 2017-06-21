@@ -40,6 +40,7 @@ class Particle extends Node {
   }
 
   addConnectionName(name) {
+    assert(this._connections[name] == undefined);
     this._connections[name] = new ViewConnection(name, this);
     return this._connections[name];
   }
@@ -53,8 +54,13 @@ class Particle extends Node {
   }
 
   isResolved() {
-    return this._unnamedConnections.length == 0;
-    // and probably some other stuff too.
+    if (this.id == undefined)
+      return false;
+    if (this._unnamedConnections.length > 0)
+      return false;
+    if (Object.entries(this.connections).filter(a => !a.isResolved()).length > 0)
+      return false;
+    return true;
   }
 }
 
@@ -76,7 +82,7 @@ class View extends Node {
   get connections() { return this._connections } // ViewConnection*
 
   isResolved() {
-    return this._id !== undefined || this._create == true;
+    return (this._id !== undefined || this._create == true) && this._type !== undefined;
   }
 }
 
@@ -89,6 +95,7 @@ class ViewConnection extends Connection {
     this._type = undefined;
     this._direction = undefined;
     this._particle = particle;
+    this._view = undefined;
   }
 
   get name() { return this._name; } // Parameter name?
@@ -97,6 +104,10 @@ class ViewConnection extends Connection {
   get direction() { return this._direction; } // in/out
   get view() { return this._view; } // View?
   get particle() { return this._particle; } // never null
+
+  isResolved() {
+    return this.hasDefinedType() && this.view && this.view.isResolved());
+  }
 
   hasDefinedType() {
     return this._type !== undefined && this._direction !== undefined;
@@ -107,7 +118,7 @@ class ViewConnection extends Connection {
     if (this._type !== undefined) {
       if (view._type == undefined)
         view._type = this._type;
-      else 
+      else
         assert(this_type == view._type);
     } else if (view._type !== undefined) {
         this._type = view._type;
@@ -154,15 +165,16 @@ class Recipe {
   get particles() { return this._particles; } // Particle*
   get views() { return this._views; } // View*
   get slots() {} // Slot*
-  
+
   get slotConnections() {} // SlotConnection*
-  
+
   get viewConnections() {
     var viewConnections = [];
     this._particles.forEach(particle => {
       viewConnection.push(...Object.entries(particle.connections));
       viweConnection.push(...particle._unnamedConnections);
     });
+    return viewConnections;
   }
 }
 
