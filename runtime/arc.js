@@ -107,7 +107,25 @@ class Arc {
     var arc = new Arc({loader: this._loader, id: this.generateID(), pecFactory: this._pecFactory});
     var viewMap = new Map();
     this._views.forEach(v => viewMap.set(v, v.clone()));
-    // TODO: implement cloning of this.particles and this.particleViewMaps
+    this.particleViewMaps.forEach((value, key) => {
+      arc.particleViewMaps.set(key, {
+        clazz: arc._loader.loadParticle(value.clazz.name),
+        views: new Map()
+      });
+      value.views.forEach(v => arc.particleViewMaps.get(key).views.set(v.name, v.clone()));
+    });
+    this.particles.forEach(p => {
+      let cloneParticleSpec = {
+        exposeMap: new Map(),
+        particle: this._loader.loadParticle(p.particle.name),
+        renderMap: new Map(),
+        views: new Map()
+      };
+      p.exposeMap.forEach((view, slotid) => arc.exposeMap.set(slotid, view ? view.clone() : view));
+      p.renderMap.forEach((view, slotid) => arc.renderMap.set(slotid, view ? view.clone() : view));
+      p.views.forEach(v => cloneParticleSpec.views.set(v.name, v.clone()));
+      arc.particles.push(cloneParticleSpec);
+    });
     for (let v of viewMap.values())
       arc.registerView(v);
     arc._viewMap = viewMap;
