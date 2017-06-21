@@ -11,6 +11,7 @@
 
 var assert = require("assert");
 var runtime = require("./runtime.js");
+var NewRecipe = require("./new-recipe.js");
 
 class RecipeViewConnection {
   constructor(name, view) {
@@ -114,4 +115,54 @@ class RecipeBuilder {
   }
 }
 
-Object.assign(module.exports, { Recipe, RecipeComponent, RecipeSpecConnection, RecipeViewConnection, RecipeConstraintConnection, RecipeBuilder });
+class NewRecipeBuilder {
+  constructor() {
+    this.recipe = new NewRecipe();
+    this.currentParticle = undefined;
+    this.constraints = {};
+  }
+  addParticle(particleName) {
+    this.currentParticle = this.recipe.newParticle(particleName);
+    return this;
+  }
+  connectSpec(name, spec) {
+    var viewConnection = this.currentParticle.addConnectionName(name);
+    viewConnection._type = runtime.internals.Type.fromLiteral(spec.typeName);
+    viewConnection._direction = spec.direction;
+    if (spec.mustCreate) {
+      var view = this.recipe.newView();
+      view._create = true;
+      viewConnection.connectToView(view);
+    }
+    this.currentViewConnection = viewConnection;
+    return this;
+  }
+  connectView(name, view) {
+    var viewConnection = this.currentParticle.addConnectionName(name);
+    var recipeView = this.recipe.newView();
+    recipeView._id = view._id;
+    viewConnection.connectToView(recipeView);
+    this.currentViewConnection = viewConnection;
+    return this;
+  }
+  connectConstraint(name, constraintName) {
+    var view = this.constraints[constraintName];
+    if (!view) {
+      var view = this.recipe.newView();
+      this.constraints[constraintName] = view;
+    }
+    var viewConnection = this.currentParticle.addConnectionName(name);
+    viewConnection.connectToView(view);
+    this.currentViewConnection = viewConnection;
+    return this;
+  }
+  tag(tag) {
+    this.currentViewConnection.tags.push(tag);
+    return this;
+  }
+  build() {
+    return this.recipe;
+  }
+}
+
+Object.assign(module.exports, { Recipe, RecipeComponent, RecipeSpecConnection, RecipeViewConnection, RecipeConstraintConnection, RecipeBuilder, NewRecipeBuilder });
