@@ -8,11 +8,6 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-ListView(in [Product] list)
+BFOinator(in [ImportantDate] importantDates, out ImportantDate dueBy)
 
-renders: root none-need
-exposes: action(list), header
-
-Description {
-  pattern: Show ${list}
-}
+renders: header none-need

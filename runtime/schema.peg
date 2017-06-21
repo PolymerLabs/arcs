@@ -31,7 +31,7 @@ SectionType = "normative" / "optional"
 
 Field = type:Type _ name:FieldName _ ";" _ { return { type, name } }
 
-Type = "Text" / "URL"
+Type = "Text" / "URL" / "Date"
 
 FieldName = [a-zA-Z]* { return text(); }
 
