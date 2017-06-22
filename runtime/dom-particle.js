@@ -50,11 +50,12 @@ class DomParticle extends XenonBase(Particle) {
       // acquire (async) list data from views
       let data = await Promise.all(config.views.map(name => {
         let view = views.get(name);
-        return view.toList ? view.toList() : view.name;
+        return view.toList ? view.toList() : view.get();
       }));
       // convert view data (array) into props (dictionary)
       let props = config.views.reduce((props, name, i) => {
-        props[name] = data[i];
+        let value = data[i];
+        props[name] = (value && value.rawData) ? value.rawData : value;
         return props;
       }, {});
       this._setProps(props);
