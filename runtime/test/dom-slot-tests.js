@@ -12,6 +12,9 @@
 const assert = require('chai').assert;
 var DomSlot = require("../dom-slot.js");
 let util = require('./test-util.js');
+let loader = new (require('../loader'));
+const Bar = loader.loadEntity("Bar");
+const view = require('../view.js');
 
 describe('dom-slot', function() {
   it('initialize render derender and uninitialize', function() {
@@ -42,12 +45,12 @@ describe('dom-slot', function() {
     // derender content.
     slot.derender();
     assert.isTrue(slot.isInitialized());
-    //assert.equal('', slot.content);
+    assert.equal('', slot.dom._cachedContent);
 
     // uninitialize DOM.
     slot.uninitialize();
     assert.isFalse(slot.isInitialized());
-    //assert.equal(undefined, slot.content);
+    assert.isNull(slot.dom);
   });
 
   it('check availability', function() {
@@ -65,6 +68,25 @@ describe('dom-slot', function() {
 
 	// Slot isn't initialized.
     slot.uninitialize();
+    assert.isFalse(slot.isAvailable());
+  });
+
+  it('check exposed rendered views mapping', function() {
+    let slot = new DomSlot('slotid');
+
+    let v = new view.View(Bar.type, /* arc= */ null, "bar", "bar-id");
+    // Slot is initialized and not associated with a Particle.
+    slot.initialize(/* context= */{}, /* exposedView= */ v);
+    assert.isTrue(slot.isAvailable());
+
+    // Cannot associate particle with unmatching view with the Slot.
+    let particle = util.initParticleSpec('particle');
+    assert.throws(() => { slot.associateWithParticle(particle) });
+    assert.isTrue(slot.isAvailable());
+
+    // Successfully associate particle.
+    particle.renderMap.set(slot.slotid, v);
+    slot.associateWithParticle(particle)
     assert.isFalse(slot.isAvailable());
   });
 });
