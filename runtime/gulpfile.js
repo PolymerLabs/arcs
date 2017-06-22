@@ -7,8 +7,35 @@
 // http://polymer.github.io/PATENTS.txt
 
 const gulp = require('gulp');
+const gutil = require('gulp-util');
+const peg = require('gulp-peg');
 
-gulp.task('build', async function() {
+const paths = {
+  build: './build',
+};
+
+const sources = {
+  peg: [
+    'particle-parser.peg',
+    'schema-parser.peg',
+  ],
+  browser: [
+    'browser-test/browser-test.js',
+    'browser-demo/browser-demo.js',
+    'browser-vr-demo/browser-vr-demo.js',
+    'particle-ui-tester/particle-ui-tester.js',
+    'worker-entry.js',
+  ],
+};
+
+gulp.task('peg', function() {
+  gulp
+    .src(sources.peg)
+    .pipe(peg().on('error', gutil.log))
+    .pipe(gulp.dest(paths.build));
+});
+
+gulp.task('webpack', async function() {
   const webpack = require('webpack');
 
   let node = {
@@ -17,13 +44,7 @@ gulp.task('build', async function() {
     minimist: 'empty',
   };
 
-  for (let file of [
-    'browser-test/browser-test.js',
-    'browser-demo/browser-demo.js',
-    'browser-vr-demo/browser-vr-demo.js',
-    'particle-ui-tester/particle-ui-tester.js',
-    'worker-entry.js',
-  ]) {
+  for (let file of sources.browser) {
     await new Promise((resolve, reject) => {
       webpack({
         entry: `./browser/${file}`,
@@ -42,6 +63,8 @@ gulp.task('build', async function() {
     });
   }
 });
+
+gulp.task('build', ['peg', 'webpack']);
 
 gulp.task('test', function() {
   const mocha = require('gulp-mocha');
@@ -62,12 +85,12 @@ gulp.task('test', function() {
 });
 
 gulp.task('watch', function() {
-  gulp.watch(['**', '!browser/build/**'], ['build', 'test']);
+  gulp.watch(['**', '!browser/build/**', '!node_modules'], ['build', 'test']);
 });
 
 gulp.task('default', ['build', 'test']);
 
 gulp.task('dev', function() {
-  gulp.watch(['**', '!browser/build/**'], ['build']);
+  gulp.watch(['**', '!browser/build/**', '!node_modules'], ['build']);
 });
 
