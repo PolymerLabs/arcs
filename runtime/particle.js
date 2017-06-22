@@ -9,7 +9,7 @@
  */
 "use strict";
 
-var parser = require("./parser.js");
+var parser = require("./build/particle-parser.js");
 var runtime = require("./runtime.js");
 //var loader = require("./loader.js");
 var ParticleSpec = require("./particle-spec.js");

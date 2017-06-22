@@ -9,8 +9,8 @@
  */
 "use strict";
 
-var parser = require("./parser.js");
-const schemaParser = require("./schema-parser.js");
+var parser = require("./build/particle-parser.js");
+const schemaParser = require("./build/schema-parser.js");
 var fs = require("fs");
 var recipe = require("./recipe.js");
 var runtime = require("./runtime.js");
