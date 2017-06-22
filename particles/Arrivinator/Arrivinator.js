@@ -20,7 +20,7 @@ defineParticle(({DomParticle}) => {
 </x-list>
     `.trim();
 
-  return class arrivinator extends DomParticle {
+  return class extends DomParticle {
     get template() {
       return template;
     }
