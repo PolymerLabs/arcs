@@ -43,7 +43,7 @@ defineParticle(({DomParticle}) => {
 <div gift-list>
   <div>
     <div head>
-      <span>Buying Gifts</span>
+      <span>Buying Gifts for&nbsp;</span><b>{{person}}</b>
     </div>
     <div form>
       <div><span>for</span><model-select person on-change="_onPersonChange" options="{{people}}"></select></div>
@@ -59,11 +59,15 @@ defineParticle(({DomParticle}) => {
       return template;
     }
     _render(props, state) {
-      return {
-        person: 'Claire',
-        people: [{value: 'Claire'}],
-        occasions: [{value: 'Birthday'}]
-      };
+      let {person} = props;
+      let name = (person && person.name) || 'n/a';
+      if (person) {
+        return {
+          person: name,
+          people: [{value: name}],
+          occasions: [{value: 'Birthday'}]
+        };
+      }
     }
   };
 
