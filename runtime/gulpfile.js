@@ -20,9 +20,9 @@ const sources = {
     'schema-parser.peg',
   ],
   browser: [
-    'browser-test/browser-test.js',
-    'browser-demo/browser-demo.js',
-    'browser-vr-demo/browser-vr-demo.js',
+    'test/test.js',
+    'demo/demo.js',
+    'vr-demo/vr-demo.js',
     'particle-ui-tester/particle-ui-tester.js',
     'worker-entry.js',
   ],
