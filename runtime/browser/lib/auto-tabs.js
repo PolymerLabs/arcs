@@ -22,6 +22,8 @@ let template = Object.assign(document.createElement('template'), {
     font-style: italic;
     font-size: 0.7em;
     padding: 4px 8px 4px 4px;
+    /* shut off for now */
+    display: none;
   }
 </style>
 <div crumbs>{{crumbs}}</div>
