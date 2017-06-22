@@ -18,6 +18,7 @@ const sources = {
   peg: [
     'particle-parser.peg',
     'schema-parser.peg',
+    'manifest-parser.peg',
   ],
   browser: [
     'test/test.js',
