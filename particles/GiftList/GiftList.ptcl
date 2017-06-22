@@ -10,7 +10,7 @@
 
 GiftList(in Person person)
 
-renders: preamble(list) none-need
+renders: preamble none-need
 
 Description {
   pattern: Buy gifts for ${person}'s {occasion} in {timeframe}
