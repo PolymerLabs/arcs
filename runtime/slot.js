@@ -32,7 +32,7 @@ class Slot {
     // Verify that particle that hosts this slot exposes the same view that is
     // being rendered by the particle that is being associated with it.
     assert(!this._exposedView ||
-           this._particleSpec.renderMap.get(this._slotid) == this._exposedView,
+           particleSpec.renderMap.get(this._slotid) == this._exposedView,
            "Cannot associate particle-spec with an unmatching view.");
     this._particleSpec = particleSpec;
   }
@@ -64,6 +64,9 @@ class Slot {
         this._pendingRequests.delete(pendingRequest.value[0]);
       }
     }
+  }
+  set exposedView(exposedView) {
+    this._exposedView = exposedView;
   }
   /*
     abstract methods
