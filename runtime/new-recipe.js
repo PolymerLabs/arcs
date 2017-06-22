@@ -176,6 +176,10 @@ class Recipe {
     });
     return viewConnections;
   }
+
+  clone() {
+    // .. TODO
+  }
 }
 
 module.exports = Recipe;

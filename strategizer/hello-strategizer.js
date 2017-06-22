@@ -12,7 +12,8 @@ class Seed extends Strategy {
     return {generate: strategizer.generation == 0 ? 1 : 0, evaluate: 0};
   }
   async generate(strategizer, n) {
-    return [''];
+    var results = strategizer.generation == 0 ? [{result: '', score: 1}] : [];
+    return {results, generate: null};
   }
 }
 
@@ -21,16 +22,18 @@ class Grow extends Strategy {
     return {generate: strategizer.population.length > 0 ? 1: 0, evaluate: 0};
   }
   async generate(strategizer, n) {
+    if (strategizer.population.length == 0)
+      return {results: [], generate: null};
     const alphabet = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ.,! ';
     let population = strategizer.population;
-    let result = [];
+    let results = [];
     for (let i = 0; i < n; i++) {
       let source = population[Math.random() * population.length|0];
       let split = Math.random() * (source.length + 1) |0;
       let str = source.substr(0, split) + alphabet[Math.random() * alphabet.length|0] + source.substr(split);
-      result.push(str);
+      results.push({result: str, score: 1});
     }
-    return result;
+    return {results, generate: null};
   }
 }
 
@@ -40,17 +43,17 @@ class Cross extends Strategy {
   }
   async generate(strategizer, n) {
     let population = strategizer.population.filter(str => str.length > 0);
-    let result = [];
-    while (population.length > 0 && result.length < n) {
+    let results = [];
+    while (population.length > 0 && results.length < n) {
       let p1 = population[Math.random() * population.length|0];
       let p2 = population[Math.random() * population.length|0];
       let str = '';
       for (let i = 0; i < Math.min(p1.length, p2.length); i++) {
         str += Math.random() > 0.5 ? p1[i] : p2[i];
       }
-      result.push(str);
+      results.push({result: str, score: 1});
     }
-    return result;
+    return {results, generate: null};
   }
 }
 
@@ -61,8 +64,8 @@ class Mutate extends Strategy {
   }
   async generate(strategizer, n) {
     let population = strategizer.population.filter(str => str.length > 2);
-    let result = [];
-    while (population.length > 0 && result.length < n) {
+    let results = [];
+    while (population.length > 0 && results.length < n) {
       let source = population[Math.random() * population.length|0];
       let str = source.split('');
       let i = Math.random() * source.length |0;
@@ -70,11 +73,9 @@ class Mutate extends Strategy {
       let tmp = str[i];
       str[i] = str[j];
       str[j] = tmp;
-      result.push(str.join(''));
+      results.push({result: str.join(''), score: 1});
     }
-    return result;
-  }
-  discard(individuals) {
+    return { results, generate: null};
   }
 }
 
@@ -88,6 +89,7 @@ class Eval extends Strategy {
     return {generate: 0, evaluate: 1};
   }
   async evaluate(strategizer, individuals) {
+    console.log(individuals);
     return individuals.map(str => {
       // Shrug. It seems to work. It basically penalises higher edit distances, but gives
       // credit for characters that could be moved somewhere else.
@@ -116,7 +118,7 @@ class Eval extends Strategy {
 }
 
 let target = 'Hello, world.';
-let strategizer = new Strategizer([new Seed(), new Grow(), new Mutate(), new Cross(), new Eval(target)], {
+let strategizer = new Strategizer([new Seed(), new Grow(), new Mutate(), new Cross()], [new Eval(target)], {
   maxPopulation: 100,
   generationSize: 1000,
   discardSize: 20,
