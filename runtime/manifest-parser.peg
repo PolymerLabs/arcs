@@ -1,0 +1,144 @@
+/**
+ * @license
+ * Copyright (c) 2017 Google Inc. All rights reserved.
+ * This code may only be used under the BSD style license found at
+ * http://polymer.github.io/LICENSE.txt
+ * Code distributed by Google as part of this project is also
+ * subject to an additional IP rights grant found at
+ * http://polymer.github.io/PATENTS.txt
+ */
+
+{
+  var indent = '';
+  var indents = [];
+  function extractIndented(items) {
+    return items[1].map(item => item[1]);
+  }
+}
+
+Manifest
+  = eolWhiteSpace? Indent? items:(SameIndent ManifestItem)*
+  {
+    return items.map(item => item[1]);
+  }
+
+ManifestItem
+  = Recipe / Particle
+
+Particle
+  = "particle" eolWhiteSpace
+
+Recipe
+  = "recipe" whiteSpace ident:upperIdent tags:SpaceTagList? eolWhiteSpace items:(Indent (SameIndent RecipeItem)*)?
+  {
+    if (items) {
+      items = extractIndented(items);
+    }
+    return {
+      kind: "recipe",
+      ident,
+      tags: tags || [],
+      items
+    };
+  }
+
+RecipeItem
+  = RecipeParticle
+  / RecipeView
+
+RecipeParticle
+  = ref:ParticleRef eolWhiteSpace connections:(Indent (SameIndent RecipeParticleConnection)*)?
+  {
+    if (connections) {
+      connections = extractIndented(connections);
+    }
+    return {
+      kind: 'particle',
+      ref,
+      connections: connections || [],
+    };
+  }
+
+RecipeParticleConnection
+  = param:(lowerIdent / "*") whiteSpace dir:("<-" / "->" / "=") whiteSpace target:ConnectionTarget eolWhiteSpace
+  {
+    return {
+      param,
+      dir,
+      target,
+    };
+  }
+
+ConnectionTarget
+  = particle:upperIdent param:("." lowerIdent)? tags:SpaceTagList?
+  {
+    return {
+      particle,
+      param: param ? param[1] : null,
+      tags: tags || [],
+    }
+  }
+  / tags:TagList
+  { return {tags}; }
+
+RecipeView
+  = "map" whiteSpace ref:ViewRef eolWhiteSpace
+  {
+    return {
+      kind: 'view',
+      ref
+    }
+  }
+
+Tag
+  = "#" [a-zA-Z][a-zA-Z0-9_]* {return text()}
+
+TagList
+  = tags:Tag+
+  { return tags; }
+
+SpaceTagList
+  = whiteSpace tags:TagList
+  { return tags}
+
+ParticleRef
+  = id:id tags:SpaceTagList?
+  { return {id, tags}; }
+  / name:upperIdent tags:SpaceTagList?
+  { return {name, tags}; }
+  / tags:TagList
+  { return {tags}; }
+
+ViewRef
+  = id:id tags:SpaceTagList?
+  { return {id, tags}; }
+  / tags:TagList
+  { return {tags}; }
+
+Indent = &(i:" "+ &{
+  i = i.join('');
+  if (i.length > indent.length) {
+    indents.push(indent);
+    indent = i;
+    return true;
+  }
+})
+
+SameIndent = &(i:" "* &{
+  i = i.join('');
+  if (i.length == indent.length) {
+    return true;
+  } else if (i.length < indent.length) {
+    indent = indents.pop();
+    return false;
+  }
+}) " "*
+
+id = "'" id:[^']+ "'" {return id}
+upperIdent = ident:([A-Z][a-z0-9_]i*) {return text()}
+lowerIdent = ident:([a-z][a-z0-9_]i*) {return text()}
+whiteSpace
+  = " "+
+eolWhiteSpace
+  = [ ]* !.
+  / [ ]* "\n" eolWhiteSpace?
