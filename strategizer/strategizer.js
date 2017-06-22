@@ -8,8 +8,9 @@
 const assert = require('assert');
 
 class Strategizer {
-  constructor(strategies, {maxPopulation, generationSize, discardSize}) {
+  constructor(strategies, evaluators, {maxPopulation, generationSize, discardSize}) {
     this._strategies = strategies;
+    this._evaluators = evaluators;
     this._generation = 0;
     this._internalPopulation = [];
     this._population = [];
@@ -38,29 +39,20 @@ class Strategizer {
     // TODO: Do we need this?
   }
   async generate() {
-    let activationRecords = this._strategies.map(strategy => ({
-      strategy,
-      activation: strategy.activate(this),
-    }));
-    for (let record of activationRecords) {
-      record.activation = await record.activation;
-    }
-    let generators = activationRecords.filter(record => record.activation.generate > 0);
-    let evaluators = activationRecords.filter(record => record.activation.evaluate > 0);
-
     // Generate
     let generation = this.generation + 1;
-    let individualsPerStrategy = Math.floor(this._options.generationSize / generators.length);
-    let generated = await Promise.all(generators.map(({strategy}) => {
+    let individualsPerStrategy = Math.floor(this._options.generationSize / this._strategies.length);
+    let generated = await Promise.all(this._strategies.map(strategy => {
       return strategy.generate(this, individualsPerStrategy);
     }));
-    generated = [].concat(...generated);
+    generated = generated.map(({results}) => results);
+    generated = [].concat(...generated).map(({result}) => result);
 
     // Evalute
-    if (generated.length > 0 && evaluators.length == 0) {
+    if (generated.length > 0 && this._evaluators.length == 0) {
       console.warn('No evaluators');
     }
-    let evaluations = await Promise.all(evaluators.map(({strategy}) => {
+    let evaluations = await Promise.all(this._evaluators.map(strategy => {
       return strategy.evaluate(this, generated);
     }));
     let fitness = Strategizer._mergeEvaluations(evaluations, generated);
