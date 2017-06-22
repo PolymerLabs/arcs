@@ -35,7 +35,7 @@ gulp.task('peg', function() {
     .pipe(gulp.dest(paths.build));
 });
 
-gulp.task('build', async function() {
+gulp.task('webpack', async function() {
   try {
     const webpack = require('webpack');
 
@@ -97,6 +97,6 @@ gulp.task('watch', function() {
 gulp.task('default', ['build', 'test']);
 
 gulp.task('dev', function() {
-  gulp.watch(['**', '!browser/build/**', '!node_modules'], ['build']);
+  gulp.watch(['**', '!browser/build/**', '!node_modules'], ['webpack']);
 });
 
