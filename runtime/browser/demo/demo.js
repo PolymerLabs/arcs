@@ -40,7 +40,7 @@ let stages = [{
 }];
 
 require('../lib/auto-tabs.js');
-require('../lib/x-toast.js');
+require('../lib/suggestions-element.js');
 
 let template = Object.assign(document.createElement('template'), {innerHTML: `
 
@@ -63,41 +63,12 @@ let template = Object.assign(document.createElement('template'), {innerHTML: `
   [particle-container] > * {
     flex: 1;
   }
-  x-toast[suggestion-container] {
-    background-color: white;
-    /*margin: 0 2px;*/
-  }
-  #suggestions {
-    padding: 2px;
-    background-color: whitesmoke;
-    border: 3px solid gray;
-  }
-  suggest {
-    display: block;
-    box-shadow: 0px 1px 5px 0px rgba(102,102,102,0.21);
-    background-color: white;
-    color: #666666;
-    margin: 6px;
-    padding: 4px;
-    margin-bottom: 8px;
-    cursor: pointer;
-  }
-  suggest:hover {
-    background-color: rgba(86,255,86,0.25);
-    box-shadow: 0px 3px 11px 0px rgba(102,102,102,0.41);
-    padding-top: 2px;
-    margin-bottom: 10px;
-    color: black;
-  }
 </style>
 
 <auto-tabs particle-container>
   <slot></slot>
 </auto-tabs>
-<x-toast open suggestion-container>
-  <div slot="header"><img src="../assets/dots.png"></div>
-  <suggestions></suggestions>
-</x-toast>
+<suggestions-element></suggestions-element>
 
 `.trim()});
 
@@ -114,11 +85,9 @@ class DemoFlow extends DemoBase {
     });
     this.arc = arc;
     this.stages = stages;
-    this.toast = this._root.querySelector('x-toast');
-  }
-  chooseSuggestion(plan) {
-    this.toast.open = false;
-    super.chooseSuggestion(plan);
+    this.suggestions = this._root.querySelector('suggestions-element');
+    this.suggestions.arc = arc;
+    this.suggestions.callback = this.nextStage.bind(this);
   }
 }
 
