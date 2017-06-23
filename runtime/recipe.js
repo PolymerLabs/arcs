@@ -75,7 +75,12 @@ class Recipe {
 
   instantiate(arc) {
     this.beforeInstantiation.forEach(f => f(arc));
-    this.components.forEach(component => component.instantiate(arc));
+    this.components.forEach(component => {
+      component.instantiate(arc);
+      let particleSpec = arc.particleSpec(component.particleName);
+      particleSpec.exposes.forEach(e => arc.availableSlotIds.add(e.name));
+      particleSpec.renders.forEach(e => arc.availableSlotIds.delete(e.name.name));
+    });
   }
 }
 
