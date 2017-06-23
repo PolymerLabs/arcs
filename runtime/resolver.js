@@ -41,11 +41,33 @@ class Resolver {
 
     var resolve; var reject;
     context.afterResolution = [];
+
+    let availableSlotIds = new Set(arc.availableSlotIds);
+    // This is a hack; should add interface to ask SlotComposer for available slots.
+    availableSlotIds.add("root");
+    let missingSlotIds = new Set();
+
     for (var component of recipe.components) {
       if (!new Resolver()._resolveComponent(context, component)) {
         return false;
       }
+
+      let particleSpec = arc.particleSpec(component.particleName);
+      particleSpec.exposes.forEach(e => {
+        availableSlotIds.add(e.name);
+        missingSlotIds.delete(e.name);
+      });
+      particleSpec.renders.forEach(e => {
+        if (!availableSlotIds.delete(e.name.name)) {
+          missingSlotIds.add(e.name.name);
+        }
+      });
     }
+
+    if (missingSlotIds.size > 0) {
+      return false;
+    }
+
     recipe.arc = arc;
 
     // We used to complete the afterResolution tasks here, but moved them

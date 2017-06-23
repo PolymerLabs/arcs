@@ -11,7 +11,7 @@
 ListView(in [Product] list)
 
 renders: root none-need
-exposes: action(list), preamble
+exposes: action(list), preamble, annotation
 
 Description {
   pattern: Show ${list}

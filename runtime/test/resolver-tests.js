@@ -18,6 +18,7 @@ let systemParticles = require('../system-particles.js');
 let util = require('./test-util.js');
 var viewlet = require('../viewlet.js');
 let SlotComposer = require('../slot-composer.js');
+var Loader = require('../loader');
 
 require("./trace-setup.js");
 
@@ -90,5 +91,48 @@ describe('resolver', () => {
     assert.equal(runtime.testing.viewFor(Bar).data.data, 2);
     arc.tick();
     assert.equal(runtime.testing.viewFor(Bar).data.data, 3);
-  })
+  });
+
+  it('resolve slots', function() {
+    var loader = new Loader();
+    const slotComposer = new SlotComposer({});
+    var arc = new Arc({loader, slotComposer});
+    particles.register(loader);
+
+    var r = new recipe.RecipeBuilder()
+        .addParticle("TestParticle")
+            .connectConstraint("foo", "fooView")
+            .connectConstraint("bar", "barView")
+        .build();
+    assert(Resolver.resolve(r, arc), "recipe should resolve");
+
+    // Particle renders in root slot.
+    particles.TestParticle.spec.renders = [{name : {name : "root"}}];
+    loader.registerParticle(particles.TestParticle);
+    assert(Resolver.resolve(r, arc), "recipe should resolve");
+
+    // Particle requires non existing slot "action" to render.
+    particles.TestParticle.spec.renders = [{name : {name : "action"}}];
+    loader.registerParticle(particles.TestParticle);
+    assert.isFalse(Resolver.resolve(r, arc), "recipe shouldn't resolve");
+
+    // Add another particle that exposes the slot required for TestParticle.
+    var r = new recipe.RecipeBuilder()
+        .addParticle("TestParticle")
+            .connectConstraint("foo", "fooView")
+            .connectConstraint("bar", "barView")
+        .addParticle("ListTestParticle")
+            .connectConstraint("bar", "barView")
+            .connectConstraint("fars", "farsView")
+        .build();
+    particles.ListTestParticle.spec.exposes = [{name : "action"}];
+    loader.registerParticle(particles.ListTestParticle);
+    assert(Resolver.resolve(r, arc), "recipe should resolve");
+
+    // Revert particle changes.
+    particles.TestParticle.spec.renders = [];
+    loader.registerParticle(particles.TestParticle);
+    particles.ListTestParticle.spec.exposes = [];
+    loader.registerParticle(particles.ListTestParticle);
+  });
 });
