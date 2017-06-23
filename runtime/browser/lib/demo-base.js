@@ -55,35 +55,12 @@ class DemoBase extends HTMLElement {
     this.suggest();
   }
   suggest() {
-    // clear old suggestions
-    let container = this._root.querySelector('suggestions');
-    container.textContent = '';
-    // build new suggestions
     if (this.stage.recipes) {
        this.suggestinator._getSuggestions = () =>  this.stage.recipes.map(r => this.buildRecipe(r));
        this.suggestinator.suggestinate(this.arc).then(plans => plans.forEach((plan, i) => {
-         this.createSuggestion(container, plan, i);
+         this.suggestions.add(plan, i);
       }));
     }
-  }
-  createSuggestion(container, plan, index) {
-    let model = {
-      index,
-      textContent: plan.description || plan.name,
-      onclick: () => this.chooseSuggestion(plan)
-    };
-    container.insertBefore(
-      Object.assign(document.createElement("suggest"), model),
-      container.firstElementChild
-    );
-  }
-  chooseSuggestion(plan) {
-    this.toast.open = false;
-    // TODO(sjmiles): wait for toast animation
-    setTimeout(() => {
-      plan.instantiate(this.arc);
-      this.nextStage();
-    }, 80);
   }
   buildRecipe(info) {
     let rb = new RecipeBuilder();

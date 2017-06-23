@@ -17,7 +17,7 @@ let recipes = require('./recipes.js');
 let DemoBase = require('../lib/demo-base.js');
 
 require('../lib/auto-tabs.js');
-require('../lib/x-toast.js');
+require('../lib/suggestions-element.js');
 
 let template = Object.assign(document.createElement('template'), {innerHTML: `
 
@@ -28,32 +28,6 @@ let template = Object.assign(document.createElement('template'), {innerHTML: `
     flex-direction: column;
     position: relative;
     overflow: hidden;
-  }
-  x-toast[suggestion-container] {
-    margin: 0 2px;
-  }
-  suggestions {
-    display: block;
-    padding: 2px;
-    background-color: whitesmoke;
-    border: 1px solid gray;
-  }
-  suggest {
-    display: block;
-    box-shadow: 0px 1px 5px 0px rgba(102,102,102,0.21);
-    background-color: white;
-    color: #666666;
-    margin: 6px;
-    padding: 4px;
-    margin-bottom: 8px;
-    cursor: pointer;
-  }
-  suggest:hover {
-    background-color: rgba(86,255,86,0.25);
-    box-shadow: 0px 3px 11px 0px rgba(102,102,102,0.41);
-    padding-top: 6px;
-    margin-bottom: 6px;
-    color: black;
   }
 </style>
 
@@ -80,10 +54,7 @@ let template = Object.assign(document.createElement('template'), {innerHTML: `
 
   </a-scene>
 
-  <x-toast open suggestion-container>
-    <div slot="header"><img src="../assets/dots.png"></div>
-    <suggestions></suggestions>
-  </x-toast>
+  <suggestions-element></suggestions-element>
 `.trim()});
 
 class DemoFlow extends DemoBase {
@@ -96,7 +67,6 @@ class DemoFlow extends DemoBase {
     this.didMount();
   }
   didMount() {
-    this.toast = this._root.querySelector('x-toast');
     let {arc} = ContextFactory({
       loader: new BrowserLoader('../../'),
       pecFactory: require('../worker-pec-factory.js').bind(null, '../../'),
@@ -110,10 +80,9 @@ class DemoFlow extends DemoBase {
         recipes[2]
       ]
     }];
-  }
-  chooseSuggestion(plan) {
-    this.toast.open = false;
-    super.chooseSuggestion(plan);
+    this.suggestions = this._root.querySelector('suggestions-element');
+    this.suggestions.arc = arc;
+    this.suggestions.callback = this.nextStage.bind(this);
   }
 }
 
