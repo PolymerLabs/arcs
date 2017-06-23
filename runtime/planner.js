@@ -6,6 +6,8 @@
 // http://polymer.github.io/PATENTS.txt
 
 let {Strategy, Strategizer} = require('../strategizer/strategizer.js');
+let oldRecipe = require('./recipe.js');
+let Recipe = require('./new-recipe.js');
 
 class AssignViewsByTagAndType extends Strategy {
   async activate(strategizer) {
@@ -40,15 +42,48 @@ class AssignViewsByTagAndType extends Strategy {
     // search for a view in recipe.views that has a matching tag and type
     // generate a result
     // assign the view to the viewConnection
+      }
+    }
+  }
+}
 
+class InitPopulation extends Strategy {
+  async generate(strategizer) {
+    if (strategizer.generation == 0) {
+      var r = new oldRecipe.NewRecipeBuilder()
+        .addParticle("Create")
+          .connectConstraint("newList", "list")
+          .tag("gift list")
+        .addParticle("Create")
+          .connectConstraint("newList", "recommended")
+        .addParticle("WishlistFor")
+          .connectConstraint("wishlist", "wishlist")
+          .connectConstraint("person", "person")
+        .addParticle("Recommend")
+          .connectConstraint("known", "list")
+          .connectConstraint("population", "wishlist")
+          .connectConstraint("recommendations", "recommended")
+        .addParticle("SaveList")
+          .connectConstraint("list", "list")
+        .addParticle("Choose")
+          .connectConstraint("singleton", "person")
+        .addParticle("ListView")
+          .connectConstraint("list", "list")
+        .addParticle("Chooser")
+          .connectConstraint("choices", "recommended")
+          .connectConstraint("resultList", "list")
+        .build();
+
+        return { results: [{result: r, score: 1}], generate: null };
+     }
+     return { results: [], generate: null };
   }
 }
 
 class CreateViews extends Strategy {
   // TODO: move generation to use an async generator.
   async generate(strategizer) {
-
-    var results = Recipe.over(strategizer.generated, new class extends RecipeWalker {
+    var results = Recipe.over(strategizer.generated, new class extends Recipe.Walker {
       onRecipe(recipe) {
         this.score = 0;
       }
@@ -59,11 +94,7 @@ class CreateViews extends Strategy {
           return (recipe, view) => view.create = true;
         }
       }
-
-      // onRecipeDone(recipe) {
-        // return strategizer.create(recipe, this.score);
-      // }
-    });
+    }(strategizer));
 
     return { results, generate: null };
   }
@@ -71,15 +102,24 @@ class CreateViews extends Strategy {
 
 
 class Planner {
-  async plan(arc) {
-    let strategies = [];
-    let strategizer = new Strategizer(strategies, {
+  async plan() {
+    let strategies = [new InitPopulation(), new CreateViews()];
+    let strategizer = new Strategizer(strategies, [], {
       maxPopulation: 100,
       generationSize: 1000,
       discardSize: 20,
     });
     // TODO: Repeat until...?
     await strategizer.generate();
-    return strategizer.population.filter(possiblePlan => possiblePlan.ready);
+    await strategizer.generate();
+    return strategizer.population; //.filter(possiblePlan => possiblePlan.ready);
   }
 }
+
+(async () => {
+  var p = new Planner();
+  var population = await(p.plan());
+  console.log(population.length);
+  console.log(population[0]._views);
+  console.log(population[1]._views);
+})();

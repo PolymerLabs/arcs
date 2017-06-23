@@ -122,6 +122,10 @@ class Strategizer {
     }
     return mergedEvaluations;
   }
+
+  create(recipe, score) {
+    return {result: recipe, score};
+  }
 }
 
 // TODO: Doc call convention, incl strategies are stateful.

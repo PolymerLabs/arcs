@@ -5,10 +5,20 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
+var assert = require('assert');
+
 class Node {
+  constructor(recipe) {
+    assert(recipe);
+    this._recipe = recipe;
+  }
 }
 
 class Edge {
+  constructor(recipe) {
+    assert(recipe);
+    this._recipe = recipe;
+  }
 }
 
 class Connection extends Edge {
@@ -16,8 +26,7 @@ class Connection extends Edge {
 
 class Particle extends Node {
   constructor(recipe, name) {
-    assert(recipe);
-    this._recipe = recipe;
+    super(recipe);
     this._id = undefined;
     this._name = name;
     this._tags = [];
@@ -26,6 +35,19 @@ class Particle extends Node {
     this._connections = {};
     this._unnamedConnections = [];
   }
+
+  clone(recipe, cloneMap) {
+    var particle = new Particle(recipe, this._name);
+    particle._id  = this._id;
+    particle._tags = this._tags.slice();
+    particle._providedSlots = this._providedSlots.map(slot => slot.clone(recipe)); // ?
+    particle._consumedSlots = this._consumedSlots.map(slot => slot.clone(recipe)); // ?
+    Object.keys(particle._connections).forEach(key => this._connections[key] = particle._connections[key].clone(this, cloneMap));
+    particle._unnamedConnections = this._unnamedConnections.map(connection => connection.clone(this, cloneMap));
+
+    return particle;
+  }
+
   get id() { return this._id; } // Not resolved until we have an ID.
   get name() { return this._name; }
   get tags() { return this._tags; }
@@ -62,23 +84,38 @@ class Particle extends Node {
       return false;
     return true;
   }
+
 }
 
 class View extends Node {
   constructor(recipe) {
-    assert(recipe);
-    this._recipe = recipe;
+    super(recipe);
     this._id = undefined;
     this._tags = [];
     this._type = undefined;
     this._create = false;
     this._connections = [];
   }
+
+  clone(recipe) {
+    var view = new View(recipe);
+    view._id = this._id;
+    view._tags = this._tags.slice();
+    view._tyep = this._type;
+    view._create = this._create;
+
+    // the connections are re-established when Particles clone their
+    // attached ViewConnection objects.
+    view._connections = [];
+    return view;
+  }
+
   // a resolved View has either an id or create=true
   get tags() { return this._tags; } // only tags owned by the view
   get type() { return this._type; } // nullable
   get id() { return this._id; }
   get create() { return this._create; }
+  set create(create) { this._create = create; }
   get connections() { return this._connections } // ViewConnection*
 
   isResolved() {
@@ -89,13 +126,24 @@ class View extends Node {
 class ViewConnection extends Connection {
   constructor(name, particle) {
     assert(particle);
-    this._recipe = particle._recipe;
+    super(particle._recipe);
     this._name = name;
     this._tags = [];
     this._type = undefined;
     this._direction = undefined;
     this._particle = particle;
     this._view = undefined;
+  }
+
+  clone(particle, cloneMap) {
+    var viewConnection = new ViewConnection(this._name, particle);
+    viewConnection._tags = this._tags.slice();
+    viewConnection._type = this._type;
+    viewConnection._direction = this._direction;
+    if (this._view != undefined) {
+      viewConnection._view = cloneMap.get(this._view);
+      viewConnection._view.connections.push(view);
+    }
   }
 
   get name() { return this._name; } // Parameter name?
@@ -106,7 +154,7 @@ class ViewConnection extends Connection {
   get particle() { return this._particle; } // never null
 
   isResolved() {
-    return this.hasDefinedType() && this.view && this.view.isResolved());
+    return this.hasDefinedType() && this.view && this.view.isResolved();
   }
 
   hasDefinedType() {
@@ -177,9 +225,68 @@ class Recipe {
     return viewConnections;
   }
 
-  clone() {
-    // .. TODO
+  clone(cloneMap) {
+    // for now, just copy everything
+
+    var recipe = new Recipe();
+
+    if (cloneMap == undefined)
+      cloneMap = new Map();
+
+    function cloneTheThing(object) {
+      var newObject = object.clone(recipe, cloneMap);
+      cloneMap.set(object, newObject);
+      return newObject;
+
+    }
+
+    recipe._views = this._views.map(cloneTheThing);
+    recipe._particles = this._particles.map(cloneTheThing);
+
+    return recipe;
+  }
+
+  static over(recipes, walker) {
+    var results = [];
+    for (var recipe of recipes) {
+      var updateList = [];
+
+      walker.onRecipe && walker.onRecipe(recipe);
+      for (var view of recipe.views) {
+        if (walker.onView) {
+          var result = walker.onView(recipe, view);
+          if (result)
+            updateList.push({continuation: result, context: view});
+        }
+      }
+
+      if (updateList.length) {
+        var cloneMap = new Map();
+        recipe = recipe.clone(cloneMap);
+        updateList.forEach(({continuation, context}) => continuation(recipe, cloneMap.get(context)));
+      }
+
+      if (walker.onRecipeDone)
+        var result = walker.onRecipeDone(recipe, updateList.length > 0);
+        if (result)
+          results.push(result);
+    }
+
+    return results;
+  }
+
+}
+
+class Walker {
+  constructor(strategizer) {
+    this.strategizer = strategizer;
+  }
+  onRecipeDone(recipe, isCloned) {
+    if (isCloned)
+      return this.strategizer.create(recipe, this.score);
   }
 }
+
+Recipe.Walker = Walker;
 
 module.exports = Recipe;
