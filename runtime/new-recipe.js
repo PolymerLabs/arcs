@@ -39,7 +39,7 @@ class Particle extends Node {
   clone(recipe, cloneMap) {
     var particle = new Particle(recipe, this._name);
     particle._id  = this._id;
-    particle._tags = this._tags.slice();
+    particle._tags = [...this._tags];
     particle._providedSlots = this._providedSlots.map(slot => slot.clone(recipe)); // ?
     particle._consumedSlots = this._consumedSlots.map(slot => slot.clone(recipe)); // ?
     Object.keys(particle._connections).forEach(key => this._connections[key] = particle._connections[key].clone(this, cloneMap));
@@ -100,7 +100,7 @@ class View extends Node {
   clone(recipe) {
     var view = new View(recipe);
     view._id = this._id;
-    view._tags = this._tags.slice();
+    view._tags = [...this._tags];
     view._tyep = this._type;
     view._create = this._create;
 
@@ -137,7 +137,7 @@ class ViewConnection extends Connection {
 
   clone(particle, cloneMap) {
     var viewConnection = new ViewConnection(this._name, particle);
-    viewConnection._tags = this._tags.slice();
+    viewConnection._tags = [...this._tags];
     viewConnection._type = this._type;
     viewConnection._direction = this._direction;
     if (this._view != undefined) {
