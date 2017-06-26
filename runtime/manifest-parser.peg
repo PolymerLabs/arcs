@@ -29,16 +29,16 @@ Particle
   = "particle" eolWhiteSpace
 
 Recipe
-  = "recipe" whiteSpace ident:upperIdent tags:SpaceTagList? eolWhiteSpace items:(Indent (SameIndent RecipeItem)*)?
+  = "recipe" whiteSpace name:upperIdent tags:SpaceTagList? eolWhiteSpace items:(Indent (SameIndent RecipeItem)*)?
   {
     if (items) {
       items = extractIndented(items);
     }
     return {
       kind: "recipe",
-      ident,
+      name,
       tags: tags || [],
-      items
+      items: items || [],
     };
   }
 
@@ -111,7 +111,7 @@ ParticleRef
 
 ViewRef
   = id:id tags:SpaceTagList?
-  { return {id, tags}; }
+  { return {id, tags: tags || []}; }
   / tags:TagList
   { return {tags}; }
 
@@ -134,7 +134,7 @@ SameIndent = &(i:" "* &{
   }
 }) " "*
 
-id = "'" id:[^']+ "'" {return id}
+id = "'" id:[^']+ "'" {return id.join('')}
 upperIdent = ident:([A-Z][a-z0-9_]i*) {return text()}
 lowerIdent = ident:([a-z][a-z0-9_]i*) {return text()}
 whiteSpace

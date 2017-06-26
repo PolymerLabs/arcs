@@ -51,6 +51,7 @@ class Particle extends Node {
   get id() { return this._id; } // Not resolved until we have an ID.
   get name() { return this._name; }
   get tags() { return this._tags; }
+  set tags(tags) { this._tags = tags; }
   get providedSlots() { return this._providedSlots; } // Slot*
   get consumedSlots() { return this._consumedSlots; } // SlotConnection*
   get connections() { return this._connections; } // {parameter -> ViewConnection}
@@ -112,8 +113,10 @@ class View extends Node {
 
   // a resolved View has either an id or create=true
   get tags() { return this._tags; } // only tags owned by the view
+  set tags(tags) { this._tags = tags; }
   get type() { return this._type; } // nullable
   get id() { return this._id; }
+  set id(id) { this._id = id; }
   get create() { return this._create; }
   set create(create) { this._create = create; }
   get connections() { return this._connections } // ViewConnection*
@@ -148,8 +151,10 @@ class ViewConnection extends Connection {
 
   get name() { return this._name; } // Parameter name?
   get tags() { return this._tags; }
+  set tags(tags) { this._tags = tags; }
   get type() { return this._type; }
   get direction() { return this._direction; } // in/out
+  set direction(direction) { this._direction = direction; }
   get view() { return this._view; } // View?
   get particle() { return this._particle; } // never null
 
@@ -219,8 +224,8 @@ class Recipe {
   get viewConnections() {
     var viewConnections = [];
     this._particles.forEach(particle => {
-      viewConnection.push(...Object.entries(particle.connections));
-      viweConnection.push(...particle._unnamedConnections);
+      viewConnections.push(...Object.values(particle.connections));
+      viewConnections.push(...particle._unnamedConnections);
     });
     return viewConnections;
   }
