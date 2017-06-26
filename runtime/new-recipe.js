@@ -54,6 +54,7 @@ class Particle extends Node {
   get impl() { return this._impl; }
   set impl(impl) { this._impl = impl; }
   get tags() { return this._tags; }
+  set tags(tags) { this._tags = tags; }
   get providedSlots() { return this._providedSlots; } // Slot*
   get consumedSlots() { return this._consumedSlots; } // SlotConnection*
   get connections() { return this._connections; } // {parameter -> ViewConnection}
@@ -115,8 +116,10 @@ class View extends Node {
 
   // a resolved View has either an id or create=true
   get tags() { return this._tags; } // only tags owned by the view
+  set tags(tags) { this._tags = tags; }
   get type() { return this._type; } // nullable
   get id() { return this._id; }
+  set id(id) { this._id = id; }
   get create() { return this._create; }
   set create(create) { this._create = create; }
   get connections() { return this._connections } // ViewConnection*
@@ -152,8 +155,10 @@ class ViewConnection extends Connection {
 
   get name() { return this._name; } // Parameter name?
   get tags() { return this._tags; }
+  set tags(tags) { this._tags = tags; }
   get type() { return this._type; }
   get direction() { return this._direction; } // in/out
+  set direction(direction) { this._direction = direction; }
   get view() { return this._view; } // View?
   get particle() { return this._particle; } // never null
 
