@@ -44,7 +44,7 @@ let recipes = [{
       "singleton": "person"
     }
   },{
-    name: "ListView",
+    name: "ShowProducts",
     constrain: {
       "list": "list"
     }
@@ -72,7 +72,7 @@ let recipes = [{
       "singleton": "person"
     }
   },{
-    name: "ListView",
+    name: "ShowProducts",
     constrain: {
       "list": "wishlist"
     }

@@ -55,15 +55,17 @@ let template = Object.assign(document.createElement('template'), {innerHTML: `
     flex: 1;
     display: flex;
     flex-direction: column;
-    border: 3px solid gray;
     box-sizing: border-box;
+    padding-bottom: 25px;
+    overflow: auto;
+    overflow-x: hidden;
   }
   [particle-container] > * {
     flex: 1;
   }
   x-toast[suggestion-container] {
     background-color: white;
-    margin: 0 2px;
+    /*margin: 0 2px;*/
   }
   #suggestions {
     padding: 2px;

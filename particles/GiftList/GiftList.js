@@ -43,7 +43,7 @@ defineParticle(({DomParticle}) => {
 <div gift-list>
   <div>
     <div head>
-      <span>Buying Gifts for&nbsp;</span><b>{{person}}</b>
+      <span>Buying gifts for&nbsp;</span><b>{{person}}</b>
     </div>
     <div form>
       <div><span>for</span><model-select person on-change="_onPersonChange" options="{{people}}"></select></div>
