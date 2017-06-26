@@ -12,60 +12,102 @@
 
 defineParticle(({DomParticle}) => {
 
-  let template = `
+  let styles = `
 <style>
   [chooser] {
-    border: 1px solid silver;
-    padding: 4px;
+    background-color: #e8e8e8;
+    padding: 8px;
   }
+  /*[chooser] [content] {
+    background-color: white;
+  }*/
   [chooser] [head] {
-    color: white;
-    background-color: #00897B;
+    color: #666666;
+    font-weight: bold;
+    /*background-color: #00897B;*/
     display: flex;
     align-items: center;
     padding: 8px 16px;
+  }
+  [chooser] button {
+    padding: 4px 12px;
+    border: 1px solid silver;
+    font-size: 0.75em;
+    margin-top: 6px;
+  }
+</style>
+  `;
+
+  let productStyles = `
+<style>
+  [chooser] [item] {
+    padding: 4px 24px;
+    border-bottom: 1px solid #fbfbfb;
+    background: white;
   }
   [chooser] [row] {
     display: flex;
     align-items: center;
-    padding: 8px 16px;
   }
-  [chooser] [disc] {
-    display: inline-block;
-    margin-right: 16px;
+  [chooser] [col0] {
+    flex: 1;
+    overflow: hidden;
+  }
+  [chooser] [col0] > * {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding: 1px 0;
+  }
+  [chooser] [col1] {
+    width: 164px;
+    padding-left: 24px;
     box-sizing: border-box;
-    width: 32px;
-    height:32px;
-    border-radius:40px;
-    background-color:gray;
+    text-align: center;
   }
-  [chooser] [icon] {
-    display:inline-block;
-    width:24px;
-    height:24px;
-    padding:4px;
-    color: white;
+  [chooser] [category] {
+    font-size: 0.7em;
+    color: #cccccc;
+  }
+  [chooser] [price] {
+    color: #333333;
+  }
+  [chooser] [seller] {
+    font-size: 0.8em;
+    color: #cccccc;
   }
 </style>
+  `;
+
+  let productTemplate = `
+<template>
+  <div item>
+    <div row>
+      <div col0>
+        <div title="{{name}}">{{name}}</div>
+        <div category>{{category}}</div>
+        <div price>{{price}}</div>
+        <div seller>{{seller}}</div>
+        <div><button events key="{{index}}" on-click="_onChooseValue">Add</button></div>
+      </div>
+      <div col1>
+        <img src="../assets/products/book.png">
+      </div>
+    </div>
+  </div>
+</template>
+  `;
+
+  let template = `
+${styles}
+${productStyles}
 <div chooser>
-  <div>
+  <div content>
     <div head>
       <span>Recommendations based on <span>{{person}}</span>'s Wishlist</span>
     </div>
-    <x-list items="{{items}}">
-      <template>
-        <div row>
-          <span disc>
-            <img icon src="../../../particles/Chooser/product.svg">
-          </span>
-          <span style="flex:1;">{{name}}</span>
-          <button events key="{{index}}" on-click="_onChooseValue">Add</button>
-        </div>
-      </template>
-    </x-list>
+    <x-list items="{{items}}">${productTemplate}</x-list>
   </div>
-  <!-- include slot below to cause various problems -->
-  <div XXXslotid="action"></div>
 </div>
     `.trim();
 
@@ -86,7 +128,15 @@ defineParticle(({DomParticle}) => {
       if (state.values && state.values.length) {
         return {
           person: 'Claire',
-          items: state.values.map((value, index) => {return {name: value.name, index}})
+          items: state.values.map((value, index) => {
+            return {
+              name: value.name,
+              price: '$14.99',
+              seller: 'de-nile.com',
+              category: 'product',
+              index
+            }
+          })
         };
       }
     }

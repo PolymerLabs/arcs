@@ -18,7 +18,7 @@ let template = Object.assign(document.createElement('template'), {innerHTML: `
     right: 0;
     bottom: 0;
     border: 1px solid silver;
-    transform: translate3d(0, 100%, 0) translateY(-26px);
+    transform: translate3d(0, 100%, 0) translateY(-25px);
     transition: transform 80ms ease-in;
   }
   :host([open]) {

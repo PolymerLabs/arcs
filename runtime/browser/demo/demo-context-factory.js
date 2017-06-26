@@ -22,9 +22,9 @@ function prepareDemoContext({loader, pecFactory, slotComposer}) {
   let productView = pageArc.createView(Product.type.viewOf(), 'productsFromWebpage');
   pageArc.commit([
     new Person({name: 'Claire'}),
-    new Product({name: 'Tea Pot'}),
-    new Product({name: 'Bee Hive'}),
-    new Product({name: 'Denim Jeans'})
+    new Product({name: 'Minecraft Book'}),
+    new Product({name: 'Power Tool Set'}),
+    new Product({name: 'Guardian of the Galaxy Figure'})
   ]);
   // demo arc
   let arc = new Arc({id: 'demo', loader, pecFactory, slotComposer});

@@ -111,7 +111,9 @@ class SlotComposer {
       if (slot.particleSpec == particleSpec) {
         this._disassociateSlotFromParticle(slot);
         return this._releaseSlot(slotid);
-      } else slot.removePendingRequest(particleSpec);
+      } else {
+        slot.removePendingRequest(particleSpec);
+      }
     }
   }
   _releaseSlot(slotid) {

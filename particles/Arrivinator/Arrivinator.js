@@ -30,7 +30,7 @@ defineParticle(({DomParticle}) => {
         return {
           items: props.list.map((item) => {
             return {
-              arrival: `${item.name} arrives in August, ${Math.floor(Math.random()*1000)+2017}`
+              arrival: `Arrives August, ${Math.floor(Math.random()*1000)+2017}`
             };
           })
         };
