@@ -29,6 +29,7 @@ class Particle extends Node {
     super(recipe);
     this._id = undefined;
     this._name = name;
+    this._impl = undefined;
     this._tags = [];
     this._providedSlots = [];
     this._consumedSlots = [];
@@ -42,14 +43,16 @@ class Particle extends Node {
     particle._tags = [...this._tags];
     particle._providedSlots = this._providedSlots.map(slot => slot.clone(recipe)); // ?
     particle._consumedSlots = this._consumedSlots.map(slot => slot.clone(recipe)); // ?
-    Object.keys(particle._connections).forEach(key => this._connections[key] = particle._connections[key].clone(this, cloneMap));
-    particle._unnamedConnections = this._unnamedConnections.map(connection => connection.clone(this, cloneMap));
+    Object.keys(this._connections).forEach(key => particle._connections[key] = this._connections[key].clone(particle, cloneMap));
+    particle._unnamedConnections = this._unnamedConnections.map(connection => connection.clone(particle, cloneMap));
 
     return particle;
   }
 
   get id() { return this._id; } // Not resolved until we have an ID.
   get name() { return this._name; }
+  get impl() { return this._impl; }
+  set impl(impl) { this._impl = impl; }
   get tags() { return this._tags; }
   get providedSlots() { return this._providedSlots; } // Slot*
   get consumedSlots() { return this._consumedSlots; } // SlotConnection*
@@ -142,8 +145,9 @@ class ViewConnection extends Connection {
     viewConnection._direction = this._direction;
     if (this._view != undefined) {
       viewConnection._view = cloneMap.get(this._view);
-      viewConnection._view.connections.push(view);
+      viewConnection._view.connections.push(viewConnection);
     }
+    return viewConnection;
   }
 
   get name() { return this._name; } // Parameter name?
@@ -219,8 +223,8 @@ class Recipe {
   get viewConnections() {
     var viewConnections = [];
     this._particles.forEach(particle => {
-      viewConnection.push(...Object.entries(particle.connections));
-      viweConnection.push(...particle._unnamedConnections);
+      viewConnections.push(...Object.values(particle.connections));
+      viewConnections.push(...particle._unnamedConnections);
     });
     return viewConnections;
   }
@@ -251,7 +255,24 @@ class Recipe {
     for (var recipe of recipes) {
       var updateList = [];
 
+      // update phase - walk through recipe and call onRecipe,
+      // onView, etc.
+
       walker.onRecipe && walker.onRecipe(recipe);
+      for (var particle of recipe.particles) {
+        if (walker.onParticle) {
+          var result = walker.onParticle(recipe, particle);
+          if (result)
+            updateList.push({continuation: result, context: particle});
+        }
+      }
+      for (var viewConnection of recipe.viewConnections) {
+        if (walker.onViewConnection) {
+          var result = walker.onViewConnection(recipe, viewConnection);
+          if (result)
+            updateList.push({continuation: result, context: viewConnection});
+        }
+      }
       for (var view of recipe.views) {
         if (walker.onView) {
           var result = walker.onView(recipe, view);
@@ -260,16 +281,33 @@ class Recipe {
         }
       }
 
+      // application phase - apply updates and track results
+
+      var newRecipes = [];
       if (updateList.length) {
-        var cloneMap = new Map();
-        recipe = recipe.clone(cloneMap);
-        updateList.forEach(({continuation, context}) => continuation(recipe, cloneMap.get(context)));
+        if (walker.tactic == Recipe.Walker.ApplyAll) {
+          var cloneMap = new Map();
+          var newRecipe = recipe.clone(cloneMap);
+          updateList.forEach(({continuation, context}) => {
+            if (typeof continuation == 'function')
+              continuation = [continuation];
+            continuation.forEach(f => {
+              f(newRecipe, cloneMap.get(context));
+            });
+          });
+          newRecipes.push(newRecipe);
+        }
       }
 
-      if (walker.onRecipeDone)
-        var result = walker.onRecipeDone(recipe, updateList.length > 0);
-        if (result)
-          results.push(result);
+      // commit phase - output results.
+
+      if (walker.onRecipeDone) {
+        for (var newRecipe of newRecipes) {
+          var result = walker.onRecipeDone(newRecipe, updateList.length > 0);
+          if (result)
+            results.push(result);
+        }
+      }
     }
 
     return results;
@@ -278,8 +316,9 @@ class Recipe {
 }
 
 class Walker {
-  constructor(strategizer) {
+  constructor(strategizer, tactic) {
     this.strategizer = strategizer;
+    this.tactic = tactic;
   }
   onRecipeDone(recipe, isCloned) {
     if (isCloned)
@@ -288,5 +327,6 @@ class Walker {
 }
 
 Recipe.Walker = Walker;
+Recipe.Walker.ApplyAll = "apply all";
 
 module.exports = Recipe;
