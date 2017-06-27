@@ -12,29 +12,29 @@ let {parse} = require('../build/manifest-parser.js');
 let assert = require('chai').assert;
 
 describe('manifest parser', function() {
-  it('can parse an empy manifest', () => {
+  it('parses an empy manifest', () => {
     parse('');
   });
-  it('can parse a trivial recipe', () => {
+  it('parses a trivial recipe', () => {
     parse(`recipe Recipe`);
   });
-  it('can parse with indentation', () => {
+  it('parses with indentation', () => {
     parse(`
-    recipe Recipe`);
+      recipe Recipe`);
   });
-  it('can parse recipes that map views', () => {
+  it('parses recipes that map views', () => {
     parse(`
       recipe Thing
         map #someTag
         map 'some-id' #someTag`);
   });
-  it('can parse recipes with with particles', () => {
+  it('parses recipes with particles', () => {
     parse(`
       recipe Recipe
         SomeParticle
         #someTag`);
   });
-  it('parse reipes that connect particles to views', () => {
+  it('parses recipes that connect particles to views', () => {
     parse(`
       recipe Recipe
         SomeParticle
@@ -43,5 +43,15 @@ describe('manifest parser', function() {
           * = SomeOtherParticle
           * -> SomeOtherParticle #someTag
           * -> SomeOtherParticle.param`);
+  });
+  it('parses trivial particles', () => {
+    parse(`
+      particle SomeParticle`);
+  })
+  it('parses recipes that name views and particles', () => {
+    parse(`
+      recipe Recipe
+        SomeParticle as thing
+        map #thing as anotherThing`);
   });
 });
