@@ -157,6 +157,7 @@ class ViewConnection extends Connection {
   get tags() { return this._tags; }
   set tags(tags) { this._tags = tags; }
   get type() { return this._type; }
+  set type(type) { this._type = type;}
   get direction() { return this._direction; } // in/out
   set direction(direction) { this._direction = direction; }
   get view() { return this._view; } // View?
