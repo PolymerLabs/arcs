@@ -20,7 +20,7 @@ const OuterPec = require('./outer-PEC.js');
 
 class Arc {
   constructor({id, loader, pecFactory, slotComposer}) {
-    assert(loader);
+    assert(loader, "must provide loader for Arc");
     this._loader = loader;
     // TODO: pecFactory should not be optional. update all callers and fix here.
     this._pecFactory = pecFactory ||  require('./fake-pec-factory').bind(null);

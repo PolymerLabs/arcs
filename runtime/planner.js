@@ -8,59 +8,20 @@
 let {Strategy, Strategizer} = require('../strategizer/strategizer.js');
 let oldRecipe = require('./recipe.js');
 let Recipe = require('./new-recipe.js');
-
-class AssignViewsByTagAndType extends Strategy {
-  async activate(strategizer) {
-    // activate if there are views
-    // and there are view connections that are not assigned
-    // and tags or types match
-  }
-  async generate(strategizer, n) {
-    let results = [];
-    for (let recipe of strategizer.generated) {
-      // assume that we have already tested that recipe has gaps we can fill
-      let result = recipe.clone();
-      for (let i = 0; i < recipe.viewConnections.length; i++) {
-        let viewConnection = recipe.viewConnections[i];
-        if (viewConnection.view) {
-          let view = viewConnection.view;
-          if (view.resolved()) {
-            continue;
-          }
-          // TODO: there should be some sort of relevance score per found view.
-          for (let matchingView of recipe.findView(view.type, view.tags)) {
-            let result = recipe.clone();
-            let resultView = result.viewConnections[i].view;
-            let replacementView = matchingView.clone();
-            resultView.replaceWith(replacementView);
-            results.push(result);
-          }
-        }
-    // for each recipe
-    // for each viewConnection that doesn't have a view
-    //     and for each view that is unresolved
-    // search for a view in recipe.views that has a matching tag and type
-    // generate a result
-    // assign the view to the viewConnection
-      }
-    }
-  }
-}
+let Arc = require('./arc.js');
+let Loader = require('./loader.js');
+let systemParticles = require('./system-particles.js');
 
 class InitPopulation extends Strategy {
   async generate(strategizer) {
     if (strategizer.generation == 0) {
       var r = new oldRecipe.NewRecipeBuilder()
-        .addParticle("Create")
-          .connectConstraint("newList", "list")
-          .tag("gift list")
-        .addParticle("Create")
-          .connectConstraint("newList", "recommended")
         .addParticle("WishlistFor")
           .connectConstraint("wishlist", "wishlist")
           .connectConstraint("person", "person")
         .addParticle("Recommend")
           .connectConstraint("known", "list")
+          .tag("gift list")
           .connectConstraint("population", "wishlist")
           .connectConstraint("recommendations", "recommended")
         .addParticle("SaveList")
@@ -80,6 +41,59 @@ class InitPopulation extends Strategy {
   }
 }
 
+class ResolveParticleByName extends Strategy {
+  constructor(loader) {
+    super();
+    this.loader = loader;
+  }
+  async generate(strategizer) {
+    var loader = this.loader;
+    var results = Recipe.over(strategizer.generated, new class extends Recipe.Walker {
+      onParticle(recipe, particle) {
+        if (particle.impl == undefined) {
+          var impl = loader.loadParticle(particle.name, true);
+          if (impl == undefined)
+            return;
+          return (recipe, particle) => {
+            particle.impl = impl;
+            for (var connection of impl.spec.connectionMap.keys()) {
+              if (particle.connections[connection] != undefined) {
+                console.log('has', connection);
+              } else {
+                console.log('has not', connection);
+              }
+            }
+          }
+        }
+      }
+    }(strategizer, Recipe.Walker.ApplyAll));
+
+    return { results, generate: null };
+  }
+}
+
+class AssignViewsByTagAndType extends Strategy {
+  constructor(arc) {
+    super();
+    this.arc = arc;
+  }
+  async generate(strategizer) {
+    var results = Recipe.over(strategizer.generated, new class extends Recipe.Walker {
+      onViewConnection(recipe, viewConnection) {
+        if (viewConnection.view) {
+          let view = viewConnection.view;
+          if (view.resolved())
+            return;
+          return this.arc.findView(view.type, view.tags).map(newView =>
+            ((recipe, viewConnection) => viewConnection.view.id = newView.id));
+        }
+      }
+    }(strategizer));
+
+    return { results, generate: null };
+  }
+}
+
 class CreateViews extends Strategy {
   // TODO: move generation to use an async generator.
   async generate(strategizer) {
@@ -94,7 +108,7 @@ class CreateViews extends Strategy {
           return (recipe, view) => view.create = true;
         }
       }
-    }(strategizer));
+    }(strategizer, Recipe.Walker.ApplyAll));
 
     return { results, generate: null };
   }
@@ -102,24 +116,30 @@ class CreateViews extends Strategy {
 
 
 class Planner {
-  async plan() {
-    let strategies = [new InitPopulation(), new CreateViews()];
+  async plan(arc) {
+    let strategies = [
+      new InitPopulation(),
+      new CreateViews(),
+      new ResolveParticleByName(arc._loader),
+      new AssignViewsByTagAndType(arc)];
     let strategizer = new Strategizer(strategies, [], {
       maxPopulation: 100,
       generationSize: 1000,
       discardSize: 20,
     });
     // TODO: Repeat until...?
-    await strategizer.generate();
-    await strategizer.generate();
+    console.log(await strategizer.generate());
+    console.log(await strategizer.generate());
+    // console.log(await strategizer.generate());
     return strategizer.population; //.filter(possiblePlan => possiblePlan.ready);
   }
 }
 
 (async () => {
+  var loader = new Loader();
+  systemParticles.register(loader);
+  var a = new Arc({id: "test-plan-arc", loader});
   var p = new Planner();
-  var population = await(p.plan());
+  var population = await(p.plan(a));
   console.log(population.length);
-  console.log(population[0]._views);
-  console.log(population[1]._views);
 })();

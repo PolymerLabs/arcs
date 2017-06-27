@@ -45,8 +45,19 @@ class Strategizer {
     let generated = await Promise.all(this._strategies.map(strategy => {
       return strategy.generate(this, individualsPerStrategy);
     }));
+
+    var record = {};
+    record.generation = generation;
+    record.sizeOfLastGeneration = this.generated.length;
+    record.outputSizesOfStrategies = {};
+    for (var i = 0; i < this._strategies.length; i++) {
+      record.outputSizesOfStrategies[this._strategies[i].constructor.name] = generated[i].results.length;
+    }
+
     generated = generated.map(({results}) => results);
     generated = [].concat(...generated).map(({result}) => result);
+
+    record.totalGenerated = generated.length;
 
     // Evalute
     if (generated.length > 0 && this._evaluators.length == 0) {
@@ -95,6 +106,8 @@ class Strategizer {
     this._generation = generation;
     this._generated = generated;
     this._population = this._internalPopulation.map(x => x.individual);
+
+    return record;
   }
 
   static _mergeEvaluations(evaluations, generated) {
