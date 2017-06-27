@@ -12,7 +12,7 @@ let Manifest = require('../manifest.js');
 let assert = require('chai').assert;
 
 describe('manifest', function() {
-  it('can parse a manifest', () => {
+  it('can parse a manifest containing a recipe', () => {
     let manifest = Manifest.parse(`
       recipe SomeRecipe
         map #someView
@@ -25,4 +25,28 @@ describe('manifest', function() {
     assert.equal(recipe.viewConnections.length, 1);
     assert.sameMembers(recipe.viewConnections[0].tags, ['#tag'])
   })
+  it('can resolve recipes with connections between particles', () => {
+    let manifest = Manifest.parse(`
+      recipe Connected
+        P1
+          x -> P2
+        P2
+          y -> P1.y`);
+    let recipe = manifest.recipes.Connected;
+    assert(recipe);
+    assert.equal(recipe.views.length, 2);
+    assert.equal(recipe.viewConnections.length, 4);
+  });
+  it('supports recipies specified with bidirectional connections', () => {
+    let manifest = Manifest.parse(`
+      recipe Bidirectional
+        P1
+          x -> P2.x
+        P2
+          x -> P1.x`);
+    let recipe = manifest.recipes.Bidirectional;
+    assert(recipe);
+    assert.equal(recipe.views.length, 1);
+    assert.equal(recipe.viewConnections.length, 2);
+  });
 });
