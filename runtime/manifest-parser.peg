@@ -26,7 +26,7 @@ ManifestItem
   = Recipe / Particle
 
 Particle
-  = "particle" eolWhiteSpace
+  = "particle" whiteSpace name:upperIdent eolWhiteSpace
 
 Recipe
   = "recipe" whiteSpace name:upperIdent tags:SpaceTagList? eolWhiteSpace items:(Indent (SameIndent RecipeItem)*)?
@@ -46,14 +46,21 @@ RecipeItem
   = RecipeParticle
   / RecipeView
 
+Name
+  = whiteSpace "as" whiteSpace name:lowerIdent whiteSpace?
+  {
+    return name;
+  }
+
 RecipeParticle
-  = ref:ParticleRef eolWhiteSpace connections:(Indent (SameIndent RecipeParticleConnection)*)?
+  = ref:ParticleRef name:Name? eolWhiteSpace connections:(Indent (SameIndent RecipeParticleConnection)*)?
   {
     if (connections) {
       connections = extractIndented(connections);
     }
     return {
       kind: 'particle',
+      name,
       ref,
       connections: connections || [],
     };
@@ -82,10 +89,11 @@ ConnectionTarget
   { return {tags}; }
 
 RecipeView
-  = "map" whiteSpace ref:ViewRef eolWhiteSpace
+  = "map" whiteSpace ref:ViewRef name:Name? eolWhiteSpace
   {
     return {
       kind: 'view',
+      name,
       ref
     }
   }
