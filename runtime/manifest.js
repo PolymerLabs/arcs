@@ -64,18 +64,46 @@ class Manifest {
     for (let item of particleItems) {
       let particle = particles.get(item);
       for (let connectionItem of item.connections) {
-        var connection;
+        let connection;
         if (connectionItem.param == '*') {
           connection = particle.addUnnamedConnection();
         } else {
-          connection = particle.addConnectionName(connectionItem.param);
+          connection = particle.connections[connectionItem.param];
+          if (!connection) {
+            connection = particle.addConnectionName(connectionItem.param);
+          }
+          // TODO: else, merge tags? merge directions?
         }
         connection.tags = connectionItem.target.tags;
         connection.direction = {'->': 'out', '<-': 'in', '=': 'inout'}[connectionItem.dir];
-        // TODO: deal with connection target to particle
+
+        if (connectionItem.target.particle) {
+          let targetParticle = particlesByName[connectionItem.target.particle];
+          // TODO: error reporting
+          assert(targetParticle);
+
+          let targetConnection;
+          if (connectionItem.target.param) {
+            targetConnection = targetParticle.connections[connectionItem.target.param];
+            if (!targetConnection) {
+              targetConnection = targetParticle.addConnectionName(connectionItem.target.param);
+              // TODO: direction?
+            }
+          } else {
+            targetConnection = targetParticle.addUnnamedConnection();
+            // TODO: direction?
+          }
+
+          let view = targetConnection.view;
+          if (!view) {
+            // TODO: tags?
+            view = recipe.newView();
+            targetConnection.connectToView(view)
+          }
+          connection.connectToView(view);
+        }
       }
     }
-
   }
   _newRecipe(name) {
     assert(!this._recipes[name]);
