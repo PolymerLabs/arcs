@@ -56,12 +56,15 @@ class ResolveParticleByName extends Strategy {
             return;
           return (recipe, particle) => {
             particle.impl = impl;
-            for (var connection of impl.spec.connectionMap.keys()) {
-              if (particle.connections[connection] != undefined) {
-                console.log('has', connection);
-              } else {
-                console.log('has not', connection);
+            for (var connectionName of impl.spec.connectionMap.keys()) {
+              var speccedConnection = impl.spec.connectionMap.get(connectionName);
+              var connection = particle.connections[connectionName];
+              if (connection == undefined) {
+                connection = particle.addConnectionName(connectionName);
               }
+              // TODO: don't just overwrite here, check that the types
+              // are compatible if one already exists.
+              connection.type = speccedConnection.type;
             }
           }
         }
@@ -78,13 +81,16 @@ class AssignViewsByTagAndType extends Strategy {
     this.arc = arc;
   }
   async generate(strategizer) {
+    var arc = this.arc;
     var results = Recipe.over(strategizer.generated, new class extends Recipe.Walker {
       onViewConnection(recipe, viewConnection) {
         if (viewConnection.view) {
           let view = viewConnection.view;
-          if (view.resolved())
+          if (view.isResolved())
             return;
-          return this.arc.findView(view.type, view.tags).map(newView =>
+          if (view.type == undefined)
+            return;
+          return arc.findViews(view.type, view.tags).map(newView =>
             ((recipe, viewConnection) => viewConnection.view.id = newView.id));
         }
       }
@@ -130,7 +136,7 @@ class Planner {
     // TODO: Repeat until...?
     console.log(await strategizer.generate());
     console.log(await strategizer.generate());
-    // console.log(await strategizer.generate());
+    console.log(await strategizer.generate());
     return strategizer.population; //.filter(possiblePlan => possiblePlan.ready);
   }
 }
