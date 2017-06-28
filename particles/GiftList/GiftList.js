@@ -13,44 +13,19 @@ defineParticle(({DomParticle}) => {
   let template = `
 <style>
   [gift-list] {
-    border: 1px solid silver;
-    padding: 4px;
+    padding: 8px 0;
+    border-bottom: 2px solid #eeeeee;
   }
-  [gift-list] [head] {
-    color: white;
-    background-color: #00897B;
-    display: flex;
-    align-items: center;
-    padding: 8px 16px;
-  }
-  [gift-list] [form] {
-    padding: 8px;
-    line-height: 1.6em;
-  }
-  [gift-list] [form] div {
-    display: flex;
-  }
-  [gift-list] [form] div * {
-    flex: 4;
-  }
-  [gift-list] [form] div span {
-    flex: 1;
-    text-align: right;
-    padding-right: 12px;
+  [gift-list] input {
+    color: #666666;
+    font-size: 1.1em;
+    font-family: inherit;
+    border: none;
   }
 </style>
 
 <div gift-list>
-  <div>
-    <div head>
-      <span>Buying Gifts for&nbsp;</span><b>{{person}}</b>
-    </div>
-    <div form>
-      <div><span>for</span><model-select person on-change="_onPersonChange" options="{{people}}"></select></div>
-      <div><span>occasion</span><model-select occasion on-change="_onOccasionChange" options="{{occasions}}"></select></div>
-      <div><span>due</span><input type="date"></div>
-    </div>
-  </div>
+  for <span>{{person}}</span>'s <span title="{{occasionDate}}">{{occasion}}</span> • <input type="date" value="{{date}}">
 </div>
     `.trim();
 
@@ -61,13 +36,14 @@ defineParticle(({DomParticle}) => {
     _render(props, state) {
       let {person} = props;
       let name = (person && person.name) || 'n/a';
-      if (person) {
-        return {
-          person: name,
-          people: [{value: name}],
-          occasions: [{value: 'Birthday'}]
-        };
-      }
+      return {
+        person: name,
+        occasion: 'Birthday',
+        occasionDate: '2017-08-04',
+        date: '2017-08-04'
+        //people: [{value: name}],
+        //occasions: [{value: 'Birthday'}]
+      };
     }
   };
 

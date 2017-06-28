@@ -9,17 +9,38 @@
 "use strict";
 
 defineParticle(({Particle}) => {
+
+  let products = [
+    {
+      name: "Book: How to Draw",
+      category: "Books",
+      seller: "gutenburger.com",
+      price: "$14.50",
+      shipDays: 7
+    },
+    {
+      name: "Arduino Starter Pack",
+      category: "",
+      seller: "arduino.cc",
+      //price: "$64.95"
+      //shipDays: 42
+    },
+    {
+      name: "Field Hockey Stick",
+      category: "Sports & Outdoor",
+      seller: "denile.com",
+      price: "$29.00",
+      shipDays: 3
+    }
+  ];
+
   return class WishlistFor extends Particle {
     setViews(views) {
       // TODO: Don't let this stay here.
       const Product = views.get('wishlist').entityClass;
       this.logDebug("person", views.get("person"));
       var wishlist = views.get('wishlist');
-      [
-        "Book: How to Draw",
-        "Arduino",
-        "Field Hockey Stick"
-      ].map(p => wishlist.store(new Product({name: p})));
+      products.map(p => wishlist.store(new Product(p)));
       this.logDebug("wishlist", wishlist);
       this.relevance = 8;
     }

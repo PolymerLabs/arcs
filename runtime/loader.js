@@ -91,6 +91,7 @@ class Loader {
         result.push(particleWrapper);
       },
       console,
+      importScripts: s => null //console.log(`(skipping browser-space import for [${s}])`)
     };
     script.runInNewContext(self);
     return this.unwrapParticle(result[0]);

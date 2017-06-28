@@ -13,12 +13,15 @@
 defineParticle(({DomParticle}) => {
 
   let template = `
+
 <x-list items="{{items}}">
   <template>
-    <div>{{arrival}}</div>
+    <div style%="{{style}}">{{arrival}}</div>
   </template>
 </x-list>
     `.trim();
+
+  let daysToMs = 24*60*60*1000;
 
   return class extends DomParticle {
     get template() {
@@ -26,11 +29,27 @@ defineParticle(({DomParticle}) => {
     }
     _render(props) {
       if (props.list && props.list.length) {
-        console.log('rendering Arrivinator');
+        //console.log('rendering Arrivinator');
+        let now = Date.now();
+        let needed = new Date('2017-08-04').getTime();
         return {
-          items: props.list.map((item) => {
+          items: props.list.map((item, i) => {
+            // TODO(sjmiles): bypass schema for the moment
+            item = item.rawData;
+            let style = null;
+            let arrival = '';
+            if (item.shipDays) {
+              let then = new Date(now + item.shipDays*daysToMs);
+              if (then > needed) {
+                style = {color: 'red', fontWeight: 'bold', fontStyle: 'normal'};
+              }
+              arrival = `Arrives ${then.toDateString()}`;
+            } else {
+              arrival = `No shipping info.`;
+            }
             return {
-              arrival: `${item.name} arrives in August, ${Math.floor(Math.random()*1000)+2017}`
+              arrival,
+              style
             };
           })
         };
