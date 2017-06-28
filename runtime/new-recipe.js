@@ -29,6 +29,7 @@ class Particle extends Node {
     super(recipe);
     this._id = undefined;
     this._name = name;
+    this._localName = undefined;
     this._impl = undefined;
     this._tags = [];
     this._providedSlots = [];
@@ -48,7 +49,8 @@ class Particle extends Node {
 
     return particle;
   }
-
+  get localName() { return this._localName; }
+  set localName(name) { this._localName = name; }
   get id() { return this._id; } // Not resolved until we have an ID.
   get name() { return this._name; }
   get impl() { return this._impl; }
@@ -58,6 +60,7 @@ class Particle extends Node {
   get providedSlots() { return this._providedSlots; } // Slot*
   get consumedSlots() { return this._consumedSlots; } // SlotConnection*
   get connections() { return this._connections; } // {parameter -> ViewConnection}
+  get unnamedConnections() { return this._unnamedConnections; } // ViewConnection*
 
   addUnnamedConnection() {
     var connection = new ViewConnection(undefined, this);
@@ -89,6 +92,21 @@ class Particle extends Node {
     return true;
   }
 
+  toString(nameMap) {
+    let result = [];
+    // TODO: we need at least name or tags
+    result.push(this.name);
+    result.push(...this.tags);
+    result.push(`as ${(nameMap && nameMap.get(this)) || this.localName}`)
+    result = [result.join(' ')];
+    for (let connection of this.unnamedConnections) {
+      result.push(connection.toString(nameMap).replace(/^|(\n)/g, '$1  '));
+    }
+    for (let connection of Object.values(this.connections)) {
+      result.push(connection.toString(nameMap).replace(/^|(\n)/g, '$1  '));
+    }
+    return result.join('\n')
+  }
 }
 
 class View extends Node {
@@ -105,7 +123,7 @@ class View extends Node {
     var view = new View(recipe);
     view._id = this._id;
     view._tags = [...this._tags];
-    view._tyep = this._type;
+    view._type = this._type;
     view._create = this._create;
 
     // the connections are re-established when Particles clone their
@@ -126,6 +144,18 @@ class View extends Node {
 
   isResolved() {
     return (this._id !== undefined || this._create == true) && this._type !== undefined;
+  }
+
+  toString(nameMap) {
+    // TODO: type? maybe output in a comment
+    let result = [];
+    result.push(this.create ? 'create' : 'map');
+    if (this.id) {
+      result.push(`'${id}'`);
+    }
+    result.push(...this.tags);
+    result.push(`as ${(nameMap && nameMap.get(this)) || this.localName}`);
+    return result.join(' ');
   }
 }
 
@@ -184,6 +214,17 @@ class ViewConnection extends Connection {
     this._view = view;
     this._view.connections.push(this);
   }
+
+  toString(nameMap) {
+    let result = [];
+    result.push(this.name || '*');
+    result.push({'in': '<-', 'out': '->', 'inout': '='}[this.direction]);
+    if (this.view) {
+      result.push(`${(nameMap && nameMap.get(this.view)) || this.view.localName}`);
+    }
+    result.push(...this.tags);
+    return result.join(' ');
+  }
 }
 
 class SlotConnection extends Connection {
@@ -220,6 +261,8 @@ class Recipe {
     return view;
 
   }
+  get localName() { return this._localName; }
+  set localName(name) { this._localName = name; }
   get particles() { return this._particles; } // Particle*
   get views() { return this._views; } // View*
   get slots() {} // Slot*
@@ -319,6 +362,58 @@ class Recipe {
     return results;
   }
 
+  _makeLocalNameMap() {
+    let names = new Set();
+    for (let particle in this.particles) {
+      names.add(particle.localName);
+    }
+    for (let view in this.views) {
+      names.add(view.localName);
+    }
+
+    let nameMap = new Map();
+    let i = 0;
+    for (let particle of this.particles) {
+      let localName = particle.localName;
+      if (!localName) {
+        do {
+          localName = `particle${i}`;
+        } while (names.has(localName));
+      }
+      nameMap.set(particle, localName);
+    }
+
+    i = 0;
+    for (let view of this.views) {
+      let localName = view.localName;
+      if (!localName) {
+        do {
+          localName = `view${i}`;
+        } while (names.has(localName));
+      }
+      nameMap.set(view, localName);
+    }
+
+    return nameMap;
+  }
+
+  // TODO: Add a normalize() which strips local names and puts and nested
+  //       lists into a normal ordering.
+
+  toString() {
+    let nameMap = this._makeLocalNameMap();
+    let result = [];
+    // TODO: figure out where recipe names come from
+    result.push(`recipe ${name}`);
+    for (let view of this.views) {
+      result.push(view.toString(nameMap).replace(/^|(\n)/g, '$1  '));
+    }
+    // TODO: particle, name map. pass to the particle toString?
+    for (let particle of this.particles) {
+      result.push(particle.toString(nameMap).replace(/^|(\n)/g, '$1  '));
+    }
+    return result.join('\n');
+  }
 }
 
 class Walker {

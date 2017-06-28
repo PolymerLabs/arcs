@@ -51,9 +51,10 @@ class Manifest {
     }
 
     let particles = new Map();
+    // TODO: deal with ambiguity
     let particlesByName = {};
     for (let item of particleItems) {
-      let particle = recipe.newParticle(item.name);
+      let particle = recipe.newParticle(item.ref.name);
       particle.tags = item.ref.tags;
       particles.set(item, particle);
       if (item.ref.name) {
