@@ -54,9 +54,11 @@ class AutoTabs extends HTMLElement {
           return true;
       }
     });
+    /*
     pages.forEach(p => {
       p.style.border = "1px solid #eee";
     });
+    */
     let crumbs = pages.map((p,i) => {
       return `Page ${i}`;
     }).join(' / ');

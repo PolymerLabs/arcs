@@ -13,8 +13,8 @@ defineParticle(({DomParticle}) => {
   let template = `
 <style>
   [list-view] {
-    border: 1px solid silver;
-    padding: 4px;
+    /*border: 1px solid silver;*/
+    /*padding: 4px;*/
   }
   [list-view] [head] {
     color: white;

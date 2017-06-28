@@ -34,7 +34,7 @@ class InterleavedList extends XenElement {
     this.interleaveNodes(nodes, this._target);
   }
   interleaveNodes(nodes, into) {
-    console.log('interleaving...');
+    //console.log('interleaving...');
     let next = into.firstElementChild;
     let tag = 'interleaved';
     nodes.forEach(node => {
@@ -42,12 +42,8 @@ class InterleavedList extends XenElement {
       if (next) {
         let container = next.querySelector('[slotid]') || next;
         container.appendChild(node);
-        //into.insertBefore(node, next);
-        //next.appendChild(node);
         next = next.nextElementSibling;
-      } /*else {
-        into.appendChild(node);
-      }*/
+      }
     });
   }
 }

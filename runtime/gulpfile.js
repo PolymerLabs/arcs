@@ -66,7 +66,7 @@ gulp.task('webpack', async function() {
     }
 
   } catch(x) {
-    // in case of emergency, break glass .. then stay calm and carry on (watching)
+    // in case of emergency, break glass .. then stay calm and carry on watching
     console.log(x);
   }
 });

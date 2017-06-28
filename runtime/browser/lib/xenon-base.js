@@ -8,8 +8,6 @@ let XenonStaterMixin = Base => class extends Base {
     this._lastProps = nob();
     this._state = this._getInitialState() || nob();
     this._lastState = nob();
-    //this.__configureAccessors();
-    //this.__lazyAcquireProps();
   }
   _getInitialProps() {
   }

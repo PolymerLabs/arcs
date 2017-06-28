@@ -11,12 +11,7 @@
 defineParticle(({DomParticle}) => {
 
   let template = `
-    <!--
-    <a-assets>
-      <a-asset-item id="pot-obj" src="assets/3d-model.obj"></a-asset-item>
-    </a-assets>
-    -->
-    <a-obj-model src="assets/3d-model.obj" position="0 1 -2" scale="0.002 0.002 0.002"></a-obj-model>
+    <a-obj-model src="assets/3d-model.obj" position="-0.3 0 -1.3" scale="0.002 0.002 0.002"></a-obj-model>
   `.trim();
 
   return class extends DomParticle {

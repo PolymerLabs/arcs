@@ -9,7 +9,7 @@
  */
  "use strict";
 
-var runtime = require("../runtime.js");
+//var runtime = require("../runtime.js");
 var Arc = require("../arc.js");
 var Loader = require("../loader.js");
 var Suggestinator = require("../suggestinator.js");
@@ -68,7 +68,7 @@ describe('demo flow', function() {
         .connectConstraint("list", "list")
       .addParticle("Choose")
         .connectConstraint("singleton", "person")
-      .addParticle("ListView")
+      .addParticle("ShowProducts")
         .connectConstraint("list", "list")
       .addParticle("Chooser")
         .connectConstraint("choices", "recommended")
@@ -93,16 +93,16 @@ describe('demo flow', function() {
       var slotComposer = new MockSlotComposer(arc.pec);
       slotComposer
                  .expectGetSlot("Chooser", "action")
-                 .expectGetSlot("ListView", "root")
+                 .expectGetSlot("ShowProducts", "root")
 
                  .expectRender("Chooser")
-                 .expectRender("ListView")
+                 .expectRender("ShowProducts")
                  .expectRender("Chooser")
-                 .expectRender("ListView")
+                 .expectRender("ShowProducts")
 
                  .thenSend("action", "_onChooseValue", {key: "1"})
 
-                 .expectRender("ListView")
+                 .expectRender("ShowProducts")
                  .expectRender("Chooser")
                  ;
 
@@ -115,18 +115,18 @@ describe('demo flow', function() {
 
       var giftView = arc.findViews(Product.type.viewOf(), {tag: "gift list"})[0];
       await testUtil.assertViewHas(giftView, Product, "name",
-          ["Tea Pot", "Bee Hive", "Denim Jeans", "Arduino"]);
+          ["Tea Pot", "Bee Hive", "Denim Jeans", "Arduino Starter Pack"]);
 
       var serialization = arc.serialize();
       var loader = new Loader();
       systemParticles.register(loader);
 
       slotComposer
-                 .expectGetSlot("ListView", "root")
+                 .expectGetSlot("ShowProducts", "root")
                  .expectGetSlot("Chooser", "action")
-                 .expectRender("ListView")
+                 .expectRender("ShowProducts")
                  .expectRender("Chooser")
-                 .expectRender("ListView")
+                 .expectRender("ShowProducts")
                  .expectRender("Chooser")
                  ;
 
@@ -140,7 +140,7 @@ describe('demo flow', function() {
       assert.equal(productViews.length, 4);
       var giftView = arc.findViews(Product.type.viewOf(), {tag: "gift list"})[0];
       await testUtil.assertViewHas(giftView, Product, "name",
-          ["Tea Pot", "Bee Hive", "Denim Jeans", "Arduino"]);
+          ["Tea Pot", "Bee Hive", "Denim Jeans", "Arduino Starter Pack"]);
 
       done();
     });

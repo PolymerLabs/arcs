@@ -18,21 +18,27 @@ const {
 
 const XenonBase = require("./browser/lib/xenon-base.js");
 
-let log = !global.document || (global.logging === false) ? () => {} : console.log.bind(console, `---------- DomParticle::`);
+//let log = !global.document || (global.logging === false) ? () => {} : console.log.bind(console, `---------- DomParticle::`);
+//console.log(!!global.document, global.logging, log);
+
+let log = false ? console.log.bind(console) : () => {};
 
 class DomParticle extends XenonBase(Particle) {
   // override to return a String defining primary markup
   get template() {
     return '';
   }
-  // override if you need to do things specifically when props change
-  _willReceiveProps(props) {
+  // override to return false if the Particle won't use it's slot
+  _shouldRender(props, state) {
+    return true;
   }
-  // override to return a dictionary to map against the template,
-  // return null to yield any rendering context (slot)
+  // override to return a dictionary to map against the template
   _render(props, state) {
   }
-  // override only if necessary, to modify superclass config
+  // override if necessary, to do things when props change
+  _willReceiveProps(props) {
+  }
+  // override if necessary, to modify superclass config
   get config() {
     // TODO(sjmiles): getter that does work is a bad idea, this is temporary
     return {
@@ -42,11 +48,14 @@ class DomParticle extends XenonBase(Particle) {
       slotName: this.spec.renders.length && this.spec.renders[0].name.name
     };
   }
+  _info() {
+    return `---------- DomParticle::[${this.spec.name}]`;
+  }
   async setViews(views) {
     this._views = views;
     let config = this.config;
     this.when([new ViewChanges(views, config.views, 'change')], async () => {
-      //console.log(`---------- DomParticle::[${this.spec.name}]: invalidated by [ViewChanges]`);
+      //log(`${this.info()}: invalidated by [ViewChanges]`);
       // acquire (async) list data from views
       let data = await Promise.all(config.views.map(name => {
         let view = views.get(name);
@@ -57,29 +66,40 @@ class DomParticle extends XenonBase(Particle) {
         let value = data[i];
         props[name] = (value && value.rawData) ? value.rawData : value;
         return props;
-      }, {});
+      }, Object.create(null));
       this._setProps(props);
     });
   }
   _update(props, state) {
-    let viewModel = this._render(props, state);
-    this._renderModel(viewModel);
+    let slotName = this.config.slotName;
+    if (this._shouldRender(props, state) === false) {
+      this.releaseSlot(slotName);
+    } else {
+      this.requireSlot(slotName);
+    }
+    if (state.slot) {
+      log(`${this._info()}: rendering`);
+      state.slot.render({model: this._render(props, state)});
+    }
   }
+  /*
   async _renderModel(model) {
     let slotName = this.config.slotName;
     if (!model) {
       if (this.slot) {
-        //log('_renderModel about to releaseSlot: ', this.spec.name);
+        //log(`${this.info()}: _renderModel about to releaseSlot: `, this.spec.name);
         this.releaseSlot(slotName);
       }
     } else {
       // TODO(sjmiles): render commands will stack up as we wait for slots, which
       // is generally not what we want
-      //log(_renderModel about to requireSlot: ', this.spec.name, Object.keys(model));
+      //log(`${this.info()}: _renderModel about to requireSlot: `, this.spec.name, Object.keys(model));
       (await this.requireSlot(slotName)).render({model});
     }
   }
+  */
   setSlot(slot) {
+    this._setState({slot: slot});
     this._initializeRender(slot);
     super.setSlot(slot);
   }

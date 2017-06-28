@@ -10,62 +10,77 @@
 
 "use strict";
 
+var host = `[chooser]`;
+var productStyles = '';
+
+importScripts('../../../particles/shared/product-templates.js');
+
 defineParticle(({DomParticle}) => {
 
-  let template = `
+  let styles = `
 <style>
-  [chooser] {
+  ${host} {
+    padding: 0 16px;
+    margin-top: 16px;
+    background-color: #f4f4f4;
+    border-top: 4px solid silver;
+  }
+  ${host} [chevron] {
+    color: silver;
+    transform: translate3d(50%, -17px, 0);
+    height: 0;
+  }
+  ${host} [head] {
+    display: flex;
+    align-items: center;
+    padding: 16px 0;
+    color: #555555;
+    font-size: 0.8em;
+  }
+  ${host} button {
+    padding: 4px 12px;
+    border-radius: 16px;
     border: 1px solid silver;
-    padding: 4px;
+    font-size: 0.75em;
+    margin-top: 6px;
+    outline: none;
   }
-  [chooser] [head] {
-    color: white;
-    background-color: #00897B;
-    display: flex;
-    align-items: center;
-    padding: 8px 16px;
-  }
-  [chooser] [row] {
-    display: flex;
-    align-items: center;
-    padding: 8px 16px;
-  }
-  [chooser] [disc] {
-    display: inline-block;
-    margin-right: 16px;
-    box-sizing: border-box;
-    width: 32px;
-    height:32px;
-    border-radius:40px;
-    background-color:gray;
-  }
-  [chooser] [icon] {
-    display:inline-block;
-    width:24px;
-    height:24px;
-    padding:4px;
-    color: white;
+  ${host} [item] {
+    padding: 4px 8px;
+    background-color: white;
+    border-bottom: 8px solid #eeeeee;
   }
 </style>
-<div chooser>
-  <div>
-    <div head>
-      <span>Recommendations based on <span>{{person}}</span>'s Wishlist</span>
+  `;
+
+  let productTemplate = `
+<template>
+  <div item>
+    <div row>
+      <div col0>
+        <div name title="{{name}}">{{name}}</div>
+        <div category>{{category}}</div>
+        <div price>{{price}}</div>
+        <div seller>{{seller}}</div>
+        <div><button events key="{{index}}" on-click="_onChooseValue">Add</button></div>
+      </div>
+      <div col1>
+        <img src="../assets/products/book.png">
+      </div>
     </div>
-    <x-list items="{{items}}">
-      <template>
-        <div row>
-          <span disc>
-            <img icon src="../../../particles/Chooser/product.svg">
-          </span>
-          <span style="flex:1;">{{name}}</span>
-          <button events key="{{index}}" on-click="_onChooseValue">Add</button>
-        </div>
-      </template>
-    </x-list>
   </div>
-  <!-- include slot below to cause various problems -->
-  <div XXXslotid="action"></div>
+</template>
+  `;
+
+  let template = `
+${styles}
+${productStyles}
+<div chooser>
+  <div chevron>▲</div>
+  <div head>
+    <span>Recommendations based on <span>{{person}}</span>'s Wishlist</span>
+  </div>
+  <x-list items="{{items}}">${productTemplate}</x-list>
 </div>
     `.trim();
 
@@ -82,13 +97,18 @@ defineParticle(({DomParticle}) => {
         this.relevance = 10;
       }
     }
+    _shouldRender(props, state) {
+      return Boolean(state.values && state.values.length);
+    }
     _render(props, state) {
-      if (state.values && state.values.length) {
-        return {
-          person: 'Claire',
-          items: state.values.map((value, index) => {return {name: value.name, index}})
-        };
-      }
+      return {
+        person: 'Claire',
+        items: state.values.map(({rawData}, index) => {
+          return Object.assign({
+            index
+          }, rawData);
+        })
+      };
     }
     _onChooseValue(e, state) {
       this._views.get('resultList').store(state.values[e.data.key]);

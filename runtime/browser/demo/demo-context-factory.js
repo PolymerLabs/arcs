@@ -12,6 +12,30 @@ let Arc = require('../../arc.js');
 let systemParticles = require('../../system-particles.js');
 //require('./trace-setup.js');
 
+let products = [
+  {
+    name: "Minecraft Book",
+    category: "Books",
+    seller: "denile.com",
+    price: "$14.50",
+    shipDays: 7
+  },
+  {
+    name: "Power Tool Set",
+    category: "Tools",
+    seller: "denile.com",
+    price: "$59.00",
+    shipDays: 42
+  },
+  {
+    name: "Guardian of the Galaxy Figure",
+    category: "Toys & Collectibles",
+    seller: "denile.com",
+    price: "$75.00",
+    shipDays: 14
+  }
+];
+
 function prepareDemoContext({loader, pecFactory, slotComposer}) {
   // uber arc
   let pageArc = new Arc({loader, id: 'pageArc'});
@@ -21,11 +45,9 @@ function prepareDemoContext({loader, pecFactory, slotComposer}) {
   let personView = pageArc.createView(Person.type.viewOf(), 'peopleFromWebpage');
   let productView = pageArc.createView(Product.type.viewOf(), 'productsFromWebpage');
   pageArc.commit([
-    new Person({name: 'Claire'}),
-    new Product({name: 'Tea Pot'}),
-    new Product({name: 'Bee Hive'}),
-    new Product({name: 'Denim Jeans'})
-  ]);
+    new Person({name: 'Claire'})
+  ].concat(products.map(p => new Product(p)))
+  );
   // demo arc
   let arc = new Arc({id: 'demo', loader, pecFactory, slotComposer});
   arc.createView(Person.type, 'personSlot');
