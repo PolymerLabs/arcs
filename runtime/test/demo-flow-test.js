@@ -84,9 +84,10 @@ describe('demo flow', function() {
     var results = suggestinator.suggestinate(arc);
     results.then(async r => {
       assert.equal(1, r.length);
-      assert.equal("Show Product List (Tea Pot, Bee Hive, Denim Jeans) and " +
-                   "Choose from Products recommended based on Product List (Tea Pot, Bee Hive, Denim Jeans) " +
-                   "and Claire's wishlist", r[0].description);
+      assert.equal("Show Product List from your browsing context (Tea Pot, Bee Hive, Denim Jeans) and " +
+                   "Choose from Products recommended based on Product List from your browsing context (Tea Pot, Bee Hive, Denim Jeans) " +
+                   "and Claire's wishlist (Book: How to Draw, Arduino Starter Pack, Field Hockey Stick)",
+                   r[0].descriptinator.description);
       var productViews = arc.findViews(Product.type.viewOf());
       assert.equal(productViews.length, 1);
       await testUtil.assertViewHas(productViews[0], Product, "name", ["Tea Pot", "Bee Hive", "Denim Jeans"]);

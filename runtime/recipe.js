@@ -81,6 +81,17 @@ class Recipe {
       particleSpec.exposes.forEach(e => arc.availableSlotIds.add(e.name));
       particleSpec.renders.forEach(e => arc.availableSlotIds.delete(e.name.name));
     });
+
+    // update all available descriptions for views in Arc
+    if (this.descriptinator) {
+      this.descriptinator.setViewDescriptions(arc);
+    }
+  }
+
+  findComponentByParticle(particleName) {
+    for (let component of this.components)
+      if (component.particleName === particleName)
+        return component;
   }
 }
 

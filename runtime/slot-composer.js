@@ -15,8 +15,7 @@ const Slot = require('./dom-slot.js');
 let log = !global.document || (global.logging === false) ? () => {} : console.log.bind(console, '---------- SlotComposer::');
 
 class SlotComposer {
-  constructor(domRoot, pec) {
-    this._pec = pec;
+  constructor(domRoot) {
     this._slotBySlotId = new Map();
     // Contains both fulfilled slots and pending requests.
     this._slotIdByParticleSpec = new Map();
@@ -80,7 +79,7 @@ class SlotComposer {
   renderSlot(particleSpec, content, handler) {
     let slot = this._getParticleSlot(particleSpec);
     // returns slot(id)s rendered by the particle
-    let innerSlotInfos = slot.render(content, handler);
+    let innerSlotInfos = slot.render(content, this.arc, handler);
     if (innerSlotInfos && innerSlotInfos.length > 0) {
       // the `innerSlotInfos` identify available slot-contexts, make them available for composition
       this._provideInnerSlots(innerSlotInfos, particleSpec);

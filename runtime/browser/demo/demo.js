@@ -78,11 +78,13 @@ class DemoFlow extends DemoBase {
   }
   didMount() {
     let root = '../../';
+    let slotComposer = new SlotComposer(this._root.querySelector('[particle-container]'));
     let {arc} = ContextFactory({
       loader: new BrowserLoader(root),
       pecFactory: require('../worker-pec-factory.js').bind(null, root),
-      slotComposer: new SlotComposer(this._root.querySelector('[particle-container]'))
+      slotComposer: slotComposer
     });
+    slotComposer.arc = arc;
     this.arc = arc;
     this.stages = stages;
     this.suggestions = this._root.querySelector('suggestions-element');

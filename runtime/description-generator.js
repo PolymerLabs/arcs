@@ -19,185 +19,179 @@ class DescriptionGenerator {
   constructor(recipe, relevance) {
     this.recipe = recipe;  // this is a Plan (aka resolved Recipe)
     this.relevance = relevance;
-    this._descriptionByParticleName = new Map();
-    this._description = this._init(/* includeAll= */ false) || this.recipe.name;
+    this._descriptionByParticle = new Map();
+    this._description = this._generateParticleDescriptions(/* includeAll= */ false);
   }
-  // Initializes the descriptions.
-  // |includeAll| determines whether all particles are included or only the ones that render UI.
-  _init(includeAll) {
-    let selectedDescriptions = [];
-    this.recipe.components.forEach(component => {
-      let description = this.generateDescription(component);
-      if (!description) return;
-      this._descriptionByParticleName.set(component.particleName, description);
-      let particleSpec = this.recipe.arc.particleSpec(component.particleName);
-      // Add description of particle that renders to "root" as the first element
-      if (particleSpec.renders.reduce((prev, r) => { return r.name.name == "root" || prev; }, false))
-        selectedDescriptions.unshift(description);
-      else if (particleSpec.renders.length > 0 || includeAll)
-        selectedDescriptions.push(description);
-    });
-    return selectedDescriptions.join(" and ");
-  }
-  getDescription() {
+  get description() {
     return this._description;
   }
-  generateDescription(recipeComponent) {
-    let particleSpec = this.recipe.arc.particleSpec(recipeComponent.particleName);
-    if (particleSpec.transient)
-      return;  // skip transient particles.
-    if (!particleSpec.description || !particleSpec.description.pattern)
-      return;  // skip particles with no description
-    return this._resolveDescription(particleSpec.description.pattern, particleSpec, recipeComponent);
+  getViewDescription(particleName, connectionName) {
+    if (this._descriptionByParticle.has(particleName))
+      return this._descriptionByParticle.get(particleName).get(connectionName);
   }
-  // Resolves description sentence, supporting both - the particle's full description pattern,
-  // or particle parameter description.
-  _resolveDescription(description, particleSpec, recipeComponent) {
-    let tokens = description.match(/\${[a-zA-Z0-9::~\[\]]+}/g);
+  getViewShortDescription(particleName, connectionName) {
+    let description = this.getViewDescription(particleName, connectionName);
+    if (description)
+      return description.replace(/\([a-zA-Z:, ]*\)/ig, '');
+  }
+  setViewDescriptions(arc) {
+    arc.particleViewMaps.forEach((value, key) => {
+      value.views.forEach((view, connectionName) => {
+        let description = this.getViewShortDescription(value.clazz.name, connectionName);
+        if (description)
+          view.description = description;
+      });
+    });
+  }
+  _initDescriptionsByView() {
+    this._descriptionsByView = new Map();
+    this.recipe.components.forEach(component => {
+      let particleSpec = this.recipe.arc.particleSpec(component.particleName);
+      component.connections.forEach(connection => {
+        let view = connection.view;
+        if (!this._descriptionsByView.has(view.id)) {
+          this._descriptionsByView.set(view.id,
+              { type: view.type, value: this._formatViewValue(view), descriptions: []});
+        }
+        assert(this._descriptionsByView.get(view.id).type.equals(view.type),
+               `Unexpected type for view ${view.id}`);
+        // should verify same particle doesn't push twice?
+        this._descriptionsByView.get(view.id)["descriptions"].push({
+          particleSpec: particleSpec,
+          connectionName: connection.name,
+          component: component,
+          direction: particleSpec.connectionMap.get(connection.name).isOutput ? "out" : "in",
+          description: particleSpec.description ? particleSpec.description[connection.name] : undefined
+        });
+      });
+    });
+  }
+  _generateParticleDescriptions(includeAll) {
+    // Generate descriptions for views.
+    this.recipe.components.forEach(c => this._descriptionByParticle.set(c.particleName, new Map()));
+    this._initDescriptionsByView();
+    this._descriptionsByView.forEach((viewDescription, viewId) => {
+      viewDescription.descriptions.forEach(desc => {
+        let description =
+          this._resolveConnectionDescription(desc.connectionName, desc.component, desc.particleSpec);
+        this._descriptionByParticle.get(desc.particleSpec.name).set(desc.connectionName, description);
+      });
+    });
+    // Generate descriptions for particles and select ones for the significant ones for displayed suggestion.
+    let selectedDescriptions = [];
+    this.recipe.components.forEach(component => {
+      let particleSpec = this.recipe.arc.particleSpec(component.particleName);
+      if (particleSpec.description && particleSpec.description.pattern) {
+        let description = this._resolveTokens(particleSpec.description.pattern, component, particleSpec);
+        if (description) {
+          this._descriptionByParticle.get(component.particleName).set("description", description);
+          let particleSpec = this.recipe.arc.particleSpec(component.particleName);
+          // Add description of particle that renders to "root" as the first element
+          if (particleSpec.renders.reduce((prev, r) => { return r.name.name == "root" || prev; }, false))
+            selectedDescriptions.unshift(description);
+          else if (particleSpec.renders.length > 0 || includeAll)
+            selectedDescriptions.push(description);
+        }
+      }
+    });
+    return selectedDescriptions.length > 0 ? selectedDescriptions.join(" and ") : this.recipe.name;
+  }
+  _resolveTokens(description, recipeComponent, particleSpec) {
+    let tokens = description.match(/\${[a-zA-Z0-9::~\.\[\]]+}/g);
     if (!tokens)
       return description;  // no tokens found
     tokens.forEach(token => {
-      token = token.match(/^\${([a-zA-Z0-9::~\[\]]+)}$/)[1];
-      let resolvedToken = this._resolveToken(token, particleSpec, recipeComponent);
-      if (resolvedToken) {
-        description = description.replace(`\$\{${token}\}`, resolvedToken);
+      token = token.match(/^\${([a-zA-Z0-9::~\.\[\]]+)}$/)[1];  // ${viewname} or ${viewname.type}
+      let matchers = token.match(/^(.*)\.type$/);
+      let viewDescription = null;
+      if (matchers) {  // token is ${viewname.type}
+        let connection = recipeComponent.findConnectionByName(matchers[1]);
+        viewDescription = connection.view.type.toString();
       } else {
-        return null;  // token failed to resolve.
+        // Executing this twice - 1st to generate the view's description, then if the view is part
+        // of the particle description. Should instead call: this.getViewDescription(particleSpec.name, token)
+        // here for the latter.
+        viewDescription =
+          this._resolveConnectionDescription(token, recipeComponent, particleSpec);
       }
+      if (!viewDescription) {
+        return null;
+      }
+      description = description.replace(`\$\{${token}\}`, viewDescription);
     });
     return description;
   }
-  _resolveToken(token, particleSpec, recipeComponent) {
-    // Try resolve the token as particle parameter
-    let resolvedToken = this._resolveParticleParam(token, particleSpec, recipeComponent,
-        /* useBindings= */ particleSpec.isInput(token));
-    if (resolvedToken) return resolvedToken;
 
-    // Try resolve the token as template type
-    return this.tryResolveTemplateType(token, particleSpec, recipeComponent);
-  }
-  _resolveParticleParam(paramName, particleSpec, recipeComponent, useBindings) {
-    // If |useBindings| is true, construct parameter description from other particles that output
-    // to the same view.
-    if (useBindings) {
-      // Find the name of the view, this parameter is bound to by resolver
-      let resolvedViewName = recipeComponent.findConnectionByName(paramName).constraintName;
-      if (resolvedViewName) {
-        // Find particles that have same view bound and "out" parameter.
-        let outViewDescription = this._resolveOutputConnection(resolvedViewName, particleSpec.name);
-        if (outViewDescription) return outViewDescription;
+  _resolveConnectionDescription(connectionName, recipeComponent, particleSpec) {
+    let connection = recipeComponent.findConnectionByName(connectionName);
+    assert(connection, `No connection for ${connectionName} in component ${recipeComponent.name}`);
+    let viewDescription = this._descriptionsByView.get(connection.view.id);
+    let resultDescription;
+    let selectedParticleViewDescription =
+        this._selectParticleViewDescription(viewDescription, particleSpec.name);
+    if (selectedParticleViewDescription) {
+      resultDescription = this._resolveTokens(selectedParticleViewDescription.description,
+                                              selectedParticleViewDescription.component,
+                                              selectedParticleViewDescription.particleSpec);
+    } else {
+      if (viewDescription.type.isView || !viewDescription.value) {
+        resultDescription = viewDescription.type.toString();
       }
     }
-    // This view is not an "out"/"create" param of any view.
-    let localDescription = this._resolveLocalParamName(paramName, particleSpec, recipeComponent);
-    if (localDescription) return localDescription;
-    return null;
-  }
-  tryResolveTemplateType(typeToken, particleSpec, recipeComponent) {
-    let results = typeToken.match(/^\[~([a-z])\]$/);  // Try match template list type, eg [~a]
-    if (results && results.length > 0)
-      return this._resolveTemplateTypeList(Type.typeVariable(results[1]).viewOf(), recipeComponent);
-    results = typeToken.match(/^~([a-z])$/);  // Try match template singleton type, eg ~a
-    if (results && results.length > 0)
-      return this._resolveTemplateTypeSingleton(Type.typeVariable(results[1]), recipeComponent);
-    return null;
-  }
-  // TODO(mmandlis): resolving repeated and singleton types shouldn't be so different.
-  // Should Resolver set rawType for both, so that simple comparison would suffice?
-  _resolveTemplateTypeList(templateType, recipeComponent) {
-    for (let connection of recipeComponent.connections)
-      if (connection.spec && connection.spec.rawData && connection.spec.rawData.type &&
-          templateType.equals(Type.fromLiteral(connection.spec.rawData.type)))
-        return Type.fromLiteral(connection.type.key);
-  }
-  _resolveTemplateTypeSingleton(templateType, recipeComponent) {
-    for (let connection of recipeComponent.connections)
-      if (connection.rawType == templateType.key.name)
-        return Type.fromLiteral(connection.type.key);
-  }
-  _resolveOutputConnection(viewName, requestingParticleName) {
-    return this.recipe.components.reduce((curr, recipeComponent) => {
-      // Skip requesting particle
-      if (recipeComponent.particleName == requestingParticleName) return curr;
-      // Find output connection
-      let connection = recipeComponent.findConnectionByConstraintName(viewName);
-      let particleSpec = this.recipe.arc.particleSpec(recipeComponent.particleName);
-      if (!connection || !particleSpec.isOutput(connection.name)) return curr;
-      // Evaluate rank and use highest ranked description.
-      let rank = this.relevance.calcParticleRelevance(particleSpec.name);
-      if (curr.rank < rank) {
-        let description = this._resolveToken(connection.name, particleSpec, recipeComponent);
-        if (description) {
-          curr.description = description;
-          curr.rank = rank;
-        }
-      }
-      return curr;
-    }, {rank:-1, description:null}).description;
-  }
-  // Resolve the given particleSpec's param name (independent of the rest of the components of the recipe)
-  _resolveLocalParamName(paramName, particleSpec, recipeComponent) {
-    // Use param's description, if available
-    let paramDescription = particleSpec.description && particleSpec.description[paramName];
-    if (paramDescription) {
-      let resolvedDescription = this._resolveDescription(paramDescription, particleSpec, recipeComponent);
-      if (resolvedDescription) return resolvedDescription;
-      console.warn(`Failed resolving description ${paramDescription} for ${paramName} in ${particleSpec.name}`);
+    if (resultDescription) {
+      if (viewDescription.value && resultDescription.indexOf(viewDescription.value) < 0)
+        return `${resultDescription} (${viewDescription.value})`;
+      return resultDescription;
     }
-    let particleConnection = particleSpec.connectionMap.get(paramName);
-    if (particleConnection) {
-      let type = particleConnection.type;
-      if (type.isVariable) {  // Resolve singleton template type
-        type = this._resolveTemplateTypeSingleton(type, recipeComponent);
-      } else if (type.hasVariable) {  // Resolve list template type
-        type = this._resolveTemplateTypeList(type, recipeComponent);
-      }
-      if (!type) return null;
+    return viewDescription.value;
+  }
 
-      let result = type.toString();
-      if (type.isView) {
-        let realValue = this._getViewList(paramName, recipeComponent);
-        if (realValue) {
-          result = `${result} (${realValue})`;
-        }
-      } else {
-        // TODO(mmandlis): check that the value isn't too long.
-        let realValue = this._getViewValue(paramName, recipeComponent);
-        if (realValue) {
-          result = realValue;
-        }
+  _selectParticleViewDescription(viewDescription, particleName) {
+    if (viewDescription.descriptions && viewDescription.descriptions.length > 0) {
+      let localDescription = viewDescription.descriptions.reduce((prev, curr) => {
+        if (curr.particleSpec.name == particleName) prev = curr; return prev;
+      }, null);
+      assert(localDescription);
+      if (localDescription && localDescription.direction == "out") {
+        if (localDescription.description)
+          return localDescription;
       }
-      // TODO(mmandlis): need to handle relations here?
-      return result;
+
+      let outDescriptions = viewDescription.descriptions.reduce((prev, curr) => {
+        if (curr.direction == "out") {
+          prev.push(curr);
+        }
+        return prev;
+      }, []);
+      outDescriptions.push(localDescription);
+      outDescriptions.sort((r1, r2) => {
+        if (r1.description != r2.description) {
+          return r1.description ? -1 : 1;
+        }
+        if (r1.particleSpec.name == particleName) {
+          return 1;
+        }
+        if (r2.particleSpec.name == particleName) {
+          return -1;
+        }
+        let rank1 = this.relevance.calcParticleRelevance(r1.particleSpec.name);
+        let rank2 = this.relevance.calcParticleRelevance(r1.particleSpec.name);
+        return rank2 - rank1;
+      });
+      if (outDescriptions[0].description)
+        return outDescriptions[0];
     }
-    return null;
   }
-  _getViewValue(paramName, recipeComponent) {
-    return this._getViewValueFromArc(paramName, recipeComponent, this.relevance.newArc) ||
-           this._getViewValueFromArc(paramName, recipeComponent, this.recipe.arc);
-  }
-  _getViewValueFromArc(paramName, recipeComponent, arc) {
-    let view = this._getViewFromArc(paramName, recipeComponent, arc);
-    let viewVar = view ? view.get() : null;
-    if (viewVar)
-      return viewVar.rawData.name;
-  }
-  _getViewList(paramName, recipeComponent) {
-    return this._getViewListFromArc(paramName, recipeComponent, this.relevance.newArc) ||
-           this._getViewListFromArc(paramName, recipeComponent, this.recipe.arc);
-  }
-  _getViewListFromArc(paramName, recipeComponent, arc) {
-    let view = this._getViewFromArc(paramName, recipeComponent, arc);
-    let viewList = view ? view.toList() : null;
-    if (viewList)
-      return viewList.map(v => v.rawData.name).join(", ");
-  }
-  _getViewFromArc(paramName, recipeComponent, arc) {
-    let connection = recipeComponent.findConnectionByName(paramName);
-    if (connection && connection.view) {
-      return arc.viewById(connection.view.id) ||
-             (arc._viewMap && arc._viewMap.get(connection.view));
-    }
+  _formatViewValue(view) {
+    if (view.type.isView) {
+      let viewList = view.toList() || this.relevance.newArc._viewMap.get(view).get();
+      if (viewList)
+        return viewList.map(v => v.rawData.name).join(", ");
+    } else {
+      let viewVar = view.get() || this.relevance.newArc._viewMap.get(view).get();
+      if (viewVar)
+        return viewVar.rawData.name;  // TODO: use type's Entity instead
+      }
   }
 }
 

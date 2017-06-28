@@ -236,6 +236,13 @@ class Arc {
     return views;
   }
 
+  findViewByName(particleName, name) {
+    for (var particle of this.particleViewMaps.values()) {
+      if (particle.clazz.name == particleName)
+        return particle.views.get(name);
+    }
+  }
+
   viewById(id) {
     return this._viewsById.get(id);
   }
