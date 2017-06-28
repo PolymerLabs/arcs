@@ -49,7 +49,7 @@ exports.Choose = particle.define('Choose(in [~a] view, out ~a singleton)\n' +
 exports.SaveList = particle.define('transient SaveList(ephemeral in [~a] inputs, out [~a] list)\n' +
   'Description { \n' +
   '  pattern: Save ${list}\n' +
-  '  list: ${[~a]} from your browsing context\n' +
+  '  list: ${list.type} from your browsing context\n' +
   '}', async views => {
   var inputsView = views.get('inputs');
   let thisParticle = this._particles.filter(p => p.spec.name=="SaveList")[0];

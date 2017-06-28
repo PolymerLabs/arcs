@@ -37,7 +37,7 @@ class Suggestinator {
        let relevance = await this.speculator.speculate(arc, suggestion);
        suggestion.rank = relevance.calcRelevanceScore();
 
-       suggestion.description = new DescriptionGenerator(suggestion, relevance).getDescription();
+       suggestion.descriptinator = new DescriptionGenerator(suggestion, relevance);
      }
 
     suggestions.sort((a,b) => a.rank - b.rank);
