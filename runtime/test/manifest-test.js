@@ -48,11 +48,11 @@ describe('manifest', function() {
     assert(recipe);
     assert.equal(recipe.views.length, 1);
     assert.equal(recipe.viewConnections.length, 2);
-    assert.equal(recipe.toString(`recipe recipe0
+    assert.equal(recipe.toString(), `recipe undefined
   map as view0
   P1 as particle0
     x -> view0
-  P2 as particle0
+  P2 as particle1
     x -> view0`);
   });
 });

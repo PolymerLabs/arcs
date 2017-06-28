@@ -377,7 +377,7 @@ class Recipe {
       let localName = particle.localName;
       if (!localName) {
         do {
-          localName = `particle${i}`;
+          localName = `particle${i++}`;
         } while (names.has(localName));
       }
       nameMap.set(particle, localName);
@@ -388,7 +388,7 @@ class Recipe {
       let localName = view.localName;
       if (!localName) {
         do {
-          localName = `view${i}`;
+          localName = `view${i++}`;
         } while (names.has(localName));
       }
       nameMap.set(view, localName);
@@ -403,6 +403,7 @@ class Recipe {
   toString() {
     let nameMap = this._makeLocalNameMap();
     let result = [];
+    let name = undefined;
     // TODO: figure out where recipe names come from
     result.push(`recipe ${name}`);
     for (let view of this.views) {
