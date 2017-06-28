@@ -111,9 +111,9 @@ SpaceTagList
 
 ParticleRef
   = id:id tags:SpaceTagList?
-  { return {id, tags}; }
+  { return {id, tags: tags || []}; }
   / name:upperIdent tags:SpaceTagList?
-  { return {name, tags}; }
+  { return {name, tags: tags || []}; }
   / tags:TagList
   { return {tags}; }
 

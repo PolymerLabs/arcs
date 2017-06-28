@@ -48,5 +48,11 @@ describe('manifest', function() {
     assert(recipe);
     assert.equal(recipe.views.length, 1);
     assert.equal(recipe.viewConnections.length, 2);
+    assert.equal(recipe.toString(`recipe recipe0
+  map as view0
+  P1 as particle0
+    x -> view0
+  P2 as particle0
+    x -> view0`);
   });
 });
