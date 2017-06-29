@@ -56,7 +56,9 @@ defineParticle(({DomParticle}) => {
         <div seller>{{seller}}</div>
         <div slotid$="{{itemSlotId}}"></div>
       </div>
-      <div col1></div>
+      <div col1>
+        <img src="{{image}}">
+      </div>
     </div>
   </div>
 </template>
