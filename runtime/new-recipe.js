@@ -86,7 +86,10 @@ class Particle extends Node {
     particle._tags = [...this._tags];
     particle._providedSlots = this._providedSlots.map(slotConn => slotConn.clone(particle, cloneMap));
     particle._consumedSlots = this._consumedSlots.map(slotConn => slotConn.clone(particle, cloneMap));
-    Object.keys(this._connections).forEach(key => particle._connections[key] = this._connections[key].clone(particle, cloneMap));
+    Object.keys(this._connections).forEach(key => {
+      particle._connections[key] = this._connections[key].clone(particle, cloneMap);
+      cloneMap.set(this._connections[key], particle._connections[key]);
+    });
     particle._unnamedConnections = this._unnamedConnections.map(connection => connection.clone(particle, cloneMap));
 
     return particle;
@@ -253,7 +256,7 @@ class View extends Node {
     let result = [];
     result.push(this.create ? 'create' : 'map');
     if (this.id) {
-      result.push(`'${id}'`);
+      result.push(`'${this.id}'`);
     }
     result.push(...this.tags);
     result.push(`as ${(nameMap && nameMap.get(this)) || this.localName}`);
@@ -705,21 +708,21 @@ class Walker extends Strategizer.Walker {
     for (var particle of recipe.particles) {
       if (this.onParticle) {
         var result = this.onParticle(recipe, particle);
-        if (result)
+        if (result && (result.constructor != Array || result.length > 0))
           updateList.push({continuation: result, context: particle});
       }
     }
     for (var viewConnection of recipe.viewConnections) {
       if (this.onViewConnection) {
         var result = this.onViewConnection(recipe, viewConnection);
-        if (result)
+        if (result && (result.constructor != Array || result.length > 0))
           updateList.push({continuation: result, context: viewConnection});
       }
     }
     for (var view of recipe.views) {
       if (this.onView) {
         var result = this.onView(recipe, view);
-        if (result)
+        if (result && (result.constructor != Array || result.length > 0))
           updateList.push({continuation: result, context: view});
       }
     }

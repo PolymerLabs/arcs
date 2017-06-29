@@ -6,6 +6,7 @@
 // http://polymer.github.io/PATENTS.txt
 
 let {Strategy, Strategizer} = require('../strategizer/strategizer.js');
+var assert = require("assert");
 let oldRecipe = require('./recipe.js');
 let Recipe = require('./new-recipe.js');
 
@@ -98,13 +99,21 @@ class AssignViewsByTagAndType extends Strategy {
           let view = viewConnection.view;
           if (view.isResolved())
             return;
+          if (view.type) {
+            // TODO: Handle template types (currently simply overrides with the view's type).
+            // Once handled, assert that viewConnection.type is either undefined or same as view.type.
+            viewConnection.type = view.type;
+          } else if (viewConnection.type) {
+            viewConnection.connectToView(view);
+          }
           if (view.type == undefined)
             return;
+          // TODO: verify that same Arc's view is not assigned to different connections' views.
           return arc.findViews(view.type, view.tags).map(newView =>
             ((recipe, viewConnection) => viewConnection.view.id = newView.id));
         }
       }
-    }(), this);
+    }(Recipe.Walker.ApplyAll), this);
 
     return { results, generate: null };
   }
