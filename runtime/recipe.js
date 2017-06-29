@@ -127,8 +127,8 @@ class NewRecipeBuilder {
   }
   connectSpec(name, spec) {
     var viewConnection = this.currentParticle.addConnectionName(name);
-    viewConnection._type = runtime.internals.Type.fromLiteral(spec.typeName);
-    viewConnection._direction = spec.direction;
+    viewConnection.type = runtime.internals.Type.fromLiteral(spec.typeName);
+    viewConnection.direction = spec.direction;
     if (spec.mustCreate) {
       var view = this.recipe.newView();
       view._create = true;
@@ -149,6 +149,7 @@ class NewRecipeBuilder {
     var view = this.constraints[constraintName];
     if (!view) {
       var view = this.recipe.newView();
+      view.constraintName = constraintName;
       this.constraints[constraintName] = view;
     }
     var viewConnection = this.currentParticle.addConnectionName(name);

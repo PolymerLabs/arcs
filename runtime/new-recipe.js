@@ -115,6 +115,7 @@ class View extends Node {
     this._id = undefined;
     this._tags = [];
     this._type = undefined;
+    this._constraintName = undefined;
     this._create = false;
     this._connections = [];
   }
@@ -124,6 +125,7 @@ class View extends Node {
     view._id = this._id;
     view._tags = [...this._tags];
     view._type = this._type;
+    view._constraintName = this._constraintName;
     view._create = this._create;
 
     // the connections are re-established when Particles clone their
@@ -139,6 +141,8 @@ class View extends Node {
   get id() { return this._id; }
   set id(id) { this._id = id; }
   get create() { return this._create; }
+  get constraintName() { return this._constraintName};
+  set constraintName(constraintName) { this._constraintName = constraintName; }
   set create(create) { this._create = create; }
   get connections() { return this._connections } // ViewConnection*
 
