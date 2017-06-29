@@ -58,6 +58,7 @@ class Strategizer {
     generated = [].concat(...generated).map(({result}) => result);
 
     record.totalGenerated = generated.length;
+    record.generated = generated.toString();
 
     // Evalute
     if (generated.length > 0 && this._evaluators.length == 0) {

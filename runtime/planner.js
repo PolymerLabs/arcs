@@ -100,6 +100,31 @@ class AssignViewsByTagAndType extends Strategy {
   }
 }
 
+class AssignViewByConstraintName extends Strategy {
+  constructor(arc) {
+    super();
+    this.arc = arc;
+  }
+  async generate(strategizer) {
+    var arc = this.arc;
+    var results = Recipe.over(strategizer.generated, new class extends Recipe.Walker {
+      onViewConnection(recipe, viewConnection) {
+        if (viewConnection.view) {
+          let view = viewConnection.view;
+          if (view.isResolved())
+            return;
+          if (view.constraintName == undefined)
+            return;
+          let newView = arc.findViewByName(view.constraintName);
+          return (recipe, viewConnection) => viewConnection.view.id = newView.id;
+        }
+      }
+    }(strategizer));
+
+    return { results, generate: null };
+  }
+}
+
 class CreateViews extends Strategy {
   // TODO: move generation to use an async generator.
   async generate(strategizer) {
@@ -127,7 +152,8 @@ class Planner {
       new InitPopulation(),
       new CreateViews(),
       new ResolveParticleByName(arc._loader),
-      new AssignViewsByTagAndType(arc)];
+      new AssignViewsByTagAndType(arc),
+      new AssignViewByConstraintName(arc)];
     let strategizer = new Strategizer(strategies, [], {
       maxPopulation: 100,
       generationSize: 1000,
@@ -147,5 +173,5 @@ class Planner {
   var a = new Arc({id: "test-plan-arc", loader});
   var p = new Planner();
   var population = await(p.plan(a));
-  console.log(population.length);
+  console.log(`Population length: ${population.length}`);
 })();

@@ -220,6 +220,11 @@ class Arc {
     return this._viewsById.get(id);
   }
 
+  findViewByName(viewName) {
+    for (let view of this._viewsById.values())
+      if (view.name === viewName)
+        return view;
+  }
   addView(view) {
     this._viewsById.set(view.id, view);
     this._viewTags.set(view, new Set());
