@@ -65,7 +65,7 @@ defineParticle(({DomParticle}) => {
         <div><button events key="{{index}}" on-click="_onChooseValue">Add</button></div>
       </div>
       <div col1>
-        <img src="../assets/products/book.png">
+        <img src="{{image}}">
       </div>
     </div>
   </div>

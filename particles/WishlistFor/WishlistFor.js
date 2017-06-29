@@ -16,7 +16,8 @@ defineParticle(({Particle}) => {
       category: "Books",
       seller: "gutenburger.com",
       price: "$14.50",
-      shipDays: 7
+      shipDays: 7,
+      image: "../assets/products/draw-book.png"
     },
     {
       name: "Arduino Starter Pack",
@@ -24,13 +25,15 @@ defineParticle(({Particle}) => {
       seller: "arduino.cc",
       //price: "$64.95"
       //shipDays: 42
+      image: "../assets/products/arduino.png"
     },
     {
       name: "Field Hockey Stick",
       category: "Sports & Outdoor",
       seller: "denile.com",
       price: "$29.00",
-      shipDays: 3
+      shipDays: 3,
+      image: "../assets/products/hockeystick.png"
     }
   ];
 

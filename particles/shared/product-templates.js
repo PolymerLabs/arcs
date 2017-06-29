@@ -21,8 +21,11 @@ var productStyles = `
     height: 128px;
     box-sizing: border-box;
     text-align: center;
-    background: url(../assets/products/book.png) no-repeat center;
     background-size: contain;
+  }
+  ${host} > x-list [col1] > img {
+    max-width: 148px;
+    max-height: 128px;
   }
   ${host} > x-list [name] {
     font-size: 0.95em;
