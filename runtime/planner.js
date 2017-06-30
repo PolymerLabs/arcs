@@ -65,11 +65,12 @@ class ResolveParticleByName extends Strategy {
               // TODO: don't just overwrite here, check that the types
               // are compatible if one already exists.
               connection.type = speccedConnection.type;
+              connection.direction = speccedConnection.direction;
             }
           }
         }
       }
-    }(strategizer, Recipe.Walker.ApplyAll));
+    }(Recipe.Walker.ApplyAll), this);
 
     return { results, generate: null };
   }
@@ -94,7 +95,7 @@ class AssignViewsByTagAndType extends Strategy {
             ((recipe, viewConnection) => viewConnection.view.id = newView.id));
         }
       }
-    }(strategizer));
+    }(), this);
 
     return { results, generate: null };
   }
@@ -114,7 +115,7 @@ class CreateViews extends Strategy {
           return (recipe, view) => view.create = true;
         }
       }
-    }(strategizer, Recipe.Walker.ApplyAll));
+    }(Recipe.Walker.ApplyAll), this);
 
     return { results, generate: null };
   }
@@ -148,4 +149,7 @@ class Planner {
   var p = new Planner();
   var population = await(p.plan(a));
   console.log(population.length);
+  for (var p of population) {
+    console.log(p.result.toString());
+  }
 })();
