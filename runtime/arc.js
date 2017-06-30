@@ -121,8 +121,8 @@ class Arc {
         renderMap: new Map(),
         views: new Map()
       };
-      p.exposeMap.forEach((view, slotid) => arc.exposeMap.set(slotid, view ? view.clone() : view));
-      p.renderMap.forEach((view, slotid) => arc.renderMap.set(slotid, view ? view.clone() : view));
+      p.exposeMap.forEach((view, slotid) => cloneParticleSpec.exposeMap.set(slotid, view ? view.clone() : view));
+      p.renderMap.forEach((view, slotid) => cloneParticleSpec.renderMap.set(slotid, view ? view.clone() : view));
       p.views.forEach(v => cloneParticleSpec.views.set(v.name, v.clone()));
       arc.particles.push(cloneParticleSpec);
     });
