@@ -219,10 +219,8 @@ class ViewConnection extends Connection {
   toString(nameMap) {
     let result = [];
     result.push(this.name || '*');
-    if (['in', 'out', 'inout'].indexOf(this.direction) == -1)
-      result.push(`{${this.direction}}`)
-    else
-      result.push({'in': '<-', 'out': '->', 'inout': '='}[this.direction]);
+    // TODO: better deal with unspecified direction.
+    result.push({'in': '<-', 'out': '->', 'inout': '='}[this.direction] || '=');
     if (this.view) {
       result.push(`${(nameMap && nameMap.get(this.view)) || this.view.localName}`);
     }
@@ -348,13 +346,11 @@ class Recipe {
   toString() {
     let nameMap = this._makeLocalNameMap();
     let result = [];
-    let name = undefined;
     // TODO: figure out where recipe names come from
-    result.push(`recipe ${name}`);
+    result.push(`recipe`);
     for (let view of this.views) {
       result.push(view.toString(nameMap).replace(/^|(\n)/g, '$1  '));
     }
-    // TODO: particle, name map. pass to the particle toString?
     for (let particle of this.particles) {
       result.push(particle.toString(nameMap).replace(/^|(\n)/g, '$1  '));
     }

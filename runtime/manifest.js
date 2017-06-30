@@ -14,7 +14,7 @@ const Recipe = require('./new-recipe.js');
 
 class Manifest {
   constructor() {
-    this._recipes = {};
+    this._recipes = [];
   }
   get recipes() {
     return this._recipes;
@@ -39,31 +39,46 @@ class Manifest {
   }
   static _processRecipe(manifest, recipeItem) {
     let recipe = manifest._newRecipe(recipeItem.name);
-    let viewItems = recipeItem.items.filter(item => item.kind == 'view');
-    let particleItems = recipeItem.items.filter(item => item.kind == 'particle');
+    let items = {
+      views: recipeItem.items.filter(item => item.kind == 'view'),
+      byView: new Map(),
+      particles: recipeItem.items.filter(item => item.kind == 'particle'),
+      byParticle: new Map(),
+      byName: new Map(),
+    };
 
-    for (let item of viewItems) {
+    for (let item of items.views) {
       let view = recipe.newView();
       if (item.ref.id) {
         view.id = item.ref.id;
       }
       view.tags = item.ref.tags;
+      if (item.name) {
+        assert(!items.byName.has(item.name));
+        view.localName = item.name;
+        items.byName.set(item.name, {item: item, view: view});
+      }
+      items.byView.set(view, item);
     }
 
-    let particles = new Map();
-    // TODO: deal with ambiguity
+    // TODO: disambiguate.
     let particlesByName = {};
-    for (let item of particleItems) {
+    for (let item of items.particles) {
       let particle = recipe.newParticle(item.ref.name);
       particle.tags = item.ref.tags;
-      particles.set(item, particle);
       if (item.ref.name) {
         particlesByName[item.ref.name] = particle;
       }
+      if (item.name) {
+        // TODO: errors.
+        assert(!items.byName.has(item.name));
+        particle.localName = item.name;
+        items.byName.set(item.name, {item: item, particle: particle});
+      }
+      items.byParticle.set(particle, item);
     }
 
-    for (let item of particleItems) {
-      let particle = particles.get(item);
+    for (let [particle, item] of items.byParticle) {
       for (let connectionItem of item.connections) {
         let connection;
         if (connectionItem.param == '*') {
@@ -78,11 +93,28 @@ class Manifest {
         connection.tags = connectionItem.target.tags;
         connection.direction = {'->': 'out', '<-': 'in', '=': 'inout'}[connectionItem.dir];
 
+        let targetView;
+        let targetParticle;
+
+        if (connectionItem.target.name) {
+          let entry = items.byName.get(connectionItem.target.name);
+          assert(entry, `could not find ${connectionItem.target.name}`);
+          if (entry.item.kind == 'view') {
+            targetView = entry.view;
+          } else if (entry.item.kind == 'particle') {
+            targetParticle = entry.particle;
+          } else {
+            assert(false, `did not expect ${entry.item.kind}`);
+          }
+        }
+
         if (connectionItem.target.particle) {
-          let targetParticle = particlesByName[connectionItem.target.particle];
+          targetParticle = particlesByName[connectionItem.target.particle];
           // TODO: error reporting
           assert(targetParticle);
+        }
 
+        if (targetParticle) {
           let targetConnection;
           if (connectionItem.target.param) {
             targetConnection = targetParticle.connections[connectionItem.target.param];
@@ -95,21 +127,24 @@ class Manifest {
             // TODO: direction?
           }
 
-          let view = targetConnection.view;
-          if (!view) {
+          targetView = targetConnection.view;
+          if (!targetView) {
             // TODO: tags?
-            view = recipe.newView();
-            targetConnection.connectToView(view)
+            targetView = recipe.newView();
+            targetConnection.connectToView(targetView)
           }
-          connection.connectToView(view);
+        }
+
+        if (targetView) {
+          connection.connectToView(targetView);
         }
       }
     }
   }
   _newRecipe(name) {
-    assert(!this._recipes[name]);
+    // TODO: use name
     let recipe = new Recipe();
-    this._recipes[name] = recipe;
+    this._recipes.push(recipe);
     return recipe;
   }
 }

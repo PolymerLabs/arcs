@@ -14,6 +14,15 @@
   function extractIndented(items) {
     return items[1].map(item => item[1]);
   }
+  function optional(result, extract, defaultValue) {
+    if (result != null) {
+      let value = extract(result);
+      if (value != null) {
+        return value;
+      }
+    }
+    return defaultValue == null ? null : defaultValue;
+  }
 }
 
 Manifest
@@ -23,22 +32,20 @@ Manifest
   }
 
 ManifestItem
-  = Recipe / Particle
+  = Recipe
+  / Particle
 
 Particle
   = "particle" whiteSpace name:upperIdent eolWhiteSpace
 
 Recipe
-  = "recipe" whiteSpace name:upperIdent tags:SpaceTagList? eolWhiteSpace items:(Indent (SameIndent RecipeItem)*)?
+  = "recipe" name:(whiteSpace upperIdent)? tags:(whiteSpace TagList)? eolWhiteSpace items:(Indent (SameIndent RecipeItem)*)?
   {
-    if (items) {
-      items = extractIndented(items);
-    }
     return {
       kind: "recipe",
-      name,
-      tags: tags || [],
-      items: items || [],
+      name: optional(name, name => name[1], null),
+      tags: optional(tags, tags => tags[1], []),
+      items: optional(items, extractIndented, []),
     };
   }
 
@@ -47,20 +54,20 @@ RecipeItem
   / RecipeView
 
 Name
-  = whiteSpace "as" whiteSpace name:lowerIdent whiteSpace?
+  = "as" whiteSpace name:lowerIdent
   {
     return name;
   }
 
 RecipeParticle
-  = ref:ParticleRef name:Name? eolWhiteSpace connections:(Indent (SameIndent RecipeParticleConnection)*)?
+  = ref:ParticleRef name:(whiteSpace Name)? eolWhiteSpace connections:(Indent (SameIndent RecipeParticleConnection)*)?
   {
     if (connections) {
       connections = extractIndented(connections);
     }
     return {
       kind: 'particle',
-      name,
+      name: optional(name, name => name[1], null),
       ref,
       connections: connections || [],
     };
@@ -76,25 +83,37 @@ RecipeParticleConnection
     };
   }
 
+  //  or view-name, or particle-name
 ConnectionTarget
-  = particle:upperIdent param:("." lowerIdent)? tags:SpaceTagList?
+  = ident:(upperIdent / lowerIdent) param:("." lowerIdent)? tags:(whiteSpace TagList)?
   {
+    let particle = null;
+    let name = null;
+    if (ident) {
+      if (/^[A-Z]/.test(ident)) {
+        particle = ident;
+      } else {
+        name = ident;
+      }
+    }
+
     return {
       particle,
-      param: param ? param[1] : null,
-      tags: tags || [],
+      name,
+      param: optional(param, param => param[1], null),
+      tags: optional(tags, tags => tags[1], []),
     }
   }
   / tags:TagList
   { return {tags}; }
 
 RecipeView
-  = "map" whiteSpace ref:ViewRef name:Name? eolWhiteSpace
+  = "map" ref:(whiteSpace ViewRef)? name:(whiteSpace Name)? eolWhiteSpace
   {
     return {
       kind: 'view',
-      name,
-      ref
+      name: optional(name, name => name[1], null),
+      ref: optional(ref, ref => ref[1], {tags: []})
     }
   }
 
@@ -102,12 +121,12 @@ Tag
   = "#" [a-zA-Z][a-zA-Z0-9_]* {return text()}
 
 TagList
-  = tags:Tag+
-  { return tags; }
+  = head:Tag tail:(whiteSpace TagList)?
+  { return [head, ...(tail && tail[1] || [])]; }
 
 SpaceTagList
   = whiteSpace tags:TagList
-  { return tags}
+  { return tags; }
 
 ParticleRef
   = id:id tags:SpaceTagList?
