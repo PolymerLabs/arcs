@@ -55,7 +55,7 @@ class Strategizer {
     }
 
     generated = generated.map(({results}) => results);
-    generated = [].concat(...generated).map(({result}) => result);
+    generated = [].concat(...generated);
 
     record.totalGenerated = generated.length;
 
@@ -136,10 +136,46 @@ class Strategizer {
     return mergedEvaluations;
   }
 
-  create(recipe, score) {
-    return {result: recipe, score};
+  static over(results, walker, strategy) {
+    walker.onStrategy(strategy);
+    results.forEach(result => {
+      walker.onResult(result);
+      walker.onResultDone();
+    });
+    walker.onStrategyDone();
+    return walker.descendants;
   }
 }
+
+class Walker {
+  constructor() {
+    this.descendants = [];
+  }
+
+  onStrategy(strategy) {
+    this.currentStrategy = strategy;
+  }
+
+  onResult(result) {
+    this.currentResult = result;
+  }
+
+  createDescendant(result) {
+    assert(this.currentResult, "no current result");
+    assert(this.currentStrategy, "no current strategy");
+    this.descendants.push({result, score: this.score, parent: this.currentResult, strategy: this.currentStrategy });
+  }
+
+  onResultDone() {
+    this.currentResult = undefined;
+  }
+
+  onStrategyDone() {
+    this.currentStrategy = undefined;
+  }
+}
+
+Strategizer.Walker = Walker;
 
 // TODO: Doc call convention, incl strategies are stateful.
 class Strategy {

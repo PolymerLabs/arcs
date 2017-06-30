@@ -6,6 +6,7 @@
 // http://polymer.github.io/PATENTS.txt
 
 var assert = require('assert');
+var Strategizer = require('../strategizer/strategizer.js').Strategizer;
 
 class Node {
   constructor(recipe) {
@@ -218,7 +219,10 @@ class ViewConnection extends Connection {
   toString(nameMap) {
     let result = [];
     result.push(this.name || '*');
-    result.push({'in': '<-', 'out': '->', 'inout': '='}[this.direction]);
+    if (['in', 'out', 'inout'].indexOf(this.direction) == -1)
+      result.push(`{${this.direction}}`)
+    else
+      result.push({'in': '<-', 'out': '->', 'inout': '='}[this.direction]);
     if (this.view) {
       result.push(`${(nameMap && nameMap.get(this.view)) || this.view.localName}`);
     }
@@ -299,67 +303,8 @@ class Recipe {
     return recipe;
   }
 
-  static over(recipes, walker) {
-    var results = [];
-    for (var recipe of recipes) {
-      var updateList = [];
-
-      // update phase - walk through recipe and call onRecipe,
-      // onView, etc.
-
-      walker.onRecipe && walker.onRecipe(recipe);
-      for (var particle of recipe.particles) {
-        if (walker.onParticle) {
-          var result = walker.onParticle(recipe, particle);
-          if (result)
-            updateList.push({continuation: result, context: particle});
-        }
-      }
-      for (var viewConnection of recipe.viewConnections) {
-        if (walker.onViewConnection) {
-          var result = walker.onViewConnection(recipe, viewConnection);
-          if (result)
-            updateList.push({continuation: result, context: viewConnection});
-        }
-      }
-      for (var view of recipe.views) {
-        if (walker.onView) {
-          var result = walker.onView(recipe, view);
-          if (result)
-            updateList.push({continuation: result, context: view});
-        }
-      }
-
-      // application phase - apply updates and track results
-
-      var newRecipes = [];
-      if (updateList.length) {
-        if (walker.tactic == Recipe.Walker.ApplyAll) {
-          var cloneMap = new Map();
-          var newRecipe = recipe.clone(cloneMap);
-          updateList.forEach(({continuation, context}) => {
-            if (typeof continuation == 'function')
-              continuation = [continuation];
-            continuation.forEach(f => {
-              f(newRecipe, cloneMap.get(context));
-            });
-          });
-          newRecipes.push(newRecipe);
-        }
-      }
-
-      // commit phase - output results.
-
-      if (walker.onRecipeDone) {
-        for (var newRecipe of newRecipes) {
-          var result = walker.onRecipeDone(newRecipe, updateList.length > 0);
-          if (result)
-            results.push(result);
-        }
-      }
-    }
-
-    return results;
+  static over(results, walker, strategy) {
+    return Strategizer.over(results, walker, strategy);
   }
 
   _makeLocalNameMap() {
@@ -417,14 +362,66 @@ class Recipe {
   }
 }
 
-class Walker {
-  constructor(strategizer, tactic) {
-    this.strategizer = strategizer;
+class Walker extends Strategizer.Walker {
+  constructor(tactic) {
+    super();
     this.tactic = tactic;
   }
-  onRecipeDone(recipe, isCloned) {
-    if (isCloned)
-      return this.strategizer.create(recipe, this.score);
+
+  onResult(result) {
+    super.onResult(result);
+    var recipe = result.result;
+    var updateList = [];
+
+    // update phase - walk through recipe and call onRecipe,
+    // onView, etc.
+
+    this.onRecipe && this.onRecipe(recipe, result);
+    for (var particle of recipe.particles) {
+      if (this.onParticle) {
+        var result = this.onParticle(recipe, particle);
+        if (result)
+          updateList.push({continuation: result, context: particle});
+      }
+    }
+    for (var viewConnection of recipe.viewConnections) {
+      if (this.onViewConnection) {
+        var result = this.onViewConnection(recipe, viewConnection);
+        if (result)
+          updateList.push({continuation: result, context: viewConnection});
+      }
+    }
+    for (var view of recipe.views) {
+      if (this.onView) {
+        var result = this.onView(recipe, view);
+        if (result)
+          updateList.push({continuation: result, context: view});
+      }
+    }
+
+    // application phase - apply updates and track results
+
+    var newRecipes = [];
+    if (updateList.length) {
+      if (this.tactic == Recipe.Walker.ApplyAll) {
+        var cloneMap = new Map();
+        var newRecipe = recipe.clone(cloneMap);
+        updateList.forEach(({continuation, context}) => {
+          if (typeof continuation == 'function')
+            continuation = [continuation];
+          continuation.forEach(f => {
+            f(newRecipe, cloneMap.get(context));
+          });
+        });
+        newRecipes.push(newRecipe);
+      }
+    }
+
+    // commit phase - output results.
+
+    for (var newRecipe of newRecipes) {
+      var result = this.createDescendant(newRecipe);
+    }
   }
 }
 

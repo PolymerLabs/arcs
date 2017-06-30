@@ -8,9 +8,6 @@
 let {Strategizer, Strategy} = require('./strategizer.js');
 
 class Seed extends Strategy {
-  async activate(strategizer) {
-    return {generate: strategizer.generation == 0 ? 1 : 0, evaluate: 0};
-  }
   async generate(strategizer, n) {
     var results = strategizer.generation == 0 ? [{result: '', score: 1}] : [];
     return {results, generate: null};
@@ -18,9 +15,6 @@ class Seed extends Strategy {
 }
 
 class Grow extends Strategy {
-  async activate(strategizer) {
-    return {generate: strategizer.population.length > 0 ? 1: 0, evaluate: 0};
-  }
   async generate(strategizer, n) {
     if (strategizer.population.length == 0)
       return {results: [], generate: null};
@@ -28,7 +22,7 @@ class Grow extends Strategy {
     let population = strategizer.population;
     let results = [];
     for (let i = 0; i < n; i++) {
-      let source = population[Math.random() * population.length|0];
+      let source = population[Math.random() * population.length|0].result;
       let split = Math.random() * (source.length + 1) |0;
       let str = source.substr(0, split) + alphabet[Math.random() * alphabet.length|0] + source.substr(split);
       results.push({result: str, score: 1});
@@ -38,15 +32,12 @@ class Grow extends Strategy {
 }
 
 class Cross extends Strategy {
-  async activate(strategizer) {
-    return {generate: strategizer.population.length > 0 ? 1: 0, evaluate: 0};
-  }
   async generate(strategizer, n) {
     let population = strategizer.population.filter(str => str.length > 0);
     let results = [];
     while (population.length > 0 && results.length < n) {
-      let p1 = population[Math.random() * population.length|0];
-      let p2 = population[Math.random() * population.length|0];
+      let p1 = population[Math.random() * population.length|0].result;
+      let p2 = population[Math.random() * population.length|0].result;
       let str = '';
       for (let i = 0; i < Math.min(p1.length, p2.length); i++) {
         str += Math.random() > 0.5 ? p1[i] : p2[i];
@@ -58,15 +49,11 @@ class Cross extends Strategy {
 }
 
 class Mutate extends Strategy {
-  async activate(strategizer) {
-    // Returns estimated ability to generate/evaluate.
-    return {generate: strategizer.population.length > 0 ? 1: 0, evaluate: 0};
-  }
   async generate(strategizer, n) {
     let population = strategizer.population.filter(str => str.length > 2);
     let results = [];
     while (population.length > 0 && results.length < n) {
-      let source = population[Math.random() * population.length|0];
+      let source = population[Math.random() * population.length|0].result;
       let str = source.split('');
       let i = Math.random() * source.length |0;
       let j = Math.random() * source.length |0;
@@ -85,14 +72,12 @@ class Eval extends Strategy {
     super();
     this._target = target;
   }
-  async activate(strategizer) {
-    return {generate: 0, evaluate: 1};
-  }
   async evaluate(strategizer, individuals) {
     console.log(individuals);
-    return individuals.map(str => {
+    return individuals.map(result => {
       // Shrug. It seems to work. It basically penalises higher edit distances, but gives
       // credit for characters that could be moved somewhere else.
+      let str = result.result;
       let target = this._target;
       let lev = ed.levenshtein(str, target, () => 0.5, () => 1, (x, y) => x == y ? 0 : 1);
       let n = -lev.distance;
@@ -128,7 +113,7 @@ let strategizer = new Strategizer([new Seed(), new Grow(), new Mutate(), new Cro
   while (true) {
     await strategizer.generate();
     console.log(strategizer.population[0]);
-    if (strategizer.population[0] == target) {
+    if (strategizer.population[0].result == target) {
       return;
     }
   }
