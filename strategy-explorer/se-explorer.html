@@ -1,0 +1,21 @@
+<link rel="import" href="bower_components/polymer/polymer.html">
+<link rel="import" href="se-population.html"></link>
+
+<dom-module id='se-explorer'>
+  <template>
+    <style>
+      .generation-box {
+        border: 1px solid black;
+      }
+    </style>
+    <div>
+      <template is='dom-repeat' items='{{results}}'>
+        <div class='generation-box'><se-population population={{item.population}}></se-population></div>
+      </template>
+    </div>
+  </template>
+
+  <script>
+    Polymer({is: 'se-explorer'});
+  </script>
+</dom-module>

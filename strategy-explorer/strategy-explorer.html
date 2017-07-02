@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+
+<script src='../runtime/browser/build/planner.js'></script>
+
+<link rel="import" href="se-explorer.html"></link>
+
+<se-explorer></se-explorer>
+
+<script>
+function preparePopulation(population) {
+  population = population.map(({ result, score, parent, strategy }) => ({ result, score, parent, strategy}));
+  population.forEach((item, i) => item.id = i);
+  population.forEach(item => {
+    if (item.parent)
+      item.parent = item.parent.id;
+    item.result = item.result.toString();
+    if (item.strategy)
+      item.strategy = item.strategy.constructor.name;
+  });
+  return {population: population};
+}
+
+(async () => {
+  var loader = new Loader();
+  systemParticles.register(loader);
+  var a = new Arc({id: "test-plan-arc", loader});
+  var p = new Planner();
+  p.init(a);
+  var result = [await p.generate(), await p.generate(), await p.generate()].map(preparePopulation);
+  document.querySelector('se-explorer').results = result;
+})();
+</script>
