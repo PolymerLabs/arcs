@@ -1,0 +1,25 @@
+<link rel="import" href="bower_components/polymer/polymer.html">
+
+<dom-module id='se-population'>
+  <template>
+    <style>
+    .recipe-container {
+      display: flex;
+    }
+
+    .recipe-box {
+      border: 1px solid red;
+      white-space: pre;
+    }
+    </style>
+    <div class='recipe-container'>
+      <template is='dom-repeat' items='{{population}}'>
+        <div class='recipe-box'>{{item.result}}</div>
+      </template>
+    </div>
+  </template>
+
+  <script>
+    Polymer({is: 'se-population'});
+  </script>
+</dom-module>

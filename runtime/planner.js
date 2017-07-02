@@ -8,9 +8,6 @@
 let {Strategy, Strategizer} = require('../strategizer/strategizer.js');
 let oldRecipe = require('./recipe.js');
 let Recipe = require('./new-recipe.js');
-let Arc = require('./arc.js');
-let Loader = require('./loader.js');
-let systemParticles = require('./system-particles.js');
 
 class InitPopulation extends Strategy {
   async generate(strategizer) {
@@ -123,33 +120,34 @@ class CreateViews extends Strategy {
 
 
 class Planner {
-  async plan(arc) {
+  init(arc) {
     let strategies = [
       new InitPopulation(),
       new CreateViews(),
       new ResolveParticleByName(arc._loader),
       new AssignViewsByTagAndType(arc)];
-    let strategizer = new Strategizer(strategies, [], {
+    this.strategizer = new Strategizer(strategies, [], {
       maxPopulation: 100,
       generationSize: 1000,
       discardSize: 20,
     });
+  }
+
+  async generate() {
+    var log = await this.strategizer.generate();
+    console.log(log);
+    return this.strategizer.generated;
+  }
+
+  async plan(arc) {
+    init(arc);
     // TODO: Repeat until...?
-    console.log(await strategizer.generate());
-    console.log(await strategizer.generate());
-    console.log(await strategizer.generate());
-    return strategizer.population; //.filter(possiblePlan => possiblePlan.ready);
+
+    await this.generate();
+    await this.generate();
+    await this.generate();
+    return this.strategizer.population; //.filter(possiblePlan => possiblePlan.ready);
   }
 }
 
-(async () => {
-  var loader = new Loader();
-  systemParticles.register(loader);
-  var a = new Arc({id: "test-plan-arc", loader});
-  var p = new Planner();
-  var population = await(p.plan(a));
-  console.log(population.length);
-  for (var p of population) {
-    console.log(p.result.toString());
-  }
-})();
+module.exports = Planner;

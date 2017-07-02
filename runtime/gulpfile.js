@@ -26,6 +26,7 @@ const sources = {
     'vr-demo/vr-demo.js',
     'particle-ui-tester/particle-ui-tester.js',
     'worker-entry.js',
+    'planner.js'
   ],
 };
 
@@ -100,4 +101,3 @@ gulp.task('default', ['build', 'test']);
 gulp.task('dev', function() {
   gulp.watch(['**', '!browser/build/**', '!node_modules'], ['webpack']);
 });
-
