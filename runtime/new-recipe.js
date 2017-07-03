@@ -8,6 +8,43 @@
 var assert = require('assert');
 var Strategizer = require('../strategizer/strategizer.js').Strategizer;
 
+function compareNulls(o1, o2) {
+  if (o1 == o2) return 0;
+  if (o1 == null) return -1;
+  return 1;
+}
+function compareStrings(s1, s2) {
+  if (s1 == null || s2 == null) return compareNulls(s1, s2);
+  return s1.localeCompare(s2);
+}
+function compareNumbers(n1, n2) {
+  if (n1 == null || n2 == null) return compareNulls(n1, n2);
+  return n1 - n2;
+}
+function compareArrays(a1, a2, compare) {
+  assert(a1 != null);
+  assert(a2 != null);
+  if (a1.length != a2.length) return compareNumbers(a1.length, a2.length);
+  for (let i = 0; i < a1.length; i++) {
+    let result;
+    if ((result = compare(a1[i], a2[i])) != 0) return result;
+  }
+  return 0;
+}
+function compareObjects(o1, o2, compare) {
+  let keys = Object.keys(o1);
+  let result;
+  if ((result = compareNumbers(keys.length, Object.keys(o2).length)) != 0) return result;
+  for (let key of keys) {
+    if ((result = compare(o1[key], o2[key])) != 0) return result;
+  }
+  return 0;
+}
+function compareComparables(o1, o2) {
+  if (o1 == null || o2 == null) return compareNulls(o1, o2);
+  return o1.compareTo(o2);
+}
+
 class Node {
   constructor(recipe) {
     assert(recipe);
@@ -50,6 +87,45 @@ class Particle extends Node {
 
     return particle;
   }
+
+  normalize() {
+    if (Object.isFrozen(this)) return;
+
+    this._localName = null;
+    this._tags.sort();
+
+    for (let connection of Object.values(this._connections)) {
+      connection.normalize();
+    }
+    for (let connection of this._unnamedConnections) {
+      connection.normalize();
+    }
+
+    let normalizedConnections = {};
+    for (let key of (Object.keys(this._connections).sort())) {
+      let connection = this._connections[key];
+      connection.normalize();
+      normalizedConnections[key] = this._connections[key];
+    }
+    this._connections = normalizedConnections;
+    this._unnamedConnections.sort(compareComparables);
+
+    Object.freeze(this);
+  }
+
+  compareTo(other) {
+    let cmp;
+    if ((cmp = compareStrings(this._id, other._id)) != 0) return cmp;
+    if ((cmp = compareStrings(this._name, other._name)) != 0) return cmp;
+    if ((cmp = compareStrings(this._localName, other._localName)) != 0) return cmp;
+    // TODO: impl?
+    if ((cmp = compareArrays(this._tags, other._tags, compareStrings)) != 0) return cmp;
+    // TODO: slots
+    if ((cmp = compareObjects(this._connections, other._connections, compareComparables)) != 0) return cmp;
+    if ((cmp = compareArrays(this._unnamedConnections, other._unnamedConnections, compareComparables)) != 0) return cmp;
+    return 0;
+  }
+
   get localName() { return this._localName; }
   set localName(name) { this._localName = name; }
   get id() { return this._id; } // Not resolved until we have an ID.
@@ -114,6 +190,7 @@ class View extends Node {
   constructor(recipe) {
     super(recipe);
     this._id = undefined;
+    this._localName = undefined;
     this._tags = [];
     this._type = undefined;
     this._create = false;
@@ -133,12 +210,37 @@ class View extends Node {
     return view;
   }
 
+  normalize() {
+    if (Object.isFrozen(this)) return;
+    this._localName = null;
+    this._tags.sort();
+    // TODO: type?
+    for (let connection of this._connections) {
+      connection.normalize();
+    }
+    this._connections.sort(compareComparables);
+    Object.freeze(this);
+  }
+
+  compareTo(other) {
+    let cmp;
+    if ((cmp = compareStrings(this._id, other._id)) != 0) return cmp;
+    if ((cmp = compareStrings(this._localName, other._localName)) != 0) return cmp;
+    if ((cmp = compareArrays(this._tags, other._tags, compareStrings)) != 0) return cmp;
+    // TODO: type?
+    if ((cmp = compareNumbers(this._create, other._create)) != 0) return cmp;
+    if ((cmp = compareArrays(this._connections, other._connections, compareComparables)) != 0) return cmp;
+    return 0;
+  }
+
   // a resolved View has either an id or create=true
   get tags() { return this._tags; } // only tags owned by the view
   set tags(tags) { this._tags = tags; }
   get type() { return this._type; } // nullable
   get id() { return this._id; }
   set id(id) { this._id = id; }
+  get localName() { return this._localName; }
+  set localName(name) { this._localName = name; }
   get create() { return this._create; }
   set create(create) { this._create = create; }
   get connections() { return this._connections } // ViewConnection*
@@ -182,6 +284,22 @@ class ViewConnection extends Connection {
       viewConnection._view.connections.push(viewConnection);
     }
     return viewConnection;
+  }
+
+  normalize() {
+    if (Object.isFrozen(this)) return;
+    this._tags.sort();
+    Object.freeze(this);
+  }
+
+  compareTo(other) {
+    let cmp;
+    if ((cmp = compareStrings(this._name, other._name)) != 0) return cmp;
+    if ((cmp = compareArrays(this._tags, other._tags, compareStrings)) != 0) return cmp;
+    if ((cmp = compareStrings(this._type, other._type)) != 0) return cmp;
+    if ((cmp = compareStrings(this._direction, other._direction)) != 0) return cmp;
+    throw new Error('Cannot normalize yet, would need to compare views or particles to continue');
+    return 0;
   }
 
   get name() { return this._name; } // Parameter name?
@@ -278,6 +396,19 @@ class Recipe {
       viewConnections.push(...particle._unnamedConnections);
     });
     return viewConnections;
+  }
+
+  normalize() {
+    if (Object.isFrozen(this)) return;
+    for (let particle of this._particles) {
+      particle.normalize();
+    }
+    for (let view of this._views) {
+      view.normalize();
+    }
+    this._particles.sort(compareComparables);
+    this._views.sort(compareComparables);
+    Object.freeze(this);
   }
 
   clone(cloneMap) {
