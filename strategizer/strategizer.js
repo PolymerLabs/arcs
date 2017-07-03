@@ -163,7 +163,9 @@ class Walker {
   createDescendant(result) {
     assert(this.currentResult, "no current result");
     assert(this.currentStrategy, "no current strategy");
-    this.descendants.push({result, score: this.score, parent: this.currentResult, strategy: this.currentStrategy });
+    var score = (this.score || 0) + (this.currentResult.score || 0);
+
+    this.descendants.push({result, score, parent: this.currentResult, strategy: this.currentStrategy });
   }
 
   onResultDone() {

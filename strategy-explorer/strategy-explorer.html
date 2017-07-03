@@ -1,24 +1,56 @@
 <!DOCTYPE html>
 
 <script src='../runtime/browser/build/planner.js'></script>
-
 <link rel="import" href="se-explorer.html"></link>
+<link rel="import" href="se-recipe-view.html"></link>
 
-<se-explorer></se-explorer>
+<style>
+#toplevel {
+  display: flex;
+}
+</style>
 
+<div id='toplevel'>
+  <se-explorer></se-explorer>
+  <se-recipe-view></se-recipe-view>
+</div>
 <script>
+
+var parentMap = new Map();
+var lastID = 0;
+
 function preparePopulation(population) {
-  population = population.map(({ result, score, parent, strategy }) => ({ result, score, parent, strategy}));
-  population.forEach((item, i) => item.id = i);
+  population = population.map(recipe => {
+    let { result, score, parent, strategy } = recipe;
+    return { result, score, parent, strategy, original: recipe };
+  });
+  population.forEach((item) => {
+    item.id = lastID++;
+    parentMap.set(item.original, item.id);
+  });
   population.forEach(item => {
     if (item.parent)
-      item.parent = item.parent.id;
+      item.parent = parentMap.get(item.parent);
+    item.original = undefined;
     item.result = item.result.toString();
     if (item.strategy)
       item.strategy = item.strategy.constructor.name;
   });
-  return {population: population};
+  var populationMap = {};
+  population.forEach(item => {
+    if (populationMap[item.strategy] == undefined)
+      populationMap[item.strategy] = []
+    populationMap[item.strategy].push(item);
+  });
+  var result = {population: []}
+  Object.keys(populationMap).forEach(strategy => {
+    result.population.push({strategy: strategy, recipes: populationMap[strategy]});
+  })
+  console.log(result)
+  return result;
 }
+
+document.idMap = new Map();
 
 (async () => {
   var loader = new Loader();
