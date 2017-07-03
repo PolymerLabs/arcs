@@ -81,4 +81,34 @@ describe('manifest', function() {
           x -> thingView
           y -> view0`);
   });
+  // TODO: move these tests to new-recipe tests.
+  it('can normalize simple recipes', () => {
+    let manifest = Manifest.parse(`
+      recipe
+        map as v1
+        P1
+          x -> v1
+        P2
+      recipe
+        map as someView
+        P2
+        P1
+          x -> someView
+        `);
+    let [recipe1, recipe2] = manifest.recipes;
+    recipe1.normalize();
+    recipe2.normalize();
+    assert.deepEqual(recipe1.toString(), recipe2.toString());
+  });
+  it('cannot normalize recipes with interdependent ordering of views and particles', () => {
+    let manifest = Manifest.parse(`
+      recipe
+        map as v1
+        map as v2
+        P1
+          x -> v1
+        P1
+          x -> v2`);
+    assert.throws(() => manifest.recipes[0].normalize());
+  });
 });
