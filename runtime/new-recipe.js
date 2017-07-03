@@ -565,6 +565,11 @@ class Walker extends Strategizer.Walker {
       var result = this.createDescendant(newRecipe);
     }
   }
+
+  createDescendant(recipe) {
+    recipe.normalize();
+    super.createDescendant(recipe);
+  }
 }
 
 Recipe.Walker = Walker;
