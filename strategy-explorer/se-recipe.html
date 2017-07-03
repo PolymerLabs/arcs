@@ -1,0 +1,107 @@
+<link rel="import" href="bower_components/polymer/polymer.html">
+
+<dom-module id='se-recipe'>
+  <template>
+    <style>
+      #recipe-box {
+        border: 1px solid black;
+        white-space: pre;
+        font-family: consolas;
+        font-size: 10px;
+        margin: 5px;
+        padding: 5px;
+        width: 30px;
+        height: 30px;
+      }
+
+      #recipe-box[selected] {
+        border: 2px solid green;
+        margin: 4px;
+        background: #afa;
+      }
+
+      #recipe-box[activeParent] {
+        border: 2px solid blue;
+        margin: 4px;
+        background: #aaf;
+      }
+
+      #recipe-box[activeAncestor] {
+        border: 1px solid blue;
+        background: #ccf;
+      }
+
+      #recipe-box[activeChild] {
+        border: 2px solid purple;
+        margin: 4px;
+        background: #faf;
+      }
+
+      #recipe-box[activeDescendant] {
+        border: 1px solid purple;
+        background: #fcf;
+      }
+    </style>
+    <div id='recipe-box'
+      selected$='{{selected}}'
+      activeParent$='{{activeParent}}'
+      activeAncestor$='{{activeAncestor}}'
+      activeChild$='{{activeChild}}'
+      activeDescendant$='{{activeDescendant}}'
+    >{{recipe.score}}</div>
+  </template>
+
+  <script>
+    Polymer({
+      is: 'se-recipe',
+      properties: {
+        selected: {value: false, notifies: true},
+        activeParent: {value: false, notifies: true},
+        activeAncestor: {value: false, notifies: true}
+      },
+      attached: function() {
+        document.idMap.set(this.recipe.id, this);
+        this.ancestors = [];
+        this.childrens = [];
+        this.descendants = [];
+        if (this.recipe.parent !== undefined) {
+          this.parent = document.idMap.get(this.recipe.parent);
+          var ancestor = this.parent;
+          while (ancestor.recipe.parent !== undefined) {
+            ancestor = document.idMap.get(ancestor.recipe.parent);
+            this.ancestors.push(ancestor);
+          }
+          this.parent.childrens.push(this);
+          this.ancestors.forEach(ancestor => ancestor.descendants.push(this));
+        }
+
+
+
+        var recipeView = document.documentElement.querySelector('se-recipe-view');
+        this.$['recipe-box'].addEventListener('mouseenter', e => {
+          recipeView.recipe = this.recipe;
+        });
+        this.$['recipe-box'].addEventListener('click', e => {
+          if (document._selectedBox !== undefined) {
+            document._selectedBox.selected = false;
+            if (document._selectedBox.parent)
+              document._selectedBox.parent.activeParent = false;
+            document._selectedBox.ancestors.forEach(ancestor => ancestor.activeAncestor = false);
+            document._selectedBox.childrens.forEach(child => child.activeChild = false);
+            document._selectedBox.descendants.forEach(descendant => descendant.activeDescendant = false);
+            recipeView.unpin();
+          }
+          this.selected = true;
+          if (this.parent)
+            this.parent.activeParent = true;
+          this.ancestors.forEach(ancestor => ancestor.activeAncestor = true);
+          this.childrens.forEach(child => child.activeChild = true);
+          this.descendants.forEach(descendant => descendant.activeDescendant = true);
+          document._selectedBox = this;
+
+          recipeView.pin();
+        })
+      }
+    });
+  </script>
+</dom-module>

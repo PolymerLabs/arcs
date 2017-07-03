@@ -1,4 +1,5 @@
 <link rel="import" href="bower_components/polymer/polymer.html">
+<link rel="import" href="se-recipe.html"></link>
 
 <dom-module id='se-population'>
   <template>
@@ -7,14 +8,21 @@
       display: flex;
     }
 
-    .recipe-box {
-      border: 1px solid red;
-      white-space: pre;
+    .strategy-box {
+      border: 1px solid #bbb;
+      padding: 2px;
+      margin: 2px;
     }
     </style>
     <div class='recipe-container'>
       <template is='dom-repeat' items='{{population}}'>
-        <div class='recipe-box'>{{item.result}}</div>
+        <div class='strategy-box'>
+          {{item.strategy}}
+          <template is='dom-repeat' items='{{item.recipes}}'>
+            <se-recipe recipe={{item}}>
+            </se-recipe>
+          </template>
+        </div>
       </template>
     </div>
   </template>

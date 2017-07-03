@@ -1,0 +1,73 @@
+<link rel="import" href="bower_components/polymer/polymer.html">
+<script src="bower_components/jsdiff/diff.min.js"></script>
+
+<dom-module id='se-recipe-view'>
+  <template>
+    <style>
+      .recipe-box {
+        border: 1px solid red;
+        white-space: pre;
+        font-family: consolas;
+        font-size: 10px;
+        margin: 5px;
+        padding: 5px;
+      }
+
+      .added {
+        color: green;
+      }
+
+      .removed {
+        color: red;
+        text-decoration: line-through;
+      }
+    </style>
+    <template is='dom-if' if='{{shownRecipe}}'>
+      <div class='recipe-box'>Strategy: {{shownRecipe.strategy}}
+ID: {{shownRecipe.id}}
+Score: {{shownRecipe.score}}
+Parent: {{shownRecipe.parent}}
+<span inner-h-t-m-l='{{shownRecipe.result}}'></span>
+      </div>
+  </template>
+</template>
+  <script>
+    Polymer({
+      is: 'se-recipe-view',
+      properties: {
+        recipe: {observer: "recipeChanged"},
+        shownRecipe: Object
+      },
+      recipeChanged: function(recipe) {
+        if (!this.pinned) {
+          this.shownRecipe = (({result, strategy, id, parent, score}) => ({result, strategy, id, parent, score}))(this.recipe);
+        } else {
+          if (recipe.id == this.shownRecipe.id) {
+            this.set("shownRecipe.result", this.pinnedResult);
+            return;
+          }
+          var left = recipe.result.replace(/</g, "&lt;");
+          var right = this.pinnedResult.replace(/</g, "&lt;");
+          var diff = JsDiff.diffWords(left, right);
+          diff = diff.map(entry => {
+            if (entry.added)
+              return `<span class='added'>${entry.value}</span>`;
+            if (entry.removed)
+              return `<span class='removed'>${entry.value}</span>`;
+            return entry.value;
+          });
+          this.set("shownRecipe.result", diff.join(""));
+        }
+
+      },
+      pin: function() {
+        this.pinned = true;
+        this.pinnedResult = this.recipe.result;
+      },
+      unpin: function() {
+        this.pinned = false;
+        this.shownRecipe = (({result, strategy, id, parent, score}) => ({result, strategy, id, parent, score}))(this.recipe);
+      }
+    });
+  </script>
+</dom-module>
