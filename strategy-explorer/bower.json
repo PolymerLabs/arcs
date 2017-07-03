@@ -1,19 +1,5 @@
 {
   "name": "strategy-explorer",
-  "homepage": "https://github.com/shans/arcs",
-  "authors": [
-    "shans <shane.stephens@gmail.com>"
-  ],
-  "description": "",
-  "main": "",
-  "license": "MIT",
-  "ignore": [
-    "**/.*",
-    "node_modules",
-    "bower_components",
-    "test",
-    "tests"
-  ],
   "dependencies": {
     "polymer": "^2.0.1",
     "jsdiff": "^3.2.0"
