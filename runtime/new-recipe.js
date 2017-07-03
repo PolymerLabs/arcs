@@ -398,6 +398,21 @@ class Recipe {
     return viewConnections;
   }
 
+  async digest() {
+    if (typeof(crypto) != 'undefined' && crypto.subtle) {
+      // browser
+      let buffer = new TextEncoder('utf-8').encode(this.toString());
+      let digest = await crypto.subtle.digest('SHA-1', buffer)
+      return Array.from(new Uint8Array(digest)).map(x => ('00' + x.toString(16)).slice(-2)).join('');
+    } else {
+      // nodejs
+      let crypto = require('crypto');
+      let sha = crypto.createHash('sha1');
+      sha.update(this.toString());
+      return sha.digest('hex');
+    }
+  }
+
   normalize() {
     if (Object.isFrozen(this)) return;
     for (let particle of this._particles) {
