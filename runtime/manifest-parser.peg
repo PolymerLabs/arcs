@@ -36,12 +36,12 @@ ManifestItem
   / Particle
 
 Particle
-  = "particle" whiteSpace name:upperIdent impl:(whiteSpace "in" whiteSpace id)? eolWhiteSpace body:IndentedText?
+  = "particle" whiteSpace name:upperIdent implFile:(whiteSpace "in" whiteSpace id)? eolWhiteSpace body:IndentedText?
   {
     return {
       kind: "particle",
       name,
-      impl: optional(impl, impl => impl[3], null),
+      implFile: optional(implFile, implFile => implFile[3], null),
       body,
     };
   }
