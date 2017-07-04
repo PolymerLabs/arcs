@@ -36,7 +36,21 @@ ManifestItem
   / Particle
 
 Particle
-  = "particle" whiteSpace name:upperIdent eolWhiteSpace
+  = "particle" whiteSpace name:upperIdent impl:(whiteSpace "in" whiteSpace id)? eolWhiteSpace body:IndentedText?
+  {
+    return {
+      kind: "particle",
+      name,
+      impl: optional(impl, impl => impl[3], null),
+      body,
+    };
+  }
+
+IndentedText
+  = Indent (SameOrMoreIndent [^\n]+ eolWhiteSpace)*
+  {
+    return text();
+  }
 
 Recipe
   = "recipe" name:(whiteSpace upperIdent)? tags:(whiteSpace TagList)? eolWhiteSpace items:(Indent (SameIndent RecipeItem)*)?
@@ -154,6 +168,16 @@ Indent = &(i:" "+ &{
 SameIndent = &(i:" "* &{
   i = i.join('');
   if (i.length == indent.length) {
+    return true;
+  } else if (i.length < indent.length) {
+    indent = indents.pop();
+    return false;
+  }
+}) " "*
+
+SameOrMoreIndent = &(i:" "* &{
+  i = i.join('');
+  if (i.length >= indent.length) {
     return true;
   } else if (i.length < indent.length) {
     indent = indents.pop();
