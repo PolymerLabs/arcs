@@ -54,4 +54,14 @@ describe('manifest parser', function() {
         SomeParticle as thing
         map #thing as anotherThing`);
   });
+  it('parses recipes with recipe level connections', () => {
+    parse(`
+      recipe
+        X -> Y
+        X.a -> Y.a
+        a = b
+        a.a = b.b
+        #tag <- #tag
+        X.a #tag <- a.y`);
+  });
 });
