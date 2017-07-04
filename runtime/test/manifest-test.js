@@ -115,7 +115,7 @@ describe('manifest', function() {
     assert.deepEqual(recipe1.toString(), recipe2.toString());
     assert.equal(await recipe1.digest(), await recipe2.digest());
   });
-  it('cannot normalize recipes with interdependent ordering of views and particles', () => {
+  it('can normalize recipes with interdependent ordering of views and particles', () => {
     let manifest = Manifest.parse(`
       recipe
         map as v1
@@ -123,7 +123,18 @@ describe('manifest', function() {
         P1
           x -> v1
         P1
-          x -> v2`);
-    assert.throws(() => manifest.recipes[0].normalize());
+          x -> v2
+      recipe
+        map as v1
+        map as v2
+        P1
+          x -> v2
+        P1
+          x -> v1`);
+    let [recipe1, recipe2] = manifest.recipes;
+    assert.notEqual(recipe1.toString(), recipe2.toString());
+    recipe1.normalize();
+    recipe2.normalize();
+    assert.deepEqual(recipe1.toString(), recipe2.toString());
   });
 });
