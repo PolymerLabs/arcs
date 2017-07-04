@@ -31,7 +31,19 @@ describe('manifest', function() {
     assert.equal(recipe.views.length, 1);
     assert.equal(recipe.viewConnections.length, 1);
     assert.sameMembers(recipe.viewConnections[0].tags, ['#tag'])
-  })
+  });
+  it('can parse a manifest containing a particle specification', () => {
+    let manifest = Manifest.parse(`
+      particle Chooser in 'chooser.js'
+        Chooser(in [Product] choices, out [Product] resultList)
+
+        renders: action(resultList) none-need
+
+        Description {
+          pattern: Choose from \${choices}
+        }`);
+  });
+
   it('can resolve recipes with connections between particles', () => {
     let manifest = Manifest.parse(`
       recipe Connected

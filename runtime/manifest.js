@@ -11,10 +11,13 @@
 const assert = require('assert');
 const parser = require('./build/manifest-parser.js');
 const Recipe = require('./new-recipe.js');
+const ParticleParser = require('./build/particle-parser.js');
+const ParticleSpec = require('./particle-spec.js')
 
 class Manifest {
   constructor() {
     this._recipes = [];
+    this._particles = {};
   }
   get recipes() {
     return this._recipes;
@@ -31,11 +34,18 @@ class Manifest {
         case 'recipe':
           this._processRecipe(manifest, item);
           break;
+        case 'particle':
+          this._processParticle(manifest, item);
+          break;
         default:
           throw `${item.kind} not yet implemented`;
       }
     }
     return manifest;
+  }
+  static _processParticle(manifest, particleItem) {
+    let particleSpec = new ParticleSpec(ParticleParser.parse(particleItem.body));
+    manifest._particles[particleItem.name] = particleSpec;
   }
   static _processRecipe(manifest, recipeItem) {
     let recipe = manifest._newRecipe(recipeItem.name);
