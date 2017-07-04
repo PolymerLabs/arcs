@@ -48,12 +48,12 @@ class ResolveParticleByName extends Strategy {
     var loader = this.loader;
     var results = Recipe.over(strategizer.generated, new class extends Recipe.Walker {
       onParticle(recipe, particle) {
-        if (particle.impl == undefined) {
+        if (particle.spec == undefined) {
           var impl = loader.loadParticle(particle.name, true);
           if (impl == undefined)
             return;
           return (recipe, particle) => {
-            particle.impl = impl;
+            particle.spec = impl.spec;
             for (var connectionName of impl.spec.connectionMap.keys()) {
               var speccedConnection = impl.spec.connectionMap.get(connectionName);
               var connection = particle.connections[connectionName];
