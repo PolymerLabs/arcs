@@ -26,7 +26,7 @@ describe('Planner', function() {
     var a = new Arc({id: "test-plan-arc", loader});
     var p = new Planner();
     var population = await(p.plan(a));
-    assert.equal(5, population.length);
+    assert.equal(4, population.length);
   });
 
   it('make a plan with views', async () => {
@@ -36,7 +36,7 @@ describe('Planner', function() {
 
     var p = new Planner();
     var population = await(p.plan(a));
-    assert.equal(6, population.length);
+    assert.equal(7, population.length);
     console.log(population.length);
     for (var p of population) {
       console.log(p.result.toString());

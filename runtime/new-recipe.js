@@ -745,17 +745,33 @@ class Walker extends Strategizer.Walker {
 
     var newRecipes = [];
     if (updateList.length) {
-      if (this.tactic == Recipe.Walker.ApplyAll) {
-        var cloneMap = new Map();
-        var newRecipe = recipe.clone(cloneMap);
-        updateList.forEach(({continuation, context}) => {
-          if (typeof continuation == 'function')
-            continuation = [continuation];
-          continuation.forEach(f => {
-            f(newRecipe, cloneMap.get(context));
+      switch (this.tactic) {
+        case Recipe.Walker.ApplyAll:
+          var cloneMap = new Map();
+          var newRecipe = recipe.clone(cloneMap);
+          updateList.forEach(({continuation, context}) => {
+            if (typeof continuation == 'function')
+              continuation = [continuation];
+            continuation.forEach(f => {
+              f(newRecipe, cloneMap.get(context));
+            });
           });
-        });
-        newRecipes.push(newRecipe);
+          newRecipes.push(newRecipe);
+          break;
+        case Recipe.Walker.ApplyEach:
+          updateList.forEach(({continuation, context}) => {
+            var cloneMap = new Map();
+            var newRecipe = recipe.clone(cloneMap);
+            if (typeof continuation == 'function')
+              continuation = [continuation];
+            continuation.forEach(f => {
+              f(newRecipe, cloneMap.get(context));
+            });
+            newRecipes.push(newRecipe);
+          });
+          break;
+        default:
+          throw `${this.tactic} not supported`;
       }
     }
 
@@ -774,5 +790,6 @@ class Walker extends Strategizer.Walker {
 
 Recipe.Walker = Walker;
 Recipe.Walker.ApplyAll = "apply all";
+Recipe.Walker.ApplyEach = "apply each";
 
 module.exports = Recipe;
