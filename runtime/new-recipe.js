@@ -218,7 +218,7 @@ class View extends Node {
     for (let connection of this._connections) {
       connection.normalize();
     }
-    this._connections.sort(compareComparables);
+    // this._connections.sort(compareComparables);
     Object.freeze(this);
   }
 
@@ -229,7 +229,11 @@ class View extends Node {
     if ((cmp = compareArrays(this._tags, other._tags, compareStrings)) != 0) return cmp;
     // TODO: type?
     if ((cmp = compareNumbers(this._create, other._create)) != 0) return cmp;
-    if ((cmp = compareArrays(this._connections, other._connections, compareComparables)) != 0) return cmp;
+    var sortedThisConnections = this._connections.slice();
+    var sortedOtherConnections = other._connections.slice();
+    sortedThisConnections.sort(compareComparables);
+    sortedOtherConnections.sort(compareComparables);
+    if ((cmp = compareArrays(sortedThisConnections, sortedOtherConnections, compareComparables)) != 0) return cmp;
     return 0;
   }
 
@@ -296,8 +300,10 @@ class ViewConnection extends Connection {
     let cmp;
     if ((cmp = compareStrings(this._name, other._name)) != 0) return cmp;
     if ((cmp = compareArrays(this._tags, other._tags, compareStrings)) != 0) return cmp;
-    if ((cmp = compareStrings(this._type, other._type)) != 0) return cmp;
+    // TODO: add type comparison
+    // if ((cmp = compareStrings(this._type, other._type)) != 0) return cmp;
     if ((cmp = compareStrings(this._direction, other._direction)) != 0) return cmp;
+    if ((cmp = compareStrings(this._particle._name, other._particle._name)) != 0) return cmp;
     throw new Error('Cannot normalize yet, would need to compare views or particles to continue');
     return 0;
   }
@@ -568,7 +574,7 @@ class Walker extends Strategizer.Walker {
 
   createDescendant(recipe) {
     recipe.normalize();
-    super.createDescendant(recipe);
+    super.createDescendant(recipe, recipe.digest());
   }
 }
 

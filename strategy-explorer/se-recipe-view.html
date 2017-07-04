@@ -23,11 +23,7 @@
       }
     </style>
     <template is='dom-if' if='{{shownRecipe}}'>
-      <div class='recipe-box'>Strategy: {{shownRecipe.strategy}}
-ID: {{shownRecipe.id}}
-Score: {{shownRecipe.score}}
-Parent: {{shownRecipe.parent}}
-<span inner-h-t-m-l='{{shownRecipe.result}}'></span>
+      <div class='recipe-box'>{{strategyString}}<span inner-h-t-m-l='{{shownRecipe.result}}'></span>
       </div>
   </template>
 </template>
@@ -36,6 +32,7 @@ Parent: {{shownRecipe.parent}}
       is: 'se-recipe-view',
       properties: {
         recipe: {observer: "recipeChanged"},
+        strategyString: String,
         shownRecipe: Object
       },
       recipeChanged: function(recipe) {
@@ -44,11 +41,15 @@ Parent: {{shownRecipe.parent}}
         } else {
           if (recipe.id == this.shownRecipe.id) {
             this.set("shownRecipe.result", this.pinnedResult);
+            this.strategyString = '';
             return;
           }
           var left = recipe.result.replace(/</g, "&lt;");
           var right = this.pinnedResult.replace(/</g, "&lt;");
-          var diff = JsDiff.diffWords(left, right);
+          if (this.over.strategyMap.has(this.to))
+            var diff = JsDiff.diffWords(right, left);
+          else
+            var diff = JsDiff.diffWords(left, right);
           diff = diff.map(entry => {
             if (entry.added)
               return `<span class='added'>${entry.value}</span>`;
@@ -57,16 +58,24 @@ Parent: {{shownRecipe.parent}}
             return entry.value;
           });
           this.set("shownRecipe.result", diff.join(""));
+          var strategies = this.to.strategyMap.get(this.over) || this.over.strategyMap.get(this.to);
+          if (strategies)
+            this.strategyString = "Strategies: [" + strategies.join('], [') + "]\n";
+          else
+            this.strategyString = '';
         }
 
       },
       pin: function() {
         this.pinned = true;
         this.pinnedResult = this.recipe.result;
+        this.to = this.over;
       },
       unpin: function() {
         this.pinned = false;
         this.shownRecipe = (({result, strategy, id, parent, score}) => ({result, strategy, id, parent, score}))(this.recipe);
+        this.strategyString = '';
+        this.to = undefined;
       }
     });
   </script>
