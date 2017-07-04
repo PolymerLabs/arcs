@@ -68,7 +68,7 @@ class Particle extends Node {
     this._id = undefined;
     this._name = name;
     this._localName = undefined;
-    this._impl = undefined;
+    this._spec = undefined;
     this._tags = [];
     this._providedSlots = [];
     this._consumedSlots = [];
@@ -108,7 +108,7 @@ class Particle extends Node {
     if ((cmp = compareStrings(this._id, other._id)) != 0) return cmp;
     if ((cmp = compareStrings(this._name, other._name)) != 0) return cmp;
     if ((cmp = compareStrings(this._localName, other._localName)) != 0) return cmp;
-    // TODO: impl?
+    // TODO: spec?
     if ((cmp = compareArrays(this._tags, other._tags, compareStrings)) != 0) return cmp;
     // TODO: slots
     return 0;
@@ -118,8 +118,8 @@ class Particle extends Node {
   set localName(name) { this._localName = name; }
   get id() { return this._id; } // Not resolved until we have an ID.
   get name() { return this._name; }
-  get impl() { return this._impl; }
-  set impl(impl) { this._impl = impl; }
+  get spec() { return this._spec; }
+  set spec(spec) { this._spec = spec; }
   get tags() { return this._tags; }
   set tags(tags) { this._tags = tags; }
   get providedSlots() { return this._providedSlots; } // Slot*
