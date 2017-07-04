@@ -32,7 +32,8 @@ class InitPopulation extends Strategy {
           .connectConstraint("resultList", "list")
         .build();
 
-        return { results: [{result: r, score: 1}], generate: null };
+        r.normalize();
+        return { results: [{result: r, score: 1, derivation: [{strategy: this, parent: undefined}], hash: r.digest() }], generate: null };
      }
      return { results: [], generate: null };
   }

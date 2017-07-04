@@ -64,36 +64,46 @@
         this.ancestors = [];
         this.childrens = [];
         this.descendants = [];
-        if (this.recipe.parent !== undefined) {
-          this.parent = document.idMap.get(this.recipe.parent);
-          var ancestor = this.parent;
-          while (ancestor.recipe.parent !== undefined) {
-            ancestor = document.idMap.get(ancestor.recipe.parent);
-            this.ancestors.push(ancestor);
+        this.parents = [];
+        this.strategyMap = new Map();
+        this.recipe.derivation.forEach(derivation => {
+          if (derivation.parent !== undefined) {
+            var newParent = document.idMap.get(derivation.parent);
+            this.strategyMap.set(newParent, [[derivation.strategy]]);
+            this.parents.push(newParent);
+            newParent.strategyMap.forEach((valueList, key) => {
+              valueList.forEach(value =>  {
+                strategyList = value.slice();
+                strategyList.push(derivation.strategy);
+                if (this.strategyMap.get(key) == undefined)
+                  this.strategyMap.set(key, []);
+                this.strategyMap.get(key).push(strategyList);
+              });
+            });
+            this.ancestors = this.ancestors.concat(newParent.parents, newParent.ancestors);
+            newParent.childrens.push(this);
+            newParent.parents.forEach(parent => parent.descendants.push(this));
+            newParent.ancestors.forEach(ancestor => ancestor.descendants.push(this));
           }
-          this.parent.childrens.push(this);
-          this.ancestors.forEach(ancestor => ancestor.descendants.push(this));
-        }
-
-
+        });
 
         var recipeView = document.documentElement.querySelector('se-recipe-view');
         this.$['recipe-box'].addEventListener('mouseenter', e => {
+          recipeView.over = this;
           recipeView.recipe = this.recipe;
         });
         this.$['recipe-box'].addEventListener('click', e => {
           if (document._selectedBox !== undefined) {
             document._selectedBox.selected = false;
-            if (document._selectedBox.parent)
-              document._selectedBox.parent.activeParent = false;
+
+            document._selectedBox.parents.forEach(parent => parent.activeParent = false);
             document._selectedBox.ancestors.forEach(ancestor => ancestor.activeAncestor = false);
             document._selectedBox.childrens.forEach(child => child.activeChild = false);
             document._selectedBox.descendants.forEach(descendant => descendant.activeDescendant = false);
             recipeView.unpin();
           }
           this.selected = true;
-          if (this.parent)
-            this.parent.activeParent = true;
+          this.parents.forEach(parent => parent.activeParent = true);
           this.ancestors.forEach(ancestor => ancestor.activeAncestor = true);
           this.childrens.forEach(child => child.activeChild = true);
           this.descendants.forEach(descendant => descendant.activeDescendant = true);

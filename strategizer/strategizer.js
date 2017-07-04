@@ -20,6 +20,7 @@ class Strategizer {
       generationSize,
       discardSize,
     };
+    this.populationHash = new Map();
   }
   // Latest generation number.
   get generation() {
@@ -56,6 +57,23 @@ class Strategizer {
 
     generated = generated.map(({results}) => results);
     generated = [].concat(...generated);
+
+    // TODO: get rid of this additional asynchrony
+    generated = await Promise.all(generated.map(async result => {
+      if (result.hash) result.hash = await result.hash;
+      return result;
+    }));
+
+    generated = generated.filter(result => {
+      if (result.hash) {
+        if (this.populationHash.has(result.hash)) {
+          this.populationHash.get(result.hash).derivation.push(result.derivation[0]);
+          return false;
+        }
+        this.populationHash.set(result.hash, result);
+      }
+      return true;
+    });
 
     record.totalGenerated = generated.length;
 
@@ -160,12 +178,12 @@ class Walker {
     this.currentResult = result;
   }
 
-  createDescendant(result) {
+  createDescendant(result, hash) {
     assert(this.currentResult, "no current result");
     assert(this.currentStrategy, "no current strategy");
     var score = (this.score || 0) + (this.currentResult.score || 0);
 
-    this.descendants.push({result, score, parent: this.currentResult, strategy: this.currentStrategy });
+    this.descendants.push({result, score, derivation: [{parent: this.currentResult, strategy: this.currentStrategy}], hash });
   }
 
   onResultDone() {

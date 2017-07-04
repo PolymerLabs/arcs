@@ -21,26 +21,29 @@ var lastID = 0;
 
 function preparePopulation(population) {
   population = population.map(recipe => {
-    let { result, score, parent, strategy } = recipe;
-    return { result, score, parent, strategy, original: recipe };
+    let { result, score, derivation, hash } = recipe;
+    return { result, score, derivation, hash, original: recipe };
   });
   population.forEach((item) => {
     item.id = lastID++;
     parentMap.set(item.original, item.id);
   });
   population.forEach(item => {
-    if (item.parent)
-      item.parent = parentMap.get(item.parent);
+    item.derivation = item.derivation.map(derivItem => {
+      if (derivItem.parent)
+        var parent = parentMap.get(derivItem.parent);
+      if (derivItem.strategy)
+        var strategy = derivItem.strategy.constructor.name;
+      return { parent, strategy };
+    })
     item.original = undefined;
     item.result = item.result.toString();
-    if (item.strategy)
-      item.strategy = item.strategy.constructor.name;
   });
   var populationMap = {};
   population.forEach(item => {
-    if (populationMap[item.strategy] == undefined)
-      populationMap[item.strategy] = []
-    populationMap[item.strategy].push(item);
+    if (populationMap[item.derivation[0].strategy] == undefined)
+      populationMap[item.derivation[0].strategy] = []
+    populationMap[item.derivation[0].strategy].push(item);
   });
   var result = {population: []}
   Object.keys(populationMap).forEach(strategy => {
