@@ -91,14 +91,14 @@ class Particle extends Node {
   _startNormalize() {
     this._localName = null;
     this._tags.sort();
-  }
-
-  _finishNormalize() {
     let normalizedConnections = {};
     for (let key of (Object.keys(this._connections).sort())) {
       normalizedConnections[key] = this._connections[key];
     }
     this._connections = normalizedConnections;
+  }
+
+  _finishNormalize() {
     this._unnamedConnections.sort(compareComparables);
     Object.freeze(this);
   }
@@ -111,10 +111,6 @@ class Particle extends Node {
     // TODO: impl?
     if ((cmp = compareArrays(this._tags, other._tags, compareStrings)) != 0) return cmp;
     // TODO: slots
-    if (Object.isFrozen(this)) {
-      if ((cmp = compareObjects(this._connections, other._connections, compareComparables)) != 0) return cmp;
-      if ((cmp = compareArrays(this._unnamedConnections, other._unnamedConnections, compareComparables)) != 0) return cmp;
-    }
     return 0;
   }
 
@@ -223,9 +219,6 @@ class View extends Node {
     if ((cmp = compareArrays(this._tags, other._tags, compareStrings)) != 0) return cmp;
     // TODO: type?
     if ((cmp = compareNumbers(this._create, other._create)) != 0) return cmp;
-    if (Object.isFrozen(this)) {
-      if ((cmp = compareArrays(this._connections, other._connections, compareComparables)) != 0) return cmp;
-    }
     return 0;
   }
 
@@ -268,7 +261,6 @@ class ViewConnection extends Connection {
     this._direction = undefined;
     this._particle = particle;
     this._view = undefined;
-    this._sequenceNumber = undefined;
   }
 
   clone(particle, cloneMap) {
@@ -283,28 +275,21 @@ class ViewConnection extends Connection {
     return viewConnection;
   }
 
-  _startNormalize() {
+  _normalize() {
     this._tags.sort();
     // TODO: type?
-  }
-
-  _finishNormalize(sequenceNumber) {
-    this._sequenceNumber = sequenceNumber;
     Object.freeze(this);
   }
 
   _compareTo(other) {
-    if (Object.isFrozen(this)) {
-      return compareNumbers(this._sequenceNumber, other._sequenceNumber);
-    }
     let cmp;
+    if ((cmp = compareComparables(this._particle, other._particle)) != 0) return cmp;
+    if ((cmp = compareComparables(this._view, other._view)) != 0) return cmp;
     if ((cmp = compareStrings(this._name, other._name)) != 0) return cmp;
     if ((cmp = compareArrays(this._tags, other._tags, compareStrings)) != 0) return cmp;
     // TODO: add type comparison
     // if ((cmp = compareStrings(this._type, other._type)) != 0) return cmp;
     if ((cmp = compareStrings(this._direction, other._direction)) != 0) return cmp;
-    if ((cmp = compareComparables(this._particle, other._particle)) != 0) return cmp;
-    if ((cmp = compareComparables(this._view, other._view)) != 0) return cmp;
     return 0;
   }
 
@@ -434,13 +419,9 @@ class Recipe {
     // Sort and normalize connections.
     let connections = this.viewConnections;
     for (let connection of connections) {
-      connection._startNormalize();
+      connection._normalize();
     }
     connections.sort(compareComparables);
-    let i = 0;
-    for (let connection of connections) {
-      connection._finishNormalize(i++);
-    }
 
     // Finish normalizing particles and views with sorted connections.
     for (let particle of this._particles) {
@@ -450,9 +431,24 @@ class Recipe {
       view._finishNormalize();
     }
 
+    let seenViews = new Set();
+    let seenParticles = new Set();
+    let particles = [];
+    let views = [];
+    for (let connection of connections) {
+      if (!seenViews.has(connection.particle)) {
+        particles.push(connection.particle);
+        seenViews.add(connection.particle);
+      }
+      if (connection.view && !seenViews.has(connection.view)) {
+        views.push(connection.view);
+        seenViews.add(connection.view);
+      }
+    }
+
     // Put particles and views in their final ordering.
-    this._particles.sort(compareComparables);
-    this._views.sort(compareComparables);
+    this._particles = particles;
+    this._views = views;
     Object.freeze(this);
   }
 
