@@ -66,6 +66,7 @@ Recipe
 RecipeItem
   = RecipeParticle
   / RecipeView
+  / RecipeConnection
 
 Name
   = "as" whiteSpace name:lowerIdent
@@ -88,7 +89,7 @@ RecipeParticle
   }
 
 RecipeParticleConnection
-  = param:(lowerIdent / "*") whiteSpace dir:("<-" / "->" / "=") whiteSpace target:ConnectionTarget eolWhiteSpace
+  = param:(lowerIdent / "*") whiteSpace dir:Direction whiteSpace target:ConnectionTarget eolWhiteSpace
   {
     return {
       param,
@@ -97,7 +98,20 @@ RecipeParticleConnection
     };
   }
 
-  //  or view-name, or particle-name
+RecipeConnection
+  = from:ConnectionTarget whiteSpace dir:Direction whiteSpace to:ConnectionTarget eolWhiteSpace
+  {
+    return {
+      kind: 'connection',
+      dir,
+      from,
+      to,
+    };
+  }
+
+Direction
+  = dir:("<-" / "->" / "=")
+
 ConnectionTarget
   = ident:(upperIdent / lowerIdent) param:("." lowerIdent)? tags:(whiteSpace TagList)?
   {
