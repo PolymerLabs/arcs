@@ -708,21 +708,21 @@ class Walker extends Strategizer.Walker {
     for (var particle of recipe.particles) {
       if (this.onParticle) {
         var result = this.onParticle(recipe, particle);
-        if (result && (result.constructor != Array || result.length > 0))
+        if (!this.isEmptyResult(result))
           updateList.push({continuation: result, context: particle});
       }
     }
     for (var viewConnection of recipe.viewConnections) {
       if (this.onViewConnection) {
         var result = this.onViewConnection(recipe, viewConnection);
-        if (result && (result.constructor != Array || result.length > 0))
+        if (!this.isEmptyResult(result))
           updateList.push({continuation: result, context: viewConnection});
       }
     }
     for (var view of recipe.views) {
       if (this.onView) {
         var result = this.onView(recipe, view);
-        if (result && (result.constructor != Array || result.length > 0))
+        if (!this.isEmptyResult(result))
           updateList.push({continuation: result, context: view});
       }
     }
@@ -785,6 +785,16 @@ class Walker extends Strategizer.Walker {
   createDescendant(recipe) {
     recipe.normalize();
     super.createDescendant(recipe, recipe.digest());
+  }
+
+  isEmptyResult(result) {
+    if (!result)
+      return true;
+
+    if (result.constructor == Array && result.length <= 0)
+      return true;
+
+    return false;
   }
 }
 
