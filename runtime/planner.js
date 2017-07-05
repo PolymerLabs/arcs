@@ -65,6 +65,17 @@ class ResolveParticleByName extends Strategy {
               connection.type = speccedConnection.type;
               connection.direction = speccedConnection.direction;
             }
+            impl.spec.renders.forEach(slot => {
+              let slotConn = particle.addSlotConnection(slot.name.name, "consume");
+              if (slot.name.view)
+                slotConn.connectToView(slot.name.view);
+            });
+            impl.spec.exposes.forEach(slot => {
+              let slotConn = particle.addSlotConnection(slot.name, "provide");
+              slotConn.connectToSlot(recipe.newSlot());
+              if (slot.view)
+                slotConn.connectToView(slot.view);
+            });
           }
         }
       }
@@ -141,7 +152,7 @@ class Planner {
   }
 
   async plan(arc) {
-    init(arc);
+    this.init(arc);
     // TODO: Repeat until...?
 
     await this.generate();
