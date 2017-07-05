@@ -21,6 +21,10 @@ function compareNumbers(n1, n2) {
   if (n1 == null || n2 == null) return compareNulls(n1, n2);
   return n1 - n2;
 }
+function compareBools(b1, b2) {
+  if (b1 == null || b2 == null) return compareNulls(b1, b2);
+  return b1 - b2;
+}
 function compareArrays(a1, a2, compare) {
   assert(a1 != null);
   assert(a2 != null);
@@ -80,8 +84,8 @@ class Particle extends Node {
     var particle = new Particle(recipe, this._name);
     particle._id  = this._id;
     particle._tags = [...this._tags];
-    particle._providedSlots = this._providedSlots.map(slot => slot.clone(recipe)); // ?
-    particle._consumedSlots = this._consumedSlots.map(slot => slot.clone(recipe)); // ?
+    particle._providedSlots = this._providedSlots.map(slotConn => slotConn.clone(particle, cloneMap));
+    particle._consumedSlots = this._consumedSlots.map(slotConn => slotConn.clone(particle, cloneMap));
     Object.keys(this._connections).forEach(key => particle._connections[key] = this._connections[key].clone(particle, cloneMap));
     particle._unnamedConnections = this._unnamedConnections.map(connection => connection.clone(particle, cloneMap));
 
@@ -122,7 +126,7 @@ class Particle extends Node {
   set spec(spec) { this._spec = spec; }
   get tags() { return this._tags; }
   set tags(tags) { this._tags = tags; }
-  get providedSlots() { return this._providedSlots; } // Slot*
+  get providedSlots() { return this._providedSlots; } // SlotConnection*
   get consumedSlots() { return this._consumedSlots; } // SlotConnection*
   get connections() { return this._connections; } // {parameter -> ViewConnection}
   get unnamedConnections() { return this._unnamedConnections; } // ViewConnection*
@@ -145,6 +149,12 @@ class Particle extends Node {
     connection._name = name;
     this._connections[name] = connection;
     this._unnamedConnections.splice(idx, 1);
+  }
+
+  addSlotConnection(name, direction) {
+    let slots = direction == "consume" ? this.consumedSlots : this.providedSlots;
+    slots.push(new SlotConnection(name, direction, this));
+    return slots[slots.length - 1];
   }
 
   isResolved() {
@@ -264,7 +274,10 @@ class ViewConnection extends Connection {
   }
 
   clone(particle, cloneMap) {
-    var viewConnection = new ViewConnection(this._name, particle);
+    if (cloneMap.has(this)) {
+      return cloneMap.get(this);
+    }
+    var viewConnection = new ViewConnection(this._name, particle);  // Note: This is the original, not the cloned particle, is it a right?
     viewConnection._tags = [...this._tags];
     viewConnection._type = this._type;
     viewConnection._direction = this._direction;
@@ -272,6 +285,7 @@ class ViewConnection extends Connection {
       viewConnection._view = cloneMap.get(this._view);
       viewConnection._view.connections.push(viewConnection);
     }
+    cloneMap.set(this, viewConnection);
     return viewConnection;
   }
 
@@ -339,25 +353,132 @@ class ViewConnection extends Connection {
 }
 
 class SlotConnection extends Connection {
+  constructor(name, direction, particle) {
+    assert(particle);
+    super(particle._recipe);
+    this._name = name;  // name is unique across same Particle's provided slots.
+    this._slot = undefined;
+    this._particle = particle;  // consumer / provider
+    this._tags = []
+    this._viewConnections = [];
+    this._direction = direction;
+    this._formFactors = [];
+    this._required = true;  // TODO: support optional slots; currently every slot is required.
+  }
+
+  clone(particle, cloneMap) {
+    var slotConnection = new SlotConnection(this._name, this._direction, particle);
+    slotConnection._tags = [...this._tags];
+    slotConnection._formFactors = [...this._formFactors];
+    slotConnection._required = this._required;
+    if (this._slot != undefined) {
+      slotConnection.connectToSlot(cloneMap.get(this._slot));
+    }
+    this._viewConnections.forEach(viewConn => slotConnection._viewConnections.push(viewConn.clone(particle, cloneMap)));
+    return slotConnection;
+  }
+
+  _normalize() {
+    this._tags.sort();
+    this._formFactors.sort();
+    Object.freeze(this);
+  }
+
+  _compareTo(other) {
+    let cmp;
+    if ((cmp = compareComparables(this._slot, other._slot)) != 0) return cmp;
+    if ((cmp = compareComparables(this._particle, other._particle)) != 0) return cmp;
+    if ((cmp = compareStrings(this._name, other._name)) != 0) return cmp;
+    if ((cmp = compareArrays(this._tags, other._tags, compareStrings)) != 0) return cmp;
+    if ((cmp = compareStrings(this._direction, other._direction)) != 0) return cmp;
+    if ((cmp = compareArrays(this._formFactors, other._formFactors, compareStrings)) != 0) return cmp;
+    if ((cmp = compareBools(this._required, other._required)) != 0) return cmp;
+    // viewConnections?
+    return 0;
+  }
+
   // TODO: slot functors??
-  get tags() {}
-  get view() {} // ViewConnection?
-  get direction() {} // provide/consume
-  get formFactors() {} // string*
-  get required() {} // bool
-  get particle() {} // Particle? :: consumer/provider
-  get slot() {} // Slot?
+  get tags() { return this._tags; }
+  get viewConnections() { return this._viewConnections; } // ViewConnection*
+  get direction() { return this._direction; } // provide/consume
+  get formFactors() { return this._formFactors; } // string*
+  get required() { return this._required; } // bool
+  get slot() { return this._slot; } // Slot?
+  get particle() { return this._particle; } // Particle
+
+  connectToView(name) {
+    assert(this.particle.connections[name], `Cannot connect slot to nonexistent view parameter ${name}`);
+    this._viewConnections.push(this.particle.connections[name]);
+  }
+
+  connectToSlot(slot) {
+    assert(this._recipe == slot._recipe);
+    assert(!this._slot, "Cannot override slot connection");
+    this._slot = slot;
+    if (this.direction == "provide") {
+      assert(this._slot.providerConnection == undefined, "Cannot override Slot provider");
+      this._slot._providerConnection = this;
+    } else if (this.direction == "consume") {
+      this._slot._consumerConnections.push(this);
+    } else {
+      fail(`Unsupported direction ${this.direction}`);
+    }
+  }
 }
 
 class Slot extends Node {
-  get provider() {} // SlotConnection?
-  get consumers() {} // SlotConnection*
+  constructor(recipe) {
+    super(recipe);
+    this._id = undefined;
+    this._localName = undefined;
+    this._providerConnection = undefined;
+    this._consumerConnections = [];
+  }
+
+  clone(recipe, cloneMap) {
+    var slot = new Slot(recipe);
+    slot._id = this._id;
+    // the connections are re-established when Particles clone their attached SlotConnection objects.
+    return slot;
+  }
+
+  _startNormalize() {
+    this._localName = null;
+  }
+
+  _finishNormalize() {
+    assert(Object.isFrozen(this._providerConnection));
+    for (let consumerConn of this._consumerConnections) {
+      assert(Object.isFrozen(consumerConn));
+    }
+    this._consumerConnections.sort(compareComparables);
+    Object.freeze(this);
+  }
+
+  _compareTo(other) {
+    let cmp;
+    if ((cmp = compareStrings(this._id, other._id)) != 0) return cmp;
+    if ((cmp = compareStrings(this._localName, other._localName)) != 0) return cmp;
+    return 1;
+  }
+
+  get id() { return this._id; }
+  set id(id) { this._id = id; }
+  get localName() { return this._localName; }
+  set localName(name) { this._localName = name; }
+  get providerConnection() { return this._providerConnection; }
+  get consumerConnections() { return this._consumerConnections; }
+
+  isResolved() {
+    return !!this.id() && !!this.providerConnection();
+  }
 }
 
 class Recipe {
   constructor() {
     this._particles = [];
     this._views = [];
+    this._slots = []
   }
 
   newParticle(name) {
@@ -370,15 +491,28 @@ class Recipe {
     var view = new View(this);
     this._views.push(view);
     return view;
-
   }
+
+  newSlot() {
+    var slot = new Slot(this);
+    this._slots.push(slot);
+    return slot;
+  }
+
   get localName() { return this._localName; }
   set localName(name) { this._localName = name; }
   get particles() { return this._particles; } // Particle*
   get views() { return this._views; } // View*
-  get slots() {} // Slot*
+  get slots() { return this._slots; } // Slot*
 
-  get slotConnections() {} // SlotConnection*
+  get slotConnections() {  // SlotConnection*
+    var slotConnections = [];
+    this._particles.forEach(particle => {
+      slotConnections.push(...particle._providedSlots);
+      slotConnections.push(...particle._consumedSlots);
+    });
+    return slotConnections;
+  }
 
   get viewConnections() {
     var viewConnections = [];
@@ -415,13 +549,23 @@ class Recipe {
     for (let view of this._views) {
       view._startNormalize();
     }
+    for (let slot of this._slots) {
+      slot._startNormalize();
+    }
 
-    // Sort and normalize connections.
+    // Sort and normalize view connections.
     let connections = this.viewConnections;
     for (let connection of connections) {
       connection._normalize();
     }
     connections.sort(compareComparables);
+
+    // Sort and normalize slot connections.
+    let slotConnections = this.slotConnections;
+    for (let slotConnection of slotConnections) {
+      slotConnection._normalize();
+    }
+    slotConnections.sort(compareComparables);
 
     // Finish normalizing particles and views with sorted connections.
     for (let particle of this._particles) {
@@ -430,25 +574,37 @@ class Recipe {
     for (let view of this._views) {
       view._finishNormalize();
     }
+    for (let slot of this._slots) {
+      slot._finishNormalize();
+    }
 
     let seenViews = new Set();
     let seenParticles = new Set();
     let particles = [];
     let views = [];
     for (let connection of connections) {
-      if (!seenViews.has(connection.particle)) {
+      if (!seenParticles.has(connection.particle)) {
         particles.push(connection.particle);
-        seenViews.add(connection.particle);
+        seenParticles.add(connection.particle);
       }
       if (connection.view && !seenViews.has(connection.view)) {
         views.push(connection.view);
         seenViews.add(connection.view);
       }
     }
+    let seenSlots = new Set();
+    let slots = [];
+    for (let slotConnection of slotConnections) {
+      if (slotConnection.slot && !seenSlots.has(slotConnection.slot)) {
+        slots.push(slotConnection.slot);
+        seenSlots.add(slotConnection.slot);
+      }
+    }
 
     // Put particles and views in their final ordering.
     this._particles = particles;
     this._views = views;
+    this._slots = slots;
     Object.freeze(this);
   }
 
@@ -468,6 +624,7 @@ class Recipe {
     }
 
     recipe._views = this._views.map(cloneTheThing);
+    recipe._slots = this._slots.map(cloneTheThing);
     recipe._particles = this._particles.map(cloneTheThing);
 
     return recipe;
@@ -564,6 +721,20 @@ class Walker extends Strategizer.Walker {
         var result = this.onView(recipe, view);
         if (result)
           updateList.push({continuation: result, context: view});
+      }
+    }
+    for (var slotConnection of recipe.slotConnections) {
+      if (this.onSlotConnection) {
+        var result = this.onSlotConnection(recipe, slotConnection);
+        if (result)
+          updateList.push({continuation: result, context: slotConnection});
+      }
+    }
+    for (var slot of recipe.slots) {
+      if (this.onSlot) {
+        var result = this.onSlot(recipe, slot);
+        if (result)
+          updateList.push({continuation: result, context: slot});
       }
     }
 
