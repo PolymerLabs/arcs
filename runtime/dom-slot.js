@@ -21,12 +21,11 @@ if (global.document) {
   require('./browser/lib/interleaved-list.js');
 }
 
-let templates = new Map();
-
 class DomSlot extends Slot {
   constructor(slotid) {
     super(slotid);
     this.dom = null;
+    this.templates = new Map();
   }
   initialize(context, exposedView) {
     this.dom = context;
@@ -68,13 +67,13 @@ class DomSlot extends Slot {
       // content is multiplexed
       let templateName = content.name || 'main';
       if (content.template) {
-        templates[templateName] = Object.assign(document.createElement('template'), {
+        this.templates[templateName] = Object.assign(document.createElement('template'), {
           innerHTML: content.template
         });
       }
       if (content.model) {
         if (!this._liveDom) {
-          this._stampTemplate(templates[templateName], eventHandler);
+          this._stampTemplate(this.templates[templateName], eventHandler);
         }
         this._liveDom.set(content.model);
       }
