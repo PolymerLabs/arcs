@@ -78,7 +78,7 @@ ${productStyles}
 <div chooser>
   <div chevron>▲</div>
   <div head>
-    <span>{{choices}}</span>
+    <span>{{choices.description}}</span>
   </div>
   <x-list items="{{items}}">${productTemplate}</x-list>
 </div>
@@ -102,7 +102,6 @@ ${productStyles}
     }
     _render(props, state) {
       return {
-        choices: '{{choices.description}}',
         items: state.values.map(({rawData}, index) => {
           return Object.assign({
             index

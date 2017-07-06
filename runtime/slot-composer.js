@@ -79,7 +79,7 @@ class SlotComposer {
   renderSlot(particleSpec, content, handler) {
     let slot = this._getParticleSlot(particleSpec);
     // returns slot(id)s rendered by the particle
-    let innerSlotInfos = slot.render(content, this.arc, handler);
+    let innerSlotInfos = slot.render(content, handler);
     if (innerSlotInfos && innerSlotInfos.length > 0) {
       // the `innerSlotInfos` identify available slot-contexts, make them available for composition
       this._provideInnerSlots(innerSlotInfos, particleSpec);
