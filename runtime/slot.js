@@ -82,7 +82,7 @@ class Slot {
   }
   get content() {
   }
-  render(content, arc, eventHandler) {
+  render(content, eventHandler) {
   }
   derender() {
   }

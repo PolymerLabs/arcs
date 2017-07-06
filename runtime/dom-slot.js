@@ -9,7 +9,7 @@
  */
 "use strict";
 
-//const assert = require('assert');
+const assert = require('assert');
 const Slot = require('./slot.js');
 const Template = require('./browser/lib/xenon-template.js');
 
@@ -46,13 +46,13 @@ class DomSlot extends Slot {
     return infos;
   }
   // TODO(sjmiles): SlotManager calls here
-  render(content, arc, eventHandler) {
+  render(content, eventHandler) {
     if (this.isInitialized()) {
-      this._setContent(content, arc, eventHandler);
+      this._setContent(content, eventHandler);
       return this._findInnerSlotInfos();
     }
   }
-  _setContent(content, arc, eventHandler) {
+  _setContent(content, eventHandler) {
     //console.log(`[${this._particleSpec.particle.name}]::dom-slot:_setContent:`, content);
     //
     // TODO(sjmiles): these signals are ad hoc
@@ -73,27 +73,24 @@ class DomSlot extends Slot {
         });
       }
       if (content.model) {
-        if (arc) {
-          this._replaceViewDescriptions(content.model, arc);
-        }
-
         if (!this._liveDom) {
           this._stampTemplate(templates[templateName], eventHandler);
         }
+        this._populateViewDescriptions(content.model);
         this._liveDom.set(content.model);
       }
     }
   }
-  _replaceViewDescriptions(model, arc) {
-    for (let key in model) {
-      let matchers = model[key].match && model[key].match(/^{{([a-zA-Z]*).description}}$/);
-      if (matchers && matchers.length > 1) {
-        let view = arc.findViewByName(this.particleSpec.particle.name, matchers[1]);
-        if (view && view.description)
-          model[key] = view.description;
+
+  _populateViewDescriptions(contentModel) {
+    assert(this.isAssociated(), "Cannot populate unassociated slot view descriptions");
+    this.particleSpec.views.forEach((view, viewName) => {
+      if (view && view.description) {
+        contentModel[`${viewName}.description`] = view.description;
       }
-    }
+    });
   }
+
   _stampTemplate(template, eventHandler) {
     let eventMapper = this._eventMapper.bind(this, eventHandler);
     // TODO(sjmiles): hack to allow subtree elements (e.g. x-list) to marshal events
