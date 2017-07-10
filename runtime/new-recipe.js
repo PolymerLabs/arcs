@@ -477,11 +477,46 @@ class Slot extends Node {
   }
 }
 
+class ConnectionConstraint {
+  constructor(from, fromConnection, to, toConnection) {
+    this.fromParticle = from;
+    this.fromConnection = fromConnection;
+    this.toParticle = to;
+    this.toConnection = toConnection;
+    Object.freeze(this);
+  }
+
+  clone() {
+    return new ConnectionConstraint(this.fromParticle, this.fromConnection, this.toParticle, this.toConnection);
+  }
+
+  compareTo(other) {
+    let cmp;
+    if ((cmp = compareStrings(this.fromParticle, other.fromParticle)) != 0) return cmp;
+    if ((cmp = compareStrings(this.fromConnection, other.fromConnection)) != 0) return cmp;
+    if ((cmp = compareStrings(this.toParticle, other.toParticle)) != 0) return cmp;
+    if ((cmp = compareStrings(this.toConnection, other.toConnection)) != 0) return cmp;
+    return 0;
+  }
+
+  toString() {
+    return `${this.fromParticle}.${this.fromConnection} -> ${this.toParticle}.${this.toConnection}`;
+  }
+}
+
 class Recipe {
   constructor() {
     this._particles = [];
     this._views = [];
-    this._slots = []
+    this._slots = []    // TODO: Recipes should be collections of records that are tagged
+    // with a type. Strategies should register the record types they
+    // can handle. ConnectionConstraints should be a different record
+    // type to particles/views.
+    this._connectionConstraints = [];
+  }
+
+  newConnectionConstraint(from, fromConnection, to, toConnection) {
+    this._connectionConstraints.push(new ConnectionConstraint(from, fromConnection, to, toConnection));
   }
 
   newParticle(name) {
@@ -605,9 +640,9 @@ class Recipe {
     }
 
     // Put particles and views in their final ordering.
-    this._particles = particles;
-    this._views = views;
-    this._slots = slots;
+    this._particles.sort(compareComparables);
+    this._views.sort(compareComparables);
+    this._connectionConstraints.sort(compareComparables);
     Object.freeze(this);
   }
 
@@ -629,6 +664,8 @@ class Recipe {
     recipe._views = this._views.map(cloneTheThing);
     recipe._slots = this._slots.map(cloneTheThing);
     recipe._particles = this._particles.map(cloneTheThing);
+
+    recipe._connectionConstraints = this._connectionConstraints.map(a => a.clone());
 
     return recipe;
   }
@@ -680,6 +717,9 @@ class Recipe {
     let result = [];
     // TODO: figure out where recipe names come from
     result.push(`recipe`);
+    for (let constraint of this._connectionConstraints) {
+      result.push(constraint.toString().replace(/^|(\n)/g, '$1  '));
+    }
     for (let view of this.views) {
       result.push(view.toString(nameMap).replace(/^|(\n)/g, '$1  '));
     }
@@ -687,6 +727,52 @@ class Recipe {
       result.push(particle.toString(nameMap).replace(/^|(\n)/g, '$1  '));
     }
     return result.join('\n');
+  }
+}
+
+class ConstraintWalker extends Strategizer.Walker {
+  constructor(tactic) {
+    super();
+    this.tactic = tactic;
+  }
+
+  onResult(result) {
+    super.onResult(result);
+    var recipe = result.result;
+    var updateList = [];
+
+    recipe._connectionConstraints.forEach(constraint => {
+      if (this.onConstraint) {
+        var result = this.onConstraint(constraint);
+        if (result)
+          updateList.push({continuatino: result, context: constraint});
+      }
+    });
+
+    var newRecipes = [];
+    if (updateList.length) {
+      if (this.tactic == Recipe.Walker.ApplyAll) {
+        var cloneMap = new Map();
+        var newRecipe = recipe.clone(cloneMap);
+        updateList.forEach(({continuation, context}) => {
+          if (typeof continuation == 'function')
+            continuation = [continuation];
+          continuation.forEach(f => {
+            f(newRecipe, constraint);
+          });
+        });
+        newRecipes.push(newRecipe);
+      }
+    }
+
+    for (var newRecipe of newRecipes) {
+      var result = this.createDescendant(newRecipe);
+    }
+  }
+
+  createDescendant(recipe) {
+    recipe.normalize();
+    super.createDescendant(recipe, recipe.digest());
   }
 }
 
@@ -799,6 +885,8 @@ class Walker extends Strategizer.Walker {
 }
 
 Recipe.Walker = Walker;
+Recipe.ConstraintWalker = ConstraintWalker;
+
 Recipe.Walker.ApplyAll = "apply all";
 Recipe.Walker.ApplyEach = "apply each";
 
