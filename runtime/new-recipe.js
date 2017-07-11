@@ -153,7 +153,7 @@ class Particle extends Node {
     });
     spec.exposes.forEach(slot => {
       let slotConn = this.addSlotConnection(slot.name, "provide");
-      slotConn.connectToSlot(recipe.newSlot());
+      slotConn.connectToSlot(this._recipe.newSlot());
       if (slot.view)
       slotConn.connectToView(slot.view);
     });
