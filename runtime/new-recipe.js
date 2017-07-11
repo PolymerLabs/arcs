@@ -88,7 +88,6 @@ class Particle extends Node {
     particle._consumedSlots = this._consumedSlots.map(slotConn => slotConn.clone(particle, cloneMap));
     Object.keys(this._connections).forEach(key => {
       particle._connections[key] = this._connections[key].clone(particle, cloneMap);
-      cloneMap.set(this._connections[key], particle._connections[key]);
     });
     particle._unnamedConnections = this._unnamedConnections.map(connection => connection.clone(particle, cloneMap));
 
@@ -198,6 +197,8 @@ class Particle extends Node {
       return false;
     if (Object.entries(this.connections).filter(a => !a.isResolved()).length > 0)
       return false;
+    if (Object.entries(this.consumedSlots).filter(c => !c.isResolved()).length > 0)
+      return false;
     return true;
   }
 
@@ -206,13 +207,19 @@ class Particle extends Node {
     // TODO: we need at least name or tags
     result.push(this.name);
     result.push(...this.tags);
-    result.push(`as ${(nameMap && nameMap.get(this)) || this.localName}`)
+    result.push(`as ${(nameMap && nameMap.get(this)) || this.localName}`);
     result = [result.join(' ')];
     for (let connection of this.unnamedConnections) {
       result.push(connection.toString(nameMap).replace(/^|(\n)/g, '$1  '));
     }
     for (let connection of Object.values(this.connections)) {
       result.push(connection.toString(nameMap).replace(/^|(\n)/g, '$1  '));
+    }
+    for (let slotConnection of this.consumedSlots) {
+      result.push(slotConnection.toString(nameMap).replace(/^|(\n)/g, '$1  '));
+    }
+    for (let slotConnection of this.providedSlots) {
+      result.push(slotConnection.toString(nameMap).replace(/^|(\n)/g, '$1  '));
     }
     return result.join('\n')
   }
@@ -409,6 +416,7 @@ class SlotConnection extends Connection {
       slotConnection.connectToSlot(cloneMap.get(this._slot));
     }
     this._viewConnections.forEach(viewConn => slotConnection._viewConnections.push(viewConn.clone(particle, cloneMap)));
+    cloneMap.set(this, slotConnection);
     return slotConnection;
   }
 
@@ -432,6 +440,7 @@ class SlotConnection extends Connection {
   }
 
   // TODO: slot functors??
+  get name() { return this._name; }
   get tags() { return this._tags; }
   get viewConnections() { return this._viewConnections; } // ViewConnection*
   get direction() { return this._direction; } // provide/consume
@@ -446,7 +455,7 @@ class SlotConnection extends Connection {
   }
 
   connectToSlot(slot) {
-    assert(this._recipe == slot._recipe);
+    assert(this._recipe == slot._recipe, "Cannot connect to slot from non matching recipe");
     assert(!this._slot, "Cannot override slot connection");
     this._slot = slot;
     if (this.direction == "provide") {
@@ -457,6 +466,22 @@ class SlotConnection extends Connection {
     } else {
       fail(`Unsupported direction ${this.direction}`);
     }
+  }
+
+  isResolved() {
+    return this.slot && this.slot.isResolved();
+  }
+
+  toString(nameMap) {
+    let result = [];
+    result.push(this.direction == "provide" ? "provides" : "consumes");
+    result.push(this.name);
+    if (this.slot) {
+      result.push(`as ${(nameMap && nameMap.get(this.slot)) || this.slot.localName}`);
+    }
+    result.push(...this.tags);
+    result.push(...this.formFactors);
+    return result.join(' ');
   }
 }
 
@@ -504,7 +529,19 @@ class Slot extends Node {
   get consumerConnections() { return this._consumerConnections; }
 
   isResolved() {
-    return !!this.id() && !!this.providerConnection();
+    // Note: "root" slot doesn't have a "provide" connection, hence it must have "consume" connections.
+    return !!this.id && (!!this.providerConnection || this.consumerConnections.length > 0);
+  }
+
+  toString(nameMap) {
+    let result = [];
+    result.push("renders");
+    if (this.providerConnection && this.providerConnection.viewConnections.length > 0 &&
+        this.providerConnection.viewConnections[0].view) {
+      result.push(nameMap.get(this.providerConnection.viewConnections[0].view));
+    }
+    result.push(`as ${(nameMap && nameMap.get(this)) || this.localName}`);
+    return result.join(' ');
   }
 }
 
@@ -756,6 +793,17 @@ class Recipe {
       nameMap.set(view, localName);
     }
 
+    i = 0;
+    for (let slot of this.slots) {
+      let localName = slot.localName;
+      if (!localName) {
+        do {
+          localName = `slot${i++}`;
+        } while (names.has(localName));
+      }
+      nameMap.set(slot, localName);
+    }
+
     return nameMap;
   }
 
@@ -772,6 +820,9 @@ class Recipe {
     }
     for (let view of this.views) {
       result.push(view.toString(nameMap).replace(/^|(\n)/g, '$1  '));
+    }
+    for (let slot of this.slots) {
+      result.push(slot.toString(nameMap).replace(/^|(\n)/g, '$1  '));
     }
     for (let particle of this.particles) {
       result.push(particle.toString(nameMap).replace(/^|(\n)/g, '$1  '));
@@ -881,14 +932,14 @@ class Walker extends Strategizer.Walker {
     for (var slotConnection of recipe.slotConnections) {
       if (this.onSlotConnection) {
         var result = this.onSlotConnection(recipe, slotConnection);
-        if (result)
+        if (!this.isEmptyResult(result))
           updateList.push({continuation: result, context: slotConnection});
       }
     }
     for (var slot of recipe.slots) {
       if (this.onSlot) {
         var result = this.onSlot(recipe, slot);
-        if (result)
+        if (!this.isEmptyResult(result))
           updateList.push({continuation: result, context: slot});
       }
     }

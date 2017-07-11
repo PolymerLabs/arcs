@@ -117,6 +117,30 @@ class CreateViews extends Strategy {
   }
 }
 
+class MatchConsumedSlots extends Strategy {
+  async generate(strategizer) {
+    var results = Recipe.over(strategizer.generated, new class extends Recipe.Walker {
+      onSlotConnection(recipe, slotConnection) {
+        if (slotConnection.direction == "provide")
+          return;
+        if (slotConnection.slot)
+          return;
+        return (recipe, slotConnection) => {
+          // TODO: handle slots that don't have a provider (like "root" slot)
+          var slot = recipe.slots.find((s) => {return s.providerConnection && s.providerConnection.name == slotConnection.name});
+          if (!slot)
+            return;
+          // TODO: verify set of slot.providerConnection.viewConnections[i].view.id contains
+          // the set of (or at least one of? TBD) slotConnection.viewConnections[i].view.id
+          slotConnection.connectToSlot(slot);
+        };
+      }
+    }(Recipe.Walker.ApplyAll), this);
+
+    return { results, generate: null };
+  }
+}
+
 
 class Planner {
   init(arc) {
@@ -125,7 +149,8 @@ class Planner {
       new CreateViews(),
       new ResolveParticleByName(arc._loader),
       new AssignViewsByTagAndType(arc),
-      new ConvertConstraintsToConnections()];
+      new ConvertConstraintsToConnections(),
+      new MatchConsumedSlots()];
     this.strategizer = new Strategizer(strategies, [], {
       maxPopulation: 100,
       generationSize: 1000,
