@@ -43,7 +43,21 @@ describe('manifest', function() {
           pattern: Choose from \${choices}
         }`);
   });
-
+  it('can parse a manifest containing a schema', async () => {
+    let manifest = await Manifest.parse(`
+      schema Bar
+        normative
+          Text value`);
+    assert.equal(manifest.schemas.Bar.normative.value, 'Text');
+  });
+  it('can parse a manifest containing an extended schema', async () => {
+    let manifest = await Manifest.parse(`
+      schema Foo
+        normative
+          Text value
+      schema Bar extends Foo`);
+    assert.equal(manifest.schemas.Bar.normative.value, 'Text');
+  });
   it('can resolve recipes with connections between particles', async () => {
     let manifest = await Manifest.parse(`
       recipe Connected
@@ -182,5 +196,23 @@ describe('manifest', function() {
     };
     let manifest = await Manifest.load('a', loader, registry);
     assert.equal(manifest.recipes[0].particles[0].spec, registry.b.particles.ParticleB);
+  });
+  it('can parse a schema extending a schema in another manifest', async () => {
+    let registry = {};
+    let loader = {
+      loadFile(path) {
+        return {
+          a: `
+              import 'b'
+              schema Bar extends Foo`,
+          b: `
+              schema Foo
+                normative
+                  Text value`
+        }[path];
+      }
+    };
+    let manifest = await Manifest.load('a', loader, registry);
+    assert.equal(manifest.schemas.Bar.normative.value, 'Text');
   });
 });
