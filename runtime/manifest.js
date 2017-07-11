@@ -17,6 +17,7 @@ const ParticleSpec = require('./particle-spec.js')
 class Manifest {
   constructor() {
     this._recipes = [];
+    this._imports = [];
     this._particles = {};
   }
   get recipes() {
@@ -25,14 +26,36 @@ class Manifest {
   get particles() {
     return this._particles;
   }
-  static parse(content /* TODO: context from file, line, col? */) {
+  get imports() {
+    return this._imports;
+  }
+  static async load(path, loader, registry) {
+    if (registry && registry[path]) {
+      return registry[path];
+    }
+    let content = await loader.loadFile(path);
+    let manifest = await Manifest.parse(content, {loader, registry, position: {line: 1, column: 0}});
+    if (manifest && registry) {
+      registry[path] = manifest;
+    }
+    return manifest;
+  }
+  static async parse(content, options) {
+    options = options || {};
+    let {path, position, loader, registry} = options;
+    registry = registry || {};
+    position = position || {line: 1, column: 0};
+
     let items = parser.parse(content);
     let manifest = new Manifest();
     // TODO: This should be written to process in dependency order.
-    // 1. TODO: imports
+    // 1. imports
     // 2. TODO: schemas
     // 3. particles, TODO: entities => views
     // 4. recipes
+    for (let item of items.filter(item => item.kind == 'import')) {
+      manifest._imports.push(await Manifest.load(item.path, loader, registry));
+    }
     for (let item of items.filter(item => item.kind == 'particle')) {
       this._processParticle(manifest, item);
     }
@@ -76,6 +99,15 @@ class Manifest {
       particle.tags = item.ref.tags;
       if (item.ref.name) {
         let spec = manifest.particles[item.ref.name];
+        // TODO: factor out import lookups
+        if (!spec) {
+          for (let importManifest of manifest.imports) {
+            if (importManifest.particles[item.ref.name]) {
+              spec = importManifest.particles[item.ref.name];
+              break;
+            }
+          }
+        }
         if (spec) {
           particle.spec = spec;
         }

@@ -34,6 +34,16 @@ Manifest
 ManifestItem
   = Recipe
   / Particle
+  / Import
+
+Import
+  = "import" whiteSpace path:id eolWhiteSpace
+  {
+    return {
+      kind: "import",
+      path,
+    }
+  }
 
 Particle
   = "particle" whiteSpace name:upperIdent implFile:(whiteSpace "in" whiteSpace id)? eolWhiteSpace body:IndentedText?
