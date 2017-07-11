@@ -35,6 +35,7 @@ ManifestItem
   = Recipe
   / Particle
   / Import
+  / Schema
 
 Import
   = "import" whiteSpace path:id eolWhiteSpace
@@ -179,6 +180,42 @@ ViewRef
   { return {id, tags: tags || []}; }
   / tags:TagList
   { return {tags}; }
+
+Schema
+  = "schema" whiteSpace name:upperIdent parent:(whiteSpace "extends" whiteSpace upperIdent)? eolWhiteSpace sections:(Indent (SameIndent SchemaSection)*)?
+  {
+    return {
+      kind: 'schema',
+      name: name,
+      parent: optional(parent, parent => parent[3], null),
+      sections: optional(sections, extractIndented, []),
+    };
+  }
+
+SchemaSection
+  = sectionType:("normative" / "optional") eolWhiteSpace fields:(Indent (SameIndent SchemaField eolWhiteSpace)+)
+  {
+    let fieldDict = {};
+    for (let field of extractIndented(fields)) {
+      fieldDict[field.name] = field.type;
+    }
+    return {
+      sectionType,
+      fields: fieldDict,
+    };
+  }
+
+SchemaField
+  = type:SchemaType whiteSpace name:lowerIdent
+  {
+    return {
+      type,
+      name,
+    };
+  }
+
+SchemaType
+  = "Text" / "URL"
 
 Indent = &(i:" "+ &{
   i = i.join('');

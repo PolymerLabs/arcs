@@ -13,12 +13,14 @@ const parser = require('./build/manifest-parser.js');
 const Recipe = require('./new-recipe.js');
 const ParticleParser = require('./build/particle-parser.js');
 const ParticleSpec = require('./particle-spec.js')
+const Schema = require('./schema.js')
 
 class Manifest {
   constructor() {
     this._recipes = [];
     this._imports = [];
     this._particles = {};
+    this._schemas = {};
   }
   get recipes() {
     return this._recipes;
@@ -28,6 +30,22 @@ class Manifest {
   }
   get imports() {
     return this._imports;
+  }
+  get schemas() {
+    return this._schemas;
+  }
+  findSchemaByName(name) {
+    let schema = this._schemas[name];
+    if (!schema) {
+      // TODO: flatten or index imports?
+      for (let importedManifest of this._imports) {
+        schema = importedManifest.findSchemaByName(name);
+        if (schema) {
+          break;
+        }
+      }
+    }
+    return schema;
   }
   static async load(path, loader, registry) {
     if (registry && registry[path]) {
@@ -56,6 +74,9 @@ class Manifest {
     for (let item of items.filter(item => item.kind == 'import')) {
       manifest._imports.push(await Manifest.load(item.path, loader, registry));
     }
+    for (let item of items.filter(item => item.kind == 'schema')) {
+      this._processSchema(manifest, item);
+    }
     for (let item of items.filter(item => item.kind == 'particle')) {
       this._processParticle(manifest, item);
     }
@@ -63,6 +84,15 @@ class Manifest {
       this._processRecipe(manifest, item);
     }
     return manifest;
+  }
+  static _processSchema(manifest, schemaItem) {
+    let parent;
+    if (schemaItem.parent) {
+      parent = manifest.findSchemaByName(schemaItem.parent);
+      // TODO: error handling
+      assert(parent);
+    }
+    manifest._schemas[schemaItem.name] = new Schema(schemaItem, parent);
   }
   static _processParticle(manifest, particleItem) {
     let particleSpec = new ParticleSpec(ParticleParser.parse(particleItem.body));
