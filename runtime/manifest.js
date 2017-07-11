@@ -22,24 +22,22 @@ class Manifest {
   get recipes() {
     return this._recipes;
   }
+  get particles() {
+    return this._particles;
+  }
   static parse(content /* TODO: context from file, line, col? */) {
     let items = parser.parse(content);
     let manifest = new Manifest();
-    // TODO: This probably needs to be rewritten to process in phases.
-    // 1. imports
-    // 2. populate recipes, particles etc. and assign IDs
-    // 3. process recipes/particles, and resolve references to particles/schemas etc.
-    for (let item of items) {
-      switch (item.kind) {
-        case 'recipe':
-          this._processRecipe(manifest, item);
-          break;
-        case 'particle':
-          this._processParticle(manifest, item);
-          break;
-        default:
-          throw `${item.kind} not yet implemented`;
-      }
+    // TODO: This should be written to process in dependency order.
+    // 1. TODO: imports
+    // 2. TODO: schemas
+    // 3. particles, TODO: entities => views
+    // 4. recipes
+    for (let item of items.filter(item => item.kind == 'particle')) {
+      this._processParticle(manifest, item);
+    }
+    for (let item of items.filter(item => item.kind == 'recipe')) {
+      this._processRecipe(manifest, item);
     }
     return manifest;
   }
@@ -77,6 +75,10 @@ class Manifest {
       let particle = recipe.newParticle(item.ref.name);
       particle.tags = item.ref.tags;
       if (item.ref.name) {
+        let spec = manifest.particles[item.ref.name];
+        if (spec) {
+          particle.spec = spec;
+        }
         particlesByName[item.ref.name] = particle;
       }
       if (item.name) {

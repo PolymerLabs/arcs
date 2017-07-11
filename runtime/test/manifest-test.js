@@ -137,4 +137,12 @@ describe('manifest', function() {
     recipe2.normalize();
     assert.deepEqual(recipe1.toString(), recipe2.toString());
   });
+  it('can resolve recipe particles defined in the same manifest', () => {
+    let manifest = Manifest.parse(`
+      particle Thing in 'thing.js'
+        Thing(in [Something] someThings, out [Someother] someOthers)
+      recipe
+        Thing`);
+    assert(manifest.recipes[0].particles[0].spec);
+  });
 });
