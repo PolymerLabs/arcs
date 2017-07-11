@@ -53,31 +53,7 @@ class ResolveParticleByName extends Strategy {
           var impl = loader.loadParticle(particle.name, true);
           if (impl == undefined)
             return;
-          return (recipe, particle) => {
-            particle.spec = impl.spec;
-            for (var connectionName of impl.spec.connectionMap.keys()) {
-              var speccedConnection = impl.spec.connectionMap.get(connectionName);
-              var connection = particle.connections[connectionName];
-              if (connection == undefined) {
-                connection = particle.addConnectionName(connectionName);
-              }
-              // TODO: don't just overwrite here, check that the types
-              // are compatible if one already exists.
-              connection.type = speccedConnection.type;
-              connection.direction = speccedConnection.direction;
-            }
-            impl.spec.renders.forEach(slot => {
-              let slotConn = particle.addSlotConnection(slot.name.name, "consume");
-              if (slot.name.view)
-                slotConn.connectToView(slot.name.view);
-            });
-            impl.spec.exposes.forEach(slot => {
-              let slotConn = particle.addSlotConnection(slot.name, "provide");
-              slotConn.connectToSlot(recipe.newSlot());
-              if (slot.view)
-                slotConn.connectToView(slot.view);
-            });
-          }
+          return (recipe, particle) => particle.spec = impl.spec;
         }
       }
     }(Recipe.Walker.ApplyAll), this);

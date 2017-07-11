@@ -126,13 +126,38 @@ class Particle extends Node {
   get id() { return this._id; } // Not resolved until we have an ID.
   get name() { return this._name; }
   get spec() { return this._spec; }
-  set spec(spec) { this._spec = spec; }
   get tags() { return this._tags; }
   set tags(tags) { this._tags = tags; }
   get providedSlots() { return this._providedSlots; } // SlotConnection*
   get consumedSlots() { return this._consumedSlots; } // SlotConnection*
   get connections() { return this._connections; } // {parameter -> ViewConnection}
   get unnamedConnections() { return this._unnamedConnections; } // ViewConnection*
+
+  set spec(spec) {
+    this._spec = spec;
+    for (var connectionName of spec.connectionMap.keys()) {
+      var speccedConnection = spec.connectionMap.get(connectionName);
+      var connection = this.connections[connectionName];
+      if (connection == undefined) {
+        connection = this.addConnectionName(connectionName);
+      }
+      // TODO: don't just overwrite here, check that the types
+      // are compatible if one already exists.
+      connection.type = speccedConnection.type;
+      connection.direction = speccedConnection.direction;
+    }
+    spec.renders.forEach(slot => {
+      let slotConn = this.addSlotConnection(slot.name.name, "consume");
+      if (slot.name.view)
+      slotConn.connectToView(slot.name.view);
+    });
+    spec.exposes.forEach(slot => {
+      let slotConn = this.addSlotConnection(slot.name, "provide");
+      slotConn.connectToSlot(recipe.newSlot());
+      if (slot.view)
+      slotConn.connectToView(slot.view);
+    });
+  }
 
   addUnnamedConnection() {
     var connection = new ViewConnection(undefined, this);
