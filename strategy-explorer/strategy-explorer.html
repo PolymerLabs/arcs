@@ -54,6 +54,7 @@ function preparePopulation(population) {
 }
 
 document.idMap = new Map();
+document.pendingActions = new Map();
 
 (async () => {
   var loader = new Loader();
@@ -65,7 +66,7 @@ document.idMap = new Map();
   var productView = a.createView(Product.type.viewOf(), "products");
   var p = new Planner();
   p.init(a);
-  var result = [await p.generate(), await p.generate(), await p.generate()].map(preparePopulation);
+  var result = [await p.generate(), await p.generate(), await p.generate(), await p.generate(), await p.generate(), await p.generate(), await p.generate(), await p.generate()].map(preparePopulation);
   document.querySelector('se-explorer').results = result;
 })();
 </script>

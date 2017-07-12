@@ -92,6 +92,8 @@ class Particle extends Node {
     });
     particle._unnamedConnections = this._unnamedConnections.map(connection => connection.clone(particle, cloneMap));
 
+    particle._spec = this._spec;
+
     return particle;
   }
 
@@ -169,6 +171,10 @@ class Particle extends Node {
     assert(this._connections[name] == undefined);
     this._connections[name] = new ViewConnection(name, this);
     return this._connections[name];
+  }
+
+  addConnectionNameIfMissing(name) {
+    return this._connections[name] || this.addConnectionName(name);
   }
 
   nameConnection(connection, name) {
@@ -326,9 +332,9 @@ class ViewConnection extends Connection {
   _compareTo(other) {
     let cmp;
     if ((cmp = compareComparables(this._particle, other._particle)) != 0) return cmp;
-    if ((cmp = compareComparables(this._view, other._view)) != 0) return cmp;
     if ((cmp = compareStrings(this._name, other._name)) != 0) return cmp;
     if ((cmp = compareArrays(this._tags, other._tags, compareStrings)) != 0) return cmp;
+    if ((cmp = compareComparables(this._view, other._view)) != 0) return cmp;
     // TODO: add type comparison
     // if ((cmp = compareStrings(this._type, other._type)) != 0) return cmp;
     if ((cmp = compareStrings(this._direction, other._direction)) != 0) return cmp;
@@ -533,7 +539,9 @@ class Recipe {
   constructor() {
     this._particles = [];
     this._views = [];
-    this._slots = []    // TODO: Recipes should be collections of records that are tagged
+    this._slots = []
+
+    // TODO: Recipes should be collections of records that are tagged
     // with a type. Strategies should register the record types they
     // can handle. ConnectionConstraints should be a different record
     // type to particles/views.
@@ -542,6 +550,12 @@ class Recipe {
 
   newConnectionConstraint(from, fromConnection, to, toConnection) {
     this._connectionConstraints.push(new ConnectionConstraint(from, fromConnection, to, toConnection));
+  }
+
+  removeConstraint(constraint) {
+    var idx = this._connectionConstraints.indexOf(constraint);
+    assert(idx >= 0);
+    this._connectionConstraints.splice(idx, 1);
   }
 
   newParticle(name) {
@@ -665,8 +679,9 @@ class Recipe {
     }
 
     // Put particles and views in their final ordering.
-    this._particles.sort(compareComparables);
-    this._views.sort(compareComparables);
+    this._particles = particles;
+    this._views = views;
+    this._slots = slots;
     this._connectionConstraints.sort(compareComparables);
     Object.freeze(this);
   }
@@ -690,9 +705,17 @@ class Recipe {
     recipe._slots = this._slots.map(cloneTheThing);
     recipe._particles = this._particles.map(cloneTheThing);
 
-    recipe._connectionConstraints = this._connectionConstraints.map(a => a.clone());
+    recipe._connectionConstraints = this._connectionConstraints.map(cloneTheThing);
+
+    recipe._cloneMap = cloneMap;
 
     return recipe;
+  }
+
+  updateToClone(dict) {
+    var result = {};
+    Object.keys(dict).forEach(key => result[key] = this._cloneMap.get(dict[key]));
+    return result;
   }
 
   static over(results, walker, strategy) {
@@ -768,25 +791,41 @@ class ConstraintWalker extends Strategizer.Walker {
 
     recipe._connectionConstraints.forEach(constraint => {
       if (this.onConstraint) {
-        var result = this.onConstraint(constraint);
+        var result = this.onConstraint(recipe, constraint);
         if (result)
-          updateList.push({continuatino: result, context: constraint});
+          updateList.push({continuation: result, context: constraint});
       }
     });
 
     var newRecipes = [];
     if (updateList.length) {
-      if (this.tactic == Recipe.Walker.ApplyAll) {
-        var cloneMap = new Map();
-        var newRecipe = recipe.clone(cloneMap);
-        updateList.forEach(({continuation, context}) => {
-          if (typeof continuation == 'function')
-            continuation = [continuation];
-          continuation.forEach(f => {
-            f(newRecipe, constraint);
+      switch (this.tactic) {
+        case Recipe.Walker.ApplyAll:
+          var cloneMap = new Map();
+          var newRecipe = recipe.clone(cloneMap);
+          updateList.forEach(({continuation, context}) => {
+            if (typeof continuation == 'function')
+              continuation = [continuation];
+            continuation.forEach(f => {
+              f(newRecipe, cloneMap.get(context));
+            });
           });
-        });
-        newRecipes.push(newRecipe);
+          newRecipes.push(newRecipe);
+          break;
+        case Recipe.Walker.ApplyEach:
+          updateList.forEach(({continuation, context}) => {
+            var cloneMap = new Map();
+            var newRecipe = recipe.clone(cloneMap);
+            if (typeof continuation == 'function')
+              continuation = [continuation];
+            continuation.forEach(f => {
+              f(newRecipe, cloneMap.get(context));
+            });
+            newRecipes.push(newRecipe);
+          });
+          break;
+        default:
+          throw `${this.tactic} not supported`;
       }
     }
 
