@@ -253,4 +253,5 @@ whiteSpace
   = " "+
 eolWhiteSpace
   = [ ]* !.
+  / [ ]* '//' [^\n]* eolWhiteSpace
   / [ ]* "\n" eolWhiteSpace?
