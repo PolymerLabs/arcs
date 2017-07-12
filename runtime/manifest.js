@@ -106,7 +106,13 @@ class Manifest {
       particles: recipeItem.items.filter(item => item.kind == 'particle'),
       byParticle: new Map(),
       byName: new Map(),
+      connections: recipeItem.items.filter(item => item.kind == 'connection')
     };
+
+    for (let connection of items.connections) {
+      recipe.newConnectionConstraint(connection.from.particle, connection.from.param,
+                                     connection.to.particle, connection.to.param);
+    }
 
     for (let item of items.views) {
       let view = recipe.newView();
