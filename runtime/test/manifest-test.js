@@ -88,6 +88,19 @@ describe('manifest', function() {
   P2 as particle1
     x -> view0`);
   });
+  it('supports recipes with constraints', async () => {
+    let manifest = await Manifest.parse(`
+      recipe Constrained
+        A.a -> B.b`);
+    let recipe = manifest.recipes[0];
+    assert(recipe);
+    assert.equal(recipe._connectionConstraints.length, 1);
+    var constraint = recipe._connectionConstraints[0];
+    assert.equal(constraint.fromParticle, 'A');
+    assert.equal(constraint.fromConnection, 'a');
+    assert.equal(constraint.toParticle, 'B');
+    assert.equal(constraint.toConnection, 'b');
+  })
   it('supports recipes with local names', async () => {
     await assertRecipeParses(
       `recipe
