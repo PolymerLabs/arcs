@@ -173,7 +173,7 @@ class Particle extends Node {
     return this._connections[name];
   }
 
-  addConnectionNameIfMissing(name) {
+  ensureConnectionName(name) {
     return this._connections[name] || this.addConnectionName(name);
   }
 
@@ -707,6 +707,8 @@ class Recipe {
 
     recipe._connectionConstraints = this._connectionConstraints.map(cloneTheThing);
 
+    // TODO: figure out a better approach than stashing the cloneMap permanently
+    // on the recipe
     recipe._cloneMap = cloneMap;
 
     return recipe;
