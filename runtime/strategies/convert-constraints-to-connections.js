@@ -47,7 +47,7 @@ class ConvertConstraintsToConnections extends Strategy {
         var leftActions = leftResolved.map(resolveMap => {
           (recipe, constraint) => {
             resolveMap = recipe.updateToClone(resolveMap);
-            resolveMap[constraint.toParticle].addConnectionNameIfMissing(constraint.toConnection).connectToView(resolveMap['a']);
+            resolveMap[constraint.toParticle].ensureConnectionName(constraint.toConnection).connectToView(resolveMap['a']);
             recipe.removeConstraint(constraint);
           }
         });
@@ -55,7 +55,7 @@ class ConvertConstraintsToConnections extends Strategy {
         var rightActions = rightResolved.map(resolveMap => {
           return (recipe, constraint) => {
             resolveMap = recipe.updateToClone(resolveMap);
-            resolveMap[constraint.fromParticle].addConnectionNameIfMissing(constraint.fromConnection).connectToView(resolveMap['a']);
+            resolveMap[constraint.fromParticle].ensureConnectionName(constraint.fromConnection).connectToView(resolveMap['a']);
             recipe.removeConstraint(constraint);
           };
         });
@@ -70,8 +70,8 @@ class ConvertConstraintsToConnections extends Strategy {
           return (recipe, constraint) => {
             resolveMap = recipe.updateToClone(resolveMap);
             var view = recipe.newView();
-            resolveMap[constraint.fromParticle].addConnectionNameIfMissing(constraint.fromConnection).connectToView(view);
-            resolveMap[constraint.toParticle].addConnectionNameIfMissing(constraint.toConnection).connectToView(view);
+            resolveMap[constraint.fromParticle].ensureConnectionName(constraint.fromConnection).connectToView(view);
+            resolveMap[constraint.toParticle].ensureConnectionName(constraint.toConnection).connectToView(view);
             recipe.removeConstraint(constraint);
           };
         });
@@ -87,7 +87,7 @@ class ConvertConstraintsToConnections extends Strategy {
           return (recipe, constraint) => {
             resolveMap = recipe.updateToClone(resolveMap);
             var view = recipe.newView();
-            resolveMap[constraint.fromParticle].addConnectionNameIfMissing(constraint.fromConnection).connectToView(view);
+            resolveMap[constraint.fromParticle].ensureConnectionName(constraint.fromConnection).connectToView(view);
             recipe.newParticle(constraint.toParticle).addConnectionName(constraint.toConnection).connectToView(view);
             recipe.removeConstraint(constraint);
           }
@@ -97,7 +97,7 @@ class ConvertConstraintsToConnections extends Strategy {
             resolveMap = recipe.updateToClone(resolveMap);
             var view = recipe.newView();
             recipe.newParticle(constraint.fromParticle).addConnectionName(constraint.fromConnection).connectToView(view);
-            resolveMap[constraint.toParticle].addConnectionNameIfMissing(constraint.toConnection).connectToView(view);
+            resolveMap[constraint.toParticle].ensureConnectionName(constraint.toConnection).connectToView(view);
             recipe.removeConstraint(constraint);
           }
         });
