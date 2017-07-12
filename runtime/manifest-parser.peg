@@ -78,6 +78,7 @@ RecipeItem
   = RecipeParticle
   / RecipeView
   / RecipeConnection
+  / RecipeSlot
 
 Name
   = "as" whiteSpace name:lowerIdent
@@ -86,16 +87,25 @@ Name
   }
 
 RecipeParticle
-  = ref:ParticleRef name:(whiteSpace Name)? eolWhiteSpace connections:(Indent (SameIndent RecipeParticleConnection)*)?
+  = ref:ParticleRef name:(whiteSpace Name)? eolWhiteSpace connections:(Indent (SameIndent (RecipeParticleConnection / RecipeParticleSlotConnection))*)?
   {
+    let viewConnections = [];
+    let slotConnections = [];
     if (connections) {
       connections = extractIndented(connections);
+      for (let conn of connections) {
+        if (conn.dir == "consumes" || conn.dir == "provides")
+          slotConnections.push(conn);
+        else
+          viewConnections.push(conn)
+      }
     }
     return {
       kind: 'particle',
       name: optional(name, name => name[1], null),
       ref,
-      connections: connections || [],
+      connections: viewConnections,
+      slotConnections: slotConnections,
     };
   }
 
@@ -106,6 +116,16 @@ RecipeParticleConnection
       param,
       dir,
       target,
+    };
+  }
+
+RecipeParticleSlotConnection
+  = dir:("provides" / "consumes") whiteSpace param:(lowerIdent / "*") name:(whiteSpace Name)? eolWhiteSpace
+  {
+    return {
+      param,
+      dir,
+      name,
     };
   }
 
@@ -151,6 +171,16 @@ RecipeView
   {
     return {
       kind: 'view',
+      name: optional(name, name => name[1], null),
+      ref: optional(ref, ref => ref[1], {tags: []})
+    }
+  }
+
+RecipeSlot
+  = "renders" ref:(whiteSpace ViewRef)? name:(whiteSpace Name)? eolWhiteSpace
+  {
+    return {
+      kind: 'slot',
       name: optional(name, name => name[1], null),
       ref: optional(ref, ref => ref[1], {tags: []})
     }

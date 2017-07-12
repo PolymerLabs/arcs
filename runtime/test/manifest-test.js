@@ -22,15 +22,20 @@ describe('manifest', function() {
   it('can parse a manifest containing a recipe', async () => {
     let manifest = await Manifest.parse(`
       recipe SomeRecipe
-        map #someView
+        map as someView
+        renders 'someView' as slot0
+        renders as slot1
         SomeParticle
-          someParam -> #tag`);
+          someParam -> #tag
+          consumes mySlot as slot0
+          provides otherSlot as slot1`);
     let recipe = manifest.recipes[0];
     assert(recipe);
     assert.equal(recipe.particles.length, 1);
     assert.equal(recipe.views.length, 1);
     assert.equal(recipe.viewConnections.length, 1);
-    assert.sameMembers(recipe.viewConnections[0].tags, ['#tag'])
+    assert.sameMembers(recipe.viewConnections[0].tags, ['#tag']);
+    // TODO: populate and verify slots and slotconnections in the recipe
   });
   it('can parse a manifest containing a particle specification', async () => {
     let manifest = await Manifest.parse(`
