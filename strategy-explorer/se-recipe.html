@@ -41,6 +41,10 @@
         border: 1px solid purple;
         background: #fcf;
       }
+
+      #recipe-box[terminal] {
+        border-radius: 20px;
+      }
     </style>
     <div id='recipe-box'
       selected$='{{selected}}'
@@ -48,6 +52,7 @@
       activeAncestor$='{{activeAncestor}}'
       activeChild$='{{activeChild}}'
       activeDescendant$='{{activeDescendant}}'
+      terminal$='{{terminal}}'
     >{{recipe.score}}</div>
   </template>
 
@@ -55,37 +60,51 @@
     Polymer({
       is: 'se-recipe',
       properties: {
-        selected: {value: false, notifies: true},
-        activeParent: {value: false, notifies: true},
-        activeAncestor: {value: false, notifies: true}
       },
       attached: function() {
         document.idMap.set(this.recipe.id, this);
+
         this.ancestors = [];
         this.childrens = [];
+        this.set("terminal", true);
         this.descendants = [];
         this.parents = [];
         this.strategyMap = new Map();
         this.recipe.derivation.forEach(derivation => {
           if (derivation.parent !== undefined) {
             var newParent = document.idMap.get(derivation.parent);
-            this.strategyMap.set(newParent, [[derivation.strategy]]);
-            this.parents.push(newParent);
-            newParent.strategyMap.forEach((valueList, key) => {
-              valueList.forEach(value =>  {
-                strategyList = value.slice();
-                strategyList.push(derivation.strategy);
-                if (this.strategyMap.get(key) == undefined)
-                  this.strategyMap.set(key, []);
-                this.strategyMap.get(key).push(strategyList);
+
+            var setupContext = (newParent => {
+              this.strategyMap.set(newParent, [[derivation.strategy]]);
+              this.parents.push(newParent);
+              newParent.strategyMap.forEach((valueList, key) => {
+                valueList.forEach(value =>  {
+                  strategyList = value.slice();
+                  strategyList.push(derivation.strategy);
+                  if (this.strategyMap.get(key) == undefined)
+                    this.strategyMap.set(key, []);
+                  this.strategyMap.get(key).push(strategyList);
+                });
               });
+              this.ancestors = this.ancestors.concat(newParent.parents, newParent.ancestors);
+              newParent.childrens.push(this);
+              newParent.set("terminal", false);
+              newParent.parents.forEach(parent => parent.descendants.push(this));
+              newParent.ancestors.forEach(ancestor => ancestor.descendants.push(this));
             });
-            this.ancestors = this.ancestors.concat(newParent.parents, newParent.ancestors);
-            newParent.childrens.push(this);
-            newParent.parents.forEach(parent => parent.descendants.push(this));
-            newParent.ancestors.forEach(ancestor => ancestor.descendants.push(this));
+            if (newParent == undefined) {
+              if (!document.pendingActions.has(derivation.parent))
+                document.pendingActions.set(derivation.parent, []);
+              document.pendingActions.get(derivation.parent).push(setupContext);
+            } else {
+              setupContext(newParent);
+            }
           }
         });
+
+        if (document.pendingActions.has(this.recipe.id)) {
+          document.pendingActions.get(this.recipe.id).forEach(action => action(this));
+        }
 
         var recipeView = document.documentElement.querySelector('se-recipe-view');
         this.$['recipe-box'].addEventListener('mouseenter', e => {

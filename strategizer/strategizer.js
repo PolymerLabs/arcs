@@ -64,10 +64,30 @@ class Strategizer {
       return result;
     }));
 
+    record.rawGenerated = generated.length;
+    record.nullDerivations = 0;
+    record.duplicateDerivations = 0;
+    record.nullDerivationsByStrategy = {};
+    record.duplicateDerivationsByStrategy = {};
+
     generated = generated.filter(result => {
       if (result.hash) {
-        if (this.populationHash.has(result.hash)) {
-          this.populationHash.get(result.hash).derivation.push(result.derivation[0]);
+        var existingResult = this.populationHash.get(result.hash);
+        var strategy = result.derivation[0].strategy.constructor.name;
+        if (existingResult) {
+          if (result.derivation[0].parent == existingResult) {
+            record.nullDerivations += 1;
+            if (record.nullDerivationsByStrategy[strategy] == undefined)
+              record.nullDerivationsByStrategy[strategy] = 0;
+            record.nullDerivationsByStrategy[strategy]++;
+          } else if (existingResult.derivation.map(a => a.parent).indexOf(result.derivation[0].parent) != -1) {
+            record.duplicateDerivations += 1;
+            if (record.duplicateDerivationsByStrategy[strategy] == undefined)
+              record.duplicateDerivationsByStrategy[strategy] = 0;
+            record.duplicateDerivationsByStrategy[strategy]++;
+          } else {
+            this.populationHash.get(result.hash).derivation.push(result.derivation[0]);
+          }
           return false;
         }
         this.populationHash.set(result.hash, result);

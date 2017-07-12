@@ -4,8 +4,13 @@
 <dom-module id='se-population'>
   <template>
     <style>
+    .strategy-container {
+      display: flex;
+    }
+
     .recipe-container {
       display: flex;
+      flex-wrap: wrap;
     }
 
     .strategy-box {
@@ -14,14 +19,16 @@
       margin: 2px;
     }
     </style>
-    <div class='recipe-container'>
+    <div class='strategy-container'>
       <template is='dom-repeat' items='{{population}}'>
         <div class='strategy-box'>
           {{item.strategy}}
-          <template is='dom-repeat' items='{{item.recipes}}'>
-            <se-recipe recipe={{item}}>
-            </se-recipe>
-          </template>
+          <div class='recipe-container'>
+            <template is='dom-repeat' items='{{item.recipes}}'>
+              <se-recipe recipe={{item}}>
+              </se-recipe>
+            </template>
+          </div>
         </div>
       </template>
     </div>
