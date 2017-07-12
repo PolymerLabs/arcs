@@ -54,6 +54,18 @@ describe('manifest parser', function() {
         SomeParticle as thing
         map #thing as anotherThing`);
   });
+  it('parses manifests with comments', () => {
+    parse(`
+    // comment
+      recipe // comment
+        // comment
+           // comment
+        A//comment
+   // comment
+        // comment
+        B    //comment
+      `)
+  });
   it('parses recipes with recipe level connections', () => {
     parse(`
       recipe
