@@ -13,6 +13,7 @@ let Arc = require('../arc.js');
 let Loader = require('../loader.js');
 let Planner = require('../planner.js');
 let assert = require('chai').assert;
+let Manifest = require('../manifest.js');
 let Recipe = require('../new-recipe.js');
 let systemParticles = require('../system-particles.js');
 let ConvertConstraintsToConnections = require('../strategies/convert-constraints-to-connections.js');
@@ -45,8 +46,113 @@ describe('Planner', function() {
 describe('ConvertConstraintsToConnections', async() => {
 
   it('fills out an empty constraint', async() => {
-    var recipe = new Recipe();
-    recipe.newConnectionConstraint('A', 'b', 'C', 'd');
+    let recipe = (await Manifest.parse(`
+      recipe
+        A.b -> C.d`)).recipes[0];
+    var strategizer = {generated: [{result: recipe, score: 1}]};
+    var cctc = new ConvertConstraintsToConnections();
+    let { results } = await cctc.generate(strategizer);
+    assert(results.length == 1);
+    let { result, score } = results[0];
+    assert.deepEqual(result.toString(),
+`recipe
+  map as view0
+  A as particle0
+    b = view0
+  C as particle1
+    d = view0`);
+  });
+
+  it('fills out a constraint, reusing a single particle', async() => {
+    let recipe = (await Manifest.parse(`
+      recipe
+        A.b -> C.d
+        C`)).recipes[0];
+    var strategizer = {generated: [{result: recipe, score: 1}]};
+    var cctc = new ConvertConstraintsToConnections();
+    let { results } = await cctc.generate(strategizer);
+    assert(results.length == 1);
+    let { result, score } = results[0];
+    assert.deepEqual(result.toString(),
+`recipe
+  map as view0
+  A as particle0
+    b = view0
+  C as particle1
+    d = view0`);
+  });
+
+  it('fills out a constraint, reusing a single particle (2)', async() => {
+    let recipe = (await Manifest.parse(`
+      recipe
+        A.b -> C.d
+        A`)).recipes[0];
+    var strategizer = {generated: [{result: recipe, score: 1}]};
+    var cctc = new ConvertConstraintsToConnections();
+    let { results } = await cctc.generate(strategizer);
+    assert(results.length == 1);
+    let { result, score } = results[0];
+    assert.deepEqual(result.toString(),
+`recipe
+  map as view0
+  A as particle0
+    b = view0
+  C as particle1
+    d = view0`);
+  });
+
+
+  it('fills out a constraint, reusing two particles', async() => {
+    let recipe = (await Manifest.parse(`
+      recipe
+        A.b -> C.d
+        C
+        A`)).recipes[0];
+    var strategizer = {generated: [{result: recipe, score: 1}]};
+    var cctc = new ConvertConstraintsToConnections();
+    let { results } = await cctc.generate(strategizer);
+    assert(results.length == 1);
+    let { result, score } = results[0];
+    assert.deepEqual(result.toString(),
+`recipe
+  map as view0
+  A as particle0
+    b = view0
+  C as particle1
+    d = view0`);
+  });
+
+  it('fills out a constraint, reusing two particles and a view', async() => {
+    let recipe = (await Manifest.parse(`
+      recipe
+        A.b -> C.d
+        map as v1
+        C
+          d = v1
+        A`)).recipes[0];
+    var strategizer = {generated: [{result: recipe, score: 1}]};
+    var cctc = new ConvertConstraintsToConnections();
+    let { results } = await cctc.generate(strategizer);
+    assert(results.length == 1);
+    let { result, score } = results[0];
+    assert.deepEqual(result.toString(),
+`recipe
+  map as view0
+  A as particle0
+    b = view0
+  C as particle1
+    d = view0`);
+  });
+
+  it('removes an already fulfilled constraint', async() => {
+    let recipe = (await Manifest.parse(`
+      recipe
+        A.b -> C.d
+        map as v1
+        C
+          d = v1
+        A
+          b = v1`)).recipes[0];
     var strategizer = {generated: [{result: recipe, score: 1}]};
     var cctc = new ConvertConstraintsToConnections();
     let { results } = await cctc.generate(strategizer);
