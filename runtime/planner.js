@@ -106,8 +106,28 @@ class CreateViews extends Strategy {
       }
 
       onView(recipe, view) {
+        var counts = {'in': 0, 'out': 0, 'inout': 0, 'unknown': 0}
+        for (var connection of view.connections) {
+          var direction = connection.direction;
+          if (counts[direction] == undefined)
+            direction = 'unknown';
+          counts[direction]++;
+        }
+        counts.in += counts.inout;
+        counts.out += counts.inout;
+
+        var score = 1;
+        if (counts.in == 0 || counts.out == 0) {
+          if (counts.unknown > 0)
+            return;
+          if (counts.in == 0)
+            score = -1;
+          else
+            score = 0;
+        }
+
         if (!view.id && !view.create) {
-          this.score--;
+          this.score += score;
           return (recipe, view) => view.create = true;
         }
       }
