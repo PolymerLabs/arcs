@@ -29,7 +29,7 @@ describe('Planner', function() {
     var a = new Arc({id: "test-plan-arc", loader});
     var p = new Planner();
     var population = await(p.plan(a));
-    assert.equal(10, population.length);
+    assert.equal(7, population.length);
   });
 
   it('make a plan with views', async () => {
@@ -39,7 +39,7 @@ describe('Planner', function() {
 
     var p = new Planner();
     var population = await(p.plan(a));
-    assert.equal(13, population.length);
+    assert.equal(10, population.length);
   });
 });
 
