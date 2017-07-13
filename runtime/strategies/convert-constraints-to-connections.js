@@ -6,12 +6,14 @@
 // http://polymer.github.io/PATENTS.txt
 
 let {Strategy} = require('../../strategizer/strategizer.js');
-let Recipe = require('../new-recipe.js');
+let ConstraintWalker = require('../recipe/constraint-walker.js');
+let Recipe = require('../recipe/recipe.js');
+let RecipeWalker = require('../recipe/walker.js');
 let RecipeUtil = require('../recipe-util.js');
 
 class ConvertConstraintsToConnections extends Strategy {
   async generate(strategizer) {
-    var results = Recipe.over(strategizer.generated, new class extends Recipe.ConstraintWalker {
+    var results = Recipe.over(strategizer.generated, new class extends ConstraintWalker {
       onConstraint(recipe, constraint) {
         // existing particles and views
 
@@ -118,7 +120,7 @@ class ConvertConstraintsToConnections extends Strategy {
           recipe.removeConstraint(constraint);
         }
       }
-    }(Recipe.Walker.ApplyEach), this);
+    }(RecipeWalker.ApplyEach), this);
 
     return { results, generate: null };
   }

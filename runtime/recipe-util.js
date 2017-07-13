@@ -5,7 +5,7 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-let Recipe = require('./new-recipe.js');
+let Recipe = require('./recipe/recipe.js');
 
 class Shape {
   constructor(recipe, particles, views) {
