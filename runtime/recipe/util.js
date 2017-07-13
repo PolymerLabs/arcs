@@ -47,25 +47,6 @@ function compareComparables(o1, o2) {
   return o1._compareTo(o2);
 }
 
-class Node {
-  constructor(recipe) {
-    assert(recipe);
-    this._recipe = recipe;
-  }
-}
-
-class Edge {
-  constructor(recipe) {
-    assert(recipe);
-    this._recipe = recipe;
-  }
-}
-
-class Connection extends Edge {
-}
-
-exports.Node = Node;
-exports.Connection = Connection;
 exports.compareNulls = compareNulls;
 exports.compareStrings = compareStrings;
 exports.compareNumbers = compareNumbers;

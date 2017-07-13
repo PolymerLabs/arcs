@@ -6,13 +6,13 @@
 // http://polymer.github.io/PATENTS.txt
 
 var assert = require('assert');
-var base = require('./base.js');
-var Connection = require('./base.js').Connection;
+var util = require('./util.js');
 
-class SlotConnection extends Connection {
+class SlotConnection {
   constructor(name, direction, particle) {
     assert(particle);
-    super(particle._recipe);
+    assert(particle.recipe);
+    this._recipe = particle.recipe;
     this._name = name;  // name is unique across same Particle's provided slots.
     this._slot = undefined;
     this._particle = particle;  // consumer / provider
@@ -44,18 +44,19 @@ class SlotConnection extends Connection {
 
   _compareTo(other) {
     let cmp;
-    if ((cmp = base.compareComparables(this._slot, other._slot)) != 0) return cmp;
-    if ((cmp = base.compareComparables(this._particle, other._particle)) != 0) return cmp;
-    if ((cmp = base.compareStrings(this._name, other._name)) != 0) return cmp;
-    if ((cmp = base.compreArrays(this._tags, other._tags, base.compareStrings)) != 0) return cmp;
-    if ((cmp = base.compareStrings(this._direction, other._direction)) != 0) return cmp;
-    if ((cmp = base.compareArrays(this._formFactors, other._formFactors, base.compareStrings)) != 0) return cmp;
-    if ((cmp = base.compareBools(this._required, other._required)) != 0) return cmp;
+    if ((cmp = util.compareComparables(this._slot, other._slot)) != 0) return cmp;
+    if ((cmp = util.compareComparables(this._particle, other._particle)) != 0) return cmp;
+    if ((cmp = util.compareStrings(this._name, other._name)) != 0) return cmp;
+    if ((cmp = base.compreArrays(this._tags, other._tags, util.compareStrings)) != 0) return cmp;
+    if ((cmp = util.compareStrings(this._direction, other._direction)) != 0) return cmp;
+    if ((cmp = util.compareArrays(this._formFactors, other._formFactors, util.compareStrings)) != 0) return cmp;
+    if ((cmp = util.compareBools(this._required, other._required)) != 0) return cmp;
     // viewConnections?
     return 0;
   }
 
   // TODO: slot functors??
+  get recipe() { return this._recipe; }
   get name() { return this._name; }
   get tags() { return this._tags; }
   get viewConnections() { return this._viewConnections; } // ViewConnection*
@@ -71,7 +72,7 @@ class SlotConnection extends Connection {
   }
 
   connectToSlot(slot) {
-    assert(this._recipe == slot._recipe, "Cannot connect to slot from non matching recipe");
+    assert(this.recipe == slot.recipe, "Cannot connect to slot from non matching recipe");
     assert(!this._slot, "Cannot override slot connection");
     this._slot = slot;
     if (this.direction == "provide") {

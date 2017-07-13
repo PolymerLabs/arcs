@@ -6,12 +6,12 @@
 // http://polymer.github.io/PATENTS.txt
 
 var assert = require('assert');
-var base = require('./base.js');
-var Node = require('./base.js').Node;
+var util = require('./util.js');
 
-class Slot extends Node {
+class Slot {
   constructor(recipe) {
-    super(recipe);
+    assert(recipe);
+    this._recipe = recipe;
     this._id = undefined;
     this._localName = undefined;
     this._providerConnection = undefined;
@@ -34,17 +34,18 @@ class Slot extends Node {
     for (let consumerConn of this._consumerConnections) {
       assert(Object.isFrozen(consumerConn));
     }
-    this._consumerConnections.sort(base.compareComparables);
+    this._consumerConnections.sort(util.compareComparables);
     Object.freeze(this);
   }
 
   _compareTo(other) {
     let cmp;
-    if ((cmp = base.compareStrings(this._id, other._id)) != 0) return cmp;
-    if ((cmp = base.compareStrings(this._localName, other._localName)) != 0) return cmp;
+    if ((cmp = util.compareStrings(this._id, other._id)) != 0) return cmp;
+    if ((cmp = util.compareStrings(this._localName, other._localName)) != 0) return cmp;
     return 1;
   }
 
+  get recipe() { return this._recipe; }
   get id() { return this._id; }
   set id(id) { this._id = id; }
   get localName() { return this._localName; }

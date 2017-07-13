@@ -7,11 +7,11 @@
 
 var assert = require('assert');
 var Strategizer = require('../../strategizer/strategizer.js').Strategizer;
-var base = require('./base.js');
 var ConnectionConstraint = require('./connection-constraint.js');
 var Particle = require('./particle.js');
 var Slot = require('./slot.js');
 var View = require('./view.js');
+var util = require('./util.js');
 
 class Recipe {
   constructor() {
@@ -113,14 +113,14 @@ class Recipe {
     for (let connection of connections) {
       connection._normalize();
     }
-    connections.sort(base.compareComparables);
+    connections.sort(util.compareComparables);
 
     // Sort and normalize slot connections.
     let slotConnections = this.slotConnections;
     for (let slotConnection of slotConnections) {
       slotConnection._normalize();
     }
-    slotConnections.sort(base.compareComparables);
+    slotConnections.sort(util.compareComparables);
 
     // Finish normalizing particles and views with sorted connections.
     for (let particle of this._particles) {
@@ -160,7 +160,7 @@ class Recipe {
     this._particles = particles;
     this._views = views;
     this._slots = slots;
-    this._connectionConstraints.sort(base.compareComparables);
+    this._connectionConstraints.sort(util.compareComparables);
     Object.freeze(this);
   }
 

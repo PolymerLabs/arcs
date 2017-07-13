@@ -6,12 +6,12 @@
 // http://polymer.github.io/PATENTS.txt
 
 var assert = require('assert');
-var base = require('./base.js');
-var Node = require('./base.js').Node;
+var util = require('./util.js');
 
-class View extends Node {
+class View {
   constructor(recipe) {
-    super(recipe);
+    assert(recipe);
+    this._recipe = recipe;
     this._id = undefined;
     this._localName = undefined;
     this._tags = [];
@@ -43,21 +43,22 @@ class View extends Node {
     for (let connection of this._connections) {
       assert(Object.isFrozen(connection));
     }
-    this._connections.sort(base.compareComparables);
+    this._connections.sort(util.compareComparables);
     Object.freeze(this);
   }
 
   _compareTo(other) {
     let cmp;
-    if ((cmp = base.compareStrings(this._id, other._id)) != 0) return cmp;
-    if ((cmp = base.compareStrings(this._localName, other._localName)) != 0) return cmp;
-    if ((cmp = base.compareArrays(this._tags, other._tags, base.compareStrings)) != 0) return cmp;
+    if ((cmp = util.compareStrings(this._id, other._id)) != 0) return cmp;
+    if ((cmp = util.compareStrings(this._localName, other._localName)) != 0) return cmp;
+    if ((cmp = util.compareArrays(this._tags, other._tags, util.compareStrings)) != 0) return cmp;
     // TODO: type?
-    if ((cmp = base.compareNumbers(this._create, other._create)) != 0) return cmp;
+    if ((cmp = util.compareNumbers(this._create, other._create)) != 0) return cmp;
     return 0;
   }
 
   // a resolved View has either an id or create=true
+  get recipe() { return this._recipe; }
   get tags() { return this._tags; } // only tags owned by the view
   set tags(tags) { this._tags = tags; }
   get type() { return this._type; } // nullable
