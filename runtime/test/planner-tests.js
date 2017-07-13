@@ -14,7 +14,7 @@ let Loader = require('../loader.js');
 let Planner = require('../planner.js');
 let assert = require('chai').assert;
 let Manifest = require('../manifest.js');
-let Recipe = require('../new-recipe.js');
+let Recipe = require('../recipe/recipe.js');
 let systemParticles = require('../system-particles.js');
 let ConvertConstraintsToConnections = require('../strategies/convert-constraints-to-connections.js');
 

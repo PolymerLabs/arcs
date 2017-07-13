@@ -8,8 +8,10 @@
 let {Strategy, Strategizer} = require('../strategizer/strategizer.js');
 var assert = require("assert");
 let oldRecipe = require('./recipe.js');
-let Recipe = require('./new-recipe.js');
+let Recipe = require('./recipe/recipe.js');
+let RecipeWalker = require('./recipe/walker.js');
 let ConvertConstraintsToConnections = require('./strategies/convert-constraints-to-connections.js');
+
 
 class InitPopulation extends Strategy {
   async generate(strategizer) {
@@ -49,7 +51,7 @@ class ResolveParticleByName extends Strategy {
   }
   async generate(strategizer) {
     var loader = this.loader;
-    var results = Recipe.over(strategizer.generated, new class extends Recipe.Walker {
+    var results = Recipe.over(strategizer.generated, new class extends RecipeWalker {
       onParticle(recipe, particle) {
         if (particle.spec == undefined) {
           var impl = loader.loadParticle(particle.name, true);
@@ -58,7 +60,7 @@ class ResolveParticleByName extends Strategy {
           return (recipe, particle) => particle.spec = impl.spec;
         }
       }
-    }(Recipe.Walker.ApplyAll), this);
+    }(RecipeWalker.ApplyAll), this);
 
     return { results, generate: null };
   }
@@ -71,7 +73,7 @@ class AssignViewsByTagAndType extends Strategy {
   }
   async generate(strategizer) {
     var arc = this.arc;
-    var results = Recipe.over(strategizer.generated, new class extends Recipe.Walker {
+    var results = Recipe.over(strategizer.generated, new class extends RecipeWalker {
       onViewConnection(recipe, viewConnection) {
         if (viewConnection.view) {
           let view = viewConnection.view;
@@ -91,7 +93,7 @@ class AssignViewsByTagAndType extends Strategy {
             }));
         }
       }
-    }(Recipe.Walker.ApplyEach), this);
+    }(RecipeWalker.ApplyEach), this);
 
     return { results, generate: null };
   }
@@ -100,7 +102,7 @@ class AssignViewsByTagAndType extends Strategy {
 class CreateViews extends Strategy {
   // TODO: move generation to use an async generator.
   async generate(strategizer) {
-    var results = Recipe.over(strategizer.generated, new class extends Recipe.Walker {
+    var results = Recipe.over(strategizer.generated, new class extends RecipeWalker {
       onRecipe(recipe) {
         this.score = 0;
       }
@@ -131,7 +133,7 @@ class CreateViews extends Strategy {
           return (recipe, view) => view.create = true;
         }
       }
-    }(Recipe.Walker.ApplyAll), this);
+    }(RecipeWalker.ApplyAll), this);
 
     return { results, generate: null };
   }
@@ -139,7 +141,7 @@ class CreateViews extends Strategy {
 
 class MatchConsumedSlots extends Strategy {
   async generate(strategizer) {
-    var results = Recipe.over(strategizer.generated, new class extends Recipe.Walker {
+    var results = Recipe.over(strategizer.generated, new class extends RecipeWalker {
       onSlotConnection(recipe, slotConnection) {
         if (slotConnection.direction == "provide")
           return;
@@ -155,7 +157,7 @@ class MatchConsumedSlots extends Strategy {
           slotConnection.connectToSlot(slot);
         };
       }
-    }(Recipe.Walker.ApplyAll), this);
+    }(RecipeWalker.ApplyAll), this);
 
     return { results, generate: null };
   }

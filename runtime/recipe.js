@@ -11,7 +11,7 @@
 
 var assert = require("assert");
 var runtime = require("./runtime.js");
-var NewRecipe = require("./new-recipe.js");
+var NewRecipe = require("./recipe/recipe.js");
 
 class RecipeViewConnection {
   constructor(name, view) {
@@ -127,7 +127,7 @@ class RecipeBuilder {
     if (this.currentComponent !== undefined) {
       this.components.push(new RecipeComponent(this.currentComponent.name, this.currentComponent.connections));
     }
-    return new Recipe(...this.components)  
+    return new Recipe(...this.components)
   }
 }
 
