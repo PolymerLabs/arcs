@@ -6,14 +6,14 @@
 // http://polymer.github.io/PATENTS.txt
 
 var assert = require('assert')
-var base = require('./base.js');
-var Node = require('./base.js').Node;
 var SlotConnection = require('./slot-connection.js');
 var ViewConnection = require('./view-connection.js');
+var util = require('./util.js');
 
-class Particle extends Node {
+class Particle {
   constructor(recipe, name) {
-    super(recipe);
+    assert(recipe);
+    this._recipe = recipe;
     this._id = undefined;
     this._name = name;
     this._localName = undefined;
@@ -52,21 +52,22 @@ class Particle extends Node {
   }
 
   _finishNormalize() {
-    this._unnamedConnections.sort(base.compareComparables);
+    this._unnamedConnections.sort(util.compareComparables);
     Object.freeze(this);
   }
 
   _compareTo(other) {
     let cmp;
-    if ((cmp = base.compareStrings(this._id, other._id)) != 0) return cmp;
-    if ((cmp = base.compareStrings(this._name, other._name)) != 0) return cmp;
-    if ((cmp = base.compareStrings(this._localName, other._localName)) != 0) return cmp;
+    if ((cmp = util.compareStrings(this._id, other._id)) != 0) return cmp;
+    if ((cmp = util.compareStrings(this._name, other._name)) != 0) return cmp;
+    if ((cmp = util.compareStrings(this._localName, other._localName)) != 0) return cmp;
     // TODO: spec?
-    if ((cmp = base.compareArrays(this._tags, other._tags, base.compareStrings)) != 0) return cmp;
+    if ((cmp = util.compareArrays(this._tags, other._tags, util.compareStrings)) != 0) return cmp;
     // TODO: slots
     return 0;
   }
 
+  get recipe() { return this._recipe; }
   get localName() { return this._localName; }
   set localName(name) { this._localName = name; }
   get id() { return this._id; } // Not resolved until we have an ID.
@@ -99,7 +100,7 @@ class Particle extends Node {
     });
     spec.exposes.forEach(slot => {
       let slotConn = this.addSlotConnection(slot.name, "provide");
-      slotConn.connectToSlot(this._recipe.newSlot());
+      slotConn.connectToSlot(this.recipe.newSlot());
       if (slot.view)
       slotConn.connectToView(slot.view);
     });

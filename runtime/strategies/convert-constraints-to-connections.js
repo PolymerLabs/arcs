@@ -9,7 +9,7 @@ let {Strategy} = require('../../strategizer/strategizer.js');
 let ConstraintWalker = require('../recipe/constraint-walker.js');
 let Recipe = require('../recipe/recipe.js');
 let RecipeWalker = require('../recipe/walker.js');
-let RecipeUtil = require('../recipe-util.js');
+let RecipeUtil = require('../recipe/recipe-util.js');
 
 class ConvertConstraintsToConnections extends Strategy {
   async generate(strategizer) {

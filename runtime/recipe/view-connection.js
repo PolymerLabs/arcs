@@ -6,13 +6,13 @@
 // http://polymer.github.io/PATENTS.txt
 
 var assert = require('assert');
-var base = require('./base.js');
-var Connection = require('./base.js').Connection;
+var util = require('./util.js');
 
-class ViewConnection extends Connection {
+class ViewConnection {
   constructor(name, particle) {
     assert(particle);
-    super(particle._recipe);
+    assert(particle.recipe);
+    this._recipe = particle.recipe;
     this._name = name;
     this._tags = [];
     this._type = undefined;
@@ -45,16 +45,17 @@ class ViewConnection extends Connection {
 
   _compareTo(other) {
     let cmp;
-    if ((cmp = base.compareComparables(this._particle, other._particle)) != 0) return cmp;
-    if ((cmp = base.compareStrings(this._name, other._name)) != 0) return cmp;
-    if ((cmp = base.compareArrays(this._tags, other._tags, base.compareStrings)) != 0) return cmp;
-    if ((cmp = base.compareComparables(this._view, other._view)) != 0) return cmp;
+    if ((cmp = util.compareComparables(this._particle, other._particle)) != 0) return cmp;
+    if ((cmp = util.compareStrings(this._name, other._name)) != 0) return cmp;
+    if ((cmp = util.compareArrays(this._tags, other._tags, util.compareStrings)) != 0) return cmp;
+    if ((cmp = util.compareComparables(this._view, other._view)) != 0) return cmp;
     // TODO: add type comparison
-    // if ((cmp = base.compareStrings(this._type, other._type)) != 0) return cmp;
-    if ((cmp = base.compareStrings(this._direction, other._direction)) != 0) return cmp;
+    // if ((cmp = util.compareStrings(this._type, other._type)) != 0) return cmp;
+    if ((cmp = util.compareStrings(this._direction, other._direction)) != 0) return cmp;
     return 0;
   }
 
+  get recipe() { return this._recipe; }
   get name() { return this._name; } // Parameter name?
   get tags() { return this._tags; }
   set tags(tags) { this._tags = tags; }
@@ -74,7 +75,7 @@ class ViewConnection extends Connection {
   }
 
   connectToView(view) {
-    assert(view._recipe == this._recipe);
+    assert(view.recipe == this.recipe);
     if (this._type !== undefined) {
       if (view._type == undefined)
         view._type = this._type;
