@@ -22,9 +22,9 @@ describe('manifest', function() {
   it('can parse a manifest containing a recipe', async () => {
     let manifest = await Manifest.parse(`
       recipe SomeRecipe
-        map as someView
-        renders 'someView' as slot0
-        renders as slot1
+        map #someView
+        renders someView as zslot0
+        renders as xslot1
         SomeParticle
           someParam -> #tag
           consumes mySlot as slot0
