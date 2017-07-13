@@ -102,7 +102,6 @@ class RecipeUtil {
 
         if (recipeParticle.name != shapeParticle.name)
           continue;
-
         var newMatch = {forward: new Map(), reverse: new Map()};
         forward.forEach((value, key) => newMatch.forward.set(key, value));
         reverse.forEach((value, key) => newMatch.reverse.set(key, value));

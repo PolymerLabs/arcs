@@ -75,7 +75,7 @@ class ConvertConstraintsToConnections extends Strategy {
             recipe.removeConstraint(constraint);
           };
         });
-        if (actions.lenth > 0)
+        if (actions.length > 0)
           return actions;
 
         // one particle
@@ -101,6 +101,7 @@ class ConvertConstraintsToConnections extends Strategy {
             recipe.removeConstraint(constraint);
           }
         });
+
         var actions = leftActions.concat(rightActions);
         if (actions.length > 0)
           return actions;
