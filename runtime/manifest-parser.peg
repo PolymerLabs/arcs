@@ -87,17 +87,17 @@ Name
   }
 
 RecipeParticle
-  = ref:ParticleRef name:(whiteSpace Name)? eolWhiteSpace connections:(Indent (SameIndent (RecipeParticleConnection / RecipeParticleSlotConnection))*)?
+  = ref:ParticleRef name:(whiteSpace Name)? eolWhiteSpace connections:(Indent (SameIndent RecipeParticleItem)*)?
   {
     let viewConnections = [];
     let slotConnections = [];
     if (connections) {
       connections = extractIndented(connections);
       for (let conn of connections) {
-        if (conn.dir == "consumes" || conn.dir == "provides")
-          slotConnections.push(conn);
+        if (conn.kind == 'view-connection')
+          viewConnections.push(conn);
         else
-          viewConnections.push(conn)
+          slotConnections.push(conn)
       }
     }
     return {
@@ -109,10 +109,13 @@ RecipeParticle
     };
   }
 
+RecipeParticleItem = RecipeParticleConnection / RecipeParticleSlotConnection
+
 RecipeParticleConnection
   = param:(lowerIdent / "*") whiteSpace dir:Direction whiteSpace target:ConnectionTarget eolWhiteSpace
   {
     return {
+      kind: 'view-connection',
       param,
       dir,
       target,
@@ -123,6 +126,7 @@ RecipeParticleSlotConnection
   = dir:("provides" / "consumes") whiteSpace param:(lowerIdent / "*") name:(whiteSpace Name)? eolWhiteSpace
   {
     return {
+      kind: 'slot-connection',
       param,
       dir,
       name,
@@ -177,7 +181,7 @@ RecipeView
   }
 
 RecipeSlot
-  = "renders" ref:(whiteSpace ViewRef)? name:(whiteSpace Name)? eolWhiteSpace
+  = "renders" ref:(whiteSpace !'as' lowerIdent)? name:(whiteSpace Name)? eolWhiteSpace
   {
     return {
       kind: 'slot',
