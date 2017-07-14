@@ -22,6 +22,7 @@ class Particle {
     this._providedSlots = [];
     this._consumedSlots = [];
     this._connections = {};
+    // TODO: replace with constraint connections on the recipe
     this._unnamedConnections = [];
   }
 
@@ -65,6 +66,25 @@ class Particle {
     if ((cmp = util.compareArrays(this._tags, other._tags, util.compareStrings)) != 0) return cmp;
     // TODO: slots
     return 0;
+  }
+
+  _isValid() {
+    // TODO: implement
+    if (!this.spec) {
+      return true;
+    }
+    // TODO: this shouldn't be possible.
+    return Object.entries(this.connections).every(([name, connection]) => {
+      return connection.name == name;
+    });
+  }
+
+  isResolved() {
+    assert(Object.isFrozen(this));
+    // TODO: slots
+    return this.spec
+        && this.spec.connectionMap.size == Object.keys(this._connections).length
+        && this.unnamedConnections.length == 0;
   }
 
   get recipe() { return this._recipe; }

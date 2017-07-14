@@ -66,6 +66,16 @@ class SlotConnection {
   get slot() { return this._slot; } // Slot?
   get particle() { return this._particle; } // Particle
 
+  _isValid() {
+    // TODO: implement
+    return true;
+  }
+
+  isResolved() {
+    // TODO: implement
+    return true;
+  }
+
   connectToView(name) {
     assert(this.particle.connections[name], `Cannot connect slot to nonexistent view parameter ${name}`);
     this._viewConnections.push(this.particle.connections[name]);
