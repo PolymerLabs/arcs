@@ -58,6 +58,11 @@ class Slot {
     return !!this.id && (!!this.providerConnection || this.consumerConnections.length > 0);
   }
 
+  _isValid() {
+    // TODO: implement
+    return true;
+  }
+
   toString(nameMap) {
     let result = [];
     result.push("renders");
