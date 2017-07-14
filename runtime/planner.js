@@ -57,10 +57,10 @@ class ResolveParticleByName extends Strategy {
           var impl = loader.loadParticle(particle.name, true);
           if (impl == undefined)
             return;
-          return (recipe, particle) => particle.spec = impl.spec;
+          return (recipe, particle) => {particle.spec = impl.spec; return 1};
         }
       }
-    }(RecipeWalker.ApplyAll), this);
+    }(RecipeWalker.Permuted), this);
 
     return { results, generate: null };
   }
@@ -90,10 +90,11 @@ class AssignViewsByTagAndType extends Strategy {
               if (newView.type == undefined || viewConnection.type == undefined)
                 viewConnection.connectToView(newView);
               viewConnection.view.id = newView.id;
+              return 0;
             }));
         }
       }
-    }(RecipeWalker.ApplyEach), this);
+    }(RecipeWalker.Independent), this);
 
     return { results, generate: null };
   }
@@ -103,10 +104,6 @@ class CreateViews extends Strategy {
   // TODO: move generation to use an async generator.
   async generate(strategizer) {
     var results = Recipe.over(strategizer.generated, new class extends RecipeWalker {
-      onRecipe(recipe) {
-        this.score = 0;
-      }
-
       onView(recipe, view) {
         var counts = {'in': 0, 'out': 0, 'inout': 0, 'unknown': 0}
         for (var connection of view.connections) {
@@ -129,11 +126,10 @@ class CreateViews extends Strategy {
         }
 
         if (!view.id && !view.create) {
-          this.score += score;
-          return (recipe, view) => view.create = true;
+          return (recipe, view) => {view.create = true; return score}
         }
       }
-    }(RecipeWalker.ApplyAll), this);
+    }(RecipeWalker.Permuted), this);
 
     return { results, generate: null };
   }
@@ -151,13 +147,14 @@ class MatchConsumedSlots extends Strategy {
           // TODO: handle slots that don't have a provider (like "root" slot)
           var slot = recipe.slots.find((s) => {return s.providerConnection && s.providerConnection.name == slotConnection.name});
           if (!slot)
-            return;
+            return 0;
           // TODO: verify set of slot.providerConnection.viewConnections[i].view.id contains
           // the set of (or at least one of? TBD) slotConnection.viewConnections[i].view.id
           slotConnection.connectToSlot(slot);
+          return 1;
         };
       }
-    }(RecipeWalker.ApplyAll), this);
+    }(RecipeWalker.Permuted), this);
 
     return { results, generate: null };
   }

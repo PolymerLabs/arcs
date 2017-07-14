@@ -28,7 +28,7 @@ class ConvertConstraintsToConnections extends Strategy {
 
         var resolved = RecipeUtil.find(recipe, connectedShape);
         if (resolved.length > 0) {
-          return (recipe, constraint) => recipe.removeConstraint(constraint);
+          return (recipe, constraint) => {recipe.removeConstraint(constraint); return 4};
         }
 
         // existing particles, joined on the left side
@@ -51,6 +51,7 @@ class ConvertConstraintsToConnections extends Strategy {
             resolveMap = recipe.updateToClone(resolveMap);
             resolveMap[constraint.toParticle].ensureConnectionName(constraint.toConnection).connectToView(resolveMap['a']);
             recipe.removeConstraint(constraint);
+            return 3;
           }
         });
         var rightResolved = RecipeUtil.find(recipe, rightShape);
@@ -59,6 +60,7 @@ class ConvertConstraintsToConnections extends Strategy {
             resolveMap = recipe.updateToClone(resolveMap);
             resolveMap[constraint.fromParticle].ensureConnectionName(constraint.fromConnection).connectToView(resolveMap['a']);
             recipe.removeConstraint(constraint);
+            return 3;
           };
         });
         var actions = leftActions.concat(rightActions);
@@ -75,6 +77,7 @@ class ConvertConstraintsToConnections extends Strategy {
             resolveMap[constraint.fromParticle].ensureConnectionName(constraint.fromConnection).connectToView(view);
             resolveMap[constraint.toParticle].ensureConnectionName(constraint.toConnection).connectToView(view);
             recipe.removeConstraint(constraint);
+            return 2;
           };
         });
         if (actions.length > 0)
@@ -92,6 +95,7 @@ class ConvertConstraintsToConnections extends Strategy {
             resolveMap[constraint.fromParticle].ensureConnectionName(constraint.fromConnection).connectToView(view);
             recipe.newParticle(constraint.toParticle).addConnectionName(constraint.toConnection).connectToView(view);
             recipe.removeConstraint(constraint);
+            return 1;
           }
         });
         var rightActions = rightResolved.map(resolveMap => {
@@ -101,6 +105,7 @@ class ConvertConstraintsToConnections extends Strategy {
             recipe.newParticle(constraint.fromParticle).addConnectionName(constraint.fromConnection).connectToView(view);
             resolveMap[constraint.toParticle].ensureConnectionName(constraint.toConnection).connectToView(view);
             recipe.removeConstraint(constraint);
+            return 1;
           }
         });
 
@@ -118,9 +123,10 @@ class ConvertConstraintsToConnections extends Strategy {
               },
             recipe);
           recipe.removeConstraint(constraint);
+          return 0;
         }
       }
-    }(RecipeWalker.ApplyEach), this);
+    }(RecipeWalker.Independent), this);
 
     return { results, generate: null };
   }
