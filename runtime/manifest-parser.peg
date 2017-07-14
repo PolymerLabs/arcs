@@ -123,13 +123,13 @@ RecipeParticleConnection
   }
 
 RecipeParticleSlotConnection
-  = dir:("provides" / "consumes") whiteSpace param:(lowerIdent / "*") name:(whiteSpace Name)? eolWhiteSpace
+  = dir:("provide" / "consume") whiteSpace param:(lowerIdent / "*") name:(whiteSpace Name)? eolWhiteSpace
   {
     return {
       kind: 'slot-connection',
       param,
       dir,
-      name,
+      name: optional(name, name=>name[1], null),
     };
   }
 
@@ -181,7 +181,7 @@ RecipeView
   }
 
 RecipeSlot
-  = "renders" ref:(whiteSpace !'as' lowerIdent)? name:(whiteSpace Name)? eolWhiteSpace
+  = "renders" ref:(whiteSpace SlotViewRef)? name:(whiteSpace Name)? eolWhiteSpace
   {
     return {
       kind: 'slot',
@@ -212,6 +212,12 @@ ParticleRef
 ViewRef
   = id:id tags:SpaceTagList?
   { return {id, tags: tags || []}; }
+  / tags:TagList
+  { return {tags}; }
+
+SlotViewRef
+  = !'as' lowerIdent
+  { return {view:text()}; }
   / tags:TagList
   { return {tags}; }
 

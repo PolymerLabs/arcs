@@ -113,7 +113,8 @@ class Manifest {
       particles: recipeItem.items.filter(item => item.kind == 'particle'),
       byParticle: new Map(),
       byName: new Map(),
-      connections: recipeItem.items.filter(item => item.kind == 'connection')
+      connections: recipeItem.items.filter(item => item.kind == 'connection'),
+      slots: recipeItem.items.filter(item => item.kind == 'slot')
     };
 
     for (let connection of items.connections) {
@@ -133,6 +134,16 @@ class Manifest {
         items.byName.set(item.name, {item: item, view: view});
       }
       items.byView.set(view, item);
+    }
+
+    for (let item of items.slots) {
+      let slot = recipe.newSlot();
+      if (item.name) {
+        // TODO: errors.
+        assert(!items.byName.has(item.name));
+        slot.localName = item.name;
+        items.byName.set(item.name, {item: item, slot: slot});
+      }
     }
 
     // TODO: disambiguate.
@@ -224,6 +235,40 @@ class Manifest {
 
         if (targetView) {
           connection.connectToView(targetView);
+        }
+      }
+      for (let slotConnectionItem of item.slotConnections) {
+        let slotConn = particle.addSlotConnection(slotConnectionItem.param, slotConnectionItem.dir);
+        if (!slotConnectionItem.name) {
+          continue;
+        }
+        assert(items.byName.has(slotConnectionItem.name));
+        let {item, slot} = items.byName.get(slotConnectionItem.name);
+        slotConn.connectToSlot(slot);
+        if (item.ref.view || (item.ref.tags.length > 0)) {
+          let foundConnection = false;
+          for (let particleViewConn of Object.values(particle.connections)) {
+            if (!particleViewConn.view) continue;
+            if ((particleViewConn.view.localName == item.ref.view) ||
+                (item.ref.tags.every(t => particleViewConn.view.tags.indexOf(t) >= 0))) {
+              slotConn.connectToView(particleViewConn.name);
+              foundConnection = true;
+              break;
+            }
+          }
+          // add new unnamed connections
+          if (!foundConnection) {
+            let viewConn = particle.addUnnamedConnection();
+            if (item.ref.view) {
+              let viewEntry = items.byName.get(item.ref.view);
+              if (viewEntry) {
+                viewConn.connectToView(viewEntry.view);
+              }
+            } else {
+              viewConn.tags = item.ref.tags;
+            }
+            slotConn.viewConnections.push(viewConn);
+          }
         }
       }
     }
