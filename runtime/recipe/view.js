@@ -70,8 +70,14 @@ class View {
   set create(create) { this._create = create; }
   get connections() { return this._connections } // ViewConnection*
 
+  _isValid() {
+    // TODO: implement
+    return true;
+  }
+
   isResolved() {
-    return (this._id !== undefined || this._create == true) && this._type !== undefined;
+    assert(Object.isFrozen(this));
+    return (this._id || this._create) && this._type;
   }
 
   toString(nameMap) {

@@ -40,7 +40,13 @@ class WalkerBase extends Strategizer.Walker {
             var cloneMap = new Map();
             var newRecipe = recipe.clone(cloneMap);
             var score = 0;
-            permutation.forEach(({f, context}) => score += f(newRecipe, cloneMap.get(context)));
+            permutation = permutation.filter(p => p.f !== null);
+            if (permutation.length == 0)
+              continue;
+            permutation.forEach(({f, context}) => {
+              score += f(newRecipe, cloneMap.get(context))
+            });
+
             newRecipes.push({recipe: newRecipe, score});
           }
           break;
@@ -49,6 +55,8 @@ class WalkerBase extends Strategizer.Walker {
             if (typeof continuation == 'function')
               continuation = [continuation];
             continuation.forEach(f => {
+              if (f == null)
+                f = () => 0;
               var cloneMap = new Map();
               var newRecipe = recipe.clone(cloneMap);
               var score = f(newRecipe, cloneMap.get(context));
@@ -69,7 +77,8 @@ class WalkerBase extends Strategizer.Walker {
   }
 
   createDescendant(recipe, score) {
-    recipe.normalize();
+    let valid = recipe.normalize();
+    // TODO: something with valid
     super.createDescendant(recipe, score, recipe.digest());
   }
 

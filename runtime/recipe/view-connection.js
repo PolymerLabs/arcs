@@ -58,20 +58,40 @@ class ViewConnection {
   get recipe() { return this._recipe; }
   get name() { return this._name; } // Parameter name?
   get tags() { return this._tags; }
-  set tags(tags) { this._tags = tags; }
   get type() { return this._type; }
-  set type(type) { this._type = type;}
   get direction() { return this._direction; } // in/out
-  set direction(direction) { this._direction = direction; }
   get view() { return this._view; } // View?
   get particle() { return this._particle; } // never null
 
-  isResolved() {
-    return this.hasDefinedType() && this.view && this.view.isResolved();
+  set tags(tags) { this._tags = tags; }
+  set type(type) { this._type = type;}
+  set direction(direction) { this._direction = direction; }
+
+  _isValid() {
+    // TODO: 'create' is not a valid direction
+    if (this.direction && !['in', 'out', 'inout', 'create'].includes(this.direction)) {
+      return false;
+    }
+    if (this.type && this.particle && this.particle.spec) {
+      let connectionSpec = this.particle.spec.connectionMap.get(this.name);
+      if (connectionSpec) {
+        // TODO: this shouldn't be a direct comparison
+        if (this.type != connectionSpec.type) {
+          return false;
+        }
+        if (this.direction != connectionSpec.direction) {
+          return false;
+        }
+      }
+    }
+    return true;
   }
 
-  hasDefinedType() {
-    return this._type !== undefined && this._direction !== undefined;
+  isResolved() {
+    assert(Object.isFrozen(this));
+    return this._type
+        && this._direction
+        && this.view;
   }
 
   connectToView(view) {

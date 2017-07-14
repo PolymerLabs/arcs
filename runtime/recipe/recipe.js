@@ -54,6 +54,23 @@ class Recipe {
     return slot;
   }
 
+  isResolved() {
+    assert(Object.isFrozen(this));
+    return this._views.every(view => view.isResolved())
+        && this._particles.every(particle => particle.isResolved())
+        && this._slots.every(slot => slot.isResolved())
+        && this.viewConnections.every(connection => connection.isResolved())
+        && this.slotConnections.every(connection => connection.isResolved());
+  }
+
+  _isValid() {
+    return this._views.every(view => view._isValid())
+        && this._particles.every(particle => particle._isValid())
+        && this._slots.every(slot => slot._isValid())
+        && this.viewConnections.every(connection => connection._isValid())
+        && this.slotConnections.every(connection => connection._isValid());
+  }
+
   get localName() { return this._localName; }
   set localName(name) { this._localName = name; }
   get particles() { return this._particles; } // Particle*
@@ -96,6 +113,9 @@ class Recipe {
   normalize() {
     if (Object.isFrozen(this)) {
       return;
+    }
+    if (!this._isValid()) {
+      return false;
     }
     // Get views and particles ready to sort connections.
     for (let particle of this._particles) {
@@ -162,6 +182,8 @@ class Recipe {
     this._slots = slots;
     this._connectionConstraints.sort(util.compareComparables);
     Object.freeze(this);
+
+    return true;
   }
 
   clone(cloneMap) {
