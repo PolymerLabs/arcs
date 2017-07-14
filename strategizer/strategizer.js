@@ -198,11 +198,11 @@ class Walker {
     this.currentResult = result;
   }
 
-  createDescendant(result, hash) {
+  createDescendant(result, score, hash) {
     assert(this.currentResult, "no current result");
     assert(this.currentStrategy, "no current strategy");
-    var score = (this.score || 0) + (this.currentResult.score || 0);
-
+    if (this.currentResult.score)
+      score += this.currentResult.score;
     this.descendants.push({result, score, derivation: [{parent: this.currentResult, strategy: this.currentStrategy}], hash });
   }
 
