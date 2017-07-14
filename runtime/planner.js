@@ -66,6 +66,19 @@ class ResolveParticleByName extends Strategy {
   }
 }
 
+function directionCoints(view) {
+  var counts = {'in': 0, 'out': 0, 'inout': 0, 'unknown': 0}
+  for (var connection of view.connections) {
+    var direction = connection.direction;
+    if (counts[direction] == undefined)
+      direction = 'unknown';
+    counts[direction]++;
+  }
+  counts.in += counts.inout;
+  counts.out += counts.inout;
+  return counts;
+}
+
 class AssignViewsByTagAndType extends Strategy {
   constructor(arc) {
     super();
@@ -84,7 +97,23 @@ class AssignViewsByTagAndType extends Strategy {
           }
           if (view.create)
             return;
-          return arc.findViews(view.type /* || viewConnection.type */, view.tags).map(newView =>
+
+          var counts = directionCounts(view);
+
+          this.score = -1;
+          if (counts.in == 0 || counts.out == 0) {
+            if (counts.unknown > 0)
+              return;
+            if (counts.in == 0)
+              this.score = 1;
+            else
+              this.score = 0;
+          }
+
+          // Score is broken for ApplyEach because I can't do per-function scores.
+          // Probably should do the permutation thing now.
+
+          return arc.findViews(view.type || viewConnection.type, view.tags).map(newView =>
             ((recipe, viewConnection) => {
               // TODO: verify that same Arc's view is not assigned to different connections' views.
               if (newView.type == undefined || viewConnection.type == undefined)
@@ -105,15 +134,7 @@ class CreateViews extends Strategy {
   async generate(strategizer) {
     var results = Recipe.over(strategizer.generated, new class extends RecipeWalker {
       onView(recipe, view) {
-        var counts = {'in': 0, 'out': 0, 'inout': 0, 'unknown': 0}
-        for (var connection of view.connections) {
-          var direction = connection.direction;
-          if (counts[direction] == undefined)
-            direction = 'unknown';
-          counts[direction]++;
-        }
-        counts.in += counts.inout;
-        counts.out += counts.inout;
+        var counts = directionCounts(view);
 
         var score = 1;
         if (counts.in == 0 || counts.out == 0) {
