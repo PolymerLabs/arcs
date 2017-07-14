@@ -23,19 +23,14 @@ describe('manifest', function() {
     let manifest = await Manifest.parse(`
       recipe SomeRecipe
         map #someView
-        renders someView as zslot0
-        renders as xslot1
         SomeParticle
-          someParam -> #tag
-          consumes mySlot as slot0
-          provides otherSlot as slot1`);
+          someParam -> #tag`);
     let recipe = manifest.recipes[0];
     assert(recipe);
     assert.equal(recipe.particles.length, 1);
     assert.equal(recipe.views.length, 1);
     assert.equal(recipe.viewConnections.length, 1);
     assert.sameMembers(recipe.viewConnections[0].tags, ['#tag']);
-    // TODO: populate and verify slots and slotconnections in the recipe
   });
   it('can parse a manifest containing a particle specification', async () => {
     let manifest = await Manifest.parse(`
@@ -281,5 +276,38 @@ describe('manifest', function() {
     };
     let manifest = await Manifest.load('somewhere/a', loader, registry);
     assert(registry['somewhere/a path/b']);
-  })
+  });
+  it('can parse a manifest containing a recipe with slots', async () => {
+    let manifest = await Manifest.parse(`
+      recipe SomeRecipe
+        map #someView as myView
+        renders myView as slot0
+        renders as slot1
+        renders #someView as slot2
+        SomeParticle
+          someParam -> myView
+          consume mySlot as slot0
+          consume myOtherSlot
+          provide otherSlot as slot1
+          provide oneMoreSlot as slot2`);
+    let recipe = manifest.recipes[0];
+    assert(recipe);
+    assert.equal(recipe.particles.length, 1);
+    assert.equal(recipe.views.length, 1);
+    assert.equal(recipe.viewConnections.length, 1);
+    assert.equal(recipe.slots.length, 3);
+    assert.equal(recipe.slotConnections.length, 4);
+    assert.equal(recipe.particles[0].consumedSlots.length, 2);
+    assert.equal(recipe.particles[0].consumedSlots[0].slot.localName, "slot0");
+    assert.equal(recipe.particles[0].consumedSlots[0].viewConnections.length, 1);
+    assert.equal(recipe.particles[0].consumedSlots[0].viewConnections[0].name, "someParam");
+    assert.isUndefined(recipe.particles[0].consumedSlots[1].slot);
+    assert.equal(recipe.particles[0].consumedSlots[1].viewConnections.length, 0);
+    assert.equal(recipe.particles[0].providedSlots.length, 2);
+    assert.equal(recipe.particles[0].providedSlots[0].slot.localName, "slot1");
+    assert.equal(recipe.particles[0].providedSlots[0].viewConnections.length, 0);
+    assert.equal(recipe.particles[0].providedSlots[1].slot.localName, "slot2");
+    assert.equal(recipe.particles[0].providedSlots[1].viewConnections.length, 1);
+    assert.equal(recipe.particles[0].providedSlots[1].viewConnections[0].name, "someParam");
+  });
 });
