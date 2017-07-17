@@ -66,7 +66,7 @@ class ResolveParticleByName extends Strategy {
   }
 }
 
-function directionCoints(view) {
+function directionCounts(view) {
   var counts = {'in': 0, 'out': 0, 'inout': 0, 'unknown': 0}
   for (var connection of view.connections) {
     var direction = connection.direction;
@@ -87,43 +87,65 @@ class AssignViewsByTagAndType extends Strategy {
   async generate(strategizer) {
     var arc = this.arc;
     var results = Recipe.over(strategizer.generated, new class extends RecipeWalker {
-      onViewConnection(recipe, viewConnection) {
-        if (viewConnection.view) {
-          let view = viewConnection.view;
-          if (view.isResolved())
-            return;
-          if (view.type == undefined) { //} && viewConnection.type == undefined) {
-            return;
-          }
-          if (view.create)
-            return;
-
-          var counts = directionCounts(view);
-
-          this.score = -1;
-          if (counts.in == 0 || counts.out == 0) {
-            if (counts.unknown > 0)
-              return;
-            if (counts.in == 0)
-              this.score = 1;
-            else
-              this.score = 0;
-          }
-
-          // Score is broken for ApplyEach because I can't do per-function scores.
-          // Probably should do the permutation thing now.
-
-          return arc.findViews(view.type || viewConnection.type, view.tags).map(newView =>
-            ((recipe, viewConnection) => {
-              // TODO: verify that same Arc's view is not assigned to different connections' views.
-              if (newView.type == undefined || viewConnection.type == undefined)
-                viewConnection.connectToView(newView);
-              viewConnection.view.mapToView(newView);
-              return 0;
-            }));
-        }
+      onViewConnection(recipe, vc) {
+        if (vc.view)
+          return;
+        if (vc.direction == 'in')
+          var counts = {'in': 1, 'out': 0, 'unknown': 0};
+        else if (vc.direction == 'out')
+          var counts = {'in': 0, 'out': 1, 'unknown': 0};
+        else if (vc.direction == 'inout')
+          var counts = {'in': 1, 'out': 1, 'unknown': 0};
+        else
+          var counts = {'in': 0, 'out': 0, 'unknown': 1};
+        console.log(vc.type, counts);
+        return this.mapView(null, vc.tags, vc.type, counts);
       }
-    }(RecipeWalker.Independent), this);
+      onView(recipe, view) {
+        if (view.create)
+          return;
+
+        if (view.connections.length == 0)
+          return;
+
+        // TODO: using the connection to retrieve type information is wrong.
+        // Once validation of recipes generates type information on the view
+        // we should switch to using that instead.
+        var counts = directionCounts(view);
+        return this.mapView(view, view.tags, view.connections[0].type, counts);
+      }
+
+      mapView(view, tags, type, counts) {
+        var score = -1;
+        if (counts.in == 0 || counts.out == 0) {
+          if (counts.unknown > 0)
+            return;
+          if (counts.in == 0)
+            score = 1;
+          else
+            score = 0;
+        }
+
+        var responses = arc.findViews(type, tags).map(newView =>
+          ((recipe, clonedObject) => {
+            var tscore = 0;
+            if (view == null) {
+              view = recipe.newView();
+              clonedObject.connectToView(view);
+              tscore += 1;
+            } else {
+              view = clonedObject;
+            }
+            for (var existingView of recipe.views)
+              if (existingView.id == newView.id)
+                tscore -= 1;
+            view.id = newView.id;
+            return score + tscore;
+          }));
+        responses.push(null); // "do nothing" for this view.
+        return responses;
+      }
+    }(RecipeWalker.Permuted), this);
 
     return { results, generate: null };
   }
