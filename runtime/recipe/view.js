@@ -81,8 +81,10 @@ class View {
       if (connection.type)
         typeSet.push({type: connection.type, direction: connection.direction, connection});
     }
-    var {type, valid} TypeChecker.processTypeList(typeSet);
-    this._type = type;
+    var {type, valid} = TypeChecker.processTypeList(typeSet);
+    if (valid) {
+      this._type = type.type;
+    }
     return valid;
   }
 

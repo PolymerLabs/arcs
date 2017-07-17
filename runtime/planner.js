@@ -79,12 +79,12 @@ class AssignViewsByTagAndType extends Strategy {
           let view = viewConnection.view;
           if (view.isResolved())
             return;
-          if (view.type == undefined && viewConnection.type == undefined) {
+          if (view.type == undefined) { //} && viewConnection.type == undefined) {
             return;
           }
           if (view.create)
             return;
-          return arc.findViews(view.type || viewConnection.type, view.tags).map(newView =>
+          return arc.findViews(view.type /* || viewConnection.type */, view.tags).map(newView =>
             ((recipe, viewConnection) => {
               // TODO: verify that same Arc's view is not assigned to different connections' views.
               if (newView.type == undefined || viewConnection.type == undefined)
