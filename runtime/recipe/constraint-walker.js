@@ -67,8 +67,8 @@ class ConstraintWalker extends Strategizer.Walker {
 
   createDescendant(recipe) {
     let valid = recipe.normalize();
-    // TODO: something with valid
-    super.createDescendant(recipe, recipe.digest());
+    if (!valid) debugger;
+    super.createDescendant(recipe, recipe.digest(), valid);
   }
 }
 

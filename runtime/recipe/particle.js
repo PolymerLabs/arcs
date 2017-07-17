@@ -69,14 +69,11 @@ class Particle {
   }
 
   _isValid() {
-    // TODO: implement
     if (!this.spec) {
       return true;
     }
-    // TODO: this shouldn't be possible.
-    return Object.entries(this.connections).every(([name, connection]) => {
-      return connection.name == name;
-    });
+    // TODO: What
+    return true;
   }
 
   isResolved() {
@@ -154,18 +151,6 @@ class Particle {
     let slots = direction == "consume" ? this.consumedSlots : this.providedSlots;
     slots.push(new SlotConnection(name, direction, this));
     return slots[slots.length - 1];
-  }
-
-  isResolved() {
-    if (this.id == undefined)
-      return false;
-    if (this._unnamedConnections.length > 0)
-      return false;
-    if (Object.entries(this.connections).filter(a => !a.isResolved()).length > 0)
-      return false;
-    if (Object.entries(this.consumedSlots).filter(c => !c.isResolved()).length > 0)
-      return false;
-    return true;
   }
 
   toString(nameMap) {

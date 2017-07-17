@@ -66,9 +66,11 @@ class Strategizer {
 
     record.rawGenerated = generated.length;
     record.nullDerivations = 0;
+    record.invalidDerivations = 0;
     record.duplicateDerivations = 0;
     record.nullDerivationsByStrategy = {};
     record.duplicateDerivationsByStrategy = {};
+    record.invalidDerivationsByStrategy = {};
 
     generated = generated.filter(result => {
       if (result.hash) {
@@ -91,6 +93,11 @@ class Strategizer {
           return false;
         }
         this.populationHash.set(result.hash, result);
+      }
+      if (result.valid === false) {
+        record.invalidDerivations++;
+        record.invalidDerivationsByStrategy[strategy] = (record.duplicateDerivationsByStrategy[strategy] || 0) + 1;
+        return false;
       }
       return true;
     });
@@ -198,12 +205,18 @@ class Walker {
     this.currentResult = result;
   }
 
-  createDescendant(result, hash) {
+  createDescendant(result, hash, valid) {
     assert(this.currentResult, "no current result");
     assert(this.currentStrategy, "no current strategy");
     var score = (this.score || 0) + (this.currentResult.score || 0);
 
-    this.descendants.push({result, score, derivation: [{parent: this.currentResult, strategy: this.currentStrategy}], hash });
+    this.descendants.push({
+      result,
+      score,
+      derivation: [{parent: this.currentResult, strategy: this.currentStrategy}],
+      hash,
+      valid,
+    });
   }
 
   onResultDone() {

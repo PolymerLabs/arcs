@@ -102,8 +102,9 @@ class Walker extends Strategizer.Walker {
 
   createDescendant(recipe) {
     let valid = recipe.normalize();
-    // TODO: something with valid
-    super.createDescendant(recipe, recipe.digest());
+    if (!valid) debugger;
+    let hash = valid ? recipe.digest() : null;
+    super.createDescendant(recipe, hash, valid);
   }
 
   isEmptyResult(result) {

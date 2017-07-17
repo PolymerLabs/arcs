@@ -37,6 +37,7 @@ function preparePopulation(population) {
       return { parent, strategy };
     })
     item.original = undefined;
+    item.resolved = item.result.isResolved();
     item.result = item.result.toString();
   });
   var populationMap = {};
