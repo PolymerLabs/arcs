@@ -89,7 +89,7 @@ class AssignViewsByTagAndType extends Strategy {
               // TODO: verify that same Arc's view is not assigned to different connections' views.
               if (newView.type == undefined || viewConnection.type == undefined)
                 viewConnection.connectToView(newView);
-              viewConnection.view.id = newView.id;
+              viewConnection.view.mapToView(newView);
               return 0;
             }));
         }

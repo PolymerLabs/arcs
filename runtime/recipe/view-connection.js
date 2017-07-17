@@ -64,8 +64,15 @@ class ViewConnection {
   get particle() { return this._particle; } // never null
 
   set tags(tags) { this._tags = tags; }
-  set type(type) { this._type = type;}
-  set direction(direction) { this._direction = direction; }
+  set type(type) {
+    this._type = type;
+    this._resetViewType();
+  }
+
+  set direction(direction) {
+    this._direction = direction;
+    this._resetViewType();
+  }
 
   _isValid() {
     // TODO: 'create' is not a valid direction
@@ -94,17 +101,15 @@ class ViewConnection {
         && this.view;
   }
 
+  _resetViewType() {
+    if (this._view)
+      this._view._type = undefined;
+  }
+
   connectToView(view) {
     assert(view.recipe == this.recipe);
-    if (this._type !== undefined) {
-      if (view._type == undefined)
-        view._type = this._type;
-      else
-        assert(this_type == view._type);
-    } else if (view._type !== undefined) {
-        this._type = view._type;
-    }
     this._view = view;
+    this._resetViewType();
     this._view.connections.push(this);
   }
 
