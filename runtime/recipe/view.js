@@ -7,6 +7,7 @@
 
 var assert = require('assert');
 var util = require('./util.js');
+var TypeChecker = require('./type-checker.js');
 
 class View {
   constructor(recipe) {
@@ -18,6 +19,7 @@ class View {
     this._type = undefined;
     this._create = false;
     this._connections = [];
+    this._mappedType = undefined;
   }
 
   clone(recipe) {
@@ -26,6 +28,7 @@ class View {
     view._tags = [...this._tags];
     view._type = this._type;
     view._create = this._create;
+    view._mappedType = this._mappedType;
 
     // the connections are re-established when Particles clone their
     // attached ViewConnection objects.
@@ -63,7 +66,7 @@ class View {
   set tags(tags) { this._tags = tags; }
   get type() { return this._type; } // nullable
   get id() { return this._id; }
-  set id(id) { this._id = id; }
+  mapToView(view) { this._id = view.id; this._type = undefined; this._mappedType = view.type;}
   get localName() { return this._localName; }
   set localName(name) { this._localName = name; }
   get create() { return this._create; }
@@ -71,8 +74,16 @@ class View {
   get connections() { return this._connections } // ViewConnection*
 
   _isValid() {
-    // TODO: implement
-    return true;
+    var typeSet = [];
+    if (this._mappedType)
+      typeSet.push({type: this._mappedType});
+    for (var connection of this._connections) {
+      if (connection.type)
+        typeSet.push({type: connection.type, direction: connection.direction, connection});
+    }
+    var {type, valid} TypeChecker.processTypeList(typeSet);
+    this._type = type;
+    return valid;
   }
 
   isResolved() {
