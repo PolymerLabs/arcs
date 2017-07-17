@@ -115,6 +115,7 @@ class Recipe {
       return;
     }
     if (!this._isValid()) {
+      console.log(this.toString());
       return false;
     }
     // Get views and particles ready to sort connections.

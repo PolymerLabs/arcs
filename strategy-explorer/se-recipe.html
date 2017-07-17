@@ -45,6 +45,10 @@
       #recipe-box[terminal] {
         border-radius: 20px;
       }
+
+      #recipe-box:not([resolved]) {
+        border-style: dashed;
+      }
     </style>
     <div id='recipe-box'
       selected$='{{selected}}'
@@ -53,6 +57,7 @@
       activeChild$='{{activeChild}}'
       activeDescendant$='{{activeDescendant}}'
       terminal$='{{terminal}}'
+      resolved$='{{recipe.resolved}}'
     >{{recipe.score}}</div>
   </template>
 
