@@ -64,8 +64,14 @@ document.pendingActions = new Map();
   let Product = loader.loadEntity("Product");
   var personView = a.createView(Person.type.viewOf(), "aperson");
   var productView = a.createView(Product.type.viewOf(), "products");
+  a.commit([new Person({name: 'Claire'})]);
+  var remoteArc = new Arc({id: "claires-wishlist", loader});
+  var remoteView = a.createView(Product.type.viewOf(), "wishlist");
+  var context = {
+    Claire: [remoteArc]
+  };
   var p = new Planner();
-  p.init(a);
+  p.init(a, context);
   var result = [await p.generate(), await p.generate(), await p.generate(), await p.generate(), await p.generate(), await p.generate(), await p.generate(), await p.generate()].map(preparePopulation);
   document.querySelector('se-explorer').results = result;
 })();

@@ -18,24 +18,19 @@ class InitPopulation extends Strategy {
     if (strategizer.generation == 0) {
       var r = new oldRecipe.NewRecipeBuilder()
       .addParticle("Chooser")
-        .connectConstraint("choices", "recommended")
         .connectConstraint("resultList", "list")
-        .addParticle("WishlistFor")
-          .connectConstraint("wishlist", "wishlist")
         .addParticle("Recommend")
           .connectConstraint("known", "list")
           .tag("gift list")
           .connectConstraint("population", "wishlist")
-          .connectConstraint("recommendations", "recommended")
         .addParticle("SaveList")
           .connectConstraint("list", "list")
-        .addParticle("Choose")
         .addParticle("ListView")
           .connectConstraint("list", "list")
 
         .build();
 
-        r.newConnectionConstraint("Choose", "singleton", "WishlistFor", "person");
+        r.newConnectionConstraint("Chooser", "choices", "Recommend", "recommendations");
 
         r.normalize();
         return { results: [{result: r, score: 1, derivation: [{strategy: this, parent: undefined}], hash: r.digest() }], generate: null };
@@ -80,12 +75,22 @@ function directionCounts(view) {
 }
 
 class AssignViewsByTagAndType extends Strategy {
-  constructor(arc) {
+  constructor(arc, context) {
     super();
     this.arc = arc;
+    this.mappable = [];
+    var Person = arc._loader.loadEntity("Person");
+    var peopleViews = arc.findViews(Person.type.viewOf());
+    // TODO: do this properly
+    var people = peopleViews.map(view => view.toList()).reduce((a,b) => a.concat(b), [])
+      .map(a => a.rawData.name);
+    people.forEach(person => {
+      this.mappable = this.mappable.concat(context[person]);
+    });
   }
   async generate(strategizer) {
     var arc = this.arc;
+    var mappable = this.mappable;
     var results = Recipe.over(strategizer.generated, new class extends RecipeWalker {
       onViewConnection(recipe, vc) {
         if (vc.view)
@@ -127,7 +132,10 @@ class AssignViewsByTagAndType extends Strategy {
 
         var contextIsViewConnection = view == null;
 
-        var responses = arc.findViews(type, tags).map(newView =>
+        var views = arc.findViews(type, tags);
+        views = views.concat(mappable.map(arc => arc.findViews(type, {tag: tags})).reduce((a,b) => a.concat(b), []));
+
+        var responses = views.map(newView =>
           ((recipe, clonedObject) => {
             var tscore = 0;
             if (contextIsViewConnection) {
@@ -145,6 +153,7 @@ class AssignViewsByTagAndType extends Strategy {
             view.mapToView(newView);
             return score + tscore;
           }));
+
         responses.push(null); // "do nothing" for this view.
         return responses;
       }
@@ -208,17 +217,18 @@ class MatchConsumedSlots extends Strategy {
 
 
 class Planner {
-  init(arc) {
+  init(arc, context) {
     let strategies = [
       new InitPopulation(),
       new CreateViews(),
       new ResolveParticleByName(arc._loader),
-      new AssignViewsByTagAndType(arc),
+      new AssignViewsByTagAndType(arc, context),
       new ConvertConstraintsToConnections(),
-      new MatchConsumedSlots()];
+      new MatchConsumedSlots(),
+    ];
     this.strategizer = new Strategizer(strategies, [], {
       maxPopulation: 100,
-      generationSize: 1000,
+      generationSize: 100,
       discardSize: 20,
     });
   }
