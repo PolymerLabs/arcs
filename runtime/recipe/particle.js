@@ -135,6 +135,10 @@ class Particle {
     return this._connections[name];
   }
 
+  allConnections() {
+    return Object.values(this._connections).concat(this._unnamedConnections);
+  }
+
   ensureConnectionName(name) {
     return this._connections[name] || this.addConnectionName(name);
   }

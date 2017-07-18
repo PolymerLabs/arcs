@@ -6,6 +6,7 @@
 // http://polymer.github.io/PATENTS.txt
 
 var Type = require('../type.js');
+var assert = require('assert');
 
 class TypeChecker {
 
@@ -27,7 +28,8 @@ class TypeChecker {
   }
 
   static _applyResolutionsToType(type, resolutions) {
-    console.log('apply resolutions to type', type, resolutions);
+    if (resolutions.length > 0)
+      console.log('apply resolutions to type', type, resolutions);
     return type;
   }
 
@@ -72,8 +74,24 @@ class TypeChecker {
     return {type: result.type, valid: true}
   }
 
+  static substitute(type, variable, value) {
+    if (type.equals(variable))
+      return value;
+    if (type.isView)
+      return TypeChecker.substitute(type.primitiveType(), variable, value).viewOf();
+    return type;
+  }
+
   static applyVariableResolutions(resolutions) {
-    console.log('apply variable resolutions', resolutions)
+    resolutions.forEach(resolution => {
+      var particle = resolution.context.particle;
+      particle.allConnections().forEach(connection => {
+        // TODO: is this actually always true?
+        assert(connection.type == connection.rawType);
+        connection._type = TypeChecker.substitute(connection.rawType, resolution.variable, resolution.becomes);
+        console.log(particle.name, connection.name, connection.rawType, '->', connection._type);
+      });
+    });
   }
 }
 
