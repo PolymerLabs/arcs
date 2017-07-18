@@ -126,10 +126,12 @@ class AssignViewsByTagAndType extends Strategy {
             score = 0;
         }
 
+        var contextIsViewConnection = view == null;
+
         var responses = arc.findViews(type, tags).map(newView =>
           ((recipe, clonedObject) => {
             var tscore = 0;
-            if (view == null) {
+            if (contextIsViewConnection) {
               view = recipe.newView();
               clonedObject.connectToView(view);
               tscore += 1;
@@ -139,7 +141,9 @@ class AssignViewsByTagAndType extends Strategy {
             for (var existingView of recipe.views)
               if (existingView.id == newView.id)
                 tscore -= 1;
-            view.id = newView.id;
+            if (view.mapToView == undefined)
+              console.log(view);
+            view.mapToView(newView);
             return score + tscore;
           }));
         responses.push(null); // "do nothing" for this view.
