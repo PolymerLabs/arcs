@@ -16,6 +16,7 @@ class ViewConnection {
     this._name = name;
     this._tags = [];
     this._type = undefined;
+    this._rawType = undefined;
     this._direction = undefined;
     this._particle = particle;
     this._view = undefined;
@@ -28,6 +29,7 @@ class ViewConnection {
     var viewConnection = new ViewConnection(this._name, particle);  // Note: This is the original, not the cloned particle, is it a right?
     viewConnection._tags = [...this._tags];
     viewConnection._type = this._type;
+    viewConnection._rawType = this._rawType;
     viewConnection._direction = this._direction;
     if (this._view != undefined) {
       viewConnection._view = cloneMap.get(this._view);
@@ -58,14 +60,22 @@ class ViewConnection {
   get recipe() { return this._recipe; }
   get name() { return this._name; } // Parameter name?
   get tags() { return this._tags; }
-  get type() { return this._type; }
+  get type() {
+    if (this._type)
+      return this._type;
+    return this._rawType;
+  }
+  get rawType() {
+    return this._rawType;
+  }
   get direction() { return this._direction; } // in/out
   get view() { return this._view; } // View?
   get particle() { return this._particle; } // never null
 
   set tags(tags) { this._tags = tags; }
   set type(type) {
-    this._type = type;
+    this._rawType = type;
+    this._type = undefined;
     this._resetViewType();
   }
 
@@ -83,7 +93,7 @@ class ViewConnection {
       let connectionSpec = this.particle.spec.connectionMap.get(this.name);
       if (connectionSpec) {
         // TODO: this shouldn't be a direct comparison
-        if (this.type != connectionSpec.type) {
+        if (this.rawType != connectionSpec.type) {
           return false;
         }
         if (this.direction != connectionSpec.direction) {
