@@ -69,11 +69,11 @@
       attached: function() {
         document.idMap.set(this.recipe.id, this);
 
-        this.ancestors = [];
-        this.childrens = [];
+        this.ancestors = new Set();
+        this.childrens = new Set();
         this.set("terminal", true);
-        this.descendants = [];
-        this.parents = [];
+        this.descendants = new Set();
+        this.parents = new Set();
         this.strategyMap = new Map();
         this.recipe.derivation.forEach(derivation => {
           if (derivation.parent !== undefined) {
@@ -81,22 +81,28 @@
 
             var setupContext = (newParent => {
               this.strategyMap.set(newParent, [[derivation.strategy]]);
-              this.parents.push(newParent);
-              newParent.strategyMap.forEach((valueList, key) => {
-                valueList.forEach(value =>  {
-                  strategyList = value.slice();
-                  strategyList.push(derivation.strategy);
-                  if (this.strategyMap.get(key) == undefined)
-                    this.strategyMap.set(key, []);
-                  this.strategyMap.get(key).push(strategyList);
+              if (!this.parents.has(newParent)) {
+                this.parents.add(newParent);
+                newParent.strategyMap.forEach((valueList, key) => {
+                  valueList.forEach(value =>  {
+                    strategyList = value.slice();
+                    strategyList.push(derivation.strategy);
+                    if (this.strategyMap.get(key) == undefined)
+                      this.strategyMap.set(key, []);
+                    this.strategyMap.get(key).push(strategyList);
+                  });
                 });
-              });
-              this.ancestors = this.ancestors.concat(newParent.parents, newParent.ancestors);
-              newParent.childrens.push(this);
-              newParent.set("terminal", false);
-              newParent.parents.forEach(parent => parent.descendants.push(this));
-              newParent.ancestors.forEach(ancestor => ancestor.descendants.push(this));
+
+                newParent.parents.forEach(elem => this.ancestors.add(elem));
+                newParent.ancestors.forEach(elem => this.ancestors.add(elem));
+
+                newParent.childrens.add(this);
+                newParent.set("terminal", false);
+                newParent.parents.forEach(parent => parent.descendants.add(this));
+                newParent.ancestors.forEach(ancestor => ancestor.descendants.add(this));
+              }
             });
+
             if (newParent == undefined) {
               if (!document.pendingActions.has(derivation.parent))
                 document.pendingActions.set(derivation.parent, []);
