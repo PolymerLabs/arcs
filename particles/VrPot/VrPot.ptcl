@@ -11,3 +11,4 @@
 VrPot(in Person person)
 
 renders: root none-need
+exposes: soil, soil2

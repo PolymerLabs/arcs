@@ -12,32 +12,39 @@ let Arc = require('../../arc.js');
 let systemParticles = require('../../system-particles.js');
 //require('./trace-setup.js');
 
-let products = [
-  {
-    name: "Minecraft Book",
-    category: "Books",
-    seller: "denile.com",
-    price: "$14.50",
-    shipDays: 7,
-    image: "../assets/products/book.png"
-  },
-  {
-    name: "Power Tool Set",
-    category: "Tools",
-    seller: "denile.com",
-    price: "$59.00",
-    shipDays: 42,
-    image: "../assets/products/powertool.png"
-  },
-  {
-    name: "Guardian of the Galaxy Figure",
-    category: "Toys & Collectibles",
-    seller: "denile.com",
-    price: "$75.00",
-    shipDays: 14,
-    image: "../assets/products/galaxy.png"
-  }
-];
+let db = {
+  people: [
+    {
+      name: "Claire"
+    }
+  ],
+  products: [
+    {
+      name: "Minecraft Book",
+      category: "Books",
+      seller: "denile.com",
+      price: "$14.50",
+      shipDays: 7,
+      image: "../assets/products/book.png"
+    },
+    {
+      name: "Power Tool Set",
+      category: "Tools",
+      seller: "denile.com",
+      price: "$59.00",
+      shipDays: 42,
+      image: "../assets/products/powertool.png"
+    },
+    {
+      name: "Guardian of the Galaxy Figure",
+      category: "Toys & Collectibles",
+      seller: "denile.com",
+      price: "$75.00",
+      shipDays: 14,
+      image: "../assets/products/galaxy.png"
+    }
+  ]
+};
 
 function prepareDemoContext({loader, pecFactory, slotComposer}) {
   // uber arc
@@ -45,12 +52,12 @@ function prepareDemoContext({loader, pecFactory, slotComposer}) {
   // bootstrap data context
   let Person = loader.loadEntity('Person');
   let Product = loader.loadEntity('Product');
+  // TODO(sjmiles): empirically, views must exist before committing Entities
   let personView = pageArc.createView(Person.type.viewOf(), 'peopleFromWebpage');
   let productView = pageArc.createView(Product.type.viewOf(), 'productsFromWebpage');
-  pageArc.commit([
-    new Person({name: 'Claire'})
-  ].concat(products.map(p => new Product(p)))
-  );
+  // commit entities
+  pageArc.commit(db.people.map(p => new Person(p)));
+  pageArc.commit(db.products.map(p => new Product(p)));
   // demo arc
   let arc = new Arc({id: 'demo', loader, pecFactory, slotComposer});
   arc.createView(Person.type, 'personSlot');

@@ -11,7 +11,7 @@
 
 const assert = require('assert');
 const Slot = require('./slot.js');
-const Template = require('./browser/lib/xenon-template.js');
+const Template = require('./browser/lib/xen-template.js');
 
 // TODO(sjmiles): should be elsewhere
 // TODO(sjmiles): using Node syntax to import custom-elements in strictly-browser context
@@ -81,7 +81,6 @@ class DomSlot extends Slot {
       }
     }
   }
-
   _populateViewDescriptions(contentModel) {
     assert(this.isAssociated(), "Cannot populate unassociated slot view descriptions");
     this.particleSpec.views.forEach((view, viewName) => {
@@ -90,15 +89,12 @@ class DomSlot extends Slot {
       }
     });
   }
-
   _stampTemplate(template, eventHandler) {
     let eventMapper = this._eventMapper.bind(this, eventHandler);
     // TODO(sjmiles): hack to allow subtree elements (e.g. x-list) to marshal events
     this.dom._eventMapper = eventMapper;
     // TODO(sjmiles): _liveDom needs new name
-    this._liveDom = Template.stamp(template);
-    this._liveDom.mapEvents(eventMapper);
-    this._liveDom.appendTo(this.dom);
+    this._liveDom = Template.stamp(template).mapEvents(eventMapper).appendTo(this.dom);
   }
   _eventMapper(eventHandler, node, eventName, handlerName) {
     node.addEventListener(eventName, () => {

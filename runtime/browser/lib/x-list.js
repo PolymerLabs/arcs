@@ -1,34 +1,12 @@
 'use strict';
 
-const Template = require('./xenon-template.js');
+const XTemplate = require('./xen-template.js');
+const XElement = require('./xen-element.js');
+const XState = require('./xen-state.js');
 
-class XList extends HTMLElement {
+class XList extends XState(XElement) {
   static get observedAttributes() {
     return ['items','template','handler','render','scope'];
-  }
-
-  // TODO(sjmiles): begin inlining MVP base class
-  constructor() {
-    super();
-    this._props = Object.create(null);
-    this._state = Object.create(null);
-  }
-  _setState(state) {
-    Object.assign(this._state, state);
-  }
-  connectedCallback() {
-    if (!this._mounted) {
-      this._mounted = true;
-      this._mount();
-      //this.render();
-    }
-  }
-  set items(items) {
-    this._props.items = items;
-    this.render();
-  }
-  render() {
-    this._render(this._props, this._state);
   }
   _mount() {
     this._setState({
@@ -37,9 +15,7 @@ class XList extends HTMLElement {
     });
     this.textContent = '';
   }
-  // TODO(sjmiles): end inlined MVP base class
-
-  _render(props, state) {
+  _update(props, state) {
     var template = props.template || state.template;
     if (template) {
       this._renderList(state.container, template, props);
@@ -59,13 +35,10 @@ class XList extends HTMLElement {
       next = child && child.nextElementSibling;
       if (!child) {
         try {
-          var dom = Template.stamp(template);
           // TODO(sjmiles): install event handlers explicitly now
-          if (props.eventMapper) {
-            dom.mapEvents(props.eventMapper);
-          }
+          var dom = XTemplate.stamp(template).mapEvents(props.eventMapper);
         } catch(x) {
-          console.warn('x-list: if `listen` is undefined, you need to  provide a `handler` property for `on-*` events');
+          console.warn('x-list: if `listen` is undefined, you need to provide a `handler` property for `on-*` events');
           throw x;
         }
         child = dom.root.firstElementChild;

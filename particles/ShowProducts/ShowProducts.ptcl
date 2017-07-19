@@ -11,7 +11,7 @@
 ShowProducts(in [Product] list)
 
 renders: root none-need
-exposes: action(list), preamble, annotation
+exposes: action(list), preamble, annotation, annotation2, annotation3, postamble
 
 Description {
   pattern: Show ${list}

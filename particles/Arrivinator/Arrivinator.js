@@ -41,7 +41,9 @@ defineParticle(({DomParticle}) => {
             if (item.shipDays) {
               let then = new Date(now + item.shipDays*daysToMs);
               if (then > needed) {
-                style = {color: 'red', fontWeight: 'bold', fontStyle: 'normal'};
+                style = {color: 'orange', fontWeight: 'bold', fontStyle: 'normal'};
+              } else {
+                style = {color: 'green'};
               }
               arrival = `Arrives ${then.toDateString()}`;
             } else {

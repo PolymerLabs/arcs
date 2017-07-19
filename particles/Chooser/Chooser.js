@@ -31,8 +31,8 @@ defineParticle(({DomParticle}) => {
     height: 0;
   }
   ${host} [head] {
-    display: flex;
-    align-items: center;
+    /*display: flex;
+    align-items: center;*/
     padding: 16px 0;
     color: #555555;
     font-size: 0.8em;
@@ -77,9 +77,7 @@ ${styles}
 ${productStyles}
 <div chooser>
   <div chevron>▲</div>
-  <div head>
-    <span>{{choices.description}}</span>
-  </div>
+  <div head>{{choices.description}}</div>
   <x-list items="{{items}}">${productTemplate}</x-list>
 </div>
     `.trim();

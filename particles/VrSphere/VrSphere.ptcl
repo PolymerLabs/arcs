@@ -11,4 +11,4 @@
 VrSphere(in Person person)
 
 renders: root none-need
-exposes: action(person)
+exposes: action

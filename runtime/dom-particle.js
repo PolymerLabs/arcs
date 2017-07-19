@@ -16,29 +16,44 @@ const {
   //SlotChanges
 } = require("./particle.js");
 
-const XenonBase = require("./browser/lib/xenon-base.js");
+const XenStateMixin = require("./browser/lib/xen-state.js");
 
 //let log = !global.document || (global.logging === false) ? () => {} : console.log.bind(console, `---------- DomParticle::`);
 //console.log(!!global.document, global.logging, log);
 
 let log = false ? console.log.bind(console) : () => {};
 
-class DomParticle extends XenonBase(Particle) {
-  // override to return a String defining primary markup
+/** @class DomParticle
+ * Particle that does stuff with DOM.
+ */
+class DomParticle extends XenStateMixin(Particle) {
+  /** @method get template()
+   * Override to return a String defining primary markup.
+   */
   get template() {
     return '';
   }
-  // override to return false if the Particle won't use it's slot
+  /** @method _shouldRender(props, state)
+   * Override to return false if the Particle won't use
+   * it's slot.
+   */
   _shouldRender(props, state) {
     return true;
   }
-  // override to return a dictionary to map against the template
+  /** @method _render(props, state)
+   * Override to return a dictionary to map into the template.
+   */
   _render(props, state) {
+    return {};
   }
-  // override if necessary, to do things when props change
+  /** @method _willReceiveProps(props)
+   * Override if necessary, to do things when props change.
+   */
   _willReceiveProps(props) {
   }
-  // override if necessary, to modify superclass config
+  /** @method get config()
+   * Override if necessary, to modify superclass config.
+   */
   get config() {
     // TODO(sjmiles): getter that does work is a bad idea, this is temporary
     return {
@@ -79,25 +94,14 @@ class DomParticle extends XenonBase(Particle) {
     }
     if (state.slot) {
       log(`${this._info()}: rendering`);
-      state.slot.render({model: this._render(props, state)});
-    }
-  }
-  /*
-  async _renderModel(model) {
-    let slotName = this.config.slotName;
-    if (!model) {
-      if (this.slot) {
-        //log(`${this.info()}: _renderModel about to releaseSlot: `, this.spec.name);
-        this.releaseSlot(slotName);
+      try {
+        state.slot.render({model: this._render(props, state)});
+      } catch(x) {
+        console.warn(this._info(), ': Exception during render, ensure your render-model is serializable.');
+        console.error(x);
       }
-    } else {
-      // TODO(sjmiles): render commands will stack up as we wait for slots, which
-      // is generally not what we want
-      //log(`${this.info()}: _renderModel about to requireSlot: `, this.spec.name, Object.keys(model));
-      (await this.requireSlot(slotName)).render({model});
     }
   }
-  */
   setSlot(slot) {
     this._setState({slot: slot});
     this._initializeRender(slot);

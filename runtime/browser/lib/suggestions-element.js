@@ -57,7 +57,7 @@ class SuggestionsElement extends HTMLElement {
   add(plan, index) {
     let model = {
       index,
-      textContent: plan.descriptinator.description,
+      innerHTML: plan.descriptinator.description,
       onclick: () => { this.choose(plan); }
     };
     this.container.insertBefore(

@@ -37,10 +37,7 @@ defineParticle(({DomParticle}) => {
     border: none;
   }
   ${host} [interleaved] {
-    /*margin: -8px 0 8px 64px;*/
     font-size: 0.7em;
-    font-style: italic;
-    color: blue;
   }
 </style>
   `;
@@ -71,14 +68,24 @@ ${productStyles}
   <div head>
     <span>Your shortlist</span>
   </div>
+
   <div slotid="preamble"></div>
+
   <x-list items="{{items}}">${productTemplate}</x-list>
   <interleaved-list>
     <div slotid="annotation"></div>
   </interleaved-list>
-  <div slotid="action"></div>
-</div>
+  <interleaved-list>
+    <div slotid="annotation2"></div>
+  </interleaved-list>
+  <interleaved-list>
+    <div slotid="annotation3"></div>
+  </interleaved-list>
 
+  <div slotid="action"></div>
+
+  <div slotid="postamble"></div>
+</div>
     `.trim();
 
   return class extends DomParticle {
@@ -90,7 +97,7 @@ ${productStyles}
         // TODO(sjmiles): rawData provides POJO access, but shortcuts schema-enforcing getters
         items: props.list.map(({rawData}, i) => {
           return Object.assign({
-            itemSlotId: `action-${i}`
+            itemSlotId: `item-${i}`
           }, rawData);
         })
       });

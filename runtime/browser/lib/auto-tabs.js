@@ -10,7 +10,7 @@
 
 'use strict';
 
-const Xen = require('../lib/xenon-template.js');
+const Xen = require('../lib/xen-template.js');
 
 let template = Object.assign(document.createElement('template'), {
   innerHTML: `

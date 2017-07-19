@@ -17,12 +17,12 @@ defineParticle(({DomParticle}) => {
   `.trim();
 
   return class extends DomParticle {
+    constructor() {
+      super();
+      this.relevance = 9;
+    }
     get template() {
       return template;
-    }
-    _render(props, state) {
-      return {
-      };
     }
   };
 
