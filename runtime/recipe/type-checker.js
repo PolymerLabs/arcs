@@ -20,8 +20,10 @@ class TypeChecker {
     for (var i = 1; i < list.length; i++) {
       let result = TypeChecker.compareTypes(baseType, list[i], variableResolutions);
       baseType = result.type;
-      if (!result.valid)
+      if (!result.valid) {
+        debugger;
         return {valid: false};
+      }
     }
     TypeChecker.applyVariableResolutions(variableResolutions);
     return {type: baseType, valid: true};

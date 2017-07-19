@@ -21,8 +21,8 @@ class InitPopulation extends Strategy {
         .connectConstraint("resultList", "list")
         .addParticle("Recommend")
           .connectConstraint("known", "list")
-          .tag("gift list")
           .connectConstraint("population", "wishlist")
+          .tag("gift list")
         .addParticle("SaveList")
           .connectConstraint("list", "list")
         .addParticle("ListView")
@@ -95,6 +95,8 @@ class AssignViewsByTagAndType extends Strategy {
       onViewConnection(recipe, vc) {
         if (vc.view)
           return;
+        if (!vc.type)
+          return;
         if (vc.direction == 'in')
           var counts = {'in': 1, 'out': 0, 'unknown': 0};
         else if (vc.direction == 'out')
@@ -112,11 +114,17 @@ class AssignViewsByTagAndType extends Strategy {
         if (view.connections.length == 0)
           return;
 
+        if (view.id)
+          return;
+
+        if (!view.type)
+          return;
+
         // TODO: using the connection to retrieve type information is wrong.
         // Once validation of recipes generates type information on the view
         // we should switch to using that instead.
         var counts = directionCounts(view);
-        return this.mapView(view, view.tags, view.connections[0].type, counts);
+        return this.mapView(view, view.tags, view.type, counts);
       }
 
       mapView(view, tags, type, counts) {
@@ -132,8 +140,17 @@ class AssignViewsByTagAndType extends Strategy {
 
         var contextIsViewConnection = view == null;
 
-        var views = arc.findViews(type, tags);
-        views = views.concat(mappable.map(arc => arc.findViews(type, {tag: tags})).reduce((a,b) => a.concat(b), []));
+        if (tags.length > 0) {
+          // score bump for matching tag information
+          score += 2;
+          var views = arc.findViews(type, {tag: tags[0]});
+          views = views.concat(mappable.map(arc => arc.findViews(type, {tag: tags[0]})).reduce((a,b) => a.concat(b), []));
+        }
+        else
+        {
+          var views = arc.findViews(type);
+          views = views.concat(mappable.map(arc => arc.findViews(type).reduce((a,b) => a.concat(b), [])));
+        }
 
         var responses = views.map(newView =>
           ((recipe, clonedObject) => {

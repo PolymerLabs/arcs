@@ -75,14 +75,19 @@
         this.descendants = new Set();
         this.parents = new Set();
         this.strategyMap = new Map();
+
         this.recipe.derivation.forEach(derivation => {
           if (derivation.parent !== undefined) {
             var newParent = document.idMap.get(derivation.parent);
+            if (newParent == undefined) {
+              return;
+            }
 
             var setupContext = (newParent => {
               this.strategyMap.set(newParent, [[derivation.strategy]]);
               if (!this.parents.has(newParent)) {
                 this.parents.add(newParent);
+
                 newParent.strategyMap.forEach((valueList, key) => {
                   valueList.forEach(value =>  {
                     strategyList = value.slice();
@@ -98,8 +103,10 @@
 
                 newParent.childrens.add(this);
                 newParent.set("terminal", false);
+
                 newParent.parents.forEach(parent => parent.descendants.add(this));
                 newParent.ancestors.forEach(ancestor => ancestor.descendants.add(this));
+
               }
             });
 
@@ -113,6 +120,7 @@
           }
         });
 
+
         if (document.pendingActions.has(this.recipe.id)) {
           document.pendingActions.get(this.recipe.id).forEach(action => action(this));
         }
@@ -121,6 +129,9 @@
         this.$['recipe-box'].addEventListener('mouseenter', e => {
           recipeView.over = this;
           recipeView.recipe = this.recipe;
+        });
+        this.$['recipe-box'].addEventListener('mouseleave', e => {
+          recipeView.resetToPinned();
         });
         this.$['recipe-box'].addEventListener('click', e => {
           if (document._selectedBox !== undefined) {

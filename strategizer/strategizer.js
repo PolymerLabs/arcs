@@ -112,10 +112,6 @@ class Strategizer {
       return 0;
     });
 
-    console.log(generated);
-    if (generated.length > 20)
-    generated = generated.slice(0, 20);
-
     // Evalute
     if (generated.length > 0 && this._evaluators.length == 0) {
       console.warn('No evaluators');

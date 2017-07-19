@@ -22,12 +22,10 @@ var lastID = 0;
 function preparePopulation(population) {
   population = population.map(recipe => {
     let { result, score, derivation, hash } = recipe;
-    return { result, score, derivation, hash, original: recipe };
+    parentMap.set(recipe, lastID);
+    return { result, score, derivation, hash, id: lastID++ };
   });
-  population.forEach((item) => {
-    item.id = lastID++;
-    parentMap.set(item.original, item.id);
-  });
+
   population.forEach(item => {
     item.derivation = item.derivation.map(derivItem => {
       if (derivItem.parent)
@@ -66,7 +64,8 @@ document.pendingActions = new Map();
   var productView = a.createView(Product.type.viewOf(), "products");
   a.commit([new Person({name: 'Claire'})]);
   var remoteArc = new Arc({id: "claires-wishlist", loader});
-  var remoteView = a.createView(Product.type.viewOf(), "wishlist");
+  var remoteView = remoteArc.createView(Product.type.viewOf(), "wishlist");
+  remoteArc.tagView(remoteView, 'gift list');
   var context = {
     Claire: [remoteArc]
   };
