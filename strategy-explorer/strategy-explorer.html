@@ -50,7 +50,6 @@ function preparePopulation(population) {
   Object.keys(populationMap).forEach(strategy => {
     result.population.push({strategy: strategy, recipes: populationMap[strategy]});
   })
-  console.log(result)
   return result;
 }
 

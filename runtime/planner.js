@@ -98,7 +98,6 @@ class AssignViewsByTagAndType extends Strategy {
           var counts = {'in': 1, 'out': 1, 'unknown': 0};
         else
           var counts = {'in': 0, 'out': 0, 'unknown': 1};
-        console.log(vc.type, counts);
         return this.mapView(null, vc.tags, vc.type, counts);
       }
       onView(recipe, view) {
