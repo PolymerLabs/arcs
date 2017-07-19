@@ -77,13 +77,17 @@ class View {
     var typeSet = [];
     if (this._mappedType)
       typeSet.push({type: this._mappedType});
+    var tags = new Set();
     for (var connection of this._connections) {
       if (connection.type)
         typeSet.push({type: connection.type, direction: connection.direction, connection});
+      connection.tags.forEach(tag => tags.add(tag));
     }
     var {type, valid} = TypeChecker.processTypeList(typeSet);
     if (valid) {
       this._type = type.type;
+      this._tags.forEach(tag => tags.add(tag));
+      this._tags = [...tags];
     }
     return valid;
   }
@@ -102,6 +106,10 @@ class View {
     }
     result.push(...this.tags);
     result.push(`as ${(nameMap && nameMap.get(this)) || this.localName}`);
+    if (this.type) {
+      result.push('#');
+      result.push(JSON.stringify(this.type.key));
+    }
     return result.join(' ');
   }
 }

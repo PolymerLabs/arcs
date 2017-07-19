@@ -60,7 +60,7 @@
           this.set("shownRecipe.result", diff.join(""));
           var strategies = this.to.strategyMap.get(this.over) || this.over.strategyMap.get(this.to);
           if (strategies)
-            this.strategyString = "Strategies: [" + strategies.join('], [') + "]\n";
+            this.strategyString = "Strategies: [" + strategies.join(']\n[') + "]\n";
           else
             this.strategyString = '';
         }
@@ -70,6 +70,12 @@
         this.pinned = true;
         this.pinnedResult = this.recipe.result;
         this.to = this.over;
+      },
+      resetToPinned: function() {
+        if (this.pinned) {
+          this.over = this.to;
+          this.recipe = this.over.recipe;
+        }
       },
       unpin: function() {
         this.pinned = false;
