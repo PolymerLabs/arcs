@@ -89,7 +89,6 @@ class TypeChecker {
         // TODO: is this actually always true?
         assert(connection.type == connection.rawType);
         connection._type = TypeChecker.substitute(connection.rawType, resolution.variable, resolution.becomes);
-        console.log(particle.name, connection.name, connection.rawType, '->', connection._type);
       });
     });
   }
