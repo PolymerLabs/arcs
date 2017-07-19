@@ -10,6 +10,7 @@
 
 let Suggestinator = require("../../suggestinator.js");
 let {RecipeBuilder} = require('../../recipe.js');
+let recipes = require("../demo/recipes.js");
 
 class DemoBase extends HTMLElement {
   constructor() {
@@ -28,6 +29,9 @@ class DemoBase extends HTMLElement {
     this.didMount();
   }
   didMount() {
+  }
+  $(slctr) {
+    return this._root && this._root.querySelector(slctr);
   }
   get arc() {
     return this._arc;
@@ -51,15 +55,22 @@ class DemoBase extends HTMLElement {
   }
   nextStage() {
     this.stage = this.stages[this.stageNo % this.stages.length];
+    //this.stage.recipes = recipes;
     this.stageNo++;
     this.suggest();
   }
   suggest() {
     if (this.stage.recipes) {
-       this.suggestinator._getSuggestions = () =>  this.stage.recipes.map(r => this.buildRecipe(r));
-       this.suggestinator.suggestinate(this.arc).then(plans => plans.forEach((plan, i) => {
-         this.suggestions.add(plan, i);
-      }));
+      this.suggestinator._getSuggestions = () => this.stage.recipes.map(
+          r => this.buildRecipe(r)
+        );
+      this.suggestinator
+        .suggestinate(this.arc)
+        .then(plans =>
+          plans.forEach((plan, i) => {
+            this.suggestions.add(plan, i);
+          })
+        );
     }
   }
   buildRecipe(info) {

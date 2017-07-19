@@ -12,7 +12,7 @@
 const assert = require('assert');
 const Slot = require('./dom-slot.js');
 
-let log = !global.document || (global.logging === false) ? () => {} : console.log.bind(console, '---------- SlotComposer::');
+let log = false && global.document && global.logging ? console.log.bind(console, '---------- SlotComposer::') : () => {};
 
 class SlotComposer {
   constructor(domRoot) {

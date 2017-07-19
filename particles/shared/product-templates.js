@@ -17,6 +17,9 @@ var productStyles = `
     */
   }
   ${host} > x-list [col1] {
+    display: flex;
+    align-items: center;
+    justify-content: center;
     width: 148px;
     height: 128px;
     box-sizing: border-box;
@@ -24,8 +27,8 @@ var productStyles = `
     background-size: contain;
   }
   ${host} > x-list [col1] > img {
-    max-width: 148px;
-    max-height: 128px;
+    max-width: 128px;
+    max-height: 96px;
   }
   ${host} > x-list [name] {
     font-size: 0.95em;

@@ -185,8 +185,12 @@ class DescriptionGenerator {
   _formatViewValue(view) {
     if (view.type.isView) {
       let viewList = view.toList() || this.relevance.newArc._viewMap.get(view).get();
-      if (viewList)
+      if (viewList) {
+        if (viewList.length > 2) {
+          return `<b>${viewList[0].rawData.name}</b> and <b>${viewList.length-1}</b> other items`;
+        }
         return viewList.map(v => v.rawData.name).join(", ");
+      }
     } else {
       let viewVar = view.get() || this.relevance.newArc._viewMap.get(view).get();
       if (viewVar)

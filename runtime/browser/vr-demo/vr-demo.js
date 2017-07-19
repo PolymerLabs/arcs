@@ -19,7 +19,7 @@ let DemoBase = require('../lib/demo-base.js');
 require('../lib/auto-tabs.js');
 require('../lib/suggestions-element.js');
 
-let template = Object.assign(document.createElement('template'), {innerHTML: `
+let template = `
 
 <style>
   demo-flow {
@@ -31,31 +31,30 @@ let template = Object.assign(document.createElement('template'), {innerHTML: `
   }
 </style>
 
-  <a-scene particle-container physics="debug: false">
+<a-scene gridhelper="size:8" particle-container physics="debug: false">
+  <a-entity light="type:directional; castShadow: true;" position="1 1 1"></a-entity>
+  <a-sky color="#DCDCDC" src="assets/tokyo (candy bar).jpg"></a-sky>
+  <a-camera position="0 0 0"></a-camera>
+</a-scene>
 
-    <a-entity light="type:directional; castShadow: true;" position="1 1 1"></a-entity>
-    <a-sky color="#ECECEC" src="assets/tokyo (candy bar).jpg"></a-sky>
-    <a-camera position="0 0 0">
-      <!--
-      <a-entity position="0 0 -1" scale="0.02 0.02 0.02"
-        geometry="primitive: ring"
-        material="color: black; shader: flat"
-        cursor="fuse: true; fuseTimeout: 750"
-        raycaster="objects: [clickable]"
-        event-set__fuse="_event: fusing; material.color: red"
-        event-set__leave="_event: mouseleave; material.color: black; scale: 0.02 0.02 0.02">
-        <a-animation begin="cursor-fusing" easing="ease-in" attribute="scale"
-          fill="forwards" from="0.02 0.02 0.02" to="0.002 0.002 0.002" dur="700"></a-animation>
-        <a-animation begin="click" easing="ease-out-elastic" attribute="scale"
-          from="0.002 0.002 0.002" to="0.02 0.02 0.02" dur="150"></a-animation>
-      </a-entity>
-      -->
-    </a-camera>
+<suggestions-element></suggestions-element>
 
-  </a-scene>
+  `.trim();
 
-  <suggestions-element></suggestions-element>
-`.trim()});
+let bg = window.location.hash.slice(1);
+switch (bg) {
+  case '1':
+    template = template.replace('tokyo (candy bar)', 'tokyo');
+  default:
+    template = template.replace('gridhelper="size:8" ', '');
+    break;
+  case '2':
+    template = template.replace('src="assets/tokyo (candy bar).jpg"', '');
+    template = template.replace('<a-camera position="0 0 0">', '<a-camera position="0 0 2">');
+    break;
+}
+
+template = Object.assign(document.createElement('template'), {innerHTML: template});
 
 class DemoFlow extends DemoBase {
   get template() {
@@ -70,17 +69,13 @@ class DemoFlow extends DemoBase {
     let {arc} = ContextFactory({
       loader: new BrowserLoader('../../'),
       pecFactory: require('../worker-pec-factory.js').bind(null, '../../'),
-      slotComposer: new SlotComposer(this._root.querySelector('[particle-container]'))
+      slotComposer: new SlotComposer(this.$('[particle-container]'))
     });
     this.arc = arc;
     this.stages =  [{
-      recipes: [
-        recipes[0],
-        recipes[1],
-        recipes[2]
-      ]
+      recipes
     }];
-    this.suggestions = this._root.querySelector('suggestions-element');
+    this.suggestions = this.$('suggestions-element');
     this.suggestions.arc = arc;
     this.suggestions.callback = this.nextStage.bind(this);
   }

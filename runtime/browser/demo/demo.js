@@ -16,6 +16,10 @@ let DemoBase = require('../lib/demo-base.js');
 let ContextFactory = require('./demo-context-factory.js');
 let recipes = require('./recipes.js');
 
+// 0: make shortlist, 1: see wishlist,
+// 2: uber shortlist, 3: buying for,
+// 4: manu info, 5: interests
+
 let stages = [{
   recipes: [
     recipes[0],
@@ -24,18 +28,24 @@ let stages = [{
   ]
 }, {
   recipes: [
-    recipes[3]
+    recipes[3],
+    recipes[4]
+  ]
+}, {
+  recipes: [
+    recipes[3],
+    recipes[4],
+    recipes[5]
   ]
 }, {
   recipes: [
     recipes[4],
-    recipes[5],
-    recipes[6],
-    recipes[7]
+    recipes[5]
   ]
 }, {
   recipes: [
-    recipes[8]
+    recipes[5],
+    recipes[6]
   ]
 }];
 
@@ -81,11 +91,11 @@ class DemoFlow extends DemoBase {
     let {arc} = ContextFactory({
       loader: new BrowserLoader(root),
       pecFactory: require('../worker-pec-factory.js').bind(null, root),
-      slotComposer: new SlotComposer(this._root.querySelector('[particle-container]'))
+      slotComposer: new SlotComposer(this.$('[particle-container]'))
     });
     this.arc = arc;
     this.stages = stages;
-    this.suggestions = this._root.querySelector('suggestions-element');
+    this.suggestions = this.$('suggestions-element');
     this.suggestions.arc = arc;
     this.suggestions.callback = this.nextStage.bind(this);
   }

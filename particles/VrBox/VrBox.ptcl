@@ -10,4 +10,4 @@
 
 VrBox(in Person person)
 
-renders: action(person) none-need
+renders: action none-need
