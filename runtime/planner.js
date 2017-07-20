@@ -148,9 +148,7 @@ class AssignViewsByTagAndType extends Strategy {
           score += 4;
           var views = arc.findViews(type, {tag: tags[0]});
           views = views.concat(mappable.map(arc => arc.findViews(type, {tag: tags[0]})).reduce((a,b) => a.concat(b), []));
-        }
-        else
-        {
+        } else {
           var views = arc.findViews(type);
           views = views.concat(mappable.map(arc => arc.findViews(type)).reduce((a,b) => a.concat(b), []));
         }
