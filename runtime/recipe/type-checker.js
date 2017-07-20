@@ -21,7 +21,6 @@ class TypeChecker {
       let result = TypeChecker.compareTypes(baseType, list[i], variableResolutions);
       baseType = result.type;
       if (!result.valid) {
-        debugger;
         return {valid: false};
       }
     }
@@ -52,7 +51,6 @@ class TypeChecker {
       resolutions.push({variable: rightType, becomes: leftType, context: right.connection});
       var type = left;
     } else {
-      debugger;
       return null;
     }
     return {type, resolutions};
