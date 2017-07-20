@@ -54,8 +54,22 @@ class Slot {
   get consumerConnections() { return this._consumerConnections; }
 
   isResolved() {
-    // Note: "root" slot doesn't have a "provide" connection, hence it must have "consume" connections.
-    return !!this.id && (!!this.providerConnection || this.consumerConnections.length > 0);
+    if (!!this.id) {
+      return false;
+    }
+    if (this.providerConnection) {
+      if (providerConnection.viewConnections.length == 0) {
+        // The providing particle doesn't restrict view generated in this slot.
+        return true;
+      }
+      for (let provideViewConn of providerConnection.viewConnections) {
+        // The consuming slots must ALL comply with either of the view connections enforced by the providing particle.
+        return this.consumerConnections.every(c => c.particle && Array.from[c.particles.connection.values].find(v => v.id == provideViewConn.id));
+      }
+    } else {
+      // Note: "root" slot doesn't have a "provide" connection, hence it must have "consume" connections.
+      return this.consumerConnections.length > 0;
+    }
   }
 
   _isValid() {
@@ -64,14 +78,7 @@ class Slot {
   }
 
   toString(nameMap) {
-    let result = [];
-    result.push("renders");
-    if (this.providerConnection && this.providerConnection.viewConnections.length > 0 &&
-        this.providerConnection.viewConnections[0].view) {
-      result.push(nameMap.get(this.providerConnection.viewConnections[0].view));
-    }
-    result.push(`as ${(nameMap && nameMap.get(this)) || this.localName}`);
-    return result.join(' ');
+    return '';
   }
 }
 

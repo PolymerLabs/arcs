@@ -78,7 +78,6 @@ RecipeItem
   = RecipeParticle
   / RecipeView
   / RecipeConnection
-  / RecipeSlot
 
 Name
   = "as" whiteSpace name:lowerIdent
@@ -123,12 +122,13 @@ RecipeParticleConnection
   }
 
 RecipeParticleSlotConnection
-  = dir:("provide" / "consume") whiteSpace param:(lowerIdent / "*") name:(whiteSpace Name)? eolWhiteSpace
+  = dir:("provide" / "consume") whiteSpace param:(lowerIdent / "*") viewRef:(whiteSpace SlotViewRef)? name:(whiteSpace Name)? eolWhiteSpace
   {
     return {
       kind: 'slot-connection',
       param,
       dir,
+      viewRef: optional(viewRef, viewRef => viewRef[1], null),
       name: optional(name, name=>name[1], null),
     };
   }
@@ -180,16 +180,6 @@ RecipeView
     }
   }
 
-RecipeSlot
-  = "renders" ref:(whiteSpace SlotViewRef)? name:(whiteSpace Name)? eolWhiteSpace
-  {
-    return {
-      kind: 'slot',
-      name: optional(name, name => name[1], null),
-      ref: optional(ref, ref => ref[1], {tags: []})
-    }
-  }
-
 Tag
   = "#" [a-zA-Z][a-zA-Z0-9_]* {return text()}
 
@@ -216,10 +206,10 @@ ViewRef
   { return {tags}; }
 
 SlotViewRef
-  = !'as' lowerIdent
-  { return {view:text()}; }
-  / tags:TagList
-  { return {tags}; }
+  = "(" name:lowerIdent? tags:TagList? ")"
+  {
+    return name ? {name, tags:[]} : {tags};
+  }
 
 Schema
   = "schema" whiteSpace name:upperIdent parent:(whiteSpace "extends" whiteSpace upperIdent)? eolWhiteSpace sections:(Indent (SameIndent SchemaSection)*)?
