@@ -49,6 +49,7 @@ class WalkerBase extends Strategizer.Walker {
 
             newRecipes.push({recipe: newRecipe, score});
           }
+          /*
           if (newRecipes.length > 10) {
             newRecipes.sort((a,b) => {
               if (a.score > b.score)
@@ -59,6 +60,7 @@ class WalkerBase extends Strategizer.Walker {
             });
             newRecipes = newRecipes.slice(0, 10);
           }
+          */
           break;
         case WalkerBase.Independent:
           updateList.forEach(({continuation, context}) => {
