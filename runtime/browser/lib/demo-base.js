@@ -30,8 +30,8 @@ class DemoBase extends HTMLElement {
   }
   didMount() {
   }
-  $(slctr) {
-    return this._root && this._root.querySelector(slctr);
+  $(selector) {
+    return this._root && this._root.querySelector(selector);
   }
   get arc() {
     return this._arc;
