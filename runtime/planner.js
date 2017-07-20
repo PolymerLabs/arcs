@@ -132,42 +132,46 @@ class AssignViewsByTagAndType extends Strategy {
         if (counts.in == 0 || counts.out == 0) {
           if (counts.unknown > 0)
             return;
-          if (counts.in == 0)
+          if (counts.out == 0)
             score = 1;
           else
             score = 0;
         }
 
         var contextIsViewConnection = view == null;
+        if (contextIsViewConnection) {
+          score -= 2;
+        }
 
         if (tags.length > 0) {
           // score bump for matching tag information
-          score += 2;
+          score += 4;
           var views = arc.findViews(type, {tag: tags[0]});
           views = views.concat(mappable.map(arc => arc.findViews(type, {tag: tags[0]})).reduce((a,b) => a.concat(b), []));
         }
         else
         {
           var views = arc.findViews(type);
-          views = views.concat(mappable.map(arc => arc.findViews(type).reduce((a,b) => a.concat(b), [])));
+          views = views.concat(mappable.map(arc => arc.findViews(type)).reduce((a,b) => a.concat(b), []));
         }
+
+        if (views.length == 0)
+          return;
 
         var responses = views.map(newView =>
           ((recipe, clonedObject) => {
-            var tscore = 0;
-            if (contextIsViewConnection) {
-              view = recipe.newView();
-              clonedObject.connectToView(view);
-              tscore += 1;
-            } else {
-              view = clonedObject;
-            }
             for (var existingView of recipe.views)
               if (existingView.id == newView.id)
-                tscore -= 1;
-            if (view.mapToView == undefined)
-              console.log(view);
-            view.mapToView(newView);
+                return 0;
+            var tscore = 0;
+            if (contextIsViewConnection) {
+              var clonedView = recipe.newView();
+              clonedObject.connectToView(clonedView);
+            } else {
+              var clonedView = clonedObject;
+            }
+            assert(newView.id);
+            clonedView.mapToView(newView);
             return score + tscore;
           }));
 
