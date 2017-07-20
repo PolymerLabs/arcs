@@ -16,7 +16,7 @@ class SlotConnection {
     this._name = name;  // name is unique across same Particle's provided slots.
     this._slot = undefined;
     this._particle = particle;  // consumer / provider
-    this._tags = []
+    this._tags = [];
     this._viewConnections = [];
     this._direction = direction;
     this._formFactors = [];
@@ -72,8 +72,7 @@ class SlotConnection {
   }
 
   isResolved() {
-    // TODO: implement
-    return true;
+    return this.slot && this.slot.isResolved();
   }
 
   connectToView(name) {
@@ -101,12 +100,16 @@ class SlotConnection {
 
   toString(nameMap) {
     let result = [];
-    result.push(this.direction == "provide" ? "provides" : "consumes");
+    result.push(this.direction == "provide" ? "provide" : "consume");
     result.push(this.name);
+    if (this.viewConnections.length > 0) {
+      result.push(`(${this.viewConnections.map(v => v.name || v.tags).join(",")})`);
+    } else if (this.tags.length > 0) {
+      result.push(`(${[...this.tags]})`);
+    }
     if (this.slot) {
       result.push(`as ${(nameMap && nameMap.get(this.slot)) || this.slot.localName}`);
     }
-    result.push(...this.tags);
     result.push(...this.formFactors);
     return result.join(' ');
   }

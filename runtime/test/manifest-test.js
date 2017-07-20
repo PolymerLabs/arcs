@@ -280,34 +280,39 @@ describe('manifest', function() {
   it('can parse a manifest containing a recipe with slots', async () => {
     let manifest = await Manifest.parse(`
       recipe SomeRecipe
-        map #someView as myView
-        renders myView as slot0
-        renders as slot1
-        renders #someView as slot2
+        map #someView1 as myView
         SomeParticle
           someParam -> myView
-          consume mySlot as slot0
-          consume myOtherSlot
-          provide otherSlot as slot1
-          provide oneMoreSlot as slot2`);
+          consume mySlot
+          provide otherSlot (someParam) as slot0
+          provide oneMoreSlot (#someView) as slot1
+        OtherParticle
+          aParam -> myView
+          consume aSlot as slot1
+          consume bSlot as slot0
+          `);
     let recipe = manifest.recipes[0];
     assert(recipe);
-    assert.equal(recipe.particles.length, 1);
+    assert.equal(recipe.particles.length, 2);
     assert.equal(recipe.views.length, 1);
-    assert.equal(recipe.viewConnections.length, 1);
-    assert.equal(recipe.slots.length, 3);
-    assert.equal(recipe.slotConnections.length, 4);
-    assert.equal(recipe.particles[0].consumedSlots.length, 2);
-    assert.equal(recipe.particles[0].consumedSlots[0].slot.localName, "slot0");
-    assert.equal(recipe.particles[0].consumedSlots[0].viewConnections.length, 1);
-    assert.equal(recipe.particles[0].consumedSlots[0].viewConnections[0].name, "someParam");
-    assert.isUndefined(recipe.particles[0].consumedSlots[1].slot);
-    assert.equal(recipe.particles[0].consumedSlots[1].viewConnections.length, 0);
+    assert.equal(recipe.viewConnections.length, 2);
+    assert.equal(recipe.slots.length, 2);
+    assert.equal(recipe.slotConnections.length, 5);
+    assert.equal(recipe.particles[0].consumedSlots.length, 1);
+    assert.equal(recipe.particles[0].consumedSlots[0].viewConnections.length, 0);
     assert.equal(recipe.particles[0].providedSlots.length, 2);
-    assert.equal(recipe.particles[0].providedSlots[0].slot.localName, "slot1");
-    assert.equal(recipe.particles[0].providedSlots[0].viewConnections.length, 0);
-    assert.equal(recipe.particles[0].providedSlots[1].slot.localName, "slot2");
-    assert.equal(recipe.particles[0].providedSlots[1].viewConnections.length, 1);
-    assert.equal(recipe.particles[0].providedSlots[1].viewConnections[0].name, "someParam");
+    assert.equal(recipe.particles[0].providedSlots[0].slot.localName, "slot0");
+    assert.equal(recipe.particles[0].providedSlots[1].slot.localName, "slot1");
+    assert.equal(recipe.particles[0].providedSlots[0].viewConnections.length, 1);
+    assert.equal(recipe.particles[0].providedSlots[0].viewConnections[0].name, "someParam");
+    assert.equal(recipe.particles[0].providedSlots[0].tags.length, 0);
+    assert.equal(recipe.particles[0].providedSlots[1].viewConnections.length, 0);
+    assert.equal(recipe.particles[0].providedSlots[1].tags, "#someView");
+    assert.equal(recipe.particles[1].consumedSlots.length, 2);
+    assert.equal(recipe.particles[1].consumedSlots[0].slot.localName, "slot1");
+    assert.equal(recipe.particles[1].consumedSlots[0].viewConnections.length, 0);
+    assert.equal(recipe.particles[1].consumedSlots[1].slot.localName, "slot0");
+    assert.equal(recipe.particles[1].consumedSlots[1].viewConnections.length, 0);
+    assert.equal(recipe.particles[1].providedSlots.length, 0);
   });
 });
