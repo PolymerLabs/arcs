@@ -64,7 +64,20 @@ class Recipe {
   }
 
   _isValid() {
-    return this._views.every(view => view._isValid())
+    let hasDuplicateView = () => {
+      let seenViews = new Set();
+      return this._views.find(view => {
+        if (view.id) {
+          if (seenViews.has(view.id)) {
+            return true;
+          }
+          seenViews.add(view.id);
+        }
+        return false;
+      });
+    }
+
+    return !hasDuplicateView() && this._views.every(view => view._isValid())
         && this._particles.every(particle => particle._isValid())
         && this._slots.every(slot => slot._isValid())
         && this.viewConnections.every(connection => connection._isValid())
