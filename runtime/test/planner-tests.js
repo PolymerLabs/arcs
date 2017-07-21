@@ -136,8 +136,10 @@ describe('ConvertConstraintsToConnections', async() => {
     assert(results.length == 1);
     let { result, score } = results[0];
     assert.deepEqual(result.toString(),
+    // TODO: Two views seems wrong.
 `recipe
   map as view0
+  map as view1
   A as particle0
     b = view0
   C as particle1
@@ -158,12 +160,12 @@ describe('ConvertConstraintsToConnections', async() => {
     let { results } = await cctc.generate(strategizer);
     assert(results.length == 1);
     let { result, score } = results[0];
-    assert.deepEqual(result.toString(),
-`recipe
+    assert.deepEqual(`recipe
   map as view0
   A as particle0
     b = view0
   C as particle1
-    d = view0`);
+    d = view0`,
+result.toString());
   });
 });

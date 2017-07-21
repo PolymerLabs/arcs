@@ -168,6 +168,16 @@ class Recipe {
         seenViews.add(connection.view);
       }
     }
+
+    let orphanedViews = this._views.filter(view => !seenViews.has(view));
+    orphanedViews.sort(util.compareComparables);
+    views.push(...orphanedViews);
+
+    let orphanedParticles = this._particles.filter(particle => !seenParticles.has(particle));
+    orphanedParticles.sort(util.compareComparables);
+    particles.push(...orphanedParticles);
+
+    // TODO: redo slots as above.
     let seenSlots = new Set();
     let slots = [];
     for (let slotConnection of slotConnections) {
