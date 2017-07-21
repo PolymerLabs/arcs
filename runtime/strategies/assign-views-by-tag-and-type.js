@@ -13,27 +13,19 @@ let ViewMapperBase = require('./view-mapper-base.js');
 
 let assert = require('assert');
 
-class AssignRemoteViews extends ViewMapperBase {
-  constructor(arc, loader, context) {
+class AssignViewsByTagAndType extends ViewMapperBase {
+  constructor(arc) {
     super();
-    this.mappable = [];
-    var Person = loader.loadEntity("Person");
-    var peopleViews = arc.findViews(Person.type.viewOf());
-    // TODO: do this properly
-    var people = peopleViews.map(view => view.toList()).reduce((a,b) => a.concat(b), [])
-      .map(a => a.rawData.name);
-    people.forEach(person => {
-      this.mappable = this.mappable.concat(context[person]);
-    });
+    this.arc = arc;
   }
 
   getMappableViews(type, tags) {
     if (tags.length > 0) {
-      return this.mappable.map(arc => arc.findViews(type, {tag: tags[0]})).reduce((a,b) => a.concat(b), []);
+      return this.arc.findViews(type, {tag: tags[0]});
     } else {
-      return this.mappable.map(arc => arc.findViews(type)).reduce((a,b) => a.concat(b), []);
+      return this.arc.findViews(type);
     }
   }
 }
 
-module.exports = AssignRemoteViews;
+module.exports = AssignViewsByTagAndType;
