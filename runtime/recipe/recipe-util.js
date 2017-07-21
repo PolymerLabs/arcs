@@ -141,6 +141,19 @@ class RecipeUtil {
       return match;
     });
   }
+
+  static directionCounts(view) {
+    var counts = {'in': 0, 'out': 0, 'inout': 0, 'unknown': 0}
+    for (var connection of view.connections) {
+      var direction = connection.direction;
+      if (counts[direction] == undefined)
+        direction = 'unknown';
+      counts[direction]++;
+    }
+    counts.in += counts.inout;
+    counts.out += counts.inout;
+    return counts;
+  }
 }
 
 module.exports = RecipeUtil;
