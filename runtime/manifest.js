@@ -21,6 +21,7 @@ class Manifest {
     this._imports = [];
     this._particles = {};
     this._schemas = {};
+    this._fileName = null;
   }
   get recipes() {
     return this._recipes;
@@ -33,6 +34,9 @@ class Manifest {
   }
   get schemas() {
     return this._schemas;
+  }
+  get fileName() {
+    return this._fileName;
   }
   findSchemaByName(name) {
     let schema = this._schemas[name];
@@ -47,32 +51,35 @@ class Manifest {
     }
     return schema;
   }
-  static async load(path, loader, registry) {
-    if (registry && registry[path]) {
-      return registry[path];
+  static async load(fileName, loader, registry) {
+    if (registry && registry[fileName]) {
+      return registry[fileName];
     }
-    let content = await loader.loadFile(path);
-    let manifest = await Manifest.parse(content, {loader, registry, position: {line: 1, column: 0}});
+    let content = await loader.loadFile(fileName);
+    let manifest = await Manifest.parse(content, {fileName, loader, registry, position: {line: 1, column: 0}});
     if (manifest && registry) {
-      registry[path] = manifest;
+      registry[fileName] = manifest;
     }
     return manifest;
   }
   static async parse(content, options) {
     options = options || {};
-    let {path, position, loader, registry} = options;
+    let {fileName, position, loader, registry} = options;
     registry = registry || {};
     position = position || {line: 1, column: 0};
 
     let items = parser.parse(content);
     let manifest = new Manifest();
+    manifest._fileName = fileName;
     // TODO: This should be written to process in dependency order.
     // 1. imports
-    // 2. TODO: schemas
+    // 2. schemas
     // 3. particles, TODO: entities => views
     // 4. recipes
     for (let item of items.filter(item => item.kind == 'import')) {
-      manifest._imports.push(await Manifest.load(item.path, loader, registry));
+      let path = loader.path(manifest.fileName);
+      let target = loader.join(path, item.path);
+      manifest._imports.push(await Manifest.load(target, loader, registry));
     }
     for (let item of items.filter(item => item.kind == 'schema')) {
       this._processSchema(manifest, item);

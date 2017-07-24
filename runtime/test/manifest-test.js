@@ -179,19 +179,37 @@ describe('manifest', function() {
   });
   it('can load a manifest via a loader', async () => {
     let registry = {};
-    let loader = {loadFile() { return 'recipe'; }};
+    let loader = {
+      loadFile() {
+        return 'recipe';
+      },
+      path(fileName) {
+        return fileName;
+      },
+      join(path, file) {
+        return `${path}/${file}`;
+      },
+    };
     let manifest = await Manifest.load('some-path', loader, registry);
     assert(manifest.recipes[0]);
     assert.equal(manifest, registry['some-path']);
   })
   it('can load a manifest with imports', async () => {
     let registry = {};
-    let loader = {loadFile(path) {
-      return {
-        a: `import 'b'`,
-        b: `recipe`,
-      }[path];
-    }}
+    let loader = {
+      loadFile(path) {
+        return {
+          a: `import 'b'`,
+          b: `recipe`,
+        }[path];
+      },
+      path(fileName) {
+        return fileName;
+      },
+      join(_, file) {
+        return file;
+      },
+    }
     let manifest = await Manifest.load('a', loader, registry);
     assert.equal(registry.a, manifest);
     assert.equal(manifest.imports[0], registry.b);
@@ -210,7 +228,13 @@ describe('manifest', function() {
               particle ParticleB in 'b.js'
                 ParticleB(in Thing)`
         }[path];
-      }
+      },
+      path(fileName) {
+        return fileName;
+      },
+      join(_, file) {
+        return file;
+      },
     };
     let manifest = await Manifest.load('a', loader, registry);
     assert.equal(manifest.recipes[0].particles[0].spec, registry.b.particles.ParticleB);
@@ -228,9 +252,34 @@ describe('manifest', function() {
                 normative
                   Text value`
         }[path];
-      }
+      },
+      path(fileName) {
+        return fileName;
+      },
+      join(_, file) {
+        return file;
+      },
     };
     let manifest = await Manifest.load('a', loader, registry);
     assert.equal(manifest.schemas.Bar.normative.value, 'Text');
   });
+  it('relies on the loader to combine paths', async () => {
+    let registry = {};
+    let loader = {
+      loadFile(path) {
+        return {
+          'somewhere/a': `import 'path/b'`,
+          'somewhere/a path/b': `recipe`,
+        }[path];
+      },
+      path(fileName) {
+        return fileName;
+      },
+      join(path, file) {
+        return `${path} ${file}`;
+      },
+    };
+    let manifest = await Manifest.load('somewhere/a', loader, registry);
+    assert(registry['somewhere/a path/b']);
+  })
 });
