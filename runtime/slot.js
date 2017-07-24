@@ -21,11 +21,11 @@ class Slot {
     // A map of pending slot requests, mapping {resolve, reject} tuple by requesting particle name.
     this._pendingRequests = new Map();
   }
-  get slotid() { 
-    return this._slotid; 
+  get slotid() {
+    return this._slotid;
   }
-  get particleSpec() { 
-    return this._particleSpec; 
+  get particleSpec() {
+    return this._particleSpec;
   }
   associateWithParticle(particleSpec) {
     assert(!this._particleSpec, "Particle spec already set, cannot associate slot");
@@ -44,14 +44,14 @@ class Slot {
     return !!this._particleSpec;
   }
   addPendingRequest(particleSpec, resolve, reject) {
-    if (!this._pendingRequests.has(particleSpec.particle.name)) {
-      this._pendingRequests.set(particleSpec.particle.name, {resolve, reject});
+    if (!this._pendingRequests.has(particleSpec.spec.name)) {
+      this._pendingRequests.set(particleSpec.spec.name, {resolve, reject});
     }
   }
   removePendingRequest(particleSpec) {
-    let particleName = particleSpec.particle.name;
+    let particleName = particleSpec.spec.name;
     assert(this._pendingRequests.has(particleName),
-      `Cannot remove pending request from particle ${particleSpec.particle.name} for slot ${this.slotid}`);
+      `Cannot remove pending request from particle ${particleSpec.spec.name} for slot ${this.slotid}`);
     this._pendingRequests.get(particleName).reject();
     this._pendingRequests.delete(particleName);
   }

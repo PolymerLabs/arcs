@@ -55,22 +55,22 @@ class MockSlotComposer {
   }
 
   renderSlot(particleSpec, content) {
-    log(`renderSlot: ${particleSpec.particle.name}`, content && content.template ? 'TEMPLATE' : 'MODEL');
+    log(`renderSlot: ${particleSpec.spec.name}`, content && content.template ? 'TEMPLATE' : 'MODEL');
     var expectation = this.expectQueue.shift();
     assert(expectation, "Got a render but not expecting anything further.");
     assert.equal('render', expectation.type, `expecting a render, not ${expectation.type}`);
-    assert.equal(particleSpec.particle.spec.name, expectation.name,
-        `expecting a render from ${expectation.name}, not ${particleSpec.particle.spec.name}`);
+    assert.equal(particleSpec.spec.name, expectation.name,
+        `expecting a render from ${expectation.name}, not ${particleSpec.spec.name}`);
     this.expectationMet(expectation);
   }
 
   registerSlot(particleSpec, slotId) {
-    log(`registerSlot: ${particleSpec.particle.name}:${slotId}`);
+    log(`registerSlot: ${particleSpec.spec.name}:${slotId}`);
     var expectation = this.expectQueue.shift();
-    assert(expectation, `Got a getSlot '${slotId}' from '${particleSpec.particle.spec.name}' but not expecting anything further`);
+    assert(expectation, `Got a getSlot '${slotId}' from '${particleSpec.spec.name}' but not expecting anything further`);
     assert.equal('getSlot', expectation.type, `expecting a ${expectation.type}, not a getSlot`);
-    assert.equal(particleSpec.particle.spec.name, expectation.name,
-        `expecting a getSlot from ${expectation.name}, not ${particleSpec.particle.spec.name}`);
+    assert.equal(particleSpec.spec.name, expectation.name,
+        `expecting a getSlot from ${expectation.name}, not ${particleSpec.spec.name}`);
     assert.equal(slotId, expectation.slotId,
         `expecting slotId ${expectation.slotId}, not ${slotId}`);
     this.specs.set(slotId, particleSpec);
@@ -81,7 +81,7 @@ class MockSlotComposer {
 
   releaseSlot(particleSpec) {
     // TODO(sjmiles): do something?
-    log(`releaseSlot:`, particleSpec.particle.name);
+    log(`releaseSlot:`, particleSpec.spec.name);
     var expectation = this.expectQueue.shift();
     assert(expectation, `Got a releaseSlot from '${particleSpec.particle.spec.name}' but not expecting anything further`);
     assert.equal('releaseSlot', expectation.type, `expecting a ${expectation.type}, not a releaseSlot`);

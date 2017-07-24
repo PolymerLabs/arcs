@@ -52,10 +52,10 @@ class ResolveParticleByName extends Strategy {
     var results = Recipe.over(strategizer.generated, new class extends RecipeWalker {
       onParticle(recipe, particle) {
         if (particle.spec == undefined) {
-          var impl = loader.loadParticle(particle.name, true);
-          if (impl == undefined)
+          var spec = loader.loadParticleSpec(particle.name, true);
+          if (spec == undefined)
             return;
-          return (recipe, particle) => {particle.spec = impl.spec; return 1};
+          return (recipe, particle) => {particle.spec = spec; return 1};
         }
       }
     }(RecipeWalker.Permuted), this);

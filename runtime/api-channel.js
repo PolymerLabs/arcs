@@ -193,7 +193,7 @@ class PECOuterPort extends APIPort {
       {particleDefinition: this.Direct, particleFunction: this.Stringify});
     this.registerRedundantInitializer("DefineView", {viewType: this.Direct, name: this.Direct})
     this.registerInitializer("InstantiateParticle",
-      {particleName: this.Direct, views: this.Map(this.Direct, this.Mapped)});
+      {spec: this.Direct, views: this.Map(this.Direct, this.Mapped)});
 
     this.registerCall("UIEvent", {particle: this.Mapped, event: this.Direct});
     this.registerCall("ViewCallback", {callback: this.Direct, data: this.Direct});
@@ -223,7 +223,7 @@ class PECInnerPort extends APIPort {
       {particleDefinition: this.Direct, particleFunction: this.Direct});
     this.registerInitializerHandler("DefineView", {viewType: this.Direct, name: this.Direct});
     this.registerInitializerHandler("InstantiateParticle",
-      {particleName: this.Direct, views: this.Map(this.Direct, this.Mapped)});
+      {spec: this.Direct, views: this.Map(this.Direct, this.Mapped)});
 
     this.registerHandler("UIEvent", {particle: this.Mapped, event: this.Direct});
     this.registerHandler("ViewCallback", {callback: this.LocalMapped, data: this.Direct});

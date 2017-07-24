@@ -38,7 +38,7 @@ class SlotComposer {
   }
   // TODO(sjmiles): this is a _request_ for a slot, it's mapped to `GetSlot` message
   registerSlot(particleSpec, slotid) {
-    log(`registerSlot("${particleSpec.particle.name}", "${slotid}")`);
+    log(`registerSlot("${particleSpec.spec.name}", "${slotid}")`);
     return new Promise((resolve, reject) => {
       try {
         let slot = this._getOrCreateSlot(slotid);

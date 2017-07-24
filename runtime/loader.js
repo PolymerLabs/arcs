@@ -67,17 +67,18 @@ class Loader {
     return new ParticleSpec(parser.parse(data));
   }
 
-  // TODO: onlyRegisteredScript is a hack for inline particles. remove it.
-  loadParticle(name, onlyRegisteredScript) {
-    let particleClass = this._particlesByName[name];
+  loadParticleClass(spec) {
+    let particleClass = this._particlesByName[spec.name];
     if (particleClass) {
       return particleClass;
     }
 
-    let clazz = onlyRegisteredScript ? {name} : this.requireParticle(name);
-    clazz.spec = this.loadParticleSpec(name);
-    this._particlesByName[name] = clazz;
+    let clazz = this.requireParticle(spec.name);
+    assert(spec.resolve, JSON.stringify(spec));
+    clazz.spec = spec;
+    this._particlesByName[spec.name] = clazz;
     return clazz;
+
   }
 
   requireParticle(name) {

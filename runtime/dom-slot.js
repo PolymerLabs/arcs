@@ -66,7 +66,7 @@ class DomSlot extends Slot {
       this.dom.innerHTML = content;
     } else {
       // content is multiplexed
-      let templateName = `${this.particleSpec.particle.name}${content.name || 'main'}`;
+      let templateName = `${this.particleSpec.spec.name}${content.name || 'main'}`;
       if (content.template) {
         templates[templateName] = Object.assign(document.createElement('template'), {
           innerHTML: content.template

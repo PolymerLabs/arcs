@@ -92,32 +92,33 @@ class OuterPEC extends PEC {
     this._apiPort.UIEvent({particle, event})
   }
 
-  instantiate(particle, views, lastSeenVersion) {
+  instantiate(spec, views, lastSeenVersion) {
     views.forEach(view => {
       var version = lastSeenVersion.get(view.id) || 0;
       this._apiPort.DefineView(view, { viewType: view.type.toLiteral(), name: view.name,
                                        version });
     });
 
-    if (particle._isInline) {
+    // TODO: Can we just always define the particle and map a handle for use in later
+    //       calls to InstantiateParticle?
+    if (spec._model._isInline) {
       this._apiPort.DefineParticle({
-        particleDefinition: particle._inlineDefinition,
-        particleFunction: particle._inlineUpdateFunction
+        particleDefinition: spec._model._inlineDefinition,
+        particleFunction: spec._model._inlineUpdateFunction
       });
     }
 
     var renderMap = new Map();
-    particle.spec.renders.forEach(
+    spec.renders.forEach(
       render => renderMap.set(render.name.name, views.get(render.name.view)));
 
     var exposeMap = new Map();
-    particle.spec.exposes.forEach(
+    spec.exposes.forEach(
       expose => exposeMap.set(expose.name, views.get(expose.view)));
-    
-    var particleSpec = {particle, views, renderMap, exposeMap };
 
-    this._apiPort.InstantiateParticle(particleSpec, { particleName: particle.name, views });
-
+    // TODO: rename this concept to something like instantiatedParticle, handle or registration.
+    var particleSpec = {spec, views, renderMap, exposeMap};
+    this._apiPort.InstantiateParticle(particleSpec, {spec: spec._model, views});
     return particleSpec;
   }
 
