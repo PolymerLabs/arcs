@@ -15,6 +15,7 @@ const define = require('./particle.js').define;
 const assert = require('assert');
 const typeLiteral = require('./type-literal.js');
 const PECInnerPort = require('./api-channel.js').PECInnerPort;
+const ParticleSpec = require('./particle-spec.js');
 
 class RemoteView {
   constructor(id, type, port, pec, name, version) {
@@ -88,7 +89,7 @@ class InnerPEC {
     };
 
     this._apiPort.onInstantiateParticle =
-      ({particleName, views}) => this._instantiateParticle(particleName, views);
+      ({spec, views}) => this._instantiateParticle(spec, views);
 
     this._apiPort.onViewCallback = ({callback, data}) => callback(data);
 
@@ -104,8 +105,10 @@ class InnerPEC {
     return `${this._idBase}:${this._nextLocalID++}`;
   }
 
-  _instantiateParticle(name, views) {
-    let clazz = this._loader.loadParticle(name);
+  _instantiateParticle(spec, views) {
+    spec = new ParticleSpec(spec);
+    let name = spec.name;
+    let clazz = this._loader.loadParticleClass(spec);
     let particle = new clazz();
     this._particles.push(particle);
 

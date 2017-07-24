@@ -37,23 +37,23 @@ class ConnectionSpec {
 }
 
 class ParticleSpec {
-  constructor(rawData) {
-    this.rawData = rawData;
-    this.name = rawData.name;
+  constructor(model) {
+    this._model = model;
+    this.name = model.name;
     var typeVarMap = new Map();
-    this.connections = this.rawData.args.map(a => new ConnectionSpec(a, typeVarMap));
+    this.connections = model.args.map(a => new ConnectionSpec(a, typeVarMap));
     this.connectionMap = new Map();
     this.connections.forEach(a => this.connectionMap.set(a.name, a));
     this.inputs = this.connections.filter(a => a.isInput);
     this.outputs = this.connections.filter(a => a.isOutput);
-    this.exposes = rawData.exposes;
-    this.renders = rawData.renders;
-    this.transient = rawData.transient;
-    this.description = rawData.description;
+    this.exposes = model.exposes;
+    this.renders = model.renders;
+    this.transient = model.transient;
+    this.description = model.description;
   }
 
   resolve() {
-    let result = new ParticleSpec(this.rawData);
+    let result = new ParticleSpec(this._model);
     // FIXME: do we need this now?
     return result;
   }

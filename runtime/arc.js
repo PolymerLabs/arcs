@@ -26,7 +26,7 @@ class Arc {
     this._pecFactory = pecFactory ||  require('./fake-pec-factory').bind(null);
     this.id = id;
     this.nextLocalID = 0;
-    this.particles = [];
+    this._particles = [];
 
     // All the views, mapped by view ID
     this._viewsById = new Map();
@@ -36,6 +36,8 @@ class Arc {
     // information about last-seen-versions of views
     this._lastSeenVersion = new Map();
 
+    // TODO: remove this. with new recipes we should be able to
+    //       instantiate a particle together with all its views.
     this.particleViewMaps = new Map();
     let pecId = this.generateID();
     let innerPecPort = this._pecFactory(pecId);
@@ -85,13 +87,14 @@ class Arc {
   }
 
   instantiateParticle(name) {
-    let particleClass = this._loader.loadParticle(name, true);
-    assert(particleClass, `can't find particle ${name}`);
+    let spec = this._loader.loadParticleSpec(name);
+    assert(spec, `can't find particle ${name}`);
     var handle = this.nextParticleHandle++;
-    this.particleViewMaps.set(handle, {clazz: particleClass, views: new Map()});
+    this.particleViewMaps.set(handle, {spec, views: new Map()});
     return handle;
   }
 
+  // TODO: What is this even for?
   particleSpec(name) {
     return this._loader.loadParticleSpec(name);
   }
@@ -111,22 +114,22 @@ class Arc {
     this._views.forEach(v => viewMap.set(v, v.clone()));
     this.particleViewMaps.forEach((value, key) => {
       arc.particleViewMaps.set(key, {
-        clazz: arc._loader.loadParticle(value.clazz.name),
+        spec: value.spec,
         views: new Map()
       });
       value.views.forEach(v => arc.particleViewMaps.get(key).views.set(v.name, v.clone()));
     });
-    this.particles.forEach(p => {
+    this._particles.forEach(p => {
       let cloneParticleSpec = {
         exposeMap: new Map(),
-        particle: this._loader.loadParticle(p.particle.name),
+        spec: p.spec,
         renderMap: new Map(),
         views: new Map()
       };
       p.exposeMap.forEach((view, slotid) => cloneParticleSpec.exposeMap.set(slotid, view ? view.clone() : view));
       p.renderMap.forEach((view, slotid) => cloneParticleSpec.renderMap.set(slotid, view ? view.clone() : view));
       p.views.forEach(v => cloneParticleSpec.views.set(v.name, v.clone()));
-      arc.particles.push(cloneParticleSpec);
+      arc._particles.push(cloneParticleSpec);
     });
     for (let v of viewMap.values())
       arc.registerView(v);
@@ -155,9 +158,9 @@ class Arc {
 
     // 3. serialize particles
     for (var particle of this.particleViewMaps.values()) {
-      if (particle.clazz.spec.transient)
+      if (particle.spec.transient)
         continue;
-      var name = particle.clazz.name;
+      var name = particle.spec.name;
       var serializedParticle = { name, views: {}};
       for (let [key, value] of particle.views) {
         serializedParticle.views[key] = value.id;
@@ -167,6 +170,7 @@ class Arc {
     return s;
   }
 
+  // TODO: remove this, not needed for new recipe instantiation
   connectParticleToView(particleHandle, name, targetView) {
     // If speculatively executing then we need to translate the view
     // in the plan to its clone.
@@ -176,11 +180,11 @@ class Arc {
     assert(targetView, "no target view provided");
     assert(this._viewsById.has(targetView.id), "view of type " + targetView.type.key + " not visible to arc");
     var viewMap = this.particleViewMaps.get(particleHandle);
-    assert(viewMap.clazz.spec.connectionMap.get(name) !== undefined, "can't connect view to a view slot that doesn't exist");
+    assert(viewMap.spec.connectionMap.get(name) !== undefined, "can't connect view to a view slot that doesn't exist");
     viewMap.views.set(name, targetView);
-    if (viewMap.views.size == viewMap.clazz.spec.connectionMap.size) {
-      var particleSpec = this.pec.instantiate(viewMap.clazz, viewMap.views, this._lastSeenVersion);
-      this.particles.push(particleSpec);
+    if (viewMap.views.size == viewMap.spec.connectionMap.size) {
+      var particleSpec = this.pec.instantiate(viewMap.spec, viewMap.views, this._lastSeenVersion);
+      this._particles.push(particleSpec);
     }
   }
 
@@ -234,13 +238,6 @@ class Arc {
       views = views.filter(view => this.tagsForView(view).has(options.tag));
     }
     return views;
-  }
-
-  findViewByName(particleName, name) {
-    for (var particle of this.particleViewMaps.values()) {
-      if (particle.clazz.name == particleName)
-        return particle.views.get(name);
-    }
   }
 
   viewById(id) {

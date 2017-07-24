@@ -258,25 +258,6 @@ describe('manifest', function() {
     let manifest = await Manifest.load('a', loader, registry);
     assert.equal(manifest.schemas.Bar.normative.value, 'Text');
   });
-  it('relies on the loader to combine paths', async () => {
-    let registry = {};
-    let loader = {
-      loadFile(path) {
-        return {
-          'somewhere/a': `import 'path/b'`,
-          'somewhere/a path/b': `recipe`,
-        }[path];
-      },
-      path(fileName) {
-        return fileName;
-      },
-      join(path, file) {
-        return `${path} ${file}`;
-      },
-    };
-    let manifest = await Manifest.load('somewhere/a', loader, registry);
-    assert(registry['somewhere/a path/b']);
-  });
   it('can parse a manifest containing a recipe with slots', async () => {
     let manifest = await Manifest.parse(`
       recipe SomeRecipe
@@ -315,4 +296,23 @@ describe('manifest', function() {
     assert.equal(recipe.particles[1].consumedSlots[1].viewConnections.length, 0);
     assert.equal(recipe.particles[1].providedSlots.length, 0);
   });
+  it('relies on the loader to combine paths', async () => {
+    let registry = {};
+    let loader = {
+      loadFile(path) {
+        return {
+          'somewhere/a': `import 'path/b'`,
+          'somewhere/a path/b': `recipe`,
+        }[path];
+      },
+      path(fileName) {
+        return fileName;
+      },
+      join(path, file) {
+        return `${path} ${file}`;
+      },
+    };
+    let manifest = await Manifest.load('somewhere/a', loader, registry);
+    assert(registry['somewhere/a path/b']);
+  })
 });

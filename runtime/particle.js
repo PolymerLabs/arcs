@@ -51,9 +51,10 @@ function define(def, update) {
   Object.defineProperty(clazz, 'name', {
     value: spec.name,
   });
-  clazz._isInline = true;
-  clazz._inlineDefinition = def;
-  clazz._inlineUpdateFunction = update;
+  // TODO: Super hacks.
+  clazz.spec._model._isInline = true;
+  clazz.spec._model._inlineDefinition = def;
+  clazz.spec._model._inlineUpdateFunction = String(update);
   return clazz;
 }
 

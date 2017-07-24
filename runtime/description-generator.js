@@ -35,9 +35,10 @@ class DescriptionGenerator {
       return description.replace(/\([a-zA-Z:, ]*\)/ig, '');
   }
   setViewDescriptions(arc) {
+    // TODO: This should iterate arc.particles instead.
     arc.particleViewMaps.forEach((value, key) => {
       value.views.forEach((view, connectionName) => {
-        let description = this.getViewShortDescription(value.clazz.name, connectionName);
+        let description = this.getViewShortDescription(value.spec.name, connectionName);
         if (description)
           view.description = description;
       });
