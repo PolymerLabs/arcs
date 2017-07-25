@@ -79,7 +79,11 @@ let locateNodes = function(root, locator, map) {
     let loc = locator[n];
     if (loc) {
       let node = root.childNodes[n];
-      map[loc.key] = node;
+      if (node.nodeType == Node.TEXT_NODE && node.parentElement) {
+        map[loc.key] = node.parentElement;
+      } else {
+        map[loc.key] = node;
+      }
       if (loc.sub) {
         // recurse
         locateNodes(node, loc.sub, map);
@@ -213,12 +217,7 @@ let _set = function(node, property, value) {
       node.setAttribute(n, value);
     }
   } else if (property === 'textContent') {
-    if (node.nodeType === Node.TEXT_NODE) {
-      node = node.parentElement;
-    }
-    if (node) {
-      node.innerHTML = (value || '');
-    }
+    node.innerHTML = (value || '');
   } else {
     node[property] = (property === 'textContent') ? (value || '') : value;
   }
