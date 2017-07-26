@@ -20,6 +20,7 @@ class DescriptionGenerator {
     this.recipe = recipe;  // this is a Plan (aka resolved Recipe)
     this.relevance = relevance;
     this._descriptionByParticle = new Map();
+    this._seenViews = new Set();
     this._description = this._generateParticleDescriptions(/* includeAll= */ false);
   }
   get description() {
@@ -32,7 +33,7 @@ class DescriptionGenerator {
   getViewShortDescription(particleName, connectionName) {
     let description = this.getViewDescription(particleName, connectionName);
     if (description)
-      return description.replace(/\([a-zA-Z:, ]*\)/ig, '');
+      return description.replace(/ \([a-zA-Z0-9:, <>\/]*\)/ig, '');
   }
   setViewDescriptions(arc) {
     arc.particleViewMaps.forEach((value, key) => {
@@ -79,6 +80,7 @@ class DescriptionGenerator {
     });
     // Generate descriptions for particles and select ones for the significant ones for displayed suggestion.
     let selectedDescriptions = [];
+    this._seenViews.clear();
     this.recipe.components.forEach(component => {
       let particleSpec = this.recipe.arc.particleSpec(component.particleName);
       if (particleSpec.description && particleSpec.description.pattern) {
@@ -86,11 +88,15 @@ class DescriptionGenerator {
         if (description) {
           this._descriptionByParticle.get(component.particleName).set("description", description);
           let particleSpec = this.recipe.arc.particleSpec(component.particleName);
-          // Add description of particle that renders to "root" as the first element
-          if (particleSpec.renders.reduce((prev, r) => { return r.name.name == "root" || prev; }, false))
-            selectedDescriptions.unshift(description);
-          else if (particleSpec.renders.length > 0 || includeAll)
-            selectedDescriptions.push(description);
+          if (particleSpec.renders.length > 0 || includeAll) {
+            // Add description of particle that renders to "root" as the first element
+            if (particleSpec.renders.reduce((prev, r) => { return r.name.name == "root" || prev; }, false)) {
+              selectedDescriptions.unshift(description);
+            } else {
+              selectedDescriptions.push(description);
+            }
+            component.connections.forEach(conn => this._seenViews.add(conn.view.id));
+          }
         }
       }
     });
@@ -139,8 +145,11 @@ class DescriptionGenerator {
       }
     }
     if (resultDescription) {
-      if (viewDescription.value && resultDescription.indexOf(viewDescription.value) < 0)
+      if (viewDescription.value &&
+          resultDescription.indexOf(viewDescription.value) < 0 &&
+          !this._seenViews.has(connection.view.id)) {
         return `${resultDescription} (${viewDescription.value})`;
+      }
       return resultDescription;
     }
     return viewDescription.value;
