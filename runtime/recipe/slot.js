@@ -58,13 +58,13 @@ class Slot {
       return false;
     }
     if (this.providerConnection) {
-      if (providerConnection.viewConnections.length == 0) {
+      if (this.providerConnection.viewConnections.length == 0) {
         // The providing particle doesn't restrict view generated in this slot.
         return true;
       }
-      for (let provideViewConn of providerConnection.viewConnections) {
+      for (let provideViewConn of this.providerConnection.viewConnections) {
         // The consuming slots must ALL comply with either of the view connections enforced by the providing particle.
-        return this.consumerConnections.every(c => c.particle && Array.from[c.particles.connection.values].find(v => v.id == provideViewConn.id));
+        return this.consumerConnections.every(c => c.particle && Object.values(c.particle.connections).find(v => v.id == provideViewConn.id));
       }
     } else {
       // Note: "root" slot doesn't have a "provide" connection, hence it must have "consume" connections.
