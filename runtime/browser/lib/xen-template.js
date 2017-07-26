@@ -80,6 +80,8 @@ let locateNodes = function(root, locator, map) {
     if (loc) {
       let node = root.childNodes[n];
       if (node.nodeType == Node.TEXT_NODE && node.parentElement) {
+        // TODO(mmandlis): remove this line and the (property === 'textContent') clause
+        // in _set() method, in favor of explicit innerHTML binding.
         map[loc.key] = node.parentElement;
       } else {
         map[loc.key] = node;
