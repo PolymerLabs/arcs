@@ -60,7 +60,7 @@ function define(def, update) {
 
 class Particle {
   constructor() {
-    this.spec = this.constructor.spec.resolve();
+    this.spec = this.constructor.spec;
     if (this.spec.inputs.length == 0)
       this.extraData = true;
     this.relevances = [];
