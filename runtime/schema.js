@@ -11,18 +11,23 @@
 const Entity = require("./entity.js");
 
 class Schema {
-  constructor(parsedSchema, parent) {
-    this.name = parsedSchema.name;
-    this.parent = parent;
+  constructor(model) {
+    this._model = model;
+    this.name = model.name;
+    this.parent = model.parent;
     this._normative = {};
     this._optional = {};
-    for (var section of parsedSchema.sections) {
+    for (var section of model.sections) {
       var into = section.sectionType == 'normative' ? this._normative : this._optional;
       for (var field in section.fields) {
         // TODO normalize field types here?
         into[field] = section.fields[field];
       }
     }
+  }
+
+  get toLiteral() {
+    return this._model;
   }
 
   get normative() {
@@ -35,7 +40,7 @@ class Schema {
     var dict = this.parent ? this.parent.optional : {};
     Object.assign(dict, this._optional);
     return dict;
-  } 
+  }
 
   entityClass() {
     const name = this.name;
@@ -71,7 +76,7 @@ class Schema {
         set: function(v) {
           this.rawData[property] = v;
         }
-      });    
+      });
     }
     return clazz;
   }

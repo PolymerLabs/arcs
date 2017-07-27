@@ -42,11 +42,9 @@ class Loader {
     let data = this.loadFile(schemaLocationFor(name));
     var parsed = schemaParser.parse(data);
     if (parsed.parent) {
-      var parent = this.loadSchema(parsed.parent);
-    } else {
-      var parent = undefined;
+      parsed.parent = this.loadSchema(parsed.parent);
     }
-    return new Schema(parsed, parent);
+    return new Schema(parsed);
   }
 
   loadEntity(name) {
