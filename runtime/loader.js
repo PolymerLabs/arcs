@@ -74,7 +74,6 @@ class Loader {
     }
 
     let clazz = this.requireParticle(spec.name);
-    assert(spec.resolve, JSON.stringify(spec));
     clazz.spec = spec;
     this._particlesByName[spec.name] = clazz;
     return clazz;
