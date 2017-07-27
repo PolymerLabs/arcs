@@ -52,12 +52,6 @@ class ParticleSpec {
     this.description = model.description;
   }
 
-  resolve() {
-    let result = new ParticleSpec(this._model);
-    // FIXME: do we need this now?
-    return result;
-  }
-
   buildRecipe() {
     var builder = new recipe.RecipeBuilder();
     builder.addParticle(this.name);
