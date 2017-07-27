@@ -95,11 +95,12 @@ class Manifest {
   static _processSchema(manifest, schemaItem) {
     let parent;
     if (schemaItem.parent) {
-      parent = manifest.findSchemaByName(schemaItem.parent);
+      let parent = manifest.findSchemaByName(schemaItem.parent);
       // TODO: error handling
       assert(parent);
+      schemaItem.parent = parent;
     }
-    manifest._schemas[schemaItem.name] = new Schema(schemaItem, parent);
+    manifest._schemas[schemaItem.name] = new Schema(schemaItem);
   }
   static _processParticle(manifest, particleItem) {
     let particleSpec = new ParticleSpec(ParticleParser.parse(particleItem.body));
