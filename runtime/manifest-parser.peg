@@ -171,12 +171,13 @@ ConnectionTarget
   { return {tags}; }
 
 RecipeView
-  = "map" ref:(whiteSpace ViewRef)? name:(whiteSpace Name)? eolWhiteSpace
+  = type:("map" / "create") ref:(whiteSpace ViewRef)? name:(whiteSpace Name)? eolWhiteSpace
   {
     return {
       kind: 'view',
       name: optional(name, name => name[1], null),
-      ref: optional(ref, ref => ref[1], {tags: []})
+      ref: optional(ref, ref => ref[1], {tags: []}),
+      create: type === "create" ? true : false
     }
   }
 

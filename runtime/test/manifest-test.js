@@ -23,12 +23,15 @@ describe('manifest', function() {
     let manifest = await Manifest.parse(`
       recipe SomeRecipe
         map #someView
+        create #newView as view0
         SomeParticle
           someParam -> #tag`);
     let recipe = manifest.recipes[0];
     assert(recipe);
     assert.equal(recipe.particles.length, 1);
-    assert.equal(recipe.views.length, 1);
+    assert.equal(recipe.views.length, 2);
+    assert.isFalse(recipe.views[0].create);
+    assert.isTrue(recipe.views[1].create);
     assert.equal(recipe.viewConnections.length, 1);
     assert.sameMembers(recipe.viewConnections[0].tags, ['#tag']);
   });
