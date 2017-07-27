@@ -93,7 +93,6 @@ class Manifest {
     return manifest;
   }
   static _processSchema(manifest, schemaItem) {
-    let parent;
     if (schemaItem.parent) {
       let parent = manifest.findSchemaByName(schemaItem.parent);
       // TODO: error handling
