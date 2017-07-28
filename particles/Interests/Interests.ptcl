@@ -11,3 +11,7 @@
 Interests(in [Product] list)
 
 renders: postamble(list) none-need
+
+Description {
+  pattern: Recommendations based on ${list}
+}

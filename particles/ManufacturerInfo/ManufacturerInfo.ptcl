@@ -12,4 +12,6 @@ ManufacturerInfo(in [Product] list)
 
 renders: annotation3(list) none-need
 
-
+Description {
+  pattern: Check manufacturer information for ${list}
+}
