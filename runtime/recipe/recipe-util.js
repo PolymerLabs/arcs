@@ -6,6 +6,7 @@
 // http://polymer.github.io/PATENTS.txt
 
 let Recipe = require('./recipe.js');
+let assert = require('assert');
 
 class Shape {
   constructor(recipe, particles, views) {
@@ -29,8 +30,10 @@ class RecipeUtil {
     particles.forEach(particle => pMap[particle] = recipe.newParticle(particle));
     views.forEach(view => vMap[view] = recipe.newView());
     Object.keys(map).forEach(key => {
-      let { name, view } = map[key];
-      pMap[key].addConnectionName(name).connectToView(vMap[view]);
+      Object.keys(map[key]).forEach(name => {
+        let view = map[key][name];
+        pMap[key].addConnectionName(name).connectToView(vMap[view]);
+      });
     });
     return new Shape(recipe, pMap, vMap);
   }
@@ -38,7 +41,8 @@ class RecipeUtil {
   static find(recipe, shape) {
 
     function _buildNewVCMatches(recipe, shapeVC, match, outputList) {
-      let {forward, reverse} = match;
+      let {forward, reverse, score} = match;
+      var matchFound = false;
       for (var recipeVC of recipe.viewConnections) {
         // TODO are there situations where multiiple viewConnections should
         // be allowed to point to the same one in the recipe?
@@ -67,46 +71,75 @@ class RecipeUtil {
 
         // shapeVC doesn't necessarily reference a view, but if it does
         // then recipeVC needs to reference the matching view, or one
-        // that isn't yet mapped.
-        if (shapeVC.view) {
-          if (!recipeVC.view)
-            continue;
+        // that isn't yet mapped, or no view yet.
+        if (shapeVC.view && recipeVC.view) {
           if (reverse.has(recipeVC.view)) {
             if (reverse.get(recipeVC.view) != shapeVC.view)
               continue;
-          } else if (forward.has(shapeVC.view)) {
+          } else if (forward.has(shapeVC.view) && forward.get(shapeVC.view) !== null) {
             continue;
           }
         }
 
         // clone forward and reverse mappings and establish new components.
-        var newMatch = {forward: new Map(), reverse: new Map()};
+        var newMatch = {forward: new Map(), reverse: new Map(), score};
         forward.forEach((value, key) => newMatch.forward.set(key, value));
         reverse.forEach((value, key) => newMatch.reverse.set(key, value));
+        assert(!newMatch.forward.has(shapeVC.particle) || newMatch.forward.get(shapeVC.particle) == recipeVC.particle);
         newMatch.forward.set(shapeVC.particle, recipeVC.particle);
         newMatch.reverse.set(recipeVC.particle, shapeVC.particle);
         if (shapeVC.view) {
-          newMatch.forward.set(shapeVC.view, recipeVC.view);
-          newMatch.reverse.set(recipeVC.view, shapeVC.view);
+          if (!recipeVC.view) {
+            if (!newMatch.forward.has(shapeVC.view)) {
+              newMatch.forward.set(shapeVC.view, null);
+            }
+            newMatch.score -= 1;
+          } else {
+            newMatch.forward.set(shapeVC.view, recipeVC.view);
+            newMatch.reverse.set(recipeVC.view, shapeVC.view);
+          }
         }
         newMatch.reverse.set(recipeVC, shapeVC);
         outputList.push(newMatch);
+        matchFound = true;
+      }
+      if (matchFound == false) {
+        var newMatches = [];
+        _buildNewParticleMatches(recipe, shapeVC.particle, match, newMatches);
+        newMatches.forEach(newMatch => {
+          if (shapeVC.view && !newMatch.forward.has(shapeVC.view))
+            newMatch.forward.set(shapeVC.view, null);
+          newMatch.score -= 1;
+          outputList.push(newMatch);
+        });
       }
     }
 
     function _buildNewParticleMatches(recipe, shapeParticle, match, newMatches) {
-      let {forward, reverse} = match;
+      let {forward, reverse, score} = match;
+      var matchFound = false;
       for (var recipeParticle of recipe.particles) {
         if (reverse.has(recipeParticle))
           continue;
 
         if (recipeParticle.name != shapeParticle.name)
           continue;
-        var newMatch = {forward: new Map(), reverse: new Map()};
+        var newMatch = {forward: new Map(), reverse: new Map(), score};
         forward.forEach((value, key) => newMatch.forward.set(key, value));
         reverse.forEach((value, key) => newMatch.reverse.set(key, value));
         newMatch.forward.set(shapeParticle, recipeParticle);
         newMatch.reverse.set(recipeParticle, shapeParticle);
+        newMatches.push(newMatch);
+        matchFound = true;
+      }
+      if (matchFound == false) {
+        var newMatch = {forward: new Map(), reverse: new Map(), score: 0};
+        forward.forEach((value, key) => newMatch.forward.set(key, value));
+        reverse.forEach((value, key) => newMatch.reverse.set(key, value));
+        if (!newMatch.forward.has(shapeParticle)) {
+          newMatch.forward.set(shapeParticle, null);
+          newMatch.score = match.score - 1;
+        }
         newMatches.push(newMatch);
       }
     }
@@ -115,7 +148,7 @@ class RecipeUtil {
     // shape component to recipe component.
     // View connections, particles and views are also stored by a reverse map
     // from recipe component to shape component.
-    var matches = [{forward: new Map(), reverse: new Map()}];
+    var matches = [{forward: new Map(), reverse: new Map(), score: 0}];
     for (var shapeVC of shape.recipe.viewConnections) {
       var newMatches = [];
       for (var match of matches) {
@@ -135,10 +168,10 @@ class RecipeUtil {
       matches = newMatches;
     }
 
-    return matches.map(({forward}) => {
+    return matches.map(({forward, score}) => {
       var match = {};
       forward.forEach((value, key) => match[shape.reverse.get(key)] = value);
-      return match;
+      return {match, score};
     });
   }
 

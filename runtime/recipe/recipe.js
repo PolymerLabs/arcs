@@ -36,6 +36,10 @@ class Recipe {
     this._connectionConstraints.splice(idx, 1);
   }
 
+  clearConnectionConstraints() {
+    this._connectionConstraints = [];
+  }
+
   newParticle(name) {
     var particle = new Particle(this, name);
     this._particles.push(particle);
@@ -89,6 +93,7 @@ class Recipe {
   get particles() { return this._particles; } // Particle*
   get views() { return this._views; } // View*
   get slots() { return this._slots; } // Slot*
+  get connectionConstraints() { return this._connectionConstraints; }
 
   get slotConnections() {  // SlotConnection*
     var slotConnections = [];
