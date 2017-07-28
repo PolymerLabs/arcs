@@ -13,7 +13,6 @@ var assert = require('assert');
 var Arc = require('./arc.js');
 var Recipe = require('./recipe.js');
 var Type = require('./type.js');
-var TypeLiteral = require('./type-literal.js');
 
 class DescriptionGenerator {
   constructor(recipe, relevance) {

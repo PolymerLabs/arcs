@@ -17,6 +17,7 @@ let assert = require('chai').assert;
 let particles = require('./test-particles.js');
 let Loader = require('../loader');
 let SlotComposer = require('../slot-composer.js');
+let Type = require('../type.js');
 
 let loader = new Loader();
 particles.register(loader);
@@ -36,15 +37,15 @@ describe('suggestinator', function() {
 
     var recipe1 = new recipe.RecipeBuilder()
         .addParticle("TestParticle")
-            .connectSpec("foo", {typeName: "Foo", mustCreate: false})
-            .connectSpec("bar", {typeName: "Bar", mustCreate: false})
+            .connectSpec("foo", {type: new Type("Foo"), mustCreate: false})
+            .connectSpec("bar", {type: new Type("Bar"), mustCreate: false})
         .build();
 
     var recipe2 = new recipe.RecipeBuilder()
         .addParticle("TwoInputTestParticle")
-            .connectSpec("foo", {typeName: "Foo", mustCreate: false})
-            .connectSpec("bar", {typeName: "Bar", mustCreate: false})
-            .connectSpec("far", {typeName: "Far", mustCreate: true})
+            .connectSpec("foo", {type: new Type("Foo"), mustCreate: false})
+            .connectSpec("bar", {type: new Type("Bar"), mustCreate: false})
+            .connectSpec("far", {type: new Type("Far"), mustCreate: true})
         .build();
 
     var suggestinator = new Suggestinator();

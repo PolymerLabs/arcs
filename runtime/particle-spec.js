@@ -14,13 +14,20 @@ var recipe = require("./recipe.js");
 var typeLiteral = require("./type-literal.js");
 
 class ConnectionSpec {
-  constructor(rawData, typeVarMap) {
+  constructor(rawData, typeVarMap, resolveSchema) {
     this.rawData = rawData;
     this.direction = rawData.direction;
     this.name = rawData.name;
-    this.typeName = rawData.type;
-    this.typeName = typeLiteral.convertNamedVariablesToVariables(this.typeName, typeVarMap);
-    this.type = new runtime.internals.Type(this.typeName);
+    let type = rawData.type;
+    if (typeof rawData.type == 'string') {
+      // TODO: Convert to entity type.
+      // type = {
+      //   tag: 'entity',
+      //   schema: resolveSchema(type).toLiteral(),
+      // };
+    }
+    type = typeLiteral.convertNamedVariablesToVariables(type, typeVarMap);
+    this.type = new runtime.internals.Type(type);
   }
 
   get mustCreate() {
@@ -37,11 +44,11 @@ class ConnectionSpec {
 }
 
 class ParticleSpec {
-  constructor(model) {
+  constructor(model, resolveSchema) {
     this._model = model;
     this.name = model.name;
     var typeVarMap = new Map();
-    this.connections = model.args.map(a => new ConnectionSpec(a, typeVarMap));
+    this.connections = model.args.map(a => new ConnectionSpec(a, typeVarMap, resolveSchema));
     this.connectionMap = new Map();
     this.connections.forEach(a => this.connectionMap.set(a.name, a));
     this.inputs = this.connections.filter(a => a.isInput);
