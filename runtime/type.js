@@ -28,10 +28,6 @@ class Type {
     return typeLiteral.isVariable(this.key);
   }
 
-  get isEntity() {
-    return typeLiteral.isEntity(this.key);
-  }
-
   get hasVariable() {
     return typeLiteral.hasVariable(this.key);
   }
@@ -42,9 +38,6 @@ class Type {
 
   primitiveType() {
     return new Type(typeLiteral.primitiveType(this.key));
-  }
-  toSchema() {
-    assert(this.isEntity());
   }
   toLiteral() {
     return this.key;
