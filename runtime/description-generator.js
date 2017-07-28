@@ -10,7 +10,6 @@
 "use strict";
 
 var assert = require('assert');
-var Arc = require('./arc.js');
 var Recipe = require('./recipe.js');
 var Type = require('./type.js');
 var TypeLiteral = require('./type-literal.js');
@@ -130,7 +129,12 @@ class DescriptionGenerator {
     let resultDescription;
     let selectedParticleViewDescription =
         this._selectParticleViewDescription(viewDescription, particleSpec.name);
-    if (selectedParticleViewDescription) {
+    if ((!selectedParticleViewDescription || !selectedParticleViewDescription.description) &&
+        connection.view.description) {
+      // Fallback to previously existing view description, if the new recipe doesn't have explicit
+      // description pattern for the view,
+      resultDescription = connection.view.description;
+    } else if (selectedParticleViewDescription) {
       resultDescription = this._resolveTokens(selectedParticleViewDescription.description,
                                               selectedParticleViewDescription.component,
                                               selectedParticleViewDescription.particleSpec);

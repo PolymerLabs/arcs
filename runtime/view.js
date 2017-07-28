@@ -55,7 +55,7 @@ class ViewBase {
     }
 
     scheduler.enqueue(this, eventRecords);
- 
+
     callTrace.end();
   }
 }
@@ -70,6 +70,7 @@ class View extends ViewBase {
     var view = new View(this._type, this._arc, this.name);
     view._items = this._items;
     view._version = this._version;
+    view.description = this.description;
     return view;
   }
 
@@ -166,7 +167,7 @@ class Variable extends ViewBase {
     this._version++;
     this._fire('change', {data: this._stored, version: this._version});
   }
-  
+
   clear() {
     this.set(undefined);
   }
@@ -197,7 +198,7 @@ class Variable extends ViewBase {
       version: this._version,
       arc: this._arc.id
     })
-  }  
+  }
 }
 
 Object.assign(module.exports, {

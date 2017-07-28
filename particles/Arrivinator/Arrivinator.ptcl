@@ -12,4 +12,6 @@ Arrivinator(in [Product] list)
 
 renders: annotation(list) none-need
 
-
+Description {
+  pattern: Estimate arrival dates for ${list}
+}
