@@ -10,12 +10,78 @@
 const assert = require('assert');
 const typeLiteral = require('./type-literal.js');
 
+let nextVariableId = 0;
 class Type {
   constructor(key) {
+    assert(typeof key != 'string')
     assert(!typeLiteral.isNamedVariable(key));
     this.key = key;
   }
+
+  // Replaces 'prevariable' types with 'variable'+id types .
+  static assignVariableIds(literal, variableMap) {
+    if (typeof literal == 'string') {
+      return literal;
+    } else switch (literal.tag) {
+      case 'list':
+        return {
+          tag: 'list',
+          type: Type.assignVariableIds(literal.type, variableMap),
+        };
+      case 'prevariable':
+        // TODO: It seems wrong to assign these IDs to a particle-spec.
+        //       They should be unique per particle instance.
+        var id = variableMap.get(literal.name);
+        if (id == undefined) {
+          id = {
+            tag: 'variable',
+            id: nextVariableId++,
+            name: literal.name
+          }
+          variableMap.set(literal.name, id);
+        }
+        return id;
+      case 'variable':
+        return literal;
+      case 'entity':
+        return literal;
+      default:
+        throw new Error(`Unexpected type literal: ${JSON.stringify(literal)}`);
+    }
+  }
+
+  // Replaces raw strings with resolved schemas.
+  static resolveSchemas(literal, resolveSchema) {
+    if (typeof literal == 'string') {
+      // TODO: This should probably all happen during type construction so that
+      //       we can cache the schema objet.
+      return {
+        tag: 'entity',
+        schema: resolveSchema(literal).toLiteral(),
+      };
+    } else switch (literal.tag) {
+      case 'list':
+        return {
+          tag: 'list',
+          type: Type.resolveSchemas(literal.type, resolveSchema),
+        };
+      case 'prevariable':
+        return literal;
+      case 'variable':
+        return literal;
+      case 'entity':
+        return literal;
+      default:
+        throw new Error(`Unexpected type literal: ${JSON.stringify(literal)}`);
+    }
+  }
+
   equals(type) {
+    if (this.key.tag == 'entity' && type.key.tag == 'entity') {
+      // TODO: Remove this hack that allows the old resolver to match
+      //       types by schema name.
+      return this.key.schema.name == type.key.schema.name;
+    }
     return typeLiteral.equal(type.toLiteral(), this.toLiteral());
   }
   get isRelation() {
@@ -26,6 +92,10 @@ class Type {
   }
   get isVariable() {
     return typeLiteral.isVariable(this.key);
+  }
+
+  get isEntity() {
+    return typeLiteral.isEntity(this.key);
   }
 
   get hasVariable() {
@@ -39,7 +109,12 @@ class Type {
   primitiveType() {
     return new Type(typeLiteral.primitiveType(this.key));
   }
+  get schema() {
+    assert(this.isEntity);
+    return this.key.schema;
+  }
   toLiteral() {
+    assert(typeof this.key != 'string');
     return this.key;
   }
   static fromLiteral(literal) {
@@ -61,6 +136,7 @@ class Type {
   toString() {
     return typeLiteral.stringFor(this.key);
   }
+
 }
 
 module.exports = Type;

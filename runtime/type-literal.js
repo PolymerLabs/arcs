@@ -27,7 +27,11 @@ function isVariable(t) {
   return (typeof t == "object" && t.tag == "variable");
 }
 
-// TODO: clauses for relations too 
+function isEntity(t) {
+  return (typeof t == "object" && t.tag == "entity");
+}
+
+// TODO: clauses for relations too
 function hasVariable(t) {
   return isVariable(t) || (isView(t) && hasVariable(primitiveType(t)));
 }
@@ -55,27 +59,7 @@ function variableID(t) {
   return t.id;
 }
 
-function convertNamedVariablesToVariables(variable, typeMap) {
-  if (isView(variable)) {
-    return viewOf(convertNamedVariablesToVariables(primitiveType(variable), typeMap));
-  }
-  if (isRelation(variable)) {
-    return variable.map(a => convertNamedVariablesToVariables(a, typeMap));
-  }
-
-  if (isNamedVariable(variable)) {
-    var id = typeMap.get(variable.name);
-    if (id == undefined) {
-      id = typeVariable(variable.name);
-      typeMap.set(variable.name, id);
-    }
-    return id.clone();
-  }
-
-  return variable;
-}
-
-// TODO: we can do better than this. 
+// TODO: we can do better than this.
 function equal(t1, t2) {
   return stringFor(t1) == stringFor(t2);
 }
@@ -87,12 +71,14 @@ function stringFor(t) {
     return `${stringFor(primitiveType(t))} List`;
   else if (isVariable(t) || isNamedVariable(t))
     return `[${t.name}]`;
+  else if (isEntity(t))
+    return t.schema.name;
   if (typeof t == "object")
     return JSON.stringify(t);
   return String(t);
 }
 
 
-Object.assign(module.exports, { isRelation, isView, isNamedVariable, isVariable, primitiveType, viewOf,
-                                namedTypeVariable, typeVariable, variableID, hasVariable,
-                                convertNamedVariablesToVariables, stringFor, equal });
+Object.assign(module.exports, { isRelation, isView, isEntity, isNamedVariable, isVariable, primitiveType, viewOf,
+  namedTypeVariable, typeVariable, variableID, hasVariable,
+  stringFor, equal });

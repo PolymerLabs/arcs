@@ -11,16 +11,22 @@
 
 var parser = require("./build/particle-parser.js");
 var runtime = require("./runtime.js");
-//var loader = require("./loader.js");
 var ParticleSpec = require("./particle-spec.js");
 var tracing = require('tracelib');
 var assert = require('assert');
-const typeLiteral = require('./type-literal.js');
+const Schema = require('./schema.js');
 
 const DEBUGGING = false;
 
 function define(def, update) {
-  let spec = new ParticleSpec(parser.parse(def));
+  let model = parser.parse(def);
+  // TODO: Remove this, inline definition should happen at the manifest level
+  //       and include schemas.
+  let resolveSchema = name => new Schema({
+    name,
+    sections: [],
+  });
+  let spec = new ParticleSpec(model, resolveSchema);
   let clazz = class extends Particle {
     static get spec() {
       return spec;

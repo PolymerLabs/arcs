@@ -9,17 +9,16 @@
  */
 "use strict";
 
-var runtime = require("./runtime.js");
-var recipe = require("./recipe.js");
-var typeLiteral = require("./type-literal.js");
+const runtime = require("./runtime.js");
+const recipe = require("./recipe.js");
+const Type = require('./type.js');
 
 class ConnectionSpec {
   constructor(rawData, typeVarMap) {
     this.rawData = rawData;
     this.direction = rawData.direction;
     this.name = rawData.name;
-    let type = rawData.type;
-    type = typeLiteral.convertNamedVariablesToVariables(type, typeVarMap);
+    let type = Type.assignVariableIds(rawData.type, typeVarMap);
     this.type = new runtime.internals.Type(type);
   }
 
@@ -37,7 +36,9 @@ class ConnectionSpec {
 }
 
 class ParticleSpec {
-  constructor(model) {
+  constructor(model, resolveSchema) {
+    // TODO: This should really happen after parsing, not here.
+    model.args.forEach(arg => arg.type = Type.resolveSchemas(arg.type, resolveSchema));
     this._model = model;
     this.name = model.name;
     var typeVarMap = new Map();

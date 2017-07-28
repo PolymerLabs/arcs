@@ -13,9 +13,9 @@ const Type = require('./type.js');
 const viewlet = require('./viewlet.js');
 const define = require('./particle.js').define;
 const assert = require('assert');
-const typeLiteral = require('./type-literal.js');
 const PECInnerPort = require('./api-channel.js').PECInnerPort;
 const ParticleSpec = require('./particle-spec.js');
+const Schema = require('./schema.js');
 
 class RemoteView {
   constructor(id, type, port, pec, name, version) {
@@ -159,11 +159,14 @@ class InnerPEC {
 
 
     for (var view of viewMap.values()) {
-      var type = view.underlyingView().type.toLiteral();
-      if (typeLiteral.isView(type)) {
-        type = typeLiteral.primitiveType(type);
+      var type = view.underlyingView().type;
+      let schemaModel;
+      if (type.isView) {
+        schemaModel = type.primitiveType().schema;
+      } else {
+        schemaModel = type.schema;
       }
-      view.entityClass = this._loader.loadEntity(type);
+      view.entityClass = new Schema(schemaModel).entityClass();
     }
 
     // the problem with doing this here is that it's only after we return particle below

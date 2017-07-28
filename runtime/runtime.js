@@ -13,26 +13,18 @@ const assert = require('assert');
 const view = require('./view.js');
 const Symbols = require('./symbols.js');
 const Entity = require('./entity.js');
+const Schema = require('./schema.js');
 const Type = require('./type.js');
 const Relation = require('./relation.js');
 
-class BasicEntity extends Entity {
-  constructor(rawData) {
-    super();
-    this.rawData = rawData;
-  }
-  get data() {
-    return this.rawData;
-  }
+function testEntityClass(type) {
+  return new Schema({
+    name: type,
+    sections: [],
+  }).entityClass();
 }
 
-function testEntityClass(type) {
-  return class TestEntity extends BasicEntity {
-    static get key() {
-      return type;
-    }
-  };
-}
+let BasicEntity = testEntityClass('BasicEntity');
 
 Object.assign(exports, {
   Entity,
