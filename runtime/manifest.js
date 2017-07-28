@@ -97,12 +97,18 @@ class Manifest {
       let parent = manifest.findSchemaByName(schemaItem.parent);
       // TODO: error handling
       assert(parent);
-      schemaItem.parent = parent;
+      schemaItem.parent = parent.toLiteral();
     }
     manifest._schemas[schemaItem.name] = new Schema(schemaItem);
   }
   static _processParticle(manifest, particleItem) {
-    let particleSpec = new ParticleSpec(ParticleParser.parse(particleItem.body));
+    let model = ParticleParser.parse(particleItem.body);
+    // TODO: Remove the fallback hack.
+    let resolveSchema = name => manifest.findSchemaByName(name) || new Schema({
+        name,
+        sections: [],
+      });
+    let particleSpec = new ParticleSpec(model, resolveSchema);
     manifest._particles[particleItem.name] = particleSpec;
   }
   static _processRecipe(manifest, recipeItem) {

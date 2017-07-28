@@ -42,7 +42,7 @@ class Loader {
     let data = this.loadFile(schemaLocationFor(name));
     var parsed = schemaParser.parse(data);
     if (parsed.parent) {
-      parsed.parent = this.loadSchema(parsed.parent);
+      parsed.parent = this.loadSchema(parsed.parent).toLiteral();
     }
     return new Schema(parsed);
   }
@@ -62,7 +62,11 @@ class Loader {
     if (this._particlesByName[name])
       return this._particlesByName[name].spec;
     let data = this.loadFile(this.particleLocationFor(name, 'ptcl'));
-    return new ParticleSpec(parser.parse(data));
+    let model = parser.parse(data);
+    let resolveSchema = name => {
+      return this.loadSchema(name);
+    };
+    return new ParticleSpec(model, resolveSchema);
   }
 
   loadParticleClass(spec) {

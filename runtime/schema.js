@@ -9,14 +9,16 @@
  */
 
 const Entity = require("./entity.js");
+const assert = require('assert');
 
 class Schema {
   constructor(model) {
     this._model = model;
     this.name = model.name;
-    this.parent = model.parent;
+    this.parent = model.parent ? new Schema(model.parent) : null;
     this._normative = {};
     this._optional = {};
+    assert(model.sections);
     for (var section of model.sections) {
       var into = section.sectionType == 'normative' ? this._normative : this._optional;
       for (var field in section.fields) {
@@ -26,7 +28,7 @@ class Schema {
     }
   }
 
-  get toLiteral() {
+  toLiteral() {
     return this._model;
   }
 
@@ -43,6 +45,7 @@ class Schema {
   }
 
   entityClass() {
+    let schema = this;
     const name = this.name;
     var clazz = class extends Entity {
       constructor(data) {
@@ -51,7 +54,10 @@ class Schema {
       }
 
       static get key() {
-        return name;
+        return {
+          tag: 'entity',
+          schema: schema.toLiteral(),
+        };
       }
     }
     Object.defineProperty(clazz, 'name', {value: this.name});

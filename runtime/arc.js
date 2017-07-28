@@ -195,6 +195,7 @@ class Arc {
     if (type.isView) {
       var v = new view.View(type, this, name, id);
     } else {
+      assert(type.isEntity, `Expected entity type, but... ${JSON.stringify(type.toLiteral())}`);
       var v = new view.Variable(type, this, name, id);
     }
     this.registerView(v);
@@ -217,13 +218,23 @@ class Arc {
     this._viewTags.get(view).add(tag);
   }
 
+  // TODO: Don't use this, we should be testing the schemas for compatiblity
+  //       instead of using just the name.
+  static _viewKey(type) {
+    if (type.isView) {
+      return `list:${type.primitiveType().schema.name}`;
+    } else {
+      assert(type.isEntity);
+      return type.schema.name;
+    }
+  }
+
   registerView(view) {
     let views = this.findViews(view.type);
     if (!views.length) {
-      this._viewsByType.set(JSON.stringify(view.type.toLiteral()), views);
+      this._viewsByType.set(Arc._viewKey(view.type), views);
     }
     views.push(view);
-
     this.addView(view);
   }
 
@@ -233,7 +244,7 @@ class Arc {
 
   findViews(type, options) {
     // TODO: use options (location, labels, etc.) somehow.
-    var views = this._viewsByType.get(JSON.stringify(type.toLiteral())) || [];
+    var views = this._viewsByType.get(Arc._viewKey(type)) || [];
     if (options && options.tag) {
       views = views.filter(view => this.tagsForView(view).has(options.tag));
     }
