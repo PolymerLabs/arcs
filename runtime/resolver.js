@@ -13,7 +13,6 @@ var runtime = require('./runtime.js');
 var assert = require('assert');
 var recipe = require('./recipe.js');
 var tracing = require('tracelib');
-var typeLiteral = require('./type-literal.js');
 
 class Resolver {
 
@@ -107,12 +106,12 @@ class Resolver {
       return false;
     // can't match directly against a constraint - that comes later.
     if (spec.constructor == recipe.RecipeConstraintConnection)
-      return true;  
+      return true;
     assert(spec.constructor == recipe.RecipeSpecConnection, "Should only match RecipeSpecConnections in Resolver::matches");
     authority = authority;
     spec = spec.spec;
     // TODO: better matching enforcement goes here
-    if (typeLiteral.equal(spec.typeName, authority.typeName))
+    if (spec.type.equals(authority.type))
       return true;
     assert(spec.type, '_matches requires spec.type');
     assert(authority.type, '_matches requires authority.type');
@@ -141,7 +140,7 @@ class Resolver {
     var connections = new Map();
     for (var connection of componentSpec.connections)
       connections.set(connection.name, connection);
-    trace.update({args: {components: component.connections.length, specifiedComponents: componentSpec.connections.length}});    
+    trace.update({args: {components: component.connections.length, specifiedComponents: componentSpec.connections.length}});
     var success = true;
     for (var connection of component.connections) {
       var connectionSpec = connections.get(connection.name);
@@ -152,7 +151,7 @@ class Resolver {
     }
     for (var connection of connections.values()) {
       var newConnection = new recipe.RecipeSpecConnection(connection.name, connection)
-      context.connectionSpec = connection; 
+      context.connectionSpec = connection;
       component.addConnection(newConnection);
       success &= this._resolveConnection(context, newConnection);
     }
@@ -212,7 +211,7 @@ class Resolver {
       args: {name: connection.name}});
     // TODO this is *not* the right way to deal with singleton vs. list connections :)
     assert(connection.spec, "cannot resolve an undefined spec connection");
-    var typeName = connection.spec.typeName;
+    var typeName = connection.spec.type.toLiteral();
     trace.update({args: {type: typeName}});
     var type = runtime.internals.Type.fromLiteral(typeName);
 
@@ -228,7 +227,7 @@ class Resolver {
     // TODO: More complex resolution logic should go here.
     // Defer view creation until after resolution.
     if (connection.spec.mustCreate)
-      context.afterResolution.push(arc => { 
+      context.afterResolution.push(arc => {
         connection.view = arc.createView(type, connection.constraintName);
         if (connection.options && connection.options.tag)
           arc.tagView(connection.view, connection.options.tag);
@@ -241,7 +240,7 @@ class Resolver {
   }
 
   _resolveConstraintConnection(context, connection) {
-    var trace = tracing.start({cat: "resolver", name: "Resolver::resolveConstraintConnection", 
+    var trace = tracing.start({cat: "resolver", name: "Resolver::resolveConstraintConnection",
       args: {name: connection.name, constraintName: connection.constraintName}});
     var constrainedConnection = context.constraintNames.get(connection.constraintName);
     if (constrainedConnection !== undefined) {
@@ -264,7 +263,7 @@ class Resolver {
     }
 
     // This is the first time we've encountered this name. Construct a new spec based on
-    // the information we have (particularly the name and type of the connection as 
+    // the information we have (particularly the name and type of the connection as
     // exposed by the particle) and attempt to resolve it.
     constrainedConnection = new recipe.RecipeSpecConnection(connection.name, context.connectionSpec);
     constrainedConnection.constraintName = connection.constraintName;

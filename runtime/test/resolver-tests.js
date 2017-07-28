@@ -19,6 +19,7 @@ let util = require('./test-util.js');
 var viewlet = require('../viewlet.js');
 let SlotComposer = require('../slot-composer.js');
 var Loader = require('../loader');
+let Type = require('../type.js');
 
 require("./trace-setup.js");
 
@@ -35,8 +36,8 @@ describe('resolver', () => {
     let fooView = arc.createView(Foo.type);
     var r = new recipe.RecipeBuilder()
         .addParticle("TestParticle")
-            .connectSpec("foo", {typeName: "Foo", mustCreate: false})
-            .connectSpec("bar", {typeName: "Bar", mustCreate: true})
+            .connectSpec("foo", {type: new Type("Foo"), mustCreate: false})
+            .connectSpec("bar", {type: new Type("Bar"), mustCreate: true})
         .build();
     viewlet.viewletFor(fooView).set(new Foo({value: "not a Bar"}));
     assert(Resolver.resolve(r, arc), "recipe resolves");
@@ -71,7 +72,7 @@ describe('resolver', () => {
     var arc = new Arc({loader, slotComposer});
     var r = new recipe.RecipeBuilder()
         .addParticle("TestParticle")
-            .connectSpec("herp", {typeName: "Foo", mustCreate: false})
+            .connectSpec("herp", {type: new Type("Foo"), mustCreate: false})
         .build();
     assert(!Resolver.resolve(r, arc), "recipe should not resolve");
   });
