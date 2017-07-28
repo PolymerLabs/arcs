@@ -17,7 +17,11 @@ class Walker extends WalkerBase {
     // update phase - walk through recipe and call onRecipe,
     // onView, etc.
 
-    this.onRecipe && this.onRecipe(recipe, result);
+    if (this.onRecipe) {
+      var result = this.onRecipe(recipe, result);
+      if (!this.isEmptyResult(result));
+        updateList.push({continuation: result});
+    }
     for (var particle of recipe.particles) {
       if (this.onParticle) {
         var result = this.onParticle(recipe, particle);

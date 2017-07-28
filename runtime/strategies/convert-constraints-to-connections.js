@@ -6,125 +6,64 @@
 // http://polymer.github.io/PATENTS.txt
 
 let {Strategy} = require('../../strategizer/strategizer.js');
-let ConstraintWalker = require('../recipe/constraint-walker.js');
 let Recipe = require('../recipe/recipe.js');
 let RecipeWalker = require('../recipe/walker.js');
 let RecipeUtil = require('../recipe/recipe-util.js');
 
 class ConvertConstraintsToConnections extends Strategy {
   async generate(strategizer) {
-    var results = Recipe.over(strategizer.generated, new class extends ConstraintWalker {
-      onConstraint(recipe, constraint) {
-        // existing particles and views
+    var results = Recipe.over(strategizer.generated, new class extends RecipeWalker {
+      onRecipe(recipe) {
+        var particles = new Set();
+        var views = new Set();
+        var map = {};
+        var viewCount = 0;
+        for (var constraint of recipe.connectionConstraints) {
+          particles.add(constraint.fromParticle);
+          if (map[constraint.fromParticle] == undefined)
+            map[constraint.fromParticle] = {};
+          particles.add(constraint.toParticle);
+          if (map[constraint.toParticle] == undefined)
+            map[constraint.toParticle] = {};
+          var view = map[constraint.fromParticle][constraint.fromConnection];
+          if (view == undefined) {
+            view = 'v' + viewCount++;
+            map[constraint.fromParticle][constraint.fromConnection] = view;
+            views.add(view);
+          }
+          map[constraint.toParticle][constraint.toConnection] = view;
+        }
+        var shape = RecipeUtil.makeShape([...particles.values()], [...views.values()], map);
+        var results = RecipeUtil.find(recipe, shape);
 
-        var connectedShape = RecipeUtil.makeShape(
-            [constraint.fromParticle, constraint.toParticle],
-            ['a'],
-            {
-              [constraint.fromParticle]: {name: constraint.fromConnection, view: 'a'},
-              [constraint.toParticle]: {name: constraint.toConnection, view: 'a'}
+        return results.map(match => {
+          return (recipe) => {
+            var score = recipe.connectionConstraints.length + match.score;
+            var recipeMap = recipe.updateToClone(match.match);
+            for (var particle in map) {
+              for (var connection in map[particle]) {
+                var view = map[particle][connection];
+                var recipeParticle = recipeMap[particle];
+                if (recipeParticle == null) {
+                  recipeParticle = recipe.newParticle(particle);
+                  recipeMap[particle] = recipeParticle;
+                }
+                var recipeViewConnection = recipeParticle.connections[connection];
+                if (recipeViewConnection == undefined)
+                  recipeViewConnection = recipeParticle.addConnectionName(connection);
+                var recipeView = recipeMap[view];
+                if (recipeView == null) {
+                  recipeView = recipe.newView(view);
+                  recipeMap[view] = recipeView;
+                }
+                if (recipeViewConnection.view == null)
+                  recipeViewConnection.connectToView(recipeView);
+              }
             }
-        );
-
-        var resolved = RecipeUtil.find(recipe, connectedShape);
-        if (resolved.length > 0) {
-          return (recipe, constraint) => {recipe.removeConstraint(constraint); return 4};
-        }
-
-        // existing particles, joined on the left side
-        var leftShape = RecipeUtil.makeShape(
-          [constraint.fromParticle, constraint.toParticle],
-          ['a'],
-          {[constraint.fromParticle]: {name: constraint.fromConnection, view: 'a'}}
-        );
-
-        // existing particles, joined on the right side
-        var rightShape = RecipeUtil.makeShape(
-          [constraint.fromParticle, constraint.toParticle],
-          ['a'],
-          {[constraint.fromParticle]: {name: constraint.toConnection, view: 'a'}}
-        );
-
-        var leftResolved = RecipeUtil.find(recipe, leftShape);
-        var leftActions = leftResolved.map(resolveMap => {
-          (recipe, constraint) => {
-            resolveMap = recipe.updateToClone(resolveMap);
-            resolveMap[constraint.toParticle].ensureConnectionName(constraint.toConnection).connectToView(resolveMap['a']);
-            recipe.removeConstraint(constraint);
-            return 3;
+            recipe.clearConnectionConstraints();
+            return score;
           }
         });
-        var rightResolved = RecipeUtil.find(recipe, rightShape);
-        var rightActions = rightResolved.map(resolveMap => {
-          return (recipe, constraint) => {
-            resolveMap = recipe.updateToClone(resolveMap);
-            resolveMap[constraint.fromParticle].ensureConnectionName(constraint.fromConnection).connectToView(resolveMap['a']);
-            recipe.removeConstraint(constraint);
-            return 3;
-          };
-        });
-        var actions = leftActions.concat(rightActions);
-        if (actions.length > 0)
-          return actions;
-
-        // existing particles
-        var particles = RecipeUtil.makeShape([constraint.fromParticle, constraint.toParticle], [], {});
-        var resolved = RecipeUtil.find(recipe, particles);
-        var actions = resolved.map(resolveMap => {
-          return (recipe, constraint) => {
-            resolveMap = recipe.updateToClone(resolveMap);
-            var view = recipe.newView();
-            resolveMap[constraint.fromParticle].ensureConnectionName(constraint.fromConnection).connectToView(view);
-            resolveMap[constraint.toParticle].ensureConnectionName(constraint.toConnection).connectToView(view);
-            recipe.removeConstraint(constraint);
-            return 2;
-          };
-        });
-        if (actions.length > 0)
-          return actions;
-
-        // one particle
-        var leftParticle = RecipeUtil.makeShape([constraint.fromParticle], [], {});
-        var rightParticle = RecipeUtil.makeShape([constraint.toParticle], [], {});
-        var leftResolved = RecipeUtil.find(recipe, leftParticle);
-        var rightResolved = RecipeUtil.find(recipe, rightParticle);
-        var leftActions = leftResolved.map(resolveMap => {
-          return (recipe, constraint) => {
-            resolveMap = recipe.updateToClone(resolveMap);
-            var view = recipe.newView();
-            resolveMap[constraint.fromParticle].ensureConnectionName(constraint.fromConnection).connectToView(view);
-            recipe.newParticle(constraint.toParticle).addConnectionName(constraint.toConnection).connectToView(view);
-            recipe.removeConstraint(constraint);
-            return 1;
-          }
-        });
-        var rightActions = rightResolved.map(resolveMap => {
-          return (recipe, constraint) => {
-            resolveMap = recipe.updateToClone(resolveMap);
-            var view = recipe.newView();
-            recipe.newParticle(constraint.fromParticle).addConnectionName(constraint.fromConnection).connectToView(view);
-            resolveMap[constraint.toParticle].ensureConnectionName(constraint.toConnection).connectToView(view);
-            recipe.removeConstraint(constraint);
-            return 1;
-          }
-        });
-
-        var actions = leftActions.concat(rightActions);
-        if (actions.length > 0)
-          return actions;
-
-        return (recipe, constraint) => {
-          RecipeUtil.makeShape(
-              [constraint.fromParticle, constraint.toParticle],
-              ['a'],
-              {
-                [constraint.fromParticle]: {name: constraint.fromConnection, view: 'a'},
-                [constraint.toParticle]: {name: constraint.toConnection, view: 'a'}
-              },
-            recipe);
-          recipe.removeConstraint(constraint);
-          return 0;
-        }
       }
     }(RecipeWalker.Independent), this);
 

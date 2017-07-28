@@ -52,6 +52,7 @@ describe('ConvertConstraintsToConnections', async() => {
     var strategizer = {generated: [{result: recipe, score: 1}]};
     var cctc = new ConvertConstraintsToConnections();
     let { results } = await cctc.generate(strategizer);
+    console.log(results);
     assert(results.length == 1);
     let { result, score } = results[0];
     assert.deepEqual(result.toString(),
@@ -136,10 +137,30 @@ describe('ConvertConstraintsToConnections', async() => {
     assert(results.length == 1);
     let { result, score } = results[0];
     assert.deepEqual(result.toString(),
-    // TODO: Two views seems wrong.
 `recipe
   map as view0
-  map as view1
+  A as particle0
+    b = view0
+  C as particle1
+    d = view0`);
+  });
+
+  it('fills out a constraint, reusing two particles and a view (2)', async() => {
+    let recipe = (await Manifest.parse(`
+      recipe
+        A.b -> C.d
+        map as v1
+        C
+        A
+          b = v1`)).recipes[0];
+    var strategizer = {generated: [{result: recipe, score: 1}]};
+    var cctc = new ConvertConstraintsToConnections();
+    let { results } = await cctc.generate(strategizer);
+    assert(results.length == 1);
+    let { result, score } = results[0];
+    assert.deepEqual(result.toString(),
+`recipe
+  map as view0
   A as particle0
     b = view0
   C as particle1
