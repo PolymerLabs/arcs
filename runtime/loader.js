@@ -30,6 +30,15 @@ class Loader {
     this._particlesByName = {};
   }
 
+  path(fileName) {
+    let path = fileName.replace(/[\/][^\/]+$/, '/')
+    return path;
+  }
+  join(prefix, path) {
+    prefix = path(prefix);
+    return prefix + path;
+  }
+
   particleLocationFor(name, type) {
     return `../particles/${name}/${name}.${type}`;
   }
@@ -65,6 +74,7 @@ class Loader {
       return this._particlesByName[name].spec;
     let data = this.loadFile(this.particleLocationFor(name, 'ptcl'));
     let model = parser.parse(data);
+    model.implFile = this.particleLocationFor(name, 'js');
     let resolveSchema = name => {
       return this.loadSchema(name);
     };
@@ -77,18 +87,16 @@ class Loader {
       return particleClass;
     }
 
-    let clazz = this.requireParticle(spec.name);
+    let clazz = this.requireParticle(spec.implFile);
     clazz.spec = spec;
     this._particlesByName[spec.name] = clazz;
     return clazz;
-
   }
 
-  requireParticle(name) {
-    let filename = this.particleLocationFor(name, 'js');
-    let src = this.loadFile(filename);
+  requireParticle(fileName) {
+    let src = this.loadFile(fileName);
     // Note. This is not real isolation.
-    let script = new vm.Script(src, {filename});
+    let script = new vm.Script(src, {fileName});
     let result = [];
     let self = {
       defineParticle(particleWrapper) {

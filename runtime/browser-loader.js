@@ -14,21 +14,26 @@ const Loader = require('./loader');
 module.exports = class BrowserLoader extends Loader {
   constructor(base) {
     super();
-    this._base = base || '';
+    // TODO: Update all callers to pass a valid base URL to avoid the use of
+    //       location here. `new URL(base)` should be valid.
+    this._base = new URL(base || '', global.location).href;
+  }
+  _resolve(path) {
+    return new URL(path, this._base).href;
   }
   loadFile(name) {
     let xhr = new XMLHttpRequest();
-    xhr.open('GET', this._base + name, false);
+    xhr.open('GET', this._resolve(name), false);
     xhr.send();
     return xhr.responseText;
   }
-  requireParticle(name) {
-    let filename = this._base + this.particleLocationFor(name, 'js');
+  requireParticle(fileName) {
+    fileName = this._resolve(fileName);
     let result = [];
     self.defineParticle = function(particleWrapper) {
       result.push(particleWrapper);
     };
-    importScripts(filename);
+    importScripts(fileName);
     delete self.defineParticle;
     return this.unwrapParticle(result[0]);
   }
