@@ -106,7 +106,8 @@ class ViewConnection {
 
   isResolved() {
     assert(Object.isFrozen(this));
-    return this._type
+    // TODO: This should use this._type, or possibly not consider type at all.
+    return this.type
         && this._direction
         && this.view;
   }
