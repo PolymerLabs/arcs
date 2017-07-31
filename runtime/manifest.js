@@ -103,11 +103,13 @@ class Manifest {
   }
   static _processParticle(manifest, particleItem) {
     let model = ParticleParser.parse(particleItem.body);
-    // TODO: Remove the fallback hack.
-    let resolveSchema = name => manifest.findSchemaByName(name) || new Schema({
-        name,
-        sections: [],
-      });
+    let resolveSchema = name => {
+      let schema = manifest.findSchemaByName(name);
+      if (!schema) {
+        throw new Error(`Schema '${name}' was not declared or imported`);
+      }
+      return schema;
+    };
     let particleSpec = new ParticleSpec(model, resolveSchema);
     manifest._particles[particleItem.name] = particleSpec;
   }

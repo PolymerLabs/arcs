@@ -37,6 +37,7 @@ describe('manifest', function() {
   });
   it('can parse a manifest containing a particle specification', async () => {
     let manifest = await Manifest.parse(`
+      schema Product
       particle Chooser in 'chooser.js'
         Chooser(in [Product] choices, out [Product] resultList)
 
@@ -169,6 +170,8 @@ describe('manifest', function() {
   });
   it('can resolve recipe particles defined in the same manifest', async () => {
     let manifest = await Manifest.parse(`
+      schema Something
+      schema Someother
       particle Thing in 'thing.js'
         Thing(in [Something] someThings, out [Someother] someOthers)
       recipe
@@ -223,6 +226,7 @@ describe('manifest', function() {
                 ParticleB
                 `,
           b: `
+              schema Thing
               particle ParticleB in 'b.js'
                 ParticleB(in Thing)`
         }[path];
