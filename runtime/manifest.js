@@ -85,7 +85,7 @@ class Manifest {
       this._processSchema(manifest, item);
     }
     for (let item of items.filter(item => item.kind == 'particle')) {
-      this._processParticle(manifest, item);
+      this._processParticle(manifest, item, loader);
     }
     for (let item of items.filter(item => item.kind == 'recipe')) {
       this._processRecipe(manifest, item);
@@ -101,7 +101,7 @@ class Manifest {
     }
     manifest._schemas[schemaItem.name] = new Schema(schemaItem);
   }
-  static _processParticle(manifest, particleItem) {
+  static _processParticle(manifest, particleItem, loader) {
     let model = ParticleParser.parse(particleItem.body);
     // TODO: loader should not be optional.
     if (particleItem.implFile && loader) {

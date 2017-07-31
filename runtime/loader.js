@@ -35,7 +35,7 @@ class Loader {
     return path;
   }
   join(prefix, path) {
-    prefix = path(prefix);
+    prefix = this.path(prefix);
     return prefix + path;
   }
 
