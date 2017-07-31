@@ -8,17 +8,40 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-var Arc = require("../arc.js");
-var runtime = require("../runtime.js");
-let assert = require('chai').assert;
-let particles = require('./test-particles.js');
+const Loader = require("../loader.js");
+const assert = require('chai').assert;
+const Manifest = require('../manifest.js');
 
-var Foo = runtime.testing.testEntityClass('Foo');
-var Bar = runtime.testing.testEntityClass('Bar');
+let loader = new Loader();
 
-describe('particle loader', function() {
-  it('can load a particle', function() {
-    var particle = new particles.TestParticle();
-    assert.isDefined(particle.spec.description);
+describe('loader', function() {
+  it('can extract a path', function() {
+    assert.equal(loader.path('a/foo'), 'a/');
+  });
+  it('can join paths', function() {
+    assert.equal(loader.join('a/foo', 'b'), 'a/b');
+  });
+  it('can load a particle from a particle spec', async () => {
+    let files = [];
+    let testLoader = new class extends Loader {
+      requireParticle(fileName) {
+        files.push(fileName);
+        return {};
+      }
+    };
+    let options = {
+      fileName: 'somewhere/something',
+      loader: testLoader,
+    };
+    let manifest = await Manifest.parse(`
+        schema A
+        schema B
+        particle Foo in 'foo.js'
+          Foo(in A, out B)`, options);
+    let spec = manifest.particles.Foo;
+    assert.equal(spec.implFile, 'somewhere/foo.js');
+    let clazz = testLoader.loadParticleClass(spec);
+    assert.equal(clazz.spec, spec);
+    assert.deepEqual(files, ['somewhere/foo.js']);
   });
 });

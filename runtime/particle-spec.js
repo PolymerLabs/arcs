@@ -51,7 +51,7 @@ class ParticleSpec {
     this.renders = model.renders;
     this.transient = model.transient;
     this.description = model.description;
-    this.impl = model.impl;
+    this.implFile = model.implFile;
   }
 
   buildRecipe() {
