@@ -96,9 +96,52 @@ class InnerPEC {
     this._apiPort.onAwaitIdle = ({version}) =>
       this.idle.then(a => this._apiPort.Idle({version, relevance: this.relevance}));
 
-    this._apiPort.onLostSlots = ({particles}) => particles.forEach(particle => particle.slotReleased());
+    this._apiPort.onUIEvent = ({particle, slotName, event}) => particle.fireEvent(slotName, event);
 
-    this._apiPort.onUIEvent = ({particle, event}) => particle.fireEvent(event);
+    this._apiPort.onStartRender = ({particle, slotName, contentTypes}) => {
+      class Slotlet {
+        constructor(pec, particle, slotName) {
+          this._slotName = slotName;
+          this._particle = particle;
+          this._handlers = new Map();
+          this._pec = pec;
+          this._requestedContentTypes = new Set();
+        }
+        get particle() { return this._particle; }
+        get slotName() { return this._slotName; }
+        get isRendered() { return this._isRendered; }
+        render(content) {
+          this._pec._apiPort.Render({particle, slotName, content});
+
+          Object.keys(content).forEach(key => { this._requestedContentTypes.delete(key) });
+          // Slot is considered rendered, if a non-empty content was sent and all requested content types were fullfilled.
+          this._isRendered = this._requestedContentTypes.size == 0 && (Object.keys(content).length > 0);
+        }
+        registerEventHandler(name, f) {
+          if (!this._handlers.has(name)) {
+            this._handlers.set(name, []);
+          }
+          this._handlers.get(name).push(f);
+        }
+        clearEventHandlers(name) {
+          this._handlers.set(name, []);
+        }
+        fireEvent(event) {
+          for (var handler of this._handlers.get(event.handler) || []) {
+            handler(event);
+          }
+        }
+      }
+
+      particle._slotByName.set(slotName, new Slotlet(this, particle, slotName));
+      particle.render(slotName, contentTypes);
+    };
+
+    this._apiPort.onStopRender = ({particle, slotName}) => {
+      assert(particle._slotByName.has(slotName),
+        `Stop render called for particle ${particle.name} slot ${slotName} without start render being called.`);
+      particle._slotByName.delete(slotName);
+    }
   }
 
   generateID() {
@@ -115,47 +158,6 @@ class InnerPEC {
     views.forEach((value, key) => {
       viewMap.set(key, viewlet.viewletFor(value, value.type.isView));
     });
-
-    class Slotlet {
-      constructor(pec, particle) {
-        this._particle = particle;
-        this._handlers = new Map();
-        this._pec = pec;
-      }
-      render(content) {
-        this._pec._apiPort.RenderSlot({content, particle: this._particle});
-      }
-      registerEventHandler(name, f) {
-        if (!this._handlers.has(name)) {
-          this._handlers.set(name, []);
-        }
-        this._handlers.get(name).push(f);
-      }
-      clearEventHandlers(name) {
-        this._handlers.set(name, []);
-      }
-      fireEvent(event) {
-        for (var handler of this._handlers.get(event.handler) || []) {
-          handler(event);
-        }
-      }
-    }
-
-    particle.setSlotCallback(async (name, state) => {
-      switch (state) {
-        case "Need":
-          /*var data =*/ await new Promise((resolve/*, reject*/) =>
-            this._apiPort.GetSlot({name, particle, callback: r => resolve(r)})
-          );
-          particle.setSlot(new Slotlet(this, particle));
-          break;
-
-        case "No":
-          this._apiPort.ReleaseSlot({particle})
-          break;
-      }
-    });
-
 
     for (var view of viewMap.values()) {
       var type = view.underlyingView().type;

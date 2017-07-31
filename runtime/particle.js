@@ -76,6 +76,7 @@ class Particle {
     this.slotHandlers = [];
     this.stateHandlers = new Map();
     this.states = new Map();
+    this._slotByName = new Map();
   }
 
   // Override this to do stuff
@@ -122,50 +123,8 @@ class Particle {
     return this.spec.outputs;
   }
 
-  async requireSlot(id) {
-    if (this.slot) {
-      return this.slot;
-    }
-    if (!this.slotPromise) {
-      this.slotPromise = new Promise((resolve, reject) => {
-        this.slotResolver = resolve;
-        this._slotCallback(id, "Need");
-      });
-    }
-    return this.slotPromise;
-  }
-
-  setSlot(slot) {
-    this.slot = slot;
-    this.slotPromise = null;
-    if (this.slotResolver) {
-      this.slotResolver(this.slot);
-    }
-    this.slotResolver = null;
-    this.slotHandlers.forEach(f => f(true));
-  }
-
-  releaseSlot() {
-    if (this.slot) {
-      this._slotCallback(this.slot.id, "No");
-      this._clearSlot();
-    }
-  }
-
-  // our slot was released involuntarily
-  slotReleased() {
-    this._clearSlot();
-  }
-
-  _clearSlot() {
-    if (this.slot) {
-      this.slot = null;
-      this.slotHandlers.forEach(f => f(false));
-    }
-  }
-
-  setSlotCallback(callback) {
-    this._slotCallback = callback;
+  getSlot(name) {
+    return this._slotByName.get(name);
   }
 
   addSlotHandler(f) {
@@ -206,10 +165,11 @@ class Particle {
     changes.forEach(change => change.register(this, f));
   }
 
-  fireEvent(event) {
+  fireEvent(slotName, event) {
     // TODO(sjmiles): tests can get here without a `this.slot`, maybe this needs to be fixed in MockSlotManager?
-    assert(this.slot, 'Particle::fireEvent: require a slot for events (this.slot is falsey)');
-    this.slot.fireEvent(event);
+    let slot = this.getSlot(slotName);
+    assert(slot, `Particle::fireEvent: slot ${slotName} is falsey`);
+    slot.fireEvent(event);
   }
 }
 

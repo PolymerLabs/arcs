@@ -10,145 +10,79 @@
 "use strict";
 
 const assert = require('assert');
-const Slot = require('./dom-slot.js');
+const Slot = require('./slot.js');
+const DomSlot = require('./dom-slot.js');
 
-let log = false && global.document && global.logging ? console.log.bind(console, '---------- SlotComposer::') : () => {};
+function createNewSlot(affordance, consumeConn) {
+  switch(affordance) {
+    case "dom":
+    case "dom-touch":
+    case "vr":
+      return new DomSlot(consumeConn);
+    default:
+      assert("unsupported affordance ", affordance);
+  }
+}
 
 class SlotComposer {
-  constructor(domRoot) {
-    this._slotBySlotId = new Map();
-    // Contains both fulfilled slots and pending requests.
-    this._slotIdByParticleSpec = new Map();
-    this._createSlot('root').initialize(domRoot, /* exposedView= */ undefined);
+  constructor(rootContext, affordance) {
+    this.affordance = affordance;
+    this.rootContext = rootContext;
+    this._slots = [];
   }
-  _createSlot(slotid) {
-    let slot = new Slot(slotid);
-    this._slotBySlotId.set(slotid, slot);
-    return slot;
+  getSlot(particle, slotName) {
+    return this._slots.find(s => s.consumeConn.particle == particle && s.consumeConn.name == slotName);
   }
-  getSlot(slotid) {
-    return this._slotBySlotId.get(slotid);
-  }
-  // TODO(sjmiles): is this necessary?
-  hasSlot(slotid) {
-    return Boolean(this.getSlot(slotid));
-  }
-  _getOrCreateSlot(slotid) {
-    return this.getSlot(slotid) || this._createSlot(slotid);
-  }
-  // TODO(sjmiles): this is a _request_ for a slot, it's mapped to `GetSlot` message
-  registerSlot(particleSpec, slotid) {
-    log(`registerSlot("${particleSpec.spec.name}", "${slotid}")`);
-    return new Promise((resolve, reject) => {
-      try {
-        let slot = this._getOrCreateSlot(slotid);
-        this._slotIdByParticleSpec.set(particleSpec, slotid);
-        if (slot.isAvailable()) {
-          resolve(slot);
-        } else {
-          slot.addPendingRequest(particleSpec, resolve, reject);
+  initializeRecipe(recipe) {
+    // Create slots for each of the recipe's particles slot connections.
+    recipe.particles.forEach(p => {
+      Object.values(p.consumedSlotConnections).forEach(cs => {
+        let slot = createNewSlot(this.affordance, cs);
+        slot.startRenderCallback = this.pec.startRender.bind(this.pec);
+        slot.stopRenderCallback = this.pec.stopRender.bind(this.pec);
+        this._slots.push(slot);
+      });
+    });
+    // Attempt to set context for each of the slots.
+    this._slots.forEach(s => {
+      if (s.context) {
+        return;
+      }
+
+      let context = null;
+      let sourceConnection = s.consumeConn.targetSlot.sourceConnection;
+      if (sourceConnection) {
+        let sourceConnSlot = this.getSlot(sourceConnection.particle, sourceConnection.name);
+        if (sourceConnSlot) {
+          context = sourceConnSlot.getInnerContext(s.consumeConn.name);
         }
-      } catch(x) {
-        // TODO(sjmiles): my Promise-fu is not strong, probably should do something else
-        reject(x);
-      }
-    }).then(slot => {
-      this._assignSlot(slotid, slot, particleSpec);
-    });
-  }
-  _assignSlot(slotid, slot, particleSpec) {
-    log(`_assignSlot("${slotid}")`);
-    slot.associateWithParticle(particleSpec);
-  }
-  _getSlotId(particleSpec) {
-    return this._slotIdByParticleSpec.get(particleSpec);
-  }
-  _getParticle(slotid) {
-    if (this._slotBySlotId.has(slotid)) {
-      return this._slotBySlotId.get(slotid)._particleSpec;
-    }
-  }
-  _getSlot(slotid) {
-    assert(this._slotBySlotId.has(slotid));
-    return this._slotBySlotId.get(slotid);
-  }
-  _getParticleSlot(particleSpec) {
-    return this._getSlot(this._getSlotId(particleSpec));
-  }
-  // TODO(sjmiles): should be `renderParticle`?
-  renderSlot(particleSpec, content, handler) {
-    let slot = this._getParticleSlot(particleSpec);
-    // returns slot(id)s rendered by the particle
-    let innerSlotInfos = slot.render(content, handler);
-    if (innerSlotInfos && innerSlotInfos.length > 0) {
-      // the `innerSlotInfos` identify available slot-contexts, make them available for composition
-      this._provideInnerSlots(innerSlotInfos, particleSpec);
-    }
-  }
-  _provideInnerSlots(innerSlotInfos, particleSpec) {
-    //log(`SlotManager::_provideInnerSlots: [${innerSlotInfos.map(info=>info.id).join(',')}]`);
-    innerSlotInfos.forEach(info => {
-      let inner = this._getOrCreateSlot(info.id);
-      if (inner.isInitialized()) {
-        //log(`SlotManager::_provideInnerSlots: slot [${info.id}] is already provisioned`)
       } else {
-        //log(`SlotManager::_provideInnerSlots: provisioning slot [${info.id}]`);
-        inner.initialize(info.context, particleSpec.exposeMap.get(info.id));
+        // TODO: currently any slot that doesn't have a sourceConnection falls back to using the root context.
+        // Instead it should be explicitely determined by the slot matching strategy.
+        context = this.rootContext;
       }
-      if (!inner.isAssociated()) {
-        //log(`SlotManager::_provideInnerSlots: providing slot [${info.id}]`);
-        inner.providePendingSlot();
+      if (context) {
+        s.setContext(context);
       }
     });
   }
-  // particleSpec is relinquishing ownership of it's slot
-  releaseSlot(particleSpec) {
-    let slotid = this._getSlotId(particleSpec);
-    if (slotid) {
-      let slot = this._getSlot(slotid);
-      // particleSpec is mapped to slotid, hence it is either associated or pending.
-      if (slot.particleSpec == particleSpec) {
-        this._disassociateSlotFromParticle(slot);
-        return this._releaseSlot(slotid);
-      } else {
-        slot.removePendingRequest(particleSpec);
-      }
-    }
-  }
-  _releaseSlot(slotid) {
-    let slot = this._getSlot(slotid);
-    // teardown rendering, retrieve info on lost slots
-    let lostInfos = slot.derender();
-    // acquire list of particles who lost slots
-    let affectedParticles = lostInfos.map(s => this._getParticle(s.id));
-    // remove lost slots
-    lostInfos.forEach(s => this._removeSlot(this._getSlot(s.id)));
-    log(`_releaseSlotId("${slotid}"):`, affectedParticles);
-    // released slot is now available for another requester
-    slot.providePendingSlot();
-    // return list of particles who lost slots
-    return affectedParticles;
-  }
-  // Force free slot contents and particles associated to free up the slot for user accepted suggestion.
-  freeSlot(slotid) {
-    let slot = this._getSlot(slotid);
-    if (slot.isAssociated()) {
-      this._disassociateSlotFromParticle(slot);
-      slot._pendingRequests.clear();
-      this._releaseSlot(slotid);
-    }
-  }
-  _disassociateSlotFromParticle(slot) {
-    this._slotIdByParticleSpec.delete(slot.particleSpec);
-    slot.disassociateParticle();
-  }
-  // `remove` means to evacipate the slot context (`release` otoh means only to mark the slot as unused)
-  _removeSlot(slot) {
-    if (slot.isAssociated()) {
-      this._disassociateSlotFromParticle(slot);
-    }
-    slot.uninitialize();
-    this._slotBySlotId.delete(slot.slotid);
+
+  renderSlot(particle, slotName, content) {
+    let slot = this.getSlot(particle, slotName);
+    assert(slot, `Cannot find slot ${slotName} for particle ${particle.name}`);
+
+    // Set the slot's new content.
+    slot.setContent(content, eventlet => this.pec.sendEvent(particle, slotName, eventlet));
+
+    // Update provided slot contexts.
+    Object.keys(slot.consumeConn.providedSlots).forEach(providedSlotName => {
+      let providedContext = slot.getInnerContext(providedSlotName);
+      let providedSlot = slot.consumeConn.providedSlots[providedSlotName];
+      slot.consumeConn.providedSlots[providedSlotName].consumeConnections.forEach(cc => {
+        // This will trigger "start" or "stop" render, if applicable.
+        this.getSlot(cc.particle, cc.name).setContext(providedContext);
+      });
+    });
   }
 }
 

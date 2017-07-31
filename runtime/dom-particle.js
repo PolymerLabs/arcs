@@ -33,6 +33,13 @@ class DomParticle extends XenStateMixin(Particle) {
   get template() {
     return '';
   }
+  /** @method getTemplate(slotName)
+   * Override to return a String defining primary markup for the given slot name.
+   */
+  getTemplate(slotName) {
+    // TODO: only supports a single template for now. add multiple templates support.
+    return this.template;
+  }
   /** @method _shouldRender(props, state)
    * Override to return false if the Particle won't use
    * it's slot.
@@ -60,7 +67,9 @@ class DomParticle extends XenStateMixin(Particle) {
       // TODO(sjmiles): output views shouldn't be included here, but afaict, `inout`
       // doesn't work yet in manifest, so we are using `out` views for `inout` views
       views: this.spec.inputs.map(i => i.name).concat(this.spec.outputs.map(o => o.name)),
-      slotName: this.spec.renders.length && this.spec.renders[0].name.name
+      // TODO(mmandlis): this.spec needs to be replace with a particle-spec loaded from
+      // .manifest files, instead of .ptcl ones.
+      slotNames: [ this.spec.renders.length && this.spec.renders[0].name.name ]
     };
   }
   _info() {
@@ -86,33 +95,30 @@ class DomParticle extends XenStateMixin(Particle) {
     });
   }
   _update(props, state) {
-    let slotName = this.config.slotName;
-    if (this._shouldRender(props, state) === false) {
-      this.releaseSlot(slotName);
-    } else {
-      this.requireSlot(slotName);
+    this.config.slotNames.forEach(s => this.render(s, ["model"]));
+  }
+  render(slotName, contentTypes) {
+    let slot = this.getSlot(slotName);
+    if (!slot) {
+      return;  // didn't receive StartRender.
     }
-    if (state.slot) {
-      log(`${this._info()}: rendering`);
-      try {
-        state.slot.render({model: this._render(props, state)});
-      } catch(x) {
-        console.warn(this._info(), ': Exception during render, ensure your render-model is serializable.');
-        console.error(x);
+    contentTypes.forEach(ct => slot._requestedContentTypes.add(ct));
+    if (this._shouldRender(this._props, this._state)) {
+      let content = {};
+      if (slot._requestedContentTypes.has("template")) {
+        content["template"] = this._initializeRender(slot);
       }
+      if (slot._requestedContentTypes.has("model")) {
+        content["model"] = this._render(this._props, this._state);
+      }
+      slot.render(content);
+    } else if (slot.isRendered) {
+      // Send empty object, to clear rendered slot contents.
+      slot.render({});
     }
-  }
-  setSlot(slot) {
-    this._setState({slot: slot});
-    this._initializeRender(slot);
-    super.setSlot(slot);
-  }
-  _clearSlot() {
-    this._setState({slot: null});
-    super._clearSlot();
   }
   _initializeRender(slot) {
-    let template = this.template;
+    let template = this.getTemplate(slot.slotName);
     this._findHandlerNames(template).forEach(name => {
       slot.clearEventHandlers(name);
       slot.registerEventHandler(name, eventlet => {
@@ -121,7 +127,7 @@ class DomParticle extends XenStateMixin(Particle) {
         }
       });
     });
-    slot.render({name: 'main', template: template});
+    return template;
   }
   _findHandlerNames(html) {
     let handlers = new Map();

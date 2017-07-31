@@ -25,7 +25,7 @@ class Instantiator {
       let particle = arc.instantiateParticle(recipeParticle.spec)
       for (let [name, connection] of Object.entries(recipeParticle.connections)) {
         let view = recipeViewMap.get(connection.view);
-        arc.connectParticleToView(particle, name, view);
+        arc.connectParticleToView(particle, recipeParticle, name, view);
       }
     }
   }

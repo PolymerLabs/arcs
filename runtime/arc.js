@@ -80,7 +80,7 @@ class Arc {
     for (var serializedParticle of serialization.particles) {
       var particleHandle = arc.instantiateParticle(serializedParticle.name);
       for (var name in serializedParticle.views) {
-        arc.connectParticleToView(particleHandle, name, viewMap[serializedParticle.views[name]]);
+        arc.connectParticleToView(particleHandle, serializedParticle, name, viewMap[serializedParticle.views[name]]);
       }
     }
     return arc;
@@ -178,8 +178,7 @@ class Arc {
     return s;
   }
 
-  // TODO: remove this, not needed for new recipe instantiation
-  connectParticleToView(particleHandle, name, targetView) {
+  connectParticleToView(particleHandle, particle, name, targetView) {
     // If speculatively executing then we need to translate the view
     // in the plan to its clone.
     if (this._viewMap) {
@@ -191,7 +190,7 @@ class Arc {
     assert(viewMap.spec.connectionMap.get(name) !== undefined, "can't connect view to a view slot that doesn't exist");
     viewMap.views.set(name, targetView);
     if (viewMap.views.size == viewMap.spec.connectionMap.size) {
-      var particleSpec = this.pec.instantiate(viewMap.spec, viewMap.views, this._lastSeenVersion);
+      var particleSpec = this.pec.instantiate(particle, viewMap.spec, viewMap.views, this._lastSeenVersion);
       this._particles.push(particleSpec);
     }
   }
