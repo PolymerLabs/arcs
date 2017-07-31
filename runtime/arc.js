@@ -86,9 +86,13 @@ class Arc {
     return arc;
   }
 
-  instantiateParticle(name) {
-    let spec = this._loader.loadParticleSpec(name);
-    assert(spec, `can't find particle ${name}`);
+  instantiateParticle(spec) {
+    // TODO: Stop accpting strings when the old recipes are removed.
+    if (typeof spec == 'string') {
+      let name = spec;
+      spec = this._loader.loadParticleSpec(spec);
+      assert(spec, `can't find particle ${name}`);
+    }
     var handle = this.nextParticleHandle++;
     this.particleViewMaps.set(handle, {spec, views: new Map()});
     return handle;

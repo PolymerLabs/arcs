@@ -1,0 +1,11 @@
+schema Text
+  normative
+    Text value
+
+particle Hello in 'hello.js'
+  Hello(out Text text)
+
+recipe
+  create as viewA
+  Hello
+    text -> viewA
