@@ -103,6 +103,10 @@ class Manifest {
   }
   static _processParticle(manifest, particleItem) {
     let model = ParticleParser.parse(particleItem.body);
+    // TODO: loader should not be optional.
+    if (particleItem.implFile && loader) {
+      model.implFile = loader.join(manifest.fileName, particleItem.implFile);
+    }
     let resolveSchema = name => {
       let schema = manifest.findSchemaByName(name);
       if (!schema) {
