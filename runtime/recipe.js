@@ -46,11 +46,12 @@ class RecipeComponent {
     this.connections.push(connection);
   }
 
+  // TODO: remove this method once switched to new recipes.
   instantiate(arc) {
     var particle = arc.instantiateParticle(this.particleName);
     for (var connection of this.connections) {
       assert(connection.view, 'cannot connect particle ' + this.particleName + ' to NULL view ' + connection.name);
-      arc.connectParticleToView(particle, connection.name, connection.view);
+      arc.connectParticleToView(particle, {particle, views: this.connections}, connection.name, connection.view);
     }
   }
 

@@ -31,6 +31,7 @@ class Slot {
   set formFactor(formFactor) { this._formFactor = formFactor; }
   get viewConnections() { return this._viewConnections; }
   get sourceConnection() { return this._sourceConnection; }
+  set sourceConnection(sourceConnection) { this._sourceConnection = sourceConnection; }
   get consumeConnections() { return this._consumerConnections; }
 
   clone(recipe, cloneMap) {

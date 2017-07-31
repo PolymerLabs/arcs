@@ -91,7 +91,7 @@ class DemoFlow extends DemoBase {
     let {context} = await demoContext({
       loader,
       pecFactory: require('../worker-pec-factory.js').bind(null, root),
-      slotComposer: new SlotComposer(this.$('[particle-container]'))
+      slotComposer: new SlotComposer(this.$('[particle-container]'),  /* affordance */ "dom")
     });
     this.arc = context.arc;
     this.context = context;

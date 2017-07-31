@@ -23,10 +23,11 @@ class OuterPEC extends PEC {
     this._reverseIdMap = new Map();
     this.slotComposer = slotComposer;
 
-    this._apiPort.onRenderSlot = ({particle, content}) => {
-      if (this.slotComposer)
-        this.slotComposer.renderSlot(particle, content, this._makeEventletHandler(particle));
-    };
+    this._apiPort.onRender = ({particle, slotName, content}) => {
+      if (this.slotComposer) {
+        this.slotComposer.renderSlot(particle, slotName, content);
+      }
+    }
 
     this._apiPort.onSynchronize = ({view, target, callback, modelCallback, type}) => {
       if (view.constructor.name == 'Variable') {
@@ -55,22 +56,6 @@ class OuterPEC extends PEC {
         this._idleResolve(relevance);
       }
     }
-
-    this._apiPort.onGetSlot = ({particle, name, callback}) => {
-      assert(particle.renderMap.has(name));
-      if (this.slotComposer)
-        this.slotComposer.registerSlot(particle, name).then(() =>
-          this._apiPort.ViewCallback({callback}));
-    }
-
-    this._apiPort.onReleaseSlot = ({particle}) => {
-      if (this.slotComposer) {
-        let affectedParticles = this.slotComposer.releaseSlot(particle);
-        if (affectedParticles) {
-          this._apiPort.LostSlots({particles: affectedParticles});
-        }
-      }
-    }
   }
 
   get idle() {
@@ -88,11 +73,11 @@ class OuterPEC extends PEC {
     return this._apiPort.messageCount;
   }
 
-  sendEvent(particle, event) {
-    this._apiPort.UIEvent({particle, event})
+  sendEvent(particle, slotName, event) {
+    this._apiPort.UIEvent({particle, slotName, event})
   }
 
-  instantiate(spec, views, lastSeenVersion) {
+  instantiate(particleSpec, spec, views, lastSeenVersion) {
     views.forEach(view => {
       var version = lastSeenVersion.get(view.id) || 0;
       this._apiPort.DefineView(view, { viewType: view.type.toLiteral(), name: view.name,
@@ -108,33 +93,15 @@ class OuterPEC extends PEC {
       });
     }
 
-    var renderMap = new Map();
-    spec.renders.forEach(render => {
-      let renderViews = [];
-      if (render.name.view && views.has(render.name.view))
-        renderViews.push(views.get(render.name.view));
-      else if (render.name.views) {
-        render.name.views.forEach(v => {
-          if (views.has(v)) {
-            renderViews.push(views.get(v));
-          }
-        })
-      }
-      renderMap.set(render.name.name, renderViews);
-    });
-
-    var exposeMap = new Map();
-    spec.exposes.forEach(
-      expose => exposeMap.set(expose.name, views.get(expose.view)));
-
     // TODO: rename this concept to something like instantiatedParticle, handle or registration.
-    var particleSpec = {spec, views, renderMap, exposeMap};
     this._apiPort.InstantiateParticle(particleSpec, {spec, views});
     return particleSpec;
   }
-
-  _makeEventletHandler(particle) {
-    return eventlet => { this.sendEvent(particle, eventlet) };
+  startRender(particle, slotName, contentTypes) {
+    this._apiPort.StartRender(particle, slotName, contentTypes);
+  }
+  stopRender(particle, slotName) {
+    this._apiPort.StopRender(particle, slotName);
   }
 }
 

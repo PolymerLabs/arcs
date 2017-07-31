@@ -24,77 +24,82 @@ if (global.document) {
 let templates = new Map();
 
 class DomSlot extends Slot {
-  constructor(slotid) {
-    super(slotid);
-    this.dom = null;
+  constructor(consumeConn) {
+    super(consumeConn);
+    this._templateName = `${this.consumeConn.particle.name}::${this.consumeConn.name}`;
+    this._model = null;
+    this._liveDom = null;
+    this._innerContextBySlotName = null;
   }
-  initialize(context, exposedView) {
-    this.dom = context;
-    this.exposedView = exposedView;
+  getTemplate() {
+    return templates.get(this._templateName);
   }
-  isInitialized() {
-    return Boolean(this.dom);
-  }
-  uninitialize() {
-    this.dom = null;
-    this.exposedView = null;
-  }
-  // TODO(sjmiles): name is weird, maybe `teardown` or something
-  derender() {
-    var infos = this._findInnerSlotInfos();
-    this._setContent('');
-    return infos;
-  }
-  // TODO(sjmiles): SlotManager calls here
-  render(content, eventHandler) {
-    if (this.isInitialized()) {
-      this._setContent(content, eventHandler);
-      return this._findInnerSlotInfos();
+  setContent(content, handler) {
+    if (!content || Object.keys(content).length == 0) {
+      this.clearContext();
+      return;
     }
-  }
-  _setContent(content, eventHandler) {
-    //console.log(`[${this._particleSpec.particle.name}]::dom-slot:_setContent:`, content);
-    //
-    // TODO(sjmiles): these signals are ad hoc
-    //
-    if (!content) {
-      // falsey content is a request to teardown rendering
-      this.dom.textContent = '';
-      this._liveDom = null;
-    } else if (typeof content === 'string') {
-      // legacy html content
-      this.dom.innerHTML = content;
-    } else {
-      // content is multiplexed
-      let templateName = `${this.particleSpec.spec.name}${content.name || 'main'}`;
-      if (content.template) {
-        templates[templateName] = Object.assign(document.createElement('template'), {
+    if (!this.context) {
+      return;
+    }
+
+    if (content.template) {
+      templates.set(
+        this._templateName,
+        Object.assign(document.createElement('template'), {
           innerHTML: content.template
-        });
-      }
-      if (content.model) {
-        if (!this._liveDom) {
-          this._stampTemplate(templates[templateName], eventHandler);
-        }
-        this._populateViewDescriptions(content.model);
-        this._liveDom.set(content.model);
-      }
+        }));
+    }
+    this.eventHandler = handler;
+    if (Object.keys(content).indexOf("model") >= 0) {
+      this._model = content.model;
+    }
+    return this.doRender();
+  }
+  doRender() {
+    // Initialize template, if possible.
+    if (this.getTemplate() && !this._liveDom) {
+      this._stampTemplate();
+    }
+    // else {
+    // TODO: should trigger request to particle, if template missing?
+    //}
+    if (this._liveDom && this._model) {
+      this._liveDom.set(this._model);
     }
   }
-  _populateViewDescriptions(contentModel) {
-    assert(this.isAssociated(), "Cannot populate unassociated slot view descriptions");
-    this.particleSpec.views.forEach((view, viewName) => {
-      if (view && view.description) {
-        contentModel[`${viewName}.description`] = view.description;
-      }
-    });
+  clearContext() {
+    this.context.textContent = "";
+    this._liveDom = null;
+    this._model = null;
+    this._innerContextBySlotName = null;
   }
-  _stampTemplate(template, eventHandler) {
-    let eventMapper = this._eventMapper.bind(this, eventHandler);
+
+  getInnerContext(slotName) {
+    return this._innerContextBySlotName && this._innerContextBySlotName[slotName];
+  }
+
+  constructRenderRequest() {
+    let request = ["model"];
+    if (!this.getTemplate()) {
+      request.push("template");
+    }
+    return request;
+  }
+  _stampTemplate() {
+    assert(this.context);
+    let eventMapper = this._eventMapper.bind(this, this.eventHandler);
     // TODO(sjmiles): hack to allow subtree elements (e.g. x-list) to marshal events
-    this.dom._eventMapper = eventMapper;
+    this.context._eventMapper = eventMapper;
     // TODO(sjmiles): _liveDom needs new name
-    this._liveDom = Template.stamp(template).mapEvents(eventMapper).appendTo(this.dom);
+    this._liveDom = Template.stamp(this.getTemplate(), this.eventHandler);
+    this._liveDom.mapEvents(eventMapper);
+    this._liveDom.appendTo(this.context);
+
+    // Note: need to store inner slot contexts before the inner slots have rendered their contexts
+    // inside, as inner slots' particles may have inner slots with the same name.
+    this._innerContextBySlotName = {};
+    Array.from(this.context.querySelectorAll("[slotid]")).map(s => this._innerContextBySlotName[s.getAttribute('slotid')] = s);
   }
   _eventMapper(eventHandler, node, eventName, handlerName) {
     node.addEventListener(eventName, () => {
@@ -107,39 +112,6 @@ class DomSlot extends Slot {
       });
     });
   }
-  _findInnerSlotInfos() {
-    return Array.from(this.dom.querySelectorAll("[slotid]")).map(s => {
-      return {
-        context: s,
-        id: s.getAttribute('slotid')
-      };
-    });
-  }
 }
 
-class MockDomSlot extends DomSlot {
-  _setContent(content) {
-    let html = content.html || content;
-    this.dom.innerHTML = this.dom._cachedContent = html;
-  }
-  _findInnerSlotInfos() {
-    let slots = [];
-    let slot;
-    let RE = /slotid="([^"]*)"/g;
-    while ((slot = RE.exec(this.dom.innerHTML))) {
-      slots.push({
-        context: {},
-        id: slot[1]
-      });
-    }
-    return slots;
-  }
-  _findEventGenerators() {
-    // TODO(mmandlis): missing mock-DOM version
-    // TODO(sjmiles): mock-DOM is ill-defined, but one possibility is that it never generates events
-    return [];
-  }
-}
-
-// TODO(sjmiles): this decision should be elsewhere
-module.exports = global.document ? DomSlot : MockDomSlot;
+module.exports = DomSlot;

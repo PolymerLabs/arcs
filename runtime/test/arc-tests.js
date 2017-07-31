@@ -34,8 +34,8 @@ describe('Arc', function() {
     viewlet.viewletFor(fooView).set(new Foo({value: 'a Foo'}));
     let barView = arc.createView(Bar.type);
     var particle = arc.instantiateParticle('TestParticle');
-    arc.connectParticleToView(particle, 'foo', fooView);
-    arc.connectParticleToView(particle, 'bar', barView);
+    arc.connectParticleToView(particle, {particle, fooView}, 'foo', fooView);
+    arc.connectParticleToView(particle, {particle, barView}, 'bar', barView);
     await util.assertSingletonHas(barView, Bar, "a Foo1");
   });
 
@@ -44,8 +44,8 @@ describe('Arc', function() {
     let fooView = arc.createView(Foo.type);
     let barView = arc.createView(Bar.type);
     var particle = arc.instantiateParticle('TestParticle');
-    arc.connectParticleToView(particle, 'foo', fooView);
-    arc.connectParticleToView(particle, 'bar', barView);
+    arc.connectParticleToView(particle, {particle, fooView}, 'foo', fooView);
+    arc.connectParticleToView(particle, {particle, barView}, 'bar', barView);
     viewlet.viewletFor(fooView).set(new Foo({value: 'a Foo'}));
     await util.assertSingletonHas(barView, Bar, "a Foo1");
   });
@@ -63,8 +63,8 @@ describe('Arc', function() {
     let barView = arc.createView(Bar.type);
     loader.registerParticle(particleClass);
     let instance = arc.instantiateParticle('P');
-    arc.connectParticleToView(instance, 'foo', fooView);
-    arc.connectParticleToView(instance, 'bar', barView);
+    arc.connectParticleToView(instance, {instance, fooView}, 'foo', fooView);
+    arc.connectParticleToView(instance, {instance, barView}, 'bar', barView);
     await util.assertSingletonHas(barView, Bar, 123);
   });
 
