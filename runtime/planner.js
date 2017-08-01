@@ -20,20 +20,15 @@ class InitPopulation extends Strategy {
   async generate(strategizer) {
     if (strategizer.generation == 0) {
       var r = new oldRecipe.NewRecipeBuilder()
-      .addParticle("Chooser")
-        .connectConstraint("resultList", "list")
         .addParticle("Recommend")
-          .connectConstraint("known", "list")
           .connectConstraint("population", "wishlist")
           .tag("gift list")
-        .addParticle("SaveList")
-          .connectConstraint("list", "list")
-        .addParticle("ListView")
-          .connectConstraint("list", "list")
-
         .build();
 
         r.newConnectionConstraint("Chooser", "choices", "Recommend", "recommendations");
+        r.newConnectionConstraint("Chooser", "resultList", "Recommend", "known");
+        r.newConnectionConstraint("Chooser", "resultList", "SaveList", "list");
+        r.newConnectionConstraint("Chooser", "resultList", "ListView", "list");
 
         r.normalize();
         return { results: [{result: r, score: 1, derivation: [{strategy: this, parent: undefined}], hash: r.digest() }], generate: null };
