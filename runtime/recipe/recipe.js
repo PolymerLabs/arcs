@@ -12,6 +12,7 @@ var Particle = require('./particle.js');
 var Slot = require('./slot.js');
 var View = require('./view.js');
 var util = require('./util.js');
+var Instantiator = require('./instantiator.js');
 
 class Recipe {
   constructor() {
@@ -126,6 +127,10 @@ class Recipe {
       sha.update(this.toString());
       return sha.digest('hex');
     }
+  }
+
+  instantiate(arc) {
+    Instantiator.instantiate(this, arc);
   }
 
   normalize() {

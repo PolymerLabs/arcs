@@ -18,16 +18,21 @@ const Instantiator = require('../recipe/instantiator.js');
 const Viewlet = require('../viewlet.js');
 const Schema = require('../schema.js');
 
+async function setup() {
+  let registry = {};
+  let loader = new Loader();
+  let manifest = await Manifest.load('../particles/test/test.manifest', loader, registry);
+  assert(manifest);
+  let arc = new Arc({loader});
+  let recipe = manifest.recipes[0];
+  assert(recipe.normalize());
+  assert(recipe.isResolved());
+  return {arc, recipe}
+}
+
 describe('manifest integration', () => {
-  it('is integrated?', async () => {
-    let registry = {};
-    let loader = new Loader();
-    let manifest = await Manifest.load('../particles/test/test.manifest', loader, registry);
-    assert(manifest);
-    let arc = new Arc({loader});
-    let recipe = manifest.recipes[0];
-    assert(recipe.normalize());
-    assert(recipe.isResolved());
+  it('can produce a recipe that can be instantiated in an arc', async () => {
+    let {arc, recipe} = await setup();
     Instantiator.instantiate(recipe, arc);
     await arc.pec.idle;
     let type = recipe.views[0].type;
@@ -38,5 +43,10 @@ describe('manifest integration', () => {
     viewlet.entityClass = new Schema(type.schema).entityClass();
     let result = await viewlet.get();
     assert.equal(result.value, 'Hello, world!');
+  });
+  it('can produce a recipe that can be speculated', async () => {
+    let {arc, recipe} = await setup();
+    let relevance = await new (require('../speculator.js'))().speculate(arc, recipe);
+    assert.equal(relevance.calcRelevanceScore(), 1);
   });
 });
