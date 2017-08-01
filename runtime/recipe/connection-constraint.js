@@ -5,6 +5,8 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
+var util = require('./util.js');
+
 class ConnectionConstraint {
   constructor(from, fromConnection, to, toConnection) {
     this.fromParticle = from;
@@ -18,12 +20,12 @@ class ConnectionConstraint {
     return new ConnectionConstraint(this.fromParticle, this.fromConnection, this.toParticle, this.toConnection);
   }
 
-  compareTo(other) {
+  _compareTo(other) {
     let cmp;
-    if ((cmp = compareStrings(this.fromParticle, other.fromParticle)) != 0) return cmp;
-    if ((cmp = compareStrings(this.fromConnection, other.fromConnection)) != 0) return cmp;
-    if ((cmp = compareStrings(this.toParticle, other.toParticle)) != 0) return cmp;
-    if ((cmp = compareStrings(this.toConnection, other.toConnection)) != 0) return cmp;
+    if ((cmp = util.compareStrings(this.fromParticle, other.fromParticle)) != 0) return cmp;
+    if ((cmp = util.compareStrings(this.fromConnection, other.fromConnection)) != 0) return cmp;
+    if ((cmp = util.compareStrings(this.toParticle, other.toParticle)) != 0) return cmp;
+    if ((cmp = util.compareStrings(this.toConnection, other.toConnection)) != 0) return cmp;
     return 0;
   }
 
