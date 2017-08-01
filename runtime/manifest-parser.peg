@@ -9,6 +9,9 @@
  */
 
 {
+  const assert = require('assert');
+  var typeLiteral = require('../type-literal.js');
+
   var indent = '';
   var indents = [];
   function extractIndented(items) {
@@ -38,36 +41,186 @@ ManifestItem
   / Schema
 
 Import
-  = "import" whiteSpace path:id eolWhiteSpace
+  = 'import' whiteSpace path:id eolWhiteSpace
   {
     return {
-      kind: "import",
+      kind: 'import',
       path,
     }
   }
 
 Particle
-  = "particle" whiteSpace name:upperIdent implFile:(whiteSpace "in" whiteSpace id)? eolWhiteSpace body:IndentedText?
+  = 'particle' whiteSpace name:upperIdent implFile:(whiteSpace 'in' whiteSpace id)? eolWhiteSpace items:(Indent (SameIndent ParticleItem)*)? eolWhiteSpace?
   {
+    let args = null;
+    let affordance = [];
+    let slots = [];
+    let description = null;
+    items = items ? extractIndented(items) : [];
+    items.forEach(item => {
+      if (item.name == name) {
+        args = item.args;
+      } else if (item.kind == 'particle-slot') {
+        slots.push(item);
+      } else if (item.kind == 'description') {
+        description = {};
+        item.description.forEach(d => { description[d.name] = d.pattern; });
+      } else {
+        affordance.push(item.affordance)
+      }
+    });
+
     return {
-      kind: "particle",
+      kind: 'particle',
       name,
       implFile: optional(implFile, implFile => implFile[3], null),
-      body,
+      args,
+      affordance,
+      slots,
+      description
     };
   }
 
-IndentedText
-  = Indent (SameOrMoreIndent [^\n]+ eolWhiteSpace)*
+ParticleItem
+  = ParticleInterface
+  / Affordance
+  / ParticleSlot
+  / ParticleDescription
+
+ParticleInterface
+  = name:upperIdent '(' args:ParticleArgumentList ')' eolWhiteSpace
   {
-    return text();
+    return { name, args }
   }
 
-Recipe
-  = "recipe" name:(whiteSpace upperIdent)? tags:(whiteSpace TagList)? eolWhiteSpace items:(Indent (SameIndent RecipeItem)*)?
+ParticleArgumentList
+  = head:ParticleArgument tail:(',' whiteSpace ParticleArgument)*
+  {
+    return [head].concat(tail.map(a => a[2]));
+  }
+
+ParticleArgument
+  = direction:ParticleArgumentDirection whiteSpace tn:ParticleArgumentType whiteSpace name:(lowerIdent)
+  {
+    return {direction, type:tn, name};
+  }
+
+ParticleArgumentDirection
+  = 'in' / 'out' / 'inout'
+  {
+     // Do we still need ephemeral?
+     return {direction: dir};
+  }
+
+ParticleArgumentType
+  = (VariableType / PrimitiveType / ListType)
+ListType
+  = '[' pt:ParticleArgumentType ']' { return typeLiteral.viewOf(pt); }
+VariableType
+  = '~' name: VariableTypeName { return typeLiteral.namedTypeVariable(name); }
+VariableTypeName
+  = [a-z][a-zA-Z0-9]* { return text() }
+PrimitiveType
+  = [A-Z][a-zA-Z0-9]* { return text() }
+
+Affordance
+  = 'affordance' whiteSpace affordance:('dom-touch' / 'dom' / 'vr' / 'voice') eolWhiteSpace
+  { return {affordance}; }
+
+ParticleSlot
+  = isRequired:('must' whiteSpace)? 'consume' whiteSpace name:(lowerIdent) eolWhiteSpace
+    items:(Indent (SameIndent ParticleSlotItem)*)?
+  {
+    let formFactor = null;
+    let providedSlots = [];
+    items = items ? extractIndented(items) : [];
+    items.forEach(item => {
+      if (item.kind == 'provided-slot') {
+        providedSlots.push(item);
+      } else if (item.kind == 'form-factor') {
+        if (formFactor)
+          assert ('duplicate form factor for a slot');
+        formFactor = item.formFactor;
+      } else {
+        assert('Unsupported particle slot item ', item);
+      }
+    });
+    return {
+      kind: 'particle-slot',
+      name,
+      isRequired: optional(isRequired, isRequired => isRequired[0] == 'must', false),
+      formFactor,
+      providedSlots
+    };
+  }
+
+ParticleSlotItem
+  = SlotFormFactor
+  / ParticleProvidedSlot
+
+SlotFormFactor
+  = 'formFactor' whiteSpace formFactor:('fullscreen' / 'big' / 'medium' / 'small' / 'interleaved') eolWhiteSpace
   {
     return {
-      kind: "recipe",
+      kind: 'form-factor',
+      formFactor
+    };
+  }
+
+ParticleProvidedSlot
+  = 'provide' whiteSpace name:(lowerIdent) eolWhiteSpace items:(Indent (SameIndent ParticleProvidedSlotItem)*)?
+  {
+    let formFactor = null;
+    let views = [];
+    items = items ? extractIndented(items) : [];
+    items.forEach(item => {
+      if (item.kind == 'form-factor') {
+        // TODO: assert this is the only form factor.
+        formFactor = item.formFactor;
+      } else {
+        views.push(item.view);
+      }
+    });
+    return {
+      kind: 'provided-slot',
+      name,
+      formFactor,
+      views
+    };
+  }
+
+ParticleProvidedSlotItem
+  = SlotFormFactor
+  / ParticleProvidedSlotView
+
+ParticleProvidedSlotView
+  = 'view' whiteSpace view:lowerIdent eolWhiteSpace
+  { return {view}; }
+
+ParticleDescription
+  = 'description' eolWhiteSpace tokens:(Indent (SameIndent ParticleDescriptionToken)+)
+  {
+    // assert(!tokens);
+    tokens = extractIndented(tokens);
+    assert(tokens[0].name == 'pattern', 'Description must start with pattern.');
+    return {
+      kind: 'description',
+      description: tokens
+    };
+  }
+
+ParticleDescriptionToken
+  = name:lowerIdent whiteSpace '`' pattern:ParticleDescriptionPattern '`' eolWhiteSpace
+  {
+    return { name, pattern };
+  }
+ParticleDescriptionPattern = ([^`]+) { return text().trim() }
+
+Recipe
+  = 'recipe' name:(whiteSpace upperIdent)? tags:(whiteSpace TagList)? eolWhiteSpace items:(Indent (SameIndent RecipeItem)*)?
+  {
+    return {
+      kind: 'recipe',
       name: optional(name, name => name[1], null),
       tags: optional(tags, tags => tags[1], []),
       items: optional(items, extractIndented, []),
@@ -80,7 +233,7 @@ RecipeItem
   / RecipeConnection
 
 Name
-  = "as" whiteSpace name:lowerIdent
+  = 'as' whiteSpace name:lowerIdent
   {
     return name;
   }
@@ -111,7 +264,7 @@ RecipeParticle
 RecipeParticleItem = RecipeParticleConnection / RecipeParticleSlotConnection
 
 RecipeParticleConnection
-  = param:(lowerIdent / "*") whiteSpace dir:Direction whiteSpace target:ConnectionTarget eolWhiteSpace
+  = param:(lowerIdent / '*') whiteSpace dir:Direction whiteSpace target:ConnectionTarget eolWhiteSpace
   {
     return {
       kind: 'view-connection',
@@ -122,7 +275,7 @@ RecipeParticleConnection
   }
 
 RecipeParticleSlotConnection
-  = dir:("provide" / "consume") whiteSpace param:(lowerIdent / "*") viewRef:(whiteSpace SlotViewRef)? name:(whiteSpace Name)? eolWhiteSpace
+  = dir:('provide' / 'consume') whiteSpace param:(lowerIdent / '*') viewRef:(whiteSpace SlotViewRef)? name:(whiteSpace Name)? eolWhiteSpace
   {
     return {
       kind: 'slot-connection',
@@ -145,10 +298,10 @@ RecipeConnection
   }
 
 Direction
-  = dir:("<-" / "->" / "=")
+  = dir:('<-' / '->' / '=')
 
 ConnectionTarget
-  = ident:(upperIdent / lowerIdent) param:("." lowerIdent)? tags:(whiteSpace TagList)?
+  = ident:(upperIdent / lowerIdent) param:('.' lowerIdent)? tags:(whiteSpace TagList)?
   {
     let particle = null;
     let name = null;
@@ -171,18 +324,18 @@ ConnectionTarget
   { return {tags}; }
 
 RecipeView
-  = type:("map" / "create") ref:(whiteSpace ViewRef)? name:(whiteSpace Name)? eolWhiteSpace
+  = type:('map' / 'create') ref:(whiteSpace ViewRef)? name:(whiteSpace Name)? eolWhiteSpace
   {
     return {
       kind: 'view',
       name: optional(name, name => name[1], null),
       ref: optional(ref, ref => ref[1], {tags: []}),
-      create: type === "create" ? true : false
+      create: type === 'create' ? true : false
     }
   }
 
 Tag
-  = "#" [a-zA-Z][a-zA-Z0-9_]* {return text()}
+  = '#' [a-zA-Z][a-zA-Z0-9_]* {return text()}
 
 TagList
   = head:Tag tail:(whiteSpace TagList)?
@@ -207,13 +360,13 @@ ViewRef
   { return {tags}; }
 
 SlotViewRef
-  = "(" name:lowerIdent? tags:TagList? ")"
+  = '(' name:lowerIdent? tags:TagList? ')'
   {
     return name ? {name, tags:[]} : {tags};
   }
 
 Schema
-  = "schema" whiteSpace name:upperIdent parent:(whiteSpace "extends" whiteSpace upperIdent)? eolWhiteSpace sections:(Indent (SameIndent SchemaSection)*)?
+  = 'schema' whiteSpace name:upperIdent parent:(whiteSpace 'extends' whiteSpace upperIdent)? eolWhiteSpace sections:(Indent (SameIndent SchemaSection)*)?
   {
     return {
       kind: 'schema',
@@ -224,7 +377,7 @@ Schema
   }
 
 SchemaSection
-  = sectionType:("normative" / "optional") eolWhiteSpace fields:(Indent (SameIndent SchemaField eolWhiteSpace)+)
+  = sectionType:('normative' / 'optional') eolWhiteSpace fields:(Indent (SameIndent SchemaField eolWhiteSpace)+)
   {
     let fieldDict = {};
     for (let field of extractIndented(fields)) {
@@ -246,7 +399,7 @@ SchemaField
   }
 
 SchemaType
-  = "Text" / "URL"
+  = 'Text' / 'URL'
 
 Indent = &(i:" "+ &{
   i = i.join('');
@@ -285,4 +438,4 @@ whiteSpace
 eolWhiteSpace
   = [ ]* !.
   / [ ]* '#' [^\n]* eolWhiteSpace
-  / [ ]* "\n" eolWhiteSpace?
+  / [ ]* '\n' eolWhiteSpace?
