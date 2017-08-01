@@ -12,6 +12,7 @@
 const runtime = require("./runtime.js");
 const recipe = require("./recipe.js");
 const Type = require('./type.js');
+var assert = require('assert');
 
 class ConnectionSpec {
   constructor(rawData, typeVarMap) {
@@ -35,6 +36,26 @@ class ConnectionSpec {
   }
 }
 
+class SlotSpec {
+  constructor(slotModel) {
+    this.name = slotModel.name;
+    this.isRequired = slotModel.isRequired;
+    this.formFactor = slotModel.formFactor;
+    this.providedSlots = [];
+    slotModel.providedSlots.forEach(ps => {
+      this.providedSlots.push(new ProvidedSlotSpec(ps.name, ps.formFactor, ps.views));
+    });
+  }
+}
+
+class ProvidedSlotSpec {
+  constructor(name, formFactor, views) {
+    this.name = name;
+    this.formFactor = formFactor;
+    this.views = views;
+  }
+}
+
 class ParticleSpec {
   constructor(model, resolveSchema) {
     // TODO: This should really happen after parsing, not here.
@@ -47,11 +68,21 @@ class ParticleSpec {
     this.connections.forEach(a => this.connectionMap.set(a.name, a));
     this.inputs = this.connections.filter(a => a.isInput);
     this.outputs = this.connections.filter(a => a.isOutput);
-    this.exposes = model.exposes;
-    this.renders = model.renders;
+    this.exposes = model.exposes;  // TODO: deprecate and use this.slots instead.
+    this.renders = model.renders;  // TODO: deprecate and use this.slots instead.
     this.transient = model.transient;
     this.description = model.description;
     this.implFile = model.implFile;
+    this.affordance = model.affordance;
+    this.slots = [];
+    if (model.slots)
+      model.slots.forEach(s => this.slots.push(new SlotSpec(s)));
+    // Verify provided slots use valid view connection names.
+    this.slots.forEach(slot => {
+      slot.providedSlots.forEach(ps => {
+        ps.views.forEach(v => assert(this.connectionMap.has(v), 'Cannot provide slot for nonexistent view constraint ', v));
+      });
+    });
   }
 
   buildRecipe() {
