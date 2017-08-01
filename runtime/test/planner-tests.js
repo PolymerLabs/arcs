@@ -39,7 +39,7 @@ describe('Planner', function() {
 
     var p = new Planner();
     var population = await(p.plan(a));
-    assert.equal(10, population.length);
+    assert.equal(8, population.length);
   });
 });
 
