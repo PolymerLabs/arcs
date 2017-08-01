@@ -52,7 +52,6 @@ describe('ConvertConstraintsToConnections', async() => {
     var strategizer = {generated: [{result: recipe, score: 1}]};
     var cctc = new ConvertConstraintsToConnections();
     let { results } = await cctc.generate(strategizer);
-    console.log(results);
     assert(results.length == 1);
     let { result, score } = results[0];
     assert.deepEqual(result.toString(),

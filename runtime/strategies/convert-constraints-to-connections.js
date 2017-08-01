@@ -53,7 +53,7 @@ class ConvertConstraintsToConnections extends Strategy {
                   recipeViewConnection = recipeParticle.addConnectionName(connection);
                 var recipeView = recipeMap[view];
                 if (recipeView == null) {
-                  recipeView = recipe.newView(view);
+                  recipeView = recipe.newView();
                   recipeMap[view] = recipeView;
                 }
                 if (recipeViewConnection.view == null)

@@ -82,9 +82,7 @@ class RecipeUtil {
         }
 
         // clone forward and reverse mappings and establish new components.
-        var newMatch = {forward: new Map(), reverse: new Map(), score};
-        forward.forEach((value, key) => newMatch.forward.set(key, value));
-        reverse.forEach((value, key) => newMatch.reverse.set(key, value));
+        var newMatch = {forward: new Map(forward), reverse: new Map(reverse), score};
         assert(!newMatch.forward.has(shapeVC.particle) || newMatch.forward.get(shapeVC.particle) == recipeVC.particle);
         newMatch.forward.set(shapeVC.particle, recipeVC.particle);
         newMatch.reverse.set(recipeVC.particle, shapeVC.particle);
@@ -124,9 +122,7 @@ class RecipeUtil {
 
         if (recipeParticle.name != shapeParticle.name)
           continue;
-        var newMatch = {forward: new Map(), reverse: new Map(), score};
-        forward.forEach((value, key) => newMatch.forward.set(key, value));
-        reverse.forEach((value, key) => newMatch.reverse.set(key, value));
+        var newMatch = {forward: new Map(forward), reverse: new Map(reverse), score};
         newMatch.forward.set(shapeParticle, recipeParticle);
         newMatch.reverse.set(recipeParticle, shapeParticle);
         newMatches.push(newMatch);
@@ -148,10 +144,13 @@ class RecipeUtil {
     // shape component to recipe component.
     // View connections, particles and views are also stored by a reverse map
     // from recipe component to shape component.
+
+    // Start with a single, empty match
     var matches = [{forward: new Map(), reverse: new Map(), score: 0}];
     for (var shapeVC of shape.recipe.viewConnections) {
       var newMatches = [];
       for (var match of matches) {
+        // collect matching view connections into a new matches list
         _buildNewVCMatches(recipe, shapeVC, match, newMatches);
       }
       matches = newMatches;
