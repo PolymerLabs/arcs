@@ -38,6 +38,7 @@ class Loader {
     return fs.readFileSync(file, "utf-8");
   }
 
+  // TODO: Remove this once schemas are only loaded from manifests.
   loadSchema(name) {
     let data = this.loadFile(schemaLocationFor(name));
     var parsed = schemaParser.parse(data);
@@ -58,6 +59,7 @@ class Loader {
     this._particlesByName[particleClass.name] = particleClass;
   }
 
+  // TODO: Remove this once particles are only loaded from manifests.
   loadParticleSpec(name) {
     if (this._particlesByName[name])
       return this._particlesByName[name].spec;
