@@ -18,6 +18,7 @@ class Type {
     this.key = key;
   }
 
+  // TODO: Replace these static functions with operations on Types directly.
   // Replaces 'prevariable' types with 'variable'+id types .
   static assignVariableIds(literal, variableMap) {
     if (typeof literal == 'string') {
