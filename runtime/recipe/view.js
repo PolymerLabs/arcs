@@ -108,7 +108,7 @@ class View {
     result.push(`as ${(nameMap && nameMap.get(this)) || this.localName}`);
     if (this.type) {
       result.push('#');
-      result.push(JSON.stringify(this.type.key));
+      result.push(this.type.toString());
     }
     return result.join(' ');
   }
