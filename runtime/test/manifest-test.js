@@ -38,14 +38,24 @@ describe('manifest', function() {
   it('can parse a manifest containing a particle specification', async () => {
     let manifest = await Manifest.parse(`
       schema Product
-      particle Chooser in 'chooser.js'
-        Chooser(in [Product] choices, out [Product] resultList)
-
-        renders: action(resultList) none-need
-
-        Description {
-          pattern: Choose from \${choices}
-        }`);
+      schema Person
+      particle TestParticle in 'testParticle.js'
+        TestParticle(in [Product] list, out Person person)
+        affordance dom
+        affordance dom-touch
+        must consume root
+          formFactor big
+          provide action
+            view list
+            formFactor big
+          provide preamble
+            formFactor medium
+          provide annotation
+        consume other
+        description
+          pattern \`hello world \${list}\`
+          list \`my special list\`
+      `);
   });
   it('can parse a manifest containing a schema', async () => {
     let manifest = await Manifest.parse(`
@@ -228,7 +238,7 @@ describe('manifest', function() {
           b: `
               schema Thing
               particle ParticleB in 'b.js'
-                ParticleB(in Thing)`
+                ParticleB(in Thing thing)`
         }[path];
       },
       path(fileName) {

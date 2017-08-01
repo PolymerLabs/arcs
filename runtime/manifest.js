@@ -68,9 +68,15 @@ class Manifest {
     registry = registry || {};
     position = position || {line: 1, column: 0};
 
-    let items = parser.parse(content);
+    let items = [];
+    try{
+      items = parser.parse(content);
+    } catch (e) {
+      console.log(e);
+    }
     let manifest = new Manifest();
     manifest._fileName = fileName;
+
     // TODO: This should be written to process in dependency order.
     // 1. imports
     // 2. schemas
@@ -102,10 +108,23 @@ class Manifest {
     manifest._schemas[schemaItem.name] = new Schema(schemaItem);
   }
   static _processParticle(manifest, particleItem, loader) {
-    let model = ParticleParser.parse(particleItem.body);
+    // Populate old particle spec "renders" and "exposes" fields.
+    // TODO(mmandlis): get rid of it when migrated to new specs.
+    particleItem.renders = [];
+    particleItem.exposes = [];
+    particleItem.slots.forEach(slot => {
+      particleItem.renders.push({ name : {name : slot.name}, min: 'none', max: 'need' });
+      slot.providedSlots.forEach(providedSlot => {
+        let exposedSlot = {name: providedSlot.name};
+        if (providedSlot.views.length > 0) {
+          exposedSlot.view = providedSlot.views[0];
+        }
+        particleItem.exposes.push(exposedSlot);
+      });
+    });
     // TODO: loader should not be optional.
     if (particleItem.implFile && loader) {
-      model.implFile = loader.join(manifest.fileName, particleItem.implFile);
+      particleItem.implFile = loader.join(manifest.fileName, particleItem.implFile);
     }
     let resolveSchema = name => {
       let schema = manifest.findSchemaByName(name);
@@ -114,7 +133,7 @@ class Manifest {
       }
       return schema;
     };
-    let particleSpec = new ParticleSpec(model, resolveSchema);
+    let particleSpec = new ParticleSpec(particleItem, resolveSchema);
     manifest._particles[particleItem.name] = particleSpec;
   }
   static _processRecipe(manifest, recipeItem) {
