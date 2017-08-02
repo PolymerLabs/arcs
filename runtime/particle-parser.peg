@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 {
-  var typeLiteral = require("../type-literal.js");
+  var type = require("../type.js");
 }
 
 
@@ -38,7 +38,7 @@ RenderDescriptor = name:SlotDescriptor _ min:RenderLevel? max:(_ "-" _ RenderLev
   } else {
     max = max[3];
   }
-  
+
   if (min == undefined) {
     min = "none";
   }
@@ -62,7 +62,7 @@ SlotDescriptor = name:VariableTypeName view:("(" _ VariableTypeName _ ")")? {
 Comment = "/*" (! "*/" .)* "*/" _
 
 Particle
-  = transient:Transient _ name: PrimitiveType _ "(" _ args: Arguments? _ ")" {
+  = transient:Transient _ name: PrimitiveName _ "(" _ args: Arguments? _ ")" {
       return { name, args, transient };
   }
 
@@ -73,14 +73,16 @@ Transient = "transient"? {
 
 Type = (VariableType / PrimitiveType / ListType)
 
-ListType = "[" pt:Type "]" { return typeLiteral.viewOf(pt); }
+ListType = "[" pt:Type "]" { return pt.viewOf(); }
 
-VariableType = "~" name: VariableTypeName { return typeLiteral.namedTypeVariable(name); }
+VariableType = "~" name:VariableTypeName { return type.newVariableReference(name); }
 
 VariableTypeName = [a-z][a-zA-Z0-9]* { return text() }
 
-PrimitiveType = [A-Z][a-zA-Z0-9]* { return text() }
-  
+PrimitiveType = [A-Z][a-zA-Z0-9]* { return type.newEntityReference(text()) }
+
+PrimitiveName = [A-Z][a-zA-Z0-9]* { return text() }
+
 Arguments
   = head:Argument tail:(_ "," _ Argument)* {
       return [head].concat(tail.map(a => a[3]));
@@ -98,7 +100,7 @@ Direction = e: "ephemeral"? _ dir: ("in" / "out" / "inout" / "create") {
 Name = [a-z][a-zA-Z0-9]* { return text() }
 
 _ "whitespace"
-  = [ \t\n\r]* 
+  = [ \t\n\r]*
 
 Description = "Description {" _ "pattern:" first:DescriptionValue rest:(_ DescriptionToken)* _ "}" {
   let result = {"pattern":first};

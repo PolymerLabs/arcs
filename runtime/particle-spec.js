@@ -12,15 +12,14 @@
 const runtime = require("./runtime.js");
 const recipe = require("./recipe.js");
 const Type = require('./type.js');
-var assert = require('assert');
+const assert = require('assert');
 
 class ConnectionSpec {
   constructor(rawData, typeVarMap) {
     this.rawData = rawData;
     this.direction = rawData.direction;
     this.name = rawData.name;
-    let type = Type.assignVariableIds(rawData.type, typeVarMap);
-    this.type = new runtime.internals.Type(type);
+    this.type = rawData.type.assignVariableIds(typeVarMap);
   }
 
   get mustCreate() {
@@ -59,7 +58,13 @@ class ProvidedSlotSpec {
 class ParticleSpec {
   constructor(model, resolveSchema) {
     // TODO: This should really happen after parsing, not here.
-    model.args.forEach(arg => arg.type = Type.resolveSchemas(arg.type, resolveSchema));
+    assert(model.args);
+    for(var arg of model.args) {
+      if (arg.type.resolveSchemas == undefined)
+        console.log(arg.type);
+      arg.type = arg.type.resolveSchemas(resolveSchema);
+    }
+    // model.args.forEach(arg => {console.log(arg.type.resolveSchemas); arg.type = arg.type.resolveSchemas(resolveSchema)});
     this._model = model;
     this.name = model.name;
     var typeVarMap = new Map();
@@ -98,6 +103,21 @@ class ParticleSpec {
 
   isOutput(param) {
     for (let outputs of this.outputs) if (outputs.name == param) return true;
+  }
+
+  toLiteral() {
+    let {args, name, exposes, renders, transient, description, implFile} = this._model;
+    args = args.map(a => {
+      let {type, direction, name} = a;
+      type = type.toLiteral();
+      return {type, direction, name};
+    });
+    return {args, name, exposes, renders, transient, description, implFile};
+  }
+
+  static fromLiteral(literal) {
+    literal.args.forEach(a => a.type = Type.fromLiteral(a.type));
+    return new ParticleSpec(literal, () => assert(false));
   }
 }
 

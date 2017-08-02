@@ -80,12 +80,12 @@ class Resolver {
   // TODO: Either all of this logic should be static or context should be folded into `this`
   _matchVariableReference(context, typeVar, type) {
     assert(typeVar.isVariable, "can't resolve a type variable that isn't a type variable");
-    assert(context.variableBindings.get(typeVar.variableID) == undefined, "can't re-resolve an already resolved type variable");
+    assert(context.variableBindings.get(typeVar.variableId) == undefined, "can't re-resolve an already resolved type variable");
     // TODO: check for circularity of references?
-    context.variableBindings.set(typeVar.variableID, type);
+    context.variableBindings.set(typeVar.variableId, type);
     // TODO: this should drop pending view checks as they actually return true
     if (!context.pendingViewChecks.map(a => this._viewExists(context, a)).reduce((a,b) => a && b, true)) {
-      context.variableBindings.remove(typeVar.variableID);
+      context.variableBindings.remove(typeVar.variableId);
       return false;
     }
     return true;
@@ -199,7 +199,7 @@ class Resolver {
     }
 
     if (type.isVariable) {
-      var t = context.variableBindings.get(type.variableID);
+      var t = context.variableBindings.get(type.variableId);
       return t;
     }
 

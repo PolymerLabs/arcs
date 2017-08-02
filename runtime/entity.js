@@ -35,7 +35,9 @@ class Entity {
   }
 
   static get type() {
-    return new Type(this.key);
+    // TODO: should the entity's key just be its type?
+    // Should it just be called type in that case?
+    return Type.newEntity(this.key.schema);
   }
 }
 

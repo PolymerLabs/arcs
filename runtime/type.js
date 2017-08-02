@@ -8,136 +8,144 @@
 'use strict';
 
 const assert = require('assert');
-const typeLiteral = require('./type-literal.js');
 
 let nextVariableId = 0;
+
+function addType(name, tag, args) {
+  var lowerName = name[0].toLowerCase() + name.substring(1);
+  if (args.length == 1) {
+    Object.defineProperty(Type, `new${name}`, {
+      value: function() {
+        return new Type(tag, arguments[0]);
+      }});
+    var upperArg = args[0][0].toUpperCase() + args[0].substring(1);
+    Object.defineProperty(Type.prototype, `${lowerName}${upperArg}`, {
+      get: function() {
+        assert(this[`is${name}`]);
+        return this.data;
+      }});
+  } else {
+    Object.defineProperty(Type, `new${name}`, {
+      value: function() {
+        var data = {};
+        for (var i = 0; i < args.length; i++)
+          data[args[i]] = arguments[i];
+        return new Type(tag, data);
+      }});
+    for (var arg of args) {
+      var upperArg = arg[0].toUpperCase() + arg.substring(1);
+      Object.defineProperty(Type.prototype, `${lowerName}${upperArg}`, {
+        get: function() {
+          assert(this[`is${name}`]);
+          return this.data[arg];
+        }});
+    }
+  }
+  Object.defineProperty(Type.prototype, `is${name}`, {
+    get: function() {
+      return this.tag == tag;
+    }});
+}
+
 class Type {
-  constructor(key) {
-    assert(typeof key != 'string')
-    assert(!typeLiteral.isNamedVariable(key));
-    this.key = key;
+  constructor(tag, data) {
+    assert(typeof tag == 'string');
+    assert(data);
+    if (tag == 'entity')
+      assert(data.tag == undefined);
+    this.tag = tag;
+    this.data = data;
   }
 
   // TODO: Replace these static functions with operations on Types directly.
   // Replaces 'prevariable' types with 'variable'+id types .
-  static assignVariableIds(literal, variableMap) {
-    if (typeof literal == 'string') {
-      return literal;
-    } else switch (literal.tag) {
-      case 'list':
-        return {
-          tag: 'list',
-          type: Type.assignVariableIds(literal.type, variableMap),
-        };
-      case 'prevariable':
-        // TODO: It seems wrong to assign these IDs to a particle-spec.
-        //       They should be unique per particle instance.
-        var id = variableMap.get(literal.name);
-        if (id == undefined) {
-          id = {
-            tag: 'variable',
-            id: nextVariableId++,
-            name: literal.name
-          }
-          variableMap.set(literal.name, id);
-        }
-        return id;
-      case 'variable':
-        return literal;
-      case 'entity':
-        return literal;
-      default:
-        throw new Error(`Unexpected type literal: ${JSON.stringify(literal)}`);
+  assignVariableIds(variableMap) {
+    if (this.isVariableReference) {
+      var name = this.data.name;
+      var id = variableMap.get(name);
+      if (id == undefined) {
+        id = nextVariableId++;
+        variableMap.set(name, id);
+      }
+      return Type.newVariable(name, id);
     }
+
+    if (this.isView) {
+      return this.primitiveType().assignVariableIds(variableMap).viewOf();
+    }
+
+    return this;
   }
 
   // Replaces raw strings with resolved schemas.
-  static resolveSchemas(literal, resolveSchema) {
-    if (typeof literal == 'string') {
+  resolveSchemas(resolveSchema) {
+    if (this.isEntityReference) {
       // TODO: This should probably all happen during type construction so that
       //       we can cache the schema objet.
-      return {
-        tag: 'entity',
-        schema: resolveSchema(literal).toLiteral(),
-      };
-    } else switch (literal.tag) {
-      case 'list':
-        return {
-          tag: 'list',
-          type: Type.resolveSchemas(literal.type, resolveSchema),
-        };
-      case 'prevariable':
-        return literal;
-      case 'variable':
-        return literal;
-      case 'entity':
-        return literal;
-      default:
-        throw new Error(`Unexpected type literal: ${JSON.stringify(literal)}`);
+      return Type.newEntity(resolveSchema(this.data).toLiteral());
     }
+
+    if (this.isView) {
+      return this.primitiveType().resolveSchemas(resolveSchema).viewOf();
+    }
+
+    return this;
   }
 
   equals(type) {
-    if (this.key.tag == 'entity' && type.key.tag == 'entity') {
+    if (this.tag !== type.tag)
+      return false;
+    if (this.tag == 'entity') {
       // TODO: Remove this hack that allows the old resolver to match
       //       types by schema name.
-      return this.key.schema.name == type.key.schema.name;
+      return this.data.name == type.data.name;
     }
-    return typeLiteral.equal(type.toLiteral(), this.toLiteral());
-  }
-  get isRelation() {
-    return typeLiteral.isRelation(this.key);
-  }
-  get isView() {
-    return typeLiteral.isView(this.key);
-  }
-  get isVariable() {
-    return typeLiteral.isVariable(this.key);
-  }
-
-  get isEntity() {
-    return typeLiteral.isEntity(this.key);
-  }
-
-  get hasVariable() {
-    return typeLiteral.hasVariable(this.key);
+    return JSON.stringify(this.data) == JSON.stringify(type.data);
   }
 
   get isValid() {
-    return !typeLiteral.isNamedVariable(this.key);
+    return !this.variableReference;
   }
 
   primitiveType() {
-    return new Type(typeLiteral.primitiveType(this.key));
+    var type = this.viewType;
+    return new Type(type.tag, type.data);
   }
-  get schema() {
-    assert(this.isEntity);
-    return this.key.schema;
-  }
+
   toLiteral() {
-    assert(typeof this.key != 'string');
-    return this.key;
+    return this;
   }
+
   static fromLiteral(literal) {
-    return new Type(literal);
+    return new Type(literal.tag, literal.data);
   }
 
   viewOf() {
-    return new Type(typeLiteral.viewOf(this.key));
+    return Type.newView(this);
   }
 
-  get variableID() {
-    return typeLiteral.variableID(this.key);
-  }
-
-  static typeVariable(name) {
-    return new Type(typeLiteral.typeVariable(name));
-  }
-
+  // TODO: rename toString to describe
   toString() {
-    return typeLiteral.stringFor(this.key);
+    if (this.isRelation)
+      return JSON.stringify(this.data);
+    if (this.isView)
+      return `${this.primitiveType().toString()} List`;
+    if (this.isVariable)
+      return `[${this.variableName}]`;
+    if (this.isVariableReference)
+      return `[${this.variableReferenceName}]`;
+    if (this.isEntity)
+      return this.entitySchema.name;
+    if (this.isEntityReference)
+      return this.entityReferenceName;
   }
-
 }
+
+addType('EntityReference', 'entityReference', ['name']);
+addType('Entity', 'entity', ['schema']);
+addType('VariableReference', 'variableReference', ['name']);
+addType('Variable', 'variable', ['name', 'id']);
+addType('View', 'list', ['type']);
+addType('Relation', 'relation', ['entities']);
 
 module.exports = Type;

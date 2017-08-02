@@ -10,6 +10,7 @@
 "use strict";
 
 const assert = require('assert');
+const ParticleSpec = require('./particle-spec.js');
 
 class ThingMapper {
   constructor(prefix) {
@@ -121,6 +122,13 @@ class APIPort {
         unconvert: a => a.map(v => primitive.unconvert(v))
       }
     }
+
+    this.ByLiteral = function(clazz) {
+      return {
+        convert: a => a.toLiteral(),
+        unconvert: a => clazz.fromLiteral(a)
+      }
+    }
   }
 
   _handle(e) {
@@ -193,7 +201,7 @@ class PECOuterPort extends APIPort {
       {particleDefinition: this.Direct, particleFunction: this.Stringify});
     this.registerRedundantInitializer("DefineView", {viewType: this.Direct, name: this.Direct})
     this.registerInitializer("InstantiateParticle",
-      {spec: this.Direct, views: this.Map(this.Direct, this.Mapped)});
+      {spec: this.ByLiteral(ParticleSpec), views: this.Map(this.Direct, this.Mapped)});
 
     this.registerCall("UIEvent", {particle: this.Mapped, event: this.Direct});
     this.registerCall("ViewCallback", {callback: this.Direct, data: this.Direct});
@@ -223,7 +231,7 @@ class PECInnerPort extends APIPort {
       {particleDefinition: this.Direct, particleFunction: this.Direct});
     this.registerInitializerHandler("DefineView", {viewType: this.Direct, name: this.Direct});
     this.registerInitializerHandler("InstantiateParticle",
-      {spec: this.Direct, views: this.Map(this.Direct, this.Mapped)});
+      {spec: this.ByLiteral(ParticleSpec), views: this.Map(this.Direct, this.Mapped)});
 
     this.registerHandler("UIEvent", {particle: this.Mapped, event: this.Direct});
     this.registerHandler("ViewCallback", {callback: this.LocalMapped, data: this.Direct});
