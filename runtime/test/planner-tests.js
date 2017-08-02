@@ -25,21 +25,36 @@ let Product = loader.loadEntity("Product");
 
 describe('Planner', function() {
 
-  it('make a plan', async () => {
-    var a = new Arc({id: "test-plan-arc", loader});
-    var p = new Planner();
-    var population = await(p.plan(a));
-    assert.equal(6, population.length);
+  it('can generate things', async () => {
+    var arc = new Arc({id: "test-plan-arc", loader});
+    let manifest = await Manifest.load('../particles/test/giftlist.manifest', loader);
+    var planner = new Planner();
+    planner.init(arc, {
+      recipes: manifest.recipes,
+    });
+    var generated = [
+      ...await planner.generate(),
+      ...await planner.generate(),
+      ...await planner.generate(),
+    ];
+    assert.equal(8, generated.length);
   });
 
   it('make a plan with views', async () => {
-    var a = new Arc({id: "test-plan-arc", loader});
-    var personView = a.createView(Person.type.viewOf(), "aperson");
-    var productView = a.createView(Product.type.viewOf(), "products");
-
-    var p = new Planner();
-    var population = await(p.plan(a));
-    assert.equal(8, population.length);
+    var arc = new Arc({id: "test-plan-arc", loader});
+    var personView = arc.createView(Person.type.viewOf(), "aperson");
+    var productView = arc.createView(Product.type.viewOf(), "products");
+    let manifest = await Manifest.load('../particles/test/giftlist.manifest', loader);
+    var planner = new Planner();
+    planner.init(arc, {
+      recipes: manifest.recipes,
+    });
+    var generated = [
+      ...await planner.generate(),
+      ...await planner.generate(),
+      ...await planner.generate(),
+    ];
+    assert.equal(10, generated.length);
   });
 });
 

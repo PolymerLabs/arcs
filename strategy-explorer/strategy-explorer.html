@@ -65,9 +65,13 @@ document.pendingActions = new Map();
   a.commit([new Person({name: 'Claire'})]);
   var remoteArc = new Arc({id: "claires-wishlist", loader});
   var remoteView = remoteArc.createView(Product.type.viewOf(), "wishlist");
-  remoteArc.tagView(remoteView, 'gift list');
+  remoteArc.tagView(remoteView, '#giftlist');
+  let manifest = await Manifest.load('../particles/test/giftlist.manifest', loader)
   var context = {
-    Claire: [remoteArc]
+    recipes: manifest.recipes,
+    people: {
+      'Claire': [remoteArc],
+    }
   };
   var p = new Planner();
   p.init(a, context);

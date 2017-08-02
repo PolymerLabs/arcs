@@ -14,26 +14,38 @@ let RecipeWalker = require('./recipe/walker.js');
 let ConvertConstraintsToConnections = require('./strategies/convert-constraints-to-connections.js');
 let AssignRemoteViews = require('./strategies/assign-remote-views.js');
 let AssignViewsByTagAndType = require('./strategies/assign-views-by-tag-and-type.js');
+let Manifest = require('./manifest.js');
 
 
 class InitPopulation extends Strategy {
+  constructor(context) {
+    super();
+    this._recipes = [];
+    for (let recipe of (context.recipes || [])) {
+      recipe = recipe.clone();
+      if (!recipe.normalize()) {
+        console.warn('could not normalize a context recipe');
+      } else {
+        this._recipes.push(recipe);
+      }
+    }
+  }
   async generate(strategizer) {
-    if (strategizer.generation == 0) {
-      var r = new oldRecipe.NewRecipeBuilder()
-        .addParticle("Recommend")
-          .connectConstraint("population", "wishlist")
-          .tag("gift list")
-        .build();
+    if (strategizer.generation != 0) {
+      return { results: [], generate: null };
+    }
 
-        r.newConnectionConstraint("Chooser", "choices", "Recommend", "recommendations");
-        r.newConnectionConstraint("Chooser", "resultList", "Recommend", "known");
-        r.newConnectionConstraint("Chooser", "resultList", "SaveList", "list");
-        r.newConnectionConstraint("Chooser", "resultList", "ListView", "list");
+    let results = this._recipes.map(recipe => ({
+      result: recipe,
+      score: 1,
+      derivation: [{strategy: this, parent: undefined}],
+      hash: recipe.digest(),
+    }));
 
-        r.normalize();
-        return { results: [{result: r, score: 1, derivation: [{strategy: this, parent: undefined}], hash: r.digest() }], generate: null };
-     }
-     return { results: [], generate: null };
+    return {
+      results: results,
+      generate: null,
+    };
   }
 }
 
@@ -115,7 +127,7 @@ class MatchConsumedSlots extends Strategy {
 class Planner {
   init(arc, context) {
     let strategies = [
-      new InitPopulation(),
+      new InitPopulation(context),
       new CreateViews(),
       new ResolveParticleByName(arc._loader),
       new AssignViewsByTagAndType(arc),
@@ -136,13 +148,14 @@ class Planner {
   }
 
   async plan(arc) {
-    this.init(arc);
-    // TODO: Repeat until...?
-
-    await this.generate();
-    await this.generate();
-    await this.generate();
-    return this.strategizer.population; //.filter(possiblePlan => possiblePlan.ready);
+    do {
+      await this.generate();
+      let resolved = this.strategizer.generated
+          .map(individual => individual.result)
+          .filter(recipe => recipe.isResolved());
+      return resolved;
+    } while (this.strategizer.generated.length > 0);
+    return [];
   }
 }
 
