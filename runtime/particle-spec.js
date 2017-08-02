@@ -59,12 +59,7 @@ class ParticleSpec {
   constructor(model, resolveSchema) {
     // TODO: This should really happen after parsing, not here.
     assert(model.args);
-    for(var arg of model.args) {
-      if (arg.type.resolveSchemas == undefined)
-        console.log(arg.type);
-      arg.type = arg.type.resolveSchemas(resolveSchema);
-    }
-    // model.args.forEach(arg => {console.log(arg.type.resolveSchemas); arg.type = arg.type.resolveSchemas(resolveSchema)});
+  model.args.forEach(arg => arg.type = arg.type.resolveSchemas(resolveSchema));
     this._model = model;
     this.name = model.name;
     var typeVarMap = new Map();

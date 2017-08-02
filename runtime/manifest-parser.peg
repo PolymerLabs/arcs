@@ -9,7 +9,8 @@
  */
 
 {
-  var typeLiteral = require('../type-literal.js');
+
+  let Type = require('../type.js');
 
   var indent = '';
   var indents = [];
@@ -110,11 +111,13 @@ ParticleArgumentDirection
   { return {direction: dir}; }
 
 ParticleArgumentType
-  = (VariableType / upperIdent / ListType)
+  = (VariableType / EntityType / ListType)
 ListType
-  = '[' pt:ParticleArgumentType ']' { return typeLiteral.viewOf(pt); }
+  = '[' pt:ParticleArgumentType ']' { return Type.newView(pt); }
 VariableType
-  = '~' name:lowerIdent { return typeLiteral.namedTypeVariable(name); }
+  = '~' name:lowerIdent { return Type.newVariableReference(name); }
+EntityType
+  = name:upperIdent { return Type.newEntityReference(name); }
 
 ParticleAffordance
   = 'affordance' whiteSpace affordance:('dom-touch' / 'dom' / 'vr' / 'voice') eolWhiteSpace
