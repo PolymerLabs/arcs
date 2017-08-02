@@ -73,6 +73,7 @@ class Manifest {
       items = parser.parse(content);
     } catch (e) {
       console.log(e);
+      throw e;
     }
     let manifest = new Manifest();
     manifest._fileName = fileName;

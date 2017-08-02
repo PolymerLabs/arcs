@@ -9,7 +9,6 @@
  */
 
 {
-  const assert = require('assert');
   var typeLiteral = require('../type-literal.js');
 
   var indent = '';
@@ -83,14 +82,17 @@ Particle
 
 ParticleItem
   = ParticleInterface
-  / Affordance
+  / ParticleAffordance
   / ParticleSlot
   / ParticleDescription
 
 ParticleInterface
-  = name:upperIdent '(' args:ParticleArgumentList ')' eolWhiteSpace
+  = name:upperIdent '(' args:ParticleArgumentList? ')' eolWhiteSpace
   {
-    return { name, args }
+    return {
+      name,
+      args:args || []
+    };
   }
 
 ParticleArgumentList
@@ -100,30 +102,21 @@ ParticleArgumentList
   }
 
 ParticleArgument
-  = direction:ParticleArgumentDirection whiteSpace tn:ParticleArgumentType whiteSpace name:(lowerIdent)
-  {
-    return {direction, type:tn, name};
-  }
+  = direction:ParticleArgumentDirection whiteSpace type:ParticleArgumentType whiteSpace name:lowerIdent
+  { return {direction, type:type, name}; }
 
 ParticleArgumentDirection
   = 'in' / 'out' / 'inout'
-  {
-     // Do we still need ephemeral?
-     return {direction: dir};
-  }
+  { return {direction: dir}; }
 
 ParticleArgumentType
-  = (VariableType / PrimitiveType / ListType)
+  = (VariableType / upperIdent / ListType)
 ListType
   = '[' pt:ParticleArgumentType ']' { return typeLiteral.viewOf(pt); }
 VariableType
-  = '~' name: VariableTypeName { return typeLiteral.namedTypeVariable(name); }
-VariableTypeName
-  = [a-z][a-zA-Z0-9]* { return text() }
-PrimitiveType
-  = [A-Z][a-zA-Z0-9]* { return text() }
+  = '~' name:lowerIdent { return typeLiteral.namedTypeVariable(name); }
 
-Affordance
+ParticleAffordance
   = 'affordance' whiteSpace affordance:('dom-touch' / 'dom' / 'vr' / 'voice') eolWhiteSpace
   { return {affordance}; }
 
@@ -133,16 +126,16 @@ ParticleSlot
   {
     let formFactor = null;
     let providedSlots = [];
-    items = items ? extractIndented(items) : [];
+    items = optional(items, extractIndented, []);
     items.forEach(item => {
       if (item.kind == 'provided-slot') {
         providedSlots.push(item);
       } else if (item.kind == 'form-factor') {
         if (formFactor)
-          assert ('duplicate form factor for a slot');
+          error('duplicate form factor for a slot');
         formFactor = item.formFactor;
       } else {
-        assert('Unsupported particle slot item ', item);
+        error('Unsupported particle slot item ', item);
       }
     });
     return {
@@ -175,7 +168,8 @@ ParticleProvidedSlot
     items = items ? extractIndented(items) : [];
     items.forEach(item => {
       if (item.kind == 'form-factor') {
-        // TODO: assert this is the only form factor.
+        if (formFactor)
+          error('duplicate form factor for a slot');
         formFactor = item.formFactor;
       } else {
         views.push(item.view);
@@ -198,23 +192,21 @@ ParticleProvidedSlotView
   { return {view}; }
 
 ParticleDescription
-  = 'description' eolWhiteSpace tokens:(Indent (SameIndent ParticleDescriptionToken)+)
+  = 'description' whiteSpace pattern:ParticleDescriptionPattern eolWhiteSpace viewDescriptions:(Indent (SameIndent ParticleViewDescription)+)
   {
-    // assert(!tokens);
-    tokens = extractIndented(tokens);
-    assert(tokens[0].name == 'pattern', 'Description must start with pattern.');
+    viewDescriptions = extractIndented(viewDescriptions);
     return {
       kind: 'description',
-      description: tokens
+      description: [{'name': 'pattern', 'pattern': pattern}].concat(viewDescriptions)
     };
   }
 
-ParticleDescriptionToken
-  = name:lowerIdent whiteSpace '`' pattern:ParticleDescriptionPattern '`' eolWhiteSpace
+ParticleViewDescription
+  = name:lowerIdent whiteSpace pattern:ParticleDescriptionPattern eolWhiteSpace
   {
     return { name, pattern };
   }
-ParticleDescriptionPattern = ([^`]+) { return text().trim() }
+ParticleDescriptionPattern = '`' pattern:([^`]+) '`' { return pattern.join(''); }
 
 Recipe
   = 'recipe' name:(whiteSpace upperIdent)? tags:(whiteSpace TagList)? eolWhiteSpace items:(Indent (SameIndent RecipeItem)*)?

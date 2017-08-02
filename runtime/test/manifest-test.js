@@ -52,10 +52,12 @@ describe('manifest', function() {
             formFactor medium
           provide annotation
         consume other
-        description
-          pattern \`hello world \${list}\`
+        description \`hello world \${list}\`
           list \`my special list\`
-      `);
+      particle NoArgsParticle in 'noArgsParticle.js'
+        NoArgsParticle()
+    `);
+    assert.equal(Object.keys(manifest.particles).length, 2);
   });
   it('can parse a manifest containing a schema', async () => {
     let manifest = await Manifest.parse(`
