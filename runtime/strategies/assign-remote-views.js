@@ -21,9 +21,10 @@ class AssignRemoteViews extends ViewMapperBase {
     var peopleViews = arc.findViews(Person.type.viewOf());
     // TODO: do this properly
     var people = peopleViews.map(view => view.toList()).reduce((a,b) => a.concat(b), [])
-      .map(a => a.rawData.name);
+        .map(a => a.rawData.name);
+    let contextPeople = context.people || {};
     people.forEach(person => {
-      this.mappable = this.mappable.concat(context[person]);
+      this.mappable.push(...(contextPeople[person] || []));
     });
   }
 
