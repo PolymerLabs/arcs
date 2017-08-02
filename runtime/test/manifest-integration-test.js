@@ -40,7 +40,7 @@ describe('manifest integration', () => {
     assert(view);
     let viewlet = Viewlet.viewletFor(view);
     // TODO: This should not be necessary.
-    viewlet.entityClass = new Schema(type.schema).entityClass();
+    viewlet.entityClass = new Schema(type.entitySchema).entityClass();
     let result = await viewlet.get();
     assert.equal(result.value, 'Hello, world!');
   });
