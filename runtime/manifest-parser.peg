@@ -430,4 +430,4 @@ whiteSpace
 eolWhiteSpace
   = [ ]* !.
   / [ ]* '#' [^\n]* eolWhiteSpace
-  / [ ]* '\n' eolWhiteSpace?
+  / [ ]* "\r"? "\n" "\r"? eolWhiteSpace?
