@@ -225,6 +225,7 @@ Recipe
 RecipeItem
   = RecipeParticle
   / RecipeView
+  / RecipeSlot
   / RecipeConnection
 
 Name
@@ -270,14 +271,22 @@ RecipeParticleConnection
   }
 
 RecipeParticleSlotConnection
-  = dir:('provide' / 'consume') whiteSpace param:(lowerIdent / '*') viewRef:(whiteSpace SlotViewRef)? name:(whiteSpace Name)? eolWhiteSpace
+  = 'consume' whiteSpace param:lowerIdent name:(whiteSpace Name)? eolWhiteSpace providedSlots:(Indent (SameIndent RecipeParticleProvidedSlot)*)?
   {
     return {
       kind: 'slot-connection',
       param,
-      dir,
-      viewRef: optional(viewRef, viewRef => viewRef[1], null),
       name: optional(name, name=>name[1], null),
+      providedSlots: optional(providedSlots, extractIndented, [])
+    };
+  }
+
+RecipeParticleProvidedSlot
+  = 'provide' whiteSpace param:lowerIdent name:(whiteSpace Name)? eolWhiteSpace
+  {
+    return {
+      param,
+      name: optional(name, name=>name[1], null)
     };
   }
 
@@ -354,10 +363,14 @@ ViewRef
   / tags:TagList
   { return {tags}; }
 
-SlotViewRef
-  = '(' name:lowerIdent? tags:TagList? ')'
+RecipeSlot
+  = 'slot' whiteSpace id:id name:(whiteSpace Name)? eolWhiteSpace
   {
-    return name ? {name, tags:[]} : {tags};
+    return {
+      kind: 'slot',
+      id,
+      name: optional(name, name => name[1], '')
+    }
   }
 
 Schema

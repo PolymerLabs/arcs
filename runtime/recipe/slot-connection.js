@@ -9,62 +9,75 @@ var assert = require('assert');
 var util = require('./util.js');
 
 class SlotConnection {
-  constructor(name, direction, particle) {
+  constructor(name, particle) {
     assert(particle);
     assert(particle.recipe);
+    assert(name);
+
     this._recipe = particle.recipe;
-    this._name = name;  // name is unique across same Particle's provided slots.
-    this._slot = undefined;
-    this._particle = particle;  // consumer / provider
-    this._tags = [];
-    this._viewConnections = [];
-    this._direction = direction;
-    this._formFactors = [];
-    this._required = true;  // TODO: support optional slots; currently every slot is required.
+    this._particle = particle;
+    this._name = name;
+    this._slotSpec = undefined;  // isRequired + formFactor
+    this._targetSlot = undefined;  // Slot?
+    this._providedSlots = {};      // Slot*
+  }
+
+  get recipe() { return this._recipe; }
+  get particle() { return this._particle; }
+  get name() { return this._name; }
+  get slotSpec() { return this._slotSpec; }
+  get targetSlot() { return this._targetSlot; }
+  get providedSlots() { return this._providedSlots; }
+
+  set slotSpec(slotSpec) {
+    assert(this.name == slotSpec.name);
+    this._slotSpec = slotSpec;
+  }
+
+  connectToSlot(targetSlot) {
+    assert(targetSlot);
+    assert(!this.targetSlot);
+    assert(this.recipe == targetSlot.recipe, 'Cannot connect to slot from different recipe');
+
+    this._targetSlot = targetSlot;
+    targetSlot.consumeConnections.push(this);
   }
 
   clone(particle, cloneMap) {
-    var slotConnection = new SlotConnection(this._name, this._direction, particle);
-    slotConnection._tags = [...this._tags];
-    slotConnection._formFactors = [...this._formFactors];
-    slotConnection._required = this._required;
-    if (this._slot != undefined) {
-      slotConnection.connectToSlot(cloneMap.get(this._slot));
+    if (cloneMap.has(this)) {
+      return cloneMap.get(this);
     }
-    this._viewConnections.forEach(viewConn => slotConnection._viewConnections.push(viewConn.clone(particle, cloneMap)));
+    var slotConnection = new SlotConnection(this.name, particle);
+    if (this.slotSpec) {
+      slotConnection.slotSpec = particle.spec.getSlotSpec(this.name);
+    }
+    if (this.targetSlot) {
+      slotConnection.connectToSlot(cloneMap.get(this.targetSlot));
+    }
+    Object.keys(this.providedSlots).forEach(ps => {
+      slotConnection.providedSlots[ps] = cloneMap.get(this.providedSlots[ps]);
+    });
+
     cloneMap.set(this, slotConnection);
     return slotConnection;
   }
 
   _normalize() {
-    this._tags.sort();
-    this._formFactors.sort();
+    let normalizedSlots = {};
+    for (let key of (Object.keys(this._providedSlots).sort())) {
+      normalizedSlots[key] = this._providedSlots[key];
+    }
+    this._providedSlots = normalizedSlots;
     Object.freeze(this);
   }
 
   _compareTo(other) {
     let cmp;
-    if ((cmp = util.compareComparables(this._slot, other._slot)) != 0) return cmp;
+    if ((cmp = util.compareStrings(this.name, other.name)) != 0) return cmp;
+    if ((cmp = util.compareComparables(this._targetSlot, other._targetSlot)) != 0) return cmp;
     if ((cmp = util.compareComparables(this._particle, other._particle)) != 0) return cmp;
-    if ((cmp = util.compareStrings(this._name, other._name)) != 0) return cmp;
-    if ((cmp = base.compreArrays(this._tags, other._tags, util.compareStrings)) != 0) return cmp;
-    if ((cmp = util.compareStrings(this._direction, other._direction)) != 0) return cmp;
-    if ((cmp = util.compareArrays(this._formFactors, other._formFactors, util.compareStrings)) != 0) return cmp;
-    if ((cmp = util.compareBools(this._required, other._required)) != 0) return cmp;
-    // viewConnections?
     return 0;
   }
-
-  // TODO: slot functors??
-  get recipe() { return this._recipe; }
-  get name() { return this._name; }
-  get tags() { return this._tags; }
-  get viewConnections() { return this._viewConnections; } // ViewConnection*
-  get direction() { return this._direction; } // provide/consume
-  get formFactors() { return this._formFactors; } // string*
-  get required() { return this._required; } // bool
-  get slot() { return this._slot; } // Slot?
-  get particle() { return this._particle; } // Particle
 
   _isValid() {
     // TODO: implement
@@ -72,46 +85,17 @@ class SlotConnection {
   }
 
   isResolved() {
-    return this.slot && this.slot.isResolved();
-  }
-
-  connectToView(name) {
-    assert(this.particle.connections[name], `Cannot connect slot to nonexistent view parameter ${name}`);
-    this._viewConnections.push(this.particle.connections[name]);
-  }
-
-  connectToSlot(slot) {
-    assert(this.recipe == slot.recipe, "Cannot connect to slot from non matching recipe");
-    assert(!this._slot, "Cannot override slot connection");
-    this._slot = slot;
-    if (this.direction == "provide") {
-      assert(this._slot.providerConnection == undefined, "Cannot override Slot provider");
-      this._slot._providerConnection = this;
-    } else if (this.direction == "consume") {
-      this._slot._consumerConnections.push(this);
-    } else {
-      fail(`Unsupported direction ${this.direction}`);
-    }
-  }
-
-  isResolved() {
-    return this.slot && this.slot.isResolved();
+    // TODO: implement
+    return true;
   }
 
   toString(nameMap) {
     let result = [];
-    result.push(this.direction == "provide" ? "provide" : "consume");
-    result.push(this.name);
-    if (this.viewConnections.length > 0) {
-      result.push(`(${this.viewConnections.map(v => v.name || v.tags).join(",")})`);
-    } else if (this.tags.length > 0) {
-      result.push(`(${[...this.tags]})`);
-    }
-    if (this.slot) {
-      result.push(`as ${(nameMap && nameMap.get(this.slot)) || this.slot.localName}`);
-    }
-    result.push(...this.formFactors);
-    return result.join(' ');
+    result.push(`consume ${this.name} as ${(nameMap && nameMap.get(this.targetSlot)) || this.targetSlot.localName}`)
+    Object.keys(this.providedSlots).forEach(psName => {
+      result.push(`  provide ${psName} as ${(nameMap && nameMap.get(this.providedSlots[psName])) || this.providedSlots[psName]}`);
+    })
+    return result.join("\n");
   }
 }
 

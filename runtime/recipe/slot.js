@@ -11,65 +11,58 @@ var util = require('./util.js');
 class Slot {
   constructor(recipe) {
     assert(recipe);
+
     this._recipe = recipe;
-    this._id = undefined;
-    this._localName = undefined;
-    this._providerConnection = undefined;
-    this._consumerConnections = [];
-  }
+    this._id = undefined;          // The ID of the slot in the context
+    this._localName = undefined;   // Local id within the recipe
 
-  clone(recipe, cloneMap) {
-    var slot = new Slot(recipe);
-    slot._id = this._id;
-    // the connections are re-established when Particles clone their attached SlotConnection objects.
-    return slot;
-  }
-
-  _startNormalize() {
-    this._localName = null;
-  }
-
-  _finishNormalize() {
-    assert(Object.isFrozen(this._providerConnection));
-    for (let consumerConn of this._consumerConnections) {
-      assert(Object.isFrozen(consumerConn));
-    }
-    this._consumerConnections.sort(util.compareComparables);
-    Object.freeze(this);
-  }
-
-  _compareTo(other) {
-    let cmp;
-    if ((cmp = util.compareStrings(this._id, other._id)) != 0) return cmp;
-    if ((cmp = util.compareStrings(this._localName, other._localName)) != 0) return cmp;
-    return 1;
+    this._formFactor = undefined;
+    this._viewConnections = [];  // ViewConnection* (can only be set if source connection is set and particle in slot connections is set)
+    this._sourceConnection = undefined;  // SlotConnection
+    this._consumerConnections = [];  // SlotConnection*
   }
 
   get recipe() { return this._recipe; }
   get id() { return this._id; }
   set id(id) { this._id = id; }
   get localName() { return this._localName; }
-  set localName(name) { this._localName = name; }
-  get providerConnection() { return this._providerConnection; }
-  get consumerConnections() { return this._consumerConnections; }
+  set localName(localName) { this._localName = localName; }
+  get formFactor() { return this._formFactor; }
+  set formFactor(formFactor) { this._formFactor = formFactor; }
+  get viewConnections() { return this._viewConnections; }
+  get sourceConnection() { return this._sourceConnection; }
+  get consumeConnections() { return this._consumerConnections; }
+
+  clone(recipe, cloneMap) {
+    var slot = new Slot(recipe);
+    slot._id = this.id;
+    slot._formFactor = this.formFactor;
+    // the connections are re-established when Particles clone their attached SlotConnection objects.
+    return slot;
+  }
+
+  _startNormalize() {
+    this.localName = null;
+  }
+
+  _finishNormalize() {
+    assert(Object.isFrozen(this._source));
+    this._consumerConnections.forEach(cc => assert(Object.isFrozen(cc)));
+    this._consumerConnections.sort(util.compareComparables);
+    Object.freeze(this);
+  }
+
+  _compareTo(other) {
+    let cmp;
+    if ((cmp = util.compareStrings(this.id, other.id)) != 0) return cmp;
+    if ((cmp = util.compareStrings(this.localName, other.localName)) != 0) return cmp;
+    if ((cmp = util.compareStrings(this.formFactor, other.formFactor)) != 0) return cmp;
+    return 0;
+  }
 
   isResolved() {
-    if (!!this.id) {
-      return false;
-    }
-    if (this.providerConnection) {
-      if (this.providerConnection.viewConnections.length == 0) {
-        // The providing particle doesn't restrict view generated in this slot.
-        return true;
-      }
-      for (let provideViewConn of this.providerConnection.viewConnections) {
-        // The consuming slots must ALL comply with either of the view connections enforced by the providing particle.
-        return this.consumerConnections.every(c => c.particle && Object.values(c.particle.connections).find(v => v.id == provideViewConn.id));
-      }
-    } else {
-      // Note: "root" slot doesn't have a "provide" connection, hence it must have "consume" connections.
-      return this.consumerConnections.length > 0;
-    }
+    // TODO: implement
+    return true;
   }
 
   _isValid() {
@@ -78,7 +71,9 @@ class Slot {
   }
 
   toString(nameMap) {
-    return '';
+    if (this.id)
+      return `slot '${this.id}' as ${(nameMap && nameMap.get(this)) || this.localName}`;
+
   }
 }
 

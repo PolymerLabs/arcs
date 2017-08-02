@@ -19,25 +19,26 @@ class Particle {
     this._localName = undefined;
     this._spec = undefined;
     this._tags = [];
-    this._providedSlots = [];
-    this._consumedSlots = [];
+
     this._connections = {};
     // TODO: replace with constraint connections on the recipe
     this._unnamedConnections = [];
+    this._consumedSlotConnections = {};  // map of consumed Slot connections by slot name.
   }
 
   clone(recipe, cloneMap) {
     var particle = new Particle(recipe, this._name);
     particle._id  = this._id;
     particle._tags = [...this._tags];
-    particle._providedSlots = this._providedSlots.map(slotConn => slotConn.clone(particle, cloneMap));
-    particle._consumedSlots = this._consumedSlots.map(slotConn => slotConn.clone(particle, cloneMap));
+    particle._spec = this._spec;
+
     Object.keys(this._connections).forEach(key => {
       particle._connections[key] = this._connections[key].clone(particle, cloneMap);
     });
     particle._unnamedConnections = this._unnamedConnections.map(connection => connection.clone(particle, cloneMap));
-
-    particle._spec = this._spec;
+    Object.keys(this._consumedSlotConnections).forEach(key => {
+      particle._consumedSlotConnections[key] = this._consumedSlotConnections[key].clone(particle, cloneMap);
+    });
 
     return particle;
   }
@@ -50,6 +51,12 @@ class Particle {
       normalizedConnections[key] = this._connections[key];
     }
     this._connections = normalizedConnections;
+
+    let normalizedSlotConnections = {};
+    for (let key of (Object.keys(this._consumedSlotConnections).sort())) {
+      normalizedSlotConnections[key] = this._consumedSlotConnections[key];
+    }
+    this._consumedSlotConnections = normalizedSlotConnections;
   }
 
   _finishNormalize() {
@@ -92,10 +99,9 @@ class Particle {
   get spec() { return this._spec; }
   get tags() { return this._tags; }
   set tags(tags) { this._tags = tags; }
-  get providedSlots() { return this._providedSlots; } // SlotConnection*
-  get consumedSlots() { return this._consumedSlots; } // SlotConnection*
   get connections() { return this._connections; } // {parameter -> ViewConnection}
   get unnamedConnections() { return this._unnamedConnections; } // ViewConnection*
+  get consumedSlotConnections() { return this._consumedSlotConnections; }
 
   set spec(spec) {
     this._spec = spec;
@@ -110,16 +116,9 @@ class Particle {
       connection.type = speccedConnection.type;
       connection.direction = speccedConnection.direction;
     }
-    spec.renders.forEach(slot => {
-      let slotConn = this.addSlotConnection(slot.name.name, "consume");
-      if (slot.name.view)
-      slotConn.connectToView(slot.name.view);
-    });
-    spec.exposes.forEach(slot => {
-      let slotConn = this.addSlotConnection(slot.name, "provide");
-      slotConn.connectToSlot(this.recipe.newSlot());
-      if (slot.view)
-      slotConn.connectToView(slot.view);
+    spec.slots.forEach(slotSpec => {
+      let slotConn = this.addSlotConnection(slotSpec.name);
+      slotConn.slotSpec = slotSpec;
     });
   }
 
@@ -151,10 +150,10 @@ class Particle {
     this._unnamedConnections.splice(idx, 1);
   }
 
-  addSlotConnection(name, direction) {
-    let slots = direction == "consume" ? this.consumedSlots : this.providedSlots;
-    slots.push(new SlotConnection(name, direction, this));
-    return slots[slots.length - 1];
+  addSlotConnection(name) {
+    let slotConn = new SlotConnection(name, this);
+    this._consumedSlotConnections[name] = slotConn;
+    return slotConn;
   }
 
   toString(nameMap) {
@@ -170,10 +169,7 @@ class Particle {
     for (let connection of Object.values(this.connections)) {
       result.push(connection.toString(nameMap).replace(/^|(\n)/g, '$1  '));
     }
-    for (let slotConnection of this.consumedSlots) {
-      result.push(slotConnection.toString(nameMap).replace(/^|(\n)/g, '$1  '));
-    }
-    for (let slotConnection of this.providedSlots) {
+    for (let slotConnection of Object.values(this._consumedSlotConnections)) {
       result.push(slotConnection.toString(nameMap).replace(/^|(\n)/g, '$1  '));
     }
     return result.join('\n')

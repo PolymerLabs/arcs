@@ -99,8 +99,7 @@ class Recipe {
   get slotConnections() {  // SlotConnection*
     var slotConnections = [];
     this._particles.forEach(particle => {
-      slotConnections.push(...particle._providedSlots);
-      slotConnections.push(...particle._consumedSlots);
+      slotConnections.push(...Object.values(particle.consumedSlotConnections));
     });
     return slotConnections;
   }
@@ -204,10 +203,16 @@ class Recipe {
     let seenSlots = new Set();
     let slots = [];
     for (let slotConnection of slotConnections) {
-      if (slotConnection.slot && !seenSlots.has(slotConnection.slot)) {
-        slots.push(slotConnection.slot);
-        seenSlots.add(slotConnection.slot);
+      if (slotConnection.targetSlot && !seenSlots.has(slotConnection.targetSlot)) {
+        slots.push(slotConnection.targetSlot);
+        seenSlots.add(slotConnection.targetSlot);
       }
+      Object.values(slotConnection.providedSlots).forEach(ps => {
+        if (!seenSlots.has(ps)) {
+          slots.push(ps);
+          seenSlots.add(ps);
+        }
+      })
     }
 
     // Put particles and views in their final ordering.
@@ -319,7 +324,10 @@ class Recipe {
       result.push(view.toString(nameMap).replace(/^|(\n)/g, '$1  '));
     }
     for (let slot of this.slots) {
-      result.push(slot.toString(nameMap).replace(/^|(\n)/g, '$1  '));
+      let slotString = slot.toString(nameMap);
+      if (slotString) {
+        result.push(slotString.replace(/^|(\n)/g, '$1  '));
+      }
     }
     for (let particle of this.particles) {
       result.push(particle.toString(nameMap).replace(/^|(\n)/g, '$1  '));
