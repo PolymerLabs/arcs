@@ -74,9 +74,9 @@ class ParticleSpec {
     this.description = model.description;
     this.implFile = model.implFile;
     this.affordance = model.affordance;
-    this.slots = [];
+    this.slots = new Map();
     if (model.slots)
-      model.slots.forEach(s => this.slots.push(new SlotSpec(s)));
+      model.slots.forEach(s => this.slots.set(s.name, new SlotSpec(s)));
     // Verify provided slots use valid view connection names.
     this.slots.forEach(slot => {
       slot.providedSlots.forEach(ps => {
@@ -98,6 +98,10 @@ class ParticleSpec {
 
   isOutput(param) {
     for (let outputs of this.outputs) if (outputs.name == param) return true;
+  }
+
+  getSlotSpec(slotName) {
+    return this.slots.get(slotName);
   }
 
   toLiteral() {

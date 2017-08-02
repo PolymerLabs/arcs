@@ -144,6 +144,8 @@ class Manifest {
       byView: new Map(),
       particles: recipeItem.items.filter(item => item.kind == 'particle'),
       byParticle: new Map(),
+      slots: recipeItem.items.filter(item => item.kind == 'slot'),
+      bySlot: new Map(),
       byName: new Map(),
       connections: recipeItem.items.filter(item => item.kind == 'connection')
     };
@@ -166,6 +168,19 @@ class Manifest {
       }
       view.create = item.create;
       items.byView.set(view, item);
+    }
+
+    for (let item of items.slots) {
+      let slot = recipe.newSlot();
+      if (item.id) {
+        slot.id = item.id;
+      }
+      if (item.name) {
+        assert(!items.byName.has(item.name), `Duplicate slot local name ${item.name}`);
+        slot.localName = item.name;
+        items.byName.set(item.name, slot);
+      }
+      items.bySlot.set(slot, item);
     }
 
     // TODO: disambiguate.
@@ -260,28 +275,29 @@ class Manifest {
         }
       }
       for (let slotConnectionItem of item.slotConnections) {
-        let slotConn = particle.addSlotConnection(slotConnectionItem.param, slotConnectionItem.dir);
-        if (slotConnectionItem.name) {
-          let slot = items.byName.get(slotConnectionItem.name);
-          if (!slot) {
-            slot = recipe.newSlot();
-            slot.localName = slotConnectionItem.name;
-            items.byName.set(slotConnectionItem.name, slot);
-          }
-          slotConn.connectToSlot(slot);
+        let slotConn = particle.consumedSlotConnections[slotConnectionItem.param];
+        if (!slotConn) {
+          slotConn = particle.addSlotConnection(slotConnectionItem.param);
         }
-        if (slotConnectionItem.viewRef) {
-          assert(slotConnectionItem.dir == "provide");
-          if (slotConnectionItem.viewRef.name) {
-            assert(slotConnectionItem.viewRef.tags.length == 0);
-            let viewConn = particle.connections[slotConnectionItem.viewRef.name];
-            assert(viewConn, `Slot ${slotConnectionItem.name} cannot use nonexistent view connection ${slotConnectionItem.viewRef.name}`);
-            slotConn.viewConnections.push(viewConn);
-          } else if (slotConnectionItem.viewRef.tags.length > 0) {
-            slotConnectionItem.viewRef.tags.forEach(t => slotConn.tags.push(t));
-          } else {
-            fail(`Unsupported view ref for slot ${slotConnectionItem.name}`);
+        if (slotConnectionItem.name) {
+          let targetSlot = items.byName.get(slotConnectionItem.name);
+          if (!targetSlot) {
+            targetSlot = recipe.newSlot();
+            targetSlot.localName = slotConnectionItem.name;
+            items.byName.set(slotConnectionItem.name, targetSlot);
           }
+          slotConn.connectToSlot(targetSlot);
+
+          slotConnectionItem.providedSlots.forEach(ps => {
+            let providedSlot = items.byName.get(ps.name) || slotConn.providedSlots[ps.param];
+            if (!providedSlot) {
+              providedSlot = recipe.newSlot();
+              providedSlot.localName = ps.name;
+            }
+            if (!slotConn.providedSlots[ps.param]) {
+              slotConn.providedSlots[ps.param] = providedSlot;
+            }
+          });
         }
       }
     }

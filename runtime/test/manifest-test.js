@@ -278,42 +278,47 @@ describe('manifest', function() {
     assert.equal(manifest.schemas.Bar.normative.value, 'Text');
   });
   it('can parse a manifest containing a recipe with slots', async () => {
+
     let manifest = await Manifest.parse(`
+      schema Thing
+      particle SomeParticle in 'some-particle.js'
+        SomeParticle(in Thing someParam)
+        consume mySlot
+          formFactor big
+          provide otherSlot
+            view someParam
+          provide oneMoreSlot
+            formFactor small
       recipe SomeRecipe
         map #someView1 as myView
+        slot 'slotIDs:A' as slot0
+        slot 'slotIds:B' as slot1
         SomeParticle
           someParam -> myView
-          consume mySlot
-          provide otherSlot (someParam) as slot0
-          provide oneMoreSlot (#someView) as slot1
+          consume mySlot as slot0
+            provide otherSlot as slot2
+            provide oneMoreSlot as slot1
         OtherParticle
           aParam -> myView
-          consume aSlot as slot1
-          consume bSlot as slot0
+          consume aSlot as slot0
+          consume bSlot as slot1
           `);
     let recipe = manifest.recipes[0];
     assert(recipe);
+    recipe.normalize();
+
     assert.equal(recipe.particles.length, 2);
     assert.equal(recipe.views.length, 1);
     assert.equal(recipe.viewConnections.length, 2);
-    assert.equal(recipe.slots.length, 2);
-    assert.equal(recipe.slotConnections.length, 5);
-    assert.equal(recipe.particles[0].consumedSlots.length, 1);
-    assert.equal(recipe.particles[0].consumedSlots[0].viewConnections.length, 0);
-    assert.equal(recipe.particles[0].providedSlots.length, 2);
-    assert.equal(recipe.particles[0].providedSlots[0].slot.localName, "slot0");
-    assert.equal(recipe.particles[0].providedSlots[1].slot.localName, "slot1");
-    assert.equal(recipe.particles[0].providedSlots[0].viewConnections.length, 1);
-    assert.equal(recipe.particles[0].providedSlots[0].viewConnections[0].name, "someParam");
-    assert.equal(recipe.particles[0].providedSlots[0].tags.length, 0);
-    assert.equal(recipe.particles[0].providedSlots[1].viewConnections.length, 0);
-    assert.equal(recipe.particles[0].providedSlots[1].tags, "#someView");
-    assert.equal(recipe.particles[1].consumedSlots.length, 2);
-    assert.equal(recipe.particles[1].consumedSlots[0].slot.localName, "slot1");
-    assert.equal(recipe.particles[1].consumedSlots[0].viewConnections.length, 0);
-    assert.equal(recipe.particles[1].consumedSlots[1].slot.localName, "slot0");
-    assert.equal(recipe.particles[1].consumedSlots[1].viewConnections.length, 0);
-    assert.equal(recipe.particles[1].providedSlots.length, 0);
+    debugger;
+    assert.equal(recipe.slots.length, 3);
+    assert.equal(recipe.slotConnections.length, 3);
+    assert.equal(Object.keys(recipe.particles[0].consumedSlotConnections).length, 1);
+    let mySlot = recipe.particles[0].consumedSlotConnections['mySlot'];
+    assert.isDefined(mySlot.targetSlot);
+    assert.equal(Object.keys(mySlot.providedSlots).length, 2);
+    assert.equal(mySlot.providedSlots["otherSlot"].localName, "slot2");
+    assert.equal(mySlot.providedSlots["oneMoreSlot"].localName, "slot1");
   });
   it('relies on the loader to combine paths', async () => {
     let registry = {};
