@@ -12,8 +12,6 @@
 var Resolver = require('./resolver.js');
 var Speculator = require('./speculator.js');
 var DescriptionGenerator = require('./description-generator.js');
-var Type = require('./type.js');
-var TypeLiteral = require('./type-literal.js');
 var tracing = require('tracelib');
 
 class Suggestinator {

@@ -30,6 +30,7 @@ describe('Arc', function() {
 
   it('applies existing runtime to a particle', async () => {
     let arc = new Arc({loader, slotComposer});
+    console.log(Foo.type, Foo.type.isEntity);
     let fooView = arc.createView(Foo.type);
     viewlet.viewletFor(fooView).set(new Foo({value: 'a Foo'}));
     let barView = arc.createView(Bar.type);

@@ -63,7 +63,7 @@ class Arc {
         arc.mapView(view);
       } else {
         // TODO add a separate deserialize constructor for view?
-        var view = arc.createView(new Type(serializedView.type), serializedView.name, serializedView.id);
+        var view = arc.createView(new Type(serializedView.type.tag, serializedView.type.data), serializedView.name, serializedView.id);
         view._version = serializedView.version;
 
         if (serializedView.sort == 'view') {
@@ -195,7 +195,7 @@ class Arc {
   createView(type, name, id, tags) {
     assert(type instanceof Type, "can't createView with a type that isn't a Type");
     if (type.isRelation)
-      type = type.viewOf(this);
+      type = Type.newView(type);
     if (type.isView) {
       var v = new view.View(type, this, name, id);
     } else {
@@ -226,10 +226,10 @@ class Arc {
   //       instead of using just the name.
   static _viewKey(type) {
     if (type.isView) {
-      return `list:${type.primitiveType().schema.name}`;
+      return `list:${type.primitiveType().entitySchema.name}`;
     } else {
       assert(type.isEntity);
-      return type.schema.name;
+      return type.entitySchema.name;
     }
   }
 
@@ -276,11 +276,11 @@ class Arc {
   commit(entities) {
     let entityMap = new Map();
     for (let entity of entities) {
-      entityMap.set(entity, this._viewFor(entity.constructor.type.viewOf()));
+      entityMap.set(entity, this._viewFor(Type.newView(entity.constructor.type)));
     }
     for (let entity of entities) {
       if (entity instanceof Relation) {
-        entity.entities.forEach(entity => entityMap.set(entity, this._viewFor(entity.constructor.type.viewOf())));
+        entity.entities.forEach(entity => entityMap.set(entity, this._viewFor(Type.newView(entity.constructor.type))));
       }
     }
     this.newCommit(entityMap);

@@ -106,7 +106,6 @@ class InnerPEC {
   }
 
   _instantiateParticle(spec, views) {
-    spec = new ParticleSpec(spec);
     let name = spec.name;
     let clazz = this._loader.loadParticleClass(spec);
     let particle = new clazz();
@@ -162,9 +161,9 @@ class InnerPEC {
       var type = view.underlyingView().type;
       let schemaModel;
       if (type.isView) {
-        schemaModel = type.primitiveType().schema;
+        schemaModel = type.primitiveType().entitySchema;
       } else {
-        schemaModel = type.schema;
+        schemaModel = type.entitySchema;
       }
       view.entityClass = new Schema(schemaModel).entityClass();
     }

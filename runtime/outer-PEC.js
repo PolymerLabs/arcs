@@ -118,7 +118,7 @@ class OuterPEC extends PEC {
 
     // TODO: rename this concept to something like instantiatedParticle, handle or registration.
     var particleSpec = {spec, views, renderMap, exposeMap};
-    this._apiPort.InstantiateParticle(particleSpec, {spec: spec._model, views});
+    this._apiPort.InstantiateParticle(particleSpec, {spec, views});
     return particleSpec;
   }
 
