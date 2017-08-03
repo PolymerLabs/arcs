@@ -32,12 +32,10 @@ describe('Planner', function() {
     planner.init(arc, {
       recipes: manifest.recipes,
     });
-    var generated = [
-      ...await planner.generate(),
-      ...await planner.generate(),
-      ...await planner.generate(),
-    ];
-    assert.equal(8, generated.length);
+    await planner.generate(),
+    await planner.generate(),
+    await planner.generate(),
+    assert.equal(planner.strategizer.population.length, 8);
   });
 
   it('make a plan with views', async () => {
@@ -49,12 +47,10 @@ describe('Planner', function() {
     planner.init(arc, {
       recipes: manifest.recipes,
     });
-    var generated = [
-      ...await planner.generate(),
-      ...await planner.generate(),
-      ...await planner.generate(),
-    ];
-    assert.equal(10, generated.length);
+    await planner.generate(),
+    await planner.generate(),
+    await planner.generate(),
+    assert.equal(planner.strategizer.population.length, 10);
   });
 });
 
