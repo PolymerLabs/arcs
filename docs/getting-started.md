@@ -30,7 +30,7 @@ When the demo is loaded, the Arcs runtime does the following:
 <table>
   <tr>
    <td>
-     <img src="images/demo.gif" width="" alt="alt_text" title="image_tooltip" style="max-width=1024px;">
+     <img src="images/demo.gif" width="1000px" alt="alt_text" title="image_tooltip">
    </td>
    <td>Once the Arc is set up, the DEMO will suggest the "Hello, World!" recipe to the user by rendering a suggestion in toast at the bottom of the screen. The recipe gets suggested to the user because all of the inputs and UI affordance required for the recipe to run are available.
 <p>
