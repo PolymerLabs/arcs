@@ -109,8 +109,19 @@ class OuterPEC extends PEC {
     }
 
     var renderMap = new Map();
-    spec.renders.forEach(
-      render => renderMap.set(render.name.name, views.get(render.name.view)));
+    spec.renders.forEach(render => {
+      let renderViews = [];
+      if (render.name.view && views.has(render.name.view))
+        renderViews.push(views.get(render.name.view));
+      else if (render.name.views) {
+        render.name.views.forEach(v => {
+          if (views.has(v)) {
+            renderViews.push(views.get(v));
+          }
+        })
+      }
+      renderMap.set(render.name.name, renderViews);
+    });
 
     var exposeMap = new Map();
     spec.exposes.forEach(

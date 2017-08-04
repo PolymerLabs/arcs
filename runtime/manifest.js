@@ -109,20 +109,6 @@ class Manifest {
     manifest._schemas[schemaItem.name] = new Schema(schemaItem);
   }
   static _processParticle(manifest, particleItem, loader) {
-    // Populate old particle spec "renders" and "exposes" fields.
-    // TODO(mmandlis): get rid of it when migrated to new specs.
-    particleItem.renders = [];
-    particleItem.exposes = [];
-    particleItem.slots.forEach(slot => {
-      particleItem.renders.push({ name : {name : slot.name}, min: 'none', max: 'need' });
-      slot.providedSlots.forEach(providedSlot => {
-        let exposedSlot = {name: providedSlot.name};
-        if (providedSlot.views.length > 0) {
-          exposedSlot.view = providedSlot.views[0];
-        }
-        particleItem.exposes.push(exposedSlot);
-      });
-    });
     // TODO: loader should not be optional.
     if (particleItem.implFile && loader) {
       particleItem.implFile = loader.join(manifest.fileName, particleItem.implFile);

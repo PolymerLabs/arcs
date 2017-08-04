@@ -85,7 +85,7 @@ describe('dom-slot', function() {
     assert.isTrue(slot.isAvailable());
 
     // Successfully associate particle.
-    particle.renderMap.set(slot.slotid, v);
+    particle.renderMap.set(slot.slotid, [v]);
     slot.associateWithParticle(particle)
     assert.isFalse(slot.isAvailable());
   });
