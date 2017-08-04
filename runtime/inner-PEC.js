@@ -99,6 +99,10 @@ class InnerPEC {
     this._apiPort.onLostSlots = ({particles}) => particles.forEach(particle => particle.slotReleased());
 
     this._apiPort.onUIEvent = ({particle, event}) => particle.fireEvent(event);
+
+    this._apiPort.onStartRender = ({particle, slotName, types}) => { /* TODO: particle.startRender(slotName, types); */ }
+
+    this._apiPort.onStopRender = ({particle, slotName}) => { /* TODO: particle.stopRender(slotName); */ }
   }
 
   generateID() {
