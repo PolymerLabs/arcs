@@ -27,22 +27,15 @@ When the demo is loaded, the Arcs runtime does the following:
 *   Insert a Person entity named "Claire" into the Arc's context.
 *   Add the "Hello, World!" recipe to the Arc.
 
-<table>
-  <tr>
-   <td>
-     <img src="images/demo.gif" width="1000px" alt="alt_text" title="image_tooltip">
-   </td>
-   <td>Once the Arc is set up, the DEMO will suggest the "Hello, World!" recipe to the user by rendering a suggestion in toast at the bottom of the screen. The recipe gets suggested to the user because all of the inputs and UI affordance required for the recipe to run are available.
-<p>
-Clicking on the suggestion runs all the particles in the recipe and renders their output in the main UI slot. A UI slot corresponds to a named DOM element that particles may render content into. In this example the Greet particle renders a green <code><div></code> into the main Arcs UI slot called "root".
-<p>
-This recipe includes a simple illustration of particle composition: the Greet particle exposes a UI slot called "customgreeting" for another particle to render UI into. The PersonalGreet particle expects a "customgreeting" UI slot to be available and renders a yellow <code><div></code> into that slot.
-<p>
-Note that these two particles don't need to know about each other (however they both know about the "customgreeting" slot) and would typically be written by different developers.
-   </td>
-  </tr>
-</table>
+![Demo](/images/demo.gif)
 
+Once the Arc is set up, the DEMO will suggest the "Hello, World!" recipe to the user by rendering a suggestion in toast at the bottom of the screen. The recipe gets suggested to the user because all of the inputs and UI affordance required for the recipe to run are available.
+
+Clicking on the suggestion runs all the particles in the recipe and renders their output in the main UI slot. A UI slot corresponds to a named DOM element that particles may render content into. In this example the Greet particle renders a green `<div>` into the main Arcs UI slot called "root".
+
+This recipe includes a simple illustration of particle composition: the Greet particle exposes a UI slot called "customgreeting" for another particle to render UI into. The PersonalGreet particle expects a "customgreeting" UI slot to be available and renders a yellow `<div>` into that slot.
+
+Note that these two particles don't need to know about each other (however they both know about the "customgreeting" slot) and would typically be written by different developers.
 
 You can [run the demo](https://arcs-demos-hello-world.glitch.me/) and even [edit the demo](https://glitch.com/edit/#!/arcs-demos-hello-world) hosted on Glitch. In the following sections we pull the demo apart and describe the different parts of the demo in more detail.
 
