@@ -30,9 +30,7 @@ When the demo is loaded, the Arcs runtime does the following:
 <table>
   <tr>
    <td>
-
-<img src="images/demo.gif" width="" alt="alt_text" title="image_tooltip">
-
+     <img src="images/demo.gif" width="" alt="alt_text" title="image_tooltip" style="max-width=1024px;">
    </td>
    <td>Once the Arc is set up, the DEMO will suggest the "Hello, World!" recipe to the user by rendering a suggestion in toast at the bottom of the screen. The recipe gets suggested to the user because all of the inputs and UI affordance required for the recipe to run are available.
 <p>
@@ -63,10 +61,7 @@ The recipe declares the particles that constitute (and run as part of) the progr
 For the demo we have four different manifest files. One for every particle and one that pulls it all together and describes the recipe. Let's look at the higher-level recipe manifest first.
 
 
-```
 TODO: show new format recipe manifests for the demo. As of now, recipes are coded in JavaScript. See hello-world.js.
-```
-
 
 The recipe lists all of the particles running in the demo and declares how data flows between these particles by connecting views and UI slots. E.g., the HelloWorld particle outputs a Message named "hello" and Greet takes in a Message named "message". The recipe will declare that the output of HelloWorld should flow into the input of Greet. Note that Greet doesn't know of the existence of HelloWorld. It doesn't care where the message is coming from.
 
@@ -76,8 +71,7 @@ HelloWorld(out Message hello)
 Greet(in Message message)
 ```
 
-
-The demo only uses singleton views. Arcs also supports set views, e.g., ShowProductList(in [Product] products). See [view.js](https://github.com/PolymerLabs/arcs/blob/master/runtime/view.js) for a complete description of the view interface.
+The demo only uses singleton views. Arcs also supports set views, e.g., `ShowProductList(in [Product] products)`. See [view.js](https://github.com/PolymerLabs/arcs/blob/master/runtime/view.js) for a complete description of the view interface.
 
 
 ## Slots
@@ -86,7 +80,7 @@ Slots are named UI placeholders where particles can render content into. E.g., t
 
 Slots are also the mechanism by which UI composes in Arcs. E.g., the Greet particle renders DOM inside the root slot and exposes a new slot for another particle to render additional content into its DOM. The Greet DOM output contains the following tag: `<div slotid="customgreeting"></div>`. The PersonalGreet particle can then specify in its manifest that it wants to be rendered into the 'customgreeting' slot.
 
-TODO: describe more complex slot composition (e.g., interleaved lists). 
+TODO: describe more complex slot composition (e.g., interleaved lists).
 
 
 ## Particles
@@ -94,10 +88,7 @@ TODO: describe more complex slot composition (e.g., interleaved lists).
 A particle is the basic unit of computation in Arcs. Simply put it's a JavaScript file that contains a class that inherits either from [DomParticle](https://github.com/PolymerLabs/arcs/blob/master/runtime/dom-particle.js) (if the particle renders DOM UI) or from its parent class [Particle](https://github.com/PolymerLabs/arcs/blob/master/runtime/particle.js) (if it only operates on input and output views).
 
 
-```
 TODO: show the basic new format particle manifest and link to the spec.
-```
-
 
 Particles may gain access to sensitive user data through input views. To avoid data leaks and protect user privacy, particles run isolated from other particles and have limited capabilities. Particles don't have direct access to traditional storage, DOM or even network resources. Instead, particles may have side effects by writing to output views or by rendering (sanitized) DOM content into UI slots. The Arcs runtime is responsible for instantiating particles inside the Arc and for persisting views across ephemeral particle invocations.
 
@@ -105,31 +96,22 @@ Particle authors can write to output views that behave as sets of entities ([int
 
 
 ### Code
-
-
-```
-HelloWorld.js
-```
+[HelloWorld.js](https://github.com/PolymerLabs/arcs-demos/blob/master/particles/HelloWorld/HelloWorld.js)
 
 
 Particles may also output DOM UI. Particles that output any DOM have to inherit from DomParticle. E.g., Greet takes as input a singleton view of type Message and renders that message to DOM.
 
 
 ### Code
-
-
-```
-Greet.js.
-```
-
+[Greet.js](https://github.com/PolymerLabs/arcs-demos/blob/master/particles/Greet/Greet.js)
 
 It's important to note that DOM particles *don't* have unrestricted access to the main DOM. That would give particle authors a way to leak sensitive user data. Instead, DOM particles render templated shadow DOMs into slots that get sanitized before being rendered into the main DOM by the Arcs runtime. As of now, DomParticle templates support the following features:
 
 
 
-*   innerHTML substitution. E.g., <span>{{name}}</span>.
-*   Attribute substitution. E.g., <span class="{{class}}"></span>.
-*   Basic event handling. E.g., <button on-click="_onChooseValue">ClickMe</button>. The sanitizer will substitute on-foo with onfoo before rendering the element to DOM. Event handlers take two arguments: (event:{?}, state:particle state).
+*   innerHTML substitution. E.g., `<span>{{name}}</span>`.
+*   Attribute substitution. E.g., `<span class="{{class}}"></span>`.
+*   Basic event handling. E.g., `<button on-click="_onChooseValue">ClickMe</button>`. The sanitizer will substitute on-foo with onfoo before rendering the element to DOM. Event handlers take two arguments: `(event:{?}, state:particle state)`.
 *   TODO: describe more complex attribute substitution (%= and $=).
 
 The Arcs library also includes various web components to allow more complex features such as rendering a list of templated content. A complete list of supported web components can be found [here](https://github.com/PolymerLabs/arcs/tree/master/runtime/browser/lib).
