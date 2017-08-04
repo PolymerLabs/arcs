@@ -65,7 +65,7 @@ let buildRecipe = info => {
 let {arc} = prepareExtensionArc();
 
 let demoParticle = {
-  name: "ListView",
+  name: "ShowProducts",
   constrain: {
     "list": "list"
   }

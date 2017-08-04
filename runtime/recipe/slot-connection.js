@@ -91,7 +91,11 @@ class SlotConnection {
 
   toString(nameMap) {
     let result = [];
-    result.push(`consume ${this.name} as ${(nameMap && nameMap.get(this.targetSlot)) || this.targetSlot.localName}`)
+    if (this.targetSlot)
+      result.push(`consume ${this.name} as ${(nameMap && nameMap.get(this.targetSlot)) || this.targetSlot.localName}`)
+    else
+      result.push(`consume ${this.name}`);
+
     Object.keys(this.providedSlots).forEach(psName => {
       result.push(`  provide ${psName} as ${(nameMap && nameMap.get(this.providedSlots[psName])) || this.providedSlots[psName]}`);
     })

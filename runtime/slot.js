@@ -32,7 +32,8 @@ class Slot {
     // Verify that particle that hosts this slot exposes the same view that is
     // being rendered by the particle that is being associated with it.
     assert(!this._exposedView ||
-           particleSpec.renderMap.get(this._slotid) == this._exposedView,
+           (particleSpec.renderMap.has(this._slotid) &&
+            particleSpec.renderMap.get(this._slotid).indexOf(this._exposedView) >= 0),
            "Cannot associate particle-spec with an unmatching view.");
     this._particleSpec = particleSpec;
   }

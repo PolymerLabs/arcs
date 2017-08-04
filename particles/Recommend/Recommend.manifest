@@ -1,3 +1,4 @@
+# @license
 # Copyright (c) 2017 Google Inc. All rights reserved.
 # This code may only be used under the BSD style license found at
 # http://polymer.github.io/LICENSE.txt
@@ -5,11 +6,7 @@
 # subject to an additional IP rights grant found at
 # http://polymer.github.io/PATENTS.txt
 
-recipe
-  Chooser.choices -> Recommend.recommendations
-  Chooser.resultList -> ShowProducts.list
-  Chooser.resultList -> Recommend.known
-  Chooser.resultList -> SaveList.list
-  map #giftlist as wishlist
-  Recommend
-    population = wishlist
+particle Recommend in '../particles/Recommend/Recommend.js'
+  Recommend(in [Product] known, in [Product] population, out [Product] recommendations)
+  description `Recommend Products from ${known} and ${population}`
+    recommendations `Products recommended based on ${known} and ${population}`
