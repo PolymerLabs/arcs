@@ -27,7 +27,7 @@ When the demo is loaded, the Arcs runtime does the following:
 *   Insert a Person entity named "Claire" into the Arc's context.
 *   Add the "Hello, World!" recipe to the Arc.
 
-![Demo](/images/demo.gif)
+ ![Demo](images/demo.gif)
 
 Once the Arc is set up, the DEMO will suggest the "Hello, World!" recipe to the user by rendering a suggestion in toast at the bottom of the screen. The recipe gets suggested to the user because all of the inputs and UI affordance required for the recipe to run are available.
 
