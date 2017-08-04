@@ -281,7 +281,7 @@ class Manifest {
         }
         if (slotConnectionItem.name) {
           let targetSlot = items.byName.get(slotConnectionItem.name);
-          if (!targetSlot) {
+          if (!targetSlot || !items.bySlot.has(targetSlot)) {
             targetSlot = recipe.newSlot();
             targetSlot.localName = slotConnectionItem.name;
             items.byName.set(slotConnectionItem.name, targetSlot);
