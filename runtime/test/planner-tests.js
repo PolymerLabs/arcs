@@ -34,7 +34,7 @@ describe('Planner', function() {
       particles: [
         loader.loadParticleSpec('Chooser'),
         loader.loadParticleSpec('Recommend'),
-        loader.loadParticleSpec('ListView'),
+        loader.loadParticleSpec('ShowProducts'),
         loader.loadParticleSpec('SaveList'),
       ],
     });
