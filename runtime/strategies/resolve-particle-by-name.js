@@ -15,7 +15,7 @@ class ResolveParticleByName extends Strategy {
     super();
     this._loader = loader;
     this._particles = {};
-    for (let particle in (context.particles || [])) {
+    for (let particle of (context.particles || [])) {
       let particles = this._particles[particle.name];
       if (!particles) {
         particles = this._particles[particle.name] = [];
