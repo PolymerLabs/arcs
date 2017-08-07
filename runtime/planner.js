@@ -14,6 +14,7 @@ let RecipeWalker = require('./recipe/walker.js');
 let ConvertConstraintsToConnections = require('./strategies/convert-constraints-to-connections.js');
 let AssignRemoteViews = require('./strategies/assign-remote-views.js');
 let AssignViewsByTagAndType = require('./strategies/assign-views-by-tag-and-type.js');
+let ResolveParticleByName = require('./strategies/resolve-particle-by-name.js');
 let Manifest = require('./manifest.js');
 
 
@@ -46,44 +47,6 @@ class InitPopulation extends Strategy {
       results: results,
       generate: null,
     };
-  }
-}
-
-// TODO: remove loader.
-class ResolveParticleByName extends Strategy {
-  constructor(context, loader) {
-    super();
-    this._loader = loader;
-    this._particles = {};
-    for (let particle in (context.particles || [])) {
-      let particles = this._particles[particle.name];
-      if (!particles) {
-        particles = this._particles[particle.name] = [];
-      }
-      particles.push(particle);
-    }
-  }
-  async generate(strategizer) {
-    let find = name => {
-      let particles = this._particles[name] || [];
-      if (this._loader) {
-        let particle = this._loader.loadParticleSpec(name, true);
-        if (particle) {
-          particles = [...particles, particle];
-        }
-      }
-      return particles;
-    };
-    var results = Recipe.over(strategizer.generated, new class extends RecipeWalker {
-      onParticle(recipe, particle) {
-        let particles = find(particle.name);
-        return particles.map(spec => {
-          return (recipe, particle) => {particle.spec = spec; return 1 / particles.length};
-        });
-      }
-    }(RecipeWalker.Permuted), this);
-
-    return { results, generate: null };
   }
 }
 
@@ -145,7 +108,7 @@ class Planner {
     let strategies = [
       new InitPopulation(context),
       new CreateViews(),
-      new ResolveParticleByName(context, arc._loader),
+      new ResolveParticleByName(arc._loader, context),
       new AssignViewsByTagAndType(arc),
       new ConvertConstraintsToConnections(),
       new MatchConsumedSlots(),
