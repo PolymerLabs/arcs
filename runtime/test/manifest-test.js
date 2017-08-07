@@ -9,7 +9,10 @@
  */
 
 let Manifest = require('../manifest.js');
+var parser = require("../build/manifest-parser.js");
 let assert = require('chai').assert;
+var fs = require("fs");
+var path = require('path');
 
 async function assertRecipeParses(input, result) {
   // Strip common leading whitespace.
@@ -338,5 +341,20 @@ describe('manifest', function() {
     };
     let manifest = await Manifest.load('somewhere/a', loader, registry);
     assert(registry['somewhere/a path/b']);
-  })
+  });
+  it('parses all particles manifests', async () => {
+    let particlesPath = '../particles/';
+    let particleNames = fs.readdirSync(particlesPath);
+    let count = 0;
+    particleNames.forEach(pn => {
+      let particleManifestFile = `${path.join(particlesPath, pn, pn)}.manifest`;
+      if (fs.existsSync(particleManifestFile)) {
+        let data = fs.readFileSync(particleManifestFile, "utf-8");
+        let model = parser.parse(data);
+        assert.isDefined(model);
+        ++count;
+      }
+    })
+    assert.equal(count, 9);
+  });
 });
