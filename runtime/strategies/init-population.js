@@ -19,7 +19,7 @@ class InitPopulation extends Strategy {
         this._recipes.push(recipe);
       }
     }
-    this._loadedParticles = context.arc.loadedParticles().map(spec => spec.implFile);
+    this._loadedParticles = new Set(context.arc.loadedParticles().map(spec => spec.implFile));
   }
   async generate(strategizer) {
     if (strategizer.generation != 0) {
@@ -27,7 +27,7 @@ class InitPopulation extends Strategy {
     }
     let results = this._recipes.map(recipe => ({
       result: recipe,
-      score: 1 - recipe.particles.filter(particle => particle.spec && this._loadedParticles.includes(particle.spec.implFile)).length,
+      score: 1 - recipe.particles.filter(particle => particle.spec && this._loadedParticles.has(particle.spec.implFile)).length,
       derivation: [{strategy: this, parent: undefined}],
       hash: recipe.digest(),
     }));
