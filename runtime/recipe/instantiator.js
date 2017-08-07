@@ -9,15 +9,15 @@ const assert = require('assert');
 
 class Instantiator {
   static instantiate(recipe, arc) {
-    assert(recipe.isResolved());
+    assert(recipe.isResolved(), 'Cannot instantiate an unresolved recipe');
     let recipeViewMap = new Map();
     for (let recipeView of recipe.views) {
       let view;
       if (recipeView.create) {
         view = arc.createView(recipeView.type);
       } else {
-        view = arc.viewById(view.id);
-        assert(view, `view '${view.id}' is not registered in arc`)
+        view = arc.viewById(recipeView.id);
+        assert(view, `view '${recipeView.id}' is not registered in arc`)
       }
       recipeViewMap.set(recipeView, view);
     }
