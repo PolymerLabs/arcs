@@ -37,6 +37,7 @@ describe('Planner', function() {
         loader.loadParticleSpec('ShowProducts'),
         loader.loadParticleSpec('SaveList'),
       ],
+      arc
     });
     await planner.generate(),
     await planner.generate(),
@@ -52,6 +53,7 @@ describe('Planner', function() {
     var planner = new Planner();
     planner.init(arc, {
       recipes: manifest.recipes,
+      arc
     });
     await planner.generate(),
     await planner.generate(),
