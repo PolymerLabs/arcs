@@ -6,7 +6,7 @@
 # subject to an additional IP rights grant found at
 # http://polymer.github.io/PATENTS.txt
 
-particle Interests in '../particles/Interests/Interests.js'
+particle Interests in 'Interests.js'
   Interests(in [Product] list)
   consume postamble
   description `Recommendations based on ${list}`

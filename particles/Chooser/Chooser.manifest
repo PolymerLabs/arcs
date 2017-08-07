@@ -6,7 +6,7 @@
 # subject to an additional IP rights grant found at
 # http://polymer.github.io/PATENTS.txt
 
-particle Chooser in '../particles/Chooser/Chooser.js'
+particle Chooser in 'Chooser.js'
   Chooser(in [Product] choices, out [Product] resultList)
   consume action
   description `Choose from ${choices}`

@@ -6,7 +6,7 @@
 # subject to an additional IP rights grant found at
 # http://polymer.github.io/PATENTS.txt
 
-particle Arrivinator in '../particles/Arrivinator/Arrivinator.js'
+particle Arrivinator in 'Arrivinator.js'
   Arrivinator(in [Product] list)
   consume annotation
   description `Estimate arrival dates for ${list}`
