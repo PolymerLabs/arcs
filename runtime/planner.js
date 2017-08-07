@@ -49,21 +49,37 @@ class InitPopulation extends Strategy {
   }
 }
 
+// TODO: remove loader.
 class ResolveParticleByName extends Strategy {
-  constructor(loader) {
+  constructor(context, loader) {
     super();
-    this.loader = loader;
+    this._loader = loader;
+    this._particles = {};
+    for (let particle in (context.particles || [])) {
+      let particles = this._particles[particle.name];
+      if (!particles) {
+        particles = this._particles[particle.name] = [];
+      }
+      particles.push(particle);
+    }
   }
   async generate(strategizer) {
-    var loader = this.loader;
+    let find = name => {
+      let particles = this._particles[name] || [];
+      if (this._loader) {
+        let particle = this._loader.loadParticleSpec(name, true);
+        if (particle) {
+          particles = [...particles, particle];
+        }
+      }
+      return particles;
+    };
     var results = Recipe.over(strategizer.generated, new class extends RecipeWalker {
       onParticle(recipe, particle) {
-        if (particle.spec == undefined) {
-          var spec = loader.loadParticleSpec(particle.name, true);
-          if (spec == undefined)
-            return;
-          return (recipe, particle) => {particle.spec = spec; return 1};
-        }
+        let particles = find(particle.name);
+        return particles.map(spec => {
+          return (recipe, particle) => {particle.spec = spec; return 1 / particles.length};
+        });
       }
     }(RecipeWalker.Permuted), this);
 
@@ -129,7 +145,7 @@ class Planner {
     let strategies = [
       new InitPopulation(context),
       new CreateViews(),
-      new ResolveParticleByName(arc._loader),
+      new ResolveParticleByName(context, arc._loader),
       new AssignViewsByTagAndType(arc),
       new ConvertConstraintsToConnections(),
       new MatchConsumedSlots(),

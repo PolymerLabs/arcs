@@ -31,6 +31,12 @@ describe('Planner', function() {
     var planner = new Planner();
     planner.init(arc, {
       recipes: manifest.recipes,
+      particles: [
+        loader.loadParticleSpec('Chooser'),
+        loader.loadParticleSpec('Recommend'),
+        loader.loadParticleSpec('ListView'),
+        loader.loadParticleSpec('SaveList'),
+      ],
     });
     await planner.generate(),
     await planner.generate(),
