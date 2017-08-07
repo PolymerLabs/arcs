@@ -6,7 +6,7 @@
 # subject to an additional IP rights grant found at
 # http://polymer.github.io/PATENTS.txt
 
-particle ManufacturerInfo in '../particles/ManufacturerInfo/ManufacturerInfo.js'
+particle ManufacturerInfo in 'ManufacturerInfo.js'
   ManufacturerInfo(in [Product] list)
   consume annotation3
   description `Check manufacturer information for ${list}`

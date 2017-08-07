@@ -6,7 +6,7 @@
 # subject to an additional IP rights grant found at
 # http://polymer.github.io/PATENTS.txt
 
-particle GiftList in '../particles/GiftList/GiftList.js'
+particle GiftList in 'GiftList.js'
   GiftList(in Person person)
   consume preamble
   description `Buy gifts for ${person}'s {occasion} in {timeframe}`

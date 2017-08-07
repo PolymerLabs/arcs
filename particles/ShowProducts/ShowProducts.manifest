@@ -6,7 +6,7 @@
 # subject to an additional IP rights grant found at
 # http://polymer.github.io/PATENTS.txt
 
-particle ShowProducts in '../particles/ShowProducts/ShowProducts.js'
+particle ShowProducts in 'ShowProducts.js'
   ShowProducts(in [Product] list)
   consume root
     provide action

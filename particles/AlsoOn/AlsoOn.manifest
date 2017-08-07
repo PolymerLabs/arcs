@@ -6,6 +6,6 @@
 # subject to an additional IP rights grant found at
 # http://polymer.github.io/PATENTS.txt
 
-particle AlsoOn in '../particles/AlsoOn/AlsoOn.js'
+particle AlsoOn in 'AlsoOn.js'
   AlsoOn(in [Product] list, in [Product] choices)
   consume annotation2

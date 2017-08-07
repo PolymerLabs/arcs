@@ -6,7 +6,7 @@
 # subject to an additional IP rights grant found at
 # http://polymer.github.io/PATENTS.txt
 
-particle Recommend in '../particles/Recommend/Recommend.js'
+particle Recommend in 'Recommend.js'
   Recommend(in [Product] known, in [Product] population, out [Product] recommendations)
   description `Recommend Products from ${known} and ${population}`
     recommendations `Products recommended based on ${known} and ${population}`
