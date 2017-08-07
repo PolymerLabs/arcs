@@ -22,7 +22,7 @@ class ResolveParticleByName extends Strategy {
       }
       particles.push(particle);
     }
-    this._loadedParticles = context.arc.loadedParticles().map(spec => spec.implFile);
+    this._loadedParticles = new Set(context.arc.loadedParticles().map(spec => spec.implFile));
   }
 
   async generate(strategizer) {
@@ -42,7 +42,7 @@ class ResolveParticleByName extends Strategy {
         let particles = find(particle.name);
         return particles.map(spec => {
           var score = 1 / particles.length;
-          if (loadedParticles.includes(spec.implFile))
+          if (loadedParticles.has(spec.implFile))
             score = -1;
           return (recipe, particle) => {particle.spec = spec; return score};
         });
