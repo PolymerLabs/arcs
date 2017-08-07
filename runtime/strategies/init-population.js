@@ -25,10 +25,9 @@ class InitPopulation extends Strategy {
     if (strategizer.generation != 0) {
       return { results: [], generate: null };
     }
-
     let results = this._recipes.map(recipe => ({
       result: recipe,
-      score: 1 - recipe.particles.filter(particle => this._loadedParticles.includes(particle.implFile)).length,
+      score: 1 - recipe.particles.filter(particle => particle.spec && this._loadedParticles.includes(particle.spec.implFile)).length,
       derivation: [{strategy: this, parent: undefined}],
       hash: recipe.digest(),
     }));
