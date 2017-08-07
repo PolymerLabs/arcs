@@ -86,6 +86,10 @@ class Arc {
     return arc;
   }
 
+  loadedParticles() {
+    return [...this.particleViewMaps.values()].map(({spec}) => spec);
+  }
+
   instantiateParticle(spec) {
     // TODO: Stop accpting strings when the old recipes are removed.
     if (typeof spec == 'string') {

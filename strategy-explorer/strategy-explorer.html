@@ -69,6 +69,7 @@ document.pendingActions = new Map();
   let manifest = await Manifest.load('../particles/test/giftlist.manifest', loader)
   var context = {
     recipes: manifest.recipes,
+    arc: a,
     people: {
       'Claire': [remoteArc],
     }
