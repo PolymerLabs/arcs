@@ -18,6 +18,7 @@ let Recipe = require('../recipe/recipe.js');
 let systemParticles = require('../system-particles.js');
 let ConvertConstraintsToConnections = require('../strategies/convert-constraints-to-connections.js');
 let ResolveParticleByName = require('../strategies/resolve-particle-by-name.js');
+let InitPopulation = require('../strategies/init-population.js');
 
 var loader = new Loader();
 systemParticles.register(loader);
@@ -60,6 +61,32 @@ describe('Planner', function() {
     await planner.generate(),
     await planner.generate(),
     assert.equal(planner.strategizer.population.length, 10);
+  });
+});
+
+describe('InitPopulation', async() => {
+  it('penalizes resolution of particles that already exist in the arc', async() => {
+    let manifest = await Manifest.parse(`
+      schema Product
+
+      particle A in 'A.js'
+        A(in Product product)
+
+      recipe
+        create as v1
+        A
+          product <- v1`);
+    let recipe = manifest.recipes[0];
+    assert(recipe.normalize());
+    var arc = new Arc({id: 'test-plan-arc', loader});
+    recipe.instantiate(arc);
+    var context = { arc, recipes: [recipe]};
+    let ip = new InitPopulation(context);
+
+    var strategizer = {generated: [], generation: 0};
+    let { results } = await ip.generate(strategizer);
+    assert(results.length == 1);
+    assert(results[0].score == 0);
   });
 });
 
