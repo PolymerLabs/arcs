@@ -15,40 +15,8 @@ let ConvertConstraintsToConnections = require('./strategies/convert-constraints-
 let AssignRemoteViews = require('./strategies/assign-remote-views.js');
 let AssignViewsByTagAndType = require('./strategies/assign-views-by-tag-and-type.js');
 let ResolveParticleByName = require('./strategies/resolve-particle-by-name.js');
+let InitPopulation = require('./strategies/init-population.js');
 let Manifest = require('./manifest.js');
-
-
-class InitPopulation extends Strategy {
-  constructor(context) {
-    super();
-    this._recipes = [];
-    for (let recipe of (context.recipes || [])) {
-      recipe = recipe.clone();
-      if (!recipe.normalize()) {
-        console.warn('could not normalize a context recipe');
-      } else {
-        this._recipes.push(recipe);
-      }
-    }
-  }
-  async generate(strategizer) {
-    if (strategizer.generation != 0) {
-      return { results: [], generate: null };
-    }
-
-    let results = this._recipes.map(recipe => ({
-      result: recipe,
-      score: 1,
-      derivation: [{strategy: this, parent: undefined}],
-      hash: recipe.digest(),
-    }));
-
-    return {
-      results: results,
-      generate: null,
-    };
-  }
-}
 
 class CreateViews extends Strategy {
   // TODO: move generation to use an async generator.
