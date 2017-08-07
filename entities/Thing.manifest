@@ -6,9 +6,9 @@
 # subject to an additional IP rights grant found at
 # http://polymer.github.io/PATENTS.txt
 
-import '../../entities/Product.manifest'
-
-particle Interests in 'Interests.js'
-  Interests(in [Product] list)
-  consume postamble
-  description `Recommendations based on ${list}`
+schema Thing
+  normative
+    Text name
+  optional
+    Text description
+    URL image

@@ -66,6 +66,7 @@ class View {
   set tags(tags) { this._tags = tags; }
   get type() { return this._type; } // nullable
   get id() { return this._id; }
+  set id(id) { this._id = id; }
   mapToView(view) { this._id = view.id; this._type = undefined; this._mappedType = view.type;}
   get localName() { return this._localName; }
   set localName(name) { this._localName = name; }

@@ -6,6 +6,8 @@
 # subject to an additional IP rights grant found at
 # http://polymer.github.io/PATENTS.txt
 
+import '../../entities/Product.manifest'
+
 particle ShowProducts in 'ShowProducts.js'
   ShowProducts(in [Product] list)
   consume root
