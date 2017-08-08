@@ -100,7 +100,9 @@ class Planner {
       let resolved = this.strategizer.generated
           .map(individual => individual.result)
           .filter(recipe => recipe.isResolved());
-      return resolved;
+      if (resolved.length) {
+        return resolved;
+      }
     } while (this.strategizer.generated.length > 0);
     return [];
   }
