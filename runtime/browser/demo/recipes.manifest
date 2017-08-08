@@ -5,6 +5,12 @@
 # subject to an additional IP rights grant found at
 # http://polymer.github.io/PATENTS.txt
 
+import '../../../particles/ShowProducts/ShowProducts.manifest'
+import '../../../particles/Recommend/Recommend.manifest'
+import '../../../particles/Chooser/Chooser.manifest'
+import '../../../particles/AlsoOn/AlsoOn.manifest'
+import '../../../particles/GiftList/GiftList.manifest'
+
 # Create shortlist with [product, ...]
 recipe
    create as list
