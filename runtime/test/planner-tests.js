@@ -55,7 +55,7 @@ describe('Planner', function() {
     await planner.generate(),
     await planner.generate(),
     await planner.generate(),
-    assert.equal(planner.strategizer.population.length, 10);
+    assert.equal(planner.strategizer.population.length, 11);
   });
 });
 
