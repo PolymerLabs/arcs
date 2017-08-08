@@ -68,8 +68,10 @@ class DemoBase extends HTMLElement {
     let plans = await planner.plan(500);
     plans.forEach((plan, i) => {
       // TODO: invoke speculator/decriptinator
+      const Speculator = require('../../speculator.js');
+      const DescriptionGenerator = require('../../description-generator.js');
       let rank = 1;
-      let description = 'TODO: description';
+      let description = plan.particles.map(p => p.spec.name).join(', '); //new DescriptoinGenerator();
       this.suggestions.add({plan, rank, description}, i);
     });
   }
