@@ -71,7 +71,8 @@ class DemoBase extends HTMLElement {
       const Speculator = require('../../speculator.js');
       const DescriptionGenerator = require('../../description-generator.js');
       let rank = 1;
-      let description = plan.particles.map(p => p.spec.name).join(', '); //new DescriptoinGenerator();
+      let description = plan.toString();
+      //let description = plan.particles.map(p => p.spec.name).join(', '); //new DescriptoinGenerator();
       this.suggestions.add({plan, rank, description}, i);
     });
   }
