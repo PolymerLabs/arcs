@@ -94,17 +94,21 @@ class Planner {
     return this.strategizer.generated;
   }
 
-  async plan(arc) {
+  async plan(timeout) {
+    timeout = timeout || NaN;
+    let allResolved = [];
+    let start = performance.now();
     do {
       await this.generate();
       let resolved = this.strategizer.generated
           .map(individual => individual.result)
           .filter(recipe => recipe.isResolved());
-      if (resolved.length) {
-        return resolved;
+      allResolved.push(...resolved);
+      if (performance.now() - start > timeout) {
+        break;
       }
     } while (this.strategizer.generated.length > 0);
-    return [];
+    return allResolved;
   }
 }
 
