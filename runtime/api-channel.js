@@ -219,6 +219,11 @@ class PECOuterPort extends APIPort {
     this.registerHandler("Idle", {version: this.Direct, relevance: this.Map(this.Mapped, this.Direct)});
     this.registerHandler("GetSlot", {particle: this.Mapped, name: this.Direct, callback: this.Direct});
     this.registerHandler("ReleaseSlot", {particle: this.Mapped});
+    // These API calls are for the new SlotComposer implementation.
+    // TODO: They will replace LostSlots, RenderSlot, GetSlot and ReleaseSlot APis.
+    this.registerCall("StartRender", {particle: this.Mapped, slotName: this.Direct, types: this.Direct});
+    this.registerCall("StopRender", {particle: this.Mapped, slotName: this.Direct});
+    this.registerHandler("Render", {particle: this.Mapped, slotName: this.Direct, content: this.Direct});
   }
 }
 
@@ -249,6 +254,12 @@ class PECInnerPort extends APIPort {
     this.registerCall("Idle", {version: this.Direct, relevance: this.Map(this.Mapped, this.Direct)});
     this.registerCall("GetSlot", {particle: this.Mapped, name: this.Direct, callback: this.LocalMapped});
     this.registerCall("ReleaseSlot", {particle: this.Mapped});
+
+    // These API calls are for the new SlotComposer implementation.
+    // TODO: They will replace LostSlots, RenderSlot, GetSlot and ReleaseSlot APis.
+    this.registerHandler("StartRender", {particle: this.Mapped, slotName: this.Direct, types: this.Direct});
+    this.registerHandler("StopRender", {particle: this.Mapped, slotName: this.Direct});
+    this.registerCall("Render", {particle: this.Mapped, slotName: this.Direct, content: this.Direct});
   }
 }
 

@@ -71,6 +71,10 @@ class OuterPEC extends PEC {
         }
       }
     }
+
+    this._apiPort.onRender = ({particle, slotName, content}) => {
+      // TODO: implement
+    }
   }
 
   get idle() {
