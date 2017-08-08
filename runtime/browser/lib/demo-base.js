@@ -65,9 +65,7 @@ class DemoBase extends HTMLElement {
     // TODO: Shrug.. Context dependency between demo base and subclasses is weird.
     this.context.recipes = this.stage.recipes;
     planner.init(this.arc, this.context);
-    let recipes = await planner.plan();
-    // TODO: how many planning phases to run?
-    let plans = await planner.plan();
+    let plans = await planner.plan(500);
     plans.forEach((plan, i) => {
       // TODO: invoke speculator/decriptinator
       let rank = 1;

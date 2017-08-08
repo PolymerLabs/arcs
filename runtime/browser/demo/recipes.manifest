@@ -17,6 +17,7 @@ recipe
 recipe
   map as wishlist
   map as person
+  # TODO: remove WishlistFor and provide the person in the context.
   WishlistFor
     wishlist = wishlist
     person = person
@@ -31,6 +32,7 @@ recipe
   create as recommended
   map as wishlist
   map as person
+  # TODO: remove WishlistFor and provide the person in the context.
   WishlistFor
     wishlist = wishlist
     person = person
