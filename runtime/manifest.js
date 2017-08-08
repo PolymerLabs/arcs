@@ -51,6 +51,18 @@ class Manifest {
     }
     return schema;
   }
+  findParticleByName(name) {
+    let spec = this.particles[name];
+    if (!spec) {
+      for (let importManifest of this.imports) {
+        if (importManifest.particles[name]) {
+          spec = importManifest.particles[name];
+          break;
+        }
+      }
+    }
+    return spec;
+  }
   static async load(fileName, loader, registry) {
     if (registry && registry[fileName]) {
       return registry[fileName];
@@ -137,6 +149,10 @@ class Manifest {
     };
 
     for (let connection of items.connections) {
+      var fromParticle = manifest.findParticleByName(connection.from.particle);
+      var toParticle = manifest.findParticleByName(connection.to.particle);
+      assert(fromParticle, `could not find particle ${fromParticle}`);
+      assert(toParticle, `could not find particle ${toParticle}`);
       recipe.newConnectionConstraint(connection.from.particle, connection.from.param,
                                      connection.to.particle, connection.to.param);
     }
@@ -175,19 +191,9 @@ class Manifest {
       let particle = recipe.newParticle(item.ref.name);
       particle.tags = item.ref.tags;
       if (item.ref.name) {
-        let spec = manifest.particles[item.ref.name];
-        // TODO: factor out import lookups
-        if (!spec) {
-          for (let importManifest of manifest.imports) {
-            if (importManifest.particles[item.ref.name]) {
-              spec = importManifest.particles[item.ref.name];
-              break;
-            }
-          }
-        }
-        if (spec) {
-          particle.spec = spec;
-        }
+        var spec = manifest.findParticleByName(item.ref.name);
+        assert(spec, `could not find particle ${item.ref.name}`);
+        particle.spec = spec;
         particlesByName[item.ref.name] = particle;
       }
       if (item.name) {

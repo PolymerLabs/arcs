@@ -5,11 +5,14 @@
 # subject to an additional IP rights grant found at
 # http://polymer.github.io/PATENTS.txt
 
+import '../Chooser/Chooser.manifest'
+import '../Recommend/Recommend.manifest'
+import '../ShowProducts/ShowProducts.manifest'
+
 recipe
   Chooser.choices -> Recommend.recommendations
   Chooser.resultList -> ShowProducts.list
   Chooser.resultList -> Recommend.known
-  Chooser.resultList -> SaveList.list
   map #giftlist as wishlist
   Recommend
-    population = wishlist
+    population <- wishlist

@@ -100,6 +100,9 @@ class Type {
       //       types by schema name.
       return this.data.name == type.data.name;
     }
+    if (this.isView) {
+      return this.data.equals(type.data);
+    }
     return JSON.stringify(this.data) == JSON.stringify(type.data);
   }
 

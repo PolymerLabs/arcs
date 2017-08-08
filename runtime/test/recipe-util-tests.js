@@ -15,6 +15,9 @@ let assert = require('assert');
 describe('recipe-util', function() {
   it('can produce a shape match to a simple recipe', async () => {
     let manifest = await Manifest.parse(`
+      particle A
+      particle B
+
       recipe Recipe
         map as v1
         A
@@ -34,6 +37,10 @@ describe('recipe-util', function() {
 
   it('can produce multiple partial shape matches to a simple recipe', async () => {
     let manifest = await Manifest.parse(`
+      particle A
+      particle B
+      particle C
+      
       recipe Recipe
         map as v1
         map as v2
