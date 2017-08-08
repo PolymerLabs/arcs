@@ -82,9 +82,12 @@ function prepareDemoContext({loader, pecFactory, slotComposer}) {
   // TODO(sjmiles): empirically, views must exist before committing Entities
   let personView = pageArc.createView(Person.type.viewOf(), 'peopleFromWebpage');
   let productView = pageArc.createView(Product.type.viewOf(), 'productsFromWebpage');
+  let personVar = pageArc.createView(Person.type, 'personFromWebpage');
+  personVar.set(new Person(db.people[0]));
   // commit entities
   pageArc.commit(db.people.map(p => new Person(p)));
   pageArc.commit(db.products.map(p => new Product(p)));
+
 
   // claire's wishlist arc
   let wishlistArc = new Arc({loader, id: 'claires-wishlist'});
@@ -93,9 +96,10 @@ function prepareDemoContext({loader, pecFactory, slotComposer}) {
 
   // demo arc
   let arc = new Arc({id: 'demo', loader, pecFactory, slotComposer});
-  arc.createView(Person.type, 'personSlot');
+  //arc.createView(Person.type, 'personSlot');
   arc.mapView(personView);
   arc.mapView(productView);
+  arc.mapView(personVar);
 
   // TODO: This should be part of recipe instantiation.
   arc.mapView(wishlistView)

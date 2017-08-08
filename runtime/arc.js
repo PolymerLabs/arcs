@@ -260,7 +260,10 @@ class Arc {
   }
 
   viewById(id) {
-    return this._viewsById.get(id);
+    if (this._viewsById.has(id))
+      return this._viewsById.get(id);
+    else if (this._viewMap)
+      return this._viewMap.get([...this._viewMap.keys()].find(v => v.id == id));
   }
 
   addView(view) {
