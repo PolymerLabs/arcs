@@ -22,15 +22,15 @@ class ConnectionConstraint {
 
   _compareTo(other) {
     let cmp;
-    if ((cmp = util.compareStrings(this.fromParticle, other.fromParticle)) != 0) return cmp;
+    if ((cmp = util.compareStrings(this.fromParticle.name, other.fromParticle.name)) != 0) return cmp;
     if ((cmp = util.compareStrings(this.fromConnection, other.fromConnection)) != 0) return cmp;
-    if ((cmp = util.compareStrings(this.toParticle, other.toParticle)) != 0) return cmp;
+    if ((cmp = util.compareStrings(this.toParticle.name, other.toParticle.name)) != 0) return cmp;
     if ((cmp = util.compareStrings(this.toConnection, other.toConnection)) != 0) return cmp;
     return 0;
   }
 
   toString() {
-    return `${this.fromParticle}.${this.fromConnection} -> ${this.toParticle}.${this.toConnection}`;
+    return `${this.fromParticle.name}.${this.fromConnection} -> ${this.toParticle.name}.${this.toConnection}`;
   }
 }
 

@@ -67,8 +67,10 @@ class TypeChecker {
     // TODO: subset/superset relations between types.
 
     let result  = TypeChecker._coerceTypes(left, right);
-    if (result == null)
+    if (result == null) {
+      debugger;
       return {valid: false};
+    }
     // TODO: direction?
     result.resolutions.forEach(resolution => resolutions.push(resolution));
     return {type: result.type, valid: true}

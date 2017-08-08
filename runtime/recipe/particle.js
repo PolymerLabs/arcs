@@ -86,6 +86,11 @@ class Particle {
   isResolved() {
     assert(Object.isFrozen(this));
     // TODO: slots
+    if (this.consumedSlotConnections.length > 0) {
+      let fulfilledSlotConnections = this.consumedSlotConnections.filter(connection => connection.targetSlot !== undefined);
+      if (fulfilledSlotConnections.length == 0)
+        return false;
+    }
     return this.spec
         && this.spec.connectionMap.size == Object.keys(this._connections).length
         && this.unnamedConnections.length == 0;

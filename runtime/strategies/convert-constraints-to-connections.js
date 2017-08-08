@@ -17,21 +17,26 @@ class ConvertConstraintsToConnections extends Strategy {
         var particles = new Set();
         var views = new Set();
         var map = {};
+        var particlesByName = {};
         var viewCount = 0;
         for (var constraint of recipe.connectionConstraints) {
-          particles.add(constraint.fromParticle);
-          if (map[constraint.fromParticle] == undefined)
-            map[constraint.fromParticle] = {};
-          particles.add(constraint.toParticle);
-          if (map[constraint.toParticle] == undefined)
-            map[constraint.toParticle] = {};
-          var view = map[constraint.fromParticle][constraint.fromConnection];
+          particles.add(constraint.fromParticle.name);
+          if (map[constraint.fromParticle.name] == undefined) {
+            map[constraint.fromParticle.name] = {};
+            particlesByName[constraint.fromParticle.name] = constraint.fromParticle;
+          }
+          particles.add(constraint.toParticle.name);
+          if (map[constraint.toParticle.name] == undefined) {
+            map[constraint.toParticle.name] = {};
+            particlesByName[constraint.toParticle.name] = constraint.toParticle;
+          }
+          var view = map[constraint.fromParticle.name][constraint.fromConnection];
           if (view == undefined) {
             view = 'v' + viewCount++;
-            map[constraint.fromParticle][constraint.fromConnection] = view;
+            map[constraint.fromParticle.name][constraint.fromConnection] = view;
             views.add(view);
           }
-          map[constraint.toParticle][constraint.toConnection] = view;
+          map[constraint.toParticle.name][constraint.toConnection] = view;
         }
         var shape = RecipeUtil.makeShape([...particles.values()], [...views.values()], map);
         var results = RecipeUtil.find(recipe, shape);
@@ -46,6 +51,7 @@ class ConvertConstraintsToConnections extends Strategy {
                 var recipeParticle = recipeMap[particle];
                 if (recipeParticle == null) {
                   recipeParticle = recipe.newParticle(particle);
+                  recipeParticle.spec = particlesByName[particle];
                   recipeMap[particle] = recipeParticle;
                 }
                 var recipeViewConnection = recipeParticle.connections[connection];
