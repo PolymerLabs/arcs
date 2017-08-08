@@ -152,8 +152,8 @@ class Manifest {
       var toParticle = manifest.findParticleByName(connection.to.particle);
       assert(fromParticle, `could not find particle ${fromParticle}`);
       assert(toParticle, `could not find particle ${toParticle}`);
-      recipe.newConnectionConstraint(connection.from.particle, connection.from.param,
-                                     connection.to.particle, connection.to.param);
+      recipe.newConnectionConstraint(fromParticle, connection.from.param,
+                                     toParticle, connection.to.param);
     }
 
     for (let item of items.views) {

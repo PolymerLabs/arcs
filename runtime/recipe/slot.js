@@ -62,8 +62,7 @@ class Slot {
   }
 
   isResolved() {
-    // TODO: implement
-    return true;
+    return this._id && this._formFactor && this._sourceConnection;
   }
 
   _isValid() {

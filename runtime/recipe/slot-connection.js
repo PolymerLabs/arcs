@@ -85,7 +85,10 @@ class SlotConnection {
   }
 
   isResolved() {
-    // TODO: implement
+    if (!this.name || !this.particle || !this.targetSlot)
+      return false;
+    if (this.slotSpec.isRequired && this.targetSlot.sourceConnection == undefined)
+      return false;
     return true;
   }
 
