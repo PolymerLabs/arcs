@@ -88,7 +88,7 @@ function prepareDemoContext({loader, pecFactory, slotComposer}) {
 
   // claire's wishlist arc
   let wishlistArc = new Arc({loader, id: 'claires-wishlist'});
-  let wishlistView = pageArc.createView(Product.type.viewOf(), 'claires-wishlist');
+  let wishlistView = wishlistArc.createView(Product.type.viewOf(), 'claires-wishlist');
   wishlistArc.commit(wishlistDb.map(p => new Product(p)));
 
   // demo arc
@@ -96,6 +96,9 @@ function prepareDemoContext({loader, pecFactory, slotComposer}) {
   arc.createView(Person.type, 'personSlot');
   arc.mapView(personView);
   arc.mapView(productView);
+
+  // TODO: This should be part of recipe instantiation.
+  arc.mapView(wishlistView)
   // TODO(sjmiles): boilerplate? not needed until we are rendering particles (arc not pageArc)?
   systemParticles.register(loader);
   let context = {
