@@ -24,6 +24,8 @@ async function assertRecipeParses(input, result) {
 describe('manifest', function() {
   it('can parse a manifest containing a recipe', async () => {
     let manifest = await Manifest.parse(`
+      particle SomeParticle
+
       recipe SomeRecipe
         map #someView
         create #newView as view0
@@ -79,6 +81,9 @@ describe('manifest', function() {
   });
   it('can resolve recipes with connections between particles', async () => {
     let manifest = await Manifest.parse(`
+      particle P1
+      particle P2
+
       recipe Connected
         P1
           x -> P2
@@ -89,8 +94,11 @@ describe('manifest', function() {
     assert.equal(recipe.views.length, 2);
     assert.equal(recipe.viewConnections.length, 4);
   });
-  it('supports recipies specified with bidirectional connections', async () => {
+  it('supports recipes specified with bidirectional connections', async () => {
     let manifest = await Manifest.parse(`
+      particle P1
+      particle P2
+
       recipe Bidirectional
         P1
           x -> P2.x
@@ -109,6 +117,9 @@ describe('manifest', function() {
   });
   it('supports recipes with constraints', async () => {
     let manifest = await Manifest.parse(`
+      particle A
+      particle B
+
       recipe Constrained
         A.a -> B.b`);
     let recipe = manifest.recipes[0];
@@ -122,14 +133,20 @@ describe('manifest', function() {
   })
   it('supports recipes with local names', async () => {
     await assertRecipeParses(
-      `recipe
+      `particle P1
+      particle P2
+
+      recipe
         map #things as thingView
         P1 as p1
           x -> thingView
         P2
           x -> thingView
           y -> p1.y`,
-      `recipe
+      `particle P1
+      particle P2
+
+      recipe
         map #things as thingView
         map as view0
         P1 as p1
@@ -142,6 +159,9 @@ describe('manifest', function() {
   // TODO: move these tests to new-recipe tests.
   it('can normalize simple recipes', async () => {
     let manifest = await Manifest.parse(`
+      particle P1
+      particle P2
+
       recipe
         map as v1
         P1
@@ -163,6 +183,8 @@ describe('manifest', function() {
   });
   it('can normalize recipes with interdependent ordering of views and particles', async () => {
     let manifest = await Manifest.parse(`
+      particle P1
+
       recipe
         map as v1
         map as v2
@@ -292,6 +314,9 @@ describe('manifest', function() {
             view someParam
           provide oneMoreSlot
             formFactor small
+
+      particle OtherParticle
+
       recipe SomeRecipe
         map #someView1 as myView
         slot 'slotIDs:A' as slot0

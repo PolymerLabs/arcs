@@ -92,8 +92,8 @@ class ViewConnection {
     if (this.type && this.particle && this.particle.spec) {
       let connectionSpec = this.particle.spec.connectionMap.get(this.name);
       if (connectionSpec) {
-        // TODO: this shouldn't be a direct comparison
-        if (this.rawType != connectionSpec.type) {
+        // TODO: this shouldn't be a direct equals comparison
+        if (!this.rawType.equals(connectionSpec.type)) {
           return false;
         }
         if (this.direction != connectionSpec.direction) {

@@ -58,8 +58,10 @@ class ProvidedSlotSpec {
 class ParticleSpec {
   constructor(model, resolveSchema) {
     // TODO: This should really happen after parsing, not here.
-    assert(model.args);
-  model.args.forEach(arg => arg.type = arg.type.resolveSchemas(resolveSchema));
+    if (model.args)
+      model.args.forEach(arg => arg.type = arg.type.resolveSchemas(resolveSchema));
+    else
+      model.args = [];
     this._model = model;
     this.name = model.name;
     var typeVarMap = new Map();

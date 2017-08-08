@@ -44,7 +44,7 @@ describe('Planner', function() {
     await planner.generate(),
     await planner.generate(),
     await planner.generate(),
-    assert.equal(planner.strategizer.population.length, 8);
+    assert.equal(planner.strategizer.population.length, 5);
   });
 
   it('make a plan with views', async () => {
@@ -60,7 +60,7 @@ describe('Planner', function() {
     await planner.generate(),
     await planner.generate(),
     await planner.generate(),
-    assert.equal(planner.strategizer.population.length, 10);
+    assert.equal(planner.strategizer.population.length, 11);
   });
 });
 
@@ -90,38 +90,13 @@ describe('InitPopulation', async() => {
   });
 });
 
-describe('ResolveParticleByName', async() => {
-  it('penalizes resolution of particles that already exist in the arc', async() => {
-    let manifest = await Manifest.parse(`
-      schema Product
-
-      particle A in 'A.js'
-        A(in Product product)
-
-      recipe
-        create as v1
-        A
-          product <- v1`);
-    let recipe = manifest.recipes[0];
-    assert(recipe.normalize());
-    var arc = new Arc({id: 'test-plan-arc', loader});
-    recipe.instantiate(arc);
-    var context = { arc, particles: [manifest.particles.A]}
-    var rpbn = new ResolveParticleByName(null, context);
-    let recipe2 = (await Manifest.parse(`
-      recipe
-        A`)).recipes[0];
-    var strategizer = {generated: [{result: recipe2, score: 1}]};
-    let { results } = await rpbn.generate(strategizer);
-    assert(results.length == 1);
-    assert(results[0].score == 0);
-  });
-});
-
 describe('ConvertConstraintsToConnections', async() => {
 
   it('fills out an empty constraint', async() => {
     let recipe = (await Manifest.parse(`
+      particle A
+      particle C
+
       recipe
         A.b -> C.d`)).recipes[0];
     var strategizer = {generated: [{result: recipe, score: 1}]};
@@ -140,6 +115,9 @@ describe('ConvertConstraintsToConnections', async() => {
 
   it('fills out a constraint, reusing a single particle', async() => {
     let recipe = (await Manifest.parse(`
+      particle A
+      particle C
+
       recipe
         A.b -> C.d
         C`)).recipes[0];
@@ -159,6 +137,9 @@ describe('ConvertConstraintsToConnections', async() => {
 
   it('fills out a constraint, reusing a single particle (2)', async() => {
     let recipe = (await Manifest.parse(`
+      particle A
+      particle C
+
       recipe
         A.b -> C.d
         A`)).recipes[0];
@@ -179,6 +160,9 @@ describe('ConvertConstraintsToConnections', async() => {
 
   it('fills out a constraint, reusing two particles', async() => {
     let recipe = (await Manifest.parse(`
+      particle A
+      particle C
+
       recipe
         A.b -> C.d
         C
@@ -199,6 +183,9 @@ describe('ConvertConstraintsToConnections', async() => {
 
   it('fills out a constraint, reusing two particles and a view', async() => {
     let recipe = (await Manifest.parse(`
+      particle A
+      particle C
+
       recipe
         A.b -> C.d
         map as v1
@@ -221,6 +208,9 @@ describe('ConvertConstraintsToConnections', async() => {
 
   it('fills out a constraint, reusing two particles and a view (2)', async() => {
     let recipe = (await Manifest.parse(`
+      particle A
+      particle C
+
       recipe
         A.b -> C.d
         map as v1
@@ -243,6 +233,9 @@ describe('ConvertConstraintsToConnections', async() => {
 
   it('removes an already fulfilled constraint', async() => {
     let recipe = (await Manifest.parse(`
+      particle A
+      particle C
+
       recipe
         A.b -> C.d
         map as v1
