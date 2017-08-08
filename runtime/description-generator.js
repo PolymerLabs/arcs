@@ -44,21 +44,21 @@ class DescriptionGenerator {
   }
   _initDescriptionsByView() {
     this._descriptionsByView = new Map();
-    this.recipe.components.forEach(component => {
-      let particleSpec = this.recipe.arc.particleSpec(component.particleName);
-      component.connections.forEach(connection => {
+    this.recipe.particles.forEach(particle => {
+      let particleSpec = particle.spec;
+      Object.values(particle.connections).forEach(connection => {
         let view = connection.view;
-        if (!this._descriptionsByView.has(view.id)) {
-          this._descriptionsByView.set(view.id,
+        if (!this._descriptionsByView.has(view)) {
+          this._descriptionsByView.set(view,
               { type: view.type, value: this._formatViewValue(view), descriptions: []});
         }
-        assert(this._descriptionsByView.get(view.id).type.equals(view.type),
-               `Unexpected type for view ${view.id}`);
+        assert(this._descriptionsByView.get(view).type.equals(view.type),
+               `Unexpected type for view ${view}`);
         // should verify same particle doesn't push twice?
-        this._descriptionsByView.get(view.id)["descriptions"].push({
+        this._descriptionsByView.get(view)["descriptions"].push({
           particleSpec: particleSpec,
           connectionName: connection.name,
-          component: component,
+          component: particle,
           direction: particleSpec.connectionMap.get(connection.name).isOutput ? "out" : "in",
           description: particleSpec.description ? particleSpec.description[connection.name] : undefined
         });
@@ -67,7 +67,7 @@ class DescriptionGenerator {
   }
   _generateParticleDescriptions(includeAll) {
     // Generate descriptions for views.
-    this.recipe.components.forEach(c => this._descriptionByParticle.set(c.particleName, new Map()));
+    this.recipe.particles.forEach(p => this._descriptionByParticle.set(p.name, new Map()));
     this._initDescriptionsByView();
     this._descriptionsByView.forEach((viewDescription, viewId) => {
       viewDescription.descriptions.forEach(desc => {
@@ -78,13 +78,12 @@ class DescriptionGenerator {
     });
     // Generate descriptions for particles and select ones for the significant ones for displayed suggestion.
     let selectedDescriptions = [];
-    this.recipe.components.forEach(component => {
-      let particleSpec = this.recipe.arc.particleSpec(component.particleName);
+    this.recipe.particles.forEach(particle => {
+      let particleSpec = particle.spec;
       if (particleSpec.description && particleSpec.description.pattern) {
-        let description = this._resolveTokens(particleSpec.description.pattern, component, particleSpec);
+        let description = this._resolveTokens(particleSpec.description.pattern, particle, particleSpec);
         if (description) {
-          this._descriptionByParticle.get(component.particleName).set("description", description);
-          let particleSpec = this.recipe.arc.particleSpec(component.particleName);
+          this._descriptionByParticle.get(particle.name).set("description", description);
           // Add description of particle that renders to "root" as the first element
           if (particleSpec.renders.reduce((prev, r) => { return r.name.name == "root" || prev; }, false))
             selectedDescriptions.unshift(description);
@@ -122,9 +121,9 @@ class DescriptionGenerator {
   }
 
   _resolveConnectionDescription(connectionName, recipeComponent, particleSpec) {
-    let connection = recipeComponent.findConnectionByName(connectionName);
+    let connection = recipeComponent.connections[connectionName];
     assert(connection, `No connection for ${connectionName} in component ${recipeComponent.name}`);
-    let viewDescription = this._descriptionsByView.get(connection.view.id);
+    let viewDescription = this._descriptionsByView.get(connection.view);
     let resultDescription;
     let selectedParticleViewDescription =
         this._selectParticleViewDescription(viewDescription, particleSpec.name);
@@ -186,9 +185,13 @@ class DescriptionGenerator {
         return outDescriptions[0];
     }
   }
-  _formatViewValue(view) {
+  _formatViewValue(recipeView) {
+    if (!recipeView.id)
+      return;
+    let view = this.relevance.newArc.viewById(recipeView.id);
+    assert(view, `Cannot find view ${recipeView.id} in arc`);
     if (view.type.isView) {
-      let viewList = view.toList() || this.relevance.newArc._viewMap.get(view).get();
+      let viewList = view.toList();
       if (viewList) {
         if (viewList.length > 2) {
           return `<b>${viewList[0].rawData.name}</b> and <b>${viewList.length-1}</b> other items`;
@@ -196,10 +199,11 @@ class DescriptionGenerator {
         return viewList.map(v => v.rawData.name).join(", ");
       }
     } else {
-      let viewVar = view.get() || this.relevance.newArc._viewMap.get(view).get();
-      if (viewVar)
+      let viewVar = view.get();
+      if (viewVar) {
         return viewVar.rawData.name;  // TODO: use type's Entity instead
       }
+    }
   }
 }
 
