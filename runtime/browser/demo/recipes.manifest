@@ -10,25 +10,28 @@ import '../../../particles/Recommend/Recommend.manifest'
 import '../../../particles/Chooser/Chooser.manifest'
 import '../../../particles/AlsoOn/AlsoOn.manifest'
 import '../../../particles/GiftList/GiftList.manifest'
+import '../../../particles/Arrivinator/Arrivinator.manifest'
+import '../../../particles/ManufacturerInfo/ManufacturerInfo.manifest'
+import '../../../particles/Interests/Interests.manifest'
 
 # Create shortlist with [product, ...]
 recipe
-   create as list
-   SaveList
-     list = list
+   map as list
+   #SaveList
+   # list = list
    ShowProducts
-     list = list
+     list <- list
 
 # See [person]'s wishlist
 recipe
   map as wishlist
   map as person
   # TODO: remove WishlistFor and provide the person in the context.
-  WishlistFor
-    wishlist = wishlist
-    person = person
-  Choose
-    singleton = person
+  #WishlistFor
+  #  wishlist = wishlist
+  #  person = person
+  #Choose
+  #  singleton = person
   ShowProducts
     list = wishlist
 
@@ -39,17 +42,17 @@ recipe
   map as wishlist
   map as person
   # TODO: remove WishlistFor and provide the person in the context.
-  WishlistFor
-    wishlist = wishlist
-    person = person
+  #WishlistFor
+  #  wishlist = wishlist
+  #  person = person
   Recommend
     known = list
     population = wishlist
     recommendations = recommended
-  SaveList
-    list = list
-  Choose
-    singleton = person
+  #SaveList
+  #  list = list
+  #Choose
+  #  singleton = person
   ShowProducts
     list = list
   Chooser
