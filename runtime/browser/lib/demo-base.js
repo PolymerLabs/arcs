@@ -8,14 +8,11 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-let Suggestinator = require("../../suggestinator.js");
-let {RecipeBuilder} = require('../../recipe.js');
-let recipes = require("../demo/recipes.js");
+const Planner = require("../../planner.js");
 
 class DemoBase extends HTMLElement {
   constructor() {
     super();
-    this.suggestinator = new Suggestinator();
   }
   connectedCallback() {
     if (!this._mounted) {
@@ -59,33 +56,24 @@ class DemoBase extends HTMLElement {
     this.stageNo++;
     this.suggest();
   }
-  suggest() {
-    if (this.stage.recipes) {
-      this.suggestinator._getSuggestions = () => this.stage.recipes.map(
-          r => this.buildRecipe(r)
-        );
-      this.suggestinator
-        .suggestinate(this.arc)
-        .then(plans =>
-          plans.forEach((plan, i) => {
-            this.suggestions.add(plan, i);
-          })
-        );
+  async suggest() {
+    if (!this.stage.recipes) {
+      return;
     }
-  }
-  buildRecipe(info) {
-    let rb = new RecipeBuilder();
-    info.particles.forEach(pi => {
-      let p = rb.addParticle(pi.name);
-      if (pi.constrain) {
-        Object.keys(pi.constrain).forEach(k => {
-          p.connectConstraint(k, pi.constrain[k]);
-        });
-      }
+
+    let planner = new Planner();
+    // TODO: Shrug.. Context dependency between demo base and subclasses is weird.
+    this.context.recipes = this.stage.recipes;
+    planner.init(this.arc, this.context);
+    let recipes = await planner.plan();
+    // TODO: how many planning phases to run?
+    let plans = await planner.plan();
+    plans.forEach((plan, i) => {
+      // TODO: invoke speculator/decriptinator
+      let rank = 1;
+      let description = 'TODO: description';
+      this.suggestions.add({plan, rank, description}, i);
     });
-    let recipe = rb.build();
-    recipe.name = info.name;
-    return recipe;
   }
 }
 

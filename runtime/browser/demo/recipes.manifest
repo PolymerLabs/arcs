@@ -1,0 +1,81 @@
+# Copyright (c) 2017 Google Inc. All rights reserved.
+# This code may only be used under the BSD style license found at
+# http://polymer.github.io/LICENSE.txt
+# Code distributed by Google as part of this project is also
+# subject to an additional IP rights grant found at
+# http://polymer.github.io/PATENTS.txt
+
+# Create shortlist with [product, ...]
+recipe
+   create as list
+   SaveList
+     list = list
+   ShowProducts
+     list = list
+
+# See [person]'s wishlist
+recipe
+  map as wishlist
+  map as person
+  WishlistFor
+    wishlist = wishlist
+    person = person
+  Choose
+    singleton = person
+  ShowProducts
+    list = wishlist
+
+# Create shortlist with [product, ...] and suggest similar products from [person]'s wish list
+recipe
+  create as list
+  create as recommended
+  map as wishlist
+  map as person
+  WishlistFor
+    wishlist = wishlist
+    person = person
+  Recommend
+    known = list
+    population = wishlist
+    recommendations = recommended
+  SaveList
+    list = list
+  Choose
+    singleton = person
+  ShowProducts
+    list = list
+  Chooser
+    choices = recommended
+    resultList = list
+  AlsoOn
+    list = list
+    choices = wishlist
+
+# Buying for [person]'s [occasion] in [timeframe]? Product [X] arrives too late.
+recipe
+  map as person
+  map as list
+  GiftList
+    person = person
+  Arrivinator
+    list = list
+
+# Check manufacturer information for products.
+recipe
+  map as list
+  ManufacturerInfo
+    list = list
+
+# TODO: Check for newer versions, e.g. there is a new version of [product].
+# TODO: [Manufacturer] recommends [product] instead of [product] for 13 year olds.
+# TODO: See awards, e.g. [product] winning the [award].
+
+# Recommendations based on Claire's interest in field hockey.
+recipe
+  map as wishlist
+  Interests
+    list = wishlist
+
+# Profit
+recipe
+  # nothing...
