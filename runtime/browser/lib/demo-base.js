@@ -8,14 +8,11 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-let Suggestinator = require("../../suggestinator.js");
-let {RecipeBuilder} = require('../../recipe.js');
-let recipes = require("../demo/recipes.js");
+const Planner = require("../../planner.js");
 
 class DemoBase extends HTMLElement {
   constructor() {
     super();
-    this.suggestinator = new Suggestinator();
   }
   connectedCallback() {
     if (!this._mounted) {
@@ -59,33 +56,32 @@ class DemoBase extends HTMLElement {
     this.stageNo++;
     this.suggest();
   }
-  suggest() {
-    if (this.stage.recipes) {
-      this.suggestinator._getSuggestions = () => this.stage.recipes.map(
-          r => this.buildRecipe(r)
-        );
-      this.suggestinator
-        .suggestinate(this.arc)
-        .then(plans =>
-          plans.forEach((plan, i) => {
-            this.suggestions.add(plan, i);
-          })
-        );
+  async suggest() {
+    if (!this.stage.recipes) {
+      return;
     }
-  }
-  buildRecipe(info) {
-    let rb = new RecipeBuilder();
-    info.particles.forEach(pi => {
-      let p = rb.addParticle(pi.name);
-      if (pi.constrain) {
-        Object.keys(pi.constrain).forEach(k => {
-          p.connectConstraint(k, pi.constrain[k]);
-        });
-      }
-    });
-    let recipe = rb.build();
-    recipe.name = info.name;
-    return recipe;
+
+    let planner = new Planner();
+    // TODO: Shrug.. Context dependency between demo base and subclasses is weird.
+    this.context.recipes = this.stage.recipes;
+    planner.init(this.arc, this.context);
+    let plans = await planner.plan(500);
+
+    const Speculator = require('../../speculator.js');
+    let speculator = new Speculator;
+
+    let selectedPlans = await Promise.all(plans.map(async(plan, i) => {
+      let relevance = await speculator.speculate(this.arc, plan);
+      let rank = relevance.calcRelevanceScore();
+      const DescriptionGenerator = require('../../description-generator.js');
+      let description = new DescriptionGenerator(plan, relevance).description;
+      return {plan, rank, description};
+    }));
+    selectedPlans.sort((a, b) => b.rank - a.rank);
+    let maxSuggestions = 10;
+    for (let i = 0; i < maxSuggestions; ++i) {
+      this.suggestions.add(selectedPlans[i], i);
+    }
   }
 }
 
