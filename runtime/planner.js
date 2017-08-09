@@ -131,18 +131,6 @@ class Planner {
         description,
       };
     }));
-
-    for (let plan of plans) {
-      let relevance = await speculator.speculate(this._arc, plan);
-      let rank = relevance.calcRelevanceScore();
-      let description = new DescriptionGenerator(plan, relevance).description;
-      suggestions.push({
-        plan,
-        rank,
-        description,
-      });
-    }
-    return suggestions;
   }
 }
 
