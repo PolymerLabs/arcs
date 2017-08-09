@@ -18,6 +18,9 @@ let ResolveParticleByName = require('./strategies/resolve-particle-by-name.js');
 let InitPopulation = require('./strategies/init-population.js');
 let Manifest = require('./manifest.js');
 
+const Speculator = require('./speculator.js');
+const DescriptionGenerator = require('./description-generator.js');
+
 class CreateViews extends Strategy {
   // TODO: move generation to use an async generator.
   async generate(strategizer) {
@@ -72,7 +75,9 @@ class MatchConsumedSlots extends Strategy {
 
 
 class Planner {
+  // TODO: Use context.arc instead of arc
   init(arc, context) {
+    this._arc = arc;
     let strategies = [
       new InitPopulation(context),
       new CreateViews(),
@@ -110,6 +115,34 @@ class Planner {
       }
     } while (this.strategizer.generated.length > 0);
     return allResolved;
+  }
+
+  async suggest(timeout) {
+    let plans = await this.plan(timeout);
+    let suggestions = [];
+    let speculator = new Speculator();
+    return Promise.all(plans.map(async plan => {
+      let relevance = await speculator.speculate(this._arc, plan);
+      let rank = relevance.calcRelevanceScore();
+      let description = new DescriptionGenerator(plan, relevance).description;
+      return {
+        plan,
+        rank,
+        description,
+      };
+    }));
+
+    for (let plan of plans) {
+      let relevance = await speculator.speculate(this._arc, plan);
+      let rank = relevance.calcRelevanceScore();
+      let description = new DescriptionGenerator(plan, relevance).description;
+      suggestions.push({
+        plan,
+        rank,
+        description,
+      });
+    }
+    return suggestions;
   }
 }
 
