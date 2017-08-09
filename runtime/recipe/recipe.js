@@ -61,7 +61,8 @@ class Recipe {
 
   isResolved() {
     assert(Object.isFrozen(this), 'Recipe must be frozen to be resolved.');
-    return this._views.every(view => view.isResolved())
+    return this._connectionConstraints.length == 0
+        && this._views.every(view => view.isResolved())
         && this._particles.every(particle => particle.isResolved())
         && this._slots.every(slot => slot.isResolved())
         && this.viewConnections.every(connection => connection.isResolved())

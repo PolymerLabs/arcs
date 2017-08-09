@@ -10,6 +10,7 @@
 
 let Arc = require('../../arc.js');
 let systemParticles = require('../../system-particles.js');
+const Manifest = require("../../manifest.js");
 //require('./trace-setup.js');
 
 let db = {
@@ -73,9 +74,9 @@ let wishlistDb = [
   }
 ];
 
-function prepareDemoContext({loader, pecFactory, slotComposer}) {
+async function prepareDemoContext({loader, pecFactory, slotComposer}) {
   // uber arc
-  let pageArc = new Arc({loader, id: 'pageArc'});
+  let pageArc = new Arc({loader, id: 'page-arc'});
   // bootstrap data context
   let Person = loader.loadEntity('Person');
   let Product = loader.loadEntity('Product');
@@ -87,7 +88,7 @@ function prepareDemoContext({loader, pecFactory, slotComposer}) {
   pageArc.commit(db.products.map(p => new Product(p)));
 
   // claire's wishlist arc
-  let wishlistArc = new Arc({loader, id: 'claires-wishlist'});
+  let wishlistArc = new Arc({loader, id: 'claires-wishlist-arc'});
   let wishlistView = wishlistArc.createView(Product.type.viewOf(), 'claires-wishlist');
   wishlistArc.commit(wishlistDb.map(p => new Product(p)));
 
@@ -101,8 +102,13 @@ function prepareDemoContext({loader, pecFactory, slotComposer}) {
   arc.mapView(wishlistView)
   // TODO(sjmiles): boilerplate? not needed until we are rendering particles (arc not pageArc)?
   systemParticles.register(loader);
+
+  let manifest = await Manifest.load('browser/demo/recipes.manifest', loader);
+  let recipes = manifest.recipes;
+
   let context = {
     arc,
+    recipes,
     people: {
       'Claire': [wishlistArc],
     },
