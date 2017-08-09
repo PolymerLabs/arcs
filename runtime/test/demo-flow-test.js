@@ -55,6 +55,8 @@ describe('demo flow', function() {
     //    .expectRender("Chooser");
 
     //arc.pec.slotComposer = slotComposer;
+
+    // TODO: figure out which plan is the correct one.
     plans[0].instantiate(arc);
     await arc.pec.idle;
 
