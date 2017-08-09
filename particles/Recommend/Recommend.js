@@ -16,12 +16,9 @@ defineParticle(({Particle}) => {
         var populationView = views.get("population");
         this.logDebug("population", populationView);
         populationView.toList().then(data => {
-          if (data.length > 0)
-            views.get('recommendations').store(data[0]);
-          if (data.length > 1)
-            views.get('recommendations').store(data[1]);
-          if (data.length > 2)
-            views.get('recommendations').store(data[2]);
+          for (let i = 0; i < 3 && i < data.length; i++) {
+            views.get('recommendations').store(data[i]);
+          }
           this.logDebug("recommendations", views.get('recommendations'));
           this.relevance = 9;
         });
