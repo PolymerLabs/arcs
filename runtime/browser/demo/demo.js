@@ -10,19 +10,14 @@
 
 let BrowserLoader = require("../../browser-loader.js");
 let SlotComposer = require('../../slot-composer.js');
-
 let DemoBase = require('../lib/demo-base.js');
-
-let ContextFactory = require('./demo-context-factory.js');
-const Manifest = require("../../manifest.js");
+let demoContext = require('./demo-context-factory.js');
 
 // 0: make shortlist, 1: see wishlist,
 // 2: uber shortlist, 3: buying for,
 // 4: manu info, 5: interests
 
-async function buildStages(loader) {
-  let manifest = await Manifest.load('browser/demo/recipes.manifest', loader);
-  let recipes = manifest.recipes;
+function buildStages(recipes) {
   return [{
     recipes: [
       recipes[0],
@@ -93,14 +88,14 @@ class DemoFlow extends DemoBase {
   async didMount() {
     let root = '../../';
     let loader = new BrowserLoader(root);
-    let {context} = ContextFactory({
+    let {context} = await demoContext({
       loader,
       pecFactory: require('../worker-pec-factory.js').bind(null, root),
       slotComposer: new SlotComposer(this.$('[particle-container]'))
     });
     this.arc = context.arc;
     this.context = context;
-    this.stages = await buildStages(loader);
+    this.stages = buildStages(context.recipes);
     this.suggestions = this.$('suggestions-element');
     this.suggestions.arc = context.arc;
     this.suggestions.callback = this.nextStage.bind(this);

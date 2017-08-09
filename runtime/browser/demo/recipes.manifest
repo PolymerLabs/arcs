@@ -26,21 +26,12 @@ recipe
 
 # Create shortlist with [product, ...] and suggest similar products from [person]'s wish list
 recipe
-  map as list
-  map as wishlist #wishlist
-  create as recommended
+  Chooser.choices -> Recommend.recommendations
+  Chooser.resultList -> ShowProducts.list
+  Chooser.resultList -> Recommend.known
+  map #giftlist as wishlist
   Recommend
-    known <- list
     population <- wishlist
-    recommendations -> recommended
-  ShowProducts
-    list <- list
-  Chooser
-    choices <- recommended
-    resultList -> list
-  AlsoOn
-    list <- list
-    choices <- wishlist
 
 # Buying for [person]'s [occasion] in [timeframe]? Product [X] arrives too late.
 recipe
