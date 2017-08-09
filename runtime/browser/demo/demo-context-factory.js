@@ -8,10 +8,8 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-let Arc = require('../../arc.js');
-let systemParticles = require('../../system-particles.js');
+const Arc = require('../../arc.js');
 const Manifest = require("../../manifest.js");
-//require('./trace-setup.js');
 
 let db = {
   people: [
@@ -104,9 +102,6 @@ async function prepareDemoContext({loader, pecFactory, slotComposer}) {
   arc.mapView(personVar);
   arc.mapView(wishlistView)
 
-  // TODO(sjmiles): boilerplate? not needed until we are rendering particles (arc not pageArc)?
-  systemParticles.register(loader);
-
   let manifest = await Manifest.load('browser/demo/recipes.manifest', loader);
   let recipes = manifest.recipes;
 
@@ -117,6 +112,8 @@ async function prepareDemoContext({loader, pecFactory, slotComposer}) {
       'Claire': [wishlistArc],
     },
   };
+
+  // TODO: should related arcs be part of the planner's context (above)?
   let relatedArcs = [
     pageArc,
     wishlistArc,
