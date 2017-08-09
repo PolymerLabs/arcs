@@ -173,6 +173,9 @@ class Variable extends ViewBase {
   }
 
   extractEntities(set) {
+    if (!this._stored) {
+      return;
+    }
     set.add(this._stored);
   }
 

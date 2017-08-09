@@ -87,6 +87,9 @@ async function prepareDemoContext({loader, pecFactory, slotComposer}) {
   pageArc.commit(db.people.map(p => new Person(p)));
   pageArc.commit(db.products.map(p => new Product(p)));
 
+  let personVar = pageArc.createView(Person.type, 'personFromWebpage');
+  personVar.set(new Person(db.people[0]));
+
   // claire's wishlist arc
   let wishlistArc = new Arc({loader, id: 'claires-wishlist-arc'});
   let wishlistView = wishlistArc.createView(Product.type.viewOf(), 'claires-wishlist');
@@ -94,12 +97,13 @@ async function prepareDemoContext({loader, pecFactory, slotComposer}) {
 
   // demo arc
   let arc = new Arc({id: 'demo', loader, pecFactory, slotComposer});
-  arc.createView(Person.type, 'personSlot');
   arc.mapView(personView);
   arc.mapView(productView);
 
-  // TODO: This should be part of recipe instantiation.
+  // TODO: These should be part of recipe instantiation.
+  arc.mapView(personVar);
   arc.mapView(wishlistView)
+
   // TODO(sjmiles): boilerplate? not needed until we are rendering particles (arc not pageArc)?
   systemParticles.register(loader);
 
@@ -113,8 +117,12 @@ async function prepareDemoContext({loader, pecFactory, slotComposer}) {
       'Claire': [wishlistArc],
     },
   };
+  let relatedArcs = [
+    pageArc,
+    wishlistArc,
+  ];
   // your context objects
-  return {pageArc, arc, Person, Product, context};
+  return {relatedArcs, arc, Person, Product, context};
 }
 
 module.exports = prepareDemoContext;
