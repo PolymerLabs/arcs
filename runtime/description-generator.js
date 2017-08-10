@@ -44,22 +44,20 @@ class DescriptionGenerator {
   _initDescriptionsByView() {
     this._descriptionsByView = new Map();
     this.recipe.particles.forEach(particle => {
-      let particleSpec = particle.spec;
       Object.values(particle.connections).forEach(connection => {
         let view = connection.view;
         if (!this._descriptionsByView.has(view)) {
           this._descriptionsByView.set(view,
-              { create: view.create, type: view.type, value: this._formatViewValue(view), descriptions: []});
+              { create: view.create, type: connection.type, value: this._formatViewValue(view), descriptions: []});
         }
-        assert(this._descriptionsByView.get(view).type.equals(view.type),
+        assert(this._descriptionsByView.get(view).type.equals(connection.type),
                `Unexpected type for view ${view}`);
         // should verify same particle doesn't push twice?
         this._descriptionsByView.get(view)["descriptions"].push({
-          particleSpec: particleSpec,
           connectionName: connection.name,
-          component: particle,
-          direction: particleSpec.connectionMap.get(connection.name).isOutput ? "out" : "in",
-          description: particleSpec.description ? particleSpec.description[connection.name] : undefined
+          recipeParticle: particle,
+          direction: particle.spec.connectionMap.get(connection.name).isOutput ? "out" : "in",
+          description: particle.spec.description ? particle.spec.description[connection.name] : undefined
         });
       });
     });
@@ -71,29 +69,28 @@ class DescriptionGenerator {
     this._descriptionsByView.forEach((viewDescription, viewId) => {
       viewDescription.descriptions.forEach(desc => {
         let description =
-          this._resolveConnectionDescription(desc.connectionName, desc.component, desc.particleSpec);
-        this._descriptionByParticle.get(desc.particleSpec.name).set(desc.connectionName, description);
+          this._resolveConnectionDescription(desc.connectionName, desc.recipeParticle);
+        this._descriptionByParticle.get(desc.recipeParticle.spec.name).set(desc.connectionName, description);
       });
     });
     // Generate descriptions for particles and select ones for the significant ones for displayed suggestion.
     let selectedDescriptions = [];
     this.recipe.particles.forEach(particle => {
-      let particleSpec = particle.spec;
-      if (particleSpec.description && particleSpec.description.pattern) {
-        let description = this._resolveTokens(particleSpec.description.pattern, particle, particleSpec);
+      if (particle.spec.description && particle.spec.description.pattern) {
+        let description = this._resolveTokens(particle.spec.description.pattern, particle, particle.spec);
         if (description) {
           this._descriptionByParticle.get(particle.name).set("description", description);
-          // Add description of particle that renders to "root" as the first element
-          if (particleSpec.renders.reduce((prev, r) => { return r.name.name == "root" || prev; }, false))
+          // Add description of particle that consumes the "root" slot as the first element.
+          if (Object.keys(particle.consumedSlotConnections).indexOf("root") >= 0)
             selectedDescriptions.unshift(description);
-          else if (particleSpec.renders.length > 0 || includeAll)
+          else if (Object.keys(particle.consumedSlotConnections).length > 0 || includeAll)
             selectedDescriptions.push(description);
         }
       }
     });
     return selectedDescriptions.length > 0 ? selectedDescriptions.join(" and ") : this.recipe.name;
   }
-  _resolveTokens(description, recipeComponent, particleSpec) {
+  _resolveTokens(description, recipeParticle) {
     let tokens = description.match(/\${[a-zA-Z0-9::~\.\[\]]+}/g);
     if (!tokens)
       return description;  // no tokens found
@@ -102,7 +99,7 @@ class DescriptionGenerator {
       let matchers = token.match(/^(.*)\.type$/);
       let viewDescription = null;
       if (matchers) {  // token is ${viewname.type}
-        let connection = recipeComponent.findConnectionByName(matchers[1]);
+        let connection = recipeParticle.findConnectionByName(matchers[1]);
         viewDescription = connection.view.type.toString();
         if (connection.view.create) {
           viewDescription = 'new ' + viewDescription;
@@ -112,7 +109,7 @@ class DescriptionGenerator {
         // of the particle description. Should instead call: this.getViewDescription(particleSpec.name, token)
         // here for the latter.
         viewDescription =
-          this._resolveConnectionDescription(token, recipeComponent, particleSpec);
+          this._resolveConnectionDescription(token, recipeParticle);
       }
       if (!viewDescription) {
         return null;
@@ -122,24 +119,23 @@ class DescriptionGenerator {
     return description;
   }
 
-  _resolveConnectionDescription(connectionName, recipeComponent, particleSpec) {
-    let connection = recipeComponent.connections[connectionName];
-    assert(connection, `No connection for ${connectionName} in component ${recipeComponent.name}`);
+  _resolveConnectionDescription(connectionName, recipeParticle) {
+    let connection = recipeParticle.connections[connectionName];
+    assert(connection, `No connection for ${connectionName} in particle ${recipeParticle.name}`);
     let viewDescription = this._descriptionsByView.get(connection.view);
     let resultDescription;
     let selectedParticleViewDescription =
-        this._selectParticleViewDescription(viewDescription, particleSpec.name);
+        this._selectParticleViewDescription(viewDescription, recipeParticle.spec.name);
     if ((!selectedParticleViewDescription || !selectedParticleViewDescription.description) &&
-        connection.view.description) {
+        connection.view && connection.view.description) {
       // Fallback to previously existing view description, if the new recipe doesn't have explicit
       // description pattern for the view,
       resultDescription = connection.view.description;
     } else if (selectedParticleViewDescription) {
       resultDescription = this._resolveTokens(selectedParticleViewDescription.description,
-                                              selectedParticleViewDescription.component,
-                                              selectedParticleViewDescription.particleSpec);
+                                              selectedParticleViewDescription.recipeParticle);
     } else {
-      if (viewDescription.type.isView || !viewDescription.value) {
+      if (viewDescription && (viewDescription.type.isView || !viewDescription.value)) {
         resultDescription = viewDescription.type.toString();
         if (viewDescription.create) {
           resultDescription = 'new ' + resultDescription;
@@ -147,7 +143,7 @@ class DescriptionGenerator {
       }
     }
     if (resultDescription) {
-      if (viewDescription.value && resultDescription.indexOf(viewDescription.value) < 0)
+      if (viewDescription && viewDescription.value && resultDescription.indexOf(viewDescription.value) < 0)
         return `${resultDescription} (${viewDescription.value})`;
       return resultDescription;
     }
@@ -155,9 +151,9 @@ class DescriptionGenerator {
   }
 
   _selectParticleViewDescription(viewDescription, particleName) {
-    if (viewDescription.descriptions && viewDescription.descriptions.length > 0) {
+    if (viewDescription && viewDescription.descriptions && viewDescription.descriptions.length > 0) {
       let localDescription = viewDescription.descriptions.reduce((prev, curr) => {
-        if (curr.particleSpec.name == particleName) prev = curr; return prev;
+        if (curr.recipeParticle.spec.name == particleName) prev = curr; return prev;
       }, null);
       assert(localDescription);
       if (localDescription && localDescription.direction == "out") {
@@ -176,14 +172,16 @@ class DescriptionGenerator {
         if (r1.description != r2.description) {
           return r1.description ? -1 : 1;
         }
-        if (r1.particleSpec.name == particleName) {
+        let r1Name = r1.recipeParticle.spec.name;
+        let r2Name = r2.recipeParticle.spec.name;
+        if (r1Name == particleName) {
           return 1;
         }
-        if (r2.particleSpec.name == particleName) {
+        if (r2Name == particleName) {
           return -1;
         }
-        let rank1 = this.relevance.calcParticleRelevance(r1.particleSpec.name);
-        let rank2 = this.relevance.calcParticleRelevance(r1.particleSpec.name);
+        let rank1 = this.relevance.calcParticleRelevance(r1Name);
+        let rank2 = this.relevance.calcParticleRelevance(r2Name);
         return rank2 - rank1;
       });
       if (outDescriptions[0].description)
