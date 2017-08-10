@@ -15,13 +15,11 @@ let Planner = require('../planner.js');
 let assert = require('chai').assert;
 let Manifest = require('../manifest.js');
 let Recipe = require('../recipe/recipe.js');
-let systemParticles = require('../system-particles.js');
 let ConvertConstraintsToConnections = require('../strategies/convert-constraints-to-connections.js');
 let ResolveParticleByName = require('../strategies/resolve-particle-by-name.js');
 let InitPopulation = require('../strategies/init-population.js');
 
 var loader = new Loader();
-systemParticles.register(loader);
 let Person = loader.loadEntity("Person");
 let Product = loader.loadEntity("Product");
 

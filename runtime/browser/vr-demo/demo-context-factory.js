@@ -9,7 +9,6 @@
  */
 
 let Arc = require("../../arc.js");
-let systemParticles = require('../../system-particles.js');
 //require("./trace-setup.js");
 
 function prepareDemoContext({loader, pecFactory, slotComposer}) {
@@ -27,7 +26,6 @@ function prepareDemoContext({loader, pecFactory, slotComposer}) {
     new Product({name: "Denim Jeans"})
   ]);
   // TODO(sjmiles): boilerplate? not needed until we are rendering particles (arc not pageArc?)
-  systemParticles.register(loader);
   // demo arc
   let arc = new Arc({id: 'demo', loader, pecFactory, slotComposer});
   arc.mapView(personView);

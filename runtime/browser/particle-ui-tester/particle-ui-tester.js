@@ -18,14 +18,12 @@ let SlotComposer = require('../../slot-composer.js');
 //let SuggestionComposer = require('../../suggestion-composer.js');
 
 let recipe = require('../../recipe.js');
-let systemParticles = require('../../system-particles.js');
 //require("./trace-setup.js");
 
 //let recipes = require('./recipes.js');
 let particleRoot = global.document ? document.querySelector('[particle-container]') || document.body : {};
 
 let loader = new BrowserLoader('../../');
-systemParticles.register(loader);
 
 let Person = loader.loadEntity("Person");
 let Product = loader.loadEntity("Product");
