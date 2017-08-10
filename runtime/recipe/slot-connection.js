@@ -32,6 +32,14 @@ class SlotConnection {
   set slotSpec(slotSpec) {
     assert(this.name == slotSpec.name);
     this._slotSpec = slotSpec;
+    slotSpec.providedSlots.forEach(providedSlot => {
+      let slot = this.recipe.newSlot(providedSlot.name);
+      slot.localName = providedSlot.name;
+      slot.formFactor = providedSlot.formFactor;
+      slot._sourceConnection = this;
+      providedSlot.views.forEach(view => slot.viewConnections.push(this.particle.connections[view]));
+      this.providedSlots[providedSlot.name] = slot;
+    });
   }
 
   connectToSlot(targetSlot) {
@@ -49,14 +57,8 @@ class SlotConnection {
     }
     var slotConnection = new SlotConnection(this.name, particle);
     if (this.slotSpec) {
-      slotConnection.slotSpec = particle.spec.getSlotSpec(this.name);
+      slotConnection._slotSpec = particle.spec.getSlotSpec(this.name);
     }
-    if (this.targetSlot) {
-      slotConnection.connectToSlot(cloneMap.get(this.targetSlot));
-    }
-    Object.keys(this.providedSlots).forEach(ps => {
-      slotConnection.providedSlots[ps] = cloneMap.get(this.providedSlots[ps]);
-    });
 
     cloneMap.set(this, slotConnection);
     return slotConnection;
