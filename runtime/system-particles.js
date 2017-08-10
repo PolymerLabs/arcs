@@ -11,7 +11,7 @@ var particle = require("./particle.js");
 var runtime = require("./runtime.js");
 let assert = require('chai').assert;
 
-exports.Demuxer = particle.define('Demuxer(in [~a] view, out ~a singleton)', ({view}) => {  
+exports.Demuxer = particle.define('Demuxer(in [~a] view, out ~a singleton)', ({view}) => {
   var list = view.asList();
   return function* () {
     for (var i = 0; i < list.length; i++)
@@ -23,7 +23,7 @@ exports.Demuxer2 = particle.define('Demuxer2(in [~a] view1, in [~b] view2, out ~
   var list1 = view1.asList();
   var list2 = view2.asList();
   return function* () {
-    for (var i = 0; i < list1.length; i++) 
+    for (var i = 0; i < list1.length; i++)
       for (var j = 0; j < list2.length; j++)
         yield {singleton1: list1[i], singleton2: list2[j], relevance: 5};
   };
@@ -69,6 +69,7 @@ exports.SaveList = particle.define('transient SaveList(ephemeral in [~a] inputs,
 });
 
 exports.register = function(loader) {
+  return;
   loader.registerParticle(exports.Demuxer);
   loader.registerParticle(exports.Demuxer2);
   loader.registerParticle(exports.Choose);

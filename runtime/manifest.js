@@ -11,7 +11,6 @@
 const assert = require('assert');
 const parser = require('./build/manifest-parser.js');
 const Recipe = require('./recipe/recipe.js');
-const ParticleParser = require('./build/particle-parser.js');
 const ParticleSpec = require('./particle-spec.js')
 const Schema = require('./schema.js')
 

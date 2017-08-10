@@ -9,7 +9,6 @@
  */
 "use strict";
 
-var parser = require("./build/particle-parser.js");
 var runtime = require("./runtime.js");
 var ParticleSpec = require("./particle-spec.js");
 var tracing = require('tracelib');
@@ -19,49 +18,8 @@ const Schema = require('./schema.js');
 const DEBUGGING = false;
 
 function define(def, update) {
-  let model = parser.parse(def);
-  // TODO: Remove this, inline definition should happen at the manifest level
-  //       and include schemas.
-  let resolveSchema = name => new Schema({
-    name,
-    sections: [],
-  });
-  let spec = new ParticleSpec(model, resolveSchema);
-  let clazz = class extends Particle {
-    static get spec() {
-      return spec;
-    }
-    constructor() {
-      super();
-    }
-    setViews(views) {
-      var inputViews = new Map();
-      for (let input of this.inputs()) {
-        this.on(views, input.name, 'change', async e => {
-            this.setBusy();
-            var relevance = await update(views, e);
-            this.setIdle();
-            if (relevance !== undefined)
-              this.relevance = relevance;
-        });
-      }
-    }
-    logDebug(tag, view) {
-      if (!DEBUGGING)
-        return;
-      let direction = this.spec.connectionMap.get(tag).direction;
-      view.debugString().then(v => console.log(
-         `(${this.spec.name})(${direction})(${tag}): (${view.name})`, v));
-    }
-  };
-  Object.defineProperty(clazz, 'name', {
-    value: spec.name,
-  });
-  // TODO: Super hacks.
-  clazz.spec._model._isInline = true;
-  clazz.spec._model._inlineDefinition = def;
-  clazz.spec._model._inlineUpdateFunction = String(update);
-  return clazz;
+  console.warn('Particle.define is deprecated')
+  return;
 }
 
 class Particle {

@@ -19,7 +19,6 @@ let view = require('../view.js');
 let viewlet = require('../viewlet.js');
 
 let loader = new (require('../loader'));
-loader.registerParticle(particles.TestParticle);
 const slotComposer = new SlotComposer({});
 const Bar = loader.loadEntity("Bar");
 
@@ -32,7 +31,7 @@ describe('View', function() {
     barView.clear();
     assert.equal(barView.get(), undefined);
   });
-  
+
   it('remove entry from view', async () => {
     let arc = new Arc({loader, slotComposer});
     let barView = arc.createView(Bar.type.viewOf());
