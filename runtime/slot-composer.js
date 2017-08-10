@@ -50,7 +50,7 @@ class SlotComposer {
       }
 
       let context = null;
-      let sourceConnection = s.consumeConn.targetSlot.sourceConnection;
+      let sourceConnection = s.consumeConn.targetSlot && s.consumeConn.targetSlot.sourceConnection;
       if (sourceConnection) {
         let sourceConnSlot = this.getSlot(sourceConnection.particle, sourceConnection.name);
         if (sourceConnSlot) {

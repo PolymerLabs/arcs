@@ -42,6 +42,9 @@ class Arc {
     let pecId = this.generateID();
     let innerPecPort = this._pecFactory(pecId);
     this.pec = new OuterPec(innerPecPort, slotComposer, `${pecId}:outer`);
+    if (slotComposer) {
+      slotComposer.pec = this.pec;
+    }
     this.nextParticleHandle = 0;
 
     // Dictionary from each tag string to a list of views
@@ -134,9 +137,9 @@ class Arc {
         renderMap: new Map(),
         views: new Map()
       };
-      p.exposeMap.forEach((view, slotid) => cloneParticleSpec.exposeMap.set(slotid, view ? view.clone() : view));
-      p.renderMap.forEach((views, slotid) => cloneParticleSpec.renderMap.set(slotid, views ? views.map(v => v.clone()) : views));
-      p.views.forEach(v => cloneParticleSpec.views.set(v.name, v.clone()));
+      // p.spec.exposes.forEach((view, slotid) => cloneParticleSpec.exposeMap.set(slotid, view ? view.clone() : view));
+      // p.spec.renders.forEach((views, slotid) => cloneParticleSpec.renderMap.set(slotid, views ? views.map(v => v.clone()) : views));
+      // p.views.forEach(v => cloneParticleSpec.views.set(v.name, v.clone()));
       arc._particles.push(cloneParticleSpec);
     });
     for (let v of viewMap.values())

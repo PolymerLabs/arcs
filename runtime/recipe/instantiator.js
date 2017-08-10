@@ -28,6 +28,9 @@ class Instantiator {
         arc.connectParticleToView(particle, recipeParticle, name, view);
       }
     }
+    if (arc.pec.slotComposer) {
+      arc.pec.slotComposer.initializeRecipe(recipe);
+    }
   }
 }
 
