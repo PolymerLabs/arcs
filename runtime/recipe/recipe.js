@@ -53,8 +53,8 @@ class Recipe {
     return view;
   }
 
-  newSlot() {
-    var slot = new Slot(this);
+  newSlot(name) {
+    var slot = new Slot(this, name);
     this._slots.push(slot);
     return slot;
   }
@@ -242,8 +242,8 @@ class Recipe {
     }
 
     recipe._views = this._views.map(cloneTheThing);
-    recipe._slots = this._slots.map(cloneTheThing);
     recipe._particles = this._particles.map(cloneTheThing);
+    recipe._slots = this._slots.map(cloneTheThing);
 
     recipe._connectionConstraints = this._connectionConstraints.map(cloneTheThing);
 

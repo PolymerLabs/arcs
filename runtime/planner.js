@@ -53,18 +53,27 @@ class MatchConsumedSlots extends Strategy {
       onSlotConnection(recipe, slotConnection) {
         if (slotConnection.direction == "provide")
           return;
-        if (slotConnection.slot)
+        if (slotConnection.targetSlot)
           return;
-        return (recipe, slotConnection) => {
-          // TODO: handle slots that don't have a provider (like "root" slot)
-          var slot = recipe.slots.find((s) => {return s.providerConnection && s.providerConnection.name == slotConnection.name});
-          if (!slot)
-            return 0;
-          // TODO: verify set of slot.providerConnection.viewConnections[i].view.id contains
-          // the set of (or at least one of? TBD) slotConnection.viewConnections[i].view.id
-          slotConnection.connectToSlot(slot);
-          return 1;
-        };
+        var potentialSlots = recipe.slots.filter(slot => {
+          if (slotConnection.name != slot.name)
+            return false;
+          var views = slot.viewConnections.map(connection => connection.view);
+          var particle = slotConnection.particle;
+          for (var name in particle.connections) {
+            var connection = particle.connections[name];
+            if (views.includes(connection.view))
+              return true;
+          }
+          return false;
+        });
+        return potentialSlots.map(slot => {
+          return (recipe, slotConnection) => {
+            let clonedSlot = recipe.updateToClone({slot})
+            slotConnection.connectToSlot(clonedSlot.slot);
+            return 1;
+          };
+        });
       }
     }(RecipeWalker.Permuted), this);
 

@@ -9,12 +9,13 @@ var assert = require('assert');
 var util = require('./util.js');
 
 class Slot {
-  constructor(recipe) {
+  constructor(recipe, name) {
     assert(recipe);
 
     this._recipe = recipe;
     this._id = undefined;          // The ID of the slot in the context
     this._localName = undefined;   // Local id within the recipe
+    this._name = name;
 
     this._formFactor = undefined;
     this._viewConnections = [];  // ViewConnection* (can only be set if source connection is set and particle in slot connections is set)
@@ -27,6 +28,7 @@ class Slot {
   set id(id) { this._id = id; }
   get localName() { return this._localName; }
   set localName(localName) { this._localName = localName; }
+  get name() { return this._name; };
   get formFactor() { return this._formFactor; }
   set formFactor(formFactor) { this._formFactor = formFactor; }
   get viewConnections() { return this._viewConnections; }
@@ -35,10 +37,15 @@ class Slot {
   get consumeConnections() { return this._consumerConnections; }
 
   clone(recipe, cloneMap) {
-    var slot = new Slot(recipe);
+    var slot = new Slot(recipe, this.name);
     slot._id = this.id;
     slot._formFactor = this.formFactor;
+    slot._localName = this._localName;
     // the connections are re-established when Particles clone their attached SlotConnection objects.
+    slot._sourceConnection = cloneMap.get(this._sourceConnection);
+    slot.sourceConnection._providedSlots[slot.name] = slot;
+    this._viewConnections.forEach(connection => slot._viewConnections.push(cloneMap.get(connection)));
+    this._consumerConnections.forEach(connection => cloneMap.get(connection).connectToSlot(slot));
     return slot;
   }
 
