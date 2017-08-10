@@ -9,7 +9,6 @@
  */
 "use strict";
 
-var parser = require("./build/particle-parser.js");
 const schemaParser = require("./build/schema-parser.js");
 var fs = require("fs");
 var runtime = require("./runtime.js");
@@ -36,10 +35,6 @@ class Loader {
   join(prefix, path) {
     prefix = this.path(prefix);
     return prefix + path;
-  }
-
-  particleLocationFor(name, type) {
-    return `../particles/${name}/${name}.${type}`;
   }
 
   loadFile(file) {
