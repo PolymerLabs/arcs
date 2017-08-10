@@ -36,8 +36,6 @@ class Arc {
     // information about last-seen-versions of views
     this._lastSeenVersion = new Map();
 
-    // TODO: remove this. with new recipes we should be able to
-    //       instantiate a particle together with all its views.
     this.particleViewMaps = new Map();
     let pecId = this.generateID();
     let innerPecPort = this._pecFactory(pecId);
@@ -94,20 +92,9 @@ class Arc {
   }
 
   instantiateParticle(spec) {
-    // TODO: Stop accpting strings when the old recipes are removed.
-    if (typeof spec == 'string') {
-      let name = spec;
-      spec = this._loader.loadParticleSpec(spec);
-      assert(spec, `can't find particle ${name}`);
-    }
     var handle = this.nextParticleHandle++;
     this.particleViewMaps.set(handle, {spec, views: new Map()});
     return handle;
-  }
-
-  // TODO: What is this even for?
-  particleSpec(name) {
-    return this._loader.loadParticleSpec(name);
   }
 
   generateID() {
