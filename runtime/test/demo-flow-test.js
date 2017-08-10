@@ -70,7 +70,6 @@ describe('demo flow', function() {
     //    ["Tea Pot", "Bee Hive", "Denim Jeans", "Arduino Starter Pack"]);
 
     var serialization = arc.serialize();
-    //systemParticles.register(loader);
 
     //slotComposer
     //           .expectGetSlot("ShowProducts", "root")

@@ -17,11 +17,6 @@ const Schema = require('./schema.js');
 
 const DEBUGGING = false;
 
-function define(def, update) {
-  console.warn('Particle.define is deprecated')
-  return;
-}
-
 class Particle {
   constructor() {
     this.spec = this.constructor.spec;
@@ -169,7 +164,6 @@ class StateChanges {
   }
 }
 
-exports.define = define;
 exports.Particle = Particle;
 exports.ViewChanges = ViewChanges;
 exports.SlotChanges = SlotChanges;
