@@ -11,8 +11,6 @@
 const runtime = require("../../runtime.js");
 const Arc = require("../../arc.js");
 const BrowserLoader = require("../../browser-loader.js");
-const Suggestinator = require("../../suggestinator.js");
-const recipe = require('../../recipe.js');
 const SlotComposer = require('../../slot-composer.js');
 const tracing = require('tracelib');
 tracing.enable();
