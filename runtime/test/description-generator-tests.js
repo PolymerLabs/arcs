@@ -11,19 +11,24 @@
 var Arc = require("../arc.js");
 var DescriptionGenerator = require('../description-generator.js');
 var Loader = require('../loader');
-var particles = require('./test-particles.js');
 var Relevance = require('../relevance.js');
 var runtime = require("../runtime.js");
 var SlotComposer = require('../slot-composer.js');
 var viewlet = require('../viewlet.js');
 var assert = require('chai').assert;
+var Manifest = require('../manifest.js');
 var Foo = runtime.testing.testEntityClass('Foo');
 var Bar = runtime.testing.testEntityClass('Bar');
 var Far = runtime.testing.testEntityClass('Far');
 
 describe('description generator', function() {
-  it('generate description', function() {
+  it('generate description', async function() {
     var loader = new Loader();
+    let manifest = await Manifest.load('../particles/test/test-particles.manifest', loader);
+    let particles = {
+      TestParticle: manifest.findParticleByName('TestParticle'),
+      ListTestParticle: manifest.findParticleByName('TestParticle'),
+    };
     const slotComposer = new SlotComposer({});
     var arc = new Arc({loader, slotComposer});
     var relevance = new Relevance();
@@ -32,7 +37,6 @@ describe('description generator', function() {
     let map = new Map();
     map.set({particle : {name : "TestParticle"}}, [5]);
     relevance.apply(map);
-    particles.register(loader);
     var fooView = arc.createView(Foo.type);
     var barView = arc.createView(Bar.type);
     var farsView = arc.createView(Far.type.viewOf());

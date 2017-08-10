@@ -12,7 +12,6 @@
 var runtime = require("../runtime.js");
 var Arc = require("../arc.js");
 let assert = require('chai').assert;
-let particles = require('./test-particles.js');
 const SlotComposer = require('../slot-composer.js');
 
 let view = require('../view.js');
