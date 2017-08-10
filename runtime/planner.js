@@ -7,7 +7,6 @@
 
 let {Strategy, Strategizer} = require('../strategizer/strategizer.js');
 var assert = require("assert");
-let oldRecipe = require('./recipe.js');
 let Recipe = require('./recipe/recipe.js');
 let RecipeUtil = require('./recipe/recipe-util.js');
 let RecipeWalker = require('./recipe/walker.js');
@@ -81,7 +80,6 @@ class Planner {
     let strategies = [
       new InitPopulation(context),
       new CreateViews(),
-      new ResolveParticleByName(arc._loader, context),
       new AssignViewsByTagAndType(arc),
       new ConvertConstraintsToConnections(),
       new MatchConsumedSlots(),

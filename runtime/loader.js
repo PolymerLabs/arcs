@@ -12,7 +12,6 @@
 var parser = require("./build/particle-parser.js");
 const schemaParser = require("./build/schema-parser.js");
 var fs = require("fs");
-var recipe = require("./recipe.js");
 var runtime = require("./runtime.js");
 var assert = require("assert");
 var ParticleSpec = require("./particle-spec.js");
@@ -66,19 +65,6 @@ class Loader {
     if (this._particlesByName[particleClass.name])
       console.warn(`${particleClass.name} is already registered`);
     this._particlesByName[particleClass.name] = particleClass;
-  }
-
-  // TODO: Remove this once particles are only loaded from manifests.
-  loadParticleSpec(name) {
-    if (this._particlesByName[name])
-      return this._particlesByName[name].spec;
-    let data = this.loadFile(this.particleLocationFor(name, 'ptcl'));
-    let model = parser.parse(data);
-    model.implFile = this.particleLocationFor(name, 'js');
-    let resolveSchema = name => {
-      return this.loadSchema(name);
-    };
-    return new ParticleSpec(model, resolveSchema);
   }
 
   loadParticleClass(spec) {
