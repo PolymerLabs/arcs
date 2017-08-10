@@ -10,6 +10,7 @@
 
 const Entity = require("./entity.js");
 const assert = require('assert');
+const Type = require('./type.js');
 
 class Schema {
   constructor(model) {
@@ -30,6 +31,10 @@ class Schema {
 
   toLiteral() {
     return this._model;
+  }
+
+  get type() {
+    return Type.newEntity(this.toLiteral());
   }
 
   get normative() {
@@ -60,6 +65,7 @@ class Schema {
         };
       }
     }
+    Object.defineProperty(clazz, 'type', {value: this.type});
     Object.defineProperty(clazz, 'name', {value: this.name});
     for (let property in this.normative) {
       // TODO: type checking, make a distinction between normative

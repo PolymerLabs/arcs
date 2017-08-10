@@ -13,7 +13,6 @@ var DescriptionGenerator = require('../description-generator.js');
 var Loader = require('../loader');
 var particles = require('./test-particles.js');
 var Relevance = require('../relevance.js');
-var recipe = require("../recipe.js");
 var runtime = require("../runtime.js");
 var SlotComposer = require('../slot-composer.js');
 var viewlet = require('../viewlet.js');

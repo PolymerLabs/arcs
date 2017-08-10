@@ -10,7 +10,6 @@
 "use strict";
 
 var assert = require('assert');
-var Recipe = require('./recipe.js');
 var Type = require('./type.js');
 
 class DescriptionGenerator {

@@ -10,7 +10,6 @@
 "use strict";
 
 const runtime = require("./runtime.js");
-const recipe = require("./recipe.js");
 const Type = require('./type.js');
 const assert = require('assert');
 
@@ -85,13 +84,6 @@ class ParticleSpec {
         ps.views.forEach(v => assert(this.connectionMap.has(v), 'Cannot provide slot for nonexistent view constraint ', v));
       });
     });
-  }
-
-  buildRecipe() {
-    var builder = new recipe.RecipeBuilder();
-    builder.addParticle(this.name);
-    this.connections.forEach(connection => builder.connectSpec(connection.name, connection));
-    return builder.build();
   }
 
   isInput(param) {

@@ -33,18 +33,12 @@ describe('Planner', function() {
     var planner = new Planner();
     planner.init(arc, {
       recipes: manifest.recipes,
-      particles: [
-        loader.loadParticleSpec('Chooser'),
-        loader.loadParticleSpec('Recommend'),
-        loader.loadParticleSpec('ShowProducts'),
-        loader.loadParticleSpec('SaveList'),
-      ],
       arc
     });
     await planner.generate(),
     await planner.generate(),
     await planner.generate(),
-    assert.equal(planner.strategizer.population.length, 5);
+    assert.equal(planner.strategizer.population.length, 4);
   });
 
   it('make a plan with views', async () => {
@@ -60,7 +54,7 @@ describe('Planner', function() {
     await planner.generate(),
     await planner.generate(),
     await planner.generate(),
-    assert.equal(planner.strategizer.population.length, 11);
+    assert.equal(planner.strategizer.population.length, 10);
   });
 });
 
