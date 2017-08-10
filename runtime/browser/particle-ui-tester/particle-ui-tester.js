@@ -12,12 +12,10 @@
 
 let Arc = require("../../arc.js");
 let BrowserLoader = require("../../browser-loader.js");
-let Resolver = require('../../resolver.js');
 let SlotComposer = require('../../slot-composer.js');
 //let Suggestinator = require("../../suggestinator.js");
 //let SuggestionComposer = require('../../suggestion-composer.js');
 
-let recipe = require('../../recipe.js');
 //require("./trace-setup.js");
 
 //let recipes = require('./recipes.js');
@@ -71,11 +69,13 @@ let demoParticle = {
 
 let renderParticle = () => {
   particleRoot.textContent = '';
+  // TODO: build a new-recipe.
   let r = buildRecipe({
     particles: [
       demoParticle
     ]
   });
+  // TODO: should not need to be resolved now.
   if (Resolver.resolve(r, arc)) {
     r.instantiate(arc);
   }
