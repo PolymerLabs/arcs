@@ -37,7 +37,7 @@ class Slot {
   get consumeConnections() { return this._consumerConnections; }
 
   clone(recipe, cloneMap) {
-    var slot = new Slot(recipe, this.name);
+    var slot = recipe.newSlot(this.name);
     slot._id = this.id;
     slot._formFactor = this.formFactor;
     slot._localName = this._localName;
@@ -69,7 +69,7 @@ class Slot {
   }
 
   isResolved() {
-    return this._id && this._formFactor && this._sourceConnection;
+    return this._sourceConnection;
   }
 
   _isValid() {
