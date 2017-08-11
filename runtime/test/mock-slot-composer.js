@@ -10,35 +10,31 @@
 "use strict";
 
 let assert = require('chai').assert;
+const Slot = require('../slot.js');
+const SlotComposer = require('../slot-composer.js');
 
 let logging = false;
 let log = (!logging || global.logging === false) ? () => {} : console.log.bind(console, '---------- MockSlotComposer::');
 
-class MockSlotComposer {
-  constructor(pec) {
-    this.pec = pec;
+class MockSlotComposer extends SlotComposer {
+  constructor() {
+    super(/* rootContext= */ "dummy-context", /* affordance= */ "mock");
     this.expectQueue = [];
-    this.specs = new Map();
     this.onExpectationsComplete = () => undefined;
   }
 
-  expectGetSlot(name, slotId) {
-    this.expectQueue.push({type: 'getSlot', name, slotId});
+  initializeRecipe(recipe) {
+    Slot.prototype.constructRenderRequest = () => { return ['template', 'model'] };
+    super.initializeRecipe(recipe);
+  }
+
+  expectRenderSlot(particleName, slotName, contentTypes) {
+    this.expectQueue.push({type: 'render', particleName, slotName, contentTypes});
     return this;
   }
 
-  expectReleaseSlot(name, slotId) {
-    this.expectQueue.push({type: 'releaseSlot', name});
-    return this;
- }
-
-  expectRender(name) {
-    this.expectQueue.push({type: 'render', name});
-    return this;
-  }
-
-  thenSend(slot, event, data) {
-    this.expectQueue[this.expectQueue.length - 1].then = {slot, event, data};
+  thenSend(particleName, slotName, event, data) {
+    this.expectQueue[this.expectQueue.length - 1].then = {particleName, slotName, event, data};
     return this;
   }
 
@@ -48,45 +44,23 @@ class MockSlotComposer {
     return new Promise((resolve, reject) => this.onExpectationsComplete = resolve);
   }
 
-  _sendEvent({slot, event, data}) {
-    var spec = this.specs.get(slot);
-    assert(spec, "slot supplied to _sendEvent is not registered");
-    this.pec.sendEvent(spec, {handler: event, data});
+  _sendEvent({particleName, slotName, event, data}) {
+    let particle = this._slots.find(s => s.consumeConn.particle.name == particleName).consumeConn.particle;
+    this.pec.sendEvent(particle, slotName, {handler: event, data});
   }
 
-  renderSlot(particleSpec, content) {
-    log(`renderSlot: ${particleSpec.spec.name}`, content && content.template ? 'TEMPLATE' : 'MODEL');
+  renderSlot(particle, slotName, content) {
+    console.log(`renderSlot ${particle.name}:${slotName}`, Object.keys(content).join(', '));
     var expectation = this.expectQueue.shift();
-    assert(expectation, "Got a render but not expecting anything further.");
-    assert.equal('render', expectation.type, `expecting a render, not ${expectation.type}`);
-    assert.equal(particleSpec.spec.name, expectation.name,
-        `expecting a render from ${expectation.name}, not ${particleSpec.spec.name}`);
-    this.expectationMet(expectation);
-  }
-
-  registerSlot(particleSpec, slotId) {
-    log(`registerSlot: ${particleSpec.spec.name}:${slotId}`);
-    var expectation = this.expectQueue.shift();
-    assert(expectation, `Got a getSlot '${slotId}' from '${particleSpec.spec.name}' but not expecting anything further`);
-    assert.equal('getSlot', expectation.type, `expecting a ${expectation.type}, not a getSlot`);
-    assert.equal(particleSpec.spec.name, expectation.name,
-        `expecting a getSlot from ${expectation.name}, not ${particleSpec.spec.name}`);
-    assert.equal(slotId, expectation.slotId,
-        `expecting slotId ${expectation.slotId}, not ${slotId}`);
-    this.specs.set(slotId, particleSpec);
-    return Promise.resolve().then(() => {
-      this.expectationMet(expectation);
-    });
-  }
-
-  releaseSlot(particleSpec) {
-    // TODO(sjmiles): do something?
-    log(`releaseSlot:`, particleSpec.spec.name);
-    var expectation = this.expectQueue.shift();
-    assert(expectation, `Got a releaseSlot from '${particleSpec.particle.spec.name}' but not expecting anything further`);
-    assert.equal('releaseSlot', expectation.type, `expecting a ${expectation.type}, not a releaseSlot`);
-    assert.equal(particleSpec.particle.spec.name, expectation.name,
-        `expecting a releaseSlot from ${expectation.name}, not ${particleSpec.particle.spec.name}`);
+    assert(expectation, "Got a startRender but not expecting anything further.");
+    assert.equal('render', expectation.type, `expecting a startRender, not ${expectation.type}`);
+    assert.equal(particle.name, expectation.particleName,
+                 `expecting a render from ${expectation.particleName}, not ${particle.name}`);
+    assert.equal(slotName, expectation.slotName,
+                `expecting a render from ${expectation.slotName}, not ${slotName}`);
+    assert.isTrue(expectation.contentTypes.length == Object.keys(content).length &&
+                  expectation.contentTypes.every(t => content[t]),
+                  `expecting a render of content types [${expectation.contentTypes.join(', ')}], not [${Object.keys(content).join(', ')}]`);
     this.expectationMet(expectation);
   }
 

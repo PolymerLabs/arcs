@@ -19,6 +19,8 @@ function createNewSlot(affordance, consumeConn) {
     case "dom-touch":
     case "vr":
       return new DomSlot(consumeConn);
+    case "mock":
+      return new Slot(consumeConn);
     default:
       assert("unsupported affordance ", affordance);
   }
