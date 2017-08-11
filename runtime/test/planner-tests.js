@@ -20,14 +20,14 @@ let ResolveParticleByName = require('../strategies/resolve-particle-by-name.js')
 let InitPopulation = require('../strategies/init-population.js');
 
 var loader = new Loader();
-let Person = loader.loadEntity("Person");
-let Product = loader.loadEntity("Product");
 
 describe('Planner', function() {
 
   it('can generate things', async () => {
     var arc = new Arc({id: "test-plan-arc", loader});
     let manifest = await Manifest.load('../particles/test/giftlist.manifest', loader);
+    let Person = manifest.findSchemaByName('Person').entityClass();
+    let Product = manifest.findSchemaByName('Person').entityClass();
     var planner = new Planner();
     planner.init(arc, {
       recipes: manifest.recipes,
@@ -41,9 +41,11 @@ describe('Planner', function() {
 
   it('make a plan with views', async () => {
     var arc = new Arc({id: "test-plan-arc", loader});
+    let manifest = await Manifest.load('../particles/test/giftlist.manifest', loader);
+    let Person = manifest.findSchemaByName('Person').entityClass();
+    let Product = manifest.findSchemaByName('Product').entityClass();
     var personView = arc.createView(Person.type.viewOf(), "aperson");
     var productView = arc.createView(Product.type.viewOf(), "products");
-    let manifest = await Manifest.load('../particles/test/giftlist.manifest', loader);
     var planner = new Planner();
     planner.init(arc, {
       recipes: manifest.recipes,

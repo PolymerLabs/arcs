@@ -15,7 +15,7 @@ const assert = require('chai').assert;
 var DomSlot = require("../dom-slot.js");
 let util = require('./test-util.js');
 let loader = new (require('../loader'));
-const Bar = loader.loadEntity("Bar");
+//const Bar = loader.loadEntity("Bar");
 const view = require('../view.js');
 
 describe('dom-slot', function() {

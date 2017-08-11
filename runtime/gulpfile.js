@@ -16,7 +16,6 @@ const paths = {
 
 const sources = {
   peg: [
-    'schema-parser.peg',
     'manifest-parser.peg',
   ],
   browser: [

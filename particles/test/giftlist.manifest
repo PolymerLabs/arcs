@@ -8,6 +8,7 @@
 import '../Chooser/Chooser.manifest'
 import '../Recommend/Recommend.manifest'
 import '../ShowProducts/ShowProducts.manifest'
+import '../../entities/Person.manifest'
 
 recipe
   Chooser.choices -> Recommend.recommendations

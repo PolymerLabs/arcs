@@ -19,7 +19,7 @@ let viewlet = require('../viewlet.js');
 
 let loader = new (require('../loader'));
 const slotComposer = new SlotComposer({});
-const Bar = loader.loadEntity("Bar");
+const Bar = runtime.testing.testEntityClass('Bar');
 
 describe('View', function() {
 

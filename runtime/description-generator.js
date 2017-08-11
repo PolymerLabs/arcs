@@ -49,7 +49,7 @@ class DescriptionGenerator {
         let view = connection.view;
         if (!this._descriptionsByView.has(view)) {
           this._descriptionsByView.set(view,
-              { type: view.type, value: this._formatViewValue(view), descriptions: []});
+              { create: view.create, type: view.type, value: this._formatViewValue(view), descriptions: []});
         }
         assert(this._descriptionsByView.get(view).type.equals(view.type),
                `Unexpected type for view ${view}`);
@@ -104,6 +104,9 @@ class DescriptionGenerator {
       if (matchers) {  // token is ${viewname.type}
         let connection = recipeComponent.findConnectionByName(matchers[1]);
         viewDescription = connection.view.type.toString();
+        if (connection.view.create) {
+          viewDescription = 'new ' + viewDescription;
+        }
       } else {
         // Executing this twice - 1st to generate the view's description, then if the view is part
         // of the particle description. Should instead call: this.getViewDescription(particleSpec.name, token)
@@ -138,6 +141,9 @@ class DescriptionGenerator {
     } else {
       if (viewDescription.type.isView || !viewDescription.value) {
         resultDescription = viewDescription.type.toString();
+        if (viewDescription.create) {
+          resultDescription = 'new ' + resultDescription;
+        }
       }
     }
     if (resultDescription) {
