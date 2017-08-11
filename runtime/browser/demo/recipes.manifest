@@ -29,7 +29,8 @@ recipe
   Chooser.choices -> Recommend.recommendations
   Chooser.resultList -> ShowProducts.list
   Chooser.resultList -> Recommend.known
-  map #giftlist as wishlist
+  # TODO: wishlist view should have tag #giftlist - removed for now, until views with tags are properly resolved.
+  map as wishlist
   Recommend
     population <- wishlist
 
