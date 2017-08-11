@@ -1,4 +1,0 @@
-schema Foo {
-  normative:
-    Text value;
-}

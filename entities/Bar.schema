@@ -1,4 +1,0 @@
-schema Bar {
-  normative:
-    Text value;
-}
