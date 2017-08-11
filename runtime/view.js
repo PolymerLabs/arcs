@@ -68,7 +68,8 @@ class View extends ViewBase {
 
   clone() {
     var view = new View(this._type, this._arc, this.name);
-    view._items = this._items;
+    view._items = new Map();
+    [...this._items.keys()].forEach(key => view._items.set(key, this._items.get(key)));
     view._version = this._version;
     view.description = this.description;
     return view;

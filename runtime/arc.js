@@ -126,7 +126,7 @@ class Arc {
       };
       // p.spec.exposes.forEach((view, slotid) => cloneParticleSpec.exposeMap.set(slotid, view ? view.clone() : view));
       // p.spec.renders.forEach((views, slotid) => cloneParticleSpec.renderMap.set(slotid, views ? views.map(v => v.clone()) : views));
-      // p.views.forEach(v => cloneParticleSpec.views.set(v.name, v.clone()));
+      p.views.forEach(v => cloneParticleSpec.views.set(v.name, v.clone()));
       arc._particles.push(cloneParticleSpec);
     });
     for (let v of viewMap.values())
