@@ -271,25 +271,34 @@ class Manifest {
           slotConn = particle.addSlotConnection(slotConnectionItem.param);
         }
         if (slotConnectionItem.name) {
-          let targetSlot = items.byName.get(slotConnectionItem.name);
-          if (!targetSlot || !items.bySlot.has(targetSlot)) {
-            targetSlot = recipe.newSlot();
-            targetSlot.localName = slotConnectionItem.name;
-            items.byName.set(slotConnectionItem.name, targetSlot);
-          }
-          slotConn.connectToSlot(targetSlot);
-
           slotConnectionItem.providedSlots.forEach(ps => {
-            let providedSlot = items.byName.get(ps.name) || slotConn.providedSlots[ps.param];
+            let providedSlot = slotConn.providedSlots[ps.param];
+            if (providedSlot) {
+              items.byName.set(ps.name, providedSlot);
+              items.bySlot.set(providedSlot);
+            } else
+              providedSlot = items.byName.get(ps.name);
             if (!providedSlot) {
-              providedSlot = recipe.newSlot();
+              providedSlot = recipe.newSlot(ps.param);
               providedSlot.localName = ps.name;
+              items.byName.set(ps.name, providedSlot);
+              items.bySlot.add(providedSlot);
             }
             if (!slotConn.providedSlots[ps.param]) {
               slotConn.providedSlots[ps.param] = providedSlot;
             }
           });
         }
+      }
+
+      for (let slotConnectionItem of item.slotConnections) {
+        let targetSlot = items.byName.get(slotConnectionItem.name);
+        if (!targetSlot || !items.bySlot.has(targetSlot)) {
+          targetSlot = recipe.newSlot(slotConnectionItem.param);
+          targetSlot.localName = slotConnectionItem.name;
+          items.byName.set(slotConnectionItem.name, targetSlot);
+        }
+        particle.consumedSlotConnections[slotConnectionItem.param].connectToSlot(targetSlot);
       }
     }
   }
