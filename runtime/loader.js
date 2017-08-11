@@ -9,12 +9,8 @@
  */
 "use strict";
 
-const schemaParser = require("./build/schema-parser.js");
 var fs = require("fs");
-var runtime = require("./runtime.js");
 var assert = require("assert");
-var ParticleSpec = require("./particle-spec.js");
-const Schema = require("./schema.js");
 const particle = require("./particle.js");
 const DomParticle = require("./dom-particle.js");
 const vm = require('vm');
@@ -39,20 +35,6 @@ class Loader {
 
   loadFile(file) {
     return fs.readFileSync(file, "utf-8");
-  }
-
-  // TODO: Remove this once schemas are only loaded from manifests.
-  loadSchema(name) {
-    let data = this.loadFile(schemaLocationFor(name));
-    var parsed = schemaParser.parse(data);
-    if (parsed.parent) {
-      parsed.parent = this.loadSchema(parsed.parent).toLiteral();
-    }
-    return new Schema(parsed);
-  }
-
-  loadEntity(name) {
-    return this.loadSchema(name).entityClass();
   }
 
   registerParticle(particleClass) {

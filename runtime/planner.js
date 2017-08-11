@@ -80,10 +80,11 @@ class Planner {
     let strategies = [
       new InitPopulation(context),
       new CreateViews(),
+      new ResolveParticleByName(arc._loader, context),
       new AssignViewsByTagAndType(arc),
       new ConvertConstraintsToConnections(),
       new MatchConsumedSlots(),
-      new AssignRemoteViews(arc, arc._loader, context),
+      new AssignRemoteViews(arc, context),
     ];
     this.strategizer = new Strategizer(strategies, [], {
       maxPopulation: 100,

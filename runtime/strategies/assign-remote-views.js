@@ -10,16 +10,20 @@ let RecipeWalker = require('../recipe/walker.js');
 let Recipe = require('../recipe/recipe.js');
 let RecipeUtil = require('../recipe/recipe-util.js');
 let ViewMapperBase = require('./view-mapper-base.js');
+let Schema = require('../schema.js');
 
 let assert = require('assert');
 
 class AssignRemoteViews extends ViewMapperBase {
-  constructor(arc, loader, context) {
+  constructor(arc, context) {
     super();
     this.mappable = [];
-    var Person = loader.loadEntity("Person");
-    var peopleViews = arc.findViews(Person.type.viewOf());
     // TODO: do this properly
+    var Person = new Schema({
+      name: 'Person',
+      sections: [],
+    })
+    var peopleViews = arc.findViews(Person.type.viewOf());
     var people = peopleViews.map(view => view.toList()).reduce((a,b) => a.concat(b), [])
         .map(a => a.rawData.name);
     let contextPeople = context.people || {};

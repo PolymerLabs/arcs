@@ -73,11 +73,14 @@ let wishlistDb = [
 ];
 
 async function prepareDemoContext({loader, pecFactory, slotComposer}) {
+  let manifest = await Manifest.load('browser/demo/recipes.manifest', loader);
+  let Person = manifest.findSchemaByName('Person').entityClass();
+  let Product = manifest.findSchemaByName('Product').entityClass();;
+
   // uber arc
   let pageArc = new Arc({loader, id: 'page-arc'});
+
   // bootstrap data context
-  let Person = loader.loadEntity('Person');
-  let Product = loader.loadEntity('Product');
   // TODO(sjmiles): empirically, views must exist before committing Entities
   let personView = pageArc.createView(Person.type.viewOf(), 'peopleFromWebpage');
   let productView = pageArc.createView(Product.type.viewOf(), 'productsFromWebpage');
@@ -102,7 +105,6 @@ async function prepareDemoContext({loader, pecFactory, slotComposer}) {
   arc.mapView(personVar);
   arc.mapView(wishlistView)
 
-  let manifest = await Manifest.load('browser/demo/recipes.manifest', loader);
   let recipes = manifest.recipes;
 
   let context = {
