@@ -31,12 +31,13 @@ describe('Planner', function() {
     var planner = new Planner();
     planner.init(arc, {
       recipes: manifest.recipes,
+      particleFinder: manifest,
       arc
     });
     await planner.generate(),
     await planner.generate(),
     await planner.generate(),
-    assert.equal(planner.strategizer.population.length, 4);
+    assert.equal(planner.strategizer.population.length, 5);
   });
 
   it('make a plan with views', async () => {

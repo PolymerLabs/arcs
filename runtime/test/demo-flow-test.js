@@ -33,7 +33,7 @@ describe('demo flow', function() {
     // TODO: planner.suggest intead of planner.plan
     let plans = await planner.plan();
 
-    assert.equal(6, plans.length);
+    assert.equal(plans.length, 7);
     // assert.equal("Show Product List from your browsing context (<b>Tea Pot</b> and <b>2</b> other items) and " +
     //              "Choose from Products recommended based on Product List from your browsing context (<b>Tea Pot</b> and <b>2</b> other items) " +
     //              "and Claire's wishlist (<b>Book: How to Draw</b> and <b>2</b> other items)",

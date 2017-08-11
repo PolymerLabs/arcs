@@ -80,7 +80,7 @@ class Planner {
     let strategies = [
       new InitPopulation(context),
       new CreateViews(),
-      new ResolveParticleByName(arc._loader, context),
+      new ResolveParticleByName(context),
       new AssignViewsByTagAndType(arc),
       new ConvertConstraintsToConnections(),
       new MatchConsumedSlots(),
