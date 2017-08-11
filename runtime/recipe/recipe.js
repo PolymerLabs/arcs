@@ -69,21 +69,21 @@ class Recipe {
         && this.slotConnections.every(connection => connection.isResolved());
   }
 
-  _isValid() {
-    let hasDuplicateView = () => {
-      let seenViews = new Set();
-      return this._views.find(view => {
-        if (view.id) {
-          if (seenViews.has(view.id)) {
-            return true;
-          }
-          seenViews.add(view.id);
+  _hasDuplicateView() {
+    let seenViews = new Set();
+    return this._views.find(view => {
+      if (view.id) {
+        if (seenViews.has(view.id)) {
+          return true;
         }
-        return false;
-      });
-    }
+        seenViews.add(view.id);
+      }
+      return false;
+    });
+  }
 
-    return !hasDuplicateView() && this._views.every(view => view._isValid())
+  _isValid() {
+    return !this._hasDuplicateView() && this._views.every(view => view._isValid())
         && this._particles.every(particle => particle._isValid())
         && this._slots.every(slot => slot._isValid())
         && this.viewConnections.every(connection => connection._isValid())
@@ -139,6 +139,18 @@ class Recipe {
     }
     if (!this._isValid()) {
       console.log(this.toString());
+      if (this._hasDuplicateView())
+        console.log("Has Duplicate View");
+      if (!this._views.every(view => view._isValid()))
+        console.log("Has Invalid View");
+      if (!this._particles.every(particle => particle._isValid()))
+        console.log("Has Invalid Particle");
+      if (!this._slots.every(slot => slot._isValid()))
+        console.log("Has Invalid Slot");
+      if (!this.viewConnections.every(connection => connection._isValid()))
+        console.log("Has Invalid ViewConnection");
+      if (!this.slotConnections.every(connection => connection._isValid()))
+        console.log("Has Invalid SlotConnection");
       return false;
     }
     // Get views and particles ready to sort connections.
@@ -271,6 +283,9 @@ class Recipe {
     }
     for (let view in this.views) {
       names.add(view.localName);
+    }
+    for (let slot in this.slots) {
+      names.add(slot.localName);
     }
 
     let nameMap = new Map();

@@ -68,7 +68,6 @@ class TypeChecker {
 
     let result  = TypeChecker._coerceTypes(left, right);
     if (result == null) {
-      debugger;
       return {valid: false};
     }
     // TODO: direction?
