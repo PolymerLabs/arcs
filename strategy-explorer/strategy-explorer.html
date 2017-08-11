@@ -56,7 +56,6 @@ document.pendingActions = new Map();
 
 (async () => {
   var loader = new Loader();
-  systemParticles.register(loader);
   var a = new Arc({id: "test-plan-arc", loader});
   let Person = loader.loadEntity("Person");
   let Product = loader.loadEntity("Product");

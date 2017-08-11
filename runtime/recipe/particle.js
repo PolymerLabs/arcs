@@ -122,8 +122,9 @@ class Particle {
       connection.direction = speccedConnection.direction;
     }
     spec.slots.forEach(slotSpec => {
-      let slotConn = this.addSlotConnection(slotSpec.name);
-      slotConn.slotSpec = slotSpec;
+      if (this._consumedSlotConnections[slotSpec.name] == undefined)
+        var slotConn = this.addSlotConnection(slotSpec.name);
+      this._consumedSlotConnections[slotSpec.name].slotSpec = slotSpec;
     });
   }
 

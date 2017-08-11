@@ -55,7 +55,8 @@ class SlotConnection {
     if (cloneMap.has(this)) {
       return cloneMap.get(this);
     }
-    var slotConnection = new SlotConnection(this.name, particle);
+
+    var slotConnection = particle.addSlotConnection(this.name);
     if (this.slotSpec) {
       slotConnection._slotSpec = particle.spec.getSlotSpec(this.name);
     }
@@ -87,7 +88,11 @@ class SlotConnection {
   }
 
   isResolved() {
-    if (!this.name || !this.particle || !this.targetSlot)
+    if (!this.name || !this.particle)
+      return false;
+    if (this.name == 'root')
+      return true;
+    if (!this.targetSlot)
       return false;
     if (this.slotSpec.isRequired && this.targetSlot.sourceConnection == undefined)
       return false;
