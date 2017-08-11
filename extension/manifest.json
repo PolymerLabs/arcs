@@ -13,5 +13,6 @@
   },
   "chrome_url_overrides" : {
     "newtab": "new-tab.html"
-  }
+  },
+  "content_security_policy": "script-src 'self' https://sjmiles.github.io/ 'sha256-robKfu4eWwjHHH9s/mRjUMre8tSQQyiUDirf2a65wA0='; object-src 'self'"
 }

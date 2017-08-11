@@ -4,6 +4,7 @@
 **/bower_components
 **/*.swp
 **/*.swo
+**/.DS_Store
 **/*~
 **/trace.json
 runtime/browser-test/browser-test-ified.js
