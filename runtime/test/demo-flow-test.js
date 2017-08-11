@@ -37,22 +37,22 @@ describe('demo flow', function() {
     assert.equal(plans.length, 13);
 
     // Choose a plan to test with.
-    let plan = plans.find((p, i) => {
-      return p.particles.every(pp => {
-        switch(pp.name) {
-          case 'Chooser':
-            return pp.connections['choices'].view.create && pp.connections['resultList'].view.id == 'page-arc:2';
-          case 'ShowProducts':
-            return pp.connections['list'].view.id == 'page-arc:2';
-          case 'Recommend':
-            return pp.connections['known'].view.id == 'page-arc:2' &&
-            pp.connections['population'].view.id == 'claires-wishlist-arc:1' &&
-            pp.connections['recommendations'].view.create;
-          default:
-            return false;
-        }
-      });
-    });
+    let expectedPlanString = `recipe
+  create as view0 # Product List
+  map 'page-arc:2' as view1 # Product List
+  map 'claires-wishlist-arc:1' as view2 # Product List
+  Chooser as particle0
+    choices <- view0
+    resultList -> view1
+    consume action
+  Recommend as particle1
+    known <- view1
+    population <- view2
+    recommendations -> view0
+  ShowProducts as particle2
+    list <- view1
+    consume root`;
+    let plan = plans.find(p => p.toString() == expectedPlanString);
     assert(plan);
 
     // assert.equal("Show Product List from your browsing context (<b>Tea Pot</b> and <b>2</b> other items) and " +
