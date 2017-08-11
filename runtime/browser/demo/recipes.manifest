@@ -26,24 +26,12 @@ recipe
 
 # Create shortlist with [product, ...] and suggest similar products from [person]'s wish list
 recipe
-  # TODO: replace with this once connection constraints are fixed.
-  # Chooser.choices -> Recommend.recommendations
-  # Chooser.resultList -> ShowProducts.list
-  # Chooser.resultList -> Recommend.known
-  # map #giftlist as wishlist
-  # Recommend
-  #   population <- wishlist
-  map as list
-  map as recommendations
+  Chooser.choices -> Recommend.recommendations
+  Chooser.resultList -> ShowProducts.list
+  Chooser.resultList -> Recommend.known
   map #giftlist as wishlist
   Recommend
     population <- wishlist
-    recommendations -> recommendations
-  Chooser
-    choices <- recommendations
-    resultList -> list
-  ShowProducts
-    list <- list
 
 # Buying for [person]'s [occasion] in [timeframe]? Product [X] arrives too late.
 recipe

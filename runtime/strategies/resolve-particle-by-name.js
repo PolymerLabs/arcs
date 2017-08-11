@@ -11,25 +11,18 @@ let Recipe = require('../recipe/recipe.js');
 let RecipeWalker = require('../recipe/walker.js');
 
 class ResolveParticleByName extends Strategy {
-  constructor(loader, context) {
+  constructor(context) {
     super();
-    this._loader = loader;
-    this._particles = {};
-    for (let particle of (context.particles || [])) {
-      let particles = this._particles[particle.name];
-      if (!particles) {
-        particles = this._particles[particle.name] = [];
-      }
-      particles.push(particle);
-    }
+    // TODO: remove this, or remove this entire strategy.
+    this._particleFinder = context.particleFinder;
     this._loadedParticles = new Set(context.arc.loadedParticles().map(spec => spec.implFile));
   }
 
   async generate(strategizer) {
     let find = name => {
-      let particles = this._particles[name] || [];
-      if (this._loader) {
-        let particle = this._loader.loadParticleSpec(name, true);
+      let particles = [];
+      if (this._particleFinder) {
+        let particle = this._particleFinder.findParticleByName(name);
         if (particle) {
           particles = [...particles, particle];
         }

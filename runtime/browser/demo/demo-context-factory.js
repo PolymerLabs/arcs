@@ -113,6 +113,8 @@ async function prepareDemoContext({loader, pecFactory, slotComposer}) {
     people: {
       'Claire': [wishlistArc],
     },
+    // TODO: Remove this. Only needed for the findParticleByName strategy.
+    particleFinder: manifest,
   };
 
   // TODO: should related arcs be part of the planner's context (above)?

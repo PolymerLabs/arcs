@@ -22,7 +22,7 @@ var Bar = runtime.testing.testEntityClass('Bar');
 var Far = runtime.testing.testEntityClass('Far');
 
 describe('description generator', function() {
-  it('generate description', async function() {
+  it.skip('generate description', async function() {
     var loader = new Loader();
     let manifest = await Manifest.load('../particles/test/test-particles.manifest', loader);
     let particles = {
