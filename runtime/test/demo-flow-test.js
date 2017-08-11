@@ -31,8 +31,8 @@ describe('demo flow', function() {
     let planner = new Planner();
     context.recipes = [context.recipes[2]];
     planner.init(arc, context);
-    // TODO: planner.suggest intead of planner.plan
-    let plans = await planner.plan();
+
+    let plans = await planner.suggest();
 
     assert.equal(plans.length, 13);
 
@@ -52,13 +52,14 @@ describe('demo flow', function() {
   ShowProducts as particle2
     list <- view1
     consume root`;
-    let plan = plans.find(p => p.toString() == expectedPlanString);
+    let {plan, description} = plans.find(p => p.plan.toString() == expectedPlanString);
     assert(plan);
 
-    // assert.equal("Show Product List from your browsing context (<b>Tea Pot</b> and <b>2</b> other items) and " +
-    //              "Choose from Products recommended based on Product List from your browsing context (<b>Tea Pot</b> and <b>2</b> other items) " +
-    //              "and Claire's wishlist (<b>Book: How to Draw</b> and <b>2</b> other items)",
-    //              r[0].descriptinator.description);
+    // TODO: description missing "from your browsing context" and "Claire's wishlist" view descriptions - should be extracted from the arc.
+    assert.equal("Show Product List (<b>Minecraft Book</b> and <b>2</b> other items) and " +
+                 "Choose from Products recommended based on Product List (<b>Minecraft Book</b> and <b>2</b> other items) " +
+                 "and Product List (<b>Book: How to Draw</b> and <b>2</b> other items)",
+                 description);
 
     slotComposer
       .expectRenderSlot("ShowProducts", "root", ["template", "model"])
