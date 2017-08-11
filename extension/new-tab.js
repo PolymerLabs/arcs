@@ -5,15 +5,14 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-let output = document.createElement('div');
+let output = document.getElementById('debug-output');
 output.style.whiteSpace = 'pre';
 output.style.fontFamily = 'monospace';
-document.body.appendChild(output);
 
 // TODO: Polymer.
 function print(...lines) {
   for (let line of lines) {
-    output.appendChild(document.createTextNode(line + '\n'));
+    // output.appendChild(document.createTextNode(line + '\n'));
   }
 }
 
@@ -21,6 +20,10 @@ function prefix(str, print) {
   return (...lines) => print(...lines.map(line => str + line));
 }
 
+/**
+ * Load the current browsing data from all tabs on all devices; output is
+ * piped out through detailPrint().
+ */
 (async () => {
   let devices = await new Promise((resolve) => chrome.sessions.getDevices(null, resolve));
   let tabs = [];
@@ -78,14 +81,14 @@ function prefix(str, print) {
   let detailPrint = prefix('  ', print);
   for (let [group, tabs] of groupTabMap) {
     let title = `${tabs[0].device} / ${group}`;
-    print(`${title}`, `${title.replace(/./g, '=')}`);
+    print('garbage' + `${title}`, `${title.replace(/./g, '=')}`);
     for (let tab of tabs) {
       let entities = await tabEntityMap.get(tab);
       detailPrint(`${tab.title}`);
       for (let entity of entities) {
         detailPrint(JSON.stringify(entity));
       }
-      print('');
+      print('foobar');
     }
     dumpEntities(detailPrint, [].concat(...await Promise.all(tabs.map(tab => tabEntityMap.get(tab)))));
   }
