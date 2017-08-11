@@ -20,10 +20,6 @@ function schemaLocationFor(name) {
 }
 
 class Loader {
-  constructor() {
-    this._particlesByName = {};
-  }
-
   path(fileName) {
     let path = fileName.replace(/[\/][^\/]+$/, '/')
     return path;
@@ -37,22 +33,9 @@ class Loader {
     return fs.readFileSync(file, "utf-8");
   }
 
-  registerParticle(particleClass) {
-    assert(particleClass instanceof Function);
-    if (this._particlesByName[particleClass.name])
-      console.warn(`${particleClass.name} is already registered`);
-    this._particlesByName[particleClass.name] = particleClass;
-  }
-
   loadParticleClass(spec) {
-    let particleClass = this._particlesByName[spec.name];
-    if (particleClass) {
-      return particleClass;
-    }
-
     let clazz = this.requireParticle(spec.implFile);
     clazz.spec = spec;
-    this._particlesByName[spec.name] = clazz;
     return clazz;
   }
 

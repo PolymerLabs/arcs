@@ -1,7 +1,0 @@
-schema Thing {
-  normative:
-    Text name;
-  optional:
-    Text description;
-    URL image;
-}

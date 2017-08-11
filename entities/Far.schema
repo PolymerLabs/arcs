@@ -1,4 +1,0 @@
-schema Far {
-  normative:
-    Text value;
-}
