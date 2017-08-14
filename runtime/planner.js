@@ -15,6 +15,7 @@ let AssignRemoteViews = require('./strategies/assign-remote-views.js');
 let AssignViewsByTagAndType = require('./strategies/assign-views-by-tag-and-type.js');
 let ResolveParticleByName = require('./strategies/resolve-particle-by-name.js');
 let InitPopulation = require('./strategies/init-population.js');
+let MapRemoteSlots = require('./strategies/map-remote-slots.js');
 let Manifest = require('./manifest.js');
 
 const Speculator = require('./speculator.js');
@@ -92,6 +93,7 @@ class Planner {
       new ConvertConstraintsToConnections(),
       new MatchConsumedSlots(),
       new AssignRemoteViews(arc, context),
+      new MapRemoteSlots(arc, context)
     ];
     this.strategizer = new Strategizer(strategies, [], {
       maxPopulation: 100,
