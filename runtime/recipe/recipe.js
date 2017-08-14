@@ -69,21 +69,20 @@ class Recipe {
         && this.slotConnections.every(connection => connection.isResolved());
   }
 
-  _hasDuplicateView() {
+  _findDuplicateView() {
     let seenViews = new Set();
     return this._views.find(view => {
       if (view.id) {
         if (seenViews.has(view.id)) {
-          return true;
+          return view;
         }
         seenViews.add(view.id);
       }
-      return false;
     });
   }
 
   _isValid() {
-    return !this._hasDuplicateView() && this._views.every(view => view._isValid())
+    return !this._findDuplicateView() && this._views.every(view => view._isValid())
         && this._particles.every(particle => particle._isValid())
         && this._slots.every(slot => slot._isValid())
         && this.viewConnections.every(connection => connection._isValid())
@@ -139,18 +138,20 @@ class Recipe {
     }
     if (!this._isValid()) {
       console.log(this.toString());
-      if (this._hasDuplicateView())
-        console.log("Has Duplicate View");
-      if (!this._views.every(view => view._isValid()))
-        console.log("Has Invalid View");
-      if (!this._particles.every(particle => particle._isValid()))
-        console.log("Has Invalid Particle");
-      if (!this._slots.every(slot => slot._isValid()))
-        console.log("Has Invalid Slot");
-      if (!this.viewConnections.every(connection => connection._isValid()))
-        console.log("Has Invalid ViewConnection");
-      if (!this.slotConnections.every(connection => connection._isValid()))
-        console.log("Has Invalid SlotConnection");
+      var duplicateView = this._findDuplicateView();
+      if (duplicateView)
+        console.log(`Has Duplicate View ${duplicateView.id}`);
+
+      checkForInvalid = (name, list, f) => {
+        var invalids = list.filter(item => !item._isValid());
+        if (invalids.length > 0)
+          console.log(`Has Invalid ${name} ${invalids.map(f)}`)
+      }
+      checkForInvalid('Views', this._views, view => view.id);
+      checkForInvalid('Particles', this._particles, particle => particle.name);
+      checkForInvalid('Slots', this._slots, slot => slot.name);
+      checkForInvalid('ViewConnections', this.viewConnections, viewConnection => `${viewConnection.particle.name}::${viewConnection.name}`);
+      checkForInvalid('SlotConnections', this.slotConnections, slotConnection => slotConnection.name);
       return false;
     }
     // Get views and particles ready to sort connections.

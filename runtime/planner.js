@@ -51,8 +51,6 @@ class MatchConsumedSlots extends Strategy {
   async generate(strategizer) {
     var results = Recipe.over(strategizer.generated, new class extends RecipeWalker {
       onSlotConnection(recipe, slotConnection) {
-        if (slotConnection.direction == "provide")
-          return;
         if (slotConnection.targetSlot)
           return;
         var potentialSlots = recipe.slots.filter(slot => {
