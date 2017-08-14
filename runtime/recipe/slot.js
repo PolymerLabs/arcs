@@ -48,7 +48,8 @@ class Slot {
       slot._localName = this._localName;
       // the connections are re-established when Particles clone their attached SlotConnection objects.
       slot._sourceConnection = cloneMap.get(this._sourceConnection);
-      slot.sourceConnection._providedSlots[slot.name] = slot;
+      if (slot.sourceConnection)
+        slot.sourceConnection._providedSlots[slot.name] = slot;
       this._viewConnections.forEach(connection => slot._viewConnections.push(cloneMap.get(connection)));
       this._consumerConnections.forEach(connection => cloneMap.get(connection).connectToSlot(slot));
       create = true;
