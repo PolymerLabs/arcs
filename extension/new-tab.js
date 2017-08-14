@@ -5,26 +5,17 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-let output = document.getElementById('debug-output');
-output.style.whiteSpace = 'pre';
-output.style.fontFamily = 'monospace';
-
-// TODO: Polymer.
-function print(...lines) {
-  for (let line of lines) {
-    // output.appendChild(document.createTextNode(line + '\n'));
-  }
-}
-
-function prefix(str, print) {
-  return (...lines) => print(...lines.map(line => str + line));
-}
-
 /**
- * Load the current browsing data from all tabs on all devices; output is
+ * Load the current browsing data from all non-https tabs on all devices; output is
  * piped out through detailPrint().
  */
 (async () => {
+
+  if (typeof(Storage) === "undefined") {
+    alert('this should be a better error message');
+    return;
+  }
+
   let devices = await new Promise((resolve) => chrome.sessions.getDevices(null, resolve));
   let tabs = [];
   for (let device of devices) {
@@ -78,43 +69,31 @@ function prefix(str, print) {
     groupTabMap.get(tab.group).push(tab);
   }
 
-  let detailPrint = prefix('  ', print);
   for (let [group, tabs] of groupTabMap) {
-    let title = `${tabs[0].device} / ${group}`;
-    print('garbage' + `${title}`, `${title.replace(/./g, '=')}`);
-    for (let tab of tabs) {
-      let entities = await tabEntityMap.get(tab);
-      detailPrint(`${tab.title}`);
-      for (let entity of entities) {
-        detailPrint(JSON.stringify(entity));
-      }
-      print('foobar');
-    }
-    dumpEntities(detailPrint, [].concat(...await Promise.all(tabs.map(tab => tabEntityMap.get(tab)))));
+    dumpEntities([].concat(...await Promise.all(tabs.map(tab => tabEntityMap.get(tab)))));
   }
 
 })();
 
 
-function dumpEntities(print, entities) {
-  let typeEntityMap = new Map();
+function dumpEntities(entities) {
+
+  let store = sessionStorage.arcs ? JSON.parse(sessionStorage.arcs) : new Map();
+
   for (let entity of entities) {
     let type = entity['@type'] || 'unknown';
-    if (!typeEntityMap.has(type)) {
-      typeEntityMap.set(type, []);
+    if (!store[type]) {
+      store[type] = [];
     }
-    typeEntityMap.get(type).push(entity);
+    store[type].push(entity);
   }
 
-  for (let [type, entities] of typeEntityMap) {
-    print(type, type.replace(/./g, '='));
-    for (let entity of entities) {
-      let copy = Object.assign({}, entity);
-      delete copy['@type'];
-      print(JSON.stringify(copy));
-    }
-    print('');
-  }
+  // Based on my reading of this file the whole thing is async, but processed
+  // in a single thread.
+  // However, this is not thread-safe, so if that changes we'll need to lock
+  // dumpEntities().
+  // Another option would be to qualify the keys - maybe 'arcs.'+type.
+  sessionStorage.arcs = JSON.stringify(store);
 }
 
 async function fetchEntities(tab) {
