@@ -76,4 +76,10 @@ describe('manifest parser', function() {
         #tag <- #tag
         X.a #tag <- a.y`);
   });
+  it('parses manifests with views', () => {
+    parse(`
+      schema Person
+      view View0 of [Person]
+      view View1 of Person 'some-id' @7`);
+  });
 });
