@@ -52,12 +52,12 @@ describe('demo flow', function() {
   ShowProducts as particle2
     list <- view1
     consume root
-      provide action as slot1
-      provide annotation1 as slot2
-      provide annotation2 as slot3
-      provide annotation3 as slot4
-      provide postamble as slot5
-      provide preamble as slot6`;
+      provide action as slot0
+      provide annotation1 as slot1
+      provide annotation2 as slot2
+      provide annotation3 as slot3
+      provide postamble as slot4
+      provide preamble as slot5`;
     console.log(plans[22].toString());
     let {plan, description} = plans.find(p => p.plan.toString() == expectedPlanString);
     assert(plan);
