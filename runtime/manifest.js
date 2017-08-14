@@ -11,15 +11,18 @@
 const assert = require('assert');
 const parser = require('./build/manifest-parser.js');
 const Recipe = require('./recipe/recipe.js');
-const ParticleSpec = require('./particle-spec.js')
-const Schema = require('./schema.js')
+const ParticleSpec = require('./particle-spec.js');
+const Schema = require('./schema.js');
+const ManifestView = require('./manifest-view.js');
 
 class Manifest {
   constructor() {
     this._recipes = [];
     this._imports = [];
+    // TODO: These should be lists, possibly with a separate flattened map.
     this._particles = {};
     this._schemas = {};
+    this._views = [];
     this._fileName = null;
   }
   get recipes() {
@@ -37,30 +40,39 @@ class Manifest {
   get fileName() {
     return this._fileName;
   }
-  findSchemaByName(name) {
-    let schema = this._schemas[name];
-    if (!schema) {
-      // TODO: flatten or index imports?
+  get views() {
+    return this._views;
+  }
+  // TODO: newParticle, Schema, etc.
+  // TODO: simplify() / isValid().
+  newView() {
+    let view = new ManifestView();
+    this._views.push(view);
+    return view;
+  }
+  find(manifestFinder) {
+    let result = manifestFinder(this);
+    if (!result) {
       for (let importedManifest of this._imports) {
-        schema = importedManifest.findSchemaByName(name);
-        if (schema) {
+        result = importedManifest.find(manifestFinder);
+        if (result) {
           break;
         }
       }
     }
-    return schema;
+    return result;
+  }
+  findSchemaByName(name) {
+    return this.find(manifest => manifest._schemas[name]);
   }
   findParticleByName(name) {
-    let spec = this.particles[name];
-    if (!spec) {
-      for (let importManifest of this.imports) {
-        if (importManifest.particles[name]) {
-          spec = importManifest.particles[name];
-          break;
-        }
-      }
-    }
-    return spec;
+    return this.find(manifest => manifest._particles[name]);
+  }
+  findViewByName(name) {
+    return this.find(manifest => manifest._views.find(view => view.localName == name));
+  }
+  findViewById(id) {
+    return this.find(manifest => manifest._views.find(view => view.id == id));
   }
   static async load(fileName, loader, registry) {
     if (registry && registry[fileName]) {
