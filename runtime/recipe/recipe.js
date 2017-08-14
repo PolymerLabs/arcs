@@ -272,14 +272,14 @@ class Recipe {
 
   merge(recipe) {
     var cloneMap = new Map();
-    var viewWM = recipe._views.length;
-    var particleWM = recipe._particles.length;
-    var slotWM = recipe._slots.length;
+    var numViews = recipe._views.length;
+    var numParticles = recipe._particles.length;
+    var numSlots = recipe._slots.length;
     this._copyInto(recipe, cloneMap);
     return {
-      views: recipe._views.slice(viewWM),
-      particles: recipe._particles.slice(particleWM),
-      slots: recipe._slots.slice(slotWM)
+      views: recipe._views.slice(numViews),
+      particles: recipe._particles.slice(numParticles),
+      slots: recipe._slots.slice(numSlots)
     };
   }
 

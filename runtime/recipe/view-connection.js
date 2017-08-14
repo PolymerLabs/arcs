@@ -33,10 +33,6 @@ class ViewConnection {
     viewConnection._direction = this._direction;
     if (this._view != undefined) {
       viewConnection._view = cloneMap.get(this._view);
-      if (viewConnection._view == undefined) {
-        console.log(cloneMap);
-        console.log(this._view);
-      }
       assert(viewConnection._view !== undefined);
       viewConnection._view.connections.push(viewConnection);
     }
