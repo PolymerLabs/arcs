@@ -1,0 +1,4 @@
+schema Url extends Thing {
+  normative:
+    Text balance;
+}

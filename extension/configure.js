@@ -9,14 +9,16 @@
  */
 
 window.urls = {
-  // "../entities/Account": "entities/Account",
   "../entities/Account": "https://sjmiles.github.io/arcs-playground/entities/Account",
-  "../particles/ShowAccounts": "https://sjmiles.github.io/arcs-playground/particles/ShowAccounts"
+  "../particles/ShowAccounts": "https://sjmiles.github.io/arcs-playground/particles/ShowAccounts",
+
+  "../entities/Url": window.location+'/../entities/Url',
 };
 
 window.db = {
   entities: [
-    'Account'
+    'Account',
+    'Url'
   ],
   views: {
     'accounts': 'Account'
