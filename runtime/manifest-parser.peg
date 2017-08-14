@@ -39,6 +39,20 @@ ManifestItem
   / Particle
   / Import
   / Schema
+  / ManifestView
+
+// TODO: Entity syntax.
+ManifestView
+  = 'view' whiteSpace name:upperIdent whiteSpace 'of' whiteSpace type:(ListType / EntityType) id:(whiteSpace id)? version:(whiteSpace Version)? eolWhiteSpace
+  {
+    return {
+      kind: 'view',
+      name,
+      type,
+      id: optional(id, id => id[1], null),
+      version: optional(version, version => version[1], null),
+    };
+  }
 
 Import
   = 'import' whiteSpace path:id eolWhiteSpace
@@ -46,7 +60,7 @@ Import
     return {
       kind: 'import',
       path,
-    }
+    };
   }
 
 Particle
@@ -426,6 +440,12 @@ SchemaField
 
 SchemaType
   = 'Text' / 'URL'
+
+Version
+  = '@' version:[0-9]+
+  {
+    return Number(version.join(''));
+  }
 
 Indent = &(i:" "+ &{
   i = i.join('');
