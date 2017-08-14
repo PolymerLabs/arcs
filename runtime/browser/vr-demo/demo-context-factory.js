@@ -11,6 +11,14 @@
 let Arc = require("../../arc.js");
 const Manifest = require("../../manifest.js");
 
+let db = {
+  people: [
+    {
+      name: "Claire"
+    }
+  ]
+};
+
 async function prepareDemoContext({loader, pecFactory, slotComposer}) {
   let manifest = await Manifest.load('browser/vr-demo/recipes.manifest', loader);
   // TODO: remove all Person views, once particle with no view connection intantiation is supported.
