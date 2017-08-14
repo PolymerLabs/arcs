@@ -372,12 +372,17 @@ describe('manifest', function() {
     particleNames.forEach(pn => {
       let particleManifestFile = `${path.join(particlesPath, pn, pn)}.manifest`;
       if (fs.existsSync(particleManifestFile)) {
-        let data = fs.readFileSync(particleManifestFile, "utf-8");
-        let model = parser.parse(data);
-        assert.isDefined(model);
+        try {
+          let data = fs.readFileSync(particleManifestFile, "utf-8");
+          let model = parser.parse(data);
+          assert.isDefined(model);
+        } catch (e) {
+          console.log(`Failed parsing ${particleManifestFile}`);
+          throw e;
+        }
         ++count;
       }
     })
-    assert.equal(count, 9);
+    assert.equal(count, 14);
   });
 });
