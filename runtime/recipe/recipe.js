@@ -113,6 +113,20 @@ class Recipe {
     return viewConnections;
   }
 
+  findView(id) {
+    for (var view of this.views) {
+      if (view.id == id)
+        return view;
+    }
+  }
+
+  findSlot(id) {
+    for (var slot of this.slots) {
+      if (slot.id == id)
+        return slot;
+    }
+  }
+
   async digest() {
     if (typeof(crypto) != 'undefined' && crypto.subtle) {
       // browser
@@ -247,24 +261,41 @@ class Recipe {
     if (cloneMap == undefined)
       cloneMap = new Map();
 
-    function cloneTheThing(object) {
-      var newObject = object.clone(recipe, cloneMap);
-      cloneMap.set(object, newObject);
-      return newObject;
-
-    }
-
-    recipe._views = this._views.map(cloneTheThing);
-    recipe._particles = this._particles.map(cloneTheThing);
-    recipe._slots = this._slots.map(cloneTheThing);
-
-    recipe._connectionConstraints = this._connectionConstraints.map(cloneTheThing);
+    this._copyInto(recipe, cloneMap);
 
     // TODO: figure out a better approach than stashing the cloneMap permanently
     // on the recipe
     recipe._cloneMap = cloneMap;
 
     return recipe;
+  }
+
+  merge(recipe) {
+    var cloneMap = new Map();
+    var viewWM = recipe._views.length;
+    var particleWM = recipe._particles.length;
+    var slotWM = recipe._slots.length;
+    this._copyInto(recipe, cloneMap);
+    return {
+      views: recipe._views.slice(viewWM),
+      particles: recipe._particles.slice(particleWM),
+      slots: recipe._slots.slice(slotWM)
+    };
+  }
+
+  _copyInto(recipe, cloneMap) {
+    function cloneTheThing(object) {
+      var result = object._copyInto(recipe, cloneMap);
+      cloneMap.set(object, result.object);
+      if (result.create)
+        return result.object;
+    }
+
+    recipe._views = recipe._views.concat(this._views.map(cloneTheThing).filter(a => a !== undefined));
+    recipe._particles = recipe._particles.concat(this._particles.map(cloneTheThing));
+    recipe._slots = recipe._slots.concat(this._slots.map(cloneTheThing).filter(a => a !== undefined));
+
+    recipe._connectionConstraints = recipe._connectionConstraints.concat(this._connectionConstraints.map(cloneTheThing));
   }
 
   updateToClone(dict) {

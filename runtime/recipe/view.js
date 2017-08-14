@@ -22,18 +22,26 @@ class View {
     this._mappedType = undefined;
   }
 
-  clone(recipe) {
-    var view = new View(recipe);
-    view._id = this._id;
-    view._tags = [...this._tags];
-    view._type = this._type;
-    view._create = this._create;
-    view._mappedType = this._mappedType;
+  _copyInto(recipe) {
+    var view = undefined;
+    var create = false;
+    if (!this._create && this._id)
+      view = recipe.findView(this._id);
 
-    // the connections are re-established when Particles clone their
-    // attached ViewConnection objects.
-    view._connections = [];
-    return view;
+    if (view == undefined) {
+      var view = new View(recipe);
+      view._id = this._id;
+      view._tags = [...this._tags];
+      view._type = this._type;
+      view._create = this._create;
+      view._mappedType = this._mappedType;
+
+      // the connections are re-established when Particles clone their
+      // attached ViewConnection objects.
+      view._connections = [];
+      create = true;
+    }
+    return {object: view, create};
   }
 
   _startNormalize() {

@@ -36,17 +36,24 @@ class Slot {
   set sourceConnection(sourceConnection) { this._sourceConnection = sourceConnection; }
   get consumeConnections() { return this._consumerConnections; }
 
-  clone(recipe, cloneMap) {
-    var slot = recipe.newSlot(this.name);
-    slot._id = this.id;
-    slot._formFactor = this.formFactor;
-    slot._localName = this._localName;
-    // the connections are re-established when Particles clone their attached SlotConnection objects.
-    slot._sourceConnection = cloneMap.get(this._sourceConnection);
-    slot.sourceConnection._providedSlots[slot.name] = slot;
-    this._viewConnections.forEach(connection => slot._viewConnections.push(cloneMap.get(connection)));
-    this._consumerConnections.forEach(connection => cloneMap.get(connection).connectToSlot(slot));
-    return slot;
+  _copyInto(recipe, cloneMap) {
+    var slot = undefined;
+    var create = false;
+    if (!this.sourceConnection && this.id)
+      slot = recipe.findSlot(this.id);
+    if (slot == undefined) {
+      var slot = recipe.newSlot(this.name);
+      slot._id = this.id;
+      slot._formFactor = this.formFactor;
+      slot._localName = this._localName;
+      // the connections are re-established when Particles clone their attached SlotConnection objects.
+      slot._sourceConnection = cloneMap.get(this._sourceConnection);
+      slot.sourceConnection._providedSlots[slot.name] = slot;
+      this._viewConnections.forEach(connection => slot._viewConnections.push(cloneMap.get(connection)));
+      this._consumerConnections.forEach(connection => cloneMap.get(connection).connectToSlot(slot));
+      create = true;
+    }
+    return {object: slot, create};
   }
 
   _startNormalize() {
