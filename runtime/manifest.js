@@ -275,14 +275,15 @@ class Manifest {
             let providedSlot = slotConn.providedSlots[ps.param];
             if (providedSlot) {
               items.byName.set(ps.name, providedSlot);
-              items.bySlot.set(providedSlot);
+              items.bySlot.set(providedSlot, ps);
             } else
               providedSlot = items.byName.get(ps.name);
             if (!providedSlot) {
               providedSlot = recipe.newSlot(ps.param);
               providedSlot.localName = ps.name;
+              assert(!items.byName.has(ps.name));
               items.byName.set(ps.name, providedSlot);
-              items.bySlot.add(providedSlot);
+              items.bySlot.set(providedSlot, ps);
             }
             if (!slotConn.providedSlots[ps.param]) {
               slotConn.providedSlots[ps.param] = providedSlot;
@@ -293,10 +294,13 @@ class Manifest {
 
       for (let slotConnectionItem of item.slotConnections) {
         let targetSlot = items.byName.get(slotConnectionItem.name);
-        if (!targetSlot || !items.bySlot.has(targetSlot)) {
+        if (targetSlot) {
+          assert(items.bySlot.has(targetSlot));
+        } else {
           targetSlot = recipe.newSlot(slotConnectionItem.param);
           targetSlot.localName = slotConnectionItem.name;
           items.byName.set(slotConnectionItem.name, targetSlot);
+          items.bySlot.set(targetSlot, slotConnectionItem);
         }
         particle.consumedSlotConnections[slotConnectionItem.param].connectToSlot(targetSlot);
       }
