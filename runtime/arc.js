@@ -117,18 +117,9 @@ class Arc {
       });
       value.views.forEach(v => arc.particleViewMaps.get(key).views.set(v.name, v.clone()));
     });
-    this._particles.forEach(p => {
-      let cloneParticleSpec = {
-        exposeMap: new Map(),
-        spec: p.spec,
-        renderMap: new Map(),
-        views: new Map()
-      };
-      // p.spec.exposes.forEach((view, slotid) => cloneParticleSpec.exposeMap.set(slotid, view ? view.clone() : view));
-      // p.spec.renders.forEach((views, slotid) => cloneParticleSpec.renderMap.set(slotid, views ? views.map(v => v.clone()) : views));
-      p.views.forEach(v => cloneParticleSpec.views.set(v.name, v.clone()));
-      arc._particles.push(cloneParticleSpec);
-    });
+
+    // TODO: properly clone previously executed recipes / particles via serialization and deserialization.
+
     for (let v of viewMap.values())
       arc.registerView(v);
     arc._viewMap = viewMap;
