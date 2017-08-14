@@ -8,13 +8,30 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-let Suggestinator = require("../../suggestinator.js");
-let ContextFactory = require('./demo-context-factory.js');
 let BrowserLoader = require("../../browser-loader.js");
 let SlotComposer = require('../../slot-composer.js');
-
-let recipes = require('./recipes.js');
 let DemoBase = require('../lib/demo-base.js');
+let demoContext = require('./demo-context-factory.js');
+
+// 0: create Pot, 2: create Sphere
+// 1: create Flower 3: create Box
+
+function buildStages(recipes) {
+  return [{
+    recipes: [
+      recipes[0],
+      recipes[2]
+    ]
+  }, {
+    recipes: [
+      recipes[0],
+      recipes[1],
+      recipes[2],
+      recipes[3]
+    ]
+  }];
+}
+
 
 require('../lib/auto-tabs.js');
 require('../lib/suggestions-element.js');
@@ -65,18 +82,19 @@ class DemoFlow extends DemoBase {
     this._root.appendChild(document.importNode(this.template.content, true));
     this.didMount();
   }
-  didMount() {
-    let {arc} = ContextFactory({
-      loader: new BrowserLoader('../../'),
-      pecFactory: require('../worker-pec-factory.js').bind(null, '../../'),
-      slotComposer: new SlotComposer(this.$('[particle-container]'))
+  async didMount() {
+    let root = '../../';
+    let loader = new BrowserLoader(root);
+    let {context} = await demoContext({
+      loader,
+      pecFactory: require('../worker-pec-factory.js').bind(null, root),
+      slotComposer: new SlotComposer(this.$('[particle-container]'),  /* affordance= */ "vr")
     });
-    this.arc = arc;
-    this.stages =  [{
-      recipes
-    }];
+    this.arc = context.arc;
+    this.context = context;
+    this.stages = buildStages(context.recipes);
     this.suggestions = this.$('suggestions-element');
-    this.suggestions.arc = arc;
+    this.suggestions.arc = context.arc;
     this.suggestions.callback = this.nextStage.bind(this);
   }
 }

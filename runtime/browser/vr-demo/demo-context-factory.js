@@ -9,30 +9,46 @@
  */
 
 let Arc = require("../../arc.js");
-//require("./trace-setup.js");
+const Manifest = require("../../manifest.js");
 
-function prepareDemoContext({loader, pecFactory, slotComposer}) {
+async function prepareDemoContext({loader, pecFactory, slotComposer}) {
+  let manifest = await Manifest.load('browser/vr-demo/recipes.manifest', loader);
+  // TODO: remove all Person views, once particle with no view connection intantiation is supported.
+  let Person = manifest.findSchemaByName('Person').entityClass();
+
   // uber arc
-  let pageArc = new Arc({loader, id: "pageArc"});
+  let pageArc = new Arc({loader, id: 'page-arc'});
+
   // bootstrap data context
-  let Person = loader.loadEntity("Person");
-  let Product = loader.loadEntity("Product");
-  let personView = pageArc.createView(Person.type.viewOf(), "peopleFromWebpage");
-  let productView = pageArc.createView(Product.type.viewOf(), "productsFromWebpage");
-  pageArc.commit([
-    new Person({name: "Claire"}),
-    new Product({name: "Tea Pot"}),
-    new Product({name: "Bee Hive"}),
-    new Product({name: "Denim Jeans"})
-  ]);
-  // TODO(sjmiles): boilerplate? not needed until we are rendering particles (arc not pageArc?)
+  // TODO(sjmiles): empirically, views must exist before committing Entities
+  let personView = pageArc.createView(Person.type.viewOf(), 'peopleFromWebpage');
+  // commit entities
+  pageArc.commit(db.people.map(p => new Person(p)));
+
+  let personVar = pageArc.createView(Person.type, 'personFromWebpage');
+  personVar.set(new Person(db.people[0]));
+
   // demo arc
   let arc = new Arc({id: 'demo', loader, pecFactory, slotComposer});
   arc.mapView(personView);
-  arc.mapView(productView);
-  /*let personSlot =*/ arc.createView(Person.type, "personSlot");
-  // context objects
-  return {pageArc, arc, Person, Product};
+  // // TODO: These should be part of recipe instantiation.
+  arc.mapView(personVar);
+
+  let recipes = manifest.recipes;
+
+  let context = {
+    arc,
+    recipes,
+    // TODO: Remove this. Only needed for the findParticleByName strategy.
+    particleFinder: manifest,
+  };
+
+  // TODO: should related arcs be part of the planner's context (above)?
+  let relatedArcs = [
+    pageArc,
+  ];
+  // your context objects
+  return {relatedArcs, arc, context};
 }
 
 module.exports = prepareDemoContext;
