@@ -26,21 +26,21 @@ class Particle {
     this._consumedSlotConnections = {};  // map of consumed Slot connections by slot name.
   }
 
-  clone(recipe, cloneMap) {
+  _copyInto(recipe, cloneMap) {
     var particle = new Particle(recipe, this._name);
     particle._id  = this._id;
     particle._tags = [...this._tags];
     particle._spec = this._spec;
 
     Object.keys(this._connections).forEach(key => {
-      particle._connections[key] = this._connections[key].clone(particle, cloneMap);
+      particle._connections[key] = this._connections[key]._clone(particle, cloneMap);
     });
-    particle._unnamedConnections = this._unnamedConnections.map(connection => connection.clone(particle, cloneMap));
+    particle._unnamedConnections = this._unnamedConnections.map(connection => connection._clone(particle, cloneMap));
     Object.keys(this._consumedSlotConnections).forEach(key => {
-      particle._consumedSlotConnections[key] = this._consumedSlotConnections[key].clone(particle, cloneMap);
+      particle._consumedSlotConnections[key] = this._consumedSlotConnections[key]._clone(particle, cloneMap);
     });
 
-    return particle;
+    return {object: particle, create: true};
   }
 
   _startNormalize() {

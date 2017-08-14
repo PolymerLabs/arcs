@@ -51,7 +51,7 @@ class SlotConnection {
     targetSlot.consumeConnections.push(this);
   }
 
-  clone(particle, cloneMap) {
+  _clone(particle, cloneMap) {
     if (cloneMap.has(this)) {
       return cloneMap.get(this);
     }
