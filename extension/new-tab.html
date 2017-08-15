@@ -1,3 +1,4 @@
+<!doctype html>
 <html lang="en">
 <head>
 
@@ -6,12 +7,66 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
 
+  <link rel="stylesheet" href="index.css">
+
+  <!-- Arcs engine -->
+  <script src="https://sjmiles.github.io/arcs-cdn/v0.01/ArcsLib.js"></script>
+
+  <!-- demo helpers -->
+  <script src="utils.js"></script>
+
+  <!-- custom elements -->
+  <script src="https://sjmiles.github.io/arcs-cdn/v0.01/components/x-toast.js"></script>
+  <script src="https://sjmiles.github.io/arcs-cdn/v0.01/components/suggestions-element.js"></script>
+
+  <!-- app-specific configuration -->
+  <!-- <script src="configure.js"></script> -->
   <script src="db.js"></script>
   <script src="new-tab.js"></script>
 </head>
 <body>
 
-  <link rel="import" href="https://sjmiles.github.io/arcs-cdn/v0.01/playground/playground.html">
+  <demo-frame>
+    <div id="particle-container"></div>
+    <suggestions-element></suggestions-element>
+  </demo-frame>
+
+  <script>
+    (async function() {
+      //
+      // 1. URL mapping
+      //
+      // setup default map
+      let root = `https://sjmiles.github.io/arcs-cdn/v0.01`;
+      let map = utils.createUrlMap(root);
+      // overrides
+      Object.assign(map, {
+      });
+
+      //
+      // Step 2: create system objects
+      //
+      // renderer
+      let slotComposer = new Arcs.SlotComposer(window['particle-container'], /* affordance */ "dom");
+      // an Arc!
+      let arc = Arcs.createArc({id: 'demo', urlMap: map, slotComposer});
+
+      //
+      // Step 3: configure application
+      //
+      // load manifest
+      let manifest = await Arcs.Manifest.load('./new-tab.manifest', arc._loader);
+      // setup the database
+      utils.prepareDataContext(window.db, arc, manifest);
+      // configure suggestions UI
+      let ui = document.querySelector('suggestions-element');
+      ui.arc = arc;
+      ui.callback = () => {};
+      // generate suggestions
+      let planner = new Arcs.Planner();
+      utils.suggest(arc, ui, planner, manifest.recipes);
+    })();
+  </script>
 
 </body>
 </html>
