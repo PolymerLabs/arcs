@@ -6,10 +6,8 @@
 # subject to an additional IP rights grant found at
 # http://polymer.github.io/PATENTS.txt
 
-# TODO: None of the VR particles requires an input view. It is temporary added until particle can be instantiated without view connections.
-import '../../entities/Person.manifest'
 
 particle VrBox in 'VrBox.js'
-  VrBox(in Person person)
+  VrBox()
   consume action
   description `Create Box`

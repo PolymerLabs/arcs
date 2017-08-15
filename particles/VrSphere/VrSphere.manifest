@@ -6,10 +6,8 @@
 # subject to an additional IP rights grant found at
 # http://polymer.github.io/PATENTS.txt
 
-import '../../entities/Person.manifest'
-
 particle VrSphere in 'VrSphere.js'
-  VrSphere(in Person person)
+  VrSphere()
   consume root
     provide action
   description `Create Sphere`
