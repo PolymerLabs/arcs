@@ -90,8 +90,6 @@ class SlotConnection {
   isResolved() {
     if (!this.name || !this.particle)
       return false;
-    if (this.name == 'root')
-      return true;
     if (!this.targetSlot)
       return false;
     if (this.slotSpec.isRequired && this.targetSlot.sourceConnection == undefined)
