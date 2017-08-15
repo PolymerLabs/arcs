@@ -393,6 +393,8 @@ ParticleRef
 ViewRef
   = id:id tags:SpaceTagList?
   { return {id, tags: tags || []}; }
+  / name:upperIdent tags:SpaceTagList?
+  { return {name, tags: tags || []}; }
   / tags:TagList
   { return {tags}; }
 

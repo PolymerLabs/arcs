@@ -74,12 +74,20 @@ class Manifest {
   findViewById(id) {
     return this.find(manifest => manifest._views.find(view => view.id == id));
   }
-  static async load(fileName, loader, registry) {
+  static async load(fileName, loader, options) {
+    options = options || {};
+    let {registry, id} = options;
     if (registry && registry[fileName]) {
       return registry[fileName];
     }
     let content = await loader.loadFile(fileName);
-    let manifest = await Manifest.parse(content, {fileName, loader, registry, position: {line: 1, column: 0}});
+    let manifest = await Manifest.parse(content, {
+      id,
+      fileName,
+      loader,
+      registry,
+      position: {line: 1, column: 0}
+    });
     if (manifest && registry) {
       registry[fileName] = manifest;
     }
@@ -87,9 +95,10 @@ class Manifest {
   }
   static async parse(content, options) {
     options = options || {};
-    let {fileName, position, loader, registry} = options;
+    let {id, fileName, position, loader, registry} = options;
     registry = registry || {};
     position = position || {line: 1, column: 0};
+    id = `manifest:${fileName}:`;
 
     let items = [];
     try{
@@ -100,6 +109,7 @@ class Manifest {
     }
     let manifest = new Manifest();
     manifest._fileName = fileName;
+    manifest._id = id;
 
     // TODO: This should be written to process in dependency order.
     // 1. imports
@@ -109,7 +119,7 @@ class Manifest {
     for (let item of items.filter(item => item.kind == 'import')) {
       let path = loader.path(manifest.fileName);
       let target = loader.join(path, item.path);
-      manifest._imports.push(await Manifest.load(target, loader, registry));
+      manifest._imports.push(await Manifest.load(target, loader, {registry}));
     }
     for (let item of items.filter(item => item.kind == 'schema')) {
       this._processSchema(manifest, item);
@@ -117,11 +127,11 @@ class Manifest {
     for (let item of items.filter(item => item.kind == 'particle')) {
       this._processParticle(manifest, item, loader);
     }
-    for (let item of items.filter(item => item.kind == 'recipe')) {
-      this._processRecipe(manifest, item);
-    }
     for (let item of items.filter(item => item.kind == 'view')) {
       await this._processView(manifest, item, loader);
+    }
+    for (let item of items.filter(item => item.kind == 'recipe')) {
+      this._processRecipe(manifest, item);
     }
     return manifest;
   }
@@ -175,6 +185,11 @@ class Manifest {
       let view = recipe.newView();
       if (item.ref.id) {
         view.id = item.ref.id;
+      } else if (item.ref.name) {
+        let targetView = manifest.findViewByName(item.ref.name);
+        // TODO: Error handling.
+        assert(targetView, `Could not find view ${item.ref.name}`);
+        view.id = targetView.id;
       }
       view.tags = item.ref.tags;
       if (item.name) {
@@ -326,6 +341,9 @@ class Manifest {
     view.localName = item.name;
     view.type = item.type;
     view.id = item.id;
+    if (view.id == null) {
+      view.id = `${manifest._id}view${manifest._views.length}`;
+    }
     view.version = item.version;
     let source = loader.join(manifest.fileName, item.source);
     // TODO: json5?
