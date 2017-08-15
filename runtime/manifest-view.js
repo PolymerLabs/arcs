@@ -7,6 +7,8 @@
 // http://polymer.github.io/PATENTS.txt
 'use strict';
 
+const assert = require('assert');
+
 class ManifestView {
   constructor() {
     this._version = null;
@@ -32,7 +34,7 @@ class ManifestView {
   }
   addEntity(entity) {
     // This should be in the format used by Viewlet.
-    assert(entity.id && entity.rawData);
+    assert(entity.rawData != null);
     this._entities.push(entity);
   }
   get type() {
@@ -47,3 +49,5 @@ class ManifestView {
     // TODO: duplicate entities? entities have id/rawData?
   }
 }
+
+module.exports = ManifestView;

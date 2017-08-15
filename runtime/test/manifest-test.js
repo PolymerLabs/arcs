@@ -385,4 +385,42 @@ describe('manifest', function() {
     })
     assert.equal(count, 14);
   });
+  it('loads entities from json files', async () => {
+    let manifestSource = `
+        schema Thing
+        view View0 of [Thing] in 'entities.json'`;
+    let entitySource = JSON.stringify([
+      {someProp: 'someValue'},
+      {
+        $id: 'entity-id',
+        someProp: 'someValue2'
+      },
+    ]);
+    let loader = {
+      loadFile(path) {
+        return {
+          'the.manifest': manifestSource,
+          'entities.json': entitySource,
+        }[path];
+      },
+      path(fileName) {
+        return fileName;
+      },
+      join(path, file) {
+        return file;
+      },
+    };
+    let manifest = await Manifest.load('the.manifest', loader);
+    let view = manifest.findViewByName('View0');
+    assert(view);
+    assert.deepEqual(view.entities, [
+      {
+        id: null,
+        rawData: {someProp: 'someValue'},
+      }, {
+        id: 'entity-id',
+        rawData: {someProp: 'someValue2'},
+      }
+    ]);
+  });
 });
