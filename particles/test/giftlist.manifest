@@ -15,5 +15,8 @@ recipe
   Chooser.resultList -> ShowProducts.list
   Chooser.resultList -> Recommend.known
   map #giftlist as wishlist
+  copy as view0
   Recommend
     population <- wishlist
+  ShowProducts
+    list <- view0

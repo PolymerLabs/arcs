@@ -37,7 +37,7 @@ describe('Planner', function() {
     await planner.generate(),
     await planner.generate(),
     await planner.generate(),
-    assert.equal(planner.strategizer.population.length, 7);
+    assert.equal(planner.strategizer.population.length, 9);
   });
 
   it('make a plan with views', async () => {
@@ -55,7 +55,7 @@ describe('Planner', function() {
     await planner.generate(),
     await planner.generate(),
     await planner.generate(),
-    assert.equal(planner.strategizer.population.length, 13);
+    assert.equal(planner.strategizer.population.length, 21);
   });
 });
 

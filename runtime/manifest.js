@@ -197,7 +197,7 @@ class Manifest {
         view.localName = item.name;
         items.byName.set(item.name, {item: item, view: view});
       }
-      view.create = item.create;
+      view._fate = item.fate;
       items.byView.set(view, item);
     }
 

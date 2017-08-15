@@ -9,6 +9,10 @@ var assert = require('assert');
 var util = require('./util.js');
 var TypeChecker = require('./type-checker.js');
 
+const Create = "create";
+const Copy = "copy";
+const Map = "map";
+
 class View {
   constructor(recipe) {
     assert(recipe);
@@ -17,14 +21,14 @@ class View {
     this._localName = undefined;
     this._tags = [];
     this._type = undefined;
-    this._create = false;
+    this._fate = Map;
     this._connections = [];
     this._mappedType = undefined;
   }
 
   _copyInto(recipe) {
     var view = undefined;
-    if (!this._create && this._id)
+    if (!this.create && this._id)
       view = recipe.findView(this._id);
 
     if (view == undefined) {
@@ -32,7 +36,7 @@ class View {
       view._id = this._id;
       view._tags = [...this._tags];
       view._type = this._type;
-      view._create = this._create;
+      view._fate = this._fate;
       view._mappedType = this._mappedType;
 
       // the connections are re-established when Particles clone their
@@ -76,8 +80,7 @@ class View {
   mapToView(view) { this._id = view.id; this._type = undefined; this._mappedType = view.type;}
   get localName() { return this._localName; }
   set localName(name) { this._localName = name; }
-  get create() { return this._create; }
-  set create(create) { this._create = create; }
+  get create() { return this._fate == Create || this._fate == Copy; }
   get connections() { return this._connections } // ViewConnection*
 
   _isValid() {
@@ -101,13 +104,15 @@ class View {
 
   isResolved() {
     assert(Object.isFrozen(this));
-    return (this._id || this._create) && this._type;
+    if (this._fate === "copy" && this.id === null)
+      return false;
+    return (this._id || this.create) && this._type;
   }
 
   toString(nameMap) {
     // TODO: type? maybe output in a comment
     let result = [];
-    result.push(this.create ? (this.id === null ?  'create' : 'copy') : 'map');
+    result.push(this._fate);
     if (this.id) {
       result.push(`'${this.id}'`);
     }
