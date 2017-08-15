@@ -77,7 +77,7 @@ class Slot {
   }
 
   isResolved() {
-    return this._sourceConnection;
+    return this._sourceConnection || this.id;
   }
 
   _isValid() {

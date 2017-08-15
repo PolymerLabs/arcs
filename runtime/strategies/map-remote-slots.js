@@ -14,7 +14,7 @@ class MapRemoteSlots extends Strategy {
   constructor(arc, context) {
     // faked out for now
     super();
-    this.remoteSlots = {root: 0};
+    this.remoteSlots = {root: {id: 'r0', count: 0}};
   }
   async generate(strategizer) {
     var remoteSlots = this.remoteSlots;
@@ -24,9 +24,11 @@ class MapRemoteSlots extends Strategy {
           return;
         if (remoteSlots[slotConnection.name] == undefined)
           return;
-        var score = 1 - remoteSlots[slotConnection.name];
+        var score = 1 - remoteSlots[slotConnection.name].count;
         return (recipe, slotConnection) => {
-          slotConnection.connectToSlot(recipe.newSlot(slotConnection.name));
+          let slot = recipe.newSlot(slotConnection.name);
+          slot.id = remoteSlots[slotConnection.name].id;
+          slotConnection.connectToSlot(slot);
           return score;
         }
       }
