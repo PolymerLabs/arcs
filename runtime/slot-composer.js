@@ -31,11 +31,13 @@ class SlotComposer {
     this.affordance = affordance;
     this.rootContext = rootContext;
     this._slots = [];
+    this._nextSlotId = 0;
   }
   getSlot(particle, slotName) {
     return this._slots.find(s => s.consumeConn.particle == particle && s.consumeConn.name == slotName);
   }
   initializeRecipe(recipeParticles) {
+    // Create slots for each of the recipe's particles slot connections.
     recipeParticles.forEach(p => {
       Object.values(p.consumedSlotConnections).forEach(cs => {
         let slot = createNewSlot(this.affordance, cs);
@@ -84,6 +86,27 @@ class SlotComposer {
         this.getSlot(cc.particle, cc.name).setContext(providedContext);
       });
     });
+  }
+
+  getAvailableSlots() {
+    let targetSlots = new Set();
+    let availableSlots = {};
+    this._slots.forEach(slot => {
+      assert(slot.consumeConn.targetSlot);
+      Object.values(slot.consumeConn.providedSlots).forEach(ps => {
+        if (!availableSlots[ps.name]) {
+          availableSlots[ps.name] = {};
+        }
+        let psId = ps.id || `slotid-${this._nextSlotId++}`;
+        ps.id = psId;
+        availableSlots[ps.name] = {id: psId, count: ps.consumeConnections.length};
+      });
+    });
+    // Populate default "root" slot, if not available yet.
+    if (!availableSlots["root"]) {
+      availableSlots["root"] = {id:"r0", count:0};
+    }
+    return availableSlots;
   }
 }
 

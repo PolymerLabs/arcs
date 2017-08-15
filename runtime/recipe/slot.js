@@ -50,8 +50,8 @@ class Slot {
       if (slot.sourceConnection)
         slot.sourceConnection._providedSlots[slot.name] = slot;
       this._viewConnections.forEach(connection => slot._viewConnections.push(cloneMap.get(connection)));
-      this._consumerConnections.forEach(connection => cloneMap.get(connection).connectToSlot(slot));
     }
+    this._consumerConnections.forEach(connection => cloneMap.get(connection).connectToSlot(slot));
     return slot;
   }
 

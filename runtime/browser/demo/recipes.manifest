@@ -29,6 +29,9 @@ recipe
   Chooser.choices -> Recommend.recommendations
   Chooser.resultList -> ShowProducts.list
   Chooser.resultList -> Recommend.known
+  # TODO: AlsoOn particle requires proper view descriptions (eg "Claire's wishlist")
+  # Chooser.resultList -> AlsoOn.list
+  # Chooser.choices -> AlsoOn.choices
   # TODO: wishlist view should have tag #giftlist - removed for now, until views with tags are properly resolved.
   map as wishlist
   Recommend
