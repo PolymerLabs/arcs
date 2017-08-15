@@ -28,10 +28,14 @@ defineParticle(({DomParticle}) => {
     get template() {
       return template;
     }
+    _shouldRender(props, state) {
+      return Boolean(props.list);
+    }
     _render(props, state) {
       let items = props.list.map(({rawData}) => {
         return Object.assign({}, rawData);
       });
+
       return {
         items,
         count: items.length
