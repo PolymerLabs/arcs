@@ -13,6 +13,7 @@ window.urls = {
   "../particles/ShowAccounts": "https://sjmiles.github.io/arcs-playground/particles/ShowAccounts",
 
   "../entities/Url": window.location+'/../entities/Url',
+  "../particles/ShowUrls": window.location+'/../particles/ShowUrls',
 };
 
 window.db = {
@@ -21,7 +22,8 @@ window.db = {
     'Url'
   ],
   views: {
-    'accounts': 'Account'
+    'accounts': 'Account',
+    'urls': 'Url'
   },
   model: {
     Account: [
@@ -33,6 +35,16 @@ window.db = {
         name: "Savings and Koan",
         balance: "9876.54"
       }
+    ],
+    Url: [
+      {
+        name: "url1",
+        balance: "20.30"
+      },
+      {
+        name: "url2",
+        balance: "9876.54"
+      }
     ]
   }
 };
@@ -41,6 +53,13 @@ window.recipes = [
 {
   particles: [{
     name: "ShowAccounts",
+    constrain: {
+      "list": "list"
+    }
+  }]
+},{
+  particles: [{
+    name: "ShowUrls",
     constrain: {
       "list": "list"
     }

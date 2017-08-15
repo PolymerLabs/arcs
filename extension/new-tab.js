@@ -86,6 +86,11 @@ function dumpEntities(entities) {
       store[type] = [];
     }
     store[type].push(entity);
+
+    if (!window.db.model.Url) {
+      window.db.model.Url = []
+    }
+    window.db.model.Url.push(entity);
   }
 
   // Based on my reading of this file the whole thing is async, but processed
