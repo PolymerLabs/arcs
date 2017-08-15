@@ -13,7 +13,7 @@ class View {
   constructor(recipe) {
     assert(recipe);
     this._recipe = recipe;
-    this._id = undefined;
+    this._id = null;
     this._localName = undefined;
     this._tags = [];
     this._type = undefined;
@@ -109,7 +109,7 @@ class View {
   toString(nameMap) {
     // TODO: type? maybe output in a comment
     let result = [];
-    result.push(this.create ? 'create' : 'map');
+    result.push(this.create ? (this.id === null ?  'create' : 'copy') : 'map');
     if (this.id) {
       result.push(`'${this.id}'`);
     }
