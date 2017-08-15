@@ -76,7 +76,7 @@ describe('demo flow', function() {
       .expectRenderSlot("ShowProducts", "root", ["model"]);
 
 
-    plan.instantiate(arc);
+    arc.instantiate(plan);
     await arc.pec.idle;
 
     await slotComposer.expectationsCompleted();

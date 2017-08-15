@@ -14,7 +14,6 @@ const assert = require('chai').assert;
 const Arc = require("../arc.js");
 const Loader = require("../loader.js");
 const Manifest = require('../manifest.js');
-const Instantiator = require('../recipe/instantiator.js');
 const Viewlet = require('../viewlet.js');
 const Schema = require('../schema.js');
 
@@ -33,7 +32,7 @@ async function setup() {
 describe('manifest integration', () => {
   it('can produce a recipe that can be instantiated in an arc', async () => {
     let {arc, recipe} = await setup();
-    Instantiator.instantiate(recipe, arc);
+    arc.instantiate(recipe);
     await arc.pec.idle;
     let type = recipe.views[0].type;
     let [view] = arc.findViews(type);

@@ -35,9 +35,8 @@ class SlotComposer {
   getSlot(particle, slotName) {
     return this._slots.find(s => s.consumeConn.particle == particle && s.consumeConn.name == slotName);
   }
-  initializeRecipe(recipe) {
-    // Create slots for each of the recipe's particles slot connections.
-    recipe.particles.forEach(p => {
+  initializeRecipe(recipeParticles) {
+    recipeParticles.forEach(p => {
       Object.values(p.consumedSlotConnections).forEach(cs => {
         let slot = createNewSlot(this.affordance, cs);
         slot.startRenderCallback = this.pec.startRender.bind(this.pec);

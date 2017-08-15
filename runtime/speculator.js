@@ -19,7 +19,7 @@ class Speculator {
   speculate(arc, plan) {
     var callTrace = tracing.start({cat: "speculator", name: "Speculator::speculate"});
     var newArc = arc.cloneForSpeculativeExecution();
-    plan.instantiate(newArc);
+    newArc.instantiate(plan);
     callTrace.end();
     let relevance = new Relevance();
     async function awaitCompletion() {
