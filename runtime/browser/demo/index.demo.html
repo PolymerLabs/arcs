@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
+  <link rel="import" href="../../../strategy-explorer/strategy-explorer.html"></link>
 
   <title>Arcs: Flow Demo</title>
 
@@ -22,12 +23,38 @@
       max-height: 736px;
       background-color: white;
     }
+    strategy-explorer {
+      background-color: white;
+      display: none;
+      width: 100%;
+    }
   </style>
 
 </head>
-<body>
+<script>
+function onLoad() {
+  let demoFlow = document.querySelector('demo-flow');
+  let strategyExplorer = document.querySelector('strategy-explorer');
+  demoFlow.strategyExplorer = strategyExplorer;
+}
+function onKeyPressed(event) {
+  if (event.ctrlKey && (event.key == "e")) {
+    let strategyExplorer = document.querySelector('strategy-explorer');
+    let strategyExplorerVisible = strategyExplorer.style.display == 'block';
+    setVisible(strategyExplorer, !strategyExplorerVisible);
 
+    let demoFlow = document.querySelector('demo-flow');
+    setVisible(demoFlow, strategyExplorerVisible);
+  }
+}
+function setVisible(element, isVisible) {
+  element.style.display = isVisible ? 'block' : 'none';
+}
+</script>
+<body onload="onLoad()" onkeydown="onKeyPressed(event)">
   <demo-flow></demo-flow>
+
+  <strategy-explorer></strategy-explorer>
 
   <script src="../build/demo/demo.js"></script>
 

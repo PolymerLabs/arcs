@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+
+<script src='../runtime/browser/build/planner.js'></script>
+<link rel="import" href="strategy-explorer.html"></link>
+
+<strategy-explorer></strategy-explorer>
+
+<script>
+
+(async () => {
+  var loader = new Loader();
+  var a = new Arc({id: "test-plan-arc", loader});
+  let manifest = await Manifest.load('../particles/test/giftlist.manifest', loader)
+  let Person = manifest.findSchemaByName("Person").entityClass();
+  let Product = manifest.findSchemaByName("Product").entityClass();
+  var personView = a.createView(Person.type.viewOf(), "aperson");
+  var productView = a.createView(Product.type.viewOf(), "products");
+  a.commit([new Person({name: 'Claire'})]);
+  var remoteArc = new Arc({id: "claires-wishlist", loader});
+  var remoteView = remoteArc.createView(Product.type.viewOf(), "wishlist");
+  remoteArc.tagView(remoteView, '#giftlist');
+  var context = {
+    recipes: manifest.recipes,
+    arc: a,
+    people: {
+      'Claire': [remoteArc],
+    }
+  };
+  var p = new Planner();
+  p.init(a, context);
+  var strategyExplorer = document.querySelector('strategy-explorer');
+  var result = [await p.generate(),
+                await p.generate(),
+                await p.generate(),
+                await p.generate(),
+                await p.generate(),
+                await p.generate(),
+                await p.generate(),
+                await p.generate()].map(strategyExplorer.preparePopulation);
+  strategyExplorer.results = result;
+})();
+</script>

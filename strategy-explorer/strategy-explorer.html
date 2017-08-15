@@ -4,78 +4,65 @@
 <link rel="import" href="se-explorer.html"></link>
 <link rel="import" href="se-recipe-view.html"></link>
 
-<style>
-#toplevel {
-  display: flex;
-}
-</style>
+<dom-module id='strategy-explorer'>
+  <template>
+    <style>
+      #toplevel {
+        display: flex;
+      }
+    </style>
+    <div id='toplevel'>
+      <se-explorer results='{{results}}'></se-explorer>
+      <se-recipe-view></se-recipe-view>
+    </div>
+  </template>
 
-<div id='toplevel'>
-  <se-explorer></se-explorer>
-  <se-recipe-view></se-recipe-view>
-</div>
 <script>
 
 var parentMap = new Map();
 var lastID = 0;
 
-function preparePopulation(population) {
-  population = population.map(recipe => {
-    let { result, score, derivation, hash } = recipe;
-    parentMap.set(recipe, lastID);
-    return { result, score, derivation, hash, id: lastID++ };
-  });
-
-  population.forEach(item => {
-    item.derivation = item.derivation.map(derivItem => {
-      if (derivItem.parent)
-        var parent = parentMap.get(derivItem.parent);
-      if (derivItem.strategy)
-        var strategy = derivItem.strategy.constructor.name;
-      return { parent, strategy };
-    })
-    item.original = undefined;
-    item.resolved = item.result.isResolved();
-    item.result = item.result.toString();
-  });
-  var populationMap = {};
-  population.forEach(item => {
-    if (populationMap[item.derivation[0].strategy] == undefined)
-      populationMap[item.derivation[0].strategy] = []
-    populationMap[item.derivation[0].strategy].push(item);
-  });
-  var result = {population: []}
-  Object.keys(populationMap).forEach(strategy => {
-    result.population.push({strategy: strategy, recipes: populationMap[strategy]});
-  })
-  return result;
-}
-
 document.idMap = new Map();
 document.pendingActions = new Map();
 
-(async () => {
-  var loader = new Loader();
-  var a = new Arc({id: "test-plan-arc", loader});
-  let manifest = await Manifest.load('../particles/test/giftlist.manifest', loader)
-  let Person = manifest.findSchemaByName("Person").entityClass();
-  let Product = manifest.findSchemaByName("Product").entityClass();
-  var personView = a.createView(Person.type.viewOf(), "aperson");
-  var productView = a.createView(Product.type.viewOf(), "products");
-  a.commit([new Person({name: 'Claire'})]);
-  var remoteArc = new Arc({id: "claires-wishlist", loader});
-  var remoteView = remoteArc.createView(Product.type.viewOf(), "wishlist");
-  remoteArc.tagView(remoteView, '#giftlist');
-  var context = {
-    recipes: manifest.recipes,
-    arc: a,
-    people: {
-      'Claire': [remoteArc],
+</script>
+
+<script>
+  Polymer({
+    is: 'strategy-explorer',
+    properties: {
+      results: Array
+    },
+    preparePopulation: function(population) {
+      population = population.map(recipe => {
+        let { result, score, derivation, hash } = recipe;
+        parentMap.set(recipe, lastID);
+        return { result, score, derivation, hash, id: lastID++ };
+      });
+
+      population.forEach(item => {
+        item.derivation = item.derivation.map(derivItem => {
+          if (derivItem.parent)
+            var parent = parentMap.get(derivItem.parent);
+          if (derivItem.strategy)
+            var strategy = derivItem.strategy.constructor.name;
+          return { parent, strategy };
+        })
+        item.original = undefined;
+        item.resolved = item.result.isResolved();
+        item.result = item.result.toString();
+      });
+      var populationMap = {};
+      population.forEach(item => {
+        if (populationMap[item.derivation[0].strategy] == undefined)
+          populationMap[item.derivation[0].strategy] = []
+        populationMap[item.derivation[0].strategy].push(item);
+      });
+      var result = {population: []}
+      Object.keys(populationMap).forEach(strategy => {
+        result.population.push({strategy: strategy, recipes: populationMap[strategy]});
+      })
+      return result;
     }
-  };
-  var p = new Planner();
-  p.init(a, context);
-  var result = [await p.generate(), await p.generate(), await p.generate(), await p.generate(), await p.generate(), await p.generate(), await p.generate(), await p.generate()].map(preparePopulation);
-  document.querySelector('se-explorer').results = result;
-})();
+  });
 </script>

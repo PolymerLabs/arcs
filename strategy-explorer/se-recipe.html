@@ -125,7 +125,7 @@
           document.pendingActions.get(this.recipe.id).forEach(action => action(this));
         }
 
-        var recipeView = document.documentElement.querySelector('se-recipe-view');
+        var recipeView = document.documentElement.querySelector('strategy-explorer').shadowRoot.querySelector('se-recipe-view');
         this.$['recipe-box'].addEventListener('mouseenter', e => {
           recipeView.over = this;
           recipeView.recipe = this.recipe;

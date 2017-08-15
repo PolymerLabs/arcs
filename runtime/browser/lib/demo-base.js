@@ -52,7 +52,6 @@ class DemoBase extends HTMLElement {
   }
   nextStage() {
     this.stage = this.stages[this.stageNo % this.stages.length];
-    //this.stage.recipes = recipes;
     this.stageNo++;
     this.suggest();
   }
@@ -66,6 +65,12 @@ class DemoBase extends HTMLElement {
     this.context.recipes = this.stage.recipes;
     planner.init(this.arc, this.context);
     let suggestions = await planner.suggest(5000);
+
+    if (this.strategyExplorer) {
+      var results = planner._generated.map(this.strategyExplorer.preparePopulation);
+      this.strategyExplorer.results = results;
+    }
+
     suggestions.forEach(async (suggestion, i) => {
       this.suggestions.add(suggestion, i);
     });
