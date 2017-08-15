@@ -64,7 +64,7 @@ describe('manifest parser', function() {
    # comment
         # comment
         B    #comment
-      `)
+      `);
   });
   it('parses recipes with recipe level connections', () => {
     parse(`
@@ -79,7 +79,7 @@ describe('manifest parser', function() {
   it('parses manifests with views', () => {
     parse(`
       schema Person
-      view View0 of [Person]
-      view View1 of Person 'some-id' @7`);
+      view View0 of [Person] in 'person.json'
+      view View1 of Person 'some-id' @7 in 'people.json'`);
   });
 });

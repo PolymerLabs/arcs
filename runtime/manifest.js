@@ -120,6 +120,9 @@ class Manifest {
     for (let item of items.filter(item => item.kind == 'recipe')) {
       this._processRecipe(manifest, item);
     }
+    for (let item of items.filter(item => item.kind == 'view')) {
+      await this._processView(manifest, item, loader);
+    }
     return manifest;
   }
   static _processSchema(manifest, schemaItem) {
@@ -316,6 +319,25 @@ class Manifest {
         }
         particle.consumedSlotConnections[slotConnectionItem.param].connectToSlot(targetSlot);
       }
+    }
+  }
+  static async _processView(manifest, item, loader) {
+    let view = manifest.newView();
+    view.localName = item.name;
+    view.type = item.type;
+    view.id = item.id;
+    view.version = item.version;
+    let source = loader.join(manifest.fileName, item.source);
+    // TODO: json5?
+    let json = await loader.loadFile(source);
+    let entities = JSON.parse(json);
+    for (let entity of entities) {
+      let id = entity.$id || null;
+      delete entity.$id;
+      view.addEntity({
+        id,
+        rawData: entity,
+      });
     }
   }
   _newRecipe(name) {

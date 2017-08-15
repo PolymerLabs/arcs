@@ -43,7 +43,7 @@ ManifestItem
 
 // TODO: Entity syntax.
 ManifestView
-  = 'view' whiteSpace name:upperIdent whiteSpace 'of' whiteSpace type:(ListType / EntityType) id:(whiteSpace id)? version:(whiteSpace Version)? eolWhiteSpace
+  = 'view' whiteSpace name:upperIdent whiteSpace 'of' whiteSpace type:(ListType / EntityType) id:(whiteSpace id)? version:(whiteSpace Version)? whiteSpace 'in' whiteSpace source:id eolWhiteSpace
   {
     return {
       kind: 'view',
@@ -51,6 +51,7 @@ ManifestView
       type,
       id: optional(id, id => id[1], null),
       version: optional(version, version => version[1], null),
+      source,
     };
   }
 
