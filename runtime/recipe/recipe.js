@@ -12,7 +12,6 @@ var Particle = require('./particle.js');
 var Slot = require('./slot.js');
 var View = require('./view.js');
 var util = require('./util.js');
-var Instantiator = require('./instantiator.js');
 
 class Recipe {
   constructor() {
@@ -92,8 +91,11 @@ class Recipe {
   get localName() { return this._localName; }
   set localName(name) { this._localName = name; }
   get particles() { return this._particles; } // Particle*
+  set particles(particles) { this._particles = particles; }
   get views() { return this._views; } // View*
+  set views(views) { this._views = views; }
   get slots() { return this._slots; } // Slot*
+  set slots(slots) { this._slots = slots; }
   get connectionConstraints() { return this._connectionConstraints; }
 
   get slotConnections() {  // SlotConnection*
@@ -140,10 +142,6 @@ class Recipe {
       sha.update(this.toString());
       return sha.digest('hex');
     }
-  }
-
-  instantiate(arc) {
-    Instantiator.instantiate(this, arc);
   }
 
   normalize() {
@@ -270,7 +268,7 @@ class Recipe {
     return recipe;
   }
 
-  merge(recipe) {
+  mergeInfo(recipe) {
     var cloneMap = new Map();
     var numViews = recipe._views.length;
     var numParticles = recipe._particles.length;

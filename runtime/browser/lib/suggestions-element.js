@@ -71,7 +71,7 @@ class SuggestionsElement extends HTMLElement {
     // TODO(sjmiles): wait for toast animation
     setTimeout(() => {
       this.container.textContent = '';
-      plan.instantiate(this.arc);
+      this.arc.instantiate(plan);
       this.callback();
     }, 80);
   }

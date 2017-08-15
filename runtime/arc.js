@@ -17,6 +17,7 @@ const view = require('./view.js');
 const Relation = require('./relation.js');
 let viewlet = require('./viewlet.js');
 const OuterPec = require('./outer-PEC.js');
+const Recipe = require('./recipe/recipe.js');
 
 class Arc {
   constructor({id, loader, pecFactory, slotComposer}) {
@@ -26,7 +27,7 @@ class Arc {
     this._pecFactory = pecFactory ||  require('./fake-pec-factory').bind(null);
     this.id = id;
     this.nextLocalID = 0;
-    this._particles = [];
+    this._activeRecipe = new Recipe();
 
     // All the views, mapped by view ID
     this._viewsById = new Map();
@@ -81,7 +82,7 @@ class Arc {
     for (var serializedParticle of serialization.particles) {
       var particleHandle = arc.instantiateParticle(serializedParticle.name);
       for (var name in serializedParticle.views) {
-        arc.connectParticleToView(particleHandle, serializedParticle, name, viewMap[serializedParticle.views[name]]);
+        arc._connectParticleToView(particleHandle, serializedParticle, name, viewMap[serializedParticle.views[name]]);
       }
     }
     return arc;
@@ -91,9 +92,18 @@ class Arc {
     return [...this.particleViewMaps.values()].map(({spec}) => spec);
   }
 
-  instantiateParticle(spec) {
+  instantiateParticle(recipeParticle, recipeViewMap) {
     var handle = this.nextParticleHandle++;
-    this.particleViewMaps.set(handle, {spec, views: new Map()});
+    let viewMap = {spec: recipeParticle.spec, views: new Map()};
+    this.particleViewMaps.set(handle, viewMap);
+
+    for (let [name, connection] of Object.entries(recipeParticle.connections)) {
+      let view = recipeViewMap.get(connection.view);
+      this._connectParticleToView(handle, recipeParticle, name, view);
+    }
+
+    assert(viewMap.views.size == viewMap.spec.connectionMap.size, `Not all connections are resolved for {$particle}`);
+    this.pec.instantiate(recipeParticle, viewMap.spec, viewMap.views, this._lastSeenVersion);
     return handle;
   }
 
@@ -118,7 +128,7 @@ class Arc {
       value.views.forEach(v => arc.particleViewMaps.get(key).views.set(v.name, v.clone()));
     });
 
-    // TODO: properly clone previously executed recipes / particles via serialization and deserialization.
+    arc._activeRecipe.mergeInfo(this._activeRecipe);
 
     for (let v of viewMap.values())
       arc.registerView(v);
@@ -159,7 +169,30 @@ class Arc {
     return s;
   }
 
-  connectParticleToView(particleHandle, particle, name, targetView) {
+  instantiate(recipe) {
+    assert(recipe.isResolved(), 'Cannot instantiate an unresolved recipe');
+    let {views, particles, slots} = recipe.mergeInfo(this._activeRecipe);
+    let recipeViewMap = new Map();
+    views.forEach(recipeView => {
+      let view;
+      if (recipeView.create) {
+        view = this.createView(recipeView.type);
+      } else {
+        view = this.viewById(recipeView.id);
+        assert(view, `view '${recipeView.id}' is not registered in arc`);
+      }
+      recipeViewMap.set(recipeView, view);
+    });
+
+    particles.forEach(recipeParticle => this.instantiateParticle(recipeParticle, recipeViewMap));
+
+    if (this.pec.slotComposer) {
+      // TODO: pass slot-connections instead
+      this.pec.slotComposer.initializeRecipe(particles);
+    }
+  }
+
+  _connectParticleToView(particleHandle, particle, name, targetView) {
     // If speculatively executing then we need to translate the view
     // in the plan to its clone.
     if (this._viewMap) {
@@ -170,10 +203,6 @@ class Arc {
     var viewMap = this.particleViewMaps.get(particleHandle);
     assert(viewMap.spec.connectionMap.get(name) !== undefined, "can't connect view to a view slot that doesn't exist");
     viewMap.views.set(name, targetView);
-    if (viewMap.views.size == viewMap.spec.connectionMap.size) {
-      var particleSpec = this.pec.instantiate(particle, viewMap.spec, viewMap.views, this._lastSeenVersion);
-      this._particles.push(particleSpec);
-    }
   }
 
   createView(type, name, id, tags) {

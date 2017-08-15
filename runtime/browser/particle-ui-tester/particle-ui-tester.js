@@ -77,7 +77,7 @@ let renderParticle = () => {
   });
   // TODO: should not need to be resolved now.
   if (Resolver.resolve(r, arc)) {
-    r.instantiate(arc);
+    arc.instantiate(r);
   }
 };
 

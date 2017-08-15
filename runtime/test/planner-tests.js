@@ -74,7 +74,7 @@ describe('InitPopulation', async() => {
     let recipe = manifest.recipes[0];
     assert(recipe.normalize());
     var arc = new Arc({id: 'test-plan-arc', loader});
-    recipe.instantiate(arc);
+    arc.instantiate(recipe);
     var context = { arc, recipes: [recipe]};
     let ip = new InitPopulation(context);
 

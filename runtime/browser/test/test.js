@@ -65,5 +65,5 @@ var results = suggestinator.suggestinate(arc);
 results.then(r => {
   console.log(r);
   window.trace = tracing.save();
-  r[0].instantiate(arc);
+  arc.instantiate(r[0]);
 })
