@@ -228,7 +228,7 @@ describe('manifest', function() {
         return `${path}/${file}`;
       },
     };
-    let manifest = await Manifest.load('some-path', loader, registry);
+    let manifest = await Manifest.load('some-path', loader, {registry});
     assert(manifest.recipes[0]);
     assert.equal(manifest, registry['some-path']);
   })
@@ -248,7 +248,7 @@ describe('manifest', function() {
         return file;
       },
     }
-    let manifest = await Manifest.load('a', loader, registry);
+    let manifest = await Manifest.load('a', loader, {registry});
     assert.equal(registry.a, manifest);
     assert.equal(manifest.imports[0], registry.b);
   });
@@ -275,7 +275,7 @@ describe('manifest', function() {
         return file;
       },
     };
-    let manifest = await Manifest.load('a', loader, registry);
+    let manifest = await Manifest.load('a', loader, {registry});
     assert.equal(manifest.recipes[0].particles[0].spec, registry.b.particles.ParticleB);
   });
   it('can parse a schema extending a schema in another manifest', async () => {
@@ -299,7 +299,7 @@ describe('manifest', function() {
         return file;
       },
     };
-    let manifest = await Manifest.load('a', loader, registry);
+    let manifest = await Manifest.load('a', loader, {registry});
     assert.equal(manifest.schemas.Bar.normative.value, 'Text');
   });
   it('can parse a manifest containing a recipe with slots', async () => {
@@ -362,7 +362,7 @@ describe('manifest', function() {
         return `${path} ${file}`;
       },
     };
-    let manifest = await Manifest.load('somewhere/a', loader, registry);
+    let manifest = await Manifest.load('somewhere/a', loader, {registry});
     assert(registry['somewhere/a path/b']);
   });
   it('parses all particles manifests', async () => {
@@ -422,5 +422,31 @@ describe('manifest', function() {
         rawData: {someProp: 'someValue2'},
       }
     ]);
+  });
+
+  it('resolves view names to ids', async () => {
+    let manifestSource = `
+        schema Thing
+        view View0 of [Thing] in 'entities.json'
+        recipe
+          map View0 as myView`;
+    let entitySource = JSON.stringify([]);
+    let loader = {
+      loadFile(path) {
+        return {
+          'the.manifest': manifestSource,
+          'entities.json': entitySource,
+        }[path];
+      },
+      path(fileName) {
+        return fileName;
+      },
+      join(path, file) {
+        return file;
+      },
+    };
+    let manifest = await Manifest.load('the.manifest', loader);
+    let recipe = manifest.recipes[0];
+    assert.deepEqual(recipe.toString(), 'recipe\n  map \'manifest:the.manifest:view1\' as myView');
   });
 });
