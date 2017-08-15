@@ -119,6 +119,7 @@ class Planner {
           .filter(recipe => recipe.isResolved());
       allResolved.push(...resolved);
       if (now() - start > timeout) {
+        console.warn('Planner.plan timed out.');
         break;
       }
     } while (this.strategizer.generated.length > 0);
