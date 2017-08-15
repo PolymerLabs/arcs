@@ -38,7 +38,6 @@ class Slot {
 
   _copyInto(recipe, cloneMap) {
     var slot = undefined;
-    var create = false;
     if (!this.sourceConnection && this.id)
       slot = recipe.findSlot(this.id);
     if (slot == undefined) {
@@ -52,9 +51,8 @@ class Slot {
         slot.sourceConnection._providedSlots[slot.name] = slot;
       this._viewConnections.forEach(connection => slot._viewConnections.push(cloneMap.get(connection)));
       this._consumerConnections.forEach(connection => cloneMap.get(connection).connectToSlot(slot));
-      create = true;
     }
-    return {object: slot, create};
+    return slot;
   }
 
   _startNormalize() {

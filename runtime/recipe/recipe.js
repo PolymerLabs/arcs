@@ -283,17 +283,14 @@ class Recipe {
 
   _copyInto(recipe, cloneMap) {
     function cloneTheThing(object) {
-      var result = object._copyInto(recipe, cloneMap);
-      cloneMap.set(object, result.object);
-      if (result.create)
-        return result.object;
+      var clonedObject = object._copyInto(recipe, cloneMap);
+      cloneMap.set(object, clonedObject);
     }
 
-    recipe._views = recipe._views.concat(this._views.map(cloneTheThing).filter(a => a !== undefined));
-    recipe._particles = recipe._particles.concat(this._particles.map(cloneTheThing));
-    recipe._slots = recipe._slots.concat(this._slots.map(cloneTheThing).filter(a => a !== undefined));
-
-    recipe._connectionConstraints = recipe._connectionConstraints.concat(this._connectionConstraints.map(cloneTheThing));
+    this._views.forEach(cloneTheThing);
+    this._particles.forEach(cloneTheThing);
+    this._slots.forEach(cloneTheThing);
+    this._connectionConstraints.forEach(cloneTheThing);
   }
 
   updateToClone(dict) {

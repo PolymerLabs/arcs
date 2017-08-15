@@ -27,7 +27,7 @@ class Particle {
   }
 
   _copyInto(recipe, cloneMap) {
-    var particle = new Particle(recipe, this._name);
+    var particle = recipe.newParticle(this._name);
     particle._id  = this._id;
     particle._tags = [...this._tags];
     particle._spec = this._spec;
@@ -40,7 +40,7 @@ class Particle {
       particle._consumedSlotConnections[key] = this._consumedSlotConnections[key]._clone(particle, cloneMap);
     });
 
-    return {object: particle, create: true};
+    return particle;
   }
 
   _startNormalize() {
