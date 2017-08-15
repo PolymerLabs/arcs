@@ -6,10 +6,8 @@
 # subject to an additional IP rights grant found at
 # http://polymer.github.io/PATENTS.txt
 
-import '../../entities/Person.manifest'
-
 particle VrPot in 'VrPot.js'
-  VrPot(in Person person)
+  VrPot()
   consume root
     provide soil
     provide soil2

@@ -11,37 +11,10 @@
 let Arc = require("../../arc.js");
 const Manifest = require("../../manifest.js");
 
-let db = {
-  people: [
-    {
-      name: "Claire"
-    }
-  ]
-};
-
 async function prepareDemoContext({loader, pecFactory, slotComposer}) {
   let manifest = await Manifest.load('browser/vr-demo/recipes.manifest', loader);
-  // TODO: remove all Person views, once particle with no view connection intantiation is supported.
-  let Person = manifest.findSchemaByName('Person').entityClass();
 
-  // uber arc
-  let pageArc = new Arc({loader, id: 'page-arc'});
-
-  // bootstrap data context
-  // TODO(sjmiles): empirically, views must exist before committing Entities
-  let personView = pageArc.createView(Person.type.viewOf(), 'peopleFromWebpage');
-  // commit entities
-  pageArc.commit(db.people.map(p => new Person(p)));
-
-  let personVar = pageArc.createView(Person.type, 'personFromWebpage');
-  personVar.set(new Person(db.people[0]));
-
-  // demo arc
   let arc = new Arc({id: 'demo', loader, pecFactory, slotComposer});
-  arc.mapView(personView);
-  // // TODO: These should be part of recipe instantiation.
-  arc.mapView(personVar);
-
   let recipes = manifest.recipes;
 
   let context = {
@@ -51,12 +24,7 @@ async function prepareDemoContext({loader, pecFactory, slotComposer}) {
     particleFinder: manifest,
   };
 
-  // TODO: should related arcs be part of the planner's context (above)?
-  let relatedArcs = [
-    pageArc,
-  ];
-  // your context objects
-  return {relatedArcs, arc, context};
+  return {relatedArcs: [], arc, context};
 }
 
 module.exports = prepareDemoContext;

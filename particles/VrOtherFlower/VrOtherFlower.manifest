@@ -6,9 +6,7 @@
 # subject to an additional IP rights grant found at
 # http://polymer.github.io/PATENTS.txt
 
-import '../../entities/Person.manifest'
-
 particle VrOtherFlower in 'VrOtherFlower.js'
-  VrOtherFlower(in Person person)
+  VrOtherFlower()
   consume soil2
   description `Create other Flower`
