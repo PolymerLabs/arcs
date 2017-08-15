@@ -100,6 +100,7 @@ class Planner {
       generationSize: 100,
       discardSize: 20,
     });
+    this._generated = [];
   }
 
   async generate() {
@@ -113,7 +114,7 @@ class Planner {
     let now = () => global.performance ? performance.now() : process.hrtime();
     let start = now();
     do {
-      await this.generate();
+      this._generated.push(await this.generate());
       let resolved = this.strategizer.generated
           .map(individual => individual.result)
           .filter(recipe => recipe.isResolved());
