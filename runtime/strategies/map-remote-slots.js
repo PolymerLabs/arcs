@@ -14,7 +14,7 @@ class MapRemoteSlots extends Strategy {
   constructor(arc, context) {
     // faked out for now
     super();
-    this.remoteSlots = {root: {id: 'r0', count: 0}};
+    this.remoteSlots = arc.pec.slotComposer ? arc.pec.slotComposer.getAvailableSlots() : {};
   }
   async generate(strategizer) {
     var remoteSlots = this.remoteSlots;
@@ -24,6 +24,7 @@ class MapRemoteSlots extends Strategy {
           return;
         if (remoteSlots[slotConnection.name] == undefined)
           return;
+        // TODO: remoteSlots should also contain and verify view-connections of the provided slot
         var score = 1 - remoteSlots[slotConnection.name].count;
         return (recipe, slotConnection) => {
           let slot = recipe.newSlot(slotConnection.name);

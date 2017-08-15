@@ -25,7 +25,7 @@ defineParticle(({DomParticle}) => {
       return template;
     }
     _shouldRender(props) {
-      return props.list && props.list.length && props.choices;
+      return props.list && props.list.length;
     }
     _render(props) {
       return {

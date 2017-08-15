@@ -24,7 +24,7 @@ var loader = new Loader();
 describe('Planner', function() {
 
   it('can generate things', async () => {
-    var arc = new Arc({id: "test-plan-arc"});
+    var arc = new Arc({id: "test-plan-arc", slotComposer : { getAvailableSlots: (() => { return {root: {id: 'r0', count: 0}}; }) }});
     let manifest = await Manifest.load('../particles/test/giftlist.manifest', loader);
     let Person = manifest.findSchemaByName('Person').entityClass();
     let Product = manifest.findSchemaByName('Person').entityClass();
@@ -41,7 +41,7 @@ describe('Planner', function() {
   });
 
   it('make a plan with views', async () => {
-    var arc = new Arc({id: "test-plan-arc"});
+    var arc = new Arc({id: "test-plan-arc", slotComposer : { getAvailableSlots: (() => { return {root: {id: 'r0', count: 0}}; }) }});
     let manifest = await Manifest.load('../particles/test/giftlist.manifest', loader);
     let Person = manifest.findSchemaByName('Person').entityClass();
     let Product = manifest.findSchemaByName('Product').entityClass();
