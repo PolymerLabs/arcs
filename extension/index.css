@@ -1,0 +1,32 @@
+body {
+  font-family: sans-serif;
+  margin: 0;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  background-image: url(assets/linen.png);
+}
+demo-frame {
+  flex: 1;
+  max-width: 414px;
+  max-height: 736px;
+  background-color: white;
+}
+demo-frame {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+}
+#particle-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  margin-bottom: 25px;
+  overflow: auto;
+  overflow-x: hidden;
+}
+#particle-container > * {
+  flex: 1;
+}
