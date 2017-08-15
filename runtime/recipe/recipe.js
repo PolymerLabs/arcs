@@ -268,7 +268,7 @@ class Recipe {
     return recipe;
   }
 
-  mergeInfo(recipe) {
+  mergeInto(recipe) {
     var cloneMap = new Map();
     var numViews = recipe._views.length;
     var numParticles = recipe._particles.length;

@@ -20,9 +20,17 @@ const Manifest = require('../manifest.js');
 let loader = new (require('../loader'));
 
 async function setup() {
-  let manifest = await Manifest.load('../particles/test/test-particles.manifest', loader);
+  let manifest = await Manifest.parse(`
+    import '../particles/test/test-particles.manifest'
+    recipe TestRecipe
+      map 'test:1' as view0
+      map 'test:2' as view1
+      TestParticle
+        foo <- view0
+        bar -> view1
+  `, {loader, fileName: './'});
   return {
-    TestParticle: manifest.findParticleByName('TestParticle'),
+    recipe: manifest.recipes[0],
     Foo: manifest.findSchemaByName('Foo').entityClass(),
     Bar: manifest.findSchemaByName('Bar').entityClass(),
   }
@@ -31,25 +39,24 @@ const slotComposer = new SlotComposer({});
 
 describe('Arc', function() {
   it('applies existing views to a particle', async () => {
-    let {TestParticle, Foo, Bar} = await setup();
-    let arc = new Arc({loader, slotComposer});
+    let {recipe, Foo, Bar} = await setup();
+    let arc = new Arc({loader, slotComposer, id:'test'});
     let fooView = arc.createView(Foo.type);
-    viewlet.viewletFor(fooView).set(new Foo({value: 'a Foo'}));
     let barView = arc.createView(Bar.type);
-    var particle = arc.instantiateParticle(TestParticle);
-    arc.connectParticleToView(particle, {particle, fooView}, 'foo', fooView);
-    arc.connectParticleToView(particle, {particle, barView}, 'bar', barView);
+    viewlet.viewletFor(fooView).set(new Foo({value: 'a Foo'}));
+    recipe.normalize();
+    arc.instantiate(recipe);
     await util.assertSingletonHas(barView, Bar, "a Foo1");
   });
 
   it('applies new views to a particle', async () => {
-    let {TestParticle, Foo, Bar} = await setup();
-    let arc = new Arc({loader, slotComposer});
+    let {recipe, Foo, Bar} = await setup();
+    let arc = new Arc({loader, slotComposer, id:'test'});
     let fooView = arc.createView(Foo.type);
     let barView = arc.createView(Bar.type);
-    var particle = arc.instantiateParticle(TestParticle);
-    arc.connectParticleToView(particle, {particle, fooView}, 'foo', fooView);
-    arc.connectParticleToView(particle, {particle, barView}, 'bar', barView);
+    recipe.normalize();
+    arc.instantiate(recipe);
+
     viewlet.viewletFor(fooView).set(new Foo({value: 'a Foo'}));
     await util.assertSingletonHas(barView, Bar, "a Foo1");
   });

@@ -80,7 +80,7 @@ class Arc {
       arc._lastSeenVersion.set(view.id, serializedView.version);
     }
     for (var serializedParticle of serialization.particles) {
-      var particleHandle = arc.instantiateParticle(serializedParticle.name);
+      var particleHandle = arc._instantiateParticle(serializedParticle.name);
       for (var name in serializedParticle.views) {
         arc._connectParticleToView(particleHandle, serializedParticle, name, viewMap[serializedParticle.views[name]]);
       }
@@ -92,13 +92,14 @@ class Arc {
     return [...this.particleViewMaps.values()].map(({spec}) => spec);
   }
 
-  instantiateParticle(recipeParticle, recipeViewMap) {
+  _instantiateParticle(recipeParticle) {
     var handle = this.nextParticleHandle++;
     let viewMap = {spec: recipeParticle.spec, views: new Map()};
     this.particleViewMaps.set(handle, viewMap);
 
     for (let [name, connection] of Object.entries(recipeParticle.connections)) {
-      let view = recipeViewMap.get(connection.view);
+      let view = this.viewById(connection.view.id);
+      assert(view);
       this._connectParticleToView(handle, recipeParticle, name, view);
     }
 
@@ -128,7 +129,7 @@ class Arc {
       value.views.forEach(v => arc.particleViewMaps.get(key).views.set(v.name, v.clone()));
     });
 
-    arc._activeRecipe.mergeInfo(this._activeRecipe);
+    arc._activeRecipe.mergeInto(this._activeRecipe);
 
     for (let v of viewMap.values())
       arc.registerView(v);
@@ -171,20 +172,18 @@ class Arc {
 
   instantiate(recipe) {
     assert(recipe.isResolved(), 'Cannot instantiate an unresolved recipe');
-    let {views, particles, slots} = recipe.mergeInfo(this._activeRecipe);
-    let recipeViewMap = new Map();
+    let {views, particles, slots} = recipe.mergeInto(this._activeRecipe);
     views.forEach(recipeView => {
-      let view;
       if (recipeView.create) {
-        view = this.createView(recipeView.type);
-      } else {
-        view = this.viewById(recipeView.id);
-        assert(view, `view '${recipeView.id}' is not registered in arc`);
+        let view = this.createView(recipeView.type);
+        recipeView.id = view.id;
+        recipeView.create = false;
+        // TODO: move the call to OuterPEC's DefineView to here
       }
-      recipeViewMap.set(recipeView, view);
+      assert(this.viewById(recipeView.id), `view '${recipeView.id}' is not registered in arc`);
     });
 
-    particles.forEach(recipeParticle => this.instantiateParticle(recipeParticle, recipeViewMap));
+    particles.forEach(recipeParticle => this._instantiateParticle(recipeParticle));
 
     if (this.pec.slotComposer) {
       // TODO: pass slot-connections instead
