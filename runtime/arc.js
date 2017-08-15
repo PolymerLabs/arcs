@@ -177,7 +177,7 @@ class Arc {
       if (recipeView.create) {
         let view = this.createView(recipeView.type);
         recipeView.id = view.id;
-        recipeView.create = false;
+        recipeView._fate = "map";
         // TODO: move the call to OuterPEC's DefineView to here
       }
       assert(this.viewById(recipeView.id), `view '${recipeView.id}' is not registered in arc`);

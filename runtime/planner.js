@@ -39,7 +39,7 @@ class CreateViews extends Strategy {
         }
 
         if (!view.id && !view.create) {
-          return (recipe, view) => {view.create = true; return score}
+          return (recipe, view) => {view._fate = "create"; return score}
         }
       }
     }(RecipeWalker.Permuted), this);

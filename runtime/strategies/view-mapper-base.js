@@ -31,9 +31,9 @@ class ViewMapperBase extends Strategy {
           var counts = {'in': 0, 'out': 0, 'unknown': 1};
         return this.mapView(null, vc.tags, vc.type, counts);
       }
-      
+
       onView(recipe, view) {
-        if (view.create)
+        if (view._fate == "create")
           return;
 
         if (view.connections.length == 0)
