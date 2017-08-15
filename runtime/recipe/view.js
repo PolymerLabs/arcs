@@ -24,12 +24,11 @@ class View {
 
   _copyInto(recipe) {
     var view = undefined;
-    var create = false;
     if (!this._create && this._id)
       view = recipe.findView(this._id);
 
     if (view == undefined) {
-      var view = new View(recipe);
+      var view = recipe.newView();
       view._id = this._id;
       view._tags = [...this._tags];
       view._type = this._type;
@@ -39,9 +38,8 @@ class View {
       // the connections are re-established when Particles clone their
       // attached ViewConnection objects.
       view._connections = [];
-      create = true;
     }
-    return {object: view, create};
+    return view;
   }
 
   _startNormalize() {
@@ -52,7 +50,7 @@ class View {
 
   _finishNormalize() {
     for (let connection of this._connections) {
-      assert(Object.isFrozen(connection));
+      assert(Object.isFrozen(connection), 'View connection is not frozen.');
     }
     this._connections.sort(util.compareComparables);
     Object.freeze(this);

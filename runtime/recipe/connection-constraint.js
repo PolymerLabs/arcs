@@ -16,8 +16,8 @@ class ConnectionConstraint {
     Object.freeze(this);
   }
 
-  _copyInto() {
-    return {object: new ConnectionConstraint(this.fromParticle, this.fromConnection, this.toParticle, this.toConnection), create: true};
+  _copyInto(recipe) {
+    return recipe.newConnectionConstraint(this.fromParticle, this.fromConnection, this.toParticle, this.toConnection);
   }
 
   _compareTo(other) {
