@@ -37,33 +37,18 @@ class DemoBase extends HTMLElement {
     this._arc = arc;
     this.update();
   }
-  get stages() {
-    return this._stages;
-  }
-  set stages(stages) {
-    this.stageNo = 0;
-    this._stages = stages;
-    this.update();
-  }
   update() {
-    if (this.arc && this.stages) {
+    if (this.arc) {
       this.nextStage();
     }
   }
   nextStage() {
-    this.stage = this.stages[this.stageNo % this.stages.length];
     this.stageNo++;
     this.suggest();
   }
   async suggest() {
-    if (!this.stage.recipes) {
-      return;
-    }
-
     let planner = new Planner();
-    // TODO: Shrug.. Context dependency between demo base and subclasses is weird.
-    this.context.recipes = this.stage.recipes;
-    planner.init(this.arc, this.context);
+    planner.init(this.arc);
     let generations = [];
     let suggestions = await planner.suggest(5000, generations);
 

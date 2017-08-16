@@ -88,7 +88,6 @@ class View extends ViewBase {
   toList() {
     return [...this._items.values()];
   }
-  // thing()
 
   store(entity) {
     var trace = tracing.start({cat: "view", name: "View::store", args: {name: this.name}});

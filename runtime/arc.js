@@ -13,18 +13,21 @@ var runtime = require("./runtime.js");
 var assert = require("assert");
 var tracing = require("tracelib");
 const Type = require('./type.js');
-const view = require('./view.js');
+const {View, Variable} = require('./view.js');
 const Relation = require('./relation.js');
 let viewlet = require('./viewlet.js');
 const OuterPec = require('./outer-PEC.js');
 const Recipe = require('./recipe/recipe.js');
+const Manifest = require('./manifest.js');
 
 class Arc {
-  constructor({id, pecFactory, slotComposer}) {
+  constructor({id, context, pecFactory, slotComposer}) {
+    // TODO: context should not be optional.
+    this._context = context || new Manifest();
     // TODO: pecFactory should not be optional. update all callers and fix here.
     this._pecFactory = pecFactory ||  require('./fake-pec-factory').bind(null);
     this.id = id;
-    this.nextLocalID = 0;
+    this._nextLocalID = 0;
     this._activeRecipe = new Recipe();
 
     // All the views, mapped by view ID
@@ -59,7 +62,7 @@ class Arc {
     var arc = new Arc({id: serialization.id, slotComposer});
     for (var serializedView of serialization.views) {
       if (serializedView.arc) {
-        var view = arcMap.get(serializedView.arc).viewById(serializedView.id);
+        var view = arcMap.get(serializedView.arc).findViewById(serializedView.id);
         arc.mapView(view);
       } else {
         // TODO add a separate deserialize constructor for view?
@@ -86,6 +89,10 @@ class Arc {
     return arc;
   }
 
+  get context() {
+    return this._context;
+  }
+
   loadedParticles() {
     return [...this.particleViewMaps.values()].map(({spec}) => spec);
   }
@@ -96,7 +103,7 @@ class Arc {
     this.particleViewMaps.set(handle, viewMap);
 
     for (let [name, connection] of Object.entries(recipeParticle.connections)) {
-      let view = this.viewById(connection.view.id);
+      let view = this.findViewById(connection.view.id);
       assert(view);
       this._connectParticleToView(handle, recipeParticle, name, view);
     }
@@ -107,7 +114,7 @@ class Arc {
   }
 
   generateID() {
-    return `${this.id}:${this.nextLocalID++}`;
+    return `${this.id}:${this._nextLocalID++}`;
   }
 
   get _views() {
@@ -116,7 +123,7 @@ class Arc {
 
   // Makes a copy of the arc used for speculative execution.
   cloneForSpeculativeExecution() {
-    var arc = new Arc({id: this.generateID(), pecFactory: this._pecFactory});
+    var arc = new Arc({id: this.generateID(), pecFactory: this._pecFactory, context: this.context});
     var viewMap = new Map();
     this._views.forEach(v => viewMap.set(v, v.clone()));
     this.particleViewMaps.forEach((value, key) => {
@@ -171,7 +178,7 @@ class Arc {
   instantiate(recipe) {
     assert(recipe.isResolved(), 'Cannot instantiate an unresolved recipe');
     let {views, particles, slots} = recipe.mergeInto(this._activeRecipe);
-    views.forEach(recipeView => {
+    for (let recipeView of views) {
       if (recipeView._fate !== "map") {
         let view = this.createView(recipeView.type);
         if (recipeView._fate === "copy") {
@@ -179,11 +186,12 @@ class Arc {
           view.cloneFrom(copiedView);
         }
         recipeView.id = view.id;
+      assert(this.findViewById(recipeView.id), `view '${recipeView.id}' was not found`);
         recipeView._fate = "map";
         // TODO: move the call to OuterPEC's DefineView to here
       }
-      assert(this.viewById(recipeView.id), `view '${recipeView.id}' is not registered in arc`);
-    });
+      assert(this.findViewById(recipeView.id), `view '${recipeView.id}' was not found`);
+    }
 
     particles.forEach(recipeParticle => this._instantiateParticle(recipeParticle));
 
@@ -200,40 +208,38 @@ class Arc {
       targetView = this._viewMap.get(targetView) || targetView;
     }
     assert(targetView, "no target view provided");
-    assert(this._viewsById.has(targetView.id), "view of type " + targetView.type.key + " not visible to arc");
     var viewMap = this.particleViewMaps.get(particleHandle);
     assert(viewMap.spec.connectionMap.get(name) !== undefined, "can't connect view to a view slot that doesn't exist");
     viewMap.views.set(name, targetView);
   }
 
   createView(type, name, id, tags) {
+    tags = tags || [];
     assert(type instanceof Type, "can't createView with a type that isn't a Type");
     if (type.isRelation)
       type = Type.newView(type);
+    let view;
     if (type.isView) {
-      var v = new view.View(type, this, name, id);
+      view = new View(type, this, name, id);
     } else {
       assert(type.isEntity, `Expected entity type, but... ${JSON.stringify(type.toLiteral())}`);
-      var v = new view.Variable(type, this, name, id);
+      view = new Variable(type, this, name, id);
     }
-    this.registerView(v);
-    if (tags && tags.length) {
-      tags.forEach(tag => this.tagView(v, tag));
+
+    this._viewsById.set(view.id, view);
+    let byType = this._viewsByType.get(Arc._viewKey(view.type)) || [];
+    byType.push(view);
+    this._viewsByType.set(Arc._viewKey(view.type), byType);
+
+    if (tags.length) {
+      for (let tag of tags) {
+        if (this._tags[tag] == undefined)
+          this._tags[tag] = [];
+        this._tags[tag].push(view);
+      }
     }
-    return v;
-  }
-
-  mapView(view) {
-    this.registerView(view);
-  }
-
-  tagView(view, tag) {
-    assert (this.viewById(view.id) == view);
-    if (this._tags[tag] == undefined)
-      this._tags[tag] = [];
-
-    this._tags[tag].push(view);
-    this._viewTags.get(view).add(tag);
+    this._viewTags.set(view, new Set(tags));
+    return view;
   }
 
   // TODO: Don't use this, we should be testing the schemas for compatiblity
@@ -247,42 +253,26 @@ class Arc {
     }
   }
 
-  registerView(view) {
-    let views = this.findViews(view.type);
-    if (!views.length) {
-      this._viewsByType.set(Arc._viewKey(view.type), views);
-    }
-    views.push(view);
-    this.addView(view);
-  }
-
-  tagsForView(view) {
-    return this._viewTags.get(view);
-  }
-
-  findViews(type, options) {
+  findViewsByType(type, options) {
     // TODO: use options (location, labels, etc.) somehow.
     var views = this._viewsByType.get(Arc._viewKey(type)) || [];
     if (options && options.tag) {
-      views = views.filter(view => this.tagsForView(view).has(options.tag));
+      views = views.filter(view => this._viewTags.get(view).has(options.tag));
     }
-    return views;
+    return [...views, ...this.context.findViewsByType(type, options)];
   }
 
-  viewById(id) {
-    if (this._viewsById.has(id))
-      return this._viewsById.get(id);
-    else if (this._viewMap)
-      return this._viewMap.get([...this._viewMap.keys()].find(v => v.id == id));
+  findViewById(id) {
+    let view = this._viewsById.get(id);
+    if (view == null) {
+      view = this._context.findViewById(id);
+    }
+    return view;
   }
 
-  addView(view) {
-    this._viewsById.set(view.id, view);
-    this._viewTags.set(view, new Set());
-  }
-
+  // TODO: Remove this.
   _viewFor(type) {
-    let views = this.findViews(type);
+    let views = this.findViewsByType(type);
     if (views.length > 0) {
       return views[0];
     }

@@ -8,10 +8,10 @@
 let {Strategy} = require('../../strategizer/strategizer.js');
 
 class InitPopulation extends Strategy {
-  constructor(context) {
+  constructor(arc) {
     super();
     this._recipes = [];
-    for (let recipe of (context.recipes || [])) {
+    for (let recipe of (arc.context.recipes || [])) {
       recipe = recipe.clone();
       if (!recipe.normalize()) {
         console.warn('could not normalize a context recipe');
@@ -19,7 +19,7 @@ class InitPopulation extends Strategy {
         this._recipes.push(recipe);
       }
     }
-    this._loadedParticles = new Set(context.arc.loadedParticles().map(spec => spec.implFile));
+    this._loadedParticles = new Set(arc.loadedParticles().map(spec => spec.implFile));
   }
   async generate(strategizer) {
     if (strategizer.generation != 0) {

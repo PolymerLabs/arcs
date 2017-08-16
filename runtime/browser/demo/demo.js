@@ -88,16 +88,14 @@ class DemoFlow extends DemoBase {
   async didMount() {
     let root = '../../';
     let loader = new BrowserLoader(root);
-    let {context} = await demoContext({
+    let {arc} = await demoContext({
       loader,
       pecFactory: require('../worker-pec-factory.js').bind(null, root),
       slotComposer: new SlotComposer(this.$('[particle-container]'),  /* affordance */ "dom")
     });
-    this.arc = context.arc;
-    this.context = context;
-    this.stages = buildStages(context.recipes);
+    this.arc = arc;
     this.suggestions = this.$('suggestions-element');
-    this.suggestions.arc = context.arc;
+    this.suggestions.arc = arc;
     this.suggestions.callback = this.nextStage.bind(this);
   }
 }

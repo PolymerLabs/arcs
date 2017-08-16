@@ -35,7 +35,7 @@ describe('manifest integration', () => {
     arc.instantiate(recipe);
     await arc.pec.idle;
     let type = recipe.views[0].type;
-    let [view] = arc.findViews(type);
+    let [view] = arc.findViewsByType(type);
     assert(view);
     let viewlet = Viewlet.viewletFor(view);
     // TODO: This should not be necessary.
