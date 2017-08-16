@@ -38,7 +38,7 @@ class CreateViews extends Strategy {
             score = 0;
         }
 
-        if (!view.id && !view.create) {
+        if (!view.id && view._fate == "map") {
           return (recipe, view) => {view._fate = "create"; return score}
         }
       }
