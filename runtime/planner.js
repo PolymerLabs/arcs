@@ -86,17 +86,16 @@ class MatchConsumedSlots extends Strategy {
 
 class Planner {
   // TODO: Use context.arc instead of arc
-  init(arc, context) {
+  init(arc) {
     this._arc = arc;
     let strategies = [
-      new InitPopulation(context),
+      new InitPopulation(arc),
       new CreateViews(),
-      new ResolveParticleByName(context),
       new AssignViewsByTagAndType(arc),
       new ConvertConstraintsToConnections(),
       new MatchConsumedSlots(),
-      new AssignRemoteViews(arc, context),
-      new MapRemoteSlots(arc, context)
+      new AssignRemoteViews(arc),
+      new MapRemoteSlots(arc)
     ];
     this.strategizer = new Strategizer(strategies, [], {
       maxPopulation: 100,
@@ -137,6 +136,18 @@ class Planner {
     let plans = await this.plan(timeout, generations);
     let suggestions = [];
     let speculator = new Speculator();
+    let results = [];
+    for (let plan of plans) {
+      let relevance = {}; //await speculator.speculate(this._arc, plan);
+      let rank = 1; //relevance.calcRelevanceScore();
+      let description = new DescriptionGenerator(plan, relevance).description;
+      results.push({
+        plan,
+        rank,
+        description,
+      });
+    }
+    return results;
     return Promise.all(plans.map(async plan => {
       let relevance = await speculator.speculate(this._arc, plan);
       let rank = relevance.calcRelevanceScore();

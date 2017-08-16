@@ -191,7 +191,7 @@ class DescriptionGenerator {
   _formatViewValue(recipeView) {
     if (!recipeView.id)
       return;
-    let view = this.relevance.newArc.viewById(recipeView.id);
+    let view = this.relevance.newArc.findViewById(recipeView.id);
     assert(view, `Cannot find view ${recipeView.id} in arc`);
     if (view.type.isView) {
       let viewList = view.toList();

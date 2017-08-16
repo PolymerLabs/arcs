@@ -11,7 +11,7 @@ let RecipeWalker = require('../recipe/walker.js');
 let RecipeUtil = require('../recipe/recipe-util.js');
 
 class MapRemoteSlots extends Strategy {
-  constructor(arc, context) {
+  constructor(arc) {
     // faked out for now
     super();
     this.remoteSlots = arc.pec.slotComposer ? arc.pec.slotComposer.getAvailableSlots() : {};

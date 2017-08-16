@@ -13,7 +13,7 @@ const parser = require('./build/manifest-parser.js');
 const Recipe = require('./recipe/recipe.js');
 const ParticleSpec = require('./particle-spec.js');
 const Schema = require('./schema.js');
-const ManifestView = require('./manifest-view.js');
+const {View, Variable} = require('./view.js');
 
 class Manifest {
   constructor() {
@@ -24,6 +24,11 @@ class Manifest {
     this._schemas = {};
     this._views = [];
     this._fileName = null;
+    this._nextLocalID = 0;
+    this._id = null;
+  }
+  get id() {
+    return this._id;
   }
   get recipes() {
     return this._recipes;
@@ -45,16 +50,21 @@ class Manifest {
   }
   // TODO: newParticle, Schema, etc.
   // TODO: simplify() / isValid().
-  newView() {
-    let view = new ManifestView();
+  newView(type, name, id) {
+    let view;
+    if (type.isView) {
+      view = new View(type, this, name, id);
+    } else {
+      view = new Variable(type, this, name, id);
+    }
     this._views.push(view);
     return view;
   }
-  find(manifestFinder) {
+  _find(manifestFinder) {
     let result = manifestFinder(this);
     if (!result) {
       for (let importedManifest of this._imports) {
-        result = importedManifest.find(manifestFinder);
+        result = importedManifest._find(manifestFinder);
         if (result) {
           break;
         }
@@ -62,17 +72,29 @@ class Manifest {
     }
     return result;
   }
+  *_findAll(manifestFinder) {
+    yield* manifestFinder(this);
+    for (let importedManifest of this._imports) {
+      yield* importedManifest._findAll(manifestFinder);
+    }
+  }
   findSchemaByName(name) {
-    return this.find(manifest => manifest._schemas[name]);
+    return this._find(manifest => manifest._schemas[name]);
   }
   findParticleByName(name) {
-    return this.find(manifest => manifest._particles[name]);
+    return this._find(manifest => manifest._particles[name]);
   }
   findViewByName(name) {
-    return this.find(manifest => manifest._views.find(view => view.localName == name));
+    return this._find(manifest => manifest._views.find(view => view.name == name));
   }
   findViewById(id) {
-    return this.find(manifest => manifest._views.find(view => view.id == id));
+    return this._find(manifest => manifest._views.find(view => view.id == id));
+  }
+  findViewsByType(type, options) {
+    return [...this._findAll(manifest => manifest._views.filter(view => view.type.equals(type)))];
+  }
+  generateID() {
+    return `${this.id}:${this._nextLocalID++}`;
   }
   static async load(fileName, loader, options) {
     options = options || {};
@@ -337,25 +359,44 @@ class Manifest {
     }
   }
   static async _processView(manifest, item, loader) {
-    let view = manifest.newView();
-    view.localName = item.name;
-    view.type = item.type;
-    view.id = item.id;
-    if (view.id == null) {
-      view.id = `${manifest._id}view${manifest._views.length}`;
+    let name = item.name;
+    let id = item.id;
+    let type = item.type;
+    if (id == null) {
+      id = `${manifest._id}view${manifest._views.length}`
     }
-    view.version = item.version;
+
+    // TODO: make this a util?
+    let resolveSchema = name => {
+      let schema = manifest.findSchemaByName(name);
+      if (!schema) {
+        throw new Error(`Schema '${name}' was not declared or imported`);
+      }
+      return schema;
+    };
+    type = type.resolveSchemas(resolveSchema);
+
+    let view = manifest.newView(type, name, id);
+    // TODO: How to set the version?
+    // view.version = item.version;
     let source = loader.join(manifest.fileName, item.source);
     // TODO: json5?
     let json = await loader.loadFile(source);
     let entities = JSON.parse(json);
     for (let entity of entities) {
-      let id = entity.$id || null;
+      let id = entity.$id || manifest.generateID();
       delete entity.$id;
-      view.addEntity({
-        id,
-        rawData: entity,
-      });
+      if (type.isView) {
+        view.store({
+          id,
+          rawData: entity,
+        });
+      } else {
+        view.set({
+          id,
+          rawData: entity,
+        })
+      }
     }
   }
   _newRecipe(name) {

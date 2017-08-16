@@ -420,9 +420,9 @@ describe('manifest', function() {
     let manifest = await Manifest.load('the.manifest', loader);
     let view = manifest.findViewByName('View0');
     assert(view);
-    assert.deepEqual(view.entities, [
+    assert.deepEqual(view.toList(), [
       {
-        id: null,
+        id: 'manifest:the.manifest::0',
         rawData: {someProp: 'someValue'},
       }, {
         id: 'entity-id',
@@ -454,6 +454,6 @@ describe('manifest', function() {
     };
     let manifest = await Manifest.load('the.manifest', loader);
     let recipe = manifest.recipes[0];
-    assert.deepEqual(recipe.toString(), 'recipe\n  map \'manifest:the.manifest:view1\' as myView');
+    assert.deepEqual(recipe.toString(), 'recipe\n  map \'manifest:the.manifest:view0\' as myView');
   });
 });

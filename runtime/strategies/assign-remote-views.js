@@ -15,28 +15,30 @@ let Schema = require('../schema.js');
 let assert = require('assert');
 
 class AssignRemoteViews extends ViewMapperBase {
-  constructor(arc, context) {
+  constructor(arc) {
     super();
-    this.mappable = [];
-    // TODO: do this properly
-    var Person = new Schema({
-      name: 'Person',
-      sections: [],
-    })
-    var peopleViews = arc.findViews(Person.type.viewOf());
-    var people = peopleViews.map(view => view.toList()).reduce((a,b) => a.concat(b), [])
-        .map(a => a.rawData.name);
-    let contextPeople = context.people || {};
-    people.forEach(person => {
-      this.mappable.push(...(contextPeople[person] || []));
-    });
+    this._arc = arc;
+
+    // this.mappable = [];
+    // // TODO: do this properly
+    // var Person = new Schema({
+    //   name: 'Person',
+    //   sections: [],
+    // })
+    // var peopleViews = arc.findViewsByType(Person.type.viewOf());
+    // var people = peopleViews.map(view => view.toList()).reduce((a,b) => a.concat(b), [])
+    //     .map(a => a.rawData.name);
+    // let contextPeople = arc.context.people || {};
+    // people.forEach(person => {
+    //   this.mappable.push(...(contextPeople[person] || []));
+    // });
   }
 
   getMappableViews(type, tags) {
     if (tags.length > 0) {
-      return this.mappable.map(arc => arc.findViews(type, {tag: tags[0]})).reduce((a,b) => a.concat(b), []);
+      return this._arc.findViewsByType(type, {tag: tags[0]});
     } else {
-      return this.mappable.map(arc => arc.findViews(type)).reduce((a,b) => a.concat(b), []);
+      return this._arc.findViewsByType(type);
     }
   }
 }

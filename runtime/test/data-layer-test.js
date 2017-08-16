@@ -29,7 +29,7 @@ describe('entity', function() {
     assert.isDefined(entity);
     arc.commit([entity]);
 
-    let list = await arc.findViews(entity.constructor.type.viewOf())[0].toList();
+    let list = await arc.findViewsByType(entity.constructor.type.viewOf())[0].toList();
     let clone = list[0];
     assert.isDefined(clone);
     assert.deepEqual(clone.rawData, {value: 'hello world'});
@@ -43,7 +43,7 @@ describe.skip('relation', function() {
     let relation = new Relation(new BasicEntity('thing1'), new BasicEntity('thing2'));
     assert.isDefined(relation);
     arc.commit([relation]);
-    let clone = arc.findViews(relation.constructor.type.viewOf())[0].toList()[0];
+    let clone = arc.findViewsByType(relation.constructor.type.viewOf())[0].toList()[0];
     assert.isDefined(clone);
     assert.equal(clone.entities[0].data, 'thing1');
     assert.notEqual(relation, clone);

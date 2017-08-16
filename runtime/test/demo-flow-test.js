@@ -81,10 +81,10 @@ describe('demo flow', function() {
 
     await slotComposer.expectationsCompleted();
 
-    let productViews = arc.findViews(Product.type.viewOf());
+    let productViews = arc.findViewsByType(Product.type.viewOf());
     assert.equal(productViews.length, 3);
 
-    //var giftView = arc.findViews(Product.type.viewOf(), {tag: "giftlist"})[0];
+    //var giftView = arc.findViewsByType(Product.type.viewOf(), {tag: "giftlist"})[0];
     //await testUtil.assertViewHas(giftView, Product, "name",
     //    ["Tea Pot", "Bee Hive", "Denim Jeans", "Arduino Starter Pack"]);
 
@@ -107,9 +107,9 @@ describe('demo flow', function() {
     //var newArc = Arc.deserialize({serialization, loader, slotComposer, arcMap});
     //await slotComposer.expectationsCompleted();
 
-    //productViews = arc.findViews(Product.type.viewOf());
+    //productViews = arc.findViewsByType(Product.type.viewOf());
     //assert.equal(productViews.length, 5);
-    //var giftView = arc.findViews(Product.type.viewOf(), {tag: "gift list"})[0];
+    //var giftView = arc.findViewsByType(Product.type.viewOf(), {tag: "gift list"})[0];
     //await testUtil.assertViewHas(giftView, Product, "name",
     //    ["Tea Pot", "Bee Hive", "Denim Jeans", "Arduino Starter Pack"]);
   });
