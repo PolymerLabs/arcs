@@ -20,9 +20,7 @@ const OuterPec = require('./outer-PEC.js');
 const Recipe = require('./recipe/recipe.js');
 
 class Arc {
-  constructor({id, loader, pecFactory, slotComposer}) {
-    assert(loader, "must provide loader for Arc");
-    this._loader = loader;
+  constructor({id, pecFactory, slotComposer}) {
     // TODO: pecFactory should not be optional. update all callers and fix here.
     this._pecFactory = pecFactory ||  require('./fake-pec-factory').bind(null);
     this.id = id;
@@ -54,11 +52,11 @@ class Arc {
     this.availableSlotIds = new Set();
   }
 
-  static deserialize({serialization, pecFactory, loader, slotComposer, arcMap}) {
+  static deserialize({serialization, pecFactory, slotComposer, arcMap}) {
     var entityMap = {};
     var viewMap = {};
     serialization.entities.forEach(e => entityMap[e.id] = e);
-    var arc = new Arc({id: serialization.id, loader, slotComposer});
+    var arc = new Arc({id: serialization.id, slotComposer});
     for (var serializedView of serialization.views) {
       if (serializedView.arc) {
         var view = arcMap.get(serializedView.arc).viewById(serializedView.id);
@@ -118,7 +116,7 @@ class Arc {
 
   // Makes a copy of the arc used for speculative execution.
   cloneForSpeculativeExecution() {
-    var arc = new Arc({loader: this._loader, id: this.generateID(), pecFactory: this._pecFactory});
+    var arc = new Arc({id: this.generateID(), pecFactory: this._pecFactory});
     var viewMap = new Map();
     this._views.forEach(v => viewMap.set(v, v.clone()));
     this.particleViewMaps.forEach((value, key) => {

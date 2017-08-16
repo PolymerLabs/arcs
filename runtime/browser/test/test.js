@@ -23,7 +23,7 @@ function prepareExtensionArc() {
   let pecFactory = require('../worker-pec-factory.js').bind(null, '../');
   var domRoot = global.document ? document.querySelector('[particle-container]') || document.body : {};
   var slotComposer = new SlotComposer(domRoot);
-  var arc = new Arc({loader, pecFactory, slotComposer});
+  var arc = new Arc({pecFactory, slotComposer});
   var personView = arc.createView(Person.type.viewOf(), "peopleFromWebpage");
   var productView = arc.createView(Product.type.viewOf(), "productsFromWebpage");
   var personSlot = arc.createView(Person.type, "personSlot");

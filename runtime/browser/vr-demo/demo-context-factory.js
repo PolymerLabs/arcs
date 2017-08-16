@@ -14,7 +14,7 @@ const Manifest = require("../../manifest.js");
 async function prepareDemoContext({loader, pecFactory, slotComposer}) {
   let manifest = await Manifest.load('browser/vr-demo/recipes.manifest', loader);
 
-  let arc = new Arc({id: 'demo', loader, pecFactory, slotComposer});
+  let arc = new Arc({id: 'demo', pecFactory, slotComposer});
   let recipes = manifest.recipes;
 
   let context = {

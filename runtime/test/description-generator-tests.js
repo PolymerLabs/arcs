@@ -10,7 +10,6 @@
 
 var Arc = require("../arc.js");
 var DescriptionGenerator = require('../description-generator.js');
-var Loader = require('../loader');
 var Relevance = require('../relevance.js');
 var SlotComposer = require('../slot-composer.js');
 var assert = require('chai').assert;
@@ -21,9 +20,8 @@ var Bar = runtime.testing.testEntityClass('Bar');
 var Far = runtime.testing.testEntityClass('Far');
 
 function testRelevance() {
-  var loader = new Loader();
   const slotComposer = new SlotComposer({});
-  var arc = new Arc({loader, slotComposer, id:'test'});
+  var arc = new Arc({slotComposer, id:'test'});
   var relevance = new Relevance();
   relevance.newArc = arc;
   relevance.newArc._viewMap = new Map();

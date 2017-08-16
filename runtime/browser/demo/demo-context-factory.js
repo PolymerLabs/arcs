@@ -78,7 +78,7 @@ async function prepareDemoContext({loader, pecFactory, slotComposer}) {
   let Product = manifest.findSchemaByName('Product').entityClass();;
 
   // uber arc
-  let pageArc = new Arc({loader, id: 'page-arc'});
+  let pageArc = new Arc({id: 'page-arc'});
 
   // bootstrap data context
   // TODO(sjmiles): empirically, views must exist before committing Entities
@@ -92,12 +92,12 @@ async function prepareDemoContext({loader, pecFactory, slotComposer}) {
   personVar.set(new Person(db.people[0]));
 
   // claire's wishlist arc
-  let wishlistArc = new Arc({loader, id: 'claires-wishlist-arc'});
+  let wishlistArc = new Arc({id: 'claires-wishlist-arc'});
   let wishlistView = wishlistArc.createView(Product.type.viewOf(), 'claires-wishlist');
   wishlistArc.commit(wishlistDb.map(p => new Product(p)));
 
   // demo arc
-  let arc = new Arc({id: 'demo', loader, pecFactory, slotComposer});
+  let arc = new Arc({id: 'demo', pecFactory, slotComposer});
   arc.mapView(personView);
   arc.mapView(productView);
 
