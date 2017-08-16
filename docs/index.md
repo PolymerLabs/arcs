@@ -1,5 +1,4 @@
 
-# Arcs
 Welcome to Arcs!
 
 If you've never heard of Arcs you probably want to start by reading our [overview](overview.md) page.
