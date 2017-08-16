@@ -174,7 +174,7 @@ class Arc {
     assert(recipe.isResolved(), 'Cannot instantiate an unresolved recipe');
     let {views, particles, slots} = recipe.mergeInto(this._activeRecipe);
     views.forEach(recipeView => {
-      if (recipeView.create) {
+      if (recipeView._fate !== "map") {
         let view = this.createView(recipeView.type);
         recipeView.id = view.id;
         recipeView._fate = "map";

@@ -35,8 +35,8 @@ describe('manifest', function() {
     assert(recipe);
     assert.equal(recipe.particles.length, 1);
     assert.equal(recipe.views.length, 2);
-    assert.isFalse(recipe.views[0].create);
-    assert.isTrue(recipe.views[1].create);
+    assert.equal(recipe.views[0]._fate, "map");
+    assert.equal(recipe.views[1]._fate, "create");
     assert.equal(recipe.viewConnections.length, 1);
     assert.sameMembers(recipe.viewConnections[0].tags, ['#tag']);
   });
