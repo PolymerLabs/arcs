@@ -6,15 +6,9 @@
 // http://polymer.github.io/PATENTS.txt
 
 /**
- * Load the current browsing data from all non-https tabs on all devices; output is
- * piped out through detailPrint().
+ * Load the current browsing data from all non-https tabs on all devices.
  */
-(async () => {
-
-  if (typeof(Storage) === "undefined") {
-    alert('this should be a better error message');
-    return;
-  }
+async function loadBrowsingData(arc, manifest) {
 
   let devices = await new Promise((resolve) => chrome.sessions.getDevices(null, resolve));
   let tabs = [];
@@ -70,35 +64,16 @@
   }
 
   for (let [group, tabs] of groupTabMap) {
-    dumpEntities([].concat(...await Promise.all(tabs.map(tab => tabEntityMap.get(tab)))));
+    dumpEntities(arc, manifest, [].concat(...await Promise.all(tabs.map(tab => tabEntityMap.get(tab)))));
   }
 
-})();
+}
 
 
-function dumpEntities(entities) {
+function dumpEntities(arc, manifest, entities) {
 
-  let store = sessionStorage.arcs ? JSON.parse(sessionStorage.arcs) : new Map();
-
-  for (let entity of entities) {
-    let type = entity['@type'] || 'unknown';
-    if (!store[type]) {
-      store[type] = [];
-    }
-    store[type].push(entity);
-
-    if (!window.db.model.Url) {
-      window.db.model.Url = []
-    }
-    window.db.model.Url.push(entity);
-  }
-
-  // Based on my reading of this file the whole thing is async, but processed
-  // in a single thread.
-  // However, this is not thread-safe, so if that changes we'll need to lock
-  // dumpEntities().
-  // Another option would be to qualify the keys - maybe 'arcs.'+type.
-  sessionStorage.arcs = JSON.stringify(store);
+  let entity = manifest.findSchemaByName('Url').entityClass();
+  arc.commit(entities.map(p => new entity(p)));
 }
 
 async function fetchEntities(tab) {
