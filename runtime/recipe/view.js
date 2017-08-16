@@ -9,10 +9,6 @@ var assert = require('assert');
 var util = require('./util.js');
 var TypeChecker = require('./type-checker.js');
 
-const Create = "create";
-const Copy = "copy";
-const Map = "map";
-
 class View {
   constructor(recipe) {
     assert(recipe);
@@ -21,14 +17,14 @@ class View {
     this._localName = undefined;
     this._tags = [];
     this._type = undefined;
-    this._fate = Map;
+    this._fate = "map";
     this._connections = [];
     this._mappedType = undefined;
   }
 
   _copyInto(recipe) {
     var view = undefined;
-    if (!this.create && this._id)
+    if (this._fate === "map" && this._id !== null)
       view = recipe.findView(this._id);
 
     if (view == undefined) {
@@ -66,7 +62,7 @@ class View {
     if ((cmp = util.compareStrings(this._localName, other._localName)) != 0) return cmp;
     if ((cmp = util.compareArrays(this._tags, other._tags, util.compareStrings)) != 0) return cmp;
     // TODO: type?
-    if ((cmp = util.compareNumbers(this._create, other._create)) != 0) return cmp;
+    if ((cmp = util.compareStrings(this._fate, other._fate)) != 0) return cmp;
     return 0;
   }
 
@@ -80,7 +76,6 @@ class View {
   mapToView(view) { this._id = view.id; this._type = undefined; this._mappedType = view.type;}
   get localName() { return this._localName; }
   set localName(name) { this._localName = name; }
-  get create() { return this._fate == Create || this._fate == Copy; }
   get connections() { return this._connections } // ViewConnection*
 
   _isValid() {
@@ -104,9 +99,15 @@ class View {
 
   isResolved() {
     assert(Object.isFrozen(this));
-    if (this._fate === "copy" && this.id === null)
+    if (!this._type)
       return false;
-    return (this._id || this.create) && this._type;
+    switch (this._fate) {
+      case "copy":
+      case "map":
+        return this.id !== null;
+      case "create":
+        return true;
+    }
   }
 
   toString(nameMap) {
