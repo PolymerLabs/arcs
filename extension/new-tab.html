@@ -58,6 +58,8 @@
       let manifest = await Arcs.Manifest.load('./new-tab.manifest', arc._loader);
       // setup the database
       utils.prepareDataContext(window.db, arc, manifest);
+      await loadBrowsingData(arc, manifest);
+
       // configure suggestions UI
       let ui = document.querySelector('suggestions-element');
       ui.arc = arc;
