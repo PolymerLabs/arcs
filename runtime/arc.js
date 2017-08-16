@@ -174,6 +174,10 @@ class Arc {
     views.forEach(recipeView => {
       if (recipeView._fate !== "map") {
         let view = this.createView(recipeView.type);
+        if (recipeView._fate === "copy") {
+          var copiedView = this.findViewById(recipeView.id);
+          view.cloneFrom(copiedView);
+        }
         recipeView.id = view.id;
         recipeView._fate = "map";
         // TODO: move the call to OuterPEC's DefineView to here
