@@ -100,7 +100,6 @@ class Planner {
       generationSize: 100,
       discardSize: 20,
     });
-    this._generated = [];
   }
 
   async generate() {
@@ -108,13 +107,17 @@ class Planner {
     return this.strategizer.generated;
   }
 
-  async plan(timeout) {
+  async plan(timeout, generations) {
     timeout = timeout || NaN;
     let allResolved = [];
     let now = () => global.performance ? performance.now() : process.hrtime();
     let start = now();
     do {
-      this._generated.push(await this.generate());
+      let generated = await this.generate();
+      if (generations !== null) {
+        generations.push(generated);
+      }
+
       let resolved = this.strategizer.generated
           .map(individual => individual.result)
           .filter(recipe => recipe.isResolved());
@@ -127,8 +130,8 @@ class Planner {
     return allResolved;
   }
 
-  async suggest(timeout) {
-    let plans = await this.plan(timeout);
+  async suggest(timeout, generations) {
+    let plans = await this.plan(timeout, generations);
     let suggestions = [];
     let speculator = new Speculator();
     return Promise.all(plans.map(async plan => {
