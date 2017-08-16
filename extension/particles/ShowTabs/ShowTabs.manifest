@@ -5,8 +5,9 @@
 # subject to an additional IP rights grant found at
 # http://polymer.github.io/PATENTS.txt
 
-import 'https://sjmiles.github.io/arcs-cdn/v0.01/entities/Thing.manifest'
+import '../../entities/Tab.manifest'
 
-schema Url extends Thing
-  normative
-    URL url
+particle ShowTabs in 'ShowTabs.js'
+  ShowTabs(in [Tab] list)
+  consume root
+  description `Show ${list}`

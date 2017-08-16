@@ -5,9 +5,8 @@
 # subject to an additional IP rights grant found at
 # http://polymer.github.io/PATENTS.txt
 
-import '../../entities/Url.manifest'
+import 'https://sjmiles.github.io/arcs-cdn/v0.01/entities/Thing.manifest'
 
-particle ShowUrls in 'ShowUrls.js'
-  ShowUrls(in [Url] list)
-  consume root
-  description `Show ${list}`
+schema Tab extends Thing
+  normative
+    URL url
