@@ -8,8 +8,6 @@ body {
 }
 demo-frame {
   flex: 1;
-  max-width: 414px;
-  max-height: 736px;
   background-color: white;
 }
 demo-frame {
