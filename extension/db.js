@@ -10,16 +10,6 @@
 
 window.db = {
   model: {
-    Url: [
-      {
-        name: "url1",
-        balance: "20.30"
-      },
-      {
-        name: "url2",
-        balance: "9876.54"
-      }
-    ],
     Product: [
       {
         name: "Minecraft Book",

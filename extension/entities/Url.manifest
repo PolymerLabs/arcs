@@ -9,4 +9,4 @@ import 'https://sjmiles.github.io/arcs-cdn/v0.01/entities/Thing.manifest'
 
 schema Url extends Thing
   normative
-    Text balance
+    URL url
