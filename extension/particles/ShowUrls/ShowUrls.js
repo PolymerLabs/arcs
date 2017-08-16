@@ -16,8 +16,9 @@ defineParticle(({DomParticle}) => {
   <hr>
   <x-list items="{{items}}">
     <template>
-      <div style="padding: 6px; border-bottom: 1px dotted silver;">
-        <span>{{name}}</span>: <span>{{balance}}</span>
+      <div style="height: 20px; padding: 8px" item>
+        <a href="{{url}}"><img src="{{image}}" height="16px" width="16px"></a>
+        <a href="{{url}}">{{name}}</a>
       </div>
     </template>
   </x-list>
