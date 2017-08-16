@@ -20,7 +20,7 @@ require("./trace-setup.js");
 describe('speculator', function() {
   it('can speculatively produce a relevance', async () => {
     let loader = new Loader();
-    var arc = new Arc({loader});
+    var arc = new Arc({});
     let manifest = await Manifest.load('../particles/test/test.manifest', loader);
     let recipe = manifest.recipes[0];
     assert(recipe.normalize());

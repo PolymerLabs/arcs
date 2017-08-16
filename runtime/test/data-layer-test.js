@@ -24,7 +24,7 @@ describe('entity', function() {
         }]
     }]});
 
-    let arc = new Arc({loader: new Loader(), slotComposer: new SlotComposer({})});
+    let arc = new Arc({slotComposer: new SlotComposer({})});
     let entity = new (schema.entityClass())({value: 'hello world'});
     assert.isDefined(entity);
     arc.commit([entity]);

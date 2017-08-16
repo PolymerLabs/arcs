@@ -24,7 +24,7 @@ var loader = new Loader();
 describe('Planner', function() {
 
   it('can generate things', async () => {
-    var arc = new Arc({id: "test-plan-arc", loader});
+    var arc = new Arc({id: "test-plan-arc"});
     let manifest = await Manifest.load('../particles/test/giftlist.manifest', loader);
     let Person = manifest.findSchemaByName('Person').entityClass();
     let Product = manifest.findSchemaByName('Person').entityClass();
@@ -41,7 +41,7 @@ describe('Planner', function() {
   });
 
   it('make a plan with views', async () => {
-    var arc = new Arc({id: "test-plan-arc", loader});
+    var arc = new Arc({id: "test-plan-arc"});
     let manifest = await Manifest.load('../particles/test/giftlist.manifest', loader);
     let Person = manifest.findSchemaByName('Person').entityClass();
     let Product = manifest.findSchemaByName('Product').entityClass();
@@ -73,7 +73,7 @@ describe('InitPopulation', async() => {
           product <- v1`);
     let recipe = manifest.recipes[0];
     assert(recipe.normalize());
-    var arc = new Arc({id: 'test-plan-arc', loader});
+    var arc = new Arc({id: 'test-plan-arc'});
     arc.instantiate(recipe);
     var context = { arc, recipes: [recipe]};
     let ip = new InitPopulation(context);

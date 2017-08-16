@@ -30,7 +30,7 @@ let pecFactory = require('../worker-pec-factory.js').bind(null, '../../');
 
 function prepareExtensionArc() {
   let slotComposer = new SlotComposer(particleRoot);
-  let arc = new Arc({id: 'demo', loader, pecFactory, slotComposer});
+  let arc = new Arc({id: 'demo', pecFactory, slotComposer});
   //
   arc.createView(Person.type.viewOf(), "peopleFromWebpage");
   arc.createView(Product.type.viewOf(), "productsFromWebpage");

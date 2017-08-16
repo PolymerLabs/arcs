@@ -40,7 +40,7 @@ const slotComposer = new SlotComposer({});
 describe('Arc', function() {
   it('applies existing views to a particle', async () => {
     let {recipe, Foo, Bar} = await setup();
-    let arc = new Arc({loader, slotComposer, id:'test'});
+    let arc = new Arc({slotComposer, id:'test'});
     let fooView = arc.createView(Foo.type);
     let barView = arc.createView(Bar.type);
     viewlet.viewletFor(fooView).set(new Foo({value: 'a Foo'}));
@@ -51,7 +51,7 @@ describe('Arc', function() {
 
   it('applies new views to a particle', async () => {
     let {recipe, Foo, Bar} = await setup();
-    let arc = new Arc({loader, slotComposer, id:'test'});
+    let arc = new Arc({slotComposer, id:'test'});
     let fooView = arc.createView(Foo.type);
     let barView = arc.createView(Bar.type);
     recipe.normalize();

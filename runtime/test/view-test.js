@@ -17,14 +17,13 @@ const SlotComposer = require('../slot-composer.js');
 let view = require('../view.js');
 let viewlet = require('../viewlet.js');
 
-let loader = new (require('../loader'));
 const slotComposer = new SlotComposer({});
 const Bar = runtime.testing.testEntityClass('Bar');
 
 describe('View', function() {
 
   it('clear singleton view', async () => {
-    let arc = new Arc({loader, slotComposer});
+    let arc = new Arc({slotComposer});
     let barView = arc.createView(Bar.type);
     barView.set(new Bar({value: 'a Bar'}));
     barView.clear();
@@ -32,7 +31,7 @@ describe('View', function() {
   });
 
   it('remove entry from view', async () => {
-    let arc = new Arc({loader, slotComposer});
+    let arc = new Arc({slotComposer});
     let barView = arc.createView(Bar.type.viewOf());
     let bar = new Bar({id: 0, value: 'a Bar'});
     barView.store(bar);
