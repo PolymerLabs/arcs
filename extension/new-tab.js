@@ -72,7 +72,7 @@ async function loadBrowsingData(arc, manifest) {
 
 function dumpEntities(arc, manifest, entities) {
 
-  let entity = manifest.findSchemaByName('Url').entityClass();
+  let entity = manifest.findSchemaByName('Tab').entityClass();
   arc.commit(entities.map(p => new entity(p)));
 }
 
