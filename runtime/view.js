@@ -68,10 +68,14 @@ class View extends ViewBase {
 
   clone() {
     var view = new View(this._type, this._arc, this.name);
-    view._items = new Map(this._items);
-    view._version = this._version;
-    view.description = this.description;
+    view.cloneFrom(this);
     return view;
+  }
+
+  cloneFrom(view) {
+    this._items = new Map(view._items);
+    this._version = view._version;
+    this.description = view.description;
   }
 
   get(id) {
@@ -149,9 +153,13 @@ class Variable extends ViewBase {
 
   clone() {
     var variable = new Variable(this._type, this._arc, this.name);
-    variable._stored = this._stored;
-    variable._version = this._version;
+    variable.cloneFrom(this);
     return variable;
+  }
+
+  cloneFrom(variable) {
+    this._stored = variable._stored;
+    this._version = variable._version;
   }
 
   traceInfo() {
