@@ -22,10 +22,13 @@ const sources = {
     'test/test.js',
     'demo/demo.js',
     'vr-demo/vr-demo.js',
-    'particle-ui-tester/particle-ui-tester.js',
     'worker-entry.js',
     'planner.js'
   ],
+  cdn: [
+    'cdn/worker-entry-cdn.js',
+    'cdn/ArcsLib.js'
+  ]
 };
 
 gulp.task('peg', function() {
@@ -35,7 +38,7 @@ gulp.task('peg', function() {
     .pipe(gulp.dest(paths.build));
 });
 
-gulp.task('webpack', async function() {
+let pack = async (files) => {
   try {
     const webpack = require('webpack');
 
@@ -45,7 +48,7 @@ gulp.task('webpack', async function() {
       minimist: 'empty',
     };
 
-    for (let file of sources.browser) {
+    for (let file of files) {
       await new Promise((resolve, reject) => {
         webpack({
           entry: `./browser/${file}`,
@@ -68,9 +71,17 @@ gulp.task('webpack', async function() {
     // in case of emergency, break glass .. then stay calm and carry on watching
     console.log(x);
   }
+};
+
+gulp.task('webpack', async function() {
+  await pack(sources.browser);
 });
 
-gulp.task('build', ['peg', 'webpack']);
+gulp.task('cdn', async function() {
+  await pack(sources.cdn);
+});
+
+gulp.task('build', ['peg', 'webpack', 'cdn']);
 
 gulp.task('test', function() {
   const mocha = require('gulp-mocha');
