@@ -109,7 +109,7 @@ describe('manifest', function() {
     assert.equal(recipe.views.length, 1);
     assert.equal(recipe.viewConnections.length, 2);
     assert.equal(recipe.toString(), `recipe
-  map as view0
+  ? as view0
   P1 as particle0
     x -> view0
   P2 as particle1
@@ -137,7 +137,7 @@ describe('manifest', function() {
       particle P2
 
       recipe
-        map #things as thingView
+        ? #things as thingView
         P1 as p1
           x -> thingView
         P2
@@ -147,8 +147,8 @@ describe('manifest', function() {
       particle P2
 
       recipe
-        map #things as thingView
-        map as view0
+        ? #things as thingView
+        ? as view0
         P1 as p1
           x -> thingView
           y = view0
@@ -163,12 +163,12 @@ describe('manifest', function() {
       particle P2
 
       recipe
-        map as v1
+        ? as v1
         P1
           x -> v1
         P2
       recipe
-        map as someView
+        ? as someView
         P2
         P1
           x -> someView
@@ -186,15 +186,15 @@ describe('manifest', function() {
       particle P1
 
       recipe
-        map as v1
-        map as v2
+        use as v1
+        use as v2
         P1
           x -> v1
         P1
           x -> v2
       recipe
-        map as v1
-        map as v2
+        use as v1
+        use as v2
         P1
           x -> v2
         P1
@@ -325,7 +325,7 @@ describe('manifest', function() {
       particle OtherParticle
 
       recipe SomeRecipe
-        map #someView1 as myView
+        ? #someView1 as myView
         slot 'slotIDs:A' as slot0
         SomeParticle
           someParam <- myView

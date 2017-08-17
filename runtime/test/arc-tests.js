@@ -23,8 +23,8 @@ async function setup() {
   let manifest = await Manifest.parse(`
     import '../particles/test/test-particles.manifest'
     recipe TestRecipe
-      map 'test:1' as view0
-      map 'test:2' as view1
+      use 'test:1' as view0
+      use 'test:2' as view1
       TestParticle
         foo <- view0
         bar -> view1

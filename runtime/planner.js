@@ -38,7 +38,8 @@ class CreateViews extends Strategy {
             score = 0;
         }
 
-        if (!view.id && view._fate == "?") {
+        // TODO: This should really only apply to fate = '?'
+        if (!view.id && view._fate != "copy") {
           return (recipe, view) => {view._fate = "create"; return score}
         }
       }
