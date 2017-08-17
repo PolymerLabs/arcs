@@ -34,8 +34,11 @@ recipe
   # Chooser.choices -> AlsoOn.choices
   # TODO: wishlist view should have tag #giftlist - removed for now, until views with tags are properly resolved.
   map as wishlist
+  copy as shortlist
   Recommend
     population <- wishlist
+  ShowProducts
+    list <- shortlist
 
 # Buying for [person]'s [occasion] in [timeframe]? Product [X] arrives too late.
 recipe
