@@ -117,8 +117,12 @@ class Manifest {
     // 3. particles, TODO: entities => views
     // 4. recipes
     for (let item of items.filter(item => item.kind == 'import')) {
-      let path = loader.path(manifest.fileName);
-      let target = loader.join(path, item.path);
+      let target = item.path;
+      // TODO(sjmiles): might need a more robust test here
+      if (target[0] !== '/' && target.slice(0, 4) !== 'http') {
+        // TODO(sjmiles): assumes manifest.fileName starts with `./`
+        target = loader.join(loader.path(manifest.fileName), target);
+      }
       manifest._imports.push(await Manifest.load(target, loader, {registry}));
     }
     for (let item of items.filter(item => item.kind == 'schema')) {
