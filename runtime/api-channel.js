@@ -131,6 +131,10 @@ class APIPort {
     }
   }
 
+  close() {
+    this._port.close();
+  }
+
   _handle(e) {
     assert(this._messageMap.has(e.data.messageType));
 
@@ -197,6 +201,7 @@ class PECOuterPort extends APIPort {
   constructor(messagePort) {
     super(messagePort, 'o');
 
+    this.registerCall("Stop", {});
     this.registerCall("DefineParticle",
       {particleDefinition: this.Direct, particleFunction: this.Stringify});
     this.registerRedundantInitializer("DefineView", {viewType: this.Direct, name: this.Direct})
@@ -225,6 +230,7 @@ class PECInnerPort extends APIPort {
   constructor(messagePort) {
     super(messagePort, 'i');
 
+    this.registerHandler("Stop", {});
     // particleFunction needs to be eval'd in context or it won't work.
     this.registerHandler("DefineParticle",
       {particleDefinition: this.Direct, particleFunction: this.Direct});
