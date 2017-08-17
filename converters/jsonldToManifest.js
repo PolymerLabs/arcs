@@ -85,6 +85,3 @@ class JsonldToManifest {
 }
 
 module.exports = JsonldToManifest;
-
-var fs = require('fs');
-console.log(JsonldToManifest.convert(fs.readFileSync("C:/Users/shanestephens/Downloads/Product.jsonld", "utf-8")));
