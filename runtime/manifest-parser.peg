@@ -361,7 +361,7 @@ ConnectionTarget
   { return {tags}; }
 
 RecipeView
-  = type:('map' / 'create' / 'copy') ref:(whiteSpace ViewRef)? name:(whiteSpace Name)? eolWhiteSpace
+  = type:('?' / 'use' / 'map' / 'create' / 'copy') ref:(whiteSpace ViewRef)? name:(whiteSpace Name)? eolWhiteSpace
   {
     return {
       kind: 'view',

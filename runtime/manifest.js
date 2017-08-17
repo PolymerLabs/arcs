@@ -219,7 +219,7 @@ class Manifest {
         view.localName = item.name;
         items.byName.set(item.name, {item: item, view: view});
       }
-      view._fate = item.fate;
+      view.fate = item.fate;
       items.byView.set(view, item);
     }
 

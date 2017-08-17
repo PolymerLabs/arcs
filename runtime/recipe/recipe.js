@@ -154,7 +154,7 @@ class Recipe {
       if (duplicateView)
         console.log(`Has Duplicate View ${duplicateView.id}`);
 
-      checkForInvalid = (name, list, f) => {
+      let checkForInvalid = (name, list, f) => {
         var invalids = list.filter(item => !item._isValid());
         if (invalids.length > 0)
           console.log(`Has Invalid ${name} ${invalids.map(f)}`)
