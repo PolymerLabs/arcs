@@ -33,12 +33,18 @@ class SlotConnection {
     assert(this.name == slotSpec.name);
     this._slotSpec = slotSpec;
     slotSpec.providedSlots.forEach(providedSlot => {
-      let slot = this.recipe.newSlot(providedSlot.name);
-      slot.localName = providedSlot.name;
-      slot.formFactor = providedSlot.formFactor;
-      slot._sourceConnection = this;
+      let slot = this.providedSlots[providedSlot.name];
+      if (slot == undefined) {
+        slot = this.recipe.newSlot(providedSlot.name);
+        slot._sourceConnection = this;
+        slot._name = providedSlot.name;
+        this.providedSlots[providedSlot.name] = slot;
+      }
+      assert(slot.viewConnections.length == 0, "View connections must be empty");
       providedSlot.views.forEach(view => slot.viewConnections.push(this.particle.connections[view]));
-      this.providedSlots[providedSlot.name] = slot;
+      assert(slot._name == providedSlot.name);
+      assert(!slot.formFactor);
+      slot.formFactor = providedSlot.formFactor;
     });
   }
 
@@ -83,7 +89,12 @@ class SlotConnection {
   }
 
   _isValid() {
-    // TODO: implement
+    if (this._targetSlot && this._targetSlot.sourceConnection &&
+        this._targetSlot != this._targetSlot.sourceConnection.providedSlots[this._targetSlot.name]) {
+      return false;
+    }
+
+    // TODO: add more checks.
     return true;
   }
 

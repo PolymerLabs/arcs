@@ -32,6 +32,8 @@ class ResolveParticleByName extends Strategy {
     var loadedParticles = this._loadedParticles;
     var results = Recipe.over(strategizer.generated, new class extends RecipeWalker {
       onParticle(recipe, particle) {
+        if (particle.spec)
+          return;
         let particles = find(particle.name);
         return particles.map(spec => {
           var score = 1 / particles.length;
