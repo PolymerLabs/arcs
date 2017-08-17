@@ -15,7 +15,11 @@ let template = Object.assign(document.createElement('template'), {innerHTML: `
 <style>
   x-toast[suggestion-container] {
     background-color: white;
-    /*margin: 0 2px;*/
+  }
+  suggestions {
+    display: block;
+    max-height: 500px;
+    overflow-y: auto;
   }
   suggest {
     display: block;
