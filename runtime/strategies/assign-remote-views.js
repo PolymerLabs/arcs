@@ -18,27 +18,14 @@ class AssignRemoteViews extends ViewMapperBase {
   constructor(arc) {
     super();
     this._arc = arc;
-
-    // this.mappable = [];
-    // // TODO: do this properly
-    // var Person = new Schema({
-    //   name: 'Person',
-    //   sections: [],
-    // })
-    // var peopleViews = arc.findViewsByType(Person.type.viewOf());
-    // var people = peopleViews.map(view => view.toList()).reduce((a,b) => a.concat(b), [])
-    //     .map(a => a.rawData.name);
-    // let contextPeople = arc.context.people || {};
-    // people.forEach(person => {
-    //   this.mappable.push(...(contextPeople[person] || []));
-    // });
+    this.fate = 'map';
   }
 
   getMappableViews(type, tags) {
     if (tags.length > 0) {
-      return this._arc.findViewsByType(type, {tag: tags[0]});
+      return this._arc.context.findViewsByType(type, {tag: tags[0]});
     } else {
-      return this._arc.findViewsByType(type);
+      return this._arc.context.findViewsByType(type);
     }
   }
 }

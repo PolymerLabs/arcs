@@ -17,6 +17,7 @@ class AssignViewsByTagAndType extends ViewMapperBase {
   constructor(arc) {
     super();
     this.arc = arc;
+    this.fate = 'use';
   }
 
   getMappableViews(type, tags) {

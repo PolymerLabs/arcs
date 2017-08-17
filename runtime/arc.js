@@ -179,15 +179,14 @@ class Arc {
     assert(recipe.isResolved(), 'Cannot instantiate an unresolved recipe');
     let {views, particles, slots} = recipe.mergeInto(this._activeRecipe);
     for (let recipeView of views) {
-      if (recipeView._fate !== "map") {
+      if (['copy', 'create'].includes(recipeView.fate)) {
         let view = this.createView(recipeView.type);
         if (recipeView._fate === "copy") {
           var copiedView = this.findViewById(recipeView.id);
           view.cloneFrom(copiedView);
         }
         recipeView.id = view.id;
-      assert(this.findViewById(recipeView.id), `view '${recipeView.id}' was not found`);
-        recipeView._fate = "map";
+        recipeView.fate = "use";
         // TODO: move the call to OuterPEC's DefineView to here
       }
       assert(this.findViewById(recipeView.id), `view '${recipeView.id}' was not found`);
@@ -259,7 +258,7 @@ class Arc {
     if (options && options.tag) {
       views = views.filter(view => this._viewTags.get(view).has(options.tag));
     }
-    return [...views, ...this.context.findViewsByType(type, options)];
+    return views;
   }
 
   findViewById(id) {

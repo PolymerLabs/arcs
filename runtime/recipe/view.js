@@ -17,14 +17,14 @@ class View {
     this._localName = undefined;
     this._tags = [];
     this._type = undefined;
-    this._fate = "map";
+    this._fate = "?";
     this._connections = [];
     this._mappedType = undefined;
   }
 
   _copyInto(recipe) {
     var view = undefined;
-    if (this._fate === "map" && this._id !== null)
+    if (this._id !== null && ['map', 'use', 'copy'].includes(this._fate))
       view = recipe.findView(this._id);
 
     if (view == undefined) {
@@ -67,13 +67,19 @@ class View {
   }
 
   // a resolved View has either an id or create=true
+  get fate() { return this._fate; }
+  set fate(fate) { this._fate = fate; }
   get recipe() { return this._recipe; }
   get tags() { return this._tags; } // only tags owned by the view
   set tags(tags) { this._tags = tags; }
   get type() { return this._type; } // nullable
   get id() { return this._id; }
   set id(id) { this._id = id; }
-  mapToView(view) { this._id = view.id; this._type = undefined; this._mappedType = view.type;}
+  mapToView(view) {
+    this._id = view.id;
+    this._type = undefined;
+    this._mappedType = view.type;
+  }
   get localName() { return this._localName; }
   set localName(name) { this._localName = name; }
   get connections() { return this._connections } // ViewConnection*
@@ -83,7 +89,11 @@ class View {
     if (this._mappedType)
       typeSet.push({type: this._mappedType});
     var tags = new Set();
-    for (var connection of this._connections) {
+    for (let connection of this._connections) {
+      // A remote view cannot be connected to an output param.
+      if (this.fate == 'map' && ['out', 'inout'].includes(connection.direction)) {
+        return false;
+      }
       if (connection.type)
         typeSet.push({type: connection.type, direction: connection.direction, connection});
       connection.tags.forEach(tag => tags.add(tag));
@@ -102,11 +112,16 @@ class View {
     if (!this._type)
       return false;
     switch (this._fate) {
+      case "?":
+        return false;
       case "copy":
       case "map":
+      case "use":
         return this.id !== null;
       case "create":
         return true;
+      default:
+        assert(false, `Unexpected fate: ${this._fate}`);
     }
   }
 
