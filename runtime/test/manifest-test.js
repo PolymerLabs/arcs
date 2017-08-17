@@ -335,7 +335,7 @@ describe('manifest', function() {
         OtherParticle
           aParam -> myView
           consume aSlot as slot0
-          consume bSlot as slot1
+          consume oneMoreSlot as slot1
           `);
     let recipe = manifest.recipes[0];
     assert(recipe);
@@ -351,7 +351,7 @@ describe('manifest', function() {
     let mySlot = recipe.particles[1].consumedSlotConnections['mySlot'];
     assert.isDefined(mySlot.targetSlot);
     assert.equal(Object.keys(mySlot.providedSlots).length, 2);
-    assert.equal(mySlot.providedSlots["oneMoreSlot"], recipe.particles[0].consumedSlotConnections['bSlot'].targetSlot);
+    assert.equal(mySlot.providedSlots["oneMoreSlot"], recipe.particles[0].consumedSlotConnections['oneMoreSlot'].targetSlot);
   });
   it('relies on the loader to combine paths', async () => {
     let registry = {};
