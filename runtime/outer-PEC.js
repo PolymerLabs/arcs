@@ -58,6 +58,10 @@ class OuterPEC extends PEC {
     }
   }
 
+  stop() {
+    this._apiPort.Stop();
+  }
+
   get idle() {
     if (this._idlePromise == undefined) {
       this._idlePromise = new Promise((resolve, reject) => {

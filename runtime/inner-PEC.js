@@ -88,6 +88,12 @@ class InnerPEC {
       this._loader.registerParticle(particle);
     };
 
+    this._apiPort.onStop = () => {
+      if (global.close) {
+        global.close();
+      }
+    }
+
     this._apiPort.onInstantiateParticle =
       ({spec, views}) => this._instantiateParticle(spec, views);
 

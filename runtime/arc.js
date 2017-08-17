@@ -301,6 +301,10 @@ class Arc {
       new viewlet.viewletFor(view).store(entity);
     }
   }
+
+  stop() {
+    this.pec.stop();
+  }
 }
 
 module.exports = Arc;

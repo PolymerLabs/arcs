@@ -24,6 +24,10 @@ class MessagePort {
   set onmessage(f) {
     this._onmessage = f;
   }
+
+  close() {
+    this.postMessage = function(){};
+  }
 }
 
 class MessageEvent {
