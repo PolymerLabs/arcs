@@ -39,6 +39,12 @@ defineParticle(({DomParticle}) => {
   ${host} [interleaved] {
     font-size: 0.7em;
   }
+  ${host} [empty] {
+    color: #aaaaaa;
+    font-size: 14px;
+    font-style: italic;
+    padding: 10px 0;
+  }
 </style>
   `;
 
@@ -71,6 +77,8 @@ ${productStyles}
 
   <div slotid="preamble"></div>
 
+  <div empty hidden="{{itemsNotEmpty}}">List is empty</div>
+
   <x-list items="{{items}}">${productTemplate}</x-list>
   <interleaved-list>
     <div slotid="annotation"></div>
@@ -93,21 +101,22 @@ ${productStyles}
       return template;
     }
     _willReceiveProps(props) {
+      let items = props.list.map(({rawData}, i) => {
+        return Object.assign({
+          itemSlotId: `item-${i}`
+        }, rawData);
+      });
+      let itemsNotEmpty = items.length > 0;
       this._setState({
         // TODO(sjmiles): rawData provides POJO access, but shortcuts schema-enforcing getters
-        items: props.list.map(({rawData}, i) => {
-          return Object.assign({
-            itemSlotId: `item-${i}`
-          }, rawData);
-        })
+        items,
+        itemsNotEmpty
       });
-    }
-    _shouldRender(props, state) {
-      return Boolean(state.items && state.items.length);
     }
     _render(props, state) {
       return {
-        items: state.items
+        items: state.items,
+        itemsNotEmpty: state.itemsNotEmpty
       };
     }
   };
