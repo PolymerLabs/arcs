@@ -24,16 +24,12 @@ var loader = new Loader();
 describe('Planner', function() {
 
   it('can generate things', async () => {
-    var arc = new Arc({id: "test-plan-arc", slotComposer : { getAvailableSlots: (() => { return {root: {id: 'r0', count: 0}}; }) }});
     let manifest = await Manifest.load('../particles/test/giftlist.manifest', loader);
+    var arc = new Arc({id: "test-plan-arc", context: manifest, slotComposer: { getAvailableSlots: (() => { return {root: {id: 'r0', count: 0}}; }) }});
     let Person = manifest.findSchemaByName('Person').entityClass();
     let Product = manifest.findSchemaByName('Person').entityClass();
     var planner = new Planner();
-    planner.init(arc, {
-      recipes: manifest.recipes,
-      particleFinder: manifest,
-      arc
-    });
+    planner.init(arc);
     await planner.generate(),
     await planner.generate(),
     await planner.generate(),
@@ -41,17 +37,14 @@ describe('Planner', function() {
   });
 
   it('make a plan with views', async () => {
-    var arc = new Arc({id: "test-plan-arc", slotComposer : { getAvailableSlots: (() => { return {root: {id: 'r0', count: 0}}; }) }});
     let manifest = await Manifest.load('../particles/test/giftlist.manifest', loader);
+    var arc = new Arc({id: "test-plan-arc", context: manifest, slotComposer: { getAvailableSlots: (() => { return {root: {id: 'r0', count: 0}}; }) }});
     let Person = manifest.findSchemaByName('Person').entityClass();
     let Product = manifest.findSchemaByName('Product').entityClass();
     var personView = arc.createView(Person.type.viewOf(), "aperson");
     var productView = arc.createView(Product.type.viewOf(), "products");
     var planner = new Planner();
-    planner.init(arc, {
-      recipes: manifest.recipes,
-      arc
-    });
+    planner.init(arc);
     await planner.generate(),
     await planner.generate(),
     await planner.generate(),
@@ -73,15 +66,14 @@ describe('InitPopulation', async() => {
           product <- v1`);
     let recipe = manifest.recipes[0];
     assert(recipe.normalize());
-    var arc = new Arc({id: 'test-plan-arc'});
+    var arc = new Arc({id: 'test-plan-arc', context: {recipes: [recipe]}});
     arc.instantiate(recipe);
-    var context = { arc, recipes: [recipe]};
-    let ip = new InitPopulation(context);
+    let ip = new InitPopulation(arc);
 
     var strategizer = {generated: [], generation: 0};
     let { results } = await ip.generate(strategizer);
-    assert(results.length == 1);
-    assert(results[0].score == 0);
+    assert.equal(results.length, 1);
+    assert.equal(results[0].score, 0);
   });
 });
 
@@ -183,7 +175,7 @@ describe('ConvertConstraintsToConnections', async() => {
 
       recipe
         A.b -> C.d
-        map as v1
+        use as v1
         C
           d = v1
         A`)).recipes[0];
@@ -194,7 +186,7 @@ describe('ConvertConstraintsToConnections', async() => {
     let { result, score } = results[0];
     assert.deepEqual(result.toString(),
 `recipe
-  map as view0
+  use as view0
   A as particle0
     b = view0
   C as particle1
@@ -208,7 +200,7 @@ describe('ConvertConstraintsToConnections', async() => {
 
       recipe
         A.b -> C.d
-        map as v1
+        use as v1
         C
         A
           b = v1`)).recipes[0];
@@ -219,7 +211,7 @@ describe('ConvertConstraintsToConnections', async() => {
     let { result, score } = results[0];
     assert.deepEqual(result.toString(),
 `recipe
-  map as view0
+  use as view0
   A as particle0
     b = view0
   C as particle1
@@ -233,7 +225,7 @@ describe('ConvertConstraintsToConnections', async() => {
 
       recipe
         A.b -> C.d
-        map as v1
+        use as v1
         C
           d = v1
         A
@@ -243,12 +235,11 @@ describe('ConvertConstraintsToConnections', async() => {
     let { results } = await cctc.generate(strategizer);
     assert(results.length == 1);
     let { result, score } = results[0];
-    assert.deepEqual(`recipe
-  map as view0
+    assert.deepEqual(result.toString(), `recipe
+  use as view0
   A as particle0
     b = view0
   C as particle1
-    d = view0`,
-result.toString());
+    d = view0`);
   });
 });
