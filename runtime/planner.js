@@ -58,6 +58,9 @@ class MatchConsumedSlots extends Strategy {
           if (slotConnection.name != slot.name)
             return false;
           var views = slot.viewConnections.map(connection => connection.view);
+          if (views.length == 0) {
+            return true;
+          }
           var particle = slotConnection.particle;
           for (var name in particle.connections) {
             var connection = particle.connections[name];
