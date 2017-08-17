@@ -66,14 +66,11 @@ class DemoBase extends HTMLElement {
     planner.init(this.arc, this.context);
     let generations = [];
     let suggestions = await planner.suggest(5000, generations);
-
-    if (this.strategyExplorer) {
-      this.strategyExplorer.results = generations.map(this.strategyExplorer.preparePopulation);
-    }
-
     suggestions.forEach(async (suggestion, i) => {
       this.suggestions.add(suggestion, i);
     });
+    // fire an event so optional tooling can present this data
+    document.dispatchEvent(new CustomEvent('generations', {detail: generations}));
   }
 }
 
