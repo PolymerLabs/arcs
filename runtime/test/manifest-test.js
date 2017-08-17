@@ -302,6 +302,13 @@ describe('manifest', function() {
     let manifest = await Manifest.load('a', loader, {registry});
     assert.equal(manifest.schemas.Bar.normative.value, 'Text');
   });
+  it('can parse a schema with union typing', async () => {
+    let manifest = await Manifest.parse(`
+      schema Foo
+        optional
+          (Text or URL) value`);
+    assert.deepEqual(manifest.schemas.Foo.optional.value, ['Text', 'URL']);
+  })
   it('can parse a manifest containing a recipe with slots', async () => {
 
     let manifest = await Manifest.parse(`

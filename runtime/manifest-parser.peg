@@ -442,7 +442,15 @@ SchemaField
   }
 
 SchemaType
-  = 'Text' / 'URL'
+  = 'Text' / 'URL' / SchemaUnionType
+
+SchemaUnionType = '(' whiteSpace? first:SchemaType rest:(whiteSpace 'or' whiteSpace SchemaType)* whiteSpace? ')' {
+  let typeList = [first];
+  for (let type of rest) {
+    typeList.push(type[3]);
+  }
+  return typeList;
+}
 
 Version
   = '@' version:[0-9]+
