@@ -38,7 +38,6 @@ class RemoteView {
   }
 
   synchronize(type, modelCallback, callback, target) {
-    console.log('synchronize');
     this._port.Synchronize({view: this, modelCallback, callback, target, type});
   }
 
