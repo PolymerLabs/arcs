@@ -67,7 +67,7 @@ class View extends ViewBase {
   }
 
   clone() {
-    var view = new View(this._type, this._arc, this.name);
+    var view = new View(this._type, this._arc, this.name, this.id);
     view.cloneFrom(this);
     return view;
   }
@@ -151,7 +151,7 @@ class Variable extends ViewBase {
   }
 
   clone() {
-    var variable = new Variable(this._type, this._arc, this.name);
+    var variable = new Variable(this._type, this._arc, this.name, this.id);
     variable.cloneFrom(this);
     return variable;
   }
