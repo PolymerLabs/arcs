@@ -9,25 +9,10 @@
 
 (async () => {
   var loader = new Loader();
-  var a = new Arc({id: "test-plan-arc", loader});
-  let manifest = await Manifest.load('../particles/test/giftlist.manifest', loader)
-  let Person = manifest.findSchemaByName("Person").entityClass();
-  let Product = manifest.findSchemaByName("Product").entityClass();
-  var personView = a.createView(Person.type.viewOf(), "aperson");
-  var productView = a.createView(Product.type.viewOf(), "products");
-  a.commit([new Person({name: 'Claire'})]);
-  var remoteArc = new Arc({id: "claires-wishlist", loader});
-  var remoteView = remoteArc.createView(Product.type.viewOf(), "wishlist");
-  remoteArc.tagView(remoteView, '#giftlist');
-  var context = {
-    recipes: manifest.recipes,
-    arc: a,
-    people: {
-      'Claire': [remoteArc],
-    }
-  };
+  let manifest = await Manifest.load('../runtime/browser/demo/recipes.manifest', loader)
+  var a = new Arc({id: "test-plan-arc", context: manifest});
   var p = new Planner();
-  p.init(a, context);
+  p.init(a);
   var strategyExplorer = document.querySelector('strategy-explorer');
   var result = [await p.generate(),
                 await p.generate(),
