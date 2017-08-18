@@ -25,6 +25,7 @@
     }
     strategy-explorer {
       background-color: white;
+      display: none;
       width: 100%;
     }
   </style>
@@ -34,13 +35,12 @@
 function onLoad() {
   let demoFlow = document.querySelector('demo-flow');
   let strategyExplorer = document.querySelector('strategy-explorer');
-  setVisible(strategyExplorer, false);
   demoFlow.strategyExplorer = strategyExplorer;
 }
 function onKeyPressed(event) {
   if (event.ctrlKey && (event.key == "e")) {
     let strategyExplorer = document.querySelector('strategy-explorer');
-    let strategyExplorerVisible = strategyExplorer.style.display != 'none';
+    let strategyExplorerVisible = strategyExplorer.style.display == 'block';
     setVisible(strategyExplorer, !strategyExplorerVisible);
 
     let demoFlow = document.querySelector('demo-flow');
@@ -48,7 +48,7 @@ function onKeyPressed(event) {
   }
 }
 function setVisible(element, isVisible) {
-  element.style.display = isVisible ? '' : 'none';
+  element.style.display = isVisible ? 'block' : 'none';
 }
 </script>
 <body onload="onLoad()" onkeydown="onKeyPressed(event)">
