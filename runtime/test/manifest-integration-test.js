@@ -34,7 +34,6 @@ describe('manifest integration', () => {
     let {arc, recipe} = await setup();
     arc.instantiate(recipe);
     await arc.pec.idle;
-    console.log('idle');
     let type = recipe.views[0].type;
     let [view] = arc.findViews(type);
     assert(view);
