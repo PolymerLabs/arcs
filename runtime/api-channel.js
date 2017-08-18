@@ -140,7 +140,10 @@ class APIPort {
     var args = this._unprocessArguments(handler, e.data.messageBody);
     var r = this["on" + e.data.messageType](args);
     if (r && args.identifier) {
-      this._mapper.establishThingMapping(args.identifier, r);
+      if (r instanceof Promise)
+        r.then(v => this._mapper.establishThingMapping(args.identifier, v));
+      else
+        this._mapper.establishThingMapping(args.identifier, r);
     }
   }
 

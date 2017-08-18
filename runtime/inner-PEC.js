@@ -38,6 +38,7 @@ class RemoteView {
   }
 
   synchronize(type, modelCallback, callback, target) {
+    console.log('synchronize');
     this._port.Synchronize({view: this, modelCallback, callback, target, type});
   }
 
@@ -68,6 +69,7 @@ class InnerPEC {
     this._idBase = idBase;
     this._nextLocalID = 0;
     this._loader = loader;
+    this._pendingLoads = [];
 
     /*
      * This code ensures that the relevant types are known
@@ -148,9 +150,12 @@ class InnerPEC {
     return `${this._idBase}:${this._nextLocalID++}`;
   }
 
-  _instantiateParticle(spec, views) {
+  async _instantiateParticle(spec, views) {
     let name = spec.name;
-    let clazz = this._loader.loadParticleClass(spec);
+    var resolve = null;
+    var p = new Promise((res, rej) => resolve = res);
+    this._pendingLoads.push(p);
+    let clazz = await this._loader.loadParticleClass(spec);;
     let particle = new clazz();
     this._particles.push(particle);
 
@@ -170,10 +175,12 @@ class InnerPEC {
       view.entityClass = new Schema(schemaModel).entityClass();
     }
 
-    // the problem with doing this here is that it's only after we return particle below
-    // that the target mapping gets established.
-    Promise.resolve().then(() => particle.setViews(viewMap));
-
+    setTimeout(() => {
+      resolve();
+      var idx = this._pendingLoads.indexOf(p);
+      this._pendingLoads.splice(idx, 1);
+      particle.setViews(viewMap);
+    }, 0);
     return particle;
   }
 
@@ -189,6 +196,8 @@ class InnerPEC {
   }
 
   get busy() {
+    if (this._pendingLoads.length > 0)
+      return true;
     for (let particle of this._particles) {
       if (particle.busy) {
         return true;
@@ -201,7 +210,7 @@ class InnerPEC {
     if (!this.busy) {
       return Promise.resolve();
     }
-    return Promise.all(this._particles.map(particle => particle.idle)).then(() => this.idle);
+    return Promise.all(this._pendingLoads.concat(this._particles.map(particle => particle.idle))).then(() => this.idle);
   }
 }
 

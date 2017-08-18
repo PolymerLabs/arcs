@@ -30,17 +30,24 @@ class Loader {
   }
 
   loadFile(file) {
-    return fs.readFileSync(file, "utf-8");
+    return new Promise((resolve, reject) => {
+      fs.readFile(file, (err, data) => {
+        if (err)
+          reject(err);
+        else
+          resolve(data.toString('utf-8'));
+      });
+    });
   }
 
-  loadParticleClass(spec) {
-    let clazz = this.requireParticle(spec.implFile);
+  async loadParticleClass(spec) {
+    let clazz = await this.requireParticle(spec.implFile);
     clazz.spec = spec;
     return clazz;
   }
 
-  requireParticle(fileName) {
-    let src = this.loadFile(fileName);
+  async requireParticle(fileName) {
+    let src = await this.loadFile(fileName);
     // Note. This is not real isolation.
     let script = new vm.Script(src, {fileName});
     let result = [];
