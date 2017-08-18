@@ -116,8 +116,12 @@ class SlotConnection {
       result.push(`consume ${this.name}`);
 
     Object.keys(this.providedSlots).forEach(psName => {
-      result.push(`  provide ${psName} as ${(nameMap && nameMap.get(this.providedSlots[psName])) || this.providedSlots[psName]}`);
-    })
+      let providedSlot = this.providedSlots[psName];
+      result.push(`  provide ${psName} as ${(nameMap && nameMap.get(providedSlot)) || providedSlot}`);
+      providedSlot.viewConnections.forEach(vc => {
+        result.push(`    view ${vc.name}`);
+      });
+    });
     return result.join("\n");
   }
 }
