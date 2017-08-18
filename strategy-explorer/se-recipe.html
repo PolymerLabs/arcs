@@ -57,6 +57,16 @@ http://polymer.github.io/PATENTS.txt
       #recipe-box:not([resolved]) {
         border-style: dashed;
       }
+
+      #hash {
+        color: #555;
+        font-style: italic;
+        text-align: center;
+      }
+
+      #recipe-box:not([resolved])>#hash {
+        display: none;
+      }
     </style>
     <div id='recipe-box'
       selected$='{{selected}}'
@@ -66,13 +76,14 @@ http://polymer.github.io/PATENTS.txt
       activeDescendant$='{{activeDescendant}}'
       terminal$='{{terminal}}'
       resolved$='{{recipe.resolved}}'
-    >{{recipe.score}}</div>
+    ><div>{{recipe.score}}</div><div id='hash'>{{shortHash}}</div></div>
   </template>
 
   <script>
     Polymer({
       is: 'se-recipe',
       properties: {
+        shortHash: String,
       },
       attached: function() {
         document.idMap.set(this.recipe.id, this);
@@ -127,6 +138,7 @@ http://polymer.github.io/PATENTS.txt
             }
           }
         });
+        this.shortHash = this.recipe.hash.substring(this.recipe.hash.length - 4);
 
 
         if (document.pendingActions.has(this.recipe.id)) {
