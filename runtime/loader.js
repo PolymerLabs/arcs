@@ -14,6 +14,9 @@ var assert = require("assert");
 const particle = require("./particle.js");
 const DomParticle = require("./dom-particle.js");
 const vm = require('vm');
+let JsonldToManifest = require("../converters/jsonldToManifest.js");
+
+let fetch = global.fetch || require('node-fetch');
 
 function schemaLocationFor(name) {
   return `../entities/${name}.schema`;
@@ -26,14 +29,20 @@ class Loader {
   }
 
   join(prefix, path) {
-    // TODO(sjmiles): might need a more robust test here
-    if (path[0] === '/' || path.slice(0, 4) === 'http') {
+    if (/^https?:\/\//.test(path))
       return path;
-    }
-    return this.path(prefix) + path;
+    prefix = this.path(prefix);
+    return prefix + path;
   }
 
-  loadFile(file) {
+  loadResource(file) {
+    console.log(file);
+    if (/^https?:\/\//.test(file))
+      return this._loadURL(file);
+    return this._loadFile(file);
+  }
+
+  _loadFile(file) {
     return new Promise((resolve, reject) => {
       fs.readFile(file, (err, data) => {
         if (err)
@@ -44,6 +53,12 @@ class Loader {
     });
   }
 
+  _loadURL(url) {
+    if (/\/\/schema.org\//.test(url))
+      return fetch(url + ".jsonld").then(res => res.text()).then(data => JsonldToManifest.convert(data));
+    return fetch(url).then(res => res.text());
+  }
+
   async loadParticleClass(spec) {
     let clazz = await this.requireParticle(spec.implFile);
     clazz.spec = spec;
@@ -51,7 +66,7 @@ class Loader {
   }
 
   async requireParticle(fileName) {
-    let src = await this.loadFile(fileName);
+    let src = await this.loadResource(fileName);
     // Note. This is not real isolation.
     let script = new vm.Script(src, {fileName});
     let result = [];
