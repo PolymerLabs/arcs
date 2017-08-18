@@ -10,12 +10,12 @@
  "use strict";
 
 const Arc = require("../arc.js");
+const Manifest = require("../arc.js");
 const Loader = require("../loader.js");
 const assert = require('chai').assert;
 const Planner = require('../planner.js');
 const testUtil = require('./test-util.js');
 const MockSlotComposer = require('./mock-slot-composer.js');
-const demoContext = require('../browser/demo/demo-context-factory.js');
 
 require("./trace-setup.js");
 
@@ -24,8 +24,11 @@ describe('demo flow', function() {
     let loader = new Loader();
     let pecFactory = null;
     var slotComposer = new MockSlotComposer();
-    let {relatedArcs, arc, Person, Product, context} = await demoContext({
-      loader, pecFactory, slotComposer,
+    let arc = new Arc({
+      id: 'demo',
+      pecFactory,
+      slotComposer,
+      context: await Manifest.load('browser/demo/recipes.manifest', loader),
     });
     slotComposer.pec = arc.pec;
     let planner = new Planner();

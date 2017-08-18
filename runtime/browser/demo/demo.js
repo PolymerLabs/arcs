@@ -11,42 +11,8 @@
 let BrowserLoader = require("../../browser-loader.js");
 let SlotComposer = require('../../slot-composer.js');
 let DemoBase = require('../lib/demo-base.js');
-let demoContext = require('./demo-context-factory.js');
-
-// 0: make shortlist, 1: see wishlist,
-// 2: uber shortlist, 3: buying for,
-// 4: manu info, 5: interests
-
-function buildStages(recipes) {
-  return [{
-    recipes: [
-      recipes[0],
-      recipes[1],
-      recipes[2]
-    ]
-  }, {
-    recipes: [
-      recipes[3],
-      recipes[4]
-    ]
-  }, {
-    recipes: [
-      recipes[3],
-      recipes[4],
-      recipes[5]
-    ]
-  }, {
-    recipes: [
-      recipes[4],
-      recipes[5]
-    ]
-  }, {
-    recipes: [
-      recipes[5],
-      recipes[6]
-    ]
-  }];
-}
+const Arc = require('../../arc.js');
+const Manifest = require("../../manifest.js");
 
 require('../lib/auto-tabs.js');
 require('../lib/suggestions-element.js');
@@ -88,10 +54,11 @@ class DemoFlow extends DemoBase {
   async didMount() {
     let root = '../../';
     let loader = new BrowserLoader(root);
-    let {arc} = await demoContext({
-      loader,
+    let arc = new Arc({
+      id: 'demo',
       pecFactory: require('../worker-pec-factory.js').bind(null, root),
-      slotComposer: new SlotComposer(this.$('[particle-container]'),  /* affordance */ "dom")
+      slotComposer: new SlotComposer(this.$('[particle-container]'),  /* affordance */ "dom"),
+      context: await Manifest.load('browser/demo/recipes.manifest', loader),
     });
     this.arc = arc;
     this.suggestions = this.$('suggestions-element');
