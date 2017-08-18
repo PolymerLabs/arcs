@@ -24,9 +24,13 @@ class Loader {
     let path = fileName.replace(/[\/][^\/]+$/, '/')
     return path;
   }
+
   join(prefix, path) {
-    prefix = this.path(prefix);
-    return prefix + path;
+    // TODO(sjmiles): might need a more robust test here
+    if (path[0] === '/' || path.slice(0, 4) === 'http') {
+      return path;
+    }
+    return this.path(prefix) + path;
   }
 
   loadFile(file) {
