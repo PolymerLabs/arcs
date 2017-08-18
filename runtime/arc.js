@@ -136,8 +136,10 @@ class Arc {
 
     arc._activeRecipe.mergeInto(this._activeRecipe);
 
-    for (let v of viewMap.values())
-      arc.registerView(v);
+    for (let v of viewMap.values()) {
+      // FIXME: Tags
+      arc._registerView(v, []);
+    }
     arc._viewMap = viewMap;
     return arc;
   }
@@ -224,7 +226,11 @@ class Arc {
       assert(type.isEntity, `Expected entity type, but... ${JSON.stringify(type.toLiteral())}`);
       view = new Variable(type, this, name, id);
     }
+    this._registerView(view, tags);
+    return view;
+  }
 
+  _registerView(view, tags) {
     this._viewsById.set(view.id, view);
     let byType = this._viewsByType.get(Arc._viewKey(view.type)) || [];
     byType.push(view);
@@ -238,7 +244,6 @@ class Arc {
       }
     }
     this._viewTags.set(view, new Set(tags));
-    return view;
   }
 
   // TODO: Don't use this, we should be testing the schemas for compatiblity

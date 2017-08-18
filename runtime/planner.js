@@ -137,20 +137,22 @@ class Planner {
     let plans = await this.plan(timeout, generations);
     let suggestions = [];
     let speculator = new Speculator();
-    // TODO: Set an upper bound on how many speculations we can run in parallel.
-    return Promise.all(plans.map(async plan => {
+    // TODO: Run some reasonable number of speculations in parallel.
+    let results = [];
+    for (let plan of plans) {
       let relevance = await speculator.speculate(this._arc, plan);
       let rank = relevance.calcRelevanceScore();
       let description = new DescriptionGenerator(plan, relevance).description;
       // TODO: Move this logic inside speculate, so that it can stop the arc
       // before returning.
       relevance.newArc.stop();
-      return {
+      results.push({
         plan,
         rank,
         description,
-      };
-    }));
+      });
+    }
+    return results;
   }
 }
 
