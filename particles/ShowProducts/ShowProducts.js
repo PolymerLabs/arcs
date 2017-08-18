@@ -8,12 +8,9 @@
 
 "use strict";
 
-var host = `[show-products]`;
-var productStyles = '';
+defineParticle(({DomParticle, resolver}) => {
 
-importScripts('../../../particles/shared/product-templates.js');
-
-defineParticle(({DomParticle}) => {
+  let host = `[show-products]`;
 
   let styles = `
 <style>
@@ -48,6 +45,50 @@ defineParticle(({DomParticle}) => {
 </style>
   `;
 
+  var productStyles = `
+<style>
+  ${host} > x-list [row] {
+    display: flex;
+    align-items: center;
+  }
+  ${host} > x-list [col0] {
+    flex: 1;
+    overflow: hidden;
+    line-height: 115%;
+  }
+  ${host} > x-list [col0] > * {
+  }
+  ${host} > x-list [col1] {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 148px;
+    height: 128px;
+    box-sizing: border-box;
+    text-align: center;
+    background-size: contain;
+  }
+  ${host} > x-list [col1] > img {
+    max-width: 128px;
+    max-height: 96px;
+  }
+  ${host} > x-list [name] {
+    font-size: 0.95em;
+  }
+  ${host} > x-list [category] {
+    font-size: 0.7em;
+    color: #cccccc;
+  }
+  ${host} > x-list [price] {
+    color: #333333;
+  }
+  ${host} > x-list [seller] {
+    font-size: 0.8em;
+    color: #cccccc;
+  }
+</style>
+  `;
+
   let productTemplate = `
 <template>
   <div item>
@@ -57,7 +98,6 @@ defineParticle(({DomParticle}) => {
         <div category>{{category}}</div>
         <div price>{{price}}</div>
         <div seller>{{seller}}</div>
-        <div slotid$="{{itemSlotId}}"></div>
       </div>
       <div col1>
         <img src="{{image}}">
@@ -77,7 +117,7 @@ ${productStyles}
 
   <div slotid="preamble"></div>
 
-  <div empty hidden="{{itemsNotEmpty}}">List is empty</div>
+  <div empty hidden="{{haveItems}}">List is empty</div>
 
   <x-list items="{{items}}">${productTemplate}</x-list>
   <interleaved-list>
@@ -102,22 +142,20 @@ ${productStyles}
     }
     _willReceiveProps(props) {
       let items = props.list.map(({rawData}, i) => {
-        return Object.assign({
-          itemSlotId: `item-${i}`
-        }, rawData);
-      });
-      let itemsNotEmpty = items.length > 0;
-      this._setState({
         // TODO(sjmiles): rawData provides POJO access, but shortcuts schema-enforcing getters
-        items,
-        itemsNotEmpty
+        let item = Object.assign({}, rawData);
+        item.image = resolver ? resolver(item.image) : item.image;
+        return item;
+      });
+      this._setState({
+        renderModel: {
+          items,
+          haveItems: items.length > 0
+        }
       });
     }
     _render(props, state) {
-      return {
-        items: state.items,
-        itemsNotEmpty: state.itemsNotEmpty
-      };
+      return state.renderModel;
     }
   };
 

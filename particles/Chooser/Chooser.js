@@ -10,14 +10,55 @@
 
 "use strict";
 
-var host = `[chooser]`;
-var productStyles = '';
-
-importScripts('../../../particles/shared/product-templates.js');
-
 defineParticle(({DomParticle}) => {
 
-  let styles = `
+  const host = `[chooser]`;
+
+  const productStyles = `
+    <style>
+      ${host} > x-list [row] {
+        display: flex;
+        align-items: center;
+      }
+      ${host} > x-list [col0] {
+        flex: 1;
+        overflow: hidden;
+        line-height: 115%;
+      }
+      ${host} > x-list [col0] > * {
+      }
+      ${host} > x-list [col1] {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 148px;
+        height: 128px;
+        box-sizing: border-box;
+        text-align: center;
+        background-size: contain;
+      }
+      ${host} > x-list [col1] > img {
+        max-width: 128px;
+        max-height: 96px;
+      }
+      ${host} > x-list [name] {
+        font-size: 0.95em;
+      }
+      ${host} > x-list [category] {
+        font-size: 0.7em;
+        color: #cccccc;
+      }
+      ${host} > x-list [price] {
+        color: #333333;
+      }
+      ${host} > x-list [seller] {
+        font-size: 0.8em;
+        color: #cccccc;
+      }
+    </style>
+      `;
+
+    let styles = `
 <style>
   ${host} {
     padding: 0 16px;
@@ -78,7 +119,9 @@ ${productStyles}
 <div chooser>
   <div chevron>▲</div>
   <div head>{{choices.description}}</div>
-  <x-list items="{{items}}">${productTemplate}</x-list>
+  <x-list items="{{items}}">
+    ${productTemplate}
+  </x-list>
 </div>
     `.trim();
 
@@ -88,12 +131,12 @@ ${productStyles}
     }
     _willReceiveProps(props) {
       let result = [...difference(props.choices, props.resultList)];
-      this._setState({
-        values: result
-      });
       if (result.length > 0) {
         this.relevance = 10;
       }
+      this._setState({
+        values: result
+      });
     }
     _shouldRender(props, state) {
       return Boolean(state.values && state.values.length);
