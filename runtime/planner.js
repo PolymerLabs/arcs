@@ -143,6 +143,7 @@ class Planner {
       let relevance = await speculator.speculate(this._arc, plan);
       let rank = relevance.calcRelevanceScore();
       let description = new DescriptionGenerator(plan, relevance).description;
+      let hash = ((hash) => { return hash.substring(hash.length - 4)}) (await plan.digest());
       // TODO: Move this logic inside speculate, so that it can stop the arc
       // before returning.
       relevance.newArc.stop();
@@ -150,6 +151,7 @@ class Planner {
         plan,
         rank,
         description,
+        hash
       });
     }
     return results;

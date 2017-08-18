@@ -58,7 +58,7 @@ class SuggestionsElement extends HTMLElement {
     }
   }
 
-  add({plan, description, rank}, index) {
+  add({plan, description, rank, hash}, index) {
     let model = {
       index,
       innerHTML: description,
@@ -67,7 +67,7 @@ class SuggestionsElement extends HTMLElement {
     this.container.insertBefore(
       Object.assign(document.createElement("suggest"), model),
       this.container.firstElementChild
-    );
+    ).setAttribute("hash", hash);
   }
 
   choose(plan) {
