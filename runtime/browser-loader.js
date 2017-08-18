@@ -21,21 +21,8 @@ module.exports = class BrowserLoader extends Loader {
   _resolve(path) {
     return new URL(path, this._base).href;
   }
-  loadFile(name) {
-    return new Promise((resolve, reject) => {
-      let xhr = new XMLHttpRequest();
-      xhr.open('GET', this._resolve(name));
-      xhr.send();
-      xhr.onreadystatechange = () => {
-        if (xhr.readyState == XMLHttpRequest.DONE) {
-          if (xhr.status == 200)
-            resolve(xhr.responseText);
-          else
-            reject(xhr.status);
-        }
-
-      }
-    });
+  loadResource(name) {
+    return this._loadURL(this._resolve(name));
   }
   async requireParticle(fileName) {
     fileName = this._resolve(fileName);

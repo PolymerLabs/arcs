@@ -218,7 +218,7 @@ describe('manifest', function() {
   it('can load a manifest via a loader', async () => {
     let registry = {};
     let loader = {
-      loadFile() {
+      loadResource() {
         return 'recipe';
       },
       path(fileName) {
@@ -235,7 +235,7 @@ describe('manifest', function() {
   it('can load a manifest with imports', async () => {
     let registry = {};
     let loader = {
-      loadFile(path) {
+      loadResource(path) {
         return {
           a: `import 'b'`,
           b: `recipe`,
@@ -255,7 +255,7 @@ describe('manifest', function() {
   it('can resolve recipe particles imported from another manifest', async () => {
     let registry = {};
     let loader = {
-      loadFile(path) {
+      loadResource(path) {
         return {
           a: `
               import 'b'
@@ -281,7 +281,7 @@ describe('manifest', function() {
   it('can parse a schema extending a schema in another manifest', async () => {
     let registry = {};
     let loader = {
-      loadFile(path) {
+      loadResource(path) {
         return {
           a: `
               import 'b'
@@ -356,7 +356,7 @@ describe('manifest', function() {
   it('relies on the loader to combine paths', async () => {
     let registry = {};
     let loader = {
-      loadFile(path) {
+      loadResource(path) {
         return {
           'somewhere/a': `import 'path/b'`,
           'somewhere/a path/b': `recipe`,
@@ -404,7 +404,7 @@ describe('manifest', function() {
       },
     ]);
     let loader = {
-      loadFile(path) {
+      loadResource(path) {
         return {
           'the.manifest': manifestSource,
           'entities.json': entitySource,
@@ -439,7 +439,7 @@ describe('manifest', function() {
           map View0 as myView`;
     let entitySource = JSON.stringify([]);
     let loader = {
-      loadFile(path) {
+      loadResource(path) {
         return {
           'the.manifest': manifestSource,
           'entities.json': entitySource,

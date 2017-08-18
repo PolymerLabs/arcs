@@ -102,7 +102,7 @@ class Manifest {
     if (registry && registry[fileName]) {
       return registry[fileName];
     }
-    let content = await loader.loadFile(fileName);
+    let content = await loader.loadResource(fileName);
     let manifest = await Manifest.parse(content, {
       id,
       fileName,
@@ -381,7 +381,7 @@ class Manifest {
     // view.version = item.version;
     let source = loader.join(manifest.fileName, item.source);
     // TODO: json5?
-    let json = await loader.loadFile(source);
+    let json = await loader.loadResource(source);
     let entities = JSON.parse(json);
     for (let entity of entities) {
       let id = entity.$id || manifest.generateID();
