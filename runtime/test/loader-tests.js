@@ -24,7 +24,7 @@ describe('loader', function() {
   it('can load a particle from a particle spec', async () => {
     let files = [];
     let testLoader = new class extends Loader {
-      requireParticle(fileName) {
+      async requireParticle(fileName) {
         files.push(fileName);
         return {};
       }
@@ -40,7 +40,7 @@ describe('loader', function() {
           Foo(in A a, out B b)`, options);
     let spec = manifest.particles.Foo;
     assert.equal(spec.implFile, 'somewhere/foo.js');
-    let clazz = testLoader.loadParticleClass(spec);
+    let clazz = await testLoader.loadParticleClass(spec);
     assert.equal(clazz.spec, spec);
     assert.deepEqual(files, ['somewhere/foo.js']);
   });

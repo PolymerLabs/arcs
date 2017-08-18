@@ -22,12 +22,22 @@ module.exports = class BrowserLoader extends Loader {
     return new URL(path, this._base).href;
   }
   loadFile(name) {
-    let xhr = new XMLHttpRequest();
-    xhr.open('GET', this._resolve(name), false);
-    xhr.send();
-    return xhr.responseText;
+    return new Promise((resolve, reject) => {
+      let xhr = new XMLHttpRequest();
+      xhr.open('GET', this._resolve(name));
+      xhr.send();
+      xhr.onreadystatechange = () => {
+        if (xhr.readyState == XMLHttpRequest.DONE) {
+          if (xhr.status == 200)
+            resolve(xhr.responseText);
+          else
+            reject(xhr.status);
+        }
+
+      }
+    });
   }
-  requireParticle(fileName) {
+  async requireParticle(fileName) {
     fileName = this._resolve(fileName);
     let result = [];
     self.defineParticle = function(particleWrapper) {
