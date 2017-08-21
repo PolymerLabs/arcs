@@ -49,6 +49,7 @@ class OuterPEC extends PEC {
 
     this._apiPort.onViewSet = ({view, data}) => view.set(data);
     this._apiPort.onViewStore = ({view, data}) => view.store(data);
+    this._apiPort.onViewClear = ({view}) => view.clear();
 
     this._apiPort.onIdle = ({version, relevance}) => {
       if (version == this._idleVersion) {
