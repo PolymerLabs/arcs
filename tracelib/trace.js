@@ -18,31 +18,28 @@ var options = require('./options');
 
 var events = [];
 if (global.document) {
-  var pid = process.pid;
+  var pid = 42;
   var now = function() {
     var t = performance.now();
     return t;
   }
 } else {
-  var pid = 42;
+  var pid = process.pid;
   var now = function() {
     var t = process.hrtime();
     return t[0] * 1000000 + t[1] / 1000;
   }
 }
 
-var asyncId = 0;
 var flowId = 0;
 
 function parseInfo(info) {
   if (!info)
-    return {args: {}};
+    return {};
   if (typeof info == 'function')
     return parseInfo(info());
   if (info.toTraceInfo)
     return parseInfo(info.toTraceInfo());
-  if (info.args == undefined)
-    info.args = {};
   return info;
 }
 
@@ -57,10 +54,16 @@ function init() {
   module.exports.enabled = enabled;
 
   var result = {
-    start: function() {
+    wait: function(f) {
+      if (f instanceof Function) {
+        return f();
+      }
+      return f;
+    },
+    resume: function() {
       return this;
     },
-    update: function() {
+    start: function() {
       return this;
     },
     end: function() {
@@ -104,63 +107,62 @@ function init() {
   };
   module.exports.start = function(info) {
     info = parseInfo(info);
-    var begin = now();
+    let args = info.args || {};
+    let begin = now();
     return {
-      update: function(args) {
-        for (var k in args) {
-          info.args[k] = args[k];
-        }       
-      },
       end: function(endInfo) {
-        var end = now();
         if (endInfo && endInfo.args) {
-          for (var k in endInfo.args) {
-            info.args[k] = endInfo.args[k]
-          }
+          Object.assign(args, endInfo.args);
         }
+        var end = now();
         events.push({
           ph: 'X',
           ts: begin,
           dur: end - begin,
           cat: info.cat,
           name: info.name,
-          args: info.args,
+          args: args,
         });
       },
     };
   };
+  // TODO: perhaps this should just be the only API, it acts the same as
+  //       start() when there is no call to wait/resume().
   module.exports.async = function(info) {
-    info = parseInfo(info);
-    var id = asyncId++;
-    var begin = now();
-    events.push({
-      ph: 'b',
-      ts: begin,
-      cat: info.cat,
-      name: info.name,
-      args: info.args,
-      id: id,
-    });
+    let trace = module.exports.start(info);
+    let flow;
+    let baseInfo = {cat: info.cat, name: info.name + ' (async)'};
+    let n = 0;
     return {
-      end: function(endInfo) {
-        var end = now();
-        endInfo = parseInfo(endInfo);
-        events.push({
-          ph: 'e',
-          ts: end,
-          cat: info.cat,
-          name: info.name,
-          args: endInfo && endInfo.args,
-          id: id,
-        });
-      },
-      endWrap: function(fn) {
-        var self = this;
-        return function() {
-          self.end();
-          fn.apply(this, arguments);
+      async wait(v) {
+        let result;
+        if (v instanceof Promise) {
+          result = f;
+        } else {
+          result = v();
         }
-      }
+        if (!flow) {
+          flow = module.exports.flow(baseInfo).start();
+        }
+        trace.end();
+        trace = null;
+        return result;
+      },
+      resume(info) {
+        if (info) {
+          Object.assign(info, baseInfo);
+        } else {
+          info = baseInfo;
+        }
+        trace = module.exports.start(info);
+        flow.step(baseInfo);
+      },
+      end(endInfo) {
+        if (flow) {
+          flow.end();
+        }
+        trace.end(endInfo);
+      },
     };
   };
   module.exports.flow = function(info) {
@@ -187,6 +189,7 @@ function init() {
         endInfo = parseInfo(endInfo);
         events.push({
           ph: 'f',
+          bp: 'e', // binding point is enclosing slice.
           ts: end,
           cat: info.cat,
           name: info.name,
@@ -227,6 +230,12 @@ function init() {
   module.exports.dump = function() {
     mkdirp.sync(path.dirname(options.traceFile));
     fs.writeFileSync(options.traceFile, module.exports.save());
+  };
+  module.exports.download = function() {
+    let a = document.createElement('a');
+    a.download = 'trace.json';
+    a.href = 'data:text/plain;base64,' + btoa(JSON.stringify(module.exports.save()));
+    a.click();
   };
 }
 

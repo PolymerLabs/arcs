@@ -16,6 +16,9 @@ const Manifest = require("../../manifest.js");
 
 require('../lib/auto-tabs.js');
 require('../lib/suggestions-element.js');
+const Tracing = require('../../../tracelib/trace.js');
+Tracing.enable();
+global.Tracing = Tracing;
 
 let template = Object.assign(document.createElement('template'), {innerHTML: `
 

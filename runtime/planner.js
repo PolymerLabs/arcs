@@ -20,6 +20,7 @@ let Manifest = require('./manifest.js');
 
 const Speculator = require('./speculator.js');
 const DescriptionGenerator = require('./description-generator.js');
+const Tracing = require('../tracelib/trace.js');
 
 class CreateViews extends Strategy {
   // TODO: move generation to use an async generator.
@@ -111,12 +112,16 @@ class Planner {
   }
 
   async plan(timeout, generations) {
+    let trace = Tracing.async({cat: 'planning', name: 'Planner::plan', args: {timeout}})
     timeout = timeout || NaN;
     let allResolved = [];
     let now = () => global.performance ? performance.now() : process.hrtime();
     let start = now();
     do {
-      let generated = await this.generate();
+      let generated = await trace.wait(() => this.generate());
+      trace.resume({args: {
+        generated: this.strategizer.generated.length,
+      }});
       if (generations !== null) {
         generations.push(generated);
       }
@@ -130,17 +135,21 @@ class Planner {
         break;
       }
     } while (this.strategizer.generated.length > 0);
+    trace.end();
     return allResolved;
   }
 
   async suggest(timeout, generations) {
-    let plans = await this.plan(timeout, generations);
+    let trace = Tracing.async({cat: 'planning', name: 'Planner::suggest', args: {timeout}})
+    let plans = await trace.wait(() => this.plan(timeout, generations));
+    trace.resume();
     let suggestions = [];
     let speculator = new Speculator();
     // TODO: Run some reasonable number of speculations in parallel.
     let results = [];
     for (let plan of plans) {
-      let relevance = await speculator.speculate(this._arc, plan);
+      let relevance = await trace.wait(() => speculator.speculate(this._arc, plan));
+      trace.resume();
       let rank = relevance.calcRelevanceScore();
       let description = new DescriptionGenerator(plan, relevance).description;
       // TODO: Move this logic inside speculate, so that it can stop the arc
@@ -152,6 +161,7 @@ class Planner {
         description,
       });
     }
+    trace.end();
     return results;
   }
 }

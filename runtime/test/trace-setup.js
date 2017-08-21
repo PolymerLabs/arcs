@@ -9,7 +9,7 @@
  */
 "use strict";
 
-let tracing = require('tracelib');
+let tracing = require('../../tracelib/trace.js');
 let assert = require("assert");
 
 var traceFile = process.env.traceFile;

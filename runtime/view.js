@@ -8,7 +8,7 @@
 'use strict';
 
 const assert = require('assert');
-const tracing = require("tracelib");
+const tracing = require("../tracelib/trace.js");
 const scheduler = require('./scheduler.js');
 
 class ViewBase {
@@ -95,10 +95,9 @@ class View extends ViewBase {
 
     this._items.set(entity.id, entity);
     this._version++;
-    trace.update({ entity });
     if (!entityWasPresent)
       this._fire('change', {add: [entity], version: this._version});
-    trace.end();
+    trace.end({args: {entity}});
   }
 
   remove(id) {
@@ -109,9 +108,8 @@ class View extends ViewBase {
     let entity = this._items.get(id);
     assert(this._items.delete(id));
     this._version++;
-    trace.update({ entity });
     this._fire('change', {remove: [entity], version: this._version});
-    trace.end();
+    trace.end({args: {entity}});
   }
 
   // TODO: Something about iterators??
