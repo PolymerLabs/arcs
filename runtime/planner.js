@@ -20,7 +20,7 @@ let Manifest = require('./manifest.js');
 
 const Speculator = require('./speculator.js');
 const DescriptionGenerator = require('./description-generator.js');
-const Tracing = require('../tracelib/trace.js');
+const Tracing = require('tracelib');
 
 class CreateViews extends Strategy {
   // TODO: move generation to use an async generator.

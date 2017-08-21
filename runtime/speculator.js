@@ -10,7 +10,7 @@
 "use strict";
 
 let assert = require('assert');
-var tracing = require('../tracelib/trace.js');
+var tracing = require('tracelib');
 const scheduler = require('./scheduler.js');
 const Relevance = require('./relevance.js');
 
