@@ -36,7 +36,7 @@ class Viewlet {
   }
   underlyingView() {
     return this._view;
-  }  
+  }
   on(kind, callback, target) {
     return this._view.on(kind, callback, target);
   }
@@ -110,6 +110,9 @@ class Variable extends Viewlet {
   }
   set(entity) {
     return this._view.set(this._serialize(entity));
+  }
+  clear() {
+    this._view.clear();
   }
   async debugString() {
     var value = await this.get();

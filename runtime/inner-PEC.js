@@ -58,6 +58,10 @@ class RemoteView {
   store(entity) {
     this._port.ViewStore({data: entity, view: this});
   }
+
+  clear() {
+    this._port.ViewClear({view: this});
+  }
 }
 
 class InnerPEC {
