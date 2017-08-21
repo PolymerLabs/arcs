@@ -16,7 +16,7 @@ const Manifest = require("../../manifest.js");
 
 require('../lib/auto-tabs.js');
 require('../lib/suggestions-element.js');
-const Tracing = require('../../../tracelib/trace.js');
+const Tracing = require('tracelib');
 Tracing.enable();
 global.Tracing = Tracing;
 

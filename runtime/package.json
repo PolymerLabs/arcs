@@ -15,7 +15,6 @@
     "pegjs": "^0.10.0",
     "watchify": "^3.9.0",
     "webpack": "^2.6.1",
-    "minimist": "*",
-    "mkdirp": "*"
+    "tracelib": "../tracelib"
   }
 }

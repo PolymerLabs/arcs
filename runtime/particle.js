@@ -11,7 +11,7 @@
 
 var runtime = require("./runtime.js");
 var ParticleSpec = require("./particle-spec.js");
-var tracing = require('../tracelib/trace.js');
+var tracing = require('tracelib');
 var assert = require('assert');
 const Schema = require('./schema.js');
 
