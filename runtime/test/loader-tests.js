@@ -22,8 +22,6 @@ describe('loader', function() {
     assert.equal(loader.join('a/foo', 'b'), 'a/b');
   });
   it('can join an absolute path', function() {
-    assert.equal(loader.join('a/foo', '/b'), '/b');
-    assert.equal(loader.join('a/foo', '//b'), '//b');
     assert.equal(loader.join('a/foo', 'http://b'), 'http://b');
     assert.equal(loader.join('a/foo', 'https://b'), 'https://b');
   });
