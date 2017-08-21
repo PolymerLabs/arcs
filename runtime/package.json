@@ -14,6 +14,8 @@
     "node-fetch": "^1.7.2",
     "pegjs": "^0.10.0",
     "watchify": "^3.9.0",
-    "webpack": "^2.6.1"
+    "webpack": "^2.6.1",
+    "minimist": "*",
+    "mkdirp": "*"
   }
 }
