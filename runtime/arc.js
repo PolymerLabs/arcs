@@ -11,7 +11,7 @@
 
 var runtime = require("./runtime.js");
 var assert = require("assert");
-var tracing = require("tracelib");
+var tracing = require("../tracelib/trace.js");
 const Type = require('./type.js');
 const {View, Variable} = require('./view.js');
 const Relation = require('./relation.js');

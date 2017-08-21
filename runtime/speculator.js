@@ -10,17 +10,16 @@
 "use strict";
 
 let assert = require('assert');
-var tracing = require('tracelib');
+var tracing = require('../tracelib/trace.js');
 const scheduler = require('./scheduler.js');
 const Relevance = require('./relevance.js');
 
 class Speculator {
 
   speculate(arc, plan) {
-    var callTrace = tracing.start({cat: "speculator", name: "Speculator::speculate"});
+    var trace = tracing.start({cat: "speculator", name: "Speculator::speculate"});
     var newArc = arc.cloneForSpeculativeExecution();
     newArc.instantiate(plan);
-    callTrace.end();
     let relevance = new Relevance();
     async function awaitCompletion() {
       await scheduler.idle;
@@ -35,8 +34,9 @@ class Speculator {
       }
     }
 
-    return awaitCompletion();
-
+    let result = awaitCompletion();
+    trace.end();
+    return result;
   }
 }
 
