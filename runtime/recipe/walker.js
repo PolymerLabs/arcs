@@ -19,7 +19,7 @@ class Walker extends WalkerBase {
 
     if (this.onRecipe) {
       var result = this.onRecipe(recipe, result);
-      if (!this.isEmptyResult(result));
+      if (!this.isEmptyResult(result))
         updateList.push({continuation: result});
     }
     for (var particle of recipe.particles) {
