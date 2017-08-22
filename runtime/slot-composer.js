@@ -102,12 +102,16 @@ class SlotComposer {
         }
         let psId = ps.id || `slotid-${this._nextSlotId++}`;
         ps.id = psId;
-        availableSlots[ps.name] = {id: psId, count: ps.consumeConnections.length};
+        availableSlots[ps.name] = {
+          id: psId,
+          count: ps.consumeConnections.length,
+          views: ps.viewConnections.map(vc => vc.view)
+        };
       });
     });
     // Populate default "root" slot, if not available yet.
     if (!availableSlots["root"]) {
-      availableSlots["root"] = {id:"r0", count:0};
+      availableSlots["root"] = {id:"r0", count:0, views: []};
     }
     return availableSlots;
   }

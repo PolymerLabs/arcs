@@ -15,6 +15,7 @@ let AssignRemoteViews = require('./strategies/assign-remote-views.js');
 let AssignViewsByTagAndType = require('./strategies/assign-views-by-tag-and-type.js');
 let ResolveParticleByName = require('./strategies/resolve-particle-by-name.js');
 let InitPopulation = require('./strategies/init-population.js');
+let MapConsumedSlots = require('./strategies/map-consumed-slots.js');
 let MapRemoteSlots = require('./strategies/map-remote-slots.js');
 let Manifest = require('./manifest.js');
 
@@ -49,41 +50,6 @@ class CreateViews extends Strategy {
   }
 }
 
-class MatchConsumedSlots extends Strategy {
-  async generate(strategizer) {
-    var results = Recipe.over(strategizer.generated, new class extends RecipeWalker {
-      onSlotConnection(recipe, slotConnection) {
-        if (slotConnection.targetSlot)
-          return;
-        var potentialSlots = recipe.slots.filter(slot => {
-          if (slotConnection.name != slot.name)
-            return false;
-          var views = slot.viewConnections.map(connection => connection.view);
-          if (views.length == 0) {
-            return true;
-          }
-          var particle = slotConnection.particle;
-          for (var name in particle.connections) {
-            var connection = particle.connections[name];
-            if (views.includes(connection.view))
-              return true;
-          }
-          return false;
-        });
-        return potentialSlots.map(slot => {
-          return (recipe, slotConnection) => {
-            let clonedSlot = recipe.updateToClone({slot})
-            slotConnection.connectToSlot(clonedSlot.slot);
-            return 1;
-          };
-        });
-      }
-    }(RecipeWalker.Permuted), this);
-
-    return { results, generate: null };
-  }
-}
-
 
 class Planner {
   // TODO: Use context.arc instead of arc
@@ -94,7 +60,7 @@ class Planner {
       new CreateViews(),
       new AssignViewsByTagAndType(arc),
       new ConvertConstraintsToConnections(),
-      new MatchConsumedSlots(),
+      new MapConsumedSlots(),
       new AssignRemoteViews(arc),
       new MapRemoteSlots(arc)
     ];
