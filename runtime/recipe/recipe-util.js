@@ -9,7 +9,7 @@ let Recipe = require('./recipe.js');
 let assert = require('assert');
 
 class Shape {
-  constructor(recipe, particles, views) {
+  constructor(recipe, particles, views, vcs) {
     this.recipe = recipe;
     this.particles = particles;
     this.views = views;
@@ -19,6 +19,8 @@ class Shape {
     this.reverseViews = new Map();
     for (var v in views)
       this.reverse.set(views[v], v);
+    for (var vc in vcs)
+      this.reverse.set(vcs[vc], vc);
   }
 }
 
@@ -27,15 +29,17 @@ class RecipeUtil {
     recipe = recipe || new Recipe();
     var pMap = {};
     var vMap = {};
+    var vcMap = {};
     particles.forEach(particle => pMap[particle] = recipe.newParticle(particle));
     views.forEach(view => vMap[view] = recipe.newView());
     Object.keys(map).forEach(key => {
       Object.keys(map[key]).forEach(name => {
         let view = map[key][name];
         pMap[key].addConnectionName(name).connectToView(vMap[view]);
+        vcMap[key + ':' + name] = pMap[key].connections[name];
       });
     });
-    return new Shape(recipe, pMap, vMap);
+    return new Shape(recipe, pMap, vMap, vcMap);
   }
 
   static find(recipe, shape) {
@@ -90,13 +94,14 @@ class RecipeUtil {
           if (!recipeVC.view) {
             if (!newMatch.forward.has(shapeVC.view)) {
               newMatch.forward.set(shapeVC.view, null);
+              newMatch.score -= 2;
             }
-            newMatch.score -= 1;
           } else {
             newMatch.forward.set(shapeVC.view, recipeVC.view);
             newMatch.reverse.set(recipeVC.view, shapeVC.view);
           }
         }
+        newMatch.forward.set(shapeVC, recipeVC);
         newMatch.reverse.set(recipeVC, shapeVC);
         outputList.push(newMatch);
         matchFound = true;
@@ -105,8 +110,11 @@ class RecipeUtil {
         var newMatches = [];
         _buildNewParticleMatches(recipe, shapeVC.particle, match, newMatches);
         newMatches.forEach(newMatch => {
-          if (shapeVC.view && !newMatch.forward.has(shapeVC.view))
+          if (shapeVC.view && !newMatch.forward.has(shapeVC.view)) {
             newMatch.forward.set(shapeVC.view, null);
+            newMatch.score -= 2;
+          }
+          newMatch.forward.set(shapeVC, null);
           newMatch.score -= 1;
           outputList.push(newMatch);
         });
@@ -140,6 +148,31 @@ class RecipeUtil {
       }
     }
 
+    function _assignViewsToEmptyPosition(match, emptyViews, nullViews) {
+      if (emptyViews.length == 1) {
+        var matches = [];
+        let {forward, reverse, score} = match;
+        for (var nullView of nullViews) {
+          var newMatch = {forward: new Map(forward), reverse: new Map(reverse), score: score + 1};
+          newMatch.forward.set(nullView, emptyViews[0]);
+          newMatch.reverse.set(emptyViews[0], nullView);
+          matches.push(newMatch);
+        }
+        return matches;
+      }
+      var thisView = emptyViews.pop();
+      var matches = _assignViewsToEmptyPosition(match, emptyViews, nullViews);
+      var newMatches = [];
+      for (var match of matches) {
+        var nullViews = Object.values(shape.views).filter(view => match.forward.get(view) == null);
+        if (nullViews.length > 0)
+          newMatches = newMatches.concat(_assignViewsToEmptyPosition(match, [thisView], nullViews));
+        else
+          newMatches.concat(match);
+      }
+      return newMatches;
+    }
+
     // Particles and Views are initially stored by a forward map from
     // shape component to recipe component.
     // View connections, particles and views are also stored by a reverse map
@@ -164,6 +197,20 @@ class RecipeUtil {
       var newMatches = [];
       for (var match of matches)
         _buildNewParticleMatches(recipe, shapeParticle, match, newMatches);
+      matches = newMatches;
+    }
+
+    var emptyViews = recipe.views.filter(view => view.connections.length == 0);
+
+    if (emptyViews.length > 0) {
+      var newMatches = [];
+      for (var match of matches) {
+        var nullViews = Object.values(shape.views).filter(view => match.forward.get(view) == null);
+        if (nullViews.length > 0)
+          newMatches = newMatches.concat(_assignViewsToEmptyPosition(match, emptyViews, nullViews));
+        else
+          newMatches.concat(match);
+      }
       matches = newMatches;
     }
 

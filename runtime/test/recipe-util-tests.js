@@ -40,7 +40,7 @@ describe('recipe-util', function() {
       particle A
       particle B
       particle C
-      
+
       recipe Recipe
         map as v1
         map as v2
@@ -67,5 +67,46 @@ describe('recipe-util', function() {
     assert(results[1].match.B.name == 'B');
     assert(results[1].match.C.name == 'C');
     assert(results[1].match.v.localName == 'v2');
+  });
+
+  it('can match a free view', async() => {
+    let manifest = await Manifest.parse(`
+      particle A
+      particle B
+
+      recipe Recipe
+        map as v1
+        A
+        B`);
+    let recipe = manifest.recipes[0];
+    let shape =  RecipeUtil.makeShape(['A', 'B'], ['v'],
+      {'A': {'a': 'v'}, 'B': {'b': 'v'}});
+    let results = RecipeUtil.find(recipe, shape);
+    assert(results.length == 1);
+    assert(results[0].score == -3);
+    assert(results[0].match.v.localName == 'v1');
+  });
+
+  it('can match dangling view connections', async() => {
+    let manifest = await Manifest.parse(`
+      particle A
+      particle B
+
+      recipe Recipe
+        map as v1
+        A
+          a -> #
+        B
+          b -> #
+        `);
+    let recipe = manifest.recipes[0];
+    let shape =  RecipeUtil.makeShape(['A', 'B'], ['v'],
+      {'A': {'a': 'v'}, 'B': {'b': 'v'}});
+    let results = RecipeUtil.find(recipe, shape);
+    assert(results.length == 1);
+    assert(results[0].score == -1);
+    assert(results[0].match.v.localName == 'v1');
+    assert(results[0].match['A:a'].name == 'a');
+    assert(results[0].match['B:b'].name == 'b');
   });
 });
