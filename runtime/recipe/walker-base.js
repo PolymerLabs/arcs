@@ -90,6 +90,8 @@ class WalkerBase extends Strategizer.Walker {
     if (result.constructor == Array && result.length <= 0)
       return true;
 
+      assert(typeof result == 'function' || result.length);
+
     return false;
   }
 }
