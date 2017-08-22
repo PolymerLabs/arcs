@@ -16,22 +16,6 @@ class ViewMapperBase extends Strategy {
     var self = this;
 
     var results = Recipe.over(strategizer.generated, new class extends RecipeWalker {
-      onViewConnection(recipe, vc) {
-        if (vc.view)
-          return;
-        if (!vc.type)
-          return;
-        if (vc.direction == 'in')
-          var counts = {'in': 1, 'out': 0, 'unknown': 0};
-        else if (vc.direction == 'out')
-          var counts = {'in': 0, 'out': 1, 'unknown': 0};
-        else if (vc.direction == 'inout')
-          var counts = {'in': 1, 'out': 1, 'unknown': 0};
-        else
-          var counts = {'in': 0, 'out': 0, 'unknown': 1};
-        return this.mapView(null, vc.tags, vc.type, counts);
-      }
-
       onView(recipe, view) {
         if (view.fate == "create")
           return;
@@ -63,10 +47,6 @@ class ViewMapperBase extends Strategy {
             score = 0;
         }
 
-        var contextIsViewConnection = view == null;
-        if (contextIsViewConnection)
-          score -= 2;
-
         if (tags.length > 0)
           score += 4;
 
@@ -80,18 +60,13 @@ class ViewMapperBase extends Strategy {
           return;
 
         var responses = views.map(newView =>
-          ((recipe, clonedObject) => {
+          ((recipe, clonedView) => {
             for (var existingView of recipe.views)
               // TODO: Why don't we link the view connections to the existingView?
               if (existingView.id == newView.id)
                 return 0;
             var tscore = 0;
-            if (contextIsViewConnection) {
-              var clonedView = recipe.newView();
-              clonedObject.connectToView(clonedView);
-            } else {
-              var clonedView = clonedObject;
-            }
+
             assert(newView.id);
             clonedView.mapToView(newView);
             if (clonedView.fate != 'copy') {
