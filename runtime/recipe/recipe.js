@@ -149,7 +149,6 @@ class Recipe {
       return;
     }
     if (!this._isValid()) {
-      console.log(this.toString());
       var duplicateView = this._findDuplicateView();
       if (duplicateView)
         console.log(`Has Duplicate View ${duplicateView.id}`);

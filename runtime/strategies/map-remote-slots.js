@@ -12,7 +12,6 @@ let RecipeUtil = require('../recipe/recipe-util.js');
 
 class MapRemoteSlots extends Strategy {
   constructor(arc) {
-    // faked out for now
     super();
     this.remoteSlots = arc.pec.slotComposer ? arc.pec.slotComposer.getAvailableSlots() : {};
   }
@@ -24,7 +23,26 @@ class MapRemoteSlots extends Strategy {
           return;
         if (remoteSlots[slotConnection.name] == undefined)
           return;
-        // TODO: remoteSlots should also contain and verify view-connections of the provided slot
+
+        var views = remoteSlots[slotConnection.name].views;
+        let viewsMatch = false;
+        if (views.length == 0) {
+          viewsMatch = true;
+        }
+        var particle = slotConnection.particle;
+        for (var name in particle.connections) {
+          var connection = particle.connections[name];
+          if (!connection.view)
+            continue;
+          if (views.find(v => v.id == connection.view.id)) {
+            viewsMatch = true;
+            break;
+          }
+        }
+        if (!viewsMatch) {
+          return;
+        }
+
         var score = 1 - remoteSlots[slotConnection.name].count;
         return (recipe, slotConnection) => {
           let slot = recipe.newSlot(slotConnection.name);
