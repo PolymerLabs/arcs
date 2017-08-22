@@ -268,13 +268,13 @@ class Manifest {
           }
           // TODO: else, merge tags? merge directions?
         }
-        connection.tags = connectionItem.target.tags;
+        connection.tags = connectionItem.target ? connectionItem.target.tags : [];
         connection.direction = {'->': 'out', '<-': 'in', '=': 'inout'}[connectionItem.dir];
 
         let targetView;
         let targetParticle;
 
-        if (connectionItem.target.name) {
+        if (connectionItem.target && connectionItem.target.name) {
           let entry = items.byName.get(connectionItem.target.name);
           assert(entry, `could not find ${connectionItem.target.name}`);
           if (entry.item.kind == 'view') {
@@ -286,7 +286,7 @@ class Manifest {
           }
         }
 
-        if (connectionItem.target.particle) {
+        if (connectionItem.target && connectionItem.target.particle) {
           targetParticle = particlesByName[connectionItem.target.particle];
           // TODO: error reporting
           assert(targetParticle);
