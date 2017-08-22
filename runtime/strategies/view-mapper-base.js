@@ -17,7 +17,7 @@ class ViewMapperBase extends Strategy {
 
     var results = Recipe.over(strategizer.generated, new class extends RecipeWalker {
       onView(recipe, view) {
-        if (view.fate == "create")
+        if (view.fate !== self.fate)
           return;
 
         if (view.connections.length == 0)

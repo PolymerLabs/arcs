@@ -42,7 +42,9 @@ recipe
 
 # Buying for [person]'s [occasion] in [timeframe]? Product [X] arrives too late.
 recipe
+  map as view1
   GiftList
+    person <- view1
   Arrivinator
 
 # Check manufacturer information for products.
