@@ -24,6 +24,10 @@ class MapRemoteSlots extends Strategy {
         if (remoteSlots[slotConnection.name] == undefined)
           return;
 
+        // TODO: verify isSet matches the map-remote-slots and map-consumed strategies.
+
+        // TODO: remoteSlots[name] should be an array, for the case when a slot
+        // with the same name is provided by multiple particles (eg ShowProducts and Chooser)
         var views = remoteSlots[slotConnection.name].views;
         let viewsMatch = false;
         if (views.length == 0) {

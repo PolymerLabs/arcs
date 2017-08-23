@@ -13,12 +13,7 @@
 defineParticle(({DomParticle}) => {
 
   let template = `
-
-<x-list items="{{items}}">
-  <template>
-    <div style%="{{style}}">{{arrival}}</div>
-  </template>
-</x-list>
+    <div style%="{{style}}" id="{{subId}}"><span>{{arrival}}</span></div>
     `.trim();
 
   let daysToMs = 24*60*60*1000;
@@ -29,13 +24,13 @@ defineParticle(({DomParticle}) => {
     }
     _render(props) {
       if (props.list && props.list.length) {
-        //console.log('rendering Arrivinator');
         let now = Date.now();
         let needed = new Date('2017-08-04').getTime();
         return {
           items: props.list.map((item, i) => {
             // TODO(sjmiles): bypass schema for the moment
             item = item.rawData;
+            let subId = item.name.replace(/ /g,'').toLowerCase();
             let style = null;
             let arrival = '';
             if (item.shipDays) {
@@ -50,6 +45,7 @@ defineParticle(({DomParticle}) => {
               arrival = `No shipping info.`;
             }
             return {
+              subId,
               arrival,
               style
             };

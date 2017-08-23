@@ -109,15 +109,30 @@ class SlotConnection {
   }
 
   toString(nameMap) {
-    let result = [];
+    let consumeRes = [];
+    consumeRes.push('consume');
+    if (this.slotSpec.isSet) {
+      consumeRes.push('set of');
+    }
+    consumeRes.push(`${this.name}`);
     if (this.targetSlot)
-      result.push(`consume ${this.name} as ${(nameMap && nameMap.get(this.targetSlot)) || this.targetSlot.localName}`)
-    else
-      result.push(`consume ${this.name}`);
+      consumeRes.push(`as ${(nameMap && nameMap.get(this.targetSlot)) || this.targetSlot.localName}`);
+
+    let result = [];
+    result.push(consumeRes.join(" "));
 
     Object.keys(this.providedSlots).forEach(psName => {
       let providedSlot = this.providedSlots[psName];
-      result.push(`  provide ${psName} as ${(nameMap && nameMap.get(providedSlot)) || providedSlot}`);
+      let provideRes = [];
+      provideRes.push('  provide');
+      let providedSlotSpec = this.slotSpec.providedSlots.find(ps => ps.name == psName);
+      assert(providedSlotSpec, `Cannot find providedSlotSpec for ${psName}`);
+      if (providedSlotSpec.isSet) {
+        provideRes.push('set of');
+      }
+      provideRes.push(`${psName} as ${(nameMap && nameMap.get(providedSlot)) || providedSlot}`);
+      result.push(provideRes.join(" "));
+
       providedSlot.viewConnections.forEach(vc => {
         result.push(`    view ${vc.name}`);
       });

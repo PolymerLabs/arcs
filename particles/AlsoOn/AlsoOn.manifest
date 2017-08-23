@@ -10,4 +10,4 @@ import '../../entities/Product.manifest'
 
 particle AlsoOn in 'AlsoOn.js'
   AlsoOn(in [Product] list, in [Product] choices)
-  consume set of annotation2
+  consume set of annotation
