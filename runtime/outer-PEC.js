@@ -102,11 +102,11 @@ class OuterPEC extends PEC {
     this._apiPort.InstantiateParticle(particleSpec, {spec, views});
     return particleSpec;
   }
-  startRender(particle, slotName, contentTypes) {
-    this._apiPort.StartRender(particle, slotName, contentTypes);
+  startRender({particle, slotName, contentTypes}) {
+    this._apiPort.StartRender({particle, slotName, contentTypes});
   }
-  stopRender(particle, slotName) {
-    this._apiPort.StopRender(particle, slotName);
+  stopRender({particle, slotName}) {
+    this._apiPort.StopRender({particle, slotName});
   }
 }
 

@@ -40,20 +40,21 @@ class SlotComposer {
     return this._slots.find(s => s.consumeConn.particle == particle && s.consumeConn.name == slotName);
   }
   initializeRecipe(recipeParticles) {
+    let newSlots = [];
     // Create slots for each of the recipe's particles slot connections.
     recipeParticles.forEach(p => {
       Object.values(p.consumedSlotConnections).forEach(cs => {
         let slot = createNewSlot(this.affordance, cs);
         slot.startRenderCallback = this.pec.startRender.bind(this.pec);
         slot.stopRenderCallback = this.pec.stopRender.bind(this.pec);
-        this._slots.push(slot);
+        slot.innerSlotsUpdateCallback = this.updateInnerSlots.bind(this);
+        newSlots.push(slot);
       });
     });
+
     // Attempt to set context for each of the slots.
-    this._slots.forEach(s => {
-      if (s.context) {
-        return;
-      }
+    newSlots.forEach(s => {
+      assert(!s.context, `Unexpected context in new slot`);
 
       let context = null;
       let sourceConnection = s.consumeConn.targetSlot && s.consumeConn.targetSlot.sourceConnection;
@@ -70,6 +71,8 @@ class SlotComposer {
       if (context) {
         s.setContext(context);
       }
+
+      this._slots.push(s);
     });
   }
 
@@ -79,12 +82,15 @@ class SlotComposer {
 
     // Set the slot's new content.
     slot.setContent(content, eventlet => this.pec.sendEvent(particle, slotName, eventlet));
+  }
 
+  updateInnerSlots(slot) {
+    assert(slot, 'Cannot update inner slots of null');
     // Update provided slot contexts.
     Object.keys(slot.consumeConn.providedSlots).forEach(providedSlotName => {
       let providedContext = slot.getInnerContext(providedSlotName);
       let providedSlot = slot.consumeConn.providedSlots[providedSlotName];
-      slot.consumeConn.providedSlots[providedSlotName].consumeConnections.forEach(cc => {
+      providedSlot.consumeConnections.forEach(cc => {
         // This will trigger "start" or "stop" render, if applicable.
         this.getSlot(cc.particle, cc.name).setContext(providedContext);
       });
@@ -102,6 +108,8 @@ class SlotComposer {
         }
         let psId = ps.id || `slotid-${this._nextSlotId++}`;
         ps.id = psId;
+        // TODO(mmandlis): availableSlots[ps.name] should be an array of slots,
+        // in case slot with the same name if provided by more than one particle.
         availableSlots[ps.name] = {
           id: psId,
           count: ps.consumeConnections.length,
@@ -109,10 +117,11 @@ class SlotComposer {
         };
       });
     });
+
     // Populate default "root" slot, if not available yet.
-    if (!availableSlots["root"]) {
-      availableSlots["root"] = {id:"r0", count:0, views: []};
-    }
+    assert(!availableSlots["root"], `Root slot cannot be provided`);
+    availableSlots["root"] = {id:"r0", count:0, views: []};
+
     return availableSlots;
   }
 }

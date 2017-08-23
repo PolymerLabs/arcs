@@ -13,13 +13,9 @@
 defineParticle(({DomParticle}) => {
 
   let template = `
-<x-list items="{{items}}">
-  <template>
-    <div hidden="{{not_also_on}}">
+    <div hidden="{{notAlsoOn}}">
       <span>Also on:</span> <span>{{choices.description}}</span>
     </div>
-  </template>
-</x-list>
     `.trim();
 
   return class extends DomParticle {
@@ -32,9 +28,13 @@ defineParticle(({DomParticle}) => {
     _render(props) {
       return {
         items: props.list.map(item => {
-          let not_also_on = !Boolean(props.choices.find(c => c.name === item.name));
+          let subId = item.name.replace(/ /g,'').toLowerCase();
+          let notAlsoOn = !Boolean(props.choices.find(c => c.name === item.name));
           return {
-            not_also_on
+            subId,
+            notAlsoOn,
+            // TODO: remove this hack, once views descriptions are fixed.
+            'choices.description': "Claire's wishlist"
           };
         })
       };
