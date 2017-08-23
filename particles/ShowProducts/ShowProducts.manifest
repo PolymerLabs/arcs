@@ -14,11 +14,11 @@ particle ShowProducts in 'ShowProducts.js'
     provide action
       view list
     provide preamble
-    provide annotation
+    provide set of annotation
       view list
-    provide annotation2
+    provide set of annotation2
       view list
-    provide annotation3
+    provide set of annotation3
       view list
     provide postamble
   description `Show ${list}`
