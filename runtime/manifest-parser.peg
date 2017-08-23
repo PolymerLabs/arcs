@@ -293,13 +293,13 @@ RecipeParticle
 RecipeParticleItem = RecipeParticleConnection / RecipeParticleSlotConnection
 
 RecipeParticleConnection
-  = param:(lowerIdent / '*') whiteSpace dir:Direction whiteSpace? target:ConnectionTarget? eolWhiteSpace
+  = param:(lowerIdent / '*') whiteSpace dir:Direction target:(whiteSpace ConnectionTarget)? eolWhiteSpace
   {
     return {
       kind: 'view-connection',
       param,
       dir,
-      target,
+      target: optional(target, target => target[1], null),
     };
   }
 
