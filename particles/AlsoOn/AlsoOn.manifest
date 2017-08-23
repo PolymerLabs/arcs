@@ -10,4 +10,5 @@ import '../../entities/Product.manifest'
 
 particle AlsoOn in 'AlsoOn.js'
   AlsoOn(in [Product] list, in [Product] choices)
+  affordance dom
   consume set of annotation2

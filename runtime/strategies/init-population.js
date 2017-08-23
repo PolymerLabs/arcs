@@ -12,6 +12,14 @@ class InitPopulation extends Strategy {
     super();
     this._recipes = [];
     for (let recipe of (arc.context.recipes || [])) {
+      // Filter out recipes containing particles that don't support the current affordance.
+      if (arc.pec.slotComposer) {
+        if (recipe.particles.find(p => {
+              return p.spec.slots.size > 0 && !p.spec.affordance.includes(arc.pec.slotComposer.affordance);
+            }) !== undefined) {
+          continue;
+        }
+      }
       recipe = recipe.clone();
       if (!recipe.normalize()) {
         console.warn('could not normalize a context recipe');

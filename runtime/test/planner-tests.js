@@ -25,7 +25,7 @@ describe('Planner', function() {
 
   it('can generate things', async () => {
     let manifest = await Manifest.load('../particles/test/giftlist.manifest', loader);
-    var arc = new Arc({id: "test-plan-arc", context: manifest, slotComposer: { getAvailableSlots: (() => { return {root: {id: 'r0', count: 0}}; }) }});
+    var arc = new Arc({id: "test-plan-arc", context: manifest, slotComposer: { affordance: 'dom', getAvailableSlots: (() => { return {root: {id: 'r0', count: 0}}; }) }});
     let Person = manifest.findSchemaByName('Person').entityClass();
     let Product = manifest.findSchemaByName('Person').entityClass();
     var planner = new Planner();
@@ -38,7 +38,7 @@ describe('Planner', function() {
 
   it('make a plan with views', async () => {
     let manifest = await Manifest.load('../particles/test/giftlist.manifest', loader);
-    var arc = new Arc({id: "test-plan-arc", context: manifest, slotComposer: { getAvailableSlots: (() => { return {root: {id: 'r0', count: 0}}; }) }});
+    var arc = new Arc({id: "test-plan-arc", context: manifest, slotComposer: { affordance: 'dom', getAvailableSlots: (() => { return {root: {id: 'r0', count: 0}}; }) }});
     let Person = manifest.findSchemaByName('Person').entityClass();
     let Product = manifest.findSchemaByName('Product').entityClass();
     var personView = arc.createView(Person.type.viewOf(), "aperson");

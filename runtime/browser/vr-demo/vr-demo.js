@@ -11,7 +11,8 @@
 let BrowserLoader = require("../../browser-loader.js");
 let SlotComposer = require('../../slot-composer.js');
 let DemoBase = require('../lib/demo-base.js');
-let demoContext = require('./demo-context-factory.js');
+let Arc = require("../../arc.js");
+const Manifest = require("../../manifest.js");
 
 // 0: create Pot, 2: create Sphere
 // 1: create Flower 3: create Box
@@ -85,16 +86,16 @@ class DemoFlow extends DemoBase {
   async didMount() {
     let root = '../../';
     let loader = new BrowserLoader(root);
-    let {context} = await demoContext({
-      loader,
+    let arc = new Arc({
+      id: 'demo',
       pecFactory: require('../worker-pec-factory.js').bind(null, root),
-      slotComposer: new SlotComposer(this.$('[particle-container]'),  /* affordance= */ "vr")
+      slotComposer: new SlotComposer(this.$('[particle-container]'),  /* affordance */ "vr"),
+      context: await Manifest.load('browser/vr-demo/recipes.manifest', loader),
     });
-    this.arc = context.arc;
-    this.context = context;
-    this.stages = buildStages(context.recipes);
+
+    this.arc = arc;
     this.suggestions = this.$('suggestions-element');
-    this.suggestions.arc = context.arc;
+    this.suggestions.arc = arc;
     this.suggestions.callback = this.nextStage.bind(this);
   }
 }

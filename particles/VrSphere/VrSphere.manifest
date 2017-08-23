@@ -8,6 +8,7 @@
 
 particle VrSphere in 'VrSphere.js'
   VrSphere()
+  affordance vr
   consume root
     provide action
   description `Create Sphere`

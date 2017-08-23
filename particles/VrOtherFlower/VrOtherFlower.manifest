@@ -8,5 +8,6 @@
 
 particle VrOtherFlower in 'VrOtherFlower.js'
   VrOtherFlower()
+  affordance vr
   consume soil2
   description `Create other Flower`
