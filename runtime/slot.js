@@ -15,34 +15,29 @@ class Slot {
   constructor(consumeConn) {
     assert(consumeConn);
     this._consumeConn = consumeConn;
-    this._context = null;
     this.startRenderCallback = null;
     this.stopRenderCallback = null;
 
   }
-  get context() { return this._context; }
   get consumeConn() { return this._consumeConn; }
+
   setContext(context) {
     // do nothing, if context unchanged.
-    if (this.context == context) {
+    if ((!this.context && !context) ||
+        (this.context && this.context.isEqual(context))) {
       return;
-    }
-    // clear existing context, before resetting it.
-    if (this.context) {
-      this.clearContext();
     }
 
     // update the context;
-    this._context = context;
+    let wasNull = !this.context;
+    this.context = context;
     if (this.context) {
-      this.startRender();
+      if (wasNull) {
+        this.startRender();
+      }
     } else {
-      this.clearContext();
       this.stopRender();
     }
-  }
-  canRender() {
-    return this.context && this.content;
   }
   startRender() {
     if (this.startRenderCallback) {
@@ -57,15 +52,15 @@ class Slot {
     if (this.stopRenderCallback) {
       this.stopRenderCallback &&
       this.stopRenderCallback({
-        particle: this.consumeConn.particle.spec,
+        particle: this.consumeConn.particle,
         slotName: this.consumeConn.name
       });
     }
   }
   // absract
+  get context() { assert('not implemented'); }
+  set context(context) { assert('not implemented'); }
   setContent(content, handler) {}
-  doRender() {}
-  clearContext() {}
   getInnerContext(slotName) {}
   constructRenderRequest() {}
 }

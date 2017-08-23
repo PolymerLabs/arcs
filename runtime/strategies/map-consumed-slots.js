@@ -19,6 +19,9 @@ class MapConsumedSlots extends Strategy {
         var potentialSlots = recipe.slots.filter(slot => {
           if (slotConnection.name != slot.name)
             return false;
+
+          // TODO: verify isSet matches the map-remote-slots and map-consumed strategies.
+
           var views = slot.viewConnections.map(connection => connection.view);
           if (views.length == 0) {
             return true;

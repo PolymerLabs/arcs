@@ -194,7 +194,7 @@ ParticleSlotItem
   / ParticleProvidedSlot
 
 SlotFormFactor
-  = 'formFactor' whiteSpace formFactor:('fullscreen' / 'big' / 'medium' / 'small' / 'interleaved') eolWhiteSpace
+  = 'formFactor' whiteSpace formFactor:('fullscreen' / 'big' / 'medium' / 'small') eolWhiteSpace
   {
     return {
       kind: 'form-factor',

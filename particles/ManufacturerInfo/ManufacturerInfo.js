@@ -13,11 +13,7 @@
 defineParticle(({DomParticle}) => {
 
   let template = `
-<x-list items="{{items}}">
-  <template>
-    <div style="font-size: 0.85em; /*font-weight: bold;*/ font-style: italic">{{msg}}</div>
-  </template>
-</x-list>
+    <div style="/*font-size: 0.85em;*/ /*font-weight: bold;*/ font-style: italic">{{msg}}</div>
     `.trim();
 
   return class extends DomParticle {
@@ -30,6 +26,7 @@ defineParticle(({DomParticle}) => {
     _render(props) {
       return {
         items: props.list.map(item => {
+          let subId = item.name.replace(/ /g,'').toLowerCase();
           let msg = '';
           switch (item.name) {
             case 'Power Tool Set':
@@ -42,7 +39,7 @@ defineParticle(({DomParticle}) => {
               msg = `Award-winning book!`;
               break;
           }
-          return {msg};
+          return {msg, subId};
         })
       };
     }

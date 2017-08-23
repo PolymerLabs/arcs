@@ -11,15 +11,7 @@
 
 const assert = require('assert');
 const Slot = require('./slot.js');
-const Template = require('./browser/lib/xen-template.js');
-
-// TODO(sjmiles): should be elsewhere
-// TODO(sjmiles): using Node syntax to import custom-elements in strictly-browser context
-if (global.document) {
-  require('./browser/lib/x-list.js');
-  require('./browser/lib/model-select.js');
-  require('./browser/lib/interleaved-list.js');
-}
+const {DomContext, SetDomContext} = require('./dom-context.js');
 
 let templates = new Map();
 
@@ -27,16 +19,47 @@ class DomSlot extends Slot {
   constructor(consumeConn) {
     super(consumeConn);
     this._templateName = `${this.consumeConn.particle.name}::${this.consumeConn.name}`;
+    this._context = null;
     this._model = null;
-    this._liveDom = null;
-    this._innerContextBySlotName = null;
+
+    this._observer = new MutationObserver(() => {
+      this._observer.disconnect();
+      this.context.initInnerContexts(this.consumeConn.slotSpec);
+      this.innerSlotsUpdateCallback(this);
+    });
   }
+
+  get context() { return this._context; }
+  set context(context) {
+    let wasNull = true;
+    if (this._context) {
+      this._context.clear();
+      wasNull = false;
+    }
+
+    if (context) {
+      if (!this._context) {
+        this._context = this.consumeConn.slotSpec.isSet ? new SetDomContext() : new DomContext();
+      }
+      this._context.initContext(context);
+      if (!wasNull) {
+        this._doRender();
+      }
+    } else {
+      this._context = null;
+    }
+  }
+
   getTemplate() {
     return templates.get(this._templateName);
   }
+
   setContent(content, handler) {
     if (!content || Object.keys(content).length == 0) {
-      this.clearContext();
+      if (this.context) {
+        this.context.clear();
+      }
+      this._model = null;
       return;
     }
     if (!this.context) {
@@ -54,63 +77,35 @@ class DomSlot extends Slot {
     if (Object.keys(content).indexOf("model") >= 0) {
       this._model = content.model;
     }
-    return this.doRender();
+    return this._doRender();
   }
-  doRender() {
+
+  _doRender() {
+    assert(this.context);
+
+    this.context.observe(this._observer);
+
     // Initialize template, if possible.
-    if (this.getTemplate() && !this._liveDom) {
-      this._stampTemplate();
+    if (this.getTemplate()) {
+      this.context.stampTemplate(this.getTemplate(), this.eventHandler);
     }
     // else {
     // TODO: should trigger request to particle, if template missing?
     //}
-    if (this._liveDom && this._model) {
-      this._liveDom.set(this._model);
+
+    if (this._model) {
+      this.context.updateModel(this._model);
     }
   }
-  clearContext() {
-    this.context.textContent = "";
-    this._liveDom = null;
-    this._model = null;
-    this._innerContextBySlotName = null;
-  }
-
   getInnerContext(slotName) {
-    return this._innerContextBySlotName && this._innerContextBySlotName[slotName];
+    return this.context && this.context.getInnerContext(slotName);
   }
-
   constructRenderRequest() {
     let request = ["model"];
     if (!this.getTemplate()) {
       request.push("template");
     }
     return request;
-  }
-  _stampTemplate() {
-    assert(this.context);
-    let eventMapper = this._eventMapper.bind(this, this.eventHandler);
-    // TODO(sjmiles): hack to allow subtree elements (e.g. x-list) to marshal events
-    this.context._eventMapper = eventMapper;
-    // TODO(sjmiles): _liveDom needs new name
-    this._liveDom = Template.stamp(this.getTemplate(), this.eventHandler);
-    this._liveDom.mapEvents(eventMapper);
-    this._liveDom.appendTo(this.context);
-
-    // Note: need to store inner slot contexts before the inner slots have rendered their contexts
-    // inside, as inner slots' particles may have inner slots with the same name.
-    this._innerContextBySlotName = {};
-    Array.from(this.context.querySelectorAll("[slotid]")).map(s => this._innerContextBySlotName[s.getAttribute('slotid')] = s);
-  }
-  _eventMapper(eventHandler, node, eventName, handlerName) {
-    node.addEventListener(eventName, () => {
-      eventHandler({
-        handler: handlerName,
-        data: {
-          key: node.key,
-          value: node.value
-        }
-      });
-    });
   }
 }
 

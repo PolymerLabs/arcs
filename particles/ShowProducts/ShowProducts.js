@@ -33,7 +33,7 @@ defineParticle(({DomParticle, resolver}) => {
   ${host} > x-list [item]:last-child {
     border: none;
   }
-  ${host} [interleaved] {
+  ${host} div[slotid="annotation"] {
     font-size: 0.7em;
   }
   ${host} [empty] {
@@ -103,6 +103,8 @@ defineParticle(({DomParticle, resolver}) => {
         <img src="{{image}}">
       </div>
     </div>
+    <div slotid="annotation" subid$="{{subId}}">
+    </div>
   </div>
 </template>
   `;
@@ -120,15 +122,6 @@ ${productStyles}
   <div empty hidden="{{haveItems}}">List is empty</div>
 
   <x-list items="{{items}}">${productTemplate}</x-list>
-  <interleaved-list>
-    <div slotid="annotation"></div>
-  </interleaved-list>
-  <interleaved-list>
-    <div slotid="annotation2"></div>
-  </interleaved-list>
-  <interleaved-list>
-    <div slotid="annotation3"></div>
-  </interleaved-list>
 
   <div slotid="action"></div>
 
@@ -145,6 +138,7 @@ ${productStyles}
         // TODO(sjmiles): rawData provides POJO access, but shortcuts schema-enforcing getters
         let item = Object.assign({}, rawData);
         item.image = resolver ? resolver(item.image) : item.image;
+        item.subId = item.name.replace(/ /g,'').toLowerCase();
         return item;
       });
       this._setState({
