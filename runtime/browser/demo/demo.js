@@ -60,7 +60,7 @@ class DemoFlow extends DemoBase {
     let arc = new Arc({
       id: 'demo',
       pecFactory: require('../worker-pec-factory.js').bind(null, root),
-      slotComposer: new SlotComposer(this.$('[particle-container]'),  /* affordance */ "dom"),
+      slotComposer: new SlotComposer({rootContext: this.$('[particle-container]'), affordance: "dom"}),
       context: await Manifest.load('browser/demo/recipes.manifest', loader),
     });
     this.arc = arc;

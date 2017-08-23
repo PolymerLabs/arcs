@@ -29,7 +29,7 @@ let Product = loader.loadEntity("Product");
 let pecFactory = require('../worker-pec-factory.js').bind(null, '../../');
 
 function prepareExtensionArc() {
-  let slotComposer = new SlotComposer(particleRoot, /* affordance= */ 'test');
+  let slotComposer = new SlotComposer({rootContext: particleRoot, affordance: 'test'});
   let arc = new Arc({id: 'demo', pecFactory, slotComposer});
   //
   arc.createView(Person.type.viewOf(), "peopleFromWebpage");

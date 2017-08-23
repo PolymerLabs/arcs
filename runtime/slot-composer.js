@@ -27,12 +27,12 @@ function createNewSlot(affordance, consumeConn) {
 }
 
 class SlotComposer {
-  constructor(rootContext, affordance) {
-    assert(affordance, "Affordance is mandatory");
-    assert(rootContext, "Root context is mandatory");
+  constructor(options) {
+    assert(options.affordance, "Affordance is mandatory");
+    assert(options.rootContext, "Root context is mandatory");
 
-    this.affordance = affordance;
-    this.rootContext = rootContext;
+    this.affordance = options.affordance;
+    this.rootContext = options.rootContext;
     this._slots = [];
     this._nextSlotId = 0;
   }
