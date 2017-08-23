@@ -28,6 +28,9 @@ function createNewSlot(affordance, consumeConn) {
 
 class SlotComposer {
   constructor(rootContext, affordance) {
+    assert(affordance, "Affordance is mandatory");
+    assert(rootContext, "Root context is mandatory");
+
     this.affordance = affordance;
     this.rootContext = rootContext;
     this._slots = [];

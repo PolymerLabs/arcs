@@ -10,5 +10,6 @@ import '../../entities/Person.manifest'
 
 particle GiftList in 'GiftList.js'
   GiftList(in Person person)
+  affordance dom
   consume preamble
   description `Buy gifts for ${person}'s {occasion} in {timeframe}`

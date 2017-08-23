@@ -10,6 +10,8 @@ import '../../entities/Product.manifest'
 
 particle ShowProducts in 'ShowProducts.js'
   ShowProducts(in [Product] list)
+  affordance dom
+  affordance dom-touch
   consume root
     provide action
       view list

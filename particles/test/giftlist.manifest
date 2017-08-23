@@ -8,6 +8,7 @@
 import '../Chooser/Chooser.manifest'
 import '../Recommend/Recommend.manifest'
 import '../ShowProducts/ShowProducts.manifest'
+import '../VrPot/VrPot.manifest'
 import '../../entities/Person.manifest'
 
 recipe
@@ -20,3 +21,7 @@ recipe
     population <- wishlist
   ShowProducts
     list <- view0
+
+recipe
+  ShowProducts
+  VrPot

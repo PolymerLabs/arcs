@@ -10,5 +10,6 @@ import '../../entities/Product.manifest'
 
 particle Interests in 'Interests.js'
   Interests(in [Product] list)
+  affordance dom
   consume postamble
   description `Recommendations based on ${list}`
