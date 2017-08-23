@@ -57,6 +57,8 @@ describe('manifest', function() {
             formFactor medium
           provide annotation
         consume other
+          provide set of myProvidedSetCell
+        consume set of mySetCell
         description \`hello world \${list}\`
           list \`my special list\`
       particle NoArgsParticle in 'noArgsParticle.js'

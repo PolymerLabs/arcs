@@ -157,7 +157,7 @@ ParticleAffordance
   { return {affordance}; }
 
 ParticleSlot
-  = isRequired:('must' whiteSpace)? 'consume' whiteSpace name:(lowerIdent) eolWhiteSpace
+  = isRequired:('must' whiteSpace)? 'consume' whiteSpace isSet:('set of' whiteSpace)? name:(lowerIdent) eolWhiteSpace
     items:(Indent (SameIndent ParticleSlotItem)*)?
   {
     let formFactor = null;
@@ -178,6 +178,7 @@ ParticleSlot
       kind: 'particle-slot',
       name,
       isRequired: optional(isRequired, isRequired => isRequired[0] == 'must', false),
+      isSet: !!isSet,
       formFactor,
       providedSlots
     };
@@ -197,7 +198,7 @@ SlotFormFactor
   }
 
 ParticleProvidedSlot
-  = 'provide' whiteSpace name:(lowerIdent) eolWhiteSpace items:(Indent (SameIndent ParticleProvidedSlotItem)*)?
+  = 'provide' whiteSpace isSet:('set of' whiteSpace)? name:(lowerIdent) eolWhiteSpace items:(Indent (SameIndent ParticleProvidedSlotItem)*)?
   {
     let formFactor = null;
     let views = [];
@@ -214,6 +215,7 @@ ParticleProvidedSlot
     return {
       kind: 'provided-slot',
       name,
+      isSet: !!isSet,
       formFactor,
       views
     };
