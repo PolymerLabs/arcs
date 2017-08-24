@@ -26,32 +26,33 @@ http://polymer.github.io/PATENTS.txt
   </template>
 
 <script>
-
-var parentMap = new Map();
-var lastID = 0;
-
-document.idMap = new Map();
-document.pendingActions = new Map();
-
-</script>
-
-<script>
   Polymer({
     is: 'strategy-explorer',
     properties: {
       results: Array
     },
+    reset: function() {
+      this.set("results", []);
+      this.parentMap = new Map();
+      this.lastID = 0;
+      this.idMap = new Map();
+      this.pendingActions = new Map();
+    },
+    attached: function() {
+      document.strategyExplorer = this;
+      this.reset();
+    },
     preparePopulation: function(population) {
       population = population.map(recipe => {
         let { result, score, derivation, hash } = recipe;
-        parentMap.set(recipe, lastID);
-        return { result, score, derivation, hash, id: lastID++ };
+        this.parentMap.set(recipe, this.lastID);
+        return { result, score, derivation, hash, id: this.lastID++ };
       });
 
       population.forEach(item => {
         item.derivation = item.derivation.map(derivItem => {
           if (derivItem.parent)
-            var parent = parentMap.get(derivItem.parent);
+            var parent = this.parentMap.get(derivItem.parent);
           if (derivItem.strategy)
             var strategy = derivItem.strategy.constructor.name;
           return { parent, strategy };
