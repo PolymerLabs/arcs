@@ -29,7 +29,7 @@ http://polymer.github.io/PATENTS.txt
                 await p.generate(),
                 await p.generate(),
                 await p.generate(),
-                await p.generate()].map(strategyExplorer.preparePopulation);
+                await p.generate()].map(pop => strategyExplorer.preparePopulation(pop));
   strategyExplorer.results = result;
 })();
 </script>
