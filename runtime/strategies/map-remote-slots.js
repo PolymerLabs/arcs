@@ -28,15 +28,16 @@ class MapRemoteSlots extends Strategy {
         let viewsMatch = false;
         if (views.length == 0) {
           viewsMatch = true;
-        }
-        var particle = slotConnection.particle;
-        for (var name in particle.connections) {
-          var connection = particle.connections[name];
-          if (!connection.view)
-            continue;
-          if (views.find(v => v.id == connection.view.id)) {
-            viewsMatch = true;
-            break;
+        } else {
+          var particle = slotConnection.particle;
+          for (var name in particle.connections) {
+            var connection = particle.connections[name];
+            if (!connection.view)
+              continue;
+            if (views.find(v => v.id == connection.view.id)) {
+              viewsMatch = true;
+              break;
+            }
           }
         }
         if (!viewsMatch) {
