@@ -30,7 +30,8 @@ http://polymer.github.io/PATENTS.txt
       }
     });
     document.addEventListener('generations', e => {
-      explorer.results = e.detail.map(explorer.preparePopulation);
+      explorer.reset();
+      setTimeout(() => explorer.results = e.detail.map(pop => explorer.preparePopulation(pop)), 0);
     });
   })();
 </script>

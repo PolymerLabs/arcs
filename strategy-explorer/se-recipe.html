@@ -86,7 +86,7 @@ http://polymer.github.io/PATENTS.txt
         shortHash: String,
       },
       attached: function() {
-        document.idMap.set(this.recipe.id, this);
+        document.strategyExplorer.idMap.set(this.recipe.id, this);
 
         this.ancestors = new Set();
         this.childrens = new Set();
@@ -97,7 +97,7 @@ http://polymer.github.io/PATENTS.txt
 
         this.recipe.derivation.forEach(derivation => {
           if (derivation.parent !== undefined) {
-            var newParent = document.idMap.get(derivation.parent);
+            var newParent = document.strategyExplorer.idMap.get(derivation.parent);
             if (newParent == undefined) {
               return;
             }
@@ -130,9 +130,9 @@ http://polymer.github.io/PATENTS.txt
             });
 
             if (newParent == undefined) {
-              if (!document.pendingActions.has(derivation.parent))
-                document.pendingActions.set(derivation.parent, []);
-              document.pendingActions.get(derivation.parent).push(setupContext);
+              if (!document.strategyExplorer.pendingActions.has(derivation.parent))
+                document.strategyExplorer.pendingActions.set(derivation.parent, []);
+              document.strategyExplorer.pendingActions.get(derivation.parent).push(setupContext);
             } else {
               setupContext(newParent);
             }
@@ -141,8 +141,8 @@ http://polymer.github.io/PATENTS.txt
         this.shortHash = this.recipe.hash.substring(this.recipe.hash.length - 4);
 
 
-        if (document.pendingActions.has(this.recipe.id)) {
-          document.pendingActions.get(this.recipe.id).forEach(action => action(this));
+        if (document.strategyExplorer.pendingActions.has(this.recipe.id)) {
+          document.strategyExplorer.pendingActions.get(this.recipe.id).forEach(action => action(this));
         }
 
         var recipeView = document.documentElement.querySelector('strategy-explorer').shadowRoot.querySelector('se-recipe-view');
