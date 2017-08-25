@@ -32,7 +32,7 @@ class Manifest {
     return this._id;
   }
   get recipes() {
-    return this._recipes;
+    return [...new Set(this._findAll(manifest => manifest._recipes))];
   }
   get particles() {
     return this._particles;
