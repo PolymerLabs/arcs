@@ -42,6 +42,17 @@ class RecipeUtil {
     return new Shape(recipe, pMap, vMap, vcMap);
   }
 
+  static recipeToShape(recipe) {
+    let particles = {};
+    var id = 0;
+    recipe.particles.forEach(particle => particles[particle.name] = particle);
+    let views = {};
+    recipe.views.forEach(view => views['v' + id++] = view);
+    let vcs = {};
+    recipe.viewConnections.forEach(vc => vcs[vc.particle.name + ':' + vc.name] = vc);
+    return new Shape(recipe, particles, views, vcs);
+  }
+
   static find(recipe, shape) {
 
     function _buildNewVCMatches(recipe, shapeVC, match, outputList) {
