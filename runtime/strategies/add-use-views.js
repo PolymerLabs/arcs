@@ -15,6 +15,9 @@ class AddUseViews extends Strategy {
   async generate(strategizer) {
     var results = Recipe.over(strategizer.generated, new class extends RecipeWalker {
       onRecipe(recipe) {
+        // Don't add use views while there are outstanding constraints
+        if (recipe.connectionConstraints.length > 0)
+          return;
         // Don't add use views to a recipe with free views
         var freeViews = recipe.views.filter(view => view.connections.length == 0);
         if (freeViews.length > 0)
