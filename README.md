@@ -6,8 +6,12 @@ Note that you need a **recent** version of Node because we use new ES6 features.
 
 ```
 $ npm install -g gulp-cli
-$ (cd runtime && npm install)
+$ npm install -g bower
 $ (cd tracelib && npm install)
+$ (cd strategizer && npm install)
+$ (cd runtime && npm install)
+$ (cd strategy-explorer && bower install)
+
 ```
 
 ## Test
