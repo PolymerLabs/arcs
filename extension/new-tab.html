@@ -61,7 +61,7 @@ http://polymer.github.io/PATENTS.txt
     let manifest = await Arcs.Manifest.load(manifestPath, loader);
     // setup the database
     Arcs.utils.prepareDataContext(db, arc, manifest);
-    // await loadBrowsingData(arc, manifest);
+    await loadBrowsingData(arc, manifest);
     // configure suggestions UI
     let ui = document.querySelector('suggestions-element');
     ui.arc = arc;
