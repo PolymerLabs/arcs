@@ -304,6 +304,30 @@ describe('manifest', function() {
     let manifest = await Manifest.load('a', loader, {registry});
     assert.equal(manifest.schemas.Bar.normative.value, 'Text');
   });
+  it('can find all imported recipes', async () => {
+    let loader = {
+      loadResource(path) {
+        return {
+          a: `
+              import 'b'
+              import 'c'
+              recipe`,
+          b: `
+              import 'c'
+              recipe`,
+          c: `recipe`,
+        }[path];
+      },
+      path(fileName) {
+        return fileName;
+      },
+      join(_, file) {
+        return file;
+      },
+    };
+    let manifest = await Manifest.load('a', loader);
+    assert.equal(manifest.recipes.length, 3)
+  });
   it('can parse a schema with union typing', async () => {
     let manifest = await Manifest.parse(`
       schema Foo
