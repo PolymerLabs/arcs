@@ -20,7 +20,7 @@ recipe
 
 # See [person]'s wishlist
 recipe
-  map as wishlist #wishlist
+  map #wishlist as wishlist
   ShowProducts
     list <- wishlist
 
@@ -33,7 +33,7 @@ recipe
   # Chooser.resultList -> AlsoOn.list
   # Chooser.choices -> AlsoOn.choices
   # TODO: wishlist view should have tag #giftlist - removed for now, until views with tags are properly resolved.
-  map as wishlist
+  map #wishlist as wishlist
   copy as shortlist
   Recommend
     population <- wishlist
@@ -59,6 +59,6 @@ recipe
 
 # TODO: move these to separate manifests for claire's wishlist / page
 view PageProducts of [Product] in 'products.json'
-view ClairesWishlist of [Product] in 'wishlist.json'
+view ClairesWishlist of [Product] #wishlist in 'wishlist.json'
 view APerson of Person in 'people.json'
 #view ThePeople of Person in 'people.json'
