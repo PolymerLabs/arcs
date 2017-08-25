@@ -14,5 +14,5 @@
   "chrome_url_overrides" : {
     "newtab": "new-tab.html"
   },
-  "content_security_policy": "script-src 'self' https://sjmiles.github.io/ 'sha256-mjAl9GQORhwuWI3g16QYljGC1tHHNgJ8gQn995SPzcc='; object-src 'self'"
+  "content_security_policy": "script-src 'self' https://sjmiles.github.io/ 'sha256-mtsJriNNk74tAF71XVXPaIa3UzDL76U5EDvVGoYeTqI='; object-src 'self'"
 }

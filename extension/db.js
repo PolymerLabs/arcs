@@ -9,16 +9,19 @@
  */
 
 window.db = {
-  model: {
-    Product: [
-      {
-        name: "Minecraft Book",
-        category: "Books",
-        seller: "denile.com",
-        price: "$14.50",
-        shipDays: 7,
-        image: "assets/products/book.png"
-      }
-    ]
-  }
+  views: [
+    {
+      type: "Product",
+      model: [
+        {
+          name: "Minecraft Book",
+          category: "Books",
+          seller: "denile.com",
+          price: "$14.50",
+          shipDays: 7,
+          image: "assets/products/book.png"
+        }
+      ]
+    }
+  ]
 };
