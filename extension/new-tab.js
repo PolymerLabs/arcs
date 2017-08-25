@@ -5,10 +5,17 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
+
+// TODO(smalls) - there should be a better system of unique ids
+var faux_gid = 2000;
+
 /**
  * Load the current browsing data from all non-https tabs on all devices.
  */
 async function loadBrowsingData(arc, manifest) {
+
+  let entityKlass = manifest.findSchemaByName('Tab').entityClass();
+  let view = arc.createView(entityKlass.type.viewOf(), 'tabView'); // tabView could be 'anon'
 
   let devices = await new Promise((resolve) => chrome.sessions.getDevices(null, resolve));
   let tabs = [];
@@ -64,16 +71,16 @@ async function loadBrowsingData(arc, manifest) {
   }
 
   for (let [group, tabs] of groupTabMap) {
-    dumpEntities(arc, manifest, [].concat(...await Promise.all(tabs.map(tab => tabEntityMap.get(tab)))));
+    dumpEntities(view, entityKlass, [].concat(...await Promise.all(tabs.map(tab => tabEntityMap.get(tab)))));
   }
-
 }
 
 
-function dumpEntities(arc, manifest, entities) {
-
-  let entity = manifest.findSchemaByName('Tab').entityClass();
-  arc.commit(entities.map(p => new entity(p)));
+function dumpEntities(view, entityKlass, entities) {
+  for (let e of entities.map(p => new entityKlass(p))) {
+    e.id = faux_gid++;
+    view.store(e);
+  }
 }
 
 async function fetchEntities(tab) {
