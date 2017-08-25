@@ -23,6 +23,7 @@ class Manifest {
     this._particles = {};
     this._schemas = {};
     this._views = [];
+    this._viewTags = new Map();
     this._fileName = null;
     this._nextLocalID = 0;
     this._id = null;
@@ -50,7 +51,7 @@ class Manifest {
   }
   // TODO: newParticle, Schema, etc.
   // TODO: simplify() / isValid().
-  newView(type, name, id) {
+  newView(type, name, id, tags) {
     let view;
     if (type.isView) {
       view = new View(type, this, name, id);
@@ -58,6 +59,7 @@ class Manifest {
       view = new Variable(type, this, name, id);
     }
     this._views.push(view);
+    this._viewTags.set(view, tags);
     return view;
   }
   _find(manifestFinder) {
@@ -91,7 +93,9 @@ class Manifest {
     return this._find(manifest => manifest._views.find(view => view.id == id));
   }
   findViewsByType(type, options) {
-    return [...this._findAll(manifest => manifest._views.filter(view => view.type.equals(type)))];
+    var tags = options && options.tags ? options.tags : [];
+    var viewTags = this._viewTags;
+    return [...this._findAll(manifest => manifest._views.filter(view => view.type.equals(type) && tags.filter(tag => !viewTags.get(view).includes(tag)).length == 0))];
   }
   generateID() {
     return `${this.id}:${this._nextLocalID++}`;
@@ -365,6 +369,9 @@ class Manifest {
     if (id == null) {
       id = `${manifest._id}view${manifest._views.length}`
     }
+    let tags = item.tags;
+    if (tags == null)
+      tags = [];
 
     // TODO: make this a util?
     let resolveSchema = name => {
@@ -376,7 +383,7 @@ class Manifest {
     };
     type = type.resolveSchemas(resolveSchema);
 
-    let view = manifest.newView(type, name, id);
+    let view = manifest.newView(type, name, id, tags);
     // TODO: How to set the version?
     // view.version = item.version;
     let source = loader.join(manifest.fileName, item.source);
