@@ -81,10 +81,10 @@ class DomParticle extends XenStateMixin(Particle) {
     this.when([new ViewChanges(views, config.views, 'change')], async () => {
       //log(`${this.info()}: invalidated by [ViewChanges]`);
       // acquire (async) list data from views
-      let data = await Promise.all(config.views.map(name => {
-        let view = views.get(name);
-        return view.toList ? view.toList() : view.get();
-      }));
+      let data = await Promise.all(config.views
+          .map(name => views.get(name))
+          .filter(view => view.canRead)
+          .map(view => view.toList ? view.toList() : view.get()));
       // convert view data (array) into props (dictionary)
       let props = config.views.reduce((props, name, i) => {
         let value = data[i];
