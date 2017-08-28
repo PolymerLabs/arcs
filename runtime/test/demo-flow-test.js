@@ -17,8 +17,6 @@ const Planner = require('../planner.js');
 const testUtil = require('./test-util.js');
 const MockSlotComposer = require('./mock-slot-composer.js');
 
-require("./trace-setup.js");
-
 describe('demo flow', function() {
   it.skip('flows like a demo', async function() {
     let loader = new Loader();
