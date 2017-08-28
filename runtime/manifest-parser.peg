@@ -141,8 +141,8 @@ ParticleArgument
   { return {direction, type:type, name}; }
 
 ParticleArgumentDirection
-  = 'in' / 'out' / 'inout'
-  { return {direction: dir}; }
+  = 'inout' / 'in' / 'out'
+  { return text(); }
 
 ParticleArgumentType
   = (VariableType / EntityType / ListType)

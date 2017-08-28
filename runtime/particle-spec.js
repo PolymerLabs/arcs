@@ -21,16 +21,12 @@ class ConnectionSpec {
     this.type = rawData.type.assignVariableIds(typeVarMap);
   }
 
-  get mustCreate() {
-    return this.direction == "create";
-  }
-
   get isInput() {
-    return this.direction == "in";
+    return this.direction == "in" || this.direction == "inout";
   }
 
   get isOutput() {
-    return this.direction == "out" || this.direction == "create";
+    return this.direction == "out" || this.direction == "inout";
   }
 }
 

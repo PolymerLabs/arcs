@@ -31,8 +31,10 @@ function restore(entry, entityClass) {
 }
 
 class Viewlet {
-  constructor(view) {
+  constructor(view, canRead, canWrite) {
     this._view = view;
+    this.canRead = canRead;
+    this.canWrite = canWrite;
   }
   underlyingView() {
     return this._view;
@@ -78,18 +80,22 @@ class Viewlet {
 }
 
 class View extends Viewlet {
-  constructor(view) {
+  constructor(view, canRead, canWrite) {
     // TODO: this should talk to an API inside the PEC.
-    super(view);
+    super(view, canRead, canWrite);
   }
   query() {
     // TODO: things
   }
   async toList() {
     // TODO: remove this and use query instead
+    if (!this.canRead)
+      throw new Error("View not readable");
     return (await this._view.toList()).map(a => this._restore(a));
   }
   store(entity) {
+    if (!this.canWrite)
+      throw new Error("View not writeable");
     var serialization = this._serialize(entity);
     return this._view.store(serialization);
   }
@@ -100,18 +106,24 @@ class View extends Viewlet {
 }
 
 class Variable extends Viewlet {
-  constructor(variable) {
-    super(variable);
+  constructor(variable, canRead, canWrite) {
+    super(variable, canRead, canWrite);
   }
   async get() {
+      if (!this.canRead)
+        throw new Error("View not readable");
     var result = await this._view.get();
     var data = result == null ? undefined : this._restore(result);
     return data;
   }
   set(entity) {
+    if (!this.canWrite)
+      throw new Error("View not writeable");
     return this._view.set(this._serialize(entity));
   }
   clear() {
+    if (!this.canWrite)
+      throw new Error("View not writeable");
     this._view.clear();
   }
   async debugString() {
@@ -120,11 +132,15 @@ class Variable extends Viewlet {
   }
 }
 
-function viewletFor(view, isView) {
+function viewletFor(view, isView, canRead, canWrite) {
+  if (canRead == undefined)
+    canRead = true;
+  if (canWrite == undefined)
+    canWrite = true;
   if (isView || (isView == undefined && view instanceof underlyingView.View))
-    view = new View(view);
+    view = new View(view, canRead, canWrite);
   else
-    view = new Variable(view);
+    view = new Variable(view, canRead, canWrite);
   return view;
 }
 

@@ -164,13 +164,13 @@ class InnerPEC {
     var resolve = null;
     var p = new Promise((res, rej) => resolve = res);
     this._pendingLoads.push(p);
-    let clazz = await this._loader.loadParticleClass(spec);;
+    let clazz = await this._loader.loadParticleClass(spec);
     let particle = new clazz();
     this._particles.push(particle);
-
+    
     var viewMap = new Map();
     views.forEach((value, key) => {
-      viewMap.set(key, viewlet.viewletFor(value, value.type.isView));
+      viewMap.set(key, viewlet.viewletFor(value, value.type.isView, spec.connectionMap.get(key).isInput, spec.connectionMap.get(key).isOutput));
     });
 
     for (var view of viewMap.values()) {
