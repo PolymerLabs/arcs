@@ -9,3 +9,8 @@
 import 'Thing.manifest'
 
 schema Product extends Thing
+  optional
+    Text category
+    Text seller
+    Text price
+    Text shipDays

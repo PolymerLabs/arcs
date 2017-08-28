@@ -12,7 +12,7 @@ defineParticle(({Particle}) => {
   return class Hello extends Particle {
     setViews(views) {
       let text = views.get('text');
-      let entity = new text.entityClass({});
+      let entity = new (text.entityClass)({});
       entity.value = 'Hello, world!';
       text.set(entity);
     }

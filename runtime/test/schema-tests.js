@@ -18,7 +18,7 @@ describe('schema', function() {
     let manifest = await Manifest.load('../entities/Product.manifest', new Loader());
     let schema = manifest.findSchemaByName('Product');
     assert.deepEqual(schema.normative, {name: 'Text'});
-    assert.deepEqual(schema.optional, {description: 'Text', image: 'URL'});
+    assert.deepEqual(schema.optional, {description: 'Text', image: 'URL', category: 'Text', price: 'Text', seller: 'Text', shipDays: 'Text'});
     assert.equal(schema.name, "Product");
     assert.equal(schema.parent.name, "Thing");
   });
