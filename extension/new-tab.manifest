@@ -5,10 +5,15 @@
 # subject to an additional IP rights grant found at
 # http://polymer.github.io/PATENTS.txt
 
-import 'particles/ShowTabs/ShowTabs.manifest'
+import 'entities/WebPage.manifest'
+import 'entities/Answer.manifest'
+import 'entities/Question.manifest'
+import 'entities/VideoObject.manifest'
+
+import 'particles/ShowWebPages/ShowWebPages.manifest'
 
 recipe
-   ShowTabs
+   ShowWebPages
 
 import 'https://sjmiles.github.io/arcs-cdn/v0.01/particles/ShowProducts/ShowProducts.manifest'
 
