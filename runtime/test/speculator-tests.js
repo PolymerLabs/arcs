@@ -14,9 +14,6 @@ const assert = require('chai').assert;
 const Loader = require('../loader.js');
 const Manifest = require('../manifest.js');
 
-require("./trace-setup.js");
-
-
 describe('speculator', function() {
   it('can speculatively produce a relevance', async () => {
     let loader = new Loader();
