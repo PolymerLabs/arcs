@@ -14,8 +14,13 @@ var faux_gid = 2000;
  */
 async function loadBrowsingData(arc, manifest) {
 
-  let entityKlass = manifest.findSchemaByName('Tab').entityClass();
-  let view = arc.createView(entityKlass.type.viewOf(), 'tabView'); // tabView could be 'anon'
+  let entityDefinitions = {}
+  for (let k of ['Answer', 'WebPage', 'Question', 'VideoObject']) {
+    klass = manifest.findSchemaByName(k).entityClass();
+    view = arc.createView(klass.type.viewOf(), k+'View');
+
+    entityDefinitions[k] = {'klass': klass, 'view': view}
+  }
 
   let devices = await new Promise((resolve) => chrome.sessions.getDevices(null, resolve));
   let tabs = [];
@@ -71,13 +76,24 @@ async function loadBrowsingData(arc, manifest) {
   }
 
   for (let [group, tabs] of groupTabMap) {
-    dumpEntities(view, entityKlass, [].concat(...await Promise.all(tabs.map(tab => tabEntityMap.get(tab)))));
+    dumpEntities(entityDefinitions, [].concat(...await Promise.all(tabs.map(tab => tabEntityMap.get(tab)))));
   }
 }
 
 
-function dumpEntities(view, entityKlass, entities) {
-  for (let e of entities.map(p => new entityKlass(p))) {
+function dumpEntities(entityDefinitions, entityData) {
+  for (let ei of entityData) {
+    let type = ei['@type'].replace(/http[s]?:\/\/schema.org\//, '');
+    let ed = entityDefinitions[type];
+    if (! type in entityDefinitions || ! ed) {
+      console.log('missing type '+type+'; cant instantiate entity');
+      continue;
+    }
+
+    let klass = ed['klass'];
+    let view = ed['view'];
+
+    let e = new klass(ei);
     e.id = faux_gid++;
     view.store(e);
   }
