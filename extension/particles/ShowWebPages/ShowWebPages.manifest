@@ -5,9 +5,9 @@
 # subject to an additional IP rights grant found at
 # http://polymer.github.io/PATENTS.txt
 
-import '../../entities/Tab.manifest'
+import '../../entities/WebPage.manifest'
 
-particle ShowTabs in 'ShowTabs.js'
-  ShowTabs(in [Tab] list)
+particle ShowWebPages in 'ShowWebPages.js'
+  ShowWebPages(in [WebPage] list)
   consume root
   description `Show ${list}`
