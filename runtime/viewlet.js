@@ -55,7 +55,7 @@ class Viewlet {
     if (!entity.isIdentified())
       entity.identify(this.generateID());
     let id = entity[identifier];
-    let rawData = cloneData(entity.toLiteral());
+    let rawData = entity.dataClone();
     return {
       id,
       rawData
@@ -110,8 +110,8 @@ class Variable extends Viewlet {
     super(variable, canRead, canWrite);
   }
   async get() {
-      if (!this.canRead)
-        throw new Error("View not readable");
+    if (!this.canRead)
+      throw new Error("View not readable");
     var result = await this._view.get();
     var data = result == null ? undefined : this._restore(result);
     return data;

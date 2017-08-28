@@ -19,9 +19,9 @@ describe('entity', function() {
   it('can be created, stored, and restored', async () => {
     let schema = new Schema({name: 'TestSchema', sections: [{
         sectionType: 'normative',
-        fields: [{
+        fields: {
             'value': 'Text'
-        }]
+        }
     }]});
 
     let arc = new Arc({slotComposer: new SlotComposer({rootContext: 'test', affordance: 'test'})});

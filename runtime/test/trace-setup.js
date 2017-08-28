@@ -21,15 +21,15 @@ if (traceFile !== undefined) {
 var currentTrace = undefined;
 
 beforeEach(function() {
-  currentTrace = tracing.start({cat: "test", name: this.currentTest.title});
+  //currentTrace = tracing.start({cat: "test", name: this.currentTest.title});
 });
 
 afterEach(function() {
-  assert(currentTrace !== undefined);
-  currentTrace.end({});
-  currentTrace = undefined;
+  //assert(currentTrace !== undefined);
+  //currentTrace.end({});
+  //currentTrace = undefined;
 });
 
 after(function() {
-  tracing.dump();
+  //tracing.dump();
 });
