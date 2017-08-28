@@ -5,8 +5,10 @@
 # subject to an additional IP rights grant found at
 # http://polymer.github.io/PATENTS.txt
 
-import 'https://sjmiles.github.io/arcs-cdn/v0.01/entities/Thing.manifest'
+# replace this with a straight reference to https://schema.org/WebPage
 
-schema Tab extends Thing
-  normative
-    URL url
+import 'https://sjmiles.github.io/arcs-cdn/v0.02/entities/Thing.manifest'
+
+schema WebPage extends Thing
+  optional
+    URL url # technically this should be part of Thing, but it's not right now
