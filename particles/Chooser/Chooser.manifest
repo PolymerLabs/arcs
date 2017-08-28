@@ -9,7 +9,7 @@
 import '../../entities/Product.manifest'
 
 particle Chooser in 'Chooser.js'
-  Chooser(in [Product] choices, out [Product] resultList)
+  Chooser(in [Product] choices, inout [Product] resultList)
   affordance dom
   consume action
   description `Choose from ${choices}`
