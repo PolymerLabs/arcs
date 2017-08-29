@@ -7,7 +7,7 @@
 
 # replace this with a straight reference to https://schema.org/WebPage
 
-import 'https://sjmiles.github.io/arcs-cdn/v0.02/entities/Thing.manifest'
+import 'https://polymerlabs.github.io/arcs-cdn/v0.03/entities/Thing.manifest'
 
 schema WebPage extends Thing
   optional
