@@ -15,7 +15,10 @@ import 'particles/ShowWebPages/ShowWebPages.manifest'
 recipe
    ShowWebPages
 
-import 'https://sjmiles.github.io/arcs-cdn/v0.01/particles/ShowProducts/ShowProducts.manifest'
+
+import 'https://polymerlabs.github.io/arcs-cdn/v0.03/particles/ShowProducts/ShowProducts.manifest'
+
+view Products of [Product] in 'products.json'
 
 recipe
    ShowProducts
