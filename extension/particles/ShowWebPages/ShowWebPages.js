@@ -34,7 +34,15 @@ defineParticle(({DomParticle}) => {
     }
     _render(props, state) {
       let items = props.list.map(({rawData}) => {
-        return Object.assign({}, rawData);
+        // We're rendering a bunch of different things here, some of them
+        // don't have images or names. Let's use sane defaults.
+        let o = Object.assign(
+          {'image': 'artifacts/arc.png'},
+          rawData);
+        if (!o['name'] || o['name']==='') {
+          o['name'] = o['@type']+': '+o['url'];
+        }
+        return o;
       });
 
       return {
