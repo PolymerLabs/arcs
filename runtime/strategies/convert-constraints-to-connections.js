@@ -11,7 +11,12 @@ let RecipeWalker = require('../recipe/walker.js');
 let RecipeUtil = require('../recipe/recipe-util.js');
 
 class ConvertConstraintsToConnections extends Strategy {
+  constructor(arc) {
+    super();
+    this.affordance = arc.pec.slotComposer ? arc.pec.slotComposer.affordance : null;
+  }
   async generate(strategizer) {
+    var affordance = this.affordance;
     var results = Recipe.over(strategizer.generated, new class extends RecipeWalker {
       onRecipe(recipe) {
         var particles = new Set();
@@ -20,6 +25,9 @@ class ConvertConstraintsToConnections extends Strategy {
         var particlesByName = {};
         var viewCount = 0;
         for (var constraint of recipe.connectionConstraints) {
+          if (affordance && (!constraint.fromParticle.matchAffordance(affordance) || !constraint.toParticle.matchAffordance(affordance))) {
+            return;
+          }
           particles.add(constraint.fromParticle.name);
           if (map[constraint.fromParticle.name] == undefined) {
             map[constraint.fromParticle.name] = {};

@@ -10,6 +10,5 @@ import '../../entities/Product.manifest'
 
 particle Arrivinator in 'Arrivinator.js'
   Arrivinator(in [Product] list)
-  affordance dom
   consume set of annotation
   description `Estimate arrival dates for ${list}`
