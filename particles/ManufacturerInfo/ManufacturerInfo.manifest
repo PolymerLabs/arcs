@@ -10,6 +10,5 @@ import '../../entities/Product.manifest'
 
 particle ManufacturerInfo in 'ManufacturerInfo.js'
   ManufacturerInfo(in [Product] list)
-  affordance dom
   consume set of annotation3
   description `Check manufacturer information for ${list}`
