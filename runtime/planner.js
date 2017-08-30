@@ -61,7 +61,7 @@ class Planner {
       new InitPopulation(arc),
       new CreateViews(),
       new AssignViewsByTagAndType(arc),
-      new ConvertConstraintsToConnections(),
+      new ConvertConstraintsToConnections(arc),
       new MapConsumedSlots(),
       new AssignRemoteViews(arc),
       new CopyRemoteViews(arc),

@@ -96,6 +96,10 @@ class ParticleSpec {
     return this.slots.get(slotName);
   }
 
+  matchAffordance(affordance) {
+    return this.slots.size <= 0 || this.affordance.includes(affordance);
+  }
+
   toLiteral() {
     let {args, name, exposes, renders, transient, description, implFile} = this._model;
     args = args.map(a => {
