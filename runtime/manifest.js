@@ -215,7 +215,7 @@ class Manifest {
         let targetView = manifest.findViewByName(item.ref.name);
         // TODO: Error handling.
         assert(targetView, `Could not find view ${item.ref.name}`);
-        view.id = targetView.id;
+        view.mapToView(targetView);
       }
       view.tags = item.ref.tags;
       if (item.name) {
