@@ -11,18 +11,10 @@ import 'entities/Question.manifest'
 import 'entities/VideoObject.manifest'
 
 import 'particles/ShowWebPages/ShowWebPages.manifest'
+import 'particles/ProductsFromWebPages/ProductsFromWebPages.manifest'
 
-# create a static WebPage view
 view WebPageView of [WebPage] in 'webpages.json'
 
-# use that static view
-recipe
-  map WebPageView as webPages
-  ShowWebPages
-    list <- webPages
-
-# Use the dynamic view (populated directly in the arc by new-tab.js)
-# The input variable in ShowProducts seems to be required to be 'list'.
 recipe
   ShowWebPages
 
@@ -30,7 +22,15 @@ recipe
 import 'https://polymerlabs.github.io/arcs-cdn/v0.03/entities/Product.manifest'
 import 'https://polymerlabs.github.io/arcs-cdn/v0.03/particles/ShowProducts/ShowProducts.manifest'
 
-view Products of [Product] in 'products.json'
+recipe
+  copy as view0
+  create as view1
+
+  ProductsFromWebPages.list -> ShowWebPages.list
+
+  ProductsFromWebPages
+    list <- view0
+    products -> view1
 
 recipe
   ShowProducts
