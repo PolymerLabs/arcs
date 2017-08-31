@@ -60,7 +60,7 @@ recipe
   Interests
 
 # TODO: move these to separate manifests for claire's wishlist / page
-view PageProducts of [Product] in 'products.json'
-view ClairesWishlist of [Product] #wishlist in 'wishlist.json'
-view APerson of Person in 'people.json'
+view ProductsFromYourBrowsingContext of [Product] in 'products.json'
+view Claire_sWishlist of [Product] #wishlist in 'wishlist.json'
+view Claire of Person in 'people.json'
 #view ThePeople of Person in 'people.json'

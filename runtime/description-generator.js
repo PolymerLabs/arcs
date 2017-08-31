@@ -52,12 +52,18 @@ class DescriptionGenerator {
         }
         assert(this._descriptionsByView.get(view).type.equals(connection.type),
                `Unexpected type for view ${view}`);
+        let description = particle.spec.description ? particle.spec.description[connection.name] : undefined;
+        if (!description) {
+          if (view.id) {
+            description = this.relevance.newArc.findViewById(view.id).description
+          }
+        }
         // should verify same particle doesn't push twice?
         this._descriptionsByView.get(view)["descriptions"].push({
           connectionName: connection.name,
           recipeParticle: particle,
           direction: particle.spec.connectionMap.get(connection.name).isOutput ? "out" : "in",
-          description: particle.spec.description ? particle.spec.description[connection.name] : undefined
+          description
         });
       });
     });
