@@ -18,4 +18,5 @@ particle ShowProducts in 'ShowProducts.js'
     provide preamble
     provide postamble
     provide set of annotation
+      view list
   description `Show ${list}`

@@ -43,7 +43,7 @@ class Arc {
     let innerPecPort = this._pecFactory(pecId);
     this.pec = new OuterPec(innerPecPort, slotComposer, `${pecId}:outer`);
     if (slotComposer) {
-      slotComposer.pec = this.pec;
+      slotComposer.arc = this;
     }
     this.nextParticleHandle = 0;
 

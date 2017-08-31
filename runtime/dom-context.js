@@ -123,6 +123,11 @@ class SetDomContext {
   updateModel(model) {
     assert(model.items, `Model must contain items`);
     model.items.forEach(item => {
+      Object.keys(model).forEach(key => {
+        if (key != 'items') {
+          item[key] = model[key];
+        }
+      });
       if (this._contextBySubId[item.subId]) {
         this._contextBySubId[item.subId].updateModel(item);
       }

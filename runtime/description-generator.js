@@ -17,6 +17,7 @@ class DescriptionGenerator {
     this.recipe = recipe;  // this is a Plan (aka resolved Recipe)
     this.relevance = relevance;
     this._descriptionByParticle = new Map();
+    this._seenViews = new Set();
     this._description = this._generateParticleDescriptions(/* includeAll= */ false);
   }
   get description() {
@@ -29,7 +30,7 @@ class DescriptionGenerator {
   getViewShortDescription(particleName, connectionName) {
     let description = this.getViewDescription(particleName, connectionName);
     if (description)
-      return description.replace(/\([a-zA-Z:, ]*\)/ig, '');
+      return description.replace(/ \([a-zA-Z0-9:, <>\/]*\)/ig, '');
   }
   setViewDescriptions(arc) {
     // TODO: This should iterate arc.particles instead.
@@ -79,22 +80,32 @@ class DescriptionGenerator {
         this._descriptionByParticle.get(desc.recipeParticle.spec.name).set(desc.connectionName, description);
       });
     });
-    // Generate descriptions for particles and select ones for the significant ones for displayed suggestion.
+    // Select all particles descriptions to be displayed.
     let selectedDescriptions = [];
-    this.recipe.particles.forEach(particle => {
+    this._seenViews.clear();
+    this.recipe.particles.sort(this._sortParticles).forEach(particle => {
       if (particle.spec.description && particle.spec.description.pattern) {
-        let description = this._resolveTokens(particle.spec.description.pattern, particle, particle.spec);
-        if (description) {
-          this._descriptionByParticle.get(particle.name).set("description", description);
-          // Add description of particle that consumes the "root" slot as the first element.
-          if (Object.keys(particle.consumedSlotConnections).indexOf("root") >= 0)
-            selectedDescriptions.unshift(description);
-          else if (Object.keys(particle.consumedSlotConnections).length > 0 || includeAll)
-            selectedDescriptions.push(description);
+        let description = this._resolveTokens(particle.spec.description.pattern, particle);
+        if (description && (Object.keys(particle.consumedSlotConnections).length > 0 || includeAll)) {
+          selectedDescriptions.push(description);
+          Object.values(particle.connections).forEach(conn => this._seenViews.add(conn.view.id));
         }
       }
     });
+
     return selectedDescriptions.length > 0 ? selectedDescriptions.join(" and ") : this.recipe.name;
+  }
+  _sortParticles(p1, p2) {
+    // Root slot comes first.
+    if (Object.keys(p1.consumedSlotConnections).indexOf("root") >= 0)
+      return -1;
+    if (Object.keys(p2.consumedSlotConnections).indexOf("root") >= 0)
+      return 1;
+    let p1Slots = 0, p2Slots = 0;
+    p1.spec.slots.forEach((slotSpec) => { if (!slotSpec.isSet) ++p1Slots; });
+    p2.spec.slots.forEach((slotSpec) => { if (!slotSpec.isSet) ++p2Slots; });
+    // The particle with most singleton slots is displayed first.
+    return p2Slots - p1Slots;
   }
   _resolveTokens(description, recipeParticle) {
     let tokens = description.match(/\${[a-zA-Z0-9::~\.\[\]]+}/g);
@@ -114,8 +125,7 @@ class DescriptionGenerator {
         // Executing this twice - 1st to generate the view's description, then if the view is part
         // of the particle description. Should instead call: this.getViewDescription(particleSpec.name, token)
         // here for the latter.
-        viewDescription =
-          this._resolveConnectionDescription(token, recipeParticle);
+        viewDescription = this._resolveConnectionDescription(token, recipeParticle);
       }
       if (!viewDescription) {
         return null;
@@ -149,8 +159,11 @@ class DescriptionGenerator {
       }
     }
     if (resultDescription) {
-      if (viewDescription && viewDescription.value && resultDescription.indexOf(viewDescription.value) < 0)
+      if (viewDescription && viewDescription.value &&
+          (resultDescription.indexOf(viewDescription.value) < 0) &&
+          !this._seenViews.has(connection.view.id)) {
         return `${resultDescription} (${viewDescription.value})`;
+      }
       return resultDescription;
     }
     return viewDescription.value;

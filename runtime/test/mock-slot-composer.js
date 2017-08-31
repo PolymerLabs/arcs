@@ -18,7 +18,7 @@ let log = (!logging || global.logging === false) ? () => {} : console.log.bind(c
 
 class MockSlotComposer extends SlotComposer {
   constructor() {
-    super(/* rootContext= */ "dummy-context", /* affordance= */ "mock");
+    super({ rootContext: "dummy-context", affordance: "mock"});
     this.expectQueue = [];
     this.onExpectationsComplete = () => undefined;
   }
