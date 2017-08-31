@@ -33,8 +33,6 @@ defineParticle(({DomParticle}) => {
           return {
             subId,
             notAlsoOn,
-            // TODO: remove this hack, once views descriptions are fixed.
-            'choices.description': "Claire's wishlist"
           };
         })
       };

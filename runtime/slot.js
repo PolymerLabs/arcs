@@ -12,14 +12,17 @@
 const assert = require('assert');
 
 class Slot {
-  constructor(consumeConn) {
+  constructor(consumeConn, arc) {
     assert(consumeConn);
+    assert(arc);
     this._consumeConn = consumeConn;
+    this._arc = arc;
     this.startRenderCallback = null;
     this.stopRenderCallback = null;
 
   }
   get consumeConn() { return this._consumeConn; }
+  get arc() { return this._arc; }
 
   setContext(context) {
     // do nothing, if context unchanged.
@@ -56,6 +59,18 @@ class Slot {
         slotName: this.consumeConn.name
       });
     }
+  }
+  populateViewDescriptions() {
+    let descriptions = {};
+    Object.values(this.consumeConn.particle.connections).forEach(viewConn => {
+      if (viewConn.view  && viewConn.view.id) {
+        let view = this._arc.findViewById(viewConn.view.id);
+        assert(view, `Cannot find view ${viewConn.view.id} for connection ${viewConn.name} in the arc`);
+        if (view.description)
+          descriptions[`${viewConn.name}.description`] = view.description;
+      }
+    });
+    return descriptions;
   }
   // absract
   get context() { assert('not implemented'); }

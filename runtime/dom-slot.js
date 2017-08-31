@@ -16,8 +16,8 @@ const {DomContext, SetDomContext} = require('./dom-context.js');
 let templates = new Map();
 
 class DomSlot extends Slot {
-  constructor(consumeConn) {
-    super(consumeConn);
+  constructor(consumeConn, arc) {
+    super(consumeConn, arc);
     this._templateName = `${this.consumeConn.particle.name}::${this.consumeConn.name}`;
     this._context = null;
     this._model = null;
@@ -79,7 +79,6 @@ class DomSlot extends Slot {
     }
     return this._doRender();
   }
-
   _doRender() {
     assert(this.context);
 
@@ -94,6 +93,7 @@ class DomSlot extends Slot {
     //}
 
     if (this._model) {
+      this._model = Object.assign(this._model, this.populateViewDescriptions());
       this.context.updateModel(this._model);
     }
   }

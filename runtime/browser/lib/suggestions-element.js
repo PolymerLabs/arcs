@@ -58,11 +58,11 @@ class SuggestionsElement extends HTMLElement {
     }
   }
 
-  add({plan, description, rank, hash}, index) {
+  add({plan, descriptionGenerator, rank, hash}, index) {
     let model = {
       index,
-      innerHTML: description,
-      onclick: () => { this.choose(plan); }
+      innerHTML: descriptionGenerator.description,
+      onclick: () => { this.choose(plan, descriptionGenerator); }
     };
     this.container.insertBefore(
       Object.assign(document.createElement("suggest"), model),
@@ -70,12 +70,13 @@ class SuggestionsElement extends HTMLElement {
     ).setAttribute("hash", hash);
   }
 
-  choose(plan) {
+  choose(plan, descriptionGenerator) {
     this.toast.open = false;
     // TODO(sjmiles): wait for toast animation
     setTimeout(() => {
       this.container.textContent = '';
       this.arc.instantiate(plan);
+      descriptionGenerator.setViewDescriptions(this.arc);
       this.callback();
     }, 80);
   }

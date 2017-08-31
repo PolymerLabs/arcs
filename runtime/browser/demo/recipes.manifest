@@ -66,5 +66,4 @@ view PageProducts of [Product] in 'products.json'
 view ClairesWishlist of [Product] #wishlist in 'wishlist.json'
   description `Claire's wishlist`
 view APerson of Person in 'people.json'
-  description `Claire`
 #view ThePeople of Person in 'people.json'

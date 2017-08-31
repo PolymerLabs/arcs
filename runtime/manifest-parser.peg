@@ -98,6 +98,7 @@ Particle
       // Add default affordance
       affordance.push('dom');
     }
+    affordance.push('mock');
 
     // Populate old particle spec "renders" and "exposes" fields.
     // TODO(mmandlis): get rid of it when migrated to new specs.
