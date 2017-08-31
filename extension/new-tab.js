@@ -49,9 +49,6 @@ function instantiate_arcs(doc) {
   go(window);
 }
 
-/**
- * Load the current browsing data from all non-https tabs on all devices.
- */
 async function loadBrowsingData(arc, manifest) {
 
   let entityDefinitions = {}
