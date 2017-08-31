@@ -37,7 +37,10 @@
         <ul>
           {% for item in site.data.pages %}
           {% assign class = nil %}
-          {% if page.url contains item.url or (page.url == '/' and item.title == 'Home') %}
+          {% if page.url contains item.url %}
+            {% assign class = 'active' %}
+          {% endif %}
+          {% if page.url == '/' and item.title == 'Home' %}
             {% assign class = 'active' %}
           {% endif %}
           <li>
