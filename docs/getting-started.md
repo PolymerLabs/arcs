@@ -73,7 +73,7 @@ Slots are named UI placeholders where particles can render content into. E.g., t
 
 Slots are also the mechanism by which UI composes in Arcs. E.g., the Greet particle renders DOM inside the root slot and exposes a new slot for another particle to render additional content into its DOM. The Greet DOM output contains the following tag: `<div slotid="customgreeting"></div>`. The PersonalGreet particle can then specify in its manifest that it wants to be rendered into the 'customgreeting' slot.
 
-TODO: describe more complex slot composition (e.g., interleaved lists).
+TODO: describe more complex slot composition (e.g., set slots).
 
 
 ## Particles
@@ -108,4 +108,3 @@ It's important to note that DOM particles *don't* have unrestricted access to th
 *   TODO: describe more complex attribute substitution (%= and $=).
 
 The Arcs library also includes various web components to allow more complex features such as rendering a list of templated content. A complete list of supported web components can be found [here](https://github.com/PolymerLabs/arcs/tree/master/runtime/browser/lib).
-
