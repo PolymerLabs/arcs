@@ -1,10 +1,11 @@
-// @license
-// Copyright (c) 2017 Google Inc. All rights reserved.
-// This code may only be used under the BSD style license found at
-// http://polymer.github.io/LICENSE.txt
-// Code distributed by Google as part of this project is also
-// subject to an additional IP rights grant found at
-// http://polymer.github.io/PATENTS.txt
+/** @license
+ * Copyright (c) 2017 Google Inc. All rights reserved.
+ * This code may only be used under the BSD style license found at
+ * http://polymer.github.io/LICENSE.txt
+ * Code distributed by Google as part of this project is also
+ * subject to an additional IP rights grant found at
+ * http://polymer.github.io/PATENTS.txt
+ */
 'use strict';
 
 const Identifier = require('./identifier.js');
@@ -79,6 +80,11 @@ class Viewlet {
   }
 }
 
+/** @class View
+ * A handle on a set of Entity data. A particle's manifest dictates
+ * the types of views that need to be connected to that particle, and
+ * the current recipe identifies which views are connected.
+ */
 class View extends Viewlet {
   constructor(view, canRead, canWrite) {
     // TODO: this should talk to an API inside the PEC.
@@ -87,12 +93,23 @@ class View extends Viewlet {
   query() {
     // TODO: things
   }
+  /** @method toList()
+   * Returns a list of the Entities contained by the View.
+   * throws: Error if this view is not configured as a readable view (i.e. 'in' or 'inout')
+     in the particle's manifest.
+   */
   async toList() {
     // TODO: remove this and use query instead
     if (!this.canRead)
       throw new Error("View not readable");
     return (await this._view.toList()).map(a => this._restore(a));
   }
+
+  /** @method store(entity)
+   * Stores a new entity into the View.
+   * throws: Error if this view is not configured as a writeable view (i.e. 'out' or 'inout')
+     in the particle's manifest.
+   */
   store(entity) {
     if (!this.canWrite)
       throw new Error("View not writeable");
@@ -105,10 +122,21 @@ class View extends Viewlet {
   }
 }
 
+/** @class Variable
+ * A handle on a single entity. A particle's manifest dictates
+ * the types of views that need to be connected to that particle, and
+ * the current recipe identifies which views are connected.
+ */
 class Variable extends Viewlet {
   constructor(variable, canRead, canWrite) {
     super(variable, canRead, canWrite);
   }
+
+  /** @method get()
+  * Returns the Entity contained by the Variable.
+  * throws: Error if this variable is not configured as a readable view (i.e. 'in' or 'inout')
+    in the particle's manifest.
+   */
   async get() {
     if (!this.canRead)
       throw new Error("View not readable");
@@ -116,11 +144,23 @@ class Variable extends Viewlet {
     var data = result == null ? undefined : this._restore(result);
     return data;
   }
+
+  /** @method set(entity)
+   * Stores a new entity into the Variable, replacing any existing entity.
+   * throws: Error if this variable is not configured as a writeable view (i.e. 'out' or 'inout')
+     in the particle's manifest.
+   */
   set(entity) {
     if (!this.canWrite)
       throw new Error("View not writeable");
     return this._view.set(this._serialize(entity));
   }
+
+  /** @method clear()
+   * Clears any entity currently in the Variable.
+   * throws: Error if this variable is not configured as a writeable view (i.e. 'out' or 'inout')
+     in the particle's manifest.
+   */
   clear() {
     if (!this.canWrite)
       throw new Error("View not writeable");
