@@ -1,0 +1,23 @@
+---
+layout: default
+title: API Reference
+---
+<api-doc></api-doc>
+
+<script>
+  const url = "https://api.github.com/repos/PolymerLabs/arcs-cdn/contents?access_token=0899ff5a191a7e306508f53ee729cb6487840618";
+  
+  fetch(url).then(function(response) {
+    return response.json();
+  }).then(function(response) {
+    let html = [];
+
+    response.filter(e => {
+      return /v(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)/.test(e.name);
+    }).map(e => {
+      html.push(`<a href="https://polymerlabs.github.io/arcs-cdn/${e.name}/index.html" target="_blank">${e.name}</a><br>`);
+    });
+
+    document.querySelector('api-doc').innerHTML = html.join(' ');
+  });
+</script>
