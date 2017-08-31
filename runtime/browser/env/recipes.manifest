@@ -1,0 +1,66 @@
+# Copyright (c) 2017 Google Inc. All rights reserved.
+# This code may only be used under the BSD style license found at
+# http://polymer.github.io/LICENSE.txt
+# Code distributed by Google as part of this project is also
+# subject to an additional IP rights grant found at
+# http://polymer.github.io/PATENTS.txt
+
+import '../../../particles/ShowProducts/ShowProducts.manifest'
+import '../../../particles/Recommend/Recommend.manifest'
+import '../../../particles/Chooser/Chooser.manifest'
+import '../../../particles/AlsoOn/AlsoOn.manifest'
+import '../../../particles/GiftList/GiftList.manifest'
+import '../../../particles/Arrivinator/Arrivinator.manifest'
+import '../../../particles/ManufacturerInfo/ManufacturerInfo.manifest'
+import '../../../particles/Interests/Interests.manifest'
+
+# Create shortlist with [product, ...]
+recipe
+   ShowProducts
+
+# See [person]'s wishlist
+recipe
+  map #wishlist as wishlist
+  ShowProducts
+    list <- wishlist
+
+# Create shortlist with [product, ...] and suggest similar products from [person]'s wish list
+recipe
+  Chooser.choices -> Recommend.recommendations
+  Chooser.resultList -> ShowProducts.list
+  Chooser.resultList -> Recommend.known
+  # TODO: AlsoOn particle requires proper view descriptions (eg "Claire's wishlist")
+  # Chooser.resultList -> AlsoOn.list
+  # Chooser.choices -> AlsoOn.choices
+  # TODO: wishlist view should have tag #giftlist - removed for now, until views with tags are properly resolved.
+  map #wishlist as wishlist
+  copy as shortlist
+  Recommend
+    population <- wishlist
+  ShowProducts
+    list <- shortlist
+
+# Buying for [person]'s [occasion] in [timeframe]? Product [X] arrives too late.
+recipe
+  map as view1
+  GiftList
+    person <- view1
+  Arrivinator
+
+# Check manufacturer information for products.
+recipe
+  ManufacturerInfo
+
+# TODO: Check for newer versions, e.g. there is a new version of [product].
+# TODO: [Manufacturer] recommends [product] instead of [product] for 13 year olds.
+# TODO: See awards, e.g. [product] winning the [award].
+
+# Recommendations based on Claire's interest in field hockey.
+recipe
+  Interests
+
+# TODO: move these to separate manifests for claire's wishlist / page
+view PageProducts of [Product] in 'products.json'
+view ClairesWishlist of [Product] #wishlist in 'wishlist.json'
+view APerson of Person in 'people.json'
+#view ThePeople of Person in 'people.json'
