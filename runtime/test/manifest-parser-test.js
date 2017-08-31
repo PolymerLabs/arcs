@@ -80,6 +80,7 @@ describe('manifest parser', function() {
     parse(`
       schema Person
       view View0 of [Person] in 'person.json'
+        description \`my view\`
       view View1 of Person 'some-id' @7 in 'people.json'`);
   });
 });

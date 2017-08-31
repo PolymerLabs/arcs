@@ -44,7 +44,9 @@ ManifestItem
 // TODO: Entity syntax.
 ManifestView
   = 'view' whiteSpace name:upperIdent whiteSpace 'of' whiteSpace type:(ListType / EntityType) id:(whiteSpace id)? version:(whiteSpace Version)? tags:(whiteSpace TagList)? whiteSpace 'in' whiteSpace source:id eolWhiteSpace
+    items:(Indent (SameIndent ManifestViewItem)+)?
   {
+    items = optional(items, extractIndented, []);
     return {
       kind: 'view',
       name,
@@ -53,8 +55,15 @@ ManifestView
       version: optional(version, version => version[1], null),
       tags: optional(tags, tags => tags[1], null),
       source,
+      description: items.length > 0 ? items[0][2] : null
     };
   }
+
+ManifestViewItem
+  = ManifestViewDescription
+
+ManifestViewDescription
+  = 'description' whiteSpace DescriptionPattern eolWhiteSpace
 
 Import
   = 'import' whiteSpace path:id eolWhiteSpace
@@ -235,7 +244,7 @@ ParticleProvidedSlotView
   { return {view}; }
 
 ParticleDescription
-  = 'description' whiteSpace pattern:ParticleDescriptionPattern eolWhiteSpace viewDescriptions:(Indent (SameIndent ParticleViewDescription)+)?
+  = 'description' whiteSpace pattern:DescriptionPattern eolWhiteSpace viewDescriptions:(Indent (SameIndent ParticleViewDescription)+)?
   {
     viewDescriptions = optional(viewDescriptions, extractIndented, []);
     return {
@@ -245,11 +254,11 @@ ParticleDescription
   }
 
 ParticleViewDescription
-  = name:lowerIdent whiteSpace pattern:ParticleDescriptionPattern eolWhiteSpace
+  = name:lowerIdent whiteSpace pattern:DescriptionPattern eolWhiteSpace
   {
     return { name, pattern };
   }
-ParticleDescriptionPattern = '`' pattern:([^`]+) '`' { return pattern.join(''); }
+DescriptionPattern = '`' pattern:([^`]+) '`' { return pattern.join(''); }
 
 Recipe
   = 'recipe' name:(whiteSpace upperIdent)? tags:(whiteSpace TagList)? eolWhiteSpace items:(Indent (SameIndent RecipeItem)*)?

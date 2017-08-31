@@ -406,7 +406,7 @@ ${e.message}
     type = type.resolveSchemas(resolveSchema);
 
     let view = manifest.newView(type, name, id, tags);
-    view.description = view.name.replace(/([A-Z])/g, ' $1').replace('_', "'").trim();
+    view.description = item.description;
     // TODO: How to set the version?
     // view.version = item.version;
     let source = loader.join(manifest.fileName, item.source);
