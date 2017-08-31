@@ -130,7 +130,29 @@ class Manifest {
     try{
       items = parser.parse(content);
     } catch (e) {
-      console.log(e);
+      if (e.name == 'SyntaxError' && e.location) {
+        let lines = content.split('\n');
+        let line = lines[e.location.start.line - 1];
+        let span = 1;
+        if (e.location.end.line == e.location.start.line) {
+          span = e.location.end.column - e.location.start.column;
+        } else {
+          span = line.length - e.location.start.column;
+        }
+        span = Math.max(1, span);
+        let highlight = '';
+        for (let i = 0; i < e.location.start.column - 1; i++) {
+          highlight += ' ';
+        }
+        for (let i = 0; i < span; i++) {
+          highlight += '^';
+        }
+        let message = `Syntax error in '${fileName}' line ${e.location.start.line}.
+${e.message}
+  ${line}
+  ${highlight}`;
+        throw new SyntaxError(message);
+      }
       throw e;
     }
     let manifest = new Manifest();
