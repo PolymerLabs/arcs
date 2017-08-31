@@ -13,14 +13,14 @@ const assert = require('assert');
 const Slot = require('./slot.js');
 const DomSlot = require('./dom-slot.js');
 
-function createNewSlot(affordance, consumeConn) {
+function createNewSlot(affordance, consumeConn, arc) {
   switch(affordance) {
     case "dom":
     case "dom-touch":
     case "vr":
-      return new DomSlot(consumeConn);
+      return new DomSlot(consumeConn, arc);
     case "mock":
-      return new Slot(consumeConn);
+      return new Slot(consumeConn, arc);
     default:
       assert("unsupported affordance ", affordance);
   }
@@ -44,9 +44,9 @@ class SlotComposer {
     // Create slots for each of the recipe's particles slot connections.
     recipeParticles.forEach(p => {
       Object.values(p.consumedSlotConnections).forEach(cs => {
-        let slot = createNewSlot(this.affordance, cs);
-        slot.startRenderCallback = this.pec.startRender.bind(this.pec);
-        slot.stopRenderCallback = this.pec.stopRender.bind(this.pec);
+        let slot = createNewSlot(this.affordance, cs, this.arc);
+        slot.startRenderCallback = this.arc.pec.startRender.bind(this.arc.pec);
+        slot.stopRenderCallback = this.arc.pec.stopRender.bind(this.arc.pec);
         slot.innerSlotsUpdateCallback = this.updateInnerSlots.bind(this);
         newSlots.push(slot);
       });
@@ -81,7 +81,7 @@ class SlotComposer {
     assert(slot, `Cannot find slot ${slotName} for particle ${particle.name}`);
 
     // Set the slot's new content.
-    slot.setContent(content, eventlet => this.pec.sendEvent(particle, slotName, eventlet));
+    slot.setContent(content, eventlet => this.arc.pec.sendEvent(particle, slotName, eventlet));
   }
 
   updateInnerSlots(slot) {

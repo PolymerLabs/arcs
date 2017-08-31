@@ -81,13 +81,14 @@ describe('description generator', function() {
       schema Far
       particle TestParticle in 'test-particle.js'
         TestParticle(in Foo foo, out Bar bar)
-        consume root
+        consume action
         description \`Increment \${foo} and return \${bar}\`
           foo \`my-foo\`
           bar \`my-bar\`
       particle OtherParticle in 'other-particle.js'
         OtherParticle(in Bar bar, out [Far] fars)
         consume root
+          provide action
         description \`Get \${fars} from \${bar}\`
           fars \`my-fars-list\`
       recipe MyRecipe

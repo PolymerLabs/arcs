@@ -91,7 +91,7 @@ class Planner {
       trace.resume({args: {
         generated: this.strategizer.generated.length,
       }});
-      if (generations !== null) {
+      if (generations) {
         generations.push(generated);
       }
 
@@ -128,7 +128,8 @@ class Planner {
       let relevance = await trace.wait(() => speculator.speculate(this._arc, plan));
       trace.resume();
       let rank = relevance.calcRelevanceScore();
-      let description = new DescriptionGenerator(plan, relevance).description;
+      let descriptionGenerator = new DescriptionGenerator(plan, relevance);
+
       let hash = ((hash) => { return hash.substring(hash.length - 4)}) (await plan.digest());
       // TODO: Move this logic inside speculate, so that it can stop the arc
       // before returning.
@@ -136,7 +137,7 @@ class Planner {
       results.push({
         plan,
         rank,
-        description,
+        descriptionGenerator,
         hash
       });
     }
