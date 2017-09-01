@@ -81,9 +81,11 @@ class Viewlet {
 }
 
 /** @class View
- * A handle on a set of Entity data. A particle's manifest dictates
- * the types of views that need to be connected to that particle, and
- * the current recipe identifies which views are connected.
+ * A handle on a set of Entity data. Note that, as a set, a View can only contain
+ * a single version of an Entity for each given ID. Further, no order is implied
+ * by the set. A particle's manifest dictates the types of views that need to be
+ * connected to that particle, and the current recipe identifies which views are
+ * connected.
  */
 class View extends Viewlet {
   constructor(view, canRead, canWrite) {
@@ -93,7 +95,7 @@ class View extends Viewlet {
   query() {
     // TODO: things
   }
-  /** @method toList()
+  /** @method async toList()
    * Returns a list of the Entities contained by the View.
    * throws: Error if this view is not configured as a readable view (i.e. 'in' or 'inout')
      in the particle's manifest.
@@ -132,8 +134,9 @@ class Variable extends Viewlet {
     super(variable, canRead, canWrite);
   }
 
-  /** @method get()
-  * Returns the Entity contained by the Variable.
+  /** @method async get()
+  * Returns the Entity contained by the Variable, or undefined if the Variable
+  * is cleared.
   * throws: Error if this variable is not configured as a readable view (i.e. 'in' or 'inout')
     in the particle's manifest.
    */
