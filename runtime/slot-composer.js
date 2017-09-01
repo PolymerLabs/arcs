@@ -104,23 +104,23 @@ class SlotComposer {
       assert(slot.consumeConn.targetSlot);
       Object.values(slot.consumeConn.providedSlots).forEach(ps => {
         if (!availableSlots[ps.name]) {
-          availableSlots[ps.name] = {};
+          availableSlots[ps.name] = [];
         }
         let psId = ps.id || `slotid-${this._nextSlotId++}`;
         ps.id = psId;
-        // TODO(mmandlis): availableSlots[ps.name] should be an array of slots,
-        // in case slot with the same name if provided by more than one particle.
-        availableSlots[ps.name] = {
+        let providedSlotSpec = slot.consumeConn.slotSpec.providedSlots.find(psSpec => psSpec.name == ps.name);
+        availableSlots[ps.name].push({
           id: psId,
           count: ps.consumeConnections.length,
+          providedSlotSpec,
           views: ps.viewConnections.map(vc => vc.view)
-        };
+        });
       });
     });
 
     // Populate default "root" slot, if not available yet.
     assert(!availableSlots["root"], `Root slot cannot be provided`);
-    availableSlots["root"] = {id:"r0", count:0, views: []};
+    availableSlots["root"] = [{id:"r0", count:0, views: [], providedSlotSpec: {isSet: false}}];
 
     return availableSlots;
   }

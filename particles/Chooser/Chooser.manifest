@@ -12,6 +12,6 @@ particle Chooser in 'Chooser.js'
   Chooser(in [Product] choices, inout [Product] resultList)
   affordance dom
   consume action
-  # annotation slot will be provided, as soon as SlotComposer and MapRemoteSlots strategy support it.
+  # annotation slot will be provided, when strategizer supports it well.
   #  provide set of annotation
   description `Choose from ${choices}`

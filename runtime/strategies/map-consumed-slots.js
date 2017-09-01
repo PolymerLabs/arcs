@@ -20,8 +20,12 @@ class MapConsumedSlots extends Strategy {
           if (slotConnection.name != slot.name)
             return false;
 
-          // TODO: verify isSet matches the map-remote-slots and map-consumed strategies.
+          let providedSlotSpec =
+              slot.sourceConnection.slotSpec.providedSlots.find(ps => ps.name == slotConnection.name);
+          if (slotConnection.slotSpec.isSet != providedSlotSpec.isSet)
+            return;
 
+          // Verify view connections match.
           var views = slot.viewConnections.map(connection => connection.view);
           if (views.length == 0) {
             return true;
