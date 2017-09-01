@@ -69,9 +69,27 @@ class DomContext {
   getInnerContext(innerSlotName) {
     return this._innerContextBySlotName[innerSlotName];
   }
+  isDirectInnerSlot(slot) {
+    let parentNode = slot.parentNode;
+    while (parentNode) {
+      if (parentNode == this._context) {
+        return true;
+      }
+      if (parentNode.getAttribute("slotid")) {
+        // this is an inner slot of an inner slot.
+        return false;
+      }
+      parentNode = parentNode.parentNode;
+    }
+    assert(false);
+  }
   initInnerContexts(slotSpec) {
     this._innerContextBySlotName = {};
     Array.from(this._context.querySelectorAll("[slotid]")).forEach(s => {
+      if (!this.isDirectInnerSlot(s)) {
+        // Skip inner slots of an inner slot of the given slot.
+        return;
+      }
       let slotId = s.getAttribute('slotid');
       let providedSlotSpec = slotSpec.providedSlots.find(ps => ps.name == slotId);
       if (providedSlotSpec) {  // Skip non-declared slots

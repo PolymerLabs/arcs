@@ -24,34 +24,43 @@ class MapRemoteSlots extends Strategy {
         if (remoteSlots[slotConnection.name] == undefined)
           return;
 
-        // TODO: verify isSet matches the map-remote-slots and map-consumed strategies.
+        let matchingSlots = remoteSlots[slotConnection.name].filter(remoteSlot => {
+          //debugger;
+          if (slotConnection.slotSpec.isSet != remoteSlot.providedSlotSpec.isSet) {
+            return false;
+          }
 
-        // TODO: remoteSlots[name] should be an array, for the case when a slot
-        // with the same name is provided by multiple particles (eg ShowProducts and Chooser)
-        var views = remoteSlots[slotConnection.name].views;
-        let viewsMatch = false;
-        if (views.length == 0) {
-          viewsMatch = true;
-        } else {
-          var particle = slotConnection.particle;
-          for (var name in particle.connections) {
-            var connection = particle.connections[name];
-            if (!connection.view)
-              continue;
-            if (views.find(v => v.id == connection.view.id)) {
-              viewsMatch = true;
-              break;
+          var views = remoteSlots[slotConnection.name][0].views;
+          let viewsMatch = false;
+          if (views.length == 0) {
+            return true;
+          } else {
+            var particle = slotConnection.particle;
+            for (var name in particle.connections) {
+              var connection = particle.connections[name];
+              if (!connection.view)
+                continue;
+              if (views.find(v => v.id == connection.view.id)) {
+                return true;
+              }
             }
           }
-        }
-        if (!viewsMatch) {
+          return false;
+        });
+        if (matchingSlots.length == 0) {
           return;
         }
+        matchingSlots.sort((s1, s2) => {
+          let score1 = 1 - s1.count;
+          let score2 = 1 - s2.count;
+          return score2 - score1;
+        });
+        let remoteSlotId = matchingSlots[0].id;
+        let score = 1 - matchingSlots[0].count;
 
-        var score = 1 - remoteSlots[slotConnection.name].count;
         return (recipe, slotConnection) => {
           let slot = recipe.newSlot(slotConnection.name);
-          slot.id = remoteSlots[slotConnection.name].id;
+          slot.id = remoteSlotId;
           slotConnection.connectToSlot(slot);
           return score;
         }
