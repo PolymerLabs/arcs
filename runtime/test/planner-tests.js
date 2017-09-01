@@ -28,7 +28,10 @@ describe('Planner', function() {
     var arc = new Arc({
       id: "test-plan-arc",
       context: manifest,
-      slotComposer: { affordance: 'dom', getAvailableSlots: (() => { return {root: {id: 'r0', count: 0, views: []}}; }) }
+      slotComposer: {
+        affordance: 'dom',
+        getAvailableSlots: (() => { return {root: [{id: 'r0', count: 0, views: [], providedSlotSpec: {isSet: false}}]}; })
+      }
     });
     let Person = manifest.findSchemaByName('Person').entityClass();
     let Product = manifest.findSchemaByName('Person').entityClass();
@@ -45,7 +48,10 @@ describe('Planner', function() {
     var arc = new Arc({
       id: "test-plan-arc",
       context: manifest,
-      slotComposer: { affordance: 'dom', getAvailableSlots: (() => { return {root: {id: 'r0', count: 0, views: []}}; }) }
+      slotComposer: {
+        affordance: 'dom',
+        getAvailableSlots: (() => { return {root: [{id: 'r0', count: 0, views: [], providedSlotSpec: {isSet: false}}]}; })
+      }
     });
     let Person = manifest.findSchemaByName('Person').entityClass();
     let Product = manifest.findSchemaByName('Product').entityClass();
