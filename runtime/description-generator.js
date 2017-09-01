@@ -29,8 +29,11 @@ class DescriptionGenerator {
   }
   getViewShortDescription(particleName, connectionName) {
     let description = this.getViewDescription(particleName, connectionName);
-    if (description)
+    if (description) {
+      // Removing view values from the description.
+      // TODO: use placeholder for view values and reference to the view itself instead, and populate on demand.
       return description.replace(/ \([a-zA-Z0-9:, <>\/]*\)/ig, '');
+    }
   }
   setViewDescriptions(arc) {
     // TODO: This should iterate arc.particles instead.
