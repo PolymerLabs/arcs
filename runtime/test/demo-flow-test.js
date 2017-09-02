@@ -64,7 +64,6 @@ describe('demo flow', function() {
     known <- view1
     population <- view2
     recommendations -> view0`;
-    console.log(plans[1].plan.toString());
     let {plan, descriptionGenerator} = plans.find(p => p.plan.toString() == expectedPlanString);
     assert(plan);
 
@@ -74,17 +73,22 @@ describe('demo flow', function() {
                  descriptionGenerator.description);
 
     slotComposer
-      .expectRenderSlot("ShowProducts", "root", ["template", "model"])
-      .expectRenderSlot("Chooser", "action", ["template", "model"])
-         .thenSend("Chooser", "action", "_onChooseValue", {key: "1"})
-      .expectRenderSlot("Chooser", "action", ["model"])
-      .expectRenderSlot("ShowProducts", "root", ["model"]);
+      .newExpectations()
+        .expectRenderSlot("ShowProducts", "root", ["template"])
+      .newExpectations()
+        .expectRenderSlot("ShowProducts", "root", ["model"])
+        .expectRenderSlot("Chooser", "action", ["template", "model"])
+        .expectRenderSlot("AlsoOn", "annotation", ["template", "model"])
+        .thenSend("Chooser", "action", "_onChooseValue", {key: "1"})
+      .newExpectations()
+        .expectRenderSlot("ShowProducts", "root", ["model"])
+        .expectRenderSlot("Chooser", "action", ["model"])
+        .expectRenderSlot("AlsoOn", "annotation", ["model"]);
 
     arc.instantiate(plan);
     await arc.pec.idle;
 
-    // TODO: fix slots expectations.
-    // await slotComposer.expectationsCompleted();
+    await slotComposer.expectationsCompleted();
 
     let productViews = arc.findViewsByType(Product.type.viewOf());
     assert.equal(productViews.length, 2);

@@ -17,17 +17,21 @@ class Slot {
     assert(arc);
     this._consumeConn = consumeConn;
     this._arc = arc;
+    this._context = null;
     this.startRenderCallback = null;
     this.stopRenderCallback = null;
 
   }
   get consumeConn() { return this._consumeConn; }
   get arc() { return this._arc; }
+  get context() { return this._context; }
+  set context(context) { this._context = context; }
+  isSameContext(context) { return this._context == context; }
 
   setContext(context) {
     // do nothing, if context unchanged.
     if ((!this.context && !context) ||
-        (this.context && this.context.isEqual(context))) {
+        (this.context && this.isSameContext(context))) {
       return;
     }
 
@@ -73,8 +77,6 @@ class Slot {
     return descriptions;
   }
   // absract
-  get context() { assert('not implemented'); }
-  set context(context) { assert('not implemented'); }
   setContent(content, handler) {}
   getInnerContext(slotName) {}
   constructRenderRequest() {}
