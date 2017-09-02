@@ -16,6 +16,27 @@ const SlotComposer = require('../slot-composer.js');
 let logging = false;
 let log = (!logging || global.logging === false) ? () => {} : console.log.bind(console, '---------- MockSlotComposer::');
 
+class MockSlot extends Slot {
+  constructor(consumeConn, arc) {
+    super(consumeConn, arc);
+    this._content = {};
+  }
+  setContent(content, handler) {
+    this._content = Object.assign(this._content, content);
+  }
+  getInnerContext(slotName) {
+    if (this._content.template && this._content.template.indexOf('slotid="annotation"') > 0) {
+      return 'dummy-context';
+    }
+  }
+   constructRenderRequest() {
+     if (this._content.template) {
+       return ['model'];
+     }
+     return ['template', 'model'];
+   }
+}
+
 class MockSlotComposer extends SlotComposer {
   constructor() {
     super({ rootContext: "dummy-context", affordance: "mock"});
@@ -23,17 +44,36 @@ class MockSlotComposer extends SlotComposer {
     this.onExpectationsComplete = () => undefined;
   }
 
+  createNewSlot(affordance, consumeConn, arc) {
+    switch(affordance) {
+      case "mock":
+        return new MockSlot(consumeConn, arc);
+      default:
+        assert("unsupported affordance ", affordance);
+    }
+  }
+
   initializeRecipe(recipe) {
-    Slot.prototype.constructRenderRequest = () => { return ['template', 'model'] };
     super.initializeRecipe(recipe);
   }
 
+  newExpectations() {
+    this.expectQueue.push([]);
+    return this;
+  }
+
   expectRenderSlot(particleName, slotName, contentTypes) {
-    this.expectQueue.push({type: 'render', particleName, slotName, contentTypes});
+    assert(this.expectQueue.length > 0, 'No expectations');
+
+    for (let contentType of contentTypes) {
+      this.expectQueue[this.expectQueue.length - 1].push({type: 'render', particleName, slotName, contentType});
+    }
     return this;
   }
 
   thenSend(particleName, slotName, event, data) {
+    assert(this.expectQueue.length > 0, 'No expectations');
+
     this.expectQueue[this.expectQueue.length - 1].then = {particleName, slotName, event, data};
     return this;
   }
@@ -51,17 +91,29 @@ class MockSlotComposer extends SlotComposer {
 
   renderSlot(particle, slotName, content) {
     console.log(`renderSlot ${particle.name}:${slotName}`, Object.keys(content).join(', '));
-    var expectation = this.expectQueue.shift();
-    assert(expectation, "Got a startRender but not expecting anything further.");
-    assert.equal('render', expectation.type, `expecting a startRender, not ${expectation.type}`);
-    assert.equal(particle.name, expectation.particleName,
-                 `expecting a render from ${expectation.particleName}, not ${particle.name}`);
-    assert.equal(slotName, expectation.slotName,
-                `expecting a render from ${expectation.slotName}, not ${slotName}`);
-    assert.isTrue(expectation.contentTypes.length == Object.keys(content).length &&
-                  expectation.contentTypes.every(t => content[t]),
-                  `expecting a render of content types [${expectation.contentTypes.join(', ')}], not [${Object.keys(content).join(', ')}]`);
-    this.expectationMet(expectation);
+    assert(this.expectQueue.length > 0 && this.expectQueue[0],
+      `Got a renderSlot from ${particle.name}:${slotName}, but not expecting anything further.`);
+    var expectations = this.expectQueue[0];
+    for (let contentType of Object.keys(content)) {
+      let found = false;
+      for (let i = 0; i < expectations.length; ++i) {
+        let expectation = expectations[i];
+        if (expectation.type == 'render' && expectation.particleName == particle.name &&
+            expectation.slotName == slotName && expectation.contentType == contentType) {
+          expectations.splice(i, 1);
+          found = true;
+          break;
+        }
+      }
+      assert(found, `Unexpected render slot ${slotName} for particle ${particle.name} (content type ${contentType})`);
+    }
+    if (expectations.length == 0) {
+      this.expectQueue.shift();
+      this.expectationMet(expectations);
+    }
+
+    super.renderSlot(particle, slotName, content);
+    super.updateInnerSlots(this.getSlot(particle, slotName));
   }
 
   expectationMet(expectation) {

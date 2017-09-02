@@ -13,19 +13,6 @@ const assert = require('assert');
 const Slot = require('./slot.js');
 const DomSlot = require('./dom-slot.js');
 
-function createNewSlot(affordance, consumeConn, arc) {
-  switch(affordance) {
-    case "dom":
-    case "dom-touch":
-    case "vr":
-      return new DomSlot(consumeConn, arc);
-    case "mock":
-      return new Slot(consumeConn, arc);
-    default:
-      assert("unsupported affordance ", affordance);
-  }
-}
-
 class SlotComposer {
   constructor(options) {
     assert(options.affordance, "Affordance is mandatory");
@@ -36,6 +23,16 @@ class SlotComposer {
     this._slots = [];
     this._nextSlotId = 0;
   }
+  createNewSlot(affordance, consumeConn, arc) {
+    switch(affordance) {
+      case "dom":
+      case "dom-touch":
+      case "vr":
+        return new DomSlot(consumeConn, arc);
+      default:
+        assert("unsupported affordance ", affordance);
+    }
+  }
   getSlot(particle, slotName) {
     return this._slots.find(s => s.consumeConn.particle == particle && s.consumeConn.name == slotName);
   }
@@ -44,7 +41,7 @@ class SlotComposer {
     // Create slots for each of the recipe's particles slot connections.
     recipeParticles.forEach(p => {
       Object.values(p.consumedSlotConnections).forEach(cs => {
-        let slot = createNewSlot(this.affordance, cs, this.arc);
+        let slot = this.createNewSlot(this.affordance, cs, this.arc);
         slot.startRenderCallback = this.arc.pec.startRender.bind(this.arc.pec);
         slot.stopRenderCallback = this.arc.pec.stopRender.bind(this.arc.pec);
         slot.innerSlotsUpdateCallback = this.updateInnerSlots.bind(this);

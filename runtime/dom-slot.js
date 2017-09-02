@@ -19,7 +19,6 @@ class DomSlot extends Slot {
   constructor(consumeConn, arc) {
     super(consumeConn, arc);
     this._templateName = `${this.consumeConn.particle.name}::${this.consumeConn.name}`;
-    this._context = null;
     this._model = null;
 
     this._observer = new MutationObserver(() => {
@@ -29,7 +28,7 @@ class DomSlot extends Slot {
     });
   }
 
-  get context() { return this._context; }
+  get context() { return super.context;  }
   set context(context) {
     let wasNull = true;
     if (this._context) {
@@ -48,6 +47,9 @@ class DomSlot extends Slot {
     } else {
       this._context = null;
     }
+  }
+  isSameContext(context) {
+    return this.context.isEqual(context);
   }
 
   getTemplate() {
