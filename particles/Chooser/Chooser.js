@@ -109,8 +109,7 @@ defineParticle(({DomParticle}) => {
         <img src="{{image}}">
       </div>
     </div>
-  <!-- TODO: Declare this slot in the Chooser.manifest, when strategizer supports it well. -->
-  <div slotid="annotation" subid$="{{subId}}">
+  <!-- annotation slot will be provided, as soon as SlotComposer and MapRemoteSlots strategy support it. ->
   </div>
 </template>
   `;
