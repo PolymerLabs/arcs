@@ -31,6 +31,9 @@ function restore(entry, entityClass) {
   return entity;
 }
 
+/** @class Viewlet
+ * Base class for Views and Variables.
+ */
 class Viewlet {
   constructor(view, canRead, canWrite) {
     this._view = view;
@@ -40,6 +43,11 @@ class Viewlet {
   underlyingView() {
     return this._view;
   }
+  /** @method on(kind, callback, target)
+   * Register for callbacks every time the requested kind of event occurs.
+   * Events are grouped into delivery sets by target, which should therefore
+   * be the recieving particle.
+   */
   on(kind, callback, target) {
     return this._view.on(kind, callback, target);
   }
