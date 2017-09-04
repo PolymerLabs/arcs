@@ -110,6 +110,10 @@ class InnerPEC {
     this._apiPort.onUIEvent = ({particle, slotName, event}) => particle.fireEvent(slotName, event);
 
     this._apiPort.onStartRender = ({particle, slotName, contentTypes}) => {
+      /** @class Slot
+       * A representation of a consumed slot. Retrieved from a particle using
+       * particle.getSlot(name)
+       */
       class Slotlet {
         constructor(pec, particle, slotName) {
           this._slotName = slotName;
@@ -121,6 +125,9 @@ class InnerPEC {
         get particle() { return this._particle; }
         get slotName() { return this._slotName; }
         get isRendered() { return this._isRendered; }
+        /** @method render(content)
+         * renders content to the slot.
+         */
         render(content) {
           this._pec._apiPort.Render({particle, slotName, content});
 
@@ -128,6 +135,9 @@ class InnerPEC {
           // Slot is considered rendered, if a non-empty content was sent and all requested content types were fullfilled.
           this._isRendered = this._requestedContentTypes.size == 0 && (Object.keys(content).length > 0);
         }
+        /** @method registerEventHandler(name, f)
+         * registers a callback to be invoked when 'name' event happens.
+         */
         registerEventHandler(name, f) {
           if (!this._handlers.has(name)) {
             this._handlers.set(name, []);
@@ -167,7 +177,7 @@ class InnerPEC {
     let clazz = await this._loader.loadParticleClass(spec);
     let particle = new clazz();
     this._particles.push(particle);
-    
+
     var viewMap = new Map();
     views.forEach((value, key) => {
       viewMap.set(key, viewlet.viewletFor(value, value.type.isView, spec.connectionMap.get(key).isInput, spec.connectionMap.get(key).isOutput));
