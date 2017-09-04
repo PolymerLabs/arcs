@@ -17,6 +17,10 @@ const Schema = require('./schema.js');
 
 const DEBUGGING = false;
 
+/** @class Particle
+ * A basic particle. For particles that provide UI, you may like to
+ * instead use DOMParticle.
+ */
 class Particle {
   constructor() {
     this.spec = this.constructor.spec;
@@ -32,7 +36,14 @@ class Particle {
     this._slotByName = new Map();
   }
 
-  // Override this to do stuff
+  /** @method setViews(views)
+   * This method is invoked with a handle for each view this particle
+   * is registered to interact with, once those views are ready for
+   * interaction. Override the method to register for events from
+   * the views.
+   *
+   * Views is a map from view names to view handles.
+   */
   setViews(views) {
 
   }
@@ -45,6 +56,10 @@ class Particle {
     return this._idle;
   }
 
+  /** @method setBusy()
+   * Prevents this particle from indicating that it's idle until a matching
+   * call to setIdle is made.
+   */
   setBusy() {
     if (this._busy == 0)
     this._idle = new Promise((resolve, reject) => {
@@ -53,6 +68,9 @@ class Particle {
     this._busy++;
   }
 
+  /** @method setIdle()
+   * Indicates that a busy period (initiated by a call to setBusy) has completed.
+   */
   setIdle() {
     assert(this._busy > 0);
     this._busy--;
@@ -64,10 +82,6 @@ class Particle {
     this.relevances.push(r);
   }
 
-  // Override this to do stuff
-  dataUpdated() {
-  }
-
   inputs() {
     return this.spec.inputs;
   }
@@ -76,6 +90,9 @@ class Particle {
     return this.spec.outputs;
   }
 
+  /** @method getSlot(name)
+   * Returns the slot with provided name.
+   */
   getSlot(name) {
     return this._slotByName.get(name);
   }
@@ -98,11 +115,19 @@ class Particle {
     this.stateHandlers.get(state).forEach(f => f(value));
   }
 
-  on(views, names, action, f) {
+  /** @method on(views, names, kind, f)
+   * Convenience method for registering a callback on multiple views at once.
+   *
+   * views is a map from names to view handles
+   * names indicates the views which should have a callback installed on them
+   * kind is the kind of event that should ve registered for
+   * f is the callback function
+   */
+  on(views, names, kind, f) {
     if (typeof names == "string")
       names = [names];
-    var trace = tracing.start({cat: 'particle', names: this.constructor.name + "::on", args: {view: names, event: action}});
-    names.forEach(name => views.get(name).on(action, tracing.wrap({cat: 'particle', name: this.constructor.name, args: {view: name, event: action}}, f), this));
+    var trace = tracing.start({cat: 'particle', names: this.constructor.name + "::on", args: {view: names, event: kind}});
+    names.forEach(name => views.get(name).on(kind, tracing.wrap({cat: 'particle', name: this.constructor.name, args: {view: name, event: kind}}, f), this));
     trace.end();
   }
 
