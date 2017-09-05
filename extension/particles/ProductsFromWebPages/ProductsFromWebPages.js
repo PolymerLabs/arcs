@@ -11,9 +11,7 @@
 defineParticle(({Particle}) => {
   return class ProductsFromWebPages extends Particle {
     setViews(views) {
-      console.log('ProductsFromWebPages setViews');
       this.on(views, 'list', 'change', e => {
-        console.log('ProductsFromWebPages setViews.on callback');
         let webPagesInput = views.get('list');
         var productsOutput = views.get('products');
 
@@ -27,7 +25,9 @@ defineParticle(({Particle}) => {
             productsOutput.store(ei);
           }
 
-          console.log('in closure done storing products', views.get('products'));
+          console.log('ProductsFromWebPages converted '+input.length+
+            ' WebPages to Products',
+            productsOutput);
         });
       });
     }
