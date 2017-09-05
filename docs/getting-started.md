@@ -16,7 +16,7 @@ These two particles would be enough to display a simple "Hello, World!" message.
 
 Every recipe runs inside an Arc. The Arc contains one or more recipes (the code and data flow) and views (the data) that get mapped into the Arc from the user's context (universe of all available data to the Arcs runtime).
 
-When the demo is loaded, the Arcs runtime is initialized by including the [playground script](https://polymerlabs.github.io/arcs-cdn/v0.0.4/playground/playground.html). That script reads the Hello; World demo [arc.manifest](https://glitch.com/edit/#!/arcs-hello-world?path=arc.manifest) file and loads it as an Arc into the Arcs context (i.e., an Arc manifest is essecially a serialized Arc).
+When the demo is loaded, the Arcs runtime is initialized by including the [playground script](https://polymerlabs.github.io/arcs-cdn/v0.0.4/playground/playground.html). That script reads the "Hello, World" demo [arc.manifest](https://glitch.com/edit/#!/arcs-hello-world?path=arc.manifest) file and loads it as an Arc into the Arcs context (i.e., an Arc manifest is essecially a serialized Arc).
 
  ![Demo](images/demo.gif)
 
