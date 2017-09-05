@@ -18,6 +18,14 @@ defineParticle(({Particle}) => {
         webPagesInput.toList().then(function(input) {
 
           for (let c of input) {
+            let url = c['url'];
+
+            /* Skip sites that we don't know contain Products, or that include
+             * schema.org markup as we'll have picked those up already. */
+            if (! url.includes('amazon')) {
+              continue;
+            }
+
             let ei = new productsOutput.entityClass({
                 'image': c['image'],
                 'name': c['name']
