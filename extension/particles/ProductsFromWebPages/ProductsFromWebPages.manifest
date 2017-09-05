@@ -9,6 +9,6 @@ import '../../entities/WebPage.manifest'
 import 'https://polymerlabs.github.io/arcs-cdn/v0.0.4/entities/Product.manifest'
 
 particle ProductsFromWebPages in 'ProductsFromWebPages.js'
-  ProductsFromWebPages(in [WebPage] list,  out [Product] products)
+  ProductsFromWebPages(in [WebPage] list, out [Product] products)
   affordance dom
   description `Gather Products from ${list}`
