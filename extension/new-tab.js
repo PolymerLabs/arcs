@@ -24,18 +24,18 @@ function instantiate_arcs(doc) {
     utils.collapseRecipes(manifest);
     console.log(manifest);
     // renderer
-    let slotComposer = new Arcs.SlotComposer(container, /* affordance */ "dom");
+    let slotComposer = new Arcs.SlotComposer({rootContext: container, affordance: "dom"});
     // an Arc!
     let arc = Arcs.utils.createArc({id: 'demo', urlMap, slotComposer, context: manifest});
     // load our dynamic data
-    await loadBrowsingData(arc, manifest);
+    await loadBrowsingData(manifest);
     // generate suggestions
     Arcs.utils.suggest(arc, doc.document.querySelector('suggestions-element'));
   };
   //
   let go = async ({db, urls}) => {
     // create default URL map
-    let root = `https://polymerlabs.github.io/arcs-cdn/v0.03`;
+    let root = `https://polymerlabs.github.io/arcs-cdn/v0.0.4`;
     let urlMap = utils.createUrlMap(root);
 
     // we have an additional artifact that we need to load dynamically
@@ -49,14 +49,14 @@ function instantiate_arcs(doc) {
   go(window);
 }
 
-async function loadBrowsingData(arc, manifest) {
+async function loadBrowsingData(manifest) {
 
-  let entityDefinitions = {}
+  let views = {}
   for (let k of ['Answer', 'WebPage', 'Question', 'VideoObject']) {
     klass = manifest.findSchemaByName(k).entityClass();
-    view = arc.createView(klass.type.viewOf(), k+'View');
+    view = manifest.newView(klass.type.viewOf(), k+'View');
 
-    entityDefinitions[k] = {'klass': klass, 'view': view}
+    views[k] = view;
   }
 
   let devices = await new Promise((resolve) => chrome.sessions.getDevices(null, resolve));
@@ -113,26 +113,26 @@ async function loadBrowsingData(arc, manifest) {
   }
 
   for (let [group, tabs] of groupTabMap) {
-    dumpEntities(entityDefinitions, [].concat(...await Promise.all(tabs.map(tab => tabEntityMap.get(tab)))));
+    dumpEntities(views, [].concat(...await Promise.all(tabs.map(tab => tabEntityMap.get(tab)))));
   }
 }
 
 
-function dumpEntities(entityDefinitions, entityData) {
+function dumpEntities(views, entityData) {
   for (let ei of entityData) {
     let type = ei['@type'].replace(/http[s]?:\/\/schema.org\//, '');
-    let ed = entityDefinitions[type];
-    if (! type in entityDefinitions || ! ed) {
+    let view = views[type];
+    if (! type in views || ! view) {
       console.log('missing type '+type+'; cant instantiate entity');
       continue;
     }
 
-    let klass = ed['klass'];
-    let view = ed['view'];
+    let id = faux_gid++;
 
-    let e = new klass(ei);
-    e.id = faux_gid++;
-    view.store(e);
+    view.store({
+      id,
+      rawData: ei
+    });
   }
 }
 
