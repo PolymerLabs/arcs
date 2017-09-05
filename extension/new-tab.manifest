@@ -15,22 +15,25 @@ import 'particles/ProductsFromWebPages/ProductsFromWebPages.manifest'
 
 view WebPageView of [WebPage] in 'webpages.json'
 
+# show WebPages
 recipe
+  copy as view0
+
   ShowWebPages
+    list <- view0
 
 
-import 'https://polymerlabs.github.io/arcs-cdn/v0.0.4/entities/Product.manifest'
-import 'https://polymerlabs.github.io/arcs-cdn/v0.0.4/particles/ShowProducts/ShowProducts.manifest'
+import 'https://$cdn/entities/Product.manifest'
+import 'https://$cdn/particles/ShowProducts/ShowProducts.manifest'
 
+# convert WebPages->Products, and display those Products
 recipe
   copy as view0
   create as view1
-
-  ProductsFromWebPages.list -> ShowWebPages.list
 
   ProductsFromWebPages
     list <- view0
     products -> view1
 
-recipe
   ShowProducts
+    list <- view1
