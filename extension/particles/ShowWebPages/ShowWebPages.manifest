@@ -10,4 +10,5 @@ import '../../entities/WebPage.manifest'
 particle ShowWebPages in 'ShowWebPages.js'
   ShowWebPages(in [WebPage] list)
   consume root
+  affordance dom
   description `Show ${list}`

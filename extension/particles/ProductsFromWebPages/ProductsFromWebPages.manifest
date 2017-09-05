@@ -6,7 +6,7 @@
 # http://polymer.github.io/PATENTS.txt
 
 import '../../entities/WebPage.manifest'
-import 'https://polymerlabs.github.io/arcs-cdn/v0.03/entities/Product.manifest'
+import 'https://polymerlabs.github.io/arcs-cdn/v0.0.4/entities/Product.manifest'
 
 particle ProductsFromWebPages in 'ProductsFromWebPages.js'
   ProductsFromWebPages(in [WebPage] list,  out [Product] products)

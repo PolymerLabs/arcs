@@ -19,8 +19,8 @@ recipe
   ShowWebPages
 
 
-import 'https://polymerlabs.github.io/arcs-cdn/v0.03/entities/Product.manifest'
-import 'https://polymerlabs.github.io/arcs-cdn/v0.03/particles/ShowProducts/ShowProducts.manifest'
+import 'https://polymerlabs.github.io/arcs-cdn/v0.0.4/entities/Product.manifest'
+import 'https://polymerlabs.github.io/arcs-cdn/v0.0.4/particles/ShowProducts/ShowProducts.manifest'
 
 recipe
   copy as view0
