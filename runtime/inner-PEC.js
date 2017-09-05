@@ -194,13 +194,12 @@ class InnerPEC {
       view.entityClass = new Schema(schemaModel).entityClass();
     }
 
-    setTimeout(() => {
+    return [particle, () => {
       resolve();
       var idx = this._pendingLoads.indexOf(p);
       this._pendingLoads.splice(idx, 1);
       particle.setViews(viewMap);
-    }, 0);
-    return particle;
+    }];
   }
 
   get relevance() {

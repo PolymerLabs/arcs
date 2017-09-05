@@ -140,14 +140,26 @@ class APIPort {
 
     this.messageCount++;
 
-    var handler = this._messageMap.get(e.data.messageType);
-    var args = this._unprocessArguments(handler, e.data.messageBody);
-    var r = this["on" + e.data.messageType](args);
-    if (r && args.identifier) {
-      if (r instanceof Promise)
-        r.then(v => this._mapper.establishThingMapping(args.identifier, v));
-      else
-        this._mapper.establishThingMapping(args.identifier, r);
+    let handler = this._messageMap.get(e.data.messageType);
+    let args = this._unprocessArguments(handler, e.data.messageBody);
+    let result = this["on" + e.data.messageType](args);
+    let establishMapping = result => {
+      if (result instanceof Promise) {
+        result.then(establishMapping);
+        return;
+      }
+      let continuation;
+      if (Array.isArray(result)) {
+        [result, continuation] = result;
+      }
+      this._mapper.establishThingMapping(args.identifier, result);
+      if (continuation) {
+        continuation();
+      }
+    }
+    if (result) {
+      assert(args.identifier);
+      establishMapping(result);
     }
   }
 
