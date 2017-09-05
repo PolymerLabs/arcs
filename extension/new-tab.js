@@ -52,7 +52,7 @@ function instantiate_arcs(doc) {
 async function loadBrowsingData(manifest) {
 
   let views = {}
-  for (let k of ['Answer', 'WebPage', 'Question', 'VideoObject']) {
+  for (let k of ['Answer', 'WebPage', 'Question', 'VideoObject', 'Product']) {
     klass = manifest.findSchemaByName(k).entityClass();
     view = manifest.newView(klass.type.viewOf(), k+'View');
 
@@ -123,15 +123,18 @@ function dumpEntities(views, entityData) {
     let type = ei['@type'].replace(/http[s]?:\/\/schema.org\//, '');
     let view = views[type];
     if (! type in views || ! view) {
-      console.log('missing type '+type+'; cant instantiate entity');
+      console.log('missing type '+type+'; unable to instantiate entity');
       continue;
     }
+
+    let data = Object.assign({}, ei);
+    delete data['@type'];
 
     let id = faux_gid++;
 
     view.store({
       id,
-      rawData: ei
+      rawData: data
     });
   }
 }
