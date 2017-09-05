@@ -37,3 +37,21 @@ recipe
 
   ShowProducts
     list <- view1
+
+
+###
+# Wishlist demo
+###
+
+import 'https://$cdn/particles/Recommend/Recommend.manifest'
+import 'https://$cdn/particles/Chooser/Chooser.manifest'
+
+recipe
+  Chooser.choices -> Recommend.recommendations
+  Chooser.resultList -> ShowProducts.list
+  Chooser.resultList -> Recommend.known
+
+  copy as products
+
+  ShowProducts
+    list <- products
