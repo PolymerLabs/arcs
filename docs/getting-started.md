@@ -16,9 +16,9 @@ These two particles would be enough to display a simple "Hello, World!" message.
 
 Every recipe runs inside an Arc. The Arc contains one or more recipes (the code and data flow) and views (the data) that get mapped into the Arc from the user's context (universe of all available data to the Arcs runtime).
 
-When the demo is loaded, the Arcs runtime is initialized by including the [playground script](https://polymerlabs.github.io/arcs-cdn/v0.0.4/playground/playground.html). That script reads the "Hello, World" demo [arc.manifest](https://glitch.com/edit/#!/arcs-hello-world?path=arc.manifest) file and loads it as an Arc into the Arcs context (i.e., an Arc manifest is essecially a serialized Arc).
+When the demo is loaded, the Arcs runtime is initialized by including the [playground script](https://polymerlabs.github.io/arcs-cdn/v0.0.4/playground/playground.html). That script reads the "Hello, World" demo [arc.manifest](https://glitch.com/edit/#!/arcs-hello-world?path=arc.manifest) file and loads it as an Arc into the Arcs context.
 
- ![Demo](images/demo.gif)
+![Demo](images/demo.gif)
 
 Once the Arc is set up, the DEMO will suggest the "Hello, World!" recipe to the user by rendering a suggestion in toast at the bottom of the screen. The recipe gets suggested to the user because all of the inputs and UI affordance required for the recipe to run are available.
 
@@ -34,10 +34,11 @@ You can [run the demo](https://arcs-hello-world.glitch.me/) and even [edit the d
 
 To setup the demo we simply import [playground.html](https://polymerlabs.github.io/arcs-cdn/v0.0.4/playground/playground.html) in the main `index.html` file. The playground does all of the initialization of the Arcs environment and expects an `arc.manifest` file to be hosted in the same directory as the `index.html` file.
 
-Eventually, Arcs will be spawned automatically based on user context. In the demo, the Arc (i.e., manifest file) is explicitly loaded. The demo Arc manifest file declares the following:
+Eventually, Arcs will be spawned automatically based on user context. In the demo, the Arc is explicitly loaded via the `arc.manifest` file that represents a serialized representation of the demo Arc. That manifest file declares the following:
 
  * a view named `User` of type `Person` whose content is specified in `user.json`.
- * a recipe that stitches together three particles (HelloWorld, Greet and PersonalGreet)
+ * a list of recipes that should be included into the Arc.
+ * a recipe that stitches together three particles (HelloWorld, Greet and PersonalGreet).
 
 ## Recipes
 
@@ -55,7 +56,7 @@ TODO: describe more complex slot composition (e.g., set slots).
 
 ## Particles
 
-A particle is the basic unit of computation in Arcs. Simply put it's a JavaScript file that contains a class that inherits either from [DomParticle](https://github.com/PolymerLabs/arcs/blob/master/runtime/dom-particle.js) (if the particle renders DOM UI) or from its parent class [Particle](https://github.com/PolymerLabs/arcs/blob/master/runtime/particle.js) (if it only operates on input and output views). Take a look at the [Greet](https://glitch.com/edit/#!/arcs-hello-world?path=particles/Greet/Greet.manifest) particle manifest and its accompanied JavaScript file.
+A particle is the basic unit of computation in Arcs. Simply put it's a JavaScript file that contains a class that inherits either from [DomParticle](https://github.com/PolymerLabs/arcs/blob/master/runtime/dom-particle.js) (if the particle renders DOM UI) or from its parent class [Particle](https://github.com/PolymerLabs/arcs/blob/master/runtime/particle.js) (if it only operates on input and output views). Take a look at the [Greet](https://glitch.com/edit/#!/arcs-hello-world?path=particles/Greet/Greet.manifest) particle manifest and its accompanied [JavaScript file](https://glitch.com/edit/#!/arcs-hello-world?path=particles/Greet/Greet.js).
 
 Particles may gain access to sensitive user data through input views. To avoid data leaks and protect user privacy, particles run isolated from other particles and have limited capabilities. Particles don't have direct access to traditional storage, DOM or even network resources. Instead, particles may have side effects by writing to output views or by rendering (sanitized) DOM content into UI slots. The Arcs runtime is responsible for instantiating particles inside the Arc and for persisting views across ephemeral particle invocations.
 
