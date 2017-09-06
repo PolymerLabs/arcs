@@ -5,7 +5,7 @@
 # subject to an additional IP rights grant found at
 # http://polymer.github.io/PATENTS.txt
 
-import '../../entities/WebPage.manifest'
+import '../../entities/WebEntities.manifest'
 import 'https://polymerlabs.github.io/arcs-cdn/v0.0.4/entities/Product.manifest'
 
 particle ProductsFromWebPages in 'ProductsFromWebPages.js'
