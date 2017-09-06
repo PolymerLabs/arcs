@@ -5,12 +5,50 @@
 # subject to an additional IP rights grant found at
 # http://polymer.github.io/PATENTS.txt
 
-import 'particles/ShowTabs/ShowTabs.manifest'
+import 'entities/WebEntities.manifest'
+
+import 'particles/ShowWebPages/ShowWebPages.manifest'
+import 'particles/ProductsFromWebPages/ProductsFromWebPages.manifest'
+
+view WebPageView of [WebPage] in 'webpages.json'
+
+# show WebPages
+recipe
+  map as view0
+
+  ShowWebPages
+    list <- view0
+
+
+import 'https://$cdn/entities/Product.manifest'
+import 'https://$cdn/particles/ShowProducts/ShowProducts.manifest'
+
+# convert WebPages->Products, and display those Products
+recipe
+  map as view0
+  create as view1
+
+  ProductsFromWebPages
+    list <- view0
+    products -> view1
+
+  ShowProducts
+    list <- view1
+
+
+###
+# Wishlist demo
+###
+
+import 'https://$cdn/particles/Recommend/Recommend.manifest'
+import 'https://$cdn/particles/Chooser/Chooser.manifest'
 
 recipe
-   ShowTabs
+  Chooser.choices -> Recommend.recommendations
+  Chooser.resultList -> ShowProducts.list
+  Chooser.resultList -> Recommend.known
 
-import 'https://sjmiles.github.io/arcs-cdn/v0.01/particles/ShowProducts/ShowProducts.manifest'
+  copy as products
 
-recipe
-   ShowProducts
+  ShowProducts
+    list <- products

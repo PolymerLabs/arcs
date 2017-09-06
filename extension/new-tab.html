@@ -18,15 +18,20 @@ http://polymer.github.io/PATENTS.txt
   <link rel="stylesheet" href="index.css">
 
   <!-- Arcs engine -->
-  <script src="https://sjmiles.github.io/arcs-cdn/v0.02/ArcsLib.js"></script>
-  <script src="https://sjmiles.github.io/arcs-cdn/v0.02/utils.js"></script>
+  <script src="https://polymerlabs.github.io/arcs-cdn/v0.0.4/ArcsLib.js"></script>
+  <script src="https://polymerlabs.github.io/arcs-cdn/v0.0.4/utils.js"></script>
 
   <!-- custom elements -->
-  <script src="https://sjmiles.github.io/arcs-cdn/v0.02/components/x-toast.js"></script>
-  <script src="https://sjmiles.github.io/arcs-cdn/v0.02/components/suggestions-element.js"></script>
+  <script src="https://polymerlabs.github.io/arcs-cdn/v0.0.4/components/x-toast.js"></script>
+  <script src="https://polymerlabs.github.io/arcs-cdn/v0.0.4/components/suggestions-element.js"></script>
+
+  <!-- tooling -->
+  <!-- TODO(smalls) - this would be great to enable, but currently polymer and
+    the extension security model don't get along. -->
+  <!-- <link rel="import" href="arcs-cdn/v0.0.4/components/strategy-explorer.html"> -->
+  
 
   <!-- app-specific configuration -->
-  <script src="db.js"></script>
   <script src="new-tab.js"></script>
 </head>
 <body>
@@ -39,51 +44,7 @@ http://polymer.github.io/PATENTS.txt
 </template>
 
 <script>
-  let module = document.currentScript.ownerDocument;
-  document.body.appendChild(document.importNode(module.querySelector('template').content, true));
-  //
-  let app = async function(urlMap, manifestPath, container, db) {
-    //
-    // create system objects
-    //
-    // renderer
-    let slotComposer = new Arcs.SlotComposer(container, /* affordance */ "dom");
-    // an Arc!
-    let arc = Arcs.utils.createArc({id: 'demo', urlMap, slotComposer});
-    // create a system loader
-    // TODO(sjmiles): `pecFactory` can create loader objects (via worker-entry*.js) for the innerPEC,
-    // but we have to create one by hand for manifest loading
-    let loader = new Arcs.BrowserLoader(urlMap);
-    //
-    // configure application
-    //
-    // load manifest
-    let manifest = await Arcs.Manifest.load(manifestPath, loader);
-    // setup the database
-    Arcs.utils.prepareDataContext(db, arc, manifest);
-    await loadBrowsingData(arc, manifest);
-    // configure suggestions UI
-    let ui = document.querySelector('suggestions-element');
-    ui.arc = arc;
-    ui.callback = () => {};
-    // generate suggestions
-    Arcs.utils.suggest(arc, ui, new Arcs.Planner(), manifest.recipes);
-  };
-  //
-  let go = async ({db, urls}) => {
-    // create default URL map
-    let root = `https://sjmiles.github.io/arcs-cdn/v0.02`;
-    let urlMap = utils.createUrlMap(root);
-
-    // we have an additional artifact that we need to load dynamically
-    urlMap['worker-entry-cdn.js'] = `${root}/worker-entry-cdn.js`;
-    // customize map
-    urls && Object.assign(urlMap, urls);
-    // start application
-    app(urlMap, './new-tab.manifest', window['particle-container'], db);
-  };
-  //
-  go(window);
+  instantiate_arcs(window);
 </script>
 
 </body>

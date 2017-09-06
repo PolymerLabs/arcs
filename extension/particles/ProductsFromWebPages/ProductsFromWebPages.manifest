@@ -5,9 +5,10 @@
 # subject to an additional IP rights grant found at
 # http://polymer.github.io/PATENTS.txt
 
-import '../../entities/Tab.manifest'
+import '../../entities/WebEntities.manifest'
+import 'https://polymerlabs.github.io/arcs-cdn/v0.0.4/entities/Product.manifest'
 
-particle ShowTabs in 'ShowTabs.js'
-  ShowTabs(in [Tab] list)
-  consume root
-  description `Show ${list}`
+particle ProductsFromWebPages in 'ProductsFromWebPages.js'
+  ProductsFromWebPages(in [WebPage] list, out [Product] products)
+  affordance dom
+  description `Gather Products from ${list}`

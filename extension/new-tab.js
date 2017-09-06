@@ -9,13 +9,55 @@
 // TODO(smalls) - there should be a better system of unique ids
 var faux_gid = 2000;
 
-/**
- * Load the current browsing data from all non-https tabs on all devices.
- */
-async function loadBrowsingData(arc, manifest) {
+function instantiate_arcs(doc) {
+  let template = doc.document.querySelector('template').content;
+  doc.document.body.appendChild(doc.document.importNode(template, true));
+  //
+  let app = async function(urlMap, manifestPath, container, db) {
+    // create a system loader
+    // TODO(sjmiles): `pecFactory` can create loader objects (via worker-entry*.js) for the innerPEC,
+    // but we have to create one by hand for manifest loading
+    let loader = new Arcs.BrowserLoader(urlMap);
+    // load manifest
+    let manifest = await Arcs.Manifest.load(manifestPath, loader);
+    // TODO(sjmiles): hack in ability to utilize imported recipes
+    utils.collapseRecipes(manifest);
+    console.log(manifest);
+    // renderer
+    let slotComposer = new Arcs.SlotComposer({rootContext: container, affordance: "dom"});
+    // an Arc!
+    let arc = Arcs.utils.createArc({id: 'demo', urlMap, slotComposer, context: manifest});
+    // load our dynamic data
+    await loadBrowsingData(manifest);
+    // generate suggestions
+    Arcs.utils.suggest(arc, doc.document.querySelector('suggestions-element'));
+  };
+  //
+  let go = async ({db, urls}) => {
+    // create default URL map
+    let root = `https://polymerlabs.github.io/arcs-cdn/v0.0.4`;
+    let urlMap = utils.createUrlMap(root);
 
-  let entityKlass = manifest.findSchemaByName('Tab').entityClass();
-  let view = arc.createView(entityKlass.type.viewOf(), 'tabView'); // tabView could be 'anon'
+    // we have an additional artifact that we need to load dynamically
+    urlMap['worker-entry-cdn.js'] = `${root}/worker-entry-cdn.js`;
+    // customize map
+    urls && Object.assign(urlMap, urls);
+    // start application
+    app(urlMap, './new-tab.manifest', window['particle-container'], db);
+  };
+  //
+  go(window);
+}
+
+async function loadBrowsingData(manifest) {
+
+  let views = {}
+  for (let k of ['Answer', 'WebPage', 'Question', 'VideoObject', 'Product']) {
+    klass = manifest.findSchemaByName(k).entityClass();
+    view = manifest.newView(klass.type.viewOf(), k+'View');
+
+    views[k] = view;
+  }
 
   let devices = await new Promise((resolve) => chrome.sessions.getDevices(null, resolve));
   let tabs = [];
@@ -71,15 +113,30 @@ async function loadBrowsingData(arc, manifest) {
   }
 
   for (let [group, tabs] of groupTabMap) {
-    dumpEntities(view, entityKlass, [].concat(...await Promise.all(tabs.map(tab => tabEntityMap.get(tab)))));
+    dumpEntities(views, [].concat(...await Promise.all(tabs.map(tab => tabEntityMap.get(tab)))));
   }
 }
 
 
-function dumpEntities(view, entityKlass, entities) {
-  for (let e of entities.map(p => new entityKlass(p))) {
-    e.id = faux_gid++;
-    view.store(e);
+function dumpEntities(views, entityData) {
+  for (let ei of entityData) {
+    let type = ei['@type'].replace(/http[s]?:\/\/schema.org\//, '');
+    let view = views[type];
+    if (! type in views || ! view) {
+      console.log('missing type '+type+'; unable to instantiate entity');
+      continue;
+    }
+
+    let data = Object.assign({}, ei);
+    delete data['@type'];
+
+    // TODO(smalls) - the view should generate these ids
+    let id = faux_gid++;
+
+    view.store({
+      id,
+      rawData: data
+    });
   }
 }
 

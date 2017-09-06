@@ -5,8 +5,10 @@
 # subject to an additional IP rights grant found at
 # http://polymer.github.io/PATENTS.txt
 
-import 'https://sjmiles.github.io/arcs-cdn/v0.01/entities/Thing.manifest'
+import '../../entities/WebEntities.manifest'
 
-schema Tab extends Thing
-  normative
-    URL url
+particle ShowWebPages in 'ShowWebPages.js'
+  ShowWebPages(in [WebPage] list)
+  consume root
+  affordance dom
+  description `Show ${list}`
