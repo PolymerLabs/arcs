@@ -6,10 +6,22 @@
 # http://polymer.github.io/PATENTS.txt
 
 
-# replace this with a straight reference to https://schema.org/Answer
+# TODO(smalls) replace these with straight references to https://schema.org/<schema>
 
 import 'https://polymerlabs.github.io/arcs-cdn/v0.0.4/entities/Thing.manifest'
 
+schema Answer extends Thing
+  optional
+    URL url # TODO(smalls) remove this element once it makes it in to Thing
+
 schema Question extends Thing
   optional
+    URL url
+
+schema WebPage extends Thing
+  optional
+    URL url
+
+schema VideoObject extends Thing
+  normative
     URL url
