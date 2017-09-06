@@ -27,8 +27,7 @@ class ThingMapper {
   createMappingForThing(thing) {
     assert(!this._reverseIdMap.has(thing));
     var id = this._newIdentifier();
-    this._idMap.set(id, thing);
-    this._reverseIdMap.set(thing, id);
+    this.establishThingMapping(id, thing);
     return id;
   }
 
@@ -40,8 +39,20 @@ class ThingMapper {
   }
 
   establishThingMapping(id, thing) {
+    let continuation;
+    if (Array.isArray(thing)) {
+      [thing, continuation] = thing;
+    }
     this._idMap.set(id, thing);
-    this._reverseIdMap.set(thing, id);
+    if (thing instanceof Promise) {
+      assert(continuation == null);
+      thing.then(actualThing => this.establishThingMapping(id, actualThing));
+    } else {
+      this._reverseIdMap.set(thing, id);
+      if (continuation) {
+        continuation();
+      }
+    }
   }
 
   hasMappingForThing(thing) {
@@ -141,25 +152,19 @@ class APIPort {
     this.messageCount++;
 
     let handler = this._messageMap.get(e.data.messageType);
-    let args = this._unprocessArguments(handler, e.data.messageBody);
-    let result = this["on" + e.data.messageType](args);
-    let establishMapping = result => {
-      if (result instanceof Promise) {
-        result.then(establishMapping);
+    let args = this._unprocessArguments(handler.args, e.data.messageBody);
+    // If any of the converted arguments are still pending promises
+    // wait for them to complete before processing the message.
+    for (let arg of Object.values(args)) {
+      if (arg instanceof Promise) {
+        arg.then(() => this._handle(e));
         return;
       }
-      let continuation;
-      if (Array.isArray(result)) {
-        [result, continuation] = result;
-      }
-      this._mapper.establishThingMapping(args.identifier, result);
-      if (continuation) {
-        continuation();
-      }
     }
-    if (result) {
+    let result = this["on" + e.data.messageType](args);
+    if (handler.isInitializer) {
       assert(args.identifier);
-      establishMapping(result);
+      this._mapper.establishThingMapping(args.identifier, result);
     }
   }
 
@@ -185,12 +190,15 @@ class APIPort {
   }
 
   registerHandler(name, argumentTypes) {
-    this._messageMap.set(name, argumentTypes);
+    this._messageMap.set(name, {args: argumentTypes});
   }
 
   registerInitializerHandler(name, argumentTypes) {
     argumentTypes.identifier = this.Direct;
-    this._messageMap.set(name, argumentTypes);
+    this._messageMap.set(name, {
+      isInitializer: true,
+      args: argumentTypes,
+    });
   }
 
   registerInitializer(name, argumentTypes) {
