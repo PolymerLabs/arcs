@@ -100,12 +100,12 @@ Can include how particle inputs are connected to views:
 ...
 recipe
   map as view1               # maps a view external to the arc; changes in the
-  							 # external view will be reflected locally, but the
-							 # local view is read-only.
+                             # external view will be reflected locally, but the
+                             # local view is read-only.
   use as view2               # uses some view already in the Arc
   create as view3            # creates a new empty view
   copy ImportedView as view4 # creates a new view populated with entries from
-  							 # a view defined or imported
+                             # a view defined or imported
                              # in the manifest
   SomeParticle
     param1 <- view1 # bind's SomeParticle's 'in' param1 to view1
