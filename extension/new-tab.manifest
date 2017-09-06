@@ -5,10 +5,7 @@
 # subject to an additional IP rights grant found at
 # http://polymer.github.io/PATENTS.txt
 
-import 'entities/WebPage.manifest'
-import 'entities/Answer.manifest'
-import 'entities/Question.manifest'
-import 'entities/VideoObject.manifest'
+import 'entities/WebEntities.manifest'
 
 import 'particles/ShowWebPages/ShowWebPages.manifest'
 import 'particles/ProductsFromWebPages/ProductsFromWebPages.manifest'
@@ -17,7 +14,7 @@ view WebPageView of [WebPage] in 'webpages.json'
 
 # show WebPages
 recipe
-  copy as view0
+  map as view0
 
   ShowWebPages
     list <- view0
@@ -28,7 +25,7 @@ import 'https://$cdn/particles/ShowProducts/ShowProducts.manifest'
 
 # convert WebPages->Products, and display those Products
 recipe
-  copy as view0
+  map as view0
   create as view1
 
   ProductsFromWebPages

@@ -130,6 +130,7 @@ function dumpEntities(views, entityData) {
     let data = Object.assign({}, ei);
     delete data['@type'];
 
+    // TODO(smalls) - the view should generate these ids
     let id = faux_gid++;
 
     view.store({
