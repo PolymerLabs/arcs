@@ -217,6 +217,17 @@ describe('manifest', function() {
         Thing`);
     assert(manifest.recipes[0].particles[0].spec);
   });
+  it('throws an error when a particle has no appropriate body definition', async () => {
+    try {
+      let manifest = await Manifest.parse(`
+        schema Thixthpenthe
+        particle Thing in 'thing.js'
+          Thong(in Thixthpenthe thixthpenthe)`);
+      assert(false);
+    } catch (e) {
+      assert.equal(e.message, "no valid body defined for this particle");
+    }
+  })
   it('can load a manifest via a loader', async () => {
     let registry = {};
     let loader = {

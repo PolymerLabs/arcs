@@ -193,10 +193,12 @@ ${e.message}
     manifest._schemas[schemaItem.name] = new Schema(schemaItem);
   }
   static _processParticle(manifest, particleItem, loader) {
+    assert(particleItem.implFile == null || particleItem.args !== null, "no valid body defined for this particle");
     // TODO: loader should not be optional.
     if (particleItem.implFile && loader) {
       particleItem.implFile = loader.join(manifest.fileName, particleItem.implFile);
     }
+
     let resolveSchema = name => {
       let schema = manifest.findSchemaByName(name);
       if (!schema) {
