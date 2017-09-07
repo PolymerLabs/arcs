@@ -69,7 +69,7 @@ class DomParticle extends XenStateMixin(Particle) {
       views: this.spec.inputs.map(i => i.name).concat(this.spec.outputs.map(o => o.name)),
       // TODO(mmandlis): this.spec needs to be replace with a particle-spec loaded from
       // .manifest files, instead of .ptcl ones.
-      slotNames: [ this.spec.renders.length && this.spec.renders[0].name.name ]
+      slotNames: [...this.spec.slots.values()].map(s => s.name)
     };
   }
   _info() {

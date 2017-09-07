@@ -67,8 +67,6 @@ class ParticleSpec {
     this.connections.forEach(a => this.connectionMap.set(a.name, a));
     this.inputs = this.connections.filter(a => a.isInput);
     this.outputs = this.connections.filter(a => a.isOutput);
-    this.exposes = model.exposes;  // TODO: deprecate and use this.slots instead.
-    this.renders = model.renders;  // TODO: deprecate and use this.slots instead.
     this.transient = model.transient;
     this.description = model.description;
     this.implFile = model.implFile;
@@ -101,13 +99,13 @@ class ParticleSpec {
   }
 
   toLiteral() {
-    let {args, name, exposes, renders, transient, description, implFile} = this._model;
+    let {args, name, transient, description, implFile, affordance, slots} = this._model;
     args = args.map(a => {
       let {type, direction, name} = a;
       type = type.toLiteral();
       return {type, direction, name};
     });
-    return {args, name, exposes, renders, transient, description, implFile};
+    return {args, name, transient, description, implFile, affordance, slots};
   }
 
   static fromLiteral(literal) {
