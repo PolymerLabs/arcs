@@ -90,8 +90,10 @@ Particle
       } else if (item.kind == 'description') {
         description = {};
         item.description.forEach(d => { description[d.name] = d.pattern; });
-      } else {
+      } else if (item.affordance) {
         affordance.push(item.affordance)
+      } else {
+        error('Unknown particle element ', item);
       }
     });
     if (affordance.length == 0) {

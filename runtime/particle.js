@@ -120,7 +120,7 @@ class Particle {
    *
    * views is a map from names to view handles
    * names indicates the views which should have a callback installed on them
-   * kind is the kind of event that should ve registered for
+   * kind is the kind of event that should be registered for
    * f is the callback function
    */
   on(views, names, kind, f) {
