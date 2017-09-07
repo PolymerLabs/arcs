@@ -74,7 +74,18 @@ class Slot {
     return 0;
   }
 
-  isResolved() {
+  isResolved(options) {
+    if (options && options.showUnresolved) {
+      options.details = [];
+      if (!this._sourceConnection) {
+        options.details.push('missing source-connection');
+      }
+      if (!this.id) {
+        options.details.push('missing id');
+      }
+      options.details = options.details.join('; ');
+    }
+
     return this._sourceConnection || this.id;
   }
 
@@ -83,10 +94,18 @@ class Slot {
     return true;
   }
 
-  toString(nameMap) {
-    if (this.id)
-      return `slot '${this.id}' as ${(nameMap && nameMap.get(this)) || this.localName}`;
+  toString(nameMap, options) {
+    let result = [];
+    if (this.id) {
+      result.push(`slot '${this.id}' as ${(nameMap && nameMap.get(this)) || this.localName}`);
+      if (options && options.showUnresolved) {
+        if (!this.isResolved(options)) {
+          result.push(`# unresolved slot: ${options.details}`);
+        }
+      }
+    }
 
+    return result.join(' ');
   }
 }
 

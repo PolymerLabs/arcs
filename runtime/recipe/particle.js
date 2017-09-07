@@ -83,17 +83,37 @@ class Particle {
     return true;
   }
 
-  isResolved() {
+  isResolved(options) {
     assert(Object.isFrozen(this));
     // TODO: slots
     if (this.consumedSlotConnections.length > 0) {
       let fulfilledSlotConnections = this.consumedSlotConnections.filter(connection => connection.targetSlot !== undefined);
-      if (fulfilledSlotConnections.length == 0)
+      if (fulfilledSlotConnections.length == 0) {
+        if (options && options.showUnresolved) {
+          options.details = 'unfullfilled slot connections';
+        }
         return false;
+      }
     }
-    return this.spec
-        && this.spec.connectionMap.size == Object.keys(this._connections).length
-        && this.unnamedConnections.length == 0;
+    if (!this.spec) {
+      if (options && options.showUnresolved) {
+        options.details = 'missing spec';
+      }
+      return false;
+    }
+    if (this.spec.connectionMap.size != Object.keys(this._connections).length) {
+      if (options && options.showUnresolved) {
+        options.details = 'unresolved connections';
+      }
+      return false;
+    }
+    if (this.unnamedConnections.length != 0) {
+      if (options && options.showUnresolved) {
+        options.details = `${this.unnamedConnections.length} unnamed connections`;
+      }
+      return false;
+    }
+    return true;
   }
 
   get recipe() { return this._recipe; }
@@ -162,21 +182,27 @@ class Particle {
     return slotConn;
   }
 
-  toString(nameMap) {
+  toString(nameMap, options) {
     let result = [];
     // TODO: we need at least name or tags
     result.push(this.name);
     result.push(...this.tags);
     result.push(`as ${(nameMap && nameMap.get(this)) || this.localName}`);
+    if (options && options.showUnresolved) {
+      if (!this.isResolved(options)) {
+        result.push(`# unresolved particle: ${options.details}`);
+      }
+    }
     result = [result.join(' ')];
+
     for (let connection of this.unnamedConnections) {
-      result.push(connection.toString(nameMap).replace(/^|(\n)/g, '$1  '));
+      result.push(connection.toString(nameMap, options).replace(/^|(\n)/g, '$1  '));
     }
     for (let connection of Object.values(this.connections)) {
-      result.push(connection.toString(nameMap).replace(/^|(\n)/g, '$1  '));
+      result.push(connection.toString(nameMap, options).replace(/^|(\n)/g, '$1  '));
     }
     for (let slotConnection of Object.values(this._consumedSlotConnections)) {
-      result.push(slotConnection.toString(nameMap).replace(/^|(\n)/g, '$1  '));
+      result.push(slotConnection.toString(nameMap, options).replace(/^|(\n)/g, '$1  '));
     }
     return result.join('\n')
   }

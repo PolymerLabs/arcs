@@ -98,17 +98,35 @@ class SlotConnection {
     return true;
   }
 
-  isResolved() {
-    if (!this.name || !this.particle)
+  isResolved(options) {
+    if (!this.name) {
+      if (options) {
+        options.details = "missing name";
+      }
       return false;
-    if (!this.targetSlot)
+    }
+    if (!this.particle) {
+      if (options) {
+        options.details = "missing particle";
+      }
       return false;
-    if (this.slotSpec.isRequired && this.targetSlot.sourceConnection == undefined)
+    }
+    if (!this.targetSlot) {
+      if (options) {
+        options.details = "missing target-slot";
+      }
       return false;
+    }
+    if (this.slotSpec.isRequired && this.targetSlot.sourceConnection == undefined) {
+      if (options) {
+        options.details = "missing target-slot's source-connection of required connection";
+      }
+      return false;
+    }
     return true;
   }
 
-  toString(nameMap) {
+  toString(nameMap, options) {
     let consumeRes = [];
     consumeRes.push('consume');
     if (this.slotSpec.isSet) {
@@ -117,6 +135,12 @@ class SlotConnection {
     consumeRes.push(`${this.name}`);
     if (this.targetSlot)
       consumeRes.push(`as ${(nameMap && nameMap.get(this.targetSlot)) || this.targetSlot.localName}`);
+
+    if (options && options.showUnresolved) {
+      if (!this.isResolved(options)) {
+        consumeRes.push(`# unresolved slot-connection: ${options.details}`);
+      }
+    }
 
     let result = [];
     result.push(consumeRes.join(" "));
