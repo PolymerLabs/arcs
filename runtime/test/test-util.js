@@ -52,8 +52,6 @@ function initParticleSpec(name) {
     spec: {
       name,
     },
-    exposeMap: new Map(),
-    renderMap: new Map(),
   };
 }
 
