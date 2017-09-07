@@ -100,22 +100,6 @@ Particle
     }
     affordance.push('mock');
 
-    // Populate old particle spec "renders" and "exposes" fields.
-    // TODO(mmandlis): get rid of it when migrated to new specs.
-    let renders = [];
-    let exposes = [];
-    slots.forEach(slot => {
-      renders.push({ name : {name: slot.name, views: args.map(a => a.name)}, min: 'none', max: 'need' });
-      slot.providedSlots.forEach(providedSlot => {
-        let exposedSlot = {name: providedSlot.name};
-        if (providedSlot.views.length > 0) {
-          exposedSlot.view = providedSlot.views[0];
-        }
-        exposes.push(exposedSlot);
-      });
-    });
-
-
     return {
       kind: 'particle',
       name,
@@ -123,8 +107,6 @@ Particle
       args,
       affordance,
       slots,
-      renders,
-      exposes,
       description
     };
   }
