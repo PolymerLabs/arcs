@@ -227,7 +227,20 @@ describe('manifest', function() {
     } catch (e) {
       assert.equal(e.message, "no valid body defined for this particle");
     }
-  })
+  });
+  it('throws an error when a particle has invalid description', async () => {
+    try {
+      let manifest = await Manifest.parse(`
+        schema Foo
+        particle Thing in 'thing.js'
+          Thing(in Foo foo)
+          description \`Does thing\`
+            bar \`my-bar\``);
+      assert(false);
+    } catch (e) {
+      assert.equal(e.message, "Unexpected description for bar");
+    }
+  });
   it('can load a manifest via a loader', async () => {
     let registry = {};
     let loader = {
