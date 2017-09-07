@@ -83,4 +83,15 @@ describe('manifest parser', function() {
         description \`my view\`
       view View1 of Person 'some-id' @7 in 'people.json'`);
   });
+  it('fails to parse a nonsense argument list', () => {
+    try {
+      parse(`
+        particle AParticle
+          Nonsense()`);
+      assert.fail('this parse should have failed, no nonsense!');
+    } catch(e) {
+      assert(e.message.includes('Unknown particle element'),
+          'bad error: '+e);
+    }
+  });
 });
