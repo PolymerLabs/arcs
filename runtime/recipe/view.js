@@ -107,25 +107,41 @@ class View {
     return valid;
   }
 
-  isResolved() {
+  isResolved(options) {
     assert(Object.isFrozen(this));
-    if (!this._type)
+    if (!this._type) {
+      if (options) {
+        options.details = "missing type";
+      }
       return false;
+    }
     switch (this._fate) {
-      case "?":
+      case "?": {
+        if (options) {
+          options.details = "missing fate";
+        }
         return false;
+      }
       case "copy":
       case "map":
-      case "use":
+      case "use": {
+        if (options && this.id === null) {
+          options.details = "missing id";
+        }
         return this.id !== null;
+      }
       case "create":
         return true;
-      default:
+      default: {
+        if (options) {
+          options.details = `invalid fate ${this._fate}`;
+        }
         assert(false, `Unexpected fate: ${this._fate}`);
+      }
     }
   }
 
-  toString(nameMap) {
+  toString(nameMap, options) {
     // TODO: type? maybe output in a comment
     let result = [];
     result.push(this._fate);
@@ -138,6 +154,13 @@ class View {
       result.push('#');
       result.push(this.type.toString());
     }
+    if (options && options.showUnresolved) {
+      let options = {};
+      if (!this.isResolved(options)) {
+        result.push(` # unresolved view: ${options.details}`);
+      }
+    }
+
     return result.join(' ');
   }
 }

@@ -354,25 +354,29 @@ class Recipe {
   // TODO: Add a normalize() which strips local names and puts and nested
   //       lists into a normal ordering.
 
-  toString() {
+  toString(options) {
     let nameMap = this._makeLocalNameMap();
     let result = [];
     // TODO: figure out where recipe names come from
     result.push(`recipe`);
     for (let constraint of this._connectionConstraints) {
-      result.push(constraint.toString().replace(/^|(\n)/g, '$1  '));
+      let constraintStr = constraint.toString().replace(/^|(\n)/g, '$1  ');
+      if (options && options.showUnresolved) {
+        constraintStr = constraintStr.concat(' # unresolved connection-constraint');
+      }
+      result.push(constraintStr);
     }
     for (let view of this.views) {
-      result.push(view.toString(nameMap).replace(/^|(\n)/g, '$1  '));
+      result.push(view.toString(nameMap, options).replace(/^|(\n)/g, '$1  '));
     }
     for (let slot of this.slots) {
-      let slotString = slot.toString(nameMap);
+      let slotString = slot.toString(nameMap, options);
       if (slotString) {
         result.push(slotString.replace(/^|(\n)/g, '$1  '));
       }
     }
     for (let particle of this.particles) {
-      result.push(particle.toString(nameMap).replace(/^|(\n)/g, '$1  '));
+      result.push(particle.toString(nameMap, options).replace(/^|(\n)/g, '$1  '));
     }
     return result.join('\n');
   }

@@ -105,12 +105,28 @@ class ViewConnection {
     return true;
   }
 
-  isResolved() {
+  isResolved(options) {
     assert(Object.isFrozen(this));
     // TODO: This should use this._type, or possibly not consider type at all.
-    return this.type
-        && this._direction
-        && this.view;
+    if (!this.type) {
+      if (options) {
+        options.details = 'missing type';
+      }
+      return false;
+    }
+    if (!this._direction) {
+      if (options) {
+        options.details = 'missing direction';
+      }
+      return false;
+    }
+    if (!this.view) {
+      if (options) {
+        options.details = 'missing view';
+      }
+      return false;
+    }
+    return true;
   }
 
   _resetViewType() {
@@ -125,7 +141,7 @@ class ViewConnection {
     this._view.connections.push(this);
   }
 
-  toString(nameMap) {
+  toString(nameMap, options) {
     let result = [];
     result.push(this.name || '*');
     // TODO: better deal with unspecified direction.
@@ -134,6 +150,13 @@ class ViewConnection {
       result.push(`${(nameMap && nameMap.get(this.view)) || this.view.localName}`);
     }
     result.push(...this.tags);
+
+    if (options && options.showUnresolved) {
+      if (!this.isResolved(options)) {
+        result.push(`# unresolved view-connection: ${options.details}`);
+      }
+    }
+
     return result.join(' ');
   }
 }
