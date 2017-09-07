@@ -10,8 +10,8 @@
 "use strict";
 
 const runtime = require("./runtime.js");
-const Type = require('./type.js');
-const assert = require('assert');
+const Type = require("./type.js");
+const assert = require("assert");
 
 class ConnectionSpec {
   constructor(rawData, typeVarMap) {
@@ -68,7 +68,7 @@ class ParticleSpec {
     this.inputs = this.connections.filter(a => a.isInput);
     this.outputs = this.connections.filter(a => a.isOutput);
     this.transient = model.transient;
-    this.description = model.description;
+    this.description = this.validateDescription(model.description);
     this.implFile = model.implFile;
     this.affordance = model.affordance;
     this.slots = new Map();
@@ -77,7 +77,7 @@ class ParticleSpec {
     // Verify provided slots use valid view connection names.
     this.slots.forEach(slot => {
       slot.providedSlots.forEach(ps => {
-        ps.views.forEach(v => assert(this.connectionMap.has(v), 'Cannot provide slot for nonexistent view constraint ', v));
+        ps.views.forEach(v => assert(this.connectionMap.has(v), "Cannot provide slot for nonexistent view constraint ", v));
       });
     });
   }
@@ -111,6 +111,13 @@ class ParticleSpec {
   static fromLiteral(literal) {
     literal.args.forEach(a => a.type = Type.fromLiteral(a.type));
     return new ParticleSpec(literal, () => assert(false));
+  }
+
+  validateDescription(description) {
+    Object.keys(description || []).forEach(d => {
+      assert(d == "pattern" || this.connectionMap.has(d), `Unexpected description for ${d}`);
+    });
+    return description;
   }
 }
 
