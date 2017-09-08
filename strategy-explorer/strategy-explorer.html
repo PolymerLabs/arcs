@@ -59,7 +59,7 @@ http://polymer.github.io/PATENTS.txt
         })
         item.original = undefined;
         item.resolved = item.result.isResolved();
-        let options = {showUnresolved: true, showInvalid: true, details: ""};
+        let options = {showUnresolved: true, showInvalid: false, details: ""};
         item.result = item.result.toString(options);
       });
       var populationMap = {};
