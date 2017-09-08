@@ -20,6 +20,10 @@ class MapConsumedSlots extends Strategy {
           if (slotConnection.name != slot.name)
             return false;
 
+          if (!slot.sourceConnection) {
+            return;
+          }
+
           let providedSlotSpec =
               slot.sourceConnection.slotSpec.providedSlots.find(ps => ps.name == slotConnection.name);
           if (slotConnection.slotSpec.isSet != providedSlotSpec.isSet)
