@@ -109,7 +109,7 @@ defineParticle(({DomParticle}) => {
         <img src="{{image}}">
       </div>
     </div>
-  <!-- annotation slot will be provided, as soon as SlotComposer and MapRemoteSlots strategy support it. ->
+    <div slotid="annotation" subid$="{{subId}}">
   </div>
 </template>
   `;

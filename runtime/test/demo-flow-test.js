@@ -35,31 +35,33 @@ describe('demo flow', function() {
     planner.init(arc);
 
     let plans = await planner.suggest();
-    assert.equal(plans.length, 2);
+    assert.equal(plans.length, 3);
 
     // Choose a plan to test with.
     let expectedPlanString = `recipe
   create as view0 # Product List
   copy 'manifest:browser/demo/recipes.manifest:view0' as view1 # Product List
   map 'manifest:browser/demo/recipes.manifest:view1' #wishlist as view2 # Product List
-  slot 'r0' as slot2
+  slot 'r0' as slot3
   ShowProducts as particle0
     list <- view1
-    consume root as slot2
+    consume root as slot3
       provide action as slot0
         view list
-      provide set of annotation as slot1
+      provide set of annotation as slot2
         view list
-      provide postamble as slot3
-      provide preamble as slot4
+      provide postamble as slot4
+      provide preamble as slot5
   Chooser as particle1
     choices <- view0
     resultList = view1
     consume action as slot0
+      provide set of annotation as slot1
+        view choices
   AlsoOn as particle2
     choices <- view0
     list <- view1
-    consume set of annotation as slot1
+    consume set of annotation as slot2
   Recommend as particle3
     known <- view1
     population <- view2
