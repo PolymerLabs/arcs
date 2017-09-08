@@ -73,7 +73,7 @@ gulp.task('webpack', async function() {
 
 gulp.task('build', ['peg', 'webpack']);
 
-gulp.task('test', function() {
+gulp.task('test', ['peg'], function() {
   const mocha = require('gulp-mocha');
   // OMG gulp, why are you so hideously, hideously bad?
   //
