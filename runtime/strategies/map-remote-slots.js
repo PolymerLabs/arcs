@@ -25,12 +25,11 @@ class MapRemoteSlots extends Strategy {
           return;
 
         let matchingSlots = remoteSlots[slotConnection.name].filter(remoteSlot => {
-          //debugger;
           if (slotConnection.slotSpec.isSet != remoteSlot.providedSlotSpec.isSet) {
             return false;
           }
 
-          var views = remoteSlots[slotConnection.name][0].views;
+          var views = remoteSlot.views;
           let viewsMatch = false;
           if (views.length == 0) {
             return true;
