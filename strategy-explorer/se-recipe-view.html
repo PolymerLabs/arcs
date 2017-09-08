@@ -29,6 +29,10 @@ http://polymer.github.io/PATENTS.txt
         color: red;
         text-decoration: line-through;
       }
+
+      .unresolved {
+        color: fuchsia;
+      }
     </style>
     <template is='dom-if' if='{{shownRecipe}}'>
       <div class='recipe-box'>{{strategyString}}<span inner-h-t-m-l='{{shownRecipe.result}}'></span>
@@ -41,7 +45,10 @@ http://polymer.github.io/PATENTS.txt
       properties: {
         recipe: {observer: "recipeChanged"},
         strategyString: String,
-        shownRecipe: Object
+        shownRecipe: {
+          type: Object,
+          observer: "shownRecipeChanged"
+        },
       },
       recipeChanged: function(recipe) {
         if (!this.pinned) {
@@ -72,7 +79,16 @@ http://polymer.github.io/PATENTS.txt
           else
             this.strategyString = '';
         }
-
+      },
+      shownRecipeChanged: function(shownRecipe) {
+        let parts = shownRecipe.result.split(/(?=(?:# unresolved |[\n\r]+))/g);
+        parts = parts.map(entry => {
+          if (entry.startsWith("# unresolved ")) {
+            return `<span class='unresolved'>${entry}</span>`;
+          }
+          return entry;
+        });
+        this.set("shownRecipe.result", parts.join(""));
       },
       pin: function() {
         this.pinned = true;
@@ -83,6 +99,7 @@ http://polymer.github.io/PATENTS.txt
         if (this.pinned) {
           this.over = this.to;
           this.recipe = this.over.recipe;
+          this.shownRecipeChanged(this.shownRecipe);
         }
       },
       unpin: function() {
