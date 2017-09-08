@@ -1,5 +1,7 @@
 # arcs
 
+Particle developers should visit our [particle developer website](https://polymerlabs.github.io/arcs/) instead of reading this document which is more geared towards Arcs core system developers. 
+
 ## Install
 
 Note that you need a **recent** version of Node because we use new ES6 features. v7.8.0 is definitely OK - earlier v7 versions are probably fine too.
