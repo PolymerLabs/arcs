@@ -93,7 +93,7 @@ Particle
       } else if (item.affordance) {
         affordance.push(item.affordance)
       } else {
-        error('Unknown particle element ', item);
+        error(`Particle ${name} contains an unknown element: ${item.name}`);
       }
     });
     if (affordance.length == 0) {

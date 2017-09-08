@@ -90,7 +90,7 @@ describe('manifest parser', function() {
           Nonsense()`);
       assert.fail('this parse should have failed, no nonsense!');
     } catch(e) {
-      assert(e.message.includes('Unknown particle element'),
+      assert(e.message.includes('Nonsense'),
           'bad error: '+e);
     }
   });
