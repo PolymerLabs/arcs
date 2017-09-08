@@ -15,14 +15,14 @@ import '../../../particles/ManufacturerInfo/ManufacturerInfo.manifest'
 import '../../../particles/Interests/Interests.manifest'
 
 # Create shortlist with [product, ...]
-recipe
-   ShowProducts
+#recipe
+#   ShowProducts
 
 # See [person]'s wishlist
-recipe
-  map #wishlist as wishlist
-  ShowProducts
-    list <- wishlist
+#recipe
+#  map #wishlist as wishlist
+#  ShowProducts
+#    list <- wishlist
 
 # Create shortlist with [product, ...] and suggest similar products from [person]'s wish list
 recipe
@@ -43,10 +43,14 @@ recipe
 # Buying for [person]'s [occasion] in [timeframe]? Product [X] arrives too late.
 recipe
   map as view1
+  use as view2
+  use as view3
   GiftList
     person <- view1
   Arrivinator
-  #Arrivinator <- for Chooser particle
+    list <- view2
+  Arrivinator
+    list <- view3
 
 # Check manufacturer information for products.
 recipe
@@ -57,8 +61,8 @@ recipe
 # TODO: See awards, e.g. [product] winning the [award].
 
 # Recommendations based on Claire's interest in field hockey.
-recipe
-  Interests
+#recipe
+#  Interests
 
 # TODO: move these to separate manifests for claire's wishlist / page
 view PageProducts of [Product] in 'products.json'
