@@ -221,8 +221,7 @@ describe('manifest', function() {
     try {
       let manifest = await Manifest.parse(`
         schema Thixthpenthe
-        particle Thing in 'thing.js'
-          Thong(in Thixthpenthe thixthpenthe)`);
+        particle Thing in 'thing.js'`);
       assert(false);
     } catch (e) {
       assert.equal(e.message, "no valid body defined for this particle");
