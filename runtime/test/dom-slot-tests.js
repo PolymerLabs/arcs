@@ -7,88 +7,143 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-"use strict";
-
-// TODO(mmandlis): rewrite the tests.
+'use strict';
 
 const assert = require('chai').assert;
-var DomSlot = require("../dom-slot.js");
+var DomSlot = require('../dom-slot.js');
 let util = require('./test-util.js');
 let loader = new (require('../loader'));
-//const Bar = loader.loadEntity("Bar");
 const view = require('../view.js');
 
+class MockDomContext {
+  constructor() {
+    this.context = context;
+  }
+  observe(observer) {}
+  stampTemplate(template, eventHandler) {}
+  initContext(context) {
+    this.context = context;
+  }
+}
+DomSlot.prototype._createDomContext = () => new MockDomContext();
+DomSlot.prototype._initMutationObserver = () => {};
+DomSlot.prototype._createTemplateElement = (template) => template;
+
+function createDomSlot(slotName) {
+  // slotName should differ in each test case to avoid collision in DomSlot::templates.
+  return new DomSlot(/* consumeConn= */ {particle: {name:'MyParticle'}, name: slotName}, 'dummy-arc');
+}
+
 describe('dom-slot', function() {
-  // it('initialize render derender and uninitialize', function() {
-  //   let slot = new DomSlot('slotid');
-  //   assert.isFalse(slot.isInitialized());
-  //   assert.equal(undefined, slot.content);
-  //
-  //   // initialize DOM.
-  //   slot.initialize(/* context= */{}, /* exposedView= */undefined);
-  //   assert.isTrue(slot.isInitialized());
-  //   assert.equal(undefined, slot.content);
-  //
-  //   // render content.
-  //   let content = 'foo';
-  //   assert.deepEqual([], slot.render(content, /* eventHandler= */undefined));
-  //   assert.isTrue(slot.isInitialized());
-  //   assert.equal(content, slot.dom._cachedContent);
-  //
-  //   // render content with inner slots.
-  //   content = 'foo<div slotid="action"></div>bar<div slotid="other"></div>';
-  //   let innerSlotInfos = slot.render(content, /* eventHandler= */undefined);
-  //   assert.equal(2, innerSlotInfos.length);
-  //   assert.equal('action', innerSlotInfos[0].id);
-  //   assert.equal('other', innerSlotInfos[1].id);
-  //   assert.isTrue(slot.isInitialized());
-  //   assert.equal(content, slot.dom._cachedContent);
-  //
-  //   // derender content.
-  //   slot.derender();
-  //   assert.isTrue(slot.isInitialized());
-  //   assert.equal('', slot.dom._cachedContent);
-  //
-  //   // uninitialize DOM.
-  //   slot.uninitialize();
-  //   assert.isFalse(slot.isInitialized());
-  //   assert.isNull(slot.dom);
-  // });
-  //
-  // it('check availability', function() {
-  //   let slot = new DomSlot('slotid');
-  //   // Slot isn't initialized.
-  //   assert.isFalse(slot.isAvailable());
-  //
-  //   // Slot is initialized and not associated with a Particle.
-  //   slot.initialize(/* context= */{}, /* exposedView= */undefined);
-  //   assert.isTrue(slot.isAvailable());
-  //
-  //   // Slot is associated with a Particle.
-  //   slot.associateWithParticle(util.initParticleSpec('particle'));
-  //   assert.isFalse(slot.isAvailable());
-  //
-	// // Slot isn't initialized.
-  //   slot.uninitialize();
-  //   assert.isFalse(slot.isAvailable());
-  // });
-  //
-  // it('check exposed rendered views mapping', function() {
-  //   let slot = new DomSlot('slotid');
-  //
-  //   let v = new view.View(Bar.type, /* arc= */ null, "bar", "bar-id");
-  //   // Slot is initialized and not associated with a Particle.
-  //   slot.initialize(/* context= */{}, /* exposedView= */ v);
-  //   assert.isTrue(slot.isAvailable());
-  //
-  //   // Cannot associate particle with unmatching view with the Slot.
-  //   let particle = util.initParticleSpec('particle');
-  //   assert.throws(() => { slot.associateWithParticle(particle) });
-  //   assert.isTrue(slot.isAvailable());
-  //
-  //   // Successfully associate particle.
-  //   particle.renderMap.set(slot.slotid, [v]);
-  //   slot.associateWithParticle(particle)
-  //   assert.isFalse(slot.isAvailable());
-  // });
+  it('set context', function() {
+    let slot = createDomSlot('testContextSlot');
+    let doRenderCount = 0;
+    slot._doRender = () => { ++doRenderCount; };
+    assert.isNull(slot._context);
+
+    // context was null; set to null - nothing happens.
+    slot.context = null;
+    assert.isNull(slot._context);
+
+    // context was null; set none null - initializes DOM context
+    slot.context = 'dummy-context';
+    assert.isTrue(slot.context instanceof MockDomContext);
+    let clearCount = 0;
+    slot.context.clear = () => { clearCount++; }
+    assert.equal('dummy-context', slot.context.context);
+    assert.equal(0, doRenderCount);
+
+    // context was NOT null; set none null - updates DOM context, and calls doRender
+    slot.context = 'other-dummy-context';
+    assert.equal(1, clearCount);
+    assert.equal(1, doRenderCount);
+    assert.equal('other-dummy-context', slot.context.context);
+
+    // set context to NULL.
+    slot.context = null;
+    assert.equal(1, doRenderCount);
+    assert.isNull(slot._context);
+  });
+  it('set content', function() {
+    let slot = createDomSlot('testContentSlot');
+    let doRenderCount = 0;
+    let _doRenderImpl = slot._doRender;
+    slot._doRender = () => {
+      ++doRenderCount;
+      _doRenderImpl.call(slot);
+    };
+    slot.populateViewDescriptions = () => {};
+    assert.isNull(slot._model);
+
+    // model and context are null; set content to null - nothing happens.
+    slot.setContent(null);
+    assert.isNull(slot._model);
+    assert.equal(0, doRenderCount);
+
+    // set content to non-NULL - still nothing happens, because context is null.
+    slot.setContent({content: 'foo'});
+    assert.isNull(slot._model);
+    assert.equal(0, doRenderCount);
+
+    // set context to dummy
+    slot.context = 'dummy-context';
+    let clearCount = 0;
+    let stampTemplateCount = 0;
+    let updateModelCount = 0;
+    slot.context.clear = () => { clearCount++; }
+    slot.context.stampTemplate = (template, eventHandler) => { stampTemplateCount++; }
+    slot.context.updateModel = (model) => { updateModelCount++; }
+    // Set content to null - context is cleared.
+    slot.setContent(null);
+    assert.isNull(slot._model);
+    assert.equal(0, doRenderCount);
+    assert.equal(1, clearCount);
+    assert.equal(0, stampTemplateCount);
+    assert.equal(0, updateModelCount);
+
+    // Set content with template: templates map is updated and slot is rendered.
+    assert.isUndefined(slot.getTemplate());
+    slot.setContent({template: 'my template'});
+    assert.isNull(slot._model);
+    assert.equal('my template', slot.getTemplate());
+    assert.equal(1, doRenderCount);
+    assert.equal(1, clearCount);
+    assert.equal(1, stampTemplateCount);
+    assert.equal(0, updateModelCount);
+
+    // Set content with template and model - template is overriden, model is set and slot is re-rendered.
+    slot.setContent({template: 'my other template', model:{foo:'bar'}});
+    assert.deepEqual({foo:'bar'}, slot._model);
+    assert.equal('my other template', slot.getTemplate());
+    assert.equal(2, doRenderCount);
+    assert.equal(2, clearCount);
+    assert.equal(2, stampTemplateCount);
+    assert.equal(1, updateModelCount);
+
+    // Set content with only model - model is set and slot is re-rendered.
+    slot.setContent({model:{foo:'far'}});
+    assert.deepEqual({foo:'far'}, slot._model);
+    assert.equal('my other template', slot.getTemplate());
+    assert.equal(3, doRenderCount);
+    assert.equal(2, clearCount);
+    assert.equal(3, stampTemplateCount);
+    assert.equal(2, updateModelCount);
+
+    // set content to null - context is cleared, and model is set to null.
+    slot.setContent(null);
+    assert.isNull(slot._model);
+    assert.equal('my other template', slot.getTemplate());
+    assert.equal(3, doRenderCount);
+    assert.equal(3, clearCount);
+  });
+  it('construct render request', function() {
+    let slot = createDomSlot('testRequestSlot');
+    // request template, if not available yet.
+    assert.deepEqual(['model', 'template'], slot.constructRenderRequest());
+
+    // only request model, if template already found.
+    slot._context = new MockDomContext();
+    slot.setContent({template:'dummy-template'}, {});
+    assert.deepEqual(['model'], slot.constructRenderRequest());
+  });
 });

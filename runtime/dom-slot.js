@@ -21,18 +21,7 @@ class DomSlot extends Slot {
     this._templateName = `${this.consumeConn.particle.name}::${this.consumeConn.name}`;
     this._model = null;
 
-    this._observer = new MutationObserver(() => {
-      this._observer.disconnect();
-
-      if (this.context) {
-        // Update inner slots.
-        this.context.initInnerContexts(this.consumeConn.slotSpec);
-        this.innerSlotsUpdateCallback(this);
-
-        // Reactivate the observer.
-        this.context.observe(this._observer);
-      }
-    });
+    this._observer = this._initMutationObserver();
   }
 
   get context() { return super.context;  }
@@ -45,7 +34,7 @@ class DomSlot extends Slot {
 
     if (context) {
       if (!this._context) {
-        this._context = this.consumeConn.slotSpec.isSet ? new SetDomContext() : new DomContext();
+        this._context = this._createDomContext();
       }
       this._context.initContext(context);
       if (!wasNull) {
@@ -54,6 +43,26 @@ class DomSlot extends Slot {
     } else {
       this._context = null;
     }
+  }
+  _createDomContext() {
+    return this.consumeConn.slotSpec.isSet ? new SetDomContext() : new DomContext();
+  }
+  _initMutationObserver() {
+    return new MutationObserver(() => {
+      this._observer.disconnect();
+
+      if (this.context) {
+        // Update inner slots.
+        this.context.initInnerContexts(this.consumeConn.slotSpec);
+        this.innerSlotsUpdateCallback(this);
+
+        // Reactivate the observer.
+        this.context.observe(this._observer);
+      }
+    });
+  }
+  _createTemplateElement(template) {
+    return Object.assign(document.createElement('template'), { innerHTML: template});
   }
   isSameContext(context) {
     return this.context.isEqual(context);
@@ -76,11 +85,11 @@ class DomSlot extends Slot {
     }
 
     if (content.template) {
-      templates.set(
-        this._templateName,
-        Object.assign(document.createElement('template'), {
-          innerHTML: content.template
-        }));
+      if (this.getTemplate()) {
+        // Template is being replaced.
+        this.context.clear();
+      }
+      templates.set(this._templateName, this._createTemplateElement(content.template));
     }
     this.eventHandler = handler;
     if (Object.keys(content).indexOf("model") >= 0) {
