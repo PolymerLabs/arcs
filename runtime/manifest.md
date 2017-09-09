@@ -39,7 +39,24 @@ particle MyParticle in 'my-particle.js'
   MyParticle(in MyThing, out [MyThing], inout [AnotherThing])
 ```
 * TODO: slots
-* TODO: descriptions
+
+### Descriptions
+Particle description defines how the Particle is represented in the recipe suggestion text. Description includes a sentence pattern, and optional individual argument descriptions.
+
+```
+particle MyParticle in ‘my-particle.js’
+  MyParticle(in MyThing mything)
+  description `Do Something with ${mything}`
+     list `my special thing`
+```
+
+Only the descriptions of Particles that render UI will be included in the suggestion text.
+
+View descriptions may also be used in particles UI (including other particles in the recipe that use the same view). The particle template would contain:
+```
+<span>{{mything.description}}</span>
+```
+
 * TODO: particle JS
 
 ## Views
