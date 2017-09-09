@@ -44,9 +44,9 @@ http://polymer.github.io/PATENTS.txt
     },
     preparePopulation: function(population) {
       population = population.map(recipe => {
-        let { result, score, derivation, hash } = recipe;
+        let { result, score, derivation, description, hash } = recipe;
         this.parentMap.set(recipe, this.lastID);
-        return { result, score, derivation, hash, id: this.lastID++ };
+        return { result, score, derivation, description, hash, id: this.lastID++ };
       });
 
       population.forEach(item => {

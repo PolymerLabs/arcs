@@ -131,6 +131,15 @@ class Planner {
       let descriptionGenerator = new DescriptionGenerator(plan, relevance);
 
       let hash = ((hash) => { return hash.substring(hash.length - 4)}) (await plan.digest());
+      if (generations) {
+        generations.forEach(g => {
+          g.forEach(gg => {
+            if (gg.hash.endsWith(hash)) {
+              gg.description = descriptionGenerator.description;
+            }
+          });
+        });
+      }
       // TODO: Move this logic inside speculate, so that it can stop the arc
       // before returning.
       relevance.newArc.stop();
