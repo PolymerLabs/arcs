@@ -35,7 +35,11 @@ http://polymer.github.io/PATENTS.txt
       }
     </style>
     <template is='dom-if' if='{{shownRecipe}}'>
-      <div class='recipe-box'>{{strategyString}}<span inner-h-t-m-l='{{shownRecipe.result}}'></span>
+      <div class='recipe-box'>{{strategyString}}<div hidden$="[[isDescriptionEmpty(shownRecipe.description)]]">
+          <span inner-h-t-m-l='{{shownRecipe.description}}'></span>
+          <hr>
+        </div>
+        <span inner-h-t-m-l='{{shownRecipe.result}}'></span>
       </div>
   </template>
 </template>
@@ -50,9 +54,12 @@ http://polymer.github.io/PATENTS.txt
           observer: "shownRecipeChanged"
         },
       },
+      isDescriptionEmpty(description) {
+        return !description;
+      },
       recipeChanged: function(recipe) {
         if (!this.pinned) {
-          this.shownRecipe = (({result, strategy, id, parent, score}) => ({result, strategy, id, parent, score}))(this.recipe);
+          this.shownRecipe = (({result, strategy, id, parent, score, description}) => ({result, strategy, id, parent, score, description}))(this.recipe);
         } else {
           if (recipe.id == this.shownRecipe.id) {
             this.set("shownRecipe.result", this.pinnedResult);
@@ -104,7 +111,7 @@ http://polymer.github.io/PATENTS.txt
       },
       unpin: function() {
         this.pinned = false;
-        this.shownRecipe = (({result, strategy, id, parent, score}) => ({result, strategy, id, parent, score}))(this.recipe);
+        this.shownRecipe = (({result, strategy, id, parent, score, description}) => ({result, strategy, id, parent, score, description}))(this.recipe);
         this.strategyString = '';
         this.to = undefined;
       }
