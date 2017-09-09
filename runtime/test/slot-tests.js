@@ -9,59 +9,36 @@
  */
 "use strict";
 
- // TODO(mmandlis): rewrite the tests.
-
 const assert = require('chai').assert;
 var Slot = require("../slot.js");
-let util = require('./test-util.js');
 
 describe('slot', function() {
-  // it('associate and disassociate slot', function() {
-  //   let slot = new Slot('slotid');
-  //   assert.isFalse(slot.isAssociated());
-  //
-  //   // cannot disassociate not associated slot.
-  //   assert.throws(() => { slot.disassociateParticle() });
-  //
-  //   // associate slot.
-  //   let particleSpec = util.initParticleSpec('particle');
-  //   slot.associateWithParticle(particleSpec);
-  //   assert.isTrue(slot.isAssociated());
-  //   // cannot associate slot that is already associated.
-  //   assert.throws(() => { slot.associateWithParticle(particleSpec); });
-  // });
-  //
-  // it('add and provide pending requests', function() {
-  //   let slot = new Slot('slotid');
-  //   assert.isFalse(slot.isAssociated());
-  //
-  //   let count = 0;
-  //   let handler = () => { count++; };
-  //
-  //   slot.addPendingRequest(util.initParticleSpec('particle1'), handler, {});
-  //   // Add request for the same particle, so it is ignored.
-  //   slot.addPendingRequest(util.initParticleSpec('particle1'), handler, {});
-  //   slot.addPendingRequest(util.initParticleSpec('particle2'), handler, {});
-  //   slot.providePendingSlot();
-  //   let expectedCount = 0;
-  //   assert.equal(++expectedCount, count);
-  //   slot.providePendingSlot();
-  //   assert.equal(++expectedCount, count);
-  //   // Slot has no pending requests, providing it does nothing.
-  //   slot.providePendingSlot();
-  //   assert.equal(expectedCount, count);
-  //
-  //   // Cannot provide not associated slot.
-  //   slot.associateWithParticle(util.initParticleSpec('particle'));
-  //   assert.throws(() => { slot.providePendingSlot(); });
-  //   assert.equal(expectedCount, count);
-  // });
-  // it('remove pending request', function() {
-  //   let slot = new Slot('slotid');
-  //   let count = 0;
-  //   let reject = () => { count++; };
-  //   slot.addPendingRequest(util.initParticleSpec('particle1'), {}, reject);
-  //   slot.removePendingRequest(util.initParticleSpec('particle1'));
-  //   assert.equal(1, count);
-  // });
+  it('setting context', function() {
+    let slot = new Slot("dummy-consumeConn", "dummy-arc");
+    let startRenderCount = 0;
+    let stopRenderCount = 0;
+    slot.startRenderCallback = () => { ++startRenderCount; };
+    slot.stopRenderCallback = () => { ++stopRenderCount; };
+
+    // context was null, set to null: nothing happens.
+    slot.setContext(null);
+    assert.equal(startRenderCount, 0);
+    assert.equal(stopRenderCount, 0);
+
+    // context was null, set to non-null: startRender is called.
+    slot.setContext("dummy-context");
+    assert.equal(startRenderCount, 1);
+    assert.equal(stopRenderCount, 0);
+
+    // context was not null, set to another non-null context: nothing happens.
+    assert.isFalse(slot.isSameContext("other-context"));
+    slot.setContext("other-context");
+    assert.equal(startRenderCount, 1);
+    assert.equal(stopRenderCount, 0);
+
+    // context was not null, set to null: stopRender is called.
+    slot.setContext(null);
+    assert.equal(startRenderCount, 1);
+    assert.equal(stopRenderCount, 1);
+  });
 });
