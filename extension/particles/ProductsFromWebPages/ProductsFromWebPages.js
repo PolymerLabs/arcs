@@ -8,36 +8,33 @@
 
 "use strict";
 
-defineParticle(({Particle}) => {
-  return class ProductsFromWebPages extends Particle {
-    setViews(views) {
-      this.on(views, 'list', 'change', e => {
-        let webPagesInput = views.get('list');
-        var productsOutput = views.get('products');
+defineParticle(({DomParticle}) => {
+  return class ProductsFromWebPages extends DomParticle {
 
-        webPagesInput.toList().then(function(input) {
+    _shouldRender(props, state) { return false; }
 
-          for (let c of input) {
-            let url = c['url'];
+    _willReceiveProps(props) {
 
-            /* Skip sites that we don't know contain Products, or that include
-             * schema.org markup as we'll have picked those up already. */
-            if (! url.includes('amazon')) {
-              continue;
-            }
+      let productsView = this._views.get('products');
 
-            let ei = new productsOutput.entityClass({
-                'image': c['image'],
-                'name': c['name']
-            });
-            productsOutput.store(ei);
-          }
+      for (let l of props.list) {
+        let raw = l['rawData'];
 
-          console.log('ProductsFromWebPages converted '+input.length+
-            ' WebPages to Products',
-            productsOutput);
+        let url = raw['url'];
+
+        /* Skip sites that we don't know contain Products, or that include
+         * schema.org markup as we'll have picked those up already. */
+        if (! url.includes('amazon')) {
+          continue;
+        }
+
+        let product = new productsView.entityClass({
+            'image': raw['image'],
+            'name': raw['name']
         });
-      });
+
+        productsView.store(product);
+      }
     }
   }
 });
