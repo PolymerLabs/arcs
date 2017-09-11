@@ -130,8 +130,16 @@ class SetDomContext {
   }
   initContext(context) {
     Object.keys(context).forEach(subId => {
-      this._contextBySubId[subId] = new DomContext();
+      if (!this._contextBySubId[subId] || !this._contextBySubId[subId].isEqual(context[subId])) {
+        this._contextBySubId[subId] = new DomContext();
+      }
       this._contextBySubId[subId].initContext(context[subId]);
+    });
+    // Delete sub-contexts that are not found in the new context.
+    Object.keys(this._contextBySubId).forEach(subId => {
+      if (!context[subId]) {
+        delete this._contextBySubId[subId];
+      }
     });
   }
   isEqual(context) {
