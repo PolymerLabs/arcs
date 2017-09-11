@@ -35,11 +35,12 @@ function instantiate_arcs(doc) {
   //
   let go = async ({db, urls}) => {
     // create default URL map
-    let root = `https://polymerlabs.github.io/arcs-cdn/v0.0.4`;
+    let root = document.currentScript.ownerDocument.URL.split('/').slice(0,3).join('/') +
+      `/resources/arcs-cdn`;
     let urlMap = utils.createUrlMap(root);
 
     // we have an additional artifact that we need to load dynamically
-    urlMap['worker-entry-cdn.js'] = `${root}/worker-entry-cdn.js`;
+    urlMap['worker-entry-cdn.js'] = `${root}/lib/worker-entry-cdn.js`;
     // customize map
     urls && Object.assign(urlMap, urls);
     // start application
