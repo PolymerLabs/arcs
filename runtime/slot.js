@@ -31,7 +31,7 @@ class Slot {
   setContext(context) {
     // do nothing, if context unchanged.
     if ((!this.context && !context) ||
-        (this.context && this.isSameContext(context))) {
+        (this.context && context && this.isSameContext(context))) {
       return;
     }
 
