@@ -15,7 +15,7 @@ defineParticle(({DomParticle}) => {
   let template = `
 <x-list items="{{items}}">
   <template>
-    <div>{{caption}}</div>
+    <div unsafe-html="{{caption}}"></div>
   </template>
 </x-list>
     `.trim();
