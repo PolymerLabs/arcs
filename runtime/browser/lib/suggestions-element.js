@@ -8,10 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-require('../lib/x-toast.js');
-
 let template = Object.assign(document.createElement('template'), {innerHTML: `
-
 <style>
   x-toast[suggestion-container] {
     background-color: white;
@@ -41,7 +38,9 @@ let template = Object.assign(document.createElement('template'), {innerHTML: `
 </style>
 
 <x-toast open suggestion-container>
-  <div slot="header"><img src="../assets/dots.png"></div>
+  <div slot="header">
+    <img alt="dots" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADQAAAAICAYAAAC2wNw9AAACdElEQVQ4jd2UPUyTURSGn/u1BSmt0FZqpcWKQCLCYIwMaEUTSGAganRhQwc3DbPRgcGEsBgwDiZGJU4MxoFJjI0R+TEhDkaIkhjlp4Uq0gL9AfrzHYey9oPReO50h+c973vvyVEiIgAr60JwJgNAa6OFI+WK/VZ6eorMzGe0CjclnVf3zYGOhF8gOyuosiaUq23fZDj5i9GFcQDa/QG8pYcBUCIiwdksd4a3WI4JAJUORV9XCa0N5j2F4/29JJ8/Rk8lUSYTRc3ncQw8QXN7jMHtRXKfOpHVL/m7CbSabrSTQ3v2HF0Yp2fsPuHkbwC8pW4GW+7R7g+gltZ0uTaQYDMlVDo1AJajOgetipc9NqpchX9q69UwsVs3MFfXoKw20HNk5maxXumi/NEzQ1O56QASmgC7AmWBXBpJgvnMQ1TV7YLcwmaYjpGbbOzE8dnyjxZKRCgrtvPm8lO0918zhKP5MCIgApVOjXBUCM5mDE1tvx5BczjzYUQHpTAfqyU9PUlu8WdBTlLfkLUJKAWUGRAwF4EF9OUhw56jS+MsJVbw2T3I7vHZPYQSEd6GptAM6X+yFIrCU6NdqLfgdSqWozpKgVL5kfM6Fa0NFkPpAx2X0GNRJJUApYEI2fnvFDWdxXS0urAl6wmU6xwkAckCCrJpyIBWed2wZ3tVAJ/NQyge2Y2mCMUj+Gwe2nzNmB709/Yed5v4MJdlflVYiwuH7PmlcMpvMhS31DdCNkt6coxcJIxsxCgOXKS8bxBVajNkNVcbshmE9V+QzoEOprputNo+Q6682E5dmZ93oY/82AzxZztGRYmDwZa7nHY35Lcc/D9r+y9bbAxYGnHEIgAAAABJRU5ErkJggg==">
+  </div>
   <suggestions></suggestions>
 </x-toast>
 
@@ -58,28 +57,32 @@ class SuggestionsElement extends HTMLElement {
     }
   }
 
-  add({plan, descriptionGenerator, rank, hash}, index) {
+  addSuggestion({plan, descriptionGenerator, rank, hash}, index) {
     let model = {
       index,
       innerHTML: descriptionGenerator.description,
-      onclick: () => { this.choose(plan, descriptionGenerator); }
+      onclick: () => {
+        this.toast.open = false;
+        // TODO(sjmiles): wait for toast animation to avoid jank
+        setTimeout(()=>this._choose(plan, descriptionGenerator), 80);
+      }
     };
-    this.container.insertBefore(
-      Object.assign(document.createElement("suggest"), model),
-      this.container.firstElementChild
-    ).setAttribute("hash", hash);
+    let suggest = Object.assign(document.createElement("suggest"), model);
+    suggest.setAttribute("hash", hash);
+    this.container.insertBefore(suggest, this.container.firstElementChild);
   }
 
-  choose(plan, descriptionGenerator) {
-    this.toast.open = false;
-    // TODO(sjmiles): wait for toast animation
-    setTimeout(() => {
-      this.container.textContent = '';
-      this.arc.instantiate(plan);
-      descriptionGenerator.setViewDescriptions(this.arc);
-      this.callback();
-    }, 80);
+  add(suggestions) {
+    suggestions.forEach((suggestion, i) => this.addSuggestion(suggestion, i));
   }
+
+  _choose(plan, descriptionGenerator) {
+    this.container.textContent = "";
+    this.dispatchEvent(new CustomEvent("plan-selected", {
+      detail: { plan, descriptionGenerator }
+    }));
+  }
+
 }
 
 customElements.define('suggestions-element', SuggestionsElement);

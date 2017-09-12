@@ -14,8 +14,8 @@ let DemoBase = require('../lib/demo-base.js');
 const Arc = require('../../arc.js');
 const Manifest = require("../../manifest.js");
 
-require('../lib/auto-tabs.js');
 require('../lib/suggestions-element.js');
+
 const Tracing = require('tracelib');
 Tracing.enable();
 global.Tracing = Tracing;
@@ -43,9 +43,9 @@ let template = Object.assign(document.createElement('template'), {innerHTML: `
   }
 </style>
 
-<auto-tabs particle-container>
+<div particle-container>
   <slot></slot>
-</auto-tabs>
+</div>
 <suggestions-element></suggestions-element>
 
 `.trim()});
@@ -64,10 +64,9 @@ class DemoFlow extends DemoBase {
       context: await Manifest.load('browser/demo/recipes.manifest', loader),
     });
     this.arc = arc;
-    this.suggestions = this.$('suggestions-element');
-    this.suggestions.arc = arc;
-    this.suggestions.callback = this.nextStage.bind(this);
+    this.suggest(this.arc, this.$('suggestions-element'));
   }
+
 }
 
 customElements.define('demo-flow', DemoFlow);

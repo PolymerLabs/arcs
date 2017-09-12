@@ -10,8 +10,6 @@ http://polymer.github.io/PATENTS.txt
 <html lang="en">
 <head>
 
-  <link rel="import" href="../../../strategy-explorer/strategy-explorer.html"></link>
-
   <title>Arcs: Flow Demo</title>
 
   <meta charset="utf-8">
@@ -34,13 +32,16 @@ http://polymer.github.io/PATENTS.txt
     }
   </style>
 
-  <link rel="import" href="explorer.html"></link>
+<script src="../lib/x-toast.js"></script>
 
 </head>
 <body>
+
+  <!-- TODO(sjmiles): has to be in body -->
+  <link rel="import" href="explorer.html"></link>
 
   <demo-flow></demo-flow>
 
   <script src="../build/demo/demo.js"></script>
 
-</body>
+  </body>
