@@ -400,11 +400,11 @@ ViewRef
   { return {tags}; }
 
 RecipeSlot
-  = 'slot' whiteSpace id:id name:(whiteSpace Name)? eolWhiteSpace
+  = 'slot' id:(whiteSpace id)? name:(whiteSpace Name)? eolWhiteSpace
   {
     return {
       kind: 'slot',
-      id,
+      id: optional(id, id => id[2], null),
       name: optional(name, name => name[1], '')
     }
   }

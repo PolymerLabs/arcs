@@ -383,7 +383,7 @@ describe('manifest', function() {
             provide oneMoreSlot as slot1
         OtherParticle
           aParam -> myView
-          consume aSlot as slot0
+          consume mySlot as slot0
           consume oneMoreSlot as slot1
           `);
     let recipe = manifest.recipes[0];
