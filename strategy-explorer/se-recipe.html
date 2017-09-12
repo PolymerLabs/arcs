@@ -170,6 +170,8 @@ http://polymer.github.io/PATENTS.txt
           this.descendants.forEach(descendant => descendant.activeDescendant = true);
           document._selectedBox = this;
 
+          recipeView.over = this;
+          recipeView.recipe = this.recipe;
           recipeView.pin();
         })
       }
