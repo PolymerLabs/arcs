@@ -92,11 +92,8 @@ class DemoFlow extends DemoBase {
       slotComposer: new SlotComposer({rootContext: this.$('[particle-container]'),  affordance: "vr"}),
       context: await Manifest.load('browser/vr-demo/recipes.manifest', loader),
     });
-
     this.arc = arc;
-    this.suggestions = this.$('suggestions-element');
-    this.suggestions.arc = arc;
-    this.suggestions.callback = this.nextStage.bind(this);
+    this.suggest(this.arc, this.$('suggestions-element'));
   }
 }
 
