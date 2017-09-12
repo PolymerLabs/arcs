@@ -59,7 +59,7 @@ class DomContext {
       // TODO(sjmiles): hack to allow subtree elements (e.g. x-list) to marshal events
       this._context._eventMapper = this._eventMapper.bind(this, eventHandler);
       this._liveDom = Template.stamp(template, eventHandler)
-          .events(this._context._eventMapper)
+          .mapEvents(this._context._eventMapper)
           .appendTo(this._context);
     }
   }

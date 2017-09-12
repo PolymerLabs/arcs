@@ -178,23 +178,23 @@ let annotate = function(root, key, opts) {
 };
 
 /* Annotation Consumer */
-let mapEvents = function(notes, map, controller) {
+let mapEvents = function(notes, map, mapper) {
   // add event listeners
   for (let key in notes) {
     let node = map[key];
     let events = notes[key] && notes[key].events;
     if (node && events) {
       for (let name in events) {
-        listen(node, name, controller, events[name]);
+        mapper(node, name, events[name]);
       }
     }
   }
 };
 
-let listen = function(node, eventName, controller, handlerName) {
+let listen = function(handlers, node, eventName, handlerName) {
   node.addEventListener(eventName, function(e) {
-    if (controller[handlerName]) {
-      return controller[handlerName](e, e.detail);
+    if (handlers[handlerName]) {
+      return handlers[handlerName](e, e.detail);
     }
   });
 };
@@ -287,17 +287,17 @@ let stamp = function(template, opts) {
     root: root,
     notes: notes,
     map: map,
+    /*
     dispatch(handler, e) {
       // abstract
     },
+    */
     set: function(scope) {
       set(notes, map, scope);
       return this;
     },
     events: function(controller) {
-      if (controller) {
-        mapEvents(notes, map, controller);
-      }
+      mapEvents(notes, map, listen.bind(null, controller));
       return this;
     },
     appendTo: function(node) {
@@ -310,11 +310,17 @@ let stamp = function(template, opts) {
       // TODO(sjmiles): this.root is no longer a fragment
       this.root = node;
       return this;
+    },
+    mapEvents: function(mapper) {
+      mapEvents(notes, map, mapper);
+      return this;
     }
   };
+  /*
   mapEvents(notes, map, (node, event, handler) => {
     node.addEventListener(event, e => dom.dispatch(handler, e));
   });
+  */
   return dom;
 };
 
