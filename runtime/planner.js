@@ -108,7 +108,7 @@ class Planner {
     return allResolved;
   }
 
-  matchesActiveRecipe(plan) {
+  _matchesActiveRecipe(plan) {
     var planShape = RecipeUtil.recipeToShape(plan);
     var result = RecipeUtil.find(this._arc._activeRecipe, planShape);
     return result[0].score == 0;
@@ -123,7 +123,7 @@ class Planner {
     // TODO: Run some reasonable number of speculations in parallel.
     let results = [];
     for (let plan of plans) {
-      if (this.matchesActiveRecipe(plan))
+      if (this._matchesActiveRecipe(plan))
         continue;
       let relevance = await trace.wait(() => speculator.speculate(this._arc, plan));
       trace.resume();
