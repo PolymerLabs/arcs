@@ -19,7 +19,7 @@ class MapRemoteSlots extends Strategy {
     var remoteSlots = this.remoteSlots;
     var results = Recipe.over(strategizer.generated, new class extends RecipeWalker {
       onSlotConnection(recipe, slotConnection) {
-        if (slotConnection.targetSlot)
+        if (slotConnection.targetSlot && slotConnection.targetSlot.id)
           return;
         if (remoteSlots[slotConnection.name] == undefined)
           return;
@@ -58,9 +58,11 @@ class MapRemoteSlots extends Strategy {
         let score = 1 - matchingSlots[0].count;
 
         return (recipe, slotConnection) => {
-          let slot = recipe.newSlot(slotConnection.name);
-          slot.id = remoteSlotId;
-          slotConnection.connectToSlot(slot);
+          if (!slotConnection.targetSlot) {
+            let slot = recipe.newSlot(slotConnection.name);
+            slotConnection.connectToSlot(slot);
+          }
+          slotConnection.targetSlot.id = remoteSlotId;
           return score;
         }
       }

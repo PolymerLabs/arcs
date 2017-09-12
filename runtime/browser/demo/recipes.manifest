@@ -34,10 +34,15 @@ recipe
   # TODO: wishlist view should have tag #giftlist - removed for now, until views with tags are properly resolved.
   map #wishlist as wishlist
   copy as shortlist
+  slot as slot0
   Recommend
     population <- wishlist
   ShowProducts
     list <- shortlist
+    consume root as slot0
+      provide annotation as slot1
+  AlsoOn
+    consume annotation as slot1
 
 # Buying for [person]'s [occasion] in [timeframe]? Product [X] arrives too late.
 recipe

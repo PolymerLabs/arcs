@@ -18,6 +18,7 @@ let Recipe = require('../recipe/recipe.js');
 let ConvertConstraintsToConnections = require('../strategies/convert-constraints-to-connections.js');
 let ResolveParticleByName = require('../strategies/resolve-particle-by-name.js');
 let InitPopulation = require('../strategies/init-population.js');
+let MapRemoteSlots = require('../strategies/map-remote-slots.js');
 
 var loader = new Loader();
 
@@ -279,8 +280,34 @@ describe('ConvertConstraintsToConnections', async() => {
     var strategizer = {generated: [{result: recipes[0], score: 1}, {result: recipes[1], score: 1}]};
     var cctc = new ConvertConstraintsToConnections({pec: {slotComposer: {affordance: 'voice'}}});
     let { results } = await cctc.generate(strategizer);
-    debugger;
     assert.equal(results.length, 1);
     assert.deepEqual(results[0].result.particles.map(p => p.name), ['A', 'C']);
+  });
+});
+
+describe('MapRemoteSlots', function() {
+  it ('predefined remote slots', async() => {
+    let manifest = (await Manifest.parse(`
+      particle A in 'A.js'
+        A()
+        consume root
+
+      recipe
+        slot as rootSlot
+        A as particle0
+          consume root as rootSlot
+    `));
+    var strategizer = {generated: [{result: manifest.recipes[0], score: 1}]};  //, {result: manifest.recipes[1], score: 1}]};
+    var arc = new Arc({
+      id: "test-plan-arc",
+      context: manifest,
+      slotComposer: {
+        affordance: 'dom',
+        getAvailableSlots: (() => { return {root: [{id: 'r0', count: 0, views: [], providedSlotSpec: {isSet: false}}]}; })
+      }
+    });
+    var mrs = new MapRemoteSlots(arc);
+    let { results } = await mrs.generate(strategizer);
+    assert.equal(results.length, 1);
   });
 });

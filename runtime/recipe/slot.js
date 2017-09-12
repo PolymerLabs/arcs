@@ -29,6 +29,7 @@ class Slot {
   get localName() { return this._localName; }
   set localName(localName) { this._localName = localName; }
   get name() { return this._name; };
+  set name(name) { this._name = name; };
   get formFactor() { return this._formFactor; }
   set formFactor(formFactor) { this._formFactor = formFactor; }
   get viewConnections() { return this._viewConnections; }
@@ -104,7 +105,9 @@ class Slot {
         }
       }
     }
-
+    else if (options && options.showUnresolved && !this.isResolved(options)) {
+      result.push(`slot as ${(nameMap && nameMap.get(this)) || this.localName} # unresolved slot: ${options.details}`);
+    }
     return result.join(' ');
   }
 }

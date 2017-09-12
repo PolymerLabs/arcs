@@ -35,7 +35,7 @@ describe('demo flow', function() {
     planner.init(arc);
 
     let plans = await planner.suggest();
-    assert.equal(plans.length, 3);
+    assert.equal(plans.length, 2);
 
     // Choose a plan to test with.
     let expectedPlanString = `recipe

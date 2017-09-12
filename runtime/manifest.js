@@ -376,6 +376,11 @@ ${e.message}
         let targetSlot = items.byName.get(slotConnectionItem.name);
         if (targetSlot) {
           assert(items.bySlot.has(targetSlot));
+          if (!targetSlot.name) {
+            targetSlot.name = slotConnectionItem.param;
+          }
+          assert(targetSlot.name == slotConnectionItem.param,
+                 `Target slot name ${targetSlot.name} doesn't match slot connection name ${slotConnectionItem.param}`);
         } else {
           targetSlot = recipe.newSlot(slotConnectionItem.param);
           targetSlot.localName = slotConnectionItem.name;
