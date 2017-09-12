@@ -30,32 +30,21 @@ class DemoBase extends HTMLElement {
   $(selector) {
     return this._root && this._root.querySelector(selector);
   }
-  get arc() {
-    return this._arc;
-  }
-  set arc(arc) {
-    this._arc = arc;
-    this.update();
-  }
-  update() {
-    if (this.arc) {
-      this.nextStage();
-    }
-  }
-  nextStage() {
-    this.stageNo++;
-    this.suggest();
-  }
-  async suggest() {
-    let planner = new Planner();
-    planner.init(this.arc);
-    let generations = [];
-    let suggestions = await planner.suggest(5000, generations);
-    suggestions.forEach(async (suggestion, i) => {
-      this.suggestions.add(suggestion, i);
+  suggest(arc, ui) {
+    let makeSuggestions = async () => {
+      let planner = new Planner();
+      planner.init(arc);
+      let generations = [];
+      ui.add(await planner.suggest(5000, generations));
+      document.dispatchEvent(new CustomEvent('generations', {detail: generations}));
+    };
+    ui.addEventListener('plan-selected', e => {
+      let {descriptionGenerator, plan} = e.detail;
+      arc.instantiate(plan);
+      descriptionGenerator.setViewDescriptions(arc);
+      makeSuggestions();
     });
-    // fire an event so optional tooling can present this data
-    document.dispatchEvent(new CustomEvent('generations', {detail: generations}));
+    makeSuggestions();
   }
 }
 

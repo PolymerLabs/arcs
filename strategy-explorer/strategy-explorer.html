@@ -6,9 +6,8 @@ Code distributed by Google as part of this project is also
 subject to an additional IP rights grant found at
 http://polymer.github.io/PATENTS.txt
 -->
-<!DOCTYPE html>
+<!doctype html>
 
-<script src='../runtime/browser/build/planner.js'></script>
 <link rel="import" href="se-explorer.html"></link>
 <link rel="import" href="se-recipe-view.html"></link>
 
@@ -48,7 +47,6 @@ http://polymer.github.io/PATENTS.txt
         this.parentMap.set(recipe, this.lastID);
         return { result, score, derivation, hash, id: this.lastID++ };
       });
-
       population.forEach(item => {
         item.derivation = item.derivation.map(derivItem => {
           if (derivItem.parent)
