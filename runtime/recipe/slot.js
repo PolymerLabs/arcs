@@ -76,6 +76,8 @@ class Slot {
   }
 
   isResolved(options) {
+    assert(Object.isFrozen(this));
+
     if (options && options.showUnresolved) {
       options.details = [];
       if (!this._sourceConnection) {

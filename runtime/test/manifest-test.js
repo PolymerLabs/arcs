@@ -515,5 +515,46 @@ Expected " ", "#", "\\n", "\\r", [ ] or [A-Z] but "?" found.
   recipe ?
          ^`);
     }
-  })
+  });
+
+  it('resolves manifest with recipe with search', async () => {
+    let manifestSource = `
+      recipe
+        search \`Hello dear world\``;
+    let recipe = (await Manifest.parse(manifestSource)).recipes[0];
+    assert.isNotNull(recipe.search);
+    assert.equal('Hello dear world', recipe.search.phrase);
+    assert.deepEqual(['hello', 'dear', 'world'], recipe.search.unresolvedTokens);
+    assert.deepEqual([], recipe.search.resolvedTokens);
+    assert.isTrue(recipe.search.isValid());
+    recipe.normalize();
+    assert.isFalse(recipe.search.isResolved());
+    assert.isFalse(recipe.isResolved());
+    assert.equal(recipe.toString(), `recipe
+  search \`Hello dear world\`
+  tokens \`dear\` \`hello\` \`world\``);
+
+    recipe = (await Manifest.parse(manifestSource)).recipes[0];
+    // resolve some tokens.
+    recipe.search.resolveToken('hello');
+    recipe.search.resolveToken('world');
+    assert.equal('Hello dear world', recipe.search.phrase);
+    assert.deepEqual(['dear'], recipe.search.unresolvedTokens);
+    assert.deepEqual(['hello', 'world'], recipe.search.resolvedTokens);
+    assert.equal(recipe.toString(), `recipe
+  search \`Hello dear world\`
+  tokens \`dear\` # \`hello\` \`world\``);
+
+    // resolve all tokens.
+    recipe.search.resolveToken('dear');
+    recipe.normalize();
+    assert.equal('Hello dear world', recipe.search.phrase);
+    assert.deepEqual([], recipe.search.unresolvedTokens);
+    assert.deepEqual(['dear', 'hello', 'world'], recipe.search.resolvedTokens);
+    assert.isTrue(recipe.search.isResolved());
+    assert.isTrue(recipe.isResolved());
+    assert.equal(recipe.toString(), `recipe
+  search \`Hello dear world\`
+  tokens # \`dear\` \`hello\` \`world\``);
+  });
 });
