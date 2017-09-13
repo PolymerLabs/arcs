@@ -9,6 +9,7 @@ var assert = require('assert');
 var Strategizer = require('../../strategizer/strategizer.js').Strategizer;
 var ConnectionConstraint = require('./connection-constraint.js');
 var Particle = require('./particle.js');
+var Search = require('./search.js');
 var Slot = require('./slot.js');
 var View = require('./view.js');
 var util = require('./util.js');
@@ -24,6 +25,9 @@ class Recipe {
     // can handle. ConnectionConstraints should be a different record
     // type to particles/views.
     this._connectionConstraints = [];
+
+    // ??? should this be an array maybe?
+    this._search = null;
   }
 
   newConnectionConstraint(from, fromConnection, to, toConnection) {
@@ -61,6 +65,7 @@ class Recipe {
   isResolved() {
     assert(Object.isFrozen(this), 'Recipe must be frozen to be resolved.');
     return this._connectionConstraints.length == 0
+        && (this._search === null || this._search.isResolved())
         && this._views.every(view => view.isResolved())
         && this._particles.every(particle => particle.isResolved())
         && this._slots.every(slot => slot.isResolved())
@@ -85,7 +90,8 @@ class Recipe {
         && this._particles.every(particle => particle._isValid())
         && this._slots.every(slot => slot._isValid())
         && this.viewConnections.every(connection => connection._isValid())
-        && this.slotConnections.every(connection => connection._isValid());
+        && this.slotConnections.every(connection => connection._isValid())
+        && (!this.search || this.search.isValid());
   }
 
   get localName() { return this._localName; }
@@ -97,6 +103,16 @@ class Recipe {
   get slots() { return this._slots; } // Slot*
   set slots(slots) { this._slots = slots; }
   get connectionConstraints() { return this._connectionConstraints; }
+  get search() { return this._search; }
+  set search(search) {
+    this._search = search;
+  }
+  setSearchPhrase(phrase) {
+    assert(!this._search, 'Cannot override search phrase');
+    if (phrase) {
+      this._search = new Search(phrase);
+    }
+  }
 
   get slotConnections() {  // SlotConnection*
     var slotConnections = [];
@@ -189,6 +205,10 @@ class Recipe {
       slotConnection._normalize();
     }
     slotConnections.sort(util.compareComparables);
+
+    if (this.search) {
+      this.search._normalize();
+    }
 
     // Finish normalizing particles and views with sorted connections.
     for (let particle of this._particles) {
@@ -290,6 +310,9 @@ class Recipe {
     this._particles.forEach(cloneTheThing);
     this._slots.forEach(cloneTheThing);
     this._connectionConstraints.forEach(cloneTheThing);
+    if (this.search) {
+      this.search._copyInfo(recipe);
+    }
   }
 
   updateToClone(dict) {
@@ -359,6 +382,9 @@ class Recipe {
     let result = [];
     // TODO: figure out where recipe names come from
     result.push(`recipe`);
+    if (this.search) {
+      result.push(this.search.toString(options).replace(/^|(\n)/g, '$1  '));
+    }
     for (let constraint of this._connectionConstraints) {
       let constraintStr = constraint.toString().replace(/^|(\n)/g, '$1  ');
       if (options && options.showUnresolved) {

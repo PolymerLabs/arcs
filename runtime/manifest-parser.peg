@@ -63,7 +63,7 @@ ManifestViewItem
   = ManifestViewDescription
 
 ManifestViewDescription
-  = 'description' whiteSpace DescriptionPattern eolWhiteSpace
+  = 'description' whiteSpace backquotedString eolWhiteSpace
 
 Import
   = 'import' whiteSpace path:id eolWhiteSpace
@@ -229,7 +229,7 @@ ParticleProvidedSlotView
   { return {view}; }
 
 ParticleDescription
-  = 'description' whiteSpace pattern:DescriptionPattern eolWhiteSpace viewDescriptions:(Indent (SameIndent ParticleViewDescription)+)?
+  = 'description' whiteSpace pattern:backquotedString eolWhiteSpace viewDescriptions:(Indent (SameIndent ParticleViewDescription)+)?
   {
     viewDescriptions = optional(viewDescriptions, extractIndented, []);
     return {
@@ -239,11 +239,10 @@ ParticleDescription
   }
 
 ParticleViewDescription
-  = name:lowerIdent whiteSpace pattern:DescriptionPattern eolWhiteSpace
+  = name:lowerIdent whiteSpace pattern:backquotedString eolWhiteSpace
   {
     return { name, pattern };
   }
-DescriptionPattern = '`' pattern:([^`]+) '`' { return pattern.join(''); }
 
 Recipe
   = 'recipe' name:(whiteSpace upperIdent)? tags:(whiteSpace TagList)? eolWhiteSpace items:(Indent (SameIndent RecipeItem)*)?
@@ -261,6 +260,7 @@ RecipeItem
   / RecipeView
   / RecipeSlot
   / RecipeConnection
+  / RecipeSearch
 
 Name
   = 'as' whiteSpace name:lowerIdent
@@ -332,6 +332,17 @@ RecipeConnection
       dir,
       from,
       to,
+    };
+  }
+
+RecipeSearch
+  = 'search' whiteSpace phrase:backquotedString eolWhiteSpace tokens:(Indent (SameIndent 'tokens' t:(whiteSpace backquotedString)+ eolWhiteSpace))?
+
+  {
+    return {
+      kind: 'search',
+      phrase,
+      tokens: optional(tokens, tokens => tokens[1][2].map(t=>t[1]), null)
     };
   }
 
@@ -488,6 +499,7 @@ SameOrMoreIndent = &(i:" "* &{
   }
 }) " "*
 
+backquotedString = '`' pattern:([^`]+) '`' { return pattern.join(''); }
 id = "'" id:[^']+ "'" {return id.join('')}
 upperIdent = ident:([A-Z][a-z0-9_]i*) {return text()}
 lowerIdent = ident:([a-z][a-z0-9_]i*) {return text()}

@@ -99,6 +99,8 @@ class SlotConnection {
   }
 
   isResolved(options) {
+    assert(Object.isFrozen(this));
+
     if (!this.name) {
       if (options) {
         options.details = "missing name";
