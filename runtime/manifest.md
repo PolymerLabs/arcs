@@ -36,9 +36,36 @@ that it provides and consumes and the location of the particle implementation.
 
 ```
 particle MyParticle in 'my-particle.js'
-  MyParticle(in MyThing, out [MyThing], inout [AnotherThing])
+  MyParticle(in MyThing myinthing, out [MyThing] myoutthing, inout [AnotherThing] anotherthing)
 ```
-* TODO: slots
+
+### Slots
+Particles that produce UI must define which slots they use for rendering. Slots may be declared required or optional. Even if all slots are optional, at least one of them must be provided in order for the particle to be instantiated. Each slot may be consumed by multiple particles.
+
+"root" slot is a special slot that is provided by the system before any of the particles are rendered. If particle renders and creates slots for other particles to use, they are also defined in the manifest. The provided slots may restrict the views to be rendered in the slot. The particle that consumes the provided slot must have the same view bounded as one of its connections.
+
+```
+particle MyParticle in 'my-particle.js'
+  MyParticle(in MyThing myinthing, out [MyThing] myoutthing)
+  must consume mySlot
+    provide innerSlot
+    provide restrictedInnerSlot
+      view myinthing
+  consume otherSlot
+```
+
+"Set slot" are a special type of slot that is provided for a set view. A separate slot will be created for each individual element in the set view. The consuming particle must be explicitly defined to consume a set slot as well.
+
+```
+particle MySetParticle in 'my-set-particle.js'
+  MySetParticle(in [MyThing] mything)
+  consume mySlot
+    provide set of innerSlot
+
+particle MyItemParticle in 'my-item-particle.js'
+  MyItemParticle(in [MyThing] mythis)
+    consume set of innerSlot
+```
 
 ### Descriptions
 Particle description defines how the Particle is represented in the recipe suggestion text. Description includes a sentence pattern, and optional individual argument descriptions.
