@@ -64,7 +64,7 @@ describe('manifest', function() {
       particle NoArgsParticle in 'noArgsParticle.js'
         NoArgsParticle()
     `);
-    assert.equal(Object.keys(manifest.particles).length, 2);
+    assert.equal(manifest.particles.length, 2);
   });
   it('can parse a manifest containing a schema', async () => {
     let manifest = await Manifest.parse(`
@@ -301,7 +301,7 @@ describe('manifest', function() {
       },
     };
     let manifest = await Manifest.load('a', loader, {registry});
-    assert.equal(manifest.recipes[0].particles[0].spec, registry.b.particles.ParticleB);
+    assert.equal(manifest.recipes[0].particles[0].spec, registry.b.findParticleByName('ParticleB'));
   });
   it('can parse a schema extending a schema in another manifest', async () => {
     let registry = {};

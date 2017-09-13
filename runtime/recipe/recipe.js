@@ -18,7 +18,10 @@ class Recipe {
   constructor() {
     this._particles = [];
     this._views = [];
-    this._slots = []
+    this._slots = [];
+    // TODO: There should be a separate class to encapsulate search fields.
+    this._search = null;
+    this._tokens = [];
 
     // TODO: Recipes should be collections of records that are tagged
     // with a type. Strategies should register the record types they
@@ -43,6 +46,22 @@ class Recipe {
   clearConnectionConstraints() {
     this._connectionConstraints = [];
   }
+
+  // TODO: There should be a separate class to encapsulate search fields.
+  get search() {
+    return this._search;
+
+  }
+  set search(search) {
+    this._search = search;
+  }
+  get tokens() {
+    return this._tokens;
+  }
+  set tokens(value) {
+    this._tokens = value;
+  }
+
 
   newParticle(name) {
     var particle = new Particle(this, name);
@@ -283,6 +302,8 @@ class Recipe {
     // TODO: figure out a better approach than stashing the cloneMap permanently
     // on the recipe
     recipe._cloneMap = cloneMap;
+    recipe._search = this._search;
+    recipe._tokens = this._tokens;
 
     return recipe;
   }
@@ -403,6 +424,12 @@ class Recipe {
     }
     for (let particle of this.particles) {
       result.push(particle.toString(nameMap, options).replace(/^|(\n)/g, '$1  '));
+    }
+    if (this._search) {
+      result.push('  # ' + this._search)
+    }
+    if (this._tokens) {
+      result.push('  # ' + this._tokens)
     }
     return result.join('\n');
   }

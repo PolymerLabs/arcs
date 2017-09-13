@@ -36,7 +36,7 @@ class Manifest {
     return [...new Set(this._findAll(manifest => manifest._recipes))];
   }
   get particles() {
-    return this._particles;
+    return [...new Set(this._findAll(manifest => Object.values(manifest._particles)))];
   }
   get imports() {
     return this._imports;
