@@ -57,8 +57,13 @@ class OuterPEC extends PEC {
         this._idleResolve(relevance);
       }
     }
-  }
 
+    this._apiPort.onConstructInnerArc = ({callback, particle}) => {
+      this._apiPort.ParticleCallback({callback});
+    }
+
+  }
+  
   stop() {
     this._apiPort.Stop();
   }

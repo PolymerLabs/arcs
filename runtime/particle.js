@@ -22,7 +22,7 @@ const DEBUGGING = false;
  * instead use DOMParticle.
  */
 class Particle {
-  constructor() {
+  constructor(capabilities) {
     this.spec = this.constructor.spec;
     if (this.spec.inputs.length == 0)
       this.extraData = true;
@@ -34,6 +34,7 @@ class Particle {
     this.stateHandlers = new Map();
     this.states = new Map();
     this._slotByName = new Map();
+    this.capabilities = capabilities || {};
   }
 
   /** @method setViews(views)
@@ -46,6 +47,12 @@ class Particle {
    */
   setViews(views) {
 
+  }
+
+  constructInnerArc() {
+    if (!this.capabilities.constructInnerArc)
+      throw new Error("This particle is not allowed to construct inner arcs");
+    return this.capabilities.constructInnerArc(this);
   }
 
   get busy() {
