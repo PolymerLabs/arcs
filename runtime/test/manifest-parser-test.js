@@ -94,4 +94,17 @@ describe('manifest parser', function() {
           'bad error: '+e);
     }
   });
+  it('parses manifests with search', () => {
+    parse(`
+      recipe
+        search \`hello World!\`
+      `);
+  });
+  it('parses manifests with search and tokens', () => {
+    parse(`
+      recipe
+        search \`Hello dear world\`
+          tokens \`hello\` \`World\` # \`dear\`
+      `);
+  });
 });

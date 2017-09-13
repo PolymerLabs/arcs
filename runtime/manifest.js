@@ -13,6 +13,7 @@ const parser = require('./build/manifest-parser.js');
 const Recipe = require('./recipe/recipe.js');
 const ParticleSpec = require('./particle-spec.js');
 const Schema = require('./schema.js');
+var Search = require('./recipe/search.js');
 const {View, Variable} = require('./view.js');
 
 class Manifest {
@@ -219,7 +220,8 @@ ${e.message}
       slots: recipeItem.items.filter(item => item.kind == 'slot'),
       bySlot: new Map(),
       byName: new Map(),
-      connections: recipeItem.items.filter(item => item.kind == 'connection')
+      connections: recipeItem.items.filter(item => item.kind == 'connection'),
+      search: recipeItem.items.find(item => item.kind == 'search')
     };
 
     for (let connection of items.connections) {
@@ -229,6 +231,10 @@ ${e.message}
       assert(toParticle, `could not find particle ${toParticle}`);
       recipe.newConnectionConstraint(fromParticle, connection.from.param,
                                      toParticle, connection.to.param);
+    }
+
+    if (items.search) {
+      recipe.search = new Search(items.search.phrase, items.search.tokens);
     }
 
     for (let item of items.views) {
