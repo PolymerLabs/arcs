@@ -35,7 +35,7 @@ function instantiate_arcs(doc) {
   //
   let go = async ({db, urls}) => {
     // create default URL map
-    let root = document.currentScript.ownerDocument.URL.split('/').slice(0,3).join('/') +
+    let root = chrome.extension.getURL('newtab.js').split('/').slice(0,3).join('/') +
       `/resources/arcs-cdn`;
     let urlMap = utils.createUrlMap(root);
 
