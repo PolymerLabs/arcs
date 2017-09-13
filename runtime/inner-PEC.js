@@ -104,6 +104,8 @@ class InnerPEC {
 
     this._apiPort.onViewCallback = ({callback, data}) => callback(data);
 
+    this._apiPort.onParticleCallback = ({callback}) => callback();
+
     this._apiPort.onAwaitIdle = ({version}) =>
       this.idle.then(a => this._apiPort.Idle({version, relevance: this.relevance}));
 
@@ -169,13 +171,27 @@ class InnerPEC {
     return `${this._idBase}:${this._nextLocalID++}`;
   }
 
+  innerArcHandle() {
+    return {};
+  }
+
+  defaultCapabilitySet() {
+    return {
+      constructInnerArc: particle => {
+        return new Promise((resolve, reject) =>
+          this._apiPort.ConstructInnerArc({ callback: () => {resolve(this.innerArcHandle())}, particle }));
+      }
+    }
+  }
+
   async _instantiateParticle(spec, views) {
     let name = spec.name;
     var resolve = null;
     var p = new Promise((res, rej) => resolve = res);
     this._pendingLoads.push(p);
     let clazz = await this._loader.loadParticleClass(spec);
-    let particle = new clazz();
+    let capabilities = this.defaultCapabilitySet();
+    let particle = new clazz(capabilities);
     this._particles.push(particle);
 
     var viewMap = new Map();
