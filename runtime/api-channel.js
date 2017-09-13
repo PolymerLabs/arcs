@@ -247,6 +247,9 @@ class PECOuterPort extends APIPort {
     this.registerHandler("ViewStore", {view: this.Mapped, data: this.Direct});
     this.registerHandler("ViewClear", {view: this.Mapped});
     this.registerHandler("Idle", {version: this.Direct, relevance: this.Map(this.Mapped, this.Direct)});
+
+    this.registerHandler("ConstructInnerArc", {callback: this.Direct, particle: this.Mapped});
+    this.registerCall("ParticleCallback", {callback: this.Direct});
   }
 }
 
@@ -278,6 +281,9 @@ class PECInnerPort extends APIPort {
     this.registerCall("ViewStore", {view: this.Mapped, data: this.Direct});
     this.registerCall("ViewClear", {view: this.Mapped});
     this.registerCall("Idle", {version: this.Direct, relevance: this.Map(this.Mapped, this.Direct)});
+
+    this.registerCall("ConstructInnerArc", {callback: this.LocalMapped, particle: this.Mapped});
+    this.registerHandler("ParticleCallback", {callback: this.LocalMapped});
   }
 }
 
