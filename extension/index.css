@@ -13,6 +13,9 @@ body {
   height: 100vh;
   display: flex;
   justify-content: center;
+
+  min-height: 400px;
+  min-width: 200px;
 }
 demo-frame {
   flex: 1;

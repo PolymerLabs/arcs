@@ -14,5 +14,8 @@
   "chrome_url_overrides" : {
     "newtab": "new-tab.html"
   },
+  "browser_action": {
+    "default_popup": "popup.html"
+  },
   "content_security_policy": "script-src 'self' 'sha256-glDwaK54liKYWLvGPqqBcPawzUYWfyDqixsK0aJo+V0='; object-src 'self'"
 }
