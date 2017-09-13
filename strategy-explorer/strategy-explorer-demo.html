@@ -19,6 +19,7 @@ http://polymer.github.io/PATENTS.txt
   var loader = new Loader();
   let manifest = await Manifest.load('../runtime/browser/demo/recipes.manifest', loader)
   var a = new Arc({id: "test-plan-arc", context: manifest});
+  a._search = 'I want a Chooser and a GiftList';
   var p = new Planner();
   p.init(a);
   var strategyExplorer = document.querySelector('strategy-explorer');

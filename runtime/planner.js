@@ -20,6 +20,8 @@ let MapConsumedSlots = require('./strategies/map-consumed-slots.js');
 let MapRemoteSlots = require('./strategies/map-remote-slots.js');
 let AddUseViews = require('./strategies/add-use-views.js');
 let Manifest = require('./manifest.js');
+let InitSearch = require('./strategies/init-search.js');
+let SearchTokensToParticles = require('./strategies/search-tokens-to-particles.js');
 
 const Speculator = require('./speculator.js');
 const DescriptionGenerator = require('./description-generator.js');
@@ -59,6 +61,8 @@ class Planner {
     this._arc = arc;
     let strategies = [
       new InitPopulation(arc),
+      new InitSearch(arc),
+      new SearchTokensToParticles(arc),
       new CreateViews(),
       new AssignViewsByTagAndType(arc),
       new ConvertConstraintsToConnections(arc),

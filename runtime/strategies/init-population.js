@@ -11,6 +11,9 @@ class InitPopulation extends Strategy {
   constructor(arc) {
     super();
     this._recipes = [];
+    if (arc._search) {
+      return;
+    }
     for (let recipe of (arc.context.recipes || [])) {
       // Filter out recipes containing particles that don't support the current affordance.
       if (arc.pec.slotComposer) {
