@@ -13,7 +13,7 @@ const parser = require('./build/manifest-parser.js');
 const Recipe = require('./recipe/recipe.js');
 const ParticleSpec = require('./particle-spec.js');
 const Schema = require('./schema.js');
-var Search = require('./recipe/search.js');
+const Search = require('./recipe/search.js');
 const {View, Variable} = require('./view.js');
 
 class Manifest {

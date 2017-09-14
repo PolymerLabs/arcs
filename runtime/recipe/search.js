@@ -8,25 +8,32 @@
 var assert = require('assert');
 var util = require('./util.js');
 
-// ??? rename to SearchConstraint?
 class Search {
   constructor(phrase, unresolvedTokens) {
     assert(phrase);
 
-    this._phrase = phrase;
-    // ??? should these be sets instead? do repeated tokens matter?
+    this._phrase = "";
     this._unresolvedTokens = [];
     this._resolvedTokens = [];
 
-    let allTokens = this._phrase.toLowerCase().split(/[^a-z0-9]/g);
-    unresolvedTokens = unresolvedTokens || allTokens;
-    allTokens.forEach(t => {
-      if (unresolvedTokens.indexOf(t) >= 0) {
+    this.appendPhrase(phrase, unresolvedTokens);
+  }
+  appendPhrase(phrase, unresolvedTokens) {
+    // concat phrase
+    if (this._phrase.length > 0) {
+      this._phrase = this.phrase.concat(" ");
+    }
+    this._phrase = this._phrase.concat(phrase);
+
+    // update tokens
+    let newTokens = phrase.toLowerCase().split(/[^a-z0-9]/g);
+    newTokens.forEach(t => {
+      if (!unresolvedTokens || unresolvedTokens.indexOf(t) >= 0) {
         this._unresolvedTokens.push(t)
       } else {
         this._resolvedTokens.push(t);
       }
-    })
+    });
   }
   get phrase() { return this._phrase; }
   get unresolvedTokens() { return this._unresolvedTokens; }
@@ -56,9 +63,14 @@ class Search {
   }
 
   _copyInto(recipe) {
-    recipe.search = new Search(this.phrase, this.unresolvedTokens);
-    assert(recipe.resolveTokens.length == this.resolveTokens.length &&
-           recipe.resolveTokens.every(rt => this.resolveTokens.indexOf(rt) >= 0));
+    if (recipe.search) {
+      recipe.search.appendPhrase(this.phrase, this.unresolvedTokens);
+    } else {
+      recipe.search = new Search(this.phrase, this.unresolvedTokens);
+      assert(recipe.search.resolvedTokens.length == this.resolvedTokens.length);
+    }
+    assert(this.resolvedTokens.every(rt => recipe.search.resolvedTokens.indexOf(rt) >= 0) &&
+           this.unresolvedTokens.every(rt => recipe.search.unresolvedTokens.indexOf(rt) >= 0));
     return recipe.search;
   }
 

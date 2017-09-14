@@ -26,7 +26,7 @@ class Recipe {
     // type to particles/views.
     this._connectionConstraints = [];
 
-    // ??? should this be an array maybe?
+    // TODO: Change to array, if needed for search strings of merged recipes.
     this._search = null;
   }
 
@@ -311,7 +311,7 @@ class Recipe {
     this._slots.forEach(cloneTheThing);
     this._connectionConstraints.forEach(cloneTheThing);
     if (this.search) {
-      this.search._copyInfo(recipe);
+      this.search._copyInto(recipe);
     }
   }
 
