@@ -107,4 +107,10 @@ describe('manifest parser', function() {
           tokens \`hello\` \`World\` # \`dear\`
       `);
   });
+  it('parses manifests particle verbs', () => {
+    parse(`
+      particle SomeParticle
+        jump(in Energy energy, out Height height)
+        affordance dom`);
+  });
 });
