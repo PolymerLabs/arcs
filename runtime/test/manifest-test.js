@@ -557,4 +557,16 @@ Expected " ", "#", "\\n", "\\r", [ ] or [A-Z] but "?" found.
   search \`Hello dear world\`
   tokens # \`dear\` \`hello\` \`world\``);
   });
+  it('merge recipes with search strings', async () => {
+    let recipe1 = (await Manifest.parse(`recipe
+  search \`Hello world\``)).recipes[0];
+    let recipe2 = (await Manifest.parse(`recipe
+  search \`good morning\`
+    tokens \`morning\` # \`good\``)).recipes[0];
+
+    recipe2.mergeInto(recipe1);
+    assert.equal('Hello world good morning', recipe1.search.phrase);
+    assert.deepEqual(['hello', 'world', 'morning'], recipe1.search.unresolvedTokens);
+    assert.deepEqual(['good'], recipe1.search.resolvedTokens);
+  });
 });
