@@ -528,8 +528,8 @@ Expected " ", "#", "\\n", "\\r", [ ] or [A-Z] but "?" found.
     assert.deepEqual([], recipe.search.resolvedTokens);
     assert.isTrue(recipe.search.isValid());
     recipe.normalize();
-    assert.isFalse(recipe.search.isResolved());
-    assert.isFalse(recipe.isResolved());
+    assert.isTrue(recipe.search.isResolved());
+    assert.isTrue(recipe.isResolved());
     assert.equal(recipe.toString(), `recipe
   search \`Hello dear world\`
   tokens \`dear\` \`hello\` \`world\``);

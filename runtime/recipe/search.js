@@ -51,8 +51,8 @@ class Search {
 
   isResolved() {
     assert(Object.isFrozen(this));
-
-    return this._unresolvedTokens.length == 0;
+    // TODO: Unresolved tokens don't prevent the recipe from being resolved. For now...
+    return true;
   }
 
   _normalize() {
