@@ -4,7 +4,7 @@
       "category": "Books",
       "seller": "denile.com",
       "price": "$14.50",
-      "shipDays": 7,
+      "shipDays": 10,
       "image": "../assets/products/book.png"
     },
     {
