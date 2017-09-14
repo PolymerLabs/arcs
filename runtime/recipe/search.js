@@ -51,8 +51,9 @@ class Search {
 
   isResolved() {
     assert(Object.isFrozen(this));
+    // Recipe is considered resolved, if at least one of the search tokens was resolved.
     // TODO: Unresolved tokens don't prevent the recipe from being resolved. For now...
-    return true;
+    return this._resolvedTokens.length > 0;
   }
 
   _normalize() {

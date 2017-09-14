@@ -283,8 +283,6 @@ class Recipe {
     // TODO: figure out a better approach than stashing the cloneMap permanently
     // on the recipe
     recipe._cloneMap = cloneMap;
-    recipe._search = this._search;
-    recipe._tokens = this._tokens;
 
     return recipe;
   }
