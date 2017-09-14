@@ -12,27 +12,6 @@ var faux_gid = 2000;
 function instantiate_arcs(doc) {
   let template = doc.document.querySelector('template').content;
   doc.document.body.appendChild(doc.document.importNode(template, true));
-
-  
-  let app = async function(urlMap, manifestPath, container, db) {
-    // create a system loader
-    // TODO(sjmiles): `pecFactory` can create loader objects (via worker-entry*.js) for the innerPEC,
-    // but we have to create one by hand for manifest loading
-    let loader = new Arcs.BrowserLoader(urlMap);
-    // load manifest
-    let manifest = await Arcs.Manifest.load(manifestPath, loader);
-    // TODO(sjmiles): hack in ability to utilize imported recipes
-    utils.collapseRecipes(manifest);
-    console.log(manifest);
-    // renderer
-    let slotComposer = new Arcs.SlotComposer({rootContext: container, affordance: "dom"});
-    // an Arc!
-    let arc = Arcs.utils.createArc({id: 'demo', urlMap, slotComposer, context: manifest});
-    // load our dynamic data
-    await loadBrowsingData(manifest);
-    // generate suggestions
-    Arcs.utils.suggest(arc, doc.document.querySelector('suggestions-element'));
-  };
   
   let go = async ({db, urls}) => {
     // create default URL map
@@ -44,10 +23,11 @@ function instantiate_arcs(doc) {
     urlMap['worker-entry-cdn.js'] = `${root}/lib/worker-entry-cdn.js`;
     // customize map
     urls && Object.assign(urlMap, urls);
-    // start application
-    app(urlMap, './new-tab.manifest', window['particle-container'], db);
+
+    let arc = await create_arc(urlMap, './new-tab.manifest', window['particle-container'], db);
+
+    Arcs.utils.suggest(arc, doc.document.querySelector('suggestions-element'));
   };
   
   go(window);
 }
-
