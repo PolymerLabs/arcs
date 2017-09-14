@@ -67,7 +67,20 @@ describe('Planner', function() {
   });
 });
 
-describe('InitPopulation', async() => {
+const InitSearch = require('../strategies/init-search.js');
+describe('InitSearch', async () => {
+  it('initializes the search recipe', async() => {
+    var arc = new Arc({id: 'test-plan-arc', context: {}});
+    arc._search = 'search';
+    let initSearch = new InitSearch(arc);
+    var strategizer = {generated: [], generation: 0};
+    let {results} = await initSearch.generate(strategizer);
+    assert.equal(results.length, 1);
+    assert.equal(results[0].score, 0);
+  });
+});
+
+describe('InitPopulation', async () => {
   it('penalizes resolution of particles that already exist in the arc', async() => {
     let manifest = await Manifest.parse(`
       schema Product
