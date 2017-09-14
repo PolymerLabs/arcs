@@ -56,6 +56,25 @@ class TypeChecker {
     return {type, resolutions};
   }
 
+  static isSubclass(subclass, superclass) {
+    var subtype = subclass.type;
+    var supertype = superclass.type;
+    while (subtype.isView && supertype.isView) {
+      subtype = subtype.primitiveType();
+      supertype = supertype.primitiveType();
+    }
+
+    if (subtype.isEntity && supertype.isEntity) {
+      var t = subtype.entitySchema;
+      while (t) {
+        if (t == supertype.entitySchema)
+          return true;
+        t = t.parent;
+      }
+    }
+    return false;
+  }
+
   // left, right: {type, direction, connection}
   static compareTypes(left, right, resolutions) {
     left = TypeChecker._applyResolutionsToType(left, resolutions);
@@ -64,7 +83,33 @@ class TypeChecker {
     if (left.type.equals(right.type))
       return {type: left, valid: true};
 
-    // TODO: subset/superset relations between types.
+    if (TypeChecker.isSubclass(left, right)) {
+      var subclass = left;
+      var superclass = right;
+    } else if (TypeChecker.isSubclass(right, left)) {
+      var subclass = right;
+      var superclass = left;
+    }
+
+    // TODO: this arbitrarily chooses type restriction when
+    // super direction is 'in' and sub direction is 'out'. Eventually
+    // both possibilities should be encoded so we can maximise resolution
+    // opportunities
+    if (superclass) {
+      // treat view types as if they were 'inout' connections. Note that this
+      // guarantees that the view's type will be preserved, and that the fact
+      // that the type comes from a view rather than a connection will also
+      // be preserved.
+      var superDirection = superclass.connection ? superclass.connection.direction : 'inout';
+      var subDirection = subclass.connection ? subclass.connection.direction : 'inout';
+      if (superDirection == 'in') {
+        return {type: subclass, valid: true};
+      }
+      if (subDirection == 'out') {
+        return {type: superclass, valid: true};
+      }
+      return {valid: false};
+    }
 
     let result  = TypeChecker._coerceTypes(left, right);
     if (result == null) {
