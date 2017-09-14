@@ -61,6 +61,7 @@ class ParticleSpec {
       model.args = [];
     this._model = model;
     this.name = model.name;
+    this.verbs = model.verbs;
     var typeVarMap = new Map();
     this.connections = model.args.map(a => new ConnectionSpec(a, typeVarMap));
     this.connectionMap = new Map();
@@ -94,18 +95,20 @@ class ParticleSpec {
     return this.slots.get(slotName);
   }
 
+  get primaryVerb() { if (this.verbs.length > 0) return this.verbs[0]; }
+
   matchAffordance(affordance) {
     return this.slots.size <= 0 || this.affordance.includes(affordance);
   }
 
   toLiteral() {
-    let {args, name, transient, description, implFile, affordance, slots} = this._model;
+    let {args, name, verbs, transient, description, implFile, affordance, slots} = this._model;
     args = args.map(a => {
       let {type, direction, name} = a;
       type = type.toLiteral();
       return {type, direction, name};
     });
-    return {args, name, transient, description, implFile, affordance, slots};
+    return {args, name, verbs, transient, description, implFile, affordance, slots};
   }
 
   static fromLiteral(literal) {
