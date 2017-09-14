@@ -342,7 +342,7 @@ RecipeSearch
     return {
       kind: 'search',
       phrase,
-      tokens: optional(tokens, tokens => tokens[1][2].map(t=>t[1]), null)
+      tokens: optional(tokens, tokens => tokens[1][2].map(t => t[1]), null)
     };
   }
 
