@@ -12,6 +12,7 @@ const assert = require('assert');
 module.exports = class InitSearch extends Strategy {
   constructor(arc) {
     super();
+    // TODO: Figure out where this should really come from.
     this._search = arc._search;
   }
   async generate(strategizer) {
@@ -23,15 +24,13 @@ module.exports = class InitSearch extends Strategy {
     }
 
     let recipe = new Recipe();
-    recipe.search = this._search;
-    recipe.tokens = this._search.toLowerCase().split(/[^a-z0-9]/g);
+    recipe.setSearchPhrase(this._search);
     assert(recipe.normalize());
 
-    console.log('wat');
     return {
       results: [{
         result: recipe,
-        score: 1,
+        score: 0,
         derivation: [{strategy: this, parent: undefined}],
         hash: recipe.digest(),
       }],
