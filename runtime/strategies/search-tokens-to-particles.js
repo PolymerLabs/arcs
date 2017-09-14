@@ -22,30 +22,34 @@ module.exports = class SearchTokensToParticles extends Strategy {
       this._byToken[name].push(particle);
     }
   }
-  _findParticles(token) {
-    return this._byToken(token) || [];
-  }
   async generate(strategizer) {
     let findParticles = token => this._byToken[token] || [];
     var results = Recipe.over(strategizer.generated, new class extends RecipeWalker {
       onRecipe(recipe) {
-        if (!recipe.isResolved() || !recipe.search || !recipe.search.unresolvedTokens.length) {
+        if (/*!recipe.isResolved() ||*/ !recipe.search || !recipe.search.unresolvedTokens.length) {
           return;
         }
 
-        let results = [];
+        let specByToken = new Map();
         for (let token of recipe.search.unresolvedTokens) {
           for (let spec of findParticles(token)) {
             // TODO: Skip particles that are already in the active recipe?
-            results.push(recipe => {
-              recipe.search.resolveToken(token);
-              let particle = recipe.newParticle(spec.name);
-              particle.spec = spec;
-              return 1;
-            });
+            specByToken.set(token, spec);
           }
         }
-        return results;
+        if (specByToken.size == 0) {
+          return;
+        }
+
+        return recipe => {
+          specByToken.forEach((spec, token) => {
+            recipe.search.resolveToken(token);
+            let particle = recipe.newParticle(spec.name);
+            particle.spec = spec;
+          });
+          return specByToken.size;
+        };
+
       }
     }(RecipeWalker.Permuted), this);
 
