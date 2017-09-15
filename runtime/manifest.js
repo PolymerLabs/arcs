@@ -87,6 +87,9 @@ class Manifest {
   findParticleByName(name) {
     return this._find(manifest => manifest._particles[name]);
   }
+  findParticlesByVerb(verb) {
+    return [...this._findAll(manifest => Object.values(manifest._particles).filter(particle => particle.primaryVerb == verb))];
+  }
   findViewByName(name) {
     return this._find(manifest => manifest._views.find(view => view.name == name));
   }
@@ -275,6 +278,7 @@ ${e.message}
     for (let item of items.particles) {
       let particle = recipe.newParticle(item.ref.name);
       particle.tags = item.ref.tags;
+      particle.verbs = item.ref.verbs;
       if (item.ref.name) {
         var spec = manifest.findParticleByName(item.ref.name);
         assert(spec, `could not find particle ${item.ref.name}`);

@@ -14,10 +14,10 @@ let ConvertConstraintsToConnections = require('./strategies/convert-constraints-
 let AssignRemoteViews = require('./strategies/assign-remote-views.js');
 let CopyRemoteViews = require('./strategies/copy-remote-views.js');
 let AssignViewsByTagAndType = require('./strategies/assign-views-by-tag-and-type.js');
-let ResolveParticleByName = require('./strategies/resolve-particle-by-name.js');
 let InitPopulation = require('./strategies/init-population.js');
 let MapConsumedSlots = require('./strategies/map-consumed-slots.js');
 let MapRemoteSlots = require('./strategies/map-remote-slots.js');
+let MatchParticleByVerb = require('./strategies/match-particle-by-verb.js');
 let AddUseViews = require('./strategies/add-use-views.js');
 let Manifest = require('./manifest.js');
 let InitSearch = require('./strategies/init-search.js');
@@ -70,6 +70,7 @@ class Planner {
       new AssignRemoteViews(arc),
       new CopyRemoteViews(arc),
       new MapRemoteSlots(arc),
+      new MatchParticleByVerb(arc),
       new AddUseViews(),
     ];
     this.strategizer = new Strategizer(strategies, [], {

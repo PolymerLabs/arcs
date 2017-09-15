@@ -14,7 +14,7 @@ class InitPopulation extends Strategy {
     for (let recipe of (arc.context.recipes || [])) {
       // Filter out recipes containing particles that don't support the current affordance.
       if (arc.pec.slotComposer) {
-        if (recipe.particles.find(p => !p.spec.matchAffordance(arc.pec.slotComposer.affordance)) !== undefined) {
+        if (recipe.particles.find(p => p.spec && !p.spec.matchAffordance(arc.pec.slotComposer.affordance)) !== undefined) {
           continue;
         }
       }
