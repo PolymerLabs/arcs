@@ -1,5 +1,3 @@
-
-
 // Copyright (c) 2017 Google Inc. All rights reserved.
 // This code may only be used under the BSD style license found at
 // http://polymer.github.io/LICENSE.txt
@@ -17,9 +15,9 @@ module.exports = class SearchTokensToParticles extends Strategy {
     // TODO: Recipes. Views?
     this._byToken = {};
     for (let particle of arc.context.particles) {
-      let name = particle.name.toLowerCase();
-      this._byToken[name] = this._byToken[name] || [];
-      this._byToken[name].push(particle);
+      let verb = particle.primaryVerb;
+      this._byToken[verb] = this._byToken[verb] || [];
+      this._byToken[verb].push(particle);
     }
   }
   async generate(strategizer) {

@@ -113,4 +113,11 @@ describe('manifest parser', function() {
         jump(in Energy energy, out Height height)
         affordance dom`);
   });
+  it('parses recipe with particle verbs', () => {
+    parse(`
+      recipe
+        particle can jump
+          * <- energy
+          * -> height`);
+  });
 });
