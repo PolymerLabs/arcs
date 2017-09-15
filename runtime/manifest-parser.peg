@@ -402,12 +402,12 @@ SpaceTagList
   { return tags; }
 
 ParticleRef
-  = id:id tags:SpaceTagList?
-  { return {id, tags: tags || []}; }
-  / name:upperIdent tags:SpaceTagList?
-  { return {name, tags: tags || []}; }
+  = name:upperIdent tags:SpaceTagList?
+  { return {name, tags: tags || [], verbs: []}; }
   / tags:TagList
-  { return {tags}; }
+  { return {tags, verbs: []}; }
+  / 'particle can' whiteSpace verb:lowerIdent tags:SpaceTagList?
+  { return {verbs: [verb], tags: tags || []}; }
 
 ViewRef
   = id:id tags:SpaceTagList?

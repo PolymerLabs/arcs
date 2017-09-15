@@ -16,24 +16,28 @@ let assert = require('chai').assert;
 let Manifest = require('../manifest.js');
 let Recipe = require('../recipe/recipe.js');
 let ConvertConstraintsToConnections = require('../strategies/convert-constraints-to-connections.js');
-let ResolveParticleByName = require('../strategies/resolve-particle-by-name.js');
 let InitPopulation = require('../strategies/init-population.js');
 let MapRemoteSlots = require('../strategies/map-remote-slots.js');
+let MatchParticleByVerb = require('../strategies/match-particle-by-verb.js');
 
 var loader = new Loader();
+
+function createTestArc(id, context, affordance) {
+  return new Arc({
+    id,
+    context,
+    slotComposer: {
+      affordance,
+      getAvailableSlots: (() => { return {root: [{id: 'r0', count: 0, views: [], providedSlotSpec: {isSet: false}}]}; })
+    }
+  });
+}
 
 describe('Planner', function() {
 
   it('can generate things', async () => {
     let manifest = await Manifest.load('../particles/test/giftlist.manifest', loader);
-    var arc = new Arc({
-      id: "test-plan-arc",
-      context: manifest,
-      slotComposer: {
-        affordance: 'dom',
-        getAvailableSlots: (() => { return {root: [{id: 'r0', count: 0, views: [], providedSlotSpec: {isSet: false}}]}; })
-      }
-    });
+    var arc = createTestArc("test-plan-arc", manifest, "dom");
     let Person = manifest.findSchemaByName('Person').entityClass();
     let Product = manifest.findSchemaByName('Person').entityClass();
     var planner = new Planner();
@@ -46,14 +50,7 @@ describe('Planner', function() {
 
   it('make a plan with views', async () => {
     let manifest = await Manifest.load('../particles/test/giftlist.manifest', loader);
-    var arc = new Arc({
-      id: "test-plan-arc",
-      context: manifest,
-      slotComposer: {
-        affordance: 'dom',
-        getAvailableSlots: (() => { return {root: [{id: 'r0', count: 0, views: [], providedSlotSpec: {isSet: false}}]}; })
-      }
-    });
+    var arc = createTestArc("test-plan-arc", manifest, "dom");
     let Person = manifest.findSchemaByName('Person').entityClass();
     let Product = manifest.findSchemaByName('Product').entityClass();
     var personView = arc.createView(Person.type.viewOf(), "aperson");
@@ -310,17 +307,60 @@ describe('MapRemoteSlots', function() {
         A as particle0
           consume root as rootSlot
     `));
-    var strategizer = {generated: [{result: manifest.recipes[0], score: 1}]};  //, {result: manifest.recipes[1], score: 1}]};
-    var arc = new Arc({
-      id: "test-plan-arc",
-      context: manifest,
-      slotComposer: {
-        affordance: 'dom',
-        getAvailableSlots: (() => { return {root: [{id: 'r0', count: 0, views: [], providedSlotSpec: {isSet: false}}]}; })
-      }
-    });
+    var strategizer = {generated: [{result: manifest.recipes[0], score: 1}]};
+    var arc = createTestArc("test-plan-arc", manifest, "dom");
     var mrs = new MapRemoteSlots(arc);
     let { results } = await mrs.generate(strategizer);
     assert.equal(results.length, 1);
+  });
+});
+
+describe('MatchParticleByVerb', function() {
+  it ('particles by verb', async() => {
+    let manifest = (await Manifest.parse(`
+      schema Energy
+      schema Height
+      particle SimpleJumper in 'A.js'
+        jump(in Energy e, out Height h)
+        affordance dom
+        consume root
+      particle StarJumper in 'AA.js'
+        jump(in Energy e, out Height h)
+        affordance dom
+        consume root
+      particle VoiceStarJumper in 'AA.js'  # wrong affordance
+        jump(in Energy e, out Height h)
+        affordance voice
+        consume root
+      particle GalaxyJumper in 'AA.js'  # wrong connections
+        jump(in Energy e)
+        affordance dom
+        consume root
+      particle StarFlyer in 'AA.js'  # wrong verb
+        fly()
+
+      recipe
+        create as height
+        use as energy
+        particle can jump
+          * -> height
+          * <- energy
+    `));
+
+    var arc = createTestArc("test-plan-arc", manifest, "dom");
+    // Only apply MatchParticleByVerb strategy.
+    var strategizer = {generated: [{result: manifest.recipes[0], score: 1}]};
+    var mpv = new MatchParticleByVerb(arc);
+    let { results } = await mpv.generate(strategizer);
+    assert.equal(results.length, 3);
+    // Note: view connections are not resolved yet.
+    assert.deepEqual(["GalaxyJumper", "SimpleJumper", "StarJumper"], results.map(r => r.result.particles[0].name).sort());
+
+    // Apply all strategies to resolve recipe where particles are referenced by verbs.
+    var planner = new Planner();
+    planner.init(arc);
+    let plans = await planner.plan(1000);
+    // TODO: add support for view and connections resolution in the strategy to fully resolve the recipe.
+    // assert.equal(2, plans.length);
   });
 });

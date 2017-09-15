@@ -19,6 +19,7 @@ class Particle {
     this._localName = undefined;
     this._spec = undefined;
     this._tags = [];
+    this._verbs = [];
 
     this._connections = {};
     // TODO: replace with constraint connections on the recipe
@@ -30,6 +31,7 @@ class Particle {
     var particle = recipe.newParticle(this._name);
     particle._id  = this._id;
     particle._tags = [...this._tags];
+    particle._verbs = [...this._verbs];
     particle._spec = this._spec;
 
     Object.keys(this._connections).forEach(key => {
@@ -46,6 +48,7 @@ class Particle {
   _startNormalize() {
     this._localName = null;
     this._tags.sort();
+    this._verbs.sort();
     let normalizedConnections = {};
     for (let key of (Object.keys(this._connections).sort())) {
       normalizedConnections[key] = this._connections[key];
@@ -71,6 +74,7 @@ class Particle {
     if ((cmp = util.compareStrings(this._localName, other._localName)) != 0) return cmp;
     // TODO: spec?
     if ((cmp = util.compareArrays(this._tags, other._tags, util.compareStrings)) != 0) return cmp;
+    if ((cmp = util.compareArrays(this._verbs, other._verbs, util.compareStrings)) != 0) return cmp;
     // TODO: slots
     return 0;
   }
@@ -78,6 +82,10 @@ class Particle {
   _isValid() {
     if (!this.spec) {
       return true;
+    }
+    if (!this.name && !this.primaryVerb) {
+      // Must have either name of a verb
+      return false;
     }
     // TODO: What
     return true;
@@ -121,12 +129,15 @@ class Particle {
   set localName(name) { this._localName = name; }
   get id() { return this._id; } // Not resolved until we have an ID.
   get name() { return this._name; }
+  set name(name) { this._name = name; }
   get spec() { return this._spec; }
   get tags() { return this._tags; }
   set tags(tags) { this._tags = tags; }
   get connections() { return this._connections; } // {parameter -> ViewConnection}
   get unnamedConnections() { return this._unnamedConnections; } // ViewConnection*
   get consumedSlotConnections() { return this._consumedSlotConnections; }
+  get primaryVerb() { if (this._verbs.length > 0) return this._verbs[0]; }
+  set verbs(verbs) { this._verbs = verbs; }
 
   set spec(spec) {
     this._spec = spec;
@@ -185,14 +196,23 @@ class Particle {
   toString(nameMap, options) {
     let result = [];
     // TODO: we need at least name or tags
-    result.push(this.name);
-    result.push(...this.tags);
-    result.push(`as ${(nameMap && nameMap.get(this)) || this.localName}`);
+    if (this.name) {
+      result.push(this.name);
+      result.push(...this.tags);
+
+      result.push(`as ${(nameMap && nameMap.get(this)) || this.localName}`);
+      if (this.primaryVerb && this.primaryVerb != this.name) {
+        result.push(`# verb=${this.primaryVerb}`);
+      }
+    } else {  // verb must exist, if there is no name.
+      result.push(`particle can ${this.primaryVerb}`);
+    }
     if (options && options.showUnresolved) {
       if (!this.isResolved(options)) {
         result.push(`# unresolved particle: ${options.details}`);
       }
     }
+
     result = [result.join(' ')];
 
     for (let connection of this.unnamedConnections) {
