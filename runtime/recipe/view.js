@@ -50,7 +50,7 @@ class View {
 
   _finishNormalize() {
     for (let connection of this._connections) {
-      assert(Object.isFrozen(connection), 'View connection is not frozen.');
+      assert(Object.isFrozen(connection), `View connection '${connection.name}' is not frozen.`);
     }
     this._connections.sort(util.compareComparables);
     Object.freeze(this);
