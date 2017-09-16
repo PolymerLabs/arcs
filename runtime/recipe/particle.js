@@ -179,10 +179,24 @@ class Particle {
     return this._connections[name] || this.addConnectionName(name);
   }
 
+  getConnectionByName(name) {
+    return this._connections[name];
+  }
+
   nameConnection(connection, name) {
+    assert(!this._connections[name].view, `Connection "${name}" already has a view`);
+
     var idx = this._unnamedConnections.indexOf(connection);
-    assert(idx >= 0);
+    assert(idx >= 0, `Cannot name '${name}' nonexistent unnamed connection.`);
     connection._name = name;
+
+    connection.type = this._connections[name].type;
+    if (connection.direction != this._connections[name].direction) {
+      assert(connection.direction == "inout",
+             `Unnamed connection cannot adjust direction ${connection.direction} to ${name}'s direction ${this._connections[name].direction}`);
+      connection.direction = this._connections[name].direction;
+    }
+
     this._connections[name] = connection;
     this._unnamedConnections.splice(idx, 1);
   }

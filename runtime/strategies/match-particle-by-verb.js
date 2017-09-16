@@ -14,6 +14,7 @@ module.exports = class MatchParticleByVerb extends Strategy {
     super();
     this._arc = arc;
   }
+
   async generate(strategizer) {
     var arc = this._arc;
     var results = Recipe.over(strategizer.generated, new class extends RecipeWalker {
@@ -23,17 +24,16 @@ module.exports = class MatchParticleByVerb extends Strategy {
           return;
         }
 
-        // Find particles by verb and filter by affordance, if applicable.
         let particleSpecs = arc.context.findParticlesByVerb(particle.primaryVerb)
-            .filter(spec => !arc.pec.slotComposer || spec.matchAffordance(arc.pec.slotComposer.affordance));
-
-        // TODO: match particle view and slot connections.
+            .filter(spec => !arc.pec.slotComposer || spec.matchAffordance(arc.pec.slotComposer.affordance))
 
         return particleSpecs.map(spec => {
           return (recipe, particle) => {
             let score = 1;
+
             particle.name = spec.name;
             particle.spec = spec;
+
             return score;
           };
         });

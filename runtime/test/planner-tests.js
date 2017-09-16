@@ -316,51 +316,63 @@ describe('MapRemoteSlots', function() {
 });
 
 describe('MatchParticleByVerb', function() {
-  it ('particles by verb', async() => {
-    let manifest = (await Manifest.parse(`
-      schema Energy
-      schema Height
-      particle SimpleJumper in 'A.js'
-        jump(in Energy e, out Height h)
-        affordance dom
-        consume root
-      particle StarJumper in 'AA.js'
-        jump(in Energy e, out Height h)
-        affordance dom
-        consume root
-      particle VoiceStarJumper in 'AA.js'  # wrong affordance
-        jump(in Energy e, out Height h)
-        affordance voice
-        consume root
-      particle GalaxyJumper in 'AA.js'  # wrong connections
-        jump(in Energy e)
-        affordance dom
-        consume root
-      particle StarFlyer in 'AA.js'  # wrong verb
-        fly()
+  let manifestStr = `
+    schema Energy
+    schema Height
+    particle SimpleJumper in 'A.js'
+      jump(in Energy e, out Height h)
+      affordance dom
+      consume root
+    particle StarJumper in 'AA.js'
+      jump(in Energy e, inout Height h)
+      affordance dom
+      consume root
+    particle VoiceStarJumper in 'AA.js'  # wrong affordance
+      jump(in Energy e, out Height h)
+      affordance voice
+      consume root
+    particle GalaxyJumper in 'AA.js'  # wrong connections
+      jump(in Energy e)
+      affordance dom
+      consume root
+    particle StarFlyer in 'AA.js'  # wrong verb
+      fly()
 
-      recipe
-        create as height
-        use as energy
-        particle can jump
-          * -> height
-          * <- energy
-    `));
+    recipe
+      use as height
+      use as energy
+      particle can jump
+        * = height
+        * <- energy
+  `;
 
+  it ('particles by verb strategy', async() => {
+    let manifest = (await Manifest.parse(manifestStr));
     var arc = createTestArc("test-plan-arc", manifest, "dom");
-    // Only apply MatchParticleByVerb strategy.
+    // Apply MatchParticleByVerb strategy.
     var strategizer = {generated: [{result: manifest.recipes[0], score: 1}]};
     var mpv = new MatchParticleByVerb(arc);
     let { results } = await mpv.generate(strategizer);
     assert.equal(results.length, 3);
     // Note: view connections are not resolved yet.
     assert.deepEqual(["GalaxyJumper", "SimpleJumper", "StarJumper"], results.map(r => r.result.particles[0].name).sort());
+  });
+
+  it ('particles by verb recipe fully resolved', async() => {
+    let manifest = (await Manifest.parse(manifestStr));
+    let recipe = manifest.recipes[0];
+    recipe.views[0].mapToView({id: 'test1', type: manifest.findSchemaByName('Height').entityClass().type});
+    recipe.views[1].mapToView({id: 'test2', type: manifest.findSchemaByName('Energy').entityClass().type});
+
+    var arc = createTestArc("test-plan-arc", manifest, "dom");
 
     // Apply all strategies to resolve recipe where particles are referenced by verbs.
     var planner = new Planner();
     planner.init(arc);
     let plans = await planner.plan(1000);
-    // TODO: add support for view and connections resolution in the strategy to fully resolve the recipe.
-    // assert.equal(2, plans.length);
+
+    assert.equal(2, plans.length);
+    assert.deepEqual([["SimpleJumper"], ["StarJumper"]],
+                     plans.map(plan => plan.particles.map(particle => particle.name)));
   });
 });
