@@ -86,8 +86,7 @@ class ViewConnection {
   }
 
   _isValid() {
-    // TODO: 'create' is not a valid direction
-    if (this.direction && !['in', 'out', 'inout', 'create'].includes(this.direction)) {
+    if (this.direction && !['in', 'out', 'inout'].includes(this.direction)) {
       return false;
     }
     if (this.type && this.particle && this.particle.spec) {

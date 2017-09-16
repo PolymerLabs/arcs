@@ -18,6 +18,7 @@ let InitPopulation = require('./strategies/init-population.js');
 let MapConsumedSlots = require('./strategies/map-consumed-slots.js');
 let MapRemoteSlots = require('./strategies/map-remote-slots.js');
 let MatchParticleByVerb = require('./strategies/match-particle-by-verb.js');
+let NameUnnamedConnections = require('./strategies/name-unnamed-connections.js');
 let AddUseViews = require('./strategies/add-use-views.js');
 let Manifest = require('./manifest.js');
 let InitSearch = require('./strategies/init-search.js');
@@ -71,6 +72,7 @@ class Planner {
       new CopyRemoteViews(arc),
       new MapRemoteSlots(arc),
       new MatchParticleByVerb(arc),
+      new NameUnnamedConnections(arc),
       new AddUseViews(),
     ];
     this.strategizer = new Strategizer(strategies, [], {
