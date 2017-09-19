@@ -422,7 +422,7 @@ RecipeSlot
   {
     return {
       kind: 'slot',
-      id: optional(id, id => id[2], null),
+      id: optional(id, id => id[1], null),
       name: optional(name, name => name[1], '')
     }
   }

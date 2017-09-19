@@ -10,6 +10,7 @@
 "use strict";
 
 const runtime = require("./runtime.js");
+const {ParticleDescription, ConnectionDescription} = require("./description.js");
 const Type = require("./type.js");
 const assert = require("assert");
 
@@ -69,7 +70,15 @@ class ParticleSpec {
     this.inputs = this.connections.filter(a => a.isInput);
     this.outputs = this.connections.filter(a => a.isOutput);
     this.transient = model.transient;
-    this.description = this.validateDescription(model.description);
+
+    // initialize descriptions.
+    model.description = model.description || {};
+    this.validateDescription(model.description);
+    this.description = new ParticleDescription(model.description["pattern"], this);
+    this.connections.forEach(connectionSpec => {
+      connectionSpec.description = new ConnectionDescription(model.description[connectionSpec.name], this, connectionSpec);
+    });
+
     this.implFile = model.implFile;
     this.affordance = model.affordance;
     this.slots = new Map();
@@ -124,7 +133,6 @@ class ParticleSpec {
     Object.keys(description || []).forEach(d => {
       assert(d == "pattern" || this.connectionMap.has(d), `Unexpected description for ${d}`);
     });
-    return description;
   }
 }
 

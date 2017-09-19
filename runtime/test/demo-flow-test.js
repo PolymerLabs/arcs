@@ -10,6 +10,7 @@
  "use strict";
 
 const Arc = require("../arc.js");
+const Description = require("../description.js");
 const Manifest = require("../manifest.js");
 const Loader = require("../loader.js");
 const assert = require('chai').assert;
@@ -43,7 +44,21 @@ describe('demo flow', function() {
   copy 'manifest:browser/demo/recipes.manifest:view0' #shortlist as view1 # Product List
   map 'manifest:browser/demo/recipes.manifest:view1' #wishlist as view2 # Product List
   slot 'rootslotid-root' as slot3
-  ShowProducts as particle0
+  AlsoOn as particle0
+    choices <- view0
+    list <- view1
+    consume set of annotation as slot2
+  Chooser as particle1
+    choices <- view0
+    resultList = view1
+    consume action as slot0
+      provide set of annotation as slot1
+        view choices
+  Recommend as particle2
+    known <- view1
+    population <- view2
+    recommendations -> view0
+  ShowProducts as particle3
     list <- view1
     consume root as slot3
       provide action as slot0
@@ -51,28 +66,14 @@ describe('demo flow', function() {
       provide set of annotation as slot2
         view list
       provide postamble as slot4
-      provide preamble as slot5
-  Chooser as particle1
-    choices <- view0
-    resultList = view1
-    consume action as slot0
-      provide set of annotation as slot1
-        view choices
-  AlsoOn as particle2
-    choices <- view0
-    list <- view1
-    consume set of annotation as slot2
-  Recommend as particle3
-    known <- view1
-    population <- view2
-    recommendations -> view0`;
-    let {plan, descriptionGenerator} = plans.find(p => p.plan.toString() == expectedPlanString);
+      provide preamble as slot5`;
+    let {plan} = plans.find(p => p.plan.toString() == expectedPlanString);
     assert(plan);
 
     assert.equal("Show Products from your browsing context (<b>Minecraft Book</b> and <b>2</b> other items) and " +
                  "Choose from Products recommended based on Products from your browsing context and " +
                  "Claire\'s wishlist (<b>Book: How to Draw</b> and <b>2</b> other items)",
-                 descriptionGenerator.description);
+                 Description.getSuggestion(plan, arc));
 
     slotComposer
       .newExpectations()
