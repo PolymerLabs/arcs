@@ -11,6 +11,12 @@
     "scripts": ["event-page.js"],
     "persistent": false
   },
+  "content_scripts": [
+    {
+      "matches": ["*://*/*"],
+      "js": ["page-extractor.js", "load-browser-state.js", "content-script.js"]
+    }
+  ],
   "chrome_url_overrides" : {
     "newtab": "new-tab.html"
   },
