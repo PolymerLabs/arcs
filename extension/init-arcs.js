@@ -8,7 +8,7 @@
 /**
  * Create an arc.
  */
-async function create_arc(urlMap, manifestPath, container, db) {
+async function create_arc(urlMap, manifestPath, container) {
   // create a system loader
   // TODO(sjmiles): `pecFactory` can create loader objects (via worker-entry*.js) for the innerPEC,
   // but we have to create one by hand for manifest loading

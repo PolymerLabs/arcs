@@ -13,7 +13,7 @@ function instantiate_arcs(doc) {
   let template = doc.document.querySelector('template').content;
   doc.document.body.appendChild(doc.document.importNode(template, true));
   
-  let go = async ({db, urls}) => {
+  let go = async () => {
     // create default URL map
     let root = chrome.extension.getURL('newtab.js').split('/').slice(0,3).join('/') +
       `/resources/arcs-cdn`;
@@ -22,12 +22,11 @@ function instantiate_arcs(doc) {
     // we have an additional artifact that we need to load dynamically
     urlMap['worker-entry-cdn.js'] = `${root}/lib/worker-entry-cdn.js`;
     // customize map
-    urls && Object.assign(urlMap, urls);
 
-    let arc = await create_arc(urlMap, './new-tab.manifest', window['particle-container'], db);
+    let arc = await create_arc(urlMap, './new-tab.manifest', window['particle-container']);
 
     Arcs.utils.suggest(arc, doc.document.querySelector('suggestions-element'));
   };
   
-  go(window);
+  go();
 }
