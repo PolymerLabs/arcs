@@ -39,9 +39,8 @@ class DemoBase extends HTMLElement {
       document.dispatchEvent(new CustomEvent('generations', {detail: generations}));
     };
     ui.addEventListener('plan-selected', e => {
-      let {descriptionGenerator, plan} = e.detail;
+      let {plan} = e.detail;
       arc.instantiate(plan);
-      descriptionGenerator.setViewDescriptions(arc);
       makeSuggestions();
     });
     makeSuggestions();

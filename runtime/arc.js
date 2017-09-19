@@ -19,6 +19,7 @@ let viewlet = require('./viewlet.js');
 const OuterPec = require('./outer-PEC.js');
 const Recipe = require('./recipe/recipe.js');
 const Manifest = require('./manifest.js');
+const Description = require('./description.js');
 
 class Arc {
   constructor({id, context, pecFactory, slotComposer}) {
@@ -191,7 +192,9 @@ class Arc {
         recipeView.fate = "use";
         // TODO: move the call to OuterPEC's DefineView to here
       }
-      assert(this.findViewById(recipeView.id), `view '${recipeView.id}' was not found`);
+      let view = this.findViewById(recipeView.id);
+      assert(view, `view '${recipeView.id}' was not found`);
+      view.description = Description.getViewDescription(recipeView, this);
     }
 
     particles.forEach(recipeParticle => this._instantiateParticle(recipeParticle));

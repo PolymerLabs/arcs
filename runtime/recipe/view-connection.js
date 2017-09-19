@@ -85,6 +85,10 @@ class ViewConnection {
     this._resetViewType();
   }
 
+  get spec() {
+    return this.particle.spec.connectionMap.get(this.name);
+  }
+
   _isValid() {
     if (this.direction && !['in', 'out', 'inout'].includes(this.direction)) {
       return false;

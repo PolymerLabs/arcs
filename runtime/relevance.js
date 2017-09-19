@@ -46,10 +46,9 @@ class Relevance {
     return relevance;
   }
 
-  calcParticleRelevance(particleName) {
-    for (let key of this.relevanceMap.keys()) {
-      if (key.spec.name == particleName)
-        return Relevance.particleRelevance(this.relevanceMap.get(key));
+  calcParticleRelevance(particle) {
+    if (this.relevanceMap.has(particle)) {
+      return Relevance.particleRelevance(this.relevanceMap.get(particle));
     }
     return -1;
   }

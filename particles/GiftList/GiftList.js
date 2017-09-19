@@ -36,13 +36,13 @@ defineParticle(({DomParticle}) => {
     _render(props, state) {
       let {person} = props;
       let name = (person && person.name) || 'n/a';
+      let occasion = (person && person.occasion) || 'n/a';
+      let date = (person && person.date) || 'n/a';
       return {
         person: name,
-        occasion: 'Birthday',
-        occasionDate: '2017-08-04',
-        date: '2017-08-04'
-        //people: [{value: name}],
-        //occasions: [{value: 'Birthday'}]
+        occasion,
+        occasionDate: date,
+        date
       };
     }
   };

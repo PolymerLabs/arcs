@@ -25,7 +25,7 @@ let InitSearch = require('./strategies/init-search.js');
 let SearchTokensToParticles = require('./strategies/search-tokens-to-particles.js');
 
 const Speculator = require('./speculator.js');
-const DescriptionGenerator = require('./description-generator.js');
+const Description = require('./description.js');
 const Tracing = require('tracelib');
 
 class CreateViews extends Strategy {
@@ -135,14 +135,14 @@ class Planner {
       let relevance = await trace.wait(() => speculator.speculate(this._arc, plan));
       trace.resume();
       let rank = relevance.calcRelevanceScore();
-      let descriptionGenerator = new DescriptionGenerator(plan, relevance);
+      let description = Description.getSuggestion(plan, this._arc, relevance);
 
       let hash = ((hash) => { return hash.substring(hash.length - 4)}) (await plan.digest());
       if (generations) {
         generations.forEach(g => {
           g.forEach(gg => {
             if (gg.hash.endsWith(hash)) {
-              gg.description = descriptionGenerator.description;
+              gg.description = description;
             }
           });
         });
@@ -153,7 +153,7 @@ class Planner {
       results.push({
         plan,
         rank,
-        descriptionGenerator,
+        description,
         hash
       });
     }
