@@ -19,6 +19,7 @@ let ConvertConstraintsToConnections = require('../strategies/convert-constraints
 let InitPopulation = require('../strategies/init-population.js');
 let MapRemoteSlots = require('../strategies/map-remote-slots.js');
 let MatchParticleByVerb = require('../strategies/match-particle-by-verb.js');
+let SearchTokensToParticles = require('../strategies/search-tokens-to-particles.js');
 
 var loader = new Loader();
 
@@ -312,6 +313,34 @@ describe('MapRemoteSlots', function() {
     var mrs = new MapRemoteSlots(arc);
     let { results } = await mrs.generate(strategizer);
     assert.equal(results.length, 1);
+  });
+});
+
+describe('SearchTokensToParticles', function() {
+  it ('particles by verb strategy', async() => {
+    let manifest = (await Manifest.parse(`
+      particle SimpleJumper in 'A.js'
+        jump()
+      particle StarJumper in 'AA.js'
+        jump()
+      particle GalaxyFlyer in 'AA.js'
+        fly()
+      particle Rester in 'AA.js'
+        rest()
+
+      recipe
+        search \`jump or fly or run and Rester\`
+    `));
+    var arc = createTestArc("test-plan-arc", manifest, "dom");
+    var strategizer = {generated: [{result: manifest.recipes[0], score: 1}]};
+    var stp = new SearchTokensToParticles(arc);
+    let { results } = await stp.generate(strategizer);
+    assert.equal(results.length, 2);
+    debugger;
+    assert.deepEqual([["GalaxyFlyer", "Rester", "SimpleJumper"],
+                      ["GalaxyFlyer", "Rester", "StarJumper"]], results.map(r => r.result.particles.map(p => p.name).sort()));
+    assert.deepEqual(["fly", "jump", "rester"], results[0].result.search.resolvedTokens);
+    assert.deepEqual(["and", "or", "or", "run"], results[0].result.search.unresolvedTokens);
   });
 });
 
