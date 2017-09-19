@@ -53,18 +53,19 @@ class SuggestionsElement extends HTMLElement {
       this._root = this.attachShadow({mode: 'open'});
       this._root.appendChild(document.importNode(template.content, true));
       this.toast = this._root.querySelector('x-toast');
+      // TODO: regenerate all descriptions every time the toast is reopened.
       this.container = this._root.querySelector('suggestions');
     }
   }
 
-  addSuggestion({plan, descriptionGenerator, rank, hash}, index) {
+  addSuggestion({plan, description, rank, hash}, index) {
     let model = {
       index,
-      innerHTML: descriptionGenerator.description,
+      innerHTML: description,
       onclick: () => {
         this.toast.open = false;
         // TODO(sjmiles): wait for toast animation to avoid jank
-        setTimeout(()=>this._choose(plan, descriptionGenerator), 80);
+        setTimeout(()=>this._choose(plan), 80);
       }
     };
     let suggest = Object.assign(document.createElement("suggest"), model);
@@ -82,10 +83,10 @@ class SuggestionsElement extends HTMLElement {
     suggestions.forEach((suggestion, i) => this.addSuggestion(suggestion, i));
   }
 
-  _choose(plan, descriptionGenerator) {
+  _choose(plan) {
     this.container.textContent = "";
     this.dispatchEvent(new CustomEvent("plan-selected", {
-      detail: { plan, descriptionGenerator }
+      detail: { plan }
     }));
   }
 

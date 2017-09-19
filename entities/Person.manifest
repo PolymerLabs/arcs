@@ -9,3 +9,6 @@
 import 'Thing.manifest'
 
 schema Person extends Thing
+  optional
+    Text occasion
+    Text date
