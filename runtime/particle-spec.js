@@ -95,7 +95,11 @@ class ParticleSpec {
     return this.slots.get(slotName);
   }
 
-  get primaryVerb() { if (this.verbs.length > 0) return this.verbs[0]; }
+  get primaryVerb() {
+    if (this.verbs.length > 0) {
+      return this.verbs[0];
+    }
+  }
 
   matchAffordance(affordance) {
     return this.slots.size <= 0 || this.affordance.includes(affordance);

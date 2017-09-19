@@ -15,10 +15,18 @@ module.exports = class SearchTokensToParticles extends Strategy {
     // TODO: Recipes. Views?
     this._byToken = {};
     for (let particle of arc.context.particles) {
+      let name = particle.name.toLowerCase();
+      this._addParticle(name, particle);
+
       let verb = particle.primaryVerb;
-      this._byToken[verb] = this._byToken[verb] || [];
-      this._byToken[verb].push(particle);
+      if (verb != name) {
+        this._addParticle(verb, particle);
+      }
     }
+  }
+  _addParticle(token, particle) {
+    this._byToken[token] = this._byToken[token] || [];
+    this._byToken[token].push(particle);
   }
   async generate(strategizer) {
     let findParticles = token => this._byToken[token] || [];
@@ -30,26 +38,36 @@ module.exports = class SearchTokensToParticles extends Strategy {
           return;
         }
 
-        let specByToken = new Map();
+        let specsByToken = {};
         for (let token of recipe.search.unresolvedTokens) {
           for (let spec of findParticles(token)) {
             // TODO: Skip particles that are already in the active recipe?
-            specByToken.set(token, spec);
+            specsByToken[token] = specsByToken[token] || [];
+            specsByToken[token].push(spec)
           }
         }
-        if (specByToken.size == 0) {
+        let resolvedTokens = Object.keys(specsByToken);
+        if (resolvedTokens.length == 0) {
           return;
         }
 
-        return recipe => {
-          specByToken.forEach((spec, token) => {
-            recipe.search.resolveToken(token);
-            let particle = recipe.newParticle(spec.name);
-            particle.spec = spec;
-          });
-          return specByToken.size;
-        };
+        const flatten = (arr) => [].concat.apply([], arr);
+        const product = (...sets) =>
+          sets.reduce((acc, set) =>
+            flatten(acc.map(x => set.map(y => [ ...x, y ]))),
+            [[]]);
+        let possibleCombinations = product.apply(null, Object.values(specsByToken).map(v => flatten(v)));
 
+        return possibleCombinations.map(combination => {
+          return recipe => {
+            resolvedTokens.forEach(token => recipe.search.resolveToken(token));
+            combination.forEach(spec => {
+              let particle = recipe.newParticle(spec.name);
+              particle.spec = spec;
+            });
+            return resolvedTokens.size;
+          };
+        });
       }
     }(RecipeWalker.Permuted), this);
 
