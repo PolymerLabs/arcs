@@ -8,22 +8,47 @@
 /**
  * Create an arc.
  */
-async function create_arc(urlMap, manifestPath, container) {
+async function create_arc(urlMap, manifestPath, container, dataLoader) {
+
   // create a system loader
   // TODO(sjmiles): `pecFactory` can create loader objects (via worker-entry*.js) for the innerPEC,
   // but we have to create one by hand for manifest loading
   let loader = new Arcs.BrowserLoader(urlMap);
+
   // load manifest
   let manifest = await Arcs.Manifest.load(manifestPath, loader);
+
   // TODO(sjmiles): hack in ability to utilize imported recipes
   utils.collapseRecipes(manifest);
   console.log(manifest);
+
   // renderer
   let slotComposer = new Arcs.SlotComposer({rootContext: container, affordance: "dom"});
+
+  // load our dynamic data
+  await loadBrowsingData(manifest, dataLoader);
+
   // an Arc!
   let arc = Arcs.utils.createArc({id: 'demo', urlMap, slotComposer, context: manifest});
-  // load our dynamic data
-  await loadBrowsingData(manifest);
 
   return arc;
+};
+
+async function render_arcs(doc, dataLoader) {
+  
+  let template = doc.document.querySelector('template').content;
+  doc.document.body.appendChild(doc.document.importNode(template, true));
+  
+  // create default URL map
+  let root = chrome.extension.getURL('newtab.js').split('/').slice(0,3).join('/') +
+    `/resources/arcs-cdn`;
+  let urlMap = utils.createUrlMap(root);
+
+  // we have an additional artifact that we need to load dynamically
+  urlMap['worker-entry-cdn.js'] = `${root}/lib/worker-entry-cdn.js`;
+
+  let arc = await create_arc(urlMap, './new-tab.manifest', window['particle-container'],
+      dataLoader);
+
+  Arcs.utils.suggest(arc, window.document.querySelector('suggestions-element'));
 };
