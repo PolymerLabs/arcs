@@ -34,7 +34,6 @@ http://polymer.github.io/PATENTS.txt
   <script src="load-browser-state.js"></script>
   <script src="new-tab.js"></script>
   <script src="init-arcs.js"></script>
-  <script src="popup.js"></script>
 </head>
 <body>
 
@@ -47,11 +46,8 @@ http://polymer.github.io/PATENTS.txt
 
 <script>
   chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-    chrome.tabs.sendMessage(tabs[0].id, {method: "extractEntities"}, function(response) {
-      
-      console.log('in popup.js; ', response);
-
-      render_arcs(window, function() { return response; });
+    chrome.tabs.sendMessage(tabs[0].id, {method: "extractEntities"}, response => {
+      renderArcs(window, function() { return response; });
     });
   });
 </script>
