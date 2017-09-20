@@ -32,8 +32,8 @@ http://polymer.github.io/PATENTS.txt
 
   <!-- app-specific configuration -->
   <script src="load-browser-state.js"></script>
-  <script src="new-tab.js"></script>
   <script src="init-arcs.js"></script>
+  <script src="new-tab.js"></script>
 </head>
 <body>
 
@@ -45,7 +45,7 @@ http://polymer.github.io/PATENTS.txt
 </template>
 
 <script>
-  instantiate_arcs(window);
+  render_arcs(window, load_entities_from_tabs);
 </script>
 
 </body>

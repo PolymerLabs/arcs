@@ -8,25 +8,3 @@
 
 // TODO(smalls) - there should be a better system of unique ids
 var faux_gid = 2000;
-
-function instantiate_arcs(doc) {
-  let template = doc.document.querySelector('template').content;
-  doc.document.body.appendChild(doc.document.importNode(template, true));
-  
-  let go = async () => {
-    // create default URL map
-    let root = chrome.extension.getURL('newtab.js').split('/').slice(0,3).join('/') +
-      `/resources/arcs-cdn`;
-    let urlMap = utils.createUrlMap(root);
-
-    // we have an additional artifact that we need to load dynamically
-    urlMap['worker-entry-cdn.js'] = `${root}/lib/worker-entry-cdn.js`;
-    // customize map
-
-    let arc = await create_arc(urlMap, './new-tab.manifest', window['particle-container']);
-
-    Arcs.utils.suggest(arc, doc.document.querySelector('suggestions-element'));
-  };
-  
-  go();
-}
