@@ -54,3 +54,14 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     return true;
   }
 });
+
+/*
+ * probably useless
+chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+  console.log('tab changed'+tabId);
+});
+
+chrome.tabs.onActivated.addListener((activeInfo) => {
+  console.log('tab activated ',activeInfo.tabId);
+});
+*/

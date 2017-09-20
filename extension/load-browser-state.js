@@ -9,7 +9,7 @@
 /**
  * Load the current browser state into the specified manifest.
  */
-async function loadBrowsingData(manifest) {
+async function loadBrowsingData(manifest, dataLoader) {
 
   let views = {}
   for (let k of ['Answer', 'WebPage', 'Question', 'VideoObject', 'Product']) {
@@ -18,6 +18,15 @@ async function loadBrowsingData(manifest) {
 
     views[k] = view;
   }
+
+  let entities = await dataLoader();
+  console.log('data from browser', entities);
+
+  dumpEntities(views, entities);
+}
+
+// XXX move to new-tab.js?
+async function load_entities_from_tabs() {
 
   let devices = await new Promise((resolve) => chrome.sessions.getDevices(null, resolve));
   let tabs = [];
@@ -72,13 +81,12 @@ async function loadBrowsingData(manifest) {
     groupTabMap.get(tab.group).push(tab);
   }
 
-  for (let [group, tabs] of groupTabMap) {
-    dumpEntities(views, [].concat(...await Promise.all(tabs.map(tab => tabEntityMap.get(tab)))));
-  }
+  return [].concat(...await Promise.all(tabs.map(tab => tabEntityMap.get(tab))));
 }
 
 
 function dumpEntities(views, entityData) {
+  
   for (let ei of entityData) {
     let type = ei['@type'].replace(/http[s]?:\/\/schema.org\//, '');
     let view = views[type];
