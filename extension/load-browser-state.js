@@ -6,10 +6,7 @@
 // http://polymer.github.io/PATENTS.txt
 
 
-/**
- * Load the current browser state into the specified manifest.
- */
-async function loadBrowsingData(manifest, dataLoader) {
+async function populateManifestViews(manifest, dataLoader) {
 
   let views = {}
   for (let k of ['Answer', 'WebPage', 'Question', 'VideoObject', 'Product']) {
@@ -24,66 +21,6 @@ async function loadBrowsingData(manifest, dataLoader) {
 
   dumpEntities(views, entities);
 }
-
-// XXX move to new-tab.js?
-async function load_entities_from_tabs() {
-
-  let devices = await new Promise((resolve) => chrome.sessions.getDevices(null, resolve));
-  let tabs = [];
-  for (let device of devices) {
-    for (let session of device.sessions) {
-      for (let tab of session.window.tabs) {
-        if (!/^https?/.test(tab.url)) {
-          continue;
-        }
-        tabs.push({
-          device: device.deviceName,
-          group: session.window.sessionId,
-          id: tab.sessionId,
-          url: tab.url,
-          title: tab.title,
-          favIconUrl: tab.favIconUrl,
-        });
-      }
-    }
-  }
-  let currentTabs = await new Promise((resolve) => chrome.tabs.query({}, resolve));
-  for (let tab of currentTabs) {
-    if (!/^https?/.test(tab.url)) {
-      continue;
-    }
-    tabs.push({
-      device: 'local',
-      group: `local:${tab.windowId}`,
-      url: tab.url,
-      title: tab.title,
-      id: tab.id,
-      local: true,
-    });
-  }
-  tabs.sort((a, b) => {
-    return a.group.localeCompare(b.group);
-  });
-  let groupElement = null;
-  let lastGroup = null;
-
-  // Trigger entity extraction.
-  let tabEntityMap = new Map();
-  for (let tab of tabs) {
-    tabEntityMap.set(tab, fetchEntities(tab));
-  }
-
-  let groupTabMap = new Map();
-  for (let tab of tabs) {
-    if (!groupTabMap.has(tab.group)) {
-      groupTabMap.set(tab.group, []);
-    }
-    groupTabMap.get(tab.group).push(tab);
-  }
-
-  return [].concat(...await Promise.all(tabs.map(tab => tabEntityMap.get(tab))));
-}
-
 
 function dumpEntities(views, entityData) {
   

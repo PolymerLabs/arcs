@@ -23,5 +23,5 @@
   "browser_action": {
     "default_popup": "popup.html"
   },
-  "content_security_policy": "script-src 'self' 'sha256-4ZLoKbmiXpB4ulKjFozRAdzMwGKJbChWtw+qbw0I4uA=' 'sha256-aR62htQLYBzfCRnnuMNJ12S1RL55uokilEI6xMZMsWI='; object-src 'self'"
+  "content_security_policy": "script-src 'self' 'sha256-S2/ivOEAwfKTbm96CxzkM6NpRqpIbrs7IH77D5vpojw=' 'sha256-0hTO/Ziu2bbbBB4qbB8OvlmAodfjRkn6ZcPHtQi5F3k='; object-src 'self'"
 }

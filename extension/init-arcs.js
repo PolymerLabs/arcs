@@ -5,10 +5,14 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
+
+// TODO(smalls) - there should be a better system of unique ids
+var faux_gid = 2000;
+
 /**
  * Create an arc.
  */
-async function create_arc(urlMap, manifestPath, container, dataLoader) {
+async function _createArc(urlMap, manifestPath, container, dataLoader) {
 
   // create a system loader
   // TODO(sjmiles): `pecFactory` can create loader objects (via worker-entry*.js) for the innerPEC,
@@ -26,7 +30,7 @@ async function create_arc(urlMap, manifestPath, container, dataLoader) {
   let slotComposer = new Arcs.SlotComposer({rootContext: container, affordance: "dom"});
 
   // load our dynamic data
-  await loadBrowsingData(manifest, dataLoader);
+  await populateManifestViews(manifest, dataLoader);
 
   // an Arc!
   let arc = Arcs.utils.createArc({id: 'demo', urlMap, slotComposer, context: manifest});
@@ -34,7 +38,7 @@ async function create_arc(urlMap, manifestPath, container, dataLoader) {
   return arc;
 };
 
-async function render_arcs(doc, dataLoader) {
+async function renderArcs(doc, dataLoader) {
   
   let template = doc.document.querySelector('template').content;
   doc.document.body.appendChild(doc.document.importNode(template, true));
@@ -47,7 +51,7 @@ async function render_arcs(doc, dataLoader) {
   // we have an additional artifact that we need to load dynamically
   urlMap['worker-entry-cdn.js'] = `${root}/lib/worker-entry-cdn.js`;
 
-  let arc = await create_arc(urlMap, './new-tab.manifest', window['particle-container'],
+  let arc = await _createArc(urlMap, './new-tab.manifest', window['particle-container'],
       dataLoader);
 
   Arcs.utils.suggest(arc, window.document.querySelector('suggestions-element'));
