@@ -58,7 +58,10 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
 
 function updateBadge(tabId, response) {
-  console.log('response', response);
+  
+  // TODO(smalls) - currently, we're using the presence of entities from the
+  // page as a proxy for an interesting arc being available. In the future we
+  // should run the suggestinator for a more comprehensive view.
 
   chrome.browserAction.setBadgeBackgroundColor({
     color: response ? '#aedfff' : [0,0,0,0],
@@ -71,7 +74,7 @@ function updateBadge(tabId, response) {
 }
 
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-  console.log('changeInfo', changeInfo.status);
+  
   if (changeInfo.status && 'complete'==changeInfo.status) {
     chrome.tabs.sendMessage(tabId, {method: "extractEntities"}, response => {
       updateBadge(tabId, response);
@@ -81,17 +84,3 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
     updateBadge(tabId, null);
   }
 });
-
-/*
- * This is another entry point to tab changes, but it's not currently needed -
- * by associating our text with tabs in updateBadge() we remove the need to
- * update state as the user changes tabs.
- *
- * TODO(smalls) - remove me.
- *
-chrome.tabs.onActivated.addListener((activeInfo) => {
-  chrome.tabs.sendMessage(activeInfo.tabId, {method: "extractEntities"}, response => {
-    updateBadge(activeInfo.tabId, response);
-  });
-});
-*/
