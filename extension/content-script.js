@@ -18,9 +18,6 @@ chrome.runtime.onMessage.addListener(
       return;
     }
 
-    // TODO(smalls) - technically, there might be a race in here (in some
-    // browsers?). If the user clicks quickly betteen tabs with the plugin
-    // active they can get out-of-order responses. Maybe?
     extractEntities().then(result => {
       console.log('result of extractEntities', result);
       sendResponse(result);
