@@ -22,8 +22,8 @@ defineParticle(({DomParticle}) => {
 
         let url = raw['url'];
 
-        /* Skip sites that we don't know contain Products, or that include
-         * schema.org markup as we'll have picked those up already. */
+        // Skip sites that we don't know contain Products, or that include
+        // schema.org markup as we'll have picked those up already.
         if (! url.includes('amazon')) {
           continue;
         }
