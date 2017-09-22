@@ -8,7 +8,7 @@
 
 # TODO(smalls) replace these with straight references to https://schema.org/<schema>
 
-import 'https://polymerlabs.github.io/arcs-cdn/v0.0.5/entities/Thing.manifest'
+import 'https://$cdn/entities/Thing.manifest'
 
 schema Answer extends Thing
   optional
