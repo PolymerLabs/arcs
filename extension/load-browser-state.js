@@ -17,7 +17,6 @@ async function populateManifestViews(manifest, dataLoader) {
   }
 
   let entities = await dataLoader();
-  console.log('data from browser', entities);
 
   dumpEntities(views, entities);
 }
