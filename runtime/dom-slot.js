@@ -125,6 +125,10 @@ class DomSlot extends Slot {
     }
     return request;
   }
+  static findRootSlots(context) {
+    let domContext = new DomContext(context);
+    return domContext.findRootSlots(context);
+  }
 }
 
 module.exports = DomSlot;

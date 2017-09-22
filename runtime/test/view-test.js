@@ -17,7 +17,7 @@ const SlotComposer = require('../slot-composer.js');
 let view = require('../view.js');
 let viewlet = require('../viewlet.js');
 
-const slotComposer = new SlotComposer({rootContext: 'test', affordance: 'test'});
+const slotComposer = new SlotComposer({rootContext: 'test', affordance: 'mock'});
 const Bar = runtime.testing.testEntityClass('Bar');
 
 describe('View', function() {

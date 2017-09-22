@@ -22,8 +22,8 @@ if (global.document) {
 let templates = new Map();
 
 class DomContext {
-  constructor() {
-    this._context = null;
+  constructor(context) {
+    this._context = context;
     // TODO(sjmiles): _liveDom needs new name
     this._liveDom = null;
     this._innerContextBySlotName = {};
@@ -110,6 +110,16 @@ class DomContext {
         console.warn(`Slot ${slotSpec.name} has unexpected inner slot ${slotId}`);
       }
     });
+  }
+  findRootSlots(context) {
+    let innerSlotById = {};
+    Array.from(this._context.querySelectorAll("[slotid]")).forEach(s => {
+      assert(this.isDirectInnerSlot(s), 'Unexpected inner slot');
+      let slotId = s.getAttribute('slotid');
+      assert(!innerSlotById[slotId], `Duplicate root slot ${slotId}`);
+      innerSlotById[slotId] = s;
+    });
+    return innerSlotById;
   }
   _eventMapper(eventHandler, node, eventName, handlerName) {
     node.addEventListener(eventName, () => {

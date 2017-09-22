@@ -18,30 +18,43 @@ class SlotComposer {
     assert(options.affordance, "Affordance is mandatory");
     assert(options.rootContext, "Root context is mandatory");
 
-    this.affordance = options.affordance;
-    this.rootContext = options.rootContext;
+    this._affordance = options.affordance;
+    this._slotClass = this.getSlotClass();
+    assert(this._slotClass);
+
+    this._contextById = this._slotClass.findRootSlots(options.rootContext) || {};
+    if (Object.keys(this._contextById).length == 0) {
+      // fallback to single "root" slot using the rootContext.
+      this._contextById["root"] = options.rootContext;
+    }
+
     this._slots = [];
     this._nextSlotId = 0;
   }
-  createNewSlot(affordance, consumeConn, arc) {
-    switch(affordance) {
+  get affordance() { return this._affordance; }
+  getSlotClass() {
+    switch(this._affordance) {
       case "dom":
       case "dom-touch":
       case "vr":
-        return new DomSlot(consumeConn, arc);
+        return DomSlot;
+      case "mock":
+        return Slot;
       default:
-        assert("unsupported affordance ", affordance);
+        assert("unsupported affordance ", this._affordance);
     }
   }
+
   getSlot(particle, slotName) {
     return this._slots.find(s => s.consumeConn.particle == particle && s.consumeConn.name == slotName);
   }
+
   initializeRecipe(recipeParticles) {
     let newSlots = [];
     // Create slots for each of the recipe's particles slot connections.
     recipeParticles.forEach(p => {
       Object.values(p.consumedSlotConnections).forEach(cs => {
-        let slot = this.createNewSlot(this.affordance, cs, this.arc);
+        let slot = new this._slotClass(cs, this.arc);
         slot.startRenderCallback = this.arc.pec.startRender.bind(this.arc.pec);
         slot.stopRenderCallback = this.arc.pec.stopRender.bind(this.arc.pec);
         slot.innerSlotsUpdateCallback = this.updateInnerSlots.bind(this);
@@ -61,9 +74,7 @@ class SlotComposer {
           context = sourceConnSlot.getInnerContext(s.consumeConn.name);
         }
       } else {
-        // TODO: currently any slot that doesn't have a sourceConnection falls back to using the root context.
-        // Instead it should be explicitely determined by the slot matching strategy.
-        context = this.rootContext;
+        context = this._contextById[s.consumeConn.name];
       }
       if (context) {
         s.setContext(context);
@@ -115,10 +126,12 @@ class SlotComposer {
       });
     });
 
-    // Populate default "root" slot, if not available yet.
-    assert(!availableSlots["root"], `Root slot cannot be provided`);
-    availableSlots["root"] = [{id:"r0", count:0, views: [], providedSlotSpec: {isSet: false}}];
-
+    Object.keys(this._contextById).forEach(slotid => {
+      if (!availableSlots[slotid]) {
+        availableSlots[slotid] = [];
+      }
+      availableSlots[slotid].push({id:`rootslotid-${slotid}`, count:0, views: [], providedSlotSpec: {isSet: false}});
+    });
     return availableSlots;
   }
 }
