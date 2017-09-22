@@ -42,7 +42,7 @@ describe('demo flow', function() {
   create as view0 # Product List
   copy 'manifest:browser/demo/recipes.manifest:view0' as view1 # Product List
   map 'manifest:browser/demo/recipes.manifest:view1' #wishlist as view2 # Product List
-  slot 'r0' as slot3
+  slot 'rootslotid-root' as slot3
   ShowProducts as particle0
     list <- view1
     consume root as slot3

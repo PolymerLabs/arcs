@@ -80,6 +80,7 @@ class Slot {
   setContent(content, handler) {}
   getInnerContext(slotName) {}
   constructRenderRequest() {}
+  static findRootSlots(context) { }
 }
 
 module.exports = Slot;

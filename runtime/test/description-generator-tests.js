@@ -20,7 +20,7 @@ var Bar = runtime.testing.testEntityClass('Bar');
 var Far = runtime.testing.testEntityClass('Far');
 
 function testRelevance() {
-  const slotComposer = new SlotComposer({rootContext: 'test', affordance: 'test'});
+  const slotComposer = new SlotComposer({rootContext: 'test', affordance: 'mock'});
   var arc = new Arc({slotComposer, id:'test'});
   var relevance = new Relevance();
   relevance.newArc = arc;

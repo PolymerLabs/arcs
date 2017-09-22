@@ -35,7 +35,7 @@ async function setup() {
     Bar: manifest.findSchemaByName('Bar').entityClass(),
   }
 }
-const slotComposer = new SlotComposer({rootContext: 'test', affordance: 'test'});
+const slotComposer = new SlotComposer({rootContext: 'test', affordance: 'mock'});
 
 describe('Arc', function() {
   it('applies existing views to a particle', async () => {
