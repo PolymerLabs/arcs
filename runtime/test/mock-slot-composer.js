@@ -44,12 +44,12 @@ class MockSlotComposer extends SlotComposer {
     this.onExpectationsComplete = () => undefined;
   }
 
-  createNewSlot(affordance, consumeConn, arc) {
-    switch(affordance) {
+  getSlotClass(affordance) {
+    switch(this.affordance) {
       case "mock":
-        return new MockSlot(consumeConn, arc);
+        return MockSlot;
       default:
-        assert("unsupported affordance ", affordance);
+        assert("unsupported affordance ", this.affordance);
     }
   }
 

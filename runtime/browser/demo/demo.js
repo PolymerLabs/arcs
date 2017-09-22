@@ -44,7 +44,8 @@ let template = Object.assign(document.createElement('template'), {innerHTML: `
 </style>
 
 <div particle-container>
-  <slot></slot>
+  <div slotid="root">
+  </div>
 </div>
 <suggestions-element></suggestions-element>
 
