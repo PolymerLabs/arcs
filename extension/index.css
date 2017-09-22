@@ -14,8 +14,8 @@ body {
   display: flex;
   justify-content: center;
 
-  min-height: 400px;
-  min-width: 200px;
+  min-height: 600px;
+  min-width: 300px;
 }
 demo-frame {
   flex: 1;

@@ -51,7 +51,7 @@ async function renderArcs(doc, dataLoader) {
   // we have an additional artifact that we need to load dynamically
   urlMap['worker-entry-cdn.js'] = `${root}/lib/worker-entry-cdn.js`;
 
-  let arc = await _createArc(urlMap, './new-tab.manifest', window['particle-container'],
+  let arc = await _createArc(urlMap, './arcs-extension.manifest', window['particle-container'],
       dataLoader);
 
   Arcs.utils.suggest(arc, window.document.querySelector('suggestions-element'));

@@ -13,6 +13,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 });
 
 async function extractEntities() {
+
   let microdata = extractMicrodata(document.documentElement);
   let results = [];
   if (microdata.length) {
@@ -33,6 +34,8 @@ async function extractEntities() {
 
 // Extracts entities embedded in microdata from the page.
 // Mostly follows http://schema.org/docs/gs.html
+// TODO(smalls) - also extract <script type="application/ld+json">-style,
+// e.g. DemandWare - https://www.burton.com/us/en/p/mens-slx-snowboard-boot/W18-106201.html?dwvar_W18-106201_variationColor=10620104014&cgid=mens-boots
 function extractMicrodata(root) {
   function entityWalker(root) {
     return document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT, {
