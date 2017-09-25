@@ -27,20 +27,19 @@ http://polymer.github.io/PATENTS.txt
         e.preventDefault();
         explorerVisible = !explorerVisible;
         explorer.style.display = explorerVisible ? 'block' : '';
-        let selectedHash = document.body.querySelector('demo-flow').shadowRoot.querySelector('suggestions-element')._selectedHash;
-        if (selectedHash) {
-          let seRecipes = [].concat.apply([], Array.from(
-            explorer.shadowRoot.querySelector('se-explorer').shadowRoot.querySelectorAll('se-population')).map(se => Array.from(se.shadowRoot.querySelectorAll('se-recipe'))))
-          let seRecipe = seRecipes.find(r => r.shadowRoot.querySelector('#hash').textContent == selectedHash);
-          if (seRecipe) {
-            seRecipe.shadowRoot.querySelector('#recipe-box').click();
-          }
-        }
+        this.selectHash && this.selectHash();
       }
     });
     document.addEventListener('generations', e => {
       explorer.reset();
       setTimeout(() => explorer.results = e.detail.map(pop => explorer.preparePopulation(pop)), 0);
+    });
+    document.addEventListener('plan-hover', e => {
+      this.selectHash = () => {
+        if (e.detail.selected) {
+          document.dispatchEvent(new CustomEvent('select-hash', {detail: e.detail.hash}))
+        }
+      };
     });
   })();
 </script>
