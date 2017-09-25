@@ -70,18 +70,15 @@ class SuggestionsElement extends HTMLElement {
     let suggest = Object.assign(document.createElement("suggest"), model);
     suggest.setAttribute("hash", hash);
     suggest.onmouseover = () => {
-      this.dispatchEvent(new CustomEvent("plan-hover", {detail: {hash, selected: true}}));
+      document.dispatchEvent(new CustomEvent("plan-hover", {detail: {hash, selected: true}}));
     }
     suggest.onmouseout = () => {
-      this.dispatchEvent(new CustomEvent("plan-hover", {detail: {hash, selected: false}}));
+      document.dispatchEvent(new CustomEvent("plan-hover", {detail: {hash, selected: false}}));
     }
     this.container.insertBefore(suggest, this.container.firstElementChild);
   }
 
   add(suggestions) {
-    this.addEventListener('plan-hover', e => {
-      this._selectedHash = e.detail.selected ? e.detail.hash : null;
-    });
     suggestions.forEach((suggestion, i) => this.addSuggestion(suggestion, i));
   }
 
