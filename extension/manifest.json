@@ -5,6 +5,7 @@
   "permissions": [
     "sessions",
     "tabs",
+    "storage",
     "<all_urls>"
   ],
   "background": {
@@ -23,5 +24,5 @@
   "browser_action": {
     "default_popup": "popup.html"
   },
-  "content_security_policy": "script-src 'self' 'sha256-S2/ivOEAwfKTbm96CxzkM6NpRqpIbrs7IH77D5vpojw=' 'sha256-0hTO/Ziu2bbbBB4qbB8OvlmAodfjRkn6ZcPHtQi5F3k='; object-src 'self'"
+  "content_security_policy": "script-src 'self' http://localhost:8080/ 'sha256-9MoalItHiOZbWS3wzc0WQNjNbdE2zDUz5+TGXyHnRzk=' 'sha256-3wfjvQq3xmR22GurO1RW5aXbUGhx26Eq/ezph2P8i4I='; object-src 'self'"
 }
