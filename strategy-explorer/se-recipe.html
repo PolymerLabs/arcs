@@ -173,7 +173,13 @@ http://polymer.github.io/PATENTS.txt
           recipeView.over = this;
           recipeView.recipe = this.recipe;
           recipeView.pin();
-        })
+        });
+        document.addEventListener('select-hash', e => {
+          if (this.shortHash == e.detail) {
+            this.$['recipe-box'].click();
+          }
+        });
+
       }
     });
   </script>
