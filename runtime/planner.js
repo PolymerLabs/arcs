@@ -130,23 +130,20 @@ class Planner {
     // TODO: Run some reasonable number of speculations in parallel.
     let results = [];
     for (let plan of plans) {
-      if (this._matchesActiveRecipe(plan))
+      let hash = ((hash) => { return hash.substring(hash.length - 4)}) (await plan.digest());
+
+      if (this._matchesActiveRecipe(plan)) {
+        this._updateGeneration(generations, hash, (g) => g.active = true);
         continue;
+      }
+
       let relevance = await trace.wait(() => speculator.speculate(this._arc, plan));
       trace.resume();
       let rank = relevance.calcRelevanceScore();
       let description = Description.getSuggestion(plan, this._arc, relevance);
 
-      let hash = ((hash) => { return hash.substring(hash.length - 4)}) (await plan.digest());
-      if (generations) {
-        generations.forEach(g => {
-          g.forEach(gg => {
-            if (gg.hash.endsWith(hash)) {
-              gg.description = description;
-            }
-          });
-        });
-      }
+      this._updateGeneration(generations, hash, (g) => g.description = description);
+
       // TODO: Move this logic inside speculate, so that it can stop the arc
       // before returning.
       relevance.newArc.stop();
@@ -159,6 +156,17 @@ class Planner {
     }
     trace.end();
     return results;
+  }
+  _updateGeneration(generations, hash, handler) {
+    if (generations) {
+      generations.forEach(g => {
+        g.forEach(gg => {
+          if (gg.hash.endsWith(hash)) {
+            handler(gg);
+          }
+        });
+      });
+    }
   }
 }
 

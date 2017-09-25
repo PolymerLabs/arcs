@@ -43,9 +43,9 @@ http://polymer.github.io/PATENTS.txt
     },
     preparePopulation: function(population) {
       population = population.map(recipe => {
-        let { result, score, derivation, description, hash } = recipe;
+        let { result, score, derivation, description, hash, valid, active } = recipe;
         this.parentMap.set(recipe, this.lastID);
-        return { result, score, derivation, description, hash, id: this.lastID++ };
+        return { result, score, derivation, description, hash, valid, active, id: this.lastID++ };
       });
       population.forEach(item => {
         item.derivation = item.derivation.map(derivItem => {
@@ -55,7 +55,6 @@ http://polymer.github.io/PATENTS.txt
             var strategy = derivItem.strategy.constructor.name;
           return { parent, strategy };
         })
-        item.original = undefined;
         item.resolved = item.result.isResolved();
         let options = {showUnresolved: true, showInvalid: false, details: ""};
         item.result = item.result.toString(options);
