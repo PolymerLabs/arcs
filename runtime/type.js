@@ -54,13 +54,12 @@ class Type {
     if (tag == 'entity')
       assert(data.tag == undefined);
     if (tag == 'list') {
-      if (!(data instanceof Type) && data.tag) {
-        this.data = new Type(data.tag, data.data);
-      } else {
-        this.data = data;
+      if (!(data instanceof Type) && data.tag && data.data) {
+        data = new Type(data.tag, data.data);
       }
     }
     this.tag = tag;
+    this.data = data;
   }
 
   // TODO: Replace these static functions with operations on Types directly.
