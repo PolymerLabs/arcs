@@ -16,38 +16,25 @@ http://polymer.github.io/PATENTS.txt
 
   <link rel="stylesheet" href="index.css">
 
-  <!-- Arcs engine -->
-  <script src="resources/arcs-cdn/lib/ArcsLib.js"></script>
-  <script src="resources/arcs-cdn/lib/utils.js"></script>
-
-  <!-- custom elements -->
-  <script src="resources/arcs-cdn/components/x-toast.js"></script>
-  <script src="resources/arcs-cdn/components/suggestions-element.js"></script>
-
-  <!-- tooling -->
-  <!-- TODO(smalls) - this would be great to enable, but currently polymer and
-   the extension security model don't get along. -->
-  <!-- <link rel="import" href="resources/arcs-cdn/components/strategy-explorer.html"> -->
-  
-
   <!-- app-specific configuration -->
   <script src="load-browser-state.js"></script>
+  <script src="comm-to-arcs.js"></script>
+  <!--
   <script src="new-tab.js"></script>
   <script src="init-arcs.js"></script>
+  -->
 </head>
-<body>
+<body style="margin: 0px; padding: 0px; overflow: hidden">
 
-<template>
-  <demo-frame>
-    <div id="particle-container"></div>
-    <suggestions-element></suggestions-element>
-  </demo-frame>
-</template>
+<iframe id="arcs-if" 
+  frameborder="0" style="overflow:hidden;overflow-x:hidden;overflow-y:hidden;height:100%;width:100%;position:absolute;top:0px;left:0px;right:0px;bottom:0px"
+  height="100%" width="100%">
+</iframe>
 
 <script>
   chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
     chrome.tabs.sendMessage(tabs[0].id, {method: "extractEntities"}, response => {
-      renderArcs(window, function() { return response; });
+      populateIframe('http://localhost:8080/dev', document, response);
     });
   });
 </script>
