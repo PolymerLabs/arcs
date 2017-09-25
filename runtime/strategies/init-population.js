@@ -36,6 +36,7 @@ class InitPopulation extends Strategy {
       score: 1 - recipe.particles.filter(particle => particle.spec && this._loadedParticles.has(particle.spec.implFile)).length,
       derivation: [{strategy: this, parent: undefined}],
       hash: recipe.digest(),
+      valid: Object.isFrozen(recipe),
     }));
 
     return {

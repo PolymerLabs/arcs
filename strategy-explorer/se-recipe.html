@@ -22,6 +22,16 @@ http://polymer.github.io/PATENTS.txt
         height: 30px;
       }
 
+      #recipe-box:not([valid]) {
+        border: 1px solid fuchsia;
+        margin: 4px;
+      }
+
+      #recipe-box[active] {
+        margin: 4px;
+        background-color: lightyellow;
+      }
+
       #recipe-box[selected] {
         border: 2px solid green;
         margin: 4px;
@@ -69,6 +79,8 @@ http://polymer.github.io/PATENTS.txt
       }
     </style>
     <div id='recipe-box'
+      valid$='{{recipe.valid}}'
+      active$='{{recipe.active}}'
       selected$='{{selected}}'
       activeParent$='{{activeParent}}'
       activeAncestor$='{{activeAncestor}}'

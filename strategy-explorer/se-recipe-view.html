@@ -33,9 +33,13 @@ http://polymer.github.io/PATENTS.txt
       .unresolved {
         color: fuchsia;
       }
+
+      .description {
+        white-space: normal;
+      }
     </style>
     <template is='dom-if' if='{{shownRecipe}}'>
-      <div class='recipe-box'>{{strategyString}}<div hidden$="[[isDescriptionEmpty(shownRecipe.description)]]">
+      <div class='recipe-box'>{{strategyString}}<div hidden$="[[isDescriptionEmpty(shownRecipe.description)]]" class="description">
           <span inner-h-t-m-l='{{shownRecipe.description}}'></span>
           <hr>
         </div>
