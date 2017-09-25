@@ -7,7 +7,7 @@
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.method == 'extractEntities') {
-    extractEntities(...request.args).then(sendResponse);
+    extractEntities().then(sendResponse);
     return true;
   }
 });

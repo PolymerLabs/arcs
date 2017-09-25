@@ -14,39 +14,23 @@ http://polymer.github.io/PATENTS.txt
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
 
-  <link rel="stylesheet" href="index.css">
-
-  <!-- Arcs engine -->
-  <script src="resources/arcs-cdn/lib/ArcsLib.js"></script>
-  <script src="resources/arcs-cdn/lib/utils.js"></script>
-
-  <!-- custom elements -->
-  <script src="resources/arcs-cdn/components/x-toast.js"></script>
-  <script src="resources/arcs-cdn/components/suggestions-element.js"></script>
-
-  <!-- tooling -->
-  <!-- TODO(smalls) - this would be great to enable, but currently polymer and
-   the extension security model don't get along. -->
-  <!-- <link rel="import" href="resources/arcs-cdn/components/strategy-explorer.html"> -->
-  
-
-  <!-- app-specific configuration -->
+  <!-- app-specific configuration - - >
   <script src="load-browser-state.js"></script>
   <script src="init-arcs.js"></script>
   <script src="new-tab.js"></script>
+  -->
 </head>
 <body>
 
-<template>
-  <demo-frame>
-    <div id="particle-container"></div>
-    <suggestions-element></suggestions-element>
-  </demo-frame>
-</template>
+<iframe id='app-shell-iframe' src="http://localhost:8080/dev/app/index.html">
+</iframe>
 
 <script>
   renderArcs(window, loadEntitiesFromTabs);
+//  document.getElementById('app-shell-iframe').
+
 </script>
+-->
 
 </body>
 </html>
