@@ -50,6 +50,7 @@ class OuterPEC extends PEC {
     this._apiPort.onViewSet = ({view, data}) => view.set(data);
     this._apiPort.onViewStore = ({view, data}) => view.store(data);
     this._apiPort.onViewClear = ({view}) => view.clear();
+    this._apiPort.onViewRemove = ({view, data}) => view.remove(data);
 
     this._apiPort.onIdle = ({version, relevance}) => {
       if (version == this._idleVersion) {
@@ -61,9 +62,8 @@ class OuterPEC extends PEC {
     this._apiPort.onConstructInnerArc = ({callback, particle}) => {
       this._apiPort.ParticleCallback({callback});
     }
-
   }
-  
+
   stop() {
     this._apiPort.Stop();
   }
