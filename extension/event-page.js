@@ -73,9 +73,18 @@ function updateBadge(tabId, response) {
   });
 }
 
+function filterResponse(response) {
+
+  if (!response) return response;
+
+  let ret = response.filter(entity => /^https?:\/\/schema.org\/(Product|Event)$/.test(entity['@type']));
+  return ret;
+}
+
 function updateFirebase(tabId, response) {
 
-  // if (!response || response.length==0) return;
+  if (!response) return;
+  console.log('updating tab '+tabId+' with response', response);
 
   let db;
   if (!firebase.apps.length) {
@@ -90,20 +99,11 @@ function updateFirebase(tabId, response) {
     
     db = firebase.initializeApp(firebaseConfig, 'arcs-storage').database();
   } else {
-    db = firebase.getInstance('arcs-storage');
+    db = firebase.app('arcs-storage');
   }
 
-  let dataRef = db.ref('browser-context/'+getSessionId()+'/'+tabId);
+  let dataRef = db.database().ref('browser-context/'+getSessionId()+'/'+tabId);
   dataRef.set(response);
-}
-
-
-function filterResponse(response) {
-
-  if (!response) return response;
-
-  let ret = response.filter(entity => /^https?:\/\/schema.org\/(Product|Event)$/.test(entity['@type']));
-  return ret;
 }
 
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
@@ -123,3 +123,14 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
     // proactively clearing them).
   }
 });
+
+chrome.runtime.onMessage.addListener(
+  function(request, sender, sendResponse) {
+
+    if (request.method!='postSinglePage') {
+      return;
+    }
+
+    updateFirebase(request.args.tabId, request.args.entities);
+  }
+);
