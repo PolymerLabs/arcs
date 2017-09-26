@@ -25,6 +25,9 @@ function cloneData(data) {
 function restore(entry, entityClass) {
   let {id, rawData} = entry;
   var entity = new entityClass(cloneData(rawData));
+  if (entry.id) {
+    entity.identify(entry.id);
+  }
 
   // TODO some relation magic, somewhere, at some point.
 
@@ -126,6 +129,19 @@ class View extends Viewlet {
     var serialization = this._serialize(entity);
     return this._view.store(serialization);
   }
+
+  /** @method remove(entity)
+   * Removes an entity from the View.
+   * throws: Error if this view is not configured as a writeable view (i.e. 'out' or 'inout')
+     in the particle's manifest.
+   */
+  remove(entity) {
+    if (!this.canWrite)
+      throw new Error("View not writeable");
+    var serialization = this._serialize(entity);
+    return this._view.remove(serialization.id);
+  }
+
   async debugString() {
     var list = await this.toList();
     return list ? ('[' + list.map(p => p.debugString).join(", ") + ']') : 'undefined';
