@@ -182,7 +182,7 @@ class Arc {
     let {views, particles, slots} = recipe.mergeInto(this._activeRecipe);
     for (let recipeView of views) {
       if (['copy', 'create'].includes(recipeView.fate)) {
-        let view = this.createView(recipeView.type);
+        let view = this.createView(recipeView.type, /* name= */ null, /* id= */ null, recipeView.tags);
         if (recipeView._fate === "copy") {
           var copiedView = this.findViewById(recipeView.id);
           view.cloneFrom(copiedView);

@@ -31,9 +31,8 @@ recipe
   Chooser.resultList -> Recommend.known
   Chooser.resultList -> AlsoOn.list
   Chooser.choices -> AlsoOn.choices
-  # TODO: wishlist view should have tag #giftlist - removed for now, until views with tags are properly resolved.
   map #wishlist as wishlist
-  copy as shortlist
+  copy #shortlist as shortlist
   slot as slot0
   Recommend
     population <- wishlist
@@ -58,7 +57,9 @@ recipe
 
 # Check manufacturer information for products.
 recipe
+  use #shortlist as shortlist
   ManufacturerInfo
+    list <- shortlist
 
 # TODO: Check for newer versions, e.g. there is a new version of [product].
 # TODO: [Manufacturer] recommends [product] instead of [product] for 13 year olds.
