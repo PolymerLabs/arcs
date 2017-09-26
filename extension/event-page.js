@@ -73,14 +73,53 @@ function updateBadge(tabId, response) {
   });
 }
 
+function updateFirebase(tabId, response) {
+
+  // if (!response || response.length==0) return;
+
+  let db;
+  if (!firebase.apps.length) {
+    let firebaseConfig = {
+      apiKey: "AIzaSyBme42moeI-2k8WgXh-6YK_wYyjEXo4Oz8",
+      authDomain: "arcs-storage.firebaseapp.com",
+      databaseURL: "https://arcs-storage.firebaseio.com",
+      projectId: "arcs-storage",
+      storageBucket: "arcs-storage.appspot.com",
+      messagingSenderId: "779656349412"
+    };
+    
+    db = firebase.initializeApp(firebaseConfig, 'arcs-storage').database();
+  } else {
+    db = firebase.getInstance('arcs-storage');
+  }
+
+  let dataRef = db.ref('browser-context/'+getSessionId()+'/'+tabId);
+  dataRef.set(response);
+}
+
+
+function filterResponse(response) {
+
+  if (!response) return response;
+
+  let ret = response.filter(entity => /^https?:\/\/schema.org\/(Product|Event)$/.test(entity['@type']));
+  return ret;
+}
+
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
   
   if (changeInfo.status && 'complete'==changeInfo.status) {
     chrome.tabs.sendMessage(tabId, {method: "extractEntities"}, response => {
-      updateBadge(tabId, response);
+      let filteredResponse = filterResponse(response);
+
+      updateFirebase(tabId, filteredResponse);
+      updateBadge(tabId, filteredResponse);
     });
   } else {
     // clear out our flair
     updateBadge(tabId, null);
+
+    // for now, we're letting tabs age out of firebase (rather than
+    // proactively clearing them).
   }
 });
