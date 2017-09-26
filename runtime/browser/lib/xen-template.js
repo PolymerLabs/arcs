@@ -199,7 +199,7 @@ let listen = function(handlers, node, eventName, handlerName) {
   });
 };
 
-let set = function(notes, map, scope) {
+let set = function(notes, map, scope, controller) {
   for (let key in notes) {
     let node = map[key];
     if (node) {
@@ -210,14 +210,14 @@ let set = function(notes, map, scope) {
       for (let name in mustaches) {
         let property = mustaches[name];
         if (property in scope) {
-          _set(node, name, scope[property]);
+          _set(node, name, scope[property], controller);
         }
       }
     }
   }
 };
 
-let _set = function(node, property, value) {
+let _set = function(node, property, value, controller) {
   let modifier = property.slice(-1);
   //console.log('_set: %s, %s, '%s'', node.localName || '(text)', property, value);
   if (property === 'style%' || property === 'style') {
@@ -235,7 +235,7 @@ let _set = function(node, property, value) {
     }
   } else if (property === 'textContent') {
     if (value && (value.$template || value.template)) {
-      _setSubTemplate(node, value);
+      _setSubTemplate(node, value, controller);
     } else {
       node.textContent = (value || '');
     }
@@ -246,7 +246,7 @@ let _set = function(node, property, value) {
   }
 };
 
-let _setSubTemplate = function(node, value) {
+let _setSubTemplate = function(node, value, controller) {
   // TODO(sjmiles): sub-template iteration ability
   // specially implemented to support arcs (serialization boundary)
   // Aim to re-implement as a plugin.
@@ -258,7 +258,7 @@ let _setSubTemplate = function(node, value) {
   node.textContent = '';
   if (template) {
     for (let m of value.models) {
-      stamp(template).set(m).appendTo(node);
+      stamp(template).events(controller).set(m).appendTo(node);
     }
   }
 };
@@ -287,17 +287,18 @@ let stamp = function(template, opts) {
     root: root,
     notes: notes,
     map: map,
-    /*
-    dispatch(handler, e) {
-      // abstract
+    $(slctr) {
+      return this.root.querySelector(slctr);
     },
-    */
     set: function(scope) {
-      set(notes, map, scope);
+      set(notes, map, scope, this.controller);
       return this;
     },
     events: function(controller) {
-      mapEvents(notes, map, listen.bind(null, controller));
+      this.controller = controller;
+      if (controller) {
+        mapEvents(notes, map, controller);
+      }
       return this;
     },
     appendTo: function(node) {
@@ -312,15 +313,9 @@ let stamp = function(template, opts) {
       return this;
     },
     mapEvents: function(mapper) {
-      mapEvents(notes, map, mapper);
-      return this;
+      return this.events(mapper);
     }
   };
-  /*
-  mapEvents(notes, map, (node, event, handler) => {
-    node.addEventListener(event, e => dom.dispatch(handler, e));
-  });
-  */
   return dom;
 };
 
