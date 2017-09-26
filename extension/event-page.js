@@ -102,7 +102,7 @@ function updateFirebase(tabId, response) {
     db = firebase.app('arcs-storage');
   }
 
-  let dataRef = db.database().ref('browser-context/'+getSessionId()+'/'+tabId);
+  let dataRef = db.database().ref('arcs/'+getSessionId()+'/browser-context/'+tabId);
   dataRef.set(response);
 }
 
