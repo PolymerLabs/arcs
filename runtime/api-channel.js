@@ -60,12 +60,12 @@ class ThingMapper {
   }
 
   identifierForThing(thing) {
-    assert(this._reverseIdMap.has(thing));
+    assert(this._reverseIdMap.has(thing), `Missing thing ${thing}`);
     return this._reverseIdMap.get(thing);
   }
 
   thingForIdentifier(id) {
-    assert(this._idMap.has(id));
+    assert(this._idMap.has(id), `Missing id: ${id}`);
     return this._idMap.get(id);
   }
 }
@@ -245,6 +245,7 @@ class PECOuterPort extends APIPort {
     this.registerHandler("ViewToList", {view: this.Mapped, callback: this.Direct});
     this.registerHandler("ViewSet", {view: this.Mapped, data: this.Direct});
     this.registerHandler("ViewStore", {view: this.Mapped, data: this.Direct});
+    this.registerHandler("ViewRemove", {view: this.Mapped, data: this.Direct});
     this.registerHandler("ViewClear", {view: this.Mapped});
     this.registerHandler("Idle", {version: this.Direct, relevance: this.Map(this.Mapped, this.Direct)});
 
@@ -279,6 +280,7 @@ class PECInnerPort extends APIPort {
     this.registerCall("ViewToList", {view: this.Mapped, callback: this.LocalMapped});
     this.registerCall("ViewSet", {view: this.Mapped, data: this.Direct});
     this.registerCall("ViewStore", {view: this.Mapped, data: this.Direct});
+    this.registerCall("ViewRemove", {view: this.Mapped, data: this.Direct});
     this.registerCall("ViewClear", {view: this.Mapped});
     this.registerCall("Idle", {version: this.Direct, relevance: this.Map(this.Mapped, this.Direct)});
 

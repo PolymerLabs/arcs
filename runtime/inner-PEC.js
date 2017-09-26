@@ -59,6 +59,10 @@ class RemoteView {
     this._port.ViewStore({data: entity, view: this});
   }
 
+  remove(entityId) {
+    this._port.ViewRemove({data: entityId, view: this});
+  }
+
   clear() {
     this._port.ViewClear({view: this});
   }

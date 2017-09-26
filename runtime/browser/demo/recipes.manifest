@@ -6,6 +6,7 @@
 # http://polymer.github.io/PATENTS.txt
 
 import '../../../particles/ShowProducts/ShowProducts.manifest'
+import '../../../particles/ManageProducts/ManageProducts.manifest'
 import '../../../particles/Recommend/Recommend.manifest'
 import '../../../particles/Chooser/Chooser.manifest'
 import '../../../particles/AlsoOn/AlsoOn.manifest'
@@ -27,6 +28,7 @@ recipe
 # Create shortlist with [product, ...] and suggest similar products from [person]'s wish list
 recipe
   Chooser.choices -> Recommend.recommendations
+  #Chooser.resultList -> ManageProducts.list
   Chooser.resultList -> ShowProducts.list
   Chooser.resultList -> Recommend.known
   Chooser.resultList -> AlsoOn.list
@@ -38,6 +40,8 @@ recipe
     population <- wishlist
   ShowProducts
     list <- shortlist
+  #ManageProducts
+    #list = shortlist
     consume root as slot0
       provide annotation as slot1
   AlsoOn
