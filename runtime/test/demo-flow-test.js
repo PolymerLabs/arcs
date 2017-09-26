@@ -40,7 +40,7 @@ describe('demo flow', function() {
     // Choose a plan to test with.
     let expectedPlanString = `recipe
   create as view0 # Product List
-  copy 'manifest:browser/demo/recipes.manifest:view0' as view1 # Product List
+  copy 'manifest:browser/demo/recipes.manifest:view0' #shortlist as view1 # Product List
   map 'manifest:browser/demo/recipes.manifest:view1' #wishlist as view2 # Product List
   slot 'r0' as slot3
   ShowProducts as particle0
