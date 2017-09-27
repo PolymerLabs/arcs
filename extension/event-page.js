@@ -113,22 +113,44 @@ function updateArc(tabId, response) {
       fqTypeName = r['@type'];
       shortTypeName = fqTypeName.split('/')[3];
       delete r['@type'];
-      delete r['offers']; // TODO(smalls) - we need more schema in our Things.manifest
 
-      entityClass = m.findSchemaByName(shortTypeName).entityClass();
+      // TODO(smalls) - we need more schema in our Things.manifest
+      delete r['offers']; 
+      delete r['brand'];
+
+      schema = m.findSchemaByName(shortTypeName);
+      if (!schema) {
+        console.log('skipping unknown type '+fqTypeName, r);
+        return;
+      }
+      entityClass = schema.entityClass();
       entity = new entityClass(r);
 
-      // viewType = Arcs.Type.newView([entity], entityClass.type);
       viewType = new Arcs.Type('list', entityClass.type);
 
       viewId = 'Browser/'+tabId+'/'+shortTypeName;
       view = arc.createView(viewType, 'Browser tab '+tabId+' type '+shortTypeName, viewId);
-      // view.set(entity);
 
       // need to push entity
       arc.commit([entity]);
-      console.log(entity);
+
+      console.log('stored entity in view', view, entity);
+
+      /*
+       * TODO(smalls) - either investigate or delete this code.
+       
+      console.log('commit for entity with id '+entity.id+', identified? '+entity.isIdentified(),
+        entity);
+
+      if (!entity.id) {
+        console.log('TODO - entities shouldn\'t be identified and missing an id');
+        return;
+      }
+
+      // This call seems to be optional - entities are getting to firebase,
+      // with an id, based on the code above.
       view.store(entity);
+      */
     });
   }).then(() => {
     ams.sync({key: amKey});
@@ -138,7 +160,8 @@ function updateArc(tabId, response) {
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
   
   if (changeInfo.status && 'complete'==changeInfo.status) {
-    chrome.tabs.sendMessage(tabId, {method: "extractEntities"}, response => {
+    // fire a message to content-script.js
+    chrome.tabs.sendMessage(tabId, {method: 'extractEntities'}, response => {
       let filteredResponse = filterResponse(response);
 
       updateArc(tabId, filteredResponse);
