@@ -9,19 +9,22 @@
 function populateIframe(doc) {
 
   var iframe = doc.getElementById('arcs-if');
-  let cdnRoot = 'http://localhost:5001/arcs-cdn/dev/';
+  let cdnRoot = 'https://polymerlabs.github.io/arcs-cdn/dev/app/';
+  let arcManifest = 'https://seefeldb.github.io/arc-stories/artifacts/Restaurants/recipes.manifest';
   var newPageLink = doc.getElementById('ext-new-page');
 
   chrome.runtime.sendMessage(null, {method: 'getAmKey'}, response => {
-    var url = cdnRoot+"/app/?manifest=arcs-extension.manifest&amkey="+response;
+    var url = cdnRoot+'?manifest='+encodeURIComponent(arcManifest)+'&amkey='+response;
     iframe.src = url;
 
-    newPageLink.onclick = () => {
-      chrome.runtime.sendMessage(null, { method: 'reInitArcs', args: {}});
+    if (newPageLink) {
+      newPageLink.onclick = () => {
+        chrome.runtime.sendMessage(null, { method: 'reInitArcs', args: {}});
 
-      chrome.tabs.create({url: url});
-      window.close();
-      return false;
-    };
+        chrome.tabs.create({url: url});
+        window.close();
+        return false;
+      };
+    }
   });
 }

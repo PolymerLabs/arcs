@@ -23,5 +23,5 @@
   "browser_action": {
     "default_popup": "popup.html"
   },
-  "content_security_policy": "script-src 'self' http://localhost:5001 https://polymerlabs.github.io/ https://www.gstatic.com/ https://*.firebaseio.com/ 'sha256-rdk56h4D+jfInKWMNE+DL5C923/KiX9j3/l0Cdvgj0c=' 'sha256-UhKb6ALfS/wBC46s4Gf/MkECcgTkd8muXg/DEdOKuwY=' 'sha256-HlFI6zGPw4/H41zjJWv31smVozEiB9/uZiw6rlmcbqk='; object-src 'self'"
+  "content_security_policy": "script-src 'self' https://polymerlabs.github.io/ https://www.gstatic.com/ https://*.firebaseio.com/ 'sha256-rdk56h4D+jfInKWMNE+DL5C923/KiX9j3/l0Cdvgj0c=' 'sha256-UhKb6ALfS/wBC46s4Gf/MkECcgTkd8muXg/DEdOKuwY=' 'sha256-4aZh2LlnvT0OTXLQucnX+y1UCeqWacVPi3HhCe5zb8w='; object-src 'self'"
 }
