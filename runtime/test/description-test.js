@@ -69,7 +69,8 @@ recipe
     let foosView = arc.createView(Foo.type.viewOf());
     recipe.normalize();
     assert.isTrue(recipe.isResolved());
-    let ifooView = recipe.viewConnections.find(vc => vc.particle.name == 'A' && vc.name == 'ifoo').view;
+    let ifooViewConn = recipe.viewConnections.find(vc => vc.particle.name == 'A' && vc.name == 'ifoo');
+    let ifooView = ifooViewConn ? ifooViewConn.view : null;
     let ofoosViewConn = recipe.viewConnections.find(vc => vc.particle.name == 'A' && vc.name == 'ofoos');
     let ofoosView = ofoosViewConn ? ofoosViewConn.view : null;
     return {arc, recipe, ifooView, ofoosView, fooView, foosView};
@@ -82,27 +83,27 @@ ${aParticleManifest}
   description \`Read from \${ifoo}\ and populate \${ofoos}\`
 ${recipeManifest}
     `));
-    assert.equal('Read from Foo and populate Foo List', Description.getSuggestion(recipe, arc));
-    assert.equal('Foo', Description.getViewDescription(ifooView, arc));
-    assert.equal('Foo List', Description.getViewDescription(ofoosView, arc));
+    assert.equal('Read from foo and populate foo list.', Description.getSuggestion(recipe, arc));
+    assert.equal('foo', Description.getViewDescription(ifooView, arc));
+    assert.equal('foo list', Description.getViewDescription(ofoosView, arc));
 
     // Add value to singleton view.
     fooView.set({id: 1, rawData: {name: 'foo-name', fooValue: 'the-FOO'}});
-    assert.equal('Read from foo-name and populate Foo List', Description.getSuggestion(recipe, arc));
-    assert.equal('Foo', Description.getViewDescription(ifooView, arc));
-    assert.equal('Foo List', Description.getViewDescription(ofoosView, arc));
+    assert.equal('Read from foo-name and populate foo list.', Description.getSuggestion(recipe, arc));
+    assert.equal('foo', Description.getViewDescription(ifooView, arc));
+    assert.equal('foo list', Description.getViewDescription(ofoosView, arc));
 
     // Add values to set-view
     foosView.store({id: 2, rawData: {name: 'foo-1', fooValue: 'foo-value-1'}});
     foosView.store({id: 3, rawData: {name: 'foo-2', fooValue: 'foo-value-2'}});
-    assert.equal('Read from foo-name and populate Foo List (<b>foo-1</b>, <b>foo-2</b>)',
+    assert.equal('Read from foo-name and populate foo list (<b>foo-1</b>, <b>foo-2</b>).',
                  Description.getSuggestion(recipe, arc));
-    assert.equal('Foo', Description.getViewDescription(ifooView, arc));
-    assert.equal('Foo List', Description.getViewDescription(ofoosView, arc));
+    assert.equal('foo', Description.getViewDescription(ifooView, arc));
+    assert.equal('foo list', Description.getViewDescription(ofoosView, arc));
 
     // Add more values to set-view
     foosView.store({id: 4, rawData: {name: 'foo-name', fooValue: 'foo-3'}});
-    assert.equal('Read from foo-name and populate Foo List (<b>foo-1</b> and <b>2</b> other items)',
+    assert.equal('Read from foo-name and populate foo list (<b>foo-1</b> plus <b>2</b> other items).',
                  Description.getSuggestion(recipe, arc));
   });
 
@@ -115,23 +116,23 @@ ${aParticleManifest}
     ofoos \`my-out-foos\`
 ${recipeManifest}
     `));
-    assert.equal('Read from my-in-foo and populate my-out-foos', Description.getSuggestion(recipe, arc));
+    assert.equal('Read from my-in-foo and populate my-out-foos.', Description.getSuggestion(recipe, arc));
     assert.equal('my-in-foo', Description.getViewDescription(ifooView, arc));
     assert.equal('my-out-foos', Description.getViewDescription(ofoosView, arc));
 
     // Add value to singleton view.
     fooView.set({id: 1, rawData: {name: 'foo-name', fooValue: 'the-FOO'}});
-    assert.equal('Read from my-in-foo (foo-name) and populate my-out-foos', Description.getSuggestion(recipe, arc));
+    assert.equal('Read from my-in-foo (foo-name) and populate my-out-foos.', Description.getSuggestion(recipe, arc));
 
     // Add values to set-view
     foosView.store({id: 2, rawData: {name: 'foo-1', fooValue: 'foo-value-1'}});
     foosView.store({id: 3, rawData: {name: 'foo-2', fooValue: 'foo-value-2'}});
-    assert.equal('Read from my-in-foo (foo-name) and populate my-out-foos (<b>foo-1</b>, <b>foo-2</b>)',
+    assert.equal('Read from my-in-foo (foo-name) and populate my-out-foos (<b>foo-1</b>, <b>foo-2</b>).',
                  Description.getSuggestion(recipe, arc));
 
     // Add more values to set-view
     foosView.store({id: 4, rawData: {name: 'foo-name', fooValue: 'foo-3'}});
-    assert.equal('Read from my-in-foo (foo-name) and populate my-out-foos (<b>foo-1</b> and <b>2</b> other items)',
+    assert.equal('Read from my-in-foo (foo-name) and populate my-out-foos (<b>foo-1</b> plus <b>2</b> other items).',
                  Description.getSuggestion(recipe, arc));
     assert.equal('my-in-foo', Description.getViewDescription(ifooView, arc));
     assert.equal('my-out-foos', Description.getViewDescription(ofoosView, arc));
@@ -146,14 +147,14 @@ ${aParticleManifest}
     ofoos \`The Foos from \${ifoo}\`
 ${recipeManifest}
     `));
-    assert.equal('Read from my-in-foo and populate The Foos from my-in-foo', Description.getSuggestion(recipe, arc));
+    assert.equal('Read from my-in-foo and populate The Foos from my-in-foo.', Description.getSuggestion(recipe, arc));
     assert.equal('my-in-foo', Description.getViewDescription(ifooView, arc));
     assert.equal('The Foos from my-in-foo', Description.getViewDescription(ofoosView, arc));
 
     fooView.set({id: 1, rawData: {name: 'foo-name', fooValue: 'the-FOO'}});
     foosView.store({id: 2, rawData: {name: 'foo-1', fooValue: 'foo-value-1'}});
     foosView.store({id: 3, rawData: {name: 'foo-2', fooValue: 'foo-value-2'}});
-    assert.equal('Read from my-in-foo (foo-name) and populate The Foos from my-in-foo (<b>foo-1</b>, <b>foo-2</b>)',
+    assert.equal('Read from my-in-foo (foo-name) and populate The Foos from my-in-foo (<b>foo-1</b>, <b>foo-2</b>).',
                  Description.getSuggestion(recipe, arc));
     assert.equal('my-in-foo', Description.getViewDescription(ifooView, arc));
     assert.equal('The Foos from my-in-foo', Description.getViewDescription(ofoosView, arc));
@@ -167,17 +168,17 @@ ${aParticleManifest}
     ofoos \`The Foos from \${ifoo}\`
 ${recipeManifest}
     `));
-    assert.equal('Read from Foo and populate The Foos from Foo', Description.getSuggestion(recipe, arc));
-    assert.equal('Foo', Description.getViewDescription(ifooView, arc));
-    assert.equal('The Foos from Foo', Description.getViewDescription(ofoosView, arc));
+    assert.equal('Read from foo and populate The Foos from foo.', Description.getSuggestion(recipe, arc));
+    assert.equal('foo', Description.getViewDescription(ifooView, arc));
+    assert.equal('The Foos from foo', Description.getViewDescription(ofoosView, arc));
 
     fooView.set({id: 1, rawData: {name: 'foo-name', fooValue: 'the-FOO'}});
     foosView.store({id: 2, rawData: {name: 'foo-1', fooValue: 'foo-value-1'}});
     foosView.store({id: 3, rawData: {name: 'foo-2', fooValue: 'foo-value-2'}});
-    assert.equal('Read from foo-name and populate The Foos from foo-name (<b>foo-1</b>, <b>foo-2</b>)',
+    assert.equal('Read from foo-name and populate The Foos from foo-name (<b>foo-1</b>, <b>foo-2</b>).',
                  Description.getSuggestion(recipe, arc));
-    assert.equal('Foo', Description.getViewDescription(ifooView, arc));
-    assert.equal('The Foos from Foo', Description.getViewDescription(ofoosView, arc));
+    assert.equal('foo', Description.getViewDescription(ifooView, arc));
+    assert.equal('The Foos from foo', Description.getViewDescription(ofoosView, arc));
   });
 
   it('one particle and connections descriptions with extras', async () => {
@@ -193,10 +194,10 @@ ${recipeManifest}
     foosView.store({id: 2, rawData: {name: 'foo-1', fooValue: 'foo-value-1'}});
     foosView.store({id: 3, rawData: {name: 'foo-2', fooValue: 'foo-value-2'}});
 
-    assert.equal('Read from [fooValue: the-FOO] (foo-name) and populate [A list of Foo with values: <b>foo-1</b>, <b>foo-2</b>] (<b>foo-1</b>, <b>foo-2</b>)',
+    assert.equal('Read from [fooValue: the-FOO] (foo-name) and populate [A list of foo with values: <b>foo-1</b>, <b>foo-2</b>] (<b>foo-1</b>, <b>foo-2</b>).',
                  Description.getSuggestion(recipe, arc));
     assert.equal('[fooValue: the-FOO]', Description.getViewDescription(ifooView, arc));
-    assert.equal('[A list of Foo with values: <b>foo-1</b>, <b>foo-2</b>]', Description.getViewDescription(ofoosView, arc));
+    assert.equal('[A list of foo with values: <b>foo-1</b>, <b>foo-2</b>]', Description.getViewDescription(ofoosView, arc));
   });
 
   it('connection description from another particle', async() => {
@@ -213,7 +214,7 @@ ${recipeManifest}
     ofoo -> fooView
     `));
 
-    assert.equal('Read from best-new-foo and populate my-foos',
+    assert.equal('Read from best-new-foo and populate my-foos.',
                  Description.getSuggestion(recipe, arc));
     assert.equal('best-new-foo', Description.getViewDescription(ifooView, arc));
     let oBFooView = recipe.viewConnections.find(vc => vc.particle.name == 'B' && vc.name == 'ofoo').view;
@@ -223,7 +224,7 @@ ${recipeManifest}
     fooView.set({id: 1, rawData: {name: 'foo-name', fooValue: 'the-FOO'}});
     foosView.store({id: 2, rawData: {name: 'foo-1', fooValue: 'foo-value-1'}});
     foosView.store({id: 3, rawData: {name: 'foo-2', fooValue: 'foo-value-2'}});
-    assert.equal('Read from best-new-foo (foo-name) and populate my-foos (<b>foo-1</b>, <b>foo-2</b>)',
+    assert.equal('Read from best-new-foo (foo-name) and populate my-foos (<b>foo-1</b>, <b>foo-2</b>).',
                  Description.getSuggestion(recipe, arc));
     assert.equal('best-new-foo', Description.getViewDescription(ifooView, arc));
     assert.equal('best-new-foo', Description.getViewDescription(oBFooView, arc));
@@ -267,7 +268,7 @@ recipe
     `));
     let aFooView = recipe.viewConnections.find(vc => vc.particle.name == 'A' && vc.name == 'ifoo').view;
 
-    assert.equal('Display X1-foo and Create X1::X1-foo and Create X2::X2-foo', Description.getSuggestion(recipe, arc));
+    assert.equal('Display X1-foo, Create X1::X1-foo, and Create X2::X2-foo.', Description.getSuggestion(recipe, arc));
     assert.equal('X1-foo', Description.getViewDescription(aFooView, arc));
 
     // Rank X2 higher than X2
@@ -276,7 +277,7 @@ recipe
     relevance.relevanceMap.set(recipe.particles.find(p => p.name == "A"), [7]);
     relevance.relevanceMap.set(recipe.particles.find(p => p.name == "X1"), [5]);
     relevance.relevanceMap.set(recipe.particles.find(p => p.name == "X2"), [10]);
-    assert.equal('Display X2-foo and Create X2::X2-foo and Create X1::X1-foo', Description.getSuggestion(recipe, arc, relevance));
+    assert.equal('Display X2-foo, Create X2::X2-foo, and Create X1::X1-foo.', Description.getSuggestion(recipe, arc, relevance));
     assert.equal('X2-foo', Description.getViewDescription(aFooView, arc, relevance));
   });
 
@@ -315,7 +316,7 @@ recipe
     fooView.set({id: 1, rawData: {name: 'the-FOO'}});
     let fooView2 = arc.createView(fooView.type);
     fooView2.set({id: 2, rawData: {name: 'another-FOO'}});
-    assert.equal('Do A with b-foo (the-FOO) and Output B to b-foo and Output B to b-foo (another-FOO)',
+    assert.equal('Do A with b-foo (the-FOO), Output B to b-foo, and Output B to b-foo (another-FOO).',
                  Description.getSuggestion(recipe, arc));
     assert.equal('b-foo', Description.getViewDescription(ifooView, arc));
 
@@ -326,7 +327,28 @@ recipe
     relevance.relevanceMap.set(recipe.particles.filter(p => p.name == "B")[0], [1]);
     relevance.relevanceMap.set(recipe.particles.filter(p => p.name == "B")[1], [10]);
 
-    assert.equal('Do A with b-foo (the-FOO) and Output B to b-foo (another-FOO) and Output B to b-foo',
+    assert.equal('Do A with b-foo (the-FOO), Output B to b-foo (another-FOO), and Output B to b-foo.',
                  Description.getSuggestion(recipe, arc, relevance));
+  });
+  it('sanisize description', async() => {
+    let {arc, recipe} = (await prepareRecipeAndArc(`
+${schemaManifest}
+particle A
+  A(out Foo ofoo)
+  consume root
+  description \`Create <new> <\${ofoo}>\`
+    ofoo \`<my-foo>\`
+
+recipe
+  create as fooView   # Foo
+  slot 'r0' as slot0
+  A
+    ofoo -> fooView
+    consume root as slot0
+    `));
+    assert.equal('Create &lt;new> &lt;&lt;my-foo>>.',
+                 Description.getSuggestion(recipe, arc));
+    let view = recipe.viewConnections.find(vc => vc.particle.name == 'A' && vc.name == 'ofoo').view;
+    assert.equal('&lt;my-foo>', Description.getViewDescription(view, arc));
   });
 });
