@@ -17,7 +17,7 @@ async function init() {
   arc = new Arcs.Arc({id: 'browser/'+chrome.runtime.id, context: manifest});
   ams = new ArcMetadataStorage({arc: arc});
   await ams.init().then(values => {
-    amKey = values[0];
+    amKey = values;
     console.log('initialized extension connection with amkey '+amKey, arc);
   });
 }
