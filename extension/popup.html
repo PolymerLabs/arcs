@@ -16,7 +16,6 @@ http://polymer.github.io/PATENTS.txt
 
   <link rel="stylesheet" href="index.css">
 
-  <!-- app-specific configuration -->
   <script src="load-browser-state.js"></script>
   <script src="communicate-to-arcs.js"></script>
 </head>
@@ -31,6 +30,7 @@ http://polymer.github.io/PATENTS.txt
   chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
     chrome.tabs.sendMessage(tabs[0].id, {method: "extractEntities"}, response => {
 
+      console.log('popup.html extracted', response);
       chrome.runtime.sendMessage(null, {
         method: 'postSinglePage',
         args: {

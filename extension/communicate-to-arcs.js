@@ -6,15 +6,12 @@
 // http://polymer.github.io/PATENTS.txt
 
 
-function getSessionId() {
-  // TODO(smalls) - use a user id instead of chrome.runtime.id.
-  return chrome.runtime.id;
-}
-
 function populateIframe(doc) {
 
-  let iframe = doc.getElementById('arcs-if');
-  let cdnRoot = 'https://polymerlabs.github.io/arcs-cdn/dev/';
+  var iframe = doc.getElementById('arcs-if');
+  let cdnRoot = 'http://localhost:5001/arcs-cdn/dev/';
 
-  iframe.src = cdnRoot+"/app/?manifest=arcs-extension.manifest&amkey="+getSessionId();
+  chrome.runtime.sendMessage(null, {method: 'getAmKey'}, response => {
+    iframe.src = cdnRoot+"/app/?manifest=arcs-extension.manifest&amkey="+response;
+  });
 }
