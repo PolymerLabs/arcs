@@ -10,7 +10,7 @@ function populateIframe(doc) {
 
   var iframe = doc.getElementById('arcs-if');
   let cdnRoot = 'https://polymerlabs.github.io/arcs-cdn/dev/app/';
-  let arcManifest = 'https://seefeldb.github.io/arc-stories/artifacts/Restaurants/recipes.manifest';
+  let arcManifest = 'https://seefeldb.github.io/arc-stories/artifacts/Products/recipes.manifest';
   var newPageLink = doc.getElementById('ext-new-page');
 
   chrome.runtime.sendMessage(null, {method: 'getAmKey'}, response => {
