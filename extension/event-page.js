@@ -129,7 +129,8 @@ function updateArc(tabId, response) {
       viewType = new Arcs.Type('list', entityClass.type);
 
       viewId = 'Browser/'+tabId+'/'+shortTypeName;
-      view = arc.createView(viewType, 'Browser tab '+tabId+' type '+shortTypeName, viewId);
+      view = arc.createView(viewType, 'Browser tab '+tabId+' type '+shortTypeName,
+        viewId, ['wishlist']);
 
       // need to push entity
       arc.commit([entity]);
