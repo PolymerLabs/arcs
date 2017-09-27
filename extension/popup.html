@@ -37,7 +37,7 @@ http://polymer.github.io/PATENTS.txt
 
       console.log('popup.html extracted', response);
       chrome.runtime.sendMessage(null, {
-        method: 'newArcOneFullPage',
+        method: 'entitiesFromFullPage',
         args: {
           tabId: tabs[0].id,
           entities: response
