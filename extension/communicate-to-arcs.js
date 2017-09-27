@@ -5,6 +5,9 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
+function _getUrl(cdnRoot, arcManifest, amKey) {
+  return cdnRoot+'?manifest='+encodeURIComponent(arcManifest)+'&amkey='+amKey;
+}
 
 function populateIframe(doc) {
 
@@ -12,19 +15,29 @@ function populateIframe(doc) {
   let cdnRoot = 'https://polymerlabs.github.io/arcs-cdn/dev/app/';
   let arcManifest = 'https://seefeldb.github.io/arc-stories/artifacts/Products/recipes.manifest';
   var newPageLink = doc.getElementById('ext-new-page');
+  var reinitLink = doc.getElementById('ext-reinit');
   var displayAmKey = doc.getElementById('ext-amkey');
 
   chrome.runtime.sendMessage(null, {method: 'getAmKey'}, response => {
-    var url = cdnRoot+'?manifest='+encodeURIComponent(arcManifest)+'&amkey='+response;
+    var url = _getUrl(cdnRoot, arcManifest, response);
     iframe.src = url;
-    chrome.runtime.sendMessage(null, { method: 'reInitArcs', args: {}});
 
     if (newPageLink) {
       newPageLink.onclick = () => {
-
         chrome.tabs.create({url: url});
         window.close();
         return false;
+      };
+    }
+    if (reinitLink) {
+      reinitLink.onclick = () => {
+        chrome.runtime.sendMessage(null, { method: 'reInitArcs', args: {}},
+          response => {
+            if (displayAmKey) {
+              displayAmKey.innerText = 'amkey: '+response;
+            }
+            iframe.src = _getUrl(cdnRoot, arcManifest, response);
+          });
       };
     }
     if (displayAmKey) {
