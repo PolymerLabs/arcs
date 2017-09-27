@@ -14,23 +14,23 @@ http://polymer.github.io/PATENTS.txt
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
 
-  <!-- app-specific configuration - - >
   <script src="load-browser-state.js"></script>
-  <script src="init-arcs.js"></script>
   <script src="new-tab.js"></script>
-  -->
+  <script src="communicate-to-arcs.js"></script>
 </head>
-<body>
+<body style="margin: 0px; padding: 0px; overflow: hidden">
 
-<iframe id='app-shell-iframe' src="http://localhost:8080/dev/app/index.html">
+<iframe id="arcs-if" 
+  frameborder="0" style="overflow:hidden;overflow-x:hidden;overflow-y:hidden;height:100%;width:100%;position:absolute;top:0px;left:0px;right:0px;bottom:0px"
+  height="100%" width="100%">
 </iframe>
 
 <script>
-  renderArcs(window, loadEntitiesFromTabs);
-//  document.getElementById('app-shell-iframe').
+  loadEntitiesFromTabs().then( () => {
+    populateIframe(document);
+  });
 
 </script>
--->
 
 </body>
 </html>
