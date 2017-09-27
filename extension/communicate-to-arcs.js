@@ -10,8 +10,16 @@ function populateIframe(doc) {
 
   var iframe = doc.getElementById('arcs-if');
   let cdnRoot = 'http://localhost:5001/arcs-cdn/dev/';
+  var newPageLink = doc.getElementById('ext-new-page');
 
   chrome.runtime.sendMessage(null, {method: 'getAmKey'}, response => {
-    iframe.src = cdnRoot+"/app/?manifest=arcs-extension.manifest&amkey="+response;
+    var url = cdnRoot+"/app/?manifest=arcs-extension.manifest&amkey="+response;
+    iframe.src = url;
+
+    newPageLink.onclick = () => {
+      chrome.tabs.create({url: url});
+      window.close();
+      return false;
+    };
   });
 }

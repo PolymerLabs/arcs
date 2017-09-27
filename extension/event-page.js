@@ -179,11 +179,16 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
 chrome.runtime.onMessage.addListener(
   function(request, sender, sendResponse) {
 
-    if (request.method!='postSinglePage') {
+    if (request.method!='newArcOneFullPage') {
       return;
     }
 
-    updateArc(request.args.tabId, request.args.entities);
+    init().then(() => {
+      updateArc(request.args.tabId, request.args.entities);
+      sendResponse(amKey);
+    });
+
+    return true;
   }
 );
 
@@ -197,4 +202,3 @@ chrome.runtime.onMessage.addListener(
     sendResponse(amKey);
   }
 );
-

@@ -21,10 +21,15 @@ http://polymer.github.io/PATENTS.txt
 </head>
 <body style="margin: 0px; padding: 0px; overflow: hidden">
 
+<div>
 <iframe id="arcs-if" 
-  frameborder="0" style="overflow:hidden;overflow-x:hidden;overflow-y:hidden;height:100%;width:100%;position:absolute;top:0px;left:0px;right:0px;bottom:0px"
-  height="100%" width="100%">
+  frameborder="0" style="overflow:hidden;overflow-x:hidden;overflow-y:hidden;height:90%;width:100%;position:absolute;top:0px;left:0px;right:0px;bottom:0px"
+  height="90%" width="100%">
 </iframe>
+</div>
+<div style="position:fixed;bottom:0;">
+  <a id="ext-new-page" href="#">fullscreen</a>
+</div>
 
 <script>
   chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
@@ -32,13 +37,14 @@ http://polymer.github.io/PATENTS.txt
 
       console.log('popup.html extracted', response);
       chrome.runtime.sendMessage(null, {
-        method: 'postSinglePage',
+        method: 'newArcOneFullPage',
         args: {
           tabId: tabs[0].id,
           entities: response
         },
+      }, response => {
+        populateIframe(document);
       });
-      populateIframe(document);
     });
   });
 </script>
