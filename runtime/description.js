@@ -22,7 +22,24 @@ function getSuggestion(recipe, arc, relevance) {
   selectedParticles.forEach(particle => {
     results.push(particle.spec.description.toSuggestion(options, particle));
   });
-  return results.join(" and ");
+  return joinSuggestions(recipe, results);
+}
+
+function joinSuggestions(recipe, suggestions) {
+  // Return recipe name by default.
+  let desc = recipe.name;
+  // Maybe combine descriptions into a sentence.
+  let count = suggestions.length;
+  if (count) {
+    // "A."
+    // "A and b."
+    // "A, b, ..., and z." (Oxford comma ftw)
+    let delim = ['', '', ' and ', ', and '][count > 2 ? 3 : count];
+    desc = suggestions.slice(0,-1).join(", ") + delim + suggestions.pop();
+    // "Capitalize, punctuate."
+    desc = desc[0].toUpperCase() + desc.slice(1) + '.';
+  }
+  return desc;
 }
 
 function getViewDescription(view   /* Connection*/, arc, relevance) {
@@ -72,6 +89,7 @@ function _selectViewConnection(view, options) {
 class Description {
   constructor(pattern) {
     this._pattern = pattern || "";
+    this._pattern = this._pattern.replace(/</g, '&lt;')
     this._tokens = [];
     this._initTokens(this._pattern);
   }
@@ -133,7 +151,7 @@ class ValueToken {
     let view = options.findViewById(viewConnection.view.id);
     if (this._useType) {  // view type
       // Use view type (eg "Products list")
-      result.push(viewConnection.type.toString());
+      result.push(viewConnection.type.toString().toLowerCase());
     } else if (this._values) {  // view values
       // Use view values (eg "How to draw book, Hockey stick")
       result.push(this._formatViewValue(view));
@@ -175,7 +193,7 @@ class ValueToken {
         result.push(chosenConnectionSpec.description._tokens.map(token => token.toString(options, chosenConnection.particle)).join(""));
       } else {
         // Add the connection type.
-        result.push(chosenConnection.type.toString());
+        result.push(chosenConnection.type.toString().toLowerCase());
       }
 
       if (options.includeViewValues !== false) {
@@ -209,7 +227,7 @@ class ValueToken {
       if (viewList) {
         if (viewList.length > 2) {
           // TODO: configurable view display format.
-          return `<b>${viewList[0].rawData.name}</b> and <b>${viewList.length-1}</b> other items`;
+          return `<b>${viewList[0].rawData.name}</b> plus <b>${viewList.length-1}</b> other items`;
         }
         return viewList.map(v => `<b>${v.rawData.name}</b>`).join(", ");
       }
