@@ -199,7 +199,12 @@ chrome.runtime.onMessage.addListener(
       return;
     }
 
-    init();
+    init().then(() => {
+      updateArc(request.args.tabId, request.args.entities);
+      sendResponse(amKey);
+    });
+
+    return true;
   }
 );
 
