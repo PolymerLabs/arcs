@@ -18,6 +18,7 @@ class SlotComposer {
     assert(options.affordance, "Affordance is mandatory");
     assert(options.rootContext, "Root context is mandatory");
 
+    this._containerKind = options.containerKind;
     this._affordance = options.affordance;
     this._slotClass = this.getSlotClass();
     assert(this._slotClass);
@@ -54,7 +55,7 @@ class SlotComposer {
     // Create slots for each of the recipe's particles slot connections.
     recipeParticles.forEach(p => {
       Object.values(p.consumedSlotConnections).forEach(cs => {
-        let slot = new this._slotClass(cs, this.arc);
+        let slot = new this._slotClass(cs, this.arc, this._containerKind);
         slot.startRenderCallback = this.arc.pec.startRender.bind(this.arc.pec);
         slot.stopRenderCallback = this.arc.pec.stopRender.bind(this.arc.pec);
         slot.innerSlotsUpdateCallback = this.updateInnerSlots.bind(this);
@@ -106,7 +107,6 @@ class SlotComposer {
   }
 
   getAvailableSlots() {
-    let targetSlots = new Set();
     let availableSlots = {};
     this._slots.forEach(slot => {
       assert(slot.consumeConn.targetSlot);
