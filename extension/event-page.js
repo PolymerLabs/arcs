@@ -130,7 +130,7 @@ function updateArc(tabId, response) {
 
       viewId = 'Browser/'+tabId+'/'+shortTypeName;
       view = arc.createView(viewType, 'Browser tab '+tabId+' type '+shortTypeName,
-        viewId, ['wishlist']);
+        viewId, ['shortlist']);
 
       // need to push entity
       arc.commit([entity]);
