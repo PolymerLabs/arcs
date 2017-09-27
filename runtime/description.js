@@ -167,7 +167,7 @@ class ValueToken {
           }
         });
         if (value) {
-          result.push(value);
+          result.push(`<b>${value}</b>`);
         }
       }
     } else {  // view description
@@ -234,7 +234,7 @@ class ValueToken {
     } else {
       let viewVar = view.get();
       if (viewVar) {
-        return viewVar.rawData.name;  // TODO: use type's Entity instead
+        return `<b>${viewVar.rawData.name}</b>`;  // TODO: use type's Entity instead
       }
     }
   }
