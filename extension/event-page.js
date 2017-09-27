@@ -11,8 +11,8 @@ let amKey;
 let manifest;
 async function init() {
   manifest = Arcs.Manifest.parse(`
-    import 'http://localhost:5001/arcs-cdn/dev/entities/Thing.manifest'
-    import 'http://localhost:5001/arcs-cdn/dev/entities/Product.manifest'`,
+    import 'https://polymerlabs.github.io/arcs-cdn/dev/entities/Thing.manifest'
+    import 'https://polymerlabs.github.io/arcs-cdn/dev/entities/Product.manifest'`,
     {fileName: 'inline',  path: 'inline', loader: new Arcs.BrowserLoader(chrome.runtime.getURL('/'))});
   arc = new Arcs.Arc({id: 'browser/'+chrome.runtime.id, context: manifest});
   ams = new ArcMetadataStorage({arc: arc});
