@@ -5,6 +5,25 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
+let arc;
+let ams;
+let amKey;
+let manifest;
+async function init() {
+  manifest = Arcs.Manifest.parse(`
+    import 'http://localhost:5001/arcs-cdn/dev/entities/Thing.manifest'
+    import 'http://localhost:5001/arcs-cdn/dev/entities/Product.manifest'`,
+    {fileName: 'inline',  path: 'inline', loader: new Arcs.BrowserLoader(chrome.runtime.getURL('/'))});
+  arc = new Arcs.Arc({id: 'browser/'+chrome.runtime.id, context: manifest});
+  ams = new ArcMetadataStorage({arc: arc});
+  await ams.init().then(values => {
+    amKey = values[0];
+    console.log('initialized extension connection with amkey '+amKey, arc);
+  });
+}
+
+init();
+
 async function localExtractEntities(tab) {
   return new Promise((resolve, reject) => {
     chrome.tabs.executeScript(tab.id, {file: 'page-extractor.js'}, result => {
@@ -81,29 +100,39 @@ function filterResponse(response) {
   return ret;
 }
 
-function updateFirebase(tabId, response) {
+function updateArc(tabId, response) {
 
   if (!response) return;
   console.log('updating tab '+tabId+' with response', response);
 
-  let db;
-  if (!firebase.apps.length) {
-    let firebaseConfig = {
-      apiKey: "AIzaSyBme42moeI-2k8WgXh-6YK_wYyjEXo4Oz8",
-      authDomain: "arcs-storage.firebaseapp.com",
-      databaseURL: "https://arcs-storage.firebaseio.com",
-      projectId: "arcs-storage",
-      storageBucket: "arcs-storage.appspot.com",
-      messagingSenderId: "779656349412"
-    };
-    
-    db = firebase.initializeApp(firebaseConfig, 'arcs-storage').database();
-  } else {
-    db = firebase.app('arcs-storage');
-  }
+  let entities = {};
 
-  let dataRef = db.database().ref('arcs/'+getSessionId()+'/browser-context/'+tabId);
-  dataRef.set(response);
+
+  manifest.then(m => {
+    response.forEach(r => {
+      fqTypeName = r['@type'];
+      shortTypeName = fqTypeName.split('/')[3];
+      delete r['@type'];
+      delete r['offers']; // TODO(smalls) - we need more schema in our Things.manifest
+
+      entityClass = m.findSchemaByName(shortTypeName).entityClass();
+      entity = new entityClass(r);
+
+      // viewType = Arcs.Type.newView([entity], entityClass.type);
+      viewType = new Arcs.Type('list', entityClass.type);
+
+      viewId = 'Browser/'+tabId+'/'+shortTypeName;
+      view = arc.createView(viewType, 'Browser tab '+tabId+' type '+shortTypeName, viewId);
+      // view.set(entity);
+
+      // need to push entity
+      arc.commit([entity]);
+      console.log(entity);
+      view.store(entity);
+    });
+  }).then(() => {
+    ams.sync({key: amKey});
+  });
 }
 
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
@@ -112,7 +141,7 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
     chrome.tabs.sendMessage(tabId, {method: "extractEntities"}, response => {
       let filteredResponse = filterResponse(response);
 
-      updateFirebase(tabId, filteredResponse);
+      updateArc(tabId, filteredResponse);
       updateBadge(tabId, filteredResponse);
     });
   } else {
@@ -131,6 +160,18 @@ chrome.runtime.onMessage.addListener(
       return;
     }
 
-    updateFirebase(request.args.tabId, request.args.entities);
+    updateArc(request.args.tabId, request.args.entities);
   }
 );
+
+chrome.runtime.onMessage.addListener(
+  function (request, sender, sendResponse) {
+
+    if (request.method!='getAmKey') {
+      return;
+    }
+
+    sendResponse(amKey);
+  }
+);
+

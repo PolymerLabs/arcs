@@ -5,12 +5,11 @@
   "permissions": [
     "sessions",
     "tabs",
-    "storage",
     "<all_urls>"
   ],
   "background": {
     "page": "event-page.html",
-    "persistent": false
+    "persistent": true
   },
   "content_scripts": [
     {
@@ -24,5 +23,5 @@
   "browser_action": {
     "default_popup": "popup.html"
   },
-  "content_security_policy": "script-src 'self' http://localhost:8080/ https://www.gstatic.com/ https://*.firebaseio.com/ 'sha256-9MoalItHiOZbWS3wzc0WQNjNbdE2zDUz5+TGXyHnRzk=' 'sha256-xIedREMP42DNPlmq2yLtPJZmjr9gc1G4l5A+r1cOlmQ='; object-src 'self'"
+  "content_security_policy": "script-src 'self' http://localhost:5001 https://polymerlabs.github.io/ https://www.gstatic.com/ https://*.firebaseio.com/ 'sha256-rdk56h4D+jfInKWMNE+DL5C923/KiX9j3/l0Cdvgj0c=' 'sha256-+9vMdnFzJsizfYYbzPf2BQIYBH0k365DvREVPaTg5xo=' 'sha256-HlFI6zGPw4/H41zjJWv31smVozEiB9/uZiw6rlmcbqk='; object-src 'self'"
 }
