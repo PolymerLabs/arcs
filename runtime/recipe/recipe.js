@@ -265,6 +265,11 @@ class Recipe {
     this._views = views;
     this._slots = slots;
     this._connectionConstraints.sort(util.compareComparables);
+
+    Object.freeze(this._particles);
+    Object.freeze(this._views);
+    Object.freeze(this._slots);
+    Object.freeze(this._connectionConstraints);
     Object.freeze(this);
 
     return true;
