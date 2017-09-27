@@ -17,6 +17,8 @@ function populateIframe(doc) {
     iframe.src = url;
 
     newPageLink.onclick = () => {
+      chrome.runtime.sendMessage(null, { method: 'reInitArcs', args: {}});
+
       chrome.tabs.create({url: url});
       window.close();
       return false;
