@@ -98,8 +98,7 @@ class Manifest {
   }
   findViewsByType(type, options) {
     var tags = options && options.tags ? options.tags : [];
-    var viewTags = this._viewTags;
-    return [...this._findAll(manifest => manifest._views.filter(view => view.type.equals(type) && tags.filter(tag => !viewTags.get(view).includes(tag)).length == 0))];
+    return [...this._findAll(manifest => manifest._views.filter(view => view.type.equals(type) && tags.filter(tag => !manifest._viewTags.get(view).includes(tag)).length == 0))];
   }
   generateID() {
     return `${this.id}:${this._nextLocalID++}`;
