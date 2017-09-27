@@ -59,7 +59,7 @@ class DescriptionGenerator {
         let description = particle.spec.description ? particle.spec.description[connection.name] : undefined;
         if (!description) {
           if (view.id) {
-            description = this.relevance.newArc.findViewById(view.id).description
+            description = this.relevance.newArc.findViewById(view.id).description;
           }
         }
         // should verify same particle doesn't push twice?
@@ -95,8 +95,20 @@ class DescriptionGenerator {
         }
       }
     });
-
-    return selectedDescriptions.length > 0 ? selectedDescriptions.join(" and ") : this.recipe.name;
+    // Return recipe name by default.
+    let desc = this.recipe.name;
+    // Maybe combine descriptions into a sentence.
+    let count = selectedDescriptions.length;
+    if (count) {
+      // "A."
+      // "A and b."
+      // "A, b, ..., and z." (Oxford comma ftw)
+      let delim = ['', '', ' and ', ', and '][count > 2 ? 3 : count];
+      desc = selectedDescriptions.slice(0,-1).join(", ") + delim + selectedDescriptions.pop();
+      // "Capitalize, punctuate."
+      desc = desc[0].toUpperCase() + desc.slice(1) + '.';
+    }
+    return desc;
   }
   _sortParticles(p1, p2) {
     // Root slot comes first.
@@ -151,11 +163,11 @@ class DescriptionGenerator {
       // description pattern for the view,
       resultDescription = connection.view.description;
     } else if (selectedParticleViewDescription) {
-      resultDescription = this._resolveTokens(selectedParticleViewDescription.description,
+      resultDescription = this._resolveTokens(selectedParticleViewDescription.description.toLowerCase(),
                                               selectedParticleViewDescription.recipeParticle);
     } else {
       if (viewDescription && (viewDescription.type.isView || !viewDescription.value)) {
-        resultDescription = viewDescription.type.toString();
+        resultDescription = viewDescription.type.toString().toLowerCase();
         if (viewDescription.create) {
           resultDescription = 'new ' + resultDescription;
         }
@@ -182,7 +194,6 @@ class DescriptionGenerator {
         if (localDescription.description)
           return localDescription;
       }
-
       let outDescriptions = viewDescription.descriptions.reduce((prev, curr) => {
         if (curr.direction == "out") {
           prev.push(curr);
@@ -219,7 +230,7 @@ class DescriptionGenerator {
       let viewList = view.toList();
       if (viewList) {
         if (viewList.length > 2) {
-          return `<b>${viewList[0].rawData.name}</b> and <b>${viewList.length-1}</b> other items`;
+          return `<b>${viewList[0].rawData.name}</b> plus <b>${viewList.length-1}</b> other items`;
         }
         return viewList.map(v => v.rawData.name).join(", ");
       }
