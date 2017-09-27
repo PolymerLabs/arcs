@@ -17,10 +17,10 @@ function populateIframe(doc) {
   chrome.runtime.sendMessage(null, {method: 'getAmKey'}, response => {
     var url = cdnRoot+'?manifest='+encodeURIComponent(arcManifest)+'&amkey='+response;
     iframe.src = url;
+    chrome.runtime.sendMessage(null, { method: 'reInitArcs', args: {}});
 
     if (newPageLink) {
       newPageLink.onclick = () => {
-        chrome.runtime.sendMessage(null, { method: 'reInitArcs', args: {}});
 
         chrome.tabs.create({url: url});
         window.close();
