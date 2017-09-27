@@ -117,6 +117,7 @@ function updateArc(tabId, response) {
       // TODO(smalls) - we need more schema in our Things.manifest
       delete r['offers']; 
       delete r['brand'];
+      r['shipDate'] = 5;
 
       schema = m.findSchemaByName(shortTypeName);
       if (!schema) {
