@@ -70,9 +70,9 @@ describe('demo flow', function() {
     let {plan} = plans.find(p => p.plan.toString() == expectedPlanString);
     assert(plan);
 
-    assert.equal("Show Products from your browsing context (<b>Minecraft Book</b> and <b>2</b> other items) and " +
+    assert.equal("Show Products from your browsing context (<b>Minecraft Book</b> plus <b>2</b> other items) and " +
                  "Choose from Products recommended based on Products from your browsing context and " +
-                 "Claire\'s wishlist (<b>Book: How to Draw</b> and <b>2</b> other items)",
+                 "Claire\'s wishlist (<b>Book: How to Draw</b> plus <b>2</b> other items).",
                  Description.getSuggestion(plan, arc));
 
     slotComposer
