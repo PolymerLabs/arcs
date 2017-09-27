@@ -12,6 +12,7 @@ function populateIframe(doc) {
   let cdnRoot = 'https://polymerlabs.github.io/arcs-cdn/dev/app/';
   let arcManifest = 'https://seefeldb.github.io/arc-stories/artifacts/Products/recipes.manifest';
   var newPageLink = doc.getElementById('ext-new-page');
+  var displayAmKey = doc.getElementById('ext-amkey');
 
   chrome.runtime.sendMessage(null, {method: 'getAmKey'}, response => {
     var url = cdnRoot+'?manifest='+encodeURIComponent(arcManifest)+'&amkey='+response;
@@ -25,6 +26,9 @@ function populateIframe(doc) {
         window.close();
         return false;
       };
+    }
+    if (displayAmKey) {
+      displayAmKey.innerText = 'amkey: '+response;
     }
   });
 }
