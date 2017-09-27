@@ -89,21 +89,21 @@ ${recipeManifest}
 
     // Add value to singleton view.
     fooView.set({id: 1, rawData: {name: 'foo-name', fooValue: 'the-FOO'}});
-    assert.equal('Read from foo-name and populate foo list.', Description.getSuggestion(recipe, arc));
+    assert.equal('Read from <b>foo-name</b> and populate foo list.', Description.getSuggestion(recipe, arc));
     assert.equal('foo', Description.getViewDescription(ifooView, arc));
     assert.equal('foo list', Description.getViewDescription(ofoosView, arc));
 
     // Add values to set-view
     foosView.store({id: 2, rawData: {name: 'foo-1', fooValue: 'foo-value-1'}});
     foosView.store({id: 3, rawData: {name: 'foo-2', fooValue: 'foo-value-2'}});
-    assert.equal('Read from foo-name and populate foo list (<b>foo-1</b>, <b>foo-2</b>).',
+    assert.equal('Read from <b>foo-name</b> and populate foo list (<b>foo-1</b>, <b>foo-2</b>).',
                  Description.getSuggestion(recipe, arc));
     assert.equal('foo', Description.getViewDescription(ifooView, arc));
     assert.equal('foo list', Description.getViewDescription(ofoosView, arc));
 
     // Add more values to set-view
     foosView.store({id: 4, rawData: {name: 'foo-name', fooValue: 'foo-3'}});
-    assert.equal('Read from foo-name and populate foo list (<b>foo-1</b> plus <b>2</b> other items).',
+    assert.equal('Read from <b>foo-name</b> and populate foo list (<b>foo-1</b> plus <b>2</b> other items).',
                  Description.getSuggestion(recipe, arc));
   });
 
@@ -122,17 +122,17 @@ ${recipeManifest}
 
     // Add value to singleton view.
     fooView.set({id: 1, rawData: {name: 'foo-name', fooValue: 'the-FOO'}});
-    assert.equal('Read from my-in-foo (foo-name) and populate my-out-foos.', Description.getSuggestion(recipe, arc));
+    assert.equal('Read from my-in-foo (<b>foo-name</b>) and populate my-out-foos.', Description.getSuggestion(recipe, arc));
 
     // Add values to set-view
     foosView.store({id: 2, rawData: {name: 'foo-1', fooValue: 'foo-value-1'}});
     foosView.store({id: 3, rawData: {name: 'foo-2', fooValue: 'foo-value-2'}});
-    assert.equal('Read from my-in-foo (foo-name) and populate my-out-foos (<b>foo-1</b>, <b>foo-2</b>).',
+    assert.equal('Read from my-in-foo (<b>foo-name</b>) and populate my-out-foos (<b>foo-1</b>, <b>foo-2</b>).',
                  Description.getSuggestion(recipe, arc));
 
     // Add more values to set-view
     foosView.store({id: 4, rawData: {name: 'foo-name', fooValue: 'foo-3'}});
-    assert.equal('Read from my-in-foo (foo-name) and populate my-out-foos (<b>foo-1</b> plus <b>2</b> other items).',
+    assert.equal('Read from my-in-foo (<b>foo-name</b>) and populate my-out-foos (<b>foo-1</b> plus <b>2</b> other items).',
                  Description.getSuggestion(recipe, arc));
     assert.equal('my-in-foo', Description.getViewDescription(ifooView, arc));
     assert.equal('my-out-foos', Description.getViewDescription(ofoosView, arc));
@@ -154,7 +154,7 @@ ${recipeManifest}
     fooView.set({id: 1, rawData: {name: 'foo-name', fooValue: 'the-FOO'}});
     foosView.store({id: 2, rawData: {name: 'foo-1', fooValue: 'foo-value-1'}});
     foosView.store({id: 3, rawData: {name: 'foo-2', fooValue: 'foo-value-2'}});
-    assert.equal('Read from my-in-foo (foo-name) and populate The Foos from my-in-foo (<b>foo-1</b>, <b>foo-2</b>).',
+    assert.equal('Read from my-in-foo (<b>foo-name</b>) and populate The Foos from my-in-foo (<b>foo-1</b>, <b>foo-2</b>).',
                  Description.getSuggestion(recipe, arc));
     assert.equal('my-in-foo', Description.getViewDescription(ifooView, arc));
     assert.equal('The Foos from my-in-foo', Description.getViewDescription(ofoosView, arc));
@@ -175,7 +175,7 @@ ${recipeManifest}
     fooView.set({id: 1, rawData: {name: 'foo-name', fooValue: 'the-FOO'}});
     foosView.store({id: 2, rawData: {name: 'foo-1', fooValue: 'foo-value-1'}});
     foosView.store({id: 3, rawData: {name: 'foo-2', fooValue: 'foo-value-2'}});
-    assert.equal('Read from foo-name and populate The Foos from foo-name (<b>foo-1</b>, <b>foo-2</b>).',
+    assert.equal('Read from <b>foo-name</b> and populate The Foos from <b>foo-name</b> (<b>foo-1</b>, <b>foo-2</b>).',
                  Description.getSuggestion(recipe, arc));
     assert.equal('foo', Description.getViewDescription(ifooView, arc));
     assert.equal('The Foos from foo', Description.getViewDescription(ofoosView, arc));
@@ -194,9 +194,9 @@ ${recipeManifest}
     foosView.store({id: 2, rawData: {name: 'foo-1', fooValue: 'foo-value-1'}});
     foosView.store({id: 3, rawData: {name: 'foo-2', fooValue: 'foo-value-2'}});
 
-    assert.equal('Read from [fooValue: the-FOO] (foo-name) and populate [A list of foo with values: <b>foo-1</b>, <b>foo-2</b>] (<b>foo-1</b>, <b>foo-2</b>).',
+    assert.equal('Read from [fooValue: <b>the-FOO</b>] (<b>foo-name</b>) and populate [A list of foo with values: <b>foo-1</b>, <b>foo-2</b>] (<b>foo-1</b>, <b>foo-2</b>).',
                  Description.getSuggestion(recipe, arc));
-    assert.equal('[fooValue: the-FOO]', Description.getViewDescription(ifooView, arc));
+    assert.equal('[fooValue: <b>the-FOO</b>]', Description.getViewDescription(ifooView, arc));
     assert.equal('[A list of foo with values: <b>foo-1</b>, <b>foo-2</b>]', Description.getViewDescription(ofoosView, arc));
   });
 
@@ -224,7 +224,7 @@ ${recipeManifest}
     fooView.set({id: 1, rawData: {name: 'foo-name', fooValue: 'the-FOO'}});
     foosView.store({id: 2, rawData: {name: 'foo-1', fooValue: 'foo-value-1'}});
     foosView.store({id: 3, rawData: {name: 'foo-2', fooValue: 'foo-value-2'}});
-    assert.equal('Read from best-new-foo (foo-name) and populate my-foos (<b>foo-1</b>, <b>foo-2</b>).',
+    assert.equal('Read from best-new-foo (<b>foo-name</b>) and populate my-foos (<b>foo-1</b>, <b>foo-2</b>).',
                  Description.getSuggestion(recipe, arc));
     assert.equal('best-new-foo', Description.getViewDescription(ifooView, arc));
     assert.equal('best-new-foo', Description.getViewDescription(oBFooView, arc));
@@ -316,7 +316,7 @@ recipe
     fooView.set({id: 1, rawData: {name: 'the-FOO'}});
     let fooView2 = arc.createView(fooView.type);
     fooView2.set({id: 2, rawData: {name: 'another-FOO'}});
-    assert.equal('Do A with b-foo (the-FOO), Output B to b-foo, and Output B to b-foo (another-FOO).',
+    assert.equal('Do A with b-foo (<b>the-FOO</b>), Output B to b-foo, and Output B to b-foo (<b>another-FOO</b>).',
                  Description.getSuggestion(recipe, arc));
     assert.equal('b-foo', Description.getViewDescription(ifooView, arc));
 
@@ -327,7 +327,7 @@ recipe
     relevance.relevanceMap.set(recipe.particles.filter(p => p.name == "B")[0], [1]);
     relevance.relevanceMap.set(recipe.particles.filter(p => p.name == "B")[1], [10]);
 
-    assert.equal('Do A with b-foo (the-FOO), Output B to b-foo (another-FOO), and Output B to b-foo.',
+    assert.equal('Do A with b-foo (<b>the-FOO</b>), Output B to b-foo (<b>another-FOO</b>), and Output B to b-foo.',
                  Description.getSuggestion(recipe, arc, relevance));
   });
   it('sanisize description', async() => {
