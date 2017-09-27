@@ -16,12 +16,12 @@ const {DomContext, SetDomContext} = require('./dom-context.js');
 let templates = new Map();
 
 class DomSlot extends Slot {
-  constructor(consumeConn, arc) {
+  constructor(consumeConn, arc, containerKind) {
     super(consumeConn, arc);
     this._templateName = `${this.consumeConn.particle.name}::${this.consumeConn.name}`;
     this._model = null;
-
     this._observer = this._initMutationObserver();
+    this._containerKind = containerKind;
   }
 
   get context() { return super.context;  }
@@ -45,7 +45,8 @@ class DomSlot extends Slot {
     }
   }
   _createDomContext() {
-    return this.consumeConn.slotSpec.isSet ? new SetDomContext() : new DomContext();
+    let type = this.consumeConn.slotSpec.isSet ? SetDomContext : DomContext;
+    return new (type)(null, this._containerKind);
   }
   _initMutationObserver() {
     return new MutationObserver(() => {
@@ -126,8 +127,7 @@ class DomSlot extends Slot {
     return request;
   }
   static findRootSlots(context) {
-    let domContext = new DomContext(context);
-    return domContext.findRootSlots(context);
+    return new DomContext(context, this._containerKind).findRootSlots(context);
   }
 }
 

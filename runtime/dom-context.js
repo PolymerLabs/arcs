@@ -19,11 +19,10 @@ if (global.document) {
   require('./browser/lib/model-select.js');
 }
 
-let templates = new Map();
-
 class DomContext {
-  constructor(context) {
+  constructor(context, containerKind) {
     this._context = context;
+    this._containerKind = containerKind;
     // TODO(sjmiles): _liveDom needs new name
     this._liveDom = null;
     this._innerContextBySlotName = {};
@@ -31,7 +30,7 @@ class DomContext {
   initContext(context) {
     assert(context);
     if (!this._context) {
-      this._context = document.createElement('div');
+      this._context = document.createElement(this._containerKind || 'div');
       context.appendChild(this._context);
     } else {
       assert(this._context.parentNode == context,
@@ -111,7 +110,7 @@ class DomContext {
       }
     });
   }
-  findRootSlots(context) {
+  findRootSlots() {
     let innerSlotById = {};
     Array.from(this._context.querySelectorAll("[slotid]")).forEach(s => {
       assert(this.isDirectInnerSlot(s), 'Unexpected inner slot');
@@ -135,13 +134,14 @@ class DomContext {
 }
 
 class SetDomContext {
-  constructor() {
+  constructor(containerKind) {
     this._contextBySubId = {};
+    this._containerKind = containerKind;
   }
   initContext(context) {
     Object.keys(context).forEach(subId => {
       if (!this._contextBySubId[subId] || !this._contextBySubId[subId].isEqual(context[subId])) {
-        this._contextBySubId[subId] = new DomContext();
+        this._contextBySubId[subId] = new DomContext(this._containerKind);
       }
       this._contextBySubId[subId].initContext(context[subId]);
     });
