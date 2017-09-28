@@ -32,4 +32,4 @@ To restrict what's sent to firebase, only entities of
 [Product](https://schema.org/Product) and [Event](https://schema.org/Event)
 are synced to the global storage.
 
-The extension automatically tags [Product] with #wishlist.
+The extension automatically tags [Product] with #shortlist.
