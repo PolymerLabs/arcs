@@ -15,6 +15,7 @@ const ParticleSpec = require('./particle-spec.js');
 const Schema = require('./schema.js');
 const Search = require('./recipe/search.js');
 const {View, Variable} = require('./view.js');
+const util = require('./recipe/util.js');
 
 class Manifest {
   constructor() {
@@ -423,6 +424,7 @@ ${e.message}
     type = type.resolveSchemas(resolveSchema);
 
     let view = manifest.newView(type, name, id, tags);
+    view.source = item.source;
     view.description = item.description;
     // TODO: How to set the version?
     // view.version = item.version;
@@ -451,6 +453,34 @@ ${e.message}
     let recipe = new Recipe();
     this._recipes.push(recipe);
     return recipe;
+  }
+
+  toString(options) {
+    // TODO: sort?
+    let results = []
+
+    this._imports.forEach(i => {
+      results.push(`import '${i.fileName}'`);
+    });
+
+    Object.values(this._schemas).forEach(s => {
+      results.push(s.toString());
+    });
+
+    Object.values(this._particles).forEach(p => {
+      results.push(p.toString());
+    });
+
+    this._recipes.forEach(r => {
+      results.push(r.toString(options));
+    });
+
+    let views = [...this.views].sort(util.compareComparables);
+    views.forEach(v => {
+      results.push(v.toString(this._viewTags.get(v)));
+    });
+
+    return results.join('\n');
   }
 }
 

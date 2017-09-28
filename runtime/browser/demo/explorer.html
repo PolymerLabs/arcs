@@ -32,7 +32,8 @@ http://polymer.github.io/PATENTS.txt
     });
     document.addEventListener('generations', e => {
       explorer.reset();
-      setTimeout(() => explorer.results = e.detail.map(pop => explorer.preparePopulation(pop)), 0);
+      document.dispatchEvent(new CustomEvent('set-arc', {detail: e.detail.arc}))
+      setTimeout(() => explorer.results = e.detail.generations.map(pop => explorer.preparePopulation(pop)), 0);
     });
     document.addEventListener('plan-hover', e => {
       this.selectHash = () => {

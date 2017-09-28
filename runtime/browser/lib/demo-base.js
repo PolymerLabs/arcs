@@ -36,7 +36,7 @@ class DemoBase extends HTMLElement {
       planner.init(arc);
       let generations = [];
       ui.add(await planner.suggest(5000, generations));
-      document.dispatchEvent(new CustomEvent('generations', {detail: generations}));
+      document.dispatchEvent(new CustomEvent('generations', {detail: {generations, arc}}));
     };
     ui.addEventListener('plan-selected', e => {
       let {plan} = e.detail;
