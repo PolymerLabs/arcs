@@ -10,6 +10,7 @@
 const assert = require('assert');
 const tracing = require("tracelib");
 const scheduler = require('./scheduler.js');
+const util = require('./recipe/util.js');
 
 class ViewBase {
   constructor(type, arc, name, id) {
@@ -20,6 +21,7 @@ class ViewBase {
     this.name = name;
     this._version = 0;
     this.id = id || this._arc.generateID();
+    this.source = null;
     trace.end();
   }
 
@@ -58,6 +60,39 @@ class ViewBase {
 
     callTrace.end();
   }
+
+  _compareTo(other) {
+    let cmp;
+    if ((cmp = util.compareStrings(this.name, other.name)) != 0) return cmp;
+    if ((cmp = util.compareNumbers(this._version, other._version)) != 0) return cmp;
+    if ((cmp = util.compareStrings(this.source, other.source)) != 0) return cmp;
+    if ((cmp = util.compareStrings(this.id, other.id)) != 0) return cmp;
+    return 0;
+  }
+
+  toString(viewTags) {
+    let results = [];
+    let viewTagsStr = viewTags.size > 0 ? ' '.concat([...viewTags].join(' ')) : '';
+    let viewStr = [];
+    viewStr.push(`view`);
+    if (this.name) {
+      viewStr.push(`${this.name}`);
+    }
+    viewStr.push(`of ${this.type.toString()}`);
+    if (this.id) {
+      viewStr.push(`'${this.id}'`);
+    }
+    if (viewTags.size > 0) {
+      viewStr.push(`${[...viewTags].join(' ')}`);
+    }
+    if (this.source) {
+      viewStr.push(`in '${this.source}'`);
+    }
+    results.push(viewStr.join(' '));
+    if (this.description)
+      results.push(`  description \`${this.description}\``)
+    return results.join('\n');
+  }
 }
 
 class View extends ViewBase {
@@ -73,6 +108,8 @@ class View extends ViewBase {
   }
 
   cloneFrom(view) {
+    this.name = view.name;
+    this.source = view.source;
     this._items = new Map(view._items);
     this._version = view._version;
     this.description = view.description;

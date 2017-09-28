@@ -158,10 +158,6 @@ class SlotConnection {
       }
       provideRes.push(`${psName} as ${(nameMap && nameMap.get(providedSlot)) || providedSlot}`);
       result.push(provideRes.join(" "));
-
-      providedSlot.viewConnections.forEach(vc => {
-        result.push(`    view ${vc.name}`);
-      });
     });
     return result.join("\n");
   }

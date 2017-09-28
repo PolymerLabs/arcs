@@ -8,6 +8,7 @@ http://polymer.github.io/PATENTS.txt
 -->
 <!doctype html>
 
+<link rel="import" href="se-arc-view.html"></link>
 <link rel="import" href="se-explorer.html"></link>
 <link rel="import" href="se-recipe-view.html"></link>
 
@@ -20,7 +21,10 @@ http://polymer.github.io/PATENTS.txt
     </style>
     <div id='toplevel'>
       <se-explorer results='{{results}}'></se-explorer>
-      <se-recipe-view></se-recipe-view>
+      <div>
+        <se-recipe-view></se-recipe-view>
+        <se-arc-view></se-arc-view>
+      </div>
     </div>
   </template>
 

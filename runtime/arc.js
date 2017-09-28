@@ -20,6 +20,7 @@ const OuterPec = require('./outer-PEC.js');
 const Recipe = require('./recipe/recipe.js');
 const Manifest = require('./manifest.js');
 const Description = require('./description.js');
+const util = require('./recipe/util.js');
 
 class Arc {
   constructor({id, context, pecFactory, slotComposer}) {
@@ -311,6 +312,23 @@ class Arc {
 
   stop() {
     this.pec.stop();
+  }
+
+  toContextString(options) {
+    let results = [];
+    let views = [...this._viewsById.values()].sort(util.compareComparables);
+    views.forEach(v => {
+      results.push(v.toString(this._viewTags.get(v)));
+    });
+
+    // TODO: include views entities
+    // TODO: include (remote) slots?
+
+    if (!this._activeRecipe.isEmpty()) {
+      results.push(this._activeRecipe.toString());
+    }
+
+    return results.join('\n');
   }
 }
 

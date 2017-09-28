@@ -120,6 +120,25 @@ class Schema {
     }
     return clazz;
   }
+
+  toString() {
+    let results = [];
+    results.push(`schema ${this.name}`.concat(this.parent ? ` extends ${this.parent.name}` : ''));
+
+    let propertiesToString = (properties, keyword) => {
+      if (Object.keys(properties).length > 0) {
+        results.push(`  ${keyword}`);
+        Object.keys(properties).forEach(name => {
+          let schemaType = Array.isArray(properties[name]) && properties[name].length > 1 ? `(${properties[name].join(' or ')})` : properties[name];
+          results.push(`    ${schemaType} ${name}`);
+        });
+      }
+    }
+
+    propertiesToString(this.normative, 'normative');
+    propertiesToString(this.optional, 'optional');
+    return results.join('\n');
+  }
 }
 
 module.exports = Schema;

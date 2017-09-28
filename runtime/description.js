@@ -93,6 +93,7 @@ class Description {
     this._tokens = [];
     this._initTokens(this._pattern);
   }
+  get pattern() { return this._pattern; }
   hasPattern() {
     return this._tokens.length > 0;
   }
@@ -151,7 +152,7 @@ class ValueToken {
     let view = options.findViewById(viewConnection.view.id);
     if (this._useType) {  // view type
       // Use view type (eg "Products list")
-      result.push(viewConnection.type.toString().toLowerCase());
+      result.push(viewConnection.type.toPrettyString().toLowerCase());
     } else if (this._values) {  // view values
       // Use view values (eg "How to draw book, Hockey stick")
       result.push(this._formatViewValue(view));
@@ -193,7 +194,7 @@ class ValueToken {
         result.push(chosenConnectionSpec.description._tokens.map(token => token.toString(options, chosenConnection.particle)).join(""));
       } else {
         // Add the connection type.
-        result.push(chosenConnection.type.toString().toLowerCase());
+        result.push(chosenConnection.type.toPrettyString().toLowerCase());
       }
 
       if (options.includeViewValues !== false) {

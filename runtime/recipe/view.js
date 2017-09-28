@@ -152,7 +152,7 @@ class View {
     result.push(`as ${(nameMap && nameMap.get(this)) || this.localName}`);
     if (this.type) {
       result.push('#');
-      result.push(this.type.toString());
+      result.push(this.type.toPrettyString());
     }
     if (options && options.showUnresolved) {
       let options = {};

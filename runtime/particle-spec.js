@@ -134,6 +134,33 @@ class ParticleSpec {
       assert(d == "pattern" || this.connectionMap.has(d), `Unexpected description for ${d}`);
     });
   }
+
+  toString() {
+    let results = [];
+    results.push(`particle ${this.name} in '${this.implFile}'`);
+    let connRes = this.connections.map(cs => `${cs.direction} ${cs.type.toString()} ${cs.name}`);
+    results.push(`  ${this.primaryVerb}(${connRes.join(', ')})`);
+    this.affordance.filter(a => a != 'mock').forEach(a => results.push(`  affordance ${a}`));
+    // TODO: support form factors
+    this.slots.forEach(s => {
+    results.push(`  ${s.isRequired ? 'must ' : ''}consume ${s.isSet ? 'set of ' : ''}${s.name}`);
+      s.providedSlots.forEach(ps => {
+        results.push(`    provide ${ps.isSet ? 'set of ' : ''}${ps.name}`)
+        // TODO: support form factors
+        ps.views.forEach(psv => results.push(`      view ${psv}`))
+      });
+    });
+    // Description
+    if (this.description.hasPattern()) {
+      results.push(`  description \`${this.description.pattern}\``);
+      this.connections.forEach(cs => {
+        if (cs.description.hasPattern()) {
+          results.push(`    ${cs.name} \`${cs.description.pattern}\``);
+        }
+      });
+    }
+    return results.join('\n');
+  }
 }
 
 module.exports = ParticleSpec;
