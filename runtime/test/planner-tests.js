@@ -298,21 +298,54 @@ describe('ConvertConstraintsToConnections', async() => {
 
 describe('MapRemoteSlots', function() {
   it ('predefined remote slots', async() => {
-    let manifest = (await Manifest.parse(`
-      particle A in 'A.js'
-        A()
-        consume root
+    let particlesSpec = `
+    particle A in 'A.js'
+      A()
+      consume root
 
+    particle B in 'B.js'
+      B()
+      consume root
+    `;
+    let testManifest = async (recipeManifest) => {
+      let manifest = (await Manifest.parse(`
+        ${particlesSpec}
+
+        ${recipeManifest}
+      `));
+      var strategizer = {generated: [{result: manifest.recipes[0], score: 1}]};
+      var arc = createTestArc("test-plan-arc", manifest, "dom");
+      var mrs = new MapRemoteSlots(arc);
+
+      let { results } = await mrs.generate(strategizer);
+      assert.equal(results.length, 1);
+      assert.isTrue(results[0].result.isResolved());
+      assert.equal(results[0].result.slots.length, 1);
+    };
+    await testManifest(`
       recipe
-        slot as rootSlot
         A as particle0
-          consume root as rootSlot
-    `));
-    var strategizer = {generated: [{result: manifest.recipes[0], score: 1}]};
-    var arc = createTestArc("test-plan-arc", manifest, "dom");
-    var mrs = new MapRemoteSlots(arc);
-    let { results } = await mrs.generate(strategizer);
-    assert.equal(results.length, 1);
+        B as particle1
+    `);
+    await testManifest(`
+      recipe
+        A as particle0
+          consume root
+        B as particle1
+    `);
+    await testManifest(`
+      recipe
+        A as particle0
+        B as particle1
+          consume root
+    `);
+    await testManifest(`
+      recipe
+        A as particle0
+          consume root
+        B as particle1
+          consume root
+    `);
   });
 });
 
@@ -336,7 +369,6 @@ describe('SearchTokensToParticles', function() {
     var stp = new SearchTokensToParticles(arc);
     let { results } = await stp.generate(strategizer);
     assert.equal(results.length, 2);
-    debugger;
     assert.deepEqual([["GalaxyFlyer", "Rester", "SimpleJumper"],
                       ["GalaxyFlyer", "Rester", "StarJumper"]], results.map(r => r.result.particles.map(p => p.name).sort()));
     assert.deepEqual(["fly", "jump", "rester"], results[0].result.search.resolvedTokens);
