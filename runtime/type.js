@@ -132,8 +132,15 @@ class Type {
     return Type.newView(this);
   }
 
-  // TODO: rename toString to describe
   toString() {
+    if (this.isView)
+      return `[${this.primitiveType().toString()}]`;
+    if (this.isEntity)
+      return this.entitySchema.name;
+    assert('Add support to serializing type:', type);
+  }
+
+  toPrettyString() {
     if (this.isRelation)
       return JSON.stringify(this.data);
     if (this.isView)

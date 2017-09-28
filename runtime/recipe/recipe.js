@@ -131,6 +131,13 @@ class Recipe {
     return viewConnections;
   }
 
+  isEmpty() {
+    return this.particles.length == 0 &&
+           this.views.length == 0 &&
+           this.slots.length == 0 &&
+           this._connectionConstraints.length == 0;
+  }
+
   findView(id) {
     for (var view of this.views) {
       if (view.id == id)
@@ -332,13 +339,13 @@ class Recipe {
 
   _makeLocalNameMap() {
     let names = new Set();
-    for (let particle in this.particles) {
+    for (let particle of this.particles) {
       names.add(particle.localName);
     }
-    for (let view in this.views) {
+    for (let view of this.views) {
       names.add(view.localName);
     }
-    for (let slot in this.slots) {
+    for (let slot of this.slots) {
       names.add(slot.localName);
     }
 

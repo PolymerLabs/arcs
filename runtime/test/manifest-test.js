@@ -21,27 +21,41 @@ async function assertRecipeParses(input, result) {
   assert.deepEqual((await Manifest.parse(input)).recipes[0].toString(), target);
 }
 
+async function assertManifestParses(manifestStr, options, handler) {
+  let manifest = await Manifest.parse(manifestStr, options);
+  if (handler) {
+    handler(manifest);
+  }
+
+  let deserializedManifest = await Manifest.parse(manifest.toString(), options);
+  if (handler) {
+    handler(deserializedManifest);
+  }
+}
+
 describe('manifest', function() {
   it('can parse a manifest containing a recipe', async () => {
-    let manifest = await Manifest.parse(`
-      particle SomeParticle
+    await assertManifestParses(`
+      particle SomeParticle in 'some-particle.js'
+        work()
 
       recipe SomeRecipe
         map #someView
         create #newView as view0
         SomeParticle
-          someParam -> #tag`);
-    let recipe = manifest.recipes[0];
-    assert(recipe);
-    assert.equal(recipe.particles.length, 1);
-    assert.equal(recipe.views.length, 2);
-    assert.equal(recipe.views[0]._fate, "map");
-    assert.equal(recipe.views[1]._fate, "create");
-    assert.equal(recipe.viewConnections.length, 1);
-    assert.sameMembers(recipe.viewConnections[0].tags, ['#tag']);
+          someParam -> #tag`, {}, (manifest) => {
+      let recipe = manifest.recipes[0];
+      assert(recipe);
+      assert.equal(recipe.particles.length, 1);
+      assert.equal(recipe.views.length, 2);
+      assert.equal(recipe.views[0]._fate, "map");
+      assert.equal(recipe.views[1]._fate, "create");
+      assert.equal(recipe.viewConnections.length, 1);
+      assert.sameMembers(recipe.viewConnections[0].tags, ['#tag']);
+    });
   });
   it('can parse a manifest containing a particle specification', async () => {
-    let manifest = await Manifest.parse(`
+    await assertManifestParses(`
       schema Product
       schema Person
       particle TestParticle in 'testParticle.js'
@@ -63,26 +77,27 @@ describe('manifest', function() {
           list \`my special list\`
       particle NoArgsParticle in 'noArgsParticle.js'
         NoArgsParticle()
-    `);
-    assert.equal(manifest.particles.length, 2);
+    `, {}, (manifest) => {
+      assert.equal(manifest.particles.length, 2);
+    });
   });
   it('can parse a manifest containing a schema', async () => {
-    let manifest = await Manifest.parse(`
+    await assertManifestParses(`
       schema Bar
         normative
-          Text value`);
-    assert.equal(manifest.schemas.Bar.normative.value, 'Text');
+          Text value`,
+      (manifest) => assert.equal(manifest.schemas.Bar.normative.value, 'Text'));
   });
   it('can parse a manifest containing an extended schema', async () => {
-    let manifest = await Manifest.parse(`
+    await assertManifestParses(`
       schema Foo
         normative
           Text value
-      schema Bar extends Foo`);
-    assert.equal(manifest.schemas.Bar.normative.value, 'Text');
+      schema Bar extends Foo`,
+      (manifest) => assert.equal(manifest.schemas.Bar.normative.value, 'Text'));
   });
   it('can resolve recipes with connections between particles', async () => {
-    let manifest = await Manifest.parse(`
+    await assertManifestParses(`
       particle P1
       particle P2
 
@@ -90,14 +105,15 @@ describe('manifest', function() {
         P1
           x -> P2
         P2
-          y -> P1.y`);
-    let recipe = manifest.recipes[0];
-    assert(recipe);
-    assert.equal(recipe.views.length, 2);
-    assert.equal(recipe.viewConnections.length, 4);
+          y -> P1.y`, {}, (manifest) => {
+      let recipe = manifest.recipes[0];
+      assert(recipe);
+      assert.equal(recipe.views.length, 2);
+      assert.equal(recipe.viewConnections.length, 4);
+    });
   });
   it('supports recipes specified with bidirectional connections', async () => {
-    let manifest = await Manifest.parse(`
+    await assertManifestParses(`
       particle P1
       particle P2
 
@@ -105,34 +121,36 @@ describe('manifest', function() {
         P1
           x -> P2.x
         P2
-          x -> P1.x`);
-    let recipe = manifest.recipes[0];
-    assert(recipe);
-    assert.equal(recipe.views.length, 1);
-    assert.equal(recipe.viewConnections.length, 2);
-    assert.equal(recipe.toString(), `recipe
+          x -> P1.x`, {}, (manifest) => {
+      let recipe = manifest.recipes[0];
+      assert(recipe);
+      assert.equal(recipe.views.length, 1);
+      assert.equal(recipe.viewConnections.length, 2);
+      assert.equal(recipe.toString(), `recipe
   ? as view0
   P1 as particle0
     x -> view0
   P2 as particle1
     x -> view0`);
+    });
   });
   it('supports recipes with constraints', async () => {
-    let manifest = await Manifest.parse(`
+    await assertManifestParses(`
       particle A
       particle B
 
       recipe Constrained
-        A.a -> B.b`);
-    let recipe = manifest.recipes[0];
-    assert(recipe);
-    assert.equal(recipe._connectionConstraints.length, 1);
-    var constraint = recipe._connectionConstraints[0];
-    assert.equal(constraint.fromParticle.name, 'A');
-    assert.equal(constraint.fromConnection, 'a');
-    assert.equal(constraint.toParticle.name, 'B');
-    assert.equal(constraint.toConnection, 'b');
-  })
+        A.a -> B.b`, {}, (manifest) => {
+      let recipe = manifest.recipes[0];
+      assert(recipe);
+      assert.equal(recipe._connectionConstraints.length, 1);
+      var constraint = recipe._connectionConstraints[0];
+      assert.equal(constraint.fromParticle.name, 'A');
+      assert.equal(constraint.fromConnection, 'a');
+      assert.equal(constraint.toParticle.name, 'B');
+      assert.equal(constraint.toConnection, 'b');
+    });
+  });
   it('supports recipes with local names', async () => {
     await assertRecipeParses(
       `particle P1
@@ -160,7 +178,7 @@ describe('manifest', function() {
   });
   // TODO: move these tests to new-recipe tests.
   it('can normalize simple recipes', async () => {
-    let manifest = await Manifest.parse(`
+    await assertManifestParses(`
       particle P1
       particle P2
 
@@ -174,14 +192,15 @@ describe('manifest', function() {
         P2
         P1
           x -> someView
-        `);
-    let [recipe1, recipe2] = manifest.recipes;
-    assert.notEqual(recipe1.toString(), recipe2.toString());
-    assert.notEqual(await recipe1.digest(), await recipe2.digest());
-    recipe1.normalize();
-    recipe2.normalize();
-    assert.deepEqual(recipe1.toString(), recipe2.toString());
-    assert.equal(await recipe1.digest(), await recipe2.digest());
+        `, {}, async (manifest) => {
+      let [recipe1, recipe2] = manifest.recipes;
+      assert.notEqual(recipe1.toString(), recipe2.toString());
+      assert.notEqual(await recipe1.digest(), await recipe2.digest());
+      recipe1.normalize();
+      recipe2.normalize();
+      assert.deepEqual(recipe1.toString(), recipe2.toString());
+      assert.equal(await recipe1.digest(), await recipe2.digest());
+    });
   });
   it('can normalize recipes with interdependent ordering of views and particles', async () => {
     let manifest = await Manifest.parse(`
@@ -208,14 +227,13 @@ describe('manifest', function() {
     assert.deepEqual(recipe1.toString(), recipe2.toString());
   });
   it('can resolve recipe particles defined in the same manifest', async () => {
-    let manifest = await Manifest.parse(`
+    await assertManifestParses(`
       schema Something
       schema Someother
       particle Thing in 'thing.js'
         Thing(in [Something] someThings, out [Someother] someOthers)
       recipe
-        Thing`);
-    assert(manifest.recipes[0].particles[0].spec);
+        Thing`, (manifest) => assert(manifest.recipes[0].particles[0].spec));
   });
   it('throws an error when a particle has no appropriate body definition', async () => {
     try {
@@ -256,7 +274,7 @@ describe('manifest', function() {
     let manifest = await Manifest.load('some-path', loader, {registry});
     assert(manifest.recipes[0]);
     assert.equal(manifest, registry['some-path']);
-  })
+  });
   it('can load a manifest with imports', async () => {
     let registry = {};
     let loader = {
@@ -352,15 +370,15 @@ describe('manifest', function() {
     assert.equal(manifest.recipes.length, 3)
   });
   it('can parse a schema with union typing', async () => {
-    let manifest = await Manifest.parse(`
+    await assertManifestParses(`
       schema Foo
         optional
-          (Text or URL) value`);
-    assert.deepEqual(manifest.schemas.Foo.optional.value, ['Text', 'URL']);
-  })
+          (Text or URL) value
+        optional
+          Text test`, (manifest) => assert.deepEqual(manifest.schemas.Foo.optional.value, ['Text', 'URL']));
+  });
   it('can parse a manifest containing a recipe with slots', async () => {
-
-    let manifest = await Manifest.parse(`
+    await assertManifestParses(`
       schema Thing
       particle SomeParticle in 'some-particle.js'
         SomeParticle(in Thing someParam)
@@ -372,6 +390,9 @@ describe('manifest', function() {
             formFactor small
 
       particle OtherParticle
+        OtherParticle()
+        consume mySlot
+        consume oneMoreSlot
 
       recipe SomeRecipe
         ? #someView1 as myView
@@ -385,22 +406,23 @@ describe('manifest', function() {
           aParam -> myView
           consume mySlot as slot0
           consume oneMoreSlot as slot1
-          `);
-    let recipe = manifest.recipes[0];
-    assert(recipe);
-    recipe.normalize();
+          `, {}, (manifest) => {
+      let recipe = manifest.recipes[0];
+      assert(recipe);
+      recipe.normalize();
 
-    assert.equal(recipe.particles.length, 2);
-    assert.equal(recipe.views.length, 1);
-    assert.equal(recipe.viewConnections.length, 2);
-    assert.equal(recipe.slots.length, 3);
-    assert.equal(recipe.slotConnections.length, 3);
-    assert.equal(Object.keys(recipe.particles[0].consumedSlotConnections).length, 2);
-    assert.equal(Object.keys(recipe.particles[1].consumedSlotConnections).length, 1);
-    let mySlot = recipe.particles[1].consumedSlotConnections['mySlot'];
-    assert.isDefined(mySlot.targetSlot);
-    assert.equal(Object.keys(mySlot.providedSlots).length, 2);
-    assert.equal(mySlot.providedSlots["oneMoreSlot"], recipe.particles[0].consumedSlotConnections['oneMoreSlot'].targetSlot);
+      assert.equal(recipe.particles.length, 2);
+      assert.equal(recipe.views.length, 1);
+      assert.equal(recipe.viewConnections.length, 2);
+      assert.equal(recipe.slots.length, 3);
+      assert.equal(recipe.slotConnections.length, 3);
+      assert.equal(Object.keys(recipe.particles[0].consumedSlotConnections).length, 2);
+      assert.equal(Object.keys(recipe.particles[1].consumedSlotConnections).length, 1);
+      let mySlot = recipe.particles[1].consumedSlotConnections['mySlot'];
+      assert.isDefined(mySlot.targetSlot);
+      assert.equal(Object.keys(mySlot.providedSlots).length, 2);
+      assert.equal(mySlot.providedSlots["oneMoreSlot"], recipe.particles[0].consumedSlotConnections['oneMoreSlot'].targetSlot);
+    });
   });
   it('relies on the loader to combine paths', async () => {
     let registry = {};
@@ -518,6 +540,7 @@ Expected " ", "#", "\\n", "\\r", [ ] or [A-Z] but "?" found.
   });
 
   it('resolves manifest with recipe with search', async () => {
+    // TODO: support search tokens in manifest-parser.peg
     let manifestSource = `
       recipe
         search \`Hello dear world\``;
@@ -568,5 +591,25 @@ Expected " ", "#", "\\n", "\\r", [ ] or [A-Z] but "?" found.
     assert.equal('Hello world good morning', recipe1.search.phrase);
     assert.deepEqual(['hello', 'world', 'morning'], recipe1.search.unresolvedTokens);
     assert.deepEqual(['good'], recipe1.search.resolvedTokens);
+  });
+  it('can parse a manifest containing views', async () => {
+    let loader = {
+      loadResource() {
+        return '[]';
+      },
+      path(fileName) {
+        return fileName;
+      },
+      join(path, file) {
+        return `${path}/${file}`;
+      },
+    };
+
+    await assertManifestParses(`
+  schema Product
+  view ClairesWishlist of [Product] #wishlist in 'wishlist.json'
+    description \`Claire's wishlist\``, {loader}, (manifest) => {
+      assert.equal(manifest.views.length, 1);
+    });
   });
 });
