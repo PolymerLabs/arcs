@@ -26,6 +26,7 @@ module.exports = class InitSearch extends Strategy {
     let recipe = new Recipe();
     recipe.setSearchPhrase(this._search);
     assert(recipe.normalize());
+    assert(!recipe.isResolved())
 
     return {
       results: [{
