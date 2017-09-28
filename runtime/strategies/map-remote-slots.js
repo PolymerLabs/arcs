@@ -59,7 +59,12 @@ class MapRemoteSlots extends Strategy {
 
         return (recipe, slotConnection) => {
           if (!slotConnection.targetSlot) {
-            let slot = recipe.newSlot(slotConnection.name);
+            let slot = recipe.slots.find(slot => {
+              return (slot.id == remoteSlotId) || (!slot.id && (slot.name == slotConnection.name));
+            });
+            if (!slot) {
+              slot = recipe.newSlot(slotConnection.name);
+            }
             slotConnection.connectToSlot(slot);
           }
           slotConnection.targetSlot.id = remoteSlotId;
