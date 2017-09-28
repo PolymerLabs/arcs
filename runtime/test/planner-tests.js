@@ -365,7 +365,10 @@ describe('SearchTokensToParticles', function() {
         search \`jump or fly or run and Rester\`
     `));
     var arc = createTestArc("test-plan-arc", manifest, "dom");
-    var strategizer = {generated: [{result: manifest.recipes[0], score: 1}]};
+    let recipe = manifest.recipes[0];
+    assert(recipe.normalize());
+    assert(!recipe.isResolved());
+    var strategizer = {generated: [], terminal: [{result: recipe, score: 1}]};
     var stp = new SearchTokensToParticles(arc);
     let { results } = await stp.generate(strategizer);
     assert.equal(results.length, 2);
