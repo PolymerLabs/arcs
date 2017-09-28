@@ -15,6 +15,7 @@ class Strategizer {
     this._internalPopulation = [];
     this._population = [];
     this._generated = [];
+    this._terminal = [];
     this._options = {
       maxPopulation,
       generationSize,
@@ -38,6 +39,12 @@ class Strategizer {
   get discarded() {
     return this._discarded;
     // TODO: Do we need this?
+  }
+  // Individuals from the previous generation that were not decended from in the
+  // current generation.
+  get terminal() {
+    assert(this._terminal);
+    return this._terminal;
   }
   async generate() {
     // Generate
@@ -102,6 +109,19 @@ class Strategizer {
       return true;
     });
 
+    let terminal = new Map();
+    for (let candidate of this.generated) {
+      terminal.set(candidate.result, candidate);
+    }
+    for (let result of generated) {
+      for (let {parent} of result.derivation) {
+        if (parent && terminal.has(parent.result)) {
+          terminal.delete(parent.result);
+        }
+      }
+    }
+    terminal = [...terminal.values()];
+
     record.totalGenerated = generated.length;
 
     generated.sort((a,b) => {
@@ -156,6 +176,7 @@ class Strategizer {
     }
 
     // Publish
+    this._terminal = terminal;
     this._generation = generation;
     this._generated = generated;
     this._population = this._internalPopulation.map(x => x.individual);

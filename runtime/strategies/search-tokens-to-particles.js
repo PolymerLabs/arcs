@@ -30,11 +30,11 @@ module.exports = class SearchTokensToParticles extends Strategy {
   }
   async generate(strategizer) {
     let findParticles = token => this._byToken[token] || [];
-    var results = Recipe.over(strategizer.generated, new class extends RecipeWalker {
+    let generated = strategizer.generated.filter(result => !result.result.isResolved());
+    let terminal = strategizer.terminal;
+    var results = Recipe.over([...generated, ...terminal], new class extends RecipeWalker {
       onRecipe(recipe) {
-        // TODO: according to design, the search strategy activates when the recipe is resolved
-        // OR when the recipe is a terminal case (did not generate descendants from any other strategies).
-        if (/*!recipe.isResolved() ||*/ !recipe.search || !recipe.search.unresolvedTokens.length) {
+        if (!recipe.search || !recipe.search.unresolvedTokens.length) {
           return;
         }
 
