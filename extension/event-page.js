@@ -117,7 +117,6 @@ function updateArc(tabId, response) {
       // TODO(smalls) - we need more schema in our Things.manifest
       delete r['offers']; 
       delete r['brand'];
-      r['shipDays'] = '5';
 
       schema = m.findSchemaByName(shortTypeName);
       if (!schema) {
@@ -137,22 +136,6 @@ function updateArc(tabId, response) {
       arc.commit([entity]);
 
       console.log('stored entity in view', view, entity);
-
-      /*
-       * TODO(smalls) - either investigate or delete this code.
-       
-      console.log('commit for entity with id '+entity.id+', identified? '+entity.isIdentified(),
-        entity);
-
-      if (!entity.id) {
-        console.log('TODO - entities shouldn\'t be identified and missing an id');
-        return;
-      }
-
-      // This call seems to be optional - entities are getting to firebase,
-      // with an id, based on the code above.
-      view.store(entity);
-      */
     });
   }).then(() => {
     ams.sync({key: amKey});
