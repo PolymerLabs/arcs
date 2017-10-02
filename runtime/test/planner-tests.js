@@ -20,6 +20,8 @@ let InitPopulation = require('../strategies/init-population.js');
 let MapRemoteSlots = require('../strategies/map-remote-slots.js');
 let MatchParticleByVerb = require('../strategies/match-particle-by-verb.js');
 let SearchTokensToParticles = require('../strategies/search-tokens-to-particles.js');
+let GroupViewConnections = require('../strategies/group-view-connections.js');
+let CombinedStrategy = require('../strategies/combined-strategy.js');
 let FallbackFate = require('../strategies/fallback-fate.js');
 
 var loader = new Loader();
@@ -587,6 +589,46 @@ describe('MatchParticleByVerb', function() {
     assert.equal(2, plans.length);
     assert.deepEqual([["SimpleJumper"], ["StarJumper"]],
                      plans.map(plan => plan.particles.map(particle => particle.name)));
+  });
+
+  describe('GroupViewConnections', function() {
+    let schemaAndParticlesStr = `
+schema Thing
+schema OtherThing
+particle A
+  A(in Thing ithingA1)
+particle B
+  B(in Thing ithingB1, in Thing ithingB2, in [OtherThing] iotherthingB1)
+particle C
+  C(in Thing ithingC1, out Thing othingC2, inout [OtherThing] iootherthingC1)
+particle D
+  D(in Thing ithingD1, in Thing ithingD2, out Thing othingD3)
+    `;
+    it ('group in and out view connections', async() => {
+      // TODO: add another Type view connections to the recipe!
+      let manifest = (await Manifest.parse(`
+${schemaAndParticlesStr}
+recipe
+  A
+  B
+  C
+  D
+      `));
+      var strategizer = {generated: [{result: manifest.recipes[0], score: 1}]};
+      var arc = createTestArc("test-plan-arc", manifest, "dom");
+      arc._search = "showproducts and chooser alsoon recommend";
+      var gvc = new GroupViewConnections(arc);
+
+      let { results } = await gvc.generate(strategizer);
+      assert.equal(results.length, 1);
+      let recipe = results[0].result;
+      console.log(recipe.toString());
+      assert.equal(4, recipe.views.length);
+      // Verify all connections are bound to views.
+      assert.isUndefined(recipe.viewConnections.find(vc => !vc.view));
+      // Verify all views have non-empty connections list.
+      assert.isUndefined(recipe.views.find(v => v.connections.length == 0));
+    });
   });
 });
 describe('FallbackFate', function() {

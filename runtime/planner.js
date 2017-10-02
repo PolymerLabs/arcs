@@ -24,6 +24,8 @@ let Manifest = require('./manifest.js');
 let InitSearch = require('./strategies/init-search.js');
 let SearchTokensToParticles = require('./strategies/search-tokens-to-particles.js');
 let FallbackFate = require('./strategies/fallback-fate.js');
+let GroupViewConnections = require('./strategies/group-view-connections.js');
+let CombinedStrategy = require('./strategies/combined-strategy.js');
 
 const Speculator = require('./speculator.js');
 const Description = require('./description.js');
@@ -64,7 +66,10 @@ class Planner {
     let strategies = [
       new InitPopulation(arc),
       new InitSearch(arc),
-      new SearchTokensToParticles(arc),
+      new CombinedStrategy([
+        new SearchTokensToParticles(arc),
+        new GroupViewConnections(),
+      ]),
       new FallbackFate(),
       new CreateViews(),
       new AssignViewsByTagAndType(arc),
