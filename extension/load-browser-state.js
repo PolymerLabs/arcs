@@ -6,44 +6,6 @@
 // http://polymer.github.io/PATENTS.txt
 
 
-async function populateManifestViews(manifest, dataLoader) {
-
-  let views = {}
-  for (let k of ['Answer', 'WebPage', 'Question', 'VideoObject', 'Product']) {
-    klass = manifest.findSchemaByName(k).entityClass();
-    view = manifest.newView(klass.type.viewOf(), k+'View');
-
-    views[k] = view;
-  }
-
-  let entities = await dataLoader();
-
-  dumpEntities(views, entities);
-}
-
-function dumpEntities(views, entityData) {
-  
-  for (let ei of entityData) {
-    let type = ei['@type'].replace(/http[s]?:\/\/schema.org\//, '');
-    let view = views[type];
-    if (! type in views || ! view) {
-      console.log('missing type '+type+'; unable to instantiate entity');
-      continue;
-    }
-
-    let data = Object.assign({}, ei);
-    delete data['@type'];
-
-    // TODO(smalls) - the view should generate these ids
-    let id = faux_gid++;
-
-    view.store({
-      id,
-      rawData: data
-    });
-  }
-}
-
 async function fetchEntities(tab) {
   return new Promise((resolve, reject) => {
     chrome.runtime.sendMessage(null, {
