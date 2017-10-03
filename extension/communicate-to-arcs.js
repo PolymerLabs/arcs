@@ -38,7 +38,7 @@ function populateIframe(doc) {
         chrome.runtime.sendMessage(null, { method: 'reInitArcs', args: {}},
           response => {
             if (displayAmKey) {
-              displayAmKey.innerText = 'amkey: '+response.amKey;
+              displayAmKey.innerText = 'amkey: '+response;
             }
             iframe.src = _getUrl(cdnApp, defaultManifest, response);
           });
