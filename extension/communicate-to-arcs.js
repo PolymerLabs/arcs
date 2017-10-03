@@ -7,7 +7,10 @@
 
 function _getUrl(cdnRoot, arcManifest, response) {
   let ret = cdnRoot+'?manifest='+arcManifest+'&amkey='+response.amKey;
-  ret += response.manifestUrls.reduce((accum, current)=>accum+'&manifest='+current, '');
+  if (response.manifestUrls) {
+    ret += response.manifestUrls.reduce((accum, current)=>accum+'&manifest='+current, '');
+  }
+
   return ret;
 }
 

@@ -32,10 +32,30 @@ Custom actions may be visible on some pages that you visit. Try the
 in the [arcs-custom-events](https://github.com/smalls/arcs-custom-events)
 repository.
 
+## testing
+
+There are a few scenarios that should reliably work after enabling the
+extension.
+
+1) Visit a store with embedded data [Products](https://schema.org/Product)
+  such as [Google Cardboard](https://store.google.com/product/google_cardboard).
+  Verify that:
+    - The 'arc' logo appears on the Browser Action.
+    - Clicking on the Browser Action includes your sample data (in my case,
+      Google Cardboard) in a recipe. For a product, try the "Buy products"
+      recipe. If too many things appear, go full-screen and disable any extra
+      recipes.
+1) Open the New Tab, and verify it has access to the information from all
+  tabs. Open another product (such as [LG Watch](https://store.google.com/product/lg_watch_style)
+  and verify that shows up in the arc.
+1) Visit a page with an embedded manifest like 
+  [index-with-arcs](https://smalls.github.io/arcs-custom-events/index-with-arcs.html). Verify that the custom actions appear.
+
 ## notes & limitations
 
 To restrict what's sent to firebase, most entities are stripped out in
-event-page.js#filterResponse(). Notable inclusions are (but not limited to)
-[Product](https://schema.org/Product) and [Event](https://schema.org/Event).
+event-page.js#filterResponse(). Notable inclusions are
+[Product](https://schema.org/Product) and [Event](https://schema.org/Event),
+but check the code for the authoritative list.
 
 The extension automatically tags [Product] with #shortlist.
