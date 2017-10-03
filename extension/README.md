@@ -7,7 +7,8 @@ The extension does two things:
 
 The first point is worth re-emphasizing. **The extension sends metadata from
 pages you visit to a public firebase.** We've limited the extent of data
-shared (only Product and Event entities are sent).
+shared to allow the extension to be tested while we continue working on the
+platform.
 
 ## installation
 
@@ -26,10 +27,15 @@ The extension is visible in two places:
   Arcs context and will open Arcs in a popup.
 * Opening a new tab will open Arcs.
 
+Custom actions may be visible on some pages that you visit. Try the
+[index-with-arcs](https://smalls.github.io/arcs-custom-events/index-with-arcs.html)
+in the [arcs-custom-events](https://github.com/smalls/arcs-custom-events)
+repository.
+
 ## notes & limitations
 
-To restrict what's sent to firebase, only entities of
-[Product](https://schema.org/Product) and [Event](https://schema.org/Event)
-are synced to the global storage.
+To restrict what's sent to firebase, most entities are stripped out in
+event-page.js#filterResponse(). Notable inclusions are (but not limited to)
+[Product](https://schema.org/Product) and [Event](https://schema.org/Event).
 
 The extension automatically tags [Product] with #shortlist.

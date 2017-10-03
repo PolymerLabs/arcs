@@ -8,12 +8,16 @@
 let arc;
 let ams;
 let amKey;
+let manifestUrls = [];
 let manifest;
+let loader;
 async function init() {
+  loader = new Arcs.BrowserLoader(chrome.runtime.getURL('/'));
+
+  // The goal here is that this list contains all known schema
   manifest = Arcs.Manifest.parse(`
-    import 'https://polymerlabs.github.io/arcs-cdn/dev/entities/Thing.manifest'
-    import 'https://polymerlabs.github.io/arcs-cdn/dev/entities/Product.manifest'`,
-    {fileName: 'inline',  path: 'inline', loader: new Arcs.BrowserLoader(chrome.runtime.getURL('/'))});
+    import '${cdn}/entities/entities.manifest'`,
+    {fileName: 'inline',  path: 'inline', loader: loader});
   arc = new Arcs.Arc({id: 'browser/'+chrome.runtime.id, context: manifest});
   ams = new ArcMetadataStorage({arc: arc});
   await ams.init().then(values => {
@@ -96,8 +100,25 @@ function filterResponse(response) {
 
   if (!response) return response;
 
-  let ret = response.filter(entity => /^https?:\/\/schema.org\/(Product|Event)$/.test(entity['@type']));
+  let ret = response.filter(entity => {
+    if (/^https?:\/\/schema.org\/(Product|Event)$/.test(entity['@type'])) return true;
+    if (entity['@type'].endsWith('CustomEvent')) return true;
+    if (entity['@type'].endsWith(manifestType)) return true;
+    return false;
+  });
   return ret;
+}
+
+function loadManifest(url) {
+  return loader.loadResource(url).then(contents => {
+    path = url.split('/').slice(0, -1).join('/');
+    return Arcs.Manifest.parse(contents,
+      {fileName: url, //url.split('/').slice(-1)[0],
+        path: path,
+        loader: new Arcs.BrowserLoader(path)
+      }
+    )}
+  );
 }
 
 function updateArc(tabId, response) {
@@ -107,18 +128,27 @@ function updateArc(tabId, response) {
 
   let entities = {};
 
+  let manifests = [manifest];
+  manifests = manifests.concat(
+    response.filter(r => r['@type']==manifestType).map(r => loadManifest(r['url']))
+  );
+  manifestUrls = response.filter(r => r['@type']==manifestType).map(r => r['url']);
 
-  manifest.then(m => {
-    response.forEach(r => {
+  Promise.all(manifests).then(manifests => {
+    response.filter(r => r['@type']!=manifestType).forEach(r => {
       fqTypeName = r['@type'];
-      shortTypeName = fqTypeName.split('/')[3];
+      shortTypeName = fqTypeName.startsWith('http') && fqTypeName.includes('/') ?
+        fqTypeName.split('/').slice(-1)[0] : fqTypeName;
       delete r['@type'];
 
       // TODO(smalls) - we need more schema in our Things.manifest
       delete r['offers']; 
       delete r['brand'];
 
-      schema = m.findSchemaByName(shortTypeName);
+      schema = manifests.reduce((accumulator, currentValue) => {
+        let s = currentValue.findSchemaByName(shortTypeName)
+        if (s) return s;
+      });
       if (!schema) {
         console.log('skipping unknown type '+fqTypeName, r);
         return;
@@ -194,12 +224,11 @@ chrome.runtime.onMessage.addListener(
 chrome.runtime.onMessage.addListener(
   function (request, sender, sendResponse) {
 
-    if (request.method!='getAmKey') {
+    if (request.method!='getAmKeyAndManifests') {
       return;
     }
 
-    sendResponse(amKey);
-    return true;
+    sendResponse({amKey: amKey, manifestUrls: manifestUrls});
   }
 
 );
