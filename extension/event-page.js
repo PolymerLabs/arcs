@@ -148,7 +148,8 @@ function updateArc(tabId, response) {
       schema = manifests.reduce((accumulator, currentValue) => {
         let s = currentValue.findSchemaByName(shortTypeName)
         if (s) return s;
-      });
+        if (accumulator) return accumulator;
+      }, null);
       if (!schema) {
         console.log('skipping unknown type '+fqTypeName, r);
         return;
