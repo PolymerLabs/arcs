@@ -45,8 +45,10 @@ class DomSlot extends Slot {
     }
   }
   _createDomContext() {
-    let type = this.consumeConn.slotSpec.isSet ? SetDomContext : DomContext;
-    return new (type)(null, this._containerKind);
+    if (this.consumeConn.slotSpec.isSet) {
+      return new SetDomContext(this._containerKind);
+    }
+    return new DomContext(null, this._containerKind);
   }
   _initMutationObserver() {
     return new MutationObserver(() => {
