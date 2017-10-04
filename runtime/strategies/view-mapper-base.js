@@ -55,7 +55,6 @@ class ViewMapperBase extends Strategy {
           return;
         }
         var views = self.getMappableViews(type, tags);
-
         if (views.length == 0)
           return;
 

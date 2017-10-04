@@ -22,7 +22,7 @@ class AssignViewsByTagAndType extends ViewMapperBase {
 
   getMappableViews(type, tags) {
     if (tags.length > 0) {
-      return this.arc.findViewsByType(type, {tag: tags[0]});
+      return this.arc.findViewsByType(type, {tags});
     } else {
       return this.arc.findViewsByType(type);
     }
