@@ -70,7 +70,7 @@ recipe
   Interests
 
 # TODO: move these to separate manifests for claire's wishlist / page
-view PageProducts of [Product] in 'products.json'
+view PageProducts of [Product] #shortlist in 'products.json'
   description `Products from your browsing context`
 view ClairesWishlist of [Product] #wishlist in 'wishlist.json'
   description `Claire's wishlist`

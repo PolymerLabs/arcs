@@ -23,7 +23,7 @@ class CopyRemoteViews extends ViewMapperBase {
 
   getMappableViews(type, tags) {
     if (tags.length > 0) {
-      return this._arc.context.findViewsByType(type, {tag: tags[0]});
+      return this._arc.context.findViewsByType(type, {tags});
     } else {
       return this._arc.context.findViewsByType(type);
     }

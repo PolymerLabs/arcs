@@ -349,6 +349,146 @@ describe('MapRemoteSlots', function() {
   });
 });
 
+describe('AssignOrCopyRemoteViews', function() {
+  it ('finds tagged remote views', async() => {
+    let particlesSpec = `
+    schema Foo
+
+    particle A in 'A.js'
+      A(in [Foo] list)
+      consume root
+
+    particle B in 'A.js'
+      B(inout [Foo] list)
+      consume root
+    `;
+    let testManifest = async (recipeManifest, expectedResults) => {
+      let manifest = (await Manifest.parse(`
+        ${particlesSpec}
+
+        ${recipeManifest}
+      `));
+
+      let schema = manifest.findSchemaByName('Foo');
+      manifest.newView(schema.type.viewOf(), 'Test1', 'test-1', ['#tag1']);
+      manifest.newView(schema.type.viewOf(), 'Test2', 'test-2', ['#tag2']);
+      manifest.newView(schema.type.viewOf(), 'Test2', 'test-3', []);
+
+      var arc = createTestArc("test-plan-arc", manifest, "dom");
+
+      var planner = new Planner();
+      planner.init(arc);
+      let plans = await planner.plan(1000);
+
+      assert.equal(plans.length, expectedResults, recipeManifest);
+    };
+
+    // map one
+    await testManifest(`
+      recipe
+        map #tag1 as list
+        A as particle0
+          list <- list
+    `, 1);
+    await testManifest(`
+      recipe
+        map #tag2 as list
+        A as particle0
+          list <- list
+    `, 1);
+    await testManifest(`
+      recipe
+        map #tag3 as list
+        A as particle0
+          list <- list
+    `, 0);
+    await testManifest(`
+      recipe
+        map as list
+        A as particle0
+          list <- list
+    `, 3);
+
+    // copy one
+    await testManifest(`
+      recipe
+        copy #tag1 as list
+        A as particle0
+          list <- list
+    `, 1);
+    await testManifest(`
+      recipe
+        copy #tag2 as list
+        A as particle0
+          list <- list
+    `, 1);
+    await testManifest(`
+      recipe
+        copy #tag3 as list
+        A as particle0
+          list <- list
+    `, 0);
+    await testManifest(`
+      recipe
+        copy as list
+        A as particle0
+          list <- list
+    `, 3);
+
+    // both at once
+    await testManifest(`
+      recipe
+        map #tag1 as list
+        copy #tag2 as list2
+        A as particle0
+          list <- list
+        B as particle1
+          list = list2
+    `, 1);
+    await testManifest(`
+      recipe
+        map #tag1 as list
+        copy #tag3 as list2
+        A as particle0
+          list <- list
+        B as particle1
+          list = list2
+    `, 0);
+
+    // both, but only one has a tag
+    await testManifest(`
+      recipe
+        map #tag1 as list
+        copy as list2
+        A as particle0
+          list <- list
+        B as particle1
+          list = list2
+    `, 2);
+    await testManifest(`
+      recipe
+        map as list
+        copy #tag2 as list2
+        A as particle0
+          list <- list
+        B as particle1
+          list = list2
+    `, 2);
+
+    // no tags leads to all possible permutations of 3 matching views
+    await testManifest(`
+      recipe
+        map as list
+        copy as list2
+        A as particle0
+          list <- list
+        B as particle1
+          list = list2
+    `, 6);
+
+  });
+});
+
 describe('SearchTokensToParticles', function() {
   it ('particles by verb strategy', async() => {
     let manifest = (await Manifest.parse(`

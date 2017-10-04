@@ -263,8 +263,8 @@ class Arc {
   findViewsByType(type, options) {
     // TODO: use options (location, labels, etc.) somehow.
     var views = this._viewsByType.get(Arc._viewKey(type)) || [];
-    if (options && options.tag) {
-      views = views.filter(view => this._viewTags.get(view).has(options.tag));
+    if (options && options.tags) {
+      views = views.filter(view => options.tags.filter(tag => !this._viewTags.get(view).has(tag)).length == 0);
     }
     return views;
   }
