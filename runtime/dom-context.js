@@ -141,7 +141,7 @@ class SetDomContext {
   initContext(context) {
     Object.keys(context).forEach(subId => {
       if (!this._contextBySubId[subId] || !this._contextBySubId[subId].isEqual(context[subId])) {
-        this._contextBySubId[subId] = new DomContext(this._containerKind);
+        this._contextBySubId[subId] = new DomContext(null, this._containerKind);
       }
       this._contextBySubId[subId].initContext(context[subId]);
     });
