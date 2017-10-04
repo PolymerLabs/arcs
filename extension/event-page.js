@@ -8,14 +8,14 @@
 let arc;
 let ams;
 let amKey;
-let manifestUrls = [];
 let manifest;
+let additionalManifestUrls = [];
 let loader;
 async function init() {
   loader = new Arcs.BrowserLoader(chrome.runtime.getURL('/'));
 
   // The goal here is that this list contains all known schema
-  manifest = Arcs.Manifest.parse(`
+  manifest = await Arcs.Manifest.parse(`
     import '${cdn}/entities/entities.manifest'`,
     {fileName: 'inline',  path: 'inline', loader: loader});
   arc = new Arcs.Arc({id: 'browser/'+chrome.runtime.id, context: manifest});
@@ -81,7 +81,6 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
 
 function updateBadge(tabId, response) {
-  
   // TODO(smalls) - currently, we're using the presence of entities from the
   // page as a proxy for an interesting arc being available. In the future we
   // should run the suggestinator for a more comprehensive view.
@@ -97,7 +96,6 @@ function updateBadge(tabId, response) {
 }
 
 function filterResponse(response) {
-
   if (!response) return response;
 
   let ret = response.filter(entity => {
@@ -122,19 +120,16 @@ function loadManifest(url) {
 }
 
 function updateArc(tabId, response) {
-
   if (!response) return;
   console.log('updating tab '+tabId+' with response', response);
 
   let entities = {};
 
-  let manifests = [manifest];
-  manifests = manifests.concat(
-    response.filter(r => r['@type']==manifestType).map(r => loadManifest(r['url']))
-  );
-  manifestUrls = response.filter(r => r['@type']==manifestType).map(r => r['url']);
+  additionalManifestUrls = response.filter(r => r['@type']==manifestType).map(r => r['url']);
+  additionalManifests = additionalManifestUrls.map(url => loadManifest(url));
 
-  Promise.all(manifests).then(manifests => {
+  Promise.all(additionalManifests).then(manifests => {
+    manifests.push(manifest);
     response.filter(r => r['@type']!=manifestType).forEach(r => {
       fqTypeName = r['@type'];
       shortTypeName = fqTypeName.startsWith('http') && fqTypeName.includes('/') ?
@@ -174,7 +169,6 @@ function updateArc(tabId, response) {
 }
 
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-  
   if (changeInfo.status && 'complete'==changeInfo.status) {
     // fire a message to content-script.js
     chrome.tabs.sendMessage(tabId, {method: 'extractEntities'}, response => {
@@ -229,7 +223,7 @@ chrome.runtime.onMessage.addListener(
       return;
     }
 
-    sendResponse({amKey: amKey, manifestUrls: manifestUrls});
+    sendResponse({amKey: amKey, manifestUrls: additionalManifestUrls});
   }
 
 );
