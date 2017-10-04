@@ -59,3 +59,19 @@ event-page.js#filterResponse(). Notable inclusions are
 but check the code for the authoritative list.
 
 The extension automatically tags [Product] with #shortlist.
+
+## todos
+
+Nothing is ever complete.
+
+- [ ] When initializing the extension, pull in data from all open tabs. The
+  current version depends on the extension being on from browser startup, and
+  there's a hook from each tab that's opened to send over entities from that
+  tab.
+- [ ] Tags are how we differentiate between views. Once firebase supports it,
+  put additional tags on all views created by the extension (as many as
+  possible - the more information in tags, the better matches we'll be able to
+  find).
+- [ ] De-duplicate data - some pages embed entities multiple times, and
+  reloads can cause the same information to be in the view many times. Keep
+  track of what we've sent and only send new entities.
