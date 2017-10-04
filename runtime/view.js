@@ -72,7 +72,6 @@ class ViewBase {
 
   toString(viewTags) {
     let results = [];
-    let viewTagsStr = viewTags.size > 0 ? ' '.concat([...viewTags].join(' ')) : '';
     let viewStr = [];
     viewStr.push(`view`);
     if (this.name) {
@@ -82,7 +81,7 @@ class ViewBase {
     if (this.id) {
       viewStr.push(`'${this.id}'`);
     }
-    if (viewTags.size > 0) {
+    if (viewTags && viewTags.length) {
       viewStr.push(`${[...viewTags].join(' ')}`);
     }
     if (this.source) {
