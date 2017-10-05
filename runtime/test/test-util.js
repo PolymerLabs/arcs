@@ -13,7 +13,7 @@
 let assert = require('chai').assert;
 let viewlet = require('../viewlet.js');
 
-function assertSingletonHas(view, entityClass, expectation) {
+function assertSingletonWillChangeTo(view, entityClass, expectation) {
   return new Promise((resolve, reject) => {
     var variable = viewlet.viewletFor(view);
     variable.entityClass = entityClass;
@@ -23,6 +23,15 @@ function assertSingletonHas(view, entityClass, expectation) {
       assert.equal(result.value, expectation);
       resolve();
     }), {});
+  });
+}
+
+function assertSingletonIs(view, entityClass, expectation) {
+  var variable = viewlet.viewletFor(view);
+  variable.entityClass = entityClass;
+  return variable.get().then(result => {
+    assert(result !== undefined);
+    assert.equal(result.value, expectation);
   });
 }
 
@@ -55,7 +64,8 @@ function initParticleSpec(name) {
   };
 }
 
-exports.assertSingletonHas = assertSingletonHas;
+exports.assertSingletonWillChangeTo = assertSingletonWillChangeTo;
+exports.assertSingletonIs = assertSingletonIs;
 exports.assertSingletonEmpty = assertSingletonEmpty;
 exports.assertViewHas = assertViewHas;
 exports.initParticleSpec = initParticleSpec;

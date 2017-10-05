@@ -14,13 +14,12 @@ const assert = require('assert');
 const PECOuterPort = require('./api-channel.js').PECOuterPort;
 
 class OuterPEC extends PEC {
-  constructor(port, slotComposer) {
+  constructor(port, slotComposer, arc) {
     super();
     this._particles = [];
     this._apiPort = new PECOuterPort(port);
+    this._arc = arc;
     this._nextIdentifier = 0;
-    this._idMap = new Map();
-    this._reverseIdMap = new Map();
     this.slotComposer = slotComposer;
 
     this._apiPort.onRender = ({particle, slotName, content}) => {
@@ -60,7 +59,13 @@ class OuterPEC extends PEC {
     }
 
     this._apiPort.onConstructInnerArc = ({callback, particle}) => {
-      this._apiPort.ParticleCallback({callback});
+      var arc = {};
+      this._apiPort.ConstructArcCallback({callback, arc});
+    }
+
+    this._apiPort.onArcCreateView = ({callback, arc, viewType, name}) => {
+      var view = this._arc.createView(viewType, name);
+      this._apiPort.CreateViewCallback(view, {viewType, name, callback});
     }
   }
 

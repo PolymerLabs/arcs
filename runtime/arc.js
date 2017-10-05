@@ -43,7 +43,7 @@ class Arc {
     this.particleViewMaps = new Map();
     let pecId = this.generateID();
     let innerPecPort = this._pecFactory(pecId);
-    this.pec = new OuterPec(innerPecPort, slotComposer, `${pecId}:outer`);
+    this.pec = new OuterPec(innerPecPort, slotComposer, this, `${pecId}:outer`);
     if (slotComposer) {
       slotComposer.arc = this;
     }
@@ -220,7 +220,7 @@ class Arc {
 
   createView(type, name, id, tags) {
     tags = tags || [];
-    assert(type instanceof Type, "can't createView with a type that isn't a Type");
+    assert(type instanceof Type, `can't createView with type ${type} that isn't a Type`);
     if (type.isRelation)
       type = Type.newView(type);
     let view;
