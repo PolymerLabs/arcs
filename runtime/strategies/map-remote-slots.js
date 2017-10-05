@@ -17,7 +17,7 @@ class MapRemoteSlots extends Strategy {
   }
   async generate(strategizer) {
     var remoteSlots = this.remoteSlots;
-    var results = Recipe.over(strategizer.generated, new class extends RecipeWalker {
+    var results = Recipe.over(this.getResults(strategizer), new class extends RecipeWalker {
       onSlotConnection(recipe, slotConnection) {
         if (slotConnection.targetSlot && slotConnection.targetSlot.id)
           return;
