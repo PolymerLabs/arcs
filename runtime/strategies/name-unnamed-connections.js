@@ -11,13 +11,13 @@ let RecipeWalker = require('../recipe/walker.js');
 
 module.exports = class NameUnnamedConnections extends Strategy {
   async generate(strategizer) {
-    var results = Recipe.over(strategizer.generated, new class extends RecipeWalker {
+    var results = Recipe.over(this.getResults(strategizer), new class extends RecipeWalker {
       onViewConnection(recipe, viewConnection) {
         if (viewConnection.name)
           return;   // it is already named.
 
         if (!viewConnection.particle.spec)
-          return;   // it is already named.
+          return;   // the particle doesn't have spec yet.
 
         let possibleSpecConns = viewConnection.particle.spec.connections.filter(specConn => {
           // filter specs with matching types that don't have views bound to the corresponding view connection.

@@ -5,6 +5,7 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
+let assert = require('assert');
 let {Strategy} = require('../../strategizer/strategizer.js');
 let Recipe = require('../recipe/recipe.js');
 let RecipeWalker = require('../recipe/walker.js');
@@ -23,16 +24,9 @@ module.exports = class SearchTokensToParticles extends Strategy {
         this._addParticle(verb, particle);
       }
     }
-  }
-  _addParticle(token, particle) {
-    this._byToken[token] = this._byToken[token] || [];
-    this._byToken[token].push(particle);
-  }
-  async generate(strategizer) {
+
     let findParticles = token => this._byToken[token] || [];
-    let generated = strategizer.generated.filter(result => !result.result.isResolved());
-    let terminal = strategizer.terminal;
-    var results = Recipe.over([...generated, ...terminal], new class extends RecipeWalker {
+    class Walker extends RecipeWalker {
       onRecipe(recipe) {
         if (!recipe.search || !recipe.search.unresolvedTokens.length) {
           return;
@@ -40,6 +34,7 @@ module.exports = class SearchTokensToParticles extends Strategy {
 
         let specsByToken = {};
         for (let token of recipe.search.unresolvedTokens) {
+          //for (let spec of this.particlesFinder(token)) {
           for (let spec of findParticles(token)) {
             // TODO: Skip particles that are already in the active recipe?
             specsByToken[token] = specsByToken[token] || [];
@@ -69,10 +64,28 @@ module.exports = class SearchTokensToParticles extends Strategy {
           };
         });
       }
-    }(RecipeWalker.Permuted), this);
+    };
+    this._walker = new Walker(RecipeWalker.Permuted);
+  }
 
+  get walker() {
+    return this._walker;
+  }
+
+  getResults(strategizer) {
+    assert(strategizer);
+    let generated = super.getResults(strategizer).filter(result => !result.result.isResolved());
+    let terminal = strategizer.terminal;
+    return [...generated, ...terminal];
+  }
+
+  _addParticle(token, particle) {
+    this._byToken[token] = this._byToken[token] || [];
+    this._byToken[token].push(particle);
+  }
+  async generate(strategizer) {
     return {
-      results,
+      results: Recipe.over(this.getResults(strategizer), this.walker, this),
       generate: null,
     };
   }

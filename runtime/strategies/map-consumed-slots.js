@@ -12,7 +12,7 @@ let RecipeUtil = require('../recipe/recipe-util.js');
 
 class MapConsumedSlots extends Strategy {
   async generate(strategizer) {
-    var results = Recipe.over(strategizer.generated, new class extends RecipeWalker {
+    var results = Recipe.over(this.getResults(strategizer), new class extends RecipeWalker {
       onSlotConnection(recipe, slotConnection) {
         if (slotConnection.targetSlot)
           return;

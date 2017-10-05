@@ -13,7 +13,7 @@ let RecipeWalker = require('../recipe/walker.js');
 class AddUseViews extends Strategy {
   // TODO: move generation to use an async generator.
   async generate(strategizer) {
-    var results = Recipe.over(strategizer.generated, new class extends RecipeWalker {
+    var results = Recipe.over(this.getResults(strategizer), new class extends RecipeWalker {
       onRecipe(recipe) {
         // Don't add use views while there are outstanding constraints
         if (recipe.connectionConstraints.length > 0)

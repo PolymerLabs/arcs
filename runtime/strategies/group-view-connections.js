@@ -5,14 +5,16 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-let assert = require('chai').assert;
+let assert = require('assert');
 let {Strategy} = require('../../strategizer/strategizer.js');
 let Recipe = require('../recipe/recipe.js');
 let RecipeWalker = require('../recipe/walker.js');
 
 module.exports = class GroupViewConnections extends Strategy {
-  async generate(strategizer) {
-    var results = Recipe.over(strategizer.generated, new class extends RecipeWalker {
+  constructor() {
+    super();
+
+    this._walker = new class extends RecipeWalker {
       onRecipe(recipe) {
         // Only apply this strategy if ALL view connections are named and have types.
         if (recipe.viewConnections.find(vc => !vc.type || !vc.name)) {
@@ -90,19 +92,22 @@ module.exports = class GroupViewConnections extends Strategy {
             groups.forEach(group => {
               let recipeView = recipe.newView();
               group.forEach(conn => {
-                let realConn = recipe.particles.find(p => p.name == conn.particle.name).connections[conn.name];
-                assert(realConn);
-                realConn.connectToView(recipeView)
+                let cloneConn = recipe.updateToClone({conn}).conn;
+                cloneConn.connectToView(recipeView)
               });
             });
           });
           // TODO: score!
         };
       }
-    }(RecipeWalker.Permuted), this);
-
+    }(RecipeWalker.Permuted);
+  }
+  get walker() {
+    return this._walker;
+  }
+  async generate(strategizer) {
     return {
-      results,
+      results: Recipe.over(this.getResults(strategizer), this.walker, this),
       generate: null,
     };
   }

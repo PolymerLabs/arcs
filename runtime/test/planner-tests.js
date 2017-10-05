@@ -622,12 +622,43 @@ recipe
       let { results } = await gvc.generate(strategizer);
       assert.equal(results.length, 1);
       let recipe = results[0].result;
-      console.log(recipe.toString());
       assert.equal(4, recipe.views.length);
       // Verify all connections are bound to views.
       assert.isUndefined(recipe.viewConnections.find(vc => !vc.view));
       // Verify all views have non-empty connections list.
       assert.isUndefined(recipe.views.find(v => v.connections.length == 0));
+    });
+  });
+  describe('CombinedStrategy', function() {
+    it ('combined strategy with search tokens and group view connections', async() => {
+      let manifest = (await Manifest.parse(`
+        schema Energy
+        schema Height
+        particle Energizer in 'A.js'
+          prepare(out Energy energy)
+        particle Jumper in 'AA.js'
+          jump(in Energy energy, out Height height)
+
+        recipe
+          search \`prepare and jump\`
+      `));
+      manifest.recipes[0].normalize();
+      var strategizer = {generated: [{result: manifest.recipes[0], score: 1}], terminal:[]};
+      var arc = createTestArc("test-plan-arc", manifest, "dom");
+      var cs = new CombinedStrategy([
+        new SearchTokensToParticles(arc),
+        new GroupViewConnections(arc),
+      ]);
+
+      let { results } = await cs.generate(strategizer);
+      assert.equal(results.length, 2);
+      assert.isTrue(results[0].final);
+      assert.isFalse(!!results[1].final);
+      // Examine the last recipe - it was produced by applying all strategies.
+      let recipe = results[results.length - 1].result;
+      assert.equal(2, recipe.particles.length);
+      assert.equal(1, recipe.views.length);
+      assert.equal(2, recipe.views[0].connections.length);
     });
   });
 });

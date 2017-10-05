@@ -264,6 +264,9 @@ class Strategy {
     // generated individuals and evaluations.
     return {generate: 0, evaluate: 0};
   }
+  getResults(strategizer) {
+    return strategizer.generated.filter(g => !g.final);;
+  }
   async generate(strategizer, n) {
     return [];
   }

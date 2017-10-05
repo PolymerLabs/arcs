@@ -34,7 +34,7 @@ const Tracing = require('tracelib');
 class CreateViews extends Strategy {
   // TODO: move generation to use an async generator.
   async generate(strategizer) {
-    var results = Recipe.over(strategizer.generated, new class extends RecipeWalker {
+    var results = Recipe.over(this.getResults(strategizer), new class extends RecipeWalker {
       onView(recipe, view) {
         var counts = RecipeUtil.directionCounts(view);
 
@@ -70,7 +70,10 @@ class Planner {
         new SearchTokensToParticles(arc),
         new GroupViewConnections(),
       ]),
+<<<<<<< HEAD
       new FallbackFate(),
+=======
+>>>>>>> Introduce combined strategy to run multiple strategies together
       new CreateViews(),
       new AssignViewsByTagAndType(arc),
       new ConvertConstraintsToConnections(arc),
