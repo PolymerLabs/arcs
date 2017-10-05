@@ -43,10 +43,11 @@ describe('particle-api', function() {
             defineParticle(({Particle}) => {
               return class P extends Particle {
                 async setViews(views) {
-                  let result = await this.constructInnerArc();
-                  var view = views.get('result');
-                  result = (result == undefined ? 'fail' : 'success');
-                  view.set(new view.entityClass({value: result}));
+                  let arc = await this.constructInnerArc();
+                  var resultView = views.get('result');
+                  let view = await arc.createView(resultView.type, "a view");
+                  view.set(new resultView.entityClass({value: 'success'}));
+                  resultView.set(new resultView.entityClass({value: 'done'}));
                 }
               }
             });
@@ -73,6 +74,9 @@ describe('particle-api', function() {
     recipe.normalize();
     arc.instantiate(recipe);
 
-    await util.assertSingletonHas(resultView, Result, "success");
+    await util.assertSingletonWillChangeTo(resultView, Result, "done");
+    let newView = arc.findViewsByType(Result.type)[1];
+    assert(newView.name == "a view");
+    await util.assertSingletonIs(newView, Result, "success");
   });
 });

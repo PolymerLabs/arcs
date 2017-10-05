@@ -46,7 +46,7 @@ describe('Arc', function() {
     viewlet.viewletFor(fooView).set(new Foo({value: 'a Foo'}));
     recipe.normalize();
     arc.instantiate(recipe);
-    await util.assertSingletonHas(barView, Bar, "a Foo1");
+    await util.assertSingletonWillChangeTo(barView, Bar, "a Foo1");
   });
 
   it('applies new views to a particle', async () => {
@@ -58,6 +58,6 @@ describe('Arc', function() {
     arc.instantiate(recipe);
 
     viewlet.viewletFor(fooView).set(new Foo({value: 'a Foo'}));
-    await util.assertSingletonHas(barView, Bar, "a Foo1");
+    await util.assertSingletonWillChangeTo(barView, Bar, "a Foo1");
   });
 });

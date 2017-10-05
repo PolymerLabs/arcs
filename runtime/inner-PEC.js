@@ -20,12 +20,16 @@ const Schema = require('./schema.js');
 class RemoteView {
   constructor(id, type, port, pec, name, version) {
     this._id = id;
-    this.type = type;
+    this._type = type;
     this._port = port;
     this._pec = pec;
     this.name = name;
     this._version = version;
     this.state = 'outOfDate';
+  }
+
+  get type() {
+    return this._type;
   }
 
   generateID() {
@@ -88,6 +92,12 @@ class InnerPEC {
       return new RemoteView(identifier, Type.fromLiteral(viewType), this._apiPort, this, name, version);
     };
 
+    this._apiPort.onCreateViewCallback = ({viewType, identifier, name, callback}) => {
+      var view = new RemoteView(identifier, Type.fromLiteral(viewType), this._apiPort, this, name, 0);
+      Promise.resolve().then(() => callback(view));
+      return view;
+    }
+
     this._apiPort.onDefineParticle = ({particleDefinition, particleFunction}) => {
       var particle = define(particleDefinition, eval(particleFunction));
       this._loader.registerParticle(particle);
@@ -104,7 +114,7 @@ class InnerPEC {
 
     this._apiPort.onViewCallback = ({callback, data}) => callback(data);
 
-    this._apiPort.onParticleCallback = ({callback}) => callback();
+    this._apiPort.onConstructArcCallback = ({callback, arc}) => callback(arc);
 
     this._apiPort.onAwaitIdle = ({version}) =>
       this.idle.then(a => this._apiPort.Idle({version, relevance: this.relevance}));
@@ -171,15 +181,21 @@ class InnerPEC {
     return `${this._idBase}:${this._nextLocalID++}`;
   }
 
-  innerArcHandle() {
-    return {};
+  innerArcHandle(arcId) {
+    var pec = this;
+    return {
+      createView: function(viewType, name) {
+        return new Promise((resolve, reject) =>
+          pec._apiPort.ArcCreateView({arc: arcId, viewType, name, callback: resolve}));
+      }
+    };
   }
 
   defaultCapabilitySet() {
     return {
       constructInnerArc: particle => {
         return new Promise((resolve, reject) =>
-          this._apiPort.ConstructInnerArc({ callback: () => {resolve(this.innerArcHandle())}, particle }));
+          this._apiPort.ConstructInnerArc({ callback: arcId => {resolve(this.innerArcHandle(arcId))}, particle }));
       }
     }
   }
