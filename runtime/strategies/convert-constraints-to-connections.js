@@ -17,7 +17,7 @@ class ConvertConstraintsToConnections extends Strategy {
   }
   async generate(strategizer) {
     var affordance = this.affordance;
-    var results = Recipe.over(strategizer.generated, new class extends RecipeWalker {
+    var results = Recipe.over(this.getResults(strategizer), new class extends RecipeWalker {
       onRecipe(recipe) {
         var particles = new Set();
         var views = new Set();

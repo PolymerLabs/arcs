@@ -15,7 +15,7 @@ class ViewMapperBase extends Strategy {
   async generate(strategizer) {
     var self = this;
 
-    var results = Recipe.over(strategizer.generated, new class extends RecipeWalker {
+    var results = Recipe.over(this.getResults(strategizer), new class extends RecipeWalker {
       onView(recipe, view) {
         if (view.fate !== self.fate)
           return;
