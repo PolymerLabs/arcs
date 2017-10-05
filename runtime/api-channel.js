@@ -11,6 +11,7 @@
 
 const assert = require('assert');
 const ParticleSpec = require('./particle-spec.js');
+const Type = require('./type.js');
 
 class ThingMapper {
   constructor(prefix) {
@@ -250,7 +251,10 @@ class PECOuterPort extends APIPort {
     this.registerHandler("Idle", {version: this.Direct, relevance: this.Map(this.Mapped, this.Direct)});
 
     this.registerHandler("ConstructInnerArc", {callback: this.Direct, particle: this.Mapped});
-    this.registerCall("ParticleCallback", {callback: this.Direct});
+    this.registerCall("ConstructArcCallback", {callback: this.Direct, arc: this.LocalMapped});
+
+    this.registerHandler("ArcCreateView", {callback: this.Direct, arc: this.LocalMapped, viewType: this.ByLiteral(Type), name: this.Direct});
+    this.registerInitializer("CreateViewCallback", {callback: this.Direct, viewType: this.Direct, name: this.Direct});
   }
 }
 
@@ -285,7 +289,10 @@ class PECInnerPort extends APIPort {
     this.registerCall("Idle", {version: this.Direct, relevance: this.Map(this.Mapped, this.Direct)});
 
     this.registerCall("ConstructInnerArc", {callback: this.LocalMapped, particle: this.Mapped});
-    this.registerHandler("ParticleCallback", {callback: this.LocalMapped});
+    this.registerHandler("ConstructArcCallback", {callback: this.LocalMapped, arc: this.Direct});
+
+    this.registerCall("ArcCreateView", {callback: this.LocalMapped, arc: this.Direct, viewType: this.ByLiteral(Type), name: this.Direct});
+    this.registerInitializerHandler("CreateViewCallback", {callback: this.LocalMapped, viewType: this.Direct, name: this.Direct});
   }
 }
 
