@@ -20,6 +20,7 @@ let InitPopulation = require('../strategies/init-population.js');
 let MapRemoteSlots = require('../strategies/map-remote-slots.js');
 let MatchParticleByVerb = require('../strategies/match-particle-by-verb.js');
 let SearchTokensToParticles = require('../strategies/search-tokens-to-particles.js');
+let FallbackFate = require('../strategies/fallback-fate.js');
 
 var loader = new Loader();
 
@@ -35,7 +36,6 @@ function createTestArc(id, context, affordance) {
 }
 
 describe('Planner', function() {
-
   it('can generate things', async () => {
     let manifest = await Manifest.load('../particles/test/giftlist.manifest', loader);
     var arc = createTestArc("test-plan-arc", manifest, "dom");
@@ -578,5 +578,61 @@ describe('MatchParticleByVerb', function() {
     assert.equal(2, plans.length);
     assert.deepEqual([["SimpleJumper"], ["StarJumper"]],
                      plans.map(plan => plan.particles.map(particle => particle.name)));
+  });
+});
+describe('FallbackFate', function() {
+  it('fallback for search based recipe', async () => {
+    let manifest = (await Manifest.parse(`
+      schema Thing
+      particle DoSomething in 'AA.js'
+        DoSomething(in Thing inthing, out Thing outthing)
+
+      recipe
+        search \`DoSomething\`
+        use as view0
+        use as view1
+        DoSomething as particle0
+          inthing <- view0
+          outthing -> view1
+    `));
+    let recipe = manifest.recipes[0];
+    recipe.views.forEach(v => v._originalFate = "?");
+    assert(recipe.normalize());
+    var arc = createTestArc("test-plan-arc", manifest, "dom");
+    var strategizer = {generated: [{result: manifest.recipes[0], score: 1}], terminal: []};
+
+    var ff = new FallbackFate(arc);
+    let { results } = await ff.generate(strategizer);
+
+    assert.equal(results.length, 1);
+    let plan = results[0].result;
+    assert.equal(plan.views.length, 2);
+    assert.equal('map', plan.views[0].fate);
+    assert.equal('copy', plan.views[1].fate);
+  });
+
+  it('ignore non-search unresolved recipe', async () => {
+    // Same as above, but the recipe doesn't originate from user search query.
+    let manifest = (await Manifest.parse(`
+      schema Thing
+      particle DoSomething in 'AA.js'
+        DoSomething(in Thing inthing, out Thing outthing)
+
+      recipe
+        use as view0
+        use as view1
+        DoSomething as particle0
+          inthing <- view0
+          outthing -> view1
+    `));
+    let recipe = manifest.recipes[0];
+    recipe.views.forEach(v => v._originalFate = "?");
+    assert(recipe.normalize());
+    var arc = createTestArc("test-plan-arc", manifest, "dom");
+    var strategizer = {generated: [{result: manifest.recipes[0], score: 1}], terminal: []};
+
+    var ff = new FallbackFate(arc);
+    let { results } = await ff.generate(strategizer);
+    assert.equal(results.length, 0);
   });
 });

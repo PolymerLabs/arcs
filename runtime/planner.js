@@ -23,6 +23,7 @@ let AddUseViews = require('./strategies/add-use-views.js');
 let Manifest = require('./manifest.js');
 let InitSearch = require('./strategies/init-search.js');
 let SearchTokensToParticles = require('./strategies/search-tokens-to-particles.js');
+let FallbackFate = require('./strategies/fallback-fate.js');
 
 const Speculator = require('./speculator.js');
 const Description = require('./description.js');
@@ -45,8 +46,8 @@ class CreateViews extends Strategy {
             score = 0;
         }
 
-        if (!view.id && view._fate == "?") {
-          return (recipe, view) => {view._fate = "create"; return score}
+        if (!view.id && view.fate == "?") {
+          return (recipe, view) => {view.fate = "create"; return score}
         }
       }
     }(RecipeWalker.Permuted), this);
@@ -64,6 +65,7 @@ class Planner {
       new InitPopulation(arc),
       new InitSearch(arc),
       new SearchTokensToParticles(arc),
+      new FallbackFate(),
       new CreateViews(),
       new AssignViewsByTagAndType(arc),
       new ConvertConstraintsToConnections(arc),

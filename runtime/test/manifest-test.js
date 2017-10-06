@@ -37,8 +37,8 @@ describe('manifest', function() {
       assert(recipe);
       assert.equal(recipe.particles.length, 1);
       assert.equal(recipe.views.length, 2);
-      assert.equal(recipe.views[0]._fate, "map");
-      assert.equal(recipe.views[1]._fate, "create");
+      assert.equal(recipe.views[0].fate, "map");
+      assert.equal(recipe.views[1].fate, "create");
       assert.equal(recipe.viewConnections.length, 1);
       assert.sameMembers(recipe.viewConnections[0].tags, ['#tag']);
     };
@@ -573,7 +573,7 @@ Expected " ", "#", "\\n", "\\r", [ ] or [A-Z] but "?" found.
     assert.isFalse(recipe.isResolved());
     assert.equal(recipe.toString(), `recipe
   search \`Hello dear world\`
-  tokens \`dear\` \`hello\` \`world\``);
+    tokens \`dear\` \`hello\` \`world\``);
 
     recipe = (await Manifest.parse(manifestSource)).recipes[0];
     // resolve some tokens.
@@ -584,7 +584,7 @@ Expected " ", "#", "\\n", "\\r", [ ] or [A-Z] but "?" found.
     assert.deepEqual(['hello', 'world'], recipe.search.resolvedTokens);
     assert.equal(recipe.toString(), `recipe
   search \`Hello dear world\`
-  tokens \`dear\` # \`hello\` \`world\``);
+    tokens \`dear\` # \`hello\` \`world\``);
 
     // resolve all tokens.
     recipe.search.resolveToken('dear');
@@ -596,7 +596,7 @@ Expected " ", "#", "\\n", "\\r", [ ] or [A-Z] but "?" found.
     assert.isTrue(recipe.isResolved());
     assert.equal(recipe.toString(), `recipe
   search \`Hello dear world\`
-  tokens # \`dear\` \`hello\` \`world\``);
+    tokens # \`dear\` \`hello\` \`world\``);
   });
   it('merge recipes with search strings', async () => {
     let recipe1 = (await Manifest.parse(`recipe
