@@ -17,14 +17,15 @@ class View {
     this._localName = undefined;
     this._tags = [];
     this._type = undefined;
-    this._fate = "?";
+    this._fate = null;
+    this._originalFate = null;
     this._connections = [];
     this._mappedType = undefined;
   }
 
   _copyInto(recipe) {
     var view = undefined;
-    if (this._id !== null && ['map', 'use', 'copy'].includes(this._fate))
+    if (this._id !== null && ['map', 'use', 'copy'].includes(this.fate))
       view = recipe.findView(this._id);
 
     if (view == undefined) {
@@ -33,6 +34,7 @@ class View {
       view._tags = [...this._tags];
       view._type = this._type;
       view._fate = this._fate;
+      view._originalFate = this._originalFate;
       view._mappedType = this._mappedType;
 
       // the connections are re-established when Particles clone their
@@ -62,13 +64,19 @@ class View {
     if ((cmp = util.compareStrings(this._localName, other._localName)) != 0) return cmp;
     if ((cmp = util.compareArrays(this._tags, other._tags, util.compareStrings)) != 0) return cmp;
     // TODO: type?
-    if ((cmp = util.compareStrings(this._fate, other._fate)) != 0) return cmp;
+    if ((cmp = util.compareStrings(this.fate, other.fate)) != 0) return cmp;
     return 0;
   }
 
   // a resolved View has either an id or create=true
-  get fate() { return this._fate; }
-  set fate(fate) { this._fate = fate; }
+  get fate() { return this._fate || "?"; }
+  set fate(fate) {
+    if (!this._originalFate) {
+      this._originalFate = this._fate;
+    }
+    this._fate = fate;
+  }
+  get originalFate() { return this._originalFate || "?"; }
   get recipe() { return this._recipe; }
   get tags() { return this._tags; } // only tags owned by the view
   set tags(tags) { this._tags = tags; }
@@ -115,7 +123,7 @@ class View {
       }
       return false;
     }
-    switch (this._fate) {
+    switch (this.fate) {
       case "?": {
         if (options) {
           options.details = "missing fate";
@@ -134,9 +142,9 @@ class View {
         return true;
       default: {
         if (options) {
-          options.details = `invalid fate ${this._fate}`;
+          options.details = `invalid fate ${this.fate}`;
         }
-        assert(false, `Unexpected fate: ${this._fate}`);
+        assert(false, `Unexpected fate: ${this.fate}`);
       }
     }
   }
@@ -144,7 +152,7 @@ class View {
   toString(nameMap, options) {
     // TODO: type? maybe output in a comment
     let result = [];
-    result.push(this._fate);
+    result.push(this.fate);
     if (this.id) {
       result.push(`'${this.id}'`);
     }
