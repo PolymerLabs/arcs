@@ -14,7 +14,7 @@ let loader;
 async function init() {
   loader = new Arcs.BrowserLoader(chrome.runtime.getURL('/'));
 
-  // The goal here is that this list contains all known schema
+  // The goal here eventually is that this contains all known schema
   manifest = await Arcs.Manifest.parse(`
     import '${cdn}/artifacts/Products/Product.schema'`,
     {fileName: 'inline',  path: 'inline', loader: loader});
