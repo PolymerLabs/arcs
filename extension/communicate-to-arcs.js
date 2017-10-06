@@ -6,7 +6,7 @@
 // http://polymer.github.io/PATENTS.txt
 
 function _getUrl(cdnRoot, arcManifest, response) {
-  let ret = cdnRoot+'?manifest='+arcManifest+'&amkey='+response.amKey;
+  let ret = `${cdnRoot}?manifest=${arcManifest}&amkey=${response.amKey}`;
   if (response.manifestUrls) {
     ret += response.manifestUrls.reduce((accum, current)=>accum+'&manifest='+current, '');
   }
