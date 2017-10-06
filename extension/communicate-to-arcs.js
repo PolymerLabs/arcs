@@ -17,7 +17,7 @@ function _getUrl(cdnRoot, arcManifest, response) {
 function populateIframe(doc) {
 
   var iframe = doc.getElementById('arcs-if');
-  let cdnApp = cdn + '/app/';
+  let cdnApp = cdn + '/apps/chrome-extension/';
   var newPageLink = doc.getElementById('ext-new-page');
   var reinitLink = doc.getElementById('ext-reinit');
   var displayAmKey = doc.getElementById('ext-amkey');

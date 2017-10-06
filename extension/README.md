@@ -58,12 +58,16 @@ event-page.js#filterResponse(). Notable inclusions are
 [Product](https://schema.org/Product) and [Event](https://schema.org/Event),
 but check the code for the authoritative list.
 
-The extension automatically tags [Product] with #shortlist.
+The extension automatically tags [Product] with #shortlist, and all other
+views with #browserContext.
 
 ## todos
 
 Nothing is ever complete.
 
+- [ ] Views should be created in the user's profile, so they can be consumed
+  in other arcs (and as they aren't meant to be shared to other users by
+  default).
 - [ ] When initializing the extension, pull in data from all open tabs. The
   current version depends on the extension being on from browser startup, and
   there's a hook from each tab that's opened to send over entities from that
