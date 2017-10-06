@@ -11,10 +11,11 @@
 var supportedTypes = ["Text", "URL"];
 
 class JsonldToManifest {
-  static convert(jsonld) {
+  static convert(jsonld, theClass) {
     var obj = JSON.parse(jsonld);
     var classes = {};
     var properties = {};
+
     for (var item of obj['@graph']) {
       if (item["@type"] == "rdf:Property")
         properties[item["@id"]] = item;
@@ -31,9 +32,8 @@ class JsonldToManifest {
         clazz.superclass = classes[superclass];
       }
     }
-    var theClass = null;
     for (var clazz of Object.values(classes)) {
-      if (clazz.subclasses.length == 0) {
+      if (clazz.subclasses.length == 0 && theClass == undefined) {
         theClass = clazz;
       }
     }
@@ -41,12 +41,16 @@ class JsonldToManifest {
     var relevantProperties = [];
     for (var property of Object.values(properties)) {
       var domains = property['schema:domainIncludes'];
+      if (!domains)
+        domains = {'@id': theClass['@id']};
       if (!domains.length)
         domains = [domains];
       domains = domains.map(a => a['@id']);
       if (domains.includes(theClass['@id'])) {
         var name = property['@id'].split(':')[1];
         var type = property['schema:rangeIncludes'];
+        if (!type)
+          console.log(property);
         if (!type.length)
           type = [type];
 
