@@ -16,7 +16,7 @@ async function init() {
 
   // The goal here is that this list contains all known schema
   manifest = await Arcs.Manifest.parse(`
-    import '${cdn}/entities/entities.manifest'`,
+    import '${cdn}/artifacts/Products/Product.schema'`,
     {fileName: 'inline',  path: 'inline', loader: loader});
   arc = new Arcs.Arc({id: 'browser/'+chrome.runtime.id, context: manifest});
   ams = new ArcMetadataStorage({arc: arc});
@@ -154,9 +154,11 @@ function updateArc(tabId, response) {
 
       viewType = new Arcs.Type('list', entityClass.type);
 
+      let viewTag = shortTypeName=='Product' ? 'shortlist' : 'browserContext';
+
       viewId = 'Browser/'+tabId+'/'+shortTypeName;
       view = arc.createView(viewType, 'Browser tab '+tabId+' type '+shortTypeName,
-        viewId, ['shortlist']);
+        viewId, [viewTag]);
 
       // need to push entity
       arc.commit([entity]);
