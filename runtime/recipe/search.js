@@ -80,7 +80,7 @@ class Search {
     result.push(`search \`${this.phrase}\``);
 
     let tokenStr = [];
-    tokenStr.push('tokens');
+    tokenStr.push('  tokens');
     if (this.unresolvedTokens.length > 0) {
       tokenStr.push(this.unresolvedTokens.map(t => `\`${t}\``).join(" "));
     }

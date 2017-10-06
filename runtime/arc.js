@@ -185,7 +185,7 @@ class Arc {
     for (let recipeView of views) {
       if (['copy', 'create'].includes(recipeView.fate)) {
         let view = this.createView(recipeView.type, /* name= */ null, /* id= */ null, recipeView.tags);
-        if (recipeView._fate === "copy") {
+        if (recipeView.fate === "copy") {
           var copiedView = this.findViewById(recipeView.id);
           view.cloneFrom(copiedView);
         }
