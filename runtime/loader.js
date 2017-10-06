@@ -54,8 +54,12 @@ class Loader {
   }
 
   _loadURL(url) {
-    if (/\/\/schema.org\//.test(url))
+    if (/\/\/schema.org\//.test(url)) {
+      if (url.endsWith('/Thing')) {
+        return fetch("https://schema.org/Product.jsonld").then(res => res.text()).then(data => JsonldToManifest.convert(data, {'@id': 'schema:Thing'}));
+      }
       return fetch(url + ".jsonld").then(res => res.text()).then(data => JsonldToManifest.convert(data));
+    }
     return fetch(url).then(res => res.text());
   }
 
