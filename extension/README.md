@@ -2,13 +2,11 @@
 
 The extension does two things:
 
-1) Synchronizes metadata from the browser to the shared Arcs system.
+1) Synchronizes metadata from the browser to your Arc.
 1) Provides an entry point to Arcs.
 
-The first point is worth re-emphasizing. **The extension sends metadata from
-pages you visit to a public firebase.** We've limited the extent of data
-shared to allow the extension to be tested while we continue working on the
-platform.
+Currently (and temporarily) synchronization happens via a **public** firebase.
+
 
 ## installation
 
@@ -65,13 +63,6 @@ views with #browserContext.
 
 Nothing is ever complete.
 
-- [ ] Views should be created in the user's profile, so they can be consumed
-  in other arcs (and as they aren't meant to be shared to other users by
-  default).
-- [ ] When initializing the extension, pull in data from all open tabs. The
-  current version depends on the extension being on from browser startup, and
-  there's a hook from each tab that's opened to send over entities from that
-  tab.
 - [ ] Tags are how we differentiate between views. Once firebase supports it,
   put additional tags on all views created by the extension (as many as
   possible - the more information in tags, the better matches we'll be able to
