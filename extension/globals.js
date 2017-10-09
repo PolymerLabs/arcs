@@ -5,11 +5,17 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
+// the root of the CDN. This is also (unfortunately) hardcoded in
+// event-page.html
 //const cdn = 'http://localhost:5001/dev';
 const cdn = 'https://polymerlabs.github.io/arcs-cdn/dev';
 
-//const arcStories = 'http://localhost:5002/arc-stories';
-const arcStories = 'https://sjmiles.github.io/arc-stories/';
+const manifestType = 'text/x-arcs-manifest';
+const manifestRel = 'arcs-manifest';
 
-const defaultManifest = arcStories + '/artifacts/Products/recipes.manifest';
-const manifestType = 'arcs-manifest';
+// ----------------------------------------------------------
+// defaultManifest specifies a manifest to always load; or, leave empty to
+// skip.
+
+// This is our central store for Product-related manifests
+const defaultManifest = cdn + '/artifacts/Products/recipes.manifest';

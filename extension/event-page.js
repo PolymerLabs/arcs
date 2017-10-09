@@ -101,7 +101,7 @@ function filterResponse(response) {
   let ret = response.filter(entity => {
     if (/^https?:\/\/schema.org\/(Product|Event)$/.test(entity['@type'])) return true;
     if (entity['@type'].endsWith('CustomEvent')) return true;
-    if (entity['@type'].endsWith(manifestType)) return true;
+    if (entity['@type'] == manifestType) return true;
     return false;
   });
   return ret;
