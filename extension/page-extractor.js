@@ -40,10 +40,9 @@ async function extractEntities() {
 function extractManifests() {
 
   return Array.prototype.map.call(
-    document.querySelectorAll('link[rel="arcsManifest"]'),
+    document.querySelectorAll('link[type="'+manifestType+'"]'),
     function(link) {
-      return {'@type': manifestType,
-      url: link.href};
+      return {'@type': manifestType, url: link.href};
     }
   );
 }
