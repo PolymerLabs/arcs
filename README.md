@@ -1,6 +1,6 @@
 # arcs
 
-Particle developers should visit our [particle developer website](https://polymerlabs.github.io/arcs/) instead of reading this document which is more geared towards Arcs core system developers. 
+Particle developers should visit our [particle developer website](https://polymerlabs.github.io/arcs-cdn/dev/) instead of reading this document which is more geared towards Arcs core system developers. 
 
 ## Install
 
