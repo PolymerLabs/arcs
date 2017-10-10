@@ -28,6 +28,10 @@ class Recipe {
 
     // TODO: Change to array, if needed for search strings of merged recipes.
     this._search = null;
+
+    // The recipe as it was created or loaded from manifest. Each plan holds the initial version
+    // of recipe it was resolved from.
+    this._baseRecipe = null;
   }
 
   newConnectionConstraint(from, fromConnection, to, toConnection) {
@@ -296,6 +300,7 @@ class Recipe {
     // on the recipe
     recipe._cloneMap = cloneMap;
 
+    recipe._baseRecipe = this._baseRecipe || this;
     return recipe;
   }
 

@@ -16,7 +16,6 @@ const util = require('./test-util.js');
 const viewlet = require('../viewlet.js');
 const Manifest = require('../manifest.js');
 
-
 let loader = new (require('../loader'));
 
 async function setup() {
@@ -47,6 +46,7 @@ describe('Arc', function() {
     recipe.normalize();
     arc.instantiate(recipe);
     await util.assertSingletonHas(barView, Bar, "a Foo1");
+    assert.equal(arc._acceptedSuggestions.length, 1);
   });
 
   it('applies new views to a particle', async () => {
@@ -59,5 +59,6 @@ describe('Arc', function() {
 
     viewlet.viewletFor(fooView).set(new Foo({value: 'a Foo'}));
     await util.assertSingletonHas(barView, Bar, "a Foo1");
+    assert.equal(arc._acceptedSuggestions.length, 1);
   });
 });

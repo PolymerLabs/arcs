@@ -31,6 +31,7 @@ class Arc {
     this.id = id;
     this._nextLocalID = 0;
     this._activeRecipe = new Recipe();
+    this._acceptedSuggestions = [];
 
     // All the views, mapped by view ID
     this._viewsById = new Map();
@@ -136,6 +137,7 @@ class Arc {
       value.views.forEach(v => arc.particleViewMaps.get(key).views.set(v.name, v.clone()));
     });
 
+    this._acceptedSuggestions.forEach(a => arc._acceptedSuggestions.push(a.clone()));
     arc._activeRecipe.mergeInto(this._activeRecipe);
 
     for (let v of viewMap.values()) {
@@ -181,11 +183,11 @@ class Arc {
 
   instantiate(recipe) {
     assert(recipe.isResolved(), 'Cannot instantiate an unresolved recipe');
-    let {views, particles, slots} = recipe.mergeInto(this._activeRecipe);
+    let {views, particles, slots} = this._acceptSuggestion(recipe);
     for (let recipeView of views) {
       if (['copy', 'create'].includes(recipeView.fate)) {
         let view = this.createView(recipeView.type, /* name= */ null, /* id= */ null, recipeView.tags);
-        if (recipeView._fate === "copy") {
+        if (recipeView.fate === "copy") {
           var copiedView = this.findViewById(recipeView.id);
           view.cloneFrom(copiedView);
         }
@@ -204,6 +206,11 @@ class Arc {
       // TODO: pass slot-connections instead
       this.pec.slotComposer.initializeRecipe(particles);
     }
+  }
+
+  _acceptSuggestion(recipe) {
+    this._acceptedSuggestions.push(recipe);
+    return recipe.mergeInto(this._activeRecipe);
   }
 
   _connectParticleToView(particleHandle, particle, name, targetView) {
@@ -327,6 +334,8 @@ class Arc {
     if (!this._activeRecipe.isEmpty()) {
       results.push(this._activeRecipe.toString());
     }
+
+    this._acceptedSuggestions.forEach(a => results.push(a.toString()));
 
     return results.join('\n');
   }
