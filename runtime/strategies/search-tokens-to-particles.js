@@ -34,7 +34,6 @@ module.exports = class SearchTokensToParticles extends Strategy {
 
         let specsByToken = {};
         for (let token of recipe.search.unresolvedTokens) {
-          //for (let spec of this.particlesFinder(token)) {
           for (let spec of findParticles(token)) {
             // TODO: Skip particles that are already in the active recipe?
             specsByToken[token] = specsByToken[token] || [];
