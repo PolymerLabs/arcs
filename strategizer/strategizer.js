@@ -265,7 +265,7 @@ class Strategy {
     return {generate: 0, evaluate: 0};
   }
   getResults(strategizer) {
-    return strategizer.generated.filter(g => !g.final);;
+    return strategizer.generated;
   }
   async generate(strategizer, n) {
     return [];
