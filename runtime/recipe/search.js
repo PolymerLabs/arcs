@@ -39,10 +39,10 @@ class Search {
   get unresolvedTokens() { return this._unresolvedTokens; }
   get resolvedTokens() { return this._resolvedTokens; }
   resolveToken(token) {
-    let index = this.unresolvedTokens.indexOf(token);
+    let index = this.unresolvedTokens.indexOf(token.toLowerCase());
     assert(index >= 0, `Cannot resolved nonexistent token ${token}`);
     this._unresolvedTokens.splice(index, 1);
-    this._resolvedTokens.push(token);
+    this._resolvedTokens.push(token.toLowerCase());
   }
 
   isValid() {

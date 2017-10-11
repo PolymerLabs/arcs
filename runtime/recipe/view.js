@@ -18,6 +18,8 @@ class View {
     this._tags = [];
     this._type = undefined;
     this._fate = null;
+    // TODO: replace originalFate with more generic mechanism for tracking
+    // how and from what the recipe was generated.
     this._originalFate = null;
     this._connections = [];
     this._mappedType = undefined;
