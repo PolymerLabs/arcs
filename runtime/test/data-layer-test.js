@@ -17,7 +17,7 @@ const SlotComposer = require('../slot-composer.js');
 
 describe('entity', function() {
   it('can be created, stored, and restored', async () => {
-    let schema = new Schema({name: 'TestSchema', sections: [{
+    let schema = new Schema({name: 'TestSchema', parents: [], sections: [{
         sectionType: 'normative',
         fields: {
             'value': 'Text'
