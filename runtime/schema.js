@@ -16,7 +16,7 @@ class Schema {
   constructor(model) {
     this._model = model;
     this.name = model.name;
-    this.parent = model.parent ? new Schema(model.parent) : null;
+    this.parents = model.parents.map(parent => new Schema(parent));
     this._normative = {};
     this._optional = {};
     assert(model.sections);
@@ -38,15 +38,19 @@ class Schema {
   }
 
   get normative() {
-    var dict = this.parent ? this.parent.normative : {};
-    Object.assign(dict, this._normative);
-    return dict;
+    var normative = {};
+    for (var parent of this.parents)
+      Object.assign(normative, parent.normative);
+    Object.assign(normative, this._normative);
+    return normative;
   }
 
   get optional() {
-    var dict = this.parent ? this.parent.optional : {};
-    Object.assign(dict, this._optional);
-    return dict;
+    var optional = {};
+    for (var parent of this.parents)
+      Object.assign(optional, parent.optional);
+    Object.assign(optional, this._optional);
+    return optional;
   }
 
   entityClass() {

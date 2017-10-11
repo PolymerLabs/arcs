@@ -188,12 +188,13 @@ ${e.message}
     return manifest;
   }
   static _processSchema(manifest, schemaItem) {
-    if (schemaItem.parent) {
-      let parent = manifest.findSchemaByName(schemaItem.parent);
-      // TODO: error handling
+    var parents = [];
+    for (let parent of schemaItem.parents) {
+      parent = manifest.findSchemaByName(parent);
       assert(parent);
-      schemaItem.parent = parent.toLiteral();
+      parents.push(parent.toLiteral());
     }
+    schemaItem.parents = parents;
     manifest._schemas[schemaItem.name] = new Schema(schemaItem);
   }
   static _processParticle(manifest, particleItem, loader) {

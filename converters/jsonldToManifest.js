@@ -16,6 +16,10 @@ class JsonldToManifest {
     var classes = {};
     var properties = {};
 
+    if (!obj['@graph']) {
+      obj['@graph'] = [obj];
+    }
+
     for (var item of obj['@graph']) {
       if (item["@type"] == "rdf:Property")
         properties[item["@id"]] = item;
@@ -25,13 +29,25 @@ class JsonldToManifest {
         item.superclass = null;
       }
     }
+
     for (var clazz of Object.values(classes)) {
       if (clazz['rdfs:subClassOf'] !== undefined) {
-        var superclass = clazz['rdfs:subClassOf']['@id'];
-        classes[superclass].subclasses.push(clazz);
-        clazz.superclass = classes[superclass];
+        if (clazz['rdfs:subClassOf'].length == undefined)
+          clazz['rdfs:subClassOf'] = [clazz['rdfs:subClassOf']];
+        for (let subClass of clazz['rdfs:subClassOf']) {
+          var superclass = subClass['@id'];
+          if (clazz.superclass == undefined)
+            clazz.superclass = [];
+          if (classes[superclass]) {
+            classes[superclass].subclasses.push(clazz);
+            clazz.superclass.push(classes[superclass]);
+          } else {
+            clazz.superclass.push({'@id': superclass});
+          }
+        }
       }
     }
+
     for (var clazz of Object.values(classes)) {
       if (clazz.subclasses.length == 0 && theClass == undefined) {
         theClass = clazz;
@@ -62,15 +78,15 @@ class JsonldToManifest {
     }
 
     var className = theClass['@id'].split(':')[1];
-    var superName = theClass.superclass ? theClass.superclass['@id'].split(':')[1] : null;
+    var superNames = theClass.superclass ? theClass.superclass.map(a => a['@id'].split(':')[1]) : [];
 
     var s = '';
-    if (superName !== null)
+    for (let superName of superNames)
       s += `import 'https://schema.org/${superName}'\n\n`
 
     s += `schema ${className}`
-    if (superName !== null)
-      s += ` extends ${superName}`
+    if (superNames.length > 0)
+      s += ` extends ${superNames.join(', ')}`
 
     if (relevantProperties.length > 0) {
       s += '\n  optional';

@@ -21,6 +21,7 @@ function testEntityClass(type) {
   return new Schema({
     name: type,
     sections: [],
+    parents: [],
   }).entityClass();
 }
 
