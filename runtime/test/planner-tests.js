@@ -645,17 +645,14 @@ recipe
       manifest.recipes[0].normalize();
       var strategizer = {generated: [{result: manifest.recipes[0], score: 1}], terminal:[]};
       var arc = createTestArc("test-plan-arc", manifest, "dom");
-      var cs = new CombinedStrategy([
+      var strategy = new CombinedStrategy([
         new SearchTokensToParticles(arc),
         new GroupViewConnections(arc),
       ]);
 
-      let { results } = await cs.generate(strategizer);
-      assert.equal(results.length, 2);
-      assert.isTrue(results[0].final);
-      assert.isFalse(!!results[1].final);
-      // Examine the last recipe - it was produced by applying all strategies.
-      let recipe = results[results.length - 1].result;
+      let { results } = await strategy.generate(strategizer);
+      assert.equal(results.length, 1);
+      let recipe = results[0].result;
       assert.equal(2, recipe.particles.length);
       assert.equal(1, recipe.views.length);
       assert.equal(2, recipe.views[0].connections.length);

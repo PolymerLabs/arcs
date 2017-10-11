@@ -45,12 +45,33 @@ http://polymer.github.io/PATENTS.txt
       document.strategyExplorer = this;
       this.reset();
     },
+    addExtraPredecessor(parent, hash) {
+      let extras = [];
+      if (parent && !this.parentMap.has(parent)) {
+        parent.derivation.forEach(d => extras = extras.concat(this.addExtraPredecessor(d.parent, hash)));
+        this.parentMap.set(parent, this.lastID);
+        extras.push({ result: parent.result,
+                      score: parent.score,
+                      derivation: parent.derivation,
+                      description: parent.description,
+                      hash: hash,
+                      valid: parent.valid,
+                      active: parent.active,
+                      combined: true,
+                      id: this.lastID++ });
+      }
+      return extras;
+    },
     preparePopulation: function(population) {
+      let extras = [];
       population = population.map(recipe => {
         let { result, score, derivation, description, hash, valid, active } = recipe;
+        recipe.derivation.forEach(d => extras = extras.concat(this.addExtraPredecessor(d.parent, hash)));
         this.parentMap.set(recipe, this.lastID);
         return { result, score, derivation, description, hash, valid, active, id: this.lastID++ };
       });
+      population = extras.concat(population);
+
       population.forEach(item => {
         item.derivation = item.derivation.map(derivItem => {
           if (derivItem.parent)

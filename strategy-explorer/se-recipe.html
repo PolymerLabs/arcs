@@ -68,6 +68,10 @@ http://polymer.github.io/PATENTS.txt
         border-style: dashed;
       }
 
+      #recipe-box[combined] {
+        background-color: lightgrey;
+      }
+
       #hash {
         color: #555;
         font-style: italic;
@@ -88,6 +92,7 @@ http://polymer.github.io/PATENTS.txt
       activeDescendant$='{{activeDescendant}}'
       terminal$='{{terminal}}'
       resolved$='{{recipe.resolved}}'
+      combined$='{{recipe.combined}}'
     ><div>{{recipe.score}}</div><div id='hash'>{{shortHash}}</div></div>
   </template>
 
