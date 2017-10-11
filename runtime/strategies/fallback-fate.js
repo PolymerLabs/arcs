@@ -18,8 +18,8 @@ class FallbackFate extends Strategy {
     let terminal = strategizer.terminal;
     var results = Recipe.over([...generated, ...terminal], new class extends RecipeWalker {
       onView(recipe, view) {
-        // Only apply this strategy to user query based recipes.
-        if (!recipe.search) {
+        // Only apply this strategy only to user query based recipes with resolved tokens.
+        if (!recipe.search || (recipe.search.resolvedTokens.length == 0)) {
           return;
         }
 
@@ -28,9 +28,14 @@ class FallbackFate extends Strategy {
           return;
         }
 
+        let hasOutConns = view.connections.some(vc => vc.isOutput);
+        let newFate = hasOutConns ? "copy" : "map";
+        if (view.fate == newFate) {
+          return;
+        }
+
         return (recipe, clonedView) => {
-          let hasOutConns = clonedView.connections.some(vc => vc.isOutput);
-          clonedView.fate = hasOutConns ? "copy" : "map";
+          clonedView.fate = newFate;
           return 0;
         };
       }
