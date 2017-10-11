@@ -20,7 +20,7 @@ describe('schema', function() {
     assert.deepEqual(schema.normative, {name: 'Text'});
     assert.deepEqual(schema.optional, {description: 'Text', image: 'URL', category: 'Text', price: 'Text', seller: 'Text', shipDays: 'Text', url: 'URL'});
     assert.equal(schema.name, "Product");
-    assert.equal(schema.parent.name, "Thing");
+    assert.equal(schema.parents[0].name, "Thing");
   });
 
   it('constructs an appropriate entity subclass', async function() {
