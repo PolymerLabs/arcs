@@ -46,7 +46,7 @@ describe('Planner', function() {
     await planner.generate(),
     await planner.generate(),
     await planner.generate(),
-    assert.equal(planner.strategizer.population.length, 6);
+    assert.equal(planner.strategizer.population.length, 5);
   });
 
   it('make a plan with views', async () => {
@@ -61,7 +61,7 @@ describe('Planner', function() {
     await planner.generate(),
     await planner.generate(),
     await planner.generate(),
-    assert.equal(planner.strategizer.population.length, 6);
+    assert.equal(planner.strategizer.population.length, 5);
   });
 });
 
@@ -119,7 +119,7 @@ describe('ConvertConstraintsToConnections', async() => {
     let { result, score } = results[0];
     assert.deepEqual(result.toString(),
 `recipe
-  ? as view0
+  create as view0
   A as particle0
     b = view0
   C as particle1
@@ -141,7 +141,7 @@ describe('ConvertConstraintsToConnections', async() => {
     let { result, score } = results[0];
     assert.deepEqual(result.toString(),
 `recipe
-  ? as view0
+  create as view0
   A as particle0
     b = view0
   C as particle1
@@ -163,7 +163,7 @@ describe('ConvertConstraintsToConnections', async() => {
     let { result, score } = results[0];
     assert.deepEqual(result.toString(),
 `recipe
-  ? as view0
+  create as view0
   A as particle0
     b = view0
   C as particle1
@@ -187,7 +187,7 @@ describe('ConvertConstraintsToConnections', async() => {
     let { result, score } = results[0];
     assert.deepEqual(result.toString(),
 `recipe
-  ? as view0
+  create as view0
   A as particle0
     b = view0
   C as particle1
@@ -597,7 +597,7 @@ describe('FallbackFate', function() {
         DoSomething(in Thing inthing, out Thing outthing)
 
       recipe
-        search \`DoSomething\`
+        search \`DoSomething DoSomethingElse\`
         use as view0
         use as view1
         DoSomething as particle0
@@ -609,10 +609,15 @@ describe('FallbackFate', function() {
     assert(recipe.normalize());
     var arc = createTestArc("test-plan-arc", manifest, "dom");
     var strategizer = {generated: [{result: manifest.recipes[0], score: 1}], terminal: []};
+    var strategy = new FallbackFate(arc);
 
-    var ff = new FallbackFate(arc);
-    let { results } = await ff.generate(strategizer);
+    // no resolved search tokens.
+    let { results } = await strategy.generate(strategizer);
+    assert.equal(results.length, 0);
 
+    // Resolved a search token and rerun strategy.
+    recipe.search.resolveToken('DoSomething');
+    results = (await strategy.generate(strategizer)).results;
     assert.equal(results.length, 1);
     let plan = results[0].result;
     assert.equal(plan.views.length, 2);
@@ -640,8 +645,8 @@ describe('FallbackFate', function() {
     var arc = createTestArc("test-plan-arc", manifest, "dom");
     var strategizer = {generated: [{result: manifest.recipes[0], score: 1}], terminal: []};
 
-    var ff = new FallbackFate(arc);
-    let { results } = await ff.generate(strategizer);
+    var strategy = new FallbackFate(arc);
+    let { results } = await strategy.generate(strategizer);
     assert.equal(results.length, 0);
   });
 });

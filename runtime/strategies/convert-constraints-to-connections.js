@@ -68,6 +68,7 @@ class ConvertConstraintsToConnections extends Strategy {
                 var recipeView = recipeMap[view];
                 if (recipeView == null) {
                   recipeView = recipe.newView();
+                  recipeView.fate = 'create';
                   recipeMap[view] = recipeView;
                 }
                 if (recipeViewConnection.view == null)
