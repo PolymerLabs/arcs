@@ -36,7 +36,6 @@ class Loader {
   }
 
   loadResource(file) {
-    console.log(file);
     if (/^https?:\/\//.test(file))
       return this._loadURL(file);
     return this._loadFile(file);
