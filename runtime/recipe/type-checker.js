@@ -64,15 +64,18 @@ class TypeChecker {
       supertype = supertype.primitiveType();
     }
 
-    if (subtype.isEntity && supertype.isEntity) {
-      var t = subtype.entitySchema;
-      while (t) {
-        if (t == supertype.entitySchema)
+    function checkSuper(schema) {
+      if (!schema)
+        return false;
+      if (schema == supertype.entitySchema)
+        return true;
+      for (let parent of schema.parents)
+        if (checkSuper(parent))
           return true;
-        t = t.parent;
-      }
+      return false;
     }
-    return false;
+
+    return checkSuper(subtype.entitySchema);
   }
 
   // left, right: {type, direction, connection}
