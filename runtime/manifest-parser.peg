@@ -427,13 +427,23 @@ RecipeSlot
     }
   }
 
+ExtendsList
+  = whiteSpace 'extends' whiteSpace first:upperIdent rest:(whiteSpace? ',' whiteSpace upperIdent)*
+{
+  var list = [first];
+  for (let item of rest) {
+    list.push(item[3]);
+  }
+  return list;
+}
+
 Schema
-  = 'schema' whiteSpace name:upperIdent parent:(whiteSpace 'extends' whiteSpace upperIdent)? eolWhiteSpace sections:(Indent (SameIndent SchemaSection)*)?
+  = 'schema' whiteSpace name:upperIdent parent:ExtendsList? eolWhiteSpace sections:(Indent (SameIndent SchemaSection)*)?
   {
     return {
       kind: 'schema',
       name: name,
-      parent: optional(parent, parent => parent[3], null),
+      parents: optional(parent, parent => parent, []),
       sections: optional(sections, extractIndented, []),
     };
   }

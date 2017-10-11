@@ -15,9 +15,22 @@ const Manifest = require('../manifest.js');
 let loader = new Loader();
 
 describe('loader', function() {
-  it('can read a schema.org schema', async () => {
+  it('correctly loads Thing as a dependency', async () => {
     let schemaString = await loader.loadResource('http://schema.org/Product');
     let manifest = await Manifest.parse(schemaString, {loader, fileName: 'http://schema.org/Product'});
-  assert(manifest.schemas.Product.optional.description == 'Text');
-  });
+    assert(manifest.schemas.Product.optional.description == 'Text');
+  }).timeout(10000);
+
+  it('can read a schema.org schema that aliases another type', async () => {
+    let schemaString = await loader.loadResource('http://schema.org/Restaurant');
+    let manifest = await Manifest.parse(schemaString, {loader, fileName: 'http://schema.org/Restaurant'});
+    assert(manifest.schemas.Restaurant.optional.servesCuisine == 'Text');
+  }).timeout(10000);
+
+  it('can read a schema.org schema with multiple inheritance', async () => {
+    let schemaString = await loader.loadResource('http://schema.org/LocalBusiness');
+    let manifest = await Manifest.parse(schemaString, {loader, fileName: 'http://schema.org/LocalBusiness'});
+    assert(manifest.schemas.LocalBusiness.optional.duns == 'Text');
+    assert(manifest.schemas.LocalBusiness.optional.branchCode == 'Text');
+  }).timeout(10000);
 });
