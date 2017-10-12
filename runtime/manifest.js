@@ -150,7 +150,7 @@ class Manifest {
       for (let i = 0; i < span; i++) {
         highlight += '^';
       }
-      let message = `Syntax error in '${fileName}' line ${e.location.start.line}.
+      let message = `Parse error in '${fileName}' line ${e.location.start.line}.
 ${e.message}
   ${line}
   ${highlight}`;
