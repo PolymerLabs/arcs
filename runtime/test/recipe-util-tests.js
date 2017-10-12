@@ -15,8 +15,11 @@ let assert = require('assert');
 describe('recipe-util', function() {
   it('can produce a shape match to a simple recipe', async () => {
     let manifest = await Manifest.parse(`
+      schema S
       particle A
+        A(out S a)
       particle B
+        B(out S b)
 
       recipe Recipe
         map as v1
@@ -37,9 +40,13 @@ describe('recipe-util', function() {
 
   it('can produce multiple partial shape matches to a simple recipe', async () => {
     let manifest = await Manifest.parse(`
+      schema S
       particle A
+        A(out S a)
       particle B
+        B(out S b)
       particle C
+        C(out S c)
 
       recipe Recipe
         map as v1
@@ -89,8 +96,11 @@ describe('recipe-util', function() {
 
   it('can match dangling view connections', async() => {
     let manifest = await Manifest.parse(`
+      schema S
       particle A
+        A(out S a)
       particle B
+        B(out S b)
 
       recipe Recipe
         map as v1

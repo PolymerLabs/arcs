@@ -133,9 +133,6 @@ class Strategizer {
     });
 
     // Evalute
-    if (generated.length > 0 && this._evaluators.length == 0) {
-      console.warn('No evaluators');
-    }
     let evaluations = await Promise.all(this._evaluators.map(strategy => {
       return strategy.evaluate(this, generated);
     }));

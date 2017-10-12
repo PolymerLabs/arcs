@@ -345,12 +345,20 @@ ${e.message}
         }
         connection.tags = connectionItem.target ? connectionItem.target.tags : [];
         let direction = {'->': 'out', '<-': 'in', '=': 'inout'}[connectionItem.dir];
-        if (connection.direction != direction && direction != 'inout') {
-          let error = new Error(`'${connectionItem.dir}' not compatible with '${connection.direction}' param of '${particle.name}'`);
-          error.location = connectionItem.location;
-          throw error;
+        if (connection.direction) {
+          if (connection.direction != direction && direction != 'inout') {
+            let error = new Error(`'${connectionItem.dir}' not compatible with '${connection.direction}' param of '${particle.name}'`);
+            error.location = connectionItem.location;
+            throw error;
+          }
+        } else {
+          if (connectionItem.param != '*') {
+            let error = new Error(`param '${connectionItem.param}' is not defined by '${particle.name}'`);
+            error.location = connectionItem.location;
+            throw error;
+          }
+          connection.direction = direction;
         }
-        connection.direction = direction;
 
         let targetView;
         let targetParticle;
