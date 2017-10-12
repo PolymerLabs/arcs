@@ -557,6 +557,36 @@ Expected " ", "#", "\\n", "\\r", [ ] or [A-Z] but "?" found.
     }
   });
 
+  it('errors when the manifest connects a particle incorrectly', async () => {
+    let manifestSource = `
+        schema Thing
+        particle TestParticle in 'tp.js'
+          TestParticle(in Thing iny, out Thing outy, inout Thing inouty)
+        recipe
+          create as x
+          TestParticle
+            iny -> x
+            outy -> x
+            inouty -> x`;
+    let loader = {
+      loadResource(path) {
+        return manifestSource;
+      },
+      path(fileName) {
+        return fileName;
+      },
+      join(path, file) {
+        return file;
+      },
+    };
+    try {
+      await Manifest.load('...', loader);
+      assert.fail();
+    } catch (e) {
+      assert.match(e.message, /'->' not compatible with 'in' param of 'TestParticle'/);
+    }
+  });
+
   it('resolves manifest with recipe with search', async () => {
     // TODO: support search tokens in manifest-parser.peg
     let manifestSource = `
