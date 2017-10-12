@@ -564,7 +564,7 @@ describe('manifest', function() {
       await Manifest.parse('recipe ?', {fileName: 'bad-file'});
       assert(false);
     } catch (e) {
-      assert.deepEqual(e.message, `Syntax error in 'bad-file' line 1.
+      assert.deepEqual(e.message, `Parse error in 'bad-file' line 1.
 Expected " ", "#", "\\n", "\\r", [ ] or [A-Z] but "?" found.
   recipe ?
          ^`);
