@@ -17,5 +17,5 @@ const manifestRel = 'arcs-manifest';
 // defaultManifest specifies a manifest to always load; or, leave empty to
 // skip.
 
-// This is our central store for Product-related manifests
-const defaultManifest = cdn + '/artifacts/Products/recipes.manifest';
+// This is a sample demo manifest
+const defaultManifest = 'https://smalls.github.io/arcs-sample-particles/Product/Products.recipes'
