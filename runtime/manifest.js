@@ -130,34 +130,38 @@ class Manifest {
     position = position || {line: 1, column: 0};
     id = `manifest:${fileName}:`;
 
+    function processError(e) {
+      if (!e.location) {
+        return e;
+      }
+      let lines = content.split('\n');
+      let line = lines[e.location.start.line - 1];
+      let span = 1;
+      if (e.location.end.line == e.location.start.line) {
+        span = e.location.end.column - e.location.start.column;
+      } else {
+        span = line.length - e.location.start.column;
+      }
+      span = Math.max(1, span);
+      let highlight = '';
+      for (let i = 0; i < e.location.start.column - 1; i++) {
+        highlight += ' ';
+      }
+      for (let i = 0; i < span; i++) {
+        highlight += '^';
+      }
+      let message = `Syntax error in '${fileName}' line ${e.location.start.line}.
+${e.message}
+  ${line}
+  ${highlight}`;
+      return new Error(message);
+    }
+
     let items = [];
     try{
       items = parser.parse(content);
     } catch (e) {
-      if (e.name == 'SyntaxError' && e.location) {
-        let lines = content.split('\n');
-        let line = lines[e.location.start.line - 1];
-        let span = 1;
-        if (e.location.end.line == e.location.start.line) {
-          span = e.location.end.column - e.location.start.column;
-        } else {
-          span = line.length - e.location.start.column;
-        }
-        span = Math.max(1, span);
-        let highlight = '';
-        for (let i = 0; i < e.location.start.column - 1; i++) {
-          highlight += ' ';
-        }
-        for (let i = 0; i < span; i++) {
-          highlight += '^';
-        }
-        let message = `Syntax error in '${fileName}' line ${e.location.start.line}.
-${e.message}
-  ${line}
-  ${highlight}`;
-        throw new SyntaxError(message);
-      }
-      throw e;
+      throw processError(e);
     }
     let manifest = new Manifest();
     manifest._fileName = fileName;
@@ -173,17 +177,22 @@ ${e.message}
       let target = loader.join(path, item.path);
       manifest._imports.push(await Manifest.load(target, loader, {registry}));
     }
-    for (let item of items.filter(item => item.kind == 'schema')) {
-      this._processSchema(manifest, item);
-    }
-    for (let item of items.filter(item => item.kind == 'particle')) {
-      this._processParticle(manifest, item, loader);
-    }
-    for (let item of items.filter(item => item.kind == 'view')) {
-      await this._processView(manifest, item, loader);
-    }
-    for (let item of items.filter(item => item.kind == 'recipe')) {
-      this._processRecipe(manifest, item);
+
+    try {
+      for (let item of items.filter(item => item.kind == 'schema')) {
+        this._processSchema(manifest, item);
+      }
+      for (let item of items.filter(item => item.kind == 'particle')) {
+        this._processParticle(manifest, item, loader);
+      }
+      for (let item of items.filter(item => item.kind == 'view')) {
+        await this._processView(manifest, item, loader);
+      }
+      for (let item of items.filter(item => item.kind == 'recipe')) {
+        this._processRecipe(manifest, item);
+      }
+    } catch (e) {
+      throw processError(e);
     }
     return manifest;
   }
@@ -335,7 +344,13 @@ ${e.message}
           // TODO: else, merge tags? merge directions?
         }
         connection.tags = connectionItem.target ? connectionItem.target.tags : [];
-        connection.direction = {'->': 'out', '<-': 'in', '=': 'inout'}[connectionItem.dir];
+        let direction = {'->': 'out', '<-': 'in', '=': 'inout'}[connectionItem.dir];
+        if (connection.direction != direction && direction != 'inout') {
+          let error = new Error(`'${connectionItem.dir}' not compatible with '${connection.direction}' param of '${particle.name}'`);
+          error.location = connectionItem.location;
+          throw error;
+        }
+        connection.direction = direction;
 
         let targetView;
         let targetParticle;

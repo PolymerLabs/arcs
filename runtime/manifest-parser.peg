@@ -115,7 +115,7 @@ Particle
       args,
       affordance,
       slots,
-      description
+      description,
     };
   }
 
@@ -308,6 +308,7 @@ RecipeParticleConnection
       param,
       dir,
       target: optional(target, target => target[1], null),
+      location: location(),
     };
   }
 
