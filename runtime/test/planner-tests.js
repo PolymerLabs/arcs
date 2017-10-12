@@ -196,8 +196,11 @@ describe('ConvertConstraintsToConnections', async() => {
 
   it('fills out a constraint, reusing two particles and a view', async() => {
     let recipe = (await Manifest.parse(`
+      schema S
       particle A
+        A(inout S b)
       particle C
+        C(inout S d)
 
       recipe
         A.b -> C.d
@@ -212,7 +215,7 @@ describe('ConvertConstraintsToConnections', async() => {
     let { result, score } = results[0];
     assert.deepEqual(result.toString(),
 `recipe
-  use as view0
+  use as view0 # S
   A as particle0
     b = view0
   C as particle1
@@ -221,8 +224,11 @@ describe('ConvertConstraintsToConnections', async() => {
 
   it('fills out a constraint, reusing two particles and a view (2)', async() => {
     let recipe = (await Manifest.parse(`
+      schema S
       particle A
+        A(inout S b)
       particle C
+        C(inout S d)
 
       recipe
         A.b -> C.d
@@ -237,7 +243,7 @@ describe('ConvertConstraintsToConnections', async() => {
     let { result, score } = results[0];
     assert.deepEqual(result.toString(),
 `recipe
-  use as view0
+  use as view0 # S
   A as particle0
     b = view0
   C as particle1
@@ -246,8 +252,11 @@ describe('ConvertConstraintsToConnections', async() => {
 
   it('removes an already fulfilled constraint', async() => {
     let recipe = (await Manifest.parse(`
+      schema S
       particle A
+        A(inout S b)
       particle C
+        C(inout S d)
 
       recipe
         A.b -> C.d
@@ -262,7 +271,7 @@ describe('ConvertConstraintsToConnections', async() => {
     assert(results.length == 1);
     let { result, score } = results[0];
     assert.deepEqual(result.toString(), `recipe
-  use as view0
+  use as view0 # S
   A as particle0
     b = view0
   C as particle1

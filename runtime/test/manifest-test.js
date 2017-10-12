@@ -24,8 +24,9 @@ async function assertRecipeParses(input, result) {
 describe('manifest', function() {
   it('can parse a manifest containing a recipe', async () => {
     let manifest = await Manifest.parse(`
+      schema S
       particle SomeParticle in 'some-particle.js'
-        work()
+        work(out S someParam)
 
       recipe SomeRecipe
         map #someView
@@ -96,8 +97,11 @@ describe('manifest', function() {
   });
   it('can resolve recipes with connections between particles', async () => {
     let manifest = await Manifest.parse(`
+      schema S
       particle P1
+        P1(out S x, in S y)
       particle P2
+        P2(out S y)
 
       recipe Connected
         P1
@@ -115,8 +119,11 @@ describe('manifest', function() {
   });
   it('supports recipes specified with bidirectional connections', async () => {
     let manifest = await Manifest.parse(`
+      schema S
       particle P1
+        P1(out S x)
       particle P2
+        P2(out S x)
 
       recipe Bidirectional
         P1
@@ -160,8 +167,11 @@ describe('manifest', function() {
   });
   it('supports recipes with local names', async () => {
     let manifest = await Manifest.parse(`
+      schema S
       particle P1
+        P1(out S x, out S y)
       particle P2
+        P2(out S x, out S y)
 
       recipe
         ? #things as thingView
@@ -187,7 +197,9 @@ describe('manifest', function() {
   // TODO: move these tests to new-recipe tests.
   it('can normalize simple recipes', async () => {
     let manifest = await Manifest.parse(`
+      schema S
       particle P1
+        P1(out S x)
       particle P2
 
       recipe
@@ -213,7 +225,9 @@ describe('manifest', function() {
   });
   it('can normalize recipes with interdependent ordering of views and particles', async () => {
     let manifest = await Manifest.parse(`
+      schema S
       particle P1
+        P1(out S x)
 
       recipe
         use as v1
@@ -405,7 +419,7 @@ describe('manifest', function() {
             formFactor small
 
       particle OtherParticle
-        OtherParticle()
+        OtherParticle(out Thing aParam)
         consume mySlot
         consume oneMoreSlot
 
@@ -584,6 +598,35 @@ Expected " ", "#", "\\n", "\\r", [ ] or [A-Z] but "?" found.
       assert.fail();
     } catch (e) {
       assert.match(e.message, /'->' not compatible with 'in' param of 'TestParticle'/);
+    }
+  });
+
+  it('errors when the manifest referencs a missing particle param', async () => {
+    let manifestSource = `
+        schema Thing
+        particle TestParticle in 'tp.js'
+          TestParticle(in Thing a)
+        recipe
+          create as x
+          TestParticle
+            a = x
+            b = x`
+    let loader = {
+      loadResource(path) {
+        return manifestSource;
+      },
+      path(fileName) {
+        return fileName;
+      },
+      join(path, file) {
+        return file;
+      },
+    };
+    try {
+      await Manifest.load('...', loader);
+      assert.fail();
+    } catch (e) {
+      assert.match(e.message, /param 'b' is not defined by 'TestParticle'/);
     }
   });
 
