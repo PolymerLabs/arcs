@@ -61,7 +61,7 @@ class Manifest {
       view = new Variable(type, this, name, id);
     }
     this._views.push(view);
-    this._viewTags.set(view, tags);
+    this._viewTags.set(view, tags ? tags : []);
     return view;
   }
   _find(manifestFinder) {
