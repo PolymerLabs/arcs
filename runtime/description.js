@@ -225,16 +225,20 @@ class ValueToken {
     }
     if (view.type.isView) {
       let viewList = view.toList();
-      if (viewList) {
-        if (viewList.length > 2) {
-          // TODO: configurable view display format.
-          return `<b>${viewList[0].rawData.name}</b> plus <b>${viewList.length-1}</b> other items`;
+      if (viewList && viewList.length > 0) {
+        if (viewList[0].rawData.name) {
+          if (viewList.length > 2) {
+            // TODO: configurable view display format.
+            return `<b>${viewList[0].rawData.name}</b> plus <b>${viewList.length-1}</b> other items`;
+          }
+          return viewList.map(v => `<b>${v.rawData.name}</b>`).join(", ");
+        } else {
+          return `<b>${viewList.length}</b> items`;
         }
-        return viewList.map(v => `<b>${v.rawData.name}</b>`).join(", ");
       }
     } else {
       let viewVar = view.get();
-      if (viewVar) {
+      if (viewVar && viewVar.rawData.name) {
         return `<b>${viewVar.rawData.name}</b>`;  // TODO: use type's Entity instead
       }
     }

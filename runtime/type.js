@@ -143,14 +143,16 @@ class Type {
   toPrettyString() {
     if (this.isRelation)
       return JSON.stringify(this.data);
-    if (this.isView)
-      return `${this.primitiveType().toString()} List`;
+    if (this.isView) {
+      return `${this.primitiveType().toPrettyString()} List`;
+    }
     if (this.isVariable)
       return `[${this.variableName}]`;
     if (this.isVariableReference)
       return `[${this.variableReferenceName}]`;
     if (this.isEntity)
-      return this.entitySchema.name;
+      // Spit MyTypeFOO to My Type FOO
+      return this.entitySchema.name.replace(/([^A-Z])([A-Z])/g, "$1 $2").replace(/([A-Z][^A-Z])/g, " $1").trim();
     if (this.isEntityReference)
       return this.entityReferenceName;
   }
