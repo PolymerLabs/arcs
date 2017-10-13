@@ -70,10 +70,7 @@ class Planner {
         new SearchTokensToParticles(arc),
         new GroupViewConnections(),
       ]),
-<<<<<<< HEAD
       new FallbackFate(),
-=======
->>>>>>> Introduce combined strategy to run multiple strategies together
       new CreateViews(),
       new AssignViewsByTagAndType(arc),
       new ConvertConstraintsToConnections(arc),
