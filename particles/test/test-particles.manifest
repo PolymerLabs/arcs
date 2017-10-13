@@ -13,6 +13,10 @@ schema Bar
     Text value
 schema Far
 
+schema Result
+  normative
+    Text value
+
 particle TestParticle in 'test-particle.js'
   TestParticle(in Foo foo, out Bar bar)
   description `test particle`
@@ -22,3 +26,6 @@ particle TwoInputTestParticle in 'two-input-test-particle.js'
 
 particle ListTestParticle in 'list-test-particle.js'
   ListTestParticle(in Bar bar, out [Far] fars)
+
+particle PassThrough in 'pass-through.js'
+  PassThrough(in Result a, out Result b)

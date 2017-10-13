@@ -12,6 +12,10 @@
 const PEC = require('./particle-execution-context.js');
 const assert = require('assert');
 const PECOuterPort = require('./api-channel.js').PECOuterPort;
+const Manifest = require('./manifest.js');
+
+// TODO: fix
+const Loader = require('./loader.js');
 
 class OuterPEC extends PEC {
   constructor(port, slotComposer, arc) {
@@ -34,16 +38,16 @@ class OuterPEC extends PEC {
       } else {
         var model = view.toList();
       }
-      this._apiPort.ViewCallback({callback: modelCallback, data: model}, target);
-      view.on(type, data => this._apiPort.ViewCallback({callback, data}), target);
+      this._apiPort.SimpleCallback({callback: modelCallback, data: model}, target);
+      view.on(type, data => this._apiPort.SimpleCallback({callback, data}), target);
     };
 
     this._apiPort.onViewGet = ({view, callback}) => {
-      this._apiPort.ViewCallback({callback, data: view.get()});
+      this._apiPort.SimpleCallback({callback, data: view.get()});
     }
 
     this._apiPort.onViewToList = ({view, callback}) => {
-      this._apiPort.ViewCallback({callback, data: view.toList()});
+      this._apiPort.SimpleCallback({callback, data: view.toList()});
     }
 
     this._apiPort.onViewSet = ({view, data}) => view.set(data);
@@ -65,7 +69,31 @@ class OuterPEC extends PEC {
 
     this._apiPort.onArcCreateView = ({callback, arc, viewType, name}) => {
       var view = this._arc.createView(viewType, name);
-      this._apiPort.CreateViewCallback(view, {viewType, name, callback});
+      this._apiPort.CreateViewCallback(view, {viewType, name, callback, id: view.id});
+    }
+
+    this._apiPort.onArcLoadRecipe = async ({arc, recipe, callback}) => {
+      // TODO: don't construct a new Loader here
+      let manifest = await Manifest.parse(recipe, {loader: new Loader(), fileName: ''});
+      let error = undefined
+      var recipe = manifest.recipes[0];
+      if (recipe) {
+        for (var view of recipe.views) {
+          view.mapToView(this._arc.findViewById(view.id));
+        }
+        if (recipe.normalize()) {
+          if (recipe.isResolved()) {
+            this._arc.instantiate(recipe);
+          } else {
+            error = "Recipe is not resolvable";
+          }
+        } else {
+          error = "Recipe could not be normalized";
+        }
+      } else {
+        error = "No recipe defined";
+      }
+      this._apiPort.SimpleCallback({callback, data: error})
     }
   }
 

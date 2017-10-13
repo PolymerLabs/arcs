@@ -233,7 +233,7 @@ class PECOuterPort extends APIPort {
       {spec: this.ByLiteral(ParticleSpec), views: this.Map(this.Direct, this.Mapped)});
 
     this.registerCall("UIEvent", {particle: this.Mapped, slotName: this.Direct, event: this.Direct});
-    this.registerCall("ViewCallback", {callback: this.Direct, data: this.Direct});
+    this.registerCall("SimpleCallback", {callback: this.Direct, data: this.Direct});
     this.registerCall("AwaitIdle", {version: this.Direct});
     this.registerCall("StartRender", {particle: this.Mapped, slotName: this.Direct, contentTypes: this.List(this.Direct)});
     this.registerCall("StopRender", {particle: this.Mapped, slotName: this.Direct});
@@ -254,7 +254,9 @@ class PECOuterPort extends APIPort {
     this.registerCall("ConstructArcCallback", {callback: this.Direct, arc: this.LocalMapped});
 
     this.registerHandler("ArcCreateView", {callback: this.Direct, arc: this.LocalMapped, viewType: this.ByLiteral(Type), name: this.Direct});
-    this.registerInitializer("CreateViewCallback", {callback: this.Direct, viewType: this.Direct, name: this.Direct});
+    this.registerInitializer("CreateViewCallback", {callback: this.Direct, viewType: this.Direct, name: this.Direct, id: this.Direct});
+
+    this.registerHandler("ArcLoadRecipe", {arc: this.LocalMapped, recipe: this.Direct, callback: this.Direct});
   }
 }
 
@@ -271,7 +273,7 @@ class PECInnerPort extends APIPort {
       {spec: this.ByLiteral(ParticleSpec), views: this.Map(this.Direct, this.Mapped)});
 
     this.registerHandler("UIEvent", {particle: this.Mapped, slotName: this.Direct, event: this.Direct});
-    this.registerHandler("ViewCallback", {callback: this.LocalMapped, data: this.Direct});
+    this.registerHandler("SimpleCallback", {callback: this.LocalMapped, data: this.Direct});
     this.registerHandler("AwaitIdle", {version: this.Direct});
     this.registerHandler("StartRender", {particle: this.Mapped, slotName: this.Direct, contentTypes: this.Direct});
     this.registerHandler("StopRender", {particle: this.Mapped, slotName: this.Direct});
@@ -292,7 +294,9 @@ class PECInnerPort extends APIPort {
     this.registerHandler("ConstructArcCallback", {callback: this.LocalMapped, arc: this.Direct});
 
     this.registerCall("ArcCreateView", {callback: this.LocalMapped, arc: this.Direct, viewType: this.ByLiteral(Type), name: this.Direct});
-    this.registerInitializerHandler("CreateViewCallback", {callback: this.LocalMapped, viewType: this.Direct, name: this.Direct});
+    this.registerInitializerHandler("CreateViewCallback", {callback: this.LocalMapped, viewType: this.Direct, name: this.Direct, id: this.Direct});
+
+    this.registerCall("ArcLoadRecipe", {arc: this.Direct, recipe: this.Direct, callback: this.LocalMapped});
   }
 }
 

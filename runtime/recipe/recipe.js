@@ -63,7 +63,7 @@ class Recipe {
   }
 
   isResolved() {
-    assert(Object.isFrozen(this), 'Recipe must be frozen to be resolved.');
+    assert(Object.isFrozen(this), 'Recipe must be normalized to be resolved.');
     return this._connectionConstraints.length == 0
         && (this._search === null || this._search.isResolved())
         && this._views.every(view => view.isResolved())
