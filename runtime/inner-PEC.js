@@ -28,6 +28,10 @@ class RemoteView {
     this.state = 'outOfDate';
   }
 
+  get id() {
+    return this._id;
+  }
+
   get type() {
     return this._type;
   }
@@ -96,8 +100,8 @@ class InnerPEC {
       return new RemoteView(identifier, Type.fromLiteral(viewType), this._apiPort, this, name, version);
     };
 
-    this._apiPort.onCreateViewCallback = ({viewType, identifier, name, callback}) => {
-      var view = new RemoteView(identifier, Type.fromLiteral(viewType), this._apiPort, this, name, 0);
+    this._apiPort.onCreateViewCallback = ({viewType, identifier, id, name, callback}) => {
+      var view = new RemoteView(id, Type.fromLiteral(viewType), this._apiPort, this, name, 0);
       Promise.resolve().then(() => callback(view));
       return view;
     }
@@ -116,7 +120,7 @@ class InnerPEC {
     this._apiPort.onInstantiateParticle =
       ({spec, views}) => this._instantiateParticle(spec, views);
 
-    this._apiPort.onViewCallback = ({callback, data}) => callback(data);
+    this._apiPort.onSimpleCallback = ({callback, data}) => callback(data);
 
     this._apiPort.onConstructArcCallback = ({callback, arc}) => callback(arc);
 
@@ -191,6 +195,16 @@ class InnerPEC {
       createView: function(viewType, name) {
         return new Promise((resolve, reject) =>
           pec._apiPort.ArcCreateView({arc: arcId, viewType, name, callback: resolve}));
+      },
+      loadRecipe: function(recipe) {
+        // TODO: do we want to return a promise on completion?
+        return new Promise((resolve, reject) =>
+          pec._apiPort.ArcLoadRecipe({arc: arcId, recipe, callback: a => {
+            if (a == undefined)
+              resolve();
+            else
+              reject(a);
+          }}));
       }
     };
   }
