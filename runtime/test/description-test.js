@@ -9,12 +9,13 @@
 */
 
 let assert = require('chai').assert;
-var Arc = require('../arc.js');
-var Description = require('../description.js');
+let Arc = require('../arc.js');
+let Description = require('../description.js');
 let Loader = require('../loader.js');
 let Manifest = require('../manifest.js');
 let Relevance = require('../relevance.js');
-var SlotComposer = require('../slot-composer.js');
+let SlotComposer = require('../slot-composer.js');
+let Type = require('../type.js');
 
 function createTestArc() {
   const slotComposer = new SlotComposer({rootContext: 'test', affordance: 'mock'});
@@ -350,5 +351,51 @@ recipe
                  Description.getSuggestion(recipe, arc));
     let view = recipe.viewConnections.find(vc => vc.particle.name == 'A' && vc.name == 'ofoo').view;
     assert.equal('&lt;my-foo>', Description.getViewDescription(view, arc));
+  });
+  it('multiword type and no name property in description', async() => {
+    let manifestStr = `
+      schema MyBESTType
+        optional
+          Text property
+      particle P
+        P(in MyBESTType t, out [MyBESTType] ts)
+        description \`Make \${ts} from \${t}\`
+        consume root
+      recipe
+        create as tView
+        create as tsView
+        slot 'rootslotid-root' as slot0
+        P
+         t = tView
+         ts = tsView
+         consume root as slot0`;
+      let manifest = (await Manifest.parse(manifestStr));
+      assert(1, manifest.recipes.length);
+      let recipe = manifest.recipes[0];
+      let MyBESTType = manifest.findSchemaByName('MyBESTType').entityClass();
+      recipe.views[0].mapToView({id: 'test:1', type: MyBESTType.type});
+      if (recipe.views.length > 1) {
+        recipe.views[1].mapToView({id: 'test:2', type: MyBESTType.type.viewOf()});
+      }
+      let arc = createTestArc();
+      let tView = arc.createView(MyBESTType.type);
+      let tsView = arc.createView(MyBESTType.type.viewOf());
+      recipe.normalize();
+      assert.isTrue(recipe.isResolved());
+
+      assert.equal('Make my best type list from my best type.', Description.getSuggestion(recipe, arc));
+      let tRecipeView = recipe.viewConnections.find(vc => vc.particle.name == 'P' && vc.name == 't').view;
+      let tsRecipeView = recipe.viewConnections.find(vc => vc.particle.name == 'P' && vc.name == 'ts').view;
+      assert.equal('my best type', Description.getViewDescription(tRecipeView, arc));
+      assert.equal('my best type list', Description.getViewDescription(tsRecipeView, arc));
+
+      // Add values to views.
+      tView.set({id: 1, rawData: {property: 'value1'}});
+      tsView.store({id: 2, rawData: {property: 'value2'}});
+      assert.equal('Make my best type list (<b>1</b> items) from my best type.', Description.getSuggestion(recipe, arc));
+
+      tsView.store({id: 3, rawData: {property: 'value3'}});
+      tsView.store({id: 4, rawData: {property: 'value4'}});
+      assert.equal('Make my best type list (<b>3</b> items) from my best type.', Description.getSuggestion(recipe, arc));
   });
 });
