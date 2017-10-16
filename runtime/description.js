@@ -42,7 +42,7 @@ function joinSuggestions(recipe, suggestions) {
   return desc;
 }
 
-function getViewDescription(view   /* Connection*/, arc, relevance) {
+function getViewDescription(view, arc, relevance) {
   assert(view);
   let options = createViewDescriptionOptions({arc, relevance});
   let viewConnection = _selectViewConnection(view, options) || view.connections[0];
