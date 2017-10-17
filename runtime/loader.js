@@ -81,6 +81,7 @@ class Loader {
       importScripts: s => null //console.log(`(skipping browser-space import for [${s}])`)
     };
     script.runInNewContext(self);
+    assert(result.length > 0 && typeof result[0] == 'function', `Error while instantiating particle implementation from ${fileName}`);
     return this.unwrapParticle(result[0]);
   }
 

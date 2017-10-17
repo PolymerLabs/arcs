@@ -111,6 +111,7 @@ class Manifest {
       return registry[fileName];
     }
     let content = await loader.loadResource(fileName);
+    assert(content !== undefined, `${fileName} unable to be loaded by Manifest parser`);
     let manifest = await Manifest.parse(content, {
       id,
       fileName,

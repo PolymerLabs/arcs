@@ -73,8 +73,7 @@ class OuterPEC extends PEC {
     }
 
     this._apiPort.onArcLoadRecipe = async ({arc, recipe, callback}) => {
-      // TODO: don't construct a new Loader here
-      let manifest = await Manifest.parse(recipe, {loader: new Loader(), fileName: ''});
+      let manifest = await Manifest.parse(recipe, {loader: this._arc._loader, fileName: ''});
       let error = undefined
       var recipe = manifest.recipes[0];
       if (recipe) {
