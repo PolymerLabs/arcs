@@ -80,7 +80,7 @@ describe('particle-api', function() {
     await util.assertSingletonIs(newView, Result, "success");
   });
 
-  it.only('can load a recipe', async () => {
+  it('can load a recipe', async () => {
     let registry = {};
     let loader = new class extends Loader {
       loadResource(path) {
@@ -111,7 +111,13 @@ describe('particle-api', function() {
                   let outView = await arc.createView(resultView.type, "out view");
                   try {
                     await arc.loadRecipe(\`
-                      import '../particles/test/test-particles.manifest'
+                      schema Result
+                        normative
+                          Text value
+
+                      particle PassThrough in 'pass-through.js'
+                        PassThrough(in Result a, out Result b)
+
                       recipe
                         use '\${inView.id}' as v1
                         use '\${outView.id}' as v2
@@ -129,7 +135,7 @@ describe('particle-api', function() {
               }
             });
           `,
-          '../particles/test/pass-through.js': `
+          'pass-through.js': `
             "use strict";
 
             defineParticle(({Particle}) => {
@@ -157,7 +163,7 @@ describe('particle-api', function() {
       new InnerPec(channel.port1, `${id}:inner`, loader);
       return channel.port2;
     };
-    let arc = new Arc({id:'test', pecFactory});
+    let arc = new Arc({id:'test', pecFactory, loader});
     let Result = manifest.findSchemaByName('Result').entityClass();
     let resultView = arc.createView(Result.type);
     let recipe = manifest.recipes[0];

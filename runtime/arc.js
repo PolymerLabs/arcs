@@ -23,7 +23,7 @@ const Description = require('./description.js');
 const util = require('./recipe/util.js');
 
 class Arc {
-  constructor({id, context, pecFactory, slotComposer}) {
+  constructor({id, context, pecFactory, slotComposer, loader}) {
     // TODO: context should not be optional.
     this._context = context || new Manifest();
     // TODO: pecFactory should not be optional. update all callers and fix here.
@@ -31,6 +31,7 @@ class Arc {
     this.id = id;
     this._nextLocalID = 0;
     this._activeRecipe = new Recipe();
+    this._loader = loader;
 
     // All the views, mapped by view ID
     this._viewsById = new Map();
