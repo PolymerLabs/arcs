@@ -35,6 +35,21 @@ function assertSingletonIs(view, entityClass, expectation) {
   });
 }
 
+function assertViewWillChangeTo(setView, entityClass, field, expectations) {
+  return new Promise((resolve, reject) => {
+    var view = viewlet.viewletFor(setView, true);
+    view.entityClass = entityClass;
+    view.on('change', () => view.toList().then(result => {
+      if (result == undefined)
+        return;
+      if (result.length == expectations.length &&
+          result.every(a => expectations.indexOf(a[field]) >= 0)) {
+        resolve();
+      }
+    }), {});
+  });
+}
+
 function assertViewHas(view, entityClass, field, expectations) {
   return new Promise((resolve, reject) => {
     view = viewlet.viewletFor(view, true);
@@ -67,5 +82,6 @@ function initParticleSpec(name) {
 exports.assertSingletonWillChangeTo = assertSingletonWillChangeTo;
 exports.assertSingletonIs = assertSingletonIs;
 exports.assertSingletonEmpty = assertSingletonEmpty;
+exports.assertViewWillChangeTo = assertViewWillChangeTo;
 exports.assertViewHas = assertViewHas;
 exports.initParticleSpec = initParticleSpec;
