@@ -64,9 +64,7 @@ class DomParticle extends XenStateMixin(Particle) {
   get config() {
     // TODO(sjmiles): getter that does work is a bad idea, this is temporary
     return {
-      // TODO(sjmiles): output views shouldn't be included here, but afaict, `inout`
-      // doesn't work yet in manifest, so we are using `out` views for `inout` views
-      views: this.spec.inputs.map(i => i.name).concat(this.spec.outputs.map(o => o.name)),
+      views: this.spec.inputs.map(i => i.name),
       // TODO(mmandlis): this.spec needs to be replace with a particle-spec loaded from
       // .manifest files, instead of .ptcl ones.
       slotNames: [...this.spec.slots.values()].map(s => s.name)
@@ -78,22 +76,24 @@ class DomParticle extends XenStateMixin(Particle) {
   async setViews(views) {
     this._views = views;
     let config = this.config;
-    let readableViews = config.views.filter(name => views.get(name).canRead);
-    this.when([new ViewChanges(views, readableViews, 'change')], async () => {
-      //log(`${this.info()}: invalidated by [ViewChanges]`);
+    //let readableViews = config.views.filter(name => views.get(name).canRead);
+    //this.when([new ViewChanges(views, readableViews, 'change')], async () => {
+    this.when([new ViewChanges(views, config.views, 'change')], async () => {
       // acquire (async) list data from views
-      let data = await Promise.all(config.views
-          .map(name => views.get(name))
-          .filter(view => view.canRead)
-          .map(view => view.toList ? view.toList() : view.get()));
+      let data = await Promise.all(
+        config.views
+        .map(name => views.get(name))
+        .map(view => view.toList ? view.toList() : view.get())
+      );
       // convert view data (array) into props (dictionary)
-      let props = config.views.reduce((props, name, i) => {
-        let value = data[i];
-        props[name] = (value && value.rawData) ? value.rawData : value;
-        return props;
-      }, Object.create(null));
+      let props = Object.create(null);
+      config.views.forEach((name, i) => {
+        props[name] = data[i];
+      });
       this._setProps(props);
     });
+    // make sure we invalidate once, even if there are no incoming views
+    this._setState({});
   }
   _update(props, state) {
     this.config.slotNames.forEach(s => this.render(s, ["model"]));
