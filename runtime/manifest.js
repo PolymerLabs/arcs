@@ -482,10 +482,17 @@ ${e.message}
 
   toString(options) {
     // TODO: sort?
-    let results = []
+    options = options || {};
+    let results = [];
 
     this._imports.forEach(i => {
-      results.push(`import '${i.fileName}'`);
+      if (options.recursive) {
+        results.push(`# import '${i.fileName}'`);
+        let importStr = i.toString(options);
+        results.push(`${i.toString(options)}`);
+      } else {
+        results.push(`import '${i.fileName}'`);
+      }
     });
 
     Object.values(this._schemas).forEach(s => {
