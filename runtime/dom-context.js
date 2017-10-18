@@ -57,8 +57,9 @@ class DomContext {
     if (!this._liveDom) {
       // TODO(sjmiles): hack to allow subtree elements (e.g. x-list) to marshal events
       this._context._eventMapper = this._eventMapper.bind(this, eventHandler);
-      this._liveDom = Template.stamp(template, eventHandler)
-          .mapEvents(this._context._eventMapper)
+      this._liveDom = Template
+          .stamp(template)
+          .events(this._context._eventMapper)
           .appendTo(this._context);
     }
   }
@@ -121,7 +122,12 @@ class DomContext {
     return innerSlotById;
   }
   _eventMapper(eventHandler, node, eventName, handlerName) {
-    node.addEventListener(eventName, () => {
+    node.addEventListener(eventName, event => {
+      // TODO(sjmiles): we have an extremely minimalist approach to events here, this is useful IMO for
+      // finding the smallest set of features that we are going to need.
+      // First problem: click event firing multiple times as it bubbles up the tree, minimalist solution
+      // is to enforce a 'first listener' rule by executing `stopPropagation`.
+      event.stopPropagation();
       eventHandler({
         handler: handlerName,
         data: {

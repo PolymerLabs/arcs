@@ -7,7 +7,17 @@ The complete set of contributors may be found at http://polymer.github.io/CONTRI
 Code distributed by Google as part of the polymer project is also
 subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
 */
+(scope => {
+
 'use strict';
+
+if (typeof document !== 'undefined' && !('currentImport' in document)) {
+  Object.defineProperty(document, 'currentImport', {
+    get() {
+      return (document._currentScript || document.currentScript || document).ownerDocument;
+    }
+  });
+}
 
 /* Annotator */
 // tree walker that generates arbitrary data using visitor function `cb`
@@ -155,7 +165,7 @@ let annotateEvent = function(node, key, notes, name, value) {
     if (value.slice(0, 2) === '{{') {
       value = value.slice(2, -2);
       console.warn(
-        `Xen: event handler for '{$name}' expressed as a mustache, which is not supported. Using literal value '${value}' instead.`
+        `Xen: event handler for '${name}' expressed as a mustache, which is not supported. Using literal value '${value}' instead.`
       );
     }
     takeNote(notes, key, 'events', name.slice(3), value);
@@ -191,26 +201,28 @@ let mapEvents = function(notes, map, mapper) {
   }
 };
 
-let listen = function(handlers, node, eventName, handlerName) {
+let listen = function(controller, node, eventName, handlerName) {
   node.addEventListener(eventName, function(e) {
-    if (handlers[handlerName]) {
-      return handlers[handlerName](e, e.detail);
+    if (controller[handlerName]) {
+      return controller[handlerName](e, e.detail);
     }
   });
 };
 
 let set = function(notes, map, scope, controller) {
-  for (let key in notes) {
-    let node = map[key];
-    if (node) {
-      // everybody gets a scope
-      node.scope = scope;
-      // now get your regularly scheduled bindings
-      let mustaches = notes[key].mustaches;
-      for (let name in mustaches) {
-        let property = mustaches[name];
-        if (property in scope) {
-          _set(node, name, scope[property], controller);
+  if (scope) {
+    for (let key in notes) {
+      let node = map[key];
+      if (node) {
+        // everybody gets a scope
+        node.scope = scope;
+        // now get your regularly scheduled bindings
+        let mustaches = notes[key].mustaches;
+        for (let name in mustaches) {
+          let property = mustaches[name];
+          if (property in scope) {
+            _set(node, name, scope[property], controller);
+          }
         }
       }
     }
@@ -256,7 +268,7 @@ let _setSubTemplate = function(node, value, controller) {
     template = container.querySelector(`template[${value.$template}]`);
   }
   node.textContent = '';
-  if (template) {
+  if (template && value.models) {
     for (let m of value.models) {
       stamp(template).events(controller).set(m).appendTo(node);
     }
@@ -295,6 +307,14 @@ let stamp = function(template, opts) {
       return this;
     },
     events: function(controller) {
+      // TODO(sjmiles): originally `controller` was expected to be an Object with event handler
+      // methods on it (typically a custom-element stamping a template).
+      // In Arcs, we want to attach a generic handler (Function) for any event on this node.
+      // Subtemplate stamping gets involved because they need to reuse whichever controller.
+      // I suspect this can be simplified, but right now I'm just making it go.
+      if (controller && typeof controller !== 'function') {
+        controller = listen.bind(this, controller);
+      }
       this.controller = controller;
       if (controller) {
         mapEvents(notes, map, controller);
@@ -311,15 +331,19 @@ let stamp = function(template, opts) {
       // TODO(sjmiles): this.root is no longer a fragment
       this.root = node;
       return this;
-    },
-    mapEvents: function(mapper) {
-      return this.events(mapper);
     }
   };
   return dom;
 };
 
-module.exports = {
+let Xen = {
   setBoolAttribute,
   stamp
 };
+
+if (typeof module !== 'undefined' && typeof module.exports !== 'undefined')
+  module.exports = Xen;
+else
+  scope.Xen = Xen;
+
+})(this);
