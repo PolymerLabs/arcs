@@ -7,6 +7,8 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
+(scope => {
+
 class XenElement extends HTMLElement {
   constructor() {
     super();
@@ -35,21 +37,22 @@ class XenElement extends HTMLElement {
       }
     });
   }
-  __configureAccessors(outputStates) {
+  __configureAccessors() {
     // only do this once per prototype
     var p = Object.getPrototypeOf(this);
     if (!p.hasOwnProperty('__$xenPropsConfigured')) {
       p.__$xenPropsConfigured = true;
       var a = this._class.observedAttributes;
-      a && a.forEach((n)=>{
+      a && a.forEach(n => {
         Object.defineProperty(p, n, {
-          get() { return this._getProperty(n); },
-          set(value) { this._setProperty(n, value); }
-        });
-      });
-      outputStates && outputStates.forEach((n)=>{
-        Object.defineProperty(p, n, {
-          get() { return this._state[n]; }
+          get() {
+            // abstract
+            return this._getProperty(n);
+          },
+          set(value) {
+            // abstract
+            this._setProperty(n, value);
+          }
         });
       });
     }
@@ -68,6 +71,16 @@ class XenElement extends HTMLElement {
   }
   _didMount() {
   }
+  _fire(eventName, detail) {
+    let event = new CustomEvent(eventName, {detail: detail});
+    this.dispatchEvent(event);
+    return event.detail;
+  }
 }
 
-module.exports = XenElement;
+if (typeof module !== 'undefined' && typeof module.exports !== 'undefined')
+  module.exports = XenElement;
+else
+  scope.XenElement = XenElement;
+
+})(this);
