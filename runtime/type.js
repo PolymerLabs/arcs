@@ -33,12 +33,14 @@ function addType(name, tag, args) {
         return new Type(tag, data);
       }});
     for (var arg of args) {
-      var upperArg = arg[0].toUpperCase() + arg.substring(1);
-      Object.defineProperty(Type.prototype, `${lowerName}${upperArg}`, {
-        get: function() {
-          assert(this[`is${name}`]);
-          return this.data[arg];
-        }});
+      (function(arg) {
+        var upperArg = arg[0].toUpperCase() + arg.substring(1);
+        Object.defineProperty(Type.prototype, `${lowerName}${upperArg}`, {
+          get: function() {
+            assert(this[`is${name}`]);
+            return this.data[arg];
+          }});
+      })(arg);
     }
   }
   Object.defineProperty(Type.prototype, `is${name}`, {
@@ -62,11 +64,10 @@ class Type {
     this.data = data;
   }
 
-  // TODO: Replace these static functions with operations on Types directly.
-  // Replaces 'prevariable' types with 'variable'+id types .
+  // Replaces variableReference types with variable types .
   assignVariableIds(variableMap) {
     if (this.isVariableReference) {
-      var name = this.data.name;
+      var name = this.data;
       var id = variableMap.get(name);
       if (id == undefined) {
         id = nextVariableId++;
@@ -79,10 +80,16 @@ class Type {
       return this.primitiveType().assignVariableIds(variableMap).viewOf();
     }
 
+    if (this.isShape) {
+      var shape = this.shapeShape.clone();
+      shape._typeVars.map(({object, field}) => object[field] = object[field].assignVariableIds(variableMap));
+      return Type.newShape(shape, this.shapeDisambiguation);
+    }
+
     return this;
   }
 
-  // Replaces raw strings with resolved schemas.
+  // Replaces entityReference types with resolved schemas.
   resolveSchemas(resolveSchema) {
     if (this.isEntityReference) {
       // TODO: This should probably all happen during type construction so that
@@ -132,6 +139,14 @@ class Type {
     return Type.newView(this);
   }
 
+  hasProperty(property) {
+    if (property(this))
+      return true;
+    if (this.isView)
+      return this.viewType.hasProperty(property);
+    return false;
+  }
+
   toString() {
     if (this.isView)
       return `[${this.primitiveType().toString()}]`;
@@ -155,6 +170,10 @@ class Type {
       return this.entitySchema.name.replace(/([^A-Z])([A-Z])/g, "$1 $2").replace(/([A-Z][^A-Z])/g, " $1").trim();
     if (this.isEntityReference)
       return this.entityReferenceName;
+    if (this.isShapeReference)
+      return this.shapeReferenceName;
+    if (this.isShape)
+      return this.shapeShape.toPrettyString();
   }
 }
 
@@ -164,5 +183,7 @@ addType('VariableReference', 'variableReference', ['name']);
 addType('Variable', 'variable', ['name', 'id']);
 addType('View', 'list', ['type']);
 addType('Relation', 'relation', ['entities']);
+addType('ShapeReference', 'shapeReference', ['name']);
+addType('Shape', 'shape', ['shape', 'disambiguation'])
 
 module.exports = Type;
