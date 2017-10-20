@@ -194,7 +194,11 @@ class InnerPEC {
     return {
       createView: function(viewType, name) {
         return new Promise((resolve, reject) =>
-          pec._apiPort.ArcCreateView({arc: arcId, viewType, name, callback: resolve}));
+          pec._apiPort.ArcCreateView({arc: arcId, viewType, name, callback: view => {
+            var v = viewlet.viewletFor(view, view.type.isView, true, true);
+            v.entityClass = new Schema(view.type.isView ? view.type.primitiveType().entitySchema : view.type.entitySchema).entityClass();
+            resolve(v);
+          }}));
       },
       loadRecipe: function(recipe) {
         // TODO: do we want to return a promise on completion?

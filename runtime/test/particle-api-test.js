@@ -119,8 +119,8 @@ describe('particle-api', function() {
                         PassThrough(in Result a, out Result b)
 
                       recipe
-                        use '\${inView.id}' as v1
-                        use '\${outView.id}' as v2
+                        use '\${inView._id}' as v1
+                        use '\${outView._id}' as v2
                         PassThrough
                           a <- v1
                           b -> v2
@@ -220,8 +220,8 @@ describe('particle-api', function() {
                           PassThrough(in Result a, out Result b)
 
                         recipe
-                          use '\${inView.id}' as v1
-                          use '\${outView.id}' as v2
+                          use '\${inView._id}' as v1
+                          use '\${outView._id}' as v2
                           PassThrough
                             a <- v1
                             b -> v2
@@ -230,9 +230,13 @@ describe('particle-api', function() {
                       inView.set(input);
                       let res = resultsView.store(new resultsView.entityClass({value: 'done'}));
 
-                      // outView.on('change', () => outView.get().then(result => {
-                      //   console.log('????? outview changed = ', result);
-                      // }), {});
+                      outView.on('change', () => {
+                        outView.get().then(result => {
+                          if (result) {
+                            resultsView.store(result);
+                          }
+                        })
+                      }, this);
                     } catch (e) {
                       resultsView.store(new resultsView.entityClass({value: e}));
                     }
@@ -280,7 +284,8 @@ describe('particle-api', function() {
     recipe.normalize();
     arc.instantiate(recipe);
 
-    await util.assertViewWillChangeTo(resultsView, Result, "value", ["done", "done"]);
+    await util.assertViewWillChangeTo(resultsView, Result, "value", ["done", "done", "HELLO", "WORLD"]);
+
     // TODO: how do i listen to inner arc's outView view-changes?
     // await util.assertViewWillChangeTo(resultsView, Result, "value", ["HELLO", "WORLD"]);
     let newView = arc.findViewsByType(Result.type)[1];
@@ -289,6 +294,6 @@ describe('particle-api', function() {
     util.assertSingletonIs(newView, Result, "HELLO");
     newView = arc.findViewsByType(Result.type)[3];
     assert(newView.name == "out view", `Unexpected newView name: ${newView.name}`);
-    await util.assertSingletonWillChangeTo(newView, Result, "WORLD");
+    await util.assertSingletonIs(newView, Result, "WORLD");
   });
 });
