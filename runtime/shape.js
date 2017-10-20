@@ -40,6 +40,46 @@ class Shape {
   static isTypeVar(reference) {
     return (reference instanceof Type) && reference.hasProperty(r => r.isVariable || r.isVariableReference);
   }
+
+  static mustMatch(reference) {
+    return !(reference == undefined || Shape.isTypeVar(reference));
+  }
+
+  static viewsMatch(shapeView, particleView) {
+    if (Shape.mustMatch(shapeView.name) && shapeView.name !== particleView.name)
+      return false;
+    // TODO: direction subsetting?
+    if (Shape.mustMatch(shapeView.direction) && shapeView.direction !== particleView.direction)
+      return false;
+    // TODO: polymorphism?
+    if (Shape.mustMatch(shapeView.type) && !shapeView.type.equals(particleView.type))
+      return false;
+    return true;
+  }
+
+  _particleMatches(particleSpec) {
+    var viewMatches = this.views.map(view => particleSpec.connections.filter(connection => Shape.viewsMatch(view, connection)));
+
+    var exclusions = [];
+
+    function choose(list, exclusions) {
+      if (list.length == 0)
+        return true;
+      var thisLevel = list.pop();
+      for (var connection of thisLevel) {
+        if (exclusions.includes(connection))
+          continue;
+        var newE = exclusions.slice();
+        newE.push(connection);
+        if (choose(list, newE))
+          return true;
+      }
+
+      return false;
+    }
+
+    return choose(viewMatches, []);
+  }
 }
 
 module.exports = Shape;

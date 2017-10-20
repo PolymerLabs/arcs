@@ -11,6 +11,8 @@
 const assert = require('chai').assert;
 const Shape = require('../shape.js');
 const Type = require('../type.js');
+const Manifest = require('../manifest.js');
+
 
 describe('shape', function() {
   it('finds type variable references in views', function() {
@@ -47,4 +49,29 @@ describe('shape', function() {
     assert(shape.views[0].name.variableId == shape.slots[0].name.variableId);
     assert(shape.views[1].type.variableId == shape.views[2].type.viewType.variableId);
   });
+
+  it('matches particleSpecs', async () => {
+    let manifest = await Manifest.parse(`
+        schema Test
+        schema NotTest
+
+        particle P
+          P(in Test foo)
+
+        particle Q
+          Q(in Test foo, in Test foo, in Test foo)
+
+        particle R
+          R(out NotTest foo, in NotTest bar, out Test far)
+
+        particle S
+          S(in NotTest bar, out Test far, out NotTest foo)
+      `);
+      let type = Type.newEntity(manifest.schemas.Test.toLiteral());
+      var shape = new Shape([{name: 'foo'}, {direction: 'in'}, {type}], []);
+      assert(!shape._particleMatches(manifest.particles[0]));
+      assert(shape._particleMatches(manifest.particles[1]));
+      assert(shape._particleMatches(manifest.particles[2]));
+      assert(shape._particleMatches(manifest.particles[3]));
+  })
 });
