@@ -42,9 +42,11 @@ function assertViewWillChangeTo(setView, entityClass, field, expectations) {
     view.on('change', () => view.toList().then(result => {
       if (result == undefined)
         return;
-      if (result.length == expectations.length &&
-          result.every(a => expectations.indexOf(a[field]) >= 0)) {
-        resolve();
+      if (result.length == expectations.length) {
+          if (result.every(a => expectations.indexOf(a[field]) >= 0))
+            resolve();
+          else
+            reject(new Error(`expected ${expectations} but got ${result.map(a => a[field])}`));
       }
     }), {});
   });
