@@ -32,15 +32,13 @@ function addType(name, tag, args) {
           data[args[i]] = arguments[i];
         return new Type(tag, data);
       }});
-    for (var arg of args) {
-      (function(arg) {
-        var upperArg = arg[0].toUpperCase() + arg.substring(1);
-        Object.defineProperty(Type.prototype, `${lowerName}${upperArg}`, {
-          get: function() {
-            assert(this[`is${name}`]);
-            return this.data[arg];
-          }});
-      })(arg);
+    for (let arg of args) {
+      var upperArg = arg[0].toUpperCase() + arg.substring(1);
+      Object.defineProperty(Type.prototype, `${lowerName}${upperArg}`, {
+        get: function() {
+          assert(this[`is${name}`]);
+          return this.data[arg];
+        }});
     }
   }
   Object.defineProperty(Type.prototype, `is${name}`, {
