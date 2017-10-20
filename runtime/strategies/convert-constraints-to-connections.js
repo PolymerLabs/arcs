@@ -13,10 +13,12 @@ let RecipeUtil = require('../recipe/recipe-util.js');
 class ConvertConstraintsToConnections extends Strategy {
   constructor(arc) {
     super();
+    this.arc = arc;
     this.affordance = arc.pec.slotComposer ? arc.pec.slotComposer.affordance : null;
   }
   async generate(strategizer) {
     var affordance = this.affordance;
+    var arc = this.arc;
     var results = Recipe.over(this.getResults(strategizer), new class extends RecipeWalker {
       onRecipe(recipe) {
         var particles = new Set();
@@ -69,6 +71,7 @@ class ConvertConstraintsToConnections extends Strategy {
                 if (recipeView == null) {
                   recipeView = recipe.newView();
                   recipeView.fate = 'create';
+                  recipeView.id = arc.generateID();
                   recipeMap[view] = recipeView;
                 }
                 if (recipeViewConnection.view == null)

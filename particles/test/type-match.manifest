@@ -20,7 +20,7 @@ particle ReadsProduct
   ReadsProduct(in [Product] product)
 
 recipe MatchBasic
-  create as v0
+  create 'demo-view0' as v0
   WritesLego
     lego -> v0
   ReadsProduct

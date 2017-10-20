@@ -32,8 +32,14 @@ const Description = require('./description.js');
 const Tracing = require('tracelib');
 
 class CreateViews extends Strategy {
+  constructor(arc) {
+    super();
+    this._arc = arc;
+  }
+
   // TODO: move generation to use an async generator.
   async generate(strategizer) {
+    var arc = this._arc;
     var results = Recipe.over(this.getResults(strategizer), new class extends RecipeWalker {
       onView(recipe, view) {
         var counts = RecipeUtil.directionCounts(view);
@@ -48,8 +54,12 @@ class CreateViews extends Strategy {
             score = 0;
         }
 
-        if (!view.id && view.fate == "?") {
-          return (recipe, view) => {view.fate = "create"; return score}
+        if (!view.id && (view.fate == "?" || view.fate == "create")) {
+          return (recipe, view) => {
+            view.fate = "create";
+            view.id = arc.generateID();
+            return score;
+          }
         }
       }
     }(RecipeWalker.Permuted), this);
@@ -71,7 +81,7 @@ class Planner {
         new GroupViewConnections(),
       ]),
       new FallbackFate(),
-      new CreateViews(),
+      new CreateViews(arc),
       new AssignViewsByTagAndType(arc),
       new ConvertConstraintsToConnections(arc),
       new MapConsumedSlots(),

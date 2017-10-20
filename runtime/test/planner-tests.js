@@ -48,7 +48,7 @@ describe('Planner', function() {
     await planner.generate(),
     await planner.generate(),
     await planner.generate(),
-    assert.equal(planner.strategizer.population.length, 5);
+    assert.equal(planner.strategizer.population.length, 6);
   });
 
   it('make a plan with views', async () => {
@@ -63,7 +63,7 @@ describe('Planner', function() {
     await planner.generate(),
     await planner.generate(),
     await planner.generate(),
-    assert.equal(planner.strategizer.population.length, 5);
+    assert.equal(planner.strategizer.population.length, 6);
   });
 });
 
@@ -89,7 +89,7 @@ describe('InitPopulation', async () => {
         A(in Product product)
 
       recipe
-        create as v1
+        create 'demo-view1' as v1
         A
           product <- v1`);
     let recipe = manifest.recipes[0];
@@ -115,13 +115,13 @@ describe('ConvertConstraintsToConnections', async() => {
       recipe
         A.b -> C.d`)).recipes[0];
     var strategizer = {generated: [{result: recipe, score: 1}]};
-    var cctc = new ConvertConstraintsToConnections({pec:{}});
+    var cctc = new ConvertConstraintsToConnections({pec:{}, generateID : () => { return 'demo-view0' }});
     let { results } = await cctc.generate(strategizer);
     assert(results.length == 1);
     let { result, score } = results[0];
     assert.deepEqual(result.toString(),
 `recipe
-  create as view0
+  create 'demo-view0' as view0
   A as particle0
     b = view0
   C as particle1
@@ -137,13 +137,13 @@ describe('ConvertConstraintsToConnections', async() => {
         A.b -> C.d
         C`)).recipes[0];
     var strategizer = {generated: [{result: recipe, score: 1}]};
-    var cctc = new ConvertConstraintsToConnections({pec:{}});
+    var cctc = new ConvertConstraintsToConnections({pec:{}, generateID : () => { return 'demo-view0' }});
     let { results } = await cctc.generate(strategizer);
     assert(results.length == 1);
     let { result, score } = results[0];
     assert.deepEqual(result.toString(),
 `recipe
-  create as view0
+  create 'demo-view0' as view0
   A as particle0
     b = view0
   C as particle1
@@ -159,13 +159,13 @@ describe('ConvertConstraintsToConnections', async() => {
         A.b -> C.d
         A`)).recipes[0];
     var strategizer = {generated: [{result: recipe, score: 1}]};
-    var cctc = new ConvertConstraintsToConnections({pec:{}});
+    var cctc = new ConvertConstraintsToConnections({pec:{}, generateID : () => { return 'demo-view0' }});
     let { results } = await cctc.generate(strategizer);
     assert(results.length == 1);
     let { result, score } = results[0];
     assert.deepEqual(result.toString(),
 `recipe
-  create as view0
+  create 'demo-view0' as view0
   A as particle0
     b = view0
   C as particle1
@@ -183,13 +183,13 @@ describe('ConvertConstraintsToConnections', async() => {
         C
         A`)).recipes[0];
     var strategizer = {generated: [{result: recipe, score: 1}]};
-    var cctc = new ConvertConstraintsToConnections({pec:{}});
+    var cctc = new ConvertConstraintsToConnections({pec:{}, generateID : () => { return 'demo-view0' }});
     let { results } = await cctc.generate(strategizer);
     assert(results.length == 1);
     let { result, score } = results[0];
     assert.deepEqual(result.toString(),
 `recipe
-  create as view0
+  create 'demo-view0' as view0
   A as particle0
     b = view0
   C as particle1
@@ -300,7 +300,7 @@ describe('ConvertConstraintsToConnections', async() => {
         A.b -> E.f
     `)).recipes;
     var strategizer = {generated: [{result: recipes[0], score: 1}, {result: recipes[1], score: 1}]};
-    var cctc = new ConvertConstraintsToConnections({pec: {slotComposer: {affordance: 'voice'}}});
+    var cctc = new ConvertConstraintsToConnections({pec: {slotComposer: {affordance: 'voice'}}, generateID : () => { return 'demo-view' }});
     let { results } = await cctc.generate(strategizer);
     assert.equal(results.length, 1);
     assert.deepEqual(results[0].result.particles.map(p => p.name), ['A', 'C']);

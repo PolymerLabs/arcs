@@ -13,6 +13,6 @@ particle Hello in 'hello.js'
   Hello(out Text text)
 
 recipe
-  create as viewA
+  create 'demo-view0' as viewA
   Hello
     text -> viewA

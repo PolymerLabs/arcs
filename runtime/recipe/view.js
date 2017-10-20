@@ -134,14 +134,13 @@ class View {
       }
       case "copy":
       case "map":
+      case "create":
       case "use": {
         if (options && this.id === null) {
           options.details = "missing id";
         }
         return this.id !== null;
       }
-      case "create":
-        return true;
       default: {
         if (options) {
           options.details = `invalid fate ${this.fate}`;
