@@ -16,7 +16,7 @@ class Schema {
   constructor(model) {
     this._model = model;
     this.name = model.name;
-    this.parents = model.parents.map(parent => new Schema(parent));
+    this.parents = (model.parents || []).map(parent => new Schema(parent));
     this._normative = {};
     this._optional = {};
     assert(model.sections);
