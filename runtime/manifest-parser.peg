@@ -43,7 +43,7 @@ ManifestItem
 
 // TODO: Entity syntax.
 ManifestView
-  = 'view' whiteSpace name:upperIdent whiteSpace 'of' whiteSpace type:(ListType / EntityType) id:(whiteSpace id)? version:(whiteSpace Version)? tags:(whiteSpace TagList)? whiteSpace 'in' whiteSpace source:id eolWhiteSpace
+  = 'view' whiteSpace name:TopLevelIdent whiteSpace 'of' whiteSpace type:(ListType / EntityType) id:(whiteSpace id)? version:(whiteSpace Version)? tags:(whiteSpace TagList)? whiteSpace 'in' whiteSpace source:id eolWhiteSpace
     items:(Indent (SameIndent ManifestViewItem)+)?
   {
     items = optional(items, extractIndented, []);
@@ -75,7 +75,7 @@ Import
   }
 
 Particle
-  = 'particle' whiteSpace name:upperIdent implFile:(whiteSpace 'in' whiteSpace id)? eolWhiteSpace items:(Indent (SameIndent ParticleItem)*)? eolWhiteSpace?
+  = 'particle' whiteSpace name:TopLevelIdent implFile:(whiteSpace 'in' whiteSpace id)? eolWhiteSpace items:(Indent (SameIndent ParticleItem)*)? eolWhiteSpace?
   {
     let args = null;
     let verbs = [];
@@ -252,7 +252,7 @@ ParticleViewDescription
   }
 
 Recipe
-  = 'recipe' name:(whiteSpace upperIdent)? tags:(whiteSpace TagList)? eolWhiteSpace items:(Indent (SameIndent RecipeItem)*)?
+  = 'recipe' name:(whiteSpace TopLevelIdent)? tags:(whiteSpace TagList)? eolWhiteSpace items:(Indent (SameIndent RecipeItem)*)?
   {
     return {
       kind: 'recipe',
@@ -439,7 +439,7 @@ ExtendsList
 }
 
 Schema
-  = 'schema' whiteSpace name:upperIdent parent:ExtendsList? eolWhiteSpace sections:(Indent (SameIndent SchemaSection)*)?
+  = 'schema' whiteSpace name:TopLevelIdent parent:ExtendsList? eolWhiteSpace sections:(Indent (SameIndent SchemaSection)*)?
   {
     return {
       kind: 'schema',
@@ -516,6 +516,15 @@ SameOrMoreIndent = &(i:" "* &{
     return false;
   }
 }) " "*
+
+TopLevelIdent
+  = upperIdent
+  / lowerIdent
+  {
+    let fixed = text();
+    fixed = fixed.replace(/^(.)/, l => l.toUpperCase());
+    expected(`a top level identifier (e.g. "${fixed}")`);
+  }
 
 backquotedString = '`' pattern:([^`]+) '`' { return pattern.join(''); }
 id = "'" id:[^']+ "'" {return id.join('')}
