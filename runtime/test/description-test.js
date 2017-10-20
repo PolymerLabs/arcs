@@ -186,16 +186,16 @@ ${recipeManifest}
     let {arc, recipe, ifooView, ofoosView, fooView, foosView} = (await prepareRecipeAndArc(`
 ${schemaManifest}
 ${aParticleManifest}
-  description \`Read from \${ifoo}\ and populate \${ofoos}\`
+  description \`Read from \${ifoo}\ and populate \${ofoos._name_}\`
     ifoo \`[fooValue: \${ifoo.fooValue}]\`
-    ofoos \`[A list of \${ifoo.type} with values: \${ofoos.values}]\`
+    ofoos \`[A list of \${ifoo._type_} with values: \${ofoos._values_}]\`
 ${recipeManifest}
     `));
     fooView.set({id: 1, rawData: {name: 'foo-name', fooValue: 'the-FOO'}});
     foosView.store({id: 2, rawData: {name: 'foo-1', fooValue: 'foo-value-1'}});
     foosView.store({id: 3, rawData: {name: 'foo-2', fooValue: 'foo-value-2'}});
 
-    assert.equal('Read from [fooValue: <b>the-FOO</b>] (<b>foo-name</b>) and populate [A list of foo with values: <b>foo-1</b>, <b>foo-2</b>] (<b>foo-1</b>, <b>foo-2</b>).',
+    assert.equal('Read from [fooValue: <b>the-FOO</b>] (<b>foo-name</b>) and populate [A list of foo with values: <b>foo-1</b>, <b>foo-2</b>].',
                  Description.getSuggestion(recipe, arc));
     assert.equal('[fooValue: <b>the-FOO</b>]', Description.getViewDescription(ifooView, arc));
     assert.equal('[A list of foo with values: <b>foo-1</b>, <b>foo-2</b>]', Description.getViewDescription(ofoosView, arc));

@@ -99,9 +99,9 @@ class Description {
   }
   _initTokens(pattern) {
     while (pattern.length  > 0) {
-      let tokens = pattern.match(/\${[a-zA-Z0-9::~\.\[\]]+}/g);
+      let tokens = pattern.match(/\${[a-zA-Z0-9::~\.\[\]_]+}/g);
       if (tokens) {
-        var firstToken = pattern.match(/\${[a-zA-Z0-9::~\.\[\]]+}/g)[0];
+        var firstToken = pattern.match(/\${[a-zA-Z0-9::~\.\[\]_]+}/g)[0];
         var tokenIndex = pattern.indexOf(firstToken);
       } else {
         var firstToken = "";
@@ -135,11 +135,14 @@ class ValueToken {
     let parts = this._token.split(".");
     this._viewName = parts[0];
     switch(parts[1]) {
-      case "type":
+      case "_type_":
         this._useType = true;
         break;
-      case "values":
+      case "_values_":
         this._values = true;
+        break;
+      case "_name_":
+        this._excludeValues = true;
         break;
       default:
         this._property = parts;
@@ -156,7 +159,7 @@ class ValueToken {
     } else if (this._values) {  // view values
       // Use view values (eg "How to draw book, Hockey stick")
       result.push(this._formatViewValue(view));
-    } else if (this._property.length > 0) {
+    } else if (this._property && this._property.length > 0) {
       assert(!view.type.isView, `Cannot return property ${this._property.join(",")} for set-view`);
       // Use singleton value's property (eg. "09/15" for person's birthday)
       let viewVar = view.get();
@@ -197,7 +200,7 @@ class ValueToken {
         result.push(chosenConnection.type.toPrettyString().toLowerCase());
       }
 
-      if (options.includeViewValues !== false) {
+      if (options.includeViewValues !== false && !this._excludeValues) {
         let viewValues = this._formatViewValue(view);
         if (viewValues) {
           if (!view.type.isView && !chosenConnectionSpec.description.hasPattern()) {

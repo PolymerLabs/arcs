@@ -77,6 +77,12 @@ particle MyParticle in ‘my-particle.js’
      list `my special thing`
 ```
 
+Description may also reference the following details form the view descriptions:
+```${mything._type_}``` to display the view type (eg MyThing)
+```${mything._values_}``` to display only the values of the view
+```${mything._name_}``` to display the view description with no values
+```${mything.myProperty}``` to display a select property of the view (only supported for singleton views)
+
 Only the descriptions of Particles that render UI will be included in the suggestion text.
 
 View descriptions may also be used in particles UI (including other particles in the recipe that use the same view). The particle template would contain:
