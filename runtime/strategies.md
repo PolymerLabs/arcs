@@ -20,7 +20,7 @@ Maps recipe view with “map” fate to a remote view in the arc context matchin
 [assign-remote-views.js](https://github.com/PolymerLabs/arcs/blob/master/runtime/strategies/assign-remote-views.js)
 
 ##CopyRemoteViews
-Maps recipe view with “copy” fate to a remote view in the arc context matching type and tags.
+Maps recipe view with “copy” fate to a remote view in the arc context matching type and tags. On execution a new view will be created and contents of the remote view copied into it.
 [copy-remote-views.js](https://github.com/PolymerLabs/arcs/blob/master/runtime/strategies/copy-remote-views.js)
 
 ##AddUseViews
