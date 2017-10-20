@@ -153,6 +153,7 @@ class ValueToken {
     let result = [];
     let viewConnection = recipeParticle.getConnectionByName(this._viewName);
     let view = options.findViewById(viewConnection.view.id);
+    if (!view) return "";  // no view (e.g. if not yet created) -> empty description
     if (this._useType) {  // view type
       // Use view type (eg "Products list")
       result.push(viewConnection.type.toPrettyString().toLowerCase());
