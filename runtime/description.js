@@ -153,14 +153,13 @@ class ValueToken {
     let result = [];
     let viewConnection = recipeParticle.getConnectionByName(this._viewName);
     let view = options.findViewById(viewConnection.view.id);
-    if (!view) return "";  // no view (e.g. if not yet created) -> empty description
     if (this._useType) {  // view type
       // Use view type (eg "Products list")
       result.push(viewConnection.type.toPrettyString().toLowerCase());
-    } else if (this._values) {  // view values
+    } else if (view && this._values) {  // view values
       // Use view values (eg "How to draw book, Hockey stick")
       result.push(this._formatViewValue(view));
-    } else if (this._property && this._property.length > 0) {
+    } else if (view && this._property && this._property.length > 0) {
       assert(!view.type.isView, `Cannot return property ${this._property.join(",")} for set-view`);
       // Use singleton value's property (eg. "09/15" for person's birthday)
       let viewVar = view.get();
@@ -201,7 +200,7 @@ class ValueToken {
         result.push(chosenConnection.type.toPrettyString().toLowerCase());
       }
 
-      if (options.includeViewValues !== false && !this._excludeValues) {
+      if (options.includeViewValues !== false && !this._excludeValues && view) {
         let viewValues = this._formatViewValue(view);
         if (viewValues) {
           if (!view.type.isView && !chosenConnectionSpec.description.hasPattern()) {
