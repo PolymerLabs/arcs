@@ -69,9 +69,9 @@ class Shape {
       for (var connection of thisLevel) {
         if (exclusions.includes(connection))
           continue;
-        var newE = exclusions.slice();
-        newE.push(connection);
-        if (choose(list, newE))
+        var newExclusions = exclusions.slice();
+        newExclusions.push(connection);
+        if (choose(list, newExclusions))
           return true;
       }
 
