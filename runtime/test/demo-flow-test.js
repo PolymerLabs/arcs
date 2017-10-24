@@ -10,7 +10,6 @@
  "use strict";
 
 const Arc = require("../arc.js");
-const Description = require("../description.js");
 const Manifest = require("../manifest.js");
 const Loader = require("../loader.js");
 const assert = require('chai').assert;
@@ -64,13 +63,13 @@ describe('demo flow', function() {
       provide set of annotation as slot2
       provide postamble as slot4
       provide preamble as slot5`;
-    let {plan} = plans.find(p => p.plan.toString() == expectedPlanString);
+    let {plan, description} = plans.find(p => p.plan.toString() == expectedPlanString);
     assert(plan);
 
     assert.equal("Show products from your browsing context (<b>Minecraft Book</b> plus <b>2</b> other items) and " +
                  "Choose from Products recommended based on products from your browsing context and " +
                  "Claire\'s wishlist (<b>Book: How to Draw</b> plus <b>2</b> other items).",
-                 Description.getSuggestion(plan, arc));
+                 description);
 
     slotComposer
       .newExpectations()
