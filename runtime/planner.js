@@ -150,7 +150,9 @@ class Planner {
         continue;
       }
       let rank = relevance.calcRelevanceScore();
-      let description = Description.getSuggestion(plan, this._arc, relevance);
+
+      let description = Description.getSuggestion(relevance.newArc.recipes[relevance.newArc.recipes.length - 1],
+                                                  relevance.newArc);
 
       this._updateGeneration(generations, hash, (g) => g.description = description);
 

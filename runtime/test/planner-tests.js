@@ -23,7 +23,9 @@ let SearchTokensToParticles = require('../strategies/search-tokens-to-particles.
 let GroupViewConnections = require('../strategies/group-view-connections.js');
 let CombinedStrategy = require('../strategies/combined-strategy.js');
 let FallbackFate = require('../strategies/fallback-fate.js');
-
+let MessageChannel = require('../message-channel.js');
+let InnerPec = require('../inner-pec.js');
+let Particle = require('../particle.js');
 var loader = new Loader();
 
 function createTestArc(id, context, affordance) {
@@ -80,7 +82,7 @@ describe('InitSearch', async () => {
   });
 });
 
-describe('InitPopulation', async () => {
+describe('InitPopulation', async ()  => {
   it('penalizes resolution of particles that already exist in the arc', async() => {
     let manifest = await Manifest.parse(`
       schema Product
@@ -718,5 +720,72 @@ describe('FallbackFate', function() {
     var strategy = new FallbackFate(arc);
     let { results } = await strategy.generate(strategizer);
     assert.equal(results.length, 0);
+  });
+});
+
+describe('Description', async ()  => {
+  it('description generated from speculative execution arc', async() => {
+    let registry = {};
+    let loader = new class extends Loader {
+      loadResource(path) {
+        return {
+          manifest: `
+          schema Thing
+            optional
+              Text name
+
+          particle A in 'A.js'
+            A(out Thing thing)
+            consume root
+            description \`Make \${thing}\`
+
+          recipe
+            create as v1
+            slot 'root-slot' as slot0
+            A
+              thing -> v1
+              consume root as slot0
+
+          `
+        }[path];
+      }
+      async requireParticle(fileName) {
+        let clazz = class {
+          constructor() {
+            this.relevances = [];
+          }
+          async setViews(views) {
+            let thingView = views.get('thing');
+            thingView.set(new thingView.entityClass({name: 'MYTHING'}));
+          }
+        };
+        return clazz;
+      }
+      path(fileName) {
+        return fileName;
+      }
+      join(_, file) {
+        return file;
+      }
+    };
+    let manifest = await Manifest.load('manifest', loader, {registry});
+
+    let recipe = manifest.recipes[0];
+    assert(recipe.normalize());
+    assert.isTrue(recipe.isResolved());
+
+    var pecFactory = function(id) {
+      var channel = new MessageChannel();
+      new InnerPec(channel.port1, `${id}:inner`, loader);
+      return channel.port2;
+    };
+    var arc = new Arc({id: 'test-plan-arc', context: manifest, pecFactory, loader});
+    let planner = new Planner();
+    planner.init(arc);
+
+    let plans = await planner.suggest();
+    assert.equal(plans.length, 1);
+    assert.equal('Make <b>MYTHING</b>.', plans[0].description);
+    assert.equal(0, arc._viewsById.size);
   });
 });
