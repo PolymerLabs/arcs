@@ -31,6 +31,7 @@ class Arc {
     this.id = id;
     this._nextLocalID = 0;
     this._activeRecipe = new Recipe();
+    this._recipes = [];
     this._loader = loader;
 
     // All the views, mapped by view ID
@@ -103,6 +104,8 @@ class Arc {
     return this._context;
   }
 
+  get recipes() { return this._recipes; }
+
   loadedParticles() {
     return [...this.particleViewMaps.values()].map(({spec}) => spec);
   }
@@ -144,13 +147,12 @@ class Arc {
       value.views.forEach(v => arc.particleViewMaps.get(key).views.set(v.name, v.clone()));
     });
 
-    arc._activeRecipe.mergeInto(this._activeRecipe);
+   this._activeRecipe.mergeInto(arc._activeRecipe);
 
     for (let v of viewMap.values()) {
       // FIXME: Tags
       arc._registerView(v, []);
     }
-    arc._viewMap = viewMap;
     return arc;
   }
 
@@ -212,14 +214,16 @@ class Arc {
       // TODO: pass slot-connections instead
       this.pec.slotComposer.initializeRecipe(particles);
     }
+
+    let newRecipe = new Recipe();
+    newRecipe.particles = particles;
+    newRecipe.views = views;
+    newRecipe.slots = slots;
+    newRecipe.search = recipe.search;
+    this._recipes.push(newRecipe);
   }
 
   _connectParticleToView(particleHandle, particle, name, targetView) {
-    // If speculatively executing then we need to translate the view
-    // in the plan to its clone.
-    if (this._viewMap) {
-      targetView = this._viewMap.get(targetView) || targetView;
-    }
     assert(targetView, "no target view provided");
     var viewMap = this.particleViewMaps.get(particleHandle);
     assert(viewMap.spec.connectionMap.get(name) !== undefined, "can't connect view to a view slot that doesn't exist");
