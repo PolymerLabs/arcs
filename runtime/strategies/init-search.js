@@ -13,7 +13,7 @@ module.exports = class InitSearch extends Strategy {
   constructor(arc) {
     super();
     // TODO: Figure out where this should really come from.
-    this._search = arc._search;
+    this._search = arc.search;
   }
   async generate(strategizer) {
     if (this._search == null || strategizer.generation != 0) {
