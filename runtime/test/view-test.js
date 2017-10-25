@@ -17,6 +17,13 @@ const SlotComposer = require('../slot-composer.js');
 let view = require('../view.js');
 let viewlet = require('../viewlet.js');
 
+const Shape = require('../shape.js');
+const Type = require('../type.js');
+
+const Manifest = require('../manifest.js');
+
+let loader = new (require('../loader'));
+
 const slotComposer = new SlotComposer({rootContext: 'test', affordance: 'mock'});
 const Bar = runtime.testing.testEntityClass('Bar');
 
@@ -37,5 +44,18 @@ describe('View', function() {
     barView.store(bar);
     barView.remove(bar.id);
     assert.equal(barView.toList().length, 0);
+  });
+
+  it('can store a particle in a shape view', async () => {
+    let arc = new Arc({slotComposer});
+    let manifest = await Manifest.load('../particles/test/test-particles.manifest', loader);
+
+    let shape = new Shape([{type: Type.newEntity(manifest.schemas.Foo.toLiteral())},
+                           {type: Type.newEntity(manifest.schemas.Bar.toLiteral())}], []);
+    assert(shape._particleMatches(manifest.particles[0]));
+
+    let shapeView = arc.createView(Type.newShape(shape));
+    shapeView.set(manifest.particles[0]);
+    assert(shapeView.get() == manifest.particles[0]);
   });
 });

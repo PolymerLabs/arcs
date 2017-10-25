@@ -228,7 +228,7 @@ class Arc {
     if (type.isView) {
       view = new View(type, this, name, id);
     } else {
-      assert(type.isEntity, `Expected entity type, but... ${JSON.stringify(type.toLiteral())}`);
+      assert(type.isEntity || type.isShape, `Expected entity or shape type, but... ${JSON.stringify(type.toLiteral())}`);
       view = new Variable(type, this, name, id);
     }
     this._registerView(view, tags);
@@ -256,9 +256,12 @@ class Arc {
   static _viewKey(type) {
     if (type.isView) {
       return `list:${type.primitiveType().entitySchema.name}`;
-    } else {
-      assert(type.isEntity);
+    } else if (type.isEntity) {
       return type.entitySchema.name;
+    } else if (type.isShape) {
+      // TODO we need to fix this too, otherwise all views of shape type will
+      // be of the 'same type' when searching by type.
+      return type.shapeShape;
     }
   }
 
