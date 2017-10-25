@@ -55,7 +55,14 @@ class Arc {
     // Map from each view to a list of tags.
     this._viewTags = new Map();
 
-    this.availableSlotIds = new Set();
+    this._search = null;
+  }
+  set search(search) {
+    this._search = search ? search.toLowerCase().trim() : null;
+  }
+
+  get search() {
+    return this._search;
   }
 
   static deserialize({serialization, pecFactory, slotComposer, arcMap}) {
