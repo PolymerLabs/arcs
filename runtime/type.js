@@ -150,7 +150,9 @@ class Type {
       return `[${this.primitiveType().toString()}]`;
     if (this.isEntity)
       return this.entitySchema.name;
-    assert('Add support to serializing type:', type);
+    if (this.isShape)
+      return 'Shape'
+    assert('Add support to serializing type:', this);
   }
 
   toPrettyString() {
