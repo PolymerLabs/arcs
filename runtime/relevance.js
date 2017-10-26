@@ -25,25 +25,47 @@ class Relevance {
 
   calcRelevanceScore() {
     let relevance = 1;
+    let hasNegative = false;
     for (let rList of this.relevanceMap.values()) {
-      relevance *= Relevance.particleRelevance(rList);
+      let particleRelevance = Relevance.particleRelevance(rList);
+      if (particleRelevance < 0) {
+        hasNegative = true;
+      }
+      relevance *= Math.abs(particleRelevance);
     }
-    return relevance;
+    return relevance * (hasNegative ? -1 : 1);
+  }
+
+  // Returns false, if at least one of the particles relevance lists ends with a negative score.
+  isRelevant() {
+    for (let rList of this.relevanceMap.values()) {
+      if (rList[rList.length - 1] < 0) {
+        return false;
+      }
+    }
+    return true;
   }
 
   static scaleRelevance(relevance) {
     if (relevance == undefined) {
       relevance = 5;
     }
-    relevance = Math.max(0, Math.min(relevance, 10));
+    relevance = Math.max(-1, Math.min(relevance, 10));
     // TODO: might want to make this geometric or something instead;
     return relevance / 5;
   }
 
   static particleRelevance(relevanceList) {
     let relevance = 1;
-    relevanceList.forEach(r => relevance *= Relevance.scaleRelevance(r));
-    return relevance;
+    let hasNegative = false;
+    relevanceList.forEach(r => {
+      let scaledRelevance = Relevance.scaleRelevance(r);
+      if (scaledRelevance < 0) {
+        hasNegative = true;
+      }
+      relevance *= Math.abs(scaledRelevance);
+    });
+    return relevance * (hasNegative ? -1 : 1);
   }
 
   calcParticleRelevance(particle) {
