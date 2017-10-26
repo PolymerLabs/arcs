@@ -146,6 +146,9 @@ class Planner {
 
       let relevance = await trace.wait(() => speculator.speculate(this._arc, plan));
       trace.resume();
+      if (!relevance.isRelevant()) {
+        continue;
+      }
       let rank = relevance.calcRelevanceScore();
       let description = Description.getSuggestion(plan, this._arc, relevance);
 
