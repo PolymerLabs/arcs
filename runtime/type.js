@@ -135,6 +135,8 @@ class Type {
     let data = literal.data;
     if (literal.tag == 'shape')
       data = {shape: Shape.fromLiteral(data.shape)};
+    else if (literal.tag == 'entity')
+      data = Schema.fromLiteral(data);
     return new Type(literal.tag, data);
   }
 
@@ -194,3 +196,4 @@ addType('Shape', 'shape', ['shape', 'disambiguation'])
 module.exports = Type;
 
 const Shape = require('./shape.js');
+const Schema = require('./schema.js');

@@ -156,6 +156,24 @@ class Particle {
     assert(slot, `Particle::fireEvent: slot ${slotName} is falsey`);
     slot.fireEvent(event);
   }
+
+  static buildManifest(strings, ...bits) {
+    let output = [];
+    for (let i = 0; i < bits.length; i++) {
+        let str = strings[i];
+        let indent = / *$/.exec(str)[0];
+        if (typeof bits[i] == 'string')
+          var bitStr = bits[i];
+        else
+          var bitStr = bits[i].toManifestString();
+        bitStr = bitStr.replace(/(\n)/g, '$1' + indent);
+        output.push(str);
+        output.push(bitStr);
+    }
+    if (strings.length > bits.length)
+      output.push(strings[strings.length - 1]);
+    return output.join('');
+  }
 }
 
 class ViewChanges {
