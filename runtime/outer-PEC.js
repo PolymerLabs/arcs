@@ -122,7 +122,7 @@ class OuterPEC extends PEC {
   instantiate(particleSpec, spec, views, lastSeenVersion) {
     views.forEach(view => {
       var version = lastSeenVersion.get(view.id) || 0;
-      this._apiPort.DefineView(view, { viewType: view.type.toLiteral(), name: view.name,
+      this._apiPort.DefineView(view, { viewType: view.type, name: view.name,
                                        version });
     });
 

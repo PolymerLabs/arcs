@@ -97,7 +97,7 @@ class InnerPEC {
      * only keeping type information on the arc side.
      */
     this._apiPort.onDefineView = ({viewType, identifier, name, version}) => {
-      return new RemoteView(identifier, Type.fromLiteral(viewType), this._apiPort, this, name, version);
+      return new RemoteView(identifier, viewType, this._apiPort, this, name, version);
     };
 
     this._apiPort.onCreateViewCallback = ({viewType, identifier, id, name, callback}) => {
@@ -245,6 +245,7 @@ class InnerPEC {
       } else if (type.isEntity) {
         schemaModel = type.entitySchema;
       }
+
       if (schemaModel)
         view.entityClass = schemaModel.entityClass();
     }
