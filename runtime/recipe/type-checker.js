@@ -67,7 +67,7 @@ class TypeChecker {
     function checkSuper(schema) {
       if (!schema)
         return false;
-      if (schema == supertype.entitySchema)
+      if (schema.equals(supertype.entitySchema))
         return true;
       for (let parent of schema.parents)
         if (checkSuper(parent))

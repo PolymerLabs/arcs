@@ -19,6 +19,12 @@ function _fromLiteral(member) {
   return member;
 }
 
+function _toLiteral(member) {
+  if (member && member.toLiteral)
+    return member.toLiteral();
+  return member;
+}
+
 class Shape {
   constructor(views, slots) {
     this.views = views;
@@ -46,7 +52,9 @@ class Shape {
   }
 
   toLiteral() {
-    return {views: this.views, slots: this.slots};
+    let views = this.views.map(view => ({type: _toLiteral(view.type), name: _toLiteral(view.name), direction: _toLiteral(view.direction)}));
+    let slots = this.slots.map(slot => ({name: _toLiteral(slot.name), direction: _toLiteral(slot.direction)}));
+    return {views, slots};
   }
 
   clone() {

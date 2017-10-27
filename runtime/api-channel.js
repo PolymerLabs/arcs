@@ -153,7 +153,13 @@ class APIPort {
     this.messageCount++;
 
     let handler = this._messageMap.get(e.data.messageType);
-    let args = this._unprocessArguments(handler.args, e.data.messageBody);
+    let args;
+    try {
+      args = this._unprocessArguments(handler.args, e.data.messageBody);
+    } catch (exc) {
+      console.error(`Exception during unmarshaling for ${e.data.messageType}`);
+      throw exc;
+    }
     // If any of the converted arguments are still pending promises
     // wait for them to complete before processing the message.
     for (let arg of Object.values(args)) {
@@ -228,7 +234,7 @@ class PECOuterPort extends APIPort {
     this.registerCall("Stop", {});
     this.registerCall("DefineParticle",
       {particleDefinition: this.Direct, particleFunction: this.Stringify});
-    this.registerRedundantInitializer("DefineView", {viewType: this.Direct, name: this.Direct})
+    this.registerRedundantInitializer("DefineView", {viewType: this.ByLiteral(Type), name: this.Direct})
     this.registerInitializer("InstantiateParticle",
       {spec: this.ByLiteral(ParticleSpec), views: this.Map(this.Direct, this.Mapped)});
 
@@ -268,7 +274,7 @@ class PECInnerPort extends APIPort {
     // particleFunction needs to be eval'd in context or it won't work.
     this.registerHandler("DefineParticle",
       {particleDefinition: this.Direct, particleFunction: this.Direct});
-    this.registerInitializerHandler("DefineView", {viewType: this.Direct, name: this.Direct});
+    this.registerInitializerHandler("DefineView", {viewType: this.ByLiteral(Type), name: this.Direct});
     this.registerInitializerHandler("InstantiateParticle",
       {spec: this.ByLiteral(ParticleSpec), views: this.Map(this.Direct, this.Mapped)});
 

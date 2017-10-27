@@ -18,7 +18,7 @@ class Schema {
     this._normative = {};
     this._optional = {};
 
-    assert(model.sections);
+    assert(model.sections, `${JSON.stringify(model)} should have sections`);
     for (var section of model.sections) {
       var into = section.sectionType == 'normative' ? this._normative : this._optional;
       for (var field in section.fields) {
@@ -36,8 +36,12 @@ class Schema {
     return new Schema(data);
   }
 
+  equals(otherSchema) {
+    return this.toLiteral() == otherSchema.toLiteral();
+  }
+
   get type() {
-    return Type.newEntity(this.toLiteral());
+    return Type.newEntity(this);
   }
 
   get normative() {

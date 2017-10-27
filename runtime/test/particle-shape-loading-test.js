@@ -84,8 +84,8 @@ describe('particle-shape-loading', function() {
 
     let manifest = await Manifest.load('../particles/test/test-particles.manifest', loader);
 
-    let fooType = Type.newEntity(manifest.schemas.Foo.toLiteral());
-    let barType = Type.newEntity(manifest.schemas.Bar.toLiteral());
+    let fooType = Type.newEntity(manifest.schemas.Foo);
+    let barType = Type.newEntity(manifest.schemas.Bar);
 
     let shape = new Shape([{type: fooType}, {type: barType}], []);
 
