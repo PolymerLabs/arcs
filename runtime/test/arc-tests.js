@@ -60,4 +60,5 @@ describe('Arc', function() {
     viewlet.viewletFor(fooView).set(new Foo({value: 'a Foo'}));
     await util.assertSingletonWillChangeTo(barView, Bar, "a Foo1");
   });
+
 });

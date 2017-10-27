@@ -240,12 +240,13 @@ class InnerPEC {
     for (var view of viewMap.values()) {
       var type = view.underlyingView().type;
       let schemaModel;
-      if (type.isView) {
+      if (type.isView && type.primitiveType.isEntity) {
         schemaModel = type.primitiveType().entitySchema;
-      } else {
+      } else if (type.isEntity) {
         schemaModel = type.entitySchema;
       }
-      view.entityClass = new Schema(schemaModel).entityClass();
+      if (schemaModel)
+        view.entityClass = new Schema(schemaModel).entityClass();
     }
 
     return [particle, () => {
