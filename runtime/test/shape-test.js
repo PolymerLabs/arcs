@@ -67,7 +67,7 @@ describe('shape', function() {
         particle S
           S(in NotTest bar, out Test far, out NotTest foo)
       `);
-      let type = Type.newEntity(manifest.schemas.Test.toLiteral());
+      let type = Type.newEntity(manifest.schemas.Test);
       var shape = new Shape([{name: 'foo'}, {direction: 'in'}, {type}], []);
       assert(!shape._particleMatches(manifest.particles[0]));
       assert(shape._particleMatches(manifest.particles[1]));

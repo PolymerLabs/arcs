@@ -51,8 +51,9 @@ class Type {
   constructor(tag, data) {
     assert(typeof tag == 'string');
     assert(data);
-    if (tag == 'entity')
-      assert(data.tag == undefined);
+    if (tag == 'entity') {
+      assert(data instanceof Schema);
+    }
     if (tag == 'list') {
       if (!(data instanceof Type) && data.tag && data.data) {
         data = new Type(data.tag, data.data);
@@ -92,7 +93,7 @@ class Type {
     if (this.isEntityReference) {
       // TODO: This should probably all happen during type construction so that
       //       we can cache the schema objet.
-      return Type.newEntity(resolveSchema(this.data).toLiteral());
+      return Type.newEntity(resolveSchema(this.data));
     }
 
     if (this.isView) {
@@ -126,8 +127,14 @@ class Type {
   }
 
   toLiteral() {
-    if (this.data.toLiteral)
+    if (this.tag == 'entity' || this.tag == 'list')
       return {tag: this.tag, data: this.data.toLiteral()};
+
+    // TODO: make sure we can deal with multiple-arg type literalization
+    // generically.
+    if (this.tag == 'shape')
+      return {tag: this.tag, data: {shape: this.data.shape.toLiteral()}};
+
     return this;
   }
 
@@ -137,6 +144,8 @@ class Type {
       data = {shape: Shape.fromLiteral(data.shape)};
     else if (literal.tag == 'entity')
       data = Schema.fromLiteral(data);
+    else if (literal.tag == 'list')
+      data = Type.fromLiteral(data);
     return new Type(literal.tag, data);
   }
 
