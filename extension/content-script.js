@@ -5,24 +5,11 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-function gather_current_page() {
-  extractEntities().then(result => {
-    console.log(result);
+extractEntities().then(results => {
+  console.log('content-script result of extractEntities', results);
+  chrome.runtime.sendMessage({
+    method: 'storePageEntities',
+    url: window.location.toString(),
+    results: results
   });
-}
-
-chrome.runtime.onMessage.addListener(
-  function(request, sender, sendResponse) {
-
-    if (request.method!='extractEntities') {
-      return;
-    }
-
-    extractEntities().then(result => {
-      console.log('result of extractEntities', result);
-      sendResponse(result);
-    });
-
-    return true;
-  }
-);
+});

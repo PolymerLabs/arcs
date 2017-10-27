@@ -3,18 +3,21 @@
   "name": "arcs",
   "version": "0",
   "permissions": [
+    "storage",
+
     "sessions",
     "tabs",
     "<all_urls>"
   ],
   "background": {
-    "page": "event-page.html",
-    "persistent": true
+    "scripts": ["event-page.js"],
+    "persistent": false
   },
   "content_scripts": [
     {
       "matches": ["*://*/*"],
-      "js": ["page-extractor.js", "load-browser-state.js", "content-script.js", "globals.js"]
+      "js": ["globals.js", "page-extractor.js", "content-script.js"],
+      "all_frames": true
     }
   ],
   "chrome_url_overrides" : {
@@ -23,5 +26,5 @@
   "browser_action": {
     "default_popup": "popup.html"
   },
-  "content_security_policy": "script-src 'self' https://polymerlabs.github.io/ https://www.gstatic.com/ https://*.firebaseio.com/ 'sha256-rdk56h4D+jfInKWMNE+DL5C923/KiX9j3/l0Cdvgj0c=' 'sha256-UhKb6ALfS/wBC46s4Gf/MkECcgTkd8muXg/DEdOKuwY='; object-src 'self'"
+  "content_security_policy": "script-src 'self' 'sha256-rdk56h4D+jfInKWMNE+DL5C923/KiX9j3/l0Cdvgj0c='; object-src 'self'"
 }
