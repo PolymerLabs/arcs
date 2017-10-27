@@ -15,6 +15,7 @@ const Symbols = require('./symbols.js');
 const underlyingView = require('./view.js');
 let identifier = Symbols.identifier;
 const assert = require("assert");
+const ParticleSpec = require("./particle-spec.js");
 
 // TODO: This won't be needed once runtime is transferred between contexts.
 function cloneData(data) {
@@ -88,6 +89,10 @@ class Viewlet {
 
   get _id() {
     return this._view._id;
+  }
+
+  toManifestString() {
+    return `'${this._id}'`;
   }
 }
 
@@ -172,6 +177,8 @@ class Variable extends Viewlet {
       return undefined;
     if (this.type.isEntity)
       return this._restore(result);
+    if (this.type.isShape)
+      return ParticleSpec.fromLiteral(result);
     return result;
   }
 

@@ -254,7 +254,7 @@ class PECOuterPort extends APIPort {
     this.registerCall("ConstructArcCallback", {callback: this.Direct, arc: this.LocalMapped});
 
     this.registerHandler("ArcCreateView", {callback: this.Direct, arc: this.LocalMapped, viewType: this.ByLiteral(Type), name: this.Direct});
-    this.registerInitializer("CreateViewCallback", {callback: this.Direct, viewType: this.Direct, name: this.Direct, id: this.Direct});
+    this.registerInitializer("CreateViewCallback", {callback: this.Direct, viewType: this.ByLiteral(Type), name: this.Direct, id: this.Direct});
 
     this.registerHandler("ArcLoadRecipe", {arc: this.LocalMapped, recipe: this.Direct, callback: this.Direct});
   }
@@ -294,7 +294,7 @@ class PECInnerPort extends APIPort {
     this.registerHandler("ConstructArcCallback", {callback: this.LocalMapped, arc: this.Direct});
 
     this.registerCall("ArcCreateView", {callback: this.LocalMapped, arc: this.Direct, viewType: this.ByLiteral(Type), name: this.Direct});
-    this.registerInitializerHandler("CreateViewCallback", {callback: this.LocalMapped, viewType: this.Direct, name: this.Direct, id: this.Direct});
+    this.registerInitializerHandler("CreateViewCallback", {callback: this.LocalMapped, viewType: this.ByLiteral(Type), name: this.Direct, id: this.Direct});
 
     this.registerCall("ArcLoadRecipe", {arc: this.Direct, recipe: this.Direct, callback: this.LocalMapped});
   }
