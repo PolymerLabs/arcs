@@ -97,6 +97,7 @@ class DomParticle extends XenStateMixin(Particle) {
   }
   _update(props, state) {
     this.config.slotNames.forEach(s => this.render(s, ["model"]));
+    // TODO: improve relevance signal.
     this.relevance = this._shouldRender(this._props, this._state) ? 1 : -1;
   }
   render(slotName, contentTypes) {
