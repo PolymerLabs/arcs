@@ -24,7 +24,7 @@ let GroupViewConnections = require('../strategies/group-view-connections.js');
 let CombinedStrategy = require('../strategies/combined-strategy.js');
 let FallbackFate = require('../strategies/fallback-fate.js');
 let MessageChannel = require('../message-channel.js');
-let InnerPec = require('../inner-pec.js');
+let InnerPec = require('../inner-PEC.js');
 let Particle = require('../particle.js');
 var loader = new Loader();
 
