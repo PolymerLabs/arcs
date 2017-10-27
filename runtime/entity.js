@@ -9,7 +9,6 @@
 
 const assert = require('assert');
 const Symbols = require('./symbols.js');
-const Type = require('./type.js');
 
 class Entity {
   constructor() {
@@ -42,3 +41,5 @@ class Entity {
 }
 
 module.exports = Entity;
+
+const Type = require('./type.js');

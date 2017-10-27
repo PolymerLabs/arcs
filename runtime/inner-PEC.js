@@ -101,7 +101,7 @@ class InnerPEC {
     };
 
     this._apiPort.onCreateViewCallback = ({viewType, identifier, id, name, callback}) => {
-      var view = new RemoteView(id, Type.fromLiteral(viewType), this._apiPort, this, name, 0);
+      var view = new RemoteView(id, viewType, this._apiPort, this, name, 0);
       Promise.resolve().then(() => callback(view));
       return view;
     }
@@ -196,7 +196,7 @@ class InnerPEC {
         return new Promise((resolve, reject) =>
           pec._apiPort.ArcCreateView({arc: arcId, viewType, name, callback: view => {
             var v = viewlet.viewletFor(view, view.type.isView, true, true);
-            v.entityClass = new Schema(view.type.isView ? view.type.primitiveType().entitySchema : view.type.entitySchema).entityClass();
+            v.entityClass = (view.type.isView ? view.type.primitiveType().entitySchema : view.type.entitySchema).entityClass();
             resolve(v);
           }}));
       },
@@ -246,7 +246,7 @@ class InnerPEC {
         schemaModel = type.entitySchema;
       }
       if (schemaModel)
-        view.entityClass = new Schema(schemaModel).entityClass();
+        view.entityClass = schemaModel.entityClass();
     }
 
     return [particle, () => {
