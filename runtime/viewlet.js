@@ -168,8 +168,11 @@ class Variable extends Viewlet {
     if (!this.canRead)
       throw new Error("View not readable");
     var result = await this._view.get();
-    var data = result == null ? undefined : this._restore(result);
-    return data;
+    if (result == null)
+      return undefined;
+    if (this.type.isEntity)
+      return this._restore(result);
+    return result;
   }
 
   /** @method set(entity)

@@ -73,7 +73,7 @@ class View {
   // a resolved View has either an id or create=true
   get fate() { return this._fate || "?"; }
   set fate(fate) {
-    if (!this._originalFate) {
+    if (this._originalFate == null) {
       this._originalFate = this._fate;
     }
     this._fate = fate;

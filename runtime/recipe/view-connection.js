@@ -96,7 +96,7 @@ class ViewConnection {
   }
 
   _isValid() {
-    if (this.direction && !['in', 'out', 'inout'].includes(this.direction)) {
+    if (this.direction && !['in', 'out', 'inout', 'host'].includes(this.direction)) {
       return false;
     }
     if (this.type && this.particle && this.particle.spec) {
