@@ -162,6 +162,10 @@ class ParticleSpec {
     }
     return results.join('\n');
   }
+
+  toManifestString() {
+    return this.toString();
+  }
 }
 
 module.exports = ParticleSpec;

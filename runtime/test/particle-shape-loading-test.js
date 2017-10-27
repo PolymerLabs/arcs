@@ -40,24 +40,20 @@ describe('particle-shape-loading', function() {
                 let outView = await arc.createView(outputView.type, "output");
                 let particle = await views.get('particle').get();
 
-                var recipe = \`
-                  schema Foo
-                    optional
-                      Text value
-                  schema Bar
-                    optional
-                      Text value
+                var recipe = Particle.buildManifest\`
+                  \${inputView.type.entitySchema}
+                  \${outputView.type.entitySchema}
 
-                  particle \${particle.name} in '\${particle.implFile}'
-                    \${particle.name}(in Foo foo, out Bar bar)
+                  \${particle}
 
                   recipe
-                    use '\${inView._id}' as v1
-                    use '\${outView._id}' as v2
+                    use \${inView} as v1
+                    use \${outView} as v2
                     \${particle.name}
                       foo <- v1
                       bar -> v2
                 \`;
+
                 try {
                   await arc.loadRecipe(recipe);
                   var input = await inputView.get();

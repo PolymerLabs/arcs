@@ -8,9 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-const Entity = require("./entity.js");
 const assert = require('assert');
-const Type = require('./type.js');
 
 class Schema {
   constructor(model) {
@@ -19,6 +17,7 @@ class Schema {
     this.parents = (model.parents || []).map(parent => new Schema(parent));
     this._normative = {};
     this._optional = {};
+
     assert(model.sections);
     for (var section of model.sections) {
       var into = section.sectionType == 'normative' ? this._normative : this._optional;
@@ -31,6 +30,10 @@ class Schema {
 
   toLiteral() {
     return this._model;
+  }
+
+  static fromLiteral(data) {
+    return new Schema(data);
   }
 
   get type() {
@@ -143,6 +146,13 @@ class Schema {
     propertiesToString(this.optional, 'optional');
     return results.join('\n');
   }
+
+  toManifestString() {
+    return this.toString();
+  }
 }
 
 module.exports = Schema;
+
+const Type = require('./type.js');
+const Entity = require("./entity.js");
