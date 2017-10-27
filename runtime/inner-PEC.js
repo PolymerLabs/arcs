@@ -240,7 +240,7 @@ class InnerPEC {
     for (var view of viewMap.values()) {
       var type = view.underlyingView().type;
       let schemaModel;
-      if (type.isView && type.primitiveType.isEntity) {
+      if (type.isView && type.primitiveType().isEntity) {
         schemaModel = type.primitiveType().entitySchema;
       } else if (type.isEntity) {
         schemaModel = type.entitySchema;

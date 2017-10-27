@@ -23,7 +23,7 @@ const ParticleSpec = require("../particle-spec.js");
 
 describe('particle-shape-loading', function() {
 
-  it.only('loads shapes into particles', async () => {
+  it('loads shapes into particles', async () => {
     var loader = new class extends Loader {
       loadResource(path) {
         if (path == 'outer-particle.js')
