@@ -5,6 +5,7 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
+/*
 let arc;
 let ams;
 let amKey;
@@ -228,4 +229,21 @@ chrome.runtime.onMessage.addListener(
     sendResponse({amKey: amKey, manifestUrls: additionalManifestUrls});
   }
 
+);
+*/
+
+chrome.runtime.onMessage.addListener(
+  function(request, sender, sendResponse) {
+    if (request.method!='storePageEntities') {
+      return;
+    }
+
+    let key = request.url;
+    chrome.storage.local.set({[request.url]: request.results});
+
+    // XXX for debugging
+    chrome.storage.local.get(null, result => {
+      console.log('storage contains', result);
+    });
+  }
 );
