@@ -23,7 +23,8 @@ class ConnectionSpec {
   }
 
   get isInput() {
-    return this.direction == "in" || this.direction == "inout";
+    // TODO: we probably don't really want host to be here.
+    return this.direction == "in" || this.direction == "inout" || this.direction == "host";
   }
 
   get isOutput() {

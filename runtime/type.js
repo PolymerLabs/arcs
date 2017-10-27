@@ -126,11 +126,16 @@ class Type {
   }
 
   toLiteral() {
+    if (this.data.toLiteral)
+      return {tag: this.tag, data: this.data.toLiteral()};
     return this;
   }
 
   static fromLiteral(literal) {
-    return new Type(literal.tag, literal.data);
+    let data = literal.data;
+    if (literal.tag == 'shape')
+      data = {shape: Shape.fromLiteral(data.shape)};
+    return new Type(literal.tag, data);
   }
 
   viewOf() {
@@ -187,3 +192,5 @@ addType('ShapeReference', 'shapeReference', ['name']);
 addType('Shape', 'shape', ['shape', 'disambiguation'])
 
 module.exports = Type;
+
+const Shape = require('./shape.js');

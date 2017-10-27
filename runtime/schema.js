@@ -57,7 +57,7 @@ class Schema {
     let schema = this;
     const className = this.name;
     var properties = Object.keys(this.normative).concat(Object.keys(this.optional));
-    var classJunk = ['toJSON', 'prototype', 'toString'];
+    var classJunk = ['toJSON', 'prototype', 'toString', 'inspect'];
 
     var clazz = class extends Entity {
       constructor(data) {

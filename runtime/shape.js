@@ -9,10 +9,15 @@
  */
 
 const assert = require('assert');
-const Type = require('./type.js');
 
 // ShapeView {name, direction, type}
 // Slot {name, direction}
+
+function _fromLiteral(member) {
+  if (typeof member == 'object')
+    return Type.fromLiteral(member);
+  return member;
+}
 
 class Shape {
   constructor(views, slots) {
@@ -30,6 +35,19 @@ class Shape {
           this._typeVars.push({object: slot, field});
   }
 
+  toPrettyString() {
+    return "SHAAAAPE";
+  }
+
+  static fromLiteral(data) {
+    let views = data.views.map(view => ({type: _fromLiteral(view.type), name: _fromLiteral(view.name), direction: _fromLiteral(view.direction)}));
+    let slots = data.slots.map(slot => ({name: _fromLiteral(slot.name), direction: _fromLiteral(slot.direction)}));
+    return new Shape(views, slots);
+  }
+
+  toLiteral() {
+    return {views: this.views, slots: this.slots};
+  }
 
   clone() {
     var views = this.views.map(({name, direction, type}) => ({name, direction, type}));
@@ -83,3 +101,5 @@ class Shape {
 }
 
 module.exports = Shape;
+
+const Type = require('./type.js');
