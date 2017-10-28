@@ -90,9 +90,9 @@ class MockSlotComposer extends SlotComposer {
   }
 
   renderSlot(particle, slotName, content) {
-    console.log(`renderSlot ${particle.name}:${slotName}`, Object.keys(content).join(', '));
+//    console.log(`renderSlot ${particle.name}:${slotName}`, Object.keys(content).join(', '));
     assert(this.expectQueue.length > 0 && this.expectQueue[0],
-      `Got a renderSlot from ${particle.name}:${slotName}, but not expecting anything further.`);
+      `Got a renderSlot from ${particle.name}:${slotName} (content types: ${Object.keys(content).join(', ')}), but not expecting anything further.`);
     var expectations = this.expectQueue[0];
     for (let contentType of Object.keys(content)) {
       let found = false;
@@ -105,7 +105,7 @@ class MockSlotComposer extends SlotComposer {
           break;
         }
       }
-      assert(found, `Unexpected render slot ${slotName} for particle ${particle.name} (content type ${contentType})`);
+      assert(found, `Unexpected render slot ${slotName} for particle ${particle.name} (content type: ${contentType})`);
     }
     if (expectations.length == 0) {
       this.expectQueue.shift();
@@ -113,7 +113,12 @@ class MockSlotComposer extends SlotComposer {
     }
 
     super.renderSlot(particle, slotName, content);
-    super.updateInnerSlots(this.getSlot(particle, slotName));
+    let slot = this.getSlot(particle, slotName);
+    if (slot) {
+      super.updateInnerSlots(slot);
+    } else {
+      // Slots of particles hosted in transformation particles.
+    }
   }
 
   expectationMet(expectation) {

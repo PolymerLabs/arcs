@@ -72,9 +72,16 @@ class OuterPEC extends PEC {
       this._apiPort.CreateViewCallback(view, {viewType, name, callback, id: view.id});
     }
 
+    this._apiPort.onArcCreateSlot = ({callback, arc, transformationParticle, transformationSlotName, hostedParticleName,  hostedSlotName}) => {
+      if (this.slotComposer) {
+        var hostedSlotId = this.slotComposer.createHostedSlot(transformationParticle, transformationSlotName, hostedParticleName, hostedSlotName);
+      }
+      this._apiPort.CreateSlotCallback({}, {transformationParticle, transformationSlotName, hostedParticleName, hostedSlotName, callback, hostedSlotId});
+    }
+
     this._apiPort.onArcLoadRecipe = async ({arc, recipe, callback}) => {
       let manifest = await Manifest.parse(recipe, {loader: this._arc._loader, fileName: ''});
-      let error = undefined
+      let error = undefined;
       var recipe = manifest.recipes[0];
       if (recipe) {
         for (var view of recipe.views) {
@@ -84,7 +91,7 @@ class OuterPEC extends PEC {
           if (recipe.isResolved()) {
             this._arc.instantiate(recipe);
           } else {
-            error = "Recipe is not resolvable";
+            error = `Recipe is not resolvable ${recipe.toString({showUnresolved: true})}`;
           }
         } else {
           error = "Recipe could not be normalized";
@@ -144,6 +151,9 @@ class OuterPEC extends PEC {
   }
   stopRender({particle, slotName}) {
     this._apiPort.StopRender({particle, slotName});
+  }
+  innerArcRender(transformationParticle, transformationSlotName, hostedParticle, hostedSlotName, hostedSlotId, content) {
+    this._apiPort.InnerArcRender({transformationParticle, transformationSlotName, hostedParticle, hostedSlotName, hostedSlotId, content})
   }
 }
 
