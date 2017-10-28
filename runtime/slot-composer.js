@@ -30,7 +30,9 @@ class SlotComposer {
     }
 
     this._slots = [];
-    this._nextSlotId = 0;
+
+    // TODO(mmandlis): Add unit tests to slot-composer-test for all the hosted slots functionality.
+    this._hostedSlotById = new Map();
   }
   get affordance() { return this._affordance; }
   getSlotClass() {
@@ -50,14 +52,45 @@ class SlotComposer {
     return this._slots.find(s => s.consumeConn.particle == particle && s.consumeConn.name == slotName);
   }
 
+  createHostedSlot(transformationParticle, transformationSlotName, hostedParticleName, hostedSlotName) {
+    let hostedSlotId = this.arc.generateID();
+
+    this._hostedSlotById.set(hostedSlotId, {
+      transformationParticle,
+      transformationSlotName,
+      hostedParticleName,
+      hostedSlotName,
+      hostedSlotId
+    });
+
+    assert(this.getSlot(transformationParticle, transformationSlotName),
+           `Unexpected transformation slot particle ${transformationParticle.name}:${transformationSlotName}, hosted particle ${hostedParticleName}, slot name ${hostedSlotName}`);
+    return hostedSlotId;
+  }
+
+  findHostedSlot(hostedParticle, hostedSlotName) {
+    for (let hostedSlot of this._hostedSlotById.values()) {
+      if (hostedSlot.hostedParticle == hostedParticle && hostedSlot.hostedSlotName == hostedSlotName) {
+        return hostedSlot;
+      }
+    }
+  }
+
   initializeRecipe(recipeParticles) {
     let newSlots = [];
     // Create slots for each of the recipe's particles slot connections.
     recipeParticles.forEach(p => {
       Object.values(p.consumedSlotConnections).forEach(cs => {
+        assert(cs.targetSlot, `No target slot for particle's ${p.name} consumed slot: ${cs.name}.`);
+
+        if (this._initHostedSlot(cs.targetSlot.id, p)) {
+          // Skip slot creation for hosted slots.
+          return;
+        }
+
         let slot = new this._slotClass(cs, this.arc, this._containerKind);
-        slot.startRenderCallback = this.arc.pec.startRender.bind(this.arc.pec);
-        slot.stopRenderCallback = this.arc.pec.stopRender.bind(this.arc.pec);
+        slot.startRenderCallback = this.startRender.bind(this);
+        slot.stopRenderCallback = this.stopRender.bind(this);
         slot.innerSlotsUpdateCallback = this.updateInnerSlots.bind(this);
         newSlots.push(slot);
       });
@@ -74,7 +107,7 @@ class SlotComposer {
         if (sourceConnSlot) {
           context = sourceConnSlot.getInnerContext(s.consumeConn.name);
         }
-      } else {
+      } else {  // External slots provided at SlotComposer ctor (eg "root")
         context = this._contextById[s.consumeConn.name];
       }
       if (context) {
@@ -85,12 +118,78 @@ class SlotComposer {
     });
   }
 
+  _initHostedSlot(hostedSlotId, hostedParticle) {
+    if (!this._hostedSlotById.has(hostedSlotId)) {
+      return false;
+    }
+    let hostedSlot = this._hostedSlotById.get(hostedSlotId);
+    assert(hostedSlot.hostedParticleName == hostedParticle.name,
+           `Unexpected particle name ${hostedParticle.name} for slot ${hostedSlotId}; expected: ${hostedSlot.hostedParticleName}`)
+    hostedSlot.hostedParticle = hostedParticle;
+    let outerSlot = this.getSlot(hostedSlot.transformationParticle, hostedSlot.transformationSlotName);
+    if (outerSlot.context) {
+      this.arc.pec.startRender({
+        particle: hostedSlot.hostedParticle,
+        slotName: hostedSlot.hostedSlotName,
+        contentTypes: outerSlot.constructRenderRequest(),
+      });
+    }
+
+    return true;
+  }
+
+  startRender(params) {
+    this.arc.pec.startRender(params);
+
+    for (let hostedSlot of this._hostedSlotById.values()) {
+      if (hostedSlot.hostedParticle && hostedSlot.transformationParticle == params.particle) {
+        this.arc.pec.startRender(Object.assign({}, params, {particle: hostedSlot.hostedParticle, slotName: hostedSlot.hostedSlotName}));
+      }
+    }
+  }
+
+  stopRender(params) {
+    for (let hostedSlot of this._hostedSlotById.values()) {
+      if (hostedSlot.hostedParticle && hostedSlot.transformationParticle == params.particle) {
+        this.arc.pec.stopRender(Object.assign(params, {particle: hostedSlot.hostedParticle, slotName: hostedSlot.hostedSlotName}));
+      }
+    }
+    this.arc.pec.stopRender(params);
+  }
+
+
   renderSlot(particle, slotName, content) {
     let slot = this.getSlot(particle, slotName);
-    assert(slot, `Cannot find slot ${slotName} for particle ${particle.name}`);
+    if (slot) {
+      // Set the slot's new content.
+      slot.setContent(content, eventlet => this.arc.pec.sendEvent(particle, slotName, eventlet));
+      return;
+    }
 
-    // Set the slot's new content.
-    slot.setContent(content, eventlet => this.arc.pec.sendEvent(particle, slotName, eventlet));
+    if (this._renderHostedSlot(particle, slotName, content)) {
+      return;
+    }
+
+    assert(slot, `Cannot find slot (or hosted slot) ${slotName} for particle ${particle.name}`);
+  }
+
+  _renderHostedSlot(particle, slotName, content) {
+    let hostedSlot = this.findHostedSlot(particle, slotName);
+    if (!hostedSlot) {
+      return false;
+    }
+    assert(this.getSlot(hostedSlot.transformationParticle, hostedSlot.transformationSlotName),
+           `Missing transformation particle slot for inner ${particle.name} slot ${slotName}`);
+
+    this.arc.pec.innerArcRender(
+      hostedSlot.transformationParticle,
+      hostedSlot.transformationSlotName,
+      hostedSlot.hostedParticle,
+      hostedSlot.hostedSlotName,
+      hostedSlot.hostedSlotId,
+      content);
+
+    return true;
   }
 
   updateInnerSlots(slot) {
@@ -114,7 +213,7 @@ class SlotComposer {
         if (!availableSlots[ps.name]) {
           availableSlots[ps.name] = [];
         }
-        let psId = ps.id || `slotid-${this._nextSlotId++}`;
+        let psId = ps.id || `slotid-${this.arc.generateID()}`;
         ps.id = psId;
         let providedSlotSpec = slot.consumeConn.slotSpec.providedSlots.find(psSpec => psSpec.name == ps.name);
         availableSlots[ps.name].push({
