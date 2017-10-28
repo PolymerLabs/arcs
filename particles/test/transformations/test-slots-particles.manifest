@@ -1,0 +1,24 @@
+# @license
+# Copyright (c) 2017 Google Inc. All rights reserved.
+# This code may only be used under the BSD style license found at
+# http://polymer.github.io/LICENSE.txt
+# Code distributed by Google as part of this project is also
+# subject to an additional IP rights grant found at
+# http://polymer.github.io/PATENTS.txt
+
+
+schema Foo
+  optional
+    Text value
+
+particle SingleSlotParticle in 'test-single-slot-particle.js'
+  SingleSlotParticle(in Foo foo)
+  consume annotation
+  description `test slot particle`
+
+particle MultiplexSlotsParticle in 'test-multiplex-slots-particle.js'
+  MultiplexSlotsParticle(in [Foo] foos)
+  # TODO: add hosted particle shape here!
+  consume set of annotationsSet
+    provide annotation
+  description `outer test slot particle`

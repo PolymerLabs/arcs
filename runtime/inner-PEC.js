@@ -100,10 +100,22 @@ class InnerPEC {
       return new RemoteView(identifier, viewType, this._apiPort, this, name, version);
     };
 
-    this._apiPort.onCreateViewCallback = ({viewType, identifier, id, name, callback}) => {
+    this._apiPort.onCreateViewCallback = ({viewType, id, name, callback}) => {
       var view = new RemoteView(id, viewType, this._apiPort, this, name, 0);
       Promise.resolve().then(() => callback(view));
       return view;
+    }
+
+    this._apiPort.onCreateSlotCallback = ({transformationParticle, transformationSlotName, hostedParticleName, hostedSlotName, hostedSlotId, callback}) => {
+      // TODO: Is it OK to get rid of:
+      // transformationParticle, transformationSlotName, hostedParticleName, hostedSlotName
+      // parameters? They aren't really used.
+      Promise.resolve().then(() => callback(hostedSlotId));
+      return hostedSlotId;
+    }
+
+    this._apiPort.onInnerArcRender = ({transformationParticle, transformationSlotName, hostedParticle, hostedSlotName, hostedSlotId, content}) => {
+      transformationParticle.renderHostedSlot(transformationSlotName, hostedSlotId, content);
     }
 
     this._apiPort.onDefineParticle = ({particleDefinition, particleFunction}) => {
@@ -200,6 +212,12 @@ class InnerPEC {
             resolve(v);
           }}));
       },
+      createSlot: function(transformationParticle, transformationSlotName, hostedParticleName, hostedSlotName) {
+        return new Promise((resolve, reject) =>
+          pec._apiPort.ArcCreateSlot({arc: arcId, transformationParticle, transformationSlotName, hostedParticleName, hostedSlotName, callback: hostedSlotId => {
+            resolve(hostedSlotId);
+          }}));
+      },
       loadRecipe: function(recipe) {
         // TODO: do we want to return a promise on completion?
         return new Promise((resolve, reject) =>
@@ -229,7 +247,8 @@ class InnerPEC {
     this._pendingLoads.push(p);
     let clazz = await this._loader.loadParticleClass(spec);
     let capabilities = this.defaultCapabilitySet();
-    let particle = new clazz(capabilities);
+    let particle = new clazz();  // TODO: how can i add an argument to DomParticle ctor?
+    particle.capabilities = capabilities;
     this._particles.push(particle);
 
     var viewMap = new Map();

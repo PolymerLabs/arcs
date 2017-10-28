@@ -9,6 +9,7 @@
  */
 "use strict";
 
+const assert = require('assert');
 const {
   Particle,
   ViewChanges,
@@ -119,6 +120,26 @@ class DomParticle extends XenStateMixin(Particle) {
       // Send empty object, to clear rendered slot contents.
       slot.render({});
     }
+  }
+  renderHostedSlot(slotName, hostedSlotId, content) {
+    assert(this.hostedSlotBySlotId.has(hostedSlotId), `Missing model for slot ID ${hostedSlotId}`);
+    this.hostedSlotBySlotId.get(hostedSlotId).content = content;
+
+    let slot = this.getSlot(slotName);
+    if (slot) {
+      let combinedContent = this.combineHostedContent(Object.keys(content));
+
+      // TODO: group multiple calls together!
+      if (combinedContent) {
+        slot.render(combinedContent);
+      } else if (slot.isRendered) {
+        slot.render({});
+      }
+    }
+  }
+  combineHostedContent(contentTypes) {
+    // Method must be implemented by transformation particle.
+    // TODO: consider adding a default implementation.
   }
   _initializeRender(slot) {
     let template = this.getTemplate(slot.slotName);
