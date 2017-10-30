@@ -88,16 +88,20 @@ class Type {
     return this;
   }
 
-  // Replaces entityReference types with resolved schemas.
-  resolveSchemas(resolveSchema) {
-    if (this.isEntityReference) {
-      // TODO: This should probably all happen during type construction so that
-      //       we can cache the schema objet.
-      return Type.newEntity(resolveSchema(this.data));
+  // Replaces manifestReference types with resolved schemas.
+  resolveReferences(resolve) {
+    if (this.isManifestReference) {
+      let resolved = resolve(this.data);
+      if (resolved.schema) {
+        // TODO: Figure out how to cache the schema objet.
+        return Type.newEntity(resolved.schema);
+      } else {
+        assert(false);
+      }
     }
 
     if (this.isView) {
-      return this.primitiveType().resolveSchemas(resolveSchema).viewOf();
+      return this.primitiveType().resolveReferences(resolve).viewOf();
     }
 
     return this;
@@ -184,22 +188,19 @@ class Type {
     if (this.isEntity)
       // Spit MyTypeFOO to My Type FOO
       return this.entitySchema.name.replace(/([^A-Z])([A-Z])/g, "$1 $2").replace(/([A-Z][^A-Z])/g, " $1").trim();
-    if (this.isEntityReference)
-      return this.entityReferenceName;
-    if (this.isShapeReference)
-      return this.shapeReferenceName;
+    if (this.isManifestReference)
+      return this.manifestReferenceName;
     if (this.isShape)
       return this.shapeShape.toPrettyString();
   }
 }
 
-addType('EntityReference', 'entityReference', ['name']);
+addType('ManifestReference', 'manifestReference', ['name']);
 addType('Entity', 'entity', ['schema']);
 addType('VariableReference', 'variableReference', ['name']);
 addType('Variable', 'variable', ['name', 'id']);
 addType('View', 'list', ['type']);
 addType('Relation', 'relation', ['entities']);
-addType('ShapeReference', 'shapeReference', ['name']);
 addType('Shape', 'shape', ['shape', 'disambiguation'])
 
 module.exports = Type;
