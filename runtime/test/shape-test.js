@@ -40,12 +40,12 @@ describe('shape', function() {
         {name: Type.newVariableReference('a')},
       ]);
     assert.equal(shape._typeVars.length, 4);
-    var type = Type.newShape(shape);
+    var type = Type.newInterface(shape);
     var map = new Map();
     type = type.assignVariableIds(map);
     assert(map.has('a'));
     assert(map.has('b'));
-    shape = type.shapeShape;
+    shape = type.interfaceShape;
     assert(shape.views[0].name.variableId == shape.slots[0].name.variableId);
     assert(shape.views[1].type.variableId == shape.views[2].type.viewType.variableId);
   });
