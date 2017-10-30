@@ -89,7 +89,7 @@ describe('particle-shape-loading', function() {
 
     let shape = new Shape([{type: fooType}, {type: barType}], []);
 
-    let shapeType = Type.newShape(shape);
+    let shapeType = Type.newInterface(shape);
 
     let outerParticleSpec = new ParticleSpec({
       name: 'outerParticle',

@@ -54,7 +54,7 @@ describe('View', function() {
                            {type: Type.newEntity(manifest.schemas.Bar)}], []);
     assert(shape._particleMatches(manifest.particles[0]));
 
-    let shapeView = arc.createView(Type.newShape(shape));
+    let shapeView = arc.createView(Type.newInterface(shape));
     shapeView.set(manifest.particles[0]);
     assert(shapeView.get() == manifest.particles[0]);
   });
