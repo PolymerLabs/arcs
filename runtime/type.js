@@ -77,10 +77,10 @@ class Type {
       return this.primitiveType().assignVariableIds(variableMap).viewOf();
     }
 
-    if (this.isShape) {
-      var shape = this.shapeShape.clone();
+    if (this.isInterface) {
+      var shape = this.interfaceShape.clone();
       shape._typeVars.map(({object, field}) => object[field] = object[field].assignVariableIds(variableMap));
-      return Type.newShape(shape, this.shapeDisambiguation);
+      return Type.newInterface(shape);
     }
 
     return this;
@@ -93,7 +93,7 @@ class Type {
       if (resolved.schema) {
         return Type.newEntity(resolved.schema);
       } else if (resolved.shape) {
-        return Type.newShape(resolved.shape);
+        return Type.newInterface(resolved.shape);
       } else {
         throw new Error('Expected {shape} or {schema}')
       }
@@ -137,7 +137,7 @@ class Type {
   }
 
   toLiteral() {
-    if (this.tag == 'Entity' || this.tag == 'SetView' || this.tag == 'Shape')
+    if (this.tag == 'Entity' || this.tag == 'SetView' || this.tag == 'Interface')
       return {tag: this.tag, data: this.data.toLiteral()};
 
     return this;
@@ -145,7 +145,7 @@ class Type {
 
   static fromLiteral(literal) {
     let data = literal.data;
-    if (literal.tag == 'Shape')
+    if (literal.tag == 'Interface')
       data = Shape.fromLiteral(data);
     else if (literal.tag == 'Entity')
       data = Schema.fromLiteral(data);
@@ -171,8 +171,8 @@ class Type {
       return `[${this.primitiveType().toString()}]`;
     if (this.isEntity)
       return this.entitySchema.name;
-    if (this.isShape)
-      return 'Shape'
+    if (this.isInterface)
+      return 'Interface'
     assert('Add support to serializing type:', this);
   }
 
@@ -191,8 +191,8 @@ class Type {
       return this.entitySchema.name.replace(/([^A-Z])([A-Z])/g, "$1 $2").replace(/([A-Z][^A-Z])/g, " $1").trim();
     if (this.isManifestReference)
       return this.manifestReferenceName;
-    if (this.isShape)
-      return this.shapeShape.toPrettyString();
+    if (this.isInterface)
+      return this.interfaceShape.toPrettyString();
   }
 }
 
@@ -202,7 +202,7 @@ addType('VariableReference', 'name');
 addType('Variable', 'variable');
 addType('SetView', 'type');
 addType('Relation', 'entities');
-addType('Shape', 'shape');
+addType('Interface', 'shape');
 
 module.exports = Type;
 

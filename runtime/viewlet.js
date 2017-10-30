@@ -177,7 +177,7 @@ class Variable extends Viewlet {
       return undefined;
     if (this.type.isEntity)
       return this._restore(result);
-    if (this.type.isShape)
+    if (this.type.isInterface)
       return ParticleSpec.fromLiteral(result);
     return result;
   }
