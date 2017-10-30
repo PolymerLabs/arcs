@@ -56,11 +56,6 @@ class ProvidedSlotSpec {
 
 class ParticleSpec {
   constructor(model, resolveSchema) {
-    // TODO: This should really happen after parsing, not here.
-    if (model.args)
-      model.args.forEach(arg => arg.type = arg.type.resolveSchemas(resolveSchema));
-    else
-      model.args = [];
     this._model = model;
     this.name = model.name;
     this.verbs = model.verbs;
@@ -127,7 +122,7 @@ class ParticleSpec {
 
   static fromLiteral(literal) {
     literal.args.forEach(a => a.type = Type.fromLiteral(a.type));
-    return new ParticleSpec(literal, () => assert(false));
+    return new ParticleSpec(literal);
   }
 
   validateDescription(description) {
