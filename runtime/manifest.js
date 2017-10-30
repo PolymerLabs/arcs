@@ -211,7 +211,11 @@ ${e.message}
     manifest._schemas[schemaItem.name] = new Schema(schemaItem);
   }
   static _processParticle(manifest, particleItem, loader) {
+    // TODO: we should require both of these and update failing tests...
     assert(particleItem.implFile == null || particleItem.args !== null, "no valid body defined for this particle");
+    if (!particleItem.args) {
+      particleItem.args = [];
+    }
     // TODO: loader should not be optional.
     if (particleItem.implFile && loader) {
       particleItem.implFile = loader.join(manifest.fileName, particleItem.implFile);
@@ -224,7 +228,12 @@ ${e.message}
       }
       return schema;
     };
-    let particleSpec = new ParticleSpec(particleItem, resolveSchema);
+
+    for (let arg of particleItem.args) {
+      arg.type = arg.type.resolveSchemas(resolveSchema);
+    }
+
+    let particleSpec = new ParticleSpec(particleItem);
     manifest._particles[particleItem.name] = particleSpec;
   }
   static _processShape(manifest, shapeItem) {
