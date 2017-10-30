@@ -67,12 +67,13 @@ class Type {
   assignVariableIds(variableMap) {
     if (this.isVariableReference) {
       var name = this.data;
-      var id = variableMap.get(name);
-      if (id == undefined) {
-        id = nextVariableId++;
-        variableMap.set(name, id);
+      let sharedVariable = variableMap.get(name);
+      if (sharedVariable == undefined) {
+        let id = nextVariableId++;
+        sharedVariable = new TypeVariable(name, id);
+        variableMap.set(name, sharedVariable);
       }
-      return Type.newVariable(name, id);
+      return Type.newVariable(sharedVariable);
     }
 
     if (this.isView) {
@@ -129,6 +130,13 @@ class Type {
   primitiveType() {
     var type = this.viewType;
     return new Type(type.tag, type.data);
+  }
+
+  resolvedType() {
+    if (this.isTypeVariable && this.data.isResolved)
+      return this.data.resolution.resolvedType();
+
+    return this;
   }
 
   toLiteral() {
@@ -199,7 +207,7 @@ class Type {
 addType('ManifestReference', 'manifestReference', ['name']);
 addType('Entity', 'entity', ['schema']);
 addType('VariableReference', 'variableReference', ['name']);
-addType('Variable', 'variable', ['name', 'id']);
+addType('Variable', 'variable', ['variable']);
 addType('View', 'list', ['type']);
 addType('Relation', 'relation', ['entities']);
 addType('Shape', 'shape', ['shape', 'disambiguation'])
@@ -208,3 +216,4 @@ module.exports = Type;
 
 const Shape = require('./shape.js');
 const Schema = require('./schema.js');
+const TypeVariable = require('./type-variable.js');
