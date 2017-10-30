@@ -11,36 +11,18 @@ const assert = require('assert');
 
 let nextVariableId = 0;
 
-function addType(name, tag, args) {
+function addType(name, tag, arg) {
   var lowerName = name[0].toLowerCase() + name.substring(1);
-  if (args.length == 1) {
-    Object.defineProperty(Type, `new${name}`, {
-      value: function() {
-        return new Type(tag, arguments[0]);
-      }});
-    var upperArg = args[0][0].toUpperCase() + args[0].substring(1);
-    Object.defineProperty(Type.prototype, `${lowerName}${upperArg}`, {
-      get: function() {
-        assert(this[`is${name}`]);
-        return this.data;
-      }});
-  } else {
-    Object.defineProperty(Type, `new${name}`, {
-      value: function() {
-        var data = {};
-        for (var i = 0; i < args.length; i++)
-          data[args[i]] = arguments[i];
-        return new Type(tag, data);
-      }});
-    for (let arg of args) {
-      var upperArg = arg[0].toUpperCase() + arg.substring(1);
-      Object.defineProperty(Type.prototype, `${lowerName}${upperArg}`, {
-        get: function() {
-          assert(this[`is${name}`]);
-          return this.data[arg];
-        }});
-    }
-  }
+  Object.defineProperty(Type, `new${name}`, {
+    value: function() {
+      return new Type(tag, arguments[0]);
+    }});
+  var upperArg = arg[0].toUpperCase() + arg.substring(1);
+  Object.defineProperty(Type.prototype, `${lowerName}${upperArg}`, {
+    get: function() {
+      assert(this[`is${name}`]);
+      return this.data;
+    }});
   Object.defineProperty(Type.prototype, `is${name}`, {
     get: function() {
       return this.tag == tag;
@@ -140,13 +122,8 @@ class Type {
   }
 
   toLiteral() {
-    if (this.tag == 'entity' || this.tag == 'list')
+    if (this.tag == 'entity' || this.tag == 'list' || this.tag == 'shape')
       return {tag: this.tag, data: this.data.toLiteral()};
-
-    // TODO: make sure we can deal with multiple-arg type literalization
-    // generically.
-    if (this.tag == 'shape')
-      return {tag: this.tag, data: {shape: this.data.shape.toLiteral()}};
 
     return this;
   }
@@ -154,7 +131,7 @@ class Type {
   static fromLiteral(literal) {
     let data = literal.data;
     if (literal.tag == 'shape')
-      data = {shape: Shape.fromLiteral(data.shape)};
+      data = Shape.fromLiteral(data);
     else if (literal.tag == 'entity')
       data = Schema.fromLiteral(data);
     else if (literal.tag == 'list')
@@ -204,13 +181,13 @@ class Type {
   }
 }
 
-addType('ManifestReference', 'manifestReference', ['name']);
-addType('Entity', 'entity', ['schema']);
-addType('VariableReference', 'variableReference', ['name']);
-addType('Variable', 'variable', ['variable']);
-addType('View', 'list', ['type']);
-addType('Relation', 'relation', ['entities']);
-addType('Shape', 'shape', ['shape', 'disambiguation'])
+addType('ManifestReference', 'manifestReference', 'name');
+addType('Entity', 'entity', 'schema');
+addType('VariableReference', 'variableReference', 'name');
+addType('Variable', 'variable', 'variable');
+addType('View', 'list', 'type');
+addType('Relation', 'relation', 'entities');
+addType('Shape', 'shape', 'shape');
 
 module.exports = Type;
 
