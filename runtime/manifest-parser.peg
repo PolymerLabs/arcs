@@ -40,6 +40,7 @@ ManifestItem
   / Import
   / Schema
   / ManifestView
+  / Shape
 
 // TODO: Entity syntax.
 ManifestView
@@ -73,6 +74,20 @@ Import
       path,
     };
   }
+
+Shape
+  = 'shape' whiteSpace name:TopLevelIdent typeVars:(whiteSpace? '<' whiteSpace? VariableTypeList whiteSpace? '>')? eolWhiteSpace items:(Indent (SameIndent ShapeItem)*)? eolWhiteSpace?
+  {
+    return {
+      kind: 'shape',
+      interface: optional(items, extractIndented, []).find(item => item.kind == 'interface'),
+      slots: optional(items, extractIndented, []).filter(item => item.kind == 'particle-slot'),
+    }
+  }
+
+ShapeItem
+  = ParticleInterface
+  / ParticleSlot
 
 Particle
   = 'particle' whiteSpace name:TopLevelIdent implFile:(whiteSpace 'in' whiteSpace id)? eolWhiteSpace items:(Indent (SameIndent ParticleItem)*)? eolWhiteSpace?
@@ -157,6 +172,12 @@ VariableType
   = '~' name:lowerIdent { return Type.newVariableReference(name); }
 EntityType
   = name:upperIdent { return Type.newEntityReference(name); }
+
+VariableTypeList
+  = head:VariableType tail:(',' whiteSpace VariableType)*
+  {
+    return [head, ...tail.map(a => a[2])];
+  }
 
 ParticleAffordance
   = 'affordance' whiteSpace affordance:('dom-touch' / 'dom' / 'vr' / 'voice') eolWhiteSpace
