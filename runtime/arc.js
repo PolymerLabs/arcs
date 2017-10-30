@@ -239,7 +239,7 @@ class Arc {
     if (type.isView) {
       view = new View(type, this, name, id);
     } else {
-      assert(type.isEntity || type.isShape, `Expected entity or shape type, but... ${JSON.stringify(type.toLiteral())}`);
+      assert(type.isEntity || type.isInterface, `Expected entity or interface type, but... ${JSON.stringify(type.toLiteral())}`);
       view = new Variable(type, this, name, id);
     }
     this._registerView(view, tags);
