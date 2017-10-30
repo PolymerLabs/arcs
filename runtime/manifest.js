@@ -221,22 +221,17 @@ ${e.message}
       particleItem.implFile = loader.join(manifest.fileName, particleItem.implFile);
     }
 
-    let resolveSchema = name => {
-      let schema = manifest.findSchemaByName(name);
-      if (!schema) {
-        throw new Error(`Schema '${name}' was not declared or imported`);
-      }
-      return schema;
-    };
-
     for (let arg of particleItem.args) {
-      arg.type = arg.type.resolveSchemas(resolveSchema);
+      arg.type = arg.type.resolveReferences(name => manifest.resolveReference(name));
     }
 
     let particleSpec = new ParticleSpec(particleItem);
     manifest._particles[particleItem.name] = particleSpec;
   }
   static _processShape(manifest, shapeItem) {
+    for (let arg of shapeItem.interface.args) {
+      arg.type = arg.type.resolveReferences(name => manifest.resolveReference(name));
+    }
     let views = shapeItem.interface.args;
     let slots = [];
     for (let slotItem of shapeItem.slots) {
@@ -459,6 +454,17 @@ ${e.message}
       }
     }
   }
+  resolveReference(name) {
+    let schema = this.findSchemaByName(name);
+    if (schema) {
+      return {schema};
+    }
+    let shape = this.findShapeByName(name);
+    if (shape) {
+      return {shape};
+    }
+    throw new Error(`Schema or Shape '${name}' was not declared or imported`);
+  }
   static async _processView(manifest, item, loader) {
     let name = item.name;
     let id = item.id;
@@ -470,15 +476,7 @@ ${e.message}
     if (tags == null)
       tags = [];
 
-    // TODO: make this a util?
-    let resolveSchema = name => {
-      let schema = manifest.findSchemaByName(name);
-      if (!schema) {
-        throw new Error(`Schema '${name}' was not declared or imported`);
-      }
-      return schema;
-    };
-    type = type.resolveSchemas(resolveSchema);
+    type = type.resolveReferences(name => manifest.resolveReference(name));
 
     let view = manifest.newView(type, name, id, tags);
     view.source = item.source;
