@@ -14,6 +14,7 @@ const Recipe = require('./recipe/recipe.js');
 const ParticleSpec = require('./particle-spec.js');
 const Schema = require('./schema.js');
 const Search = require('./recipe/search.js');
+const Shape = require('./shape.js');
 const {View, Variable} = require('./view.js');
 const util = require('./recipe/util.js');
 
@@ -25,6 +26,7 @@ class Manifest {
     this._particles = {};
     this._schemas = {};
     this._views = [];
+    this._shapes = [];
     this._viewTags = new Map();
     this._fileName = null;
     this._nextLocalID = 0;
@@ -101,6 +103,9 @@ class Manifest {
     var tags = options && options.tags ? options.tags : [];
     return [...this._findAll(manifest => manifest._views.filter(view => view.type.equals(type) && tags.filter(tag => !manifest._viewTags.get(view).includes(tag)).length == 0))];
   }
+  findShapeByName(name) {
+    return this._find(manifest => manifest._shapes.find(shape => shape.name == name));
+  }
   generateID() {
     return `${this.id}:${this._nextLocalID++}`;
   }
@@ -168,11 +173,6 @@ ${e.message}
     manifest._fileName = fileName;
     manifest._id = id;
 
-    // TODO: This should be written to process in dependency order.
-    // 1. imports
-    // 2. schemas
-    // 3. particles, TODO: entities => views
-    // 4. recipes
     for (let item of items.filter(item => item.kind == 'import')) {
       let path = loader.path(manifest.fileName);
       let target = loader.join(path, item.path);
@@ -182,6 +182,9 @@ ${e.message}
     try {
       for (let item of items.filter(item => item.kind == 'schema')) {
         this._processSchema(manifest, item);
+      }
+      for (let item of items.filter(item => item.kind == 'shape')) {
+        this._processShape(manifest, item);
       }
       for (let item of items.filter(item => item.kind == 'particle')) {
         this._processParticle(manifest, item, loader);
@@ -223,6 +226,26 @@ ${e.message}
     };
     let particleSpec = new ParticleSpec(particleItem, resolveSchema);
     manifest._particles[particleItem.name] = particleSpec;
+  }
+  static _processShape(manifest, shapeItem) {
+    let views = shapeItem.interface.args;
+    let slots = [];
+    for (let slotItem of shapeItem.slots) {
+      slots.push({
+        direction: 'consume',
+        name: slotItem.name,
+      });
+      for (let providedSlotItem of slotItem.providedSlots) {
+        slots.push({
+          direction: 'provide',
+          name: providedSlotItem.name,
+        })
+      }
+    }
+    // TODO: move shape to recipe/ and add shape builder?
+    let shape = new Shape(views, slots);
+    shape.name = shapeItem.name;
+    manifest._shapes.push(shape);
   }
   static _processRecipe(manifest, recipeItem) {
     let recipe = manifest._newRecipe(recipeItem.name);
