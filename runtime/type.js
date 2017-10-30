@@ -11,11 +11,11 @@ const assert = require('assert');
 
 let nextVariableId = 0;
 
-function addType(name, tag, arg) {
+function addType(name, arg) {
   var lowerName = name[0].toLowerCase() + name.substring(1);
   Object.defineProperty(Type, `new${name}`, {
     value: function() {
-      return new Type(tag, arguments[0]);
+      return new Type(name, arguments[0]);
     }});
   var upperArg = arg[0].toUpperCase() + arg.substring(1);
   Object.defineProperty(Type.prototype, `${lowerName}${upperArg}`, {
@@ -25,7 +25,7 @@ function addType(name, tag, arg) {
     }});
   Object.defineProperty(Type.prototype, `is${name}`, {
     get: function() {
-      return this.tag == tag;
+      return this.tag == name;
     }});
 }
 
@@ -33,16 +33,31 @@ class Type {
   constructor(tag, data) {
     assert(typeof tag == 'string');
     assert(data);
-    if (tag == 'entity') {
+    if (tag == 'Entity') {
       assert(data instanceof Schema);
     }
-    if (tag == 'list') {
+    if (tag == 'SetView') {
       if (!(data instanceof Type) && data.tag && data.data) {
         data = new Type(data.tag, data.data);
       }
     }
     this.tag = tag;
     this.data = data;
+  }
+
+  /** DEPRECATED */
+  static newView(type) {
+    return Type.newSetView(type);
+  }
+
+  /** DEPRECATED */
+  get isView() {
+    return this.isSetView;
+  }
+
+  /** DEPRECATED */
+  get viewType() {
+    return this.setViewType;
   }
 
   // Replaces variableReference types with variable types .
@@ -94,7 +109,7 @@ class Type {
   equals(type) {
     if (this.tag !== type.tag)
       return false;
-    if (this.tag == 'entity') {
+    if (this.tag == 'Entity') {
       // TODO: Remove this hack that allows the old resolver to match
       //       types by schema name.
       return this.data.name == type.data.name;
@@ -122,7 +137,7 @@ class Type {
   }
 
   toLiteral() {
-    if (this.tag == 'entity' || this.tag == 'list' || this.tag == 'shape')
+    if (this.tag == 'Entity' || this.tag == 'SetView' || this.tag == 'Shape')
       return {tag: this.tag, data: this.data.toLiteral()};
 
     return this;
@@ -130,11 +145,11 @@ class Type {
 
   static fromLiteral(literal) {
     let data = literal.data;
-    if (literal.tag == 'shape')
+    if (literal.tag == 'Shape')
       data = Shape.fromLiteral(data);
-    else if (literal.tag == 'entity')
+    else if (literal.tag == 'Entity')
       data = Schema.fromLiteral(data);
-    else if (literal.tag == 'list')
+    else if (literal.tag == 'SetView')
       data = Type.fromLiteral(data);
     return new Type(literal.tag, data);
   }
@@ -181,13 +196,13 @@ class Type {
   }
 }
 
-addType('ManifestReference', 'manifestReference', 'name');
-addType('Entity', 'entity', 'schema');
-addType('VariableReference', 'variableReference', 'name');
-addType('Variable', 'variable', 'variable');
-addType('View', 'list', 'type');
-addType('Relation', 'relation', 'entities');
-addType('Shape', 'shape', 'shape');
+addType('ManifestReference', 'name');
+addType('Entity', 'schema');
+addType('VariableReference', 'name');
+addType('Variable', 'variable');
+addType('SetView', 'type');
+addType('Relation', 'entities');
+addType('Shape', 'shape');
 
 module.exports = Type;
 
