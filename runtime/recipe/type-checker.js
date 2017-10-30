@@ -24,36 +24,36 @@ class TypeChecker {
         return {valid: false};
       }
     }
-    TypeChecker.applyVariableResolutions(variableResolutions);
-    return {type: baseType, valid: true};
-  }
 
-  static _applyResolutionsToType(type, resolutions) {
-    if (resolutions.length > 0)
-      console.log('apply resolutions to type', type, resolutions);
-    return type;
+    return {type: baseType, valid: true};
   }
 
   static _coerceTypes(left, right) {
     var leftType = left.type;
     var rightType = right.type;
-    var resolutions = [];
 
     while (leftType.isView && rightType.isView) {
       leftType = leftType.primitiveType();
       rightType = rightType.primitiveType();
     }
+
+    leftType = leftType.resolvedType();
+    rightType = rightType.resolvedType();
+
+    if (leftType.equals(rightType))
+      return left;
+
     // TODO: direction?
     if (leftType.isVariable) {
-      resolutions.push({variable: leftType, becomes: rightType, context: left.connection});
+      leftType.variableVariable.resolution = rightType;
       var type = right;
     } else if (rightType.isVariable) {
-      resolutions.push({variable: rightType, becomes: leftType, context: right.connection});
+      rightType.variableVariable.resolution = leftType;
       var type = left;
     } else {
       return null;
     }
-    return {type, resolutions};
+    return type;
   }
 
   static isSubclass(subclass, superclass) {
@@ -79,10 +79,7 @@ class TypeChecker {
   }
 
   // left, right: {type, direction, connection}
-  static compareTypes(left, right, resolutions) {
-    left = TypeChecker._applyResolutionsToType(left, resolutions);
-    right = TypeChecker._applyResolutionsToType(right, resolutions);
-
+  static compareTypes(left, right) {
     if (left.type.equals(right.type))
       return {type: left, valid: true};
 
@@ -119,7 +116,6 @@ class TypeChecker {
       return {valid: false};
     }
     // TODO: direction?
-    result.resolutions.forEach(resolution => resolutions.push(resolution));
     return {type: result.type, valid: true}
   }
 
@@ -129,17 +125,6 @@ class TypeChecker {
     if (type.isView)
       return TypeChecker.substitute(type.primitiveType(), variable, value).viewOf();
     return type;
-  }
-
-  static applyVariableResolutions(resolutions) {
-    resolutions.forEach(resolution => {
-      var particle = resolution.context.particle;
-      particle.allConnections().forEach(connection => {
-        // TODO: is this actually always true?
-        assert(connection.type == connection.rawType);
-        connection._type = TypeChecker.substitute(connection.rawType, resolution.variable, resolution.becomes);
-      });
-    });
   }
 }
 
