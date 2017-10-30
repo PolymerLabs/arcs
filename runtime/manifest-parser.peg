@@ -146,7 +146,7 @@ ParticleInterface
     return {
       kind: 'interface',
       verb,
-      args:args || []
+      args: args || []
     };
   }
 

@@ -99,7 +99,7 @@ describe('particle-shape-loading', function() {
         {direction: 'in', type: fooType, name: 'input'},
         {direction: 'out', type: barType, name: 'output'}
       ],
-    }, a => a);
+    });
 
     let shapeView = arc.createView(shapeType);
     shapeView.set(manifest.particles[0].toLiteral());
