@@ -93,10 +93,11 @@ class Type {
     if (this.isManifestReference) {
       let resolved = resolve(this.data);
       if (resolved.schema) {
-        // TODO: Figure out how to cache the schema objet.
         return Type.newEntity(resolved.schema);
+      } else if (resolved.shape) {
+        return Type.newShape(resolved.shape);
       } else {
-        assert(false);
+        throw new Error('Expected {shape} or {schema}')
       }
     }
 
