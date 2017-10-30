@@ -80,6 +80,7 @@ Shape
   {
     return {
       kind: 'shape',
+      name,
       interface: optional(items, extractIndented, []).find(item => item.kind == 'interface'),
       slots: optional(items, extractIndented, []).filter(item => item.kind == 'particle-slot'),
     }

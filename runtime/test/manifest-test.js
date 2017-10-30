@@ -707,4 +707,13 @@ Expected " ", "#", "\\n", "\\r", [ ], [A-Z] or [a-z] but "?" found.
     verify(manifest);
     verify(await Manifest.parse(manifest.toString(), {loader}));
   });
+  it('can parse a manifest containing shapes', async () => {
+    let manifest = await Manifest.parse(`
+      schema Foo
+      shape Shape
+        AnyThing(in Foo foo)
+      particle ShapeParticle
+        ShapeParticle(in Shape shape)`);
+    assert(manifest.findShapeByName('Shape'));
+  });
 });
