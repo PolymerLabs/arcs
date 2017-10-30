@@ -17,7 +17,7 @@ function addType(name, arg) {
     value: function() {
       return new Type(name, arguments[0]);
     }});
-  var upperArg = arg[0].toUpperCase() + arg.substring(1);
+  var upperArg = arg ? arg[0].toUpperCase() + arg.substring(1) : '';
   Object.defineProperty(Type.prototype, `${lowerName}${upperArg}`, {
     get: function() {
       assert(this[`is${name}`]);
@@ -58,6 +58,21 @@ class Type {
   /** DEPRECATED */
   get viewType() {
     return this.setViewType;
+  }
+
+  /** DEPRECATED */
+  get manifestReferenceName() {
+    return this.manifestReference;
+  }
+
+  /** DEPRECATED */
+  get variableReferenceName() {
+    return this.variableReference;
+  }
+
+  /** DEPRECATED */
+  get variableVariable() {
+    return this.variable;
   }
 
   // Replaces variableReference types with variable types .
@@ -196,10 +211,10 @@ class Type {
   }
 }
 
-addType('ManifestReference', 'name');
+addType('ManifestReference');
 addType('Entity', 'schema');
-addType('VariableReference', 'name');
-addType('Variable', 'variable');
+addType('VariableReference');
+addType('Variable');
 addType('SetView', 'type');
 addType('Relation', 'entities');
 addType('Interface', 'shape');
