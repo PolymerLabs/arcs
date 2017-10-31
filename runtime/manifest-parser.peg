@@ -9,9 +9,6 @@
  */
 
 {
-
-  let Type = require('../type.js');
-
   var indent = '';
   var indents = [];
   function extractIndented(items) {
@@ -26,12 +23,37 @@
     }
     return defaultValue == null ? null : defaultValue;
   }
+  function checkNormal(result) {
+    if (['string', 'number', 'boolean'].includes(typeof result) || result === null) {
+      return;
+    }
+    if (Array.isArray(result)) {
+      for (let item of result) {
+        checkNormal(item);
+      }
+      return;
+    }
+    if (!result.location) {
+      throw new Error(`no 'location' in ${JSON.stringify(result)}`);
+    }
+    if (!result.kind) {
+      throw new Error(`no 'kind' in ${JSON.stringify(result)}`);
+    }
+    for (let key of Object.keys(result)) {
+      if (['location', 'kind'].includes(key)) {
+        continue;
+      }
+      checkNormal(result[key]);
+    }
+  }
 }
 
 Manifest
   = eolWhiteSpace? Indent? items:(SameIndent ManifestItem)*
   {
-    return items.map(item => item[1]);
+    let result = items.map(item => item[1]);
+    checkNormal(result);
+    return result;
   }
 
 ManifestItem
@@ -50,6 +72,7 @@ ManifestView
     items = optional(items, extractIndented, []);
     return {
       kind: 'view',
+      location: location(),
       name,
       type,
       id: optional(id, id => id[1], null),
@@ -71,6 +94,7 @@ Import
   {
     return {
       kind: 'import',
+      location: location(),
       path,
     };
   }
@@ -80,6 +104,7 @@ Shape
   {
     return {
       kind: 'shape',
+      location: location(),
       name,
       interface: optional(items, extractIndented, []).find(item => item.kind == 'interface'),
       slots: optional(items, extractIndented, []).filter(item => item.kind == 'particle-slot'),
@@ -109,7 +134,11 @@ Particle
       } else if (item.kind == 'particle-slot') {
         slots.push(item);
       } else if (item.kind == 'description') {
-        description = {};
+        // TODO: Super hacks.
+        description = {
+          kind: 'description?',
+          location: 'FIXME',
+        };
         item.description.forEach(d => { description[d.name] = d.pattern; });
       } else if (item.affordance) {
         affordance.push(item.affordance)
@@ -125,6 +154,7 @@ Particle
 
     return {
       kind: 'particle',
+      location: location(),
       name,
       implFile: optional(implFile, implFile => implFile[3], null),
       verbs,
@@ -146,6 +176,7 @@ ParticleInterface
   {
     return {
       kind: 'interface',
+      location: location(),
       verb,
       args: args || []
     };
@@ -158,21 +189,57 @@ ParticleArgumentList
   }
 
 ParticleArgument
-  = direction:ParticleArgumentDirection whiteSpace type:ParticleArgumentType whiteSpace name:lowerIdent
-  { return {direction, type:type, name}; }
+  = direction:ParticleArgumentDirection whiteSpace type:Type whiteSpace name:lowerIdent
+  {
+    return {
+      kind: 'particle-argument',
+      location: location(),
+      direction,
+      type: type,
+      name,
+    };
+  }
 
 ParticleArgumentDirection
   = 'inout' / 'in' / 'out'
-  { return text(); }
+  {
+    return text();
+  }
 
-ParticleArgumentType
-  = (VariableType / ReferenceType / ListType)
+Type
+  = VariableType
+  / ReferenceType
+  / ListType
+
 ListType
-  = '[' pt:ParticleArgumentType ']' { return Type.newView(pt); }
+  = '[' type:Type ']'
+  {
+    return {
+      kind: 'list-type',
+      location: location(),
+      type,
+    };
+  }
+
 VariableType
-  = '~' name:lowerIdent { return Type.newVariableReference(name); }
+  = '~' name:lowerIdent
+  {
+    return {
+      kind: 'variable-type',
+      location: location(),
+      name,
+    };
+  }
+
 ReferenceType
-  = name:upperIdent { return Type.newManifestReference(name); }
+  = name:upperIdent
+  {
+    return {
+      kind: 'reference-type',
+      location: location(),
+      name,
+    };
+  }
 
 VariableTypeList
   = head:VariableType tail:(',' whiteSpace VariableType)*
@@ -182,7 +249,13 @@ VariableTypeList
 
 ParticleAffordance
   = 'affordance' whiteSpace affordance:('dom-touch' / 'dom' / 'vr' / 'voice') eolWhiteSpace
-  { return {affordance}; }
+  {
+    return {
+      kind: 'particle-affordance',
+      location: location(),
+      affordance,
+    };
+  }
 
 ParticleSlot
   = isRequired:('must' whiteSpace)? 'consume' whiteSpace isSet:('set of' whiteSpace)? name:(lowerIdent) eolWhiteSpace
@@ -204,6 +277,7 @@ ParticleSlot
     });
     return {
       kind: 'particle-slot',
+      location: location(),
       name,
       isRequired: optional(isRequired, isRequired => isRequired[0] == 'must', false),
       isSet: !!isSet,
@@ -221,6 +295,7 @@ SlotFormFactor
   {
     return {
       kind: 'form-factor',
+      location: location(),
       formFactor
     };
   }
@@ -242,6 +317,7 @@ ParticleProvidedSlot
     });
     return {
       kind: 'provided-slot',
+      location: location(),
       name,
       isSet: !!isSet,
       formFactor,
@@ -255,22 +331,42 @@ ParticleProvidedSlotItem
 
 ParticleProvidedSlotView
   = 'view' whiteSpace view:lowerIdent eolWhiteSpace
-  { return {view}; }
+  {
+    return {
+      kind: 'particle-provided-slot-view',
+      location: location(),
+      view,
+    };
+  }
 
 ParticleDescription
   = 'description' whiteSpace pattern:backquotedString eolWhiteSpace viewDescriptions:(Indent (SameIndent ParticleViewDescription)+)?
   {
-    viewDescriptions = optional(viewDescriptions, extractIndented, []);
     return {
       kind: 'description',
-      description: [{'name': 'pattern', 'pattern': pattern}].concat(viewDescriptions)
+      location: location(),
+      description: [
+        {
+          // TODO: this should be stored in a different field.
+          kind: 'default-description?',
+          location: location(),
+          name: 'pattern',
+          pattern: pattern,
+        },
+        ...optional(viewDescriptions, extractIndented, []),
+      ],
     };
   }
 
 ParticleViewDescription
   = name:lowerIdent whiteSpace pattern:backquotedString eolWhiteSpace
   {
-    return { name, pattern };
+    return {
+      kind: 'view-description',
+      location: location(),
+      name,
+      pattern,
+    };
   }
 
 Recipe
@@ -278,6 +374,7 @@ Recipe
   {
     return {
       kind: 'recipe',
+      location: location(),
       name: optional(name, name => name[1], null),
       tags: optional(tags, tags => tags[1], []),
       items: optional(items, extractIndented, []),
@@ -313,6 +410,7 @@ RecipeParticle
     }
     return {
       kind: 'particle',
+      location: location(),
       name: optional(name, name => name[1], null),
       ref,
       connections: viewConnections,
@@ -327,10 +425,10 @@ RecipeParticleConnection
   {
     return {
       kind: 'view-connection',
+      location: location(),
       param,
       dir,
       target: optional(target, target => target[1], null),
-      location: location(),
     };
   }
 
@@ -339,6 +437,7 @@ RecipeParticleSlotConnection
   {
     return {
       kind: 'slot-connection',
+      location: location(),
       param,
       name: optional(name, name=>name[1], null),
       providedSlots: optional(providedSlots, extractIndented, [])
@@ -349,6 +448,8 @@ RecipeParticleProvidedSlot
   = 'provide' whiteSpace param:lowerIdent name:(whiteSpace Name)? eolWhiteSpace
   {
     return {
+      kind: 'provided-slot',
+      location: location(),
       param,
       name: optional(name, name=>name[1], null)
     };
@@ -359,6 +460,7 @@ RecipeConnection
   {
     return {
       kind: 'connection',
+      location: location(),
       dir,
       from,
       to,
@@ -371,6 +473,7 @@ RecipeSearch
   {
     return {
       kind: 'search',
+      location: location(),
       phrase,
       tokens: optional(tokens, tokens => tokens[1][2].map(t => t[1]), null)
     };
@@ -393,6 +496,8 @@ ConnectionTarget
     }
 
     return {
+      kind: 'connection-target',
+      location: location(),
       particle,
       name,
       param: optional(param, param => param[1], null),
@@ -400,15 +505,22 @@ ConnectionTarget
     }
   }
   / tags:TagList
-  { return {tags}; }
+  {
+    return {
+      kind: 'connection-target',
+      location: location(),
+      tags,
+    };
+  }
 
 RecipeView
   = type:('?' / 'use' / 'map' / 'create' / 'copy') ref:(whiteSpace ViewRef)? name:(whiteSpace Name)? eolWhiteSpace
   {
     return {
       kind: 'view',
+      location: location(),
       name: optional(name, name => name[1], null),
-      ref: optional(ref, ref => ref[1], {tags: []}),
+      ref: optional(ref, ref => ref[1], null),
       fate: type
     }
   }
@@ -426,25 +538,68 @@ SpaceTagList
 
 ParticleRef
   = name:upperIdent tags:SpaceTagList?
-  { return {name, tags: tags || [], verbs: []}; }
+  {
+    return {
+      kind: 'particle-ref',
+      location: location(),
+      name,
+      tags: tags || [],
+      verbs: [],
+    };
+  }
   / tags:TagList
-  { return {tags, verbs: []}; }
+  {
+    return {
+      kind: 'particle-ref',
+      location: location(),
+      tags,
+      verbs: [],
+    };
+  }
   / 'particle can' whiteSpace verb:lowerIdent tags:SpaceTagList?
-  { return {verbs: [verb], tags: tags || []}; }
+  {
+    return {
+      kind: 'particle-ref',
+      location: location(),
+      verbs: [verb],
+      tags: tags || [],
+    };
+  }
 
 ViewRef
   = id:id tags:SpaceTagList?
-  { return {id, tags: tags || []}; }
+  {
+    return {
+      kind: 'view-ref',
+      location: location(),
+      id,
+      tags: tags || [],
+    };
+  }
   / name:upperIdent tags:SpaceTagList?
-  { return {name, tags: tags || []}; }
+  {
+    return {
+      kind: 'view-ref',
+      location: location(),
+      name,
+      tags: tags || [],
+    };
+  }
   / tags:TagList
-  { return {tags}; }
+  {
+    return {
+      kind: 'view-ref',
+      location: location(),
+      tags,
+    };
+  }
 
 RecipeSlot
   = 'slot' id:(whiteSpace id)? name:(whiteSpace Name)? eolWhiteSpace
   {
     return {
       kind: 'slot',
+      location: location(),
       id: optional(id, id => id[1], null),
       name: optional(name, name => name[1], '')
     }
@@ -465,6 +620,7 @@ Schema
   {
     return {
       kind: 'schema',
+      location: location(),
       name: name,
       parents: optional(parent, parent => parent, []),
       sections: optional(sections, extractIndented, []),
@@ -474,13 +630,11 @@ Schema
 SchemaSection
   = sectionType:('normative' / 'optional') eolWhiteSpace fields:(Indent (SameIndent SchemaField eolWhiteSpace)+)
   {
-    let fieldDict = {};
-    for (let field of extractIndented(fields)) {
-      fieldDict[field.name] = field.type;
-    }
     return {
+      kind: 'schema-section',
+      location: location(),
       sectionType,
-      fields: fieldDict,
+      fields: extractIndented(fields),
     };
   }
 
@@ -488,6 +642,8 @@ SchemaField
   = type:SchemaType whiteSpace name:lowerIdent
   {
     return {
+      kind: 'schema-field',
+      location: location(),
       type,
       name,
     };

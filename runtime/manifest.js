@@ -15,6 +15,7 @@ const ParticleSpec = require('./particle-spec.js');
 const Schema = require('./schema.js');
 const Search = require('./recipe/search.js');
 const Shape = require('./shape.js');
+const Type = require('./type.js');
 const {View, Variable} = require('./view.js');
 const util = require('./recipe/util.js');
 
@@ -201,14 +202,24 @@ ${e.message}
     return manifest;
   }
   static _processSchema(manifest, schemaItem) {
-    var parents = [];
-    for (let parent of schemaItem.parents) {
-      parent = manifest.findSchemaByName(parent);
-      assert(parent);
-      parents.push(parent.toLiteral());
-    }
-    schemaItem.parents = parents;
-    manifest._schemas[schemaItem.name] = new Schema(schemaItem);
+    manifest._schemas[schemaItem.name] = new Schema({
+      name: schemaItem.name,
+      parents: schemaItem.parents.map(parent => {
+        let result = manifest.findSchemaByName(parent);
+        assert(result);
+        return result.toLiteral();
+      }),
+      sections: schemaItem.sections.map(section => {
+        let fields = {};
+        for (let field of section.fields) {
+          fields[field.name] = field.type;
+        }
+        return {
+          sectionType: section.sectionType,
+          fields,
+        };
+      }),
+    });
   }
   static _processParticle(manifest, particleItem, loader) {
     // TODO: we should require both of these and update failing tests...
@@ -222,14 +233,29 @@ ${e.message}
     }
 
     for (let arg of particleItem.args) {
+      arg.type = Manifest._processType(arg.type);
       arg.type = arg.type.resolveReferences(name => manifest.resolveReference(name));
     }
 
     let particleSpec = new ParticleSpec(particleItem);
     manifest._particles[particleItem.name] = particleSpec;
   }
+  // TODO: Move this to a generic pass over the AST and merge with resolveReference.
+  static _processType(typeItem) {
+    switch (typeItem.kind) {
+      case 'variable-type':
+        return Type.newVariableReference(typeItem.name);
+      case 'reference-type':
+        return Type.newManifestReference(typeItem.name);
+      case 'list-type':
+        return Type.newView(Manifest._processType(typeItem.type));
+      default:
+        throw `Unexpected type item of kind '${typeItem.kind}'`;
+    }
+  }
   static _processShape(manifest, shapeItem) {
     for (let arg of shapeItem.interface.args) {
+      arg.type = Manifest._processType(arg.type);
       arg.type = arg.type.resolveReferences(name => manifest.resolveReference(name));
     }
     let views = shapeItem.interface.args;
@@ -280,15 +306,16 @@ ${e.message}
 
     for (let item of items.views) {
       let view = recipe.newView();
-      if (item.ref.id) {
-        view.id = item.ref.id;
-      } else if (item.ref.name) {
-        let targetView = manifest.findViewByName(item.ref.name);
+      let ref = item.ref || {tags: []};
+      if (ref.id) {
+        view.id = ref.id;
+      } else if (ref.name) {
+        let targetView = manifest.findViewByName(ref.name);
         // TODO: Error handling.
-        assert(targetView, `Could not find view ${item.ref.name}`);
+        assert(targetView, `Could not find view ${ref.name}`);
         view.mapToView(targetView);
       }
-      view.tags = item.ref.tags;
+      view.tags = ref.tags;
       if (item.name) {
         assert(!items.byName.has(item.name));
         view.localName = item.name;
@@ -468,7 +495,7 @@ ${e.message}
   static async _processView(manifest, item, loader) {
     let name = item.name;
     let id = item.id;
-    let type = item.type;
+    let type = Manifest._processType(item.type);
     if (id == null) {
       id = `${manifest._id}view${manifest._views.length}`
     }
