@@ -127,7 +127,7 @@ class ParticleSpec {
 
   validateDescription(description) {
     Object.keys(description || []).forEach(d => {
-      assert(d == "pattern" || this.connectionMap.has(d), `Unexpected description for ${d}`);
+      assert(['kind', 'location', 'pattern'].includes(d) || this.connectionMap.has(d), `Unexpected description for ${d}`);
     });
   }
 
