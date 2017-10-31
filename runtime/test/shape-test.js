@@ -19,14 +19,14 @@ describe('shape', function() {
     var shape = new Shape([{type: Type.newVariableReference('a')}], []);
     assert.equal(shape._typeVars.length, 1);
     assert(shape._typeVars[0].field == 'type');
-    assert(shape._typeVars[0].object[shape._typeVars[0].field].variableReferenceName == 'a');
+    assert(shape._typeVars[0].object[shape._typeVars[0].field].variableReference == 'a');
   });
 
   it('finds type variable references in slots', function() {
     var shape = new Shape([], [{name: Type.newVariableReference('a')}]);
     assert.equal(shape._typeVars.length, 1);
     assert(shape._typeVars[0].field == 'name');
-    assert(shape._typeVars[0].object[shape._typeVars[0].field].variableReferenceName == 'a');
+    assert(shape._typeVars[0].object[shape._typeVars[0].field].variableReference == 'a');
   });
 
   it('upgrades type variable references', function() {
@@ -34,7 +34,7 @@ describe('shape', function() {
       [
         {name: Type.newVariableReference('a')},
         {type: Type.newVariableReference('b'), name: 'singleton'},
-        {type: Type.newVariableReference('b').viewOf(), name: 'set'}
+        {type: Type.newVariableReference('b').setViewOf(), name: 'set'}
       ],
       [
         {name: Type.newVariableReference('a')},
@@ -47,7 +47,7 @@ describe('shape', function() {
     assert(map.has('b'));
     shape = type.interfaceShape;
     assert(shape.views[0].name.variableId == shape.slots[0].name.variableId);
-    assert(shape.views[1].type.variableId == shape.views[2].type.viewType.variableId);
+    assert(shape.views[1].type.variableId == shape.views[2].type.setViewType.variableId);
   });
 
   it('matches particleSpecs', async () => {

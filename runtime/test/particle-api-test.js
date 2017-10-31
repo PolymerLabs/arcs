@@ -276,10 +276,10 @@ describe('particle-api', function() {
     };
     let arc = new Arc({id:'test', pecFactory, loader});
     let Result = manifest.findSchemaByName('Result').entityClass();
-    let inputsView = arc.createView(Result.type.viewOf());
+    let inputsView = arc.createView(Result.type.setViewOf());
     inputsView.store({id: 1, rawData: {value: 'hello'} });
     inputsView.store({id: 2, rawData: {value: 'world'} });
-    let resultsView = arc.createView(Result.type.viewOf());
+    let resultsView = arc.createView(Result.type.setViewOf());
     let recipe = manifest.recipes[0];
     recipe.normalize();
     arc.instantiate(recipe);

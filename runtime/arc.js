@@ -234,9 +234,9 @@ class Arc {
     tags = tags || [];
     assert(type instanceof Type, `can't createView with type ${type} that isn't a Type`);
     if (type.isRelation)
-      type = Type.newView(type);
+      type = Type.newSetView(type);
     let view;
-    if (type.isView) {
+    if (type.isSetView) {
       view = new View(type, this, name, id);
     } else {
       assert(type.isEntity || type.isInterface, `Expected entity or interface type, but... ${JSON.stringify(type.toLiteral())}`);
@@ -265,7 +265,7 @@ class Arc {
   // TODO: Don't use this, we should be testing the schemas for compatiblity
   //       instead of using just the name.
   static _viewKey(type) {
-    if (type.isView) {
+    if (type.isSetView) {
       return `list:${type.primitiveType().entitySchema.name}`;
     } else if (type.isEntity) {
       return type.entitySchema.name;
@@ -306,11 +306,11 @@ class Arc {
   commit(entities) {
     let entityMap = new Map();
     for (let entity of entities) {
-      entityMap.set(entity, this._viewFor(Type.newView(entity.constructor.type)));
+      entityMap.set(entity, this._viewFor(Type.newSetView(entity.constructor.type)));
     }
     for (let entity of entities) {
       if (entity instanceof Relation) {
-        entity.entities.forEach(entity => entityMap.set(entity, this._viewFor(Type.newView(entity.constructor.type))));
+        entity.entities.forEach(entity => entityMap.set(entity, this._viewFor(Type.newSetView(entity.constructor.type))));
       }
     }
     this.newCommit(entityMap);

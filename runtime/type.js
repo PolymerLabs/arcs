@@ -45,33 +45,38 @@ class Type {
     this.data = data;
   }
 
-  /** DEPRECATED */
   static newView(type) {
+    console.warn('Type.newView is deprecated. Please use Type.newSetView instead');
     return Type.newSetView(type);
   }
 
-  /** DEPRECATED */
   get isView() {
+    console.warn('Type.isView is deprecated. Please use Type.isSetView instead');
     return this.isSetView;
   }
 
-  /** DEPRECATED */
   get viewType() {
+    console.warn('Type.viewType is deprecated. Please use Type.setViewType isntead');
     return this.setViewType;
   }
 
-  /** DEPRECATED */
+  viewOf() {
+    console.warn('Type.viewOf is deprecated. Please use Type.setViewOf instead');
+    return this.setViewOf();
+  }
+
   get manifestReferenceName() {
+    console.warn('Type.manifestReferenceName is deprecated. Please use Type.manifestReference instead');
     return this.manifestReference;
   }
 
-  /** DEPRECATED */
   get variableReferenceName() {
+    console.warn('Type.variableReferenceName is deprecated. Please use Type.variableReference instead');
     return this.variableReference;
   }
 
-  /** DEPRECATED */
   get variableVariable() {
+    console.warn('Type.variableVariable is deprecated. Please use Type.variable instead');
     return this.variable;
   }
 
@@ -88,8 +93,8 @@ class Type {
       return Type.newVariable(sharedVariable);
     }
 
-    if (this.isView) {
-      return this.primitiveType().assignVariableIds(variableMap).viewOf();
+    if (this.isSetView) {
+      return this.primitiveType().assignVariableIds(variableMap).setViewOf();
     }
 
     if (this.isInterface) {
@@ -114,8 +119,8 @@ class Type {
       }
     }
 
-    if (this.isView) {
-      return this.primitiveType().resolveReferences(resolve).viewOf();
+    if (this.isSetView) {
+      return this.primitiveType().resolveReferences(resolve).setViewOf();
     }
 
     return this;
@@ -129,7 +134,7 @@ class Type {
       //       types by schema name.
       return this.data.name == type.data.name;
     }
-    if (this.isView) {
+    if (this.isSetView) {
       return this.data.equals(type.data);
     }
     return JSON.stringify(this.data) == JSON.stringify(type.data);
@@ -140,7 +145,7 @@ class Type {
   }
 
   primitiveType() {
-    var type = this.viewType;
+    var type = this.setViewType;
     return new Type(type.tag, type.data);
   }
 
@@ -169,20 +174,20 @@ class Type {
     return new Type(literal.tag, data);
   }
 
-  viewOf() {
-    return Type.newView(this);
+  setViewOf() {
+    return Type.newSetView(this);
   }
 
   hasProperty(property) {
     if (property(this))
       return true;
-    if (this.isView)
-      return this.viewType.hasProperty(property);
+    if (this.isSetView)
+      return this.setViewType.hasProperty(property);
     return false;
   }
 
   toString() {
-    if (this.isView)
+    if (this.isSetView)
       return `[${this.primitiveType().toString()}]`;
     if (this.isEntity)
       return this.entitySchema.name;
@@ -194,7 +199,7 @@ class Type {
   toPrettyString() {
     if (this.isRelation)
       return JSON.stringify(this.data);
-    if (this.isView) {
+    if (this.isSetView) {
       return `${this.primitiveType().toPrettyString()} List`;
     }
     if (this.isVariable)

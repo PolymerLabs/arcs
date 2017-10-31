@@ -32,8 +32,8 @@ function prepareExtensionArc() {
   let slotComposer = new SlotComposer({rootContext: particleRoot, affordance: 'mock'});
   let arc = new Arc({id: 'demo', pecFactory, slotComposer});
   //
-  arc.createView(Person.type.viewOf(), "peopleFromWebpage");
-  arc.createView(Product.type.viewOf(), "productsFromWebpage");
+  arc.createView(Person.type.setViewOf(), "peopleFromWebpage");
+  arc.createView(Product.type.setViewOf(), "productsFromWebpage");
   arc.createView(Person.type, "personSlot");
   arc.commit([
     new Person({name: "Claire"}),
