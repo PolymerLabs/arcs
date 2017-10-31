@@ -58,7 +58,7 @@ class Manifest {
   // TODO: simplify() / isValid().
   newView(type, name, id, tags) {
     let view;
-    if (type.isView) {
+    if (type.isSetView) {
       view = new View(type, this, name, id);
     } else {
       view = new Variable(type, this, name, id);
@@ -248,7 +248,7 @@ ${e.message}
       case 'reference-type':
         return Type.newManifestReference(typeItem.name);
       case 'list-type':
-        return Type.newView(Manifest._processType(typeItem.type));
+        return Type.newSetView(Manifest._processType(typeItem.type));
       default:
         throw `Unexpected type item of kind '${typeItem.kind}'`;
     }
@@ -517,7 +517,7 @@ ${e.message}
     for (let entity of entities) {
       let id = entity.$id || manifest.generateID();
       delete entity.$id;
-      if (type.isView) {
+      if (type.isSetView) {
         view.store({
           id,
           rawData: entity,

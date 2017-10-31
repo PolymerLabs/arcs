@@ -195,8 +195,8 @@ class InnerPEC {
       createView: function(viewType, name) {
         return new Promise((resolve, reject) =>
           pec._apiPort.ArcCreateView({arc: arcId, viewType, name, callback: view => {
-            var v = viewlet.viewletFor(view, view.type.isView, true, true);
-            v.entityClass = (view.type.isView ? view.type.primitiveType().entitySchema : view.type.entitySchema).entityClass();
+            var v = viewlet.viewletFor(view, view.type.isSetView, true, true);
+            v.entityClass = (view.type.isSetView ? view.type.primitiveType().entitySchema : view.type.entitySchema).entityClass();
             resolve(v);
           }}));
       },
@@ -234,13 +234,13 @@ class InnerPEC {
 
     var viewMap = new Map();
     views.forEach((value, key) => {
-      viewMap.set(key, viewlet.viewletFor(value, value.type.isView, spec.connectionMap.get(key).isInput, spec.connectionMap.get(key).isOutput));
+      viewMap.set(key, viewlet.viewletFor(value, value.type.isSetView, spec.connectionMap.get(key).isInput, spec.connectionMap.get(key).isOutput));
     });
 
     for (var view of viewMap.values()) {
       var type = view.underlyingView().type;
       let schemaModel;
-      if (type.isView && type.primitiveType().isEntity) {
+      if (type.isSetView && type.primitiveType().isEntity) {
         schemaModel = type.primitiveType().entitySchema;
       } else if (type.isEntity) {
         schemaModel = type.entitySchema;

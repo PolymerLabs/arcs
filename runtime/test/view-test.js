@@ -39,7 +39,7 @@ describe('View', function() {
 
   it('remove entry from view', async () => {
     let arc = new Arc({slotComposer});
-    let barView = arc.createView(Bar.type.viewOf());
+    let barView = arc.createView(Bar.type.setViewOf());
     let bar = new Bar({id: 0, value: 'a Bar'});
     barView.store(bar);
     barView.remove(bar.id);

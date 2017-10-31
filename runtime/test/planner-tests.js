@@ -58,8 +58,8 @@ describe('Planner', function() {
     var arc = createTestArc("test-plan-arc", manifest, "dom");
     let Person = manifest.findSchemaByName('Person').entityClass();
     let Product = manifest.findSchemaByName('Product').entityClass();
-    var personView = arc.createView(Person.type.viewOf(), "aperson");
-    var productView = arc.createView(Product.type.viewOf(), "products");
+    var personView = arc.createView(Person.type.setViewOf(), "aperson");
+    var productView = arc.createView(Product.type.setViewOf(), "products");
     var planner = new Planner();
     planner.init(arc);
     await planner.generate(),
@@ -383,9 +383,9 @@ describe('AssignOrCopyRemoteViews', function() {
       `));
 
       let schema = manifest.findSchemaByName('Foo');
-      manifest.newView(schema.type.viewOf(), 'Test1', 'test-1', ['#tag1']);
-      manifest.newView(schema.type.viewOf(), 'Test2', 'test-2', ['#tag2']);
-      manifest.newView(schema.type.viewOf(), 'Test2', 'test-3', []);
+      manifest.newView(schema.type.setViewOf(), 'Test1', 'test-1', ['#tag1']);
+      manifest.newView(schema.type.setViewOf(), 'Test2', 'test-2', ['#tag2']);
+      manifest.newView(schema.type.setViewOf(), 'Test2', 'test-3', []);
 
       var arc = createTestArc("test-plan-arc", manifest, "dom");
 
