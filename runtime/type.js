@@ -157,21 +157,26 @@ class Type {
   }
 
   toLiteral() {
-    if (this.tag == 'Entity' || this.tag == 'SetView' || this.tag == 'Interface')
+    if (this.data.toLiteral)
       return {tag: this.tag, data: this.data.toLiteral()};
-
     return this;
   }
 
+  static _deliteralizer(tag) {
+    switch (tag) {
+      case 'Interface':
+        return Shape.fromLiteral;
+      case 'Entity':
+        return Schema.fromLiteral;
+      case 'SetView':
+        return Type.fromLiteral;
+      default:
+        return a => a;
+    }
+  }
+
   static fromLiteral(literal) {
-    let data = literal.data;
-    if (literal.tag == 'Interface')
-      data = Shape.fromLiteral(data);
-    else if (literal.tag == 'Entity')
-      data = Schema.fromLiteral(data);
-    else if (literal.tag == 'SetView')
-      data = Type.fromLiteral(data);
-    return new Type(literal.tag, data);
+    return new Type(literal.tag, Type._deliteralizer(literal.tag)(literal.data));
   }
 
   setViewOf() {
