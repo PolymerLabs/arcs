@@ -160,7 +160,7 @@ class ValueToken {
       // Use view values (eg "How to draw book, Hockey stick")
       result.push(this._formatViewValue(view));
     } else if (view && this._property && this._property.length > 0) {
-      assert(!view.type.isView, `Cannot return property ${this._property.join(",")} for set-view`);
+      assert(!view.type.isSetView, `Cannot return property ${this._property.join(",")} for set-view`);
       // Use singleton value's property (eg. "09/15" for person's birthday)
       let viewVar = view.get();
       if (viewVar) {
@@ -203,7 +203,7 @@ class ValueToken {
       if (options.includeViewValues !== false && !this._excludeValues && view) {
         let viewValues = this._formatViewValue(view);
         if (viewValues) {
-          if (!view.type.isView && !chosenConnectionSpec.description.hasPattern()) {
+          if (!view.type.isSetView && !chosenConnectionSpec.description.hasPattern()) {
             // For singleton view, if there is no real description (the type was used), use the plain value for description.
             result = [];
             result.push(`${viewValues}`);
@@ -226,7 +226,7 @@ class ValueToken {
     if (!view) {
       return;
     }
-    if (view.type.isView) {
+    if (view.type.isSetView) {
       let viewList = view.toList();
       if (viewList && viewList.length > 0) {
         if (viewList[0].rawData.name) {
