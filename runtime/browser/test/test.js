@@ -24,8 +24,8 @@ function prepareExtensionArc() {
   var domRoot = global.document ? document.querySelector('[particle-container]') || document.body : {};
   var slotComposer = new SlotComposer({rootContext: domRoot, affordance: 'mock'});
   var arc = new Arc({pecFactory, slotComposer});
-  var personView = arc.createView(Person.type.viewOf(), "peopleFromWebpage");
-  var productView = arc.createView(Product.type.viewOf(), "productsFromWebpage");
+  var personView = arc.createView(Person.type.setViewOf(), "peopleFromWebpage");
+  var productView = arc.createView(Product.type.setViewOf(), "productsFromWebpage");
   var personSlot = arc.createView(Person.type, "personSlot");
   arc.commit([new Person({name: "Claire"}), new Product({name: "Tea Pot"}), new Product({name: "Bee Hive"}),
               new Product({name: "Denim Jeans"})]);

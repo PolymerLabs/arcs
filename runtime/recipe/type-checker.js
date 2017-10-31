@@ -32,7 +32,7 @@ class TypeChecker {
     var leftType = left.type;
     var rightType = right.type;
 
-    while (leftType.isView && rightType.isView) {
+    while (leftType.isSetView && rightType.isSetView) {
       leftType = leftType.primitiveType();
       rightType = rightType.primitiveType();
     }
@@ -45,10 +45,10 @@ class TypeChecker {
 
     // TODO: direction?
     if (leftType.isVariable) {
-      leftType.variableVariable.resolution = rightType;
+      leftType.variable.resolution = rightType;
       var type = right;
     } else if (rightType.isVariable) {
-      rightType.variableVariable.resolution = leftType;
+      rightType.variable.resolution = leftType;
       var type = left;
     } else {
       return null;
@@ -59,7 +59,7 @@ class TypeChecker {
   static isSubclass(subclass, superclass) {
     var subtype = subclass.type;
     var supertype = superclass.type;
-    while (subtype.isView && supertype.isView) {
+    while (subtype.isSetView && supertype.isSetView) {
       subtype = subtype.primitiveType();
       supertype = supertype.primitiveType();
     }
@@ -122,8 +122,8 @@ class TypeChecker {
   static substitute(type, variable, value) {
     if (type.equals(variable))
       return value;
-    if (type.isView)
-      return TypeChecker.substitute(type.primitiveType(), variable, value).viewOf();
+    if (type.isSetView)
+      return TypeChecker.substitute(type.primitiveType(), variable, value).setViewOf();
     return type;
   }
 }

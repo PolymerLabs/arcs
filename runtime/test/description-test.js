@@ -60,14 +60,14 @@ recipe
     let Foo = manifest.findSchemaByName('Foo').entityClass();
     recipe.views[0].mapToView({id: 'test:1', type: Foo.type});
     if (recipe.views.length > 1) {
-      recipe.views[1].mapToView({id: 'test:2', type: Foo.type.viewOf()});
+      recipe.views[1].mapToView({id: 'test:2', type: Foo.type.setViewOf()});
     }
     if (recipe.views.length > 2) {
       recipe.views[2].mapToView({id: 'test:3', type: Foo.type});
     }
     let arc = createTestArc();
     let fooView = arc.createView(Foo.type);
-    let foosView = arc.createView(Foo.type.viewOf());
+    let foosView = arc.createView(Foo.type.setViewOf());
     recipe.normalize();
     assert.isTrue(recipe.isResolved());
     let ifooViewConn = recipe.viewConnections.find(vc => vc.particle.name == 'A' && vc.name == 'ifoo');
@@ -375,11 +375,11 @@ recipe
       let MyBESTType = manifest.findSchemaByName('MyBESTType').entityClass();
       recipe.views[0].mapToView({id: 'test:1', type: MyBESTType.type});
       if (recipe.views.length > 1) {
-        recipe.views[1].mapToView({id: 'test:2', type: MyBESTType.type.viewOf()});
+        recipe.views[1].mapToView({id: 'test:2', type: MyBESTType.type.setViewOf()});
       }
       let arc = createTestArc();
       let tView = arc.createView(MyBESTType.type);
-      let tsView = arc.createView(MyBESTType.type.viewOf());
+      let tsView = arc.createView(MyBESTType.type.setViewOf());
       recipe.normalize();
       assert.isTrue(recipe.isResolved());
 
