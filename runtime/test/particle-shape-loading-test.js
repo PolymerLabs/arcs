@@ -135,4 +135,60 @@ describe('particle-shape-loading', function() {
     await util.assertSingletonWillChangeTo(outView, manifest.schemas.Bar.entityClass(), "a foo1");
 
   });
+
+  it('loads shapes into particles declaratively', async () => {
+    var loader = new Loader();
+
+    var pecFactory = function(id) {
+      var channel = new MessageChannel();
+      new InnerPec(channel.port1, `${id}:inner`, loader);
+      return channel.port2;
+    };
+
+    var arc = new Arc({id: 'test', pecFactory});
+
+    let manifest = await Manifest.load('../particles/test/test-particles.manifest', loader);
+
+    let fooType = Type.newEntity(manifest.schemas.Foo);
+    let barType = Type.newEntity(manifest.schemas.Bar);
+
+    let shape = manifest.shapes[0];
+    let shapeType = Type.newInterface(shape);
+
+    let outerParticleSpec = manifest.particles[3];
+
+    let shapeView = arc.createView(shapeType);
+    shapeView.set(manifest.particles[0].toLiteral());
+    let outView = arc.createView(barType);
+    let inView = arc.createView(fooType);
+    var Foo = manifest.schemas.Foo.entityClass();
+    inView.set(new Foo({value: 'a foo'}))
+
+    let recipe = new Recipe();
+    let particle = recipe.newParticle("outerParticle");
+    particle.spec = outerParticleSpec;
+
+    let recipeShapeView = recipe.newView();
+    particle.connections['particle'].connectToView(recipeShapeView);
+    recipeShapeView.fate = 'use';
+    recipeShapeView.mapToView(shapeView);
+
+    let recipeOutView = recipe.newView();
+    particle.connections['output'].connectToView(recipeOutView);
+    recipeOutView.fate = 'use';
+    recipeOutView.mapToView(outView);
+
+    let recipeInView = recipe.newView();
+    particle.connections['input'].connectToView(recipeInView);
+    recipeInView.fate = 'use';
+    recipeInView.mapToView(inView);
+
+    assert(recipe.normalize(), "can't normalize recipe");
+    assert(recipe.isResolved(), "recipe isn't resolved");
+
+    arc.instantiate(recipe);
+
+    await util.assertSingletonWillChangeTo(outView, manifest.schemas.Bar.entityClass(), "a foo1");
+
+  });
 });
