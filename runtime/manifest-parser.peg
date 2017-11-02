@@ -201,7 +201,7 @@ ParticleArgument
   }
 
 ParticleArgumentDirection
-  = 'inout' / 'in' / 'out'
+  = 'inout' / 'in' / 'out' / 'host'
   {
     return text();
   }
