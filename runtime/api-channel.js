@@ -269,20 +269,8 @@ class PECOuterPort extends APIPort {
       transformationSlotName: this.Direct,
       hostedParticleName: this.Direct,
       hostedSlotName: this.Direct});
-    this.registerInitializer("CreateSlotCallback", {
-      callback: this.Direct,
-      transformationParticle: this.Mapped,
-      transformationSlotName: this.Direct,
-      hostedParticleName: this.Direct,
-      hostedSlotName: this.Direct,
-      hostedSlotId: this.Direct});
-    this.registerCall("InnerArcRender", {
-      transformationParticle: this.Mapped,
-      transformationSlotName: this.Direct,
-      hostedParticle: this.Mapped,
-      hostedSlotName: this.Direct,
-      hostedSlotId: this.Direct,
-      content: this.Direct});
+    this.registerInitializer("CreateSlotCallback", {callback: this.Direct, hostedSlotId: this.Direct});
+    this.registerCall("InnerArcRender", { transformationParticle: this.Mapped, transformationSlotName: this.Direct, hostedSlotId: this.Direct, content: this.Direct});
 
     this.registerHandler("ArcLoadRecipe", {arc: this.LocalMapped, recipe: this.Direct, callback: this.Direct});
   }
@@ -331,21 +319,8 @@ class PECInnerPort extends APIPort {
       hostedParticleName: this.Direct,
       hostedSlotName: this.Direct
     });
-    this.registerInitializerHandler("CreateSlotCallback", {
-      callback: this.LocalMapped,
-      transformationParticle: this.Mapped,
-      transformationSlotName: this.Direct,
-      hostedParticleName: this.Direct,
-      hostedSlotName: this.Direct,
-      hostedSlotId: this.Direct
-    });
-    this.registerHandler("InnerArcRender", {
-      transformationParticle: this.Mapped,
-      transformationSlotName: this.Direct,
-      hostedParticle: this.Mapped,
-      hostedSlotName: this.Direct,
-      hostedSlotId: this.Direct,
-      content: this.Direct});
+    this.registerInitializerHandler("CreateSlotCallback", { callback: this.LocalMapped, hostedSlotId: this.Direct });
+    this.registerHandler("InnerArcRender", {transformationParticle: this.Mapped, transformationSlotName: this.Direct, hostedSlotId: this.Direct, content: this.Direct});
 
     this.registerCall("ArcLoadRecipe", {arc: this.Direct, recipe: this.Direct, callback: this.LocalMapped});
   }
