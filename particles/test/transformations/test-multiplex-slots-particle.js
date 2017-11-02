@@ -19,8 +19,6 @@ defineParticle(({DomParticle}) => {
         let slotName = [...this.spec.slots.values()][0].name;
         let slotId = await arc.createSlot(this, slotName, hostedParticle.name, hostedSlotName);
 
-        // TODO: how can i require assert here?
-        // assert(this.hostedSlotBySlotId.has(slotId), `Unexpected model for slot ID ${slotId}`)
         this.hostedSlotBySlotId.set(slotId, {subId: foo.value.replace(/ /g,'').toLowerCase()});
 
         var recipe = `

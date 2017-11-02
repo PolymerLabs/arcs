@@ -76,7 +76,7 @@ class OuterPEC extends PEC {
       if (this.slotComposer) {
         var hostedSlotId = this.slotComposer.createHostedSlot(transformationParticle, transformationSlotName, hostedParticleName, hostedSlotName);
       }
-      this._apiPort.CreateSlotCallback({}, {transformationParticle, transformationSlotName, hostedParticleName, hostedSlotName, callback, hostedSlotId});
+      this._apiPort.CreateSlotCallback({}, {callback, hostedSlotId});
     }
 
     this._apiPort.onArcLoadRecipe = async ({arc, recipe, callback}) => {
@@ -152,8 +152,8 @@ class OuterPEC extends PEC {
   stopRender({particle, slotName}) {
     this._apiPort.StopRender({particle, slotName});
   }
-  innerArcRender(transformationParticle, transformationSlotName, hostedParticle, hostedSlotName, hostedSlotId, content) {
-    this._apiPort.InnerArcRender({transformationParticle, transformationSlotName, hostedParticle, hostedSlotName, hostedSlotId, content})
+  innerArcRender(transformationParticle, transformationSlotName, hostedSlotId, content) {
+    this._apiPort.InnerArcRender({transformationParticle, transformationSlotName, hostedSlotId, content})
   }
 }
 

@@ -45,7 +45,7 @@ describe('particle-shape-loading-with-slots', function() {
     assert.equal("MultiplexSlotsParticle", manifest.particles[1].name);
 
     let shape = new Shape([{type: fooType}], [{name: 'annotation'}]);
-    let shapeType = Type.newShape(shape);
+    let shapeType = Type.newInterface(shape);
     let shapeView = arc.createView(shapeType);
     // TODO: Do we need to verify that particle matches the shape?
     shapeView.set(manifest.particles[0].toLiteral());
@@ -75,7 +75,7 @@ describe('particle-shape-loading-with-slots', function() {
     recipeParticle.connections['foos'].connectToView(recipeInView);
     recipeInView.fate = 'use';
 
-    let inView = arc.createView(fooType.viewOf());
+    let inView = arc.createView(fooType.setViewOf());
     var Foo = manifest.schemas.Foo.entityClass();
     inView.store({id: 1, rawData: {value: 'foo1'} });
     inView.store({id: 2, rawData: {value: 'foo2'} });
