@@ -106,15 +106,12 @@ class InnerPEC {
       return view;
     }
 
-    this._apiPort.onCreateSlotCallback = ({transformationParticle, transformationSlotName, hostedParticleName, hostedSlotName, hostedSlotId, callback}) => {
-      // TODO: Is it OK to get rid of:
-      // transformationParticle, transformationSlotName, hostedParticleName, hostedSlotName
-      // parameters? They aren't really used.
+    this._apiPort.onCreateSlotCallback = ({hostedSlotId, callback}) => {
       Promise.resolve().then(() => callback(hostedSlotId));
       return hostedSlotId;
     }
 
-    this._apiPort.onInnerArcRender = ({transformationParticle, transformationSlotName, hostedParticle, hostedSlotName, hostedSlotId, content}) => {
+    this._apiPort.onInnerArcRender = ({transformationParticle, transformationSlotName, hostedSlotId, content}) => {
       transformationParticle.renderHostedSlot(transformationSlotName, hostedSlotId, content);
     }
 

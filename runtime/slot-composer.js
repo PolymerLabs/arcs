@@ -184,8 +184,6 @@ class SlotComposer {
     this.arc.pec.innerArcRender(
       hostedSlot.transformationParticle,
       hostedSlot.transformationSlotName,
-      hostedSlot.hostedParticle,
-      hostedSlot.hostedSlotName,
       hostedSlot.hostedSlotId,
       content);
 
