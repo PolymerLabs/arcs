@@ -20,7 +20,7 @@ function addType(name, arg) {
   var upperArg = arg ? arg[0].toUpperCase() + arg.substring(1) : '';
   Object.defineProperty(Type.prototype, `${lowerName}${upperArg}`, {
     get: function() {
-      assert(this[`is${name}`]);
+      assert(this[`is${name}`], `{${this.tag}, ${this.data}} is not of type ${name}`);
       return this.data;
     }});
   Object.defineProperty(Type.prototype, `is${name}`, {
@@ -137,6 +137,11 @@ class Type {
     if (this.isSetView) {
       return this.data.equals(type.data);
     }
+
+    if (this.isInterface)
+      return this.data.equals(type.data);
+    // TODO: this doesn't always work with the way the parser keeps kind
+    // information around
     return JSON.stringify(this.data) == JSON.stringify(type.data);
   }
 

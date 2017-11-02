@@ -63,6 +63,27 @@ class Shape {
     return new Shape(views, slots);
   }
 
+  equals(other) {
+    if (this.views.length !== other.views.length)
+      return false;
+
+    // TODO: this isn't quite right as it doesn't deal with duplicates properly
+    for (let otherView of other.views) {
+      let exists = false;
+      for (let view of this.views) {
+        if (view.name == otherView.name && view.direction == otherView.direction && view.type == otherView.type) {
+          exists = true;
+          break;
+        }
+      }
+      if (!exists)
+        return false;
+    }
+
+    // TODO: compare slots too
+    return true;
+  }
+
   static isTypeVar(reference) {
     return (reference instanceof Type) && reference.hasProperty(r => r.isVariable || r.isVariableReference);
   }
