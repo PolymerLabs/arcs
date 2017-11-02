@@ -713,7 +713,12 @@ Expected " ", "#", "\\n", "\\r", [ ], [A-Z] or [a-z] but "?" found.
       shape Shape
         AnyThing(in Foo foo)
       particle ShapeParticle
-        ShapeParticle(in Shape shape)`);
+        ShapeParticle(host Shape shape)
+      recipe
+        create as view0
+        ShapeParticle
+          shape = view0`);
     assert(manifest.findShapeByName('Shape'));
+    assert(manifest.recipes[0].normalize());
   });
 });
