@@ -54,6 +54,11 @@ class Manifest {
   get views() {
     return this._views;
   }
+
+  get shapes() {
+    return this._shapes;
+  }
+  
   // TODO: newParticle, Schema, etc.
   // TODO: simplify() / isValid().
   newView(type, name, id, tags) {

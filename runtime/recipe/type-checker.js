@@ -64,6 +64,9 @@ class TypeChecker {
       supertype = supertype.primitiveType();
     }
 
+    if (!(subtype.isEntity && supertype.isEntity))
+      return false;
+
     function checkSuper(schema) {
       if (!schema)
         return false;
