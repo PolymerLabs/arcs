@@ -22,3 +22,9 @@ particle TwoInputTestParticle in 'two-input-test-particle.js'
 
 particle ListTestParticle in 'list-test-particle.js'
   ListTestParticle(in Bar bar, out [Far] fars)
+
+shape TestShape
+  AnyThing(in Foo foo, out Bar bar)
+
+particle OuterParticle in 'outer-particle.js'
+  OuterParticle(host TestShape particle, in Foo input, out Bar output)
