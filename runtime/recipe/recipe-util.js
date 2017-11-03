@@ -25,6 +25,10 @@ class Shape {
 }
 
 class RecipeUtil {
+  static newShape(recipe, particles, views, vcs) {
+    return new Shape(recipe, particles, views, vcs);
+  }
+
   static makeShape(particles, views, map, recipe) {
     recipe = recipe || new Recipe();
     var pMap = {};
