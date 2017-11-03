@@ -20,7 +20,7 @@ class Slot {
     this._context = null;
     this.startRenderCallback = null;
     this.stopRenderCallback = null;
-
+    this._hostedSlotById = new Map();
   }
   get consumeConn() { return this._consumeConn; }
   get arc() { return this._arc; }
@@ -48,22 +48,25 @@ class Slot {
   }
   startRender() {
     if (this.startRenderCallback) {
-      this.startRenderCallback({
-        particle: this.consumeConn.particle,
-        slotName: this.consumeConn.name,
-        contentTypes: this.constructRenderRequest()
-      });
+      let contentTypes = this.constructRenderRequest();
+      this.startRenderCallback({ particle: this.consumeConn.particle, slotName: this.consumeConn.name, contentTypes });
+
+      for (let hostedSlot of this._hostedSlotById.values()) {
+        this.startRenderCallback({ particle: hostedSlot.particle, slotName: hostedSlot.slotName, contentTypes });
+      }
     }
   }
+
   stopRender() {
     if (this.stopRenderCallback) {
-      this.stopRenderCallback &&
-      this.stopRenderCallback({
-        particle: this.consumeConn.particle,
-        slotName: this.consumeConn.name
-      });
+      this.stopRenderCallback({ particle: this.consumeConn.particle, slotName: this.consumeConn.name });
+
+      for (let hostedSlot of this._hostedSlotById.values()) {
+        this.stopRenderCallback({ particle: hostedSlot.particle, slotName: hostedSlot.slotName });
+      }
     }
   }
+
   populateViewDescriptions() {
     let descriptions = {};
     Object.values(this.consumeConn.particle.connections).forEach(viewConn => {
@@ -76,6 +79,34 @@ class Slot {
     });
     return descriptions;
   }
+
+  addHostedSlot(hostedSlotId, hostedParticleName, hostedSlotName) {
+    assert(hostedSlotId, `Hosted slot ID must be provided`);
+    assert(!this._hostedSlotById.has(hostedSlotId), `Hosted slot ${hostedSlotId} already exists`);
+    this._hostedSlotById.set(hostedSlotId, {slotId: hostedSlotId, particleName: hostedParticleName, slotName: hostedSlotName});
+    return hostedSlotId;
+  }
+  getHostedSlot(hostedSlotId) {
+    return this._hostedSlotById.get(hostedSlotId);
+  }
+  findHostedSlot(hostedParticle, hostedSlotName) {
+    for (let hostedSlot of this._hostedSlotById.values()) {
+      if (hostedSlot.particle == hostedParticle && hostedSlot.slotName == hostedSlotName) {
+        return hostedSlot;
+      }
+    }
+  }
+  initHostedSlot(hostedSlotId, hostedParticle) {
+    let hostedSlot = this.getHostedSlot(hostedSlotId);
+    assert(hostedSlot, `Hosted slot ${hostedSlotId} doesn't exist`);
+    assert(hostedSlot.particleName == hostedParticle.name,
+           `Unexpected particle name ${hostedParticle.name} for slot ${hostedSlotId}; expected: ${hostedSlot.particleName}`)
+    hostedSlot.particle = hostedParticle;
+    if (this.context && this.startRenderCallback) {
+      this.startRenderCallback({ particle: hostedSlot.particle, slotName: hostedSlot.slotName, contentTypes: this.constructRenderRequest() });
+    }
+  }
+
   // absract
   setContent(content, handler) {}
   getInnerContext(slotName) {}
