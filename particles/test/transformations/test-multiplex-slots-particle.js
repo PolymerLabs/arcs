@@ -46,28 +46,5 @@ defineParticle(({DomParticle}) => {
         }
       }
     }
-    // Groups all rendered contents produced by the hosted particles, and sets the subId in each model.
-    combineHostedContent(contentTypes) {
-      let result = {};
-      let includeModel = contentTypes.indexOf('model') >= 0;
-      let includeTemplate = contentTypes.indexOf('template') >= 0;
-      if (includeModel) {
-        result.model = [];
-      }
-      for (let value of this.hostedSlotBySlotId.values()) {
-        let content = value.content;
-        if (!content) {
-          continue;
-        }
-        if (includeModel) {
-          result.model.push(Object.assign(content.model, {subId: content.subId}));
-        }
-        if (includeTemplate && !result.template) {
-          // TODO: Currently using the first available template. Add support for multiple templates.
-          result.template = content.template;
-        }
-      }
-      return result;
-    }
   }
 });
