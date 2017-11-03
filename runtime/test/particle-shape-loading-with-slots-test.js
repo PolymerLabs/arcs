@@ -33,38 +33,19 @@ describe('particle-shape-loading-with-slots', function() {
     };
 
     var slotComposer = new MockSlotComposer();
-    // slotComposer._contextById["annotation"] = {'foo1': '', 'another-foo': ''};
     var arc = new Arc({id: 'test', pecFactory, slotComposer});
-
     let manifest = await Manifest.load('../particles/test/transformations/test-slots-particles.manifest', loader);
-
-    let fooType = Type.newEntity(manifest.schemas.Foo);
 
     let recipe = new Recipe();
     let recipeParticle = recipe.newParticle("MultiplexSlotsParticle");
     assert.equal("MultiplexSlotsParticle", manifest.particles[1].name);
+    recipeParticle.spec = manifest.particles[1];
 
-    let shape = new Shape([{type: fooType}], [{name: 'annotation'}]);
+    let shape = manifest.shapes[0];
     let shapeType = Type.newInterface(shape);
     let shapeView = arc.createView(shapeType);
-    // TODO: Do we need to verify that particle matches the shape?
+    assert.equal("SingleSlotParticle", manifest.particles[0].name);
     shapeView.set(manifest.particles[0].toLiteral());
-
-    // TODO: This is a hack, until particle parser support shape connection parsing.
-    // Eventually should just use recipeParticle.spec = manifest.particles[1];
-    recipeParticle.spec = new ParticleSpec({
-      name: manifest.particles[1].name,
-      implFile: manifest.particles[1].implFile,
-      args: manifest.particles[1].connections.map(conn => { return { direction: conn.direction, type: conn.type, name: conn.name}; })
-          .concat([{direction: 'host', type: shapeType, name: 'particle'}]),
-      slots: [...manifest.particles[1].slots.values()].map(s => {
-        return {
-          name: s.name,
-          isSet: s.isSet,
-          providedSlots: s.providedSlots ? s.providedSlots.map(ps => { return {name: ps.name, isSet: ps.isSet, views: []}; }) : []
-        };
-      })
-    }, a => a);
 
     let recipeShapeView = recipe.newView();
     recipeParticle.connections['particle'].connectToView(recipeShapeView);
@@ -75,6 +56,7 @@ describe('particle-shape-loading-with-slots', function() {
     recipeParticle.connections['foos'].connectToView(recipeInView);
     recipeInView.fate = 'use';
 
+    let fooType = Type.newEntity(manifest.schemas.Foo);
     let inView = arc.createView(fooType.setViewOf());
     var Foo = manifest.schemas.Foo.entityClass();
     inView.store({id: 1, rawData: {value: 'foo1'} });
