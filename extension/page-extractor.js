@@ -5,14 +5,6 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-// called from event-page.js#localExtractEntities()
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  if (request.method == 'extractEntities') {
-    extractEntities().then(sendResponse);
-    return true;
-  }
-});
-
 async function extractEntities() {
 
   let microdata = extractMicrodata(document.documentElement);
