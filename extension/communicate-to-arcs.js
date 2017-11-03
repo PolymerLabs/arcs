@@ -15,7 +15,6 @@ function _getUrl(cdnRoot, arcManifest, response) {
 }
 
 function populateIframe(doc) {
-
   var iframe = doc.getElementById('arcs-if');
   let cdnApp = cdn + '/apps/chrome-extension/';
   var newPageLink = doc.getElementById('ext-new-page');
@@ -48,4 +47,8 @@ function populateIframe(doc) {
       displayAmKey.innerText = 'amkey: '+response.amKey;
     }
   });
+}
+
+function displayArcs(doc) {
+  populateIframe(doc);
 }

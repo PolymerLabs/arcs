@@ -173,7 +173,7 @@ function updateArc(tabId, response) {
 
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
   if (changeInfo.status && 'complete'==changeInfo.status) {
-    // fire a message to content-script.js
+    // fire a message to extract-entities-content-script.js
     chrome.tabs.sendMessage(tabId, {method: 'extractEntities'}, response => {
       let filteredResponse = filterResponse(response);
 
@@ -234,16 +234,21 @@ chrome.runtime.onMessage.addListener(
 
 chrome.runtime.onMessage.addListener(
   function(request, sender, sendResponse) {
-    if (request.method!='storePageEntities') {
+    if (request.method == 'storePageEntities') {
+      let key = request.url;
+      chrome.storage.local.set({[request.url]: request.results});
+
+      // XXX for debugging
+      chrome.storage.local.get(null, result => {
+        console.log('storage contains', result);
+      });
+    } else if (request.method == 'loadAllEntities') {
+      chrome.storage.local.get(null, result => {
+        sendResponse(result);
+      });
+      return true;
+    } else {
       return;
     }
-
-    let key = request.url;
-    chrome.storage.local.set({[request.url]: request.results});
-
-    // XXX for debugging
-    chrome.storage.local.get(null, result => {
-      console.log('storage contains', result);
-    });
   }
 );
