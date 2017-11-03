@@ -34,21 +34,7 @@ http://polymer.github.io/PATENTS.txt
 </div>
 
 <script>
-  chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-    chrome.tabs.sendMessage(tabs[0].id, {method: "extractEntities"}, response => {
-
-      console.log('popup.html extracted', response);
-      chrome.runtime.sendMessage(null, {
-        method: 'entitiesFromFullPage',
-        args: {
-          tabId: tabs[0].id,
-          entities: response
-        },
-      }, response => {
-        populateIframe(document);
-      });
-    });
-  });
+  displayArcs(document);
 </script>
 
 </body>

@@ -16,7 +16,7 @@
   "content_scripts": [
     {
       "matches": ["*://*/*"],
-      "js": ["globals.js", "page-extractor.js", "content-script.js"],
+      "js": ["globals.js", "page-extractor.js", "arcs-content-script.js"],
       "all_frames": true
     }
   ],
