@@ -121,6 +121,9 @@ class DomParticle extends XenStateMixin(Particle) {
       slot.render({});
     }
   }
+
+  // TODO: renderHostedSlot and combineHostedContent are methods needed for transformation particle
+  // that renders UI. Consider adding a TransformationParticle base class.
   renderHostedSlot(slotName, hostedSlotId, content) {
     assert(this.hostedSlotBySlotId.has(hostedSlotId), `Missing model for slot ID ${hostedSlotId}`);
     this.hostedSlotBySlotId.get(hostedSlotId).content = content;
@@ -137,9 +140,28 @@ class DomParticle extends XenStateMixin(Particle) {
       }
     }
   }
+  // Groups all rendered contents produced by the hosted particles, and sets the subId in each model.
   combineHostedContent(contentTypes) {
-    // Method must be implemented by transformation particle.
-    // TODO: consider adding a default implementation.
+    let result = {};
+    let includeModel = contentTypes.indexOf('model') >= 0;
+    let includeTemplate = contentTypes.indexOf('template') >= 0;
+    if (includeModel) {
+      result.model = [];
+    }
+    for (let value of this.hostedSlotBySlotId.values()) {
+      let content = value.content;
+      if (!content) {
+        continue;
+      }
+      if (includeModel) {
+        result.model.push(Object.assign(content.model, {subId: content.subId}));
+      }
+      if (includeTemplate && !result.template) {
+        // TODO: Currently using the first available template. Add support for multiple templates.
+        result.template = content.template;
+      }
+    }
+    return result;
   }
   _initializeRender(slot) {
     let template = this.getTemplate(slot.slotName);
