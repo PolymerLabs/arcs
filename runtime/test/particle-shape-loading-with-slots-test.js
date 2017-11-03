@@ -122,7 +122,7 @@ describe('particle-shape-loading-with-slots', function() {
     // Wait for the hosted slots to be initialized in slot-composer.
     await new Promise((resolve, reject) => {
       var myInterval = setInterval(function() {
-        if (slotComposer._hostedSlotById.size == 2) {
+        if (slotComposer._slots[0]._hostedSlotById.size == 2) {
           resolve();
           clearInterval(myInterval);
         }
