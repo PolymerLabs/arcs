@@ -6,7 +6,6 @@
 // http://polymer.github.io/PATENTS.txt
 
 async function extractEntities() {
-
   let microdata = extractMicrodata(document.documentElement);
   let results = [];
   if (microdata.length) {
@@ -30,6 +29,7 @@ async function extractEntities() {
 // This is out in a separate function, as extractMicrodata() may be replaced
 // with a library for https://github.com/PolymerLabs/arcs/issues/431
 function extractManifests() {
+  const manifestType = 'text/x-arcs-manifest';
   return Array.prototype.map.call(
     document.querySelectorAll('link[type="'+manifestType+'"]'),
     link => {
