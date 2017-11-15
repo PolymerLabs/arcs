@@ -15,7 +15,7 @@ defineParticle(({DomParticle}) => {
       for (let [index, foo] of foosList.entries()) {
         let fooView = await arc.createView(foosView.type.primitiveType(), "foo" + index);
         let hostedParticle = await views.get('particle').get();
-        let hostedSlotName = [...hostedParticle.slots.values()][0].name;
+        let hostedSlotName =  [...hostedParticle.slots.keys()][0];
         let slotName = [...this.spec.slots.values()][0].name;
         let slotId = await arc.createSlot(this, slotName, hostedParticle.name, hostedSlotName);
 
