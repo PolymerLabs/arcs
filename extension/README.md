@@ -6,6 +6,8 @@ The extension does two things:
 1) Provides an entry point to Arcs.
 
 Currently (and temporarily) synchronization happens via a **public** firebase.
+Eventually the sync will be to a private data store (perhaps firebase, perhaps
+not).
 
 
 ## installation
@@ -35,9 +37,9 @@ repository.
 There are a few scenarios that should reliably work after enabling the
 extension.
 
-1) Visit a store with embedded data [Products](https://schema.org/Product)
-  such as [Google Cardboard](https://store.google.com/product/google_cardboard).
-  Verify that:
+1) Visit a page with embedded data. [Products](https://schema.org/Product)
+  such as [Google Cardboard](https://store.google.com/product/google_cardboard)
+  is an easy option. Verify that:
     - The 'arc' logo appears on the Browser Action.
     - Clicking on the Browser Action includes your sample data (in my case,
       Google Cardboard) in a recipe. For a product, try the "Buy products"

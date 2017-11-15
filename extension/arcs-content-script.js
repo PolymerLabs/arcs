@@ -5,11 +5,19 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
+// TODO(smalls) there should be a better way to detect an arcs page we can
+// inject data into.
 const isArcsPage = document.body.getElementsByTagName('extension-app-shell').length>0;
 
-// In the common case, if we're not running an arcs instance, extract entities
-// from the page.
+function sendInjectArcsDataMessage() {
+  chrome.runtime.sendMessage({method: 'loadAllEntities'}, entities => {
+    window.postMessage({method: 'injectArcsData', entities: entities}, '*');
+  });
+}
+
 if (!isArcsPage) {
+  // In the common case, if we're not running an arcs instance, extract entities
+  // from the page.
   extractEntities().then(results => {
     console.log('content-script result of extractEntities', results);
     chrome.runtime.sendMessage({
@@ -18,24 +26,18 @@ if (!isArcsPage) {
       results: results
     });
   });
-}
-
-// In the other case, we're running an Arcs page. Grab the metadata and
-// send it over to the Arcs chrome-extension shell.
-if (isArcsPage) {
-  chrome.runtime.sendMessage({method: 'loadAllEntities'}, entities => {
-    window.postMessage({method: 'injectArcsData', entities: entities}, '*');
-  });
+} else {
+  // We're running an Arcs page. Grab the metadata and send it over to the
+  // Arcs chrome-extension shell.
+  sendInjectArcsDataMessage();
 }
 
 // In case we fired entities before anyone was listening, let's listen for
 // requests to send entities as well.
 window.addEventListener('message', event => {
+  console.log('content script received event '+event.data.method, event.data);
   if (event.source != window || event.data.method != 'pleaseInjectArcsData') {
     return;
   }
-
-  chrome.runtime.sendMessage({method: 'loadAllEntities'}, entities => {
-    window.postMessage({method: 'injectArcsData', entities: entities}, '*');
-  });
+  sendInjectArcsDataMessage();
 });

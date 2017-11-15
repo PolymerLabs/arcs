@@ -30,10 +30,9 @@ async function extractEntities() {
 // This is out in a separate function, as extractMicrodata() may be replaced
 // with a library for https://github.com/PolymerLabs/arcs/issues/431
 function extractManifests() {
-
   return Array.prototype.map.call(
     document.querySelectorAll('link[type="'+manifestType+'"]'),
-    function(link) {
+    link => {
       return {'@type': manifestType, url: link.href};
     }
   );
