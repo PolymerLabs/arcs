@@ -6,6 +6,8 @@
 // http://polymer.github.io/PATENTS.txt
 
 function _getUrl(cdnRoot, arcManifest, response) {
+  // TODO(smalls) use something like https://medialize.github.io/URI.js/ to
+  // build the URL
   let ret = `${cdnRoot}?manifest=${arcManifest}&amkey=${response.amKey}`;
   if (response.manifestUrls) {
     ret += response.manifestUrls.reduce((accum, current)=>accum+'&manifest='+current, '');

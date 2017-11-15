@@ -7,16 +7,26 @@
 
 chrome.runtime.onMessage.addListener(
   function(request, sender, sendResponse) {
+    console.log('event page received message '+request.method, request);
     if (request.method == 'storePageEntities') {
       let key = request.url;
-      chrome.storage.local.set({[request.url]: request.results});
+      chrome.storage.local.set({[request.url]: request.results}, () => {
+        if (chrome.runtime.lastError) {
+          console.log('ERROR failed to store: '+chrome.runtime.lastError);
+        }
+      });
 
-      // XXX for debugging
+      // TODO(smalls) remove this, it's only for debugging
       chrome.storage.local.get(null, result => {
-        console.log('storage contains', result);
+        console.log('after store completed, storage contains', result);
       });
     } else if (request.method == 'loadAllEntities') {
       chrome.storage.local.get(null, result => {
+        if (chrome.runtime.lastError) {
+          console.log('ERROR retrieving storage: '+chrome.runtime.lastError);
+          return;
+        }
+
         sendResponse(result);
       });
       return true;
