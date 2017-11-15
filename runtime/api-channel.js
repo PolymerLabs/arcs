@@ -262,13 +262,8 @@ class PECOuterPort extends APIPort {
     this.registerHandler("ArcCreateView", {callback: this.Direct, arc: this.LocalMapped, viewType: this.ByLiteral(Type), name: this.Direct});
     this.registerInitializer("CreateViewCallback", {callback: this.Direct, viewType: this.ByLiteral(Type), name: this.Direct, id: this.Direct});
 
-    this.registerHandler("ArcCreateSlot", {
-      callback: this.Direct,
-      arc: this.LocalMapped,
-      transformationParticle: this.Mapped,
-      transformationSlotName: this.Direct,
-      hostedParticleName: this.Direct,
-      hostedSlotName: this.Direct});
+    this.registerHandler("ArcCreateSlot",
+      { callback: this.Direct, arc: this.LocalMapped, transformationParticle: this.Mapped, transformationSlotName: this.Direct, hostedParticleName: this.Direct, hostedSlotName: this.Direct});
     this.registerInitializer("CreateSlotCallback", {callback: this.Direct, hostedSlotId: this.Direct});
     this.registerCall("InnerArcRender", { transformationParticle: this.Mapped, transformationSlotName: this.Direct, hostedSlotId: this.Direct, content: this.Direct});
 
@@ -311,14 +306,8 @@ class PECInnerPort extends APIPort {
 
     this.registerCall("ArcCreateView", {callback: this.LocalMapped, arc: this.Direct, viewType: this.ByLiteral(Type), name: this.Direct});
     this.registerInitializerHandler("CreateViewCallback", {callback: this.LocalMapped, viewType: this.ByLiteral(Type), name: this.Direct, id: this.Direct});
-    this.registerCall("ArcCreateSlot", {
-      callback: this.LocalMapped,
-      arc: this.Direct,
-      transformationParticle: this.Mapped,
-      transformationSlotName: this.Direct,
-      hostedParticleName: this.Direct,
-      hostedSlotName: this.Direct
-    });
+    this.registerCall("ArcCreateSlot",
+      {callback: this.LocalMapped, arc: this.Direct, transformationParticle: this.Mapped, transformationSlotName: this.Direct, hostedParticleName: this.Direct, hostedSlotName: this.Direct});
     this.registerInitializerHandler("CreateSlotCallback", { callback: this.LocalMapped, hostedSlotId: this.Direct });
     this.registerHandler("InnerArcRender", {transformationParticle: this.Mapped, transformationSlotName: this.Direct, hostedSlotId: this.Direct, content: this.Direct});
 
