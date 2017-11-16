@@ -81,20 +81,14 @@ describe('particle-shape-loading-with-slots', function() {
     slotComposer
       .newExpectations()
         .expectRenderSlot("MultiplexSlotsParticle", "annotationsSet", ["template", "model"])
-        // Inner arc instantiation for the first element.
+      // Inner arc instantiation for the first element.
+      .newExpectations()
         .expectRenderSlot("SingleSlotParticle", "annotation", ["template", "model"])
-        .expectRenderSlot("SingleSlotParticle", "annotation", ["model"])
         .expectRenderSlot("MultiplexSlotsParticle", "annotationsSet", ["template", "model"])
-        .expectRenderSlot("MultiplexSlotsParticle", "annotationsSet", ["model"])
-        .expectRenderSlot("SingleSlotParticle", "annotation", ["model"])
-        .expectRenderSlot("MultiplexSlotsParticle", "annotationsSet", ["model"])
-        // Inner arc instantiation for the second element.
+      // Inner arc instantiation for the second element.
+      .newExpectations()
         .expectRenderSlot("SingleSlotParticle", "annotation", ["template", "model"])
-        .expectRenderSlot("SingleSlotParticle", "annotation", ["model"])
         .expectRenderSlot("MultiplexSlotsParticle", "annotationsSet", ["template", "model"])
-        .expectRenderSlot("MultiplexSlotsParticle", "annotationsSet", ["model"])
-        .expectRenderSlot("SingleSlotParticle", "annotation", ["model"])
-        .expectRenderSlot("MultiplexSlotsParticle", "annotationsSet", ["model"]);
   }
 
   it('multiplex recipe with slots', async () => {
