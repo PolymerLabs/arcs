@@ -80,21 +80,12 @@ describe('particle-shape-loading-with-slots', function() {
   function setRenderingExpectations(slotComposer) {
     slotComposer
       .newExpectations()
-        .expectRenderSlot("MultiplexSlotsParticle", "annotationsSet", ["template", "model"])
         // Inner arc instantiation for the first element.
         .expectRenderSlot("SingleSlotParticle", "annotation", ["template", "model"])
-        .expectRenderSlot("SingleSlotParticle", "annotation", ["model"])
         .expectRenderSlot("MultiplexSlotsParticle", "annotationsSet", ["template", "model"])
-        .expectRenderSlot("MultiplexSlotsParticle", "annotationsSet", ["model"])
-        .expectRenderSlot("SingleSlotParticle", "annotation", ["model"])
-        .expectRenderSlot("MultiplexSlotsParticle", "annotationsSet", ["model"])
         // Inner arc instantiation for the second element.
         .expectRenderSlot("SingleSlotParticle", "annotation", ["template", "model"])
-        .expectRenderSlot("SingleSlotParticle", "annotation", ["model"])
         .expectRenderSlot("MultiplexSlotsParticle", "annotationsSet", ["template", "model"])
-        .expectRenderSlot("MultiplexSlotsParticle", "annotationsSet", ["model"])
-        .expectRenderSlot("SingleSlotParticle", "annotation", ["model"])
-        .expectRenderSlot("MultiplexSlotsParticle", "annotationsSet", ["model"]);
   }
 
   it('multiplex recipe with slots', async () => {
@@ -110,7 +101,7 @@ describe('particle-shape-loading-with-slots', function() {
     assert.equal(1, slotComposer._slots.length);
     let slot = slotComposer._slots[0];
     assert.isTrue(slot._content.template.length > 0);
-    assert.deepEqual([{value: 'foo1'}, {value: 'foo2'}], slot._content.model);
+    assert.deepEqual([{subId: 'foo1', value: 'foo1'}, {subId: 'foo2', value: 'foo2'}], slot._content.model.items);
   });
 
   it('multiplex recipe with slots (init context later)', async () => {
@@ -139,6 +130,6 @@ describe('particle-shape-loading-with-slots', function() {
     assert.equal(1, slotComposer._slots.length);
     let slot = slotComposer._slots[0];
     assert.isTrue(slot._content.template.length > 0);
-    assert.deepEqual([{value: 'foo1'}, {value: 'foo2'}], slot._content.model);
+    assert.deepEqual([{subId: 'foo1', value: 'foo1'}, {subId: 'foo2', value: 'foo2'}], slot._content.model.items);
   });
 });

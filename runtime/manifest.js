@@ -58,7 +58,7 @@ class Manifest {
   get shapes() {
     return this._shapes;
   }
-  
+
   // TODO: newParticle, Schema, etc.
   // TODO: simplify() / isValid().
   newView(type, name, id, tags) {
@@ -437,8 +437,7 @@ ${e.message}
 
         if (connectionItem.target && connectionItem.target.particle) {
           targetParticle = particlesByName[connectionItem.target.particle];
-          // TODO: error reporting
-          assert(targetParticle);
+          assert(targetParticle, `Unknown particle ${connectionItem.target.particle}`);
         }
 
         if (targetParticle) {
