@@ -130,6 +130,10 @@ class Arc {
     return `${this.id}:${this._nextLocalID++}`;
   }
 
+  generateIDComponents() {
+    return {base: this.id, component: () => this._nextLocalID++};
+  }
+
   get _views() {
     return [...this._viewsById.values()];
   }
