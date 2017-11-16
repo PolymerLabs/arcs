@@ -59,8 +59,8 @@ describe('particle-shape-loading-with-slots', function() {
     let fooType = Type.newEntity(manifest.schemas.Foo);
     let inView = arc.createView(fooType.setViewOf());
     var Foo = manifest.schemas.Foo.entityClass();
-    inView.store({id: 1, rawData: {value: 'foo1'} });
-    inView.store({id: 2, rawData: {value: 'foo2'} });
+    inView.store({id: "1", rawData: {value: 'foo1'} });
+    inView.store({id: "2", rawData: {value: 'foo2'} });
     recipeInView.mapToView(inView);
 
     assert.equal(1, Object.keys(recipeParticle.consumedSlotConnections).length);
@@ -113,7 +113,7 @@ describe('particle-shape-loading-with-slots', function() {
     assert.deepEqual([{value: 'foo1'}, {value: 'foo2'}], slot._content.model);
   });
 
-  it('multiplex recipe with slots (init context later)', async () => {
+  it.skip('multiplex recipe with slots (init context later)', async () => {
     // This test is different from the one above because it initializes the transformation particle context
     // after the hosted particles are also instantiated.
     // This verifies a different start-render call in slot-composer.

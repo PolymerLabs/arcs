@@ -67,7 +67,7 @@ class Schema {
     var classJunk = ['toJSON', 'prototype', 'toString', 'inspect'];
 
     var clazz = class extends Entity {
-      constructor(data) {
+      constructor(data, userIDComponent) {
         var p = new Proxy(data, {
           get: (target, name) => {
             if (classJunk.includes(name))
@@ -86,7 +86,7 @@ class Schema {
             return true;
           }
         });
-        super();
+        super(userIDComponent);
         this.rawData = p;
       }
 
