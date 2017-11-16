@@ -63,6 +63,7 @@ class DemoFlow extends DemoBase {
       pecFactory: require('../worker-pec-factory.js').bind(null, root),
       slotComposer: new SlotComposer({rootContext: this.$('[particle-container]'), affordance: "dom"}),
       context: await Manifest.load('browser/demo/recipes.manifest', loader),
+      loader,
     });
     this.arc = arc;
     this.suggest(this.arc, this.$('suggestions-element'));

@@ -146,7 +146,7 @@ class DomParticle extends XenStateMixin(Particle) {
     let includeModel = contentTypes.indexOf('model') >= 0;
     let includeTemplate = contentTypes.indexOf('template') >= 0;
     if (includeModel) {
-      result.model = [];
+      result.model = {items: []};
     }
     for (let value of this.hostedSlotBySlotId.values()) {
       let content = value.content;
@@ -154,7 +154,7 @@ class DomParticle extends XenStateMixin(Particle) {
         continue;
       }
       if (includeModel) {
-        result.model.push(Object.assign(content.model, {subId: content.subId}));
+        result.model.items.push(Object.assign(content.model || {}, {subId: value.subId}));
       }
       if (includeTemplate && !result.template) {
         // TODO: Currently using the first available template. Add support for multiple templates.

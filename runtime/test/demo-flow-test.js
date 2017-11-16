@@ -27,6 +27,7 @@ describe('demo flow', function() {
       pecFactory,
       slotComposer,
       context: await Manifest.load('browser/demo/recipes.manifest', loader),
+      loader
     });
     let Product = arc.context.findSchemaByName('Product').entityClass();
 
@@ -35,7 +36,7 @@ describe('demo flow', function() {
     planner.init(arc);
 
     let plans = await planner.suggest();
-    assert.equal(plans.length, 2);
+    assert.equal(plans.length, 3);
 
     // Choose a plan to test with.
     let expectedPlanString = `recipe
@@ -64,7 +65,6 @@ describe('demo flow', function() {
       provide postamble as slot4
       provide preamble as slot5`;
     let {plan, description} = plans.find(p => p.plan.toString() == expectedPlanString);
-    assert(plan);
 
     assert.equal("Show products from your browsing context (<b>Minecraft Book</b> plus <b>2</b> other items) and " +
                  "Choose from Products recommended based on products from your browsing context and " +

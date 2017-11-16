@@ -11,6 +11,9 @@ defineParticle(({DomParticle}) => {
     get template() {
       return `<div><{{value}}/div>`;
     }
+    _shouldRender(props) {
+      return !!props && !!props.foo;
+    }
     _render(props, state) {
       let {foo} = props;
       return {
