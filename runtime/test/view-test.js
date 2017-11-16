@@ -37,6 +37,20 @@ describe('View', function() {
     assert.equal(barView.get(), undefined);
   });
 
+  it('dedupes common user-provided ids', async() => {
+    let arc = new Arc({slotComposer});
+
+    let manifest = await Manifest.load('../particles/test/test-particles.manifest', loader);
+    let Foo = manifest.schemas.Foo.entityClass();
+    let fooView = viewlet.viewletFor(arc.createView(Foo.type.setViewOf()));
+    fooView.entityClass = Foo;
+
+    await fooView.store(new Foo({value: 'a Foo'}, 'first'));
+    await fooView.store(new Foo({value: 'another Foo'}, 'second'));
+    await fooView.store(new Foo({value: 'a Foo, again'}, 'first'));
+    assert.equal((await fooView.toList()).length, 2);
+  });
+
   it('remove entry from view', async () => {
     let arc = new Arc({slotComposer});
     let barView = arc.createView(Bar.type.setViewOf());

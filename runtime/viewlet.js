@@ -61,12 +61,18 @@ class Viewlet {
   }
 
   generateID() {
+    assert (this._view.generateID);
     return this._view.generateID();
+  }
+
+  generateIDComponents() {
+    assert (this._view.generateIDComponents);
+    return this._view.generateIDComponents();
   }
 
   _serialize(entity) {
     if (!entity.isIdentified())
-      entity.identify(this.generateID());
+      entity.createIdentity(this.generateIDComponents());
     let id = entity[identifier];
     let rawData = entity.dataClone();
     return {

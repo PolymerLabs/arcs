@@ -29,6 +29,10 @@ class ViewBase {
     return this._arc.generateID();
   }
 
+  generateIDComponents() {
+    return this._arc.generateIDComponents();
+  }
+
   get type() {
     return this._type;
   }

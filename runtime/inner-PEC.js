@@ -36,8 +36,8 @@ class RemoteView {
     return this._type;
   }
 
-  generateID() {
-    return this._pec.generateID();
+  generateIDComponents() {
+    return this._pec.generateIDComponents();
   }
 
   on(type, callback, target) {
@@ -192,6 +192,10 @@ class InnerPEC {
         `Stop render called for particle ${particle.name} slot ${slotName} without start render being called.`);
       particle._slotByName.delete(slotName);
     }
+  }
+
+  generateIDComponents() {
+    return {base: this._idBase, component: () => this._nextLocalID++};
   }
 
   generateID() {
