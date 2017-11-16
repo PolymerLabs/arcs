@@ -113,7 +113,7 @@ describe('particle-shape-loading-with-slots', function() {
     assert.deepEqual([{value: 'foo1'}, {value: 'foo2'}], slot._content.model);
   });
 
-  it.skip('multiplex recipe with slots (init context later)', async () => {
+  it('multiplex recipe with slots (init context later)', async () => {
     // This test is different from the one above because it initializes the transformation particle context
     // after the hosted particles are also instantiated.
     // This verifies a different start-render call in slot-composer.
