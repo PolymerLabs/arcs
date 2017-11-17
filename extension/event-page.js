@@ -30,8 +30,6 @@ chrome.runtime.onMessage.addListener(
         sendResponse(result);
       });
       return true;
-    } else {
-      return;
     }
   }
 );
