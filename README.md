@@ -1,6 +1,6 @@
 # arcs
 
-Particle developers should visit our [particle developer website](https://polymerlabs.github.io/arcs-cdn/dev/) instead of reading this document which is more geared towards Arcs core system developers. 
+Particle developers should visit our [particle developer website](https://polymerlabs.github.io/arcs-cdn/dev/) instead of reading this document which is more geared towards Arcs core system developers.
 
 ## Install
 
@@ -13,12 +13,14 @@ $ (cd tracelib && npm install)
 $ (cd strategizer && npm install)
 $ (cd runtime && npm install)
 $ (cd strategy-explorer && bower install)
+$ (cd extension && npm install)
 
 ```
 
 ## Test
 ```
 $ (cd runtime && gulp)
+$ (cd extension && npm test)
 ```
 
 If there are unhandled promise exceptions without stack traces, use `./node_modules/.bin/mocha --trace-warnings`.
