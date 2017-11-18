@@ -38,7 +38,7 @@ async function loadEntitiesFromTabs() {
       continue;
     }
     tabs.push({
-      device: "local",
+      device: 'local',
       group: `local:${tab.windowId}`,
       url: tab.url,
       title: tab.title,
