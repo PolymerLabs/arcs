@@ -6,5 +6,8 @@
     "chai": "^4.1.2",
     "mocha": "^4.0.1",
     "mocha-chrome": "^1.0.1"
+  },
+  "prettier": {
+    "singleQuote": true
   }
 }

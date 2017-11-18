@@ -14,11 +14,13 @@ async function extractEntities(doc, windowLocation) {
     results.push(...microdata);
   }
 
-  let linkImage = doc.querySelector('link[rel~="image_src"], link[rel~="icon"]')
+  let linkImage = doc.querySelector(
+    'link[rel~="image_src"], link[rel~="icon"]'
+  );
   let pageEntity = {
     '@type': 'http://schema.org/WebPage',
     name: doc.title,
-    url: windowLocation.toString(),
+    url: windowLocation.toString()
   };
   if (linkImage && linkImage.href) {
     pageEntity.image = linkImage.href;

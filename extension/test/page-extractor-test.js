@@ -11,20 +11,23 @@ afterEach(function() {
   target.innerHTML = '';
 });
 
-describe("PageExtractor", function() {
-  describe("#extractEntities()", function() {
-    it("should extract simple product info", function() {
+describe('PageExtractor', function() {
+  describe('#extractEntities()', function() {
+    it('should extract simple product info', function() {
       target.innerHTML = `
           <div itemscope itemtype="http://schema.org/Product">
             <span itemprop="name">Chile Verde Burrito</span>
           </div>`;
       return extractEntities(document, window.location).then(function(results) {
         assert.equal(2, results.length);
-        assert.deepEqual({'@type': "http://schema.org/Product", 'name': "Chile Verde Burrito"}, results[0]);
+        assert.deepEqual(
+          { '@type': 'http://schema.org/Product', name: 'Chile Verde Burrito' },
+          results[0]
+        );
         // The web page url contains a machine specific path so just check the
         // file name presence at end.
-        assert.equal("http://schema.org/WebPage", results[1]['@type']);
-        assert.equal("Arcs Extension Mocha Tests", results[1]['name']);
+        assert.equal('http://schema.org/WebPage', results[1]['@type']);
+        assert.equal('Arcs Extension Mocha Tests', results[1]['name']);
         assert.isOk(results[1]['url'].endsWith('index.test.html'));
       });
     });
