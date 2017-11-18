@@ -752,7 +752,7 @@ describe('Description', async ()  => {
       async requireParticle(fileName) {
         let clazz = class {
           constructor() {
-            this.relevances = [];
+            this.relevances = [1];
           }
           async setViews(views) {
             let thingView = views.get('thing');
