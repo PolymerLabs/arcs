@@ -33,9 +33,9 @@ async function extractEntities(doc, windowLocation) {
 function extractManifests() {
   const manifestType = 'text/x-arcs-manifest';
   return Array.prototype.map.call(
-    document.querySelectorAll('link[type="'+manifestType+'"]'),
+    document.querySelectorAll('link[type="' + manifestType + '"]'),
     link => {
-      return {'@type': manifestType, url: link.href};
+      return { '@type': manifestType, url: link.href };
     }
   );
 }
@@ -65,7 +65,11 @@ function extractMicrodata(root) {
           return NodeFilter.FILTER_SKIP;
         }
         let parent = node.parentElement;
-        if (parent && parent != root && (parent.hasAttribute('itemscope') || parent.hasAttribute('itemtype'))) {
+        if (
+          parent &&
+          parent != root &&
+          (parent.hasAttribute('itemscope') || parent.hasAttribute('itemtype'))
+        ) {
           // No need to look for props inside nested entities.
           return NodeFilter.FILTER_REJECT;
         }
@@ -104,7 +108,7 @@ function extractMicrodata(root) {
     if (value == undefined) {
       value = node.textContent.replace(/(^\s*|\s*$)/g, '');
     }
-    return {prop, value};
+    return { prop, value };
   }
 
   function* extractProperties(node) {
@@ -119,7 +123,7 @@ function extractMicrodata(root) {
     if (node.hasAttribute('itemtype')) {
       result['@type'] = node.getAttribute('itemtype');
     }
-    for (let {prop, value} of extractProperties(node)) {
+    for (let { prop, value } of extractProperties(node)) {
       if (typeof result[prop] != 'undefined') {
         if (!Array.isArray(result[prop])) {
           result[prop] = [result[prop]];

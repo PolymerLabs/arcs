@@ -7,11 +7,12 @@
 
 // TODO(smalls) there should be a better way to detect an arcs page we can
 // inject data into.
-const isArcsPage = document.body.getElementsByTagName('extension-app-shell').length>0;
+const isArcsPage =
+  document.body.getElementsByTagName('extension-app-shell').length > 0;
 
 function sendInjectArcsDataMessage() {
-  chrome.runtime.sendMessage({method: 'loadAllEntities'}, entities => {
-    window.postMessage({method: 'injectArcsData', entities: entities}, '*');
+  chrome.runtime.sendMessage({ method: 'loadAllEntities' }, entities => {
+    window.postMessage({ method: 'injectArcsData', entities: entities }, '*');
   });
 }
 
@@ -35,7 +36,7 @@ if (!isArcsPage) {
 // In case we fired entities before anyone was listening, let's listen for
 // requests to send entities as well.
 window.addEventListener('message', event => {
-  console.log('content script received event '+event.data.method, event.data);
+  console.log('content script received event ' + event.data.method, event.data);
   if (event.source != window || event.data.method != 'pleaseInjectArcsData') {
     return;
   }
