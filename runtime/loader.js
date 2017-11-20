@@ -9,12 +9,12 @@
  */
 "use strict";
 
-var fs = require("fs");
-var assert = require("assert");
-const particle = require("./particle.js");
-const DomParticle = require("./dom-particle.js");
-const vm = require('vm');
-let JsonldToManifest = require("../converters/jsonldToManifest.js");
+import fs from "fs";
+import assert from "assert";
+import particle from './particle.js';
+import DomParticle from './dom-particle.js';
+import vm from 'vm';
+import JsonldToManifest from '../converters/jsonldToManifest.js';
 
 let fetch = global.fetch || require('node-fetch');
 
@@ -91,4 +91,4 @@ class Loader {
 
 }
 
-module.exports = Loader;
+export default Loader;

@@ -5,8 +5,8 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-let Recipe = require('./recipe.js');
-let assert = require('assert');
+import Recipe from './recipe.js';
+import assert from 'assert';
 
 class Shape {
   constructor(recipe, particles, views, vcs) {
@@ -246,4 +246,4 @@ class RecipeUtil {
   }
 }
 
-module.exports = RecipeUtil;
+export default RecipeUtil;

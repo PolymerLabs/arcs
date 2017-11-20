@@ -8,16 +8,16 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-const assert = require('assert');
-const parser = require('./build/manifest-parser.js');
-const Recipe = require('./recipe/recipe.js');
-const ParticleSpec = require('./particle-spec.js');
-const Schema = require('./schema.js');
-const Search = require('./recipe/search.js');
-const Shape = require('./shape.js');
-const Type = require('./type.js');
-const {InMemoryCollection, InMemoryVariable} = require('./in-memory-storage.js');
-const util = require('./recipe/util.js');
+import assert from 'assert';
+import parser from './build/manifest-parser.js';
+import Recipe from './recipe/recipe.js';
+import ParticleSpec from './particle-spec.js';
+import Schema from './schema.js';
+import Search from './recipe/search.js';
+import Shape from './shape.js';
+import Type from './type.js';
+import {InMemoryCollection, InMemoryVariable} from './in-memory-storage.js';
+import util from './recipe/util.js';
 
 class Manifest {
   constructor() {
@@ -577,4 +577,4 @@ ${e.message}
   }
 }
 
-module.exports = Manifest;
+export default Manifest;

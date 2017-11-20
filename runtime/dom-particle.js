@@ -9,15 +9,15 @@
  */
 "use strict";
 
-const assert = require('assert');
-const {
+import assert from 'assert';
+import {
   Particle,
   ViewChanges,
   //StateChanges,
   //SlotChanges
-} = require("./particle.js");
+} from './particle.js';
 
-const XenStateMixin = require("./browser/lib/xen-state.js");
+import XenStateMixin from './browser/lib/xen-state.js';
 
 //let log = !global.document || (global.logging === false) ? () => {} : console.log.bind(console, `---------- DomParticle::`);
 //console.log(!!global.document, global.logging, log);
@@ -188,4 +188,4 @@ class DomParticle extends XenStateMixin(Particle) {
   }
 }
 
-module.exports = DomParticle;
+export default DomParticle;

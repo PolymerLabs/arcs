@@ -5,14 +5,14 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-var assert = require('assert');
-var Strategizer = require('../../strategizer/strategizer.js').Strategizer;
-var ConnectionConstraint = require('./connection-constraint.js');
-var Particle = require('./particle.js');
-var Search = require('./search.js');
-var Slot = require('./slot.js');
-var View = require('./view.js');
-var util = require('./util.js');
+import assert from 'assert';
+import {Strategizer} from '../../strategizer/strategizer.js';
+import ConnectionConstraint from './connection-constraint.js';
+import Particle from './particle.js';
+import Search from './search.js';
+import Slot from './slot.js';
+import View from './view.js';
+import util from './util.js';
 
 class Recipe {
   constructor() {
@@ -160,7 +160,7 @@ class Recipe {
       return Array.from(new Uint8Array(digest)).map(x => ('00' + x.toString(16)).slice(-2)).join('');
     } else {
       // nodejs
-      let crypto = require('crypto');
+      import crypto from 'crypto';
       let sha = crypto.createHash('sha1');
       sha.update(this.toString());
       return sha.digest('hex');
@@ -420,4 +420,4 @@ class Recipe {
   }
 }
 
-module.exports = Recipe;
+export default Recipe;

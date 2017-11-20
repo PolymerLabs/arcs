@@ -9,9 +9,9 @@
  */
 "use strict";
 
-const Loader = require('./loader');
+import Loader from './loader';
 
-module.exports = class BrowserLoader extends Loader {
+export default class BrowserLoader extends Loader {
   constructor(base) {
     super();
     // TODO: Update all callers to pass a valid base URL to avoid the use of

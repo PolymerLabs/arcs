@@ -7,10 +7,10 @@
 // http://polymer.github.io/PATENTS.txt
 'use strict';
 
-const assert = require('assert');
-const Entity = require('./entity.js');
-const Type = require('./type.js');
-const Symbols = require('./symbols.js');
+import assert from 'assert';
+import Entity from './entity.js';
+import Type from './type.js';
+import Symbols from './symbols.js';
 
 // TODO: Should relations normalized by another layer, or here?
 class Relation extends Entity {
@@ -27,4 +27,4 @@ class Relation extends Entity {
   }
 }
 
-module.exports = Relation;
+export default Relation;

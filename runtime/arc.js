@@ -9,25 +9,26 @@
  */
 "use strict";
 
-var runtime = require("./runtime.js");
-var assert = require("assert");
-var tracing = require("tracelib");
-const Type = require('./type.js');
-const {InMemoryCollection, InMemoryVariable} = require('./in-memory-storage.js');
-const Relation = require('./relation.js');
-let handle = require('./handle.js');
-const OuterPec = require('./outer-PEC.js');
-const Recipe = require('./recipe/recipe.js');
-const Manifest = require('./manifest.js');
-const Description = require('./description.js');
-const util = require('./recipe/util.js');
+import runtime from './runtime.js';
+import assert from "assert";
+import tracing from "tracelib";
+import Type from './type.js';
+import {InMemoryCollection, InMemoryVariable} from './in-memory-storage.js';
+import Relation from './relation.js';
+import handle from './handle.js';
+import OuterPec from './outer-PEC.js';
+import Recipe from './recipe/recipe.js';
+import Manifest from './manifest.js';
+import Description from './description.js';
+import util from './recipe/util.js';
+import FakePecFactory from './fake-pec-factory.js';
 
 class Arc {
   constructor({id, context, pecFactory, slotComposer, loader}) {
     // TODO: context should not be optional.
     this._context = context || new Manifest();
     // TODO: pecFactory should not be optional. update all callers and fix here.
-    this._pecFactory = pecFactory ||  require('./fake-pec-factory').bind(null);
+    this._pecFactory = pecFactory ||  FakePecFactory.bind(null);
     this.id = id;
     this._nextLocalID = 0;
     this._activeRecipe = new Recipe();
@@ -366,4 +367,4 @@ class Arc {
   }
 }
 
-module.exports = Arc;
+export default Arc;

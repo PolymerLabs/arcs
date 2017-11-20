@@ -6,9 +6,9 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-const gulp = require('gulp');
-const gutil = require('gulp-util');
-const peg = require('gulp-peg');
+import gulp from 'gulp';
+import gutil from 'gulp-util';
+import peg from 'gulp-peg';
 
 const paths = {
   build: './build',
@@ -38,7 +38,7 @@ gulp.task('peg', function() {
 
 gulp.task('webpack', async function() {
   try {
-    const webpack = require('webpack');
+    import webpack from 'webpack';
 
     let node = {
       fs: 'empty',
@@ -74,7 +74,7 @@ gulp.task('webpack', async function() {
 gulp.task('build', ['peg', 'webpack']);
 
 gulp.task('test', ['peg'], function() {
-  const mocha = require('gulp-mocha');
+  import mocha from 'gulp-mocha';
   // OMG gulp, why are you so hideously, hideously bad?
   //
   // Pass the test you want to run in as a --param,

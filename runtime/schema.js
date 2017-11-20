@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-const assert = require('assert');
+import assert from 'assert';
 
 class Schema {
   constructor(model) {
@@ -156,7 +156,7 @@ class Schema {
   }
 }
 
-module.exports = Schema;
+export default Schema;
 
-const Type = require('./type.js');
-const Entity = require("./entity.js");
+import Type from './type.js';
+import Entity from './entity.js';

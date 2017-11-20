@@ -7,4 +7,4 @@
 // http://polymer.github.io/PATENTS.txt
 'use strict';
 
-exports.identifier = Symbol('id');
+export const identifier = Symbol('id');
