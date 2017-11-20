@@ -315,4 +315,5 @@ class PECInnerPort extends APIPort {
   }
 }
 
+export {PECOuterPort as PECOuterPort, PECInnerPort as PECInnerPort};
 export default { PECOuterPort, PECInnerPort };

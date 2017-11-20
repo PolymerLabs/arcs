@@ -7,7 +7,7 @@
 // http://polymer.github.io/PATENTS.txt
 'use strict';
 
-import tracing from "tracelib";
+import tracing from "../tracelib/trace.js";
 import assert from '../platform/assert-web.js';
 
 class Scheduler {

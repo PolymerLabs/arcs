@@ -9,7 +9,7 @@
  */
 "use strict";
 
-import Loader from './loader';
+import Loader from './loader.js';
 
 export default class BrowserLoader extends Loader {
   constructor(base) {

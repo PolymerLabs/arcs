@@ -11,7 +11,7 @@
 
 import Type from './type.js';
 import handle from './handle.js';
-import {define} from './particle.js');
+// import {define} from './particle.js';
 import assert from '../platform/assert-web.js';
 import {PECInnerPort} from './api-channel.js';
 import ParticleSpec from './particle-spec.js';
