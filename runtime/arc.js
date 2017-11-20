@@ -10,8 +10,8 @@
 "use strict";
 
 import runtime from './runtime.js';
-import assert from "assert";
-import tracing from "tracelib";
+import assert from '../platform/assert-web.js';
+import tracing from "../tracelib/trace.js";
 import Type from './type.js';
 import {InMemoryCollection, InMemoryVariable} from './in-memory-storage.js';
 import Relation from './relation.js';

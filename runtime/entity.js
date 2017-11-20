@@ -9,6 +9,7 @@
 
 import assert from '../platform/assert-web.js';
 import Symbols from './symbols.js';
+import Type from './type.js';
 
 class Entity {
   constructor(userIDComponent) {
@@ -58,5 +59,3 @@ class Entity {
 }
 
 export default Entity;
-
-import Type from './type.js';

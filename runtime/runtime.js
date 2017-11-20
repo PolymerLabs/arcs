@@ -27,7 +27,7 @@ function testEntityClass(type) {
 
 let BasicEntity = testEntityClass('BasicEntity');
 
-Object.assign(exports, {
+export default {
   Entity,
   BasicEntity,
   Relation,
@@ -42,4 +42,4 @@ Object.assign(exports, {
     StorageProvider: storage.InMemoryStorageProvider,
     Variable: storage.InMemoryVariable
   }
-});
+};

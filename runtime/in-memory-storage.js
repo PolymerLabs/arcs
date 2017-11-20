@@ -8,7 +8,7 @@
 'use strict';
 
 import assert from '../platform/assert-web.js';
-import tracing from "tracelib";
+import tracing from "../tracelib/trace.js";
 import scheduler from './scheduler.js';
 import util from './recipe/util.js';
 

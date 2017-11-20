@@ -11,10 +11,10 @@
   limitations under the License.
 */
 
-var fs = require('fs');
-var mkdirp = require('mkdirp');
-var path = require('path');
-var options = require('./options');
+//var fs = require('fs');
+//var mkdirp = require('mkdirp');
+//var path = require('path');
+//var options = require('./options');
 
 var events = [];
 if (global.document) {
@@ -43,16 +43,17 @@ function parseInfo(info) {
   return info;
 }
 
-module.exports.options = options;
-var enabled = Boolean(options.traceFile);
+let module = {exports: {}};
+export default module.exports;
+module.exports.enabled = false;
+module.exports.enable = function() {
+  module.exports.enabled = true;
+  init();
+};
+//module.exports.options = options;
+//var enabled = Boolean(options.traceFile);
 
 function init() {
-  module.exports.enable = function() {
-    enabled = true;
-    init();
-  };
-  module.exports.enabled = enabled;
-
   var result = {
     wait: function(f) {
       if (f instanceof Function) {
@@ -91,7 +92,7 @@ function init() {
   module.exports.dump = function() {
   };
 
-  if (!enabled) {
+  if (!module.exports.enabled) {
     return;
   }
 
