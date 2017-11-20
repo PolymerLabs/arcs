@@ -6,7 +6,7 @@
 // http://polymer.github.io/PATENTS.txt
 
 import {Strategy, Strategizer} from '../strategizer/strategizer.js';
-import assert from "assert";
+import assert from '../../platform/assert-web.js';
 import Recipe from './recipe/recipe.js';
 import RecipeUtil from './recipe/recipe-util.js';
 import RecipeWalker from './recipe/walker.js';
@@ -30,7 +30,7 @@ import CombinedStrategy from './strategies/combined-strategy.js';
 
 import Speculator from './speculator.js';
 import Description from './description.js';
-import Tracing from 'tracelib';
+import Tracing from '../tracelib/trace.js';
 
 class CreateViews extends Strategy {
   // TODO: move generation to use an async generator.

@@ -16,6 +16,6 @@
     "pegjs": "^0.10.0",
     "watchify": "^3.9.0",
     "webpack": "^2.6.1",
-    "tracelib": "../tracelib"
+    "../tracelib/trace.js": "../tracelib"
   }
 }

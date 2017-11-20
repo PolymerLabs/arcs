@@ -9,14 +9,14 @@
  */
 "use strict";
 
-import fs from "fs";
-import assert from "assert";
+import fs from '../platform/fs-web.js';
+import vm from '../platform/vm-web.js';
+import fetch from './fetch-web.js';
+
+import assert from '../platform/assert-web.js';
 import particle from './particle.js';
 import DomParticle from './dom-particle.js';
-import vm from 'vm';
 import JsonldToManifest from '../converters/jsonldToManifest.js';
-
-let fetch = global.fetch || require('node-fetch');
 
 function schemaLocationFor(name) {
   return `../entities/${name}.schema`;

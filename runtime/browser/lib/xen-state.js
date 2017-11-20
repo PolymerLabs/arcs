@@ -7,11 +7,10 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-(scope => {
 
 let nob = () => Object.create(null);
 
-let StaterMixin = Base => class extends Base {
+export default Base => class extends Base {
   constructor() {
     super();
     this._pendingProps = nob();
@@ -105,10 +104,3 @@ let StaterMixin = Base => class extends Base {
   _didUpdate(props, state) {
   }
 };
-
-if (typeof module !== 'undefined' && typeof module.exports !== 'undefined')
-  module.exports = StaterMixin;
-else
-  scope.XenState = StaterMixin;
-
-})(this);

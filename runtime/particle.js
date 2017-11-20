@@ -11,7 +11,7 @@
 
 import runtime from './runtime.js';
 import ParticleSpec from './particle-spec.js';
-import tracing from 'tracelib';
+import tracing from '../tracelib/trace.js';
 import assert from '../platform/assert-web.js';
 import Schema from './schema.js';
 
@@ -21,7 +21,7 @@ const DEBUGGING = false;
  * A basic particle. For particles that provide UI, you may like to
  * instead use DOMParticle.
  */
-class Particle {
+export class Particle {
   constructor(capabilities) {
     this.spec = this.constructor.spec;
     if (this.spec.inputs.length == 0)
@@ -190,7 +190,7 @@ class Particle {
   }
 }
 
-class ViewChanges {
+export class ViewChanges {
   constructor(views, names, type) {
     if (typeof names == "string")
       names = [names];
@@ -209,7 +209,7 @@ class ViewChanges {
   }
 }
 
-class SlotChanges {
+export class SlotChanges {
   constructor() {
   }
   register(particle, f) {
@@ -217,7 +217,7 @@ class SlotChanges {
   }
 }
 
-class StateChanges {
+export class StateChanges {
   constructor(states) {
     if (typeof states == "string")
       states = [states];

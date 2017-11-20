@@ -14,7 +14,7 @@ import Relation from './relation.js';
 import Symbols from './symbols.js';
 import storage from './in-memory-storage.js';
 let identifier = Symbols.identifier;
-import assert from "assert";
+import assert from '../platform/assert-web.js';
 import ParticleSpec from './particle-spec.js';
 
 // TODO: This won't be needed once runtime is transferred between contexts.
