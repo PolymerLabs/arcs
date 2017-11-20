@@ -9,7 +9,7 @@
  */
 "use strict";
 
-import assert from 'assert';
+import assert from '../platform/assert-web.js';
 import Slot from './slot.js';
 import {DomContext, SetDomContext} from './dom-context.js';
 

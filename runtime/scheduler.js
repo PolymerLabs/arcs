@@ -8,7 +8,7 @@
 'use strict';
 
 import tracing from "tracelib";
-import assert from 'assert';
+import assert from '../platform/assert-web.js';
 
 class Scheduler {
   constructor() {

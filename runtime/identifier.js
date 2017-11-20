@@ -7,7 +7,7 @@
 // http://polymer.github.io/PATENTS.txt
 'use strict';
 
-import assert from 'assert';
+import assert from '../platform/assert-web.js';
 import Type from './type.js';
 
 // TODO: relation identifier should incorporate key/value identifiers

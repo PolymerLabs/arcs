@@ -7,7 +7,7 @@
 // http://polymer.github.io/PATENTS.txt
 'use strict';
 
-import assert from 'assert';
+import assert from '../platform/assert-web.js';
 import tracing from "tracelib";
 import scheduler from './scheduler.js';
 import util from './recipe/util.js';

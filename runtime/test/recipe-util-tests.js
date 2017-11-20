@@ -10,7 +10,7 @@
 
 let Manifest = require('../manifest.js');
 let RecipeUtil = require('../recipe/recipe-util.js');
-let assert = require('assert');
+let assert = require('../../platform/assert-web.js');
 
 describe('recipe-util', function() {
   it('can produce a shape match to a simple recipe', async () => {

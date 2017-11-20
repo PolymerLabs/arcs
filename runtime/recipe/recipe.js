@@ -5,7 +5,7 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import assert from 'assert';
+import assert from '../../platform/assert-web.js';
 import {Strategizer} from '../../strategizer/strategizer.js';
 import ConnectionConstraint from './connection-constraint.js';
 import Particle from './particle.js';
