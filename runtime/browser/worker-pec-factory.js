@@ -8,7 +8,7 @@
 
 'use strict';
 
-module.exports = function(base, id) {
+export default function(base, id) {
   let channel = new MessageChannel();
   let worker = new Worker('../build/worker-entry.js');
   worker.postMessage({id: `${id}:inner`, base}, [channel.port1]);

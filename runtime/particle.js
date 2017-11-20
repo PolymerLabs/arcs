@@ -9,11 +9,11 @@
  */
 "use strict";
 
-var runtime = require("./runtime.js");
-var ParticleSpec = require("./particle-spec.js");
-var tracing = require('tracelib');
-var assert = require('assert');
-const Schema = require('./schema.js');
+import runtime from './runtime.js';
+import ParticleSpec from './particle-spec.js';
+import tracing from 'tracelib';
+import assert from 'assert';
+import Schema from './schema.js';
 
 const DEBUGGING = false;
 
@@ -228,7 +228,4 @@ class StateChanges {
   }
 }
 
-exports.Particle = Particle;
-exports.ViewChanges = ViewChanges;
-exports.SlotChanges = SlotChanges;
-exports.StateChanges = StateChanges;
+export default {Particle, ViewChanges, SlotChanges, StateChanges};

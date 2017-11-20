@@ -7,7 +7,7 @@
 // http://polymer.github.io/PATENTS.txt
 'use strict';
 
-const assert = require('assert');
+import assert from 'assert';
 
 let nextVariableId = 0;
 
@@ -234,8 +234,8 @@ addType('SetView', 'type');
 addType('Relation', 'entities');
 addType('Interface', 'shape');
 
-module.exports = Type;
+export default Type;
 
-const Shape = require('./shape.js');
-const Schema = require('./schema.js');
-const TypeVariable = require('./type-variable.js');
+import Shape from './shape.js';
+import Schema from './schema.js';
+import TypeVariable from './type-variable.js';

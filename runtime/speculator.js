@@ -9,10 +9,10 @@
  */
 "use strict";
 
-let assert = require('assert');
-var tracing = require('tracelib');
-const scheduler = require('./scheduler.js');
-const Relevance = require('./relevance.js');
+import assert from 'assert';
+import tracing from 'tracelib';
+import scheduler from './scheduler.js';
+import Relevance from './relevance.js';
 
 class Speculator {
 
@@ -40,4 +40,4 @@ class Speculator {
   }
 }
 
-module.exports = Speculator;
+export default Speculator;

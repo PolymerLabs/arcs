@@ -5,10 +5,10 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-var assert = require('assert')
-var SlotConnection = require('./slot-connection.js');
-var ViewConnection = require('./view-connection.js');
-var util = require('./util.js');
+import assert from 'assert';
+import SlotConnection from './slot-connection.js';
+import ViewConnection from './view-connection.js';
+import util from './util.js';
 
 class Particle {
   constructor(recipe, name) {
@@ -242,4 +242,4 @@ class Particle {
   }
 }
 
-module.exports = Particle;
+export default Particle;

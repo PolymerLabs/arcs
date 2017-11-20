@@ -9,7 +9,7 @@
  */
 "use strict";
 
-const assert = require('assert');
+import assert from 'assert';
 
 class Slot {
   constructor(consumeConn, arc) {
@@ -111,4 +111,4 @@ class Slot {
   static findRootSlots(context) { }
 }
 
-module.exports = Slot;
+export default Slot;

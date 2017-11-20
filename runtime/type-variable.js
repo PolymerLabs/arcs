@@ -32,4 +32,4 @@ class TypeVariable {
 
 }
 
-module.exports = TypeVariable;
+export default TypeVariable;

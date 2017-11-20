@@ -9,8 +9,8 @@
  */
 "use strict";
 
-const assert = require('assert');
-const Template = require('./browser/lib/xen-template.js');
+import assert from 'assert';
+import Template from './browser/lib/xen-template.js';
 
 // TODO(sjmiles): should be elsewhere
 // TODO(sjmiles): using Node syntax to import custom-elements in strictly-browser context
@@ -196,5 +196,4 @@ class SetDomContext {
   }
 }
 
-exports.DomContext = DomContext;
-exports.SetDomContext = SetDomContext;
+export default {DomContext, SetDomContext};

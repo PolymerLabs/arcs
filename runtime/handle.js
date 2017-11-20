@@ -8,14 +8,14 @@
  */
 'use strict';
 
-const Identifier = require('./identifier.js');
-const Entity = require('./entity.js');
-const Relation = require('./relation.js');
-const Symbols = require('./symbols.js');
-const storage = require('./in-memory-storage.js');
+import Identifier from './identifier.js';
+import Entity from './entity.js';
+import Relation from './relation.js';
+import Symbols from './symbols.js';
+import storage from './in-memory-storage.js';
 let identifier = Symbols.identifier;
-const assert = require("assert");
-const ParticleSpec = require("./particle-spec.js");
+import assert from "assert";
+import ParticleSpec from './particle-spec.js';
 
 // TODO: This won't be needed once runtime is transferred between contexts.
 function cloneData(data) {
@@ -228,4 +228,10 @@ function handleFor(view, isSet, canRead, canWrite) {
   return handle;
 }
 
+<<<<<<< a185af46a307daca90d688eb972d1a95a028ab80:runtime/handle.js
 module.exports = { handleFor };
+||||||| merged common ancestors
+module.exports = { viewletFor };
+=======
+export default { viewletFor };
+>>>>>>> Rename js to mjs for most of runtime:runtime/viewlet.js

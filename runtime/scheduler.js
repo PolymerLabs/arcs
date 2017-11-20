@@ -7,8 +7,8 @@
 // http://polymer.github.io/PATENTS.txt
 'use strict';
 
-const tracing = require("tracelib");
-const assert = require('assert');
+import tracing from "tracelib";
+import assert from 'assert';
 
 class Scheduler {
   constructor() {
@@ -88,4 +88,4 @@ class Scheduler {
   }
 }
 
-module.exports = new Scheduler();
+export default new Scheduler();

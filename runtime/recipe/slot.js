@@ -5,8 +5,8 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-var assert = require('assert');
-var util = require('./util.js');
+import assert from 'assert';
+import util from './util.js';
 
 class Slot {
   constructor(recipe, name) {
@@ -114,4 +114,4 @@ class Slot {
   }
 }
 
-module.exports = Slot;
+export default Slot;

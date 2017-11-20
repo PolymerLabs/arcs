@@ -9,13 +9,13 @@
  */
 "use strict";
 
-const Type = require('./type.js');
-const handle = require('./handle.js');
-const define = require('./particle.js').define;
-const assert = require('assert');
-const PECInnerPort = require('./api-channel.js').PECInnerPort;
-const ParticleSpec = require('./particle-spec.js');
-const Schema = require('./schema.js');
+import Type from './type.js';
+import handle from './handle.js';
+import {define} from './particle.js');
+import assert from 'assert';
+import {PECInnerPort} from './api-channel.js';
+import ParticleSpec from './particle-spec.js';
+import Schema from './schema.js';
 
 class StoreProxy {
   constructor(id, type, port, pec, name, version) {
@@ -307,4 +307,4 @@ class InnerPEC {
   }
 }
 
-module.exports = InnerPEC;
+export default InnerPEC;

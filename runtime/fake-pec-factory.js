@@ -8,13 +8,13 @@
 
 "use strict";
 
-const InnerPec = require('./inner-PEC.js');
-const MessageChannel = require('./message-channel.js');
-const Loader = require('./loader.js');
+import InnerPec from './inner-PEC.js';
+import MessageChannel from './message-channel.js';
+import Loader from './loader.js';
 
 // TODO: Make this generic so that it can also be used in-browser, or add a
 // separate in-process browser pec-factory.
-module.exports = function(id) {
+export default function(id) {
   var channel = new MessageChannel();
   new InnerPec(channel.port1, `${id}:inner`, new Loader());
   return channel.port2;

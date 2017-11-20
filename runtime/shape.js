@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-const assert = require('assert');
+import assert from 'assert';
 
 // ShapeView {name, direction, type}
 // Slot {name, direction}
@@ -129,6 +129,6 @@ class Shape {
   }
 }
 
-module.exports = Shape;
+export default Shape;
 
-const Type = require('./type.js');
+import Type from './type.js';

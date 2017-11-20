@@ -5,8 +5,8 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-var Recipe = require('./recipe.js');
-var WalkerBase = require('./walker-base.js');
+import Recipe from './recipe.js';
+import WalkerBase from './walker-base.js';
 
 class ConstraintWalker extends WalkerBase {
   onResult(result) {
@@ -26,4 +26,4 @@ class ConstraintWalker extends WalkerBase {
   }
 }
 
-module.exports = ConstraintWalker;
+export default ConstraintWalker;

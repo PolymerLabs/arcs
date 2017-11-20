@@ -80,4 +80,4 @@ class Relevance {
     return -1;
   }
 }
-module.exports = Relevance;
+export default Relevance;
