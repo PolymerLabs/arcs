@@ -11,7 +11,7 @@ let Recipe = require('../recipe/recipe.js');
 let RecipeUtil = require('../recipe/recipe-util.js');
 let ViewMapperBase = require('./view-mapper-base.js');
 
-let assert = require('assert');
+let assert = require('../../platform/assert-web.js');
 
 class AssignViewsByTagAndType extends ViewMapperBase {
   constructor(arc) {

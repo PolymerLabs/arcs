@@ -4,7 +4,7 @@
 // Code distributed by Google as part of this project is also
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
-import assert from 'assert';
+import assert from '../../platform/assert-web.js';
 
 function compareNulls(o1, o2) {
   if (o1 == o2) return 0;
