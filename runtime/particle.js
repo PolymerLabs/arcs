@@ -12,7 +12,7 @@
 import runtime from './runtime.js';
 import ParticleSpec from './particle-spec.js';
 import tracing from 'tracelib';
-import assert from 'assert';
+import assert from '../platform/assert-web.js';
 import Schema from './schema.js';
 
 const DEBUGGING = false;

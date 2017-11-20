@@ -7,7 +7,7 @@
 
 import {Strategizer} = '../../strategizer/strategizer.js';
 import Recipe from './recipe.js';
-import assert from 'assert';
+import assert from '../../platform/assert-web.js';
 
 class WalkerBase extends Strategizer.Walker {
   constructor(tactic) {

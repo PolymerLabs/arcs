@@ -9,7 +9,7 @@ let {Strategy} = require('../../strategizer/strategizer.js');
 let RecipeWalker = require('../recipe/walker.js');
 let Recipe = require('../recipe/recipe.js');
 let RecipeUtil = require('../recipe/recipe-util.js');
-let assert = require('assert');
+let assert = require('../../platform/assert-web.js');
 
 class ViewMapperBase extends Strategy {
   async generate(strategizer) {

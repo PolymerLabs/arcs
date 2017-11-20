@@ -6,7 +6,7 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-let assert = require('assert');
+let assert = require('../../platform/assert-web.js');
 let {Strategy} = require('../../strategizer/strategizer.js');
 let Recipe = require('../recipe/recipe.js');
 let RecipeWalker = require('../recipe/walker.js');

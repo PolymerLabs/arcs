@@ -9,7 +9,7 @@
  */
 "use strict";
 
-import assert from 'assert';
+import assert from '../platform/assert-web.js';
 import tracing from 'tracelib';
 import scheduler from './scheduler.js';
 import Relevance from './relevance.js';

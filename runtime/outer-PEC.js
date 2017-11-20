@@ -10,7 +10,7 @@
 "use strict";
 
 import PEC from './particle-execution-context.js';
-import assert from 'assert';
+import assert from '../platform/assert-web.js';
 import {PECOuterPort} from './api-channel.js';
 import Manifest from './manifest.js';
 

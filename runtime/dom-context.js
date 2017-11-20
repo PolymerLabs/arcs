@@ -9,7 +9,7 @@
  */
 "use strict";
 
-import assert from 'assert';
+import assert from '../platform/assert-web.js';
 import Template from './browser/lib/xen-template.js';
 
 // TODO(sjmiles): should be elsewhere

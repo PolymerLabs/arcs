@@ -7,7 +7,7 @@
 
 const {Strategy} = require('../../strategizer/strategizer.js');
 const Recipe = require('../recipe/recipe.js');
-const assert = require('assert');
+const assert = require('../../platform/assert-web.js');
 
 module.exports = class InitSearch extends Strategy {
   constructor(arc) {

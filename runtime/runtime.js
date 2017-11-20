@@ -9,7 +9,7 @@
  */
 "use strict";
 
-import assert from 'assert';
+import assert from '../platform/assert-web.js';
 import storage from './in-memory-storage.js';
 import Symbols from './symbols.js';
 import Entity from './entity.js';

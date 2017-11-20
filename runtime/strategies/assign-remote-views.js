@@ -12,7 +12,7 @@ let RecipeUtil = require('../recipe/recipe-util.js');
 let ViewMapperBase = require('./view-mapper-base.js');
 let Schema = require('../schema.js');
 
-let assert = require('assert');
+let assert = require('../../platform/assert-web.js');
 
 class AssignRemoteViews extends ViewMapperBase {
   constructor(arc) {
