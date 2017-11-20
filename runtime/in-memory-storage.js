@@ -7,10 +7,10 @@
 // http://polymer.github.io/PATENTS.txt
 'use strict';
 
-const assert = require('assert');
-const tracing = require("tracelib");
-const scheduler = require('./scheduler.js');
-const util = require('./recipe/util.js');
+import assert from 'assert';
+import tracing from "tracelib";
+import scheduler from './scheduler.js';
+import util from './recipe/util.js';
 
 class InMemoryStorageProvider {
   constructor(type, arc, name, id) {
@@ -249,7 +249,7 @@ class InMemoryVariable extends InMemoryStorageProvider {
   }
 }
 
-Object.assign(module.exports, {
+export default {
   InMemoryCollection,
   InMemoryVariable,
-});
+};

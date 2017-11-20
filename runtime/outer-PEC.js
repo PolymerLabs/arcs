@@ -9,13 +9,13 @@
  */
 "use strict";
 
-const PEC = require('./particle-execution-context.js');
-const assert = require('assert');
-const PECOuterPort = require('./api-channel.js').PECOuterPort;
-const Manifest = require('./manifest.js');
+import PEC from './particle-execution-context.js';
+import assert from 'assert';
+import {PECOuterPort} from './api-channel.js';
+import Manifest from './manifest.js';
 
 // TODO: fix
-const Loader = require('./loader.js');
+import Loader from './loader.js';
 
 class OuterPEC extends PEC {
   constructor(port, slotComposer, arc) {
@@ -157,4 +157,4 @@ class OuterPEC extends PEC {
   }
 }
 
-module.exports = OuterPEC;
+export default OuterPEC;

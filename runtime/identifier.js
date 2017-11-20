@@ -7,8 +7,8 @@
 // http://polymer.github.io/PATENTS.txt
 'use strict';
 
-const assert = require('assert');
-const Type = require('./type.js');
+import assert from 'assert';
+import Type from './type.js';
 
 // TODO: relation identifier should incorporate key/value identifiers
 class Identifier {
@@ -26,4 +26,4 @@ class Identifier {
   }
 }
 
-module.exports = Identifier;
+export default Identifier;

@@ -5,8 +5,8 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-var Type = require('../type.js');
-var assert = require('assert');
+import Type from '../type.js';
+import assert from 'assert';
 
 class TypeChecker {
 
@@ -131,4 +131,4 @@ class TypeChecker {
   }
 }
 
-module.exports = TypeChecker;
+export default TypeChecker;

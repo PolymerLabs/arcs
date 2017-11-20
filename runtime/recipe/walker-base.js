@@ -5,9 +5,9 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-var Strategizer = require('../../strategizer/strategizer.js').Strategizer;
-var Recipe = require('./recipe.js');
-var assert = require('assert');
+import {Strategizer} = '../../strategizer/strategizer.js';
+import Recipe from './recipe.js';
+import assert from 'assert';
 
 class WalkerBase extends Strategizer.Walker {
   constructor(tactic) {
@@ -99,4 +99,4 @@ class WalkerBase extends Strategizer.Walker {
 WalkerBase.Permuted = "permuted";
 WalkerBase.Independent = "independent";
 
-module.exports = WalkerBase;
+export default WalkerBase;

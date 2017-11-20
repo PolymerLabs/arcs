@@ -4,7 +4,7 @@
 // Code distributed by Google as part of this project is also
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
-var assert = require('assert');
+import assert from 'assert';
 
 function compareNulls(o1, o2) {
   if (o1 == o2) return 0;
@@ -47,10 +47,12 @@ function compareComparables(o1, o2) {
   return o1._compareTo(o2);
 }
 
-exports.compareNulls = compareNulls;
-exports.compareStrings = compareStrings;
-exports.compareNumbers = compareNumbers;
-exports.compareBools = compareBools;
-exports.compareArrays = compareArrays;
-exports.compareObjects = compareObjects;
-exports.compareComparables = compareComparables;
+export default {
+  compareNulls,
+  compareStrings,
+  compareNumbers,
+  compareBools,
+  compareArrays,
+  compareObjects,
+  compareComparables,
+};

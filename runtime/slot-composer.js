@@ -9,9 +9,9 @@
  */
 "use strict";
 
-const assert = require('assert');
-const Slot = require('./slot.js');
-const DomSlot = require('./dom-slot.js');
+import assert from 'assert';
+import Slot from './slot.js';
+import DomSlot from './dom-slot.js';
 
 class SlotComposer {
   constructor(options) {
@@ -200,4 +200,4 @@ class SlotComposer {
   }
 }
 
-module.exports = SlotComposer;
+export default SlotComposer;

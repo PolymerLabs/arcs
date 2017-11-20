@@ -9,13 +9,13 @@
  */
 "use strict";
 
-const assert = require('assert');
-const storage = require('./in-memory-storage.js');
-const Symbols = require('./symbols.js');
-const Entity = require('./entity.js');
-const Schema = require('./schema.js');
-const Type = require('./type.js');
-const Relation = require('./relation.js');
+import assert from 'assert';
+import storage from './in-memory-storage.js';
+import Symbols from './symbols.js';
+import Entity from './entity.js';
+import Schema from './schema.js';
+import Type from './type.js';
+import Relation from './relation.js';
 
 function testEntityClass(type) {
   return new Schema({

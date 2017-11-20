@@ -9,9 +9,9 @@
  */
 "use strict";
 
-const assert = require('assert');
-const Slot = require('./slot.js');
-const {DomContext, SetDomContext} = require('./dom-context.js');
+import assert from 'assert';
+import Slot from './slot.js';
+import {DomContext, SetDomContext} from './dom-context.js';
 
 let templates = new Map();
 
@@ -135,4 +135,4 @@ class DomSlot extends Slot {
   }
 }
 
-module.exports = DomSlot;
+export default DomSlot;

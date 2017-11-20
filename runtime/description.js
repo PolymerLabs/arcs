@@ -9,8 +9,8 @@
  */
 "use strict";
 
-var assert = require('assert');
-var Type = require('./type.js');
+import assert from 'assert';
+import Type from './type.js';
 
 class Description {
   constructor(arc) {
@@ -315,4 +315,4 @@ class DescriptionToken {
   }
 }
 
-module.exports = Description;
+export default Description;

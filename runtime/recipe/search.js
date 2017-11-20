@@ -5,8 +5,8 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-var assert = require('assert');
-var util = require('./util.js');
+import assert from 'assert';
+import util from './util.js';
 
 class Search {
   constructor(phrase, unresolvedTokens) {
@@ -98,4 +98,4 @@ class Search {
   }
 }
 
-module.exports = Search;
+export default Search;

@@ -5,7 +5,7 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-var util = require('./util.js');
+import util from './util.js';
 
 class ConnectionConstraint {
   constructor(from, fromConnection, to, toConnection) {
@@ -34,4 +34,4 @@ class ConnectionConstraint {
   }
 }
 
-module.exports = ConnectionConstraint;
+export default ConnectionConstraint;

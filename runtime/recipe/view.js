@@ -5,9 +5,9 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-var assert = require('assert');
-var util = require('./util.js');
-var TypeChecker = require('./type-checker.js');
+import assert from 'assert';
+import util from './util.js';
+import TypeChecker from './type-checker.js';
 
 class View {
   constructor(recipe) {
@@ -175,4 +175,4 @@ class View {
   }
 }
 
-module.exports = View;
+export default View;
