@@ -5,12 +5,12 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-let {Strategy} = require('../../strategizer/strategizer.js');
-let Recipe = require('../recipe/recipe.js');
-let RecipeWalker = require('../recipe/walker.js');
-let RecipeUtil = require('../recipe/recipe-util.js');
+import {Strategy} from '../../strategizer/strategizer.js';
+import Recipe from '../recipe/recipe.js';
+import RecipeWalker from '../recipe/walker.js';
+import RecipeUtil from '../recipe/recipe-util.js';
 
-class ConvertConstraintsToConnections extends Strategy {
+export default class ConvertConstraintsToConnections extends Strategy {
   constructor(arc) {
     super();
     this.affordance = arc.pec.slotComposer ? arc.pec.slotComposer.affordance : null;
@@ -85,5 +85,3 @@ class ConvertConstraintsToConnections extends Strategy {
     return { results, generate: null };
   }
 }
-
-module.exports = ConvertConstraintsToConnections;

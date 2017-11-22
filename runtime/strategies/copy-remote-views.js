@@ -5,16 +5,16 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-let {Strategy} = require('../../strategizer/strategizer.js');
-let RecipeWalker = require('../recipe/walker.js');
-let Recipe = require('../recipe/recipe.js');
-let RecipeUtil = require('../recipe/recipe-util.js');
-let ViewMapperBase = require('./view-mapper-base.js');
-let Schema = require('../schema.js');
+import {Strategy} from '../../strategizer/strategizer.js';
+import RecipeWalker from '../recipe/walker.js';
+import Recipe from '../recipe/recipe.js';
+import RecipeUtil from '../recipe/recipe-util.js';
+import ViewMapperBase from './view-mapper-base.js';
+import Schema from '../schema.js';
 
-let assert = require('../../platform/assert-web.js');
+import assert from '../../platform/assert-web.js';
 
-class CopyRemoteViews extends ViewMapperBase {
+export default class CopyRemoteViews extends ViewMapperBase {
   constructor(arc) {
     super();
     this._arc = arc;
@@ -29,5 +29,3 @@ class CopyRemoteViews extends ViewMapperBase {
     }
   }
 }
-
-module.exports = CopyRemoteViews;

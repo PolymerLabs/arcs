@@ -10,13 +10,13 @@
 
  "use strict";
 
-const Arc = require("../arc.js");
-const Manifest = require("../manifest.js");
-const Loader = require("../loader.js");
-const assert = require('chai').assert;
-const Planner = require('../planner.js');
-const testUtil = require('./test-util.js');
-const MockSlotComposer = require('./mock-slot-composer.js');
+import Arc from "../arc.js";
+import Manifest from "../manifest.js";
+import Loader from "../loader.js";
+import {assert} from './chai-web.js';
+import Planner from '../planner.js';
+import * as testUtil from './test-util.js';
+import MockSlotComposer from './mock-slot-composer.js';
 
 describe('demo flow', function() {
   it('flows like a demo', async function() {

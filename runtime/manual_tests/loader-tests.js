@@ -8,9 +8,9 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-const Loader = require("../loader.js");
-const assert = require('chai').assert;
-const Manifest = require('../manifest.js');
+import Loader from '../loader.js';
+import {assert} from '../test/chai-web.js';
+import Manifest from '../manifest.js';
 
 let loader = new Loader();
 

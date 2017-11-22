@@ -5,11 +5,11 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-let {Strategy} = require('../../strategizer/strategizer.js');
-let Recipe = require('../recipe/recipe.js');
-let RecipeWalker = require('../recipe/walker.js');
+import {Strategy} from '../../strategizer/strategizer.js';
+import Recipe from '../recipe/recipe.js';
+import RecipeWalker from '../recipe/walker.js';
 
-module.exports = class MatchParticleByVerb extends Strategy {
+export default class MatchParticleByVerb extends Strategy {
   constructor(arc) {
     super();
     this._arc = arc;

@@ -9,10 +9,12 @@
  */
 'use strict';
 
-const assert = require('chai').assert;
-var DomSlot = require('../dom-slot.js');
-let util = require('./test-util.js');
-let loader = new (require('../loader'));
+import {assert} from './chai-web.js';
+import DomSlot from '../dom-slot.js';
+import * as util from './test-util.js';
+import Loader from '../loader.js';
+
+let loader = new Loader();
 
 class MockDomContext {
   constructor() {

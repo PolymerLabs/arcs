@@ -8,14 +8,14 @@
 * http://polymer.github.io/PATENTS.txt
 */
 
-let assert = require('chai').assert;
-let Arc = require('../arc.js');
-let Description = require('../description.js');
-let Loader = require('../loader.js');
-let Manifest = require('../manifest.js');
-let Relevance = require('../relevance.js');
-let SlotComposer = require('../slot-composer.js');
-let Type = require('../type.js');
+import {assert} from './chai-web.js';
+import Arc from '../arc.js';
+import Description from '../description.js';
+import Loader from '../loader.js';
+import Manifest from '../manifest.js';
+import Relevance from '../relevance.js';
+import SlotComposer from '../slot-composer.js';
+import Type from '../type.js';
 
 function createTestArc() {
   const slotComposer = new SlotComposer({rootContext: 'test', affordance: 'mock'});

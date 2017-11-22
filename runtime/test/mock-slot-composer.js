@@ -9,9 +9,9 @@
  */
 "use strict";
 
-let assert = require('chai').assert;
-const Slot = require('../slot.js');
-const SlotComposer = require('../slot-composer.js');
+import {assert} from './chai-web.js';
+import Slot from '../slot.js';
+import SlotComposer from '../slot-composer.js';
 
 let logging = false;
 let log = (!logging || global.logging === false) ? () => {} : console.log.bind(console, '---------- MockSlotComposer::');
@@ -132,4 +132,4 @@ class MockSlotComposer extends SlotComposer {
   }
 }
 
-module.exports = MockSlotComposer;
+export default MockSlotComposer;
