@@ -10,8 +10,8 @@
 
  "use strict";
 
-let assert = require('chai').assert;
-let handle = require('../handle.js');
+import {assert} from './chai-web.js';
+import handle from '../handle.js';
 
 function assertSingletonWillChangeTo(view, entityClass, expectation) {
   return new Promise((resolve, reject) => {
@@ -81,9 +81,11 @@ function initParticleSpec(name) {
   };
 }
 
-exports.assertSingletonWillChangeTo = assertSingletonWillChangeTo;
-exports.assertSingletonIs = assertSingletonIs;
-exports.assertSingletonEmpty = assertSingletonEmpty;
-exports.assertViewWillChangeTo = assertViewWillChangeTo;
-exports.assertViewHas = assertViewHas;
-exports.initParticleSpec = initParticleSpec;
+export {
+  assertSingletonWillChangeTo,
+  assertSingletonIs,
+  assertSingletonEmpty,
+  assertViewWillChangeTo,
+  assertViewHas,
+  initParticleSpec,
+};

@@ -13,6 +13,7 @@ import Search from './search.js';
 import Slot from './slot.js';
 import View from './view.js';
 import util from './util.js';
+import digest from './digest-web.js';
 
 class Recipe {
   constructor() {
@@ -153,18 +154,7 @@ class Recipe {
   }
 
   async digest() {
-    if (typeof(crypto) != 'undefined' && crypto.subtle) {
-      // browser
-      let buffer = new TextEncoder('utf-8').encode(this.toString());
-      let digest = await crypto.subtle.digest('SHA-1', buffer)
-      return Array.from(new Uint8Array(digest)).map(x => ('00' + x.toString(16)).slice(-2)).join('');
-    } else {
-      // nodejs
-      import crypto from 'crypto';
-      let sha = crypto.createHash('sha1');
-      sha.update(this.toString());
-      return sha.digest('hex');
-    }
+    return digest(this.toString());
   }
 
   normalize() {
