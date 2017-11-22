@@ -5,12 +5,12 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-let {Strategy} = require('../../strategizer/strategizer.js');
-let Recipe = require('../recipe/recipe.js');
-let RecipeWalker = require('../recipe/walker.js');
-let RecipeUtil = require('../recipe/recipe-util.js');
+import {Strategy} from '../../strategizer/strategizer.js';
+import Recipe from '../recipe/recipe.js';
+import RecipeWalker from '../recipe/walker.js';
+import RecipeUtil from '../recipe/recipe-util.js';
 
-class MapConsumedSlots extends Strategy {
+export default class MapConsumedSlots extends Strategy {
   async generate(strategizer) {
     var results = Recipe.over(this.getResults(strategizer), new class extends RecipeWalker {
       onSlotConnection(recipe, slotConnection) {
@@ -55,5 +55,3 @@ class MapConsumedSlots extends Strategy {
     return { results, generate: null };
   }
 }
-
-module.exports = MapConsumedSlots;

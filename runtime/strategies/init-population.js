@@ -5,9 +5,9 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-let {Strategy} = require('../../strategizer/strategizer.js');
+import {Strategy} from '../../strategizer/strategizer.js';
 
-class InitPopulation extends Strategy {
+export default class InitPopulation extends Strategy {
   constructor(arc) {
     super();
     this._recipes = [];
@@ -45,5 +45,3 @@ class InitPopulation extends Strategy {
     };
   }
 }
-
-module.exports = InitPopulation;

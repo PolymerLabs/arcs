@@ -8,10 +8,10 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-const assert = require('chai').assert;
-const Shape = require('../shape.js');
-const Type = require('../type.js');
-const Manifest = require('../manifest.js');
+import {assert} from './chai-web.js';
+import Shape from '../shape.js';
+import Type from '../type.js';
+import Manifest from '../manifest.js';
 
 
 describe('shape', function() {

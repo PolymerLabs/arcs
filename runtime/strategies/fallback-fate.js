@@ -6,12 +6,12 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-let assert = require('../../platform/assert-web.js');
-let {Strategy} = require('../../strategizer/strategizer.js');
-let Recipe = require('../recipe/recipe.js');
-let RecipeWalker = require('../recipe/walker.js');
+import assert from '../../platform/assert-web.js';
+import {Strategy} from '../../strategizer/strategizer.js';
+import Recipe from '../recipe/recipe.js';
+import RecipeWalker from '../recipe/walker.js';
 
-class FallbackFate extends Strategy {
+export default class FallbackFate extends Strategy {
   async generate(strategizer) {
     assert(strategizer);
     let generated = strategizer.generated.filter(result => !result.result.isResolved());
@@ -44,5 +44,3 @@ class FallbackFate extends Strategy {
     return { results, generate: null };
   }
 }
-
-module.exports = FallbackFate;

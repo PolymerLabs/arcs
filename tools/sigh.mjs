@@ -17,8 +17,7 @@ function* testsInDir(dir) {
     if (stat.isDirectory()) {
       yield* testsInDir(fullPath);
     } else {
-      if (/\-tests?.js$/.test(fullPath)) {
-        if (entry == 'arc-tests.js')
+      if (/-tests?.js$/.test(fullPath) && !fullPath.includes('manual_test')) {
         yield fullPath;
       }
     }
@@ -33,6 +32,7 @@ function buildTestRunner() {
     chain.push(`
       import mocha from '${mochaInstanceFile}';
       mocha.suite.emit('pre-require', global, '${test}', mocha);
+      console.log('next ${test}')
     `);
     chain.push(`
       import '${test}';

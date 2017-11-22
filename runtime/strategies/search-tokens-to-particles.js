@@ -5,12 +5,12 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-let assert = require('../../platform/assert-web.js');
-let {Strategy} = require('../../strategizer/strategizer.js');
-let Recipe = require('../recipe/recipe.js');
-let RecipeWalker = require('../recipe/walker.js');
+import assert from '../../platform/assert-web.js';
+import {Strategy} from '../../strategizer/strategizer.js';
+import Recipe from '../recipe/recipe.js';
+import RecipeWalker from '../recipe/walker.js';
 
-module.exports = class SearchTokensToParticles extends Strategy {
+export default class SearchTokensToParticles extends Strategy {
   constructor(arc) {
     super();
     // TODO: Recipes. Views?

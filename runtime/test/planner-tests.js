@@ -9,24 +9,24 @@
  */
  "use strict";
 
-let Arc = require('../arc.js');
-let Loader = require('../loader.js');
-let Planner = require('../planner.js');
-let assert = require('chai').assert;
-let Manifest = require('../manifest.js');
-let Recipe = require('../recipe/recipe.js');
-let ConvertConstraintsToConnections = require('../strategies/convert-constraints-to-connections.js');
-let InitPopulation = require('../strategies/init-population.js');
-let MapRemoteSlots = require('../strategies/map-remote-slots.js');
-let MatchParticleByVerb = require('../strategies/match-particle-by-verb.js');
-let SearchTokensToParticles = require('../strategies/search-tokens-to-particles.js');
-let GroupViewConnections = require('../strategies/group-view-connections.js');
-let CombinedStrategy = require('../strategies/combined-strategy.js');
-let FallbackFate = require('../strategies/fallback-fate.js');
-let CreateDescriptionHandle = require('../strategies/create-description-handle.js')
-let MessageChannel = require('../message-channel.js');
-let InnerPec = require('../inner-PEC.js');
-let Particle = require('../particle.js');
+import Arc from '../arc.js';
+import Loader from '../loader.js';
+import Planner from '../planner.js';
+import {assert} from './chai-web.js';
+import Manifest from '../manifest.js';
+import Recipe from '../recipe/recipe.js';
+import ConvertConstraintsToConnections from '../strategies/convert-constraints-to-connections.js';
+import InitPopulation from '../strategies/init-population.js';
+import MapRemoteSlots from '../strategies/map-remote-slots.js';
+import MatchParticleByVerb from '../strategies/match-particle-by-verb.js';
+import SearchTokensToParticles from '../strategies/search-tokens-to-particles.js';
+import GroupViewConnections from '../strategies/group-view-connections.js';
+import CombinedStrategy from '../strategies/combined-strategy.js';
+import CreateDescriptionHandle from '../strategies/create-description-handle.js';
+import FallbackFate from '../strategies/fallback-fate.js';
+import MessageChannel from '../message-channel.js';
+import InnerPec from '../inner-PEC.js';
+import Particle from '../particle.js';
 var loader = new Loader();
 
 function createTestArc(id, context, affordance) {
@@ -70,7 +70,7 @@ describe('Planner', function() {
   });
 });
 
-const InitSearch = require('../strategies/init-search.js');
+import InitSearch from '../strategies/init-search.js';
 describe('InitSearch', async () => {
   it('initializes the search recipe', async() => {
     var arc = new Arc({id: 'test-plan-arc', context: {}});
