@@ -5,7 +5,7 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import {Strategizer} = '../../strategizer/strategizer.js';
+import {Strategizer} from '../../strategizer/strategizer.js';
 import Recipe from './recipe.js';
 import assert from '../../platform/assert-web.js';
 

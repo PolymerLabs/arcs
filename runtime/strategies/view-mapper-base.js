@@ -5,13 +5,13 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-let {Strategy} = require('../../strategizer/strategizer.js');
-let RecipeWalker = require('../recipe/walker.js');
-let Recipe = require('../recipe/recipe.js');
-let RecipeUtil = require('../recipe/recipe-util.js');
-let assert = require('../../platform/assert-web.js');
+import {Strategy} from '../../strategizer/strategizer.js';
+import RecipeWalker from '../recipe/walker.js';
+import Recipe from '../recipe/recipe.js';
+import RecipeUtil from '../recipe/recipe-util.js';
+import assert from '../../platform/assert-web.js';
 
-class ViewMapperBase extends Strategy {
+export default class ViewMapperBase extends Strategy {
   async generate(strategizer) {
     var self = this;
 
@@ -82,5 +82,3 @@ class ViewMapperBase extends Strategy {
     return { results, generate: null };
   }
 }
-
-module.exports = ViewMapperBase;

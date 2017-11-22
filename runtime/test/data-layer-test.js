@@ -8,12 +8,10 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-let {Relation, Entity, BasicEntity, internals} = require('../runtime.js');
-let assert = require('chai').assert;
-let Arc = require('../arc.js');
-let Schema = require('../schema.js');
-let Loader = require('../loader');
-const SlotComposer = require('../slot-composer.js');
+import {assert} from './chai-web.js';
+import Arc from '../arc.js';
+import Schema from '../schema.js';
+import SlotComposer from '../slot-composer.js';
 
 describe('entity', function() {
   it('can be created, stored, and restored', async () => {

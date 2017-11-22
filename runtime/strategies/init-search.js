@@ -5,11 +5,11 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-const {Strategy} = require('../../strategizer/strategizer.js');
-const Recipe = require('../recipe/recipe.js');
-const assert = require('../../platform/assert-web.js');
+import {Strategy} from '../../strategizer/strategizer.js';
+import Recipe from '../recipe/recipe.js';
+import assert from '../../platform/assert-web.js';
 
-module.exports = class InitSearch extends Strategy {
+export default class InitSearch extends Strategy {
   constructor(arc) {
     super();
     // TODO: Figure out where this should really come from.

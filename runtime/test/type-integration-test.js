@@ -10,11 +10,11 @@
 
 "use strict";
 
-const assert = require('chai').assert;
-const Arc = require("../arc.js");
-const Loader = require("../loader.js");
-const Manifest = require('../manifest.js');
-const Schema = require('../schema.js');
+import {assert} from './chai-web.js';
+import Arc from "../arc.js";
+import Loader from "../loader.js";
+import Manifest from '../manifest.js';
+import Schema from '../schema.js';
 
 async function setup() {
   let registry = {};

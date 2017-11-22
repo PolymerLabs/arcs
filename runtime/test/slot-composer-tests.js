@@ -9,13 +9,13 @@
  */
 "use strict";
 
-const Arc = require('../arc.js');
-const assert = require('chai').assert;
-const Slot = require("../slot.js");
-const SlotComposer = require("../slot-composer.js");
-const Manifest = require('../manifest.js');
-const Planner = require('../planner.js');
-const util = require('./test-util.js');
+import Arc from '../arc.js';
+import {assert} from './chai-web.js';
+import Slot from "../slot.js";
+import SlotComposer from "../slot-composer.js";
+import Manifest from '../manifest.js';
+import Planner from '../planner.js';
+import * as util from './test-util.js';
 
 class MockSlot extends Slot {
   constructor(consumeConn, arc) {

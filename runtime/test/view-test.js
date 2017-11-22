@@ -9,19 +9,20 @@
  */
 "use strict";
 
-var runtime = require("../runtime.js");
-var Arc = require("../arc.js");
-let assert = require('chai').assert;
-const SlotComposer = require('../slot-composer.js');
+import runtime from "../runtime.js";
+import Arc from "../arc.js";
+import {assert} from './chai-web.js';
+import SlotComposer from '../slot-composer.js';
 
-let handle = require('../handle.js');
+import handle from '../handle.js';
 
-const Shape = require('../shape.js');
-const Type = require('../type.js');
+import Shape from '../shape.js';
+import Type from '../type.js';
 
-const Manifest = require('../manifest.js');
+import Manifest from '../manifest.js';
+import Loader from '../loader.js';
 
-let loader = new (require('../loader'));
+let loader = new Loader();
 
 const slotComposer = new SlotComposer({rootContext: 'test', affordance: 'mock'});
 const Bar = runtime.testing.testEntityClass('Bar');
