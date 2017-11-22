@@ -196,4 +196,4 @@ class SetDomContext {
   }
 }
 
-export default {DomContext, SetDomContext};
+export {DomContext, SetDomContext};

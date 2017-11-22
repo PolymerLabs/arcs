@@ -12,7 +12,7 @@ import Identifier from './identifier.js';
 import Entity from './entity.js';
 import Relation from './relation.js';
 import Symbols from './symbols.js';
-import storage from './in-memory-storage.js';
+import * as storage from './in-memory-storage.js';
 let identifier = Symbols.identifier;
 import assert from '../platform/assert-web.js';
 import ParticleSpec from './particle-spec.js';
@@ -228,10 +228,4 @@ function handleFor(view, isSet, canRead, canWrite) {
   return handle;
 }
 
-<<<<<<< a185af46a307daca90d688eb972d1a95a028ab80:runtime/handle.js
-module.exports = { handleFor };
-||||||| merged common ancestors
-module.exports = { viewletFor };
-=======
-export default { viewletFor };
->>>>>>> Rename js to mjs for most of runtime:runtime/viewlet.js
+export default { handleFor };
