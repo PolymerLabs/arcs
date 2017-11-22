@@ -6,9 +6,9 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import gulp from 'gulp';
-import gutil from 'gulp-util';
-import peg from 'gulp-peg';
+const gulp = require('gulp');
+const gutil = require('gulp-util');
+const peg = require('gulp-peg');
 
 const paths = {
   build: './build',
@@ -32,13 +32,14 @@ const sources = {
 gulp.task('peg', function() {
   gulp
     .src(sources.peg)
-    .pipe(peg().on('error', gutil.log))
+    // TODO: Why doesn't the format option work?
+    .pipe(peg({exportVar: 'export default parser; const parser'}).on('error', gutil.log))
     .pipe(gulp.dest(paths.build));
 });
 
 gulp.task('webpack', async function() {
   try {
-    import webpack from 'webpack';
+    const webpack = require('webpack');
 
     let node = {
       fs: 'empty',
@@ -74,7 +75,7 @@ gulp.task('webpack', async function() {
 gulp.task('build', ['peg', 'webpack']);
 
 gulp.task('test', ['peg'], function() {
-  import mocha from 'gulp-mocha';
+  const mocha = require('gulp-mocha');
   // OMG gulp, why are you so hideously, hideously bad?
   //
   // Pass the test you want to run in as a --param,

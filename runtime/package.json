@@ -17,5 +17,9 @@
     "watchify": "^3.9.0",
     "webpack": "^2.6.1",
     "../tracelib/trace.js": "../tracelib"
+  },
+  "dependencies": {
+    "@std/esm": "^0.16.0",
+    "module-alias": "^2.0.2"
   }
 }

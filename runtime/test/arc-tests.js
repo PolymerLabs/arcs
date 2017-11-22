@@ -7,17 +7,16 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-"use strict";
 
-const Arc = require("../arc.js");
-const assert = require('chai').assert;
-const SlotComposer = require('../slot-composer.js');
-const util = require('./test-util.js');
-const handle = require('../handle.js');
-const Manifest = require('../manifest.js');
+import Arc from '../arc.js';
+import {assert} from './chai-web.js';
+import SlotComposer from '../slot-composer.js';
+import * as util from './test-util.js';
+import handle from '../handle.js';
+import Manifest from '../manifest.js';
+import Loader from '../loader.js';
 
-
-let loader = new (require('../loader'));
+let loader = new Loader();
 
 async function setup() {
   let manifest = await Manifest.parse(`

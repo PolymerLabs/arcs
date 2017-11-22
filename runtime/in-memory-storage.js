@@ -98,7 +98,7 @@ class InMemoryStorageProvider {
   }
 }
 
-class InMemoryCollection extends InMemoryStorageProvider {
+export class InMemoryCollection extends ViewBase {
   constructor(type, arc, name, id) {
     super(type, arc, name, id);
     this._items = new Map();
@@ -182,7 +182,7 @@ class InMemoryCollection extends InMemoryStorageProvider {
   }
 }
 
-class InMemoryVariable extends InMemoryStorageProvider {
+export class InMemoryVariable extends InMemoryStorageProvider {
   constructor(type, arc, name, id) {
     super(type, arc, name, id);
     this._stored = null;
@@ -248,8 +248,3 @@ class InMemoryVariable extends InMemoryStorageProvider {
     })
   }
 }
-
-export default {
-  InMemoryCollection,
-  InMemoryVariable,
-};

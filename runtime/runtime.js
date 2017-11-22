@@ -7,10 +7,9 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-"use strict";
 
 import assert from '../platform/assert-web.js';
-import storage from './in-memory-storage.js';
+import * as storage from './in-memory-storage.js';
 import Symbols from './symbols.js';
 import Entity from './entity.js';
 import Schema from './schema.js';
@@ -37,9 +36,18 @@ export default {
   internals: {
     identifier: Symbols.identifier,
     Type,
+<<<<<<< 38605c14fbf4818fdbbb2d39a870a9162b0a9b97
     // TODO: are these used?
     Collection: storage.InMemoryCollection,
     StorageProvider: storage.InMemoryStorageProvider,
     Variable: storage.InMemoryVariable
+||||||| merged common ancestors
+    View: view.View,
+    ViewBase: view.ViewBase,
+    SingletonView: view.SingletonView
+=======
+    View,
+    ViewBase,
+>>>>>>> tools/sigh can run arc-tests
   }
 };

@@ -1,0 +1,2 @@
+#!/bin/sh
+exec node --experimental-modules $(dirname $0)/sigh.mjs $(dirname $0)
