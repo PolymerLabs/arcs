@@ -141,6 +141,15 @@ ${productStyles}
         item.subId = item.name.replace(/ /g,'').toLowerCase();
         return item;
       });
+
+      if (items.length > 5) {
+        this.setParticleDescription('Show maaaaany items ${list}');
+        this.setDescriptionPattern('list', 'my long list');
+      } else {
+        this.setParticleDescription('Show some items: ${list}');
+        this.setDescriptionPattern('list', 'my short list');
+      }
+
       this._setState({
         renderModel: {
           items,
