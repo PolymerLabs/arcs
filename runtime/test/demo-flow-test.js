@@ -7,6 +7,9 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
+
+/////// DO NOT MERGE THIS FILE: CHANGES HERE ARE FOR DEMO PURPOSES ONLY! ///////
+
  "use strict";
 
 const Arc = require("../arc.js");
@@ -44,6 +47,7 @@ describe('demo flow', function() {
   create as view0 # Product List
   copy 'manifest:browser/demo/recipes.manifest:view0' #shortlist as view1 # Product List
   map 'manifest:browser/demo/recipes.manifest:view1' #wishlist as view2 # Product List
+  create #descriptions as view3 # Description List
   slot 'rootslotid-root' as slot3
   AlsoOn as particle0
     choices <- view0
@@ -59,6 +63,7 @@ describe('demo flow', function() {
     population <- view2
     recommendations -> view0
   ShowProducts as particle3
+    descriptions -> view3
     list <- view1
     consume root as slot3
       provide action as slot0
