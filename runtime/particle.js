@@ -175,6 +175,16 @@ class Particle {
       output.push(strings[strings.length - 1]);
     return output.join('');
   }
+
+  setParticleDescription(pattern) {
+    this.setDescriptionPattern('_pattern_', pattern);
+
+  }
+  setDescriptionPattern(connectionName, pattern) {
+    let descriptions = this._views.get('descriptions');
+    assert(descriptions, 'Descriptions handle is not available');
+    descriptions.store(new descriptions.entityClass({key: connectionName, value: pattern}, connectionName));
+  }
 }
 
 class ViewChanges {

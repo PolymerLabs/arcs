@@ -6,10 +6,13 @@
 # subject to an additional IP rights grant found at
 # http://polymer.github.io/PATENTS.txt
 
+######## DO NOT MERGE THIS FILE: CHANGES HERE ARE FOR DEMO PURPOSES ONLY! ########
+
+import '../../entities/Description.manifest'
 import '../../entities/Product.manifest'
 
 particle ShowProducts in 'ShowProducts.js'
-  ShowProducts(in [Product] list)
+  ShowProducts(in [Product] list, out [Description] descriptions)
   affordance dom
   affordance dom-touch
   consume root

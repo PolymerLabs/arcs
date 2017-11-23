@@ -151,9 +151,8 @@ class Planner {
       }
       let rank = relevance.calcRelevanceScore();
 
-      // TODO: recipes are not copied to the speculative arc. should they be?
-      let description = Description.getSuggestion(relevance.newArc.recipes[0],
-                                                  relevance.newArc);
+      relevance.newArc.description.setRelevance(relevance);
+      let description = relevance.newArc.description.getRecipeSuggestion(relevance.newArc.recipes[0].particles);
 
       this._updateGeneration(generations, hash, (g) => g.description = description);
 
