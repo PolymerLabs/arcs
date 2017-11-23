@@ -57,6 +57,7 @@ class Arc {
     this._viewTags = new Map();
 
     this._search = null;
+    this._description = new Description(this);
   }
   set search(search) {
     this._search = search ? search.toLowerCase().trim() : null;
@@ -65,6 +66,8 @@ class Arc {
   get search() {
     return this._search;
   }
+
+  get description() { return this._description; }
 
   static deserialize({serialization, pecFactory, slotComposer, arcMap}) {
     var entityMap = {};
@@ -195,7 +198,10 @@ class Arc {
 
   instantiate(recipe) {
     assert(recipe.isResolved(), 'Cannot instantiate an unresolved recipe');
+
     let {views, particles, slots} = recipe.mergeInto(this._activeRecipe);
+    this.description.onRecipeUpdate();
+
     for (let recipeView of views) {
       if (['copy', 'create'].includes(recipeView.fate)) {
         let view = this.createView(recipeView.type, /* name= */ null, /* id= */ null, recipeView.tags);
@@ -209,7 +215,8 @@ class Arc {
       }
       let view = this.findViewById(recipeView.id);
       assert(view, `view '${recipeView.id}' was not found`);
-      view.description = Description.getViewDescription(recipeView, this);
+
+      view.description = this.description.getViewDescription(recipeView);
     }
 
     particles.forEach(recipeParticle => this._instantiateParticle(recipeParticle));

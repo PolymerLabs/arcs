@@ -5,6 +5,8 @@
 # subject to an additional IP rights grant found at
 # http://polymer.github.io/PATENTS.txt
 
+######## DO NOT MERGE THIS FILE: CHANGES HERE ARE FOR DEMO PURPOSES ONLY! ########
+
 import '../Chooser/Chooser.manifest'
 import '../Recommend/Recommend.manifest'
 import '../ShowProducts/ShowProducts.manifest'
@@ -16,11 +18,13 @@ recipe
   Chooser.resultList -> ShowProducts.list
   Chooser.resultList -> Recommend.known
   map #giftlist as wishlist
+  create #descriptions as descriptions
   copy as view0
   Recommend
     population <- wishlist
   ShowProducts
     list <- view0
+    descriptions -> descriptions
 
 recipe
   ShowProducts
