@@ -5,8 +5,6 @@
 # subject to an additional IP rights grant found at
 # http://polymer.github.io/PATENTS.txt
 
-######## DO NOT MERGE THIS FILE: CHANGES HERE ARE FOR DEMO PURPOSES ONLY! ########
-
 import '../../../particles/ShowProducts/ShowProducts.manifest'
 import '../../../particles/ManageProducts/ManageProducts.manifest'
 import '../../../particles/Recommend/Recommend.manifest'
@@ -26,10 +24,8 @@ recipe
 # See [person]'s wishlist
 recipe
   map #wishlist as wishlist
-  create #descriptions as descriptions
   ShowProducts
     list <- wishlist
-    descriptions -> descriptions
 
 # See products shortlist with estimated arrival dates (transformation)
 recipe
@@ -56,13 +52,11 @@ recipe
   Chooser.choices -> AlsoOn.choices
   map #wishlist as wishlist
   copy #shortlist as shortlist
-  create #descriptions as descriptions
   slot as slot0
   Recommend
     population <- wishlist
   ShowProducts
     list <- shortlist
-    descriptions -> descriptions
   #ManageProducts
     #list = shortlist
     consume root as slot0
