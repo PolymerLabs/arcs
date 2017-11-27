@@ -9,7 +9,7 @@
  */
 'use strict';
 
-class ModelSelect extends HTMLElement {
+export default class ModelSelect extends HTMLElement {
   connectedCallback() {
     this.style.display = 'inline-block';
     this._requireSelect();
@@ -32,5 +32,3 @@ class ModelSelect extends HTMLElement {
 }
 
 customElements.define('model-select', ModelSelect);
-
-module.exports = ModelSelect;
