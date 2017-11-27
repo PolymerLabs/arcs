@@ -7,11 +7,10 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-'use strict';
 
-const XTemplate = require('./xen-template.js');
-const XElement = require('./xen-element.js');
-const XState = require('./xen-state.js');
+import XTemplate from './xen-template.js';
+import XElement from './xen-element.js';
+import XState from './xen-state.js';
 
 class XList extends XState(XElement) {
   static get observedAttributes() {

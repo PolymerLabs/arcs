@@ -8,9 +8,9 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-const Planner = require("../../planner.js");
+import Planner from '../../planner.js';
 
-class DemoBase extends HTMLElement {
+export default class DemoBase extends HTMLElement {
   constructor() {
     super();
   }
@@ -48,5 +48,3 @@ class DemoBase extends HTMLElement {
     arc.makeSuggestions();
   }
 }
-
-module.exports = DemoBase;

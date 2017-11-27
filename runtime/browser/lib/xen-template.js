@@ -336,7 +336,7 @@ let stamp = function(template, opts) {
   return dom;
 };
 
-let Xen = {
+return {
   setBoolAttribute,
   stamp
 };
