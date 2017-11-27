@@ -12,7 +12,7 @@ const runtime = require("../../runtime.js");
 const Arc = require("../../arc.js");
 const BrowserLoader = require("../../browser-loader.js");
 const SlotComposer = require('../../slot-composer.js');
-const tracing = require('../tracelib/trace.js');
+const tracing = require('../../../tracelib/trace.js');
 tracing.enable();
 
 function prepareExtensionArc() {

@@ -1,0 +1,17 @@
+{
+  "name": "arcs",
+  "version": "0.0.0",
+  "private": "true",
+  "scripts": {
+    "test": "./tools/sigh"
+  },
+  "devDependencies": {
+    "chai": "^3.5.0",
+    "mocha": "^3.2.0",
+    "pegjs": "^0.10.0",
+    "webpack": "^2.6.1"
+  },
+  "dependencies": {
+    "node-fetch": "^1.7.2"
+  }
+}
