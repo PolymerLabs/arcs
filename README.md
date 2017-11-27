@@ -19,7 +19,7 @@ $ (cd extension && npm install)
 
 ## Test
 ```
-$ (cd runtime && gulp)
+$ (cd runtime && npm test)
 $ (cd extension && npm test)
 ```
 
