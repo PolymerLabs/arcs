@@ -47,7 +47,7 @@ describe('demo flow', function() {
   create as view0 # Product List
   copy 'manifest:browser/demo/recipes.manifest:view0' #shortlist as view1 # Product List
   map 'manifest:browser/demo/recipes.manifest:view1' #wishlist as view2 # Product List
-  create #descriptions as view3 # Description List
+  create as view3 # Description List
   slot 'rootslotid-root' as slot3
   AlsoOn as particle0
     choices <- view0
