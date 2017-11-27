@@ -1,2 +1,2 @@
 #!/bin/sh
-exec node --experimental-modules $(dirname $0)/sigh.mjs $(dirname $0)
+exec node $(dirname $0)/sigh.js
