@@ -5,20 +5,22 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-async function extractEntities() {
-  let microdata = extractMicrodata(document.documentElement);
+// Returns an array of Schema.org entities extracted from the given document
+// or an empty array if none were found.
+async function extractEntities(doc, windowLocation) {
+  let microdata = extractMicrodata(doc.documentElement);
   let results = [];
   if (microdata.length) {
     results.push(...microdata);
   }
 
-  let linkImage = document.querySelector(
+  let linkImage = doc.querySelector(
     'link[rel~="image_src"], link[rel~="icon"]'
   );
   let pageEntity = {
     '@type': 'http://schema.org/WebPage',
-    name: document.title,
-    url: window.location.toString()
+    name: doc.title,
+    url: windowLocation.toString()
   };
   if (linkImage && linkImage.href) {
     pageEntity.image = linkImage.href;

@@ -19,7 +19,7 @@ function sendInjectArcsDataMessage() {
 if (!isArcsPage) {
   // In the common case, if we're not running an arcs instance, extract entities
   // from the page.
-  extractEntities().then(results => {
+  extractEntities(document, window.location).then(results => {
     console.log('content-script result of extractEntities', results);
     chrome.runtime.sendMessage({
       method: 'storePageEntities',
