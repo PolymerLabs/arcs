@@ -17,7 +17,7 @@
 //var options = require('./options');
 
 var events = [];
-if (global.document) {
+if (typeof document == 'object') {
   var pid = 42;
   var now = function() {
     var t = performance.now();
