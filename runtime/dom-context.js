@@ -14,10 +14,9 @@ import Template from './browser/lib/xen-template.js';
 
 // TODO(sjmiles): should be elsewhere
 // TODO(sjmiles): using Node syntax to import custom-elements in strictly-browser context
-if (global.document) {
-  require('./browser/lib/x-list.js');
-  require('./browser/lib/model-select.js');
-}
+// TOOD(dstockwell): why was this only in browser context?
+import './browser/lib/x-list.js';
+import './browser/lib/model-select.js';
 
 class DomContext {
   constructor(context, containerKind) {

@@ -15,11 +15,10 @@ import Arc from '../../arc.js';
 import Manifest from "../../manifest.js";
 import Tracing from '../../../tracelib/trace.js';
 
-import WorkerPecFactory from '../worker-pec-factory';
+import WorkerPecFactory from '../worker-pec-factory.js';
 import '../lib/suggestions-element.js';
 
 Tracing.enable();
-global.Tracing = Tracing;
 
 let template = Object.assign(document.createElement('template'), {innerHTML: `
 

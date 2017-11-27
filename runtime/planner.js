@@ -100,7 +100,7 @@ class Planner {
     let trace = Tracing.async({cat: 'planning', name: 'Planner::plan', args: {timeout}})
     timeout = timeout || NaN;
     let allResolved = [];
-    let now = () => global.performance ? performance.now() : process.hrtime();
+    let now = () => (typeof performance == 'object') ? performance.now() : process.hrtime();
     let start = now();
     do {
       let generated = await trace.wait(() => this.generate());
