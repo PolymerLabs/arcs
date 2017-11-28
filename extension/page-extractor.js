@@ -18,7 +18,7 @@ async function extractEntities(doc, windowLocation) {
     'link[rel~="image_src"], link[rel~="icon"]'
   );
   let pageEntity = {
-    "@type": "http://schema.org/WebPage",
+    '@type': 'http://schema.org/WebPage',
     name: doc.title,
     url: windowLocation.toString()
   };
