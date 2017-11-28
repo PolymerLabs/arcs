@@ -21,7 +21,8 @@ module.exports = class NameUnnamedConnections extends Strategy {
 
         let possibleSpecConns = viewConnection.particle.spec.connections.filter(specConn => {
           // filter specs with matching types that don't have views bound to the corresponding view connection.
-          return viewConnection.view.type.equals(specConn.type) &&
+          return !specConn.isOptional &&
+                 viewConnection.view.type.equals(specConn.type) &&
                  !viewConnection.particle.getConnectionByName(specConn.name).view;
         });
 

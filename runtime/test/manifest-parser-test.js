@@ -94,6 +94,11 @@ describe('manifest parser', function() {
           'bad error: '+e);
     }
   });
+  it('parses particles with optional handles', () => {
+    parse(`
+      particle MyParticle
+        MyParticle(in MyThing mandatory, in MyThing? optional1, out [MyThing]? optional2)`);
+  });
   it('parses manifests with search', () => {
     parse(`
       recipe
