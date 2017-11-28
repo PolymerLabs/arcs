@@ -10,7 +10,7 @@
 "use strict";
 
 const Type = require('./type.js');
-const viewlet = require('./viewlet.js');
+const handle = require('./handle.js');
 const define = require('./particle.js').define;
 const assert = require('assert');
 const PECInnerPort = require('./api-channel.js').PECInnerPort;
@@ -208,7 +208,7 @@ class InnerPEC {
       createView: function(viewType, name) {
         return new Promise((resolve, reject) =>
           pec._apiPort.ArcCreateView({arc: arcId, viewType, name, callback: view => {
-            var v = viewlet.viewletFor(view, view.type.isSetView, true, true);
+            var v = handle.handleFor(view, view.type.isSetView, true, true);
             v.entityClass = (view.type.isSetView ? view.type.primitiveType().entitySchema : view.type.entitySchema).entityClass();
             resolve(v);
           }}));
@@ -254,7 +254,7 @@ class InnerPEC {
 
     var viewMap = new Map();
     views.forEach((value, key) => {
-      viewMap.set(key, viewlet.viewletFor(value, value.type.isSetView, spec.connectionMap.get(key).isInput, spec.connectionMap.get(key).isOutput));
+      viewMap.set(key, handle.handleFor(value, value.type.isSetView, spec.connectionMap.get(key).isInput, spec.connectionMap.get(key).isOutput));
     });
 
     for (var view of viewMap.values()) {

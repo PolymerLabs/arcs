@@ -11,11 +11,11 @@
  "use strict";
 
 let assert = require('chai').assert;
-let viewlet = require('../viewlet.js');
+let handle = require('../handle.js');
 
 function assertSingletonWillChangeTo(view, entityClass, expectation) {
   return new Promise((resolve, reject) => {
-    var variable = viewlet.viewletFor(view);
+    var variable = handle.handleFor(view);
     variable.entityClass = entityClass;
     variable.on('change', () => variable.get().then(result => {
       if (result == undefined)
@@ -27,7 +27,7 @@ function assertSingletonWillChangeTo(view, entityClass, expectation) {
 }
 
 function assertSingletonIs(view, entityClass, expectation) {
-  var variable = viewlet.viewletFor(view);
+  var variable = handle.handleFor(view);
   variable.entityClass = entityClass;
   return variable.get().then(result => {
     assert(result !== undefined);
@@ -37,7 +37,7 @@ function assertSingletonIs(view, entityClass, expectation) {
 
 function assertViewWillChangeTo(setView, entityClass, field, expectations) {
   return new Promise((resolve, reject) => {
-    var view = viewlet.viewletFor(setView, true);
+    var view = handle.handleFor(setView, true);
     view.entityClass = entityClass;
     view.on('change', () => view.toList().then(result => {
       if (result == undefined)
@@ -54,7 +54,7 @@ function assertViewWillChangeTo(setView, entityClass, field, expectations) {
 
 function assertViewHas(view, entityClass, field, expectations) {
   return new Promise((resolve, reject) => {
-    view = viewlet.viewletFor(view, true);
+    view = handle.handleFor(view, true);
     view.entityClass = entityClass;
     view.toList().then(result => {
       assert.deepEqual(result.map(a => a[field]), expectations);
@@ -65,7 +65,7 @@ function assertViewHas(view, entityClass, field, expectations) {
 
 function assertSingletonEmpty(view) {
   return new Promise((resolve, reject) => {
-    var variable = new viewlet.viewletFor(view);
+    var variable = new handle.handleFor(view);
     variable.get().then(result => {
       assert.equal(result, undefined);
       resolve();

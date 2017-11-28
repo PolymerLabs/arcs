@@ -15,7 +15,7 @@ let assert = require('chai').assert;
 const SlotComposer = require('../slot-composer.js');
 
 let view = require('../view.js');
-let viewlet = require('../viewlet.js');
+let handle = require('../handle.js');
 
 const Shape = require('../shape.js');
 const Type = require('../type.js');
@@ -42,7 +42,7 @@ describe('View', function() {
 
     let manifest = await Manifest.load('../particles/test/test-particles.manifest', loader);
     let Foo = manifest.schemas.Foo.entityClass();
-    let fooView = viewlet.viewletFor(arc.createView(Foo.type.setViewOf()));
+    let fooView = handle.handleFor(arc.createView(Foo.type.setViewOf()));
     fooView.entityClass = Foo;
 
     await fooView.store(new Foo({value: 'a Foo'}, 'first'));
