@@ -42,18 +42,18 @@ class OuterPEC extends PEC {
       view.on(type, data => this._apiPort.SimpleCallback({callback, data}), target);
     };
 
-    this._apiPort.onViewGet = ({view, callback}) => {
+    this._apiPort.onHandleGet = ({view, callback}) => {
       this._apiPort.SimpleCallback({callback, data: view.get()});
     }
 
-    this._apiPort.onViewToList = ({view, callback}) => {
+    this._apiPort.onHandleToList = ({view, callback}) => {
       this._apiPort.SimpleCallback({callback, data: view.toList()});
     }
 
-    this._apiPort.onViewSet = ({view, data}) => view.set(data);
-    this._apiPort.onViewStore = ({view, data}) => view.store(data);
-    this._apiPort.onViewClear = ({view}) => view.clear();
-    this._apiPort.onViewRemove = ({view, data}) => view.remove(data);
+    this._apiPort.onHandleSet = ({view, data}) => view.set(data);
+    this._apiPort.onHandleStore = ({view, data}) => view.store(data);
+    this._apiPort.onHandleClear = ({view}) => view.clear();
+    this._apiPort.onHandleRemove = ({view, data}) => view.remove(data);
 
     this._apiPort.onIdle = ({version, relevance}) => {
       if (version == this._idleVersion) {
@@ -67,9 +67,9 @@ class OuterPEC extends PEC {
       this._apiPort.ConstructArcCallback({callback, arc});
     }
 
-    this._apiPort.onArcCreateView = ({callback, arc, viewType, name}) => {
+    this._apiPort.onArcCreateHandle = ({callback, arc, viewType, name}) => {
       var view = this._arc.createView(viewType, name);
-      this._apiPort.CreateViewCallback(view, {viewType, name, callback, id: view.id});
+      this._apiPort.CreateHandleCallback(view, {viewType, name, callback, id: view.id});
     }
 
     this._apiPort.onArcCreateSlot = ({callback, arc, transformationParticle, transformationSlotName, hostedParticleName,  hostedSlotName}) => {
@@ -129,7 +129,7 @@ class OuterPEC extends PEC {
   instantiate(particleSpec, spec, views, lastSeenVersion) {
     views.forEach(view => {
       var version = lastSeenVersion.get(view.id) || 0;
-      this._apiPort.DefineView(view, { viewType: view.type, name: view.name,
+      this._apiPort.DefineHandle(view, { viewType: view.type, name: view.name,
                                        version });
     });
 

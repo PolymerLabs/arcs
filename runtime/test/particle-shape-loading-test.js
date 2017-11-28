@@ -35,8 +35,8 @@ describe('particle-shape-loading', function() {
                 let arc = await this.constructInnerArc();
                 var inputView = views.get('input');
                 let outputView = views.get('output');
-                let inView = await arc.createView(inputView.type, "input");
-                let outView = await arc.createView(outputView.type, "output");
+                let inView = await arc.createHandle(inputView.type, "input");
+                let outView = await arc.createHandle(outputView.type, "output");
                 let particle = await views.get('particle').get();
 
                 var recipe = Particle.buildManifest\`
