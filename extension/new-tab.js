@@ -9,8 +9,9 @@
  * Load schema.org entities from all available tabs.
  */
 async function loadEntitiesFromTabs() {
-
-  let devices = await new Promise((resolve) => chrome.sessions.getDevices(null, resolve));
+  let devices = await new Promise(resolve =>
+    chrome.sessions.getDevices(null, resolve)
+  );
   let tabs = [];
   for (let device of devices) {
     for (let session of device.sessions) {
@@ -24,12 +25,14 @@ async function loadEntitiesFromTabs() {
           id: tab.sessionId,
           url: tab.url,
           title: tab.title,
-          favIconUrl: tab.favIconUrl,
+          favIconUrl: tab.favIconUrl
         });
       }
     }
   }
-  let currentTabs = await new Promise((resolve) => chrome.tabs.query({}, resolve));
+  let currentTabs = await new Promise(resolve =>
+    chrome.tabs.query({}, resolve)
+  );
   for (let tab of currentTabs) {
     if (!/^https?/.test(tab.url)) {
       continue;
@@ -40,7 +43,7 @@ async function loadEntitiesFromTabs() {
       url: tab.url,
       title: tab.title,
       id: tab.id,
-      local: true,
+      local: true
     });
   }
   tabs.sort((a, b) => {
@@ -63,6 +66,7 @@ async function loadEntitiesFromTabs() {
     groupTabMap.get(tab.group).push(tab);
   }
 
-  return [].concat(...await Promise.all(tabs.map(tab => tabEntityMap.get(tab))));
+  return [].concat(
+    ...(await Promise.all(tabs.map(tab => tabEntityMap.get(tab))))
+  );
 }
-

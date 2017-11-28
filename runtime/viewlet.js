@@ -61,12 +61,12 @@ class Viewlet {
   }
 
   generateID() {
-    assert (this._view.generateID);
+    assert(this._view.generateID);
     return this._view.generateID();
   }
 
   generateIDComponents() {
-    assert (this._view.generateIDComponents);
+    assert(this._view.generateIDComponents);
     return this._view.generateIDComponents();
   }
 
