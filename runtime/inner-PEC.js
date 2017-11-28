@@ -134,7 +134,11 @@ class InnerPEC {
     this._apiPort.onConstructArcCallback = ({callback, arc}) => callback(arc);
 
     this._apiPort.onAwaitIdle = ({version}) =>
-      this.idle.then(a => this._apiPort.Idle({version, relevance: this.relevance}));
+      this.idle.then(a => {
+        let idle;
+        setTimeout(() => idle = this._apiPort.Idle({version, relevance: this.relevance}));
+        return idle;
+      });
 
     this._apiPort.onUIEvent = ({particle, slotName, event}) => particle.fireEvent(slotName, event);
 
