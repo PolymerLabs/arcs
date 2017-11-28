@@ -18,6 +18,7 @@ const Relation = require('./relation.js');
 let handle = require('./handle.js');
 const OuterPec = require('./outer-PEC.js');
 const Recipe = require('./recipe/recipe.js');
+const RecipeUtil = require('./recipe/recipe-util.js');
 const Manifest = require('./manifest.js');
 const Description = require('./description.js');
 const util = require('./recipe/util.js');
@@ -219,12 +220,7 @@ class Arc {
       this.pec.slotComposer.initializeRecipe(particles);
     }
 
-    let newRecipe = new Recipe();
-    newRecipe.particles = particles;
-    newRecipe.views = views;
-    newRecipe.slots = slots;
-    newRecipe.search = recipe.search;
-    this._recipes.push(newRecipe);
+    this._recipes.push(RecipeUtil.newShape(this._activeRecipe, particles, views, { /* TODO: view connections map? */ }));
   }
 
   _connectParticleToView(particleHandle, particle, name, targetView) {
