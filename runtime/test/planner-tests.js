@@ -51,7 +51,6 @@ describe('Planner', function() {
     await planner.generate();
     await planner.generate();
     await planner.generate();
-    debugger;
     assert.equal(planner.strategizer.population.length, 5);
   });
 

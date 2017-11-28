@@ -120,12 +120,18 @@ class Arc {
     this.particleViewMaps.set(handle, viewMap);
 
     for (let [name, connection] of Object.entries(recipeParticle.connections)) {
+      if (!connection.view) {
+        assert(connection.isOptional);
+        continue;
+      }
       let view = this.findViewById(connection.view.id);
       assert(view);
       this._connectParticleToView(handle, recipeParticle, name, view);
     }
 
-    assert(viewMap.views.size == viewMap.spec.connectionMap.size, `Not all connections are resolved for {$particle}`);
+    // At least all non-optional connections must be resolved
+    assert(viewMap.views.size >= viewMap.spec.connections.filter(c => !c.isOptional).length,
+           `Not all mandatory connections are resolved for {$particle}`);
     this.pec.instantiate(recipeParticle, viewMap.spec, viewMap.views, this._lastSeenVersion);
     return handle;
   }
