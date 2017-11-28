@@ -1,4 +1,4 @@
-# arcs chrome extension
+# Arcs Chrome extension
 
 The extension does a few things:
 
@@ -20,13 +20,12 @@ Please be aware of this limitation as you think about what sites to visit
 while using this extension. A best practice is to use this in a non-primary
 profile or a secondary browser.
 
-
-## installation
+## Installation
 
 Load the extension as an 'unpacked extension' at
 [chrome://extensions](chrome://extensions).
 
-## interaction
+## Interaction
 
 As mentioned above, Arcs consumes metadata from the browser in the background
 at Arcs extensions startup and when a new page loads.
@@ -43,7 +42,7 @@ Custom actions may be visible on some pages that you visit. Try the
 in the [arcs-custom-events](https://github.com/smalls/arcs-custom-events)
 repository.
 
-## embedding manifests
+## Embedding Manifests
 
 Manifests can be embedded into web pages, allowing sites to extend Arcs with
 additional custom functionality or data types. This is done via a link element
@@ -58,12 +57,15 @@ This will load the manifest as `arcs/custom.manifest` into Arcs instances that
 are triggered from the browser (either via the popup or new tab).
   
 
-## testing
+## Testing
 
-There are a few scenarios that should reliably work after enabling the
-extension.
+Unit tests can be run in browser by opening index.test.html or on the command
+line with `npm install && npm test`.
 
-1) Visit a page with embedded data. [Products](https://schema.org/Product)
+For manual testing, there are a few scenarios that should reliably work after
+enabling the extension.
+
+1. Visit a page with embedded data. [Products](https://schema.org/Product)
   such as [Google Cardboard](https://store.google.com/product/google_cardboard)
   is an easy option. Verify that:
     - The 'arc' logo appears on the Browser Action.
@@ -71,18 +73,18 @@ extension.
       Google Cardboard) in a recipe. For a product, try the "Buy products"
       recipe. If too many things appear, go full-screen and disable any extra
       recipes.
-1) Open the New Tab, and verify it has access to the information from all
+1. Open the New Tab, and verify it has access to the information from all
   tabs. Open another product (such as [LG Watch](https://store.google.com/product/lg_watch_style)
   and verify that shows up in the arc.
-1) Visit a page with an embedded manifest like 
+1. Visit a page with an embedded manifest like
   [index-with-arcs](https://smalls.github.io/arcs-custom-events/index-with-arcs.html). Verify that the custom actions appear.
 
-## notes & limitations
+## Notes and Limitations
 
 The extension automatically tags [Product] with #shortlist, and all other
 views with #browserContext.
 
-## todos
+## TODOs
 
 Nothing is ever complete.
 

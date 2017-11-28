@@ -5,20 +5,22 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-async function extractEntities() {
-  let microdata = extractMicrodata(document.documentElement);
+// Returns an array of Schema.org entities extracted from the given document
+// or an empty array if none were found.
+async function extractEntities(doc, windowLocation) {
+  let microdata = extractMicrodata(doc.documentElement);
   let results = [];
   if (microdata.length) {
     results.push(...microdata);
   }
 
-  let linkImage = document.querySelector(
+  let linkImage = doc.querySelector(
     'link[rel~="image_src"], link[rel~="icon"]'
   );
   let pageEntity = {
     '@type': 'http://schema.org/WebPage',
-    name: document.title,
-    url: window.location.toString()
+    name: doc.title,
+    url: windowLocation.toString()
   };
   if (linkImage && linkImage.href) {
     pageEntity.image = linkImage.href;
@@ -31,11 +33,11 @@ async function extractEntities() {
 // This is out in a separate function, as extractMicrodata() may be replaced
 // with a library for https://github.com/PolymerLabs/arcs/issues/431
 function extractManifests() {
-  const manifestType = 'text/x-arcs-manifest';
+  const manifestType = "text/x-arcs-manifest";
   return Array.prototype.map.call(
     document.querySelectorAll('link[type="' + manifestType + '"]'),
     link => {
-      return { '@type': manifestType, url: link.href };
+      return { "@type": manifestType, url: link.href };
     }
   );
 }
@@ -46,8 +48,8 @@ function extractMicrodata(root) {
   function entityWalker(root) {
     return document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT, {
       acceptNode(node) {
-        if (node.hasAttribute('itemscope') || node.hasAttribute('itemtype')) {
-          if (node.hasAttribute('itemprop')) {
+        if (node.hasAttribute("itemscope") || node.hasAttribute("itemtype")) {
+          if (node.hasAttribute("itemprop")) {
             // The entity is a property of another entity.
             return NodeFilter.FILTER_SKIP;
           }
@@ -68,12 +70,12 @@ function extractMicrodata(root) {
         if (
           parent &&
           parent != root &&
-          (parent.hasAttribute('itemscope') || parent.hasAttribute('itemtype'))
+          (parent.hasAttribute("itemscope") || parent.hasAttribute("itemtype"))
         ) {
           // No need to look for props inside nested entities.
           return NodeFilter.FILTER_REJECT;
         }
-        if (node.hasAttribute('itemprop')) {
+        if (node.hasAttribute("itemprop")) {
           return NodeFilter.FILTER_ACCEPT;
         }
         return NodeFilter.FILTER_SKIP;
@@ -82,31 +84,31 @@ function extractMicrodata(root) {
   }
 
   function extractProperty(node) {
-    let prop = node.getAttribute('itemprop');
+    let prop = node.getAttribute("itemprop");
     let value;
-    if (node.hasAttribute('content')) {
+    if (node.hasAttribute("content")) {
       // TODO: Is it valid to prefer 'content' over all?
       // tandy has <meta itemprop="itemCondition" itemtype="http://schema.org/OfferItemCondition" content="http://schema.org/NewCondition"
       // officeworks has <a itemprop="sameAs" content="http://www.facebook.com/officeworks">http://www.facebook.com/officeworks</a>, the twitter
       // ebay has <div itemprop=x content=y>
-      value = node.getAttribute('content');
-    } else if (node.getAttribute('itemtype')) {
+      value = node.getAttribute("content");
+    } else if (node.getAttribute("itemtype")) {
       value = extractEntity(node);
-    } else if (node.tagName == 'LINK') {
+    } else if (node.tagName == "LINK") {
       // TODO: untested
       value = node.href;
-    } else if (node.tagName == 'META') {
+    } else if (node.tagName == "META") {
       value = node.content;
-    } else if (node.tagName == 'IMG') {
+    } else if (node.tagName == "IMG") {
       value = node.src;
-    } else if (node.tagName == 'A') {
+    } else if (node.tagName == "A") {
       value = node.href;
-    } else if (node.tagName == 'TIME') {
+    } else if (node.tagName == "TIME") {
       // TODO: untested
       value = node.datetime;
     }
     if (value == undefined) {
-      value = node.textContent.replace(/(^\s*|\s*$)/g, '');
+      value = node.textContent.replace(/(^\s*|\s*$)/g, "");
     }
     return { prop, value };
   }
@@ -120,11 +122,11 @@ function extractMicrodata(root) {
 
   function extractEntity(node) {
     let result = {};
-    if (node.hasAttribute('itemtype')) {
-      result['@type'] = node.getAttribute('itemtype');
+    if (node.hasAttribute("itemtype")) {
+      result["@type"] = node.getAttribute("itemtype");
     }
     for (let { prop, value } of extractProperties(node)) {
-      if (typeof result[prop] != 'undefined') {
+      if (typeof result[prop] != "undefined") {
         if (!Array.isArray(result[prop])) {
           result[prop] = [result[prop]];
         }
