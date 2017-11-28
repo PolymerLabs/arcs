@@ -11,6 +11,7 @@
 
 import assert from '../platform/assert-web.js';
 import Type from './type.js';
+import ParticleSpec  from './particle-spec.js';
 
 export default class Description {
   constructor(arc) {
@@ -181,6 +182,12 @@ export default class Description {
         return this._formatViewValue(token._view);
       case "_name_": {
         return this._formatDescription(token._viewConn, token._view, options).toString();
+      }
+      case "_description_": {
+        // hosted particle
+        assert(token._view.type.isInterface, 'Expected interface');
+        // TODO: support hosted particle dynamic description pattern?
+        return ParticleSpec.fromLiteral(token._view.get()).pattern;
       }
       case undefined:
         // full view description

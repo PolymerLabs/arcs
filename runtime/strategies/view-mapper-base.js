@@ -39,7 +39,8 @@ export default class ViewMapperBase extends Strategy {
       mapView(view, tags, type, counts) {
         var score = -1;
         if (counts.in == 0 || counts.out == 0) {
-          if (counts.unknown > 0)
+          // DONOTSUBMIT this is hack, count "host" connections too.
+          if (counts.unknown > 1)
             return;
           if (counts.out == 0)
             score = 1;

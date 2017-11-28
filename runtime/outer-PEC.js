@@ -13,6 +13,7 @@ import PEC from './particle-execution-context.js';
 import assert from '../platform/assert-web.js';
 import {PECOuterPort} from './api-channel.js';
 import Manifest from './manifest.js';
+import Schema  from './schema.js';
 
 // TODO: fix
 import Loader from './loader.js';
@@ -80,7 +81,17 @@ class OuterPEC extends PEC {
     }
 
     this._apiPort.onArcLoadRecipe = async ({arc, recipe, callback}) => {
+      debugger;
+      let typeOfArrivinatorConnection = this._arc.context.views[0]._stored.args[0].type.data;
+      console.log(typeOfArrivinatorConnection);
+
       let manifest = await Manifest.parse(recipe, {loader: this._arc._loader, fileName: ''});
+
+      let newTypeOfArrivinatorConnection = this._arc.context.views[0]._stored.args[0].type.data;
+      console.log(newTypeOfArrivinatorConnection);
+      // typeOfArrivinatorConnection and newTypeOfArrivinatorConnection should be equal! but they are not :(
+      console.log(Schema.fromLiteral(typeOfArrivinatorConnection).equals(newTypeOfArrivinatorConnection));
+
       let error = undefined;
       var recipe = manifest.recipes[0];
       if (recipe) {

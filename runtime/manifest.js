@@ -196,7 +196,7 @@ ${e.message}
         this._processParticle(manifest, item, loader);
       }
       for (let item of items.filter(item => item.kind == 'view')) {
-        await this._processView(manifest, item, loader);
+        await this._processView(manifest, item, loader, registry);
       }
       for (let item of items.filter(item => item.kind == 'recipe')) {
         this._processRecipe(manifest, item);
@@ -496,7 +496,7 @@ ${e.message}
     }
     throw new Error(`Schema or Shape '${name}' was not declared or imported`);
   }
-  static async _processView(manifest, item, loader) {
+  static async _processView(manifest, item, loader, registry) {
     let name = item.name;
     let id = item.id;
     let type = Manifest._processType(item.type);
@@ -516,22 +516,30 @@ ${e.message}
     // view.version = item.version;
     let source = loader.join(manifest.fileName, item.source);
     // TODO: json5?
-    let json = await loader.loadResource(source);
-    let entities = JSON.parse(json);
-    for (let entity of entities) {
-      let id = entity.$id || manifest.generateID();
-      delete entity.$id;
-      if (type.isSetView) {
-        view.store({
-          id,
-          rawData: entity,
-        });
-      } else {
-        view.set({
-          id,
-          rawData: entity,
-        })
+    let contents = await loader.loadResource(source);
+    if (source.endsWith('json')) {
+      let entities = JSON.parse(contents);
+      for (let entity of entities) {
+        let id = entity.$id || manifest.generateID();
+        delete entity.$id;
+        if (type.isSetView) {
+          view.store({
+            id,
+            rawData: entity,
+          });
+        } else {
+          view.set({
+            id,
+            rawData: entity,
+          })
+        }
       }
+    } else {
+      assert(source.endsWith('manifest'));
+      let newImport = await Manifest.load(source, loader, {registry});
+      assert(newImport.particles.length == 1, 'Need to specify hosted particle.');
+      manifest._imports.push(newImport);
+      view.set(newImport.particles[0].toLiteral());
     }
   }
   _newRecipe(name) {

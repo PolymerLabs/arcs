@@ -8,12 +8,12 @@
 
 import '../../entities/Product.manifest'
 
-shape HostedParticleShape
-  HostedParticleShape(in Product foo)
+shape HostedProductParticle
+  HostedProductParticle(in Product foo)
   consume annotation
 
 # TODO: This particle should use generic handle type and slot name.
 particle ProductMultiplexer in 'ProductMultiplexer.js'
-  ProductMultiplexer(host HostedParticleShape hostedParticle, in [Product] products)
+  ProductMultiplexer(host HostedProductParticle hostedParticle, in [Product] products)
   consume set of annotation
-  description `${hostedParticle} for each product`
+  description `${hostedParticle._description_} for each product`
