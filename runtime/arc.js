@@ -31,6 +31,7 @@ class Arc {
     this.id = id;
     this._nextLocalID = 0;
     this._activeRecipe = new Recipe();
+    // TODO: rename: this are just tuples of {particles, views, slots} of instantiated recipes merged into active recipe..
     this._recipes = [];
     this._loader = loader;
 
@@ -155,6 +156,7 @@ class Arc {
     });
 
    this._activeRecipe.mergeInto(arc._activeRecipe);
+   // TODO: merge this._recipes too?
 
     for (let v of viewMap.values()) {
       // FIXME: Tags
@@ -226,12 +228,7 @@ class Arc {
       this.pec.slotComposer.initializeRecipe(particles);
     }
 
-    let newRecipe = new Recipe();
-    newRecipe.particles = particles;
-    newRecipe.views = views;
-    newRecipe.slots = slots;
-    newRecipe.search = recipe.search;
-    this._recipes.push(newRecipe);
+    this._recipes.push({particles, views, slots});
   }
 
   _connectParticleToView(particleHandle, particle, name, targetView) {

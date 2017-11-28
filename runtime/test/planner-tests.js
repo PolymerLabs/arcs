@@ -23,6 +23,7 @@ let SearchTokensToParticles = require('../strategies/search-tokens-to-particles.
 let GroupViewConnections = require('../strategies/group-view-connections.js');
 let CombinedStrategy = require('../strategies/combined-strategy.js');
 let FallbackFate = require('../strategies/fallback-fate.js');
+let CreateDescriptionHandle = require('../strategies/create-description-handle.js')
 let MessageChannel = require('../message-channel.js');
 let InnerPec = require('../inner-PEC.js');
 let Particle = require('../particle.js');
@@ -47,9 +48,10 @@ describe('Planner', function() {
     let Product = manifest.findSchemaByName('Person').entityClass();
     var planner = new Planner();
     planner.init(arc);
-    await planner.generate(),
-    await planner.generate(),
-    await planner.generate(),
+    await planner.generate();
+    await planner.generate();
+    await planner.generate();
+    debugger;
     assert.equal(planner.strategizer.population.length, 5);
   });
 
@@ -720,6 +722,30 @@ describe('FallbackFate', function() {
     var strategy = new FallbackFate(arc);
     let { results } = await strategy.generate(strategizer);
     assert.equal(results.length, 0);
+  });
+});
+
+
+describe('CreateDescriptionHandle', function() {
+  it('descriptions handle created', async () => {
+    let manifest = (await Manifest.parse(`
+      schema Description
+      particle DoSomething in 'AA.js'
+        DoSomething(out [Description] descriptions)
+
+      recipe
+        DoSomething as particle0
+    `));
+    let recipe = manifest.recipes[0];
+    var strategizer = {generated: [{result: manifest.recipes[0], score: 1}], terminal: []};
+    var strategy = new CreateDescriptionHandle();
+    let results = (await strategy.generate(strategizer)).results;
+
+    assert.equal(results.length, 1);
+    let plan = results[0].result;
+    assert.equal(plan.views.length, 1);
+    assert.equal('create', plan.views[0].fate);
+    assert.isTrue(plan.isResolved());
   });
 });
 
