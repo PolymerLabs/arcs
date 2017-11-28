@@ -29,7 +29,5 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
       sendResponse(result);
     });
     return true;
-  } else {
-    return;
   }
 });
