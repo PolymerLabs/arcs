@@ -36,6 +36,7 @@ describe('demo flow', function() {
     planner.init(arc);
 
     let plans = await planner.suggest();
+    // TODO: Should be 2 plans, after the transition to transformations is complete.
     assert.equal(plans.length, 3);
 
     // Choose a plan to test with.
