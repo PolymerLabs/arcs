@@ -83,8 +83,15 @@ class SuggestionsElement extends HTMLElement {
     suggestions.forEach((suggestion, i) => this.addSuggestion(suggestion, i));
   }
 
+  set suggestions(suggestions) {
+    if (this._suggestions !== suggestions) {
+      this._suggestions = suggestions;
+      this.container.textContent = "";
+      suggestions && this.add(suggestions);
+    }
+  }
+
   _choose(plan) {
-    this.container.textContent = "";
     this.dispatchEvent(new CustomEvent("plan-selected", {
       detail: { plan }
     }));
