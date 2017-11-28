@@ -109,7 +109,7 @@ class Handle {
  * connected to that particle, and the current recipe identifies which views are
  * connected.
  */
-class View extends Handle {
+class Collection extends Handle {
   constructor(view, canRead, canWrite) {
     // TODO: this should talk to an API inside the PEC.
     super(view, canRead, canWrite);
@@ -220,11 +220,12 @@ function handleFor(view, isSet, canRead, canWrite) {
     canRead = true;
   if (canWrite == undefined)
     canWrite = true;
+  let handle;
   if (isSet || (isSet == undefined && view instanceof underlyingView.View))
-    view = new View(view, canRead, canWrite);
+    handle = new Collection(view, canRead, canWrite);
   else
-    view = new Variable(view, canRead, canWrite);
-  return view;
+    handle = new Variable(view, canRead, canWrite);
+  return handle;
 }
 
 module.exports = { handleFor };
