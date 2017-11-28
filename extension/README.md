@@ -1,13 +1,24 @@
 # arcs chrome extension
 
-The extension does two things:
+The extension does a few things:
 
-1) Synchronizes metadata from the browser to your Arc.
+1) Parses webpages you visit for schema.org entities, and provides that data
+to Arcs.
+1) Allows webpages to specify manifests that are loaded into your Arcs
+instance.
 1) Provides an entry point to Arcs.
 
-Currently (and temporarily) synchronization happens via a **public** firebase.
-Eventually the sync will be to a private data store (perhaps firebase, perhaps
-not).
+The extension reads out schema.org-compatible data from web pages that you
+visit. Those entities are stored in your browser's local storage and are
+exposed to Arcs as views. When you accept suggestions that contain those
+views, they are synchronized to a **public** firebase.
+
+Eventually, the sync will be to your private data store (perhaps firebase,
+but other options will be available).
+
+Please be aware of this limitation as you think about what sites to visit
+while using this extension. A best practice is to use this in a non-primary
+profile or a secondary browser.
 
 
 ## installation
@@ -32,6 +43,21 @@ Custom actions may be visible on some pages that you visit. Try the
 in the [arcs-custom-events](https://github.com/smalls/arcs-custom-events)
 repository.
 
+## embedding manifests
+
+Manifests can be embedded into web pages, allowing sites to extend Arcs with
+additional custom functionality or data types. This is done via a link element
+as in this example:
+
+```
+  <link rel="arcs-manifest" type="text/x-arcs-manifest"
+          href="arcs/custom.manifest">
+```
+
+This will load the manifest as `arcs/custom.manifest` into Arcs instances that
+are triggered from the browser (either via the popup or new tab).
+  
+
 ## testing
 
 There are a few scenarios that should reliably work after enabling the
@@ -52,11 +78,6 @@ extension.
   [index-with-arcs](https://smalls.github.io/arcs-custom-events/index-with-arcs.html). Verify that the custom actions appear.
 
 ## notes & limitations
-
-To restrict what's sent to firebase, most entities are stripped out in
-event-page.js#filterResponse(). Notable inclusions are
-[Product](https://schema.org/Product) and [Event](https://schema.org/Event),
-but check the code for the authoritative list.
 
 The extension automatically tags [Product] with #shortlist, and all other
 views with #browserContext.
