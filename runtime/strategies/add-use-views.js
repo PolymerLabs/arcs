@@ -23,7 +23,7 @@ class AddUseViews extends Strategy {
         if (freeViews.length > 0)
           return;
 
-        var disconnectedConnections = recipe.viewConnections.filter(vc => vc.view == null);
+        var disconnectedConnections = recipe.viewConnections.filter(vc => vc.view == null && !vc.isOptional);
 
         return recipe => {
           disconnectedConnections.forEach(vc => {

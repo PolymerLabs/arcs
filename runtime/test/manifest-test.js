@@ -721,4 +721,24 @@ Expected " ", "#", "\\n", "\\r", [ ], [A-Z] or [a-z] but "?" found.
     assert(manifest.findShapeByName('Shape'));
     assert(manifest.recipes[0].normalize());
   });
+  it('can resolve optional handles', async () => {
+    let manifest = await Manifest.parse(`
+      schema Something
+      particle Thing in 'thing.js'
+        Thing(in [Something] inThing, out [Something]? maybeOutThings)
+      recipe
+        create as view0 # [Something]
+        Thing
+          inThing <- view0`);
+    let verify = (manifest) => {
+      assert.isFalse(manifest.particles[0].connections[0].isOptional);
+      assert.isTrue(manifest.particles[0].connections[1].isOptional);
+
+      let recipe = manifest.recipes[0];
+      recipe.normalize();
+      assert.isTrue(recipe.isResolved());
+    }
+    verify(manifest);
+    verify(await Manifest.parse(manifest.toString(), {}));
+  });
 });

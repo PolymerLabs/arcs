@@ -189,13 +189,14 @@ ParticleArgumentList
   }
 
 ParticleArgument
-  = direction:ParticleArgumentDirection whiteSpace type:Type whiteSpace name:lowerIdent
+  = direction:ParticleArgumentDirection whiteSpace type:Type isOptional:'?'? whiteSpace name:lowerIdent
   {
     return {
       kind: 'particle-argument',
       location: location(),
       direction,
       type: type,
+      isOptional: !!isOptional,
       name,
     };
   }
