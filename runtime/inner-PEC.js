@@ -274,11 +274,7 @@ class InnerPEC {
       resolve();
       var idx = this._pendingLoads.indexOf(p);
       this._pendingLoads.splice(idx, 1);
-      try {
-        await particle.setViews(viewMap);
-      } catch (e) {
-        console.error("Exception in particle code\n", e);
-      }
+      await particle.setViews(viewMap);
     }];
   }
 

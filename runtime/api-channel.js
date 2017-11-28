@@ -39,7 +39,7 @@ class ThingMapper {
     return this.createMappingForThing(thing);
   }
 
-  establishThingMapping(id, thing) {
+  async establishThingMapping(id, thing) {
     let continuation;
     if (Array.isArray(thing)) {
       [thing, continuation] = thing;
@@ -47,11 +47,11 @@ class ThingMapper {
     this._idMap.set(id, thing);
     if (thing instanceof Promise) {
       assert(continuation == null);
-      thing.then(actualThing => this.establishThingMapping(id, actualThing));
+      await this.establishThingMapping(id, await thing);
     } else {
       this._reverseIdMap.set(thing, id);
       if (continuation) {
-        continuation();
+        await continuation();
       }
     }
   }
@@ -77,7 +77,7 @@ class APIPort {
     this._port = messagePort;
     this._mapper = new ThingMapper(prefix);
     this._messageMap = new Map();
-    this._port.onmessage = e => this._handle(e);
+    this._port.onmessage = async e => this._handle(e);
     this.messageCount = 0;
 
     this.Direct = {
@@ -147,7 +147,7 @@ class APIPort {
     this._port.close();
   }
 
-  _handle(e) {
+  async _handle(e) {
     assert(this._messageMap.has(e.data.messageType));
 
     this.messageCount++;
@@ -171,7 +171,7 @@ class APIPort {
     let result = this["on" + e.data.messageType](args);
     if (handler.isInitializer) {
       assert(args.identifier);
-      this._mapper.establishThingMapping(args.identifier, result);
+      await this._mapper.establishThingMapping(args.identifier, result);
     }
   }
 
