@@ -14,7 +14,6 @@ const assert = require('chai').assert;
 const Arc = require("../arc.js");
 const Loader = require("../loader.js");
 const Manifest = require('../manifest.js');
-const Viewlet = require('../viewlet.js');
 const Schema = require('../schema.js');
 
 async function setup() {

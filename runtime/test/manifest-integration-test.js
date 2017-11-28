@@ -14,7 +14,7 @@ const assert = require('chai').assert;
 const Arc = require("../arc.js");
 const Loader = require("../loader.js");
 const Manifest = require('../manifest.js');
-const Viewlet = require('../viewlet.js');
+const handle = require('../handle.js');
 const Schema = require('../schema.js');
 
 async function setup() {
@@ -37,10 +37,10 @@ describe('manifest integration', () => {
     let type = recipe.views[0].type;
     let [view] = arc.findViewsByType(type);
     assert(view);
-    let viewlet = Viewlet.viewletFor(view);
+    let theHandle = handle.handleFor(view);
     // TODO: This should not be necessary.
-    viewlet.entityClass = type.entitySchema.entityClass();
-    let result = await viewlet.get();
+    theHandle.entityClass = type.entitySchema.entityClass();
+    let result = await theHandle.get();
     assert.equal(result.value, 'Hello, world!');
   });
   it('can produce a recipe that can be speculated', async () => {
