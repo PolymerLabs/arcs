@@ -140,7 +140,7 @@ class Arc {
 
   // Makes a copy of the arc used for speculative execution.
   cloneForSpeculativeExecution() {
-    var arc = new Arc({id: this.generateID(), pecFactory: this._pecFactory, context: this.context});
+    var arc = new Arc({id: this.generateID(), pecFactory: this._pecFactory, context: this.context, loader: this._loader});
     var viewMap = new Map();
     this._views.forEach(v => viewMap.set(v, v.clone()));
     this.particleViewMaps.forEach((value, key) => {
