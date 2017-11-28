@@ -8,6 +8,10 @@
 
 defineParticle(({DomParticle}) => {
   return class MultiplexSlotsParticle extends DomParticle {
+    _shouldRender(props) {
+      return false;
+    }
+
     async setViews(views) {
       let arc = await this.constructInnerArc();
       var foosView = views.get('foos');

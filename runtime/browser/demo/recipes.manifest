@@ -14,6 +14,8 @@ import '../../../particles/GiftList/GiftList.manifest'
 import '../../../particles/Arrivinator/Arrivinator.manifest'
 import '../../../particles/ManufacturerInfo/ManufacturerInfo.manifest'
 import '../../../particles/Interests/Interests.manifest'
+import '../../../particles/ProductMultiplexer/ProductMultiplexer.manifest'
+import '../../../particles/ArrivinatorX/ArrivinatorX.manifest'
 
 # Create shortlist with [product, ...]
 recipe
@@ -24,6 +26,21 @@ recipe
   map #wishlist as wishlist
   ShowProducts
     list <- wishlist
+
+# See products shortlist with estimated arrival dates (transformation)
+recipe
+  map #shortlist as shortlist
+  create as shape0
+  ShowProducts
+    list <- shortlist
+    consume root as slot0
+      provide annotation as slot1
+  ProductMultiplexer
+    products <- shortlist
+    # TODO: get rid of shape0 and replace it with Arrivinator particle shape.
+    hostedParticle = shape0  # ArrivinatorX
+    consume annotation as slot1
+
 
 # Create shortlist with [product, ...] and suggest similar products from [person]'s wish list
 recipe

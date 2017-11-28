@@ -37,13 +37,18 @@ class Relevance {
   }
 
   // Returns false, if at least one of the particles relevance lists ends with a negative score.
-  isRelevant() {
-    for (let rList of this.relevanceMap.values()) {
+  isRelevant(plan) {
+    let hasUi = plan.particles.some(p => Object.keys(p.consumedSlotConnections).length > 0);
+    let rendersUi = false;
+    this.relevanceMap.forEach((rList, particle) => {
       if (rList[rList.length - 1] < 0) {
         return false;
+      } else if (Object.keys(particle.consumedSlotConnections).length) {
+        rendersUi = true;
       }
-    }
-    return true;
+    });
+    // If the recipe has UI rendering particles, at least one of the particles must render UI.
+    return hasUi == rendersUi;
   }
 
   static scaleRelevance(relevance) {
