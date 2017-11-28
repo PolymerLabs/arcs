@@ -35,7 +35,7 @@ function restore(entry, entityClass) {
   return entity;
 }
 
-/** @class Viewlet
+/** @class Handle
  * Base class for Views and Variables.
  */
 class Handle {
@@ -82,7 +82,7 @@ class Handle {
   }
 
   _restore(entry) {
-    assert(this.entityClass, "Viewlets need entity classes for deserialization");
+    assert(this.entityClass, "Handles need entity classes for deserialization");
     return restore(entry, this.entityClass);
   }
 
