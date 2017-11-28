@@ -20,6 +20,7 @@ class ConnectionSpec {
     this.direction = rawData.direction;
     this.name = rawData.name;
     this.type = rawData.type.assignVariableIds(typeVarMap);
+    this.isOptional = rawData.isOptional;
   }
 
   get isInput() {
@@ -134,7 +135,7 @@ class ParticleSpec {
   toString() {
     let results = [];
     results.push(`particle ${this.name} in '${this.implFile}'`);
-    let connRes = this.connections.map(cs => `${cs.direction} ${cs.type.toString()} ${cs.name}`);
+    let connRes = this.connections.map(cs => `${cs.direction} ${cs.type.toString()}${cs.isOptional ? '?' : ''} ${cs.name}`);
     results.push(`  ${this.primaryVerb}(${connRes.join(', ')})`);
     this.affordance.filter(a => a != 'mock').forEach(a => results.push(`  affordance ${a}`));
     // TODO: support form factors

@@ -17,13 +17,13 @@ module.exports = class GroupViewConnections extends Strategy {
     this._walker = new class extends RecipeWalker {
       onRecipe(recipe) {
         // Only apply this strategy if ALL view connections are named and have types.
-        if (recipe.viewConnections.find(vc => !vc.type || !vc.name)) {
+        if (recipe.viewConnections.find(vc => !vc.type || !vc.name || vc.isOptional)) {
           return;
         }
         // Find all unique types used in the recipe that have unbound view connections.
         let types = new Set();
         recipe.viewConnections.forEach(vc => {
-          if (!vc.view && !Array.from(types).find(t => t.equals(vc.type))) {
+          if (!vc.isOptional && !vc.view && !Array.from(types).find(t => t.equals(vc.type))) {
             types.add(vc.type);
           }
         });
@@ -32,7 +32,7 @@ module.exports = class GroupViewConnections extends Strategy {
         types.forEach(type => {
           // Find the particle with the largest number of unbound connections of the same type.
           let countConnectionsByType = (connections) => Object.values(connections).filter(conn => {
-            return !conn.view && type.equals(conn.type);
+            return !conn.isOptional && !conn.view && type.equals(conn.type);
           }).length;
           let sortedParticles = [...recipe.particles].sort((p1, p2) => {
             return countConnectionsByType(p2.connections) - countConnectionsByType(p1.connections);
@@ -45,7 +45,7 @@ module.exports = class GroupViewConnections extends Strategy {
           let groups = new Map();
           groupsByType.set(type, groups);
           let allTypeViewConnections = recipe.viewConnections.filter(c => {
-            return !c.view && type.equals(c.type) && (c.particle != particleWithMostConnectionsOfType);
+            return !c.isOptional && !c.view && type.equals(c.type) && (c.particle != particleWithMostConnectionsOfType);
           });
 
           let iteration = 0;

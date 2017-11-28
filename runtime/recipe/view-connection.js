@@ -95,6 +95,10 @@ class ViewConnection {
     return this.particle.spec.connectionMap.get(this.name);
   }
 
+  get isOptional() {
+    return this.spec.isOptional;
+  }
+
   _isValid() {
     if (this.direction && !['in', 'out', 'inout', 'host'].includes(this.direction)) {
       return false;
@@ -116,6 +120,11 @@ class ViewConnection {
 
   isResolved(options) {
     assert(Object.isFrozen(this));
+
+    if (this.isOptional) {
+      return true;
+    }
+
     // TODO: This should use this._type, or possibly not consider type at all.
     if (!this.type) {
       if (options) {
