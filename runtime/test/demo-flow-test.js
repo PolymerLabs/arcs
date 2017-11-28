@@ -8,8 +8,6 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-/////// DO NOT MERGE THIS FILE: CHANGES HERE ARE FOR DEMO PURPOSES ONLY! ///////
-
  "use strict";
 
 const Arc = require("../arc.js");
@@ -72,8 +70,8 @@ describe('demo flow', function() {
       provide preamble as slot5`;
     let {plan, description} = plans.find(p => p.plan.toString() == expectedPlanString);
 
-    assert.equal("Show products from your browsing context (<b>Minecraft Book</b> plus <b>2</b> other items) and " +
-                 "choose from Products recommended based on products from your browsing context and " +
+    assert.equal("Show a few items: my short list (<b>Minecraft Book</b> plus <b>2</b> other items) and " +
+                 "choose from Products recommended based on my short list and " +
                  "Claire\'s wishlist (<b>Book: How to Draw</b> plus <b>2</b> other items).",
                  description);
 

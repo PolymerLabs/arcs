@@ -5,8 +5,6 @@
 # subject to an additional IP rights grant found at
 # http://polymer.github.io/PATENTS.txt
 
-######## DO NOT MERGE THIS FILE: CHANGES HERE ARE FOR DEMO PURPOSES ONLY! ########
-
 import '../Chooser/Chooser.manifest'
 import '../Recommend/Recommend.manifest'
 import '../ShowProducts/ShowProducts.manifest'
