@@ -11,7 +11,6 @@
 const Manifest = require('../manifest.js');
 const assert = require('chai').assert;
 const util = require('./test-util.js');
-const viewlet = require('../viewlet.js');
 const Arc = require("../arc.js");
 const MessageChannel = require("../message-channel.js");
 const InnerPec = require("../inner-PEC.js");

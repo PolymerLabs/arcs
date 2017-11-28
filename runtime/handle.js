@@ -38,7 +38,7 @@ function restore(entry, entityClass) {
 /** @class Viewlet
  * Base class for Views and Variables.
  */
-class Viewlet {
+class Handle {
   constructor(view, canRead, canWrite) {
     this._view = view;
     this.canRead = canRead;
@@ -109,7 +109,7 @@ class Viewlet {
  * connected to that particle, and the current recipe identifies which views are
  * connected.
  */
-class View extends Viewlet {
+class View extends Handle {
   constructor(view, canRead, canWrite) {
     // TODO: this should talk to an API inside the PEC.
     super(view, canRead, canWrite);
@@ -164,7 +164,7 @@ class View extends Viewlet {
  * the types of views that need to be connected to that particle, and
  * the current recipe identifies which views are connected.
  */
-class Variable extends Viewlet {
+class Variable extends Handle {
   constructor(variable, canRead, canWrite) {
     super(variable, canRead, canWrite);
   }
@@ -215,16 +215,16 @@ class Variable extends Viewlet {
   }
 }
 
-function viewletFor(view, isView, canRead, canWrite) {
+function handleFor(view, isSet, canRead, canWrite) {
   if (canRead == undefined)
     canRead = true;
   if (canWrite == undefined)
     canWrite = true;
-  if (isView || (isView == undefined && view instanceof underlyingView.View))
+  if (isSet || (isSet == undefined && view instanceof underlyingView.View))
     view = new View(view, canRead, canWrite);
   else
     view = new Variable(view, canRead, canWrite);
   return view;
 }
 
-module.exports = { viewletFor };
+module.exports = { handleFor };
