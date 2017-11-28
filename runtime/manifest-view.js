@@ -33,7 +33,7 @@ class ManifestView {
     return this._entities;
   }
   addEntity(entity) {
-    // This should be in the format used by Viewlet.
+    // This should be in the format used by Handle.
     assert(entity.rawData != null);
     this._entities.push(entity);
   }
