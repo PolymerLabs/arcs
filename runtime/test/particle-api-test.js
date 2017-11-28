@@ -44,7 +44,7 @@ describe('particle-api', function() {
                 async setViews(views) {
                   let arc = await this.constructInnerArc();
                   var resultView = views.get('result');
-                  let view = await arc.createView(resultView.type, "a view");
+                  let view = await arc.createHandle(resultView.type, "a view");
                   view.set(new resultView.entityClass({value: 'success'}));
                   resultView.set(new resultView.entityClass({value: 'done'}));
                 }
@@ -106,8 +106,8 @@ describe('particle-api', function() {
                 async setViews(views) {
                   let arc = await this.constructInnerArc();
                   var resultView = views.get('result');
-                  let inView = await arc.createView(resultView.type, "in view");
-                  let outView = await arc.createView(resultView.type, "out view");
+                  let inView = await arc.createHandle(resultView.type, "in view");
+                  let outView = await arc.createHandle(resultView.type, "out view");
                   try {
                     await arc.loadRecipe(\`
                       schema Result
@@ -207,8 +207,8 @@ describe('particle-api', function() {
                   var inputsList = await inputsView.toList();
                   var resultsView = views.get('results');
                   for (let input of inputsList) {
-                    let inView = await arc.createView(resultsView.type.primitiveType(), "in view");
-                    let outView = await arc.createView(resultsView.type.primitiveType(), "out view");
+                    let inView = await arc.createHandle(resultsView.type.primitiveType(), "in view");
+                    let outView = await arc.createHandle(resultsView.type.primitiveType(), "out view");
                     try {
                       let done = await arc.loadRecipe(\`
                         schema Result

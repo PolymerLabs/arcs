@@ -71,7 +71,7 @@ class Loader {
   async requireParticle(fileName) {
     let src = await this.loadResource(fileName);
     // Note. This is not real isolation.
-    let script = new vm.Script(src, {fileName});
+    let script = new vm.Script(src, {filename: fileName, displayErrors: true});
     let result = [];
     let self = {
       defineParticle(particleWrapper) {
@@ -80,7 +80,7 @@ class Loader {
       console,
       importScripts: s => null //console.log(`(skipping browser-space import for [${s}])`)
     };
-    script.runInNewContext(self);
+    script.runInNewContext(self, {filename: fileName, displayErrors: true});
     assert(result.length > 0 && typeof result[0] == 'function', `Error while instantiating particle implementation from ${fileName}`);
     return this.unwrapParticle(result[0]);
   }
