@@ -6,8 +6,6 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-/////// DO NOT MERGE THIS FILE: CHANGES HERE ARE FOR DEMO PURPOSES ONLY! ///////
-
 "use strict";
 
 defineParticle(({DomParticle, resolver}) => {
@@ -144,13 +142,13 @@ ${productStyles}
         return item;
       });
 
-      // if (items.length > 4) {
-      //   this.setParticleDescription('Show maaaaany items ${list}');
-      //   this.setDescriptionPattern('list', 'my long list');
-      // } else {
-      //   this.setParticleDescription('Show some items: ${list}');
-      //   this.setDescriptionPattern('list', 'my short list');
-      // }
+      if (items.length > 4) {
+        this.setParticleDescription('Show a lot of items ${list}');
+        this.setDescriptionPattern('list', 'my long list');
+      } else {
+        this.setParticleDescription('Show a few items: ${list}');
+        this.setDescriptionPattern('list', 'my short list');
+      }
 
       this._setState({
         renderModel: {
