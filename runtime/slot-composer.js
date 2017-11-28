@@ -130,7 +130,10 @@ class SlotComposer {
     let slot = this.getSlot(particle, slotName);
     if (slot) {
       // Set the slot's new content.
-      slot.setContent(content, eventlet => this.arc.pec.sendEvent(particle, slotName, eventlet));
+      slot.setContent(content, eventlet => {
+        this.arc.pec.sendEvent(particle, slotName, eventlet)
+        this.arc.makeSuggestions && this.arc.makeSuggestions();
+      });
       return;
     }
 
