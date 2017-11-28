@@ -15,7 +15,7 @@ var tracing = require("tracelib");
 const Type = require('./type.js');
 const {View, Variable} = require('./view.js');
 const Relation = require('./relation.js');
-let viewlet = require('./viewlet.js');
+let handle = require('./handle.js');
 const OuterPec = require('./outer-PEC.js');
 const Recipe = require('./recipe/recipe.js');
 const Manifest = require('./manifest.js');
@@ -325,7 +325,7 @@ class Arc {
       entity.identify(this.generateID());
     }
     for (let [entity, view] of entityMap.entries()) {
-      new viewlet.viewletFor(view).store(entity);
+      new handle.handleFor(view).store(entity);
     }
   }
 

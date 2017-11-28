@@ -13,7 +13,7 @@ const Arc = require("../arc.js");
 const assert = require('chai').assert;
 const SlotComposer = require('../slot-composer.js');
 const util = require('./test-util.js');
-const viewlet = require('../viewlet.js');
+const handle = require('../handle.js');
 const Manifest = require('../manifest.js');
 
 
@@ -43,7 +43,7 @@ describe('Arc', function() {
     let arc = new Arc({slotComposer, id:'test'});
     let fooView = arc.createView(Foo.type);
     let barView = arc.createView(Bar.type);
-    viewlet.viewletFor(fooView).set(new Foo({value: 'a Foo'}));
+    handle.handleFor(fooView).set(new Foo({value: 'a Foo'}));
     recipe.normalize();
     arc.instantiate(recipe);
     await util.assertSingletonWillChangeTo(barView, Bar, "a Foo1");
@@ -57,7 +57,7 @@ describe('Arc', function() {
     recipe.normalize();
     arc.instantiate(recipe);
 
-    viewlet.viewletFor(fooView).set(new Foo({value: 'a Foo'}));
+    handle.handleFor(fooView).set(new Foo({value: 'a Foo'}));
     await util.assertSingletonWillChangeTo(barView, Bar, "a Foo1");
   });
 
