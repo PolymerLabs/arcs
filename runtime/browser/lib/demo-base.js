@@ -31,19 +31,21 @@ class DemoBase extends HTMLElement {
     return this._root && this._root.querySelector(selector);
   }
   suggest(arc, ui) {
-    let makeSuggestions = async () => {
-      let planner = new Planner();
-      planner.init(arc);
-      let generations = [];
-      ui.add(await planner.suggest(5000, generations));
-      document.dispatchEvent(new CustomEvent('generations', {detail: {generations, arc}}));
-    };
+    if (!arc.makeSuggestions) {
+      arc.makeSuggestions = async () => {
+        let planner = new Planner();
+        planner.init(arc);
+        let generations = [];
+        ui.suggestions = await planner.suggest(5000, generations);
+        document.dispatchEvent(new CustomEvent('generations', {detail: {generations, arc}}));
+      };
+    }
     ui.addEventListener('plan-selected', e => {
       let {plan} = e.detail;
       arc.instantiate(plan);
-      makeSuggestions();
+      arc.makeSuggestions();
     });
-    makeSuggestions();
+    arc.makeSuggestions();
   }
 }
 
