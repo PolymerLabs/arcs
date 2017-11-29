@@ -12,4 +12,4 @@ particle VrPot in 'VrPot.js'
   consume root
     provide soil
     provide soil2
-  description `Create Pot`
+  description `create Pot`

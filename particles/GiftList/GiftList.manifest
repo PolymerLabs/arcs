@@ -12,4 +12,4 @@ particle GiftList in 'GiftList.js'
   GiftList(in Person person)
   affordance dom
   consume preamble
-  description `Buy gifts for ${person}'s ${person.occasion} on ${person.date}`
+  description `buy gifts for ${person}'s ${person.occasion} on ${person.date}`

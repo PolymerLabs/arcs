@@ -11,4 +11,4 @@ particle VrBox in 'VrBox.js'
   VrBox()
   affordance vr
   consume action
-  description `Create Box`
+  description `create Box`
