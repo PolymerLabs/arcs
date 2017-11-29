@@ -16,7 +16,7 @@ const Schema = require('./schema.js');
 const Search = require('./recipe/search.js');
 const Shape = require('./shape.js');
 const Type = require('./type.js');
-const {View, Variable} = require('./view.js');
+const {InMemoryCollection, InMemoryVariable} = require('./in-memory-storage.js');
 const util = require('./recipe/util.js');
 
 class Manifest {
@@ -64,9 +64,9 @@ class Manifest {
   newView(type, name, id, tags) {
     let view;
     if (type.isSetView) {
-      view = new View(type, this, name, id);
+      view = new InMemoryCollection(type, this, name, id);
     } else {
-      view = new Variable(type, this, name, id);
+      view = new InMemoryVariable(type, this, name, id);
     }
     this._views.push(view);
     this._viewTags.set(view, tags ? tags : []);

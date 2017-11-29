@@ -13,7 +13,6 @@ const assert = require('chai').assert;
 var DomSlot = require('../dom-slot.js');
 let util = require('./test-util.js');
 let loader = new (require('../loader'));
-const view = require('../view.js');
 
 class MockDomContext {
   constructor() {

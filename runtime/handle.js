@@ -12,7 +12,7 @@ const Identifier = require('./identifier.js');
 const Entity = require('./entity.js');
 const Relation = require('./relation.js');
 const Symbols = require('./symbols.js');
-const underlyingView = require('./view.js');
+const storage = require('./in-memory-storage.js');
 let identifier = Symbols.identifier;
 const assert = require("assert");
 const ParticleSpec = require("./particle-spec.js");
@@ -221,7 +221,7 @@ function handleFor(view, isSet, canRead, canWrite) {
   if (canWrite == undefined)
     canWrite = true;
   let handle;
-  if (isSet || (isSet == undefined && view instanceof underlyingView.View))
+  if (isSet || (isSet == undefined && view instanceof storage.InMemoryCollection))
     handle = new Collection(view, canRead, canWrite);
   else
     handle = new Variable(view, canRead, canWrite);
