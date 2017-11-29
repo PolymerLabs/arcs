@@ -14,7 +14,6 @@ var Arc = require("../arc.js");
 let assert = require('chai').assert;
 const SlotComposer = require('../slot-composer.js');
 
-let view = require('../view.js');
 let handle = require('../handle.js');
 
 const Shape = require('../shape.js');

@@ -10,7 +10,7 @@
 "use strict";
 
 const assert = require('assert');
-const view = require('./view.js');
+const storage = require('./in-memory-storage.js');
 const Symbols = require('./symbols.js');
 const Entity = require('./entity.js');
 const Schema = require('./schema.js');
@@ -37,8 +37,9 @@ Object.assign(exports, {
   internals: {
     identifier: Symbols.identifier,
     Type,
-    View: view.View,
-    ViewBase: view.ViewBase,
-    SingletonView: view.SingletonView
+    // TODO: are these used?
+    Collection: storage.InMemoryCollection,
+    StorageProvider: storage.InMemoryStorageProvider,
+    Variable: storage.InMemoryVariable
   }
 });

@@ -13,7 +13,7 @@ var runtime = require("./runtime.js");
 var assert = require("assert");
 var tracing = require("tracelib");
 const Type = require('./type.js');
-const {View, Variable} = require('./view.js');
+const {InMemoryCollection, InMemoryVariable} = require('./in-memory-storage.js');
 const Relation = require('./relation.js');
 let handle = require('./handle.js');
 const OuterPec = require('./outer-PEC.js');
@@ -241,10 +241,10 @@ class Arc {
       type = Type.newSetView(type);
     let view;
     if (type.isSetView) {
-      view = new View(type, this, name, id);
+      view = new InMemoryCollection(type, this, name, id);
     } else {
       assert(type.isEntity || type.isInterface, `Expected entity or interface type, but... ${JSON.stringify(type.toLiteral())}`);
-      view = new Variable(type, this, name, id);
+      view = new InMemoryVariable(type, this, name, id);
     }
     this._registerView(view, tags);
     return view;

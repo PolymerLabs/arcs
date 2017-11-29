@@ -33,7 +33,7 @@ class OuterPEC extends PEC {
     }
 
     this._apiPort.onSynchronize = ({handle, target, callback, modelCallback, type}) => {
-      if (handle.constructor.name == 'Variable') {
+      if (handle.constructor.name == 'InMemoryVariable') {
         var model = handle.get();
       } else {
         var model = handle.toList();
