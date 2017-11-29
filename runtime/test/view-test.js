@@ -82,5 +82,12 @@ describe('View', function() {
       /must start/);
     assert.throws(() => arc.createView(Bar.type, 'name', 'id', ['#valid', 'invalid']),
       /must start/);
+
+    arc.createView(Bar.type, 'name', 'id', '#sufficient');
+    arc.createView(Bar.type, 'name', 'id', ['#valid']);
+    arc.createView(Bar.type, 'name', 'id', ['#valid', '#good']);
+    ['#sufficient', '#valid', '#good'].forEach(tag =>
+      assert(arc._tags.hasOwnProperty(tag),
+        `tags ${arc._tags} should have included ${tag}`));
   });
 });
