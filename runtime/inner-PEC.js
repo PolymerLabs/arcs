@@ -46,33 +46,33 @@ class RemoteView {
   }
 
   synchronize(type, modelCallback, callback, target) {
-    this._port.Synchronize({view: this, modelCallback, callback, target, type});
+    this._port.Synchronize({handle: this, modelCallback, callback, target, type});
   }
 
   get() {
     return new Promise((resolve, reject) =>
-      this._port.HandleGet({ callback: r => {resolve(r)}, view: this }));
+      this._port.HandleGet({ callback: r => {resolve(r)}, handle: this }));
   }
 
   toList() {
     return new Promise((resolve, reject) =>
-      this._port.HandleToList({ callback: r => resolve(r), view: this }));
+      this._port.HandleToList({ callback: r => resolve(r), handle: this }));
   }
 
   set(entity) {
-    this._port.HandleSet({data: entity, view: this});
+    this._port.HandleSet({data: entity, handle: this});
   }
 
   store(entity) {
-    this._port.HandleStore({data: entity, view: this});
+    this._port.HandleStore({data: entity, handle: this});
   }
 
   remove(entityId) {
-    this._port.HandleRemove({data: entityId, view: this});
+    this._port.HandleRemove({data: entityId, handle: this});
   }
 
   clear() {
-    this._port.HandleClear({view: this});
+    this._port.HandleClear({handle: this});
   }
 }
 
@@ -96,12 +96,12 @@ class InnerPEC {
      * specifications separated from particle classes - and
      * only keeping type information on the arc side.
      */
-    this._apiPort.onDefineHandle = ({viewType, identifier, name, version}) => {
-      return new RemoteView(identifier, viewType, this._apiPort, this, name, version);
+    this._apiPort.onDefineHandle = ({type, identifier, name, version}) => {
+      return new RemoteView(identifier, type, this._apiPort, this, name, version);
     };
 
-    this._apiPort.onCreateHandleCallback = ({viewType, id, name, callback}) => {
-      var view = new RemoteView(id, viewType, this._apiPort, this, name, 0);
+    this._apiPort.onCreateHandleCallback = ({type, id, name, callback}) => {
+      var view = new RemoteView(id, type, this._apiPort, this, name, 0);
       Promise.resolve().then(() => callback(view));
       return view;
     }
@@ -127,7 +127,7 @@ class InnerPEC {
     }
 
     this._apiPort.onInstantiateParticle =
-      ({spec, views}) => this._instantiateParticle(spec, views);
+      ({spec, handles}) => this._instantiateParticle(spec, handles);
 
     this._apiPort.onSimpleCallback = ({callback, data}) => callback(data);
 
@@ -205,9 +205,9 @@ class InnerPEC {
   innerArcHandle(arcId) {
     var pec = this;
     return {
-      createHandle: function(viewType, name) {
+      createHandle: function(type, name) {
         return new Promise((resolve, reject) =>
-          pec._apiPort.ArcCreateHandle({arc: arcId, viewType, name, callback: view => {
+          pec._apiPort.ArcCreateHandle({arc: arcId, type, name, callback: view => {
             var v = handle.handleFor(view, view.type.isSetView, true, true);
             v.entityClass = (view.type.isSetView ? view.type.primitiveType().entitySchema : view.type.entitySchema).entityClass();
             resolve(v);
