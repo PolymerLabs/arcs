@@ -7,7 +7,14 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-'use strict';
+
+// TODO: Move HTMLElement to platform abstraction.
+let HTMLElement;
+if (typeof window == 'undefined') {
+  HTMLElement = class HTMLElement {}
+} else {
+  HTMLElement = window.HTMLElement;
+}
 
 export default class ModelSelect extends HTMLElement {
   connectedCallback() {
@@ -31,4 +38,6 @@ export default class ModelSelect extends HTMLElement {
   }
 }
 
-customElements.define('model-select', ModelSelect);
+if (typeof customElements != 'undefined') {
+  customElements.define('model-select', ModelSelect);
+}

@@ -90,4 +90,6 @@ class XList extends XState(XElement) {
   }
 }
 
-customElements.define('x-list', XList);
+if (typeof customElements != 'undefined') {
+  customElements.define('x-list', XList);
+}
