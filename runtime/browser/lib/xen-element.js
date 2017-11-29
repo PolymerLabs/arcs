@@ -8,6 +8,13 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
+let HTMLElement;
+if (typeof window == 'undefined') {
+  HTMLElement = class HTMLElement {}
+} else {
+  HTMLElement = window.HTMLElement;
+}
+
 export default class XenElement extends HTMLElement {
   constructor() {
     super();
