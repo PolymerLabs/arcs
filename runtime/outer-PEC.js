@@ -32,28 +32,28 @@ class OuterPEC extends PEC {
       }
     }
 
-    this._apiPort.onSynchronize = ({view, target, callback, modelCallback, type}) => {
-      if (view.constructor.name == 'Variable') {
-        var model = view.get();
+    this._apiPort.onSynchronize = ({handle, target, callback, modelCallback, type}) => {
+      if (handle.constructor.name == 'Variable') {
+        var model = handle.get();
       } else {
-        var model = view.toList();
+        var model = handle.toList();
       }
       this._apiPort.SimpleCallback({callback: modelCallback, data: model}, target);
-      view.on(type, data => this._apiPort.SimpleCallback({callback, data}), target);
+      handle.on(type, data => this._apiPort.SimpleCallback({callback, data}), target);
     };
 
-    this._apiPort.onHandleGet = ({view, callback}) => {
-      this._apiPort.SimpleCallback({callback, data: view.get()});
+    this._apiPort.onHandleGet = ({handle, callback}) => {
+      this._apiPort.SimpleCallback({callback, data: handle.get()});
     }
 
-    this._apiPort.onHandleToList = ({view, callback}) => {
-      this._apiPort.SimpleCallback({callback, data: view.toList()});
+    this._apiPort.onHandleToList = ({handle, callback}) => {
+      this._apiPort.SimpleCallback({callback, data: handle.toList()});
     }
 
-    this._apiPort.onHandleSet = ({view, data}) => view.set(data);
-    this._apiPort.onHandleStore = ({view, data}) => view.store(data);
-    this._apiPort.onHandleClear = ({view}) => view.clear();
-    this._apiPort.onHandleRemove = ({view, data}) => view.remove(data);
+    this._apiPort.onHandleSet = ({handle, data}) => handle.set(data);
+    this._apiPort.onHandleStore = ({handle, data}) => handle.store(data);
+    this._apiPort.onHandleClear = ({handle}) => handle.clear();
+    this._apiPort.onHandleRemove = ({handle, data}) => handle.remove(data);
 
     this._apiPort.onIdle = ({version, relevance}) => {
       if (version == this._idleVersion) {
@@ -67,9 +67,9 @@ class OuterPEC extends PEC {
       this._apiPort.ConstructArcCallback({callback, arc});
     }
 
-    this._apiPort.onArcCreateHandle = ({callback, arc, viewType, name}) => {
-      var view = this._arc.createView(viewType, name);
-      this._apiPort.CreateHandleCallback(view, {viewType, name, callback, id: view.id});
+    this._apiPort.onArcCreateHandle = ({callback, arc, type, name}) => {
+      var view = this._arc.createView(type, name);
+      this._apiPort.CreateHandleCallback(view, {type, name, callback, id: view.id});
     }
 
     this._apiPort.onArcCreateSlot = ({callback, arc, transformationParticle, transformationSlotName, hostedParticleName,  hostedSlotName}) => {
@@ -129,7 +129,7 @@ class OuterPEC extends PEC {
   instantiate(particleSpec, spec, views, lastSeenVersion) {
     views.forEach(view => {
       var version = lastSeenVersion.get(view.id) || 0;
-      this._apiPort.DefineHandle(view, { viewType: view.type, name: view.name,
+      this._apiPort.DefineHandle(view, { type: view.type, name: view.name,
                                        version });
     });
 
@@ -143,7 +143,7 @@ class OuterPEC extends PEC {
     }
 
     // TODO: rename this concept to something like instantiatedParticle, handle or registration.
-    this._apiPort.InstantiateParticle(particleSpec, {spec, views});
+    this._apiPort.InstantiateParticle(particleSpec, {spec, handles: views});
     return particleSpec;
   }
   startRender({particle, slotName, contentTypes}) {

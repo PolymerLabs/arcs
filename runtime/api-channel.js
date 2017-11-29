@@ -234,9 +234,9 @@ class PECOuterPort extends APIPort {
     this.registerCall("Stop", {});
     this.registerCall("DefineParticle",
       {particleDefinition: this.Direct, particleFunction: this.Stringify});
-    this.registerRedundantInitializer("DefineHandle", {viewType: this.ByLiteral(Type), name: this.Direct})
+    this.registerRedundantInitializer("DefineHandle", {type: this.ByLiteral(Type), name: this.Direct})
     this.registerInitializer("InstantiateParticle",
-      {spec: this.ByLiteral(ParticleSpec), views: this.Map(this.Direct, this.Mapped)});
+      {spec: this.ByLiteral(ParticleSpec), handles: this.Map(this.Direct, this.Mapped)});
 
     this.registerCall("UIEvent", {particle: this.Mapped, slotName: this.Direct, event: this.Direct});
     this.registerCall("SimpleCallback", {callback: this.Direct, data: this.Direct});
@@ -245,22 +245,22 @@ class PECOuterPort extends APIPort {
     this.registerCall("StopRender", {particle: this.Mapped, slotName: this.Direct});
 
     this.registerHandler("Render", {particle: this.Mapped, slotName: this.Direct, content: this.Direct});
-    this.registerHandler("Synchronize", {view: this.Mapped, target: this.Mapped,
+    this.registerHandler("Synchronize", {handle: this.Mapped, target: this.Mapped,
                                     type: this.Direct, callback: this.Direct,
                                     modelCallback: this.Direct});
-    this.registerHandler("HandleGet", {view: this.Mapped, callback: this.Direct});
-    this.registerHandler("HandleToList", {view: this.Mapped, callback: this.Direct});
-    this.registerHandler("HandleSet", {view: this.Mapped, data: this.Direct});
-    this.registerHandler("HandleStore", {view: this.Mapped, data: this.Direct});
-    this.registerHandler("HandleRemove", {view: this.Mapped, data: this.Direct});
-    this.registerHandler("HandleClear", {view: this.Mapped});
+    this.registerHandler("HandleGet", {handle: this.Mapped, callback: this.Direct});
+    this.registerHandler("HandleToList", {handle: this.Mapped, callback: this.Direct});
+    this.registerHandler("HandleSet", {handle: this.Mapped, data: this.Direct});
+    this.registerHandler("HandleStore", {handle: this.Mapped, data: this.Direct});
+    this.registerHandler("HandleRemove", {handle: this.Mapped, data: this.Direct});
+    this.registerHandler("HandleClear", {handle: this.Mapped});
     this.registerHandler("Idle", {version: this.Direct, relevance: this.Map(this.Mapped, this.Direct)});
 
     this.registerHandler("ConstructInnerArc", {callback: this.Direct, particle: this.Mapped});
     this.registerCall("ConstructArcCallback", {callback: this.Direct, arc: this.LocalMapped});
 
-    this.registerHandler("ArcCreateHandle", {callback: this.Direct, arc: this.LocalMapped, viewType: this.ByLiteral(Type), name: this.Direct});
-    this.registerInitializer("CreateHandleCallback", {callback: this.Direct, viewType: this.ByLiteral(Type), name: this.Direct, id: this.Direct});
+    this.registerHandler("ArcCreateHandle", {callback: this.Direct, arc: this.LocalMapped, type: this.ByLiteral(Type), name: this.Direct});
+    this.registerInitializer("CreateHandleCallback", {callback: this.Direct, type: this.ByLiteral(Type), name: this.Direct, id: this.Direct});
 
     this.registerHandler("ArcCreateSlot",
       { callback: this.Direct, arc: this.LocalMapped, transformationParticle: this.Mapped, transformationSlotName: this.Direct, hostedParticleName: this.Direct, hostedSlotName: this.Direct});
@@ -279,9 +279,9 @@ class PECInnerPort extends APIPort {
     // particleFunction needs to be eval'd in context or it won't work.
     this.registerHandler("DefineParticle",
       {particleDefinition: this.Direct, particleFunction: this.Direct});
-    this.registerInitializerHandler("DefineHandle", {viewType: this.ByLiteral(Type), name: this.Direct});
+    this.registerInitializerHandler("DefineHandle", {type: this.ByLiteral(Type), name: this.Direct});
     this.registerInitializerHandler("InstantiateParticle",
-      {spec: this.ByLiteral(ParticleSpec), views: this.Map(this.Direct, this.Mapped)});
+      {spec: this.ByLiteral(ParticleSpec), handles: this.Map(this.Direct, this.Mapped)});
 
     this.registerHandler("UIEvent", {particle: this.Mapped, slotName: this.Direct, event: this.Direct});
     this.registerHandler("SimpleCallback", {callback: this.LocalMapped, data: this.Direct});
@@ -290,22 +290,22 @@ class PECInnerPort extends APIPort {
     this.registerHandler("StopRender", {particle: this.Mapped, slotName: this.Direct});
 
     this.registerCall("Render", {particle: this.Mapped, slotName: this.Direct, content: this.Direct});
-    this.registerCall("Synchronize", {view: this.Mapped, target: this.Mapped,
+    this.registerCall("Synchronize", {handle: this.Mapped, target: this.Mapped,
                                  type: this.Direct, callback: this.LocalMapped,
                                  modelCallback: this.LocalMapped});
-    this.registerCall("HandleGet", {view: this.Mapped, callback: this.LocalMapped});
-    this.registerCall("HandleToList", {view: this.Mapped, callback: this.LocalMapped});
-    this.registerCall("HandleSet", {view: this.Mapped, data: this.Direct});
-    this.registerCall("HandleStore", {view: this.Mapped, data: this.Direct});
-    this.registerCall("HandleRemove", {view: this.Mapped, data: this.Direct});
-    this.registerCall("HandleClear", {view: this.Mapped});
+    this.registerCall("HandleGet", {handle: this.Mapped, callback: this.LocalMapped});
+    this.registerCall("HandleToList", {handle: this.Mapped, callback: this.LocalMapped});
+    this.registerCall("HandleSet", {handle: this.Mapped, data: this.Direct});
+    this.registerCall("HandleStore", {handle: this.Mapped, data: this.Direct});
+    this.registerCall("HandleRemove", {handle: this.Mapped, data: this.Direct});
+    this.registerCall("HandleClear", {handle: this.Mapped});
     this.registerCall("Idle", {version: this.Direct, relevance: this.Map(this.Mapped, this.Direct)});
 
     this.registerCall("ConstructInnerArc", {callback: this.LocalMapped, particle: this.Mapped});
     this.registerHandler("ConstructArcCallback", {callback: this.LocalMapped, arc: this.Direct});
 
-    this.registerCall("ArcCreateHandle", {callback: this.LocalMapped, arc: this.Direct, viewType: this.ByLiteral(Type), name: this.Direct});
-    this.registerInitializerHandler("CreateHandleCallback", {callback: this.LocalMapped, viewType: this.ByLiteral(Type), name: this.Direct, id: this.Direct});
+    this.registerCall("ArcCreateHandle", {callback: this.LocalMapped, arc: this.Direct, type: this.ByLiteral(Type), name: this.Direct});
+    this.registerInitializerHandler("CreateHandleCallback", {callback: this.LocalMapped, type: this.ByLiteral(Type), name: this.Direct, id: this.Direct});
     this.registerCall("ArcCreateSlot",
       {callback: this.LocalMapped, arc: this.Direct, transformationParticle: this.Mapped, transformationSlotName: this.Direct, hostedParticleName: this.Direct, hostedSlotName: this.Direct});
     this.registerInitializerHandler("CreateSlotCallback", { callback: this.LocalMapped, hostedSlotId: this.Direct });
