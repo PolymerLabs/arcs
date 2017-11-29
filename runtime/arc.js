@@ -34,10 +34,7 @@ class Arc {
     this._recipes = [];
     this._loader = loader;
 
-    // All the views, mapped by view ID
-    this._viewsById = new Map();
-    // .. and mapped by Type
-    this._viewsByType = new Map();
+    this._viewRegistry = ViewRegistry();
 
     // information about last-seen-versions of views
     this._lastSeenVersion = new Map();
@@ -50,11 +47,6 @@ class Arc {
       slotComposer.arc = this;
     }
     this.nextParticleHandle = 0;
-
-    // Dictionary from each tag string to a list of views
-    this._tags = {};
-    // Map from each view to a list of tags.
-    this._viewTags = new Map();
 
     this._search = null;
   }
@@ -135,7 +127,7 @@ class Arc {
   }
 
   get _views() {
-    return [...this._viewsById.values()];
+    return _viewRegistry.views();
   }
 
   // Makes a copy of the arc used for speculative execution.
@@ -232,69 +224,6 @@ class Arc {
     var viewMap = this.particleViewMaps.get(particleHandle);
     assert(viewMap.spec.connectionMap.get(name) !== undefined, "can't connect view to a view slot that doesn't exist");
     viewMap.views.set(name, targetView);
-  }
-
-  createView(type, name, id, tags) {
-    tags = tags || [];
-    assert(type instanceof Type, `can't createView with type ${type} that isn't a Type`);
-    if (type.isRelation)
-      type = Type.newSetView(type);
-    let view;
-    if (type.isSetView) {
-      view = new View(type, this, name, id);
-    } else {
-      assert(type.isEntity || type.isInterface, `Expected entity or interface type, but... ${JSON.stringify(type.toLiteral())}`);
-      view = new Variable(type, this, name, id);
-    }
-    this._registerView(view, tags);
-    return view;
-  }
-
-  _registerView(view, tags) {
-    this._viewsById.set(view.id, view);
-    let byType = this._viewsByType.get(Arc._viewKey(view.type)) || [];
-    byType.push(view);
-    this._viewsByType.set(Arc._viewKey(view.type), byType);
-
-    if (tags.length) {
-      for (let tag of tags) {
-        if (this._tags[tag] == undefined)
-          this._tags[tag] = [];
-        this._tags[tag].push(view);
-      }
-    }
-    this._viewTags.set(view, new Set(tags));
-  }
-
-  // TODO: Don't use this, we should be testing the schemas for compatiblity
-  //       instead of using just the name.
-  static _viewKey(type) {
-    if (type.isSetView) {
-      return `list:${type.primitiveType().entitySchema.name}`;
-    } else if (type.isEntity) {
-      return type.entitySchema.name;
-    } else if (type.isShape) {
-      // TODO we need to fix this too, otherwise all views of shape type will
-      // be of the 'same type' when searching by type.
-      return type.shapeShape;
-    }
-  }
-
-  findViewsByType(type, options) {
-    // TODO: use options (location, labels, etc.) somehow.
-    var views = this._viewsByType.get(Arc._viewKey(type)) || [];
-    if (options && options.tags) {
-      views = views.filter(view => options.tags.filter(tag => !this._viewTags.get(view).has(tag)).length == 0);
-    }
-    return views;
-  }
-
-  findViewById(id) {
-    let view = this._viewsById.get(id);
-    if (view == null) {
-      view = this._context.findViewById(id);
-    }
-    return view;
   }
 
   // TODO: Remove this.

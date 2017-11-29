@@ -253,3 +253,28 @@ Object.assign(module.exports, {
   View,
   Variable,
 });
+
+class ViewRegistry {
+
+  /**
+   * @param finder A generator allowing contexts that contain a tree of
+   * view-containing elements to be walked for recursive view-finding.
+   */
+  constructor(finder) {
+  }
+
+  create(type, name, id, tags) {
+  }
+
+  _registerView(view, tags) {
+  }
+
+  findByType(type, options) {
+  }
+
+  findById() {
+  }
+
+  findByName() {
+  }
+}

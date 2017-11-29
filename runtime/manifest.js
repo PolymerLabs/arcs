@@ -26,12 +26,11 @@ class Manifest {
     // TODO: These should be lists, possibly with a separate flattened map.
     this._particles = {};
     this._schemas = {};
-    this._views = [];
     this._shapes = [];
-    this._viewTags = new Map();
     this._fileName = null;
     this._nextLocalID = 0;
     this._id = null;
+    this._viewRegistry = ViewRegistry(_findAll);
   }
   get id() {
     return this._id;
@@ -52,25 +51,11 @@ class Manifest {
     return this._fileName;
   }
   get views() {
-    return this._views;
+    return this._viewRegistry.views();
   }
 
   get shapes() {
     return this._shapes;
-  }
-
-  // TODO: newParticle, Schema, etc.
-  // TODO: simplify() / isValid().
-  newView(type, name, id, tags) {
-    let view;
-    if (type.isSetView) {
-      view = new View(type, this, name, id);
-    } else {
-      view = new Variable(type, this, name, id);
-    }
-    this._views.push(view);
-    this._viewTags.set(view, tags ? tags : []);
-    return view;
   }
   _find(manifestFinder) {
     let result = manifestFinder(this);
@@ -98,16 +83,6 @@ class Manifest {
   }
   findParticlesByVerb(verb) {
     return [...this._findAll(manifest => Object.values(manifest._particles).filter(particle => particle.primaryVerb == verb))];
-  }
-  findViewByName(name) {
-    return this._find(manifest => manifest._views.find(view => view.name == name));
-  }
-  findViewById(id) {
-    return this._find(manifest => manifest._views.find(view => view.id == id));
-  }
-  findViewsByType(type, options) {
-    var tags = options && options.tags ? options.tags : [];
-    return [...this._findAll(manifest => manifest._views.filter(view => view.type.equals(type) && tags.filter(tag => !manifest._viewTags.get(view).includes(tag)).length == 0))];
   }
   findShapeByName(name) {
     return this._find(manifest => manifest._shapes.find(shape => shape.name == name));
