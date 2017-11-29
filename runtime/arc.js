@@ -263,7 +263,6 @@ class Arc {
 
     if (tags.length) {
       for (let tag of tags) {
-        assert(tag.startsWith('#'), `tag ${tag} must start with '#'`);
         if (this._tags[tag] == undefined)
           this._tags[tag] = [];
         this._tags[tag].push(view);
