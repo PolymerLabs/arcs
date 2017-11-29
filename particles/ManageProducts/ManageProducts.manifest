@@ -19,4 +19,4 @@ particle ManageProducts in 'ManageProducts.js'
     provide postamble
     provide set of annotation
       view list
-  description `Manage ${list}`
+  description `manage ${list}`
