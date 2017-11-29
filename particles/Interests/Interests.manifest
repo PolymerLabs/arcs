@@ -11,4 +11,4 @@ import '../../entities/Product.manifest'
 particle Interests in 'Interests.js'
   Interests(in [Product] list)
   consume postamble
-  description `Recommendations based on ${list}`
+  description `recommendations based on ${list}`

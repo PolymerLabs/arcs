@@ -68,7 +68,7 @@ describe('demo flow', function() {
     let {plan, description} = plans.find(p => p.plan.toString() == expectedPlanString);
 
     assert.equal("Show products from your browsing context (<b>Minecraft Book</b> plus <b>2</b> other items) and " +
-                 "Choose from Products recommended based on products from your browsing context and " +
+                 "choose from Products recommended based on products from your browsing context and " +
                  "Claire\'s wishlist (<b>Book: How to Draw</b> plus <b>2</b> other items).",
                  description);
 
