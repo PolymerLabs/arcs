@@ -235,8 +235,8 @@ class Arc {
   }
 
   createView(type, name, id, tags) {
-    tags = tags || [];
     assert(type instanceof Type, `can't createView with type ${type} that isn't a Type`);
+
     if (type.isRelation)
       type = Type.newSetView(type);
     let view;
@@ -251,6 +251,11 @@ class Arc {
   }
 
   _registerView(view, tags) {
+    tags = tags || [];
+    tags = Array.isArray(tags) ? tags : [tags];
+    tags.forEach(tag => assert(tag.startsWith('#'),
+      `tag ${tag} must start with '#'`));
+
     this._viewsById.set(view.id, view);
     let byType = this._viewsByType.get(Arc._viewKey(view.type)) || [];
     byType.push(view);
@@ -258,6 +263,7 @@ class Arc {
 
     if (tags.length) {
       for (let tag of tags) {
+        assert(tag.startsWith('#'), `tag ${tag} must start with '#'`);
         if (this._tags[tag] == undefined)
           this._tags[tag] = [];
         this._tags[tag].push(view);

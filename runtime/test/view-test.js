@@ -7,7 +7,7 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
- "use strict";
+"use strict";
 
 var runtime = require("../runtime.js");
 var Arc = require("../arc.js");
@@ -71,5 +71,16 @@ describe('View', function() {
     let shapeView = arc.createView(Type.newInterface(shape));
     shapeView.set(manifest.particles[0]);
     assert(shapeView.get() == manifest.particles[0]);
+  });
+
+  it('createView only allows valid tags & types in views', async () => {
+    let arc = new Arc({slotComposer});
+    let manifest = await Manifest.load('../particles/test/test-particles.manifest', loader);
+
+    assert.throws(() => arc.createView('not a type'), /isn\'t a Type/);
+    assert.throws(() => arc.createView(Bar.type, 'name', 'id', 'invalid'),
+      /must start/);
+    assert.throws(() => arc.createView(Bar.type, 'name', 'id', ['#valid', 'invalid']),
+      /must start/);
   });
 });
