@@ -17,7 +17,7 @@ defineParticle(({DomParticle}) => {
       var productsView = views.get('products');
       var productsList = await productsView.toList();
       for (let [index, product] of productsList.entries()) {
-        let productView = await arc.createView(productsView.type.primitiveType(), "product" + index);
+        let productView = await arc.createHandle(productsView.type.primitiveType(), "product" + index);
 
         // TODO: fetch the particle from "hostedParticle" handle.
         // let hostedParticle = await views.get('hostedParticle').get();
