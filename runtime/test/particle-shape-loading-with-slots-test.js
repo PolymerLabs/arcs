@@ -34,7 +34,7 @@ describe('particle-shape-loading-with-slots', function() {
 
     var slotComposer = new MockSlotComposer();
     var arc = new Arc({id: 'test', pecFactory, slotComposer});
-    let manifest = await Manifest.load('../particles/test/transformations/test-slots-particles.manifest', loader);
+    let manifest = await Manifest.load('./particles/test/transformations/test-slots-particles.manifest', loader);
 
     let recipe = new Recipe();
     let recipeParticle = recipe.newParticle("MultiplexSlotsParticle");

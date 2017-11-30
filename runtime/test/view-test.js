@@ -40,7 +40,7 @@ describe('View', function() {
   it('dedupes common user-provided ids', async() => {
     let arc = new Arc({slotComposer});
 
-    let manifest = await Manifest.load('../particles/test/test-particles.manifest', loader);
+    let manifest = await Manifest.load('./particles/test/test-particles.manifest', loader);
     let Foo = manifest.schemas.Foo.entityClass();
     let fooView = handle.handleFor(arc.createView(Foo.type.setViewOf()));
     fooView.entityClass = Foo;
@@ -62,7 +62,7 @@ describe('View', function() {
 
   it('can store a particle in a shape view', async () => {
     let arc = new Arc({slotComposer});
-    let manifest = await Manifest.load('../particles/test/test-particles.manifest', loader);
+    let manifest = await Manifest.load('./particles/test/test-particles.manifest', loader);
 
     let shape = new Shape([{type: Type.newEntity(manifest.schemas.Foo)},
                            {type: Type.newEntity(manifest.schemas.Bar)}], []);

@@ -27,7 +27,7 @@ describe('demo flow', function() {
       id: 'demo',
       pecFactory,
       slotComposer,
-      context: await Manifest.load('browser/demo/recipes.manifest', loader),
+      context: await Manifest.load('./runtime/browser/demo/recipes.manifest', loader),
       loader
     });
     let Product = arc.context.findSchemaByName('Product').entityClass();
@@ -43,8 +43,8 @@ describe('demo flow', function() {
     // Choose a plan to test with.
     let expectedPlanString = `recipe
   create as view0 # Product List
-  copy 'manifest:browser/demo/recipes.manifest:view0' #shortlist as view1 # Product List
-  map 'manifest:browser/demo/recipes.manifest:view1' #wishlist as view2 # Product List
+  copy 'manifest:./runtime/browser/demo/recipes.manifest:view0' #shortlist as view1 # Product List
+  map 'manifest:./runtime/browser/demo/recipes.manifest:view1' #wishlist as view2 # Product List
   create as view3 # Description List
   slot 'rootslotid-root' as slot3
   AlsoOn as particle0

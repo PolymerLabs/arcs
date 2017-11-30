@@ -20,7 +20,7 @@ let loader = new Loader();
 
 async function setup() {
   let manifest = await Manifest.parse(`
-    import '../particles/test/test-particles.manifest'
+    import './particles/test/test-particles.manifest'
     recipe TestRecipe
       use 'test:1' as view0
       use 'test:2' as view1

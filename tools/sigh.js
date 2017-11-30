@@ -1,4 +1,3 @@
-// TODO: Don't use modules here!
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
@@ -36,39 +35,32 @@ function peg() {
 }
 
 async function webpack() {
-  try {
-    const webpack = require('webpack');
+  const webpack = require('webpack');
 
-    let node = {
-      fs: 'empty',
-      mkdirp: 'empty',
-      minimist: 'empty',
-    };
+  let node = {
+    fs: 'empty',
+    mkdirp: 'empty',
+    minimist: 'empty',
+  };
 
-    for (let file of sources.browser) {
-      await new Promise((resolve, reject) => {
-        webpack({
-          entry: `./runtime/browser/${file}`,
-          output: {
-            filename: `./runtime/browser/build/${file}`,
-          },
-          node,
-          devtool: 'sourcemap',
-        }, (err, stats) => {
-          if (err) {
-            reject(err);
-          }
-          console.log(stats.toString({colors: true, verbose: true}));
-          resolve();
-        });
+  for (let file of sources.browser) {
+    await new Promise((resolve, reject) => {
+      webpack({
+        entry: `./runtime/browser/${file}`,
+        output: {
+          filename: `./runtime/browser/build/${file}`,
+        },
+        node,
+        devtool: 'sourcemap',
+      }, (err, stats) => {
+        if (err) {
+          reject(err);
+        }
+        console.log(stats.toString({colors: true, verbose: true}));
+        resolve();
       });
-    }
-
-  } catch(x) {
-    // in case of emergency, break glass .. then stay calm and carry on watching
-    console.log(x);
+    });
   }
-
 }
 
 function test() {
@@ -98,7 +90,6 @@ function test() {
       chain.push(`
         import mocha from '${mochaInstanceFile}';
         mocha.suite.emit('pre-require', global, '${test}', mocha);
-        console.log('next ${test}')
       `);
       chain.push(`
         import '${test}';
