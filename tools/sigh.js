@@ -2,6 +2,7 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 const spawn = require('child_process').spawnSync;
+const minimist = require('minimist');
 
 const projectRoot = path.resolve(__dirname, '..');
 process.chdir(projectRoot);
@@ -17,6 +18,13 @@ const sources = {
     'worker-entry.js',
     'planner.js'
   ],
+};
+
+const steps = {
+  peg: [peg],
+  test: [peg, test],
+  webpack: [peg, webpack],
+  default: [peg, test, webpack],
 };
 
 function peg() {
@@ -60,9 +68,14 @@ async function webpack() {
       });
     });
   }
+  return true;
 }
 
-function test() {
+function test(args) {
+  let options = minimist(args, {
+    string: ['grep'],
+    alias: {g: 'grep'},
+  });
   function* testsInDir(dir) {
     let tests = [];
     for (let entry of fs.readdirSync(dir)) {
@@ -107,10 +120,12 @@ function test() {
     let runner = `
       import mocha from '${mochaInstanceFile}';
       ${chainImports.join('\n    ')}
-      mocha.run(function(failures) {
-        process.on("exit", function() {
-          process.exit(failures > 0 ? 1 : 0);
-        });
+      mocha
+        .grep(${JSON.stringify(options.grep || '')})
+        .run(function(failures) {
+          process.on("exit", function() {
+            process.exit(failures > 0 ? 1 : 0);
+          });
       });
     `;
     let runnerFile = path.join(tempDir, 'runner.js');
@@ -135,8 +150,30 @@ async function defaultSteps() {
 }
 
 (async () => {
-  let result = await defaultSteps();
-  process.on("exit", function() {
-    process.exit(result ? 0 : 1);
-  });
+  console.log('😌');
+  let result = false;
+  let command = process.argv[2] || 'default';
+  let funs = steps[command];
+  try {
+    if (!funs) {
+      console.error(`What is '${command}'?`);
+      return;
+    }
+    for (let fun of funs) {
+      console.log(`🙋 ${fun.name}`);
+      // To avoid confusion, only the last step gets args.
+      let args = fun == funs[funs.length - 1] ? process.argv.slice(2) : [];
+      if (!await fun(args)) {
+        console.log(`🙅 ${fun.name}`);
+        return;
+      }
+      console.log(`🙆 ${fun.name}`);
+    }
+    result = true;
+  } finally {
+    console.log(result ? '🎉' : '😱');
+    process.on("exit", function() {
+      process.exit(result ? 0 : 1);
+    });
+  }
 })();
