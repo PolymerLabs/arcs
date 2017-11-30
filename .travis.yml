@@ -1,4 +1,4 @@
 language: node_js
 node_js:
-  - "7"
-script: "cd runtime && npm install && gulp"
+  - "9"
+script: "npm install && ./tools/sigh"
