@@ -256,8 +256,8 @@ class InnerPEC {
       handleMap.set(key, handle.handleFor(value, value.type.isSetView, spec.connectionMap.get(key).isInput, spec.connectionMap.get(key).isOutput));
     });
 
-    for (let handle of handleMap.values()) {
-      var type = handle.underlyingView().type;
+    for (let localHandle of handleMap.values()) {
+      var type = localHandle.underlyingView().type;
       let schemaModel;
       if (type.isSetView && type.primitiveType().isEntity) {
         schemaModel = type.primitiveType().entitySchema;
@@ -266,7 +266,7 @@ class InnerPEC {
       }
 
       if (schemaModel)
-        handle.entityClass = schemaModel.entityClass();
+        localHandle.entityClass = schemaModel.entityClass();
     }
 
     return [particle, async () => {

@@ -228,4 +228,4 @@ function handleFor(view, isSet, canRead, canWrite) {
   return handle;
 }
 
-export default { handleFor };
+export default {handleFor};
