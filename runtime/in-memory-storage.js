@@ -98,7 +98,7 @@ class InMemoryStorageProvider {
   }
 }
 
-export class InMemoryCollection extends ViewBase {
+export class InMemoryCollection extends InMemoryStorageProvider {
   constructor(type, arc, name, id) {
     super(type, arc, name, id);
     this._items = new Map();

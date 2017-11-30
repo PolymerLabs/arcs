@@ -75,7 +75,7 @@ describe('View', function() {
 
   it('createView only allows valid tags & types in views', async () => {
     let arc = new Arc({slotComposer});
-    let manifest = await Manifest.load('../particles/test/test-particles.manifest', loader);
+    let manifest = await Manifest.load('./particles/test/test-particles.manifest', loader);
 
     assert.throws(() => arc.createView('not a type'), /isn\'t a Type/);
     assert.throws(() => arc.createView(Bar.type, 'name', 'id', 'invalid'),
