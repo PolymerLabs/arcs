@@ -47,6 +47,8 @@ class MessageChannel {
     message = JSON.parse(JSON.stringify(message));
     if (this._ports[id]._onmessage) {
       try {
+        // Yield so that we deliver the message asynchronously.
+        await 0;
         await this._ports[id]._onmessage(new MessageEvent(message));
       } catch (e) {
         console.error("Exception in particle code\n", e);

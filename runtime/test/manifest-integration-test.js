@@ -14,7 +14,7 @@ import {assert} from './chai-web.js';
 import Arc from "../arc.js";
 import Loader from "../loader.js";
 import Manifest from '../manifest.js';
-import handle from '../viewlet.js';
+import handle from '../handle.js';
 import Schema from '../schema.js';
 import Speculator from '../speculator.js';
 

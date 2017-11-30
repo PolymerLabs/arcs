@@ -11,7 +11,7 @@
 import Manifest from '../manifest.js';
 import {assert} from './chai-web.js';
 import * as util from './test-util.js';
-import handle from '../viewlet.js';
+import handle from '../handle.js';
 import Arc from "../arc.js";
 import MessageChannel from "../message-channel.js";
 import InnerPec from "../inner-PEC.js";
