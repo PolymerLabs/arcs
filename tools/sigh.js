@@ -32,6 +32,7 @@ function peg() {
     let prefix = 'export default ';
     fs.writeFileSync(path.resolve(projectRoot, outputFile), prefix + source);
   }
+  return true;
 }
 
 async function webpack() {
@@ -126,13 +127,18 @@ function test() {
     //'--print_all_exceptions',
     '--loader', path.join(__dirname, 'custom-loader.mjs'),
     runner,
-  ], {stdio: 'inherit'});
+  ], {stdio: 'inherit'}).status == 0;
 }
 
 async function defaultSteps() {
-  await peg();
-  await test();
-  await webpack();
+  return await peg() &&
+      await test() &&
+      await webpack();
 }
 
-defaultSteps();
+(async () => {
+  let result = await defaultSteps();
+  process.on("exit", function() {
+    process.exit(result ? 0 : 1);
+  });
+})();
