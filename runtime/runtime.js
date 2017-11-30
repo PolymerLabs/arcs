@@ -36,18 +36,5 @@ export default {
   internals: {
     identifier: Symbols.identifier,
     Type,
-<<<<<<< 38605c14fbf4818fdbbb2d39a870a9162b0a9b97
-    // TODO: are these used?
-    Collection: storage.InMemoryCollection,
-    StorageProvider: storage.InMemoryStorageProvider,
-    Variable: storage.InMemoryVariable
-||||||| merged common ancestors
-    View: view.View,
-    ViewBase: view.ViewBase,
-    SingletonView: view.SingletonView
-=======
-    View,
-    ViewBase,
->>>>>>> tools/sigh can run arc-tests
   }
 };
