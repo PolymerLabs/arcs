@@ -1,7 +1,7 @@
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
-const spawn = require('child_process').spawn;
+const spawn = require('child_process').spawnSync;
 
 const projectRoot = path.resolve(__dirname, '..');
 process.chdir(projectRoot);
@@ -129,6 +129,10 @@ function test() {
   ], {stdio: 'inherit'});
 }
 
-peg();
-test();
-webpack();
+async function defaultSteps() {
+  await peg();
+  await test();
+  await webpack();
+}
+
+defaultSteps();
