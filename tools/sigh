@@ -1,2 +1,2 @@
 #!/bin/sh
-exec node $(dirname $0)/sigh.js
+exec node $(dirname $0)/sigh.js $@
