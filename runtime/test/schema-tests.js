@@ -15,7 +15,7 @@ import Manifest from '../manifest.js';
 describe('schema', function() {
 
   it('schemas load recursively', async function() {
-    let manifest = await Manifest.load('../entities/Product.manifest', new Loader());
+    let manifest = await Manifest.load('./entities/Product.manifest', new Loader());
     let schema = manifest.findSchemaByName('Product');
     assert.deepEqual(schema.normative, {name: 'Text'});
     assert.deepEqual(schema.optional, {description: 'Text', image: 'URL', category: 'Text', price: 'Text', seller: 'Text', shipDays: 'Text', url: 'URL', identifier: 'Text'});
@@ -24,7 +24,7 @@ describe('schema', function() {
   });
 
   it('constructs an appropriate entity subclass', async function() {
-    let manifest = await Manifest.load('../entities/Product.manifest', new Loader());
+    let manifest = await Manifest.load('./entities/Product.manifest', new Loader());
     let schema = manifest.findSchemaByName('Product');
     var Product = schema.entityClass();
     assert.equal(Product.name, "Product");

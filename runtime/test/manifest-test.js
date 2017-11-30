@@ -543,7 +543,7 @@ describe('manifest', function() {
       assert(false);
     } catch (e) {
       assert.deepEqual(e.message, `Parse error in 'bad-file' line 1.
-Expected " ", "#", "\\n", "\\r", [ ], [A-Z] or [a-z] but "?" found.
+Expected " ", "#", "\\n", "\\r", [ ], [A-Z], or [a-z] but "?" found.
   recipe ?
          ^`);
     }

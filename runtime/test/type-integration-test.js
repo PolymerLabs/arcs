@@ -19,7 +19,7 @@ import Schema from '../schema.js';
 async function setup() {
   let registry = {};
   let loader = new Loader();
-  let manifest = await Manifest.load('../particles/test/type-match.manifest', loader, registry);
+  let manifest = await Manifest.load('./particles/test/type-match.manifest', loader, registry);
   assert(manifest);
 
   return manifest
