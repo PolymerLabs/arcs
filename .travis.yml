@@ -1,6 +1,7 @@
 language: node_js
 node_js:
   - "7"
-script:
-  - "cd runtime && npm install && gulp"
-  - "cd extension && npm install && npm test"
+env:
+  - TEST_DIR=runtime
+  - TEST_DIR=extension
+script: cd $TEST_DIR && npm install && npm test
