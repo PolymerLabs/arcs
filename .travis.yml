@@ -1,4 +1,6 @@
 language: node_js
 node_js:
   - "7"
-script: "cd runtime && npm install && gulp"
+script:
+  - "cd runtime && npm install && gulp"
+  - "cd extension && npm install && npm test"
