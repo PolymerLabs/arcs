@@ -36,6 +36,10 @@ function peg() {
       output: 'source',
     });
     let prefix = 'export default ';
+    let dir = path.dirname(path.resolve(projectRoot, outputFile));
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir);
+    }
     fs.writeFileSync(path.resolve(projectRoot, outputFile), prefix + source);
   }
   return true;
@@ -50,6 +54,9 @@ async function webpack() {
     minimist: 'empty',
   };
 
+  if (!fs.existsSync('./runtime/browser/build')) {
+    fs.mkdirSync('./runtime/browser/build');
+  }
   for (let file of sources.browser) {
     await new Promise((resolve, reject) => {
       webpack({
