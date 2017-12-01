@@ -19,7 +19,7 @@ if (isExtensionAppShellPage) {
     }
 
     chrome.runtime.sendMessage({ method: 'loadAllEntities' }, entities => {
-      console.log('arcs-page content script received entities from extension; forwarding to extension-app-shell for injection',
+      console.log('arcs-extension content script received entities from extension; forwarding to extension-app-shell for injection',
         entities);
       window.postMessage({ method: 'injectArcsData', entities: entities }, '*');
     });
@@ -27,10 +27,9 @@ if (isExtensionAppShellPage) {
 } else {
   // Listen for requests from the event page
   chrome.runtime.onMessage.addListener( (request, sender, sendResponse) => {
-    console.log('non-arcs-page content script received message ' + request, request);
+    console.log('arcs-other content script received message ' + request, request);
     if (request.method == 'loadEntities') {
       extractEntities(document, window.location).then(results => {
-        console.log('hey!! content-script result of extractEntities', results);
         sendResponse(results);
       });
 

@@ -9,7 +9,7 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
   console.log('event page received message ' + request.method, request);
   if (request.method == 'loadAllEntities') {
     loadEntitiesFromTabs().then(results => {
-      console.log('got result from all tabs', results);
+      console.log('event page finished loading entities from all tabs', results);
       sendResponse(_prepareResults(results));
     });
 
