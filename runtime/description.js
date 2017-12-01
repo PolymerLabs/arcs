@@ -12,7 +12,7 @@
 import assert from '../platform/assert-web.js';
 import Type from './type.js';
 
-class Description {
+export default class Description {
   constructor(arc) {
     this._arc = arc;
     this._recipe = arc._activeRecipe;
@@ -314,5 +314,3 @@ class DescriptionToken {
     return new DescriptionToken(null, typeDescription);
   }
 }
-
-export default Description;
