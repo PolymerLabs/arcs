@@ -11,9 +11,9 @@ afterEach(function() {
   target.innerHTML = '';
 });
 
-describe('EventPage', () => {
-  describe('#_prepareResults()', () => {
-    it('should prepare keys', () => {
+describe('EventPage', function() {
+  describe('#_prepareResults()', function() {
+    it('should prepare keys', function() {
       let result = _prepareResults([
         {tab: {id: 12, url: 'urla'}, result: [{name: 'entitya1'}, {name: 'entityb2'}]},
         {tab: {id: 13, url: 'urlb'}, result: [{name: 'entitya1'}, {name: 'entityb2'}]}
@@ -26,7 +26,7 @@ describe('EventPage', () => {
         result['urla']
       );
     });
-    it('should trim out keys without values', () => {
+    it('should trim out keys without values', function() {
       let result = _prepareResults([
         {tab: {id: 12, url: 'urla'}, result: [{name: 'entitya1'}, {name: 'entityb2'}]},
         {tab: {id: 13, url: 'empty'}}
