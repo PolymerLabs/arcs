@@ -13,7 +13,7 @@
  * Also trims out any empty results (urls without entities, for instance).
  */
 function _prepareResults(results) {
-  return results.reduce( (accumulator, currentValue) => {
+  return results.reduce((accumulator, currentValue) => {
     let value = currentValue['result'];
     if (value) {
       let key = currentValue['tab']['url'];

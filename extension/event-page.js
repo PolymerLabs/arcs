@@ -9,7 +9,10 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
   console.log('event page received message ' + request.method, request);
   if (request.method == 'loadAllEntities') {
     loadEntitiesFromTabs().then(results => {
-      console.log('event page finished loading entities from all tabs', results);
+      console.log(
+        'event page finished loading entities from all tabs',
+        results
+      );
       sendResponse(_prepareResults(results));
     });
 
@@ -48,9 +51,9 @@ async function loadEntitiesFromTabs() {
 }
 
 async function loadEntitiesFromTab(tab) {
-  return new Promise(resolve => 
-    chrome.tabs.sendMessage(tab.id, {'method': 'loadEntities'}, result => {
-      resolve({tab: tab, result: result});
+  return new Promise(resolve =>
+    chrome.tabs.sendMessage(tab.id, { method: 'loadEntities' }, result => {
+      resolve({ tab: tab, result: result });
     })
   );
 }
