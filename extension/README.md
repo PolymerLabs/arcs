@@ -2,23 +2,23 @@
 
 The extension does a few things:
 
-1) Parses webpages you visit for schema.org entities, and provides that data
+1. Parses webpages you visit for schema.org entities, and provides that data
 to Arcs.
-1) Allows webpages to specify manifests that are loaded into your Arcs
+1. Allows webpages to specify manifests that are loaded into your Arcs
 instance.
-1) Provides an entry point to Arcs.
+1. Provides an entry point to Arcs.
 
-The extension reads out schema.org-compatible data from web pages that you
-visit. Those entities are stored in your browser's local storage and are
-exposed to Arcs as views. When you accept suggestions that contain those
+The extension reads out schema.org-compatible data from web pages that are
+open when you activate the extension (by opening a new tab, activating the
+browser action, or manually).  When you accept suggestions that contain those
 views, they are synchronized to a **public** firebase.
 
 Eventually, the sync will be to your private data store (perhaps firebase,
 but other options will be available).
 
 Please be aware of this limitation as you think about what sites to visit
-while using this extension. A best practice is to use this in a non-primary
-profile or a secondary browser.
+while using this extension. A best practice until these limitations are
+removed is to use this in a non-primary profile or a secondary browser.
 
 ## Installation
 
