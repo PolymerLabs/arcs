@@ -19,6 +19,7 @@ function sendInjectArcsDataMessage() {
 if (!isArcsPage) {
   // In the common case, if we're not running an arcs instance, extract entities
   // from the page.
+  /*
   extractEntities(document, window.location).then(results => {
     console.log('content-script result of extractEntities', results);
     chrome.runtime.sendMessage({
@@ -27,18 +28,34 @@ if (!isArcsPage) {
       results: results
     });
   });
+  */
+
+  // Listen for requests from the event page
+  chrome.runtime.onMessage.addListener( (request, sender, sendResponse) => {
+    console.log('hey!! content script received message ' + request, request);
+    if (request.method == 'loadEntities') {
+      extractEntities(document, window.location).then(results => {
+        console.log('hey!! content-script result of extractEntities', results);
+        sendResponse(results);
+      });
+
+      // we'll send a response async, once we're done parsing
+      return true;
+    }
+  });
+
+  // In case we fired entities before anyone was listening, let's listen for
+  // requests to send entities as well.
+  // XXX do I still need this?
+  //window.addEventListener('message', event => {
+  //  console.log('content script received event ' + event.data.method, event.data);
+  //  if (event.source != window || event.data.method != 'pleaseInjectArcsData') {
+  //    return;
+  //  }
+  //  sendInjectArcsDataMessage();
+  //});
 } else {
   // We're running an Arcs page. Grab the metadata and send it over to the
   // Arcs chrome-extension shell.
   sendInjectArcsDataMessage();
 }
-
-// In case we fired entities before anyone was listening, let's listen for
-// requests to send entities as well.
-window.addEventListener('message', event => {
-  console.log('content script received event ' + event.data.method, event.data);
-  if (event.source != window || event.data.method != 'pleaseInjectArcsData') {
-    return;
-  }
-  sendInjectArcsDataMessage();
-});
