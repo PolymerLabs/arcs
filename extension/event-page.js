@@ -5,24 +5,6 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-/**
- * Transform the results from our internal format (list of
- *   [{tab: tabInfo, results: [entities]}]
- * into the format expect by callers, namely a map
- *   {url: [entities]}
- * Also trims out any empty results (urls without entities, for instance).
- */
-function _prepareResults(results) {
-  return results.reduce( (accumulator, currentValue) => {
-    let value = currentValue['result'];
-    if (value) {
-      let key = currentValue['tab']['url'];
-      accumulator[key] = value;
-    }
-    return accumulator;
-  }, {});
-}
-
 chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
   console.log('event page received message ' + request.method, request);
   if (request.method == 'loadAllEntities') {
@@ -50,17 +32,11 @@ async function loadEntitiesFromTabs() {
       continue;
     }
     tabs.push({
-      device: 'local',
-      group: `local:${tab.windowId}`,
       url: tab.url,
       title: tab.title,
-      id: tab.id,
-      local: true
+      id: tab.id
     });
   }
-  tabs.sort((a, b) => {
-    return a.group.localeCompare(b.group);
-  });
 
   // Trigger entity extraction.
   let tabEntityMap = new Map();

@@ -10,7 +10,7 @@
     "<all_urls>"
   ],
   "background": {
-    "scripts": ["event-page.js"],
+    "scripts": ["event-page-data.js", "event-page.js"],
     "persistent": false
   },
   "content_scripts": [
