@@ -7,26 +7,10 @@
 
 // TODO(smalls) there should be a better way to detect an arcs page we can
 // inject data into.
-const isArcsPage =
+const isExtensionAppShellPage =
   document.body.getElementsByTagName('extension-app-shell').length > 0;
 
-// TODO(smalls) can this be split into 2 content scripts, with the logic for
-// each type of page only loaded for that type of page?
-if (!isArcsPage) {
-  // Listen for requests from the event page
-  chrome.runtime.onMessage.addListener( (request, sender, sendResponse) => {
-    console.log('non-arcs-page content script received message ' + request, request);
-    if (request.method == 'loadEntities') {
-      extractEntities(document, window.location).then(results => {
-        console.log('hey!! content-script result of extractEntities', results);
-        sendResponse(results);
-      });
-
-      // we'll send a response async, once we're done parsing
-      return true;
-    }
-  });
-} else {
+if (isExtensionAppShellPage) {
   // Listen for requests to send entities.
   window.addEventListener('message', event => {
     console.log('arcs-page content script received event ' + event.data.method, event.data);
@@ -39,5 +23,19 @@ if (!isArcsPage) {
         entities);
       window.postMessage({ method: 'injectArcsData', entities: entities }, '*');
     });
+  });
+} else {
+  // Listen for requests from the event page
+  chrome.runtime.onMessage.addListener( (request, sender, sendResponse) => {
+    console.log('non-arcs-page content script received message ' + request, request);
+    if (request.method == 'loadEntities') {
+      extractEntities(document, window.location).then(results => {
+        console.log('hey!! content-script result of extractEntities', results);
+        sendResponse(results);
+      });
+
+      // we'll send a response async, once we're done parsing
+      return true;
+    }
   });
 }
