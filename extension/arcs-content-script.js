@@ -13,21 +13,29 @@ const isExtensionAppShellPage =
 if (isExtensionAppShellPage) {
   // Listen for requests to send entities.
   window.addEventListener('message', event => {
-    console.log('arcs-page content script received event ' + event.data.method, event.data);
+    console.log(
+      'arcs-page content script received event ' + event.data.method,
+      event.data
+    );
     if (event.source != window || event.data.method != 'pleaseInjectArcsData') {
       return;
     }
 
     chrome.runtime.sendMessage({ method: 'loadAllEntities' }, entities => {
-      console.log('arcs-extension content script received entities from extension; forwarding to extension-app-shell for injection',
-        entities);
+      console.log(
+        'arcs-extension content script received entities from extension; forwarding to extension-app-shell for injection',
+        entities
+      );
       window.postMessage({ method: 'injectArcsData', entities: entities }, '*');
     });
   });
 } else {
   // Listen for requests from the event page
-  chrome.runtime.onMessage.addListener( (request, sender, sendResponse) => {
-    console.log('arcs-other content script received message ' + request, request);
+  chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+    console.log(
+      'arcs-other content script received message ' + request,
+      request
+    );
     if (request.method == 'loadEntities') {
       extractEntities(document, window.location).then(results => {
         sendResponse(results);
