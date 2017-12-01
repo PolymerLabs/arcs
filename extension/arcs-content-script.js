@@ -13,19 +13,6 @@ const isArcsPage =
 // TODO(smalls) can this be split into 2 content scripts, with the logic for
 // each type of page only loaded for that type of page?
 if (!isArcsPage) {
-  // In the common case, if we're not running an arcs instance, extract entities
-  // from the page.
-  /*
-  extractEntities(document, window.location).then(results => {
-    console.log('content-script result of extractEntities', results);
-    chrome.runtime.sendMessage({
-      method: 'storePageEntities',
-      url: window.location.toString(),
-      results: results
-    });
-  });
-  */
-
   // Listen for requests from the event page
   chrome.runtime.onMessage.addListener( (request, sender, sendResponse) => {
     console.log('non-arcs-page content script received message ' + request, request);
@@ -40,22 +27,12 @@ if (!isArcsPage) {
     }
   });
 } else {
-  // We're running an Arcs page. Grab the metadata and send it over to the
-  // Arcs chrome-extension shell.
-  //chrome.runtime.sendMessage({ method: 'loadAllEntities' }, entities => {
-  //  console.log('received entities from extension; forwarding to content-script for injection',
-  //    entities);
-  //  window.postMessage({ method: 'injectArcsData', entities: entities }, '*');
-  //});
-
-  // In case we fired entities before anyone was listening, let's listen for
-  // requests to send entities as well.
+  // Listen for requests to send entities.
   window.addEventListener('message', event => {
     console.log('arcs-page content script received event ' + event.data.method, event.data);
     if (event.source != window || event.data.method != 'pleaseInjectArcsData') {
       return;
     }
-    // sendInjectArcsDataMessage();
 
     chrome.runtime.sendMessage({ method: 'loadAllEntities' }, entities => {
       console.log('arcs-page content script received entities from extension; forwarding to extension-app-shell for injection',
