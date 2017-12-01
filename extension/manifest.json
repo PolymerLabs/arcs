@@ -3,9 +3,6 @@
   "name": "arcs",
   "version": "0",
   "permissions": [
-    "storage",
-
-    "sessions",
     "tabs",
     "<all_urls>"
   ],
