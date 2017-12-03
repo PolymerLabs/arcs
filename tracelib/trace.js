@@ -11,10 +11,7 @@
   limitations under the License.
 */
 
-//var fs = require('fs');
-//var mkdirp = require('mkdirp');
-//var path = require('path');
-//var options = require('./options');
+import fs from '../platform/fs-web.js';
 
 var events = [];
 if (typeof document == 'object') {
@@ -50,6 +47,8 @@ module.exports.enable = function() {
   module.exports.enabled = true;
   init();
 };
+
+// TODO: Add back support for options.
 //module.exports.options = options;
 //var enabled = Boolean(options.traceFile);
 
@@ -229,7 +228,6 @@ function init() {
     return {traceEvents: events};
   };
   module.exports.dump = function() {
-    mkdirp.sync(path.dirname(options.traceFile));
     fs.writeFileSync(options.traceFile, module.exports.save());
   };
   module.exports.download = function() {
