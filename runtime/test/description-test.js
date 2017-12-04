@@ -488,4 +488,57 @@ recipe
     descriptionView.remove(2);
     assert.equal('Return my <b>foo-name</b>.', description.getRecipeSuggestion());
   });
+  it('particle slots description', async() => {
+    let manifestStr = `
+schema Foo
+  optional
+    Text name
+particle A
+  A(inout Foo foo)
+  consume root
+    provide aslot
+    provide otherslot
+  description \`Hello \${root.aslot}, see you at \${root.otherslot}\`
+particle B1
+  B1(out Foo foo)
+  consume aslot
+  description \`first b\`
+particle B2
+  B2(out Foo foo)
+  consume aslot
+  description \`second b\`
+particle C
+  C(in Foo foo)
+  consume otherslot
+  description \`only c\`
+recipe
+  create 'test:1' as view0  # Foo
+  slot 'rootslotid-root' as slot0
+  A as particle1
+    foo = view0
+    consume root as slot0
+      provide aslot as slot1
+      provide otherslot as slot2
+  B1
+    foo -> view0
+    consume aslot as slot1
+  B2
+    foo -> view0
+    consume aslot as slot1
+  C
+    foo <- view0
+    consume otherslot as slot2
+`;
+    let manifest = (await Manifest.parse(manifestStr));
+    assert(1, manifest.recipes.length);
+    let recipe = manifest.recipes[0];
+    recipe.normalize();
+    assert.isTrue(recipe.isResolved());
+
+    let arc = createTestArc();
+    arc._activeRecipe = recipe;
+
+    let description = new Description(arc);
+    assert.equal('Hello first b and second b, see you at only c.', description.getRecipeSuggestion());
+  });
 });
