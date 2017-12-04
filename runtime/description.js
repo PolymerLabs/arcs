@@ -78,23 +78,35 @@ export default class Description {
       .filter(desc => { return particlesSet.has(desc._particle) && desc._particle.spec.slots.size > 0 && !!desc.pattern; })
       .sort(Description.sort);
 
-    let options = { seenViews: new Set() };
-    let suggestions = selectedDescriptions.map(particle => this.patternToSuggestion(particle.pattern, particle, options));
+    let options = { seenViews: new Set(), seenParticles: new Set() };
+    let suggestions = [];
+    selectedDescriptions.forEach(particle => {
+      if (!options.seenParticles.has(particle._particle)) {
+        suggestions.push(this.patternToSuggestion(particle.pattern, particle, options));
+      }
+    });
 
-    let count = suggestions.length;
-    if (count == 0) {
+    if (suggestions.length == 0) {
       // Return recipe name by default.
       return this._recipe.name;
     }
 
+    return this._capitalizeAndPunctuate(this._joinStringsToSentence(suggestions));
+  }
+
+  _joinStringsToSentence(strings) {
+    let count = strings.length;
     // Combine descriptions into a sentence:
     // "A."
     // "A and b."
     // "A, b, ..., and z." (Oxford comma ftw)
     let delim = ['', '', ' and ', ', and '][count > 2 ? 3 : count];
-    let suggestion = suggestions.slice(0, -1).join(", ") + delim + suggestions.pop();
+    return strings.slice(0, -1).join(", ") + delim + strings.pop();
+  }
+
+  _capitalizeAndPunctuate(sentence) {
     // "Capitalize, punctuate."
-    return suggestion[0].toUpperCase() + suggestion.slice(1) + '.';
+    return sentence[0].toUpperCase() + sentence.slice(1) + '.';
   }
 
   getViewDescription(recipeView) {
@@ -130,13 +142,18 @@ export default class Description {
         results.push({text: nextToken});
       if (firstToken.length > 0) {
         let valueTokens = pattern.match(/\$\{([a-zA-Z]+)(?:\.([_a-zA-Z]+))?\}/);
-        let valueToken = { viewName: valueTokens[1] };
-        if (valueTokens.length == 3) {
-          valueToken.extra = valueTokens[2];
+        let handleName = valueTokens[1];
+        let extra = valueTokens.length == 3 ? valueTokens[2] : undefined;
+        let valueToken;
+        let viewConn = particle.connections[handleName];
+        if (viewConn) {  // view connection
+          assert(viewConn.view && viewConn.view.id, 'Missing id???');
+          valueToken = {viewName: handleName, extra, _viewConn: viewConn, _view: this._arc.findViewById(viewConn.view.id)};
+        } else {  // slot connection
+          let providedSlotConn = particle.consumedSlotConnections[handleName].providedSlots[extra];
+          assert(providedSlotConn, `Could not find handle ${handleName}`);
+          valueToken = {slotName: handleName, _providedSlotConn: providedSlotConn};
         }
-        valueToken._viewConn = particle.connections[valueToken.viewName];
-        assert(valueToken._viewConn.view && valueToken._viewConn.view.id, 'Missing id???');
-        valueToken._view = this._arc.findViewById(valueToken._viewConn.view.id);
         results.push(valueToken);
       }
       pattern = pattern.substring(tokenIndex + firstToken.length);
@@ -148,8 +165,15 @@ export default class Description {
     if (token.text) {
       return token.text;
     }
-    assert(token.viewName, "no text and no view name???");
+    if (token.viewName) {
+      return this._viewTokenToString(token, options);
+    } else  if (token.slotName) {
+      return this._slotTokenToString(token, options);
+    }
+    assert(false, `no view or slot name (${JSON.stringify(token)})`);
+  }
 
+  _viewTokenToString(token, options) {
     switch (token.extra) {
       case "_type_":
         return token._viewConn.type.toPrettyString().toLowerCase();
@@ -177,6 +201,17 @@ export default class Description {
       default:  // property
         return this._propertyTokenToString(token._view, token.extra.split('.'));
       }
+  }
+
+  _slotTokenToString(token, options) {
+    let results = token._providedSlotConn.consumeConnections.map(consumeConn => {
+      let particle = consumeConn.particle;
+      let particleDescription = this._particleDescriptions.find(desc => desc._particle == particle);
+      options.seenParticles.add(particle);
+      return this.patternToSuggestion(particle.spec.pattern, particleDescription, options);
+    }).filter(str => !!str);
+
+    return this._joinStringsToSentence(results);
   }
 
   _propertyTokenToString(view, properties) {
