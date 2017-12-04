@@ -31,8 +31,16 @@ const steps = {
   peg: [peg],
   test: [peg, test],
   webpack: [peg, webpack],
+  watch: [watch],
   default: [peg, test, webpack],
 };
+
+// Paths to `watch` for the `watch` step.
+const watchPaths = [
+  './platform',
+  './strategizer',
+  './tracelib',
+];
 
 function peg() {
   const peg = require('pegjs');
@@ -157,26 +165,52 @@ function test(args) {
   ], {stdio: 'inherit'}).status == 0;
 }
 
+
+// Watches `watchPaths` for changes, then runs the `peg` and `webpack` steps.
+async function watch() {
+  let watchers = [];
+  let handler = async () => {
+    for (let watcher of watchers) {
+      watcher.close();
+    }
+    watchers = [];
+
+    await run([
+      [peg, []],
+      [webpack, []]
+    ]);
+
+    for (let watchPath of watchPaths) {
+      watchers.push(fs.watch(watchPath, {persistent: false}, handler));
+    }
+  };
+
+  // Run the steps and start watching for file changes.
+  handler();
+
+  // TODO: Is there a better way to keep the process alive?
+  let forever = () => {
+    setTimeout(forever, 60 * 60 * 1000);
+  };
+  forever();
+  // Never resolved.
+  return new Promise(() => {});
+}
+
 async function defaultSteps() {
   return await peg() &&
       await test() &&
       await webpack();
 }
 
-(async () => {
+// Runs a chain of `[[fun, args]]` by calling `fun(args)`, logs emoji, and returns whether
+// all the functions returned `true`.
+async function run(funsAndArgs) {
   console.log('😌');
   let result = false;
-  let command = process.argv[2] || 'default';
-  let funs = steps[command];
   try {
-    if (!funs) {
-      console.error(`What is '${command}'?`);
-      return;
-    }
-    for (let fun of funs) {
+    for (let [fun, args] of funsAndArgs) {
       console.log(`🙋 ${fun.name}`);
-      // To avoid confusion, only the last step gets args.
-      let args = fun == funs[funs.length - 1] ? process.argv.slice(2) : [];
       if (!await fun(args)) {
         console.log(`🙅 ${fun.name}`);
         return;
@@ -184,10 +218,21 @@ async function defaultSteps() {
       console.log(`🙆 ${fun.name}`);
     }
     result = true;
+  } catch (e) {
+    console.error(e);
   } finally {
     console.log(result ? '🎉' : '😱');
-    process.on("exit", function() {
-      process.exit(result ? 0 : 1);
-    });
+    return result;
   }
+}
+
+(async () => {
+  let command = process.argv[2] || 'default';
+  let funs = steps[command];
+  // To avoid confusion, only the last step gets args.
+  let funsAndArgs = funs.map(fun => [fun, fun == funs[funs.length - 1] ? process.argv.slice(2) : []])
+  let result = await run(funsAndArgs);
+  process.on("exit", function() {
+    process.exit(result ? 0 : 1);
+  });
 })();
