@@ -9,8 +9,8 @@
  */
 "use strict";
 
-const assert = require("chai").assert;
-var Slot = require("../slot.js");
+import {assert} from './chai-web.js';
+import Slot from "../slot.js";
 
 describe("slot", function() {
   it("setting context", function() {

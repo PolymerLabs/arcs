@@ -9,11 +9,11 @@
  */
 "use strict";
 
-var runtime = require("./runtime.js");
-var ParticleSpec = require("./particle-spec.js");
-var tracing = require('tracelib');
-var assert = require('assert');
-const Schema = require('./schema.js');
+import runtime from './runtime.js';
+import ParticleSpec from './particle-spec.js';
+import tracing from '../tracelib/trace.js';
+import assert from '../platform/assert-web.js';
+import Schema from './schema.js';
 
 const DEBUGGING = false;
 
@@ -21,7 +21,7 @@ const DEBUGGING = false;
  * A basic particle. For particles that provide UI, you may like to
  * instead use DOMParticle.
  */
-class Particle {
+export class Particle {
   constructor(capabilities) {
     this.spec = this.constructor.spec;
     if (this.spec.inputs.length == 0)
@@ -175,9 +175,22 @@ class Particle {
       output.push(strings[strings.length - 1]);
     return output.join('');
   }
+
+  setParticleDescription(pattern) {
+    return this.setDescriptionPattern('_pattern_', pattern);
+
+  }
+  setDescriptionPattern(connectionName, pattern) {
+    let descriptions = this._views.get('descriptions');
+    if (descriptions) {
+      descriptions.store(new descriptions.entityClass({key: connectionName, value: pattern}, connectionName));
+      return true;
+    }
+    return false;
+  }
 }
 
-class ViewChanges {
+export class ViewChanges {
   constructor(views, names, type) {
     if (typeof names == "string")
       names = [names];
@@ -196,7 +209,7 @@ class ViewChanges {
   }
 }
 
-class SlotChanges {
+export class SlotChanges {
   constructor() {
   }
   register(particle, f) {
@@ -204,7 +217,7 @@ class SlotChanges {
   }
 }
 
-class StateChanges {
+export class StateChanges {
   constructor(states) {
     if (typeof states == "string")
       states = [states];
@@ -215,7 +228,4 @@ class StateChanges {
   }
 }
 
-exports.Particle = Particle;
-exports.ViewChanges = ViewChanges;
-exports.SlotChanges = SlotChanges;
-exports.StateChanges = StateChanges;
+export default {Particle, ViewChanges, SlotChanges, StateChanges};

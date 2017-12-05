@@ -4,14 +4,11 @@ Particle developers should visit our [particle developer website](https://polyme
 
 ## Install
 
-Note that you need a **recent** version of Node because we use new ES6 features. v7.8.0 is definitely OK - earlier v7 versions are probably fine too.
+Note that you need a **recent** version of Node because we use new ES6 features. v9 is definitely OK - earlier v8 versions are probably fine too.
 
 ```
-$ npm install -g gulp-cli
+$ npm install
 $ npm install -g bower
-$ (cd tracelib && npm install)
-$ (cd strategizer && npm install)
-$ (cd runtime && npm install)
 $ (cd strategy-explorer && bower install)
 $ (cd extension && npm install)
 
@@ -19,16 +16,8 @@ $ (cd extension && npm install)
 
 ## Test
 ```
-$ (cd runtime && npm test)
+$ ./tools/sigh test
 $ (cd extension && npm test)
-```
-
-If there are unhandled promise exceptions without stack traces, use `./node_modules/.bin/mocha --trace-warnings`.
-
-## Trace
-```
-$ cd runtime
-$ traceFile=`pwd`/trace.json npm test
 ```
 
 ## Demo

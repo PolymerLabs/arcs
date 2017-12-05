@@ -8,17 +8,17 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-const Speculator = require("../speculator.js");
-const Arc = require("../arc.js");
-const assert = require('chai').assert;
-const Loader = require('../loader.js');
-const Manifest = require('../manifest.js');
+import Speculator from "../speculator.js";
+import Arc from "../arc.js";
+import {assert} from './chai-web.js';
+import Loader from '../loader.js';
+import Manifest from '../manifest.js';
 
 describe('speculator', function() {
   it('can speculatively produce a relevance', async () => {
     let loader = new Loader();
     var arc = new Arc({});
-    let manifest = await Manifest.load('../particles/test/test.manifest', loader);
+    let manifest = await Manifest.load('./particles/test/test.manifest', loader);
     let recipe = manifest.recipes[0];
     assert(recipe.normalize());
     var speculator = new Speculator();

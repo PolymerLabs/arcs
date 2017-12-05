@@ -8,11 +8,11 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-let Manifest = require('../manifest.js');
-var parser = require("../build/manifest-parser.js");
-let assert = require('chai').assert;
-var fs = require("fs");
-var path = require('path');
+import Manifest from '../manifest.js';
+import parser from "../build/manifest-parser.js";
+import {assert} from './chai-web.js';
+import fs from '../../platform/fs-web.js';
+import path from '../../platform/path-web.js';
 
 async function assertRecipeParses(input, result) {
   // Strip common leading whitespace.
@@ -476,7 +476,7 @@ describe('manifest', function() {
     assert(registry['somewhere/a path/b']);
   });
   it('parses all particles manifests', async () => {
-    let particlesPath = '../particles/';
+    let particlesPath = './particles/';
     let particleNames = fs.readdirSync(particlesPath);
     let count = 0;
     particleNames.forEach(pn => {
@@ -565,7 +565,7 @@ describe('manifest', function() {
       assert(false);
     } catch (e) {
       assert.deepEqual(e.message, `Parse error in 'bad-file' line 1.
-Expected " ", "#", "\\n", "\\r", [ ], [A-Z] or [a-z] but "?" found.
+Expected " ", "#", "\\n", "\\r", [ ], [A-Z], or [a-z] but "?" found.
   recipe ?
          ^`);
     }

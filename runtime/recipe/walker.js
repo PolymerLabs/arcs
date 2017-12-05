@@ -5,8 +5,8 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-var Recipe = require('./recipe.js');
-let WalkerBase = require('./walker-base.js');
+import Recipe from './recipe.js';
+import WalkerBase from './walker-base.js';
 
 class Walker extends WalkerBase {
   onResult(result) {
@@ -65,4 +65,4 @@ class Walker extends WalkerBase {
 Walker.Permuted = WalkerBase.Permuted;
 Walker.Independent = WalkerBase.Independent;
 
-module.exports = Walker;
+export default Walker;

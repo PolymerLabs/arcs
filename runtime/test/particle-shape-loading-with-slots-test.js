@@ -8,18 +8,19 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-const Manifest = require('../manifest.js');
-const assert = require('chai').assert;
-const util = require('./test-util.js');
-const Arc = require("../arc.js");
-const MessageChannel = require("../message-channel.js");
-const InnerPec = require("../inner-PEC.js");
-const Loader = require("../loader.js");
-const Recipe = require("../recipe/recipe.js");
-const Type = require("../type.js");
-const Shape = require("../shape.js");
-const ParticleSpec = require("../particle-spec.js");
-const MockSlotComposer = require('./mock-slot-composer.js');
+import Manifest from '../manifest.js';
+import {assert} from './chai-web.js';
+import * as util from './test-util.js';
+import handle from '../handle.js';
+import Arc from "../arc.js";
+import MessageChannel from "../message-channel.js";
+import InnerPec from "../inner-PEC.js";
+import Loader from "../loader.js";
+import Recipe from "../recipe/recipe.js";
+import Type from "../type.js";
+import Shape from "../shape.js";
+import ParticleSpec from "../particle-spec.js";
+import MockSlotComposer from './mock-slot-composer.js';
 
 describe('particle-shape-loading-with-slots', function() {
   async function instantiateRecipe() {
@@ -33,7 +34,7 @@ describe('particle-shape-loading-with-slots', function() {
 
     var slotComposer = new MockSlotComposer();
     var arc = new Arc({id: 'test', pecFactory, slotComposer});
-    let manifest = await Manifest.load('../particles/test/transformations/test-slots-particles.manifest', loader);
+    let manifest = await Manifest.load('./particles/test/transformations/test-slots-particles.manifest', loader);
 
     let recipe = new Recipe();
     let recipeParticle = recipe.newParticle("MultiplexSlotsParticle");

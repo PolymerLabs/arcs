@@ -8,8 +8,8 @@
 
 'use strict';
 
-const InnerPec = require('../inner-PEC.js');
-const Loader = require('../browser-loader.js');
+import InnerPec from '../inner-PEC.js';
+import Loader from '../browser-loader.js';
 
 self.onmessage = function(e) {
   self.onmessage = null;
@@ -17,3 +17,5 @@ self.onmessage = function(e) {
   console.log('starting worker', id, base);
   new InnerPec(e.ports[0], id, new Loader(base));
 };
+
+export default null;

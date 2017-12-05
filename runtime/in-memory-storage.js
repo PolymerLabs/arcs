@@ -7,14 +7,14 @@
 // http://polymer.github.io/PATENTS.txt
 'use strict';
 
-const assert = require('assert');
-const tracing = require("tracelib");
-const scheduler = require('./scheduler.js');
-const util = require('./recipe/util.js');
+import assert from '../platform/assert-web.js';
+import tracing from "../tracelib/trace.js";
+import scheduler from './scheduler.js';
+import util from './recipe/util.js';
 
-class ViewBase {
+class InMemoryStorageProvider {
   constructor(type, arc, name, id) {
-    var trace = tracing.start({cat: 'view', name: 'ViewBase::constructor', args: {type: type.key, name: name}});
+    var trace = tracing.start({cat: 'view', name: 'InMemoryStorageProvider::constructor', args: {type: type.key, name: name}});
     this._type = type;
     this._arc = arc;
     this._listeners = new Map();
@@ -49,7 +49,7 @@ class ViewBase {
     if (!listenerMap || listenerMap.size == 0)
       return;
 
-    var callTrace = tracing.start({cat: 'view', name: 'ViewBase::_fire', args: {kind, type: this._type.key,
+    var callTrace = tracing.start({cat: 'view', name: 'InMemoryStorageProvider::_fire', args: {kind, type: this._type.key,
         name: this.name, listeners: listenerMap.size}});
 
     // TODO: wire up a target (particle)
@@ -98,14 +98,14 @@ class ViewBase {
   }
 }
 
-class View extends ViewBase {
+export class InMemoryCollection extends InMemoryStorageProvider {
   constructor(type, arc, name, id) {
     super(type, arc, name, id);
     this._items = new Map();
   }
 
   clone() {
-    var view = new View(this._type, this._arc, this.name, this.id);
+    var view = new InMemoryCollection(this._type, this._arc, this.name, this.id);
     view.cloneFrom(this);
     return view;
   }
@@ -130,7 +130,7 @@ class View extends ViewBase {
   }
 
   store(entity) {
-    var trace = tracing.start({cat: "view", name: "View::store", args: {name: this.name}});
+    var trace = tracing.start({cat: "view", name: "InMemoryCollection::store", args: {name: this.name}});
     var entityWasPresent = this._items.has(entity.id);
 
     this._items.set(entity.id, entity);
@@ -141,7 +141,7 @@ class View extends ViewBase {
   }
 
   remove(id) {
-    var trace = tracing.start({cat: "view", name: "View::remove", args: {name: this.name}});
+    var trace = tracing.start({cat: "view", name: "InMemoryCollection::remove", args: {name: this.name}});
     if (!this._items.has(id)) {
       return;
     }
@@ -182,14 +182,14 @@ class View extends ViewBase {
   }
 }
 
-class Variable extends ViewBase {
+export class InMemoryVariable extends InMemoryStorageProvider {
   constructor(type, arc, name, id) {
     super(type, arc, name, id);
     this._stored = null;
   }
 
   clone() {
-    var variable = new Variable(this._type, this._arc, this.name, this.id);
+    var variable = new InMemoryVariable(this._type, this._arc, this.name, this.id);
     variable.cloneFrom(this);
     return variable;
   }
@@ -248,8 +248,3 @@ class Variable extends ViewBase {
     })
   }
 }
-
-Object.assign(module.exports, {
-  View,
-  Variable,
-});

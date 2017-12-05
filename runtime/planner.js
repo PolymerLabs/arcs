@@ -5,31 +5,32 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-let {Strategy, Strategizer} = require('../strategizer/strategizer.js');
-var assert = require("assert");
-let Recipe = require('./recipe/recipe.js');
-let RecipeUtil = require('./recipe/recipe-util.js');
-let RecipeWalker = require('./recipe/walker.js');
-let ConvertConstraintsToConnections = require('./strategies/convert-constraints-to-connections.js');
-let AssignRemoteViews = require('./strategies/assign-remote-views.js');
-let CopyRemoteViews = require('./strategies/copy-remote-views.js');
-let AssignViewsByTagAndType = require('./strategies/assign-views-by-tag-and-type.js');
-let InitPopulation = require('./strategies/init-population.js');
-let MapConsumedSlots = require('./strategies/map-consumed-slots.js');
-let MapRemoteSlots = require('./strategies/map-remote-slots.js');
-let MatchParticleByVerb = require('./strategies/match-particle-by-verb.js');
-let NameUnnamedConnections = require('./strategies/name-unnamed-connections.js');
-let AddUseViews = require('./strategies/add-use-views.js');
-let Manifest = require('./manifest.js');
-let InitSearch = require('./strategies/init-search.js');
-let SearchTokensToParticles = require('./strategies/search-tokens-to-particles.js');
-let FallbackFate = require('./strategies/fallback-fate.js');
-let GroupViewConnections = require('./strategies/group-view-connections.js');
-let CombinedStrategy = require('./strategies/combined-strategy.js');
+import {Strategy, Strategizer} from '../strategizer/strategizer.js';
+import assert from '../platform/assert-web.js';
+import Recipe from './recipe/recipe.js';
+import RecipeUtil from './recipe/recipe-util.js';
+import RecipeWalker from './recipe/walker.js';
+import ConvertConstraintsToConnections from './strategies/convert-constraints-to-connections.js';
+import AssignRemoteViews from './strategies/assign-remote-views.js';
+import CopyRemoteViews from './strategies/copy-remote-views.js';
+import AssignViewsByTagAndType from './strategies/assign-views-by-tag-and-type.js';
+import InitPopulation from './strategies/init-population.js';
+import MapConsumedSlots from './strategies/map-consumed-slots.js';
+import MapRemoteSlots from './strategies/map-remote-slots.js';
+import MatchParticleByVerb from './strategies/match-particle-by-verb.js';
+import NameUnnamedConnections from './strategies/name-unnamed-connections.js';
+import AddUseViews from './strategies/add-use-views.js';
+import CreateDescriptionHandle from './strategies/create-description-handle.js';
+import Manifest from './manifest.js';
+import InitSearch from './strategies/init-search.js';
+import SearchTokensToParticles from './strategies/search-tokens-to-particles.js';
+import FallbackFate from './strategies/fallback-fate.js';
+import GroupViewConnections from './strategies/group-view-connections.js';
+import CombinedStrategy from './strategies/combined-strategy.js';
 
-const Speculator = require('./speculator.js');
-const Description = require('./description.js');
-const Tracing = require('tracelib');
+import Speculator from './speculator.js';
+import Description from './description.js';
+import Tracing from '../tracelib/trace.js';
 
 class CreateViews extends Strategy {
   // TODO: move generation to use an async generator.
@@ -81,6 +82,7 @@ class Planner {
       new MatchParticleByVerb(arc),
       new NameUnnamedConnections(arc),
       new AddUseViews(),
+      new CreateDescriptionHandle(),
     ];
     this.strategizer = new Strategizer(strategies, [], {
       maxPopulation: 100,
@@ -98,7 +100,7 @@ class Planner {
     let trace = Tracing.async({cat: 'planning', name: 'Planner::plan', args: {timeout}})
     timeout = timeout || NaN;
     let allResolved = [];
-    let now = () => global.performance ? performance.now() : process.hrtime();
+    let now = () => (typeof performance == 'object') ? performance.now() : process.hrtime();
     let start = now();
     do {
       let generated = await trace.wait(() => this.generate());
@@ -151,9 +153,8 @@ class Planner {
       }
       let rank = relevance.calcRelevanceScore();
 
-      // TODO: recipes are not copied to the speculative arc. should they be?
-      let description = Description.getSuggestion(relevance.newArc.recipes[0],
-                                                  relevance.newArc);
+      relevance.newArc.description.setRelevance(relevance);
+      let description = relevance.newArc.description.getRecipeSuggestion(relevance.newArc.recipes[0].particles);
 
       this._updateGeneration(generations, hash, (g) => g.description = description);
 
@@ -199,4 +200,4 @@ class Planner {
   }
 }
 
-module.exports = Planner;
+export default Planner;

@@ -9,23 +9,24 @@
  */
  "use strict";
 
-let Arc = require('../arc.js');
-let Loader = require('../loader.js');
-let Planner = require('../planner.js');
-let assert = require('chai').assert;
-let Manifest = require('../manifest.js');
-let Recipe = require('../recipe/recipe.js');
-let ConvertConstraintsToConnections = require('../strategies/convert-constraints-to-connections.js');
-let InitPopulation = require('../strategies/init-population.js');
-let MapRemoteSlots = require('../strategies/map-remote-slots.js');
-let MatchParticleByVerb = require('../strategies/match-particle-by-verb.js');
-let SearchTokensToParticles = require('../strategies/search-tokens-to-particles.js');
-let GroupViewConnections = require('../strategies/group-view-connections.js');
-let CombinedStrategy = require('../strategies/combined-strategy.js');
-let FallbackFate = require('../strategies/fallback-fate.js');
-let MessageChannel = require('../message-channel.js');
-let InnerPec = require('../inner-PEC.js');
-let Particle = require('../particle.js');
+import Arc from '../arc.js';
+import Loader from '../loader.js';
+import Planner from '../planner.js';
+import {assert} from './chai-web.js';
+import Manifest from '../manifest.js';
+import Recipe from '../recipe/recipe.js';
+import ConvertConstraintsToConnections from '../strategies/convert-constraints-to-connections.js';
+import InitPopulation from '../strategies/init-population.js';
+import MapRemoteSlots from '../strategies/map-remote-slots.js';
+import MatchParticleByVerb from '../strategies/match-particle-by-verb.js';
+import SearchTokensToParticles from '../strategies/search-tokens-to-particles.js';
+import GroupViewConnections from '../strategies/group-view-connections.js';
+import CombinedStrategy from '../strategies/combined-strategy.js';
+import CreateDescriptionHandle from '../strategies/create-description-handle.js';
+import FallbackFate from '../strategies/fallback-fate.js';
+import MessageChannel from '../message-channel.js';
+import InnerPec from '../inner-PEC.js';
+import Particle from '../particle.js';
 var loader = new Loader();
 
 function createTestArc(id, context, affordance) {
@@ -41,20 +42,20 @@ function createTestArc(id, context, affordance) {
 
 describe('Planner', function() {
   it('can generate things', async () => {
-    let manifest = await Manifest.load('../particles/test/giftlist.manifest', loader);
+    let manifest = await Manifest.load('./particles/test/giftlist.manifest', loader);
     var arc = createTestArc("test-plan-arc", manifest, "dom");
     let Person = manifest.findSchemaByName('Person').entityClass();
     let Product = manifest.findSchemaByName('Person').entityClass();
     var planner = new Planner();
     planner.init(arc);
-    await planner.generate(),
-    await planner.generate(),
-    await planner.generate(),
+    await planner.generate();
+    await planner.generate();
+    await planner.generate();
     assert.equal(planner.strategizer.population.length, 5);
   });
 
   it('make a plan with views', async () => {
-    let manifest = await Manifest.load('../particles/test/giftlist.manifest', loader);
+    let manifest = await Manifest.load('./particles/test/giftlist.manifest', loader);
     var arc = createTestArc("test-plan-arc", manifest, "dom");
     let Person = manifest.findSchemaByName('Person').entityClass();
     let Product = manifest.findSchemaByName('Product').entityClass();
@@ -69,7 +70,7 @@ describe('Planner', function() {
   });
 });
 
-const InitSearch = require('../strategies/init-search.js');
+import InitSearch from '../strategies/init-search.js';
 describe('InitSearch', async () => {
   it('initializes the search recipe', async() => {
     var arc = new Arc({id: 'test-plan-arc', context: {}});
@@ -720,6 +721,30 @@ describe('FallbackFate', function() {
     var strategy = new FallbackFate(arc);
     let { results } = await strategy.generate(strategizer);
     assert.equal(results.length, 0);
+  });
+});
+
+
+describe('CreateDescriptionHandle', function() {
+  it('descriptions handle created', async () => {
+    let manifest = (await Manifest.parse(`
+      schema Description
+      particle DoSomething in 'AA.js'
+        DoSomething(out [Description] descriptions)
+
+      recipe
+        DoSomething as particle0
+    `));
+    let recipe = manifest.recipes[0];
+    var strategizer = {generated: [{result: manifest.recipes[0], score: 1}], terminal: []};
+    var strategy = new CreateDescriptionHandle();
+    let results = (await strategy.generate(strategizer)).results;
+
+    assert.equal(results.length, 1);
+    let plan = results[0].result;
+    assert.equal(plan.views.length, 1);
+    assert.equal('create', plan.views[0].fate);
+    assert.isTrue(plan.isResolved());
   });
 });
 

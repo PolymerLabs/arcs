@@ -7,14 +7,14 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-let path = require("path");
+import path from "path";
 
 let sources = [
   "demo/demo.js",
   "vr-demo/vr-demo.js"
 ]
 
-module.exports = sources.map(s => new Object({
+export default sources.map(s => new Object({
   entry: `./browser/${s}`,
   output: {
     path: path.join(__dirname, "/browser/build/", path.dirname(s)),

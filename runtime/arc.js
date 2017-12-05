@@ -9,28 +9,30 @@
  */
 "use strict";
 
-var runtime = require("./runtime.js");
-var assert = require("assert");
-var tracing = require("tracelib");
-const Type = require('./type.js');
-const {View, Variable} = require('./view.js');
-const Relation = require('./relation.js');
-let handle = require('./handle.js');
-const OuterPec = require('./outer-PEC.js');
-const Recipe = require('./recipe/recipe.js');
-const Manifest = require('./manifest.js');
-const Description = require('./description.js');
-const util = require('./recipe/util.js');
+import runtime from './runtime.js';
+import assert from '../platform/assert-web.js';
+import tracing from "../tracelib/trace.js";
+import Type from './type.js';
+import {InMemoryCollection, InMemoryVariable} from './in-memory-storage.js';
+import Relation from './relation.js';
+import handle from './handle.js';
+import OuterPec from './outer-PEC.js';
+import Recipe from './recipe/recipe.js';
+import Manifest from './manifest.js';
+import Description from './description.js';
+import util from './recipe/util.js';
+import FakePecFactory from './fake-pec-factory.js';
 
 class Arc {
   constructor({id, context, pecFactory, slotComposer, loader}) {
     // TODO: context should not be optional.
     this._context = context || new Manifest();
     // TODO: pecFactory should not be optional. update all callers and fix here.
-    this._pecFactory = pecFactory ||  require('./fake-pec-factory').bind(null);
+    this._pecFactory = pecFactory ||  FakePecFactory.bind(null);
     this.id = id;
     this._nextLocalID = 0;
     this._activeRecipe = new Recipe();
+    // TODO: rename: this are just tuples of {particles, views, slots} of instantiated recipes merged into active recipe..
     this._recipes = [];
     this._loader = loader;
 
@@ -57,6 +59,7 @@ class Arc {
     this._viewTags = new Map();
 
     this._search = null;
+    this._description = new Description(this);
   }
   set search(search) {
     this._search = search ? search.toLowerCase().trim() : null;
@@ -65,6 +68,8 @@ class Arc {
   get search() {
     return this._search;
   }
+
+  get description() { return this._description; }
 
   static deserialize({serialization, pecFactory, slotComposer, arcMap}) {
     var entityMap = {};
@@ -116,12 +121,18 @@ class Arc {
     this.particleViewMaps.set(handle, viewMap);
 
     for (let [name, connection] of Object.entries(recipeParticle.connections)) {
+      if (!connection.view) {
+        assert(connection.isOptional);
+        continue;
+      }
       let view = this.findViewById(connection.view.id);
       assert(view);
       this._connectParticleToView(handle, recipeParticle, name, view);
     }
 
-    assert(viewMap.views.size == viewMap.spec.connectionMap.size, `Not all connections are resolved for {$particle}`);
+    // At least all non-optional connections must be resolved
+    assert(viewMap.views.size >= viewMap.spec.connections.filter(c => !c.isOptional).length,
+           `Not all mandatory connections are resolved for {$particle}`);
     this.pec.instantiate(recipeParticle, viewMap.spec, viewMap.views, this._lastSeenVersion);
     return handle;
   }
@@ -152,6 +163,7 @@ class Arc {
     });
 
    this._activeRecipe.mergeInto(arc._activeRecipe);
+   // TODO: merge this._recipes too?
 
     for (let v of viewMap.values()) {
       // FIXME: Tags
@@ -195,7 +207,10 @@ class Arc {
 
   instantiate(recipe) {
     assert(recipe.isResolved(), 'Cannot instantiate an unresolved recipe');
+
     let {views, particles, slots} = recipe.mergeInto(this._activeRecipe);
+    this.description.onRecipeUpdate();
+
     for (let recipeView of views) {
       if (['copy', 'create'].includes(recipeView.fate)) {
         let view = this.createView(recipeView.type, /* name= */ null, /* id= */ null, recipeView.tags);
@@ -209,7 +224,8 @@ class Arc {
       }
       let view = this.findViewById(recipeView.id);
       assert(view, `view '${recipeView.id}' was not found`);
-      view.description = Description.getViewDescription(recipeView, this);
+
+      view.description = this.description.getViewDescription(recipeView);
     }
 
     particles.forEach(recipeParticle => this._instantiateParticle(recipeParticle));
@@ -219,12 +235,7 @@ class Arc {
       this.pec.slotComposer.initializeRecipe(particles);
     }
 
-    let newRecipe = new Recipe();
-    newRecipe.particles = particles;
-    newRecipe.views = views;
-    newRecipe.slots = slots;
-    newRecipe.search = recipe.search;
-    this._recipes.push(newRecipe);
+    this._recipes.push({particles, views, slots});
   }
 
   _connectParticleToView(particleHandle, particle, name, targetView) {
@@ -235,22 +246,27 @@ class Arc {
   }
 
   createView(type, name, id, tags) {
-    tags = tags || [];
     assert(type instanceof Type, `can't createView with type ${type} that isn't a Type`);
+
     if (type.isRelation)
       type = Type.newSetView(type);
     let view;
     if (type.isSetView) {
-      view = new View(type, this, name, id);
+      view = new InMemoryCollection(type, this, name, id);
     } else {
       assert(type.isEntity || type.isInterface, `Expected entity or interface type, but... ${JSON.stringify(type.toLiteral())}`);
-      view = new Variable(type, this, name, id);
+      view = new InMemoryVariable(type, this, name, id);
     }
     this._registerView(view, tags);
     return view;
   }
 
   _registerView(view, tags) {
+    tags = tags || [];
+    tags = Array.isArray(tags) ? tags : [tags];
+    tags.forEach(tag => assert(tag.startsWith('#'),
+      `tag ${tag} must start with '#'`));
+
     this._viewsById.set(view.id, view);
     let byType = this._viewsByType.get(Arc._viewKey(view.type)) || [];
     byType.push(view);
@@ -351,4 +367,4 @@ class Arc {
   }
 }
 
-module.exports = Arc;
+export default Arc;

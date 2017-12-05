@@ -8,14 +8,14 @@
  */
 'use strict';
 
-const Identifier = require('./identifier.js');
-const Entity = require('./entity.js');
-const Relation = require('./relation.js');
-const Symbols = require('./symbols.js');
-const underlyingView = require('./view.js');
+import Identifier from './identifier.js';
+import Entity from './entity.js';
+import Relation from './relation.js';
+import Symbols from './symbols.js';
+import * as storage from './in-memory-storage.js';
 let identifier = Symbols.identifier;
-const assert = require("assert");
-const ParticleSpec = require("./particle-spec.js");
+import assert from '../platform/assert-web.js';
+import ParticleSpec from './particle-spec.js';
 
 // TODO: This won't be needed once runtime is transferred between contexts.
 function cloneData(data) {
@@ -221,11 +221,11 @@ function handleFor(view, isSet, canRead, canWrite) {
   if (canWrite == undefined)
     canWrite = true;
   let handle;
-  if (isSet || (isSet == undefined && view instanceof underlyingView.View))
+  if (isSet || (isSet == undefined && view instanceof storage.InMemoryCollection))
     handle = new Collection(view, canRead, canWrite);
   else
     handle = new Variable(view, canRead, canWrite);
   return handle;
 }
 
-module.exports = { handleFor };
+export default {handleFor};

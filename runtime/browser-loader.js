@@ -9,14 +9,14 @@
  */
 "use strict";
 
-const Loader = require('./loader');
+import Loader from './loader.js';
 
-module.exports = class BrowserLoader extends Loader {
+export default class BrowserLoader extends Loader {
   constructor(base) {
     super();
     // TODO: Update all callers to pass a valid base URL to avoid the use of
     //       location here. `new URL(base)` should be valid.
-    this._base = new URL(base || '', global.location).href;
+    this._base = new URL(base || '', self.location).href;
   }
   _resolve(path) {
     return new URL(path, this._base).href;

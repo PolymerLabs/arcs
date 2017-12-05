@@ -9,13 +9,13 @@
  */
 "use strict";
 
-const PEC = require('./particle-execution-context.js');
-const assert = require('assert');
-const PECOuterPort = require('./api-channel.js').PECOuterPort;
-const Manifest = require('./manifest.js');
+import PEC from './particle-execution-context.js';
+import assert from '../platform/assert-web.js';
+import {PECOuterPort} from './api-channel.js';
+import Manifest from './manifest.js';
 
 // TODO: fix
-const Loader = require('./loader.js');
+import Loader from './loader.js';
 
 class OuterPEC extends PEC {
   constructor(port, slotComposer, arc) {
@@ -33,7 +33,7 @@ class OuterPEC extends PEC {
     }
 
     this._apiPort.onSynchronize = ({handle, target, callback, modelCallback, type}) => {
-      if (handle.constructor.name == 'Variable') {
+      if (handle.constructor.name == 'InMemoryVariable') {
         var model = handle.get();
       } else {
         var model = handle.toList();
@@ -157,4 +157,4 @@ class OuterPEC extends PEC {
   }
 }
 
-module.exports = OuterPEC;
+export default OuterPEC;

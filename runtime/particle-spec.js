@@ -9,10 +9,9 @@
  */
 "use strict";
 
-const runtime = require("./runtime.js");
-const {ParticleDescription, ConnectionDescription} = require("./description.js");
-const Type = require("./type.js");
-const assert = require("assert");
+import runtime from './runtime.js';
+import Type from './type.js';
+import assert from '../platform/assert-web.js';
 
 class ConnectionSpec {
   constructor(rawData, typeVarMap) {
@@ -68,12 +67,12 @@ class ParticleSpec {
     this.outputs = this.connections.filter(a => a.isOutput);
     this.transient = model.transient;
 
-    // initialize descriptions.
+    // initialize descriptions patterns.
     model.description = model.description || {};
     this.validateDescription(model.description);
-    this.description = new ParticleDescription(model.description["pattern"], this);
+    this.pattern = model.description["pattern"];
     this.connections.forEach(connectionSpec => {
-      connectionSpec.description = new ConnectionDescription(model.description[connectionSpec.name], this, connectionSpec);
+      connectionSpec.pattern = model.description[connectionSpec.name];
     });
 
     this.implFile = model.implFile;
@@ -148,11 +147,11 @@ class ParticleSpec {
       });
     });
     // Description
-    if (this.description.hasPattern()) {
-      results.push(`  description \`${this.description.pattern}\``);
+    if (!!this.pattern) {
+      results.push(`  description \`${this.pattern}\``);
       this.connections.forEach(cs => {
-        if (cs.description.hasPattern()) {
-          results.push(`    ${cs.name} \`${cs.description.pattern}\``);
+        if (!!cs.pattern) {
+          results.push(`    ${cs.name} \`${cs.pattern}\``);
         }
       });
     }
@@ -164,4 +163,4 @@ class ParticleSpec {
   }
 }
 
-module.exports = ParticleSpec;
+export default ParticleSpec;

@@ -5,9 +5,9 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-const assert = require('assert');
+import assert from '../platform/assert-web.js';
 
-class Strategizer {
+export class Strategizer {
   constructor(strategies, evaluators, {maxPopulation, generationSize, discardSize}) {
     this._strategies = strategies;
     this._evaluators = evaluators;
@@ -257,7 +257,7 @@ class Walker {
 Strategizer.Walker = Walker;
 
 // TODO: Doc call convention, incl strategies are stateful.
-class Strategy {
+export class Strategy {
   async activate(strategizer) {
     // Returns estimated ability to generate/evaluate.
     // TODO: What do these numbers mean? Some sort of indication of the accuracy of the
@@ -276,8 +276,3 @@ class Strategy {
     return individuals.map(() => NaN);
   }
 }
-
-Object.assign(module.exports, {
-  Strategizer,
-  Strategy,
-});

@@ -9,9 +9,9 @@
  */
 "use strict";
 
-const assert = require('assert');
-const ParticleSpec = require('./particle-spec.js');
-const Type = require('./type.js');
+import assert from '../platform/assert-web.js';
+import ParticleSpec from './particle-spec.js';
+import Type from './type.js';
 
 class ThingMapper {
   constructor(prefix) {
@@ -315,4 +315,5 @@ class PECInnerPort extends APIPort {
   }
 }
 
-module.exports = { PECOuterPort, PECInnerPort };
+export {PECOuterPort as PECOuterPort, PECInnerPort as PECInnerPort};
+export default { PECOuterPort, PECInnerPort };

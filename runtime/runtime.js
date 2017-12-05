@@ -7,15 +7,14 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-"use strict";
 
-const assert = require('assert');
-const view = require('./view.js');
-const Symbols = require('./symbols.js');
-const Entity = require('./entity.js');
-const Schema = require('./schema.js');
-const Type = require('./type.js');
-const Relation = require('./relation.js');
+import assert from '../platform/assert-web.js';
+import * as storage from './in-memory-storage.js';
+import Symbols from './symbols.js';
+import Entity from './entity.js';
+import Schema from './schema.js';
+import Type from './type.js';
+import Relation from './relation.js';
 
 function testEntityClass(type) {
   return new Schema({
@@ -27,7 +26,7 @@ function testEntityClass(type) {
 
 let BasicEntity = testEntityClass('BasicEntity');
 
-Object.assign(exports, {
+export default {
   Entity,
   BasicEntity,
   Relation,
@@ -37,8 +36,5 @@ Object.assign(exports, {
   internals: {
     identifier: Symbols.identifier,
     Type,
-    View: view.View,
-    ViewBase: view.ViewBase,
-    SingletonView: view.SingletonView
   }
-});
+};

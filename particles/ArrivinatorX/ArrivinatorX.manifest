@@ -12,4 +12,4 @@ import '../../entities/Product.manifest'
 particle ArrivinatorX in 'ArrivinatorX.js'
   ArrivinatorX(in Product product)
   consume annotation
-  description `Estimate product arrival date`
+  description `estimate product arrival date`

@@ -14,4 +14,4 @@ particle Chooser in 'Chooser.js'
   consume action
     provide set of annotation
       view choices
-  description `Choose from ${choices}`
+  description `choose from ${choices}`

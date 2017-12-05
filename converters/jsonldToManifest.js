@@ -104,4 +104,4 @@ class JsonldToManifest {
   }
 }
 
-module.exports = JsonldToManifest;
+export default JsonldToManifest;

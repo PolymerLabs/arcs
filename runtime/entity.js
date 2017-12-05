@@ -7,8 +7,9 @@
 // http://polymer.github.io/PATENTS.txt
 'use strict';
 
-const assert = require('assert');
-const Symbols = require('./symbols.js');
+import assert from '../platform/assert-web.js';
+import Symbols from './symbols.js';
+import Type from './type.js';
 
 class Entity {
   constructor(userIDComponent) {
@@ -57,6 +58,4 @@ class Entity {
   }
 }
 
-module.exports = Entity;
-
-const Type = require('./type.js');
+export default Entity;

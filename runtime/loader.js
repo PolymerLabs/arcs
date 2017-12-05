@@ -7,16 +7,15 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-"use strict";
+ 
+import fs from '../platform/fs-web.js';
+import vm from '../platform/vm-web.js';
+import fetch from './fetch-web.js';
 
-var fs = require("fs");
-var assert = require("assert");
-const particle = require("./particle.js");
-const DomParticle = require("./dom-particle.js");
-const vm = require('vm');
-let JsonldToManifest = require("../converters/jsonldToManifest.js");
-
-let fetch = global.fetch || require('node-fetch');
+import assert from '../platform/assert-web.js';
+import particle from './particle.js';
+import DomParticle from './dom-particle.js';
+import JsonldToManifest from '../converters/jsonldToManifest.js';
 
 function schemaLocationFor(name) {
   return `../entities/${name}.schema`;
@@ -91,4 +90,4 @@ class Loader {
 
 }
 
-module.exports = Loader;
+export default Loader;

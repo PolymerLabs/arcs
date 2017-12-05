@@ -8,8 +8,9 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-let {parse} = require('../build/manifest-parser.js');
-let assert = require('chai').assert;
+import parser from '../build/manifest-parser.js';
+const parse = parser.parse;
+import {assert} from './chai-web.js';
 
 describe('manifest parser', function() {
   it('parses an empy manifest', () => {

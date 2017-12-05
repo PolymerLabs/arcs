@@ -9,95 +9,124 @@
  */
 "use strict";
 
-var assert = require('assert');
-var Type = require('./type.js');
+import assert from '../platform/assert-web.js';
+import Type from './type.js';
 
-function getSuggestion(recipe, arc, relevance) {
-  let options = createSuggestionsOptions({arc, relevance});
-  let selectedParticles = recipe.particles
-      .filter(particle => particle.spec.description && particle.spec.description.hasPattern() && particle.spec.slots.size > 0)
-      .sort(ParticleDescription.sortParticles.bind(null, options));
+export default class Description {
+  constructor(arc) {
+    this._arc = arc;
+    this._recipe = arc._activeRecipe;
 
-  let results = [];
-  selectedParticles.forEach(particle => {
-    results.push(particle.spec.description.toSuggestion(options, particle));
-  });
-  return joinSuggestions(recipe, results);
-}
+    this.onRecipeUpdate();
+  }
 
-function joinSuggestions(recipe, suggestions) {
-  // Return recipe name by default.
-  let desc = recipe.name;
-  // Maybe combine descriptions into a sentence.
-  let count = suggestions.length;
-  if (count) {
+  onRecipeUpdate() {
+    this._particleDescriptions = this._recipe.particles.map(particle => { return {_particle: particle, _connections: {} }; });
+
+    this.setRelevance(this._relevance);
+  }
+
+  setRelevance(relevance) {
+    this._relevance = relevance;
+    if (this._relevance) {
+      this._particleDescriptions.forEach(pDesc => {
+        pDesc._rank = this._relevance.calcParticleRelevance(pDesc._particle);
+      });
+    }
+  }
+
+  _updateDescriptionHandles() {
+    this._particleDescriptions.forEach(pDesc => {
+      let particle = pDesc._particle;
+      let descByName = this._getPatternByNameFromDescriptionHandle(particle) || {};
+      let pattern = descByName["_pattern_"] || particle.spec.pattern;
+      if (pattern) {
+        pDesc.pattern = pattern;
+      }
+
+      pDesc._connections = {};
+      Object.values(particle.connections).forEach(viewConn => {
+        let specConn = particle.spec.connectionMap.get(viewConn.name);
+        let pattern = descByName[viewConn.name] || specConn.pattern;
+        if (pattern) {
+          let viewDescription = {pattern: pattern, _viewConn: viewConn, _view: this._arc.findViewById(viewConn.view.id)};
+          pDesc._connections[viewConn.name] = viewDescription;
+        }
+      });
+    });
+  }
+
+  _getPatternByNameFromDescriptionHandle(particle) {
+    let descriptionConn = particle.connections["descriptions"];
+    if (descriptionConn && descriptionConn.view && descriptionConn.view.id) {
+      let descView = this._arc.findViewById(descriptionConn.view.id);
+      if (descView) {
+        let descList = descView.toList();
+        let descByName = {};
+        descList.forEach(d => descByName[d.rawData.key] = d.rawData.value);
+        return descByName;
+      }
+    }
+  }
+
+  getRecipeSuggestion(particles) {
+    this._updateDescriptionHandles();  // This is needed to get updates in description handle.
+
+    // Choose particles that render UI, sort them by rank and generate suggestions.
+    let particlesSet = new Set(particles || this._particleDescriptions.map(pDesc => pDesc._particle));
+    let selectedDescriptions = this._particleDescriptions
+      .filter(desc => { return particlesSet.has(desc._particle) && desc._particle.spec.slots.size > 0 && !!desc.pattern; })
+      .sort(Description.sort);
+
+    let options = { seenViews: new Set(), seenParticles: new Set() };
+    let suggestions = [];
+    selectedDescriptions.forEach(particle => {
+      if (!options.seenParticles.has(particle._particle)) {
+        suggestions.push(this.patternToSuggestion(particle.pattern, particle, options));
+      }
+    });
+
+    if (suggestions.length == 0) {
+      // Return recipe name by default.
+      return this._recipe.name;
+    }
+
+    return this._capitalizeAndPunctuate(this._joinStringsToSentence(suggestions));
+  }
+
+  _joinStringsToSentence(strings) {
+    let count = strings.length;
+    // Combine descriptions into a sentence:
     // "A."
     // "A and b."
     // "A, b, ..., and z." (Oxford comma ftw)
     let delim = ['', '', ' and ', ', and '][count > 2 ? 3 : count];
-    desc = suggestions.slice(0,-1).join(", ") + delim + suggestions.pop();
+    return strings.slice(0, -1).join(", ") + delim + strings.pop();
+  }
+
+  _capitalizeAndPunctuate(sentence) {
     // "Capitalize, punctuate."
-    desc = desc[0].toUpperCase() + desc.slice(1) + '.';
-  }
-  return desc;
-}
-
-function getViewDescription(view, arc, relevance) {
-  assert(view);
-  let options = createViewDescriptionOptions({arc, relevance});
-  let viewConnection = _selectViewConnection(view, options) || view.connections[0];
-  assert(viewConnection);
-  let connectionSpec = viewConnection.spec;
-  assert(connectionSpec, `Cannot get view description for a nonexistent connection ${viewConnection.name}`);
-  return connectionSpec.description.toSuggestion(options, viewConnection);
-}
-
-function createSuggestionsOptions({arc, relevance}) {
-  let options = { includeViewValues: true };
-  options.findViewById = (viewId) => { return viewId ? (relevance ? relevance.newArc : arc).findViewById(viewId) : null };
-  options.getParticleRank = (particle) => { return relevance ? relevance.calcParticleRelevance(particle) : 0 };
-  return options;
-}
-
-function createViewDescriptionOptions({arc, relevance}) {
-  let options = { includeViewValues: false };
-  options.findViewById = (viewId) => { return viewId ? (relevance ? relevance.newArc : arc).findViewById(viewId) : null };
-  options.getParticleRank = (particle) => { return relevance ? relevance.calcParticleRelevance(particle) : 0 };
-  return options;
-}
-
-function _selectViewConnection(view, options) {
-  let possibleConnections = view.connections.filter(connection => {
-    let connectionSpec = connection.spec;
-    return connectionSpec.isOutput && connectionSpec.description.hasPattern();
-  });
-
-  if (options) {
-    possibleConnections.sort((c1, c2) => {
-      // Sort by particle's rank in descending order.
-      return options.getParticleRank(c2.particle) - options.getParticleRank(c1.particle);
-    });
-  } else {
-    // TODO: sort
+    return sentence[0].toUpperCase() + sentence.slice(1) + '.';
   }
 
-  if (possibleConnections.length > 0) {
-    return possibleConnections[0];
-  }
-}
+  getViewDescription(recipeView) {
+    assert(recipeView.connections.length > 0, 'view has no connections?');
 
-class Description {
-  constructor(pattern) {
-    this._pattern = pattern || "";
-    this._pattern = this._pattern.replace(/</g, '&lt;')
-    this._tokens = [];
-    this._initTokens(this._pattern);
+    this._updateDescriptionHandles();  // This is needed to get updates in description handle.
+
+    let viewConnection = this._selectViewConnection(recipeView) || recipeView.connections[0];
+    let view = this._arc.findViewById(recipeView.id);
+    return this._formatDescription(viewConnection, view, { seenViews: new Set(), excludeValues: true });
   }
-  get pattern() { return this._pattern; }
-  hasPattern() {
-    return this._tokens.length > 0;
+
+  patternToSuggestion(pattern, particleDescription, options) {
+    this._tokens = this._initTokens(pattern, particleDescription._particle);
+    return this._tokens.map(token => this.tokenToString(token, options)).join("");
   }
-  _initTokens(pattern) {
+
+  _initTokens(pattern, particle) {
+    pattern = pattern.replace(/</g, '&lt;');
+    let results = [];
     while (pattern.length  > 0) {
       let tokens = pattern.match(/\${[a-zA-Z0-9::~\.\[\]_]+}/g);
       if (tokens) {
@@ -110,116 +139,96 @@ class Description {
       assert(tokenIndex >= 0);
       let nextToken = pattern.substring(0, tokenIndex);
       if (nextToken.length > 0)
-        this._tokens.push(new TextToken(nextToken));
-      if (firstToken.length > 0)
-        this._tokens.push(new ValueToken(firstToken.substring(2, firstToken.length - 1)));
+        results.push({text: nextToken});
+      if (firstToken.length > 0) {
+        let valueTokens = pattern.match(/\$\{([a-zA-Z]+)(?:\.([_a-zA-Z]+))?\}/);
+        let handleName = valueTokens[1];
+        let extra = valueTokens.length == 3 ? valueTokens[2] : undefined;
+        let valueToken;
+        let viewConn = particle.connections[handleName];
+        if (viewConn) {  // view connection
+          assert(viewConn.view && viewConn.view.id, 'Missing id???');
+          valueToken = {viewName: handleName, extra, _viewConn: viewConn, _view: this._arc.findViewById(viewConn.view.id)};
+        } else {  // slot connection
+          let providedSlotConn = particle.consumedSlotConnections[handleName].providedSlots[extra];
+          assert(providedSlotConn, `Could not find handle ${handleName}`);
+          valueToken = {slotName: handleName, _providedSlotConn: providedSlotConn};
+        }
+        results.push(valueToken);
+      }
       pattern = pattern.substring(tokenIndex + firstToken.length);
     }
+    return results;
   }
-  toString() {
-    return this._tokens.map(token => token.toString()).join("");
-  }
-}
 
-class TextToken {
-  constructor(text) {
-    this._text = text;
+  tokenToString(token, options) {
+    if (token.text) {
+      return token.text;
+    }
+    if (token.viewName) {
+      return this._viewTokenToString(token, options);
+    } else  if (token.slotName) {
+      return this._slotTokenToString(token, options);
+    }
+    assert(false, `no view or slot name (${JSON.stringify(token)})`);
   }
-  toString() { return this._text; }
-}
 
-class ValueToken {
-  constructor(token) {
-    assert(token);
-    this._token = token;
-    let parts = this._token.split(".");
-    this._viewName = parts[0];
-    switch(parts[1]) {
+  _viewTokenToString(token, options) {
+    switch (token.extra) {
       case "_type_":
-        this._useType = true;
-        break;
+        return token._viewConn.type.toPrettyString().toLowerCase();
       case "_values_":
-        this._values = true;
-        break;
-      case "_name_":
-        this._excludeValues = true;
-        break;
-      default:
-        this._property = parts;
-        this._property.shift();
-    }
+        return this._formatViewValue(token._view);
+      case "_name_": {
+        return this._formatDescription(token._viewConn, token._view, options).toString();
+      }
+      case undefined:
+        // full view description
+        let descriptionToken = this._formatDescription(token._viewConn, token._view, options) || {};
+        let viewValue = this._formatViewValue(token._view);
+        if (!descriptionToken.pattern) {
+          // For singleton view, if there is no real description (the type was used), use the plain value for description.
+          if (viewValue && !token._view.type.isSetView && !options.excludeValues) {
+            return viewValue;
+          }
+        }
+
+        if (viewValue && !options.excludeValues && !options.seenViews.has(token._view.id)) {
+          options.seenViews.add(token._view.id);
+          return `${descriptionToken.toString()} (${viewValue})`;
+        }
+        return descriptionToken.toString();
+      default:  // property
+        return this._propertyTokenToString(token._view, token.extra.split('.'));
+      }
   }
-  toString(options, recipeParticle) {
-    let result = [];
-    let viewConnection = recipeParticle.getConnectionByName(this._viewName);
-    let view = options.findViewById(viewConnection.view.id);
-    if (this._useType) {  // view type
-      // Use view type (eg "Products list")
-      result.push(viewConnection.type.toPrettyString().toLowerCase());
-    } else if (view && this._values) {  // view values
-      // Use view values (eg "How to draw book, Hockey stick")
-      result.push(this._formatViewValue(view));
-    } else if (view && this._property && this._property.length > 0) {
-      assert(!view.type.isSetView, `Cannot return property ${this._property.join(",")} for set-view`);
-      // Use singleton value's property (eg. "09/15" for person's birthday)
-      let viewVar = view.get();
-      if (viewVar) {
-        let value = viewVar.rawData;
-        this._property.forEach(p => {
-          if (value) {
-            value = value[p];
-          }
-        });
+
+  _slotTokenToString(token, options) {
+    let results = token._providedSlotConn.consumeConnections.map(consumeConn => {
+      let particle = consumeConn.particle;
+      let particleDescription = this._particleDescriptions.find(desc => desc._particle == particle);
+      options.seenParticles.add(particle);
+      return this.patternToSuggestion(particle.spec.pattern, particleDescription, options);
+    }).filter(str => !!str);
+
+    return this._joinStringsToSentence(results);
+  }
+
+  _propertyTokenToString(view, properties) {
+    assert(!view.type.isSetView, `Cannot return property ${properties.join(",")} for set-view`);
+    // Use singleton value's property (eg. "09/15" for person's birthday)
+    let viewVar = view.get();
+    if (viewVar) {
+      let value = viewVar.rawData;
+      properties.forEach(p => {
         if (value) {
-          result.push(`<b>${value}</b>`);
+          value = value[p];
         }
-      }
-    } else {  // view description
-      let chosenConnection = viewConnection;
-      let chosenConnectionSpec = viewConnection.spec;
-      // For "out" connection, use its own description
-      // For "in" connection, use description of the highest ranked out connection with description.
-      if (!chosenConnectionSpec.isOutput) {
-
-        let otherConnection = _selectViewConnection(viewConnection.view, options);
-        if (otherConnection) {
-          chosenConnection = otherConnection;
-          chosenConnectionSpec = chosenConnection.spec;
-          assert(options.findViewById(chosenConnection.view.id) == view, `Non matching views`);
-        }
-      }
-      // Add description to result array.
-      if (!chosenConnectionSpec.description.hasPattern() && view && view.description) {
-        // Use the view description available in the arc.
-        result.push(view.description);
-      } else if (chosenConnectionSpec.description.hasPattern()) {
-        // Add the connection spec's description pattern.
-        result.push(chosenConnectionSpec.description._tokens.map(token => token.toString(options, chosenConnection.particle)).join(""));
-      } else {
-        // Add the connection type.
-        result.push(chosenConnection.type.toPrettyString().toLowerCase());
-      }
-
-      if (options.includeViewValues !== false && !this._excludeValues && view) {
-        let viewValues = this._formatViewValue(view);
-        if (viewValues) {
-          if (!view.type.isSetView && !chosenConnectionSpec.description.hasPattern()) {
-            // For singleton view, if there is no real description (the type was used), use the plain value for description.
-            result = [];
-            result.push(`${viewValues}`);
-          } else {  // append the values
-            if (!options.seenViews) {
-              options.seenViews = new Set();
-            }
-            if (!options.seenViews.has(view.id)) {
-              result.push(` (${viewValues})`);
-            }
-            options.seenViews.add(view.id);
-          }
-        }
+      });
+      if (value) {
+        return `<b>${value}</b>`;
       }
     }
-    return result.join("");
   }
 
   _formatViewValue(view) {
@@ -246,66 +255,97 @@ class ValueToken {
       }
     }
   }
-}
 
-class ParticleDescription extends Description {
-  constructor(pattern, particleSpec) {
-    super(pattern);
-    assert(particleSpec);
-    this._particleSpec = particleSpec;
+  _formatDescription(viewConnection, view, options) {
+    assert(viewConnection.view.id == view.id, `Mismatching view IDs ${viewConnection.view.id} and ${view.id}`);
+
+    let chosenConnection = viewConnection;
+    // For "out" connection, use its own description
+    // For "in" connection, use description of the highest ranked out connection with description.
+    if (!chosenConnection.spec.isOutput) {
+      let otherConnection = this._selectViewConnection(viewConnection.view);
+      if (otherConnection) {
+        chosenConnection = otherConnection;
+        assert(chosenConnection.view.id == view.id, `Non matching views`);
+      }
+    }
+
+    let chosenParticleDescription = this._particleDescriptions.find(desc => desc._particle == chosenConnection.particle);
+    let viewDescription = chosenParticleDescription ? chosenParticleDescription._connections[chosenConnection.name] : null;
+    // Add description to result array.
+    if (viewDescription) {
+      // Add the connection spec's description pattern.
+      return DescriptionToken.fromPatternDescription(this.patternToSuggestion(viewDescription.pattern, chosenParticleDescription, options));
+    } else if (view && view.description) {
+      // Use the view description available in the arc.
+      return view.description;
+    } else {
+      return DescriptionToken.fromTypeDescription(viewConnection.type.toPrettyString().toLowerCase());
+    }
   }
 
-  toSuggestion(options, recipeParticle) {
-    assert(recipeParticle.spec == this._particleSpec, `Recipe particle ${recipeParticle.name} spec doesn't match existing ${this._particleSpec.name}`);
-    return this._tokens.map(token => token.toString(options, recipeParticle)).join("");
+  _selectViewConnection(recipeView) {
+    let possibleConnections = recipeView.connections.filter(connection => {
+      // Choose connections with patterns (manifest-based or dynamic).
+      let connectionSpec = connection.spec;
+      let particleDescription = this._particleDescriptions.find(desc => desc._particle == connection.particle);
+      return !!connectionSpec.pattern || !!particleDescription._connections[connection.name];
+    });
+
+    possibleConnections.sort((c1, c2) => {
+      let isOutput1 = c1.spec.isOutput;
+      let isOutput2 = c2.spec.isOutput;
+      if (isOutput1 != isOutput2) {
+        // Prefer output connections
+        return isOutput1 ? -1 : 1;
+      }
+
+      let d1 = this._particleDescriptions.find(desc => desc._particle == c1.particle);
+      let d2 = this._particleDescriptions.find(desc => desc._particle == c2.particle);
+      // Sort by particle's rank in descending order.
+      return d2._rank - d1._rank;
+    });
+
+    if (possibleConnections.length > 0) {
+      return possibleConnections[0];
+    }
   }
 
-  static sortParticles(options, p1, p2) {
+  static sort(p1, p2) {
     // Root slot comes first.
-    let hasRoot1 = [...p1.spec.slots.keys()].indexOf("root") >= 0;
-    let hasRoot2 = [...p2.spec.slots.keys()].indexOf("root") >= 0;
+    let hasRoot1 = [...p1._particle.spec.slots.keys()].indexOf("root") >= 0;
+    let hasRoot2 = [...p2._particle.spec.slots.keys()].indexOf("root") >= 0;
     if (hasRoot1 != hasRoot2) {
       return hasRoot1 ? -1 : 1;
     }
 
     // Sort by rank
-    let rank1 = options.getParticleRank(p1);
-    let rank2 = options.getParticleRank(p2);
-    if (rank1 != rank2) {
-      return rank2 - rank1;
+    if (p1._rank != p2._rank) {
+      return p1._rank != p2._rank;
     }
 
     // Sort by number of singleton slots.
     let p1Slots = 0, p2Slots = 0;
-    p1.spec.slots.forEach((slotSpec) => { if (!slotSpec.isSet) ++p1Slots; });
-    p2.spec.slots.forEach((slotSpec) => { if (!slotSpec.isSet) ++p2Slots; });
+    p1._particle.spec.slots.forEach((slotSpec) => { if (!slotSpec.isSet) ++p1Slots; });
+    p2._particle.spec.slots.forEach((slotSpec) => { if (!slotSpec.isSet) ++p2Slots; });
     return p2Slots - p1Slots;
   }
 }
 
-class ConnectionDescription extends Description {
-  constructor(pattern, particleSpec, connectionSpec) {
-    super(pattern);
-    assert(particleSpec);
-    assert(connectionSpec);
-    this._particleSpec = particleSpec;
-    this._connectionSpec = connectionSpec;
+class DescriptionToken {
+  constructor(pattern, type) {
+    this._pattern = pattern;
+    this._type = type;
   }
-
-  toSuggestion(options, viewConnection) {
-    assert(viewConnection);
-    assert(this._particleSpec == viewConnection.particle.spec,
-           `Particle ${viewConnection.particle.spec.name} expected to match ${this._particleSpec.name}`);
-    assert(this._connectionSpec == viewConnection.particle.spec.connectionMap.get(viewConnection.name),
-           `View connection ${viewConnection.name} spec expected to match ${this._connectionSpec.name} spec.`);
-
-    return new ValueToken(viewConnection.name).toString(options, viewConnection.particle);
+  get pattern() { return this._pattern; }
+  get type() { return this._type; }
+  toString() {
+    return this._pattern || this._type;
+  }
+  static fromPatternDescription(patternDescription) {
+    return new DescriptionToken(patternDescription);
+  }
+  static fromTypeDescription(typeDescription) {
+    return new DescriptionToken(null, typeDescription);
   }
 }
-
-Object.assign(module.exports, {
-  getSuggestion,
-  getViewDescription,
-  ConnectionDescription,
-  ParticleDescription,
-});

@@ -9,7 +9,7 @@
  */
 "use strict";
 
-const assert = require('assert');
+import assert from '../platform/assert-web.js';
 
 class Slot {
   constructor(consumeConn, arc) {
@@ -70,11 +70,8 @@ class Slot {
   populateViewDescriptions() {
     let descriptions = {};
     Object.values(this.consumeConn.particle.connections).forEach(viewConn => {
-      if (viewConn.view  && viewConn.view.id) {
-        let view = this._arc.findViewById(viewConn.view.id);
-        assert(view, `Cannot find view ${viewConn.view.id} for connection ${viewConn.name} in the arc`);
-        if (view.description)
-          descriptions[`${viewConn.name}.description`] = view.description;
+      if (viewConn.view) {
+        descriptions[`${viewConn.name}.description`] = this._arc.description.getViewDescription(viewConn.view).toString();
       }
     });
     return descriptions;
@@ -114,4 +111,4 @@ class Slot {
   static findRootSlots(context) { }
 }
 
-module.exports = Slot;
+export default Slot;

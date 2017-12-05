@@ -10,4 +10,4 @@ particle VrFlower in 'VrFlower.js'
   VrFlower()
   affordance vr
   consume soil
-  description `Create Flower`
+  description `create Flower`
