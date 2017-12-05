@@ -4,7 +4,7 @@ Particle developers should visit our [particle developer website](https://polyme
 
 ## Install
 
-Note that you need a **recent** version of Node because we use new ES6 features. v9 is definitely OK - earlier v8 versions are probably fine too.
+Note that you need a **recent** version of Node because we use new ES6 features. v9 is definitely OK.
 
 ```
 $ npm install
