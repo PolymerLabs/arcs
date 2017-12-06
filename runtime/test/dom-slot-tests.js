@@ -11,6 +11,7 @@
 
 import {assert} from './chai-web.js';
 import DomSlot from '../dom-slot.js';
+import {DomContext} from '../dom-context.js';
 import * as util from './test-util.js';
 import Loader from '../loader.js';
 
@@ -28,7 +29,7 @@ class MockDomContext {
 }
 DomSlot.prototype._createDomContext = () => new MockDomContext();
 DomSlot.prototype._initMutationObserver = () => {};
-DomSlot.prototype._createTemplateElement = (template) => template;
+DomContext.createTemplateElement = (template) => template;
 
 function createDomSlot(slotName) {
   // slotName should differ in each test case to avoid collision in DomSlot::templates.

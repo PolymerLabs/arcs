@@ -12,6 +12,8 @@
 import assert from '../platform/assert-web.js';
 import Slot from './slot.js';
 import DomSlot from './dom-slot.js';
+import {DomContext} from './dom-context.js';
+import DescriptionDomFormatter from './description-dom-formatter.js';
 
 class SlotComposer {
   constructor(options) {
@@ -29,6 +31,8 @@ class SlotComposer {
       this._contextById["root"] = options.rootContext;
     }
 
+    this._suggestionsContext = options.suggestionsContext;
+
     this._slots = [];
   }
   get affordance() { return this._affordance; }
@@ -43,6 +47,43 @@ class SlotComposer {
       default:
         assert("unsupported affordance ", this._affordance);
     }
+  }
+  _getSuggestionContext() {
+    switch(this._affordance) {
+      case "dom":
+      case "dom-touch":
+      case "vr":
+        return DomContext;
+      default:
+        assert("unsupported affordance ", this._affordance);
+    }
+  }
+  _getDescriptionFormatter() {
+    switch(this._affordance) {
+      case "dom":
+      case "dom-touch":
+      case "vr":
+        return DescriptionDomFormatter;
+      default:
+        assert("unsupported affordance ", this._affordance);
+    }
+  }
+
+  async setSuggestions(suggestions) {
+    // TODO(mmandlis): slot composer should not be familiar with suggestions concept - they should just be slots.
+    if (!this._suggestionsContext) {
+      return;
+    }
+
+    this._suggestionsContext.clear();
+    suggestions.forEach(async suggestion => {
+      let suggestionContent =
+        await suggestion.description.getRecipeSuggestion(suggestion.description.arc.recipes[0].particles, this._getDescriptionFormatter());
+
+      this._getSuggestionContext().createContext(
+          this._suggestionsContext.createSuggestionElement({hash: suggestion.hash, plan: suggestion.plan}),
+          suggestionContent);
+    });
   }
 
   getSlot(particle, slotName) {

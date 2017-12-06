@@ -178,7 +178,6 @@ export class Particle {
 
   setParticleDescription(pattern) {
     return this.setDescriptionPattern('_pattern_', pattern);
-
   }
   setDescriptionPattern(connectionName, pattern) {
     let descriptions = this._views.get('descriptions');

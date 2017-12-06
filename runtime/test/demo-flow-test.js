@@ -70,10 +70,10 @@ describe('demo flow', function() {
       provide preamble as slot5`;
     let {plan, description} = plans.find(p => p.plan.toString() == expectedPlanString);
 
-    assert.equal("Show a few items: my short list (<b>Minecraft Book</b> plus <b>2</b> other items) and " +
-                 "choose from Products recommended based on my short list and " +
-                 "Claire\'s wishlist (<b>Book: How to Draw</b> plus <b>2</b> other items).",
-                 description);
+    assert.equal("Show a few items: my short list (Minecraft Book plus 2 other items) and " +
+                 "choose from products recommended based on my short list and " +
+                 "Claire\'s wishlist (Book: How to Draw plus 2 other items).",
+                 await description.getRecipeSuggestion());
 
     slotComposer
       .newExpectations()

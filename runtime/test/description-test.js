@@ -11,6 +11,8 @@
 import {assert} from './chai-web.js';
 import Arc from '../arc.js';
 import Description from '../description.js';
+import DescriptionDomFormatter from '../description-dom-formatter.js';
+import handle from '../handle.js';
 import Loader from '../loader.js';
 import Manifest from '../manifest.js';
 import Relevance from '../relevance.js';
@@ -22,6 +24,28 @@ function createTestArc() {
   var arc = new Arc({slotComposer, id:'test'});
   return arc;
 }
+
+var tests = [
+  {
+    name: 'text',
+    verifySuggestion: async (expectedSuggestion, description) => {
+      assert.equal(expectedSuggestion, await description.getRecipeSuggestion());
+    }
+  },
+  {
+    name:'dom',
+    verifySuggestion: async (expectedSuggestion, description) => {
+      let suggestion = await description.getRecipeSuggestion(/* all particles */ undefined, DescriptionDomFormatter);
+      let result = suggestion.template.replace(/<[/]?span>/g, '').replace(/<[/]?b>/g, '');
+      Object.keys(suggestion.model).forEach(m => {
+        assert.isTrue(result.indexOf(`{{${m}}}`) >= 0);
+        result = result.replace(new RegExp(`{{${m}}}`, 'g'), suggestion.model[m]);
+        assert.isFalse(result.indexOf(`{{${m}}}`) >= 0);
+      });
+      assert.equal(expectedSuggestion, result);
+    }
+  },
+];
 
 describe('Description', function() {
   var schemaManifest = `
@@ -78,196 +102,208 @@ recipe
     return {arc, recipe, ifooView, ofoosView, fooView, foosView};
   }
 
-  it('one particle description', async () => {
-    let {arc, recipe, ifooView, ofoosView, fooView, foosView} = (await prepareRecipeAndArc(`
+  tests.forEach((test) => {
+    it('one particle description ' + test.name, async () => {
+      let {arc, recipe, ifooView, ofoosView, fooView, foosView} = (await prepareRecipeAndArc(`
 ${schemaManifest}
 ${aParticleManifest}
-  description \`Read from \${ifoo}\ and populate \${ofoos}\`
+  description \`read from \${ifoo}\ and populate \${ofoos}\`
 ${recipeManifest}
-    `));
+      `));
 
-    let description = new Description(arc);
+      let description = new Description(arc);
 
-    assert.equal('Read from foo and populate foo list.', await description.getRecipeSuggestion());
-    assert.equal('foo', await description.getViewDescription(ifooView));
-    assert.equal('foo list', await description.getViewDescription(ofoosView));
+      await test.verifySuggestion('Read from foo and populate foo list.', description);
+      assert.equal('foo', await description.getViewDescription(ifooView));
+      assert.equal('foo list', await description.getViewDescription(ofoosView));
 
-    // Add value to singleton view.
-    fooView.set({id: 1, rawData: {name: 'foo-name', fooValue: 'the-FOO'}});
-    assert.equal('Read from <b>foo-name</b> and populate foo list.', await description.getRecipeSuggestion());
-    assert.equal('foo', await description.getViewDescription(ifooView));
-    assert.equal('foo list', await description.getViewDescription(ofoosView));
+      // Add value to singleton view.
+      fooView.set({id: 1, rawData: {name: 'foo-name', fooValue: 'the-FOO'}});
+      await test.verifySuggestion('Read from foo-name and populate foo list.', description);
+      assert.equal('foo', await description.getViewDescription(ifooView));
+      assert.equal('foo list', await description.getViewDescription(ofoosView));
 
-    // Add values to set-view
-    foosView.store({id: 2, rawData: {name: 'foo-1', fooValue: 'foo-value-1'}});
-    foosView.store({id: 3, rawData: {name: 'foo-2', fooValue: 'foo-value-2'}});
-    assert.equal('Read from <b>foo-name</b> and populate foo list (<b>foo-1</b>, <b>foo-2</b>).', await description.getRecipeSuggestion());
-    assert.equal('foo', await description.getViewDescription(ifooView));
-    assert.equal('foo list', await description.getViewDescription(ofoosView));
+      // Add values to set-view
+      foosView.store({id: 2, rawData: {name: 'foo-1', fooValue: 'foo-value-1'}});
+      foosView.store({id: 3, rawData: {name: 'foo-2', fooValue: 'foo-value-2'}});
+      await test.verifySuggestion('Read from foo-name and populate foo list (foo-1, foo-2).', description);
+      assert.equal('foo', await description.getViewDescription(ifooView));
+      assert.equal('foo list', await description.getViewDescription(ofoosView));
 
-    // Add more values to set-view
-    foosView.store({id: 4, rawData: {name: 'foo-name', fooValue: 'foo-3'}});
-    assert.equal('Read from <b>foo-name</b> and populate foo list (<b>foo-1</b> plus <b>2</b> other items).',
-                 await description.getRecipeSuggestion());
+      // Add more values to set-view
+      foosView.store({id: 4, rawData: {name: 'foo-name', fooValue: 'foo-3'}});
+      await test.verifySuggestion('Read from foo-name and populate foo list (foo-1 plus 2 other items).', description);
+    });
   });
 
-  it('one particle and connections descriptions', async () => {
-    let {arc, recipe, ifooView, ofoosView, fooView, foosView} = (await prepareRecipeAndArc(`
+  tests.forEach((test) => {
+    it('one particle and connections descriptions ' + test.name, async () => {
+      let {arc, recipe, ifooView, ofoosView, fooView, foosView} = (await prepareRecipeAndArc(`
 ${schemaManifest}
 ${aParticleManifest}
-  description \`Read from \${ifoo}\ and populate \${ofoos}\`
+  description \`read from \${ifoo}\ and populate \${ofoos}\`
     ifoo \`my-in-foo\`
     ofoos \`my-out-foos\`
 ${recipeManifest}
     `));
 
-    let description = new Description(arc);
+      let description = new Description(arc);
 
-    assert.equal('Read from my-in-foo and populate my-out-foos.', await description.getRecipeSuggestion());
-    assert.equal('my-in-foo', await description.getViewDescription(ifooView));
-    assert.equal('my-out-foos', await description.getViewDescription(ofoosView));
+      await test.verifySuggestion('Read from my-in-foo and populate my-out-foos.', description);
+      assert.equal('my-in-foo', await description.getViewDescription(ifooView));
+      assert.equal('my-out-foos', await description.getViewDescription(ofoosView));
 
-    // Add value to singleton view.
-    fooView.set({id: 1, rawData: {name: 'foo-name', fooValue: 'the-FOO'}});
-    assert.equal('Read from my-in-foo (<b>foo-name</b>) and populate my-out-foos.', await description.getRecipeSuggestion());
+      // Add value to singleton view.
+      fooView.set({id: 1, rawData: {name: 'foo-name', fooValue: 'the-FOO'}});
+      await test.verifySuggestion('Read from my-in-foo (foo-name) and populate my-out-foos.', description);
 
-    // Add values to set-view
-    foosView.store({id: 2, rawData: {name: 'foo-1', fooValue: 'foo-value-1'}});
-    foosView.store({id: 3, rawData: {name: 'foo-2', fooValue: 'foo-value-2'}});
-    assert.equal('Read from my-in-foo (<b>foo-name</b>) and populate my-out-foos (<b>foo-1</b>, <b>foo-2</b>).',
-                 await description.getRecipeSuggestion());
+      // Add values to set-view
+      foosView.store({id: 2, rawData: {name: 'foo-1', fooValue: 'foo-value-1'}});
+      foosView.store({id: 3, rawData: {name: 'foo-2', fooValue: 'foo-value-2'}});
+      await test.verifySuggestion('Read from my-in-foo (foo-name) and populate my-out-foos (foo-1, foo-2).',
+                            description);
 
-    // Add more values to set-view
-    foosView.store({id: 4, rawData: {name: 'foo-name', fooValue: 'foo-3'}});
-    assert.equal('Read from my-in-foo (<b>foo-name</b>) and populate my-out-foos (<b>foo-1</b> plus <b>2</b> other items).',
-                 await description.getRecipeSuggestion());
-    assert.equal('my-in-foo', await description.getViewDescription(ifooView));
-    assert.equal('my-out-foos', await description.getViewDescription(ofoosView));
+      // Add more values to set-view
+      foosView.store({id: 4, rawData: {name: 'foo-name', fooValue: 'foo-3'}});
+      await test.verifySuggestion('Read from my-in-foo (foo-name) and populate my-out-foos (foo-1 plus 2 other items).',
+                            description);
+      assert.equal('my-in-foo', await description.getViewDescription(ifooView));
+      assert.equal('my-out-foos', await description.getViewDescription(ofoosView));
+    });
   });
 
-it('one particle and connections descriptions references', async () => {
-    let {arc, recipe, ifooView, ofoosView, fooView, foosView} = (await prepareRecipeAndArc(`
+  tests.forEach((test) => {
+    it('one particle and connections descriptions references ' + test.name, async () => {
+      let {arc, recipe, ifooView, ofoosView, fooView, foosView} = (await prepareRecipeAndArc(`
 ${schemaManifest}
 ${aParticleManifest}
-  description \`Read from \${ifoo}\ and populate \${ofoos}\`
+  description \`read from \${ifoo}\ and populate \${ofoos}\`
     ifoo \`my-in-foo\`
     ofoos \`The Foos from \${ifoo}\`
 ${recipeManifest}
     `));
 
-    let description = new Description(arc);
+      let description = new Description(arc);
 
-    assert.equal('Read from my-in-foo and populate The Foos from my-in-foo.', await description.getRecipeSuggestion());
-    assert.equal('my-in-foo', await description.getViewDescription(ifooView));
-    assert.equal('The Foos from my-in-foo', await description.getViewDescription(ofoosView));
+      await test.verifySuggestion('Read from my-in-foo and populate The Foos from my-in-foo.', description);
+      assert.equal('my-in-foo', await description.getViewDescription(ifooView));
+      assert.equal('The Foos from my-in-foo', await description.getViewDescription(ofoosView));
 
-    fooView.set({id: 1, rawData: {name: 'foo-name', fooValue: 'the-FOO'}});
-    foosView.store({id: 2, rawData: {name: 'foo-1', fooValue: 'foo-value-1'}});
-    foosView.store({id: 3, rawData: {name: 'foo-2', fooValue: 'foo-value-2'}});
-    assert.equal('Read from my-in-foo (<b>foo-name</b>) and populate The Foos from my-in-foo (<b>foo-1</b>, <b>foo-2</b>).',
-                 await description.getRecipeSuggestion());
-    assert.equal('my-in-foo', await description.getViewDescription(ifooView));
-    assert.equal('The Foos from my-in-foo', await description.getViewDescription(ofoosView));
+      fooView.set({id: 1, rawData: {name: 'foo-name', fooValue: 'the-FOO'}});
+      foosView.store({id: 2, rawData: {name: 'foo-1', fooValue: 'foo-value-1'}});
+      foosView.store({id: 3, rawData: {name: 'foo-2', fooValue: 'foo-value-2'}});
+      await test.verifySuggestion('Read from my-in-foo (foo-name) and populate The Foos from my-in-foo (foo-1, foo-2).',
+                            description);
+      assert.equal('my-in-foo', await description.getViewDescription(ifooView));
+      assert.equal('The Foos from my-in-foo', await description.getViewDescription(ofoosView));
+    });
   });
 
-  it('one particle and connections descriptions references no pattern', async () => {
-    let {arc, recipe, ifooView, ofoosView, fooView, foosView} = (await prepareRecipeAndArc(`
+  tests.forEach((test) => {
+    it('one particle and connections descriptions references no pattern ' + test.name, async () => {
+      let {arc, recipe, ifooView, ofoosView, fooView, foosView} = (await prepareRecipeAndArc(`
 ${schemaManifest}
 ${aParticleManifest}
-  description \`Read from \${ifoo}\ and populate \${ofoos}\`
+  description \`read from \${ifoo}\ and populate \${ofoos}\`
     ofoos \`The Foos from \${ifoo}\`
 ${recipeManifest}
     `));
 
-    let description = new Description(arc);
+      let description = new Description(arc);
 
-    assert.equal('Read from foo and populate The Foos from foo.', await description.getRecipeSuggestion());
-    assert.equal('foo', await description.getViewDescription(ifooView));
-    assert.equal('The Foos from foo', await description.getViewDescription(ofoosView));
+      await test.verifySuggestion('Read from foo and populate The Foos from foo.', description);
+      assert.equal('foo', await description.getViewDescription(ifooView));
+      assert.equal('The Foos from foo', await description.getViewDescription(ofoosView));
 
-    fooView.set({id: 1, rawData: {name: 'foo-name', fooValue: 'the-FOO'}});
-    foosView.store({id: 2, rawData: {name: 'foo-1', fooValue: 'foo-value-1'}});
-    foosView.store({id: 3, rawData: {name: 'foo-2', fooValue: 'foo-value-2'}});
-    assert.equal('Read from <b>foo-name</b> and populate The Foos from <b>foo-name</b> (<b>foo-1</b>, <b>foo-2</b>).',
-                 await description.getRecipeSuggestion());
-    assert.equal('foo', await description.getViewDescription(ifooView));
-    assert.equal('The Foos from foo', await description.getViewDescription(ofoosView));
+      fooView.set({id: 1, rawData: {name: 'foo-name', fooValue: 'the-FOO'}});
+      foosView.store({id: 2, rawData: {name: 'foo-1', fooValue: 'foo-value-1'}});
+      foosView.store({id: 3, rawData: {name: 'foo-2', fooValue: 'foo-value-2'}});
+      await test.verifySuggestion('Read from foo-name and populate The Foos from foo-name (foo-1, foo-2).',
+                            description);
+      assert.equal('foo', await description.getViewDescription(ifooView));
+      assert.equal('The Foos from foo', await description.getViewDescription(ofoosView));
+    });
   });
 
-  it('one particle and connections descriptions with extras', async () => {
-    let {arc, recipe, ifooView, ofoosView, fooView, foosView} = (await prepareRecipeAndArc(`
+  tests.forEach((test) => {
+    it('one particle and connections descriptions with extras ' + test.name, async () => {
+      let {arc, recipe, ifooView, ofoosView, fooView, foosView} = (await prepareRecipeAndArc(`
 ${schemaManifest}
 ${aParticleManifest}
-  description \`Read from \${ifoo}\ and populate \${ofoos._name_}\`
+  description \`read from \${ifoo}\ and populate \${ofoos}._name_\`
     ifoo \`[fooValue: \${ifoo.fooValue}]\`
-    ofoos \`[A list of \${ifoo._type_} with values: \${ofoos._values_}]\`
+    ofoos \`[A list of \${ifoo}._type_ with values: \${ofoos}._values_]\`
 ${recipeManifest}
     `));
 
-    let description = new Description(arc);
+      let description = new Description(arc);
 
-    fooView.set({id: 1, rawData: {name: 'foo-name', fooValue: 'the-FOO'}});
-    foosView.store({id: 2, rawData: {name: 'foo-1', fooValue: 'foo-value-1'}});
-    foosView.store({id: 3, rawData: {name: 'foo-2', fooValue: 'foo-value-2'}});
+      fooView.set({id: 1, rawData: {name: 'foo-name', fooValue: 'the-FOO'}});
+      foosView.store({id: 2, rawData: {name: 'foo-1', fooValue: 'foo-value-1'}});
+      foosView.store({id: 3, rawData: {name: 'foo-2', fooValue: 'foo-value-2'}});
 
-    debugger;
-    assert.equal('Read from [fooValue: <b>the-FOO</b>] (<b>foo-name</b>) and populate [A list of foo with values: <b>foo-1</b>, <b>foo-2</b>].',
-                 await description.getRecipeSuggestion());
-    assert.equal('[fooValue: <b>the-FOO</b>]', await description.getViewDescription(ifooView));
-    assert.equal('[A list of foo with values: <b>foo-1</b>, <b>foo-2</b>]', await description.getViewDescription(ofoosView));
+      await test.verifySuggestion('Read from [fooValue: the-FOO] (foo-name) and populate [A list of foo with values: foo-1, foo-2].',
+                            description);
+
+      assert.equal('[fooValue: the-FOO]', await description.getViewDescription(ifooView));  /// view description is an object?
+      // Add mode getViewDescription tests, to verify all are strings!
+      assert.equal('[A list of foo with values: foo-1, foo-2]', await description.getViewDescription(ofoosView));
+    });
   });
 
-  it('connection description from another particle', async() => {
-    let {arc, recipe, ifooView, ofoosView, fooView, foosView} = (await prepareRecipeAndArc(`
+  tests.forEach((test) => {
+    it('connection description from another particle ' + test.name, async() => {
+      let {arc, recipe, ifooView, ofoosView, fooView, foosView} = (await prepareRecipeAndArc(`
 ${schemaManifest}
 ${aParticleManifest}
-  description \`Read from \${ifoo}\ and populate \${ofoos}\`
+  description \`read from \${ifoo}\ and populate \${ofoos}\`
     ofoos \`my-foos\`
 ${bParticleManifest}
-  description \`Create the \${ofoo}\`
+  description \`create the \${ofoo}\`
     ofoo \`best-new-foo\`
 ${recipeManifest}
   B
     ofoo -> fooView
     `));
 
-    let description = new Description(arc);
+      let description = new Description(arc);
 
-    assert.equal('Read from best-new-foo and populate my-foos.',
-                 await description.getRecipeSuggestion());
-    assert.equal('best-new-foo', await description.getViewDescription(ifooView));
-    let oBFooView = recipe.viewConnections.find(vc => vc.particle.name == 'B' && vc.name == 'ofoo').view;
-    assert.equal('best-new-foo', await description.getViewDescription(oBFooView));
-    assert.equal('my-foos', await description.getViewDescription(ofoosView));
+      await test.verifySuggestion('Read from best-new-foo and populate my-foos.', description);
+      assert.equal('best-new-foo', await description.getViewDescription(ifooView));
+      let oBFooView = recipe.viewConnections.find(vc => vc.particle.name == 'B' && vc.name == 'ofoo').view;
+      assert.equal('best-new-foo', await description.getViewDescription(oBFooView));
+      assert.equal('my-foos', await description.getViewDescription(ofoosView));
 
-    fooView.set({id: 1, rawData: {name: 'foo-name', fooValue: 'the-FOO'}});
-    foosView.store({id: 2, rawData: {name: 'foo-1', fooValue: 'foo-value-1'}});
-    foosView.store({id: 3, rawData: {name: 'foo-2', fooValue: 'foo-value-2'}});
-    assert.equal('Read from best-new-foo (<b>foo-name</b>) and populate my-foos (<b>foo-1</b>, <b>foo-2</b>).',
-                 await description.getRecipeSuggestion());
-    assert.equal('best-new-foo', await description.getViewDescription(ifooView));
-    assert.equal('best-new-foo', await description.getViewDescription(oBFooView));
-    assert.equal('my-foos', await description.getViewDescription(ofoosView));
+      fooView.set({id: 1, rawData: {name: 'foo-name', fooValue: 'the-FOO'}});
+      foosView.store({id: 2, rawData: {name: 'foo-1', fooValue: 'foo-value-1'}});
+      foosView.store({id: 3, rawData: {name: 'foo-2', fooValue: 'foo-value-2'}});
+      await test.verifySuggestion('Read from best-new-foo (foo-name) and populate my-foos (foo-1, foo-2).',
+                            description);
+      assert.equal('best-new-foo', await description.getViewDescription(ifooView));
+      assert.equal('best-new-foo', await description.getViewDescription(oBFooView));
+      assert.equal('my-foos', await description.getViewDescription(ofoosView));
+    });
   });
 
-  it('multiple particles', async() => {
-    let {arc, recipe, ifooViewConn, fooView} = (await prepareRecipeAndArc(`
+  tests.forEach((test) => {
+    it('multiple particles ' + test.name, async() => {
+      let {arc, recipe, ifooViewConn, fooView} = (await prepareRecipeAndArc(`
 ${schemaManifest}
 particle X1
   X1(out Foo ofoo)
   consume action
-  description \`Create X1::\${ofoo}\`
+  description \`create X1::\${ofoo}\`
     ofoo \`X1-foo\`
 particle X2
   X2(out Foo ofoo)
   consume action
-  description \`Create X2::\${ofoo}\`
+  description \`create X2::\${ofoo}\`
     ofoo \`X2-foo\`
 particle A
   A(in Foo ifoo)
   consume root
     provide action
-  description \`Display \${ifoo}\`
+  description \`display \${ifoo}\`
     ifoo \`A-foo\`
 
 recipe
@@ -285,34 +321,92 @@ recipe
     consume root as slot0
       provide action as slot1
     `));
-    let aFooView = recipe.viewConnections.find(vc => vc.particle.name == 'A' && vc.name == 'ifoo').view;
+      let aFooView = recipe.viewConnections.find(vc => vc.particle.name == 'A' && vc.name == 'ifoo').view;
 
-    let description = new Description(arc);
+      let description = new Description(arc);
 
-    assert.equal('Display X1-foo, Create X1::X1-foo, and Create X2::X2-foo.', await description.getRecipeSuggestion());
-    assert.equal('X1-foo', await description.getViewDescription(aFooView));
+      await test.verifySuggestion('Display X1-foo, create X1::X1-foo, and create X2::X2-foo.', description);
+      assert.equal('X1-foo', await description.getViewDescription(aFooView));
 
-    // Rank X2 higher than X2
-    let relevance = new Relevance();
-    relevance.relevanceMap.set(recipe.particles.find(p => p.name == "A"), [7]);
-    relevance.relevanceMap.set(recipe.particles.find(p => p.name == "X1"), [5]);
-    relevance.relevanceMap.set(recipe.particles.find(p => p.name == "X2"), [10]);
+      // Rank X2 higher than X2
+      let relevance = new Relevance();
+      relevance.relevanceMap.set(recipe.particles.find(p => p.name == 'A'), [7]);
+      relevance.relevanceMap.set(recipe.particles.find(p => p.name == 'X1'), [5]);
+      relevance.relevanceMap.set(recipe.particles.find(p => p.name == 'X2'), [10]);
 
-    description.setRelevance(relevance);
-    assert.equal('Display X2-foo, Create X2::X2-foo, and Create X1::X1-foo.', await description.getRecipeSuggestion());
-    assert.equal('X2-foo', await description.getViewDescription(aFooView));
+      description.relevance = relevance;
+      await test.verifySuggestion('Display X2-foo, create X2::X2-foo, and create X1::X1-foo.', description);
+      assert.equal('X2-foo', await description.getViewDescription(aFooView));
+    });
   });
 
-  it('duplicate particles', async() => {
-    let {arc, recipe, ifooView, fooView} = (await prepareRecipeAndArc(`
+  tests.forEach((test) => {
+    it('same particle multiple times ' + test.name, async() => {
+      let manifestStr = `
+${schemaManifest}
+particle X
+  X(out [Foo] ofoo)
+  consume root
+  description \`write to \${ofoo}\`
+    ofoo \`X-foo\`
+
+recipe
+  create as fooView1   # Foo
+  create as fooView2   # Foo
+  slot 'r0' as slot0
+  X
+    ofoo -> fooView1
+    consume root as slot0
+  X
+    ofoo -> fooView2
+    consume root as slot0
+    `;
+      let manifest = (await Manifest.parse(manifestStr));
+      assert(1, manifest.recipes.length);
+      let recipe = manifest.recipes[0];
+      let Foo = manifest.findSchemaByName('Foo').entityClass();
+      recipe.views[0].mapToView({id: 'test:1', type: Foo.type.setViewOf()});
+      recipe.views[1].mapToView({id: 'test:2', type: Foo.type.setViewOf()});
+      let arc = createTestArc();
+      let fooView1 = arc.createView(Foo.type.setViewOf());
+      let fooView2 = arc.createView(Foo.type.setViewOf());
+      recipe.normalize();
+      assert.isTrue(recipe.isResolved());
+      arc._activeRecipe = recipe;
+
+      let description = new Description(arc);
+
+      await test.verifySuggestion('Write to X-foo and write to X-foo.', description);
+      assert.equal('X-foo', await description.getViewDescription(recipe.views[0]));
+      assert.equal('X-foo', await description.getViewDescription(recipe.views[1]));
+
+      // Add values to the second view.
+      fooView2.store({id: 1, rawData: {name: 'foo-1', fooValue: 'foo-value-1'}});
+      fooView2.store({id: 2, rawData: {name: 'foo-2', fooValue: 'foo-value-2'}});
+      await test.verifySuggestion('Write to X-foo and write to X-foo (foo-1, foo-2).', description);
+      assert.equal('X-foo', await description.getViewDescription(recipe.views[0]));
+      assert.equal('X-foo', await description.getViewDescription(recipe.views[1]));
+
+      // Add values to the first view also.
+      fooView1.store({id: 3, rawData: {name: 'foo-3', fooValue: 'foo-value-3'}});
+      fooView1.store({id: 4, rawData: {name: 'foo-4', fooValue: 'foo-value-4'}});
+      await test.verifySuggestion('Write to X-foo (foo-3, foo-4) and write to X-foo (foo-1, foo-2).', description);
+      assert.equal('X-foo', await description.getViewDescription(recipe.views[0]));
+      assert.equal('X-foo', await description.getViewDescription(recipe.views[1]));
+    });
+  });
+
+  tests.forEach((test) => {
+    it('duplicate particles ' + test.name, async() => {
+      let {arc, recipe, ifooView, fooView} = (await prepareRecipeAndArc(`
 ${schemaManifest}
 ${aParticleManifest}
     provide action
-  description \`Do A with \${ifoo}\`
+  description \`do A with \${ifoo}\`
     ifoo \`a-foo\`
 ${bParticleManifest}
   consume action
-  description \`Output B to \${ofoo}\`
+  description \`output B to \${ofoo}\`
     ofoo \`b-foo\`
 
 recipe
@@ -334,34 +428,37 @@ recipe
     consume action as slot1
     `));
 
-    let description = new Description(arc);
+      let description = new Description(arc);
 
-    // Add values to both Foo views
-    fooView.set({id: 1, rawData: {name: 'the-FOO'}});
-    let fooView2 = arc.createView(fooView.type);
-    fooView2.set({id: 2, rawData: {name: 'another-FOO'}});
-    assert.equal('Do A with b-foo (<b>the-FOO</b>), Output B to b-foo, and Output B to b-foo (<b>another-FOO</b>).',
-                 await description.getRecipeSuggestion());
-    assert.equal('b-foo', await description.getViewDescription(ifooView));
+      // Add values to both Foo views
+      fooView.set({id: 1, rawData: {name: 'the-FOO'}});
+      let fooView2 = arc.createView(fooView.type);
+      fooView2.set({id: 2, rawData: {name: 'another-FOO'}});
+      await test.verifySuggestion('Do A with b-foo (the-FOO), output B to b-foo, and output B to b-foo (another-FOO).',
+                            description);
+      assert.equal('b-foo', await description.getViewDescription(ifooView));
 
-    // Rank B bound to fooView2 higher than B that is bound to fooView1.
-    let relevance = new Relevance();
-    relevance.newArc = arc;
-    relevance.relevanceMap.set(recipe.particles.find(p => p.name == "A"), [7]);
-    relevance.relevanceMap.set(recipe.particles.filter(p => p.name == "B")[0], [1]);
-    relevance.relevanceMap.set(recipe.particles.filter(p => p.name == "B")[1], [10]);
+      // Rank B bound to fooView2 higher than B that is bound to fooView1.
+      let relevance = new Relevance();
+      relevance.newArc = arc;
+      relevance.relevanceMap.set(recipe.particles.find(p => p.name == 'A'), [7]);
+      relevance.relevanceMap.set(recipe.particles.filter(p => p.name == 'B')[0], [1]);
+      relevance.relevanceMap.set(recipe.particles.filter(p => p.name == 'B')[1], [10]);
 
-    description.setRelevance(relevance);
-    assert.equal('Do A with b-foo (<b>the-FOO</b>), Output B to b-foo (<b>another-FOO</b>), and Output B to b-foo.',
-                 await description.getRecipeSuggestion());
+      description.relevance = relevance;
+      await test.verifySuggestion('Do A with b-foo (the-FOO), output B to b-foo (another-FOO), and output B to b-foo.',
+                            description);
+    });
   });
-  it('sanisize description', async() => {
-    let {arc, recipe} = (await prepareRecipeAndArc(`
+
+  tests.forEach((test) => {
+    it('sanisize description ' + test.name, async() => {
+      let {arc, recipe} = (await prepareRecipeAndArc(`
 ${schemaManifest}
 particle A
   A(out Foo ofoo)
   consume root
-  description \`Create <new> <\${ofoo}>\`
+  description \`create <new> <\${ofoo}>\`
     ofoo \`<my-foo>\`
 
 recipe
@@ -372,61 +469,124 @@ recipe
     consume root as slot0
     `));
 
-    let description = new Description(arc);
+      let description = new Description(arc);
 
-    assert.equal('Create &lt;new> &lt;&lt;my-foo>>.',
-                 await description.getRecipeSuggestion());
-    let view = recipe.viewConnections.find(vc => vc.particle.name == 'A' && vc.name == 'ofoo').view;
-    assert.equal('&lt;my-foo>', await description.getViewDescription(view, arc));
+      await test.verifySuggestion('Create &lt;new> &lt;&lt;my-foo>>.', description);
+      let view = recipe.viewConnections.find(vc => vc.particle.name == 'A' && vc.name == 'ofoo').view;
+      assert.equal('&lt;my-foo>', await description.getViewDescription(view, arc));
+    });
   });
-  it('multiword type and no name property in description', async() => {
-    let manifestStr = `
-      schema MyBESTType
-        optional
-          Text property
-      particle P
-        P(in MyBESTType t, out [MyBESTType] ts)
-        description \`Make \${ts} from \${t}\`
-        consume root
-      recipe
-        create as tView
-        create as tsView
-        slot 'rootslotid-root' as slot0
-        P
-         t = tView
-         ts = tsView
-         consume root as slot0`;
+
+  tests.forEach((test) => {
+    it('multiword type and no name property in description ' + test.name, async() => {
+      let manifestStr = `
+        schema MyBESTType
+          optional
+            Text property
+        particle P
+          P(in MyBESTType t, out [MyBESTType] ts)
+          description \`make \${ts} from \${t}\`
+          consume root
+        recipe
+          create as tView
+          create as tsView
+          slot 'rootslotid-root' as slot0
+          P
+           t = tView
+           ts = tsView
+           consume root as slot0`;
+        let manifest = (await Manifest.parse(manifestStr));
+        assert(1, manifest.recipes.length);
+        let recipe = manifest.recipes[0];
+        let MyBESTType = manifest.findSchemaByName('MyBESTType').entityClass();
+        recipe.views[0].mapToView({id: 'test:1', type: MyBESTType.type});
+        recipe.views[1].mapToView({id: 'test:2', type: MyBESTType.type.setViewOf()});
+        let arc = createTestArc();
+        let tView = arc.createView(MyBESTType.type);
+        let tsView = arc.createView(MyBESTType.type.setViewOf());
+        recipe.normalize();
+        assert.isTrue(recipe.isResolved());
+
+        arc._activeRecipe = recipe;
+        let description = new Description(arc);
+
+        await test.verifySuggestion('Make my best type list from my best type.', description);
+        let tRecipeView = recipe.viewConnections.find(vc => vc.particle.name == 'P' && vc.name == 't').view;
+        let tsRecipeView = recipe.viewConnections.find(vc => vc.particle.name == 'P' && vc.name == 'ts').view;
+        assert.equal('my best type', await description.getViewDescription(tRecipeView));
+        assert.equal('my best type list', await description.getViewDescription(tsRecipeView));
+
+        // Add values to views.
+        tView.set({id: 1, rawData: {property: 'value1'}});
+        tsView.store({id: 2, rawData: {property: 'value2'}});
+        await test.verifySuggestion('Make my best type list (1 items) from my best type.', description);
+
+        tsView.store({id: 3, rawData: {property: 'value3'}});
+        tsView.store({id: 4, rawData: {property: 'value4'}});
+        await test.verifySuggestion('Make my best type list (3 items) from my best type.', description);
+    });
+  });
+
+  tests.forEach((test) => {
+    it('particle slots description ' + test.name, async() => {
+      let manifestStr = `
+schema Foo
+  optional
+    Text name
+particle A
+  A(inout Foo foo)
+  consume root
+    provide aslot
+    provide otherslot
+  description \`hello \${root.aslot}, see you at \${root.otherslot}\`
+particle B1
+  B1(out Foo foo)
+  consume aslot
+  description \`first b\`
+particle B2
+  B2(out Foo foo)
+  consume aslot
+  description \`second b\`
+particle C
+  C(in Foo foo)
+  consume otherslot
+  description \`only c\`
+recipe
+  create 'test:1' as view0  # Foo
+  slot 'rootslotid-root' as slot0
+  A as particle1
+    foo = view0
+    consume root as slot0
+      provide aslot as slot1
+      provide otherslot as slot2
+  B1
+    foo -> view0
+    consume aslot as slot1
+  B2
+    foo -> view0
+    consume aslot as slot1
+  C
+    foo <- view0
+    consume otherslot as slot2
+`;
       let manifest = (await Manifest.parse(manifestStr));
       assert(1, manifest.recipes.length);
       let recipe = manifest.recipes[0];
-      let MyBESTType = manifest.findSchemaByName('MyBESTType').entityClass();
-      recipe.views[0].mapToView({id: 'test:1', type: MyBESTType.type});
-      recipe.views[1].mapToView({id: 'test:2', type: MyBESTType.type.setViewOf()});
-      let arc = createTestArc();
-      let tView = arc.createView(MyBESTType.type);
-      let tsView = arc.createView(MyBESTType.type.setViewOf());
       recipe.normalize();
       assert.isTrue(recipe.isResolved());
 
+      let arc = createTestArc();
       arc._activeRecipe = recipe;
+
       let description = new Description(arc);
 
-      assert.equal('Make my best type list from my best type.', await description.getRecipeSuggestion());
-      let tRecipeView = recipe.viewConnections.find(vc => vc.particle.name == 'P' && vc.name == 't').view;
-      let tsRecipeView = recipe.viewConnections.find(vc => vc.particle.name == 'P' && vc.name == 'ts').view;
-      assert.equal('my best type', await description.getViewDescription(tRecipeView));
-      assert.equal('my best type list', await description.getViewDescription(tsRecipeView));
-
-      // Add values to views.
-      tView.set({id: 1, rawData: {property: 'value1'}});
-      tsView.store({id: 2, rawData: {property: 'value2'}});
-      assert.equal('Make my best type list (<b>1</b> items) from my best type.', await description.getRecipeSuggestion());
-
-      tsView.store({id: 3, rawData: {property: 'value3'}});
-      tsView.store({id: 4, rawData: {property: 'value4'}});
-      assert.equal('Make my best type list (<b>3</b> items) from my best type.', await description.getRecipeSuggestion());
+      await test.verifySuggestion('Hello first b and second b, see you at only c.', description);
+    });
   });
-  it('particle dynamic description', async() => {
+});
+
+describe('Dynamic description', function() {
+  async function prepareRecipeAndArc() {
     let manifestStr = `
 schema Foo
   optional
@@ -462,84 +622,57 @@ recipe
     assert.isTrue(recipe.isResolved());
 
     arc._activeRecipe = recipe;
-    let description = new Description(arc);
+    return {
+      recipe,
+      description: new Description(arc),
+      fooView,
+      Description: descriptionView.type.primitiveType().entitySchema.entityClass(),
+      descriptionHandle: handle.handleFor(descriptionView)
+    };
+  }
 
-    assert.isUndefined(await description.getRecipeSuggestion());
+  tests.forEach((test) => {
+    it('particle dynamic description ' + test.name, async() => {
+      let {recipe, description, fooView, Description, descriptionHandle} = await prepareRecipeAndArc();
 
-    // Particle (static) spec pattern.
-    recipe.particles[0].spec.pattern = "hello world";
-    assert.equal('Hello world.', await description.getRecipeSuggestion());
+      assert.isUndefined(await description.getRecipeSuggestion());
 
-    // Particle (dynamic) description handle (override static description).
-    descriptionView.store({id: 1, rawData: {key: '_pattern_', value: 'Return my foo'}});
-    assert.equal('Return my foo.', await description.getRecipeSuggestion());
+      // Particle (static) spec pattern.
+      recipe.particles[0].spec.pattern = 'hello world';
+      await test.verifySuggestion('Hello world.', description);
 
-    // Particle description handle with view connections.
-    descriptionView.store({id: 1, rawData: {key: '_pattern_', value: 'Return my temporary foo'}});
-    descriptionView.store({id: 1, rawData: {key: '_pattern_', value: 'Return my ${ofoo}'}});
-    descriptionView.store({id: 2, rawData: {key: 'ofoo', value: 'best-foo'}});
-    assert.equal('Return my best-foo.', await description.getRecipeSuggestion());
+      // Particle (dynamic) description handle (override static description).
+      descriptionHandle.store(new Description({key: '_pattern_', value: 'Return my foo'}));
+      await test.verifySuggestion('Return my foo.', description);
 
-    // Add value to connection's view.
-    fooView.set({id: 3, rawData: {name: 'foo-name', fooValue: 'the-FOO'}});
-    assert.equal('Return my best-foo (<b>foo-name</b>).', await description.getRecipeSuggestion());
+      // Particle description handle with view connections.
+      descriptionHandle.store(new Description({key: '_pattern_', value: 'Return my temporary foo'}));
+      descriptionHandle.store(new Description({key: '_pattern_', value: 'Return my ${ofoo}'}));
+      let ofooDesc = new Description({key: 'ofoo', value: 'best-foo'});
+      descriptionHandle.store(ofooDesc);
+      await test.verifySuggestion('Return my best-foo.', description);
 
-    // Remove connection's description.
-    fooView.set({id: 3, rawData: {name: 'foo-name', fooValue: 'the-FOO'}});
-    descriptionView.remove(2);
-    assert.equal('Return my <b>foo-name</b>.', await description.getRecipeSuggestion());
+      // Add value to connection's view.
+      fooView.set({id: 3, rawData: {name: 'foo-name', fooValue: 'the-FOO'}});
+      await test.verifySuggestion('Return my best-foo (foo-name).', description);
+
+      // Remove connection's description.
+      fooView.set({id: 3, rawData: {name: 'foo-name', fooValue: 'the-FOO'}});
+      descriptionHandle.remove(ofooDesc);
+      await test.verifySuggestion('Return my foo-name.', description);
+    });
   });
-  it('particle slots description', async() => {
-    let manifestStr = `
-schema Foo
-  optional
-    Text name
-particle A
-  A(inout Foo foo)
-  consume root
-    provide aslot
-    provide otherslot
-  description \`Hello \${root.aslot}, see you at \${root.otherslot}\`
-particle B1
-  B1(out Foo foo)
-  consume aslot
-  description \`first b\`
-particle B2
-  B2(out Foo foo)
-  consume aslot
-  description \`second b\`
-particle C
-  C(in Foo foo)
-  consume otherslot
-  description \`only c\`
-recipe
-  create 'test:1' as view0  # Foo
-  slot 'rootslotid-root' as slot0
-  A as particle1
-    foo = view0
-    consume root as slot0
-      provide aslot as slot1
-      provide otherslot as slot2
-  B1
-    foo -> view0
-    consume aslot as slot1
-  B2
-    foo -> view0
-    consume aslot as slot1
-  C
-    foo <- view0
-    consume otherslot as slot2
-`;
-    let manifest = (await Manifest.parse(manifestStr));
-    assert(1, manifest.recipes.length);
-    let recipe = manifest.recipes[0];
-    recipe.normalize();
-    assert.isTrue(recipe.isResolved());
 
-    let arc = createTestArc();
-    arc._activeRecipe = recipe;
+  tests.forEach((test) => {
+    it('particle dynamic dom description ' + test.name, async() => {
+      let {recipe, description, fooView, Description, descriptionHandle} = await prepareRecipeAndArc();
+      descriptionHandle.store(new Description({key: "_pattern_", value: 'return my ${ofoo} (text)'}));
+      descriptionHandle.store(new Description({key: "_template_", value: 'Return my <span>{{ofoo}}</span> (dom)'}));
+      descriptionHandle.store(new Description({key: "_model_", value: JSON.stringify({'ofoo': '${ofoo}'})}));
+      await test.verifySuggestion(`Return my foo (${test.name}).`, description);
 
-    let description = new Description(arc);
-    assert.equal('Hello first b and second b, see you at only c.', await description.getRecipeSuggestion());
+      fooView.set({id: 5, rawData: {name: 'foo-name'}});
+      await test.verifySuggestion(`Return my foo-name (${test.name}).`, description);
+    });
   });
 });

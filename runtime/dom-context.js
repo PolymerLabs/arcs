@@ -26,6 +26,12 @@ class DomContext {
     this._liveDom = null;
     this._innerContextBySlotName = {};
   }
+  static createContext(context, content) {
+    let domContext = new DomContext(context);
+    domContext.stampTemplate(DomContext.createTemplateElement(content.template), () => {});
+    domContext.updateModel(content.model);
+    return domContext;
+  }
   initContext(context) {
     assert(context);
     if (!this._context) {
@@ -36,6 +42,7 @@ class DomContext {
              'TODO: add support for moving slot to different context');
     }
   }
+  get context() { return this._context; }
   isEqual(context) {
     return this._context.parentNode == context;
   }
@@ -51,6 +58,9 @@ class DomContext {
     this._liveDom = null;
     this._innerContextBySlotName = {};
 
+  }
+  static createTemplateElement(template) {
+    return Object.assign(document.createElement('template'), { innerHTML: template});
   }
   stampTemplate(template, eventHandler) {
     if (!this._liveDom) {
