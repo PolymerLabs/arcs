@@ -42,15 +42,15 @@ class OuterPEC extends PEC {
       handle.on(type, data => this._apiPort.SimpleCallback({callback, data}), target);
     };
 
-    this._apiPort.onHandleGet = ({handle, callback}) => {
-      this._apiPort.SimpleCallback({callback, data: handle.get()});
+    this._apiPort.onHandleGet = async ({handle, callback}) => {
+      this._apiPort.SimpleCallback({callback, data: await handle.get()});
     }
 
-    this._apiPort.onHandleToList = ({handle, callback}) => {
-      this._apiPort.SimpleCallback({callback, data: handle.toList()});
+    this._apiPort.onHandleToList = async ({handle, callback}) => {
+      this._apiPort.SimpleCallback({callback, data: await handle.toList()});
     }
 
-    this._apiPort.onHandleSet = ({handle, data}) => handle.set(data);
+    this._apiPort.onHandleSet = ({handle, data}) => {handle.set(data)};
     this._apiPort.onHandleStore = ({handle, data}) => handle.store(data);
     this._apiPort.onHandleClear = ({handle}) => handle.clear();
     this._apiPort.onHandleRemove = ({handle, data}) => handle.remove(data);

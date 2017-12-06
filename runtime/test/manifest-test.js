@@ -523,7 +523,7 @@ describe('manifest', function() {
     let manifest = await Manifest.load('the.manifest', loader);
     let view = manifest.findViewByName('View0');
     assert(view);
-    assert.deepEqual(view.toList(), [
+    assert.deepEqual(await view.toList(), [
       {
         id: 'manifest:the.manifest::0',
         rawData: {someProp: 'someValue'},

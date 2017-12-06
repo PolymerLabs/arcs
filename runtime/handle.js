@@ -134,11 +134,11 @@ class Collection extends Handle {
    * throws: Error if this view is not configured as a writeable view (i.e. 'out' or 'inout')
      in the particle's manifest.
    */
-  store(entity) {
+  async store(entity) {
     if (!this.canWrite)
       throw new Error("View not writeable");
     var serialization = this._serialize(entity);
-    return this._view.store(serialization);
+    return (await this._view.store(serialization));
   }
 
   /** @method remove(entity)
@@ -146,11 +146,11 @@ class Collection extends Handle {
    * throws: Error if this view is not configured as a writeable view (i.e. 'out' or 'inout')
      in the particle's manifest.
    */
-  remove(entity) {
+  async remove(entity) {
     if (!this.canWrite)
       throw new Error("View not writeable");
     var serialization = this._serialize(entity);
-    return this._view.remove(serialization.id);
+    return (await this._view.remove(serialization.id));
   }
 
   async debugString() {
@@ -193,10 +193,10 @@ class Variable extends Handle {
    * throws: Error if this variable is not configured as a writeable view (i.e. 'out' or 'inout')
      in the particle's manifest.
    */
-  set(entity) {
+  async set(entity) {
     if (!this.canWrite)
       throw new Error("View not writeable");
-    return this._view.set(this._serialize(entity));
+    return (await this._view.set(this._serialize(entity)));
   }
 
   /** @method clear()
@@ -204,10 +204,10 @@ class Variable extends Handle {
    * throws: Error if this variable is not configured as a writeable view (i.e. 'out' or 'inout')
      in the particle's manifest.
    */
-  clear() {
+  async clear() {
     if (!this.canWrite)
       throw new Error("View not writeable");
-    this._view.clear();
+    await this._view.clear();
   }
   async debugString() {
     var value = await this.get();

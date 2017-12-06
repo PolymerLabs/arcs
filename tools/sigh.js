@@ -174,9 +174,10 @@ function test(args) {
   let runner = buildTestRunner();
   return spawn('node', [
     '--experimental-modules',
+    '--trace-warnings',
     ...extraFlags,
     '--loader', fixPathForWindows(path.join(__dirname, 'custom-loader.mjs')),
-    runner,
+    runner
   ], {stdio: 'inherit'}).status == 0;
 }
 

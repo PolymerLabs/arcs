@@ -118,18 +118,18 @@ export class InMemoryCollection extends InMemoryStorageProvider {
     this.description = view.description;
   }
 
-  get(id) {
+  async get(id) {
     return this._items.get(id);
   }
   traceInfo() {
     return {items: this._items.size};
   }
   // HACK: replace this with some kind of iterator thing?
-  toList() {
+  async toList() {
     return [...this._items.values()];
   }
 
-  store(entity) {
+  async store(entity) {
     var trace = tracing.start({cat: "view", name: "InMemoryCollection::store", args: {name: this.name}});
     var entityWasPresent = this._items.has(entity.id);
 
@@ -140,7 +140,7 @@ export class InMemoryCollection extends InMemoryStorageProvider {
     trace.end({args: {entity}});
   }
 
-  remove(id) {
+  async remove(id) {
     var trace = tracing.start({cat: "view", name: "InMemoryCollection::remove", args: {name: this.name}});
     if (!this._items.has(id)) {
       return;
@@ -203,17 +203,17 @@ export class InMemoryVariable extends InMemoryStorageProvider {
     return {stored: this._stored !== null};
   }
 
-  get() {
+  async get() {
     return this._stored;
   }
 
-  set(entity) {
+  async set(entity) {
     this._stored = entity;
     this._version++;
     this._fire('change', {data: this._stored, version: this._version});
   }
 
-  clear() {
+  async clear() {
     this.set(undefined);
   }
 

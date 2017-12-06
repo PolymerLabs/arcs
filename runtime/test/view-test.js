@@ -34,7 +34,7 @@ describe('View', function() {
     let barView = arc.createView(Bar.type);
     barView.set(new Bar({value: 'a Bar'}));
     barView.clear();
-    assert.equal(barView.get(), undefined);
+    assert.equal(await barView.get(), undefined);
   });
 
   it('dedupes common user-provided ids', async() => {
@@ -57,7 +57,7 @@ describe('View', function() {
     let bar = new Bar({id: 0, value: 'a Bar'});
     barView.store(bar);
     barView.remove(bar.id);
-    assert.equal(barView.toList().length, 0);
+    assert.equal((await barView.toList()).length, 0);
   });
 
   it('can store a particle in a shape view', async () => {
@@ -70,7 +70,7 @@ describe('View', function() {
 
     let shapeView = arc.createView(Type.newInterface(shape));
     shapeView.set(manifest.particles[0]);
-    assert(shapeView.get() == manifest.particles[0]);
+    assert(await shapeView.get() == manifest.particles[0]);
   });
 
   it('createView only allows valid tags & types in views', async () => {
