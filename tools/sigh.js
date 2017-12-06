@@ -116,17 +116,23 @@ function test(args) {
     }
   }
 
+  function fixPathForWindows(path) {
+    if (path[0] == '/')
+      return path;
+    return '/' + path.replace(new RegExp(String.fromCharCode(92,92), 'g'), "/");
+  }
+
   function buildTestRunner() {
     let tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'sigh-'));
     let chain = [];
-    let mochaInstanceFile = path.resolve(__dirname, '../platform/mocha-node.js');
+    let mochaInstanceFile = fixPathForWindows(path.resolve(__dirname, '../platform/mocha-node.js'));
     for (let test of testsInDir(process.cwd())) {
       chain.push(`
         import mocha from '${mochaInstanceFile}';
         mocha.suite.emit('pre-require', global, '${test}', mocha);
       `);
       chain.push(`
-        import '${test}';
+        import '${fixPathForWindows(test)}';
       `)
       chain.push(`
         import mocha from '${mochaInstanceFile}';
@@ -137,7 +143,7 @@ function test(args) {
     let chainImports = chain.map((entry, i) => {
       let file = path.join(tempDir, `chain${i}.js`);
       fs.writeFileSync(file, entry);
-      return `import '${file}';`;
+      return `import '${fixPathForWindows(file)}';`;
     });
     let runner = `
       import mocha from '${mochaInstanceFile}';
@@ -160,7 +166,7 @@ function test(args) {
   return spawn('node', [
     '--experimental-modules',
     //'--print_all_exceptions',
-    '--loader', path.join(__dirname, 'custom-loader.mjs'),
+    '--loader', fixPathForWindows(path.join(__dirname, 'custom-loader.mjs')),
     runner,
   ], {stdio: 'inherit'}).status == 0;
 }
