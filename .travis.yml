@@ -1,4 +1,7 @@
 language: node_js
 node_js:
   - "9"
-script: "npm install && ./tools/sigh"
+env:
+  - TEST_DIR: .
+  - TEST_DIR: extension
+script: "cd $TEST_DIR && npm install && npm test"
