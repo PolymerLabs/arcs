@@ -42,7 +42,7 @@ describe('Arc', function() {
     let arc = new Arc({slotComposer, id:'test'});
     let fooView = arc.createView(Foo.type);
     let barView = arc.createView(Bar.type);
-    handle.handleFor(fooView).set(new Foo({value: 'a Foo'}));
+    await handle.handleFor(fooView).set(new Foo({value: 'a Foo'}));
     recipe.normalize();
     arc.instantiate(recipe);
     await util.assertSingletonWillChangeTo(barView, Bar, "a Foo1");
