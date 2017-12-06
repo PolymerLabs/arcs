@@ -810,7 +810,7 @@ describe('Description', async ()  => {
 
     let plans = await planner.suggest();
     assert.equal(plans.length, 1);
-    assert.equal('Make <b>MYTHING</b>.', plans[0].description);
+    assert.equal('Make MYTHING.', await plans[0].description.getRecipeSuggestion());
     assert.equal(0, arc._viewsById.size);
   });
 });

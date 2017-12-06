@@ -213,7 +213,6 @@ class Arc {
     assert(recipe.isResolved(), 'Cannot instantiate an unresolved recipe');
 
     let {views, particles, slots} = recipe.mergeInto(this._activeRecipe);
-    this.description.onRecipeUpdate();
 
     for (let recipeView of views) {
       if (['copy', 'create'].includes(recipeView.fate)) {

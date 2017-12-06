@@ -153,7 +153,7 @@ class Planner {
       }
       let rank = relevance.calcRelevanceScore();
 
-      relevance.newArc.description.setRelevance(relevance);
+      relevance.newArc.description.relevance = relevance;
       let description = await relevance.newArc.description.getRecipeSuggestion(relevance.newArc.recipes[0].particles);
 
       this._updateGeneration(generations, hash, (g) => g.description = description);
@@ -180,7 +180,7 @@ class Planner {
       results.push({
         plan,
         rank,
-        description,
+        description: relevance.newArc.description,
         hash
       });
     }

@@ -58,18 +58,14 @@ class SuggestionsElement extends HTMLElement {
     }
   }
 
-  addSuggestion({plan, description, rank, hash}, index) {
-    let model = {
-      index,
-      innerHTML: description,
-      onclick: () => {
-        this.toast.open = false;
-        // TODO(sjmiles): wait for toast animation to avoid jank
-        setTimeout(()=>this._choose(plan), 80);
-      }
-    };
-    let suggest = Object.assign(document.createElement("suggest"), model);
+  createSuggestionElement({hash, plan}) {
+    let suggest = document.createElement("suggest");
     suggest.setAttribute("hash", hash);
+    suggest.onclick = () => {
+      this.toast.open = false;
+      // TODO(sjmiles): wait for toast animation to avoid jank
+      setTimeout(()=>this._choose(plan), 80);
+    }
     suggest.onmouseover = () => {
       document.dispatchEvent(new CustomEvent("plan-hover", {detail: {hash, selected: true}}));
     }
@@ -77,18 +73,11 @@ class SuggestionsElement extends HTMLElement {
       document.dispatchEvent(new CustomEvent("plan-hover", {detail: {hash, selected: false}}));
     }
     this.container.insertBefore(suggest, this.container.firstElementChild);
+    return suggest;
   }
 
-  add(suggestions) {
-    suggestions.forEach((suggestion, i) => this.addSuggestion(suggestion, i));
-  }
-
-  set suggestions(suggestions) {
-    if (this._suggestions !== suggestions) {
-      this._suggestions = suggestions;
-      this.container.textContent = "";
-      suggestions && this.add(suggestions);
-    }
+  clear() {
+    this.container.textContent = "";
   }
 
   _choose(plan) {

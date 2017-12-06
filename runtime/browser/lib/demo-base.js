@@ -9,6 +9,7 @@
  */
 
 import Planner from '../../planner.js';
+import {DomContext} from '../../dom-context.js';
 
 export default class DemoBase extends HTMLElement {
   constructor() {
@@ -36,7 +37,7 @@ export default class DemoBase extends HTMLElement {
         let planner = new Planner();
         planner.init(arc);
         let generations = [];
-        ui.suggestions = await planner.suggest(5000, generations);
+        await arc.pec.slotComposer.setSuggestions(await planner.suggest(5000, generations));
         document.dispatchEvent(new CustomEvent('generations', {detail: {generations, arc}}));
       };
     }

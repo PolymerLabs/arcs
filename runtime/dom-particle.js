@@ -186,6 +186,14 @@ class DomParticle extends XenStateMixin(Particle) {
     }
     return Array.from(handlers.keys());
   }
+  setParticleDescription(pattern) {
+    if (typeof pattern === "string") {
+      return super.setParticleDescription(pattern);
+    }
+    assert(!!pattern.template && !!pattern.model, 'Description pattern must either be string or have template and model');
+    super.setDescriptionPattern("_template_", pattern.template);
+    super.setDescriptionPattern("_model_", JSON.stringify(pattern.model));
+  }
 }
 
 export default DomParticle;

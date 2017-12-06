@@ -142,13 +142,9 @@ ${productStyles}
         return item;
       });
 
-      if (items.length > 4) {
-        this.setParticleDescription('Show a lot of items ${list}');
-        this.setDescriptionPattern('list', 'my long list');
-      } else {
-        this.setParticleDescription('Show a few items: ${list}');
-        this.setDescriptionPattern('list', 'my short list');
-      }
+      // This is for description capabilities demo purposes.
+      this._setDynamicDescription(items);
+      this._setDynamicDomDescription(items);
 
       this._setState({
         renderModel: {
@@ -156,6 +152,26 @@ ${productStyles}
           haveItems: items.length > 0
         }
       });
+    }
+    _setDynamicDescription(items) {
+      if (items.length > 4) {
+        this.setParticleDescription('Show a lot of items ${list}');
+        this.setDescriptionPattern('list', 'my long list');
+      } else {
+        this.setParticleDescription('Show a few items: ${list}');
+        this.setDescriptionPattern('list', 'my short list');
+      }
+    }
+    _setDynamicDomDescription(items) {
+      let template = `
+          <span>Show <u><span>{{list}}</span></u><span hidden="{{actionEmpty}}"> and <i><span style='color:red'>{{action}}</span></i></span></span>
+          `.trim();
+      let model = {
+        list: '${list}',
+        action: '${root.action}',
+        actionEmpty: '${root.action}._empty_'
+      }
+      this.setParticleDescription({template, model});
     }
     _render(props, state) {
       return state.renderModel;

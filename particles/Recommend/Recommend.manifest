@@ -10,5 +10,5 @@ import '../../entities/Product.manifest'
 
 particle Recommend in 'Recommend.js'
   Recommend(in [Product] known, in [Product] population, out [Product] recommendations)
-  description `recommend Products from ${known} and ${population}`
-    recommendations `Products recommended based on ${known._name_} and ${population._name_}`
+  description `recommend products from ${known} and ${population}`
+    recommendations `products recommended based on ${known}._name_ and ${population}._name_`

@@ -63,9 +63,6 @@ class DomSlot extends Slot {
       }
     });
   }
-  _createTemplateElement(template) {
-    return Object.assign(document.createElement('template'), { innerHTML: template});
-  }
   isSameContext(context) {
     return this.getContext().isEqual(context);
   }
@@ -93,7 +90,7 @@ class DomSlot extends Slot {
         // Template is being replaced.
         this.getContext().clear();
       }
-      templates.set(this._templateName, this._createTemplateElement(content.template));
+      templates.set(this._templateName, DomContext.createTemplateElement(content.template));
     }
     this.eventHandler = handler;
     if (Object.keys(content).indexOf("model") >= 0) {
