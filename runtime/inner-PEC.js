@@ -17,7 +17,7 @@ import {PECInnerPort} from './api-channel.js';
 import ParticleSpec from './particle-spec.js';
 import Schema from './schema.js';
 
-class StoreProxy {
+class StorageProxy {
   constructor(id, type, port, pec, name, version) {
     this._id = id;
     this._type = type;
@@ -96,11 +96,11 @@ class InnerPEC {
      * only keeping type information on the arc side.
      */
     this._apiPort.onDefineHandle = ({type, identifier, name, version}) => {
-      return new StoreProxy(identifier, type, this._apiPort, this, name, version);
+      return new StorageProxy(identifier, type, this._apiPort, this, name, version);
     };
 
     this._apiPort.onCreateHandleCallback = ({type, id, name, callback}) => {
-      var proxy = new StoreProxy(id, type, this._apiPort, this, name, 0);
+      var proxy = new StorageProxy(id, type, this._apiPort, this, name, 0);
       Promise.resolve().then(() => callback(proxy));
       return proxy;
     }
