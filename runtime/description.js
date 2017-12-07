@@ -178,7 +178,7 @@ export default class Description {
       case "_type_":
         return token._viewConn.type.toPrettyString().toLowerCase();
       case "_values_":
-        return this._formatViewValue(token._view);
+        return await this._formatViewValue(token._view);
       case "_name_": {
         return (await this._formatDescription(token._viewConn, token._view, options)).toString();
       }
