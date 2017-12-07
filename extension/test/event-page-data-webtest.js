@@ -33,6 +33,7 @@ describe('EventPage', function() {
         [{ name: 'entitya1' }, { name: 'entityb2' }],
         result['urla']
       );
+      assret.isOk(false);
     });
     it('should trim out keys without values', function() {
       let result = _prepareResults([
