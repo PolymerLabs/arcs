@@ -116,7 +116,7 @@ export default class Description {
 
     let viewConnection = this._selectViewConnection(recipeView) || recipeView.connections[0];
     let view = this._arc.findViewById(recipeView.id);
-    return (await this._formatDescription(viewConnection, view, { seenViews: new Set(), excludeValues: true }));
+    return await this._formatDescription(viewConnection, view, { seenViews: new Set(), excludeValues: true });
   }
 
   async patternToSuggestion(pattern, particleDescription, options) {
@@ -166,9 +166,9 @@ export default class Description {
       return token.text;
     }
     if (token.viewName) {
-      return (await this._viewTokenToString(token, options));
+      return await this._viewTokenToString(token, options);
     } else  if (token.slotName) {
-      return (await this._slotTokenToString(token, options));
+      return await this._slotTokenToString(token, options);
     }
     assert(false, `no view or slot name (${JSON.stringify(token)})`);
   }
@@ -178,7 +178,7 @@ export default class Description {
       case "_type_":
         return token._viewConn.type.toPrettyString().toLowerCase();
       case "_values_":
-        return (await this._formatViewValue(token._view));
+        return await this._formatViewValue(token._view);
       case "_name_": {
         return (await this._formatDescription(token._viewConn, token._view, options)).toString();
       }
@@ -199,7 +199,7 @@ export default class Description {
         }
         return descriptionToken.toString();
       default:  // property
-        return (await this._propertyTokenToString(token._view, token.extra.split('.')));
+        return await this._propertyTokenToString(token._view, token.extra.split('.'));
       }
   }
 
@@ -208,7 +208,7 @@ export default class Description {
       let particle = consumeConn.particle;
       let particleDescription = this._particleDescriptions.find(desc => desc._particle == particle);
       options.seenParticles.add(particle);
-      return (await this.patternToSuggestion(particle.spec.pattern, particleDescription, options));
+      return await this.patternToSuggestion(particle.spec.pattern, particleDescription, options);
     }))).filter(str => !!str);
 
     return this._joinStringsToSentence(results);
