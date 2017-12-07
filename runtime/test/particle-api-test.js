@@ -71,7 +71,7 @@ describe('particle-api', function() {
     let resultView = arc.createView(Result.type);
     let recipe = manifest.recipes[0];
     recipe.normalize();
-    arc.instantiate(recipe);
+    await arc.instantiate(recipe);
 
     await util.assertSingletonWillChangeTo(resultView, Result, "done");
     let newView = arc.findViewsByType(Result.type)[1];
@@ -167,7 +167,7 @@ describe('particle-api', function() {
     let resultView = arc.createView(Result.type);
     let recipe = manifest.recipes[0];
     recipe.normalize();
-    arc.instantiate(recipe);
+    await arc.instantiate(recipe);
 
     await util.assertSingletonWillChangeTo(resultView, Result, "done");
     let newView = arc.findViewsByType(Result.type)[2];
@@ -281,7 +281,7 @@ describe('particle-api', function() {
     let resultsView = arc.createView(Result.type.setViewOf());
     let recipe = manifest.recipes[0];
     recipe.normalize();
-    arc.instantiate(recipe);
+    await arc.instantiate(recipe);
 
     await util.assertViewWillChangeTo(resultsView, Result, "value", ["done", "done", "HELLO", "WORLD"]);
 

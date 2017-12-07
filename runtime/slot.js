@@ -67,11 +67,11 @@ class Slot {
     }
   }
 
-  populateViewDescriptions() {
+  async populateViewDescriptions() {
     let descriptions = {};
-    Object.values(this.consumeConn.particle.connections).forEach(viewConn => {
+    Object.values(this.consumeConn.particle.connections).forEach(async viewConn => {
       if (viewConn.view) {
-        descriptions[`${viewConn.name}.description`] = this._arc.description.getViewDescription(viewConn.view).toString();
+        descriptions[`${viewConn.name}.description`] = (await this._arc.description.getViewDescription(viewConn.view)).toString();
       }
     });
     return descriptions;

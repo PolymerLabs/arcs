@@ -44,7 +44,7 @@ describe('Arc', function() {
     let barView = arc.createView(Bar.type);
     await handle.handleFor(fooView).set(new Foo({value: 'a Foo'}));
     recipe.normalize();
-    arc.instantiate(recipe);
+    await arc.instantiate(recipe);
     await util.assertSingletonWillChangeTo(barView, Bar, "a Foo1");
   });
 
@@ -54,7 +54,7 @@ describe('Arc', function() {
     let fooView = arc.createView(Foo.type);
     let barView = arc.createView(Bar.type);
     recipe.normalize();
-    arc.instantiate(recipe);
+    await arc.instantiate(recipe);
 
     handle.handleFor(fooView).set(new Foo({value: 'a Foo'}));
     await util.assertSingletonWillChangeTo(barView, Bar, "a Foo1");

@@ -40,9 +40,9 @@ export default class DemoBase extends HTMLElement {
         document.dispatchEvent(new CustomEvent('generations', {detail: {generations, arc}}));
       };
     }
-    ui.addEventListener('plan-selected', e => {
+    ui.addEventListener('plan-selected', async e => {
       let {plan} = e.detail;
-      arc.instantiate(plan);
+      await arc.instantiate(plan);
       arc.makeSuggestions();
     });
     arc.makeSuggestions();

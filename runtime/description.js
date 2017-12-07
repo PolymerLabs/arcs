@@ -35,10 +35,10 @@ export default class Description {
     }
   }
 
-  _updateDescriptionHandles() {
-    this._particleDescriptions.forEach(pDesc => {
+  async _updateDescriptionHandles() {
+    for (let pDesc of this._particleDescriptions) {
       let particle = pDesc._particle;
-      let descByName = this._getPatternByNameFromDescriptionHandle(particle) || {};
+      let descByName = await this._getPatternByNameFromDescriptionHandle(particle) || {};
       let pattern = descByName["_pattern_"] || particle.spec.pattern;
       if (pattern) {
         pDesc.pattern = pattern;
@@ -53,15 +53,15 @@ export default class Description {
           pDesc._connections[viewConn.name] = viewDescription;
         }
       });
-    });
+    };
   }
 
-  _getPatternByNameFromDescriptionHandle(particle) {
+  async _getPatternByNameFromDescriptionHandle(particle) {
     let descriptionConn = particle.connections["descriptions"];
     if (descriptionConn && descriptionConn.view && descriptionConn.view.id) {
       let descView = this._arc.findViewById(descriptionConn.view.id);
       if (descView) {
-        let descList = descView.toList();
+        let descList = await descView.toList();
         let descByName = {};
         descList.forEach(d => descByName[d.rawData.key] = d.rawData.value);
         return descByName;
@@ -69,8 +69,8 @@ export default class Description {
     }
   }
 
-  getRecipeSuggestion(particles) {
-    this._updateDescriptionHandles();  // This is needed to get updates in description handle.
+  async getRecipeSuggestion(particles) {
+    await this._updateDescriptionHandles();  // This is needed to get updates in description handle.
 
     // Choose particles that render UI, sort them by rank and generate suggestions.
     let particlesSet = new Set(particles || this._particleDescriptions.map(pDesc => pDesc._particle));
@@ -80,11 +80,11 @@ export default class Description {
 
     let options = { seenViews: new Set(), seenParticles: new Set() };
     let suggestions = [];
-    selectedDescriptions.forEach(particle => {
+    for (let particle of selectedDescriptions) {
       if (!options.seenParticles.has(particle._particle)) {
-        suggestions.push(this.patternToSuggestion(particle.pattern, particle, options));
+        suggestions.push(await this.patternToSuggestion(particle.pattern, particle, options));
       }
-    });
+    }
 
     if (suggestions.length == 0) {
       // Return recipe name by default.
@@ -109,19 +109,19 @@ export default class Description {
     return sentence[0].toUpperCase() + sentence.slice(1) + '.';
   }
 
-  getViewDescription(recipeView) {
+  async getViewDescription(recipeView) {
     assert(recipeView.connections.length > 0, 'view has no connections?');
 
-    this._updateDescriptionHandles();  // This is needed to get updates in description handle.
+    await this._updateDescriptionHandles();  // This is needed to get updates in description handle.
 
     let viewConnection = this._selectViewConnection(recipeView) || recipeView.connections[0];
     let view = this._arc.findViewById(recipeView.id);
-    return this._formatDescription(viewConnection, view, { seenViews: new Set(), excludeValues: true });
+    return (await this._formatDescription(viewConnection, view, { seenViews: new Set(), excludeValues: true }));
   }
 
-  patternToSuggestion(pattern, particleDescription, options) {
+  async patternToSuggestion(pattern, particleDescription, options) {
     this._tokens = this._initTokens(pattern, particleDescription._particle);
-    return this._tokens.map(token => this.tokenToString(token, options)).join("");
+    return (await Promise.all(this._tokens.map(async token => await this.tokenToString(token, options)))).join("");
   }
 
   _initTokens(pattern, particle) {
@@ -161,31 +161,31 @@ export default class Description {
     return results;
   }
 
-  tokenToString(token, options) {
+  async tokenToString(token, options) {
     if (token.text) {
       return token.text;
     }
     if (token.viewName) {
-      return this._viewTokenToString(token, options);
+      return (await this._viewTokenToString(token, options));
     } else  if (token.slotName) {
-      return this._slotTokenToString(token, options);
+      return (await this._slotTokenToString(token, options));
     }
     assert(false, `no view or slot name (${JSON.stringify(token)})`);
   }
 
-  _viewTokenToString(token, options) {
+  async _viewTokenToString(token, options) {
     switch (token.extra) {
       case "_type_":
         return token._viewConn.type.toPrettyString().toLowerCase();
       case "_values_":
-        return this._formatViewValue(token._view);
+        return (await this._formatViewValue(token._view));
       case "_name_": {
-        return this._formatDescription(token._viewConn, token._view, options).toString();
+        return (await this._formatDescription(token._viewConn, token._view, options)).toString();
       }
       case undefined:
         // full view description
-        let descriptionToken = this._formatDescription(token._viewConn, token._view, options) || {};
-        let viewValue = this._formatViewValue(token._view);
+        let descriptionToken = (await this._formatDescription(token._viewConn, token._view, options)) || {};
+        let viewValue = await this._formatViewValue(token._view);
         if (!descriptionToken.pattern) {
           // For singleton view, if there is no real description (the type was used), use the plain value for description.
           if (viewValue && !token._view.type.isSetView && !options.excludeValues) {
@@ -199,25 +199,25 @@ export default class Description {
         }
         return descriptionToken.toString();
       default:  // property
-        return this._propertyTokenToString(token._view, token.extra.split('.'));
+        return (await this._propertyTokenToString(token._view, token.extra.split('.')));
       }
   }
 
-  _slotTokenToString(token, options) {
-    let results = token._providedSlotConn.consumeConnections.map(consumeConn => {
+  async _slotTokenToString(token, options) {
+    let results = (await Promise.all(token._providedSlotConn.consumeConnections.map(async consumeConn => {
       let particle = consumeConn.particle;
       let particleDescription = this._particleDescriptions.find(desc => desc._particle == particle);
       options.seenParticles.add(particle);
-      return this.patternToSuggestion(particle.spec.pattern, particleDescription, options);
-    }).filter(str => !!str);
+      return (await this.patternToSuggestion(particle.spec.pattern, particleDescription, options));
+    }))).filter(str => !!str);
 
     return this._joinStringsToSentence(results);
   }
 
-  _propertyTokenToString(view, properties) {
+  async _propertyTokenToString(view, properties) {
     assert(!view.type.isSetView, `Cannot return property ${properties.join(",")} for set-view`);
     // Use singleton value's property (eg. "09/15" for person's birthday)
-    let viewVar = view.get();
+    let viewVar = await view.get();
     if (viewVar) {
       let value = viewVar.rawData;
       properties.forEach(p => {
@@ -231,12 +231,12 @@ export default class Description {
     }
   }
 
-  _formatViewValue(view) {
+  async _formatViewValue(view) {
     if (!view) {
       return;
     }
     if (view.type.isSetView) {
-      let viewList = view.toList();
+      let viewList = await view.toList();
       if (viewList && viewList.length > 0) {
         if (viewList[0].rawData.name) {
           if (viewList.length > 2) {
@@ -249,14 +249,14 @@ export default class Description {
         }
       }
     } else {
-      let viewVar = view.get();
+      let viewVar = await view.get();
       if (viewVar && viewVar.rawData.name) {
         return `<b>${viewVar.rawData.name}</b>`;  // TODO: use type's Entity instead
       }
     }
   }
 
-  _formatDescription(viewConnection, view, options) {
+  async _formatDescription(viewConnection, view, options) {
     assert(viewConnection.view.id == view.id, `Mismatching view IDs ${viewConnection.view.id} and ${view.id}`);
 
     let chosenConnection = viewConnection;
@@ -275,7 +275,7 @@ export default class Description {
     // Add description to result array.
     if (viewDescription) {
       // Add the connection spec's description pattern.
-      return DescriptionToken.fromPatternDescription(this.patternToSuggestion(viewDescription.pattern, chosenParticleDescription, options));
+      return DescriptionToken.fromPatternDescription(await this.patternToSuggestion(viewDescription.pattern, chosenParticleDescription, options));
     } else if (view && view.description) {
       // Use the view description available in the arc.
       return view.description;

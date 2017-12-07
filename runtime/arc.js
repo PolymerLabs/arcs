@@ -205,7 +205,7 @@ class Arc {
     return s;
   }
 
-  instantiate(recipe) {
+  async instantiate(recipe) {
     assert(recipe.isResolved(), 'Cannot instantiate an unresolved recipe');
 
     let {views, particles, slots} = recipe.mergeInto(this._activeRecipe);
@@ -225,7 +225,7 @@ class Arc {
       let view = this.findViewById(recipeView.id);
       assert(view, `view '${recipeView.id}' was not found`);
 
-      view.description = this.description.getViewDescription(recipeView);
+      view.description = await this.description.getViewDescription(recipeView);
     }
 
     particles.forEach(recipeParticle => this._instantiateParticle(recipeParticle));

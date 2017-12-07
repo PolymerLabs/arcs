@@ -98,7 +98,7 @@ describe('InitPopulation', async ()  => {
     let recipe = manifest.recipes[0];
     assert(recipe.normalize());
     var arc = new Arc({id: 'test-plan-arc', context: {recipes: [recipe]}});
-    arc.instantiate(recipe);
+    await arc.instantiate(recipe);
     let ip = new InitPopulation(arc);
 
     var strategizer = {generated: [], generation: 0};
