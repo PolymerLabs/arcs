@@ -1,0 +1,61 @@
+<!--
+Copyright (c) 2017 Google Inc. All rights reserved.
+This code may only be used under the BSD style license found at
+http://polymer.github.io/LICENSE.txt
+Code distributed by Google as part of this project is also
+subject to an additional IP rights grant found at
+http://polymer.github.io/PATENTS.txt
+-->
+<!DOCTYPE html>
+<link href="../node_modules/mocha/mocha.css" rel="stylesheet" />
+
+Tests to run:<br>
+<textarea id=testInput style="width: 500px"></textarea><br>
+Select the top-level `arcs` directory to update:
+<input id="directoryInput" type="file" webkitdirectory></input>
+<div id="mocha"></div>
+
+<script src="../node_modules/mocha/mocha.js"></script>
+<script>mocha.setup('bdd')</script>
+<script>
+async function loadTests(files) {
+  let promises = [];
+  for (let file of files) {
+    if (!file) continue;
+    let script = document.createElement('script');
+    script.src = file;
+    script.type = 'module';
+    document.head.appendChild(script);
+    promises.push(new Promise(resolve => {
+      script.onload = resolve;
+      script.onerror = e => {
+        resolve();
+        console.error(e);
+      };
+    }));
+  }
+  await Promise.all(promises);
+}
+
+directoryInput.onchange = function(e) {
+  let tests = Array.from(e.target.files)
+      .map(file => file.webkitRelativePath)
+      .map(file => file.replace(/^arcs\//, ''))
+      .filter(file => /-tests?\.js$/.test(file))
+      .filter(file => !/node_modules|manual_tests/.test(file))
+      .map(file => '../' + file);
+
+  localStorage.setItem('test-runner-tests', tests.join('\n'));
+  window.location.reload();
+}
+
+testInput.value = localStorage.getItem('test-runner-tests') || './runtime/tests/recipe-util-tests.js';
+testInput.onchange = function(e) {
+  localStorage.setItem('test-runner-tests', testInput.value);
+};
+
+loadTests(testInput.value.split(/\s+/)).then(() => {
+  mocha.checkLeaks();
+  mocha.run();
+});
+</script>
