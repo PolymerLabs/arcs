@@ -138,7 +138,7 @@ class Collection extends Handle {
     if (!this.canWrite)
       throw new Error("View not writeable");
     var serialization = this._serialize(entity);
-    return await this._view.store(serialization);
+    return this._view.store(serialization);
   }
 
   /** @method remove(entity)
@@ -150,7 +150,7 @@ class Collection extends Handle {
     if (!this.canWrite)
       throw new Error("View not writeable");
     var serialization = this._serialize(entity);
-    return await this._view.remove(serialization.id);
+    return this._view.remove(serialization.id);
   }
 
   async debugString() {
@@ -196,7 +196,7 @@ class Variable extends Handle {
   async set(entity) {
     if (!this.canWrite)
       throw new Error("View not writeable");
-    return await this._view.set(this._serialize(entity));
+    return this._view.set(this._serialize(entity));
   }
 
   /** @method clear()
