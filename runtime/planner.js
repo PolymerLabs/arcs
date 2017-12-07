@@ -154,7 +154,7 @@ class Planner {
       let rank = relevance.calcRelevanceScore();
 
       relevance.newArc.description.setRelevance(relevance);
-      let description = relevance.newArc.description.getRecipeSuggestion(relevance.newArc.recipes[0].particles);
+      let description = await relevance.newArc.description.getRecipeSuggestion(relevance.newArc.recipes[0].particles);
 
       this._updateGeneration(generations, hash, (g) => g.description = description);
 

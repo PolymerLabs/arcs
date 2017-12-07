@@ -88,7 +88,7 @@ describe('demo flow', function() {
         .expectRenderSlot("Chooser", "action", ["model"])
         .expectRenderSlot("AlsoOn", "annotation", ["model"]);
 
-    arc.instantiate(plan);
+    await arc.instantiate(plan);
     await arc.pec.idle;
 
     await slotComposer.expectationsCompleted();
@@ -100,7 +100,7 @@ describe('demo flow', function() {
     //await testUtil.assertViewHas(giftView, Product, "name",
     //    ["Tea Pot", "Bee Hive", "Denim Jeans", "Arduino Starter Pack"]);
 
-    var serialization = arc.serialize();
+    // var serialization = arc.serialize();
 
     //slotComposer
     //           .expectGetSlot("ShowProducts", "root")

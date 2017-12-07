@@ -130,7 +130,7 @@ describe('particle-shape-loading', function() {
     assert(recipe.normalize(), "can't normalize recipe");
     assert(recipe.isResolved(), "recipe isn't resolved");
 
-    arc.instantiate(recipe);
+    await arc.instantiate(recipe);
 
     await util.assertSingletonWillChangeTo(outView, manifest.schemas.Bar.entityClass(), "a foo1");
 
@@ -186,7 +186,7 @@ describe('particle-shape-loading', function() {
     assert(recipe.normalize(), "can't normalize recipe");
     assert(recipe.isResolved(), "recipe isn't resolved");
 
-    arc.instantiate(recipe);
+    await arc.instantiate(recipe);
 
     await util.assertSingletonWillChangeTo(outView, manifest.schemas.Bar.entityClass(), "a foo1");
 

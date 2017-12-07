@@ -33,7 +33,7 @@ async function setup() {
 describe('manifest integration', () => {
   it('can produce a recipe that can be instantiated in an arc', async () => {
     let {arc, recipe} = await setup();
-    arc.instantiate(recipe);
+    await arc.instantiate(recipe);
     await arc.pec.idle;
     let type = recipe.views[0].type;
     let [view] = arc.findViewsByType(type);

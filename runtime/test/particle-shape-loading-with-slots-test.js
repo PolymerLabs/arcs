@@ -72,7 +72,7 @@ describe('particle-shape-loading-with-slots', function() {
     assert(recipe.normalize(), "can't normalize recipe");
     assert(recipe.isResolved(), "recipe isn't resolved");
 
-    arc.instantiate(recipe);
+    await arc.instantiate(recipe);
 
     return slotComposer;
   }

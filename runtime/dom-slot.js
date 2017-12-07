@@ -116,8 +116,11 @@ class DomSlot extends Slot {
     //}
 
     if (this._model) {
-      this._model = Object.assign(this._model, this.populateViewDescriptions());
-      this.context.updateModel(this._model);
+      // TODO(mmandlis): re-add populateViewDescriptions
+      //this.populateViewDescriptions().then(update => {
+        //this._model = Object.assign(this._model, update);
+        this.context.updateModel(this._model);
+      //});
     }
   }
   getInnerContext(slotName) {

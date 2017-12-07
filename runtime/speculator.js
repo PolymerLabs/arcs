@@ -19,7 +19,6 @@ class Speculator {
   speculate(arc, plan) {
     var trace = tracing.start({cat: "speculator", name: "Speculator::speculate"});
     var newArc = arc.cloneForSpeculativeExecution();
-    newArc.instantiate(plan);
     let relevance = new Relevance();
     async function awaitCompletion() {
       await scheduler.idle;
@@ -34,7 +33,7 @@ class Speculator {
       }
     }
 
-    let result = awaitCompletion();
+    let result = newArc.instantiate(plan).then(a => awaitCompletion());
     trace.end();
     return result;
   }
