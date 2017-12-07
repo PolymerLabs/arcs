@@ -32,11 +32,11 @@ class OuterPEC extends PEC {
       }
     }
 
-    this._apiPort.onSynchronize = ({handle, target, callback, modelCallback, type}) => {
+    this._apiPort.onSynchronize = async ({handle, target, callback, modelCallback, type}) => {
       if (handle.constructor.name == 'InMemoryVariable') {
-        var model = handle.get();
+        var model = await handle.get();
       } else {
-        var model = handle.toList();
+        var model = await handle.toList();
       }
       this._apiPort.SimpleCallback({callback: modelCallback, data: model}, target);
       handle.on(type, data => this._apiPort.SimpleCallback({callback, data}), target);

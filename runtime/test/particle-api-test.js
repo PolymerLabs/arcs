@@ -17,6 +17,75 @@ import InnerPec from "../inner-PEC.js";
 import Loader from "../loader.js";
 
 describe('particle-api', function() {
+  it('contains view synchronize calls', async () => {
+    let registry = {};
+    let loader = new class extends Loader {
+      loadResource(path) {
+        return {
+          manifest: `
+          schema Input
+            normative
+              Text value
+
+          schema Result
+            normative
+              Text value
+
+          particle P in 'a.js'
+            P(in [Input] inputs, out Result result)
+
+          recipe
+            use 'test:1' as view0
+            use 'test:2' as view1
+            P
+              inputs <- view0
+              result -> view1
+          `,
+          'a.js': `
+            "use strict";
+
+            defineParticle(({Particle}) => {
+              return class P extends Particle {
+                async setViews(views) {
+                  var input = views.get("inputs");
+                  var output = views.get("result");
+                  input.synchronize('change', model => {
+                    output.set(new output.entityClass({value: model.length}));
+                  }, update => undefined, this);
+                }
+              }
+            });
+          `
+        }[path];
+      }
+      path(fileName) {
+        return fileName;
+      }
+      join(_, file) {
+        return file;
+      }
+    }
+    let manifest = await Manifest.load('manifest', loader, {registry});
+    var pecFactory = function(id) {
+      var channel = new MessageChannel();
+      new InnerPec(channel.port1, `${id}:inner`, loader);
+      return channel.port2;
+    };
+    let arc = new Arc({id:'test', pecFactory});
+
+    let Input = manifest.findSchemaByName('Input').entityClass();
+    let inputView = arc.createView(Input.type.setViewOf());
+    inputView.store({id: 1, text: "Hi"});
+    inputView.store({id: 2, text: "There"});
+
+    let Result = manifest.findSchemaByName('Result').entityClass();
+    let resultView = arc.createView(Result.type);
+    let recipe = manifest.recipes[0];
+    recipe.normalize();
+    await arc.instantiate(recipe);
+
+    await util.assertSingletonWillChangeTo(resultView, Result, "2");
+  }),
   it('contains a constructInnerArc call', async () => {
     let registry = {};
     let loader = new class extends Loader {
