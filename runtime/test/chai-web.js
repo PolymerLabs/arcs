@@ -5,6 +5,7 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import '../../node_modules/chai/chai.js';
+// Assume chai has been loaded. We can't `import` it here as it does not
+// support strict mode.
 export default window.chai;
 export const assert = window.chai.assert;
