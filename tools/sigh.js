@@ -96,6 +96,8 @@ async function webpack() {
 function test(args) {
   let options = minimist(args, {
     string: ['grep'],
+    inspect: ['inspect'],
+    exceptions: ['exceptions'],
     alias: {g: 'grep'},
   });
   function* testsInDir(dir) {
@@ -161,11 +163,18 @@ function test(args) {
     return runnerFile;
   }
 
+  let extraFlags = [];
+  if (options.inspect) {
+    extraFlags.push('--inspect-brk');
+  }
+  if (options.exceptions) {
+    extraFlags.push('--print_all_exceptions')
+  }
+
   let runner = buildTestRunner();
-  // TODO: exit code?
   return spawn('node', [
     '--experimental-modules',
-    //'--print_all_exceptions',
+    ...extraFlags,
     '--loader', fixPathForWindows(path.join(__dirname, 'custom-loader.mjs')),
     runner,
   ], {stdio: 'inherit'}).status == 0;
