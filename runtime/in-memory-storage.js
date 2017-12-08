@@ -12,6 +12,44 @@ import tracing from "../tracelib/trace.js";
 import scheduler from './scheduler.js';
 import util from './recipe/util.js';
 
+class InMemoryKey {
+  constructor(key) {
+    var parts = key.split("://");
+    this.protocol = parts[0];
+    assert(this.protocol == 'in-memory');
+    this.location = parts[1];
+  }
+  toString() {
+    return this.protocol + '://' + this.location;
+  }
+}
+
+export class InMemoryStorage {
+  constructor(arc) {
+      this._arc = arc;
+      this.memoryMap = {};
+      this.localIDBase = 0;
+  }
+
+  construct(id, type, keyFragment) {
+    var key = new InMemoryKey(keyFragment);
+    if (key.location == undefined)
+      key.location = 'in-memory-' + this.localIDBase++;
+    var provider = InMemoryStorageProvider.newProvider(type, this._arc, undefined, id);
+    if (this.memoryMap[key.toString()] !== undefined)
+      return null;
+    this.memoryMap[key.toString()] = provider;
+    return provider;
+  }
+
+  connect(id, type, key) {
+    if (this.memoryMap[key] == undefined)
+      return null;
+    // TODO assert types match?
+    return this.memoryMap[key];
+  }
+}
+
 class InMemoryStorageProvider {
   constructor(type, arc, name, id) {
     var trace = tracing.start({cat: 'view', name: 'InMemoryStorageProvider::constructor', args: {type: type.key, name: name}});
@@ -96,6 +134,12 @@ class InMemoryStorageProvider {
       results.push(`  description \`${this.description}\``)
     return results.join('\n');
   }
+
+  static newProvider(type, arc, name, id) {
+    if (type.isSetView)
+      return new InMemoryCollection(type.primitiveType(), arc, name, id);
+    return new InMemoryVariable(type, arc, name, id);
+  })
 }
 
 export class InMemoryCollection extends InMemoryStorageProvider {
