@@ -84,11 +84,10 @@ recipe
     assert.deepEqual(["root"], Object.keys(slotComposer.getAvailableSlots()));
 
     // initializing recipe
-    slotComposer.initializeRecipe(plan.particles);
+    await slotComposer.initializeRecipe(plan.particles);
     assert.deepEqual(['A'], startRenderParticles);
 
     // render root slot
-    debugger;
     let particle = plan.particles[0];
     slotComposer.renderSlot(particle, 'root', 'dummy-content');
     let rootSlot = slotComposer.getSlot(particle, 'root');
@@ -97,7 +96,7 @@ recipe
     // update inner slots
     startRenderParticles.length = 0;
     rootSlot.getInnerContext = (providedSlotName) => providedSlotName == 'mySlot' ? 'dummy-inner-context' : null;
-    slotComposer.updateInnerSlots(rootSlot);
+    await slotComposer.updateInnerSlots(rootSlot);
     assert.deepEqual(['B', 'BB'], startRenderParticles);
 
     // get available slots

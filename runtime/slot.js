@@ -24,21 +24,21 @@ class Slot {
   }
   get consumeConn() { return this._consumeConn; }
   get arc() { return this._arc; }
-  get context() { return this._context; }
-  set context(context) { this._context = context; }
+  getContext() { return this._context; }
+  async setContext(context) { this._context = context; }
   isSameContext(context) { return this._context == context; }
 
-  setContext(context) {
+  async updateContext(context) {
     // do nothing, if context unchanged.
-    if ((!this.context && !context) ||
-        (this.context && context && this.isSameContext(context))) {
+    if ((!this.getContext() && !context) ||
+        (this.getContext() && context && this.isSameContext(context))) {
       return;
     }
 
     // update the context;
-    let wasNull = !this.context;
-    this.context = context;
-    if (this.context) {
+    let wasNull = !this.getContext();
+    await this.setContext(context);
+    if (this.getContext()) {
       if (wasNull) {
         this.startRender();
       }
@@ -69,11 +69,11 @@ class Slot {
 
   async populateViewDescriptions() {
     let descriptions = {};
-    Object.values(this.consumeConn.particle.connections).forEach(async viewConn => {
+    await Promise.all(Object.values(this.consumeConn.particle.connections).map(async viewConn => {
       if (viewConn.view) {
         descriptions[`${viewConn.name}.description`] = (await this._arc.description.getViewDescription(viewConn.view)).toString();
       }
-    });
+    }));
     return descriptions;
   }
 
@@ -99,13 +99,13 @@ class Slot {
     assert(hostedSlot.particleName == hostedParticle.name,
            `Unexpected particle name ${hostedParticle.name} for slot ${hostedSlotId}; expected: ${hostedSlot.particleName}`)
     hostedSlot.particle = hostedParticle;
-    if (this.context && this.startRenderCallback) {
+    if (this.getContext() && this.startRenderCallback) {
       this.startRenderCallback({ particle: hostedSlot.particle, slotName: hostedSlot.slotName, contentTypes: this.constructRenderRequest() });
     }
   }
 
   // absract
-  setContent(content, handler) {}
+  async setContent(content, handler) {}
   getInnerContext(slotName) {}
   constructRenderRequest() {}
   static findRootSlots(context) { }
