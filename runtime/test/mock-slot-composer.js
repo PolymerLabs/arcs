@@ -89,7 +89,7 @@ class MockSlotComposer extends SlotComposer {
     this.pec.sendEvent(particle, slotName, {handler: event, data});
   }
 
-  renderSlot(particle, slotName, content) {
+  async renderSlot(particle, slotName, content) {
 //    console.log(`renderSlot ${particle.name}:${slotName}`, Object.keys(content).join(', '));
     assert(this.expectQueue.length > 0 && this.expectQueue[0],
       `Got a renderSlot from ${particle.name}:${slotName} (content types: ${Object.keys(content).join(', ')}), but not expecting anything further.`);
@@ -115,7 +115,7 @@ class MockSlotComposer extends SlotComposer {
     super.renderSlot(particle, slotName, content);
     let slot = this.getSlot(particle, slotName);
     if (slot) {
-      super.updateInnerSlots(slot);
+      await super.updateInnerSlots(slot);
     } else {
       // Slots of particles hosted in transformation particles.
     }

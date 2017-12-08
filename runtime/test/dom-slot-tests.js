@@ -43,29 +43,29 @@ describe('dom-slot', function() {
     assert.isNull(slot._context);
 
     // context was null; set to null - nothing happens.
-    slot.context = null;
+    slot.setContext(null);
     assert.isNull(slot._context);
 
     // context was null; set none null - initializes DOM context
-    slot.context = 'dummy-context';
-    assert.isTrue(slot.context instanceof MockDomContext);
+    slot.setContext('dummy-context');
+    assert.isTrue(slot.getContext() instanceof MockDomContext);
     let clearCount = 0;
-    slot.context.clear = () => { clearCount++; }
-    assert.equal('dummy-context', slot.context.context);
+    slot.getContext().clear = () => { clearCount++; }
+    assert.equal('dummy-context', slot.getContext().context);
     assert.equal(0, doRenderCount);
 
     // context was NOT null; set none null - updates DOM context, and calls doRender
-    slot.context = 'other-dummy-context';
+    slot.setContext('other-dummy-context');
     assert.equal(1, clearCount);
     assert.equal(1, doRenderCount);
-    assert.equal('other-dummy-context', slot.context.context);
+    assert.equal('other-dummy-context', slot.getContext().context);
 
     // set context to NULL.
-    slot.context = null;
+    slot.setContext(null);
     assert.equal(1, doRenderCount);
     assert.isNull(slot._context);
   });
-  it('set content', function() {
+  it('set content', async () => {
     let slot = createDomSlot('testContentSlot');
     let doRenderCount = 0;
     let _doRenderImpl = slot._doRender;
@@ -77,25 +77,25 @@ describe('dom-slot', function() {
     assert.isNull(slot._model);
 
     // model and context are null; set content to null - nothing happens.
-    slot.setContent(null);
+    await slot.setContent(null);
     assert.isNull(slot._model);
     assert.equal(0, doRenderCount);
 
     // set content to non-NULL - still nothing happens, because context is null.
-    slot.setContent({content: 'foo'});
+    await slot.setContent({content: 'foo'});
     assert.isNull(slot._model);
     assert.equal(0, doRenderCount);
 
     // set context to dummy
-    slot.context = 'dummy-context';
+    await slot.setContext('dummy-context');
     let clearCount = 0;
     let stampTemplateCount = 0;
     let updateModelCount = 0;
-    slot.context.clear = () => { clearCount++; }
-    slot.context.stampTemplate = (template, eventHandler) => { stampTemplateCount++; }
-    slot.context.updateModel = (model) => { updateModelCount++; }
+    slot.getContext().clear = () => { clearCount++; }
+    slot.getContext().stampTemplate = (template, eventHandler) => { stampTemplateCount++; }
+    slot.getContext().updateModel = (model) => { updateModelCount++; }
     // Set content to null - context is cleared.
-    slot.setContent(null);
+    await slot.setContent(null);
     assert.isNull(slot._model);
     assert.equal(0, doRenderCount);
     assert.equal(1, clearCount);
@@ -104,7 +104,7 @@ describe('dom-slot', function() {
 
     // Set content with template: templates map is updated and slot is rendered.
     assert.isUndefined(slot.getTemplate());
-    slot.setContent({template: 'my template'});
+    await slot.setContent({template: 'my template'});
     assert.isNull(slot._model);
     assert.equal('my template', slot.getTemplate());
     assert.equal(1, doRenderCount);
@@ -113,7 +113,7 @@ describe('dom-slot', function() {
     assert.equal(0, updateModelCount);
 
     // Set content with template and model - template is overriden, model is set and slot is re-rendered.
-    slot.setContent({template: 'my other template', model:{foo:'bar'}});
+    await slot.setContent({template: 'my other template', model:{foo:'bar'}});
     assert.deepEqual({foo:'bar'}, slot._model);
     assert.equal('my other template', slot.getTemplate());
     assert.equal(2, doRenderCount);
@@ -122,7 +122,7 @@ describe('dom-slot', function() {
     assert.equal(1, updateModelCount);
 
     // Set content with only model - model is set and slot is re-rendered.
-    slot.setContent({model:{foo:'far'}});
+    await slot.setContent({model:{foo:'far'}});
     assert.deepEqual({foo:'far'}, slot._model);
     assert.equal('my other template', slot.getTemplate());
     assert.equal(3, doRenderCount);
@@ -131,7 +131,7 @@ describe('dom-slot', function() {
     assert.equal(2, updateModelCount);
 
     // set content to null - context is cleared, and model is set to null.
-    slot.setContent(null);
+    await slot.setContent(null);
     assert.isNull(slot._model);
     assert.equal('my other template', slot.getTemplate());
     assert.equal(3, doRenderCount);

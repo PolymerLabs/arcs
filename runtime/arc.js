@@ -233,7 +233,7 @@ class Arc {
 
     if (this.pec.slotComposer) {
       // TODO: pass slot-connections instead
-      this.pec.slotComposer.initializeRecipe(particles);
+      await this.pec.slotComposer.initializeRecipe(particles);
     }
 
     this._recipes.push({particles, views, slots});

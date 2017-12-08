@@ -75,7 +75,7 @@ class SlotComposer {
     }
   }
 
-  initializeRecipe(recipeParticles) {
+  async initializeRecipe(recipeParticles) {
     let newSlots = [];
     // Create slots for each of the recipe's particles slot connections.
     recipeParticles.forEach(p => {
@@ -96,8 +96,8 @@ class SlotComposer {
     });
 
     // Attempt to set context for each of the slots.
-    newSlots.forEach(s => {
-      assert(!s.context, `Unexpected context in new slot`);
+    await Promise.all(newSlots.map(async s => {
+      assert(!s.getContext(), `Unexpected context in new slot`);
 
       let context = null;
       let sourceConnection = s.consumeConn.targetSlot && s.consumeConn.targetSlot.sourceConnection;
@@ -109,12 +109,13 @@ class SlotComposer {
       } else {  // External slots provided at SlotComposer ctor (eg "root")
         context = this._contextById[s.consumeConn.name];
       }
-      if (context) {
-        s.setContext(context);
-      }
 
       this._slots.push(s);
-    });
+
+      if (context) {
+        await s.updateContext(context);
+      }
+    }));
   }
 
   _initHostedSlot(hostedSlotId, hostedParticle) {
@@ -126,11 +127,11 @@ class SlotComposer {
     return true;
   }
 
-  renderSlot(particle, slotName, content) {
+  async renderSlot(particle, slotName, content) {
     let slot = this.getSlot(particle, slotName);
     if (slot) {
       // Set the slot's new content.
-      slot.setContent(content, eventlet => {
+      await slot.setContent(content, eventlet => {
         this.arc.pec.sendEvent(particle, slotName, eventlet)
         this.arc.makeSuggestions && this.arc.makeSuggestions();
       });
@@ -157,17 +158,17 @@ class SlotComposer {
     return true;
   }
 
-  updateInnerSlots(slot) {
+  async updateInnerSlots(slot) {
     assert(slot, 'Cannot update inner slots of null');
     // Update provided slot contexts.
-    Object.keys(slot.consumeConn.providedSlots).forEach(providedSlotName => {
+    await Promise.all(Object.keys(slot.consumeConn.providedSlots).map(async providedSlotName => {
       let providedContext = slot.getInnerContext(providedSlotName);
       let providedSlot = slot.consumeConn.providedSlots[providedSlotName];
-      providedSlot.consumeConnections.forEach(cc => {
+      await Promise.all(providedSlot.consumeConnections.map(async cc => {
         // This will trigger "start" or "stop" render, if applicable.
-        this.getSlot(cc.particle, cc.name).setContext(providedContext);
-      });
-    });
+        await this.getSlot(cc.particle, cc.name).updateContext(providedContext);
+      }));
+    }));
   }
 
   getAvailableSlots() {
