@@ -137,12 +137,12 @@ class InMemoryStorageProvider {
 
   static newProvider(type, arc, name, id) {
     if (type.isSetView)
-      return new InMemoryCollection(type.primitiveType(), arc, name, id);
+      return new InMemoryCollection(type, arc, name, id);
     return new InMemoryVariable(type, arc, name, id);
-  })
+  }
 }
 
-export class InMemoryCollection extends InMemoryStorageProvider {
+class InMemoryCollection extends InMemoryStorageProvider {
   constructor(type, arc, name, id) {
     super(type, arc, name, id);
     this._items = new Map();
@@ -226,7 +226,7 @@ export class InMemoryCollection extends InMemoryStorageProvider {
   }
 }
 
-export class InMemoryVariable extends InMemoryStorageProvider {
+class InMemoryVariable extends InMemoryStorageProvider {
   constructor(type, arc, name, id) {
     super(type, arc, name, id);
     this._stored = null;

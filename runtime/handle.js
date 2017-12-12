@@ -221,7 +221,7 @@ function handleFor(view, isSet, canRead, canWrite) {
   if (canWrite == undefined)
     canWrite = true;
   let handle;
-  if (isSet || (isSet == undefined && view instanceof storage.InMemoryCollection))
+  if (isSet || (isSet == undefined && view.type.isSetView))
     handle = new Collection(view, canRead, canWrite);
   else
     handle = new Variable(view, canRead, canWrite);

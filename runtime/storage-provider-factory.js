@@ -7,25 +7,25 @@
 // http://polymer.github.io/PATENTS.txt
 'use strict';
 
-import InMemoryStorage from './in-memory-storage.js';
+import {InMemoryStorage} from './in-memory-storage.js';
 
-class StorageProviderFactory {
+export default class StorageProviderFactory {
   constructor(arc) {
     this._arc = arc;
     this.storageInstances = {'in-memory': new InMemoryStorage(arc)};
   }
 
   _storageForKey(key) {
-    var protocol = keyFragment.split(':')[0];
+    var protocol = key.split(':')[0];
     return this.storageInstances[protocol];
   }
 
   construct(id, type, keyFragment) {
-    this._storageForKey(keyFragment).construct(id, type, keyFragment);
+    return this._storageForKey(keyFragment).construct(id, type, keyFragment);
   }
 
   connect(id, type, key) {
-    this._storageForKey(key).connect(id, type, keyFragment);
+    return this._storageForKey(key).connect(id, type, keyFragment);
   }
 
   newKey(id, associatedKeyFragment) {

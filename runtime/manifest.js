@@ -16,8 +16,8 @@ import Schema from './schema.js';
 import Search from './recipe/search.js';
 import Shape from './shape.js';
 import Type from './type.js';
-import {InMemoryCollection, InMemoryVariable} from './in-memory-storage.js';
 import util from './recipe/util.js';
+import StorageProviderFactory from './storage-provider-factory.js';
 
 class Manifest {
   constructor() {
@@ -32,6 +32,7 @@ class Manifest {
     this._fileName = null;
     this._nextLocalID = 0;
     this._id = null;
+    this.storageProviderFactory = new StorageProviderFactory(this);
   }
   get id() {
     return this._id;
@@ -62,12 +63,8 @@ class Manifest {
   // TODO: newParticle, Schema, etc.
   // TODO: simplify() / isValid().
   newView(type, name, id, tags) {
-    let view;
-    if (type.isSetView) {
-      view = new InMemoryCollection(type, this, name, id);
-    } else {
-      view = new InMemoryVariable(type, this, name, id);
-    }
+    let view = this.storageProviderFactory.construct(id, type, 'in-memory');
+    view.name = name;
     this._views.push(view);
     this._viewTags.set(view, tags ? tags : []);
     return view;
