@@ -27,7 +27,7 @@ class InMemoryKey {
 export class InMemoryStorage {
   constructor(arc) {
       this._arc = arc;
-      this.memoryMap = {};
+      this._memoryMap = {};
       this.localIDBase = 0;
   }
 
@@ -36,17 +36,17 @@ export class InMemoryStorage {
     if (key.location == undefined)
       key.location = 'in-memory-' + this.localIDBase++;
     var provider = InMemoryStorageProvider.newProvider(type, this._arc, undefined, id);
-    if (this.memoryMap[key.toString()] !== undefined)
+    if (this._memoryMap[key.toString()] !== undefined)
       return null;
-    this.memoryMap[key.toString()] = provider;
+    this._memoryMap[key.toString()] = provider;
     return provider;
   }
 
   connect(id, type, key) {
-    if (this.memoryMap[key] == undefined)
+    if (this._memoryMap[key] == undefined)
       return null;
     // TODO assert types match?
-    return this.memoryMap[key];
+    return this._memoryMap[key];
   }
 }
 

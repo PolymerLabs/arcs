@@ -12,12 +12,12 @@ import {InMemoryStorage} from './in-memory-storage.js';
 export default class StorageProviderFactory {
   constructor(arc) {
     this._arc = arc;
-    this.storageInstances = {'in-memory': new InMemoryStorage(arc)};
+    this._storageInstances = {'in-memory': new InMemoryStorage(arc)};
   }
 
   _storageForKey(key) {
     var protocol = key.split(':')[0];
-    return this.storageInstances[protocol];
+    return this._storageInstances[protocol];
   }
 
   construct(id, type, keyFragment) {

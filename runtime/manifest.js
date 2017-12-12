@@ -32,7 +32,7 @@ class Manifest {
     this._fileName = null;
     this._nextLocalID = 0;
     this._id = null;
-    this.storageProviderFactory = new StorageProviderFactory(this);
+    this._storageProviderFactory = new StorageProviderFactory(this);
   }
   get id() {
     return this._id;
@@ -63,7 +63,7 @@ class Manifest {
   // TODO: newParticle, Schema, etc.
   // TODO: simplify() / isValid().
   newView(type, name, id, tags) {
-    let view = this.storageProviderFactory.construct(id, type, 'in-memory');
+    let view = this._storageProviderFactory.construct(id, type, 'in-memory');
     view.name = name;
     this._views.push(view);
     this._viewTags.set(view, tags ? tags : []);
