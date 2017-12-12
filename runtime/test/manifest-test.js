@@ -726,7 +726,7 @@ Expected " ", "#", "\\n", "\\r", [ ], [A-Z], or [a-z] but "?" found.
         HostedShape(in S foo) 
 
       particle Hosted
-        Hosted(in S foo)
+        Hosted(in S foo, in S bar)
 
       particle Transformation in '...js'
         work(host HostedShape hosted)
