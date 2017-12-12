@@ -1,4 +1,4 @@
-  /**
+/**
  * @license
  * Copyright (c) 2017 Google Inc. All rights reserved.
  * This code may only be used under the BSD style license found at
