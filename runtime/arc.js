@@ -52,7 +52,7 @@ class Arc {
       slotComposer.arc = this;
     }
     this.nextParticleHandle = 0;
-    this.storageProviderFactory = new StorageProviderFactory(this);
+    this._storageProviderFactory = new StorageProviderFactory(this);
 
     // Dictionary from each tag string to a list of views
     this._tags = {};
@@ -252,7 +252,7 @@ class Arc {
     if (type.isRelation)
       type = Type.newSetView(type);
 
-      let view = this.storageProviderFactory.construct(id, type, 'in-memory');
+      let view = this._storageProviderFactory.construct(id, type, 'in-memory');
       view.name = name;
 
       this._registerView(view, tags);
