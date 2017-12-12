@@ -440,14 +440,12 @@ ${e.message}
             error.location = connectionItem.target.location;
             throw error;
           }
-          // TODO: require that direction is '<-' ?
-          let type = Type.newInterface(particle.toShape());
           // TODO: Better ID.
           let id = `${manifest._id}immediate${particle.name}`
           // TODO: Mark as immediate.
           targetView = recipe.newView();
           targetView.fate = 'map';
-          targetView.mapToView(manifest.newView(type, null, id, []));
+          targetView.mapToView(manifest.newView(connection.type, null, id, []));
         }
 
         if (targetParticle) {

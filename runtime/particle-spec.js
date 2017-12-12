@@ -130,7 +130,11 @@ class ParticleSpec {
     });
   }
 
-  toShape() {
+  toInterface() {
+    return Type.newInterface(this._toShape());
+  }
+
+  _toShape() {
     const views = this._model.args;
     // TODO: wat do?
     assert(!this.slots.length, 'please implement slots toShape');
