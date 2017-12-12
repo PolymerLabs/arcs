@@ -145,50 +145,35 @@ describe('particle-shape-loading', function() {
       return channel.port2;
     };
 
-    var arc = new Arc({id: 'test', pecFactory});
+    let manifest = await Manifest.parse(`
+      import './particles/test/test-particles.manifest'
 
-    let manifest = await Manifest.load('./particles/test/test-particles.manifest', loader);
+      recipe
+        create as v0
+        create as v1
+        OuterParticle
+          particle = TestParticle
+          output -> v0
+          input <- v1
+      `, {loader, fileName: './test.manifest'});
 
-    let fooType = Type.newEntity(manifest.schemas.Foo);
-    let barType = Type.newEntity(manifest.schemas.Bar);
+    var arc = new Arc({id: 'test', pecFactory, context: manifest});  
 
-    let shape = manifest.shapes[0];
-    let shapeType = Type.newInterface(shape);
+    let fooType = manifest.findTypeByName('Foo');
+    let barType = manifest.findTypeByName('Bar');
 
-    let outerParticleSpec = manifest.particles[3];
+    let shapeType = manifest.findTypeByName('TestShape');
 
-    let shapeView = arc.createView(shapeType);
-    shapeView.set(manifest.particles[0].toLiteral());
-    let outView = arc.createView(barType);
-    let inView = arc.createView(fooType);
-    var Foo = manifest.schemas.Foo.entityClass();
-    inView.set(new Foo({value: 'a foo'}))
-
-    let recipe = new Recipe();
-    let particle = recipe.newParticle("outerParticle");
-    particle.spec = outerParticleSpec;
-
-    let recipeShapeView = recipe.newView();
-    particle.connections['particle'].connectToView(recipeShapeView);
-    recipeShapeView.fate = 'use';
-    recipeShapeView.mapToView(shapeView);
-
-    let recipeOutView = recipe.newView();
-    particle.connections['output'].connectToView(recipeOutView);
-    recipeOutView.fate = 'use';
-    recipeOutView.mapToView(outView);
-
-    let recipeInView = recipe.newView();
-    particle.connections['input'].connectToView(recipeInView);
-    recipeInView.fate = 'use';
-    recipeInView.mapToView(inView);
+    let recipe = manifest.recipes[0];
 
     assert(recipe.normalize(), "can't normalize recipe");
     assert(recipe.isResolved(), "recipe isn't resolved");
 
     await arc.instantiate(recipe);
 
-    await util.assertSingletonWillChangeTo(outView, manifest.schemas.Bar.entityClass(), "a foo1");
+    arc.findViewsByType(fooType)[0].set(new (fooType.entitySchema.entityClass())({value: 'a foo'}));
+
+    await util.assertSingletonWillChangeTo(arc.findViewsByType(barType)[0], barType.entitySchema.entityClass(), "a foo1");
 
   });
 });

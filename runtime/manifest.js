@@ -90,6 +90,15 @@ class Manifest {
   findSchemaByName(name) {
     return this._find(manifest => manifest._schemas[name]);
   }
+  findTypeByName(name) {
+    let schema = this.findSchemaByName(name);
+    if (schema)
+      return Type.newEntity(schema);
+    let shape = this.findShapeByName(name);
+    if (shape)
+      return Type.newInterface(shape);
+    return null;
+  }
   findParticleByName(name) {
     return this._find(manifest => manifest._particles[name]);
   }
@@ -445,7 +454,9 @@ ${e.message}
           // TODO: Mark as immediate.
           targetView = recipe.newView();
           targetView.fate = 'map';
-          targetView.mapToView(manifest.newView(connection.type, null, id, []));
+          var view = manifest.newView(connection.type, null, id, []);
+          view.set(particle.toLiteral());
+          targetView.mapToView(view);
         }
 
         if (targetParticle) {
