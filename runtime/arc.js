@@ -13,7 +13,6 @@ import runtime from './runtime.js';
 import assert from '../platform/assert-web.js';
 import tracing from "../tracelib/trace.js";
 import Type from './type.js';
-import {InMemoryCollection, InMemoryVariable} from './in-memory-storage.js';
 import Relation from './relation.js';
 import handle from './handle.js';
 import OuterPec from './outer-PEC.js';
@@ -22,6 +21,7 @@ import Manifest from './manifest.js';
 import Description from './description.js';
 import util from './recipe/util.js';
 import FakePecFactory from './fake-pec-factory.js';
+import StorageProviderFactory from './storage-provider-factory.js';
 
 class Arc {
   constructor({id, context, pecFactory, slotComposer, loader}) {
@@ -52,6 +52,7 @@ class Arc {
       slotComposer.arc = this;
     }
     this.nextParticleHandle = 0;
+    this.storageProviderFactory = new StorageProviderFactory(this);
 
     // Dictionary from each tag string to a list of views
     this._tags = {};
@@ -250,14 +251,11 @@ class Arc {
 
     if (type.isRelation)
       type = Type.newSetView(type);
-    let view;
-    if (type.isSetView) {
-      view = new InMemoryCollection(type, this, name, id);
-    } else {
-      assert(type.isEntity || type.isInterface, `Expected entity or interface type, but... ${JSON.stringify(type.toLiteral())}`);
-      view = new InMemoryVariable(type, this, name, id);
-    }
-    this._registerView(view, tags);
+
+      let view = this.storageProviderFactory.construct(id, type, 'in-memory');
+      view.name = name;
+
+      this._registerView(view, tags);
     return view;
   }
 
