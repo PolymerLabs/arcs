@@ -71,7 +71,7 @@ class Shape {
     for (let otherView of other.views) {
       let exists = false;
       for (let view of this.views) {
-        if (view.name == otherView.name && view.direction == otherView.direction && view.type == otherView.type) {
+        if (view.name == otherView.name && view.direction == otherView.direction && view.type.equals(otherView.type)) {
           exists = true;
           break;
         }
