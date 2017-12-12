@@ -7,10 +7,9 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-"use strict";
 
-import runtime from './runtime.js';
 import Type from './type.js';
+import Shape from './shape.js';
 import assert from '../platform/assert-web.js';
 
 class ConnectionSpec {
@@ -129,6 +128,14 @@ class ParticleSpec {
     Object.keys(description || []).forEach(d => {
       assert(['kind', 'location', 'pattern'].includes(d) || this.connectionMap.has(d), `Unexpected description for ${d}`);
     });
+  }
+
+  toShape() {
+    const views = this._model.args;
+    // TODO: wat do?
+    assert(!this.slots.length, 'please implement slots toShape');
+    const slots = [];
+    return new Shape(views, slots);
   }
 
   toString() {

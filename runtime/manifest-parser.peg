@@ -27,6 +27,9 @@
     if (['string', 'number', 'boolean'].includes(typeof result) || result === null) {
       return;
     }
+    if (result === undefined) {
+      throw new Error(`result was undefined`);
+    }
     if (Array.isArray(result)) {
       for (let item of result) {
         checkNormal(item);

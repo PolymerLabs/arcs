@@ -432,9 +432,22 @@ ${e.message}
           }
         }
 
+        // Handle implicit view connections in the form `param = SomeParticle`
         if (connectionItem.target && connectionItem.target.particle) {
-          targetParticle = particlesByName[connectionItem.target.particle];
-          assert(targetParticle, `Unknown particle ${connectionItem.target.particle}`);
+          let particle = manifest.findParticleByName(connectionItem.target.particle);
+          if (!particle) {
+            let error = new Error(`Could not find particle '${connectionItem.target.particle}'`);
+            error.location = connectionItem.target.location;
+            throw error;
+          }
+          // TODO: require that direction is '<-' ?
+          let type = Type.newInterface(particle.toShape());
+          // TODO: Better ID.
+          let id = `${manifest._id}immediate${particle.name}`
+          // TODO: Mark as immediate.
+          targetView = recipe.newView();
+          targetView.fate = 'map';
+          targetView.mapToView(manifest.newView(type, null, id, []));
         }
 
         if (targetParticle) {

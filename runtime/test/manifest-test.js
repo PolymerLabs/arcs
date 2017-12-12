@@ -95,28 +95,6 @@ describe('manifest', function() {
     verify(manifest);
     verify(await Manifest.parse(manifest.toString(), {}));
   });
-  it('can resolve recipes with connections between particles', async () => {
-    let manifest = await Manifest.parse(`
-      schema S
-      particle P1
-        P1(out S x, in S y)
-      particle P2
-        P2(out S y)
-
-      recipe Connected
-        P1
-          x -> P2
-        P2
-          y -> P1.y`);
-    let verify = (manifest) => {
-      let recipe = manifest.recipes[0];
-      assert(recipe);
-      assert.equal(recipe.views.length, 2);
-      assert.equal(recipe.viewConnections.length, 4);
-    };
-    verify(manifest);
-    verify(await Manifest.parse(manifest.toString(), {}));
-  });
   it('supports recipes specified with bidirectional connections', async () => {
     let manifest = await Manifest.parse(`
       schema S
@@ -126,10 +104,10 @@ describe('manifest', function() {
         P2(out S x)
 
       recipe Bidirectional
-        P1
-          x -> P2.x
-        P2
-          x -> P1.x`);
+        P1 as p1
+          x -> p2.x
+        P2 as p2
+          x -> p1.x`);
     let verify = (manifest) => {
       let recipe = manifest.recipes[0];
       assert(recipe);
@@ -137,9 +115,9 @@ describe('manifest', function() {
       assert.equal(recipe.viewConnections.length, 2);
       assert.equal(recipe.toString(), `recipe
   ? as view0
-  P1 as particle0
+  P1 as p1
     x -> view0
-  P2 as particle1
+  P2 as p2
     x -> view0`);
     };
     verify(manifest);
@@ -740,5 +718,24 @@ Expected " ", "#", "\\n", "\\r", [ ], [A-Z], or [a-z] but "?" found.
     }
     verify(manifest);
     verify(await Manifest.parse(manifest.toString(), {}));
+  });
+  it('can resolve an immediate view specified by a particle target', async () => {
+    let manifest = await Manifest.parse(`
+      schema S
+      shape HostedShape
+        HostedShape(in S foo) 
+
+      particle Hosted
+        Hosted(in S foo)
+
+      particle Transformation in '...js'
+        work(host HostedShape hosted)
+
+      recipe
+        Transformation
+          hosted = Hosted`);
+    let [recipe] = manifest.recipes;
+    assert(recipe.normalize());
+    assert(recipe.isResolved());
   });
 });
