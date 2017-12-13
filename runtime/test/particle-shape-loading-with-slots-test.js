@@ -25,54 +25,39 @@ import MockSlotComposer from './mock-slot-composer.js';
 describe('particle-shape-loading-with-slots', function() {
   async function instantiateRecipe() {
     var loader = new Loader();
-
     var pecFactory = function(id) {
       var channel = new MessageChannel();
       new InnerPec(channel.port1, `${id}:inner`, loader);
       return channel.port2;
     };
-
     var slotComposer = new MockSlotComposer();
-    var arc = new Arc({id: 'test', pecFactory, slotComposer});
-    let manifest = await Manifest.load('./particles/test/transformations/test-slots-particles.manifest', loader);
+    let manifest = await Manifest.parse(`
+      import './particles/test/transformations/test-slots-particles.manifest'
 
-    let recipe = new Recipe();
-    let recipeParticle = recipe.newParticle("MultiplexSlotsParticle");
-    assert.equal("MultiplexSlotsParticle", manifest.particles[1].name);
-    recipeParticle.spec = manifest.particles[1];
+      recipe
+        create as view0
+        slot 'slotid-0' as slot0
+        MultiplexSlotsParticle
+          particle = SingleSlotParticle
+          foos <- view0
+          consume annotationsSet as slot0
+      `, {loader, fileName: './test.manifest'});
+    let recipe = manifest.recipes[0];
 
-    let shape = manifest.shapes[0];
-    let shapeType = Type.newInterface(shape);
-    let shapeView = arc.createView(shapeType);
-    assert.equal("SingleSlotParticle", manifest.particles[0].name);
-    shapeView.set(manifest.particles[0].toLiteral());
-
-    let recipeShapeView = recipe.newView();
-    recipeParticle.connections['particle'].connectToView(recipeShapeView);
-    recipeShapeView.fate = 'use';
-    recipeShapeView.mapToView(shapeView);
-
-    let recipeInView = recipe.newView();
-    recipeParticle.connections['foos'].connectToView(recipeInView);
-    recipeInView.fate = 'use';
-
-    let fooType = Type.newEntity(manifest.schemas.Foo);
-    let inView = arc.createView(fooType.setViewOf());
-    var Foo = manifest.schemas.Foo.entityClass();
-    inView.store({id: "1", rawData: {value: 'foo1'} });
-    inView.store({id: "2", rawData: {value: 'foo2'} });
-    recipeInView.mapToView(inView);
-
-    assert.equal(1, Object.keys(recipeParticle.consumedSlotConnections).length);
-    let outerParticleSlotConnection = Object.values(recipeParticle.consumedSlotConnections)[0];
-    let recipeSlot = recipe.newSlot(outerParticleSlotConnection.name);
-    recipeSlot.id = 'myslot-id-0';
-    outerParticleSlotConnection.connectToSlot(recipeSlot);
+    var arc = new Arc({id: 'test', pecFactory, slotComposer, context: manifest});
 
     assert(recipe.normalize(), "can't normalize recipe");
     assert(recipe.isResolved(), "recipe isn't resolved");
 
     await arc.instantiate(recipe);
+
+    let fooType = manifest.findTypeByName('Foo');
+    let inView = arc.findViewsByType(fooType.setViewOf())[0];
+    inView.store({id: "1", rawData: {value: 'foo1'} });
+    inView.store({id: "2", rawData: {value: 'foo2'} });
+    // TODO: replace with (need to figure out how to property set entity IDs):
+    // inView.store(new (fooType.entitySchema.entityClass())({value: 'foo1'}));
+    // inView.store(new (fooType.entitySchema.entityClass())({value: 'foo2'}));
 
     return slotComposer;
   }
