@@ -215,6 +215,15 @@ class Arc {
     for (let recipeView of views) {
       if (['copy', 'create'].includes(recipeView.fate)) {
         let view = this.createView(recipeView.type, /* name= */ null, /* id= */ null, recipeView.tags);
+
+        // THIS IS THE VERY FIRST HACK I USED, PUTTING THE HOSTED PARTICLE NAME IN VIEW-ID,
+        // AND THIS WORKED, BECAUSE BEFORE INSTANTIATING THE RECIPE FOR REAL, I SET THE VIEW TO .toLiteral()
+        // OVERRIDING THE PROBLEMATIC CHANGES THAT HAPPEN DURING INSTANTIATION OF INNER RECIPE IN SPECULATIVE EXECUTION.
+
+        // if (recipeView.id == "ArrivinatorX") {
+        //   view.set(this.context.findParticleByName(recipeView.id).toLiteral());
+        // }
+
         if (recipeView.fate === "copy") {
           var copiedView = this.findViewById(recipeView.id);
           view.cloneFrom(copiedView);

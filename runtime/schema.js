@@ -18,6 +18,11 @@ class Schema {
     this._normative = {};
     this._optional = {};
 
+    if (!model.sections) {
+      // HERE HAPPENS THE EVENTUAL FAILURE!
+      debugger;
+    }
+
     assert(model.sections, `${JSON.stringify(model)} should have sections`);
     for (var section of model.sections) {
       var into = section.sectionType == 'normative' ? this._normative : this._optional;
