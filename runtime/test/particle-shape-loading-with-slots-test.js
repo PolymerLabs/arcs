@@ -52,12 +52,9 @@ describe('particle-shape-loading-with-slots', function() {
     await arc.instantiate(recipe);
 
     let fooType = manifest.findTypeByName('Foo');
-    let inView = arc.findViewsByType(fooType.setViewOf())[0];
-    inView.store({id: "1", rawData: {value: 'foo1'} });
-    inView.store({id: "2", rawData: {value: 'foo2'} });
-    // TODO: replace with (need to figure out how to property set entity IDs):
-    // inView.store(new (fooType.entitySchema.entityClass())({value: 'foo1'}));
-    // inView.store(new (fooType.entitySchema.entityClass())({value: 'foo2'}));
+    let inView = new handle.handleFor(arc.findViewsByType(fooType.setViewOf())[0]);
+    inView.store(new (fooType.entitySchema.entityClass())({value: 'foo1'}));
+    inView.store(new (fooType.entitySchema.entityClass())({value: 'foo2'}));
 
     return slotComposer;
   }
