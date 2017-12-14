@@ -122,7 +122,7 @@ class ParticleSpec {
   static fromLiteral(literal) {
     let {args, name, verbs, transient, description, implFile, affordance, slots} = literal;
     args = args.map(({type, direction, name}) => ({type: Type.fromLiteral(type), direction, name}));
-    return new ParticleSpec({args, name, verbs, transient, description, implFile, affordance, slots});;
+    return new ParticleSpec({args, name, verbs, transient, description, implFile, affordance, slots});
   }
 
   validateDescription(description) {
