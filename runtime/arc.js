@@ -44,6 +44,9 @@ class Arc {
     // information about last-seen-versions of views
     this._lastSeenVersion = new Map();
 
+    // storage keys for referenced views
+    this._storageKeys = {};
+
     this.particleViewMaps = new Map();
     let pecId = this.generateID();
     let innerPecPort = this._pecFactory(pecId);
@@ -223,7 +226,10 @@ class Arc {
         recipeView.fate = "use";
         // TODO: move the call to OuterPEC's DefineView to here
       }
-      let view = this.findViewById(recipeView.id);
+      let storageKey = recipeView.storageKey;
+      if (!storageKey)
+        storageKey = this.keyForId(recipeView.id);
+      let view = this._storageProviderFactory.connect(recipeView.id, recipeView.type, storageKey);
       assert(view, `view '${recipeView.id}' was not found`);
 
       view.description = await this.description.getViewDescription(recipeView);
@@ -278,6 +284,8 @@ class Arc {
       }
     }
     this._viewTags.set(view, new Set(tags));
+
+    this._storageKeys[view.id] = view.storageKey;
   }
 
   // TODO: Don't use this, we should be testing the schemas for compatiblity
@@ -319,6 +327,10 @@ class Arc {
     }
 
     return this.createView(type, "automatically created for _viewFor");
+  }
+
+  keyForId(id) {
+    return this._storageKeys[id];
   }
 
   commit(entities) {
