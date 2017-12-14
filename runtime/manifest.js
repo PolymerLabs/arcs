@@ -412,7 +412,7 @@ ${e.message}
         connection.tags = connectionItem.target ? connectionItem.target.tags : [];
         let direction = {'->': 'out', '<-': 'in', '=': 'inout'}[connectionItem.dir];
         if (connection.direction) {
-          if (connection.direction != direction && direction != 'inout') {
+          if (connection.direction != direction && direction != 'inout' && !(connection.direction == 'host' && direction == 'in')) {
             let error = new Error(`'${connectionItem.dir}' not compatible with '${connection.direction}' param of '${particle.name}'`);
             error.location = connectionItem.location;
             throw error;
