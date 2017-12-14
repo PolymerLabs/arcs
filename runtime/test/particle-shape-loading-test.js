@@ -152,7 +152,7 @@ describe('particle-shape-loading', function() {
         create as v0
         create as v1
         OuterParticle
-          particle = TestParticle
+          particle <- TestParticle
           output -> v0
           input <- v1
       `, {loader, fileName: './test.manifest'});
