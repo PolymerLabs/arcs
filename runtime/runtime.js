@@ -19,7 +19,10 @@ import Relation from './relation.js';
 function testEntityClass(type) {
   return new Schema({
     name: type,
-    sections: [],
+    sections: [{
+      sectionType: 'normative',
+      fields: {'id': 'Number', 'value': 'Text'}
+    }],
     parents: [],
   }).entityClass();
 }
