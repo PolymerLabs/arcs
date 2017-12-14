@@ -13,4 +13,4 @@ schema Product extends Thing
     Text category
     Text seller
     Text price
-    Text shipDays
+    Number shipDays

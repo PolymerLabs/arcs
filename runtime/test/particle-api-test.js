@@ -50,7 +50,7 @@ describe('particle-api', function() {
                   var input = views.get("inputs");
                   var output = views.get("result");
                   input.synchronize('change', model => {
-                    output.set(new output.entityClass({value: model.length}));
+                    output.set(new output.entityClass({value: '' + model.length}));
                   }, update => undefined, this);
                 }
               }

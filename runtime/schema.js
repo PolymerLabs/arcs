@@ -62,37 +62,59 @@ class Schema {
 
   entityClass() {
     let schema = this;
-    const className = this.name;
-    var properties = Object.keys(this.normative).concat(Object.keys(this.optional));
-    var classJunk = ['toJSON', 'prototype', 'toString', 'inspect'];
+    let className = this.name;
+    let normative = this.normative;
+    let optional = this.optional;
+    let classJunk = ['toJSON', 'prototype', 'toString', 'inspect'];
 
-    var clazz = class extends Entity {
+    let checkFieldIsValidAndGetTypes = (name, op) => {
+      let fieldType = normative[name] || optional[name];
+      switch (fieldType) {
+        case undefined:
+          throw new Error(`Can't ${op} field ${name} not in schema ${className}`);
+        case 'Number':
+          return [fieldType, 'number'];
+        default:
+          // Text, URL
+          return [fieldType, 'string'];
+      }
+    };
+
+    let clazz = class extends Entity {
       constructor(data, userIDComponent) {
-        var p = new Proxy(data, {
+        super(userIDComponent);
+        this.rawData = new Proxy({}, {
           get: (target, name) => {
             if (classJunk.includes(name))
               return undefined;
             if (name.constructor == Symbol)
               return undefined;
-            if (!properties.includes(name))
-              throw new Error(`Can't access field ${name} not in schema ${className}`);
-            return target[name];
+            let [fieldType, jsType] = checkFieldIsValidAndGetTypes(name, 'get');
+            let value = target[name];
+            assert(value === undefined || value === null || typeof(value) == jsType,
+                   `Field ${name} (type ${fieldType}) has value ${value} (type ${typeof(value)})`);
+            return value;
           },
           set: (target, name, value) => {
-            if (!properties.includes(name)) {
-              throw new Error(`Can't write field ${name} not in schema ${className}`);
+            let [fieldType, jsType] = checkFieldIsValidAndGetTypes(name, 'set');
+            if (value !== undefined && value !== null && typeof(value) != jsType) {
+              throw new TypeError(
+                  `Can't set field ${name} (type ${fieldType}) to value ${value} (type ${typeof(value)})`);
             }
             target[name] = value;
             return true;
           }
         });
-        super(userIDComponent);
-        this.rawData = p;
+        for (let [name, value] of Object.entries(data)) {
+          this.rawData[name] = value;
+        }
       }
 
       dataClone() {
-        var clone = {};
-        properties.forEach(prop => clone[prop] = this.rawData[prop]);
+        let clone = {};
+        for (let propertyList of [normative, optional]) {
+          Object.keys(propertyList).forEach(prop => clone[prop] = this.rawData[prop]);
+        }
         return clone;
       }
 
@@ -106,28 +128,19 @@ class Schema {
 
     Object.defineProperty(clazz, 'type', {value: this.type});
     Object.defineProperty(clazz, 'name', {value: this.name});
-    for (let property in this.normative) {
-      // TODO: type checking, make a distinction between normative
-      // and optional properties.
-      // TODO: add query / getter functions for user properties
-      Object.defineProperty(clazz.prototype, property, {
-        get: function() {
-          return this.rawData[property];
-        },
-        set: function(v) {
-          this.rawData[property] = v;
-        }
-      });
-    }
-    for (let property in this.optional) {
-      Object.defineProperty(clazz.prototype, property, {
-        get: function() {
-          return this.rawData[property];
-        },
-        set: function(v) {
-          this.rawData[property] = v;
-        }
-      });
+    // TODO: make a distinction between normative and optional properties.
+    // TODO: add query / getter functions for user properties
+    for (let propertyList of [normative, optional]) {
+      for (let property in propertyList) {
+        Object.defineProperty(clazz.prototype, property, {
+          get: function() {
+            return this.rawData[property];
+          },
+          set: function(v) {
+            this.rawData[property] = v;
+          }
+        });
+      }
     }
     return clazz;
   }
