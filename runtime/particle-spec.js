@@ -120,8 +120,9 @@ class ParticleSpec {
   }
 
   static fromLiteral(literal) {
-    literal.args.forEach(a => a.type = Type.fromLiteral(a.type));
-    return new ParticleSpec(literal);
+    let {args, name, verbs, transient, description, implFile, affordance, slots} = literal;
+    args = args.map(({type, direction, name}) => ({type: Type.fromLiteral(type), direction, name}));
+    return new ParticleSpec({args, name, verbs, transient, description, implFile, affordance, slots});;
   }
 
   validateDescription(description) {
