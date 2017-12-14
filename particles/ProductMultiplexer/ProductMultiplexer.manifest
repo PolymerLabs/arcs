@@ -16,4 +16,4 @@ shape HostedParticleShape
 particle ProductMultiplexer in 'ProductMultiplexer.js'
   ProductMultiplexer(host HostedParticleShape hostedParticle, in [Product] products)
   consume set of annotation
-  description `${hostedParticle} for each product`
+  description `${hostedParticle} for each product in ${products})`

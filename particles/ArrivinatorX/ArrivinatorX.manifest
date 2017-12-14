@@ -12,4 +12,7 @@ import '../../entities/Product.manifest'
 particle ArrivinatorX in 'ArrivinatorX.js'
   ArrivinatorX(in Product product)
   consume annotation
-  description `estimate product arrival date`
+  description `estimate arrival date`
+  # TODO: add support for patterns:
+  #description `estimate ${product} arrival date`
+    #product `my best product`

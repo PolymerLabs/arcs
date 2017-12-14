@@ -222,7 +222,9 @@ class Recipe {
     let seenParticles = new Set();
     let particles = [];
     let views = [];
-    for (let connection of connections) {
+    // Reorder connections so that interfaces come last.
+    // TODO: update view-connection comparison method instead?
+    for (let connection of connections.filter(c => !c.type || !c.type.isInterface).concat(connections.filter(c => !!c.type && !!c.type.isInterface))) {
       if (!seenParticles.has(connection.particle)) {
         particles.push(connection.particle);
         seenParticles.add(connection.particle);

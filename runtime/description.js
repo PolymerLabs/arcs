@@ -11,6 +11,7 @@
 
 import assert from '../platform/assert-web.js';
 import Type from './type.js';
+import ParticleSpec from './particle-spec.js';
 
 export default class Description {
   constructor(arc) {
@@ -227,6 +228,13 @@ export class DescriptionFormatter {
       default:
         assert(!token.extra, `Unrecognized extra ${token.extra}`);
 
+        // Transformation's hosted particle.
+        if (token._viewConn.type.isInterface) {
+          let particleSpec = ParticleSpec.fromLiteral(await token._view.get());
+          // TODO: call this.patternToSuggestion(...) to resolved expressions in the pattern template.
+          return particleSpec.pattern;
+        }
+
         // singleton view property.
         if (token.properties && token.properties.length > 0) {
           return this._propertyTokenToString(token.viewName, token._view, token.properties);
@@ -406,7 +414,7 @@ export class DescriptionFormatter {
 
     // Sort by rank
     if (p1._rank != p2._rank) {
-      return p1._rank != p2._rank;
+      return p2._rank - p1._rank;
     }
 
     // Sort by number of singleton slots.
