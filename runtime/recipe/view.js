@@ -23,6 +23,7 @@ class View {
     this._originalFate = null;
     this._connections = [];
     this._mappedType = undefined;
+    this._storageKey = undefined;
   }
 
   _copyInto(recipe) {
@@ -38,6 +39,7 @@ class View {
       view._fate = this._fate;
       view._originalFate = this._originalFate;
       view._mappedType = this._mappedType;
+      view._storageKey = this._storageKey;
 
       // the connections are re-established when Particles clone their
       // attached ViewConnection objects.
@@ -89,10 +91,12 @@ class View {
     this._id = view.id;
     this._type = undefined;
     this._mappedType = view.type;
+    this._storageKey = view.storageKey;
   }
   get localName() { return this._localName; }
   set localName(name) { this._localName = name; }
-  get connections() { return this._connections } // ViewConnection*
+  get connections() { return this._connections; } // ViewConnection*
+  get storageKey() { return this._storageKey; }
 
   _isValid() {
     var typeSet = [];

@@ -17,10 +17,12 @@ class InMemoryKey {
     var parts = key.split("://");
     this.protocol = parts[0];
     assert(this.protocol == 'in-memory');
+    parts = parts[1] ? parts[1].split('^^') : [];
+    this.arcId = parts[0];
     this.location = parts[1];
   }
   toString() {
-    return this.protocol + '://' + this.location;
+    return `${this.protocol}://${this.arcId}^^${this.location}`;
   }
 }
 
@@ -33,9 +35,11 @@ export class InMemoryStorage {
 
   construct(id, type, keyFragment) {
     var key = new InMemoryKey(keyFragment);
+    if (key.arcId == undefined)
+      key.arcId = this._arc.id;
     if (key.location == undefined)
       key.location = 'in-memory-' + this.localIDBase++;
-    var provider = InMemoryStorageProvider.newProvider(type, this._arc, undefined, id);
+    var provider = InMemoryStorageProvider.newProvider(type, this._arc, undefined, id, key.toString());
     if (this._memoryMap[key.toString()] !== undefined)
       return null;
     this._memoryMap[key.toString()] = provider;
@@ -51,7 +55,7 @@ export class InMemoryStorage {
 }
 
 class InMemoryStorageProvider {
-  constructor(type, arc, name, id) {
+  constructor(type, arc, name, id, key) {
     var trace = tracing.start({cat: 'view', name: 'InMemoryStorageProvider::constructor', args: {type: type.key, name: name}});
     this._type = type;
     this._arc = arc;
@@ -60,7 +64,12 @@ class InMemoryStorageProvider {
     this._version = 0;
     this.id = id || this._arc.generateID();
     this.source = null;
+    this._storageKey = key;
     trace.end();
+  }
+
+  get storageKey() {
+    return this._storageKey;
   }
 
   generateID() {
@@ -135,16 +144,16 @@ class InMemoryStorageProvider {
     return results.join('\n');
   }
 
-  static newProvider(type, arc, name, id) {
+  static newProvider(type, arc, name, id, key) {
     if (type.isSetView)
-      return new InMemoryCollection(type, arc, name, id);
-    return new InMemoryVariable(type, arc, name, id);
+      return new InMemoryCollection(type, arc, name, id, key);
+    return new InMemoryVariable(type, arc, name, id, key);
   }
 }
 
 class InMemoryCollection extends InMemoryStorageProvider {
-  constructor(type, arc, name, id) {
-    super(type, arc, name, id);
+  constructor(type, arc, name, id, key) {
+    super(type, arc, name, id, key);
     this._items = new Map();
   }
 
@@ -227,8 +236,8 @@ class InMemoryCollection extends InMemoryStorageProvider {
 }
 
 class InMemoryVariable extends InMemoryStorageProvider {
-  constructor(type, arc, name, id) {
-    super(type, arc, name, id);
+  constructor(type, arc, name, id, key) {
+    super(type, arc, name, id, key);
     this._stored = null;
   }
 

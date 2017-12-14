@@ -63,7 +63,7 @@ class Manifest {
   // TODO: newParticle, Schema, etc.
   // TODO: simplify() / isValid().
   newView(type, name, id, tags) {
-    let view = this._storageProviderFactory.construct(id, type, 'in-memory');
+    let view = this._storageProviderFactory.construct(id, type, `in-memory://${this.id}`);
     view.name = name;
     this._views.push(view);
     this._viewTags.set(view, tags ? tags : []);
