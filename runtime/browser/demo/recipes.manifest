@@ -27,21 +27,6 @@ recipe
   ShowProducts
     list <- wishlist
 
-# See products shortlist with estimated arrival dates (transformation)
-recipe
-  map #shortlist as shortlist
-  create as shape0
-  ShowProducts
-    list <- shortlist
-    consume root as slot0
-      provide annotation as slot1
-  ProductMultiplexer
-    products <- shortlist
-    # TODO: get rid of shape0 and replace it with Arrivinator particle shape.
-    hostedParticle = shape0  # ArrivinatorX
-    consume annotation as slot1
-
-
 # Create shortlist with [product, ...] and suggest similar products from [person]'s wish list
 recipe
   Chooser.choices -> Recommend.recommendations
@@ -75,6 +60,20 @@ recipe
     list <- view2
   Arrivinator
     list <- view3
+
+# Buying for [person]'s [occasion] in [timeframe]? Product [X] arrives too late.
+recipe
+  map as view1
+  use as view2
+  use as view3
+  GiftList
+    person <- view1
+  ProductMultiplexer
+    products <- view2
+    hostedParticle = ArrivinatorX
+  ProductMultiplexer
+    products <- view3
+    hostedParticle = ArrivinatorX
 
 # Check manufacturer information for products.
 recipe

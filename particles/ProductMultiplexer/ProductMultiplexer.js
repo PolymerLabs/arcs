@@ -16,16 +16,9 @@ defineParticle(({DomParticle}) => {
       let arc = await this.constructInnerArc();
       var productsView = views.get('products');
       var productsList = await productsView.toList();
+      let hostedParticle = await views.get('hostedParticle').get();
       for (let [index, product] of productsList.entries()) {
         let productView = await arc.createHandle(productsView.type.primitiveType(), "product" + index);
-
-        // TODO: fetch the particle from "hostedParticle" handle.
-        // let hostedParticle = await views.get('hostedParticle').get();
-        let hostedParticle = {
-          name: "ArrivinatorX",
-          implFile: "../particles/ArrivinatorX/ArrivinatorX.js",
-          slots: new Map([["annotation", {} ]])
-        };
 
         let hostedSlotName =  [...hostedParticle.slots.keys()][0];
         let slotName = [...this.spec.slots.values()][0].name;
@@ -51,7 +44,6 @@ defineParticle(({DomParticle}) => {
         }
       }
     }
-
     _shouldRender(props) {
       return false;
     }

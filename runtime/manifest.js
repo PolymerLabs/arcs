@@ -442,19 +442,19 @@ ${e.message}
 
         // Handle implicit view connections in the form `param = SomeParticle`
         if (connectionItem.target && connectionItem.target.particle) {
-          let particle = manifest.findParticleByName(connectionItem.target.particle);
-          if (!particle) {
-            let error = new Error(`Could not find particle '${connectionItem.target.particle}'`);
+          let hostedParticle = manifest.findParticleByName(connectionItem.target.particle);
+          if (!hostedParticle) {
+            let error = new Error(`Could not find hosted particle '${connectionItem.target.particle}'`);
             error.location = connectionItem.target.location;
             throw error;
           }
           // TODO: Better ID.
-          let id = `${manifest._id}immediate${particle.name}`
+          let id = `${manifest._id}immediate${hostedParticle.name}`;  // ${manifest._views.length}`;
           // TODO: Mark as immediate.
           targetView = recipe.newView();
           targetView.fate = 'map';
           var view = manifest.newView(connection.type, null, id, []);
-          view.set(particle.toLiteral());
+          view.set(hostedParticle.toLiteral());
           targetView.mapToView(view);
         }
 
