@@ -30,7 +30,7 @@ const Bar = runtime.testing.testEntityClass('Bar');
 describe('View', function() {
 
   it('clear singleton view', async () => {
-    let arc = new Arc({slotComposer});
+    let arc = new Arc({slotComposer, id: 'test'});
     let barView = arc.createView(Bar.type);
     barView.set(new Bar({value: 'a Bar'}));
     barView.clear();
@@ -38,7 +38,7 @@ describe('View', function() {
   });
 
   it('dedupes common user-provided ids', async() => {
-    let arc = new Arc({slotComposer});
+    let arc = new Arc({slotComposer, id: 'test'});
 
     let manifest = await Manifest.load('./particles/test/test-particles.manifest', loader);
     let Foo = manifest.schemas.Foo.entityClass();
@@ -52,7 +52,7 @@ describe('View', function() {
   });
 
   it('remove entry from view', async () => {
-    let arc = new Arc({slotComposer});
+    let arc = new Arc({slotComposer, id: 'test'});
     let barView = arc.createView(Bar.type.setViewOf());
     let bar = new Bar({id: 0, value: 'a Bar'});
     barView.store(bar);
@@ -61,7 +61,7 @@ describe('View', function() {
   });
 
   it('can store a particle in a shape view', async () => {
-    let arc = new Arc({slotComposer});
+    let arc = new Arc({slotComposer, id: 'test'});
     let manifest = await Manifest.load('./particles/test/test-particles.manifest', loader);
 
     let shape = new Shape([{type: Type.newEntity(manifest.schemas.Foo)},
@@ -74,7 +74,7 @@ describe('View', function() {
   });
 
   it('createView only allows valid tags & types in views', async () => {
-    let arc = new Arc({slotComposer});
+    let arc = new Arc({slotComposer, id: 'test'});
     let manifest = await Manifest.load('./particles/test/test-particles.manifest', loader);
 
     assert.throws(() => arc.createView('not a type'), /isn\'t a Type/);

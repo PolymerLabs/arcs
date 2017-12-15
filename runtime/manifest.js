@@ -20,7 +20,7 @@ import util from './recipe/util.js';
 import StorageProviderFactory from './storage-provider-factory.js';
 
 class Manifest {
-  constructor() {
+  constructor({id}) {
     this._recipes = [];
     this._imports = [];
     // TODO: These should be lists, possibly with a separate flattened map.
@@ -31,7 +31,7 @@ class Manifest {
     this._viewTags = new Map();
     this._fileName = null;
     this._nextLocalID = 0;
-    this._id = null;
+    this._id = id;
     this._storageProviderFactory = new StorageProviderFactory(this);
   }
   get id() {
@@ -181,9 +181,8 @@ ${e.message}
     } catch (e) {
       throw processError(e);
     }
-    let manifest = new Manifest();
+    let manifest = new Manifest({id});
     manifest._fileName = fileName;
-    manifest._id = id;
 
     for (let item of items.filter(item => item.kind == 'import')) {
       let path = loader.path(manifest.fileName);

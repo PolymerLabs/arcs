@@ -26,7 +26,7 @@ import StorageProviderFactory from './storage-provider-factory.js';
 class Arc {
   constructor({id, context, pecFactory, slotComposer, loader}) {
     // TODO: context should not be optional.
-    this._context = context || new Manifest();
+    this._context = context || new Manifest({id});
     // TODO: pecFactory should not be optional. update all callers and fix here.
     this._pecFactory = pecFactory ||  FakePecFactory.bind(null);
     this.id = id;

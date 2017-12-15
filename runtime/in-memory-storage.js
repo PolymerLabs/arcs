@@ -26,11 +26,17 @@ class InMemoryKey {
   }
 }
 
+let __storageCache = {};
+
 export class InMemoryStorage {
   constructor(arc) {
+      assert(arc.id !== undefined, "Arcs with storage must have ids");
       this._arc = arc;
       this._memoryMap = {};
       this.localIDBase = 0;
+      // TODO(shans): re-add this assert once we have a runtime object to put it on.
+      // assert(__storageCache[this._arc.id] == undefined, `${this._arc.id} already exists in local storage cache`);
+      __storageCache[this._arc.id] = this;
   }
 
   construct(id, type, keyFragment) {
@@ -46,11 +52,17 @@ export class InMemoryStorage {
     return provider;
   }
 
-  connect(id, type, key) {
-    if (this._memoryMap[key] == undefined)
+  connect(id, type, keyString) {
+    let key = new InMemoryKey(keyString);
+    if (key.arcId !== this._arc.id) {
+      if (__storageCache[key.arcId] == undefined)
+        return null;
+      return __storageCache[key.arcId].connect(id, type, keyString);
+    }
+    if (this._memoryMap[keyString] == undefined)
       return null;
     // TODO assert types match?
-    return this._memoryMap[key];
+    return this._memoryMap[keyString];
   }
 }
 
