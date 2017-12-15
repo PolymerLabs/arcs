@@ -10,6 +10,7 @@ const os = require('os');
 const path = require('path');
 const spawn = require('child_process').spawnSync;
 const minimist = require('minimist');
+const chokidar = require('chokidar');
 
 const projectRoot = path.resolve(__dirname, '..');
 process.chdir(projectRoot);
@@ -40,6 +41,11 @@ const watchPaths = [
   './platform',
   './strategizer',
   './tracelib',
+];
+
+const watchSteps = [
+  [peg, []],
+  [webpack, []]
 ];
 
 function peg() {
@@ -85,7 +91,10 @@ async function webpack() {
         if (err) {
           reject(err);
         }
-        console.log(stats.toString({colors: true, verbose: true}));
+        console.log(stats.toString({
+          colors: true, verbose: false,
+          chunks: false,
+        }));
         resolve();
       });
     });
@@ -182,27 +191,25 @@ function test(args) {
 }
 
 
-// Watches `watchPaths` for changes, then runs the `peg` and `webpack` steps.
+// Watches `watchPaths` for changes, then runs the `watchSteps` steps.
 async function watch() {
-  let watchers = [];
-  let handler = async () => {
-    for (let watcher of watchers) {
-      watcher.close();
+  let watcher = chokidar.watch('.', {
+    ignored: /(node_modules|\/build\/|\.git)/,
+    persistent: true
+  });
+  let version = 0;
+  let task = Promise.resolve(true);
+  let changes = new Set();
+  watcher.on('change', async (path, stats) => {
+    let current = ++version;
+    changes.add(path);
+    await task;
+    if (current <= version) {
+      console.log(`Rebuilding due to changes to:\n  ${[...changes].join('  \n')}`)
+      changes.clear();
+      task = run(watchSteps);
     }
-    watchers = [];
-
-    await run([
-      [peg, []],
-      [webpack, []]
-    ]);
-
-    for (let watchPath of watchPaths) {
-      watchers.push(fs.watch(watchPath, {persistent: false}, handler));
-    }
-  };
-
-  // Run the steps and start watching for file changes.
-  handler();
+  });
 
   // TODO: Is there a better way to keep the process alive?
   let forever = () => {
