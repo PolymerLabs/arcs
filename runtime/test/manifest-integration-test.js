@@ -23,7 +23,7 @@ async function setup() {
   let loader = new Loader();
   let manifest = await Manifest.load('./particles/test/test.manifest', loader, registry);
   assert(manifest);
-  let arc = new Arc({});
+  let arc = new Arc({id: 'test'});
   let recipe = manifest.recipes[0];
   assert(recipe.normalize());
   assert(recipe.isResolved());

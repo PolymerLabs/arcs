@@ -22,7 +22,7 @@ describe('entity', function() {
         }
     }]});
 
-    let arc = new Arc({slotComposer: new SlotComposer({rootContext: 'test', affordance: 'mock'})});
+    let arc = new Arc({slotComposer: new SlotComposer({rootContext: 'test', affordance: 'mock'}), id: 'test'});
     let entity = new (schema.entityClass())({value: 'hello world'});
     assert.isDefined(entity);
     arc.commit([entity]);
