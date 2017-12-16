@@ -84,7 +84,7 @@ recipe
     assert.deepEqual(["root"], Object.keys(slotComposer.getAvailableSlots()));
 
     // initializing recipe
-    await slotComposer.initializeRecipe(plan.particles);
+    slotComposer.initializeRecipe(plan.particles);
     assert.deepEqual(['A'], startRenderParticles);
 
     // render root slot

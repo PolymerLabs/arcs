@@ -25,10 +25,10 @@ class Slot {
   get consumeConn() { return this._consumeConn; }
   get arc() { return this._arc; }
   getContext() { return this._context; }
-  async setContext(context) { this._context = context; }
+  setContext(context) { this._context = context; }
   isSameContext(context) { return this._context == context; }
 
-  async updateContext(context) {
+  updateContext(context) {
     // do nothing, if context unchanged.
     if ((!this.getContext() && !context) ||
         (this.getContext() && context && this.isSameContext(context))) {
@@ -37,7 +37,7 @@ class Slot {
 
     // update the context;
     let wasNull = !this.getContext();
-    await this.setContext(context);
+    this.setContext(context);
     if (this.getContext()) {
       if (wasNull) {
         this.startRender();

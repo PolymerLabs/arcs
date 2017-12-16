@@ -97,11 +97,10 @@ class DomParticle extends XenStateMixin(Particle) {
     this._setState({});
   }
   _update(props, state) {
-    let shouldRender = this._shouldRender(this._props, this._state);
-    if (shouldRender) {  // TODO: should _shouldRender be slot specific?
-      this.config.slotNames.forEach(s => this.render(s, ["model"]));
+    if (this._shouldRender(this._props, this._state)) {  // TODO: should _shouldRender be slot specific?
       this.relevance = 1;  // TODO: improve relevance signal.
     }
+    this.config.slotNames.forEach(s => this.render(s, ["model"]));
   }
 
   render(slotName, contentTypes) {
