@@ -24,7 +24,7 @@ class DomSlot extends Slot {
     this._containerKind = containerKind;
   }
 
-  async setContext(context) {
+  setContext(context) {
     let wasNull = true;
     if (this.getContext()) {
       this.getContext().clear();
@@ -37,7 +37,7 @@ class DomSlot extends Slot {
       }
       this.getContext().initContext(context);
       if (!wasNull) {
-        await this._doRender();
+        this._doRender();
       }
     } else {
       this._context = null;
@@ -56,7 +56,7 @@ class DomSlot extends Slot {
       if (this.getContext()) {
         // Update inner slots.
         this.getContext().initInnerContexts(this.consumeConn.slotSpec);
-        await this.innerSlotsUpdateCallback(this);
+        this.innerSlotsUpdateCallback(this);
 
         // Reactivate the observer.
         this.getContext().observe(this._observer);
@@ -94,11 +94,16 @@ class DomSlot extends Slot {
     }
     this.eventHandler = handler;
     if (Object.keys(content).indexOf("model") >= 0) {
-      this._model = content.model;
+      if (content.model) {
+        this._model = Object.assign(content.model, await this.populateViewDescriptions());
+      } else {
+        this._model = undefined;
+      }
     }
-    await this._doRender();
+    this._doRender();
   }
-  async _doRender() {
+
+  _doRender() {
     assert(this.getContext());
 
     this.getContext().observe(this._observer);
@@ -112,8 +117,6 @@ class DomSlot extends Slot {
     //}
 
     if (this._model) {
-      let update = await this.populateViewDescriptions();
-      this._model = Object.assign(this._model, update);
       this.getContext().updateModel(this._model);
     }
   }
