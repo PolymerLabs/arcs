@@ -654,7 +654,7 @@ SchemaField
   }
 
 SchemaType
-  = 'Text' / 'URL' / 'Number' / SchemaUnionType
+  = 'Text' / 'URL' / 'Number' / 'Boolean' / SchemaUnionType
 
 SchemaUnionType = '(' whiteSpace? first:SchemaType rest:(whiteSpace 'or' whiteSpace SchemaType)* whiteSpace? ')' {
   let typeList = [first];

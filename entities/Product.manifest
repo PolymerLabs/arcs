@@ -14,3 +14,4 @@ schema Product extends Thing
     Text seller
     Text price
     Number shipDays
+    Boolean isReal
