@@ -43,10 +43,7 @@ const watchPaths = [
   './tracelib',
 ];
 
-const watchSteps = [
-  [peg, []],
-  [webpack, []]
-];
+const watchDefault = 'webpack';
 
 function peg() {
   const peg = require('pegjs');
@@ -191,8 +188,10 @@ function test(args) {
 }
 
 
-// Watches `watchPaths` for changes, then runs the `watchSteps` steps.
-async function watch() {
+// Watches `watchPaths` for changes, then runs the `arg` steps.
+async function watch([arg, ...moreArgs]) {
+  let funs = steps[arg || watchDefault];
+  let funsAndArgs = funs.map(fun => [fun, fun == funs[funs.length - 1] ? moreArgs : []])
   let watcher = chokidar.watch('.', {
     ignored: /(node_modules|\/build\/|\.git)/,
     persistent: true
@@ -207,7 +206,7 @@ async function watch() {
     if (current <= version) {
       console.log(`Rebuilding due to changes to:\n  ${[...changes].join('  \n')}`)
       changes.clear();
-      task = run(watchSteps);
+      task = run(funsAndArgs);
     }
   });
 
@@ -233,7 +232,7 @@ async function run(funsAndArgs) {
   let result = false;
   try {
     for (let [fun, args] of funsAndArgs) {
-      console.log(`🙋 ${fun.name}`);
+      console.log(`🙋 ${fun.name} ${args.join(' ')}`);
       if (!await fun(args)) {
         console.log(`🙅 ${fun.name}`);
         return;
@@ -253,7 +252,7 @@ async function run(funsAndArgs) {
   let command = process.argv[2] || 'default';
   let funs = steps[command];
   // To avoid confusion, only the last step gets args.
-  let funsAndArgs = funs.map(fun => [fun, fun == funs[funs.length - 1] ? process.argv.slice(2) : []])
+  let funsAndArgs = funs.map(fun => [fun, fun == funs[funs.length - 1] ? process.argv.slice(3) : []])
   let result = await run(funsAndArgs);
   process.on("exit", function() {
     process.exit(result ? 0 : 1);
