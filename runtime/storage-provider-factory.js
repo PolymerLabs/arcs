@@ -8,11 +8,12 @@
 'use strict';
 
 import {InMemoryStorage} from './in-memory-storage.js';
+import {FirebaseStorage} from './firebase-storage.js';
 
 export default class StorageProviderFactory {
   constructor(arc) {
     this._arc = arc;
-    this._storageInstances = {'in-memory': new InMemoryStorage(arc)};
+    this._storageInstances = {'in-memory': new InMemoryStorage(arc), 'firebase': new FirebaseStorage(arc)};
   }
 
   _storageForKey(key) {
