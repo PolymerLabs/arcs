@@ -37,7 +37,46 @@ class Schema {
   }
 
   equals(otherSchema) {
-    return this.toLiteral() == otherSchema.toLiteral();
+    return this === otherSchema || (this.name == otherSchema.name
+       // TODO: Check equality without calling contains.
+       && this.contains(otherSchema)
+       && otherSchema.contains(this));
+  }
+
+  contains(otherSchema) {
+    if (!this.containsAncestry(otherSchema)) {
+      return false;
+    }
+    for (let section of ['normative', 'optional']) {
+      let thisSection = this[section];
+      let otherSection = otherSchema[section];
+      for (let field in otherSection) {
+        if (thisSection[field] != otherSection[field]) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+  containsAncestry(otherSchema) {
+    if (this.name == otherSchema.name) {
+      nextOtherParent: for (let otherParent of otherSchema.parents) {
+        for (let parent of this.parents) {
+          if (parent.containsAncestry(otherParent)) {
+            continue nextOtherParent;
+          }
+        }
+        return false;
+      }
+      return true;
+    } else {
+      for (let parent of this.parents) {
+        if (parent.containsAncestry(otherSchema)) {
+          return true;
+        }
+      }
+      return false;
+    }
   }
 
   get type() {

@@ -738,4 +738,45 @@ Expected " ", "#", "\\n", "\\r", [ ], [A-Z], or [a-z] but "?" found.
     assert(recipe.normalize());
     assert(recipe.isResolved());
   });
+  it('can resolve a particle with an inline schema', async () => {
+    let manifest = await Manifest.parse(`
+      particle P
+        P(in {Text value} foo)
+      recipe
+        create as view
+        P
+          foo = view
+    `);
+    let [recipe] = manifest.recipes;
+    assert(recipe.normalize());
+    assert(recipe.isResolved());
+  });
+  it('can resolve view types from inline schemas', async () => {
+    let manifest = await Manifest.parse(`
+      particle P
+        P(in {Text value} foo)
+      particle P2
+        P2(in {Text value, Text value2} foo)
+      particle P3
+        P3(in {Text value, Text value3} foo)
+
+      recipe
+        create as view
+        P
+          foo = view
+        P2
+          foo = view
+
+      recipe
+        create as view
+        P2
+          foo = view
+        P3
+          foo = view
+    `);
+    let [validRecipe, invalidRecipe] = manifest.recipes;
+    assert(validRecipe.normalize());
+    assert(validRecipe.isResolved());
+    assert(!invalidRecipe.normalize());
+  });
 });

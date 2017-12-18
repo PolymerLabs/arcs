@@ -253,6 +253,19 @@ ${e.message}
   // TODO: Move this to a generic pass over the AST and merge with resolveReference.
   static _processType(typeItem) {
     switch (typeItem.kind) {
+      case 'schema-inline':
+        let fields = {};
+        for (let {name, type} of typeItem.fields) {
+          fields[name] = type;
+        }
+        return Type.newEntity(new Schema({
+          name: typeItem.name,
+          parents: [],
+          sections: [{
+            sectionType: 'normative',
+            fields,
+          }],
+        }));
       case 'variable-type':
         return Type.newVariableReference(typeItem.name);
       case 'reference-type':

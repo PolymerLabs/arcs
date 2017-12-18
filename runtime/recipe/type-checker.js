@@ -67,24 +67,14 @@ class TypeChecker {
     if (!(subtype.isEntity && supertype.isEntity))
       return false;
 
-    function checkSuper(schema) {
-      if (!schema)
-        return false;
-      if (schema.equals(supertype.entitySchema))
-        return true;
-      for (let parent of schema.parents)
-        if (checkSuper(parent))
-          return true;
-      return false;
-    }
-
-    return checkSuper(subtype.entitySchema);
+    return subtype.entitySchema.contains(supertype.entitySchema);
   }
 
   // left, right: {type, direction, connection}
   static compareTypes(left, right) {
-    if (left.type.equals(right.type))
+    if (left.type.equals(right.type)) {
       return {type: left, valid: true};
+    }
 
     if (TypeChecker.isSubclass(left, right)) {
       var subclass = left;
