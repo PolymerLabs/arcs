@@ -130,9 +130,7 @@ class Type {
     if (this.tag !== type.tag)
       return false;
     if (this.tag == 'Entity') {
-      // TODO: Remove this hack that allows the old resolver to match
-      //       types by schema name.
-      return this.data.name == type.data.name;
+      return this.data.equals(type.data);
     }
     if (this.isSetView) {
       return this.data.equals(type.data);
@@ -216,9 +214,13 @@ class Type {
       return `[${this.variableName}]`;
     if (this.isVariableReference)
       return `[${this.variableReferenceName}]`;
-    if (this.isEntity)
+    if (this.isEntity) {
       // Spit MyTypeFOO to My Type FOO
-      return this.entitySchema.name.replace(/([^A-Z])([A-Z])/g, "$1 $2").replace(/([A-Z][^A-Z])/g, " $1").trim();
+      if (this.entitySchema.name) {
+        return this.entitySchema.name.replace(/([^A-Z])([A-Z])/g, "$1 $2").replace(/([A-Z][^A-Z])/g, " $1").trim();
+      } 
+      return JSON.stringify(this.entitySchema._model);
+    }
     if (this.isManifestReference)
       return this.manifestReferenceName;
     if (this.isInterface)
