@@ -74,6 +74,8 @@ class Schema {
           throw new Error(`Can't ${op} field ${name} not in schema ${className}`);
         case 'Number':
           return [fieldType, 'number'];
+        case 'Boolean':
+          return [fieldType, 'boolean']
         default:
           // Text, URL
           return [fieldType, 'string'];

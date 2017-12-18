@@ -20,7 +20,7 @@ describe('schema', function() {
     assert.deepEqual(schema.normative, {name: 'Text'});
     assert.deepEqual(schema.optional, {description: 'Text', image: 'URL', category: 'Text',
                                        price: 'Text', seller: 'Text', shipDays: 'Number',
-                                       url: 'URL', identifier: 'Text'});
+                                       url: 'URL', identifier: 'Text', isReal: 'Boolean'});
     assert.equal(schema.name, 'Product');
     assert.equal(schema.parents[0].name, 'Thing');
   });
@@ -114,13 +114,16 @@ describe('schema', function() {
     assert.throws(() => { product.name = 6; }, TypeError);
     assert.throws(() => { product.url = ['url']; }, TypeError);
     assert.throws(() => { product.shipDays = {two:2}; }, TypeError);
+    assert.throws(() => { product.isReal = 1; }, TypeError);
 
     // Should be able to clear fields.
     assert.doesNotThrow(() => { new Product({name: null, shipDays: undefined}) });
     assert.doesNotThrow(() => { product.image = null; });
     assert.doesNotThrow(() => { product.url = undefined; });
+    assert.doesNotThrow(() => { product.isReal = true; });
     assert.deepEqual(product.image, null);
     assert.deepEqual(product.url, undefined);
+    assert.deepEqual(product.isReal, true);
   });
 
   it('makes a copy of the data when cloning', async function() {
@@ -139,6 +142,6 @@ describe('schema', function() {
     assert.deepEqual(data, {name: 'Tomato Soup', description: 'Soup that tastes like tomato',
                             image: 'http://www.example.com/soup.jpg', url: undefined,
                             identifier: undefined, category: 'Fluidic Food', seller: undefined,
-                            price: undefined, shipDays: 4});
+                            price: undefined, shipDays: 4, isReal: undefined});
   });
 });
