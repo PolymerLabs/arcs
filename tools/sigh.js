@@ -98,6 +98,7 @@ function test(args) {
     string: ['grep'],
     inspect: ['inspect'],
     exceptions: ['exceptions'],
+    boolean: ['manual'],
     alias: {g: 'grep'},
   });
   function* testsInDir(dir) {
@@ -111,7 +112,8 @@ function test(args) {
       if (stat.isDirectory()) {
         yield* testsInDir(fullPath);
       } else {
-        if (/-tests?.js$/.test(fullPath) && !fullPath.includes('manual_test')) {
+        var isSelectedTest = options.manual == fullPath.includes('manual_test');
+        if (/-tests?.js$/.test(fullPath) && isSelectedTest) {
           yield fullPath;
         }
       }
