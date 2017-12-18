@@ -192,7 +192,7 @@ ParticleArgumentList
   }
 
 ParticleArgument
-  = direction:ParticleArgumentDirection whiteSpace type:Type isOptional:'?'? whiteSpace name:lowerIdent
+  = direction:ParticleArgumentDirection whiteSpace type:ParticleArgumentType isOptional:'?'? whiteSpace name:lowerIdent
   {
     return {
       kind: 'particle-argument',
@@ -210,13 +210,14 @@ ParticleArgumentDirection
     return text();
   }
 
-Type
+ParticleArgumentType
   = VariableType
+  / SchemaInline
   / ReferenceType
   / ListType
 
 ListType
-  = '[' type:Type ']'
+  = '[' type:ParticleArgumentType ']'
   {
     return {
       kind: 'list-type',
@@ -619,6 +620,29 @@ ExtendsList
   return list;
 }
 
+SchemaInline
+  = name:(upperIdent ' ')? '{' fields:(SchemaInlineField (',' whiteSpace)?)+ '}'
+  {
+    return {
+      kind: 'schema-inline',
+      location: location(),
+      name: optional(name, name => name[0], null),
+      fields: fields.map(field => field[0]), 
+    }
+  }
+
+SchemaInlineField
+  = type:SchemaType arity:SchemaArity? whiteSpace name:lowerIdent
+  {
+    return {
+      kind: 'schema-inline-field',
+      location: location(),
+      name,
+      type,
+      arity,
+    };
+  }
+
 Schema
   = 'schema' whiteSpace name:TopLevelIdent parent:ExtendsList? eolWhiteSpace sections:(Indent (SameIndent SchemaSection)*)?
   {
@@ -642,6 +666,9 @@ SchemaSection
     };
   }
 
+SchemaArity
+  = '?'
+
 SchemaField
   = type:SchemaType whiteSpace name:lowerIdent
   {
@@ -654,9 +681,12 @@ SchemaField
   }
 
 SchemaType
-  = 'Text' / 'URL' / 'Number' / 'Boolean' / SchemaUnionType
+  = SchemaPrimitiveType / SchemaUnionType
 
-SchemaUnionType = '(' whiteSpace? first:SchemaType rest:(whiteSpace 'or' whiteSpace SchemaType)* whiteSpace? ')' {
+SchemaPrimitiveType
+  = 'Text' / 'URL' / 'Number' / 'Boolean'
+
+SchemaUnionType = '(' whiteSpace? first:SchemaPrimitiveType rest:(whiteSpace 'or' whiteSpace SchemaPrimitiveType)* whiteSpace? ')' {
   let typeList = [first];
   for (let type of rest) {
     typeList.push(type[3]);
