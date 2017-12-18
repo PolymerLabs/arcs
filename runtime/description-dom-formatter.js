@@ -28,7 +28,7 @@ export default class DescriptionDomFormatter extends DescriptionFormatter {
     if (descriptionByName["_template_"]) {
       result = Object.assign(result, {
         template: descriptionByName["_template_"],
-        model: Object.assign({}, JSON.parse(descriptionByName["_model_"]))
+        model: JSON.parse(descriptionByName["_model_"])
       });
     }
 

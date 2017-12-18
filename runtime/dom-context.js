@@ -60,7 +60,7 @@ class DomContext {
 
   }
   static createTemplateElement(template) {
-    return Object.assign(document.createElement('template'), { innerHTML: template});
+    return Object.assign(document.createElement('template'), {innerHTML: template});
   }
   stampTemplate(template, eventHandler) {
     if (!this._liveDom) {
