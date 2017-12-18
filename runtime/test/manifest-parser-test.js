@@ -126,4 +126,26 @@ describe('manifest parser', function() {
           * <- energy
           * -> height`);
   });
+  it('parses inline schemas', () => {
+    parse(`
+      particle Foo
+        Foo(in MySchema {Text value} mySchema)
+    `);
+    parse(`
+      particle Foo
+        Foo(in [MySchema {Text value}] mySchema)
+    `);
+    parse(`
+      particle Foo
+        Foo(in [{Text value, Number num}] anonSchema)
+    `);
+    parse(`
+      particle Foo
+        Foo(in {Text? value}? optionalWithOptional)
+    `);
+    parse(`
+      particle Foo
+        Foo(in {(Text or Number)? value} optionalUnion)
+    `);
+  })
 });
