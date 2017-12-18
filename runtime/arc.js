@@ -65,6 +65,10 @@ class Arc {
     this._search = null;
     this._description = new Description(this);
   }
+  get loader() {
+    return this._loader;
+  }
+
   set search(search) {
     this._search = search ? search.toLowerCase().trim() : null;
   }
