@@ -24,7 +24,7 @@
     return defaultValue == null ? null : defaultValue;
   }
   function checkNormal(result) {
-    if (['string', 'number', 'boolean'].includes(typeof result) || result === null) {
+    if (['string', 'number', 'boolean', 'Object'].includes(typeof result) || result === null) {
       return;
     }
     if (result === undefined) {
@@ -627,7 +627,7 @@ SchemaInline
       kind: 'schema-inline',
       location: location(),
       name: optional(name, name => name[0], null),
-      fields: fields.map(field => field[0]), 
+      fields: fields.map(field => field[0]),
     }
   }
 
@@ -684,7 +684,7 @@ SchemaType
   = SchemaPrimitiveType / SchemaUnionType
 
 SchemaPrimitiveType
-  = 'Text' / 'URL' / 'Number' / 'Boolean'
+  = 'Text' / 'URL' / 'Number' / 'Boolean' / 'Object'
 
 SchemaUnionType = '(' whiteSpace? first:SchemaPrimitiveType rest:(whiteSpace 'or' whiteSpace SchemaPrimitiveType)* whiteSpace? ')' {
   let typeList = [first];
