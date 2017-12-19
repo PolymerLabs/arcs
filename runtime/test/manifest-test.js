@@ -471,7 +471,7 @@ describe('manifest', function() {
         ++count;
       }
     })
-    assert.equal(count, 17);
+    assert.equal(count, 18);
   });
   it('loads entities from json files', async () => {
     let manifestSource = `
@@ -723,7 +723,7 @@ Expected " ", "#", "\\n", "\\r", [ ], [A-Z], or [a-z] but "?" found.
     let manifest = await Manifest.parse(`
       schema S
       shape HostedShape
-        HostedShape(in S foo) 
+        HostedShape(in S foo)
 
       particle Hosted
         Hosted(in S foo, in S bar)

@@ -11,11 +11,12 @@ import '../../../particles/Recommend/Recommend.manifest'
 import '../../../particles/Chooser/Chooser.manifest'
 import '../../../particles/AlsoOn/AlsoOn.manifest'
 import '../../../particles/GiftList/GiftList.manifest'
-import '../../../particles/Arrivinator/Arrivinator.manifest'
-import '../../../particles/ManufacturerInfo/ManufacturerInfo.manifest'
+#import '../../../particles/Arrivinator/Arrivinator.manifest'
+#import '../../../particles/ManufacturerInfo/ManufacturerInfo.manifest'
 import '../../../particles/Interests/Interests.manifest'
 import '../../../particles/ProductMultiplexer/ProductMultiplexer.manifest'
 import '../../../particles/ArrivinatorX/ArrivinatorX.manifest'
+import '../../../particles/ManufacturerInfoX/ManufacturerInfoX.manifest'
 
 # Create shortlist with [product, ...]
 recipe
@@ -56,18 +57,10 @@ recipe
   use as view3
   GiftList
     person <- view1
-  Arrivinator
-    list <- view2
-  Arrivinator
-    list <- view3
-
-# Buying for [person]'s [occasion] in [timeframe]? Product [X] arrives too late.
-recipe
-  map as view1
-  use as view2
-  use as view3
-  GiftList
-    person <- view1
+#  Arrivinator
+#    list <- view2
+#  Arrivinator
+#    list <- view3
   ProductMultiplexer
     products <- view2
     hostedParticle = ArrivinatorX
@@ -78,8 +71,11 @@ recipe
 # Check manufacturer information for products.
 recipe
   use #shortlist as shortlist
-  ManufacturerInfo
-    list <- shortlist
+#  ManufacturerInfo
+#   list <- shortlist
+  ProductMultiplexer
+    products <- shortlist
+    hostedParticle <- ManufacturerInfoX
 
 # TODO: Check for newer versions, e.g. there is a new version of [product].
 # TODO: [Manufacturer] recommends [product] instead of [product] for 13 year olds.

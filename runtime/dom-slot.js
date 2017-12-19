@@ -18,7 +18,8 @@ let templates = new Map();
 class DomSlot extends Slot {
   constructor(consumeConn, arc, containerKind) {
     super(consumeConn, arc);
-    this._templateName = `${this.consumeConn.particle.name}::${this.consumeConn.name}`;
+    this._templateName = [this.consumeConn.particle.name, this.consumeConn.name].concat(
+        Object.values(this.consumeConn.particle.connections).filter(conn => conn.type.isInterface).map(conn => conn.view.id)).join('::');
     this._model = null;
     this._observer = this._initMutationObserver();
     this._containerKind = containerKind;
