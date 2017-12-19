@@ -28,6 +28,11 @@ class Entity {
   isIdentified() {
     return this[Symbols.identifier] !== undefined;
   }
+  // TODO: entity should not be exposing its IDs.
+  get id() {
+    assert(!!this.isIdentified());
+    return this[Symbols.identifier];
+  }
   identify(identifier) {
     assert(!this.isIdentified());
     this[Symbols.identifier] = identifier;
