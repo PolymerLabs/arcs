@@ -45,7 +45,15 @@ export default class FirebaseStorage {
   }
 
   async construct(id, type, keyFragment) {
-    var key = new FirebaseKey(keyFragment);
+    return this._join(id, type, keyFragment, false);
+  }
+
+  async connect(id, type, key) {
+    return this._join(id, type, key, true);
+  }
+
+  async _join(id, type, key, shouldExist) {
+    key = new FirebaseKey(key);
     // TODO: is it ever going to be possible to autoconstruct new firebase datastores? 
     if (key.databaseUrl == undefined || key.apiKey == undefined)
       throw new Error("Can't complete partial firebase keys");
@@ -56,29 +64,33 @@ export default class FirebaseStorage {
         databaseURL: key.databaseUrl
       }, `app${this._nextAppNameSuffix++}`);
 
-    return FirebaseStorageProvider.newProvider(type, this._arc, id, this._apps[key.projectId], key);
+    var reference = firebase.database(this._apps[key.projectId]).ref(key.location);
+    let snapshot = await reference.once('value');
+    let exists = snapshot.val() != null;
+    if (shouldExist != exists)
+      return null;
+
+    return FirebaseStorageProvider.newProvider(type, this._arc, id, reference, key);
   }
 }
 
 class FirebaseStorageProvider extends StorageProviderBase {
-  constructor(type, arc, id, firebaseApp, key) {
+  constructor(type, arc, id, reference, key) {
     super(type, arc, undefined, id, key.toString());
-    this.firebaseApp = firebaseApp;
     this.firebaseKey = key;
-    this.database = firebase.database(this.firebaseApp);
-    this.reference = this.database.ref(this.firebaseKey.location);
+    this.reference = reference;
   }
 
-  static newProvider(type, arc, id, firebaseApp, key) {
+  static newProvider(type, arc, id, reference, key) {
     if (type.isSetView)
-      return new FirebaseCollection(type, arc, id, firebaseApp, key);
-    return new FirebaseVariable(type, arc, id, firebaseApp, key);
+      return new FirebaseCollection(type, arc, id, reference, key);
+    return new FirebaseVariable(type, arc, id, reference, key);
   }
 }
 
 class FirebaseVariable extends FirebaseStorageProvider {
-  constructor(type, arc, id, firebaseApp, firebaseKey) {
-    super(type, arc, id, firebaseApp, firebaseKey);
+  constructor(type, arc, id, reference, firebaseKey) {
+    super(type, arc, id, reference, firebaseKey);
     this.dataSnapshot = undefined;
     this.version = 0;
     this.reference.on('value', dataSnapshot => {
@@ -102,8 +114,8 @@ class FirebaseVariable extends FirebaseStorageProvider {
 }
 
 class FirebaseCollection extends FirebaseStorageProvider {
-  constructor(type, arc, id, firebaseApp, firebaseKey) {
-    super(type, arc, id, firebaseApp, firebaseKey);
+  constructor(type, arc, id, reference, firebaseKey) {
+    super(type, arc, id, reference, firebaseKey);
     this.dataSnapshot = undefined;
     this.reference.on('value', dataSnapshot => {
       this.dataSnapshot = dataSnapshot;
