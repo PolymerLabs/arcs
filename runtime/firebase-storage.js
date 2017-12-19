@@ -37,11 +37,11 @@ class FirebaseKey {
   }
 }
 
-export class FirebaseStorage {
+export default class FirebaseStorage {
   constructor(arc) {
     this._arc = arc;
-    this.apps = {};
-    this.nextAppNameSuffix = 0;
+    this._apps = {};
+    this._nextAppNameSuffix = 0;
   }
 
   construct(id, type, keyFragment) {
@@ -50,13 +50,13 @@ export class FirebaseStorage {
     if (key.databaseUrl == undefined || key.apiKey == undefined)
       throw new Error("Can't complete partial firebase keys");
 
-    if (this.apps[key.projectId] == undefined)
-      this.apps[key.projectId] = firebase.initializeApp({
+    if (this._apps[key.projectId] == undefined)
+      this._apps[key.projectId] = firebase.initializeApp({
         apiKey: key.apiKey,
         databaseURL: key.databaseUrl
-      }, `app${this.nextAppNameSuffix++}`);
+      }, `app${this._nextAppNameSuffix++}`);
 
-    return FirebaseStorageProvider.newProvider(type, this._arc, id, this.apps[key.projectId], key);
+    return FirebaseStorageProvider.newProvider(type, this._arc, id, this._apps[key.projectId], key);
   }
 }
 
