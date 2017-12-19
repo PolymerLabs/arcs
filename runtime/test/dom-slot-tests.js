@@ -33,7 +33,7 @@ DomContext.createTemplateElement = (template) => template;
 
 function createDomSlot(slotName) {
   // slotName should differ in each test case to avoid collision in DomSlot::templates.
-  return new DomSlot(/* consumeConn= */ {particle: {name:'MyParticle'}, name: slotName}, 'dummy-arc');
+  return new DomSlot(/* consumeConn= */ {particle: {name: 'MyParticle', connections: []}, name: slotName}, 'dummy-arc');
 }
 
 describe('dom-slot', function() {

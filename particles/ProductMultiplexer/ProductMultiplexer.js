@@ -21,6 +21,11 @@ defineParticle(({DomParticle}) => {
       this.on(views, 'products', 'change', async e => {
         var productsView = views.get('products');
         var productsList = await productsView.toList();
+
+        if (productsList.length > 0) {
+          this.relevance = 0.1;
+        }
+
         let hostedParticle = await views.get('hostedParticle').get();
         for (let [index, product] of productsList.entries()) {
           if (this._handleIds.has(product.id)) {

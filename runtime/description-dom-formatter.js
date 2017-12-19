@@ -36,7 +36,7 @@ export default class DescriptionDomFormatter extends DescriptionFormatter {
   }
 
   async _combineSelectedDescriptions(selectedDescriptions) {
-    let suggestions = [];
+    let suggestionByParticleDesc = new Map();
     await Promise.all(selectedDescriptions.map(async (particleDesc, index) => {
       if (this.seenParticles.has(particleDesc._particle)) {
         return;
@@ -61,8 +61,17 @@ export default class DescriptionDomFormatter extends DescriptionFormatter {
           model[newTokenKey] = tokenValue;
         }
       }));
-      suggestions.push({template, model});
+
+      suggestionByParticleDesc.set(particleDesc, {template, model});
     }));
+
+    // Populate suggestions list while maintaining original particles order.
+    let suggestions = [];
+    selectedDescriptions.forEach(desc => {
+      if (suggestionByParticleDesc.has(desc)) {
+        suggestions.push(suggestionByParticleDesc.get(desc));
+      }
+    });
 
     let result = this._joinDescriptions(suggestions);
     result.template += '.';
@@ -83,7 +92,16 @@ export default class DescriptionDomFormatter extends DescriptionFormatter {
         template = template.concat(`${index == 0 && i == 0 ? token.text[0].toUpperCase() + token.text.slice(1) : token.text}`);
       } else {  // view or slot handle.
         let sanitizedFullName = token.fullName.replace(/[.{}_\$]/g, '');
-        template = template.concat(`<span>{{${sanitizedFullName}}}</span>`);
+        let attribute = '';
+        if (i == 0) {
+          // Capitalize the first letter in the token.
+          template = template.concat(`<style>
+            [firstletter]::first-letter { text-transform: capitalize; }
+            [firstletter] {display: inline-block}
+            </style>`);
+          attribute = ' firstletter';
+        }
+        template = template.concat(`<span${attribute}>{{${sanitizedFullName}}}</span>`);
         model[sanitizedFullName] = token.fullName;
       }
     });
