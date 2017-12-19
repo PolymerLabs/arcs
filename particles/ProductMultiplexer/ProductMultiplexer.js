@@ -12,37 +12,47 @@
 
 defineParticle(({DomParticle}) => {
   return class ProductMultiplexer extends DomParticle {
+    constructor() {
+      super();
+      this._handleIds = new Set();
+    }
     async setViews(views) {
       let arc = await this.constructInnerArc();
-      var productsView = views.get('products');
-      var productsList = await productsView.toList();
-      let hostedParticle = await views.get('hostedParticle').get();
-      for (let [index, product] of productsList.entries()) {
-        let productView = await arc.createHandle(productsView.type.primitiveType(), "product" + index);
+      this.on(views, 'products', 'change', async e => {
+        var productsView = views.get('products');
+        var productsList = await productsView.toList();
+        let hostedParticle = await views.get('hostedParticle').get();
+        for (let [index, product] of productsList.entries()) {
+          if (this._handleIds.has(product.id)) {
+            continue;
+          }
+          let productView = await arc.createHandle(productsView.type.primitiveType(), "product" + index);
+          this._handleIds.add(product.id);
 
-        let hostedSlotName =  [...hostedParticle.slots.keys()][0];
-        let slotName = [...this.spec.slots.values()][0].name;
-        let slotId = await arc.createSlot(this, slotName, hostedParticle.name, hostedSlotName);
+          let hostedSlotName =  [...hostedParticle.slots.keys()][0];
+          let slotName = [...this.spec.slots.values()][0].name;
+          let slotId = await arc.createSlot(this, slotName, hostedParticle.name, hostedSlotName);
 
-        this.hostedSlotBySlotId.set(slotId, {subId: product.name.replace(/ /g,'').toLowerCase()});
+          this.hostedSlotBySlotId.set(slotId, {subId: product.name.replace(/ /g,'').toLowerCase()});
 
-        var recipe = `
-          import '${hostedParticle.implFile.replace(/\.[^\.]+$/, ".manifest")}'
-          recipe
-            use '${productView._id}' as v1
-            slot '${slotId}' as s1
-            ${hostedParticle.name}
-              product <- v1
-              consume ${hostedSlotName} as s1
-        `;
+          var recipe = `
+            import '${hostedParticle.implFile.replace(/\.[^\.]+$/, ".manifest")}'
+            recipe
+              use '${productView._id}' as v1
+              slot '${slotId}' as s1
+              ${hostedParticle.name}
+                product <- v1
+                consume ${hostedSlotName} as s1
+          `;
 
-        try {
-          await arc.loadRecipe(recipe, this);
-          productView.set(product);
-        } catch (e) {
-          console.log(e);
+          try {
+            await arc.loadRecipe(recipe, this);
+            productView.set(product);
+          } catch (e) {
+            console.log(e);
+          }
         }
-      }
+      });
     }
     _shouldRender(props) {
       return false;
