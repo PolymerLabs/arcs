@@ -67,8 +67,8 @@ class OuterPEC extends PEC {
       this._apiPort.ConstructArcCallback({callback, arc});
     }
 
-    this._apiPort.onArcCreateHandle = ({callback, arc, type, name}) => {
-      var view = this._arc.createView(type, name);
+    this._apiPort.onArcCreateHandle = async ({callback, arc, type, name}) => {
+      var view = await this._arc.createView(type, name);
       this._apiPort.CreateHandleCallback(view, {type, name, callback, id: view.id});
     }
 

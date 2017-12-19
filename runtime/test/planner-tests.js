@@ -59,8 +59,8 @@ describe('Planner', function() {
     var arc = createTestArc("test-plan-arc", manifest, "dom");
     let Person = manifest.findSchemaByName('Person').entityClass();
     let Product = manifest.findSchemaByName('Product').entityClass();
-    var personView = arc.createView(Person.type.setViewOf(), "aperson");
-    var productView = arc.createView(Product.type.setViewOf(), "products");
+    var personView = await arc.createView(Person.type.setViewOf(), "aperson");
+    var productView = await arc.createView(Product.type.setViewOf(), "products");
     var planner = new Planner();
     planner.init(arc);
     await planner.generate(),

@@ -21,11 +21,11 @@ export default class StorageProviderFactory {
     return this._storageInstances[protocol];
   }
 
-  construct(id, type, keyFragment) {
+  async construct(id, type, keyFragment) {
     return this._storageForKey(keyFragment).construct(id, type, keyFragment);
   }
 
-  connect(id, type, key) {
+  async connect(id, type, key) {
     return this._storageForKey(key).connect(id, type, key);
   }
 

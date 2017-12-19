@@ -90,8 +90,8 @@ recipe
       recipe.views[2].mapToView({id: 'test:3', type: Foo.type});
     }
     let arc = createTestArc();
-    let fooView = arc.createView(Foo.type);
-    let foosView = arc.createView(Foo.type.setViewOf());
+    let fooView = await arc.createView(Foo.type);
+    let foosView = await arc.createView(Foo.type.setViewOf());
     recipe.normalize();
     assert.isTrue(recipe.isResolved());
     let ifooViewConn = recipe.viewConnections.find(vc => vc.particle.name == 'A' && vc.name == 'ifoo');
@@ -368,8 +368,8 @@ recipe
       recipe.views[0].mapToView({id: 'test:1', type: Foo.type.setViewOf()});
       recipe.views[1].mapToView({id: 'test:2', type: Foo.type.setViewOf()});
       let arc = createTestArc();
-      let fooView1 = arc.createView(Foo.type.setViewOf());
-      let fooView2 = arc.createView(Foo.type.setViewOf());
+      let fooView1 = await arc.createView(Foo.type.setViewOf());
+      let fooView2 = await arc.createView(Foo.type.setViewOf());
       recipe.normalize();
       assert.isTrue(recipe.isResolved());
       arc._activeRecipe = recipe;
@@ -432,7 +432,7 @@ recipe
 
       // Add values to both Foo views
       fooView.set({id: 1, rawData: {name: 'the-FOO'}});
-      let fooView2 = arc.createView(fooView.type);
+      let fooView2 = await arc.createView(fooView.type);
       fooView2.set({id: 2, rawData: {name: 'another-FOO'}});
       await test.verifySuggestion('Do A with b-foo (the-FOO), output B to b-foo, and output B to b-foo (another-FOO).',
                             description);
@@ -502,8 +502,8 @@ recipe
         recipe.views[0].mapToView({id: 'test:1', type: MyBESTType.type});
         recipe.views[1].mapToView({id: 'test:2', type: MyBESTType.type.setViewOf()});
         let arc = createTestArc();
-        let tView = arc.createView(MyBESTType.type);
-        let tsView = arc.createView(MyBESTType.type.setViewOf());
+        let tView = await arc.createView(MyBESTType.type);
+        let tsView = await arc.createView(MyBESTType.type.setViewOf());
         recipe.normalize();
         assert.isTrue(recipe.isResolved());
 
@@ -616,8 +616,8 @@ recipe
     recipe.views[0].mapToView({id: 'test:1', type: Foo.type});
     recipe.views[1].mapToView({id: 'test:2', type: DescriptionType.type.setViewOf()});
     let arc = createTestArc();
-    let fooView = arc.createView(Foo.type);
-    let descriptionView = arc.createView(DescriptionType.type.setViewOf());
+    let fooView = await arc.createView(Foo.type);
+    let descriptionView = await arc.createView(DescriptionType.type.setViewOf());
     recipe.normalize();
     assert.isTrue(recipe.isResolved());
 

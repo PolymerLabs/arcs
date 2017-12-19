@@ -62,8 +62,8 @@ class Manifest {
 
   // TODO: newParticle, Schema, etc.
   // TODO: simplify() / isValid().
-  newView(type, name, id, tags) {
-    let view = this._storageProviderFactory.construct(id, type, `in-memory://${this.id}`);
+  async newView(type, name, id, tags) {
+    let view = await this._storageProviderFactory.construct(id, type, `in-memory://${this.id}`);
     view.name = name;
     this._views.push(view);
     this._viewTags.set(view, tags ? tags : []);
@@ -204,7 +204,7 @@ ${e.message}
         await this._processView(manifest, item, loader);
       }
       for (let item of items.filter(item => item.kind == 'recipe')) {
-        this._processRecipe(manifest, item);
+        await this._processRecipe(manifest, item);
       }
     } catch (e) {
       throw processError(e);
@@ -287,7 +287,7 @@ ${e.message}
     shape.name = shapeItem.name;
     manifest._shapes.push(shape);
   }
-  static _processRecipe(manifest, recipeItem) {
+  static async _processRecipe(manifest, recipeItem) {
     let recipe = manifest._newRecipe(recipeItem.name);
     let items = {
       views: recipeItem.items.filter(item => item.kind == 'view'),
@@ -453,7 +453,7 @@ ${e.message}
           // TODO: Mark as immediate.
           targetView = recipe.newView();
           targetView.fate = 'map';
-          var view = manifest.newView(connection.type, null, id, []);
+          var view = await manifest.newView(connection.type, null, id, []);
           view.set(hostedParticle.toLiteral());
           targetView.mapToView(view);
         }
@@ -527,7 +527,7 @@ ${e.message}
 
     type = type.resolveReferences(name => manifest.resolveReference(name));
 
-    let view = manifest.newView(type, name, id, tags);
+    let view = await manifest.newView(type, name, id, tags);
     view.source = item.source;
     view.description = item.description;
     // TODO: How to set the version?

@@ -25,7 +25,7 @@ describe('firebase', function() {
     let storage = new StorageProviderFactory(arc);
     let BarType = Type.newEntity(manifest.schemas.Bar);
     let value = "Hi there" + Math.random();
-    let variable = storage.construct('test0', BarType, 
+    let variable = await storage.construct('test0', BarType, 
       'firebase://test-firebase-45a3e.firebaseio.com/AIzaSyBLqThan3QCOICj0JZ-nEwk27H4gmnADP8/test');
     await variable.set({id: 'test0:test', value});
     let result = await variable.get();
@@ -43,7 +43,7 @@ describe('firebase', function() {
     let BarType = Type.newEntity(manifest.schemas.Bar);
     let value1 = "Hi there" + Math.random();
     let value2 = "Goodbye" + Math.random();
-    let collection = storage.construct('test1', BarType.setViewOf(), 
+    let collection = await storage.construct('test1', BarType.setViewOf(), 
       'firebase://test-firebase-45a3e.firebaseio.com/AIzaSyBLqThan3QCOICj0JZ-nEwk27H4gmnADP8/collection/test');
     await collection.store({id: 'test0:test0', value: value1});
     await collection.store({id: 'test0:test1', value: value2});

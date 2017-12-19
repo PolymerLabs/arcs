@@ -44,7 +44,7 @@ export default class FirebaseStorage {
     this._nextAppNameSuffix = 0;
   }
 
-  construct(id, type, keyFragment) {
+  async construct(id, type, keyFragment) {
     var key = new FirebaseKey(keyFragment);
     // TODO: is it ever going to be possible to autoconstruct new firebase datastores? 
     if (key.databaseUrl == undefined || key.apiKey == undefined)
