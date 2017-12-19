@@ -20,7 +20,8 @@ describe('schema', function() {
     assert.deepEqual(schema.normative, {name: 'Text'});
     assert.deepEqual(schema.optional, {description: 'Text', image: 'URL', category: 'Text',
                                        price: 'Text', seller: 'Text', shipDays: 'Number',
-                                       url: 'URL', identifier: 'Text', isReal: 'Boolean'});
+                                       url: 'URL', identifier: 'Text', isReal: 'Boolean',
+                                       brand: 'Object'});
     assert.equal(schema.name, 'Product');
     assert.equal(schema.parents[0].name, 'Thing');
   });
@@ -142,6 +143,7 @@ describe('schema', function() {
     assert.deepEqual(data, {name: 'Tomato Soup', description: 'Soup that tastes like tomato',
                             image: 'http://www.example.com/soup.jpg', url: undefined,
                             identifier: undefined, category: 'Fluidic Food', seller: undefined,
-                            price: undefined, shipDays: 4, isReal: undefined});
+                            price: undefined, shipDays: 4, isReal: undefined,
+                            brand: undefined});
   });
 });

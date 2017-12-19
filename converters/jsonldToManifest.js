@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-var supportedTypes = ["Text", "URL", "Number", "Boolean"];
+var supportedTypes = ["Text", "URL", "Number", "Boolean", "Object"];
 
 class JsonldToManifest {
   static convert(jsonld, theClass) {
