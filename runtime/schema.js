@@ -116,7 +116,7 @@ class Schema {
         case 'Boolean':
           return [fieldType, 'boolean']
         case 'Object':
-          return [fieldType, 'Object']
+          return [fieldType, 'object']
         default:
           // Text, URL
           return [fieldType, 'string'];
