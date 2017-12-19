@@ -101,10 +101,10 @@ describe('particle-shape-loading', function() {
       ],
     });
 
-    let shapeView = arc.createView(shapeType);
+    let shapeView = await arc.createView(shapeType);
     shapeView.set(manifest.particles[0].toLiteral());
-    let outView = arc.createView(barType);
-    let inView = arc.createView(fooType);
+    let outView = await arc.createView(barType);
+    let inView = await arc.createView(fooType);
     var Foo = manifest.schemas.Foo.entityClass();
     inView.set(new Foo({value: 'a foo'}))
 

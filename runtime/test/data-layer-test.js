@@ -12,8 +12,10 @@ import {assert} from './chai-web.js';
 import Arc from '../arc.js';
 import Schema from '../schema.js';
 import SlotComposer from '../slot-composer.js';
+import Type from '../type.js';
+import Handle from '../handle.js';
 
-describe('entity', function() {
+describe('entity', async function() {
   it('can be created, stored, and restored', async () => {
     let schema = new Schema({name: 'TestSchema', parents: [], sections: [{
         sectionType: 'normative',
@@ -25,7 +27,9 @@ describe('entity', function() {
     let arc = new Arc({slotComposer: new SlotComposer({rootContext: 'test', affordance: 'mock'}), id: 'test'});
     let entity = new (schema.entityClass())({value: 'hello world'});
     assert.isDefined(entity);
-    arc.commit([entity]);
+    let storage = await arc.createView(Type.newEntity(schema).setViewOf());
+    let handle = Handle.handleFor(storage);
+    await handle.store(entity);
 
     let list = await arc.findViewsByType(entity.constructor.type.setViewOf())[0].toList();
     let clone = list[0];

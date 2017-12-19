@@ -39,7 +39,7 @@ export default class InMemoryStorage {
       __storageCache[this._arc.id] = this;
   }
 
-  construct(id, type, keyFragment) {
+  async construct(id, type, keyFragment) {
     var key = new InMemoryKey(keyFragment);
     if (key.arcId == undefined)
       key.arcId = this._arc.id;
@@ -52,7 +52,7 @@ export default class InMemoryStorage {
     return provider;
   }
 
-  connect(id, type, keyString) {
+  async connect(id, type, keyString) {
     let key = new InMemoryKey(keyString);
     if (key.arcId !== this._arc.id) {
       if (__storageCache[key.arcId] == undefined)

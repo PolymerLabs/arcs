@@ -220,7 +220,7 @@ class Arc {
 
     for (let recipeView of views) {
       if (['copy', 'create'].includes(recipeView.fate)) {
-        let view = this.createView(recipeView.type, /* name= */ null, /* id= */ null, recipeView.tags);
+        let view = await this.createView(recipeView.type, /* name= */ null, /* id= */ null, recipeView.tags);
         if (recipeView.fate === "copy") {
           var copiedView = this.findViewById(recipeView.id);
           view.cloneFrom(copiedView);
@@ -232,7 +232,7 @@ class Arc {
       let storageKey = recipeView.storageKey;
       if (!storageKey)
         storageKey = this.keyForId(recipeView.id);
-      let view = this._storageProviderFactory.connect(recipeView.id, recipeView.type, storageKey);
+      let view = await this._storageProviderFactory.connect(recipeView.id, recipeView.type, storageKey);
       assert(view, `view '${recipeView.id}' was not found`);
 
       view.description = await this.description.getViewDescription(recipeView);
@@ -255,13 +255,13 @@ class Arc {
     viewMap.views.set(name, targetView);
   }
 
-  createView(type, name, id, tags) {
+  async createView(type, name, id, tags) {
     assert(type instanceof Type, `can't createView with type ${type} that isn't a Type`);
 
     if (type.isRelation)
       type = Type.newSetView(type);
 
-      let view = this._storageProviderFactory.construct(id, type, 'in-memory');
+      let view = await this._storageProviderFactory.construct(id, type, 'in-memory');
       view.name = name;
 
       this._registerView(view, tags);
@@ -322,31 +322,8 @@ class Arc {
     return view;
   }
 
-  // TODO: Remove this.
-  _viewFor(type) {
-    let views = this.findViewsByType(type);
-    if (views.length > 0) {
-      return views[0];
-    }
-
-    return this.createView(type, "automatically created for _viewFor");
-  }
-
   keyForId(id) {
     return this._storageKeys[id];
-  }
-
-  commit(entities) {
-    let entityMap = new Map();
-    for (let entity of entities) {
-      entityMap.set(entity, this._viewFor(Type.newSetView(entity.constructor.type)));
-    }
-    for (let entity of entities) {
-      if (entity instanceof Relation) {
-        entity.entities.forEach(entity => entityMap.set(entity, this._viewFor(Type.newSetView(entity.constructor.type))));
-      }
-    }
-    this.newCommit(entityMap);
   }
 
   newCommit(entityMap) {

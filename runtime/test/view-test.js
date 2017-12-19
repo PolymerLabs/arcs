@@ -31,7 +31,7 @@ describe('View', function() {
 
   it('clear singleton view', async () => {
     let arc = new Arc({slotComposer, id: 'test'});
-    let barView = arc.createView(Bar.type);
+    let barView = await arc.createView(Bar.type);
     barView.set(new Bar({value: 'a Bar'}));
     barView.clear();
     assert.equal(await barView.get(), undefined);
@@ -42,7 +42,7 @@ describe('View', function() {
 
     let manifest = await Manifest.load('./particles/test/test-particles.manifest', loader);
     let Foo = manifest.schemas.Foo.entityClass();
-    let fooView = handle.handleFor(arc.createView(Foo.type.setViewOf()));
+    let fooView = handle.handleFor(await arc.createView(Foo.type.setViewOf()));
     fooView.entityClass = Foo;
 
     await fooView.store(new Foo({value: 'a Foo'}, 'first'));
@@ -53,7 +53,7 @@ describe('View', function() {
 
   it('remove entry from view', async () => {
     let arc = new Arc({slotComposer, id: 'test'});
-    let barView = arc.createView(Bar.type.setViewOf());
+    let barView = await arc.createView(Bar.type.setViewOf());
     let bar = new Bar({id: 0, value: 'a Bar'});
     barView.store(bar);
     barView.remove(bar.id);
@@ -68,7 +68,7 @@ describe('View', function() {
                            {type: Type.newEntity(manifest.schemas.Bar)}], []);
     assert(shape._particleMatches(manifest.particles[0]));
 
-    let shapeView = arc.createView(Type.newInterface(shape));
+    let shapeView = await arc.createView(Type.newInterface(shape));
     shapeView.set(manifest.particles[0]);
     assert(await shapeView.get() == manifest.particles[0]);
   });
@@ -77,15 +77,24 @@ describe('View', function() {
     let arc = new Arc({slotComposer, id: 'test'});
     let manifest = await Manifest.load('./particles/test/test-particles.manifest', loader);
 
-    assert.throws(() => arc.createView('not a type'), /isn\'t a Type/);
-    assert.throws(() => arc.createView(Bar.type, 'name', 'id', 'invalid'),
+    let assert_throws_async = async (f, message) => {
+      try {
+        await f();
+        assert.throws(() => undefined, message);                
+      } catch (e) {
+        assert.throws(() => {throw e}, message);                        
+      }
+    }
+
+    await assert_throws_async(async () => await arc.createView('not a type'), /isn\'t a Type/);
+    await assert_throws_async(async () => await arc.createView(Bar.type, 'name', 'id', 'invalid'),
       /must start/);
-    assert.throws(() => arc.createView(Bar.type, 'name', 'id', ['#valid', 'invalid']),
+    await assert_throws_async(async () => await arc.createView(Bar.type, 'name', 'id', ['#valid', 'invalid']),
       /must start/);
 
-    arc.createView(Bar.type, 'name', 'id', '#sufficient');
-    arc.createView(Bar.type, 'name', 'id', ['#valid']);
-    arc.createView(Bar.type, 'name', 'id', ['#valid', '#good']);
+    await arc.createView(Bar.type, 'name', 'id', '#sufficient');
+    await arc.createView(Bar.type, 'name', 'id', ['#valid']);
+    await arc.createView(Bar.type, 'name', 'id', ['#valid', '#good']);
     ['#sufficient', '#valid', '#good'].forEach(tag =>
       assert(arc._tags.hasOwnProperty(tag),
         `tags ${arc._tags} should have included ${tag}`));
