@@ -24,7 +24,7 @@
     return defaultValue == null ? null : defaultValue;
   }
   function checkNormal(result) {
-    if (['string', 'number', 'boolean', 'Object'].includes(typeof result) || result === null) {
+    if (['string', 'number', 'boolean', 'object'].includes(typeof result) || result === null) {
       return;
     }
     if (result === undefined) {
