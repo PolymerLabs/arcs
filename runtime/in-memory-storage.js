@@ -28,7 +28,7 @@ class InMemoryKey {
 
 let __storageCache = {};
 
-export class InMemoryStorage {
+export default class InMemoryStorage {
   constructor(arc) {
       assert(arc.id !== undefined, "Arcs with storage must have ids");
       this._arc = arc;
