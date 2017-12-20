@@ -21,7 +21,7 @@ import Manifest from './manifest.js';
 import Description from './description.js';
 import util from './recipe/util.js';
 import FakePecFactory from './fake-pec-factory.js';
-import StorageProviderFactory from './storage-provider-factory.js';
+import StorageProviderFactory from './storage/storage-provider-factory.js';
 
 class Arc {
   constructor({id, context, pecFactory, slotComposer, loader}) {

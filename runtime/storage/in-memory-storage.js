@@ -7,9 +7,9 @@
 // http://polymer.github.io/PATENTS.txt
 'use strict';
 
-import assert from '../platform/assert-web.js';
-import tracing from "../tracelib/trace.js";
-import util from './recipe/util.js';
+import assert from '../../platform/assert-web.js';
+import tracing from "../../tracelib/trace.js";
+import util from '../recipe/util.js';
 import StorageProviderBase from './storage-provider-base.js';
 
 class InMemoryKey {

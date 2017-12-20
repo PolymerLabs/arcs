@@ -17,7 +17,7 @@ import Search from './recipe/search.js';
 import Shape from './shape.js';
 import Type from './type.js';
 import util from './recipe/util.js';
-import StorageProviderFactory from './storage-provider-factory.js';
+import StorageProviderFactory from './storage/storage-provider-factory.js';
 
 class Manifest {
   constructor({id}) {
