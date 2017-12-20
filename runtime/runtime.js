@@ -9,7 +9,6 @@
  */
 
 import assert from '../platform/assert-web.js';
-import * as storage from './in-memory-storage.js';
 import Symbols from './symbols.js';
 import Entity from './entity.js';
 import Schema from './schema.js';

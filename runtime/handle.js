@@ -12,7 +12,6 @@ import Identifier from './identifier.js';
 import Entity from './entity.js';
 import Relation from './relation.js';
 import Symbols from './symbols.js';
-import * as storage from './in-memory-storage.js';
 let identifier = Symbols.identifier;
 import assert from '../platform/assert-web.js';
 import ParticleSpec from './particle-spec.js';
