@@ -14,9 +14,8 @@ import DemoBase from '../lib/demo-base.js';
 import Arc from '../../arc.js';
 import Manifest from '../../manifest.js';
 import Tracing from '../../../tracelib/trace.js';
-import '../lib/auto-tabs.js';
-import '../lib/suggestions-element.js';
 import WorkerPecFactory from '../worker-pec-factory.js';
+import '../lib/suggestions-element.js';
 
 Tracing.enable();
 window.Tracing = Tracing;
@@ -44,9 +43,10 @@ let template = Object.assign(document.createElement('template'), {innerHTML: `
   }
 </style>
 
-<auto-tabs particle-container>
-  <slot></slot>
-</auto-tabs>
+<div particle-container>
+  <div slotid="root">
+  </div>
+</div>
 <suggestions-element></suggestions-element>
 
 `.trim()});
@@ -61,13 +61,16 @@ class ArcHost extends DemoBase {
     let arc = new Arc({
       id: 'demo',
       pecFactory: WorkerPecFactory.bind(null, root),
-      slotComposer: new SlotComposer({rootContext: this.$('[particle-container]'), affordance: "dom"}),
-      context: await Manifest.load(this.getAttribute('manifest-location'), loader),
+      slotComposer: new SlotComposer({
+        rootContext: this.$('[particle-container]'),
+        suggestionsContext: this.$('suggestions-element'),
+        affordance: "dom",
+      }),
+      context: await Manifest.load(this.getAttribute('manifest-location'),
+      loader),
     });
     this.arc = arc;
-    this.suggestions = this.$('suggestions-element');
-    this.suggestions.arc = arc;
-    this.suggestions.callback = this.nextStage.bind(this);
+    this.suggest(this.arc, this.$('suggestions-element'));
   }
 }
 
