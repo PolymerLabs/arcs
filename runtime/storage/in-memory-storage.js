@@ -17,12 +17,17 @@ class InMemoryKey {
     var parts = key.split("://");
     this.protocol = parts[0];
     assert(this.protocol == 'in-memory');
-    parts = parts[1] ? parts[1].split('^^') : [];
+    parts = parts[1] ? parts.slice(1).join('://').split('^^') : [];
     this.arcId = parts[0];
     this.location = parts[1];
+    assert(this.toString() == key);
   }
   toString() {
-    return `${this.protocol}://${this.arcId}^^${this.location}`;
+    if (this.location !== undefined && this.arcId !== undefined)
+      return `${this.protocol}://${this.arcId}^^${this.location}`;
+    if (this.arcId !== undefined)
+      return `${this.protocol}://${this.arcId}`;
+    return `${this.protocol}`;
   }
 }
 
