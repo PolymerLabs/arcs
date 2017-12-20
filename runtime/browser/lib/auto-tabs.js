@@ -10,7 +10,7 @@
 
 'use strict';
 
-const Xen = require('../lib/xen-template.js');
+import Xen from '../lib/xen-template.js';
 
 let template = Object.assign(document.createElement('template'), {
   innerHTML: `
@@ -68,4 +68,4 @@ class AutoTabs extends HTMLElement {
 
 customElements.define('auto-tabs', AutoTabs);
 
-module.exports = AutoTabs;
+export default AutoTabs;
