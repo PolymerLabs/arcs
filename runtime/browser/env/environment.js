@@ -8,17 +8,18 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-let BrowserLoader = require("../../browser-loader.js");
-let SlotComposer = require('../../slot-composer.js');
-let DemoBase = require('../lib/demo-base.js');
-const Arc = require('../../arc.js');
-const Manifest = require("../../manifest.js");
+import BrowserLoader from "../../browser-loader.js";
+import SlotComposer from '../../slot-composer.js';
+import DemoBase from '../lib/demo-base.js';
+import Arc from '../../arc.js';
+import Manifest from '../../manifest.js';
+import Tracing from '../../../tracelib/trace.js';
+import '../lib/auto-tabs.js';
+import '../lib/suggestions-element.js';
+import WorkerPecFactory from '../worker-pec-factory.js';
 
-require('../lib/auto-tabs.js');
-require('../lib/suggestions-element.js');
-const Tracing = require('../../../tracelib/trace.js');
 Tracing.enable();
-global.Tracing = Tracing;
+window.Tracing = Tracing;
 
 let template = Object.assign(document.createElement('template'), {innerHTML: `
 
@@ -59,7 +60,7 @@ class ArcHost extends DemoBase {
     let loader = new BrowserLoader(root);
     let arc = new Arc({
       id: 'demo',
-      pecFactory: require('../worker-pec-factory.js').bind(null, root),
+      pecFactory: WorkerPecFactory.bind(null, root),
       slotComposer: new SlotComposer({rootContext: this.$('[particle-container]'), affordance: "dom"}),
       context: await Manifest.load(this.getAttribute('manifest-location'), loader),
     });

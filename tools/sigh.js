@@ -22,7 +22,6 @@ const sources = {
   browser: [
     'test/test.js',
     'demo/demo.js',
-    'env/environment.js',
     'worker-entry.js',
     'planner.js'
   ],
