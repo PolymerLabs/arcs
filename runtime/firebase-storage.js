@@ -127,7 +127,7 @@ class FirebaseVariable extends FirebaseStorageProvider {
   }
 
   async clear() {
-    this.set(undefined);
+    return this.set(undefined);
   }
 }
 
