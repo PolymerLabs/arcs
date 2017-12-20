@@ -37,6 +37,16 @@ class FirebaseKey {
   }
 }
 
+async function realTransaction(reference, transactionFunction) {
+  let realData = undefined;
+  await reference.once('value', data => {realData = data.val(); });
+  return reference.transaction(data => {
+    if (data == null)
+      data = realData;
+    return transactionFunction(data);
+  }, undefined, false);
+}
+
 export default class FirebaseStorage {
   constructor(arc) {
     this._arc = arc;
@@ -65,9 +75,18 @@ export default class FirebaseStorage {
       }, `app${this._nextAppNameSuffix++}`);
 
     var reference = firebase.database(this._apps[key.projectId]).ref(key.location);
-    let snapshot = await reference.once('value');
-    let exists = snapshot.val() != null;
-    if (shouldExist != exists)
+    
+    let result = await realTransaction(reference, data => {
+      if ((data == null) == shouldExist)
+        return; // abort transaction
+      if (!shouldExist) {
+        return {version: 0};
+      }
+      return data;
+    });
+    
+
+    if (!result.committed)
       return null;
 
     return FirebaseStorageProvider.newProvider(type, this._arc, id, reference, key);
@@ -92,20 +111,19 @@ class FirebaseVariable extends FirebaseStorageProvider {
   constructor(type, arc, id, reference, firebaseKey) {
     super(type, arc, id, reference, firebaseKey);
     this.dataSnapshot = undefined;
-    this.version = 0;
     this.reference.on('value', dataSnapshot => {
       this.dataSnapshot = dataSnapshot;
-      this._fire('change', {data: this.dataSnapshot.val(), version: this._version});
+      let data = dataSnapshot.val();
+      this._fire('change', {data: data.data, version: data.version});
     });
   }
 
   async get() {
-    return this.dataSnapshot.val();
+    return this.dataSnapshot.val().data;
   }
 
   async set(value) {
-    this.version++;
-    return this.reference.set(value);
+    return realTransaction(this.reference, data => ({data: value, version: data.version + 1}));
   }
 
   async clear() {
@@ -119,26 +137,38 @@ class FirebaseCollection extends FirebaseStorageProvider {
     this.dataSnapshot = undefined;
     this.reference.on('value', dataSnapshot => {
       this.dataSnapshot = dataSnapshot;
-      this._fire('change', {data: this._setToList(this.dataSnapshot.val()), version: this._version});
+      let data = dataSnapshot.val();
+      this._fire('change', {data: this._setToList(data.data), version: data.version});
     });
   }
 
   async get(id) {
-    return this.dataSnapshot.val()[id];
+    var set = this.dataSnapshot.val().data;
+    if (set)
+      return set[id];
+    return undefined;
   }
 
   async store(entity) { 
-    return this.reference.child(entity.id).set(entity);
+    return realTransaction(this.reference, data => {
+      if (!data.data)
+        data.data = {};
+      data.data[entity.id] = entity;
+      data.version += 1;
+      return data;
+    });
   }
 
   async toList() {
-    return this._setToList(this.dataSnapshot.val());
+    return this._setToList(this.dataSnapshot.val().data);
   }
 
   _setToList(set) {
     var list = [];
-    for (let key in set) {
-      list.push(set[key]);
+    if (set) {
+      for (let key in set) {
+        list.push(set[key]);
+      }
     }
     return list;
   }
