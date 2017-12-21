@@ -97,6 +97,7 @@ class View {
   set localName(name) { this._localName = name; }
   get connections() { return this._connections; } // ViewConnection*
   get storageKey() { return this._storageKey; }
+  set storageKey(key) { this._storageKey = key; }
 
   _isValid() {
     var typeSet = [];

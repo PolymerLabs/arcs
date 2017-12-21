@@ -227,6 +227,7 @@ class Arc {
         }
         recipeView.id = view.id;
         recipeView.fate = "use";
+        recipeView.storageKey = view.storageKey;
         // TODO: move the call to OuterPEC's DefineView to here
       }
       let storageKey = recipeView.storageKey;
