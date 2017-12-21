@@ -40,33 +40,79 @@ function createTestArc(id, context, affordance) {
   });
 }
 
+async function planFromManifest(manifest, {arcFactory, testSteps}={}) {
+  if (typeof manifest == 'string') {
+    let fileName = './test.manifest';
+    manifest = await Manifest.parse(manifest, {loader, fileName});
+  }
+
+  arcFactory = arcFactory || ((manifest) => createTestArc('test', manifest, 'dom'));
+  testSteps = testSteps || ((planner) => planner.plan(Infinity));
+
+  let arc = await arcFactory(manifest);
+  var planner = new Planner();
+  planner.init(arc);
+  return await testSteps(planner);
+}
+
 describe('Planner', function() {
   it('can generate things', async () => {
     let manifest = await Manifest.load('./particles/test/giftlist.manifest', loader);
-    var arc = createTestArc('test-plan-arc', manifest, 'dom');
-    let Person = manifest.findSchemaByName('Person').entityClass();
-    let Product = manifest.findSchemaByName('Person').entityClass();
-    var planner = new Planner();
-    planner.init(arc);
-    await planner.generate();
-    await planner.generate();
-    await planner.generate();
-    assert.equal(planner.strategizer.population.length, 5);
+    let testSteps = async planner => {
+      await planner.generate();
+      await planner.generate();
+      await planner.generate();
+      return planner.strategizer.population.length;
+    };
+    let results = await planFromManifest(manifest, {testSteps});
+    assert.equal(results, 5);
   });
 
-  it('make a plan with views', async () => {
+  // TODO: rewrite or remove this, it doesn't test anything more than the above test?
+  it('can make a plan with views', async () => {
     let manifest = await Manifest.load('./particles/test/giftlist.manifest', loader);
-    var arc = createTestArc('test-plan-arc', manifest, 'dom');
-    let Person = manifest.findSchemaByName('Person').entityClass();
-    let Product = manifest.findSchemaByName('Product').entityClass();
-    var personView = await arc.createView(Person.type.setViewOf(), 'aperson');
-    var productView = await arc.createView(Product.type.setViewOf(), 'products');
-    var planner = new Planner();
-    planner.init(arc);
-    await planner.generate(),
-    await planner.generate(),
-    await planner.generate(),
-    assert.equal(planner.strategizer.population.length, 5);
+    let arcFactory = async manifest => {
+      let arc = createTestArc("test-plan-arc", manifest, "dom");
+      let Person = manifest.findSchemaByName('Person').entityClass();
+      let Product = manifest.findSchemaByName('Product').entityClass();
+      let personView = await arc.createView(Person.type.setViewOf(), "aperson");
+      let productView = await arc.createView(Product.type.setViewOf(), "products");
+      return arc;
+    };
+    let testSteps = async planner => {
+      await planner.generate();
+      await planner.generate();
+      await planner.generate();
+      return planner.strategizer.population.length;
+    }
+    let results = await planFromManifest(manifest, {arcFactory, testSteps});
+    assert.equal(results, 5);
+  });
+
+  it('can map remote views structurally', async () => {
+    let results = await planFromManifest(`
+      view AView of {Text text, Text moreText} in './entities/empty.json'
+      particle P1 in './some-particle.js'
+        P1(in {Text text} text)
+      recipe
+        map as view
+        P1
+          text <- view
+    `);
+    assert.equal(results.length, 1);
+  });
+
+  it('can copy remote views structurally', async () => {
+    let results = await planFromManifest(`
+      view AView of {Text text, Text moreText} in './entities/empty.json'
+      particle P1 in './some-particle.js'
+        P1(in {Text text} text)
+      recipe
+        copy as view
+        P1
+          text <- view
+    `);
+    assert.equal(results.length, 1);
   });
 });
 

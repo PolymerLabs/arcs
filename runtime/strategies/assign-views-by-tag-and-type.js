@@ -21,6 +21,8 @@ export default class AssignViewsByTagAndType extends ViewMapperBase {
   }
 
   getMappableViews(type, tags) {
+    // TODO: We need to look at the connections to determine whether a
+    // schema subtype or supertype is OK.
     if (tags.length > 0) {
       return this.arc.findViewsByType(type, {tags});
     } else {

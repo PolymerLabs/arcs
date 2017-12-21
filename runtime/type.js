@@ -126,6 +126,18 @@ class Type {
     return this;
   }
 
+  static unwrapPair(type1, type2) {
+    assert(type1 instanceof Type);
+    assert(type2 instanceof Type);
+    if (type1.tag != type2.tag) {
+      return null;
+    }
+    if (type1.isEntity || type1.isInterface || type1.isVariableReference || type1.isManifestReference) {
+      return [type1, type2];
+    }
+    return unwrapPair(type1.data, type2.data);
+  }
+
   equals(type) {
     if (this.tag !== type.tag)
       return false;
