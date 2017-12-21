@@ -80,6 +80,10 @@ class SlotComposer {
       let suggestionContent =
         await suggestion.description.getRecipeSuggestion(suggestion.description.arc.recipes[0].particles, this._getDescriptionFormatter());
 
+      if (!suggestionContent) {
+        suggestionContent = 'No suggestion content was generated (unnamed recipe and no describable particles)';
+      }
+
       this._getSuggestionContext().createContext(
           this._suggestionsContext.createSuggestionElement({hash: suggestion.hash, plan: suggestion.plan}),
           suggestionContent);
