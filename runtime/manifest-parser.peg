@@ -69,7 +69,7 @@ ManifestItem
 
 // TODO: Entity syntax.
 ManifestView
-  = 'view' whiteSpace name:TopLevelIdent whiteSpace 'of' whiteSpace type:(ListType / ReferenceType) id:(whiteSpace id)? version:(whiteSpace Version)? tags:(whiteSpace TagList)? whiteSpace 'in' whiteSpace source:id eolWhiteSpace
+  = 'view' whiteSpace name:TopLevelIdent whiteSpace 'of' whiteSpace type:(SchemaInline / ListType / ReferenceType) id:(whiteSpace id)? version:(whiteSpace Version)? tags:(whiteSpace TagList)? whiteSpace 'in' whiteSpace source:id eolWhiteSpace
     items:(Indent (SameIndent ManifestViewItem)+)?
   {
     items = optional(items, extractIndented, []);
