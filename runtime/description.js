@@ -25,12 +25,13 @@ export default class Description {
   set relevance(relevance) { this._relevance = relevance; }
 
   async getRecipeSuggestion(particles, formatterClass) {
-    let desc = await new (formatterClass || DescriptionFormatter)(this).getRecipeSuggestion(particles);
+    let formatter = new (formatterClass || DescriptionFormatter)(this);
+    let desc = await formatter.getRecipeSuggestion(particles);
     if (desc) {
       return desc;
     }
 
-    return this._recipe.name;
+    return formatter.suggestionFromString(this._recipe.name || 'hello world!!!');
   }
 
   async getViewDescription(recipeView) {
@@ -47,7 +48,6 @@ export class DescriptionFormatter {
     this._description = description;
     this._arc = description._arc;
     this._particleDescriptions = [];
-    // this._updateDescriptionHandles(description);
 
     this.seenViews = new Set();
     this.seenParticles = new Set();
@@ -66,6 +66,10 @@ export class DescriptionFormatter {
     if (selectedDescriptions.length > 0) {
       return this._combineSelectedDescriptions(selectedDescriptions);
     }
+  }
+
+  suggestionFromString(str) {
+    return str;
   }
 
   _isSelectedDescription(desc) {

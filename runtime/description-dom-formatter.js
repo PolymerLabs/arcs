@@ -18,6 +18,10 @@ export default class DescriptionDomFormatter extends DescriptionFormatter {
     this._nextID = 0;
   }
 
+  suggestionFromString(str) {
+    return {template: str, model: {}};
+  }
+
   _isSelectedDescription(desc) {
     return super._isSelectedDescription(desc) || (!!desc.template && !!desc.model);
   }
