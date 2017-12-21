@@ -111,9 +111,24 @@ class Manifest {
   findViewById(id) {
     return this._find(manifest => manifest._views.find(view => view.id == id));
   }
-  findViewsByType(type, options) {
-    var tags = options && options.tags ? options.tags : [];
-    return [...this._findAll(manifest => manifest._views.filter(view => view.type.equals(type) && tags.filter(tag => !manifest._viewTags.get(view).includes(tag)).length == 0))];
+  findViewsByType(type, options={}) {
+    let tags = options.tags || [];
+    let subtype = options.subtype || false;
+    function typePredicate(view) {
+      if (subtype) {
+        let types = Type.unwrapPair(view.type, type);
+        if (types && types[0].isEntity) {
+          return types[0].entitySchema.contains(types[1].entitySchema);
+        }
+        return false;
+      }
+
+      return view.type.equals(type);
+    }
+    function tagPredicate(manifest, view) {
+      return tags.filter(tag => !manifest._viewTags.get(view).includes(tag)).length == 0;
+    }
+    return [...this._findAll(manifest => manifest._views.filter(view => typePredicate(view) && tagPredicate(manifest, view)))];
   }
   findShapeByName(name) {
     return this._find(manifest => manifest._shapes.find(shape => shape.name == name));

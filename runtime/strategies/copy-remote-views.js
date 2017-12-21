@@ -21,11 +21,7 @@ export default class CopyRemoteViews extends ViewMapperBase {
     this.fate = 'copy';
   }
 
-  getMappableViews(type, tags) {
-    if (tags.length > 0) {
-      return this._arc.context.findViewsByType(type, {tags});
-    } else {
-      return this._arc.context.findViewsByType(type);
-    }
+  getMappableViews(type, tags=[]) {
+    return this._arc.context.findViewsByType(type, {tags, subtype: true});
   }
 }

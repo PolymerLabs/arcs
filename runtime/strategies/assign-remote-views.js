@@ -21,11 +21,7 @@ export default class AssignRemoteViews extends ViewMapperBase {
     this.fate = 'map';
   }
 
-  getMappableViews(type, tags) {
-    if (tags.length > 0) {
-      return this._arc.context.findViewsByType(type, {tags});
-    } else {
-      return this._arc.context.findViewsByType(type);
-    }
+  getMappableViews(type, tags=[]) {
+    return this._arc.context.findViewsByType(type, {tags, subtype: true});
   }
 }
