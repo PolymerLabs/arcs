@@ -11,8 +11,6 @@ import '../../../particles/Recommend/Recommend.manifest'
 import '../../../particles/Chooser/Chooser.manifest'
 import '../../../particles/AlsoOn/AlsoOn.manifest'
 import '../../../particles/GiftList/GiftList.manifest'
-#import '../../../particles/Arrivinator/Arrivinator.manifest'
-#import '../../../particles/ManufacturerInfo/ManufacturerInfo.manifest'
 import '../../../particles/Interests/Interests.manifest'
 import '../../../particles/ProductMultiplexer/ProductMultiplexer.manifest'
 import '../../../particles/ArrivinatorX/ArrivinatorX.manifest'
@@ -57,10 +55,6 @@ recipe
   use as view3
   GiftList
     person <- view1
-#  Arrivinator
-#    list <- view2
-#  Arrivinator
-#    list <- view3
   ProductMultiplexer
     products <- view2
     hostedParticle = ArrivinatorX
@@ -71,8 +65,6 @@ recipe
 # Check manufacturer information for products.
 recipe
   use #shortlist as shortlist
-#  ManufacturerInfo
-#   list <- shortlist
   ProductMultiplexer
     products <- shortlist
     hostedParticle <- ManufacturerInfoX

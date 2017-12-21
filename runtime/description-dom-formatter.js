@@ -93,6 +93,7 @@ export default class DescriptionDomFormatter extends DescriptionFormatter {
       } else {  // view or slot handle.
         let sanitizedFullName = token.fullName.replace(/[.{}_\$]/g, '');
         let attribute = '';
+        // TODO(mmandlis): capitalize the data in the model instead.
         if (i == 0) {
           // Capitalize the first letter in the token.
           template = template.concat(`<style>
