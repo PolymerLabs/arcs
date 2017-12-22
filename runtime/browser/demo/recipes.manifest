@@ -9,10 +9,11 @@ import '../../../particles/ShowProducts/ShowProducts.manifest'
 import '../../../particles/ManageProducts/ManageProducts.manifest'
 import '../../../particles/Recommend/Recommend.manifest'
 import '../../../particles/Chooser/Chooser.manifest'
-import '../../../particles/AlsoOn/AlsoOn.manifest'
 import '../../../particles/GiftList/GiftList.manifest'
 import '../../../particles/Interests/Interests.manifest'
 import '../../../particles/ProductMultiplexer/ProductMultiplexer.manifest'
+import '../../../particles/ProductMultiplexer2/ProductMultiplexer2.manifest'
+import '../../../particles/AlsoOnX/AlsoOnX.manifest'
 import '../../../particles/ArrivinatorX/ArrivinatorX.manifest'
 import '../../../particles/ManufacturerInfoX/ManufacturerInfoX.manifest'
 
@@ -32,8 +33,8 @@ recipe
   #Chooser.resultList -> ManageProducts.list
   Chooser.resultList -> ShowProducts.list
   Chooser.resultList -> Recommend.known
-  Chooser.resultList -> AlsoOn.list
-  Chooser.choices -> AlsoOn.choices
+  Chooser.resultList -> ProductMultiplexer2.products
+  Chooser.choices -> ProductMultiplexer2.others
   map #wishlist as wishlist
   copy #shortlist as shortlist
   slot as slot0
@@ -45,7 +46,8 @@ recipe
     #list = shortlist
     consume root as slot0
       provide annotation as slot1
-  AlsoOn
+  ProductMultiplexer2
+    hostedParticle = AlsoOnX
     consume annotation as slot1
 
 # Buying for [person]'s [occasion] in [timeframe]? Product [X] arrives too late.

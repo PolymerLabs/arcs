@@ -7,11 +7,10 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-
 "use strict";
 
 defineParticle(({DomParticle}) => {
-  return class ProductMultiplexer extends DomParticle {
+  return class ProductMultiplexer2 extends DomParticle {
     constructor() {
       super();
       this._handleIds = new Set();
@@ -26,7 +25,14 @@ defineParticle(({DomParticle}) => {
           this.relevance = 0.1;
         }
 
+        var othersView = views.get('others');
+        let othersMappedId = await arc.mapHandle(othersView._view);
+
         let hostedParticle = await views.get('hostedParticle').get();
+        let productConnName = hostedParticle.connections.find(conn => conn.type.equals(productsView.type.primitiveType())).name;
+        let otherConnName = hostedParticle.connections.find(conn => conn.type.equals(othersView.type)).name;
+        this.handleByHostedHandle.set(otherConnName, 'others');
+
         for (let [index, product] of productsList.entries()) {
           if (this._handleIds.has(product.id)) {
             continue;
@@ -47,9 +53,11 @@ defineParticle(({DomParticle}) => {
             import '${hostedParticle.implFile.replace(/\.[^\.]+$/, ".manifest")}'
             recipe
               use '${productView._id}' as v1
+              map '${othersMappedId}' as v2
               slot '${slotId}' as s1
               ${hostedParticle.name}
-                ${hostedParticle.connections[0].name} <- v1
+                ${productConnName} <- v1
+                ${otherConnName} <- v2
                 consume ${hostedSlotName} as s1
           `;
 

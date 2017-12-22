@@ -109,7 +109,7 @@ class TypeChecker {
       return {valid: false};
     }
     // TODO: direction?
-    return {type: result.type, valid: true}
+    return {type: result, valid: true}
   }
 
   static substitute(type, variable, value) {

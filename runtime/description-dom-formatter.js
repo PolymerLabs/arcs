@@ -44,11 +44,13 @@ export default class DescriptionDomFormatter extends DescriptionFormatter {
 
       let {template, model} = this._retrieveTemplateAndModel(particleDesc, index);
 
-      await Promise.all(Object.keys(model).map(async tokenKey => {
+      let success = await Promise.all(Object.keys(model).map(async tokenKey => {
         let token = this._initHandleToken(model[tokenKey], particleDesc._particle);
         let tokenValue = await this.tokenToString(token);
 
-        if (tokenValue.template && tokenValue.model) {
+        if (tokenValue == undefined) {
+          return false;
+        } else if (tokenValue && tokenValue.template && tokenValue.model) {
           // Dom token.
           template = template.replace(`{{${tokenKey}}}`, tokenValue.template);
           delete model[tokenKey];
@@ -60,9 +62,12 @@ export default class DescriptionDomFormatter extends DescriptionFormatter {
           delete model[tokenKey];
           model[newTokenKey] = tokenValue;
         }
+        return true;
       }));
 
-      suggestionByParticleDesc.set(particleDesc, {template, model});
+      if (success.every(s => !!s)) {
+        suggestionByParticleDesc.set(particleDesc, {template, model});
+      }
     }));
 
     // Populate suggestions list while maintaining original particles order.
