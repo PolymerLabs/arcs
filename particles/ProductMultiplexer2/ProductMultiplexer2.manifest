@@ -9,11 +9,10 @@
 import '../../entities/Product.manifest'
 
 shape HostedParticleShape
-  HostedParticleShape(in Product product)  # why aren't argument names optional?
+  HostedParticleShape(in Product product, in [~a] others)
   consume annotation
 
-# TODO: This particle should use generic handle type and slot name.
-particle ProductMultiplexer in 'ProductMultiplexer.js'
-  ProductMultiplexer(host HostedParticleShape hostedParticle, in [Product] products)
+particle ProductMultiplexer2 in 'ProductMultiplexer2.js'
+  ProductMultiplexer2(host HostedParticleShape hostedParticle, in [Product] products, in [~a] others)
   consume set of annotation
   description `${hostedParticle} for each product in ${products}`

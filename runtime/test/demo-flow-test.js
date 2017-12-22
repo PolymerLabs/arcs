@@ -45,16 +45,18 @@ describe('demo flow', function() {
   copy 'manifest:./runtime/browser/demo/recipes.manifest:view0' #shortlist as view1 # Product List
   map 'manifest:./runtime/browser/demo/recipes.manifest:view1' #wishlist as view2 # Product List
   create as view3 # Description List
+  map 'manifest:./runtime/browser/demo/recipes.manifest:immediateAlsoOnX' as view4 # SHAAAAPE
   slot 'rootslotid-root' as slot3
-  AlsoOn as particle0
-    choices <- view0
-    list <- view1
-    consume set of annotation as slot2
-  Chooser as particle1
+  Chooser as particle0
     choices <- view0
     resultList = view1
     consume action as slot0
       provide set of annotation as slot1
+  ProductMultiplexer2 as particle1
+    hostedParticle host view4
+    others <- view0
+    products <- view1
+    consume set of annotation as slot2
   Recommend as particle2
     known <- view1
     population <- view2
@@ -80,12 +82,18 @@ describe('demo flow', function() {
       .newExpectations()
         .expectRenderSlot("ShowProducts", "root", ["model"])
         .expectRenderSlot("Chooser", "action", ["template", "model"])
-        .expectRenderSlot("AlsoOn", "annotation", ["template", "model"])
+        .expectRenderSlot("AlsoOnX", "annotation", ["template", "model"])
+        .expectRenderSlot("ProductMultiplexer2", "annotation", ["template", "model"])
+        .expectRenderSlot("AlsoOnX", "annotation", ["model"])
+        .expectRenderSlot("ProductMultiplexer2", "annotation", ["model"])
+        .expectRenderSlot("AlsoOnX", "annotation", ["model"])
+        .expectRenderSlot("ProductMultiplexer2", "annotation", ["model"])
         .thenSend("Chooser", "action", "_onChooseValue", {key: "1"})
       .newExpectations()
         .expectRenderSlot("ShowProducts", "root", ["model"])
         .expectRenderSlot("Chooser", "action", ["model"])
-        .expectRenderSlot("AlsoOn", "annotation", ["model"]);
+        .expectRenderSlot("AlsoOnX", "annotation", ["model"])
+        .expectRenderSlot("ProductMultiplexer2", "annotation", ["model"])
 
     await arc.instantiate(plan);
     await arc.pec.idle;

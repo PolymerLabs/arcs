@@ -36,6 +36,7 @@ export class Particle {
     this._slotByName = new Map();
     this.capabilities = capabilities || {};
     this.hostedSlotBySlotId = new Map();
+    this.handleByHostedHandle = new Map();
   }
 
   /** @method setViews(views)

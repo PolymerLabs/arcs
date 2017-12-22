@@ -158,9 +158,14 @@ class DomParticle extends XenStateMixin(Particle) {
       if (includeModel) {
         result.model.items.push(Object.assign(content.model || {}, {subId: value.subId}));
       }
+      // TODO: Currently using the first available template. Add support for multiple templates.
       if (includeTemplate && !result.template) {
-        // TODO: Currently using the first available template. Add support for multiple templates.
-        result.template = content.template;
+        let template = content.template;
+        // Replace hosted particle handle names with the corresponding transformation particle handles.
+        this.handleByHostedHandle.forEach((handleName, hostedHandleName) => {
+          template = template.replace(new RegExp(`\{\{(${hostedHandleName})(.*)\}\}`), `{{${handleName}$2}}`);
+        });
+        result.template = template;
       }
     }
     return result;

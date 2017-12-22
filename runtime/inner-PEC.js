@@ -105,6 +105,11 @@ class InnerPEC {
       return proxy;
     }
 
+    this._apiPort.onMapHandleCallback = ({id, callback}) => {
+      Promise.resolve().then(() => callback(id));
+      return id;
+    }
+
     this._apiPort.onCreateSlotCallback = ({hostedSlotId, callback}) => {
       Promise.resolve().then(() => callback(hostedSlotId));
       return hostedSlotId;
@@ -210,6 +215,12 @@ class InnerPEC {
             var v = handle.handleFor(proxy, proxy.type.isSetView, true, true);
             v.entityClass = (proxy.type.isSetView ? proxy.type.primitiveType().entitySchema : proxy.type.entitySchema).entityClass();
             resolve(v);
+          }}));
+      },
+      mapHandle: function(handle) {
+        return new Promise((resolve, reject) =>
+          pec._apiPort.ArcMapHandle({arc: arcId, handle, callback: id => {
+            resolve(id);
           }}));
       },
       createSlot: function(transformationParticle, transformationSlotName, hostedParticleName, hostedSlotName) {

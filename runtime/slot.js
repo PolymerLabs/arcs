@@ -52,7 +52,10 @@ class Slot {
       this.startRenderCallback({ particle: this.consumeConn.particle, slotName: this.consumeConn.name, contentTypes });
 
       for (let hostedSlot of this._hostedSlotById.values()) {
-        this.startRenderCallback({ particle: hostedSlot.particle, slotName: hostedSlot.slotName, contentTypes });
+        if (hostedSlot.particle) {
+          // Note: hosted particle may still not be set, if the hosted slot was already created, but the inner recipe wasn't instantiate yet.
+          this.startRenderCallback({ particle: hostedSlot.particle, slotName: hostedSlot.slotName, contentTypes });
+        }
       }
     }
   }

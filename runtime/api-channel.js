@@ -262,6 +262,9 @@ class PECOuterPort extends APIPort {
     this.registerHandler("ArcCreateHandle", {callback: this.Direct, arc: this.LocalMapped, type: this.ByLiteral(Type), name: this.Direct});
     this.registerInitializer("CreateHandleCallback", {callback: this.Direct, type: this.ByLiteral(Type), name: this.Direct, id: this.Direct});
 
+    this.registerHandler("ArcMapHandle", {callback: this.Direct, arc: this.LocalMapped, handle: this.Mapped});
+    this.registerInitializer("MapHandleCallback", {callback: this.Direct, id: this.Direct});
+
     this.registerHandler("ArcCreateSlot",
       { callback: this.Direct, arc: this.LocalMapped, transformationParticle: this.Mapped, transformationSlotName: this.Direct, hostedParticleName: this.Direct, hostedSlotName: this.Direct});
     this.registerInitializer("CreateSlotCallback", {callback: this.Direct, hostedSlotId: this.Direct});
@@ -306,6 +309,8 @@ class PECInnerPort extends APIPort {
 
     this.registerCall("ArcCreateHandle", {callback: this.LocalMapped, arc: this.Direct, type: this.ByLiteral(Type), name: this.Direct});
     this.registerInitializerHandler("CreateHandleCallback", {callback: this.LocalMapped, type: this.ByLiteral(Type), name: this.Direct, id: this.Direct});
+    this.registerCall("ArcMapHandle", {callback: this.LocalMapped, arc: this.Direct, handle: this.Mapped});
+    this.registerInitializerHandler("MapHandleCallback", {callback: this.LocalMapped, id: this.Direct});
     this.registerCall("ArcCreateSlot",
       {callback: this.LocalMapped, arc: this.Direct, transformationParticle: this.Mapped, transformationSlotName: this.Direct, hostedParticleName: this.Direct, hostedSlotName: this.Direct});
     this.registerInitializerHandler("CreateSlotCallback", { callback: this.LocalMapped, hostedSlotId: this.Direct });

@@ -153,8 +153,12 @@ export class DescriptionFormatter {
   }
 
   async patternToSuggestion(pattern, particleDescription) {
-    this._tokens = this._initTokens(pattern, particleDescription._particle);
-    return this._joinTokens(await Promise.all(this._tokens.map(async token => await this.tokenToString(token))));
+    var tokens = this._initTokens(pattern, particleDescription._particle);
+    let tokenPromises = tokens.map(async token => await this.tokenToString(token));
+    let tokenResults = await Promise.all(tokenPromises);
+    if (tokenResults.filter(res => res == undefined).length == 0) {
+      return this._joinTokens(tokenResults);
+    }
   }
 
   _initTokens(pattern, particle) {
