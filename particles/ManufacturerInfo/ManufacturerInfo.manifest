@@ -9,6 +9,6 @@
 import '../../entities/Product.manifest'
 
 particle ManufacturerInfo in 'ManufacturerInfo.js'
-  ManufacturerInfo(in [Product] list)
-  consume set of annotation
-  description `check manufacturer information for ${list}`
+  ManufacturerInfo(in Product product)
+  consume annotation
+  description `check manufacturer information`

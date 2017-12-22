@@ -11,7 +11,6 @@
 "use strict";
 
 defineParticle(({DomParticle}) => {
-
   let template = `
     <div hidden="{{notAlsoOn}}">
       <span>Also on:</span> <span>{{choices.description}}</span>
@@ -23,20 +22,14 @@ defineParticle(({DomParticle}) => {
       return template;
     }
     _shouldRender(props) {
-      return props.list && props.list.length && props.choices;
+      return !!props && !!props.product && !!props.choices;
     }
     _render(props) {
+      let {product} = props;
+      let notAlsoOn = !Boolean(props.choices.find(c => c.name === product.name));
       return {
-        items: props.list.map(item => {
-          let subId = item.name.replace(/ /g,'').toLowerCase();
-          let notAlsoOn = !Boolean(props.choices.find(c => c.name === item.name));
-          return {
-            subId,
-            notAlsoOn,
-          };
-        })
+        notAlsoOn,
       };
     }
   };
-
 });
