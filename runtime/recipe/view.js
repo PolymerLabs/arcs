@@ -18,9 +18,10 @@ class View {
     this._tags = [];
     this._type = undefined;
     this._fate = null;
-    // TODO: replace originalFate with more generic mechanism for tracking
+    // TODO: replace originalFate and originalId with more generic mechanism for tracking
     // how and from what the recipe was generated.
     this._originalFate = null;
+    this._originalId = null;
     this._connections = [];
     this._mappedType = undefined;
     this._storageKey = undefined;
@@ -38,6 +39,7 @@ class View {
       view._type = this._type;
       view._fate = this._fate;
       view._originalFate = this._originalFate;
+      view._originalId = this._originalId;
       view._mappedType = this._mappedType;
       view._storageKey = this._storageKey;
 
@@ -81,12 +83,18 @@ class View {
     this._fate = fate;
   }
   get originalFate() { return this._originalFate || "?"; }
+  get originalId() { return this._originalId; }
   get recipe() { return this._recipe; }
   get tags() { return this._tags; } // only tags owned by the view
   set tags(tags) { this._tags = tags; }
   get type() { return this._type; } // nullable
   get id() { return this._id; }
-  set id(id) { this._id = id; }
+  set id(id) {
+    if (!this._originalId) {
+      this._originalId = this._id;
+    }
+    this._id = id;
+  }
   mapToView(view) {
     this._id = view.id;
     this._type = undefined;
