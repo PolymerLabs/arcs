@@ -16,7 +16,6 @@ class Shape {
     this.reverse = new Map();
     for (var p in particles)
       this.reverse.set(particles[p], p);
-    this.reverseViews = new Map();
     for (var v in views)
       this.reverse.set(views[v], v);
     for (var vc in vcs)
@@ -92,6 +91,11 @@ class RecipeUtil {
             if (reverse.get(recipeVC.view) != shapeVC.view)
               continue;
           } else if (forward.has(shapeVC.view) && forward.get(shapeVC.view) !== null) {
+            continue;
+          }
+          if ((shapeVC.view.fate != 'create' || (recipeVC.view.fate != 'create' && recipeVC.view.originalFate != 'create')) &&
+              shapeVC.view.id != recipeVC.view.id && shapeVC.view.id != recipeVC.view.originalId) {
+            // this is a different view.
             continue;
           }
         }

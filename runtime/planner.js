@@ -127,7 +127,7 @@ class Planner {
   _matchesActiveRecipe(plan) {
     var planShape = RecipeUtil.recipeToShape(plan);
     var result = RecipeUtil.find(this._arc._activeRecipe, planShape);
-    return result[0].score == 0;
+    return result.some(r => r.score == 0);
   }
 
   async suggest(timeout, generations) {
