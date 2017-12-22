@@ -13,9 +13,9 @@ import '../../../particles/GiftList/GiftList.manifest'
 import '../../../particles/Interests/Interests.manifest'
 import '../../../particles/ProductMultiplexer/ProductMultiplexer.manifest'
 import '../../../particles/ProductMultiplexer2/ProductMultiplexer2.manifest'
-import '../../../particles/AlsoOnX/AlsoOnX.manifest'
-import '../../../particles/ArrivinatorX/ArrivinatorX.manifest'
-import '../../../particles/ManufacturerInfoX/ManufacturerInfoX.manifest'
+import '../../../particles/AlsoOn/AlsoOn.manifest'
+import '../../../particles/Arrivinator/Arrivinator.manifest'
+import '../../../particles/ManufacturerInfo/ManufacturerInfo.manifest'
 
 # Create shortlist with [product, ...]
 recipe
@@ -47,7 +47,7 @@ recipe
     consume root as slot0
       provide annotation as slot1
   ProductMultiplexer2
-    hostedParticle = AlsoOnX
+    hostedParticle = AlsoOn
     consume annotation as slot1
 
 # Buying for [person]'s [occasion] in [timeframe]? Product [X] arrives too late.
@@ -59,17 +59,17 @@ recipe
     person <- view1
   ProductMultiplexer
     products <- view2
-    hostedParticle = ArrivinatorX
+    hostedParticle = Arrivinator
   ProductMultiplexer
     products <- view3
-    hostedParticle = ArrivinatorX
+    hostedParticle = Arrivinator
 
 # Check manufacturer information for products.
 recipe
   use #shortlist as shortlist
   ProductMultiplexer
     products <- shortlist
-    hostedParticle <- ManufacturerInfoX
+    hostedParticle <- ManufacturerInfo
 
 # TODO: Check for newer versions, e.g. there is a new version of [product].
 # TODO: [Manufacturer] recommends [product] instead of [product] for 13 year olds.

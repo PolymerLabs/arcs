@@ -22,37 +22,30 @@ defineParticle(({DomParticle}) => {
     get template() {
       return template;
     }
-    _render(props) {
-      if (props.list && props.list.length) {
-        let now = Date.now();
-        let needed = new Date('2017-08-04').getTime();
-        return {
-          items: props.list.map((item, i) => {
-            // TODO(sjmiles): bypass schema for the moment
-            item = item.rawData;
-            let subId = item.name.replace(/ /g,'').toLowerCase();
-            let style = null;
-            let arrival = '';
-            if (item.shipDays) {
-              let then = new Date(now + item.shipDays*daysToMs);
-              if (then > needed) {
-                style = {color: 'orange', fontWeight: 'bold', fontStyle: 'normal'};
-              } else {
-                style = {color: 'green'};
-              }
-              arrival = `Arrives ${then.toDateString()}`;
-            } else {
-              arrival = `No shipping info.`;
-            }
-            return {
-              subId,
-              arrival,
-              style
-            };
-          })
-        };
-      }
+    _shouldRender(props) {
+      return !!props && !!props.product;
     }
-  };
-
+    _render(props) {
+      let {product} = props;
+      let now = Date.now();
+      let needed = new Date('2017-12-04').getTime();
+      let style = null;
+      let arrival = '';
+      if (product.shipDays) {
+        let then = new Date(now + product.shipDays * daysToMs);
+        if (then > needed) {
+          style = {color: 'orange', fontWeight: 'bold', fontStyle: 'normal'};
+        } else {
+          style = {color: 'green'};
+        }
+        arrival = `Arrives ${then.toDateString()}`;
+      } else {
+        arrival = `No shipping info.`;
+      }
+      return {
+        arrival,
+        style
+      };
+    }
+  }
 });

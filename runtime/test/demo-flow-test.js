@@ -45,7 +45,7 @@ describe('demo flow', function() {
   copy 'manifest:./runtime/browser/demo/recipes.manifest:view0' #shortlist as view1 # Product List
   map 'manifest:./runtime/browser/demo/recipes.manifest:view1' #wishlist as view2 # Product List
   create as view3 # Description List
-  map 'manifest:./runtime/browser/demo/recipes.manifest:immediateAlsoOnX' as view4 # SHAAAAPE
+  map 'manifest:./runtime/browser/demo/recipes.manifest:immediateAlsoOn' as view4 # SHAAAAPE
   slot 'rootslotid-root' as slot3
   Chooser as particle0
     choices <- view0
@@ -82,17 +82,17 @@ describe('demo flow', function() {
       .newExpectations()
         .expectRenderSlot("ShowProducts", "root", ["model"])
         .expectRenderSlot("Chooser", "action", ["template", "model"])
-        .expectRenderSlot("AlsoOnX", "annotation", ["template", "model"])
+        .expectRenderSlot("AlsoOn", "annotation", ["template", "model"])
         .expectRenderSlot("ProductMultiplexer2", "annotation", ["template", "model"])
-        .expectRenderSlot("AlsoOnX", "annotation", ["model"])
+        .expectRenderSlot("AlsoOn", "annotation", ["model"])
         .expectRenderSlot("ProductMultiplexer2", "annotation", ["model"])
-        .expectRenderSlot("AlsoOnX", "annotation", ["model"])
+        .expectRenderSlot("AlsoOn", "annotation", ["model"])
         .expectRenderSlot("ProductMultiplexer2", "annotation", ["model"])
         .thenSend("Chooser", "action", "_onChooseValue", {key: "1"})
       .newExpectations()
         .expectRenderSlot("ShowProducts", "root", ["model"])
         .expectRenderSlot("Chooser", "action", ["model"])
-        .expectRenderSlot("AlsoOnX", "annotation", ["model"])
+        .expectRenderSlot("AlsoOn", "annotation", ["model"])
         .expectRenderSlot("ProductMultiplexer2", "annotation", ["model"])
 
     await arc.instantiate(plan);

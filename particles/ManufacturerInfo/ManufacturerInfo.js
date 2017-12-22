@@ -21,28 +21,23 @@ defineParticle(({DomParticle}) => {
       return template;
     }
     _shouldRender(props) {
-      return props.list && props.list.length;
+      return !!props && !!props.product;
     }
     _render(props) {
-      return {
-        items: props.list.map(item => {
-          let subId = item.name.replace(/ /g,'').toLowerCase();
-          let msg = '';
-          switch (item.name) {
-            case 'Power Tool Set':
-              msg = `Newer version available: ${item.name} v2.`;
-              break;
-            case 'Guardian of the Galaxy Figure':
-              msg = `Manufacturer recommends a more appropriate gift for a 13yo.`;
-              break;
-            case 'Book: How to Draw':
-              msg = `Award-winning book!`;
-              break;
-          }
-          return {msg, subId};
-        })
-      };
+      let {product} = props;
+      let msg = '';
+      switch (product.name) {
+        case 'Power Tool Set':
+          msg = `Newer version available: ${product.name} v2.`;
+          break;
+        case 'Guardian of the Galaxy Figure':
+          msg = `Manufacturer recommends a more appropriate gift for a 13yo.`;
+          break;
+        case 'Book: How to Draw':
+          msg = `Award-winning book!`;
+          break;
+      }
+      return {msg};
     }
   };
-
 });
