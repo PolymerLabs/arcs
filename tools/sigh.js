@@ -251,7 +251,7 @@ async function run(funsAndArgs) {
   } catch (e) {
     console.error(e);
   } finally {
-    console.log(result ? `🎉  ${rot13(Nqinapr Nhfgenyvn!)} 🇳🇿` : '😱');
+    console.log(result ? `🎉  ${rot13('Nqinapr Nhfgenyv!')} 🇳🇿` : '😱');
     return result;
   }
 }
