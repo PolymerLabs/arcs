@@ -131,6 +131,13 @@ function test(args) {
     return '/' + path.replace(new RegExp(String.fromCharCode(92,92), 'g'), "/");
   }
 
+  function rot13(str) {
+    var input     = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'.split('');
+    var output    = 'NOPQRSTUVWXYZABCDEFGHIJKLMnopqrstuvwxyzabcdefghijklm'.split('');
+    var lookup    = input.reduce((m,k,i) => Object.assign(m, {[k]: output[i]}), {});
+    return str.split('').map(x => lookup[x] || x).join('');
+  }
+
   function buildTestRunner() {
     let tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'sigh-'));
     let chain = [];
@@ -244,7 +251,7 @@ async function run(funsAndArgs) {
   } catch (e) {
     console.error(e);
   } finally {
-    console.log(result ? '🎉' : '😱');
+    console.log(result ? `🎉  ${rot13(Nqinapr Nhfgenyvn!)} 🇳🇿` : '😱');
     return result;
   }
 }
