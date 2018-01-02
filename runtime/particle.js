@@ -15,8 +15,6 @@ import tracing from '../tracelib/trace.js';
 import assert from '../platform/assert-web.js';
 import Schema from './schema.js';
 
-const DEBUGGING = false;
-
 /** @class Particle
  * A basic particle. For particles that provide UI, you may like to
  * instead use DOMParticle.
@@ -137,14 +135,6 @@ export class Particle {
     var trace = tracing.start({cat: 'particle', names: this.constructor.name + "::on", args: {view: names, event: kind}});
     names.forEach(name => views.get(name).on(kind, tracing.wrap({cat: 'particle', name: this.constructor.name, args: {view: name, event: kind}}, f), this));
     trace.end();
-  }
-
-  logDebug(tag, view) {
-    if (!DEBUGGING)
-      return;
-    let direction = this.spec.connectionMap.get(tag).direction;
-    view.debugString().then(v => console.log(
-       `(${this.spec.name})(${direction})(${tag}): (${view.name})`, v));
   }
 
   when(changes, f) {
