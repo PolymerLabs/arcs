@@ -98,6 +98,13 @@ async function webpack() {
   return true;
 }
 
+function rot13(str) {
+  var input     = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'.split('');
+  var output    = 'NOPQRSTUVWXYZABCDEFGHIJKLMnopqrstuvwxyzabcdefghijklm'.split('');
+  var lookup    = input.reduce((m,k,i) => Object.assign(m, {[k]: output[i]}), {});
+  return str.split('').map(x => lookup[x] || x).join('');
+}
+
 function test(args) {
   let options = minimist(args, {
     string: ['grep'],
@@ -129,13 +136,6 @@ function test(args) {
     if (path[0] == '/')
       return path;
     return '/' + path.replace(new RegExp(String.fromCharCode(92,92), 'g'), "/");
-  }
-
-  function rot13(str) {
-    var input     = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'.split('');
-    var output    = 'NOPQRSTUVWXYZABCDEFGHIJKLMnopqrstuvwxyzabcdefghijklm'.split('');
-    var lookup    = input.reduce((m,k,i) => Object.assign(m, {[k]: output[i]}), {});
-    return str.split('').map(x => lookup[x] || x).join('');
   }
 
   function buildTestRunner() {
