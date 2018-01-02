@@ -10,9 +10,7 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
   if (request.method == 'loadAllEntities') {
     loadEntitiesFromTabs().then(results => {
       console.log(
-        'event page finished loading entities from all tabs',
-        results
-      );
+          'event page finished loading entities from all tabs', results);
       sendResponse(_prepareResults(results));
     });
 
@@ -27,9 +25,8 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
  */
 async function loadEntitiesFromTabs() {
   let tabs = [];
-  let currentTabs = await new Promise(resolve =>
-    chrome.tabs.query({}, resolve)
-  );
+  let currentTabs =
+      await new Promise(resolve => chrome.tabs.query({}, resolve));
   for (let tab of currentTabs) {
     if (!/^https?/.test(tab.url)) {
       continue;
@@ -37,7 +34,7 @@ async function loadEntitiesFromTabs() {
     tabs.push({
       url: tab.url,
       title: tab.title,
-      id: tab.id
+      id: tab.id,
     });
   }
 
@@ -51,9 +48,9 @@ async function loadEntitiesFromTabs() {
 }
 
 async function loadEntitiesFromTab(tab) {
-  return new Promise(resolve =>
-    chrome.tabs.sendMessage(tab.id, { method: 'loadEntities' }, result => {
-      resolve({ tab: tab, result: result });
-    })
-  );
+  return new Promise(
+      resolve =>
+          chrome.tabs.sendMessage(tab.id, {method: 'loadEntities'}, result => {
+            resolve({tab: tab, result: result});
+          }));
 }
