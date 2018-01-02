@@ -12,14 +12,11 @@ defineParticle(({Particle}) => {
   return class Recommend extends Particle {
     setViews(views) {
       this.on(views, 'population', 'change', e => {
-        this.logDebug("known", views.get("known"));
         var populationView = views.get("population");
-        this.logDebug("population", populationView);
         populationView.toList().then(data => {
           for (let i = 0; i < 3 && i < data.length; i++) {
             views.get('recommendations').store(data[i]);
           }
-          this.logDebug("recommendations", views.get('recommendations'));
           this.relevance = 9;
         });
       });

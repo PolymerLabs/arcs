@@ -151,11 +151,6 @@ class Collection extends Handle {
     var serialization = this._serialize(entity);
     return this._view.remove(serialization.id);
   }
-
-  async debugString() {
-    var list = await this.toList();
-    return list ? ('[' + list.map(p => p.debugString).join(", ") + ']') : 'undefined';
-  }
 }
 
 /** @class Variable
@@ -207,10 +202,6 @@ class Variable extends Handle {
     if (!this.canWrite)
       throw new Error("View not writeable");
     await this._view.clear();
-  }
-  async debugString() {
-    var value = await this.get();
-    return value ? value.debugString : 'undefined';
   }
 }
 
