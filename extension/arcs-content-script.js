@@ -8,34 +8,30 @@
 // TODO(smalls) there should be a better way to detect an arcs page we can
 // inject data into.
 const isExtensionAppShellPage =
-  document.body.getElementsByTagName('extension-app-shell').length > 0;
+    document.body.getElementsByTagName('extension-app-shell').length > 0;
 
 if (isExtensionAppShellPage) {
   // Listen for requests to send entities.
   window.addEventListener('message', event => {
     console.log(
-      'arcs-page content script received event ' + event.data.method,
-      event.data
-    );
+        'arcs-page content script received event ' + event.data.method,
+        event.data);
     if (event.source != window || event.data.method != 'pleaseInjectArcsData') {
       return;
     }
 
-    chrome.runtime.sendMessage({ method: 'loadAllEntities' }, entities => {
+    chrome.runtime.sendMessage({method: 'loadAllEntities'}, entities => {
       console.log(
-        'arcs-extension content script received entities from extension; forwarding to extension-app-shell for injection',
-        entities
-      );
-      window.postMessage({ method: 'injectArcsData', entities: entities }, '*');
+          'arcs-extension content script received entities from extension; forwarding to extension-app-shell for injection',
+          entities);
+      window.postMessage({method: 'injectArcsData', entities: entities}, '*');
     });
   });
 } else {
   // Listen for requests from the event page
   chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     console.log(
-      'arcs-other content script received message ' + request,
-      request
-    );
+        'arcs-other content script received message ' + request, request);
     if (request.method == 'loadEntities') {
       extractEntities(document, window.location).then(results => {
         sendResponse(results);

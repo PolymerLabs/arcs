@@ -21,9 +21,8 @@ describe('PageExtractor', function() {
       return extractEntities(document, window.location).then(function(results) {
         assert.equal(2, results.length);
         assert.deepEqual(
-          { '@type': 'http://schema.org/Product', name: 'Chile Verde Burrito' },
-          results[0]
-        );
+            {'@type': 'http://schema.org/Product', name: 'Chile Verde Burrito'},
+            results[0]);
         // The web page url contains a machine specific path so just check the
         // file name presence.
         assert.equal('http://schema.org/WebPage', results[1]['@type']);
