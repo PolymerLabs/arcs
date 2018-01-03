@@ -100,7 +100,7 @@ class Slot {
     let hostedSlot = this.getHostedSlot(hostedSlotId);
     assert(hostedSlot, `Hosted slot ${hostedSlotId} doesn't exist`);
     assert(hostedSlot.particleName == hostedParticle.name,
-           `Unexpected particle name ${hostedParticle.name} for slot ${hostedSlotId}; expected: ${hostedSlot.particleName}`)
+           `Unexpected particle name ${hostedParticle.name} for slot ${hostedSlotId}; expected: ${hostedSlot.particleName}`);
     hostedSlot.particle = hostedParticle;
     if (this.getContext() && this.startRenderCallback) {
       this.startRenderCallback({ particle: hostedSlot.particle, slotName: hostedSlot.slotName, contentTypes: this.constructRenderRequest() });

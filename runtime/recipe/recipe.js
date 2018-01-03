@@ -169,7 +169,7 @@ class Recipe {
       let checkForInvalid = (name, list, f) => {
         var invalids = list.filter(item => !item._isValid());
         if (invalids.length > 0)
-          console.log(`Has Invalid ${name} ${invalids.map(f)}`)
+          console.log(`Has Invalid ${name} ${invalids.map(f)}`);
       }
       checkForInvalid('Views', this._views, view => `'${view.toString()}'`);
       checkForInvalid('Particles', this._particles, particle => particle.name);
@@ -256,7 +256,7 @@ class Recipe {
           slots.push(ps);
           seenSlots.add(ps);
         }
-      })
+      });
     }
 
     // Put particles and views in their final ordering.

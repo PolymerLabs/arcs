@@ -73,5 +73,5 @@ describe('shape', function() {
       assert(shape._particleMatches(manifest.particles[1]));
       assert(shape._particleMatches(manifest.particles[2]));
       assert(shape._particleMatches(manifest.particles[3]));
-  })
+  });
 });

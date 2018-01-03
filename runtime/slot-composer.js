@@ -177,7 +177,7 @@ class SlotComposer {
     if (slot) {
       // Set the slot's new content.
       await slot.setContent(content, eventlet => {
-        this.arc.pec.sendEvent(particle, slotName, eventlet)
+        this.arc.pec.sendEvent(particle, slotName, eventlet);
         this.arc.makeSuggestions && this.arc.makeSuggestions();
       });
       return;

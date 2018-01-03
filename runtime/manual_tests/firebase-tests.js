@@ -21,7 +21,7 @@ describe('firebase', function() {
         normative
           Text value
     `);
-    let arc = new Arc({id: 'test'})
+    let arc = new Arc({id: 'test'});
     let storage = new StorageProviderFactory(arc);
     let BarType = Type.newEntity(manifest.schemas.Bar);
     let value = "Hi there" + Math.random();
@@ -38,7 +38,7 @@ describe('firebase', function() {
         normative
           Text value
     `);
-    let arc = new Arc({id: 'test'})
+    let arc = new Arc({id: 'test'});
     let storage = new StorageProviderFactory(arc);
     let BarType = Type.newEntity(manifest.schemas.Bar);
     let value1 = "Hi there" + Math.random();

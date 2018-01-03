@@ -171,13 +171,13 @@ export default class DescriptionDomFormatter extends DescriptionFormatter {
       return {
         template: `${description.template} (${viewValue.template})`,
         model: Object.assign(description.model, viewValue.model)
-      }
+      };
     }
     let descKey = `${token.viewName}Description${++this._nextID}`;
     return {
       template: `<span>{{${descKey}}}</span> (${viewValue.template})`,
       model: Object.assign({[descKey]: description}, viewValue.model)
-    }
+    };
   }
 
   _formatEntityProperty(viewName, properties, value) {
@@ -200,7 +200,7 @@ export default class DescriptionDomFormatter extends DescriptionFormatter {
       return {
         template: viewList.map((v, i) => `<b>{{${viewKey}${i}}}</b>`).join(", "),
         model: Object.assign(...viewList.map((v, i) => ({[`${viewKey}${i}`]: v.rawData.name} )))
-      }
+      };
     }
     return {
       template: `<b>{{${viewKey}Length}}</b> items`,
@@ -212,7 +212,7 @@ export default class DescriptionDomFormatter extends DescriptionFormatter {
       return {
         template: `<b>{{${viewName}Var}}</b>`,
         model: {[`${viewName}Var`]: viewVar.rawData.name}
-      }
+      };
     }
   }
 }

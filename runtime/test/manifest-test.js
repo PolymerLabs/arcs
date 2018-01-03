@@ -294,7 +294,7 @@ describe('manifest', function() {
       join(_, file) {
         return file;
       },
-    }
+    };
     let manifest = await Manifest.load('a', loader, {registry});
     assert.equal(registry.a, manifest);
     assert.equal(manifest.imports[0], registry.b);
@@ -371,7 +371,7 @@ describe('manifest', function() {
       },
     };
     let manifest = await Manifest.load('a', loader);
-    assert.equal(manifest.recipes.length, 3)
+    assert.equal(manifest.recipes.length, 3);
   });
   it('can parse a schema with union typing', async () => {
     let manifest = await Manifest.parse(`
@@ -470,8 +470,8 @@ describe('manifest', function() {
         }
         ++count;
       }
-    })
-    assert.equal(count, 17);
+    });
+    assert.equal(count, 18);
   });
   it('loads entities from json files', async () => {
     let manifestSource = `
@@ -588,7 +588,7 @@ Expected " ", "#", "\\n", "\\r", [ ], [A-Z], or [a-z] but "?" found.
           create as x
           TestParticle
             a = x
-            b = x`
+            b = x`;
     let loader = {
       loadResource(path) {
         return manifestSource;
@@ -715,7 +715,7 @@ Expected " ", "#", "\\n", "\\r", [ ], [A-Z], or [a-z] but "?" found.
       let recipe = manifest.recipes[0];
       recipe.normalize();
       assert.isTrue(recipe.isResolved());
-    }
+    };
     verify(manifest);
     verify(await Manifest.parse(manifest.toString(), {}));
   });

@@ -371,7 +371,7 @@ export class DescriptionFormatter {
     // Add description to result array.
     if (viewDescription) {
       // Add the connection spec's description pattern.
-      return await this.patternToSuggestion(viewDescription.pattern, chosenParticleDescription)
+      return await this.patternToSuggestion(viewDescription.pattern, chosenParticleDescription);
     }
   }
   _formatViewDescription(viewConn, view) {

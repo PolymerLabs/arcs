@@ -27,7 +27,7 @@ async function setup() {
   let recipe = manifest.recipes[0];
   assert(recipe.normalize());
   assert(recipe.isResolved());
-  return {arc, recipe}
+  return {arc, recipe};
 }
 
 describe('manifest integration', () => {

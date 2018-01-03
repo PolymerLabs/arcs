@@ -30,7 +30,7 @@ class OuterPEC extends PEC {
       if (this.slotComposer) {
         this.slotComposer.renderSlot(particle, slotName, content);
       }
-    }
+    };
 
     this._apiPort.onSynchronize = async ({handle, target, callback, modelCallback, type}) => {
       if (handle.constructor.name == 'InMemoryVariable') {
@@ -44,13 +44,13 @@ class OuterPEC extends PEC {
 
     this._apiPort.onHandleGet = async ({handle, callback}) => {
       this._apiPort.SimpleCallback({callback, data: await handle.get()});
-    }
+    };
 
     this._apiPort.onHandleToList = async ({handle, callback}) => {
       this._apiPort.SimpleCallback({callback, data: await handle.toList()});
-    }
+    };
 
-    this._apiPort.onHandleSet = ({handle, data}) => {handle.set(data)};
+    this._apiPort.onHandleSet = ({handle, data}) => {handle.set(data);};
     this._apiPort.onHandleStore = ({handle, data}) => handle.store(data);
     this._apiPort.onHandleClear = ({handle}) => handle.clear();
     this._apiPort.onHandleRemove = ({handle, data}) => handle.remove(data);
@@ -60,17 +60,17 @@ class OuterPEC extends PEC {
         this._idlePromise = undefined;
         this._idleResolve(relevance);
       }
-    }
+    };
 
     this._apiPort.onConstructInnerArc = ({callback, particle}) => {
       var arc = {};
       this._apiPort.ConstructArcCallback({callback, arc});
-    }
+    };
 
     this._apiPort.onArcCreateHandle = async ({callback, arc, type, name}) => {
       var view = await this._arc.createView(type, name);
       this._apiPort.CreateHandleCallback(view, {type, name, callback, id: view.id});
-    }
+    };
 
     this._apiPort.onArcMapHandle = async ({callback, arc, handle}) => {
       assert(this._arc.findViewById(handle.id), `Cannot map nonexistent handle ${handle.id}`);
@@ -83,7 +83,7 @@ class OuterPEC extends PEC {
         var hostedSlotId = this.slotComposer.createHostedSlot(transformationParticle, transformationSlotName, hostedParticleName, hostedSlotName);
       }
       this._apiPort.CreateSlotCallback({}, {callback, hostedSlotId});
-    }
+    };
 
     this._apiPort.onArcLoadRecipe = async ({arc, recipe, callback}) => {
       let manifest = await Manifest.parse(recipe, {loader: this._arc._loader, fileName: ''});
@@ -105,8 +105,8 @@ class OuterPEC extends PEC {
       } else {
         error = "No recipe defined";
       }
-      this._apiPort.SimpleCallback({callback, data: error})
-    }
+      this._apiPort.SimpleCallback({callback, data: error});
+    };
   }
 
   stop() {
@@ -129,7 +129,7 @@ class OuterPEC extends PEC {
   }
 
   sendEvent(particle, slotName, event) {
-    this._apiPort.UIEvent({particle, slotName, event})
+    this._apiPort.UIEvent({particle, slotName, event});
   }
 
   instantiate(particleSpec, spec, views, lastSeenVersion) {
@@ -159,7 +159,7 @@ class OuterPEC extends PEC {
     this._apiPort.StopRender({particle, slotName});
   }
   innerArcRender(transformationParticle, transformationSlotName, hostedSlotId, content) {
-    this._apiPort.InnerArcRender({transformationParticle, transformationSlotName, hostedSlotId, content})
+    this._apiPort.InnerArcRender({transformationParticle, transformationSlotName, hostedSlotId, content});
   }
 }
 

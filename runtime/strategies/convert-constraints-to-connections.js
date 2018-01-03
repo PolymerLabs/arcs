@@ -77,7 +77,7 @@ export default class ConvertConstraintsToConnections extends Strategy {
             }
             recipe.clearConnectionConstraints();
             return score;
-          }
+          };
         });
       }
     }(RecipeWalker.Independent), this);

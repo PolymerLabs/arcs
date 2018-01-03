@@ -93,7 +93,7 @@ export default class GroupViewConnections extends Strategy {
               let recipeView = recipe.newView();
               group.forEach(conn => {
                 let cloneConn = recipe.updateToClone({conn}).conn;
-                cloneConn.connectToView(recipeView)
+                cloneConn.connectToView(recipeView);
               });
             });
           });

@@ -64,7 +64,7 @@ describe('particle-api', function() {
       join(_, file) {
         return file;
       }
-    }
+    };
     let manifest = await Manifest.load('manifest', loader, {registry});
     var pecFactory = function(id) {
       var channel = new MessageChannel();

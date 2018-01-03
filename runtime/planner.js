@@ -50,7 +50,7 @@ class CreateViews extends Strategy {
         }
 
         if (!view.id && view.fate == "?") {
-          return (recipe, view) => {view.fate = "create"; return score}
+          return (recipe, view) => {view.fate = "create"; return score;};
         }
       }
     }(RecipeWalker.Permuted), this);
@@ -97,7 +97,7 @@ class Planner {
   }
 
   async plan(timeout, generations) {
-    let trace = Tracing.async({cat: 'planning', name: 'Planner::plan', args: {timeout}})
+    let trace = Tracing.async({cat: 'planning', name: 'Planner::plan', args: {timeout}});
     timeout = timeout || NaN;
     let allResolved = [];
     let now = () => (typeof performance == 'object') ? performance.now() : process.hrtime();
@@ -131,7 +131,7 @@ class Planner {
   }
 
   async suggest(timeout, generations) {
-    let trace = Tracing.async({cat: 'planning', name: 'Planner::suggest', args: {timeout}})
+    let trace = Tracing.async({cat: 'planning', name: 'Planner::suggest', args: {timeout}});
     let plans = await trace.wait(() => this.plan(timeout, generations));
     trace.resume();
     let suggestions = [];
@@ -139,7 +139,7 @@ class Planner {
     // TODO: Run some reasonable number of speculations in parallel.
     let results = [];
     for (let plan of plans) {
-      let hash = ((hash) => { return hash.substring(hash.length - 4)}) (await plan.digest());
+      let hash = ((hash) => { return hash.substring(hash.length - 4);}) (await plan.digest());
 
       if (this._matchesActiveRecipe(plan)) {
         this._updateGeneration(generations, hash, (g) => g.active = true);

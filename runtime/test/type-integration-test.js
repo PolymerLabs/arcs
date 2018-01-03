@@ -22,7 +22,7 @@ async function setup() {
   let manifest = await Manifest.load('./particles/test/type-match.manifest', loader, registry);
   assert(manifest);
 
-  return manifest
+  return manifest;
 }
 
 describe('type integration', () => {
@@ -33,7 +33,7 @@ describe('type integration', () => {
     assert(recipe.normalize());
     assert(recipe.isResolved());
     assert(recipe.views.length == 1);
-    assert(recipe.views[0].type.primitiveType().entitySchema.name == 'Lego')
+    assert(recipe.views[0].type.primitiveType().entitySchema.name == 'Lego');
   });
 
   it('a subtype matches to a supertype that wants to be read when a view exists', async () => {
@@ -44,7 +44,7 @@ describe('type integration', () => {
     assert(recipe.normalize());
     assert(recipe.isResolved());
     assert(recipe.views.length == 1);
-    assert(recipe.views[0].type.primitiveType().entitySchema.name == 'Product')
+    assert(recipe.views[0].type.primitiveType().entitySchema.name == 'Product');
   });
 
   it('a subtype matches to a supertype that wants to be read when a view exists', async () => {
@@ -55,6 +55,6 @@ describe('type integration', () => {
     assert(recipe.normalize());
     assert(recipe.isResolved());
     assert(recipe.views.length == 1);
-    assert(recipe.views[0].type.primitiveType().entitySchema.name == 'Lego')
+    assert(recipe.views[0].type.primitiveType().entitySchema.name == 'Lego');
   });
 });

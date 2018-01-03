@@ -69,7 +69,7 @@ export default class MapRemoteSlots extends Strategy {
           }
           slotConnection.targetSlot.id = remoteSlotId;
           return score;
-        }
+        };
       }
     }(RecipeWalker.Permuted), this);
 
