@@ -46,5 +46,5 @@ defineParticle(({Particle}) => {
         console.log(e);
       }
     }
-  }
+  };
 });

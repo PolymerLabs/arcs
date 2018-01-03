@@ -292,7 +292,7 @@ ${e.message}
         slots.push({
           direction: 'provide',
           name: providedSlotItem.name,
-        })
+        });
       }
     }
     // TODO: move shape to recipe/ and add shape builder?
@@ -488,7 +488,7 @@ ${e.message}
           if (!targetView) {
             // TODO: tags?
             targetView = recipe.newView();
-            targetConnection.connectToView(targetView)
+            targetConnection.connectToView(targetView);
           }
         }
 
@@ -532,7 +532,7 @@ ${e.message}
     let id = item.id;
     let type = Manifest._processType(item.type);
     if (id == null) {
-      id = `${manifest._id}view${manifest._views.length}`
+      id = `${manifest._id}view${manifest._views.length}`;
     }
     let tags = item.tags;
     if (tags == null)
@@ -561,7 +561,7 @@ ${e.message}
         view.set({
           id,
           rawData: entity,
-        })
+        });
       }
     }
   }

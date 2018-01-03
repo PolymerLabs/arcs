@@ -106,7 +106,7 @@ describe('particle-shape-loading', function() {
     let outView = await arc.createView(barType);
     let inView = await arc.createView(fooType);
     var Foo = manifest.schemas.Foo.entityClass();
-    inView.set(new Foo({value: 'a foo'}))
+    inView.set(new Foo({value: 'a foo'}));
 
     let recipe = new Recipe();
     let particle = recipe.newParticle("outerParticle");

@@ -149,7 +149,7 @@ function test(args) {
       `);
       chain.push(`
         import '${fixPathForWindows(test)}';
-      `)
+      `);
       chain.push(`
         import mocha from '${mochaInstanceFile}';
         mocha.suite.emit('require', null, '${test}', mocha);
@@ -182,7 +182,7 @@ function test(args) {
     extraFlags.push('--inspect-brk');
   }
   if (options.exceptions) {
-    extraFlags.push('--print_all_exceptions')
+    extraFlags.push('--print_all_exceptions');
   }
 
   let runner = buildTestRunner();
@@ -199,7 +199,7 @@ function test(args) {
 // Watches `watchPaths` for changes, then runs the `arg` steps.
 async function watch([arg, ...moreArgs]) {
   let funs = steps[arg || watchDefault];
-  let funsAndArgs = funs.map(fun => [fun, fun == funs[funs.length - 1] ? moreArgs : []])
+  let funsAndArgs = funs.map(fun => [fun, fun == funs[funs.length - 1] ? moreArgs : []]);
   let watcher = chokidar.watch('.', {
     ignored: /(node_modules|\/build\/|\.git)/,
     persistent: true
@@ -212,7 +212,7 @@ async function watch([arg, ...moreArgs]) {
     changes.add(path);
     await task;
     if (current <= version) {
-      console.log(`Rebuilding due to changes to:\n  ${[...changes].join('  \n')}`)
+      console.log(`Rebuilding due to changes to:\n  ${[...changes].join('  \n')}`);
       changes.clear();
       task = run(funsAndArgs);
     }
@@ -260,7 +260,7 @@ async function run(funsAndArgs) {
   let command = process.argv[2] || 'default';
   let funs = steps[command];
   // To avoid confusion, only the last step gets args.
-  let funsAndArgs = funs.map(fun => [fun, fun == funs[funs.length - 1] ? process.argv.slice(3) : []])
+  let funsAndArgs = funs.map(fun => [fun, fun == funs[funs.length - 1] ? process.argv.slice(3) : []]);
   let result = await run(funsAndArgs);
   process.on("exit", function() {
     process.exit(result ? 0 : 1);

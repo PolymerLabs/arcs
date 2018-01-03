@@ -97,7 +97,7 @@ describe('schema', function() {
   it('has accessors for schema fields only', async function() {
     let manifest = await Manifest.load('./entities/Product.manifest', new Loader());
     let Product = manifest.findSchemaByName('Product').entityClass();
-    assert.throws(() => { new Product({sku: 'sku'}) }, 'not in schema');
+    assert.throws(() => { new Product({sku: 'sku'}); }, 'not in schema');
 
     let product = new Product({});
     assert.throws(() => { product.rawData.sku = 'sku'; }, 'not in schema');
@@ -107,9 +107,9 @@ describe('schema', function() {
   it('performs type checking', async function() {
     let manifest = await Manifest.load('./entities/Product.manifest', new Loader());
     let Product = manifest.findSchemaByName('Product').entityClass();
-    assert.throws(() => { new Product({name: 6}) }, TypeError);
-    assert.throws(() => { new Product({url: 7}) }, TypeError);
-    assert.throws(() => { new Product({shipDays: '2'}) }, TypeError);
+    assert.throws(() => { new Product({name: 6}); }, TypeError);
+    assert.throws(() => { new Product({url: 7}); }, TypeError);
+    assert.throws(() => { new Product({shipDays: '2'}); }, TypeError);
 
     let product = new Product({});
     assert.throws(() => { product.name = 6; }, TypeError);
@@ -118,7 +118,7 @@ describe('schema', function() {
     assert.throws(() => { product.isReal = 1; }, TypeError);
 
     // Should be able to clear fields.
-    assert.doesNotThrow(() => { new Product({name: null, shipDays: undefined}) });
+    assert.doesNotThrow(() => { new Product({name: null, shipDays: undefined}); });
     assert.doesNotThrow(() => { product.image = null; });
     assert.doesNotThrow(() => { product.url = undefined; });
     assert.doesNotThrow(() => { product.isReal = true; });

@@ -83,22 +83,22 @@ class APIPort {
     this.Direct = {
       convert: a => a,
       unconvert: a => a
-    }
+    };
 
     this.Stringify = {
       convert: a => a.toString(),
       unconvert: a => eval(a)
-    }
+    };
 
     this.LocalMapped = {
       convert: a => this._mapper.maybeCreateMappingForThing(a),
       unconvert: a => this._mapper.thingForIdentifier(a)
-    }
+    };
 
     this.Mapped = {
       convert: a => this._mapper.identifierForThing(a),
       unconvert: a => this._mapper.thingForIdentifier(a)
-    }
+    };
 
     this.Dictionary = function(primitive) {
       return {
@@ -109,8 +109,8 @@ class APIPort {
           }
           return r;
         }
-      }
-    }
+      };
+    };
 
     this.Map = function(keyprimitive, valueprimitive) {
       return {
@@ -125,22 +125,22 @@ class APIPort {
             r.set(keyprimitive.unconvert(key), valueprimitive.unconvert(a[key]));
           return r;
         }
-      }
-    }
+      };
+    };
 
     this.List = function(primitive) {
       return {
         convert: a => a.map(v => primitive.convert(v)),
         unconvert: a => a.map(v => primitive.unconvert(v))
-      }
-    }
+      };
+    };
 
     this.ByLiteral = function(clazz) {
       return {
         convert: a => a.toLiteral(),
         unconvert: a => clazz.fromLiteral(a)
-      }
-    }
+      };
+    };
   }
 
   close() {
@@ -234,7 +234,7 @@ class PECOuterPort extends APIPort {
     this.registerCall("Stop", {});
     this.registerCall("DefineParticle",
       {particleDefinition: this.Direct, particleFunction: this.Stringify});
-    this.registerRedundantInitializer("DefineHandle", {type: this.ByLiteral(Type), name: this.Direct})
+    this.registerRedundantInitializer("DefineHandle", {type: this.ByLiteral(Type), name: this.Direct});
     this.registerInitializer("InstantiateParticle",
       {spec: this.ByLiteral(ParticleSpec), handles: this.Map(this.Direct, this.Mapped)});
 

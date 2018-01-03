@@ -82,9 +82,9 @@ describe('View', function() {
         await f();
         assert.throws(() => undefined, message);                
       } catch (e) {
-        assert.throws(() => {throw e}, message);                        
+        assert.throws(() => {throw e;}, message);                        
       }
-    }
+    };
 
     await assert_throws_async(async () => await arc.createView('not a type'), /isn\'t a Type/);
     await assert_throws_async(async () => await arc.createView(Bar.type, 'name', 'id', 'invalid'),

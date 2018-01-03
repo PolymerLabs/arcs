@@ -19,13 +19,13 @@ if (typeof document == 'object') {
   var now = function() {
     var t = performance.now();
     return t;
-  }
+  };
 } else {
   var pid = process.pid;
   var now = function() {
     var t = process.hrtime();
     return t[0] * 1000000 + t[1] / 1000;
-  }
+  };
 }
 
 var flowId = 0;

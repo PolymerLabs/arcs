@@ -32,7 +32,7 @@ async function setup() {
     recipe: manifest.recipes[0],
     Foo: manifest.findSchemaByName('Foo').entityClass(),
     Bar: manifest.findSchemaByName('Bar').entityClass(),
-  }
+  };
 }
 const slotComposer = new SlotComposer({rootContext: 'test', affordance: 'mock'});
 

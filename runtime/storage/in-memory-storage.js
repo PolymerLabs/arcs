@@ -159,7 +159,7 @@ class InMemoryCollection extends InMemoryStorageProvider {
       name: this.name,
       version: this._version,
       arc: this._arc.id
-    })
+    });
   }
 }
 
@@ -226,6 +226,6 @@ class InMemoryVariable extends InMemoryStorageProvider {
       name: this.name,
       version: this._version,
       arc: this._arc.id
-    })
+    });
   }
 }

@@ -51,7 +51,7 @@ class StorageProxy {
 
   get() {
     return new Promise((resolve, reject) =>
-      this._port.HandleGet({ callback: r => {resolve(r)}, handle: this }));
+      this._port.HandleGet({ callback: r => {resolve(r);}, handle: this }));
   }
 
   toList() {
@@ -103,7 +103,7 @@ class InnerPEC {
       var proxy = new StorageProxy(id, type, this._apiPort, this, name, 0);
       Promise.resolve().then(() => callback(proxy));
       return proxy;
-    }
+    };
 
     this._apiPort.onMapHandleCallback = ({id, callback}) => {
       Promise.resolve().then(() => callback(id));
@@ -113,11 +113,11 @@ class InnerPEC {
     this._apiPort.onCreateSlotCallback = ({hostedSlotId, callback}) => {
       Promise.resolve().then(() => callback(hostedSlotId));
       return hostedSlotId;
-    }
+    };
 
     this._apiPort.onInnerArcRender = ({transformationParticle, transformationSlotName, hostedSlotId, content}) => {
       transformationParticle.renderHostedSlot(transformationSlotName, hostedSlotId, content);
-    }
+    };
 
     this._apiPort.onDefineParticle = ({particleDefinition, particleFunction}) => {
       var particle = define(particleDefinition, eval(particleFunction));
@@ -128,7 +128,7 @@ class InnerPEC {
       if (global.close) {
         global.close();
       }
-    }
+    };
 
     this._apiPort.onInstantiateParticle =
       ({spec, handles}) => this._instantiateParticle(spec, handles);
@@ -164,7 +164,7 @@ class InnerPEC {
         render(content) {
           this._pec._apiPort.Render({particle, slotName, content});
 
-          Object.keys(content).forEach(key => { this._requestedContentTypes.delete(key) });
+          Object.keys(content).forEach(key => { this._requestedContentTypes.delete(key); });
           // Slot is considered rendered, if a non-empty content was sent and all requested content types were fullfilled.
           this._isRendered = this._requestedContentTypes.size == 0 && (Object.keys(content).length > 0);
         }
@@ -195,7 +195,7 @@ class InnerPEC {
       assert(particle._slotByName.has(slotName),
         `Stop render called for particle ${particle.name} slot ${slotName} without start render being called.`);
       particle._slotByName.delete(slotName);
-    }
+    };
   }
 
   generateIDComponents() {
@@ -246,9 +246,9 @@ class InnerPEC {
     return {
       constructInnerArc: particle => {
         return new Promise((resolve, reject) =>
-          this._apiPort.ConstructInnerArc({ callback: arcId => {resolve(this.innerArcHandle(arcId))}, particle }));
+          this._apiPort.ConstructInnerArc({ callback: arcId => {resolve(this.innerArcHandle(arcId));}, particle }));
       }
-    }
+    };
   }
 
   async _instantiateParticle(spec, proxies) {

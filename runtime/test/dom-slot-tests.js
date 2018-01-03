@@ -51,7 +51,7 @@ describe('dom-slot', function() {
     slot.setContext('dummy-context');
     assert.isTrue(slot.getContext() instanceof MockDomContext);
     let clearCount = 0;
-    slot.getContext().clear = () => { clearCount++; }
+    slot.getContext().clear = () => { clearCount++; };
     assert.equal('dummy-context', slot.getContext().context);
     assert.equal(0, doRenderCount);
 
@@ -92,9 +92,9 @@ describe('dom-slot', function() {
     let clearCount = 0;
     let stampTemplateCount = 0;
     let updateModelCount = 0;
-    slot.getContext().clear = () => { clearCount++; }
-    slot.getContext().stampTemplate = (template, eventHandler) => { stampTemplateCount++; }
-    slot.getContext().updateModel = (model) => { updateModelCount++; }
+    slot.getContext().clear = () => { clearCount++; };
+    slot.getContext().stampTemplate = (template, eventHandler) => { stampTemplateCount++; };
+    slot.getContext().updateModel = (model) => { updateModelCount++; };
     // Set content to null - context is cleared.
     await slot.setContent(null);
     assert.isNull(slot._model);

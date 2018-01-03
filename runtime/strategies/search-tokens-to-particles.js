@@ -37,7 +37,7 @@ export default class SearchTokensToParticles extends Strategy {
           for (let spec of findParticles(token)) {
             // TODO: Skip particles that are already in the active recipe?
             specsByToken[token] = specsByToken[token] || [];
-            specsByToken[token].push(spec)
+            specsByToken[token].push(spec);
           }
         }
         let resolvedTokens = Object.keys(specsByToken);

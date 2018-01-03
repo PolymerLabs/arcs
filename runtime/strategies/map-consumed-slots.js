@@ -44,7 +44,7 @@ export default class MapConsumedSlots extends Strategy {
         });
         return potentialSlots.map(slot => {
           return (recipe, slotConnection) => {
-            let clonedSlot = recipe.updateToClone({slot})
+            let clonedSlot = recipe.updateToClone({slot});
             slotConnection.connectToSlot(clonedSlot.slot);
             return 1;
           };

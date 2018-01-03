@@ -25,7 +25,7 @@ export default class MatchParticleByVerb extends Strategy {
         }
 
         let particleSpecs = arc.context.findParticlesByVerb(particle.primaryVerb)
-            .filter(spec => !arc.pec.slotComposer || spec.matchAffordance(arc.pec.slotComposer.affordance))
+            .filter(spec => !arc.pec.slotComposer || spec.matchAffordance(arc.pec.slotComposer.affordance));
 
         return particleSpecs.map(spec => {
           return (recipe, particle) => {

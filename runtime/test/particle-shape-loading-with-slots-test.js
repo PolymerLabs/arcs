@@ -64,7 +64,7 @@ describe('particle-shape-loading-with-slots', function() {
     for (let i = 0; i < times; ++i) {
       slotComposer
         .expectRenderSlot("SingleSlotParticle", "annotation", contentTypes)
-        .expectRenderSlot("MultiplexSlotsParticle", "annotationsSet", contentTypes)
+        .expectRenderSlot("MultiplexSlotsParticle", "annotationsSet", contentTypes);
     }
   }
 

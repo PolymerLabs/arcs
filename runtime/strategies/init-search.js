@@ -26,7 +26,7 @@ export default class InitSearch extends Strategy {
     let recipe = new Recipe();
     recipe.setSearchPhrase(this._search);
     assert(recipe.normalize());
-    assert(!recipe.isResolved())
+    assert(!recipe.isResolved());
 
     return {
       results: [{
