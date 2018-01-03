@@ -14,8 +14,8 @@ let nextVariableId = 0;
 function addType(name, arg) {
   var lowerName = name[0].toLowerCase() + name.substring(1);
   Object.defineProperty(Type, `new${name}`, {
-    value: function() {
-      return new Type(name, arguments[0]);
+    value: function(arg) {
+      return new Type(name, arg);
     }});
   var upperArg = arg ? arg[0].toUpperCase() + arg.substring(1) : '';
   Object.defineProperty(Type.prototype, `${lowerName}${upperArg}`, {
