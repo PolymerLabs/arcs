@@ -24,8 +24,15 @@ export default class Description {
   get relevance() { return this._relevance; }
   set relevance(relevance) { this._relevance = relevance; }
 
-  async getRecipeSuggestion(particles, formatterClass) {
-    let desc = await new (formatterClass || DescriptionFormatter)(this).getRecipeSuggestion(particles);
+  async getArcDescription(formatterClass) {
+    let desc = await new (formatterClass || DescriptionFormatter)(this).getDescription(this._recipe.particles);
+    if (desc) {
+      return desc;
+    }
+  }
+
+  async getRecipeSuggestion(formatterClass) {
+    let desc = await new (formatterClass || DescriptionFormatter)(this).getDescription(this._arc.recipes[0].particles);
     if (desc) {
       return desc;
     }
@@ -47,18 +54,17 @@ export class DescriptionFormatter {
     this._description = description;
     this._arc = description._arc;
     this._particleDescriptions = [];
-    // this._updateDescriptionHandles(description);
 
     this.seenViews = new Set();
     this.seenParticles = new Set();
     this.excludeValues = false;
   }
 
-  async getRecipeSuggestion(particles) {
+  async getDescription(particles) {
     await this._updateDescriptionHandles(this._description);
 
     // Choose particles that render UI, sort them by rank and generate suggestions.
-    let particlesSet = new Set(particles || this._particleDescriptions.map(pDesc => pDesc._particle));
+    let particlesSet = new Set(particles);
     let selectedDescriptions = this._particleDescriptions
       .filter(desc => { return particlesSet.has(desc._particle) && desc._particle.spec.slots.size > 0 && this._isSelectedDescription(desc); })
       .sort(DescriptionFormatter.sort);

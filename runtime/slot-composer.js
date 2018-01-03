@@ -78,7 +78,7 @@ class SlotComposer {
     this._suggestionsContext.clear();
     suggestions.forEach(async suggestion => {
       let suggestionContent =
-        await suggestion.description.getRecipeSuggestion(suggestion.description.arc.recipes[0].particles, this._getDescriptionFormatter());
+        await suggestion.description.getRecipeSuggestion(this._getDescriptionFormatter());
 
       if (!suggestionContent) {
         suggestionContent = 'No suggestion content was generated (unnamed recipe and no describable particles)';
