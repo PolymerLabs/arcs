@@ -10,7 +10,7 @@
 
 let HTMLElement;
 if (typeof window == 'undefined') {
-  HTMLElement = class HTMLElement {}
+  HTMLElement = class HTMLElement {};
 } else {
   HTMLElement = window.HTMLElement;
 }

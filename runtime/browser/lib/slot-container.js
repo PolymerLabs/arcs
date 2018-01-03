@@ -29,7 +29,7 @@ if (global.document) {
         })
       );
     }
-  }
+  };
   customElements.define('slot-container', SlotContainer);
 } else {
   SlotContainer = { subscribe: () => null };

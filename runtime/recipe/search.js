@@ -29,7 +29,7 @@ class Search {
     let newTokens = phrase.toLowerCase().split(/[^a-z0-9]/g);
     newTokens.forEach(t => {
       if (!unresolvedTokens || unresolvedTokens.indexOf(t) >= 0) {
-        this._unresolvedTokens.push(t)
+        this._unresolvedTokens.push(t);
       } else {
         this._resolvedTokens.push(t);
       }

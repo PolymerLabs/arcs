@@ -114,9 +114,9 @@ class Schema {
         case 'Number':
           return [fieldType, 'number'];
         case 'Boolean':
-          return [fieldType, 'boolean']
+          return [fieldType, 'boolean'];
         case 'Object':
-          return [fieldType, 'object']
+          return [fieldType, 'object'];
         default:
           // Text, URL
           return [fieldType, 'string'];
@@ -167,7 +167,7 @@ class Schema {
           schema: schema.toLiteral(),
         };
       }
-    }
+    };
 
     Object.defineProperty(clazz, 'type', {value: this.type});
     Object.defineProperty(clazz, 'name', {value: this.name});
@@ -200,7 +200,7 @@ class Schema {
           results.push(`    ${schemaType} ${name}`);
         });
       }
-    }
+    };
 
     propertiesToString(this.normative, 'normative');
     propertiesToString(this.optional, 'optional');

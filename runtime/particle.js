@@ -194,7 +194,7 @@ export class ViewChanges {
 
     for (var name of this.names) {
       var view = this.views.get(name);
-      view.synchronize(this.type, afterAllModels, f, particle)
+      view.synchronize(this.type, afterAllModels, f, particle);
     }
   }
 }

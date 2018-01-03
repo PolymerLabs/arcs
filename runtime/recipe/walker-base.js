@@ -44,7 +44,7 @@ class WalkerBase extends Strategizer.Walker {
             if (permutation.length == 0)
               continue;
             permutation.forEach(({f, context}) => {
-              score += f(newRecipe, cloneMap.get(context))
+              score += f(newRecipe, cloneMap.get(context));
             });
 
             newRecipes.push({recipe: newRecipe, score});
@@ -79,7 +79,7 @@ class WalkerBase extends Strategizer.Walker {
   createDescendant(recipe, score) {
     let valid = recipe.normalize();
     //if (!valid) debugger;
-    let hash = valid ? recipe.digest() : null
+    let hash = valid ? recipe.digest() : null;
     super.createDescendant(recipe, score, hash, valid);
   }
 

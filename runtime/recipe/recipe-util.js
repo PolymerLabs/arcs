@@ -240,7 +240,7 @@ class RecipeUtil {
   }
 
   static directionCounts(view) {
-    var counts = {'in': 0, 'out': 0, 'inout': 0, 'unknown': 0}
+    var counts = {'in': 0, 'out': 0, 'inout': 0, 'unknown': 0};
     for (var connection of view.connections) {
       var direction = connection.direction;
       if (counts[direction] == undefined)

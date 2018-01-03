@@ -48,7 +48,7 @@ describe('manifest parser', function() {
   it('parses trivial particles', () => {
     parse(`
       particle SomeParticle`);
-  })
+  });
   it('parses recipes that name views and particles', () => {
     parse(`
       recipe Recipe
@@ -147,5 +147,5 @@ describe('manifest parser', function() {
       particle Foo
         Foo(in {(Text or Number)? value} optionalUnion)
     `);
-  })
+  });
 });

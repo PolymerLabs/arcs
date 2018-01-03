@@ -47,5 +47,5 @@ defineParticle(({DomParticle}) => {
         style
       };
     }
-  }
+  };
 });

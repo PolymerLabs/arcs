@@ -13,7 +13,7 @@ import Type from './type.js';
 
 class Entity {
   constructor(userIDComponent) {
-    assert(!userIDComponent || userIDComponent.indexOf(':') == -1, "user IDs must not contain the ':' character")
+    assert(!userIDComponent || userIDComponent.indexOf(':') == -1, "user IDs must not contain the ':' character");
     this[Symbols.identifier] = undefined;
     this._userIDComponent = userIDComponent;
   }

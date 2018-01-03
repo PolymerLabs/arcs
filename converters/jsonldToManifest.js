@@ -82,11 +82,11 @@ class JsonldToManifest {
 
     var s = '';
     for (let superName of superNames)
-      s += `import 'https://schema.org/${superName}'\n\n`
+      s += `import 'https://schema.org/${superName}'\n\n`;
 
-    s += `schema ${className}`
+    s += `schema ${className}`;
     if (superNames.length > 0)
-      s += ` extends ${superNames.join(', ')}`
+      s += ` extends ${superNames.join(', ')}`;
 
     if (relevantProperties.length > 0) {
       s += '\n  optional';
@@ -94,7 +94,7 @@ class JsonldToManifest {
         if (property.type.length > 1)
           var type = '(' + property.type.join(" or ") + ')';
         else
-          var type = property.type[0]
+          var type = property.type[0];
         s += `\n    ${type} ${property.name}`;
       }
     }
