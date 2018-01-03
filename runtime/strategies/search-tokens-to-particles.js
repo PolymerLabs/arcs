@@ -45,12 +45,12 @@ export default class SearchTokensToParticles extends Strategy {
           return;
         }
 
-        const flatten = (arr) => [].concat.apply([], arr);
+        const flatten = (arr) => [].concat(...arr);
         const product = (...sets) =>
           sets.reduce((acc, set) =>
             flatten(acc.map(x => set.map(y => [ ...x, y ]))),
             [[]]);
-        let possibleCombinations = product.apply(null, Object.values(specsByToken).map(v => flatten(v)));
+        let possibleCombinations = product(...Object.values(specsByToken).map(v => flatten(v)));
 
         return possibleCombinations.map(combination => {
           return recipe => {

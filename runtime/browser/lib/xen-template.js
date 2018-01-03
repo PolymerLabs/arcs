@@ -341,4 +341,4 @@ return {
   stamp
 };
 
-})(this);
+})();

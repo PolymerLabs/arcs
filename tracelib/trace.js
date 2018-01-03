@@ -96,10 +96,10 @@ function init() {
   }
 
   module.exports.wrap = function(info, fn) {
-    return function() {
+    return function(...args) {
       var t = module.exports.start(info);
       try {
-        return fn.apply(this, arguments);
+        return fn(...args);
       } finally {
         t.end();
       }
