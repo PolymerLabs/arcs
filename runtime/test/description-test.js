@@ -29,13 +29,13 @@ var tests = [
   {
     name: 'text',
     verifySuggestion: async (expectedSuggestion, description) => {
-      assert.equal(expectedSuggestion, await description.getRecipeSuggestion());
+      assert.equal(expectedSuggestion, await description.getArcDescription());
     }
   },
   {
     name:'dom',
     verifySuggestion: async (expectedSuggestion, description) => {
-      let suggestion = await description.getRecipeSuggestion(/* all particles */ undefined, DescriptionDomFormatter);
+      let suggestion = await description.getArcDescription(DescriptionDomFormatter);
       let result = suggestion.template.replace(/<[/]?span>/g, '').replace(/<[/]?b>/g, '');
       Object.keys(suggestion.model).forEach(m => {
         assert.isTrue(result.indexOf(`{{${m}}}`) >= 0);
@@ -635,7 +635,7 @@ recipe
     it('particle dynamic description ' + test.name, async() => {
       let {recipe, description, fooView, Description, descriptionHandle} = await prepareRecipeAndArc();
 
-      assert.isUndefined(await description.getRecipeSuggestion());
+      assert.isUndefined(await description.getArcDescription());
 
       // Particle (static) spec pattern.
       recipe.particles[0].spec.pattern = 'hello world';
