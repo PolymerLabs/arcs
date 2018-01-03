@@ -259,13 +259,14 @@ class Arc {
   async createView(type, name, id, tags) {
     assert(type instanceof Type, `can't createView with type ${type} that isn't a Type`);
 
-    if (type.isRelation)
+    if (type.isRelation) {
       type = Type.newSetView(type);
+    }
 
-      let view = await this._storageProviderFactory.construct(id, type, 'in-memory');
-      view.name = name;
+    let view = await this._storageProviderFactory.construct(id, type, 'in-memory');
+    view.name = name;
 
-      this._registerView(view, tags);
+    this._registerView(view, tags);
     return view;
   }
 
