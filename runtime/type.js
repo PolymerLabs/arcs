@@ -115,7 +115,7 @@ class Type {
       } else if (resolved.shape) {
         return Type.newInterface(resolved.shape);
       } else {
-        throw new Error('Expected {shape} or {schema}')
+        throw new Error('Expected {shape} or {schema}');
       }
     }
 
@@ -200,7 +200,7 @@ class Type {
     if (this.isEntity)
       return this.entitySchema.name;
     if (this.isInterface)
-      return 'Interface'
+      return 'Interface';
     assert('Add support to serializing type:', this);
   }
 

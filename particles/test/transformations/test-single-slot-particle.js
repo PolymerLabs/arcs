@@ -20,5 +20,5 @@ defineParticle(({DomParticle}) => {
         value: (foo && foo.value) || 'n/a'
       };
     }
-  }
+  };
 });

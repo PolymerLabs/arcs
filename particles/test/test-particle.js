@@ -14,10 +14,10 @@ defineParticle(({Particle}) => {
       const Bar = views.get('bar').entityClass;
       views.get('foo').get().then(result => {
         var bar = views.get('bar');
-        bar.set(new bar.entityClass({value: result.value + 1}))
+        bar.set(new bar.entityClass({value: result.value + 1}));
       });
       // TODO: what is this meant to do?
       return 9;
     }
-  }
+  };
 });

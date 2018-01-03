@@ -238,7 +238,7 @@ class Particle {
     for (let slotConnection of Object.values(this._consumedSlotConnections)) {
       result.push(slotConnection.toString(nameMap, options).replace(/^|(\n)/g, '$1  '));
     }
-    return result.join('\n')
+    return result.join('\n');
   }
 }
 

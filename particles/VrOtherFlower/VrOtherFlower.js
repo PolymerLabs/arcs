@@ -14,7 +14,7 @@ defineParticle(({DomParticle}) => {
     get template() {
       return `
 <a-obj-model src="assets/plants1.obj" mtl="assets/plants1.mtl" position="0.52 0.18 0.175" rotation="-3 -22 -10" scale="0.002 0.002 0.002"></a-obj-model>
-      `.trim()
+      `.trim();
     }
   };
 

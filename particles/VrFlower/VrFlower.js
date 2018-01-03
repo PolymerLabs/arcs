@@ -19,7 +19,7 @@ defineParticle(({DomParticle}) => {
       return `
 <a-obj-model src="assets/plants.obj" mtl="assets/plants.mtl" position="-0.36 0.5 0.04" rotation="-30 30 0" scale="0.002 0.002 0.002"></a-obj-model>
 <a-obj-model src="assets/plants1.obj" mtl="assets/plants1.mtl" position="0.52 0.18 0.175" rotation="-3 -22 -10" scale="0.002 0.002 0.002"></a-obj-model>
-      `.trim()
+      `.trim();
     }
   };
 

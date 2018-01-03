@@ -170,7 +170,7 @@ ${productStyles}
         list: '${list}',
         action: '${root.action}',
         actionEmpty: '${root.action}._empty_'
-      }
+      };
       this.setParticleDescription({template, model});
     }
     _render(props, state) {

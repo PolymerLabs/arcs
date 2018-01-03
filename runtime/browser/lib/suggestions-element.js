@@ -65,13 +65,13 @@ class SuggestionsElement extends HTMLElement {
       this.toast.open = false;
       // TODO(sjmiles): wait for toast animation to avoid jank
       setTimeout(()=>this._choose(plan), 80);
-    }
+    };
     suggest.onmouseover = () => {
       document.dispatchEvent(new CustomEvent("plan-hover", {detail: {hash, selected: true}}));
-    }
+    };
     suggest.onmouseout = () => {
       document.dispatchEvent(new CustomEvent("plan-hover", {detail: {hash, selected: false}}));
-    }
+    };
     this.container.insertBefore(suggest, this.container.firstElementChild);
     return suggest;
   }

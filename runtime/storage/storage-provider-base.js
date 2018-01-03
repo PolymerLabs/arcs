@@ -97,7 +97,7 @@ export default class StorageProviderBase {
     }
     results.push(viewStr.join(' '));
     if (this.description)
-      results.push(`  description \`${this.description}\``)
+      results.push(`  description \`${this.description}\``);
     return results.join('\n');
   }
 }

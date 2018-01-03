@@ -16,5 +16,5 @@ defineParticle(({Particle}) => {
       entity.value = 'Hello, world!';
       text.set(entity);
     }
-  }
+  };
 });

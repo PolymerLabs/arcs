@@ -153,9 +153,9 @@ class ParticleSpec {
     this.slots.forEach(s => {
     results.push(`  ${s.isRequired ? 'must ' : ''}consume ${s.isSet ? 'set of ' : ''}${s.name}`);
       s.providedSlots.forEach(ps => {
-        results.push(`    provide ${ps.isSet ? 'set of ' : ''}${ps.name}`)
+        results.push(`    provide ${ps.isSet ? 'set of ' : ''}${ps.name}`);
         // TODO: support form factors
-        ps.views.forEach(psv => results.push(`      view ${psv}`))
+        ps.views.forEach(psv => results.push(`      view ${psv}`));
       });
     });
     // Description
