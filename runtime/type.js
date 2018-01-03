@@ -135,7 +135,7 @@ class Type {
     if (type1.isEntity || type1.isInterface || type1.isVariableReference || type1.isManifestReference) {
       return [type1, type2];
     }
-    return unwrapPair(type1.data, type2.data);
+    return Type.unwrapPair(type1.data, type2.data);
   }
 
   equals(type) {
