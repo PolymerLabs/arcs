@@ -471,7 +471,7 @@ describe('manifest', function() {
         ++count;
       }
     });
-    assert.equal(count, 18);
+    assert.equal(count, 17);
   });
   it('loads entities from json files', async () => {
     let manifestSource = `
