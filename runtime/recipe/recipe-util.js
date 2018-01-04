@@ -93,6 +93,9 @@ class RecipeUtil {
           } else if (forward.has(shapeVC.view) && forward.get(shapeVC.view) !== null) {
             continue;
           }
+          // Check whether shapeVC and recipeVC reference the same view.
+          // Note: the id of a view with 'copy' fate changes during recipe instantiation, hence comparing to original id too.
+          // Skip the check if views have 'create' fate (their ids are arbitrary).
           if ((shapeVC.view.fate != 'create' || (recipeVC.view.fate != 'create' && recipeVC.view.originalFate != 'create')) &&
               shapeVC.view.id != recipeVC.view.id && shapeVC.view.id != recipeVC.view.originalId) {
             // this is a different view.

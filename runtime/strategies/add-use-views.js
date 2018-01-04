@@ -23,6 +23,8 @@ export default class AddUseViews extends Strategy {
         if (freeViews.length > 0)
           return;
 
+        // TODO: "description" handles are always created, and in the future they need to be "optional" (blocked by optional handles
+        // not being properly supported in arc instantiation). For now just hardcode skiping them.
         var disconnectedConnections = recipe.viewConnections.filter(vc => vc.view == null && !vc.isOptional && vc.name != "descriptions");
 
         return recipe => {
