@@ -63,11 +63,15 @@ export class DescriptionFormatter {
   async getDescription(particles) {
     await this._updateDescriptionHandles(this._description);
 
-    // Choose particles that render UI, sort them by rank and generate suggestions.
+    // Choose particles, sort them by rank and generate suggestions.
     let particlesSet = new Set(particles);
     let selectedDescriptions = this._particleDescriptions
-      .filter(desc => { return particlesSet.has(desc._particle) && desc._particle.spec.slots.size > 0 && this._isSelectedDescription(desc); })
-      .sort(DescriptionFormatter.sort);
+      .filter(desc => (particlesSet.has(desc._particle) && this._isSelectedDescription(desc)));
+    // Prefer particles that render UI, if any.
+    if (selectedDescriptions.find(desc => (desc._particle.spec.slots.size > 0))) {
+      selectedDescriptions = selectedDescriptions.filter(desc => (desc._particle.spec.slots.size > 0));
+    }
+    selectedDescriptions = selectedDescriptions.sort(DescriptionFormatter.sort);
 
     if (selectedDescriptions.length > 0) {
       return this._combineSelectedDescriptions(selectedDescriptions);
