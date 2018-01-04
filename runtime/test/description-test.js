@@ -583,6 +583,27 @@ recipe
       await test.verifySuggestion('Hello first b and second b, see you at only c.', description);
     });
   });
+
+  tests.forEach((test) => {
+    it('particle without UI description ' + test.name, async () => {
+      let {arc, recipe, fooView} = (await prepareRecipeAndArc(`
+${schemaManifest}
+${bParticleManifest}
+  description \`Populate \${ofoo}\`
+recipe
+  create as fooView   # Foo
+  B
+    ofoo -> fooView
+      `));
+
+      let description = new Description(arc);
+      await test.verifySuggestion('Populate foo.', description);
+
+      // Add value to singleton view.
+      fooView.set({id: 1, rawData: {name: 'foo-name', fooValue: 'the-FOO'}});
+      await test.verifySuggestion('Populate foo-name.', description);
+    });
+  });
 });
 
 describe('Dynamic description', function() {
