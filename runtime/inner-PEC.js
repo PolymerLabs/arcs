@@ -51,7 +51,7 @@ class StorageProxy {
 
   get() {
     return new Promise((resolve, reject) =>
-      this._port.HandleGet({ callback: r => {resolve(r);}, handle: this }));
+      this._port.HandleGet({ callback: r => resolve(r), handle: this }));
   }
 
   toList() {
