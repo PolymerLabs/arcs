@@ -311,7 +311,7 @@ describe('ConvertConstraintsToConnections', async () => {
 });
 
 describe('MapRemoteSlots', function() {
-  it ('predefined remote slots', async () => {
+  it('predefined remote slots', async () => {
     let particlesSpec = `
     particle A in 'A.js'
       A()
@@ -364,7 +364,7 @@ describe('MapRemoteSlots', function() {
 });
 
 describe('AssignOrCopyRemoteViews', function() {
-  it ('finds tagged remote views', async () => {
+  it('finds tagged remote views', async () => {
     let particlesSpec = `
     schema Foo
 
@@ -504,7 +504,7 @@ describe('AssignOrCopyRemoteViews', function() {
 });
 
 describe('SearchTokensToParticles', function() {
-  it ('particles by verb strategy', async () => {
+  it('particles by verb strategy', async () => {
     let manifest = (await Manifest.parse(`
       particle SimpleJumper in 'A.js'
         jump()
@@ -564,7 +564,7 @@ describe('MatchParticleByVerb', function() {
         * <- energy
   `;
 
-  it ('particles by verb strategy', async () => {
+  it('particles by verb strategy', async () => {
     let manifest = (await Manifest.parse(manifestStr));
     var arc = createTestArc("test-plan-arc", manifest, "dom");
     // Apply MatchParticleByVerb strategy.
@@ -576,7 +576,7 @@ describe('MatchParticleByVerb', function() {
     assert.deepEqual(["GalaxyJumper", "SimpleJumper", "StarJumper"], results.map(r => r.result.particles[0].name).sort());
   });
 
-  it ('particles by verb recipe fully resolved', async () => {
+  it('particles by verb recipe fully resolved', async () => {
     let manifest = (await Manifest.parse(manifestStr));
     let recipe = manifest.recipes[0];
     recipe.views[0].mapToView({id: 'test1', type: manifest.findSchemaByName('Height').entityClass().type});
@@ -607,7 +607,7 @@ particle C
 particle D
   D(in Thing ithingD1, in Thing ithingD2, out Thing othingD3)
     `;
-    it ('group in and out view connections', async () => {
+    it('group in and out view connections', async () => {
       // TODO: add another Type view connections to the recipe!
       let manifest = (await Manifest.parse(`
 ${schemaAndParticlesStr}
@@ -633,7 +633,7 @@ recipe
     });
   });
   describe('CombinedStrategy', function() {
-    it ('combined strategy with search tokens and group view connections', async () => {
+    it('combined strategy with search tokens and group view connections', async () => {
       let manifest = (await Manifest.parse(`
         schema Energy
         schema Height

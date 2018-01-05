@@ -139,7 +139,7 @@ class Planner {
     // TODO: Run some reasonable number of speculations in parallel.
     let results = [];
     for (let plan of plans) {
-      let hash = ((hash) => { return hash.substring(hash.length - 4);}) (await plan.digest());
+      let hash = ((hash) => { return hash.substring(hash.length - 4);})(await plan.digest());
 
       if (this._matchesActiveRecipe(plan)) {
         this._updateGeneration(generations, hash, (g) => g.active = true);
