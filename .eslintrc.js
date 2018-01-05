@@ -40,7 +40,6 @@ module.exports = {
     "object-curly-spacing": "off",
     "keyword-spacing": "off",
     "no-trailing-spaces": "off",
-    "space-before-function-paren": "off",
     "key-spacing": "off",
     "func-call-spacing": "off",
     "generator-star-spacing": "off",

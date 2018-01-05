@@ -72,7 +72,7 @@ describe('Planner', function() {
 
 import InitSearch from '../strategies/init-search.js';
 describe('InitSearch', async () => {
-  it('initializes the search recipe', async() => {
+  it('initializes the search recipe', async () => {
     var arc = new Arc({id: 'test-plan-arc', context: {}});
     arc._search = 'search';
     let initSearch = new InitSearch(arc);
@@ -84,7 +84,7 @@ describe('InitSearch', async () => {
 });
 
 describe('InitPopulation', async ()  => {
-  it('penalizes resolution of particles that already exist in the arc', async() => {
+  it('penalizes resolution of particles that already exist in the arc', async () => {
     let manifest = await Manifest.parse(`
       schema Product
 
@@ -108,9 +108,9 @@ describe('InitPopulation', async ()  => {
   });
 });
 
-describe('ConvertConstraintsToConnections', async() => {
+describe('ConvertConstraintsToConnections', async () => {
 
-  it('fills out an empty constraint', async() => {
+  it('fills out an empty constraint', async () => {
     let recipe = (await Manifest.parse(`
       particle A
       particle C
@@ -131,7 +131,7 @@ describe('ConvertConstraintsToConnections', async() => {
     d = view0`);
   });
 
-  it('fills out a constraint, reusing a single particle', async() => {
+  it('fills out a constraint, reusing a single particle', async () => {
     let recipe = (await Manifest.parse(`
       particle A
       particle C
@@ -153,7 +153,7 @@ describe('ConvertConstraintsToConnections', async() => {
     d = view0`);
   });
 
-  it('fills out a constraint, reusing a single particle (2)', async() => {
+  it('fills out a constraint, reusing a single particle (2)', async () => {
     let recipe = (await Manifest.parse(`
       particle A
       particle C
@@ -176,7 +176,7 @@ describe('ConvertConstraintsToConnections', async() => {
   });
 
 
-  it('fills out a constraint, reusing two particles', async() => {
+  it('fills out a constraint, reusing two particles', async () => {
     let recipe = (await Manifest.parse(`
       particle A
       particle C
@@ -199,7 +199,7 @@ describe('ConvertConstraintsToConnections', async() => {
     d = view0`);
   });
 
-  it('fills out a constraint, reusing two particles and a view', async() => {
+  it('fills out a constraint, reusing two particles and a view', async () => {
     let recipe = (await Manifest.parse(`
       schema S
       particle A
@@ -227,7 +227,7 @@ describe('ConvertConstraintsToConnections', async() => {
     d = view0`);
   });
 
-  it('fills out a constraint, reusing two particles and a view (2)', async() => {
+  it('fills out a constraint, reusing two particles and a view (2)', async () => {
     let recipe = (await Manifest.parse(`
       schema S
       particle A
@@ -255,7 +255,7 @@ describe('ConvertConstraintsToConnections', async() => {
     d = view0`);
   });
 
-  it('removes an already fulfilled constraint', async() => {
+  it('removes an already fulfilled constraint', async () => {
     let recipe = (await Manifest.parse(`
       schema S
       particle A
@@ -283,7 +283,7 @@ describe('ConvertConstraintsToConnections', async() => {
     d = view0`);
   });
 
-  it('verifies affordance', async() => {
+  it('verifies affordance', async () => {
     let recipes = (await Manifest.parse(`
       particle A in 'A.js'
         A()
@@ -311,7 +311,7 @@ describe('ConvertConstraintsToConnections', async() => {
 });
 
 describe('MapRemoteSlots', function() {
-  it ('predefined remote slots', async() => {
+  it ('predefined remote slots', async () => {
     let particlesSpec = `
     particle A in 'A.js'
       A()
@@ -364,7 +364,7 @@ describe('MapRemoteSlots', function() {
 });
 
 describe('AssignOrCopyRemoteViews', function() {
-  it ('finds tagged remote views', async() => {
+  it ('finds tagged remote views', async () => {
     let particlesSpec = `
     schema Foo
 
@@ -504,7 +504,7 @@ describe('AssignOrCopyRemoteViews', function() {
 });
 
 describe('SearchTokensToParticles', function() {
-  it ('particles by verb strategy', async() => {
+  it ('particles by verb strategy', async () => {
     let manifest = (await Manifest.parse(`
       particle SimpleJumper in 'A.js'
         jump()
@@ -564,7 +564,7 @@ describe('MatchParticleByVerb', function() {
         * <- energy
   `;
 
-  it ('particles by verb strategy', async() => {
+  it ('particles by verb strategy', async () => {
     let manifest = (await Manifest.parse(manifestStr));
     var arc = createTestArc("test-plan-arc", manifest, "dom");
     // Apply MatchParticleByVerb strategy.
@@ -576,7 +576,7 @@ describe('MatchParticleByVerb', function() {
     assert.deepEqual(["GalaxyJumper", "SimpleJumper", "StarJumper"], results.map(r => r.result.particles[0].name).sort());
   });
 
-  it ('particles by verb recipe fully resolved', async() => {
+  it ('particles by verb recipe fully resolved', async () => {
     let manifest = (await Manifest.parse(manifestStr));
     let recipe = manifest.recipes[0];
     recipe.views[0].mapToView({id: 'test1', type: manifest.findSchemaByName('Height').entityClass().type});
@@ -607,7 +607,7 @@ particle C
 particle D
   D(in Thing ithingD1, in Thing ithingD2, out Thing othingD3)
     `;
-    it ('group in and out view connections', async() => {
+    it ('group in and out view connections', async () => {
       // TODO: add another Type view connections to the recipe!
       let manifest = (await Manifest.parse(`
 ${schemaAndParticlesStr}
@@ -633,7 +633,7 @@ recipe
     });
   });
   describe('CombinedStrategy', function() {
-    it ('combined strategy with search tokens and group view connections', async() => {
+    it ('combined strategy with search tokens and group view connections', async () => {
       let manifest = (await Manifest.parse(`
         schema Energy
         schema Height
@@ -749,7 +749,7 @@ describe('CreateDescriptionHandle', function() {
 });
 
 describe('Description', async ()  => {
-  it('description generated from speculative execution arc', async() => {
+  it('description generated from speculative execution arc', async () => {
     let registry = {};
     let loader = new class extends Loader {
       loadResource(path) {
