@@ -39,7 +39,6 @@ module.exports = {
     "no-multi-spaces": "off",
     "object-curly-spacing": "off",
     "keyword-spacing": "off",
-    "comma-spacing": "off",
     "no-trailing-spaces": "off",
     "space-before-function-paren": "off",
     "key-spacing": "off",

@@ -124,7 +124,7 @@ export class Strategizer {
 
     record.totalGenerated = generated.length;
 
-    generated.sort((a,b) => {
+    generated.sort((a, b) => {
       if (a.score > b.score)
         return -1;
       if (a.score < b.score)

@@ -14,7 +14,7 @@ import XState from './xen-state.js';
 
 class XList extends XState(XElement) {
   static get observedAttributes() {
-    return ['items','template','handler','render','scope'];
+    return ['items', 'template', 'handler', 'render', 'scope'];
   }
   _mount() {
     this._setState({
@@ -38,7 +38,7 @@ class XList extends XState(XElement) {
     }
     //console.log('XList::_renderList:', props);
     var child = container.firstElementChild, next;
-    props.items && props.items.forEach((item,i)=>{
+    props.items && props.items.forEach((item, i)=>{
       // use existing node if possible
       next = child && child.nextElementSibling;
       if (!child) {

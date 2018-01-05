@@ -148,7 +148,7 @@ ${productStyles}
         // TODO(sjmiles): rawData provides POJO access, but shortcuts schema-enforcing getters
         let item = Object.assign({}, rawData);
         item.image = resolver ? resolver(item.image) : item.image;
-        item.subId = item.name.replace(/ /g,'').toLowerCase();
+        item.subId = item.name.replace(/ /g, '').toLowerCase();
         item.index = i;
         return item;
       });
