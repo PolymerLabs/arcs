@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-var supportedTypes = ["Text", "URL", "Number", "Boolean"];
+var supportedTypes = ['Text', 'URL', 'Number', 'Boolean'];
 
 class JsonldToManifest {
   static convert(jsonld, theClass) {
@@ -21,10 +21,10 @@ class JsonldToManifest {
     }
 
     for (var item of obj['@graph']) {
-      if (item["@type"] == "rdf:Property")
-        properties[item["@id"]] = item;
-      else if (item["@type"] == "rdfs:Class") {
-        classes[item["@id"]] = item;
+      if (item['@type'] == 'rdf:Property')
+        properties[item['@id']] = item;
+      else if (item['@type'] == 'rdfs:Class') {
+        classes[item['@id']] = item;
         item.subclasses = [];
         item.superclass = null;
       }
@@ -92,7 +92,7 @@ class JsonldToManifest {
       s += '\n  optional';
       for (var property of relevantProperties) {
         if (property.type.length > 1)
-          var type = '(' + property.type.join(" or ") + ')';
+          var type = '(' + property.type.join(' or ') + ')';
         else
           var type = property.type[0];
         s += `\n    ${type} ${property.name}`;

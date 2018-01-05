@@ -26,7 +26,7 @@ defineParticle(({DomParticle}) => {
             // The element already exists.
             continue;
           }
-          let fooView = await arc.createHandle(foosView.type.primitiveType(), "foo" + index);
+          let fooView = await arc.createHandle(foosView.type.primitiveType(), 'foo' + index);
           this._handleIds.add(foo.id);
           let hostedParticle = await views.get('particle').get();
           let hostedSlotName = [...hostedParticle.slots.keys()][0];

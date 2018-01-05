@@ -8,11 +8,11 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-"use strict";
+'use strict';
 
 import {assert} from './chai-web.js';
-import Arc from "../arc.js";
-import Loader from "../loader.js";
+import Arc from '../arc.js';
+import Loader from '../loader.js';
 import Manifest from '../manifest.js';
 import Schema from '../schema.js';
 

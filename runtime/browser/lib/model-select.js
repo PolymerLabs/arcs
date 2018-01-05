@@ -29,7 +29,7 @@ export default class ModelSelect extends HTMLElement {
     select.textContent = '';
     options && options.forEach(o =>
       select.appendChild(
-        Object.assign(document.createElement("option"), {
+        Object.assign(document.createElement('option'), {
           value: o.value || o,
           text: o.text || o.value || o
         })

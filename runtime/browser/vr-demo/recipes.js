@@ -9,16 +9,16 @@
  */
 module.exports = [
   {
-    name: "Create Pot",
+    name: 'Create Pot',
     particles: [{
-      name: "VrPot"
+      name: 'VrPot'
     }]
   },
 
   {
-    name: "Create Flowers",
+    name: 'Create Flowers',
     particles: [{
-      name: "VrFlower"
+      name: 'VrFlower'
     }]
   },
 /*
@@ -30,16 +30,16 @@ module.exports = [
   },
 */
   {
-    name: "Create Sphere",
+    name: 'Create Sphere',
     particles: [{
-      name: "VrSphere"
+      name: 'VrSphere'
     }]
   },
 
   {
-    name: "Create Box",
+    name: 'Create Box',
     particles: [{
-      name: "VrBox"
+      name: 'VrBox'
     }]
   }
 /*

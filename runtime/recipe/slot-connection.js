@@ -40,7 +40,7 @@ class SlotConnection {
         slot._name = providedSlot.name;
         this.providedSlots[providedSlot.name] = slot;
       }
-      assert(slot.viewConnections.length == 0, "View connections must be empty");
+      assert(slot.viewConnections.length == 0, 'View connections must be empty');
       providedSlot.views.forEach(view => slot.viewConnections.push(this.particle.connections[view]));
       assert(slot._name == providedSlot.name);
       assert(!slot.formFactor);
@@ -103,25 +103,25 @@ class SlotConnection {
 
     if (!this.name) {
       if (options) {
-        options.details = "missing name";
+        options.details = 'missing name';
       }
       return false;
     }
     if (!this.particle) {
       if (options) {
-        options.details = "missing particle";
+        options.details = 'missing particle';
       }
       return false;
     }
     if (!this.targetSlot) {
       if (options) {
-        options.details = "missing target-slot";
+        options.details = 'missing target-slot';
       }
       return false;
     }
     if (this.slotSpec.isRequired && this.targetSlot.sourceConnection == undefined) {
       if (options) {
-        options.details = "missing target-slot's source-connection of required connection";
+        options.details = 'missing target-slot\'s source-connection of required connection';
       }
       return false;
     }
@@ -145,7 +145,7 @@ class SlotConnection {
     }
 
     let result = [];
-    result.push(consumeRes.join(" "));
+    result.push(consumeRes.join(' '));
 
     Object.keys(this.providedSlots).forEach(psName => {
       let providedSlot = this.providedSlots[psName];
@@ -157,9 +157,9 @@ class SlotConnection {
         provideRes.push('set of');
       }
       provideRes.push(`${psName} as ${(nameMap && nameMap.get(providedSlot)) || providedSlot}`);
-      result.push(provideRes.join(" "));
+      result.push(provideRes.join(' '));
     });
-    return result.join("\n");
+    return result.join('\n');
   }
 }
 

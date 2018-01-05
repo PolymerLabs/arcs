@@ -42,7 +42,7 @@ class Shape {
   }
 
   toPrettyString() {
-    return "SHAAAAPE";
+    return 'SHAAAAPE';
   }
 
   static fromLiteral(data) {

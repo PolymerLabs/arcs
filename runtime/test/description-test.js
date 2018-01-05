@@ -687,9 +687,9 @@ recipe
   tests.forEach((test) => {
     it('particle dynamic dom description ' + test.name, async () => {
       let {recipe, description, fooView, Description, descriptionHandle} = await prepareRecipeAndArc();
-      descriptionHandle.store(new Description({key: "_pattern_", value: 'return my ${ofoo} (text)'}));
-      descriptionHandle.store(new Description({key: "_template_", value: 'Return my <span>{{ofoo}}</span> (dom)'}));
-      descriptionHandle.store(new Description({key: "_model_", value: JSON.stringify({'ofoo': '${ofoo}'})}));
+      descriptionHandle.store(new Description({key: '_pattern_', value: 'return my ${ofoo} (text)'}));
+      descriptionHandle.store(new Description({key: '_template_', value: 'Return my <span>{{ofoo}}</span> (dom)'}));
+      descriptionHandle.store(new Description({key: '_model_', value: JSON.stringify({'ofoo': '${ofoo}'})}));
       await test.verifySuggestion(`Return my foo (${test.name}).`, description);
 
       fooView.set({id: 5, rawData: {name: 'foo-name'}});

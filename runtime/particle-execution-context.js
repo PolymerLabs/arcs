@@ -5,7 +5,7 @@
 // Code distributed by Google as part of this project is also
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
-"use strict";
+'use strict';
 
 class ParticleExecutionContext {
   constructor() {

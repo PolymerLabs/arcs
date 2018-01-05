@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import BrowserLoader from "../../browser-loader.js";
+import BrowserLoader from '../../browser-loader.js';
 import SlotComposer from '../../slot-composer.js';
 import DemoBase from '../lib/demo-base.js';
 import Arc from '../../arc.js';
@@ -64,7 +64,7 @@ class ArcHost extends DemoBase {
       slotComposer: new SlotComposer({
         rootContext: this.$('[particle-container]'),
         suggestionsContext: this.$('suggestions-element'),
-        affordance: "dom",
+        affordance: 'dom',
       }),
       context: await Manifest.load(this.getAttribute('manifest-location'),
       loader),

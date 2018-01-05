@@ -232,8 +232,8 @@ class Walker {
   }
 
   createDescendant(result, score, hash, valid) {
-    assert(this.currentResult, "no current result");
-    assert(this.currentStrategy, "no current strategy");
+    assert(this.currentResult, 'no current result');
+    assert(this.currentStrategy, 'no current strategy');
     if (this.currentResult.score)
       score += this.currentResult.score;
     this.descendants.push({

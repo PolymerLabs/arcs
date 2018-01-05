@@ -7,7 +7,7 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-"use strict";
+'use strict';
 
 import assert from '../platform/assert-web.js';
 import tracing from '../tracelib/trace.js';
@@ -17,7 +17,7 @@ import Relevance from './relevance.js';
 class Speculator {
 
   speculate(arc, plan) {
-    var trace = tracing.start({cat: "speculator", name: "Speculator::speculate"});
+    var trace = tracing.start({cat: 'speculator', name: 'Speculator::speculate'});
     var newArc = arc.cloneForSpeculativeExecution();
     let relevance = new Relevance();
     async function awaitCompletion() {

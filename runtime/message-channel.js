@@ -7,7 +7,7 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-"use strict";
+'use strict';
 
 class MessagePort {
   constructor(channel, id, other) {
@@ -51,7 +51,7 @@ class MessageChannel {
         await 0;
         await this._ports[id]._onmessage(new MessageEvent(message));
       } catch (e) {
-        console.error("Exception in particle code\n", e);
+        console.error('Exception in particle code\n', e);
       }
     }
   }

@@ -7,7 +7,7 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-"use strict";
+'use strict';
 
 import assert from '../platform/assert-web.js';
 import Slot from './slot.js';
@@ -17,8 +17,8 @@ import DescriptionDomFormatter from './description-dom-formatter.js';
 
 class SlotComposer {
   constructor(options) {
-    assert(options.affordance, "Affordance is mandatory");
-    assert(options.rootContext, "Root context is mandatory");
+    assert(options.affordance, 'Affordance is mandatory');
+    assert(options.rootContext, 'Root context is mandatory');
 
     this._containerKind = options.containerKind;
     this._affordance = options.affordance;
@@ -28,7 +28,7 @@ class SlotComposer {
     this._contextById = this._slotClass.findRootSlots(options.rootContext) || {};
     if (Object.keys(this._contextById).length == 0) {
       // fallback to single "root" slot using the rootContext.
-      this._contextById["root"] = options.rootContext;
+      this._contextById['root'] = options.rootContext;
     }
 
     this._suggestionsContext = options.suggestionsContext;
@@ -38,34 +38,34 @@ class SlotComposer {
   get affordance() { return this._affordance; }
   getSlotClass() {
     switch (this._affordance) {
-      case "dom":
-      case "dom-touch":
-      case "vr":
+      case 'dom':
+      case 'dom-touch':
+      case 'vr':
         return DomSlot;
-      case "mock":
+      case 'mock':
         return Slot;
       default:
-        assert("unsupported affordance ", this._affordance);
+        assert('unsupported affordance ', this._affordance);
     }
   }
   _getSuggestionContext() {
     switch (this._affordance) {
-      case "dom":
-      case "dom-touch":
-      case "vr":
+      case 'dom':
+      case 'dom-touch':
+      case 'vr':
         return DomContext;
       default:
-        assert("unsupported affordance ", this._affordance);
+        assert('unsupported affordance ', this._affordance);
     }
   }
   _getDescriptionFormatter() {
     switch (this._affordance) {
-      case "dom":
-      case "dom-touch":
-      case "vr":
+      case 'dom':
+      case 'dom-touch':
+      case 'vr':
         return DescriptionDomFormatter;
       default:
-        assert("unsupported affordance ", this._affordance);
+        assert('unsupported affordance ', this._affordance);
     }
   }
 

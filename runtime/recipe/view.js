@@ -75,14 +75,14 @@ class View {
   }
 
   // a resolved View has either an id or create=true
-  get fate() { return this._fate || "?"; }
+  get fate() { return this._fate || '?'; }
   set fate(fate) {
     if (this._originalFate == null) {
       this._originalFate = this._fate;
     }
     this._fate = fate;
   }
-  get originalFate() { return this._originalFate || "?"; }
+  get originalFate() { return this._originalFate || '?'; }
   get originalId() { return this._originalId; }
   get recipe() { return this._recipe; }
   get tags() { return this._tags; } // only tags owned by the view
@@ -134,26 +134,26 @@ class View {
     assert(Object.isFrozen(this));
     if (!this._type) {
       if (options) {
-        options.details = "missing type";
+        options.details = 'missing type';
       }
       return false;
     }
     switch (this.fate) {
-      case "?": {
+      case '?': {
         if (options) {
-          options.details = "missing fate";
+          options.details = 'missing fate';
         }
         return false;
       }
-      case "copy":
-      case "map":
-      case "use": {
+      case 'copy':
+      case 'map':
+      case 'use': {
         if (options && this.id === null) {
-          options.details = "missing id";
+          options.details = 'missing id';
         }
         return this.id !== null;
       }
-      case "create":
+      case 'create':
         return true;
       default: {
         if (options) {

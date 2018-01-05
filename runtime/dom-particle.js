@@ -7,7 +7,7 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-"use strict";
+'use strict';
 
 import assert from '../platform/assert-web.js';
 import {
@@ -100,7 +100,7 @@ class DomParticle extends XenStateMixin(Particle) {
     if (this._shouldRender(this._props, this._state)) { // TODO: should _shouldRender be slot specific?
       this.relevance = 1; // TODO: improve relevance signal.
     }
-    this.config.slotNames.forEach(s => this.render(s, ["model"]));
+    this.config.slotNames.forEach(s => this.render(s, ['model']));
   }
 
   render(slotName, contentTypes) {
@@ -111,11 +111,11 @@ class DomParticle extends XenStateMixin(Particle) {
     contentTypes.forEach(ct => slot._requestedContentTypes.add(ct));
     if (this._shouldRender(this._props, this._state)) {
       let content = {};
-      if (slot._requestedContentTypes.has("template")) {
-        content["template"] = this._initializeRender(slot);
+      if (slot._requestedContentTypes.has('template')) {
+        content['template'] = this._initializeRender(slot);
       }
-      if (slot._requestedContentTypes.has("model")) {
-        content["model"] = this._render(this._props, this._state);
+      if (slot._requestedContentTypes.has('model')) {
+        content['model'] = this._render(this._props, this._state);
       }
       slot.render(content);
     } else if (slot.isRendered) {
@@ -191,12 +191,12 @@ class DomParticle extends XenStateMixin(Particle) {
     return Array.from(handlers.keys());
   }
   setParticleDescription(pattern) {
-    if (typeof pattern === "string") {
+    if (typeof pattern === 'string') {
       return super.setParticleDescription(pattern);
     }
     assert(!!pattern.template && !!pattern.model, 'Description pattern must either be string or have template and model');
-    super.setDescriptionPattern("_template_", pattern.template);
-    super.setDescriptionPattern("_model_", JSON.stringify(pattern.model));
+    super.setDescriptionPattern('_template_', pattern.template);
+    super.setDescriptionPattern('_model_', JSON.stringify(pattern.model));
   }
 }
 

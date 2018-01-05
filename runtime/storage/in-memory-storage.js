@@ -8,13 +8,13 @@
 'use strict';
 
 import assert from '../../platform/assert-web.js';
-import tracing from "../../tracelib/trace.js";
+import tracing from '../../tracelib/trace.js';
 import util from '../recipe/util.js';
 import StorageProviderBase from './storage-provider-base.js';
 
 class InMemoryKey {
   constructor(key) {
-    var parts = key.split("://");
+    var parts = key.split('://');
     this.protocol = parts[0];
     assert(this.protocol == 'in-memory');
     parts = parts[1] ? parts.slice(1).join('://').split('^^') : [];
@@ -35,7 +35,7 @@ let __storageCache = {};
 
 export default class InMemoryStorage {
   constructor(arc) {
-      assert(arc.id !== undefined, "Arcs with storage must have ids");
+      assert(arc.id !== undefined, 'Arcs with storage must have ids');
       this._arc = arc;
       this._memoryMap = {};
       this.localIDBase = 0;
@@ -111,7 +111,7 @@ class InMemoryCollection extends InMemoryStorageProvider {
   }
 
   async store(entity) {
-    var trace = tracing.start({cat: "view", name: "InMemoryCollection::store", args: {name: this.name}});
+    var trace = tracing.start({cat: 'view', name: 'InMemoryCollection::store', args: {name: this.name}});
     var entityWasPresent = this._items.has(entity.id);
 
     this._items.set(entity.id, entity);
@@ -122,7 +122,7 @@ class InMemoryCollection extends InMemoryStorageProvider {
   }
 
   async remove(id) {
-    var trace = tracing.start({cat: "view", name: "InMemoryCollection::remove", args: {name: this.name}});
+    var trace = tracing.start({cat: 'view', name: 'InMemoryCollection::remove', args: {name: this.name}});
     if (!this._items.has(id)) {
       return;
     }

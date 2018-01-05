@@ -7,7 +7,7 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
- "use strict";
+ 'use strict';
 
 import Arc from '../arc.js';
 import Loader from '../loader.js';
@@ -43,7 +43,7 @@ function createTestArc(id, context, affordance) {
 describe('Planner', function() {
   it('can generate things', async () => {
     let manifest = await Manifest.load('./particles/test/giftlist.manifest', loader);
-    var arc = createTestArc("test-plan-arc", manifest, "dom");
+    var arc = createTestArc('test-plan-arc', manifest, 'dom');
     let Person = manifest.findSchemaByName('Person').entityClass();
     let Product = manifest.findSchemaByName('Person').entityClass();
     var planner = new Planner();
@@ -56,11 +56,11 @@ describe('Planner', function() {
 
   it('make a plan with views', async () => {
     let manifest = await Manifest.load('./particles/test/giftlist.manifest', loader);
-    var arc = createTestArc("test-plan-arc", manifest, "dom");
+    var arc = createTestArc('test-plan-arc', manifest, 'dom');
     let Person = manifest.findSchemaByName('Person').entityClass();
     let Product = manifest.findSchemaByName('Product').entityClass();
-    var personView = await arc.createView(Person.type.setViewOf(), "aperson");
-    var productView = await arc.createView(Product.type.setViewOf(), "products");
+    var personView = await arc.createView(Person.type.setViewOf(), 'aperson');
+    var productView = await arc.createView(Product.type.setViewOf(), 'products');
     var planner = new Planner();
     planner.init(arc);
     await planner.generate(),
@@ -328,7 +328,7 @@ describe('MapRemoteSlots', function() {
         ${recipeManifest}
       `));
       var strategizer = {generated: [{result: manifest.recipes[0], score: 1}]};
-      var arc = createTestArc("test-plan-arc", manifest, "dom");
+      var arc = createTestArc('test-plan-arc', manifest, 'dom');
       var mrs = new MapRemoteSlots(arc);
 
       let {results} = await mrs.generate(strategizer);
@@ -388,7 +388,7 @@ describe('AssignOrCopyRemoteViews', function() {
       manifest.newView(schema.type.setViewOf(), 'Test2', 'test-2', ['#tag2']);
       manifest.newView(schema.type.setViewOf(), 'Test2', 'test-3', []);
 
-      var arc = createTestArc("test-plan-arc", manifest, "dom");
+      var arc = createTestArc('test-plan-arc', manifest, 'dom');
 
       var planner = new Planner();
       planner.init(arc);
@@ -518,7 +518,7 @@ describe('SearchTokensToParticles', function() {
       recipe
         search \`jump or fly or run and Rester\`
     `));
-    var arc = createTestArc("test-plan-arc", manifest, "dom");
+    var arc = createTestArc('test-plan-arc', manifest, 'dom');
     let recipe = manifest.recipes[0];
     assert(recipe.normalize());
     assert(!recipe.isResolved());
@@ -526,10 +526,10 @@ describe('SearchTokensToParticles', function() {
     var stp = new SearchTokensToParticles(arc);
     let {results} = await stp.generate(strategizer);
     assert.equal(results.length, 2);
-    assert.deepEqual([["GalaxyFlyer", "Rester", "SimpleJumper"],
-                      ["GalaxyFlyer", "Rester", "StarJumper"]], results.map(r => r.result.particles.map(p => p.name).sort()));
-    assert.deepEqual(["fly", "jump", "rester"], results[0].result.search.resolvedTokens);
-    assert.deepEqual(["and", "or", "or", "run"], results[0].result.search.unresolvedTokens);
+    assert.deepEqual([['GalaxyFlyer', 'Rester', 'SimpleJumper'],
+                      ['GalaxyFlyer', 'Rester', 'StarJumper']], results.map(r => r.result.particles.map(p => p.name).sort()));
+    assert.deepEqual(['fly', 'jump', 'rester'], results[0].result.search.resolvedTokens);
+    assert.deepEqual(['and', 'or', 'or', 'run'], results[0].result.search.unresolvedTokens);
   });
 });
 
@@ -566,14 +566,14 @@ describe('MatchParticleByVerb', function() {
 
   it('particles by verb strategy', async () => {
     let manifest = (await Manifest.parse(manifestStr));
-    var arc = createTestArc("test-plan-arc", manifest, "dom");
+    var arc = createTestArc('test-plan-arc', manifest, 'dom');
     // Apply MatchParticleByVerb strategy.
     var strategizer = {generated: [{result: manifest.recipes[0], score: 1}]};
     var mpv = new MatchParticleByVerb(arc);
     let {results} = await mpv.generate(strategizer);
     assert.equal(results.length, 3);
     // Note: view connections are not resolved yet.
-    assert.deepEqual(["GalaxyJumper", "SimpleJumper", "StarJumper"], results.map(r => r.result.particles[0].name).sort());
+    assert.deepEqual(['GalaxyJumper', 'SimpleJumper', 'StarJumper'], results.map(r => r.result.particles[0].name).sort());
   });
 
   it('particles by verb recipe fully resolved', async () => {
@@ -582,7 +582,7 @@ describe('MatchParticleByVerb', function() {
     recipe.views[0].mapToView({id: 'test1', type: manifest.findSchemaByName('Height').entityClass().type});
     recipe.views[1].mapToView({id: 'test2', type: manifest.findSchemaByName('Energy').entityClass().type});
 
-    var arc = createTestArc("test-plan-arc", manifest, "dom");
+    var arc = createTestArc('test-plan-arc', manifest, 'dom');
 
     // Apply all strategies to resolve recipe where particles are referenced by verbs.
     var planner = new Planner();
@@ -590,7 +590,7 @@ describe('MatchParticleByVerb', function() {
     let plans = await planner.plan(1000);
 
     assert.equal(2, plans.length);
-    assert.deepEqual([["SimpleJumper"], ["StarJumper"]],
+    assert.deepEqual([['SimpleJumper'], ['StarJumper']],
                      plans.map(plan => plan.particles.map(particle => particle.name)));
   });
 
@@ -618,8 +618,8 @@ recipe
   D
       `));
       var strategizer = {generated: [{result: manifest.recipes[0], score: 1}]};
-      var arc = createTestArc("test-plan-arc", manifest, "dom");
-      arc._search = "showproducts and chooser alsoon recommend";
+      var arc = createTestArc('test-plan-arc', manifest, 'dom');
+      arc._search = 'showproducts and chooser alsoon recommend';
       var gvc = new GroupViewConnections(arc);
 
       let {results} = await gvc.generate(strategizer);
@@ -647,7 +647,7 @@ recipe
       `));
       manifest.recipes[0].normalize();
       var strategizer = {generated: [{result: manifest.recipes[0], score: 1}], terminal: []};
-      var arc = createTestArc("test-plan-arc", manifest, "dom");
+      var arc = createTestArc('test-plan-arc', manifest, 'dom');
       var strategy = new CombinedStrategy([
         new SearchTokensToParticles(arc),
         new GroupViewConnections(arc),
@@ -678,9 +678,9 @@ describe('FallbackFate', function() {
           outthing -> view1
     `));
     let recipe = manifest.recipes[0];
-    recipe.views.forEach(v => v._originalFate = "?");
+    recipe.views.forEach(v => v._originalFate = '?');
     assert(recipe.normalize());
-    var arc = createTestArc("test-plan-arc", manifest, "dom");
+    var arc = createTestArc('test-plan-arc', manifest, 'dom');
     var strategizer = {generated: [{result: manifest.recipes[0], score: 1}], terminal: []};
     var strategy = new FallbackFate(arc);
 
@@ -713,9 +713,9 @@ describe('FallbackFate', function() {
           outthing -> view1
     `));
     let recipe = manifest.recipes[0];
-    recipe.views.forEach(v => v._originalFate = "?");
+    recipe.views.forEach(v => v._originalFate = '?');
     assert(recipe.normalize());
-    var arc = createTestArc("test-plan-arc", manifest, "dom");
+    var arc = createTestArc('test-plan-arc', manifest, 'dom');
     var strategizer = {generated: [{result: manifest.recipes[0], score: 1}], terminal: []};
 
     var strategy = new FallbackFate(arc);

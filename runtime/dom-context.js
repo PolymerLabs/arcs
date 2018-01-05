@@ -7,7 +7,7 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-"use strict";
+'use strict';
 
 import assert from '../platform/assert-web.js';
 import Template from './browser/lib/xen-template.js';
@@ -53,7 +53,7 @@ class DomContext {
   }
   clear() {
     if (this._liveDom) {
-      this._liveDom.root.textContent = "";
+      this._liveDom.root.textContent = '';
     }
     this._liveDom = null;
     this._innerContextBySlotName = {};
@@ -84,7 +84,7 @@ class DomContext {
       if (parentNode == this._context) {
         return true;
       }
-      if (parentNode.getAttribute("slotid")) {
+      if (parentNode.getAttribute('slotid')) {
         // this is an inner slot of an inner slot.
         return false;
       }
@@ -94,7 +94,7 @@ class DomContext {
   }
   initInnerContexts(slotSpec) {
     this._innerContextBySlotName = {};
-    Array.from(this._context.querySelectorAll("[slotid]")).forEach(s => {
+    Array.from(this._context.querySelectorAll('[slotid]')).forEach(s => {
       if (!this.isDirectInnerSlot(s)) {
         // Skip inner slots of an inner slot of the given slot.
         return;
@@ -122,7 +122,7 @@ class DomContext {
   }
   findRootSlots() {
     let innerSlotById = {};
-    Array.from(this._context.querySelectorAll("[slotid]")).forEach(s => {
+    Array.from(this._context.querySelectorAll('[slotid]')).forEach(s => {
       assert(this.isDirectInnerSlot(s), 'Unexpected inner slot');
       let slotId = s.getAttribute('slotid');
       assert(!innerSlotById[slotId], `Duplicate root slot ${slotId}`);

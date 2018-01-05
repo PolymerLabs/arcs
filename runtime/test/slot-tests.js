@@ -7,14 +7,14 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-"use strict";
+'use strict';
 
 import {assert} from './chai-web.js';
-import Slot from "../slot.js";
+import Slot from '../slot.js';
 
-describe("slot", function() {
-  it("setting context", async () => {
-    let slot = new Slot("dummy-consumeConn", "dummy-arc");
+describe('slot', function() {
+  it('setting context', async () => {
+    let slot = new Slot('dummy-consumeConn', 'dummy-arc');
     let startRenderCount = 0;
     let stopRenderCount = 0;
     slot.startRenderCallback = () => { ++startRenderCount; };
@@ -26,13 +26,13 @@ describe("slot", function() {
     assert.equal(stopRenderCount, 0);
 
     // context was null, set to non-null: startRender is called.
-    await slot.updateContext("dummy-context");
+    await slot.updateContext('dummy-context');
     assert.equal(startRenderCount, 1);
     assert.equal(stopRenderCount, 0);
 
     // context was not null, set to another non-null context: nothing happens.
-    assert.isFalse(slot.isSameContext("other-context"));
-    await slot.updateContext("other-context");
+    assert.isFalse(slot.isSameContext('other-context'));
+    await slot.updateContext('other-context');
     assert.equal(startRenderCount, 1);
     assert.equal(stopRenderCount, 0);
 
@@ -41,13 +41,13 @@ describe("slot", function() {
     assert.equal(startRenderCount, 1);
     assert.equal(stopRenderCount, 1);
   });
-  it("hosted slots", async () => {
+  it('hosted slots', async () => {
     assert(true);
-    let transformationSlotName = "myTransformationSlotName";
-    let slot = new Slot({particle: {name: "myTransformationParticle"}, name: transformationSlotName}, "dummy-arc");
-    let hostedSlotId = "id-0";
-    let hostedParticleName = "particle-0";
-    let hostedSlotName = "slot-0";
+    let transformationSlotName = 'myTransformationSlotName';
+    let slot = new Slot({particle: {name: 'myTransformationParticle'}, name: transformationSlotName}, 'dummy-arc');
+    let hostedSlotId = 'id-0';
+    let hostedParticleName = 'particle-0';
+    let hostedSlotName = 'slot-0';
     let hostedParticle = {name: hostedParticleName};
 
     // Add hosted slot and verify it exists.
@@ -65,16 +65,16 @@ describe("slot", function() {
     // Start render hosted slots
     slot.startRenderCallback = ({particle, slotName, contentTypes}) => { startRenderSlotNames.add(slotName); };
     slot.stopRenderCallback = ({particle, slotName}) => { stopRenderSlotNames.add(slotName); };
-    await slot.updateContext("dummy-context");
+    await slot.updateContext('dummy-context');
     assert.equal(2, startRenderSlotNames.size);
     assert.isTrue(startRenderSlotNames.has(transformationSlotName));
     assert.isTrue(startRenderSlotNames.has(hostedSlotName));
     startRenderSlotNames.clear();
 
     // Add another hosted slot and have startRender trigger immediately.
-    let otherHostedSlotId = "id-1";
-    let otherHostedParticleName = "particle-1";
-    let otherHostedSlotName = "slot-2";
+    let otherHostedSlotId = 'id-1';
+    let otherHostedParticleName = 'particle-1';
+    let otherHostedSlotName = 'slot-2';
     let otherHostedParticle = {name: otherHostedParticleName};
     slot.addHostedSlot(otherHostedSlotId, otherHostedParticleName, otherHostedSlotName);
     assert.isDefined(slot.getHostedSlot(otherHostedSlotId));

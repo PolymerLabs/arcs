@@ -7,7 +7,7 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-"use strict";
+'use strict';
 
 import assert from '../platform/assert-web.js';
 import Slot from './slot.js';
@@ -94,7 +94,7 @@ class DomSlot extends Slot {
       templates.set(this._templateName, DomContext.createTemplateElement(content.template));
     }
     this.eventHandler = handler;
-    if (Object.keys(content).indexOf("model") >= 0) {
+    if (Object.keys(content).indexOf('model') >= 0) {
       if (content.model) {
         this._model = Object.assign(content.model, await this.populateViewDescriptions());
       } else {
@@ -125,9 +125,9 @@ class DomSlot extends Slot {
     return this.getContext() && this.getContext().getInnerContext(slotName);
   }
   constructRenderRequest() {
-    let request = ["model"];
+    let request = ['model'];
     if (!this.getTemplate()) {
-      request.push("template");
+      request.push('template');
     }
     return request;
   }

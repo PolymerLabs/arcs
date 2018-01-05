@@ -7,7 +7,7 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-"use strict";
+'use strict';
 
 import assert from '../platform/assert-web.js';
 import ParticleSpec from './particle-spec.js';
@@ -168,7 +168,7 @@ class APIPort {
         return;
       }
     }
-    let result = this["on" + e.data.messageType](args);
+    let result = this['on' + e.data.messageType](args);
     if (handler.isInitializer) {
       assert(args.identifier);
       await this._mapper.establishThingMapping(args.identifier, result);
@@ -231,46 +231,46 @@ class PECOuterPort extends APIPort {
   constructor(messagePort) {
     super(messagePort, 'o');
 
-    this.registerCall("Stop", {});
-    this.registerCall("DefineParticle",
+    this.registerCall('Stop', {});
+    this.registerCall('DefineParticle',
       {particleDefinition: this.Direct, particleFunction: this.Stringify});
-    this.registerRedundantInitializer("DefineHandle", {type: this.ByLiteral(Type), name: this.Direct});
-    this.registerInitializer("InstantiateParticle",
+    this.registerRedundantInitializer('DefineHandle', {type: this.ByLiteral(Type), name: this.Direct});
+    this.registerInitializer('InstantiateParticle',
       {spec: this.ByLiteral(ParticleSpec), handles: this.Map(this.Direct, this.Mapped)});
 
-    this.registerCall("UIEvent", {particle: this.Mapped, slotName: this.Direct, event: this.Direct});
-    this.registerCall("SimpleCallback", {callback: this.Direct, data: this.Direct});
-    this.registerCall("AwaitIdle", {version: this.Direct});
-    this.registerCall("StartRender", {particle: this.Mapped, slotName: this.Direct, contentTypes: this.List(this.Direct)});
-    this.registerCall("StopRender", {particle: this.Mapped, slotName: this.Direct});
+    this.registerCall('UIEvent', {particle: this.Mapped, slotName: this.Direct, event: this.Direct});
+    this.registerCall('SimpleCallback', {callback: this.Direct, data: this.Direct});
+    this.registerCall('AwaitIdle', {version: this.Direct});
+    this.registerCall('StartRender', {particle: this.Mapped, slotName: this.Direct, contentTypes: this.List(this.Direct)});
+    this.registerCall('StopRender', {particle: this.Mapped, slotName: this.Direct});
 
-    this.registerHandler("Render", {particle: this.Mapped, slotName: this.Direct, content: this.Direct});
-    this.registerHandler("Synchronize", {handle: this.Mapped, target: this.Mapped,
+    this.registerHandler('Render', {particle: this.Mapped, slotName: this.Direct, content: this.Direct});
+    this.registerHandler('Synchronize', {handle: this.Mapped, target: this.Mapped,
                                     type: this.Direct, callback: this.Direct,
                                     modelCallback: this.Direct});
-    this.registerHandler("HandleGet", {handle: this.Mapped, callback: this.Direct});
-    this.registerHandler("HandleToList", {handle: this.Mapped, callback: this.Direct});
-    this.registerHandler("HandleSet", {handle: this.Mapped, data: this.Direct});
-    this.registerHandler("HandleStore", {handle: this.Mapped, data: this.Direct});
-    this.registerHandler("HandleRemove", {handle: this.Mapped, data: this.Direct});
-    this.registerHandler("HandleClear", {handle: this.Mapped});
-    this.registerHandler("Idle", {version: this.Direct, relevance: this.Map(this.Mapped, this.Direct)});
+    this.registerHandler('HandleGet', {handle: this.Mapped, callback: this.Direct});
+    this.registerHandler('HandleToList', {handle: this.Mapped, callback: this.Direct});
+    this.registerHandler('HandleSet', {handle: this.Mapped, data: this.Direct});
+    this.registerHandler('HandleStore', {handle: this.Mapped, data: this.Direct});
+    this.registerHandler('HandleRemove', {handle: this.Mapped, data: this.Direct});
+    this.registerHandler('HandleClear', {handle: this.Mapped});
+    this.registerHandler('Idle', {version: this.Direct, relevance: this.Map(this.Mapped, this.Direct)});
 
-    this.registerHandler("ConstructInnerArc", {callback: this.Direct, particle: this.Mapped});
-    this.registerCall("ConstructArcCallback", {callback: this.Direct, arc: this.LocalMapped});
+    this.registerHandler('ConstructInnerArc', {callback: this.Direct, particle: this.Mapped});
+    this.registerCall('ConstructArcCallback', {callback: this.Direct, arc: this.LocalMapped});
 
-    this.registerHandler("ArcCreateHandle", {callback: this.Direct, arc: this.LocalMapped, type: this.ByLiteral(Type), name: this.Direct});
-    this.registerInitializer("CreateHandleCallback", {callback: this.Direct, type: this.ByLiteral(Type), name: this.Direct, id: this.Direct});
+    this.registerHandler('ArcCreateHandle', {callback: this.Direct, arc: this.LocalMapped, type: this.ByLiteral(Type), name: this.Direct});
+    this.registerInitializer('CreateHandleCallback', {callback: this.Direct, type: this.ByLiteral(Type), name: this.Direct, id: this.Direct});
 
-    this.registerHandler("ArcMapHandle", {callback: this.Direct, arc: this.LocalMapped, handle: this.Mapped});
-    this.registerInitializer("MapHandleCallback", {callback: this.Direct, id: this.Direct});
+    this.registerHandler('ArcMapHandle', {callback: this.Direct, arc: this.LocalMapped, handle: this.Mapped});
+    this.registerInitializer('MapHandleCallback', {callback: this.Direct, id: this.Direct});
 
-    this.registerHandler("ArcCreateSlot",
+    this.registerHandler('ArcCreateSlot',
       {callback: this.Direct, arc: this.LocalMapped, transformationParticle: this.Mapped, transformationSlotName: this.Direct, hostedParticleName: this.Direct, hostedSlotName: this.Direct});
-    this.registerInitializer("CreateSlotCallback", {callback: this.Direct, hostedSlotId: this.Direct});
-    this.registerCall("InnerArcRender", {transformationParticle: this.Mapped, transformationSlotName: this.Direct, hostedSlotId: this.Direct, content: this.Direct});
+    this.registerInitializer('CreateSlotCallback', {callback: this.Direct, hostedSlotId: this.Direct});
+    this.registerCall('InnerArcRender', {transformationParticle: this.Mapped, transformationSlotName: this.Direct, hostedSlotId: this.Direct, content: this.Direct});
 
-    this.registerHandler("ArcLoadRecipe", {arc: this.LocalMapped, recipe: this.Direct, callback: this.Direct});
+    this.registerHandler('ArcLoadRecipe', {arc: this.LocalMapped, recipe: this.Direct, callback: this.Direct});
   }
 }
 
@@ -278,45 +278,45 @@ class PECInnerPort extends APIPort {
   constructor(messagePort) {
     super(messagePort, 'i');
 
-    this.registerHandler("Stop", {});
+    this.registerHandler('Stop', {});
     // particleFunction needs to be eval'd in context or it won't work.
-    this.registerHandler("DefineParticle",
+    this.registerHandler('DefineParticle',
       {particleDefinition: this.Direct, particleFunction: this.Direct});
-    this.registerInitializerHandler("DefineHandle", {type: this.ByLiteral(Type), name: this.Direct});
-    this.registerInitializerHandler("InstantiateParticle",
+    this.registerInitializerHandler('DefineHandle', {type: this.ByLiteral(Type), name: this.Direct});
+    this.registerInitializerHandler('InstantiateParticle',
       {spec: this.ByLiteral(ParticleSpec), handles: this.Map(this.Direct, this.Mapped)});
 
-    this.registerHandler("UIEvent", {particle: this.Mapped, slotName: this.Direct, event: this.Direct});
-    this.registerHandler("SimpleCallback", {callback: this.LocalMapped, data: this.Direct});
-    this.registerHandler("AwaitIdle", {version: this.Direct});
-    this.registerHandler("StartRender", {particle: this.Mapped, slotName: this.Direct, contentTypes: this.Direct});
-    this.registerHandler("StopRender", {particle: this.Mapped, slotName: this.Direct});
+    this.registerHandler('UIEvent', {particle: this.Mapped, slotName: this.Direct, event: this.Direct});
+    this.registerHandler('SimpleCallback', {callback: this.LocalMapped, data: this.Direct});
+    this.registerHandler('AwaitIdle', {version: this.Direct});
+    this.registerHandler('StartRender', {particle: this.Mapped, slotName: this.Direct, contentTypes: this.Direct});
+    this.registerHandler('StopRender', {particle: this.Mapped, slotName: this.Direct});
 
-    this.registerCall("Render", {particle: this.Mapped, slotName: this.Direct, content: this.Direct});
-    this.registerCall("Synchronize", {handle: this.Mapped, target: this.Mapped,
+    this.registerCall('Render', {particle: this.Mapped, slotName: this.Direct, content: this.Direct});
+    this.registerCall('Synchronize', {handle: this.Mapped, target: this.Mapped,
                                  type: this.Direct, callback: this.LocalMapped,
                                  modelCallback: this.LocalMapped});
-    this.registerCall("HandleGet", {handle: this.Mapped, callback: this.LocalMapped});
-    this.registerCall("HandleToList", {handle: this.Mapped, callback: this.LocalMapped});
-    this.registerCall("HandleSet", {handle: this.Mapped, data: this.Direct});
-    this.registerCall("HandleStore", {handle: this.Mapped, data: this.Direct});
-    this.registerCall("HandleRemove", {handle: this.Mapped, data: this.Direct});
-    this.registerCall("HandleClear", {handle: this.Mapped});
-    this.registerCall("Idle", {version: this.Direct, relevance: this.Map(this.Mapped, this.Direct)});
+    this.registerCall('HandleGet', {handle: this.Mapped, callback: this.LocalMapped});
+    this.registerCall('HandleToList', {handle: this.Mapped, callback: this.LocalMapped});
+    this.registerCall('HandleSet', {handle: this.Mapped, data: this.Direct});
+    this.registerCall('HandleStore', {handle: this.Mapped, data: this.Direct});
+    this.registerCall('HandleRemove', {handle: this.Mapped, data: this.Direct});
+    this.registerCall('HandleClear', {handle: this.Mapped});
+    this.registerCall('Idle', {version: this.Direct, relevance: this.Map(this.Mapped, this.Direct)});
 
-    this.registerCall("ConstructInnerArc", {callback: this.LocalMapped, particle: this.Mapped});
-    this.registerHandler("ConstructArcCallback", {callback: this.LocalMapped, arc: this.Direct});
+    this.registerCall('ConstructInnerArc', {callback: this.LocalMapped, particle: this.Mapped});
+    this.registerHandler('ConstructArcCallback', {callback: this.LocalMapped, arc: this.Direct});
 
-    this.registerCall("ArcCreateHandle", {callback: this.LocalMapped, arc: this.Direct, type: this.ByLiteral(Type), name: this.Direct});
-    this.registerInitializerHandler("CreateHandleCallback", {callback: this.LocalMapped, type: this.ByLiteral(Type), name: this.Direct, id: this.Direct});
-    this.registerCall("ArcMapHandle", {callback: this.LocalMapped, arc: this.Direct, handle: this.Mapped});
-    this.registerInitializerHandler("MapHandleCallback", {callback: this.LocalMapped, id: this.Direct});
-    this.registerCall("ArcCreateSlot",
+    this.registerCall('ArcCreateHandle', {callback: this.LocalMapped, arc: this.Direct, type: this.ByLiteral(Type), name: this.Direct});
+    this.registerInitializerHandler('CreateHandleCallback', {callback: this.LocalMapped, type: this.ByLiteral(Type), name: this.Direct, id: this.Direct});
+    this.registerCall('ArcMapHandle', {callback: this.LocalMapped, arc: this.Direct, handle: this.Mapped});
+    this.registerInitializerHandler('MapHandleCallback', {callback: this.LocalMapped, id: this.Direct});
+    this.registerCall('ArcCreateSlot',
       {callback: this.LocalMapped, arc: this.Direct, transformationParticle: this.Mapped, transformationSlotName: this.Direct, hostedParticleName: this.Direct, hostedSlotName: this.Direct});
-    this.registerInitializerHandler("CreateSlotCallback", {callback: this.LocalMapped, hostedSlotId: this.Direct});
-    this.registerHandler("InnerArcRender", {transformationParticle: this.Mapped, transformationSlotName: this.Direct, hostedSlotId: this.Direct, content: this.Direct});
+    this.registerInitializerHandler('CreateSlotCallback', {callback: this.LocalMapped, hostedSlotId: this.Direct});
+    this.registerHandler('InnerArcRender', {transformationParticle: this.Mapped, transformationSlotName: this.Direct, hostedSlotId: this.Direct, content: this.Direct});
 
-    this.registerCall("ArcLoadRecipe", {arc: this.Direct, recipe: this.Direct, callback: this.LocalMapped});
+    this.registerCall('ArcLoadRecipe', {arc: this.Direct, recipe: this.Direct, callback: this.LocalMapped});
   }
 }
 

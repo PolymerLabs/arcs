@@ -12,14 +12,14 @@ import Manifest from '../manifest.js';
 import {assert} from './chai-web.js';
 import * as util from './test-util.js';
 import handle from '../handle.js';
-import Arc from "../arc.js";
-import MessageChannel from "../message-channel.js";
-import InnerPec from "../inner-PEC.js";
-import Loader from "../loader.js";
-import Recipe from "../recipe/recipe.js";
-import Type from "../type.js";
-import Shape from "../shape.js";
-import ParticleSpec from "../particle-spec.js";
+import Arc from '../arc.js';
+import MessageChannel from '../message-channel.js';
+import InnerPec from '../inner-PEC.js';
+import Loader from '../loader.js';
+import Recipe from '../recipe/recipe.js';
+import Type from '../type.js';
+import Shape from '../shape.js';
+import ParticleSpec from '../particle-spec.js';
 
 describe('particle-shape-loading', function() {
 
@@ -109,7 +109,7 @@ describe('particle-shape-loading', function() {
     inView.set(new Foo({value: 'a foo'}));
 
     let recipe = new Recipe();
-    let particle = recipe.newParticle("outerParticle");
+    let particle = recipe.newParticle('outerParticle');
     particle.spec = outerParticleSpec;
 
     let recipeShapeView = recipe.newView();
@@ -127,12 +127,12 @@ describe('particle-shape-loading', function() {
     recipeInView.fate = 'use';
     recipeInView.mapToView(inView);
 
-    assert(recipe.normalize(), "can't normalize recipe");
-    assert(recipe.isResolved(), "recipe isn't resolved");
+    assert(recipe.normalize(), 'can\'t normalize recipe');
+    assert(recipe.isResolved(), 'recipe isn\'t resolved');
 
     await arc.instantiate(recipe);
 
-    await util.assertSingletonWillChangeTo(outView, manifest.schemas.Bar.entityClass(), "a foo1");
+    await util.assertSingletonWillChangeTo(outView, manifest.schemas.Bar.entityClass(), 'a foo1');
 
   });
 
@@ -166,14 +166,14 @@ describe('particle-shape-loading', function() {
 
     let recipe = manifest.recipes[0];
 
-    assert(recipe.normalize(), "can't normalize recipe");
-    assert(recipe.isResolved(), "recipe isn't resolved");
+    assert(recipe.normalize(), 'can\'t normalize recipe');
+    assert(recipe.isResolved(), 'recipe isn\'t resolved');
 
     await arc.instantiate(recipe);
 
     arc.findViewsByType(fooType)[0].set(new (fooType.entitySchema.entityClass())({value: 'a foo'}));
 
-    await util.assertSingletonWillChangeTo(arc.findViewsByType(barType)[0], barType.entitySchema.entityClass(), "a foo1");
+    await util.assertSingletonWillChangeTo(arc.findViewsByType(barType)[0], barType.entitySchema.entityClass(), 'a foo1');
 
   });
 });

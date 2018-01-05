@@ -7,12 +7,12 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-"use strict";
+'use strict';
 
 import Arc from '../arc.js';
 import {assert} from './chai-web.js';
-import Slot from "../slot.js";
-import SlotComposer from "../slot-composer.js";
+import Slot from '../slot.js';
+import SlotComposer from '../slot-composer.js';
 import Manifest from '../manifest.js';
 import Planner from '../planner.js';
 import * as util from './test-util.js';
@@ -33,7 +33,7 @@ async function initSlotComposer(recipeStr) {
 
   let manifest = (await Manifest.parse(recipeStr));
   var arc = new Arc({
-    id: "test-plan-arc",
+    id: 'test-plan-arc',
     context: manifest,
     slotComposer,
   });
@@ -81,7 +81,7 @@ recipe
     plan = plan.clone();
 
     // "root" slot is always available
-    assert.deepEqual(["root"], Object.keys(slotComposer.getAvailableSlots()));
+    assert.deepEqual(['root'], Object.keys(slotComposer.getAvailableSlots()));
 
     // initializing recipe
     slotComposer.initializeRecipe(plan.particles);
@@ -103,6 +103,6 @@ recipe
     // TODO: slot composer should actually return only "mySlot" and "root" - the slots that were actually rendered,
     // however because in the browser demo, the planner is executed before the slots are really rendered, all the
     // slots that could possibly be rendered are returned.
-    assert.deepEqual(["mySlot", "otherSlot", "root"], Object.keys(slotComposer.getAvailableSlots()));
+    assert.deepEqual(['mySlot', 'otherSlot', 'root'], Object.keys(slotComposer.getAvailableSlots()));
   });
 });

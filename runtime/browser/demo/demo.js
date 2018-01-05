@@ -8,11 +8,11 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import BrowserLoader from "../../browser-loader.js";
+import BrowserLoader from '../../browser-loader.js';
 import SlotComposer from '../../slot-composer.js';
 import DemoBase from '../lib/demo-base.js';
 import Arc from '../../arc.js';
-import Manifest from "../../manifest.js";
+import Manifest from '../../manifest.js';
 import Tracing from '../../../tracelib/trace.js';
 
 import WorkerPecFactory from '../worker-pec-factory.js';
@@ -64,7 +64,7 @@ class DemoFlow extends DemoBase {
       slotComposer: new SlotComposer({
         rootContext: this.$('[particle-container]'),
         suggestionsContext: this.$('suggestions-element'),
-        affordance: "dom"}),
+        affordance: 'dom'}),
       context: await Manifest.load('browser/demo/recipes.manifest', loader),
       loader,
     });

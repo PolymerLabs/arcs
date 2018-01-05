@@ -7,7 +7,7 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-"use strict";
+'use strict';
 
 import assert from '../platform/assert-web.js';
 import Type from './type.js';
@@ -115,7 +115,7 @@ export class DescriptionFormatter {
   }
 
   async _getPatternByNameFromDescriptionHandle(particle) {
-    let descriptionConn = particle.connections["descriptions"];
+    let descriptionConn = particle.connections['descriptions'];
     if (descriptionConn && descriptionConn.view && descriptionConn.view.id) {
       let descView = this._arc.findViewById(descriptionConn.view.id);
       if (descView) {
@@ -128,7 +128,7 @@ export class DescriptionFormatter {
   }
 
   _populateParticleDescription(particle, descriptionByName) {
-    let pattern = descriptionByName["_pattern_"] || particle.spec.pattern;
+    let pattern = descriptionByName['_pattern_'] || particle.spec.pattern;
     return pattern ? {pattern} : {};
   }
 
@@ -150,7 +150,7 @@ export class DescriptionFormatter {
     // "A and b."
     // "A, b, ..., and z." (Oxford comma ftw)
     let delim = ['', '', ' and ', ', and '][Math.min(3, count)];
-    return nonEmptyStrings.slice(0, -1).join(", ") + delim + strings.pop();
+    return nonEmptyStrings.slice(0, -1).join(', ') + delim + strings.pop();
   }
 
   _joinTokens(tokens) {
@@ -180,7 +180,7 @@ export class DescriptionFormatter {
         var firstToken = tokens[0];
         var tokenIndex = pattern.indexOf(firstToken);
       } else {
-        var firstToken = "";
+        var firstToken = '';
         var tokenIndex = pattern.length;
       }
       assert(tokenIndex >= 0);
@@ -233,11 +233,11 @@ export class DescriptionFormatter {
 
   async _viewTokenToString(token) {
     switch (token.extra) {
-      case "_type_":
+      case '_type_':
         return token._viewConn.type.toPrettyString().toLowerCase();
-      case "_values_":
+      case '_values_':
         return this._formatViewValue(token.viewName, token._view);
-      case "_name_":
+      case '_name_':
         return this._formatDescription(token._viewConn, token._view);
       default:
         assert(!token.extra, `Unrecognized extra ${token.extra}`);
@@ -298,7 +298,7 @@ export class DescriptionFormatter {
   }
 
   async _propertyTokenToString(viewName, view, properties) {
-    assert(!view.type.isSetView, `Cannot return property ${properties.join(",")} for set-view`);
+    assert(!view.type.isSetView, `Cannot return property ${properties.join(',')} for set-view`);
     // Use singleton value's property (eg. "09/15" for person's birthday)
     let viewVar = await view.get();
     if (viewVar) {
@@ -340,7 +340,7 @@ export class DescriptionFormatter {
       if (viewList.length > 2) {
         return `${viewList[0].rawData.name} plus ${viewList.length-1} other items`;
       }
-      return viewList.map(v => v.rawData.name).join(", ");
+      return viewList.map(v => v.rawData.name).join(', ');
     } else {
       return `${viewList.length} items`;
     }
@@ -420,8 +420,8 @@ export class DescriptionFormatter {
 
   static sort(p1, p2) {
     // Root slot comes first.
-    let hasRoot1 = [...p1._particle.spec.slots.keys()].indexOf("root") >= 0;
-    let hasRoot2 = [...p2._particle.spec.slots.keys()].indexOf("root") >= 0;
+    let hasRoot1 = [...p1._particle.spec.slots.keys()].indexOf('root') >= 0;
+    let hasRoot2 = [...p2._particle.spec.slots.keys()].indexOf('root') >= 0;
     if (hasRoot1 != hasRoot2) {
       return hasRoot1 ? -1 : 1;
     }

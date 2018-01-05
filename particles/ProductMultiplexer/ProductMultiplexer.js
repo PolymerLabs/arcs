@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-"use strict";
+'use strict';
 
 defineParticle(({DomParticle}) => {
   return class ProductMultiplexer extends DomParticle {
@@ -31,7 +31,7 @@ defineParticle(({DomParticle}) => {
           if (this._handleIds.has(product.id)) {
             continue;
           }
-          let productView = await arc.createHandle(productsView.type.primitiveType(), "product" + index);
+          let productView = await arc.createHandle(productsView.type.primitiveType(), 'product' + index);
           this._handleIds.add(product.id);
 
           let hostedSlotName = [...hostedParticle.slots.keys()][0];
@@ -44,7 +44,7 @@ defineParticle(({DomParticle}) => {
           this.hostedSlotBySlotId.set(slotId, {subId: product.name.replace(/ /g, '').toLowerCase()});
 
           var recipe = `
-            import '${hostedParticle.implFile.replace(/\.[^\.]+$/, ".manifest")}'
+            import '${hostedParticle.implFile.replace(/\.[^\.]+$/, '.manifest')}'
             recipe
               use '${productView._id}' as v1
               slot '${slotId}' as s1
