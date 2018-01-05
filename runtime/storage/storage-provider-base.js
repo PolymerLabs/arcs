@@ -7,7 +7,7 @@
 // http://polymer.github.io/PATENTS.txt
 
 import assert from '../../platform/assert-web.js';
-import tracing from "../../tracelib/trace.js";
+import tracing from '../../tracelib/trace.js';
 import scheduler from '../scheduler.js';
 import util from '../recipe/util.js';
 
@@ -42,7 +42,7 @@ export default class StorageProviderBase {
   }
   // TODO: add 'once' which returns a promise.
   on(kind, callback, target) {
-    assert(target !== undefined, "must provide a target to register a view event handler");
+    assert(target !== undefined, 'must provide a target to register a view event handler');
     let listeners = this._listeners.get(kind) || new Map();
     listeners.set(callback, {version: -Infinity, target});
     this._listeners.set(kind, listeners);

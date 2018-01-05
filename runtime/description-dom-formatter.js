@@ -7,7 +7,7 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-"use strict";
+'use strict';
 
 import assert from '../platform/assert-web.js';
 import {DescriptionFormatter} from './description.js';
@@ -25,10 +25,10 @@ export default class DescriptionDomFormatter extends DescriptionFormatter {
   _populateParticleDescription(particle, descriptionByName) {
     let result = super._populateParticleDescription(particle, descriptionByName);
 
-    if (descriptionByName["_template_"]) {
+    if (descriptionByName['_template_']) {
       result = Object.assign(result, {
-        template: descriptionByName["_template_"],
-        model: JSON.parse(descriptionByName["_model_"])
+        template: descriptionByName['_template_'],
+        model: JSON.parse(descriptionByName['_model_'])
       });
     }
 
@@ -198,7 +198,7 @@ export default class DescriptionDomFormatter extends DescriptionFormatter {
         };
       }
       return {
-        template: viewList.map((v, i) => `<b>{{${viewKey}${i}}}</b>`).join(", "),
+        template: viewList.map((v, i) => `<b>{{${viewKey}${i}}}</b>`).join(', '),
         model: Object.assign(...viewList.map((v, i) => ({[`${viewKey}${i}`]: v.rawData.name} )))
       };
     }

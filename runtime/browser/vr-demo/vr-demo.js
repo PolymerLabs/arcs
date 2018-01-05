@@ -8,11 +8,11 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-let BrowserLoader = require("../../browser-loader.js");
+let BrowserLoader = require('../../browser-loader.js');
 let SlotComposer = require('../../slot-composer.js');
 let DemoBase = require('../lib/demo-base.js');
-let Arc = require("../../arc.js");
-const Manifest = require("../../manifest.js");
+let Arc = require('../../arc.js');
+const Manifest = require('../../manifest.js');
 
 // 0: create Pot, 2: create Sphere
 // 1: create Flower 3: create Box
@@ -89,7 +89,7 @@ class DemoFlow extends DemoBase {
     let arc = new Arc({
       id: 'demo',
       pecFactory: require('../worker-pec-factory.js').bind(null, root),
-      slotComposer: new SlotComposer({rootContext: this.$('[particle-container]'), affordance: "vr"}),
+      slotComposer: new SlotComposer({rootContext: this.$('[particle-container]'), affordance: 'vr'}),
       context: await Manifest.load('browser/vr-demo/recipes.manifest', loader),
     });
     this.arc = arc;

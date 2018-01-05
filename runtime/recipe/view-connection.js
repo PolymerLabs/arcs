@@ -71,10 +71,10 @@ class ViewConnection {
   }
   get direction() { return this._direction; } // in/out
   get isInput() {
-    return this.direction == "in" || this.direction == "inout";
+    return this.direction == 'in' || this.direction == 'inout';
   }
   get isOutput() {
-    return this.direction == "out" || this.direction == "inout";
+    return this.direction == 'out' || this.direction == 'inout';
   }
   get view() { return this._view; } // View?
   get particle() { return this._particle; } // never null

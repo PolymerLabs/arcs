@@ -26,7 +26,7 @@ class FirebaseKey {
       this.databaseUrl = undefined;
       this.projectId = undefined;
       this.apiKey = undefined;
-      this.location = "";
+      this.location = '';
     }
   }
 
@@ -66,7 +66,7 @@ export default class FirebaseStorage {
     key = new FirebaseKey(key);
     // TODO: is it ever going to be possible to autoconstruct new firebase datastores? 
     if (key.databaseUrl == undefined || key.apiKey == undefined)
-      throw new Error("Can't complete partial firebase keys");
+      throw new Error('Can\'t complete partial firebase keys');
 
     if (this._apps[key.projectId] == undefined)
       this._apps[key.projectId] = firebase.initializeApp({

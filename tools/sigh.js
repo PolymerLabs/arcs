@@ -155,7 +155,7 @@ function test(args) {
   function fixPathForWindows(path) {
     if (path[0] == '/')
       return path;
-    return '/' + path.replace(new RegExp(String.fromCharCode(92, 92), 'g'), "/");
+    return '/' + path.replace(new RegExp(String.fromCharCode(92, 92), 'g'), '/');
   }
 
   function buildTestRunner() {
@@ -282,7 +282,7 @@ async function run(funsAndArgs) {
   // To avoid confusion, only the last step gets args.
   let funsAndArgs = funs.map(fun => [fun, fun == funs[funs.length - 1] ? process.argv.slice(3) : []]);
   let result = await run(funsAndArgs);
-  process.on("exit", function() {
+  process.on('exit', function() {
     process.exit(result ? 0 : 1);
   });
 })();

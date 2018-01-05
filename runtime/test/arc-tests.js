@@ -45,7 +45,7 @@ describe('Arc', function() {
     await handle.handleFor(fooView).set(new Foo({value: 'a Foo'}));
     recipe.normalize();
     await arc.instantiate(recipe);
-    await util.assertSingletonWillChangeTo(barView, Bar, "a Foo1");
+    await util.assertSingletonWillChangeTo(barView, Bar, 'a Foo1');
   });
 
   it('applies new views to a particle', async () => {
@@ -57,7 +57,7 @@ describe('Arc', function() {
     await arc.instantiate(recipe);
 
     handle.handleFor(fooView).set(new Foo({value: 'a Foo'}));
-    await util.assertSingletonWillChangeTo(barView, Bar, "a Foo1");
+    await util.assertSingletonWillChangeTo(barView, Bar, 'a Foo1');
   });
 
 });

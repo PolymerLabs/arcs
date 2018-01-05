@@ -16,7 +16,7 @@ export default class CreateDescriptionHandle extends Strategy {
       onViewConnection(recipe, viewConnection) {
         if (viewConnection.view)
           return;
-        if (viewConnection.name != "descriptions")
+        if (viewConnection.name != 'descriptions')
           return;
 
         return (recipe, viewConnection) => {

@@ -9,7 +9,7 @@
  */
 
 import Manifest from '../manifest.js';
-import parser from "../build/manifest-parser.js";
+import parser from '../build/manifest-parser.js';
 import {assert} from './chai-web.js';
 import fs from '../../platform/fs-web.js';
 import path from '../../platform/path-web.js';
@@ -38,8 +38,8 @@ describe('manifest', function() {
       assert(recipe);
       assert.equal(recipe.particles.length, 1);
       assert.equal(recipe.views.length, 2);
-      assert.equal(recipe.views[0].fate, "map");
-      assert.equal(recipe.views[1].fate, "create");
+      assert.equal(recipe.views[0].fate, 'map');
+      assert.equal(recipe.views[1].fate, 'create');
       assert.equal(recipe.viewConnections.length, 1);
       assert.sameMembers(recipe.viewConnections[0].tags, ['#tag']);
     };
@@ -246,7 +246,7 @@ describe('manifest', function() {
         particle Thing in 'thing.js'`);
       assert(false);
     } catch (e) {
-      assert.equal(e.message, "no valid body defined for this particle");
+      assert.equal(e.message, 'no valid body defined for this particle');
     }
   });
   it('throws an error when a particle has invalid description', async () => {
@@ -259,7 +259,7 @@ describe('manifest', function() {
             bar \`my-bar\``);
       assert(false);
     } catch (e) {
-      assert.equal(e.message, "Unexpected description for bar");
+      assert.equal(e.message, 'Unexpected description for bar');
     }
   });
   it('can load a manifest via a loader', async () => {
@@ -429,7 +429,7 @@ describe('manifest', function() {
       let mySlot = recipe.particles[1].consumedSlotConnections['mySlot'];
       assert.isDefined(mySlot.targetSlot);
       assert.equal(Object.keys(mySlot.providedSlots).length, 2);
-      assert.equal(mySlot.providedSlots["oneMoreSlot"], recipe.particles[0].consumedSlotConnections['oneMoreSlot'].targetSlot);
+      assert.equal(mySlot.providedSlots['oneMoreSlot'], recipe.particles[0].consumedSlotConnections['oneMoreSlot'].targetSlot);
     };
     verify(manifest);
     verify(await Manifest.parse(manifest.toString()));
@@ -461,7 +461,7 @@ describe('manifest', function() {
       let particleManifestFile = `${path.join(particlesPath, pn, pn)}.manifest`;
       if (fs.existsSync(particleManifestFile)) {
         try {
-          let data = fs.readFileSync(particleManifestFile, "utf-8");
+          let data = fs.readFileSync(particleManifestFile, 'utf-8');
           let model = parser.parse(data);
           assert.isDefined(model);
         } catch (e) {

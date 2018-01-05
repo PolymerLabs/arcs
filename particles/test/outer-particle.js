@@ -7,7 +7,7 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-"use strict";
+'use strict';
 
 defineParticle(({Particle}) => {
   return class P extends Particle {
@@ -15,8 +15,8 @@ defineParticle(({Particle}) => {
       let arc = await this.constructInnerArc();
       var inputView = views.get('input');
       let outputView = views.get('output');
-      let inView = await arc.createHandle(inputView.type, "input");
-      let outView = await arc.createHandle(outputView.type, "output");
+      let inView = await arc.createHandle(inputView.type, 'input');
+      let outView = await arc.createHandle(outputView.type, 'output');
       let particle = await views.get('particle').get();
 
       var recipe = Particle.buildManifest`

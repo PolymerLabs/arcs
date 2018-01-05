@@ -192,7 +192,7 @@ class Particle {
 
     connection.type = this._connections[name].type;
     if (connection.direction != this._connections[name].direction) {
-      assert(connection.direction == "inout",
+      assert(connection.direction == 'inout',
              `Unnamed connection cannot adjust direction ${connection.direction} to ${name}'s direction ${this._connections[name].direction}`);
       connection.direction = this._connections[name].direction;
     }

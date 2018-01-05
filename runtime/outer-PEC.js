@@ -7,7 +7,7 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-"use strict";
+'use strict';
 
 import PEC from './particle-execution-context.js';
 import assert from '../platform/assert-web.js';
@@ -100,10 +100,10 @@ class OuterPEC extends PEC {
             error = `Recipe is not resolvable ${recipe.toString({showUnresolved: true})}`;
           }
         } else {
-          error = "Recipe could not be normalized";
+          error = 'Recipe could not be normalized';
         }
       } else {
-        error = "No recipe defined";
+        error = 'No recipe defined';
       }
       this._apiPort.SimpleCallback({callback, data: error});
     };

@@ -59,29 +59,29 @@ class SuggestionsElement extends HTMLElement {
   }
 
   createSuggestionElement({hash, plan}) {
-    let suggest = document.createElement("suggest");
-    suggest.setAttribute("hash", hash);
+    let suggest = document.createElement('suggest');
+    suggest.setAttribute('hash', hash);
     suggest.onclick = () => {
       this.toast.open = false;
       // TODO(sjmiles): wait for toast animation to avoid jank
       setTimeout(()=>this._choose(plan), 80);
     };
     suggest.onmouseover = () => {
-      document.dispatchEvent(new CustomEvent("plan-hover", {detail: {hash, selected: true}}));
+      document.dispatchEvent(new CustomEvent('plan-hover', {detail: {hash, selected: true}}));
     };
     suggest.onmouseout = () => {
-      document.dispatchEvent(new CustomEvent("plan-hover", {detail: {hash, selected: false}}));
+      document.dispatchEvent(new CustomEvent('plan-hover', {detail: {hash, selected: false}}));
     };
     this.container.insertBefore(suggest, this.container.firstElementChild);
     return suggest;
   }
 
   clear() {
-    this.container.textContent = "";
+    this.container.textContent = '';
   }
 
   _choose(plan) {
-    this.dispatchEvent(new CustomEvent("plan-selected", {
+    this.dispatchEvent(new CustomEvent('plan-selected', {
       detail: {plan}
     }));
   }

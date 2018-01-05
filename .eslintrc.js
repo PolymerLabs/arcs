@@ -30,10 +30,8 @@ module.exports = {
 
     // TODO: Once clang-format is working, we can enable some of these.
     // Formatting rules, (probably) handled by clang-format.
-    "quotes": "off",
     "eol-last": "off",
     "comma-dangle": "off",
     "max-len": "off",
-
   },
 };

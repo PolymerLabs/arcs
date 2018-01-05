@@ -11,10 +11,10 @@
 import Manifest from '../manifest.js';
 import {assert} from './chai-web.js';
 import * as util from './test-util.js';
-import Arc from "../arc.js";
-import MessageChannel from "../message-channel.js";
-import InnerPec from "../inner-PEC.js";
-import Loader from "../loader.js";
+import Arc from '../arc.js';
+import MessageChannel from '../message-channel.js';
+import InnerPec from '../inner-PEC.js';
+import Loader from '../loader.js';
 
 describe('particle-api', function() {
   it('contains view synchronize calls', async () => {
@@ -75,8 +75,8 @@ describe('particle-api', function() {
 
     let Input = manifest.findSchemaByName('Input').entityClass();
     let inputView = await arc.createView(Input.type.setViewOf());
-    inputView.store({id: 1, text: "Hi"});
-    inputView.store({id: 2, text: "There"});
+    inputView.store({id: 1, text: 'Hi'});
+    inputView.store({id: 2, text: 'There'});
 
     let Result = manifest.findSchemaByName('Result').entityClass();
     let resultView = await arc.createView(Result.type);
@@ -84,7 +84,7 @@ describe('particle-api', function() {
     recipe.normalize();
     await arc.instantiate(recipe);
 
-    await util.assertSingletonWillChangeTo(resultView, Result, "2");
+    await util.assertSingletonWillChangeTo(resultView, Result, '2');
   }),
   it('contains a constructInnerArc call', async () => {
     let registry = {};
@@ -142,10 +142,10 @@ describe('particle-api', function() {
     recipe.normalize();
     await arc.instantiate(recipe);
 
-    await util.assertSingletonWillChangeTo(resultView, Result, "done");
+    await util.assertSingletonWillChangeTo(resultView, Result, 'done');
     let newView = arc.findViewsByType(Result.type)[1];
-    assert(newView.name == "a view");
-    await util.assertSingletonIs(newView, Result, "success");
+    assert(newView.name == 'a view');
+    await util.assertSingletonIs(newView, Result, 'success');
   });
 
   it('can load a recipe', async () => {
@@ -238,10 +238,10 @@ describe('particle-api', function() {
     recipe.normalize();
     await arc.instantiate(recipe);
 
-    await util.assertSingletonWillChangeTo(resultView, Result, "done");
+    await util.assertSingletonWillChangeTo(resultView, Result, 'done');
     let newView = arc.findViewsByType(Result.type)[2];
-    assert(newView.name == "out view");
-    await util.assertSingletonWillChangeTo(newView, Result, "success");
+    assert(newView.name == 'out view');
+    await util.assertSingletonWillChangeTo(newView, Result, 'success');
   });
 
   it('multiplexing', async () => {
@@ -345,23 +345,23 @@ describe('particle-api', function() {
     let arc = new Arc({id: 'test', pecFactory, loader});
     let Result = manifest.findSchemaByName('Result').entityClass();
     let inputsView = await arc.createView(Result.type.setViewOf());
-    inputsView.store({id: "1", rawData: {value: 'hello'}});
-    inputsView.store({id: "2", rawData: {value: 'world'}});
+    inputsView.store({id: '1', rawData: {value: 'hello'}});
+    inputsView.store({id: '2', rawData: {value: 'world'}});
     let resultsView = await arc.createView(Result.type.setViewOf());
     let recipe = manifest.recipes[0];
     recipe.normalize();
     await arc.instantiate(recipe);
 
-    await util.assertViewWillChangeTo(resultsView, Result, "value", ["done", "done", "HELLO", "WORLD"]);
+    await util.assertViewWillChangeTo(resultsView, Result, 'value', ['done', 'done', 'HELLO', 'WORLD']);
 
     // TODO: how do i listen to inner arc's outView view-changes?
     // await util.assertViewWillChangeTo(resultsView, Result, "value", ["HELLO", "WORLD"]);
     let newView = arc.findViewsByType(Result.type)[1];
-    assert(newView.name == "out view", `Unexpected newView name: ${newView.name}`);
+    assert(newView.name == 'out view', `Unexpected newView name: ${newView.name}`);
 
-    util.assertSingletonIs(newView, Result, "HELLO");
+    util.assertSingletonIs(newView, Result, 'HELLO');
     newView = arc.findViewsByType(Result.type)[3];
-    assert(newView.name == "out view", `Unexpected newView name: ${newView.name}`);
-    await util.assertSingletonIs(newView, Result, "WORLD");
+    assert(newView.name == 'out view', `Unexpected newView name: ${newView.name}`);
+    await util.assertSingletonIs(newView, Result, 'WORLD');
   });
 });

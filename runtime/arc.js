@@ -7,11 +7,11 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-"use strict";
+'use strict';
 
 import runtime from './runtime.js';
 import assert from '../platform/assert-web.js';
-import tracing from "../tracelib/trace.js";
+import tracing from '../tracelib/trace.js';
 import Type from './type.js';
 import Relation from './relation.js';
 import handle from './handle.js';
@@ -221,12 +221,12 @@ class Arc {
     for (let recipeView of views) {
       if (['copy', 'create'].includes(recipeView.fate)) {
         let view = await this.createView(recipeView.type, /* name= */ null, /* id= */ null, recipeView.tags);
-        if (recipeView.fate === "copy") {
+        if (recipeView.fate === 'copy') {
           var copiedView = this.findViewById(recipeView.id);
           view.cloneFrom(copiedView);
         }
         recipeView.id = view.id;
-        recipeView.fate = "use";
+        recipeView.fate = 'use';
         recipeView.storageKey = view.storageKey;
         // TODO: move the call to OuterPEC's DefineView to here
       }
@@ -250,9 +250,9 @@ class Arc {
   }
 
   _connectParticleToView(particleHandle, particle, name, targetView) {
-    assert(targetView, "no target view provided");
+    assert(targetView, 'no target view provided');
     var viewMap = this.particleViewMaps.get(particleHandle);
-    assert(viewMap.spec.connectionMap.get(name) !== undefined, "can't connect view to a view slot that doesn't exist");
+    assert(viewMap.spec.connectionMap.get(name) !== undefined, 'can\'t connect view to a view slot that doesn\'t exist');
     viewMap.views.set(name, targetView);
   }
 

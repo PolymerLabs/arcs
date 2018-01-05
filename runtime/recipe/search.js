@@ -12,7 +12,7 @@ class Search {
   constructor(phrase, unresolvedTokens) {
     assert(phrase);
 
-    this._phrase = "";
+    this._phrase = '';
     this._unresolvedTokens = [];
     this._resolvedTokens = [];
 
@@ -21,7 +21,7 @@ class Search {
   appendPhrase(phrase, unresolvedTokens) {
     // concat phrase
     if (this._phrase.length > 0) {
-      this._phrase = this.phrase.concat(" ");
+      this._phrase = this.phrase.concat(' ');
     }
     this._phrase = this._phrase.concat(phrase);
 
@@ -82,19 +82,19 @@ class Search {
     let tokenStr = [];
     tokenStr.push('  tokens');
     if (this.unresolvedTokens.length > 0) {
-      tokenStr.push(this.unresolvedTokens.map(t => `\`${t}\``).join(" "));
+      tokenStr.push(this.unresolvedTokens.map(t => `\`${t}\``).join(' '));
     }
     if (this.resolvedTokens.length > 0) {
-      tokenStr.push(`# ${this.resolvedTokens.map(t => `\`${t}\``).join(" ")}`);
+      tokenStr.push(`# ${this.resolvedTokens.map(t => `\`${t}\``).join(' ')}`);
     }
     if (options && options.showUnresolved) {
       if (this.unresolvedTokens.length > 0) {
         tokenStr.push('# unresolved search tokens');
       }
     }
-    result.push(tokenStr.join(" "));
+    result.push(tokenStr.join(' '));
 
-    return result.join("\n");
+    return result.join('\n');
   }
 }
 

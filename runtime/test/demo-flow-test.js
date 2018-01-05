@@ -8,11 +8,11 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
- "use strict";
+ 'use strict';
 
-import Arc from "../arc.js";
-import Manifest from "../manifest.js";
-import Loader from "../loader.js";
+import Arc from '../arc.js';
+import Manifest from '../manifest.js';
+import Loader from '../loader.js';
 import {assert} from './chai-web.js';
 import Planner from '../planner.js';
 import * as testUtil from './test-util.js';
@@ -71,29 +71,29 @@ describe('demo flow', function() {
       provide preamble as slot5`;
     let {plan, description} = plans.find(p => p.plan.toString() == expectedPlanString);
 
-    assert.equal("Show a few items: my short list (Minecraft Book plus 2 other items) and " +
-                 "choose from products recommended based on my short list and " +
-                 "Claire\'s wishlist (Book: How to Draw plus 2 other items).",
+    assert.equal('Show a few items: my short list (Minecraft Book plus 2 other items) and ' +
+                 'choose from products recommended based on my short list and ' +
+                 'Claire\'s wishlist (Book: How to Draw plus 2 other items).',
                  await description.getRecipeSuggestion());
 
     slotComposer
       .newExpectations()
-        .expectRenderSlot("ShowProducts", "root", ["template"])
+        .expectRenderSlot('ShowProducts', 'root', ['template'])
       .newExpectations()
-        .expectRenderSlot("ShowProducts", "root", ["model"])
-        .expectRenderSlot("Chooser", "action", ["template", "model"])
-        .expectRenderSlot("AlsoOn", "annotation", ["template", "model"])
-        .expectRenderSlot("ProductMultiplexer2", "annotation", ["template", "model"])
-        .expectRenderSlot("AlsoOn", "annotation", ["model"])
-        .expectRenderSlot("ProductMultiplexer2", "annotation", ["model"])
-        .expectRenderSlot("AlsoOn", "annotation", ["model"])
-        .expectRenderSlot("ProductMultiplexer2", "annotation", ["model"])
-        .thenSend("Chooser", "action", "_onChooseValue", {key: "1"})
+        .expectRenderSlot('ShowProducts', 'root', ['model'])
+        .expectRenderSlot('Chooser', 'action', ['template', 'model'])
+        .expectRenderSlot('AlsoOn', 'annotation', ['template', 'model'])
+        .expectRenderSlot('ProductMultiplexer2', 'annotation', ['template', 'model'])
+        .expectRenderSlot('AlsoOn', 'annotation', ['model'])
+        .expectRenderSlot('ProductMultiplexer2', 'annotation', ['model'])
+        .expectRenderSlot('AlsoOn', 'annotation', ['model'])
+        .expectRenderSlot('ProductMultiplexer2', 'annotation', ['model'])
+        .thenSend('Chooser', 'action', '_onChooseValue', {key: '1'})
       .newExpectations()
-        .expectRenderSlot("ShowProducts", "root", ["model"])
-        .expectRenderSlot("Chooser", "action", ["model"])
-        .expectRenderSlot("AlsoOn", "annotation", ["model"])
-        .expectRenderSlot("ProductMultiplexer2", "annotation", ["model"]);
+        .expectRenderSlot('ShowProducts', 'root', ['model'])
+        .expectRenderSlot('Chooser', 'action', ['model'])
+        .expectRenderSlot('AlsoOn', 'annotation', ['model'])
+        .expectRenderSlot('ProductMultiplexer2', 'annotation', ['model']);
 
     await arc.instantiate(plan);
     await arc.pec.idle;

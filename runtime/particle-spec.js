@@ -23,11 +23,11 @@ class ConnectionSpec {
 
   get isInput() {
     // TODO: we probably don't really want host to be here.
-    return this.direction == "in" || this.direction == "inout" || this.direction == "host";
+    return this.direction == 'in' || this.direction == 'inout' || this.direction == 'host';
   }
 
   get isOutput() {
-    return this.direction == "out" || this.direction == "inout";
+    return this.direction == 'out' || this.direction == 'inout';
   }
 }
 
@@ -69,7 +69,7 @@ class ParticleSpec {
     // initialize descriptions patterns.
     model.description = model.description || {};
     this.validateDescription(model.description);
-    this.pattern = model.description["pattern"];
+    this.pattern = model.description['pattern'];
     this.connections.forEach(connectionSpec => {
       connectionSpec.pattern = model.description[connectionSpec.name];
     });
@@ -82,7 +82,7 @@ class ParticleSpec {
     // Verify provided slots use valid view connection names.
     this.slots.forEach(slot => {
       slot.providedSlots.forEach(ps => {
-        ps.views.forEach(v => assert(this.connectionMap.has(v), "Cannot provide slot for nonexistent view constraint ", v));
+        ps.views.forEach(v => assert(this.connectionMap.has(v), 'Cannot provide slot for nonexistent view constraint ', v));
       });
     });
   }

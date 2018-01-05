@@ -7,10 +7,10 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-"use strict";
+'use strict';
 
-import runtime from "../runtime.js";
-import Arc from "../arc.js";
+import runtime from '../runtime.js';
+import Arc from '../arc.js';
 import {assert} from './chai-web.js';
 import SlotComposer from '../slot-composer.js';
 

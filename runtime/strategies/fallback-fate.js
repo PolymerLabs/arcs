@@ -24,12 +24,12 @@ export default class FallbackFate extends Strategy {
         }
 
         // Only apply to views whose fate is set, but wasn't explicitly defined in the recipe.
-        if (view.isResolved() || view.fate == "?" || view.originalFate != "?") {
+        if (view.isResolved() || view.fate == '?' || view.originalFate != '?') {
           return;
         }
 
         let hasOutConns = view.connections.some(vc => vc.isOutput);
-        let newFate = hasOutConns ? "copy" : "map";
+        let newFate = hasOutConns ? 'copy' : 'map';
         if (view.fate == newFate) {
           return;
         }

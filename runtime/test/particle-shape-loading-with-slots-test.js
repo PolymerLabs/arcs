@@ -12,14 +12,14 @@ import Manifest from '../manifest.js';
 import {assert} from './chai-web.js';
 import * as util from './test-util.js';
 import handle from '../handle.js';
-import Arc from "../arc.js";
-import MessageChannel from "../message-channel.js";
-import InnerPec from "../inner-PEC.js";
-import Loader from "../loader.js";
-import Recipe from "../recipe/recipe.js";
-import Type from "../type.js";
-import Shape from "../shape.js";
-import ParticleSpec from "../particle-spec.js";
+import Arc from '../arc.js';
+import MessageChannel from '../message-channel.js';
+import InnerPec from '../inner-PEC.js';
+import Loader from '../loader.js';
+import Recipe from '../recipe/recipe.js';
+import Type from '../type.js';
+import Shape from '../shape.js';
+import ParticleSpec from '../particle-spec.js';
 import MockSlotComposer from './mock-slot-composer.js';
 
 describe('particle-shape-loading-with-slots', function() {
@@ -46,8 +46,8 @@ describe('particle-shape-loading-with-slots', function() {
 
     var arc = new Arc({id: 'test', pecFactory, slotComposer, context: manifest});
 
-    assert(recipe.normalize(), "can't normalize recipe");
-    assert(recipe.isResolved(), "recipe isn't resolved");
+    assert(recipe.normalize(), 'can\'t normalize recipe');
+    assert(recipe.isResolved(), 'recipe isn\'t resolved');
 
     await arc.instantiate(recipe);
 
@@ -63,8 +63,8 @@ describe('particle-shape-loading-with-slots', function() {
     slotComposer.newExpectations();
     for (let i = 0; i < times; ++i) {
       slotComposer
-        .expectRenderSlot("SingleSlotParticle", "annotation", contentTypes)
-        .expectRenderSlot("MultiplexSlotsParticle", "annotationsSet", contentTypes);
+        .expectRenderSlot('SingleSlotParticle', 'annotation', contentTypes)
+        .expectRenderSlot('MultiplexSlotsParticle', 'annotationsSet', contentTypes);
     }
   }
 
@@ -72,7 +72,7 @@ describe('particle-shape-loading-with-slots', function() {
     let {fooType, inView, slotComposer} = await instantiateRecipe();
     slotComposer._slots[0].updateContext({});
 
-    setRenderingExpectations(slotComposer, 2, ["template", "model"]);
+    setRenderingExpectations(slotComposer, 2, ['template', 'model']);
     await slotComposer.arc.pec.idle;
     await slotComposer.expectationsCompleted();
 
@@ -87,7 +87,7 @@ describe('particle-shape-loading-with-slots', function() {
     inView.store(new (fooType.entitySchema.entityClass())({value: 'foo3'}));
 
     await slotComposer.arc.pec.idle;
-    setRenderingExpectations(slotComposer, 1, ["model"]);
+    setRenderingExpectations(slotComposer, 1, ['model']);
     await slotComposer.expectationsCompleted();
 
     // Verify slot template and models.
@@ -114,7 +114,7 @@ describe('particle-shape-loading-with-slots', function() {
     });
     slotComposer._slots[0].updateContext({});
 
-    setRenderingExpectations(slotComposer, 2, ["template", "model"]);
+    setRenderingExpectations(slotComposer, 2, ['template', 'model']);
     await slotComposer.arc.pec.idle;
     await slotComposer.expectationsCompleted();
 
@@ -129,7 +129,7 @@ describe('particle-shape-loading-with-slots', function() {
     inView.store(new (fooType.entitySchema.entityClass())({value: 'foo3'}));
 
     await slotComposer.arc.pec.idle;
-    setRenderingExpectations(slotComposer, 1, ["model"]);
+    setRenderingExpectations(slotComposer, 1, ['model']);
     await slotComposer.expectationsCompleted();
     // Verify slot template and models.
     assert.equal(1, slotComposer._slots.length);

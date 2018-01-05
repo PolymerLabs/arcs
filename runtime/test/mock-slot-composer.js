@@ -7,7 +7,7 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-"use strict";
+'use strict';
 
 import {assert} from './chai-web.js';
 import Slot from '../slot.js';
@@ -39,17 +39,17 @@ class MockSlot extends Slot {
 
 class MockSlotComposer extends SlotComposer {
   constructor() {
-    super({rootContext: "dummy-context", affordance: "mock"});
+    super({rootContext: 'dummy-context', affordance: 'mock'});
     this.expectQueue = [];
     this.onExpectationsComplete = () => undefined;
   }
 
   getSlotClass(affordance) {
     switch (this.affordance) {
-      case "mock":
+      case 'mock':
         return MockSlot;
       default:
-        assert("unsupported affordance ", this.affordance);
+        assert('unsupported affordance ', this.affordance);
     }
   }
 

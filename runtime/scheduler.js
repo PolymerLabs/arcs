@@ -7,7 +7,7 @@
 // http://polymer.github.io/PATENTS.txt
 'use strict';
 
-import tracing from "../tracelib/trace.js";
+import tracing from '../tracelib/trace.js';
 import assert from '../platform/assert-web.js';
 
 class Scheduler {
@@ -58,7 +58,7 @@ class Scheduler {
 
   _asyncProcess() {
     Promise.resolve().then(() => {
-      assert(this.frameQueue.length > 0, "_asyncProcess should not be invoked with 0 length queue");
+      assert(this.frameQueue.length > 0, '_asyncProcess should not be invoked with 0 length queue');
       let frame = this.frameQueue.shift();
       this.targetMap.delete(frame.target);
       if (this.frameQueue.length > 0)
@@ -72,7 +72,7 @@ class Scheduler {
   }
 
   _applyFrame(frame) {
-    var trace = tracing.start({cat: 'scheduler', name: 'Scheduler::_applyFrame', args: {target: frame.target ? frame.target.constructor.name : "NULL TARGET"}});
+    var trace = tracing.start({cat: 'scheduler', name: 'Scheduler::_applyFrame', args: {target: frame.target ? frame.target.constructor.name : 'NULL TARGET'}});
 
     var totalRecords = 0;
     for (let [view, kinds] of frame.views.entries()) {

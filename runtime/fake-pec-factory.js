@@ -6,7 +6,7 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-"use strict";
+'use strict';
 
 import InnerPec from './inner-PEC.js';
 import MessageChannel from './message-channel.js';

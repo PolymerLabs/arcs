@@ -7,7 +7,7 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-"use strict";
+'use strict';
 
 import runtime from './runtime.js';
 import ParticleSpec from './particle-spec.js';
@@ -51,7 +51,7 @@ export class Particle {
 
   constructInnerArc() {
     if (!this.capabilities.constructInnerArc)
-      throw new Error("This particle is not allowed to construct inner arcs");
+      throw new Error('This particle is not allowed to construct inner arcs');
     return this.capabilities.constructInnerArc(this);
   }
 
@@ -131,9 +131,9 @@ export class Particle {
    * f is the callback function
    */
   on(views, names, kind, f) {
-    if (typeof names == "string")
+    if (typeof names == 'string')
       names = [names];
-    var trace = tracing.start({cat: 'particle', names: this.constructor.name + "::on", args: {view: names, event: kind}});
+    var trace = tracing.start({cat: 'particle', names: this.constructor.name + '::on', args: {view: names, event: kind}});
     names.forEach(name => views.get(name).on(kind, tracing.wrap({cat: 'particle', name: this.constructor.name, args: {view: name, event: kind}}, f), this));
     trace.end();
   }
@@ -182,7 +182,7 @@ export class Particle {
 
 export class ViewChanges {
   constructor(views, names, type) {
-    if (typeof names == "string")
+    if (typeof names == 'string')
       names = [names];
     this.names = names;
     this.views = views;
@@ -209,7 +209,7 @@ export class SlotChanges {
 
 export class StateChanges {
   constructor(states) {
-    if (typeof states == "string")
+    if (typeof states == 'string')
       states = [states];
     this.states = states;
   }

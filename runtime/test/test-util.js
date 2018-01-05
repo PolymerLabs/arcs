@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
- "use strict";
+ 'use strict';
 
 import {assert} from './chai-web.js';
 import handle from '../handle.js';

@@ -96,7 +96,7 @@ class WalkerBase extends Strategizer.Walker {
   }
 }
 
-WalkerBase.Permuted = "permuted";
-WalkerBase.Independent = "independent";
+WalkerBase.Permuted = 'permuted';
+WalkerBase.Independent = 'independent';
 
 export default WalkerBase;

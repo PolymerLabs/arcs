@@ -81,7 +81,7 @@ class Handle {
   }
 
   _restore(entry) {
-    assert(this.entityClass, "Handles need entity classes for deserialization");
+    assert(this.entityClass, 'Handles need entity classes for deserialization');
     return restore(entry, this.entityClass);
   }
 
@@ -124,7 +124,7 @@ class Collection extends Handle {
   async toList() {
     // TODO: remove this and use query instead
     if (!this.canRead)
-      throw new Error("View not readable");
+      throw new Error('View not readable');
     return (await this._view.toList()).map(a => this._restore(a));
   }
 
@@ -135,7 +135,7 @@ class Collection extends Handle {
    */
   async store(entity) {
     if (!this.canWrite)
-      throw new Error("View not writeable");
+      throw new Error('View not writeable');
     var serialization = this._serialize(entity);
     return this._view.store(serialization);
   }
@@ -147,7 +147,7 @@ class Collection extends Handle {
    */
   async remove(entity) {
     if (!this.canWrite)
-      throw new Error("View not writeable");
+      throw new Error('View not writeable');
     var serialization = this._serialize(entity);
     return this._view.remove(serialization.id);
   }
@@ -171,7 +171,7 @@ class Variable extends Handle {
    */
   async get() {
     if (!this.canRead)
-      throw new Error("View not readable");
+      throw new Error('View not readable');
     var result = await this._view.get();
     if (result == null)
       return undefined;
@@ -189,7 +189,7 @@ class Variable extends Handle {
    */
   async set(entity) {
     if (!this.canWrite)
-      throw new Error("View not writeable");
+      throw new Error('View not writeable');
     return this._view.set(this._serialize(entity));
   }
 
@@ -200,7 +200,7 @@ class Variable extends Handle {
    */
   async clear() {
     if (!this.canWrite)
-      throw new Error("View not writeable");
+      throw new Error('View not writeable');
     await this._view.clear();
   }
 }

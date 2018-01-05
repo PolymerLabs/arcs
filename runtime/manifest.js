@@ -233,7 +233,7 @@ ${e.message}
   }
   static _processParticle(manifest, particleItem, loader) {
     // TODO: we should require both of these and update failing tests...
-    assert(particleItem.implFile == null || particleItem.args !== null, "no valid body defined for this particle");
+    assert(particleItem.implFile == null || particleItem.args !== null, 'no valid body defined for this particle');
     if (!particleItem.args) {
       particleItem.args = [];
     }
