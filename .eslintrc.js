@@ -19,6 +19,10 @@ module.exports = {
     "valid-jsdoc": "off",
     "quote-props": "off",
     "guard-for-in": "off",
+    "padded-blocks": "off",
+    "spaced-comment": "off",
+    "block-spacing": "off",
+    "no-trailing-spaces": "off",
 
     // Thigns we might care about if clang-format did them.
     "arrow-parens": "off",
@@ -33,10 +37,6 @@ module.exports = {
 
     // TODO: Once clang-format is working, we can enable some of these.
     // Spacing rules, (probably) handled by clang-format.
-    "padded-blocks": "off",
-    "spaced-comment": "off",
-    "block-spacing": "off",
-    "no-trailing-spaces": "off",
     "generator-star-spacing": "off",
   },
 };
