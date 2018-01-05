@@ -82,7 +82,7 @@ class SuggestionsElement extends HTMLElement {
 
   _choose(plan) {
     this.dispatchEvent(new CustomEvent("plan-selected", {
-      detail: { plan }
+      detail: {plan}
     }));
   }
 

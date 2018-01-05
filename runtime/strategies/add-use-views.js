@@ -39,6 +39,6 @@ export default class AddUseViews extends Strategy {
       }
     }(RecipeWalker.Permuted), this);
 
-    return { results, generate: null };
+    return {results, generate: null};
   }
 }

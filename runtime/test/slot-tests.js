@@ -48,7 +48,7 @@ describe("slot", function() {
     let hostedSlotId = "id-0";
     let hostedParticleName = "particle-0";
     let hostedSlotName = "slot-0";
-    let hostedParticle = { name: hostedParticleName };
+    let hostedParticle = {name: hostedParticleName};
 
     // Add hosted slot and verify it exists.
     assert.isUndefined(slot.getHostedSlot(hostedSlotId));
@@ -75,7 +75,7 @@ describe("slot", function() {
     let otherHostedSlotId = "id-1";
     let otherHostedParticleName = "particle-1";
     let otherHostedSlotName = "slot-2";
-    let otherHostedParticle = { name: otherHostedParticleName };
+    let otherHostedParticle = {name: otherHostedParticleName};
     slot.addHostedSlot(otherHostedSlotId, otherHostedParticleName, otherHostedSlotName);
     assert.isDefined(slot.getHostedSlot(otherHostedSlotId));
     slot.initHostedSlot(otherHostedSlotId, otherHostedParticle);

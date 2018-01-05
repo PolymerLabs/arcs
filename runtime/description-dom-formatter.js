@@ -184,7 +184,7 @@ export default class DescriptionDomFormatter extends DescriptionFormatter {
     let key = `${viewName}${properties.join('')}Value${++this._nextID}`;
     return {
       template: `<b>{{${key}}}</b>`,
-      model: {[`${key}`]: value }
+      model: {[`${key}`]: value}
     };
   }
 
@@ -194,7 +194,7 @@ export default class DescriptionDomFormatter extends DescriptionFormatter {
       if (viewList.length > 2) {
         return {
           template: `<b>{{${viewKey}FirstName}}</b> plus <b>{{${viewKey}OtherCount}}</b> other items`,
-          model: { [`${viewKey}FirstName`]: viewList[0].rawData.name, [`${viewKey}OtherCount`] : viewList.length - 1}
+          model: {[`${viewKey}FirstName`]: viewList[0].rawData.name, [`${viewKey}OtherCount`] : viewList.length - 1}
         };
       }
       return {
@@ -204,7 +204,7 @@ export default class DescriptionDomFormatter extends DescriptionFormatter {
     }
     return {
       template: `<b>{{${viewKey}Length}}</b> items`,
-      model: { [`${viewKey}Length`]: viewList.length}
+      model: {[`${viewKey}Length`]: viewList.length}
     };
   }
   _formatSingleton(viewName, viewVar) {

@@ -73,6 +73,6 @@ export default class MapRemoteSlots extends Strategy {
       }
     }(RecipeWalker.Permuted), this);
 
-    return { results, generate: null };
+    return {results, generate: null};
   }
 }

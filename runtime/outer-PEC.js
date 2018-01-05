@@ -135,8 +135,8 @@ class OuterPEC extends PEC {
   instantiate(particleSpec, spec, views, lastSeenVersion) {
     views.forEach(view => {
       var version = lastSeenVersion.get(view.id) || 0;
-      this._apiPort.DefineHandle(view, { type: view.type, name: view.name,
-                                       version });
+      this._apiPort.DefineHandle(view, {type: view.type, name: view.name,
+                                       version});
     });
 
     // TODO: Can we just always define the particle and map a handle for use in later
