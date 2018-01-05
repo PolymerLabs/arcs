@@ -146,7 +146,7 @@ ${productStyles}
       return {
         items: state.values.map(({rawData}, index) => {
           return Object.assign({
-            subId: rawData.name.replace(/ /g,'').toLowerCase(),
+            subId: rawData.name.replace(/ /g, '').toLowerCase(),
             index
           }, rawData);
         })

@@ -33,7 +33,7 @@ defineParticle(({DomParticle}) => {
           let slotName = [...this.spec.slots.values()][0].name;
           let slotId = await arc.createSlot(this, slotName, hostedParticle.name, hostedSlotName);
 
-          this.hostedSlotBySlotId.set(slotId, {subId: foo.value.replace(/ /g,'').toLowerCase()});
+          this.hostedSlotBySlotId.set(slotId, {subId: foo.value.replace(/ /g, '').toLowerCase()});
 
           var recipe = `
             schema Foo

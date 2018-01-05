@@ -41,7 +41,7 @@ defineParticle(({DomParticle}) => {
             continue;
           }
 
-          this.hostedSlotBySlotId.set(slotId, {subId: product.name.replace(/ /g,'').toLowerCase()});
+          this.hostedSlotBySlotId.set(slotId, {subId: product.name.replace(/ /g, '').toLowerCase()});
 
           var recipe = `
             import '${hostedParticle.implFile.replace(/\.[^\.]+$/, ".manifest")}'
