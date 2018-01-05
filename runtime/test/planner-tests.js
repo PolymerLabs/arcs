@@ -83,7 +83,7 @@ describe('InitSearch', async () => {
   });
 });
 
-describe('InitPopulation', async ()  => {
+describe('InitPopulation', async () => {
   it('penalizes resolution of particles that already exist in the arc', async () => {
     let manifest = await Manifest.parse(`
       schema Product
@@ -748,7 +748,7 @@ describe('CreateDescriptionHandle', function() {
   });
 });
 
-describe('Description', async ()  => {
+describe('Description', async () => {
   it('description generated from speculative execution arc', async () => {
     let registry = {};
     let loader = new class extends Loader {

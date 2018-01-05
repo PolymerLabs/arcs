@@ -28,7 +28,7 @@ class Arc {
     // TODO: context should not be optional.
     this._context = context || new Manifest({id});
     // TODO: pecFactory should not be optional. update all callers and fix here.
-    this._pecFactory = pecFactory ||  FakePecFactory.bind(null);
+    this._pecFactory = pecFactory || FakePecFactory.bind(null);
     this.id = id;
     this._nextLocalID = 0;
     this._activeRecipe = new Recipe();

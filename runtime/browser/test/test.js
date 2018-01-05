@@ -32,7 +32,7 @@ function prepareExtensionArc() {
   return {arc, slotComposer};
 }
 
-let {arc, slotComposer}  = prepareExtensionArc();
+let {arc, slotComposer} = prepareExtensionArc();
 var r = new recipe.RecipeBuilder()
   .addParticle("Create")
     .connectConstraint("newList", "list")

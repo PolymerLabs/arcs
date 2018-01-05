@@ -41,7 +41,7 @@ export default class StorageProviderBase {
     return this._type;
   }
   // TODO: add 'once' which returns a promise.
-  on(kind,  callback, target) {
+  on(kind, callback, target) {
     assert(target !== undefined, "must provide a target to register a view event handler");
     let listeners = this._listeners.get(kind) || new Map();
     listeners.set(callback, {version: -Infinity, target});

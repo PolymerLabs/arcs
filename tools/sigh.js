@@ -132,9 +132,9 @@ async function webpack() {
 }
 
 function rot13(str) {
-  var input     = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'.split('');
-  var output    = 'NOPQRSTUVWXYZABCDEFGHIJKLMnopqrstuvwxyzabcdefghijklm'.split('');
-  var lookup    = input.reduce((m, k, i) => Object.assign(m, {[k]: output[i]}), {});
+  var input = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'.split('');
+  var output = 'NOPQRSTUVWXYZABCDEFGHIJKLMnopqrstuvwxyzabcdefghijklm'.split('');
+  var lookup = input.reduce((m, k, i) => Object.assign(m, {[k]: output[i]}), {});
   return str.split('').map(x => lookup[x] || x).join('');
 }
 

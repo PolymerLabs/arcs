@@ -181,7 +181,7 @@ class Planner {
         plan,
         rank,
         description: relevance.newArc.description,
-        descriptionText: description,  // TODO(mmandlis): exclude the text description from returned results.
+        descriptionText: description, // TODO(mmandlis): exclude the text description from returned results.
         hash
       });
     }

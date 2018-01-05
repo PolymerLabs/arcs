@@ -245,7 +245,7 @@ ${recipeManifest}
       await test.verifySuggestion('Read from [fooValue: the-FOO] (foo-name) and populate [A list of foo with values: foo-1, foo-2].',
                             description);
 
-      assert.equal('[fooValue: the-FOO]', await description.getViewDescription(ifooView));  /// view description is an object?
+      assert.equal('[fooValue: the-FOO]', await description.getViewDescription(ifooView)); /// view description is an object?
       // Add mode getViewDescription tests, to verify all are strings!
       assert.equal('[A list of foo with values: foo-1, foo-2]', await description.getViewDescription(ofoosView));
     });

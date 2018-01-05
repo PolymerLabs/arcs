@@ -13,14 +13,14 @@ class Slot {
     assert(recipe);
 
     this._recipe = recipe;
-    this._id = undefined;          // The ID of the slot in the context
-    this._localName = undefined;   // Local id within the recipe
+    this._id = undefined; // The ID of the slot in the context
+    this._localName = undefined; // Local id within the recipe
     this._name = name;
 
     this._formFactor = undefined;
-    this._viewConnections = [];  // ViewConnection* (can only be set if source connection is set and particle in slot connections is set)
-    this._sourceConnection = undefined;  // SlotConnection
-    this._consumerConnections = [];  // SlotConnection*
+    this._viewConnections = []; // ViewConnection* (can only be set if source connection is set and particle in slot connections is set)
+    this._sourceConnection = undefined; // SlotConnection
+    this._consumerConnections = []; // SlotConnection*
   }
 
   get recipe() { return this._recipe; }

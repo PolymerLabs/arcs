@@ -115,7 +115,7 @@ class Recipe {
     }
   }
 
-  get slotConnections() {  // SlotConnection*
+  get slotConnections() { // SlotConnection*
     var slotConnections = [];
     this._particles.forEach(particle => {
       slotConnections.push(...Object.values(particle.consumedSlotConnections));

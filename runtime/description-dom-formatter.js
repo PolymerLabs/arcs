@@ -55,7 +55,7 @@ export default class DescriptionDomFormatter extends DescriptionFormatter {
           template = template.replace(`{{${tokenKey}}}`, tokenValue.template);
           delete model[tokenKey];
           model = Object.assign(model, tokenValue.model);
-        } else {  // Text token.
+        } else { // Text token.
           // Replace tokenKey, in case multiple selected suggestions use the same key.
           let newTokenKey = `${tokenKey}${++this._nextID}`;
           template = template.replace(`{{${tokenKey}}}`, `{{${newTokenKey}}}`);
@@ -95,7 +95,7 @@ export default class DescriptionDomFormatter extends DescriptionFormatter {
     tokens.forEach((token, i) => {
       if (token.text) {
         template = template.concat(`${index == 0 && i == 0 ? token.text[0].toUpperCase() + token.text.slice(1) : token.text}`);
-      } else {  // view or slot handle.
+      } else { // view or slot handle.
         let sanitizedFullName = token.fullName.replace(/[.{}_\$]/g, '');
         let attribute = '';
         // TODO(mmandlis): capitalize the data in the model instead.

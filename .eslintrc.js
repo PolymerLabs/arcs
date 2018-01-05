@@ -36,7 +36,6 @@ module.exports = {
     "padded-blocks": "off",
     "spaced-comment": "off",
     "block-spacing": "off",
-    "no-multi-spaces": "off",
     "no-trailing-spaces": "off",
     "key-spacing": "off",
     "func-call-spacing": "off",
