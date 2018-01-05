@@ -45,6 +45,5 @@ module.exports = {
     "func-call-spacing": "off",
     "generator-star-spacing": "off",
     "space-before-blocks": "off",
-    "array-bracket-spacing": "off",
   },
 };
