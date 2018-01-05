@@ -26,7 +26,7 @@ class MessagePort {
   }
 
   close() {
-    this.postMessage = function(){};
+    this.postMessage = function() {};
   }
 }
 
