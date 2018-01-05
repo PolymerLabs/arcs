@@ -176,7 +176,7 @@ ${e.message}
     }
 
     let items = [];
-    try{
+    try {
       items = parser.parse(content);
     } catch (e) {
       throw processError(e);
