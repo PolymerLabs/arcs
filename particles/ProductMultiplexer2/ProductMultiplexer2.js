@@ -73,5 +73,5 @@ defineParticle(({DomParticle}) => {
     _shouldRender(props) {
       return false;
     }
-  }
+  };
 });

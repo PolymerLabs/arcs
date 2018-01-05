@@ -76,7 +76,7 @@ class OuterPEC extends PEC {
       assert(this._arc.findViewById(handle.id), `Cannot map nonexistent handle ${handle.id}`);
       // TODO: create hosted handles map with specially generated ids instead of returning the real ones?
       this._apiPort.MapHandleCallback({}, {callback, id: handle.id});
-    }
+    };
 
     this._apiPort.onArcCreateSlot = ({callback, arc, transformationParticle, transformationSlotName, hostedParticleName,  hostedSlotName}) => {
       if (this.slotComposer) {

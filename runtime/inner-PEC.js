@@ -108,7 +108,7 @@ class InnerPEC {
     this._apiPort.onMapHandleCallback = ({id, callback}) => {
       Promise.resolve().then(() => callback(id));
       return id;
-    }
+    };
 
     this._apiPort.onCreateSlotCallback = ({hostedSlotId, callback}) => {
       Promise.resolve().then(() => callback(hostedSlotId));
