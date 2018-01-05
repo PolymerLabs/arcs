@@ -13,6 +13,7 @@ module.exports = {
     "camelcase": "off",
     "no-unused-vars": "off",
     "new-cap": "off",
+    "arrow-parens": "off", // puts parens around single arg arrow functions
 
     // Things we don't care about.
     "require-jsdoc": "off",
@@ -27,11 +28,7 @@ module.exports = {
     "max-len": "off",
     "comma-dangle": "off",
 
-    // Thigns we might care about if clang-format did them.
-    "arrow-parens": "off",
-    "curly": "off",
-
-    // TODO: Once clang-format is working, we can enable some of these.
-    // Formatting rules, (probably) handled by clang-format.
+    // Things we might care about if we could automate them.
+    "curly": "off", // curly braces even single line blocks, --fix does something weird.
   },
 };
