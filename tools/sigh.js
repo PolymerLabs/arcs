@@ -80,10 +80,18 @@ function peg() {
   return true;
 }
 
-async function lint() {
+async function lint(args) {
+  let options = minimist(args, {
+    boolean: ['fix'],
+  });
+  let extra = [];
+  if (options.fix) {
+    extra.push('--fix');
+  }
   let jsSources = findProjectFiles(process.cwd(), fullPath => /\.js$/.test(fullPath));
   return spawn('node', [
     './node_modules/.bin/eslint',
+    ...extra,
     ...jsSources,
   ], {stdio: 'inherit'}).status == 0;
 }
