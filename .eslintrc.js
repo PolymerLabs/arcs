@@ -23,6 +23,9 @@ module.exports = {
     "spaced-comment": "off",
     "block-spacing": "off",
     "no-trailing-spaces": "off",
+    "eol-last": "off",
+    "max-len": "off",
+    "comma-dangle": "off",
 
     // Thigns we might care about if clang-format did them.
     "arrow-parens": "off",
@@ -30,8 +33,5 @@ module.exports = {
 
     // TODO: Once clang-format is working, we can enable some of these.
     // Formatting rules, (probably) handled by clang-format.
-    "eol-last": "off",
-    "comma-dangle": "off",
-    "max-len": "off",
   },
 };
