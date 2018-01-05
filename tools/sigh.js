@@ -33,7 +33,7 @@ const steps = {
   webpack: [peg, webpack],
   watch: [watch],
   lint: [lint],
-  default: [peg, test, webpack],
+  default: [peg, test, webpack, lint],
 };
 
 // Paths to `watch` for the `watch` step.
