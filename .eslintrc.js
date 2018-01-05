@@ -35,8 +35,5 @@ module.exports = {
     "comma-dangle": "off",
     "max-len": "off",
 
-    // TODO: Once clang-format is working, we can enable some of these.
-    // Spacing rules, (probably) handled by clang-format.
-    "generator-star-spacing": "off",
   },
 };

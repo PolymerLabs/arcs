@@ -81,7 +81,7 @@ class Manifest {
     }
     return result;
   }
-  *_findAll(manifestFinder) {
+  * _findAll(manifestFinder) {
     yield* manifestFinder(this);
     for (let importedManifest of this._imports) {
       yield* importedManifest._findAll(manifestFinder);
