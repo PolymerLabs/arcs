@@ -78,7 +78,7 @@ class OuterPEC extends PEC {
       this._apiPort.MapHandleCallback({}, {callback, id: handle.id});
     };
 
-    this._apiPort.onArcCreateSlot = ({callback, arc, transformationParticle, transformationSlotName, hostedParticleName,  hostedSlotName}) => {
+    this._apiPort.onArcCreateSlot = ({callback, arc, transformationParticle, transformationSlotName, hostedParticleName, hostedSlotName}) => {
       if (this.slotComposer) {
         var hostedSlotId = this.slotComposer.createHostedSlot(transformationParticle, transformationSlotName, hostedParticleName, hostedSlotName);
       }

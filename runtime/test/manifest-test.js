@@ -130,7 +130,7 @@ describe('manifest', function() {
 
       recipe Constrained
         A.a -> B.b`);
-    let verify =  (manifest) => {
+    let verify = (manifest) => {
       let recipe = manifest.recipes[0];
       assert(recipe);
       assert.equal(recipe._connectionConstraints.length, 1);

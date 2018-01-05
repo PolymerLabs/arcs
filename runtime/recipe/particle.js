@@ -24,12 +24,12 @@ class Particle {
     this._connections = {};
     // TODO: replace with constraint connections on the recipe
     this._unnamedConnections = [];
-    this._consumedSlotConnections = {};  // map of consumed Slot connections by slot name.
+    this._consumedSlotConnections = {}; // map of consumed Slot connections by slot name.
   }
 
   _copyInto(recipe, cloneMap) {
     var particle = recipe.newParticle(this._name);
-    particle._id  = this._id;
+    particle._id = this._id;
     particle._tags = [...this._tags];
     particle._verbs = [...this._verbs];
     particle._spec = this._spec;
@@ -218,7 +218,7 @@ class Particle {
       if (this.primaryVerb && this.primaryVerb != this.name) {
         result.push(`# verb=${this.primaryVerb}`);
       }
-    } else {  // verb must exist, if there is no name.
+    } else { // verb must exist, if there is no name.
       result.push(`particle can ${this.primaryVerb}`);
     }
     if (options && options.showUnresolved) {

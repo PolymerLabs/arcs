@@ -101,7 +101,7 @@ class DomContext {
       }
       let slotId = s.getAttribute('slotid');
       let providedSlotSpec = slotSpec.providedSlots.find(ps => ps.name == slotId);
-      if (providedSlotSpec) {  // Skip non-declared slots
+      if (providedSlotSpec) { // Skip non-declared slots
         let subId = s.getAttribute('subid');
         assert(!subId || providedSlotSpec.isSet,
             `Slot provided in ${slotSpec.name} sub-id ${subId} doesn't match set spec: ${providedSlotSpec.isSet}`);

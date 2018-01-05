@@ -174,7 +174,7 @@ export class DescriptionFormatter {
   _initTokens(pattern, particle) {
     pattern = pattern.replace(/</g, '&lt;');
     let results = [];
-    while (pattern.length  > 0) {
+    while (pattern.length > 0) {
       let tokens = pattern.match(/\${[a-zA-Z0-9\.]+}(?:\.[_a-zA-Z]+)?/g);
       if (tokens) {
         var firstToken = tokens[0];
@@ -201,7 +201,7 @@ export class DescriptionFormatter {
     let extra = valueTokens.length == 3 ? valueTokens[2] : undefined;
     let valueToken;
     let viewConn = particle.connections[handleNames[0]];
-    if (viewConn) {  // view connection
+    if (viewConn) { // view connection
       assert(viewConn.view && viewConn.view.id, 'Missing id???');
       return {
         fullName: valueTokens[0],
@@ -225,7 +225,7 @@ export class DescriptionFormatter {
     }
     if (token.viewName) {
       return this._viewTokenToString(token);
-    } else  if (token.consumeSlotName && token.provideSlotName) {
+    } else if (token.consumeSlotName && token.provideSlotName) {
       return this._slotTokenToString(token);
     }
     assert(false, 'no view or slot name');

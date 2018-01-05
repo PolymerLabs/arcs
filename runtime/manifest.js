@@ -462,7 +462,7 @@ ${e.message}
             throw error;
           }
           // TODO: Better ID.
-          let id = `${manifest._id}immediate${hostedParticle.name}`;  // ${manifest._views.length}`;
+          let id = `${manifest._id}immediate${hostedParticle.name}`; // ${manifest._views.length}`;
           // TODO: Mark as immediate.
           targetView = recipe.newView();
           targetView.fate = 'map';

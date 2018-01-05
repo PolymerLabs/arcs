@@ -258,7 +258,7 @@ class InnerPEC {
     this._pendingLoads.push(p);
     let clazz = await this._loader.loadParticleClass(spec);
     let capabilities = this.defaultCapabilitySet();
-    let particle = new clazz();  // TODO: how can i add an argument to DomParticle ctor?
+    let particle = new clazz(); // TODO: how can i add an argument to DomParticle ctor?
     particle.capabilities = capabilities;
     this._particles.push(particle);
 

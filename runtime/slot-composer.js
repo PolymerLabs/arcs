@@ -151,7 +151,7 @@ class SlotComposer {
         if (sourceConnSlot) {
           context = sourceConnSlot.getInnerContext(s.consumeConn.name);
         }
-      } else {  // External slots provided at SlotComposer ctor (eg "root")
+      } else { // External slots provided at SlotComposer ctor (eg "root")
         context = this._contextById[s.consumeConn.name];
       }
 

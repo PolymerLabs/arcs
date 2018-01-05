@@ -17,9 +17,9 @@ class SlotConnection {
     this._recipe = particle.recipe;
     this._particle = particle;
     this._name = name;
-    this._slotSpec = undefined;  // isRequired + formFactor
-    this._targetSlot = undefined;  // Slot?
-    this._providedSlots = {};      // Slot*
+    this._slotSpec = undefined; // isRequired + formFactor
+    this._targetSlot = undefined; // Slot?
+    this._providedSlots = {}; // Slot*
   }
 
   get recipe() { return this._recipe; }

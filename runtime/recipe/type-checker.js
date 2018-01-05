@@ -104,7 +104,7 @@ class TypeChecker {
       return {valid: false};
     }
 
-    let result  = TypeChecker._coerceTypes(left, right);
+    let result = TypeChecker._coerceTypes(left, right);
     if (result == null) {
       return {valid: false};
     }

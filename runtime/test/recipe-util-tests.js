@@ -28,7 +28,7 @@ describe('recipe-util', function() {
         B
           b -> v1`);
     let recipe = manifest.recipes[0];
-    let shape =  RecipeUtil.makeShape(['A', 'B'], ['v'],
+    let shape = RecipeUtil.makeShape(['A', 'B'], ['v'],
       {'A': {'a': 'v'}, 'B': {'b': 'v'}});
     let results = RecipeUtil.find(recipe, shape);
     assert(results.length == 1);
@@ -60,7 +60,7 @@ describe('recipe-util', function() {
         C
           c -> v2`);
     let recipe = manifest.recipes[0];
-    let shape =  RecipeUtil.makeShape(['A', 'B', 'C'], ['v'],
+    let shape = RecipeUtil.makeShape(['A', 'B', 'C'], ['v'],
       {'A': {'a': 'v'}, 'B': {'b': 'v'}, 'C': {'c': 'v'}});
     let results = RecipeUtil.find(recipe, shape);
     assert(results.length == 2);
@@ -86,7 +86,7 @@ describe('recipe-util', function() {
         A
         B`);
     let recipe = manifest.recipes[0];
-    let shape =  RecipeUtil.makeShape(['A', 'B'], ['v'],
+    let shape = RecipeUtil.makeShape(['A', 'B'], ['v'],
       {'A': {'a': 'v'}, 'B': {'b': 'v'}});
     let results = RecipeUtil.find(recipe, shape);
     assert(results.length == 1);
@@ -110,7 +110,7 @@ describe('recipe-util', function() {
           b -> #
         `);
     let recipe = manifest.recipes[0];
-    let shape =  RecipeUtil.makeShape(['A', 'B'], ['v'],
+    let shape = RecipeUtil.makeShape(['A', 'B'], ['v'],
       {'A': {'a': 'v'}, 'B': {'b': 'v'}});
     let results = RecipeUtil.find(recipe, shape);
     assert(results.length == 1);

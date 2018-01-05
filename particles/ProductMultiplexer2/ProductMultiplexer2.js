@@ -40,7 +40,7 @@ defineParticle(({DomParticle}) => {
           let productView = await arc.createHandle(productsView.type.primitiveType(), "product" + index);
           this._handleIds.add(product.id);
 
-          let hostedSlotName =  [...hostedParticle.slots.keys()][0];
+          let hostedSlotName = [...hostedParticle.slots.keys()][0];
           let slotName = [...this.spec.slots.values()][0].name;
           let slotId = await arc.createSlot(this, slotName, hostedParticle.name, hostedSlotName);
           if (!slotId) {
