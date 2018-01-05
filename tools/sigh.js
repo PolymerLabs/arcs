@@ -32,6 +32,7 @@ const steps = {
   test: [peg, test],
   webpack: [peg, webpack],
   watch: [watch],
+  lint: [lint],
   default: [peg, test, webpack],
 };
 
@@ -43,6 +44,23 @@ const watchPaths = [
 ];
 
 const watchDefault = 'webpack';
+
+function* findProjectFiles(dir, predicate) {
+  let tests = [];
+  for (let entry of fs.readdirSync(dir)) {
+    if (/\b(node_modules|bower_components|build)\b/.test(entry)
+       || entry.startsWith('.')) {
+      continue;
+    }
+    let fullPath = path.join(dir, entry);
+    let stat = fs.statSync(fullPath);
+    if (stat.isDirectory()) {
+      yield* findProjectFiles(fullPath, predicate);
+    } else if (predicate(fullPath)) {
+      yield fullPath;
+    }
+  }
+}
 
 function peg() {
   const peg = require('pegjs');
@@ -60,6 +78,14 @@ function peg() {
     fs.writeFileSync(path.resolve(projectRoot, outputFile), prefix + source);
   }
   return true;
+}
+
+async function lint() {
+  let jsSources = findProjectFiles(process.cwd(), fullPath => /\.js$/.test(fullPath));
+  return spawn('node', [
+    './node_modules/.bin/eslint',
+    ...jsSources,
+  ], {stdio: 'inherit'}).status == 0;
 }
 
 async function webpack() {
@@ -113,24 +139,11 @@ function test(args) {
     boolean: ['manual'],
     alias: {g: 'grep'},
   });
-  function* testsInDir(dir) {
-    let tests = [];
-    for (let entry of fs.readdirSync(dir)) {
-      if (entry.includes('node_modules') || entry.startsWith('.')) {
-        continue;
-      }
-      let fullPath = path.join(dir, entry);
-      let stat = fs.statSync(fullPath);
-      if (stat.isDirectory()) {
-        yield* testsInDir(fullPath);
-      } else {
-        var isSelectedTest = options.manual == fullPath.includes('manual_test');
-        if (/-tests?.js$/.test(fullPath) && isSelectedTest) {
-          yield fullPath;
-        }
-      }
-    }
-  }
+  
+  const testsInDir = dir => findProjectFiles(dir, fullPath => {
+    var isSelectedTest = options.manual == fullPath.includes('manual_test');
+    return /-tests?.js$/.test(fullPath) && isSelectedTest;
+  });
 
   function fixPathForWindows(path) {
     if (path[0] == '/')
