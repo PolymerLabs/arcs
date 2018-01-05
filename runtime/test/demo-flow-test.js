@@ -93,7 +93,7 @@ describe('demo flow', function() {
         .expectRenderSlot("ShowProducts", "root", ["model"])
         .expectRenderSlot("Chooser", "action", ["model"])
         .expectRenderSlot("AlsoOn", "annotation", ["model"])
-        .expectRenderSlot("ProductMultiplexer2", "annotation", ["model"])
+        .expectRenderSlot("ProductMultiplexer2", "annotation", ["model"]);
 
     await arc.instantiate(plan);
     await arc.pec.idle;

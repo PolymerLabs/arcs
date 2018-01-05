@@ -170,7 +170,7 @@ class Recipe {
         var invalids = list.filter(item => !item._isValid());
         if (invalids.length > 0)
           console.log(`Has Invalid ${name} ${invalids.map(f)}`);
-      }
+      };
       checkForInvalid('Views', this._views, view => `'${view.toString()}'`);
       checkForInvalid('Particles', this._particles, particle => particle.name);
       checkForInvalid('Slots', this._slots, slot => slot.name);
