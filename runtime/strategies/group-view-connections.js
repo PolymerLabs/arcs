@@ -49,7 +49,7 @@ export default class GroupViewConnections extends Strategy {
           });
 
           let iteration = 0;
-          while(allTypeViewConnections.length > 0) {
+          while (allTypeViewConnections.length > 0) {
             Object.values(particleWithMostConnectionsOfType.connections).forEach(viewConnection => {
               if (!type.equals(viewConnection.type)) {
                 return;

@@ -37,7 +37,7 @@ class SlotComposer {
   }
   get affordance() { return this._affordance; }
   getSlotClass() {
-    switch(this._affordance) {
+    switch (this._affordance) {
       case "dom":
       case "dom-touch":
       case "vr":
@@ -49,7 +49,7 @@ class SlotComposer {
     }
   }
   _getSuggestionContext() {
-    switch(this._affordance) {
+    switch (this._affordance) {
       case "dom":
       case "dom-touch":
       case "vr":
@@ -59,7 +59,7 @@ class SlotComposer {
     }
   }
   _getDescriptionFormatter() {
-    switch(this._affordance) {
+    switch (this._affordance) {
       case "dom":
       case "dom-touch":
       case "vr":

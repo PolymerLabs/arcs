@@ -45,7 +45,7 @@ class AutoTabs extends HTMLElement {
     //console.log('AutoTabs::slotchange: ', e);
     let nodes = this._root.querySelector('slot').assignedNodes();
     let pages = nodes.filter(n => {
-      switch(n.localName) {
+      switch (n.localName) {
         case undefined:
         case 'style':
         case 'slot':

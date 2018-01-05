@@ -45,7 +45,7 @@ class MockSlotComposer extends SlotComposer {
   }
 
   getSlotClass(affordance) {
-    switch(this.affordance) {
+    switch (this.affordance) {
       case "mock":
         return MockSlot;
       default:
