@@ -39,7 +39,7 @@ class MockSlot extends Slot {
 
 class MockSlotComposer extends SlotComposer {
   constructor() {
-    super({ rootContext: "dummy-context", affordance: "mock"});
+    super({rootContext: "dummy-context", affordance: "mock"});
     this.expectQueue = [];
     this.onExpectationsComplete = () => undefined;
   }

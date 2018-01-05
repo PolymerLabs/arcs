@@ -49,12 +49,12 @@ class Slot {
   startRender() {
     if (this.startRenderCallback) {
       let contentTypes = this.constructRenderRequest();
-      this.startRenderCallback({ particle: this.consumeConn.particle, slotName: this.consumeConn.name, contentTypes });
+      this.startRenderCallback({particle: this.consumeConn.particle, slotName: this.consumeConn.name, contentTypes});
 
       for (let hostedSlot of this._hostedSlotById.values()) {
         if (hostedSlot.particle) {
           // Note: hosted particle may still not be set, if the hosted slot was already created, but the inner recipe wasn't instantiate yet.
-          this.startRenderCallback({ particle: hostedSlot.particle, slotName: hostedSlot.slotName, contentTypes });
+          this.startRenderCallback({particle: hostedSlot.particle, slotName: hostedSlot.slotName, contentTypes});
         }
       }
     }
@@ -62,10 +62,10 @@ class Slot {
 
   stopRender() {
     if (this.stopRenderCallback) {
-      this.stopRenderCallback({ particle: this.consumeConn.particle, slotName: this.consumeConn.name });
+      this.stopRenderCallback({particle: this.consumeConn.particle, slotName: this.consumeConn.name});
 
       for (let hostedSlot of this._hostedSlotById.values()) {
-        this.stopRenderCallback({ particle: hostedSlot.particle, slotName: hostedSlot.slotName });
+        this.stopRenderCallback({particle: hostedSlot.particle, slotName: hostedSlot.slotName});
       }
     }
   }
@@ -103,7 +103,7 @@ class Slot {
            `Unexpected particle name ${hostedParticle.name} for slot ${hostedSlotId}; expected: ${hostedSlot.particleName}`);
     hostedSlot.particle = hostedParticle;
     if (this.getContext() && this.startRenderCallback) {
-      this.startRenderCallback({ particle: hostedSlot.particle, slotName: hostedSlot.slotName, contentTypes: this.constructRenderRequest() });
+      this.startRenderCallback({particle: hostedSlot.particle, slotName: hostedSlot.slotName, contentTypes: this.constructRenderRequest()});
     }
   }
 

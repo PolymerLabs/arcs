@@ -50,6 +50,6 @@ export default class CombinedStrategy extends Strategy {
       results = this._getLeaves(totalResults);
     }
 
-    return { results, generate: null };
+    return {results, generate: null};
   }
 };

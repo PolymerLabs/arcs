@@ -181,7 +181,7 @@ class Arc {
   }
 
   serialize() {
-    var s = { views: [], particles: [], id: this.id };
+    var s = {views: [], particles: [], id: this.id};
 
     // 1. serialize entities
     var entities = new Set();
@@ -204,7 +204,7 @@ class Arc {
       if (particle.spec.transient)
         continue;
       var name = particle.spec.name;
-      var serializedParticle = { name, views: {}};
+      var serializedParticle = {name, views: {}};
       for (let [key, value] of particle.views) {
         serializedParticle.views[key] = value.id;
       }

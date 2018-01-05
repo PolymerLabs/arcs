@@ -28,6 +28,6 @@ export default class CreateDescriptionHandle extends Strategy {
       }
     }(RecipeWalker.Permuted), this);
 
-    return { results, generate: null };
+    return {results, generate: null};
   }
 }

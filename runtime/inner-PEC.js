@@ -51,12 +51,12 @@ class StorageProxy {
 
   get() {
     return new Promise((resolve, reject) =>
-      this._port.HandleGet({ callback: r => resolve(r), handle: this }));
+      this._port.HandleGet({callback: r => resolve(r), handle: this}));
   }
 
   toList() {
     return new Promise((resolve, reject) =>
-      this._port.HandleToList({ callback: r => resolve(r), handle: this }));
+      this._port.HandleToList({callback: r => resolve(r), handle: this}));
   }
 
   set(entity) {
@@ -246,7 +246,7 @@ class InnerPEC {
     return {
       constructInnerArc: particle => {
         return new Promise((resolve, reject) =>
-          this._apiPort.ConstructInnerArc({ callback: arcId => {resolve(this.innerArcHandle(arcId));}, particle }));
+          this._apiPort.ConstructInnerArc({callback: arcId => {resolve(this.innerArcHandle(arcId));}, particle}));
       }
     };
   }

@@ -62,7 +62,7 @@ class Mutate extends Strategy {
       str[j] = tmp;
       results.push({result: str.join(''), score: 1});
     }
-    return { results, generate: null};
+    return {results, generate: null};
   }
 }
 

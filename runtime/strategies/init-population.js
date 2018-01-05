@@ -29,7 +29,7 @@ export default class InitPopulation extends Strategy {
   }
   async generate(strategizer) {
     if (strategizer.generation != 0) {
-      return { results: [], generate: null };
+      return {results: [], generate: null};
     }
     let results = this._recipes.map(recipe => ({
       result: recipe,

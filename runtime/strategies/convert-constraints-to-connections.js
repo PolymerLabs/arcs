@@ -82,6 +82,6 @@ export default class ConvertConstraintsToConnections extends Strategy {
       }
     }(RecipeWalker.Independent), this);
 
-    return { results, generate: null };
+    return {results, generate: null};
   }
 }

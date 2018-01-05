@@ -102,7 +102,7 @@ describe('InitPopulation', async ()  => {
     let ip = new InitPopulation(arc);
 
     var strategizer = {generated: [], generation: 0};
-    let { results } = await ip.generate(strategizer);
+    let {results} = await ip.generate(strategizer);
     assert.equal(results.length, 1);
     assert.equal(results[0].score, 0);
   });
@@ -119,9 +119,9 @@ describe('ConvertConstraintsToConnections', async () => {
         A.b -> C.d`)).recipes[0];
     var strategizer = {generated: [{result: recipe, score: 1}]};
     var cctc = new ConvertConstraintsToConnections({pec:{}});
-    let { results } = await cctc.generate(strategizer);
+    let {results} = await cctc.generate(strategizer);
     assert(results.length == 1);
-    let { result, score } = results[0];
+    let {result, score} = results[0];
     assert.deepEqual(result.toString(),
 `recipe
   create as view0
@@ -141,9 +141,9 @@ describe('ConvertConstraintsToConnections', async () => {
         C`)).recipes[0];
     var strategizer = {generated: [{result: recipe, score: 1}]};
     var cctc = new ConvertConstraintsToConnections({pec:{}});
-    let { results } = await cctc.generate(strategizer);
+    let {results} = await cctc.generate(strategizer);
     assert(results.length == 1);
-    let { result, score } = results[0];
+    let {result, score} = results[0];
     assert.deepEqual(result.toString(),
 `recipe
   create as view0
@@ -163,9 +163,9 @@ describe('ConvertConstraintsToConnections', async () => {
         A`)).recipes[0];
     var strategizer = {generated: [{result: recipe, score: 1}]};
     var cctc = new ConvertConstraintsToConnections({pec:{}});
-    let { results } = await cctc.generate(strategizer);
+    let {results} = await cctc.generate(strategizer);
     assert(results.length == 1);
-    let { result, score } = results[0];
+    let {result, score} = results[0];
     assert.deepEqual(result.toString(),
 `recipe
   create as view0
@@ -187,9 +187,9 @@ describe('ConvertConstraintsToConnections', async () => {
         A`)).recipes[0];
     var strategizer = {generated: [{result: recipe, score: 1}]};
     var cctc = new ConvertConstraintsToConnections({pec:{}});
-    let { results } = await cctc.generate(strategizer);
+    let {results} = await cctc.generate(strategizer);
     assert(results.length == 1);
-    let { result, score } = results[0];
+    let {result, score} = results[0];
     assert.deepEqual(result.toString(),
 `recipe
   create as view0
@@ -215,9 +215,9 @@ describe('ConvertConstraintsToConnections', async () => {
         A`)).recipes[0];
     var strategizer = {generated: [{result: recipe, score: 1}]};
     var cctc = new ConvertConstraintsToConnections({pec:{}});
-    let { results } = await cctc.generate(strategizer);
+    let {results} = await cctc.generate(strategizer);
     assert(results.length == 1);
-    let { result, score } = results[0];
+    let {result, score} = results[0];
     assert.deepEqual(result.toString(),
 `recipe
   use as view0 # S
@@ -243,9 +243,9 @@ describe('ConvertConstraintsToConnections', async () => {
           b = v1`)).recipes[0];
     var strategizer = {generated: [{result: recipe, score: 1}]};
     var cctc = new ConvertConstraintsToConnections({pec:{}});
-    let { results } = await cctc.generate(strategizer);
+    let {results} = await cctc.generate(strategizer);
     assert(results.length == 1);
-    let { result, score } = results[0];
+    let {result, score} = results[0];
     assert.deepEqual(result.toString(),
 `recipe
   use as view0 # S
@@ -272,9 +272,9 @@ describe('ConvertConstraintsToConnections', async () => {
           b = v1`)).recipes[0];
     var strategizer = {generated: [{result: recipe, score: 1}]};
     var cctc = new ConvertConstraintsToConnections({pec:{}});
-    let { results } = await cctc.generate(strategizer);
+    let {results} = await cctc.generate(strategizer);
     assert(results.length == 1);
-    let { result, score } = results[0];
+    let {result, score} = results[0];
     assert.deepEqual(result.toString(), `recipe
   use as view0 # S
   A as particle0
@@ -304,7 +304,7 @@ describe('ConvertConstraintsToConnections', async () => {
     `)).recipes;
     var strategizer = {generated: [{result: recipes[0], score: 1}, {result: recipes[1], score: 1}]};
     var cctc = new ConvertConstraintsToConnections({pec: {slotComposer: {affordance: 'voice'}}});
-    let { results } = await cctc.generate(strategizer);
+    let {results} = await cctc.generate(strategizer);
     assert.equal(results.length, 1);
     assert.deepEqual(results[0].result.particles.map(p => p.name), ['A', 'C']);
   });
@@ -331,7 +331,7 @@ describe('MapRemoteSlots', function() {
       var arc = createTestArc("test-plan-arc", manifest, "dom");
       var mrs = new MapRemoteSlots(arc);
 
-      let { results } = await mrs.generate(strategizer);
+      let {results} = await mrs.generate(strategizer);
       assert.equal(results.length, 1);
       assert.isTrue(results[0].result.isResolved());
       assert.equal(results[0].result.slots.length, 1);
@@ -524,7 +524,7 @@ describe('SearchTokensToParticles', function() {
     assert(!recipe.isResolved());
     var strategizer = {generated: [], terminal: [{result: recipe, score: 1}]};
     var stp = new SearchTokensToParticles(arc);
-    let { results } = await stp.generate(strategizer);
+    let {results} = await stp.generate(strategizer);
     assert.equal(results.length, 2);
     assert.deepEqual([["GalaxyFlyer", "Rester", "SimpleJumper"],
                       ["GalaxyFlyer", "Rester", "StarJumper"]], results.map(r => r.result.particles.map(p => p.name).sort()));
@@ -570,7 +570,7 @@ describe('MatchParticleByVerb', function() {
     // Apply MatchParticleByVerb strategy.
     var strategizer = {generated: [{result: manifest.recipes[0], score: 1}]};
     var mpv = new MatchParticleByVerb(arc);
-    let { results } = await mpv.generate(strategizer);
+    let {results} = await mpv.generate(strategizer);
     assert.equal(results.length, 3);
     // Note: view connections are not resolved yet.
     assert.deepEqual(["GalaxyJumper", "SimpleJumper", "StarJumper"], results.map(r => r.result.particles[0].name).sort());
@@ -622,7 +622,7 @@ recipe
       arc._search = "showproducts and chooser alsoon recommend";
       var gvc = new GroupViewConnections(arc);
 
-      let { results } = await gvc.generate(strategizer);
+      let {results} = await gvc.generate(strategizer);
       assert.equal(results.length, 1);
       let recipe = results[0].result;
       assert.equal(4, recipe.views.length);
@@ -653,7 +653,7 @@ recipe
         new GroupViewConnections(arc),
       ]);
 
-      let { results } = await strategy.generate(strategizer);
+      let {results} = await strategy.generate(strategizer);
       assert.equal(results.length, 1);
       let recipe = results[0].result;
       assert.equal(2, recipe.particles.length);
@@ -685,7 +685,7 @@ describe('FallbackFate', function() {
     var strategy = new FallbackFate(arc);
 
     // no resolved search tokens.
-    let { results } = await strategy.generate(strategizer);
+    let {results} = await strategy.generate(strategizer);
     assert.equal(results.length, 0);
 
     // Resolved a search token and rerun strategy.
@@ -719,7 +719,7 @@ describe('FallbackFate', function() {
     var strategizer = {generated: [{result: manifest.recipes[0], score: 1}], terminal: []};
 
     var strategy = new FallbackFate(arc);
-    let { results } = await strategy.generate(strategizer);
+    let {results} = await strategy.generate(strategizer);
     assert.equal(results.length, 0);
   });
 });
