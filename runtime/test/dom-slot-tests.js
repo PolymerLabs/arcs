@@ -114,8 +114,8 @@ describe('dom-slot', function() {
     assert.equal(0, updateModelCount);
 
     // Set content with template and model - template is overriden, model is set and slot is re-rendered.
-    await slot.setContent({template: 'my other template', model:{foo:'bar'}});
-    assert.deepEqual({foo:'bar'}, slot._model);
+    await slot.setContent({template: 'my other template', model: {foo: 'bar'}});
+    assert.deepEqual({foo: 'bar'}, slot._model);
     assert.equal('my other template', slot.getTemplate());
     assert.equal(2, doRenderCount);
     assert.equal(2, clearCount);
@@ -123,8 +123,8 @@ describe('dom-slot', function() {
     assert.equal(1, updateModelCount);
 
     // Set content with only model - model is set and slot is re-rendered.
-    await slot.setContent({model:{foo:'far'}});
-    assert.deepEqual({foo:'far'}, slot._model);
+    await slot.setContent({model: {foo: 'far'}});
+    assert.deepEqual({foo: 'far'}, slot._model);
     assert.equal('my other template', slot.getTemplate());
     assert.equal(3, doRenderCount);
     assert.equal(2, clearCount);
@@ -145,7 +145,7 @@ describe('dom-slot', function() {
 
     // only request model, if template already found.
     slot._context = new MockDomContext();
-    slot.setContent({template:'dummy-template'}, {});
+    slot.setContent({template: 'dummy-template'}, {});
     assert.deepEqual(['model'], slot.constructRenderRequest());
   });
 });

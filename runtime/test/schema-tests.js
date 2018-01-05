@@ -114,7 +114,7 @@ describe('schema', function() {
     let product = new Product({});
     assert.throws(() => { product.name = 6; }, TypeError);
     assert.throws(() => { product.url = ['url']; }, TypeError);
-    assert.throws(() => { product.shipDays = {two:2}; }, TypeError);
+    assert.throws(() => { product.shipDays = {two: 2}; }, TypeError);
     assert.throws(() => { product.isReal = 1; }, TypeError);
 
     // Should be able to clear fields.

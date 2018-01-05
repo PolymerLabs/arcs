@@ -194,7 +194,7 @@ export default class DescriptionDomFormatter extends DescriptionFormatter {
       if (viewList.length > 2) {
         return {
           template: `<b>{{${viewKey}FirstName}}</b> plus <b>{{${viewKey}OtherCount}}</b> other items`,
-          model: {[`${viewKey}FirstName`]: viewList[0].rawData.name, [`${viewKey}OtherCount`] : viewList.length - 1}
+          model: {[`${viewKey}FirstName`]: viewList[0].rawData.name, [`${viewKey}OtherCount`]: viewList.length - 1}
         };
       }
       return {

@@ -37,7 +37,6 @@ module.exports = {
     "spaced-comment": "off",
     "block-spacing": "off",
     "no-trailing-spaces": "off",
-    "key-spacing": "off",
     "func-call-spacing": "off",
     "generator-star-spacing": "off",
   },

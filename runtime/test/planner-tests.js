@@ -118,7 +118,7 @@ describe('ConvertConstraintsToConnections', async () => {
       recipe
         A.b -> C.d`)).recipes[0];
     var strategizer = {generated: [{result: recipe, score: 1}]};
-    var cctc = new ConvertConstraintsToConnections({pec:{}});
+    var cctc = new ConvertConstraintsToConnections({pec: {}});
     let {results} = await cctc.generate(strategizer);
     assert(results.length == 1);
     let {result, score} = results[0];
@@ -140,7 +140,7 @@ describe('ConvertConstraintsToConnections', async () => {
         A.b -> C.d
         C`)).recipes[0];
     var strategizer = {generated: [{result: recipe, score: 1}]};
-    var cctc = new ConvertConstraintsToConnections({pec:{}});
+    var cctc = new ConvertConstraintsToConnections({pec: {}});
     let {results} = await cctc.generate(strategizer);
     assert(results.length == 1);
     let {result, score} = results[0];
@@ -162,7 +162,7 @@ describe('ConvertConstraintsToConnections', async () => {
         A.b -> C.d
         A`)).recipes[0];
     var strategizer = {generated: [{result: recipe, score: 1}]};
-    var cctc = new ConvertConstraintsToConnections({pec:{}});
+    var cctc = new ConvertConstraintsToConnections({pec: {}});
     let {results} = await cctc.generate(strategizer);
     assert(results.length == 1);
     let {result, score} = results[0];
@@ -186,7 +186,7 @@ describe('ConvertConstraintsToConnections', async () => {
         C
         A`)).recipes[0];
     var strategizer = {generated: [{result: recipe, score: 1}]};
-    var cctc = new ConvertConstraintsToConnections({pec:{}});
+    var cctc = new ConvertConstraintsToConnections({pec: {}});
     let {results} = await cctc.generate(strategizer);
     assert(results.length == 1);
     let {result, score} = results[0];
@@ -214,7 +214,7 @@ describe('ConvertConstraintsToConnections', async () => {
           d = v1
         A`)).recipes[0];
     var strategizer = {generated: [{result: recipe, score: 1}]};
-    var cctc = new ConvertConstraintsToConnections({pec:{}});
+    var cctc = new ConvertConstraintsToConnections({pec: {}});
     let {results} = await cctc.generate(strategizer);
     assert(results.length == 1);
     let {result, score} = results[0];
@@ -242,7 +242,7 @@ describe('ConvertConstraintsToConnections', async () => {
         A
           b = v1`)).recipes[0];
     var strategizer = {generated: [{result: recipe, score: 1}]};
-    var cctc = new ConvertConstraintsToConnections({pec:{}});
+    var cctc = new ConvertConstraintsToConnections({pec: {}});
     let {results} = await cctc.generate(strategizer);
     assert(results.length == 1);
     let {result, score} = results[0];
@@ -271,7 +271,7 @@ describe('ConvertConstraintsToConnections', async () => {
         A
           b = v1`)).recipes[0];
     var strategizer = {generated: [{result: recipe, score: 1}]};
-    var cctc = new ConvertConstraintsToConnections({pec:{}});
+    var cctc = new ConvertConstraintsToConnections({pec: {}});
     let {results} = await cctc.generate(strategizer);
     assert(results.length == 1);
     let {result, score} = results[0];
@@ -646,7 +646,7 @@ recipe
           search \`prepare and jump\`
       `));
       manifest.recipes[0].normalize();
-      var strategizer = {generated: [{result: manifest.recipes[0], score: 1}], terminal:[]};
+      var strategizer = {generated: [{result: manifest.recipes[0], score: 1}], terminal: []};
       var arc = createTestArc("test-plan-arc", manifest, "dom");
       var strategy = new CombinedStrategy([
         new SearchTokensToParticles(arc),

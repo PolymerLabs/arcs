@@ -21,7 +21,7 @@ import Type from '../type.js';
 
 function createTestArc() {
   const slotComposer = new SlotComposer({rootContext: 'test', affordance: 'mock'});
-  var arc = new Arc({slotComposer, id:'test'});
+  var arc = new Arc({slotComposer, id: 'test'});
   return arc;
 }
 
@@ -33,7 +33,7 @@ var tests = [
     }
   },
   {
-    name:'dom',
+    name: 'dom',
     verifySuggestion: async (expectedSuggestion, description) => {
       let suggestion = await description.getArcDescription(DescriptionDomFormatter);
       let result = suggestion.template.replace(/<[/]?span>/g, '').replace(/<[/]?b>/g, '');
