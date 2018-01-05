@@ -240,7 +240,7 @@ class SlotComposer {
       if (!availableSlots[slotid]) {
         availableSlots[slotid] = [];
       }
-      availableSlots[slotid].push({id:`rootslotid-${slotid}`, count:0, views: [], providedSlotSpec: {isSet: false}});
+      availableSlots[slotid].push({id: `rootslotid-${slotid}`, count: 0, views: [], providedSlotSpec: {isSet: false}});
     });
     return availableSlots;
   }

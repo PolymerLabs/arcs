@@ -39,7 +39,7 @@ const slotComposer = new SlotComposer({rootContext: 'test', affordance: 'mock'})
 describe('Arc', function() {
   it('applies existing views to a particle', async () => {
     let {recipe, Foo, Bar} = await setup();
-    let arc = new Arc({slotComposer, id:'test'});
+    let arc = new Arc({slotComposer, id: 'test'});
     let fooView = await arc.createView(Foo.type);
     let barView = await arc.createView(Bar.type);
     await handle.handleFor(fooView).set(new Foo({value: 'a Foo'}));
@@ -50,7 +50,7 @@ describe('Arc', function() {
 
   it('applies new views to a particle', async () => {
     let {recipe, Foo, Bar} = await setup();
-    let arc = new Arc({slotComposer, id:'test'});
+    let arc = new Arc({slotComposer, id: 'test'});
     let fooView = await arc.createView(Foo.type);
     let barView = await arc.createView(Bar.type);
     recipe.normalize();

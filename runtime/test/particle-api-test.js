@@ -71,7 +71,7 @@ describe('particle-api', function() {
       new InnerPec(channel.port1, `${id}:inner`, loader);
       return channel.port2;
     };
-    let arc = new Arc({id:'test', pecFactory});
+    let arc = new Arc({id: 'test', pecFactory});
 
     let Input = manifest.findSchemaByName('Input').entityClass();
     let inputView = await arc.createView(Input.type.setViewOf());
@@ -135,7 +135,7 @@ describe('particle-api', function() {
       new InnerPec(channel.port1, `${id}:inner`, loader);
       return channel.port2;
     };
-    let arc = new Arc({id:'test', pecFactory});
+    let arc = new Arc({id: 'test', pecFactory});
     let Result = manifest.findSchemaByName('Result').entityClass();
     let resultView = await arc.createView(Result.type);
     let recipe = manifest.recipes[0];
@@ -231,7 +231,7 @@ describe('particle-api', function() {
       new InnerPec(channel.port1, `${id}:inner`, loader);
       return channel.port2;
     };
-    let arc = new Arc({id:'test', pecFactory, loader});
+    let arc = new Arc({id: 'test', pecFactory, loader});
     let Result = manifest.findSchemaByName('Result').entityClass();
     let resultView = await arc.createView(Result.type);
     let recipe = manifest.recipes[0];
@@ -342,7 +342,7 @@ describe('particle-api', function() {
       new InnerPec(channel.port1, `${id}:inner`, loader);
       return channel.port2;
     };
-    let arc = new Arc({id:'test', pecFactory, loader});
+    let arc = new Arc({id: 'test', pecFactory, loader});
     let Result = manifest.findSchemaByName('Result').entityClass();
     let inputsView = await arc.createView(Result.type.setViewOf());
     inputsView.store({id: "1", rawData: {value: 'hello'}});
