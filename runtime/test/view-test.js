@@ -37,7 +37,7 @@ describe('View', function() {
     assert.equal(await barView.get(), undefined);
   });
 
-  it('dedupes common user-provided ids', async() => {
+  it('dedupes common user-provided ids', async () => {
     let arc = new Arc({slotComposer, id: 'test'});
 
     let manifest = await Manifest.load('./particles/test/test-particles.manifest', loader);

@@ -252,7 +252,7 @@ ${recipeManifest}
   });
 
   tests.forEach((test) => {
-    it('connection description from another particle ' + test.name, async() => {
+    it('connection description from another particle ' + test.name, async () => {
       let {arc, recipe, ifooView, ofoosView, fooView, foosView} = (await prepareRecipeAndArc(`
 ${schemaManifest}
 ${aParticleManifest}
@@ -286,7 +286,7 @@ ${recipeManifest}
   });
 
   tests.forEach((test) => {
-    it('multiple particles ' + test.name, async() => {
+    it('multiple particles ' + test.name, async () => {
       let {arc, recipe, ifooViewConn, fooView} = (await prepareRecipeAndArc(`
 ${schemaManifest}
 particle X1
@@ -341,7 +341,7 @@ recipe
   });
 
   tests.forEach((test) => {
-    it('same particle multiple times ' + test.name, async() => {
+    it('same particle multiple times ' + test.name, async () => {
       let manifestStr = `
 ${schemaManifest}
 particle X
@@ -397,7 +397,7 @@ recipe
   });
 
   tests.forEach((test) => {
-    it('duplicate particles ' + test.name, async() => {
+    it('duplicate particles ' + test.name, async () => {
       let {arc, recipe, ifooView, fooView} = (await prepareRecipeAndArc(`
 ${schemaManifest}
 ${aParticleManifest}
@@ -452,7 +452,7 @@ recipe
   });
 
   tests.forEach((test) => {
-    it('sanisize description ' + test.name, async() => {
+    it('sanisize description ' + test.name, async () => {
       let {arc, recipe} = (await prepareRecipeAndArc(`
 ${schemaManifest}
 particle A
@@ -478,7 +478,7 @@ recipe
   });
 
   tests.forEach((test) => {
-    it('multiword type and no name property in description ' + test.name, async() => {
+    it('multiword type and no name property in description ' + test.name, async () => {
       let manifestStr = `
         schema MyBESTType
           optional
@@ -528,7 +528,7 @@ recipe
   });
 
   tests.forEach((test) => {
-    it('particle slots description ' + test.name, async() => {
+    it('particle slots description ' + test.name, async () => {
       let manifestStr = `
 schema Foo
   optional
@@ -653,7 +653,7 @@ recipe
   }
 
   tests.forEach((test) => {
-    it('particle dynamic description ' + test.name, async() => {
+    it('particle dynamic description ' + test.name, async () => {
       let {recipe, description, fooView, Description, descriptionHandle} = await prepareRecipeAndArc();
 
       assert.isUndefined(await description.getArcDescription());
@@ -685,7 +685,7 @@ recipe
   });
 
   tests.forEach((test) => {
-    it('particle dynamic dom description ' + test.name, async() => {
+    it('particle dynamic dom description ' + test.name, async () => {
       let {recipe, description, fooView, Description, descriptionHandle} = await prepareRecipeAndArc();
       descriptionHandle.store(new Description({key: "_pattern_", value: 'return my ${ofoo} (text)'}));
       descriptionHandle.store(new Description({key: "_template_", value: 'Return my <span>{{ofoo}}</span> (dom)'}));

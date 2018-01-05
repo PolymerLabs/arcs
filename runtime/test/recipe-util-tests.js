@@ -76,7 +76,7 @@ describe('recipe-util', function() {
     assert(results[1].match.v.localName == 'v2');
   });
 
-  it('can match a free view', async() => {
+  it('can match a free view', async () => {
     let manifest = await Manifest.parse(`
       particle A
       particle B
@@ -94,7 +94,7 @@ describe('recipe-util', function() {
     assert(results[0].match.v.localName == 'v1');
   });
 
-  it('can match dangling view connections', async() => {
+  it('can match dangling view connections', async () => {
     let manifest = await Manifest.parse(`
       schema S
       particle A
