@@ -40,6 +40,5 @@ module.exports = {
     "key-spacing": "off",
     "func-call-spacing": "off",
     "generator-star-spacing": "off",
-    "space-before-blocks": "off",
   },
 };
