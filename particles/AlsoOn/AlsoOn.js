@@ -22,11 +22,11 @@ defineParticle(({DomParticle}) => {
       return template;
     }
     _shouldRender(props) {
-      return !!props && !!props.product && !!props.choices;
+      return !!props && !!props.choices;
     }
     _render(props) {
       let {product} = props;
-      let notAlsoOn = !Boolean(props.choices.find(c => c.name === product.name));
+      let notAlsoOn = !product || !Boolean(props.choices.find(c => c.name === product.name));
       return {
         notAlsoOn,
       };
