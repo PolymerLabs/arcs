@@ -5,6 +5,7 @@ env:
   - TEST_DIR: .
   - TEST_DIR: extension
 
+sudo: false
 dist: trusty
 addons:
   chrome: stable
