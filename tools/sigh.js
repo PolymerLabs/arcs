@@ -89,8 +89,7 @@ async function lint(args) {
     extra.push('--fix');
   }
   let jsSources = findProjectFiles(process.cwd(), fullPath => /\.js$/.test(fullPath));
-  return spawn('node', [
-    './node_modules/.bin/eslint',
+  return spawn('./node_modules/.bin/eslint', [
     ...extra,
     ...jsSources,
   ], {stdio: 'inherit'}).status == 0;
