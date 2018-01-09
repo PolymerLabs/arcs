@@ -8,6 +8,6 @@ env:
 sudo: false
 dist: trusty
 addons:
-  chrome: stable
+  chrome: beta
 
 script: "cd $TEST_DIR && npm install && npm test"
