@@ -5,9 +5,8 @@ env:
   - TEST_DIR: .
   - TEST_DIR: extension
 
-sudo: false
-dist: trusty
+sudo: required
 addons:
-  chrome: beta
+  chrome: stable
 
 script: "cd $TEST_DIR && npm install && npm test"
