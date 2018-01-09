@@ -5,6 +5,7 @@ env:
   - TEST_DIR: .
   - TEST_DIR: extension
 
+# todo: remove this once travis fixes their upstream issue (travis-ci/travis-ci#8836)
 sudo: required
 addons:
   chrome: stable
