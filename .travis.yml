@@ -4,8 +4,9 @@ node_js:
 env:
   - TEST_DIR: .
   - TEST_DIR: extension
-before_install:
-  - google-chrome-stable --headless --disable-gpu --remote-debugging-port=9222 http://localhost &
+
+dist: trusty
 addons:
   chrome: stable
+
 script: "cd $TEST_DIR && npm install && npm test"
