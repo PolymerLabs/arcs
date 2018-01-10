@@ -72,11 +72,11 @@ describe('Planner', function() {
   it('can make a plan with views', async () => {
     let manifest = await Manifest.load('./particles/test/giftlist.manifest', loader);
     let arcFactory = async manifest => {
-      let arc = createTestArc("test-plan-arc", manifest, "dom");
+      let arc = createTestArc('test-plan-arc', manifest, 'dom');
       let Person = manifest.findSchemaByName('Person').entityClass();
       let Product = manifest.findSchemaByName('Product').entityClass();
-      let personView = await arc.createView(Person.type.setViewOf(), "aperson");
-      let productView = await arc.createView(Product.type.setViewOf(), "products");
+      let personView = await arc.createView(Person.type.setViewOf(), 'aperson');
+      let productView = await arc.createView(Product.type.setViewOf(), 'products');
       return arc;
     };
     let testSteps = async planner => {
@@ -84,7 +84,7 @@ describe('Planner', function() {
       await planner.generate();
       await planner.generate();
       return planner.strategizer.population.length;
-    }
+    };
     let results = await planFromManifest(manifest, {arcFactory, testSteps});
     assert.equal(results, 5);
   });
