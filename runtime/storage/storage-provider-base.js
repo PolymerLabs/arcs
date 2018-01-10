@@ -13,7 +13,7 @@ import util from '../recipe/util.js';
 
 export default class StorageProviderBase {
   constructor(type, arc, name, id, key) {
-    var trace = tracing.start({cat: 'view', name: 'InMemoryStorageProvider::constructor', args: {type: type.key, name: name}});
+    var trace = tracing.start({cat: 'view', name: 'StorageProviderBase::constructor', args: {type: type.key, name: name}});
     this._type = type;
     this._arc = arc;
     this._listeners = new Map();
@@ -53,7 +53,7 @@ export default class StorageProviderBase {
     if (!listenerMap || listenerMap.size == 0)
       return;
 
-    var callTrace = tracing.start({cat: 'view', name: 'InMemoryStorageProvider::_fire', args: {kind, type: this._type.key,
+    var callTrace = tracing.start({cat: 'view', name: 'StorageProviderBase::_fire', args: {kind, type: this._type.key,
         name: this.name, listeners: listenerMap.size}});
 
     // TODO: wire up a target (particle)
