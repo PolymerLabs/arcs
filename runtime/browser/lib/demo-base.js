@@ -9,7 +9,6 @@
  */
 
 import Planner from '../../planner.js';
-import {DomContext} from '../../dom-context.js';
 
 export default class DemoBase extends HTMLElement {
   constructor() {
@@ -31,9 +30,11 @@ export default class DemoBase extends HTMLElement {
   $(selector) {
     return this._root && this._root.querySelector(selector);
   }
-  suggest(arc, ui) {
+  suggest(arc) {
     if (!arc.makeSuggestions) {
       arc.makeSuggestions = async () => {
+        // Open the drawer only if the current arc is empty.
+        this.$('[suggestion-container]').open = arc._activeRecipe.particles.length == 0;
         let planner = new Planner();
         planner.init(arc);
         let generations = [];
@@ -41,7 +42,7 @@ export default class DemoBase extends HTMLElement {
         document.dispatchEvent(new CustomEvent('generations', {detail: {generations, arc}}));
       };
     }
-    ui.addEventListener('plan-selected', async e => {
+    document.addEventListener('plan-selected', async e => {
       let {plan} = e.detail;
       await arc.instantiate(plan);
       arc.makeSuggestions();
