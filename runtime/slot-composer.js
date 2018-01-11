@@ -27,11 +27,11 @@ class SlotComposer {
 
     this._contextById = this._slotClass.findRootSlots(options.rootContext) || {};
     if (Object.keys(this._contextById).length == 0) {
-      // fallback to single "root" slot using the rootContext.
+      // fallback to single 'root' slot using the rootContext.
       this._contextById['root'] = options.rootContext;
     }
 
-    this._suggestionsContext = options.suggestionsContext || this._contextById["suggestions"];
+    this._suggestionsContext = options.suggestionsContext || this._contextById['suggestions'];
 
     this._slots = [];
   }
@@ -93,7 +93,7 @@ class SlotComposer {
   }
 
   createSuggestionElement(container, plan) {
-    let suggest = Object.assign(document.createElement("suggestion-element"), {plan});
+    let suggest = Object.assign(document.createElement('suggestion-element'), {plan});
     // TODO(sjmiles): LIFO is weird, iterate top-down elsewhere?
     container.insertBefore(suggest, container.firstElementChild);
     return suggest;
@@ -160,7 +160,7 @@ class SlotComposer {
         if (sourceConnSlot) {
           context = sourceConnSlot.getInnerContext(s.consumeConn.name);
         }
-      } else { // External slots provided at SlotComposer ctor (eg "root")
+      } else { // External slots provided at SlotComposer ctor (eg 'root')
         context = this._contextById[s.consumeConn.name];
       }
 
@@ -219,7 +219,7 @@ class SlotComposer {
       let providedContext = slot.getInnerContext(providedSlotName);
       let providedSlot = slot.consumeConn.providedSlots[providedSlotName];
       providedSlot.consumeConnections.forEach(cc => {
-        // This will trigger "start" or "stop" render, if applicable.
+        // This will trigger 'start' or 'stop' render, if applicable.
         this.getSlot(cc.particle, cc.name).updateContext(providedContext);
       });
     });
