@@ -17,7 +17,10 @@ class Scheduler {
     this._finishNotifiers = [];
     this._idle = Promise.resolve();
     this._idleResolver = null;
+    this._idleCallback = null;
   }
+
+  set idleCallack(idleCallback) { this._idleCallback = idleCallback; }
 
   enqueue(view, eventRecords) {
     var trace = tracing.flow({cat: 'view', name: 'ViewBase::_fire flow'}).start();
@@ -67,6 +70,9 @@ class Scheduler {
       if (this.frameQueue.length == 0) {
         this._idleResolver();
         this._idleResolver = null;
+        if (this._idleCallback) {
+          this._idleCallback();
+        }
       }
     });
   }
@@ -88,4 +94,4 @@ class Scheduler {
   }
 }
 
-export default new Scheduler();
+export default Scheduler;

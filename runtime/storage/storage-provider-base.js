@@ -8,7 +8,6 @@
 
 import assert from '../../platform/assert-web.js';
 import tracing from '../../tracelib/trace.js';
-import scheduler from '../scheduler.js';
 import util from '../recipe/util.js';
 
 export default class StorageProviderBase {
@@ -64,7 +63,7 @@ export default class StorageProviderBase {
       eventRecords.push({target, callback, kind, details});
     }
 
-    scheduler.enqueue(this, eventRecords);
+    this._arc.scheduler.enqueue(this, eventRecords);
 
     callTrace.end();
   }

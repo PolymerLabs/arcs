@@ -45,7 +45,6 @@ export default class DemoBase extends HTMLElement {
     document.addEventListener('plan-selected', async e => {
       let {plan} = e.detail;
       await arc.instantiate(plan);
-      arc.makeSuggestions();
     });
     arc.makeSuggestions();
   }

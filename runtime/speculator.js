@@ -11,7 +11,6 @@
 
 import assert from '../platform/assert-web.js';
 import tracing from '../tracelib/trace.js';
-import scheduler from './scheduler.js';
 import Relevance from './relevance.js';
 
 class Speculator {
@@ -21,7 +20,7 @@ class Speculator {
     var newArc = arc.cloneForSpeculativeExecution();
     let relevance = new Relevance();
     async function awaitCompletion() {
-      await scheduler.idle;
+      await newArc.scheduler.idle;
       var messageCount = newArc.pec.messageCount;
       relevance.apply(await newArc.pec.idle);
 
