@@ -9,9 +9,11 @@
 import StorageProviderBase from './storage-provider-base.js';
 import firebase from '../../platform/firebase-web.js';
 import assert from '../../platform/assert-web.js';
+import KeyBase from './key-base.js';
 
-class FirebaseKey {
+class FirebaseKey extends KeyBase {
   constructor(key) {
+    super();
     var parts = key.split('://');
     this.protocol = parts[0];
     assert(this.protocol == 'firebase');
@@ -30,9 +32,17 @@ class FirebaseKey {
     }
   }
 
+  childKeyForHandle(id) {
+    let location = '';
+    if (this.location != undefined && this.location.length > 0)
+      location = this.location + '/';
+    location += `handles/${id}`;
+    return new FirebaseKey(`${this.protocol}://${this.databaseUrl}/${this.apiKey}/${location}`);
+  }
+
   toString() {
     if (this.databaseUrl && this.apiKey)
-      return `${this.protocol}://${this.databaseUrl}/${this.apiKey}`;
+      return `${this.protocol}://${this.databaseUrl}/${this.apiKey}/${this.location}`;
     return `${this.protocol}://`;
   }
 }
@@ -60,6 +70,10 @@ export default class FirebaseStorage {
 
   async connect(id, type, key) {
     return this._join(id, type, key, true);
+  }
+
+  parseStringAsKey(string) {
+    return new FirebaseKey(string);
   }
 
   async _join(id, type, key, shouldExist) {

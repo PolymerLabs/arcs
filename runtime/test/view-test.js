@@ -22,6 +22,8 @@ import Type from '../type.js';
 import Manifest from '../manifest.js';
 import Loader from '../loader.js';
 
+import StorageProviderFactory from '../storage/storage-provider-factory.js';
+
 let loader = new Loader();
 
 const slotComposer = new SlotComposer({rootContext: 'test', affordance: 'mock'});
@@ -98,5 +100,24 @@ describe('View', function() {
     ['#sufficient', '#valid', '#good'].forEach(tag =>
       assert(arc._tags.hasOwnProperty(tag),
         `tags ${arc._tags} should have included ${tag}`));
+  });
+  it('uses default storage keys', async () => {
+    let manifest = await Manifest.parse(`
+    schema Bar
+      normative
+        Text value
+    `);
+    let arc = new Arc({id: 'test', storageKey: 'firebase://test-firebase-45a3e.firebaseio.com/AIzaSyBLqThan3QCOICj0JZ-nEwk27H4gmnADP8/'});
+    let resolver;
+    var promise = new Promise((resolve, reject) => {resolver = resolve;});
+    arc._storageProviderFactory = new class extends StorageProviderFactory {
+      construct(id, type, keyFragment) {
+        resolver(keyFragment);
+        return {type};
+      }
+    }(arc);
+    arc.createView(manifest.schemas.Bar.type, 'foo', 'test1');
+    let result = await promise;
+    assert(result == 'firebase://test-firebase-45a3e.firebaseio.com/AIzaSyBLqThan3QCOICj0JZ-nEwk27H4gmnADP8/handles/test1');
   });
 });

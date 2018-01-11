@@ -24,7 +24,7 @@ import FakePecFactory from './fake-pec-factory.js';
 import StorageProviderFactory from './storage/storage-provider-factory.js';
 
 class Arc {
-  constructor({id, context, pecFactory, slotComposer, loader}) {
+  constructor({id, context, pecFactory, slotComposer, loader, storageKey}) {
     // TODO: context should not be optional.
     this._context = context || new Manifest({id});
     // TODO: pecFactory should not be optional. update all callers and fix here.
@@ -46,6 +46,7 @@ class Arc {
 
     // storage keys for referenced views
     this._storageKeys = {};
+    this._storageKey = storageKey;
 
     this.particleViewMaps = new Map();
     let pecId = this.generateID();
@@ -256,14 +257,20 @@ class Arc {
     viewMap.views.set(name, targetView);
   }
 
-  async createView(type, name, id, tags) {
+  async createView(type, name, id, tags, storageKey) {
     assert(type instanceof Type, `can't createView with type ${type} that isn't a Type`);
 
     if (type.isRelation) {
       type = Type.newSetView(type);
     }
 
-    let view = await this._storageProviderFactory.construct(id, type, 'in-memory');
+    if (storageKey == undefined && this._storageKey)
+      storageKey = this._storageProviderFactory.parseStringAsKey(this._storageKey).childKeyForHandle(id).toString();
+    
+    if (storageKey == undefined)
+      storageKey = 'in-memory';
+
+    let view = await this._storageProviderFactory.construct(id, type, storageKey);
     view.name = name;
 
     this._registerView(view, tags);
