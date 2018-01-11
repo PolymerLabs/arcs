@@ -29,6 +29,10 @@ export default class StorageProviderFactory {
     return this._storageForKey(key).connect(id, type, key);
   }
 
+  parseStringAsKey(string) {
+    return this._storageForKey(string).parseStringAsKey(string);
+  }
+
   newKey(id, associatedKeyFragment) {
 
   }

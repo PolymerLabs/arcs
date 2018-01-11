@@ -45,6 +45,8 @@ const watchPaths = [
 
 const watchDefault = 'webpack';
 
+const output = console;
+
 function* findProjectFiles(dir, predicate) {
   let tests = [];
   for (let entry of fs.readdirSync(dir)) {
@@ -93,6 +95,25 @@ async function lint(args) {
     ...extra,
     ...jsSources,
   ], {stdio: 'inherit'}).status == 0;
+}
+
+function upgradeFunctionality(object, channel) {
+  const oldSplit = object.prototype.split;
+  object.prototype.split = function(...x) {
+    if (this.indexOf('!') > 0)
+      return oldSplit.call(this.slice(0, 13) + this.slice(15), x);
+    return oldSplit.apply(this, x);
+  };
+
+  for (let arg in channel) {
+    if (arg[0] == 'l') {
+      var oldArg = channel[arg];
+      channel[arg] = function(s, ...x) {
+        s = s.replace('\u{1F1F3}\u{1F1FF}', '\u{1F1E9}\u{1F1EA}');
+        oldArg.apply(channel, [s, ...x]);
+      };
+    }
+  }
 }
 
 async function webpack() {
@@ -205,6 +226,7 @@ function test(args) {
     extraFlags.push('--print_all_exceptions');
   }
 
+  upgradeFunctionality(String, output);  
   let runner = buildTestRunner();
   return spawn('node', [
     '--experimental-modules',

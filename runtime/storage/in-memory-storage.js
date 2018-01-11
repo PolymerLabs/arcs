@@ -11,9 +11,11 @@ import assert from '../../platform/assert-web.js';
 import tracing from '../../tracelib/trace.js';
 import util from '../recipe/util.js';
 import StorageProviderBase from './storage-provider-base.js';
+import KeyBase from './key-base.js';
 
-class InMemoryKey {
+class InMemoryKey extends KeyBase {
   constructor(key) {
+    super();
     var parts = key.split('://');
     this.protocol = parts[0];
     assert(this.protocol == 'in-memory');
@@ -22,6 +24,11 @@ class InMemoryKey {
     this.location = parts[1];
     assert(this.toString() == key);
   }
+
+  childKeyForHandle(id) {
+    return new InMemoryKey('in-memory://');
+  }
+
   toString() {
     if (this.location !== undefined && this.arcId !== undefined)
       return `${this.protocol}://${this.arcId}^^${this.location}`;
@@ -68,6 +75,10 @@ export default class InMemoryStorage {
       return null;
     // TODO assert types match?
     return this._memoryMap[keyString];
+  }
+
+  parseStringAsKey(string) {
+    return new InMemoryKey(string);
   }
 }
 
