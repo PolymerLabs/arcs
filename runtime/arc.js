@@ -22,6 +22,7 @@ import Description from './description.js';
 import util from './recipe/util.js';
 import FakePecFactory from './fake-pec-factory.js';
 import StorageProviderFactory from './storage/storage-provider-factory.js';
+import Scheduler from './scheduler.js';
 
 class Arc {
   constructor({id, context, pecFactory, slotComposer, loader, storageKey}) {
@@ -35,6 +36,7 @@ class Arc {
     // TODO: rename: this are just tuples of {particles, views, slots} of instantiated recipes merged into active recipe..
     this._recipes = [];
     this._loader = loader;
+    this._scheduler = new Scheduler();
 
     // All the views, mapped by view ID
     this._viewsById = new Map();
@@ -70,6 +72,10 @@ class Arc {
     return this._loader;
   }
 
+  get scheduler() {
+    return this._scheduler;
+  }
+
   set search(search) {
     this._search = search ? search.toLowerCase().trim() : null;
   }
@@ -79,6 +85,12 @@ class Arc {
   }
 
   get description() { return this._description; }
+
+  get makeSuggestions() { return this._makeSuggestions; }
+  set makeSuggestions(callback) {
+    this._makeSuggestions = callback;
+    this._scheduler.idleCallack = callback;
+  }
 
   static deserialize({serialization, pecFactory, slotComposer, arcMap}) {
     var entityMap = {};
