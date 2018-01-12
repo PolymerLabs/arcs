@@ -132,8 +132,17 @@ class FirebaseVariable extends FirebaseStorageProvider {
     });
   }
 
+  async cloneFrom(store) {
+    let {data, version} = await store._getWithVersion();
+    await realTransaction(this.reference, data => ({data, version}));
+  }
+
   async get() {
     return this.dataSnapshot.val().data;
+  }
+
+  async _getWithVersion() {
+    return this.dataSnapshot.val();
   }
 
   async set(value) {
