@@ -102,12 +102,10 @@ class InMemoryCollection extends InMemoryStorageProvider {
     return view;
   }
 
-  cloneFrom(view) {
-    this.name = view.name;
-    this.source = view.source;
-    this._items = new Map(view._items);
-    this._version = view._version;
-    this.description = view.description;
+  async cloneFrom(handle) {
+    let {list, version} = await handle._toListWithVersion();
+    this._version = version;
+    list.forEach(item => this._items.set(item.id, item));
   }
 
   async get(id) {
@@ -119,6 +117,10 @@ class InMemoryCollection extends InMemoryStorageProvider {
   // HACK: replace this with some kind of iterator thing?
   async toList() {
     return [...this._items.values()];
+  }
+
+  async _toListWithVersion() {
+    return {list: [...this._items.values()], version: this._version};
   }
 
   async store(entity) {

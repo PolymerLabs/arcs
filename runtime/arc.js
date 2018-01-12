@@ -221,10 +221,10 @@ class Arc {
 
     for (let recipeView of views) {
       if (['copy', 'create'].includes(recipeView.fate)) {
-        let view = await this.createView(recipeView.type, /* name= */ null, /* id= */ null, recipeView.tags);
+        let view = await this.createView(recipeView.type, /* name= */ null, this.generateID(), recipeView.tags);
         if (recipeView.fate === 'copy') {
           var copiedView = this.findViewById(recipeView.id);
-          view.cloneFrom(copiedView);
+          await view.cloneFrom(copiedView);
         }
         recipeView.id = view.id;
         recipeView.fate = 'use';

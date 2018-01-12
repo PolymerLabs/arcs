@@ -173,8 +173,24 @@ class FirebaseCollection extends FirebaseStorageProvider {
     });
   }
 
+  async cloneFrom(store) {
+    let {list, version} = await store._toListWithVersion();
+    return realTransaction(this.reference, data => {
+      if (!data.data)
+        data.data = {};
+      list.forEach(item => data.data[item.id] = item);
+      data.version = version;
+      return data;
+    });
+  }
+
   async toList() {
     return this._setToList(this.dataSnapshot.val().data);
+  }
+
+  async _toListWithVersion() {
+    let data = this.dataSnapshot.val();
+    return {list: this._setToList(data.data), version: data.version};
   }
 
   _setToList(set) {
