@@ -188,9 +188,10 @@ class InMemoryVariable extends InMemoryStorageProvider {
     return variable;
   }
 
-  cloneFrom(variable) {
-    this._stored = variable._stored;
-    this._version = variable._version;
+  async cloneFrom(handle) {
+    let {data, version} = await handle._getWithVersion();
+    this._stored = data;
+    this._version = version;
   }
 
   traceInfo() {
@@ -199,6 +200,10 @@ class InMemoryVariable extends InMemoryStorageProvider {
 
   async get() {
     return this._stored;
+  }
+
+  async _getWithVersion() {
+    return {data: this._stored, version: this._version};
   }
 
   async set(entity) {
