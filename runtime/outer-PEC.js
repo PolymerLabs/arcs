@@ -63,7 +63,7 @@ class OuterPEC extends PEC {
     };
 
     this._apiPort.onConstructInnerArc = ({callback, particle}) => {
-      var arc = {};
+      var arc = {particle};
       this._apiPort.ConstructArcCallback({callback, arc});
     };
 
@@ -95,7 +95,7 @@ class OuterPEC extends PEC {
         }
         if (recipe.normalize()) {
           if (recipe.isResolved()) {
-            this._arc.instantiate(recipe);
+            this._arc.instantiate(recipe, arc);
           } else {
             error = `Recipe is not resolvable ${recipe.toString({showUnresolved: true})}`;
           }
