@@ -118,6 +118,7 @@ class Arc {
     return this._context;
   }
 
+  get activeRecipe() { return this._activeRecipe; }
   get recipes() { return this._recipes; }
 
   loadedParticles() {
@@ -171,8 +172,45 @@ class Arc {
       value.views.forEach(v => arc.particleViewMaps.get(key).views.set(v.name, v.clone()));
     });
 
-   this._activeRecipe.mergeInto(arc._activeRecipe);
-   // TODO: merge this._recipes too?
+   let {particles, views, slots} = this._activeRecipe.mergeInto(arc._activeRecipe);
+   let particleIndex = 0, viewIndex = 0, slotIndex = 0;
+   this._recipes.forEach(recipe => {
+     let arcRecipe = {particles: [], views: [], slots: [], innerArcs: new Map()};
+     recipe.particles.forEach(p => {
+       arcRecipe.particles.push(particles[particleIndex++]);
+       if (recipe.innerArcs.has(p)) {
+         let thisInnerArc = recipe.innerArcs.get(p);
+         let transformationParticle = arcRecipe.particles[arcRecipe.particles.length - 1];
+         let innerArc = {activeRecipe: new Recipe(), recipes: []};
+         let innerTuples = thisInnerArc.activeRecipe.mergeInto(innerArc.activeRecipe);
+         thisInnerArc.recipes.forEach(thisInnerArcRecipe => {
+           let innerArcRecipe = {particles: [], views: [], slots: [], innerArcs: new Map()};
+           let innerIndex = 0;
+           thisInnerArcRecipe.particles.forEach(thisInnerArcRecipeParticle => {
+             innerArcRecipe.particles.push(innerTuples.particles[innerIndex++]);
+           });
+           innerIndex = 0;
+           thisInnerArcRecipe.views.forEach(thisInnerArcRecipeParticle => {
+             innerArcRecipe.views.push(innerTuples.views[innerIndex++]);
+           });
+           innerIndex = 0;
+           thisInnerArcRecipe.slots.forEach(thisInnerArcRecipeParticle => {
+             innerArcRecipe.slots.push(innerTuples.slots[innerIndex++]);
+           });
+           innerArc.recipes.push(innerArcRecipe);
+         });
+         arcRecipe.innerArcs.set(transformationParticle, innerArc);
+       }
+     });
+     recipe.views.forEach(p => {
+       arcRecipe.views.push(views[viewIndex++]);
+     });
+     recipe.slots.forEach(p => {
+       arcRecipe.slots.push(slots[slotIndex++]);
+     });
+
+     arc._recipes.push(arcRecipe);
+   });
 
     for (let v of viewMap.values()) {
       // FIXME: Tags
@@ -214,10 +252,19 @@ class Arc {
     return s;
   }
 
-  async instantiate(recipe) {
+  async instantiate(recipe, innerArc) {
     assert(recipe.isResolved(), 'Cannot instantiate an unresolved recipe');
 
-    let {views, particles, slots} = recipe.mergeInto(this._activeRecipe);
+    let currentArc = {activeRecipe: this._activeRecipe, recipes: this._recipes};
+    if (innerArc) {
+      let innerArcs = this._recipes.find(r => !!r.particles.find(p => p == innerArc.particle)).innerArcs;
+      if (!innerArcs.has(innerArc.particle)) {
+         innerArcs.set(innerArc.particle, {activeRecipe: new Recipe(), recipes: []});
+      }
+      currentArc = innerArcs.get(innerArc.particle);
+    }
+    let {views, particles, slots} = recipe.mergeInto(currentArc.activeRecipe);
+    currentArc.recipes.push({particles, views, slots, innerArcs: new Map()});
 
     for (let recipeView of views) {
       if (['copy', 'create'].includes(recipeView.fate)) {
@@ -246,8 +293,6 @@ class Arc {
       // TODO: pass slot-connections instead
       this.pec.slotComposer.initializeRecipe(particles);
     }
-
-    this._recipes.push({particles, views, slots});
   }
 
   _connectParticleToView(particleHandle, particle, name, targetView) {
@@ -266,7 +311,7 @@ class Arc {
 
     if (storageKey == undefined && this._storageKey)
       storageKey = this._storageProviderFactory.parseStringAsKey(this._storageKey).childKeyForHandle(id).toString();
-    
+
     if (storageKey == undefined)
       storageKey = 'in-memory';
 

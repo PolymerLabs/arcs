@@ -16,28 +16,26 @@ import ParticleSpec from './particle-spec.js';
 export default class Description {
   constructor(arc) {
     this._arc = arc;
-    this._recipe = arc._activeRecipe;
     this._relevance = null;
   }
   get arc() { return this._arc; }
-  get recipe() { return this._recipe; }
   get relevance() { return this._relevance; }
   set relevance(relevance) { this._relevance = relevance; }
 
   async getArcDescription(formatterClass) {
-    let desc = await new (formatterClass || DescriptionFormatter)(this).getDescription(this._recipe.particles);
+    let desc = await new (formatterClass || DescriptionFormatter)(this).getDescription(this._arc.activeRecipe.particles);
     if (desc) {
       return desc;
     }
   }
 
   async getRecipeSuggestion(formatterClass) {
-    let desc = await new (formatterClass || DescriptionFormatter)(this).getDescription(this._arc.recipes[0].particles);
+    let desc = await new (formatterClass || DescriptionFormatter)(this).getDescription(this._arc.recipes[this._arc.recipes.length - 1].particles);
     if (desc) {
       return desc;
     }
 
-    return this._recipe.name;
+    return this._arc.activeRecipe.name;
   }
 
   async getViewDescription(recipeView) {
@@ -91,27 +89,44 @@ export class DescriptionFormatter {
   }
 
   async _updateDescriptionHandles(description) {
-    await Promise.all(description.recipe.particles.map(async particle => {
-      let pDesc = {
-        _particle: particle,
-        _connections: {}
-      };
-      if (description.relevance) {
-        pDesc._rank = description.relevance.calcParticleRelevance(particle);
-      }
+    this._particleDescriptions = [];
 
-      let descByName = await this._getPatternByNameFromDescriptionHandle(particle) || {};
-      pDesc = Object.assign(pDesc, this._populateParticleDescription(particle, descByName));
-      Object.values(particle.connections).forEach(viewConn => {
-        let specConn = particle.spec.connectionMap.get(viewConn.name);
-        let pattern = descByName[viewConn.name] || specConn.pattern;
-        if (pattern) {
-          let viewDescription = {pattern: pattern, _viewConn: viewConn, _view: this._arc.findViewById(viewConn.view.id)};
-          pDesc._connections[viewConn.name] = viewDescription;
-        }
+    // Combine all particles from direct and inner arcs.
+    let allParticles = description.arc.activeRecipe.particles;
+    description._arc.recipes.forEach(recipe => {
+      let innerArcs = [...recipe.innerArcs.values()];
+      innerArcs.forEach(innerArc => {
+        innerArc.recipes.forEach(innerRecipe => {
+          allParticles = allParticles.concat(innerRecipe.particles);
+        });
       });
-      this._particleDescriptions.push(pDesc);
+    });
+
+    await Promise.all(allParticles.map(async particle => {
+      this._particleDescriptions.push(await this._createParticleDescription(particle, description.relevance));
     }));
+  }
+
+  async _createParticleDescription(particle, relevance) {
+    let pDesc = {
+      _particle: particle,
+      _connections: {}
+    };
+    if (relevance) {
+      pDesc._rank = relevance.calcParticleRelevance(particle);
+    }
+
+    let descByName = await this._getPatternByNameFromDescriptionHandle(particle) || {};
+    pDesc = Object.assign(pDesc, this._populateParticleDescription(particle, descByName));
+    Object.values(particle.connections).forEach(viewConn => {
+      let specConn = particle.spec.connectionMap.get(viewConn.name);
+      let pattern = descByName[viewConn.name] || specConn.pattern;
+      if (pattern) {
+        let viewDescription = {pattern: pattern, _viewConn: viewConn, _view: this._arc.findViewById(viewConn.view.id)};
+        pDesc._connections[viewConn.name] = viewDescription;
+      }
+    });
+    return pDesc;
   }
 
   async _getPatternByNameFromDescriptionHandle(particle) {

@@ -34,7 +34,7 @@ export default class DemoBase extends HTMLElement {
     if (!arc.makeSuggestions) {
       arc.makeSuggestions = async () => {
         // Open the drawer only if the current arc is empty.
-        this.$('[suggestion-container]').open = arc._activeRecipe.particles.length == 0;
+        this.$('[suggestion-container]').open = arc.activeRecipe.particles.length == 0;
         let planner = new Planner();
         planner.init(arc);
         let generations = [];
