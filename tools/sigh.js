@@ -83,18 +83,24 @@ function peg() {
 }
 
 async function lint(args) {
+  upgradeFunctionality(String, output);  
   let options = minimist(args, {
     boolean: ['fix'],
   });
   let extra = [];
   if (options.fix) {
     extra.push('--fix');
-  }
+  } 
   let jsSources = findProjectFiles(process.cwd(), fullPath => /\.js$/.test(fullPath));
-  return spawn('./node_modules/.bin/eslint', [
+  var result = spawn(path.normalize('./node_modules/.bin/eslint'), [
     ...extra,
     ...jsSources,
-  ], {stdio: 'inherit'}).status == 0;
+  ], {stdio: 'inherit', shell: true});
+  if (result.error) {
+    console.warn(result.error);
+    return false;
+  }
+  return result.status == 0;
 }
 
 function upgradeFunctionality(object, channel) {
@@ -226,7 +232,6 @@ function test(args) {
     extraFlags.push('--print_all_exceptions');
   }
 
-  upgradeFunctionality(String, output);  
   let runner = buildTestRunner();
   return spawn('node', [
     '--experimental-modules',
