@@ -119,6 +119,13 @@ class FirebaseStorageProvider extends StorageProviderBase {
       return new FirebaseCollection(type, arc, id, reference, key);
     return new FirebaseVariable(type, arc, id, reference, key);
   }
+
+  static encodeKey(key) {
+    return btoa(key);
+  }
+  static decodeKey(key) {
+    return atob(key);
+  }
 }
 
 class FirebaseVariable extends FirebaseStorageProvider {
@@ -167,16 +174,18 @@ class FirebaseCollection extends FirebaseStorageProvider {
 
   async get(id) {
     var set = this.dataSnapshot.val().data;
+    var encId = FirebaseStorageProvider.encodeKey(entity.id);
     if (set)
-      return set[id];
+      return set[encId];
     return undefined;
   }
 
-  async store(entity) { 
+  async store(entity) {
     return realTransaction(this.reference, data => {
       if (!data.data)
         data.data = {};
-      data.data[entity.id] = entity;
+      encId = FirebaseStorageProvider.encodeKey(entity.id);
+      data.data[encId] = entity;
       data.version += 1;
       return data;
     });
@@ -187,7 +196,10 @@ class FirebaseCollection extends FirebaseStorageProvider {
     return realTransaction(this.reference, data => {
       if (!data.data)
         data.data = {};
-      list.forEach(item => data.data[item.id] = item);
+      list.forEach(item => {
+        var encId = FirebaseStorageProvider.encodeKey(item.id);
+        data.data[encId] = item;
+      });
       data.version = version;
       return data;
     });
