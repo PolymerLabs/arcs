@@ -78,9 +78,11 @@ export default class DescriptionDomFormatter extends DescriptionFormatter {
       }
     });
 
-    let result = this._joinDescriptions(suggestions);
-    result.template += '.';
-    return result;
+    if (suggestions.length > 0) {
+      let result = this._joinDescriptions(suggestions);
+      result.template += '.';
+      return result;
+    }
   }
 
   _retrieveTemplateAndModel(particleDesc, index) {
