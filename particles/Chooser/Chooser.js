@@ -144,11 +144,11 @@ ${productStyles}
     }
     _render(props, state) {
       return {
-        items: state.values.map((value, index) => {
+        items: state.values.map(({rawData, id}, index) => {
           return Object.assign({
-            subId: value.id,
+            subId: id,
             index
-          }, value.rawData);
+          }, rawData);
         })
       };
     }

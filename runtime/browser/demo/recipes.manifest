@@ -12,7 +12,6 @@ import '../../../particles/Chooser/Chooser.manifest'
 import '../../../particles/GiftList/GiftList.manifest'
 import '../../../particles/Interests/Interests.manifest'
 import '../../../particles/ProductMultiplexer/ProductMultiplexer.manifest'
-import '../../../particles/ProductMultiplexer2/ProductMultiplexer2.manifest'
 import '../../../particles/AlsoOn/AlsoOn.manifest'
 import '../../../particles/Arrivinator/Arrivinator.manifest'
 import '../../../particles/ManufacturerInfo/ManufacturerInfo.manifest'
@@ -45,9 +44,6 @@ recipe
   ProductMultiplexer2
     hostedParticle = AlsoOn
     consume annotation as slot1
-//  ProductMultiplexer
-//    list <- shortlist
-//    hostedParticle = Arrivinator
 
 // Buying for [person]'s [occasion] in [timeframe]? Product [X] arrives too late.
 recipe
@@ -81,6 +77,25 @@ recipe
     list <- view0
 
 // Experimental recipes
+// TODO(mmandlis): create separate file and tests for experimental recipes.
+//import '../../../particles/ShowCollection/ShowCollection.manifest'
+//import '../../../particles/ShowProduct/ShowProduct.manifest'
+//recipe
+//  map #shortlist as shortlist
+//  map #wishlist as wishlist
+//  slot as slot0
+//  ShowCollection
+//    collection <- shortlist
+//    hostedParticle = ShowProduct
+//    consume root as slot0
+//  ProductMultiplexer
+//    list <- shortlist
+//    hostedParticle = Arrivinator
+//  ProductMultiplexer2
+//    list <- shortlist
+//    others <- wishlist
+//    hostedParticle = AlsoOn
+//
 //import '../../../particles/ProductFilter/ProductFilter.manifest'
 //import '../../../particles/ProductIsBook/ProductIsBook.manifest'
 //recipe

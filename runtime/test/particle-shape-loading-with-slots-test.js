@@ -59,20 +59,21 @@ describe('particle-shape-loading-with-slots', function() {
     return {fooType, inView, slotComposer};
   }
 
-  function setRenderingExpectations(slotComposer, times, contentTypes) {
-    slotComposer.newExpectations();
-    for (let i = 0; i < times; ++i) {
-      slotComposer
-        .expectRenderSlot('SingleSlotParticle', 'annotation', contentTypes)
-        .expectRenderSlot('MultiplexSlotsParticle', 'annotationsSet', contentTypes);
-    }
+  function verifyFooItems(items, expectedValues) {
+    assert.equal(items.length, expectedValues.length);
+    expectedValues.forEach(value => assert(items.find(item => item.value == value), `Cannot find item '${value}' in model`));
   }
 
   it('multiplex recipe with slots', async () => {
     let {fooType, inView, slotComposer} = await instantiateRecipe();
     slotComposer._slots[0].updateContext({});
 
-    setRenderingExpectations(slotComposer, 2, ['template', 'model']);
+    slotComposer
+      .newExpectations()
+      .expectRenderSlot('SingleSlotParticle', 'annotation', ['template', 'model'])
+      .expectRenderSlot('MultiplexSlotsParticle', 'annotationsSet', ['template', 'model'])
+      .expectRenderSlot('SingleSlotParticle', 'annotation', ['template', 'model'])
+      .expectRenderSlot('MultiplexSlotsParticle', 'annotationsSet', ['model']);
     await slotComposer.arc.pec.idle;
     await slotComposer.expectationsCompleted();
 
@@ -80,21 +81,21 @@ describe('particle-shape-loading-with-slots', function() {
     assert.equal(1, slotComposer._slots.length);
     let slot = slotComposer._slots[0];
     assert.isTrue(slot._content.template.length > 0);
-    assert.deepEqual([{subId: 'foo1', value: 'foo1'}, {subId: 'foo2', value: 'foo2'}],
-                     slot._content.model.items);
+    verifyFooItems(slot._content.model.items, ['foo1', 'foo2']);
 
     // Add one more element.
     inView.store(new (fooType.entitySchema.entityClass())({value: 'foo3'}));
-
+    slotComposer
+      .newExpectations()
+      .expectRenderSlot('SingleSlotParticle', 'annotation', ['model'])
+      .expectRenderSlot('MultiplexSlotsParticle', 'annotationsSet', ['model']);
     await slotComposer.arc.pec.idle;
-    setRenderingExpectations(slotComposer, 1, ['model']);
     await slotComposer.expectationsCompleted();
 
     // Verify slot template and models.
     assert.equal(1, slotComposer._slots.length);
     assert.isTrue(slot._content.template.length > 0);
-    assert.deepEqual([{subId: 'foo1', value: 'foo1'}, {subId: 'foo2', value: 'foo2'}, {subId: 'foo3', value: 'foo3'}],
-                     slot._content.model.items);
+    verifyFooItems(slot._content.model.items, ['foo1', 'foo2', 'foo3']);
   });
 
   it('multiplex recipe with slots (init context later)', async () => {
@@ -114,7 +115,11 @@ describe('particle-shape-loading-with-slots', function() {
     });
     slotComposer._slots[0].updateContext({});
 
-    setRenderingExpectations(slotComposer, 2, ['template', 'model']);
+    slotComposer
+      .newExpectations()
+      .expectRenderSlot('SingleSlotParticle', 'annotation', ['template', 'model'])
+      .expectRenderSlot('SingleSlotParticle', 'annotation', ['template', 'model'])
+      .expectRenderSlot('MultiplexSlotsParticle', 'annotationsSet', ['template', 'model']);
     await slotComposer.arc.pec.idle;
     await slotComposer.expectationsCompleted();
 
@@ -122,19 +127,21 @@ describe('particle-shape-loading-with-slots', function() {
     assert.equal(1, slotComposer._slots.length);
     let slot = slotComposer._slots[0];
     assert.isTrue(slot._content.template.length > 0);
-    assert.deepEqual([{subId: 'foo1', value: 'foo1'}, {subId: 'foo2', value: 'foo2'}],
-                     slot._content.model.items);
+    verifyFooItems(slot._content.model.items, ['foo1', 'foo2']);
 
     // Add one more element.
     inView.store(new (fooType.entitySchema.entityClass())({value: 'foo3'}));
 
+    slotComposer
+      .newExpectations()
+      .expectRenderSlot('SingleSlotParticle', 'annotation', ['model'])
+      .expectRenderSlot('MultiplexSlotsParticle', 'annotationsSet', ['model']);
     await slotComposer.arc.pec.idle;
-    setRenderingExpectations(slotComposer, 1, ['model']);
     await slotComposer.expectationsCompleted();
+
     // Verify slot template and models.
     assert.equal(1, slotComposer._slots.length);
     assert.isTrue(slot._content.template.length > 0);
-    assert.deepEqual([{subId: 'foo1', value: 'foo1'}, {subId: 'foo2', value: 'foo2'}, {subId: 'foo3', value: 'foo3'}],
-                     slot._content.model.items);
+    verifyFooItems(slot._content.model.items, ['foo1', 'foo2', 'foo3']);
   });
 });

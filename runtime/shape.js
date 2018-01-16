@@ -140,7 +140,7 @@ class Shape {
     particleSpec.slots.forEach(consumedSlot => {
       particleSlots.push({name: consumedSlot.name, direction: 'consume', isRequired: consumedSlot.isRequired, isSet: consumedSlot.isSet});
       consumedSlot.providedSlots.forEach(providedSlot => {
-        particleSlots.push({name: providedSlot.name, direction: 'provide', isSet: providedSlot.isSet});
+        particleSlots.push({name: providedSlot.name, direction: 'provide', isRequired: false, isSet: providedSlot.isSet});
       });
     });
     var slotMatches = this.slots.map(slot => particleSlots.filter(particleSlot => Shape.slotsMatch(slot, particleSlot)));

@@ -6,19 +6,28 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-defineParticle(({DomParticle}) => {
-  return class MultiplexSlotsParticle extends DomParticle {
+defineParticle(({TransformationDomParticle}) => {
+  return class MultiplexSlotsParticle extends TransformationDomParticle {
     constructor() {
       super();
       this._handleIds = new Set();
     }
-    _shouldRender(props) {
-      return false;
+
+    _willReceiveProps(props) {
+      this._setState({renderModel: {items: TransformationDomParticle.propsToItems(props.foos)}});
+    }
+
+    combineHostedTemplate(slotName, hostedSlotId, content) {
+      if (content.template) {
+        this._setState({template: content.template});
+      }
     }
 
     async setViews(views) {
       let arc = await this.constructInnerArc();
       this.on(views, 'foos', 'change', async e => {
+        this._updateAllViews(views, this.config);
+
         var foosView = views.get('foos');
         var foosList = await foosView.toList();
         for (let [index, foo] of foosList.entries()) {
@@ -32,8 +41,6 @@ defineParticle(({DomParticle}) => {
           let hostedSlotName = [...hostedParticle.slots.keys()][0];
           let slotName = [...this.spec.slots.values()][0].name;
           let slotId = await arc.createSlot(this, slotName, hostedParticle.name, hostedSlotName);
-
-          this.hostedSlotBySlotId.set(slotId, {subId: foo.value});
 
           var recipe = `
             schema Foo

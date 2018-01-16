@@ -80,21 +80,24 @@ class DomParticle extends XenStateMixin(Particle) {
     //let readableViews = config.views.filter(name => views.get(name).canRead);
     //this.when([new ViewChanges(views, readableViews, 'change')], async () => {
     this.when([new ViewChanges(views, config.views, 'change')], async () => {
-      // acquire (async) list data from views
-      let data = await Promise.all(
-        config.views
-        .map(name => views.get(name))
-        .map(view => view.toList ? view.toList() : view.get())
-      );
-      // convert view data (array) into props (dictionary)
-      let props = Object.create(null);
-      config.views.forEach((name, i) => {
-        props[name] = data[i];
-      });
-      this._setProps(props);
+      await this._updateAllViews(views, config);
     });
     // make sure we invalidate once, even if there are no incoming views
     this._setState({});
+  }
+  async _updateAllViews(views, config) {
+    // acquire (async) list data from views
+    let data = await Promise.all(
+      config.views
+      .map(name => views.get(name))
+      .map(view => view.toList ? view.toList() : view.get())
+    );
+    // convert view data (array) into props (dictionary)
+    let props = Object.create(null);
+    config.views.forEach((name, i) => {
+      props[name] = data[i];
+    });
+    this._setProps(props);
   }
   _update(props, state) {
     if (this._shouldRender(this._props, this._state)) { // TODO: should _shouldRender be slot specific?
@@ -122,53 +125,6 @@ class DomParticle extends XenStateMixin(Particle) {
       // Send empty object, to clear rendered slot contents.
       slot.render({});
     }
-  }
-
-  // TODO: renderHostedSlot and combineHostedContent are methods needed for transformation particle
-  // that renders UI. Consider adding a TransformationParticle base class.
-  renderHostedSlot(slotName, hostedSlotId, content) {
-    assert(this.hostedSlotBySlotId.has(hostedSlotId), `Missing model for slot ID ${hostedSlotId}`);
-    this.hostedSlotBySlotId.get(hostedSlotId).content = content;
-
-    let slot = this.getSlot(slotName);
-    if (slot) {
-      let combinedContent = this.combineHostedContent(Object.keys(content));
-
-      // TODO: group multiple calls together!
-      if (combinedContent) {
-        slot.render(combinedContent);
-      } else if (slot.isRendered) {
-        slot.render({});
-      }
-    }
-  }
-  // Groups all rendered contents produced by the hosted particles, and sets the subId in each model.
-  combineHostedContent(contentTypes) {
-    let result = {};
-    let includeModel = contentTypes.indexOf('model') >= 0;
-    let includeTemplate = contentTypes.indexOf('template') >= 0;
-    if (includeModel) {
-      result.model = {items: []};
-    }
-    for (let value of this.hostedSlotBySlotId.values()) {
-      let content = value.content;
-      if (!content) {
-        continue;
-      }
-      if (includeModel) {
-        result.model.items.push(Object.assign(content.model || {}, {subId: value.subId}));
-      }
-      // TODO: Currently using the first available template. Add support for multiple templates.
-      if (includeTemplate && !result.template) {
-        let template = content.template;
-        // Replace hosted particle handle names with the corresponding transformation particle handles.
-        this.handleByHostedHandle.forEach((handleName, hostedHandleName) => {
-          template = template.replace(new RegExp(`\{\{(${hostedHandleName})(.*)\}\}`), `{{${handleName}$2}}`);
-        });
-        result.template = template;
-      }
-    }
-    return result;
   }
   _initializeRender(slot) {
     let template = this.getTemplate(slot.slotName);
