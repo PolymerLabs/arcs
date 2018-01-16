@@ -121,9 +121,11 @@ class FirebaseStorageProvider extends StorageProviderBase {
   }
 
   static encodeKey(key) {
-    return btoa(key);
+    key = btoa(key);
+    return key.replace(/\//g, '*');
   }
   static decodeKey(key) {
+    key = key.replace(/\*/g, '/');
     return atob(key);
   }
 }
