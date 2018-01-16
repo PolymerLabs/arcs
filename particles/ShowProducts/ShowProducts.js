@@ -134,11 +134,11 @@ ${productStyles}
       return template;
     }
     _willReceiveProps(props) {
-      let items = props.list.map(value => {
+      let items = props.list.map(({rawData, id}) => {
         // TODO(sjmiles): rawData provides POJO access, but shortcuts schema-enforcing getters
-        let item = Object.assign({}, value.rawData);
+        let item = Object.assign({}, rawData);
         item.image = resolver ? resolver(item.image) : item.image;
-        item.subId = value.id;
+        item.subId = id;
         return item;
       });
 

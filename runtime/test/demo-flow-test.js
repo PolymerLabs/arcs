@@ -97,10 +97,11 @@ describe('demo flow', function() {
         .expectRenderSlot('Chooser', 'action', ['template', 'model'])
         .expectRenderSlot('AlsoOn', 'annotation', ['template', 'model'])
         .expectRenderSlot('ProductMultiplexer2', 'annotation', ['template', 'model'])
-        .expectRenderSlot('AlsoOn', 'annotation', ['template', 'model'])
-        .expectRenderSlot('ProductMultiplexer2', 'annotation', ['template', 'model'])
-        .expectRenderSlot('AlsoOn', 'annotation', ['template', 'model'])
-        .expectRenderSlot('ProductMultiplexer2', 'annotation', ['template', 'model']);
+        .expectRenderSlot('AlsoOn', 'annotation', ['model'])
+        .expectRenderSlot('ProductMultiplexer2', 'annotation', ['model'])
+        .expectRenderSlot('AlsoOn', 'annotation', ['model'])
+        .expectRenderSlot('ProductMultiplexer2', 'annotation', ['model'])
+        .expectRenderSlot('ProductMultiplexer2', 'annotation', ['model']);
     await arc.instantiate(plan);
     await arc.pec.idle;
     await slotComposer.expectationsCompleted();
@@ -115,13 +116,11 @@ describe('demo flow', function() {
       'Buy gifts for Claire\'s Birthday on 2017-08-04, estimate arrival date for ' +
       'products from your browsing context (Minecraft Book plus 2 other items), and estimate ' +
       'arrival date for products recommended based on products from your ' +
-      'browsing context and Claire\'s wishlist (Book: How to Draw plus 2 other items).'
-      // TODO: recipe with Interests particle considered "irrelevant",
-      // because relevance is updated after speculative execution considered
-      // finished (but works well in the browser demo, why?).
+      'browsing context and Claire\'s wishlist (Book: How to Draw plus 2 other items).',
+      'Recommendations based on Claire\'s wishlist (Book: How to Draw plus 2 other items).'
     ];
     plans = await makePlans(arc, expectedSuggestions);
-    assert.equal(plans.length, 3);
+    assert.equal(plans.length, 4);
 
     // Move an element from recommended list to shortlist.
     slotComposer
@@ -131,6 +130,7 @@ describe('demo flow', function() {
         .expectRenderSlot('ShowProducts', 'root', ['model'])
         .expectRenderSlot('Chooser', 'action', ['model'])
         .expectRenderSlot('AlsoOn', 'annotation', ['model'])
+        .expectRenderSlot('ProductMultiplexer2', 'annotation', ['model'])
         .expectRenderSlot('ProductMultiplexer2', 'annotation', ['model']);
     await arc.pec.idle;
     await slotComposer.expectationsCompleted();
@@ -141,7 +141,7 @@ describe('demo flow', function() {
                        .replace('Minecraft Book plus 2 other items', 'Minecraft Book plus 3 other items');
     });
     plans = await makePlans(arc, expectedSuggestions);
-    assert.equal(plans.length, 3);
+    assert.equal(plans.length, 4);
 
     //var giftView = arc.findHandlesByType(Product.type.setViewOf(), {tag: "giftlist"})[0];
     //await testUtil.assertViewHas(giftView, Product, "name",

@@ -138,7 +138,11 @@ class InnerPEC {
     this._apiPort.onConstructArcCallback = ({callback, arc}) => callback(arc);
 
     this._apiPort.onAwaitIdle = ({version}) =>
-      this.idle.then(a => this._apiPort.Idle({version, relevance: this.relevance}));
+      this.idle.then(a => {
+        // TODO: dom-particles update is async, this is a workaround to allow dom-particles to
+        // update relevance, after handles are updated. Needs better idle signal.
+        setTimeout(() => { this._apiPort.Idle({version, relevance: this.relevance}); }, 0);
+      });
 
     this._apiPort.onUIEvent = ({particle, slotName, event}) => particle.fireEvent(slotName, event);
 

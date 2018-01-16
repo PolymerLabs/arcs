@@ -7,7 +7,6 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
- 
 import fs from '../platform/fs-web.js';
 import vm from '../platform/vm-web.js';
 import fetch from './fetch-web.js';
@@ -15,6 +14,7 @@ import fetch from './fetch-web.js';
 import assert from '../platform/assert-web.js';
 import particle from './particle.js';
 import DomParticle from './dom-particle.js';
+import TransformationDomParticle from './transformation-dom-particle.js';
 import JsonldToManifest from '../converters/jsonldToManifest.js';
 
 function schemaLocationFor(name) {
@@ -85,7 +85,7 @@ class Loader {
   }
 
   unwrapParticle(particleWrapper) {
-    return particleWrapper({particle, Particle: particle.Particle, DomParticle});
+    return particleWrapper({particle, Particle: particle.Particle, DomParticle, TransformationDomParticle});
   }
 
 }
