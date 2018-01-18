@@ -22,7 +22,7 @@ import Description from './description.js';
 import util from './recipe/util.js';
 import FakePecFactory from './fake-pec-factory.js';
 import StorageProviderFactory from './storage/storage-provider-factory.js';
-import Scheduler from './scheduler.js';
+import scheduler from './scheduler.js';
 
 class Arc {
   constructor({id, context, pecFactory, slotComposer, loader, storageKey}) {
@@ -36,7 +36,7 @@ class Arc {
     // TODO: rename: this are just tuples of {particles, views, slots} of instantiated recipes merged into active recipe..
     this._recipes = [];
     this._loader = loader;
-    this._scheduler = new Scheduler();
+    this._scheduler = scheduler;
 
     // All the views, mapped by view ID
     this._viewsById = new Map();
@@ -174,6 +174,7 @@ class Arc {
   // Makes a copy of the arc used for speculative execution.
   cloneForSpeculativeExecution() {
     var arc = new Arc({id: this.generateID(), pecFactory: this._pecFactory, context: this.context, loader: this._loader});
+    arc._scheduler = this._scheduler.clone();
     var viewMap = new Map();
     this._views.forEach(v => viewMap.set(v, v.clone()));
     this.particleViewMaps.forEach((value, key) => {

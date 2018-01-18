@@ -20,6 +20,10 @@ class Scheduler {
     this._idleCallback = null;
   }
 
+  clone() {
+    return new Scheduler();
+  }
+
   set idleCallack(idleCallback) { this._idleCallback = idleCallback; }
 
   enqueue(view, eventRecords) {
@@ -94,4 +98,5 @@ class Scheduler {
   }
 }
 
-export default Scheduler;
+// TODO: Scheduler needs to be per arc, once multi-arc support is implemented.
+export default new Scheduler();
