@@ -68,7 +68,7 @@ describe('View', function() {
 
     let shape = new Shape([{type: Type.newEntity(manifest.schemas.Foo)},
                            {type: Type.newEntity(manifest.schemas.Bar)}], []);
-    assert(shape._particleMatches(manifest.particles[0]));
+    assert(shape.particleMatches(manifest.particles[0]));
 
     let shapeView = await arc.createView(Type.newInterface(shape));
     shapeView.set(manifest.particles[0]);
@@ -82,9 +82,9 @@ describe('View', function() {
     let assert_throws_async = async (f, message) => {
       try {
         await f();
-        assert.throws(() => undefined, message);                
+        assert.throws(() => undefined, message);
       } catch (e) {
-        assert.throws(() => {throw e;}, message);                        
+        assert.throws(() => {throw e;}, message);
       }
     };
 

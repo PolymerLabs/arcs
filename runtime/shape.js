@@ -11,16 +11,16 @@
 import assert from '../platform/assert-web.js';
 
 // ShapeView {name, direction, type}
-// Slot {name, direction}
+// Slot {name, direction, isRequired, isSet}
 
 function _fromLiteral(member) {
-  if (typeof member == 'object')
+  if (!!member && typeof member == 'object')
     return Type.fromLiteral(member);
   return member;
 }
 
 function _toLiteral(member) {
-  if (member && member.toLiteral)
+  if (!!member && member.toLiteral)
     return member.toLiteral();
   return member;
 }
@@ -36,7 +36,7 @@ class Shape {
           this._typeVars.push({object: view, field});
 
     for (let slot of slots)
-      for (let field of ['name', 'direction'])
+      for (let field of ['name', 'direction', 'isRequired', 'isSet'])
         if (Shape.isTypeVar(slot[field]))
           this._typeVars.push({object: slot, field});
   }
@@ -47,19 +47,19 @@ class Shape {
 
   static fromLiteral(data) {
     let views = data.views.map(view => ({type: _fromLiteral(view.type), name: _fromLiteral(view.name), direction: _fromLiteral(view.direction)}));
-    let slots = data.slots.map(slot => ({name: _fromLiteral(slot.name), direction: _fromLiteral(slot.direction)}));
+    let slots = data.slots.map(slot => ({name: _fromLiteral(slot.name), direction: _fromLiteral(slot.direction), isRequired: _fromLiteral(slot.isRequired), isSet: _fromLiteral(slot.isSet)}));
     return new Shape(views, slots);
   }
 
   toLiteral() {
     let views = this.views.map(view => ({type: _toLiteral(view.type), name: _toLiteral(view.name), direction: _toLiteral(view.direction)}));
-    let slots = this.slots.map(slot => ({name: _toLiteral(slot.name), direction: _toLiteral(slot.direction)}));
+    let slots = this.slots.map(slot => ({name: _toLiteral(slot.name), direction: _toLiteral(slot.direction), isRequired: _toLiteral(slot.isRequired), isSet: _toLiteral(slot.isSet)}));
     return {views, slots};
   }
 
   clone() {
     var views = this.views.map(({name, direction, type}) => ({name, direction, type}));
-    var slots = this.slots.map(({name, direction}) => ({name, direction}));
+    var slots = this.slots.map(({name, direction, isRequired, isSet}) => ({name, direction, isRequired, isSet}));
     return new Shape(views, slots);
   }
 
@@ -68,10 +68,29 @@ class Shape {
       return false;
 
     // TODO: this isn't quite right as it doesn't deal with duplicates properly
-    for (let otherView of other.views) {
+    if (!this._equalItems(other.views, this.views, this._equalView)) {
+      return false;
+    }
+
+    if (!this._equalItems(other.slots, this.slots, this._equalSlot)) {
+      return false;
+    }
+    return true;
+  }
+
+  _equalView(view, otherView) {
+    return view.name == otherView.name && view.direction == otherView.direction && view.type.equals(otherView.type);
+  }
+
+  _equalSlot(slot, otherSlot) {
+    return slot.name == otherSlot.name && slot.direction == otherSlot.direction && slot.isRequired == otherSlot.isRequired && slot.isSet == otherSlot.isSet;
+  }
+
+  _equalItems(otherItems, items, compareItem) {
+    for (let otherItem of otherItems) {
       let exists = false;
-      for (let view of this.views) {
-        if (view.name == otherView.name && view.direction == otherView.direction && view.type.equals(otherView.type)) {
+      for (let item of items) {
+        if (compareItem(item, otherItem)) {
           exists = true;
           break;
         }
@@ -80,7 +99,6 @@ class Shape {
         return false;
     }
 
-    // TODO: compare slots too
     return true;
   }
 
@@ -104,8 +122,28 @@ class Shape {
     return true;
   }
 
-  _particleMatches(particleSpec) {
+  static slotsMatch(shapeSlot, particleSlot) {
+    if (Shape.mustMatch(shapeSlot.name) && shapeSlot.name !== particleSlot.name)
+      return false;
+    if (Shape.mustMatch(shapeSlot.direction) && shapeSlot.direction !== particleSlot.direction)
+      return false;
+    if (Shape.mustMatch(shapeSlot.isRequired) && shapeSlot.isRequired !== particleSlot.isRequired)
+      return false;
+    if (Shape.mustMatch(shapeSlot.isSet) && shapeSlot.isSet !== particleSlot.isSet)
+      return false;
+    return true;
+  }
+
+  particleMatches(particleSpec) {
     var viewMatches = this.views.map(view => particleSpec.connections.filter(connection => Shape.viewsMatch(view, connection)));
+    let particleSlots = [];
+    particleSpec.slots.forEach(consumedSlot => {
+      particleSlots.push({name: consumedSlot.name, direction: 'consume', isRequired: consumedSlot.isRequired, isSet: consumedSlot.isSet});
+      consumedSlot.providedSlots.forEach(providedSlot => {
+        particleSlots.push({name: providedSlot.name, direction: 'provide', isSet: providedSlot.isSet});
+      });
+    });
+    var slotMatches = this.slots.map(slot => particleSlots.filter(particleSlot => Shape.slotsMatch(slot, particleSlot)));
 
     var exclusions = [];
 
@@ -124,8 +162,7 @@ class Shape {
 
       return false;
     }
-
-    return choose(viewMatches, []);
+    return choose(viewMatches, []) && choose(slotMatches, []);
   }
 }
 

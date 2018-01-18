@@ -9,7 +9,7 @@
 import '../../entities/Product.manifest'
 
 shape HostedParticleShape
-  HostedParticleShape(in Product product)  # why aren't argument names optional?
+  HostedParticleShape(in Product)
   consume annotation
 
 # TODO: This particle should use generic handle type and slot name.
