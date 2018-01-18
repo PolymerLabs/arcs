@@ -685,6 +685,30 @@ Expected " ", "#", "\\n", "\\r", [ ], [A-Z], or [a-z] but "?" found.
     verify(manifest);
     verify(await Manifest.parse(manifest.toString(), {loader}));
   });
+  it('can parse a manifest containing incomplete shapes', async () => {
+    let manifest = await Manifest.parse(`
+      schema Foo
+      shape FullShape
+        AnyThing(in Foo foo)
+        consume root
+        provide action
+      shape ShapeNoHandleName
+        AnyThing(in Foo)
+      shape ShapeNoHandleType
+        AnyThing(inout foo)
+      shape ShapeNoHandleDirection
+        AnyThing(Foo foo)
+      shape ShapeOnlyHandleDirection
+        AnyThing(out)
+      shape ShapeManyHandles
+        AnyThing(in Foo, out [~a])
+      shape ShapeOnlyProvideSlots
+        AnyThing()
+        provide action
+    `);
+    assert.equal(7, manifest.shapes.length);
+    assert(manifest.findShapeByName('FullShape'));
+  });
   it('can parse a manifest containing shapes', async () => {
     let manifest = await Manifest.parse(`
       schema Foo

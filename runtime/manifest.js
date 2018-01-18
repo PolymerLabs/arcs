@@ -293,22 +293,20 @@ ${e.message}
   }
   static _processShape(manifest, shapeItem) {
     for (let arg of shapeItem.interface.args) {
-      arg.type = Manifest._processType(arg.type);
-      arg.type = arg.type.resolveReferences(name => manifest.resolveReference(name));
+      if (!!arg.type) {
+        arg.type = Manifest._processType(arg.type);
+        arg.type = arg.type.resolveReferences(name => manifest.resolveReference(name));
+      }
     }
     let views = shapeItem.interface.args;
     let slots = [];
     for (let slotItem of shapeItem.slots) {
       slots.push({
-        direction: 'consume',
+        direction: slotItem.direction,
         name: slotItem.name,
+        isRequired: slotItem.isRequired,
+        isSet: slotItem.isSet
       });
-      for (let providedSlotItem of slotItem.providedSlots) {
-        slots.push({
-          direction: 'provide',
-          name: providedSlotItem.name,
-        });
-      }
     }
     // TODO: move shape to recipe/ and add shape builder?
     let shape = new Shape(views, slots);
@@ -476,8 +474,13 @@ ${e.message}
             error.location = connectionItem.target.location;
             throw error;
           }
+          if (!connection.type.data.particleMatches(hostedParticle)) {
+            let errorType = new Error(`Hosted particle '${hostedParticle.name}' does not match shape '${connection.name}'`);
+            errorType.location = connectionItem.target.location;
+            throw errorType;
+          }
           // TODO: Better ID.
-          let id = `${manifest._id}immediate${hostedParticle.name}`; // ${manifest._views.length}`;
+          let id = `${manifest._id}immediate${hostedParticle.name}`;
           // TODO: Mark as immediate.
           targetView = recipe.newView();
           targetView.fate = 'map';

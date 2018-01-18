@@ -69,9 +69,40 @@ describe('shape', function() {
       `);
       let type = Type.newEntity(manifest.schemas.Test);
       var shape = new Shape([{name: 'foo'}, {direction: 'in'}, {type}], []);
-      assert(!shape._particleMatches(manifest.particles[0]));
-      assert(shape._particleMatches(manifest.particles[1]));
-      assert(shape._particleMatches(manifest.particles[2]));
-      assert(shape._particleMatches(manifest.particles[3]));
+      assert(!shape.particleMatches(manifest.particles[0]));
+      assert(shape.particleMatches(manifest.particles[1]));
+      assert(shape.particleMatches(manifest.particles[2]));
+      assert(shape.particleMatches(manifest.particles[3]));
+  });
+
+  it('matches particleSpecs with slots', async () => {
+    let manifest = await Manifest.parse(`
+        schema Test
+
+        particle P
+          P(in Test foo)
+
+        particle Q
+          Q(in Test foo)
+          consume one
+
+        particle R
+          R(in Test foo)
+          consume one
+            provide set of other
+
+        particle S
+          S(in Test foo)
+          consume notTest
+            provide one
+            provide set of randomSlot
+      `);
+      let type = Type.newEntity(manifest.schemas.Test);
+      var shape = new Shape([{direction: 'in', type}], [{name: 'one'}, {direction: 'provide', isSet: true}]);
+
+      assert(!shape.particleMatches(manifest.particles[0]));
+      assert(!shape.particleMatches(manifest.particles[1]));
+      assert(shape.particleMatches(manifest.particles[2]));
+      assert(shape.particleMatches(manifest.particles[3]));
   });
 });

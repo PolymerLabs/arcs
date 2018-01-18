@@ -109,14 +109,61 @@ Shape
       kind: 'shape',
       location: location(),
       name,
-      interface: optional(items, extractIndented, []).find(item => item.kind == 'interface'),
-      slots: optional(items, extractIndented, []).filter(item => item.kind == 'particle-slot'),
+      interface: optional(items, extractIndented, []).find(item => item.kind == 'shape-interface'),
+      slots: optional(items, extractIndented, []).filter(item => item.kind == 'shape-slot'),
     }
   }
 
 ShapeItem
-  = ParticleInterface
-  / ParticleSlot
+  = ShapeInterface
+  / ShapeSlot
+
+
+ShapeInterface
+  = verb:(upperIdent / lowerIdent) '(' args:ShapeArgumentList? ')' eolWhiteSpace
+  {
+    return {
+      kind: 'shape-interface',
+      location: location(),
+      verb,
+      args: args || []
+    };
+  }
+
+ShapeArgumentList
+  = head:ShapeArgument tail:(',' whiteSpace ShapeArgument)*
+  {
+    return [head].concat(tail.map(a => a[2]));
+  }
+
+ShapeArgument
+  = direction:(ParticleArgumentDirection)? whiteSpace? type:(ParticleArgumentType)? whiteSpace? name:(lowerIdent)?
+  {
+    if (direction == 'host') {
+      error(`Shape cannot have arguments with a 'host' direction.`);
+    }
+
+    return {
+      kind: 'shape-argument',
+      location: location(),
+      direction,
+      type,
+      name,
+    };
+  }
+
+ShapeSlot
+  = isRequired:('must' whiteSpace)? direction:('consume' / 'provide')? whiteSpace isSet:('set of' whiteSpace)? name:(lowerIdent)? eolWhiteSpace
+  {
+    return {
+      kind: 'shape-slot',
+      location: location(),
+      name,
+      isRequired: optional(isRequired, isRequired => isRequired[0] == 'must', false),
+      direction,
+      isSet: !!isSet,
+    }
+  }
 
 Particle
   = 'particle' whiteSpace name:TopLevelIdent implFile:(whiteSpace 'in' whiteSpace id)? eolWhiteSpace items:(Indent (SameIndent ParticleItem)*)? eolWhiteSpace?
