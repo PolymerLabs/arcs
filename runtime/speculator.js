@@ -15,9 +15,9 @@ import Relevance from './relevance.js';
 
 class Speculator {
 
-  speculate(arc, plan) {
+  async speculate(arc, plan) {
     var trace = tracing.start({cat: 'speculator', name: 'Speculator::speculate'});
-    var newArc = arc.cloneForSpeculativeExecution();
+    var newArc = await arc.cloneForSpeculativeExecution();
     let relevance = new Relevance();
     async function awaitCompletion() {
       await newArc.scheduler.idle;

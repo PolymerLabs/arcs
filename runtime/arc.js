@@ -172,11 +172,17 @@ class Arc {
   }
 
   // Makes a copy of the arc used for speculative execution.
-  cloneForSpeculativeExecution() {
+  async cloneForSpeculativeExecution() {
+    console.log('cloneForSpeculativeExecution', this.id);
     var arc = new Arc({id: this.generateID(), pecFactory: this._pecFactory, context: this.context, loader: this._loader});
     arc._scheduler = this._scheduler.clone();
+    console.log('\tnew ID:', arc.id);
     var viewMap = new Map();
-    this._views.forEach(v => viewMap.set(v, v.clone()));
+    for (let v of this._views) {
+      let clone = await arc._storageProviderFactory.construct(v.id, v.type, 'in-memory');
+      await clone.cloneFrom(v);
+      viewMap.set(v, clone);      
+    };
     this.particleViewMaps.forEach((value, key) => {
       arc.particleViewMaps.set(key, {
         spec: value.spec,
@@ -266,6 +272,7 @@ class Arc {
   }
 
   async instantiate(recipe, innerArc) {
+    console.log('instantiate', recipe, this.id);
     assert(recipe.isResolved(), 'Cannot instantiate an unresolved recipe');
 
     let currentArc = {activeRecipe: this._activeRecipe, recipes: this._recipes};
@@ -306,6 +313,8 @@ class Arc {
       // TODO: pass slot-connections instead
       this.pec.slotComposer.initializeRecipe(particles);
     }
+
+    console.log('instantiation finished', this.id);
   }
 
   _connectParticleToView(particleHandle, particle, name, targetView) {

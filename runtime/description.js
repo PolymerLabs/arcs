@@ -59,6 +59,7 @@ export class DescriptionFormatter {
   }
 
   async getDescription(particles) {
+    console.log('getDescription', this._arc.id);
     await this._updateDescriptionHandles(this._description);
 
     // Choose particles, sort them by rank and generate suggestions.
