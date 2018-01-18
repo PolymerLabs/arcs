@@ -134,9 +134,12 @@ class FirebaseVariable extends FirebaseStorageProvider {
   constructor(type, arc, id, reference, firebaseKey) {
     super(type, arc, id, reference, firebaseKey);
     this.dataSnapshot = undefined;
+    this._pendingGets = [];    
     this.reference.on('value', dataSnapshot => {
       this.dataSnapshot = dataSnapshot;
       let data = dataSnapshot.val();
+      this._pendingGets.forEach(_get => _get(data));
+      this._pendingGets = [];
       this._fire('change', {data: data.data, version: data.version});
     });
   }
@@ -151,6 +154,11 @@ class FirebaseVariable extends FirebaseStorageProvider {
   }
 
   async _getWithVersion() {
+    if (this.dataSnapshot == undefined) {
+      return new Promise((resolve, reject) => {
+        this._pendingGets.push(resolve);
+      });
+    }
     return this.dataSnapshot.val();
   }
 
@@ -159,7 +167,7 @@ class FirebaseVariable extends FirebaseStorageProvider {
   }
 
   async clear() {
-    return this.set(undefined);
+    return this.set(null);
   }
 }
 
@@ -167,9 +175,12 @@ class FirebaseCollection extends FirebaseStorageProvider {
   constructor(type, arc, id, reference, firebaseKey) {
     super(type, arc, id, reference, firebaseKey);
     this.dataSnapshot = undefined;
+    this._pendingGets = [];
     this.reference.on('value', dataSnapshot => {
       this.dataSnapshot = dataSnapshot;
       let data = dataSnapshot.val();
+      this._pendingGets.forEach(_get => _get(data));
+      this._pendingGets = [];
       this._fire('change', {data: this._setToList(data.data), version: data.version});
     });
   }
@@ -186,7 +197,7 @@ class FirebaseCollection extends FirebaseStorageProvider {
     return realTransaction(this.reference, data => {
       if (!data.data)
         data.data = {};
-      encId = FirebaseStorageProvider.encodeKey(entity.id);
+      var encId = FirebaseStorageProvider.encodeKey(entity.id);
       data.data[encId] = entity;
       data.version += 1;
       return data;
@@ -208,10 +219,20 @@ class FirebaseCollection extends FirebaseStorageProvider {
   }
 
   async toList() {
+    if (this.dataSnapshot == undefined) {
+      return new Promise((resolve, reject) => {
+        this._pendingGets.push(resolve);
+      }).then(data => this._setToList(data.data));
+    }
     return this._setToList(this.dataSnapshot.val().data);
   }
 
   async _toListWithVersion() {
+    if (this.dataSnapshot == undefined) {
+      return new Promise((resolve, reject) => {
+        this._pendingGets.push(resolve);
+      }).then(data => ({list: this._setToList(data.data), version: data.version}));
+    }
     let data = this.dataSnapshot.val();
     return {list: this._setToList(data.data), version: data.version};
   }
