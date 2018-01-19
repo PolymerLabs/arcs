@@ -367,7 +367,7 @@ describe('MapRemoteSlots', function() {
       B()
       consume root
     `;
-    let testManifest = async (recipeManifest) => {
+    let testManifest = async (recipeManifest, expectedSlots) => {
       let manifest = (await Manifest.parse(`
         ${particlesSpec}
 
@@ -380,32 +380,39 @@ describe('MapRemoteSlots', function() {
       let {results} = await mrs.generate(strategizer);
       assert.equal(results.length, 1);
       assert.isTrue(results[0].result.isResolved());
-      assert.equal(results[0].result.slots.length, 1);
+      assert.equal(results[0].result.slots.length, expectedSlots);
     };
     await testManifest(`
       recipe
         A as particle0
         B as particle1
-    `);
+    `, /* expectedSlots= */ 1);
     await testManifest(`
       recipe
         A as particle0
           consume root
         B as particle1
-    `);
+    `, /* expectedSlots= */ 1);
     await testManifest(`
       recipe
         A as particle0
         B as particle1
           consume root
-    `);
+    `, /* expectedSlots= */ 1);
+    await testManifest(`
+      recipe
+        A as particle0
+          consume root as slot0
+        B as particle1
+          consume root as slot0
+    `, /* expectedSlots= */ 1);
     await testManifest(`
       recipe
         A as particle0
           consume root
         B as particle1
           consume root
-    `);
+    `, /* expectedSlots= */ 2);
   });
 });
 
