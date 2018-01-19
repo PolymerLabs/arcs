@@ -18,6 +18,7 @@ import Shape from './shape.js';
 import Type from './type.js';
 import util from './recipe/util.js';
 import StorageProviderFactory from './storage/storage-provider-factory.js';
+import scheduler from './scheduler.js';
 
 class Manifest {
   constructor({id}) {
@@ -33,6 +34,7 @@ class Manifest {
     this._nextLocalID = 0;
     this._id = id;
     this._storageProviderFactory = new StorageProviderFactory(this);
+    this._scheduler = scheduler;
   }
   get id() {
     return this._id;
