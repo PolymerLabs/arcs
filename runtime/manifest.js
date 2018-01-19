@@ -548,7 +548,8 @@ ${e.message}
         } else {
           targetSlot = recipe.newSlot(slotConnectionItem.param);
           targetSlot.localName = slotConnectionItem.name;
-          items.byName.set(slotConnectionItem.name, targetSlot);
+          if (slotConnectionItem.name)
+            items.byName.set(slotConnectionItem.name, targetSlot);
           items.bySlot.set(targetSlot, slotConnectionItem);
         }
         particle.consumedSlotConnections[slotConnectionItem.param].connectToSlot(targetSlot);
