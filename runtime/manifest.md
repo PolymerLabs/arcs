@@ -73,17 +73,23 @@ Particle description defines how the Particle is represented in the recipe sugge
 ```
 particle MyParticle in ‘my-particle.js’
   MyParticle(in MyThing mything)
+    consume main
+      provide secondary
   description `Do Something with ${mything}`
-     list `my special thing`
+     mything `my special thing`
 ```
 
-Description may also reference the following details form the view descriptions:
-```${mything._type_}``` to display the view type (eg MyThing)
-```${mything._values_}``` to display only the values of the view
-```${mything._name_}``` to display the view description with no values
-```${mything.myProperty}``` to display a select property of the view (only supported for singleton views)
+Description may also reference the following details from the view descriptions:
+- ```${mything}._type_``` to include the view type (eg MyThing)
+- ```${mything}._values_``` to include only the values of the view
+- ```${mything}._name_``` to include the view description with no values
+- ```${mything.myProperty}``` to include a select property of the view (only supported for singleton views)
 
-Only the descriptions of Particles that render UI will be included in the suggestion text.
+or from slot descriptions:
+- ```{main.secondary}``` to include the description of a recipe particle that consumes the 'secondary' slot, provided by MyParticle.
+- ```{main.secondary}._empty_``` true, if the secondary slot actually consumed to render content.
+
+Only the descriptions of Particles that render UI will be used to construct the suggestion text.
 
 View descriptions may also be used in particles UI (including other particles in the recipe that use the same view). The particle template would contain:
 ```
