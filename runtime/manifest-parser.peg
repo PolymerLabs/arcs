@@ -673,7 +673,7 @@ SchemaInline
     return {
       kind: 'schema-inline',
       location: location(),
-      name: optional(name, name => name[0], null),
+      name: name == '*' ? null : name,
       fields: fields.map(field => field[0]),
     }
   }

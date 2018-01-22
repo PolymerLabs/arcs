@@ -59,7 +59,7 @@ class Schema {
     return true;
   }
   containsAncestry(otherSchema) {
-    if (this.name == otherSchema.name) {
+    if (this.name == otherSchema.name || otherSchema.name == null) {
       nextOtherParent: for (let otherParent of otherSchema.parents) {
         for (let parent of this.parents) {
           if (parent.containsAncestry(otherParent)) {
