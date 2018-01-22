@@ -134,7 +134,7 @@ class Schema {
               return undefined;
             let [fieldType, jsType] = checkFieldIsValidAndGetTypes(name, 'get');
             let value = target[name];
-            assert(value === undefined || value === null || typeof(value) == jsType,
+            assert(value == undefined || value === null || typeof(value) == jsType,
                    `Field ${name} (type ${fieldType}) has value ${value} (type ${typeof(value)})`);
             return value;
           },
@@ -156,7 +156,10 @@ class Schema {
       dataClone() {
         let clone = {};
         for (let propertyList of [normative, optional]) {
-          Object.keys(propertyList).forEach(prop => clone[prop] = this.rawData[prop]);
+          Object.keys(propertyList).forEach(prop => {
+            if (this.rawData[prop] !== undefined)
+              clone[prop] = this.rawData[prop];
+          });
         }
         return clone;
       }

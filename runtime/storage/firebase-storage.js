@@ -57,11 +57,12 @@ async function realTransaction(reference, transactionFunction) {
   }, undefined, false);
 }
 
+let _nextAppNameSuffix = 0;
+
 export default class FirebaseStorage {
   constructor(arc) {
     this._arc = arc;
     this._apps = {};
-    this._nextAppNameSuffix = 0;
   }
 
   async construct(id, type, keyFragment) {
@@ -81,12 +82,22 @@ export default class FirebaseStorage {
     // TODO: is it ever going to be possible to autoconstruct new firebase datastores? 
     if (key.databaseUrl == undefined || key.apiKey == undefined)
       throw new Error('Can\'t complete partial firebase keys');
+      
+    if (this._apps[key.projectId] == undefined) {
+      for (var app of firebase.apps) {
+        if (app.options.databaseURL == key.databaseURL) {
+          this._apps[key.projectId] = app;
+          break;
+        }
+      }
+    }
 
-    if (this._apps[key.projectId] == undefined)
+    if (this._apps[key.projectId] == undefined) {      
       this._apps[key.projectId] = firebase.initializeApp({
         apiKey: key.apiKey,
         databaseURL: key.databaseUrl
-      }, `app${this._nextAppNameSuffix++}`);
+      }, `app${_nextAppNameSuffix++}`);
+    }
 
     var reference = firebase.database(this._apps[key.projectId]).ref(key.location);
     
@@ -187,10 +198,21 @@ class FirebaseCollection extends FirebaseStorageProvider {
 
   async get(id) {
     var set = this.dataSnapshot.val().data;
-    var encId = FirebaseStorageProvider.encodeKey(entity.id);
+    var encId = FirebaseStorageProvider.encodeKey(id);
     if (set)
       return set[encId];
     return undefined;
+  }
+
+  async remove(id) {
+    return realTransaction(this.reference, data => {
+      if (!data.data)
+        data.data = {};
+      var encId = FirebaseStorageProvider.encodeKey(id);
+      data.data[encId] = null;
+      data.version += 1;
+      return data;
+    });
   }
 
   async store(entity) {

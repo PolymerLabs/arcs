@@ -141,9 +141,7 @@ describe('schema', function() {
     product.name = 'Potato Soup';
     product.category = undefined;
     assert.deepEqual(data, {name: 'Tomato Soup', description: 'Soup that tastes like tomato',
-                            image: 'http://www.example.com/soup.jpg', url: undefined,
-                            identifier: undefined, category: 'Fluidic Food', seller: undefined,
-                            price: undefined, shipDays: 4, isReal: undefined,
-                            brand: undefined});
+                            image: 'http://www.example.com/soup.jpg', category: 'Fluidic Food',
+                            shipDays: 4});
   });
 });
