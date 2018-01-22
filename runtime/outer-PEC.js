@@ -161,6 +161,9 @@ class OuterPEC extends PEC {
   innerArcRender(transformationParticle, transformationSlotName, hostedSlotId, content) {
     this._apiPort.InnerArcRender({transformationParticle, transformationSlotName, hostedSlotId, content});
   }
+  initDebug() {
+    this._apiPort.initDebug(this._arc.id);
+  }
 }
 
 export default OuterPEC;

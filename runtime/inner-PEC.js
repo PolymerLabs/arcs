@@ -40,39 +40,39 @@ class StorageProxy {
     return this._pec.generateIDComponents();
   }
 
-  on(type, callback, target) {
+  on(type, callback, target, particleId) {
     var dataFreeCallback = (d) => callback();
-    this.synchronize(type, dataFreeCallback, dataFreeCallback, target);
+    this.synchronize(type, dataFreeCallback, dataFreeCallback, target, particleId);
   }
 
-  synchronize(type, modelCallback, callback, target) {
-    this._port.Synchronize({handle: this, modelCallback, callback, target, type});
+  synchronize(type, modelCallback, callback, target, particleId) {
+    this._port.Synchronize({handle: this, modelCallback, callback, target, type, particleId});
   }
 
-  get() {
+  get(particleId) {
     return new Promise((resolve, reject) =>
-      this._port.HandleGet({callback: r => resolve(r), handle: this}));
+      this._port.HandleGet({callback: r => resolve(r), handle: this, particleId}));
   }
 
-  toList() {
+  toList(particleId) {
     return new Promise((resolve, reject) =>
-      this._port.HandleToList({callback: r => resolve(r), handle: this}));
+      this._port.HandleToList({callback: r => resolve(r), handle: this, particleId}));
   }
 
-  set(entity) {
-    this._port.HandleSet({data: entity, handle: this});
+  set(entity, particleId) {
+    this._port.HandleSet({data: entity, handle: this, particleId});
   }
 
-  store(entity) {
-    this._port.HandleStore({data: entity, handle: this});
+  store(entity, particleId) {
+    this._port.HandleStore({data: entity, handle: this, particleId});
   }
 
-  remove(entityId) {
-    this._port.HandleRemove({data: entityId, handle: this});
+  remove(entityId, particleId) {
+    this._port.HandleRemove({data: entityId, handle: this, particleId});
   }
 
-  clear() {
-    this._port.HandleClear({handle: this});
+  clear(particleId) {
+    this._port.HandleClear({handle: this, particleId});
   }
 }
 
@@ -206,13 +206,13 @@ class InnerPEC {
     return `${this._idBase}:${this._nextLocalID++}`;
   }
 
-  innerArcHandle(arcId) {
+  innerArcHandle(arcId, particleId) {
     var pec = this;
     return {
       createHandle: function(type, name) {
         return new Promise((resolve, reject) =>
           pec._apiPort.ArcCreateHandle({arc: arcId, type, name, callback: proxy => {
-            var v = handle.handleFor(proxy, proxy.type.isSetView, true, true);
+            var v = handle.handleFor(proxy, proxy.type.isSetView, true, true, particleId);
             v.entityClass = (proxy.type.isSetView ? proxy.type.primitiveType().entitySchema : proxy.type.entitySchema).entityClass();
             resolve(v);
           }}));
@@ -246,7 +246,7 @@ class InnerPEC {
     return {
       constructInnerArc: particle => {
         return new Promise((resolve, reject) =>
-          this._apiPort.ConstructInnerArc({callback: arcId => {resolve(this.innerArcHandle(arcId));}, particle}));
+          this._apiPort.ConstructInnerArc({callback: arcId => {resolve(this.innerArcHandle(arcId, particle.id));}, particle}));
       }
     };
   }
@@ -265,7 +265,7 @@ class InnerPEC {
 
     var handleMap = new Map();
     proxies.forEach((value, key) => {
-      handleMap.set(key, handle.handleFor(value, value.type.isSetView, spec.connectionMap.get(key).isInput, spec.connectionMap.get(key).isOutput));
+      handleMap.set(key, handle.handleFor(value, value.type.isSetView, spec.connectionMap.get(key).isInput, spec.connectionMap.get(key).isOutput, id));
     });
 
     for (let localHandle of handleMap.values()) {

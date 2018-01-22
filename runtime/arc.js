@@ -68,6 +68,12 @@ class Arc {
 
     this._search = null;
     this._description = new Description(this);
+
+    // Debugging is currently only available in the browser env.
+    if (typeof window === 'object') {
+      window._arcDebugHandles = window._arcDebugHandles || [];
+      window._arcDebugHandles.push(this);
+    }
   }
   get loader() {
     return this._loader;
@@ -392,6 +398,10 @@ ${this.activeRecipe.toString()}`;
     }
 
     return results.join('\n');
+  }
+
+  initDebug() {
+    this.pec.initDebug();
   }
 }
 
