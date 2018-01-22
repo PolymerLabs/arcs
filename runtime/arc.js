@@ -57,7 +57,6 @@ class Arc {
     if (slotComposer) {
       slotComposer.arc = this;
     }
-    this.nextParticleHandle = 0;
     this._storageProviderFactory = new StorageProviderFactory(this);
 
     // Dictionary from each tag string to a list of views
@@ -118,9 +117,9 @@ class Arc {
       arc._lastSeenVersion.set(view.id, serializedView.version);
     }
     for (var serializedParticle of serialization.particles) {
-      var particleHandle = arc._instantiateParticle(serializedParticle.name);
+      var particleId = arc._instantiateParticle(serializedParticle.name);
       for (var name in serializedParticle.views) {
-        arc._connectParticleToView(particleHandle, serializedParticle, name, viewMap[serializedParticle.views[name]]);
+        arc._connectParticleToView(particleId, serializedParticle, name, viewMap[serializedParticle.views[name]]);
       }
     }
     return arc;
@@ -138,9 +137,9 @@ class Arc {
   }
 
   _instantiateParticle(recipeParticle) {
-    var handle = this.nextParticleHandle++;
+    let id = this.generateID();
     let viewMap = {spec: recipeParticle.spec, views: new Map()};
-    this.particleViewMaps.set(handle, viewMap);
+    this.particleViewMaps.set(id, viewMap);
 
     for (let [name, connection] of Object.entries(recipeParticle.connections)) {
       if (!connection.view) {
@@ -149,14 +148,14 @@ class Arc {
       }
       let view = this.findViewById(connection.view.id);
       assert(view);
-      this._connectParticleToView(handle, recipeParticle, name, view);
+      this._connectParticleToView(id, recipeParticle, name, view);
     }
 
     // At least all non-optional connections must be resolved
     assert(viewMap.views.size >= viewMap.spec.connections.filter(c => !c.isOptional).length,
            `Not all mandatory connections are resolved for {$particle}`);
-    this.pec.instantiate(recipeParticle, viewMap.spec, viewMap.views, this._lastSeenVersion);
-    return handle;
+    this.pec.instantiate(recipeParticle, id, viewMap.spec, viewMap.views, this._lastSeenVersion);
+    return id;
   }
 
   generateID() {
@@ -312,9 +311,9 @@ class Arc {
     }
   }
 
-  _connectParticleToView(particleHandle, particle, name, targetView) {
+  _connectParticleToView(particleId, particle, name, targetView) {
     assert(targetView, 'no target view provided');
-    var viewMap = this.particleViewMaps.get(particleHandle);
+    var viewMap = this.particleViewMaps.get(particleId);
     assert(viewMap.spec.connectionMap.get(name) !== undefined, 'can\'t connect view to a view slot that doesn\'t exist');
     viewMap.views.set(name, targetView);
   }
