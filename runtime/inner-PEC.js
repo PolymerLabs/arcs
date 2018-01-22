@@ -131,7 +131,7 @@ class InnerPEC {
     };
 
     this._apiPort.onInstantiateParticle =
-      ({spec, handles}) => this._instantiateParticle(spec, handles);
+      ({id, spec, handles}) => this._instantiateParticle(id, spec, handles);
 
     this._apiPort.onSimpleCallback = ({callback, data}) => callback(data);
 
@@ -251,7 +251,7 @@ class InnerPEC {
     };
   }
 
-  async _instantiateParticle(spec, proxies) {
+  async _instantiateParticle(id, spec, proxies) {
     let name = spec.name;
     var resolve = null;
     var p = new Promise((res, rej) => resolve = res);
@@ -259,6 +259,7 @@ class InnerPEC {
     let clazz = await this._loader.loadParticleClass(spec);
     let capabilities = this.defaultCapabilitySet();
     let particle = new clazz(); // TODO: how can i add an argument to DomParticle ctor?
+    particle.id = id;
     particle.capabilities = capabilities;
     this._particles.push(particle);
 

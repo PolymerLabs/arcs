@@ -132,7 +132,7 @@ class OuterPEC extends PEC {
     this._apiPort.UIEvent({particle, slotName, event});
   }
 
-  instantiate(particleSpec, spec, views, lastSeenVersion) {
+  instantiate(particleSpec, id, spec, views, lastSeenVersion) {
     views.forEach(view => {
       var version = lastSeenVersion.get(view.id) || 0;
       this._apiPort.DefineHandle(view, {type: view.type, name: view.name,
@@ -149,7 +149,7 @@ class OuterPEC extends PEC {
     }
 
     // TODO: rename this concept to something like instantiatedParticle, handle or registration.
-    this._apiPort.InstantiateParticle(particleSpec, {spec, handles: views});
+    this._apiPort.InstantiateParticle(particleSpec, {id, spec, handles: views});
     return particleSpec;
   }
   startRender({particle, slotName, contentTypes}) {
