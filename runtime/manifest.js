@@ -57,6 +57,9 @@ class Manifest {
   get views() {
     return this._views;
   }
+  get scheduler() {
+    return this._scheduler;
+  }
 
   get shapes() {
     return this._shapes;
