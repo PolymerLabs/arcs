@@ -12,6 +12,7 @@
 import assert from '../platform/assert-web.js';
 import ParticleSpec from './particle-spec.js';
 import Type from './type.js';
+import OuterPortDebugChannel from '../debug/outer-port-debug-channel.js';
 
 class ThingMapper {
   constructor(prefix) {
@@ -78,6 +79,7 @@ class APIPort {
     this._mapper = new ThingMapper(prefix);
     this._messageMap = new Map();
     this._port.onmessage = async e => this._handle(e);
+    this._debugChannel = null;
     this.messageCount = 0;
 
     this.Direct = {
@@ -168,7 +170,11 @@ class APIPort {
         return;
       }
     }
-    let result = this['on' + e.data.messageType](args);
+    let handlerName = 'on' + e.data.messageType;
+    let result = this[handlerName](args);
+    if (this._debugChannel && this._debugChannel[handlerName]) {
+      this._debugChannel[handlerName](args);
+    }
     if (handler.isInitializer) {
       assert(args.identifier);
       await this._mapper.establishThingMapping(args.identifier, result);
@@ -193,6 +199,9 @@ class APIPort {
     this[name] = args => {
       var call = {messageType: name, messageBody: this._processArguments(argumentTypes, args)};
       this._port.postMessage(call);
+      if (this._debugChannel && this._debugChannel[name]) {
+        this._debugChannel[name](args);
+      }
     };
   }
 
@@ -213,6 +222,9 @@ class APIPort {
       var call = {messageType: name, messageBody: this._processArguments(argumentTypes, args)};
       call.messageBody.identifier = this._mapper.createMappingForThing(thing);
       this._port.postMessage(call);
+      if (this._debugChannel && this._debugChannel[name]) {
+        this._debugChannel[name](thing, args);
+      }
     };
   }
 
@@ -224,6 +236,10 @@ class APIPort {
       call.messageBody.identifier = this._mapper.createMappingForThing(thing);
       this._port.postMessage(call);
     };
+  }
+
+  initDebug(arcId) {
+    if (!this._debugChannel) this._debugChannel = new OuterPortDebugChannel(arcId);
   }
 }
 
@@ -247,11 +263,11 @@ class PECOuterPort extends APIPort {
     this.registerHandler('Render', {particle: this.Mapped, slotName: this.Direct, content: this.Direct});
     this.registerHandler('Synchronize', {handle: this.Mapped, target: this.Mapped,
                                     type: this.Direct, callback: this.Direct,
-                                    modelCallback: this.Direct});
-    this.registerHandler('HandleGet', {handle: this.Mapped, callback: this.Direct});
-    this.registerHandler('HandleToList', {handle: this.Mapped, callback: this.Direct});
-    this.registerHandler('HandleSet', {handle: this.Mapped, data: this.Direct});
-    this.registerHandler('HandleStore', {handle: this.Mapped, data: this.Direct});
+                                    modelCallback: this.Direct, particleId: this.Direct});
+    this.registerHandler('HandleGet', {handle: this.Mapped, callback: this.Direct, particleId: this.Direct});
+    this.registerHandler('HandleToList', {handle: this.Mapped, callback: this.Direct, particleId: this.Direct});
+    this.registerHandler('HandleSet', {handle: this.Mapped, data: this.Direct, particleId: this.Direct});
+    this.registerHandler('HandleStore', {handle: this.Mapped, data: this.Direct, particleId: this.Direct});
     this.registerHandler('HandleRemove', {handle: this.Mapped, data: this.Direct});
     this.registerHandler('HandleClear', {handle: this.Mapped});
     this.registerHandler('Idle', {version: this.Direct, relevance: this.Map(this.Mapped, this.Direct)});
@@ -295,11 +311,11 @@ class PECInnerPort extends APIPort {
     this.registerCall('Render', {particle: this.Mapped, slotName: this.Direct, content: this.Direct});
     this.registerCall('Synchronize', {handle: this.Mapped, target: this.Mapped,
                                  type: this.Direct, callback: this.LocalMapped,
-                                 modelCallback: this.LocalMapped});
-    this.registerCall('HandleGet', {handle: this.Mapped, callback: this.LocalMapped});
-    this.registerCall('HandleToList', {handle: this.Mapped, callback: this.LocalMapped});
-    this.registerCall('HandleSet', {handle: this.Mapped, data: this.Direct});
-    this.registerCall('HandleStore', {handle: this.Mapped, data: this.Direct});
+                                 modelCallback: this.LocalMapped, particleId: this.Direct});
+    this.registerCall('HandleGet', {handle: this.Mapped, callback: this.LocalMapped, particleId: this.Direct});
+    this.registerCall('HandleToList', {handle: this.Mapped, callback: this.LocalMapped, particleId: this.Direct});
+    this.registerCall('HandleSet', {handle: this.Mapped, data: this.Direct, particleId: this.Direct});
+    this.registerCall('HandleStore', {handle: this.Mapped, data: this.Direct, particleId: this.Direct});
     this.registerCall('HandleRemove', {handle: this.Mapped, data: this.Direct});
     this.registerCall('HandleClear', {handle: this.Mapped});
     this.registerCall('Idle', {version: this.Direct, relevance: this.Map(this.Mapped, this.Direct)});

@@ -38,10 +38,11 @@ function restore(entry, entityClass) {
  * Base class for Views and Variables.
  */
 class Handle {
-  constructor(view, canRead, canWrite) {
+  constructor(view, canRead, canWrite, particleId) {
     this._view = view;
     this.canRead = canRead;
     this.canWrite = canWrite;
+    this._particleId = particleId;
   }
   underlyingView() {
     return this._view;
@@ -52,11 +53,11 @@ class Handle {
    * be the recieving particle.
    */
   on(kind, callback, target) {
-    return this._view.on(kind, callback, target);
+    return this._view.on(kind, callback, target, this._particleId);
   }
 
   synchronize(kind, modelCallback, callback, target) {
-    return this._view.synchronize(kind, modelCallback, callback, target);
+    return this._view.synchronize(kind, modelCallback, callback, target, this._particleId);
   }
 
   generateID() {
@@ -109,9 +110,9 @@ class Handle {
  * connected.
  */
 class Collection extends Handle {
-  constructor(view, canRead, canWrite) {
+  constructor(view, canRead, canWrite, particleId) {
     // TODO: this should talk to an API inside the PEC.
-    super(view, canRead, canWrite);
+    super(view, canRead, canWrite, particleId);
   }
   query() {
     // TODO: things
@@ -125,7 +126,7 @@ class Collection extends Handle {
     // TODO: remove this and use query instead
     if (!this.canRead)
       throw new Error('View not readable');
-    return (await this._view.toList()).map(a => this._restore(a));
+    return (await this._view.toList(this._particleId)).map(a => this._restore(a));
   }
 
   /** @method store(entity)
@@ -137,7 +138,7 @@ class Collection extends Handle {
     if (!this.canWrite)
       throw new Error('View not writeable');
     var serialization = this._serialize(entity);
-    return this._view.store(serialization);
+    return this._view.store(serialization, this._particleId);
   }
 
   /** @method remove(entity)
@@ -149,7 +150,7 @@ class Collection extends Handle {
     if (!this.canWrite)
       throw new Error('View not writeable');
     var serialization = this._serialize(entity);
-    return this._view.remove(serialization.id);
+    return this._view.remove(serialization.id, this._particleId);
   }
 }
 
@@ -159,8 +160,8 @@ class Collection extends Handle {
  * the current recipe identifies which views are connected.
  */
 class Variable extends Handle {
-  constructor(variable, canRead, canWrite) {
-    super(variable, canRead, canWrite);
+  constructor(variable, canRead, canWrite, particleId) {
+    super(variable, canRead, canWrite, particleId);
   }
 
   /** @method async get()
@@ -172,7 +173,7 @@ class Variable extends Handle {
   async get() {
     if (!this.canRead)
       throw new Error('View not readable');
-    var result = await this._view.get();
+    var result = await this._view.get(this._particleId);
     if (result == null)
       return undefined;
     if (this.type.isEntity)
@@ -190,7 +191,7 @@ class Variable extends Handle {
   async set(entity) {
     if (!this.canWrite)
       throw new Error('View not writeable');
-    return this._view.set(this._serialize(entity));
+    return this._view.set(this._serialize(entity), this._particleId);
   }
 
   /** @method clear()
@@ -201,21 +202,14 @@ class Variable extends Handle {
   async clear() {
     if (!this.canWrite)
       throw new Error('View not writeable');
-    await this._view.clear();
+    await this._view.clear(this._particleId);
   }
 }
 
-function handleFor(view, isSet, canRead, canWrite) {
-  if (canRead == undefined)
-    canRead = true;
-  if (canWrite == undefined)
-    canWrite = true;
-  let handle;
-  if (isSet || (isSet == undefined && view.type.isSetView))
-    handle = new Collection(view, canRead, canWrite);
-  else
-    handle = new Variable(view, canRead, canWrite);
-  return handle;
+function handleFor(view, isSet, canRead = true, canWrite = true, particleId) {
+  return (isSet || (isSet == undefined && view.type.isSetView))
+      ? new Collection(view, canRead, canWrite, particleId)
+      : new Variable(view, canRead, canWrite, particleId);
 }
 
 export default {handleFor};
