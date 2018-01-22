@@ -137,15 +137,15 @@ describe('manifest parser', function() {
     `);
     parse(`
       particle Foo
-        Foo(in [{Text value, Number num}] anonSchema)
+        Foo(in [* {Text value, Number num}] anonSchema)
     `);
     parse(`
       particle Foo
-        Foo(in {Text? value}? optionalWithOptional)
+        Foo(in * {Text? value}? optionalWithOptional)
     `);
     parse(`
       particle Foo
-        Foo(in {(Text or Number)? value} optionalUnion)
+        Foo(in * {(Text or Number)? value} optionalUnion)
     `);
   });
 });

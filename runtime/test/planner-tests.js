@@ -91,9 +91,9 @@ describe('Planner', function() {
 
   it('can map remote views structurally', async () => {
     let results = await planFromManifest(`
-      view AView of {Text text, Text moreText} in './entities/empty.json'
+      view AView of * {Text text, Text moreText} in './entities/empty.json'
       particle P1 in './some-particle.js'
-        P1(in {Text text} text)
+        P1(in * {Text text} text)
       recipe
         map as view
         P1
@@ -104,9 +104,9 @@ describe('Planner', function() {
 
   it('can copy remote views structurally', async () => {
     let results = await planFromManifest(`
-      view AView of {Text text, Text moreText} in './entities/empty.json'
+      view AView of * {Text text, Text moreText} in './entities/empty.json'
       particle P1 in './some-particle.js'
-        P1(in {Text text} text)
+        P1(in * {Text text} text)
       recipe
         copy as view
         P1

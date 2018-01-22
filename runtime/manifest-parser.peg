@@ -668,7 +668,7 @@ ExtendsList
 }
 
 SchemaInline
-  = name:(upperIdent ' ')? '{' fields:(SchemaInlineField (',' whiteSpace)?)+ '}'
+  = name:(upperIdent / '*') whiteSpace '{' fields:(SchemaInlineField (',' whiteSpace)?)+ '}'
   {
     return {
       kind: 'schema-inline',
