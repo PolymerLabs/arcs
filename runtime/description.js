@@ -394,11 +394,12 @@ export class DescriptionFormatter {
     }
   }
   _formatViewDescription(viewConn, view) {
-    if (view && view.description) {
+    if (view) {
+      let viewDescription = this._arc.getViewDescription(view);
       let viewType = this._formatViewType(viewConn);
-      // Use the view description available in the arc (if it is different than type name.
-      if (view.description != viewType) {
-        return view.description;
+      // Use the view description available in the arc (if it is different than type name).
+      if (!!viewDescription && viewDescription != viewType) {
+        return viewDescription;
       }
     }
   }

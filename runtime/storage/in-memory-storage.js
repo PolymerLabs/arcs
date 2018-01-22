@@ -105,7 +105,6 @@ class InMemoryCollection extends InMemoryStorageProvider {
   async cloneFrom(handle) {
     let {list, version} = await handle._toListWithVersion();
     this._version = version;
-    this.description = handle.description;
     list.forEach(item => this._items.set(item.id, item));
   }
 
@@ -193,7 +192,6 @@ class InMemoryVariable extends InMemoryStorageProvider {
     let {data, version} = await handle._getWithVersion();
     this._stored = data;
     this._version = version;
-    this.description = handle.description;
   }
 
   traceInfo() {

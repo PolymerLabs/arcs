@@ -158,7 +158,6 @@ class FirebaseVariable extends FirebaseStorageProvider {
   async cloneFrom(store) {
     let {data, version} = await store._getWithVersion();
     await realTransaction(this.reference, data => ({data, version}));
-    this.description = store.description;
   }
 
   async get() {
@@ -239,7 +238,6 @@ class FirebaseCollection extends FirebaseStorageProvider {
       data.version = version;
       return data;
     });
-    this.description = store.description;
   }
 
   async toList() {
