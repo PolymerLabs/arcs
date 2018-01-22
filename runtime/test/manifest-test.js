@@ -765,7 +765,7 @@ Expected " ", "#", "\\n", "\\r", [ ], [A-Z], or [a-z] but "?" found.
   it('can resolve a particle with an inline schema', async () => {
     let manifest = await Manifest.parse(`
       particle P
-        P(in {Text value} foo)
+        P(in * {Text value} foo)
       recipe
         create as view
         P
@@ -778,11 +778,11 @@ Expected " ", "#", "\\n", "\\r", [ ], [A-Z], or [a-z] but "?" found.
   it('can resolve view types from inline schemas', async () => {
     let manifest = await Manifest.parse(`
       particle P
-        P(in {Text value} foo)
+        P(in * {Text value} foo)
       particle P2
-        P2(in {Text value, Text value2} foo)
+        P2(in * {Text value, Text value2} foo)
       particle P3
-        P3(in {Text value, Text value3} foo)
+        P3(in * {Text value, Text value3} foo)
 
       recipe
         create as view
