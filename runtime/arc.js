@@ -63,6 +63,8 @@ class Arc {
     this._tags = {};
     // Map from each view to a list of tags.
     this._viewTags = new Map();
+    // Map from each view to its description (originating in the manifest).
+    this._viewDescriptions = new Map();
 
     this._search = null;
     this._description = new Description(this);
@@ -163,6 +165,9 @@ ${this.activeRecipe.toString()}`;
       let clone = await arc._storageProviderFactory.construct(v.id, v.type, 'in-memory');
       await clone.cloneFrom(v);
       viewMap.set(v, clone);
+      if (this._viewDescriptions.has(v)) {
+        arc._viewDescriptions.set(clone, this._viewDescriptions.get(v));
+      }
     };
     this.particleViewMaps.forEach((value, key) => {
       arc.particleViewMaps.set(key, {
@@ -239,6 +244,10 @@ ${this.activeRecipe.toString()}`;
         if (recipeView.fate === 'copy') {
           var copiedView = this.findViewById(recipeView.id);
           await view.cloneFrom(copiedView);
+          let copiedViewDesc = this.getViewDescription(copiedView);
+          if (copiedViewDesc) {
+            this._viewDescriptions.set(view, copiedViewDesc);
+          }
         }
         recipeView.id = view.id;
         recipeView.fate = 'use';
@@ -250,8 +259,6 @@ ${this.activeRecipe.toString()}`;
         storageKey = this.keyForId(recipeView.id);
       let view = await this._storageProviderFactory.connect(recipeView.id, recipeView.type, storageKey);
       assert(view, `view '${recipeView.id}' was not found`);
-
-      view.description = await this.description.getViewDescription(recipeView);
     }
 
     particles.forEach(recipeParticle => this._instantiateParticle(recipeParticle));
@@ -345,6 +352,11 @@ ${this.activeRecipe.toString()}`;
       view = this._context.findViewById(id);
     }
     return view;
+  }
+
+  getViewDescription(view) {
+    assert(view, 'Cannot fetch description for nonexistend view');
+    return this._viewDescriptions.get(view) || view.description;
   }
 
   keyForId(id) {
