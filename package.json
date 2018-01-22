@@ -14,7 +14,9 @@
     "minimist": "^1.2.0",
     "mocha": "^3.2.0",
     "pegjs": "^0.10.0",
-    "webpack": "^2.6.1"
+    "webpack": "^2.6.1",
+    "ohm-js": "0.14.0",
+    "grammkit": "^0.6.0"
   },
   "dependencies": {
     "firebase": "^4.8.0",
