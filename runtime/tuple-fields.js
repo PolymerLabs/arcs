@@ -10,7 +10,7 @@
 
 import assert from '../platform/assert-web.js';
 
-class TupleFields {
+export default class TupleFields {
   constructor(fieldList) {
     this.fieldList = fieldList;
   }
