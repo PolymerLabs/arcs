@@ -185,6 +185,8 @@ class Type {
         return Schema.fromLiteral;
       case 'SetView':
         return Type.fromLiteral;
+      case 'Tuple':
+        return TupleFields.fromLiteral;
       default:
         return a => a;
     }
@@ -213,6 +215,8 @@ class Type {
       return this.entitySchema.name;
     if (this.isInterface)
       return 'Interface';
+    if (this.isTuple)
+      return this.tupleFields.toString();
     assert('Add support to serializing type:', this);
   }
 
@@ -233,6 +237,8 @@ class Type {
       } 
       return JSON.stringify(this.entitySchema._model);
     }
+    if (this.isTuple)
+      return this.tupleFields.toString();
     if (this.isManifestReference)
       return this.manifestReferenceName;
     if (this.isInterface)
@@ -247,9 +253,11 @@ addType('Variable');
 addType('SetView', 'type');
 addType('Relation', 'entities');
 addType('Interface', 'shape');
+addType('Tuple', 'fields');
 
 export default Type;
 
 import Shape from './shape.js';
 import Schema from './schema.js';
 import TypeVariable from './type-variable.js';
+import TupleFields from './tuple-fields.js';
