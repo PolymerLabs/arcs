@@ -8,3 +8,5 @@
 **/*~
 **/trace.json
 runtime/browser-test/browser-test-ified.js
+manifest-railroad.html
+**/*.code-workspace
