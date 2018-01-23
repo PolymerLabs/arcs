@@ -54,7 +54,7 @@ export default class ViewMapperBase extends Strategy {
         if (counts.out > 0 && fate == 'map') {
           return;
         }
-        var views = self.getMappableViews(type, tags);
+        var views = self.getMappableViews(type, tags, counts);
         if (views.length == 0)
           return;
 

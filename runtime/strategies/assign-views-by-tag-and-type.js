@@ -20,11 +20,12 @@ export default class AssignViewsByTagAndType extends ViewMapperBase {
     this.fate = 'use';
   }
 
-  getMappableViews(type, tags) {
-    // TODO: We need to look at the connections to determine whether a
-    // schema subtype or supertype is OK.
+  getMappableViews(type, tags, counts) {
+    // We can use a handle that has a subtype only when all of the connections
+    // are inputs.
+    let subtype = counts.out == 0;
     if (tags.length > 0) {
-      return this.arc.findViewsByType(type, {tags});
+      return this.arc.findViewsByType(type, {tags, subtype});
     } else {
       return this.arc.findViewsByType(type);
     }
