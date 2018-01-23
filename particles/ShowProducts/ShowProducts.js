@@ -143,8 +143,8 @@ ${productStyles}
       });
 
       // This is for description capabilities demo purposes.
-      this._setDynamicDescription(items);
-      this._setDynamicDomDescription(items);
+      // this._setDynamicDescription(items);
+      // this._setDynamicDomDescription(items);
 
       this._setState({
         renderModel: {

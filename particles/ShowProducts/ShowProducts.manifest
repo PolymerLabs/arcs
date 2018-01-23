@@ -14,10 +14,10 @@ particle ShowProducts in 'ShowProducts.js'
   affordance dom
   affordance dom-touch
   consume root
-    provide action
-      view list
-    provide preamble
-    provide postamble
-    provide set of annotation
-      view list
+#    provide action
+#      view list
+#    provide preamble
+#    provide postamble
+#    provide set of annotation
+#      view list
   description `show ${list}`
