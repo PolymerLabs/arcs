@@ -85,20 +85,20 @@ function peg() {
 
 function railroad() {
   // railroad rendering logic taken from GrammKit/cli.js
-  const { transform } = require('grammkit/lib/util');
+  const {transform} = require('grammkit/lib/util');
   const handlebars = require('handlebars');
 
   var renderTemplate = function(data, templatePath) {
     var raw_template = fs.readFileSync(templatePath);
     var template = handlebars.compile(raw_template.toString());
     return template(data);
-  }
+  };
 
   for (let [grammarFile, _a, railroadFile] of sources.peg) {
     let grammar = fs.readFileSync(path.resolve(projectRoot, grammarFile), 'utf8');
     let result = transform(grammar);
 
-    var grammars = result.procesedGrammars.map(({ rules, references, name }) => {
+    var grammars = result.procesedGrammars.map(({rules, references, name}) => {
       var rules = rules.map(function(rule) {
         const ref = references[rule.name] || {};
         return {
@@ -116,7 +116,7 @@ function railroad() {
     });
 
     var style = fs.readFileSync(path.resolve(projectRoot, path.join('node_modules', 'grammkit', 'app', 'diagram.css')), 'utf-8') + '\n' + 
-                fs.readFileSync(path.resolve(projectRoot, path.join('node_modules', 'grammkit', 'app', 'app.css')), 'utf-8')
+                fs.readFileSync(path.resolve(projectRoot, path.join('node_modules', 'grammkit', 'app', 'app.css')), 'utf-8');
     var data = {
         title: `Railroad diagram for ${grammarFile}`,
         style: style,
