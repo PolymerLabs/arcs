@@ -792,7 +792,6 @@ Expected " ", "#", "\\n", "\\r", [ ], [A-Z], or [a-z] but "?" found.
         P2
           foo = view
     `);
-      debugger;
     let [validRecipe, invalidRecipe] = manifest.recipes;
     assert(validRecipe.normalize());
     assert(validRecipe.isResolved());
