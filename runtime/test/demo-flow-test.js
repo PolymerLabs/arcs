@@ -19,6 +19,22 @@ import * as testUtil from './test-util.js';
 import MockSlotComposer from './mock-slot-composer.js';
 
 describe('demo flow', function() {
+  async function makePlans(arc, expectedSuggestions) {
+    let planner = new Planner();
+    planner.init(arc);
+    let plans = await planner.suggest();
+
+    if (!!expectedSuggestions) {
+      let suggestions = await Promise.all(plans.map(async p => await p.description.getRecipeSuggestion()));
+      expectedSuggestions.forEach(expectedSuggestion => {
+        assert(!!suggestions.find(s => s === expectedSuggestion),
+               `Cannot find expected suggestion "${expectedSuggestion}" in the ${plans.length} generated plans.`);
+      });
+    }
+
+    return plans;
+  }
+
   it('flows like a demo', async function() {
     let loader = new Loader();
     let pecFactory = null;
@@ -33,10 +49,7 @@ describe('demo flow', function() {
     let Product = arc.context.findSchemaByName('Product').entityClass();
 
     slotComposer.pec = arc.pec;
-    let planner = new Planner();
-    planner.init(arc);
-
-    let plans = await planner.suggest();
+    let plans = await makePlans(arc);
     assert.equal(plans.length, 2);
 
     // Choose a plan to test with.
@@ -71,9 +84,9 @@ describe('demo flow', function() {
       provide preamble as slot5`;
     let {plan, description} = plans.find(p => p.plan.toString() == expectedPlanString);
 
-    assert.equal('Show a few items: my short list (Minecraft Book plus 2 other items) and ' +
-                 'choose from products recommended based on my short list and ' +
-                 'Claire\'s wishlist (Book: How to Draw plus 2 other items).',
+    assert.equal('Show products from your browsing context (Minecraft Book plus 2 other items) ' +
+                 'and choose from products recommended based on products from your browsing context ' +
+                 'and Claire\'s wishlist (Book: How to Draw plus 2 other items).',
                  await description.getRecipeSuggestion());
 
     slotComposer
@@ -87,21 +100,48 @@ describe('demo flow', function() {
         .expectRenderSlot('AlsoOn', 'annotation', ['model'])
         .expectRenderSlot('ProductMultiplexer2', 'annotation', ['model'])
         .expectRenderSlot('AlsoOn', 'annotation', ['model'])
-        .expectRenderSlot('ProductMultiplexer2', 'annotation', ['model'])
+        .expectRenderSlot('ProductMultiplexer2', 'annotation', ['model']);
+    await arc.instantiate(plan);
+    await arc.pec.idle;
+    await slotComposer.expectationsCompleted();
+    let productViews = arc.findViewsByType(Product.type.setViewOf());
+    assert.equal(productViews.length, 2);
+
+    // Verify next stage suggestions.
+    let expectedSuggestions = [
+      'Check manufacturer information for each product in products from your browsing context ' +
+      '(Minecraft Book plus 2 other items).',
+      'Show Claire\'s wishlist (Book: How to Draw plus 2 other items).',
+      'Buy gifts for Claire\'s Birthday on 2017-08-04, estimate arrival date for each product ' +
+      'in products from your browsing context (Minecraft Book plus 2 other items), and estimate ' +
+      'arrival date for each product in products recommended based on products from your ' +
+      'browsing context and Claire\'s wishlist (Book: How to Draw plus 2 other items).'
+      // TODO: recipe with Interests particle considered "irrelevant",
+      // because relevance is updated after speculative execution considered
+      // finished (but works well in the browser demo, why?).
+    ];
+    plans = await makePlans(arc, expectedSuggestions);
+    assert.equal(plans.length, 3);
+
+    // Move an element from recommended list to shortlist.
+    slotComposer
+      .newExpectations()
         .thenSend('Chooser', 'action', '_onChooseValue', {key: '1'})
       .newExpectations()
         .expectRenderSlot('ShowProducts', 'root', ['model'])
         .expectRenderSlot('Chooser', 'action', ['model'])
         .expectRenderSlot('AlsoOn', 'annotation', ['model'])
         .expectRenderSlot('ProductMultiplexer2', 'annotation', ['model']);
-
-    await arc.instantiate(plan);
     await arc.pec.idle;
-
     await slotComposer.expectationsCompleted();
 
-    let productViews = arc.findViewsByType(Product.type.setViewOf());
-    assert.equal(productViews.length, 2);
+    // Replan and verify updated suggestions.
+    expectedSuggestions = expectedSuggestions.map(suggestion => {
+      return suggestion.replace(/products from your browsing context/g, 'my short list')
+                       .replace('Minecraft Book plus 2 other items', 'Minecraft Book plus 3 other items');
+    });
+    plans = await makePlans(arc, expectedSuggestions);
+    assert.equal(plans.length, 3);
 
     //var giftView = arc.findViewsByType(Product.type.setViewOf(), {tag: "giftlist"})[0];
     //await testUtil.assertViewHas(giftView, Product, "name",

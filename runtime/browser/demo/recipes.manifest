@@ -73,7 +73,9 @@ recipe
 
 # Recommendations based on Claire's interest in field hockey.
 recipe
+  map #wishlist as view0
   Interests
+    list <- view0
 
 # Experimental recipes
 #import '../../../particles/ProductFilter/ProductFilter.manifest'

@@ -154,10 +154,10 @@ ${productStyles}
       });
     }
     _setDynamicDescription(items) {
-      if (items.length > 4) {
+      if (items.length >= 6) {
         this.setParticleDescription('Show a lot of items ${list}');
         this.setDescriptionPattern('list', 'my long list');
-      } else {
+      } else if (items.length > 3) {
         this.setParticleDescription('Show a few items: ${list}');
         this.setDescriptionPattern('list', 'my short list');
       }

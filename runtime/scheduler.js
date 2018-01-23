@@ -24,7 +24,7 @@ class Scheduler {
     return new Scheduler();
   }
 
-  set idleCallack(idleCallback) { this._idleCallback = idleCallback; }
+  set idleCallback(idleCallback) { this._idleCallback = idleCallback; }
 
   enqueue(view, eventRecords) {
     var trace = tracing.flow({cat: 'view', name: 'ViewBase::_fire flow'}).start();

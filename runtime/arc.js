@@ -88,7 +88,7 @@ class Arc {
   get makeSuggestions() { return this._makeSuggestions; }
   set makeSuggestions(callback) {
     this._makeSuggestions = callback;
-    this._scheduler.idleCallack = callback;
+    this._scheduler.idleCallback = callback;
   }
 
   static deserialize({serialization, pecFactory, slotComposer, arcMap}) {
@@ -178,7 +178,7 @@ class Arc {
     for (let v of this._views) {
       let clone = await arc._storageProviderFactory.construct(v.id, v.type, 'in-memory');
       await clone.cloneFrom(v);
-      viewMap.set(v, clone);      
+      viewMap.set(v, clone);
     };
     this.particleViewMaps.forEach((value, key) => {
       arc.particleViewMaps.set(key, {
