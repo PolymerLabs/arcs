@@ -30,11 +30,14 @@ export default class DemoBase extends HTMLElement {
   $(selector) {
     return this._root && this._root.querySelector(selector);
   }
+  closeSuggestionsIfNonempty(arc) {
+    // Open the drawer only if the current arc is empty.
+    this.$('[suggestion-container]').open = arc.activeRecipe.particles.length == 0;
+  }
   suggest(arc) {
     if (!arc.makeSuggestions) {
       arc.makeSuggestions = async () => {
-        // Open the drawer only if the current arc is empty.
-        this.$('[suggestion-container]').open = arc.activeRecipe.particles.length == 0;
+        this.closeSuggestionsIfNonempty(arc);
         let planner = new Planner();
         planner.init(arc);
         let generations = [];
@@ -43,8 +46,10 @@ export default class DemoBase extends HTMLElement {
       };
     }
     document.addEventListener('plan-selected', async e => {
+      this.closeSuggestionsIfNonempty(arc);
       let {plan} = e.detail;
       await arc.instantiate(plan);
+      // TODO: Trigger replanning, if handles and/or slots changes haven't triggered it already.
     });
     arc.makeSuggestions();
   }

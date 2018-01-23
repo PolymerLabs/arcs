@@ -70,7 +70,7 @@ class DemoFlow extends DemoBase {
   async didMount() {
     let root = '../../';
     let loader = new BrowserLoader(root);
-    let arc = new Arc({
+    this.arc = new Arc({
       id: 'demo',
       pecFactory: WorkerPecFactory.bind(null, root),
       slotComposer: new SlotComposer({
@@ -79,7 +79,6 @@ class DemoFlow extends DemoBase {
       context: await Manifest.load('browser/demo/recipes.manifest', loader),
       loader,
     });
-    this.arc = arc;
     this.suggest(this.arc);
   }
 }

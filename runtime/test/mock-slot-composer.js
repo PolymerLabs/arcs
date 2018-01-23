@@ -74,7 +74,12 @@ class MockSlotComposer extends SlotComposer {
   thenSend(particleName, slotName, event, data) {
     assert(this.expectQueue.length > 0, 'No expectations');
 
-    this.expectQueue[this.expectQueue.length - 1].then = {particleName, slotName, event, data};
+    let expectations = this.expectQueue[this.expectQueue.length - 1];
+    expectations.then = {particleName, slotName, event, data};
+    if (expectations.length == 0) {
+      this.expectQueue.shift();
+      this.expectationMet(expectations);
+    }
     return this;
   }
 
