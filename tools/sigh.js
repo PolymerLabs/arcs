@@ -127,6 +127,8 @@ function railroad() {
 
     fs.writeFileSync(path.resolve(projectRoot, railroadFile), output);
   }
+
+  return true;
 }
 
 async function lint(args) {
