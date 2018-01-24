@@ -52,9 +52,13 @@
 }
 
 Manifest
-  = eolWhiteSpace? Indent? items:(SameIndent ManifestItem)*
+  = eolWhiteSpace? Indent? items:((SameIndent Annotation eolWhiteSpace)? SameIndent ManifestItem)*
   {
-    let result = items.map(item => item[1]);
+    let result = items.map(item => {
+      let manifestItem = item[2];
+      manifestItem.annotation = optional(item[0], a => a[1], null);
+      return manifestItem;
+    });
     checkNormal(result);
     return result;
   }
@@ -66,6 +70,9 @@ ManifestItem
   / Schema
   / ManifestView
   / Shape
+  / Meta
+
+Annotation = '@' annotation: lowerIdent { return annotation; }
 
 // TODO: Entity syntax.
 ManifestView
@@ -165,6 +172,19 @@ ShapeSlot
     }
   }
 
+Meta
+  = 'meta' eolWhiteSpace items:(Indent (SameIndent MetaItem)*)? eolWhiteSpace?
+{
+  items = items ? extractIndented(items): [];
+  return { kind: 'meta', items: items}
+}
+
+MetaItem = MetaStorageKey / MetaName
+
+MetaName = 'name' whiteSpace? ':' whiteSpace? name:id { return { key: 'name', value: name } }
+
+MetaStorageKey = 'storageKey' whiteSpace? ':' whiteSpace? key:id { return {key: 'storageKey', value: key}};
+
 Particle
   = 'particle' whiteSpace name:TopLevelIdent implFile:(whiteSpace 'in' whiteSpace id)? eolWhiteSpace items:(Indent (SameIndent ParticleItem)*)? eolWhiteSpace?
   {
@@ -177,7 +197,7 @@ Particle
     items.forEach(item => {
       if (item.kind == 'interface') {
         if (/[A-Z]/.test(item.verb[0]) && item.verb != name) {
-          error(`Verb ${item.verb} must start with a lower case character or be same as particle name.`);
+          error(`Verb ${item.verb} must start with a lower case character or be same ass particle name.`);
         }
         verbs.push(item.verb);
         args = item.args;

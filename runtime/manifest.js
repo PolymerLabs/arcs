@@ -19,6 +19,7 @@ import Type from './type.js';
 import util from './recipe/util.js';
 import StorageProviderFactory from './storage/storage-provider-factory.js';
 import scheduler from './scheduler.js';
+import ManifestMeta from './manifest-meta.js';
 
 class Manifest {
   constructor({id}) {
@@ -35,6 +36,7 @@ class Manifest {
     this._id = id;
     this._storageProviderFactory = new StorageProviderFactory(this);
     this._scheduler = scheduler;
+    this._meta = new ManifestMeta();
   }
   get id() {
     return this._id;
@@ -42,6 +44,11 @@ class Manifest {
   get recipes() {
     return [...new Set(this._findAll(manifest => manifest._recipes))];
   }
+
+  get activeRecipe() {
+    return this._recipes.find(recipe => recipe.annotation == 'active');
+  }
+
   get particles() {
     return [...new Set(this._findAll(manifest => Object.values(manifest._particles)))];
   }
@@ -63,6 +70,10 @@ class Manifest {
 
   get shapes() {
     return this._shapes;
+  }
+
+  get meta() {
+    return this._meta;
   }
 
   // TODO: newParticle, Schema, etc.
@@ -226,6 +237,9 @@ ${e.message}
       for (let item of items.filter(item => item.kind == 'recipe')) {
         await this._processRecipe(manifest, item);
       }
+      for (let meta of items.filter(item => item.kind == 'meta')) {
+        manifest._meta.apply(meta.items);
+      }
     } catch (e) {
       throw processError(e);
     }
@@ -319,7 +333,9 @@ ${e.message}
     manifest._shapes.push(shape);
   }
   static async _processRecipe(manifest, recipeItem) {
+    // TODO: annotate other things too
     let recipe = manifest._newRecipe(recipeItem.name);
+    recipe.annotation = recipeItem.annotation;
     let items = {
       views: recipeItem.items.filter(item => item.kind == 'view'),
       byView: new Map(),
