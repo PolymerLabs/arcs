@@ -197,7 +197,7 @@ Particle
     items.forEach(item => {
       if (item.kind == 'interface') {
         if (/[A-Z]/.test(item.verb[0]) && item.verb != name) {
-          error(`Verb ${item.verb} must start with a lower case character or be same ass particle name.`);
+          error(`Verb ${item.verb} must start with a lower case character or be same as particle name.`);
         }
         verbs.push(item.verb);
         args = item.args;
