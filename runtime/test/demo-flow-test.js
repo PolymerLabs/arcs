@@ -67,8 +67,8 @@ describe('demo flow', function() {
       provide set of annotation as slot1
   ProductMultiplexer2 as particle1
     hostedParticle host view4
+    list <- view1
     others <- view0
-    products <- view1
     consume set of annotation as slot2
   Recommend as particle2
     known <- view1
@@ -109,12 +109,12 @@ describe('demo flow', function() {
 
     // Verify next stage suggestions.
     let expectedSuggestions = [
-      'Check manufacturer information for each product in products from your browsing context ' +
+      'Check manufacturer information for products from your browsing context ' +
       '(Minecraft Book plus 2 other items).',
       'Show Claire\'s wishlist (Book: How to Draw plus 2 other items).',
-      'Buy gifts for Claire\'s Birthday on 2017-08-04, estimate arrival date for each product ' +
-      'in products from your browsing context (Minecraft Book plus 2 other items), and estimate ' +
-      'arrival date for each product in products recommended based on products from your ' +
+      'Buy gifts for Claire\'s Birthday on 2017-08-04, estimate arrival date for ' +
+      'products from your browsing context (Minecraft Book plus 2 other items), and estimate ' +
+      'arrival date for products recommended based on products from your ' +
       'browsing context and Claire\'s wishlist (Book: How to Draw plus 2 other items).'
       // TODO: recipe with Interests particle considered "irrelevant",
       // because relevance is updated after speculative execution considered

@@ -17,11 +17,11 @@ defineParticle(({DomParticle}) => {
     }
     async setViews(views) {
       let arc = await this.constructInnerArc();
-      this.on(views, 'products', 'change', async e => {
-        var productsView = views.get('products');
-        var productsList = await productsView.toList();
+      this.on(views, 'list', 'change', async e => {
+        var listHandle = views.get('list');
+        var list = await listHandle.toList();
 
-        if (productsList.length > 0) {
+        if (list.length > 0) {
           this.relevance = 0.1;
         }
 
@@ -29,16 +29,16 @@ defineParticle(({DomParticle}) => {
         let othersMappedId = await arc.mapHandle(othersView._view);
 
         let hostedParticle = await views.get('hostedParticle').get();
-        let productConnName = hostedParticle.connections.find(conn => conn.type.equals(productsView.type.primitiveType())).name;
+        let productConnName = hostedParticle.connections.find(conn => conn.type.equals(listHandle.type.primitiveType())).name;
         let otherConnName = hostedParticle.connections.find(conn => conn.type.equals(othersView.type)).name;
         this.handleByHostedHandle.set(otherConnName, 'others');
 
-        for (let [index, product] of productsList.entries()) {
-          if (this._handleIds.has(product.id)) {
+        for (let [index, item] of list.entries()) {
+          if (this._handleIds.has(item.id)) {
             continue;
           }
-          let productView = await arc.createHandle(productsView.type.primitiveType(), 'product' + index);
-          this._handleIds.add(product.id);
+          let itemView = await arc.createHandle(listHandle.type.primitiveType(), 'item' + index);
+          this._handleIds.add(item.id);
 
           let hostedSlotName = [...hostedParticle.slots.keys()][0];
           let slotName = [...this.spec.slots.values()][0].name;
@@ -47,12 +47,12 @@ defineParticle(({DomParticle}) => {
             continue;
           }
 
-          this.hostedSlotBySlotId.set(slotId, {subId: product.name.replace(/ /g, '').toLowerCase()});
+          this.hostedSlotBySlotId.set(slotId, {subId: item.id});
 
           var recipe = `
             import '${hostedParticle.implFile.replace(/\.[^\.]+$/, '.manifest')}'
             recipe
-              use '${productView._id}' as v1
+              use '${itemView._id}' as v1
               map '${othersMappedId}' as v2
               slot '${slotId}' as s1
               ${hostedParticle.name}
@@ -63,7 +63,7 @@ defineParticle(({DomParticle}) => {
 
           try {
             await arc.loadRecipe(recipe, this);
-            productView.set(product);
+            itemView.set(item);
           } catch (e) {
             console.log(e);
           }

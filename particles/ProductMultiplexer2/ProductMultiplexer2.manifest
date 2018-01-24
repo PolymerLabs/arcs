@@ -6,13 +6,12 @@
 # subject to an additional IP rights grant found at
 # http://polymer.github.io/PATENTS.txt
 
-import '../../entities/Product.manifest'
-
 shape HostedParticleShape
-  HostedParticleShape(in Product, in [~a])
+  HostedParticleShape(in ~a, in [~a])
   consume annotation
 
+# TODO: rename to a generic (non product specific) multiplexer.
 particle ProductMultiplexer2 in 'ProductMultiplexer2.js'
-  ProductMultiplexer2(host HostedParticleShape hostedParticle, in [Product] products, in [~a] others)
+  ProductMultiplexer2(host HostedParticleShape hostedParticle, in [~a] list, in [~a] others)
   consume set of annotation
-  description `${hostedParticle} for each product in ${products}`
+  description `${hostedParticle} for ${list}`
