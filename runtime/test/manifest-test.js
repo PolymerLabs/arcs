@@ -22,26 +22,6 @@ async function assertRecipeParses(input, result) {
 }
 
 describe('manifest', function() {
-  it('duplicate consume slot', async () => {
-    let manifest = await Manifest.parse(`
-      particle SomeParticle in 'some-particle.js'
-        work()
-        consume slotA
-        consume slotB
-      particle SomeParticle1 in 'some-particle.js'
-        rest()
-        consume slotC
-
-      recipe
-        SomeParticle
-          consume slotA
-        SomeParticle1
-          consume slotC
-    `);
-    let recipe = manifest.recipes[0];
-    assert(recipe);
-  });
-
   it('can parse a manifest containing a recipe', async () => {
     let manifest = await Manifest.parse(`
       schema S
@@ -453,6 +433,24 @@ describe('manifest', function() {
     };
     verify(manifest);
     verify(await Manifest.parse(manifest.toString()));
+  });
+  it.only('unnamed consume slots', async () => {
+    let manifest = await Manifest.parse(`
+      particle SomeParticle in 'some-particle.js'
+        work()
+        consume slotA
+      particle SomeParticle1 in 'some-particle.js'
+        rest()
+        consume slotC
+
+      recipe
+        SomeParticle
+          consume slotA
+        SomeParticle1
+          consume slotC
+    `);
+    let recipe = manifest.recipes[0];
+    assert.equal(2, recipe.slots.length);
   });
   it('relies on the loader to combine paths', async () => {
     let registry = {};
