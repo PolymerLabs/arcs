@@ -60,4 +60,13 @@ describe('Arc', function() {
     await util.assertSingletonWillChangeTo(barView, Bar, 'a Foo1');
   });
 
+  it.only('deserializing a serialized empty arc produces an empty arc', async () => {
+    let arc = new Arc({slotComposer, loader, id: 'test'});
+    let serialization = arc.serialize();
+    let newArc = await Arc.deserialize({serialization, loader, slotComposer});
+    assert(newArc._viewsById.size == 0);
+    assert(newArc.activeRecipe.toString() == arc.activeRecipe.toString());
+    assert(newArc.id == 'test');
+  });
+
 });

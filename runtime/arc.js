@@ -91,37 +91,21 @@ class Arc {
     this._scheduler.idleCallack = callback;
   }
 
-  static deserialize({serialization, pecFactory, slotComposer, arcMap}) {
-    var entityMap = {};
-    var viewMap = {};
-    serialization.entities.forEach(e => entityMap[e.id] = e);
-    var arc = new Arc({id: serialization.id, slotComposer});
-    for (var serializedView of serialization.views) {
-      if (serializedView.arc) {
-        var view = arcMap.get(serializedView.arc).findViewById(serializedView.id);
-        arc.mapView(view);
-      } else {
-        // TODO add a separate deserialize constructor for view?
-        var view = arc.createView(new Type(serializedView.type.tag, serializedView.type.data), serializedView.name, serializedView.id);
-        view._version = serializedView.version;
+  serialize() {
+    return `
+meta
+  name: '${this.id}'
 
-        if (serializedView.sort == 'view') {
-          var values = serializedView.values.map(a => entityMap[a]);
-          values.forEach(v => view._items.set(v.id, v));
-        } else {
-          var value = entityMap[serializedView.value];
-          view._stored = value;
-        }
-      }
-      viewMap[view.id] = view;
-      arc._lastSeenVersion.set(view.id, serializedView.version);
-    }
-    for (var serializedParticle of serialization.particles) {
-      var particleId = arc._instantiateParticle(serializedParticle.name);
-      for (var name in serializedParticle.views) {
-        arc._connectParticleToView(particleId, serializedParticle, name, viewMap[serializedParticle.views[name]]);
-      }
-    }
+@active
+${this.activeRecipe.toString()}`;
+  }
+
+  static async deserialize({serialization, pecFactory, slotComposer, loader}) {
+    let manifest = await Manifest.parse(serialization, {loader});
+    var arc = new Arc({id: manifest.meta.name, slotComposer, pecFactory, loader});
+    var recipe = manifest.activeRecipe.clone();
+    recipe.normalize();
+    arc.instantiate(recipe);
     return arc;
   }
 
@@ -233,39 +217,6 @@ class Arc {
       arc._registerView(v, []);
     }
     return arc;
-  }
-
-  serialize() {
-    var s = {views: [], particles: [], id: this.id};
-
-    // 1. serialize entities
-    var entities = new Set();
-    for (var view of this._views)
-      view.extractEntities(entities);
-
-    s.entities = [...entities.values()];
-
-    // 2. serialize views
-    for (var view of this._views) {
-      if (view._arc !== this) {
-        view.serializeMappingRecord(s.views);
-      } else {
-        view.serialize(s.views);
-      }
-    }
-
-    // 3. serialize particles
-    for (var particle of this.particleViewMaps.values()) {
-      if (particle.spec.transient)
-        continue;
-      var name = particle.spec.name;
-      var serializedParticle = {name, views: {}};
-      for (let [key, value] of particle.views) {
-        serializedParticle.views[key] = value.id;
-      }
-      s.particles.push(serializedParticle);
-    }
-    return s;
   }
 
   async instantiate(recipe, innerArc) {
