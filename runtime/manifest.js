@@ -537,6 +537,19 @@ ${e.message}
       }
 
       for (let slotConnectionItem of item.slotConnections) {
+        // Validate consumed and provided slots names are according to spec.
+        if (!particle.spec.slots.has(slotConnectionItem.param)) {
+          let error = new Error(`Consumed slot '${slotConnectionItem.param}' is not defined by '${particle.name}'`);
+          error.location = slotConnectionItem.location;
+          throw error;
+        }
+        slotConnectionItem.providedSlots.forEach(ps => {
+          if (!particle.spec.slots.get(slotConnectionItem.param).providedSlots.find(specPs => specPs.name == ps.param)) {
+            let error = new Error(`Provided slot '${ps.param}' is not defined by '${particle.name}'`);
+            error.location = ps.location;
+            throw error;
+          }
+        });
         let targetSlot = items.byName.get(slotConnectionItem.name);
         if (targetSlot) {
           assert(items.bySlot.has(targetSlot));

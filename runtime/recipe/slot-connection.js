@@ -131,9 +131,6 @@ class SlotConnection {
   toString(nameMap, options) {
     let consumeRes = [];
     consumeRes.push('consume');
-    if (this.slotSpec.isSet) {
-      consumeRes.push('set of');
-    }
     consumeRes.push(`${this.name}`);
     if (this.targetSlot)
       consumeRes.push(`as ${(nameMap && nameMap.get(this.targetSlot)) || this.targetSlot.localName}`);
@@ -153,9 +150,6 @@ class SlotConnection {
       provideRes.push('  provide');
       let providedSlotSpec = this.slotSpec.providedSlots.find(ps => ps.name == psName);
       assert(providedSlotSpec, `Cannot find providedSlotSpec for ${psName}`);
-      if (providedSlotSpec.isSet) {
-        provideRes.push('set of');
-      }
       provideRes.push(`${psName} as ${(nameMap && nameMap.get(providedSlot)) || providedSlot}`);
       result.push(provideRes.join(' '));
     });
