@@ -257,6 +257,7 @@ ${this.activeRecipe.toString()}`;
       let storageKey = recipeView.storageKey;
       if (!storageKey)
         storageKey = this.keyForId(recipeView.id);
+      assert(storageKey, `couldn't find storage key for view '${recipeView}'`);
       let view = await this._storageProviderFactory.connect(recipeView.id, recipeView.type, storageKey);
       assert(view, `view '${recipeView.id}' was not found`);
     }
