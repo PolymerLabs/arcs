@@ -64,12 +64,12 @@ describe('demo flow', function() {
     choices <- view0
     resultList = view1
     consume action as slot0
-      provide set of annotation as slot1
+      provide annotation as slot1
   ProductMultiplexer2 as particle1
     hostedParticle host view4
     list <- view1
     others <- view0
-    consume set of annotation as slot2
+    consume annotation as slot2
   Recommend as particle2
     known <- view1
     population <- view2
@@ -79,7 +79,7 @@ describe('demo flow', function() {
     list <- view1
     consume root as slot3
       provide action as slot0
-      provide set of annotation as slot2
+      provide annotation as slot2
       provide postamble as slot4
       provide preamble as slot5`;
     let {plan, description} = plans.find(p => p.plan.toString() == expectedPlanString);

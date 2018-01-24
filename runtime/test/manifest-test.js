@@ -568,7 +568,7 @@ Expected " ", "#", "\\n", "\\r", [ ], [A-Z], or [a-z] but "?" found.
   });
 
   it('errors when the manifest connects a particle incorrectly', async () => {
-    let manifestSource = `
+    let manifest = `
         schema Thing
         particle TestParticle in 'tp.js'
           TestParticle(in Thing iny, out Thing outy, inout Thing inouty)
@@ -578,19 +578,8 @@ Expected " ", "#", "\\n", "\\r", [ ], [A-Z], or [a-z] but "?" found.
             iny -> x
             outy -> x
             inouty -> x`;
-    let loader = {
-      loadResource(path) {
-        return manifestSource;
-      },
-      path(fileName) {
-        return fileName;
-      },
-      join(path, file) {
-        return file;
-      },
-    };
     try {
-      await Manifest.load('...', loader);
+      await Manifest.parse(manifest);
       assert.fail();
     } catch (e) {
       assert.match(e.message, /'->' not compatible with 'in' param of 'TestParticle'/);
@@ -598,7 +587,7 @@ Expected " ", "#", "\\n", "\\r", [ ], [A-Z], or [a-z] but "?" found.
   });
 
   it('errors when the manifest referencs a missing particle param', async () => {
-    let manifestSource = `
+    let manifest = `
         schema Thing
         particle TestParticle in 'tp.js'
           TestParticle(in Thing a)
@@ -607,22 +596,45 @@ Expected " ", "#", "\\n", "\\r", [ ], [A-Z], or [a-z] but "?" found.
           TestParticle
             a = x
             b = x`;
-    let loader = {
-      loadResource(path) {
-        return manifestSource;
-      },
-      path(fileName) {
-        return fileName;
-      },
-      join(path, file) {
-        return file;
-      },
-    };
     try {
-      await Manifest.load('...', loader);
+      await Manifest.parse(manifest);
       assert.fail();
     } catch (e) {
       assert.match(e.message, /param 'b' is not defined by 'TestParticle'/);
+    }
+  });
+
+  it('errors when the manifest referencs a missing consumed slot', async () => {
+    let manifest = `
+        particle TestParticle in 'tp.js'
+          TestParticle()
+          consume root
+        recipe
+          TestParticle
+            consume other`;
+    try {
+      await Manifest.parse(manifest);
+      assert.fail();
+    } catch (e) {
+      assert.match(e.message, /Consumed slot 'other' is not defined by 'TestParticle'/);
+    }
+  });
+
+  it('errors when the manifest referencs a missing provided slot', async () => {
+    let manifest = `
+        particle TestParticle in 'tp.js'
+          TestParticle()
+          consume root
+            provide action
+        recipe
+          TestParticle
+            consume root
+              provide noAction`;
+    try {
+      await Manifest.parse(manifest);
+      assert.fail();
+    } catch (e) {
+      assert.match(e.message, /Provided slot 'noAction' is not defined by 'TestParticle'/);
     }
   });
 
