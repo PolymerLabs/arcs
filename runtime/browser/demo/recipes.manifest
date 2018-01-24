@@ -29,7 +29,7 @@ recipe
   #Chooser.resultList -> ManageProducts.list
   Chooser.resultList -> ShowProducts.list
   Chooser.resultList -> Recommend.known
-  Chooser.resultList -> ProductMultiplexer2.products
+  Chooser.resultList -> ProductMultiplexer2.list
   Chooser.choices -> ProductMultiplexer2.others
   map #wishlist as wishlist
   copy #shortlist as shortlist
@@ -45,6 +45,9 @@ recipe
   ProductMultiplexer2
     hostedParticle = AlsoOn
     consume annotation as slot1
+#  ProductMultiplexer
+#    list <- shortlist
+#    hostedParticle = Arrivinator
 
 # Buying for [person]'s [occasion] in [timeframe]? Product [X] arrives too late.
 recipe
@@ -54,17 +57,17 @@ recipe
   GiftList
     person <- view1
   ProductMultiplexer
-    products <- view2
+    list <- view2
     hostedParticle = Arrivinator
   ProductMultiplexer
-    products <- view3
+    list <- view3
     hostedParticle = Arrivinator
 
 # Check manufacturer information for products.
 recipe
   use #shortlist as shortlist
   ProductMultiplexer
-    products <- shortlist
+    list <- shortlist
     hostedParticle <- ManufacturerInfo
 
 # TODO: Check for newer versions, e.g. there is a new version of [product].

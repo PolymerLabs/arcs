@@ -103,7 +103,7 @@ defineParticle(({DomParticle, resolver}) => {
         <img src="{{image}}">
       </div>
     </div>
-    <div slotid="annotation" subid$="{{subId}}">
+    <div slotid="annotation" subid="{{subId}}">
     </div>
   </div>
 </template>
@@ -134,11 +134,11 @@ ${productStyles}
       return template;
     }
     _willReceiveProps(props) {
-      let items = props.list.map(({rawData}, i) => {
+      let items = props.list.map(value => {
         // TODO(sjmiles): rawData provides POJO access, but shortcuts schema-enforcing getters
-        let item = Object.assign({}, rawData);
+        let item = Object.assign({}, value.rawData);
         item.image = resolver ? resolver(item.image) : item.image;
-        item.subId = item.name.replace(/ /g, '').toLowerCase();
+        item.subId = value.id;
         return item;
       });
 

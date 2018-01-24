@@ -12,8 +12,9 @@ shape HostedParticleShape
   HostedParticleShape(in Product)
   consume annotation
 
+# TODO: rename to a generic (non product specific) multiplexer.
 # TODO: This particle should use generic handle type and slot name.
 particle ProductMultiplexer in 'ProductMultiplexer.js'
-  ProductMultiplexer(host HostedParticleShape hostedParticle, in [Product] products)
+  ProductMultiplexer(host HostedParticleShape hostedParticle, in [Product] list)
   consume set of annotation
-  description `${hostedParticle} for each product in ${products}`
+  description `${hostedParticle} for ${list}`

@@ -13,7 +13,7 @@
 defineParticle(({DomParticle}) => {
 
   let template = `
-    <div style%="{{style}}" id="{{subId}}"><span>{{arrival}}</span></div>
+    <div style%="{{style}}"><span>{{arrival}}</span></div>
     `.trim();
 
   let daysToMs = 24*60*60*1000;

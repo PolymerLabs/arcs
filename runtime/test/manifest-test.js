@@ -434,7 +434,7 @@ describe('manifest', function() {
     verify(manifest);
     verify(await Manifest.parse(manifest.toString()));
   });
-  it.only('unnamed consume slots', async () => {
+  it('unnamed consume slots', async () => {
     let manifest = await Manifest.parse(`
       particle SomeParticle in 'some-particle.js'
         work()
