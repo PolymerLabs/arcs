@@ -68,16 +68,16 @@ ManifestItem
   / Particle
   / Import
   / Schema
-  / ManifestView
+  / ManifestHandle
   / Shape
   / Meta
 
 Annotation = '@' annotation: lowerIdent { return annotation; }
 
 // TODO: Entity syntax.
-ManifestView
+ManifestHandle
   = 'view' whiteSpace name:TopLevelIdent whiteSpace 'of' whiteSpace type:(SchemaInline / ListType / ReferenceType) id:(whiteSpace id)? version:(whiteSpace Version)? tags:(whiteSpace TagList)? whiteSpace 'in' whiteSpace source:id eolWhiteSpace
-    items:(Indent (SameIndent ManifestViewItem)+)?
+    items:(Indent (SameIndent ManifestHandleItem)+)?
   {
     items = optional(items, extractIndented, []);
     return {
@@ -93,10 +93,10 @@ ManifestView
     };
   }
 
-ManifestViewItem
-  = ManifestViewDescription
+ManifestHandleItem
+  = ManifestHandleDescription
 
-ManifestViewDescription
+ManifestHandleDescription
   = 'description' whiteSpace backquotedString eolWhiteSpace
 
 Import
