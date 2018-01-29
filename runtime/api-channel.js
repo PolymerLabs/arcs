@@ -235,6 +235,9 @@ class APIPort {
       var call = {messageType: name, messageBody: this._processArguments(argumentTypes, args)};
       call.messageBody.identifier = this._mapper.createMappingForThing(thing);
       this._port.postMessage(call);
+      if (this._debugChannel && this._debugChannel[name]) {
+        this._debugChannel[name](thing, args);
+      }
     };
   }
 

@@ -38,7 +38,7 @@ function restore(entry, entityClass) {
  * Base class for Views and Variables.
  */
 class Handle {
-  constructor(view, canRead, canWrite, particleId) {
+  constructor(view, particleId, canRead, canWrite) {
     this._view = view;
     this.canRead = canRead;
     this.canWrite = canWrite;
@@ -110,9 +110,9 @@ class Handle {
  * connected.
  */
 class Collection extends Handle {
-  constructor(view, canRead, canWrite, particleId) {
+  constructor(view, particleId, canRead, canWrite) {
     // TODO: this should talk to an API inside the PEC.
-    super(view, canRead, canWrite, particleId);
+    super(view, particleId, canRead, canWrite);
   }
   query() {
     // TODO: things
@@ -206,10 +206,10 @@ class Variable extends Handle {
   }
 }
 
-function handleFor(view, isSet, canRead = true, canWrite = true, particleId) {
+function handleFor(view, isSet, particleId, canRead = true, canWrite = true) {
   return (isSet || (isSet == undefined && view.type.isSetView))
-      ? new Collection(view, canRead, canWrite, particleId)
-      : new Variable(view, canRead, canWrite, particleId);
+      ? new Collection(view, particleId, canRead, canWrite)
+      : new Variable(view, particleId, canRead, canWrite);
 }
 
 export default {handleFor};
