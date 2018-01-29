@@ -215,9 +215,15 @@ Meta
 
 MetaItem = MetaStorageKey / MetaName
 
-MetaName = 'name' whiteSpace? ':' whiteSpace? name:id { return { key: 'name', value: name, location: location(), kind: 'name' } }
+MetaName = 'name' whiteSpace? ':' whiteSpace? name:id eolWhiteSpace
+{
+  return { key: 'name', value: name, location: location(), kind: 'name' }
+}
 
-MetaStorageKey = 'storageKey' whiteSpace? ':' whiteSpace? key:id { return {key: 'storageKey', value: key}};
+MetaStorageKey = 'storageKey' whiteSpace? ':' whiteSpace? key:id eolWhiteSpace
+{
+  return {key: 'storageKey', value: key, location: location(), kind: 'storageKey' }
+};
 
 Particle
   = 'particle' whiteSpace name:TopLevelIdent implFile:(whiteSpace 'in' whiteSpace id)? eolWhiteSpace items:(Indent (SameIndent ParticleItem)*)? eolWhiteSpace?

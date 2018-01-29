@@ -149,30 +149,8 @@ class InMemoryCollection extends InMemoryStorageProvider {
   // TODO: Something about iterators??
   // TODO: Something about changing order?
 
-  extractEntities(set) {
-    this._items.forEach(a => set.add(a));
-  }
-
-  serialize(list) {
-    list.push({
-      id: this.id,
-      sort: 'view',
-      type: this.type.toLiteral(),
-      name: this.name,
-      values: this.toList().map(a => a.id),
-      version: this._version
-    });
-  }
-
-  serializeMappingRecord(list) {
-    list.push({
-      id: this.id,
-      sort: 'view',
-      type: this.type.toLiteral(),
-      name: this.name,
-      version: this._version,
-      arc: this._arcId
-    });
+  serializedData() {
+    return this.toList();
   }
 }
 
@@ -216,34 +194,7 @@ class InMemoryVariable extends InMemoryStorageProvider {
     this.set(undefined);
   }
 
-  extractEntities(set) {
-    if (!this._stored) {
-      return;
-    }
-    set.add(this._stored);
-  }
-
-  serialize(list) {
-    if (this._stored == undefined)
-      return;
-    list.push({
-      id: this.id,
-      sort: 'variable',
-      type: this.type.toLiteral(),
-      name: this.name,
-      value: this._stored.id,
-      version: this._version
-    });
-  }
-
-  serializeMappingRecord(list) {
-    list.push({
-      id: this.id,
-      sort: 'variable',
-      type: this.type.toLiteral(),
-      name: this.name,
-      version: this._version,
-      arc: this._arcId
-    });
+  serializedData() {
+    return [this._stored];
   }
 }
