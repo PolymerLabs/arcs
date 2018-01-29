@@ -212,7 +212,7 @@ class InnerPEC {
       createHandle: function(type, name) {
         return new Promise((resolve, reject) =>
           pec._apiPort.ArcCreateHandle({arc: arcId, type, name, callback: proxy => {
-            var v = handle.handleFor(proxy, proxy.type.isSetView, true, true, particleId);
+            var v = handle.handleFor(proxy, proxy.type.isSetView, particleId);
             v.entityClass = (proxy.type.isSetView ? proxy.type.primitiveType().entitySchema : proxy.type.entitySchema).entityClass();
             resolve(v);
           }}));
@@ -265,7 +265,7 @@ class InnerPEC {
 
     var handleMap = new Map();
     proxies.forEach((value, key) => {
-      handleMap.set(key, handle.handleFor(value, value.type.isSetView, spec.connectionMap.get(key).isInput, spec.connectionMap.get(key).isOutput, id));
+      handleMap.set(key, handle.handleFor(value, value.type.isSetView, id, spec.connectionMap.get(key).isInput, spec.connectionMap.get(key).isOutput));
     });
 
     for (let localHandle of handleMap.values()) {
