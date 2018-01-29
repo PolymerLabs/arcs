@@ -76,7 +76,8 @@ Annotation = '@' annotation: lowerIdent { return annotation; }
 
 // TODO: Entity syntax.
 ManifestHandle
-  = 'view' whiteSpace name:TopLevelIdent whiteSpace 'of' whiteSpace type:(SchemaInline / ListType / ReferenceType) id:(whiteSpace id)? version:(whiteSpace Version)? tags:(whiteSpace TagList)? whiteSpace 'in' whiteSpace source:id eolWhiteSpace
+  = 'view' whiteSpace name:TopLevelIdent whiteSpace 'of' whiteSpace type:(SchemaInline / ListType / ReferenceType) id:(whiteSpace id)? 
+    version:(whiteSpace Version)? tags:(whiteSpace TagList)? whiteSpace source:ManifestHandleSource eolWhiteSpace
     items:(Indent (SameIndent ManifestHandleItem)+)?
   {
     items = optional(items, extractIndented, []);
@@ -88,10 +89,20 @@ ManifestHandle
       id: optional(id, id => id[1], null),
       version: optional(version, version => version[1], null),
       tags: optional(tags, tags => tags[1], null),
-      source,
+      source: source.source,
+      location: source.location,
       description: items.length > 0 ? items[0][2] : null
     };
   }
+
+ManifestHandleSource
+  = ManifestHandleFileSource / ManifestHandleStorageSource
+  
+ManifestHandleFileSource
+  = 'in' whiteSpace source:id { return {location: 'file', source }; }
+
+ManifestHandleStorageSource
+  = 'at' whiteSpace source:id { return {location: 'storage', source }; }
 
 ManifestHandleItem
   = ManifestHandleDescription
