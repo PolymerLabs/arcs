@@ -410,6 +410,9 @@ ${e.message}
       let ref = item.ref || {tags: []};
       if (ref.id) {
         view.id = ref.id;
+        let targetView = manifest.findHandleById(view.id);
+        if (targetView)
+          view.mapToView(targetView);
       } else if (ref.name) {
         let targetView = manifest.findViewByName(ref.name);
         // TODO: Error handling.
@@ -655,21 +658,28 @@ ${e.message}
       json = await loader.loadResource(source);
     } else if (item.origin == 'resource') {
       json = manifest.resources[item.source];
+      if (json == undefined)
+        throw new Error(`Resource ${item.source} referenced by view ${id} is not defined in this manifest`);
     }
     let entities = JSON.parse(json);
     for (let entity of entities) {
-      let id = entity.$id || manifest.generateID();
-      delete entity.$id;
-      if (type.isSetView) {
+      if (entity == null && !type.isSetView) {
+        view.clear();
+      } else {
+        let id = entity.$id || manifest.generateID();
+        delete entity.$id;
+      
+        if (type.isSetView) {
         view.store({
           id,
           rawData: entity,
         });
-      } else {
-        view.set({
-          id,
-          rawData: entity,
-        });
+        } else {
+          view.set({
+            id,
+            rawData: entity,
+          });
+        }
       }
     }
   }

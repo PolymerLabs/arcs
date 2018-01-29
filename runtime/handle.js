@@ -39,6 +39,7 @@ function restore(entry, entityClass) {
  */
 class Handle {
   constructor(view, particleId, canRead, canWrite) {
+    assert(!(view instanceof Handle));
     this._view = view;
     this.canRead = canRead;
     this.canWrite = canWrite;

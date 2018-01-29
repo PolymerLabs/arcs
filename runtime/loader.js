@@ -30,6 +30,9 @@ class Loader {
   join(prefix, path) {
     if (/^https?:\/\//.test(path))
       return path;
+    // TODO: replace this with something that isn't hacky
+    if (path[0] == '/' || path[1] == ':')
+      return path;
     prefix = this.path(prefix);
     return prefix + path;
   }

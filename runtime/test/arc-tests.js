@@ -20,14 +20,14 @@ let loader = new Loader();
 
 async function setup() {
   let manifest = await Manifest.parse(`
-    import './particles/test/test-particles.manifest'
+    import 'particles/test/test-particles.manifest'
     recipe TestRecipe
       use 'test:1' as view0
       use 'test:2' as view1
       TestParticle
         foo <- view0
         bar -> view1
-  `, {loader, fileName: './'});
+  `, {loader, fileName: process.cwd() + '/input.manifest'});
   return {
     recipe: manifest.recipes[0],
     Foo: manifest.findSchemaByName('Foo').entityClass(),
@@ -69,4 +69,18 @@ describe('Arc', function() {
     assert(newArc.id == 'test');
   });
 
+  it('deserializing a simple serialized arc produces that arc', async () => {
+    let {recipe, Foo, Bar} = await setup();
+    let arc = new Arc({slotComposer, loader, id: 'test'});
+    let fooView = await arc.createHandle(Foo.type);
+    handle.handleFor(fooView).set(new Foo({value: 'a Foo'}));
+    let barView = await arc.createHandle(Bar.type);
+    recipe.normalize();
+    await arc.instantiate(recipe);
+
+    let serialization = arc.serialize();
+    let newArc = await Arc.deserialize({serialization, loader, slotComposer});
+    await util.assertSingletonWillChangeTo(barView, Bar, 'a Foo1');
+    
+  });
 });

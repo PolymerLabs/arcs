@@ -26,7 +26,7 @@ import scheduler from './scheduler.js';
 import {registerArc} from '../devtools/shared/arc-registry.js';
 
 class Arc {
-  constructor({id, context, pecFactory, slotComposer, loader, storageKey}) {
+  constructor({id, context, pecFactory, slotComposer, loader, storageKey, storageProviderFactory}) {
     // TODO: context should not be optional.
     this._context = context || new Manifest({id});
     // TODO: pecFactory should not be optional. update all callers and fix here.
@@ -58,7 +58,7 @@ class Arc {
     if (slotComposer) {
       slotComposer.arc = this;
     }
-    this._storageProviderFactory = new StorageProviderFactory(this.id);
+    this._storageProviderFactory = storageProviderFactory || new StorageProviderFactory(this.id);
 
     // Dictionary from each tag string to a list of handles
     this._tags = {};
@@ -96,10 +96,66 @@ class Arc {
     this._scheduler.idleCallback = callback;
   }
 
+  _serializeHandles() {
+    let schemas = '';
+    let handles = '';
+    let resources = '';
+
+    let id = 0;
+    let schemaSet = new Set();
+    this._handlesById.forEach(handle => {
+      let schema = handle.type;
+      if (schema.isSetView)
+        schema = schema.primitiveType;
+      if (schema.isEntity) {
+        schema = schema.entitySchema.toString();
+        if (!schemaSet.has(schema)) {
+          schemaSet.add(schema);
+          schemas += schema + '\n';
+        }
+      }
+      let key = this._storageProviderFactory.parseStringAsKey(handle.storageKey);
+      switch (key.protocol) {
+        case 'firebase':
+          handles += `view View${id++} of ${handle.type.toString()} '${handle.id}' @0 at '${handle.storageKey}'\n`;
+          return;
+        case 'in-memory':
+          resources += `resource View${id}Resource\n`;
+          let indent = '  ';
+          resources += indent + 'start\n';
+          let serializedData = handle.serializedData().map(a => {
+            if (a == null)
+              return null;
+            let result = {};
+            result.$id = a.id;
+            for (let field in a.rawData) {
+              result[field] = a.rawData[field];
+            }
+            return result;
+          });
+          let data = JSON.stringify(serializedData);
+          resources += data.split('\n').map(line => indent + line).join('\n');
+          resources += '\n';
+          handles += `view View${id} of ${handle.type.toString()} '${handle.id}' @0 in View${id++}Resource\n`;
+          return;
+      }
+    });
+    return resources + schemas + handles;
+  }
+
+  _serializeParticles() {
+    return [...this.particleHandleMaps.values()].map(entry => entry.spec.toString()).join('\n');
+  }
+
   serialize() {
     return `
 meta
   name: '${this.id}'
+  storageKey: '${this._storageKey}'
+
+${this._serializeHandles()}
+
+${this._serializeParticles()}
 
 @active
 ${this.activeRecipe.toString()}`;
@@ -107,7 +163,16 @@ ${this.activeRecipe.toString()}`;
 
   static async deserialize({serialization, pecFactory, slotComposer, loader}) {
     let manifest = await Manifest.parse(serialization, {loader});
-    let arc = new Arc({id: manifest.meta.name, slotComposer, pecFactory, loader});
+    let arc = new Arc({
+      id: manifest.meta.name,
+      storageKey: manifest.meta.storageKey,
+      slotComposer,
+      pecFactory,
+      loader,
+      storageProviderFactory: manifest._storageProviderFactory
+    });
+    // TODO: pass tags through too
+    manifest.views.forEach(view => arc._registerHandle(view, []));
     let recipe = manifest.activeRecipe.clone();
     recipe.normalize();
     arc.instantiate(recipe);
@@ -258,6 +323,7 @@ ${this.activeRecipe.toString()}`;
         recipeView.storageKey = view.storageKey;
         // TODO: move the call to OuterPEC's DefineView to here
       }
+      
       let storageKey = recipeView.storageKey;
       if (!storageKey)
         storageKey = this.keyForId(recipeView.id);
