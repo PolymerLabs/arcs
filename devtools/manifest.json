@@ -1,0 +1,20 @@
+{
+  "name" : "Arcs debugging extension",
+  "version" : "0.1",
+  "description" : "Helps debug Arcs particles.",
+  "devtools_page": "src/devtools.html",
+  "background" : {
+    "scripts": ["src/background.js"]
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["src/contentScript.js"],
+      "run_at": "document_start",
+      "all_frames": true
+    }
+  ],
+  "permissions": ["<all_urls>", "activeTab", "webNavigation"],
+  "web_accessible_resources" : ["src/initDebug.js"],
+  "manifest_version": 2
+}

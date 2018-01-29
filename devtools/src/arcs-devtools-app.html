@@ -1,0 +1,95 @@
+<link rel="import" href="../bower_components/app-layout/app-drawer/app-drawer.html">
+<link rel="import" href="../bower_components/app-layout/app-drawer-layout/app-drawer-layout.html">
+<link rel="import" href="../bower_components/iron-icons/iron-icons.html">
+<link rel="import" href="../bower_components/iron-pages/iron-pages.html">
+<link rel="import" href="../bower_components/iron-selector/iron-selector.html">
+<link rel="import" href="../bower_components/neon-animation/web-animations.html">
+<link rel="import" href="../bower_components/paper-dropdown-menu/paper-dropdown-menu.html">
+<link rel="import" href="../bower_components/paper-item/paper-item.html">
+<link rel="import" href="../bower_components/paper-listbox/paper-listbox.html">
+<link rel="import" href="../bower_components/polymer/polymer-element.html">
+
+<link rel="import" href="arcs-inspector.html">
+<link rel="import" href="arcs-dataflow.html">
+<link rel="import" href="arcs-strategy-explorer.html">
+
+<dom-module id="arcs-devtools-app">
+  <template>
+    <style>
+      :host {
+        --app-drawer-width: 200px;
+        --app-drawer-content-container: {
+          background-color: #f3f3f3;
+          border-right: 1px solid #888;
+          box-sizing: border-box;
+        }
+        display: block;
+      }
+      .drawer-list {
+        margin: 0 10px;
+      }
+      .drawer-list a {
+        display: block;
+        padding: 0 16px;
+        text-decoration: none;
+        line-height: 20px;
+        color: rgb(90, 90, 90);
+        font-size: 12px;
+      }
+      .drawer-list a.iron-selected {
+        color: #fff;
+        background-color: rgb(56, 121, 217);
+      }
+      .drawer-list a iron-icon {
+        margin-right: 3px;
+      }
+    </style>
+    <app-drawer-layout>
+      <app-drawer slot="drawer" persistent opened="true">
+        <iron-selector selected="{{page}}" attr-for-selected="name" class="drawer-list" role="navigation">
+          <a name="inspector" href="javascript:void(0)"><iron-icon icon="search"></iron-icon>Inspector</a>
+          <a name="dataflow" href="javascript:void(0)"><iron-icon icon="swap-horiz"></iron-icon>Dataflow</a>
+          <a name="strategyExplorer" href="javascript:void();"><iron-icon icon="settings-applications"></iron-icon>Strategy Explorer</a>
+        </iron-selector>
+      </app-drawer>
+      <iron-pages selected="[[page]]" attr-for-selected="name" role="main">
+        <arcs-inspector name="inspector"></arcs-inspector>
+        <arcs-dataflow id="dataflow" name="dataflow"></arcs-dataflow>
+        <arcs-strategy-explorer name="strategyExplorer"></arcs-strategy-explorer>
+      </iron-pages>
+    </app-drawer-layout>
+  </template>
+
+  <script>
+    class ArcsDevtoolsApp extends Polymer.Element {
+      static get is() { return 'arcs-devtools-app'; }
+
+      constructor() {
+        super();
+        this.page = 'dataflow';
+        this.backgroundPageConnection = chrome.runtime.connect({
+            name: 'arcs'
+        });
+
+        this.backgroundPageConnection.postMessage({
+            name: 'init',
+            tabId: chrome.devtools.inspectedWindow.tabId
+        });
+
+        this.backgroundPageConnection.onMessage.addListener(e => {
+          // TODO: Smarter message channel to sub-components.
+          switch (e.message) {
+            case 'arcs-message':
+              this.$.dataflow.handleEvents(e.request);
+              break;
+            case 'page-refresh':
+              this.$.dataflow.clear();
+              break;
+          }
+        });
+      }
+    }
+
+    window.customElements.define(ArcsDevtoolsApp.is, ArcsDevtoolsApp);
+  </script>
+</dom-module>
