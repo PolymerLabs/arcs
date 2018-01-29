@@ -1,0 +1,14 @@
+{
+  "entrypoint": "src/index.html",
+  "lint": {
+    "rules": [
+      "polymer-2"
+    ]
+  },
+  "builds": [{
+    "name": "bundled",
+    "bundle": {
+      "sourcemaps": true
+    }
+  }]
+}

@@ -32,6 +32,7 @@ const steps = {
   railroad: [railroad],
   test: [peg, railroad, test],
   webpack: [peg, railroad, webpack],
+  devtools: [devtools],
   watch: [watch],
   lint: [lint],
   default: [peg, railroad, test, webpack, lint],
@@ -108,14 +109,14 @@ function railroad() {
           references: ref.references
         };
       });
-    
+
       return {
         name,
         rules
       };
     });
 
-    var style = fs.readFileSync(path.resolve(projectRoot, path.join('node_modules', 'grammkit', 'app', 'diagram.css')), 'utf-8') + '\n' + 
+    var style = fs.readFileSync(path.resolve(projectRoot, path.join('node_modules', 'grammkit', 'app', 'diagram.css')), 'utf-8') + '\n' +
                 fs.readFileSync(path.resolve(projectRoot, path.join('node_modules', 'grammkit', 'app', 'app.css')), 'utf-8');
     var data = {
         title: `Railroad diagram for ${grammarFile}`,
@@ -132,14 +133,14 @@ function railroad() {
 }
 
 async function lint(args) {
-  upgradeFunctionality(String, output);  
+  upgradeFunctionality(String, output);
   let options = minimist(args, {
     boolean: ['fix'],
   });
   let extra = [];
   if (options.fix) {
     extra.push('--fix');
-  } 
+  }
   let jsSources = findProjectFiles(process.cwd(), fullPath => /\.js$/.test(fullPath));
   var result = spawn(path.normalize('./node_modules/.bin/eslint'), [
     ...extra,
@@ -207,6 +208,18 @@ async function webpack() {
   return true;
 }
 
+async function devtools() {
+  // TODO: To speed up the development we should invoke crisper for each file
+  //       separately without bundling and then watch for updates.
+  // Crisper needed to separate JS and HTML to satisfy CSP restriction for extensions.
+  return spawn(path.normalize('../node_modules/.bin/polymer'),
+          ['build'], {stdio: 'inherit', cwd: 'devtools'}).status === 0
+      && spawn(path.normalize('../node_modules/.bin/crisper'),
+          ['--html=build/bundled/split.html', '--js=build/bundled/src/split.js',
+          'build/bundled/src/index.html'],
+          {stdio: 'inherit', cwd: 'devtools'}).status === 0;
+}
+
 function rot13(str) {
   var input = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'.split('');
   var output = 'NOPQRSTUVWXYZABCDEFGHIJKLMnopqrstuvwxyzabcdefghijklm'.split('');
@@ -222,7 +235,7 @@ function test(args) {
     boolean: ['manual'],
     alias: {g: 'grep'},
   });
-  
+
   const testsInDir = dir => findProjectFiles(dir, fullPath => {
     var isSelectedTest = options.manual == fullPath.includes('manual_test');
     return /-tests?.js$/.test(fullPath) && isSelectedTest;

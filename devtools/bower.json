@@ -1,0 +1,17 @@
+{
+  "name": "arcs-devtools",
+  "description": "DevTools Extension for Arcs",
+  "main": "src/index.html",
+  "dependencies": {
+    "polymer": "Polymer/polymer#^2.0.0",
+    "app-layout": "^2.0.4",
+    "iron-selector": "^2.0.1",
+    "iron-pages": "^2.0.1",
+    "iron-icons": "^2.0.1",
+    "vaadin-grid": "vaadin/vaadin-grid#^4.1.0",
+    "paper-dropdown-menu": "^2.0.1",
+    "paper-item": "^2.0.0",
+    "paper-listbox": "^2.0.0",
+    "web-animations-js": "^2.3.1"
+  }
+}
