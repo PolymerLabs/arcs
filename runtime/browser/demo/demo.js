@@ -76,7 +76,7 @@ class DemoFlow extends DemoBase {
       slotComposer: new SlotComposer({
         rootContext: this.$('[particle-container]').parentNode,
         affordance: 'dom'}),
-      context: await Manifest.load('browser/demo/recipes.manifest', loader),
+      context: await Manifest.load('browser/demo/recipes-duplicate.manifest', loader),
       loader,
     });
     this.suggest(this.arc);
