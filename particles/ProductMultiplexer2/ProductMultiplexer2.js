@@ -46,20 +46,19 @@ defineParticle(({DomParticle}) => {
           if (!slotId) {
             continue;
           }
-
           this.hostedSlotBySlotId.set(slotId, {subId: item.id});
 
-          var recipe = `
-            import '${hostedParticle.implFile.replace(/\.[^\.]+$/, '.manifest')}'
-            recipe
-              use '${itemView._id}' as v1
-              map '${othersMappedId}' as v2
-              slot '${slotId}' as s1
-              ${hostedParticle.name}
-                ${productConnName} <- v1
-                ${otherConnName} <- v2
-                consume ${hostedSlotName} as s1
-          `;
+          var recipe =
+`${this.serializeSchema(hostedParticle)}
+recipe
+  use '${itemView._id}' as v1
+  map '${othersMappedId}' as v2
+  slot '${slotId}' as s1
+  ${hostedParticle.name}
+    ${productConnName} <- v1
+    ${otherConnName} <- v2
+    consume ${hostedSlotName} as s1
+`;
 
           try {
             await arc.loadRecipe(recipe, this);

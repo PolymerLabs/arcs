@@ -36,14 +36,15 @@ defineParticle(({Particle}) => {
           this._handleIds.add(product.id);
 
           var recipe = `
-            import '${hostedParticle.implFile.replace(/\.[^\.]+$/, '.manifest')}'
-            recipe
-              use '${productView._id}' as v1
-              use '${resultView._id}' as v2
-              ${hostedParticle.name}
-                ${hostedParticle.connections[0].name} <- v1
-                ${hostedParticle.connections[1].name} -> v2
-          `;
+${this.serializeSchema(hostedParticle)}
+import '${hostedParticle.implFile.replace(/\.[^\.]+$/, '.manifest')}'
+recipe
+  use '${productView._id}' as v1
+  use '${resultView._id}' as v2
+  ${hostedParticle.name}
+    ${hostedParticle.connections[0].name} <- v1
+    ${hostedParticle.connections[1].name} -> v2
+`;
 
           try {
             await arc.loadRecipe(recipe, this);
