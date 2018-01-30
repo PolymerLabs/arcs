@@ -732,11 +732,17 @@ Expected " ", "#", "//", "\\n", "\\r", [ ], [A-Z], or [a-z] but "?" found.
         AnyThing(out)
       shape ShapeManyHandles
         AnyThing(in Foo, out [~a])
+      shape ShapeConsumeNoName
+        Anything()
+        consume
+      shape ShapeConsumeRequiredSetSlot
+        Anything()
+        must consume set of
       shape ShapeOnlyProvideSlots
         AnyThing()
         provide action
     `);
-    assert.equal(7, manifest.shapes.length);
+    assert.equal(9, manifest.shapes.length);
     assert(manifest.findShapeByName('FullShape'));
   });
   it('can parse a manifest containing shapes', async () => {

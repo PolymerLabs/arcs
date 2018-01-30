@@ -77,7 +77,7 @@ Annotation = '@' annotation: lowerIdent { return annotation; }
 
 // TODO: Entity syntax.
 ManifestHandle
-  = 'view' whiteSpace name:TopLevelIdent whiteSpace 'of' whiteSpace type:(SchemaInline / ListType / ReferenceType) id:(whiteSpace id)? 
+  = 'view' whiteSpace name:TopLevelIdent whiteSpace 'of' whiteSpace type:(SchemaInline / ListType / ReferenceType) id:(whiteSpace id)?
     version:(whiteSpace Version)? tags:(whiteSpace TagList)? whiteSpace source:ManifestHandleSource eolWhiteSpace
     items:(Indent (SameIndent ManifestHandleItem)+)?
   {
@@ -98,7 +98,7 @@ ManifestHandle
 
 ManifestHandleSource
   = ManifestHandleFileSource / ManifestHandleStorageSource
-  
+
 ManifestHandleFileSource
   = 'in' whiteSpace source:id { return {location: 'file', source }; }
 
@@ -172,12 +172,12 @@ ShapeArgument
   }
 
 ShapeSlot
-  = isRequired:('must' whiteSpace)? direction:('consume' / 'provide')? whiteSpace isSet:('set of' whiteSpace)? name:(lowerIdent)? eolWhiteSpace
+  = isRequired:('must' whiteSpace)? direction:('consume' / 'provide') isSet:(whiteSpace 'set of')? name:(whiteSpace lowerIdent)? eolWhiteSpace
   {
     return {
       kind: 'shape-slot',
       location: location(),
-      name,
+      name: optional(name, isRequired => name[1], null),
       isRequired: optional(isRequired, isRequired => isRequired[0] == 'must', false),
       direction,
       isSet: !!isSet,
