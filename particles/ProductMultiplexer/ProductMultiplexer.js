@@ -44,15 +44,14 @@ defineParticle(({DomParticle}) => {
           this.hostedSlotBySlotId.set(slotId, {subId: item.id});
 
           var recipe = `
-            import '${hostedParticle.implFile.replace(/\.[^\.]+$/, '.manifest')}'
-            recipe
-              use '${itemView._id}' as v1
-              slot '${slotId}' as s1
-              ${hostedParticle.name}
-                ${hostedParticle.connections[0].name} <- v1
-                consume ${hostedSlotName} as s1
-          `;
-
+${this.serializeSchema(hostedParticle)}
+recipe
+  use '${itemView._id}' as v1
+  slot '${slotId}' as s1
+  ${hostedParticle.name}
+    ${hostedParticle.connections[0].name} <- v1
+    consume ${hostedSlotName} as s1
+`;
           try {
             await arc.loadRecipe(recipe, this);
             itemView.set(item);

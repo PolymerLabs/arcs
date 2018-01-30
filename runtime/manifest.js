@@ -235,7 +235,7 @@ ${e.message}
         await this._processView(manifest, item, loader);
       }
       for (let item of items.filter(item => item.kind == 'recipe')) {
-        await this._processRecipe(manifest, item);
+        await this._processRecipe(manifest, item, loader);
       }
       for (let meta of items.filter(item => item.kind == 'meta')) {
         manifest._meta.apply(meta.items);
@@ -332,7 +332,7 @@ ${e.message}
     shape.name = shapeItem.name;
     manifest._shapes.push(shape);
   }
-  static async _processRecipe(manifest, recipeItem) {
+  static async _processRecipe(manifest, recipeItem, loader) {
     // TODO: annotate other things too
     let recipe = manifest._newRecipe(recipeItem.name);
     recipe.annotation = recipeItem.annotation;
@@ -506,6 +506,10 @@ ${e.message}
           targetView = recipe.newView();
           targetView.fate = 'map';
           var view = await manifest.newView(connection.type, null, id, []);
+          // TODO: loader should not be optional.
+          if (hostedParticle.implFile && loader) {
+            hostedParticle.implFile = loader.join(manifest.fileName, hostedParticle.implFile);
+          }
           view.set(hostedParticle.toLiteral());
           targetView.mapToView(view);
         }

@@ -97,10 +97,10 @@ describe('demo flow', function() {
         .expectRenderSlot('Chooser', 'action', ['template', 'model'])
         .expectRenderSlot('AlsoOn', 'annotation', ['template', 'model'])
         .expectRenderSlot('ProductMultiplexer2', 'annotation', ['template', 'model'])
-        .expectRenderSlot('AlsoOn', 'annotation', ['model'])
-        .expectRenderSlot('ProductMultiplexer2', 'annotation', ['model'])
-        .expectRenderSlot('AlsoOn', 'annotation', ['model'])
-        .expectRenderSlot('ProductMultiplexer2', 'annotation', ['model']);
+        .expectRenderSlot('AlsoOn', 'annotation', ['template', 'model'])
+        .expectRenderSlot('ProductMultiplexer2', 'annotation', ['template', 'model'])
+        .expectRenderSlot('AlsoOn', 'annotation', ['template', 'model'])
+        .expectRenderSlot('ProductMultiplexer2', 'annotation', ['template', 'model']);
     await arc.instantiate(plan);
     await arc.pec.idle;
     await slotComposer.expectationsCompleted();
