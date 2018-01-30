@@ -231,6 +231,7 @@ function test(args) {
   let options = minimist(args, {
     string: ['grep'],
     inspect: ['inspect'],
+    explore: ['explore'],
     exceptions: ['exceptions'],
     boolean: ['manual'],
     alias: {g: 'grep'},
@@ -270,16 +271,24 @@ function test(args) {
       fs.writeFileSync(file, entry);
       return `import '${fixPathForWindows(file)}';`;
     });
+    if (options.explore) chainImports.push(`
+      import devtoolsChannelProvider from '${fixPathForWindows(path.resolve(__dirname, '../runtime/debug/devtools-channel-provider.js'))}';
+      let devtoolsChannel = devtoolsChannelProvider.get();
+      console.log("Waiting for Arcs Explorer");
+    `);
     let runner = `
       import mocha from '${mochaInstanceFile}';
-      ${chainImports.join('\n    ')}
-      mocha
-        .grep(${JSON.stringify(options.grep || '')})
-        .run(function(failures) {
-          process.on("exit", function() {
-            process.exit(failures > 0 ? 1 : 0);
+      ${chainImports.join('\n      ')}
+      (async () => {
+        ${options.explore ? 'await devtoolsChannel.ready;' : ''}
+        mocha
+          .grep(${JSON.stringify(options.grep || '')})
+          .run(function(failures) {
+            process.on("exit", function() {
+              process.exit(failures > 0 ? 1 : 0);
+            });
           });
-      });
+      })();
     `;
     let runnerFile = path.join(tempDir, 'runner.js');
     fs.writeFileSync(runnerFile, runner);

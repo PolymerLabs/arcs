@@ -21,10 +21,10 @@ chrome.runtime.onConnect.addListener(function(port) {
 });
 
 // Message from the content script.
-chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
+chrome.runtime.onMessage.addListener(function(data, sender, sendResponse) {
   let tabId = sender.tab.id;
   if (tabId in connections) {
-    connections[tabId].postMessage({message: 'arcs-message', request});
+    connections[tabId].postMessage({message: 'arcs-message', data});
   }
   return true;
 });
