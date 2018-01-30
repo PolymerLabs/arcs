@@ -52,7 +52,7 @@ describe('particle-shape-loading-with-slots', function() {
     await arc.instantiate(recipe);
 
     let fooType = manifest.findTypeByName('Foo');
-    let inView = handle.handleFor(arc.findViewsByType(fooType.setViewOf())[0]);
+    let inView = handle.handleFor(arc.findHandlesByType(fooType.setViewOf())[0]);
     inView.store(new (fooType.entitySchema.entityClass())({value: 'foo1'}));
     inView.store(new (fooType.entitySchema.entityClass())({value: 'foo2'}));
 

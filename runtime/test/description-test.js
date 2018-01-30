@@ -90,8 +90,8 @@ recipe
       recipe.views[2].mapToView({id: 'test:3', type: Foo.type});
     }
     let arc = createTestArc();
-    let fooView = await arc.createView(Foo.type);
-    let foosView = await arc.createView(Foo.type.setViewOf());
+    let fooView = await arc.createHandle(Foo.type);
+    let foosView = await arc.createHandle(Foo.type.setViewOf());
     recipe.normalize();
     assert.isTrue(recipe.isResolved());
     let ifooViewConn = recipe.viewConnections.find(vc => vc.particle.name == 'A' && vc.name == 'ifoo');
@@ -114,21 +114,21 @@ ${recipeManifest}
       let description = new Description(arc);
 
       await test.verifySuggestion('Read from foo and populate foo list.', description);
-      assert.equal('foo', await description.getViewDescription(ifooView));
-      assert.equal('foo list', await description.getViewDescription(ofoosView));
+      assert.equal('foo', await description.getHandleDescription(ifooView));
+      assert.equal('foo list', await description.getHandleDescription(ofoosView));
 
       // Add value to singleton view.
       fooView.set({id: 1, rawData: {name: 'foo-name', fooValue: 'the-FOO'}});
       await test.verifySuggestion('Read from foo-name and populate foo list.', description);
-      assert.equal('foo', await description.getViewDescription(ifooView));
-      assert.equal('foo list', await description.getViewDescription(ofoosView));
+      assert.equal('foo', await description.getHandleDescription(ifooView));
+      assert.equal('foo list', await description.getHandleDescription(ofoosView));
 
       // Add values to set-view
       foosView.store({id: 2, rawData: {name: 'foo-1', fooValue: 'foo-value-1'}});
       foosView.store({id: 3, rawData: {name: 'foo-2', fooValue: 'foo-value-2'}});
       await test.verifySuggestion('Read from foo-name and populate foo list (foo-1, foo-2).', description);
-      assert.equal('foo', await description.getViewDescription(ifooView));
-      assert.equal('foo list', await description.getViewDescription(ofoosView));
+      assert.equal('foo', await description.getHandleDescription(ifooView));
+      assert.equal('foo list', await description.getHandleDescription(ofoosView));
 
       // Add more values to set-view
       foosView.store({id: 4, rawData: {name: 'foo-name', fooValue: 'foo-3'}});
@@ -150,8 +150,8 @@ ${recipeManifest}
       let description = new Description(arc);
 
       await test.verifySuggestion('Read from my-in-foo and populate my-out-foos.', description);
-      assert.equal('my-in-foo', await description.getViewDescription(ifooView));
-      assert.equal('my-out-foos', await description.getViewDescription(ofoosView));
+      assert.equal('my-in-foo', await description.getHandleDescription(ifooView));
+      assert.equal('my-out-foos', await description.getHandleDescription(ofoosView));
 
       // Add value to singleton view.
       fooView.set({id: 1, rawData: {name: 'foo-name', fooValue: 'the-FOO'}});
@@ -167,8 +167,8 @@ ${recipeManifest}
       foosView.store({id: 4, rawData: {name: 'foo-name', fooValue: 'foo-3'}});
       await test.verifySuggestion('Read from my-in-foo (foo-name) and populate my-out-foos (foo-1 plus 2 other items).',
                             description);
-      assert.equal('my-in-foo', await description.getViewDescription(ifooView));
-      assert.equal('my-out-foos', await description.getViewDescription(ofoosView));
+      assert.equal('my-in-foo', await description.getHandleDescription(ifooView));
+      assert.equal('my-out-foos', await description.getHandleDescription(ofoosView));
     });
   });
 
@@ -186,16 +186,16 @@ ${recipeManifest}
       let description = new Description(arc);
 
       await test.verifySuggestion('Read from my-in-foo and populate The Foos from my-in-foo.', description);
-      assert.equal('my-in-foo', await description.getViewDescription(ifooView));
-      assert.equal('The Foos from my-in-foo', await description.getViewDescription(ofoosView));
+      assert.equal('my-in-foo', await description.getHandleDescription(ifooView));
+      assert.equal('The Foos from my-in-foo', await description.getHandleDescription(ofoosView));
 
       fooView.set({id: 1, rawData: {name: 'foo-name', fooValue: 'the-FOO'}});
       foosView.store({id: 2, rawData: {name: 'foo-1', fooValue: 'foo-value-1'}});
       foosView.store({id: 3, rawData: {name: 'foo-2', fooValue: 'foo-value-2'}});
       await test.verifySuggestion('Read from my-in-foo (foo-name) and populate The Foos from my-in-foo (foo-1, foo-2).',
                             description);
-      assert.equal('my-in-foo', await description.getViewDescription(ifooView));
-      assert.equal('The Foos from my-in-foo', await description.getViewDescription(ofoosView));
+      assert.equal('my-in-foo', await description.getHandleDescription(ifooView));
+      assert.equal('The Foos from my-in-foo', await description.getHandleDescription(ofoosView));
     });
   });
 
@@ -212,16 +212,16 @@ ${recipeManifest}
       let description = new Description(arc);
 
       await test.verifySuggestion('Read from foo and populate The Foos from foo.', description);
-      assert.equal('foo', await description.getViewDescription(ifooView));
-      assert.equal('The Foos from foo', await description.getViewDescription(ofoosView));
+      assert.equal('foo', await description.getHandleDescription(ifooView));
+      assert.equal('The Foos from foo', await description.getHandleDescription(ofoosView));
 
       fooView.set({id: 1, rawData: {name: 'foo-name', fooValue: 'the-FOO'}});
       foosView.store({id: 2, rawData: {name: 'foo-1', fooValue: 'foo-value-1'}});
       foosView.store({id: 3, rawData: {name: 'foo-2', fooValue: 'foo-value-2'}});
       await test.verifySuggestion('Read from foo-name and populate The Foos from foo-name (foo-1, foo-2).',
                             description);
-      assert.equal('foo', await description.getViewDescription(ifooView));
-      assert.equal('The Foos from foo', await description.getViewDescription(ofoosView));
+      assert.equal('foo', await description.getHandleDescription(ifooView));
+      assert.equal('The Foos from foo', await description.getHandleDescription(ofoosView));
     });
   });
 
@@ -245,9 +245,9 @@ ${recipeManifest}
       await test.verifySuggestion('Read from [fooValue: the-FOO] (foo-name) and populate [A list of foo with values: foo-1, foo-2].',
                             description);
 
-      assert.equal('[fooValue: the-FOO]', await description.getViewDescription(ifooView)); /// view description is an object?
-      // Add mode getViewDescription tests, to verify all are strings!
-      assert.equal('[A list of foo with values: foo-1, foo-2]', await description.getViewDescription(ofoosView));
+      assert.equal('[fooValue: the-FOO]', await description.getHandleDescription(ifooView)); /// view description is an object?
+      // Add mode getHandleDescription tests, to verify all are strings!
+      assert.equal('[A list of foo with values: foo-1, foo-2]', await description.getHandleDescription(ofoosView));
     });
   });
 
@@ -269,19 +269,19 @@ ${recipeManifest}
       let description = new Description(arc);
 
       await test.verifySuggestion('Read from best-new-foo and populate my-foos.', description);
-      assert.equal('best-new-foo', await description.getViewDescription(ifooView));
+      assert.equal('best-new-foo', await description.getHandleDescription(ifooView));
       let oBFooView = recipe.viewConnections.find(vc => vc.particle.name == 'B' && vc.name == 'ofoo').view;
-      assert.equal('best-new-foo', await description.getViewDescription(oBFooView));
-      assert.equal('my-foos', await description.getViewDescription(ofoosView));
+      assert.equal('best-new-foo', await description.getHandleDescription(oBFooView));
+      assert.equal('my-foos', await description.getHandleDescription(ofoosView));
 
       fooView.set({id: 1, rawData: {name: 'foo-name', fooValue: 'the-FOO'}});
       foosView.store({id: 2, rawData: {name: 'foo-1', fooValue: 'foo-value-1'}});
       foosView.store({id: 3, rawData: {name: 'foo-2', fooValue: 'foo-value-2'}});
       await test.verifySuggestion('Read from best-new-foo (foo-name) and populate my-foos (foo-1, foo-2).',
                             description);
-      assert.equal('best-new-foo', await description.getViewDescription(ifooView));
-      assert.equal('best-new-foo', await description.getViewDescription(oBFooView));
-      assert.equal('my-foos', await description.getViewDescription(ofoosView));
+      assert.equal('best-new-foo', await description.getHandleDescription(ifooView));
+      assert.equal('best-new-foo', await description.getHandleDescription(oBFooView));
+      assert.equal('my-foos', await description.getHandleDescription(ofoosView));
     });
   });
 
@@ -326,7 +326,7 @@ recipe
       let description = new Description(arc);
 
       await test.verifySuggestion('Display X1-foo, create X1::X1-foo, and create X2::X2-foo.', description);
-      assert.equal('X1-foo', await description.getViewDescription(aFooView));
+      assert.equal('X1-foo', await description.getHandleDescription(aFooView));
 
       // Rank X2 higher than X2
       let relevance = new Relevance();
@@ -336,7 +336,7 @@ recipe
 
       description.relevance = relevance;
       await test.verifySuggestion('Display X2-foo, create X2::X2-foo, and create X1::X1-foo.', description);
-      assert.equal('X2-foo', await description.getViewDescription(aFooView));
+      assert.equal('X2-foo', await description.getHandleDescription(aFooView));
     });
   });
 
@@ -368,8 +368,8 @@ recipe
       recipe.views[0].mapToView({id: 'test:1', type: Foo.type.setViewOf()});
       recipe.views[1].mapToView({id: 'test:2', type: Foo.type.setViewOf()});
       let arc = createTestArc();
-      let fooView1 = await arc.createView(Foo.type.setViewOf());
-      let fooView2 = await arc.createView(Foo.type.setViewOf());
+      let fooView1 = await arc.createHandle(Foo.type.setViewOf());
+      let fooView2 = await arc.createHandle(Foo.type.setViewOf());
       recipe.normalize();
       assert.isTrue(recipe.isResolved());
       arc._activeRecipe = recipe;
@@ -377,22 +377,22 @@ recipe
       let description = new Description(arc);
 
       await test.verifySuggestion('Write to X-foo and write to X-foo.', description);
-      assert.equal('X-foo', await description.getViewDescription(recipe.views[0]));
-      assert.equal('X-foo', await description.getViewDescription(recipe.views[1]));
+      assert.equal('X-foo', await description.getHandleDescription(recipe.views[0]));
+      assert.equal('X-foo', await description.getHandleDescription(recipe.views[1]));
 
       // Add values to the second view.
       fooView2.store({id: 1, rawData: {name: 'foo-1', fooValue: 'foo-value-1'}});
       fooView2.store({id: 2, rawData: {name: 'foo-2', fooValue: 'foo-value-2'}});
       await test.verifySuggestion('Write to X-foo and write to X-foo (foo-1, foo-2).', description);
-      assert.equal('X-foo', await description.getViewDescription(recipe.views[0]));
-      assert.equal('X-foo', await description.getViewDescription(recipe.views[1]));
+      assert.equal('X-foo', await description.getHandleDescription(recipe.views[0]));
+      assert.equal('X-foo', await description.getHandleDescription(recipe.views[1]));
 
       // Add values to the first view also.
       fooView1.store({id: 3, rawData: {name: 'foo-3', fooValue: 'foo-value-3'}});
       fooView1.store({id: 4, rawData: {name: 'foo-4', fooValue: 'foo-value-4'}});
       await test.verifySuggestion('Write to X-foo (foo-3, foo-4) and write to X-foo (foo-1, foo-2).', description);
-      assert.equal('X-foo', await description.getViewDescription(recipe.views[0]));
-      assert.equal('X-foo', await description.getViewDescription(recipe.views[1]));
+      assert.equal('X-foo', await description.getHandleDescription(recipe.views[0]));
+      assert.equal('X-foo', await description.getHandleDescription(recipe.views[1]));
     });
   });
 
@@ -432,11 +432,11 @@ recipe
 
       // Add values to both Foo views
       fooView.set({id: 1, rawData: {name: 'the-FOO'}});
-      let fooView2 = await arc.createView(fooView.type);
+      let fooView2 = await arc.createHandle(fooView.type);
       fooView2.set({id: 2, rawData: {name: 'another-FOO'}});
       await test.verifySuggestion('Do A with b-foo (the-FOO), output B to b-foo, and output B to b-foo (another-FOO).',
                             description);
-      assert.equal('b-foo', await description.getViewDescription(ifooView));
+      assert.equal('b-foo', await description.getHandleDescription(ifooView));
 
       // Rank B bound to fooView2 higher than B that is bound to fooView1.
       let relevance = new Relevance();
@@ -473,7 +473,7 @@ recipe
 
       await test.verifySuggestion('Create &lt;new> &lt;&lt;my-foo>>.', description);
       let view = recipe.viewConnections.find(vc => vc.particle.name == 'A' && vc.name == 'ofoo').view;
-      assert.equal('&lt;my-foo>', await description.getViewDescription(view, arc));
+      assert.equal('&lt;my-foo>', await description.getHandleDescription(view, arc));
     });
   });
 
@@ -502,8 +502,8 @@ recipe
         recipe.views[0].mapToView({id: 'test:1', type: MyBESTType.type});
         recipe.views[1].mapToView({id: 'test:2', type: MyBESTType.type.setViewOf()});
         let arc = createTestArc();
-        let tView = await arc.createView(MyBESTType.type);
-        let tsView = await arc.createView(MyBESTType.type.setViewOf());
+        let tView = await arc.createHandle(MyBESTType.type);
+        let tsView = await arc.createHandle(MyBESTType.type.setViewOf());
         recipe.normalize();
         assert.isTrue(recipe.isResolved());
 
@@ -513,8 +513,8 @@ recipe
         await test.verifySuggestion('Make my best type list from my best type.', description);
         let tRecipeView = recipe.viewConnections.find(vc => vc.particle.name == 'P' && vc.name == 't').view;
         let tsRecipeView = recipe.viewConnections.find(vc => vc.particle.name == 'P' && vc.name == 'ts').view;
-        assert.equal('my best type', await description.getViewDescription(tRecipeView));
-        assert.equal('my best type list', await description.getViewDescription(tsRecipeView));
+        assert.equal('my best type', await description.getHandleDescription(tRecipeView));
+        assert.equal('my best type list', await description.getHandleDescription(tsRecipeView));
 
         // Add values to views.
         tView.set({id: 1, rawData: {property: 'value1'}});
@@ -637,8 +637,8 @@ recipe
     recipe.views[0].mapToView({id: 'test:1', type: Foo.type});
     recipe.views[1].mapToView({id: 'test:2', type: DescriptionType.type.setViewOf()});
     let arc = createTestArc();
-    let fooView = await arc.createView(Foo.type);
-    let descriptionView = await arc.createView(DescriptionType.type.setViewOf());
+    let fooView = await arc.createHandle(Foo.type);
+    let descriptionView = await arc.createHandle(DescriptionType.type.setViewOf());
     recipe.normalize();
     assert.isTrue(recipe.isResolved());
 

@@ -33,24 +33,24 @@ class Arc {
     this.id = id;
     this._nextLocalID = 0;
     this._activeRecipe = new Recipe();
-    // TODO: rename: this are just tuples of {particles, views, slots} of instantiated recipes merged into active recipe..
+    // TODO: rename: this are just tuples of {particles, handles, slots} of instantiated recipes merged into active recipe..
     this._recipes = [];
     this._loader = loader;
     this._scheduler = scheduler;
 
-    // All the views, mapped by view ID
-    this._viewsById = new Map();
+    // All the handles, mapped by handle ID
+    this._handlesById = new Map();
     // .. and mapped by Type
-    this._viewsByType = new Map();
+    this._handlesByType = new Map();
 
-    // information about last-seen-versions of views
+    // information about last-seen-versions of handles
     this._lastSeenVersion = new Map();
 
-    // storage keys for referenced views
+    // storage keys for referenced handles
     this._storageKeys = {};
     this._storageKey = storageKey;
 
-    this.particleViewMaps = new Map();
+    this.particleHandleMaps = new Map();
     let pecId = this.generateID();
     let innerPecPort = this._pecFactory(pecId);
     this.pec = new OuterPec(innerPecPort, slotComposer, this, `${pecId}:outer`);
@@ -59,12 +59,12 @@ class Arc {
     }
     this._storageProviderFactory = new StorageProviderFactory(this);
 
-    // Dictionary from each tag string to a list of views
+    // Dictionary from each tag string to a list of handles
     this._tags = {};
-    // Map from each view to a list of tags.
-    this._viewTags = new Map();
-    // Map from each view to its description (originating in the manifest).
-    this._viewDescriptions = new Map();
+    // Map from each handle to a list of tags.
+    this._handleTags = new Map();
+    // Map from each handle to its description (originating in the manifest).
+    this._handleDescriptions = new Map();
 
     this._search = null;
     this._description = new Description(this);
@@ -125,28 +125,28 @@ ${this.activeRecipe.toString()}`;
   get recipes() { return this._recipes; }
 
   loadedParticles() {
-    return [...this.particleViewMaps.values()].map(({spec}) => spec);
+    return [...this.particleHandleMaps.values()].map(({spec}) => spec);
   }
 
   _instantiateParticle(recipeParticle) {
     let id = this.generateID();
-    let viewMap = {spec: recipeParticle.spec, views: new Map()};
-    this.particleViewMaps.set(id, viewMap);
+    let handleMap = {spec: recipeParticle.spec, views: new Map()};
+    this.particleHandleMaps.set(id, handleMap);
 
     for (let [name, connection] of Object.entries(recipeParticle.connections)) {
       if (!connection.view) {
         assert(connection.isOptional);
         continue;
       }
-      let view = this.findViewById(connection.view.id);
-      assert(view);
-      this._connectParticleToView(id, recipeParticle, name, view);
+      let handle = this.findHandleById(connection.view.id);
+      assert(handle);
+      this._connectParticleToHandle(id, recipeParticle, name, handle);
     }
 
     // At least all non-optional connections must be resolved
-    assert(viewMap.views.size >= viewMap.spec.connections.filter(c => !c.isOptional).length,
+    assert(handleMap.views.size >= handleMap.spec.connections.filter(c => !c.isOptional).length,
            `Not all mandatory connections are resolved for {$particle}`);
-    this.pec.instantiate(recipeParticle, id, viewMap.spec, viewMap.views, this._lastSeenVersion);
+    this.pec.instantiate(recipeParticle, id, handleMap.spec, handleMap.views, this._lastSeenVersion);
     return id;
   }
 
@@ -159,28 +159,28 @@ ${this.activeRecipe.toString()}`;
   }
 
   get _views() {
-    return [...this._viewsById.values()];
+    return [...this._handlesById.values()];
   }
 
   // Makes a copy of the arc used for speculative execution.
   async cloneForSpeculativeExecution() {
     var arc = new Arc({id: this.generateID(), pecFactory: this._pecFactory, context: this.context, loader: this._loader});
     arc._scheduler = this._scheduler.clone();
-    var viewMap = new Map();
+    let handleMap = new Map();
     for (let v of this._views) {
       let clone = await arc._storageProviderFactory.construct(v.id, v.type, 'in-memory');
       await clone.cloneFrom(v);
-      viewMap.set(v, clone);
-      if (this._viewDescriptions.has(v)) {
-        arc._viewDescriptions.set(clone, this._viewDescriptions.get(v));
+      handleMap.set(v, clone);
+      if (this._handleDescriptions.has(v)) {
+        arc._handleDescriptions.set(clone, this._handleDescriptions.get(v));
       }
     };
-    this.particleViewMaps.forEach((value, key) => {
-      arc.particleViewMaps.set(key, {
+    this.particleHandleMaps.forEach((value, key) => {
+      arc.particleHandleMaps.set(key, {
         spec: value.spec,
         views: new Map()
       });
-      value.views.forEach(v => arc.particleViewMaps.get(key).views.set(v.name, viewMap.get(v)));
+      value.views.forEach(v => arc.particleHandleMaps.get(key).views.set(v.name, handleMap.get(v)));
     });
 
    let {particles, views, slots} = this._activeRecipe.mergeInto(arc._activeRecipe);
@@ -223,9 +223,9 @@ ${this.activeRecipe.toString()}`;
      arc._recipes.push(arcRecipe);
    });
 
-    for (let v of viewMap.values()) {
+    for (let v of handleMap.values()) {
       // FIXME: Tags
-      arc._registerView(v, []);
+      arc._registerHandle(v, []);
     }
     return arc;
   }
@@ -246,13 +246,13 @@ ${this.activeRecipe.toString()}`;
 
     for (let recipeView of views) {
       if (['copy', 'create'].includes(recipeView.fate)) {
-        let view = await this.createView(recipeView.type, /* name= */ null, this.generateID(), recipeView.tags);
+        let view = await this.createHandle(recipeView.type, /* name= */ null, this.generateID(), recipeView.tags);
         if (recipeView.fate === 'copy') {
-          var copiedView = this.findViewById(recipeView.id);
+          var copiedView = this.findHandleById(recipeView.id);
           await view.cloneFrom(copiedView);
-          let copiedViewDesc = this.getViewDescription(copiedView);
+          let copiedViewDesc = this.getHandleDescription(copiedView);
           if (copiedViewDesc) {
-            this._viewDescriptions.set(view, copiedViewDesc);
+            this._handleDescriptions.set(view, copiedViewDesc);
           }
         }
         recipeView.id = view.id;
@@ -276,15 +276,15 @@ ${this.activeRecipe.toString()}`;
     }
   }
 
-  _connectParticleToView(particleId, particle, name, targetView) {
-    assert(targetView, 'no target view provided');
-    var viewMap = this.particleViewMaps.get(particleId);
-    assert(viewMap.spec.connectionMap.get(name) !== undefined, 'can\'t connect view to a view slot that doesn\'t exist');
-    viewMap.views.set(name, targetView);
+  _connectParticleToHandle(particleId, particle, name, targetHandle) {
+    assert(targetHandle, 'no target handle provided');
+    let handleMap = this.particleHandleMaps.get(particleId);
+    assert(handleMap.spec.connectionMap.get(name) !== undefined, 'can\'t connect handle to a view slot that doesn\'t exist');
+    handleMap.views.set(name, targetHandle);
   }
 
-  async createView(type, name, id, tags, storageKey) {
-    assert(type instanceof Type, `can't createView with type ${type} that isn't a Type`);
+  async createHandle(type, name, id, tags, storageKey) {
+    assert(type instanceof Type, `can't createHandle with type ${type} that isn't a Type`);
 
     if (type.isRelation) {
       type = Type.newSetView(type);
@@ -299,35 +299,35 @@ ${this.activeRecipe.toString()}`;
     if (storageKey == undefined)
       storageKey = 'in-memory';
 
-    let view = await this._storageProviderFactory.construct(id, type, storageKey);
-    assert(view, 'handle with id ${id} already exists');
-    view.name = name;
+    let handle = await this._storageProviderFactory.construct(id, type, storageKey);
+    assert(handle, 'handle with id ${id} already exists');
+    handle.name = name;
 
-    this._registerView(view, tags);
-    return view;
+    this._registerHandle(handle, tags);
+    return handle;
   }
 
-  _registerView(view, tags) {
+  _registerHandle(handle, tags) {
     tags = tags || [];
     tags = Array.isArray(tags) ? tags : [tags];
     tags.forEach(tag => assert(tag.startsWith('#'),
       `tag ${tag} must start with '#'`));
 
-    this._viewsById.set(view.id, view);
-    let byType = this._viewsByType.get(Arc._viewKey(view.type)) || [];
-    byType.push(view);
-    this._viewsByType.set(Arc._viewKey(view.type), byType);
+    this._handlesById.set(handle.id, handle);
+    let byType = this._handlesByType.get(Arc._viewKey(handle.type)) || [];
+    byType.push(handle);
+    this._handlesByType.set(Arc._viewKey(handle.type), byType);
 
     if (tags.length) {
       for (let tag of tags) {
         if (this._tags[tag] == undefined)
           this._tags[tag] = [];
-        this._tags[tag].push(view);
+        this._tags[tag].push(handle);
       }
     }
-    this._viewTags.set(view, new Set(tags));
+    this._handleTags.set(handle, new Set(tags));
 
-    this._storageKeys[view.id] = view.storageKey;
+    this._storageKeys[handle.id] = handle.storageKey;
   }
 
   // TODO: Don't use this, we should be testing the schemas for compatiblity
@@ -344,26 +344,26 @@ ${this.activeRecipe.toString()}`;
     }
   }
 
-  findViewsByType(type, options) {
+  findHandlesByType(type, options) {
     // TODO: use options (location, labels, etc.) somehow.
-    var views = this._viewsByType.get(Arc._viewKey(type)) || [];
+    var views = this._handlesByType.get(Arc._viewKey(type)) || [];
     if (options && options.tags) {
-      views = views.filter(view => options.tags.filter(tag => !this._viewTags.get(view).has(tag)).length == 0);
+      views = views.filter(view => options.tags.filter(tag => !this._handleTags.get(view).has(tag)).length == 0);
     }
     return views;
   }
 
-  findViewById(id) {
-    let view = this._viewsById.get(id);
-    if (view == null) {
-      view = this._context.findViewById(id);
+  findHandleById(id) {
+    let handle = this._handlesById.get(id);
+    if (handle == null) {
+      handle = this._context.findHandleById(id);
     }
-    return view;
+    return handle;
   }
 
-  getViewDescription(view) {
-    assert(view, 'Cannot fetch description for nonexistend view');
-    return this._viewDescriptions.get(view) || view.description;
+  getHandleDescription(handle) {
+    assert(handle, 'Cannot fetch description for nonexistent handle');
+    return this._handleDescriptions.get(handle) || handle.description;
   }
 
   keyForId(id) {
@@ -371,11 +371,11 @@ ${this.activeRecipe.toString()}`;
   }
 
   newCommit(entityMap) {
-    for (let [entity, view] of entityMap.entries()) {
+    for (let [entity, handle] of entityMap.entries()) {
       entity.identify(this.generateID());
     }
-    for (let [entity, view] of entityMap.entries()) {
-      new handle.handleFor(view).store(entity);
+    for (let [entity, handle] of entityMap.entries()) {
+      new handle.handleFor(handle).store(entity);
     }
   }
 
@@ -385,12 +385,12 @@ ${this.activeRecipe.toString()}`;
 
   toContextString(options) {
     let results = [];
-    let views = [...this._viewsById.values()].sort(util.compareComparables);
-    views.forEach(v => {
-      results.push(v.toString(this._viewTags.get(v)));
+    let handles = [...this._handlesById.values()].sort(util.compareComparables);
+    handles.forEach(v => {
+      results.push(v.toString(this._handleTags.get(v)));
     });
 
-    // TODO: include views entities
+    // TODO: include handles entities
     // TODO: include (remote) slots?
 
     if (!this._activeRecipe.isEmpty()) {

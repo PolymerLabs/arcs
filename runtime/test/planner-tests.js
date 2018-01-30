@@ -75,8 +75,8 @@ describe('Planner', function() {
       let arc = createTestArc('test-plan-arc', manifest, 'dom');
       let Person = manifest.findSchemaByName('Person').entityClass();
       let Product = manifest.findSchemaByName('Product').entityClass();
-      let personView = await arc.createView(Person.type.setViewOf(), 'aperson');
-      let productView = await arc.createView(Product.type.setViewOf(), 'products');
+      let personView = await arc.createHandle(Person.type.setViewOf(), 'aperson');
+      let productView = await arc.createHandle(Product.type.setViewOf(), 'products');
       return arc;
     };
     let testSteps = async planner => {
@@ -864,6 +864,6 @@ describe('Description', async () => {
     let plans = await planner.suggest();
     assert.equal(plans.length, 1);
     assert.equal('Make MYTHING.', await plans[0].description.getRecipeSuggestion());
-    assert.equal(0, arc._viewsById.size);
+    assert.equal(0, arc._handlesById.size);
   });
 });

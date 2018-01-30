@@ -38,12 +38,12 @@ export default class Description {
     return this._arc.activeRecipe.name;
   }
 
-  async getViewDescription(recipeView) {
+  async getHandleDescription(recipeView) {
     assert(recipeView.connections.length > 0, 'view has no connections?');
 
     let formatter = new DescriptionFormatter(this);
     formatter.excludeValues = true;
-    return await formatter.getViewDescription(recipeView);
+    return await formatter.getHandleDescription(recipeView);
   }
 }
 
@@ -80,11 +80,11 @@ export class DescriptionFormatter {
     return !!desc.pattern;
   }
 
-  async getViewDescription(recipeView) {
+  async getHandleDescription(recipeView) {
     await this._updateDescriptionHandles(this._description);
 
     let viewConnection = this._selectViewConnection(recipeView) || recipeView.connections[0];
-    let view = this._arc.findViewById(recipeView.id);
+    let view = this._arc.findHandleById(recipeView.id);
     return this._formatDescription(viewConnection, view);
   }
 
@@ -122,7 +122,7 @@ export class DescriptionFormatter {
       let specConn = particle.spec.connectionMap.get(viewConn.name);
       let pattern = descByName[viewConn.name] || specConn.pattern;
       if (pattern) {
-        let viewDescription = {pattern: pattern, _viewConn: viewConn, _view: this._arc.findViewById(viewConn.view.id)};
+        let viewDescription = {pattern: pattern, _viewConn: viewConn, _view: this._arc.findHandleById(viewConn.view.id)};
         pDesc._connections[viewConn.name] = viewDescription;
       }
     });
@@ -132,7 +132,7 @@ export class DescriptionFormatter {
   async _getPatternByNameFromDescriptionHandle(particle) {
     let descriptionConn = particle.connections['descriptions'];
     if (descriptionConn && descriptionConn.view && descriptionConn.view.id) {
-      let descView = this._arc.findViewById(descriptionConn.view.id);
+      let descView = this._arc.findHandleById(descriptionConn.view.id);
       if (descView) {
         let descList = await descView.toList();
         let descByName = {};
@@ -224,7 +224,7 @@ export class DescriptionFormatter {
         properties: handleNames.splice(1),
         extra,
         _viewConn: viewConn,
-        _view: this._arc.findViewById(viewConn.view.id)};
+        _view: this._arc.findHandleById(viewConn.view.id)};
     }
 
     // slot connection
@@ -395,7 +395,7 @@ export class DescriptionFormatter {
   }
   _formatViewDescription(viewConn, view) {
     if (view) {
-      let viewDescription = this._arc.getViewDescription(view);
+      let viewDescription = this._arc.getHandleDescription(view);
       let viewType = this._formatViewType(viewConn);
       // Use the view description available in the arc (if it is different than type name).
       if (!!viewDescription && viewDescription != viewType) {

@@ -25,9 +25,9 @@ export default class AssignViewsByTagAndType extends ViewMapperBase {
     // are inputs.
     let subtype = counts.out == 0;
     if (tags.length > 0) {
-      return this.arc.findViewsByType(type, {tags, subtype});
+      return this.arc.findHandlesByType(type, {tags, subtype});
     } else {
-      return this.arc.findViewsByType(type);
+      return this.arc.findHandlesByType(type);
     }
   }
 }
