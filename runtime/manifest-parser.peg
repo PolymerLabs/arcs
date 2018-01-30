@@ -69,17 +69,17 @@ ManifestItem
   / Particle
   / Import
   / Schema
-  / ManifestHandle
+  / ManifestStorage
   / Shape
   / Meta
 
 Annotation = '@' annotation: lowerIdent { return annotation; }
 
 // TODO: Entity syntax.
-ManifestHandle
+ManifestStorage
   = 'view' whiteSpace name:TopLevelIdent whiteSpace 'of' whiteSpace type:(SchemaInline / ListType / ReferenceType) id:(whiteSpace id)?
-    version:(whiteSpace Version)? tags:(whiteSpace TagList)? whiteSpace source:ManifestHandleSource eolWhiteSpace
-    items:(Indent (SameIndent ManifestHandleItem)+)?
+    version:(whiteSpace Version)? tags:(whiteSpace TagList)? whiteSpace source:ManifestStorageSource eolWhiteSpace
+    items:(Indent (SameIndent ManifestStorageItem)+)?
   {
     items = optional(items, extractIndented, []);
     return {
@@ -96,19 +96,19 @@ ManifestHandle
     };
   }
 
-ManifestHandleSource
-  = ManifestHandleFileSource / ManifestHandleStorageSource
+ManifestStorageSource
+  = ManifestStorageFileSource / ManifestStorageStorageSource
 
-ManifestHandleFileSource
+ManifestStorageFileSource
   = 'in' whiteSpace source:id { return {location: 'file', source }; }
 
-ManifestHandleStorageSource
+ManifestStorageStorageSource
   = 'at' whiteSpace source:id { return {location: 'storage', source }; }
 
-ManifestHandleItem
-  = ManifestHandleDescription
+ManifestStorageItem
+  = ManifestStorageDescription
 
-ManifestHandleDescription
+ManifestStorageDescription
   = 'description' whiteSpace backquotedString eolWhiteSpace
 
 Import
