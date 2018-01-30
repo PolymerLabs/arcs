@@ -9,17 +9,13 @@ Particle developers should visit our [particle developer website](https://polyme
 Note that you need a **recent** version of Node because we use new ES6 features. v9 is definitely OK.
 
 ```
-$ npm install
-$ npm install -g bower
-$ (cd strategy-explorer && bower install)
-$ (cd extension && npm install)
+% ./tools/install
 
 ```
 
 ## Test
 ```
-$ ./tools/sigh test
-$ (cd extension && npm test)
+$ ./tools/test
 ```
 
 ## Demo

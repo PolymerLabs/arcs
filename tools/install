@@ -1,0 +1,8 @@
+#!/bin/sh
+
+ROOT=$(dirname $0)/..
+(cd $ROOT && npm install)
+(cd $ROOT && npm install)
+npm install -g bower
+(cd $ROOT/strategy-explorer && bower install)
+(cd $ROOT/extension && npm install)
