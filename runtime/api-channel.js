@@ -12,7 +12,7 @@
 import assert from '../platform/assert-web.js';
 import ParticleSpec from './particle-spec.js';
 import Type from './type.js';
-import OuterPortDebugChannel from '../debug/outer-port-debug-channel.js';
+import OuterPortAttachment from './debug/outer-port-attachment.js';
 
 class ThingMapper {
   constructor(prefix) {
@@ -79,7 +79,7 @@ class APIPort {
     this._mapper = new ThingMapper(prefix);
     this._messageMap = new Map();
     this._port.onmessage = async e => this._handle(e);
-    this._debugChannel = null;
+    this._debugAttachment = null;
     this.messageCount = 0;
 
     this.Direct = {
@@ -172,8 +172,8 @@ class APIPort {
     }
     let handlerName = 'on' + e.data.messageType;
     let result = this[handlerName](args);
-    if (this._debugChannel && this._debugChannel[handlerName]) {
-      this._debugChannel[handlerName](args);
+    if (this._debugAttachment && this._debugAttachment[handlerName]) {
+      this._debugAttachment[handlerName](args);
     }
     if (handler.isInitializer) {
       assert(args.identifier);
@@ -199,8 +199,8 @@ class APIPort {
     this[name] = args => {
       var call = {messageType: name, messageBody: this._processArguments(argumentTypes, args)};
       this._port.postMessage(call);
-      if (this._debugChannel && this._debugChannel[name]) {
-        this._debugChannel[name](args);
+      if (this._debugAttachment && this._debugAttachment[name]) {
+        this._debugAttachment[name](args);
       }
     };
   }
@@ -222,8 +222,8 @@ class APIPort {
       var call = {messageType: name, messageBody: this._processArguments(argumentTypes, args)};
       call.messageBody.identifier = this._mapper.createMappingForThing(thing);
       this._port.postMessage(call);
-      if (this._debugChannel && this._debugChannel[name]) {
-        this._debugChannel[name](thing, args);
+      if (this._debugAttachment && this._debugAttachment[name]) {
+        this._debugAttachment[name](thing, args);
       }
     };
   }
@@ -235,14 +235,14 @@ class APIPort {
       var call = {messageType: name, messageBody: this._processArguments(argumentTypes, args)};
       call.messageBody.identifier = this._mapper.createMappingForThing(thing);
       this._port.postMessage(call);
-      if (this._debugChannel && this._debugChannel[name]) {
-        this._debugChannel[name](thing, args);
+      if (this._debugAttachment && this._debugAttachment[name]) {
+        this._debugAttachment[name](thing, args);
       }
     };
   }
 
   initDebug(arcId) {
-    if (!this._debugChannel) this._debugChannel = new OuterPortDebugChannel(arcId);
+    if (!this._debugAttachment) this._debugAttachment = new OuterPortAttachment(arcId);
   }
 }
 

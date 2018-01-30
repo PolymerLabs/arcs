@@ -23,6 +23,7 @@ import util from './recipe/util.js';
 import FakePecFactory from './fake-pec-factory.js';
 import StorageProviderFactory from './storage/storage-provider-factory.js';
 import scheduler from './scheduler.js';
+import {registerArc} from '../devtools/shared/arc-registry.js';
 
 class Arc {
   constructor({id, context, pecFactory, slotComposer, loader, storageKey}) {
@@ -69,11 +70,7 @@ class Arc {
     this._search = null;
     this._description = new Description(this);
 
-    // Debugging is currently only available in the browser env.
-    if (typeof window === 'object') {
-      window._arcDebugHandles = window._arcDebugHandles || [];
-      window._arcDebugHandles.push(this);
-    }
+    registerArc(this);
   }
   get loader() {
     return this._loader;

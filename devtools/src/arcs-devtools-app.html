@@ -9,6 +9,7 @@
 <link rel="import" href="../bower_components/paper-listbox/paper-listbox.html">
 <link rel="import" href="../bower_components/polymer/polymer-element.html">
 
+<link rel="import" href="arcs-debug-channel.html">
 <link rel="import" href="arcs-inspector.html">
 <link rel="import" href="arcs-dataflow.html">
 <link rel="import" href="arcs-strategy-explorer.html">
@@ -22,11 +23,14 @@
           background-color: #f3f3f3;
           border-right: 1px solid #888;
           box-sizing: border-box;
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
         }
         display: block;
       }
       .drawer-list {
-        margin: 0 10px;
+        margin: 10px 0;
       }
       .drawer-list a {
         display: block;
@@ -51,6 +55,7 @@
           <a name="dataflow" href="javascript:void(0)"><iron-icon icon="swap-horiz"></iron-icon>Dataflow</a>
           <a name="strategyExplorer" href="javascript:void();"><iron-icon icon="settings-applications"></iron-icon>Strategy Explorer</a>
         </iron-selector>
+        <arcs-debug-channel on-message="onMessage"></arcs-debug-channel>
       </app-drawer>
       <iron-pages selected="[[page]]" attr-for-selected="name" role="main">
         <arcs-inspector name="inspector"></arcs-inspector>
@@ -67,26 +72,17 @@
       constructor() {
         super();
         this.page = 'dataflow';
-        this.backgroundPageConnection = chrome.runtime.connect({
-            name: 'arcs'
-        });
+      }
 
-        this.backgroundPageConnection.postMessage({
-            name: 'init',
-            tabId: chrome.devtools.inspectedWindow.tabId
-        });
-
-        this.backgroundPageConnection.onMessage.addListener(e => {
-          // TODO: Smarter message channel to sub-components.
-          switch (e.message) {
-            case 'arcs-message':
-              this.$.dataflow.handleEvents(e.request);
-              break;
-            case 'page-refresh':
-              this.$.dataflow.clear();
-              break;
-          }
-        });
+      onMessage({detail}) {
+        switch (detail.message) {
+          case 'arcs-message':
+            this.$.dataflow.handleEvents(detail.data);
+            break;
+          case 'page-refresh':
+            this.$.dataflow.clear();
+            break;
+        }
       }
     }
 

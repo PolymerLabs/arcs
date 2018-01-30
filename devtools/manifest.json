@@ -1,5 +1,5 @@
 {
-  "name" : "Arcs debugging extension",
+  "name" : "Arcs Explorer",
   "version" : "0.1",
   "description" : "Helps debug Arcs particles.",
   "devtools_page": "src/devtools.html",
@@ -15,6 +15,6 @@
     }
   ],
   "permissions": ["<all_urls>", "activeTab", "webNavigation"],
-  "web_accessible_resources" : ["src/initDebug.js"],
+  "web_accessible_resources" : ["shared/arc-registry.js", "src/run-init-debug.js"],
   "manifest_version": 2
 }

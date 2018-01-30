@@ -31,8 +31,5 @@ After making changes to the code, you'll need to rerun:
 ./tools/sigh devtools
 ```
 
-In order to bundle the code together and split javascript from HTML due to CSP
-restrictions for Chrome Extensions.
-
 If you made changes to the manifest, or if you're sure your changes are
 not showing up, you should click the "Reload" button on the `chrome://extensions/` page.

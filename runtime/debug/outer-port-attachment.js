@@ -9,7 +9,9 @@
  */
  'use strict';
 
-export default class OuterPortDebugChannel {
+import devtoolsChannelProvider from './devtools-channel-provider.js';
+
+export default class OuterPortAttachment {
   constructor(arcId) {
     this._arcId = arcId;
     this._callbackRegistry = {};
@@ -24,9 +26,7 @@ export default class OuterPortDebugChannel {
     let callbackDetails = this._callbackRegistry[callback];
     if (callbackDetails) {
       // Copying callback data, as the callback can be used multiple times.
-      this._fireEvent(Object.assign({}, callbackDetails), data);
-    } else {
-      console.log('Missing SimpleCallback ', callback);
+      this._sendMessage(Object.assign({}, callbackDetails), data);
     }
   }
 
@@ -64,16 +64,13 @@ export default class OuterPortDebugChannel {
   }
 
   _logHandleCall(args) {
-    this._fireEvent(this._describeHandleCall(args), args.data);
+    this._sendMessage(this._describeHandleCall(args), args.data);
   }
 
-  _fireEvent(detail, data) {
-    // Debugging is currently only available in the browser env.
-    if (typeof window === 'object') {
-      detail.data = JSON.stringify(data);
-      detail.timestamp = Date.now();
-      document.dispatchEvent(new CustomEvent('arcs-debug', {detail}));
-    }
+  _sendMessage(message, data) {
+    message.data = JSON.stringify(data);
+    message.timestamp = Date.now();
+    devtoolsChannelProvider.get().send(message);
   }
 
   _describeHandleCall({operation, handle, particleId}) {

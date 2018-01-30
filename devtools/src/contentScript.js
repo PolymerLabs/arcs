@@ -1,19 +1,6 @@
-let eventLog = [];
-let debouncing = false;
-
 document.addEventListener('arcs-debug', e => {
-  eventLog.push(e.detail);
-  if (!debouncing) {
-    setTimeout(sendMessages, 100);
-    debouncing = true;
-  }
+  chrome.runtime.sendMessage(e.detail);
 });
-
-function sendMessages() {
-  chrome.runtime.sendMessage(eventLog);
-  eventLog = [];
-  debouncing = false;
-}
 
 chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
   if (message.initDebug) {
@@ -31,6 +18,7 @@ chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
 
 function addInitDebugScript() {
   let script = document.createElement('script');
-  script.setAttribute('src', chrome.extension.getURL('/src/initDebug.js'));
+  script.setAttribute('type', 'module');
+  script.setAttribute('src', chrome.extension.getURL('/src/run-init-debug.js'));
   document.getElementsByTagName('body')[0].appendChild(script);
 }
