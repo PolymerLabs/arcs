@@ -30,7 +30,7 @@ class Manifest {
     this._schemas = {};
     this._views = [];
     this._shapes = [];
-    this._viewTags = new Map();
+    this._handleTags = new Map();
     this._fileName = null;
     this._nextLocalID = 0;
     this._id = id;
@@ -82,7 +82,7 @@ class Manifest {
     let view = await this._storageProviderFactory.construct(id, type, `in-memory://${this.id}`);
     view.name = name;
     this._views.push(view);
-    this._viewTags.set(view, tags ? tags : []);
+    this._handleTags.set(view, tags ? tags : []);
     return view;
   }
   _find(manifestFinder) {
@@ -124,10 +124,10 @@ class Manifest {
   findViewByName(name) {
     return this._find(manifest => manifest._views.find(view => view.name == name));
   }
-  findViewById(id) {
+  findHandleById(id) {
     return this._find(manifest => manifest._views.find(view => view.id == id));
   }
-  findViewsByType(type, options={}) {
+  findHandlesByType(type, options={}) {
     let tags = options.tags || [];
     let subtype = options.subtype || false;
     function typePredicate(view) {
@@ -142,7 +142,7 @@ class Manifest {
       return view.type.equals(type);
     }
     function tagPredicate(manifest, view) {
-      return tags.filter(tag => !manifest._viewTags.get(view).includes(tag)).length == 0;
+      return tags.filter(tag => !manifest._handleTags.get(view).includes(tag)).length == 0;
     }
     return [...this._findAll(manifest => manifest._views.filter(view => typePredicate(view) && tagPredicate(manifest, view)))];
   }
@@ -641,7 +641,7 @@ ${e.message}
 
     let views = [...this.views].sort(util.compareComparables);
     views.forEach(v => {
-      results.push(v.toString(this._viewTags.get(v)));
+      results.push(v.toString(this._handleTags.get(v)));
     });
 
     return results.join('\n');

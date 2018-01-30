@@ -40,8 +40,8 @@ describe('Arc', function() {
   it('applies existing views to a particle', async () => {
     let {recipe, Foo, Bar} = await setup();
     let arc = new Arc({slotComposer, id: 'test'});
-    let fooView = await arc.createView(Foo.type);
-    let barView = await arc.createView(Bar.type);
+    let fooView = await arc.createHandle(Foo.type);
+    let barView = await arc.createHandle(Bar.type);
     await handle.handleFor(fooView).set(new Foo({value: 'a Foo'}));
     recipe.normalize();
     await arc.instantiate(recipe);
@@ -51,8 +51,8 @@ describe('Arc', function() {
   it('applies new views to a particle', async () => {
     let {recipe, Foo, Bar} = await setup();
     let arc = new Arc({slotComposer, id: 'test'});
-    let fooView = await arc.createView(Foo.type);
-    let barView = await arc.createView(Bar.type);
+    let fooView = await arc.createHandle(Foo.type);
+    let barView = await arc.createHandle(Bar.type);
     recipe.normalize();
     await arc.instantiate(recipe);
 
@@ -64,7 +64,7 @@ describe('Arc', function() {
     let arc = new Arc({slotComposer, loader, id: 'test'});
     let serialization = arc.serialize();
     let newArc = await Arc.deserialize({serialization, loader, slotComposer});
-    assert(newArc._viewsById.size == 0);
+    assert(newArc._handlesById.size == 0);
     assert(newArc.activeRecipe.toString() == arc.activeRecipe.toString());
     assert(newArc.id == 'test');
   });

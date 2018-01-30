@@ -74,12 +74,12 @@ describe('particle-api', function() {
     let arc = new Arc({id: 'test', pecFactory});
 
     let Input = manifest.findSchemaByName('Input').entityClass();
-    let inputView = await arc.createView(Input.type.setViewOf());
+    let inputView = await arc.createHandle(Input.type.setViewOf());
     inputView.store({id: 1, text: 'Hi'});
     inputView.store({id: 2, text: 'There'});
 
     let Result = manifest.findSchemaByName('Result').entityClass();
-    let resultView = await arc.createView(Result.type);
+    let resultView = await arc.createHandle(Result.type);
     let recipe = manifest.recipes[0];
     recipe.normalize();
     await arc.instantiate(recipe);
@@ -137,13 +137,13 @@ describe('particle-api', function() {
     };
     let arc = new Arc({id: 'test', pecFactory});
     let Result = manifest.findSchemaByName('Result').entityClass();
-    let resultView = await arc.createView(Result.type);
+    let resultView = await arc.createHandle(Result.type);
     let recipe = manifest.recipes[0];
     recipe.normalize();
     await arc.instantiate(recipe);
 
     await util.assertSingletonWillChangeTo(resultView, Result, 'done');
-    let newView = arc.findViewsByType(Result.type)[1];
+    let newView = arc.findHandlesByType(Result.type)[1];
     assert(newView.name == 'a view');
     await util.assertSingletonIs(newView, Result, 'success');
   });
@@ -233,13 +233,13 @@ describe('particle-api', function() {
     };
     let arc = new Arc({id: 'test', pecFactory, loader});
     let Result = manifest.findSchemaByName('Result').entityClass();
-    let resultView = await arc.createView(Result.type);
+    let resultView = await arc.createHandle(Result.type);
     let recipe = manifest.recipes[0];
     recipe.normalize();
     await arc.instantiate(recipe);
 
     await util.assertSingletonWillChangeTo(resultView, Result, 'done');
-    let newView = arc.findViewsByType(Result.type)[2];
+    let newView = arc.findHandlesByType(Result.type)[2];
     assert(newView.name == 'out view');
     await util.assertSingletonWillChangeTo(newView, Result, 'success');
   });
@@ -344,10 +344,10 @@ describe('particle-api', function() {
     };
     let arc = new Arc({id: 'test', pecFactory, loader});
     let Result = manifest.findSchemaByName('Result').entityClass();
-    let inputsView = await arc.createView(Result.type.setViewOf());
+    let inputsView = await arc.createHandle(Result.type.setViewOf());
     inputsView.store({id: '1', rawData: {value: 'hello'}});
     inputsView.store({id: '2', rawData: {value: 'world'}});
-    let resultsView = await arc.createView(Result.type.setViewOf());
+    let resultsView = await arc.createHandle(Result.type.setViewOf());
     let recipe = manifest.recipes[0];
     recipe.normalize();
     await arc.instantiate(recipe);
@@ -356,11 +356,11 @@ describe('particle-api', function() {
 
     // TODO: how do i listen to inner arc's outView view-changes?
     // await util.assertViewWillChangeTo(resultsView, Result, "value", ["HELLO", "WORLD"]);
-    let newView = arc.findViewsByType(Result.type)[1];
+    let newView = arc.findHandlesByType(Result.type)[1];
     assert(newView.name == 'out view', `Unexpected newView name: ${newView.name}`);
 
     util.assertSingletonIs(newView, Result, 'HELLO');
-    newView = arc.findViewsByType(Result.type)[3];
+    newView = arc.findHandlesByType(Result.type)[3];
     assert(newView.name == 'out view', `Unexpected newView name: ${newView.name}`);
     await util.assertSingletonIs(newView, Result, 'WORLD');
   });

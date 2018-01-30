@@ -74,7 +74,7 @@ class Slot {
     let descriptions = {};
     await Promise.all(Object.values(this.consumeConn.particle.connections).map(async viewConn => {
       if (viewConn.view) {
-        descriptions[`${viewConn.name}.description`] = (await this._arc.description.getViewDescription(viewConn.view)).toString();
+        descriptions[`${viewConn.name}.description`] = (await this._arc.description.getHandleDescription(viewConn.view)).toString();
       }
     }));
     return descriptions;

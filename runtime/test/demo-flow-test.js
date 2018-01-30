@@ -104,7 +104,7 @@ describe('demo flow', function() {
     await arc.instantiate(plan);
     await arc.pec.idle;
     await slotComposer.expectationsCompleted();
-    let productViews = arc.findViewsByType(Product.type.setViewOf());
+    let productViews = arc.findHandlesByType(Product.type.setViewOf());
     assert.equal(productViews.length, 2);
 
     // Verify next stage suggestions.
@@ -143,7 +143,7 @@ describe('demo flow', function() {
     plans = await makePlans(arc, expectedSuggestions);
     assert.equal(plans.length, 3);
 
-    //var giftView = arc.findViewsByType(Product.type.setViewOf(), {tag: "giftlist"})[0];
+    //var giftView = arc.findHandlesByType(Product.type.setViewOf(), {tag: "giftlist"})[0];
     //await testUtil.assertViewHas(giftView, Product, "name",
     //    ["Tea Pot", "Bee Hive", "Denim Jeans", "Arduino Starter Pack"]);
 
@@ -166,9 +166,9 @@ describe('demo flow', function() {
     //var newArc = Arc.deserialize({serialization, loader, slotComposer, arcMap});
     // await slotComposer.expectationsCompleted();
     //
-    // productViews = arc.findViewsByType(Product.type.setViewOf());
+    // productViews = arc.findHandlesByType(Product.type.setViewOf());
     //assert.equal(productViews.length, 5);
-    //var giftView = arc.findViewsByType(Product.type.setViewOf(), {tag: "gift list"})[0];
+    //var giftView = arc.findHandlesByType(Product.type.setViewOf(), {tag: "gift list"})[0];
     //await testUtil.assertViewHas(giftView, Product, "name",
     //    ["Tea Pot", "Bee Hive", "Denim Jeans", "Arduino Starter Pack"]);
   });

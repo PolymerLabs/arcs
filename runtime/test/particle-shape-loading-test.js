@@ -101,10 +101,10 @@ describe('particle-shape-loading', function() {
       ],
     });
 
-    let shapeView = await arc.createView(shapeType);
+    let shapeView = await arc.createHandle(shapeType);
     shapeView.set(manifest.particles[0].toLiteral());
-    let outView = await arc.createView(barType);
-    let inView = await arc.createView(fooType);
+    let outView = await arc.createHandle(barType);
+    let inView = await arc.createHandle(fooType);
     var Foo = manifest.schemas.Foo.entityClass();
     inView.set(new Foo({value: 'a foo'}));
 
@@ -171,9 +171,9 @@ describe('particle-shape-loading', function() {
 
     await arc.instantiate(recipe);
 
-    arc.findViewsByType(fooType)[0].set(new (fooType.entitySchema.entityClass())({value: 'a foo'}));
+    arc.findHandlesByType(fooType)[0].set(new (fooType.entitySchema.entityClass())({value: 'a foo'}));
 
-    await util.assertSingletonWillChangeTo(arc.findViewsByType(barType)[0], barType.entitySchema.entityClass(), 'a foo1');
+    await util.assertSingletonWillChangeTo(arc.findHandlesByType(barType)[0], barType.entitySchema.entityClass(), 'a foo1');
 
   });
 });

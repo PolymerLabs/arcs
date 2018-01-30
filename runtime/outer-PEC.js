@@ -68,12 +68,12 @@ class OuterPEC extends PEC {
     };
 
     this._apiPort.onArcCreateHandle = async ({callback, arc, type, name}) => {
-      var view = await this._arc.createView(type, name);
-      this._apiPort.CreateHandleCallback(view, {type, name, callback, id: view.id});
+      let handle = await this._arc.createHandle(type, name);
+      this._apiPort.CreateHandleCallback(handle, {type, name, callback, id: handle.id});
     };
 
     this._apiPort.onArcMapHandle = async ({callback, arc, handle}) => {
-      assert(this._arc.findViewById(handle.id), `Cannot map nonexistent handle ${handle.id}`);
+      assert(this._arc.findHandleById(handle.id), `Cannot map nonexistent handle ${handle.id}`);
       // TODO: create hosted handles map with specially generated ids instead of returning the real ones?
       this._apiPort.MapHandleCallback({}, {callback, id: handle.id});
     };
@@ -90,8 +90,8 @@ class OuterPEC extends PEC {
       let error = undefined;
       var recipe = manifest.recipes[0];
       if (recipe) {
-        for (var view of recipe.views) {
-          view.mapToView(this._arc.findViewById(view.id));
+        for (let handle of recipe.views) {
+          handle.mapToView(this._arc.findHandleById(handle.id));
         }
         if (recipe.normalize()) {
           if (recipe.isResolved()) {
@@ -132,10 +132,10 @@ class OuterPEC extends PEC {
     this._apiPort.UIEvent({particle, slotName, event});
   }
 
-  instantiate(particleSpec, id, spec, views, lastSeenVersion) {
-    views.forEach(view => {
-      var version = lastSeenVersion.get(view.id) || 0;
-      this._apiPort.DefineHandle(view, {type: view.type, name: view.name,
+  instantiate(particleSpec, id, spec, handles, lastSeenVersion) {
+    handles.forEach(handle => {
+      var version = lastSeenVersion.get(handle.id) || 0;
+      this._apiPort.DefineHandle(handle, {type: handle.type, name: handle.name,
                                        version});
     });
 
@@ -149,7 +149,7 @@ class OuterPEC extends PEC {
     }
 
     // TODO: rename this concept to something like instantiatedParticle, handle or registration.
-    this._apiPort.InstantiateParticle(particleSpec, {id, spec, handles: views});
+    this._apiPort.InstantiateParticle(particleSpec, {id, spec, handles});
     return particleSpec;
   }
   startRender({particle, slotName, contentTypes}) {

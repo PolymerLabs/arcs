@@ -698,7 +698,7 @@ Expected " ", "#", "\\n", "\\r", [ ], [A-Z], or [a-z] but "?" found.
     description \`Claire's wishlist\``, {loader});
     let verify = (manifest) => {
       assert.equal(manifest.views.length, 1);
-      assert.deepEqual(['#wishlist'], manifest._viewTags.get(manifest.views[0]));
+      assert.deepEqual(['#wishlist'], manifest._handleTags.get(manifest.views[0]));
     };
     verify(manifest);
     verify(await Manifest.parse(manifest.toString(), {loader}));

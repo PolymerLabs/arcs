@@ -22,6 +22,6 @@ export default class AssignRemoteViews extends ViewMapperBase {
   }
 
   getMappableViews(type, tags=[]) {
-    return this._arc.context.findViewsByType(type, {tags, subtype: true});
+    return this._arc.context.findHandlesByType(type, {tags, subtype: true});
   }
 }

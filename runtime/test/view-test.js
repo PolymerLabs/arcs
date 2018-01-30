@@ -33,7 +33,7 @@ describe('View', function() {
 
   it('clear singleton view', async () => {
     let arc = new Arc({slotComposer, id: 'test'});
-    let barView = await arc.createView(Bar.type);
+    let barView = await arc.createHandle(Bar.type);
     barView.set(new Bar({value: 'a Bar'}));
     barView.clear();
     assert.equal(await barView.get(), undefined);
@@ -44,7 +44,7 @@ describe('View', function() {
 
     let manifest = await Manifest.load('./particles/test/test-particles.manifest', loader);
     let Foo = manifest.schemas.Foo.entityClass();
-    let fooView = handle.handleFor(await arc.createView(Foo.type.setViewOf()));
+    let fooView = handle.handleFor(await arc.createHandle(Foo.type.setViewOf()));
     fooView.entityClass = Foo;
 
     await fooView.store(new Foo({value: 'a Foo'}, 'first'));
@@ -55,7 +55,7 @@ describe('View', function() {
 
   it('remove entry from view', async () => {
     let arc = new Arc({slotComposer, id: 'test'});
-    let barView = await arc.createView(Bar.type.setViewOf());
+    let barView = await arc.createHandle(Bar.type.setViewOf());
     let bar = new Bar({id: 0, value: 'a Bar'});
     barView.store(bar);
     barView.remove(bar.id);
@@ -70,12 +70,12 @@ describe('View', function() {
                            {type: Type.newEntity(manifest.schemas.Bar)}], []);
     assert(shape.particleMatches(manifest.particles[0]));
 
-    let shapeView = await arc.createView(Type.newInterface(shape));
+    let shapeView = await arc.createHandle(Type.newInterface(shape));
     shapeView.set(manifest.particles[0]);
     assert(await shapeView.get() == manifest.particles[0]);
   });
 
-  it('createView only allows valid tags & types in views', async () => {
+  it('createHandle only allows valid tags & types in views', async () => {
     let arc = new Arc({slotComposer, id: 'test'});
     let manifest = await Manifest.load('./particles/test/test-particles.manifest', loader);
 
@@ -88,15 +88,15 @@ describe('View', function() {
       }
     };
 
-    await assert_throws_async(async () => await arc.createView('not a type'), /isn\'t a Type/);
-    await assert_throws_async(async () => await arc.createView(Bar.type, 'name', 'id', 'invalid'),
+    await assert_throws_async(async () => await arc.createHandle('not a type'), /isn\'t a Type/);
+    await assert_throws_async(async () => await arc.createHandle(Bar.type, 'name', 'id', 'invalid'),
       /must start/);
-    await assert_throws_async(async () => await arc.createView(Bar.type, 'name', 'id', ['#valid', 'invalid']),
+    await assert_throws_async(async () => await arc.createHandle(Bar.type, 'name', 'id', ['#valid', 'invalid']),
       /must start/);
 
-    await arc.createView(Bar.type, 'name', 'id', '#sufficient');
-    await arc.createView(Bar.type, 'name', 'id', ['#valid']);
-    await arc.createView(Bar.type, 'name', 'id', ['#valid', '#good']);
+    await arc.createHandle(Bar.type, 'name', 'id', '#sufficient');
+    await arc.createHandle(Bar.type, 'name', 'id', ['#valid']);
+    await arc.createHandle(Bar.type, 'name', 'id', ['#valid', '#good']);
     ['#sufficient', '#valid', '#good'].forEach(tag =>
       assert(arc._tags.hasOwnProperty(tag),
         `tags ${arc._tags} should have included ${tag}`));
@@ -116,7 +116,7 @@ describe('View', function() {
         return {type};
       }
     }(arc);
-    arc.createView(manifest.schemas.Bar.type, 'foo', 'test1');
+    arc.createHandle(manifest.schemas.Bar.type, 'foo', 'test1');
     let result = await promise;
     assert(result == 'firebase://test-firebase-45a3e.firebaseio.com/AIzaSyBLqThan3QCOICj0JZ-nEwk27H4gmnADP8/handles/test1');
   });
