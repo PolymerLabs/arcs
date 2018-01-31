@@ -32,8 +32,7 @@ describe('manifest parser', function() {
   it('parses recipes with particles', () => {
     parse(`
       recipe Recipe
-        SomeParticle
-        #someTag`);
+        SomeParticle`);
   });
   it('parses recipes that connect particles to views', () => {
     parse(`
@@ -58,10 +57,10 @@ describe('manifest parser', function() {
   it('parses manifests with comments', () => {
     parse(`
     # comment
-      recipe # comment
+      recipe // comment
         # comment
-           # comment
-        A#comment
+           // comment
+        A//comment
    # comment
         # comment
         B    #comment
@@ -74,7 +73,6 @@ describe('manifest parser', function() {
         X.a -> Y.a
         a = b
         a.a = b.b
-        #tag <- #tag
         X.a #tag <- a.y`);
   });
   it('parses manifests with views', () => {
@@ -110,7 +108,7 @@ describe('manifest parser', function() {
     parse(`
       recipe
         search \`Hello dear world\`
-          tokens \`hello\` \`World\` # \`dear\`
+          tokens \`hello\` \`World\` // \`dear\`
       `);
   });
   it('parses manifests particle verbs', () => {

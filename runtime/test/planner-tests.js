@@ -266,7 +266,7 @@ describe('ConvertConstraintsToConnections', async () => {
     let {result, score} = results[0];
     assert.deepEqual(result.toString(),
 `recipe
-  use as view0 # S
+  use as view0 // S
   A as particle0
     b = view0
   C as particle1
@@ -294,7 +294,7 @@ describe('ConvertConstraintsToConnections', async () => {
     let {result, score} = results[0];
     assert.deepEqual(result.toString(),
 `recipe
-  use as view0 # S
+  use as view0 // S
   A as particle0
     b = view0
   C as particle1
@@ -322,7 +322,7 @@ describe('ConvertConstraintsToConnections', async () => {
     assert(results.length == 1);
     let {result, score} = results[0];
     assert.deepEqual(result.toString(), `recipe
-  use as view0 # S
+  use as view0 // S
   A as particle0
     b = view0
   C as particle1
@@ -598,15 +598,15 @@ describe('MatchParticleByVerb', function() {
       jump(in Energy e, inout Height h)
       affordance dom
       consume root
-    particle VoiceStarJumper in 'AA.js'  # wrong affordance
+    particle VoiceStarJumper in 'AA.js'  // wrong affordance
       jump(in Energy e, out Height h)
       affordance voice
       consume root
-    particle GalaxyJumper in 'AA.js'  # wrong connections
+    particle GalaxyJumper in 'AA.js'  // wrong connections
       jump(in Energy e)
       affordance dom
       consume root
-    particle StarFlyer in 'AA.js'  # wrong verb
+    particle StarFlyer in 'AA.js'  // wrong verb
       fly()
 
     recipe

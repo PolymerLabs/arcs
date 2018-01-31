@@ -1,9 +1,9 @@
-# Copyright (c) 2017 Google Inc. All rights reserved.
-# This code may only be used under the BSD style license found at
-# http://polymer.github.io/LICENSE.txt
-# Code distributed by Google as part of this project is also
-# subject to an additional IP rights grant found at
-# http://polymer.github.io/PATENTS.txt
+// Copyright (c) 2017 Google Inc. All rights reserved.
+// This code may only be used under the BSD style license found at
+// http://polymer.github.io/LICENSE.txt
+// Code distributed by Google as part of this project is also
+// subject to an additional IP rights grant found at
+// http://polymer.github.io/PATENTS.txt
 
 import '../../../particles/ShowProducts/ShowProducts.manifest'
 import '../../../particles/ManageProducts/ManageProducts.manifest'
@@ -17,16 +17,16 @@ import '../../../particles/AlsoOn/AlsoOn.manifest'
 import '../../../particles/Arrivinator/Arrivinator.manifest'
 import '../../../particles/ManufacturerInfo/ManufacturerInfo.manifest'
 
-# See [person]'s wishlist
+// See [person]'s wishlist
 recipe
   map #wishlist as wishlist
   ShowProducts
     list <- wishlist
 
-# Create shortlist with [product, ...] and suggest similar products from [person]'s wish list
+// Create shortlist with [product, ...] and suggest similar products from [person]'s wish list
 recipe
   Chooser.choices -> Recommend.recommendations
-  #Chooser.resultList -> ManageProducts.list
+  //Chooser.resultList -> ManageProducts.list
   Chooser.resultList -> ShowProducts.list
   Chooser.resultList -> Recommend.known
   Chooser.resultList -> ProductMultiplexer2.list
@@ -38,18 +38,18 @@ recipe
     population <- wishlist
   ShowProducts
     list <- shortlist
-  #ManageProducts
-    #list = shortlist
+  //ManageProducts
+    //list = shortlist
     consume root as slot0
       provide annotation as slot1
   ProductMultiplexer2
     hostedParticle = AlsoOn
     consume annotation as slot1
-#  ProductMultiplexer
-#    list <- shortlist
-#    hostedParticle = Arrivinator
+//  ProductMultiplexer
+//    list <- shortlist
+//    hostedParticle = Arrivinator
 
-# Buying for [person]'s [occasion] in [timeframe]? Product [X] arrives too late.
+// Buying for [person]'s [occasion] in [timeframe]? Product [X] arrives too late.
 recipe
   map as view1
   use as view2
@@ -63,39 +63,39 @@ recipe
     list <- view3
     hostedParticle = Arrivinator
 
-# Check manufacturer information for products.
+// Check manufacturer information for products.
 recipe
   use #shortlist as shortlist
   ProductMultiplexer
     list <- shortlist
     hostedParticle <- ManufacturerInfo
 
-# TODO: Check for newer versions, e.g. there is a new version of [product].
-# TODO: [Manufacturer] recommends [product] instead of [product] for 13 year olds.
-# TODO: See awards, e.g. [product] winning the [award].
+// TODO: Check for newer versions, e.g. there is a new version of [product].
+// TODO: [Manufacturer] recommends [product] instead of [product] for 13 year olds.
+// TODO: See awards, e.g. [product] winning the [award].
 
-# Recommendations based on Claire's interest in field hockey.
+// Recommendations based on Claire's interest in field hockey.
 recipe
   map #wishlist as view0
   Interests
     list <- view0
 
-# Experimental recipes
-#import '../../../particles/ProductFilter/ProductFilter.manifest'
-#import '../../../particles/ProductIsBook/ProductIsBook.manifest'
-#recipe
-#  ShowProducts.list -> ProductFilter.results
-#  map #shortlist as shortlist
-#  create as books
-#  ProductFilter
-#    products <- shortlist
-#    hostedParticle = ProductIsBook
-#    results -> books
+// Experimental recipes
+//import '../../../particles/ProductFilter/ProductFilter.manifest'
+//import '../../../particles/ProductIsBook/ProductIsBook.manifest'
+//recipe
+//  ShowProducts.list -> ProductFilter.results
+//  map #shortlist as shortlist
+//  create as books
+//  ProductFilter
+//    products <- shortlist
+//    hostedParticle = ProductIsBook
+//    results -> books
 
-# TODO: move these to separate manifests for claire's wishlist / page
+// TODO: move these to separate manifests for claire's wishlist / page
 view PageProducts of [Product] #shortlist in 'products.json'
   description `products from your browsing context`
 view ClairesWishlist of [Product] #wishlist in 'wishlist.json'
   description `Claire's wishlist`
 view APerson of Person in 'people.json'
-#view ThePeople of Person in 'people.json'
+//view ThePeople of Person in 'people.json'

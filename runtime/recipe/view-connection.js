@@ -171,7 +171,7 @@ class ViewConnection {
 
     if (options && options.showUnresolved) {
       if (!this.isResolved(options)) {
-        result.push(`# unresolved view-connection: ${options.details}`);
+        result.push(`// unresolved view-connection: ${options.details}`);
       }
     }
 

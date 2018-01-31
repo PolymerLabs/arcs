@@ -11,6 +11,7 @@
 {
   var indent = '';
   var indents = [];
+  var deprecatedCommentWarningShown = false;
   function extractIndented(items) {
     return items[1].map(item => item[1]);
   }
@@ -813,5 +814,13 @@ whiteSpace
   = " "+
 eolWhiteSpace
   = [ ]* !.
-  / [ ]* '#' [^\n]* eolWhiteSpace
   / [ ]* "\r"? "\n" "\r"? eolWhiteSpace?
+  / comment
+comment
+  = [ ]* marker:('#' / '//') [^\n]* eolWhiteSpace
+  {
+    if (marker === '#' && !deprecatedCommentWarningShown) {
+      console.warn("'#' for comments is deprecated. Please use '//' instead");
+      deprecatedCommentWarningShown = true;
+    }
+  }

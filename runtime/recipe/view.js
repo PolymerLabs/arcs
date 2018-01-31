@@ -174,13 +174,13 @@ class View {
     result.push(...this.tags);
     result.push(`as ${(nameMap && nameMap.get(this)) || this.localName}`);
     if (this.type) {
-      result.push('#');
+      result.push('//');
       result.push(this.type.toPrettyString());
     }
     if (options && options.showUnresolved) {
       let options = {};
       if (!this.isResolved(options)) {
-        result.push(` # unresolved view: ${options.details}`);
+        result.push(` // unresolved view: ${options.details}`);
       }
     }
 

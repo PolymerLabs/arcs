@@ -105,9 +105,9 @@ describe('recipe-util', function() {
       recipe Recipe
         map as v1
         A
-          a -> #
+          a -> //
         B
-          b -> #
+          b -> //
         `);
     let recipe = manifest.recipes[0];
     let shape = RecipeUtil.makeShape(['A', 'B'], ['v'],

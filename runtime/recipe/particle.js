@@ -216,14 +216,14 @@ class Particle {
 
       result.push(`as ${(nameMap && nameMap.get(this)) || this.localName}`);
       if (this.primaryVerb && this.primaryVerb != this.name) {
-        result.push(`# verb=${this.primaryVerb}`);
+        result.push(`// verb=${this.primaryVerb}`);
       }
     } else { // verb must exist, if there is no name.
       result.push(`particle can ${this.primaryVerb}`);
     }
     if (options && options.showUnresolved) {
       if (!this.isResolved(options)) {
-        result.push(`# unresolved particle: ${options.details}`);
+        result.push(`// unresolved particle: ${options.details}`);
       }
     }
 

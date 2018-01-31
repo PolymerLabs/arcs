@@ -140,7 +140,7 @@ class SlotConnection {
 
     if (options && options.showUnresolved) {
       if (!this.isResolved(options)) {
-        consumeRes.push(`# unresolved slot-connection: ${options.details}`);
+        consumeRes.push(`// unresolved slot-connection: ${options.details}`);
       }
     }
 

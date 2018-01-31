@@ -85,11 +85,11 @@ class Search {
       tokenStr.push(this.unresolvedTokens.map(t => `\`${t}\``).join(' '));
     }
     if (this.resolvedTokens.length > 0) {
-      tokenStr.push(`# ${this.resolvedTokens.map(t => `\`${t}\``).join(' ')}`);
+      tokenStr.push(`// ${this.resolvedTokens.map(t => `\`${t}\``).join(' ')}`);
     }
     if (options && options.showUnresolved) {
       if (this.unresolvedTokens.length > 0) {
-        tokenStr.push('# unresolved search tokens');
+        tokenStr.push('// unresolved search tokens');
       }
     }
     result.push(tokenStr.join(' '));
