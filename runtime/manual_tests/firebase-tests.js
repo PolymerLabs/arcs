@@ -22,7 +22,7 @@ describe('firebase', function() {
           Text value
     `);
     let arc = new Arc({id: 'test'});
-    let storage = new StorageProviderFactory(arc);
+    let storage = new StorageProviderFactory(arc.id);
     let BarType = Type.newEntity(manifest.schemas.Bar);
     let value = 'Hi there' + Math.random();
     let variable = await storage.connect('test0', BarType, 
@@ -39,7 +39,7 @@ describe('firebase', function() {
           Text value
     `);
     let arc = new Arc({id: 'test'});
-    let storage = new StorageProviderFactory(arc);
+    let storage = new StorageProviderFactory(arc.id);
     let BarType = Type.newEntity(manifest.schemas.Bar);
     let value1 = 'Hi there' + Math.random();
     let value2 = 'Goodbye' + Math.random();
@@ -55,5 +55,5 @@ describe('firebase', function() {
     assert(result[0].id = 'test0:test0');
     assert(result[1].value = value2);
     assert(result[1].id = 'test1:test1');
-  });
+  }).timeout(10000);
 });

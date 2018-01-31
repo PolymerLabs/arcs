@@ -12,6 +12,7 @@
 
 import {assert} from './chai-web.js';
 import handle from '../handle.js';
+import scheduler from '../scheduler.js';
 
 function assertSingletonWillChangeTo(view, entityClass, expectation) {
   return new Promise((resolve, reject) => {
@@ -22,7 +23,7 @@ function assertSingletonWillChangeTo(view, entityClass, expectation) {
         return;
       assert.equal(result.value, expectation);
       resolve();
-    }), {});
+    }), {_scheduler: scheduler});
   });
 }
 
@@ -48,7 +49,7 @@ function assertViewWillChangeTo(setView, entityClass, field, expectations) {
           else
             reject(new Error(`expected ${expectations} but got ${result.map(a => a[field])}`));
       }
-    }), {});
+    }), {_scheduler: scheduler});
   });
 }
 

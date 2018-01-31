@@ -57,7 +57,7 @@ class Arc {
     if (slotComposer) {
       slotComposer.arc = this;
     }
-    this._storageProviderFactory = new StorageProviderFactory(this);
+    this._storageProviderFactory = new StorageProviderFactory(this.id);
 
     // Dictionary from each tag string to a list of handles
     this._tags = {};
@@ -147,6 +147,7 @@ ${this.activeRecipe.toString()}`;
     assert(handleMap.views.size >= handleMap.spec.connections.filter(c => !c.isOptional).length,
            `Not all mandatory connections are resolved for {$particle}`);
     this.pec.instantiate(recipeParticle, id, handleMap.spec, handleMap.views, this._lastSeenVersion);
+    recipeParticle._scheduler = this.scheduler;
     return id;
   }
 
