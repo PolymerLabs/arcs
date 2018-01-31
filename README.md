@@ -9,8 +9,7 @@ Particle developers should visit our [particle developer website](https://polyme
 Note that you need a **recent** version of Node because we use new ES6 features. v9 is definitely OK.
 
 ```
-% ./tools/install
-
+$ ./tools/install
 ```
 
 ## Test
