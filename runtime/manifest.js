@@ -648,7 +648,7 @@ ${e.message}
 
     this._imports.forEach(i => {
       if (options.recursive) {
-        results.push(`# import '${i.fileName}'`);
+        results.push(`// import '${i.fileName}'`);
         let importStr = i.toString(options);
         results.push(`${i.toString(options)}`);
       } else {

@@ -70,8 +70,8 @@ particle B
   B(out Foo ofoo)`;
   var recipeManifest = `
 recipe
-  create as fooView   # Foo
-  create as foosView  # [Foo]
+  create as fooView   // Foo
+  create as foosView  // [Foo]
   slot 'rootslotid-root' as slot0
   A
     ifoo <- fooView
@@ -307,7 +307,7 @@ particle A
     ifoo \`A-foo\`
 
 recipe
-  create as fooView   # Foo
+  create as fooView   // Foo
   slot 'r0' as slot0
   slot 'action::slot' as slot1
   X1
@@ -351,8 +351,8 @@ particle X
     ofoo \`X-foo\`
 
 recipe
-  create as fooView1   # Foo
-  create as fooView2   # Foo
+  create as fooView1   // Foo
+  create as fooView2   // Foo
   slot 'r0' as slot0
   X
     ofoo -> fooView1
@@ -410,9 +410,9 @@ ${bParticleManifest}
     ofoo \`b-foo\`
 
 recipe
-  create as fooView1    # Foo
-  create as foosView    # [Foo]
-  create as fooView2    # Foo
+  create as fooView1    // Foo
+  create as foosView    // [Foo]
+  create as fooView2    // Foo
   slot 'r0' as slot0
   slot 'action::slot' as slot1
   B
@@ -462,7 +462,7 @@ particle A
     ofoo \`<my-foo>\`
 
 recipe
-  create as fooView   # Foo
+  create as fooView   // Foo
   slot 'r0' as slot0
   A
     ofoo -> fooView
@@ -552,7 +552,7 @@ particle C
   consume otherslot
   description \`only c\`
 recipe
-  create 'test:1' as view0  # Foo
+  create 'test:1' as view0  // Foo
   slot 'rootslotid-root' as slot0
   A as particle1
     foo = view0
@@ -591,7 +591,7 @@ ${schemaManifest}
 ${bParticleManifest}
   description \`Populate \${ofoo}\`
 recipe
-  create as fooView   # Foo
+  create as fooView   // Foo
   B
     ofoo -> fooView
       `));
@@ -621,8 +621,8 @@ particle B
   B(out Foo ofoo, out [Description] descriptions)
   consume root
 recipe
-  create 'test:1' as view0  # Foo
-  create 'test:2' as view1  # [Description]
+  create 'test:1' as view0  // Foo
+  create 'test:2' as view1  // [Description]
   slot 'rootslotid-root' as slot0
   B as particle1
     ofoo -> view0

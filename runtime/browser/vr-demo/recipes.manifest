@@ -1,9 +1,9 @@
-# Copyright (c) 2017 Google Inc. All rights reserved.
-# This code may only be used under the BSD style license found at
-# http://polymer.github.io/LICENSE.txt
-# Code distributed by Google as part of this project is also
-# subject to an additional IP rights grant found at
-# http://polymer.github.io/PATENTS.txt
+// Copyright (c) 2017 Google Inc. All rights reserved.
+// This code may only be used under the BSD style license found at
+// http://polymer.github.io/LICENSE.txt
+// Code distributed by Google as part of this project is also
+// subject to an additional IP rights grant found at
+// http://polymer.github.io/PATENTS.txt
 
 import '../../../particles/VrBox/VrBox.manifest'
 import '../../../particles/VrFlower/VrFlower.manifest'
@@ -11,18 +11,18 @@ import '../../../particles/VrOtherFlower/VrOtherFlower.manifest'
 import '../../../particles/VrPot/VrPot.manifest'
 import '../../../particles/VrSphere/VrSphere.manifest'
 
-# Create Pot
+// Create Pot
 recipe
    VrPot
 
-# Create Flowers
+// Create Flowers
 recipe
   VrFlower
 
-# Create Sphere
+// Create Sphere
 recipe
   VrSphere
 
-# Create Box
+// Create Box
 recipe
   VrBox

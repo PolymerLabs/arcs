@@ -103,12 +103,12 @@ class Slot {
       result.push(`slot '${this.id}' as ${(nameMap && nameMap.get(this)) || this.localName}`);
       if (options && options.showUnresolved) {
         if (!this.isResolved(options)) {
-          result.push(`# unresolved slot: ${options.details}`);
+          result.push(`// unresolved slot: ${options.details}`);
         }
       }
     }
     else if (options && options.showUnresolved && !this.isResolved(options)) {
-      result.push(`slot as ${(nameMap && nameMap.get(this)) || this.localName} # unresolved slot: ${options.details}`);
+      result.push(`slot as ${(nameMap && nameMap.get(this)) || this.localName} // unresolved slot: ${options.details}`);
     }
     return result.join(' ');
   }

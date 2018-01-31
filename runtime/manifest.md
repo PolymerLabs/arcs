@@ -145,7 +145,7 @@ Recipes declare how particles can be wired up to become part of an Arc.
 
 This can be a combination of particles:
 ```
-... # assumes the particles are defined or imported
+... // assumes the particles are defined or imported
 recipe
   Thinginator
   ThingPresentinator
@@ -155,18 +155,18 @@ Can include how particle inputs are connected to views:
 ```
 ...
 recipe
-  map as view1               # maps a view external to the arc; changes in the
-                             # external view will be reflected locally, but the
-                             # local view is read-only.
-  use as view2               # uses some view already in the Arc
-  create as view3            # creates a new empty view
-  copy ImportedView as view4 # creates a new view populated with entries from
-                             # a view defined or imported
-                             # in the manifest
+  map as view1               // maps a view external to the arc; changes in the
+                             // external view will be reflected locally, but the
+                             // local view is read-only.
+  use as view2               // uses some view already in the Arc
+  create as view3            // creates a new empty view
+  copy ImportedView as view4 // creates a new view populated with entries from
+                             // a view defined or imported
+                             // in the manifest
   SomeParticle
-    param1 <- view1 # bind's SomeParticle's 'in' param1 to view1
-    param2 -> view2 # binds 'out'
-    param3 = view3  # binds 'inout'
+    param1 <- view1  // bind's SomeParticle's 'in' param1 to view1
+    param2 -> view2  // binds 'out'
+    param3 = view3   // binds 'inout'
 ```
 
 Can include how particles are connected to slots:
@@ -198,25 +198,18 @@ Indentation is significant. It is used to group blocks of manifest items togethe
 recipe
   SomeParticle
   AnotherParticle
-YetAnotherParitlce # This is an error, it should have been indented
-                   # as the previous lines.
+YetAnotherPartilce  // This is an error, it should have been indented
+                    // as the previous lines.
 ```
 
 ## Comments
-Comments are inserted by prefixing the comment with `#`.
+Comments are inserted by prefixing the comment with `//`.
 
 ```
-# this is a comment
+// this is a comment
 recipe
-  # so is this
+  // so is this
   SomeParticle
-```
-
-Confusingly we also use `#` to insert 'tags'. There will be a breaking change in the future when one of these is changed.
-
-```
-recipe
-  SomeParticle #ThisIsATag # but... this is a comment. Oops.
 ```
 
 ## Scoping
@@ -227,23 +220,23 @@ recipe MyRecipe
 particle MyParticle
 view MyView
 schema MySchema
-schema mySchema # This is an invalid name.
+schema mySchema  // This is an invalid name.
 ```
 
 Particle and view definitions can refer to Schemas (defined or imported) by name:
 ```
 schema MySchema
 particle MyParticle
-  MyParticle(in MySchema)     # uses the schema defined above
-view MyView of [MySchema] ... # again, uses the schema defined above
+  MyParticle(in MySchema)      // uses the schema defined above
+view MyView of [MySchema] ...  // again, uses the schema defined above
 ```
 
 Recipes can refer to particles and views by name:
 ```
 ...
 recipe
-  map MyView # 'MyView' could be is defined in this manifest or imported
-  MyParticle # 'MyParticle' could be is defined in this manifest or imported
+  map MyView  // 'MyView' could be is defined in this manifest or imported
+  MyParticle  // 'MyParticle' could be is defined in this manifest or imported
 ```
 
 Within a recipe; views, particles, and slots can be given 'local names'. Local names are scoped to the recipe:
@@ -251,9 +244,9 @@ Within a recipe; views, particles, and slots can be given 'local names'. Local n
 ```
 ...
 recipe
-  map MyView as view0 # establishes a mapped view with a local name of `view0`
+  map MyView as view0  // establishes a mapped view with a local name of `view0`
   MyParticle
-    param1 <- view0 # refers to the view mapped above by local name
+    param1 <- view0  // refers to the view mapped above by local name
 ```
 
 * TODO: serialization can refer to items external to the manifest by 'id'.

@@ -561,7 +561,7 @@ describe('manifest', function() {
       assert(false);
     } catch (e) {
       assert.deepEqual(e.message, `Parse error in 'bad-file' line 1.
-Expected " ", "#", "\\n", "\\r", [ ], [A-Z], or [a-z] but "?" found.
+Expected " ", "#", "//", "\\n", "\\r", [ ], [A-Z], or [a-z] but "?" found.
   recipe ?
          ^`);
     }
@@ -665,7 +665,7 @@ Expected " ", "#", "\\n", "\\r", [ ], [A-Z], or [a-z] but "?" found.
     assert.deepEqual(['hello', 'world'], recipe.search.resolvedTokens);
     assert.equal(recipe.toString(), `recipe
   search \`Hello dear world\`
-    tokens \`dear\` # \`hello\` \`world\``);
+    tokens \`dear\` // \`hello\` \`world\``);
 
     // resolve all tokens.
     recipe.search.resolveToken('dear');
@@ -677,14 +677,14 @@ Expected " ", "#", "\\n", "\\r", [ ], [A-Z], or [a-z] but "?" found.
     assert.isTrue(recipe.isResolved());
     assert.equal(recipe.toString(), `recipe
   search \`Hello dear world\`
-    tokens # \`dear\` \`hello\` \`world\``);
+    tokens // \`dear\` \`hello\` \`world\``);
   });
   it('merge recipes with search strings', async () => {
     let recipe1 = (await Manifest.parse(`recipe
   search \`Hello world\``)).recipes[0];
     let recipe2 = (await Manifest.parse(`recipe
   search \`good morning\`
-    tokens \`morning\` # \`good\``)).recipes[0];
+    tokens \`morning\` // \`good\``)).recipes[0];
 
     recipe2.mergeInto(recipe1);
     assert.equal('Hello world good morning', recipe1.search.phrase);
@@ -759,7 +759,7 @@ Expected " ", "#", "\\n", "\\r", [ ], [A-Z], or [a-z] but "?" found.
       particle Thing in 'thing.js'
         Thing(in [Something] inThing, out [Something]? maybeOutThings)
       recipe
-        create as view0 # [Something]
+        create as view0 // [Something]
         Thing
           inThing <- view0`);
     let verify = (manifest) => {
