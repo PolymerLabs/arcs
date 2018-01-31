@@ -10,6 +10,7 @@ import StorageProviderBase from './storage-provider-base.js';
 import firebase from '../../platform/firebase-web.js';
 import assert from '../../platform/assert-web.js';
 import KeyBase from './key-base.js';
+import btoa from '../../platform/btoa-web.js';
 
 class FirebaseKey extends KeyBase {
   constructor(key) {
@@ -60,8 +61,8 @@ async function realTransaction(reference, transactionFunction) {
 let _nextAppNameSuffix = 0;
 
 export default class FirebaseStorage {
-  constructor(arc) {
-    this._arc = arc;
+  constructor(arcId) {
+    this._arcId = arcId;
     this._apps = {};
   }
 
@@ -114,21 +115,21 @@ export default class FirebaseStorage {
     if (!result.committed)
       return null;
 
-    return FirebaseStorageProvider.newProvider(type, this._arc, id, reference, key);
+    return FirebaseStorageProvider.newProvider(type, this._arcId, id, reference, key);
   }
 }
 
 class FirebaseStorageProvider extends StorageProviderBase {
-  constructor(type, arc, id, reference, key) {
-    super(type, arc, undefined, id, key.toString());
+  constructor(type, arcId, id, reference, key) {
+    super(type, arcId, undefined, id, key.toString());
     this.firebaseKey = key;
     this.reference = reference;
   }
 
-  static newProvider(type, arc, id, reference, key) {
+  static newProvider(type, arcId, id, reference, key) {
     if (type.isSetView)
-      return new FirebaseCollection(type, arc, id, reference, key);
-    return new FirebaseVariable(type, arc, id, reference, key);
+      return new FirebaseCollection(type, arcId, id, reference, key);
+    return new FirebaseVariable(type, arcId, id, reference, key);
   }
 
   static encodeKey(key) {
@@ -142,8 +143,8 @@ class FirebaseStorageProvider extends StorageProviderBase {
 }
 
 class FirebaseVariable extends FirebaseStorageProvider {
-  constructor(type, arc, id, reference, firebaseKey) {
-    super(type, arc, id, reference, firebaseKey);
+  constructor(type, arcId, id, reference, firebaseKey) {
+    super(type, arcId, id, reference, firebaseKey);
     this.dataSnapshot = undefined;
     this._pendingGets = [];
     this.reference.on('value', dataSnapshot => {
@@ -183,8 +184,8 @@ class FirebaseVariable extends FirebaseStorageProvider {
 }
 
 class FirebaseCollection extends FirebaseStorageProvider {
-  constructor(type, arc, id, reference, firebaseKey) {
-    super(type, arc, id, reference, firebaseKey);
+  constructor(type, arcId, id, reference, firebaseKey) {
+    super(type, arcId, id, reference, firebaseKey);
     this.dataSnapshot = undefined;
     this._pendingGets = [];
     this.reference.on('value', dataSnapshot => {

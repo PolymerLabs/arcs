@@ -21,6 +21,7 @@
   },
   "dependencies": {
     "firebase": "^4.9.0",
-    "node-fetch": "^1.7.2"
+    "node-fetch": "^1.7.2",
+    "btoa": "^1.1.2"
   }
 }

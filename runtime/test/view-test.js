@@ -115,7 +115,7 @@ describe('View', function() {
         resolver(keyFragment);
         return {type};
       }
-    }(arc);
+    }(arc.id);
     arc.createHandle(manifest.schemas.Bar.type, 'foo', 'test1');
     let result = await promise;
     assert(result == 'firebase://test-firebase-45a3e.firebaseio.com/AIzaSyBLqThan3QCOICj0JZ-nEwk27H4gmnADP8/handles/test1');

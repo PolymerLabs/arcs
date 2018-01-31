@@ -34,12 +34,19 @@ class Manifest {
     this._fileName = null;
     this._nextLocalID = 0;
     this._id = id;
-    this._storageProviderFactory = new StorageProviderFactory(this);
+    this._storageProviderFactory = undefined;
     this._scheduler = scheduler;
     this._meta = new ManifestMeta();
   }
   get id() {
+    if (this._meta.name)
+      return this._meta.name;
     return this._id;
+  }
+  get storageProviderFactory() {
+    if (this._storageProviderFactory == undefined)
+      this._storageProviderFactory = new StorageProviderFactory(this.id);
+    return this._storageProviderFactory;
   }
   get recipes() {
     return [...new Set(this._findAll(manifest => manifest._recipes))];
@@ -76,10 +83,15 @@ class Manifest {
     return this._meta;
   }
 
+  applyMeta(section) {
+    if (this._storageProviderFactory !== undefined)
+      assert(section.name == this._meta.name || section.name == undefined, `can't change manifest ID after storage is constructed`);
+    this._meta.apply(section);
+  }
   // TODO: newParticle, Schema, etc.
   // TODO: simplify() / isValid().
   async newView(type, name, id, tags) {
-    let view = await this._storageProviderFactory.construct(id, type, `in-memory://${this.id}`);
+    let view = await this.storageProviderFactory.construct(id, type, `in-memory://${this.id}`);
     view.name = name;
     this._views.push(view);
     this._handleTags.set(view, tags ? tags : []);
@@ -222,6 +234,13 @@ ${e.message}
     }
 
     try {
+      // processing meta sections should come first as this contains identifying 
+      // information that might need to be used in other sections. For example,
+      // the meta.name, if present, becomes the manifest id which is relevant
+      // when constructing manifest views.
+      for (let meta of items.filter(item => item.kind == 'meta')) {
+        manifest.applyMeta(meta.items);
+      }
       for (let item of items.filter(item => item.kind == 'schema')) {
         this._processSchema(manifest, item);
       }
@@ -236,9 +255,6 @@ ${e.message}
       }
       for (let item of items.filter(item => item.kind == 'recipe')) {
         await this._processRecipe(manifest, item);
-      }
-      for (let meta of items.filter(item => item.kind == 'meta')) {
-        manifest._meta.apply(meta.items);
       }
     } catch (e) {
       throw processError(e);

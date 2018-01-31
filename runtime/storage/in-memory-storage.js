@@ -41,23 +41,23 @@ class InMemoryKey extends KeyBase {
 let __storageCache = {};
 
 export default class InMemoryStorage {
-  constructor(arc) {
-      assert(arc.id !== undefined, 'Arcs with storage must have ids');
-      this._arc = arc;
+  constructor(arcId) {
+      assert(arcId !== undefined, 'Arcs with storage must have ids');
+      this._arcId = arcId;
       this._memoryMap = {};
       this.localIDBase = 0;
       // TODO(shans): re-add this assert once we have a runtime object to put it on.
       // assert(__storageCache[this._arc.id] == undefined, `${this._arc.id} already exists in local storage cache`);
-      __storageCache[this._arc.id] = this;
+      __storageCache[this._arcId] = this;
   }
 
   async construct(id, type, keyFragment) {
     var key = new InMemoryKey(keyFragment);
     if (key.arcId == undefined)
-      key.arcId = this._arc.id;
+      key.arcId = this._arcId;
     if (key.location == undefined)
       key.location = 'in-memory-' + this.localIDBase++;
-    var provider = InMemoryStorageProvider.newProvider(type, this._arc, undefined, id, key.toString());
+    var provider = InMemoryStorageProvider.newProvider(type, this._arcId, undefined, id, key.toString());
     if (this._memoryMap[key.toString()] !== undefined)
       return null;
     this._memoryMap[key.toString()] = provider;
@@ -66,7 +66,7 @@ export default class InMemoryStorage {
 
   async connect(id, type, keyString) {
     let key = new InMemoryKey(keyString);
-    if (key.arcId !== this._arc.id) {
+    if (key.arcId !== this._arcId) {
       if (__storageCache[key.arcId] == undefined)
         return null;
       return __storageCache[key.arcId].connect(id, type, keyString);
@@ -83,21 +83,21 @@ export default class InMemoryStorage {
 }
 
 class InMemoryStorageProvider extends StorageProviderBase {
-  static newProvider(type, arc, name, id, key) {
+  static newProvider(type, arcId, name, id, key) {
     if (type.isSetView)
-      return new InMemoryCollection(type, arc, name, id, key);
-    return new InMemoryVariable(type, arc, name, id, key);
+      return new InMemoryCollection(type, arcId, name, id, key);
+    return new InMemoryVariable(type, arcId, name, id, key);
   }
 }
 
 class InMemoryCollection extends InMemoryStorageProvider {
-  constructor(type, arc, name, id, key) {
-    super(type, arc, name, id, key);
+  constructor(type, arcId, name, id, key) {
+    super(type, arcId, name, id, key);
     this._items = new Map();
   }
 
   clone() {
-    var view = new InMemoryCollection(this._type, this._arc, this.name, this.id);
+    var view = new InMemoryCollection(this._type, this._arcId, this.name, this.id);
     view.cloneFrom(this);
     return view;
   }
@@ -171,19 +171,19 @@ class InMemoryCollection extends InMemoryStorageProvider {
       type: this.type.toLiteral(),
       name: this.name,
       version: this._version,
-      arc: this._arc.id
+      arc: this._arcId
     });
   }
 }
 
 class InMemoryVariable extends InMemoryStorageProvider {
-  constructor(type, arc, name, id, key) {
-    super(type, arc, name, id, key);
+  constructor(type, arcId, name, id, key) {
+    super(type, arcId, name, id, key);
     this._stored = null;
   }
 
   clone() {
-    var variable = new InMemoryVariable(this._type, this._arc, this.name, this.id);
+    var variable = new InMemoryVariable(this._type, this._arcId, this.name, this.id);
     variable.cloneFrom(this);
     return variable;
   }
@@ -243,7 +243,7 @@ class InMemoryVariable extends InMemoryStorageProvider {
       type: this.type.toLiteral(),
       name: this.name,
       version: this._version,
-      arc: this._arc.id
+      arc: this._arcId
     });
   }
 }

@@ -11,16 +11,18 @@ import tracing from '../../tracelib/trace.js';
 import util from '../recipe/util.js';
 
 export default class StorageProviderBase {
-  constructor(type, arc, name, id, key) {
+  constructor(type, arcId, name, id, key) {
+    assert(id, 'id must be provided when constructing StorageProviders');
     var trace = tracing.start({cat: 'view', name: 'StorageProviderBase::constructor', args: {type: type.key, name: name}});
     this._type = type;
-    this._arc = arc;
+    this._arcId = arcId;
     this._listeners = new Map();
     this.name = name;
     this._version = 0;
-    this.id = id || this._arc.generateID();
+    this.id = id;
     this.source = null;
     this._storageKey = key;
+    this._nextLocalID = 0;
     trace.end();
   }
 
@@ -29,11 +31,11 @@ export default class StorageProviderBase {
   }
 
   generateID() {
-    return this._arc.generateID();
+    return `${this.id}:${this._nextLocalID++}`;
   }
 
   generateIDComponents() {
-    return this._arc.generateIDComponents();
+    return {base: this.id, component: () => this._nextLocalID++};
   }
 
   get type() {
@@ -41,9 +43,11 @@ export default class StorageProviderBase {
   }
   // TODO: add 'once' which returns a promise.
   on(kind, callback, target) {
-    assert(target !== undefined, 'must provide a target to register a view event handler');
+    assert(target !== undefined, 'must provide a target to register a storage event handler');
+    let scheduler = target._scheduler;
+    assert(scheduler !== undefined, 'must provider a scheduler to register a storage event handler');
     let listeners = this._listeners.get(kind) || new Map();
-    listeners.set(callback, {version: -Infinity, target});
+    listeners.set(callback, {version: -Infinity, target, scheduler});
     this._listeners.set(kind, listeners);
   }
 
@@ -56,15 +60,15 @@ export default class StorageProviderBase {
         name: this.name, listeners: listenerMap.size}});
 
     // TODO: wire up a target (particle)
-    let eventRecords = [];
+    let eventRecords = new Map();
 
     for (let [callback, registration] of listenerMap.entries()) {
       let target = registration.target;
-      eventRecords.push({target, callback, kind, details});
+      if (!eventRecords.has(registration.scheduler))
+        eventRecords.set(registration.scheduler, []);
+      eventRecords.get(registration.scheduler).push({target, callback, kind, details});
     }
-
-    this._arc.scheduler.enqueue(this, eventRecords);
-
+    eventRecords.forEach((records, scheduler) => scheduler.enqueue(this, records));
     callTrace.end();
   }
 
