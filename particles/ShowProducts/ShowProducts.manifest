@@ -18,7 +18,7 @@ import '../../entities/Product.manifest'
 //    list <- wishlist
 
 particle ShowProducts in 'ShowProducts.js'
-  ShowProducts(in [Product] list, out [Description] descriptions)
+  ShowProducts(in [~a] list, out [Description] descriptions)
   affordance dom
   affordance dom-touch
   consume root

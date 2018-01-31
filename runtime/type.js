@@ -230,7 +230,7 @@ class Type {
       return `${this.primitiveType().toPrettyString()} List`;
     }
     if (this.isVariable)
-      return `[${this.variableName}]`;
+      return this.data.isResolved ? this.data.resolution.toPrettyString() : `[~${this.name}]`;
     if (this.isVariableReference)
       return `[${this.variableReferenceName}]`;
     if (this.isEntity) {
