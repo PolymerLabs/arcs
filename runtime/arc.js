@@ -332,19 +332,39 @@ ${this.activeRecipe.toString()}`;
   //       instead of using just the name.
   static _viewKey(type) {
     if (type.isSetView) {
-      return `list:${type.primitiveType().entitySchema.name}`;
+      let key = this._viewKey(type.primitiveType());
+      if (key) {
+        return `list:${key}`;
+      }
     } else if (type.isEntity) {
       return type.entitySchema.name;
     } else if (type.isShape) {
       // TODO we need to fix this too, otherwise all views of shape type will
       // be of the 'same type' when searching by type.
       return type.shapeShape;
+    } else if (type.isVariable && type.data.isResolved) {
+      return Arc._viewKey(type.data.resolution);
     }
   }
 
   findHandlesByType(type, options) {
-    // TODO: use options (location, labels, etc.) somehow.
-    let views = this._handlesByType.get(Arc._viewKey(type)) || [];
+    let typeKey = Arc._viewKey(type);
+    let views = [...this._handlesById.values()].filter(handle => {
+      if (typeKey) {
+        let handleKey = Arc._viewKey(handle.type);
+        if (typeKey === handleKey) {
+          return true;
+        }
+      } else {
+        if (type.isVariable && !type.data.isResolved && handle.type.isEntity) {
+          return true;
+        } else if (type.isSetView && type.primitiveType().isVariable && !type.primitiveType().data.isResolved && handle.type.isSetView) {
+          return true;
+        }
+      }
+      return false;
+    });
+
     if (options && options.tags) {
       views = views.filter(view => options.tags.filter(tag => !this._handleTags.get(view).has(tag)).length == 0);
     }

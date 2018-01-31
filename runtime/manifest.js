@@ -20,6 +20,7 @@ import util from './recipe/util.js';
 import StorageProviderFactory from './storage/storage-provider-factory.js';
 import scheduler from './scheduler.js';
 import ManifestMeta from './manifest-meta.js';
+import TypeVariable from './type-variable.js';
 
 class Manifest {
   constructor({id}) {
@@ -145,8 +146,17 @@ class Manifest {
     let tags = options.tags || [];
     let subtype = options.subtype || false;
     function typePredicate(view) {
+      let resolvedType = type;
+      let primitiveType = type.isSetView ? type.primitiveType() : type;
+      if (primitiveType.isVariable) {
+        if (!primitiveType.data.isResolved) {
+          return true;
+        }
+        resolvedType = type.isSetView ? primitiveType.data.resolution.setViewOf() : primitiveType.data.resolution;
+      }
+
       if (subtype) {
-        let types = Type.unwrapPair(view.type, type);
+        let types = Type.unwrapPair(view.type, resolvedType);
         if (types && types[0].isEntity) {
           return types[0].entitySchema.contains(types[1].entitySchema);
         }
@@ -547,7 +557,8 @@ ${e.message}
             throw errorType;
           }
           // TODO: Better ID.
-          let id = `${manifest._id}immediate${hostedParticle.name}`;
+          //let id = `${manifest._id}immediate${hostedParticle.name}`;
+          let id = `${manifest.generateID()}:immediate${hostedParticle.name}`;
           // TODO: Mark as immediate.
           targetView = recipe.newView();
           targetView.fate = 'map';

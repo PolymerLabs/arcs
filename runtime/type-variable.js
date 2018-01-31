@@ -26,10 +26,6 @@ class TypeVariable {
     return !!this.resolution;
   }
 
-  resolve(type) {
-    this.resolution = type;
-  }
-
   equals(other) {
     if (this.isResolved && other.isResolved) {
       return this.resolution.equals(other.resolution);
