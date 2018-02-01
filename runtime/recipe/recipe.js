@@ -11,20 +11,20 @@ import ConnectionConstraint from './connection-constraint.js';
 import Particle from './particle.js';
 import Search from './search.js';
 import Slot from './slot.js';
-import View from './view.js';
+import Handle from './handle.js';
 import util from './util.js';
 import digest from './digest-web.js';
 
 class Recipe {
   constructor() {
     this._particles = [];
-    this._views = [];
+    this._handles = [];
     this._slots = [];
 
     // TODO: Recipes should be collections of records that are tagged
     // with a type. Strategies should register the record types they
     // can handle. ConnectionConstraints should be a different record
-    // type to particles/views.
+    // type to particles/handles.
     this._connectionConstraints = [];
 
     // TODO: Change to array, if needed for search strings of merged recipes.
@@ -36,7 +36,7 @@ class Recipe {
   }
 
   removeConstraint(constraint) {
-    var idx = this._connectionConstraints.indexOf(constraint);
+    let idx = this._connectionConstraints.indexOf(constraint);
     assert(idx >= 0);
     this._connectionConstraints.splice(idx, 1);
   }
@@ -46,19 +46,19 @@ class Recipe {
   }
 
   newParticle(name) {
-    var particle = new Particle(this, name);
+    let particle = new Particle(this, name);
     this._particles.push(particle);
     return particle;
   }
 
   newView() {
-    var view = new View(this);
-    this._views.push(view);
-    return view;
+    let handle = new Handle(this);
+    this._handles.push(handle);
+    return handle;
   }
 
   newSlot(name) {
-    var slot = new Slot(this, name);
+    let slot = new Slot(this, name);
     this._slots.push(slot);
     return slot;
   }
@@ -67,27 +67,27 @@ class Recipe {
     assert(Object.isFrozen(this), 'Recipe must be normalized to be resolved.');
     return this._connectionConstraints.length == 0
         && (this._search === null || this._search.isResolved())
-        && this._views.every(view => view.isResolved())
+        && this._handles.every(handle => handle.isResolved())
         && this._particles.every(particle => particle.isResolved())
         && this._slots.every(slot => slot.isResolved())
         && this.viewConnections.every(connection => connection.isResolved())
         && this.slotConnections.every(connection => connection.isResolved());
   }
 
-  _findDuplicateView() {
-    let seenViews = new Set();
-    return this._views.find(view => {
-      if (view.id) {
-        if (seenViews.has(view.id)) {
-          return view;
+  _findDuplicateHandle() {
+    let seenHandles = new Set();
+    return this._handles.find(handle => {
+      if (handle.id) {
+        if (seenHandles.has(handle.id)) {
+          return handle;
         }
-        seenViews.add(view.id);
+        seenHandles.add(handle.id);
       }
     });
   }
 
   _isValid() {
-    return !this._findDuplicateView() && this._views.every(view => view._isValid())
+    return !this._findDuplicateHandle() && this._handles.every(handle => handle._isValid())
         && this._particles.every(particle => particle._isValid())
         && this._slots.every(slot => slot._isValid())
         && this.viewConnections.every(connection => connection._isValid())
@@ -99,8 +99,8 @@ class Recipe {
   set localName(name) { this._localName = name; }
   get particles() { return this._particles; } // Particle*
   set particles(particles) { this._particles = particles; }
-  get views() { return this._views; } // View*
-  set views(views) { this._views = views; }
+  get views() { return this._handles; } // Handle*
+  set views(handles) { this._handles = handles; }
   get slots() { return this._slots; } // Slot*
   set slots(slots) { this._slots = slots; }
   get connectionConstraints() { return this._connectionConstraints; }
@@ -116,7 +116,7 @@ class Recipe {
   }
 
   get slotConnections() { // SlotConnection*
-    var slotConnections = [];
+    let slotConnections = [];
     this._particles.forEach(particle => {
       slotConnections.push(...Object.values(particle.consumedSlotConnections));
     });
@@ -124,7 +124,7 @@ class Recipe {
   }
 
   get viewConnections() {
-    var viewConnections = [];
+    let viewConnections = [];
     this._particles.forEach(particle => {
       viewConnections.push(...Object.values(particle.connections));
       viewConnections.push(...particle._unnamedConnections);
@@ -140,14 +140,14 @@ class Recipe {
   }
 
   findView(id) {
-    for (var view of this.views) {
+    for (let view of this.views) {
       if (view.id == id)
         return view;
     }
   }
 
   findSlot(id) {
-    for (var slot of this.slots) {
+    for (let slot of this.slots) {
       if (slot.id == id)
         return slot;
     }
@@ -162,28 +162,28 @@ class Recipe {
       return;
     }
     if (!this._isValid()) {
-      var duplicateView = this._findDuplicateView();
-      if (duplicateView)
-        console.log(`Has Duplicate View ${duplicateView.id}`);
+      let duplicateHandle = this._findDuplicateHandle();
+      if (duplicateHandle)
+        console.log(`Has Duplicate Handle ${duplicateHandle.id}`);
 
       let checkForInvalid = (name, list, f) => {
-        var invalids = list.filter(item => !item._isValid());
+        let invalids = list.filter(item => !item._isValid());
         if (invalids.length > 0)
           console.log(`Has Invalid ${name} ${invalids.map(f)}`);
       };
-      checkForInvalid('Views', this._views, view => `'${view.toString()}'`);
+      checkForInvalid('Views', this._handles, handle => `'${handle.toString()}'`);
       checkForInvalid('Particles', this._particles, particle => particle.name);
       checkForInvalid('Slots', this._slots, slot => slot.name);
       checkForInvalid('ViewConnections', this.viewConnections, viewConnection => `${viewConnection.particle.name}::${viewConnection.name}`);
       checkForInvalid('SlotConnections', this.slotConnections, slotConnection => slotConnection.name);
       return false;
     }
-    // Get views and particles ready to sort connections.
+    // Get handles and particles ready to sort connections.
     for (let particle of this._particles) {
       particle._startNormalize();
     }
-    for (let view of this._views) {
-      view._startNormalize();
+    for (let handle of this._handles) {
+      handle._startNormalize();
     }
     for (let slot of this._slots) {
       slot._startNormalize();
@@ -207,21 +207,21 @@ class Recipe {
       this.search._normalize();
     }
 
-    // Finish normalizing particles and views with sorted connections.
+    // Finish normalizing particles and handles with sorted connections.
     for (let particle of this._particles) {
       particle._finishNormalize();
     }
-    for (let view of this._views) {
-      view._finishNormalize();
+    for (let handle of this._handles) {
+      handle._finishNormalize();
     }
     for (let slot of this._slots) {
       slot._finishNormalize();
     }
 
-    let seenViews = new Set();
+    let seenHandles = new Set();
     let seenParticles = new Set();
     let particles = [];
-    let views = [];
+    let handles = [];
     // Reorder connections so that interfaces come last.
     // TODO: update view-connection comparison method instead?
     for (let connection of connections.filter(c => !c.type || !c.type.isInterface).concat(connections.filter(c => !!c.type && !!c.type.isInterface))) {
@@ -229,15 +229,15 @@ class Recipe {
         particles.push(connection.particle);
         seenParticles.add(connection.particle);
       }
-      if (connection.view && !seenViews.has(connection.view)) {
-        views.push(connection.view);
-        seenViews.add(connection.view);
+      if (connection.view && !seenHandles.has(connection.view)) {
+        handles.push(connection.view);
+        seenHandles.add(connection.view);
       }
     }
 
-    let orphanedViews = this._views.filter(view => !seenViews.has(view));
-    orphanedViews.sort(util.compareComparables);
-    views.push(...orphanedViews);
+    let orphanedHandles = this._handles.filter(handle => !seenHandles.has(handle));
+    orphanedHandles.sort(util.compareComparables);
+    handles.push(...orphanedHandles);
 
     let orphanedParticles = this._particles.filter(particle => !seenParticles.has(particle));
     orphanedParticles.sort(util.compareComparables);
@@ -259,14 +259,14 @@ class Recipe {
       });
     }
 
-    // Put particles and views in their final ordering.
+    // Put particles and handles in their final ordering.
     this._particles = particles;
-    this._views = views;
+    this._handles = handles;
     this._slots = slots;
     this._connectionConstraints.sort(util.compareComparables);
 
     Object.freeze(this._particles);
-    Object.freeze(this._views);
+    Object.freeze(this._handles);
     Object.freeze(this._slots);
     Object.freeze(this._connectionConstraints);
     Object.freeze(this);
@@ -277,7 +277,7 @@ class Recipe {
   clone(cloneMap) {
     // for now, just copy everything
 
-    var recipe = new Recipe();
+    let recipe = new Recipe();
 
     if (cloneMap == undefined)
       cloneMap = new Map();
@@ -292,13 +292,13 @@ class Recipe {
   }
 
   mergeInto(recipe) {
-    var cloneMap = new Map();
-    var numViews = recipe._views.length;
-    var numParticles = recipe._particles.length;
-    var numSlots = recipe._slots.length;
+    let cloneMap = new Map();
+    let numHandles = recipe._handles.length;
+    let numParticles = recipe._particles.length;
+    let numSlots = recipe._slots.length;
     this._copyInto(recipe, cloneMap);
     return {
-      views: recipe._views.slice(numViews),
+      views: recipe._handles.slice(numHandles),
       particles: recipe._particles.slice(numParticles),
       slots: recipe._slots.slice(numSlots)
     };
@@ -306,11 +306,11 @@ class Recipe {
 
   _copyInto(recipe, cloneMap) {
     function cloneTheThing(object) {
-      var clonedObject = object._copyInto(recipe, cloneMap);
+      let clonedObject = object._copyInto(recipe, cloneMap);
       cloneMap.set(object, clonedObject);
     }
 
-    this._views.forEach(cloneTheThing);
+    this._handles.forEach(cloneTheThing);
     this._particles.forEach(cloneTheThing);
     this._slots.forEach(cloneTheThing);
     this._connectionConstraints.forEach(cloneTheThing);
@@ -320,7 +320,7 @@ class Recipe {
   }
 
   updateToClone(dict) {
-    var result = {};
+    let result = {};
     Object.keys(dict).forEach(key => result[key] = this._cloneMap.get(dict[key]));
     return result;
   }

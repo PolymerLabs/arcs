@@ -9,7 +9,7 @@ import assert from '../../platform/assert-web.js';
 import util from './util.js';
 import TypeChecker from './type-checker.js';
 
-class View {
+class Handle {
   constructor(recipe) {
     assert(recipe);
     this._recipe = recipe;
@@ -188,4 +188,4 @@ class View {
   }
 }
 
-export default View;
+export default Handle;
