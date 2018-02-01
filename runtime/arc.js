@@ -130,7 +130,7 @@ ${this.activeRecipe.toString()}`;
 
   _instantiateParticle(recipeParticle) {
     let id = this.generateID();
-    let handleMap = {spec: recipeParticle.spec, views: new Map()};
+    let handleMap = {spec: recipeParticle.spec, handles: new Map()};
     this.particleHandleMaps.set(id, handleMap);
 
     for (let [name, connection] of Object.entries(recipeParticle.connections)) {
@@ -144,9 +144,9 @@ ${this.activeRecipe.toString()}`;
     }
 
     // At least all non-optional connections must be resolved
-    assert(handleMap.views.size >= handleMap.spec.connections.filter(c => !c.isOptional).length,
+    assert(handleMap.handles.size >= handleMap.spec.connections.filter(c => !c.isOptional).length,
            `Not all mandatory connections are resolved for {$particle}`);
-    this.pec.instantiate(recipeParticle, id, handleMap.spec, handleMap.views, this._lastSeenVersion);
+    this.pec.instantiate(recipeParticle, id, handleMap.spec, handleMap.handles, this._lastSeenVersion);
     recipeParticle._scheduler = this.scheduler;
     return id;
   }
@@ -159,7 +159,7 @@ ${this.activeRecipe.toString()}`;
     return {base: this.id, component: () => this._nextLocalID++};
   }
 
-  get _views() {
+  get _handles() {
     return [...this._handlesById.values()];
   }
 
@@ -168,20 +168,20 @@ ${this.activeRecipe.toString()}`;
     var arc = new Arc({id: this.generateID(), pecFactory: this._pecFactory, context: this.context, loader: this._loader});
     arc._scheduler = this._scheduler.clone();
     let handleMap = new Map();
-    for (let v of this._views) {
-      let clone = await arc._storageProviderFactory.construct(v.id, v.type, 'in-memory');
-      await clone.cloneFrom(v);
-      handleMap.set(v, clone);
-      if (this._handleDescriptions.has(v)) {
-        arc._handleDescriptions.set(clone, this._handleDescriptions.get(v));
+    for (let handle of this._handles) {
+      let clone = await arc._storageProviderFactory.construct(handle.id, handle.type, 'in-memory');
+      await clone.cloneFrom(handle);
+      handleMap.set(handle, clone);
+      if (this._handleDescriptions.has(handle)) {
+        arc._handleDescriptions.set(clone, this._handleDescriptions.get(handle));
       }
     };
     this.particleHandleMaps.forEach((value, key) => {
       arc.particleHandleMaps.set(key, {
         spec: value.spec,
-        views: new Map()
+        handles: new Map()
       });
-      value.views.forEach(v => arc.particleHandleMaps.get(key).views.set(v.name, handleMap.get(v)));
+      value.handles.forEach(handle => arc.particleHandleMaps.get(key).handles.set(handle.name, handleMap.get(handle)));
     });
 
    let {particles, views, slots} = this._activeRecipe.mergeInto(arc._activeRecipe);
@@ -281,7 +281,7 @@ ${this.activeRecipe.toString()}`;
     assert(targetHandle, 'no target handle provided');
     let handleMap = this.particleHandleMaps.get(particleId);
     assert(handleMap.spec.connectionMap.get(name) !== undefined, 'can\'t connect handle to a view slot that doesn\'t exist');
-    handleMap.views.set(name, targetHandle);
+    handleMap.handles.set(name, targetHandle);
   }
 
   async createHandle(type, name, id, tags, storageKey) {
