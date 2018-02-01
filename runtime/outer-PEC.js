@@ -88,16 +88,16 @@ class OuterPEC extends PEC {
     this._apiPort.onArcLoadRecipe = async ({arc, recipe, callback}) => {
       let manifest = await Manifest.parse(recipe, {loader: this._arc._loader, fileName: ''});
       let error = undefined;
-      var recipe = manifest.recipes[0];
-      if (recipe) {
-        for (let handle of recipe.views) {
+      let recipe0 = manifest.recipes[0];
+      if (recipe0) {
+        for (let handle of recipe0.views) {
           handle.mapToView(this._arc.findHandleById(handle.id));
         }
-        if (recipe.normalize()) {
-          if (recipe.isResolved()) {
-            this._arc.instantiate(recipe, arc);
+        if (recipe0.normalize()) {
+          if (recipe0.isResolved()) {
+            this._arc.instantiate(recipe0, arc);
           } else {
-            error = `Recipe is not resolvable ${recipe.toString({showUnresolved: true})}`;
+            error = `Recipe is not resolvable ${recipe0.toString({showUnresolved: true})}`;
           }
         } else {
           error = 'Recipe could not be normalized';
