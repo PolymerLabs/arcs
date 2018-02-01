@@ -420,7 +420,7 @@ ${e.message}
       if (item.ref.name) {
         let spec = manifest.findParticleByName(item.ref.name);
         assert(spec, `could not find particle ${item.ref.name}`);
-        particle.spec = spec;
+        particle.spec = spec.clone();
         particlesByName[item.ref.name] = particle;
       }
       if (item.name) {

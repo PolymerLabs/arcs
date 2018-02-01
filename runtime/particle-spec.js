@@ -9,6 +9,7 @@
  */
 
 import Type from './type.js';
+import TypeVariable from './type-variable.js';
 import Shape from './shape.js';
 import assert from '../platform/assert-web.js';
 
@@ -54,7 +55,7 @@ class ProvidedSlotSpec {
 }
 
 class ParticleSpec {
-  constructor(model, resolveSchema) {
+  constructor(model, typeVarMap) {
     this._model = model;
     this.name = model.name;
     this.verbs = model.verbs;
@@ -112,17 +113,29 @@ class ParticleSpec {
   toLiteral() {
     let {args, name, verbs, transient, description, implFile, affordance, slots} = this._model;
     args = args.map(a => {
-      let {type, direction, name} = a;
+      let {type, direction, name, isOptional} = a;
       type = type.toLiteral();
-      return {type, direction, name};
+      return {type, direction, name, isOptional};
     });
     return {args, name, verbs, transient, description, implFile, affordance, slots};
   }
 
-  static fromLiteral(literal) {
+  static fromLiteral(literal, typeVarMap) {
     let {args, name, verbs, transient, description, implFile, affordance, slots} = literal;
-    args = args.map(({type, direction, name}) => ({type: Type.fromLiteral(type), direction, name}));
-    return new ParticleSpec({args, name, verbs, transient, description, implFile, affordance, slots});
+    args = args.map(({type, direction, name, isOptional}) => ({type: Type.fromLiteral(type), direction, name, isOptional}));
+    return new ParticleSpec({args, name, verbs, transient, description, implFile, affordance, slots}, typeVarMap);
+  }
+
+  clone() {
+    let typeVarMapClone = new Map();
+    this._typeVarMap.forEach((typeVar, key) => {
+      typeVarMapClone.set(key, TypeVariable.fromLiteral(typeVar.toLiteral()));
+    });
+    return ParticleSpec.fromLiteral(this.toLiteral(), typeVarMapClone);
+  }
+
+  equals(other) {
+    return JSON.stringify(this.toLiteral()) === JSON.stringify(other.toLiteral());
   }
 
   validateDescription(description) {
