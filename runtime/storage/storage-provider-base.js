@@ -103,4 +103,8 @@ export default class StorageProviderBase {
       results.push(`  description \`${this.description}\``);
     return results.join('\n');
   }
+
+  get apiChannelMappingId() {
+    return this.id;
+  }
 }
