@@ -26,9 +26,17 @@ class ThingMapper {
     return this._prefix + (this._nextIdentifier++);
   }
 
-  createMappingForThing(thing) {
+  createMappingForThing(thing, requestedId) {
     assert(!this._reverseIdMap.has(thing));
-    let id = this._newIdentifier();
+    let id;
+    if (requestedId) {
+      id = requestedId;
+    } else if (thing.apiChannelMappingId) {
+      id = thing.apiChannelMappingId;
+    } else {
+      id = this._newIdentifier();
+    }
+    assert(!this._idMap.has(id));
     this.establishThingMapping(id, thing);
     return id;
   }
@@ -217,23 +225,16 @@ class APIPort {
     });
   }
 
-  registerInitializer(name, argumentTypes) {
-    this[name] = (thing, args) => {
-      let call = {messageType: name, messageBody: this._processArguments(argumentTypes, args)};
-      call.messageBody.identifier = this._mapper.createMappingForThing(thing);
-      this._port.postMessage(call);
-      if (this._debugAttachment && this._debugAttachment[name]) {
-        this._debugAttachment[name](thing, args);
-      }
-    };
+  registerRedundantInitializer(name, argumentTypes, mappingIdArg) {
+    this.registerInitializer(name, argumentTypes, mappingIdArg, true /* redundant */);
   }
 
-  registerRedundantInitializer(name, argumentTypes) {
+  registerInitializer(name, argumentTypes, mappingIdArg = null, redundant = false) {
     this[name] = (thing, args) => {
-      if (this._mapper.hasMappingForThing(thing))
-        return;
+      if (redundant && this._mapper.hasMappingForThing(thing)) return;
       let call = {messageType: name, messageBody: this._processArguments(argumentTypes, args)};
-      call.messageBody.identifier = this._mapper.createMappingForThing(thing);
+      let requestedId = mappingIdArg && args[mappingIdArg];
+      call.messageBody.identifier = this._mapper.createMappingForThing(thing, requestedId);
       this._port.postMessage(call);
       if (this._debugAttachment && this._debugAttachment[name]) {
         this._debugAttachment[name](thing, args);
@@ -255,7 +256,7 @@ class PECOuterPort extends APIPort {
       {particleDefinition: this.Direct, particleFunction: this.Stringify});
     this.registerRedundantInitializer('DefineHandle', {type: this.ByLiteral(Type), name: this.Direct});
     this.registerInitializer('InstantiateParticle',
-      {id: this.Direct, spec: this.ByLiteral(ParticleSpec), handles: this.Map(this.Direct, this.Mapped)});
+      {id: this.Direct, spec: this.ByLiteral(ParticleSpec), handles: this.Map(this.Direct, this.Mapped)}, 'id');
 
     this.registerCall('UIEvent', {particle: this.Mapped, slotName: this.Direct, event: this.Direct});
     this.registerCall('SimpleCallback', {callback: this.Direct, data: this.Direct});
