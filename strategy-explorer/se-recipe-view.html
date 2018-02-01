@@ -93,9 +93,9 @@ http://polymer.github.io/PATENTS.txt
         }
       },
       shownRecipeChanged: function(shownRecipe) {
-        let parts = shownRecipe.result.split(/(?=(?:# unresolved |[\n\r]+))/g);
+        let parts = shownRecipe.result.split(/(?=(?:// unresolved |[\n\r]+))/g);
         parts = parts.map(entry => {
-          if (entry.startsWith("# unresolved ")) {
+          if (entry.startsWith("// unresolved ")) {
             return `<span class='unresolved'>${entry}</span>`;
           }
           return entry;

@@ -392,7 +392,7 @@ class Recipe {
     for (let constraint of this._connectionConstraints) {
       let constraintStr = constraint.toString().replace(/^|(\n)/g, '$1  ');
       if (options && options.showUnresolved) {
-        constraintStr = constraintStr.concat(' # unresolved connection-constraint');
+        constraintStr = constraintStr.concat(' // unresolved connection-constraint');
       }
       result.push(constraintStr);
     }
