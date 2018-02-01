@@ -18,7 +18,7 @@ class TypeVariable {
     return this;
   }
 
-  fromLiteral(data) {
+  static fromLiteral(data) {
     return new TypeVariable(data.name, data.id);
   }
 

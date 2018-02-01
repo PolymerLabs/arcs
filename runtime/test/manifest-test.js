@@ -323,7 +323,7 @@ describe('manifest', function() {
       },
     };
     let manifest = await Manifest.load('a', loader, {registry});
-    assert.equal(manifest.recipes[0].particles[0].spec, registry.b.findParticleByName('ParticleB'));
+    assert.isTrue(manifest.recipes[0].particles[0].spec.equals(registry.b.findParticleByName('ParticleB')));
   });
   it('can parse a schema extending a schema in another manifest', async () => {
     let registry = {};
