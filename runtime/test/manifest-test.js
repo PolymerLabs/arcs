@@ -125,8 +125,11 @@ describe('manifest', function() {
   });
   it('supports recipes with constraints', async () => {
     let manifest = await Manifest.parse(`
+      schema S
       particle A
+        A(in S a)
       particle B
+        B(in S b)
 
       recipe Constrained
         A.a -> B.b`);
@@ -586,7 +589,7 @@ Expected " ", "#", "//", "\\n", "\\r", [ ], [A-Z], or [a-z] but "?" found.
     }
   });
 
-  it('errors when the manifest referencs a missing particle param', async () => {
+  it('errors when the manifest references a missing particle param', async () => {
     let manifest = `
         schema Thing
         particle TestParticle in 'tp.js'
@@ -604,7 +607,7 @@ Expected " ", "#", "//", "\\n", "\\r", [ ], [A-Z], or [a-z] but "?" found.
     }
   });
 
-  it('errors when the manifest referencs a missing consumed slot', async () => {
+  it('errors when the manifest references a missing consumed slot', async () => {
     let manifest = `
         particle TestParticle in 'tp.js'
           TestParticle()
@@ -620,7 +623,7 @@ Expected " ", "#", "//", "\\n", "\\r", [ ], [A-Z], or [a-z] but "?" found.
     }
   });
 
-  it('errors when the manifest referencs a missing provided slot', async () => {
+  it('errors when the manifest references a missing provided slot', async () => {
     let manifest = `
         particle TestParticle in 'tp.js'
           TestParticle()
@@ -635,6 +638,56 @@ Expected " ", "#", "//", "\\n", "\\r", [ ], [A-Z], or [a-z] but "?" found.
       assert.fail();
     } catch (e) {
       assert.match(e.message, /Provided slot 'noAction' is not defined by 'TestParticle'/);
+    }
+  });
+
+  it('errors when the manifest uses invalid connection constraints', async () => {
+    // nonexistent fromParticle
+    let manifestFrom = `
+        recipe
+          NoParticle.paramA -> OtherParticle.paramB`;
+    try {
+      await Manifest.parse(manifestFrom);
+      assert.fail();
+    } catch (e) {
+      assert.match(e.message, /could not find particle 'NoParticle'/);
+    }
+    // nonexistent toParticle
+    let manifestTo = `
+        particle ParticleA
+        recipe
+          ParticleA.paramA -> OtherParticle.paramB`;
+    try {
+      await Manifest.parse(manifestTo);
+      assert.fail();
+    } catch (e) {
+      assert.match(e.message, /could not find particle 'OtherParticle'/);
+    }
+    // nonexistent connection name in fromParticle
+    let manifestFromParam = `
+        particle ParticleA
+        particle ParticleB
+        recipe
+          ParticleA.paramA -> ParticleB.paramB`;
+    try {
+      await Manifest.parse(manifestFromParam);
+      assert.fail();
+    } catch (e) {
+      assert.match(e.message, /paramA is not defined by 'ParticleA'/);
+    }
+    // nonexistent connection name in toParticle
+    let manifestToParam = `
+        schema Thing
+        particle ParticleA
+          particleA(in Thing paramA)
+        particle ParticleB
+        recipe
+          ParticleA.paramA -> ParticleB.paramB`;
+    try {
+      await Manifest.parse(manifestToParam);
+      assert.fail();
+    } catch (e) {
+      assert.match(e.message, /paramB is not defined by 'ParticleB'/);
     }
   });
 

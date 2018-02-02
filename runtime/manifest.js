@@ -367,8 +367,26 @@ ${e.message}
     for (let connection of items.connections) {
       let fromParticle = manifest.findParticleByName(connection.from.particle);
       let toParticle = manifest.findParticleByName(connection.to.particle);
-      assert(fromParticle, `could not find particle ${fromParticle}`);
-      assert(toParticle, `could not find particle ${toParticle}`);
+      if (!fromParticle) {
+        let error = new Error(`could not find particle '${connection.from.particle}'`);
+        error.location = connection.location;
+        throw error;
+      }
+      if (!toParticle) {
+        let error = new Error(`could not find particle '${connection.to.particle}'`);
+        error.location = connection.location;
+        throw error;
+      }
+      if (!fromParticle.connectionMap.has(connection.from.param)) {
+        let error = new Error(`param '${connection.from.param} is not defined by '${connection.from.particle}'`);
+        error.location = connection.location;
+        throw error;
+      }
+      if (!toParticle.connectionMap.has(connection.to.param)) {
+        let error = new Error(`param '${connection.to.param} is not defined by '${connection.to.particle}'`);
+        error.location = connection.location;
+        throw error;
+      }
       recipe.newConnectionConstraint(fromParticle, connection.from.param,
                                      toParticle, connection.to.param);
     }
