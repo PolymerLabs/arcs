@@ -18,41 +18,41 @@ class Walker extends WalkerBase {
     // onView, etc.
 
     if (this.onRecipe) {
-      var result = this.onRecipe(recipe, result);
+      result = this.onRecipe(recipe, result);
       if (!this.isEmptyResult(result))
         updateList.push({continuation: result});
     }
     for (let particle of recipe.particles) {
       if (this.onParticle) {
-        var result = this.onParticle(recipe, particle);
+        let result = this.onParticle(recipe, particle);
         if (!this.isEmptyResult(result))
           updateList.push({continuation: result, context: particle});
       }
     }
     for (let viewConnection of recipe.viewConnections) {
       if (this.onViewConnection) {
-        var result = this.onViewConnection(recipe, viewConnection);
+        let result = this.onViewConnection(recipe, viewConnection);
         if (!this.isEmptyResult(result))
           updateList.push({continuation: result, context: viewConnection});
       }
     }
     for (let view of recipe.views) {
       if (this.onView) {
-        var result = this.onView(recipe, view);
+        let result = this.onView(recipe, view);
         if (!this.isEmptyResult(result))
           updateList.push({continuation: result, context: view});
       }
     }
     for (let slotConnection of recipe.slotConnections) {
       if (this.onSlotConnection) {
-        var result = this.onSlotConnection(recipe, slotConnection);
+        let result = this.onSlotConnection(recipe, slotConnection);
         if (!this.isEmptyResult(result))
           updateList.push({continuation: result, context: slotConnection});
       }
     }
     for (let slot of recipe.slots) {
       if (this.onSlot) {
-        var result = this.onSlot(recipe, slot);
+        let result = this.onSlot(recipe, slot);
         if (!this.isEmptyResult(result))
           updateList.push({continuation: result, context: slot});
       }

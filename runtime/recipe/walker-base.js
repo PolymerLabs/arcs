@@ -21,7 +21,7 @@ class WalkerBase extends Strategizer.Walker {
     if (updateList.length) {
       switch (this.tactic) {
         case WalkerBase.Permuted:
-          var permutations = [[]];
+          let permutations = [[]];
           updateList.forEach(({continuation, context}) => {
             let newResults = [];
             if (typeof continuation == 'function')
@@ -37,9 +37,9 @@ class WalkerBase extends Strategizer.Walker {
           });
 
           for (let permutation of permutations) {
-            var cloneMap = new Map();
-            var newRecipe = recipe.clone(cloneMap);
-            var score = 0;
+            let cloneMap = new Map();
+            let newRecipe = recipe.clone(cloneMap);
+            let score = 0;
             permutation = permutation.filter(p => p.f !== null);
             if (permutation.length == 0)
               continue;
@@ -71,7 +71,7 @@ class WalkerBase extends Strategizer.Walker {
 
     // commit phase - output results.
 
-    for (var newRecipe of newRecipes) {
+    for (let newRecipe of newRecipes) {
       let result = this.createDescendant(newRecipe.recipe, newRecipe.score);
     }
   }

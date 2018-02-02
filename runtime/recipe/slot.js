@@ -38,11 +38,11 @@ class Slot {
   get consumeConnections() { return this._consumerConnections; }
 
   _copyInto(recipe, cloneMap) {
-    var slot = undefined;
+    let slot = undefined;
     if (!this.sourceConnection && this.id)
       slot = recipe.findSlot(this.id);
     if (slot == undefined) {
-      var slot = recipe.newSlot(this.name);
+      slot = recipe.newSlot(this.name);
       slot._id = this.id;
       slot._formFactor = this.formFactor;
       slot._localName = this._localName;

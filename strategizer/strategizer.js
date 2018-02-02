@@ -82,7 +82,7 @@ export class Strategizer {
     generated = generated.filter(result => {
       if (result.hash) {
         let existingResult = this.populationHash.get(result.hash);
-        var strategy = result.derivation[0].strategy.constructor.name;
+        let strategy = result.derivation[0].strategy.constructor.name;
         if (existingResult) {
           if (result.derivation[0].parent == existingResult) {
             record.nullDerivations += 1;

@@ -28,12 +28,12 @@ class Handle {
   }
 
   _copyInto(recipe) {
-    var view = undefined;
+    let view = undefined;
     if (this._id !== null && ['map', 'use', 'copy'].includes(this.fate))
       view = recipe.findView(this._id);
 
     if (view == undefined) {
-      var view = recipe.newView();
+      view = recipe.newView();
       view._id = this._id;
       view._tags = [...this._tags];
       view._type = this._type;

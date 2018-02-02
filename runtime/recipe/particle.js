@@ -154,7 +154,7 @@ class Particle {
     }
     spec.slots.forEach(slotSpec => {
       if (this._consumedSlotConnections[slotSpec.name] == undefined)
-        var slotConn = this.addSlotConnection(slotSpec.name);
+        this.addSlotConnection(slotSpec.name);
       this._consumedSlotConnections[slotSpec.name].slotSpec = slotSpec;
     });
   }

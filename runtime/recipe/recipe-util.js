@@ -148,14 +148,14 @@ class RecipeUtil {
 
         if (recipeParticle.name != shapeParticle.name)
           continue;
-        var newMatch = {forward: new Map(forward), reverse: new Map(reverse), score};
+        let newMatch = {forward: new Map(forward), reverse: new Map(reverse), score};
         newMatch.forward.set(shapeParticle, recipeParticle);
         newMatch.reverse.set(recipeParticle, shapeParticle);
         newMatches.push(newMatch);
         matchFound = true;
       }
       if (matchFound == false) {
-        var newMatch = {forward: new Map(), reverse: new Map(), score: 0};
+        let newMatch = {forward: new Map(), reverse: new Map(), score: 0};
         forward.forEach((value, key) => newMatch.forward.set(key, value));
         reverse.forEach((value, key) => newMatch.reverse.set(key, value));
         if (!newMatch.forward.has(shapeParticle)) {
@@ -168,7 +168,7 @@ class RecipeUtil {
 
     function _assignViewsToEmptyPosition(match, emptyViews, nullViews) {
       if (emptyViews.length == 1) {
-        var matches = [];
+        let matches = [];
         let {forward, reverse, score} = match;
         for (let nullView of nullViews) {
           let newMatch = {forward: new Map(forward), reverse: new Map(reverse), score: score + 1};
@@ -179,10 +179,10 @@ class RecipeUtil {
         return matches;
       }
       let thisView = emptyViews.pop();
-      var matches = _assignViewsToEmptyPosition(match, emptyViews, nullViews);
+      let matches = _assignViewsToEmptyPosition(match, emptyViews, nullViews);
       let newMatches = [];
-      for (var match of matches) {
-        var nullViews = Object.values(shape.views).filter(view => match.forward.get(view) == null);
+      for (let match of matches) {
+        let nullViews = Object.values(shape.views).filter(view => match.forward.get(view) == null);
         if (nullViews.length > 0)
           newMatches = newMatches.concat(_assignViewsToEmptyPosition(match, [thisView], nullViews));
         else
@@ -199,8 +199,8 @@ class RecipeUtil {
     // Start with a single, empty match
     let matches = [{forward: new Map(), reverse: new Map(), score: 0}];
     for (let shapeVC of shape.recipe.viewConnections) {
-      var newMatches = [];
-      for (var match of matches) {
+      let newMatches = [];
+      for (let match of matches) {
         // collect matching view connections into a new matches list
         _buildNewVCMatches(recipe, shapeVC, match, newMatches);
       }
@@ -212,8 +212,8 @@ class RecipeUtil {
         continue;
       if (shapeParticle.unnamedConnections.length > 0)
         continue;
-      var newMatches = [];
-      for (var match of matches)
+      let newMatches = [];
+      for (let match of matches)
         _buildNewParticleMatches(recipe, shapeParticle, match, newMatches);
       matches = newMatches;
     }
@@ -221,8 +221,8 @@ class RecipeUtil {
     let emptyViews = recipe.views.filter(view => view.connections.length == 0);
 
     if (emptyViews.length > 0) {
-      var newMatches = [];
-      for (var match of matches) {
+      let newMatches = [];
+      for (let match of matches) {
         let nullViews = Object.values(shape.views).filter(view => match.forward.get(view) == null);
         if (nullViews.length > 0)
           newMatches = newMatches.concat(_assignViewsToEmptyPosition(match, emptyViews, nullViews));

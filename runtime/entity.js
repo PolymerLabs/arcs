@@ -42,10 +42,11 @@ class Entity {
   }
   createIdentity(components) {
     assert(!this.isIdentified());
+    let id;
     if (this._userIDComponent)
-      var id = `${components.base}:uid:${this._userIDComponent}`;
+      id = `${components.base}:uid:${this._userIDComponent}`;
     else
-      var id = `${components.base}:${components.component()}`;
+      id = `${components.base}:${components.component()}`;
     this[Symbols.identifier] = id;
   }
   toLiteral() {

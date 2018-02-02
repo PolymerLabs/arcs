@@ -30,7 +30,7 @@ class JsonldToManifest {
       }
     }
 
-    for (var clazz of Object.values(classes)) {
+    for (let clazz of Object.values(classes)) {
       if (clazz['rdfs:subClassOf'] !== undefined) {
         if (clazz['rdfs:subClassOf'].length == undefined)
           clazz['rdfs:subClassOf'] = [clazz['rdfs:subClassOf']];
@@ -48,14 +48,14 @@ class JsonldToManifest {
       }
     }
 
-    for (var clazz of Object.values(classes)) {
+    for (let clazz of Object.values(classes)) {
       if (clazz.subclasses.length == 0 && theClass == undefined) {
         theClass = clazz;
       }
     }
 
     let relevantProperties = [];
-    for (var property of Object.values(properties)) {
+    for (let property of Object.values(properties)) {
       let domains = property['schema:domainIncludes'];
       if (!domains)
         domains = {'@id': theClass['@id']};
@@ -64,7 +64,7 @@ class JsonldToManifest {
       domains = domains.map(a => a['@id']);
       if (domains.includes(theClass['@id'])) {
         let name = property['@id'].split(':')[1];
-        var type = property['schema:rangeIncludes'];
+        let type = property['schema:rangeIncludes'];
         if (!type)
           console.log(property);
         if (!type.length)
@@ -90,11 +90,12 @@ class JsonldToManifest {
 
     if (relevantProperties.length > 0) {
       s += '\n  optional';
-      for (var property of relevantProperties) {
+      for (let property of relevantProperties) {
+        let type;
         if (property.type.length > 1)
-          var type = '(' + property.type.join(' or ') + ')';
+          type = '(' + property.type.join(' or ') + ')';
         else
-          var type = property.type[0];
+          type = property.type[0];
         s += `\n    ${type} ${property.name}`;
       }
     }

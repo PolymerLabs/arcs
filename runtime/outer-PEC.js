@@ -33,10 +33,11 @@ class OuterPEC extends PEC {
     };
 
     this._apiPort.onSynchronize = async ({handle, target, callback, modelCallback, type}) => {
+      let model;
       if (handle.toList == undefined) {
-        var model = await handle.get();
+        model = await handle.get();
       } else {
-        var model = await handle.toList();
+        model = await handle.toList();
       }
       this._apiPort.SimpleCallback({callback: modelCallback, data: model}, target);
       handle.on(type, data => this._apiPort.SimpleCallback({callback, data}), target);
@@ -79,8 +80,9 @@ class OuterPEC extends PEC {
     };
 
     this._apiPort.onArcCreateSlot = ({callback, arc, transformationParticle, transformationSlotName, hostedParticleName, hostedSlotName}) => {
+      let hostedSlotId;
       if (this.slotComposer) {
-        var hostedSlotId = this.slotComposer.createHostedSlot(transformationParticle, transformationSlotName, hostedParticleName, hostedSlotName);
+        hostedSlotId = this.slotComposer.createHostedSlot(transformationParticle, transformationSlotName, hostedParticleName, hostedSlotName);
       }
       this._apiPort.CreateSlotCallback({}, {callback, hostedSlotId});
     };
