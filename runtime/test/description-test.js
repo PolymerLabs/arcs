@@ -94,10 +94,10 @@ recipe
     let foosView = await arc.createHandle(Foo.type.setViewOf());
     recipe.normalize();
     assert.isTrue(recipe.isResolved());
-    let ifooViewConn = recipe.viewConnections.find(vc => vc.particle.name == 'A' && vc.name == 'ifoo');
-    let ifooView = ifooViewConn ? ifooViewConn.view : null;
-    let ofoosViewConn = recipe.viewConnections.find(vc => vc.particle.name == 'A' && vc.name == 'ofoos');
-    let ofoosView = ofoosViewConn ? ofoosViewConn.view : null;
+    let ifooHandleConn = recipe.handleConnections.find(hc => hc.particle.name == 'A' && hc.name == 'ifoo');
+    let ifooView = ifooHandleConn ? ifooHandleConn.view : null;
+    let ofoosHandleConn = recipe.handleConnections.find(hc => hc.particle.name == 'A' && hc.name == 'ofoos');
+    let ofoosView = ofoosHandleConn ? ofoosHandleConn.view : null;
     arc._activeRecipe = recipe;
     return {arc, recipe, ifooView, ofoosView, fooView, foosView};
   }
@@ -270,7 +270,7 @@ ${recipeManifest}
 
       await test.verifySuggestion('Read from best-new-foo and populate my-foos.', description);
       assert.equal('best-new-foo', await description.getHandleDescription(ifooView));
-      let oBFooView = recipe.viewConnections.find(vc => vc.particle.name == 'B' && vc.name == 'ofoo').view;
+      let oBFooView = recipe.handleConnections.find(hc => hc.particle.name == 'B' && hc.name == 'ofoo').view;
       assert.equal('best-new-foo', await description.getHandleDescription(oBFooView));
       assert.equal('my-foos', await description.getHandleDescription(ofoosView));
 
@@ -287,7 +287,7 @@ ${recipeManifest}
 
   tests.forEach((test) => {
     it('multiple particles ' + test.name, async () => {
-      let {arc, recipe, ifooViewConn, fooView} = (await prepareRecipeAndArc(`
+      let {arc, recipe, ifooHandleConn, fooView} = (await prepareRecipeAndArc(`
 ${schemaManifest}
 particle X1
   X1(out Foo ofoo)
@@ -321,7 +321,7 @@ recipe
     consume root as slot0
       provide action as slot1
     `));
-      let aFooView = recipe.viewConnections.find(vc => vc.particle.name == 'A' && vc.name == 'ifoo').view;
+      let aFooView = recipe.handleConnections.find(hc => hc.particle.name == 'A' && hc.name == 'ifoo').view;
 
       let description = new Description(arc);
 
@@ -472,7 +472,7 @@ recipe
       let description = new Description(arc);
 
       await test.verifySuggestion('Create &lt;new> &lt;&lt;my-foo>>.', description);
-      let view = recipe.viewConnections.find(vc => vc.particle.name == 'A' && vc.name == 'ofoo').view;
+      let view = recipe.handleConnections.find(hc => hc.particle.name == 'A' && hc.name == 'ofoo').view;
       assert.equal('&lt;my-foo>', await description.getHandleDescription(view, arc));
     });
   });
@@ -511,8 +511,8 @@ recipe
         let description = new Description(arc);
 
         await test.verifySuggestion('Make my best type list from my best type.', description);
-        let tRecipeView = recipe.viewConnections.find(vc => vc.particle.name == 'P' && vc.name == 't').view;
-        let tsRecipeView = recipe.viewConnections.find(vc => vc.particle.name == 'P' && vc.name == 'ts').view;
+        let tRecipeView = recipe.handleConnections.find(hc => hc.particle.name == 'P' && hc.name == 't').view;
+        let tsRecipeView = recipe.handleConnections.find(hc => hc.particle.name == 'P' && hc.name == 'ts').view;
         assert.equal('my best type', await description.getHandleDescription(tRecipeView));
         assert.equal('my best type list', await description.getHandleDescription(tsRecipeView));
 

@@ -30,7 +30,7 @@ export default class MapConsumedSlots extends Strategy {
             return;
 
           // Verify view connections match.
-          let views = slot.viewConnections.map(connection => connection.view);
+          let views = slot.handleConnections.map(connection => connection.view);
           if (views.length == 0) {
             return true;
           }

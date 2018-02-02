@@ -20,7 +20,7 @@ import InitPopulation from '../strategies/init-population.js';
 import MapRemoteSlots from '../strategies/map-remote-slots.js';
 import MatchParticleByVerb from '../strategies/match-particle-by-verb.js';
 import SearchTokensToParticles from '../strategies/search-tokens-to-particles.js';
-import GroupViewConnections from '../strategies/group-view-connections.js';
+import GroupHandleConnections from '../strategies/group-handle-connections.js';
 import CombinedStrategy from '../strategies/combined-strategy.js';
 import CreateDescriptionHandle from '../strategies/create-description-handle.js';
 import FallbackFate from '../strategies/fallback-fate.js';
@@ -647,7 +647,7 @@ describe('MatchParticleByVerb', function() {
                      plans.map(plan => plan.particles.map(particle => particle.name)));
   });
 
-  describe('GroupViewConnections', function() {
+  describe('GroupHandleConnections', function() {
     let schemaAndParticlesStr = `
 schema Thing
 schema OtherThing
@@ -673,14 +673,14 @@ recipe
       let strategizer = {generated: [{result: manifest.recipes[0], score: 1}]};
       let arc = createTestArc('test-plan-arc', manifest, 'dom');
       arc._search = 'showproducts and chooser alsoon recommend';
-      let gvc = new GroupViewConnections(arc);
+      let ghc = new GroupHandleConnections(arc);
 
-      let {results} = await gvc.generate(strategizer);
+      let {results} = await ghc.generate(strategizer);
       assert.equal(results.length, 1);
       let recipe = results[0].result;
       assert.equal(4, recipe.views.length);
-      // Verify all connections are bound to views.
-      assert.isUndefined(recipe.viewConnections.find(vc => !vc.view));
+      // Verify all connections are bound to handles.
+      assert.isUndefined(recipe.handleConnections.find(hc => !hc.view));
       // Verify all views have non-empty connections list.
       assert.isUndefined(recipe.views.find(v => v.connections.length == 0));
     });
@@ -703,7 +703,7 @@ recipe
       let arc = createTestArc('test-plan-arc', manifest, 'dom');
       let strategy = new CombinedStrategy([
         new SearchTokensToParticles(arc),
-        new GroupViewConnections(arc),
+        new GroupHandleConnections(arc),
       ]);
 
       let {results} = await strategy.generate(strategizer);

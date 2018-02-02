@@ -12,23 +12,23 @@ import RecipeWalker from '../recipe/walker.js';
 export default class NameUnnamedConnections extends Strategy {
   async generate(strategizer) {
     let results = Recipe.over(this.getResults(strategizer), new class extends RecipeWalker {
-      onViewConnection(recipe, viewConnection) {
-        if (viewConnection.name)
+      onHandleConnection(recipe, handleConnection) {
+        if (handleConnection.name)
           return; // it is already named.
 
-        if (!viewConnection.particle.spec)
+        if (!handleConnection.particle.spec)
           return; // the particle doesn't have spec yet.
 
-        let possibleSpecConns = viewConnection.particle.spec.connections.filter(specConn => {
+        let possibleSpecConns = handleConnection.particle.spec.connections.filter(specConn => {
           // filter specs with matching types that don't have views bound to the corresponding view connection.
           return !specConn.isOptional &&
-                 viewConnection.view.type.equals(specConn.type) &&
-                 !viewConnection.particle.getConnectionByName(specConn.name).view;
+                 handleConnection.view.type.equals(specConn.type) &&
+                 !handleConnection.particle.getConnectionByName(specConn.name).view;
         });
 
         return possibleSpecConns.map(specConn => {
-          return (recipe, viewConnection) => {
-            viewConnection.particle.nameConnection(viewConnection, specConn.name);
+          return (recipe, handleConnection) => {
+            handleConnection.particle.nameConnection(handleConnection, specConn.name);
             return 1;
           };
         });

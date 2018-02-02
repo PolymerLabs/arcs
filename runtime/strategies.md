@@ -49,16 +49,16 @@ Convert unresolved search tokens (from arc’s search query) to particles and ad
 The particles are matched by name and primary verb.<br/>
 [search-tokens-to-particles.js](https://github.com/PolymerLabs/arcs/blob/master/runtime/strategies/search-tokens-to-particles.js)
 
-## GroupViewConnections
-Group together view connections of different particles that are not bound to any views with other view connections of the same type.
-View connections of the same particle must be bound to different views. If several views of the same type exist, the preference is to group “in” connections with “out” ones.<br/>
-[group-view-connections.js](https://github.com/PolymerLabs/arcs/blob/master/runtime/strategies/group-view-connections.js)
+## GroupHandleConnections
+Group together handle connections of different particles that are not bound to any handles with other handle connections of the same type.
+Handle connections of the same particle must be bound to different handles. If several handles of the same type exist, the preference is to group “in” connections with “out” ones.<br/>
+[group-handle-connections.js](https://github.com/PolymerLabs/arcs/blob/master/runtime/strategies/group-handle-connections.js)
 
 ## CombinedStrategy
 Run several strategy in a single transaction.
 Each strategy is performed on leaf results of previously executed strategies. Only the leaf-results are returned to the strategizer.
 
-Currently this strategy is used to execute SearchTokensToParticles together with GroupViewConnections (that otherwise causes explosion of recipes in next generations).<br/>
+Currently this strategy is used to execute SearchTokensToParticles together with GroupHandleConnections (that otherwise causes explosion of recipes in next generations).<br/>
 [combined-strategy.js](https://github.com/PolymerLabs/arcs/blob/master/runtime/strategies/combined-strategy.js)
 
 ## FallbackFate

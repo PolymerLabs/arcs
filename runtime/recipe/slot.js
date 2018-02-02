@@ -18,7 +18,7 @@ class Slot {
     this._name = name;
 
     this._formFactor = undefined;
-    this._viewConnections = []; // ViewConnection* (can only be set if source connection is set and particle in slot connections is set)
+    this._handleConnections = []; // HandleConnection* (can only be set if source connection is set and particle in slot connections is set)
     this._sourceConnection = undefined; // SlotConnection
     this._consumerConnections = []; // SlotConnection*
   }
@@ -32,7 +32,7 @@ class Slot {
   set name(name) { this._name = name; };
   get formFactor() { return this._formFactor; }
   set formFactor(formFactor) { this._formFactor = formFactor; }
-  get viewConnections() { return this._viewConnections; }
+  get handleConnections() { return this._handleConnections; }
   get sourceConnection() { return this._sourceConnection; }
   set sourceConnection(sourceConnection) { this._sourceConnection = sourceConnection; }
   get consumeConnections() { return this._consumerConnections; }
@@ -50,7 +50,7 @@ class Slot {
       slot._sourceConnection = cloneMap.get(this._sourceConnection);
       if (slot.sourceConnection)
         slot.sourceConnection._providedSlots[slot.name] = slot;
-      this._viewConnections.forEach(connection => slot._viewConnections.push(cloneMap.get(connection)));
+      this._handleConnections.forEach(connection => slot._handleConnections.push(cloneMap.get(connection)));
     }
     this._consumerConnections.forEach(connection => cloneMap.get(connection).connectToSlot(slot));
     return slot;

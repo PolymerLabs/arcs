@@ -83,9 +83,9 @@ export class DescriptionFormatter {
   async getHandleDescription(recipeView) {
     await this._updateDescriptionHandles(this._description);
 
-    let viewConnection = this._selectViewConnection(recipeView) || recipeView.connections[0];
+    let handleConnection = this._selectHandleConnection(recipeView) || recipeView.connections[0];
     let view = this._arc.findHandleById(recipeView.id);
-    return this._formatDescription(viewConnection, view);
+    return this._formatDescription(handleConnection, view);
   }
 
   async _updateDescriptionHandles(description) {
@@ -369,19 +369,19 @@ export class DescriptionFormatter {
     }
   }
 
-  async _formatDescription(viewConnection, view) {
-    return (await this._formatDescriptionPattern(viewConnection)) ||
-           this._formatViewDescription(viewConnection, view) ||
-           this._formatViewType(viewConnection);
+  async _formatDescription(handleConnection, view) {
+    return (await this._formatDescriptionPattern(handleConnection)) ||
+           this._formatViewDescription(handleConnection, view) ||
+           this._formatViewType(handleConnection);
   }
 
-  async _formatDescriptionPattern(viewConnection) {
-    let chosenConnection = viewConnection;
+  async _formatDescriptionPattern(handleConnection) {
+    let chosenConnection = handleConnection;
 
     // For "out" connection, use its own description
     // For "in" connection, use description of the highest ranked out connection with description.
     if (!chosenConnection.spec.isOutput) {
-      let otherConnection = this._selectViewConnection(viewConnection.view);
+      let otherConnection = this._selectHandleConnection(handleConnection.view);
       if (otherConnection) {
         chosenConnection = otherConnection;
       }
@@ -405,11 +405,11 @@ export class DescriptionFormatter {
       }
     }
   }
-  _formatViewType(viewConnection) {
-    return viewConnection.type.toPrettyString().toLowerCase();
+  _formatViewType(handleConnection) {
+    return handleConnection.type.toPrettyString().toLowerCase();
   }
 
-  _selectViewConnection(recipeView) {
+  _selectHandleConnection(recipeView) {
     let possibleConnections = recipeView.connections.filter(connection => {
       // Choose connections with patterns (manifest-based or dynamic).
       let connectionSpec = connection.spec;

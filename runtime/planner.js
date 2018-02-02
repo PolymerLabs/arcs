@@ -25,7 +25,7 @@ import Manifest from './manifest.js';
 import InitSearch from './strategies/init-search.js';
 import SearchTokensToParticles from './strategies/search-tokens-to-particles.js';
 import FallbackFate from './strategies/fallback-fate.js';
-import GroupViewConnections from './strategies/group-view-connections.js';
+import GroupHandleConnections from './strategies/group-handle-connections.js';
 import CombinedStrategy from './strategies/combined-strategy.js';
 
 import Speculator from './speculator.js';
@@ -69,7 +69,7 @@ class Planner {
       new InitSearch(arc),
       new CombinedStrategy([
         new SearchTokensToParticles(arc),
-        new GroupViewConnections(),
+        new GroupHandleConnections(),
       ]),
       new FallbackFate(),
       new CreateViews(),

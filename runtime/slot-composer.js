@@ -239,7 +239,7 @@ class SlotComposer {
           id: psId,
           count: ps.consumeConnections.length,
           providedSlotSpec,
-          views: ps.viewConnections.map(vc => vc.view)
+          views: ps.handleConnections.map(hc => hc.view)
         });
       });
     });

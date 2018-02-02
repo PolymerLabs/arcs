@@ -29,11 +29,11 @@ class Walker extends WalkerBase {
           updateList.push({continuation: result, context: particle});
       }
     }
-    for (let viewConnection of recipe.viewConnections) {
-      if (this.onViewConnection) {
-        let result = this.onViewConnection(recipe, viewConnection);
+    for (let handleConnection of recipe.handleConnections) {
+      if (this.onHandleConnection) {
+        let result = this.onHandleConnection(recipe, handleConnection);
         if (!this.isEmptyResult(result))
-          updateList.push({continuation: result, context: viewConnection});
+          updateList.push({continuation: result, context: handleConnection});
       }
     }
     for (let view of recipe.views) {

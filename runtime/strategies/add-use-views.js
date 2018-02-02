@@ -1,4 +1,3 @@
-
 // Copyright (c) 2017 Google Inc. All rights reserved.
 // This code may only be used under the BSD style license found at
 // http://polymer.github.io/LICENSE.txt
@@ -25,14 +24,14 @@ export default class AddUseViews extends Strategy {
 
         // TODO: "description" handles are always created, and in the future they need to be "optional" (blocked by optional handles
         // not being properly supported in arc instantiation). For now just hardcode skiping them.
-        let disconnectedConnections = recipe.viewConnections.filter(vc => vc.view == null && !vc.isOptional && vc.name != 'descriptions');
+        let disconnectedConnections = recipe.handleConnections.filter(hc => hc.view == null && !hc.isOptional && hc.name != 'descriptions');
 
         return recipe => {
-          disconnectedConnections.forEach(vc => {
-            let clonedVC = recipe.updateToClone({vc}).vc;
+          disconnectedConnections.forEach(hc => {
+            let clonedHC = recipe.updateToClone({hc}).hc;
             let view = recipe.newView();
             view.fate = 'use';
-            clonedVC.connectToView(view);
+            clonedHC.connectToView(view);
           });
           return 0;
         };
