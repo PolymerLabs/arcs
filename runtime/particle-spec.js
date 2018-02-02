@@ -55,7 +55,7 @@ class ProvidedSlotSpec {
 }
 
 class ParticleSpec {
-  constructor(model, typeVarMap) {
+  constructor(model) {
     this._model = model;
     this.name = model.name;
     this.verbs = model.verbs;
@@ -120,18 +120,14 @@ class ParticleSpec {
     return {args, name, verbs, transient, description, implFile, affordance, slots};
   }
 
-  static fromLiteral(literal, typeVarMap) {
+  static fromLiteral(literal) {
     let {args, name, verbs, transient, description, implFile, affordance, slots} = literal;
     args = args.map(({type, direction, name, isOptional}) => ({type: Type.fromLiteral(type), direction, name, isOptional}));
-    return new ParticleSpec({args, name, verbs, transient, description, implFile, affordance, slots}, typeVarMap);
+    return new ParticleSpec({args, name, verbs, transient, description, implFile, affordance, slots});
   }
 
   clone() {
-    let typeVarMapClone = new Map();
-    this._typeVarMap.forEach((typeVar, key) => {
-      typeVarMapClone.set(key, TypeVariable.fromLiteral(typeVar.toLiteral()));
-    });
-    return ParticleSpec.fromLiteral(this.toLiteral(), typeVarMapClone);
+    return ParticleSpec.fromLiteral(this.toLiteral());
   }
 
   equals(other) {
