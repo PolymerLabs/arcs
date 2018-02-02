@@ -22,8 +22,7 @@ const sources = {
   browser: [
     'test/test.js',
     'demo/demo.js',
-    'worker-entry.js',
-    'planner.js'
+    'worker-entry.js'
   ],
 };
 

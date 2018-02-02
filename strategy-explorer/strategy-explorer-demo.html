@@ -8,12 +8,16 @@ http://polymer.github.io/PATENTS.txt
 -->
 <!DOCTYPE html>
 
-<script src='../runtime/browser/build/planner.js'></script>
 <link rel="import" href="strategy-explorer.html"></link>
 
 <strategy-explorer></strategy-explorer>
 
-<script>
+<script type="module">
+import Arc from '../runtime/arc.js';
+import Loader from '../runtime/browser-loader.js';
+import Manifest from '../runtime/manifest.js';
+import Planner from '../runtime/planner.js';
+import SlotComposer from '../runtime/slot-composer.js';
 
 (async () => {
   var loader = new Loader();
