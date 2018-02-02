@@ -109,7 +109,7 @@ recipe
       if (listIndex >= 0 && listIndex < items.length) {
         items[listIndex] = Object.assign({}, content.model, items[listIndex]);
       } else {
-        items.push(Object.assign(content.model, {subId}));
+        items.push(Object.assign({}, content.model, {subId}));
       }
       this._setState({renderModel: {items}});
     }
