@@ -14,11 +14,11 @@ class Shape {
     this.particles = particles;
     this.views = views;
     this.reverse = new Map();
-    for (var p in particles)
+    for (let p in particles)
       this.reverse.set(particles[p], p);
-    for (var v in views)
+    for (let v in views)
       this.reverse.set(views[v], v);
-    for (var vc in vcs)
+    for (let vc in vcs)
       this.reverse.set(vcs[vc], vc);
   }
 }
@@ -26,9 +26,9 @@ class Shape {
 class RecipeUtil {
   static makeShape(particles, views, map, recipe) {
     recipe = recipe || new Recipe();
-    var pMap = {};
-    var vMap = {};
-    var vcMap = {};
+    let pMap = {};
+    let vMap = {};
+    let vcMap = {};
     particles.forEach(particle => pMap[particle] = recipe.newParticle(particle));
     views.forEach(view => vMap[view] = recipe.newView());
     Object.keys(map).forEach(key => {
@@ -43,7 +43,7 @@ class RecipeUtil {
 
   static recipeToShape(recipe) {
     let particles = {};
-    var id = 0;
+    let id = 0;
     recipe.particles.forEach(particle => particles[particle.name] = particle);
     let views = {};
     recipe.views.forEach(view => views['v' + id++] = view);
@@ -56,8 +56,8 @@ class RecipeUtil {
 
     function _buildNewVCMatches(recipe, shapeVC, match, outputList) {
       let {forward, reverse, score} = match;
-      var matchFound = false;
-      for (var recipeVC of recipe.viewConnections) {
+      let matchFound = false;
+      for (let recipeVC of recipe.viewConnections) {
         // TODO are there situations where multiiple viewConnections should
         // be allowed to point to the same one in the recipe?
         if (reverse.has(recipeVC))
@@ -104,7 +104,7 @@ class RecipeUtil {
         }
 
         // clone forward and reverse mappings and establish new components.
-        var newMatch = {forward: new Map(forward), reverse: new Map(reverse), score};
+        let newMatch = {forward: new Map(forward), reverse: new Map(reverse), score};
         assert(!newMatch.forward.has(shapeVC.particle) || newMatch.forward.get(shapeVC.particle) == recipeVC.particle);
         newMatch.forward.set(shapeVC.particle, recipeVC.particle);
         newMatch.reverse.set(recipeVC.particle, shapeVC.particle);
@@ -125,7 +125,7 @@ class RecipeUtil {
         matchFound = true;
       }
       if (matchFound == false) {
-        var newMatches = [];
+        let newMatches = [];
         _buildNewParticleMatches(recipe, shapeVC.particle, match, newMatches);
         newMatches.forEach(newMatch => {
           if (shapeVC.view && !newMatch.forward.has(shapeVC.view)) {
@@ -141,8 +141,8 @@ class RecipeUtil {
 
     function _buildNewParticleMatches(recipe, shapeParticle, match, newMatches) {
       let {forward, reverse, score} = match;
-      var matchFound = false;
-      for (var recipeParticle of recipe.particles) {
+      let matchFound = false;
+      for (let recipeParticle of recipe.particles) {
         if (reverse.has(recipeParticle))
           continue;
 
@@ -170,17 +170,17 @@ class RecipeUtil {
       if (emptyViews.length == 1) {
         var matches = [];
         let {forward, reverse, score} = match;
-        for (var nullView of nullViews) {
-          var newMatch = {forward: new Map(forward), reverse: new Map(reverse), score: score + 1};
+        for (let nullView of nullViews) {
+          let newMatch = {forward: new Map(forward), reverse: new Map(reverse), score: score + 1};
           newMatch.forward.set(nullView, emptyViews[0]);
           newMatch.reverse.set(emptyViews[0], nullView);
           matches.push(newMatch);
         }
         return matches;
       }
-      var thisView = emptyViews.pop();
+      let thisView = emptyViews.pop();
       var matches = _assignViewsToEmptyPosition(match, emptyViews, nullViews);
-      var newMatches = [];
+      let newMatches = [];
       for (var match of matches) {
         var nullViews = Object.values(shape.views).filter(view => match.forward.get(view) == null);
         if (nullViews.length > 0)
@@ -197,8 +197,8 @@ class RecipeUtil {
     // from recipe component to shape component.
 
     // Start with a single, empty match
-    var matches = [{forward: new Map(), reverse: new Map(), score: 0}];
-    for (var shapeVC of shape.recipe.viewConnections) {
+    let matches = [{forward: new Map(), reverse: new Map(), score: 0}];
+    for (let shapeVC of shape.recipe.viewConnections) {
       var newMatches = [];
       for (var match of matches) {
         // collect matching view connections into a new matches list
@@ -207,7 +207,7 @@ class RecipeUtil {
       matches = newMatches;
     }
 
-    for (var shapeParticle of shape.recipe.particles) {
+    for (let shapeParticle of shape.recipe.particles) {
       if (Object.keys(shapeParticle.connections).length > 0)
         continue;
       if (shapeParticle.unnamedConnections.length > 0)
@@ -218,12 +218,12 @@ class RecipeUtil {
       matches = newMatches;
     }
 
-    var emptyViews = recipe.views.filter(view => view.connections.length == 0);
+    let emptyViews = recipe.views.filter(view => view.connections.length == 0);
 
     if (emptyViews.length > 0) {
       var newMatches = [];
       for (var match of matches) {
-        var nullViews = Object.values(shape.views).filter(view => match.forward.get(view) == null);
+        let nullViews = Object.values(shape.views).filter(view => match.forward.get(view) == null);
         if (nullViews.length > 0)
           newMatches = newMatches.concat(_assignViewsToEmptyPosition(match, emptyViews, nullViews));
         else
@@ -233,16 +233,16 @@ class RecipeUtil {
     }
 
     return matches.map(({forward, score}) => {
-      var match = {};
+      let match = {};
       forward.forEach((value, key) => match[shape.reverse.get(key)] = value);
       return {match, score};
     });
   }
 
   static directionCounts(view) {
-    var counts = {'in': 0, 'out': 0, 'inout': 0, 'unknown': 0};
-    for (var connection of view.connections) {
-      var direction = connection.direction;
+    let counts = {'in': 0, 'out': 0, 'inout': 0, 'unknown': 0};
+    for (let connection of view.connections) {
+      let direction = connection.direction;
       if (counts[direction] == undefined)
         direction = 'unknown';
       counts[direction]++;

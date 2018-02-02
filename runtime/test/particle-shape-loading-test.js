@@ -24,7 +24,7 @@ import ParticleSpec from '../particle-spec.js';
 describe('particle-shape-loading', function() {
 
   it('loads shapes into particles', async () => {
-    var loader = new class extends Loader {
+    let loader = new class extends Loader {
       loadResource(path) {
         if (path == 'outer-particle.js')
           return `
@@ -74,13 +74,13 @@ describe('particle-shape-loading', function() {
       }
     }();
 
-    var pecFactory = function(id) {
-      var channel = new MessageChannel();
+    let pecFactory = function(id) {
+      let channel = new MessageChannel();
       new InnerPec(channel.port1, `${id}:inner`, loader);
       return channel.port2;
     };
 
-    var arc = new Arc({id: 'test', pecFactory});
+    let arc = new Arc({id: 'test', pecFactory});
 
     let manifest = await Manifest.load('./particles/test/test-particles.manifest', loader);
 
@@ -105,7 +105,7 @@ describe('particle-shape-loading', function() {
     shapeView.set(manifest.particles[0].toLiteral());
     let outView = await arc.createHandle(barType);
     let inView = await arc.createHandle(fooType);
-    var Foo = manifest.schemas.Foo.entityClass();
+    let Foo = manifest.schemas.Foo.entityClass();
     inView.set(new Foo({value: 'a foo'}));
 
     let recipe = new Recipe();
@@ -137,10 +137,10 @@ describe('particle-shape-loading', function() {
   });
 
   it('loads shapes into particles declaratively', async () => {
-    var loader = new Loader();
+    let loader = new Loader();
 
-    var pecFactory = function(id) {
-      var channel = new MessageChannel();
+    let pecFactory = function(id) {
+      let channel = new MessageChannel();
       new InnerPec(channel.port1, `${id}:inner`, loader);
       return channel.port2;
     };
@@ -157,7 +157,7 @@ describe('particle-shape-loading', function() {
           input <- v1
       `, {loader, fileName: './test.manifest'});
 
-    var arc = new Arc({id: 'test', pecFactory, context: manifest});  
+    let arc = new Arc({id: 'test', pecFactory, context: manifest});  
 
     let fooType = manifest.findTypeByName('Foo');
     let barType = manifest.findTypeByName('Bar');

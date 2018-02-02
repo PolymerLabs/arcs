@@ -22,7 +22,7 @@ class Relation extends Entity {
     return this.entities.map(entity => entity[Symbols.identifier].toLiteral());
   }
   static typeFor(relation) {
-    var result = new Type(relation.entities.map(entity => entity.constructor.type), relation.constructor);
+    let result = new Type(relation.entities.map(entity => entity.constructor.type), relation.constructor);
     return result;
   }
 }

@@ -15,7 +15,7 @@ import btoa from '../../platform/btoa-web.js';
 class FirebaseKey extends KeyBase {
   constructor(key) {
     super();
-    var parts = key.split('://');
+    let parts = key.split('://');
     this.protocol = parts[0];
     assert(this.protocol == 'firebase');
     if (parts[1]) {
@@ -85,7 +85,7 @@ export default class FirebaseStorage {
       throw new Error('Can\'t complete partial firebase keys');
 
     if (this._apps[key.projectId] == undefined) {
-      for (var app of firebase.apps) {
+      for (let app of firebase.apps) {
         if (app.options.databaseURL == key.databaseURL) {
           this._apps[key.projectId] = app;
           break;
@@ -100,7 +100,7 @@ export default class FirebaseStorage {
       }, `app${_nextAppNameSuffix++}`);
     }
 
-    var reference = firebase.database(this._apps[key.projectId]).ref(key.location);
+    let reference = firebase.database(this._apps[key.projectId]).ref(key.location);
 
     let result = await realTransaction(reference, data => {
       if ((data == null) == shouldExist)
@@ -198,8 +198,8 @@ class FirebaseCollection extends FirebaseStorageProvider {
   }
 
   async get(id) {
-    var set = this.dataSnapshot.val().data;
-    var encId = FirebaseStorageProvider.encodeKey(id);
+    let set = this.dataSnapshot.val().data;
+    let encId = FirebaseStorageProvider.encodeKey(id);
     if (set)
       return set[encId];
     return undefined;
@@ -209,7 +209,7 @@ class FirebaseCollection extends FirebaseStorageProvider {
     return realTransaction(this.reference, data => {
       if (!data.data)
         data.data = {};
-      var encId = FirebaseStorageProvider.encodeKey(id);
+      let encId = FirebaseStorageProvider.encodeKey(id);
       data.data[encId] = null;
       data.version += 1;
       return data;
@@ -220,7 +220,7 @@ class FirebaseCollection extends FirebaseStorageProvider {
     return realTransaction(this.reference, data => {
       if (!data.data)
         data.data = {};
-      var encId = FirebaseStorageProvider.encodeKey(entity.id);
+      let encId = FirebaseStorageProvider.encodeKey(entity.id);
       data.data[encId] = entity;
       data.version += 1;
       return data;
@@ -233,7 +233,7 @@ class FirebaseCollection extends FirebaseStorageProvider {
       if (!data.data)
         data.data = {};
       list.forEach(item => {
-        var encId = FirebaseStorageProvider.encodeKey(item.id);
+        let encId = FirebaseStorageProvider.encodeKey(item.id);
         data.data[encId] = item;
       });
       data.version = version;
@@ -261,7 +261,7 @@ class FirebaseCollection extends FirebaseStorageProvider {
   }
 
   _setToList(set) {
-    var list = [];
+    let list = [];
     if (set) {
       for (let key in set) {
         list.push(set[key]);

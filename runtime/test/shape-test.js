@@ -16,21 +16,21 @@ import Manifest from '../manifest.js';
 
 describe('shape', function() {
   it('finds type variable references in views', function() {
-    var shape = new Shape([{type: Type.newVariableReference('a')}], []);
+    let shape = new Shape([{type: Type.newVariableReference('a')}], []);
     assert.equal(shape._typeVars.length, 1);
     assert(shape._typeVars[0].field == 'type');
     assert(shape._typeVars[0].object[shape._typeVars[0].field].variableReference == 'a');
   });
 
   it('finds type variable references in slots', function() {
-    var shape = new Shape([], [{name: Type.newVariableReference('a')}]);
+    let shape = new Shape([], [{name: Type.newVariableReference('a')}]);
     assert.equal(shape._typeVars.length, 1);
     assert(shape._typeVars[0].field == 'name');
     assert(shape._typeVars[0].object[shape._typeVars[0].field].variableReference == 'a');
   });
 
   it('upgrades type variable references', function() {
-    var shape = new Shape(
+    let shape = new Shape(
       [
         {name: Type.newVariableReference('a')},
         {type: Type.newVariableReference('b'), name: 'singleton'},
@@ -40,8 +40,8 @@ describe('shape', function() {
         {name: Type.newVariableReference('a')},
       ]);
     assert.equal(shape._typeVars.length, 4);
-    var type = Type.newInterface(shape);
-    var map = new Map();
+    let type = Type.newInterface(shape);
+    let map = new Map();
     type = type.assignVariableIds(map);
     assert(map.has('a'));
     assert(map.has('b'));
@@ -68,7 +68,7 @@ describe('shape', function() {
           S(in NotTest bar, out Test far, out NotTest foo)
       `);
       let type = Type.newEntity(manifest.schemas.Test);
-      var shape = new Shape([{name: 'foo'}, {direction: 'in'}, {type}], []);
+      let shape = new Shape([{name: 'foo'}, {direction: 'in'}, {type}], []);
       assert(!shape.particleMatches(manifest.particles[0]));
       assert(shape.particleMatches(manifest.particles[1]));
       assert(shape.particleMatches(manifest.particles[2]));
@@ -98,7 +98,7 @@ describe('shape', function() {
             provide set of randomSlot
       `);
       let type = Type.newEntity(manifest.schemas.Test);
-      var shape = new Shape([{direction: 'in', type}], [{name: 'one'}, {direction: 'provide', isSet: true}]);
+      let shape = new Shape([{direction: 'in', type}], [{name: 'one'}, {direction: 'provide', isSet: true}]);
 
       assert(!shape.particleMatches(manifest.particles[0]));
       assert(!shape.particleMatches(manifest.particles[1]));

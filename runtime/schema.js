@@ -19,9 +19,9 @@ class Schema {
     this._optional = {};
 
     assert(model.sections, `${JSON.stringify(model)} should have sections`);
-    for (var section of model.sections) {
-      var into = section.sectionType == 'normative' ? this._normative : this._optional;
-      for (var field in section.fields) {
+    for (let section of model.sections) {
+      let into = section.sectionType == 'normative' ? this._normative : this._optional;
+      for (let field in section.fields) {
         // TODO normalize field types here?
         into[field] = section.fields[field];
       }
@@ -84,16 +84,16 @@ class Schema {
   }
 
   get normative() {
-    var normative = {};
-    for (var parent of this.parents)
+    let normative = {};
+    for (let parent of this.parents)
       Object.assign(normative, parent.normative);
     Object.assign(normative, this._normative);
     return normative;
   }
 
   get optional() {
-    var optional = {};
-    for (var parent of this.parents)
+    let optional = {};
+    for (let parent of this.parents)
       Object.assign(optional, parent.optional);
     Object.assign(optional, this._optional);
     return optional;

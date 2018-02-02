@@ -17,15 +17,15 @@ defineParticle(({Particle}) => {
       this._handleIds = new Set();
     }
     setViews(views) {
-      var arc = null;
+      let arc = null;
       this.on(views, 'products', 'change', async e => {
         if (!arc) {
           arc = await this.constructInnerArc();
         }
-        var productsView = views.get('products');
-        var productsList = await productsView.toList();
+        let productsView = views.get('products');
+        let productsList = await productsView.toList();
         let hostedParticle = await views.get('hostedParticle').get();
-        var resultsView = views.get('results');
+        let resultsView = views.get('results');
         for (let [index, product] of productsList.entries()) {
           if (this._handleIds.has(product.id)) {
             continue;
@@ -35,7 +35,7 @@ defineParticle(({Particle}) => {
           let resultView = await arc.createHandle(productsView.type.primitiveType(), 'result' + index);
           this._handleIds.add(product.id);
 
-          var recipe = `
+          let recipe = `
 ${this.serializeSchema(hostedParticle)}
 import '${hostedParticle.implFile.replace(/\.[^\.]+$/, '.manifest')}'
 recipe

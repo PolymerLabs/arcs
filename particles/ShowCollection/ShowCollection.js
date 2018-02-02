@@ -94,7 +94,7 @@ defineParticle(({TransformationDomParticle, resolver}) => {
             continue;
           }
 
-          var recipe = `
+          let recipe = `
             import '${hostedParticle.implFile.replace(/\.[^\.]+$/, '.manifest')}'
             recipe
               use '${itemView._id}' as v1

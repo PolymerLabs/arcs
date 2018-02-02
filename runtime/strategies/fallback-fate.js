@@ -16,7 +16,7 @@ export default class FallbackFate extends Strategy {
     assert(strategizer);
     let generated = strategizer.generated.filter(result => !result.result.isResolved());
     let terminal = strategizer.terminal;
-    var results = Recipe.over([...generated, ...terminal], new class extends RecipeWalker {
+    let results = Recipe.over([...generated, ...terminal], new class extends RecipeWalker {
       onView(recipe, view) {
         // Only apply this strategy only to user query based recipes with resolved tokens.
         if (!recipe.search || (recipe.search.resolvedTokens.length == 0)) {

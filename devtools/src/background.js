@@ -1,5 +1,5 @@
 // Tab ID to port of a DevTools page, background script is a singleton.
-var connections = {};
+let connections = {};
 
 // DevTools page connecting.
 chrome.runtime.onConnect.addListener(function(port) {

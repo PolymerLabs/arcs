@@ -16,7 +16,7 @@ import scheduler from '../scheduler.js';
 
 function assertSingletonWillChangeTo(view, entityClass, expectation) {
   return new Promise((resolve, reject) => {
-    var variable = handle.handleFor(view);
+    let variable = handle.handleFor(view);
     variable.entityClass = entityClass;
     variable.on('change', () => variable.get().then(result => {
       if (result == undefined)
@@ -28,7 +28,7 @@ function assertSingletonWillChangeTo(view, entityClass, expectation) {
 }
 
 function assertSingletonIs(view, entityClass, expectation) {
-  var variable = handle.handleFor(view);
+  let variable = handle.handleFor(view);
   variable.entityClass = entityClass;
   return variable.get().then(result => {
     assert(result !== undefined);
@@ -38,7 +38,7 @@ function assertSingletonIs(view, entityClass, expectation) {
 
 function assertViewWillChangeTo(setView, entityClass, field, expectations) {
   return new Promise((resolve, reject) => {
-    var view = handle.handleFor(setView, true);
+    let view = handle.handleFor(setView, true);
     view.entityClass = entityClass;
     view.on('change', () => view.toList().then(result => {
       if (result == undefined)
@@ -66,7 +66,7 @@ function assertViewHas(view, entityClass, field, expectations) {
 
 function assertSingletonEmpty(view) {
   return new Promise((resolve, reject) => {
-    var variable = new handle.handleFor(view);
+    let variable = new handle.handleFor(view);
     variable.get().then(result => {
       assert.equal(result, undefined);
       resolve();

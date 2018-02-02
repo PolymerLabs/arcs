@@ -28,7 +28,7 @@ class ThingMapper {
 
   createMappingForThing(thing) {
     assert(!this._reverseIdMap.has(thing));
-    var id = this._newIdentifier();
+    let id = this._newIdentifier();
     this.establishThingMapping(id, thing);
     return id;
   }
@@ -105,8 +105,8 @@ class APIPort {
     this.Dictionary = function(primitive) {
       return {
         convert: a => {
-          var r = {};
-          for (var key in a) {
+          let r = {};
+          for (let key in a) {
             r[key] = primitive.convert(a[key]);
           }
           return r;
@@ -117,13 +117,13 @@ class APIPort {
     this.Map = function(keyprimitive, valueprimitive) {
       return {
         convert: a => {
-          var r = {};
+          let r = {};
           a.forEach((value, key) => r[keyprimitive.convert(key)] = valueprimitive.convert(value));
           return r;
         },
         unconvert: a => {
-          var r = new Map();
-          for (var key in a)
+          let r = new Map();
+          for (let key in a)
             r.set(keyprimitive.unconvert(key), valueprimitive.unconvert(a[key]));
           return r;
         }
@@ -182,22 +182,22 @@ class APIPort {
   }
 
   _processArguments(argumentTypes, args) {
-    var messageBody = {};
-    for (var argument in argumentTypes)
+    let messageBody = {};
+    for (let argument in argumentTypes)
       messageBody[argument] = argumentTypes[argument].convert(args[argument]);
     return messageBody;
   }
 
   _unprocessArguments(argumentTypes, args) {
-    var messageBody = {};
-    for (var argument in argumentTypes)
+    let messageBody = {};
+    for (let argument in argumentTypes)
       messageBody[argument] = argumentTypes[argument].unconvert(args[argument]);
     return messageBody;
   }
 
   registerCall(name, argumentTypes) {
     this[name] = args => {
-      var call = {messageType: name, messageBody: this._processArguments(argumentTypes, args)};
+      let call = {messageType: name, messageBody: this._processArguments(argumentTypes, args)};
       this._port.postMessage(call);
       if (this._debugChannel && this._debugChannel[name]) {
         this._debugChannel[name](args);
@@ -219,7 +219,7 @@ class APIPort {
 
   registerInitializer(name, argumentTypes) {
     this[name] = (thing, args) => {
-      var call = {messageType: name, messageBody: this._processArguments(argumentTypes, args)};
+      let call = {messageType: name, messageBody: this._processArguments(argumentTypes, args)};
       call.messageBody.identifier = this._mapper.createMappingForThing(thing);
       this._port.postMessage(call);
       if (this._debugChannel && this._debugChannel[name]) {
@@ -232,7 +232,7 @@ class APIPort {
     this[name] = (thing, args) => {
       if (this._mapper.hasMappingForThing(thing))
         return;
-      var call = {messageType: name, messageBody: this._processArguments(argumentTypes, args)};
+      let call = {messageType: name, messageBody: this._processArguments(argumentTypes, args)};
       call.messageBody.identifier = this._mapper.createMappingForThing(thing);
       this._port.postMessage(call);
       if (this._debugChannel && this._debugChannel[name]) {

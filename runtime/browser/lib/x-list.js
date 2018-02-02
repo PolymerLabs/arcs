@@ -24,7 +24,7 @@ class XList extends XState(XElement) {
     this.textContent = '';
   }
   _update(props, state) {
-    var template = props.template || state.template;
+    let template = props.template || state.template;
     if (template) {
       this._renderList(state.container, template, props);
     }
@@ -37,7 +37,7 @@ class XList extends XState(XElement) {
       p = p.parentElement;
     }
     //console.log('XList::_renderList:', props);
-    var child = container.firstElementChild, next;
+    let child = container.firstElementChild, next;
     props.items && props.items.forEach((item, i)=>{
       // use existing node if possible
       next = child && child.nextElementSibling;
@@ -57,7 +57,7 @@ class XList extends XState(XElement) {
       }
       if (child) {
         // scope aka childProps
-        var scope = Object.create(null);
+        let scope = Object.create(null);
         // accumulate scope to implement lexical binding
         if (props.scope) {
           Object.assign(scope, props.scope);

@@ -13,13 +13,13 @@ defineParticle(({Particle}) => {
   return class P extends Particle {
     async setViews(views) {
       let arc = await this.constructInnerArc();
-      var inputView = views.get('input');
+      let inputView = views.get('input');
       let outputView = views.get('output');
       let inView = await arc.createHandle(inputView.type, 'input');
       let outView = await arc.createHandle(outputView.type, 'output');
       let particle = await views.get('particle').get();
 
-      var recipe = Particle.buildManifest`
+      let recipe = Particle.buildManifest`
         ${inputView.type.entitySchema}
         ${outputView.type.entitySchema}
 
@@ -35,10 +35,10 @@ defineParticle(({Particle}) => {
 
       try {
         await arc.loadRecipe(recipe);
-        var input = await inputView.get();
+        let input = await inputView.get();
         inView.set(input);
         outView.on('change', async () => {
-          var output = await outView.get();
+          let output = await outView.get();
           if (output !== undefined)
             outputView.set(output);
         }, this);

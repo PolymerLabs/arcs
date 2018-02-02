@@ -98,7 +98,7 @@ class MockSlotComposer extends SlotComposer {
 //    console.log(`renderSlot ${particle.name}:${slotName}`, Object.keys(content).join(', '));
     assert(this.expectQueue.length > 0 && this.expectQueue[0],
       `Got a renderSlot from ${particle.name}:${slotName} (content types: ${Object.keys(content).join(', ')}), but not expecting anything further.`);
-    var expectations = this.expectQueue[0];
+    let expectations = this.expectQueue[0];
     for (let contentType of Object.keys(content)) {
       let found = false;
       for (let i = 0; i < expectations.length; ++i) {

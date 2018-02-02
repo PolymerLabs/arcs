@@ -28,8 +28,8 @@ defineParticle(({TransformationDomParticle}) => {
       this.on(views, 'foos', 'change', async e => {
         this._updateAllViews(views, this.config);
 
-        var foosView = views.get('foos');
-        var foosList = await foosView.toList();
+        let foosView = views.get('foos');
+        let foosList = await foosView.toList();
         for (let [index, foo] of foosList.entries()) {
           if (this._handleIds.has(foo.id)) {
             // The element already exists.
@@ -42,7 +42,7 @@ defineParticle(({TransformationDomParticle}) => {
           let slotName = [...this.spec.slots.values()][0].name;
           let slotId = await arc.createSlot(this, slotName, hostedParticle.name, hostedSlotName);
 
-          var recipe = `
+          let recipe = `
             schema Foo
               optional
                 Text value

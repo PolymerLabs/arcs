@@ -38,8 +38,8 @@ defineParticle(({TransformationDomParticle}) => {
       this.on(views, 'list', 'change', async e => {
         let handleIds = new Set(this._state.renderModel && this._state.renderModel.items ? this._state.renderModel.items.map(item => item.subId) : []);
 
-        var listHandle = views.get('list');
-        var list = await listHandle.toList();
+        let listHandle = views.get('list');
+        let list = await listHandle.toList();
 
         if (list.length > 0) {
           this.relevance = 0.1;
@@ -61,7 +61,7 @@ defineParticle(({TransformationDomParticle}) => {
           this._itemSubIdByHostedSlotId.set(slotId, item.id);
 
 
-          var recipe = `
+          let recipe = `
 ${this.serializeSchema(hostedParticle)}
 recipe
   use '${itemView._id}' as v1

@@ -66,8 +66,8 @@ describe('particle-api', function() {
       }
     };
     let manifest = await Manifest.load('manifest', loader, {registry});
-    var pecFactory = function(id) {
-      var channel = new MessageChannel();
+    let pecFactory = function(id) {
+      let channel = new MessageChannel();
       new InnerPec(channel.port1, `${id}:inner`, loader);
       return channel.port2;
     };
@@ -130,8 +130,8 @@ describe('particle-api', function() {
       }
     };
     let manifest = await Manifest.load('manifest', loader, {registry});
-    var pecFactory = function(id) {
-      var channel = new MessageChannel();
+    let pecFactory = function(id) {
+      let channel = new MessageChannel();
       new InnerPec(channel.port1, `${id}:inner`, loader);
       return channel.port2;
     };
@@ -226,8 +226,8 @@ describe('particle-api', function() {
       }
     };
     let manifest = await Manifest.load('manifest', loader, {registry});
-    var pecFactory = function(id) {
-      var channel = new MessageChannel();
+    let pecFactory = function(id) {
+      let channel = new MessageChannel();
       new InnerPec(channel.port1, `${id}:inner`, loader);
       return channel.port2;
     };
@@ -337,8 +337,8 @@ describe('particle-api', function() {
       }
     };
     let manifest = await Manifest.load('manifest', loader, {registry});
-    var pecFactory = function(id) {
-      var channel = new MessageChannel();
+    let pecFactory = function(id) {
+      let channel = new MessageChannel();
       new InnerPec(channel.port1, `${id}:inner`, loader);
       return channel.port2;
     };

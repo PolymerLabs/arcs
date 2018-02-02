@@ -110,8 +110,8 @@ ${this.activeRecipe.toString()}`;
 
   static async deserialize({serialization, pecFactory, slotComposer, loader}) {
     let manifest = await Manifest.parse(serialization, {loader});
-    var arc = new Arc({id: manifest.meta.name, slotComposer, pecFactory, loader});
-    var recipe = manifest.activeRecipe.clone();
+    let arc = new Arc({id: manifest.meta.name, slotComposer, pecFactory, loader});
+    let recipe = manifest.activeRecipe.clone();
     recipe.normalize();
     arc.instantiate(recipe);
     return arc;
@@ -165,7 +165,7 @@ ${this.activeRecipe.toString()}`;
 
   // Makes a copy of the arc used for speculative execution.
   async cloneForSpeculativeExecution() {
-    var arc = new Arc({id: this.generateID(), pecFactory: this._pecFactory, context: this.context, loader: this._loader});
+    let arc = new Arc({id: this.generateID(), pecFactory: this._pecFactory, context: this.context, loader: this._loader});
     arc._scheduler = this._scheduler.clone();
     let handleMap = new Map();
     for (let handle of this._handles) {
@@ -249,7 +249,7 @@ ${this.activeRecipe.toString()}`;
       if (['copy', 'create'].includes(recipeView.fate)) {
         let view = await this.createHandle(recipeView.type, /* name= */ null, this.generateID(), recipeView.tags);
         if (recipeView.fate === 'copy') {
-          var copiedView = this.findHandleById(recipeView.id);
+          let copiedView = this.findHandleById(recipeView.id);
           await view.cloneFrom(copiedView);
           let copiedViewDesc = this.getHandleDescription(copiedView);
           if (copiedViewDesc) {
@@ -347,7 +347,7 @@ ${this.activeRecipe.toString()}`;
 
   findHandlesByType(type, options) {
     // TODO: use options (location, labels, etc.) somehow.
-    var views = this._handlesByType.get(Arc._viewKey(type)) || [];
+    let views = this._handlesByType.get(Arc._viewKey(type)) || [];
     if (options && options.tags) {
       views = views.filter(view => options.tags.filter(tag => !this._handleTags.get(view).has(tag)).length == 0);
     }

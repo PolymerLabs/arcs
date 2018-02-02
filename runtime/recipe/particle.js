@@ -28,7 +28,7 @@ class Particle {
   }
 
   _copyInto(recipe, cloneMap) {
-    var particle = recipe.newParticle(this._name);
+    let particle = recipe.newParticle(this._name);
     particle._id = this._id;
     particle._tags = [...this._tags];
     particle._verbs = [...this._verbs];
@@ -141,9 +141,9 @@ class Particle {
 
   set spec(spec) {
     this._spec = spec;
-    for (var connectionName of spec.connectionMap.keys()) {
-      var speccedConnection = spec.connectionMap.get(connectionName);
-      var connection = this.connections[connectionName];
+    for (let connectionName of spec.connectionMap.keys()) {
+      let speccedConnection = spec.connectionMap.get(connectionName);
+      let connection = this.connections[connectionName];
       if (connection == undefined) {
         connection = this.addConnectionName(connectionName);
       }
@@ -160,7 +160,7 @@ class Particle {
   }
 
   addUnnamedConnection() {
-    var connection = new ViewConnection(undefined, this);
+    let connection = new ViewConnection(undefined, this);
     this._unnamedConnections.push(connection);
     return connection;
   }
@@ -186,7 +186,7 @@ class Particle {
   nameConnection(connection, name) {
     assert(!this._connections[name].view, `Connection "${name}" already has a view`);
 
-    var idx = this._unnamedConnections.indexOf(connection);
+    let idx = this._unnamedConnections.indexOf(connection);
     assert(idx >= 0, `Cannot name '${name}' nonexistent unnamed connection.`);
     connection._name = name;
 

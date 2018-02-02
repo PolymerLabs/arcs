@@ -131,7 +131,7 @@ export class Particle {
   on(views, names, kind, f) {
     if (typeof names == 'string')
       names = [names];
-    var trace = tracing.start({cat: 'particle', names: this.constructor.name + '::on', args: {view: names, event: kind}});
+    let trace = tracing.start({cat: 'particle', names: this.constructor.name + '::on', args: {view: names, event: kind}});
     names.forEach(name => views.get(name).on(kind, tracing.wrap({cat: 'particle', name: this.constructor.name, args: {view: name, event: kind}}, f), this));
     trace.end();
   }
@@ -183,7 +183,7 @@ export class Particle {
     hostedParticle.connections.forEach(conn => {
       hostedConnSchemas.add((conn.type.isSetView ? conn.type.primitiveType() : conn.type).entitySchema.toString());
     });
-    var schemaString =
+    let schemaString =
 `${[...hostedConnSchemas].map(schema => schema.toString()).join('\n\r')}
 ${hostedParticle.toString()}`;
     return schemaString;
@@ -199,11 +199,11 @@ export class ViewChanges {
     this.type = type;
   }
   register(particle, f) {
-    var modelCount = 0;
-    var afterAllModels = () => { if (++modelCount == this.names.length) { f(); } };
+    let modelCount = 0;
+    let afterAllModels = () => { if (++modelCount == this.names.length) { f(); } };
 
-    for (var name of this.names) {
-      var view = this.views.get(name);
+    for (let name of this.names) {
+      let view = this.views.get(name);
       view.synchronize(this.type, afterAllModels, f, particle);
     }
   }

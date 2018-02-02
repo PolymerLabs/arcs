@@ -41,7 +41,7 @@ class StorageProxy {
   }
 
   on(type, callback, target, particleId) {
-    var dataFreeCallback = (d) => callback();
+    let dataFreeCallback = (d) => callback();
     this.synchronize(type, dataFreeCallback, dataFreeCallback, target, particleId);
   }
 
@@ -100,7 +100,7 @@ class InnerPEC {
     };
 
     this._apiPort.onCreateHandleCallback = ({type, id, name, callback}) => {
-      var proxy = new StorageProxy(id, type, this._apiPort, this, name, 0);
+      let proxy = new StorageProxy(id, type, this._apiPort, this, name, 0);
       Promise.resolve().then(() => callback(proxy));
       return proxy;
     };
@@ -120,7 +120,7 @@ class InnerPEC {
     };
 
     this._apiPort.onDefineParticle = ({particleDefinition, particleFunction}) => {
-      var particle = define(particleDefinition, eval(particleFunction));
+      let particle = define(particleDefinition, eval(particleFunction));
       this._loader.registerParticle(particle);
     };
 
@@ -185,7 +185,7 @@ class InnerPEC {
           this._handlers.set(name, []);
         }
         fireEvent(event) {
-          for (var handler of this._handlers.get(event.handler) || []) {
+          for (let handler of this._handlers.get(event.handler) || []) {
             handler(event);
           }
         }
@@ -211,12 +211,12 @@ class InnerPEC {
   }
 
   innerArcHandle(arcId, particleId) {
-    var pec = this;
+    let pec = this;
     return {
       createHandle: function(type, name) {
         return new Promise((resolve, reject) =>
           pec._apiPort.ArcCreateHandle({arc: arcId, type, name, callback: proxy => {
-            var v = handle.handleFor(proxy, proxy.type.isSetView, particleId);
+            let v = handle.handleFor(proxy, proxy.type.isSetView, particleId);
             v.entityClass = (proxy.type.isSetView ? proxy.type.primitiveType().entitySchema : proxy.type.entitySchema).entityClass();
             resolve(v);
           }}));
@@ -257,8 +257,8 @@ class InnerPEC {
 
   async _instantiateParticle(id, spec, proxies) {
     let name = spec.name;
-    var resolve = null;
-    var p = new Promise((res, rej) => resolve = res);
+    let resolve = null;
+    let p = new Promise((res, rej) => resolve = res);
     this._pendingLoads.push(p);
     let clazz = await this._loader.loadParticleClass(spec);
     let capabilities = this.defaultCapabilitySet();
@@ -267,13 +267,13 @@ class InnerPEC {
     particle.capabilities = capabilities;
     this._particles.push(particle);
 
-    var handleMap = new Map();
+    let handleMap = new Map();
     proxies.forEach((value, key) => {
       handleMap.set(key, handle.handleFor(value, value.type.isSetView, id, spec.connectionMap.get(key).isInput, spec.connectionMap.get(key).isOutput));
     });
 
     for (let localHandle of handleMap.values()) {
-      var type = localHandle.underlyingView().type;
+      let type = localHandle.underlyingView().type;
       let schemaModel;
       if (type.isSetView && type.primitiveType().isEntity) {
         schemaModel = type.primitiveType().entitySchema;
@@ -287,14 +287,14 @@ class InnerPEC {
 
     return [particle, async () => {
       resolve();
-      var idx = this._pendingLoads.indexOf(p);
+      let idx = this._pendingLoads.indexOf(p);
       this._pendingLoads.splice(idx, 1);
       await particle.setViews(handleMap);
     }];
   }
 
   get relevance() {
-    var rMap = new Map();
+    let rMap = new Map();
     this._particles.forEach(p => {
       if (p.relevances.length == 0)
         return;

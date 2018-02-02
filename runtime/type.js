@@ -12,12 +12,12 @@ import assert from '../platform/assert-web.js';
 let nextVariableId = 0;
 
 function addType(name, arg) {
-  var lowerName = name[0].toLowerCase() + name.substring(1);
+  let lowerName = name[0].toLowerCase() + name.substring(1);
   Object.defineProperty(Type, `new${name}`, {
     value: function(arg) {
       return new Type(name, arg);
     }});
-  var upperArg = arg ? arg[0].toUpperCase() + arg.substring(1) : '';
+  let upperArg = arg ? arg[0].toUpperCase() + arg.substring(1) : '';
   Object.defineProperty(Type.prototype, `${lowerName}${upperArg}`, {
     get: function() {
       assert(this[`is${name}`], `{${this.tag}, ${this.data}} is not of type ${name}`);
@@ -83,7 +83,7 @@ class Type {
   // Replaces variableReference types with variable types .
   assignVariableIds(variableMap) {
     if (this.isVariableReference) {
-      var name = this.data;
+      let name = this.data;
       let sharedVariable = variableMap.get(name);
       if (sharedVariable == undefined) {
         let id = nextVariableId++;
@@ -98,7 +98,7 @@ class Type {
     }
 
     if (this.isInterface) {
-      var shape = this.interfaceShape.clone();
+      let shape = this.interfaceShape.clone();
       shape._typeVars.map(({object, field}) => object[field] = object[field].assignVariableIds(variableMap));
       return Type.newInterface(shape);
     }
@@ -160,7 +160,7 @@ class Type {
   }
 
   primitiveType() {
-    var type = this.setViewType;
+    let type = this.setViewType;
     return new Type(type.tag, type.data);
   }
 

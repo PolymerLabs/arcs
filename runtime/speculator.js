@@ -16,12 +16,12 @@ import Relevance from './relevance.js';
 class Speculator {
 
   async speculate(arc, plan) {
-    var trace = tracing.start({cat: 'speculator', name: 'Speculator::speculate'});
-    var newArc = await arc.cloneForSpeculativeExecution();
+    let trace = tracing.start({cat: 'speculator', name: 'Speculator::speculate'});
+    let newArc = await arc.cloneForSpeculativeExecution();
     let relevance = new Relevance();
     async function awaitCompletion() {
       await newArc.scheduler.idle;
-      var messageCount = newArc.pec.messageCount;
+      let messageCount = newArc.pec.messageCount;
       relevance.apply(await newArc.pec.idle);
 
       if (newArc.pec.messageCount !== messageCount + 1)

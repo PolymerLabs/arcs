@@ -63,7 +63,7 @@ class OuterPEC extends PEC {
     };
 
     this._apiPort.onConstructInnerArc = ({callback, particle}) => {
-      var arc = {particle};
+      let arc = {particle};
       this._apiPort.ConstructArcCallback({callback, arc});
     };
 
@@ -134,7 +134,7 @@ class OuterPEC extends PEC {
 
   instantiate(particleSpec, id, spec, handles, lastSeenVersion) {
     handles.forEach(handle => {
-      var version = lastSeenVersion.get(handle.id) || 0;
+      let version = lastSeenVersion.get(handle.id) || 0;
       this._apiPort.DefineHandle(handle, {type: handle.type, name: handle.name,
                                        version});
     });

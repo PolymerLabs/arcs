@@ -62,7 +62,7 @@ class SlotConnection {
       return cloneMap.get(this);
     }
 
-    var slotConnection = particle.addSlotConnection(this.name);
+    let slotConnection = particle.addSlotConnection(this.name);
     if (this.slotSpec) {
       slotConnection._slotSpec = particle.spec.getSlotSpec(this.name);
     }

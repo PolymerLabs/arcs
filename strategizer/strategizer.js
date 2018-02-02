@@ -54,11 +54,11 @@ export class Strategizer {
       return strategy.generate(this, individualsPerStrategy);
     }));
 
-    var record = {};
+    let record = {};
     record.generation = generation;
     record.sizeOfLastGeneration = this.generated.length;
     record.outputSizesOfStrategies = {};
-    for (var i = 0; i < this._strategies.length; i++) {
+    for (let i = 0; i < this._strategies.length; i++) {
       record.outputSizesOfStrategies[this._strategies[i].constructor.name] = generated[i].results.length;
     }
 
@@ -81,7 +81,7 @@ export class Strategizer {
 
     generated = generated.filter(result => {
       if (result.hash) {
-        var existingResult = this.populationHash.get(result.hash);
+        let existingResult = this.populationHash.get(result.hash);
         var strategy = result.derivation[0].strategy.constructor.name;
         if (existingResult) {
           if (result.derivation[0].parent == existingResult) {

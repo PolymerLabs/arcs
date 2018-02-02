@@ -45,7 +45,7 @@ defineParticle(({DomParticle, resolver}) => {
 </style>
   `;
 
-  var productStyles = `
+  let productStyles = `
 <style>
   ${host} > x-list [row] {
     display: flex;

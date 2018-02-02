@@ -28,22 +28,22 @@ class MockSlot extends Slot {
 }
 
 async function initSlotComposer(recipeStr) {
-  var slotComposer = new SlotComposer({affordance: 'mock', rootContext: 'dummy-context'});
+  let slotComposer = new SlotComposer({affordance: 'mock', rootContext: 'dummy-context'});
   slotComposer._slotClass = MockSlot;
 
   let manifest = (await Manifest.parse(recipeStr));
-  var arc = new Arc({
+  let arc = new Arc({
     id: 'test-plan-arc',
     context: manifest,
     slotComposer,
   });
   let startRenderParticles = [];
   arc.pec.startRender = ({particle, slotName, contentTypes}) => { startRenderParticles.push(particle.name); };
-  var planner = new Planner();
+  let planner = new Planner();
   planner.init(arc);
   await planner.generate();
   assert.equal(planner.strategizer.population.length, 1);
-  var plan = planner.strategizer.population[0].result;
+  let plan = planner.strategizer.population[0].result;
   return {arc, slotComposer, plan, startRenderParticles};
 }
 

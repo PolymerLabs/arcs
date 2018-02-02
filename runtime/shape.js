@@ -58,8 +58,8 @@ class Shape {
   }
 
   clone() {
-    var views = this.views.map(({name, direction, type}) => ({name, direction, type}));
-    var slots = this.slots.map(({name, direction, isRequired, isSet}) => ({name, direction, isRequired, isSet}));
+    let views = this.views.map(({name, direction, type}) => ({name, direction, type}));
+    let slots = this.slots.map(({name, direction, isRequired, isSet}) => ({name, direction, isRequired, isSet}));
     return new Shape(views, slots);
   }
 
@@ -135,7 +135,7 @@ class Shape {
   }
 
   particleMatches(particleSpec) {
-    var viewMatches = this.views.map(view => particleSpec.connections.filter(connection => Shape.viewsMatch(view, connection)));
+    let viewMatches = this.views.map(view => particleSpec.connections.filter(connection => Shape.viewsMatch(view, connection)));
     let particleSlots = [];
     particleSpec.slots.forEach(consumedSlot => {
       particleSlots.push({name: consumedSlot.name, direction: 'consume', isRequired: consumedSlot.isRequired, isSet: consumedSlot.isSet});
@@ -143,18 +143,18 @@ class Shape {
         particleSlots.push({name: providedSlot.name, direction: 'provide', isRequired: false, isSet: providedSlot.isSet});
       });
     });
-    var slotMatches = this.slots.map(slot => particleSlots.filter(particleSlot => Shape.slotsMatch(slot, particleSlot)));
+    let slotMatches = this.slots.map(slot => particleSlots.filter(particleSlot => Shape.slotsMatch(slot, particleSlot)));
 
-    var exclusions = [];
+    let exclusions = [];
 
     function choose(list, exclusions) {
       if (list.length == 0)
         return true;
-      var thisLevel = list.pop();
-      for (var connection of thisLevel) {
+      let thisLevel = list.pop();
+      for (let connection of thisLevel) {
         if (exclusions.includes(connection))
           continue;
-        var newExclusions = exclusions.slice();
+        let newExclusions = exclusions.slice();
         newExclusions.push(connection);
         if (choose(list, newExclusions))
           return true;

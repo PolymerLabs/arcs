@@ -11,7 +11,7 @@ import RecipeWalker from '../recipe/walker.js';
 
 export default class NameUnnamedConnections extends Strategy {
   async generate(strategizer) {
-    var results = Recipe.over(this.getResults(strategizer), new class extends RecipeWalker {
+    let results = Recipe.over(this.getResults(strategizer), new class extends RecipeWalker {
       onViewConnection(recipe, viewConnection) {
         if (viewConnection.name)
           return; // it is already named.
