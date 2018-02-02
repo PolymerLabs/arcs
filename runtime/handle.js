@@ -24,7 +24,7 @@ function cloneData(data) {
 
 function restore(entry, entityClass) {
   let {id, rawData} = entry;
-  var entity = new entityClass(cloneData(rawData));
+  let entity = new entityClass(cloneData(rawData));
   if (entry.id) {
     entity.identify(entry.id);
   }
@@ -137,7 +137,7 @@ class Collection extends Handle {
   async store(entity) {
     if (!this.canWrite)
       throw new Error('View not writeable');
-    var serialization = this._serialize(entity);
+    let serialization = this._serialize(entity);
     return this._view.store(serialization, this._particleId);
   }
 
@@ -149,7 +149,7 @@ class Collection extends Handle {
   async remove(entity) {
     if (!this.canWrite)
       throw new Error('View not writeable');
-    var serialization = this._serialize(entity);
+    let serialization = this._serialize(entity);
     return this._view.remove(serialization.id, this._particleId);
   }
 }
@@ -173,7 +173,7 @@ class Variable extends Handle {
   async get() {
     if (!this.canRead)
       throw new Error('View not readable');
-    var result = await this._view.get(this._particleId);
+    let result = await this._view.get(this._particleId);
     if (result == null)
       return undefined;
     if (this.type.isEntity)

@@ -134,7 +134,7 @@ describe('manifest', function() {
       let recipe = manifest.recipes[0];
       assert(recipe);
       assert.equal(recipe._connectionConstraints.length, 1);
-      var constraint = recipe._connectionConstraints[0];
+      let constraint = recipe._connectionConstraints[0];
       assert.equal(constraint.fromParticle.name, 'A');
       assert.equal(constraint.fromConnection, 'a');
       assert.equal(constraint.toParticle.name, 'B');

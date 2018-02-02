@@ -12,7 +12,7 @@ defineParticle(({Particle}) => {
   return class ProductIsBook extends Particle {
     setViews(views) {
       this.on(views, 'product', 'change', e => {
-        var productHandle = views.get('product');
+        let productHandle = views.get('product');
         productHandle.get().then(data => {
           let isBook = productHandle.type.entitySchema.name.toLowerCase().indexOf('book') >= 0 ||
                        data.category && data.category.toLowerCase().indexOf('book') >= 0 ||

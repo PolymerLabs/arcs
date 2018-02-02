@@ -5,7 +5,7 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-var assert = chai.assert;
+let assert = chai.assert;
 
 afterEach(function() {
   target.innerHTML = '';

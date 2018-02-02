@@ -8,19 +8,19 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-var supportedTypes = ['Text', 'URL', 'Number', 'Boolean'];
+let supportedTypes = ['Text', 'URL', 'Number', 'Boolean'];
 
 class JsonldToManifest {
   static convert(jsonld, theClass) {
-    var obj = JSON.parse(jsonld);
-    var classes = {};
-    var properties = {};
+    let obj = JSON.parse(jsonld);
+    let classes = {};
+    let properties = {};
 
     if (!obj['@graph']) {
       obj['@graph'] = [obj];
     }
 
-    for (var item of obj['@graph']) {
+    for (let item of obj['@graph']) {
       if (item['@type'] == 'rdf:Property')
         properties[item['@id']] = item;
       else if (item['@type'] == 'rdfs:Class') {
@@ -35,7 +35,7 @@ class JsonldToManifest {
         if (clazz['rdfs:subClassOf'].length == undefined)
           clazz['rdfs:subClassOf'] = [clazz['rdfs:subClassOf']];
         for (let subClass of clazz['rdfs:subClassOf']) {
-          var superclass = subClass['@id'];
+          let superclass = subClass['@id'];
           if (clazz.superclass == undefined)
             clazz.superclass = [];
           if (classes[superclass]) {
@@ -54,16 +54,16 @@ class JsonldToManifest {
       }
     }
 
-    var relevantProperties = [];
+    let relevantProperties = [];
     for (var property of Object.values(properties)) {
-      var domains = property['schema:domainIncludes'];
+      let domains = property['schema:domainIncludes'];
       if (!domains)
         domains = {'@id': theClass['@id']};
       if (!domains.length)
         domains = [domains];
       domains = domains.map(a => a['@id']);
       if (domains.includes(theClass['@id'])) {
-        var name = property['@id'].split(':')[1];
+        let name = property['@id'].split(':')[1];
         var type = property['schema:rangeIncludes'];
         if (!type)
           console.log(property);
@@ -77,10 +77,10 @@ class JsonldToManifest {
       }
     }
 
-    var className = theClass['@id'].split(':')[1];
-    var superNames = theClass.superclass ? theClass.superclass.map(a => a['@id'].split(':')[1]) : [];
+    let className = theClass['@id'].split(':')[1];
+    let superNames = theClass.superclass ? theClass.superclass.map(a => a['@id'].split(':')[1]) : [];
 
-    var s = '';
+    let s = '';
     for (let superName of superNames)
       s += `import 'https://schema.org/${superName}'\n\n`;
 

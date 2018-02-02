@@ -16,8 +16,8 @@ export default class MapRemoteSlots extends Strategy {
     this.remoteSlots = arc.pec.slotComposer ? arc.pec.slotComposer.getAvailableSlots() : {};
   }
   async generate(strategizer) {
-    var remoteSlots = this.remoteSlots;
-    var results = Recipe.over(this.getResults(strategizer), new class extends RecipeWalker {
+    let remoteSlots = this.remoteSlots;
+    let results = Recipe.over(this.getResults(strategizer), new class extends RecipeWalker {
       onSlotConnection(recipe, slotConnection) {
         if (slotConnection.targetSlot && slotConnection.targetSlot.id)
           return;
@@ -29,13 +29,13 @@ export default class MapRemoteSlots extends Strategy {
             return false;
           }
 
-          var views = remoteSlot.views;
+          let views = remoteSlot.views;
           let viewsMatch = false;
           if (views.length == 0) {
             return true;
           } else {
-            var particle = slotConnection.particle;
-            for (var name in particle.connections) {
+            let particle = slotConnection.particle;
+            for (let name in particle.connections) {
               var connection = particle.connections[name];
               if (!connection.view)
                 continue;

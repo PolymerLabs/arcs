@@ -194,7 +194,7 @@ class SetDomContext {
     Object.values(this._contextBySubId).forEach(context => context.observe(observer));
   }
   getInnerContext(innerSlotName) {
-    var innerContexts = {};
+    let innerContexts = {};
     Object.keys(this._contextBySubId).forEach(subId => {
       innerContexts[subId] = this._contextBySubId[subId].getInnerContext(innerSlotName);
     });

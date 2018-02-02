@@ -109,7 +109,7 @@ describe('View', function() {
     `);
     let arc = new Arc({id: 'test', storageKey: 'firebase://test-firebase-45a3e.firebaseio.com/AIzaSyBLqThan3QCOICj0JZ-nEwk27H4gmnADP8/'});
     let resolver;
-    var promise = new Promise((resolve, reject) => {resolver = resolve;});
+    let promise = new Promise((resolve, reject) => {resolver = resolve;});
     arc._storageProviderFactory = new class extends StorageProviderFactory {
       construct(id, type, keyFragment) {
         resolver(keyFragment);

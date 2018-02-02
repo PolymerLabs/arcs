@@ -30,7 +30,7 @@ export default class TupleFields {
   equals(other) {
     if (this.fieldList.length !== other.fieldList.length)
       return false;
-    for (var i = 0; i < this.fieldList.length; i++) {
+    for (let i = 0; i < this.fieldList.length; i++) {
       if (!this.fieldList[i].equals(other.fieldList[i]))
         return false;
     }

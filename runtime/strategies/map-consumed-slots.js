@@ -12,11 +12,11 @@ import RecipeUtil from '../recipe/recipe-util.js';
 
 export default class MapConsumedSlots extends Strategy {
   async generate(strategizer) {
-    var results = Recipe.over(this.getResults(strategizer), new class extends RecipeWalker {
+    let results = Recipe.over(this.getResults(strategizer), new class extends RecipeWalker {
       onSlotConnection(recipe, slotConnection) {
         if (slotConnection.targetSlot)
           return;
-        var potentialSlots = recipe.slots.filter(slot => {
+        let potentialSlots = recipe.slots.filter(slot => {
           if (slotConnection.name != slot.name)
             return false;
 
@@ -30,13 +30,13 @@ export default class MapConsumedSlots extends Strategy {
             return;
 
           // Verify view connections match.
-          var views = slot.viewConnections.map(connection => connection.view);
+          let views = slot.viewConnections.map(connection => connection.view);
           if (views.length == 0) {
             return true;
           }
-          var particle = slotConnection.particle;
-          for (var name in particle.connections) {
-            var connection = particle.connections[name];
+          let particle = slotConnection.particle;
+          for (let name in particle.connections) {
+            let connection = particle.connections[name];
             if (views.includes(connection.view))
               return true;
           }

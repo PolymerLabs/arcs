@@ -58,7 +58,7 @@ class ParticleSpec {
     this._model = model;
     this.name = model.name;
     this.verbs = model.verbs;
-    var typeVarMap = new Map();
+    let typeVarMap = new Map();
     this.connections = model.args.map(a => new ConnectionSpec(a, typeVarMap));
     this.connectionMap = new Map();
     this.connections.forEach(a => this.connectionMap.set(a.name, a));

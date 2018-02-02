@@ -9,7 +9,7 @@ let {Strategizer, Strategy} = require('./strategizer.js');
 
 class Seed extends Strategy {
   async generate(strategizer, n) {
-    var results = strategizer.generation == 0 ? [{result: '', score: 1}] : [];
+    let results = strategizer.generation == 0 ? [{result: '', score: 1}] : [];
     return {results, generate: null};
   }
 }
@@ -83,7 +83,7 @@ class Eval extends Strategy {
       let n = -lev.distance;
       let needed = lev.pairs().filter(([t, s]) => t != null && t != s).map(([t, s]) => t).sort();
       let spare = lev.pairs().filter(([t, s]) => s != null && t != s).map(([t, s]) => s).sort();
-      for (var i = 0, j = 0; i < needed.length && j < spare.length; ) {
+      for (let i = 0, j = 0; i < needed.length && j < spare.length; ) {
         if (needed[i] == spare[j]) {
           i++;
           j++;

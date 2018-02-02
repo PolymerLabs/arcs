@@ -17,12 +17,12 @@ import Manifest from '../manifest.js';
 describe('speculator', function() {
   it('can speculatively produce a relevance', async () => {
     let loader = new Loader();
-    var arc = new Arc({id: 'test'});
+    let arc = new Arc({id: 'test'});
     let manifest = await Manifest.load('./particles/test/test.manifest', loader);
     let recipe = manifest.recipes[0];
     assert(recipe.normalize());
-    var speculator = new Speculator();
-    var relevance = await speculator.speculate(arc, recipe);
+    let speculator = new Speculator();
+    let relevance = await speculator.speculate(arc, recipe);
     assert.equal(relevance.calcRelevanceScore(), 1);
   });
 });

@@ -24,13 +24,13 @@ import MockSlotComposer from './mock-slot-composer.js';
 
 describe('particle-shape-loading-with-slots', function() {
   async function instantiateRecipe() {
-    var loader = new Loader();
-    var pecFactory = function(id) {
-      var channel = new MessageChannel();
+    let loader = new Loader();
+    let pecFactory = function(id) {
+      let channel = new MessageChannel();
       new InnerPec(channel.port1, `${id}:inner`, loader);
       return channel.port2;
     };
-    var slotComposer = new MockSlotComposer();
+    let slotComposer = new MockSlotComposer();
     let manifest = await Manifest.parse(`
       import './particles/test/transformations/test-slots-particles.manifest'
 
@@ -44,7 +44,7 @@ describe('particle-shape-loading-with-slots', function() {
       `, {loader, fileName: './test.manifest'});
     let recipe = manifest.recipes[0];
 
-    var arc = new Arc({id: 'test', pecFactory, slotComposer, context: manifest});
+    let arc = new Arc({id: 'test', pecFactory, slotComposer, context: manifest});
 
     assert(recipe.normalize(), 'can\'t normalize recipe');
     assert(recipe.isResolved(), 'recipe isn\'t resolved');

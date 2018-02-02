@@ -6,7 +6,6 @@ module.exports = {
   },
   "rules": {
     // Things we do, but probably shouldn't.
-    "no-var": "off",
     "no-throw-literal": "off",
     "one-var": "off",
     "brace-style": "off",

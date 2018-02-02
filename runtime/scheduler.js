@@ -27,26 +27,26 @@ class Scheduler {
   set idleCallback(idleCallback) { this._idleCallback = idleCallback; }
 
   enqueue(view, eventRecords) {
-    var trace = tracing.flow({cat: 'view', name: 'ViewBase::_fire flow'}).start();
+    let trace = tracing.flow({cat: 'view', name: 'ViewBase::_fire flow'}).start();
     if (this.frameQueue.length == 0 && eventRecords.length > 0)
       this._asyncProcess();
     if (!this._idleResolver) {
       this._idle = new Promise((resolve, reject) => this._idleResolver = resolve);
     }
-    for (var record of eventRecords) {
-      var frame = this.targetMap.get(record.target);
+    for (let record of eventRecords) {
+      let frame = this.targetMap.get(record.target);
       if (frame == undefined) {
         frame = {target: record.target, views: new Map(), traces: []};
         this.frameQueue.push(frame);
         this.targetMap.set(record.target, frame);
       }
       frame.traces.push(trace);
-      var viewEvents = frame.views.get(view);
+      let viewEvents = frame.views.get(view);
       if (viewEvents == undefined) {
         viewEvents = new Map();
         frame.views.set(view, viewEvents);
       }
-      var kindEvents = viewEvents.get(record.kind);
+      let kindEvents = viewEvents.get(record.kind);
       if (kindEvents == undefined) {
         kindEvents = [];
         viewEvents.set(record.kind, kindEvents);
@@ -82,12 +82,12 @@ class Scheduler {
   }
 
   _applyFrame(frame) {
-    var trace = tracing.start({cat: 'scheduler', name: 'Scheduler::_applyFrame', args: {target: frame.target ? frame.target.constructor.name : 'NULL TARGET'}});
+    let trace = tracing.start({cat: 'scheduler', name: 'Scheduler::_applyFrame', args: {target: frame.target ? frame.target.constructor.name : 'NULL TARGET'}});
 
-    var totalRecords = 0;
+    let totalRecords = 0;
     for (let [view, kinds] of frame.views.entries()) {
       for (let [kind, records] of kinds.entries()) {
-        var record = records[records.length - 1];
+        let record = records[records.length - 1];
         record.callback(record.details);
       }
     }

@@ -16,7 +16,7 @@ import KeyBase from './key-base.js';
 class InMemoryKey extends KeyBase {
   constructor(key) {
     super();
-    var parts = key.split('://');
+    let parts = key.split('://');
     this.protocol = parts[0];
     assert(this.protocol == 'in-memory');
     parts = parts[1] ? parts.slice(1).join('://').split('^^') : [];
@@ -52,12 +52,12 @@ export default class InMemoryStorage {
   }
 
   async construct(id, type, keyFragment) {
-    var key = new InMemoryKey(keyFragment);
+    let key = new InMemoryKey(keyFragment);
     if (key.arcId == undefined)
       key.arcId = this._arcId;
     if (key.location == undefined)
       key.location = 'in-memory-' + this.localIDBase++;
-    var provider = InMemoryStorageProvider.newProvider(type, this._arcId, undefined, id, key.toString());
+    let provider = InMemoryStorageProvider.newProvider(type, this._arcId, undefined, id, key.toString());
     if (this._memoryMap[key.toString()] !== undefined)
       return null;
     this._memoryMap[key.toString()] = provider;
@@ -97,7 +97,7 @@ class InMemoryCollection extends InMemoryStorageProvider {
   }
 
   clone() {
-    var view = new InMemoryCollection(this._type, this._arcId, this.name, this.id);
+    let view = new InMemoryCollection(this._type, this._arcId, this.name, this.id);
     view.cloneFrom(this);
     return view;
   }
@@ -124,8 +124,8 @@ class InMemoryCollection extends InMemoryStorageProvider {
   }
 
   async store(entity) {
-    var trace = tracing.start({cat: 'view', name: 'InMemoryCollection::store', args: {name: this.name}});
-    var entityWasPresent = this._items.has(entity.id);
+    let trace = tracing.start({cat: 'view', name: 'InMemoryCollection::store', args: {name: this.name}});
+    let entityWasPresent = this._items.has(entity.id);
 
     this._items.set(entity.id, entity);
     this._version++;
@@ -135,7 +135,7 @@ class InMemoryCollection extends InMemoryStorageProvider {
   }
 
   async remove(id) {
-    var trace = tracing.start({cat: 'view', name: 'InMemoryCollection::remove', args: {name: this.name}});
+    let trace = tracing.start({cat: 'view', name: 'InMemoryCollection::remove', args: {name: this.name}});
     if (!this._items.has(id)) {
       return;
     }
@@ -183,7 +183,7 @@ class InMemoryVariable extends InMemoryStorageProvider {
   }
 
   clone() {
-    var variable = new InMemoryVariable(this._type, this._arcId, this.name, this.id);
+    let variable = new InMemoryVariable(this._type, this._arcId, this.name, this.id);
     variable.cloneFrom(this);
     return variable;
   }

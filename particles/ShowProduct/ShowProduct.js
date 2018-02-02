@@ -12,7 +12,7 @@ defineParticle(({DomParticle, resolver}) => {
 
   let host = `[show-product]`;
 
-  var styles = `
+  let styles = `
 <style>
   ${host} [item] {
     padding: 4px 8px;

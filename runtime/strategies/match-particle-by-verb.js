@@ -16,8 +16,8 @@ export default class MatchParticleByVerb extends Strategy {
   }
 
   async generate(strategizer) {
-    var arc = this._arc;
-    var results = Recipe.over(this.getResults(strategizer), new class extends RecipeWalker {
+    let arc = this._arc;
+    let results = Recipe.over(this.getResults(strategizer), new class extends RecipeWalker {
       onParticle(recipe, particle) {
         if (particle.name) {
           // Particle already has explicit name.

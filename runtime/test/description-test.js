@@ -21,11 +21,11 @@ import Type from '../type.js';
 
 function createTestArc() {
   const slotComposer = new SlotComposer({rootContext: 'test', affordance: 'mock'});
-  var arc = new Arc({slotComposer, id: 'test'});
+  let arc = new Arc({slotComposer, id: 'test'});
   return arc;
 }
 
-var tests = [
+let tests = [
   {
     name: 'text',
     verifySuggestion: async (expectedSuggestion, description) => {
@@ -48,7 +48,7 @@ var tests = [
 ];
 
 describe('Description', function() {
-  var schemaManifest = `
+  let schemaManifest = `
 schema Foo
   optional
     Text name
@@ -61,14 +61,14 @@ schema Far
   optional
     Text name
     Text farValue`;
-  var aParticleManifest = `
+  let aParticleManifest = `
 particle A
   A(in Foo ifoo, out [Foo] ofoos)
   consume root`;
-  var bParticleManifest = `
+  let bParticleManifest = `
 particle B
   B(out Foo ofoo)`;
-  var recipeManifest = `
+  let recipeManifest = `
 recipe
   create as fooView   // Foo
   create as foosView  // [Foo]

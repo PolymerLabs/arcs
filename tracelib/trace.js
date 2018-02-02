@@ -13,22 +13,22 @@
 
 import fs from '../platform/fs-web.js';
 
-var events = [];
+let events = [];
 if (typeof document == 'object') {
   var pid = 42;
   var now = function() {
-    var t = performance.now();
+    let t = performance.now();
     return t;
   };
 } else {
   var pid = process.pid;
   var now = function() {
-    var t = process.hrtime();
+    let t = process.hrtime();
     return t[0] * 1000000 + t[1] / 1000;
   };
 }
 
-var flowId = 0;
+let flowId = 0;
 
 function parseInfo(info) {
   if (!info)
@@ -53,7 +53,7 @@ module.exports.enable = function() {
 //var enabled = Boolean(options.traceFile);
 
 function init() {
-  var result = {
+  let result = {
     wait: function(f) {
       if (f instanceof Function) {
         return f();
@@ -97,7 +97,7 @@ function init() {
 
   module.exports.wrap = function(info, fn) {
     return function(...args) {
-      var t = module.exports.start(info);
+      let t = module.exports.start(info);
       try {
         return fn(...args);
       } finally {
@@ -114,7 +114,7 @@ function init() {
         if (endInfo && endInfo.args) {
           Object.assign(args, endInfo.args);
         }
-        var end = now();
+        let end = now();
         events.push({
           ph: 'X',
           ts: begin,
@@ -167,11 +167,11 @@ function init() {
   };
   module.exports.flow = function(info) {
     info = parseInfo(info);
-    var id = flowId++;
-    var started = false;
+    let id = flowId++;
+    let started = false;
     return {
       start: function() {
-        var begin = now();
+        let begin = now();
         started = true;
         events.push({
           ph: 's',
@@ -185,7 +185,7 @@ function init() {
       },
       end: function(endInfo) {
         if (!started) return;
-        var end = now();
+        let end = now();
         endInfo = parseInfo(endInfo);
         events.push({
           ph: 'f',
@@ -200,7 +200,7 @@ function init() {
       },
       step: function(stepInfo) {
         if (!started) return;
-        var step = now();
+        let step = now();
         stepInfo = parseInfo(stepInfo);
         events.push({
           ph: 't',

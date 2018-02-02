@@ -21,19 +21,19 @@ function prepareExtensionArc() {
   let Product = loader.loadEntity('Product');
   // TODO: Move this to a separate file.
   let pecFactory = require('../worker-pec-factory.js').bind(null, '../');
-  var domRoot = global.document ? document.querySelector('[particle-container]') || document.body : {};
-  var slotComposer = new SlotComposer({rootContext: domRoot, affordance: 'mock'});
-  var arc = new Arc({pecFactory, slotComposer});
-  var personView = arc.createView(Person.type.setViewOf(), 'peopleFromWebpage');
-  var productView = arc.createView(Product.type.setViewOf(), 'productsFromWebpage');
-  var personSlot = arc.createView(Person.type, 'personSlot');
+  let domRoot = global.document ? document.querySelector('[particle-container]') || document.body : {};
+  let slotComposer = new SlotComposer({rootContext: domRoot, affordance: 'mock'});
+  let arc = new Arc({pecFactory, slotComposer});
+  let personView = arc.createView(Person.type.setViewOf(), 'peopleFromWebpage');
+  let productView = arc.createView(Product.type.setViewOf(), 'productsFromWebpage');
+  let personSlot = arc.createView(Person.type, 'personSlot');
   arc.commit([new Person({name: 'Claire'}), new Product({name: 'Tea Pot'}), new Product({name: 'Bee Hive'}),
               new Product({name: 'Denim Jeans'})]);
   return {arc, slotComposer};
 }
 
 let {arc, slotComposer} = prepareExtensionArc();
-var r = new recipe.RecipeBuilder()
+let r = new recipe.RecipeBuilder()
   .addParticle('Create')
     .connectConstraint('newList', 'list')
   .addParticle('Create')
@@ -59,9 +59,9 @@ var r = new recipe.RecipeBuilder()
   //   .connectConstraint("choices", "wishlist")
   //   .connectConstraint("resultList", "list")
   .build();
-var suggestinator = new Suggestinator();
+let suggestinator = new Suggestinator();
 suggestinator._getSuggestions = a => [r];
-var results = suggestinator.suggestinate(arc);
+let results = suggestinator.suggestinate(arc);
 results.then(r => {
   console.log(r);
   window.trace = tracing.save();

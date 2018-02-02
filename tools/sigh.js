@@ -89,9 +89,9 @@ function railroad() {
   const {transform} = require('grammkit/lib/util');
   const handlebars = require('handlebars');
 
-  var renderTemplate = function(data, templatePath) {
-    var raw_template = fs.readFileSync(templatePath);
-    var template = handlebars.compile(raw_template.toString());
+  let renderTemplate = function(data, templatePath) {
+    let raw_template = fs.readFileSync(templatePath);
+    let template = handlebars.compile(raw_template.toString());
     return template(data);
   };
 
@@ -99,7 +99,7 @@ function railroad() {
     let grammar = fs.readFileSync(path.resolve(projectRoot, grammarFile), 'utf8');
     let result = transform(grammar);
 
-    var grammars = result.procesedGrammars.map(({rules, references, name}) => {
+    let grammars = result.procesedGrammars.map(({rules, references, name}) => {
       var rules = rules.map(function(rule) {
         const ref = references[rule.name] || {};
         return {
@@ -116,15 +116,15 @@ function railroad() {
       };
     });
 
-    var style = fs.readFileSync(path.resolve(projectRoot, path.join('node_modules', 'grammkit', 'app', 'diagram.css')), 'utf-8') + '\n' +
+    let style = fs.readFileSync(path.resolve(projectRoot, path.join('node_modules', 'grammkit', 'app', 'diagram.css')), 'utf-8') + '\n' +
                 fs.readFileSync(path.resolve(projectRoot, path.join('node_modules', 'grammkit', 'app', 'app.css')), 'utf-8');
-    var data = {
+    let data = {
         title: `Railroad diagram for ${grammarFile}`,
         style: style,
         grammars: grammars
     };
 
-    var output = renderTemplate(data, path.resolve(projectRoot, path.join('node_modules', 'grammkit', 'template', 'viewer.html')));
+    let output = renderTemplate(data, path.resolve(projectRoot, path.join('node_modules', 'grammkit', 'template', 'viewer.html')));
 
     fs.writeFileSync(path.resolve(projectRoot, railroadFile), output);
   }
@@ -142,7 +142,7 @@ async function lint(args) {
     extra.push('--fix');
   }
   let jsSources = findProjectFiles(process.cwd(), fullPath => /\.js$/.test(fullPath));
-  var result = spawn(path.normalize('./node_modules/.bin/eslint'), [
+  let result = spawn(path.normalize('./node_modules/.bin/eslint'), [
     ...extra,
     ...jsSources,
   ], {stdio: 'inherit', shell: true});
@@ -221,9 +221,9 @@ async function devtools() {
 }
 
 function rot13(str) {
-  var input = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'.split('');
-  var output = 'NOPQRSTUVWXYZABCDEFGHIJKLMnopqrstuvwxyzabcdefghijklm'.split('');
-  var lookup = input.reduce((m, k, i) => Object.assign(m, {[k]: output[i]}), {});
+  let input = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'.split('');
+  let output = 'NOPQRSTUVWXYZABCDEFGHIJKLMnopqrstuvwxyzabcdefghijklm'.split('');
+  let lookup = input.reduce((m, k, i) => Object.assign(m, {[k]: output[i]}), {});
   return str.split('').map(x => lookup[x] || x).join('');
 }
 
@@ -237,7 +237,7 @@ function test(args) {
   });
 
   const testsInDir = dir => findProjectFiles(dir, fullPath => {
-    var isSelectedTest = options.manual == fullPath.includes('manual_test');
+    let isSelectedTest = options.manual == fullPath.includes('manual_test');
     return /-tests?.js$/.test(fullPath) && isSelectedTest;
   });
 

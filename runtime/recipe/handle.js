@@ -108,10 +108,10 @@ class Handle {
   set storageKey(key) { this._storageKey = key; }
 
   _isValid() {
-    var typeSet = [];
+    let typeSet = [];
     if (this._mappedType)
       typeSet.push({type: this._mappedType});
-    var tags = new Set();
+    let tags = new Set();
     for (let connection of this._connections) {
       // A remote view cannot be connected to an output param.
       if (this.fate == 'map' && ['out', 'inout'].includes(connection.direction)) {
@@ -121,7 +121,7 @@ class Handle {
         typeSet.push({type: connection.type, direction: connection.direction, connection});
       connection.tags.forEach(tag => tags.add(tag));
     }
-    var {type, valid} = TypeChecker.processTypeList(typeSet);
+    let {type, valid} = TypeChecker.processTypeList(typeSet);
     if (valid) {
       this._type = type.type;
       this._tags.forEach(tag => tags.add(tag));

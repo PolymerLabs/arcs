@@ -35,11 +35,11 @@ import Tracing from '../tracelib/trace.js';
 class CreateViews extends Strategy {
   // TODO: move generation to use an async generator.
   async generate(strategizer) {
-    var results = Recipe.over(this.getResults(strategizer), new class extends RecipeWalker {
+    let results = Recipe.over(this.getResults(strategizer), new class extends RecipeWalker {
       onView(recipe, view) {
-        var counts = RecipeUtil.directionCounts(view);
+        let counts = RecipeUtil.directionCounts(view);
 
-        var score = 1;
+        let score = 1;
         if (counts.in == 0 || counts.out == 0) {
           if (counts.unknown > 0)
             return;
@@ -92,7 +92,7 @@ class Planner {
   }
 
   async generate() {
-    var log = await this.strategizer.generate();
+    let log = await this.strategizer.generate();
     return this.strategizer.generated;
   }
 
@@ -125,8 +125,8 @@ class Planner {
   }
 
   _matchesActiveRecipe(plan) {
-    var planShape = RecipeUtil.recipeToShape(plan);
-    var result = RecipeUtil.find(this._arc._activeRecipe, planShape);
+    let planShape = RecipeUtil.recipeToShape(plan);
+    let result = RecipeUtil.find(this._arc._activeRecipe, planShape);
     return result.some(r => r.score == 0);
   }
 

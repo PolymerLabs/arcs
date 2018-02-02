@@ -26,7 +26,7 @@ class ViewConnection {
     if (cloneMap.has(this)) {
       return cloneMap.get(this);
     }
-    var viewConnection = new ViewConnection(this._name, particle);
+    let viewConnection = new ViewConnection(this._name, particle);
     viewConnection._tags = [...this._tags];
     viewConnection._type = this._type;
     viewConnection._rawType = this._rawType;

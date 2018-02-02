@@ -17,7 +17,7 @@ export default class StorageProviderFactory {
   }
 
   _storageForKey(key) {
-    var protocol = key.split(':')[0];
+    let protocol = key.split(':')[0];
     return this._storageInstances[protocol];
   }
 

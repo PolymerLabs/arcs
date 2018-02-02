@@ -38,7 +38,7 @@ describe('demo flow', function() {
   it('flows like a demo', async function() {
     let loader = new Loader();
     let pecFactory = null;
-    var slotComposer = new MockSlotComposer();
+    let slotComposer = new MockSlotComposer();
     let arc = new Arc({
       id: 'demo',
       pecFactory,

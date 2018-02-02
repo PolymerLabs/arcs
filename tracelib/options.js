@@ -11,6 +11,6 @@
   limitations under the License.
 */
 
-var parseArgs = require('minimist');
+let parseArgs = require('minimist');
 
 module.exports = parseArgs(process.argv.slice(2));

@@ -12,7 +12,7 @@ import RecipeWalker from '../recipe/walker.js';
 
 export default class CreateDescriptionHandle extends Strategy {
   async generate(strategizer) {
-    var results = Recipe.over(this.getResults(strategizer), new class extends RecipeWalker {
+    let results = Recipe.over(this.getResults(strategizer), new class extends RecipeWalker {
       onViewConnection(recipe, viewConnection) {
         if (viewConnection.view)
           return;
@@ -20,7 +20,7 @@ export default class CreateDescriptionHandle extends Strategy {
           return;
 
         return (recipe, viewConnection) => {
-          var view = recipe.newView();
+          let view = recipe.newView();
           view.fate = 'create';
           viewConnection.connectToView(view);
           return 1;

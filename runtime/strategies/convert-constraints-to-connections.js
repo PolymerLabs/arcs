@@ -16,15 +16,15 @@ export default class ConvertConstraintsToConnections extends Strategy {
     this.affordance = arc.pec.slotComposer ? arc.pec.slotComposer.affordance : null;
   }
   async generate(strategizer) {
-    var affordance = this.affordance;
-    var results = Recipe.over(this.getResults(strategizer), new class extends RecipeWalker {
+    let affordance = this.affordance;
+    let results = Recipe.over(this.getResults(strategizer), new class extends RecipeWalker {
       onRecipe(recipe) {
-        var particles = new Set();
-        var views = new Set();
-        var map = {};
-        var particlesByName = {};
-        var viewCount = 0;
-        for (var constraint of recipe.connectionConstraints) {
+        let particles = new Set();
+        let views = new Set();
+        let map = {};
+        let particlesByName = {};
+        let viewCount = 0;
+        for (let constraint of recipe.connectionConstraints) {
           if (affordance && (!constraint.fromParticle.matchAffordance(affordance) || !constraint.toParticle.matchAffordance(affordance))) {
             return;
           }
@@ -38,7 +38,7 @@ export default class ConvertConstraintsToConnections extends Strategy {
             map[constraint.toParticle.name] = {};
             particlesByName[constraint.toParticle.name] = constraint.toParticle;
           }
-          var view = map[constraint.fromParticle.name][constraint.fromConnection];
+          let view = map[constraint.fromParticle.name][constraint.fromConnection];
           if (view == undefined) {
             view = 'v' + viewCount++;
             map[constraint.fromParticle.name][constraint.fromConnection] = view;
@@ -46,26 +46,26 @@ export default class ConvertConstraintsToConnections extends Strategy {
           }
           map[constraint.toParticle.name][constraint.toConnection] = view;
         }
-        var shape = RecipeUtil.makeShape([...particles.values()], [...views.values()], map);
-        var results = RecipeUtil.find(recipe, shape);
+        let shape = RecipeUtil.makeShape([...particles.values()], [...views.values()], map);
+        let results = RecipeUtil.find(recipe, shape);
 
         return results.map(match => {
           return (recipe) => {
-            var score = recipe.connectionConstraints.length + match.score;
-            var recipeMap = recipe.updateToClone(match.match);
-            for (var particle in map) {
-              for (var connection in map[particle]) {
-                var view = map[particle][connection];
-                var recipeParticle = recipeMap[particle];
+            let score = recipe.connectionConstraints.length + match.score;
+            let recipeMap = recipe.updateToClone(match.match);
+            for (let particle in map) {
+              for (let connection in map[particle]) {
+                let view = map[particle][connection];
+                let recipeParticle = recipeMap[particle];
                 if (recipeParticle == null) {
                   recipeParticle = recipe.newParticle(particle);
                   recipeParticle.spec = particlesByName[particle];
                   recipeMap[particle] = recipeParticle;
                 }
-                var recipeViewConnection = recipeParticle.connections[connection];
+                let recipeViewConnection = recipeParticle.connections[connection];
                 if (recipeViewConnection == undefined)
                   recipeViewConnection = recipeParticle.addConnectionName(connection);
-                var recipeView = recipeMap[view];
+                let recipeView = recipeMap[view];
                 if (recipeView == null) {
                   recipeView = recipe.newView();
                   recipeView.fate = 'create';

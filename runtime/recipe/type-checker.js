@@ -15,9 +15,9 @@ class TypeChecker {
     if (list.length == 0) {
       return {type: {type: undefined}, valid: true};
     }
-    var baseType = list[0];
-    var variableResolutions = [];
-    for (var i = 1; i < list.length; i++) {
+    let baseType = list[0];
+    let variableResolutions = [];
+    for (let i = 1; i < list.length; i++) {
       let result = TypeChecker.compareTypes(baseType, list[i], variableResolutions);
       baseType = result.type;
       if (!result.valid) {
@@ -29,8 +29,8 @@ class TypeChecker {
   }
 
   static _coerceTypes(left, right) {
-    var leftType = left.type;
-    var rightType = right.type;
+    let leftType = left.type;
+    let rightType = right.type;
 
     while (leftType.isSetView && rightType.isSetView) {
       leftType = leftType.primitiveType();
@@ -57,8 +57,8 @@ class TypeChecker {
   }
 
   static isSubclass(subclass, superclass) {
-    var subtype = subclass.type;
-    var supertype = superclass.type;
+    let subtype = subclass.type;
+    let supertype = superclass.type;
     while (subtype.isSetView && supertype.isSetView) {
       subtype = subtype.primitiveType();
       supertype = supertype.primitiveType();
@@ -93,8 +93,8 @@ class TypeChecker {
       // guarantees that the view's type will be preserved, and that the fact
       // that the type comes from a view rather than a connection will also
       // be preserved.
-      var superDirection = superclass.connection ? superclass.connection.direction : 'inout';
-      var subDirection = subclass.connection ? subclass.connection.direction : 'inout';
+      let superDirection = superclass.connection ? superclass.connection.direction : 'inout';
+      let subDirection = subclass.connection ? subclass.connection.direction : 'inout';
       if (superDirection == 'in') {
         return {type: subclass, valid: true};
       }

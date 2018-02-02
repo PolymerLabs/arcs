@@ -365,8 +365,8 @@ ${e.message}
     };
 
     for (let connection of items.connections) {
-      var fromParticle = manifest.findParticleByName(connection.from.particle);
-      var toParticle = manifest.findParticleByName(connection.to.particle);
+      let fromParticle = manifest.findParticleByName(connection.from.particle);
+      let toParticle = manifest.findParticleByName(connection.to.particle);
       assert(fromParticle, `could not find particle ${fromParticle}`);
       assert(toParticle, `could not find particle ${toParticle}`);
       recipe.newConnectionConstraint(fromParticle, connection.from.param,
@@ -418,7 +418,7 @@ ${e.message}
       particle.tags = item.ref.tags;
       particle.verbs = item.ref.verbs;
       if (item.ref.name) {
-        var spec = manifest.findParticleByName(item.ref.name);
+        let spec = manifest.findParticleByName(item.ref.name);
         assert(spec, `could not find particle ${item.ref.name}`);
         particle.spec = spec;
         particlesByName[item.ref.name] = particle;
@@ -521,7 +521,7 @@ ${e.message}
           // TODO: Mark as immediate.
           targetView = recipe.newView();
           targetView.fate = 'map';
-          var view = await manifest.newView(connection.type, null, id, []);
+          let view = await manifest.newView(connection.type, null, id, []);
           // TODO: loader should not be optional.
           if (hostedParticle.implFile && loader) {
             hostedParticle.implFile = loader.join(manifest.fileName, hostedParticle.implFile);
