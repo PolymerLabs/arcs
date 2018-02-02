@@ -23,13 +23,19 @@ class TypeVariable {
   }
 
   get isResolved() {
-    return this.resolution !== undefined;
+    return !!this.resolution;
   }
 
   resolve(type) {
     this.resolution = type;
   }
 
+  equals(other) {
+    if (this.isResolved && other.isResolved) {
+      return this.resolution.equals(other.resolution);
+    }
+    return this.name == other.name;
+  }
 }
 
 export default TypeVariable;

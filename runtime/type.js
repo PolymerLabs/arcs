@@ -147,9 +147,12 @@ class Type {
     if (this.isSetView) {
       return this.data.equals(type.data);
     }
-
-    if (this.isInterface)
+    if (this.isInterface) {
       return this.data.equals(type.data);
+    }
+    if (this.isVariable) {
+      return this.data.equals(type.data);
+    }
     // TODO: this doesn't always work with the way the parser keeps kind
     // information around
     return JSON.stringify(this.data) == JSON.stringify(type.data);

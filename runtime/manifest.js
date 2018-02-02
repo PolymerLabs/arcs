@@ -412,7 +412,6 @@ ${e.message}
     }
 
     // TODO: disambiguate.
-    let particlesByName = {};
     for (let item of items.particles) {
       let particle = recipe.newParticle(item.ref.name);
       particle.tags = item.ref.tags;
@@ -421,7 +420,6 @@ ${e.message}
         let spec = manifest.findParticleByName(item.ref.name);
         assert(spec, `could not find particle ${item.ref.name}`);
         particle.spec = spec.clone();
-        particlesByName[item.ref.name] = particle;
       }
       if (item.name) {
         // TODO: errors.
@@ -526,7 +524,7 @@ ${e.message}
           if (hostedParticle.implFile && loader) {
             hostedParticle.implFile = loader.join(manifest.fileName, hostedParticle.implFile);
           }
-          view.set(hostedParticle.toLiteral());
+          view.set(hostedParticle.clone().toLiteral());
           targetView.mapToView(view);
         }
 
