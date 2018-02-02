@@ -10,21 +10,21 @@ import {Strategy} from '../../strategizer/strategizer.js';
 import Recipe from '../recipe/recipe.js';
 import RecipeWalker from '../recipe/walker.js';
 
-export default class GroupViewConnections extends Strategy {
+export default class GroupHandleConnections extends Strategy {
   constructor() {
     super();
 
     this._walker = new class extends RecipeWalker {
       onRecipe(recipe) {
-        // Only apply this strategy if ALL view connections are named and have types.
-        if (recipe.viewConnections.find(vc => !vc.type || !vc.name || vc.isOptional)) {
+        // Only apply this strategy if ALL handle connections are named and have types.
+        if (recipe.handleConnections.find(hc => !hc.type || !hc.name || hc.isOptional)) {
           return;
         }
-        // Find all unique types used in the recipe that have unbound view connections.
+        // Find all unique types used in the recipe that have unbound handle connections.
         let types = new Set();
-        recipe.viewConnections.forEach(vc => {
-          if (!vc.isOptional && !vc.view && !Array.from(types).find(t => t.equals(vc.type))) {
-            types.add(vc.type);
+        recipe.handleConnections.forEach(hc => {
+          if (!hc.isOptional && !hc.view && !Array.from(types).find(t => t.equals(hc.type))) {
+            types.add(hc.type);
           }
         });
 
@@ -44,24 +44,24 @@ export default class GroupViewConnections extends Strategy {
           let particleWithMostConnectionsOfType = sortedParticles[0];
           let groups = new Map();
           groupsByType.set(type, groups);
-          let allTypeViewConnections = recipe.viewConnections.filter(c => {
+          let allTypeHandleConnections = recipe.handleConnections.filter(c => {
             return !c.isOptional && !c.view && type.equals(c.type) && (c.particle != particleWithMostConnectionsOfType);
           });
 
           let iteration = 0;
-          while (allTypeViewConnections.length > 0) {
-            Object.values(particleWithMostConnectionsOfType.connections).forEach(viewConnection => {
-              if (!type.equals(viewConnection.type)) {
+          while (allTypeHandleConnections.length > 0) {
+            Object.values(particleWithMostConnectionsOfType.connections).forEach(handleConnection => {
+              if (!type.equals(handleConnection.type)) {
                 return;
               }
-              if (!groups.has(viewConnection)) {
-                groups.set(viewConnection, []);
+              if (!groups.has(handleConnection)) {
+                groups.set(handleConnection, []);
               }
-              let group = groups.get(viewConnection);
+              let group = groups.get(handleConnection);
 
               // filter all connections where this particle is already in a group.
-              let possibleConnections = allTypeViewConnections.filter(c => !group.find(gc => gc.particle == c.particle));
-              let selectedConn = possibleConnections.find(c => viewConnection.isInput != c.isInput || viewConnection.isOutput != c.isOutput);
+              let possibleConnections = allTypeHandleConnections.filter(c => !group.find(gc => gc.particle == c.particle));
+              let selectedConn = possibleConnections.find(c => handleConnection.isInput != c.isInput || handleConnection.isOutput != c.isOutput);
               // TODO: consider tags.
               // TODO: Slots view restrictions should also be accounted for when grouping.
               if (!selectedConn) {
@@ -73,7 +73,7 @@ export default class GroupViewConnections extends Strategy {
                 selectedConn = possibleConnections[0];
               }
               group.push(selectedConn);
-              allTypeViewConnections = allTypeViewConnections.filter(c => c != selectedConn);
+              allTypeHandleConnections = allTypeHandleConnections.filter(c => c != selectedConn);
             });
             iteration++;
           }

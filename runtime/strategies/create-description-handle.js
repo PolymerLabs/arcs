@@ -13,16 +13,16 @@ import RecipeWalker from '../recipe/walker.js';
 export default class CreateDescriptionHandle extends Strategy {
   async generate(strategizer) {
     let results = Recipe.over(this.getResults(strategizer), new class extends RecipeWalker {
-      onViewConnection(recipe, viewConnection) {
-        if (viewConnection.view)
+      onHandleConnection(recipe, handleConnection) {
+        if (handleConnection.view)
           return;
-        if (viewConnection.name != 'descriptions')
+        if (handleConnection.name != 'descriptions')
           return;
 
-        return (recipe, viewConnection) => {
+        return (recipe, handleConnection) => {
           let view = recipe.newView();
           view.fate = 'create';
-          viewConnection.connectToView(view);
+          handleConnection.connectToView(view);
           return 1;
         };
       }

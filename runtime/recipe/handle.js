@@ -44,7 +44,7 @@ class Handle {
       view._storageKey = this._storageKey;
 
       // the connections are re-established when Particles clone their
-      // attached ViewConnection objects.
+      // attached HandleConnection objects.
       view._connections = [];
     }
     return view;
@@ -103,7 +103,7 @@ class Handle {
   }
   get localName() { return this._localName; }
   set localName(name) { this._localName = name; }
-  get connections() { return this._connections; } // ViewConnection*
+  get connections() { return this._connections; } // HandleConnection*
   get storageKey() { return this._storageKey; }
   set storageKey(key) { this._storageKey = key; }
 

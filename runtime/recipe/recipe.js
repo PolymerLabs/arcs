@@ -70,7 +70,7 @@ class Recipe {
         && this._handles.every(handle => handle.isResolved())
         && this._particles.every(particle => particle.isResolved())
         && this._slots.every(slot => slot.isResolved())
-        && this.viewConnections.every(connection => connection.isResolved())
+        && this.handleConnections.every(connection => connection.isResolved())
         && this.slotConnections.every(connection => connection.isResolved());
   }
 
@@ -90,7 +90,7 @@ class Recipe {
     return !this._findDuplicateHandle() && this._handles.every(handle => handle._isValid())
         && this._particles.every(particle => particle._isValid())
         && this._slots.every(slot => slot._isValid())
-        && this.viewConnections.every(connection => connection._isValid())
+        && this.handleConnections.every(connection => connection._isValid())
         && this.slotConnections.every(connection => connection._isValid())
         && (!this.search || this.search.isValid());
   }
@@ -123,13 +123,13 @@ class Recipe {
     return slotConnections;
   }
 
-  get viewConnections() {
-    let viewConnections = [];
+  get handleConnections() {
+    let handleConnections = [];
     this._particles.forEach(particle => {
-      viewConnections.push(...Object.values(particle.connections));
-      viewConnections.push(...particle._unnamedConnections);
+      handleConnections.push(...Object.values(particle.connections));
+      handleConnections.push(...particle._unnamedConnections);
     });
-    return viewConnections;
+    return handleConnections;
   }
 
   isEmpty() {
@@ -174,7 +174,7 @@ class Recipe {
       checkForInvalid('Views', this._handles, handle => `'${handle.toString()}'`);
       checkForInvalid('Particles', this._particles, particle => particle.name);
       checkForInvalid('Slots', this._slots, slot => slot.name);
-      checkForInvalid('ViewConnections', this.viewConnections, viewConnection => `${viewConnection.particle.name}::${viewConnection.name}`);
+      checkForInvalid('HandleConnections', this.handleConnections, handleConnection => `${handleConnection.particle.name}::${handleConnection.name}`);
       checkForInvalid('SlotConnections', this.slotConnections, slotConnection => slotConnection.name);
       return false;
     }
@@ -189,8 +189,8 @@ class Recipe {
       slot._startNormalize();
     }
 
-    // Sort and normalize view connections.
-    let connections = this.viewConnections;
+    // Sort and normalize handle connections.
+    let connections = this.handleConnections;
     for (let connection of connections) {
       connection._normalize();
     }
@@ -223,7 +223,7 @@ class Recipe {
     let particles = [];
     let handles = [];
     // Reorder connections so that interfaces come last.
-    // TODO: update view-connection comparison method instead?
+    // TODO: update handle-connection comparison method instead?
     for (let connection of connections.filter(c => !c.type || !c.type.isInterface).concat(connections.filter(c => !!c.type && !!c.type.isInterface))) {
       if (!seenParticles.has(connection.particle)) {
         particles.push(connection.particle);

@@ -40,8 +40,8 @@ describe('manifest', function() {
       assert.equal(recipe.views.length, 2);
       assert.equal(recipe.views[0].fate, 'map');
       assert.equal(recipe.views[1].fate, 'create');
-      assert.equal(recipe.viewConnections.length, 1);
-      assert.sameMembers(recipe.viewConnections[0].tags, ['#tag']);
+      assert.equal(recipe.handleConnections.length, 1);
+      assert.sameMembers(recipe.handleConnections[0].tags, ['#tag']);
     };
     verify(manifest);
     verify(await Manifest.parse(manifest.toString(), {}));
@@ -112,7 +112,7 @@ describe('manifest', function() {
       let recipe = manifest.recipes[0];
       assert(recipe);
       assert.equal(recipe.views.length, 1);
-      assert.equal(recipe.viewConnections.length, 2);
+      assert.equal(recipe.handleConnections.length, 2);
       assert.equal(recipe.toString(), `recipe
   ? as view0
   P1 as p1
@@ -421,7 +421,7 @@ describe('manifest', function() {
 
       assert.equal(recipe.particles.length, 2);
       assert.equal(recipe.views.length, 1);
-      assert.equal(recipe.viewConnections.length, 2);
+      assert.equal(recipe.handleConnections.length, 2);
       assert.equal(recipe.slots.length, 3);
       assert.equal(recipe.slotConnections.length, 3);
       assert.equal(Object.keys(recipe.particles[0].consumedSlotConnections).length, 2);

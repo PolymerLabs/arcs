@@ -481,13 +481,13 @@ Name
 RecipeParticle
   = ref:ParticleRef name:(whiteSpace Name)? eolWhiteSpace connections:(Indent (SameIndent RecipeParticleItem)*)?
   {
-    let viewConnections = [];
+    let handleConnections = [];
     let slotConnections = [];
     if (connections) {
       connections = extractIndented(connections);
       for (let conn of connections) {
-        if (conn.kind == 'view-connection')
-          viewConnections.push(conn);
+        if (conn.kind == 'handle-connection')
+          handleConnections.push(conn);
         else
           slotConnections.push(conn)
       }
@@ -497,7 +497,7 @@ RecipeParticle
       location: location(),
       name: optional(name, name => name[1], null),
       ref,
-      connections: viewConnections,
+      connections: handleConnections,
       slotConnections: slotConnections,
     };
   }
@@ -508,7 +508,7 @@ RecipeParticleConnection
   = param:(lowerIdent / '*') whiteSpace dir:Direction target:(whiteSpace ConnectionTarget)? eolWhiteSpace
   {
     return {
-      kind: 'view-connection',
+      kind: 'handle-connection',
       location: location(),
       param,
       dir,

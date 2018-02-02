@@ -7,7 +7,7 @@
 
 import assert from '../../platform/assert-web.js';
 import SlotConnection from './slot-connection.js';
-import ViewConnection from './view-connection.js';
+import HandleConnection from './handle-connection.js';
 import util from './util.js';
 
 class Particle {
@@ -133,8 +133,8 @@ class Particle {
   get spec() { return this._spec; }
   get tags() { return this._tags; }
   set tags(tags) { this._tags = tags; }
-  get connections() { return this._connections; } // {parameter -> ViewConnection}
-  get unnamedConnections() { return this._unnamedConnections; } // ViewConnection*
+  get connections() { return this._connections; } // {parameter -> HandleConnection}
+  get unnamedConnections() { return this._unnamedConnections; } // HandleConnection*
   get consumedSlotConnections() { return this._consumedSlotConnections; }
   get primaryVerb() { if (this._verbs.length > 0) return this._verbs[0]; }
   set verbs(verbs) { this._verbs = verbs; }
@@ -160,14 +160,14 @@ class Particle {
   }
 
   addUnnamedConnection() {
-    let connection = new ViewConnection(undefined, this);
+    let connection = new HandleConnection(undefined, this);
     this._unnamedConnections.push(connection);
     return connection;
   }
 
   addConnectionName(name) {
     assert(this._connections[name] == undefined);
-    this._connections[name] = new ViewConnection(name, this);
+    this._connections[name] = new HandleConnection(name, this);
     return this._connections[name];
   }
 

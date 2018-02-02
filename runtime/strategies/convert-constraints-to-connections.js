@@ -62,17 +62,17 @@ export default class ConvertConstraintsToConnections extends Strategy {
                   recipeParticle.spec = particlesByName[particle];
                   recipeMap[particle] = recipeParticle;
                 }
-                let recipeViewConnection = recipeParticle.connections[connection];
-                if (recipeViewConnection == undefined)
-                  recipeViewConnection = recipeParticle.addConnectionName(connection);
+                let recipeHandleConnection = recipeParticle.connections[connection];
+                if (recipeHandleConnection == undefined)
+                  recipeHandleConnection = recipeParticle.addConnectionName(connection);
                 let recipeView = recipeMap[view];
                 if (recipeView == null) {
                   recipeView = recipe.newView();
                   recipeView.fate = 'create';
                   recipeMap[view] = recipeView;
                 }
-                if (recipeViewConnection.view == null)
-                  recipeViewConnection.connectToView(recipeView);
+                if (recipeHandleConnection.view == null)
+                  recipeHandleConnection.connectToView(recipeView);
               }
             }
             recipe.clearConnectionConstraints();

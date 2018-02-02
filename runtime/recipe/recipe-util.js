@@ -9,7 +9,7 @@ import Recipe from './recipe.js';
 import assert from '../../platform/assert-web.js';
 
 class Shape {
-  constructor(recipe, particles, views, vcs) {
+  constructor(recipe, particles, views, hcs) {
     this.recipe = recipe;
     this.particles = particles;
     this.views = views;
@@ -18,8 +18,8 @@ class Shape {
       this.reverse.set(particles[p], p);
     for (let v in views)
       this.reverse.set(views[v], v);
-    for (let vc in vcs)
-      this.reverse.set(vcs[vc], vc);
+    for (let hc in hcs)
+      this.reverse.set(hcs[hc], hc);
   }
 }
 
@@ -28,17 +28,17 @@ class RecipeUtil {
     recipe = recipe || new Recipe();
     let pMap = {};
     let vMap = {};
-    let vcMap = {};
+    let hcMap = {};
     particles.forEach(particle => pMap[particle] = recipe.newParticle(particle));
     views.forEach(view => vMap[view] = recipe.newView());
     Object.keys(map).forEach(key => {
       Object.keys(map[key]).forEach(name => {
         let view = map[key][name];
         pMap[key].addConnectionName(name).connectToView(vMap[view]);
-        vcMap[key + ':' + name] = pMap[key].connections[name];
+        hcMap[key + ':' + name] = pMap[key].connections[name];
       });
     });
-    return new Shape(recipe, pMap, vMap, vcMap);
+    return new Shape(recipe, pMap, vMap, hcMap);
   }
 
   static recipeToShape(recipe) {
@@ -47,57 +47,57 @@ class RecipeUtil {
     recipe.particles.forEach(particle => particles[particle.name] = particle);
     let views = {};
     recipe.views.forEach(view => views['v' + id++] = view);
-    let vcs = {};
-    recipe.viewConnections.forEach(vc => vcs[vc.particle.name + ':' + vc.name] = vc);
-    return new Shape(recipe, particles, views, vcs);
+    let hcs = {};
+    recipe.handleConnections.forEach(hc => hcs[hc.particle.name + ':' + hc.name] = hc);
+    return new Shape(recipe, particles, views, hcs);
   }
 
   static find(recipe, shape) {
 
-    function _buildNewVCMatches(recipe, shapeVC, match, outputList) {
+    function _buildNewHCMatches(recipe, shapeHC, match, outputList) {
       let {forward, reverse, score} = match;
       let matchFound = false;
-      for (let recipeVC of recipe.viewConnections) {
-        // TODO are there situations where multiiple viewConnections should
+      for (let recipeHC of recipe.handleConnections) {
+        // TODO are there situations where multiple handleConnections should
         // be allowed to point to the same one in the recipe?
-        if (reverse.has(recipeVC))
+        if (reverse.has(recipeHC))
           continue;
 
         // TODO support unnamed shape particles.
-        if (recipeVC.particle.name != shapeVC.particle.name)
+        if (recipeHC.particle.name != shapeHC.particle.name)
           continue;
 
-        if (shapeVC.name && shapeVC.name != recipeVC.name)
+        if (shapeHC.name && shapeHC.name != recipeHC.name)
           continue;
 
-        // recipeVC is a candidate for shapeVC. shapeVC references a
-        // particle, so recipeVC must reference the matching particle,
+        // recipeHC is a candidate for shapeHC. shapeHC references a
+        // particle, so recipeHC must reference the matching particle,
         // or a particle that isn't yet mapped from shape.
-        if (reverse.has(recipeVC.particle)) {
-          if (reverse.get(recipeVC.particle) != shapeVC.particle)
+        if (reverse.has(recipeHC.particle)) {
+          if (reverse.get(recipeHC.particle) != shapeHC.particle)
             continue;
-        } else if (forward.has(shapeVC.particle)) {
-          // we've already mapped the particle referenced by shapeVC
-          // and it doesn't match recipeVC's particle as recipeVC's
+        } else if (forward.has(shapeHC.particle)) {
+          // we've already mapped the particle referenced by shapeHC
+          // and it doesn't match recipeHC's particle as recipeHC's
           // particle isn't mapped
           continue;
         }
 
-        // shapeVC doesn't necessarily reference a view, but if it does
-        // then recipeVC needs to reference the matching view, or one
-        // that isn't yet mapped, or no view yet.
-        if (shapeVC.view && recipeVC.view) {
-          if (reverse.has(recipeVC.view)) {
-            if (reverse.get(recipeVC.view) != shapeVC.view)
+        // shapeHC doesn't necessarily reference a handle, but if it does
+        // then recipeHC needs to reference the matching handle, or one
+        // that isn't yet mapped, or no handle yet.
+        if (shapeHC.view && recipeHC.view) {
+          if (reverse.has(recipeHC.view)) {
+            if (reverse.get(recipeHC.view) != shapeHC.view)
               continue;
-          } else if (forward.has(shapeVC.view) && forward.get(shapeVC.view) !== null) {
+          } else if (forward.has(shapeHC.view) && forward.get(shapeHC.view) !== null) {
             continue;
           }
-          // Check whether shapeVC and recipeVC reference the same view.
+          // Check whether shapeHC and recipeHC reference the same view.
           // Note: the id of a view with 'copy' fate changes during recipe instantiation, hence comparing to original id too.
           // Skip the check if views have 'create' fate (their ids are arbitrary).
-          if ((shapeVC.view.fate != 'create' || (recipeVC.view.fate != 'create' && recipeVC.view.originalFate != 'create')) &&
-              shapeVC.view.id != recipeVC.view.id && shapeVC.view.id != recipeVC.view.originalId) {
+          if ((shapeHC.view.fate != 'create' || (recipeHC.view.fate != 'create' && recipeHC.view.originalFate != 'create')) &&
+              shapeHC.view.id != recipeHC.view.id && shapeHC.view.id != recipeHC.view.originalId) {
             // this is a different view.
             continue;
           }
@@ -105,34 +105,34 @@ class RecipeUtil {
 
         // clone forward and reverse mappings and establish new components.
         let newMatch = {forward: new Map(forward), reverse: new Map(reverse), score};
-        assert(!newMatch.forward.has(shapeVC.particle) || newMatch.forward.get(shapeVC.particle) == recipeVC.particle);
-        newMatch.forward.set(shapeVC.particle, recipeVC.particle);
-        newMatch.reverse.set(recipeVC.particle, shapeVC.particle);
-        if (shapeVC.view) {
-          if (!recipeVC.view) {
-            if (!newMatch.forward.has(shapeVC.view)) {
-              newMatch.forward.set(shapeVC.view, null);
+        assert(!newMatch.forward.has(shapeHC.particle) || newMatch.forward.get(shapeHC.particle) == recipeHC.particle);
+        newMatch.forward.set(shapeHC.particle, recipeHC.particle);
+        newMatch.reverse.set(recipeHC.particle, shapeHC.particle);
+        if (shapeHC.view) {
+          if (!recipeHC.view) {
+            if (!newMatch.forward.has(shapeHC.view)) {
+              newMatch.forward.set(shapeHC.view, null);
               newMatch.score -= 2;
             }
           } else {
-            newMatch.forward.set(shapeVC.view, recipeVC.view);
-            newMatch.reverse.set(recipeVC.view, shapeVC.view);
+            newMatch.forward.set(shapeHC.view, recipeHC.view);
+            newMatch.reverse.set(recipeHC.view, shapeHC.view);
           }
         }
-        newMatch.forward.set(shapeVC, recipeVC);
-        newMatch.reverse.set(recipeVC, shapeVC);
+        newMatch.forward.set(shapeHC, recipeHC);
+        newMatch.reverse.set(recipeHC, shapeHC);
         outputList.push(newMatch);
         matchFound = true;
       }
       if (matchFound == false) {
         let newMatches = [];
-        _buildNewParticleMatches(recipe, shapeVC.particle, match, newMatches);
+        _buildNewParticleMatches(recipe, shapeHC.particle, match, newMatches);
         newMatches.forEach(newMatch => {
-          if (shapeVC.view && !newMatch.forward.has(shapeVC.view)) {
-            newMatch.forward.set(shapeVC.view, null);
+          if (shapeHC.view && !newMatch.forward.has(shapeHC.view)) {
+            newMatch.forward.set(shapeHC.view, null);
             newMatch.score -= 2;
           }
-          newMatch.forward.set(shapeVC, null);
+          newMatch.forward.set(shapeHC, null);
           newMatch.score -= 1;
           outputList.push(newMatch);
         });
@@ -198,11 +198,11 @@ class RecipeUtil {
 
     // Start with a single, empty match
     let matches = [{forward: new Map(), reverse: new Map(), score: 0}];
-    for (let shapeVC of shape.recipe.viewConnections) {
+    for (let shapeHC of shape.recipe.handleConnections) {
       let newMatches = [];
       for (let match of matches) {
         // collect matching view connections into a new matches list
-        _buildNewVCMatches(recipe, shapeVC, match, newMatches);
+        _buildNewHCMatches(recipe, shapeHC, match, newMatches);
       }
       matches = newMatches;
     }

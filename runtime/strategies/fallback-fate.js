@@ -28,7 +28,7 @@ export default class FallbackFate extends Strategy {
           return;
         }
 
-        let hasOutConns = view.connections.some(vc => vc.isOutput);
+        let hasOutConns = view.connections.some(hc => hc.isOutput);
         let newFate = hasOutConns ? 'copy' : 'map';
         if (view.fate == newFate) {
           return;

@@ -8,7 +8,7 @@
 import assert from '../../platform/assert-web.js';
 import util from './util.js';
 
-class ViewConnection {
+class HandleConnection {
   constructor(name, particle) {
     assert(particle);
     assert(particle.recipe);
@@ -26,18 +26,18 @@ class ViewConnection {
     if (cloneMap.has(this)) {
       return cloneMap.get(this);
     }
-    let viewConnection = new ViewConnection(this._name, particle);
-    viewConnection._tags = [...this._tags];
-    viewConnection._type = this._type;
-    viewConnection._rawType = this._rawType;
-    viewConnection._direction = this._direction;
+    let handleConnection = new HandleConnection(this._name, particle);
+    handleConnection._tags = [...this._tags];
+    handleConnection._type = this._type;
+    handleConnection._rawType = this._rawType;
+    handleConnection._direction = this._direction;
     if (this._view != undefined) {
-      viewConnection._view = cloneMap.get(this._view);
-      assert(viewConnection._view !== undefined);
-      viewConnection._view.connections.push(viewConnection);
+      handleConnection._view = cloneMap.get(this._view);
+      assert(handleConnection._view !== undefined);
+      handleConnection._view.connections.push(handleConnection);
     }
-    cloneMap.set(this, viewConnection);
-    return viewConnection;
+    cloneMap.set(this, handleConnection);
+    return handleConnection;
   }
 
   _normalize() {
@@ -171,7 +171,7 @@ class ViewConnection {
 
     if (options && options.showUnresolved) {
       if (!this.isResolved(options)) {
-        result.push(`// unresolved view-connection: ${options.details}`);
+        result.push(`// unresolved handle-connection: ${options.details}`);
       }
     }
 
@@ -179,4 +179,4 @@ class ViewConnection {
   }
 }
 
-export default ViewConnection;
+export default HandleConnection;
