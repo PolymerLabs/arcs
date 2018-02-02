@@ -100,7 +100,7 @@ function railroad() {
     let result = transform(grammar);
 
     let grammars = result.procesedGrammars.map(({rules, references, name}) => {
-      var rules = rules.map(function(rule) {
+      rules = rules.map(function(rule) {
         const ref = references[rule.name] || {};
         return {
           name: rule.name,
@@ -163,7 +163,7 @@ function upgradeFunctionality(object, channel) {
 
   for (let arg in channel) {
     if (arg[0] == 'l') {
-      var oldArg = channel[arg];
+      let oldArg = channel[arg];
       channel[arg] = function(s, ...x) {
         s = s.replace('\u{1F1F3}\u{1F1FF}', '\u{1F1E9}\u{1F1EA}');
         oldArg.apply(channel, [s, ...x]);

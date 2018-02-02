@@ -25,7 +25,7 @@ defineParticle(({TransformationDomParticle}) => {
       let otherMappedViews = [];
       let otherConnections = [];
       let index = 2;
-      for (var [connectionName, otherView] of views) {
+      for (let [connectionName, otherView] of views) {
         if (['list', 'hostedParticle'].includes(connectionName)) {
           continue;
         }

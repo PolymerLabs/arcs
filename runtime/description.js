@@ -191,12 +191,14 @@ export class DescriptionFormatter {
     let results = [];
     while (pattern.length > 0) {
       let tokens = pattern.match(/\${[a-zA-Z0-9\.]+}(?:\.[_a-zA-Z]+)?/g);
+      let firstToken;
+      let tokenIndex;
       if (tokens) {
-        var firstToken = tokens[0];
-        var tokenIndex = pattern.indexOf(firstToken);
+        firstToken = tokens[0];
+        tokenIndex = pattern.indexOf(firstToken);
       } else {
-        var firstToken = '';
-        var tokenIndex = pattern.length;
+        firstToken = '';
+        tokenIndex = pattern.length;
       }
       assert(tokenIndex >= 0);
       let nextToken = pattern.substring(0, tokenIndex);

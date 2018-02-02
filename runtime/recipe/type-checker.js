@@ -44,12 +44,13 @@ class TypeChecker {
       return left;
 
     // TODO: direction?
+    let type;
     if (leftType.isVariable) {
       leftType.variable.resolution = rightType;
-      var type = right;
+      type = right;
     } else if (rightType.isVariable) {
       rightType.variable.resolution = leftType;
-      var type = left;
+      type = left;
     } else {
       return null;
     }
@@ -76,12 +77,14 @@ class TypeChecker {
       return {type: left, valid: true};
     }
 
+    let subclass;
+    let superclass;
     if (TypeChecker.isSubclass(left, right)) {
-      var subclass = left;
-      var superclass = right;
+      subclass = left;
+      superclass = right;
     } else if (TypeChecker.isSubclass(right, left)) {
-      var subclass = right;
-      var superclass = left;
+      subclass = right;
+      superclass = left;
     }
 
     // TODO: this arbitrarily chooses type restriction when

@@ -152,10 +152,11 @@ export class Particle {
     for (let i = 0; i < bits.length; i++) {
         let str = strings[i];
         let indent = / *$/.exec(str)[0];
+        let bitStr;
         if (typeof bits[i] == 'string')
-          var bitStr = bits[i];
+          bitStr = bits[i];
         else
-          var bitStr = bits[i].toManifestString();
+          bitStr = bits[i].toManifestString();
         bitStr = bitStr.replace(/(\n)/g, '$1' + indent);
         output.push(str);
         output.push(bitStr);

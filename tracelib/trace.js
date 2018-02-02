@@ -14,15 +14,17 @@
 import fs from '../platform/fs-web.js';
 
 let events = [];
+let pid;
+let now;
 if (typeof document == 'object') {
-  var pid = 42;
-  var now = function() {
+  pid = 42;
+  now = function() {
     let t = performance.now();
     return t;
   };
 } else {
-  var pid = process.pid;
-  var now = function() {
+  pid = process.pid;
+  now = function() {
     let t = process.hrtime();
     return t[0] * 1000000 + t[1] / 1000;
   };

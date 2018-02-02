@@ -42,9 +42,10 @@ class XList extends XState(XElement) {
       // use existing node if possible
       next = child && child.nextElementSibling;
       if (!child) {
+        let dom;
         try {
           // TODO(sjmiles): install event handlers explicitly now
-          var dom = XTemplate.stamp(template).events(props.eventMapper);
+          dom = XTemplate.stamp(template).events(props.eventMapper);
         } catch (x) {
           console.warn('x-list: if `listen` is undefined, you need to provide a `handler` property for `on-*` events');
           throw x;

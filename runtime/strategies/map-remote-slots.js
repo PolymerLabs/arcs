@@ -36,7 +36,7 @@ export default class MapRemoteSlots extends Strategy {
           } else {
             let particle = slotConnection.particle;
             for (let name in particle.connections) {
-              var connection = particle.connections[name];
+              let connection = particle.connections[name];
               if (!connection.view)
                 continue;
               if (views.find(v => v.id == connection.view.id)) {
