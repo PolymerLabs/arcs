@@ -607,6 +607,22 @@ Expected " ", "#", "//", "\\n", "\\r", [ ], [A-Z], or [a-z] but "?" found.
     }
   });
 
+  it('errors when the manifest references a nonexistent local name', async () => {
+    let manifest = `
+        schema S
+        particle A
+          A(in S s)
+        recipe
+          A
+            s = noSuchHandle`;
+    try {
+      await Manifest.parse(manifest);
+      assert.fail();
+    } catch (e) {
+      assert.match(e.message, /Could not find handle 'noSuchHandle'/);
+    }
+  });
+
   it('errors when the manifest references a missing consumed slot', async () => {
     let manifest = `
         particle TestParticle in 'tp.js'
