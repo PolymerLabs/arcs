@@ -519,7 +519,11 @@ ${e.message}
 
         if (connectionItem.target && connectionItem.target.name) {
           let entry = items.byName.get(connectionItem.target.name);
-          assert(entry, `could not find ${connectionItem.target.name}`);
+          if (!entry) {
+            let error = new Error(`Could not find handle '${connectionItem.target.name}'`);
+            error.location = connectionItem.location;
+            throw error;
+          }
           if (entry.item.kind == 'view') {
             targetView = entry.view;
           } else if (entry.item.kind == 'particle') {
