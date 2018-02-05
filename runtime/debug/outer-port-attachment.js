@@ -67,10 +67,10 @@ export default class OuterPortAttachment {
     this._sendMessage(this._describeHandleCall(args), args.data);
   }
 
-  _sendMessage(message, data) {
-    message.data = JSON.stringify(data);
-    message.timestamp = Date.now();
-    devtoolsChannelProvider.get().send(message);
+  _sendMessage(messageBody, data) {
+    messageBody.data = JSON.stringify(data);
+    messageBody.timestamp = Date.now();
+    devtoolsChannelProvider.get().send({messageType: 'dataflow', messageBody});
   }
 
   _describeHandleCall({operation, handle, particleId}) {

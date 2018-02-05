@@ -214,25 +214,33 @@
         };
       }
 
-      handleEvents(eventsLog) {
+      onMessages(messages) {
         let current = [];
         let filtered = [];
         let rest = new Map();
-        for (let e of eventsLog) {
-          // If user hasn't selected an arc, and this event is not from
-          // a speculative execution, select this arc.
-          if (!this.selectedArcId && e.arcId.indexOf(':') === -1) {
-            this.set('selectedArcId', e.arcId);
-          }
-          if (this.selectedArcId === e.arcId) {
-            current.push(e);
-            if (this._filter(e)) filtered.push(e);
-          } else {
-            if (rest.has(e.arcId)) {
-              rest.get(e.arcId).push(e);
-            } else {
-              rest.set(e.arcId, [e]);
-            }
+        for (let msg of messages) {
+          switch (msg.messageType) {
+            case 'dataflow':
+              let e = msg.messageBody;
+              // If user hasn't selected an arc, and this event is not from
+              // a speculative execution, select this arc.
+              if (!this.selectedArcId && e.arcId.indexOf(':') === -1) {
+                this.set('selectedArcId', e.arcId);
+              }
+              if (this.selectedArcId === e.arcId) {
+                current.push(e);
+                if (this._filter(e)) filtered.push(e);
+              } else {
+                if (rest.has(e.arcId)) {
+                  rest.get(e.arcId).push(e);
+                } else {
+                  rest.set(e.arcId, [e]);
+                }
+              }
+              break;
+            case 'page-refresh':
+              this._clear();
+              return; // page-refresh is not bundled with anything else.
           }
         }
         // Apply changes in bulk to avoid freezing page.
@@ -250,7 +258,7 @@
         }
       }
 
-      clear() {
+      _clear() {
         this.set('perArcLogs', {});
         this.set('selectedArcId', '');
       }

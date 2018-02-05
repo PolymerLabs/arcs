@@ -21,10 +21,10 @@ chrome.runtime.onConnect.addListener(function(port) {
 });
 
 // Message from the content script.
-chrome.runtime.onMessage.addListener(function(data, sender, sendResponse) {
+chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
   let tabId = sender.tab.id;
   if (tabId in connections) {
-    connections[tabId].postMessage({message: 'arcs-message', data});
+    connections[tabId].postMessage(message);
   }
   return true;
 });
@@ -35,7 +35,7 @@ chrome.webNavigation.onCommitted.addListener(function(details) {
   }
   let tabId = details.tabId;
   if (tabId in connections) {
-    connections[tabId].postMessage({message: 'page-refresh'});
+    connections[tabId].postMessage([{messageType: 'page-refresh'}]);
     chrome.tabs.sendMessage(tabId, {initDebug: true});
   }
 });

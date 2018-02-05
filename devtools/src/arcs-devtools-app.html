@@ -55,9 +55,9 @@
           <a name="dataflow" href="javascript:void(0)"><iron-icon icon="swap-horiz"></iron-icon>Dataflow</a>
           <a name="strategyExplorer" href="javascript:void();"><iron-icon icon="settings-applications"></iron-icon>Strategy Explorer</a>
         </iron-selector>
-        <arcs-debug-channel on-message="onMessage"></arcs-debug-channel>
+        <arcs-debug-channel on-messages="onMessages"></arcs-debug-channel>
       </app-drawer>
-      <iron-pages selected="[[page]]" attr-for-selected="name" role="main">
+      <iron-pages selected="[[page]]" attr-for-selected="name" role="main" id="pages">
         <arcs-inspector name="inspector"></arcs-inspector>
         <arcs-dataflow id="dataflow" name="dataflow"></arcs-dataflow>
         <arcs-strategy-explorer name="strategyExplorer"></arcs-strategy-explorer>
@@ -74,15 +74,9 @@
         this.page = 'dataflow';
       }
 
-      onMessage({detail}) {
-        switch (detail.message) {
-          case 'arcs-message':
-            this.$.dataflow.handleEvents(detail.data);
-            break;
-          case 'page-refresh':
-            this.$.dataflow.clear();
-            break;
-        }
+      onMessages({detail}) {
+        this.$.pages.childNodes.forEach(
+          page => {if (page.onMessages) page.onMessages(detail);});
       }
     }
 
