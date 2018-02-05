@@ -16,7 +16,7 @@
     "minimist": "^1.2.0",
     "mocha": "^3.2.0",
     "pegjs": "^0.10.0",
-    "polymer-cli": "^1.5.7",
+    "polymer-cli": "^1.6.0",
     "webpack": "^2.6.1"
   },
   "dependencies": {

@@ -52,7 +52,7 @@
             tabId: chrome.devtools.inspectedWindow.tabId
         });
         backgroundPageConnection.onMessage.addListener(
-          e => this._surfaceIncomingMessage(e));
+          e => this._surfaceIncomingMessages(e));
       }
 
       _connectViaWebSocket() {
@@ -63,10 +63,7 @@
         ws.onclose = e => this._updateUi('Disconnected', false);
         ws.onopen = e => {
           this._updateUi('Node JS', true);
-          ws.onmessage = message => this._surfaceIncomingMessage({
-            message: 'arcs-message',
-            data: JSON.parse(message.data)
-          });
+          ws.onmessage = msg => this._surfaceIncomingMessages(JSON.parse(msg.data));
           ws.send("init");
         };
       }
@@ -80,8 +77,8 @@
         }
       }
 
-      _surfaceIncomingMessage(e) {
-        this.dispatchEvent(new CustomEvent('message', {detail: e}));
+      _surfaceIncomingMessages(e) {
+        this.dispatchEvent(new CustomEvent('messages', {detail: e}));
       }
     }
 
