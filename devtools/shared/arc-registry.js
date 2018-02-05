@@ -10,7 +10,7 @@
 
 // Debugging is initialized either by /devtools/src/run-init-debug.js, which is
 // injected by the devtools extension content script in the browser env,
-// or used directly in when debugging nodeJS.
+// or used directly when debugging nodeJS.
 // This is why data needs to be referenced via a global object.
 
 let root = typeof window === 'object' ? window : global;

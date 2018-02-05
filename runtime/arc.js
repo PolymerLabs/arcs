@@ -69,6 +69,7 @@ class Arc {
 
     this._search = null;
     this._description = new Description(this);
+    this._debugging = false;
 
     registerArc(this);
   }
@@ -498,6 +499,7 @@ ${this.activeRecipe.toString()}`;
   }
 
   initDebug() {
+    this._debugging = true;
     this.pec.initDebug();
   }
 }
