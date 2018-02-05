@@ -6,7 +6,7 @@ Code distributed by Google as part of this project is also
 subject to an additional IP rights grant found at
 http://polymer.github.io/PATENTS.txt
 -->
-<link rel="import" href="bower_components/polymer/polymer.html">
+<link rel="import" href="../../bower_components/polymer/polymer.html">
 
 <dom-module id='se-recipe'>
   <template>
@@ -114,12 +114,12 @@ http://polymer.github.io/PATENTS.txt
 
         this.recipe.derivation.forEach(derivation => {
           if (derivation.parent !== undefined) {
-            var newParent = document.strategyExplorer.idMap.get(derivation.parent);
+            let newParent = document.strategyExplorer.idMap.get(derivation.parent);
             if (newParent == undefined) {
               return;
             }
 
-            var setupContext = (newParent => {
+            let setupContext = (newParent => {
               this.strategyMap.set(newParent, [[derivation.strategy]]);
               if (!this.parents.has(newParent)) {
                 this.parents.add(newParent);
@@ -161,8 +161,7 @@ http://polymer.github.io/PATENTS.txt
         if (document.strategyExplorer.pendingActions.has(this.recipe.id)) {
           document.strategyExplorer.pendingActions.get(this.recipe.id).forEach(action => action(this));
         }
-
-        var recipeView = document.documentElement.querySelector('strategy-explorer').shadowRoot.querySelector('se-recipe-view');
+        let recipeView = document.strategyExplorer.shadowRoot.querySelector('se-recipe-view');
         this.$['recipe-box'].addEventListener('mouseenter', e => {
           recipeView.over = this;
           recipeView.recipe = this.recipe;

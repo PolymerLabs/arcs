@@ -5,5 +5,4 @@ ROOT=$(dirname $0)/..
 npm install -g bower
 (cd $ROOT/devtools && bower install)
 (cd $ROOT/shell && npm install)
-(cd $ROOT/strategy-explorer && bower install)
 (cd $ROOT/extension && npm install)

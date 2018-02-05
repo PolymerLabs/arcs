@@ -32,6 +32,8 @@ import Speculator from './speculator.js';
 import Description from './description.js';
 import Tracing from '../tracelib/trace.js';
 
+import StrategyExplorerAdapter from './debug/strategy-explorer-adapter.js';
+
 class CreateViews extends Strategy {
   // TODO: move generation to use an async generator.
   async generate(strategizer) {
@@ -131,6 +133,7 @@ class Planner {
   }
 
   async suggest(timeout, generations) {
+    if (!generations && this._arc._debugging) generations = [];
     let trace = Tracing.async({cat: 'planning', name: 'Planner::suggest', args: {timeout}});
     let plans = await trace.wait(() => this.plan(timeout, generations));
     trace.resume();
@@ -186,6 +189,11 @@ class Planner {
       });
     }
     trace.end();
+
+    if (this._arc._debugging) {
+      StrategyExplorerAdapter.processGenerations(generations);
+    }
+
     return results;
   }
   _updateGeneration(generations, hash, handler) {

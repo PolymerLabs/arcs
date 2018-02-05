@@ -3,7 +3,7 @@
   "description": "DevTools Extension for Arcs",
   "main": "src/index.html",
   "dependencies": {
-    "polymer": "Polymer/polymer#^2.0.0",
+    "polymer": "Polymer/polymer#^2.0.1",
     "app-layout": "^2.0.4",
     "iron-selector": "^2.0.1",
     "iron-pages": "^2.0.1",
@@ -12,6 +12,7 @@
     "paper-dropdown-menu": "^2.0.1",
     "paper-item": "^2.0.0",
     "paper-listbox": "^2.0.0",
-    "web-animations-js": "^2.3.1"
+    "web-animations-js": "^2.3.1",
+    "jsdiff": "^3.2.0"
   }
 }

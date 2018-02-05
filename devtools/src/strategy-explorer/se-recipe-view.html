@@ -6,8 +6,8 @@ Code distributed by Google as part of this project is also
 subject to an additional IP rights grant found at
 http://polymer.github.io/PATENTS.txt
 -->
-<link rel="import" href="bower_components/polymer/polymer.html">
-<script src="bower_components/jsdiff/diff.min.js"></script>
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+<script src="../../bower_components/jsdiff/diff.min.js"></script>
 
 <dom-module id='se-recipe-view'>
   <template>
@@ -71,12 +71,11 @@ http://polymer.github.io/PATENTS.txt
             this.strategyString = '';
             return;
           }
-          var left = recipe.result.replace(/</g, "&lt;");
-          var right = this.pinnedResult.replace(/</g, "&lt;");
-          if (this.over.strategyMap.has(this.to))
-            var diff = JsDiff.diffWords(right, left);
-          else
-            var diff = JsDiff.diffWords(left, right);
+          let left = recipe.result.replace(/</g, "&lt;");
+          let right = this.pinnedResult.replace(/</g, "&lt;");
+          let diff = this.over.strategyMap.has(this.to)
+              ? JsDiff.diffWords(right, left)
+              : JsDiff.diffWords(left, right);
           diff = diff.map(entry => {
             if (entry.added)
               return `<span class='added'>${entry.value}</span>`;
@@ -85,7 +84,7 @@ http://polymer.github.io/PATENTS.txt
             return entry.value;
           });
           this.set("shownRecipe.result", diff.join(""));
-          var strategies = this.to.strategyMap.get(this.over) || this.over.strategyMap.get(this.to);
+          let strategies = this.to.strategyMap.get(this.over) || this.over.strategyMap.get(this.to);
           if (strategies)
             this.strategyString = "Strategies: [" + strategies.join(']\n[') + "]\n";
           else

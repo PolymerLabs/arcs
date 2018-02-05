@@ -1,7 +1,0 @@
-{
-  "name": "strategy-explorer",
-  "dependencies": {
-    "polymer": "^2.0.1",
-    "jsdiff": "^3.2.0"
-  }
-}
