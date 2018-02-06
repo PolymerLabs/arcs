@@ -626,9 +626,14 @@ ${e.message}
     view.description = item.description;
     // TODO: How to set the version?
     // view.version = item.version;
-    let source = loader.join(manifest.fileName, item.source);
-    // TODO: json5?
-    let json = await loader.loadResource(source);
+    let json;
+    if (item.origin == 'file') {
+      let source = loader.join(manifest.fileName, item.source);
+      // TODO: json5?
+      json = await loader.loadResource(source);
+    } else if (item.origin == 'resource') {
+      json = manifest.resources[item.source];
+    }
     let entities = JSON.parse(json);
     for (let entity of entities) {
       let id = entity.$id || manifest.generateID();

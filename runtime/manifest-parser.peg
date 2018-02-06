@@ -10,6 +10,7 @@
 
 {
   var indent = '';
+  var startIndent = '';
   var indents = [];
   var deprecatedCommentWarningShown = false;
   function extractIndented(items) {
@@ -76,7 +77,7 @@ ManifestItem
 
 Annotation = '@' annotation:lowerIdent { return annotation; }
 
-Resource = 'resource' whiteSpace name:TopLevelIdent eolWhiteSpace Indent SameIndent 'start' eolWhiteSpace body:ResourceBody {
+Resource = 'resource' whiteSpace name:TopLevelIdent eolWhiteSpace Indent SameIndent ResourceStart body:ResourceBody eolWhiteSpace? {
   return {
     kind: 'resource',
     name,
@@ -85,8 +86,10 @@ Resource = 'resource' whiteSpace name:TopLevelIdent eolWhiteSpace Indent SameInd
   };
 }
 
-ResourceBody = lines:(SameIndent ResourceLine)+ {
-  return lines.map(line => line[1]).join('');
+ResourceStart = 'start' eolWhiteSpace { startIndent = indent; }
+
+ResourceBody = lines:(SameOrMoreIndent ResourceLine)+ {
+  return lines.map(line => line[0].substring(startIndent.length) + line[1]).join('');
 }
 
 ResourceLine = [^\n]* eol { return text(); }
@@ -825,7 +828,7 @@ SameOrMoreIndent = &(i:" "* &{
     indent = indents.pop();
     return false;
   }
-}) " "*
+}) " "* { return text(); }
 
 TopLevelIdent
   = upperIdent
