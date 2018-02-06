@@ -85,20 +85,6 @@ recipe
       });
     }
 
-    _willReceiveProps(props) {
-      let newItems = TransformationDomParticle.propsToItems(props.list);
-      // Join with existing items in particle's state.
-      if (this._state.renderModel && this._state.renderModel.items) {
-        newItems.forEach(newItem => {
-          let item = this._state.renderModel.items.find(item => item.subId == newItem.subId);
-          if (!!item) {
-            return Object.assign(newItem, item);
-          }
-        });
-      }
-      this._setState({renderModel: {items: newItems}});
-    }
-
     combineHostedModel(slotName, hostedSlotId, content) {
       let subId = this._itemSubIdByHostedSlotId.get(hostedSlotId);
       if (!subId) {
@@ -106,10 +92,11 @@ recipe
       }
       let items = this._state.renderModel ? this._state.renderModel.items : [];
       let listIndex = items.findIndex(item => item.subId == subId);
+      let item = Object.assign({}, content.model, {subId});
       if (listIndex >= 0 && listIndex < items.length) {
-        items[listIndex] = Object.assign({}, content.model, items[listIndex]);
+        items[listIndex] = item;
       } else {
-        items.push(Object.assign({}, content.model, {subId}));
+        items.push(item);
       }
       this._setState({renderModel: {items}});
     }
