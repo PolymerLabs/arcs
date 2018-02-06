@@ -72,8 +72,23 @@ ManifestItem
   / ManifestStorage
   / Shape
   / Meta
+  / Resource
 
-Annotation = '@' annotation: lowerIdent { return annotation; }
+Annotation = '@' annotation:lowerIdent { return annotation; }
+
+Resource = 'resource' whiteSpace name:TopLevelIdent whiteSpace? eol Indent SameIndent 'start' whiteSpace? eol body:ResourceBody {
+  return {
+    kind: 'resource',
+    name,
+    data: body
+  };
+}
+
+ResourceBody = lines:(SameIndent ResourceLine)+ {
+  return lines.map(line => line[1]).join('');
+}
+
+ResourceLine = [^\n]* eol { return text(); }
 
 // TODO: Entity syntax.
 ManifestStorage
@@ -827,6 +842,8 @@ eolWhiteSpace
   = [ ]* !.
   / [ ]* "\r"? "\n" "\r"? eolWhiteSpace?
   / comment
+eol
+  = "\r"? "\n" "\r"?
 comment
   = [ ]* marker:('#' / '//') [^\n]* eolWhiteSpace
   {

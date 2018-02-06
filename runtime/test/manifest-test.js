@@ -715,6 +715,15 @@ Expected " ", "#", "//", "\\n", "\\r", [ ], [A-Z], or [a-z] but "?" found.
     verify(manifest);
     verify(await Manifest.parse(manifest.toString(), {loader}));
   });
+  it('can parse a manifest containing resources', async () => {
+    let manifest = await Manifest.parse(`
+resource SomeName
+ start
+ {'foo': 'bar'}
+ hello
+`, {});
+    assert.deepEqual(manifest.resources['SomeName'], `{'foo': 'bar'}\nhello\n`);
+  });
   it('can parse a manifest containing incomplete shapes', async () => {
     let manifest = await Manifest.parse(`
       schema Foo
