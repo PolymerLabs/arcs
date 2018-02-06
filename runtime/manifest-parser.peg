@@ -25,7 +25,7 @@
     return defaultValue == null ? null : defaultValue;
   }
   function checkNormal(result) {
-    if (['string', 'number', 'boolean', 'object'].includes(typeof result) || result === null) {
+    if (['string', 'number', 'boolean'].includes(typeof result) || result === null) {
       return;
     }
     if (result === undefined) {
@@ -80,7 +80,8 @@ Resource = 'resource' whiteSpace name:TopLevelIdent eolWhiteSpace Indent SameInd
   return {
     kind: 'resource',
     name,
-    data: body
+    data: body,
+    location: location()
   };
 }
 
@@ -106,7 +107,7 @@ ManifestStorage
       version: optional(version, version => version[1], null),
       tags: optional(tags, tags => tags[1], null),
       source: source.source,
-      location: source.location,
+      dataLocation: source.location,
       description: items.length > 0 ? items[0][2] : null
     };
   }
@@ -203,12 +204,12 @@ Meta
   = 'meta' eolWhiteSpace items:(Indent (SameIndent MetaItem)*)? eolWhiteSpace?
 {
   items = items ? extractIndented(items): [];
-  return { kind: 'meta', items: items}
+  return {kind: 'meta', items: items, location: location()};
 }
 
 MetaItem = MetaStorageKey / MetaName
 
-MetaName = 'name' whiteSpace? ':' whiteSpace? name:id { return { key: 'name', value: name } }
+MetaName = 'name' whiteSpace? ':' whiteSpace? name:id { return { key: 'name', value: name, location: location(), kind: 'name' } }
 
 MetaStorageKey = 'storageKey' whiteSpace? ':' whiteSpace? key:id { return {key: 'storageKey', value: key}};
 
@@ -840,7 +841,7 @@ whiteSpace
   = " "+
 eolWhiteSpace
   = [ ]* !.
-  / [ ]* "\r"? "\n" "\r"? eolWhiteSpace?
+  / [ ]* eol eolWhiteSpace?
   / comment
 eol
   = "\r"? "\n" "\r"?
