@@ -93,7 +93,7 @@ ResourceLine = [^\n]* eol { return text(); }
 
 // TODO: Entity syntax.
 ManifestStorage
-  = 'view' whiteSpace name:TopLevelIdent whiteSpace 'of' whiteSpace type:(SchemaInline / ListType / ReferenceType) id:(whiteSpace id)?
+  = ('view' / 'store') whiteSpace name:TopLevelIdent whiteSpace 'of' whiteSpace type:(SchemaInline / ListType / ReferenceType) id:(whiteSpace id)?
     version:(whiteSpace Version)? tags:(whiteSpace TagList)? whiteSpace source:ManifestStorageSource eolWhiteSpace
     items:(Indent (SameIndent ManifestStorageItem)+)?
   {
@@ -107,19 +107,22 @@ ManifestStorage
       version: optional(version, version => version[1], null),
       tags: optional(tags, tags => tags[1], null),
       source: source.source,
-      dataLocation: source.location,
+      origin: source.origin,
       description: items.length > 0 ? items[0][2] : null
     };
   }
 
 ManifestStorageSource
-  = ManifestStorageFileSource / ManifestStorageStorageSource
+  = ManifestStorageFileSource / ManifestStorageResourceSource / ManifestStorageStorageSource
 
 ManifestStorageFileSource
-  = 'in' whiteSpace source:id { return {location: 'file', source }; }
+  = 'in' whiteSpace source:id { return {origin: 'file', source }; }
+
+ManifestStorageResourceSource
+  = 'in' whiteSpace source:TopLevelIdent { return {origin: 'resource', source }; }
 
 ManifestStorageStorageSource
-  = 'at' whiteSpace source:id { return {location: 'storage', source }; }
+  = 'at' whiteSpace source:id { return {origin: 'storage', source }; }
 
 ManifestStorageItem
   = ManifestStorageDescription
