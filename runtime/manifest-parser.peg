@@ -76,7 +76,7 @@ ManifestItem
 
 Annotation = '@' annotation:lowerIdent { return annotation; }
 
-Resource = 'resource' whiteSpace name:TopLevelIdent whiteSpace? eol Indent SameIndent 'start' whiteSpace? eol body:ResourceBody {
+Resource = 'resource' whiteSpace name:TopLevelIdent eolWhiteSpace Indent SameIndent 'start' eolWhiteSpace body:ResourceBody {
   return {
     kind: 'resource',
     name,
