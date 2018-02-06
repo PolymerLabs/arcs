@@ -529,7 +529,31 @@ describe('manifest', function() {
       }
     ]);
   });
+  it('loads entities from a resource section', async () => {
+    let manifest = await Manifest.parse(`
+      schema Thing
 
+      resource EntityList
+        start
+        [
+          {"someProp": "someValue"},
+          {"$id": "entity-id", "someProp": "someValue2"}
+        ]
+      
+      view View0 of [Thing] in EntityList
+    `, {fileName: 'the.manifest'});
+    let view = manifest.findViewByName('View0');
+    assert(view);
+    assert.deepEqual(await view.toList(), [
+      {
+        id: 'manifest:the.manifest::0',
+        rawData: {someProp: 'someValue'},
+      }, {
+        id: 'entity-id',
+        rawData: {someProp: 'someValue2'},
+      }
+    ]);
+  });
   it('resolves view names to ids', async () => {
     let manifestSource = `
         schema Thing
@@ -718,9 +742,9 @@ Expected " ", "#", "//", "\\n", "\\r", [ ], [A-Z], or [a-z] but "?" found.
   it('can parse a manifest containing resources', async () => {
     let manifest = await Manifest.parse(`
 resource SomeName
- start
- {'foo': 'bar'}
- hello
+  start
+  {'foo': 'bar'}
+  hello
 `, {});
     assert.deepEqual(manifest.resources['SomeName'], `{'foo': 'bar'}\nhello\n`);
   });
