@@ -37,6 +37,7 @@ class Manifest {
     this._storageProviderFactory = undefined;
     this._scheduler = scheduler;
     this._meta = new ManifestMeta();
+    this._resources = {};
   }
   get id() {
     if (this._meta.name)
@@ -74,13 +75,14 @@ class Manifest {
   get scheduler() {
     return this._scheduler;
   }
-
   get shapes() {
     return this._shapes;
   }
-
   get meta() {
     return this._meta;
+  }
+  get resources() {
+    return this._resources;
   }
 
   applyMeta(section) {
@@ -241,6 +243,11 @@ ${e.message}
       for (let meta of items.filter(item => item.kind == 'meta')) {
         manifest.applyMeta(meta.items);
       }
+      // similarly, resources may be referenced from other parts of the
+      // manifest.
+      for (let item of items.filter(item => item.kind == 'resource')) {
+        this._processResource(manifest, item);
+      }
       for (let item of items.filter(item => item.kind == 'schema')) {
         this._processSchema(manifest, item);
       }
@@ -280,6 +287,9 @@ ${e.message}
         };
       }),
     });
+  }
+  static _processResource(manifest, schemaItem) {
+    manifest._resources[schemaItem.name] = schemaItem.data;
   }
   static _processParticle(manifest, particleItem, loader) {
     // TODO: we should require both of these and update failing tests...
