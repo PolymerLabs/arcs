@@ -150,7 +150,7 @@ class Manifest {
       let primitiveType = type.isSetView ? type.primitiveType() : type;
       if (primitiveType.isVariable) {
         if (!primitiveType.data.isResolved) {
-          return true;
+          return type.isSetView == view.type.isSetView;
         }
         resolvedType = type.isSetView ? primitiveType.data.resolution.setViewOf() : primitiveType.data.resolution;
       }

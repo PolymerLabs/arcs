@@ -48,8 +48,8 @@ http://polymer.github.io/PATENTS.txt
     addExtraPredecessor(parent, hash) {
       let extras = [];
       if (parent && !this.parentMap.has(parent)) {
-        parent.derivation.forEach(d => extras = extras.concat(this.addExtraPredecessor(d.parent, hash)));
         this.parentMap.set(parent, this.lastID);
+        parent.derivation.forEach(d => extras = extras.concat(this.addExtraPredecessor(d.parent, hash)));
         extras.push({ result: parent.result,
                       score: parent.score,
                       derivation: parent.derivation,
