@@ -7,17 +7,15 @@
 // http://polymer.github.io/PATENTS.txt
 
 import '../../entities/Description.manifest'
-import '../../entities/Product.manifest'
 
 // TODO: fix "consume" unnamed slot in the shape requiring a trailing whitespace.
 shape HostedParticleShape
-  HostedParticleShape(in ~a) // name should be optional
-  consume 
+  HostedParticleShape(in ~a)
+  consume
   provide annotation
 
 particle ShowCollection in 'ShowCollection.js'
-  // TODO: change to in [~a] collection
-  ShowCollection(in [Product] collection, host HostedParticleShape hostedParticle)
+  ShowCollection(in [~a] collection, host HostedParticleShape hostedParticle, out [Description] descriptions)
   affordance dom
   affordance dom-touch
   consume root

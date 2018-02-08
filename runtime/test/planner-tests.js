@@ -790,6 +790,156 @@ describe('FallbackFate', function() {
   });
 });
 
+describe('Type variable resolution', function() {
+  let loadAndPlan = async(manifestStr) => {
+    let loader = {
+      join: (() => { return ''; }),
+      loadResource: (() => { return '[]'; })
+    };
+    let manifest = (await Manifest.parse(manifestStr, {loader}));
+
+    let arc = createTestArc('test-plan-arc', manifest, 'dom');
+    let planner = new Planner();
+    planner.init(arc);
+    return planner.plan(1000);
+  }
+  let verifyResolvedPlan = async (manifestStr) => {
+    let plans = await loadAndPlan(manifestStr);
+    assert.equal(1, plans.length);
+
+    let recipe = plans[0];
+    recipe.normalize();
+    assert.isTrue(recipe.isResolved());
+  };
+
+  let verifyUnresolvedPlan = async (manifestStr) => {
+    let plans = await loadAndPlan(manifestStr);
+    assert.equal(0, plans.length);
+  }
+  it('unresolved type variables', async () => {
+    // [~a] doesn't resolve from Thing.
+    verifyUnresolvedPlan(`
+      schema Thing
+      particle P
+        P(in ~a thing)
+      recipe
+        map #mythings as mythings
+        P
+          thing <- mythings
+      view MyThings of [Thing] #mythings in 'things.json'`);
+
+    verifyUnresolvedPlan(`
+      schema Thing
+      particle P
+        P(in [~a] things)
+      recipe
+        map #mything as mything
+        P
+          things <- mything
+      view MyThing of Thing #mything in 'thing.json'`);
+  });
+
+  it('simple particles type variable resolution', async () => {
+    verifyResolvedPlan(`
+      schema Thing1
+      particle P1
+        P1(in [Thing1] things)
+      particle P2
+        P2(in [~a] things)
+      recipe
+        map #mythings as mythings
+        P1
+          things <- mythings
+        P2
+          things <- mythings
+      view MyThings of [Thing1] #mythings in 'things.json'`);
+
+    verifyResolvedPlan(`
+      schema Thing1
+      schema Thing2
+      particle P2
+        P2(in [~a] things)
+      recipe
+        map #mythings1 as mythings1
+        map #mythings2 as mythings2
+        P2
+          things <- mythings1
+        P2
+          things <- mythings2
+      view MyThings1 of [Thing1] #mythings1 in 'things1.json'
+      view MyThings2 of [Thing2] #mythings2 in 'things2.json'`);
+
+    verifyResolvedPlan(`
+      schema Thing1
+      schema Thing2
+      particle P2
+        P2(in [~a] things, in [Thing2] things2)
+      recipe
+        map #mythings1 as mythings1
+        map #mythings2 as mythings2
+        P2
+          things <- mythings1
+          things2 <- mythings2
+      view MyThings1 of [Thing1] #mythings1 in 'things1.json'
+      view MyThings2 of [Thing2] #mythings2 in 'things2.json'`);
+  });
+
+  it('transformation particles type variable resolution', async () => {
+    let particleSpecs = `
+shape HostedShape
+  HostedShape(in ~a)
+particle P1
+  P1(in ~a input)
+particle Muxer in 'Muxer.js'
+  Muxer(host HostedShape hostedParticle, in [~a] list)`;
+
+    // One transformation particle
+    verifyResolvedPlan(`
+${particleSpecs}
+recipe
+  map #mythings as mythings
+  Muxer
+    hostedParticle = P1
+    list <- mythings
+schema Thing1
+view MyThings of [Thing1] #mythings in 'things.json'`);
+
+    // Two transformation particles hosting the same particle with same type storage.
+    verifyResolvedPlan(`
+${particleSpecs}
+recipe
+  map #mythings1 as mythings1
+  map #mythings2 as mythings2
+  Muxer
+    hostedParticle = P1
+    list <- mythings1
+  Muxer
+    hostedParticle = P1
+    list <- mythings2
+schema Thing1
+view MyThings1 of [Thing1] #mythings1 in 'things.json'
+view MyThings2 of [Thing1] #mythings2 in 'things.json'`);
+
+    // Two transformation particle hosting the same particle with different type storage.
+    verifyResolvedPlan(`
+${particleSpecs}
+particle P2
+  P2(in [~a] inthings)
+recipe
+  map #mythings1 as mythings1
+  map #mythings2 as mythings2
+  Muxer
+    hostedParticle = P1
+    list <- mythings1
+  Muxer
+    hostedParticle = P1
+    list <- mythings2
+schema Thing1
+view MyThings1 of [Thing1] #mythings1 in 'things.json'
+schema Thing2
+view MyThings2 of [Thing2] #mythings2 in 'things.json'`);
+  });
+});
 
 describe('CreateDescriptionHandle', function() {
   it('descriptions handle created', async () => {

@@ -26,6 +26,7 @@ recipe
 recipe
   Chooser.choices -> Recommend.recommendations
   //Chooser.resultList -> ManageProducts.list
+  //Chooser.resultList -> ShowCollection.collection
   Chooser.resultList -> ShowProducts.list
   Chooser.resultList -> Recommend.known
   Chooser.resultList -> ProductMultiplexer2.list
@@ -35,6 +36,10 @@ recipe
   slot as slot0
   Recommend
     population <- wishlist
+  // TODO: switch demo to use ShowCollection(ShowProduct) instead of ShowProducts particle.
+  // ShowCollection
+  //   collection <- shortlist
+  //   hostedParticle = ShowProduct
   ShowProducts
     list <- shortlist
   //ManageProducts

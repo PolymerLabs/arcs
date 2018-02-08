@@ -7,7 +7,6 @@
 // http://polymer.github.io/PATENTS.txt
 
 import '../../entities/Description.manifest'
-import '../../entities/Product.manifest'
 
 // TODO: Make this particle generic
 // ShowItems(in [~a] list, out [Description] descriptions)

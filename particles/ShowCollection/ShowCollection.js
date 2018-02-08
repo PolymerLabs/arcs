@@ -67,6 +67,7 @@ defineParticle(({TransformationDomParticle, resolver}) => {
   return class extends TransformationDomParticle {
     get template() { return template; }
     async setViews(views) {
+      this._views = views;
       this._template = null;
       let arc = await this.constructInnerArc();
 
@@ -125,6 +126,22 @@ defineParticle(({TransformationDomParticle, resolver}) => {
           hasItems: items.length > 0
         }
       });
+
+      // This is for description capabilities demo purposes.
+      // this._setDynamicDescription(items);
+      this._setDynamicDomDescription(items);
+    }
+
+    _setDynamicDomDescription(items) {
+      let template = `
+          <span>Show <u><span>{{collection}}</span></u><span hidden="{{actionEmpty}}"> and <i><span style='color:blue'>{{action}}</span></i></span></span>
+          `.trim();
+      let model = {
+        collection: '${collection}',
+        action: '${root.action}',
+        actionEmpty: '${root.action}._empty_'
+      };
+      this.setParticleDescription({template, model});
     }
 
     combineHostedTemplate(slotName, hostedSlotId, content) {
