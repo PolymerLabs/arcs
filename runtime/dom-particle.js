@@ -12,17 +12,10 @@
 import assert from '../platform/assert-web.js';
 import {
   Particle,
-  ViewChanges,
-  //StateChanges,
-  //SlotChanges
+  ViewChanges
 } from './particle.js';
 
 import XenStateMixin from './browser/lib/xen-state.js';
-
-//let log = !global.document || (global.logging === false) ? () => {} : console.log.bind(console, `---------- DomParticle::`);
-//console.log(!!global.document, global.logging, log);
-
-let log = false ? console.log.bind(console) : () => {};
 
 /** @class DomParticle
  * Particle that does stuff with DOM.
@@ -126,25 +119,13 @@ class DomParticle extends XenStateMixin(Particle) {
       slot.render({});
     }
   }
-  _initializeRender(slot) {
-    let template = this.getTemplate(slot.slotName);
-    this._findHandlerNames(template).forEach(name => {
-      slot.clearEventHandlers(name);
-      slot.registerEventHandler(name, eventlet => {
-        if (this[name]) {
-          this[name](eventlet, this._state, this._views);
-        }
-      });
-    });
-    return template;
-  }
-  _findHandlerNames(html) {
-    let handlers = new Map();
-    let re = /on-.*?=\"([^\"]*)"/gmi;
-    for (let m=re.exec(html); m; m=re.exec(html)) {
-      handlers.set(m[1], true);
+  fireEvent(slotName, {handler, data}) {
+    if (this[handler]) {
+      this[handler]({data});
     }
-    return Array.from(handlers.keys());
+  }
+  _initializeRender(slot) {
+    return this.getTemplate(slot.slotName);
   }
   setParticleDescription(pattern) {
     if (typeof pattern === 'string') {
