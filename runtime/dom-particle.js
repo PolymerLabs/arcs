@@ -108,7 +108,7 @@ class DomParticle extends XenStateMixin(Particle) {
     if (this._shouldRender(this._props, this._state)) {
       let content = {};
       if (slot._requestedContentTypes.has('template')) {
-        content['template'] = this._initializeRender(slot);
+        content['template'] = this.getTemplate(slot.slotName);
       }
       if (slot._requestedContentTypes.has('model')) {
         content['model'] = this._render(this._props, this._state);
@@ -121,11 +121,8 @@ class DomParticle extends XenStateMixin(Particle) {
   }
   fireEvent(slotName, {handler, data}) {
     if (this[handler]) {
-      this[handler]({data});
+      this[handler]({data}, this._state);
     }
-  }
-  _initializeRender(slot) {
-    return this.getTemplate(slot.slotName);
   }
   setParticleDescription(pattern) {
     if (typeof pattern === 'string') {
