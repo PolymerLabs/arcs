@@ -1,0 +1,162 @@
+<link rel="import" href="../bower_components/polymer/polymer-element.html">
+<link rel="import" href="arcs-shared.html">
+
+<script src="../bower_components/vis/dist/vis-network.min.js"></script>
+
+<dom-module id="arcs-overview">
+  <template>
+    <style include="shared-styles">
+      :host {
+        display: block;
+        padding: 0;
+        height: -webkit-fill-available;
+        position: relative;
+      }
+      .legend {
+        position: absolute;
+        border: solid var(--dark-gray);
+        border-width: 1px 0 0 1px;
+        padding: 5px;
+        bottom: 0;
+        right: 0;
+      }
+      .legend span[node] {
+        width: 9px;
+        height: 9px;
+        display: inline-block;
+        border: 1px solid var(--dark-gray);
+        border-radius: 3px;
+      }
+      .legend span[edge] {
+        width: 10px;
+        height: 2px;
+        display: inline-block;
+        vertical-align: middle;
+      }
+    </style>
+    <div class="legend">
+      <div><span node style="background: var(--highlight-blue)"></span> Particle</div>
+      <div><span node style="background: var(--light-gray)"></span> Handle</div>
+      <div><span edge style="background: var(--dark-green)"></span> Read</div>
+      <div><span edge style="background: var(--dark-red)"></span> Write</div>
+      <div><span edge style="background: var(--highlight-blue)"></span> Read-Write</div>
+    </div>
+    <div id="graph"></div>
+  </template>
+  <script>
+    class ArcsOverview extends Polymer.Element {
+      static get is() { return 'arcs-overview'; }
+
+      constructor() {
+        super();
+        this._particles = new Map();
+        this._handles = new Map();
+        this._operations = new Map();
+      }
+
+      ready() {
+        super.ready();
+        new ResizeObserver(rects => {
+          let {height, width} = rects[0].contentRect;
+          this.$.graph.style.width = `${width}px`;
+          this.$.graph.style.height = `${height}px`;
+        }).observe(this);
+      }
+
+      onMessages(messages) {
+        let needsRedraw = false;
+        for (let msg of messages) {
+          switch (msg.messageType) {
+            case 'dataflow':
+              let e = msg.messageBody;
+
+              // Skip speculative stuff for now.
+              if (e.arcId.indexOf(':') !== -1) continue;
+
+              if (!this._particles.has(e.particle.id)) {
+                this._particles.set(e.particle.id, {
+                  id: e.particle.id,
+                  label: e.particle.name,
+                  color: this._cssVar('--highlight-blue'),
+                  font: {color: 'white'}
+                });
+                needsRedraw = true;
+              }
+
+              if (!this._handles.has(e.handle.id)) {
+                this._handles.set(e.handle.id, {
+                  id: e.handle.id,
+                  label: `${e.handle.name || ''} ${e.handle.type}`,
+                  color: this._cssVar('--light-gray')
+                });
+                needsRedraw = true;
+              }
+
+              let edgeId = `${e.particle.id}¯\_(ツ)_/¯${e.handle.id}`;
+              let edge = this._operations.get(edgeId);
+              let direction = writeOps.includes(e.operation) ? 'to' : 'from';
+
+              if (!edge) {
+                edge = {
+                  from: e.particle.id,
+                  to: e.handle.id,
+                  _directions: new Set([direction])
+                };
+                this._operations.set(edgeId, edge);
+                needsRedraw = true;
+              } else if (!edge._directions.has(direction)) {
+                edge._directions.add(direction);
+                needsRedraw = true;
+              }
+
+              edge.arrows = Array.from(edge._directions.values()).join(', ');
+              edge.color = {
+                color: edge._directions.size === 1
+                  ? (edge._directions.has('to')
+                      ? this._cssVar('--dark-red')
+                      : this._cssVar('--dark-green'))
+                  : this._cssVar('--highlight-blue')
+              };
+
+              break;
+            case 'page-refresh':
+              this._clear();
+              return; // page-refresh is not bundled with anything else.
+          }
+        }
+
+        if (needsRedraw) this._redraw();
+      }
+
+      _redraw() {
+        let nodes = [...this._particles.values(), ...this._handles.values()];
+        let edges = [...this._operations.values()];
+        if (this.graph) {
+          this.graph.setData({nodes, edges});
+        } else {
+          this.graph = new vis.Network(this.$.graph, {nodes, edges}, {
+            autoResize: true,
+            height: '100%',
+            width: '100%',
+            nodes: {
+              shape: 'box'
+            }
+          });
+        }
+      }
+
+      _clear() {
+        this._particles.clear();
+        this._handles.clear();
+        this._operations.clear();
+        this._redraw();
+      }
+
+      _cssVar(name) {
+        return getComputedStyle(this).getPropertyValue(name);
+      }
+    }
+
+    window.customElements.define(ArcsOverview.is, ArcsOverview);
+  </script>
+</dom-module>

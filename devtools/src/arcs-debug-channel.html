@@ -1,12 +1,13 @@
 <link rel="import" href="../bower_components/polymer/polymer-element.html">
+<link rel="import" href="arcs-shared.html">
 
 <dom-module id="arcs-debug-channel">
   <template>
-    <style>
+    <style include="shared-styles">
       :host {
         display: block;
         padding: 10px;
-        border-top: 1px solid #888;
+        border-top: 1px solid var(--dark-gray);
       }
       #connectionIndicator {
         width: 10px;

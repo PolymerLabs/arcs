@@ -1,7 +1,7 @@
 <link rel="import" href="../bower_components/vaadin-grid/vaadin-grid.html">
 <link rel="import" href="../bower_components/vaadin-grid/vaadin-grid-sorter.html">
 <link rel="import" href="../bower_components/polymer/polymer-element.html">
-<link rel="import" href="shared-styles.html">
+<link rel="import" href="arcs-shared.html">
 
 <dom-module id="arcs-dataflow">
   <template>
@@ -34,7 +34,7 @@
       }
       label {
         font-size: 9px;
-        color: #888;
+        color: var(--dark-gray);
       }
       paper-listbox {
         width: 220px;
@@ -60,7 +60,7 @@
         font-family: Courier, monospace;
       }
       .op-write {
-        color: #b71c1c;
+        color: var(--dark-red);
         font-weight: bold;
       }
     </style>
@@ -163,7 +163,6 @@
 
     </vaadin-grid>
   </template>
-
   <script>
     class ArcsDataflow extends Polymer.Element {
       static get is() { return 'arcs-dataflow'; }
@@ -317,7 +316,7 @@
       }
 
       _operationCssClass(operation) {
-        return ['set', 'store', 'clear', 'remove'].indexOf(operation) > -1 ? 'op-write' : 'op-read';
+        return writeOps.indexOf(operation) > -1 ? 'op-write' : 'op-read';
       }
 
       // Compare the segment before the first ':' lexicographically,
