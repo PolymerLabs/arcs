@@ -272,7 +272,7 @@ class PECOuterPort extends APIPort {
     this.registerHandler('HandleSet', {handle: this.Mapped, data: this.Direct, particleId: this.Direct});
     this.registerHandler('HandleStore', {handle: this.Mapped, data: this.Direct, particleId: this.Direct});
     this.registerHandler('HandleRemove', {handle: this.Mapped, data: this.Direct});
-    this.registerHandler('HandleClear', {handle: this.Mapped});
+    this.registerHandler('HandleClear', {handle: this.Mapped, particleId: this.Direct});
     this.registerHandler('Idle', {version: this.Direct, relevance: this.Map(this.Mapped, this.Direct)});
 
     this.registerHandler('ConstructInnerArc', {callback: this.Direct, particle: this.Mapped});
@@ -320,7 +320,7 @@ class PECInnerPort extends APIPort {
     this.registerCall('HandleSet', {handle: this.Mapped, data: this.Direct, particleId: this.Direct});
     this.registerCall('HandleStore', {handle: this.Mapped, data: this.Direct, particleId: this.Direct});
     this.registerCall('HandleRemove', {handle: this.Mapped, data: this.Direct});
-    this.registerCall('HandleClear', {handle: this.Mapped});
+    this.registerCall('HandleClear', {handle: this.Mapped, particleId: this.Direct});
     this.registerCall('Idle', {version: this.Direct, relevance: this.Map(this.Mapped, this.Direct)});
 
     this.registerCall('ConstructInnerArc', {callback: this.LocalMapped, particle: this.Mapped});
