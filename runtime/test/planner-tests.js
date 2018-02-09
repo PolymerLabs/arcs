@@ -791,7 +791,7 @@ describe('FallbackFate', function() {
 });
 
 describe('Type variable resolution', function() {
-  let loadAndPlan = async(manifestStr) => {
+  let loadAndPlan = async (manifestStr) => {
     let loader = {
       join: (() => { return ''; }),
       loadResource: (() => { return '[]'; })
@@ -802,7 +802,7 @@ describe('Type variable resolution', function() {
     let planner = new Planner();
     planner.init(arc);
     return planner.plan(1000);
-  }
+  };
   let verifyResolvedPlan = async (manifestStr) => {
     let plans = await loadAndPlan(manifestStr);
     assert.equal(1, plans.length);
@@ -815,7 +815,7 @@ describe('Type variable resolution', function() {
   let verifyUnresolvedPlan = async (manifestStr) => {
     let plans = await loadAndPlan(manifestStr);
     assert.equal(0, plans.length);
-  }
+  };
   it('unresolved type variables', async () => {
     // [~a] doesn't resolve from Thing.
     verifyUnresolvedPlan(`
