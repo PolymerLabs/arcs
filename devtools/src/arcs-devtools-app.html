@@ -1,6 +1,7 @@
 <link rel="import" href="../bower_components/app-layout/app-drawer/app-drawer.html">
 <link rel="import" href="../bower_components/app-layout/app-drawer-layout/app-drawer-layout.html">
 <link rel="import" href="../bower_components/iron-icons/iron-icons.html">
+<link rel="import" href="../bower_components/iron-icons/social-icons.html">
 <link rel="import" href="../bower_components/iron-pages/iron-pages.html">
 <link rel="import" href="../bower_components/iron-selector/iron-selector.html">
 <link rel="import" href="../bower_components/neon-animation/web-animations.html">
@@ -10,24 +11,29 @@
 <link rel="import" href="../bower_components/polymer/polymer-element.html">
 
 <link rel="import" href="arcs-debug-channel.html">
-<link rel="import" href="arcs-inspector.html">
+<link rel="import" href="arcs-overview.html">
 <link rel="import" href="arcs-dataflow.html">
+<link rel="import" href="arcs-shared.html">
 <link rel="import" href="strategy-explorer/strategy-explorer.html">
 
 <dom-module id="arcs-devtools-app">
   <template>
-    <style>
+    <style include="shared-styles">
       :host {
         --app-drawer-width: 200px;
         --app-drawer-content-container: {
-          background-color: #f3f3f3;
-          border-right: 1px solid #888;
+          background-color: var(--light-gray);
+          border-right: 1px solid var(--dark-gray);
           box-sizing: border-box;
           display: flex;
           flex-direction: column;
           justify-content: space-between;
         }
         display: block;
+        height: -webkit-fill-available;
+      }
+      app-drawer-layout, iron-pages {
+        height: -webkit-fill-available;
       }
       .drawer-list {
         margin: 10px 0;
@@ -42,7 +48,7 @@
       }
       .drawer-list a.iron-selected {
         color: #fff;
-        background-color: rgb(56, 121, 217);
+        background-color: var(--highlight-blue);
       }
       .drawer-list a iron-icon {
         margin-right: 3px;
@@ -51,14 +57,14 @@
     <app-drawer-layout>
       <app-drawer slot="drawer" persistent opened="true">
         <iron-selector selected="{{page}}" attr-for-selected="name" class="drawer-list" role="navigation">
-          <a name="inspector" href="javascript:void(0)"><iron-icon icon="search"></iron-icon>Inspector</a>
+          <a name="overview" href="javascript:void(0)"><iron-icon icon="timeline"></iron-icon>Overview</a>
           <a name="dataflow" href="javascript:void(0)"><iron-icon icon="swap-horiz"></iron-icon>Dataflow</a>
           <a name="strategyExplorer" href="javascript:void();"><iron-icon icon="settings-applications"></iron-icon>Strategy Explorer</a>
         </iron-selector>
         <arcs-debug-channel on-messages="onMessages"></arcs-debug-channel>
       </app-drawer>
       <iron-pages selected="[[page]]" attr-for-selected="name" role="main" id="pages">
-        <arcs-inspector name="inspector"></arcs-inspector>
+        <arcs-overview name="overview"></arcs-overview>
         <arcs-dataflow id="dataflow" name="dataflow"></arcs-dataflow>
         <strategy-explorer name="strategyExplorer"></strategy-explorer>
       </iron-pages>
@@ -71,7 +77,7 @@
 
       constructor() {
         super();
-        this.page = 'dataflow';
+        this.page = 'overview';
       }
 
       onMessages({detail}) {
