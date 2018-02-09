@@ -146,13 +146,9 @@ class Manifest {
     let tags = options.tags || [];
     let subtype = options.subtype || false;
     function typePredicate(view) {
-      let resolvedType = type;
-      let primitiveType = type.isSetView ? type.primitiveType() : type;
-      if (primitiveType.isVariable) {
-        if (!primitiveType.data.isResolved) {
-          return type.isSetView == view.type.isSetView;
-        }
-        resolvedType = type.isSetView ? primitiveType.data.resolution.setViewOf() : primitiveType.data.resolution;
+      let resolvedType = type.resolvedType();
+      if (!resolvedType.isResolved()) {
+        return type.isSetView == view.type.isSetView;
       }
 
       if (subtype) {
@@ -556,8 +552,6 @@ ${e.message}
             errorType.location = connectionItem.target.location;
             throw errorType;
           }
-          // TODO: Better ID.
-          //let id = `${manifest._id}immediate${hostedParticle.name}`;
           let id = `${manifest.generateID()}:immediate${hostedParticle.name}`;
           // TODO: Mark as immediate.
           targetView = recipe.newView();

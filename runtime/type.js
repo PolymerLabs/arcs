@@ -168,10 +168,27 @@ class Type {
   }
 
   resolvedType() {
-    if (this.isTypeVariable && this.data.isResolved)
+    if (this.isSetView) {
+      let resolvedPrimitiveType = this.primitiveType().resolvedType();
+      return resolvedPrimitiveType ? resolvedPrimitiveType.setViewOf() : this;
+    }
+    if (this.isVariable && this.data.isResolved) {
       return this.data.resolution.resolvedType();
-
+    }
+    if (this.isTypeVariable && this.data.isResolved) {
+      return this.data.resolution.resolvedType();
+    }
     return this;
+  }
+
+  isResolved() {
+    if (this.isSetView) {
+      return this.primitiveType().isResolved();
+    }
+    if (this.isVariable) {
+      return this.data.isResolved;
+    }
+    return true;
   }
 
   toLiteral() {
