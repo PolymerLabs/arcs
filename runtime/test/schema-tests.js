@@ -144,4 +144,34 @@ describe('schema', function() {
                             image: 'http://www.example.com/soup.jpg', category: 'Fluidic Food',
                             shipDays: 4});
   });
+
+  it('union types', async function() {
+    let manifest = await Manifest.parse(`
+      schema Unions
+        optional
+          (Text or Number) u1
+        normative
+          (URL or Object or Boolean) u2`);
+    let Unions = manifest.findSchemaByName('Unions').entityClass();
+    let unions = new Unions({u1: 'foo', u2: true});
+    assert.equal(unions.u1, 'foo');
+    assert.equal(unions.u2, true);
+    unions.u1 = 45;
+    unions.u2 = 'http://bar.org';
+    assert.equal(unions.u1, 45);
+    assert.equal(unions.u2, 'http://bar.org');
+    unions.u2 = {a: 12};
+    assert.equal(unions.u2.a, 12);
+
+    unions.u1 = null;
+    unions.u2 = undefined;
+    assert.equal(unions.u1, null);
+    assert.equal(unions.u2, undefined);
+    assert.doesNotThrow(() => { new Unions({u1: null, u2: undefined}); });
+
+    assert.throws(() => { new Unions({u1: false}); }, TypeError);
+    assert.throws(() => { new Unions({u2: 25}); }, TypeError);
+    assert.throws(() => { unions.u1 = {a: 12}; }, TypeError);
+    assert.throws(() => { unions.u2 = 25; }, TypeError);
+  });
 });

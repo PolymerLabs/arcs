@@ -105,21 +105,46 @@ class Schema {
     let normative = this.normative;
     let optional = this.optional;
     let classJunk = ['toJSON', 'prototype', 'toString', 'inspect'];
+    let typeMap = {
+      'Text': 'string',
+      'URL': 'string',
+      'Number': 'number',
+      'Boolean': 'boolean',
+      'Object': 'object',
+    };
 
-    let checkFieldIsValidAndGetTypes = (name, op) => {
+    let validateFieldAndTypes = (op, name, value) => {
       let fieldType = normative[name] || optional[name];
-      switch (fieldType) {
-        case undefined:
-          throw new Error(`Can't ${op} field ${name} not in schema ${className}`);
-        case 'Number':
-          return [fieldType, 'number'];
-        case 'Boolean':
-          return [fieldType, 'boolean'];
-        case 'Object':
-          return [fieldType, 'object'];
-        default:
-          // Text, URL
-          return [fieldType, 'string'];
+      if (fieldType === undefined) {
+        throw new Error(`Can't ${op} field ${name}; not in schema ${className}`);
+      }
+      if (value === undefined || value === null) {
+        return;
+      }
+
+      if (Array.isArray(fieldType)) {
+        for (let t of fieldType) {
+          let jsType = typeMap[t];
+          if (jsType === undefined) {
+            throw new Error(`Unknown field type ${t} in schema ${className}`);
+          }
+          if (typeof(value) === jsType) {
+            return;
+          }
+        }
+        throw new TypeError(
+            `Type mismatch ${op}ting field ${name} (union ${fieldType}); ` +
+            `value ${value} is type ${typeof(value)}`);
+      }
+
+      let jsType = typeMap[fieldType];
+      if (jsType === undefined) {
+        throw new Error(`Unknown field type ${fieldType} in schema ${className}`);
+      }
+      if (typeof(value) !== jsType) {
+        throw new TypeError(
+            `Type mismatch ${op}ting field ${name} (type ${fieldType}); ` +
+            `value ${value} is type ${typeof(value)}`);
       }
     };
 
@@ -128,22 +153,15 @@ class Schema {
         super(userIDComponent);
         this.rawData = new Proxy({}, {
           get: (target, name) => {
-            if (classJunk.includes(name))
+            if (classJunk.includes(name) || name.constructor == Symbol) {
               return undefined;
-            if (name.constructor == Symbol)
-              return undefined;
-            let [fieldType, jsType] = checkFieldIsValidAndGetTypes(name, 'get');
+            }
             let value = target[name];
-            assert(value == undefined || value === null || typeof(value) == jsType,
-                   `Field ${name} (type ${fieldType}) has value ${value} (type ${typeof(value)})`);
+            validateFieldAndTypes('get', name, value);
             return value;
           },
           set: (target, name, value) => {
-            let [fieldType, jsType] = checkFieldIsValidAndGetTypes(name, 'set');
-            if (value !== undefined && value !== null && typeof(value) != jsType) {
-              throw new TypeError(
-                  `Can't set field ${name} (type ${fieldType}) to value ${value} (type ${typeof(value)})`);
-            }
+            validateFieldAndTypes('set', name, value);
             target[name] = value;
             return true;
           }
