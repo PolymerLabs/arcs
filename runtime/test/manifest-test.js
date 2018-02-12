@@ -538,6 +538,23 @@ describe('manifest', function() {
       }
     ]);
   });
+  it('throws an error when a view has invalid json', async () => {
+    try {
+      let manifest = await Manifest.parse(`
+      schema Thing
+      resource EntityList
+        start
+        this is not json?
+      
+      view View0 of [Thing] in EntityList`);
+      assert(false);
+    } catch (e) {
+      assert.deepEqual(e.message, `Parse error in \'undefined\' line 7.
+Error parsing JSON from 'EntityList' (Unexpected token h in JSON at position 1)'
+        view View0 of [Thing] in EntityList
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^`);
+    }
+  });
   it('loads entities from a resource section', async () => {
     let manifest = await Manifest.parse(`
       schema Thing
