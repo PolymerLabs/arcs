@@ -8,11 +8,12 @@ Code distributed by Google as part of the polymer project is also
 subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
 */
 
+const shellPath = window.shellPath;
+
 document.body.appendChild(Object.assign(document.createElement('link'), {
   rel: 'import',
   href: `${shellPath}/components/strategy-explorer/strategy-explorer.html`
 }));
-// <link rel="import" href="arc-explorer.html"></link>
 
 // include for strategy-explorer on Safari
 /*
@@ -51,22 +52,5 @@ document.head.appendChild(Object.assign(document.createElement('style'), {innerT
       setTimeout(()=>populate(e.detail), 0);
     }
   });
-
-/*
-  let arcExplorer = document.body.appendChild(document.createElement('arc-explorer'));
-  arcExplorer.className = 'explorer';
-  window.addEventListener('keydown', e => {
-    if (e.target.localName !== 'input' && e.target.localName !== 'textarea') {
-      if (e.ctrlKey && (e.key == 'a')) {
-        e.preventDefault();
-        arcExplorer.style.display = arcExplorer.style.display == 'block' ? 'none' : 'block';
-        //console.log(arcExplorer.arc);
-      }
-    }
-  });
-  document.addEventListener('apply', e => {
-    arcExplorer.arc = e.detail.arc;
-  });
-*/
 
 })();

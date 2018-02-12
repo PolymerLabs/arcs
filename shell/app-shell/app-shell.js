@@ -8,39 +8,39 @@ Code distributed by Google as part of the polymer project is also
 subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
  */
 
-import ArcsUtils from "./lib/arcs-utils.js";
+import ArcsUtils from './lib/arcs-utils.js';
 
 // core
 import Xen from '../components/xen/xen.js';
-import "./elements/arc-config.js";
-import "./elements/arc-footer.js";
-import "./elements/arc-handle.js";
-import "./elements/arc-host.js";
-import "./elements/arc-steps.js";
-import "./elements/persistent-arc.js";
-import "./elements/persistent-handles.js";
-import "./elements/persistent-manifests.js";
-import "./elements/persistent-user.js";
-import "./elements/persistent-users.js";
-import "./elements/remote-friends-profile-handles.js";
-import "./elements/remote-profile-handles.js";
-import "./elements/remote-shared-handles.js";
-import "./elements/remote-visited-arcs.js";
+import './elements/arc-config.js';
+import './elements/arc-footer.js';
+import './elements/arc-handle.js';
+import './elements/arc-host.js';
+import './elements/arc-steps.js';
+import './elements/persistent-arc.js';
+import './elements/persistent-handles.js';
+import './elements/persistent-manifests.js';
+import './elements/persistent-user.js';
+import './elements/persistent-users.js';
+import './elements/remote-friends-profile-handles.js';
+import './elements/remote-profile-handles.js';
+import './elements/remote-shared-handles.js';
+import './elements/remote-visited-arcs.js';
 
 // tools
-import "../components/arc-tools/explorer-hotkey.js";
-import "../components/arc-tools/handle-explorer.js";
-import "../components/arc-tools/local-data.js";
-import "../components/arc-tools/manifest-data.js";
-import "../components/arc-tools/shell-particles.js";
-import "../components/data-explorer.js";
-import "../components/simple-tabs.js";
-import "../components/suggestion-element.js";
-import "../components/toggle-button.js";
+//import '../components/arc-tools/explorer-hotkey.js';
+import '../components/arc-tools/handle-explorer.js';
+import '../components/arc-tools/local-data.js';
+import '../components/arc-tools/manifest-data.js';
+import '../components/arc-tools/shell-particles.js';
+import '../components/data-explorer.js';
+import '../components/simple-tabs.js';
+import '../components/suggestion-element.js';
+import '../components/toggle-button.js';
 
 // For particles.
-import "../components/corellia-xen/cx-input.js";
-import "../components/good-map.js";
+import '../components/corellia-xen/cx-input.js';
+import '../components/good-map.js';
 
 const template = ArcsUtils.html`
 <style>
@@ -181,74 +181,74 @@ const template = ArcsUtils.html`
   }
 </style>
 
-<app-main launcher$="{{launcher}}">
+<app-main launcher$='{{launcher}}'>
   <agents>
-    <!--<arc-auth on-auth="_onAuth"></arc-auth>-->
-    <arc-config rootpath="{{cdnPath}}" on-config="_onConfig"></arc-config>
-    <persistent-arc key="{{suggestKey}}" on-key="_onKey" metadata="{{metadata}}" on-metadata="_onMetadata"></persistent-arc>
-    <persistent-users on-users="_onUsers"></persistent-users>
-    <persistent-user id="{{userId}}" user="{{user}}" key="{{key}}" on-user="_onUser"></persistent-user>
-    <persistent-manifests manifests="{{manifests}}" on-manifests="_onManifests" exclusions="{{exclusions}}" on-exclusions="_onExclusions"></persistent-manifests>
-    <persistent-handles arc="{{arc}}" key="{{key}}"></persistent-handles>
-    <remote-profile-handles arc="{{arc}}" user="{{user}}" on-profile="_onProfile"></remote-profile-handles>
-    <remote-shared-handles arc="{{arc}}" user="{{user}}" friends="{{friends}}"></remote-shared-handles>
-    <remote-friends-profiles-handles arc="{{arc}}" friends="{{friends}}" user="{{user}}"></remote-friends-profiles-handles>
-    <arc-handle arc="{{arc}}" data="{{arcsHandleData}}" options="{{arcsHandleOptions}}" on-change="_onArcsHandleChange"></arc-handle>
-    <arc-handle arc="{{arc}}" data="{{identityHandleData}}" options="{{identityHandleOptions}}" on-change="_onIdentityHandleChange"></arc-handle>
-    <arc-handle arc="{{arc}}" data="{{identitiesHandleData}}" options="{{identitiesHandleOptions}}" on-change="_onIdentitiesHandleChange"></arc-handle>
-    <arc-handle arc="{{arc}}" data="{{friendsAvatarData}}" options="{{friendsAvatarHandleOptions}}"></arc-handle>
-    <arc-handle arc="{{arc}}" data="{{themeData}}" options="{{themeHandleOptions}}" on-change="_onShellThemeChange"></arc-handle>
-    <arc-steps plans="{{plans}}" plan="{{plan}}" steps="{{steps}}" step="{{step}}" on-step="_onStep" on-steps="_onSteps"></arc-steps>
+    <!--<arc-auth on-auth='_onAuth'></arc-auth>-->
+    <arc-config rootpath='{{cdnPath}}' on-config='_onConfig'></arc-config>
+    <persistent-arc key='{{suggestKey}}' on-key='_onKey' metadata='{{metadata}}' on-metadata='_onMetadata'></persistent-arc>
+    <persistent-users on-users='_onUsers'></persistent-users>
+    <persistent-user id='{{userId}}' user='{{user}}' key='{{key}}' on-user='_onUser'></persistent-user>
+    <persistent-manifests manifests='{{manifests}}' on-manifests='_onManifests' exclusions='{{exclusions}}' on-exclusions='_onExclusions'></persistent-manifests>
+    <persistent-handles arc='{{arc}}' key='{{key}}'></persistent-handles>
+    <remote-profile-handles arc='{{arc}}' user='{{user}}' on-profile='_onProfile'></remote-profile-handles>
+    <remote-shared-handles arc='{{arc}}' user='{{user}}' friends='{{friends}}'></remote-shared-handles>
+    <remote-friends-profiles-handles arc='{{arc}}' friends='{{friends}}' user='{{user}}'></remote-friends-profiles-handles>
+    <arc-handle arc='{{arc}}' data='{{arcsHandleData}}' options='{{arcsHandleOptions}}' on-change='_onArcsHandleChange'></arc-handle>
+    <arc-handle arc='{{arc}}' data='{{identityHandleData}}' options='{{identityHandleOptions}}' on-change='_onIdentityHandleChange'></arc-handle>
+    <arc-handle arc='{{arc}}' data='{{identitiesHandleData}}' options='{{identitiesHandleOptions}}' on-change='_onIdentitiesHandleChange'></arc-handle>
+    <arc-handle arc='{{arc}}' data='{{friendsAvatarData}}' options='{{friendsAvatarHandleOptions}}'></arc-handle>
+    <arc-handle arc='{{arc}}' data='{{themeData}}' options='{{themeHandleOptions}}' on-change='_onShellThemeChange'></arc-handle>
+    <arc-steps plans='{{plans}}' plan='{{plan}}' steps='{{steps}}' step='{{step}}' on-step='_onStep' on-steps='_onSteps'></arc-steps>
     <!-- only for launcher -->
-    <remote-visited-arcs user="{{launcherUser}}" arcs="{{visitedArcs}}" on-arcs="_onVisitedArcs"></remote-visited-arcs>
+    <remote-visited-arcs user='{{launcherUser}}' arcs='{{visitedArcs}}' on-arcs='_onVisitedArcs'></remote-visited-arcs>
   </agents>
 
   <!-- toolbar is here only to reserve space in the static flow, the app-toolbar is position-fixed -->
   <toolbar>
-    <app-toolbar style="{{shellThemeStyle}}">
-      <img title="Arcs" on-click="_onNavClick" src="../logo_24x24.svg" style="cursor: pointer;">
-      <span arc-title style="{{titleStatic}}" on-click="_onStartEditingTitle" unsafe-html="{{description}}"></span>
-      <span avatar style="{{avatarStyle}}"></span>
-      <select on-change="_onUserSelected">{{usersOptions}}</select>
+    <app-toolbar style='{{shellThemeStyle}}'>
+      <img title='Arcs' on-click='_onNavClick' src='../logo_24x24.svg' style='cursor: pointer;'>
+      <span arc-title style='{{titleStatic}}' on-click='_onStartEditingTitle' unsafe-html='{{description}}'></span>
+      <span avatar style='{{avatarStyle}}'></span>
+      <select on-change='_onUserSelected'>{{usersOptions}}</select>
       <template users-options>
-        <option value="{{value}}" selected="{{selected}}">{{user}}</option>
+        <option value='{{value}}' selected='{{selected}}'>{{user}}</option>
       </template>
       <div buttons>
-        <toggle-button title="Arc Contains Profile Data" state="{{profileState}}" on-state="_onProfileState" icons="person_outline person"></toggle-button>
-        <toggle-button title="Share this Arc" state="{{sharedState}}" on-state="_onSharedState" icons="link supervisor_account"></toggle-button>
-        <toggle-button title="Cast" on-state="_onCastState" icons="cast cast_connected"></toggle-button>
-        <a href="{{launcherUrl}}"><i>apps</i></a>
+        <toggle-button title='Arc Contains Profile Data' state='{{profileState}}' on-state='_onProfileState' icons='person_outline person'></toggle-button>
+        <toggle-button title='Share this Arc' state='{{sharedState}}' on-state='_onSharedState' icons='link supervisor_account'></toggle-button>
+        <toggle-button title='Cast' on-state='_onCastState' icons='cast cast_connected'></toggle-button>
+        <a href='{{launcherUrl}}'><i>apps</i></a>
       </div>
     </app-toolbar>
   </toolbar>
 
-  <arc-host config="{{hostConfig}}" manifests="{{manifests}}" exclusions="{{exclusions}}" plans="{{plans}}" plan="{{plan}}" suggestions="{{suggestions}}" on-arc="_onArc" on-plans="_onPlans" on-applied="_onApplied">
-    <div slotid="toproot"></div>
-    <div slotid="root"></div>
-    <div slotid="modal"></div>
+  <arc-host config='{{hostConfig}}' manifests='{{manifests}}' exclusions='{{exclusions}}' plans='{{plans}}' plan='{{plan}}' suggestions='{{suggestions}}' on-arc='_onArc' on-plans='_onPlans' on-applied='_onApplied'>
+    <div slotid='toproot'></div>
+    <div slotid='root'></div>
+    <div slotid='modal'></div>
   </arc-host>
 
   <footer>
-    <arc-footer dots="{{dots}}" on-suggest="_onStep" on-search="_onSearch">
-      <div slotid="suggestions"></div>
+    <arc-footer dots='{{dots}}' on-suggest='_onStep' on-search='_onSearch'>
+      <div slotid='suggestions'></div>
     </arc-footer>
   </footer>
 </app-main>
 
 <app-tools>
   <simple-tabs>
-    <div tab="Manifests">
-      <local-data manifest="{{manifest}}" on-update-manifest="_onUpdateManifest" on-promote-manifest="_onPromoteManifest"></local-data>
-      <manifest-data manifests="{{manifests}}" exclusions="{{exclusions}}" on-exclusions="_onExclusions"></manifest-data>
+    <div tab='Manifests'>
+      <local-data manifest='{{manifest}}' on-update-manifest='_onUpdateManifest' on-promote-manifest='_onPromoteManifest'></local-data>
+      <manifest-data manifests='{{manifests}}' exclusions='{{exclusions}}' on-exclusions='_onExclusions'></manifest-data>
     </div>
-    <div tab="Handle Explorer">
-      <handle-explorer arc="{{arc}}"></handle-explorer>
+    <div tab='Handle Explorer'>
+      <handle-explorer arc='{{arc}}'></handle-explorer>
     </div>
-    <!-- <div tab="App State">
-      <data-explorer style="font-size: 0.6em;" object="{{appState}}"></data-explorer>
+    <!-- <div tab='App State'>
+      <data-explorer style='font-size: 0.6em;' object='{{appState}}'></data-explorer>
     </div> -->
   </simple-tabs>
-  <shell-particles arc="{{arc}}"></shell-particles>
+  <shell-particles arc='{{arc}}'></shell-particles>
 </app-tools>
 `;
 
@@ -284,7 +284,7 @@ class AppShell extends Xen.Base {
         tags: ['#shelltheme']
       },
       themeData: {
-        mainBackground: "white"
+        mainBackground: 'white'
       },
       identityHandleOptions: {
         schemas: `${typesPath}/identity-types.manifest`,
@@ -374,7 +374,7 @@ class AppShell extends Xen.Base {
       // modifying config only matters before initializing arc-host
       let isProfile = state.user.profiles && state.user.profiles[state.key];
       if (isProfile && !state.arc) {
-        AppShell.log('is a profile Arc, setting soloPath to "profile.manifest"');
+        AppShell.log(`is a profile Arc, setting soloPath to 'profile.manifest'`);
         //state.config.soloPath = 'profile.manifest';
       }
       let isShared = state.user.shares && state.user.shares[state.key];
@@ -396,9 +396,9 @@ class AppShell extends Xen.Base {
       models: this._renderUserOptionModels(state.users, state.user)
     };
     state.dots = state.plans == null ? 'active' : '';
-    if (state.avatar && arc) {
-      const url = arc._loader._resolve(state.avatar.rawData.url);
-      state.avatarStyle = `background: url("${url}") center no-repeat; background-size: cover;`;
+    if (state.avatar && state.arc) {
+      const url = state.arc._loader._resolve(state.avatar.rawData.url);
+      state.avatarStyle = `background: url('${url}') center no-repeat; background-size: cover;`;
     }
     // must have `auth` before doing anything else
     return state.auth ? state : null;
@@ -462,13 +462,13 @@ class AppShell extends Xen.Base {
   }
   _initHotKeys() {
     addEventListener('keydown', e => {
-      if (e.ctrlKey && !{input:1, textArea:1}[e.target.localName] && this.hotkey(e.key, e)) {
+      if (e.ctrlKey && !{input: 1, textArea: 1}[e.target.localName] && this.hotkey(e.key, e)) {
         e.preventDefault();
       }
     });
   }
   hotkey(key, e) {
-    switch(key) {
+    switch (key) {
       case 'i':
         this._onToggleIlluminate(e);
         break;
@@ -548,7 +548,7 @@ class AppShell extends Xen.Base {
   _newUserPrompt() {
     // returns String 'null' (sheesh) on cancel
     let name = prompt('User name?', 'User');
-    if (name !== "null") {
+    if (name !== 'null') {
       return {name};
     }
   }
@@ -609,7 +609,7 @@ class AppShell extends Xen.Base {
       default:
         return;
     }
-    switch(profile.id) {
+    switch (profile.id) {
       case 'PROFILE_Avatar_avatar':
         this._setIfDirty({avatar: data});
         break;
@@ -742,7 +742,7 @@ class AppShell extends Xen.Base {
       if (!currentManifests.includes(state.manifestPath)) {
         const newManifests = currentManifests.concat(state.manifestPath);
         AppShell.log(`Promoting manifest [new=${state.manifestPath}, all=[${newManifests}]].`);
-        this._setState({manifestPath: '', manifests: newManifests})
+        this._setState({manifestPath: '', manifests: newManifests});
       }
     }
   }
@@ -763,7 +763,7 @@ class AppShell extends Xen.Base {
     });
   }
   _initGeolocation() {
-    if ("geolocation" in navigator) {
+    if ('geolocation' in navigator) {
       navigator.geolocation.watchPosition(({coords}) => {
         // Skip setting the position if it's the same as what we've already got.
         const lastCoords = this._state.geoCoords;
