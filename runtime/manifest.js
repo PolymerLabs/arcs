@@ -652,16 +652,25 @@ ${e.message}
     // TODO: How to set the version?
     // view.version = item.version;
     let json;
+    let source;
     if (item.origin == 'file') {
-      let source = loader.join(manifest.fileName, item.source);
+      source = loader.join(manifest.fileName, item.source);
       // TODO: json5?
       json = await loader.loadResource(source);
     } else if (item.origin == 'resource') {
-      json = manifest.resources[item.source];
+      source = item.source;
+      json = manifest.resources[source];
       if (json == undefined)
-        throw new Error(`Resource ${item.source} referenced by view ${id} is not defined in this manifest`);
+        throw new Error(`Resource '${source}' referenced by view '${id}' is not defined in this manifest`);
     }
-    let entities = JSON.parse(json);
+    let entities;
+    try {
+      entities = JSON.parse(json);
+    } catch (e) {
+      let error = new Error(`Error parsing JSON from '${source}' (${e.message})'`);
+      error.location = item.location;
+      throw error;
+    }
     for (let entity of entities) {
       if (entity == null && !type.isSetView) {
         view.clear();
