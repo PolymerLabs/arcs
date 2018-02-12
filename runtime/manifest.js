@@ -670,10 +670,10 @@ ${e.message}
         delete entity.$id;
       
         if (type.isSetView) {
-        view.store({
-          id,
-          rawData: entity,
-        });
+          view.store({
+            id,
+            rawData: entity,
+          });
         } else {
           view.set({
             id,
