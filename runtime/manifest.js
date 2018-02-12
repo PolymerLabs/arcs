@@ -22,6 +22,13 @@ import scheduler from './scheduler.js';
 import ManifestMeta from './manifest-meta.js';
 import TypeVariable from './type-variable.js';
 
+class ManifestError extends Error {
+  constructor(location, message) {
+    super(message);
+    this.location = location;
+  }
+}
+
 class Manifest {
   constructor({id}) {
     this._recipes = [];
@@ -85,7 +92,6 @@ class Manifest {
   get resources() {
     return this._resources;
   }
-
   applyMeta(section) {
     if (this._storageProviderFactory !== undefined)
       assert(section.name == this._meta.name || section.name == undefined, `can't change manifest ID after storage is constructed`);
@@ -279,7 +285,11 @@ ${e.message}
       name: schemaItem.name,
       parents: schemaItem.parents.map(parent => {
         let result = manifest.findSchemaByName(parent);
-        assert(result);
+        if (!result) {
+          throw new ManifestError(
+              schemaItem.location,
+              `Could not find parent schema '${parent}'`);
+        }
         return result.toLiteral();
       }),
       sections: schemaItem.sections.map(section => {
@@ -384,24 +394,16 @@ ${e.message}
       let fromParticle = manifest.findParticleByName(connection.from.particle);
       let toParticle = manifest.findParticleByName(connection.to.particle);
       if (!fromParticle) {
-        let error = new Error(`could not find particle '${connection.from.particle}'`);
-        error.location = connection.location;
-        throw error;
+        throw new ManifestError(connection.location, `could not find particle '${connection.from.particle}'`);
       }
       if (!toParticle) {
-        let error = new Error(`could not find particle '${connection.to.particle}'`);
-        error.location = connection.location;
-        throw error;
+        throw new ManifestError(connection.location, `could not find particle '${connection.to.particle}'`);
       }
       if (!fromParticle.connectionMap.has(connection.from.param)) {
-        let error = new Error(`param '${connection.from.param} is not defined by '${connection.from.particle}'`);
-        error.location = connection.location;
-        throw error;
+        throw new ManifestError(connection.location, `param '${connection.from.param} is not defined by '${connection.from.particle}'`);
       }
       if (!toParticle.connectionMap.has(connection.to.param)) {
-        let error = new Error(`param '${connection.to.param} is not defined by '${connection.to.particle}'`);
-        error.location = connection.location;
-        throw error;
+        throw new ManifestError(connection.location, `param '${connection.to.param} is not defined by '${connection.to.particle}'`);
       }
       recipe.newConnectionConstraint(fromParticle, connection.from.param,
                                      toParticle, connection.to.param);
@@ -510,15 +512,15 @@ ${e.message}
         let direction = {'->': 'out', '<-': 'in', '=': 'inout'}[connectionItem.dir];
         if (connection.direction) {
           if (connection.direction != direction && direction != 'inout' && !(connection.direction == 'host' && direction == 'in')) {
-            let error = new Error(`'${connectionItem.dir}' not compatible with '${connection.direction}' param of '${particle.name}'`);
-            error.location = connectionItem.location;
-            throw error;
+            throw new ManifestError(
+                connectionItem.location,
+                `'${connectionItem.dir}' not compatible with '${connection.direction}' param of '${particle.name}'`);
           }
         } else {
           if (connectionItem.param != '*') {
-            let error = new Error(`param '${connectionItem.param}' is not defined by '${particle.name}'`);
-            error.location = connectionItem.location;
-            throw error;
+            throw new ManifestError(
+                connectionItem.location,
+                `param '${connectionItem.param}' is not defined by '${particle.name}'`);
           }
           connection.direction = direction;
         }
@@ -529,9 +531,9 @@ ${e.message}
         if (connectionItem.target && connectionItem.target.name) {
           let entry = items.byName.get(connectionItem.target.name);
           if (!entry) {
-            let error = new Error(`Could not find handle '${connectionItem.target.name}'`);
-            error.location = connectionItem.location;
-            throw error;
+            throw new ManifestError(
+                connectionItem.location,
+                `Could not find handle '${connectionItem.target.name}'`);
           }
           if (entry.item.kind == 'view') {
             targetView = entry.view;
@@ -546,14 +548,14 @@ ${e.message}
         if (connectionItem.target && connectionItem.target.particle) {
           let hostedParticle = manifest.findParticleByName(connectionItem.target.particle);
           if (!hostedParticle) {
-            let error = new Error(`Could not find hosted particle '${connectionItem.target.particle}'`);
-            error.location = connectionItem.target.location;
-            throw error;
+            throw new ManifestError(
+                connectionItem.target.location,
+                `Could not find hosted particle '${connectionItem.target.particle}'`);
           }
           if (!connection.type.data.particleMatches(hostedParticle)) {
-            let errorType = new Error(`Hosted particle '${hostedParticle.name}' does not match shape '${connection.name}'`);
-            errorType.location = connectionItem.target.location;
-            throw errorType;
+            throw new ManifestError(
+                connectionItem.target.location,
+                `Hosted particle '${hostedParticle.name}' does not match shape '${connection.name}'`);
           }
           let id = `${manifest.generateID()}:immediate${hostedParticle.name}`;
           // TODO: Mark as immediate.
@@ -597,15 +599,15 @@ ${e.message}
       for (let slotConnectionItem of item.slotConnections) {
         // Validate consumed and provided slots names are according to spec.
         if (!particle.spec.slots.has(slotConnectionItem.param)) {
-          let error = new Error(`Consumed slot '${slotConnectionItem.param}' is not defined by '${particle.name}'`);
-          error.location = slotConnectionItem.location;
-          throw error;
+          throw new ManifestError(
+              slotConnectionItem.location,
+              `Consumed slot '${slotConnectionItem.param}' is not defined by '${particle.name}'`);
         }
         slotConnectionItem.providedSlots.forEach(ps => {
           if (!particle.spec.slots.get(slotConnectionItem.param).providedSlots.find(specPs => specPs.name == ps.param)) {
-            let error = new Error(`Provided slot '${ps.param}' is not defined by '${particle.name}'`);
-            error.location = ps.location;
-            throw error;
+            throw new ManifestError(
+                ps.location,
+                `Provided slot '${ps.param}' is not defined by '${particle.name}'`);
           }
         });
         let targetSlot = items.byName.get(slotConnectionItem.name);
@@ -672,9 +674,7 @@ ${e.message}
     try {
       entities = JSON.parse(json);
     } catch (e) {
-      let error = new Error(`Error parsing JSON from '${source}' (${e.message})'`);
-      error.location = item.location;
-      throw error;
+      throw new ManifestError(item.location, `Error parsing JSON from '${source}' (${e.message})'`);
     }
     for (let entity of entities) {
       if (entity == null && !type.isSetView) {
