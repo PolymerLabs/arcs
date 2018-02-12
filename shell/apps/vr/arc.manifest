@@ -1,0 +1,3 @@
+import 'https://sjmiles.github.io/arc-stories/Vr/recipes.manifest'
+import 'https://noelutz.github.io/arcs-stories/0.2/VideoPlayer/Vr/VideoPlayer.recipes'
+import 'https://noelutz.github.io/arcs-stories/0.2/Messages/Vr/Vr.recipes'

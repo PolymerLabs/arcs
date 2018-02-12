@@ -1,0 +1,207 @@
+<!--
+@license
+Copyright (c) 2016 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+<!doctype html>
+<html>
+<head>
+
+  <title>ArcsLib API Docs</title>
+
+  <style>
+    html, body {
+      font-family: sans-serif;
+      margin: 0;
+      display: flex;
+    }
+    [toc] {
+      /*flex: 1;
+      max-*/width: 128px;
+      padding: 16px;
+    }
+    [docs] {
+      flex: 1;
+      padding-top: 16px;
+    }
+    [dclass] {
+      margin: 0 0 0 1em;
+    }
+    [dclass] > [name] {
+      background-color: #dcedc8;
+      margin-left: -1rem;
+      padding: 1rem;
+      font-size: 1.3rem;
+      /*
+      border-bottom: 1px dotted silver;
+      */
+    }
+    [dclass] > [desc] {
+      margin: 0.6em 0 1.2em;
+    }
+    [method] > [name] {
+      font-weight: bold;
+    }
+    [method] > [desc] {
+      margin: 0.4em 0 1em;
+    }
+    [chapter] {
+      margin-bottom: 20px;
+    }
+    [chapter] > [name] {
+      font-weight: bold;
+    }
+    [end] {
+      /*
+      border-bottom: 2px dashed silver;
+      */
+      margin-bottom: 2em;
+    }
+    [pre] {
+      white-space: pre-wrap;
+    }
+    pre {
+      padding: 16px;
+      background-color: #f6f8fa;
+    }
+    code {
+      /*display: block;*/
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
+      background-color: #f6f8fa;
+    }
+  </style>
+
+  <link rel="import" href="components/doc-scraper.html">
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/remarkable/1.7.1/remarkable.js"></script>
+  <!--<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/0.3.6/marked.min.js"></script>-->
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+
+  <script src="docs/doc-urls.js"></script>
+
+</head>
+<body>
+
+  <div toc></div>
+  <div docs></div>
+
+  <script>
+    let toc = document.querySelector(`[toc]`);
+    let doc = document.querySelector(`[docs]`);
+
+    let strcmp = (a,b)=>(a<b)?-1:((a>b)?1:0);
+
+    var buildMdRenderer = (file) => {
+      let md = new Remarkable({
+        highlight: function (str, lang) {
+          if (lang && hljs.getLanguage(lang)) {
+            try {
+              return hljs.highlight(lang, str).value;
+            } catch (err) {}
+          }
+          return ''; // use external default escaping
+        }
+      });
+      let pathPrefix = file.replace(/(.*\/)[^/]+/, "$1");
+      let imgRule = md.renderer.rules.image;
+      md.renderer.rules.image = (tokens, idx, options) => {
+        tokens[idx].src = pathPrefix + tokens[idx].src;
+        return imgRule(tokens, idx, options);
+      };
+      return md;
+    };
+
+    // Convert this-type-of_variables ToCamelNotation.
+    let toCamel = fn => {
+      return fn.replace(/.*\/([^/.]+)\.\w+/, "$1").replace(/^[a-z]|(-[a-z])|(_[a-z])/g, v => {
+        return v.length < 2 ? v.toUpperCase() : " " + v[1].toLowerCase();
+      })
+    };
+
+    let scrape = async urls => {
+      let ismd = url => url.toLowerCase().endsWith('.md');
+      let mds = urls.filter(f => ismd(f));
+      let others = urls.filter(f => !ismd(f));
+      let classes = await new DocScraper().addUrls(others);
+      let values = await Promise.all(mds.map(async f => {
+        let response = await fetch(f);
+        let text = await response.text();
+        return {
+          name: toCamel(f),
+          chapter: f.startsWith('docs') ? 'Background' : 'Reference',
+          description: buildMdRenderer(f).render(text)
+        };
+      }));
+      return classes.concat(values);
+    };
+
+    let renderTopic = topic => {
+      let html = [];
+      html.push(`
+        <div dclass>
+          <div name>${topic.name}</div>
+          <div desc>${topic.description}</div>
+      `.trim());
+      topic.methods && topic.methods.forEach(m => {
+        html.push(`
+          <div method>
+            <div name>${m.name}</div>
+            <div desc>${m.description}</div>
+          </div>
+        `.trim());
+      });
+      html.push(`</div>`);
+      html.push(`<div end></div>`)
+      return html.join('');
+    }
+
+    let renderDocs = docs => {
+      let html = [];
+      if (docs.classes) {
+        docs.classes.sort((a,b) => strcmp(a.name, b.name));
+        html = docs.classes.map(renderTopic);
+      }
+      doc.innerHTML = html.join(` `);
+    }
+
+    let renderToc = data => {
+      // TODO: add @chapter pragma to the source code.
+      let chapter = cls => cls.chapter || 'Reference';
+      let html = []
+      new Set(data.classes.map(cls => chapter(cls))).forEach(c => {
+        let topics = data.classes.filter(cls => chapter(cls) == c).map(c => c.name);
+        html.push(`<div chapter><span name>${c}</span>`);
+        Array.prototype.push.apply(html, topics.map(t => `<div><a href="#${t}" title="${t}">${t}</a></div>`));
+        html.push('</div>');
+      });
+      toc.innerHTML = html.join('');
+    };
+
+    let corpus;
+
+    scrape(window.docUrls).then(classes => {
+      console.log(classes);
+      corpus = {classes};
+      renderToc(corpus);
+      updateTopic();
+    });
+
+    let updateTopic = () => {
+      let name = location.hash.slice(1) || `Manifest`;
+      let topic = corpus.classes.find(c => c.name === name);
+      doc.innerHTML = topic ? renderTopic(topic) : 'n/a';
+    };
+
+    window.onhashchange = e => {
+      updateTopic();
+    };
+  </script>
+
+</body>
+</html>
