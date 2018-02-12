@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+
+  <title>ArcsVR</title>
+
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+
+  <script src="https://rawgit.com/aframevr/aframe/f8cb168/dist/aframe-master.js"></script>
+  <script src="https://unpkg.com/aframe-event-set-component@3.0.3/dist/aframe-event-set-component.min.js"></script>
+  <script src="https://unpkg.com/aframe-physics-system@1.4.0/dist/aframe-physics-system.min.js"></script>
+  <script src="https://unpkg.com/aframe-draw-component@1.5.0/dist/aframe-draw-component.js"></script>
+  <script src="https://unpkg.com/aframe-htmltexture-component@0.2.1/dist/aframe-htmltexture-component.min.js"></script>
+  <script src="https://rawgit.com/dbradleyfl/aframe-gridhelper/master/dist/aframe-gridhelper-component.min.js"></script>
+
+</head>
+<body>
+
+  <link rel="import" href="../../app-shell/app-shell.html">
+
+  <style>
+    x-toast {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background-color: white;
+    }
+    [search] {
+      display: flex;
+      align-items: center;
+      padding: 4px;
+      border-bottom: 1px dotted silver;
+    }
+    [search] input {
+      flex: 1;
+      padding: 7px;
+      border: none;
+      outline: none;
+    }
+  </style>
+
+  <template>
+    <a-scene id="particles" Xgridhelper="size:8" physics="debug: false">
+      <a-entity light="type:directional; castShadow: true;" position="1 1 1"></a-entity>
+      <a-sky color="#DCDCDC" src="assets/tokyo (candy bar).jpg"></a-sky>
+      <a-camera position="0 0 0"></a-camera>
+      <a-assets timeout="60000" slotid="assets">
+          <!-- Slot that can be used to add assets to the scene. Note <a-assets> needs
+            to be a child of the scene. -->
+      </a-assets>
+      <a-entity slotid="root"></a-entity>
+    </a-scene>
+    <x-toast app-footer open="{{toastOpen}}" suggestion-container>
+      <dancing-dots slot="toast-header" disabled="{{dotsDisabled}}" active="{{dotsActive}}"></dancing-dots>
+      <div search>
+        <input value="{{searchText}}" on-input="_onSearch">
+        <i class="material-icons" on-click="_onSearchClick">search</i>
+      </div>
+      <suggestions-element suggestions="{{suggestions}}" on-plan-selected="_onPlanSelected"></suggestions-element>
+    </x-toast>
+  </template>
+
+  <script>
+    class VrAppShell extends AppShell {
+      get template() {
+        return document.querySelector('template');
+      }
+      _start(config) {
+        config.containerKind = 'a-entity';
+        super._start(config);
+      }
+      async _fetchManifestList() {
+        return ['arc.manifest'];
+      }
+    }
+    customElements.define('vr-app-shell', VrAppShell);
+
+    document.addEventListener('configure', e => {
+      //console.log(e.detail);
+    });
+  </script>
+
+  <vr-app-shell></vr-app-shell>
+
+</body>
+</html>

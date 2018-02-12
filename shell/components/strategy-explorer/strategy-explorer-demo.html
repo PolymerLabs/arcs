@@ -1,0 +1,44 @@
+<!--
+Copyright (c) 2017 Google Inc. All rights reserved.
+This code may only be used under the BSD style license found at
+http://polymer.github.io/LICENSE.txt
+Code distributed by Google as part of this project is also
+subject to an additional IP rights grant found at
+http://polymer.github.io/PATENTS.txt
+-->
+<!DOCTYPE html>
+
+<link rel="import" href="strategy-explorer.html"></link>
+
+<strategy-explorer></strategy-explorer>
+
+<script type="module">
+import Arc from '../runtime/arc.js';
+import Loader from '../runtime/browser-loader.js';
+import Manifest from '../runtime/manifest.js';
+import Planner from '../runtime/planner.js';
+import SlotComposer from '../runtime/slot-composer.js';
+
+(async () => {
+  var loader = new Loader();
+  let manifest = await Manifest.load('../runtime/browser/demo/recipes.manifest', loader)
+  var a = new Arc({
+    id: "test-plan-arc",
+    context: manifest,
+    slotComposer: new SlotComposer({rootContext: document.body, affordance: "dom"})
+  });
+  a._search = 'I want a Chooser and a GiftList and ShowProducts';
+  var p = new Planner();
+  p.init(a);
+  var strategyExplorer = document.querySelector('strategy-explorer');
+  var result = [await p.generate(),
+                await p.generate(),
+                await p.generate(),
+                await p.generate(),
+                await p.generate(),
+                await p.generate(),
+                await p.generate(),
+                await p.generate()].map(pop => strategyExplorer.preparePopulation(pop));
+  strategyExplorer.results = result;
+})();
+</script>

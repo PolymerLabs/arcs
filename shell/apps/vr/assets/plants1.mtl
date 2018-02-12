@@ -1,0 +1,45 @@
+# Materials for file plants1.obj
+# Created by PlantStudio http://www.kurtz-fernhout.com
+# These files must be in the same directory for the materials to be read correctly.
+newmtl 1Breeder_Intrnd
+Ka  0.2196 0.5607 0.0549
+Kd  0.2196 0.5607 0.0549
+Ks  0.2196 0.5607 0.0549
+d 1.0
+illum 1
+
+newmtl 1Breeder_Intrnd
+Ka  0.2196 0.5607 0.0549
+Kd  0.2196 0.5607 0.0549
+Ks  0.2196 0.5607 0.0549
+d 1.0
+illum 1
+
+newmtl 1Breeder_Petiole
+Ka  0.9764 0.4901 0.1882
+Kd  0.9764 0.4901 0.1882
+Ks  0.9764 0.4901 0.1882
+d 1.0
+illum 1
+
+newmtl 1Breeder_Leaf
+Ka  0.0 0.3764 0.0
+Kd  0.0 0.3764 0.0
+Ks  0.0 0.3764 0.0
+d 1.0
+illum 1
+
+newmtl 1Breeder_Leaf
+Ka  0.0 0.3764 0.0
+Kd  0.0 0.3764 0.0
+Ks  0.0 0.3764 0.0
+d 1.0
+illum 1
+
+newmtl 1Breeder_Mrstm
+Ka  0.2509 0.0 0.5019
+Kd  0.2509 0.0 0.5019
+Ks  0.2509 0.0 0.5019
+d 1.0
+illum 1
+

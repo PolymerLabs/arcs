@@ -1,0 +1,82 @@
+<!--
+@license
+Copyright (c) 2016 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+
+<template>
+  <style>
+    arc-explorer > [banner] {
+      padding: 6px 4px;
+      background-color: whitesmoke;
+      margin-bottom: 8px;
+      border-top: 1px dotted silver;
+    }
+  </style>
+  <div banner>Profile Arcs</div>
+  <div>{{profileArcs}}</div>
+  <div banner>Shared Arcs</div>
+  <div>{{sharedArcs}}</div>
+  <div banner>Handles in Profile Data</div>
+  <div style="padding: 8px;">{{profiles}}</div>
+  <br>
+  <div banner>Danger Zone</div>
+  <div style="padding:8px;"><button on-click="_onPrivatize">Global Privatize (remove all shares)</button></div>
+  <hr>
+  <!--<button on-click="dumpDb">Dump Database</button>-->
+  <data-explorer style="font-size: 0.6em;" object="{{data}}"></data-explorer>
+</template>
+
+<template arc>
+  <arc-item key="{{key}}" data="{{data}}"></arc-item><br>
+</template>
+
+<template profile>
+  <div style="margin-bottom: 8px;">
+    <span>{{name}}</span>
+    <a href="{{href}}" target="_blank"><i class="material-icons" style="font-size: 0.8em; vertical-align: middle;">open_in_new</i></a>
+  </div>
+  <data-explorer style="font-size: 0.6em;" object="{{data}}"></data-explorer>
+  <br>
+</template>
+
+<script>
+  class TitleEditor extends Xen.Base {
+    _updateTitle() {
+      this._setState({
+        title: this._userGeneratedDescription || this._computedDescription || ' ',
+        titleStatic: { display: this._editingTitle ? "none" : "initial" },
+        titleEditing: { display: this._editingTitle ? "initial" : "none" }
+      });
+    }
+    _onNewDescription(computed, userGenerated) {
+      this._computedDescription = computed.replace(/<b>|<\/b>/g, '').replace(/^ - /, '');
+      this._userGeneratedDescription = userGenerated;
+      this._updateTitle();
+    }
+    _onStartEditingTitle(e) {
+      this._editingTitle = true;
+      this._setState({titleText: this._userGeneratedDescription || this._computedDescription || ""});
+      this._updateTitle();
+      let inputElement = e.currentTarget.nextElementSibling;
+      inputElement.select();
+      window.setTimeout(() => inputElement.focus(), 50);
+    }
+    _onEndEditingTitle(e) {
+      let description = e.target.value;
+      this._editingTitle = false;
+      e.target.blur();
+      this._userGeneratedDescription = description;
+      this._updateTitle();
+      StorageTools.saveUserGeneratedDescription(description);
+    }
+    _onMaybeEndEditingTitle(e) {
+      let keyCode = e.keyCode || e.which;
+      if (keyCode == 13) this._onEndEditingTitle(e);
+    }
+  };
+</script>

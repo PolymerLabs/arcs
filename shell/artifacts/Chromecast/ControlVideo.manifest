@@ -1,0 +1,15 @@
+// @license
+// Copyright (c) 2017 Google Inc. All rights reserved.
+// This code may only be used under the BSD style license found at
+// http://polymer.github.io/LICENSE.txt
+// Code distributed by Google as part of this project is also
+// subject to an additional IP rights grant found at
+// http://polymer.github.io/PATENTS.txt
+
+import 'https://noelutz.github.io/arcs-stories/artifacts/VideoPlayer/entities/VideoPlayback.manifest'
+
+particle ControlVideo in 'ControlVideo.js'
+  // Should be a Variable but those don't get synced... yet.
+  ControlVideo(inout [VideoPlayback] controls)
+  consume root
+  description `control video`

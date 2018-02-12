@@ -1,0 +1,50 @@
+// @license
+// Copyright (c) 2017 Google Inc. All rights reserved.
+// This code may only be used under the BSD style license found at
+// http://polymer.github.io/LICENSE.txt
+// Code distributed by Google as part of this project is also
+// subject to an additional IP rights grant found at
+// http://polymer.github.io/PATENTS.txt
+
+schema UiState
+  optional
+    Boolean open
+
+particle Opener in 'source/Opener.js'
+  Opener(inout UiState uiState)
+  consume root
+
+particle HelloWorld in 'source/HelloWorld.js'
+  HelloWorld(inout UiState uiState)
+  consume content
+  
+particle Dialog in '../source/Dialog.js'
+  Dialog(inout UiState uiState)
+  consume modal
+    provide content
+  description `dialog fun`
+
+recipe
+  create as uiState
+  Opener
+    uiState = uiState
+  Dialog
+    uiState = uiState
+  HelloWorld
+    uiState = uiState
+
+particle ToastPanel in '../source/ToastPanel.js'
+  ToastPanel(inout UiState uiState)
+  consume modal
+    provide content
+  description `toast-panel fun`
+
+recipe
+  create as uiState
+  Opener
+    uiState = uiState
+  ToastPanel
+    uiState = uiState
+  HelloWorld
+    uiState = uiState
+

@@ -1,0 +1,203 @@
+<!--
+Copyright (c) 2017 Google Inc. All rights reserved.
+This code may only be used under the BSD style license found at
+http://polymer.github.io/LICENSE.txt
+Code distributed by Google as part of this project is also
+subject to an additional IP rights grant found at
+http://polymer.github.io/PATENTS.txt
+-->
+<link rel="import" href="bower_components/polymer/polymer.html">
+
+<dom-module id='se-recipe'>
+  <template>
+    <style>
+      #recipe-box {
+        border: 1px solid black;
+        white-space: pre;
+        font-family: consolas;
+        font-size: 10px;
+        margin: 5px;
+        padding: 5px;
+        width: 30px;
+        height: 30px;
+      }
+
+      #recipe-box:not([valid]) {
+        border: 1px solid fuchsia;
+        margin: 4px;
+      }
+
+      #recipe-box[active] {
+        margin: 4px;
+        background-color: lightyellow;
+      }
+
+      #recipe-box[selected] {
+        border: 2px solid green;
+        margin: 4px;
+        background: #afa;
+      }
+
+      #recipe-box[activeAncestor] {
+        border: 1px solid blue;
+        background: #ccf;
+      }
+
+      #recipe-box[activeParent] {
+        border: 2px solid blue;
+        margin: 4px;
+        background: #aaf;
+      }
+
+      #recipe-box[activeDescendant] {
+        border: 1px solid purple;
+        background: #fcf;
+      }
+
+      #recipe-box[activeChild] {
+        border: 2px solid purple;
+        margin: 4px;
+        background: #faf;
+      }
+
+      #recipe-box[terminal] {
+        border-radius: 20px;
+      }
+
+      #recipe-box:not([resolved]) {
+        border-style: dashed;
+      }
+
+      #recipe-box[combined] {
+        background-color: lightgrey;
+      }
+
+      #hash {
+        color: #555;
+        font-style: italic;
+        text-align: center;
+      }
+
+      #recipe-box:not([resolved])>#hash {
+        display: none;
+      }
+    </style>
+    <div id='recipe-box'
+      valid$='{{recipe.valid}}'
+      active$='{{recipe.active}}'
+      selected$='{{selected}}'
+      activeParent$='{{activeParent}}'
+      activeAncestor$='{{activeAncestor}}'
+      activeChild$='{{activeChild}}'
+      activeDescendant$='{{activeDescendant}}'
+      terminal$='{{terminal}}'
+      resolved$='{{recipe.resolved}}'
+      combined$='{{recipe.combined}}'
+    ><div>{{recipe.score}}</div><div id='hash'>{{shortHash}}</div></div>
+  </template>
+
+  <script>
+    Polymer({
+      is: 'se-recipe',
+      properties: {
+        shortHash: String,
+      },
+      attached: function() {
+        document.strategyExplorer.idMap.set(this.recipe.id, this);
+
+        this.ancestors = new Set();
+        this.childrens = new Set();
+        this.set("terminal", true);
+        this.descendants = new Set();
+        this.parents = new Set();
+        this.strategyMap = new Map();
+
+        this.recipe.derivation.forEach(derivation => {
+          if (derivation.parent !== undefined) {
+            var newParent = document.strategyExplorer.idMap.get(derivation.parent);
+            if (newParent == undefined) {
+              return;
+            }
+
+            var setupContext = (newParent => {
+              this.strategyMap.set(newParent, [[derivation.strategy]]);
+              if (!this.parents.has(newParent)) {
+                this.parents.add(newParent);
+
+                newParent.strategyMap.forEach((valueList, key) => {
+                  valueList.forEach(value =>  {
+                    strategyList = value.slice();
+                    strategyList.push(derivation.strategy);
+                    if (this.strategyMap.get(key) == undefined)
+                      this.strategyMap.set(key, []);
+                    this.strategyMap.get(key).push(strategyList);
+                  });
+                });
+
+                newParent.parents.forEach(elem => this.ancestors.add(elem));
+                newParent.ancestors.forEach(elem => this.ancestors.add(elem));
+
+                newParent.childrens.add(this);
+                newParent.set("terminal", false);
+
+                newParent.parents.forEach(parent => parent.descendants.add(this));
+                newParent.ancestors.forEach(ancestor => ancestor.descendants.add(this));
+
+              }
+            });
+
+            if (newParent == undefined) {
+              if (!document.strategyExplorer.pendingActions.has(derivation.parent))
+                document.strategyExplorer.pendingActions.set(derivation.parent, []);
+              document.strategyExplorer.pendingActions.get(derivation.parent).push(setupContext);
+            } else {
+              setupContext(newParent);
+            }
+          }
+        });
+        this.shortHash = this.recipe.hash.substring(this.recipe.hash.length - 4);
+
+
+        if (document.strategyExplorer.pendingActions.has(this.recipe.id)) {
+          document.strategyExplorer.pendingActions.get(this.recipe.id).forEach(action => action(this));
+        }
+
+        var recipeView = document.documentElement.querySelector('strategy-explorer').shadowRoot.querySelector('se-recipe-view');
+        this.$['recipe-box'].addEventListener('mouseenter', e => {
+          recipeView.over = this;
+          recipeView.recipe = this.recipe;
+        });
+        this.$['recipe-box'].addEventListener('mouseleave', e => {
+          recipeView.resetToPinned();
+        });
+        this.$['recipe-box'].addEventListener('click', e => {
+          if (document._selectedBox !== undefined) {
+            document._selectedBox.selected = false;
+
+            document._selectedBox.parents.forEach(parent => parent.activeParent = false);
+            document._selectedBox.ancestors.forEach(ancestor => ancestor.activeAncestor = false);
+            document._selectedBox.childrens.forEach(child => child.activeChild = false);
+            document._selectedBox.descendants.forEach(descendant => descendant.activeDescendant = false);
+            recipeView.unpin();
+          }
+          this.selected = true;
+          this.parents.forEach(parent => parent.activeParent = true);
+          this.ancestors.forEach(ancestor => ancestor.activeAncestor = true);
+          this.childrens.forEach(child => child.activeChild = true);
+          this.descendants.forEach(descendant => descendant.activeDescendant = true);
+          document._selectedBox = this;
+
+          recipeView.over = this;
+          recipeView.recipe = this.recipe;
+          recipeView.pin();
+        });
+        document.addEventListener('select-hash', e => {
+          if (this.shortHash == e.detail) {
+            this.$['recipe-box'].click();
+          }
+        });
+
+      }
+    });
+  </script>
+</dom-module>

@@ -1,0 +1,65 @@
+<!--
+Copyright (c) 2017 Google Inc. All rights reserved.
+This code may only be used under the BSD style license found at
+http://polymer.github.io/LICENSE.txt
+Code distributed by Google as part of this project is also
+subject to an additional IP rights grant found at
+http://polymer.github.io/PATENTS.txt
+-->
+<link rel="import" href="bower_components/polymer/polymer.html">
+<script src="bower_components/jsdiff/diff.min.js"></script>
+
+<dom-module id='se-arc-view'>
+  <template>
+    <style>
+      .arc-box {
+        background: white;
+        border: 1px solid red;
+        white-space: pre;
+        font-family: consolas, 'Source Code Pro', monospace;
+        font-size: 10px;
+        margin: 20px 5px;
+        max-width: 500px;
+        padding: 5px;
+      }
+      .title {
+        font-weight: bold;
+      }
+    </style>
+    <div class='arc-box'>
+      <div hidden$="[[isArcStringEmpty(arcString)]]">
+        <div class="title">Active Arc:</div>
+        <div>{{arcString}}</div>
+        <hr>
+      </div>
+
+      <div hidden$="[[isContextStringEmpty(contextString)]]">
+        <div class="title">Arc context:</div>
+        <div>{{contextString}}</div>
+      </div>
+    </div>
+</template>
+  <script>
+    Polymer({
+      is: 'se-arc-view',
+      properties: {
+        arc: Object,
+        arcString: String,
+        contextString: String,
+      },
+      attached: function() {
+        document.addEventListener('set-arc', e => {
+          this.arc = e.detail;
+          this.arcString = this.arc.toContextString();
+          this.contextString = this.arc.context.toString();
+        });
+      },
+      isArcStringEmpty(arcString) {
+        return !arcString || arcString.length == 0;
+      },
+      isContextStringEmpty(contextString) {
+        return !contextString || contextString.length == 0;
+      },
+    });
+  </script>
+</dom-module>

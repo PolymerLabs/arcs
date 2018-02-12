@@ -1,0 +1,63 @@
+// Copyright (c) 2017 Google Inc. All rights reserved.
+// This code may only be used under the BSD style license found at
+// http://polymer.github.io/LICENSE.txt
+// Code distributed by Google as part of this project is also
+// subject to an additional IP rights grant found at
+// http://polymer.github.io/PATENTS.txt
+
+import 'FindRestaurants.manifest'
+import 'RestaurantMasterDetail.manifest'
+import 'RestaurantList.manifest'
+import 'RestaurantDetail.manifest'
+import '../Places/ExtractLocation.manifest'
+
+recipe
+  use #user as person
+  create as location
+  create as selected
+  create #restaurants #nosync as restaurants
+  ExtractLocation
+    person <- person
+    location -> location
+  FindRestaurants
+    location <- location
+    restaurants = restaurants
+  RestaurantMasterDetail
+    list <- restaurants
+    selected = selected
+  RestaurantList
+    list <- restaurants
+    selected = selected
+  RestaurantDetail
+    selected <- selected
+
+import '../Events/Event.schema'
+import '../Events/PartySize.manifest'
+import 'ReservationForm.manifest'
+import 'ReservationAnnotation.manifest'
+
+view EmptyEvent of Event in 'data/event.json'
+
+recipe
+  copy EmptyEvent as event
+//  create as event
+  ReservationForm
+    event = event
+  ReservationAnnotation
+    event = event
+  PartySize
+    event = event
+
+import '../Events/Calendar.manifest'
+
+recipe
+  Calendar
+
+import 'FavoriteFoodAnnotation.manifest'
+
+recipe
+  map #favorite as food
+  use as restaurants
+  FavoriteFoodAnnotation
+    restaurants <- restaurants
+    food <- food
