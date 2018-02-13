@@ -107,15 +107,15 @@ describe('schema', function() {
   it('performs type checking', async function() {
     let manifest = await Manifest.load('./entities/Product.manifest', new Loader());
     let Product = manifest.findSchemaByName('Product').entityClass();
-    assert.throws(() => { new Product({name: 6}); }, TypeError);
-    assert.throws(() => { new Product({url: 7}); }, TypeError);
-    assert.throws(() => { new Product({shipDays: '2'}); }, TypeError);
+    assert.throws(() => { new Product({name: 6}); }, TypeError, 'Type mismatch setting field name');
+    assert.throws(() => { new Product({url: 7}); }, TypeError, 'Type mismatch setting field url');
+    assert.throws(() => { new Product({shipDays: '2'}); }, TypeError, 'Type mismatch setting field shipDays');
 
     let product = new Product({});
-    assert.throws(() => { product.name = 6; }, TypeError);
-    assert.throws(() => { product.url = ['url']; }, TypeError);
-    assert.throws(() => { product.shipDays = {two: 2}; }, TypeError);
-    assert.throws(() => { product.isReal = 1; }, TypeError);
+    assert.throws(() => { product.name = 6; }, TypeError, 'Type mismatch setting field name');
+    assert.throws(() => { product.url = ['url']; }, TypeError, 'Type mismatch setting field url');
+    assert.throws(() => { product.shipDays = {two: 2}; }, TypeError, 'Type mismatch setting field shipDays');
+    assert.throws(() => { product.isReal = 1; }, TypeError, 'Type mismatch setting field isReal');
 
     // Should be able to clear fields.
     assert.doesNotThrow(() => { new Product({name: null, shipDays: undefined}); });
@@ -169,9 +169,67 @@ describe('schema', function() {
     assert.equal(unions.u2, undefined);
     assert.doesNotThrow(() => { new Unions({u1: null, u2: undefined}); });
 
-    assert.throws(() => { new Unions({u1: false}); }, TypeError);
-    assert.throws(() => { new Unions({u2: 25}); }, TypeError);
-    assert.throws(() => { unions.u1 = {a: 12}; }, TypeError);
-    assert.throws(() => { unions.u2 = 25; }, TypeError);
+    assert.throws(() => { new Unions({u1: false}); }, TypeError, 'Type mismatch setting field u1');
+    assert.throws(() => { new Unions({u2: 25}); }, TypeError, 'Type mismatch setting field u2');
+    assert.throws(() => { unions.u1 = {a: 12}; }, TypeError, 'Type mismatch setting field u1');
+    assert.throws(() => { unions.u2 = 25; }, TypeError, 'Type mismatch setting field u2');
+  });
+
+  it('tuple types', async function() {
+    let manifest = await Manifest.parse(`
+      schema Tuples
+        optional
+          (Text, Number) t1
+        normative
+          (URL, Object, Boolean) t2`);
+    let Tuples = manifest.findSchemaByName('Tuples').entityClass();
+    let tuples = new Tuples({t1: ['foo', 55], t2: [null, undefined, true]});
+    assert.deepEqual(tuples.t1, ['foo', 55]);
+    assert.deepEqual(tuples.t2, [null, undefined, true]);
+    tuples.t1 = ['bar', 66];
+    tuples.t2 = ['http://bar.org', {a: 77}, null];
+    assert.deepEqual(tuples.t1, ['bar', 66]);
+    assert.deepEqual(tuples.t2, ['http://bar.org', {a: 77}, null]);
+
+    tuples.t1 = null;
+    tuples.t2 = undefined;
+    assert.equal(tuples.t1, null);
+    assert.equal(tuples.t2, undefined);
+    assert.doesNotThrow(() => { new Tuples({t1: null, t2: undefined}); });
+
+    assert.throws(() => { new Tuples({t1: 'foo'}); }, TypeError,
+                  'Cannot set tuple t1 with non-array value');
+    assert.throws(() => { tuples.t2 = {a: 1}; }, TypeError,
+                  'Cannot set tuple t2 with non-array value');
+
+    assert.throws(() => { new Tuples({t1: ['foo']}); }, TypeError,
+                  'Length mismatch setting tuple t1');
+    assert.throws(() => { tuples.t2 = ['url', {}, true, 3]; }, TypeError,
+                  'Length mismatch setting tuple t2');
+
+    assert.throws(() => { new Tuples({t1: ['foo', '55']}); }, TypeError,
+                  /Type mismatch setting field t1 .* at index 1/);
+    assert.throws(() => { tuples.t2 = [12, {}, false]; }, TypeError,
+                  /Type mismatch setting field t2 .* at index 0/);
+
+    // Tuple fields should not be accessible as standard Arrays.
+    assert.throws(() => { tuples.t1.push(5); }, TypeError, 'Cannot read property');
+    assert.throws(() => { tuples.t2.shift(); }, TypeError, 'Cannot read property');
+  });
+
+  it('field with a single parenthesised value is a tuple not a union', async function() {
+    let manifest = await Manifest.parse(`
+      schema SingeValueTuple
+        optional
+          (Number) t`);
+    let SingeValueTuple = manifest.findSchemaByName('SingeValueTuple').entityClass();
+    let svt = new SingeValueTuple({t: [12]});
+    assert.deepEqual(svt.t, [12]);
+    svt.t = [34];
+    assert.deepEqual(svt.t, [34]);
+    assert.throws(() => { new SingeValueTuple({t: 56}); }, TypeError,
+                  'Cannot set tuple t with non-array value');
+    assert.throws(() => { svt.t = 78; }, TypeError,
+                  'Cannot set tuple t with non-array value');
   });
 });
