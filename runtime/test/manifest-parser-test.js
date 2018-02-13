@@ -139,11 +139,11 @@ describe('manifest parser', function() {
     `);
     parse(`
       particle Foo
-        Foo(in * {Text? value}? optionalWithOptional)
+        Foo(in * {(Text or Number) value} union)
     `);
     parse(`
       particle Foo
-        Foo(in * {(Text or Number)? value} optionalUnion)
+        Foo(in * {value} optionalType)
     `);
   });
 });

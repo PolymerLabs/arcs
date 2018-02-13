@@ -731,25 +731,24 @@ ExtendsList
 }
 
 SchemaInline
-  = name:(upperIdent / '*') whiteSpace '{' fields:(SchemaInlineField (',' whiteSpace)?)+ '}'
+  = name:(upperIdent / '*') whiteSpace '{' fields:(SchemaInlineField (',' whiteSpace SchemaInlineField)*)? '}'
   {
     return {
       kind: 'schema-inline',
       location: location(),
       name: name == '*' ? null : name,
-      fields: fields.map(field => field[0]),
+      fields: optional(fields, fields => [fields[0], ...fields[1].map(tail => tail[2])], []),
     }
   }
 
 SchemaInlineField
-  = type:SchemaType arity:SchemaArity? whiteSpace name:lowerIdent
+  = type:(SchemaType whiteSpace)? name:lowerIdent
   {
     return {
       kind: 'schema-inline-field',
       location: location(),
       name,
-      type,
-      arity,
+      type: optional(type, type => type[0], null),
     };
   }
 
@@ -775,9 +774,6 @@ SchemaSection
       fields: extractIndented(fields),
     };
   }
-
-SchemaArity
-  = '?'
 
 SchemaField
   = type:SchemaType whiteSpace name:lowerIdent
