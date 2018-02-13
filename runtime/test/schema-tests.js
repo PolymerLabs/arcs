@@ -219,15 +219,15 @@ describe('schema', function() {
 
   it('field with a single parenthesised value is a tuple not a union', async function() {
     let manifest = await Manifest.parse(`
-      schema SingeValueTuple
+      schema SingleValueTuple
         optional
           (Number) t`);
-    let SingeValueTuple = manifest.findSchemaByName('SingeValueTuple').entityClass();
-    let svt = new SingeValueTuple({t: [12]});
+    let SingleValueTuple = manifest.findSchemaByName('SingleValueTuple').entityClass();
+    let svt = new SingleValueTuple({t: [12]});
     assert.deepEqual(svt.t, [12]);
     svt.t = [34];
     assert.deepEqual(svt.t, [34]);
-    assert.throws(() => { new SingeValueTuple({t: 56}); }, TypeError,
+    assert.throws(() => { new SingleValueTuple({t: 56}); }, TypeError,
                   'Cannot set tuple t with non-array value');
     assert.throws(() => { svt.t = 78; }, TypeError,
                   'Cannot set tuple t with non-array value');
