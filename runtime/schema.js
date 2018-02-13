@@ -108,11 +108,16 @@ class Schema {
 
     let convertToJsType = fieldType => {
       switch (fieldType) {
-        case 'Text':    return 'string';
-        case 'URL':     return 'string';
-        case 'Number':  return 'number';
-        case 'Boolean': return 'boolean';
-        case 'Object':  return 'object';
+        case 'Text':
+          return 'string';
+        case 'URL':
+          return 'string';
+        case 'Number':
+          return 'number';
+        case 'Boolean':
+          return 'boolean';
+        case 'Object':
+          return 'object';
         default:
           throw new Error(`Unknown field type ${fieldType} in schema ${className}`);
       }

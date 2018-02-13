@@ -804,7 +804,7 @@ SchemaUnionType
   }
 
 SchemaTupleType
-  = '(' whiteSpace? first:SchemaType rest:(whiteSpace? ',' whiteSpace? SchemaType)* whiteSpace? ')'
+  = '(' whiteSpace? first:SchemaPrimitiveType rest:(whiteSpace? ',' whiteSpace? SchemaPrimitiveType)* whiteSpace? ')'
   {
     let types = [first];
     for (let type of rest) {
