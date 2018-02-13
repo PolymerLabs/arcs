@@ -8,7 +8,7 @@
 
 defineParticle(({DomParticle, resolver, html, log}) => {
 
-  let host = `show-list`;
+  let host = `toast-panel`;
 
   const template = html`
 <style>
