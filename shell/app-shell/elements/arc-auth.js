@@ -12,6 +12,7 @@
 // apps/web/index.html and see comment there for more.
 
 import Xen from '../../components/xen/xen.js';
+const firebase = window.firebase;
 
 class ArcAuth extends Xen.Base {
   get host() {
@@ -22,16 +23,16 @@ class ArcAuth extends Xen.Base {
       if (user) {
         ArcAuth.log(`user is [${user.displayName}]`);
         // User is signed in.
-        var displayName = user.displayName;
-        var email = user.email;
-        var emailVerified = user.emailVerified;
-        var photoURL = user.photoURL;
-        var isAnonymous = user.isAnonymous;
-        var uid = user.uid;
-        var providerData = user.providerData;
+        const displayName = user.displayName;
+        const email = user.email;
+        const emailVerified = user.emailVerified;
+        const photoURL = user.photoURL;
+        const isAnonymous = user.isAnonymous;
+        const uid = user.uid;
+        const providerData = user.providerData;
         this._credential(user);
       } else {
-        let provider = new firebase.auth.GoogleAuthProvider()
+        let provider = new firebase.auth.GoogleAuthProvider();
         if (false) {
           firebase.auth().signInWithPopup(provider).then(this._credential.bind(this));
         } else {
@@ -50,7 +51,7 @@ class ArcAuth extends Xen.Base {
     });
   }
   _credential(user) {
-    ArcAuth.log('credentials: ', user)
+    ArcAuth.log('credentials: ', user);
     this._fire('auth', user);
   }
 }

@@ -10,17 +10,18 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
 // TODO(wkorman): Note the FireBase library is loaded earlier in
 // apps/web/index.html and see comment there for more.
+const firebase = window.firebase;
 
 //let version = typeof Arcs === 'undefined' || !Arcs.version ? '/' : Arcs.version.replace(/\./g, '_');
 let db_version = '0_3_beta_3';
 
 let firebaseConfig = {
-  apiKey: "AIzaSyBme42moeI-2k8WgXh-6YK_wYyjEXo4Oz8",
-  authDomain: "arcs-storage.firebaseapp.com",
-  databaseURL: "https://arcs-storage.firebaseio.com",
-  projectId: "arcs-storage",
-  storageBucket: "arcs-storage.appspot.com",
-  messagingSenderId: "779656349412"
+  apiKey: 'AIzaSyBme42moeI-2k8WgXh-6YK_wYyjEXo4Oz8',
+  authDomain: 'arcs-storage.firebaseapp.com',
+  databaseURL: 'https://arcs-storage.firebaseio.com',
+  projectId: 'arcs-storage',
+  storageBucket: 'arcs-storage.appspot.com',
+  messagingSenderId: '779656349412'
 };
 
 let _db = firebase.initializeApp(firebaseConfig/*, 'arcs-storage'*/).database();

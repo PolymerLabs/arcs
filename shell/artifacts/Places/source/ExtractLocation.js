@@ -6,8 +6,6 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-"use strict";
-
 defineParticle(({DomParticle}) => {
   return class ExtractLocation extends DomParticle {
     _willReceiveProps(props, state, lastProps) {
@@ -19,5 +17,5 @@ defineParticle(({DomParticle}) => {
         location.set(new location.entityClass({latitude, longitude}));
       }
     }
-  }
+  };
 });

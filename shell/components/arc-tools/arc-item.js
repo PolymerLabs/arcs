@@ -24,7 +24,7 @@ const template = Xen.Template.createTemplate(
 );
 
 class ArcItem extends Xen.Base {
-  static get observedAttributes() { return ['key','data']; }
+  static get observedAttributes() { return ['key', 'data']; }
   get template() { return template; }
   get host() {
     return this;
@@ -39,4 +39,4 @@ class ArcItem extends Xen.Base {
     };
   }
 }
-customElements.define("arc-item", ArcItem);
+customElements.define('arc-item', ArcItem);

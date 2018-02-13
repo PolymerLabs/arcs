@@ -33,7 +33,7 @@ const template = Xen.Template.createTemplate(
 );
 
 class ToggleButton extends Xen.Base {
-  static get observedAttributes() { return ['icons','state']; }
+  static get observedAttributes() { return ['icons', 'state']; }
   get template() {
     return template;
   }
@@ -41,7 +41,7 @@ class ToggleButton extends Xen.Base {
     return {
       state: 0,
       icons: []
-    }
+    };
   }
   _willReceiveProps(props, state) {
     if ('state' in props) {

@@ -42,7 +42,7 @@ class SuggestionElement extends HTMLElement {
     }
   }
   set plan(plan) {
-    this.setAttribute("hash", plan.hash);
+    this.setAttribute('hash', plan.hash);
     this._plan = plan;
   }
   _onClick() {

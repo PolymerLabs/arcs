@@ -1,5 +1,5 @@
-import XenState from "./xen-state.js";
-import XenElement from "./xen-element.js";
+import XenState from './xen-state.js';
+import XenElement from './xen-element.js';
 import Xen from './xen-template.js';
 
 class XenBase extends XenElement(XenState(HTMLElement)) {

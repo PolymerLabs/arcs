@@ -8,13 +8,13 @@ Code distributed by Google as part of the polymer project is also
 subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
 */
 
-import ArcsUtils from "../lib/arcs-utils.js";
+import ArcsUtils from '../lib/arcs-utils.js';
 import Xen from '../../components/xen/xen.js';
 
 const db = window.db;
 
 class PersistentHandles extends Xen.Base {
-  static get observedAttributes() { return ['arc','key','handles']; }
+  static get observedAttributes() { return ['arc', 'key', 'handles']; }
   _getInitialState() {
     return {
       watchers: []
@@ -63,7 +63,7 @@ class PersistentHandles extends Xen.Base {
   }
   // Synchronize a local variable with a remote variable.
   _syncVariable(arc, localVariable, remoteVariable) {
-    var initialLoad = true;
+    let initialLoad = true;
     const callback = remoteVariable.on('value', snapshot => {
       const localValue = localVariable._stored;
       const remoteValue = snapshot.val();

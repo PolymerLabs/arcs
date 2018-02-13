@@ -6,8 +6,6 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-"use strict";
-
 defineParticle(({DomParticle}) => {
 
   let host = `party-size`;
@@ -62,7 +60,7 @@ ${styles}
     <select on-change="_onPartySizeChanged">
       <option value="1" selected$={{selected1}}>1 person</option>
       <option value="2" selected$={{selected2}}>2 people</option>
-      ${[3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]
+      ${[3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
         .map(i => `<option value="${i}" selected$={{selected${i}}}>${i} people</option>`).join('')}
       <option value="21" selected$={{selected21}}>Larger party</option>
     </select>
@@ -75,16 +73,16 @@ ${styles}
       return template;
     }
     _willReceiveProps(props, state) {
-      const event = Object.assign({}, props.event.rawData || { participants: 2 });
+      const event = Object.assign({}, props.event.rawData || {participants: 2});
 
-      this._setState({ currentEvent: event });      
+      this._setState({currentEvent: event});
     }
     _shouldRender(props, state) {
       return Boolean(state.currentEvent);
     }
     _render(props, state) {
-      var partySize = parseInt(state.currentEvent.participants);
-      var selected = {};
+      const partySize = parseInt(state.currentEvent.participants);
+      const selected = {};
       for (let i = 1; i <= 21; ++i) {
         selected[`selected${i}`] = Boolean(partySize == i);
       }

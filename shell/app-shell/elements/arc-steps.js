@@ -11,7 +11,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 import Xen from '../../components/xen/xen.js';
 
 class ArcSteps extends Xen.Base {
-  static get observedAttributes() { return ['plans','plan','steps','step']; }
+  static get observedAttributes() { return ['plans', 'plan', 'steps', 'step']; }
   _getInitialState() {
     return {
       steps: [],
@@ -37,7 +37,7 @@ class ArcSteps extends Xen.Base {
   _addStep(plan, generations, steps, applied) {
     let step = this._createStep(plan, generations);
     if (step && !steps.find(s => s.hash === step.hash)) {
-      //ArcSteps.log("createStep", step);
+      //ArcSteps.log('createStep', step);
       steps.push(step);
       applied[step.hash] = true;
       this._fire('steps', steps);
@@ -51,7 +51,7 @@ class ArcSteps extends Xen.Base {
       if (planStep) {
         ArcSteps.log('found suggestion for step'); //, planStep);
         this._state.applied[step.hash] = true;
-        this._fire('step', planStep)
+        this._fire('step', planStep);
         return;
       } else {
         ArcSteps.log('rejecting step'); //, step);
@@ -80,7 +80,7 @@ class ArcSteps extends Xen.Base {
       // TODO(wkorman): Rename `views` below to `handles` which may
       // necessitate revising the launcher.
       let mappedHandles = plan.views
-        .filter(v => (v.fate == "map") && (v.id.substr(0, 7) == "shared:"))
+        .filter(v => (v.fate == 'map') && (v.id.substr(0, 7) == 'shared:'))
         .map(v => v.id)
         .sort()
         .toString()
@@ -99,7 +99,7 @@ class ArcSteps extends Xen.Base {
       generation => last_generation = generation.find(member => member.result == plan)
     );
     if (!last_generation) {
-      ArcSteps.log("no originating generation found for", plan);
+      ArcSteps.log('no originating generation found for', plan);
     } else {
       // Walk derivation tree up to root. All paths will lead to the same root,
       // hence we can always take the first branch.
@@ -113,7 +113,7 @@ class ArcSteps extends Xen.Base {
   findStep(plan, generations) {
     let step = this._createOriginatingStep(plan, generations);
     if (!step) {
-      ArcSteps.warn("can't find first generation of", plan, "in", generations);
+      ArcSteps.warn(`can't find first generation of`, plan, 'in', generations);
     } else {
       // TODO: Allow re-applying same step unless its on the root slot.
       // Will make sense once verbs, etc. work and different slots, etc.
@@ -124,7 +124,7 @@ class ArcSteps extends Xen.Base {
           return matchingStep;
         } else {
           let nearMiss = this._steps.find(s => s.hash == step.hash);
-          nearMiss && ArcSteps.log("Almost auto-applied step: ", nearMiss);
+          nearMiss && ArcSteps.log('Almost auto-applied step: ', nearMiss);
         }
       }
     }

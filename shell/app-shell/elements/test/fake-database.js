@@ -30,7 +30,7 @@ class FakeDatabase {
   push(values) {
     const newKey = FakeDatabase.nextId();
     this._data[newKey] = values;
-    return { key: newKey };
+    return {key: newKey};
   }
   update(values) {
     this._lastUpdate = values;

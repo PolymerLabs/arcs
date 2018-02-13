@@ -6,11 +6,7 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-"use strict";
-
-defineParticle(({DomParticle, resolver}) => {
-
-  const html = (strings, ...values) => (strings[0]  + values.map((v, i) => v + strings[i+1]).join('')).trim();
+defineParticle(({DomParticle, resolver, html}) => {
 
   let host = `google-map`;
 

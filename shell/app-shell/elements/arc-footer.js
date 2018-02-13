@@ -8,10 +8,10 @@ Code distributed by Google as part of the polymer project is also
 subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
 */
 
-import ArcsUtils from "../lib/arcs-utils.js";
+import ArcsUtils from '../lib/arcs-utils.js';
 import Xen from '../../components/xen/xen.js';
-import "../../components/dancing-dots.js";
-import "../../components/x-toast.js";
+import '../../components/dancing-dots.js';
+import '../../components/x-toast.js';
 
 const template = Xen.Template.createTemplate(
   `<style>

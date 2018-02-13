@@ -6,8 +6,6 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-"use strict";
-
 defineParticle(({DomParticle, resolver}) => {
 
   let host = `friends-picker`;
@@ -64,7 +62,7 @@ ${styles}
       let friends = props.friends || [];
       let people = (props.people || []).filter(p => p.id !== user.id);
       let avatars = props.avatars || [];
-      console.log('%cFriendsPicker: avatars.length=', 'background-color: silver; padding: 4px 8px; border-radius: 4px', avatars.length)
+      console.log('%cFriendsPicker: avatars.length=', 'background-color: silver; padding: 4px 8px; border-radius: 4px', avatars.length);
       let avatarModels = people.map((p, i) => {
         let avatar = avatars.find(a => a.owner === p.id);
         //console.log(p.id, avatar, avatars);

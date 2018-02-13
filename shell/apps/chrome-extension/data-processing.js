@@ -18,7 +18,7 @@ function filter(entities) {
       return accumulator;
     }, []);
     return accumulator;
-  }, new Object());
+  }, {});
 }
 
 /**
@@ -45,7 +45,7 @@ function flatten(entities) {
         : (accumulator[type] = [entry]);
     });
     return accumulator;
-  }, new Object());
+  }, {});
 }
 
 /** Returns true iff a & b are pointers to the same object, or if their naive
@@ -70,5 +70,5 @@ function deduplicate(entities) {
       return accumulator;
     }, []);
     return accumulator;
-  }, new Object());
+  }, {});
 }

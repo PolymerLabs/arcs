@@ -38,7 +38,7 @@ class RemoteVisitedArcs extends Xen.Base {
         return {
           node: db.child(`arcs/${key}/`),
           handler: snap => this._watchHandler(data, user, snap)
-        }
+        };
       });
     } else {
       this._fire('arcs', []);

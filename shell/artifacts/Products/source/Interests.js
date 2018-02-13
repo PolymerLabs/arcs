@@ -8,8 +8,6 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-"use strict";
-
 defineParticle(({DomParticle}) => {
 
   let template = `
@@ -30,7 +28,7 @@ defineParticle(({DomParticle}) => {
         props.list.forEach(item => {
           switch (item.name) {
             case 'Field Hockey Stick':
-              items.push({caption: "<br><br><hr><h2>Field Hockey</h2><i>... is a sport played on a field.</i><hr><br><br>"});
+              items.push({caption: '<br><br><hr><h2>Field Hockey</h2><i>... is a sport played on a field.</i><hr><br><br>'});
               break;
           }
         });

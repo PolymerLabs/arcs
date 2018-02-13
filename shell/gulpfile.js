@@ -35,7 +35,7 @@ let arcsBuild = async (path) => {
     const sigh = normalize('tools/sigh.js');
     await execSync(`node ${sigh} webpack`, options);
     await execSync(`node ${sigh} test`, options);
-  } catch(e) {
+  } catch (e) {
     console.log(`error running arcs build`, e);
 
     // allow the arcs-cdn build to be continued even if the arcs build is
@@ -86,7 +86,7 @@ let pack = async (files) => {
       });
     }
 
-  } catch(x) {
+  } catch (x) {
     // in case of emergency, break glass .. then stay calm and carry on watching
     console.log(x);
   }

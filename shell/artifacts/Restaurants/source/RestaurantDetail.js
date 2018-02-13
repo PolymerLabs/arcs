@@ -6,8 +6,6 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-"use strict";
-
 defineParticle(({DomParticle}) => {
 
   let host = `restaurant-detail`;
@@ -102,7 +100,7 @@ ${styles}
         detail = {
           rating: state.detail.rating,
           reviews: state.detail.reviews.length,
-          kind: state.detail.types.slice(0,3).join(' - ').replace(/_/g, ' '),
+          kind: state.detail.types.slice(0, 3).join(' - ').replace(/_/g, ' '),
           addr: state.detail.adr_address
         };
       }

@@ -8,7 +8,7 @@ Code distributed by Google as part of the polymer project is also
 subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
 */
 
-import "./data-explorer.js";
+import './data-explorer.js';
 import Xen from './xen/xen.js';
 
 const template = Xen.Template.createTemplate(
@@ -22,7 +22,7 @@ const template = Xen.Template.createTemplate(
 );
 
 class DataItem extends Xen.Base {
-  static get observedAttributes() { return ['name','value']; }
+  static get observedAttributes() { return ['name', 'value']; }
   get template() {
     return template;
   }

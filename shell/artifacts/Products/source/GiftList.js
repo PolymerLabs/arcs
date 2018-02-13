@@ -6,8 +6,6 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-"use strict";
-
 defineParticle(({DomParticle}) => {
 
   let template = `
@@ -37,7 +35,7 @@ defineParticle(({DomParticle}) => {
       let {person} = props;
       let name = (person && person.name) || 'n/a';
       let inOneWeek =
-        new Date(new Date().setHours(21*24))  // Advance time by three weeks
+        new Date(new Date().setHours(21*24)) // Advance time by three weeks
           .toISOString().substr(0, 10);
       return {
         person: name,

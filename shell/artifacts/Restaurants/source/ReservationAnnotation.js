@@ -6,8 +6,6 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-"use strict";
-
 defineParticle(({DomParticle}) => {
 
   let host = `reservation-form`;
@@ -103,7 +101,7 @@ ${styles}
     <select on-change="_onPartySizeChanged">
       <option value="1" selected$={{selected1}}>1 person</option>
       <option value="2" selected$={{selected2}}>2 people</option>
-      ${[3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]
+      ${[3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
         .map(i => `<option value="${i}" selected$={{selected${i}}}>${i} people</option>`).join('')}
       <option value="21" selected$={{selected21}}>Larger party</option>
     </select>
@@ -124,24 +122,24 @@ ${styles}
     _willReceiveProps(props, state) {
       if (!props.event) {
         const now = this.toDateInputValue(new Date());
-        const event = { startDate: now, endDate: now, participants: 2 };
-        this._setState({ currentEvent: event });
+        const event = {startDate: now, endDate: now, participants: 2};
+        this._setState({currentEvent: event});
       } else {
         const event = props.event;
-        this._setState({ currentEvent: event });
+        this._setState({currentEvent: event});
       }
     }
     toDateInputValue(date) {
       let local = new Date(date);
       local.setMinutes(date.getMinutes() - date.getTimezoneOffset());
-      return local.toJSON().slice(0,16);
+      return local.toJSON().slice(0, 16);
     }
     makeUpReservationTimes(id, partySize, date, n) {
       // Start at (n-1)/2 half hours before the desired reservation time
       let t = new Date(date);
       t.setMinutes(t.getMinutes() - (n-1)/2*30);
       let hour = (t.getHours()) % 24;
-      let minute = t.getMinutes() >= 30 ? "30" : "00";
+      let minute = t.getMinutes() >= 30 ? '30' : '00';
 
       // Seed per restaurant and day
       let seed = parseInt(id.substr(0, 8), 16);
@@ -160,11 +158,11 @@ ${styles}
         });
 
         // Increment time slot
-        if (minute == "30") {
+        if (minute == '30') {
           hour = (hour + 1) % 24;
-          minute = "00";
+          minute = '00';
         } else {
-          minute = "30";
+          minute = '30';
         }
       }
 
@@ -176,7 +174,7 @@ ${styles}
       }
     }
     _renderSingle(restaurant, date, partySize) {
-      let restaurantId = restaurant.id || "";
+      let restaurantId = restaurant.id || '';
       let times = this.makeUpReservationTimes(restaurantId, partySize, date, 5);
       return {
         subId: restaurantId,
@@ -184,12 +182,12 @@ ${styles}
           $template: 'available-times',
           models: times
         }
-      }
+      };
     }
     _renderList(list, date, partySize) {
       return {
         items: list.map(restaurant => this._renderSingle(restaurant, date, partySize))
-      }
+      };
     }
   };
 

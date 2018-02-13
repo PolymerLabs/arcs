@@ -8,7 +8,7 @@
 
 'use strict';
 
-defineParticle(({ DomParticle, log, html }) => {
+defineParticle(({DomParticle, log, html}) => {
 
   const host = 'arcs-list';
 

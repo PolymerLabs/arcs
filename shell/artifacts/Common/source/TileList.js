@@ -6,8 +6,6 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-"use strict";
-
 defineParticle(({DomParticle, html, log}) => {
 
   let host = `show-tiles`;
@@ -71,7 +69,7 @@ defineParticle(({DomParticle, html, log}) => {
       }
     }
     _render({items}) {
-      const sorted = items.sort((a,b) => a.name > b.name ? 1 : a.name === b.name ? 0 : -1);
+      const sorted = items.sort((a, b) => a.name > b.name ? 1 : a.name === b.name ? 0 : -1);
       return {
         items: {
           $template: 'tiled-items',

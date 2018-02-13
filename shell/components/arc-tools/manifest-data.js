@@ -20,21 +20,21 @@ const template = Xen.Template.createTemplate(
     }
   </style>
   <div banner>Manifests</div>
-  <div style="padding: 4px;">
-    <button on-click="_onApply" disabled="{{applyDisabled}}">Apply Changes</button>
+  <div style='padding: 4px;'>
+    <button on-click='_onApply' disabled='{{applyDisabled}}'>Apply Changes</button>
   </div>
   <div>{{items}}</div>
   <br>`
 );
 
 const manifestItem = Xen.Template.createTemplate(
-  `<div style="padding: 8px 0; border-top: 1px dotted silver;" style%="{{style}}">
-    <label title="{{url}}" style="display: flex; align-items: center;">
-      <input style="vertical-align: middle; margin: 0 8px; flex-shrink: 0;" type="checkbox" checked="{{include}}" key="{{key}}" on-click="_onCheckInput">
+  `<div style='padding: 8px 0; border-top: 1px dotted silver;' style%='{{style}}'>
+    <label title='{{url}}' style='display: flex; align-items: center;'>
+      <input style='vertical-align: middle; margin: 0 8px; flex-shrink: 0;' type='checkbox' checked='{{include}}' key='{{key}}' on-click='_onCheckInput'>
       <div>
-        <div style="font-size:0.7em;">{{url}}</div>
-        <!--<div style="font-size:0.7em; font-style:italic;">{{origin}}</div>
-        <div style="font-size:0.9em; padding: 4px 0;">{{path}}</div>-->
+        <div style='font-size:0.7em;'>{{url}}</div>
+        <!--<div style='font-size:0.7em; font-style:italic;'>{{origin}}</div>
+        <div style='font-size:0.9em; padding: 4px 0;'>{{path}}</div>-->
       </div>
     </label>
   </div>`
@@ -104,4 +104,4 @@ class ManifestData extends HTMLElement {
     this.dirty = false;
   }
 }
-customElements.define("manifest-data", ManifestData);
+customElements.define('manifest-data', ManifestData);
