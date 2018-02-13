@@ -8,7 +8,7 @@
 
 defineParticle(({DomParticle, resolver, html, log}) => {
 
-  let host = `show-list`;
+  let host = `detail-slider`;
 
   const template = html`
 <style>
@@ -25,7 +25,7 @@ defineParticle(({DomParticle, resolver, html, log}) => {
   [${host}][open] {
     transform: translate3d(0, 0, 0);
   }
-  [${host}] [scrim] {
+  [${host}] > [scrim] {
     position: absolute;
     top: 0;
     right: 0;
@@ -35,7 +35,7 @@ defineParticle(({DomParticle, resolver, html, log}) => {
     background-color: gray;
     opacity: 0.5;
   }
-  [${host}] [dialog] {
+  [${host}] > [dialog] {
     position: absolute;
     top: 2%;
     right: 4px;
@@ -46,12 +46,19 @@ defineParticle(({DomParticle, resolver, html, log}) => {
     box-shadow: 0px 0px 8px 4px rgba(102,102,102,0.25);
     border-radius: 16px;
   }
+  [${host}] > [dialog] > [back-button] {
+    background-color: transparent;
+    border: none;
+    position: absolute;
+    right: 24px;
+    top: 26px;
+  }
 </style>
 
-<div ${host} modal open$="{{open}}" on-click="onOuterClick">
+<div ${host} modal open$="{{open}}" on-click="onBack">
   <div scrim></div>
-  <div dialog on-click="onInnerClick">
-    <div>I'm a Panel</div>
+  <div dialog>
+    <i back-button class="material-icons" on-click="onBack">close</i>
     <div slotid="content"></div>
   </div>
 </div>
@@ -61,19 +68,25 @@ defineParticle(({DomParticle, resolver, html, log}) => {
     get template() {
       return template;
     }
-    _render({uiState}) {
-      return {
-        open: Boolean(uiState && uiState.open)
-      };
+    _render({selected}, state) {
+      let hide = true;
+      const open = Boolean(selected && (selected.name || selected.id));
+      if (open || state.open) {
+        // we are or were open, so don't hide right away
+        hide = false;
+      }
+      if (!open && state.open) {
+        // about to close, wait for animation before hiding
+        // state.open will be false next update (note: an update may occur before the timeout)
+        setTimeout(() => this._setState(), 400);
+      }
+      // record new open state
+      state.open = open;
+      return {hide, open};
     }
-    onInnerClick() {
-    }
-    onOuterClick() {
-      this.close();
-    }
-    close() {
-      const handle = this._views.get('uiState');
-      handle.set(new (handle.entityClass)({open: false}));
+    onBack() {
+      // remove selection
+      this._views.get('selected').clear();
     }
   };
 });

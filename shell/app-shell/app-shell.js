@@ -28,7 +28,7 @@ import './elements/remote-shared-handles.js';
 import './elements/remote-visited-arcs.js';
 
 // tools
-//import '../components/arc-tools/explorer-hotkey.js';
+import '../components/arc-tools/explorer-hotkey.js';
 import '../components/arc-tools/handle-explorer.js';
 import '../components/arc-tools/local-data.js';
 import '../components/arc-tools/manifest-data.js';
@@ -160,6 +160,7 @@ const template = ArcsUtils.html`
     margin: 0 auto;
     box-sizing: border-box;
     pointer-events: none;
+    color: black;
   }
   /* wider-than-mobile */
   @media (min-width: 500px) {
@@ -181,7 +182,7 @@ const template = ArcsUtils.html`
   }
 </style>
 
-<app-main launcher$='{{launcher}}'>
+<app-main launcher$='{{launcher}}' style='{{shellThemeStyle}}'>
   <agents>
     <!--<arc-auth on-auth='_onAuth'></arc-auth>-->
     <arc-config rootpath='{{cdnPath}}' on-config='_onConfig'></arc-config>
