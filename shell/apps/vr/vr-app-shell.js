@@ -1,6 +1,7 @@
+import ArcsUtils from '../../app-shell/lib/arcs-utils.js';
 import AppShell from '../../app-shell/app-shell.js';
 
-const template = `
+const template = ArcsUtils.html`
   <style>
     x-toast {
       position: fixed;
@@ -60,17 +61,6 @@ const template = `
     <div slotid='suggestions'></div>
   </arc-footer>
 </footer>
-
-<!--
-  <x-toast app-footer open="{{toastOpen}}" suggestion-container>
-    <dancing-dots slot="toast-header" disabled="{{dotsDisabled}}" active="{{dotsActive}}"></dancing-dots>
-    <div search>
-      <input value="{{searchText}}" on-input="_onSearch">
-      <i class="material-icons" on-click="_onSearchClick">search</i>
-    </div>
-    <suggestions-element suggestions="{{suggestions}}" on-plan-selected="_onPlanSelected"></suggestions-element>
-  </x-toast>
--->
 `;
 
 class VrAppShell extends AppShell {
@@ -79,17 +69,10 @@ class VrAppShell extends AppShell {
   }
   _onConfig(e, config) {
     config.containerKind = 'a-entity';
+    config.soloPath = 'arc.manifest';
+    config.key = config.key || '*';
     super._onConfig(e, config);
   }
-  /*
-  _start(config) {
-    config.containerKind = 'a-entity';
-    super._start(config);
-  }
-  async _fetchManifestList() {
-    return ['arc.manifest'];
-  }
-  */
 }
 customElements.define('vr-app-shell', VrAppShell);
 
