@@ -8,8 +8,6 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-const assert = chai.assert;
-
 afterEach(function() {
   target.innerHTML = '';
 });
