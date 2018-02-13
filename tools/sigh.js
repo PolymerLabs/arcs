@@ -237,7 +237,11 @@ function test(args) {
   });
 
   const testsInDir = dir => findProjectFiles(dir, fullPath => {
-    let isSelectedTest = options.manual == fullPath.includes('manual_test');
+    // TODO(wkorman): Integrate shell testing more deeply into sigh testing. For
+    // now we skip including shell tests in the normal sigh test flow and intend
+    // to instead run them via a separate 'npm test' command.
+    if (fullPath.startsWith(fixPathForWindows(`${dir}/shell/`))) return false;
+    const isSelectedTest = options.manual == fullPath.includes('manual_test');
     return /-tests?.js$/.test(fullPath) && isSelectedTest;
   });
 
