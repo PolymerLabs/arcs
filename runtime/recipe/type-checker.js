@@ -46,9 +46,7 @@ class TypeChecker {
     // TODO: direction?
     let type;
     if (leftType.isVariable) {
-      if (!rightType.isVariable) {
-        leftType.variable.resolution = rightType;
-      }
+      leftType.variable.resolution = rightType;
       type = right;
     } else if (rightType.isVariable) {
       rightType.variable.resolution = leftType;
