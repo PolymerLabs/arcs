@@ -2,10 +2,42 @@
 <html lang="en">
 <head>
 
-  <title>ArcsVR</title>
-
+  <title>Arcs</title>
   <meta charset="utf-8">
+  <link rel="manifest" href="manifest.json"/>
   <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+  <link rel="shortcut icon" href="../logo_64.png">
+  <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
+
+  <style>
+    body {
+      font-family: 'Roboto', sans-serif;
+      margin: 0;
+      overflow-x: hidden;
+      overflow-y: scroll;
+    }
+    @font-face {
+      font-family: 'Material Icons';
+      font-style: normal;
+      font-weight: 400;
+      src: url(https://fonts.gstatic.com/s/materialicons/v30/2fcrYFNaTjcS6g4U3t-Y5ZjZjT5FdEJ140U2DJYC3mY.woff2) format('woff2');
+    }
+  </style>
+
+  <script>
+    window.shellPath = "../..";
+  </script>
+
+  <!-- TODO(wkorman): Ideally move Firebase script load to arc-store.js.
+      Currently the FireBase library is not ES Module compatible.
+      See also https://github.com/firebase/firebase-js-sdk/issues/100 -->
+  <script src="https://www.gstatic.com/firebasejs/4.2.0/firebase.js"></script>
+  <!-- firebase config is required before loading runtime -->
+  <script type="module" src="../../app-shell/firebase-config.js"></script>
+
+  <!-- load runtime (from build [lib] or source [source])-->
+  <script type="module" src="../../lib/ArcsLib.js"></script>
+  <!--<script type="module" src="../../source/ArcsLib.js"></script>-->
 
   <script src="https://rawgit.com/aframevr/aframe/f8cb168/dist/aframe-master.js"></script>
   <script src="https://unpkg.com/aframe-event-set-component@3.0.3/dist/aframe-event-set-component.min.js"></script>
@@ -17,70 +49,7 @@
 </head>
 <body>
 
-  <link rel="import" href="../../app-shell/app-shell.html">
-
-  <style>
-    x-toast {
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      background-color: white;
-    }
-    [search] {
-      display: flex;
-      align-items: center;
-      padding: 4px;
-      border-bottom: 1px dotted silver;
-    }
-    [search] input {
-      flex: 1;
-      padding: 7px;
-      border: none;
-      outline: none;
-    }
-  </style>
-
-  <template>
-    <a-scene id="particles" Xgridhelper="size:8" physics="debug: false">
-      <a-entity light="type:directional; castShadow: true;" position="1 1 1"></a-entity>
-      <a-sky color="#DCDCDC" src="assets/tokyo (candy bar).jpg"></a-sky>
-      <a-camera position="0 0 0"></a-camera>
-      <a-assets timeout="60000" slotid="assets">
-          <!-- Slot that can be used to add assets to the scene. Note <a-assets> needs
-            to be a child of the scene. -->
-      </a-assets>
-      <a-entity slotid="root"></a-entity>
-    </a-scene>
-    <x-toast app-footer open="{{toastOpen}}" suggestion-container>
-      <dancing-dots slot="toast-header" disabled="{{dotsDisabled}}" active="{{dotsActive}}"></dancing-dots>
-      <div search>
-        <input value="{{searchText}}" on-input="_onSearch">
-        <i class="material-icons" on-click="_onSearchClick">search</i>
-      </div>
-      <suggestions-element suggestions="{{suggestions}}" on-plan-selected="_onPlanSelected"></suggestions-element>
-    </x-toast>
-  </template>
-
-  <script>
-    class VrAppShell extends AppShell {
-      get template() {
-        return document.querySelector('template');
-      }
-      _start(config) {
-        config.containerKind = 'a-entity';
-        super._start(config);
-      }
-      async _fetchManifestList() {
-        return ['arc.manifest'];
-      }
-    }
-    customElements.define('vr-app-shell', VrAppShell);
-
-    document.addEventListener('configure', e => {
-      //console.log(e.detail);
-    });
-  </script>
+  <script type="module" src="vr-app-shell.js"></script>
 
   <vr-app-shell></vr-app-shell>
 
