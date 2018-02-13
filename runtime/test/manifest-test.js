@@ -380,10 +380,16 @@ describe('manifest', function() {
     let manifest = await Manifest.parse(`
       schema Foo
         optional
-          (Text or URL) value
-        optional
-          Text test`);
-    let verify = (manifest) => assert.deepEqual(manifest.schemas.Foo.optional.value, ['Text', 'URL']);
+          (Text or URL) u
+          Text test
+          (Number, Number, Boolean) t`);
+    let verify = (manifest) => {
+      let opt = manifest.schemas.Foo.optional;
+      assert.equal(opt.u.kind, 'schema-union');
+      assert.deepEqual(opt.u.types, ['Text', 'URL']);
+      assert.equal(opt.t.kind, 'schema-tuple');
+      assert.deepEqual(opt.t.types, ['Number', 'Number', 'Boolean']);
+    };
     verify(manifest);
     verify(await Manifest.parse(manifest.toString()));
   });

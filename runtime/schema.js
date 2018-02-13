@@ -137,40 +137,40 @@ class Schema {
         return;
       }
 
-      switch (fieldType.typeKind) {
-        case 'union':
+      switch (fieldType.kind) {
+        case 'schema-union':
           // Value must be a primitive that matches one of the union types.
-          for (let innerType of fieldType.typeList) {
+          for (let innerType of fieldType.types) {
             if (typeof(value) === convertToJsType(innerType)) {
               return;
             }
           }
           throw new TypeError(
-              `Type mismatch ${op}ting field ${name} (union [${fieldType.typeList}]); ` +
+              `Type mismatch ${op}ting field ${name} (union [${fieldType.types}]); ` +
               `value '${value}' is type ${typeof(value)}`);
           break;
 
-        case 'tuple':
+        case 'schema-tuple':
           // Value must be an array whose contents match each of the tuple types.
           if (!Array.isArray(value)) {
             throw new TypeError(`Cannot ${op} tuple ${name} with non-array value '${value}'`);
           }
-          if (value.length != fieldType.typeList.length) {
+          if (value.length != fieldType.types.length) {
             throw new TypeError(`Length mismatch ${op}ting tuple ${name} ` +
-                                `[${fieldType.typeList}] with value '${value}'`);
+                                `[${fieldType.types}] with value '${value}'`);
           }
-          fieldType.typeList.map((innerType, i) => {
+          fieldType.types.map((innerType, i) => {
             if (value[i] !== undefined && value[i] !== null &&
                 typeof(value[i]) !== convertToJsType(innerType)) {
               throw new TypeError(
-                  `Type mismatch ${op}ting field ${name} (tuple [${fieldType.typeList}]); ` +
+                  `Type mismatch ${op}ting field ${name} (tuple [${fieldType.types}]); ` +
                   `value '${value}' has type ${typeof(value[i])} at index ${i}`);
             }
           });
           break;
 
         default:
-          throw new Error(`Unknown typeKind ${typeKind} in schema ${className}`);
+          throw new Error(`Unknown kind ${kind} in schema ${className}`);
       }
     };
 
@@ -243,7 +243,22 @@ class Schema {
       if (Object.keys(properties).length > 0) {
         results.push(`  ${keyword}`);
         Object.keys(properties).forEach(name => {
-          let schemaType = Array.isArray(properties[name]) && properties[name].length > 1 ? `(${properties[name].join(' or ')})` : properties[name];
+          let property = properties[name];
+          let schemaType;
+          if (typeof(property) === 'object') {
+            switch (property.kind) {
+              case 'schema-union':
+                schemaType = `(${property.types.join(' or ')})`;
+                break;
+              case 'schema-tuple':
+                schemaType = `(${property.types.join(', ')})`;
+                break;
+              default:
+                throw new Error(`Unknown kind ${property.kind} in schema ${this.name}`);
+            }
+          } else {
+            schemaType = property;
+          }
           results.push(`    ${schemaType} ${name}`);
         });
       }

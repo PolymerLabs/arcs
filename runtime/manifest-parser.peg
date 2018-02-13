@@ -38,18 +38,6 @@
       }
       return;
     }
-    if (result.typeKind) {
-      if (!['union', 'tuple'].includes(result.typeKind)) {
-        throw new Error(`invalid 'typeKind' in ${JSON.stringify(result)}`);
-      }
-      if (!result.typeList) {
-        throw new Error(`no 'typeList' in ${JSON.stringify(result)}`);
-      }
-      for (let item of result.typeList) {
-        checkNormal(item);
-      }
-      return;
-    }
     if (!result.location) {
       throw new Error(`no 'location' in ${JSON.stringify(result)}`);
     }
@@ -808,21 +796,21 @@ SchemaPrimitiveType
 SchemaUnionType
   = '(' whiteSpace? first:SchemaPrimitiveType rest:(whiteSpace 'or' whiteSpace SchemaPrimitiveType)+ whiteSpace? ')'
   {
-    let typeList = [first];
+    let types = [first];
     for (let type of rest) {
-      typeList.push(type[3]);
+      types.push(type[3]);
     }
-    return { typeKind: 'union', typeList };
+    return {kind: 'schema-union', location: location(), types};
   }
 
 SchemaTupleType
   = '(' whiteSpace? first:SchemaType rest:(whiteSpace? ',' whiteSpace? SchemaType)* whiteSpace? ')'
   {
-    let typeList = [first];
+    let types = [first];
     for (let type of rest) {
-      typeList.push(type[3]);
+      types.push(type[3]);
     }
-    return { typeKind: 'tuple', typeList };
+    return {kind: 'schema-tuple', location: location(), types};
   }
 
 Version
