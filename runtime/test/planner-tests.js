@@ -817,8 +817,8 @@ describe('Type variable resolution', function() {
     assert.equal(0, plans.length);
   };
   it('unresolved type variables', async () => {
-    // [~a] doesn't resolve from Thing.
-    verifyUnresolvedPlan(`
+    // [~a] doesn't resolve to Thing.
+    await verifyUnresolvedPlan(`
       schema Thing
       particle P
         P(in ~a thing)
@@ -828,7 +828,8 @@ describe('Type variable resolution', function() {
           thing <- mythings
       view MyThings of [Thing] #mythings in 'things.json'`);
 
-    verifyUnresolvedPlan(`
+    // ~a doesn't resolve to [Thing]
+    await verifyUnresolvedPlan(`
       schema Thing
       particle P
         P(in [~a] things)
@@ -837,10 +838,25 @@ describe('Type variable resolution', function() {
         P
           things <- mything
       view MyThing of Thing #mything in 'thing.json'`);
+
+    // Different handles using the same type variable don't resolve to different type storages.
+    await verifyUnresolvedPlan(`
+      schema Thing1
+      schema Thing2
+      particle P
+        P(in [~a] manyThings, out ~a oneThing)
+      recipe
+        map #manything as manythings
+        map #onething as onething
+        P
+          manyThings <- manythings
+          oneThing -> onething
+      view ManyThings of [Thing1] #manythings in 'things.json'
+      view OneThing of Thing2 #onething in 'thing.json'`);
   });
 
   it('simple particles type variable resolution', async () => {
-    verifyResolvedPlan(`
+    await verifyResolvedPlan(`
       schema Thing1
       particle P1
         P1(in [Thing1] things)
@@ -854,7 +870,7 @@ describe('Type variable resolution', function() {
           things <- mythings
       view MyThings of [Thing1] #mythings in 'things.json'`);
 
-    verifyResolvedPlan(`
+    await verifyResolvedPlan(`
       schema Thing1
       schema Thing2
       particle P2
@@ -869,7 +885,7 @@ describe('Type variable resolution', function() {
       view MyThings1 of [Thing1] #mythings1 in 'things1.json'
       view MyThings2 of [Thing2] #mythings2 in 'things2.json'`);
 
-    verifyResolvedPlan(`
+    await verifyResolvedPlan(`
       schema Thing1
       schema Thing2
       particle P2
@@ -882,6 +898,20 @@ describe('Type variable resolution', function() {
           things2 <- mythings2
       view MyThings1 of [Thing1] #mythings1 in 'things1.json'
       view MyThings2 of [Thing2] #mythings2 in 'things2.json'`);
+
+    await verifyResolvedPlan(`
+      schema Thing
+      particle P1
+        P1(in [~a] things1)
+      particle P2
+        P2(in [~b] things2)
+      recipe
+        map #mythings as mythings
+        P1
+          things1 <- mythings
+        P2
+          things2 <- mythings
+      view MyThings of [Thing] #mythings in 'things.json'`);
   });
 
   it('transformation particles type variable resolution', async () => {
@@ -894,7 +924,7 @@ particle Muxer in 'Muxer.js'
   Muxer(host HostedShape hostedParticle, in [~a] list)`;
 
     // One transformation particle
-    verifyResolvedPlan(`
+    await verifyResolvedPlan(`
 ${particleSpecs}
 recipe
   map #mythings as mythings
@@ -905,7 +935,7 @@ schema Thing1
 view MyThings of [Thing1] #mythings in 'things.json'`);
 
     // Two transformation particles hosting the same particle with same type storage.
-    verifyResolvedPlan(`
+    await verifyResolvedPlan(`
 ${particleSpecs}
 recipe
   map #mythings1 as mythings1
@@ -921,7 +951,7 @@ view MyThings1 of [Thing1] #mythings1 in 'things.json'
 view MyThings2 of [Thing1] #mythings2 in 'things.json'`);
 
     // Two transformation particle hosting the same particle with different type storage.
-    verifyResolvedPlan(`
+    await verifyResolvedPlan(`
 ${particleSpecs}
 particle P2
   P2(in [~a] inthings)
