@@ -396,7 +396,7 @@ class AppShell extends Xen.Base {
       $template: 'users-options',
       models: this._renderUserOptionModels(state.users, state.user)
     };
-    state.dots = state.plans == null ? 'active' : '';
+    state.dots = state.plans == null && state.arc ? 'active' : '';
     if (state.avatar && state.arc) {
       const url = state.arc._loader._resolve(state.avatar.rawData.url);
       state.avatarStyle = `background: url('${url}') center no-repeat; background-size: cover;`;
@@ -779,3 +779,5 @@ class AppShell extends Xen.Base {
 }
 AppShell.log = Xen.Base.logFactory('AppShell', '#bb4d00');
 customElements.define('app-shell', AppShell);
+
+export default AppShell;
