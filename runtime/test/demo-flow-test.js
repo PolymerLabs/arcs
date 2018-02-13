@@ -65,7 +65,7 @@ describe('demo flow', function() {
     resultList = view1
     consume action as slot0
       provide annotation as slot1
-  ProductMultiplexer2 as particle1
+  Multiplexer2 as particle1
     hostedParticle host view4
     list <- view1
     others <- view0
@@ -74,7 +74,7 @@ describe('demo flow', function() {
     known <- view1
     population <- view2
     recommendations -> view0
-  ShowProducts as particle3
+  ShowItems as particle3
     descriptions -> view3
     list <- view1
     consume root as slot3
@@ -91,16 +91,16 @@ describe('demo flow', function() {
 
     slotComposer
       .newExpectations()
-        .expectRenderSlot('ShowProducts', 'root', ['template'])
+        .expectRenderSlot('ShowItems', 'root', ['template'])
       .newExpectations()
-        .expectRenderSlot('ShowProducts', 'root', ['model'])
+        .expectRenderSlot('ShowItems', 'root', ['model'])
         .expectRenderSlot('Chooser', 'action', ['template', 'model'])
         .expectRenderSlot('AlsoOn', 'annotation', ['template', 'model'])
-        .expectRenderSlot('ProductMultiplexer2', 'annotation', ['template', 'model'])
+        .expectRenderSlot('Multiplexer2', 'annotation', ['template', 'model'])
         .expectRenderSlot('AlsoOn', 'annotation', ['template', 'model'])
-        .expectRenderSlot('ProductMultiplexer2', 'annotation', ['model'])
+        .expectRenderSlot('Multiplexer2', 'annotation', ['model'])
         .expectRenderSlot('AlsoOn', 'annotation', ['template', 'model'])
-        .expectRenderSlot('ProductMultiplexer2', 'annotation', ['model']);
+        .expectRenderSlot('Multiplexer2', 'annotation', ['model']);
     await arc.instantiate(plan);
     await arc.pec.idle;
     await slotComposer.expectationsCompleted();
@@ -127,11 +127,11 @@ describe('demo flow', function() {
       .newExpectations()
         .thenSend('Chooser', 'action', '_onChooseValue', {key: '1'})
       .newExpectations()
-        .expectRenderSlot('ShowProducts', 'root', ['model'])
+        .expectRenderSlot('ShowItems', 'root', ['model'])
         .expectRenderSlot('Chooser', 'action', ['model'])
         .expectRenderSlot('AlsoOn', 'annotation', ['model'])
-        .expectRenderSlot('ProductMultiplexer2', 'annotation', ['model'])
-        .expectRenderSlot('ProductMultiplexer2', 'annotation', ['model']);
+        .expectRenderSlot('Multiplexer2', 'annotation', ['model'])
+        .expectRenderSlot('Multiplexer2', 'annotation', ['model']);
     await arc.pec.idle;
     await slotComposer.expectationsCompleted();
 
@@ -151,11 +151,11 @@ describe('demo flow', function() {
     // var serialization = arc.serialize();
 
     //slotComposer
-    //           .expectGetSlot("ShowProducts", "root")
+    //           .expectGetSlot("ShowItems", "root")
     //           .expectGetSlot("Chooser", "action")
-    //           .expectRender("ShowProducts")
+    //           .expectRender("ShowItems")
     //           .expectRender("Chooser")
-    //           .expectRender("ShowProducts")
+    //           .expectRender("ShowItems")
     //           .expectRender("Chooser")
     //           ;
     //

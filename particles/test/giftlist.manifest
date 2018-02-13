@@ -7,23 +7,23 @@
 
 import '../Chooser/Chooser.manifest'
 import '../Recommend/Recommend.manifest'
-import '../ShowProducts/ShowProducts.manifest'
+import '../ShowItems/ShowItems.manifest'
 import '../VrPot/VrPot.manifest'
 import '../../entities/Person.manifest'
 
 recipe
   Chooser.choices -> Recommend.recommendations
-  Chooser.resultList -> ShowProducts.list
+  Chooser.resultList -> ShowItems.list
   Chooser.resultList -> Recommend.known
   map #giftlist as wishlist
   create #descriptions as descriptions
   copy as view0
   Recommend
     population <- wishlist
-  ShowProducts
+  ShowItems
     list <- view0
     descriptions -> descriptions
 
 recipe
-  ShowProducts
+  ShowItems
   VrPot

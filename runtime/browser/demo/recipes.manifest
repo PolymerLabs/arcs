@@ -5,13 +5,13 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import '../../../particles/ShowProducts/ShowProducts.manifest'
+import '../../../particles/ShowItems/ShowItems.manifest'
 import '../../../particles/ManageProducts/ManageProducts.manifest'
 import '../../../particles/Recommend/Recommend.manifest'
 import '../../../particles/Chooser/Chooser.manifest'
 import '../../../particles/GiftList/GiftList.manifest'
 import '../../../particles/Interests/Interests.manifest'
-import '../../../particles/ProductMultiplexer/ProductMultiplexer.manifest'
+import '../../../particles/Multiplexer/Multiplexer.manifest'
 import '../../../particles/AlsoOn/AlsoOn.manifest'
 import '../../../particles/Arrivinator/Arrivinator.manifest'
 import '../../../particles/ManufacturerInfo/ManufacturerInfo.manifest'
@@ -19,7 +19,7 @@ import '../../../particles/ManufacturerInfo/ManufacturerInfo.manifest'
 // See [person]'s wishlist
 recipe
   map #wishlist as wishlist
-  ShowProducts
+  ShowItems
     list <- wishlist
 
 // Create shortlist with [product, ...] and suggest similar products from [person]'s wish list
@@ -27,26 +27,26 @@ recipe
   Chooser.choices -> Recommend.recommendations
   //Chooser.resultList -> ManageProducts.list
   //Chooser.resultList -> ShowCollection.collection
-  Chooser.resultList -> ShowProducts.list
+  Chooser.resultList -> ShowItems.list
   Chooser.resultList -> Recommend.known
-  Chooser.resultList -> ProductMultiplexer2.list
-  Chooser.choices -> ProductMultiplexer2.others
+  Chooser.resultList -> Multiplexer2.list
+  Chooser.choices -> Multiplexer2.others
   map #wishlist as wishlist
   copy #shortlist as shortlist
   slot as slot0
   Recommend
     population <- wishlist
-  // TODO: switch demo to use ShowCollection(ShowProduct) instead of ShowProducts particle.
+  // TODO: switch demo to use ShowCollection(ShowProduct) instead of ShowItems particle.
   // ShowCollection
   //   collection <- shortlist
   //   hostedParticle = ShowProduct
-  ShowProducts
+  ShowItems
     list <- shortlist
   //ManageProducts
     //list = shortlist
     consume root as slot0
       provide annotation as slot1
-  ProductMultiplexer2
+  Multiplexer2
     hostedParticle = AlsoOn
     consume annotation as slot1
 
@@ -57,17 +57,17 @@ recipe
   use as view3
   GiftList
     person <- view1
-  ProductMultiplexer
+  Multiplexer
     list <- view2
     hostedParticle = Arrivinator
-  ProductMultiplexer
+  Multiplexer
     list <- view3
     hostedParticle = Arrivinator
 
 // Check manufacturer information for products.
 recipe
   use #shortlist as shortlist
-  ProductMultiplexer
+  Multiplexer
     list <- shortlist
     hostedParticle <- ManufacturerInfo
 
@@ -93,10 +93,10 @@ recipe
 //    collection <- shortlist
 //    hostedParticle = ShowProduct
 //    consume root as slot0
-//  ProductMultiplexer
+//  Multiplexer
 //    list <- shortlist
 //    hostedParticle = Arrivinator
-//  ProductMultiplexer2
+//  Multiplexer2
 //    list <- shortlist
 //    others <- wishlist
 //    hostedParticle = AlsoOn
@@ -104,7 +104,7 @@ recipe
 //import '../../../particles/ProductFilter/ProductFilter.manifest'
 //import '../../../particles/ProductIsBook/ProductIsBook.manifest'
 //recipe
-//  ShowProducts.list -> ProductFilter.results
+//  ShowItems.list -> ProductFilter.results
 //  map #shortlist as shortlist
 //  create as books
 //  ProductFilter
