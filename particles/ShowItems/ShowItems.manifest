@@ -8,16 +8,8 @@
 
 import '../../entities/Description.manifest'
 
-// TODO: Make this particle generic
-// ShowItems(in [~a] list, out [Description] descriptions)
-// currently cannot resolve the type of list, when no other particles in the recipe:
-//recipe
-//  map #wishlist as wishlist
-//  ShowProducts
-//    list <- wishlist
-
-particle ShowProducts in 'ShowProducts.js'
-  ShowProducts(in [~a] list, out [Description] descriptions)
+particle ShowItems in 'ShowItems.js'
+  ShowItems(in [~a] list, out [Description] descriptions)
   affordance dom
   affordance dom-touch
   consume root

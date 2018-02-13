@@ -5,7 +5,7 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import '../../../particles/ShowProducts/ShowProducts.manifest'
+import '../../../particles/ShowItems/ShowItems.manifest'
 import '../../../particles/Recommend/Recommend.manifest'
 import '../../../particles/Chooser/Chooser.manifest'
 import '../../../particles/AlsoOn/AlsoOn.manifest'
@@ -16,18 +16,18 @@ import '../../../particles/Interests/Interests.manifest'
 
 // Create shortlist with [product, ...]
 recipe
-   ShowProducts
+   ShowItems
 
 // See [person]'s wishlist
 recipe
   map #wishlist as wishlist
-  ShowProducts
+  ShowItems
     list <- wishlist
 
 // Create shortlist with [product, ...] and suggest similar products from [person]'s wish list
 recipe
   Chooser.choices -> Recommend.recommendations
-  Chooser.resultList -> ShowProducts.list
+  Chooser.resultList -> ShowItems.list
   Chooser.resultList -> Recommend.known
   // TODO: AlsoOn particle requires proper view descriptions (eg "Claire's wishlist")
   // Chooser.resultList -> AlsoOn.list
@@ -37,7 +37,7 @@ recipe
   copy as shortlist
   Recommend
     population <- wishlist
-  ShowProducts
+  ShowItems
     list <- shortlist
 
 // Buying for [person]'s [occasion] in [timeframe]? Product [X] arrives too late.

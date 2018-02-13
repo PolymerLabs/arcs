@@ -685,7 +685,7 @@ recipe
       `));
       let strategizer = {generated: [{result: manifest.recipes[0], score: 1}]};
       let arc = createTestArc('test-plan-arc', manifest, 'dom');
-      arc._search = 'showproducts and chooser alsoon recommend';
+      arc._search = 'ShowItems and chooser alsoon recommend';
       let ghc = new GroupHandleConnections(arc);
 
       let {results} = await ghc.generate(strategizer);

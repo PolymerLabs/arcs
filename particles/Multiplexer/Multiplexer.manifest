@@ -10,20 +10,18 @@ shape HostedParticleShape
   HostedParticleShape(in ~a)
   consume annotation
 
-// TODO: rename to a generic (non product specific) multiplexer.
-// TODO: This particle should use generic handle type and slot name.
-particle ProductMultiplexer in 'ProductMultiplexer.js'
-  ProductMultiplexer(host HostedParticleShape hostedParticle, in [~a] list)
+// TODO: This particle should use generic slot name.
+particle Multiplexer in 'Multiplexer.js'
+  Multiplexer(host HostedParticleShape hostedParticle, in [~a] list)
   consume set of annotation
   description `${hostedParticle} for ${list}`
 
-// Same as ProductMultiplexer above, but with an additional connection.
+// Same as Multiplexer above, but with an additional connection.
 shape HostedParticleShape
   HostedParticleShape(in ~a, in [~a])
   consume annotation
 
-// TODO: rename to a generic (non product specific) multiplexer.
-particle ProductMultiplexer2 in 'ProductMultiplexer.js'
-  ProductMultiplexer2(host HostedParticleShape hostedParticle, in [~a] list, in [~a] others)
+particle Multiplexer2 in 'Multiplexer.js'
+  Multiplexer2(host HostedParticleShape hostedParticle, in [~a] list, in [~a] others)
   consume set of annotation
   description `${hostedParticle} for ${list}`

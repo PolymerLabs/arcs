@@ -10,7 +10,7 @@
 
 defineParticle(({DomParticle, resolver}) => {
 
-  let host = `[show-products]`;
+  let host = `[show-items]`;
 
   let styles = `
 <style>
@@ -45,7 +45,7 @@ defineParticle(({DomParticle, resolver}) => {
 </style>
   `;
 
-  let productStyles = `
+  let itemStyles = `
 <style>
   ${host} > x-list [row] {
     display: flex;
@@ -89,7 +89,7 @@ defineParticle(({DomParticle, resolver}) => {
 </style>
   `;
 
-  let productTemplate = `
+  let itemTemplate = `
 <template>
   <div item>
     <div row>
@@ -111,8 +111,8 @@ defineParticle(({DomParticle, resolver}) => {
 
   let template = `
 ${styles}
-${productStyles}
-<div show-products>
+${itemStyles}
+<div show-items>
   <div head>
     <span>Your shortlist</span>
   </div>
@@ -121,7 +121,7 @@ ${productStyles}
 
   <div empty hidden="{{haveItems}}">List is empty</div>
 
-  <x-list items="{{items}}">${productTemplate}</x-list>
+  <x-list items="{{items}}">${itemTemplate}</x-list>
 
   <div slotid="action"></div>
 
