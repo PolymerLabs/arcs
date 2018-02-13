@@ -9,16 +9,17 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 */
 
 import WatchGroup from './watch-group.js';
-import ArcsUtils from "../lib/arcs-utils.js";
+import ArcsUtils from '../lib/arcs-utils.js';
 import Xen from '../../components/xen/xen.js';
+const db = window.db;
 
 class RemoteFriendsProfileHandles extends Xen.Base {
-  static get observedAttributes() { return ['arc','friends','user']; }
+  static get observedAttributes() { return ['arc', 'friends', 'user']; }
   _getInitialState() {
     return {
       group: new WatchGroup(),
       db: db
-    }
+    };
   }
   _update(props, state, lastProps) {
     if (props.arc && props.user && props.friends && props.friends !== lastProps.friends) {
@@ -44,7 +45,7 @@ class RemoteFriendsProfileHandles extends Xen.Base {
         handler: snap => {
           group.add(this._watchFriendProfileHandles(db, arc, friend, snap));
         }
-      }
+      };
     });
   }
   _watchFriendProfileHandles(db, arc, friend, snap) {
@@ -65,7 +66,7 @@ class RemoteFriendsProfileHandles extends Xen.Base {
             RemoteFriendsProfileHandles.log(`friend [${user.name}] has EMPTY profile`); // from`, String(snap.ref));
           }
         }
-      }
+      };
     });
   }
   _processFriendProfileHandles(arc, friend, handles) {

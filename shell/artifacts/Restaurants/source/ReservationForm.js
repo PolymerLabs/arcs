@@ -6,8 +6,6 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-"use strict";
-
 defineParticle(({DomParticle}) => {
 
   let host = `reservation-form`;
@@ -103,7 +101,7 @@ ${styles}
     <select on-change="_onPartySizeChanged">
       <option value="1" selected$={{selected1}}>1 person</option>
       <option value="2" selected$={{selected2}}>2 people</option>
-      ${[3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]
+      ${[3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
         .map(i => `<option value="${i}" selected$={{selected${i}}}>${i} people</option>`).join('')}
       <option value="21" selected$={{selected21}}>Larger party</option>
     </select>
@@ -128,7 +126,7 @@ ${styles}
          *  - if later than 10pm, book evening tomorrow
          *  - if earlier than 5pm, book this evening
          *  - round up to next half hour and set seconds to 0
-         * 
+         *
          * (i.e. earliest can be 5:30pm and latest 10pm)
          */
         let when = new Date();
@@ -148,16 +146,16 @@ ${styles}
         when.setMilliseconds(0);
 
         const whenString = this.toDateInputValue(when);
-        event = { startDate: whenString, endDate: whenString, participants: 2 };
+        event = {startDate: whenString, endDate: whenString, participants: 2};
       } else {
         event = Object.assign({}, props.event.rawData);
       }
-      this._setState({ currentEvent: event });
+      this._setState({currentEvent: event});
 
       this.setParticleDescription(
         props.selected
           ? this.createDescription(props.selected.id, event.participants, event.startDate)
-          : ""); // Default description
+          : ''); // Default description
 
       if (!props.event || JSON.stringify(event) !== JSON.stringify(props.event.rawData)) {
         this._storeNewEvent(event);
@@ -166,14 +164,14 @@ ${styles}
     toDateInputValue(date) {
       let local = new Date(date);
       local.setMinutes(date.getMinutes() - date.getTimezoneOffset());
-      return local.toJSON().slice(0,16);
+      return local.toJSON().slice(0, 16);
     }
     makeUpReservationTimes(id, partySize, date, n) {
       // Start at (n-1)/2 half hours before the desired reservation time
       let t = new Date(date);
       t.setMinutes(t.getMinutes() - (n-1)/2*30);
       let hour = (t.getHours()) % 24;
-      let minute = t.getMinutes() >= 30 ? "30" : "00";
+      let minute = t.getMinutes() >= 30 ? '30' : '00';
 
       // Seed per restaurant and day
       let seed = parseInt(id.substr(0, 8), 16);
@@ -192,11 +190,11 @@ ${styles}
         });
 
         // Increment time slot
-        if (minute == "30") {
+        if (minute == '30') {
           hour = (hour + 1) % 24;
-          minute = "00";
+          minute = '00';
         } else {
-          minute = "30";
+          minute = '30';
         }
       }
 
@@ -204,9 +202,9 @@ ${styles}
     }
     createDescription(restaurantId, participants, startDate) {
       let times = this.makeUpReservationTimes(restaurantId, participants, startDate, 5);
-      
+
       let closest = null;
-      
+
       times.map(({time, notAvailable}, i) => {
         if (!notAvailable) {
           if (!closest || i <= 2) {
@@ -215,7 +213,7 @@ ${styles}
           }
         }
       });
-    
+
       return closest
         ? `Table for ${participants} available at ${closest}`
         : `No table for ${participants} available within 2 hours`;
@@ -233,7 +231,7 @@ ${styles}
       }
     }
     _renderSingle(restaurant, date, partySize) {
-      let restaurantId = restaurant.id || "";
+      let restaurantId = restaurant.id || '';
       let times = this.makeUpReservationTimes(restaurantId, partySize, date, 5);
       let timePicker = {date};
       for (let i = 1; i <= 21; ++i) {
@@ -249,10 +247,10 @@ ${styles}
           $template: 'available-times',
           models: times
         }
-      }
+      };
     }
     _onDateChanged(e, state) {
-      let newEvent = Object.assign({}, state.currentEvent || { participants: 2 });
+      let newEvent = Object.assign({}, state.currentEvent || {participants: 2});
       newEvent.startDate = newEvent.endDate = e.data.value;
       this._storeNewEvent(newEvent);
     }

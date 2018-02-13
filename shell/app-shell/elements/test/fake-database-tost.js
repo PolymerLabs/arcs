@@ -5,7 +5,7 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-var assert = chai.assert;
+const assert = chai.assert;
 
 afterEach(function() {
   db.reset();
@@ -51,15 +51,15 @@ describe('FakeDatabase', function() {
 
   describe('#push', function() {
     it('should support pushing values', function() {
-      assert.equal(db.push({ a: 1, b: 2 }).key, 1);
-      assert.equal(db.push({ a: 1, b: 2 }).key, 2);
-      assert.equal(db.push({ c: 3, d: 4 }).key, 3);
+      assert.equal(db.push({a: 1, b: 2}).key, 1);
+      assert.equal(db.push({a: 1, b: 2}).key, 2);
+      assert.equal(db.push({c: 3, d: 4}).key, 3);
     });
   });
 
   describe('#update', function() {
     it('should support update and remember the last update values', function() {
-      const values = { a: 1 };
+      const values = {a: 1};
       db.update(values);
       assert.equal(db.lastUpdate, values);
     });
@@ -71,10 +71,10 @@ describe('FakeDatabase', function() {
       assert.isNotNull(db.child('foo'));
       assert.equal(db.child('foo'), fooDatabase);
 
-      assert.equal(db.push({ a: 1, b: 2 }).key, 1);
-      assert.equal(db.push({ a: 1, b: 2 }).key, 2);
+      assert.equal(db.push({a: 1, b: 2}).key, 1);
+      assert.equal(db.push({a: 1, b: 2}).key, 2);
 
-      const values = { a: 1 };
+      const values = {a: 1};
       db.update(values);
       assert.equal(db.lastUpdate, values);
 
@@ -84,7 +84,7 @@ describe('FakeDatabase', function() {
       assert.isNotNull(db.child('foo'));
       assert.notEqual(fooDatabase2, fooDatabase);
 
-      assert.equal(db.push({ a: 1, b: 2 }).key, 1);
+      assert.equal(db.push({a: 1, b: 2}).key, 1);
       assert.isUndefined(db.lastUpdate);
       db.update(values);
       assert.equal(db.lastUpdate, values);

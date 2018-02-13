@@ -34,7 +34,7 @@ export default class BrowserLoader extends Loader {
     let url = this._urlMap[path];
     if (!url && path) {
       // TODO(sjmiles): inefficient!
-      let macro = Object.keys(this._urlMap).sort((a,b) => b.length - a.length).find(k => path.slice(0, k.length) == k);
+      let macro = Object.keys(this._urlMap).sort((a, b) => b.length - a.length).find(k => path.slice(0, k.length) == k);
       if (macro) {
         url = this._urlMap[macro] + path.slice(macro.length);
       }

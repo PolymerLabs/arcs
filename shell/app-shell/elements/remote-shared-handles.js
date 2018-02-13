@@ -9,11 +9,12 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 */
 
 import WatchGroup from './watch-group.js';
-import ArcsUtils from "../lib/arcs-utils.js";
+import ArcsUtils from '../lib/arcs-utils.js';
 import Xen from '../../components/xen/xen.js';
+const db = window.db;
 
 class RemoteSharedHandles extends Xen.Base {
-  static get observedAttributes() { return ['arc','friends','user']; }
+  static get observedAttributes() { return ['arc', 'friends', 'user']; }
   _getInitialState() {
     return {
       group: Object.assign(new WatchGroup(), {db})
@@ -23,12 +24,12 @@ class RemoteSharedHandles extends Xen.Base {
     // TODO(sjmiles): rely on invariant that `arc` and `user` are required a-priori for `friends`?
     if (/*props.arc && props.user &&*/ props.friends !== lastProps.friends) {
       let watches = [];
-      if (props.friends) {
+      if (props.friends && props.user) {
         let friends = props.friends.map(friend => friend.rawData);
         // include `user` in friends, so we can access generic profile info this way
         // TODO(sjmiles): is adding 'user' to 'friends' copacetic?
-        friends.push({id: user.id});
-        watches = this._watchFriends(props.arc, friends, props.user, state.groups)
+        friends.push({id: props.user.id});
+        watches = this._watchFriends(props.arc, friends, props.user, state.groups);
         RemoteSharedHandles.log(`watching (raw) FRIENDS`, friends);
       }
       state.group.watches = watches;
@@ -44,7 +45,7 @@ class RemoteSharedHandles extends Xen.Base {
           group.watches = this._watchSharedHandles(arc, user, snap.val());
         },
         group
-      }
+      };
     });
   }
   _watchSharedHandles(arc, user, sharer) {
@@ -58,7 +59,7 @@ class RemoteSharedHandles extends Xen.Base {
         path: `arcs/${key}/views`,
         // TODO(sjmiles): firebase knowledge here, maybe push down into watchGroup
         handler: snapshot => this._remoteHandlesChanged(arc, key, snapshot.val(), sharer)
-      }
+      };
     });
   }
   _remoteHandlesChanged(arc, arcKey, handles, sharer) {

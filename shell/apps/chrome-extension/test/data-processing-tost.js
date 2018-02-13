@@ -5,7 +5,7 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-var assert = chai.assert;
+const assert = chai.assert;
 
 afterEach(function() {
   target.innerHTML = '';
@@ -15,15 +15,15 @@ describe('ChromeExtensionDataProcessing', function() {
   describe('#filter', function() {
     it('should skip entities without a name', function() {
       let sample = {
-        'https://my/great/site': [{ '@type': 'http://TypeA' }],
+        'https://my/great/site': [{'@type': 'http://TypeA'}],
         'http://my/terrible/site': [
-          { '@type': 'http://TypeA', name: 'TypeA_MTS' }
+          {'@type': 'http://TypeA', name: 'TypeA_MTS'}
         ]
       };
       let expected = {
         'https://my/great/site': [],
         'http://my/terrible/site': [
-          { '@type': 'http://TypeA', name: 'TypeA_MTS' }
+          {'@type': 'http://TypeA', name: 'TypeA_MTS'}
         ]
       };
 
@@ -34,13 +34,13 @@ describe('ChromeExtensionDataProcessing', function() {
   describe('#flatten()', function() {
     it('should organize entities by data type', function() {
       let sample = {
-        'http://my/great/site': [{ '@type': 'TypeA', name: 'TypeA_MGS' }],
-        'http://my/terrible/site': [{ '@type': 'TypeA', name: 'TypeA_MTS' }]
+        'http://my/great/site': [{'@type': 'TypeA', name: 'TypeA_MGS'}],
+        'http://my/terrible/site': [{'@type': 'TypeA', name: 'TypeA_MTS'}]
       };
       let expected = {
         TypeA: [
-          { '@type': 'TypeA', name: 'TypeA_MGS' },
-          { '@type': 'TypeA', name: 'TypeA_MTS' }
+          {'@type': 'TypeA', name: 'TypeA_MGS'},
+          {'@type': 'TypeA', name: 'TypeA_MTS'}
         ]
       };
 
@@ -50,22 +50,22 @@ describe('ChromeExtensionDataProcessing', function() {
     it('should organize entities by data type (multiple data types should be kept separate)', function() {
       let sample = {
         'http://my/great/site': [
-          { '@type': 'TypeA', name: 'TypeA_MGS' },
-          { '@type': 'TypeB', name: 'TypeB_MGS' }
+          {'@type': 'TypeA', name: 'TypeA_MGS'},
+          {'@type': 'TypeB', name: 'TypeB_MGS'}
         ],
         'http://my/terrible/site': [
-          { '@type': 'TypeA', name: 'TypeA_MTS' },
-          { '@type': 'TypeB', name: 'TypeB_MTS' }
+          {'@type': 'TypeA', name: 'TypeA_MTS'},
+          {'@type': 'TypeB', name: 'TypeB_MTS'}
         ]
       };
       let expected = {
         TypeA: [
-          { '@type': 'TypeA', name: 'TypeA_MGS' },
-          { '@type': 'TypeA', name: 'TypeA_MTS' }
+          {'@type': 'TypeA', name: 'TypeA_MGS'},
+          {'@type': 'TypeA', name: 'TypeA_MTS'}
         ],
         TypeB: [
-          { '@type': 'TypeB', name: 'TypeB_MGS' },
-          { '@type': 'TypeB', name: 'TypeB_MTS' }
+          {'@type': 'TypeB', name: 'TypeB_MGS'},
+          {'@type': 'TypeB', name: 'TypeB_MTS'}
         ]
       };
 
@@ -75,22 +75,22 @@ describe('ChromeExtensionDataProcessing', function() {
     it('should ignore http vs https', function() {
       let sample = {
         'https://my/great/site': [
-          { '@type': 'https://TypeA', name: 'TypeA_MGS' },
-          { '@type': 'https://TypeB', name: 'TypeB_MGS' }
+          {'@type': 'https://TypeA', name: 'TypeA_MGS'},
+          {'@type': 'https://TypeB', name: 'TypeB_MGS'}
         ],
         'http://my/terrible/site': [
-          { '@type': 'http://TypeA', name: 'TypeA_MTS' },
-          { '@type': 'http://TypeB', name: 'TypeB_MTS' }
+          {'@type': 'http://TypeA', name: 'TypeA_MTS'},
+          {'@type': 'http://TypeB', name: 'TypeB_MTS'}
         ]
       };
       let expected = {
         'http://TypeA': [
-          { '@type': 'https://TypeA', name: 'TypeA_MGS' },
-          { '@type': 'http://TypeA', name: 'TypeA_MTS' }
+          {'@type': 'https://TypeA', name: 'TypeA_MGS'},
+          {'@type': 'http://TypeA', name: 'TypeA_MTS'}
         ],
         'http://TypeB': [
-          { '@type': 'https://TypeB', name: 'TypeB_MGS' },
-          { '@type': 'http://TypeB', name: 'TypeB_MTS' }
+          {'@type': 'https://TypeB', name: 'TypeB_MGS'},
+          {'@type': 'http://TypeB', name: 'TypeB_MTS'}
         ]
       };
 
@@ -102,20 +102,20 @@ describe('ChromeExtensionDataProcessing', function() {
     it('should deduplicate', function() {
       let sample = {
         TypeA: [
-          { '@type': 'TypeA', name: 'same' },
-          { '@type': 'TypeA', name: 'same' },
-          { '@type': 'TypeA', name: 'different' }
+          {'@type': 'TypeA', name: 'same'},
+          {'@type': 'TypeA', name: 'same'},
+          {'@type': 'TypeA', name: 'different'}
         ]
       };
       let expected = {
         TypeA: [
-          { '@type': 'TypeA', name: 'same' },
-          { '@type': 'TypeA', name: 'different' }
+          {'@type': 'TypeA', name: 'same'},
+          {'@type': 'TypeA', name: 'different'}
         ]
       };
 
       let result = deduplicate(sample);
       assert.deepEqual(result, expected);
-    });
-  });
+   });
+ });
 });

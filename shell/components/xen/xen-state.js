@@ -76,7 +76,7 @@ let StaterMixin = Base => class extends Base {
         this._ensureMount();
         this._update(this._props, this._state, this._lastProps, this._lastState);
       }
-    } catch(x) {
+    } catch (x) {
       console.error(x);
     }
     // nullify validator _after_ methods so state changes don't reschedule validation

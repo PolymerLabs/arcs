@@ -5,7 +5,7 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-var assert = chai.assert;
+const assert = chai.assert;
 
 afterEach(function() {
   target.innerHTML = '';
@@ -22,7 +22,7 @@ describe('GoodMap', function() {
         setOptions: options => {
           this._mapOptionsForTest = options;
         }
-      }
+      };
     }
   });
 

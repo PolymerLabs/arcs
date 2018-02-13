@@ -6,8 +6,6 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-"use strict";
-
 defineParticle(({DomParticle}) => {
 
   let host = `favorite-food`;
@@ -48,7 +46,7 @@ defineParticle(({DomParticle}) => {
     }
     _renderHaveFood(restaurant, food) {
       const restaurantId = restaurant.id;
-      const restaurantName = restaurant.name || "";
+      const restaurantName = restaurant.name || '';
 
       // Totally ridiculous heuristic:
       // They have food if first letters in name match first letter of food.
@@ -61,7 +59,7 @@ defineParticle(({DomParticle}) => {
         subId: restaurantId,
         haveFavoriteFood: {
           $template: 'have-favorite-food',
-          models: haveFood ? [{ food }] : []
+          models: haveFood ? [{food}] : []
         }
       };
     }

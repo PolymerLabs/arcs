@@ -5,7 +5,7 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-var assert = chai.assert;
+const assert = chai.assert;
 
 afterEach(function() {
   target.innerHTML = '';
@@ -29,7 +29,7 @@ describe('DancingDots', function() {
       assert.equal(false, dots.active);
       [...dots._bullets].every(b => !b._animation);
 
-      dots.active = false;  // nothing happens
+      dots.active = false; // nothing happens
       assert.equal(false, dots.active);
       [...dots._bullets].every(b => !b._animation);
 

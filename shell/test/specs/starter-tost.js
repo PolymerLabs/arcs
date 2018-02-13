@@ -9,7 +9,7 @@
  */
 
 const assert = require('assert');
-const { URL } = require('url');
+const {URL} = require('url');
 
 function pierceShadows(selectors) {
   return browser.execute(function(selectors) {
@@ -84,7 +84,7 @@ function loadSeleniumUtils() {
   browser.waitForVisible('<app-main>');
   browser.waitForVisible('<footer>');
 
-  var result = browser.execute(function(baseUrl) {
+  const result = browser.execute(function(baseUrl) {
     const script = document.createElement('script');
     script.type = 'text/javascript';
     script.src = `${baseUrl}/test/selenium-utils.js`;
@@ -135,7 +135,7 @@ function dancingDotsElement() {
 
 /** Wait for the dancing dots to stop. */
 function waitForStillness() {
-  var element = dancingDotsElement();
+  const element = dancingDotsElement();
 
   // Currently, the dots sometimes stop & start again. We're introducing a
   // fudge factor here - the dots have to be stopped for a few consecutive
@@ -154,7 +154,7 @@ function waitForStillness() {
   //   information) and see if there's an error.
   browser.waitUntil(
     () => {
-      var result = browser.elementIdAttribute(element.value.ELEMENT, 'animate');
+      const result = browser.elementIdAttribute(element.value.ELEMENT, 'animate');
       if (null == result.value) {
         matches += 1;
       } else {

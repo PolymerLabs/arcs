@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-var assert = chai.assert;
+const assert = chai.assert;
 
 afterEach(function() {
   target.innerHTML = '';
@@ -22,7 +22,7 @@ describe('SeleniumUtils', function() {
         </div>`;
       const outer = target.querySelectorAll('div[outer]');
       assert.equal(outer.length, 1);
-      const shadow = outer[0].attachShadow({ mode: 'open' });
+      const shadow = outer[0].attachShadow({mode: 'open'});
       shadow.innerHTML = `
         <div inner>
           <p goal>goal</p>
@@ -42,11 +42,11 @@ describe('SeleniumUtils', function() {
         </div>`;
       const outer = target.querySelectorAll('div[outer]');
       assert.equal(outer.length, 1);
-      const firstShadow = outer[0].attachShadow({ mode: 'open' });
+      const firstShadow = outer[0].attachShadow({mode: 'open'});
       firstShadow.innerHTML = `
         <div firstInner>
         </div>`;
-      const secondShadow = firstShadow.children[0].attachShadow({ mode: 'open' });
+      const secondShadow = firstShadow.children[0].attachShadow({mode: 'open'});
       secondShadow.innerHTML = `
         <div secondInner>
           <p goal>goal</p>
@@ -79,11 +79,11 @@ describe('SeleniumUtils', function() {
         </div>`;
       const outer = target.querySelectorAll('div[outer]');
       assert.equal(outer.length, 1);
-      const firstShadow = outer[0].attachShadow({ mode: 'open' });
+      const firstShadow = outer[0].attachShadow({mode: 'open'});
       firstShadow.innerHTML = `
         <div firstInner>
         </div>`;
-      const secondShadow = firstShadow.children[0].attachShadow({ mode: 'open' });
+      const secondShadow = firstShadow.children[0].attachShadow({mode: 'open'});
       secondShadow.innerHTML = `
         <div secondInner>
           <p goal>goal</p>
@@ -116,7 +116,7 @@ describe('SeleniumUtils', function() {
         </div>`;
       const outer = target.querySelectorAll('div[outer]');
       assert.equal(outer.length, 1);
-      const shadow = outer[0].attachShadow({ mode: 'open' });
+      const shadow = outer[0].attachShadow({mode: 'open'});
       shadow.innerHTML = `
         <div inner>
           <p goal>goal</p>

@@ -57,7 +57,7 @@ class SimpleTabs extends HTMLElement {
   get pages() {
     let nodes = this._root.querySelector('slot').assignedNodes();
     let pages = nodes.filter(n => {
-      switch(n.localName) {
+      switch (n.localName) {
         case undefined:
         case 'style':
         case 'slot':
@@ -86,7 +86,7 @@ class SimpleTabs extends HTMLElement {
     let pages = this.pages;
     let crumbs = {
       template: crumb,
-      models: pages.map((p,i) => {
+      models: pages.map((p, i) => {
         return {
           tab: i,
           crumb: p.tab || p.getAttribute('tab') || `Page ${i}`,

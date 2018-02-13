@@ -6,8 +6,6 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-"use strict";
-
 defineParticle(({DomParticle}) => {
 
   let host = `calendar`;
@@ -168,7 +166,7 @@ ${styles}
 
   <div class="scroll-container">
     <div style="{{scrollTransform}}">
-      ${[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23]
+      ${[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23]
         .map(i => `
         <div class="hour-row">
           <div class="label">
@@ -201,7 +199,7 @@ ${styles}
     _willReceiveProps(props, state) {
       const event = Object.assign({}, props.event && props.event.rawData || {});
       this._event = event;
-      this._savedStartDate = event.startDate || (new Date()).toJSON().slice(0,16);
+      this._savedStartDate = event.startDate || (new Date()).toJSON().slice(0, 16);
       if (!event.startDate) {
         this._storeNewEvent(this._savedStartDate);
       }
@@ -329,7 +327,7 @@ ${styles}
           return `tomorrow, at ${timeString}`;
         default:
           const day = t.toString().slice(0, now.getFullYear() === t.getFullYear() ? 10 : 15);
-          return `at ${timeString} on ${day}`
+          return `at ${timeString} on ${day}`;
       }
     }
     _convertStartTimeToMinutes(startTime) {
@@ -344,13 +342,13 @@ ${styles}
       const date = new Date(this._savedStartDate);
       date.setDate(date.getDate() - 1);
       date.setMinutes(date.getMinutes() - date.getTimezoneOffset());
-      this._storeNewEvent(date.toJSON().slice(0,16));
+      this._storeNewEvent(date.toJSON().slice(0, 16));
     }
     _onNextDayClick(e) {
       const date = new Date(this._savedStartDate);
       date.setDate(date.getDate() + 1);
       date.setMinutes(date.getMinutes() - date.getTimezoneOffset());
-      this._storeNewEvent(date.toJSON().slice(0,16));
+      this._storeNewEvent(date.toJSON().slice(0, 16));
     }
     _onDateChanged(e) {
       this._storeNewEvent(e.data.value + this._savedStartDate.slice(10));
@@ -359,10 +357,10 @@ ${styles}
       this._storeNewEvent(this._savedStartDate.slice(0, 11) + e.data.value);
     }
     _expandCalendar(e) {
-      this._setState({ expanded: true });
+      this._setState({expanded: true});
     }
     _collapseCalendar(e) {
-      this._setState({ expanded: false });
+      this._setState({expanded: false});
     }
     _storeNewEvent(startDate) {
       const event = this._views.get('event');

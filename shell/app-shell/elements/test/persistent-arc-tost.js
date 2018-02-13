@@ -5,7 +5,7 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-var assert = chai.assert;
+const assert = chai.assert;
 
 afterEach(function() {
   target.innerHTML = '';
@@ -36,8 +36,8 @@ describe('PersistentArc', function() {
       target.appendChild(arc);
 
       // Create the arc's database key.
-      const props = { key: '*' };
-      const state = { db: db, watch: {} };
+      const props = {key: '*'};
+      const state = {db: db, watch: {}};
       const lastProps = {};
       arc._update(props, state, lastProps);
 
@@ -50,7 +50,7 @@ describe('PersistentArc', function() {
       arc.setSearchParam('solo', soloPath);
 
       const state = arc._state;
-      const props = { key: state.key, metadata: {} };
+      const props = {key: state.key, metadata: {}};
       assert.isUndefined(
         state.db.child(state.key).child('metadata').lastUpdate
       );
@@ -67,7 +67,7 @@ describe('PersistentArc', function() {
       arc.setSearchParam('manifest', manifestPath);
 
       const state = arc._state;
-      const props = { key: state.key, metadata: {} };
+      const props = {key: state.key, metadata: {}};
       assert.isUndefined(
         state.db.child(state.key).child('metadata').lastUpdate
       );
@@ -86,7 +86,7 @@ describe('PersistentArc', function() {
       arc.setSearchParam('manifest', manifestPath);
 
       const state = arc._state;
-      const props = { key: state.key, metadata: {} };
+      const props = {key: state.key, metadata: {}};
       assert.isUndefined(
         state.db.child(state.key).child('metadata').lastUpdate
       );
@@ -101,7 +101,7 @@ describe('PersistentArc', function() {
       const arc = createTestArc();
 
       const state = arc._state;
-      const props = { key: state.key, metadata: {} };
+      const props = {key: state.key, metadata: {}};
       assert.isUndefined(
         state.db.child(state.key).child('metadata').lastUpdate
       );

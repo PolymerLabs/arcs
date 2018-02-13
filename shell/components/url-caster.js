@@ -7,17 +7,19 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-window.UrlCaster = (function () {
+window.UrlCaster = (function() {
 
-  var applicationID = '7EDE6C3F';
+  const applicationID = '7EDE6C3F';
 
-  var namespace = 'urn:x-cast:com.github.PolymerLabs.arcs.cast';
-  var session = null;
-  var url_to_be_casted = null;
+  const namespace = 'urn:x-cast:com.github.PolymerLabs.arcs.cast';
+  let url_to_be_casted = null;
+  let session = null;
+
+  const chrome = window.chrome;
 
   function initializeCastApi() {
-    var sessionRequest = new chrome.cast.SessionRequest(applicationID);
-    var apiConfig = new chrome.cast.ApiConfig(sessionRequest,
+    const sessionRequest = new chrome.cast.SessionRequest(applicationID);
+    const apiConfig = new chrome.cast.ApiConfig(sessionRequest,
             sessionListener,
             receiverListener,
             chrome.cast.AutoJoinPolicy.TAB_AND_ORIGIN_SCOPED);
@@ -63,6 +65,6 @@ window.UrlCaster = (function () {
   return {
     set: setCastURL,
     cast: castURL
-  }
+  };
 
   })();

@@ -8,8 +8,6 @@ Code distributed by Google as part of the polymer project is also
 subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
 */
 
-'use strict';
-
 const GoodMap = (() => {
   // resolves when window.__initGoodMap is called via JSONP protocol in dynamic script tag
   const callbackPromise = new Promise(resolve => window.__initGoodMap = resolve);
@@ -58,9 +56,10 @@ const GoodMap = (() => {
       this.extraOptions = {};
     }
     connectedCallback() {
+      const google = window.google;
       loadGoogleMaps(this.apiKey).then(() => {
         this.map = new google.maps.Map(this, this._constructMapOptions());
-        this.dispatchEvent(new CustomEvent('google-map-ready', { detail: this.map }));
+        this.dispatchEvent(new CustomEvent('google-map-ready', {detail: this.map}));
       });
     }
     _constructMapOptions() {
@@ -76,7 +75,7 @@ const GoodMap = (() => {
       }
       return mapOptions;
     }
-  }
+  };
 })();
 
 // define custom element

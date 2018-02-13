@@ -25,7 +25,7 @@ const template = Xen.Template.createTemplate(
 
 class ArcHost extends Xen.Base {
   static get observedAttributes() {
-    return ['config','plans','suggestions','plan','manifests','exclusions'];
+    return ['config', 'plans', 'suggestions', 'plan', 'manifests', 'exclusions'];
   }
   get template() { return template; }
   _getInitialState() {
@@ -113,7 +113,7 @@ class ArcHost extends Xen.Base {
     let manifest, {folder, content} = this._fetchManifestContent(config);
     try {
       manifest = await ArcsUtils.parseManifest(`${folder}/`, content, loader);
-    } catch(x) {
+    } catch (x) {
       console.warn(x);
       manifest = ArcsUtils.parseManifest(`${folder}/`, '', loader);
     }

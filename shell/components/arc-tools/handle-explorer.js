@@ -8,7 +8,7 @@ Code distributed by Google as part of the polymer project is also
 subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
 */
 
-import "../data-explorer.js";
+import '../data-explorer.js';
 import Xen from '../xen/xen.js';
 
 const template = Xen.Template.createTemplate(
@@ -103,4 +103,4 @@ class HandleExplorer extends Xen.Base {
     };
   }
 }
-customElements.define("handle-explorer", HandleExplorer);
+customElements.define('handle-explorer', HandleExplorer);

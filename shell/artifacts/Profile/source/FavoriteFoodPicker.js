@@ -6,8 +6,6 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-"use strict";
-
 defineParticle(({DomParticle}) => {
 
   let host = `favorite-food-picker`;
@@ -76,7 +74,7 @@ ${styles}
       let food = props.food && props.food && props.food.food || '';
       return {
         [`selected${food}`]: true
-      }
+      };
     }
     _onFavoriteFoodChanged(e, state) {
       const food = this._views.get('food');

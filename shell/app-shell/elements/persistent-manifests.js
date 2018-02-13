@@ -10,9 +10,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
 import WatchGroup from './watch-group.js';
 import Xen from '../../components/xen/xen.js';
+const db = window.db;
 
 class PersistentManifests extends Xen.Base {
-  static get observedAttributes() { return ['manifests','exclusions']; }
+  static get observedAttributes() { return ['manifests', 'exclusions']; }
   _getInitialState() {
     return {
       group: new WatchGroup(),
@@ -53,7 +54,7 @@ class PersistentManifests extends Xen.Base {
   _readExclusions() {
     try {
       return JSON.parse(localStorage.getItem('0-3-arcs-exclusions') || '[]');
-    } catch(x) {
+    } catch (x) {
       console.warn(x);
       return [];
     }

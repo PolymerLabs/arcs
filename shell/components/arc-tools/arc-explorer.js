@@ -8,7 +8,7 @@ Code distributed by Google as part of the polymer project is also
 subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
 */
 
-import "../data-explorer.js";
+import '../data-explorer.js';
 import Xen from '../xen/xen.js';
 
 const template = Xen.Template.createTemplate(
@@ -56,7 +56,7 @@ const templateHandle = Xen.Template.createTemplate(
 );
 
 class ArcExplorer extends Xen.Base {
-  static get observedAttributes() { return ['user','arc']; }
+  static get observedAttributes() { return ['user', 'arc']; }
   get template() { return template; }
   get host() {
     return this;
@@ -108,7 +108,7 @@ class ArcExplorer extends Xen.Base {
     this._setState({handles: arcHandles.concat(contextHandles)});
   }
   _render(props, state) {
-    let list = (template, models) => { return {template,models}; };
+    let list = (template, models) => { return {template, models}; };
     let arc_t = templateArc;
     let handle_t = templateHandle;
     return {
@@ -173,4 +173,4 @@ class ArcExplorer extends Xen.Base {
     });
   }
 }
-customElements.define("arc-explorer", ArcExplorer);
+customElements.define('arc-explorer', ArcExplorer);
