@@ -38,6 +38,18 @@
       }
       return;
     }
+    if (result.typeKind) {
+      if (!['union', 'tuple'].includes(result.typeKind)) {
+        throw new Error(`invalid 'typeKind' in ${JSON.stringify(result)}`);
+      }
+      if (!result.typeList) {
+        throw new Error(`no 'typeList' in ${JSON.stringify(result)}`);
+      }
+      for (let item of result.typeList) {
+        checkNormal(item);
+      }
+      return;
+    }
     if (!result.location) {
       throw new Error(`no 'location' in ${JSON.stringify(result)}`);
     }
@@ -788,18 +800,30 @@ SchemaField
   }
 
 SchemaType
-  = SchemaPrimitiveType / SchemaUnionType
+  = SchemaPrimitiveType / SchemaUnionType / SchemaTupleType
 
 SchemaPrimitiveType
   = 'Text' / 'URL' / 'Number' / 'Boolean' / 'Object'
 
-SchemaUnionType = '(' whiteSpace? first:SchemaPrimitiveType rest:(whiteSpace 'or' whiteSpace SchemaPrimitiveType)* whiteSpace? ')' {
-  let typeList = [first];
-  for (let type of rest) {
-    typeList.push(type[3]);
+SchemaUnionType
+  = '(' whiteSpace? first:SchemaPrimitiveType rest:(whiteSpace 'or' whiteSpace SchemaPrimitiveType)+ whiteSpace? ')'
+  {
+    let typeList = [first];
+    for (let type of rest) {
+      typeList.push(type[3]);
+    }
+    return { typeKind: 'union', typeList };
   }
-  return typeList;
-}
+
+SchemaTupleType
+  = '(' whiteSpace? first:SchemaType rest:(whiteSpace? ',' whiteSpace? SchemaType)* whiteSpace? ')'
+  {
+    let typeList = [first];
+    for (let type of rest) {
+      typeList.push(type[3]);
+    }
+    return { typeKind: 'tuple', typeList };
+  }
 
 Version
   = '@' version:[0-9]+

@@ -105,12 +105,17 @@ class Schema {
     let normative = this.normative;
     let optional = this.optional;
     let classJunk = ['toJSON', 'prototype', 'toString', 'inspect'];
-    let typeMap = {
-      'Text': 'string',
-      'URL': 'string',
-      'Number': 'number',
-      'Boolean': 'boolean',
-      'Object': 'object',
+
+    let convertToJsType = fieldType => {
+      switch (fieldType) {
+        case 'Text':    return 'string';
+        case 'URL':     return 'string';
+        case 'Number':  return 'number';
+        case 'Boolean': return 'boolean';
+        case 'Object':  return 'object';
+        default:
+          throw new Error(`Unknown field type ${fieldType} in schema ${className}`);
+      }
     };
 
     let validateFieldAndTypes = (op, name, value) => {
@@ -122,29 +127,50 @@ class Schema {
         return;
       }
 
-      if (Array.isArray(fieldType)) {
-        for (let t of fieldType) {
-          let jsType = typeMap[t];
-          if (jsType === undefined) {
-            throw new Error(`Unknown field type ${t} in schema ${className}`);
-          }
-          if (typeof(value) === jsType) {
-            return;
-          }
+      if (typeof(fieldType) !== 'object') {
+        // Primitive fields.
+        if (typeof(value) !== convertToJsType(fieldType)) {
+          throw new TypeError(
+              `Type mismatch ${op}ting field ${name} (type ${fieldType}); ` +
+              `value '${value}' is type ${typeof(value)}`);
         }
-        throw new TypeError(
-            `Type mismatch ${op}ting field ${name} (union ${fieldType}); ` +
-            `value ${value} is type ${typeof(value)}`);
+        return;
       }
 
-      let jsType = typeMap[fieldType];
-      if (jsType === undefined) {
-        throw new Error(`Unknown field type ${fieldType} in schema ${className}`);
-      }
-      if (typeof(value) !== jsType) {
-        throw new TypeError(
-            `Type mismatch ${op}ting field ${name} (type ${fieldType}); ` +
-            `value ${value} is type ${typeof(value)}`);
+      switch (fieldType.typeKind) {
+        case 'union':
+          // Value must be a primitive that matches one of the union types.
+          for (let innerType of fieldType.typeList) {
+            if (typeof(value) === convertToJsType(innerType)) {
+              return;
+            }
+          }
+          throw new TypeError(
+              `Type mismatch ${op}ting field ${name} (union [${fieldType.typeList}]); ` +
+              `value '${value}' is type ${typeof(value)}`);
+          break;
+
+        case 'tuple':
+          // Value must be an array whose contents match each of the tuple types.
+          if (!Array.isArray(value)) {
+            throw new TypeError(`Cannot ${op} tuple ${name} with non-array value '${value}'`);
+          }
+          if (value.length != fieldType.typeList.length) {
+            throw new TypeError(`Length mismatch ${op}ting tuple ${name} ` +
+                                `[${fieldType.typeList}] with value '${value}'`);
+          }
+          fieldType.typeList.map((innerType, i) => {
+            if (value[i] !== undefined && value[i] !== null &&
+                typeof(value[i]) !== convertToJsType(innerType)) {
+              throw new TypeError(
+                  `Type mismatch ${op}ting field ${name} (tuple [${fieldType.typeList}]); ` +
+                  `value '${value}' has type ${typeof(value[i])} at index ${i}`);
+            }
+          });
+          break;
+
+        default:
+          throw new Error(`Unknown typeKind ${typeKind} in schema ${className}`);
       }
     };
 
