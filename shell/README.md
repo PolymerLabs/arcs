@@ -43,6 +43,13 @@ Building Arcs Lib
 
 ## Testing
 
+To run local tests (including running a full build and starting a local
+server), run `npm test`. If you have a running server on localhost:8080 you
+can skip the build by running `npm run test-test`. You can start a local
+server with `npm start` as well.
+
+### Debugging tests
+
 If you see errors like
 
 ```

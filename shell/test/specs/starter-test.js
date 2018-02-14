@@ -66,7 +66,7 @@ function searchElementsForText(elements, textQuery) {
   const matches = textToId.reduce((accumulator, currentValue) => {
     const found = currentValue.text.toLowerCase().includes(textQuery.toLowerCase()) ? currentValue : null;
     if (accumulator && found) {
-      throw Error(`found two matches ${accumulator}, ${found}`);
+      throw Error(`found two matches:\nmatch 1: ${JSON.stringify(accumulator)}\nmatch 2: ${JSON.stringify(found)}`);
     } else if (accumulator) {
       return accumulator;
     }
