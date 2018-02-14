@@ -7,14 +7,19 @@
     "host": "localhost"
   },
   "scripts": {
+    "//": "We're abusing npm as a build system here using the npm-run-all package.",
+    "//": "Long-term the logic here might move into either sigh or gulp",
+
+    "test": "run-p --print-name start test-after-build",
     "start": "cross-env http-server -a ${npm_package_config_host} -p ${npm_package_config_port}",
-    "test": "npm-run-all --print-name --parallel start test-after-build",
 
     "gulp": "gulp --ignore-arc-failure",
 
-    "test-after-build": "run-s --print-name gulp test-test",
+    "//": "test-test is a useful target if you're need neither a server (perhaps because you've",
+    "//": "already invoked npm server manually) or to re-run the build.",
     "test-test": "run-s --print-name --continue-on-error test-mocha test-wdio",
 
+    "test-after-build": "run-s --print-name gulp test-test",
     "test-mocha": "mocha-chrome test/index.test.html",
     "test-wdio": "cross-env wdio -b http://${npm_package_config_host}:${npm_package_config_port}/ test/wdio.conf.js"
   },
