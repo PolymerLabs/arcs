@@ -4,6 +4,7 @@ node_js:
 env:
   - TEST_DIR: .
   - TEST_DIR: extension
+  - TEST_DIR: shell
 
 # todo: remove this once travis fixes their upstream issue (travis-ci/travis-ci#8836)
 sudo: required
