@@ -8,16 +8,19 @@
   },
   "scripts": {
     "start": "cross-env http-server -a ${npm_package_config_host} -p ${npm_package_config_port}",
-    "test": "mocha-chrome test/index.test.html && wdio -b http://${npm_package_config_host}:${npm_package_config_port}/ test/wdio.conf.js"
+    "test": "run-s -c test-mocha test-wdio",
+    "test-mocha": "mocha-chrome test/index.test.html",
+    "test-wdio": "cross-env wdio -b http://${npm_package_config_host}:${npm_package_config_port}/ test/wdio.conf.js"
   },
   "devDependencies": {
     "chai": "^4.1.2",
-    "chromedriver": "^2.33.2",
+    "chromedriver": "^2.35.0",
     "cross-env": "^5.1.3",
     "gulp": "^3.9.1",
     "gulp-babili": "^0.1.4",
     "http-server": "^0.10.0",
     "mocha-chrome": "^1.0.2",
+    "npm-run-all": "^4.1.2",
     "wdio-chromedriver-service": "^0.1.2",
     "wdio-mocha-framework": "^0.5.11",
     "wdio-spec-reporter": "^0.1.3",
