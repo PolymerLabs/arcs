@@ -81,9 +81,13 @@ class HandleExplorer extends Xen.Base {
           name: handle.name,
           tags: tags ? [...tags].join(', ') : '',
           id: handle.id,
+          storage: handle.storageKey,
           //values: JSON.stringify(handle.toList ? await handle.toList() : `await handle.get()`, null, '  ')
           values
         };
+        if (handle.description) {
+          data.description = handle.description;
+        }
         let moniker = handle.id.split(':').pop();
         result.push({tags: data.tags, data, name: handle.name || data.tags || moniker});
       }

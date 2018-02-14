@@ -58,20 +58,26 @@ class RemoteSharedHandles extends Xen.Base {
         // TODO(wkorman): Rename `views` to `handles` below on the next database rebuild.
         path: `arcs/${key}/views`,
         // TODO(sjmiles): firebase knowledge here, maybe push down into watchGroup
-        handler: snapshot => this._remoteHandlesChanged(arc, key, snapshot.val(), sharer)
+        handler: snapshot => this._remoteHandlesChanged(arc, key, snapshot.val(), user, sharer)
       };
     });
   }
-  _remoteHandlesChanged(arc, arcKey, handles, sharer) {
+  //
+  // Level 3: process data form individual handles
+  //
+  // TODO(sjmiles): need to delete vestigial handles
+  _remoteHandlesChanged(arc, arcKey, handles, user, sharer) {
     if (handles) {
-      Object.keys(handles).forEach(key => {
-        let handle = handles[key];
-        // TODO(sjmiles): hack per berni@
-        handle.metadata.name = sharer.name;
-        RemoteSharedHandles.log(`remoteHandlesChanged`, handle.metadata.tags);
-        ArcsUtils.createOrUpdateHandle(arc, handle, `SHARED[${arcKey}]`);
-      });
+      Object.values(handles).forEach(handle => this._remoteHandleChanged(arc, arcKey, user, sharer, handle));
     }
+  }
+  async _remoteHandleChanged(arc, arcKey, user, sharer, remote) {
+    // TODO(sjmiles): hack per berni@ (for descriptions?)
+    remote.metadata.name = sharer.name;
+    const handle = await ArcsUtils.createOrUpdateHandle(arc, remote, `SHARED[${arcKey}]`);
+    const typeName = handle.type.toPrettyString().toLowerCase();
+    handle.description = ArcsUtils._getHandleDescription(typeName, handle.tags, user.name, sharer.name);
+    RemoteSharedHandles.log(`remoteHandleChanged`, remote.metadata.tags, `"${handle.description}"`);
   }
 }
 RemoteSharedHandles.log = Xen.Base.logFactory('RemoteSHs', '#c79400');

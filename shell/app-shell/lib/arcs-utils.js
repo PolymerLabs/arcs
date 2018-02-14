@@ -107,7 +107,7 @@ const ArcsUtils = {
       ;
   },
   _getHandleDescription(name, tags, user, owner) {
-      let noun = (user === owner) ? 'my' : `<b>${owner}'s</b>`;
+      let noun = (user === owner) ? 'my' : `${owner}'s`;
       if (tags && tags.length) {
         return `${noun} ${tags[0].substring(1)}`;
       }
