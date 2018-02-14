@@ -13,7 +13,7 @@ const resolve = path.resolve;
 const normalize = path.normalize;
 const argv = require('yargs').argv;
 
-const target = `./lib`;
+const target = `./build`;
 
 const paths = {
   build: `${target}`
