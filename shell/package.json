@@ -7,7 +7,7 @@
     "host": "localhost"
   },
   "scripts": {
-    "test": "run-p --print-name start test-after-build",
+    "test": "run-p --print-name --race start test-after-build",
     "start": "cross-env http-server -a ${npm_package_config_host} -p ${npm_package_config_port}",
     "gulp": "gulp --ignore-arc-failure",
     "test-test": "run-s --print-name --continue-on-error test-mocha test-wdio",
