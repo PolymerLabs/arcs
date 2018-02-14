@@ -17,7 +17,7 @@ class RemoteSharedHandles extends Xen.Base {
   static get observedAttributes() { return ['arc', 'friends', 'user']; }
   _getInitialState() {
     return {
-      group: Object.assign(new WatchGroup(), {db})
+      group: new WatchGroup()
     };
   }
   _update(props, state, lastProps) {
@@ -25,20 +25,26 @@ class RemoteSharedHandles extends Xen.Base {
     if (/*props.arc && props.user &&*/ props.friends !== lastProps.friends) {
       let watches = [];
       if (props.friends && props.user) {
-        let friends = props.friends.map(friend => friend.rawData);
+        // TODO(sjmiles): making a null-prototype object makes it easeir to read in console (roi?)
+        //let friends = props.friends.map(friend => friend.rawData);
+        let friends = props.friends.map(friend => Object.assign(Object.create(null), friend.rawData));
         // include `user` in friends, so we can access generic profile info this way
         // TODO(sjmiles): is adding 'user' to 'friends' copacetic?
-        friends.push({id: props.user.id});
+        //friends.push({id: props.user.id});
+        friends.push(Object.assign(Object.create(null), {id: props.user.id}));
         watches = this._watchFriends(props.arc, friends, props.user, state.groups);
         RemoteSharedHandles.log(`watching (raw) FRIENDS`, friends);
       }
       state.group.watches = watches;
     }
   }
+  //
+  // Level 1: watch all friends arcs listings so we can adapt dynamically
+  //
   _watchFriends(arc, friends, user, groups) {
     return friends.map(friend => {
       //RemoteSharedHandles.log(`watching friend's [${friend.id}] shared handles`);
-      let group = Object.assign(new WatchGroup(), {db});
+      let group = new WatchGroup();
       return {
         path: `users/${friend.id}`,
         handler: snap => {
@@ -48,6 +54,9 @@ class RemoteSharedHandles extends Xen.Base {
       };
     });
   }
+  //
+  // Level 2: iterate a friend's arcs listings and watch the individual handles
+  //
   _watchSharedHandles(arc, user, sharer) {
     //let remotes = ArcsUtils.getUserProfileKeys(sharer);
     let remotes = ArcsUtils.getUserShareKeys(sharer);

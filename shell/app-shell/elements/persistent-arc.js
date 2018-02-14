@@ -48,7 +48,7 @@ class PersistentArc extends Xen.Base {
         // pass it along to the 'New Arc' url, but that is not the current
         // state of the world.
         props.metadata['externalManifest'] = this._getExternalManifest();
-        if (this._metadataHasChanged(props.metadata)) {
+        if (this._hasMetadataChanged(props.metadata)) {
           let arcMetadata = state.db.child(props.key).child('metadata');
           PersistentArc.log('WRITING (update) metadata for', String(arcMetadata), props.metadata);
           arcMetadata.update(props.metadata);
@@ -56,7 +56,7 @@ class PersistentArc extends Xen.Base {
       }
     }
   }
-  _metadataHasChanged(metadata) {
+  _hasMetadataChanged(metadata) {
     const state = this._state;
     const serial = JSON.stringify(metadata);
     if (serial !== state.serial) {
@@ -91,7 +91,7 @@ class PersistentArc extends Xen.Base {
       node: arcMetadata,
       handler: snap => {
         let metadata = snap.val();
-        if (this._metadataHasChanged(metadata)) {
+        if (this._hasMetadataChanged(metadata)) {
           this._fire('metadata', metadata);
         }
       }
