@@ -8,8 +8,13 @@
   },
   "scripts": {
     "start": "cross-env http-server -a ${npm_package_config_host} -p ${npm_package_config_port}",
-    "test": "run-s -c gulp test-mocha test-wdio",
+    "test": "npm-run-all --print-name --parallel start test-after-build",
+
     "gulp": "gulp --ignore-arc-failure",
+
+    "test-after-build": "run-s --print-name gulp test-test",
+    "test-test": "run-s --print-name --continue-on-error test-mocha test-wdio",
+
     "test-mocha": "mocha-chrome test/index.test.html",
     "test-wdio": "cross-env wdio -b http://${npm_package_config_host}:${npm_package_config_port}/ test/wdio.conf.js"
   },
