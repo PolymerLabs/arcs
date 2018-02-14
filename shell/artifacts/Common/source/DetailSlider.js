@@ -37,7 +37,7 @@ defineParticle(({DomParticle, resolver, html, log}) => {
   }
   [${host}] > [dialog] {
     position: absolute;
-    top: 2%;
+    top: 0;
     right: 4px;
     bottom: 0;
     left: 4px;
@@ -45,6 +45,7 @@ defineParticle(({DomParticle, resolver, html, log}) => {
     background-color: white;
     box-shadow: 0px 0px 8px 4px rgba(102,102,102,0.25);
     border-radius: 16px;
+    overflow: auto;
   }
   [${host}] > [dialog] > [back-button] {
     background-color: transparent;
