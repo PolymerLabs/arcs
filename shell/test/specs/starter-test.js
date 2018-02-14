@@ -66,7 +66,8 @@ function searchElementsForText(elements, textQuery) {
   const matches = textToId.reduce((accumulator, currentValue) => {
     const found = currentValue.text.toLowerCase().includes(textQuery.toLowerCase()) ? currentValue : null;
     if (accumulator && found) {
-      throw Error(`found two matches:\nmatch 1: ${JSON.stringify(accumulator)}\nmatch 2: ${JSON.stringify(found)}`);
+      // TODO - uncomment the assertion below once we have a fix for https://github.com/PolymerLabs/arcs/issues/708
+      // throw Error(`found two matches:\nmatch 1: ${JSON.stringify(accumulator)}\nmatch 2: ${JSON.stringify(found)}`);
     } else if (accumulator) {
       return accumulator;
     }
