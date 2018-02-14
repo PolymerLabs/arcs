@@ -96,11 +96,13 @@ describe('demo flow', function() {
         .expectRenderSlot('ShowItems', 'root', ['model'])
         .expectRenderSlot('Chooser', 'action', ['template', 'model'])
         .expectRenderSlot('AlsoOn', 'annotation', ['template', 'model'])
-        .expectRenderSlot('Multiplexer2', 'annotation', ['template', 'model'])
+        .expectRenderSlot('Multiplexer2', 'annotation', ['template'])
+        .expectRenderSlot('Multiplexer2', 'annotation', ['model'], slotComposer.expectContentItemsNumber.bind(null, 3))
         .expectRenderSlot('AlsoOn', 'annotation', ['template', 'model'])
-        .expectRenderSlot('Multiplexer2', 'annotation', ['model'])
         .expectRenderSlot('AlsoOn', 'annotation', ['template', 'model'])
-        .expectRenderSlot('Multiplexer2', 'annotation', ['model']);
+        .maybeRenderSlot('AlsoOn', 'annotation', ['model'])
+        .maybeRenderSlot('AlsoOn', 'annotation', ['model'])
+        .maybeRenderSlot('AlsoOn', 'annotation', ['model']);
     await arc.instantiate(plan);
     await arc.pec.idle;
     await slotComposer.expectationsCompleted();
@@ -121,7 +123,6 @@ describe('demo flow', function() {
     plans = await makePlans(arc, expectedSuggestions);
     // TODO: plans.length should be 4, remove duplicate GiftList + 2 Arrivinators recipes.
     assert.equal(plans.length, 5);
-
     // Move an element from recommended list to shortlist.
     slotComposer
       .newExpectations()
@@ -130,8 +131,8 @@ describe('demo flow', function() {
         .expectRenderSlot('ShowItems', 'root', ['model'])
         .expectRenderSlot('Chooser', 'action', ['model'])
         .expectRenderSlot('AlsoOn', 'annotation', ['model'])
-        .expectRenderSlot('Multiplexer2', 'annotation', ['model'])
-        .expectRenderSlot('Multiplexer2', 'annotation', ['model']);
+        .expectRenderSlot('Multiplexer2', 'annotation', ['model'], slotComposer.expectContentItemsNumber.bind(null, 4));
+
     await arc.pec.idle;
     await slotComposer.expectationsCompleted();
 
