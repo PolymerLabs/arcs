@@ -26,6 +26,9 @@ class RemoteFriendsProfileHandles extends Xen.Base {
       state.group.watches = this._watchFriends(state.db, state.group, props.arc, props.friends, props.user);
     }
   }
+  //
+  // Level 1: watch all friends arcs listings so we can adapt dynamically
+  //
   _watchFriends(db, group, arc, friends, user) {
     friends = friends.map(friend => friend.rawData);
     // include `user` in friends, so we can access generic profile info this way
@@ -48,20 +51,23 @@ class RemoteFriendsProfileHandles extends Xen.Base {
       };
     });
   }
+  //
+  // Level 2: iterate a friend's arcs listings and watch the individual handles
+  //
   _watchFriendProfileHandles(db, arc, friend, snap) {
     // get user record
     let user = snap.val();
     //RemoteFriendsProfileHandles.log(`READING friend's user [${user.name}]`); // from`, String(snap.ref));
     // find keys for user's profile arcs
     return ArcsUtils.getUserProfileKeys(user).map(key => {
-      //RemoteFriendsProfileHandles.log(`watching friend's [${user.name}] profile handles`); // from`, String(snap.ref));
+      RemoteFriendsProfileHandles.log(`watching friend's [${user.name}] profile handles`); // from`, String(snap.ref));
       return {
         node: db.child(`arcs/${key}/views`),
         handler: snap => {
           let handles = snap.val();
           if (handles) {
             RemoteFriendsProfileHandles.log(`READING friend's [${user.name}] profile handles`); // from`, String(snap.ref));
-            this._processFriendProfileHandles(arc, friend, handles);
+            this._remoteFriendProfileHandlesChanged(arc, friend, handles);
           } else {
             RemoteFriendsProfileHandles.log(`friend [${user.name}] has EMPTY profile`); // from`, String(snap.ref));
           }
@@ -69,38 +75,48 @@ class RemoteFriendsProfileHandles extends Xen.Base {
       };
     });
   }
-  _processFriendProfileHandles(arc, friend, handles) {
+  //
+  // Level 3: process individual handle data
+  //
+  // TODO(sjmiles): need to delete vestigial handles
+  _remoteFriendProfileHandlesChanged(arc, friend, handles) {
     //RemoteFriendsProfileHandles.log(`friend's profile handles`, friend, handles);
-    Object.keys(handles).forEach(async key => {
-      let {values, metadata: {name, type, tags}} = handles[key];
-      let tagString = (tags && tags.length ? `${tags.sort().join('_').replace(/#/g, '')}` : '');
-      let id = `FRIENDS_PROFILE_${tagString}`;
-      // TODO(sjmiles): not always a SetView is it?
-      let arcsType = ArcsUtils.typeFromMetaType(type);
-      if (values) {
-        let handle = await this._requireHandle(arc, id, arcsType, id, [`#friends_${tagString}`]);
-        // TODO(sjmiles): how to know if `values` represents a SetView or Entity?
-        if ('id' in values) {
-          values = [values];
-        } else {
-          values = Object.values(values);
-        }
-        let data = values.map(v => {
-          // TODO(sjmiles): `owner` not generally in schema, should be Entity metadata?
-          v.rawData.owner = friend.id;
-          return {
-            id: v.id, //arc.generateID(),
-            rawData: v.rawData
-          };
-        });
-        ArcsUtils.addHandleData(handle, data);
-        RemoteFriendsProfileHandles.log(`merged friend's profile handle [${id}]`); //, id, handle, data);
+    Object.keys(handles).forEach(async key => this._remoteFriendProfileHandleChanged(arc, friend, handles[key]));
+  }
+  async _remoteFriendProfileHandleChanged(arc, friend, handle) {
+    // destructure storage node
+    let {values, metadata: {name, type, tags}} = handle;
+    // build a string by combining tags with `_` and removing `#`
+    let tagString = (tags && tags.length ? `${tags.sort().join('_').replace(/#/g, '')}` : '');
+    // formulate an id from tags
+    let id = `FRIENDS_PROFILE_${tagString}`;
+    if (values) {
+      // acquire type record
+      const arcsType = ArcsUtils.typeFromMetaType(type);
+      // ASYNC: construct a handle, or locate an existing one
+      const handle = await this._requireHandle(arc, id, arcsType, id, [`#friends_${tagString}`]);
+      // TODO(sjmiles): how to know if `values` represents a SetView or Entity?
+      if ('id' in values) {
+        values = [values];
+      } else {
+        values = Object.values(values);
       }
-    });
+      let data = values.map(v => {
+        // TODO(sjmiles): `owner` not generally in schema, should be Entity metadata?
+        v.rawData.owner = friend.id;
+        return {
+          id: v.id,
+          rawData: v.rawData
+        };
+      });
+      ArcsUtils.addHandleData(handle, data);
+      RemoteFriendsProfileHandles.log(`merged friend's profile handle [${id}]`); //, id, handle, data);
+    }
   }
   async _requireHandle(arc, id, type, name, tags) {
     return arc.context.findHandleById(id) || await arc.context.newHandle(type, name, id, tags);
   }
 }
+
 RemoteFriendsProfileHandles.log = Xen.Base.logFactory('RemoteFriendsPHs', '#805acb');
 customElements.define('remote-friends-profiles-handles', RemoteFriendsProfileHandles);

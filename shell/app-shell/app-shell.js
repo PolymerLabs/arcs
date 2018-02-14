@@ -129,6 +129,7 @@ const template = ArcsUtils.html`
     width: 100%;
     max-width: 640px;
     background-color: white;
+    color: black;
   }
   [hidden] {
     display: none;
@@ -154,7 +155,7 @@ const template = ArcsUtils.html`
   [slotid=modal] {
     position: fixed;
     top: 56px;
-    bottom: 0;
+    bottom: 34px;
     width: 100%;
     max-width: 640px;
     margin: 0 auto;
@@ -215,8 +216,11 @@ const template = ArcsUtils.html`
         <option value='{{value}}' selected='{{selected}}'>{{user}}</option>
       </template>
       <div buttons>
+        <toggle-button title='{{shareStateTitle}}' state='{{shareState}}' on-state='_onShareState' icons='share person people'></toggle-button>
+        <!--
         <toggle-button title='Arc Contains Profile Data' state='{{profileState}}' on-state='_onProfileState' icons='person_outline person'></toggle-button>
         <toggle-button title='Share this Arc' state='{{sharedState}}' on-state='_onSharedState' icons='link supervisor_account'></toggle-button>
+        -->
         <toggle-button title='Cast' on-state='_onCastState' icons='cast cast_connected'></toggle-button>
         <a href='{{launcherUrl}}'><i>apps</i></a>
       </div>
@@ -272,6 +276,9 @@ class AppShell extends Xen.Base {
       cdnPath,
       linkTarget: '_self',
       launcherUrl: `${location.origin}${location.pathname}`,
+      themeData: {
+        mainBackground: 'white'
+      },
       arcsHandleOptions: {
         schemas: `${typesPath}/arc-types.manifest`,
         type: '[ArcMetadata]',
@@ -283,9 +290,6 @@ class AppShell extends Xen.Base {
         type: 'Theme',
         name: 'ShellTheme',
         tags: ['#shelltheme']
-      },
-      themeData: {
-        mainBackground: 'white'
       },
       identityHandleOptions: {
         schemas: `${typesPath}/identity-types.manifest`,
@@ -308,7 +312,8 @@ class AppShell extends Xen.Base {
         asContext: true
       },
       friendsAvatarData: {},
-      auth: true
+      auth: true,
+      shareState: 0
     };
   }
   _didMount() {
@@ -372,12 +377,14 @@ class AppShell extends Xen.Base {
       state.userName = state.user.name;
     }
     if (state.config && state.key && state.user) {
-      // modifying config only matters before initializing arc-host
       let isProfile = state.user.profiles && state.user.profiles[state.key];
+      /*
+      // modifying config only matters before initializing arc-host (aka `!state.arc`)
       if (isProfile && !state.arc) {
         AppShell.log(`is a profile Arc, setting soloPath to 'profile.manifest'`);
         //state.config.soloPath = 'profile.manifest';
       }
+      */
       let isShared = state.user.shares && state.user.shares[state.key];
       // unpack button states
       state.profileState = isProfile ? 1 : 0;
@@ -401,6 +408,7 @@ class AppShell extends Xen.Base {
       const url = state.arc._loader._resolve(state.avatar.rawData.url);
       state.avatarStyle = `background: url('${url}') center no-repeat; background-size: cover;`;
     }
+    state.shareStateTitle = [`Private Arc`, `Use For My Suggestions`, `Use For Friends' Suggestions`][state.shareState];
     // must have `auth` before doing anything else
     return state.auth ? state : null;
   }
@@ -599,6 +607,14 @@ class AppShell extends Xen.Base {
       this._setState({arcsHandleData: data});
     }
   }
+  async _onArcsHandleChange(e, handle) {
+    this._setState({
+      // TODO(sjmiles): any reason to replan here? I don't think so
+      //plans: null,
+      visitedArcs: await ArcsUtils.getHandleData(handle)
+    });
+    AppShell.log('onArcsHandle: ', this._state.visitedArcs);
+  }
   async _onProfile(e, profile) {
     let data;
     switch (profile.id) {
@@ -631,14 +647,6 @@ class AppShell extends Xen.Base {
       this._modifyProfileState(true);
     }
   }
-  async _onArcsHandleChange(e, handle) {
-    this._setState({
-      // TODO(sjmiles): any reason to replan here? I don't think so
-      //plans: null,
-      visitedArcs: await ArcsUtils.getHandleData(handle)
-    });
-    AppShell.log('onArcsHandle: ', this._state.visitedArcs);
-  }
   _onIdentityHandleChange() {
     // TODO(sjmiles): runtime will cause replanning on any handle change
     //this._setState({plans: null});
@@ -649,6 +657,23 @@ class AppShell extends Xen.Base {
   }
   _onMetadata(e, metadata) {
     this._setIfDirty({metadata});
+  }
+  _onShareState(e, shareState) {
+    this._setState({shareState});
+    switch (shareState) {
+      case 0:
+        this._onProfileState(e, false);
+        this._onSharedState(e, false);
+        break;
+      case 1:
+        this._onProfileState(e, true);
+        this._onSharedState(e, false);
+        break;
+      case 2:
+        this._onProfileState(e, true);
+        this._onSharedState(e, true);
+        break;
+    }
   }
   _onProfileState(e, profileState) {
     AppShell.log('profile state changed', profileState);
