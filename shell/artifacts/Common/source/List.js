@@ -22,7 +22,6 @@ defineParticle(({DomParticle, resolver}) => {
     <div slotid="action" subid="{{id}}"></div>
   </template>
   <div items>{{items}}</div>
-  <hr>
 </div>
     `.trim();
 
