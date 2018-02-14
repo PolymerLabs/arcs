@@ -1,0 +1,1 @@
+CALL node %~dp0\sigh.js %*
