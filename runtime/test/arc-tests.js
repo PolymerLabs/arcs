@@ -62,7 +62,7 @@ describe('Arc', function() {
 
   it('deserializing a serialized empty arc produces an empty arc', async () => {
     let arc = new Arc({slotComposer, loader, id: 'test'});
-    let serialization = arc.serialize();
+    let serialization = await arc.serialize();
     let newArc = await Arc.deserialize({serialization, loader, slotComposer});
     assert(newArc._handlesById.size == 0);
     assert(newArc.activeRecipe.toString() == arc.activeRecipe.toString());
@@ -77,10 +77,17 @@ describe('Arc', function() {
     let barView = await arc.createHandle(Bar.type);
     recipe.normalize();
     await arc.instantiate(recipe);
-
-    let serialization = arc.serialize();
-    let newArc = await Arc.deserialize({serialization, loader, slotComposer});
     await util.assertSingletonWillChangeTo(barView, Bar, 'a Foo1');
-    
+    assert.equal(fooView._version, 1);
+    assert.equal(barView._version, 1);
+
+    let serialization = await arc.serialize();
+    arc.stop();
+
+    let newArc = await Arc.deserialize({serialization, loader, slotComposer});
+    fooView = newArc.findHandleById(fooView.id);
+    barView = newArc.findHandleById(barView.id);
+    assert.equal(fooView._version, 1);
+    assert.equal(barView._version, 1);
   });
 });
