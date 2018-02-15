@@ -96,6 +96,18 @@ class Arc {
     this._scheduler.idleCallback = callback;
   }
 
+  get idle() {
+    let awaitCompletion = async () => {
+      await this.scheduler.idle;
+      let messageCount = this.pec.messageCount;
+      await this.pec.idle;
+      if (this.pec.messageCount !== messageCount + 1)
+        return awaitCompletion();
+    };
+
+    return awaitCompletion();
+  }
+
   _serializeHandles() {
     let schemas = '';
     let handles = '';
@@ -117,7 +129,7 @@ class Arc {
       let key = this._storageProviderFactory.parseStringAsKey(handle.storageKey);
       switch (key.protocol) {
         case 'firebase':
-          handles += `view View${id++} of ${handle.type.toString()} '${handle.id}' @0 at '${handle.storageKey}'\n`;
+          handles += `view View${id++} of ${handle.type.toString()} '${handle.id}' @${handle._version} at '${handle.storageKey}'\n`;
           return;
         case 'in-memory':
           resources += `resource View${id}Resource\n`;
@@ -136,7 +148,7 @@ class Arc {
           let data = JSON.stringify(serializedData);
           resources += data.split('\n').map(line => indent + line).join('\n');
           resources += '\n';
-          handles += `view View${id} of ${handle.type.toString()} '${handle.id}' @0 in View${id++}Resource\n`;
+          handles += `view View${id} of ${handle.type.toString()} '${handle.id}' @${handle._version} in View${id++}Resource\n`;
           return;
       }
     });
@@ -147,7 +159,8 @@ class Arc {
     return [...this.particleHandleMaps.values()].map(entry => entry.spec.toString()).join('\n');
   }
 
-  serialize() {
+  async serialize() {
+    await this.idle;
     return `
 meta
   name: '${this.id}'

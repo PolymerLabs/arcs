@@ -104,6 +104,10 @@ class InMemoryCollection extends InMemoryStorageProvider {
 
   async cloneFrom(handle) {
     let {list, version} = await handle._toListWithVersion();
+    await this._fromListWithVersion(list, version);
+  }
+
+  async _fromListWithVersion(list, version) {
     this._version = version;
     list.forEach(item => this._items.set(item.id, item));
   }
@@ -126,7 +130,10 @@ class InMemoryCollection extends InMemoryStorageProvider {
   async store(entity) {
     let trace = tracing.start({cat: 'view', name: 'InMemoryCollection::store', args: {name: this.name}});
     let entityWasPresent = this._items.has(entity.id);
-
+    if (entityWasPresent && (JSON.stringify(this._items.get(entity.id)) == JSON.stringify(entity))) {
+      trace.end({args: {entity}});    
+      return;
+    }
     this._items.set(entity.id, entity);
     this._version++;
     if (!entityWasPresent)
@@ -168,6 +175,10 @@ class InMemoryVariable extends InMemoryStorageProvider {
 
   async cloneFrom(handle) {
     let {data, version} = await handle._getWithVersion();
+    await this._setWithVersion(data, version);
+  }
+
+  async _setWithVersion(data, version) {
     this._stored = data;
     this._version = version;
   }
@@ -185,6 +196,8 @@ class InMemoryVariable extends InMemoryStorageProvider {
   }
 
   async set(entity) {
+    if (JSON.stringify(this._stored) == JSON.stringify(entity))
+      return;
     this._stored = entity;
     this._version++;
     this._fire('change', {data: this._stored, version: this._version});

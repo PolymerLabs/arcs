@@ -39,6 +39,34 @@ describe('View', function() {
     assert.equal(await barView.get(), undefined);
   });
 
+  it('ignores duplicate stores of the same entity value (variable)', async () => {
+    let arc = new Arc({slotComposer, id: 'test'});
+    let handle = await arc.createHandle(Bar.type);
+    assert.equal(handle._version, 0);
+    let bar1 = {id: 'an id', value: 'a Bar'};
+    await handle.set(bar1);
+    assert.equal(handle._version, 1);
+    await handle.set(bar1);
+    assert.equal(handle._version, 1);
+    await handle.set({value: 'a Bar'});
+    assert.equal(handle._version, 2);
+  });
+
+  it('ignores duplicate stores of the same entity value (collection)', async () => {
+    let arc = new Arc({slotComposer, id: 'test'});
+    let handle = await arc.createHandle(Bar.type.setViewOf());
+    assert.equal(handle._version, 0);
+    let bar1 = {id: 'an id', value: 'a Bar'};
+    await handle.store(bar1);
+    assert.equal(handle._version, 1);
+    await handle.store(bar1);
+    assert.equal(handle._version, 1);
+    await handle.store({value: 'a Bar'});
+    assert.equal(handle._version, 2);
+    await handle.store(bar1);
+    assert.equal(handle._version, 2);
+  });
+
   it('dedupes common user-provided ids', async () => {
     let arc = new Arc({slotComposer, id: 'test'});
 

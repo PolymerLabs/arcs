@@ -676,24 +676,21 @@ ${e.message}
       error.location = item.location;
       throw error;
     }
-    for (let entity of entities) {
-      if (entity == null && !type.isSetView) {
-        view.clear();
-      } else {
+    if (type.isSetView) {
+      entities = entities.map(entity => {
         let id = entity.$id || manifest.generateID();
         delete entity.$id;
-      
-        if (type.isSetView) {
-          view.store({
-            id,
-            rawData: entity,
-          });
-        } else {
-          view.set({
-            id,
-            rawData: entity,
-          });
-        }
+        return {id, rawData: entity};
+      });
+      view._fromListWithVersion(entities, item.version);
+    } else if (entities.length > 0) {
+      let entity = entities[entities.length - 1];
+      if (entity == null)
+        view._setWithVersion(null, item.version);
+      else {
+        let id = entity.$id || manifest.generateID();
+        delete entity.$id;
+        view._setWithVersion({id, rawData: entity}, item.version);
       }
     }
   }

@@ -147,18 +147,20 @@ class FirebaseVariable extends FirebaseStorageProvider {
     super(type, arcId, id, reference, firebaseKey);
     this.dataSnapshot = undefined;
     this._pendingGets = [];
+    this._version = 0;
     this.reference.on('value', dataSnapshot => {
       this.dataSnapshot = dataSnapshot;
       let data = dataSnapshot.val();
       this._pendingGets.forEach(_get => _get(data));
       this._pendingGets = [];
+      this._version = data.version;
       this._fire('change', {data: data.data, version: data.version});
     });
   }
 
   async cloneFrom(store) {
     let {data, version} = await store._getWithVersion();
-    await realTransaction(this.reference, data => ({data, version}));
+    await this._setWithVersion(data, version);
   }
 
   async get() {
@@ -174,8 +176,16 @@ class FirebaseVariable extends FirebaseStorageProvider {
     return this.dataSnapshot.val();
   }
 
+  async _setWithVersion(data, version) {
+    await realTransaction(this.reference, _ => ({data, version}));
+  }
+
   async set(value) {
-    return realTransaction(this.reference, data => ({data: value, version: data.version + 1}));
+    return realTransaction(this.reference, data => {
+      if (JSON.stringify(data.data) == JSON.stringify(value))
+        return data;
+      return {data: value, version: data.version + 1};
+    });
   }
 
   async clear() {
@@ -221,6 +231,8 @@ class FirebaseCollection extends FirebaseStorageProvider {
       if (!data.data)
         data.data = {};
       let encId = FirebaseStorageProvider.encodeKey(entity.id);
+      if (data.data[encId] && JSON.stringify(data.data[encId]) == JSON.stringify(entity))
+        return data;
       data.data[encId] = entity;
       data.version += 1;
       return data;
@@ -229,6 +241,10 @@ class FirebaseCollection extends FirebaseStorageProvider {
 
   async cloneFrom(store) {
     let {list, version} = await store._toListWithVersion();
+    await this._fromListWithVersion(list, version);
+  }
+
+  async _fromListWithVersion(list, version) {
     return realTransaction(this.reference, data => {
       if (!data.data)
         data.data = {};
