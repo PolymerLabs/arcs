@@ -50,7 +50,7 @@ const template = Xen.Template.createTemplate(
       outline: none;
     }
   </style>
-  <x-toast app-footer open="{{toastOpen}}" suggestion-container>
+  <x-toast app-footer open="{{toastOpen}}" on-toggle="_onToggle" suggestion-container>
     <dancing-dots slot="toast-header" disabled="{{dotsDisabled}}" active="{{dotsActive}}"></dancing-dots>
     <div search>
       <i class="material-icons" on-click="_onSearchClick" id="search-button">search</i>
@@ -93,6 +93,11 @@ class ArcFooter extends Xen.Base {
       toastOpen: state.open // == undefined ? true : state.open
     };
   }
+  _onToggle() {
+    this._setState({open: !this._state.open});
+    // TODO(sjmiles): breaks the idiom
+    this.host.querySelector('input').focus();
+  }
   _onPlanSelected(e, suggestion) {
     this._fire('suggest', suggestion);
     this._commitSearch('');
@@ -127,8 +132,10 @@ class ArcFooter extends Xen.Base {
   }
   _commitSearch(search) {
     search = search || '';
-    this._setState({search, open: true});
-    this._fire('search', {search});
+    if (this._state.search !== search) {
+      this._setState({search, open: true});
+      this._fire('search', {search});
+    }
   }
 }
 ArcFooter.log = Xen.Base.logFactory('ArcFooter', '#673AB7');
