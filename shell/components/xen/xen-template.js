@@ -268,7 +268,7 @@ let _set = function(node, property, value, controller) {
   }
 };
 
-const createTemplate = (innerHTML) => {
+const createTemplate = innerHTML => {
   return Object.assign(document.createElement('template'), {innerHTML});
 };
 
@@ -299,12 +299,9 @@ let setBoolAttribute = function(node, attr, state) {
   ](attr, '');
 };
 
-const maybeStringToTemplate = function(template) {
-  if (typeof template === 'string') {
-    // TODO(sjmiles): need to memoize this somehow
-    template = Object.assign(document.createElement('template'), {innerHTML: template});
-  }
-  return template;
+const maybeStringToTemplate = template => {
+  // TODO(sjmiles): need to memoize this somehow
+  return (typeof template === 'string') ? createTemplate(template) : template;
 };
 
 let stamp = function(template, opts) {
