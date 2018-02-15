@@ -119,12 +119,6 @@ class SlotConnection {
       }
       return false;
     }
-    if (this.slotSpec.isRequired && this.targetSlot.sourceConnection == undefined) {
-      if (options) {
-        options.details = 'missing target-slot\'s source-connection of required connection';
-      }
-      return false;
-    }
     return true;
   }
 

@@ -134,7 +134,10 @@ class SlotComposer {
     // Create slots for each of the recipe's particles slot connections.
     recipeParticles.forEach(p => {
       Object.values(p.consumedSlotConnections).forEach(cs => {
-        assert(cs.targetSlot, `No target slot for particle's ${p.name} consumed slot: ${cs.name}.`);
+        if (!cs.targetSlot) {
+          assert(!cs.slotSpec.isRequired, `No target slot for particle's ${p.name} required consumed slot: ${cs.name}.`);
+          return;
+        }
 
         if (this._initHostedSlot(cs.targetSlot.id, p)) {
           // Skip slot creation for hosted slots.
