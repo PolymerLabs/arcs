@@ -10,8 +10,6 @@
 
 import Xen from './xen/xen.js';
 
-(function() {
-
 const template = Xen.Template.createTemplate(`
 
 <style>
@@ -47,8 +45,11 @@ class XToast extends HTMLElement {
       this._mounted = true;
       this._root = this.attachShadow({mode: 'open'});
       this._root.appendChild(document.importNode(template.content, true));
-      this._root.querySelector('[header]').onclick = () => this.open = !this.open;
+      this._root.querySelector('[header]').onclick = () => this.onClick();
     }
+  }
+  onClick() {
+    this.dispatchEvent(new CustomEvent('toggle'));
   }
   get open() {
     return this.hasAttribute('open');
@@ -59,5 +60,3 @@ class XToast extends HTMLElement {
 }
 
 customElements.define('x-toast', XToast);
-
-})();
