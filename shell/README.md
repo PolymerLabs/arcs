@@ -88,12 +88,12 @@ allow you to see what's happening on the screen, and will give you enough time
 to debug the situation.
 
 ```
-arcs-cdn> vi dev/test/wdio.conf.js
-arcs-cdn> git diff dev/test/wdio.conf.js
-diff --git a/dev/test/wdio.conf.js b/dev/test/wdio.conf.js
+arcs/shell> vi test/wdio.conf.js
+arcs/shell> git diff test/wdio.conf.js
+diff --git a/test/wdio.conf.js b/test/wdio.conf.js
 index 0e36452..8ecf3d6 100644
---- a/dev/test/wdio.conf.js
-+++ b/dev/test/wdio.conf.js
+--- a/test/wdio.conf.js
++++ b/test/wdio.conf.js
 @@ -50,7 +50,7 @@ exports.config = {
        chromeOptions: {
          args: [
@@ -121,7 +121,7 @@ will exit the debugger and continue execution of the test).
 
 At that point you can open up DevTools in the browser to debug the current
 state, or inspect it visually. Some utilities (those in `selenium-utils.js`,
-including pierceShadows) have already been loaded.
+including `pierceShadows`) have already been loaded.
 
 There are also some commands available natively at that point, including
 `.help` and the `browser` variable (including methods such as
@@ -129,16 +129,16 @@ There are also some commands available natively at that point, including
 
 #### Attaching a Debugger
 
-To attach a debugger, uncomment the execArgv `--inspect` configuration option.
-It's likely that you'll still want to have increased the mochaTimeout and to
+To attach a debugger, uncomment the `execArgv` `--inspect` configuration option.
+It's likely that you'll still want to have increased the `mochaTimeout` and to
 be running graphically, so those are in the example as well:
 
 ```
-arcs-cdn> git diff dev/test/wdio.conf.js
-diff --git a/dev/test/wdio.conf.js b/dev/test/wdio.conf.js
+arcs/shell> git diff test/wdio.conf.js
+diff --git a/test/wdio.conf.js b/test/wdio.conf.js
 index 0e36452..4240c0a 100644
---- a/dev/test/wdio.conf.js
-+++ b/dev/test/wdio.conf.js
+--- a/test/wdio.conf.js
++++ b/test/wdio.conf.js
 @@ -50,11 +50,12 @@ exports.config = {
        chromeOptions: {
          args: [
