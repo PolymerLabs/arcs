@@ -27,13 +27,13 @@ npm install
 npm run build
 ```
 
-Subsequently, as long as the package.json remains consistent, just `npm run
+Subsequently, as long as the `package.json` remains consistent, just `npm run
 build` is required to update the packed browser files.
 
 ## Testing
 
 To run local tests (including running a full build and starting a local
-server), run `npm test`. If you have a running server on localhost:8080 and
+server), run `npm test`. If you have a running server on `localhost:8080` and
 there are no changes made to the runtime you can skip starting the server and
 running the build by using `npm run test-test`. You can start a local server
 with `npm start` as well.
