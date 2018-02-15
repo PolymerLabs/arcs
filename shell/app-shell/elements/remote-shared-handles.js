@@ -72,7 +72,7 @@ class RemoteSharedHandles extends Xen.Base {
     });
   }
   //
-  // Level 3: process data form individual handles
+  // Level 3: process data from individual handles
   //
   // TODO(sjmiles): need to delete vestigial handles
   _remoteHandlesChanged(arc, arcKey, handles, user, sharer) {
