@@ -38,6 +38,9 @@
       }
       return;
     }
+    if (result.model) {
+      throw new Error(`unexpected 'model' in ${JSON.stringify(result)}`);
+    }
     if (!result.location) {
       throw new Error(`no 'location' in ${JSON.stringify(result)}`);
     }
