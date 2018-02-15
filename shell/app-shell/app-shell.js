@@ -49,7 +49,8 @@ const template = ArcsUtils.html`
   }
   app-shell, [app-shell] {
     display: block;
-    max-width: 640px;
+    max-width: 512px;
+    min-width: 320px;
     margin: 0 auto;
     background-color: white;
   }
@@ -79,7 +80,7 @@ const template = ArcsUtils.html`
     position: fixed;
     top: 0;
     width: 100%;
-    max-width: 640px;
+    max-width: 512px;
     height: 56px;
     display: flex;
     align-items: center;
@@ -127,7 +128,7 @@ const template = ArcsUtils.html`
     position: fixed;
     bottom: 0;
     width: 100%;
-    max-width: 640px;
+    max-width: 512px;
     background-color: white;
     color: black;
   }
@@ -157,7 +158,7 @@ const template = ArcsUtils.html`
     top: 56px;
     bottom: 34px;
     width: 100%;
-    max-width: 640px;
+    max-width: 512px;
     margin: 0 auto;
     box-sizing: border-box;
     pointer-events: none;
@@ -165,7 +166,7 @@ const template = ArcsUtils.html`
   }
   /* wider-than-mobile */
   @media (min-width: 500px) {
-    app-shell[expanded], [expanded] app-main, [expanded] app-toolbar, [expanded] arc-footer {
+    app-shell[expanded], [expanded] app-main, [expanded] app-toolbar, [expanded] arc-footer, [expanded] [slotid=modal] {
       margin: 0;
       width: 424px;
       max-width: 424px;
