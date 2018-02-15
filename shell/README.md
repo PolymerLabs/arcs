@@ -20,33 +20,23 @@ TBD.
 
 ## Build Process
 
-The Arcs engine and other primary resources live in https://github.com/PolymerLabs/arcs repository. `ArcsLib.js` (and other artifacts in `lib`) are built out of sources in `arcs`. Here are build instructions.
+In the shell directory:
 
-Initial Setup
+```
+npm install
+npm run build
+```
 
-1. Have local checkouts of **arcs** and **arcs-cdn** as siblings (i.e. the gulpfile in arcs-cdn expects to find mainline source code in ../arcs).
-
-	**[path]/arcs
-	[path]/arcs-cdn**
-
-2. Install npm utilities for arcs-cdn (one time).
-
-	[path]/arcs-cdn/> **npm install**
-
-Building Arcs Lib
-
-1. Build browser-loadable artifacts
-
-	[path]/arcs-cdn/[version]/> **gulp**
-
-2. Built artifacts should appear in [path]/arcs-cdn/[version]/lib.
+Subsequently, as long as the package.json remains consistent, just `npm run
+build` is required to update the packed browser files.
 
 ## Testing
 
 To run local tests (including running a full build and starting a local
-server), run `npm test`. If you have a running server on localhost:8080 you
-can skip the build by running `npm run test-test`. You can start a local
-server with `npm start` as well.
+server), run `npm test`. If you have a running server on localhost:8080 and
+there are no changes made to the runtime you can skip starting the server and
+running the build by using `npm run test-test`. You can start a local server
+with `npm start` as well.
 
 ### Debugging tests
 
