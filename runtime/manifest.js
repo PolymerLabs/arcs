@@ -29,6 +29,40 @@ class ManifestError extends Error {
   }
 }
 
+class ManifestVisitor {
+  traverse(ast) {
+    if (['string', 'number', 'boolean'].includes(typeof result) || result === null) {
+      return;
+    }
+    if (Array.isArray(result)) {
+      for (let item of result) {
+        traverse(item);
+      }
+      return;
+    }
+    assert(result.location);
+    assert(result.kind);
+    let childrenVisited = false;
+    let continuation = () => {
+      if (childrenVisited) {
+        return;
+      }
+      childrenVisited = true;
+      for (let key of Object.keys(result)) {
+        if (['location', 'kind', 'model'].includes(key)) {
+          continue;
+        }
+        this.traverse(result[key]);
+      }
+    };
+    visit(ast, continuation);
+    continuation();
+  }
+
+  visit(node, visitChildren) {
+  }
+}
+
 class Manifest {
   constructor({id}) {
     this._recipes = [];
