@@ -12,7 +12,8 @@ particle ShowItems in 'source/ShowItems.js'
   ShowItems(in [~a] list, out [Description] descriptions)
   affordance dom
   affordance dom-touch
-  consume root
+  consume unused  # for testing purposes
+  must consume root
     provide action
       view list
     provide preamble
