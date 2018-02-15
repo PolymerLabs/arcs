@@ -5,11 +5,11 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import '../Chooser/Chooser.manifest'
-import '../Recommend/Recommend.manifest'
-import '../ShowItems/ShowItems.manifest'
-import '../VrPot/VrPot.manifest'
-import '../../entities/Person.manifest'
+import '../../../shell/artifacts/Products/Chooser.manifest'
+import '../../../shell/artifacts/Products/Recommend.manifest'
+import '../../../shell/artifacts/Common/ShowItems.manifest'
+import '../../../particles/VrPot/VrPot.manifest'
+import '../../../shell/artifacts/People/Person.schema'
 
 recipe
   Chooser.choices -> Recommend.recommendations

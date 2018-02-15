@@ -66,8 +66,7 @@ function searchElementsForText(elements, textQuery) {
   const matches = textToId.reduce((accumulator, currentValue) => {
     const found = currentValue.text.toLowerCase().includes(textQuery.toLowerCase()) ? currentValue : null;
     if (accumulator && found) {
-      // TODO - uncomment the assertion below once we have a fix for https://github.com/PolymerLabs/arcs/issues/708
-      // throw Error(`found two matches:\nmatch 1: ${JSON.stringify(accumulator)}\nmatch 2: ${JSON.stringify(found)}`);
+      throw Error(`found two matches:\nmatch 1: ${JSON.stringify(accumulator)}\nmatch 2: ${JSON.stringify(found)}`);
     } else if (accumulator) {
       return accumulator;
     }
@@ -428,7 +427,7 @@ describe('test Arcs demo flows', function() {
     // (2) verify 'action' slot is not visible after all products were moved.
 
     acceptSuggestion(
-      'Buy gifts for Claire, estimate arrival date for Products'
+      'Buy gifts for Claire\'s Birthday on 2017-08-04, Estimate arrival date for products'
     );
     acceptSuggestion(
       'Check manufacturer information for products from your browsing context'

@@ -82,7 +82,7 @@ describe('particle-shape-loading', function() {
 
     let arc = new Arc({id: 'test', pecFactory});
 
-    let manifest = await Manifest.load('./particles/test/test-particles.manifest', loader);
+    let manifest = await Manifest.load('./runtime/test/artifacts/test-particles.manifest', loader);
 
     let fooType = Type.newEntity(manifest.schemas.Foo);
     let barType = Type.newEntity(manifest.schemas.Bar);
@@ -146,7 +146,7 @@ describe('particle-shape-loading', function() {
     };
 
     let manifest = await Manifest.parse(`
-      import './particles/test/test-particles.manifest'
+      import './runtime/test/artifacts/test-particles.manifest'
 
       recipe
         create as v0

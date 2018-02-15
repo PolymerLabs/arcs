@@ -6,6 +6,8 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
+'use strict';
+
 defineParticle(({DomParticle, resolver}) => {
 
   let host = `[manage-products]`;
@@ -166,5 +168,4 @@ ${productStyles}
       this._views.get('list').remove(state.values[e.data.key]);
     }
   };
-
 });

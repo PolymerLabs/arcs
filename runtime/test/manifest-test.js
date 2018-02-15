@@ -481,24 +481,41 @@ describe('manifest', function() {
     assert(registry['somewhere/a path/b']);
   });
   it('parses all particles manifests', async () => {
+    let verifyParticleManifests = (particlePaths) => {
+      let count = 0;
+      particlePaths.forEach(particleManifestFile => {
+        if (fs.existsSync(particleManifestFile)) {
+          try {
+            let data = fs.readFileSync(particleManifestFile, 'utf-8');
+            let model = parser.parse(data);
+            assert.isDefined(model);
+          } catch (e) {
+            console.log(`Failed parsing ${particleManifestFile}`);
+            throw e;
+          }
+          ++count;
+        }
+      });
+      return count;
+    };
+
     let particlesPath = './particles/';
     let particleNames = fs.readdirSync(particlesPath);
-    let count = 0;
-    particleNames.forEach(pn => {
-      let particleManifestFile = `${path.join(particlesPath, pn, pn)}.manifest`;
-      if (fs.existsSync(particleManifestFile)) {
-        try {
-          let data = fs.readFileSync(particleManifestFile, 'utf-8');
-          let model = parser.parse(data);
-          assert.isDefined(model);
-        } catch (e) {
-          console.log(`Failed parsing ${particleManifestFile}`);
-          throw e;
-        }
-        ++count;
+    let count = verifyParticleManifests(particleNames.map(name => `${path.join(particlesPath, name, name)}.manifest`));
+    assert.equal(count, 9);
+
+    let shellParticlesPath = './shell/artifacts/';
+    let shellParticleNames = [];
+    fs.readdirSync(shellParticlesPath).forEach(name => {
+      let manifestFolderName = path.join(shellParticlesPath, name);
+      if (fs.statSync(manifestFolderName).isDirectory()) {
+        shellParticleNames = shellParticleNames.concat(
+            fs.readdirSync(manifestFolderName)
+                .filter(fileName => fileName.endsWith('.schema') || fileName.endsWith('.manifest') || fileName.endsWith('.recipes'))
+                .map(fileName => path.join(manifestFolderName, fileName)));
       }
     });
-    assert.equal(count, 20);
+    assert.isTrue(0 < verifyParticleManifests(shellParticleNames));
   });
   it('loads entities from json files', async () => {
     let manifestSource = `

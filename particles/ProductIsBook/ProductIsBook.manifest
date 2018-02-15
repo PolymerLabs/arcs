@@ -6,7 +6,7 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import '../../entities/Product.manifest'
+import '../../shell/artifacts/Products/Product.schema'
 
 particle ProductIsBook in 'ProductIsBook.js'
   ProductIsBook(in Product product, out Product book)

@@ -57,7 +57,7 @@ async function planFromManifest(manifest, {arcFactory, testSteps}={}) {
 
 describe('Planner', function() {
   it('can generate things', async () => {
-    let manifest = await Manifest.load('./particles/test/giftlist.manifest', loader);
+    let manifest = await Manifest.load('./runtime/test/artifacts/giftlist.manifest', loader);
     let testSteps = async planner => {
       await planner.generate();
       await planner.generate();
@@ -70,7 +70,7 @@ describe('Planner', function() {
 
   // TODO: rewrite or remove this, it doesn't test anything more than the above test?
   it('can make a plan with views', async () => {
-    let manifest = await Manifest.load('./particles/test/giftlist.manifest', loader);
+    let manifest = await Manifest.load('./runtime/test/artifacts/giftlist.manifest', loader);
     let arcFactory = async manifest => {
       let arc = createTestArc('test-plan-arc', manifest, 'dom');
       let Person = manifest.findSchemaByName('Person').entityClass();
@@ -91,7 +91,7 @@ describe('Planner', function() {
 
   it('can map remote views structurally', async () => {
     let results = await planFromManifest(`
-      view AView of * {Text text, Text moreText} in './entities/empty.json'
+      view AView of * {Text text, Text moreText} in './shell/artifacts/Things/empty.json'
       particle P1 in './some-particle.js'
         P1(in * {Text text} text)
       recipe
@@ -104,7 +104,7 @@ describe('Planner', function() {
 
   it('can copy remote views structurally', async () => {
     let results = await planFromManifest(`
-      view AView of * {Text text, Text moreText} in './entities/empty.json'
+      view AView of * {Text text, Text moreText} in './shell/artifacts/Things/empty.json'
       particle P1 in './some-particle.js'
         P1(in * {Text text} text)
       recipe

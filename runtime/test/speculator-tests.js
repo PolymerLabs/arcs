@@ -18,7 +18,7 @@ describe('speculator', function() {
   it('can speculatively produce a relevance', async () => {
     let loader = new Loader();
     let arc = new Arc({id: 'test'});
-    let manifest = await Manifest.load('./particles/test/test.manifest', loader);
+    let manifest = await Manifest.load('./runtime/test/artifacts/test.manifest', loader);
     let recipe = manifest.recipes[0];
     assert(recipe.normalize());
     let speculator = new Speculator();

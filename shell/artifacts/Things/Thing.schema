@@ -12,4 +12,5 @@ schema Thing
   optional
     Text description
     URL image
+    URL url
     Text identifier

@@ -121,8 +121,8 @@ describe('demo flow', function() {
       'Recommendations based on Claire\'s wishlist (Book: How to Draw plus 2 other items).'
     ];
     plans = await makePlans(arc, expectedSuggestions);
-    // TODO: plans.length should be 4, remove duplicate GiftList + 2 Arrivinators recipes.
-    assert.equal(plans.length, 5);
+    assert.equal(plans.length, 4);
+
     // Move an element from recommended list to shortlist.
     slotComposer
       .newExpectations()
@@ -142,8 +142,7 @@ describe('demo flow', function() {
                        .replace('Minecraft Book plus 2 other items', 'Minecraft Book plus 3 other items');
     });
     plans = await makePlans(arc, expectedSuggestions);
-    // TODO: plans.length should be 4, remove duplicate GiftList + 2 Arrivinators recipes.
-    assert.equal(plans.length, 5);
+    assert.equal(plans.length, 4);
 
     //var giftView = arc.findHandlesByType(Product.type.setViewOf(), {tag: "giftlist"})[0];
     //await testUtil.assertViewHas(giftView, Product, "name",

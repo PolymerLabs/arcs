@@ -7,67 +7,69 @@
 // http://polymer.github.io/PATENTS.txt
 
 import 'Product.schema'
-import 'ShowProducts.manifest'
+import '../Common/ShowItems.manifest'
 import 'Recommend.manifest'
 import 'Chooser.manifest'
 import 'GiftList.manifest'
 import 'Interests.manifest'
-import 'ProductMultiplexer.manifest'
+import '../Common/Multiplexer.manifest'
 import 'AlsoOn.manifest'
 import 'Arrivinator.manifest'
 import 'ManufacturerInfo.manifest'
 
 // Create shortlist with [product, ...]
 recipe
-   ShowProducts
+   ShowItems
 
 // See [person]'s wishlist
 recipe
   map #wishlist as wishlist
-  ShowProducts
+  ShowItems
     list <- wishlist
 
 // Create shortlist with [product, ...] and suggest similar products from [person]'s wish list
 recipe
   Chooser.choices -> Recommend.recommendations
   //Chooser.resultList -> ManageProducts.list
-  Chooser.resultList -> ShowProducts.list
+  Chooser.resultList -> ShowItems.list
   Chooser.resultList -> Recommend.known
-  Chooser.resultList -> ProductMultiplexer2.list
-  Chooser.choices -> ProductMultiplexer2.others
+  Chooser.resultList -> Multiplexer2.list
+  Chooser.choices -> Multiplexer2.others
+  create #recommended as recommended
   map #wishlist as wishlist
   copy #shortlist as shortlist
   slot as slot0
   Recommend
     population <- wishlist
-  ShowProducts
+    recommendations -> recommended
+  ShowItems
     list <- shortlist
   //ManageProducts
     //list = shortlist
     consume root as slot0
       provide annotation as slot1
-  ProductMultiplexer2
+  Multiplexer2
     hostedParticle = AlsoOn
     consume annotation as slot1
 
 // Buying for [person]'s [occasion] in [timeframe]? Product [X] arrives too late.
 recipe
   map as view1
-  use as view2
-  use as view3
+  use #shortlist as view2
+  use #recommended as view3
   GiftList
     person <- view1
-  ProductMultiplexer
+  Multiplexer
     list <- view2
     hostedParticle = Arrivinator
-  ProductMultiplexer
+  Multiplexer
     list <- view3
     hostedParticle = Arrivinator
 
 // Check manufacturer information for products.
 recipe
   use #shortlist as shortlist
-  ProductMultiplexer
+  Multiplexer
     list <- shortlist
     hostedParticle <- ManufacturerInfo
 
