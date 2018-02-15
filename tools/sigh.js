@@ -240,7 +240,7 @@ function test(args) {
     // TODO(wkorman): Integrate shell testing more deeply into sigh testing. For
     // now we skip including shell tests in the normal sigh test flow and intend
     // to instead run them via a separate 'npm test' command.
-    if (fullPath.startsWith(fixPathForWindows(`${dir}/shell/`))) return false;
+    if (fullPath.startsWith(path.normalize(`${dir}/shell/`))) return false;
     const isSelectedTest = options.manual == fullPath.includes('manual_test');
     return /-tests?.js$/.test(fullPath) && isSelectedTest;
   });
