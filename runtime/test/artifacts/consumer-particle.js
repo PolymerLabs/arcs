@@ -6,11 +6,9 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-schema Thing
-  normative
-    Text name
-  optional
-    Text description
-    URL image
-    URL url
-    Text identifier
+'use strict';
+
+defineParticle(({Particle}) => {
+  return class ConsumerParticle extends Particle {
+  };
+});

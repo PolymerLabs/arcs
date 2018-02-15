@@ -8,6 +8,8 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
+'use strict';
+
 defineParticle(({DomParticle, resolver}) => {
 
   const host = `[chooser]`;

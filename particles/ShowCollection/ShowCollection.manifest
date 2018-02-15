@@ -6,7 +6,7 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import '../../entities/Description.manifest'
+import '../../shell/artifacts/Arcs/Description.schema'
 
 // TODO: fix "consume" unnamed slot in the shape requiring a trailing whitespace.
 shape HostedParticleShape

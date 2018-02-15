@@ -10,5 +10,5 @@ import 'Product.schema'
 
 particle Recommend in 'source/Recommend.js'
   Recommend(in [Product] known, in [Product] population, out [Product] recommendations)
-  description `recommend Products from ${known} and ${population}`
-    recommendations `Products recommended based on ${known} and ${population}`
+  description `recommend products from ${known} and ${population}`
+    recommendations `products recommended based on ${known}._name_ and ${population}._name_`

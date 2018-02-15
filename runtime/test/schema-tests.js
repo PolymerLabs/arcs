@@ -13,9 +13,30 @@ import Loader from '../loader.js';
 import Manifest from '../manifest.js';
 
 describe('schema', function() {
+  let loader = new class extends Loader {
+    loadResource(fileName) {
+      if (fileName == 'Product.schema') {
+        return `
+        import './shell/artifacts/Things/Thing.schema'
+        schema Product extends Thing
+            optional
+              Text category
+              Text seller
+              Text price
+              Number shipDays
+              Boolean isReal
+              Object brand
+        `;
+      }
+      return new Loader().loadResource(fileName);
+    }
+    join(_, file) {
+      return file;
+    }
+  };
 
   it('schemas load recursively', async function() {
-    let manifest = await Manifest.load('./entities/Product.manifest', new Loader());
+    let manifest = await Manifest.load('Product.schema', loader);
     let schema = manifest.findSchemaByName('Product');
     assert.deepEqual(schema.normative, {name: 'Text'});
     assert.deepEqual(schema.optional, {description: 'Text', image: 'URL', category: 'Text',
@@ -27,7 +48,7 @@ describe('schema', function() {
   });
 
   it('constructs an appropriate entity subclass', async function() {
-    let manifest = await Manifest.load('./entities/Product.manifest', new Loader());
+    let manifest = await Manifest.load('Product.schema', loader);
     let Product = manifest.findSchemaByName('Product').entityClass();
     assert.equal(Product.name, 'Product');
     let product = new Product({name: 'Pickled Chicken Sandwich',
@@ -47,7 +68,7 @@ describe('schema', function() {
   });
 
   it('stores a copy of the constructor arguments', async function() {
-    let manifest = await Manifest.load('./entities/Product.manifest', new Loader());
+    let manifest = await Manifest.load('Product.schema', loader);
     let Product = manifest.findSchemaByName('Product').entityClass();
     let data = {name: 'Seafood Ice Cream', category: 'Terrible Food'};
     let product = new Product(data);
@@ -59,7 +80,7 @@ describe('schema', function() {
   });
 
   it('has accessors for all schema fields', async function() {
-    let manifest = await Manifest.load('./entities/Product.manifest', new Loader());
+    let manifest = await Manifest.load('Product.schema', loader);
     let Product = manifest.findSchemaByName('Product').entityClass();
 
     let product = new Product({});
@@ -95,7 +116,7 @@ describe('schema', function() {
   });
 
   it('has accessors for schema fields only', async function() {
-    let manifest = await Manifest.load('./entities/Product.manifest', new Loader());
+    let manifest = await Manifest.load('Product.schema', loader);
     let Product = manifest.findSchemaByName('Product').entityClass();
     assert.throws(() => { new Product({sku: 'sku'}); }, 'not in schema');
 
@@ -105,7 +126,7 @@ describe('schema', function() {
   });
 
   it('performs type checking', async function() {
-    let manifest = await Manifest.load('./entities/Product.manifest', new Loader());
+    let manifest = await Manifest.load('Product.schema', loader);
     let Product = manifest.findSchemaByName('Product').entityClass();
     assert.throws(() => { new Product({name: 6}); }, TypeError, 'Type mismatch setting field name');
     assert.throws(() => { new Product({url: 7}); }, TypeError, 'Type mismatch setting field url');
@@ -128,7 +149,7 @@ describe('schema', function() {
   });
 
   it('makes a copy of the data when cloning', async function() {
-    let manifest = await Manifest.load('./entities/Product.manifest', new Loader());
+    let manifest = await Manifest.load('Product.schema', loader);
     let Product = manifest.findSchemaByName('Product').entityClass();
 
     let product = new Product({name: 'Tomato Soup',

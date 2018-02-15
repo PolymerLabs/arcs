@@ -32,7 +32,7 @@ describe('particle-shape-loading-with-slots', function() {
     };
     let slotComposer = new MockSlotComposer();
     let manifest = await Manifest.parse(`
-      import './particles/test/transformations/test-slots-particles.manifest'
+      import './runtime/test/artifacts/transformations/test-slots-particles.manifest'
 
       recipe
         create as view0

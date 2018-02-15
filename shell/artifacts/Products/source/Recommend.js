@@ -6,11 +6,13 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
+'use strict';
+
 defineParticle(({Particle}) => {
   return class Recommend extends Particle {
     setViews(views) {
       this.on(views, 'population', 'change', e => {
-        const populationView = views.get('population');
+        let populationView = views.get('population');
         populationView.toList().then(data => {
           for (let i = 0; i < 3 && i < data.length; i++) {
             views.get('recommendations').store(data[i]);

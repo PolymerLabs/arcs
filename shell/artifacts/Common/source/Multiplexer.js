@@ -9,7 +9,7 @@
  */
 
 defineParticle(({TransformationDomParticle}) => {
-  return class ProductMultiplexer extends TransformationDomParticle {
+  return class Multiplexer extends TransformationDomParticle {
     constructor() {
       super();
       this._itemSubIdByHostedSlotId = new Map();

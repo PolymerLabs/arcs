@@ -6,10 +6,17 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import '../../entities/Person.manifest'
+import '../Arcs/Description.schema'
 
-particle GiftList in 'GiftList.js'
-  GiftList(in Person person)
+particle ShowItems in 'source/ShowItems.js'
+  ShowItems(in [~a] list, out [Description] descriptions)
   affordance dom
-  consume preamble
-  description `buy gifts for ${person}'s ${person.occasion} on ${person.date}`
+  affordance dom-touch
+  consume root
+    provide action
+      view list
+    provide preamble
+    provide postamble
+    provide set of annotation
+      view list
+  description `show ${list}`

@@ -5,16 +5,17 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import '../../../particles/ShowItems/ShowItems.manifest'
-import '../../../particles/ManageProducts/ManageProducts.manifest'
-import '../../../particles/Recommend/Recommend.manifest'
-import '../../../particles/Chooser/Chooser.manifest'
-import '../../../particles/GiftList/GiftList.manifest'
-import '../../../particles/Interests/Interests.manifest'
-import '../../../particles/Multiplexer/Multiplexer.manifest'
-import '../../../particles/AlsoOn/AlsoOn.manifest'
-import '../../../particles/Arrivinator/Arrivinator.manifest'
-import '../../../particles/ManufacturerInfo/ManufacturerInfo.manifest'
+import '../../../shell/artifacts/Products/Product.schema'
+import '../../../shell/artifacts/Common/ShowItems.manifest'
+import '../../../shell/artifacts/Products/ManageProducts.manifest'
+import '../../../shell/artifacts/Products/Recommend.manifest'
+import '../../../shell/artifacts/Products/Chooser.manifest'
+import '../../../shell/artifacts/Products/GiftList.manifest'
+import '../../../shell/artifacts/Products/Interests.manifest'
+import '../../../shell/artifacts/Common/Multiplexer.manifest'
+import '../../../shell/artifacts/Products/AlsoOn.manifest'
+import '../../../shell/artifacts/Products/Arrivinator.manifest'
+import '../../../shell/artifacts/Products/ManufacturerInfo.manifest'
 
 // See [person]'s wishlist
 recipe
@@ -53,7 +54,7 @@ recipe
 // Buying for [person]'s [occasion] in [timeframe]? Product [X] arrives too late.
 recipe
   map as view1
-  use as view2
+  use #shortlist as view2
   use as view3
   GiftList
     person <- view1

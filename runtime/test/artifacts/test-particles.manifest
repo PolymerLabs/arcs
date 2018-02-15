@@ -20,9 +20,6 @@ particle TestParticle in 'test-particle.js'
 particle TwoInputTestParticle in 'two-input-test-particle.js'
   TwoInputTestParticle(in Foo foo, in Bar bar, out Far far)
 
-particle ListTestParticle in 'list-test-particle.js'
-  ListTestParticle(in Bar bar, out [Far] fars)
-
 shape TestShape
   AnyThing(in Foo foo, out Bar bar)
 

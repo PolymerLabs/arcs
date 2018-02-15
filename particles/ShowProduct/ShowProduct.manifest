@@ -6,7 +6,7 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import '../../entities/Product.manifest'
+import '../../shell/artifacts/Products/Product.schema'
 
 particle ShowProduct in 'ShowProduct.js'
   ShowProduct(in Product product)
