@@ -102,6 +102,13 @@ ${this._slotsToManifestString()}
     return new Shape(this.name, views, slots);
   }
 
+  resolvedType() {
+    let result = this.clone();
+    for (let typeVar of result._typeVars)
+      typeVar.object[typeVar.field] = typeVar.object[typeVar.field].resolvedType();
+    return result;
+  }
+
   equals(other) {
     if (this.views.length !== other.views.length)
       return false;

@@ -14,7 +14,11 @@ class TypeVariable {
     this.resolution = null;
   }
 
+  // this shouldn't be called on a 
+  // resolved TypeVariable.. how do we
+  // pass a resolution across the PEC?
   toLiteral() {
+    assert(this.resolution == null);
     return this;
   }
 
