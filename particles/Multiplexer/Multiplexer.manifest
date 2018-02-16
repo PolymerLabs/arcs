@@ -17,11 +17,11 @@ particle Multiplexer in 'Multiplexer.js'
   description `${hostedParticle} for ${list}`
 
 // Same as Multiplexer above, but with an additional connection.
-shape HostedParticleShape
-  HostedParticleShape(in ~a, in [~a])
+shape HostedParticleShape2
+  HostedParticleShape2(in ~a, in [~a])
   consume annotation
 
 particle Multiplexer2 in 'Multiplexer.js'
-  Multiplexer2(host HostedParticleShape hostedParticle, in [~a] list, in [~a] others)
+  Multiplexer2(host HostedParticleShape2 hostedParticle, in [~a] list, in [~a] others)
   consume set of annotation
   description `${hostedParticle} for ${list}`

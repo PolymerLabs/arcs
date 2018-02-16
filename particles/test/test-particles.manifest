@@ -28,3 +28,7 @@ shape TestShape
 
 particle OuterParticle in 'outer-particle.js'
   OuterParticle(host TestShape particle, in Foo input, out Bar output)
+
+particle ConsumerParticle in 'consumer-particle.js'
+  ConsumerParticle(in Foo input)
+  consume annotation

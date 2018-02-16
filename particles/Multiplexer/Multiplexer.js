@@ -17,6 +17,7 @@ defineParticle(({TransformationDomParticle}) => {
       this._connByHostedConn = new Map();
     }
     async setViews(views) {
+      this.handleIds = new Set();
       let arc = await this.constructInnerArc();
 
       let hostedParticle = await views.get('hostedParticle').get();
@@ -36,8 +37,6 @@ defineParticle(({TransformationDomParticle}) => {
       }
 
       this.on(views, 'list', 'change', async e => {
-        let handleIds = new Set(this._state.renderModel && this._state.renderModel.items ? this._state.renderModel.items.map(item => item.subId) : []);
-
         let listHandle = views.get('list');
         let list = await listHandle.toList();
 
@@ -46,9 +45,10 @@ defineParticle(({TransformationDomParticle}) => {
         }
 
         for (let [index, item] of list.entries()) {
-          if (handleIds.has(item.id)) {
+          if (this.handleIds.has(item.id)) {
             continue;
           }
+          this.handleIds.add(item.id);
           let itemView = await arc.createHandle(listHandle.type.primitiveType(), 'item' + index);
 
           let hostedSlotName = [...hostedParticle.slots.keys()][0];
