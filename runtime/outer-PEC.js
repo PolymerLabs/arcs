@@ -137,7 +137,7 @@ class OuterPEC extends PEC {
   instantiate(particleSpec, id, spec, handles, lastSeenVersion) {
     handles.forEach(handle => {
       let version = lastSeenVersion.get(handle.id) || 0;
-      this._apiPort.DefineHandle(handle, {type: handle.type, name: handle.name,
+      this._apiPort.DefineHandle(handle, {type: handle.type.resolvedType(), name: handle.name,
                                        version});
     });
 

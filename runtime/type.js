@@ -171,6 +171,9 @@ class Type {
     if (this.isTypeVariable && this.data.isResolved) {
       return this.data.resolution.resolvedType();
     }
+    if (this.isInterface) {
+      return Type.newInterface(this.data.resolvedType());
+    }
     return this;
   }
 
@@ -200,6 +203,8 @@ class Type {
         return Type.fromLiteral;
       case 'Tuple':
         return TupleFields.fromLiteral;
+      case 'Variable':
+        return TypeVariable.fromLiteral;
       default:
         return a => a;
     }
