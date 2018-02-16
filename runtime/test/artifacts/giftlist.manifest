@@ -8,7 +8,6 @@
 import '../../../shell/artifacts/Products/Chooser.manifest'
 import '../../../shell/artifacts/Products/Recommend.manifest'
 import '../../../shell/artifacts/Common/ShowItems.manifest'
-import '../../../particles/VrPot/VrPot.manifest'
 import '../../../shell/artifacts/People/Person.schema'
 
 recipe
@@ -24,6 +23,12 @@ recipe
     list <- view0
     descriptions -> descriptions
 
+
+particle VrTestParticle in 'VrTestParticle.js'
+  VrTestParticle()
+  affordance vr
+  consume root
+
 recipe
   ShowItems
-  VrPot
+  VrTestParticle
