@@ -10,38 +10,6 @@ import AppShell from '../../app-shell/app-shell.js';
 
 import Xen from '../../components/xen/xen.js';
 
-/*
- * let's see if we can use the version in ../../app-shell/app-shell.js
-const template = ArcsUtils.html`
-  <style>
-    extension-app-shell {
-      display: block;
-      overflow: hidden;
-      padding-top: 32px;
-      padding-bottom: 64px;
-      background-color: white;
-    }
-
-    extension-app-shell {
-      min-width: 320px;
-    }
-    // wider-than-mobile
-    @media (min-width: 500px) {
-      extension-app-shell {
-        box-sizing: border-box;
-        margin: 0 auto;
-        max-width: 700px;
-      }
-      extension-app-shell[expanded] {
-        margin: 0;
-        width: 414px;
-        max-width: 414px;
-      }
-    }
-  </style>
-`;
-*/
-
 class ExtensionAppShell extends AppShell {
   async _fetchManifestList() {
     let manifests = await ManifestTools.fetchManifestList();
