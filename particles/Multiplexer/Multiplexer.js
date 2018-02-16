@@ -17,7 +17,7 @@ defineParticle(({TransformationDomParticle}) => {
       this._connByHostedConn = new Map();
     }
     async setViews(views) {
-      this.handleIds = new Set();
+      this.handleIds = {};
       let arc = await this.constructInnerArc();
 
       let hostedParticle = await views.get('hostedParticle').get();
@@ -45,15 +45,22 @@ defineParticle(({TransformationDomParticle}) => {
         }
 
         for (let [index, item] of list.entries()) {
-          if (this.handleIds.has(item.id)) {
+          if (this.handleIds[item.id]) {
+            let itemView = await this.handleIds[item.id];
+            itemView.set(item);
             continue;
           }
-          this.handleIds.add(item.id);
-          let itemView = await arc.createHandle(listHandle.type.primitiveType(), 'item' + index);
+
+          let itemViewPromise = arc.createHandle(listHandle.type.primitiveType(), 'item' + index);
+          this.handleIds[item.id] = itemViewPromise;
+
+          let itemView = await itemViewPromise;
 
           let hostedSlotName = [...hostedParticle.slots.keys()][0];
           let slotName = [...this.spec.slots.values()][0].name;
+          
           let slotId = await arc.createSlot(this, slotName, hostedParticle.name, hostedSlotName);
+
           if (!slotId) {
             continue;
           }
@@ -78,6 +85,8 @@ recipe
           } catch (e) {
             console.log(e);
           }
+
+          console.log('there');
         }
 
         // Update props of all particle's views.
