@@ -502,7 +502,7 @@ describe('manifest', function() {
     let particlesPath = './particles/';
     let particleNames = fs.readdirSync(particlesPath);
     let count = verifyParticleManifests(particleNames.map(name => `${path.join(particlesPath, name, name)}.manifest`));
-    assert.equal(count, 9);
+    assert.equal(count, 4);
 
     let shellParticlesPath = './shell/artifacts/';
     let shellParticleNames = [];
