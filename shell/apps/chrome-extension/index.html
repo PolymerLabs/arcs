@@ -34,8 +34,12 @@
   <!-- firebase config is required before loading runtime -->
   <script type="module" src="../../app-shell/firebase-config.js"></script>
 
+  <!-- load runtime (from build [build] or source [source])-->
+  <script type="module" src="../../build/ArcsLib.js"></script>
+  <!--<script type="module" src="../../source/ArcsLib.js"></script>-->
+
   <!-- TODO(smalls) move to a module included from extension-app-shell.js -->
-  <script src="data-processing.js"></script>
+  <!-- <script src="data-processing.js"></script> -->
 
   <script type="module" src="extension-app-shell.js"></script>
 </head>

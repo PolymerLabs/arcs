@@ -5,12 +5,23 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import ArcsUtils from '../../app-shell/lib/arcs-utils.js';
+//import ArcsUtils from '../../app-shell/lib/arcs-utils.js';
 import AppShell from '../../app-shell/app-shell.js';
 
 import Xen from '../../components/xen/xen.js';
 
 class ExtensionAppShell extends AppShell {
+  _onConfig(e, config) {
+    super._onConfig(e, config);
+
+    if (config.key == 'launcher') {
+      config.soloPath = '../web/launcher.manifest';
+    }
+
+    this._setState({config});
+  }
+
+  /*
   async _fetchManifestList() {
     let manifests = await ManifestTools.fetchManifestList();
     if (this._config.additionalManifests) {
@@ -123,6 +134,7 @@ class ExtensionAppShell extends AppShell {
     // (after this method, _start() returns).
     window.postMessage({method: 'pleaseInjectArcsData'}, '*');
   }
+  */
 }
 ExtensionAppShell.log = Xen.Base.logFactory('ExtensionAppShell', '#2277a8');
 customElements.define('extension-app-shell', ExtensionAppShell);
