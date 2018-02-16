@@ -214,7 +214,7 @@ ${this.activeRecipe.toString()}`;
         continue;
       }
       let handle = this.findHandleById(connection.view.id);
-      assert(handle);
+      assert(handle, `can't find handle of id ${connection.view.id}`);
       this._connectParticleToHandle(id, recipeParticle, name, handle);
     }
 

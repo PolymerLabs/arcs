@@ -197,6 +197,7 @@ class Schema {
             return true;
           }
         });
+        assert(data, `can't construct entity with null data`);
         for (let [name, value] of Object.entries(data)) {
           this.rawData[name] = value;
         }
