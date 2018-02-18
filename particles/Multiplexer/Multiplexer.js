@@ -85,8 +85,6 @@ recipe
           } catch (e) {
             console.log(e);
           }
-
-          console.log('there');
         }
 
         // Update props of all particle's views.
