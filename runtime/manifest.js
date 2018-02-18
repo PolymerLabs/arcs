@@ -31,32 +31,32 @@ class ManifestError extends Error {
 
 class ManifestVisitor {
   traverse(ast) {
-    if (['string', 'number', 'boolean'].includes(typeof result) || result === null) {
+    if (['string', 'number', 'boolean'].includes(typeof ast) || ast === null) {
       return;
     }
-    if (Array.isArray(result)) {
-      for (let item of result) {
-        traverse(item);
+    if (Array.isArray(ast)) {
+      for (let item of ast) {
+        this.traverse(item);
       }
       return;
     }
-    assert(result.location);
-    assert(result.kind);
+    assert(ast.location, JSON.stringify(ast));
+    assert(ast.kind);
     let childrenVisited = false;
-    let continuation = () => {
+    let visitChildren = () => {
       if (childrenVisited) {
         return;
       }
       childrenVisited = true;
-      for (let key of Object.keys(result)) {
+      for (let key of Object.keys(ast)) {
         if (['location', 'kind', 'model'].includes(key)) {
           continue;
         }
-        this.traverse(result[key]);
+        this.traverse(ast[key]);
       }
     };
-    visit(ast, continuation);
-    continuation();
+    this.visit(ast, visitChildren);
+    visitChildren();
   }
 
   visit(node, visitChildren) {
@@ -289,16 +289,16 @@ ${e.message}
       for (let meta of items.filter(item => item.kind == 'meta')) {
         manifest.applyMeta(meta.items);
       }
-      // similarly, resources may be referenced from other parts of the
-      // manifest.
-      for (let item of items.filter(item => item.kind == 'resource')) {
-        this._processResource(manifest, item);
-      }
       for (let item of items.filter(item => item.kind == 'schema')) {
         this._processSchema(manifest, item);
       }
+      Manifest._augmentAstWithTypes(items);
       for (let item of items.filter(item => item.kind == 'shape')) {
         this._processShape(manifest, item);
+      }
+      // Resources may be referenced from particles and views.
+      for (let item of items.filter(item => item.kind == 'resource')) {
+        this._processResource(manifest, item);
       }
       for (let item of items.filter(item => item.kind == 'particle')) {
         this._processParticle(manifest, item, loader);
@@ -313,6 +313,17 @@ ${e.message}
       throw processError(e);
     }
     return manifest;
+  }
+  static _augmentAstWithTypes(items) {
+    let visitor = new class extends ManifestVisitor {
+      constructor() {
+        super();
+      }
+      visit(node, visitChildren) {
+        visitChildren();
+      }
+    }();
+    visitor.traverse(items);
   }
   static _processSchema(manifest, schemaItem) {
     manifest._schemas[schemaItem.name] = new Schema({
