@@ -89,4 +89,41 @@ describe('Arc', function() {
     assert.equal(fooView._version, 1);
     assert.equal(barView._version, 1);
   });
+
+  it('deserializing a serialized arc with a Transformation produces that arc', async () => {
+    let manifest = await Manifest.parse(`
+      import 'particles/Multiplexer/Multiplexer.manifest'
+      import 'particles/test/test-particles.manifest'
+      
+      recipe
+        slot 'slotid' as s0
+        use 'test:1' as v0
+        Multiplexer
+          hostedParticle = ConsumerParticle
+          consume annotation as s0
+          list <- v0
+
+    `, {loader, fileName: './manifest.manifest'});
+
+    let recipe = manifest.recipes[0];
+    assert(recipe.normalize());
+    assert(recipe.isResolved());
+    let slotComposer = new SlotComposer({affordance: 'mock', rootContext: 'slotid'});
+
+    let arc = new Arc({id: 'test', context: manifest, slotComposer});
+
+    let barType = manifest.findTypeByName('Bar');
+    let handle = await arc.createHandle(barType.setViewOf());
+
+    await arc.instantiate(recipe);
+    await arc.idle;
+
+    let serialization = await arc.serialize();
+    arc.stop();
+
+    console.log(serialization);
+
+    let newArc = await Arc.deserialize({serialization, loader, slotComposer, fileName: './manifest.manifest'});
+    
+  });
 });

@@ -450,8 +450,7 @@ ${e.message}
       });
     }
     // TODO: move shape to recipe/ and add shape builder?
-    let shape = new Shape(views, slots);
-    shape.name = shapeItem.name;
+    let shape = new Shape(shapeItem.name, views, slots);
     manifest._shapes.push(shape);
   }
   static async _processRecipe(manifest, recipeItem, loader) {
@@ -646,7 +645,7 @@ ${e.message}
           let id = `${manifest.generateID()}:immediate${hostedParticle.name}`;
           // TODO: Mark as immediate.
           targetView = recipe.newHandle();
-          targetView.fate = 'map';
+          targetView.fate = 'copy';
           let handle = await manifest.newHandle(type, null, id, []);
           // TODO: loader should not be optional.
           if (hostedParticle.implFile && loader) {

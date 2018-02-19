@@ -29,7 +29,11 @@ const handleFields = ['type', 'name', 'direction'];
 const slotFields = ['name', 'direction', 'isRequired', 'isSet'];
 
 class Shape {
-  constructor(views, slots) {
+  constructor(name, views, slots) {
+    assert(name);
+    assert(views !== undefined);
+    assert(slots !== undefined);
+    this.name = name;
     this.views = views;
     this.slots = slots;
     this._typeVars = [];
@@ -57,22 +61,43 @@ class Shape {
     return false;
   }
 
+  _handlesToManifestString() {
+    return this.views
+      .map(handle => `${handle.direction ? handle.direction + ' ': ''}${handle.type.toString()}${handle.name ? ' ' + handle.name : ''}`)
+      .join(', ');
+  }
+
+  _slotsToManifestString() {
+    // TODO deal with isRequired
+    return this.slots
+      .map(slot => `  ${slot.direction} ${slot.isSet ? 'set of ' : ''}${slot.name ? slot.name + ' ' : ''}`)
+      .join('\n');
+  }
+  // TODO: Include name as a property of the shape and normalize this to just
+  // toString().
+  toString() {
+    return `shape ${this.name}
+  ${this.name}(${this._handlesToManifestString()})
+${this._slotsToManifestString()}
+`;
+  }
+
   static fromLiteral(data) {
     let views = data.views.map(view => ({type: _fromLiteral(view.type), name: _fromLiteral(view.name), direction: _fromLiteral(view.direction)}));
     let slots = data.slots.map(slot => ({name: _fromLiteral(slot.name), direction: _fromLiteral(slot.direction), isRequired: _fromLiteral(slot.isRequired), isSet: _fromLiteral(slot.isSet)}));
-    return new Shape(views, slots);
+    return new Shape(data.name, views, slots);
   }
 
   toLiteral() {
     let views = this.views.map(view => ({type: _toLiteral(view.type), name: _toLiteral(view.name), direction: _toLiteral(view.direction)}));
     let slots = this.slots.map(slot => ({name: _toLiteral(slot.name), direction: _toLiteral(slot.direction), isRequired: _toLiteral(slot.isRequired), isSet: _toLiteral(slot.isSet)}));
-    return {views, slots};
+    return {name: this.name, views, slots};
   }
 
   clone() {
     let views = this.views.map(({name, direction, type}) => ({name, direction, type}));
     let slots = this.slots.map(({name, direction, isRequired, isSet}) => ({name, direction, isRequired, isSet}));
-    return new Shape(views, slots);
+    return new Shape(this.name, views, slots);
   }
 
   equals(other) {

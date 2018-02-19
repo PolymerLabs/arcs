@@ -113,51 +113,60 @@ class Arc {
     return awaitCompletion();
   }
 
-  _serializeHandles() {
+  async _serializeHandles() {
     let schemas = '';
     let handles = '';
     let resources = '';
+    let interfaces = '';
 
     let id = 0;
     let schemaSet = new Set();
-    this._handlesById.forEach(handle => {
-      let schema = handle.type;
-      if (schema.isSetView)
-        schema = schema.primitiveType;
-      if (schema.isEntity) {
-        schema = schema.entitySchema.toString();
+    for (let handle of this._handlesById.values()) {
+      let type = handle.type;
+      if (type.isSetView)
+        type = type.primitiveType();
+      if (type.isEntity) {
+        let schema = type.entitySchema.toString();
         if (!schemaSet.has(schema)) {
           schemaSet.add(schema);
           schemas += schema + '\n';
         }
       }
+      if (type.isInterface) {
+        interfaces += type.interfaceShape.toString() + '\n';
+      }
       let key = this._storageProviderFactory.parseStringAsKey(handle.storageKey);
       switch (key.protocol) {
         case 'firebase':
           handles += `view View${id++} of ${handle.type.toString()} '${handle.id}' @${handle._version} at '${handle.storageKey}'\n`;
-          return;
+          break;
         case 'in-memory':
           resources += `resource View${id}Resource\n`;
           let indent = '  ';
           resources += indent + 'start\n';
-          let serializedData = handle.serializedData().map(a => {
+          
+          let serializedData = (await handle.serializedData()).map(a => {
             if (a == null)
               return null;
-            let result = {};
-            result.$id = a.id;
-            for (let field in a.rawData) {
-              result[field] = a.rawData[field];
+            if (a.rawData) {
+              let result = {};
+              result.$id = a.id;
+              for (let field in a.rawData) {
+                result[field] = a.rawData[field];
+              }
+              return result;
             }
-            return result;
+            return a;
           });
           let data = JSON.stringify(serializedData);
           resources += data.split('\n').map(line => indent + line).join('\n');
           resources += '\n';
           handles += `view View${id} of ${handle.type.toString()} '${handle.id}' @${handle._version} in View${id++}Resource\n`;
-          return;
+          break;
       }
-    });
-    return resources + schemas + handles;
+    }
+
+    return resources + interfaces + schemas + handles;
   }
 
   _serializeParticles() {
@@ -171,7 +180,7 @@ meta
   name: '${this.id}'
   storageKey: '${this._storageKey}'
 
-${this._serializeHandles()}
+${await this._serializeHandles()}
 
 ${this._serializeParticles()}
 
@@ -179,8 +188,8 @@ ${this._serializeParticles()}
 ${this.activeRecipe.toString()}`;
   }
 
-  static async deserialize({serialization, pecFactory, slotComposer, loader}) {
-    let manifest = await Manifest.parse(serialization, {loader});
+  static async deserialize({serialization, pecFactory, slotComposer, loader, fileName}) {
+    let manifest = await Manifest.parse(serialization, {loader, fileName});
     let arc = new Arc({
       id: manifest.meta.name,
       storageKey: manifest.meta.storageKey,

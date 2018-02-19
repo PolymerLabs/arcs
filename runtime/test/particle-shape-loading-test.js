@@ -87,7 +87,7 @@ describe('particle-shape-loading', function() {
     let fooType = Type.newEntity(manifest.schemas.Foo);
     let barType = Type.newEntity(manifest.schemas.Bar);
 
-    let shape = new Shape([{type: fooType}, {type: barType}], []);
+    let shape = new Shape("Test", [{type: fooType}, {type: barType}], []);
 
     let shapeType = Type.newInterface(shape);
 

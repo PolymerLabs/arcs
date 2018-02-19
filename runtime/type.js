@@ -226,10 +226,16 @@ class Type {
     if (this.isEntity)
       return this.entitySchema.name;
     if (this.isInterface)
-      return 'Interface';
+      return this.interfaceShape.name;
     if (this.isTuple)
       return this.tupleFields.toString();
-    assert('Add support to serializing type:', this);
+    if (this.isVariableReference)
+      return `~${this.data}`;
+    if (this.isManifestReference)
+      return this.data;
+    if (this.isVariable)
+      return `~${this.data.name}`;
+    assert(false, `Add support to serializing type: ${JSON.stringify(this)}`);
   }
 
   toPrettyString() {
