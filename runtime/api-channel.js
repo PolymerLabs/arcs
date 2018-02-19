@@ -36,7 +36,7 @@ class ThingMapper {
     } else {
       id = this._newIdentifier();
     }
-    assert(!this._idMap.has(id));
+    assert(!this._idMap.has(id), `${requestedId ? 'requestedId' : (thing.apiChannelMappingId ? 'apiChannelMappingId' : 'newIdentifier()')} ${id} already in use`);
     this.establishThingMapping(id, thing);
     return id;
   }

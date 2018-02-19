@@ -189,7 +189,7 @@ ${this.activeRecipe.toString()}`;
     manifest.views.forEach(view => arc._registerHandle(view, []));
     let recipe = manifest.activeRecipe.clone();
     recipe.normalize();
-    arc.instantiate(recipe);
+    await arc.instantiate(recipe);
     return arc;
   }
 
@@ -205,7 +205,7 @@ ${this.activeRecipe.toString()}`;
   }
 
   _instantiateParticle(recipeParticle) {
-    let id = this.generateID();
+    let id = this.generateID('particle');
     let handleMap = {spec: recipeParticle.spec, handles: new Map()};
     this.particleHandleMaps.set(id, handleMap);
 
@@ -227,8 +227,10 @@ ${this.activeRecipe.toString()}`;
     return id;
   }
 
-  generateID() {
-    return `${this.id}:${this._nextLocalID++}`;
+  generateID(component) {
+    if (component == undefined)
+      component = '';
+    return `${this.id}:${component}${this._nextLocalID++}`;
   }
 
   generateIDComponents() {
