@@ -319,8 +319,31 @@ ${e.message}
         visitChildren();
         switch (node.kind) {
         case 'schema-inline':
+          let externalSchema;
+          if (node.name != null) {
+            let resolved = manifest.resolveReference(node.name);
+            if (resolved && resolved.schema) {
+              externalSchema = resolved.schema;
+            }
+          }
           let fields = {};
           for (let {name, type} of node.fields) {
+            if (!type) {
+              if (!externalSchema) {
+                throw new ManifestError(
+                    node.location,
+                    `Could not infer type of '${name}' field`);
+              }
+              type = externalSchema.normative[name] || externalSchema.optional[name];
+            }
+            if (externalSchema) {
+              let externalType = externalSchema.normative[name] || externalSchema.optional[name];
+              if (externalType != type) {
+                throw new ManifestError(
+                    node.location,
+                    `Type of '${name}' does not match schema (${type} vs ${externalType})`);
+              }
+            }
             fields[name] = type;
           }
           node.model = Type.newEntity(new Schema({
@@ -694,7 +717,7 @@ ${e.message}
     if (shape) {
       return {shape};
     }
-    throw new Error(`Schema or Shape '${name}' was not declared or imported`);
+    return null;
   }
   static async _processView(manifest, item, loader) {
     let name = item.name;

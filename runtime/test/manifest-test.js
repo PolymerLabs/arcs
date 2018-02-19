@@ -985,4 +985,26 @@ resource SomeName
     assert(validRecipe.isResolved());
     assert(!invalidRecipe.normalize());
   });
+
+  it('can infer field types of inline schemas from external schemas', async () => {
+    let manifest = await Manifest.parse(`
+      schema Thing
+        optional
+          Text value
+      particle P
+        P(in Thing {value} foo)
+      particle P2
+        P2(in * {Text value, Text value2} foo)
+
+      recipe
+        create as view
+        P
+          foo = view
+        P2
+          foo = view
+    `);
+    let [validRecipe] = manifest.recipes;
+    assert(validRecipe.normalize());
+    assert(validRecipe.isResolved());
+  });
 });
