@@ -462,12 +462,12 @@ describe('manifest', function() {
     assert.equal(2, recipe.slots.length);
   });
   it('multiple consumed slots', async () => {
-    let parseRecipe = async (isRequiredSlotA, isRequiredSlotB, expectedIsResolved) => {
+    let parseRecipe = async (args) => {
       let recipe = (await Manifest.parse(`
         particle SomeParticle in 'some-particle.js'
           SomeParticle()
-          ${isRequiredSlotA ? 'must ' : ''}consume slotA
-          ${isRequiredSlotB ? 'must ' : ''}consume slotB
+          ${args.isRequiredSlotA ? 'must ' : ''}consume slotA
+          ${args.isRequiredSlotB ? 'must ' : ''}consume slotB
 
         recipe
           slot 'slota-0' as s0
@@ -475,12 +475,12 @@ describe('manifest', function() {
             consume slotA as s0
       `)).recipes[0];
       recipe.normalize();
-      assert.equal(expectedIsResolved, recipe.isResolved());
+      assert.equal(args.expectedIsResolved, recipe.isResolved());
     };
-    await parseRecipe(/* isRequiredSlotA= */ false, /* isRequiredSlotB= */ false, /* expectedIsResolved= */ true);
-    await parseRecipe(/* isRequiredSlotA= */ true, /* isRequiredSlotB= */ false, /* expectedIsResolved= */ true);
-    await parseRecipe(/* isRequiredSlotA= */ false, /* isRequiredSlotB= */ true, /* expectedIsResolved= */ false);
-    await parseRecipe(/* isRequiredSlotA= */ true, /* isRequiredSlotB= */ true, /* expectedIsResolved= */ false);
+    await parseRecipe({isRequiredSlotA: false, isRequiredSlotB: false, expectedIsResolved: true});
+    await parseRecipe({isRequiredSlotA: true, isRequiredSlotB: false, expectedIsResolved: true});
+    await parseRecipe({isRequiredSlotA: false, isRequiredSlotB: true, expectedIsResolved: false});
+    await parseRecipe({isRequiredSlotA: true, isRequiredSlotB: true, expectedIsResolved: false});
   });
   it('relies on the loader to combine paths', async () => {
     let registry = {};
