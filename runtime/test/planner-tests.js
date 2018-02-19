@@ -114,6 +114,20 @@ describe('Planner', function() {
     `);
     assert.equal(results.length, 1);
   });
+
+  it('can resolve multiple consumed slots', async () => {
+    let results = await planFromManifest(`
+      particle P1 in './some-particle.js'
+        P1()
+        consume one
+        consume two
+      recipe
+        slot 'slot-id0' as s0
+        P1
+          consume one as s0
+    `);
+    assert.equal(results.length, 1);
+  });
 });
 
 import InitSearch from '../strategies/init-search.js';

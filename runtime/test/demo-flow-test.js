@@ -81,8 +81,7 @@ describe('demo flow', function() {
       provide action as slot0
       provide annotation as slot2
       provide postamble as slot4
-      provide preamble as slot5
-    consume unused`;
+      provide preamble as slot5`;
     let {plan, description} = plans.find(p => p.plan.toString() == expectedPlanString);
 
     assert.equal('Show products from your browsing context (Minecraft Book plus 2 other items) ' +
