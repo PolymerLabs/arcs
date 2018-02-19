@@ -29,6 +29,7 @@ class ManifestError extends Error {
   }
 }
 
+// Calls `this.visit()` for each node in a manfest AST, parents before children.
 class ManifestVisitor {
   traverse(ast) {
     if (['string', 'number', 'boolean'].includes(typeof ast) || ast === null) {
@@ -40,8 +41,8 @@ class ManifestVisitor {
       }
       return;
     }
-    assert(ast.location, JSON.stringify(ast));
-    assert(ast.kind);
+    assert(ast.location, 'expected manifest node to have `location`');
+    assert(ast.kind, 'expected manifest node to have `kind`');
     let childrenVisited = false;
     let visitChildren = () => {
       if (childrenVisited) {
@@ -59,6 +60,8 @@ class ManifestVisitor {
     visitChildren();
   }
 
+  // Parents are visited before children, but an implementation can force
+  // children to be visted by calling `visitChildren()`.
   visit(node, visitChildren) {
   }
 }
@@ -282,45 +285,77 @@ ${e.message}
     }
 
     try {
+      let processItems = async (kind, f) => {
+        for (let item of items) {
+          if (item.kind == kind) {
+            Manifest._augmentAstWithTypes(manifest, item);
+            await f(item);
+          }
+        }
+      };
       // processing meta sections should come first as this contains identifying 
       // information that might need to be used in other sections. For example,
       // the meta.name, if present, becomes the manifest id which is relevant
       // when constructing manifest views.
-      for (let meta of items.filter(item => item.kind == 'meta')) {
-        manifest.applyMeta(meta.items);
-      }
-      for (let item of items.filter(item => item.kind == 'schema')) {
-        this._processSchema(manifest, item);
-      }
-      Manifest._augmentAstWithTypes(items);
-      for (let item of items.filter(item => item.kind == 'shape')) {
-        this._processShape(manifest, item);
-      }
-      // Resources may be referenced from particles and views.
-      for (let item of items.filter(item => item.kind == 'resource')) {
-        this._processResource(manifest, item);
-      }
-      for (let item of items.filter(item => item.kind == 'particle')) {
-        this._processParticle(manifest, item, loader);
-      }
-      for (let item of items.filter(item => item.kind == 'view')) {
-        await this._processView(manifest, item, loader);
-      }
-      for (let item of items.filter(item => item.kind == 'recipe')) {
-        await this._processRecipe(manifest, item, loader);
-      }
+      await processItems('meta', meta => manifest.applyMeta(meta.items));
+      // similarly, resources may be referenced from other parts of the manifest.
+      await processItems('resource', item => this._processResource(manifest, item));
+      await processItems('schema', item => this._processSchema(manifest, item));
+      await processItems('shape', item => this._processShape(manifest, item));
+      await processItems('particle', item => this._processParticle(manifest, item, loader));
+      await processItems('view', item => this._processView(manifest, item, loader));
+      await processItems('recipe', item => this._processRecipe(manifest, item, loader));
     } catch (e) {
       throw processError(e);
     }
     return manifest;
   }
-  static _augmentAstWithTypes(items) {
+  static _augmentAstWithTypes(manifest, items) {
     let visitor = new class extends ManifestVisitor {
       constructor() {
         super();
       }
       visit(node, visitChildren) {
         visitChildren();
+        switch (node.kind) {
+        case 'schema-inline':
+          let fields = {};
+          for (let {name, type} of node.fields) {
+            fields[name] = type;
+          }
+          node.model = Type.newEntity(new Schema({
+            name: node.name,
+            parents: [],
+            sections: [{
+              sectionType: 'normative',
+              fields,
+            }],
+          }));
+          return;
+        case 'variable-type':
+          node.model = Type.newVariableReference(node.name);
+          return;
+        case 'reference-type':
+          let resolved = manifest.resolveReference(node.name);
+          if (!resolved) {
+            throw new ManifestError(
+                node.location,
+                `Could not resolve type reference '${node.name}'`);
+          }
+          if (resolved.schema) {
+            node.model = Type.newEntity(resolved.schema);
+          } else if (resolved.shape) {
+            node.model = Type.newInterface(resolved.shape);
+          } else {
+            throw new Error('Expected {shape} or {schema}');
+          }
+          return;
+        case 'list-type':
+          node.model = Type.newSetView(node.type.model);
+          return;
+        default:
+          return;
+        }
       }
     }();
     visitor.traverse(items);
@@ -353,6 +388,8 @@ ${e.message}
     manifest._resources[schemaItem.name] = schemaItem.data;
   }
   static _processParticle(manifest, particleItem, loader) {
+    // TODO: we should be producing a new particleSpec, not mutating
+    //       particleItem directly.
     // TODO: we should require both of these and update failing tests...
     assert(particleItem.implFile == null || particleItem.args !== null, 'no valid body defined for this particle');
     if (!particleItem.args) {
@@ -364,44 +401,18 @@ ${e.message}
     }
 
     for (let arg of particleItem.args) {
-      arg.type = Manifest._processType(arg.type);
-      arg.type = arg.type.resolveReferences(name => manifest.resolveReference(name));
+      arg.type = arg.type.model;
     }
 
     let particleSpec = new ParticleSpec(particleItem);
     manifest._particles[particleItem.name] = particleSpec;
   }
   // TODO: Move this to a generic pass over the AST and merge with resolveReference.
-  static _processType(typeItem) {
-    switch (typeItem.kind) {
-      case 'schema-inline':
-        let fields = {};
-        for (let {name, type} of typeItem.fields) {
-          fields[name] = type;
-        }
-        return Type.newEntity(new Schema({
-          name: typeItem.name,
-          parents: [],
-          sections: [{
-            sectionType: 'normative',
-            fields,
-          }],
-        }));
-      case 'variable-type':
-        return Type.newVariableReference(typeItem.name);
-      case 'reference-type':
-        return Type.newManifestReference(typeItem.name);
-      case 'list-type':
-        return Type.newSetView(Manifest._processType(typeItem.type));
-      default:
-        throw `Unexpected type item of kind '${typeItem.kind}'`;
-    }
-  }
   static _processShape(manifest, shapeItem) {
     for (let arg of shapeItem.interface.args) {
       if (!!arg.type) {
-        arg.type = Manifest._processType(arg.type);
-        arg.type = arg.type.resolveReferences(name => manifest.resolveReference(name));
+        // TODO: we should copy rather than mutate the AST like this
+        arg.type = arg.type.model;
       }
     }
     let views = shapeItem.interface.args;
@@ -688,15 +699,13 @@ ${e.message}
   static async _processView(manifest, item, loader) {
     let name = item.name;
     let id = item.id;
-    let type = Manifest._processType(item.type);
+    let type = item.type.model;
     if (id == null) {
       id = `${manifest._id}view${manifest._views.length}`;
     }
     let tags = item.tags;
     if (tags == null)
       tags = [];
-
-    type = type.resolveReferences(name => manifest.resolveReference(name));
 
     let view = await manifest.newView(type, name, id, tags);
     view.source = item.source;
