@@ -132,6 +132,47 @@ class Planner {
     return result.some(r => r.score == 0);
   }
 
+  _speculativeThreadCount() {
+    // TODO(wkorman): We'll obviously have to rework the below when we do
+    // speculation in the cloud.
+
+    // Logical processor cores.
+    const hasNavigator = typeof navigator !== 'undefined';
+    const cores = hasNavigator ? navigator.hardwareConcurrency : 0;
+    // Device memory in gigabytes.
+    const memory = hasNavigator ? navigator.deviceMemory : 0;
+
+    // For now, allow occupying half of the available cores while constraining
+    // total memory used to at most a quarter of what's available. In the
+    // absence of resource information we just run two in parallel as a
+    // perhaps-low-end-device-oriented balancing act.
+    const minCores = 2;
+    if (!cores || !memory) {
+      return minCores;
+    }
+
+    // A rough estimate of memory used per thread in gigabytes.
+    const memoryPerThread = 0.125;
+    const quarterMemory = memory / 4;
+    const maxThreadsByMemory = quarterMemory / memoryPerThread;
+    const maxThreadsByCores = cores / 2;
+    return Math.max(minCores, Math.min(maxThreadsByMemory, maxThreadsByCores));
+  }
+  _splitToGroups(items, groupCount) {
+    const groups = [];
+    if (!items || items.length == 0) return groups;
+    const groupItemSize = Math.floor(items.length / groupCount);
+    let startIndex = 0;
+    for (let i = 0; i < groupCount; i++) {
+      groups.push(items.slice(startIndex, startIndex + groupItemSize));
+      startIndex += groupItemSize;
+    }
+    // Add any remaining items to the end of the last group.
+    if (startIndex < items.length) {
+      groups[groups.length - 1].push(...items.slice(startIndex, items.length));
+    }
+    return groups;
+  }
   async suggest(timeout, generations) {
     if (!generations && this._arc._debugging) generations = [];
     let trace = Tracing.async({cat: 'planning', name: 'Planner::suggest', args: {timeout}});
@@ -139,55 +180,66 @@ class Planner {
     trace.resume();
     let suggestions = [];
     let speculator = new Speculator();
-    // TODO: Run some reasonable number of speculations in parallel.
-    let results = [];
-    for (let plan of plans) {
-      let hash = ((hash) => { return hash.substring(hash.length - 4);})(await plan.digest());
+    // We don't actually know how many threads the VM will decide to use to
+    // handle the parallel speculation, but at least we know we won't kick off
+    // more than this number and so can somewhat limit resource utilization.
+    const threadCount = this._speculativeThreadCount();
+    const planGroups = this._splitToGroups(plans, threadCount);
+    let results = await trace.wait(() => Promise.all(planGroups.map(async group => {
+      let results = [];
+      for (let plan of group) {
+        let hash = ((hash) => { return hash.substring(hash.length - 4);})(await plan.digest());
 
-      if (this._matchesActiveRecipe(plan)) {
-        this._updateGeneration(generations, hash, (g) => g.active = true);
-        continue;
-      }
-
-      let relevance = await trace.wait(() => speculator.speculate(this._arc, plan));
-      trace.resume();
-      if (!relevance.isRelevant(plan)) {
-        continue;
-      }
-      let rank = relevance.calcRelevanceScore();
-
-      relevance.newArc.description.relevance = relevance;
-      let description = await relevance.newArc.description.getRecipeSuggestion();
-
-      this._updateGeneration(generations, hash, (g) => g.description = description);
-
-      // TODO: Move this logic inside speculate, so that it can stop the arc
-      // before returning.
-      relevance.newArc.stop();
-
-      // Filter plans based on arc._search string.
-      if (this._arc.search) {
-        if (!plan.search) {
-          // This plan wasn't constructed based on the provided search terms.
-          if (description.toLowerCase().indexOf(arc.search) < 0) {
-            // Description must contain the full search string.
-            // TODO: this could be a strategy, if description was already available during strategies execution.
-            continue;
-          }
-        } else {
-          // This mean the plan was constructed based on provided search terms,
-          // and at least one of them were resolved (in order for the plan to be resolved).
+        if (this._matchesActiveRecipe(plan)) {
+          this._updateGeneration(generations, hash, (g) => g.active = true);
+          continue;
         }
-      }
 
-      results.push({
-        plan,
-        rank,
-        description: relevance.newArc.description,
-        descriptionText: description, // TODO(mmandlis): exclude the text description from returned results.
-        hash
-      });
-    }
+        // TODO(wkorman): Does nesting trace.wait() work, and should we be doing
+        // something like this for the async getRecipeSuggestion() below as well?
+        let relevance = await trace.wait(() => speculator.speculate(this._arc, plan));
+        trace.resume();
+        if (!relevance.isRelevant(plan)) {
+          continue;
+        }
+        let rank = relevance.calcRelevanceScore();
+
+        relevance.newArc.description.relevance = relevance;
+        let description = await relevance.newArc.description.getRecipeSuggestion();
+
+        this._updateGeneration(generations, hash, (g) => g.description = description);
+
+        // TODO: Move this logic inside speculate, so that it can stop the arc
+        // before returning.
+        relevance.newArc.stop();
+
+        // Filter plans based on arc._search string.
+        if (this._arc.search) {
+          if (!plan.search) {
+            // This plan wasn't constructed based on the provided search terms.
+            if (description.toLowerCase().indexOf(arc.search) < 0) {
+              // Description must contain the full search string.
+              // TODO: this could be a strategy, if description was already available during strategies execution.
+              continue;
+            }
+          } else {
+            // This mean the plan was constructed based on provided search terms,
+            // and at least one of them were resolved (in order for the plan to be resolved).
+          }
+        }
+
+        results.push({
+          plan,
+          rank,
+          description: relevance.newArc.description,
+          descriptionText: description, // TODO(mmandlis): exclude the text description from returned results.
+          hash
+        });
+      }
+      return results;
+    })));
+    trace.resume();
+    results = [].concat(...results);
     trace.end();
 
     if (this._arc._debugging) {
