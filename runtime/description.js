@@ -92,15 +92,20 @@ export class DescriptionFormatter {
     this._particleDescriptions = [];
 
     // Combine all particles from direct and inner arcs.
-    let allParticles = description.arc.activeRecipe.particles;
+    let innerParticlesByName = {};
     description._arc.recipes.forEach(recipe => {
       let innerArcs = [...recipe.innerArcs.values()];
       innerArcs.forEach(innerArc => {
         innerArc.recipes.forEach(innerRecipe => {
-          allParticles = allParticles.concat(innerRecipe.particles);
+          innerRecipe.particles.forEach(innerParticle => {
+            if (!innerParticlesByName[innerParticle.name]) {
+              innerParticlesByName[innerParticle.name] = innerParticle;
+            }
+          });
         });
       });
     });
+    let allParticles = description.arc.activeRecipe.particles.concat(Object.values(innerParticlesByName));
 
     await Promise.all(allParticles.map(async particle => {
       this._particleDescriptions.push(await this._createParticleDescription(particle, description.relevance));
