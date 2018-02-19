@@ -92,8 +92,8 @@ describe('Arc', function() {
 
   it('deserializing a serialized arc with a Transformation produces that arc', async () => {
     let manifest = await Manifest.parse(`
-      import 'particles/Multiplexer/Multiplexer.manifest'
-      import 'particles/test/test-particles.manifest'
+      import 'shell/artifacts/Common/Multiplexer.manifest'
+      import 'runtime/test/artifacts/test-particles.manifest'
       
       recipe
         slot 'slotid' as s0

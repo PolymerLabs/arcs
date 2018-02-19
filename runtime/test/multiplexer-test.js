@@ -64,6 +64,5 @@ describe('Multiplexer', function() {
     await arc.idle;
 
     assert.equal(slotsCreated, 3);
-
   });
 });
