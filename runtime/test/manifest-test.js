@@ -1027,12 +1027,12 @@ resource SomeName
   it('can infer field types of inline schemas from external schemas', async () => {
     let manifest = await Manifest.parse(`
       schema Thing
-        optional
+        normative
           Text value
       particle P
         P(in Thing {value} foo)
       particle P2
-        P2(in * {Text value, Text value2} foo)
+        P2(in * {Text value} foo)
 
       recipe
         create as view
