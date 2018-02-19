@@ -7,6 +7,7 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
+'use strict';
 
 defineParticle(({TransformationDomParticle}) => {
   return class Multiplexer extends TransformationDomParticle {
@@ -16,6 +17,7 @@ defineParticle(({TransformationDomParticle}) => {
       this._connByHostedConn = new Map();
     }
     async setViews(views) {
+      this.handleIds = {};
       let arc = await this.constructInnerArc();
 
       let hostedParticle = await views.get('hostedParticle').get();
@@ -35,8 +37,6 @@ defineParticle(({TransformationDomParticle}) => {
       }
 
       this.on(views, 'list', 'change', async e => {
-        let handleIds = new Set(this._state.renderModel && this._state.renderModel.items ? this._state.renderModel.items.map(item => item.subId) : []);
-
         let listHandle = views.get('list');
         let list = await listHandle.toList();
 
@@ -45,14 +45,22 @@ defineParticle(({TransformationDomParticle}) => {
         }
 
         for (let [index, item] of list.entries()) {
-          if (handleIds.has(item.id)) {
+          if (this.handleIds[item.id]) {
+            let itemView = await this.handleIds[item.id];
+            itemView.set(item);
             continue;
           }
-          let itemView = await arc.createHandle(listHandle.type.primitiveType(), 'item' + index);
+
+          let itemViewPromise = arc.createHandle(listHandle.type.primitiveType(), 'item' + index);
+          this.handleIds[item.id] = itemViewPromise;
+
+          let itemView = await itemViewPromise;
 
           let hostedSlotName = [...hostedParticle.slots.keys()][0];
           let slotName = [...this.spec.slots.values()][0].name;
+          
           let slotId = await arc.createSlot(this, slotName, hostedParticle.name, hostedSlotName);
+
           if (!slotId) {
             continue;
           }

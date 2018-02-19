@@ -21,8 +21,8 @@ let loader = new Loader();
 describe('Multiplexer', function() {
   it('Processes multiple inputs', async () => {
     let manifest = await Manifest.parse(`
-      import 'particles/Multiplexer/Multiplexer.manifest'
-      import 'particles/test/test-particles.manifest'
+      import 'shell/artifacts/Common/Multiplexer.manifest'
+      import 'runtime/test/artifacts/test-particles.manifest'
       
       recipe
         slot 'slotid' as s0
