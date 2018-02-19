@@ -102,7 +102,7 @@ class OuterPEC extends PEC {
             error = `Recipe is not resolvable ${recipe0.toString({showUnresolved: true})}`;
           }
         } else {
-          error = 'Recipe could not be normalized';
+          error = `Recipe ${recipe0.toString()} could not be normalized`;
         }
       } else {
         error = 'No recipe defined';

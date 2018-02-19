@@ -36,7 +36,6 @@ describe('Multiplexer', function() {
 
     let recipe = manifest.recipes[0];
     assert(recipe.normalize());
-    console.log(recipe.toString({showUnresolved: true}));
     assert(recipe.isResolved());
 
     let barType = manifest.findTypeByName('Bar');
@@ -56,17 +55,13 @@ describe('Multiplexer', function() {
     let handle = await arc.createHandle(barType.setViewOf());
     await arc.instantiate(recipe);
 
-    await new Promise((resolve, reject) => {
-      setTimeout(resolve, 20);
-    });
+    await arc.idle;
 
     await handle.store({id: 'a', rawData: {value: 'one'}});
     await handle.store({id: 'b', rawData: {value: 'two'}});
     await handle.store({id: 'c', rawData: {value: 'three'}});
 
-    await new Promise((resolve, reject) => {
-      setTimeout(resolve, 20);
-    });
+    await arc.idle;
 
     assert.equal(slotsCreated, 3);
 

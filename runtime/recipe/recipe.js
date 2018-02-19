@@ -171,7 +171,7 @@ class Recipe {
         if (invalids.length > 0)
           console.log(`Has Invalid ${name} ${invalids.map(f)}`);
       };
-      checkForInvalid('Views', this._handles, handle => `'${handle.toString()}'`);
+      checkForInvalid('Handles', this._handles, handle => `'${handle.toString()}'`);
       checkForInvalid('Particles', this._particles, particle => particle.name);
       checkForInvalid('Slots', this._slots, slot => slot.name);
       checkForInvalid('HandleConnections', this.handleConnections, handleConnection => `${handleConnection.particle.name}::${handleConnection.name}`);
