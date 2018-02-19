@@ -163,7 +163,7 @@ class HandleConnection {
     let result = [];
     result.push(this.name || '*');
     // TODO: better deal with unspecified direction.
-    result.push({'in': '<-', 'out': '->', 'inout': '='}[this.direction] || this.direction || '=');
+    result.push({'in': '<-', 'out': '->', 'inout': '=', 'host': '='}[this.direction] || this.direction || '=');
     if (this.view) {
       result.push(`${(nameMap && nameMap.get(this.view)) || this.view.localName}`);
     }

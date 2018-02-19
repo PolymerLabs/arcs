@@ -122,6 +122,8 @@ class Handle {
       connection.tags.forEach(tag => tags.add(tag));
     }
     let {type, valid} = TypeChecker.processTypeList(typeSet);
+    if (this._id == 'test:2')
+      console.log(typeSet.map(a => JSON.stringify(a.type.data.toLiteral())));
     if (valid) {
       this._type = type.type;
       this._tags.forEach(tag => tags.add(tag));

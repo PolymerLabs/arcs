@@ -94,7 +94,7 @@ describe('View', function() {
     let arc = new Arc({slotComposer, id: 'test'});
     let manifest = await Manifest.load('./runtime/test/artifacts/test-particles.manifest', loader);
 
-    let shape = new Shape([{type: Type.newEntity(manifest.schemas.Foo)},
+    let shape = new Shape("Test", [{type: Type.newEntity(manifest.schemas.Foo)},
                            {type: Type.newEntity(manifest.schemas.Bar)}], []);
     assert(shape.particleMatches(manifest.particles[0]));
 
