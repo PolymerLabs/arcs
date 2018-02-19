@@ -106,33 +106,13 @@ class Type {
     return this;
   }
 
-  // Replaces manifestReference types with resolved schemas.
-  resolveReferences(resolve) {
-    if (this.isManifestReference) {
-      let resolved = resolve(this.data);
-      if (resolved.schema) {
-        return Type.newEntity(resolved.schema);
-      } else if (resolved.shape) {
-        return Type.newInterface(resolved.shape);
-      } else {
-        throw new Error('Expected {shape} or {schema}');
-      }
-    }
-
-    if (this.isSetView) {
-      return this.primitiveType().resolveReferences(resolve).setViewOf();
-    }
-
-    return this;
-  }
-
   static unwrapPair(type1, type2) {
     assert(type1 instanceof Type);
     assert(type2 instanceof Type);
     if (type1.tag != type2.tag) {
       return null;
     }
-    if (type1.isEntity || type1.isInterface || type1.isVariableReference || type1.isManifestReference) {
+    if (type1.isEntity || type1.isInterface || type1.isVariableReference) {
       return [type1, type2];
     }
     return Type.unwrapPair(type1.data, type2.data);
@@ -259,14 +239,11 @@ class Type {
     }
     if (this.isTuple)
       return this.tupleFields.toString();
-    if (this.isManifestReference)
-      return this.manifestReferenceName;
     if (this.isInterface)
       return this.interfaceShape.toPrettyString();
   }
 }
 
-addType('ManifestReference');
 addType('Entity', 'schema');
 addType('VariableReference');
 addType('Variable');
