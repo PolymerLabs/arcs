@@ -45,7 +45,7 @@ class ArcHandle extends Xen.Base {
     let handle;
     if (asContext) {
       // manifest-handle, for `map`, `copy`, `?`
-      handle = await arc.context.newView(typeOf, name, id, tags);
+      handle = await arc.context.newHandle(typeOf, name, id, tags);
     } else {
       // arc-handle, suitable for `use`, `?`
       handle = await arc.createHandle(typeOf, name, id, tags);

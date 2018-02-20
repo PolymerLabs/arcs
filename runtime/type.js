@@ -45,7 +45,7 @@ class Type {
     this.data = data;
   }
 
-  static newView(type) {
+  static newHandle(type) {
     console.warn('Type.newView is deprecated. Please use Type.newSetView instead');
     return Type.newSetView(type);
   }

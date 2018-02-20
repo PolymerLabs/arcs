@@ -67,7 +67,7 @@ export default class ConvertConstraintsToConnections extends Strategy {
                   recipeHandleConnection = recipeParticle.addConnectionName(connection);
                 let recipeView = recipeMap[view];
                 if (recipeView == null) {
-                  recipeView = recipe.newView();
+                  recipeView = recipe.newHandle();
                   recipeView.fate = 'create';
                   recipeMap[view] = recipeView;
                 }

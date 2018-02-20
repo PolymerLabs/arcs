@@ -273,7 +273,7 @@ class InnerPEC {
     });
 
     for (let localHandle of handleMap.values()) {
-      let type = localHandle.underlyingView().type;
+      let type = localHandle.underlyingProxy().type;
       let schemaModel;
       if (type.isSetView && type.primitiveType().isEntity) {
         schemaModel = type.primitiveType().entitySchema;

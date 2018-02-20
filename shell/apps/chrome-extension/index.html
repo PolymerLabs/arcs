@@ -110,7 +110,7 @@
               // tag product handles with shortlist
               let handleTag = shortTypeName=='Product' ? '#shortlist' : '#'+shortTypeName;
 
-              var handle = arc._context.newView(
+              var handle = arc._context.newHandle(
                 schema.type.viewOf(),
                 'Browser/'+shortTypeName,
                 arc.generateID(),

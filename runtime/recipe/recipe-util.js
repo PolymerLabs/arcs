@@ -30,7 +30,7 @@ class RecipeUtil {
     let vMap = {};
     let hcMap = {};
     particles.forEach(particle => pMap[particle] = recipe.newParticle(particle));
-    views.forEach(view => vMap[view] = recipe.newView());
+    views.forEach(view => vMap[view] = recipe.newHandle());
     Object.keys(map).forEach(key => {
       Object.keys(map[key]).forEach(name => {
         let view = map[key][name];

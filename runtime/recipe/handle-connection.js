@@ -19,7 +19,7 @@ class HandleConnection {
     this._rawType = undefined;
     this._direction = undefined;
     this._particle = particle;
-    this._view = undefined;
+    this._handle = undefined;
   }
 
   _clone(particle, cloneMap) {
@@ -31,10 +31,10 @@ class HandleConnection {
     handleConnection._type = this._type;
     handleConnection._rawType = this._rawType;
     handleConnection._direction = this._direction;
-    if (this._view != undefined) {
-      handleConnection._view = cloneMap.get(this._view);
-      assert(handleConnection._view !== undefined);
-      handleConnection._view.connections.push(handleConnection);
+    if (this._handle != undefined) {
+      handleConnection._handle = cloneMap.get(this._handle);
+      assert(handleConnection._handle !== undefined);
+      handleConnection._handle.connections.push(handleConnection);
     }
     cloneMap.set(this, handleConnection);
     return handleConnection;
@@ -51,7 +51,7 @@ class HandleConnection {
     if ((cmp = util.compareComparables(this._particle, other._particle)) != 0) return cmp;
     if ((cmp = util.compareStrings(this._name, other._name)) != 0) return cmp;
     if ((cmp = util.compareArrays(this._tags, other._tags, util.compareStrings)) != 0) return cmp;
-    if ((cmp = util.compareComparables(this._view, other._view)) != 0) return cmp;
+    if ((cmp = util.compareComparables(this._handle, other._handle)) != 0) return cmp;
     // TODO: add type comparison
     // if ((cmp = util.compareStrings(this._type, other._type)) != 0) return cmp;
     if ((cmp = util.compareStrings(this._direction, other._direction)) != 0) return cmp;
@@ -76,7 +76,7 @@ class HandleConnection {
   get isOutput() {
     return this.direction == 'out' || this.direction == 'inout';
   }
-  get view() { return this._view; } // View?
+  get view() { return this._handle; } // View?
   get particle() { return this._particle; } // never null
 
   set tags(tags) { this._tags = tags; }
@@ -148,15 +148,15 @@ class HandleConnection {
   }
 
   _resetViewType() {
-    if (this._view)
-      this._view._type = undefined;
+    if (this._handle)
+      this._handle._type = undefined;
   }
 
-  connectToView(view) {
-    assert(view.recipe == this.recipe);
-    this._view = view;
+  connectToView(handle) {
+    assert(handle.recipe == this.recipe);
+    this._handle = handle;
     this._resetViewType();
-    this._view.connections.push(this);
+    this._handle.connections.push(this);
   }
 
   toString(nameMap, options) {

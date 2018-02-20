@@ -51,7 +51,7 @@ class Recipe {
     return particle;
   }
 
-  newView() {
+  newHandle() {
     let handle = new Handle(this);
     this._handles.push(handle);
     return handle;
