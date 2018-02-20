@@ -1049,6 +1049,19 @@ schema Thing1
 view MyThings1 of [Thing1] #mythings1 in 'things.json'
 view MyThings2 of [Thing1] #mythings2 in 'things.json'`);
 
+    // Transformations carry types through their interface, so P1 can't resolve with
+    // Thing2
+    await verifyUnresolvedPlan(`
+${particleSpecs}
+recipe
+  map #mythings as mythings
+  Muxer
+    hostedParticle = P1
+    list <- mythings
+schema Thing1
+schema Thing2
+view MyThings of [Thing2] #mythings in 'things.json'`);
+
     // Two transformation particle hosting the same particle with different type storage.
     // NOTE: This doesn't work yet because we don't have a way of representing a concrete
     // type with type variable'd handles.
