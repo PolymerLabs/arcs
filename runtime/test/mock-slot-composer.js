@@ -37,6 +37,19 @@ class MockSlot extends Slot {
    }
 }
 
+/** @class MockSlotComposer
+ * Helper class to test with slot composer.
+ * Usage example:
+ *   mockSlotComposer
+ *       .newExpectations()
+ *           .expectRenderSlot('MyParticle1', 'mySlot1', ['template', 'model'])
+ *           .thenSend('MyParticle1', 'mySlot1', '_onMyEvent', {key: 'value'})
+ *       .newExpectations()
+ *           .expectRenderSlot('MyParticle1', 'mySlot1', ['model'])
+ *           .expectRenderSlot('MyParticle2', 'mySlot2', ['template', 'model'], (content) => !!content.myParam)
+ *           .maybeRenderSlot('MyOptionalParticle', 'myOptionalSlot', ['template', 'model'])
+ *   await mockSlotComposer.expectationsCompleted();
+ */
 class MockSlotComposer extends SlotComposer {
   constructor() {
     super({rootContext: 'dummy-context', affordance: 'mock'});
@@ -53,21 +66,26 @@ class MockSlotComposer extends SlotComposer {
     }
   }
 
-  initializeRecipe(recipe) {
-    super.initializeRecipe(recipe);
-  }
-
+  /** @method newExpectations()
+   * Creates a new group of expectations (that may occur in arbitrary order.
+   */
   newExpectations() {
     this.expectQueue.push([]);
     return this;
   }
 
+  /** @method expectContentItemsNumber(num, content)
+   * Returns true, if the number of items in content's model is equal to the given number.
+   */
   expectContentItemsNumber(num, content) {
     assert(content.model.items, `Content model doesn\'t have items (${num} expected}`);
     assert(content.model.items.length <= num, `Too many items (${content.model.items.length}), while only ${num} were expected.`);
     return content.model.items.length == num;
   }
 
+  /** @method expectContentItemsNumber(num, content)
+   * Adds an optional rendering expectation - a group of expectations is considered satifsied if only optional expectation remain.
+   */
   maybeRenderSlot(particleName, slotName, contentTypes) {
     assert(this.expectQueue.length > 0, 'No expectations');
 
@@ -77,6 +95,12 @@ class MockSlotComposer extends SlotComposer {
     return this;
   }
 
+  /** @method expectRenderSlot(particleName, slotName, contentTypes, verifyComplete)
+   * Adds a rendering expectation.
+   * particleName, slot name: the expected rendering particle and slot name
+   * contentTypes: the expected set of keys in the content object of the render request
+   * verifyComplete: an additional optional handler that determines whether the incoming render request satisfies the expectation.
+   */
   expectRenderSlot(particleName, slotName, contentTypes, verifyComplete) {
     assert(this.expectQueue.length > 0, 'No expectations');
 
@@ -86,6 +110,9 @@ class MockSlotComposer extends SlotComposer {
     return this;
   }
 
+  /** @method thenSend(particleName, slotName, event, data)
+   * Adds an event that will be sent once the current group of expectations is met.
+   */
   thenSend(particleName, slotName, event, data) {
     assert(this.expectQueue.length > 0, 'No expectations');
 
@@ -93,7 +120,7 @@ class MockSlotComposer extends SlotComposer {
     expectations.then = {particleName, slotName, event, data};
     if (expectations.length == 0) {
       this.expectQueue.shift();
-      this.expectationMet(expectations);
+      this._expectationMet(expectations);
     }
     return this;
   }
@@ -121,7 +148,7 @@ class MockSlotComposer extends SlotComposer {
       if (i >= 0) {
         let expectation = expectations[i];
         if (!expectation.verifyComplete || expectation.verifyComplete(content)) {
-          this.expectationMet(expectation);
+          this._expectationMet(expectation);
           expectations.splice(i, 1);
         }
       } else {
@@ -149,7 +176,7 @@ class MockSlotComposer extends SlotComposer {
 
     if (expectations.length == 0) {
       this.expectQueue.shift();
-      this.expectationsMet();
+      this._expectationsMet();
     }
 
     super.renderSlot(particle, slotName, content);
@@ -171,14 +198,14 @@ class MockSlotComposer extends SlotComposer {
     }
   }
 
-  expectationMet(expectation) {
+  _expectationMet(expectation) {
     if (expectation.then) {
-      log(`expectationMet: sending event`, expectation.then);
+      log(`_expectationMet: sending event`, expectation.then);
       this._sendEvent(expectation.then);
     }
   }
 
-  expectationsMet() {
+  _expectationsMet() {
     if (this.expectQueue.length == 0) {
       this.onExpectationsComplete();
     }
