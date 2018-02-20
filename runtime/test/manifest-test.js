@@ -482,6 +482,33 @@ describe('manifest', function() {
     await parseRecipe({isRequiredSlotA: false, isRequiredSlotB: true, expectedIsResolved: false});
     await parseRecipe({isRequiredSlotA: true, isRequiredSlotB: true, expectedIsResolved: false});
   });
+  it('recipe slots with tags', async () => {
+    let manifest = await Manifest.parse(`
+      particle SomeParticle in 'some-particle.js'
+        SomeParticle()
+        consume slotA #aaa
+          provide slotB #bbb
+        recipe
+          slot 'slot-id0' #aa #aaa as s0
+    `);
+    // verify particle spec
+    assert.equal(manifest.particles.length, 1);
+    let spec = manifest.particles[0];
+    assert.equal(spec.slots.size, 1);
+    let slotSpec = [...spec.slots.values()][0];
+    assert.deepEqual(slotSpec.tags, ['#aaa']);
+    assert.equal(slotSpec.providedSlots.length, 1);
+    let providedSlotSpec = slotSpec.providedSlots[0];
+    assert.deepEqual(providedSlotSpec.tags, ['#bbb']);
+
+    // verify recipe slots
+    assert.equal(manifest.recipes.length, 1);
+    let recipe = manifest.recipes[0];
+    assert.equal(recipe.slots.length, 1);
+    let recipeSlot = recipe.slots[0];
+    assert.equal(recipeSlot.id, 'slot-id0');
+    assert.deepEqual(recipeSlot.tags, ['#aa', '#aaa']);
+  });
   it('relies on the loader to combine paths', async () => {
     let registry = {};
     let loader = {

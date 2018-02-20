@@ -16,6 +16,7 @@ class Slot {
     this._id = undefined; // The ID of the slot in the context
     this._localName = undefined; // Local id within the recipe
     this._name = name;
+    this._tags = [];
 
     this._formFactor = undefined;
     this._handleConnections = []; // HandleConnection* (can only be set if source connection is set and particle in slot connections is set)
@@ -30,6 +31,8 @@ class Slot {
   set localName(localName) { this._localName = localName; }
   get name() { return this._name; };
   set name(name) { this._name = name; };
+  get tags() { return this._tags; }
+  set tags(tags) { this._tags = tags; }
   get formFactor() { return this._formFactor; }
   set formFactor(formFactor) { this._formFactor = formFactor; }
   get handleConnections() { return this._handleConnections; }

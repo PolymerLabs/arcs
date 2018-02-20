@@ -37,18 +37,20 @@ class SlotSpec {
     this.name = slotModel.name;
     this.isRequired = slotModel.isRequired;
     this.isSet = slotModel.isSet;
+    this.tags = slotModel.tags;
     this.formFactor = slotModel.formFactor;
     this.providedSlots = [];
     slotModel.providedSlots.forEach(ps => {
-      this.providedSlots.push(new ProvidedSlotSpec(ps.name, ps.isSet, ps.formFactor, ps.views));
+      this.providedSlots.push(new ProvidedSlotSpec(ps.name, ps.isSet, ps.tags, ps.formFactor, ps.views));
     });
   }
 }
 
 class ProvidedSlotSpec {
-  constructor(name, isSet, formFactor, views) {
+  constructor(name, isSet, tags, formFactor, views) {
     this.name = name;
     this.isSet = isSet;
+    this.tags = tags;
     this.formFactor = formFactor;
     this.views = views;
   }

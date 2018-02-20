@@ -519,8 +519,12 @@ ${e.message}
 
     for (let item of items.slots) {
       let slot = recipe.newSlot();
-      if (item.id) {
-        slot.id = item.id;
+      item.ref = item.ref || {};
+      if (item.ref.id) {
+        slot.id = item.ref.id;
+      }
+      if (item.ref.tags) {
+        slot.tags = item.ref.tags;
       }
       if (item.name) {
         assert(!items.byName.has(item.name), `Duplicate slot local name ${item.name}`);
