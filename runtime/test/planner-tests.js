@@ -55,6 +55,52 @@ async function planFromManifest(manifest, {arcFactory, testSteps}={}) {
   return await testSteps(planner);
 }
 
+const assertRecipeResolved = recipe => {
+  assert(recipe.normalize());
+  assert.isTrue(recipe.isResolved());
+}
+
+const loadTestArcAndRunSpeculation = async (manifest, manifestLoadedCallback) => {
+  const registry = {};
+  const loader = new class extends Loader {
+    loadResource(path) {
+      return {manifest}[path];
+    }
+    async requireParticle(fileName) {
+      let clazz = class {
+        constructor() {
+          this.relevances = [1];
+        }
+        async setViews(views) {
+          let thingView = views.get('thing');
+          thingView.set(new thingView.entityClass({name: 'MYTHING'}));
+        }
+      };
+      return clazz;
+    }
+    path(fileName) {
+      return fileName;
+    }
+    join(_, file) {
+      return file;
+    }
+  };
+  const loadedManifest = await Manifest.load('manifest', loader, {registry});
+  manifestLoadedCallback(loadedManifest);
+
+  const pecFactory = function(id) {
+    const channel = new MessageChannel();
+    new InnerPec(channel.port1, `${id}:inner`, loader);
+    return channel.port2;
+  };
+  const arc = new Arc({id: 'test-plan-arc', context: loadedManifest, pecFactory, loader});
+  const planner = new Planner();
+  planner.init(arc);
+
+  const plans = await planner.suggest();
+  return {plans, arc};
+}
+
 describe('Planner', function() {
   it('can generate things', async () => {
     let manifest = await Manifest.load('./runtime/test/artifacts/giftlist.manifest', loader);
@@ -127,6 +173,45 @@ describe('Planner', function() {
           consume one as s0
     `);
     assert.equal(results.length, 1);
+  });
+
+  it('can speculate in parallel', async () => {
+    const manifest = `
+          schema Thing
+            optional
+              Text name
+
+          particle A in 'A.js'
+            A(out Thing thing)
+            consume root
+            description \`Make \${thing}\`
+
+          recipe
+            create as v1
+            slot 'root-slot' as slot0
+            A
+              thing -> v1
+              consume root as slot0
+
+          recipe
+            create as v2
+            slot 'root-slot2' as slot1
+            A
+              thing -> v2
+              consume root as slot1
+          `;
+    const {plans} = await loadTestArcAndRunSpeculation(manifest,
+      manifest => {
+        assertRecipeResolved(manifest.recipes[0]);
+        assertRecipeResolved(manifest.recipes[1]);
+      }
+    );
+    assert.equal(plans.length, 2);
+    // Make sure the recipes were processed as separate plan groups.
+    // TODO(wkorman): When we move to a thread pool we'll revise this to check
+    // the thread index instead.
+    assert.equal(plans[0].groupIndex, 0);
+    assert.equal(plans[1].groupIndex, 1);
   });
 });
 
@@ -1010,65 +1095,28 @@ describe('CreateDescriptionHandle', function() {
 
 describe('Description', async () => {
   it('description generated from speculative execution arc', async () => {
-    let registry = {};
-    let loader = new class extends Loader {
-      loadResource(path) {
-        return {
-          manifest: `
-          schema Thing
-            optional
-              Text name
+    const manifest = `
+    schema Thing
+      optional
+        Text name
 
-          particle A in 'A.js'
-            A(out Thing thing)
-            consume root
-            description \`Make \${thing}\`
+    particle A in 'A.js'
+      A(out Thing thing)
+      consume root
+      description \`Make \${thing}\`
 
-          recipe
-            create as v1
-            slot 'root-slot' as slot0
-            A
-              thing -> v1
-              consume root as slot0
-
-          `
-        }[path];
+    recipe
+      create as v1
+      slot 'root-slot' as slot0
+      A
+        thing -> v1
+        consume root as slot0
+    `;
+    const {plans, arc} = await loadTestArcAndRunSpeculation(manifest,
+      manifest => {
+        assertRecipeResolved(manifest.recipes[0]);
       }
-      async requireParticle(fileName) {
-        let clazz = class {
-          constructor() {
-            this.relevances = [1];
-          }
-          async setViews(views) {
-            let thingView = views.get('thing');
-            thingView.set(new thingView.entityClass({name: 'MYTHING'}));
-          }
-        };
-        return clazz;
-      }
-      path(fileName) {
-        return fileName;
-      }
-      join(_, file) {
-        return file;
-      }
-    };
-    let manifest = await Manifest.load('manifest', loader, {registry});
-
-    let recipe = manifest.recipes[0];
-    assert(recipe.normalize());
-    assert.isTrue(recipe.isResolved());
-
-    let pecFactory = function(id) {
-      let channel = new MessageChannel();
-      new InnerPec(channel.port1, `${id}:inner`, loader);
-      return channel.port2;
-    };
-    let arc = new Arc({id: 'test-plan-arc', context: manifest, pecFactory, loader});
-    let planner = new Planner();
-    planner.init(arc);
-
-    let plans = await planner.suggest();
+    );
     assert.equal(plans.length, 1);
     assert.equal('Make MYTHING.', await plans[0].description.getRecipeSuggestion());
     assert.equal(0, arc._handlesById.size);
