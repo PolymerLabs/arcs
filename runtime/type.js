@@ -110,7 +110,7 @@ class Type {
     assert(type1 instanceof Type);
     assert(type2 instanceof Type);
     if (type1.isSetView && type2.isSetView)
-      return [type1.primitiveType(), type2.primitiveType()]
+      return [type1.primitiveType(), type2.primitiveType()];
     return [type1, type2];
   }
 
