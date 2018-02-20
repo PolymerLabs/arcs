@@ -138,8 +138,24 @@ class Type {
     return JSON.stringify(this.data) == JSON.stringify(type.data);
   }
 
-  get isValid() {
-    return !this.variableReference;
+  _applyExistenceTypeTest(test) {
+    if (this.isSetView)
+      return this.primitiveType()._applyExistenceTypeTest(test);
+    if (this.isInterface)
+      return this.data._applyExistenceTypeTest(test);
+    return test(this);
+  }
+
+  get hasVariable() {
+    return this._applyExistenceTypeTest(type => type.isVariable);
+  }
+
+  get hasUnresolvedVariable() {
+    return this._applyExistenceTypeTest(type => type.isVariable && !type.variable.isResolved);
+  }
+
+  get hasVariableReference() {
+    return this._applyExistenceTypeTest(type => type.isVariableReference);
   }
 
   primitiveType() {

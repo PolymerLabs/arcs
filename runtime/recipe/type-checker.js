@@ -28,6 +28,15 @@ class TypeChecker {
     return {type: baseType, valid: true};
   }
 
+  static restrictType(type, instance) {
+    assert(type.isInterface, `restrictType not implemented for ${type}`);
+
+    let shape = type.interfaceShape.restrictType(instance);
+    if (shape == false)
+      return false;
+    return Type.newInterface(shape);
+  }
+
   static _coerceTypes(left, right) {
     let leftType = left.type;
     let rightType = right.type;

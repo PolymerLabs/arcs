@@ -21,6 +21,7 @@ import StorageProviderFactory from './storage/storage-provider-factory.js';
 import scheduler from './scheduler.js';
 import ManifestMeta from './manifest-meta.js';
 import TypeVariable from './type-variable.js';
+import TypeChecker from './recipe/type-checker.js';
 
 class ManifestError extends Error {
   constructor(location, message) {
@@ -608,7 +609,9 @@ ${e.message}
                 connectionItem.target.location,
                 `Could not find hosted particle '${connectionItem.target.particle}'`);
           }
-          if (!connection.type.data.particleMatches(hostedParticle)) {
+          assert(!connection.type.hasVariableReference);
+          let type = TypeChecker.restrictType(connection.type, hostedParticle);
+          if (!type) {
             throw new ManifestError(
                 connectionItem.target.location,
                 `Hosted particle '${hostedParticle.name}' does not match shape '${connection.name}'`);
@@ -617,13 +620,13 @@ ${e.message}
           // TODO: Mark as immediate.
           targetView = recipe.newHandle();
           targetView.fate = 'map';
-          let view = await manifest.newHandle(connection.type, null, id, []);
+          let handle = await manifest.newHandle(type, null, id, []);
           // TODO: loader should not be optional.
           if (hostedParticle.implFile && loader) {
             hostedParticle.implFile = loader.join(manifest.fileName, hostedParticle.implFile);
           }
-          view.set(hostedParticle.clone().toLiteral());
-          targetView.mapToView(view);
+          handle.set(hostedParticle.clone().toLiteral());
+          targetView.mapToView(handle);
         }
 
         if (targetParticle) {

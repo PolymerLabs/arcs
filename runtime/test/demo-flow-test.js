@@ -35,6 +35,10 @@ describe('demo flow', function() {
     return plans;
   }
 
+  it('can load the recipe manifest', async function() {
+    await Manifest.load('./runtime/browser/demo/recipes.manifest', new Loader());
+  });
+
   it('flows like a demo', async function() {
     let loader = new Loader();
     let pecFactory = null;

@@ -25,24 +25,36 @@ function _toLiteral(member) {
   return member;
 }
 
+const handleFields = ['type', 'name', 'direction'];
+const slotFields = ['name', 'direction', 'isRequired', 'isSet'];
+
 class Shape {
   constructor(views, slots) {
     this.views = views;
     this.slots = slots;
     this._typeVars = [];
     for (let view of views)
-      for (let field of ['type', 'name', 'direction'])
+      for (let field of handleFields)
         if (Shape.isTypeVar(view[field]))
           this._typeVars.push({object: view, field});
 
     for (let slot of slots)
-      for (let field of ['name', 'direction', 'isRequired', 'isSet'])
+      for (let field of slotFields)
         if (Shape.isTypeVar(slot[field]))
           this._typeVars.push({object: slot, field});
   }
 
   toPrettyString() {
     return 'SHAAAAPE';
+  }
+
+  _applyExistenceTypeTest(test) {
+    for (let typeRef of this._typeVars) {
+      if (test(typeRef.object[typeRef.field]))
+        return true;
+    }
+
+    return false;
   }
 
   static fromLiteral(data) {
@@ -116,10 +128,23 @@ class Shape {
     // TODO: direction subsetting?
     if (Shape.mustMatch(shapeView.direction) && shapeView.direction !== particleView.direction)
       return false;
-    // TODO: polymorphism?
-    if (Shape.mustMatch(shapeView.type) && !shapeView.type.equals(particleView.type))
+    if (shapeView.type == undefined)
+      return true;
+    if (shapeView.type.isVariableReference)
       return false;
-    return true;
+    // TODO: recast as an operation in the type checker
+    let left = shapeView.type;
+    let right = particleView.type;
+    while (left.isSetView && right.isSetView) {
+      left = left.primitiveType();
+      right = right.primitiveType();
+    }
+    if (left.isVariable) {
+      return [{var: left, value: right}];
+    } else {
+      return left.equals(right);
+    }
+
   }
 
   static slotsMatch(shapeSlot, particleSlot) {
@@ -135,7 +160,20 @@ class Shape {
   }
 
   particleMatches(particleSpec) {
-    let viewMatches = this.views.map(view => particleSpec.connections.filter(connection => Shape.viewsMatch(view, connection)));
+    return this.restrictType(particleSpec) !== false;
+  }
+
+  restrictType(particleSpec) {
+    let newShape = this.clone();
+    return newShape._restrictThis(particleSpec); 
+  }
+
+  _restrictThis(particleSpec) {
+
+    let viewMatches = this.views.map(
+      view => particleSpec.connections.map(connection => ({match: connection, result: Shape.viewsMatch(view, connection)}))
+                                      .filter(a => a.result !== false));
+
     let particleSlots = [];
     particleSpec.slots.forEach(consumedSlot => {
       particleSlots.push({name: consumedSlot.name, direction: 'consume', isRequired: consumedSlot.isRequired, isSet: consumedSlot.isSet});
@@ -144,25 +182,39 @@ class Shape {
       });
     });
     let slotMatches = this.slots.map(slot => particleSlots.filter(particleSlot => Shape.slotsMatch(slot, particleSlot)));
+    slotMatches = slotMatches.map(matchList => matchList.map(slot => ({match: slot, result: true})));
 
     let exclusions = [];
 
+    // TODO: this probably doesn't deal with multiple match options.
     function choose(list, exclusions) {
       if (list.length == 0)
-        return true;
+        return [];
       let thisLevel = list.pop();
       for (let connection of thisLevel) {
-        if (exclusions.includes(connection))
+        if (exclusions.includes(connection.match))
           continue;
         let newExclusions = exclusions.slice();
-        newExclusions.push(connection);
-        if (choose(list, newExclusions))
-          return true;
+        newExclusions.push(connection.match);
+        let constraints = choose(list, newExclusions);
+        if (constraints !== false) {
+          return connection.result.length ? constraints.concat(connection.result) : constraints;
+        }
       }
 
       return false;
     }
-    return choose(viewMatches, []) && choose(slotMatches, []);
+    
+    let viewOptions = choose(viewMatches, []);
+    let slotOptions = choose(slotMatches, []);
+
+    if (viewOptions === false || slotOptions === false)
+      return false;
+
+    for (let constraint of viewOptions)
+      constraint.var.variable.resolution = constraint.value;
+
+    return this;
   }
 }
 
