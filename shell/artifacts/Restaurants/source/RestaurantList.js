@@ -15,7 +15,7 @@ defineParticle(({DomParticle, html}) => {
   <div style="flex: 1"></div>
   <div address>{{address}}</div>
   <div style="display: flex; position: relative;">
-    <div title style="flex: 1;">{{name}}</div>
+    <div id="webtest-title" title style="flex: 1;">{{name}}</div>
     <div style="width: 120px; text-align: right;">
       <div rating>{{rating}}</div>
       <div stars-container>
