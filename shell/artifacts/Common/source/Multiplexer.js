@@ -30,7 +30,7 @@ defineParticle(({TransformationDomParticle}) => {
         if (['list', 'hostedParticle'].includes(connectionName)) {
           continue;
         }
-        otherMappedViews.push(`map '${await arc.mapHandle(otherView._view)}' as v${index}`);
+        otherMappedViews.push(`map '${await arc.mapHandle(otherView._proxy)}' as v${index}`);
         let hostedOtherConnectionName = hostedParticle.connections.find(conn => conn.type.equals(otherView.type)).name;
         otherConnections.push(`${hostedOtherConnectionName} <- v${index++}`);
         this._connByHostedConn.set(hostedOtherConnectionName, connectionName);
@@ -58,7 +58,7 @@ defineParticle(({TransformationDomParticle}) => {
 
           let hostedSlotName = [...hostedParticle.slots.keys()][0];
           let slotName = [...this.spec.slots.values()][0].name;
-          
+
           let slotId = await arc.createSlot(this, slotName, hostedParticle.name, hostedSlotName);
 
           if (!slotId) {

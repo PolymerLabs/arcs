@@ -90,7 +90,7 @@ export default class GroupHandleConnections extends Strategy {
         return recipe => {
           groupsByType.forEach((groups, type) => {
             groups.forEach(group => {
-              let recipeView = recipe.newView();
+              let recipeView = recipe.newHandle();
               group.forEach(conn => {
                 let cloneConn = recipe.updateToClone({conn}).conn;
                 cloneConn.connectToView(recipeView);

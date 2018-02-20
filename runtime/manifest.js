@@ -73,7 +73,7 @@ class Manifest {
     // TODO: These should be lists, possibly with a separate flattened map.
     this._particles = {};
     this._schemas = {};
-    this._views = [];
+    this._handles = [];
     this._shapes = [];
     this._handleTags = new Map();
     this._fileName = null;
@@ -115,7 +115,7 @@ class Manifest {
     return this._fileName;
   }
   get views() {
-    return this._views;
+    return this._handles;
   }
   get scheduler() {
     return this._scheduler;
@@ -136,12 +136,12 @@ class Manifest {
   }
   // TODO: newParticle, Schema, etc.
   // TODO: simplify() / isValid().
-  async newView(type, name, id, tags) {
-    let view = await this.storageProviderFactory.construct(id, type, `in-memory://${this.id}`);
-    view.name = name;
-    this._views.push(view);
-    this._handleTags.set(view, tags ? tags : []);
-    return view;
+  async newHandle(type, name, id, tags) {
+    let handle = await this.storageProviderFactory.construct(id, type, `in-memory://${this.id}`);
+    handle.name = name;
+    this._handles.push(handle);
+    this._handleTags.set(handle, tags ? tags : []);
+    return handle;
   }
   _find(manifestFinder) {
     let result = manifestFinder(this);
@@ -180,10 +180,10 @@ class Manifest {
     return [...this._findAll(manifest => Object.values(manifest._particles).filter(particle => particle.primaryVerb == verb))];
   }
   findViewByName(name) {
-    return this._find(manifest => manifest._views.find(view => view.name == name));
+    return this._find(manifest => manifest._handles.find(handle => handle.name == name));
   }
   findHandleById(id) {
-    return this._find(manifest => manifest._views.find(view => view.id == id));
+    return this._find(manifest => manifest._handles.find(handle => handle.id == id));
   }
   findHandlesByType(type, options={}) {
     let tags = options.tags || [];
@@ -204,10 +204,10 @@ class Manifest {
 
       return view.type.equals(type);
     }
-    function tagPredicate(manifest, view) {
-      return tags.filter(tag => !manifest._handleTags.get(view).includes(tag)).length == 0;
+    function tagPredicate(manifest, handle) {
+      return tags.filter(tag => !manifest._handleTags.get(handle).includes(tag)).length == 0;
     }
-    return [...this._findAll(manifest => manifest._views.filter(view => typePredicate(view) && tagPredicate(manifest, view)))];
+    return [...this._findAll(manifest => manifest._handles.filter(handle => typePredicate(handle) && tagPredicate(manifest, handle)))];
   }
   findShapeByName(name) {
     return this._find(manifest => manifest._shapes.find(shape => shape.name == name));
@@ -293,7 +293,7 @@ ${e.message}
           }
         }
       };
-      // processing meta sections should come first as this contains identifying 
+      // processing meta sections should come first as this contains identifying
       // information that might need to be used in other sections. For example,
       // the meta.name, if present, becomes the manifest id which is relevant
       // when constructing manifest views.
@@ -470,7 +470,7 @@ ${e.message}
     }
 
     for (let item of items.views) {
-      let view = recipe.newView();
+      let view = recipe.newHandle();
       let ref = item.ref || {tags: []};
       if (ref.id) {
         view.id = ref.id;
@@ -615,9 +615,9 @@ ${e.message}
           }
           let id = `${manifest.generateID()}:immediate${hostedParticle.name}`;
           // TODO: Mark as immediate.
-          targetView = recipe.newView();
+          targetView = recipe.newHandle();
           targetView.fate = 'map';
-          let view = await manifest.newView(connection.type, null, id, []);
+          let view = await manifest.newHandle(connection.type, null, id, []);
           // TODO: loader should not be optional.
           if (hostedParticle.implFile && loader) {
             hostedParticle.implFile = loader.join(manifest.fileName, hostedParticle.implFile);
@@ -642,7 +642,7 @@ ${e.message}
           targetView = targetConnection.view;
           if (!targetView) {
             // TODO: tags?
-            targetView = recipe.newView();
+            targetView = recipe.newHandle();
             targetConnection.connectToView(targetView);
           }
         }
@@ -701,13 +701,13 @@ ${e.message}
     let id = item.id;
     let type = item.type.model;
     if (id == null) {
-      id = `${manifest._id}view${manifest._views.length}`;
+      id = `${manifest._id}view${manifest._handles.length}`;
     }
     let tags = item.tags;
     if (tags == null)
       tags = [];
 
-    let view = await manifest.newView(type, name, id, tags);
+    let view = await manifest.newHandle(type, name, id, tags);
     view.source = item.source;
     view.description = item.description;
     // TODO: How to set the version?

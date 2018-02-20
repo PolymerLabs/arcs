@@ -20,7 +20,7 @@ export default class CreateDescriptionHandle extends Strategy {
           return;
 
         return (recipe, handleConnection) => {
-          let view = recipe.newView();
+          let view = recipe.newHandle();
           view.fate = 'create';
           handleConnection.connectToView(view);
           return 1;

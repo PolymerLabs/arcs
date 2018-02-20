@@ -464,9 +464,9 @@ describe('AssignOrCopyRemoteViews', function() {
       `));
 
       let schema = manifest.findSchemaByName('Foo');
-      manifest.newView(schema.type.setViewOf(), 'Test1', 'test-1', ['#tag1']);
-      manifest.newView(schema.type.setViewOf(), 'Test2', 'test-2', ['#tag2']);
-      manifest.newView(schema.type.setViewOf(), 'Test2', 'test-3', []);
+      manifest.newHandle(schema.type.setViewOf(), 'Test1', 'test-1', ['#tag1']);
+      manifest.newHandle(schema.type.setViewOf(), 'Test2', 'test-2', ['#tag2']);
+      manifest.newHandle(schema.type.setViewOf(), 'Test2', 'test-3', []);
 
       let arc = createTestArc('test-plan-arc', manifest, 'dom');
 

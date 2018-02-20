@@ -99,7 +99,7 @@ class RemoteFriendsProfileHandles extends Xen.Base {
     });
   }
   async _requireHandle(arc, id, type, name, tags) {
-    return arc.context.findHandleById(id) || await arc.context.newView(type, name, id, tags);
+    return arc.context.findHandleById(id) || await arc.context.newHandle(type, name, id, tags);
   }
 }
 RemoteFriendsProfileHandles.log = Xen.Base.logFactory('RemoteFriendsPHs', '#805acb');

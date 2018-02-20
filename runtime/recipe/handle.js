@@ -33,7 +33,7 @@ class Handle {
       view = recipe.findView(this._id);
 
     if (view == undefined) {
-      view = recipe.newView();
+      view = recipe.newHandle();
       view._id = this._id;
       view._tags = [...this._tags];
       view._type = this._type;

@@ -29,7 +29,7 @@ export default class AddUseViews extends Strategy {
         return recipe => {
           disconnectedConnections.forEach(hc => {
             let clonedHC = recipe.updateToClone({hc}).hc;
-            let view = recipe.newView();
+            let view = recipe.newHandle();
             view.fate = 'use';
             clonedHC.connectToView(view);
           });
