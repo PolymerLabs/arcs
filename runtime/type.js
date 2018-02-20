@@ -109,13 +109,9 @@ class Type {
   static unwrapPair(type1, type2) {
     assert(type1 instanceof Type);
     assert(type2 instanceof Type);
-    if (type1.tag != type2.tag) {
-      return null;
-    }
-    if (type1.isEntity || type1.isInterface || type1.isVariableReference) {
-      return [type1, type2];
-    }
-    return Type.unwrapPair(type1.data, type2.data);
+    if (type1.isSetView && type2.isSetView)
+      return [type1.primitiveType(), type2.primitiveType()]
+    return [type1, type2];
   }
 
   equals(type) {

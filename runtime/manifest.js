@@ -196,9 +196,9 @@ class Manifest {
       }
 
       if (subtype) {
-        let types = Type.unwrapPair(view.type, resolvedType);
-        if (types && types[0].isEntity) {
-          return types[0].entitySchema.contains(types[1].entitySchema);
+        let [left, right] = Type.unwrapPair(view.type, resolvedType);
+        if (left.isEntity && right.isEntity) {
+          return left.entitySchema.contains(right.entitySchema);
         }
         return false;
       }
