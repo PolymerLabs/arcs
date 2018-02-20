@@ -1,4 +1,0 @@
-#!/bin/sh
-
-cd components/strategy-explorer
-$(npm bin)/bower install
