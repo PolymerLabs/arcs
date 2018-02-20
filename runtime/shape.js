@@ -132,13 +132,7 @@ class Shape {
       return true;
     if (shapeView.type.isVariableReference)
       return false;
-    // TODO: recast as an operation in the type checker
-    let left = shapeView.type;
-    let right = particleView.type;
-    while (left.isSetView && right.isSetView) {
-      left = left.primitiveType();
-      right = right.primitiveType();
-    }
+    let [left, right] = Type.unwrapPair(shapeView.type, particleView.type);
     if (left.isVariable) {
       return [{var: left, value: right}];
     } else {
