@@ -25,7 +25,7 @@ class RemoteSharedHandles extends Xen.Base {
     if (/*props.arc && props.user &&*/ props.friends !== lastProps.friends) {
       let watches = [];
       if (props.friends && props.user) {
-        // TODO(sjmiles): making a null-prototype object makes it easeir to read in console (roi?)
+        // TODO(sjmiles): making a null-prototype object makes it easier to read in console (roi?)
         //let friends = props.friends.map(friend => friend.rawData);
         let friends = props.friends.map(friend => Object.assign(Object.create(null), friend.rawData));
         // include `user` in friends, so we can access generic profile info this way
