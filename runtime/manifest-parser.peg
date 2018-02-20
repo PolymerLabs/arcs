@@ -373,7 +373,7 @@ ParticleAffordance
   }
 
 ParticleSlot
-  = isRequired:('must' whiteSpace)? 'consume' whiteSpace isSet:('set of' whiteSpace)? name:(lowerIdent) eolWhiteSpace
+  = isRequired:('must' whiteSpace)? 'consume' whiteSpace isSet:('set of' whiteSpace)? name:(lowerIdent) tags:(whiteSpace TagList)? eolWhiteSpace
     items:(Indent (SameIndent ParticleSlotItem)*)?
   {
     let formFactor = null;
@@ -394,6 +394,7 @@ ParticleSlot
       kind: 'particle-slot',
       location: location(),
       name,
+      tags: optional(tags, tags => tags[1], []),
       isRequired: optional(isRequired, isRequired => isRequired[0] == 'must', false),
       isSet: !!isSet,
       formFactor,
@@ -416,7 +417,7 @@ SlotFormFactor
   }
 
 ParticleProvidedSlot
-  = 'provide' whiteSpace isSet:('set of' whiteSpace)? name:(lowerIdent) eolWhiteSpace items:(Indent (SameIndent ParticleProvidedSlotItem)*)?
+  = 'provide' whiteSpace isSet:('set of' whiteSpace)? name:(lowerIdent) tags:(whiteSpace TagList)? eolWhiteSpace items:(Indent (SameIndent ParticleProvidedSlotItem)*)?
   {
     let formFactor = null;
     let views = [];
@@ -434,6 +435,7 @@ ParticleProvidedSlot
       kind: 'provided-slot',
       location: location(),
       name,
+      tags: optional(tags, tags => tags[1], []),
       isSet: !!isSet,
       formFactor,
       views
@@ -498,7 +500,7 @@ Recipe
 
 RecipeItem
   = RecipeParticle
-  / RecipeView
+  / RecipeHandle
   / RecipeSlot
   / RecipeConnection
   / RecipeSearch
@@ -628,8 +630,8 @@ ConnectionTarget
     };
   }
 
-RecipeView
-  = type:('?' / 'use' / 'map' / 'create' / 'copy') ref:(whiteSpace ViewRef)? name:(whiteSpace Name)? eolWhiteSpace
+RecipeHandle
+  = type:('?' / 'use' / 'map' / 'create' / 'copy') ref:(whiteSpace HandleOrSlotRef)? name:(whiteSpace Name)? eolWhiteSpace
   {
     return {
       kind: 'view',
@@ -681,7 +683,7 @@ ParticleRef
     };
   }
 
-ViewRef
+HandleOrSlotRef
   = id:id tags:SpaceTagList?
   {
     return {
@@ -710,12 +712,12 @@ ViewRef
   }
 
 RecipeSlot
-  = 'slot' id:(whiteSpace id)? name:(whiteSpace Name)? eolWhiteSpace
+  = 'slot' ref:(whiteSpace HandleOrSlotRef)? name:(whiteSpace Name)? eolWhiteSpace
   {
     return {
       kind: 'slot',
       location: location(),
-      id: optional(id, id => id[1], null),
+      ref: optional(ref, ref => ref[1], null),
       name: optional(name, name => name[1], '')
     }
   }
