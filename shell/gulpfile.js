@@ -102,13 +102,4 @@ const components = `components/`;
 const arcs = `../`;
 const browserlib = `runtime/browser/lib/`;
 
-// const strategyExplorer = `strategy-explorer`;
-// const suggestionsElement = `suggestions-element.js`;
-// const glob = `/**/*`;
-
-// gulp.task('copy-support', ['arcs-build'], function () {
-//   gulp.src(`${arcs}${strategyExplorer}${glob}`).pipe(gulp.dest(`${components}${strategyExplorer}`));
-//   gulp.src(`${arcs}${browserlib}${suggestionsElement}`).pipe(gulp.dest(`${components}`));
-// });
-
 gulp.task('default', ['arcs-build', 'copy-runtime'/*,'copy-support'*/]);

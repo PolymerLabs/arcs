@@ -9,16 +9,14 @@
   "scripts": {
     "test": "run-p --print-name --race start test-after-build",
     "start": "cross-env http-server -a ${npm_package_config_host} -p ${npm_package_config_port}",
-    "build": "run-s --print-name gulp bower",
+    "build": "run-s --print-name gulp",
     "test-test": "run-s --print-name --continue-on-error test-mocha test-wdio",
     "test-after-build": "run-s --print-name build test-test",
     "test-mocha": "mocha-chrome test/index.test.html",
     "test-wdio": "cross-env wdio -b http://${npm_package_config_host}:${npm_package_config_port}/ test/wdio.conf.js",
-    "gulp": "gulp --ignore-arc-failure",
-    "bower": "tools/build-strategy-explorer"
+    "gulp": "gulp --ignore-arc-failure"
   },
   "devDependencies": {
-    "bower": "^1.8.2",
     "chai": "^4.1.2",
     "chromedriver": "^2.35.0",
     "cross-env": "^5.1.3",

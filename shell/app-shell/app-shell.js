@@ -28,7 +28,6 @@ import './elements/remote-shared-handles.js';
 import './elements/remote-visited-arcs.js';
 
 // tools
-import '../components/arc-tools/explorer-hotkey.js';
 import '../components/arc-tools/handle-explorer.js';
 import '../components/arc-tools/local-data.js';
 import '../components/arc-tools/manifest-data.js';
