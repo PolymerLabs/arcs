@@ -387,8 +387,9 @@ describe('test Arcs demo flows', function() {
     // Rather than trying to mock this out let's just grab the first
     // restaurant.
     const restaurantSelectors = particleSelectors('root', [
-      'div.item',
-      'div.title'
+      '#webtest-title'
+      //'div.item',
+      //'div.title'
     ]);
     waitForVisible(restaurantSelectors);
     waitForSuggestion('Make a reservation');
