@@ -86,7 +86,7 @@
               if (!this._handles.has(e.handle.id)) {
                 this._handles.set(e.handle.id, {
                   id: e.handle.id,
-                  label: `${e.handle.name || ''} ${e.handle.type}`,
+                  label: `${e.handle.name ? ('"' + e.handle.name + '"') : ''} ${e.handle.type}`,
                   color: this._cssVar('--light-gray')
                 });
                 needsRedraw = true;
