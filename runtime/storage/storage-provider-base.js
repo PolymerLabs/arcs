@@ -13,6 +13,7 @@ import util from '../recipe/util.js';
 export default class StorageProviderBase {
   constructor(type, arcId, name, id, key) {
     assert(id, 'id must be provided when constructing StorageProviders');
+    assert(!type.hasUnresolvedVariable, 'Storage types must be concrete');
     let trace = tracing.start({cat: 'view', name: 'StorageProviderBase::constructor', args: {type: type.key, name: name}});
     this._type = type;
     this._arcId = arcId;
