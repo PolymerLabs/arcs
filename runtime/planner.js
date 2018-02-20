@@ -183,9 +183,11 @@ class Planner {
     // We don't actually know how many threads the VM will decide to use to
     // handle the parallel speculation, but at least we know we won't kick off
     // more than this number and so can somewhat limit resource utilization.
+    // TODO(wkorman): Rework this to use a fixed size 'thread' pool for more
+    // efficient work distribution.
     const threadCount = this._speculativeThreadCount();
     const planGroups = this._splitToGroups(plans, threadCount);
-    let results = await trace.wait(() => Promise.all(planGroups.map(async group => {
+    let results = await trace.wait(() => Promise.all(planGroups.map(async (group, groupIndex) => {
       let results = [];
       for (let plan of group) {
         let hash = ((hash) => { return hash.substring(hash.length - 4);})(await plan.digest());
@@ -233,7 +235,8 @@ class Planner {
           rank,
           description: relevance.newArc.description,
           descriptionText: description, // TODO(mmandlis): exclude the text description from returned results.
-          hash
+          hash,
+          groupIndex
         });
       }
       return results;
