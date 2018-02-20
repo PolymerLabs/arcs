@@ -58,7 +58,7 @@ async function planFromManifest(manifest, {arcFactory, testSteps}={}) {
 const assertRecipeResolved = recipe => {
   assert(recipe.normalize());
   assert.isTrue(recipe.isResolved());
-}
+};
 
 const loadTestArcAndRunSpeculation = async (manifest, manifestLoadedCallback) => {
   const registry = {};
@@ -99,7 +99,7 @@ const loadTestArcAndRunSpeculation = async (manifest, manifestLoadedCallback) =>
 
   const plans = await planner.suggest();
   return {plans, arc};
-}
+};
 
 describe('Planner', function() {
   it('can generate things', async () => {
