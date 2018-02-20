@@ -7,6 +7,7 @@
 
 import {Strategy, Strategizer} from '../strategizer/strategizer.js';
 import assert from '../platform/assert-web.js';
+import DeviceInfo from '../platform/deviceinfo-web.js';
 import Recipe from './recipe/recipe.js';
 import RecipeUtil from './recipe/recipe-util.js';
 import RecipeWalker from './recipe/walker.js';
@@ -135,13 +136,8 @@ class Planner {
   _speculativeThreadCount() {
     // TODO(wkorman): We'll obviously have to rework the below when we do
     // speculation in the cloud.
-
-    // Logical processor cores.
-    const hasNavigator = typeof navigator !== 'undefined';
-    const cores = hasNavigator ? navigator.hardwareConcurrency : 0;
-    // Device memory in gigabytes.
-    const memory = hasNavigator ? navigator.deviceMemory : 0;
-
+    const cores = DeviceInfo.hardwareConcurrency();
+    const memory = DeviceInfo.deviceMemory();
     // For now, allow occupying half of the available cores while constraining
     // total memory used to at most a quarter of what's available. In the
     // absence of resource information we just run two in parallel as a
