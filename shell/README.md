@@ -4,15 +4,15 @@
 
 ### Arcs Webapp
 
-https://polymerlabs.github.io/arcs-cdn/dev/apps/web/
+https://polymerlabs.github.io/arcs-live/apps/web/
 
 ### Arcs VR
 
-https://polymerlabs.github.io/arcs-cdn/devv/apps/vr/
+https://polymerlabs.github.io/arcs-live/apps/vr/
 
 ### Arcs ChromeCast
 
-https://polymerlabs.github.io/arcs-cdn/dev/apps/chromecast/
+https://polymerlabs.github.io/arcs-live/apps/chromecast/
 
 ### Arcs Home
 
@@ -56,8 +56,8 @@ If you see errors like
 ```
 ERROR: connect ECONNREFUSED 127.0.0.1:9515
 chrome
-    at new RuntimeError (C:\Users\small\source\arcs\shell\node_modules\webdriverio\build\lib\utils\ErrorHandler.js:144:12)
-    at Request._callback (C:\Users\small\source\arcs\shell\node_modules\webdriverio\build\lib\utils\RequestHandler.js:327:43)
+    at new RuntimeError (...\node_modules\webdriverio\build\lib\utils\ErrorHandler.js:144:12)
+    at Request._callback (...\node_modules\webdriverio\build\lib\utils\RequestHandler.js:327:43)
 ```
 
 It may indicate that chromedriver hasn't been installed completely. Run the install script:
