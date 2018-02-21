@@ -10,7 +10,6 @@
 <link rel="import" href="../bower_components/paper-listbox/paper-listbox.html">
 <link rel="import" href="../bower_components/polymer/polymer-element.html">
 
-<link rel="import" href="arcs-debug-channel.html">
 <link rel="import" href="arcs-overview.html">
 <link rel="import" href="arcs-dataflow.html">
 <link rel="import" href="arcs-shared.html">
@@ -61,7 +60,6 @@
           <a name="dataflow" href="javascript:void(0)"><iron-icon icon="swap-horiz"></iron-icon>Dataflow</a>
           <a name="strategyExplorer" href="javascript:void();"><iron-icon icon="settings-applications"></iron-icon>Strategy Explorer</a>
         </iron-selector>
-        <arcs-debug-channel on-messages="onMessages"></arcs-debug-channel>
       </app-drawer>
       <iron-pages selected="[[page]]" attr-for-selected="name" role="main" id="pages">
         <arcs-overview name="overview"></arcs-overview>
@@ -80,9 +78,12 @@
         this.page = 'overview';
       }
 
-      onMessages({detail}) {
-        this.$.pages.childNodes.forEach(
-          page => {if (page.onMessages) page.onMessages(detail);});
+      ready() {
+        super.ready();
+        document.addEventListener('messages', e => {
+          this.$.pages.childNodes.forEach(
+            page => {if (page.onMessages) page.onMessages(e.detail);});
+        });
       }
     }
 
