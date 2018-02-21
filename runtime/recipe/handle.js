@@ -98,6 +98,7 @@ class Handle {
   mapToView(view) {
     this._id = view.id;
     this._type = undefined;
+    assert(view.type == undefined || !(view.type.hasVariableReference), `variable references shouldn't be part of handle types`);
     this._mappedType = view.type;
     this._storageKey = view.storageKey;
   }
@@ -122,8 +123,6 @@ class Handle {
       connection.tags.forEach(tag => tags.add(tag));
     }
     let {type, valid} = TypeChecker.processTypeList(typeSet);
-    if (this._id == 'test:2')
-      console.log(typeSet.map(a => JSON.stringify(a.type.data.toLiteral())));
     if (valid) {
       this._type = type.type;
       this._tags.forEach(tag => tags.add(tag));

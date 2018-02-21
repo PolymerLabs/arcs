@@ -110,6 +110,15 @@ describe('Arc', function() {
     assert(recipe.isResolved());
     let slotComposer = new SlotComposer({affordance: 'mock', rootContext: 'slotid'});
 
+    let slotComposer_createHostedSlot = slotComposer.createHostedSlot;
+
+    let slotsCreated = 0;
+
+    slotComposer.createHostedSlot = (a, b, c, d) => {
+      slotsCreated++;
+      return slotComposer_createHostedSlot.apply(slotComposer, [a, b, c, d]);
+    };
+
     let arc = new Arc({id: 'test', context: manifest, slotComposer});
 
     let barType = manifest.findTypeByName('Bar');
@@ -121,9 +130,12 @@ describe('Arc', function() {
     let serialization = await arc.serialize();
     arc.stop();
 
-    console.log(serialization);
-
     let newArc = await Arc.deserialize({serialization, loader, slotComposer, fileName: './manifest.manifest'});
-    
+    await newArc.idle;
+    handle = newArc._handlesById.get(handle.id);
+    await handle.store({id: 'a', rawData: {value: 'one'}});
+
+    await newArc.idle;
+    assert.equal(slotsCreated, 1);
   });
 });

@@ -55,6 +55,7 @@ class Arc {
     this._storageKeys = {};
     this._storageKey = storageKey;
 
+
     this.particleHandleMaps = new Map();
     let pecId = this.generateID();
     let innerPecPort = this._pecFactory(pecId);
@@ -173,12 +174,18 @@ class Arc {
     return [...this.particleHandleMaps.values()].map(entry => entry.spec.toString()).join('\n');
   }
 
+  _serializeStorageKey() {
+    if (this._storageKey)
+      return `storageKey: '${this._storageKey}'\n`
+    return '';
+  }
+
   async serialize() {
     await this.idle;
     return `
 meta
   name: '${this.id}'
-  storageKey: '${this._storageKey}'
+  ${this._serializeStorageKey()}
 
 ${await this._serializeHandles()}
 
@@ -243,7 +250,7 @@ ${this.activeRecipe.toString()}`;
   generateID(component) {
     if (component == undefined)
       component = '';
-    return `${this.id}:${component}${this._nextLocalID++}`;
+    return `${this._prefixForIds}:${component}${this._nextLocalID++}`;
   }
 
   generateIDComponents() {

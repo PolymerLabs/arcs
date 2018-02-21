@@ -63,8 +63,10 @@ class Shape {
 
   _handlesToManifestString() {
     return this.views
-      .map(handle => `${handle.direction ? handle.direction + ' ': ''}${handle.type.toString()}${handle.name ? ' ' + handle.name : ''}`)
-      .join(', ');
+      .map(handle => {
+        let type = handle.type.resolvedType();
+        return `${handle.direction ? handle.direction + ' ': ''}${type.toString()}${handle.name ? ' ' + handle.name : ''}`;
+      }).join(', ');
   }
 
   _slotsToManifestString() {
