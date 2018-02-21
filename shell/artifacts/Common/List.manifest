@@ -6,27 +6,38 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
+shape HostedParticleShape
+  HostedParticleShape(in ~a)
+  consume item
+
+particle Multiplexer in 'source/Multiplexer.js'
+  Multiplexer(host HostedParticleShape hostedParticle, in [~a] list)
+  consume set of item
+
 particle List in 'source/List.js'
   List(in [~a] items)
   consume root
     provide set of item
     provide set of action
+  description `show ${items}`
 
 particle SelectableList in 'source/List.js'
   SelectableList(in [~a] items, inout ~a selected)
   consume root
     provide set of item
     provide set of action
+  description `show ${items}`
 
 particle TileList in 'source/TileList.js'
   TileList(inout [~a] items)
   consume root
     provide set of item
     provide set of action
+  description `show ${items}`
 
 particle SelectableTileList in 'source/TileList.js'
-  SelectableTileList(inout [~a] items, inout ~a selected)
+  SelectableTileList(in [~a] items, inout ~a selected)
   consume root
     provide set of item
     provide set of action
-
+  description `show ${items}`
