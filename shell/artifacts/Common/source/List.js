@@ -6,11 +6,11 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-defineParticle(({DomParticle, resolver}) => {
+defineParticle(({DomParticle, resolver, html}) => {
 
   let host = `show-list`;
 
-  const template = `
+  const template = html`
 <style>
   [${host}] [items] p {
     margin: 0;
@@ -18,7 +18,7 @@ defineParticle(({DomParticle, resolver}) => {
 </style>
 <div ${host} style="padding: 8px;">
   <template items>
-    <div slotid="item" subid="{{id}}"></div>
+    <div slotid="item" subid="{{id}}" on-click="_onSelect"></div>
     <div slotid="action" subid="{{id}}"></div>
   </template>
   <div items>{{items}}</div>
@@ -43,6 +43,13 @@ defineParticle(({DomParticle, resolver}) => {
           })
         }
       };
+    }
+    _onSelect(e) {
+      const item = this._props.items.find(i => i.id === e.data.key);
+      const selected = this._views.get('selected');
+      if (item && selected) {
+        selected.set(item);
+      }
     }
   };
 });
