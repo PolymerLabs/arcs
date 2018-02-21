@@ -138,6 +138,7 @@ class Manifest {
   // TODO: newParticle, Schema, etc.
   // TODO: simplify() / isValid().
   async newHandle(type, name, id, tags) {
+    assert(!type.hasVariableReference, `handles can't have variable references`);
     let handle = await this.storageProviderFactory.construct(id, type, `in-memory://${this.id}`);
     handle.name = name;
     this._handles.push(handle);
@@ -759,22 +760,31 @@ ${e.message}
     } catch (e) {
       throw new ManifestError(item.location, `Error parsing JSON from '${source}' (${e.message})'`);
     }
-    if (type.isSetView) {
+
+    let unitType;
+    if (!type.isSetView) {
+      if (entities.length == 0)
+        return;
+      entities = entities.slice(entities.length - 1);
+      unitType = type;
+    } else {
+      unitType = type.primitiveType();
+    }
+
+    if (unitType.isEntity) {
       entities = entities.map(entity => {
+        if (entity == null)
+          return null;
         let id = entity.$id || manifest.generateID();
         delete entity.$id;
         return {id, rawData: entity};
       });
+    }
+
+    if (type.isSetView) {
       view._fromListWithVersion(entities, item.version);
-    } else if (entities.length > 0) {
-      let entity = entities[entities.length - 1];
-      if (entity == null)
-        view._setWithVersion(null, item.version);
-      else {
-        let id = entity.$id || manifest.generateID();
-        delete entity.$id;
-        view._setWithVersion({id, rawData: entity}, item.version);
-      }
+    } else {
+      view._setWithVersion(entities[0], item.version);
     }
   }
   _newRecipe(name) {

@@ -41,6 +41,9 @@ class TypeChecker {
     let leftType = left.type;
     let rightType = right.type;
 
+    assert(!leftType.hasVariableReference);
+    assert(!rightType.hasVariableReference);
+
     while (leftType.isSetView && rightType.isSetView) {
       leftType = leftType.primitiveType();
       rightType = rightType.primitiveType();
