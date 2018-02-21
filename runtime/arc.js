@@ -176,7 +176,7 @@ class Arc {
 
   _serializeStorageKey() {
     if (this._storageKey)
-      return `storageKey: '${this._storageKey}'\n`
+      return `storageKey: '${this._storageKey}'\n`;
     return '';
   }
 
