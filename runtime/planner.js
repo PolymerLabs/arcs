@@ -157,9 +157,9 @@ class Planner {
   _splitToGroups(items, groupCount) {
     const groups = [];
     if (!items || items.length == 0) return groups;
-    const groupItemSize = Math.floor(items.length / groupCount);
+    const groupItemSize = Math.max(1, Math.floor(items.length / groupCount));
     let startIndex = 0;
-    for (let i = 0; i < groupCount; i++) {
+    for (let i = 0; i < groupCount && startIndex < items.length; i++) {
       groups.push(items.slice(startIndex, startIndex + groupItemSize));
       startIndex += groupItemSize;
     }
