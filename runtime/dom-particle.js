@@ -15,7 +15,8 @@ import {
   ViewChanges
 } from './particle.js';
 
-import XenStateMixin from './browser/lib/xen-state.js';
+//import XenStateMixin from './browser/lib/xen-state.js';
+import XenStateMixin from '../shell/components/xen/xen-state.js';
 
 /** @class DomParticle
  * Particle that does stuff with DOM.

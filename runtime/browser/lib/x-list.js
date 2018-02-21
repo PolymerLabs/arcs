@@ -8,11 +8,22 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import XTemplate from './xen-template.js';
-import XElement from './xen-element.js';
-import XState from './xen-state.js';
+import XTemplate from '../../../shell/components/xen/xen-template.js';
+import XElement from '../../../shell/components/xen/xen-element.js';
+import XState from '../../../shell/components/xen/xen-state.js';
 
-class XList extends XState(XElement) {
+let HTMLElement;
+if (typeof window == 'undefined') {
+  HTMLElement = class HTMLElement {};
+} else {
+  HTMLElement = window.HTMLElement;
+}
+
+//import XTemplate from './xen-template.js';
+//import XElement from './xen-element.js';
+//import XState from './xen-state.js';
+
+class XList extends XState(XElement(HTMLElement)) {
   static get observedAttributes() {
     return ['items', 'template', 'handler', 'render', 'scope'];
   }

@@ -8,9 +8,9 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-let nob = () => Object.create(null);
+const nob = () => Object.create(null);
 
-let StaterMixin = Base => class extends Base {
+export default Base => class extends Base {
   constructor() {
     super();
     this._pendingProps = nob();
@@ -104,5 +104,3 @@ let StaterMixin = Base => class extends Base {
   _didUpdate(props, state, lastProps, lastState) {
   }
 };
-
-export default StaterMixin;
