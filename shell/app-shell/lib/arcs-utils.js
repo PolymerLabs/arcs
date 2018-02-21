@@ -149,7 +149,7 @@ const ArcsUtils = {
     if (handle.toList) {
       data && Object.values(data).forEach(e => handle.store(e));
     } else {
-      handle.set(data);
+      data && handle.set(data);
     }
   },
   getUserProfileKeys(user) {
