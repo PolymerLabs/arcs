@@ -8,9 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import XTemplate from '../../../shell/components/xen/xen-template.js';
-import XElement from '../../../shell/components/xen/xen-element.js';
-import XState from '../../../shell/components/xen/xen-state.js';
+import Xen from './xen/xen.js';
 
 let HTMLElement;
 if (typeof window == 'undefined') {
@@ -19,11 +17,7 @@ if (typeof window == 'undefined') {
   HTMLElement = window.HTMLElement;
 }
 
-//import XTemplate from './xen-template.js';
-//import XElement from './xen-element.js';
-//import XState from './xen-state.js';
-
-class XList extends XState(XElement(HTMLElement)) {
+class XList extends Xen.State(Xen.Element(HTMLElement)) {
   static get observedAttributes() {
     return ['items', 'template', 'handler', 'render', 'scope'];
   }
@@ -56,7 +50,7 @@ class XList extends XState(XElement(HTMLElement)) {
         let dom;
         try {
           // TODO(sjmiles): install event handlers explicitly now
-          dom = XTemplate.stamp(template).events(props.eventMapper);
+          dom = Xen.Template.stamp(template).events(props.eventMapper);
         } catch (x) {
           console.warn('x-list: if `listen` is undefined, you need to provide a `handler` property for `on-*` events');
           throw x;
