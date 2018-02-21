@@ -88,7 +88,7 @@ class Annotator {
   }
 }
 
-let locateNodes = function(root, locator, map) {
+const locateNodes = function(root, locator, map) {
   map = map || [];
   for (let n in locator) {
     let loc = locator[n];
@@ -112,7 +112,7 @@ let locateNodes = function(root, locator, map) {
 
 /* Annotation Producer */
 // must return `true` for any node whose key we wish to track
-let annotatorImpl = function(node, key, notes, opts) {
+const annotatorImpl = function(node, key, notes, opts) {
   // hook
   if (opts.annotator && opts.annotator(node, key, notes, opts)) {
     return true;
@@ -128,14 +128,14 @@ let annotatorImpl = function(node, key, notes, opts) {
   }
 };
 
-let annotateTextNode = function(node, key, notes) {
+const annotateTextNode = function(node, key, notes) {
   if (annotateMustache(node, key, notes, 'textContent', node.textContent)) {
     node.textContent = '';
     return true;
   }
 };
 
-let annotateElementNode = function(node, key, notes) {
+const annotateElementNode = function(node, key, notes) {
   if (node.hasAttributes()) {
     let noted = false;
     for (let a$ = node.attributes, i = a$.length - 1, a; i >= 0 && (a = a$[i]); i--) {
@@ -151,7 +151,7 @@ let annotateElementNode = function(node, key, notes) {
   }
 };
 
-let annotateMustache = function(node, key, notes, property, mustache) {
+const annotateMustache = function(node, key, notes, property, mustache) {
   if (mustache.slice(0, 2) === '{{') {
     if (property === 'class') {
       property = 'className';
@@ -170,7 +170,7 @@ let annotateMustache = function(node, key, notes, property, mustache) {
   }
 };
 
-let annotateEvent = function(node, key, notes, name, value) {
+const annotateEvent = function(node, key, notes, name, value) {
   if (name.slice(0, 3) === 'on-') {
     if (value.slice(0, 2) === '{{') {
       value = value.slice(2, -2);
@@ -183,22 +183,22 @@ let annotateEvent = function(node, key, notes, name, value) {
   }
 };
 
-let takeNote = function(notes, key, group, name, note) {
+const takeNote = function(notes, key, group, name, note) {
   let n$ = notes[key] || (notes[key] = Object.create(null));
   (n$[group] || (n$[group] = {}))[name] = note;
   //console.log('[%s]::%s.{{%s}}:', key, group, name, note);
 };
 
-let annotator = new Annotator(annotatorImpl);
+const annotator = new Annotator(annotatorImpl);
 
-let annotate = function(root, key, opts) {
+const annotate = function(root, key, opts) {
   return (root._notes ||
     (root._notes = annotator.annotate(root.content, {/*ids:{}*/}, key, opts))
   );
 };
 
 /* Annotation Consumer */
-let mapEvents = function(notes, map, mapper) {
+const mapEvents = function(notes, map, mapper) {
   // add event listeners
   for (let key in notes) {
     let node = map[key];
@@ -211,7 +211,7 @@ let mapEvents = function(notes, map, mapper) {
   }
 };
 
-let listen = function(controller, node, eventName, handlerName) {
+const listen = function(controller, node, eventName, handlerName) {
   node.addEventListener(eventName, function(e) {
     if (controller[handlerName]) {
       return controller[handlerName](e, e.detail);
@@ -219,7 +219,7 @@ let listen = function(controller, node, eventName, handlerName) {
   });
 };
 
-let set = function(notes, map, scope, controller) {
+const set = function(notes, map, scope, controller) {
   if (scope) {
     for (let key in notes) {
       let node = map[key];
@@ -239,7 +239,7 @@ let set = function(notes, map, scope, controller) {
   }
 };
 
-let _set = function(node, property, value, controller) {
+const _set = function(node, property, value, controller) {
   let modifier = property.slice(-1);
   //console.log('_set: %s, %s, '%s'', node.localName || '(text)', property, value);
   if (property === 'style%' || property === 'style') {
@@ -268,11 +268,15 @@ let _set = function(node, property, value, controller) {
   }
 };
 
-const createTemplate = innerHTML => {
-  return Object.assign(document.createElement('template'), {innerHTML});
+const setBoolAttribute = function(node, attr, state) {
+  node[
+    (state === undefined ? !node.hasAttribute(attr) : state)
+      ? 'setAttribute'
+      : 'removeAttribute'
+  ](attr, '');
 };
 
-let _setSubTemplate = function(node, value, controller) {
+const _setSubTemplate = function(node, value, controller) {
   // TODO(sjmiles): sub-template iteration ability
   // specially implemented to support arcs (serialization boundary)
   // Aim to re-implement as a plugin.
@@ -280,8 +284,8 @@ let _setSubTemplate = function(node, value, controller) {
   if (!template) {
     let container = node.getRootNode();
     template = container.querySelector(`template[${value.$template}]`);
-  } else if (typeof template === 'string') {
-    template = createTemplate(template);
+  } else {
+    template = maybeStringToTemplate(template);
   }
   node.textContent = '';
   if (template && value.models) {
@@ -291,20 +295,7 @@ let _setSubTemplate = function(node, value, controller) {
   }
 };
 
-let setBoolAttribute = function(node, attr, state) {
-  node[
-    (state === undefined ? !node.hasAttribute(attr) : state)
-      ? 'setAttribute'
-      : 'removeAttribute'
-  ](attr, '');
-};
-
-const maybeStringToTemplate = template => {
-  // TODO(sjmiles): need to memoize this somehow
-  return (typeof template === 'string') ? createTemplate(template) : template;
-};
-
-let stamp = function(template, opts) {
+const stamp = function(template, opts) {
   template = maybeStringToTemplate(template);
   // construct (or use memoized) notes
   let notes = annotate(template, opts);
@@ -358,10 +349,17 @@ let stamp = function(template, opts) {
   return dom;
 };
 
-let Xen = {
+const maybeStringToTemplate = template => {
+  // TODO(sjmiles): need to memoize this somehow
+  return (typeof template === 'string') ? createTemplate(template) : template;
+};
+
+const createTemplate = innerHTML => {
+  return Object.assign(document.createElement('template'), {innerHTML});
+};
+
+export default {
   createTemplate,
   setBoolAttribute,
   stamp
 };
-
-export default Xen;
