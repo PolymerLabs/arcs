@@ -122,7 +122,7 @@ describe('Arc', function() {
     let arc = new Arc({id: 'test', context: manifest, slotComposer});
 
     let barType = manifest.findTypeByName('Bar');
-    let handle = await arc.createHandle(barType.setViewOf());
+    let handle = await arc.createHandle(barType.setViewOf(), undefined, 'test:1');
 
     await arc.instantiate(recipe);
     await arc.idle;

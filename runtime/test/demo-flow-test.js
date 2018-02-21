@@ -62,7 +62,7 @@ describe('demo flow', function() {
   copy 'manifest:./runtime/browser/demo/recipes.manifest:view0' #shortlist as view1 // Product List
   map 'manifest:./runtime/browser/demo/recipes.manifest:view1' #wishlist as view2 // Product List
   create as view3 // Description List
-  map 'manifest:./runtime/browser/demo/recipes.manifest::7:immediateAlsoOn' as view4 // SHAAAAPE
+  copy 'manifest:./runtime/browser/demo/recipes.manifest::7:immediateAlsoOn' as view4 // SHAAAAPE
   slot 'rootslotid-root' as slot3
   Chooser as particle0
     choices <- view0
@@ -70,7 +70,7 @@ describe('demo flow', function() {
     consume action as slot0
       provide annotation as slot1
   Multiplexer2 as particle1
-    hostedParticle host view4
+    hostedParticle = view4
     list <- view1
     others <- view0
     consume annotation as slot2

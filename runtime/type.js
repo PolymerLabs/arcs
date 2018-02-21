@@ -20,7 +20,8 @@ function addType(name, arg) {
   let upperArg = arg ? arg[0].toUpperCase() + arg.substring(1) : '';
   Object.defineProperty(Type.prototype, `${lowerName}${upperArg}`, {
     get: function() {
-      assert(this[`is${name}`], `{${this.tag}, ${this.data}} is not of type ${name}`);
+      if (!this[`is${name}`])
+        assert(this[`is${name}`], `{${this.tag}, ${this.data}} is not of type ${name}`);
       return this.data;
     }});
   Object.defineProperty(Type.prototype, `is${name}`, {
