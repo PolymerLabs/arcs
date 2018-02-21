@@ -19,16 +19,19 @@ import Loader from '../loader.js';
 let loader = new Loader();
 
 async function setup() {
+  let arc = new Arc({slotComposer, loader, id: 'test'});
+  let sid = '!' + arc.id.session;
   let manifest = await Manifest.parse(`
     import 'runtime/test/artifacts/test-particles.manifest'
     recipe TestRecipe
-      use 'test:1' as view0
-      use 'test:2' as view1
+      use '${sid}:test:1' as view0
+      use '${sid}:test:2' as view1
       TestParticle
         foo <- view0
         bar -> view1
   `, {loader, fileName: process.cwd() + '/input.manifest'});
   return {
+    arc,
     recipe: manifest.recipes[0],
     Foo: manifest.findSchemaByName('Foo').entityClass(),
     Bar: manifest.findSchemaByName('Bar').entityClass(),
@@ -38,8 +41,7 @@ const slotComposer = new SlotComposer({rootContext: 'test', affordance: 'mock'})
 
 describe('Arc', function() {
   it('applies existing views to a particle', async () => {
-    let {recipe, Foo, Bar} = await setup();
-    let arc = new Arc({slotComposer, id: 'test'});
+    let {arc, recipe, Foo, Bar} = await setup();
     let fooView = await arc.createHandle(Foo.type);
     let barView = await arc.createHandle(Bar.type);
     await handle.handleFor(fooView).set(new Foo({value: 'a Foo'}));
@@ -49,8 +51,7 @@ describe('Arc', function() {
   });
 
   it('applies new views to a particle', async () => {
-    let {recipe, Foo, Bar} = await setup();
-    let arc = new Arc({slotComposer, id: 'test'});
+    let {arc, recipe, Foo, Bar} = await setup();
     let fooView = await arc.createHandle(Foo.type);
     let barView = await arc.createHandle(Bar.type);
     recipe.normalize();
@@ -66,12 +67,11 @@ describe('Arc', function() {
     let newArc = await Arc.deserialize({serialization, loader, slotComposer});
     assert(newArc._handlesById.size == 0);
     assert(newArc.activeRecipe.toString() == arc.activeRecipe.toString());
-    assert(newArc.id == 'test');
+    assert(newArc.id.toStringWithoutSession() == 'test');
   });
 
   it('deserializing a simple serialized arc produces that arc', async () => {
-    let {recipe, Foo, Bar} = await setup();
-    let arc = new Arc({slotComposer, loader, id: 'test'});
+    let {arc, recipe, Foo, Bar} = await setup();
     let fooView = await arc.createHandle(Foo.type);
     handle.handleFor(fooView).set(new Foo({value: 'a Foo'}));
     let barView = await arc.createHandle(Bar.type);
