@@ -27,7 +27,7 @@ import assert from '../platform/assert-web.js';
 
     let id = new Id(this.currentSession);
 
-    if(components[0][0] == '!') {
+    if (components[0][0] == '!') {
       id.session = components[0].slice(1);
       id.components = components.slice(1);
     } else {
@@ -63,7 +63,7 @@ import assert from '../platform/assert-web.js';
   equalWithoutSession(id) {
     if (id.components.length !== this.components.length)
       return false;
-    for (var i = 0 ; i < id.components.length; i++)
+    for (let i = 0; i < id.components.length; i++)
       if (id.components[i] !== this.components[i])
         return false;
     
