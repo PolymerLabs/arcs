@@ -10,12 +10,12 @@
 
 import assert from '../platform/assert-web.js';
 
- export default class Id {
+export default class Id {
   constructor(currentSession) {
-    this.session = currentSession;
-    this.currentSession = currentSession;
-    this.nextIdComponent = 0;
-    this.components = [];
+    this._session = currentSession;
+    this._currentSession = currentSession;
+    this._nextIdComponent = 0;
+    this._components = [];
   }
   static newSessionId() {
     let session = Math.floor(Math.random() * Math.exp(2, 50)) + '';
@@ -25,46 +25,46 @@ import assert from '../platform/assert-web.js';
   fromString(string) {
     let components = string.split(':');
 
-    let id = new Id(this.currentSession);
+    let id = new Id(this._currentSession);
 
     if (components[0][0] == '!') {
-      id.session = components[0].slice(1);
-      id.components = components.slice(1);
+      id._session = components[0].slice(1);
+      id._components = components.slice(1);
     } else {
-      id.components = components;
+      id._components = components;
     }
 
     return id;
   }
 
   toString() {
-    return `!${this.session}:${this.components.join(':')}`;
+    return `!${this._session}:${this._components.join(':')}`;
   }
 
   // Only use this for testing!
-  toStringWithoutSession() {
-    return this.components.join(':');
+  toStringWithoutSessionForTesting() {
+    return this._components.join(':');
   }
 
   createId() {
-    let id = new Id(this.currentSession);
-    id.components = this.components.slice();
-    id.components.push(this.nextIdComponent++);
+    let id = new Id(this._currentSession);
+    id._components = this._components.slice();
+    id._components.push(this._nextIdComponent++);
     return id;
   }
 
   equal(id) {
-    if (id.session !== this.session)
+    if (id._session !== this._session)
       return false;
     return this.equalWithoutSession(id);
   }
 
   // Only use this for testing!
-  equalWithoutSession(id) {
-    if (id.components.length !== this.components.length)
+  equalWithoutSessionForTesting(id) {
+    if (id._components.length !== this._components.length)
       return false;
-    for (let i = 0; i < id.components.length; i++)
-      if (id.components[i] !== this.components[i])
+    for (let i = 0; i < id._components.length; i++)
+      if (id._components[i] !== this._components[i])
         return false;
     
     return true;

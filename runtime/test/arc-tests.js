@@ -66,7 +66,7 @@ describe('Arc', function() {
     let newArc = await Arc.deserialize({serialization, loader, slotComposer});
     assert(newArc._handlesById.size == 0);
     assert(newArc.activeRecipe.toString() == arc.activeRecipe.toString());
-    assert(newArc.id.toStringWithoutSession() == 'test');
+    assert(newArc.id.toStringWithoutSessionForTesting() == 'test');
   });
 
   it('deserializing a simple serialized arc produces that arc', async () => {
