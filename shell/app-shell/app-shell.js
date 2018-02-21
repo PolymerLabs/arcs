@@ -37,9 +37,11 @@ import '../components/simple-tabs.js';
 import '../components/suggestion-element.js';
 import '../components/toggle-button.js';
 
-// For particles.
+// for particles
 import '../components/corellia-xen/cx-input.js';
 import '../components/good-map.js';
+// TODO(sjmiles): deprecated
+import '../components/x-list.js';
 
 const template = ArcsUtils.html`
 <style>
