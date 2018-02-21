@@ -197,10 +197,9 @@ class Planner {
           continue;
         }
 
-        // TODO(wkorman): Does nesting trace.wait() work, and should we be doing
-        // something like this for the async getRecipeSuggestion() below as well?
-        let relevance = await trace.wait(() => speculator.speculate(this._arc, plan));
-        trace.resume();
+        // TODO(wkorman): Look at restoring trace.wait() here, and whether we
+        // should do similar for the async getRecipeSuggestion() below as well?
+        let relevance = await speculator.speculate(this._arc, plan);
         if (!relevance.isRelevant(plan)) {
           continue;
         }
