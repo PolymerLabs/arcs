@@ -110,7 +110,9 @@ describe('demo flow', function() {
     let slotComposerCompletePromise = slotComposer.expectationsCompleted();
     await arc.instantiate(plan);
     await arc.pec.idle;
-    slotComposer.skipOptional();
+    // TODO: get rid of set timeout. Instead update MockSlotComposer to return two promises:
+    // one for required expectations, another for all promises.
+    setTimeout(slotComposer.skipOptional.bind(slotComposer), 500);
     await slotComposerCompletePromise;
     let productViews = arc.findHandlesByType(Product.type.setViewOf());
     assert.equal(productViews.length, 2);

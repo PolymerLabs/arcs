@@ -159,6 +159,7 @@ class MockSlotComposer extends SlotComposer {
     } else {
       // Slots of particles hosted in transformation particles.
     }
+    // this.detailedLogDebug();
   }
 
   // Helper method to resolve the current expectation group, if all remaining expectations are optional.
@@ -181,6 +182,25 @@ class MockSlotComposer extends SlotComposer {
     if (this.expectQueue.length == 0) {
       this.onExpectationsComplete();
     }
+  }
+
+  detailedLogDebug() {
+    console.log(`    Has ${this.expectQueue.length} expectation groups:  [ ${this.expectQueue.map(expectations => {
+      let expectationsByParticle = {};
+      expectations.forEach(e => {
+        if (!expectationsByParticle[e.particleName]) {
+          expectationsByParticle[e.particleName] = {};
+        }
+        let key = `${e.isOptional ? 'opt_' : ''}${e.contentType}`;
+        if (!expectationsByParticle[e.particleName][key]) {
+          expectationsByParticle[e.particleName][key] = 0;
+        }
+        expectationsByParticle[e.particleName][key]++;
+      });
+      return `${expectations.length} expectations : {${Object.keys(expectationsByParticle).map(p => {
+        return `${p}: (${Object.keys(expectationsByParticle[p]).map(key => `${key}=${expectationsByParticle[p][key]}`).join('; ')})`;
+      }).join(', ')}}`;
+    }).join('\n\t\t\t\t')}]`);
   }
 }
 
