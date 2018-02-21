@@ -53,6 +53,7 @@ defineParticle(({DomParticle, html}) => {
     border-bottom: none;
   }
   [${host}] [item] {
+    font-family: 'Google Sans', sans-serif;
     display: flex;
     flex-direction: column;
     color: white;
