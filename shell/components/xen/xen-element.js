@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-let XenElement = Base => class extends Base {
+export default Base => class extends Base {
   constructor() {
     super();
     this._mounted = false;
@@ -76,5 +76,3 @@ let XenElement = Base => class extends Base {
     return event.detail;
   }
 };
-
-export default XenElement;

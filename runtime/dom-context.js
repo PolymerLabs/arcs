@@ -10,13 +10,11 @@
 'use strict';
 
 import assert from '../platform/assert-web.js';
-import Template from './browser/lib/xen-template.js';
+//import Template from './browser/lib/xen-template.js';
+import Template from '../shell/components/xen/xen-template.js';
 
-// TODO(sjmiles): should be elsewhere
-// TODO(sjmiles): using Node syntax to import custom-elements in strictly-browser context
-// TOOD(dstockwell): why was this only in browser context?
-import './browser/lib/x-list.js';
-import './browser/lib/model-select.js';
+// TODO(sjmiles): `x-list` is deprecated, remove asap
+//import './browser/lib/x-list.js';
 
 class DomContext {
   constructor(context, containerKind) {

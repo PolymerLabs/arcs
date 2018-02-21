@@ -17,6 +17,7 @@ import Tracing from '../../../tracelib/trace.js';
 
 import WorkerPecFactory from '../worker-pec-factory.js';
 import '../lib/suggestion-element.js';
+import '../lib/x-list.js';
 
 Tracing.enable();
 
