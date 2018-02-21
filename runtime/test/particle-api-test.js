@@ -74,12 +74,12 @@ describe('particle-api', function() {
     let arc = new Arc({id: 'test', pecFactory});
 
     let Input = manifest.findSchemaByName('Input').entityClass();
-    let inputView = await arc.createHandle(Input.type.setViewOf());
+    let inputView = await arc.createHandle(Input.type.setViewOf(), undefined, 'test:1');
     inputView.store({id: 1, text: 'Hi'});
     inputView.store({id: 2, text: 'There'});
 
     let Result = manifest.findSchemaByName('Result').entityClass();
-    let resultView = await arc.createHandle(Result.type);
+    let resultView = await arc.createHandle(Result.type, undefined, 'test:2');
     let recipe = manifest.recipes[0];
     recipe.normalize();
     await arc.instantiate(recipe);
@@ -137,7 +137,7 @@ describe('particle-api', function() {
     };
     let arc = new Arc({id: 'test', pecFactory});
     let Result = manifest.findSchemaByName('Result').entityClass();
-    let resultView = await arc.createHandle(Result.type);
+    let resultView = await arc.createHandle(Result.type, undefined, 'test:1');
     let recipe = manifest.recipes[0];
     recipe.normalize();
     await arc.instantiate(recipe);
@@ -233,7 +233,7 @@ describe('particle-api', function() {
     };
     let arc = new Arc({id: 'test', pecFactory, loader});
     let Result = manifest.findSchemaByName('Result').entityClass();
-    let resultView = await arc.createHandle(Result.type);
+    let resultView = await arc.createHandle(Result.type, undefined, 'test:1');
     let recipe = manifest.recipes[0];
     recipe.normalize();
     await arc.instantiate(recipe);
@@ -344,10 +344,10 @@ describe('particle-api', function() {
     };
     let arc = new Arc({id: 'test', pecFactory, loader});
     let Result = manifest.findSchemaByName('Result').entityClass();
-    let inputsView = await arc.createHandle(Result.type.setViewOf());
+    let inputsView = await arc.createHandle(Result.type.setViewOf(), undefined, 'test:1');
     inputsView.store({id: '1', rawData: {value: 'hello'}});
     inputsView.store({id: '2', rawData: {value: 'world'}});
-    let resultsView = await arc.createHandle(Result.type.setViewOf());
+    let resultsView = await arc.createHandle(Result.type.setViewOf(), undefined, 'test:2');
     let recipe = manifest.recipes[0];
     recipe.normalize();
     await arc.instantiate(recipe);

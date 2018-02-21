@@ -52,7 +52,7 @@ describe('Multiplexer', function() {
     };
 
     let arc = new Arc({id: 'test', context: manifest, slotComposer});
-    let handle = await arc.createHandle(barType.setViewOf());
+    let handle = await arc.createHandle(barType.setViewOf(), null, 'test:1');
     await arc.instantiate(recipe);
 
     await arc.idle;

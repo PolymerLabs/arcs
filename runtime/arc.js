@@ -24,6 +24,7 @@ import FakePecFactory from './fake-pec-factory.js';
 import StorageProviderFactory from './storage/storage-provider-factory.js';
 import scheduler from './scheduler.js';
 import {registerArc} from '../devtools/shared/arc-registry.js';
+import Id from './id.js';
 
 class Arc {
   constructor({id, context, pecFactory, slotComposer, loader, storageKey, storageProviderFactory}) {
@@ -31,7 +32,10 @@ class Arc {
     this._context = context || new Manifest({id});
     // TODO: pecFactory should not be optional. update all callers and fix here.
     this._pecFactory = pecFactory || FakePecFactory.bind(null);
-    this.id = id;
+
+    // for now, every Arc gets its own session
+    this.sessionId = Id.newSessionId();
+    this.id = this.sessionId.fromString(id);
     this._nextLocalID = 0;
     this._activeRecipe = new Recipe();
     // TODO: rename: this are just tuples of {particles, handles, slots} of instantiated recipes merged into active recipe..

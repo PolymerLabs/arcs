@@ -66,7 +66,7 @@ export default class InMemoryStorage {
 
   async connect(id, type, keyString) {
     let key = new InMemoryKey(keyString);
-    if (key.arcId !== this._arcId) {
+    if (key.arcId !== this._arcId.toString()) {
       if (__storageCache[key.arcId] == undefined)
         return null;
       return __storageCache[key.arcId].connect(id, type, keyString);
