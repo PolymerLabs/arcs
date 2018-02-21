@@ -29,17 +29,17 @@ defineParticle(({DomParticle, resolver, html, log}) => {
     position: absolute;
     top: 0;
     right: 0;
-    bottom: 0;
+    bottom: -64px;
     left: 0;
     pointer-events: all;
     background-color: gray;
-    opacity: 0.5;
+    opacity: 0.25;
   }
   [${host}] > [dialog] {
     position: absolute;
-    top: 0;
+    top: 4px;
     right: 4px;
-    bottom: 0;
+    bottom: 4px;
     left: 4px;
     padding: 16px;
     background-color: white;

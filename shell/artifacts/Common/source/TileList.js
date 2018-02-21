@@ -62,9 +62,8 @@ defineParticle(({DomParticle, html, log}) => {
         log('request to delete', selected);
         const item = items.find(item => item.id === selected.id);
         if (item) {
-          const items = this._views.get('items');
-          items.remove(item);
-          log('new list', await items.toList());
+          this._views.get('items').remove(item);
+          log('new list', await this._views.get('items').toList());
         }
       }
     }

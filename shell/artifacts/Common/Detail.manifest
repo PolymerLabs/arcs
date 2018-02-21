@@ -1,0 +1,4 @@
+particle DetailSlider in 'source/DetailSlider.js'
+  DetailSlider(inout ~a selected)
+  consume modal
+    provide content
