@@ -132,7 +132,7 @@ class MockSlotComposer extends SlotComposer {
   }
 
   async renderSlot(particle, slotName, content) {
-//    console.log(`renderSlot ${particle.name}:${slotName}`, Object.keys(content).join(', '));
+    // console.log(`renderSlot ${particle.name}:${slotName}`, Object.keys(content).join(', '));
     assert(this.expectQueue.length > 0 && this.expectQueue[0],
       `Got a renderSlot from ${particle.name}:${slotName} (content types: ${Object.keys(content).join(', ')}), but not expecting anything further.`);
 
@@ -161,12 +161,22 @@ class MockSlotComposer extends SlotComposer {
     }
   }
 
+  // Helper method to resolve the current expectation group, if all remaining expectations are optional.
+  skipOptional() {
+    let expectations = this.expectQueue[0];
+    if (expectations.every(e => e.isOptional)) {
+      this.expectQueue.shift();
+      this.expectationsMet();
+    }
+  }
+
   expectationMet(expectation) {
     if (expectation.then) {
       log(`expectationMet: sending event`, expectation.then);
       this._sendEvent(expectation.then);
     }
   }
+
   expectationsMet() {
     if (this.expectQueue.length == 0) {
       this.onExpectationsComplete();

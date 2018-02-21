@@ -107,9 +107,11 @@ describe('demo flow', function() {
         .maybeRenderSlot('AlsoOn', 'annotation', ['model'])
         .maybeRenderSlot('AlsoOn', 'annotation', ['model'])
         .maybeRenderSlot('AlsoOn', 'annotation', ['model']);
+    let slotComposerCompletePromise = slotComposer.expectationsCompleted();
     await arc.instantiate(plan);
     await arc.pec.idle;
-    await slotComposer.expectationsCompleted();
+    slotComposer.skipOptional();
+    await slotComposerCompletePromise;
     let productViews = arc.findHandlesByType(Product.type.setViewOf());
     assert.equal(productViews.length, 2);
 
