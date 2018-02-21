@@ -82,19 +82,16 @@ recipe
     assert(1, manifest.recipes.length);
     let recipe = manifest.recipes[0];
     let Foo = manifest.findSchemaByName('Foo').entityClass();
-
-    let arc = createTestArc();
-    let sid = '!' + arc.id.session;
-
-    recipe.views[0].mapToView({id: `${sid}:test:1`, type: Foo.type});
+    recipe.views[0].mapToView({id: 'test:1', type: Foo.type});
     if (recipe.views.length > 1) {
-      recipe.views[1].mapToView({id: `${sid}:test:2`, type: Foo.type.setViewOf()});
+      recipe.views[1].mapToView({id: 'test:2', type: Foo.type.setViewOf()});
     }
     if (recipe.views.length > 2) {
-      recipe.views[2].mapToView({id: `${sid}:test:3`, type: Foo.type});
+      recipe.views[2].mapToView({id: 'test:3', type: Foo.type});
     }
-    let fooView = await arc.createHandle(Foo.type);
-    let foosView = await arc.createHandle(Foo.type.setViewOf());
+    let arc = createTestArc();
+    let fooView = await arc.createHandle(Foo.type, undefined, 'test:1');
+    let foosView = await arc.createHandle(Foo.type.setViewOf(), undefined, 'test:2');
     recipe.normalize();
     assert.isTrue(recipe.isResolved());
     let ifooHandleConn = recipe.handleConnections.find(hc => hc.particle.name == 'A' && hc.name == 'ifoo');
@@ -368,12 +365,11 @@ recipe
       assert(1, manifest.recipes.length);
       let recipe = manifest.recipes[0];
       let Foo = manifest.findSchemaByName('Foo').entityClass();
+      recipe.views[0].mapToView({id: 'test:1', type: Foo.type.setViewOf()});
+      recipe.views[1].mapToView({id: 'test:2', type: Foo.type.setViewOf()});
       let arc = createTestArc();
-      let sid = `!${arc.id.session}`;
-      recipe.views[0].mapToView({id: `${sid}:test:1`, type: Foo.type.setViewOf()});
-      recipe.views[1].mapToView({id: `${sid}:test:2`, type: Foo.type.setViewOf()});
-      let fooView1 = await arc.createHandle(Foo.type.setViewOf());
-      let fooView2 = await arc.createHandle(Foo.type.setViewOf());
+      let fooView1 = await arc.createHandle(Foo.type.setViewOf(), undefined, 'test:1');
+      let fooView2 = await arc.createHandle(Foo.type.setViewOf(), undefined, 'test:2');
       recipe.normalize();
       assert.isTrue(recipe.isResolved());
       arc._activeRecipe = recipe;
@@ -436,7 +432,7 @@ recipe
 
       // Add values to both Foo views
       fooView.set({id: 1, rawData: {name: 'the-FOO'}});
-      let fooView2 = await arc.createHandle(fooView.type);
+      let fooView2 = await arc.createHandle(fooView.type, undefined, 'test:3');
       fooView2.set({id: 2, rawData: {name: 'another-FOO'}});
       await test.verifySuggestion('Do A with b-foo (the-FOO), output B to b-foo, and output B to b-foo (another-FOO).',
                             description);
@@ -503,12 +499,11 @@ recipe
         assert(1, manifest.recipes.length);
         let recipe = manifest.recipes[0];
         let MyBESTType = manifest.findSchemaByName('MyBESTType').entityClass();
+        recipe.views[0].mapToView({id: 'test:1', type: MyBESTType.type});
+        recipe.views[1].mapToView({id: 'test:2', type: MyBESTType.type.setViewOf()});
         let arc = createTestArc();
-        let sid = `!${arc.id.session}`;
-        recipe.views[0].mapToView({id: `${sid}:test:1`, type: MyBESTType.type});
-        recipe.views[1].mapToView({id: `${sid}:test:2`, type: MyBESTType.type.setViewOf()});
-        let tView = await arc.createHandle(MyBESTType.type);
-        let tsView = await arc.createHandle(MyBESTType.type.setViewOf());
+        let tView = await arc.createHandle(MyBESTType.type, undefined, 'test:1');
+        let tsView = await arc.createHandle(MyBESTType.type.setViewOf(), undefined, 'test:2');
         recipe.normalize();
         assert.isTrue(recipe.isResolved());
 
@@ -639,12 +634,11 @@ recipe
     let recipe = manifest.recipes[0];
     let Foo = manifest.findSchemaByName('Foo').entityClass();
     let DescriptionType = manifest.findSchemaByName('Description').entityClass();
+    recipe.views[0].mapToView({id: 'test:1', type: Foo.type});
+    recipe.views[1].mapToView({id: 'test:2', type: DescriptionType.type.setViewOf()});
     let arc = createTestArc();
-    let sid = `!${arc.id.session}`;
-    recipe.views[0].mapToView({id: `${sid}:test:1`, type: Foo.type});
-    recipe.views[1].mapToView({id: `${sid}:test:2`, type: DescriptionType.type.setViewOf()});
-    let fooView = await arc.createHandle(Foo.type);
-    let descriptionView = await arc.createHandle(DescriptionType.type.setViewOf());
+    let fooView = await arc.createHandle(Foo.type, undefined, 'test:1');
+    let descriptionView = await arc.createHandle(DescriptionType.type.setViewOf(), undefined, 'test:2');
     recipe.normalize();
     assert.isTrue(recipe.isResolved());
 

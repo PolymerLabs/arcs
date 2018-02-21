@@ -20,12 +20,11 @@ let loader = new Loader();
 
 async function setup() {
   let arc = new Arc({slotComposer, loader, id: 'test'});
-  let sid = '!' + arc.id.session;
   let manifest = await Manifest.parse(`
     import 'runtime/test/artifacts/test-particles.manifest'
     recipe TestRecipe
-      use '${sid}:test:1' as view0
-      use '${sid}:test:2' as view1
+      use 'test:1' as view0
+      use 'test:2' as view1
       TestParticle
         foo <- view0
         bar -> view1
@@ -42,8 +41,8 @@ const slotComposer = new SlotComposer({rootContext: 'test', affordance: 'mock'})
 describe('Arc', function() {
   it('applies existing views to a particle', async () => {
     let {arc, recipe, Foo, Bar} = await setup();
-    let fooView = await arc.createHandle(Foo.type);
-    let barView = await arc.createHandle(Bar.type);
+    let fooView = await arc.createHandle(Foo.type, undefined, 'test:1');
+    let barView = await arc.createHandle(Bar.type, undefined, 'test:2');
     await handle.handleFor(fooView).set(new Foo({value: 'a Foo'}));
     recipe.normalize();
     await arc.instantiate(recipe);
@@ -52,8 +51,8 @@ describe('Arc', function() {
 
   it('applies new views to a particle', async () => {
     let {arc, recipe, Foo, Bar} = await setup();
-    let fooView = await arc.createHandle(Foo.type);
-    let barView = await arc.createHandle(Bar.type);
+    let fooView = await arc.createHandle(Foo.type, undefined, 'test:1');
+    let barView = await arc.createHandle(Bar.type, undefined, 'test:2');
     recipe.normalize();
     await arc.instantiate(recipe);
 
@@ -72,9 +71,9 @@ describe('Arc', function() {
 
   it('deserializing a simple serialized arc produces that arc', async () => {
     let {arc, recipe, Foo, Bar} = await setup();
-    let fooView = await arc.createHandle(Foo.type);
+    let fooView = await arc.createHandle(Foo.type, undefined, 'test:1');
     handle.handleFor(fooView).set(new Foo({value: 'a Foo'}));
-    let barView = await arc.createHandle(Bar.type);
+    let barView = await arc.createHandle(Bar.type, undefined, 'test:2');
     recipe.normalize();
     await arc.instantiate(recipe);
     await util.assertSingletonWillChangeTo(barView, Bar, 'a Foo1');
