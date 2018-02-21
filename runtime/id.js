@@ -18,7 +18,7 @@ export default class Id {
     this._components = [];
   }
   static newSessionId() {
-    let session = Math.floor(Math.random() * Math.exp(2, 50)) + '';
+    let session = Math.floor(Math.random() * Math.pow(2, 50)) + '';
     return new Id(session);
   }
 
@@ -46,10 +46,12 @@ export default class Id {
     return this._components.join(':');
   }
 
-  createId() {
+  createId(component) {
+    if (component == undefined)
+      component = '';
     let id = new Id(this._currentSession);
     id._components = this._components.slice();
-    id._components.push(this._nextIdComponent++);
+    id._components.push(component + this._nextIdComponent++);
     return id;
   }
 

@@ -248,9 +248,7 @@ ${this.activeRecipe.toString()}`;
   }
 
   generateID(component) {
-    if (component == undefined)
-      component = '';
-    return `${this._prefixForIds}:${component}${this._nextLocalID++}`;
+    return this.id.createId(component).toString();
   }
 
   generateIDComponents() {
@@ -263,7 +261,7 @@ ${this.activeRecipe.toString()}`;
 
   // Makes a copy of the arc used for speculative execution.
   async cloneForSpeculativeExecution() {
-    let arc = new Arc({id: this.generateID(), pecFactory: this._pecFactory, context: this.context, loader: this._loader});
+    let arc = new Arc({id: this.generateID().toString(), pecFactory: this._pecFactory, context: this.context, loader: this._loader});
     arc._scheduler = this._scheduler.clone();
     let handleMap = new Map();
     for (let handle of this._handles) {
