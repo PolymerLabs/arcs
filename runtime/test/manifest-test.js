@@ -48,31 +48,42 @@ describe('manifest', function() {
     verify(await Manifest.parse(manifest.toString(), {}));
   });
   it('can parse a manifest containing a particle specification', async () => {
+    let schemaStr = `
+schema Product
+schema Person
+    `;
+    let particleStr0 =
+`particle TestParticle in 'testParticle.js'
+  TestParticle(in [Product] list, out Person person)
+  affordance dom
+  affordance dom-touch
+  must consume root #master #main
+    formFactor big
+    provide action #large
+      formFactor big
+      view list
+    provide preamble
+      formFactor medium
+    provide annotation
+  consume other
+    provide set of myProvidedSetCell
+  consume set of mySetCell
+  description \`hello world \${list}\`
+    list \`my special list\``;
+
+    let particleStr1 =
+`particle NoArgsParticle in 'noArgsParticle.js'
+  NoArgsParticle()
+  affordance dom`;
     let manifest = await Manifest.parse(`
-      schema Product
-      schema Person
-      particle TestParticle in 'testParticle.js'
-        TestParticle(in [Product] list, out Person person)
-        affordance dom
-        affordance dom-touch
-        must consume root
-          formFactor big
-          provide action
-            view list
-            formFactor big
-          provide preamble
-            formFactor medium
-          provide annotation
-        consume other
-          provide set of myProvidedSetCell
-        consume set of mySetCell
-        description \`hello world \${list}\`
-          list \`my special list\`
-      particle NoArgsParticle in 'noArgsParticle.js'
-        NoArgsParticle()
+${schemaStr}
+${particleStr0}
+${particleStr1}
     `);
     let verify = (manifest) => {
       assert.equal(manifest.particles.length, 2);
+      assert.equal(particleStr0, manifest.particles[0].toString());
+      assert.equal(particleStr1, manifest.particles[1].toString());
     };
     verify(manifest);
     verify(await Manifest.parse(manifest.toString(), {}));

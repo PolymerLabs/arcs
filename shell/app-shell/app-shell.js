@@ -440,7 +440,7 @@ class AppShell extends Xen.Base {
       // Otherwise only show plans that don't populate a root.
       // TODO(seefeld): Don't hardcode `root`
       suggestions = plans.filter(
-        ({plan}) => plan.slots && !plan.slots.find(s => s.name.includes('root'))
+        ({plan}) => plan.slots && !plan.slots.find(s => s.name.includes('root') || s.tags.includes('#root'))
       );
     }
     this._setState({suggestions});

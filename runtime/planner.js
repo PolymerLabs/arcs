@@ -16,8 +16,7 @@ import AssignRemoteViews from './strategies/assign-remote-views.js';
 import CopyRemoteViews from './strategies/copy-remote-views.js';
 import AssignViewsByTagAndType from './strategies/assign-views-by-tag-and-type.js';
 import InitPopulation from './strategies/init-population.js';
-import MapConsumedSlots from './strategies/map-consumed-slots.js';
-import MapRemoteSlots from './strategies/map-remote-slots.js';
+import MapSlots from './strategies/map-slots.js';
 import MatchParticleByVerb from './strategies/match-particle-by-verb.js';
 import NameUnnamedConnections from './strategies/name-unnamed-connections.js';
 import AddUseViews from './strategies/add-use-views.js';
@@ -78,10 +77,9 @@ class Planner {
       new CreateViews(),
       new AssignViewsByTagAndType(arc),
       new ConvertConstraintsToConnections(arc),
-      new MapConsumedSlots(),
+      new MapSlots(arc),
       new AssignRemoteViews(arc),
       new CopyRemoteViews(arc),
-      new MapRemoteSlots(arc),
       new MatchParticleByVerb(arc),
       new NameUnnamedConnections(arc),
       new AddUseViews(),

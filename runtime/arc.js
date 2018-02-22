@@ -354,6 +354,7 @@ ${this.activeRecipe.toString()}`;
     }
     let {views, particles, slots} = recipe.mergeInto(currentArc.activeRecipe);
     currentArc.recipes.push({particles, views, slots, innerArcs: new Map()});
+    slots.forEach(slot => slot.id = slot.id || `slotid-${this.generateID()}`);
 
     for (let recipeView of views) {
       if (['copy', 'create'].includes(recipeView.fate)) {

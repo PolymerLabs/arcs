@@ -94,7 +94,7 @@ class DomContext {
         return;
       }
       let slotId = s.getAttribute('slotid');
-      let providedSlotSpec = slotSpec.providedSlots.find(ps => ps.name == slotId);
+      let providedSlotSpec = slotSpec.getProvidedSlotSpec(slotId);
       if (providedSlotSpec) { // Skip non-declared slots
         let subId = s.subid;
         assert(!subId || providedSlotSpec.isSet,

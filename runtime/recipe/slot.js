@@ -39,6 +39,9 @@ class Slot {
   get sourceConnection() { return this._sourceConnection; }
   set sourceConnection(sourceConnection) { this._sourceConnection = sourceConnection; }
   get consumeConnections() { return this._consumerConnections; }
+  getProvidedSlotSpec() {
+    return this.sourceConnection ? this.sourceConnection.slotSpec.getProvidedSlotSpec(this.name) : {isSet: false, tags: []};
+  }
 
   _copyInto(recipe, cloneMap) {
     let slot = undefined;
@@ -49,6 +52,7 @@ class Slot {
       slot._id = this.id;
       slot._formFactor = this.formFactor;
       slot._localName = this._localName;
+      slot._tags = [...this._tags];
       // the connections are re-established when Particles clone their attached SlotConnection objects.
       slot._sourceConnection = cloneMap.get(this._sourceConnection);
       if (slot.sourceConnection)
@@ -61,6 +65,7 @@ class Slot {
 
   _startNormalize() {
     this.localName = null;
+    this._tags.sort();
   }
 
   _finishNormalize() {
@@ -75,6 +80,7 @@ class Slot {
     if ((cmp = util.compareStrings(this.id, other.id)) != 0) return cmp;
     if ((cmp = util.compareStrings(this.localName, other.localName)) != 0) return cmp;
     if ((cmp = util.compareStrings(this.formFactor, other.formFactor)) != 0) return cmp;
+    if ((cmp = util.compareArrays(this._tags, other._tags, util.compareStrings)) != 0) return cmp;
     return 0;
   }
 
@@ -102,18 +108,22 @@ class Slot {
 
   toString(nameMap, options) {
     let result = [];
+    result.push('slot');
     if (this.id) {
-      result.push(`slot '${this.id}' as ${(nameMap && nameMap.get(this)) || this.localName}`);
-      if (options && options.showUnresolved) {
-        if (!this.isResolved(options)) {
-          result.push(`// unresolved slot: ${options.details}`);
-        }
-      }
+      result.push(`'${this.id}'`);
     }
-    else if (options && options.showUnresolved && !this.isResolved(options)) {
-      result.push(`slot as ${(nameMap && nameMap.get(this)) || this.localName} // unresolved slot: ${options.details}`);
+    if (this.tags.length > 0) {
+      result.push(this.tags.join(' '));
     }
-    return result.join(' ');
+    result.push(`as ${(nameMap && nameMap.get(this)) || this.localName}`);
+    let includeUnresolved = options && options.showUnresolved && !this.isResolved(options);
+    if (includeUnresolved) {
+      result.push(`// unresolved slot: ${options.details}`);
+    }
+
+    if (this.id || includeUnresolved) {
+      return result.join(' ');
+    }
   }
 }
 

@@ -25,13 +25,18 @@ class SlotComposer {
     this._slotClass = this.getSlotClass();
     assert(this._slotClass);
 
-    this._contextById = this._slotClass.findRootSlots(options.rootContext) || {};
-    if (Object.keys(this._contextById).length == 0) {
+    let slotContextByName = this._slotClass.findRootSlots(options.rootContext) || {};
+    if (Object.keys(slotContextByName).length == 0) {
       // fallback to single 'root' slot using the rootContext.
-      this._contextById['root'] = options.rootContext;
+      slotContextByName['root'] = options.rootContext;
     }
 
-    this._suggestionsContext = options.suggestionsContext || this._contextById['suggestions'];
+    this._suggestionsContext = options.suggestionsContext || slotContextByName['suggestions'];
+
+    this._contextSlots = [];
+    Object.keys(slotContextByName).forEach(slotName => {
+      this._contextSlots.push({id: `rootslotid-${slotName}`, name: slotName, tags: [`#${slotName}`], context: slotContextByName[slotName], handleConnections: [], views: 0, getProvidedSlotSpec: () => { return {isSet: false}; }});
+    });
 
     this._slots = [];
   }
@@ -103,6 +108,13 @@ class SlotComposer {
     return this._slots.find(s => s.consumeConn.particle == particle && s.consumeConn.name == slotName);
   }
 
+  _findContext(slotId) {
+    let contextSlot = this._contextSlots.find(slot => slot.id == slotId);
+    if (contextSlot) {
+      return contextSlot.context;
+    }
+  }
+
   createHostedSlot(transformationParticle, transformationSlotName, hostedParticleName, hostedSlotName) {
     let hostedSlotId = this.arc.generateID();
 
@@ -164,7 +176,7 @@ class SlotComposer {
           context = sourceConnSlot.getInnerContext(s.consumeConn.name);
         }
       } else { // External slots provided at SlotComposer ctor (eg 'root')
-        context = this._contextById[s.consumeConn.name];
+        context = this._findContext(s.consumeConn.targetSlot.id);
       }
 
       this._slots.push(s);
@@ -228,30 +240,12 @@ class SlotComposer {
   }
 
   getAvailableSlots() {
-    let availableSlots = {};
-    this._slots.forEach(slot => {
-      assert(slot.consumeConn.targetSlot);
-      Object.values(slot.consumeConn.providedSlots).forEach(ps => {
-        if (!availableSlots[ps.name]) {
-          availableSlots[ps.name] = [];
-        }
-        let psId = ps.id || `slotid-${this.arc.generateID()}`;
-        ps.id = psId;
-        let providedSlotSpec = slot.consumeConn.slotSpec.providedSlots.find(psSpec => psSpec.name == ps.name);
-        availableSlots[ps.name].push({
-          id: psId,
-          count: ps.consumeConnections.length,
-          providedSlotSpec,
-          views: ps.handleConnections.map(hc => hc.view)
-        });
-      });
-    });
+    let availableSlots = this.arc.activeRecipe.slots.slice();
 
-    Object.keys(this._contextById).forEach(slotid => {
-      if (!availableSlots[slotid]) {
-        availableSlots[slotid] = [];
+    this._contextSlots.forEach(contextSlot => {
+      if (!availableSlots.find(s => s.id == contextSlot.id)) {
+        availableSlots.push(contextSlot);
       }
-      availableSlots[slotid].push({id: `rootslotid-${slotid}`, count: 0, views: [], providedSlotSpec: {isSet: false}});
     });
     return availableSlots;
   }

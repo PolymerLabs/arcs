@@ -17,7 +17,7 @@ import Manifest from '../manifest.js';
 import Recipe from '../recipe/recipe.js';
 import ConvertConstraintsToConnections from '../strategies/convert-constraints-to-connections.js';
 import InitPopulation from '../strategies/init-population.js';
-import MapRemoteSlots from '../strategies/map-remote-slots.js';
+import MapSlots from '../strategies/map-slots.js';
 import MatchParticleByVerb from '../strategies/match-particle-by-verb.js';
 import SearchTokensToParticles from '../strategies/search-tokens-to-particles.js';
 import GroupHandleConnections from '../strategies/group-handle-connections.js';
@@ -35,7 +35,7 @@ function createTestArc(id, context, affordance) {
     context,
     slotComposer: {
       affordance,
-      getAvailableSlots: (() => { return {root: [{id: 'r0', count: 0, views: [], providedSlotSpec: {isSet: false}}]}; })
+      getAvailableSlots: (() => { return [{name: 'root', id: 'r0', tags: ['#root'], views: [], handleConnections: [], getProvidedSlotSpec: () => { return {isSet: false}; }}]; })
     }
   });
 }
@@ -468,49 +468,56 @@ describe('ConvertConstraintsToConnections', async () => {
   });
 });
 
-describe('MapRemoteSlots', function() {
-  it('predefined remote slots', async () => {
-    let particlesSpec = `
+describe('MapSlots', function() {
+  let particlesSpec = `
     particle A in 'A.js'
       A()
       consume root
 
     particle B in 'B.js'
       B()
-      consume root
-    `;
-    let testManifest = async (recipeManifest, expectedSlots) => {
-      let manifest = (await Manifest.parse(`
-        ${particlesSpec}
+      consume root`;
 
-        ${recipeManifest}
-      `));
-      let strategizer = {generated: [{result: manifest.recipes[0], score: 1}]};
-      let arc = createTestArc('test-plan-arc', manifest, 'dom');
-      let mrs = new MapRemoteSlots(arc);
+  let testManifest = async (recipeManifest, expectedSlots) => {
+    let manifest = (await Manifest.parse(`
+      ${particlesSpec}
 
-      let {results} = await mrs.generate(strategizer);
-      assert.equal(results.length, 1);
-      assert.isTrue(results[0].result.isResolved());
-      assert.equal(results[0].result.slots.length, expectedSlots);
-    };
+      ${recipeManifest}
+    `));
+    let strategizer = {generated: [{result: manifest.recipes[0], score: 1}]};
+    let arc = createTestArc('test-plan-arc', manifest, 'dom');
+    let mrs = new MapSlots(arc);
+
+    let {results} = await mrs.generate(strategizer);
+    assert.equal(results.length, 1);
+    assert.isTrue(results[0].result.isResolved());
+    assert.equal(results[0].result.slots.length, expectedSlots);
+  };
+
+  it('predefined remote slots no alias', async () => {
     await testManifest(`
       recipe
         A as particle0
         B as particle1
     `, /* expectedSlots= */ 1);
+  });
+  it('predefined remote slots first explicit', async () => {
     await testManifest(`
       recipe
         A as particle0
           consume root
         B as particle1
     `, /* expectedSlots= */ 1);
+  });
+  it('predefined remote slots second explicit', async () => {
     await testManifest(`
       recipe
         A as particle0
         B as particle1
           consume root
     `, /* expectedSlots= */ 1);
+  });
+  it('predefined remote slots both have alias', async () => {
     await testManifest(`
       recipe
         A as particle0
@@ -518,6 +525,8 @@ describe('MapRemoteSlots', function() {
         B as particle1
           consume root as slot0
     `, /* expectedSlots= */ 1);
+  });
+  it('predefined remote slots both explicit', async () => {
     await testManifest(`
       recipe
         A as particle0
@@ -525,6 +534,35 @@ describe('MapRemoteSlots', function() {
         B as particle1
           consume root
     `, /* expectedSlots= */ 2);
+  });
+
+  it('map slots by tags', async () => {
+    let manifest = (await Manifest.parse(`
+      particle A in 'A.js'
+        A()
+        consume master #root
+          provide detail #info #detail
+
+      particle B in 'B.js'
+        B()
+        consume info #detail #more
+
+      recipe
+        slot 'id0' #root as s0
+        A
+        B
+    `));
+    let strategizer = {generated: [{result: manifest.recipes[0], score: 1}]};
+    let arc = createTestArc('test-plan-arc', manifest, 'dom');
+
+    let strategy = new MapSlots(arc);
+    let {results} = await strategy.generate(strategizer);
+    assert.equal(results.length, 1);
+
+    let plan = results[0].result;
+    assert.equal(plan.slots.length, 2);
+    plan.normalize();
+    assert.isTrue(plan.isResolved());
   });
 });
 

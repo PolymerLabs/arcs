@@ -714,7 +714,7 @@ ${e.message}
               `Consumed slot '${slotConnectionItem.param}' is not defined by '${particle.name}'`);
         }
         slotConnectionItem.providedSlots.forEach(ps => {
-          if (!particle.spec.slots.get(slotConnectionItem.param).providedSlots.find(specPs => specPs.name == ps.param)) {
+          if (!particle.spec.slots.get(slotConnectionItem.param).getProvidedSlotSpec(ps.param)) {
             throw new ManifestError(
                 ps.location,
                 `Provided slot '${ps.param}' is not defined by '${particle.name}'`);

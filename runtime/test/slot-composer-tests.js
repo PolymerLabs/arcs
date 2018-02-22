@@ -15,6 +15,9 @@ import Slot from '../slot.js';
 import SlotComposer from '../slot-composer.js';
 import Manifest from '../manifest.js';
 import Planner from '../planner.js';
+import MessageChannel from '../message-channel.js';
+import InnerPec from '../inner-PEC.js';
+import Loader from '../loader.js';
 import * as util from './test-util.js';
 
 class MockSlot extends Slot {
@@ -27,14 +30,32 @@ class MockSlot extends Slot {
   }
 }
 
+class MockContext {
+  constructor(context) {
+    this.context = context;
+  }
+  isEqual(other) {
+    return this.context == other.context;
+  }
+}
+
 async function initSlotComposer(recipeStr) {
-  let slotComposer = new SlotComposer({affordance: 'mock', rootContext: 'dummy-context'});
+  let slotComposer = new SlotComposer({affordance: 'mock', rootContext: new MockContext('dummy-context')});
   slotComposer._slotClass = MockSlot;
 
   let manifest = (await Manifest.parse(recipeStr));
+  let loader = new class extends Loader {
+    loadResource(fileName) { return `defineParticle(({Particle}) => { return class P extends Particle {} });`; };
+  };
+  const pecFactory = function(id) {
+    const channel = new MessageChannel();
+    new InnerPec(channel.port1, `${id}:inner`, loader);
+    return channel.port2;
+  };
   let arc = new Arc({
     id: 'test-plan-arc',
     context: manifest,
+    pecFactory,
     slotComposer,
   });
   let startRenderParticles = [];
@@ -65,7 +86,7 @@ particle C in 'c.js'
   C()
   consume otherSlot
 recipe
-  slot 'root' as slot0
+  slot 'rootslotid-root' as slot0
   A
     consume root as slot0
       provide mySlot as slot1
@@ -81,14 +102,17 @@ recipe
     plan = plan.clone();
 
     // "root" slot is always available
-    assert.deepEqual(['root'], Object.keys(slotComposer.getAvailableSlots()));
+    assert.deepEqual(['root'], slotComposer.getAvailableSlots().map(s => s.name));
 
-    // initializing recipe
-    slotComposer.initializeRecipe(plan.particles);
+    // instantiate the recipe
+    plan.normalize();
+    assert.isTrue(plan.isResolved());
+    assert.equal(arc.pec.slotComposer, slotComposer);
+    await arc.instantiate(plan);
     assert.deepEqual(['A'], startRenderParticles);
 
     // render root slot
-    let particle = plan.particles[0];
+    let particle = arc.activeRecipe.particles[0];
     slotComposer.renderSlot(particle, 'root', 'dummy-content');
     let rootSlot = slotComposer.getSlot(particle, 'root');
     assert.equal('dummy-content', rootSlot.content);
@@ -99,10 +123,6 @@ recipe
     await slotComposer.updateInnerSlots(rootSlot);
     assert.deepEqual(['B', 'BB'], startRenderParticles);
 
-    // get available slots
-    // TODO: slot composer should actually return only "mySlot" and "root" - the slots that were actually rendered,
-    // however because in the browser demo, the planner is executed before the slots are really rendered, all the
-    // slots that could possibly be rendered are returned.
-    assert.deepEqual(['mySlot', 'otherSlot', 'root'], Object.keys(slotComposer.getAvailableSlots()));
+    assert.deepEqual(['mySlot', 'otherSlot', 'root'], slotComposer.getAvailableSlots().map(s => s.name));
   });
 });

@@ -64,7 +64,7 @@ describe('demo flow', function() {
   create as view3 // Description List
   copy 'manifest:./shell/artifacts/Products/Products.recipes::9:immediateAlsoOn' as view4 // SHAAAAPE
   copy 'manifest:./shell/artifacts/Products/Products.recipes::8:immediateShowProduct' as view5 // SHAAAAPE
-  slot 'rootslotid-root' as slot3
+  slot 'rootslotid-root' #root as slot3
   Chooser as particle0
     choices <- view0
     resultList = view1
@@ -83,7 +83,7 @@ describe('demo flow', function() {
     collection <- view1
     descriptions -> view3
     hostedParticle = view5
-    consume root as slot3
+    consume master as slot3
       provide action as slot0
       provide annotation as slot2
       provide postamble as slot4
@@ -100,9 +100,9 @@ describe('demo flow', function() {
         .expectRenderSlot('ShowProduct', 'root', ['template', 'model'])
         .expectRenderSlot('ShowProduct', 'root', ['template', 'model'])
         .expectRenderSlot('ShowProduct', 'root', ['template', 'model'])
-        .expectRenderSlot('ShowCollection', 'root', ['template', 'model'])
-        .expectRenderSlot('ShowCollection', 'root', ['model'])
-        .expectRenderSlot('ShowCollection', 'root', ['model'])
+        .expectRenderSlot('ShowCollection', 'master', ['template', 'model'])
+        .expectRenderSlot('ShowCollection', 'master', ['model'])
+        .expectRenderSlot('ShowCollection', 'master', ['model'])
         .expectRenderSlot('Chooser', 'action', ['template', 'model'])
         .expectRenderSlot('AlsoOn', 'annotation', ['template', 'model'])
         .expectRenderSlot('Multiplexer2', 'annotation', ['template'])
@@ -139,9 +139,9 @@ describe('demo flow', function() {
       .newExpectations()
         .thenSend('Chooser', 'action', '_onChooseValue', {key: '1'})
       .newExpectations()
-        .expectRenderSlot('ShowCollection', 'root', ['model'])
+        .expectRenderSlot('ShowCollection', 'master', ['model'])
         .expectRenderSlot('ShowProduct', 'root', ['model'])
-        .expectRenderSlot('ShowCollection', 'root', ['model'])
+        .expectRenderSlot('ShowCollection', 'master', ['model'])
         .expectRenderSlot('Chooser', 'action', ['model'])
         .expectRenderSlot('AlsoOn', 'annotation', ['model'])
         .expectRenderSlot('Multiplexer2', 'annotation', ['model'], slotComposer.expectContentItemsNumber.bind(null, 4));
