@@ -223,7 +223,7 @@
               let e = msg.messageBody;
               // If user hasn't selected an arc, and this event is not from
               // a speculative execution, select this arc.
-              if (!this.selectedArcId && e.arcId.indexOf(':') === -1) {
+              if (!this.selectedArcId && !e.speculative) {
                 this.set('selectedArcId', e.arcId);
               }
               if (this.selectedArcId === e.arcId) {
@@ -319,16 +319,17 @@
         return writeOps.indexOf(operation) > -1 ? 'op-write' : 'op-read';
       }
 
-      // Compare the segment before the first ':' lexicographically,
-      // while the rest numerically if possible.
+      // Compare the id segments numerically if possible,
+      // lexicographically otherwise.
       _compareIds(idString1, idString2) {
         let ids1 = idString1.split(':');
         let ids2 = idString2.split(':');
-        if (ids1[0].localeCompare(ids2[0]) !== 0) return ids1[0].localeCompare(ids2[0]);
-        for (let i = 1; i < Math.min(ids1.length, ids2.length); i++) {
+        for (let i = 0; i < Math.min(ids1.length, ids2.length); i++) {
           let n1 = Number(ids1[i]), n2 = Number(ids2[i]);
-          if (!n1 || !n2) return ids1[i].localeCompare(ids2[i]);
-          if (n1 !== n2) return n1 - n2;
+          let lexComp;
+          if ((!n1 || !n2) && (lexComp = ids1[i].localeCompare(ids2[i])) !== 0)
+              return lexComp;
+          if ((n1 && n2) && n1 !== n2) return n1 - n2;
         }
         return ids1.length - ids2.length;
       }

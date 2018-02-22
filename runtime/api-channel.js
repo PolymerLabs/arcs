@@ -242,8 +242,8 @@ class APIPort {
     };
   }
 
-  initDebug(arcId) {
-    if (!this._debugAttachment) this._debugAttachment = new OuterPortAttachment(arcId);
+  initDebug(arc) {
+    if (!this._debugAttachment) this._debugAttachment = new OuterPortAttachment(arc);
   }
 }
 
