@@ -20,8 +20,6 @@ const sources = {
     ['runtime/manifest-parser.peg', 'runtime/build/manifest-parser.js', 'manifest-railroad.html'],
   ],
   browser: [
-    'test/test.js',
-    'demo/demo.js',
     'worker-entry.js'
   ],
 };
@@ -180,15 +178,15 @@ async function webpack() {
     minimist: 'empty',
   };
 
-  if (!fs.existsSync('./runtime/browser/build')) {
-    fs.mkdirSync('./runtime/browser/build');
+  if (!fs.existsSync('./shell/build')) {
+    fs.mkdirSync('./shell/build');
   }
   for (let file of sources.browser) {
     await new Promise((resolve, reject) => {
       webpack({
         entry: `./runtime/browser/${file}`,
         output: {
-          filename: `./runtime/browser/build/${file}`,
+          filename: `./shell/build/${file}`,
         },
         node,
         devtool: 'sourcemap',
