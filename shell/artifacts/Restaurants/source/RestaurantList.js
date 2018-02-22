@@ -24,7 +24,8 @@ defineParticle(({DomParticle, html}) => {
     </div>
   </div>
 </div>
-
+<div slotid="annotation" subid="{{id}}">
+  
 `;
 
   const selectable = html`
