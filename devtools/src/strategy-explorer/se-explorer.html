@@ -13,17 +13,12 @@ http://polymer.github.io/PATENTS.txt
   <template>
     <style>
       :host {
-        height: calc(100vh - 18px);
         overflow-y: scroll;
-      }
-      .generation-box {
-        border: 1px solid black;
-        width: 1200px;
       }
     </style>
     <div>
       <template is='dom-repeat' items='{{results}}'>
-        <div class='generation-box'><se-population population={{item.population}}></se-population></div>
+        <se-population population={{item.population}}></se-population>
       </template>
     </div>
   </template>

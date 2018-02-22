@@ -12,6 +12,11 @@ http://polymer.github.io/PATENTS.txt
 <dom-module id='se-population'>
   <template>
     <style>
+    :host {
+      display: block;
+      margin: 2px;
+    }
+
     .strategy-container {
       display: flex;
     }
@@ -24,13 +29,13 @@ http://polymer.github.io/PATENTS.txt
     .strategy-box {
       border: 1px solid #bbb;
       padding: 2px;
-      margin: 2px;
+      margin-right: 2px;
     }
     </style>
     <div class='strategy-container'>
       <template is='dom-repeat' items='{{population}}'>
         <div class='strategy-box'>
-          {{item.strategy}}
+          {{camelCaseToRegularForm(item.strategy)}}
           <div class='recipe-container'>
             <template is='dom-repeat' items='{{item.recipes}}'>
               <se-recipe recipe={{item}}>
@@ -43,6 +48,12 @@ http://polymer.github.io/PATENTS.txt
   </template>
 
   <script>
-    Polymer({is: 'se-population'});
+    Polymer({
+      is: 'se-population',
+      // Allows line breaking.
+      camelCaseToRegularForm(strategyName) {
+        return strategyName.replace(/([A-Z])/g, ' $1');
+      }
+    });
   </script>
 </dom-module>

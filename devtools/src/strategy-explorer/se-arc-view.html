@@ -8,18 +8,20 @@ http://polymer.github.io/PATENTS.txt
 -->
 <link rel="import" href="../../bower_components/polymer/polymer.html">
 <script src="../../bower_components/jsdiff/diff.min.js"></script>
+<link rel="import" href="../arcs-shared.html">
 
 <dom-module id='se-arc-view'>
   <template>
-    <style>
+    <style include='shared-styles'>
+      :host {
+        display: block;
+      }
       .arc-box {
         background: white;
-        border: 1px solid red;
+        border: 1px solid var(--mid-gray);
         white-space: pre;
         font-family: consolas, 'Source Code Pro', monospace;
         font-size: 10px;
-        margin: 20px 5px;
-        max-width: 500px;
         padding: 5px;
       }
       .title {

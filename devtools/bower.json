@@ -13,6 +13,7 @@
     "paper-listbox": "^2.0.0",
     "web-animations-js": "^2.3.1",
     "jsdiff": "^3.2.0",
-    "vis": "^4.21.0"
+    "vis": "^4.21.0",
+    "resizable-panels": "kcmr/resizable-panels#^2.0.4"
   }
 }
