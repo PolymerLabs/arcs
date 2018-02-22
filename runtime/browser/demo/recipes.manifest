@@ -34,7 +34,6 @@ recipe
   Chooser.choices -> Multiplexer2.others
   map #wishlist as wishlist
   copy #shortlist as shortlist
-  slot as slot0
   Recommend
     population <- wishlist
   // TODO: switch demo to use ShowCollection(ShowProduct) instead of ShowItems particle.
@@ -45,11 +44,11 @@ recipe
     list <- shortlist
   //ManageProducts
     //list = shortlist
-    consume root as slot0
-      provide annotation as slot1
+    consume root
+      provide annotation as annotationSlot
   Multiplexer2
     hostedParticle = AlsoOn
-    consume annotation as slot1
+    consume annotation as annotationSlot
 
 // Buying for [person]'s [occasion] in [timeframe]? Product [X] arrives too late.
 recipe
@@ -84,16 +83,14 @@ recipe
 
 // Experimental recipes
 // TODO(mmandlis): create separate file and tests for experimental recipes.
-//import '../../../particles/ShowCollection/ShowCollection.manifest'
-//import '../../../particles/ShowProduct/ShowProduct.manifest'
-//recipe
+// import '../../../particles/ShowCollection/ShowCollection.manifest'
+// import '../../../particles/ShowProduct/ShowProduct.manifest'
+// recipe
 //  map #shortlist as shortlist
 //  map #wishlist as wishlist
-//  slot as slot0
 //  ShowCollection
 //    collection <- shortlist
 //    hostedParticle = ShowProduct
-//    consume root as slot0
 //  Multiplexer
 //    list <- shortlist
 //    hostedParticle = Arrivinator

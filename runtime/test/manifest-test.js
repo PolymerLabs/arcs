@@ -509,6 +509,33 @@ describe('manifest', function() {
     assert.equal(recipeSlot.id, 'slot-id0');
     assert.deepEqual(recipeSlot.tags, ['#aa', '#aaa']);
   });
+  it('incomplete aliasing', async () => {
+    let recipe = (await Manifest.parse(`
+      particle P1 in 'some-particle.js'
+        P1()
+        consume slotA
+          provide slotB
+      particle P2 in 'some-particle.js'
+        P2()
+        consume slotB
+      recipe
+        P1
+          consume slotA
+            provide slotB as s1
+        P2
+          consume slotB as s1
+    `)).recipes[0];
+    recipe.normalize();
+
+    assert.equal(recipe.slots.length, 2);
+    let slotA = recipe.slots.find(s => s.name === 'slotA');
+    assert.equal(slotA.consumeConnections.length, 1);
+    assert.isUndefined(slotA.sourceConnection);
+
+    let slotB = recipe.slots.find(s => s.name === 'slotB');
+    assert.equal(slotB.consumeConnections.length, 1);
+    assert.equal(slotB.sourceConnection, slotA.consumeConnections[0]);
+  });
   it('relies on the loader to combine paths', async () => {
     let registry = {};
     let loader = {

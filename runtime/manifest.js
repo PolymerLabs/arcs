@@ -557,26 +557,24 @@ ${e.message}
         if (!slotConn) {
           slotConn = particle.addSlotConnection(slotConnectionItem.param);
         }
-        if (slotConnectionItem.name) {
-          slotConnectionItem.providedSlots.forEach(ps => {
-            let providedSlot = slotConn.providedSlots[ps.param];
-            if (providedSlot) {
-              items.byName.set(ps.name, providedSlot);
-              items.bySlot.set(providedSlot, ps);
-            } else
-              providedSlot = items.byName.get(ps.name);
-            if (!providedSlot) {
-              providedSlot = recipe.newSlot(ps.param);
-              providedSlot.localName = ps.name;
-              assert(!items.byName.has(ps.name));
-              items.byName.set(ps.name, providedSlot);
-              items.bySlot.set(providedSlot, ps);
-            }
-            if (!slotConn.providedSlots[ps.param]) {
-              slotConn.providedSlots[ps.param] = providedSlot;
-            }
-          });
-        }
+        slotConnectionItem.providedSlots.forEach(ps => {
+          let providedSlot = slotConn.providedSlots[ps.param];
+          if (providedSlot) {
+            items.byName.set(ps.name, providedSlot);
+            items.bySlot.set(providedSlot, ps);
+          } else
+            providedSlot = items.byName.get(ps.name);
+          if (!providedSlot) {
+            providedSlot = recipe.newSlot(ps.param);
+            providedSlot.localName = ps.name;
+            assert(!items.byName.has(ps.name));
+            items.byName.set(ps.name, providedSlot);
+            items.bySlot.set(providedSlot, ps);
+          }
+          if (!slotConn.providedSlots[ps.param]) {
+            slotConn.providedSlots[ps.param] = providedSlot;
+          }
+        });
       }
     }
 
