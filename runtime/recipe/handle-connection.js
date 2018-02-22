@@ -7,6 +7,7 @@
 
 import assert from '../../platform/assert-web.js';
 import util from './util.js';
+import TypeChecker from './type-checker.js';
 
 class HandleConnection {
   constructor(name, particle) {
@@ -111,10 +112,15 @@ class HandleConnection {
       if (connectionSpec) {
         // TODO: this shouldn't be a direct equals comparison
         if (!this.rawType.equals(connectionSpec.type)) {
-          if (options && options.errors) {
-            options.errors.set(this, `Type '${this.rawType} for handle connection '${this.particle.name}::${this.name}' doesn't match particle spec's type '${connectionSpec.type}'`);
+          let specType = {type: connectionSpec.type, direction: this.direction};
+          let rawType = {type: this.rawType};
+          let result = TypeChecker.compareTypes(rawType, specType);
+          if (!result.valid) {
+            if (options && options.errors) {
+              options.errors.set(this, `Type '${this.rawType} for handle connection '${this.particle.name}::${this.name}' doesn't match particle spec's type '${connectionSpec.type}'`);
+            }
+            return false;
           }
-          return false;
         }
         if (this.direction != connectionSpec.direction) {
           if (options && options.errors) {

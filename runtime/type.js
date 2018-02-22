@@ -42,6 +42,11 @@ class Type {
         data = new Type(data.tag, data.data);
       }
     }
+    if (tag == 'Constraint') {
+      if (!(data instanceof Type) && data.variable && data.type) {
+        data = new Constraint(data.variable, data.type);
+      }
+    }
     this.tag = tag;
     this.data = data;
   }
@@ -104,21 +109,35 @@ class Type {
       return Type.newInterface(shape);
     }
 
+    if (this.isConstraint) {
+      return Type.newConstraint(new Constraint(
+          this.constraint.variable.assignVariableIds(variableMap),
+          this.constraint.type.assignVariableIds(variableMap)));
+    }
+
     return this;
   }
 
   static unwrapPair(type1, type2) {
     assert(type1 instanceof Type);
     assert(type2 instanceof Type);
+    while (type1.isConstraint) {
+      type1 = type1.constraint.type;
+    }
+    while (type2.isConstraint) {
+      type2 = type2.constraint.type;
+    }
     if (type1.isSetView && type2.isSetView)
-      return [type1.primitiveType(), type2.primitiveType()];
+      return Type.unwrapPair(type1.primitiveType(), type2.primitiveType());
     return [type1, type2];
   }
 
+  // TODO: Figure out how to remove the use of equals. It prevents
+  //       various things from being polymorphic.
   equals(type) {
     if (this.tag !== type.tag)
       return false;
-    if (this.tag == 'Entity') {
+    if (this.isEntity) {
       return this.data.equals(type.data);
     }
     if (this.isSetView) {
@@ -128,6 +147,9 @@ class Type {
       return this.data.equals(type.data);
     }
     if (this.isVariable) {
+      return this.data.equals(type.data);
+    }
+    if (this.isConstraint) {
       return this.data.equals(type.data);
     }
     // TODO: this doesn't always work with the way the parser keeps kind
@@ -140,6 +162,9 @@ class Type {
       return this.primitiveType()._applyExistenceTypeTest(test);
     if (this.isInterface)
       return this.data._applyExistenceTypeTest(test);
+    if (this.isConstraint)
+      return this.constraint.variable._applyExistenceTypeTest(test)
+          && this.constraint.type._applyExistenceTypeTest(test);
     return test(this);
   }
 
@@ -155,9 +180,22 @@ class Type {
     return this._applyExistenceTypeTest(type => type.isVariableReference);
   }
 
+  // TODO: remove this in favor of setViewType?
   primitiveType() {
-    let type = this.setViewType;
-    return new Type(type.tag, type.data);
+    return this.setViewType;
+  }
+
+  resolveTo(type) {
+    if (this.isSetView) {
+      this.primitiveType().resolveTo(type.primitiveType());
+    } else if (this.isVariable) {
+      let resolved = type.resolvedType();
+      if (this !== resolved) {
+        this.variable.resolution = type.resolvedType();
+      }
+    } else if (this.isConstraint) {
+      this.constraint.variable.resolveTo(type);
+    }
   }
 
   resolvedType() {
@@ -166,10 +204,10 @@ class Type {
       return resolvedPrimitiveType ? resolvedPrimitiveType.setViewOf() : this;
     }
     if (this.isVariable && this.data.isResolved) {
-      return this.data.resolution.resolvedType();
+      return this.variable.resolution.resolvedType();
     }
-    if (this.isTypeVariable && this.data.isResolved) {
-      return this.data.resolution.resolvedType();
+    if (this.isConstraint) {
+      return this.constraint.type.resolvedType();
     }
     if (this.isInterface) {
       return Type.newInterface(this.data.resolvedType());
@@ -183,6 +221,9 @@ class Type {
     }
     if (this.isVariable) {
       return this.data.isResolved;
+    }
+    if (this.isConstraint) {
+      return this.constraint.type.isResolved();
     }
     return true;
   }
@@ -218,6 +259,7 @@ class Type {
     return Type.newSetView(this);
   }
 
+  // TODO: is this the same as _applyExistenceTypeTest
   hasProperty(property) {
     if (property(this))
       return true;
@@ -275,6 +317,33 @@ addType('SetView', 'type');
 addType('Relation', 'entities');
 addType('Interface', 'shape');
 addType('Tuple', 'fields');
+addType('Constraint');
+
+class Constraint {
+  constructor(variable, type) {
+    assert(variable);
+    assert(type);
+    this.variable = variable;
+    this.type = type;
+  }
+
+  toLiteral() {
+    return {
+      variable: this.variable.toLiteral(),
+      type: this.type.toLiteral(),
+    };
+  }
+
+  equals(other) {
+    return this.variable.equals(other) && this.type.equals(other);
+  }
+
+  static fromLiteral(literal) {
+    return new Constraint(
+      Type.fromLiteral(literal.variable),
+      Type.fromLiteral(literal.type));
+  }
+}
 
 export default Type;
 

@@ -422,6 +422,12 @@ ${e.message}
         case 'list-type':
           node.model = Type.newSetView(node.type.model);
           return;
+        case 'constraint-type':
+          node.model = Type.newConstraint({
+            variable: node.variable.model,
+            type: node.type.model,
+          });
+          return;
         default:
           return;
         }

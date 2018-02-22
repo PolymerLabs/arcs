@@ -321,10 +321,22 @@ ParticleArgumentDirection
   }
 
 ParticleArgumentType
-  = VariableType
+  = ConstraintType
+  / VariableType
   / SchemaInline
   / ReferenceType
   / ListType
+
+ConstraintType
+  = variable:VariableType whiteSpace 'with' whiteSpace type:ParticleArgumentType
+  {
+    return {
+      kind: 'constraint-type',
+      location: location,
+      type,
+      variable,
+    }
+  }
 
 ListType
   = '[' type:ParticleArgumentType ']'
