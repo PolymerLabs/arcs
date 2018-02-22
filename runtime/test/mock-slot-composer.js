@@ -26,7 +26,7 @@ class MockSlot extends Slot {
   }
   getInnerContext(slotName) {
     if (this._content.template && this._content.template.indexOf('slotid="annotation"') > 0) {
-      return 'dummy-context';
+      return new MockContext('dummy-context');
     }
   }
    constructRenderRequest() {
@@ -35,6 +35,15 @@ class MockSlot extends Slot {
      }
      return ['template', 'model'];
    }
+}
+
+class MockContext {
+  constructor(context) {
+    this.context = context;
+  }
+  isEqual(other) {
+    return this.context == other.context;
+  }
 }
 
 /** @class MockSlotComposer
@@ -52,7 +61,7 @@ class MockSlot extends Slot {
  */
 class MockSlotComposer extends SlotComposer {
   constructor() {
-    super({rootContext: 'dummy-context', affordance: 'mock'});
+    super({rootContext: new MockContext('dummy-context'), affordance: 'mock'});
     this.expectQueue = [];
     this.onExpectationsComplete = () => undefined;
   }

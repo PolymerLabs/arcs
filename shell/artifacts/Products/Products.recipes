@@ -42,7 +42,7 @@ recipe
     hostedParticle = ShowProduct
   //ManageProducts
     //list = shortlist
-    consume root
+    consume master
       provide annotation as annotationSlot
   Multiplexer2
     hostedParticle = AlsoOn

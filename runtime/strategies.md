@@ -32,13 +32,9 @@ The strategy is not executed on recipes with outstanding constraints or with fre
 Sets view’s fate to “create”, if its fate was unknown and ID was undefined.<br/>
 [planner.js](https://github.com/PolymerLabs/arcs/blob/master/runtime/planner.js#L34)
 
-## MapConsumedSlots
-Maps provided and consumed slots within the given recipes.<br/>
-[map-consumed-slots.js](https://github.com/PolymerLabs/arcs/blob/master/runtime/strategies/map-consumed-slots.js)
-
-## MapRemoteSlots
-Maps consumed slots in the recipe with pre existing slots (returned by slot-composer).<br/>
-[map-remote-slots.js](https://github.com/PolymerLabs/arcs/blob/master/runtime/strategies/map-remote-slots.js)
+## MapSlots
+Maps consumed slots with provided slots within the same recipe and pre existing slots (provided by slot-composer).<br/>
+[map-slots.js](https://github.com/PolymerLabs/arcs/blob/master/runtime/strategies/map-slots.js)
 
 ## InitSearch
 Extracts search query from the arc and sets the search phrase in the recipe.<br/>

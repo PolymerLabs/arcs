@@ -442,9 +442,10 @@ export class DescriptionFormatter {
   }
 
   static sort(p1, p2) {
+    let isRoot = (slotSpec) => slotSpec.name == 'root' || slotSpec.tags.includes('#root');
     // Root slot comes first.
-    let hasRoot1 = [...p1._particle.spec.slots.keys()].indexOf('root') >= 0;
-    let hasRoot2 = [...p2._particle.spec.slots.keys()].indexOf('root') >= 0;
+    let hasRoot1 = Boolean([...p1._particle.spec.slots.values()].find(slotSpec => isRoot(slotSpec)));
+    let hasRoot2 = Boolean([...p2._particle.spec.slots.values()].find(slotSpec => isRoot(slotSpec)));
     if (hasRoot1 != hasRoot2) {
       return hasRoot1 ? -1 : 1;
     }

@@ -142,7 +142,7 @@ class SlotConnection {
       let providedSlot = this.providedSlots[psName];
       let provideRes = [];
       provideRes.push('  provide');
-      let providedSlotSpec = this.slotSpec.providedSlots.find(ps => ps.name == psName);
+      let providedSlotSpec = this.slotSpec.getProvidedSlotSpec(psName);
       assert(providedSlotSpec, `Cannot find providedSlotSpec for ${psName}`);
       provideRes.push(`${psName} as ${(nameMap && nameMap.get(providedSlot)) || providedSlot}`);
       result.push(provideRes.join(' '));

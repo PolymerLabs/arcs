@@ -38,11 +38,15 @@ class SlotSpec {
     this.isRequired = slotModel.isRequired;
     this.isSet = slotModel.isSet;
     this.tags = slotModel.tags;
-    this.formFactor = slotModel.formFactor;
+    this.formFactor = slotModel.formFactor; // TODO: deprecate form factors?
     this.providedSlots = [];
     slotModel.providedSlots.forEach(ps => {
       this.providedSlots.push(new ProvidedSlotSpec(ps.name, ps.isSet, ps.tags, ps.formFactor, ps.views));
     });
+  }
+
+  getProvidedSlotSpec(name) {
+    return this.providedSlots.find(ps => ps.name == name);
   }
 }
 
@@ -51,7 +55,7 @@ class ProvidedSlotSpec {
     this.name = name;
     this.isSet = isSet;
     this.tags = tags;
-    this.formFactor = formFactor;
+    this.formFactor = formFactor; // TODO: deprecate form factors?
     this.views = views;
   }
 }
@@ -162,10 +166,37 @@ class ParticleSpec {
     this.affordance.filter(a => a != 'mock').forEach(a => results.push(`  affordance ${a}`));
     // TODO: support form factors
     this.slots.forEach(s => {
-    results.push(`  ${s.isRequired ? 'must ' : ''}consume ${s.isSet ? 'set of ' : ''}${s.name}`);
+      // Consume slot.
+      let consume = [];
+      if (s.isRequired) {
+        consume.push('must');
+      }
+      consume.push('consume');
+      if (s.isSet) {
+        consume.push('set of');
+      }
+      consume.push(s.name);
+      if (s.tags.length > 0) {
+        consume.push(s.tags.join(' '));
+      }
+      results.push(`  ${consume.join(' ')}`);
+      if (s.formFactor) {
+        results.push(`    formFactor ${s.formFactor}`);
+      }
+      // Provided slots.
       s.providedSlots.forEach(ps => {
-        results.push(`    provide ${ps.isSet ? 'set of ' : ''}${ps.name}`);
-        // TODO: support form factors
+        let provide = ['provide'];
+        if (ps.isSet) {
+          provide.push('set of');
+        }
+        provide.push(ps.name);
+        if (ps.tags.length > 0) {
+          provide.push(ps.tags.join(' '));
+        }
+        results.push(`    ${provide.join(' ')}`);
+        if (ps.formFactor) {
+          results.push(`      formFactor ${ps.formFactor}`);
+        }
         ps.views.forEach(psv => results.push(`      view ${psv}`));
       });
     });

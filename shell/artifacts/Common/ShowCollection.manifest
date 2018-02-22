@@ -18,7 +18,7 @@ particle ShowCollection in 'source/ShowCollection.js'
   ShowCollection(in [~a] collection, host HostedParticleShape hostedParticle, out [Description] descriptions)
   affordance dom
   affordance dom-touch
-  consume root
+  consume master #root
     provide action
       view collection
     provide preamble

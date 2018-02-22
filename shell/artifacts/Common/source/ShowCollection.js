@@ -199,8 +199,8 @@ recipe
           `.trim();
       let model = {
         collection: '${collection}',
-        action: '${root.action}',
-        actionEmpty: '${root.action}._empty_'
+        action: '${master.action}',
+        actionEmpty: '${master.action}._empty_'
       };
       this.setParticleDescription({template, model});
     }
