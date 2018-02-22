@@ -70,8 +70,7 @@
             case 'dataflow':
               let e = msg.messageBody;
 
-              // Skip speculative stuff for now.
-              if (e.arcId.indexOf(':') !== -1) continue;
+              if (e.speculative) continue;
 
               if (!this._particles.has(e.particle.id)) {
                 this._particles.set(e.particle.id, {

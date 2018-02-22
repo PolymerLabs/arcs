@@ -12,8 +12,9 @@
 import devtoolsChannelProvider from './devtools-channel-provider.js';
 
 export default class OuterPortAttachment {
-  constructor(arcId) {
-    this._arcId = arcId;
+  constructor(arc) {
+    this._arcIdString = arc.id.toString();
+    this._speculative = arc.isSpeculative;
     this._callbackRegistry = {};
     this._particleRegistry = {};
   }
@@ -75,7 +76,8 @@ export default class OuterPortAttachment {
 
   _describeHandleCall({operation, handle, particleId}) {
     return {
-      arcId: this._arcId,
+      arcId: this._arcIdString,
+      speculative: this._speculative,
       operation,
       particle: this._describeParticle(particleId),
       handle: this._describeHandle(handle)

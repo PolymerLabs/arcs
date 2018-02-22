@@ -27,7 +27,7 @@ import {registerArc} from '../devtools/shared/arc-registry.js';
 import Id from './id.js';
 
 class Arc {
-  constructor({id, context, pecFactory, slotComposer, loader, storageKey, storageProviderFactory}) {
+  constructor({id, context, pecFactory, slotComposer, loader, storageKey, storageProviderFactory, speculative}) {
     // TODO: context should not be optional.
     this._context = context || new Manifest({id});
     // TODO: pecFactory should not be optional. update all callers and fix here.
@@ -36,6 +36,7 @@ class Arc {
     // for now, every Arc gets its own session
     this.sessionId = Id.newSessionId();
     this.id = this.sessionId.fromString(id);
+    this._speculative = !!speculative; // undefined => false
     this._nextLocalID = 0;
     this._activeRecipe = new Recipe();
     // TODO: rename: this are just tuples of {particles, handles, slots} of instantiated recipes merged into active recipe..
@@ -114,6 +115,10 @@ class Arc {
     return awaitCompletion();
   }
 
+  get isSpeculative() {
+    return this._speculative;
+  }
+
   async _serializeHandles() {
     let schemas = '';
     let handles = '';
@@ -145,7 +150,7 @@ class Arc {
           resources += `resource View${id}Resource\n`;
           let indent = '  ';
           resources += indent + 'start\n';
-          
+
           let serializedData = (await handle.serializedData()).map(a => {
             if (a == null)
               return null;
@@ -261,7 +266,7 @@ ${this.activeRecipe.toString()}`;
 
   // Makes a copy of the arc used for speculative execution.
   async cloneForSpeculativeExecution() {
-    let arc = new Arc({id: this.generateID().toString(), pecFactory: this._pecFactory, context: this.context, loader: this._loader});
+    let arc = new Arc({id: this.generateID().toString(), pecFactory: this._pecFactory, context: this.context, loader: this._loader, speculative: true});
     arc._scheduler = this._scheduler.clone();
     let handleMap = new Map();
     for (let handle of this._handles) {
