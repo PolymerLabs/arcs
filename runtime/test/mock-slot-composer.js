@@ -191,12 +191,23 @@ class MockSlotComposer extends SlotComposer {
   }
 
   // Helper method to resolve the current expectation group, if all remaining expectations are optional.
-  skipOptional() {
-    let expectations = this.expectQueue[0];
-    if (expectations.every(e => e.isOptional)) {
-      this.expectQueue.shift();
-      this._expectationsMet();
-    }
+  async skipOptional() {
+    return new Promise((resolve) => {
+      if (this.expectQueue.length == 0) {
+        resolve();
+      } else {
+        // TODO: get rid of set timeout. Instead update MockSlotComposer to return two promises:
+        // one for required expectations, another for all promises.
+        setTimeout(() => {
+          let expectations = this.expectQueue[0] || [];
+          if (expectations.every(e => e.isOptional)) {
+            this.expectQueue.shift();
+            this._expectationsMet();
+          }
+          resolve();
+        }, 500);
+      }
+    });
   }
 
   _expectationMet(expectation) {
