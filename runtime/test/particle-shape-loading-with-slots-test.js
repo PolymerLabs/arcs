@@ -73,8 +73,9 @@ describe('particle-shape-loading-with-slots', function() {
       .expectRenderSlot('SingleSlotParticle', 'annotation', ['template', 'model'])
       .expectRenderSlot('MultiplexSlotsParticle', 'annotationsSet', ['template', 'model'])
       .expectRenderSlot('SingleSlotParticle', 'annotation', ['template', 'model'])
-      .expectRenderSlot('MultiplexSlotsParticle', 'annotationsSet', ['model']);
+      .maybeRenderSlot('MultiplexSlotsParticle', 'annotationsSet', ['model']);
     await slotComposer.arc.pec.idle;
+    await slotComposer.skipOptional();
     await slotComposer.expectationsCompleted();
 
     // Verify slot template and models.
@@ -103,7 +104,6 @@ describe('particle-shape-loading-with-slots', function() {
     // after the hosted particles are also instantiated.
     // This verifies a different start-render call in slot-composer.
     let {fooType, inView, slotComposer} = await instantiateRecipe();
-
     // Wait for the hosted slots to be initialized in slot-composer.
     await new Promise((resolve, reject) => {
       let myInterval = setInterval(function() {
@@ -119,8 +119,10 @@ describe('particle-shape-loading-with-slots', function() {
       .newExpectations()
       .expectRenderSlot('SingleSlotParticle', 'annotation', ['template', 'model'])
       .expectRenderSlot('SingleSlotParticle', 'annotation', ['template', 'model'])
-      .expectRenderSlot('MultiplexSlotsParticle', 'annotationsSet', ['template', 'model']);
+      .expectRenderSlot('MultiplexSlotsParticle', 'annotationsSet', ['template', 'model'])
+      .maybeRenderSlot('MultiplexSlotsParticle', 'annotationsSet', ['model']);
     await slotComposer.arc.pec.idle;
+    await slotComposer.skipOptional();
     await slotComposer.expectationsCompleted();
 
     // Verify slot template and models.
