@@ -10,7 +10,7 @@
     // Add the panel for devtools, and flush the events to it once it's shown.
     chrome.devtools.panels.create('Arcs',
       null,
-      '../build/bundled/split.html',
+      '../build/split-index.html',
       panel => panel.onShown.addListener(panelWindow => {
         if (windowForEvents) return;
         windowForEvents = panelWindow;

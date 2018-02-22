@@ -15,6 +15,10 @@
     }
   ],
   "permissions": ["<all_urls>", "activeTab", "webNavigation"],
-  "web_accessible_resources" : ["shared/arc-registry.js", "src/run-init-debug.js"],
+  "web_accessible_resources" : [
+    "shared/arc-registry.js",
+    "src/run-init-debug.js",
+    "img/*.png"
+  ],
   "manifest_version": 2
 }

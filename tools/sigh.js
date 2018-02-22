@@ -214,7 +214,7 @@ async function devtools() {
   return spawn(path.normalize('../node_modules/.bin/polymer'),
           ['build'], {stdio: 'inherit', cwd: 'devtools'}).status === 0
       && spawn(path.normalize('../node_modules/.bin/crisper'),
-          ['--html=build/bundled/split.html', '--js=build/bundled/src/split.js',
+          ['--html=build/split-index.html', '--js=build/bundled/src/split-index.js',
           'build/bundled/src/index.html'],
           {stdio: 'inherit', cwd: 'devtools'}).status === 0;
 }
