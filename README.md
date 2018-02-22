@@ -18,7 +18,24 @@ $ ./tools/test
 ```
 
 ## Demo
+
+From the directory above the `arcs` directory:
+
 ```
 $ python -m SimpleHTTPServer 5001 &
-$ open 'http://localhost:5001/runtime/browser/demo/index.demo.html'
+$ open 'http://localhost:5001/arcs/shell/apps/web/index.debug.html'
+```
+
+To load the demo shopping and wishlist recipes that were previously accessible
+via the runtime browser:
+
+- open the app shell via link above
+- choose your user from the select menu top right
+- note the user id in the query param
+- construct a url as below and consider bookmarking it for future use
+
+```
+$ open 'http://localhost:5001/arcs/shell/apps/web/index.debug.html?
+         arc=*&user=<user id>&
+         solo=http://localhost:5001/arcs/runtime/browser/demo/recipes.manifest'
 ```
