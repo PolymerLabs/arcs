@@ -8,7 +8,7 @@ https://polymerlabs.github.io/arcs-cdn/dev/apps/web/
 
 ### Arcs VR
 
-https://polymerlabs.github.io/arcs-cdn/devv/apps/vr/
+https://polymerlabs.github.io/arcs-cdn/dev/apps/vr/
 
 ### Arcs ChromeCast
 
