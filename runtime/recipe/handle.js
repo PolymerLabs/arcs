@@ -121,8 +121,9 @@ class Handle {
         }
         return false;
       }
-      if (connection.type)
+      if (connection.type) {
         typeSet.push({type: connection.type, direction: connection.direction, connection});
+      }
       connection.tags.forEach(tag => tags.add(tag));
     }
     let {type, valid} = TypeChecker.processTypeList(typeSet);
@@ -142,6 +143,12 @@ class Handle {
     if (!this._type) {
       if (options) {
         options.details = 'missing type';
+      }
+      return false;
+    }
+    if (!this.type.isResolved()) {
+      if (options) {
+        options.details = 'unresolved type';
       }
       return false;
     }

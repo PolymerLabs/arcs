@@ -1145,4 +1145,32 @@ resource SomeName
     assert(validRecipe.normalize());
     assert(validRecipe.isResolved());
   });
+
+  it('can relate inline schemas to generic connections', async () => {
+    let manifest = await Manifest.parse(`
+      schema Thing
+        normative
+          Text value
+          Number num
+
+      particle P
+        P(in ~a with Thing {value} inThing, out ~a outThing)
+
+      resource Things
+        start
+        []
+
+      view ThingView of Thing in Things
+
+      recipe
+        map ThingView as input
+        create as output
+        P
+          inThing = input
+          outThing = output
+    `);
+    let [validRecipe] = manifest.recipes;
+    assert(validRecipe.normalize());
+    assert(validRecipe.isResolved());
+  });
 });
