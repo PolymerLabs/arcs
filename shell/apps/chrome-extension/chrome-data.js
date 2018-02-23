@@ -8,6 +8,7 @@ Code distributed by Google as part of the polymer project is also
 subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
 */
 
+import { filter, flatten, deduplicate } from './data-processing.js';
 import Xen from '../../components/xen/xen.js';
 
 class ChromeData extends Xen.Base {
@@ -17,14 +18,18 @@ class ChromeData extends Xen.Base {
     // if there isn't a listener attached for data, attach that
     if (!state.listenerAttached) {
       state.listenerAttached = window.addEventListener('message', event => {
-        if (event.source != window || event.data.method != 'injectArcsData') {
+        if (event.source != window || event.data.method != 'injectArcsData'
+            || !event.data || !event.data.entities) {
           return;
         }
         ChromeData.log(`received event ${event.data.method} from ${event.source}`,
           event.data);
 
-        // XXX process the data and put it on the stack
-        state.processedData = event.data.entities;
+        state.processedData = {'entities': deduplicate(flatten(filter(event.data.entities)))};
+        if (state.processedData.entities['text/x-arcs-manifest']) {
+          state.processedData.manifests = state.processedData.entities['text/x-arcs-manifest'].map(manifest => manifest.url);
+          delete state.processedData.entities['text/x-arcs-manifest'];
+        }
 
         // Long-term we shouldn't need a check here, this should be idempotent and
         // should just run again.
