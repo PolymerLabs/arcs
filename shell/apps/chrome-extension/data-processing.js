@@ -12,9 +12,11 @@
 export function filter(entities) {
   return Object.entries(entities).reduce((accumulator, [key, values]) => {
     accumulator[key] = values.reduce((accumulator, value) => {
-      if (value.hasOwnProperty('name')) {
+      // it's not clear that this remains a restriction. If it is we'll need
+      // to whitelist text/x-arcs-manifest.
+      // if (value.hasOwnProperty('name')) {
         accumulator.push(value);
-      }
+      // }
       return accumulator;
     }, []);
     return accumulator;

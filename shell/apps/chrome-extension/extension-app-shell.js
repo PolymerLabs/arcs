@@ -10,7 +10,6 @@ import AppShell from '../../app-shell/app-shell.js';
 
 import Xen from '../../components/xen/xen.js';
 
-import { filter, flatten, deduplicate } from './data-processing.js';
 import '../../apps/chrome-extension/chrome-data.js';
 
 
@@ -254,7 +253,10 @@ class ExtensionAppShell extends AppShell {
 
   _onData(e, data) {
     console.log('XXX huzzah!');
-    debugger;
+
+    // XXX is this a good spot to split out the data?
+    ExtensionAppShell.log('received browserData', data);
+    this._setState({browserData: data});
   }
 
   /* Probably not needed
@@ -267,10 +269,35 @@ class ExtensionAppShell extends AppShell {
   }
   */
 
-  _render(props, state) {
 
+
+  _render(props, state) {
     // to delay loading of the arc-host, remove state.hostConfig until all the
     // extension data is loaded
+    if (!state.browserData && state.hostConfig) {
+      // no need to save this - it'll be restored.
+      delete state.hostConfig;
+
+      ExtensionAppShell.log('stalling until browserData is present',
+        state.browserData);
+    }
+
+    // if we have manifests, cram them in and short-circuit to yield
+    if (state.browserData
+        && state.browserData.manifests
+        && !state.browserData.manifests.every(
+            manifest => state.manifests.indexOf(manifest)>=0)) {
+      state.manifests.push(...state.browserData.manifests);
+      return super._render(props, state);
+    }
+
+    // need to check to make sure we haven't already run this. Unless it can
+    // be made idempotent?
+    if (state.browserData) {
+      ExtensionAppShell.log('resuming now that browserData is present',
+        state.browserData);
+    }
+
 
 
     return super._render(props, state);
