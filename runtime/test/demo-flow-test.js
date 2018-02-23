@@ -36,7 +36,7 @@ describe('demo flow', function() {
   }
 
   it('can load the recipe manifest', async function() {
-    await Manifest.load('./runtime/browser/demo/recipes.manifest', new Loader());
+    await Manifest.load('./shell/artifacts/Products/Products.recipes', new Loader());
   });
 
   it('flows like a demo', async function() {
@@ -47,7 +47,7 @@ describe('demo flow', function() {
       id: 'demo',
       pecFactory,
       slotComposer,
-      context: await Manifest.load('./runtime/browser/demo/recipes.manifest', loader),
+      context: await Manifest.load('./shell/artifacts/Products/Products.recipes', loader),
       loader
     });
     let Product = arc.context.findSchemaByName('Product').entityClass();
@@ -59,10 +59,10 @@ describe('demo flow', function() {
     // Choose a plan to test with.
     let expectedPlanString = `recipe
   create as view0 // Product List
-  copy 'manifest:./runtime/browser/demo/recipes.manifest:view0' #shortlist as view1 // Product List
-  map 'manifest:./runtime/browser/demo/recipes.manifest:view1' #wishlist as view2 // Product List
+  copy 'manifest:./shell/artifacts/Products/Products.recipes:view0' #shortlist as view1 // Product List
+  map 'manifest:./shell/artifacts/Products/Products.recipes:view1' #wishlist as view2 // Product List
   create as view3 // Description List
-  copy 'manifest:./runtime/browser/demo/recipes.manifest::7:immediateAlsoOn' as view4 // SHAAAAPE
+  copy 'manifest:./shell/artifacts/Products/Products.recipes::7:immediateAlsoOn' as view4 // SHAAAAPE
   slot 'rootslotid-root' as slot3
   Chooser as particle0
     choices <- view0
