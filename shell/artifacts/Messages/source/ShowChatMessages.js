@@ -6,10 +6,9 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-"use strict";
+'use strict';
 
 defineParticle(({DomParticle, resolver}) => {
-
   const host = `show-chat-messages`;
 
   const template = `
@@ -88,13 +87,13 @@ defineParticle(({DomParticle, resolver}) => {
     _render(props) {
       let {messages, user, avatars} = props;
       if (messages && user) {
-      	return {
+        return {
           scrollTop: 1e6,
           messages: {
             $template: 'chat-message',
             models: this.renderMessages(messages, user, avatars || [])
           }
-      	};
+        };
       }
     }
     renderMessages(messages, user, avatars) {

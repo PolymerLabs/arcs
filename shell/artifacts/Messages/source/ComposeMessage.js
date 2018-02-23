@@ -6,10 +6,9 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-"use strict";
+'use strict';
 
 defineParticle(({DomParticle}) => {
-
   const host = `compose-message`;
 
   const template = `
@@ -45,12 +44,12 @@ defineParticle(({DomParticle}) => {
     _render(props) {
       let {messages, user} = props;
       if (messages && user) {
-      	return {
+        return {
           placeholder: `${user.name} says`,
           message: '',
           name: user.name,
           userid: user.id
-      	};
+        };
       }
     }
     addMessage(msg) {
