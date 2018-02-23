@@ -83,8 +83,9 @@ class MockSlotComposer extends SlotComposer {
     return content.model.items.length == num;
   }
 
-  /** @method expectContentItemsNumber(num, content)
+  /** @method maybeRenderSlot(num, content)
    * Adds an optional rendering expectation - a group of expectations is considered satifsied if only optional expectation remain.
+   * The optional expectation can only be executed within its own expectations group.
    */
   maybeRenderSlot(particleName, slotName, contentTypes) {
     assert(this.expectQueue.length > 0, 'No expectations');
@@ -194,7 +195,7 @@ class MockSlotComposer extends SlotComposer {
     let expectations = this.expectQueue[0];
     if (expectations.every(e => e.isOptional)) {
       this.expectQueue.shift();
-      this.expectationsMet();
+      this._expectationsMet();
     }
   }
 
