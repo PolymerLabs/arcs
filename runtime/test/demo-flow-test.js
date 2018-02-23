@@ -39,7 +39,7 @@ describe('demo flow', function() {
     await Manifest.load('./shell/artifacts/Products/Products.recipes', new Loader());
   });
 
-  it('flows like a demo', async function() {
+  it('TESTNOW flows like a demo', async function() {
     let loader = new Loader();
     let pecFactory = null;
     let slotComposer = new MockSlotComposer();
@@ -107,11 +107,12 @@ describe('demo flow', function() {
         .maybeRenderSlot('AlsoOn', 'annotation', ['model'])
         .maybeRenderSlot('AlsoOn', 'annotation', ['model'])
         .maybeRenderSlot('AlsoOn', 'annotation', ['model']);
-    let slotComposerCompletePromise = slotComposer.expectationsCompleted();
+ //   let slotComposerCompletePromise = slotComposer.expectationsCompleted();
     await arc.instantiate(plan);
     await arc.pec.idle;
-    await slotComposer.skipOptional();
-    await slotComposerCompletePromise;
+ //   await slotComposer.skipOptional();
+//    await slotComposerCompletePromise;
+    await slotComposer.allExpectationsCompleted();
     let productViews = arc.findHandlesByType(Product.type.setViewOf());
     assert.equal(productViews.length, 2);
 

@@ -126,14 +126,36 @@ class MockSlotComposer extends SlotComposer {
     return this;
   }
 
+  areAllExpectationsMet() {
+    return this.expectQueue.length == 0;
+  }
+
+  areAllRequiredExpectationsMet() {
+    return this.areAllExpectationsMet() ||
+           (this.expectQueue.length == 1 && this._isAllOptional(this.expectQueue[0]));
+  }
+
+  _isAllOptional(expectations) {
+    return expectations.every(e => e.isOptional);
+  }
+
   expectationsCompleted() {
-    if (this.expectQueue.length == 0) {
-      return Promise.resolve();
-    }
-    if (this.expectQueue.length == 1 && this.expectQueue[0].every(e => e.isOptional)) {
+    if (this.areAllRequiredExpectationsMet()) {
       return Promise.resolve();
     }
     return new Promise((resolve, reject) => this.onExpectationsComplete = resolve);
+  }
+
+  allExpectationsCompleted() {
+    if (this.areAllExpectationsMet()) {
+      return Promise.resolve();
+    }
+    return new Promise((resolve, reject) => {
+      this.expectationsCompleted().then(() => {
+        this._skipOptional();//.then(() => resolve());
+        resolve();
+      });
+    });
   }
 
   _sendEvent({particleName, slotName, event, data}) {
@@ -167,7 +189,7 @@ class MockSlotComposer extends SlotComposer {
     let expectations = this.expectQueue[0];
     let found = this._verifyRenderContent(expectations, particle, slotName, content);
     if (!found) {
-      if (expectations.every(e => e.isOptional)) {
+      if (this._isAllOptional(expectations)) {
         this.expectQueue.shift();
         expectations = this.expectQueue[0];
         found = this._verifyRenderContent(expectations, particle, slotName, content);
@@ -191,24 +213,30 @@ class MockSlotComposer extends SlotComposer {
   }
 
   // Helper method to resolve the current expectation group, if all remaining expectations are optional.
-  async skipOptional() {
-    return new Promise((resolve) => {
-      if (this.expectQueue.length == 0) {
-        resolve();
-      } else {
-        // TODO: get rid of set timeout. Instead update MockSlotComposer to return two promises:
-        // one for required expectations, another for all promises.
-        setTimeout(() => {
-          let expectations = this.expectQueue[0] || [];
-          if (expectations.every(e => e.isOptional)) {
-            this.expectQueue.shift();
-            this._expectationsMet();
-          }
-          resolve();
-        }, 500);
-      }
-    });
+  _skipOptional() {
+    // return new Promise((resolve) => {
+    if (this.areAllRequiredExpectationsMet()) {
+      this.expectQueue.shift();
+      this._expectationsMet();
+    }
+    // };
   }
+    // return new Promise((resolve) => {
+    //   if (this.areAllExpectationsMet()) {
+    //     resolve();
+    //   } else {
+    //     // TODO: get rid of set timeout. Instead update MockSlotComposer to return two promises:
+    //     // one for required expectations, another for all promises.
+    //     setTimeout(() => {
+    //       if (this._isAllOptional(this.expectQueue[0] || [])) {
+    //         this.expectQueue.shift();
+    //         this._expectationsMet();
+    //       }
+    //       resolve();
+    //     }, 500);
+    //   }
+    // });
+  //}
 
   _expectationMet(expectation) {
     if (expectation.then) {
@@ -218,7 +246,7 @@ class MockSlotComposer extends SlotComposer {
   }
 
   _expectationsMet() {
-    if (this.expectQueue.length == 0) {
+    if (this.areAllExpectationsMet()) {
       this.onExpectationsComplete();
     }
   }

@@ -22,7 +22,7 @@ import Shape from '../shape.js';
 import ParticleSpec from '../particle-spec.js';
 import MockSlotComposer from './mock-slot-composer.js';
 
-describe('particle-shape-loading-with-slots', function() {
+describe('blah particle-shape-loading-with-slots', function() {
   async function instantiateRecipe() {
     let loader = new Loader();
     let pecFactory = function(id) {
@@ -64,7 +64,7 @@ describe('particle-shape-loading-with-slots', function() {
     expectedValues.forEach(value => assert(items.find(item => item.value == value), `Cannot find item '${value}' in model`));
   }
 
-  it('multiplex recipe with slots', async () => {
+  it('TESTNOW multiplex recipe with slots', async () => {
     let {fooType, inView, slotComposer} = await instantiateRecipe();
     slotComposer._slots[0].updateContext({});
 
@@ -75,8 +75,9 @@ describe('particle-shape-loading-with-slots', function() {
       .expectRenderSlot('SingleSlotParticle', 'annotation', ['template', 'model'])
       .maybeRenderSlot('MultiplexSlotsParticle', 'annotationsSet', ['model']);
     await slotComposer.arc.pec.idle;
-    await slotComposer.skipOptional();
-    await slotComposer.expectationsCompleted();
+    // await slotComposer.skipOptional();
+    // await slotComposer.expectationsCompleted();
+    await slotComposer.allExpectationsCompleted();
 
     // Verify slot template and models.
     assert.equal(1, slotComposer._slots.length);
@@ -99,7 +100,7 @@ describe('particle-shape-loading-with-slots', function() {
     verifyFooItems(slot._content.model.items, ['foo1', 'foo2', 'foo3']);
   });
 
-  it('multiplex recipe with slots (init context later)', async () => {
+  it('TESTNOW multiplex recipe with slots (init context later)', async () => {
     // This test is different from the one above because it initializes the transformation particle context
     // after the hosted particles are also instantiated.
     // This verifies a different start-render call in slot-composer.
@@ -122,8 +123,9 @@ describe('particle-shape-loading-with-slots', function() {
       .expectRenderSlot('MultiplexSlotsParticle', 'annotationsSet', ['template', 'model'])
       .maybeRenderSlot('MultiplexSlotsParticle', 'annotationsSet', ['model']);
     await slotComposer.arc.pec.idle;
-    await slotComposer.skipOptional();
-    await slotComposer.expectationsCompleted();
+    // await slotComposer.skipOptional();
+    // await slotComposer.expectationsCompleted();
+    await slotComposer.allExpectationsCompleted();
 
     // Verify slot template and models.
     assert.equal(1, slotComposer._slots.length);
