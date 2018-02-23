@@ -434,7 +434,7 @@ describe('test Arcs demo flows', function() {
       'Check manufacturer information for products from your browsing context'
     );
     acceptSuggestion(
-      'Recommendations based on Products recommended based on products from your browsing context'
+      `Recommendations based on Claire\'s wishlist`
       // TODO: add 'and Claire\'s wishlist' when regex is supported.
     );
 
