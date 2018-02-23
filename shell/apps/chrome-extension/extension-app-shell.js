@@ -161,7 +161,7 @@ const template = ArcsUtils.html`
     <!--<arc-auth on-auth='_onAuth'></arc-auth>-->
     <arc-config rootpath='{{cdnPath}}' on-config='_onConfig'></arc-config>
     <persistent-arc key='{{suggestKey}}' on-key='_onKey' metadata='{{metadata}}' on-metadata='_onMetadata'></persistent-arc>
-    <chrome-data on-data="_onData"></chrome-data>
+    <chrome-data arc='{{arc}}' on-data="_onData"></chrome-data>
     <persistent-users on-users='_onUsers'></persistent-users>
     <persistent-user id='{{userId}}' user='{{user}}' key='{{key}}' on-user='_onUser'></persistent-user>
     <persistent-manifests manifests='{{manifests}}' on-manifests='_onManifests' exclusions='{{exclusions}}' on-exclusions='_onExclusions'></persistent-manifests>
@@ -383,21 +383,6 @@ class ExtensionAppShell extends AppShell {
     }, false);
   }
   */
-
-  /**
-   * Request injection of data from the extension.
-   *
-   * This must be done after `_attachListener()` has been called, and ideally
-   * also after the Arc has been set up.
-   */
-  _requestDataInjection() {
-    window.postMessage({method: 'pleaseInjectArcsData'}, '*');
-  }
-
-  _onArc(e, arc) {
-    super._onArc(e, arc);
-    this._requestDataInjection();
-  }
 }
 ExtensionAppShell.log = Xen.Base.logFactory('ExtensionAppShell', '#2277a8');
 customElements.define('extension-app-shell', ExtensionAppShell);
