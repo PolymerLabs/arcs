@@ -9,7 +9,7 @@
  * There are some entity shapes that aren't yet supported by Arcs. Ensure that:
  *  - There is a 'name' field.
  */
-function filter(entities) {
+export function filter(entities) {
   return Object.entries(entities).reduce((accumulator, [key, values]) => {
     accumulator[key] = values.reduce((accumulator, value) => {
       if (value.hasOwnProperty('name')) {
@@ -30,7 +30,7 @@ function filter(entities) {
  * the output would be
  * {typeA: [{@type: 'typeA', 'a': 1}]}.
  */
-function flatten(entities) {
+export function flatten(entities) {
   return Object.entries(entities).reduce((accumulator, [key, value]) => {
     value.forEach(entry => {
       let type = entry['@type'];
@@ -59,7 +59,7 @@ function _deepIsEqual(a, b) {
  * Removes duplicate entries. Expects the input to match the output format of
  * #flatten().
  */
-function deduplicate(entities) {
+export function deduplicate(entities) {
   return Object.entries(entities).reduce((accumulator, [key, values]) => {
     accumulator[key] = values.reduce((accumulator, value) => {
       let isIncluded = accumulator.reduce(
