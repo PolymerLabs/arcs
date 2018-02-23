@@ -6,10 +6,9 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-"use strict";
+'use strict';
 
 defineParticle(({DomParticle, resolver}) => {
-
   const host = `chat-wrapper`;
 
   const template = `
@@ -92,17 +91,17 @@ defineParticle(({DomParticle, resolver}) => {
 
   `.trim();
 
-  const chatPre = [`%cChatWrapper`, `background: #524c00; color: white; padding: 1px 6px 2px 8px; border-radius: 6px;`];
+  const chatPre = [
+    `%cChatWrapper`,
+    `background: #524c00; color: white; padding: 1px 6px 2px 8px; border-radius: 6px;`
+  ];
 
   return class extends DomParticle {
     get template() {
       return template;
     }
     _getInitialState() {
-      return {
-        open: false,
-        animations: []
-      };
+      return {open: false, animations: []};
     }
     _shouldRender(props) {
       return props.messages && props.avatars;
@@ -133,7 +132,8 @@ defineParticle(({DomParticle, resolver}) => {
           state.showing = state.animations.shift();
           if (state.showing) {
             state.content = state.showing.content;
-            console.log(...chatPre, `show new message, dismiss in a few seconds`);
+            console.log(
+                ...chatPre, `show new message, dismiss in a few seconds`);
             // make it go away in a bit
             clearTimeout(state.timeout);
             state.timeout = setTimeout(() => this._invalidate(), 4000);
@@ -157,7 +157,8 @@ defineParticle(({DomParticle, resolver}) => {
         avatar = avatars.find(a => a.owner === state.showing.userid);
       }
       if (!state.avatar || avatar) {
-        state.avatar = resolver(avatar ? avatar.url : `https://$cdn/assets/avatars/user.jpg`);
+        state.avatar = resolver(
+            avatar ? avatar.url : `https://$cdn/assets/avatars/user.jpg`);
       }
       return {
         open: Boolean(state.open),
