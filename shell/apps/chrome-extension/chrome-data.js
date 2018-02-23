@@ -11,7 +11,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 import Xen from '../../components/xen/xen.js';
 
 class ChromeData extends Xen.Base {
-  static get observedAttributes() { return []; }
+  static get observedAttributes() { return ['arc']; }
 
   _update(props, state, lastProps, lastState) {
     // if there isn't a listener attached for data, attach that
@@ -37,8 +37,9 @@ class ChromeData extends Xen.Base {
       });
     }
 
-    // if there isn't a request to get data, fire that off
-    if (!state.requestedDataInjection) {
+    // If there isn't a request to get data, fire that off - once we have an
+    // arc.
+    if (props.arc && !state.requestedDataInjection) {
       window.postMessage({method: 'pleaseInjectArcsData'}, '*');
       state.requestedDataInjection = true;
       ChromeData.log('requested injection of browser data');
