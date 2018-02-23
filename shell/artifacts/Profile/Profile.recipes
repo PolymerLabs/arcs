@@ -35,3 +35,9 @@ recipe
   AddressForm
     address = address
 
+recipe
+  use #user as person
+  create #favorite as food
+  FavoriteFoodPicker
+    food = food
+    person <- person
