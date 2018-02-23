@@ -22,7 +22,7 @@ import StrategyExplorerAdapter from '../../../runtime/debug/strategy-explorer-ad
 
 (async () => {
   let loader = new Loader();
-  let manifest = await Manifest.load('../../../runtime/browser/demo/recipes.manifest', loader)
+  let manifest = await Manifest.load('../../../shell/artifacts/Products/Products.recipes', loader)
   let a = new Arc({
     id: "test-plan-arc",
     context: manifest,
