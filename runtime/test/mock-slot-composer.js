@@ -147,13 +147,21 @@ class MockSlotComposer extends SlotComposer {
   }
 
   allExpectationsCompleted() {
+    console.log('Are all expectations complete?');
     if (this.areAllExpectationsMet()) {
+      console.log('Yes, all are complete, resolving');
       return Promise.resolve();
     }
+    console.log('Returning promise to completion');
     return new Promise((resolve, reject) => {
+      console.log('waiting for expectations to complete');
       this.expectationsCompleted().then(() => {
+        this.detailedLogDebug();
+        console.log('All required expectations complete, skipping optional');
         this._skipOptional();//.then(() => resolve());
+        this.detailedLogDebug();
         resolve();
+        console.log('resolved');
       });
     });
   }
@@ -182,7 +190,7 @@ class MockSlotComposer extends SlotComposer {
   }
 
   async renderSlot(particle, slotName, content) {
-    // console.log(`renderSlot ${particle.name}:${slotName}`, Object.keys(content).join(', '));
+    console.log(`renderSlot ${particle.name}:${slotName}`, Object.keys(content).join(', '));
     assert(this.expectQueue.length > 0 && this.expectQueue[0],
       `Got a renderSlot from ${particle.name}:${slotName} (content types: ${Object.keys(content).join(', ')}), but not expecting anything further.`);
 
@@ -209,7 +217,7 @@ class MockSlotComposer extends SlotComposer {
     } else {
       // Slots of particles hosted in transformation particles.
     }
-    // this.detailedLogDebug();
+    this.detailedLogDebug();
   }
 
   // Helper method to resolve the current expectation group, if all remaining expectations are optional.
