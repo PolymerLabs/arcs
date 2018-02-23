@@ -348,7 +348,10 @@ ${this.activeRecipe.toString()}`;
 
     for (let recipeView of views) {
       if (['copy', 'create'].includes(recipeView.fate)) {
-        let view = await this.createHandle(recipeView.type, /* name= */ null, this.generateID(), recipeView.tags);
+        let type = recipeView.type;
+        if (type.isVariable)
+          type = type.resolvedType();
+        let view = await this.createHandle(type, /* name= */ null, this.generateID(), recipeView.tags);
         if (recipeView.fate === 'copy') {
           let copiedView = this.findHandleById(recipeView.id);
           await view.cloneFrom(copiedView);
