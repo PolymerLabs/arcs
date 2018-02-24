@@ -574,11 +574,6 @@ describe('manifest', function() {
       return count;
     };
 
-    let particlesPath = './particles/';
-    let particleNames = fs.readdirSync(particlesPath);
-    let count = verifyParticleManifests(particleNames.map(name => `${path.join(particlesPath, name, name)}.manifest`));
-    assert.equal(count, 4);
-
     let shellParticlesPath = './shell/artifacts/';
     let shellParticleNames = [];
     fs.readdirSync(shellParticlesPath).forEach(name => {
@@ -637,7 +632,7 @@ describe('manifest', function() {
       resource EntityList
         start
         this is not json?
-      
+
       view View0 of [Thing] in EntityList`);
       assert(false);
     } catch (e) {
@@ -657,7 +652,7 @@ Error parsing JSON from 'EntityList' (Unexpected token h in JSON at position 1)'
           {"someProp": "someValue"},
           {"$id": "entity-id", "someProp": "someValue2"}
         ]
-      
+
       view View0 of [Thing] in EntityList
     `, {fileName: 'the.manifest'});
     let view = manifest.findViewByName('View0');
