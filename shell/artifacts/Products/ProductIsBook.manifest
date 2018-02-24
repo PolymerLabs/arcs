@@ -6,9 +6,9 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import '../../shell/artifacts/Products/Product.schema'
+import 'Product.schema'
 
-particle ProductIsBook in 'ProductIsBook.js'
+particle ProductIsBook in 'source/ProductIsBook.js'
   ProductIsBook(in Product product, out Product book)
   description `filter books`
     book `book`

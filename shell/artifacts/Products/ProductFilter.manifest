@@ -6,13 +6,13 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import '../../shell/artifacts/Products/Product.schema'
+import 'Product.schema'
 
 shape HostedParticleShape
   HostedParticleShape(in Product inProduct, out Product outProduct)
 
 // TODO: This particle should use generic handle type and slot name.
-particle ProductFilter in 'ProductFilter.js'
+particle ProductFilter in 'source/ProductFilter.js'
   ProductFilter(host HostedParticleShape hostedParticle, in [Product] products, out [Product] results)
   description `show filtered products`
     results `filtered list of products`

@@ -6,29 +6,30 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
+import '../Common/Multiplexer.manifest'
+import '../Common/ShowCollection.manifest'
 import 'Product.schema'
-import '../Common/ShowItems.manifest'
 import 'Recommend.manifest'
 import 'Chooser.manifest'
 import 'GiftList.manifest'
 import 'Interests.manifest'
-import '../Common/Multiplexer.manifest'
 import 'AlsoOn.manifest'
 import 'Arrivinator.manifest'
 import 'ManufacturerInfo.manifest'
+import 'ShowProduct.manifest'
 
 // See [person]'s wishlist
 recipe
   map #wishlist as wishlist
-  ShowItems
-    list <- wishlist
+  ShowCollection
+    collection <- wishlist
+    hostedParticle = ShowProduct
 
 // Create shortlist with [product, ...] and suggest similar products from [person]'s wish list
 recipe
   Chooser.choices -> Recommend.recommendations
   //Chooser.resultList -> ManageProducts.list
-  //Chooser.resultList -> ShowCollection.collection
-  Chooser.resultList -> ShowItems.list
+  Chooser.resultList -> ShowCollection.collection
   Chooser.resultList -> Recommend.known
   Chooser.resultList -> Multiplexer2.list
   Chooser.choices -> Multiplexer2.others
@@ -36,12 +37,9 @@ recipe
   copy #shortlist as shortlist
   Recommend
     population <- wishlist
-  // TODO: switch demo to use ShowCollection(ShowProduct) instead of ShowItems particle.
-  // ShowCollection
-  //   collection <- shortlist
-  //   hostedParticle = ShowProduct
-  ShowItems
-    list <- shortlist
+  ShowCollection
+    collection <- shortlist
+    hostedParticle = ShowProduct
   //ManageProducts
     //list = shortlist
     consume root
@@ -70,10 +68,6 @@ recipe
   Multiplexer
     list <- shortlist
     hostedParticle <- ManufacturerInfo
-
-// TODO: Check for newer versions, e.g. there is a new version of [product].
-// TODO: [Manufacturer] recommends [product] instead of [product] for 13 year olds.
-// TODO: See awards, e.g. [product] winning the [award].
 
 // Recommendations based on Claire's interest in field hockey.
 recipe

@@ -6,36 +6,41 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-// import 'Arrivinator.manifest'
-// import '../Common/Multiplexer.manifest'
-// import '../Common/ShowItems.manifest'
-// import 'AlsoOn.manifest'
+////////////////////////////////////////////
+particle List in '../Common/source/List.js'
+  List(in [~a] items)
+  consume root
+    provide set of item
+    provide set of action
+  description `show ${items}`
 
-// Experimental recipes
-// TODO(mmandlis): create separate tests for experimental recipes.
-// import './ShowCollection.manifest'
-// import './ShowProduct.manifest'
-// recipe
-//  map #shortlist as shortlist
-//  map #wishlist as wishlist
-//  ShowCollection
-//    collection <- shortlist
-//    hostedParticle = ShowProduct
-//  Multiplexer
-//    list <- shortlist
-//    hostedParticle = Arrivinator
-//  Multiplexer2
-//    list <- shortlist
-//    others <- wishlist
-//    hostedParticle = AlsoOn
-//
-//import './ProductFilter.manifest'
-//import './ProductIsBook.manifest'
-//recipe
-//  ShowItems.list -> ProductFilter.results
-//  map #shortlist as shortlist
-//  create as books
-//  ProductFilter
-//    products <- shortlist
-//    hostedParticle = ProductIsBook
-//    results -> books
+shape MuxerShape
+  HostedParticleShape(in ~a)
+  consume item
+
+particle Muxer in '../Common/source/Multiplexer.js'
+  Muxer(host MuxerShape hostedParticle, in [~a] list)
+  consume set of item
+  description `${hostedParticle} for ${list}`
+
+recipe
+  map #wishlist as wishlist
+  List
+    items <- wishlist
+  Muxer
+    list <- wishlist
+    hostedParticle = ShowProduct
+
+////////////////////////////////////////////
+import './ProductFilter.manifest'
+import './ProductIsBook.manifest'
+recipe
+ ShowCollection.collection -> ProductFilter.results
+ map #shortlist as shortlist
+ create as books
+ ShowCollection
+   hostedParticle = ShowProduct
+ ProductFilter
+   products <- shortlist
+   hostedParticle = ProductIsBook
+   results -> books
