@@ -15,7 +15,7 @@ import assert from '../platform/assert-web.js';
 import particle from './particle.js';
 import DomParticle from './dom-particle.js';
 import TransformationDomParticle from './transformation-dom-particle.js';
-import JsonldToManifest from '../converters/jsonldToManifest.js';
+import JsonldToManifest from './converters/jsonldToManifest.js';
 
 function schemaLocationFor(name) {
   return `../entities/${name}.schema`;
