@@ -254,7 +254,7 @@ class MockSlotComposer extends SlotComposer {
   }
 
   _expectationsMet() {
-    if (this.areAllExpectationsMet()) {
+    if (this.areAllRequiredExpectationsMet()) { //if (this.areAllExpectationsMet()) {
       this.onExpectationsComplete();
     }
   }
