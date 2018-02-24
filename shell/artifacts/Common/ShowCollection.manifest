@@ -6,7 +6,7 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import '../../shell/artifacts/Arcs/Description.schema'
+import '../Arcs/Description.schema'
 
 // TODO: fix "consume" unnamed slot in the shape requiring a trailing whitespace.
 shape HostedParticleShape
@@ -14,7 +14,7 @@ shape HostedParticleShape
   consume
   provide annotation
 
-particle ShowCollection in 'ShowCollection.js'
+particle ShowCollection in 'source/ShowCollection.js'
   ShowCollection(in [~a] collection, host HostedParticleShape hostedParticle, out [Description] descriptions)
   affordance dom
   affordance dom-touch

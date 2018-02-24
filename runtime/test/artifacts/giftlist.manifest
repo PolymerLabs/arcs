@@ -7,20 +7,22 @@
 
 import '../../../shell/artifacts/Products/Chooser.manifest'
 import '../../../shell/artifacts/Products/Recommend.manifest'
-import '../../../shell/artifacts/Common/ShowItems.manifest'
+import '../../../shell/artifacts/Products/ShowProduct.manifest'
+import '../../../shell/artifacts/Common/ShowCollection.manifest'
 import '../../../shell/artifacts/People/Person.schema'
 
 recipe
   Chooser.choices -> Recommend.recommendations
-  Chooser.resultList -> ShowItems.list
+  Chooser.resultList -> ShowCollection.collection
   Chooser.resultList -> Recommend.known
   map #giftlist as wishlist
   create #descriptions as descriptions
   copy as view0
   Recommend
     population <- wishlist
-  ShowItems
-    list <- view0
+  ShowCollection
+    collection <- view0
+    hostedParticle = ShowProduct
     descriptions -> descriptions
 
 
@@ -30,5 +32,5 @@ particle VrTestParticle in 'VrTestParticle.js'
   consume root
 
 recipe
-  ShowItems
+  ShowCollection
   VrTestParticle

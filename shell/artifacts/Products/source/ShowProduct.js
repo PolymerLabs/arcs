@@ -66,7 +66,6 @@ defineParticle(({DomParticle, resolver}) => {
 
   let template = `
 ${styles}
-<template>
   <div item show-product>
     <div row>
       <div col0>
@@ -76,13 +75,12 @@ ${styles}
         <div seller>{{seller}}</div>
       </div>
       <div col1>
-        <img src="{{image}}">
+        <img src="{{resolvedImage}}">
       </div>
     </div>
     <div slotid="annotation" subid="{{subId}}">
     </div>
   </div>
-</template>
   `;
 
   return class extends DomParticle {
@@ -96,7 +94,7 @@ ${styles}
       let {product} = props;
       if (product) {
         let item = Object.assign({}, product.rawData);
-        item.image = resolver ? resolver(product.image) : product.image;
+        item.resolvedImage = resolver ? resolver(product.image) : product.image;
         return item;
       }
     }
