@@ -792,7 +792,7 @@ SchemaType
   = SchemaPrimitiveType / SchemaUnionType / SchemaTupleType
 
 SchemaPrimitiveType
-  = 'Text' / 'URL' / 'Number' / 'Boolean' / 'Object'
+  = 'Text' / 'URL' / 'Number' / 'Boolean' / 'Bytes' / 'Object'
 
 SchemaUnionType
   = '(' whiteSpace? first:SchemaPrimitiveType rest:(whiteSpace 'or' whiteSpace SchemaPrimitiveType)+ whiteSpace? ')'

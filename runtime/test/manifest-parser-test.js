@@ -146,4 +146,12 @@ describe('manifest parser', function() {
         Foo(in * {value} optionalType)
     `);
   });
+  it('parses a schema with a bytes field', () => {
+    parse(`
+      schema Avatar
+        normative
+          Text name
+          Bytes profileImage
+      `);
+  });
 });
