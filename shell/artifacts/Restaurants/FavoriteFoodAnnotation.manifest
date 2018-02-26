@@ -7,7 +7,7 @@
 // http://polymer.github.io/PATENTS.txt
 
 import 'Restaurant.schema'
-import '../People/FavoriteFood.schema'
+import '../Profile/FavoriteFood.schema'
 
 particle FavoriteFoodAnnotation in 'source/FavoriteFoodAnnotation.js'
   FavoriteFoodAnnotation(in [Restaurant] restaurants, in FavoriteFood food)
