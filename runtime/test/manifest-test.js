@@ -36,6 +36,7 @@ describe('manifest', function() {
     let verify = (manifest) => {
       let recipe = manifest.recipes[0];
       assert(recipe);
+      assert.equal(manifest.findRecipeByName('SomeRecipe'), recipe);
       assert.equal(recipe.particles.length, 1);
       assert.equal(recipe.views.length, 2);
       assert.equal(recipe.views[0].fate, 'map');
@@ -113,7 +114,7 @@ describe('manifest', function() {
       assert(recipe);
       assert.equal(recipe.views.length, 1);
       assert.equal(recipe.handleConnections.length, 2);
-      assert.equal(recipe.toString(), `recipe
+      assert.equal(recipe.toString(), `recipe Bidirectional
   ? as view0
   P1 as p1
     x -> view0
