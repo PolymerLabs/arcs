@@ -38,7 +38,6 @@ const template = ArcsUtils.html`
     <arc-handle arc='{{arc}}' data='{{arcsHandleData}}' options='{{arcsHandleOptions}}' on-change='_onArcsHandleChange'></arc-handle>
     <arc-handle arc='{{arc}}' data='{{identityHandleData}}' options='{{identityHandleOptions}}' on-change='_onIdentityHandleChange'></arc-handle>
     <arc-handle arc='{{arc}}' data='{{identitiesHandleData}}' options='{{identitiesHandleOptions}}' on-change='_onIdentitiesHandleChange'></arc-handle>
-    <arc-handle arc='{{arc}}' data='{{friendsAvatarData}}' options='{{friendsAvatarHandleOptions}}'></arc-handle>
     <arc-handle arc='{{arc}}' data='{{themeData}}' options='{{themeHandleOptions}}' on-change='_onShellThemeChange'></arc-handle>
     <arc-steps plans='{{plans}}' plan='{{plan}}' steps='{{steps}}' step='{{step}}' on-step='_onStep' on-steps='_onSteps'></arc-steps>
     <!-- only for launcher -->
