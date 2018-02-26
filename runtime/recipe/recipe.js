@@ -16,10 +16,11 @@ import util from './util.js';
 import digest from './digest-web.js';
 
 class Recipe {
-  constructor() {
+  constructor(name) {
     this._particles = [];
     this._handles = [];
     this._slots = [];
+    this.name = name;
 
     // TODO: Recipes should be collections of records that are tagged
     // with a type. Strategies should register the record types they
@@ -393,8 +394,7 @@ class Recipe {
   toString(options) {
     let nameMap = this._makeLocalNameMap();
     let result = [];
-    // TODO: figure out where recipe names come from
-    result.push(`recipe`);
+    result.push(`recipe${this.name ? ' ' + this.name : ''}`);
     if (this.search) {
       result.push(this.search.toString(options).replace(/^|(\n)/g, '$1  '));
     }

@@ -214,6 +214,9 @@ class Manifest {
   findShapeByName(name) {
     return this._find(manifest => manifest._shapes.find(shape => shape.name == name));
   }
+  findRecipeByName(name) {
+    return this._find(manifest => manifest._recipes.find(recipe => recipe.name == name));
+  }
   generateID() {
     return `${this.id}:${this._nextLocalID++}`;
   }
@@ -786,8 +789,7 @@ ${e.message}
     }
   }
   _newRecipe(name) {
-    // TODO: use name
-    let recipe = new Recipe();
+    let recipe = new Recipe(name);
     this._recipes.push(recipe);
     return recipe;
   }
