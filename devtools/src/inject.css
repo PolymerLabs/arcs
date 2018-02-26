@@ -1,0 +1,14 @@
+app-shell[illuminate] [particle-host] {
+  border: 1px solid #3879d9;
+  border-top: 18px solid #3879d9;
+  border-radius: 8px 8px 0 0;
+}
+app-shell[illuminate] [particle-host]::before {
+  content: attr(particle-host);
+  position: relative;
+  top: -18px;
+  left: 4px;
+  font-size: 12px;
+  font-family: monospace;
+  color: white;
+}

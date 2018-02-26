@@ -3,16 +3,29 @@ document.addEventListener('arcs-debug', e => {
 });
 
 chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
-  if (message.initDebug) {
-    if (document.readyState !== 'loading') {
-      addInitDebugScript();
-    } else {
-      document.onreadystatechange = function() {
-        if (document.readyState === 'interactive') {
-          addInitDebugScript();
-        }
-      };
-    }
+  switch (message.messageType) {
+    case 'init-debug':
+      if (document.readyState !== 'loading') {
+        addInitDebugScript();
+      } else {
+        document.onreadystatechange = function() {
+          if (document.readyState === 'interactive') {
+            addInitDebugScript();
+          }
+        };
+      }
+      break;
+    case 'illuminate':
+      let shell = document.getElementsByTagName('app-shell')[0];
+      switch (message.messageBody) {
+        case 'on':
+          shell.setAttribute('illuminate', '');
+          break;
+        case 'off':
+          shell.removeAttribute('illuminate');
+          break;
+      }
+      break;
   }
 });
 

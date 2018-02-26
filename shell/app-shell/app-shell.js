@@ -137,19 +137,6 @@ const template = ArcsUtils.html`
   [hidden] {
     display: none;
   }
-  [illuminate] [particle-host] {
-    border: 1px solid #ea80fc;
-    border-top: 18px solid #ea80fc;
-    border-radius: 8px 8px 0 0;
-  }
-  [illuminate] [particle-host]::before {
-    content: attr(particle-host);
-    position: relative;
-    top: -18px;
-    left: 4px;
-    font-size: 12px;
-    font-family: monospace;
-  }
   [slotid=suggestions] {
     max-height: 356px;
     overflow-y: auto;
@@ -308,7 +295,6 @@ class AppShell extends Xen.Base {
   }
   _didMount() {
     this.setAttribute('app-shell', '');
-    this._initHotKeys();
     this._initGeolocation();
   }
   _update(props, state, lastProps, lastState) {
@@ -399,7 +385,6 @@ class AppShell extends Xen.Base {
     if (state.config) {
       Xen.Template.setBoolAttribute(this, 'expanded', Boolean(state.arcsToolsVisible));
     }
-    Xen.Template.setBoolAttribute(this, 'illuminate', Boolean(state.illuminateParticles));
   }
   _renderUserOptionModels(users, user) {
     let models = [
@@ -452,23 +437,6 @@ class AppShell extends Xen.Base {
       return true;
     }
   }
-  _initHotKeys() {
-    addEventListener('keydown', e => {
-      if (e.ctrlKey && !{input: 1, textArea: 1}[e.target.localName] && this.hotkey(e.key, e)) {
-        e.preventDefault();
-      }
-    });
-  }
-  hotkey(key, e) {
-    switch (key) {
-      case 'i':
-        this._onToggleIlluminate(e);
-        break;
-      default:
-        return false;
-    }
-    return true;
-  }
   _updateSuggestions(plans) {
     let suggestions = plans;
     // If there is a search, plans are already filtered
@@ -505,9 +473,6 @@ class AppShell extends Xen.Base {
     }
     //config.suggestionsNode = this.querySelector('suggestions-element');
     this._setState({config, key, userId, user, arcsToolsVisible: config.arcsToolsVisible});
-  }
-  _onToggleIlluminate() {
-    this._setState({illuminateParticles: !this._state.illuminateParticles});
   }
   _onNavClick() {
     this._setState({arcsToolsVisible: !this._state.arcsToolsVisible});

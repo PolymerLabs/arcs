@@ -10,6 +10,7 @@
 
 <link rel="import" href="arcs-overview.html">
 <link rel="import" href="arcs-dataflow.html">
+<link rel="import" href="arcs-communication-channel.html">
 <link rel="import" href="arcs-shared.html">
 <link rel="import" href="strategy-explorer/strategy-explorer.html">
 
@@ -36,12 +37,23 @@
         background-color: var(--light-gray);
         border-bottom: 1px solid var(--mid-gray);
         padding: 1px;
+        line-height: 0;
       }
       .nav-toggle {
         -webkit-mask-position: -112px 192px;
       }
       #container[nav-hidden] .nav-toggle {
         -webkit-mask-position: -167px 120px;
+      }
+      header iron-icon {
+        display: inline-block;
+        width: 28px;
+        height: 24px;
+        vertical-align: unset;
+        color: rgb(110, 110, 110);
+      }
+      header iron-icon[active] {
+        color: var(--highlight-blue);
       }
       [nav-hidden] nav {
         display: none;
@@ -84,9 +96,11 @@
       }
     </style>
     <div id="container">
-      <header>
-        <div class="devtools-icon nav-toggle" on-click="toggleNav"></div>
-      </header>
+      <arcs-communication-channel id="channel" on-messages="onMessages"></arcs-communication-channel>
+      <header><!--
+      --><div class="devtools-icon nav-toggle" on-click="toggleNav"></div><!--
+      --><iron-icon id="illuminateToggle" title="Illuminate Particles" icon="select-all" on-click="toggleIlluminate"></iron-icon><!--
+   --></header>
       <nav>
         <iron-selector selected="{{page}}" attr-for-selected="name" class="drawer-list" role="navigation">
           <a name="overview" href="javascript:void(0)"><iron-icon icon="timeline"></iron-icon>Overview</a>
@@ -113,10 +127,15 @@
 
       ready() {
         super.ready();
-        document.addEventListener('messages', e => {
-          this.$.pages.childNodes.forEach(
-            page => {if (page.onMessages) page.onMessages(e.detail);});
-        });
+        if (!chrome.devtools || !chrome.devtools.inspectedWindow || !chrome.devtools.inspectedWindow.tabId) {
+          // Illuminate doesn't make sense if working with Arcs in NodeJS.
+          this.$.illuminateToggle.style.display = 'none';
+        }
+      }
+
+      onMessages(e) {
+        this.$.pages.childNodes.forEach(
+          page => {if (page.onMessages) page.onMessages(e.detail);});
       }
 
       toggleNav() {
@@ -124,6 +143,16 @@
           this.$.container.removeAttribute('nav-hidden');
         } else {
           this.$.container.setAttribute('nav-hidden', '');
+        }
+      }
+
+      toggleIlluminate() {
+        if (this.$.illuminateToggle.hasAttribute('active')) {
+          this.$.illuminateToggle.removeAttribute('active');
+          this.$.channel.send('illuminate', 'off');
+        } else {
+          this.$.illuminateToggle.setAttribute('active', '');
+          this.$.channel.send('illuminate', 'on');
         }
       }
     }
