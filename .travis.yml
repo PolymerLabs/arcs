@@ -11,7 +11,7 @@ sudo: required
 addons:
   chrome: stable
 
-script: "cd $TEST_DIR && npm install && npm test"
+script: "cd ${TRAVIS_BUILD_DIR}/${TEST_DIR} && npm install && npm test"
 
 env:
   global:
