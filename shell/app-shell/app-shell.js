@@ -251,9 +251,6 @@ const template = ArcsUtils.html`
     <div tab='Handle Explorer'>
       <handle-explorer arc='{{arc}}'></handle-explorer>
     </div>
-    <!-- <div tab='App State'>
-      <data-explorer style='font-size: 0.6em;' object='{{appState}}'></data-explorer>
-    </div> -->
   </simple-tabs>
   <shell-particles arc='{{arc}}'></shell-particles>
 </app-tools>
@@ -305,15 +302,6 @@ class AppShell extends Xen.Base {
         name: 'Identities',
         tags: ['#identities']
       },
-      friendsAvatarHandleOptions: {
-        schemas: `${typesPath}/identity-types.manifest`,
-        type: '[Avatar]',
-        name: 'FRIENDS_PROFILE_avatar',
-        id: 'FRIENDS_PROFILE_avatar',
-        tags: ['#friends_avatar'],
-        asContext: true
-      },
-      friendsAvatarData: {},
       auth: true,
       shareState: 0
     };
@@ -380,13 +368,6 @@ class AppShell extends Xen.Base {
     }
     if (state.config && state.key && state.user) {
       let isProfile = state.user.profiles && state.user.profiles[state.key];
-      /*
-      // modifying config only matters before initializing arc-host (aka `!state.arc`)
-      if (isProfile && !state.arc) {
-        AppShell.log(`is a profile Arc, setting soloPath to 'profile.manifest'`);
-        //state.config.soloPath = 'profile.manifest';
-      }
-      */
       let isShared = state.user.shares && state.user.shares[state.key];
       // unpack button states
       state.profileState = isProfile ? 1 : 0;
@@ -648,14 +629,6 @@ class AppShell extends Xen.Base {
     if (arc && this._state.config.profiler) {
       this._modifyProfileState(true);
     }
-  }
-  _onIdentityHandleChange() {
-    // TODO(sjmiles): runtime will cause replanning on any handle change
-    //this._setState({plans: null});
-  }
-  _onIdentitiesHandleChange() {
-    // TODO(sjmiles): runtime will cause replanning on any handle change
-    //this._setState({plans: null});
   }
   _onMetadata(e, metadata) {
     this._setIfDirty({metadata});
