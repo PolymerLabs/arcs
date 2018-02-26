@@ -141,6 +141,7 @@ class Manifest {
     assert(!type.hasVariableReference, `handles can't have variable references`);
     let handle = await this.storageProviderFactory.construct(id, type, `in-memory://${this.id}`);
     handle.name = name;
+    assert(handle._version !== null);
     this._handles.push(handle);
     this._handleTags.set(handle, tags ? tags : []);
     return handle;
@@ -779,10 +780,12 @@ ${e.message}
       });
     }
 
+    let version = item.version || 0;
+
     if (type.isSetView) {
-      view._fromListWithVersion(entities, item.version);
+      view._fromListWithVersion(entities, version);
     } else {
-      view._setWithVersion(entities[0], item.version);
+      view._setWithVersion(entities[0], version);
     }
   }
   _newRecipe(name) {
