@@ -2,30 +2,36 @@
 // and queing, so that opening DevTools without showing the Arcs panel is
 // sufficient to start gathering information.
 
+// TODO: Clean this up a little bit, it's spaghetti-ish.
+
 (() => {
   let msgQueue = [];
   let windowForEvents = undefined;
+
+  // Use the extension API if we're in devtools and having a window to inspect.
+  // Otherwise use WebSocket. In later case we might be in devtools but running
+  // against NodeJS, but in such case there's no window to inspect.
+  let sendMessage = (chrome.devtools && chrome.devtools.inspectedWindow.tabId)
+      ? connectViaExtensionApi()
+      : connectViaWebSocket();
 
   if (chrome && chrome.devtools) {
     // Add the panel for devtools, and flush the events to it once it's shown.
     chrome.devtools.panels.create('Arcs',
       null,
       '../build/split-index.html',
-      panel => panel.onShown.addListener(panelWindow => {
-        if (windowForEvents) return;
-        windowForEvents = panelWindow;
-        for (msg of msgQueue) fire(msg);
-        msgQueue.length = 0;
-      }));
+      panel => panel.onShown.addListener(panelWindow => initializeWindow(panelWindow)));
   } else {
     // Fire on a regular window without queueing in the standalone scenario.
-    windowForEvents = window;
+    initializeWindow(window);
   }
 
-  if (chrome.devtools && chrome.devtools.inspectedWindow.tabId) {
-    connectViaExtensionApi();
-  } else {
-    connectViaWebSocket();
+  function initializeWindow(w) {
+    if (windowForEvents) return;
+    windowForEvents = w;
+    for (msg of msgQueue) fire(msg);
+    msgQueue.length = 0;
+    w.document.addEventListener('command', e => sendMessage(e.detail));
   }
 
   function connectViaExtensionApi() {
@@ -36,6 +42,13 @@
     });
     backgroundPageConnection.onMessage.addListener(
       e => queueOrFire(e));
+    return msg => {
+      backgroundPageConnection.postMessage({
+          name: 'command',
+          tabId: chrome.devtools.inspectedWindow.tabId,
+          msg
+      });
+    };
   }
 
   function connectViaWebSocket() {
@@ -44,6 +57,11 @@
     ws.onopen = e => {
       ws.onmessage = msg => queueOrFire(JSON.parse(msg.data));
       ws.send('init');
+    };
+    return message => {
+      // TODO: Add the message itself and figure out how this will work
+      // when we implement first DevTools -> NodeJS command.
+      ws.send('command');
     };
   }
 

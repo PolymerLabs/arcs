@@ -5,9 +5,14 @@ let connections = {};
 chrome.runtime.onConnect.addListener(function(port) {
   // Message from the DevTools page.
   let extensionListener = function(message, sender, sendResponse) {
-    if (message.name === 'init') {
-      connections[message.tabId] = port;
-      chrome.tabs.sendMessage(message.tabId, {initDebug: true});
+    switch (message.name) {
+      case 'init':
+        connections[message.tabId] = port;
+        chrome.tabs.sendMessage(message.tabId, {messageType: 'init-debug'});
+        break;
+      case 'command':
+        chrome.tabs.sendMessage(message.tabId, message.msg);
+        break;
     }
   };
 
@@ -36,6 +41,6 @@ chrome.webNavigation.onCommitted.addListener(function(details) {
   let tabId = details.tabId;
   if (tabId in connections) {
     connections[tabId].postMessage([{messageType: 'page-refresh'}]);
-    chrome.tabs.sendMessage(tabId, {initDebug: true});
+    chrome.tabs.sendMessage(tabId, {messageType: 'init-debug'});
   }
 });

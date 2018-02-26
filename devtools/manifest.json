@@ -10,6 +10,7 @@
     {
       "matches": ["<all_urls>"],
       "js": ["src/contentScript.js"],
+      "css": ["src/inject.css"],
       "run_at": "document_start",
       "all_frames": true
     }
