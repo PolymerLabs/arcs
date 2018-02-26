@@ -94,6 +94,7 @@ class InMemoryCollection extends InMemoryStorageProvider {
   constructor(type, arcId, name, id, key) {
     super(type, arcId, name, id, key);
     this._items = new Map();
+    assert(this._version !== null);
   }
 
   clone() {
@@ -104,6 +105,7 @@ class InMemoryCollection extends InMemoryStorageProvider {
 
   async cloneFrom(handle) {
     let {list, version} = await handle._toListWithVersion();
+    assert(version !== null);
     await this._fromListWithVersion(list, version);
   }
 
