@@ -28,26 +28,26 @@ class Handle {
   }
 
   _copyInto(recipe) {
-    let view = undefined;
+    let handle = undefined;
     if (this._id !== null && ['map', 'use', 'copy'].includes(this.fate))
-      view = recipe.findView(this._id);
+      handle = recipe.findView(this._id);
 
-    if (view == undefined) {
-      view = recipe.newHandle();
-      view._id = this._id;
-      view._tags = [...this._tags];
-      view._type = this._type;
-      view._fate = this._fate;
-      view._originalFate = this._originalFate;
-      view._originalId = this._originalId;
-      view._mappedType = this._mappedType;
-      view._storageKey = this._storageKey;
+    if (handle == undefined) {
+      handle = recipe.newHandle();
+      handle._id = this._id;
+      handle._tags = [...this._tags];
+      handle._type = this._type;
+      handle._fate = this._fate;
+      handle._originalFate = this._originalFate;
+      handle._originalId = this._originalId;
+      handle._mappedType = this._mappedType;
+      handle._storageKey = this._storageKey;
 
       // the connections are re-established when Particles clone their
       // attached HandleConnection objects.
-      view._connections = [];
+      handle._connections = [];
     }
-    return view;
+    return handle;
   }
 
   _startNormalize() {
