@@ -284,9 +284,9 @@ class Manifest {
       }
       let preamble;
       if (parseError)
-        preamble = 'Parse error in'
+        preamble = 'Parse error in';
       else
-        preamble = 'Post-parse processing error caused by'
+        preamble = 'Post-parse processing error caused by';
       let message = `${preamble} '${fileName}' line ${e.location.start.line}.
 ${e.message}
   ${line}
