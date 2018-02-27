@@ -141,12 +141,20 @@ class Manifest {
   async newHandle(type, name, id, tags) {
     assert(!type.hasVariableReference, `handles can't have variable references`);
     let handle = await this.storageProviderFactory.construct(id, type, `in-memory://${this.id}`);
-    handle.name = name;
     assert(handle._version !== null);
+    handle.name = name;
+    return this._addHandle(handle, tags);
+  }
+
+  _addHandle(handle, tags) {
     this._handles.push(handle);
     this._handleTags.set(handle, tags ? tags : []);
     this._handleManifestUrls.set(handle.id, this.fileName);
     return handle;
+  }
+
+  newHandleStub(type, name, id, storageKey, tags) {
+    return this._addHandle({type, id, name, storageKey}, tags);
   }
 
   _find(manifestFinder) {
@@ -254,7 +262,7 @@ class Manifest {
     position = position || {line: 1, column: 0};
     id = `manifest:${fileName}:`;
 
-    function processError(e) {
+    function processError(e, parseError) {
       if (!e.location) {
         return e;
       }
@@ -274,18 +282,26 @@ class Manifest {
       for (let i = 0; i < span; i++) {
         highlight += '^';
       }
-      let message = `Parse error in '${fileName}' line ${e.location.start.line}.
+      let preamble;
+      if (parseError)
+        preamble = 'Parse error in'
+      else
+        preamble = 'Post-parse processing error caused by'
+      let message = `${preamble} '${fileName}' line ${e.location.start.line}.
 ${e.message}
   ${line}
   ${highlight}`;
-      return new Error(message);
+      let err = new Error(message);
+      if (!parseError)
+        err.stack = e.stack;
+      return err;
     }
 
     let items = [];
     try {
       items = parser.parse(content);
     } catch (e) {
-      throw processError(e);
+      throw processError(e, true);
     }
     let manifest = new Manifest({id});
     manifest._fileName = fileName;
@@ -318,7 +334,7 @@ ${e.message}
       await processItems('view', item => this._processView(manifest, item, loader));
       await processItems('recipe', item => this._processRecipe(manifest, item, loader));
     } catch (e) {
-      throw processError(e);
+      throw processError(e, false);
     }
     return manifest;
   }
@@ -744,6 +760,11 @@ ${e.message}
     let tags = item.tags;
     if (tags == null)
       tags = [];
+
+    if (item.origin == 'storage') {
+      manifest.newHandleStub(type, name, id, item.source, tags);
+      return;
+    }
 
     let view = await manifest.newHandle(type, name, id, tags);
     view.source = item.source;

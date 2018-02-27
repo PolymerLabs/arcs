@@ -1095,4 +1095,25 @@ resource SomeName
     assert(validRecipe.normalize());
     assert(validRecipe.isResolved());
   });
+
+  it('can parse a manifest with storage key handle definitions', async () => {
+    let manifest = await Manifest.parse(`
+      schema Bar
+        normative
+          Text value
+
+      particle P
+        P(in Bar foo)
+
+      view Foo of Bar 'test' @0 at 'firebase://testing'
+      
+      recipe
+        map Foo as myView
+        P
+          foo = myView
+    `);
+    let [validRecipe] = manifest.recipes;
+    assert(validRecipe.normalize());
+    assert(validRecipe.isResolved());
+  });
 });
