@@ -180,7 +180,7 @@ const template = ArcsUtils.html`
     <persistent-arc key='{{suggestKey}}' on-key='_onKey' metadata='{{metadata}}' on-metadata='_onMetadata'></persistent-arc>
     <persistent-users on-users='_onUsers'></persistent-users>
     <persistent-user id='{{userId}}' user='{{user}}' key='{{key}}' on-user='_onUser'></persistent-user>
-    <persistent-manifests manifests='{{manifests}}' on-manifests='_onManifests' exclusions='{{exclusions}}' on-exclusions='_onExclusions'></persistent-manifests>
+    <persistent-manifests manifests='{{persistedManifests}}' on-manifests='_onManifests' exclusions='{{exclusions}}' on-exclusions='_onExclusions'></persistent-manifests>
     <persistent-handles arc='{{arc}}' key='{{key}}'></persistent-handles>
     <remote-profile-handles arc='{{arc}}' user='{{user}}' on-profile='_onProfile'></remote-profile-handles>
     <remote-shared-handles arc='{{arc}}' user='{{user}}' friends='{{friends}}'></remote-shared-handles>
@@ -206,10 +206,6 @@ const template = ArcsUtils.html`
       </template>
       <div buttons>
         <toggle-button title='{{shareStateTitle}}' state='{{shareState}}' on-state='_onShareState' icons='share person people'></toggle-button>
-        <!--
-        <toggle-button title='Arc Contains Profile Data' state='{{profileState}}' on-state='_onProfileState' icons='person_outline person'></toggle-button>
-        <toggle-button title='Share this Arc' state='{{sharedState}}' on-state='_onSharedState' icons='link supervisor_account'></toggle-button>
-        -->
         <toggle-button title='Cast' on-state='_onCastState' icons='cast cast_connected'></toggle-button>
         <a href='{{launcherUrl}}'><i>apps</i></a>
       </div>
@@ -252,7 +248,7 @@ class AppShell extends Xen.Base {
     return this;
   }
   get template() {
-    return Xen.Template.createTemplate(template);
+    return template;
   }
   _getInitialState() {
     let cdnPath = window.shellPath;
@@ -708,7 +704,7 @@ class AppShell extends Xen.Base {
       if (!currentManifests.includes(state.manifestPath)) {
         const newManifests = currentManifests.concat(state.manifestPath);
         AppShell.log(`Promoting manifest [new=${state.manifestPath}, all=[${newManifests}]].`);
-        this._setState({manifestPath: '', manifests: newManifests});
+        this._setState({manifestPath: '', manifests: newManifests, persistedManifests: newManifests});
       }
     }
   }
