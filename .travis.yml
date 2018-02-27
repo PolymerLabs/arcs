@@ -29,4 +29,9 @@ deploy:
     branch: publish-artifacts
     # For now, only deploy when we've used the 'shell' build target. Once we
     # have a unified build we can remove this.
-    condition: "$TEST_DIR = shell"
+    # try using the jobs/stage support for this; condition: "$TEST_DIR = shell"
+
+jobs:
+  include:
+    - stage: deploy
+      env: TEST_DIR=shell
