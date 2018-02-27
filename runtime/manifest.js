@@ -214,8 +214,8 @@ class Manifest {
   findShapeByName(name) {
     return this._find(manifest => manifest._shapes.find(shape => shape.name == name));
   }
-  findRecipeByName(name) {
-    return this._find(manifest => manifest._recipes.find(recipe => recipe.name == name));
+  findRecipesByVerb(verb) {
+    return [...this._findAll(manifest => manifest._recipes.filter(recipe => recipe.name == verb))];
   }
   generateID() {
     return `${this.id}:${this._nextLocalID++}`;

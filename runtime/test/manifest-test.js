@@ -36,7 +36,7 @@ describe('manifest', function() {
     let verify = (manifest) => {
       let recipe = manifest.recipes[0];
       assert(recipe);
-      assert.equal(manifest.findRecipeByName('SomeRecipe'), recipe);
+      assert.equal(manifest.findRecipesByVerb('SomeRecipe')[0], recipe);
       assert.equal(recipe.particles.length, 1);
       assert.equal(recipe.views.length, 2);
       assert.equal(recipe.views[0].fate, 'map');
