@@ -637,7 +637,7 @@ describe('manifest', function() {
       view View0 of [Thing] in EntityList`);
       assert(false);
     } catch (e) {
-      assert.deepEqual(e.message, `Parse error in \'undefined\' line 7.
+      assert.deepEqual(e.message, `Post-parse processing error caused by \'undefined\' line 7.
 Error parsing JSON from 'EntityList' (Unexpected token h in JSON at position 1)'
         view View0 of [Thing] in EntityList
         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^`);
