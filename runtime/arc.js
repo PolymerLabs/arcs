@@ -133,7 +133,7 @@ class Arc {
         importSet.add(this.context.findManifestUrlForHandleId(handle.id));
     }
     for (let url of importSet.values())
-      resources += `import '${url}\n`;
+      resources += `import '${url}'\n`;
 
     for (let handle of this._handlesById.values()) {
       let type = handle.type;
