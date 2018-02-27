@@ -252,11 +252,18 @@ class ExtensionAppShell extends AppShell {
   }
 
   _onData(e, data) {
-    console.log('XXX huzzah!');
-
-    // XXX is this a good spot to split out the data?
     ExtensionAppShell.log('received browserData', data);
     this._setState({browserData: data});
+  }
+
+  _onPlans(e, plans) {
+    super._onPlans(e, plans);
+
+    if (this._state.extensionConfig && this._state.extensionConfig.manifestsNeedLoading &&
+    !this._state.extensionConfig.manifestsLoaded) {
+      // receiving plans is our trigger that the manifests have been loaded.
+      this._state.extensionConfig.manifestsLoaded = true;
+    }
   }
 
   /* Probably not needed
@@ -274,7 +281,8 @@ class ExtensionAppShell extends AppShell {
   _render(props, state) {
     // to delay loading of the arc-host, remove state.hostConfig until all the
     // extension data is loaded
-    if (!state.browserData && state.hostConfig) {
+    if (!state.browserData && state.hostConfig
+        && state.extensionConfig && state.extensionConfig.ready) {
       // no need to save this - it'll be restored.
       delete state.hostConfig;
 
@@ -282,21 +290,78 @@ class ExtensionAppShell extends AppShell {
         state.browserData);
     }
 
-    // if we have manifests, cram them in and short-circuit to yield
-    if (state.browserData
-        && state.browserData.manifests
-        && !state.browserData.manifests.every(
-            manifest => state.manifests.indexOf(manifest)>=0)) {
-      state.manifests.push(...state.browserData.manifests);
-      return super._render(props, state);
+    if (state.browserData) {
+      // If this is our first time through, set some parameters about what
+      // we're loading in this session.
+      if (!state.extensionConfig) {
+        const manifestsNeedLoading = state.browserData.manifests &&
+          !state.browserData.manifests.every(
+            manifest => state.manifests.indexOf(manifest)>=0);
+
+        const extensionConfig = {manifestsNeedLoading};
+
+        this._setState({extensionConfig});
+      }
+
+      if (state.extensionConfig.manifestsNeedLoading
+         && !state.extensionConfig.manifestsLoaded) {
+          let manifests = state.manifests.slice();
+          state.browserData.manifests.forEach(manifest => {
+            if (manifests.indexOf(manifest)<0) {
+              manifests.push(manifest);
+              ExtensionAppShell.log(`appending manifest ${manifest}`);
+            }
+          });
+          state.manifests = manifests;
+      }
+
+      if (
+        (!state.extensionConfig.manifestsNeedLoading || state.extensionConfig.manifestsLoaded)
+          && state.browserData.entities) {
+        // let's load some handle data
+        const agents = document.querySelector('extension-app-shell agents');
+
+        Object.entries(state.browserData.entities).forEach(entry => {
+          const fqTypeName = entry[0];
+          const shortTypeName = (fqTypeName.startsWith('http') && fqTypeName.includes('/'))
+                            ? fqTypeName.split('/').slice(-1)[0] : fqTypeName;
+
+          const dataKey = `browserData${shortTypeName}Data`;
+          const optionsKey = `browserData${shortTypeName}Options`;
+          if (!state[dataKey]) {
+            const arcHandle = document.createElement('arc-handle');
+            arcHandle.arc = '{{arc}}';
+            arcHandle.data = `{{${dataKey}}}`;
+            arcHandle.options = `{{${optionsKey}}}`;
+
+            state[dataKey] = entry[1];
+
+            // XXX does options need schemas (others do) and how would I get
+            // that?
+            // Can I work back from let schema = arc._context.findSchemaByName(shortTypeName); ?
+            state[optionsKey] = {
+              type: entry[0],
+              name: dataKey,
+              tags: [ shortTypeName=='Product' ? '#shortlist' : `#${shortTypeName}` ]
+            };
+
+            agents.appendChild(arcHandle);
+          }
+        });
+
+        state.extensionConfig.ready = true;
+      }
     }
 
-    // need to check to make sure we haven't already run this. Unless it can
+    /* handled above with ready? 
+    // XXX need to check to make sure we haven't already run this. Unless it can
     // be made idempotent?
-    if (state.browserData) {
+    if (state.browserData && state.browserData.entities) {
       ExtensionAppShell.log('resuming now that browserData is present',
         state.browserData);
+      //debugger;
     }
+    */
 
 
 
