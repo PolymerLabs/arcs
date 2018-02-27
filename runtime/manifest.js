@@ -84,6 +84,7 @@ class Manifest {
     this._scheduler = scheduler;
     this._meta = new ManifestMeta();
     this._resources = {};
+    this._handleManifestUrls = new Map();
   }
   get id() {
     if (this._meta.name)
@@ -144,8 +145,10 @@ class Manifest {
     assert(handle._version !== null);
     this._handles.push(handle);
     this._handleTags.set(handle, tags ? tags : []);
+    this._handleManifestUrls.set(handle.id, this.fileName);
     return handle;
   }
+
   _find(manifestFinder) {
     let result = manifestFinder(this);
     if (!result) {
@@ -187,6 +190,9 @@ class Manifest {
   }
   findHandleById(id) {
     return this._find(manifest => manifest._handles.find(handle => handle.id == id));
+  }
+  findManifestUrlForHandleId(id) {
+    return this._find(manifest => manifest._handleManifestUrls.get(id));
   }
   findHandlesByType(type, options={}) {
     let tags = options.tags || [];
@@ -742,8 +748,6 @@ ${e.message}
     let view = await manifest.newHandle(type, name, id, tags);
     view.source = item.source;
     view.description = item.description;
-    // TODO: How to set the version?
-    // view.version = item.version;
     let json;
     let source;
     if (item.origin == 'file') {

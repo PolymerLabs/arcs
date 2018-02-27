@@ -127,6 +127,14 @@ class Arc {
 
     let id = 0;
     let schemaSet = new Set();
+    let importSet = new Set();
+    for (let handle of this._activeRecipe.views) {
+      if (handle.fate == 'map')
+        importSet.add(this.context.findManifestUrlForHandleId(handle.id));
+    }
+    for (let url of importSet.values())
+      resources += `import '${url}\n`;
+
     for (let handle of this._handlesById.values()) {
       let type = handle.type;
       if (type.isSetView)
