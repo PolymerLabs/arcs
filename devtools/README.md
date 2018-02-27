@@ -48,3 +48,10 @@ To see the changes in the DevTools extension you'll need to rerun:
 If you made changes to the manifest, or if you're sure your changes are
 not showing up, you should click the "Reload" button on the `chrome://extensions/` page.
 
+### Errors
+
+`Invocation of form runtime.connect(null, ) doesn't match definition runtime.connect(optional string extensionId, optional object connectInfo)`
+happens when the newly build DevTools extension is opened on the AppShell which
+received the content script from the earlier version of the extension. This is
+harmless and requires a page refresh, so that the content script and the
+extension proper are in sync.
