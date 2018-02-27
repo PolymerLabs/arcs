@@ -143,13 +143,13 @@ class Manifest {
     let handle = await this.storageProviderFactory.construct(id, type, `in-memory://${this.id}`);
     assert(handle._version !== null);
     handle.name = name;
+    this._handleManifestUrls.set(handle.id, this.fileName);
     return this._addHandle(handle, tags);
   }
 
   _addHandle(handle, tags) {
     this._handles.push(handle);
     this._handleTags.set(handle, tags ? tags : []);
-    this._handleManifestUrls.set(handle.id, this.fileName);
     return handle;
   }
 
