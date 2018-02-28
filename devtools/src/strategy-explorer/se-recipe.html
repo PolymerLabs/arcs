@@ -36,10 +36,10 @@ http://polymer.github.io/PATENTS.txt
       valid$='{{recipe.valid}}'
       active$='{{recipe.active}}'
       selected$='{{selected}}'
-      activeParent$='{{activeParent}}'
-      activeAncestor$='{{activeAncestor}}'
-      activeChild$='{{activeChild}}'
-      activeDescendant$='{{activeDescendant}}'
+      selectedParent$='{{selectedParent}}'
+      selectedAncestor$='{{selectedAncestor}}'
+      selectedChild$='{{selectedChild}}'
+      selectedDescendant$='{{selectedDescendant}}'
       terminal$='{{terminal}}'
       resolved$='{{recipe.resolved}}'
       combined$='{{recipe.combined}}'
@@ -123,17 +123,17 @@ http://polymer.github.io/PATENTS.txt
           if (document._selectedBox !== undefined) {
             document._selectedBox.selected = false;
 
-            document._selectedBox.parents.forEach(parent => parent.activeParent = false);
-            document._selectedBox.ancestors.forEach(ancestor => ancestor.activeAncestor = false);
-            document._selectedBox.childrens.forEach(child => child.activeChild = false);
-            document._selectedBox.descendants.forEach(descendant => descendant.activeDescendant = false);
+            document._selectedBox.parents.forEach(parent => parent.selectedParent = false);
+            document._selectedBox.ancestors.forEach(ancestor => ancestor.selectedAncestor = false);
+            document._selectedBox.childrens.forEach(child => child.selectedChild = false);
+            document._selectedBox.descendants.forEach(descendant => descendant.selectedDescendant = false);
             recipeView.unpin();
           }
           this.selected = true;
-          this.parents.forEach(parent => parent.activeParent = true);
-          this.ancestors.forEach(ancestor => ancestor.activeAncestor = true);
-          this.childrens.forEach(child => child.activeChild = true);
-          this.descendants.forEach(descendant => descendant.activeDescendant = true);
+          this.parents.forEach(parent => parent.selectedParent = true);
+          this.ancestors.forEach(ancestor => ancestor.selectedAncestor = true);
+          this.childrens.forEach(child => child.selectedChild = true);
+          this.descendants.forEach(descendant => descendant.selectedDescendant = true);
           document._selectedBox = this;
 
           recipeView.over = this;
