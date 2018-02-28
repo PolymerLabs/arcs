@@ -15,10 +15,12 @@ script: "cd ${TRAVIS_BUILD_DIR}/${TEST_DIR} && npm install && npm test"
 
 env:
   global:
-    # an encrypted 'GITHUB_TOKEN=<token>' for the smalls/arcs repo
-    - secure: "Mzv6KQPjPu7+Ng1NZPgR56tsaZ6U0hdNsiL6/G0E2X5pJkLGtTlST4HYilnZ7JQ9MZsVOi1i3n7nCmDx/IY8N/lQYeh2GPqwoTcc0ZqMqe63qhXXX1yuUFscsxeAbCQMEtJTac5nuth3UU5Qk4Jjv0q16pyghpeieg4S5y60xMrirzOyaIk5Y9AHVqtPp4rdOxtC5exF5m6Pb3OPslzQgbqE7eU9FCMebYFxGX+Rjn8ylR3feBdJ/FsLM41Ttw/roi4p7V497HfoH5CvLcKYLd1dGNaBNbpzdK7ETHqzBR9OUpXRbw3+0FG+QXxv0SLF0puEfOfciqicow8vgN25gZG1F5z4ktmj8OdRriR4lI9lvZqgDBYfh3jht3jbeJZSnONaEtvCM6zCyG7mNuoJCUuCkUs8wT57kZuLS4JUwMJ4YUSr4J5Dd+OX7JTJ3gjmGOYesX8aUvugfDx/qxjEJhu5+8AvJPQm/QQhqNolvDzGhAMzHW7ipnJjMyKrfT+eE02DdzRKXeE+Q7oCPr+t64Co6aWdOYwtW40sTZt2nWQ3vNb+K9V2Q+abyHXBzIZ1LMkHRz14g1J2V/JwdvOIJyq4v8fLHLCWvB79A2o1oMHWgZMSgDYUyUwtIN4bB/BcmoSOcp+9EzVAQkM2VUXcZ0GmMRgOk6p/oCZ9KCaJba4="
+    # an encrypted 'GITHUB_TOKEN=<token>' for the PolymerLabs/arcs repo
+    secure: "qFfvf0YAK5NWkH5fj708Z+1qIHtOFrmNhslB+n14rt5J3fJjY0A/4lbLbhx2jACYME+OU2m66maxh5abEZCF4ZGi4zpJa01IUYesTTa3qdM9kozB2TfFcl0d1xffuGpAh9kPchaadCvx/BU9fYFzkd8CLD5mQWCybwqM+6xpoO/KULDXhlcOPGbzg65xmPJANZH+ldH0NgfVLqofeFUg1j0bke1n+7DLf+Oh4ZiYZavciJjhuYx561TkkSEd1gqQGImEfkmKmhz82E8curx6uJW+kD9WagNbLj4FvEsBETIM7BSE8sei2vOVO42OnzvCej+P98IUelEqBS6sTeUNp79f8cC8n7nSYUJwTpshturBFoIFfcVQNoebdaao6gWpnxhUEnsc36AMl0DpIT0DsA9SxZQRjqhAEZmAWmASJMc5t/jWIjmJrqQxDy80HGJPEhIMTOAZfAiFqwyQwYTvJ0tOTW+jk2P9oriLHwi0Pr88uPGD5HWS6ULPoAutQAWMKCYgb5PoOiB8vbUZT9RTXfdLkHLkpw0ICaj5sam2o32CMLm8KZzfNVLJ/kUgdnkYUpC0vo+PGfguiJX8fvZxB06+niljW9iHteqVuoP1tADQwby4jS2ob3eL7TgCGuGk6gQkvHkLmOzlagKeXu1YZ0ow5vq6C+vSEfKEzIDrhXk="
 
 before_deploy:
+  # Travis pages deploys skips artifacts from .gitignore. We need some of those, so
+  # remove them from .gitignore.
   - cd ${TRAVIS_BUILD_DIR} && sed -i.sedbackup -e 's/^shell\/build$//g' .gitignore
 
 deploy:
@@ -26,14 +28,11 @@ deploy:
   skip-cleanup: true
   github-token: $GITHUB_TOKEN
   keep-history: true
-  repo: smalls/arcs-live-test
+  repo: PolymerLabs/arcs-live
   target_branch: master
   verbose: true
   on:
-    branch: publish-artifacts
-    # For now, only deploy when we've used the 'shell' build target. Once we
-    # have a unified build we can remove this.
-    # try using the jobs/stage support for this; condition: "$TEST_DIR = shell"
+    branch: master
 
 jobs:
   include:
