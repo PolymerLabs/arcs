@@ -12,11 +12,6 @@ defineParticle(({DomParticle, resolver}) => {
 
   let styles = `
 <style>
-  [${host}] > div {
-    max-height: 400px;
-    overflow-x: hidden;
-    overflow-y: scroll;
-  }
   [${host}] [item] {
     display: inline-block;
     width: 96px;
