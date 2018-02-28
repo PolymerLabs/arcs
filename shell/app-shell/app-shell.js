@@ -242,6 +242,8 @@ const template = ArcsUtils.html`
 </app-tools>
 `;
 
+const SHARE = {PRIVATE: 0, SELF: 1, FRIENDS: 2};
+
 class AppShell extends Xen.Base {
   get host() {
     // TODO(sjmiles): override shadow-root generation so that
@@ -362,7 +364,7 @@ class AppShell extends Xen.Base {
     if (state.config && state.key && state.user) {
       let isProfile = state.user.profiles && state.user.profiles[state.key];
       let isShared = state.user.shares && state.user.shares[state.key];
-      state.shareState = isProfile && isShared ? 2 : (isProfile ? 1 : 0);
+      state.shareState = isProfile && isShared ? SHARE.FRIENDS : (isProfile ? SHARE.SELF : SHARE.PRIVATE);
     }
     // label sharing state
     state.shareStateTitle = [`Private Arc`, `Use For My Suggestions`, `Use For Friends' Suggestions`][state.shareState];
@@ -606,15 +608,15 @@ class AppShell extends Xen.Base {
   _onShareState(e, shareState) {
     this._setState({shareState});
     switch (shareState) {
-      case 0:
+      case SHARE.PRIVATE:
         this._onProfileState(e, false);
         this._onSharedState(e, false);
         break;
-      case 1:
+      case SHARE.SELF:
         this._onProfileState(e, true);
         this._onSharedState(e, false);
         break;
-      case 2:
+      case SHARE.FRIENDS:
         this._onProfileState(e, true);
         this._onSharedState(e, true);
         break;
