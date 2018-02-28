@@ -18,8 +18,7 @@ env:
     # an encrypted 'GITHUB_TOKEN=<token>' for the smalls/arcs repo
     - secure: "Mzv6KQPjPu7+Ng1NZPgR56tsaZ6U0hdNsiL6/G0E2X5pJkLGtTlST4HYilnZ7JQ9MZsVOi1i3n7nCmDx/IY8N/lQYeh2GPqwoTcc0ZqMqe63qhXXX1yuUFscsxeAbCQMEtJTac5nuth3UU5Qk4Jjv0q16pyghpeieg4S5y60xMrirzOyaIk5Y9AHVqtPp4rdOxtC5exF5m6Pb3OPslzQgbqE7eU9FCMebYFxGX+Rjn8ylR3feBdJ/FsLM41Ttw/roi4p7V497HfoH5CvLcKYLd1dGNaBNbpzdK7ETHqzBR9OUpXRbw3+0FG+QXxv0SLF0puEfOfciqicow8vgN25gZG1F5z4ktmj8OdRriR4lI9lvZqgDBYfh3jht3jbeJZSnONaEtvCM6zCyG7mNuoJCUuCkUs8wT57kZuLS4JUwMJ4YUSr4J5Dd+OX7JTJ3gjmGOYesX8aUvugfDx/qxjEJhu5+8AvJPQm/QQhqNolvDzGhAMzHW7ipnJjMyKrfT+eE02DdzRKXeE+Q7oCPr+t64Co6aWdOYwtW40sTZt2nWQ3vNb+K9V2Q+abyHXBzIZ1LMkHRz14g1J2V/JwdvOIJyq4v8fLHLCWvB79A2o1oMHWgZMSgDYUyUwtIN4bB/BcmoSOcp+9EzVAQkM2VUXcZ0GmMRgOk6p/oCZ9KCaJba4="
 
-#after_success:
-#  "cd ${TRAVIS_BUILD_DIR} && sed -i .sedbackup -e 's/shell\/build//g' .gitignore"
+after_success: "cd ${TRAVIS_BUILD_DIR} && sed -i .sedbackup -e 's/shell\/build//g' .gitignore"
 
 deploy:
   provider: pages
