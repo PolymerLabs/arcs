@@ -9,9 +9,9 @@
 // This is a list of recipes that are used in our canonical demos. As this file
 // grows the current alphabetized list will stop scaling, and we should
 // consider moving these into separate files or grouping by demo/test.
-import 'Profile/Profile.recipes'
-import 'Events/Events.recipes'
-import 'Restaurants/Restaurants.recipes'
-import 'Messages/Messages.recipes'
 
+import 'Events/Events.recipes'
+import 'Messages/Messages.recipes'
 import 'Products/Products.recipes'
+import 'Profile/Profile.recipes'
+import 'Restaurants/Restaurants.recipes'
