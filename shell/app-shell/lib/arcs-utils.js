@@ -88,13 +88,14 @@ const ArcsUtils = {
     return JSON.parse(JSON.stringify(object));
   },
   async createOrUpdateHandle(arc, remoteHandle, idPrefix) {
-    let {metadata, values} = remoteHandle;
+    const {metadata, values} = remoteHandle;
     // construct type object
-    let type = ArcsUtils.typeFromMetaType(metadata.type);
+    const type = ArcsUtils.typeFromMetaType(metadata.type);
     // construct id
-    let id = ArcsUtils.getContextHandleId(type, metadata.tags, idPrefix);
+    const id = ArcsUtils.getContextHandleId(type, metadata.tags, idPrefix);
+    const tag = ArcsUtils.getContextHandleTag(metadata.tags, idPrefix);
     // find or create a handle in the arc context
-    let handle = await ArcsUtils._requireHandle(arc, type, metadata.name, id, metadata.tags);
+    const handle = await ArcsUtils._requireHandle(arc, type, metadata.name, id, [tag]); //metadata.tags);
     await ArcsUtils.setHandleData(handle, values);
     return handle;
   },
@@ -102,8 +103,14 @@ const ArcsUtils = {
   getContextHandleId(type, tags, prefix) {
     return ''
       + (prefix ? `${prefix}_` : '')
-      + (`${type.toString().replace(' ', '-')}_`).replace(/[\[\]]/g, '!')
+      //+ (`${type.toString().replace(' ', '-')}_`).replace(/[\[\]]/g, '!')
       + ((tags && [...tags].length) ? `${[...tags].sort().join('-').replace(/#/g, '')}` : '')
+      ;
+  },
+  getContextHandleTag(tags, prefix) {
+    return '#'
+      + (prefix ? `${prefix}_` : '')
+      + ((tags && [...tags].length) ? `${[...tags].sort().join('-').replace(/#/g, '')}` : 'tag')
       ;
   },
   _getHandleDescription(name, tags, user, owner) {
