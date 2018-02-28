@@ -11,33 +11,30 @@ import 'FavoriteFoodPicker.manifest'
 import '../Places/AddressForm.manifest'
 
 recipe
+  create #address as address
   create #avatar as avatar
+  create #friends as friends
+  create #favorite as food
   use #user as person
+  use #identities as people
+  map #BOXED_avatar as avatars
   AvatarPicker
     avatar = avatar
     person <- person
-
-  create #friends as friends
-  use #identities as people
-  map #friends_avatar as avatars
   FriendsPicker
     person <- person
     friends = friends
-    people <- people
     avatars <- avatars
-
-  create #favorite as food
+    people <- people
   FavoriteFoodPicker
     food = food
     person <- person
-    
-  create #address as address
   AddressForm
     address = address
 
-recipe
-  use #user as person
-  create #favorite as food
-  FavoriteFoodPicker
-    food = food
-    person <- person
+//recipe
+//  use #user as person
+//  create #favorite as food
+//  FavoriteFoodPicker
+//    food = food
+//    person <- person
