@@ -1,0 +1,55 @@
+<dom-module id="se-shared-styles">
+  <template>
+    <style>
+      #recipe-box {
+        border: 1px solid black;
+        box-sizing: border-box;
+      }
+
+      #recipe-box:not([valid]) {
+        border: 1px solid fuchsia;
+      }
+
+      #recipe-box[active] {
+        background-color: lightyellow;
+      }
+
+      #recipe-box[selected] {
+        border: 2px solid green;
+        background: #afa;
+      }
+
+      #recipe-box[activeAncestor] {
+        border: 1px solid blue;
+        background: #ccf;
+      }
+
+      #recipe-box[activeParent] {
+        border: 2px solid blue;
+        background: #aaf;
+      }
+
+      #recipe-box[activeDescendant] {
+        border: 1px solid purple;
+        background: #fcf;
+      }
+
+      #recipe-box[activeChild] {
+        border: 2px solid purple;
+        background: #faf;
+      }
+
+      #recipe-box[terminal] {
+        border-radius: 20px;
+      }
+
+      #recipe-box:not([resolved]) {
+        border-style: dashed;
+      }
+
+      #recipe-box[combined] {
+        background-color: lightgrey;
+      }
+    </style>
+  </template>
+</dom-module>

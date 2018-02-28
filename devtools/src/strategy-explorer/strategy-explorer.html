@@ -12,6 +12,7 @@ http://polymer.github.io/PATENTS.txt
 
 <link rel="import" href="se-arc-view.html"></link>
 <link rel="import" href="se-explorer.html"></link>
+<link rel="import" href="se-legend.html"></link>
 <link rel="import" href="se-recipe-view.html"></link>
 <link rel="import" href="../arcs-shared.html">
 
@@ -32,6 +33,8 @@ http://polymer.github.io/PATENTS.txt
       aside {
         background-color: var(--light-gray);
         overflow: scroll;
+        width: 200px; /* Initial width before resizing */
+        flex-shrink: 0;
       }
       aside > * {
         /* Weird CSS, but padding-right causes issues with resizable-panels */
@@ -45,6 +48,7 @@ http://polymer.github.io/PATENTS.txt
       <aside>
         <se-recipe-view></se-recipe-view>
         <se-arc-view></se-arc-view>
+        <se-legend></se-legend>
       </aside>
     </resizable-panels>
   </template>
