@@ -19,9 +19,16 @@ http://polymer.github.io/PATENTS.txt
       .legend {
         background: white;
         border: 1px solid var(--mid-gray);
+        padding-top: 5px;
+        overflow: hidden;
       }
-      .legend > div {
-        margin: 5px;
+      .column {
+        display: inline-block;
+        min-width: max-content;
+        width: 45%;
+      }
+      .column > div {
+        margin: 0 5px 5px;
         line-height: 25px;
       }
       #recipe-box {
@@ -33,16 +40,20 @@ http://polymer.github.io/PATENTS.txt
       }
     </style>
     <div class="legend">
-      <div><div id='recipe-box' resolved></div> Not Valid</div>
-      <div><div id='recipe-box' valid></div> Not Resolved</div>
-      <div><div id='recipe-box' valid resolved active></div> Active</div>
-      <div><div id='recipe-box' valid resolved selected></div> Selected</div>
-      <div><div id='recipe-box' valid resolved activeAncestor></div> Active Ancestor</div>
-      <div><div id='recipe-box' valid resolved activeParent></div> Active Parent</div>
-      <div><div id='recipe-box' valid resolved activeDescendant></div> Active Descendant</div>
-      <div><div id='recipe-box' valid resolved activeChild></div> Active Child</div>
-      <div><div id='recipe-box' valid resolved terminal></div> Terminal</div>
-      <div><div id='recipe-box' valid resolved combined></div> Combined</div>
+      <div class="column">
+        <div><div id='recipe-box' resolved></div> Not Valid</div>
+        <div><div id='recipe-box' valid></div> Not Resolved</div>
+        <div><div id='recipe-box' valid resolved combined></div> Combined</div>
+        <div><div id='recipe-box' valid resolved active></div> Active</div>
+        <div><div id='recipe-box' valid resolved terminal></div> Terminal</div>
+      </div>
+      <div class="column">
+        <div><div id='recipe-box' valid resolved selected></div> Selected</div>
+        <div><div id='recipe-box' valid resolved selectedAncestor></div> Selected Ancestor</div>
+        <div><div id='recipe-box' valid resolved selectedParent></div> Selected Parent</div>
+        <div><div id='recipe-box' valid resolved selectedDescendant></div> Selected Descendant</div>
+        <div><div id='recipe-box' valid resolved selectedChild></div> Selected Child</div>
+      </div>
     </div>
   </template>
   <script>
