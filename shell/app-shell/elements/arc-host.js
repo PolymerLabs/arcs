@@ -152,6 +152,7 @@ class ArcHost extends Xen.Base {
     }
   }
   async _beginPlanning(state) {
+    ArcHost.log(`planning...`);
     let time = Date.now();
     let plans;
     while (state.invalid) {
