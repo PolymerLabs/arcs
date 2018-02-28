@@ -7,69 +7,19 @@ subject to an additional IP rights grant found at
 http://polymer.github.io/PATENTS.txt
 -->
 <link rel="import" href="../../bower_components/polymer/polymer.html">
+<link rel="import" href="se-shared.html">
 
 <dom-module id='se-recipe'>
   <template>
-    <style>
+    <style include='se-shared-styles'>
       #recipe-box {
-        border: 1px solid black;
         white-space: pre;
         font-family: consolas;
         font-size: 10px;
         margin: 5px;
         padding: 5px;
-        width: 30px;
-        height: 30px;
-      }
-
-      #recipe-box:not([valid]) {
-        border: 1px solid fuchsia;
-        margin: 4px;
-      }
-
-      #recipe-box[active] {
-        margin: 4px;
-        background-color: lightyellow;
-      }
-
-      #recipe-box[selected] {
-        border: 2px solid green;
-        margin: 4px;
-        background: #afa;
-      }
-
-      #recipe-box[activeAncestor] {
-        border: 1px solid blue;
-        background: #ccf;
-      }
-
-      #recipe-box[activeParent] {
-        border: 2px solid blue;
-        margin: 4px;
-        background: #aaf;
-      }
-
-      #recipe-box[activeDescendant] {
-        border: 1px solid purple;
-        background: #fcf;
-      }
-
-      #recipe-box[activeChild] {
-        border: 2px solid purple;
-        margin: 4px;
-        background: #faf;
-      }
-
-      #recipe-box[terminal] {
-        border-radius: 20px;
-      }
-
-      #recipe-box:not([resolved]) {
-        border-style: dashed;
-      }
-
-      #recipe-box[combined] {
-        background-color: lightgrey;
+        width: 40px;
+        height: 40px;
       }
 
       #hash {

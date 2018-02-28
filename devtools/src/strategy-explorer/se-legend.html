@@ -1,0 +1,51 @@
+<!--
+Copyright (c) 2017 Google Inc. All rights reserved.
+This code may only be used under the BSD style license found at
+http://polymer.github.io/LICENSE.txt
+Code distributed by Google as part of this project is also
+subject to an additional IP rights grant found at
+http://polymer.github.io/PATENTS.txt
+-->
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+<link rel="import" href="../arcs-shared.html">
+<link rel="import" href="se-shared.html">
+
+<dom-module id='se-legend'>
+  <template>
+    <style include='shared-styles se-shared-styles'>
+      :host {
+        display: block;
+      }
+      .legend {
+        background: white;
+        border: 1px solid var(--mid-gray);
+      }
+      .legend > div {
+        margin: 5px;
+        line-height: 25px;
+      }
+      #recipe-box {
+        width:25px;
+        height: 25px;
+        display: inline-block;
+        vertical-align: middle;
+        margin-right: 3px;
+      }
+    </style>
+    <div class="legend">
+      <div><div id='recipe-box' resolved></div> Not Valid</div>
+      <div><div id='recipe-box' valid></div> Not Resolved</div>
+      <div><div id='recipe-box' valid resolved active></div> Active</div>
+      <div><div id='recipe-box' valid resolved selected></div> Selected</div>
+      <div><div id='recipe-box' valid resolved activeAncestor></div> Active Ancestor</div>
+      <div><div id='recipe-box' valid resolved activeParent></div> Active Parent</div>
+      <div><div id='recipe-box' valid resolved activeDescendant></div> Active Descendant</div>
+      <div><div id='recipe-box' valid resolved activeChild></div> Active Child</div>
+      <div><div id='recipe-box' valid resolved terminal></div> Terminal</div>
+      <div><div id='recipe-box' valid resolved combined></div> Combined</div>
+    </div>
+  </template>
+  <script>
+    Polymer({is: 'se-legend'});
+  </script>
+</dom-module>
