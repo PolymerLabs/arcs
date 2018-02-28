@@ -19,6 +19,7 @@ import InitPopulation from './strategies/init-population.js';
 import MapConsumedSlots from './strategies/map-consumed-slots.js';
 import MapRemoteSlots from './strategies/map-remote-slots.js';
 import MatchParticleByVerb from './strategies/match-particle-by-verb.js';
+import MatchRecipeByVerb from './strategies/match-recipe-by-verb.js';
 import NameUnnamedConnections from './strategies/name-unnamed-connections.js';
 import AddUseViews from './strategies/add-use-views.js';
 import CreateDescriptionHandle from './strategies/create-description-handle.js';
@@ -83,6 +84,7 @@ class Planner {
       new CopyRemoteViews(arc),
       new MapRemoteSlots(arc),
       new MatchParticleByVerb(arc),
+      new MatchRecipeByVerb(arc),
       new NameUnnamedConnections(arc),
       new AddUseViews(),
       new CreateDescriptionHandle(),

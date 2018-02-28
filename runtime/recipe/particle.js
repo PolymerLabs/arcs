@@ -207,6 +207,10 @@ class Particle {
     return slotConn;
   }
 
+  remove() {
+    this.recipe.removeParticle(this);
+  }
+
   toString(nameMap, options) {
     let result = [];
     // TODO: we need at least name or tags
