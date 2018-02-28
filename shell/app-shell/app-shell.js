@@ -22,9 +22,8 @@ import './elements/persistent-handles.js';
 import './elements/persistent-manifests.js';
 import './elements/persistent-user.js';
 import './elements/persistent-users.js';
-import './elements/remote-friends-profile-handles.js';
 import './elements/remote-profile-handles.js';
-import './elements/remote-shared-handles.js';
+import './elements/remote-friends-shared-handles.js';
 import './elements/remote-visited-arcs.js';
 
 // tools
@@ -69,10 +68,10 @@ const template = ArcsUtils.html`
     height: 56px;
   }
   .material-icons, toolbar i {
-    font-family: 'Material Icons';
+    font-family: "Material Icons";
     font-size: 24px;
     font-style: normal;
-    -webkit-font-feature-settings: 'liga';
+    -webkit-font-feature-settings: "liga";
     -webkit-font-smoothing: antialiased;
     vertical-align: middle;
     cursor: pointer;
@@ -173,69 +172,75 @@ const template = ArcsUtils.html`
   }
 </style>
 
-<app-main launcher$='{{launcher}}' style='{{shellThemeStyle}}'>
+<app-main launcher$="{{launcher}}" style="{{shellThemeStyle}}">
   <agents>
-    <!--<arc-auth on-auth='_onAuth'></arc-auth>-->
-    <arc-config rootpath='{{cdnPath}}' on-config='_onConfig'></arc-config>
-    <persistent-arc key='{{suggestKey}}' on-key='_onKey' metadata='{{metadata}}' on-metadata='_onMetadata'></persistent-arc>
-    <persistent-users on-users='_onUsers'></persistent-users>
-    <persistent-user id='{{userId}}' user='{{user}}' key='{{key}}' on-user='_onUser'></persistent-user>
-    <persistent-manifests manifests='{{persistedManifests}}' on-manifests='_onManifests' exclusions='{{exclusions}}' on-exclusions='_onExclusions'></persistent-manifests>
-    <persistent-handles arc='{{arc}}' key='{{key}}'></persistent-handles>
-    <remote-profile-handles arc='{{arc}}' user='{{user}}' on-profile='_onProfile'></remote-profile-handles>
-    <remote-shared-handles arc='{{arc}}' user='{{user}}' friends='{{friends}}'></remote-shared-handles>
-    <remote-friends-profiles-handles arc='{{arc}}' friends='{{friends}}' user='{{user}}'></remote-friends-profiles-handles>
-    <arc-handle arc='{{arc}}' data='{{arcsHandleData}}' options='{{arcsHandleOptions}}' on-change='_onArcsHandleChange'></arc-handle>
-    <arc-handle arc='{{arc}}' data='{{identityHandleData}}' options='{{identityHandleOptions}}'></arc-handle>
-    <arc-handle arc='{{arc}}' data='{{identitiesHandleData}}' options='{{identitiesHandleOptions}}'></arc-handle>
-    <arc-handle arc='{{arc}}' data='{{themeData}}' options='{{themeHandleOptions}}' on-change='_onShellThemeChange'></arc-handle>
-    <arc-steps plans='{{plans}}' plan='{{plan}}' steps='{{steps}}' step='{{step}}' on-step='_onStep' on-steps='_onSteps'></arc-steps>
+    <!--<arc-auth on-auth="_onAuth"></arc-auth>-->
+    <arc-config rootpath="{{cdnPath}}" on-config="_onConfig"></arc-config>
+    <persistent-arc key="{{suggestKey}}" on-key="_onKey" metadata="{{metadata}}" on-metadata="_onMetadata"></persistent-arc>
+    <persistent-users on-users="_onUsers"></persistent-users>
+    <persistent-user id="{{userId}}" user="{{user}}" key="{{key}}" on-user="_onUser"></persistent-user>
+    <persistent-manifests manifests="{{manifests}}" on-manifests="_onManifests" exclusions="{{exclusions}}" on-exclusions="_onExclusions"></persistent-manifests>
+    <persistent-handles arc="{{arc}}" key="{{key}}"></persistent-handles>
+    <remote-profile-handles arc="{{arc}}" user="{{user}}" on-profile="_onProfile"></remote-profile-handles>
+    <!--<remote-shared-handles arc="{{arc}}" user="{{user}}" friends="{{friends}}"></remote-shared-handles>-->
+    <!--<remote-friends-profiles-handles arc="{{arc}}" friends="{{friends}}" user="{{user}}"></remote-friends-profiles-handles>-->
+    <remote-friends-shared-handles arc="{{arc}}" friends="{{friends}}" user="{{user}}"></remote-friends-shared-handles>-->
+    <arc-steps plans="{{plans}}" plan="{{plan}}" steps="{{steps}}" step="{{step}}" on-step="_onStep" on-steps="_onSteps"></arc-steps>
     <!-- only for launcher -->
-    <remote-visited-arcs user='{{launcherUser}}' arcs='{{visitedArcs}}' on-arcs='_onVisitedArcs'></remote-visited-arcs>
+    <remote-visited-arcs user="{{launcherUser}}" arcs="{{visitedArcs}}" on-arcs="_onVisitedArcs"></remote-visited-arcs>
   </agents>
+
+  <handles>
+    <arc-handle arc="{{arc}}" data="{{arcsHandleData}}" options="{{arcsHandleOptions}}" on-change="_onArcsHandleChange"></arc-handle>
+    <arc-handle arc="{{arc}}" data="{{identityHandleData}}" options="{{identityHandleOptions}}"></arc-handle>
+    <arc-handle arc="{{arc}}" data="{{identitiesHandleData}}" options="{{identitiesHandleOptions}}"></arc-handle>
+    <arc-handle arc="{{arc}}" data="{{themeData}}" options="{{themeHandleOptions}}" on-change="_onShellThemeChange"></arc-handle>
+    <!-- make sure #BOXED_avatar exists, even if there are no avatars to box -->
+    <arc-handle arc="{{arc}}" options="{{boxedAvatarHandleOptions}}"></arc-handle>
+  </handles>
 
   <!-- toolbar is here only to reserve space in the static flow, the app-toolbar is position-fixed -->
   <toolbar>
-    <app-toolbar style='{{shellThemeStyle}}'>
-      <img title='Arcs' on-click='_onNavClick' src='../logo_24x24.svg' style='cursor: pointer;'>
-      <span arc-title style='{{titleStatic}}' on-click='_onStartEditingTitle' unsafe-html='{{description}}'></span>
-      <span avatar style='{{avatarStyle}}'></span>
-      <select on-change='_onUserSelected'>{{usersOptions}}</select>
+    <app-toolbar style="{{shellThemeStyle}}">
+      <img title="Arcs" on-click="_onNavClick" src="../logo_24x24.svg" style="cursor: pointer;">
+      <span arc-title style="{{titleStatic}}" on-click="_onStartEditingTitle" unsafe-html="{{description}}"></span>
+      <span avatar style="{{avatarStyle}}"></span>
+      <select on-change="_onUserSelected">{{usersOptions}}</select>
       <template users-options>
-        <option value='{{value}}' selected='{{selected}}'>{{user}}</option>
+        <option value="{{value}}" selected="{{selected}}">{{user}}</option>
       </template>
       <div buttons>
-        <toggle-button title='{{shareStateTitle}}' state='{{shareState}}' on-state='_onShareState' icons='share person people'></toggle-button>
-        <toggle-button title='Cast' on-state='_onCastState' icons='cast cast_connected'></toggle-button>
-        <a href='{{launcherUrl}}'><i>apps</i></a>
+        <toggle-button title="{{shareStateTitle}}" state="{{shareState}}" on-state="_onShareState" icons="share person people"></toggle-button>
+        <toggle-button title="Cast" on-state="_onCastState" icons="cast cast_connected"></toggle-button>
+        <a href="{{launcherUrl}}"><i>apps</i></a>
       </div>
     </app-toolbar>
   </toolbar>
 
-  <arc-host config='{{hostConfig}}' manifests='{{manifests}}' exclusions='{{exclusions}}' plans='{{plans}}' plan='{{plan}}' suggestions='{{suggestions}}' on-arc='_onArc' on-plans='_onPlans' on-applied='_onApplied'>
-    <div slotid='toproot'></div>
-    <div slotid='root'></div>
-    <div slotid='modal'></div>
+  <arc-host config="{{hostConfig}}" manifests="{{manifests}}" exclusions="{{exclusions}}" plans="{{plans}}" plan="{{plan}}" suggestions="{{suggestions}}" on-arc="_onArc" on-plans="_onPlans" on-applied="_onApplied">
+    <div slotid="toproot"></div>
+    <div slotid="root"></div>
+    <div slotid="modal"></div>
   </arc-host>
 
   <footer>
-    <arc-footer dots='{{dots}}' on-suggest='_onStep' on-search='_onSearch'>
-      <div slotid='suggestions'></div>
+    <arc-footer dots="{{dots}}" on-suggest="_onStep" on-search="_onSearch">
+      <div slotid="suggestions"></div>
     </arc-footer>
   </footer>
 </app-main>
 
 <app-tools>
   <simple-tabs>
-    <div tab='Manifests'>
-      <local-data manifest='{{manifest}}' on-update-manifest='_onUpdateManifest' on-promote-manifest='_onPromoteManifest'></local-data>
-      <manifest-data manifests='{{manifests}}' exclusions='{{exclusions}}' on-exclusions='_onExclusions'></manifest-data>
+    <div tab="Manifests">
+      <local-data manifest="{{manifest}}" on-update-manifest="_onUpdateManifest" on-promote-manifest="_onPromoteManifest"></local-data>
+      <manifest-data manifests="{{manifests}}" exclusions="{{exclusions}}" on-exclusions="_onExclusions"></manifest-data>
     </div>
-    <div tab='Handle Explorer'>
-      <handle-explorer arc='{{arc}}'></handle-explorer>
+    <div tab="Handle Explorer">
+      <handle-explorer arc="{{arc}}"></handle-explorer>
     </div>
   </simple-tabs>
-  <shell-particles arc='{{arc}}'></shell-particles>
+  <shell-particles arc="{{arc}}"></shell-particles>
 </app-tools>
 `;
 
@@ -285,6 +290,14 @@ class AppShell extends Xen.Base {
         name: 'Identities',
         tags: ['#identities']
       },
+      boxedAvatarHandleOptions: {
+        schemas: `${typesPath}/identity-types.manifest`,
+        type: '[Avatar]',
+        name: 'synth-avatars',
+        tags: ['#BOXED_avatar'],
+        id: 'BOXED_avatar',
+        asContext: true
+      },
       auth: true,
       shareState: 0
     };
@@ -296,7 +309,6 @@ class AppShell extends Xen.Base {
   _update(props, state, lastProps, lastState) {
     // for debugging
     window.app = this;
-    //window.state = state;
     window.arc = state.arc;
     window.user = state.user;
     window.users = state.users;
@@ -348,13 +360,14 @@ class AppShell extends Xen.Base {
     if (state.user) {
       state.userName = state.user.name;
     }
+    // calculate sharing state
     if (state.config && state.key && state.user) {
       let isProfile = state.user.profiles && state.user.profiles[state.key];
       let isShared = state.user.shares && state.user.shares[state.key];
-      // unpack button states
-      state.profileState = isProfile ? 1 : 0;
-      state.sharedState = isShared ? 1 : 0;
+      state.shareState = isProfile && isShared ? 2 : (isProfile ? 1 : 0);
     }
+    // label sharing state
+    state.shareStateTitle = [`Private Arc`, `Use For My Suggestions`, `Use For Friends' Suggestions`][state.shareState];
     // enable remote-visited-arcs if running as launcher
     if (state.config && state.config.launcher) {
       state.launcherUser = state.user;
@@ -373,7 +386,6 @@ class AppShell extends Xen.Base {
       const url = state.arc._loader._resolve(state.avatar.rawData.url);
       state.avatarStyle = `background: url('${url}') center no-repeat; background-size: cover;`;
     }
-    state.shareStateTitle = [`Private Arc`, `Use For My Suggestions`, `Use For Friends' Suggestions`][state.shareState];
     // must have `auth` before doing anything else
     return state.auth ? state : null;
   }
@@ -560,21 +572,20 @@ class AppShell extends Xen.Base {
     AppShell.log('onArcsHandle: ', this._state.visitedArcs);
   }
   async _onProfile(e, profile) {
-    let data;
     switch (profile.id) {
-      case 'PROFILE_Avatar_avatar':
-      case 'PROFILE_!Person!_friends':
-        data = await ArcsUtils.getHandleData(profile);
-        AppShell.log(profile.id, data);
+      case 'PROFILE_avatar':
+      case 'PROFILE_friends':
         break;
       default:
         return;
     }
+    const data = await ArcsUtils.getHandleData(profile);
+    AppShell.log(profile.id, data);
     switch (profile.id) {
-      case 'PROFILE_Avatar_avatar':
+      case 'PROFILE_avatar':
         this._setIfDirty({avatar: data});
         break;
-      case 'PROFILE_!Person!_friends':
+      case 'PROFILE_friends':
         this._setIfDirty({friends: data});
         break;
     }
