@@ -216,7 +216,8 @@ ${this.activeRecipe.toString()}`;
       slotComposer,
       pecFactory,
       loader,
-      storageProviderFactory: manifest._storageProviderFactory
+      storageProviderFactory: manifest._storageProviderFactory,
+      context: manifest
     });
     // TODO: pass tags through too
     manifest.views.forEach(view => arc._registerHandle(view, []));
