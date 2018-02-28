@@ -52,6 +52,12 @@ class Recipe {
     return particle;
   }
 
+  removeParticle(particle) {
+    let idx = this._particles.indexOf(particle);
+    assert(idx > -1);
+    this._particles = this._particles.splice(idx, 1);
+  }
+
   newHandle() {
     let handle = new Handle(this);
     this._handles.push(handle);
