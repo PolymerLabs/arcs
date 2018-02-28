@@ -52,12 +52,21 @@
   }
 
   function connectViaWebSocket() {
-    let ws = new WebSocket('ws://localhost:8787');
-    ws.onerror = e => console.log('No NodeJS connection found.');
-    ws.onopen = e => {
-      ws.onmessage = msg => queueOrFire(JSON.parse(msg.data));
-      ws.send('init');
-    };
+    let ws;
+
+    let retriesLeft = 5;
+    (function createWebSocket() {
+      ws = new WebSocket('ws://localhost:8787');
+      ws.onopen = e => {
+        console.log(`WebSocket connection established.`);
+        ws.onmessage = msg => queueOrFire(JSON.parse(msg.data));
+        ws.send('init');
+      };
+      ws.onerror = e => {
+        console.log(`No WebSocket connection found, ${retriesLeft} retries left.`);
+        if (retriesLeft--) setTimeout(createWebSocket, 300);
+      };
+    })();
     return message => {
       // TODO: Add the message itself and figure out how this will work
       // when we implement first DevTools -> NodeJS command.
