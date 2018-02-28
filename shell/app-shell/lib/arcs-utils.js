@@ -95,6 +95,7 @@ const ArcsUtils = {
     const id = ArcsUtils.getContextHandleId(type, metadata.tags, idPrefix);
     const tag = ArcsUtils.getContextHandleTag(metadata.tags, idPrefix);
     // find or create a handle in the arc context
+    // TODO(sjmiles): crafting a tag now instead of propagation original tags, correct?
     const handle = await ArcsUtils._requireHandle(arc, type, metadata.name, id, [tag]); //metadata.tags);
     await ArcsUtils.setHandleData(handle, values);
     return handle;
@@ -103,6 +104,10 @@ const ArcsUtils = {
   getContextHandleId(type, tags, prefix) {
     return ''
       + (prefix ? `${prefix}_` : '')
+      // TODO(sjmiles): formats for these ids and tags are worthy of bikeshedding,
+      // so I'm leaving this here as it's an unsettled question.
+      // For now, remove the type information from the id string, because it doesn't
+      // seem worth the ROI and it's less human-readable.
       //+ (`${type.toString().replace(' ', '-')}_`).replace(/[\[\]]/g, '!')
       + ((tags && [...tags].length) ? `${[...tags].sort().join('-').replace(/#/g, '')}` : '')
       ;
