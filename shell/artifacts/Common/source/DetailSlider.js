@@ -51,12 +51,17 @@ defineParticle(({DomParticle, resolver, html, log}) => {
     background-color: transparent;
     border: none;
     position: absolute;
-    right: 24px;
+    left: 24px;
     top: 26px;
+    border-radius: 100%;
+    padding: 8px;
+  }
+  [${host}] > [dialog] > [back-button]:active {
+    background-color: #b0e3ff;
   }
 </style>
 
-<div ${host} modal open$="{{open}}" on-click="onBack">
+<div ${host} modal open$="{{open}}">
   <div scrim></div>
   <div dialog>
     <i back-button class="material-icons" on-click="onBack">close</i>
