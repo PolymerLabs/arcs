@@ -24,6 +24,12 @@ export default class MatchRecipeByVerb extends Strategy {
           return;
         }
 
+        if (particle.allConnections().length > 0)
+          return;
+
+        if (Object.keys(particle.consumedSlotConnections).length > 0)
+          return;
+
         let recipes = arc.context.findRecipesByVerb(particle.primaryVerb);
 
         return recipes.map(recipe => {
