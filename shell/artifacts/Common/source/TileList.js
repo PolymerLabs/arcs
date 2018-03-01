@@ -42,7 +42,7 @@ defineParticle(({DomParticle, html, log}) => {
 <template tiled-items>
   <div card>
     <div slotid="action" subid="{{id}}"></div>
-    <div slotid="item" subid="{{id}}" key="{{id}}" on-click="_onSelect"></div>
+    <div slotid="tile" subid="{{id}}" key="{{id}}" on-click="_onSelect"></div>
   </div>
 </template>
 
