@@ -8,9 +8,8 @@
 'use strict';
 
 class TypeVariable {
-  constructor(name, id) {
+  constructor(name) {
     this.name = name;
-    this.id = id;
     this.resolution = null;
   }
 
