@@ -19,6 +19,7 @@ import ConvertConstraintsToConnections from '../strategies/convert-constraints-t
 import InitPopulation from '../strategies/init-population.js';
 import MapRemoteSlots from '../strategies/map-remote-slots.js';
 import MatchParticleByVerb from '../strategies/match-particle-by-verb.js';
+import MatchRecipeByVerb from '../strategies/match-recipe-by-verb.js';
 import SearchTokensToParticles from '../strategies/search-tokens-to-particles.js';
 import GroupHandleConnections from '../strategies/group-handle-connections.js';
 import CombinedStrategy from '../strategies/combined-strategy.js';
@@ -695,6 +696,37 @@ describe('SearchTokensToParticles', function() {
                       ['GalaxyFlyer', 'Rester', 'StarJumper']], results.map(r => r.result.particles.map(p => p.name).sort()));
     assert.deepEqual(['fly', 'jump', 'rester'], results[0].result.search.resolvedTokens);
     assert.deepEqual(['and', 'or', 'or', 'run'], results[0].result.search.unresolvedTokens);
+  });
+});
+
+describe('MatchRecipeByVerb', function() {
+  it('removes a particle and adds a recipe', async () => {
+    let manifest = await Manifest.parse(`
+      recipe
+        particle can jump
+      
+      schema Feet
+      schema Energy
+
+      particle JumpingBoots in 'A.js'
+        JumpingBoots(in Feet f, in Energy e)
+      particle FootFactory in 'B.js'
+        FootFactory(out Feet f)
+      particle NuclearReactor in 'C.js'
+        NuclearReactor(out Energy e)
+
+      recipe jump
+        JumpingBoots.f <- FootFactory.f
+        JumpingBoots.e <- NuclearReactor.e         
+    `);
+
+    let arc = createTestArc('test-plan-arc', manifest, 'dom');
+    let strategizer = {generated: [{result: manifest.recipes[0], score: 1}]};
+    let mrv = new MatchRecipeByVerb(arc);
+    let {results} = await mrv.generate(strategizer);
+    assert.equal(results.length, 1);
+    assert.equal(results[0].result.particles.length, 0);
+    assert.deepEqual(results[0].result.toString(), "recipe\n  JumpingBoots.e -> NuclearReactor.e\n  JumpingBoots.f -> FootFactory.f");
   });
 });
 
