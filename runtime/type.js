@@ -152,8 +152,9 @@ class Type {
 
   resolvedType() {
     if (this.isSetView) {
-      let resolvedPrimitiveType = this.primitiveType().resolvedType();
-      return resolvedPrimitiveType ? resolvedPrimitiveType.setViewOf() : this;
+      let primitiveType = this.primitiveType();
+      let resolvedPrimitiveType = primitiveType.resolvedType();
+      return primitiveType !== resolvedPrimitiveType ? resolvedPrimitiveType.setViewOf() : this;
     }
     if (this.isVariable) {
       let resolution = this.variable.resolution;
@@ -172,6 +173,9 @@ class Type {
   }
 
   toLiteral() {
+    if (this.isVariable && this.isResolved()) {
+      return this.resolvedType().toLiteral();
+    }
     if (this.data.toLiteral)
       return {tag: this.tag, data: this.data.toLiteral()};
     return this;
