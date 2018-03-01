@@ -110,17 +110,14 @@ class HandleConnection {
     if (this.type && this.particle && this.particle.spec) {
       let connectionSpec = this.particle.spec.connectionMap.get(this.name);
       if (connectionSpec) {
-        // TODO: this shouldn't be a direct equals comparison
-        if (!this.rawType.equals(connectionSpec.type)) {
-          let specType = {type: connectionSpec.type, direction: this.direction};
-          let rawType = {type: this.rawType};
-          let result = TypeChecker.compareTypes(rawType, specType);
-          if (!result.valid) {
-            if (options && options.errors) {
-              options.errors.set(this, `Type '${this.rawType} for handle connection '${this.particle.name}::${this.name}' doesn't match particle spec's type '${connectionSpec.type}'`);
-            }
-            return false;
+        let specType = {type: connectionSpec.type, direction: this.direction};
+        let rawType = {type: this.rawType};
+        let result = TypeChecker.compareTypes(rawType, specType, false);
+        if (!result.valid) {
+          if (options && options.errors) {
+            options.errors.set(this, `Type '${this.rawType} for handle connection '${this.particle.name}::${this.name}' doesn't match particle spec's type '${connectionSpec.type}'`);
           }
+          return false;
         }
         if (this.direction != connectionSpec.direction) {
           if (options && options.errors) {

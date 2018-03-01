@@ -978,7 +978,7 @@ describe('Type variable resolution', function() {
     let arc = createTestArc('test-plan-arc', manifest, 'dom');
     let planner = new Planner();
     planner.init(arc);
-    return planner.plan(1000);
+    return planner.plan(Infinity);
   };
   let verifyResolvedPlan = async (manifestStr) => {
     let plans = await loadAndPlan(manifestStr);

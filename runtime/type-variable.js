@@ -7,33 +7,82 @@
 // http://polymer.github.io/PATENTS.txt
 'use strict';
 
+import Type from './type.js';
+import assert from '../platform/assert-web.js';
+
 class TypeVariable {
-  constructor(name) {
+  constructor(name, constraint) {
+    assert(typeof name == 'string');
+    assert(constraint == null || constraint instanceof Type);
     this.name = name;
-    this.resolution = null;
+    this._constraint = constraint;
+    this._resolution = null;
   }
 
-  // this shouldn't be called on a 
-  // resolved TypeVariable.. how do we
-  // pass a resolution across the PEC?
+  static mergeConstraints(var1, var2) {
+    let constraint1 = var1.constraint;
+    let constraint2 = var2.constraint;
+
+    if (constraint1 && constraint2) {
+      assert(false, 'implement merge!!!');
+    }
+    return constraint1 || constraint2;
+  }
+
+  mergeFrom(other) {
+    this.constraint = TypeVariable.mergeConstraints(this, other);
+  }
+
+  get resolution() {
+    if (this._resolution) {
+      return this._resolution.resolvedType();
+    }
+    return null;
+  }
+
+  set resolution(value) {
+    assert(value instanceof Type);
+    assert(!this._resolution);
+    this._resolution = value;
+    this._constraint = null;
+  }
+
+  get constraint() {
+    if (this._resolution) {
+      assert(!this._constraint);
+      if (this._resolution.isVariable) {
+        return this._resolution.variable.constraint;
+      }
+      return null;
+    }
+    return this._constraint;
+  }
+
+  set constraint(value) {
+    assert(!this._resolution);
+    this._constraint = value;
+  }
+
   toLiteral() {
+    // this shouldn't be called on a 
+    // resolved TypeVariable.. how do we
+    // pass a resolution across the PEC?
+    // TODO: figure that out
     assert(this.resolution == null);
-    return this;
+    return {
+      name: this.name,
+      constraint: this._constraint && this._constraint.toLiteral(),
+    };
   }
 
   static fromLiteral(data) {
-    return new TypeVariable(data.name, data.id);
+    return new TypeVariable(
+        data.name,
+        data.constraint ? Type.fromLiteral(data.constraint) : null);
   }
 
-  get isResolved() {
-    return !!this.resolution;
-  }
-
-  equals(other) {
-    if (this.isResolved && other.isResolved) {
-      return this.resolution.equals(other.resolution);
-    }
-    return this.name == other.name;
+  isResolved() {
+    return this._resolution && this._resolution.isResolved();
   }
 }
 

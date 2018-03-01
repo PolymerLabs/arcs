@@ -17,15 +17,11 @@ class TypeChecker {
     }
     let baseType = list[0];
     for (let i = 1; i < list.length; i++) {
-      let result = TypeChecker.compareTypes(baseType, list[i] );
+      let result = TypeChecker.compareTypes(baseType, list[i]);
       baseType = result.type;
       if (!result.valid) {
         return {valid: false};
       }
-    }
-
-    for (let item of list) {
-      item.type.resolveTo(baseType.type);
     }
 
     return {type: baseType, valid: true};
@@ -41,8 +37,40 @@ class TypeChecker {
   }
 
   // left, right: {type, direction, connection}
-  static compareTypes(left, right) {
-    let [leftType, rightType] = Type.unwrapPair(left.type, right.type);
+  static compareTypes(left, right, resolve=true) {
+    let resolvedLeft = left.type.resolvedType();
+    let resolvedRight = right.type.resolvedType();
+    let [leftType, rightType] = Type.unwrapPair(resolvedLeft, resolvedRight);
+
+    if (leftType.isVariable || rightType.isVariable) {
+      // FIXME: maybe... check that the constraints match?
+      if (leftType.isVariable && rightType.isVariable) {
+        if (leftType.variable === rightType.variable) {
+          return {type: left, valid: true};
+        }
+        if (resolve) {
+          // Ensure that any subsequent resolution of left will
+          // satisfy the constraints of right.
+          leftType.variable.mergeFrom(rightType);
+          rightType.variable.resolution = leftType;
+        }
+        return {type: left, valid: true};
+      } else if (leftType.isVariable) {
+        if (resolve) {
+          leftType.variable.resolution = rightType;
+        }
+        return {type: right, valid: true};
+      } else if (rightType.isVariable) {
+        if (resolve) {
+          rightType.variable.resolution = leftType;
+        }
+        return {type: left, valid: true};
+      }
+    }
+
+    if (leftType.type != rightType.type) {
+      return {valid: false};
+    }
 
     // TODO: we need a generic way to evaluate type compatibility
     //       shapes + entities + etc
@@ -53,12 +81,6 @@ class TypeChecker {
     }
 
     if (!leftType.isEntity || !rightType.isEntity) {
-      // TODO: direction?
-      if (leftType.isVariable) {
-        return {type: right, valid: true};
-      } else if (rightType.isVariable) {
-        return {type: left, valid: true};
-      }
       return {valid: false};
     }
 

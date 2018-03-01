@@ -462,12 +462,13 @@ ${this.activeRecipe.toString()}`;
       // TODO we need to fix this too, otherwise all views of shape type will
       // be of the 'same type' when searching by type.
       return type.shapeShape;
-    } else if (type.isVariable && type.data.isResolved) {
-      return Arc._viewKey(type.data.resolution);
+    } else if (type.isVariable && type.isResolved()) {
+      return Arc._viewKey(type.resolvedType());
     }
   }
 
   findHandlesByType(type, options) {
+    // TODO: dstockwell to rewrite this to use constraints and more
     let typeKey = Arc._viewKey(type);
     let handles = [...this._handlesById.values()].filter(handle => {
       if (typeKey) {
@@ -476,9 +477,9 @@ ${this.activeRecipe.toString()}`;
           return true;
         }
       } else {
-        if (type.isVariable && !type.data.isResolved && handle.type.isEntity) {
+        if (type.isVariable && !type.isResolved() && handle.type.isEntity) {
           return true;
-        } else if (type.isSetView && type.primitiveType().isVariable && !type.primitiveType().data.isResolved && handle.type.isSetView) {
+        } else if (type.isSetView && type.primitiveType().isVariable && !type.primitiveType().isResolved() && handle.type.isSetView) {
           return true;
         }
       }

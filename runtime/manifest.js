@@ -20,7 +20,6 @@ import util from './recipe/util.js';
 import StorageProviderFactory from './storage/storage-provider-factory.js';
 import scheduler from './scheduler.js';
 import ManifestMeta from './manifest-meta.js';
-import TypeVariable from './type-variable.js';
 import TypeChecker from './recipe/type-checker.js';
 
 class ManifestError extends Error {
@@ -402,7 +401,8 @@ ${e.message}
           }));
           return;
         case 'variable-type':
-          node.model = Type.newVariableReference(node.name);
+          let constraint = node.constraint && node.constraint.model;
+          node.model = Type.newVariable({name: node.name, constraint});
           return;
         case 'reference-type':
           let resolved = manifest.resolveReference(node.name);
@@ -421,12 +421,6 @@ ${e.message}
           return;
         case 'list-type':
           node.model = Type.newSetView(node.type.model);
-          return;
-        case 'constraint-type':
-          node.model = Type.newConstraint({
-            variable: node.variable.model,
-            type: node.type.model,
-          });
           return;
         default:
           return;

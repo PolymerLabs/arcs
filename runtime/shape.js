@@ -149,7 +149,7 @@ ${this._slotsToManifestString()}
   }
 
   static isTypeVar(reference) {
-    return (reference instanceof Type) && reference.hasProperty(r => r.isVariable || r.isVariableReference);
+    return (reference instanceof Type) && reference.hasProperty(r => r.isVariable);
   }
 
   static mustMatch(reference) {
@@ -240,7 +240,8 @@ ${this._slotsToManifestString()}
       return false;
 
     for (let constraint of viewOptions)
-      constraint.var.variable.resolution = constraint.value;
+      if (!constraint.var.variable.resolution)
+        constraint.var.variable.resolution = constraint.value;
 
     return this;
   }
