@@ -182,7 +182,10 @@ export class Particle {
   serializeSchema(hostedParticle) {
     let hostedConnSchemas = new Set();
     hostedParticle.connections.forEach(conn => {
-      hostedConnSchemas.add((conn.type.isSetView ? conn.type.primitiveType() : conn.type).entitySchema.toString());
+      let type = conn.type.isSetView ? conn.type.primitiveType() : conn.type;
+      if (type.isEntity) {
+        hostedConnSchemas.add(type.entitySchema.toString());
+      }
     });
     let schemaString =
 `${[...hostedConnSchemas].map(schema => schema.toString()).join('\n\r')}
