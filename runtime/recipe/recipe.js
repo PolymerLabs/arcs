@@ -55,7 +55,7 @@ class Recipe {
   removeParticle(particle) {
     let idx = this._particles.indexOf(particle);
     assert(idx > -1);
-    this._particles = this._particles.splice(idx, 1);
+    this._particles.splice(idx, 1);
   }
 
   newHandle() {

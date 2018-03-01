@@ -487,7 +487,7 @@ ParticleViewDescription
   }
 
 Recipe
-  = 'recipe' name:(whiteSpace TopLevelIdent)? tags:(whiteSpace TagList)? eolWhiteSpace items:(Indent (SameIndent RecipeItem)*)?
+  = 'recipe' name:(whiteSpace TopLevelIdentBothCases)? tags:(whiteSpace TagList)? eolWhiteSpace items:(Indent (SameIndent RecipeItem)*)?
   {
     return {
       kind: 'recipe',
@@ -857,6 +857,8 @@ TopLevelIdent
     fixed = fixed.replace(/^(.)/, l => l.toUpperCase());
     expected(`a top level identifier (e.g. "${fixed}")`);
   }
+
+TopLevelIdentBothCases = upperIdent / lowerIdent { return text(); }
 
 backquotedString = '`' pattern:([^`]+) '`' { return pattern.join(''); }
 id = "'" id:[^']+ "'" {return id.join('')}
