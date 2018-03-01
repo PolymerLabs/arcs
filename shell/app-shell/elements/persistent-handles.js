@@ -52,12 +52,11 @@ class PersistentHandles extends Xen.Base {
     });
     let remoteHandle = remoteHandleMeta.child('values');
     if (localHandle.type.isSetView) {
-      PersistentHandles.log(`Syncing set ${handleId}`);
+      PersistentHandles.log(`Syncing set [${handleId}]`);
       return this._syncSet(arc, localHandle, remoteHandle);
     }
     if (localHandle.type.isEntity) {
-      //PersistentHandles.log(`[disabled] Syncing variable ${handleId}`);
-      PersistentHandles.log(`Syncing variable ${handleId}`);
+      PersistentHandles.log(`Syncing variable [${handleId}]`);
       return this._syncVariable(arc, localHandle, remoteHandle);
     }
   }
