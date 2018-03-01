@@ -72,8 +72,10 @@ http://polymer.github.io/PATENTS.txt
       for (let msg of messages) {
         switch (msg.messageType) {
           case 'generations':
-            this.reset();
-            setTimeout(()=>this.set('results', msg.messageBody), 0);
+            if (JSON.stringify(this.results) !== JSON.stringify(msg.messageBody)) {
+              this.reset();
+              setTimeout(()=>this.set('results', msg.messageBody), 0);
+            }
             break;
           case 'page-refresh':
             this.reset();
