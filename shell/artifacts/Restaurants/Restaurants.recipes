@@ -36,11 +36,8 @@ import '../Events/PartySize.manifest'
 import 'ReservationForm.manifest'
 import 'ReservationAnnotation.manifest'
 
-view EmptyEvent of Event in 'data/event.json'
-
 recipe
-  copy EmptyEvent as event
-//  create as event
+  create #event as event
   ReservationForm
     event = event
   ReservationAnnotation
