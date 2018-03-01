@@ -96,7 +96,10 @@ class RemoteFriendsSharedHandles extends Xen.Base {
       // formulate an id
       const id = `BOXED_${tagString}`;
       // acquire type record for a Set of the given type
-      const arcsType = ArcsUtils.typeFromMetaType(type).setViewOf();
+      let arcsType = ArcsUtils.typeFromMetaType(type);
+      if (!arcsType.isSetView) {
+        arcsType = arcsType.setViewOf();
+      }
       // combine the data into a box
       this._addToBox(arc, id, arcsType, name, [`#${id}`]/*tags*/, data);
     }
