@@ -10,8 +10,8 @@ shape HostedParticleShape
   HostedParticleShape(in ~a)
   consume item
 
-particle Multiplexer in 'source/Multiplexer.js'
-  Multiplexer(host HostedParticleShape hostedParticle, in [~a] list)
+particle ItemMultiplexer in 'source/Multiplexer.js'
+  ItemMultiplexer(host HostedParticleShape hostedParticle, in [~a] list)
   consume set of item
 
 particle List in 'source/List.js'
@@ -22,22 +22,26 @@ particle List in 'source/List.js'
   description `show ${items}`
 
 particle SelectableList in 'source/List.js'
-  SelectableList(in [~a] items, inout ~a selected)
+  SelectableList(inout [~a] items, inout ~a selected)
   consume root
     provide set of item
     provide set of action
   description `show ${items}`
+
+particle TileMultiplexer in 'source/Multiplexer.js'
+  TileMultiplexer(host HostedParticleShape hostedParticle, in [~a] list)
+  consume set of tile
 
 particle TileList in 'source/TileList.js'
   TileList(inout [~a] items)
   consume root
-    provide set of item
+    provide set of tile
     provide set of action
   description `show ${items}`
 
 particle SelectableTileList in 'source/TileList.js'
-  SelectableTileList(in [~a] items, inout ~a selected)
+  SelectableTileList(inout [~a] items, inout ~a selected)
   consume root
-    provide set of item
+    provide set of tile
     provide set of action
   description `show ${items}`
