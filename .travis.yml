@@ -22,6 +22,9 @@ before_deploy:
   # Travis pages deploys skips artifacts from .gitignore. We need some of those, so
   # remove them from .gitignore.
   - cd ${TRAVIS_BUILD_DIR} && sed -i.sedbackup -e 's/^shell\/build$//g' .gitignore
+  - cd ${TRAVIS_BUILD_DIR} && git log -n 1 > VERSION
+  # allow arcs-live to have a different README
+  - cd ${TRAVIS_BUILD_DIR} && rm README.md
 
 deploy:
   provider: pages
