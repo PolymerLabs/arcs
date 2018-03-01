@@ -9,6 +9,7 @@ import ArcsUtils from '../../app-shell/lib/arcs-utils.js';
 import AppShell from '../../app-shell/app-shell.js';
 
 import Xen from '../../components/xen/xen.js';
+import '../../app-shell/elements/arc-handle.js';
 
 import '../../apps/chrome-extension/chrome-data.js';
 
@@ -51,6 +52,7 @@ class ExtensionAppShell extends AppShell {
     !this._state.extensionConfig.manifestsLoaded) {
       // receiving plans is our trigger that the manifests have been loaded.
       this._state.extensionConfig.manifestsLoaded = true;
+      ExtensionAppShell.log(`manifests are loaded`);
     }
   }
 
@@ -65,10 +67,10 @@ class ExtensionAppShell extends AppShell {
   */
 
 
-
   _render(props, state) {
     // to delay loading of the arc-host, remove state.hostConfig until all the
     // extension data is loaded
+    /* XXX
     if (!state.browserData && state.hostConfig
         && state.extensionConfig && state.extensionConfig.ready) {
       // no need to save this - it'll be restored.
@@ -77,6 +79,7 @@ class ExtensionAppShell extends AppShell {
       ExtensionAppShell.log('stalling until browserData is present',
         state.browserData);
     }
+    */
 
     if (state.browserData) {
       // If this is our first time through, set some parameters about what
@@ -114,27 +117,46 @@ class ExtensionAppShell extends AppShell {
           const shortTypeName = (fqTypeName.startsWith('http') && fqTypeName.includes('/'))
                             ? fqTypeName.split('/').slice(-1)[0] : fqTypeName;
 
-          const dataKey = `browserData${shortTypeName}Data`;
-          const optionsKey = `browserData${shortTypeName}Options`;
-          if (!state[dataKey]) {
-            const arcHandle = document.createElement('arc-handle');
-            arcHandle.arc = '{{arc}}';
-            arcHandle.data = `{{${dataKey}}}`;
-            arcHandle.options = `{{${optionsKey}}}`;
-
-            state[dataKey] = entry[1];
-
-            // XXX does options need schemas (others do) and how would I get
-            // that?
-            // Can I work back from let schema = arc._context.findSchemaByName(shortTypeName); ?
-            state[optionsKey] = {
-              type: entry[0],
-              name: dataKey,
-              tags: [ shortTypeName=='Product' ? '#shortlist' : `#${shortTypeName}` ]
-            };
-
-            agents.appendChild(arcHandle);
+          // compute the schema name to use based on what we can find
+          let foundSchemaName;
+          if (state.arc._context.findSchemaByName(fqTypeName)) {
+            foundSchemaName = fqTypeName;
+          } else if (state.arc._context.findSchemaByName(shortTypeName)) {
+            foundSchemaName = shortTypeName;
+          } else {
+            ExtensionAppShell.log(`didn't find a schema for type ${fqTypeName} or ${shortTypeName}, skipping`);
+            return;
           }
+
+          const handleName = `browserData${shortTypeName}Data`;
+
+          // see if we've already made a handle
+          if (state.arc._handles.find(handle => handle.name==handleName)) {
+            ExtensionAppShell.log(`we've already created a handle with name ${handleName}`);
+            return;
+          }
+
+
+          ExtensionAppShell.log(`creating ArcHandle with name ${handleName}`);
+          const arcHandle = document.createElement('arc-handle');
+
+          // XXX does options need schemas (others do) and how would I get
+          // that?
+          // Can I work back from let schema = arc._context.findSchemaByName(shortTypeName); ?
+          const handleProps = {
+            arc: state.arc,
+            options: {
+              type: foundSchemaName,
+              name: handleName,
+              tags: [ shortTypeName=='Product' ? '#shortlist' : `#${shortTypeName}` ]
+            },
+            data: entry[1]
+          };
+          const handleState = {
+            manifest: state.arc._context
+          };
+
+          arcHandle._update(handleProps, handleState, {});
         });
 
         state.extensionConfig.ready = true;

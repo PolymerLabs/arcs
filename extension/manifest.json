@@ -13,8 +13,7 @@
   "content_scripts": [
     {
       "matches": ["*://*/*"],
-      "js": ["page-extractor.js", "arcs-content-script.js"],
-      "all_frames": true
+      "js": ["page-extractor.js", "arcs-content-script.js"]
     }
   ],
   "chrome_url_overrides" : {
