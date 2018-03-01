@@ -42,8 +42,9 @@ class ChromeData extends Xen.Base {
       });
     }
 
-    // If there isn't a request to get data, fire that off - once we have an
-    // arc.
+    // A populated arc is a proxy for the document reaching an idle state,
+    // which indicates the content script is ready to receive events. Fire off
+    // a request for a page load.
     if (props.arc && !state.requestedDataInjection) {
       window.postMessage({method: 'pleaseInjectArcsData'}, '*');
       state.requestedDataInjection = true;

@@ -23,8 +23,9 @@ class ExtensionAppShell extends AppShell {
   */
 
   get template() {
-    return `${super.template}
-        <chrome-data arc='{{arc}}' on-data="_onData"></chrome-data>
+    return `
+${super.template}
+<chrome-data arc='{{arc}}' on-data="_onData"></chrome-data>
       `;
   }
 
@@ -68,19 +69,6 @@ class ExtensionAppShell extends AppShell {
 
 
   _render(props, state) {
-    // to delay loading of the arc-host, remove state.hostConfig until all the
-    // extension data is loaded
-    /* XXX
-    if (!state.browserData && state.hostConfig
-        && state.extensionConfig && state.extensionConfig.ready) {
-      // no need to save this - it'll be restored.
-      delete state.hostConfig;
-
-      ExtensionAppShell.log('stalling until browserData is present',
-        state.browserData);
-    }
-    */
-
     if (state.browserData) {
       // If this is our first time through, set some parameters about what
       // we're loading in this session.
@@ -94,6 +82,7 @@ class ExtensionAppShell extends AppShell {
         this._setState({extensionConfig});
       }
 
+      // set additional manifests up for loading
       if (state.extensionConfig.manifestsNeedLoading
          && !state.extensionConfig.manifestsLoaded) {
           let manifests = state.manifests.slice();
@@ -104,78 +93,73 @@ class ExtensionAppShell extends AppShell {
             }
           });
           state.manifests = manifests;
+          this._setState({plans: null});
       }
 
-      if (
-        (!state.extensionConfig.manifestsNeedLoading || state.extensionConfig.manifestsLoaded)
-          && state.browserData.entities) {
-        // let's load some handle data
-        const agents = document.querySelector('extension-app-shell agents');
+      // after manifests are loaded (if needed), create handles and indicate
+      // readiness.
+      if (!state.extensionConfig.manifestsNeedLoading
+          || state.extensionConfig.manifestsLoaded) {
+        if (state.browserData.entities) {
+          // let's load some handle data
+          const agents = document.querySelector('extension-app-shell agents');
 
-        Object.entries(state.browserData.entities).forEach(entry => {
-          const fqTypeName = entry[0];
-          const shortTypeName = (fqTypeName.startsWith('http') && fqTypeName.includes('/'))
-                            ? fqTypeName.split('/').slice(-1)[0] : fqTypeName;
+          Object.entries(state.browserData.entities).forEach(entry => {
+            const fqTypeName = entry[0];
+            const shortTypeName = (fqTypeName.startsWith('http') && fqTypeName.includes('/'))
+                              ? fqTypeName.split('/').slice(-1)[0] : fqTypeName;
 
-          // compute the schema name to use based on what we can find
-          let foundSchemaName;
-          if (state.arc._context.findSchemaByName(fqTypeName)) {
-            foundSchemaName = fqTypeName;
-          } else if (state.arc._context.findSchemaByName(shortTypeName)) {
-            foundSchemaName = shortTypeName;
-          } else {
-            ExtensionAppShell.log(`didn't find a schema for type ${fqTypeName} or ${shortTypeName}, skipping`);
-            return;
-          }
+            // compute the schema name to use based on what we can find
+            let foundSchemaName;
+            if (state.arc._context.findSchemaByName(fqTypeName)) {
+              foundSchemaName = fqTypeName;
+            } else if (state.arc._context.findSchemaByName(shortTypeName)) {
+              foundSchemaName = shortTypeName;
+            } else {
+              ExtensionAppShell.log(`didn't find a schema for type ${fqTypeName} or ${shortTypeName}, skipping`);
+              return;
+            }
 
-          const handleName = `browserData${shortTypeName}Data`;
+            const handleName = `browserData${shortTypeName}Data`;
 
-          // see if we've already made a handle
-          if (state.arc._handles.find(handle => handle.name==handleName)) {
-            ExtensionAppShell.log(`we've already created a handle with name ${handleName}`);
-            return;
-          }
+            // see if we've already made a handle
+            if (state.arc._handles.find(handle => handle.name==handleName)) {
+              ExtensionAppShell.log(`we've already created a handle with name ${handleName}`);
+              return;
+            }
 
+            ExtensionAppShell.log(`creating ArcHandle with name ${handleName}`);
+            const arcHandle = document.createElement('arc-handle');
+            const handleProps = {
+              arc: state.arc,
+              options: {
+                type: foundSchemaName,
+                name: handleName,
+                tags: [ shortTypeName=='Product' ? '#shortlist' : `#${shortTypeName}` ]
+              },
+              data: entry[1]
+            };
+            const handleState = {
+              manifest: state.arc._context
+            };
 
-          ExtensionAppShell.log(`creating ArcHandle with name ${handleName}`);
-          const arcHandle = document.createElement('arc-handle');
+            arcHandle._update(handleProps, handleState, {});
+            this._setState({plans: null});
+          });
+        }
 
-          // XXX does options need schemas (others do) and how would I get
-          // that?
-          // Can I work back from let schema = arc._context.findSchemaByName(shortTypeName); ?
-          const handleProps = {
-            arc: state.arc,
-            options: {
-              type: foundSchemaName,
-              name: handleName,
-              tags: [ shortTypeName=='Product' ? '#shortlist' : `#${shortTypeName}` ]
-            },
-            data: entry[1]
-          };
-          const handleState = {
-            manifest: state.arc._context
-          };
-
-          arcHandle._update(handleProps, handleState, {});
-        });
-
-        state.extensionConfig.ready = true;
+        state.extensionReady = true;
       }
     }
 
-    /* handled above with ready? 
-    // XXX need to check to make sure we haven't already run this. Unless it can
-    // be made idempotent?
-    if (state.browserData && state.browserData.entities) {
-      ExtensionAppShell.log('resuming now that browserData is present',
-        state.browserData);
-      //debugger;
+    /* const ret =*/ return super._render(props, state);
+    /*
+    if (!state.extensionReady) {
+      ExtensionAppShell.log('stalling (by deleting hostConfig) until the browser data has been loaded');
+      delete state.hostConfig;
     }
+    return ret;
     */
-
-
-
-    return super._render(props, state);
   }
 
   /*
