@@ -9,8 +9,6 @@
 
 import assert from '../platform/assert-web.js';
 
-let nextVariableId = 0;
-
 function addType(name, arg) {
   let lowerName = name[0].toLowerCase() + name.substring(1);
   Object.defineProperty(Type, `new${name}`, {
@@ -92,8 +90,7 @@ class Type {
       let name = this.data;
       let sharedVariable = variableMap.get(name);
       if (sharedVariable == undefined) {
-        let id = nextVariableId++;
-        sharedVariable = new TypeVariable(name, id);
+        sharedVariable = new TypeVariable(name);
         variableMap.set(name, sharedVariable);
       }
       return Type.newVariable(sharedVariable);
