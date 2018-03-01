@@ -19,8 +19,9 @@ export default class InitPopulation extends Strategy {
         }
       }
       recipe = recipe.clone();
-      if (!recipe.normalize()) {
-        console.warn('could not normalize a context recipe');
+      let options = {errors: new Map()};
+      if (!recipe.normalize(options)) {
+        console.warn(`could not normalize a context recipe: ${[...options.errors.values()].join('\n')}.\n${recipe.toString()}`);
       } else {
         this._recipes.push(recipe);
       }

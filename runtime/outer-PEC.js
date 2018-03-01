@@ -95,14 +95,15 @@ class OuterPEC extends PEC {
         for (let handle of recipe0.views) {
           handle.mapToView(this._arc.findHandleById(handle.id));
         }
-        if (recipe0.normalize()) {
+        let options = {errors: new Map()};
+        if (recipe0.normalize(options)) {
           if (recipe0.isResolved()) {
             this._arc.instantiate(recipe0, arc);
           } else {
             error = `Recipe is not resolvable ${recipe0.toString({showUnresolved: true})}`;
           }
         } else {
-          error = `Recipe ${recipe0.toString()} could not be normalized`;
+          error = `Recipe ${recipe0.toString()} could not be normalized:\n${[...options.errors.values()].join('\n')}`;
         }
       } else {
         error = 'No recipe defined';

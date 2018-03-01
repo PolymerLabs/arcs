@@ -108,7 +108,7 @@ class Handle {
   get storageKey() { return this._storageKey; }
   set storageKey(key) { this._storageKey = key; }
 
-  _isValid() {
+  _isValid(options) {
     let typeSet = [];
     if (this._mappedType)
       typeSet.push({type: this._mappedType});
@@ -116,6 +116,9 @@ class Handle {
     for (let connection of this._connections) {
       // A remote view cannot be connected to an output param.
       if (this.fate == 'map' && ['out', 'inout'].includes(connection.direction)) {
+        if (options && options.errors) {
+          options.errors.set(this, `Invalid fate '${this.fate}' for handle '${this.id || this.name || this.localName || this.tags.join(' ')}'; it is used for '${connection.direction}' ${connection.particle.name}::${connection.name} connection`);
+        }
         return false;
       }
       if (connection.type)
@@ -127,6 +130,9 @@ class Handle {
       this._type = type.type;
       this._tags.forEach(tag => tags.add(tag));
       this._tags = [...tags];
+    } else if (options && options.errors) {
+      // TODO: pass options to TypeChecker.processTypeList for better error.
+      options.errors.set(this, `Type validations failed for handle '${this.id || this.name || this.localName || this.tags.join(' ')}'`);
     }
     return valid;
   }

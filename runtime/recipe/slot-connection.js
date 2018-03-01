@@ -88,9 +88,12 @@ class SlotConnection {
     return 0;
   }
 
-  _isValid() {
+  _isValid(options) {
     if (this._targetSlot && this._targetSlot.sourceConnection &&
         this._targetSlot != this._targetSlot.sourceConnection.providedSlots[this._targetSlot.name]) {
+      if (options && options.errors) {
+        options.errors.set(this, `Invalid target slot '${this._targetSlot.name}' for slot connection '${this.name}' of particle ${this.particle.name}`);
+      }
       return false;
     }
 
