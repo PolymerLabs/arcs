@@ -90,9 +90,9 @@ class Recipe {
         });
   }
 
-  _findDuplicateHandle() {
+  _findDuplicate(items, options) {
     let seenHandles = new Set();
-    return this._handles.find(handle => {
+    let duplicateHandle = items.find(handle => {
       if (handle.id) {
         if (seenHandles.has(handle.id)) {
           return handle;
@@ -100,15 +100,21 @@ class Recipe {
         seenHandles.add(handle.id);
       }
     });
+    if (duplicateHandle && options && options.errors) {
+      options.errors.set(duplicateHandle, `Has Duplicate ${duplicateHandle instanceof Handle ? 'Handle' : 'Slot'} '${duplicateHandle.id}'`);
+    }
+    return duplicateHandle;
   }
 
-  _isValid() {
-    return !this._findDuplicateHandle() && this._handles.every(handle => handle._isValid())
-        && this._particles.every(particle => particle._isValid())
-        && this._slots.every(slot => slot._isValid())
-        && this.handleConnections.every(connection => connection._isValid())
-        && this.slotConnections.every(connection => connection._isValid())
-        && (!this.search || this.search.isValid());
+  _isValid(options) {
+    return !this._findDuplicate(this._handles, options)
+        && !this._findDuplicate(this._slots, options)
+        && this._handles.every(handle => handle._isValid(options))
+        && this._particles.every(particle => particle._isValid(options))
+        && this._slots.every(slot => slot._isValid(options))
+        && this.handleConnections.every(connection => connection._isValid(options))
+        && this.slotConnections.every(connection => connection._isValid(options))
+        && (!this.search || this.search.isValid(options));
   }
 
   get localName() { return this._localName; }
@@ -173,25 +179,22 @@ class Recipe {
     return digest(this.toString());
   }
 
-  normalize() {
+  normalize(options) {
     if (Object.isFrozen(this)) {
+      if (options && options.errors) {
+        options.errors.set(this, 'already normalized');
+      }
       return;
     }
     if (!this._isValid()) {
-      let duplicateHandle = this._findDuplicateHandle();
-      if (duplicateHandle)
-        console.log(`Has Duplicate Handle ${duplicateHandle.id}`);
-
-      let checkForInvalid = (name, list, f) => {
-        let invalids = list.filter(item => !item._isValid());
-        if (invalids.length > 0)
-          console.log(`Has Invalid ${name} ${invalids.map(f)}`);
-      };
-      checkForInvalid('Handles', this._handles, handle => `'${handle.toString()}'`);
-      checkForInvalid('Particles', this._particles, particle => particle.name);
-      checkForInvalid('Slots', this._slots, slot => slot.name);
-      checkForInvalid('HandleConnections', this.handleConnections, handleConnection => `${handleConnection.particle.name}::${handleConnection.name}`);
-      checkForInvalid('SlotConnections', this.slotConnections, slotConnection => slotConnection.name);
+      this._findDuplicate(this._handles, options);
+      this._findDuplicate(this._slots, options);
+      let checkForInvalid = (list) => list.forEach(item => !item._isValid(options));
+      checkForInvalid(this._handles);
+      checkForInvalid(this._particles);
+      checkForInvalid(this._slots);
+      checkForInvalid(this.handleConnections);
+      checkForInvalid(this.slotConnections);
       return false;
     }
     // Get handles and particles ready to sort connections.

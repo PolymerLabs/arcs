@@ -222,7 +222,8 @@ ${this.activeRecipe.toString()}`;
     // TODO: pass tags through too
     manifest.views.forEach(view => arc._registerHandle(view, []));
     let recipe = manifest.activeRecipe.clone();
-    recipe.normalize();
+    let options = {errors: new Map()};
+    assert(recipe.normalize(options), `Couldn't normalize recipe ${recipe.toString()}:\n${[...options.errors.values()].join('\n')}`);
     await arc.instantiate(recipe);
     return arc;
   }

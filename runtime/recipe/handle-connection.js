@@ -99,8 +99,11 @@ class HandleConnection {
     return this.spec.isOptional;
   }
 
-  _isValid() {
+  _isValid(options) {
     if (this.direction && !['in', 'out', 'inout', 'host'].includes(this.direction)) {
+      if (options && options.errors) {
+        options.errors.set(this, `Invalid direction '${this.direction}' for handle connection '${this.particle.name}::${this.name}'`);
+      }
       return false;
     }
     if (this.type && this.particle && this.particle.spec) {
@@ -108,9 +111,15 @@ class HandleConnection {
       if (connectionSpec) {
         // TODO: this shouldn't be a direct equals comparison
         if (!this.rawType.equals(connectionSpec.type)) {
+          if (options && options.errors) {
+            options.errors.set(this, `Type '${this.rawType} for handle connection '${this.particle.name}::${this.name}' doesn't match particle spec's type '${connectionSpec.type}'`);
+          }
           return false;
         }
         if (this.direction != connectionSpec.direction) {
+          if (options && options.errors) {
+            options.errors.set(this, `Direction '${this.direction}' for handle connection '${this.particle.name}::${this.name}' doesn't match particle spec's direction '${connectionSpec.direction}'`);
+          }
           return false;
         }
       }

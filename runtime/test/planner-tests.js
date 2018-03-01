@@ -487,12 +487,17 @@ describe('MapSlots', function() {
     `));
     let strategizer = {generated: [{result: manifest.recipes[0], score: 1}]};
     let arc = createTestArc('test-plan-arc', manifest, 'dom');
-    let mrs = new MapSlots(arc);
+    let strategy = new MapSlots(arc);
 
-    let {results} = await mrs.generate(strategizer);
+    let {results} = await strategy.generate(strategizer);
     assert.equal(results.length, 1);
-    assert.isTrue(results[0].result.isResolved());
-    assert.equal(results[0].result.slots.length, expectedSlots);
+    let recipe = results[0].result;
+    if (expectedSlots >= 0) {
+      assert.isTrue(recipe.isResolved());
+      assert.equal(recipe.slots.length, expectedSlots);
+    } else {
+      assert.isFalse(recipe.normalize());
+    }
   };
 
   it('predefined remote slots no alias', async () => {
@@ -528,13 +533,16 @@ describe('MapSlots', function() {
     `, /* expectedSlots= */ 1);
   });
   it('predefined remote slots both explicit', async () => {
+    // This recipe is invalid, because particles consume different names,
+    // but only one suitable slot is provided. This results in 2 duplicate recipe slots
+    // being assigned the same slot ID, which is invalid.
     await testManifest(`
       recipe
         A as particle0
           consume root
         B as particle1
           consume root
-    `, /* expectedSlots= */ 2);
+    `, /* expectedSlots= */ -1);
   });
 
   it('map slots by tags', async () => {
@@ -1016,7 +1024,7 @@ describe('Type variable resolution', function() {
         P(in [~a] manyThings, out ~a oneThing)
       recipe
         map #manything as manythings
-        map #onething as onething
+        copy #onething as onething
         P
           manyThings <- manythings
           oneThing -> onething

@@ -101,7 +101,7 @@ class Slot {
     return this._sourceConnection || this.id;
   }
 
-  _isValid() {
+  _isValid(options) {
     // TODO: implement
     return true;
   }

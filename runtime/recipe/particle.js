@@ -79,12 +79,15 @@ class Particle {
     return 0;
   }
 
-  _isValid() {
+  _isValid(options) {
     if (!this.spec) {
       return true;
     }
     if (!this.name && !this.primaryVerb) {
       // Must have either name of a verb
+      if (options && options.errors) {
+        options.errors.set(this, `Particle has no name and no verb`);
+      }
       return false;
     }
     // TODO: What
