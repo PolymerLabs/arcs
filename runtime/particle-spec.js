@@ -9,7 +9,6 @@
  */
 
 import Type from './type.js';
-import TypeVariable from './type-variable.js';
 import Shape from './shape.js';
 import assert from '../platform/assert-web.js';
 
@@ -18,7 +17,7 @@ class ConnectionSpec {
     this.rawData = rawData;
     this.direction = rawData.direction;
     this.name = rawData.name;
-    this.type = rawData.type.assignVariableIds(typeVarMap);
+    this.type = rawData.type.mergeTypeVariablesByName(typeVarMap);
     this.isOptional = rawData.isOptional;
   }
 
