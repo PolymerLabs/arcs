@@ -8,26 +8,34 @@ Code distributed by Google as part of the polymer project is also
 subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
 */
 
-import {filter, flatten, deduplicate} from './data-processing.js';
 import Xen from '../../components/xen/xen.js';
 
+import {deduplicate, filter, flatten} from './data-processing.js';
+
 class ChromeData extends Xen.Base {
-  static get observedAttributes() { return ['arc']; }
+  static get observedAttributes() {
+    return ['arc'];
+  }
 
   _update(props, state, lastProps, lastState) {
     // if there isn't a listener attached for data, attach that
     if (!state.listenerAttached) {
       state.listenerAttached = window.addEventListener('message', event => {
-        if (event.source != window || event.data.method != 'injectArcsData'
-            || !event.data || !event.data.entities) {
+        if (event.source != window || event.data.method != 'injectArcsData' ||
+            !event.data || !event.data.entities) {
           return;
         }
-        ChromeData.log(`received event ${event.data.method} from ${event.source}`,
-          event.data);
+        ChromeData.log(
+            `received event ${event.data.method} from ${event.source}`,
+            event.data);
 
-        state.processedData = {'entities': deduplicate(flatten(filter(event.data.entities)))};
+        state.processedData = {
+          'entities': deduplicate(flatten(filter(event.data.entities)))
+        };
         if (state.processedData.entities['text/x-arcs-manifest']) {
-          state.processedData.manifests = state.processedData.entities['text/x-arcs-manifest'].map(manifest => manifest.url);
+          state.processedData.manifests =
+              state.processedData.entities['text/x-arcs-manifest'].map(
+                  manifest => manifest.url);
           delete state.processedData.entities['text/x-arcs-manifest'];
         }
 
@@ -36,8 +44,9 @@ class ChromeData extends Xen.Base {
         if (state.processedData && !state.sentData) {
           this._fire('data', state.processedData);
           state.sentData = true;
-          ChromeData.log('sent processed data out to Arcs for processing',
-            state.processedData);
+          ChromeData.log(
+              'sent processed data out to Arcs for processing',
+              state.processedData);
         }
       });
     }

@@ -12,8 +12,7 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
       console.log(
           'event page finished loading entities from all tabs', results);
       const response = _prepareResults(results);
-      console.log(
-          'event page prepared response', response);
+      console.log('event page prepared response', response);
       sendResponse(response);
     });
 

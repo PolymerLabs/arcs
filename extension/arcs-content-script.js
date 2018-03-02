@@ -34,8 +34,7 @@ if (isExtensionAppShellPage) {
         'arcs-other content script received message ' + request, request);
     if (request.method == 'loadEntities') {
       extractEntities(document, window.location).then(results => {
-        console.log(
-            'arcs-other content script sending response', results);
+        console.log('arcs-other content script sending response', results);
         sendResponse(results);
       });
 
