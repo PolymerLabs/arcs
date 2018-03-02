@@ -23,7 +23,7 @@ before_deploy:
   # remove them from .gitignore.
   - cd ${TRAVIS_BUILD_DIR} && sed -i.sedbackup -e 's/^shell\/build$//g' .gitignore
   - cd ${TRAVIS_BUILD_DIR} && git log -n 1 > VERSION
-  # allow arcs-live to have a different README
+  # remove an inaccurate README from arcs-live
   - cd ${TRAVIS_BUILD_DIR} && rm README.md
 
 deploy:
