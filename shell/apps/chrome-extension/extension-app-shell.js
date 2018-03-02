@@ -70,18 +70,17 @@ ${super.template}
   /**
    * Filter the data down to the fields present in schema, and perform some
    * basic transformations.
+   * TODO(smalls) pull this all out into something more maintainable.
    */
   _filterBySchema(entities, schema) {
     const validSchemaKeys = Object.keys(schema.optional).concat(Object.keys(schema.normative));
 
     let filteredEntities = entities.map(entity => Object.entries(entity)
         .filter(entry => validSchemaKeys.includes(entry[0]))
-        .reduce((result,current) => {
+        .reduce((result, current) => {
           let key = current[0];
 
           // do some basic filtering on values.
-          // TODO(smalls) as we discover more cases that need this,
-          // let's pull this out into something more maintanable.
           let value;
           if (key=='name' && Array.isArray(current[1])) {
             value = current[1][0];
@@ -177,7 +176,7 @@ ${super.template}
                 type: `[${foundSchemaName}]`,
                 name: handleName,
                 id: handleName,
-                tags: [ shortTypeName=='Product' ? '#shortlist' : `#${shortTypeName}` ],
+                tags: [shortTypeName=='Product' ? '#shortlist' : `#${shortTypeName}`],
                 asContext: true
               },
               data: data
