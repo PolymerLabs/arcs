@@ -76,7 +76,7 @@ class PersistentHandles extends Xen.Base {
         // local changes and applying those to the remote variable.
         initialLoad = false;
         localVariable.on('change', change => {
-          if (change.data && change.data.id.startsWith(arc.id)) {
+          if (change.data && JSON.stringify(change.data) !== JSON.stringify(remoteValue)) {
             remoteVariable.set(ArcsUtils.removeUndefined(change.data));
           } else if (change.data === undefined) {
             remoteVariable.remove();
