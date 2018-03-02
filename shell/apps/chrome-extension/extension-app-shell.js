@@ -67,6 +67,45 @@ ${super.template}
   }
   */
 
+  /**
+   * Filter the data down to the fields present in schema, and perform some
+   * basic transformations.
+   */
+  _filterBySchema(entities, schema) {
+    const validSchemaKeys = Object.keys(schema.optional).concat(Object.keys(schema.normative));
+
+    let filteredEntities = entities.map(entity => Object.entries(entity)
+        .filter(entry => validSchemaKeys.includes(entry[0]))
+        .reduce((result,current) => {
+          let key = current[0];
+
+          // do some basic filtering on values.
+          // TODO(smalls) as we discover more cases that need this,
+          // let's pull this out into something more maintanable.
+          let value;
+          if (key=='name' && Array.isArray(current[1])) {
+            value = current[1][0];
+          } else {
+            value = current[1];
+          }
+
+          result[key] = value;
+          return result;
+        }, {})
+    );
+
+    // For Products, populate shipDays if it's not already done.
+    if (schema.name=='Product') {
+      let shipDays = 5 + Math.floor(Math.random()*5);
+      filteredEntities.forEach(entity => {
+        if (!entity.hasOwnProperty('shipDays')) {
+            entity['shipDays']=shipDays++;
+        }
+      });
+    }
+
+    return filteredEntities;
+  }
 
   _render(props, state) {
     if (state.browserData) {
@@ -119,11 +158,13 @@ ${super.template}
               ExtensionAppShell.log(`didn't find a schema for type ${fqTypeName} or ${shortTypeName}, skipping`);
               return;
             }
+            const schema = state.arc._context.findSchemaByName(foundSchemaName);
+            const data = this._filterBySchema(entry[1], schema);
 
             const handleName = `browserData${shortTypeName}Data`;
 
             // see if we've already made a handle
-            if (state.arc._handles.find(handle => handle.name==handleName)) {
+            if (state.arc._context._handles.find(handle => handle.name==handleName)) {
               ExtensionAppShell.log(`we've already created a handle with name ${handleName}`);
               return;
             }
@@ -133,11 +174,13 @@ ${super.template}
             const handleProps = {
               arc: state.arc,
               options: {
-                type: foundSchemaName,
+                type: `[${foundSchemaName}]`,
                 name: handleName,
-                tags: [ shortTypeName=='Product' ? '#shortlist' : `#${shortTypeName}` ]
+                id: handleName,
+                tags: [ shortTypeName=='Product' ? '#shortlist' : `#${shortTypeName}` ],
+                asContext: true
               },
-              data: entry[1]
+              data: data
             };
             const handleState = {
               manifest: state.arc._context
