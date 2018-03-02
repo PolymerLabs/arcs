@@ -51,7 +51,9 @@ class TypeChecker {
         if (resolve) {
           // Ensure that any subsequent resolution of left will
           // satisfy the constraints of right.
-          leftType.variable.mergeFrom(rightType);
+          if (!leftType.variable.tryMergeFrom(rightType.variable)) {
+            return false;
+          }
           rightType.variable.resolution = leftType;
         }
         return {type: left, valid: true};

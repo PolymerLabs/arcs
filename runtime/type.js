@@ -87,7 +87,10 @@ class Type {
         variable = this;
         variableMap.set(name, this);
       } else {
-        variable.variable.mergeFrom(this.variable);
+        if (!variable.variable.tryMergeFrom(this.variable)) {
+          // TODO: what do?
+          throw new Error('could not merge type variables');
+        }
       }
       return variable;
     }
