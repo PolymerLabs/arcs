@@ -8,7 +8,7 @@ Code distributed by Google as part of the polymer project is also
 subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
 */
 
-import { filter, flatten, deduplicate } from './data-processing.js';
+import {filter, flatten, deduplicate} from './data-processing.js';
 import Xen from '../../components/xen/xen.js';
 
 class ChromeData extends Xen.Base {
