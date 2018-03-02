@@ -36,6 +36,53 @@ class Schema {
     return new Schema(data);
   }
 
+  * _fields() {
+    for (let field in this.normative) {
+      yield {field, type: this.normative[field]};
+    }
+    for (let field in this.optional) {
+      yield {field, type: this.optional[field]};
+    }
+  }
+
+  static _typesEqual(fieldType1, fieldType2) {
+    // TODO: structural check instead of JSON.
+    return JSON.stringify(fieldType1) == JSON.stringify(fieldType2);
+  }
+
+  static maybeMerge(schema1, schema2) {
+    if (!schema1.hasCommonName(schema2)) {
+      return null;
+    }
+
+    let names = [...new Set(...schema1._names(), ...schema2._names())];
+    let fields = {};
+
+    for (let {field, type} of [...schema1._fields(), ...schema2._fields()]) {
+      if (fields[field]) {
+        if (!Schema._typesEqual(fields[field], type)) {
+          return null;
+        }
+      } else {
+        fields[field] = type;
+      }
+    }
+
+    return new Schema({
+      name: names.length ? names[0] : null,
+      fields,
+      parents: names.slice(1).map(name => ({
+        name,
+        parents: [],
+        sections: [],
+      })),
+      sections: [{
+        sectionType: 'optional',
+        fields: {},
+      }],
+    });
+  }
+
   equals(otherSchema) {
     return this === otherSchema || (this.name == otherSchema.name
        // TODO: Check equality without calling contains.
@@ -44,39 +91,50 @@ class Schema {
   }
 
   contains(otherSchema) {
-    if (!this.containsAncestry(otherSchema)) {
+    if (!this._containsNames(otherSchema)) {
       return false;
     }
     for (let section of ['normative', 'optional']) {
       let thisSection = this[section];
       let otherSection = otherSchema[section];
       for (let field in otherSection) {
-        if (thisSection[field] != otherSection[field]) {
+        if (!Schema._typesEqual(thisSection[field], otherSection[field])) {
           return false;
         }
       }
     }
     return true;
   }
-  containsAncestry(otherSchema) {
-    if (this.name == otherSchema.name || otherSchema.name == null) {
-      nextOtherParent: for (let otherParent of otherSchema.parents) {
-        for (let parent of this.parents) {
-          if (parent.containsAncestry(otherParent)) {
-            continue nextOtherParent;
-          }
-        }
+
+  * _names() {
+    if (this.name)
+      yield this.name;
+    for (let parent of this.parents) {
+      yield* parent._names();
+    }
+  }
+
+  _containsNames(schema) {
+    // TODO: backwards?
+    let names = new Set(this._names());
+    for (let name of schema._names()) {
+      if (!names.has(name)) {
         return false;
       }
-      return true;
-    } else {
-      for (let parent of this.parents) {
-        if (parent.containsAncestry(otherSchema)) {
-          return true;
-        }
-      }
-      return false;
     }
+    return true;
+  }
+
+  hasCommonName(otherSchema) {
+    if (!this.name || !otherSchema.name)
+      return true;
+    let otherNames = new Set(names(otherSchema));
+    for (let name of names(this)) {
+      if (otherNames.has(name)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   get type() {

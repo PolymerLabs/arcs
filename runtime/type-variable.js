@@ -9,6 +9,7 @@
 
 import Type from './type.js';
 import assert from '../platform/assert-web.js';
+import Schema from './schema.js';
 
 class TypeVariable {
   constructor(name, constraint) {
@@ -19,18 +20,26 @@ class TypeVariable {
     this._resolution = null;
   }
 
-  static mergeConstraints(var1, var2) {
-    let constraint1 = var1.constraint;
-    let constraint2 = var2.constraint;
+  tryMergeFrom(other) {
+    assert(other instanceof TypeVariable);
+
+    let constraint1 = this.constraint;
+    let constraint2 = other.constraint;
 
     if (constraint1 && constraint2) {
-      assert(false, 'implement merge!!!');
+      if (!constraint1.isEntity || !constraint2.isEntity) {
+        throw new Error('merging constraints not implemented for ${constraint1.type} and ${constraint2.type}');
+      }
+  
+      let mergedSchema = Schema.maybeMerge(constraint1.entitySchema, constraint2.entitySchema);
+      if (!mergedSchema) {
+        return false;
+      }
+      this.constraint = Type.newEntity(mergedSchema);
+    } else {
+      this.constraint = constraint1 || constraint2;
     }
-    return constraint1 || constraint2;
-  }
-
-  mergeFrom(other) {
-    this.constraint = TypeVariable.mergeConstraints(this, other);
+    return true;
   }
 
   get resolution() {
