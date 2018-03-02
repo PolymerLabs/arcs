@@ -32,29 +32,29 @@ describe('type integration', () => {
     let recipe = manifest.recipes[0];
     assert(recipe.normalize());
     assert(recipe.isResolved());
-    assert(recipe.views.length == 1);
-    assert(recipe.views[0].type.primitiveType().entitySchema.name == 'Lego');
+    assert(recipe.handles.length == 1);
+    assert(recipe.handles[0].type.primitiveType().entitySchema.name == 'Lego');
   });
 
   it('a subtype matches to a supertype that wants to be read when a view exists', async () => {
     let manifest = await setup();
 
     let recipe = manifest.recipes[1];
-    recipe.views[0].mapToView({id: 'test1', type: manifest.findSchemaByName('Product').entityClass().type.setViewOf()});
+    recipe.handles[0].mapToView({id: 'test1', type: manifest.findSchemaByName('Product').entityClass().type.setViewOf()});
     assert(recipe.normalize());
     assert(recipe.isResolved());
-    assert(recipe.views.length == 1);
-    assert(recipe.views[0].type.primitiveType().entitySchema.name == 'Product');
+    assert(recipe.handles.length == 1);
+    assert(recipe.handles[0].type.primitiveType().entitySchema.name == 'Product');
   });
 
   it('a subtype matches to a supertype that wants to be read when a view exists', async () => {
     let manifest = await setup();
 
     let recipe = manifest.recipes[1];
-    recipe.views[0].mapToView({id: 'test1', type: manifest.findSchemaByName('Lego').entityClass().type.setViewOf()});
+    recipe.handles[0].mapToView({id: 'test1', type: manifest.findSchemaByName('Lego').entityClass().type.setViewOf()});
     assert(recipe.normalize());
     assert(recipe.isResolved());
-    assert(recipe.views.length == 1);
-    assert(recipe.views[0].type.primitiveType().entitySchema.name == 'Lego');
+    assert(recipe.handles.length == 1);
+    assert(recipe.handles[0].type.primitiveType().entitySchema.name == 'Lego');
   });
 });

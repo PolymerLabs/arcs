@@ -60,7 +60,7 @@ export default class ViewMapperBase extends Strategy {
 
         let responses = views.map(newView =>
           ((recipe, clonedView) => {
-            for (let existingView of recipe.views)
+            for (let existingView of recipe.handles)
               // TODO: Why don't we link the view connections to the existingView?
               if (existingView.id == newView.id)
                 return 0;

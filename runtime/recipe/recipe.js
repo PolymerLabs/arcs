@@ -115,8 +115,8 @@ class Recipe {
   set localName(name) { this._localName = name; }
   get particles() { return this._particles; } // Particle*
   set particles(particles) { this._particles = particles; }
-  get views() { return this._handles; } // Handle*
-  set views(handles) { this._handles = handles; }
+  get handles() { return this._handles; } // Handle*
+  set handles(handles) { this._handles = handles; }
   get slots() { return this._slots; } // Slot*
   set slots(slots) { this._slots = slots; }
   get connectionConstraints() { return this._connectionConstraints; }
@@ -150,15 +150,15 @@ class Recipe {
 
   isEmpty() {
     return this.particles.length == 0 &&
-           this.views.length == 0 &&
+           this.handles.length == 0 &&
            this.slots.length == 0 &&
            this._connectionConstraints.length == 0;
   }
 
   findView(id) {
-    for (let view of this.views) {
-      if (view.id == id)
-        return view;
+    for (let handle of this.handles) {
+      if (handle.id == id)
+        return handle;
     }
   }
 
@@ -314,7 +314,7 @@ class Recipe {
     let numSlots = recipe._slots.length;
     this._copyInto(recipe, cloneMap);
     return {
-      views: recipe._handles.slice(numHandles),
+      handles: recipe._handles.slice(numHandles),
       particles: recipe._particles.slice(numParticles),
       slots: recipe._slots.slice(numSlots)
     };
@@ -350,8 +350,8 @@ class Recipe {
     for (let particle of this.particles) {
       names.add(particle.localName);
     }
-    for (let view of this.views) {
-      names.add(view.localName);
+    for (let handle of this.handles) {
+      names.add(handle.localName);
     }
     for (let slot of this.slots) {
       names.add(slot.localName);
@@ -370,14 +370,14 @@ class Recipe {
     }
 
     i = 0;
-    for (let view of this.views) {
-      let localName = view.localName;
+    for (let handle of this.handles) {
+      let localName = handle.localName;
       if (!localName) {
         do {
           localName = `view${i++}`;
         } while (names.has(localName));
       }
-      nameMap.set(view, localName);
+      nameMap.set(handle, localName);
     }
 
     i = 0;
@@ -411,8 +411,8 @@ class Recipe {
       }
       result.push(constraintStr);
     }
-    for (let view of this.views) {
-      result.push(view.toString(nameMap, options).replace(/^|(\n)/g, '$1  '));
+    for (let handle of this.handles) {
+      result.push(handle.toString(nameMap, options).replace(/^|(\n)/g, '$1  '));
     }
     for (let slot of this.slots) {
       let slotString = slot.toString(nameMap, options);

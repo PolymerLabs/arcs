@@ -46,7 +46,7 @@ class RecipeUtil {
     let id = 0;
     recipe.particles.forEach(particle => particles[particle.name] = particle);
     let views = {};
-    recipe.views.forEach(view => views['v' + id++] = view);
+    recipe.handles.forEach(view => views['v' + id++] = view);
     let hcs = {};
     recipe.handleConnections.forEach(hc => hcs[hc.particle.name + ':' + hc.name] = hc);
     return new Shape(recipe, particles, views, hcs);
@@ -218,7 +218,7 @@ class RecipeUtil {
       matches = newMatches;
     }
 
-    let emptyViews = recipe.views.filter(view => view.connections.length == 0);
+    let emptyViews = recipe.handles.filter(view => view.connections.length == 0);
 
     if (emptyViews.length > 0) {
       let newMatches = [];

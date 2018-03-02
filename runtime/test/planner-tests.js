@@ -36,7 +36,7 @@ function createTestArc(id, context, affordance) {
     context,
     slotComposer: {
       affordance,
-      getAvailableSlots: (() => { return [{name: 'root', id: 'r0', tags: ['#root'], views: [], handleConnections: [], getProvidedSlotSpec: () => { return {isSet: false}; }}]; })
+      getAvailableSlots: (() => { return [{name: 'root', id: 'r0', tags: ['#root'], handles: [], handleConnections: [], getProvidedSlotSpec: () => { return {isSet: false}; }}]; })
     }
   });
 }
@@ -116,7 +116,7 @@ describe('Planner', function() {
   });
 
   // TODO: rewrite or remove this, it doesn't test anything more than the above test?
-  it('can make a plan with views', async () => {
+  it('can make a plan with handles', async () => {
     let manifest = await Manifest.load('./runtime/test/artifacts/giftlist.manifest', loader);
     let arcFactory = async manifest => {
       let arc = createTestArc('test-plan-arc', manifest, 'dom');
@@ -136,7 +136,7 @@ describe('Planner', function() {
     assert.equal(results, 5);
   });
 
-  it('can map remote views structurally', async () => {
+  it('can map remote handles structurally', async () => {
     let results = await planFromManifest(`
       view AView of * {Text text, Text moreText} in './shell/artifacts/Things/empty.json'
       particle P1 in './some-particle.js'
@@ -149,7 +149,7 @@ describe('Planner', function() {
     assert.equal(results.length, 1);
   });
 
-  it('can copy remote views structurally', async () => {
+  it('can copy remote handles structurally', async () => {
     let results = await planFromManifest(`
       view AView of * {Text text, Text moreText} in './shell/artifacts/Things/empty.json'
       particle P1 in './some-particle.js'
@@ -568,7 +568,7 @@ describe('MapSlots', function() {
 });
 
 describe('AssignOrCopyRemoteViews', function() {
-  it('finds tagged remote views', async () => {
+  it('finds tagged remote handles', async () => {
     let particlesSpec = `
     schema Foo
 
@@ -693,7 +693,7 @@ describe('AssignOrCopyRemoteViews', function() {
           list = list2
     `, 2);
 
-    // no tags leads to all possible permutations of 3 matching views
+    // no tags leads to all possible permutations of 3 matching handles
     await testManifest(`
       recipe
         map as list
@@ -814,8 +814,8 @@ describe('MatchParticleByVerb', function() {
   it('particles by verb recipe fully resolved', async () => {
     let manifest = (await Manifest.parse(manifestStr));
     let recipe = manifest.recipes[0];
-    recipe.views[0].mapToView({id: 'test1', type: manifest.findSchemaByName('Height').entityClass().type});
-    recipe.views[1].mapToView({id: 'test2', type: manifest.findSchemaByName('Energy').entityClass().type});
+    recipe.handles[0].mapToView({id: 'test1', type: manifest.findSchemaByName('Height').entityClass().type});
+    recipe.handles[1].mapToView({id: 'test2', type: manifest.findSchemaByName('Energy').entityClass().type});
 
     let arc = createTestArc('test-plan-arc', manifest, 'dom');
 
@@ -860,11 +860,11 @@ recipe
       let {results} = await ghc.generate(strategizer);
       assert.equal(results.length, 1);
       let recipe = results[0].result;
-      assert.equal(4, recipe.views.length);
+      assert.equal(4, recipe.handles.length);
       // Verify all connections are bound to handles.
       assert.isUndefined(recipe.handleConnections.find(hc => !hc.view));
-      // Verify all views have non-empty connections list.
-      assert.isUndefined(recipe.views.find(v => v.connections.length == 0));
+      // Verify all handles have non-empty connections list.
+      assert.isUndefined(recipe.handles.find(v => v.connections.length == 0));
     });
   });
   describe('CombinedStrategy', function() {
@@ -892,8 +892,8 @@ recipe
       assert.equal(results.length, 1);
       let recipe = results[0].result;
       assert.equal(2, recipe.particles.length);
-      assert.equal(1, recipe.views.length);
-      assert.equal(2, recipe.views[0].connections.length);
+      assert.equal(1, recipe.handles.length);
+      assert.equal(2, recipe.handles[0].connections.length);
     });
   });
 });
@@ -913,7 +913,7 @@ describe('FallbackFate', function() {
           outthing -> view1
     `));
     let recipe = manifest.recipes[0];
-    recipe.views.forEach(v => v._originalFate = '?');
+    recipe.handles.forEach(v => v._originalFate = '?');
     assert(recipe.normalize());
     let arc = createTestArc('test-plan-arc', manifest, 'dom');
     let strategizer = {generated: [{result: manifest.recipes[0], score: 1}], terminal: []};
@@ -928,9 +928,9 @@ describe('FallbackFate', function() {
     results = (await strategy.generate(strategizer)).results;
     assert.equal(results.length, 1);
     let plan = results[0].result;
-    assert.equal(plan.views.length, 2);
-    assert.equal('map', plan.views[0].fate);
-    assert.equal('copy', plan.views[1].fate);
+    assert.equal(plan.handles.length, 2);
+    assert.equal('map', plan.handles[0].fate);
+    assert.equal('copy', plan.handles[1].fate);
   });
 
   it('ignore non-search unresolved recipe', async () => {
@@ -948,7 +948,7 @@ describe('FallbackFate', function() {
           outthing -> view1
     `));
     let recipe = manifest.recipes[0];
-    recipe.views.forEach(v => v._originalFate = '?');
+    recipe.handles.forEach(v => v._originalFate = '?');
     assert(recipe.normalize());
     let arc = createTestArc('test-plan-arc', manifest, 'dom');
     let strategizer = {generated: [{result: manifest.recipes[0], score: 1}], terminal: []};
@@ -1174,8 +1174,8 @@ describe('CreateDescriptionHandle', function() {
 
     assert.equal(results.length, 1);
     let plan = results[0].result;
-    assert.equal(plan.views.length, 1);
-    assert.equal('create', plan.views[0].fate);
+    assert.equal(plan.handles.length, 1);
+    assert.equal('create', plan.handles[0].fate);
     assert.isTrue(plan.isResolved());
   });
 });

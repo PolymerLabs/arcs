@@ -128,7 +128,7 @@ class Arc {
     let id = 0;
     let schemaSet = new Set();
     let importSet = new Set();
-    for (let handle of this._activeRecipe.views) {
+    for (let handle of this._activeRecipe.handles) {
       if (handle.fate == 'map')
         importSet.add(this.context.findManifestUrlForHandleId(handle.id));
     }
@@ -294,10 +294,10 @@ ${this.activeRecipe.toString()}`;
       value.handles.forEach(handle => arc.particleHandleMaps.get(key).handles.set(handle.name, handleMap.get(handle)));
     });
 
-   let {particles, views, slots} = this._activeRecipe.mergeInto(arc._activeRecipe);
-   let particleIndex = 0, viewIndex = 0, slotIndex = 0;
+   let {particles, handles, slots} = this._activeRecipe.mergeInto(arc._activeRecipe);
+   let particleIndex = 0, handleIndex = 0, slotIndex = 0;
    this._recipes.forEach(recipe => {
-     let arcRecipe = {particles: [], views: [], slots: [], innerArcs: new Map()};
+     let arcRecipe = {particles: [], handles: [], slots: [], innerArcs: new Map()};
      recipe.particles.forEach(p => {
        arcRecipe.particles.push(particles[particleIndex++]);
        if (recipe.innerArcs.has(p)) {
@@ -306,14 +306,14 @@ ${this.activeRecipe.toString()}`;
          let innerArc = {activeRecipe: new Recipe(), recipes: []};
          let innerTuples = thisInnerArc.activeRecipe.mergeInto(innerArc.activeRecipe);
          thisInnerArc.recipes.forEach(thisInnerArcRecipe => {
-           let innerArcRecipe = {particles: [], views: [], slots: [], innerArcs: new Map()};
+           let innerArcRecipe = {particles: [], handles: [], slots: [], innerArcs: new Map()};
            let innerIndex = 0;
            thisInnerArcRecipe.particles.forEach(thisInnerArcRecipeParticle => {
              innerArcRecipe.particles.push(innerTuples.particles[innerIndex++]);
            });
            innerIndex = 0;
-           thisInnerArcRecipe.views.forEach(thisInnerArcRecipeParticle => {
-             innerArcRecipe.views.push(innerTuples.views[innerIndex++]);
+           thisInnerArcRecipe.handles.forEach(thisInnerArcRecipeParticle => {
+             innerArcRecipe.handles.push(innerTuples.handles[innerIndex++]);
            });
            innerIndex = 0;
            thisInnerArcRecipe.slots.forEach(thisInnerArcRecipeParticle => {
@@ -324,8 +324,8 @@ ${this.activeRecipe.toString()}`;
          arcRecipe.innerArcs.set(transformationParticle, innerArc);
        }
      });
-     recipe.views.forEach(p => {
-       arcRecipe.views.push(views[viewIndex++]);
+     recipe.handles.forEach(p => {
+       arcRecipe.handles.push(handles[handleIndex++]);
      });
      recipe.slots.forEach(p => {
        arcRecipe.slots.push(slots[slotIndex++]);
@@ -352,37 +352,37 @@ ${this.activeRecipe.toString()}`;
       }
       currentArc = innerArcs.get(innerArc.particle);
     }
-    let {views, particles, slots} = recipe.mergeInto(currentArc.activeRecipe);
-    currentArc.recipes.push({particles, views, slots, innerArcs: new Map()});
+    let {handles, particles, slots} = recipe.mergeInto(currentArc.activeRecipe);
+    currentArc.recipes.push({particles, handles, slots, innerArcs: new Map()});
     slots.forEach(slot => slot.id = slot.id || `slotid-${this.generateID()}`);
 
-    for (let recipeView of views) {
-      if (['copy', 'create'].includes(recipeView.fate)) {
-        let type = recipeView.type;
+    for (let recipeHandle of handles) {
+      if (['copy', 'create'].includes(recipeHandle.fate)) {
+        let type = recipeHandle.type;
         if (type.isVariable)
           type = type.resolvedType();
-        let view = await this.createHandle(type, /* name= */ null, this.generateID(), recipeView.tags);
-        if (recipeView.fate === 'copy') {
-          let copiedView = this.findHandleById(recipeView.id);
-          assert(copiedView._version !== null);
-          await view.cloneFrom(copiedView);
-          let copiedViewDesc = this.getHandleDescription(copiedView);
-          if (copiedViewDesc) {
-            this._handleDescriptions.set(view, copiedViewDesc);
+        let handle = await this.createHandle(type, /* name= */ null, this.generateID(), recipeHandle.tags);
+        if (recipeHandle.fate === 'copy') {
+          let copiedHandle = this.findHandleById(recipeHandle.id);
+          assert(copiedHandle._version !== null);
+          await handle.cloneFrom(copiedHandle);
+          let copiedHandleDesc = this.getHandleDescription(copiedHandle);
+          if (copiedHandleDesc) {
+            this._handleDescriptions.set(handle, copiedHandleDesc);
           }
         }
-        recipeView.id = view.id;
-        recipeView.fate = 'use';
-        recipeView.storageKey = view.storageKey;
+        recipeHandle.id = handle.id;
+        recipeHandle.fate = 'use';
+        recipeHandle.storageKey = handle.storageKey;
         // TODO: move the call to OuterPEC's DefineView to here
       }
       
-      let storageKey = recipeView.storageKey;
+      let storageKey = recipeHandle.storageKey;
       if (!storageKey)
-        storageKey = this.keyForId(recipeView.id);
-      assert(storageKey, `couldn't find storage key for view '${recipeView}'`);
-      let view = await this._storageProviderFactory.connect(recipeView.id, recipeView.type, storageKey);
-      assert(view, `view '${recipeView.id}' was not found`);
+        storageKey = this.keyForId(recipeHandle.id);
+      assert(storageKey, `couldn't find storage key for handle '${recipeHandle}'`);
+      let handle = await this._storageProviderFactory.connect(recipeHandle.id, recipeHandle.type, storageKey);
+      assert(handle, `handle '${recipeHandle.id}' was not found`);
     }
 
     particles.forEach(recipeParticle => this._instantiateParticle(recipeParticle));
@@ -468,7 +468,7 @@ ${this.activeRecipe.toString()}`;
 
   findHandlesByType(type, options) {
     let typeKey = Arc._viewKey(type);
-    let views = [...this._handlesById.values()].filter(handle => {
+    let handles = [...this._handlesById.values()].filter(handle => {
       if (typeKey) {
         let handleKey = Arc._viewKey(handle.type);
         if (typeKey === handleKey) {
@@ -485,9 +485,9 @@ ${this.activeRecipe.toString()}`;
     });
 
     if (options && options.tags) {
-      views = views.filter(view => options.tags.filter(tag => !this._handleTags.get(view).has(tag)).length == 0);
+      handles = handles.filter(handle => options.tags.filter(tag => !this._handleTags.get(handle).has(tag)).length == 0);
     }
-    return views;
+    return handles;
   }
 
   findHandleById(id) {

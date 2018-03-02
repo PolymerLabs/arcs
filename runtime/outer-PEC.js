@@ -92,7 +92,7 @@ class OuterPEC extends PEC {
       let error = undefined;
       let recipe0 = manifest.recipes[0];
       if (recipe0) {
-        for (let handle of recipe0.views) {
+        for (let handle of recipe0.handles) {
           handle.mapToView(this._arc.findHandleById(handle.id));
         }
         if (recipe0.normalize()) {
