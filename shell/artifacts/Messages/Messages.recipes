@@ -6,9 +6,14 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
+import 'Mustache.recipes'
+
 import 'ChatWrapper.manifest'
 import 'ShowChatMessages.manifest'
 import 'ComposeMessage.manifest'
+import 'Participants.manifest'
+import 'ParticipantList.manifest'
+
 
 //bootstrap chat view
 //view Messages of [Message] #chat in 'chat.json'
@@ -17,13 +22,24 @@ recipe
   create #chat as messages
   map #BOXED_avatar as avatars
   use #user as user
+  create #participants #nosync as participants
+
   ChatWrapper
     messages <- messages
     avatars <- avatars
+    participants <- participants
   ShowChatMessages
     avatars <- avatars
     messages = messages
     user <- user
+    participants <- participants
   ComposeMessage
     messages = messages
     user <- user
+
+  // NoOp particles to mimic what the VR chat is doing.
+  Participants
+    messages <- messages
+    participants = participants
+  ParticipantList
+    participants <- participants

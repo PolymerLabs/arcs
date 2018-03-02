@@ -39,6 +39,7 @@ import '../components/toggle-button.js';
 // for particles
 import '../components/corellia-xen/cx-input.js';
 import '../components/good-map.js';
+import '../components/video-controller.js';
 // TODO(sjmiles): deprecated
 import '../components/x-list.js';
 

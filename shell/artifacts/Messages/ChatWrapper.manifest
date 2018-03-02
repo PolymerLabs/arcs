@@ -8,9 +8,10 @@
 
 import 'Message.schema'
 import 'https://$cdn/artifacts/People/Avatar.schema'
+import 'https://$cdn/artifacts/People/Person.schema'
 
 particle ChatWrapper in 'source/ChatWrapper.js'
-  ChatWrapper(in [Message] messages, in [Avatar] avatars)
+  ChatWrapper(in [Message] messages, in [Avatar] avatars, in [Person] participants)
   consume toproot
     provide chatmessages
     provide compose

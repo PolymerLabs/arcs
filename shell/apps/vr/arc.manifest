@@ -1,3 +1,3 @@
-import 'https://sjmiles.github.io/arcs-stories/0.3/Vr/recipes.manifest'
-import 'https://noelutz.github.io/arcs-stories/0.3/VideoPlayer/Vr/VideoPlayer.recipes'
-import 'https://noelutz.github.io/arcs-stories/0.3/Messages/Vr/Vr.recipes'
+import 'https://$cdn/artifacts/Vr/recipes.manifest'
+import 'https://$cdn/artifacts/VideoPlayer/Vr/VideoPlayer.recipes'
+import 'https://$cdn/artifacts/Messages/Vr/Vr.recipes'

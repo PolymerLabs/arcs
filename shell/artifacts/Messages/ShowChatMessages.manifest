@@ -11,7 +11,8 @@ import 'https://$cdn/artifacts/People/Person.schema'
 import 'Message.schema'
 
 particle ShowChatMessages in 'source/ShowChatMessages.js'
-  ShowChatMessages(in [Avatar] avatars, in Person user, inout [Message] messages)
+  ShowChatMessages(in [Avatar] avatars, in Person user, inout [Message] messages, in [Person] participants)
+  consume set of topofhead
   consume chatmessages
     provide preamble
     provide set of custom_message
