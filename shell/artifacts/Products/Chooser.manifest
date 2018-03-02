@@ -9,7 +9,7 @@
 import 'Product.schema'
 
 particle Chooser in 'source/Chooser.js'
-  Chooser(in [Product] choices, inout [Product] resultList)
+  Chooser(in [~a] choices, inout [~a] resultList)
   consume action
     provide set of annotation
       view choices
