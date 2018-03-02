@@ -73,29 +73,28 @@ ${styles}
       return template;
     }
     _willReceiveProps({event}, state) {
-      const currentEvent = Object.assign({}, event && event.rawData || {});
-      currentEvent.participants = 2;
-      this._setState({currentEvent});
+      if (event && !event.participants) {
+        this._setParticipants(2);
+      }
     }
-    _shouldRender(props, {currentEvent}) {
-      return Boolean(currentEvent);
+    _setParticipants(size) {
+      const event = this._props.event;
+      event.participants = Number(size);
+      this._views.get('event').set(event);
     }
-    _render(props, {currentEvent}) {
-      const partySize = parseInt(currentEvent.participants);
+    _shouldRender({event}) {
+      return Boolean(event);
+    }
+    _render({event}) {
+      const partySize = event.participants;
       const selected = {};
       for (let i = 1; i <= 21; ++i) {
         selected[`selected${i}`] = Boolean(partySize == i);
       }
       return selected;
     }
-    _onPartySizeChanged(e, {currentEvent}) {
-      const newEvent = Object.assign({}, currentEvent);
-      newEvent.participants = e.data.value;
-      this._storeNewEvent(newEvent);
-    }
-    _storeNewEvent(newEvent) {
-      const event = this._views.get('event');
-      event.set(new event.entityClass(newEvent));
+    _onPartySizeChanged(e) {
+      this._setParticipants(e.data.value);
     }
   };
 
