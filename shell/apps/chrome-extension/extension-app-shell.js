@@ -16,7 +16,7 @@ class ExtensionAppShell extends AppShell {
   get template() {
     return `
 ${super.template}
-<chrome-data arc='{{arc}}' on-data="_onData"></chrome-data>
+<chrome-data arc='{{arc}}' on-data="_onChromeData"></chrome-data>
       `;
   }
 
@@ -32,7 +32,7 @@ ${super.template}
     this._setState({config});
   }
 
-  _onData(e, data) {
+  _onChromeData(e, data) {
     ExtensionAppShell.log('received browserData', data);
     this._setState({browserData: data});
   }
@@ -181,6 +181,8 @@ ${super.template}
         state.extensionReady = true;
       }
     }
+
+    return super._render(props, state);
   }
 }
 ExtensionAppShell.log = Xen.Base.logFactory('ExtensionAppShell', '#2277a8');
