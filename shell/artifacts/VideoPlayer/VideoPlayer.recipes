@@ -23,7 +23,7 @@ recipe
   ShowVideo
     controls <- controls
 
-# Add controls if a video already exists.
+// Add controls if a video already exists.
 recipe
   create #ctrl as controls
   ControlVideo
