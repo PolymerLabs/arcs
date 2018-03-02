@@ -25,24 +25,28 @@ const template = ArcsUtils.html`
   </style>
 
   <agents>
-    <!--<arc-auth on-auth='_onAuth'></arc-auth>-->
-    <arc-config rootpath='{{cdnPath}}' on-config='_onConfig'></arc-config>
-    <persistent-arc key='{{suggestKey}}' on-key='_onKey' metadata='{{metadata}}' on-metadata='_onMetadata'></persistent-arc>
-    <persistent-users on-users='_onUsers'></persistent-users>
-    <persistent-user id='{{userId}}' user='{{user}}' key='{{key}}' on-user='_onUser'></persistent-user>
-    <persistent-manifests manifests='{{manifests}}' on-manifests='_onManifests' exclusions='{{exclusions}}' on-exclusions='_onExclusions'></persistent-manifests>
-    <persistent-handles arc='{{arc}}' key='{{key}}'></persistent-handles>
-    <remote-profile-handles arc='{{arc}}' user='{{user}}' on-profile='_onProfile'></remote-profile-handles>
-    <remote-shared-handles arc='{{arc}}' user='{{user}}' friends='{{friends}}'></remote-shared-handles>
-    <remote-friends-profiles-handles arc='{{arc}}' friends='{{friends}}' user='{{user}}'></remote-friends-profiles-handles>
-    <arc-handle arc='{{arc}}' data='{{arcsHandleData}}' options='{{arcsHandleOptions}}' on-change='_onArcsHandleChange'></arc-handle>
-    <arc-handle arc='{{arc}}' data='{{identityHandleData}}' options='{{identityHandleOptions}}' on-change='_onIdentityHandleChange'></arc-handle>
-    <arc-handle arc='{{arc}}' data='{{identitiesHandleData}}' options='{{identitiesHandleOptions}}' on-change='_onIdentitiesHandleChange'></arc-handle>
-    <arc-handle arc='{{arc}}' data='{{themeData}}' options='{{themeHandleOptions}}' on-change='_onShellThemeChange'></arc-handle>
-    <arc-steps plans='{{plans}}' plan='{{plan}}' steps='{{steps}}' step='{{step}}' on-step='_onStep' on-steps='_onSteps'></arc-steps>
+    <!--<arc-auth on-auth="_onAuth"></arc-auth>-->
+    <arc-config rootpath="{{cdnPath}}" on-config="_onConfig"></arc-config>
+    <persistent-arc key="{{suggestKey}}" on-key="_onKey" metadata="{{metadata}}" on-metadata="_onMetadata"></persistent-arc>
+    <persistent-users on-users="_onUsers"></persistent-users>
+    <persistent-user id="{{userId}}" user="{{user}}" key="{{key}}" on-user="_onUser"></persistent-user>
+    <persistent-manifests manifests="{{persistedManifests}}" on-manifests="_onManifests" exclusions="{{exclusions}}" on-exclusions="_onExclusions"></persistent-manifests>
+    <persistent-handles arc="{{arc}}" key="{{key}}"></persistent-handles>
+    <remote-profile-handles arc="{{arc}}" user="{{user}}" on-profile="_onProfile"></remote-profile-handles>
+    <remote-friends-shared-handles arc="{{arc}}" friends="{{friends}}" user="{{user}}"></remote-friends-shared-handles>
+    <arc-steps plans="{{plans}}" plan="{{plan}}" steps="{{steps}}" step="{{step}}" on-step="_onStep" on-steps="_onSteps"></arc-steps>
     <!-- only for launcher -->
-    <remote-visited-arcs user='{{launcherUser}}' arcs='{{visitedArcs}}' on-arcs='_onVisitedArcs'></remote-visited-arcs>
+    <remote-visited-arcs user="{{launcherUser}}" arcs="{{visitedArcs}}" on-arcs="_onVisitedArcs"></remote-visited-arcs>
   </agents>
+
+  <handles>
+    <arc-handle arc="{{arc}}" data="{{arcsHandleData}}" options="{{arcsHandleOptions}}" on-change="_onArcsHandleChange"></arc-handle>
+    <arc-handle arc="{{arc}}" data="{{identityHandleData}}" options="{{identityHandleOptions}}"></arc-handle>
+    <arc-handle arc="{{arc}}" data="{{identitiesHandleData}}" options="{{identitiesHandleOptions}}"></arc-handle>
+    <arc-handle arc="{{arc}}" data="{{themeData}}" options="{{themeHandleOptions}}" on-change="_onShellThemeChange"></arc-handle>
+    <!-- make sure #BOXED_avatar exists, even if there are no avatars to box -->
+    <arc-handle arc="{{arc}}" options="{{boxedAvatarHandleOptions}}"></arc-handle>
+  </handles>
 
   <arc-host config='{{hostConfig}}' manifests='{{manifests}}' exclusions='{{exclusions}}' plans='{{plans}}' plan='{{plan}}' suggestions='{{suggestions}}' on-arc='_onArc' on-plans='_onPlans' on-applied='_onApplied'>
     <a-scene id="particles" Xgridhelper="size:8" physics="debug: false">
@@ -51,6 +55,7 @@ const template = ArcsUtils.html`
       <a-camera position="0 0 0"></a-camera>
       <a-assets timeout="60000" slotid="assets"></a-assets>
       <!-- particles go here -->
+      <a-entity slotid="toproot"></a-entity>
       <a-entity slotid="root"></a-entity>
     </a-scene>
   </arc-host>
