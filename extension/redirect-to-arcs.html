@@ -7,15 +7,21 @@ subject to an additional IP rights grant found at
 http://polymer.github.io/PATENTS.txt
 -->
 <!doctype html>
-<title>Arcs: Chrome Plugin</title>
+<title>Arcs: Chrome Extension Redirect</title>
 
 <!--
-  To test against a local version, run `npm start` in shell and uncomment:
+  By default the extension runs against a local server. To start one, go
+  into the shell directory and run:
+
+  shell> npm start
 -->
 <meta http-equiv="refresh"
       content="0; http://localhost:8080/apps/chrome-extension/?arc=*">
   
 <!--
+  Alternately, you can run against the latest deployed version. Comment out
+  the redirect above, and uncomment this one:
+
 <meta http-equiv="refresh"
-      content="0; https://polymerlabs.github.io/arcs-cdn/v0.2.1/apps/chrome-extension/">
+      content="0; https://polymerlabs.github.io/arcs-live/shell/apps/chrome-extension/?arc=*">
 -->
