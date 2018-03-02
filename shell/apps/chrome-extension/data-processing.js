@@ -15,7 +15,7 @@ export function filter(entities) {
       // it's not clear that this remains a restriction. If it is we'll need
       // to whitelist text/x-arcs-manifest.
       // if (value.hasOwnProperty('name')) {
-        accumulator.push(value);
+      accumulator.push(value);
       // }
       return accumulator;
     }, []);
@@ -42,9 +42,8 @@ export function flatten(entities) {
         type = type.replace(/^https?:/, 'http:');
       }
 
-      accumulator[type]
-        ? accumulator[type].push(entry)
-        : (accumulator[type] = [entry]);
+      accumulator[type] ? accumulator[type].push(entry) :
+                          (accumulator[type] = [entry]);
     });
     return accumulator;
   }, {});
@@ -64,10 +63,8 @@ function _deepIsEqual(a, b) {
 export function deduplicate(entities) {
   return Object.entries(entities).reduce((accumulator, [key, values]) => {
     accumulator[key] = values.reduce((accumulator, value) => {
-      let isIncluded = accumulator.reduce(
-        (a, av) => _deepIsEqual(av, value) || a,
-        false
-      );
+      let isIncluded =
+          accumulator.reduce((a, av) => _deepIsEqual(av, value) || a, false);
       isIncluded || accumulator.push(value);
       return accumulator;
     }, []);
