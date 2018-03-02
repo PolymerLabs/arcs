@@ -256,7 +256,7 @@ ${styles}
     }
     _onPartySizeChanged(e, state) {
       let newEvent = Object.assign({}, state.currentEvent || {});
-      newEvent.participants = e.data.value;
+      newEvent.participants = Number(e.data.value);
       this._storeNewEvent(newEvent);
     }
     _storeNewEvent(newEvent) {
