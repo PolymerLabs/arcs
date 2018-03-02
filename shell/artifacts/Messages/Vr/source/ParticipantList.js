@@ -6,9 +6,9 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-"use strict";
+'use strict';
 
-defineParticle(({ DomParticle }) => {
+defineParticle(({DomParticle}) => {
 
   let template = `
 <template participant>
@@ -51,7 +51,7 @@ defineParticle(({ DomParticle }) => {
       rotation: '0 220 0',
       scale: '200 200 200',
     },
-  }
+  };
 
   return class extends DomParticle {
 

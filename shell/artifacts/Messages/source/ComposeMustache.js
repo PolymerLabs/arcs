@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-"use strict";
+'use strict';
 
 defineParticle(({DomParticle}) => {
 
@@ -64,7 +64,7 @@ defineParticle(({DomParticle}) => {
     _render(props, state) {
       if (state.messages) {
         return {
-          mustaches: mustaches.map((m, i) => { return { i, src: this._getImgSrc(m) } }),
+          mustaches: mustaches.map((m, i) => { return {i, src: this._getImgSrc(m)}; }),
         };
       }
     }

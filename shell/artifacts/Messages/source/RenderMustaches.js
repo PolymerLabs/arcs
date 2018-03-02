@@ -6,7 +6,7 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-"use strict";
+'use strict';
 
 defineParticle(({DomParticle}) => {
 
@@ -23,9 +23,9 @@ defineParticle(({DomParticle}) => {
         return {
           items: props.messages.map((m, i) => {
             if (m.type == 'mustache') {
-              return { subId: i, name: m.name, message: m.content, style: {}};
+              return {subId: i, name: m.name, message: m.content, style: {}};
             } else {
-              return { subId: i, style: {display: 'none'}};
+              return {subId: i, style: {display: 'none'}};
             }
           })
         };

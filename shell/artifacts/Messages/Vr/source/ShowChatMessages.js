@@ -6,7 +6,7 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-"use strict";
+'use strict';
 
 defineParticle(({DomParticle}) => {
 
@@ -82,7 +82,7 @@ defineParticle(({DomParticle}) => {
     }
     _renderInner(p, message) {
       if (message !== undefined) {
-        var model = { name: p.name, message };
+        let model = {name: p.name, message};
         if (this.mode == 'mustache') {
           model.position = mustache[p.name] ? mustache[p.name].position : '';   
           model.opacity = '1';            
@@ -93,11 +93,11 @@ defineParticle(({DomParticle}) => {
             $template: this.mode,
             models: [model],
           }
-        }
+        };
       } else {
         return {
           subId: p.name,
-        }
+        };
       }
     }
   };
