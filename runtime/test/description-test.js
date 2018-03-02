@@ -82,12 +82,12 @@ recipe
     assert(1, manifest.recipes.length);
     let recipe = manifest.recipes[0];
     let Foo = manifest.findSchemaByName('Foo').entityClass();
-    recipe.views[0].mapToView({id: 'test:1', type: Foo.type});
-    if (recipe.views.length > 1) {
-      recipe.views[1].mapToView({id: 'test:2', type: Foo.type.setViewOf()});
+    recipe.handles[0].mapToView({id: 'test:1', type: Foo.type});
+    if (recipe.handles.length > 1) {
+      recipe.handles[1].mapToView({id: 'test:2', type: Foo.type.setViewOf()});
     }
-    if (recipe.views.length > 2) {
-      recipe.views[2].mapToView({id: 'test:3', type: Foo.type});
+    if (recipe.handles.length > 2) {
+      recipe.handles[2].mapToView({id: 'test:3', type: Foo.type});
     }
     let arc = createTestArc();
     let fooView = await arc.createHandle(Foo.type, undefined, 'test:1');
@@ -365,8 +365,8 @@ recipe
       assert(1, manifest.recipes.length);
       let recipe = manifest.recipes[0];
       let Foo = manifest.findSchemaByName('Foo').entityClass();
-      recipe.views[0].mapToView({id: 'test:1', type: Foo.type.setViewOf()});
-      recipe.views[1].mapToView({id: 'test:2', type: Foo.type.setViewOf()});
+      recipe.handles[0].mapToView({id: 'test:1', type: Foo.type.setViewOf()});
+      recipe.handles[1].mapToView({id: 'test:2', type: Foo.type.setViewOf()});
       let arc = createTestArc();
       let fooView1 = await arc.createHandle(Foo.type.setViewOf(), undefined, 'test:1');
       let fooView2 = await arc.createHandle(Foo.type.setViewOf(), undefined, 'test:2');
@@ -377,22 +377,22 @@ recipe
       let description = new Description(arc);
 
       await test.verifySuggestion('Write to X-foo and write to X-foo.', description);
-      assert.equal('X-foo', await description.getHandleDescription(recipe.views[0]));
-      assert.equal('X-foo', await description.getHandleDescription(recipe.views[1]));
+      assert.equal('X-foo', await description.getHandleDescription(recipe.handles[0]));
+      assert.equal('X-foo', await description.getHandleDescription(recipe.handles[1]));
 
       // Add values to the second view.
       fooView2.store({id: 1, rawData: {name: 'foo-1', fooValue: 'foo-value-1'}});
       fooView2.store({id: 2, rawData: {name: 'foo-2', fooValue: 'foo-value-2'}});
       await test.verifySuggestion('Write to X-foo and write to X-foo (foo-1, foo-2).', description);
-      assert.equal('X-foo', await description.getHandleDescription(recipe.views[0]));
-      assert.equal('X-foo', await description.getHandleDescription(recipe.views[1]));
+      assert.equal('X-foo', await description.getHandleDescription(recipe.handles[0]));
+      assert.equal('X-foo', await description.getHandleDescription(recipe.handles[1]));
 
       // Add values to the first view also.
       fooView1.store({id: 3, rawData: {name: 'foo-3', fooValue: 'foo-value-3'}});
       fooView1.store({id: 4, rawData: {name: 'foo-4', fooValue: 'foo-value-4'}});
       await test.verifySuggestion('Write to X-foo (foo-3, foo-4) and write to X-foo (foo-1, foo-2).', description);
-      assert.equal('X-foo', await description.getHandleDescription(recipe.views[0]));
-      assert.equal('X-foo', await description.getHandleDescription(recipe.views[1]));
+      assert.equal('X-foo', await description.getHandleDescription(recipe.handles[0]));
+      assert.equal('X-foo', await description.getHandleDescription(recipe.handles[1]));
     });
   });
 
@@ -430,7 +430,7 @@ recipe
 
       let description = new Description(arc);
 
-      // Add values to both Foo views
+      // Add values to both Foo handles
       fooView.set({id: 1, rawData: {name: 'the-FOO'}});
       let fooView2 = await arc.createHandle(fooView.type, undefined, 'test:3');
       fooView2.set({id: 2, rawData: {name: 'another-FOO'}});
@@ -499,8 +499,8 @@ recipe
         assert(1, manifest.recipes.length);
         let recipe = manifest.recipes[0];
         let MyBESTType = manifest.findSchemaByName('MyBESTType').entityClass();
-        recipe.views[0].mapToView({id: 'test:1', type: MyBESTType.type});
-        recipe.views[1].mapToView({id: 'test:2', type: MyBESTType.type.setViewOf()});
+        recipe.handles[0].mapToView({id: 'test:1', type: MyBESTType.type});
+        recipe.handles[1].mapToView({id: 'test:2', type: MyBESTType.type.setViewOf()});
         let arc = createTestArc();
         let tView = await arc.createHandle(MyBESTType.type, undefined, 'test:1');
         let tsView = await arc.createHandle(MyBESTType.type.setViewOf(), undefined, 'test:2');
@@ -516,7 +516,7 @@ recipe
         assert.equal('my best type', await description.getHandleDescription(tRecipeView));
         assert.equal('my best type list', await description.getHandleDescription(tsRecipeView));
 
-        // Add values to views.
+        // Add values to handles.
         tView.set({id: 1, rawData: {property: 'value1'}});
         tsView.store({id: 2, rawData: {property: 'value2'}});
         await test.verifySuggestion('Make my best type list (1 items) from my best type.', description);
@@ -634,8 +634,8 @@ recipe
     let recipe = manifest.recipes[0];
     let Foo = manifest.findSchemaByName('Foo').entityClass();
     let DescriptionType = manifest.findSchemaByName('Description').entityClass();
-    recipe.views[0].mapToView({id: 'test:1', type: Foo.type});
-    recipe.views[1].mapToView({id: 'test:2', type: DescriptionType.type.setViewOf()});
+    recipe.handles[0].mapToView({id: 'test:1', type: Foo.type});
+    recipe.handles[1].mapToView({id: 'test:2', type: DescriptionType.type.setViewOf()});
     let arc = createTestArc();
     let fooView = await arc.createHandle(Foo.type, undefined, 'test:1');
     let descriptionView = await arc.createHandle(DescriptionType.type.setViewOf(), undefined, 'test:2');

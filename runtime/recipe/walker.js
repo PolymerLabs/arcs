@@ -36,7 +36,7 @@ class Walker extends WalkerBase {
           updateList.push({continuation: result, context: handleConnection});
       }
     }
-    for (let view of recipe.views) {
+    for (let view of recipe.handles) {
       if (this.onView) {
         let result = this.onView(recipe, view);
         if (!this.isEmptyResult(result))

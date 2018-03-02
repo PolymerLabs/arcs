@@ -14,12 +14,12 @@ export default class AddUseViews extends Strategy {
   async generate(strategizer) {
     let results = Recipe.over(this.getResults(strategizer), new class extends RecipeWalker {
       onRecipe(recipe) {
-        // Don't add use views while there are outstanding constraints
+        // Don't add use handles while there are outstanding constraints
         if (recipe.connectionConstraints.length > 0)
           return;
-        // Don't add use views to a recipe with free views
-        let freeViews = recipe.views.filter(view => view.connections.length == 0);
-        if (freeViews.length > 0)
+        // Don't add use handles to a recipe with free handles
+        let freeHandles = recipe.handles.filter(handle => handle.connections.length == 0);
+        if (freeHandles.length > 0)
           return;
 
         // TODO: "description" handles are always created, and in the future they need to be "optional" (blocked by optional handles
@@ -29,9 +29,9 @@ export default class AddUseViews extends Strategy {
         return recipe => {
           disconnectedConnections.forEach(hc => {
             let clonedHC = recipe.updateToClone({hc}).hc;
-            let view = recipe.newHandle();
-            view.fate = 'use';
-            clonedHC.connectToView(view);
+            let handle = recipe.newHandle();
+            handle.fate = 'use';
+            clonedHC.connectToView(handle);
           });
           return 0;
         };

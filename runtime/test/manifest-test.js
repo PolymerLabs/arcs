@@ -38,9 +38,9 @@ describe('manifest', function() {
       assert(recipe);
       assert.equal(manifest.findRecipesByVerb('SomeRecipe')[0], recipe);
       assert.equal(recipe.particles.length, 1);
-      assert.equal(recipe.views.length, 2);
-      assert.equal(recipe.views[0].fate, 'map');
-      assert.equal(recipe.views[1].fate, 'create');
+      assert.equal(recipe.handles.length, 2);
+      assert.equal(recipe.handles[0].fate, 'map');
+      assert.equal(recipe.handles[1].fate, 'create');
       assert.equal(recipe.handleConnections.length, 1);
       assert.sameMembers(recipe.handleConnections[0].tags, ['#tag']);
     };
@@ -123,7 +123,7 @@ ${particleStr1}
     let verify = (manifest) => {
       let recipe = manifest.recipes[0];
       assert(recipe);
-      assert.equal(recipe.views.length, 1);
+      assert.equal(recipe.handles.length, 1);
       assert.equal(recipe.handleConnections.length, 2);
       assert.equal(recipe.toString(), `recipe Bidirectional
   ? as view0
@@ -216,7 +216,7 @@ ${particleStr1}
 
     let deserializedManifest = await Manifest.parse(manifest.toString(), {});
   });
-  it('can normalize recipes with interdependent ordering of views and particles', async () => {
+  it('can normalize recipes with interdependent ordering of handles and particles', async () => {
     let manifest = await Manifest.parse(`
       schema S
       particle P1
@@ -441,7 +441,7 @@ ${particleStr1}
       recipe.normalize();
 
       assert.equal(recipe.particles.length, 2);
-      assert.equal(recipe.views.length, 1);
+      assert.equal(recipe.handles.length, 1);
       assert.equal(recipe.handleConnections.length, 2);
       assert.equal(recipe.slots.length, 3);
       assert.equal(recipe.slotConnections.length, 3);

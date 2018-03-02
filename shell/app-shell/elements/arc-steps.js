@@ -77,9 +77,7 @@ class ArcSteps extends Xen.Base {
       // do something smarter than literal matching anyway...
       // Find all mapped handles to be remembered.
       // Store as string, as we'll only use it to find exact matches later. (String is easier to compare)
-      // TODO(wkorman): Rename `views` below to `handles` which may
-      // necessitate revising the launcher.
-      let mappedHandles = plan.views
+      let mappedHandles = plan.handles
         .filter(v => (v.fate == 'map') && (v.id.substr(0, 7) == 'shared:'))
         .map(v => v.id)
         .sort()
