@@ -9,7 +9,7 @@
 import 'Product.schema'
 
 shape HostedParticleShape
-  HostedParticleShape(in Product inProduct, out Product outProduct)
+  HostedParticleShape(in Product, out Product)
 
 // TODO: This particle should use generic handle type and slot name.
 particle ProductFilter in 'source/ProductFilter.js'

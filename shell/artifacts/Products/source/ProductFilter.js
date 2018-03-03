@@ -37,7 +37,6 @@ defineParticle(({Particle}) => {
 
           let recipe = `
 ${this.serializeSchema(hostedParticle)}
-import '${hostedParticle.implFile.replace(/\.[^\.]+$/, '.manifest')}'
 recipe
   use '${productView._id}' as v1
   use '${resultView._id}' as v2

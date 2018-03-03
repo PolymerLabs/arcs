@@ -22,7 +22,11 @@ class MockSlot extends Slot {
     this._content = {};
   }
   setContent(content, handler) {
-    this._content = Object.assign(this._content, content);
+    if (content.template) {
+      this._content.template = content.template;
+    }
+    this._content.model = content.model;
+
   }
   getInnerContext(slotName) {
     if (this._content.template && this._content.template.indexOf('slotid="annotation"') > 0) {
@@ -51,19 +55,19 @@ class MockContext {
  * Usage example:
  *   mockSlotComposer
  *       .newExpectations()
- *           .expectRenderSlot('MyParticle1', 'mySlot1', ['template', 'model'])
- *           .thenSend('MyParticle1', 'mySlot1', '_onMyEvent', {key: 'value'})
- *       .newExpectations()
- *           .expectRenderSlot('MyParticle1', 'mySlot1', ['model'])
- *           .expectRenderSlot('MyParticle2', 'mySlot2', ['template', 'model'], (content) => !!content.myParam)
+ *           .expectRenderSlot('MyParticle1', 'mySlot1', ['template', 'model']);
+ *           .expectRenderSlot('MyParticle1', 'mySlot1', ['model'], 2)
+ *           .expectRenderSlotVerify('MyParticle2', 'mySlot2', (content) => !!content.myParam)
  *           .maybeRenderSlot('MyOptionalParticle', 'myOptionalSlot', ['template', 'model'])
+ *   mockSlotComposer.sendEvent('MyParticle1', 'mySlot1', '_onMyEvent', {key: 'value'});
  *   await mockSlotComposer.expectationsCompleted();
  */
 class MockSlotComposer extends SlotComposer {
-  constructor() {
+  constructor(options) {
     super({rootContext: new MockContext('dummy-context'), affordance: 'mock'});
     this.expectQueue = [];
     this.onExpectationsComplete = () => undefined;
+    this.strict = options && options.strict != undefined ? options.strict : true;
   }
 
   getSlotClass(affordance) {
@@ -76,10 +80,23 @@ class MockSlotComposer extends SlotComposer {
   }
 
   /** @method newExpectations()
-   * Creates a new group of expectations (that may occur in arbitrary order.
+   * Reinitializes expectations queue.
    */
   newExpectations() {
-    this.expectQueue.push([]);
+    assert(this.expectQueue.every(e => e.isOptional));
+    this.expectQueue = [];
+
+    if (!this.strict) {
+      this.ignoreUnexpectedRender();
+    }
+    return this;
+  }
+
+  /** @method ignoreUnexpectedRender
+   * Allows ignoring unexpected render slot requests.
+   */
+  ignoreUnexpectedRender() {
+    this.expectQueue.push({type: 'render', ignoreUnexpected: true, isOptional: true});
     return this;
   }
 
@@ -87,6 +104,7 @@ class MockSlotComposer extends SlotComposer {
    * Returns true, if the number of items in content's model is equal to the given number.
    */
   expectContentItemsNumber(num, content) {
+    assert(content.model, `Content doesn't have model`);
     assert(content.model.items, `Content model doesn\'t have items (${num} expected}`);
     assert(content.model.items.length <= num, `Too many items (${content.model.items.length}), while only ${num} were expected.`);
     return content.model.items.length == num;
@@ -96,98 +114,121 @@ class MockSlotComposer extends SlotComposer {
    * Adds an optional rendering expectation - a group of expectations is considered satifsied if only optional expectation remain.
    * The optional expectation can only be executed within its own expectations group.
    */
-  maybeRenderSlot(particleName, slotName, contentTypes) {
-    assert(this.expectQueue.length > 0, 'No expectations');
-
-    for (let contentType of contentTypes) {
-      this.expectQueue[this.expectQueue.length - 1].push({type: 'render', particleName, slotName, contentType, isOptional: true});
+  maybeRenderSlot(particleName, slotName, contentTypes, times) {
+    times = times || 1;
+    for (let i = 0; i < times; ++i) {
+      this._addRenderExpectation({particleName, slotName, contentTypes, isOptional: true});
     }
     return this;
   }
 
-  /** @method expectRenderSlot(particleName, slotName, contentTypes, verifyComplete)
+  /** @method expectRenderSlot(particleName, slotName, contentTypes)
    * Adds a rendering expectation.
    * particleName, slot name: the expected rendering particle and slot name
    * contentTypes: the expected set of keys in the content object of the render request
+   */
+  expectRenderSlot(particleName, slotName, contentTypes, times) {
+    times = times || 1;
+    for (let i = 0; i < times; ++i) {
+      this._addRenderExpectation({particleName, slotName, contentTypes});
+    }
+    return this;
+  }
+
+  /** @method expectRenderSlotVerify(particleName, slotName, verifyComplete)
+   * Adds a rendering expectation.
+   * particleName, slot name: the expected rendering particle and slot name
    * verifyComplete: an additional optional handler that determines whether the incoming render request satisfies the expectation.
    */
-  expectRenderSlot(particleName, slotName, contentTypes, verifyComplete) {
-    assert(this.expectQueue.length > 0, 'No expectations');
-
-    for (let contentType of contentTypes) {
-      this.expectQueue[this.expectQueue.length - 1].push({type: 'render', particleName, slotName, contentType, verifyComplete});
-    }
-    return this;
+  expectRenderSlotVerify(particleName, slotName, verifyComplete) {
+    let expectation = {particleName, slotName, verifyComplete};
+    return this._addRenderExpectation(expectation);
   }
 
-  /** @method thenSend(particleName, slotName, event, data)
-   * Adds an event that will be sent once the current group of expectations is met.
+  /** @method expectationsCompleted()
+   * Returns promise to completion of all expectations.
    */
-  thenSend(particleName, slotName, event, data) {
-    assert(this.expectQueue.length > 0, 'No expectations');
-
-    let expectations = this.expectQueue[this.expectQueue.length - 1];
-    expectations.then = {particleName, slotName, event, data};
-    if (expectations.length == 0) {
-      this.expectQueue.shift();
-      this._expectationMet(expectations);
-    }
-    return this;
-  }
-
   expectationsCompleted() {
-    if (this.expectQueue.length == 0) {
-      return Promise.resolve();
-    }
-    if (this.expectQueue.length == 1 && this.expectQueue[0].every(e => e.isOptional)) {
+    if (this.expectQueue.length == 0 || this.expectQueue.every(e => e.isOptional)) {
       return Promise.resolve();
     }
     return new Promise((resolve, reject) => this.onExpectationsComplete = resolve);
   }
 
-  _sendEvent({particleName, slotName, event, data}) {
-    let particle = this._slots.find(s => s.consumeConn.particle.name == particleName).consumeConn.particle;
-    this.pec.sendEvent(particle, slotName, {handler: event, data});
+  /** @method sendEvent(particleName, slotName, event, data)
+   * Sends an event to the given particle and slot.
+   */
+  sendEvent(particleName, slotName, event, data) {
+    let particles = this._slots.filter(s => s.consumeConn.particle.name == particleName).map(s => s.consumeConn.particle);
+    assert(1 == particles.length, `Multiple particles with name ${particleName} - cannot send event.`);
+    this.pec.sendEvent(particles[0], slotName, {handler: event, data});
   }
 
-  _verifyRenderContent(expectations, particle, slotName, content) {
-    for (let contentType of Object.keys(content)) {
-      let i = expectations.findIndex(e => {
-        return e.type == 'render' && e.particleName == particle.name && e.slotName == slotName && e.contentType == contentType;
-      });
-      if (i >= 0) {
-        let expectation = expectations[i];
-        if (!expectation.verifyComplete || expectation.verifyComplete(content)) {
-          this._expectationMet(expectation);
-          expectations.splice(i, 1);
-        }
-      } else {
-        return false;
-      }
+  _addRenderExpectation(expectation) {
+    let current = this.expectQueue.find(e => e.particleName == expectation.particleName && e.slotName == expectation.slotName && e.isOptional == expectation.isOptional);
+    if (!current) {
+      current = {type: 'render', particleName: expectation.particleName, slotName: expectation.slotName, isOptional: expectation.isOptional};
+      this.expectQueue.push(current);
     }
-    return true;
+    if (expectation.verifyComplete) {
+      assert(!current.verifyComplete);
+      current.verifyComplete = expectation.verifyComplete;
+    }
+    current.contentTypes = (current.contentTypes || []).concat(expectation.contentTypes);
+    return this;
+  }
+
+  _canIgnore(particleName, slotName, content) {
+    // TODO: add support for ignoring specific particles and/or slots.
+    return this.expectQueue.find(e => e.type == 'render' && e.ignoreUnexpected);
+  }
+
+  _verifyRenderContent(particle, slotName, content) {
+    let index = this.expectQueue.findIndex(e => e.type == 'render' && e.particleName == particle.name && e.slotName == slotName);
+    if (index < 0) {
+      return false;
+    }
+    let expectation = this.expectQueue[index];
+
+    let found = false;
+    let complete = false;
+    if (expectation.verifyComplete) {
+      found = true;
+      complete = expectation.verifyComplete(content);
+    } else if (expectation.contentTypes) {
+      Object.keys(content).forEach(contentType => {
+        let contentIndex = expectation.contentTypes.indexOf(contentType);
+        found |= contentIndex >= 0;
+        if (contentIndex >= 0) {
+          expectation.contentTypes.splice(contentIndex, 1);
+        }
+      });
+      complete = expectation.contentTypes.length == 0;
+    } else {
+      assert(false, `Invalid expectation: ${JSON.stringify(expectation)}`);
+    }
+
+    if (complete) {
+      this.expectQueue.splice(index, 1);
+    }
+    return found;
   }
 
   async renderSlot(particle, slotName, content) {
     // console.log(`renderSlot ${particle.name}:${slotName}`, Object.keys(content).join(', '));
-    assert(this.expectQueue.length > 0 && this.expectQueue[0],
+    assert(this.expectQueue.length > 0,
       `Got a renderSlot from ${particle.name}:${slotName} (content types: ${Object.keys(content).join(', ')}), but not expecting anything further.`);
 
-    let expectations = this.expectQueue[0];
-    let found = this._verifyRenderContent(expectations, particle, slotName, content);
+    let found = this._verifyRenderContent(particle, slotName, content);
     if (!found) {
-      if (expectations.every(e => e.isOptional)) {
-        this.expectQueue.shift();
-        expectations = this.expectQueue[0];
-        found = this._verifyRenderContent(expectations, particle, slotName, content);
+      let canIgnore = this._canIgnore(particle.name, slotName, content);
+      if (canIgnore) {
+        console.log(`Skipping unexpected render slot request: ${particle.name}:${slotName} (content types: ${Object.keys(content).join(', ')})`);
       }
+      assert(canIgnore, `Unexpected render slot ${slotName} for particle ${particle.name} (content types: ${Object.keys(content).join(',')})`);
     }
-    assert(found, `Unexpected render slot ${slotName} for particle ${particle.name} (content types: ${Object.keys(content).join(',')})`);
 
-    if (expectations.length == 0) {
-      this.expectQueue.shift();
-      this._expectationsMet();
-    }
+    this._expectationsMet();
 
     super.renderSlot(particle, slotName, content);
     let slot = this.getSlot(particle, slotName);
@@ -199,56 +240,29 @@ class MockSlotComposer extends SlotComposer {
     // this.detailedLogDebug();
   }
 
-  // Helper method to resolve the current expectation group, if all remaining expectations are optional.
-  async skipOptional() {
-    return new Promise((resolve) => {
-      if (this.expectQueue.length == 0) {
-        resolve();
-      } else {
-        // TODO: get rid of set timeout. Instead update MockSlotComposer to return two promises:
-        // one for required expectations, another for all promises.
-        setTimeout(() => {
-          let expectations = this.expectQueue[0] || [];
-          if (expectations.every(e => e.isOptional)) {
-            this.expectQueue.shift();
-            this._expectationsMet();
-          }
-          resolve();
-        }, 500);
-      }
-    });
-  }
-
-  _expectationMet(expectation) {
-    if (expectation.then) {
-      log(`_expectationMet: sending event`, expectation.then);
-      this._sendEvent(expectation.then);
-    }
-  }
-
   _expectationsMet() {
-    if (this.expectQueue.length == 0) {
+    if (this.expectQueue.length == 0 || this.expectQueue.every(e => e.isOptional)) {
       this.onExpectationsComplete();
     }
   }
 
   detailedLogDebug() {
-    console.log(`    Has ${this.expectQueue.length} expectation groups:  [ ${this.expectQueue.map(expectations => {
-      let expectationsByParticle = {};
-      expectations.forEach(e => {
-        if (!expectationsByParticle[e.particleName]) {
-          expectationsByParticle[e.particleName] = {};
-        }
-        let key = `${e.isOptional ? 'opt_' : ''}${e.contentType}`;
+    let expectationsByParticle = {};
+    this.expectQueue.forEach(e => {
+      if (!expectationsByParticle[e.particleName]) {
+        expectationsByParticle[e.particleName] = {};
+      }
+      e.contentTypes && e.contentTypes.forEach(contentType => {
+        let key = `${e.isOptional ? 'opt_' : ''}${contentType}`;
         if (!expectationsByParticle[e.particleName][key]) {
           expectationsByParticle[e.particleName][key] = 0;
         }
         expectationsByParticle[e.particleName][key]++;
       });
-      return `${expectations.length} expectations : {${Object.keys(expectationsByParticle).map(p => {
-        return `${p}: (${Object.keys(expectationsByParticle[p]).map(key => `${key}=${expectationsByParticle[p][key]}`).join('; ')})`;
-      }).join(', ')}}`;
-    }).join('\n\t\t\t\t')}]`);
+    });
+    console.log(`${this.expectQueue.length} expectations : {${Object.keys(expectationsByParticle).map(p => {
+      return `${p}: (${Object.keys(expectationsByParticle[p]).map(key => `${key}=${expectationsByParticle[p][key]}`).join('; ')})`;
+    }).join(', ')}}`);
   }
 }
 
