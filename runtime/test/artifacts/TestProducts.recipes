@@ -1,0 +1,34 @@
+import '../../../shell/artifacts/Common/ShowCollection.manifest'
+import '../../../shell/artifacts/Products/ProductFilter.manifest'
+import '../../../shell/artifacts/Products/ProductIsBook.manifest'
+import '../../../shell/artifacts/Products/ShowProduct.manifest'
+
+// Filter books and display them.
+recipe
+  ShowCollection.collection -> ProductFilter.results
+  map 'mylist' as mylist
+  create as books
+  ShowCollection
+    hostedParticle = ShowProduct
+  ProductFilter
+    products <- mylist
+    hostedParticle = ProductIsBook
+    results -> books
+
+// Filter books
+recipe
+  map 'mylist' as mylist
+  create as books
+  ProductFilter
+    products <- mylist
+    hostedParticle = ProductIsBook
+    results -> books
+
+resource ProductList
+  start
+  [
+    {"name": "apple"},
+    {"name": "Harry Potter", "category": "book"}
+  ]
+
+view View0 of [Product] 'mylist' in ProductList

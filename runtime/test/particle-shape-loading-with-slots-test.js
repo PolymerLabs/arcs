@@ -70,12 +70,10 @@ describe('particle-shape-loading-with-slots', function() {
 
     slotComposer
       .newExpectations()
-      .expectRenderSlot('SingleSlotParticle', 'annotation', ['template', 'model'])
+      .expectRenderSlot('SingleSlotParticle', 'annotation', ['template', 'model'], 2)
       .expectRenderSlot('MultiplexSlotsParticle', 'annotationsSet', ['template', 'model'])
-      .expectRenderSlot('SingleSlotParticle', 'annotation', ['template', 'model'])
       .maybeRenderSlot('MultiplexSlotsParticle', 'annotationsSet', ['model']);
     await slotComposer.arc.pec.idle;
-    await slotComposer.skipOptional();
     await slotComposer.expectationsCompleted();
 
     // Verify slot template and models.
@@ -89,7 +87,8 @@ describe('particle-shape-loading-with-slots', function() {
     slotComposer
       .newExpectations()
       .expectRenderSlot('SingleSlotParticle', 'annotation', ['model'])
-      .expectRenderSlot('MultiplexSlotsParticle', 'annotationsSet', ['model']);
+      .expectRenderSlot('MultiplexSlotsParticle', 'annotationsSet', ['model'])
+      .maybeRenderSlot('MultiplexSlotsParticle', 'annotationsSet', ['model']);
     await slotComposer.arc.pec.idle;
     await slotComposer.expectationsCompleted();
 
@@ -117,12 +116,10 @@ describe('particle-shape-loading-with-slots', function() {
 
     slotComposer
       .newExpectations()
-      .expectRenderSlot('SingleSlotParticle', 'annotation', ['template', 'model'])
-      .expectRenderSlot('SingleSlotParticle', 'annotation', ['template', 'model'])
+      .expectRenderSlot('SingleSlotParticle', 'annotation', ['template', 'model'], 2)
       .expectRenderSlot('MultiplexSlotsParticle', 'annotationsSet', ['template', 'model'])
       .maybeRenderSlot('MultiplexSlotsParticle', 'annotationsSet', ['model']);
     await slotComposer.arc.pec.idle;
-    await slotComposer.skipOptional();
     await slotComposer.expectationsCompleted();
 
     // Verify slot template and models.
@@ -137,7 +134,8 @@ describe('particle-shape-loading-with-slots', function() {
     slotComposer
       .newExpectations()
       .expectRenderSlot('SingleSlotParticle', 'annotation', ['model'])
-      .expectRenderSlot('MultiplexSlotsParticle', 'annotationsSet', ['model']);
+      .expectRenderSlot('MultiplexSlotsParticle', 'annotationsSet', ['model'])
+      .maybeRenderSlot('MultiplexSlotsParticle', 'annotationsSet', ['model']);
     await slotComposer.arc.pec.idle;
     await slotComposer.expectationsCompleted();
 
