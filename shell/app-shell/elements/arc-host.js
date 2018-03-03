@@ -157,14 +157,14 @@ class ArcHost extends Xen.Base {
     let plans;
     while (state.invalid) {
       state.invalid = false;
-      plans = await this._plan(state.arc);
+      plans = await this._plan(state.arc, state.config.plannerTimeout);
     }
     time = ((Date.now() - time) / 1000).toFixed(2);
     ArcHost.log(`plans`, plans, `${time}s`);
     this._fire('plans', plans);
   }
-  async _plan(arc) {
-    return await ArcsUtils.makePlans(arc, 5000) || [];
+  async _plan(arc, timeout) {
+    return await ArcsUtils.makePlans(arc, timeout) || [];
   }
   async _applySuggestion(arc, plan) {
     // aggressively remove old suggestions when a suggestion is applied
