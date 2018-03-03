@@ -309,9 +309,9 @@ const stamp = function(template, opts) {
   let map = locateNodes(root, notes.locator);
   // return dom manager
   let dom = {
-    root: root,
-    notes: notes,
-    map: map,
+    root,
+    notes,
+    map,
     $(slctr) {
       return this.root.querySelector(slctr);
     },
