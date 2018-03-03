@@ -99,9 +99,10 @@ class Planner {
     return this.strategizer.generated;
   }
 
+  // Specify a timeout value less than zero to disable timeouts.
   async plan(timeout, generations) {
     let trace = Tracing.async({cat: 'planning', name: 'Planner::plan', args: {timeout}});
-    timeout = timeout || NaN;
+    timeout = timeout || -1;
     let allResolved = [];
     let now = () => (typeof performance == 'object') ? performance.now() : process.hrtime();
     let start = now();
@@ -118,8 +119,9 @@ class Planner {
           .map(individual => individual.result)
           .filter(recipe => recipe.isResolved());
       allResolved.push(...resolved);
-      if (now() - start > timeout) {
-        console.warn('Planner.plan timed out.');
+      const elapsed = now() - start;
+      if (timeout >= 0 && elapsed > timeout) {
+        console.warn(`Planner.plan timed out [elapsed=${Math.floor(elapsed)}ms, timeout=${timeout}ms].`);
         break;
       }
     } while (this.strategizer.generated.length > 0);
