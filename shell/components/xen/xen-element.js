@@ -71,7 +71,7 @@ export default Base => class extends Base {
   _didMount() {
   }
   _fire(eventName, detail, node) {
-    let event = new CustomEvent(eventName, {detail: detail});
+    const event = new CustomEvent(eventName, {detail});
     (node || this).dispatchEvent(event);
     return event.detail;
   }
