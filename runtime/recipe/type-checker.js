@@ -6,6 +6,7 @@
 // http://polymer.github.io/PATENTS.txt
 
 import Type from '../type.js';
+import TypeVariable from '../type-variable.js';
 import assert from '../../platform/assert-web.js';
 
 class TypeChecker {
@@ -43,26 +44,33 @@ class TypeChecker {
     let [leftType, rightType] = Type.unwrapPair(resolvedLeft, resolvedRight);
 
     if (leftType.isVariable || rightType.isVariable) {
-      // FIXME: maybe... check that the constraints match?
       if (leftType.isVariable && rightType.isVariable) {
         if (leftType.variable === rightType.variable) {
           return {type: left, valid: true};
         }
-        if (resolve) {
-          // Ensure that any subsequent resolution of left will
-          // satisfy the constraints of right.
-          if (!leftType.variable.tryMergeFrom(rightType.variable)) {
-            return false;
+        if (leftType.variable.constraint || rightType.variable.constraint) {
+          let mergedConstraint = TypeVariable.maybeMergeConstraints(leftType.variable, rightType.variable);
+          if (!mergedConstraint) {
+            return {valid: false};
           }
-          rightType.variable.resolution = leftType;
-        }
+          if (resolve) {
+            leftType.constraint = mergedConstraint;
+            rightType.variable.resolution = leftType;
+          }
+        };
         return {type: left, valid: true};
       } else if (leftType.isVariable) {
+        if (!leftType.variable.isSatisfiedBy(rightType)) {
+          return {valid: false};
+        }
         if (resolve) {
           leftType.variable.resolution = rightType;
         }
         return {type: right, valid: true};
       } else if (rightType.isVariable) {
+        if (!rightType.variable.isSatisfiedBy(leftType)) {
+          return {valid: false};
+        }
         if (resolve) {
           rightType.variable.resolution = leftType;
         }

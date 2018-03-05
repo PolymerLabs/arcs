@@ -45,7 +45,7 @@ class Schema {
     }
   }
 
-  static _typesEqual(fieldType1, fieldType2) {
+  static typesEqual(fieldType1, fieldType2) {
     // TODO: structural check instead of JSON.
     return JSON.stringify(fieldType1) == JSON.stringify(fieldType2);
   }
@@ -60,7 +60,7 @@ class Schema {
 
     for (let {field, type} of [...schema1._fields(), ...schema2._fields()]) {
       if (fields[field]) {
-        if (!Schema._typesEqual(fields[field], type)) {
+        if (!Schema.typesEqual(fields[field], type)) {
           return null;
         }
       } else {
@@ -98,7 +98,7 @@ class Schema {
       let thisSection = this[section];
       let otherSection = otherSchema[section];
       for (let field in otherSection) {
-        if (!Schema._typesEqual(thisSection[field], otherSection[field])) {
+        if (!Schema.typesEqual(thisSection[field], otherSection[field])) {
           return false;
         }
       }
