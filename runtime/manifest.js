@@ -361,6 +361,8 @@ ${e.message}
         super();
       }
       visit(node, visitChildren) {
+        // TODO(dstockwell): set up a scope and merge type variables here, so that
+        //     errors relating to failed merges can reference the manifest source.
         visitChildren();
         switch (node.kind) {
         case 'schema-inline':
@@ -383,7 +385,7 @@ ${e.message}
             }
             if (externalSchema) {
               let externalType = externalSchema.normative[name] || externalSchema.optional[name];
-              if (externalType != type) {
+              if (!Schema.typesEqual(externalType, type)) {
                 throw new ManifestError(
                     node.location,
                     `Type of '${name}' does not match schema (${type} vs ${externalType})`);

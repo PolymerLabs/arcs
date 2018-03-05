@@ -20,6 +20,29 @@ class TypeVariable {
     this._resolution = null;
   }
 
+
+  static maybeMergeConstraints(variable1, variable2) {
+    assert(variable1 instanceof TypeVariable);
+    assert(variable2 instanceof TypeVariable);
+
+    let constraint1 = variable1.constraint;
+    let constraint2 = variable2.constraint;
+
+    if (constraint1 && constraint2) {
+      if (!constraint1.isEntity || !constraint2.isEntity) {
+        throw new Error('merging constraints not implemented for ${constraint1.type} and ${constraint2.type}');
+      }
+  
+      let mergedSchema = Schema.maybeMerge(constraint1.entitySchema, constraint2.entitySchema);
+      if (!mergedSchema) {
+        return null;
+      }
+      return Type.newEntity(mergedSchema);
+    } else {
+      return constraint1 || constraint2;
+    }
+  }
+
   tryMergeFrom(other) {
     assert(other instanceof TypeVariable);
 
@@ -40,6 +63,17 @@ class TypeVariable {
       this.constraint = constraint1 || constraint2;
     }
     return true;
+  }
+
+  isSatisfiedBy(type) {
+    let constraint = this.constraint;
+    if (!constraint) {
+      return true;
+    }
+    if (!constraint.isEntity || !type.isEntity) {
+      throw new Error('constraint checking not implemented for ${constraint1.type} and ${constraint2.type}');
+    }
+    return type.entitySchema.contains(constraint.entitySchema);
   }
 
   get resolution() {
