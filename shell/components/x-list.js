@@ -96,6 +96,6 @@ class XList extends Xen.State(Xen.Element(HTMLElement)) {
   }
 }
 
-if (typeof customElements != 'undefined') {
+if (typeof customElements != 'undefined' && !customElements.get('x-list')) {
   customElements.define('x-list', XList);
 }
