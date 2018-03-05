@@ -6,24 +6,6 @@
 // http://polymer.github.io/PATENTS.txt
 
 /**
- * There are some entity shapes that aren't yet supported by Arcs. Ensure that:
- *  - There is a 'name' field.
- */
-export function filter(entities) {
-  return Object.entries(entities).reduce((accumulator, [key, values]) => {
-    accumulator[key] = values.reduce((accumulator, value) => {
-      // it's not clear that this remains a restriction. If it is we'll need
-      // to whitelist text/x-arcs-manifest.
-      // if (value.hasOwnProperty('name')) {
-      accumulator.push(value);
-      // }
-      return accumulator;
-    }, []);
-    return accumulator;
-  }, {});
-}
-
-/**
  * Reduce the deeply nested structure of url=>entities-of-many-types to a
  * flatter, combined form of type=>entities.
  *

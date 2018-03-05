@@ -10,7 +10,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
 import Xen from '../../components/xen/xen.js';
 
-import {deduplicate, filter, flatten} from './data-processing.js';
+import {deduplicate, flatten} from './data-processing.js';
 
 class BrowserDataReceiver extends Xen.Base {
 
@@ -33,7 +33,7 @@ class BrowserDataReceiver extends Xen.Base {
             event.data);
 
         state.processedData = {
-          'entities': deduplicate(flatten(filter(event.data.entities)))
+          'entities': deduplicate(flatten(event.data.entities))
         };
         if (state.processedData.entities[manifestMimeType]) {
           state.processedData.manifests =
