@@ -376,7 +376,7 @@ function clickInParticles(slotName, selectors, textQuery) {
 }
 
 describe('test Arcs demo flows', function() {
-  it('can use the restaurant demo flow', function() {
+  it.skip('can use the restaurant demo flow', function() {
     initTestWithNewArc();
 
     allSuggestions();
