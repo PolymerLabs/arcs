@@ -1,4 +1,4 @@
-// Copyright (c) 2017 Google Inc. All rights reserved.
+// Copyright (c) 2018 Google Inc. All rights reserved.
 // This code may only be used under the BSD style license found at
 // http://polymer.github.io/LICENSE.txt
 // Code distributed by Google as part of this project is also
@@ -6,7 +6,7 @@
 // http://polymer.github.io/PATENTS.txt
 
 import '../../app-shell/elements/arc-handle.js';
-import '../../apps/chrome-extension/chrome-data.js';
+import '../../apps/chrome-extension/browser-data.js';
 
 import AppShell from '../../app-shell/app-shell.js';
 import ArcsUtils from '../../app-shell/lib/arcs-utils.js';
@@ -16,7 +16,7 @@ class ExtensionAppShell extends AppShell {
   get template() {
     return `
 ${super.template}
-<chrome-data arc='{{arc}}' on-data="_onChromeData"></chrome-data>
+<browser-data-receiver arc='{{arc}}' on-data="_onBrowserData"></browser-data-receiver>
       `;
   }
 
@@ -32,7 +32,7 @@ ${super.template}
     this._setState({config});
   }
 
-  _onChromeData(e, data) {
+  _onBrowserData(e, data) {
     ExtensionAppShell.log('received browserData', data);
     this._setState({browserData: data});
   }

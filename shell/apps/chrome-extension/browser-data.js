@@ -1,6 +1,6 @@
 /*
 @license
-Copyright (c) 2016 The Polymer Project Authors. All rights reserved.
+Copyright (c) 2018 The Polymer Project Authors. All rights reserved.
 This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
 The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
 The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
@@ -12,12 +12,15 @@ import Xen from '../../components/xen/xen.js';
 
 import {deduplicate, filter, flatten} from './data-processing.js';
 
-class ChromeData extends Xen.Base {
+class BrowserDataReceiver extends Xen.Base {
+
   static get observedAttributes() {
     return ['arc'];
   }
 
   _update(props, state, lastProps, lastState) {
+    const manifestMimeType = 'text/x-arcs-manifest';
+
     // if there isn't a listener attached for data, attach that
     if (!state.listenerAttached) {
       state.listenerAttached = window.addEventListener('message', event => {
@@ -25,26 +28,27 @@ class ChromeData extends Xen.Base {
             !event.data || !event.data.entities) {
           return;
         }
-        ChromeData.log(
+        BrowserDataReceiver.log(
             `received event ${event.data.method} from ${event.source}`,
             event.data);
 
         state.processedData = {
           'entities': deduplicate(flatten(filter(event.data.entities)))
         };
-        if (state.processedData.entities['text/x-arcs-manifest']) {
+        if (state.processedData.entities[manifestMimeType]) {
           state.processedData.manifests =
-              state.processedData.entities['text/x-arcs-manifest'].map(
+              state.processedData.entities[manifestMimeType].map(
                   manifest => manifest.url);
-          delete state.processedData.entities['text/x-arcs-manifest'];
+          delete state.processedData.entities[manifestMimeType];
         }
 
-        // Long-term we shouldn't need a check here, this should be idempotent and
-        // should just run again.
+        // The `sentData` check is an optimization, and could be removed. It
+        // prevents sending the same data again (since we don't currently
+        // support dynamic data).
         if (state.processedData && !state.sentData) {
           this._fire('data', state.processedData);
           state.sentData = true;
-          ChromeData.log(
+          BrowserDataReceiver.log(
               'sent processed data out to Arcs for processing',
               state.processedData);
         }
@@ -57,9 +61,9 @@ class ChromeData extends Xen.Base {
     if (props.arc && !state.requestedDataInjection) {
       window.postMessage({method: 'pleaseInjectArcsData'}, '*');
       state.requestedDataInjection = true;
-      ChromeData.log('requested injection of browser data');
+      BrowserDataReceiver.log('requested injection of browser data');
     }
   }
 }
-ChromeData.log = Xen.Base.logFactory('ChromeData', '#883997');
-customElements.define('chrome-data', ChromeData);
+BrowserDataReceiver.log = Xen.Base.logFactory('BrowserDataReceiver', '#883997');
+customElements.define('browser-data-receiver', BrowserDataReceiver);
