@@ -50,7 +50,7 @@ const template = ArcsUtils.html`
   }
   app-shell, [app-shell] {
     display: block;
-    max-width: 512px;
+    max-width: 400px; /* 512px */
     min-width: 320px;
     margin: 0 auto;
     background-color: white;
@@ -82,7 +82,7 @@ const template = ArcsUtils.html`
     position: fixed;
     top: 0;
     width: 100%;
-    max-width: 512px;
+    max-width: 400px; /* 512px */
     height: 56px;
     display: flex;
     align-items: center;
@@ -130,7 +130,7 @@ const template = ArcsUtils.html`
     position: fixed;
     bottom: 0;
     width: 100%;
-    max-width: 512px;
+    max-width: 400px; /* 512px */
     background-color: white;
     color: black;
   }
@@ -147,7 +147,7 @@ const template = ArcsUtils.html`
     top: 56px;
     bottom: 34px;
     width: 100%;
-    max-width: 512px;
+    max-width: 400px; /* 512px */
     margin: 0 auto;
     box-sizing: border-box;
     pointer-events: none;
