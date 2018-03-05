@@ -243,7 +243,8 @@ class Schema {
 
   toString() {
     let results = [];
-    results.push(`schema ${this.name}`.concat(this.parent ? ` extends ${this.parent.name}` : ''));
+    this.parents.forEach(parent => results.push(parent.toString()));
+    results.push(`schema ${this.name}`.concat(this.parents.length > 0 ? ` extends ${this.parents.map(p => p.name).join(',')}` : ''));
 
     let propertiesToString = (properties, keyword) => {
       if (Object.keys(properties).length > 0) {
@@ -270,6 +271,7 @@ class Schema {
       }
     };
 
+    // TODO: skip properties that already written as part of parent schema serialization?
     propertiesToString(this.normative, 'normative');
     propertiesToString(this.optional, 'optional');
     return results.join('\n');
