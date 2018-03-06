@@ -21,13 +21,20 @@ export default class OuterPortAttachment {
 
   InstantiateParticle(particle, {id, spec, handles}) {
     this._particleRegistry[id] = spec;
+    devtoolsChannelProvider.get().send({
+      messageType: 'InstantiateParticle',
+      messageBody: Object.assign(
+        this._arcMetadata(),
+        this._trimParticleSpec(id, spec, handles)
+      )
+    });
   }
 
   SimpleCallback({callback, data}) {
     let callbackDetails = this._callbackRegistry[callback];
     if (callbackDetails) {
       // Copying callback data, as the callback can be used multiple times.
-      this._sendMessage(Object.assign({}, callbackDetails), data);
+      this._sendDataflowMessage(Object.assign({}, callbackDetails), data);
     }
   }
 
@@ -65,22 +72,42 @@ export default class OuterPortAttachment {
   }
 
   _logHandleCall(args) {
-    this._sendMessage(this._describeHandleCall(args), args.data);
+    this._sendDataflowMessage(this._describeHandleCall(args), args.data);
   }
 
-  _sendMessage(messageBody, data) {
+  _sendDataflowMessage(messageBody, data) {
     messageBody.data = JSON.stringify(data);
     messageBody.timestamp = Date.now();
     devtoolsChannelProvider.get().send({messageType: 'dataflow', messageBody});
   }
 
   _describeHandleCall({operation, handle, particleId}) {
-    return {
-      arcId: this._arcIdString,
-      speculative: this._speculative,
+    return Object.assign(this._arcMetadata(), {
       operation,
       particle: this._describeParticle(particleId),
       handle: this._describeHandle(handle)
+    });
+  }
+
+  _arcMetadata() {
+    return {
+      arcId: this._arcIdString,
+      speculative: this._speculative
+    };
+  }
+
+  _trimParticleSpec(id, spec, handles) {
+    let connections = {};
+    spec.connectionMap.forEach((value, key) => {
+      connections[key] = Object.assign({
+        direction: value.direction
+      }, this._describeHandle(handles.get(key)));
+    });
+    return {
+      id,
+      name: spec.name,
+      connections,
+      implFile: spec.implFile
     };
   }
 

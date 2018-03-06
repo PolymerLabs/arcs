@@ -32,6 +32,17 @@
         display: inline-block;
         vertical-align: middle;
       }
+      #popup {
+        position: absolute;
+        border: 1px solid var(--mid-gray);
+        padding: 5px;
+        z-index: 1;
+        background: white;
+        display: none;
+      }
+      #popupText {
+        margin: 0;
+      }
     </style>
     <div class="legend">
       <div><span node style="background: var(--highlight-blue)"></span> Particle</div>
@@ -39,6 +50,10 @@
       <div><span edge style="background: var(--dark-green)"></span> Read</div>
       <div><span edge style="background: var(--dark-red)"></span> Write</div>
       <div><span edge style="background: var(--highlight-blue)"></span> Read-Write</div>
+      <div><span edge style="background: var(--dark-gray)"></span> Hosted</div>
+    </div>
+    <div id="popup">
+      <pre id="popupText"></pre>
     </div>
     <div id="graph"></div>
   </template>
@@ -60,62 +75,87 @@
           this.$.graph.style.width = `${width}px`;
           this.$.graph.style.height = `${height}px`;
         }).observe(this);
+        this.$.popup.addEventListener('mouseleave', e => {
+          this.$.popup.style.display = 'none';
+        });
       }
 
       onMessages(messages) {
         let needsRedraw = false;
         for (let msg of messages) {
+          let m = msg.messageBody;
           switch (msg.messageType) {
-            case 'dataflow':
-              let e = msg.messageBody;
+            case 'InstantiateParticle':
+              if (m.speculative) continue;
 
-              if (e.speculative) continue;
-
-              if (!this._particles.has(e.particle.id)) {
-                this._particles.set(e.particle.id, {
-                  id: e.particle.id,
-                  label: e.particle.name,
+              if (!this._particles.has(m.id)) {
+                this._particles.set(m.id, {
+                  id: m.id,
+                  label: m.name,
                   color: this._cssVar('--highlight-blue'),
-                  font: {color: 'white'}
+                  font: {color: 'white'},
+                  details: {
+                    id: m.id,
+                    implFile: m.implFile
+                  }
                 });
-                needsRedraw = true;
               }
 
-              if (!this._handles.has(e.handle.id)) {
-                this._handles.set(e.handle.id, {
-                  id: e.handle.id,
-                  label: `${e.handle.name ? ('"' + e.handle.name + '"') : ''} ${e.handle.type}`,
-                  color: this._cssVar('--light-gray')
+              for (let name of Object.getOwnPropertyNames(m.connections)) {
+                let con = m.connections[name];
+                this._handles.set(con.id, {
+                  id: con.id,
+                  label: `${con.name ? ('"' + con.name + '"') : ''} ${con.type}`,
+                  color: this._cssVar('--light-gray'),
+                  details: {
+                    id: con.id,
+                    storageKey: con.storageKey,
+                    name: con.name,
+                    type: con.type
+                  }
                 });
-                needsRedraw = true;
+
+                let color;
+                let arrows;
+                switch (con.direction) {
+                  case 'in':
+                    arrows = 'from';
+                    color = this._cssVar('--dark-green');
+                    break;
+                  case 'out':
+                    arrows = 'to';
+                    color = this._cssVar('--dark-red');
+                    break;
+                  case 'inout':
+                    arrows = 'to, from';
+                    color = this._cssVar('--highlight-blue');
+                    break;
+                  case 'host':
+                    arrows = {
+                      from: {
+                        enabled: true,
+                        type: 'circle'
+                      }
+                    };
+                    color = this._cssVar('--dark-gray');
+                    break;
+                }
+
+                let edgeId = `${m.id}¯\_(ツ)_/¯${con.id}`;
+                this._operations.set(edgeId, {
+                  id: edgeId,
+                  from: m.id,
+                  to: con.id,
+                  arrows,
+                  color: {color},
+                  details: {
+                    direction: con.direction,
+                    handleConnection: name
+                  }
+                });
               }
 
-              let edgeId = `${e.particle.id}¯\_(ツ)_/¯${e.handle.id}`;
-              let edge = this._operations.get(edgeId);
-              let direction = writeOps.includes(e.operation) ? 'to' : 'from';
-
-              if (!edge) {
-                edge = {
-                  from: e.particle.id,
-                  to: e.handle.id,
-                  _directions: new Set([direction])
-                };
-                this._operations.set(edgeId, edge);
-                needsRedraw = true;
-              } else if (!edge._directions.has(direction)) {
-                edge._directions.add(direction);
-                needsRedraw = true;
-              }
-
-              edge.arrows = Array.from(edge._directions.values()).join(', ');
-              edge.color = {
-                color: edge._directions.size === 1
-                  ? (edge._directions.has('to')
-                      ? this._cssVar('--dark-red')
-                      : this._cssVar('--dark-green'))
-                  : this._cssVar('--highlight-blue')
-              };
-
+              needsRedraw = true;
               break;
             case 'page-refresh':
               this._clear();
@@ -139,6 +179,29 @@
             nodes: {
               shape: 'box'
             }
+          });
+          this.graph.on('doubleClick', params => {
+            if (params.nodes.length) {
+              if (this._particles.get(params.nodes[0])) {
+                this.$.popupText.innerText = JSON.stringify(
+                  this._particles.get(params.nodes[0]).details, null, 2);
+              } else {
+                this.$.popupText.innerText = JSON.stringify(
+                  this._handles.get(params.nodes[0]).details, null, 2);
+              }
+            } else if (params.edges.length) {
+              this.$.popupText.innerText = JSON.stringify(
+                this._operations.get(params.edges[0]).details, null, 2);
+            } else {
+              return;
+            }
+            this.$.popup.style.display = 'block';
+            this.$.popup.style.left = params.pointer.DOM.x + this.$.popup.offsetWidth <= this.$.graph.offsetWidth
+                ? `${params.pointer.DOM.x - 1}px`
+                : `${params.pointer.DOM.x - this.$.popup.offsetWidth}px`;
+            this.$.popup.style.top = params.pointer.DOM.y + this.$.popup.offsetHeight <= this.$.graph.offsetHeight
+                ? `${params.pointer.DOM.y - 1}px`
+                : `${params.pointer.DOM.y - this.$.popup.offsetHeight + 1}px`;
           });
         }
       }
