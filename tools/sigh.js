@@ -19,8 +19,11 @@ const sources = {
   peg: [
     ['runtime/manifest-parser.peg', 'runtime/build/manifest-parser.js', 'manifest-railroad.html'],
   ],
-  browser: [
-    'worker-entry.js'
+  pack: [
+    {
+      src: ['shell/source/worker-entry.js', 'shell/source/ArcsLib.js', 'shell/source/Tracelib.js'],
+      dst: 'shell/build',
+    }
   ],
 };
 
@@ -179,29 +182,29 @@ async function webpack() {
     minimist: 'empty',
   };
 
-  if (!fs.existsSync('./shell/build')) {
-    fs.mkdirSync('./shell/build');
-  }
-  for (let file of sources.browser) {
-    await new Promise((resolve, reject) => {
-      webpack({
-        entry: `./runtime/browser/${file}`,
-        output: {
-          filename: `./shell/build/${file}`,
-        },
-        node,
-        devtool: 'sourcemap',
-      }, (err, stats) => {
-        if (err) {
-          reject(err);
-        }
-        console.log(stats.toString({
-          colors: true, verbose: false,
-          chunks: false,
-        }));
-        resolve();
+  for (let {src, dst} of sources.pack) {
+    if (!fs.existsSync(dst)) {
+      fs.mkdirSync(dst);
+    }
+
+    for (let file of src) {
+      await new Promise((resolve, reject) => {
+        webpack({
+          entry: path.resolve(projectRoot, file),
+          output: {
+            filename: `${dst}/${path.basename(file)}`,
+          },
+          node,
+          devtool: 'sourcemap',
+        }, (err, stats) => {
+          if (err) {
+            reject(err);
+          }
+          console.log(stats.toString({colors: true, verbose: false, chunks: false}));
+          resolve();
+        });
       });
-    });
+    }
   }
   return true;
 }

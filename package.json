@@ -22,7 +22,6 @@
   "dependencies": {
     "btoa": "^1.1.2",
     "firebase": "^4.9.0",
-    "gulp": "^3.9.1",
     "node-fetch": "^1.7.2",
     "ws": "^4.0.0"
   }

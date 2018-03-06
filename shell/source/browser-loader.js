@@ -40,7 +40,7 @@ export default class BrowserLoader extends Loader {
       }
     }
     url = url || path;
-    //console.log(`browser-cdn-loader: resolve(${path}) = ${url}`);
+    //console.log(`browser-loader: resolve(${path}) = ${url}`);
     return url;
   }
   loadResource(name) {
