@@ -21,6 +21,25 @@
             url(../img/devtools_icons_2x.png) 2x);
         background-color: rgb(110, 110, 110);
       }
+      .nav-list {
+        margin: 10px 0;
+        display: block;
+      }
+      .nav-list a {
+        display: block;
+        padding: 0 16px;
+        text-decoration: none;
+        line-height: 20px;
+        color: rgb(90, 90, 90);
+        font-size: 12px;
+      }
+      .nav-list a.iron-selected {
+        color: #fff;
+        background-color: var(--highlight-blue);
+      }
+      .nav-list a iron-icon {
+        margin-right: 3px;
+      }
     </style>
   </template>
 </dom-module>
