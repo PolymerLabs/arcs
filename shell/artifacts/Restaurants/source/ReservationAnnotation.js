@@ -66,25 +66,35 @@ defineParticle(({DomParticle}) => {
     display: inline-flex;
     align-items: center;
     position: relative;
-    padding: 10px 16px;
-    border-radius: 3px;
+    // padding: 10px 16px;
+    // border-radius: 3px;
     -webkit-appearance: none;
-    background-color: #4285f4;
-    color: #fff;
-    border: 0;
+    // background-color: #4285f4;
+    // color: #fff;
+    // border: 0;
     outline: none;
+    background: white;
+    border: 2px solid #1A73E8;
+    color: #1A73E8;
+    width: 56px;
+    height: 56px;
+    border-radius: 28px;
+    font-size: 14px;
+    font-weight: bold;
+    text-align: center;
+    display: block;
+    padding: 0;
   }
   [${host}] .x-button:disabled {
     opacity: 0.3;
   }
   [${host}] .x-button.raised {
-    transition: box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    transition-delay: 0.2s;
-    box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.26);
+    // transition: box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    // transition-delay: 0.2s;
   }
   [${host}] .x-button.raised:active:not(:disabled) {
-    box-shadow: 0 8px 17px 0 rgba(0, 0, 0, 0.2);
-    transition-delay: 0s;
+    // box-shadow: 0 8px 17px 0 rgba(0, 0, 0, 0.2);
+    // transition-delay: 0s;
   }
 </style>
   `;

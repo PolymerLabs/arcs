@@ -20,24 +20,23 @@ defineParticle(({DomParticle}) => {
     border-radius: 3px;
     -webkit-appearance: none;
     background-color: #4285f4;
-    color: #fff;
-    border: 0;
+    color: white;
     outline: none;
   }
   [${host}] .x-button:disabled {
     opacity: 0.3;
   }
   [${host}] .x-button.raised {
-    transition: box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    transition-delay: 0.2s;
-    box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.26);
+    // transition: box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    // transition-delay: 0.2s;
+
   }
   [${host}] .x-button.raised:active:not(:disabled) {
-    box-shadow: 0 8px 17px 0 rgba(0, 0, 0, 0.2);
-    transition-delay: 0s;
+    // box-shadow: 0 8px 17px 0 rgba(0, 0, 0, 0.2);
+    // transition-delay: 0s;
   }
 </style>
-<div ${host} style="border: 1px solid silver;">
+<div ${host}>
   <div style%="{{tab0}}">
     <div style="padding: 6px"><button class="x-button raised" on-click="_onBack">BACK</button></div>
     <div slotid="detail"></div>

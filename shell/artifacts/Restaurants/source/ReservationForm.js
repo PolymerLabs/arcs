@@ -78,13 +78,12 @@ defineParticle(({DomParticle}) => {
     opacity: 0.3;
   }
   [${host}] .x-button.raised {
-    transition: box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    transition-delay: 0.2s;
-    box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.26);
+    // transition: box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    // transition-delay: 0.2s;
   }
   [${host}] .x-button.raised:active:not(:disabled) {
-    box-shadow: 0 8px 17px 0 rgba(0, 0, 0, 0.2);
-    transition-delay: 0s;
+    // box-shadow: 0 8px 17px 0 rgba(0, 0, 0, 0.2);
+    // transition-delay: 0s;
   }
 </style>
   `;

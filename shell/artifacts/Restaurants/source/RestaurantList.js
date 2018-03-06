@@ -13,10 +13,13 @@ defineParticle(({DomParticle, html}) => {
 <div item style%="{{image}}" style="position: relative;">
   <div scrim></div>
   <div style="flex: 1"></div>
-  <div address>{{address}}</div>
-  <div style="display: flex; position: relative;">
-    <div id="webtest-title" title style="flex: 1;">{{name}}</div>
-    <div style="width: 120px; text-align: right;">
+
+  <div style="flex: 1; display: flex; position: relative; align-items: flex-end;">
+    <div style="flex: 1;padding-right: 60px;">
+      <div address>{{address}}</div>
+      <div id="webtest-title" title>{{name}}</div>
+    </div>
+    <div style="width: 60px; align-items: flex-end; display: flex; flex-direction: column; padding-bottom: 4px;">
       <div rating>{{rating}}</div>
       <div stars-container>
         <div stars style="{{starStyle}}"></div>
@@ -24,8 +27,8 @@ defineParticle(({DomParticle, html}) => {
     </div>
   </div>
 </div>
-<div slotid="annotation" subid="{{id}}">
-  
+<div slotid="annotation" subid="{{id}}" style="padding-top:8px;">
+
 `;
 
   const selectable = html`
@@ -42,11 +45,11 @@ defineParticle(({DomParticle, html}) => {
     overflow: auto;
   }
   [${host}] [header] {
-    padding: 10px 6px;
-    border-bottom: 1px solid #bbb;
+    padding: 12px 16px;
+    /* border-bottom: 1px solid #bbb; */
   }
   [${host}] [selectable-item] {
-    border-bottom: 1px dotted silver;
+    /* border-bottom: 1px dotted silver; */
     cursor: pointer;
     box-sizing: border-box;
   }
@@ -58,7 +61,7 @@ defineParticle(({DomParticle, html}) => {
     display: flex;
     flex-direction: column;
     color: white;
-    text-shadow: 0px 0px 10px rgba(0, 0, 0, 1);
+    /* text-shadow: 0px 0px 10px rgba(0, 0, 0, 1); */
     background-repeat: no-repeat;
     background-size: cover;
     background-position: bottom;
@@ -67,33 +70,44 @@ defineParticle(({DomParticle, html}) => {
     padding-bottom: 60%;
     */
     width: 100%;
-    height: 336px;
-    padding: 24px;
+    height: 288px;
+    padding: 12px 16px;
     box-sizing: border-box;
   }
   [${host}] [scrim] {
     position: absolute;
-    top:0;
+    top: 60%;
     right: 0;
     bottom: 0;
     left: 0;
-    background: rgba(0, 0, 0, 0) linear-gradient(to bottom, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0.6) 100%) repeat 0 0;
+    background: rgba(0, 0, 0, 0) linear-gradient(to bottom, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0.4) 100%) repeat 0 0;
   }
   [${host}] [address] {
-    font-size: 18px;
+    font-size: 14px;
+    font-weight: medium;
     opacity: 0.9;
-    padding: 24px 0;
+    /* padding: 24px 0; */
+    padding-bottom: 4px;
+    line-height: 18px;
+    letter-spacing: .25px;
   }
   [${host}] [title] {
-    font-size: 36px;
+    font-size: 24px;
+    line-height: 30px;
   }
   [${host}] [rating] {
-    font-size: 54px;
+    font-size: 36px;
+    line-height: 36px;
+    letter-spacing: 1.3px;
+    text-align: center;
+    margin-bottom: 2px;
   }
   [${host}] [stars-container] {
     display: inline-block;
-    width: 100px;
-    height: 20px;
+    /* width: 100px; */
+    /* height: 20px; */
+    width: 60px;
+    height: 12px;
     background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABwAAAAcCAQAAADYBBcfAAAA70lEQVR4AdXUIQjCQBTGcYNgMAt2BGGdZbHY28BeLKvaBIPJYLHYMf/tbX2w9V62OgZj2wljjKHP3W5FvK/cHe8Hd+/gRmpgfgalwVHa1UKWlCyHwAuKizFkQowiZmIKt6gqW1Po1dAzglioJlYnZIbFGgeXM3fCFgy5c8bFYY3F7B2eUL1y+jgqrp7hinfEIetAGc7X5rAhkRkJm86uYhMJLMLWPgc7Ae56vCM3Ad76QF+AvhYyJW/Ky2aWM9XBVV1acGXOlaJer3TwUJUF2E2Xg2rnoINPUvaMW3cesyflqYMPFsJvsOAhQ/P8E3wB75uY7oxINXcAAAAASUVORK5CYII=);
     background-size: contain;
   }
