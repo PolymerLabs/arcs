@@ -188,8 +188,20 @@
           filteredLog: {
             type: Array,
             computed: '_listFilteredLog(selectedArcLog.*, selectedHandleIds.*, selectedParticleIds.*)'
+          },
+          queryParams: {
+            type: Object,
+            notify: true,
           }
         };
+      }
+
+      static get observers() {
+        return [
+          '_onParticleFilterChanged(selectedParticleIds.*)',
+          '_onHandleFilterChanged(selectedHandleIds.*)',
+          '_onQueryParams(queryParams.*)'
+        ]
       }
 
       constructor() {
@@ -288,6 +300,23 @@
         this.set('selectedHandleIds', []);
         this.set('selectedParticleIds', []);
         this.set('selectedArcLog', this.get(`perArcLogs.${btoa(arcId)}`) || []);
+      }
+
+      _onParticleFilterChanged() {
+        if (!this.queryParams) return;
+        this.set('queryParams.particleFilter', this.selectedParticleIds.join(','));
+      }
+
+      _onHandleFilterChanged() {
+        if (!this.queryParams) return;
+        this.set('queryParams.handleFilter', this.selectedHandleIds.join(','));
+      }
+
+      _onQueryParams() {
+        this.set('selectedParticleIds', this.queryParams.particleFilter
+            ? this.queryParams.particleFilter.split(',') : []);
+        this.set('selectedHandleIds', this.queryParams.handleFilter
+            ? this.queryParams.handleFilter.split(',') : []);
       }
 
       _onGridRowSelected(e) {

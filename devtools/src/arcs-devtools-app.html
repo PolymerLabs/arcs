@@ -1,3 +1,5 @@
+<link rel="import" href="../bower_components/app-route/app-location.html">
+<link rel="import" href="../bower_components/app-route/app-route.html">
 <link rel="import" href="../bower_components/iron-icons/iron-icons.html">
 <link rel="import" href="../bower_components/iron-icons/social-icons.html">
 <link rel="import" href="../bower_components/iron-pages/iron-pages.html">
@@ -64,25 +66,6 @@
         border-right: 1px solid var(--mid-gray);
         box-sizing: border-box;
       }
-      .drawer-list {
-        margin: 10px 0;
-        display: block;
-      }
-      .drawer-list a {
-        display: block;
-        padding: 0 16px;
-        text-decoration: none;
-        line-height: 20px;
-        color: rgb(90, 90, 90);
-        font-size: 12px;
-      }
-      .drawer-list a.iron-selected {
-        color: #fff;
-        background-color: var(--highlight-blue);
-      }
-      .drawer-list a iron-icon {
-        margin-right: 3px;
-      }
       iron-pages {
         grid-area: main;
         position: relative;
@@ -97,20 +80,31 @@
     </style>
     <div id="container">
       <arcs-communication-channel id="channel" on-messages="onMessages"></arcs-communication-channel>
+      <app-location
+        route="{{route}}"
+        query-params="{{queryParams}}"
+        use-hash-as-path>
+      </app-location>
+      <app-route
+        route="{{route}}"
+        pattern=":page"
+        data="{{routeData}}"
+        tail="{{tail}}">
+      </app-route>
       <header><!--
       --><div class="devtools-icon nav-toggle" on-click="toggleNav"></div><!--
       --><iron-icon id="illuminateToggle" title="Illuminate Particles" icon="select-all" on-click="toggleIlluminate"></iron-icon><!--
    --></header>
       <nav>
-        <iron-selector selected="{{page}}" attr-for-selected="name" class="drawer-list" role="navigation">
-          <a name="overview" href="javascript:void(0)"><iron-icon icon="timeline"></iron-icon>Overview</a>
-          <a name="dataflow" href="javascript:void(0)"><iron-icon icon="swap-horiz"></iron-icon>Dataflow</a>
-          <a name="strategyExplorer" href="javascript:void();"><iron-icon icon="settings-applications"></iron-icon>Strategy Explorer</a>
+        <iron-selector selected="[[routeData.page]]" attr-for-selected="name" class="nav-list" role="navigation">
+          <a name="overview" href="#overview"><iron-icon icon="timeline"></iron-icon>Overview</a>
+          <a name="dataflow" href="#dataflow"><iron-icon icon="swap-horiz"></iron-icon>Dataflow</a>
+          <a name="strategyExplorer" href="#strategyExplorer"><iron-icon icon="settings-applications"></iron-icon>Strategy Explorer</a>
         </iron-selector>
       </nav>
-      <iron-pages selected="[[page]]" attr-for-selected="name" role="main" id="pages">
+      <iron-pages selected="[[routeData.page]]" attr-for-selected="name" role="main" id="pages">
         <arcs-overview name="overview"></arcs-overview>
-        <arcs-dataflow id="dataflow" name="dataflow"></arcs-dataflow>
+        <arcs-dataflow id="dataflow" name="dataflow" query-params="{{queryParams}}"></arcs-dataflow>
         <strategy-explorer name="strategyExplorer"></strategy-explorer>
       </iron-pages>
     </div>
@@ -122,7 +116,6 @@
 
       constructor() {
         super();
-        this.page = 'overview';
       }
 
       ready() {
@@ -130,6 +123,9 @@
         if (!chrome.devtools || !chrome.devtools.inspectedWindow || !chrome.devtools.inspectedWindow.tabId) {
           // Illuminate doesn't make sense if working with Arcs in NodeJS.
           this.$.illuminateToggle.style.display = 'none';
+        }
+        if (!this.routeData.page) {
+          this.set('routeData.page', 'overview');
         }
       }
 

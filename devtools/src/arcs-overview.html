@@ -35,13 +35,17 @@
       #popup {
         position: absolute;
         border: 1px solid var(--mid-gray);
-        padding: 5px;
         z-index: 1;
         background: white;
         display: none;
       }
       #popupText {
+        border-bottom: 1px solid var(--mid-gray);
+        padding: 16px 5px;
         margin: 0;
+      }
+      .nav-list a:hover {
+        background-color: var(--light-gray);
       }
     </style>
     <div class="legend">
@@ -54,6 +58,9 @@
     </div>
     <div id="popup">
       <pre id="popupText"></pre>
+      <div class="nav-list">
+        <a id="dataflowLink" href=""><iron-icon icon="swap-horiz"></iron-icon>Show in Dataflow</a>
+      </div>
     </div>
     <div id="graph"></div>
   </template>
@@ -185,13 +192,17 @@
               if (this._particles.get(params.nodes[0])) {
                 this.$.popupText.innerText = JSON.stringify(
                   this._particles.get(params.nodes[0]).details, null, 2);
+                this.$.dataflowLink.href = `?particleFilter=${encodeURIComponent(params.nodes[0])}#dataflow`;
               } else {
                 this.$.popupText.innerText = JSON.stringify(
                   this._handles.get(params.nodes[0]).details, null, 2);
+                this.$.dataflowLink.href = `?handleFilter=${encodeURIComponent(params.nodes[0])}#dataflow`;
               }
             } else if (params.edges.length) {
               this.$.popupText.innerText = JSON.stringify(
                 this._operations.get(params.edges[0]).details, null, 2);
+              let edgeNodes = params.edges[0].split("¯\_(ツ)_/¯");
+              this.$.dataflowLink.href = `?particleFilter=${encodeURIComponent(edgeNodes[0])}&handleFilter=${encodeURIComponent(edgeNodes[1])}#dataflow`;
             } else {
               return;
             }
