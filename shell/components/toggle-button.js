@@ -10,30 +10,33 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
 import Xen from './xen/xen.js';
 
-const template = Xen.Template.createTemplate(
-  `<style>
-      :host {
-        display: inline-flex;
-        font-size: 24px;
-        font-style: normal;
-        font-family: 'Material Icons';
-        width: 1em;
-        cursor: pointer;
-        user-select: none;
-      }
-      span {
-        display: inline-block;
-        font: inherit;
-        line-height: 1;
-        -webkit-font-feature-settings: 'liga';
-        -webkit-font-smoothing: antialiased;
-      }
-    </style>
-    <span on-click="_onToggle">{{icon}}</span>`
-);
+let template = Xen.html`
+
+<style>
+  :host {
+    display: inline-flex;
+    font-size: 24px;
+    font-style: normal;
+    font-family: 'Material Icons';
+    width: 1em;
+    cursor: pointer;
+    user-select: none;
+  }
+  span {
+    display: inline-block;
+    font: inherit;
+    line-height: 1;
+    -webkit-font-feature-settings: 'liga';
+    -webkit-font-smoothing: antialiased;
+  }
+</style>
+<span on-click="_onToggle">{{icon}}</span>
+
+`;
+template = Xen.Template.createTemplate(template);
 
 class ToggleButton extends Xen.Base {
-  static get observedAttributes() { return ['icons', 'state']; }
+  static get observedAttributes() { return ['icons', 'state', 'noauto']; }
   get template() {
     return template;
   }
@@ -57,7 +60,7 @@ class ToggleButton extends Xen.Base {
   _onToggle() {
     let {state, icons} = this._state;
     state = (state + 1) % icons.length;
-    this._setState({state});
+    //this._setState({state});
     // TODO(sjmiles): better to fire after updating the display, how hard is that logic?
     this._fire('state', state);
   }

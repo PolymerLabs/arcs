@@ -15,7 +15,7 @@ const ArcsUtils = {
   createArc({id, urlMap, slotComposer, context, loader}) {
     // worker paths are relative to worker location, remap urls from there to here
     let remap = ArcsUtils._expandUrls(urlMap);
-    let pecFactory = ArcsUtils._createPecWorker.bind(null, urlMap[`worker-entry.js`], remap);
+    let pecFactory = ArcsUtils._createPecWorker.bind(null, urlMap[`worker-entry-cdn.js`], remap);
     return new Arcs.Arc({id, pecFactory, slotComposer, context, loader});
   },
   _expandUrls(urlMap) {
@@ -43,14 +43,14 @@ const ArcsUtils = {
     //const lib = document.URL.includes('debug') ? 'source' : 'build';
     const lib = 'build';
     return {
-      // TODO(sjmiles): mapping root and dot-root allows browser-loader to replace right-hand
+      // TODO(sjmiles): mapping root and dot-root allows browser-cdn-loader to replace right-hand
       // side with fully-qualified URL when loading from worker context
       '/': '/',
       './': './',
       'assets': `${cdnRoot}/assets`,
       'https://$cdn': `${cdnRoot}`,
-      // TODO(sjmiles): map must always contain (explicitly, no prefixing) a mapping for `worker-entry.js`
-      'worker-entry.js': `${cdnRoot}/${lib}/worker-entry.js`
+      // TODO(sjmiles): map must always contain (explicitly, no prefixing) a mapping for `worker-entry-cdn.js`
+      'worker-entry-cdn.js': `${cdnRoot}/${lib}/worker-entry-cdn.js`
     };
   },
   async makePlans(arc, timeout) {
@@ -119,12 +119,12 @@ const ArcsUtils = {
       ;
   },
   _getHandleDescription(name, tags, user, owner) {
-      let proper = (user === owner) ? 'my' : `${owner}'s`;
+      let noun = (user === owner) ? 'my' : `${owner}'s`;
       if (tags && tags.length) {
-        return `${proper} ${tags[0].substring(1)}`;
+        return `${noun} ${tags[0].substring(1)}`;
       }
       if (name) {
-        return `${proper} ${name}`;
+        return `${noun} ${name}`;
       }
   },
   async _requireHandle(arc, type, name, id, tags) {

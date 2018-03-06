@@ -55,14 +55,6 @@ class DataExplorer extends Xen.Base {
   get template() {
     return template;
   }
-  /*
-  _doMount() {
-    this._dom = Xen.stamp(this.template).events(this).appendTo(this);
-  }
-  _update(props, state) {
-    this._dom.set(this._render(props, state));
-  }
-  */
   _render(props, state) {
     let o = props.object || Object;
     return {
@@ -76,17 +68,8 @@ class DataExplorer extends Xen.Base {
     return Object.keys(object).map(n => {
       let v = object[n];
       if (v) {
-        if (Array.isArray(v)) {
-          //v = `(array [${v.length}])`;
-        } else if (typeof v === 'function') {
+        if (typeof v === 'function') {
           v = '(function)';
-        } else if (typeof v === 'object') {
-          /*
-          let proto = Object.getPrototypeOf(v);
-          if (proto && proto !== Object.prototype) {
-            v = `non-POJO: {${Object.keys(v).join(', ')}}`;
-          }
-          */
         }
       }
       return {

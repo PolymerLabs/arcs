@@ -56,7 +56,7 @@ class RemoteFriendsSharedHandles extends Xen.Base {
   // Level 2: iterate a friend's share listings and watch the individual handles
   //
   _watchFriendSharedHandles(db, arc, friend, snap) {
-    // get friend's user record
+    // get user record
     let user = snap.val();
     friend.name = user.name;
     //RemoteFriendsSharedHandles.log(`READING friend's user [${user.name}]`); // from`, String(snap.ref));
@@ -92,26 +92,21 @@ class RemoteFriendsSharedHandles extends Xen.Base {
     const tagString = (tags && tags.length ? `${tags.sort().join('_').replace(/#/g, '')}` : '');
     // only box if we have values and tags
     if (values && tagString) {
-      // acquire type record
-      const arcsType = ArcsUtils.typeFromMetaType(type);
-      const schema = arcsType.isSetView ? arcsType.setViewType.entitySchema : arcsType.entitySchema;
-      const hasOwnerField = schema.fields.owner;
       // convert firebase format to handle-data format, embed friend id as owner
-      const data = this._valuesToData(values, friend, hasOwnerField);
-      // formulate id
-      const id = `${tagString}-${friend.id}`;
-      // create/update a handle for this data
-      this._updateHandle(arc, id, arcsType, name, [`#${tagString}`], data, friend);
-      // formulate box id
-      const boxId = `BOXED_${tagString}`;
-      // acquire type record for a Set of the base type
-      const setType = arcsType.isSetView ? arcsType : arcsType.setViewOf();
+      const data = this._valuesToData(values, friend);
+      // formulate an id
+      const id = `BOXED_${tagString}`;
+      // acquire type record for a Set of the given type
+      let arcsType = ArcsUtils.typeFromMetaType(type);
+      if (!arcsType.isSetView) {
+        arcsType = arcsType.setViewOf();
+      }
       // combine the data into a box
-      this._addToBox(arc, boxId, setType, name, [`#${boxId}`], data);
+      this._addToBox(arc, id, arcsType, name, [`#${id}`], data, friend);
     }
   }
   // convert firebase format to handle-data format, embed friend id as owner
-  _valuesToData(values, friend, provideOwner) {
+  _valuesToData(values, friend) {
     if ('id' in values) {
       values = [values];
     } else {
@@ -119,24 +114,16 @@ class RemoteFriendsSharedHandles extends Xen.Base {
     }
     return values.map(v => {
       // TODO(sjmiles): `owner` not generally in schema, should be Entity metadata?
-      if (provideOwner) {
-        v.rawData.owner = friend.id;
-      }
+      v.rawData.owner = friend.id;
       return {
         id: v.id,
         rawData: v.rawData
       };
     });
   }
-  async _updateHandle(arc, id, type, name, tags, data, friend) {
-    const handle = await this._requireHandle(arc, id, type, name, tags);
-    const typeName = handle.type.toPrettyString().toLowerCase();
-    handle.description = ArcsUtils._getHandleDescription(typeName, handle.tags, this._props.user.name, friend.name);
-    this._addHandleData(handle, data);
-  }
   async _addToBox(arc, id, type, name, tags, data, friend) {
-    const {boxes} = this._state;
     // find a pre-existing box construct for this id
+    const {boxes} = this._state;
     let box = boxes[id];
     // if box exists, install the values if we have a handle, otherwise cache them
     if (box) {
@@ -162,7 +149,7 @@ class RemoteFriendsSharedHandles extends Xen.Base {
   }
   _addHandleData(handle, data, friend) {
     ArcsUtils.addHandleData(handle, data);
-    RemoteFriendsSharedHandles.log(`added [${friend.name}'s] shared data to handle [${handle.id}]`, data);
+    RemoteFriendsSharedHandles.log(`added [${friend.name}'s] shared data to box [${handle.id}]`, data);
   }
 }
 

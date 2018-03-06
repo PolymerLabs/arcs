@@ -42,8 +42,8 @@ class ArcHost extends Xen.Base {
       state.config = props.config;
       state.config.manifests = state.effectiveManifests;
       this._applyConfig(state.config);
-    } else if (state.arc && (changed('manifests') || changed('exclusions'))) {
-      state.config.manifests = state.effectiveManifests;
+    }
+    else if (state.arc && (changed('manifests') || changed('exclusions'))) {
       ArcHost.log('reloading');
       this._reloadManifests();
     }
@@ -164,18 +164,18 @@ class ArcHost extends Xen.Base {
     let plans;
     while (state.invalid) {
       state.invalid = false;
-      plans = await this._plan(state.arc, state.config.plannerTimeout);
+      plans = await this._plan(state.arc);
     }
     time = ((Date.now() - time) / 1000).toFixed(2);
     ArcHost.log(`plans`, plans, `${time}s`);
     this._fire('plans', plans);
   }
-  async _plan(arc, timeout) {
-    return await ArcsUtils.makePlans(arc, timeout) || [];
+  async _plan(arc) {
+    return await ArcsUtils.makePlans(arc, 5000) || [];
   }
   async _reloadManifests() {
     let {arc} = this._state;
-    arc._context = await this._loadManifest(this._state.config, arc.loader);
+    arc._context = await this._loadManifest(this._props.config, arc.loader);
     this._fire('plans', null);
   }
 }
