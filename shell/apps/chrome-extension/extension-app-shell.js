@@ -167,6 +167,7 @@ ${super.template}
                 tags:
                     [shortTypeName == 'Product' ? '#shortlist' :
                                                   `#${shortTypeName}`],
+                description: `${shortTypeName} from your browsing context`,
                 asContext: true
               },
               data: data
