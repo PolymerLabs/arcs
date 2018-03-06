@@ -221,7 +221,7 @@ const template = ArcsUtils.html`
     </app-toolbar>
   </toolbar>
 
-  <arc-host config="{{hostConfig}}" manifests="{{manifests}}" exclusions="{{exclusions}}" plans="{{plans}}" plan="{{plan}}" suggestions="{{suggestions}}" on-arc="_onArc" on-plans="_onPlans" on-applied="_onApplied">
+  <arc-host config="{{hostConfig}}" manifests="{{manifests}}" exclusions="{{exclusions}}" plans="{{plans}}" plan="{{plan}}" suggestions="{{suggestions}}" on-arc="_onArc" on-plans="_onPlans" on-plan="_onApplied">
     <div slotid="toproot"></div>
     <div slotid="root"></div>
     <div slotid="modal"></div>
@@ -458,6 +458,8 @@ class AppShell extends Xen.Base {
       // Otherwise only show plans that don't populate a root.
       // TODO(seefeld): Don't hardcode `root`
       suggestions = plans.filter(
+        // TODO(sjmiles|mmandlis): name.includes catches all variants of `root` (e.g. `toproot`), the tags
+        // test only catches `#root` specifically
         ({plan}) => plan.slots && !plan.slots.find(s => s.name.includes('root') || s.tags.includes('#root'))
       );
     }
@@ -669,7 +671,7 @@ class AppShell extends Xen.Base {
   }
   _onSearch({detail: {search}}) {
     const state = this._state;
-    if (search !== state.search) {
+    if (search !== state.search && state.arc) {
       // TODO(sjmiles): probably this should be part of update()
       search = search.trim().toLowerCase();
       // TODO(sjmiles): installing the search term should be the job of arc-host

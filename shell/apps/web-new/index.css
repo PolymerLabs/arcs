@@ -1,0 +1,38 @@
+body {
+  --max-width: 512px;
+  --min-width: 320px;
+}
+
+body {
+  font-family: sans-serif;
+  margin: 0;
+  overflow-x: hidden;
+  overflow-y: scroll;
+  background-color: gray;
+  background-image: url("../../assets/black-linen.png");
+}
+
+@font-face {
+  font-family: 'Material Icons';
+  font-style: normal;
+  font-weight: 400;
+  src: url(https://fonts.gstatic.com/s/materialicons/v30/2fcrYFNaTjcS6g4U3t-Y5ZjZjT5FdEJ140U2DJYC3mY.woff2) format('woff2');
+}
+
+[slotid=suggestions] {
+  max-height: 356px;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+[slotid=modal] {
+  position: fixed;
+  top: var(--toolbar-height);
+  bottom: var(--footer-height);
+  max-width: var(--max-width);
+  width: 100vw;
+  margin: 0 auto;
+  box-sizing: border-box;
+  pointer-events: none;
+  color: black;
+}

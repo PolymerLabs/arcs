@@ -26,8 +26,8 @@ class DataItem extends Xen.Base {
   get template() {
     return template;
   }
-  get host() {
-    return this;
+   get host() {
+     return this;
   }
   _onCheckInput(e) {
     e.stopPropagation();
@@ -57,5 +57,34 @@ class DataItem extends Xen.Base {
     e.stopPropagation();
     this._setState({expanded: !this._state.expanded});
   }
+  /*
+    _render({name, value}, state) {
+    const type = typeof value;
+    const isnull = value === null;
+    const isobject = (type === 'object' && !isnull);
+    const isstring = (type === 'string' || type === 'number' || isnull);
+    const isbool = (type==='boolean');
+    let expanded = state.expanded || (!isobject || (Array.isArray(value) && value.length < 10));
+    expanded = false || !isobject;
+    if (!isNaN(Number(name))) {
+      expanded = true;
+    }
+    return {
+      name: name,
+      notstring: !isstring,
+      notbool: !isbool,
+      notobject: expanded,
+      object: expanded ? value : null,
+      hideexpand: expanded,
+      value: isnull || isobject ? '(null)' : String(value),
+      title: isstring ? value : name
+    };
+  }
+  _onExpandClick(e) {
+    e.stopPropagation();
+    const expanded = !this._state.expanded;
+    this._setState({expanded});
+  }
+  */
 }
 customElements.define('data-item', DataItem);
