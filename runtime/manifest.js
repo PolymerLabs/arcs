@@ -85,6 +85,7 @@ class Manifest {
     this._meta = new ManifestMeta();
     this._resources = {};
     this._handleManifestUrls = new Map();
+    this._warnings = [];
   }
   get id() {
     if (this._meta.name)
@@ -262,8 +263,17 @@ class Manifest {
     position = position || {line: 1, column: 0};
     id = `manifest:${fileName}:`;
 
+    function dumpWarnings(manifest) {
+      for (let warning of manifest._warnings) {
+        // TODO: make a decision as to whether we should be logging these here, or if it should
+        //       be a responsibility of the caller.
+        // TODO: figure out how to have node print the correct message and stack trace
+        console.warn(processError(warning).message);
+      }
+    }
+
     function processError(e, parseError) {
-      if (!e.location) {
+      if (!e instanceof ManifestError || !e.location) {
         return e;
       }
       let lines = content.split('\n');
@@ -306,12 +316,6 @@ ${e.message}
     let manifest = new Manifest({id});
     manifest._fileName = fileName;
 
-    for (let item of items.filter(item => item.kind == 'import')) {
-      let path = loader.path(manifest.fileName);
-      let target = loader.join(path, item.path);
-      manifest._imports.push(await Manifest.load(target, loader, {registry}));
-    }
-
     try {
       let processItems = async (kind, f) => {
         for (let item of items) {
@@ -321,6 +325,18 @@ ${e.message}
           }
         }
       };
+
+      await processItems('import', async item => {
+        let path = loader.path(manifest.fileName);
+        let target = loader.join(path, item.path);
+        try {
+          manifest._imports.push(await Manifest.load(target, loader, {registry}));
+        } catch (e) {
+          manifest._warnings.push(e);
+          manifest._warnings.push(new ManifestError(item.location, `Error importing '${target}'`));
+        }
+      });
+
       // processing meta sections should come first as this contains identifying
       // information that might need to be used in other sections. For example,
       // the meta.name, if present, becomes the manifest id which is relevant
@@ -334,8 +350,10 @@ ${e.message}
       await processItems('view', item => this._processView(manifest, item, loader));
       await processItems('recipe', item => this._processRecipe(manifest, item, loader));
     } catch (e) {
+      dumpWarnings(manifest);
       throw processError(e, false);
     }
+    dumpWarnings(manifest);
     return manifest;
   }
   static _augmentAstWithTypes(manifest, items) {

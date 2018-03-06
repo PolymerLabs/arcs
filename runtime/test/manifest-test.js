@@ -264,6 +264,24 @@ ${particleStr1}
       assert.equal(e.message, 'no valid body defined for this particle');
     }
   });
+  it('treats a failed import as non-fatal', async () => {
+    let manifests = {
+      a: `import 'b'`,
+      b: `lol what is this`,
+    };
+    let loader = {
+      loadResource(name) {
+        return manifests[name];
+      },
+      path(file) {
+        return '';
+      },
+      join(path, file) {
+        return file;
+      },
+    };
+    await Manifest.load('a', loader);
+  });
   it('throws an error when a particle has invalid description', async () => {
     try {
       let manifest = await Manifest.parse(`
