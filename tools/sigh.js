@@ -129,6 +129,8 @@ function railroad() {
   return true;
 }
 
+const LOL_WINDOWS_YOU_SO_FUNNY_WITH_YOUR_COMMAND_SIZE_LIMITS_NUM_FILES = 100;
+
 async function lint(args) {
   upgradeFunctionality(String, output);
   let options = minimist(args, {
@@ -138,16 +140,15 @@ async function lint(args) {
   if (options.fix) {
     extra.push('--fix');
   }
-  let jsSources = findProjectFiles(process.cwd(), fullPath => /\.js$/.test(fullPath));
-  let result = spawn(path.normalize('./node_modules/.bin/eslint'), [
-    ...extra,
-    ...jsSources,
-  ], {stdio: 'inherit', shell: true});
-  if (result.error) {
-    console.warn(result.error);
-    return false;
+  let jsSources = [...findProjectFiles(process.cwd(), fullPath => /\.js$/.test(fullPath))];
+  finalResult = true;
+  while (jsSources.length > 0) {
+    let theseSources = jsSources.splice(0, LOL_WINDOWS_YOU_SO_FUNNY_WITH_YOUR_COMMAND_SIZE_LIMITS_NUM_FILES);
+    let result = saneSpawn('./node_modules/.bin/eslint', [...extra, ...theseSources], {stdio: 'inherit'});
+    finalResult &= result;
   }
-  return result.status == 0;
+
+  return finalResult;
 }
 
 function upgradeFunctionality(object, channel) {
@@ -205,16 +206,28 @@ async function webpack() {
   return true;
 }
 
+// make spawn work more or less the same way cross-platform
+function saneSpawn(cmd, args, opts) {
+  cmd = path.normalize(cmd);
+  opts.shell = true;
+  let result = spawn(cmd, args, opts);
+  if (result.error) {
+    console.warn(result.error);
+    return false;
+  }
+  return result.status == 0;
+}
+
 async function devtools() {
   // TODO: To speed up the development we should invoke crisper for each file
   //       separately without bundling and then watch for updates.
   // Crisper needed to separate JS and HTML to satisfy CSP restriction for extensions.
-  return spawn(path.normalize('../node_modules/.bin/polymer'),
-          ['build'], {stdio: 'inherit', cwd: 'devtools'}).status === 0
-      && spawn(path.normalize('../node_modules/.bin/crisper'),
-          ['--html=build/split-index.html', '--js=build/bundled/src/split-index.js',
-          'build/bundled/src/index.html'],
-          {stdio: 'inherit', cwd: 'devtools'}).status === 0;
+  return saneSpawn('../node_modules/.bin/polymer', ['build'], {stdio: 'inherit', cwd: 'devtools'})
+         &&
+         saneSpawn('../node_modules/.bin/crisper',
+           ['--html=build/split-index.html', '--js=build/bundled/src/split-index.js',
+            'build/bundled/src/index.html'],
+           {stdio: 'inherit', cwd: 'devtools'});
 }
 
 function rot13(str) {
