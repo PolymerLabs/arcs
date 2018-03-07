@@ -3,6 +3,8 @@ import Xen from '../../components/xen/xen.js';
 // elements
 // strings
 import icons from '../icons.css.js';
+// globals
+/* global shellPath */
 
 const template = Xen.html`
 
@@ -45,6 +47,9 @@ const template = Xen.html`
   section span {
     flex: 1
   }
+  section[friends] {
+    padding: 16px;
+  }
   avatar {
     display: inline-block;
     height: var(--avatar-size);
@@ -59,7 +64,7 @@ const template = Xen.html`
     display: flex;
     align-items: center;
     cursor: pointer;
-    padding: 8px;
+    padding: 8px 0;
   }
   user-item avatar {
     height: var(--large-avatar-size);
@@ -91,9 +96,7 @@ const template = Xen.html`
   <span>Use for friends' suggestions</span>
   <icon>{{shareIcon}}</icon>
 </section>
-<section>
-  <div>{{friends}}</div>
-</section>
+<section friends>{{friends}}</section>
 `;
 
 const User = Xen.Template.html`
@@ -107,9 +110,19 @@ class MenuPanel extends Xen.Base {
     return template;
   }
   static get observedAttributes() {
-    return ['friends', 'avatar_title', 'avatar_style'];
+    return ['open', 'friends', 'avatar_title', 'avatar_style'];
   }
-  _render({avatar_title, avatar_style, friends}, {selected, isProfile, isShared}) {
+  _render({open, avatar_title, avatar_style, friends}, state) {
+    const {selected, isProfile, isShared, isOpen, shouldOpen} = state;
+    //`shouldOpen` exists to allow parent to update before we try to transition
+    state.isOpen = state.shouldOpen;
+    if (open && !isOpen) {
+      state.shouldOpen = true;
+      setTimeout(() => this._invalidate(), 40);
+    }
+    if (!open) {
+      state.shouldOpen = state.isOpen = false;
+    }
     const render = {
       avatar_title,
       avatar_style,
@@ -126,6 +139,9 @@ class MenuPanel extends Xen.Base {
     }
     return render;
   }
+  _didRender({}, {isOpen}) {
+    Xen.setBoolAttribute(this, 'open', isOpen);
+  }
   _renderUser(selected, user, i) {
     const url = user.avatar || `${shellPath}/assets/avatars/user (0).png`;
     return {
@@ -135,37 +151,40 @@ class MenuPanel extends Xen.Base {
       selected: user.id === selected
     };
   }
-  _close() {
+  _close(afterEvent) {
     this.removeAttribute('open');
-    setTimeout(() => this._fire('close'), 300);
-    //this._fire('close');
+    // allow close transition to complete before informing owner
+    setTimeout(() => {
+      this._fire('close');
+      if (afterEvent) {
+        this._fire(afterEvent);
+      }
+    }, 300);
   }
   _onClose() {
     this._close();
+  }
+  _onSelectUser() {
+    this._close('user');
+  }
+  _onCastClick() {
+    this._close('cast');
   }
   _onProfileClick() {
     let {isProfile, isShared} = this._state;
     isProfile = !isProfile;
     this._setState({
-      isProfile: isProfile,
+      isProfile,
       isShared: isShared && isProfile
     });
   }
   _onShareClick() {
-    let {isShared} = this._state;
+    let {isProfile, isShared} = this._state;
     isShared = !isShared;
     this._setState({
-      isProfile: isShared,
+      isProfile: isProfile || isShared,
       isShared: isShared
     });
-  }
-  _onSelectUser() {
-    this._close();
-    this._fire('user');
-  }
-  _onCastClick() {
-    this._close();
-    this._fire('cast');
   }
 }
 
