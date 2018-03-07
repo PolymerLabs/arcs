@@ -1,7 +1,10 @@
 import Xen from '../../components/xen/xen.js';
+import Icons from '../icons.css.js';
+
 export default Xen.html`
 
 <style>
+  ${Icons}
   :host {
     --toolbar-height: 56px;
     --footer-height: 34px;
@@ -18,16 +21,6 @@ export default Xen.html`
   [hidden] {
     display: none;
   }
-  icon {
-    font-family: "Material Icons";
-    font-size: 24px;
-    font-style: normal;
-    -webkit-font-feature-settings: "liga";
-    -webkit-font-smoothing: antialiased;
-    vertical-align: middle;
-    cursor: pointer;
-    user-select: none;
-  }
   app-modal {
     display: none;
     position: fixed;
@@ -36,17 +29,14 @@ export default Xen.html`
     min-width: var(--min-width);
     top: 0;
     bottom: 0;
-    /*
-    top: var(--toolbar-height);
-    bottom: var(--footer-height);
-    */
+    padding-top: var(--toolbar-height);
+    padding-bottom: var(--footer-height);
     background-color: rgba(32, 32, 32, 0.2);
+    overflow: hidden;
   }
   app-modal[shown] {
     display: block;
     z-index: 2000;
-    padding-top: var(--toolbar-height);
-    padding-bottom: var(--footer-height);
   }
   app-dialog {
     display: none;

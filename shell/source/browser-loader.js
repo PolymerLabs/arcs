@@ -23,6 +23,9 @@ export default class BrowserLoader extends Loader {
     this._urlMap = urlMap;
   }
   _loadURL(url) {
+    // remove '..'
+    // TODO(sjmiles): problems ensue?
+    url = new URL(url).href;
     const resource = dumbCache[url];
     if (resource) {
       //console.warn('dumbCache hit for', url);

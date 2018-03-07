@@ -18,7 +18,6 @@ const shellPath = window.shellPath;
 
 // templates
 const template = Xen.html`
-
   <!-- systemwide user list -->
   <persistent-users on-users="_onData"></persistent-users>
   <!-- user data from database -->
@@ -32,7 +31,7 @@ const template = Xen.html`
   <!-- handles, database syncing -->
   <persistent-handles arc="{{arc}}" key="{{key}}"></persistent-handles>
   <remote-profile-handles arc="{{arc}}" user="{{user}}" on-profile="_onProfile"></remote-profile-handles>
-  <remote-friends-shared-handles arc="{{arc}}" friends="{{friends}}" user="{{user}}"></remote-friends-shared-handles>-->
+  <remote-friends-shared-handles arc="{{arc}}" friends="{{friends}}" user="{{user}}"></remote-friends-shared-handles>
   <!-- set of arcs visited by user, only used by launcher -->
   <remote-visited-arcs user="{{launcherUser}}" arcs="{{visitedArcs}}" on-arcs="_onData"></remote-visited-arcs>
 `;
@@ -59,6 +58,7 @@ class ArcCloud extends Xen.Base {
     }
     this._consumeSteps(steps, metadata);
     this._fire('users', state.users);
+    this._fire('friends', state.friends);
     this._fire('manifests', state.manifests);
     this._fire('exclusions', state.exclusions);
     this._fire('user', state.user);
