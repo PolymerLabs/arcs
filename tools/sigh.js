@@ -139,7 +139,7 @@ async function lint(args) {
   let options = minimist(args, {
     boolean: ['fix'],
   });
-  let extra = [];
+  let extra = ['--no-eslintrc', '-c', '.eslintrc.js'];
   if (options.fix) {
     extra.push('--fix');
   }
