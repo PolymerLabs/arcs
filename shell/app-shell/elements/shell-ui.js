@@ -69,7 +69,7 @@ const Main = Xen.html`
   </app-dialog>
 
   <menu-panel
-    open$="{{menuOpen}}"
+    open="{{menuOpen}}"
     avatar_title="{{avatarTitle}}"
     avatar_style="{{avatarStyle}}"
     friends="{{friends}}"

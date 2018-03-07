@@ -31,7 +31,7 @@ export default Xen.html`
     bottom: 0;
     padding-top: var(--toolbar-height);
     padding-bottom: var(--footer-height);
-    background-color: rgba(32, 32, 32, 0.2);
+    background-color: rgba(0, 0, 0, 0.5);
     overflow: hidden;
   }
   app-modal[shown] {
