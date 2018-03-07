@@ -17,11 +17,6 @@ class ArcConfig extends Xen.Base {
       this._fire('config', this._configure(props.rootpath));
     }
   }
-  _getPlannerTimeout(params) {
-    const DEFAULT_PLANNER_TIMEOUT = 5000;
-    const timeout = params.get('plannertimeout');
-    return timeout ? parseInt(timeout) : DEFAULT_PLANNER_TIMEOUT;
-  }
   _configure(rootPath) {
     let params = (new URL(document.location)).searchParams;
     return {
@@ -37,7 +32,6 @@ class ArcConfig extends Xen.Base {
       //shared: params.getAll('shared'),
       search: params.get('search'),
       arcsToolsVisible: localStorage.getItem('0-3-arcs-dev-tools') === 'open',
-      plannerTimeout: this._getPlannerTimeout(params),
       urls: {}
     };
   }

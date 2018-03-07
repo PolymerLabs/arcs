@@ -15,6 +15,7 @@ import TransformationDomParticle from '../../runtime/transformation-dom-particle
 
 const logFactory = (preamble, color, log='log') => console[log].bind(console, `Ptcl:%c${preamble}`, `background: ${color}; color: white; padding: 1px 6px 2px 7px; border-radius: 4px;`);
 const html = (strings, ...values) => (strings[0] + values.map((v, i) => v + strings[i + 1]).join('')).trim();
+
 const dumbCache = {};
 
 export default class BrowserLoader extends Loader {
@@ -23,14 +24,10 @@ export default class BrowserLoader extends Loader {
     this._urlMap = urlMap;
   }
   _loadURL(url) {
-    // remove '..'
-    // TODO(sjmiles): problems ensue?
-    url = new URL(url).href;
-    const resource = dumbCache[url];
-    if (resource) {
-      //console.warn('dumbCache hit for', url);
-    }
-    return resource || (dumbCache[url] = super._loadURL(url));
+    // use URL to normalize the path for deduping
+    const cacheKey = new URL(url, document.URL).href;
+    const resource = dumbCache[cacheKey];
+    return resource || (dumbCache[cacheKey] = super._loadURL(url));
   }
   _resolve(path) {
     //return new URL(path, this._base).href;

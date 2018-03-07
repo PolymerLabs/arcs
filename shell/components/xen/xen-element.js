@@ -25,7 +25,7 @@ export default Base => class extends Base {
     const a = this._class.observedAttributes;
     a && a.forEach(n=>{
       if (n.toLowerCase() !== n) {
-        console.error('Xen: Mixed-case attributes are not yet supported, `' + this.localName + '.observedAttributes` contains `' + n + '`.');
+        console.error(`Xen: Mixed-case attributes are not yet supported, "${this.localName}.observedAttributes" contains "${n}".`);
       }
       if (this.hasOwnProperty(n)) {
         const value = this[n];

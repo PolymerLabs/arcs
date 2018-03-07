@@ -30,44 +30,42 @@ class ArcHost extends Xen.Base {
   get template() { return template; }
   _getInitialState() {
     return {
+      pendingPlans: [],
       invalid: 0
     };
   }
   _willReceiveProps(props, state, lastProps) {
     const changed = name => props[name] !== lastProps[name];
-    if (props.manifests && props.exclusions) {
+    const {manifests, exclusions, config, plan, suggestions} = props;
+    if (manifests && exclusions) {
       state.effectiveManifests = this._intersectManifests(props.manifests, props.exclusions);
     }
-    if (props.config && (props.config !== state.config) && state.effectiveManifests) {
-      state.config = props.config;
+    if (config && (config !== state.config) && state.effectiveManifests) {
+      state.config = config;
       state.config.manifests = state.effectiveManifests;
       this._applyConfig(state.config);
-    } else if (state.arc && (changed('manifests') || changed('exclusions'))) {
-      state.config.manifests = state.effectiveManifests;
+    }
+    else if (state.arc && (changed('manifests') || changed('exclusions'))) {
       ArcHost.log('reloading');
       this._reloadManifests();
     }
-    if (props.plan && changed('plan')) {
-      this._instantiatePlan(state.arc, props.plan);
+    if (plan && changed('plan')) {
+      state.pendingPlans.push(plan);
     }
-    if (props.suggestions && changed('suggestions')) {
-      state.slotComposer.setSuggestions(props.suggestions);
+    if (suggestions && changed('suggestions')) {
+      state.slotComposer.setSuggestions(suggestions);
     }
   }
-  _update(props, state) {
-    if (state.arc && !props.plans) {
+  _update({plans}, {arc, pendingPlans}) {
+    if (arc && pendingPlans.length) {
+      this._instantiatePlan(arc, pendingPlans.shift());
+    }
+    if (arc && !plans) {
       this._schedulePlanning();
     }
   }
   _intersectManifests(manifests, exclusions) {
     return manifests.filter(m => !exclusions.includes(m));
-  }
-  async _instantiatePlan(arc, plan) {
-    // aggressively remove old suggestions when a suggestion is applied
-    this._setState({suggestions: []});
-    ArcHost.log('instantiated plan', plan);
-    await arc.instantiate(plan);
-    this._fire('plan', plan);
   }
   async _applyConfig(config) {
     let arc = await this._createArc(config);
@@ -76,10 +74,6 @@ class ArcHost extends Xen.Base {
     ArcHost.log('created arc', arc);
     this._setState({arc});
     this._fire('arc', arc);
-  }
-  _runtimeHandlesUpdated() {
-    ArcHost.log('_runtimeHandlesUpdated');
-    this._schedulePlanning();
   }
   async _createArc(config) {
     // make an id
@@ -141,7 +135,16 @@ class ArcHost extends Xen.Base {
       content: manifests.map(u => `import '${u}'`).join('\n')
     };
   }
-  _schedulePlanning() {
+  async _reloadManifests() {
+    let {arc} = this._state;
+    arc._context = await this._loadManifest(this._props.config, arc.loader);
+    this._fire('plans', null);
+  }
+  _runtimeHandlesUpdated() {
+    ArcHost.log('_runtimeHandlesUpdated');
+    this._schedulePlanning();
+  }
+  async _schedulePlanning() {
     const state = this._state;
     // results obtained before now are invalid
     state.invalid = true;
@@ -152,10 +155,10 @@ class ArcHost extends Xen.Base {
       //ArcHost.log('clearing old plans');
       //this._fire('plans', null);
       // TODO(sjmiles): primitive attempt to throttle planning
-      setTimeout(async () => {
+      //setTimeout(async () => {
         await this._beginPlanning(state);
         state.planning = false;
-      }, 500); //this._lastProps.plans ? 10000 : 0);
+      //}, 500); //this._lastProps.plans ? 10000 : 0);
     }
   }
   async _beginPlanning(state) {
@@ -164,19 +167,18 @@ class ArcHost extends Xen.Base {
     let plans;
     while (state.invalid) {
       state.invalid = false;
-      plans = await this._plan(state.arc, state.config.plannerTimeout);
+      plans = await ArcsUtils.makePlans(state.arc, 5000) || [];
     }
     time = ((Date.now() - time) / 1000).toFixed(2);
     ArcHost.log(`plans`, plans, `${time}s`);
     this._fire('plans', plans);
   }
-  async _plan(arc, timeout) {
-    return await ArcsUtils.makePlans(arc, timeout) || [];
-  }
-  async _reloadManifests() {
-    let {arc} = this._state;
-    arc._context = await this._loadManifest(this._state.config, arc.loader);
-    this._fire('plans', null);
+  async _instantiatePlan(arc, plan) {
+    // aggressively remove old suggestions when a suggestion is applied
+    this._setState({suggestions: []});
+    ArcHost.log('instantiated plan', plan);
+    await arc.instantiate(plan);
+    this._fire('plan', plan);
   }
 }
 ArcHost.log = Xen.Base.logFactory('ArcHost', '#007ac1');
