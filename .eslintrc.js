@@ -41,8 +41,19 @@ module.exports = {
     mocha: true,
   },
   globals: {
+    // particle implementations
     defineParticle: false,
+    // tests
     chai: false,
+    // devtools extension
     chrome: false,
+    // selenium tests
+    browser: false,
+
+    // globals it would be good to figure out how to remove
+    target: false,
+    assert: false,
+    pierceShadows: false,
+    pierceShadowsSingle: false,
   },
 };
