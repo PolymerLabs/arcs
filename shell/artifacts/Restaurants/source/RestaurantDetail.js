@@ -183,7 +183,7 @@ ${styles}
         ;
     }
     _receiveDetail(detail) {
-      console.log(detail);
+      // console.log(detail);
       this._setState({detail});
     }
     _shouldRender(props, state) {
@@ -200,15 +200,17 @@ ${styles}
       };
       let detail;
       if (state.detail) {
-        var url = state.detail.website.replace(/^(?:https?:\/\/)?(?:www\.)?/i, "").split('/')[0];
+        var url =
+            state.detail.website &&
+            state.detail.website.replace(/^(?:https?:\/\/)?(?:www\.)?/i, "").split('/')[0];
         detail = {
           rating: state.detail.rating,
-          starStyle: `width: ${Math.round( state.detail.rating / 5 * 100)}%`,
-          reviews: state.detail.reviews.length,
-          kind: state.detail.types.slice(0, 3).join(' - ').replace(/_/g, ' '),
+          starStyle: `width: ${Math.round( (state.detail.rating || 0) / 5 * 100)}%`,
+          reviews: state.detail.reviews ? state.detail.reviews.length : 0,
+          kind: state.detail.types ? state.detail.types.slice(0, 3).join(' - ').replace(/_/g, ' ') : '',
           addr: state.detail.vicinity,
-          website: url,
-          phone: state.detail.formatted_phone_number,
+          website: url || '(none)',
+          phone: state.detail.formatted_phone_number || '(none)',
         };
       }
       return Object.assign(model, detail);
