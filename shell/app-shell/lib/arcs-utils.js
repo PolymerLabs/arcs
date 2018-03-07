@@ -119,12 +119,12 @@ const ArcsUtils = {
       ;
   },
   _getHandleDescription(name, tags, user, owner) {
-      let noun = (user === owner) ? 'my' : `${owner}'s`;
+      let proper = (user === owner) ? 'my' : `${owner}'s`;
       if (tags && tags.length) {
-        return `${noun} ${tags[0].substring(1)}`;
+        return `${proper} ${tags[0].substring(1)}`;
       }
       if (name) {
-        return `${noun} ${name}`;
+        return `${proper} ${name}`;
       }
   },
   async _requireHandle(arc, type, name, id, tags) {
