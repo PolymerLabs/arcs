@@ -394,6 +394,12 @@ async function run(funsAndArgs) {
 (async () => {
   let command = process.argv[2] || 'default';
   let funs = steps[command];
+  if (funs === undefined) {
+    console.log(`Unknown command: '${command}'`);
+    console.log('Available commands are:', Object.keys(steps).join(', '));
+    return;
+  }
+
   // To avoid confusion, only the last step gets args.
   let funsAndArgs = funs.map(fun => [fun, fun == funs[funs.length - 1] ? process.argv.slice(3) : []]);
   let result = await run(funsAndArgs);
