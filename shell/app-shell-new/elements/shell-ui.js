@@ -8,6 +8,7 @@ import './arc-cloud.js';
 import './shell-handles.js';
 import './user-picker.js';
 import './share-picker.js';
+import './menu-panel.js';
 import './arc-host.js';
 import './arc-footer.js';
 
@@ -24,6 +25,7 @@ import '../../components/arc-tools/shell-particles.js';
 
 // strings
 import Css from './shell-ui.css.js';
+import AppIcon from './icon.svg.js';
 
 // globals
 /* global shellPath */
@@ -45,6 +47,7 @@ const Main = Xen.html`
   on-manifests="_onData"
   on-exclusions="_onData"
   on-user="_onData"
+  on-friends="_onData"
   on-key="_onData"
   on-metadata="_onData"
   on-step="_onData"
@@ -52,7 +55,7 @@ const Main = Xen.html`
 
 <shell-handles users="{{users}}" user="{{user}}" arc="{{arc}}" visited="{{visited}}" on-theme="_onData"></shell-handles>
 
-<app-modal shown$="{{modalShown}}">
+<app-modal shown$="{{modalShown}}" on-click="_onScrimClick">
 
   <app-dialog open$="{{userPickerOpen}}">
     <user-picker users="{{users}}" on-selected="_onSelectedUser"></user-picker>
@@ -62,6 +65,15 @@ const Main = Xen.html`
     <share-picker share="{{share}}" on-share="_onShare"></share-picker>
   </app-dialog>
 
+  <menu-panel
+    open$="{{menuOpen}}"
+    avatar_title="{{avatarTitle}}"
+    avatar_style="{{avatarStyle}}"
+    friends="{{friends}}"
+    on-close="_onMenuClose"
+    on-user="_onSelectUser"
+    on-cast="_onMenuCast"></menu-panel>
+
 </app-modal>
 <app-main launcher$="{{launcher}}" style="{{shellStyle}}">
 
@@ -69,14 +81,21 @@ const Main = Xen.html`
   <toolbar>
     <!-- app-toolbar is position-fixed -->
     <app-toolbar style="{{shellStyle}}">
-      <img title="Arcs" on-click="_onNavClick" src="../logo_24x24.svg" style="cursor: pointer;">
+      <span title="Arcs" on-click="_onNavClick" style="cursor: pointer;">${AppIcon}</span>
+      <!--<img title="Arcs" on-click="_onNavClick" src="../logo_24x24.svg" style="cursor: pointer;">-->
       <arc-title style="{{titleStatic}}" on-click="_onStartEditingTitle" unsafe-html="{{description}}"></arc-title>
+      <toolbar-buttons>
+        <icon on-click="_onMenuClick">more_vert</icon>
+      </toolbar-buttons>
+      <!--
       <avatar title="{{avatarTitle}}" style="{{avatarStyle}}" on-click="_onSelectUser"></avatar>
       <toolbar-buttons>
         <toggle-button title="{{shareStateTitle}}" state="{{share}}" icons="lock person people" on-click="_onChooseShare"></toggle-button>
         <toggle-button title="Cast" on-state="_onCastState" icons="cast cast_connected"></toggle-button>
         <a href="{{launcherUrl}}"><icon>apps</icon></a>
+        <icon on-click="_onMenuClick">menu</icon>
       </toolbar-buttons>
+      -->
     </app-toolbar>
   </toolbar>
 
@@ -209,9 +228,11 @@ class ShellUi extends Xen.Base {
     config,
     user,
     users,
+    friends,
     selectedUser,
     userPickerOpen,
     sharePickerOpen,
+    menuOpen,
     configkey,
     manifests,
     exclusions,
@@ -240,10 +261,12 @@ class ShellUi extends Xen.Base {
       config,
       userPickerOpen,
       sharePickerOpen,
-      modalShown: userPickerOpen || sharePickerOpen,
+      menuOpen,
+      modalShown: Boolean(userPickerOpen || sharePickerOpen || menuOpen),
       selectedUser,
       user,
       hostConfig: user && config,
+      friends,
       manifests,
       exclusions,
       arc,
@@ -272,7 +295,7 @@ class ShellUi extends Xen.Base {
   _onSelectedUser(e, selectedUser) {
     this._setIfDirty({selectedUser, userPickerOpen: false});
   }
-  _onChooseShare() {
+  _onMenuShare() {
     this._setIfDirty({sharePickerOpen: true});
   }
   _onShare(e, share) {
@@ -318,6 +341,21 @@ class ShellUi extends Xen.Base {
     if (description && metadata.description !== description) {
       metadata.description = description;
       this._setState({metadata: Object.assign(Object.create(null), metadata)});
+    }
+  }
+  _onMenuClick(e) {
+    this._setState({menuOpen: true});
+  }
+  _onMenuClose() {
+    this._setState({menuOpen: false});
+  }
+  _onScrimClick(e) {
+    if (e.target === e.currentTarget) {
+      this._setState({
+        userPickerOpen: false,
+        sharePickerOpen: false,
+        menuOpen: false
+      });
     }
   }
 }

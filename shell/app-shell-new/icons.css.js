@@ -7,4 +7,8 @@ export default `icon {
   vertical-align: middle;
   cursor: pointer;
   user-select: none;
+  /* partial FOUC prevention */
+  width: 24px;
+  height: 24px;
+  overflow: hidden;;
 }`;
