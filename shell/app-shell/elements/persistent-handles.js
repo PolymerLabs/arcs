@@ -46,7 +46,7 @@ class PersistentHandles extends Xen.Base {
     let remoteHandleMeta = state.db.child(`views/${handleId}`);
     // TODO(sjmiles): maybe not do this unless we have to (reducing FB thrash)
     remoteHandleMeta.child('metadata').update({
-      type: ArcsUtils.metaTypeFromType(localHandle.type),
+      type: ArcsUtils.metaTypeFromType(localHandle.type.resolvedType()),
       name: localHandle.name || null,
       tags: [...tags]
     });
