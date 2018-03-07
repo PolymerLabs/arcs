@@ -56,8 +56,9 @@ class RemoteFriendsSharedHandles extends Xen.Base {
   // Level 2: iterate a friend's share listings and watch the individual handles
   //
   _watchFriendSharedHandles(db, arc, friend, snap) {
-    // get user record
+    // get friend's user record
     let user = snap.val();
+    friend.name = user.name;
     //RemoteFriendsSharedHandles.log(`READING friend's user [${user.name}]`); // from`, String(snap.ref));
     // find keys for user's shared arcs
     return ArcsUtils.getUserShareKeys(user).map(key => {
@@ -100,7 +101,7 @@ class RemoteFriendsSharedHandles extends Xen.Base {
       // formulate id
       const id = `${tagString}-${friend.id}`;
       // create/update a handle for this data
-      this._updateHandle(arc, id, arcsType, name, [`#${tagString}`], data);
+      this._updateHandle(arc, id, arcsType, name, [`#${tagString}`], data, friend);
       // formulate box id
       const boxId = `BOXED_${tagString}`;
       // acquire type record for a Set of the base type
@@ -127,8 +128,10 @@ class RemoteFriendsSharedHandles extends Xen.Base {
       };
     });
   }
-  async _updateHandle(arc, id, type, name, tags, data) {
+  async _updateHandle(arc, id, type, name, tags, data, friend) {
     const handle = await this._requireHandle(arc, id, type, name, tags);
+    const typeName = handle.type.toPrettyString().toLowerCase();
+    handle.description = ArcsUtils._getHandleDescription(typeName, handle.tags, this._props.user.name, friend.name);
     this._addHandleData(handle, data);
   }
   async _addToBox(arc, id, type, name, tags, data) {
