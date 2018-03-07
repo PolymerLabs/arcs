@@ -1,5 +1,17 @@
+let informedAboutVersionMismatch = false;
+
 document.addEventListener('arcs-debug', e => {
-  chrome.runtime.sendMessage(e.detail);
+  try {
+    chrome.runtime.sendMessage(e.detail);
+  } catch (error) {
+    if (error.message.startsWith('Invocation of form runtime.connect(null, ) doesn\'t match definition')
+        && !informedAboutVersionMismatch) {
+      informedAboutVersionMismatch = true;
+      if (confirm('Arcs Explorer detected version mismatch between DevTools Extension and injected Content Script. Do you want to reload the page?')) {
+        window.location.reload();
+      }
+    }
+  }
 });
 
 chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {

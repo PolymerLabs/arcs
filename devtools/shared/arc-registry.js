@@ -23,12 +23,14 @@ root._arcDebugRegistry = root._arcDebugRegistry || {
 let registry = root._arcDebugRegistry;
 
 function initDebug() {
-  if (registry.debug) return;
+  if (registry.debug) return {};
+  let preExistingArcs = registry.arcList.length > 0;
   for (let arc of registry.arcList) {
     arc.initDebug();
   }
   delete registry.arcList;
   registry.debug = true;
+  return {preExistingArcs};
 }
 
 function registerArc(arc) {
