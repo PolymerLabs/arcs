@@ -9,7 +9,9 @@
 defineParticle(({DomParticle, html}) => {
 
   const item = html`
-
+  <div class="close-button" on-click="_onBack">
+    <i class="material-icons">close</i>
+  </div>
 <div item style%="{{image}}" style="position: relative;">
   <div scrim></div>
   <div style="flex: 1"></div>
@@ -19,7 +21,7 @@ defineParticle(({DomParticle, html}) => {
       <div address>{{address}}</div>
       <div id="webtest-title" title>{{name}}</div>
     </div>
-    <div style="width: 60px; align-items: flex-end; display: flex; flex-direction: column; padding-bottom: 4px;">
+    <div style="width: 56px; align-items: flex-end; display: flex; flex-direction: column; padding-bottom: 4px;">
       <div rating>{{rating}}</div>
       <div stars-container>
         <div stars style="{{starStyle}}"></div>
@@ -101,19 +103,21 @@ defineParticle(({DomParticle, html}) => {
     letter-spacing: 1.3px;
     text-align: center;
     margin-bottom: 2px;
+    width: 100%;
   }
   [${host}] [stars-container] {
     display: inline-block;
     /* width: 100px; */
     /* height: 20px; */
-    width: 60px;
+    width: 56px;
     height: 12px;
-    background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABwAAAAcCAQAAADYBBcfAAAA70lEQVR4AdXUIQjCQBTGcYNgMAt2BGGdZbHY28BeLKvaBIPJYLHYMf/tbX2w9V62OgZj2wljjKHP3W5FvK/cHe8Hd+/gRmpgfgalwVHa1UKWlCyHwAuKizFkQowiZmIKt6gqW1Po1dAzglioJlYnZIbFGgeXM3fCFgy5c8bFYY3F7B2eUL1y+jgqrp7hinfEIetAGc7X5rAhkRkJm86uYhMJLMLWPgc7Ae56vCM3Ad76QF+AvhYyJW/Ky2aWM9XBVV1acGXOlaJer3TwUJUF2E2Xg2rnoINPUvaMW3cesyflqYMPFsJvsOAhQ/P8E3wB75uY7oxINXcAAAAASUVORK5CYII=);
-    background-size: contain;
+    background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAHAAAAAYCAYAAAAiR3l8AAAAAXNSR0IArs4c6QAAAchJREFUaAXtmE9LAzEUxHdV9FIQBLWC4MGLoCe//2fw1IIXD4IHsXgQPLauM7xsievua7JGQZ1AzL+Xefobk4ZWlYoIiIAIiMBPEGiaZpe1dC7pGtExHLYyzThGPGvpIl0jms0h18AT5GEtXaRrRLM57KQ6gePN2EPGs1/X9TJ1rxcnXaMzlkPOCeTxZjxryWtUuubhKA45BsZXZ9y39ON/xlpxf7yi7Yy14v6f0q27fw2O8inmpt15jI9Qt8P8Cu1T6MfNI67Wh3ii7UvXSJTm8MlApkGSMzSXqK1hnPYKDZ3DvHsvSLpGpySHXgOZBkkmaK5R9zl2ygvWbmDeqxOzXpKuoSjFYdBApkESfkZeoJ5z3FPuMHcL89561ganpGtoSnBwHzHBmMWgE1W1yDWPWtI1oiU4uAYG47wXnLcWtg823l5vbVDwP/6+roE44rxi2xcpr8l5qO2VOQ0xgV1aI13jVILDpm9iDpBqD5UPFD5U+GDhZ+MzGj5w+NBhDMc5RbpG68scNj1irpCHJs9g3oevzmAi57m+xNoMbXLBXumC1ndxWBuBBPwPcUtKTFcgZU9KjHS7BDQWAREQAREQAREQgV9C4B0HvYA7BFwt2gAAAABJRU5ErkJggg==);
+
+    background-size: cover;
   }
   [${host}] [stars] {
     height: 100%;
-    background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABwAAAAcCAQAAADYBBcfAAAA60lEQVR4AdXTIQjCQBTGcYNgMAt2BGGdZbHY28BeLAv/ok0wmAwWix37elsfbL2XrY7B2HbCGGPobW9bUr5yd7wf3L3HTdTI/BTkPAqypmA9Bt5Q3AZDZkQoImZD4R5VZj8UuhV0B0EMVB2jE7LAYIuFzZUnQQMGPLliY7HFYPEJL6heuXxdFVtm2No3YpF2oBSrtTnsiFtYzK6zq5iEGhZiiuPgoIGHHnPkoYGPPtDTQE+EzMnq8qJeZcwluKlKc+4suZNX+40ET2WZj1l32S9PThJ0SDgybZxMOZLgSPDFSvNbVrwEKOcP4Rt15kTMQuVR7QAAAABJRU5ErkJggg==);
+    background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAHAAAAAYCAYAAAAiR3l8AAAAAXNSR0IArs4c6QAAAcJJREFUaAXtl0FKA0EQRWcCQVCy8RLZupdcQEEEXXmALL2IGz2AW9ciCF7CtUfwBIrgYvx/uqdTMzGTTtMtCL/h09XVVX/gVZgkVaUlAiIgAiLwFwSapjmkcj9Lvo5oCofJjsM4Qz2Ve8nXES3FwbnjE/JE5Z6efMvybd0BeQZ9ec1yDVG+YXhJfHd5hZ7gUXtejHMt+TqSSRx2GeCFmZiNTToptF42TjIzTdbLxqYkKbReNk4yM03Wy8amZD2shym80q6QOx/mcT6F9n3+E/uzj+32WNf1g010sXwdiVIcOs7tjocsoQ8odrF22TP55cAaSL6FOPSQA/QceoW2LdbMe80jB9ZC8i3EoYceoKfQDbRp8W7aa4o4sAeSbwYOoz9i8H32jXm8jMzkxdeMlKxfydcxycFhdIAe/eX6CEIm+tdS6FgF8nUsSnGoKrzmJtA7xMU/8ddejLl4F/MhWI0NEXt8Lzb5EgJWNr4BNkwXrXXTvGE/6i4YQ8xxLbp87M6etlO+RTiEOQDyHXQPHYSkD5jzd7fDu21n9MkXkEpxCPzxgONw2BDE1AxbY3piauQ7JKCzCIiACIiACIiACPwTAj/CZkNVjdR/ZAAAAABJRU5ErkJggg==);
     background-size: cover;
     background-repeat: repeat no-repeat;
   }
@@ -134,7 +138,7 @@ defineParticle(({DomParticle, html}) => {
       let items = props.list.map(({rawData}, i) => {
         return Object.assign({
           index: i,
-          starStyle: `width: ${Math.round(100 - rawData.rating / 5 * 100)}%`,
+          starStyle: `width: ${Math.round(rawData.rating / 5 * 100)}%`,
           image: {backgroundImage: `url("${rawData.photo}")`}
         }, rawData);
       });
