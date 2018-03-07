@@ -33,7 +33,6 @@ defineParticle(({DomParticle}) => {
   }
   [${host}] [content] {
     position: relative;
-    z-index: 10;
     top: 168px;
     padding: 0 16px 32px 16px;
   }
