@@ -15,6 +15,9 @@ import './arc-footer.js';
 // components
 import '../../components/toggle-button.js';
 import '../../components/simple-tabs.js';
+import '../../components/corellia-xen/cx-input.js';
+import '../../components/good-map.js';
+import '../../components/video-controller.js';
 
 // tools
 import '../../components/arc-tools/handle-explorer.js';

@@ -52,8 +52,8 @@ class PersistentArc extends Xen.Base {
           metadata.externalManifest = externalManifest;
         }
         if (this._hasMetadataChanged(metadata)) {
-          state.db.child(key).child('metadata').update(metadata);
           PersistentArc.log('WRITING (update) metadata', metadata);
+          state.db.child(key).child('metadata').update(metadata);
         }
       }
       this._fire('key', key);
@@ -64,8 +64,8 @@ class PersistentArc extends Xen.Base {
     const serial = JSON.stringify(metadata);
     if (serial !== state.serial) {
       PersistentArc.groupCollapsed('metadata changed');
-        console.log(serial);
-        console.log(state.serial);
+        PersistentArc.log('new meta:', metadata); //serial);
+        PersistentArc.log('old meta:', state.serial ? JSON.parse(state.serial) : state.serial);
       console.groupEnd();
       state.serial = serial;
       return true;

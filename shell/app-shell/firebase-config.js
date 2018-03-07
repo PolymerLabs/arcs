@@ -8,9 +8,7 @@ Code distributed by Google as part of the polymer project is also
 subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
 */
 
-// TODO(wkorman): Note the FireBase library is loaded earlier in
-// apps/web/index.html and see comment there for more.
-const firebase = window.firebase;
+import firebase from '../components/firebase.4.2.0.js';
 
 const version = '0_3_beta_3';
 
