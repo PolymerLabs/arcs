@@ -14,6 +14,7 @@
 <link rel="import" href="arcs-dataflow.html">
 <link rel="import" href="arcs-communication-channel.html">
 <link rel="import" href="arcs-shared.html">
+<link rel="import" href="arcs-notifications.html">
 <link rel="import" href="strategy-explorer/strategy-explorer.html">
 
 <dom-module id="arcs-devtools-app">
@@ -36,6 +37,9 @@
       }
       header {
         grid-area: header;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
         background-color: var(--light-gray);
         border-bottom: 1px solid var(--mid-gray);
         padding: 1px;
@@ -91,10 +95,13 @@
         data="{{routeData}}"
         tail="{{tail}}">
       </app-route>
-      <header><!--
-      --><div class="devtools-icon nav-toggle" on-click="toggleNav"></div><!--
-      --><iron-icon id="illuminateToggle" title="Illuminate Particles" icon="select-all" on-click="toggleIlluminate"></iron-icon><!--
-   --></header>
+      <header>
+        <div><!--
+          --><div class="devtools-icon nav-toggle" on-click="toggleNav"></div><!--
+          --><iron-icon id="illuminateToggle" title="Illuminate Particles" icon="select-all" on-click="toggleIlluminate"></iron-icon><!--
+     --></div>
+        <div><arcs-notifications id="notifications"></arcs-notifications></div>
+      </header>
       <nav>
         <iron-selector selected="[[routeData.page]]" attr-for-selected="name" class="nav-list" role="navigation">
           <a name="overview" href="#overview"><iron-icon icon="timeline"></iron-icon>Overview</a>
@@ -116,6 +123,7 @@
 
       constructor() {
         super();
+        this._messageReceivers = [];
       }
 
       ready() {
@@ -127,11 +135,13 @@
         if (!this.routeData.page) {
           this.set('routeData.page', 'overview');
         }
+        this._messageReceivers.push(this.$.notifications);
+        this.$.pages.childNodes.forEach(
+          page => {if (page.onMessages) this._messageReceivers.push(page)});
       }
 
       onMessages(e) {
-        this.$.pages.childNodes.forEach(
-          page => {if (page.onMessages) page.onMessages(e.detail);});
+        this._messageReceivers.forEach(receiver => receiver.onMessages(e.detail));
       }
 
       toggleNav() {
