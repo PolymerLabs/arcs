@@ -5,6 +5,8 @@ module.exports = {
     "sourceType": "module",
   },
   "rules": {
+    "no-undef": "error",
+
     // Things we do, but probably shouldn't.
     "no-throw-literal": "off",
     "one-var": "off",
@@ -30,5 +32,17 @@ module.exports = {
 
     // Things we might care about if we could automate them.
     "curly": "off", // curly braces even single line blocks, --fix does something weird.
+  },
+  env: {
+    browser: true,
+    node: true,
+    es6: true,
+    worker: true,
+    mocha: true,
+  },
+  globals: {
+    defineParticle: false,
+    chai: false,
+    chrome: false,
   },
 };
