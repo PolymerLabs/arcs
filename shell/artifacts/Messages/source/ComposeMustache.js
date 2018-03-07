@@ -73,7 +73,7 @@ defineParticle(({DomParticle}) => {
       this._views.get('messages').store(new Message({
         name: state.me,
         type: 'mustache',
-        userid: user.id,
+        userid: state.me.id,
         time: new Date().toLocaleString(),
         content: this._getImgSrc(mustaches[e.data.key])}));
     }
