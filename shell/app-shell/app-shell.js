@@ -79,7 +79,8 @@ const template = ArcsUtils.html`
     user-select: none;
     background: none;
     border: none;
-    padding: 16px;
+    /* TODO(wkorman): Review with yuin@, breaks sizing of Arcs. */
+    /* padding: 16px; */
   }
   app-toolbar {
     position: fixed;
