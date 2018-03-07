@@ -45,5 +45,6 @@ export default {
   Base,
   html,
   walker,
-  logFactory: Base.logFactory
+  logFactory: Base.logFactory,
+  setBoolAttribute: Template.setBoolAttribute
 };
