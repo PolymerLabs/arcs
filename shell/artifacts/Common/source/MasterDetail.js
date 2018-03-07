@@ -35,10 +35,22 @@ defineParticle(({DomParticle}) => {
     // box-shadow: 0 8px 17px 0 rgba(0, 0, 0, 0.2);
     // transition-delay: 0s;
   }
+  [${host}] .detail-wrapper {
+    position: relative;
+  }
+  [${host}] .close-button {
+    z-index: 100;
+    position: absolute;
+    right: 0;
+    top: 0;
+  }
+  button:focus {
+    outline:0;
+  }
 </style>
 <div ${host}>
-  <div style%="{{tab0}}">
-    <div style="padding: 6px"><button class="x-button raised" on-click="_onBack">BACK</button></div>
+  <div class="detail-wrapper" style%="{{tab0}}">
+    <button on-click="_onBack" class="close-button material-icons">close</button>
     <div slotid="detail"></div>
   </div>
   <div style%="{{tab1}}">

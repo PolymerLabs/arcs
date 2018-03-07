@@ -77,6 +77,9 @@ const template = ArcsUtils.html`
     vertical-align: middle;
     cursor: pointer;
     user-select: none;
+    background: none;
+    border: none;
+    padding: 16px;
   }
   app-toolbar {
     position: fixed;
