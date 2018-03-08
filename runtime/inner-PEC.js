@@ -11,7 +11,6 @@
 
 import Type from './type.js';
 import handle from './handle.js';
-// import {define} from './particle.js';
 import assert from '../platform/assert-web.js';
 import {PECInnerPort} from './api-channel.js';
 import ParticleSpec from './particle-spec.js';
@@ -117,11 +116,6 @@ class InnerPEC {
 
     this._apiPort.onInnerArcRender = ({transformationParticle, transformationSlotName, hostedSlotId, content}) => {
       transformationParticle.renderHostedSlot(transformationSlotName, hostedSlotId, content);
-    };
-
-    this._apiPort.onDefineParticle = ({particleDefinition, particleFunction}) => {
-      let particle = define(particleDefinition, eval(particleFunction));
-      this._loader.registerParticle(particle);
     };
 
     this._apiPort.onStop = () => {

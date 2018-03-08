@@ -137,12 +137,7 @@ function init() {
     let n = 0;
     return {
       async wait(v) {
-        let result;
-        if (v instanceof Promise) {
-          result = f;
-        } else {
-          result = v();
-        }
+        let result = await v;
         if (!flow) {
           flow = module.exports.flow(baseInfo).start();
         }
@@ -228,9 +223,6 @@ function init() {
       }
     });
     return {traceEvents: events};
-  };
-  module.exports.dump = function() {
-    fs.writeFileSync(options.traceFile, module.exports.save());
   };
   module.exports.download = function() {
     let a = document.createElement('a');
