@@ -10,9 +10,10 @@
     "test": "run-p --print-name --race start test-after-build",
     "start": "cross-env http-server -a ${npm_package_config_host} -p ${npm_package_config_port}",
     "build": "../tools/sigh webpack",
-    "test-test": "run-s --print-name --continue-on-error test-mocha test-wdio",
+    "test-test": "run-s --print-name --continue-on-error test-mocha test-mocha-words test-wdio",
     "test-after-build": "run-s --print-name build test-test",
     "test-mocha": "mocha-chrome test/index.test.html",
+    "test-mocha-words": "mocha-chrome artifacts/Words/index.test.html",
     "test-wdio": "cross-env wdio -b http://${npm_package_config_host}:${npm_package_config_port}/ test/wdio.conf.js"
   },
   "devDependencies": {
