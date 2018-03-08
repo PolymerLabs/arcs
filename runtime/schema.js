@@ -220,7 +220,7 @@ class Schema {
           break;
 
         default:
-          throw new Error(`Unknown kind ${kind} in schema ${className}`);
+          throw new Error(`Unknown kind ${fieldType.kind} in schema ${className}`);
       }
     };
 

@@ -9,6 +9,7 @@
  */
 
 import assert from '../platform/assert-web.js';
+import Type from './type.js';
 
 export default class TupleFields {
   constructor(fieldList) {
