@@ -49,7 +49,7 @@ class DataItem extends Xen.Base {
       notobject: !isobject || !state.expanded,
       object: isobject && state.expanded ? props.value : null,
       hideexpand: state.expanded || !isobject,
-      value: isnull || isobject ? '(null)' : String(props.value),
+      value: isnull || isobject ? '(null)' : isbool ? props.value : String(props.value),
       title: isstring ? props.value : props.name
     };
   }
