@@ -117,8 +117,7 @@ describe('demo flow', function() {
     await helper.makePlans({
       expectedNumPlans: 4,
       expectedSuggestions: expectedSuggestions.map(suggestion => {
-          return suggestion.replace(/products from your browsing context/g, 'my short list')
-                           .replace('Minecraft Book plus 2 other items', 'Minecraft Book plus 3 other items');
+          return suggestion.replace('Minecraft Book plus 2 other items', 'Minecraft Book plus 3 other items');
       })
     });
 

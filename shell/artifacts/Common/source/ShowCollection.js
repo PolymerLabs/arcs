@@ -140,8 +140,8 @@ recipe
       }
 
       // This is for description capabilities demo purposes.
-      this._setDynamicDescription(propsItems);
-      this._setDynamicDomDescription();
+      // this._setDynamicDescription(propsItems);
+      // this._setDynamicDomDescription();
     }
 
     combineHostedModel(slotName, hostedSlotId, content) {
