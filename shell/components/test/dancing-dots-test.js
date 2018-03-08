@@ -9,11 +9,11 @@ const assert = chai.assert;
 
 afterEach(function() {
   target.innerHTML = '';
-  db.reset();
+  window.db.reset();
 });
 
 describe('DancingDots', function() {
-  class TestDancingDots extends DancingDots {
+  class TestDancingDots extends window.DancingDots {
     constructor(element) {
       super(element);
     }

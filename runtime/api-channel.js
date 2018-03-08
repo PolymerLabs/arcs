@@ -252,8 +252,6 @@ class PECOuterPort extends APIPort {
     super(messagePort, 'o');
 
     this.registerCall('Stop', {});
-    this.registerCall('DefineParticle',
-      {particleDefinition: this.Direct, particleFunction: this.Stringify});
     this.registerRedundantInitializer('DefineHandle', {type: this.ByLiteral(Type), name: this.Direct});
     this.registerInitializer('InstantiateParticle',
       {id: this.Direct, spec: this.ByLiteral(ParticleSpec), handles: this.Map(this.Direct, this.Mapped)}, 'id');

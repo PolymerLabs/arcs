@@ -144,7 +144,7 @@ async function lint(args) {
     extra.push('--fix');
   }
   let jsSources = [...findProjectFiles(process.cwd(), fullPath => /\.js$/.test(fullPath))];
-  finalResult = true;
+  let finalResult = true;
   while (jsSources.length > 0) {
     let theseSources = jsSources.splice(0, LOL_WINDOWS_YOU_SO_FUNNY_WITH_YOUR_COMMAND_SIZE_LIMITS_NUM_FILES);
     let result = saneSpawn('./node_modules/.bin/eslint', [...extra, ...theseSources], {stdio: 'inherit'});

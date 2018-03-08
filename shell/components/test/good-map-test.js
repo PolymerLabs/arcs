@@ -12,7 +12,7 @@ afterEach(function() {
 });
 
 describe('GoodMap', function() {
-  customElements.define('test-good-map', class extends GoodMap {
+  customElements.define('test-good-map', class extends window.GoodMap {
     constructor() {
       super();
       this._mapOptionsForTest = {};

@@ -36,6 +36,8 @@ describe('entity', async function() {
 
 describe.skip('relation', function() {
   it('can be created, stored, and restored', function() {
+    let Relation;
+    let BasicEntity;
     let arc = new Arc({});
     let relation = new Relation(new BasicEntity('thing1'), new BasicEntity('thing2'));
     assert.isDefined(relation);
