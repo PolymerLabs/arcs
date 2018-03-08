@@ -38,4 +38,4 @@ export default class InitSearch extends Strategy {
       generate: null,
     };
   }
-};
+}

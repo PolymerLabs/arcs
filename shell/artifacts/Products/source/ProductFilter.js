@@ -54,7 +54,7 @@ recipe
 
           resultView.on('change', async e => {
             let result = await resultView.get();
-            if (!!result) {
+            if (result) {
               resultsView.store(result);
             }
           }, this);

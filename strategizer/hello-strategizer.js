@@ -110,11 +110,8 @@ let strategizer = new Strategizer([new Seed(), new Grow(), new Mutate(), new Cro
 });
 
 (async () => {
-  while (true) {
+  do {
     await strategizer.generate();
     console.log(strategizer.population[0]);
-    if (strategizer.population[0].result == target) {
-      return;
-    }
-  }
+  } while (strategizer.population[0].result != target);
 })();

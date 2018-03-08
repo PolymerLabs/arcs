@@ -26,7 +26,7 @@ defineParticle(({DomParticle}) => {
     }
     render(props) {
       let {product} = props;
-      let notAlsoOn = !product || !Boolean(props.choices.find(c => c.name === product.name));
+      let notAlsoOn = !product || !props.choices.find(c => c.name === product.name);
       return {
         notAlsoOn,
       };

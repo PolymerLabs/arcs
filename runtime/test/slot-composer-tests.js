@@ -45,7 +45,7 @@ async function initSlotComposer(recipeStr) {
 
   let manifest = (await Manifest.parse(recipeStr));
   let loader = new class extends Loader {
-    loadResource(fileName) { return `defineParticle(({Particle}) => { return class P extends Particle {} });`; };
+    loadResource(fileName) { return `defineParticle(({Particle}) => { return class P extends Particle {} });`; }
   };
   const pecFactory = function(id) {
     const channel = new MessageChannel();

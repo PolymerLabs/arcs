@@ -32,7 +32,7 @@ chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
         };
       }
       break;
-    case 'illuminate':
+    case 'illuminate': {
       let shell = document.getElementsByTagName('app-shell')[0];
       switch (message.messageBody) {
         case 'on':
@@ -43,6 +43,7 @@ chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
           break;
       }
       break;
+    }
   }
 });
 

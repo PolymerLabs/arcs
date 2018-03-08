@@ -45,7 +45,7 @@ class WalkerBase extends Strategizer.Walker {
     let newRecipes = [];
     if (updateList.length) {
       switch (this.tactic) {
-        case WalkerBase.Permuted:
+        case WalkerBase.Permuted: {
           let permutations = [[]];
           updateList.forEach(({continuation, context}) => {
             let newResults = [];
@@ -75,6 +75,7 @@ class WalkerBase extends Strategizer.Walker {
             newRecipes.push({recipe: newRecipe, score});
           }
           break;
+        }
         case WalkerBase.Independent:
           updateList.forEach(({continuation, context}) => {
             if (typeof continuation == 'function')

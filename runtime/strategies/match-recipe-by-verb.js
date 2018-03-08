@@ -45,4 +45,4 @@ export default class MatchRecipeByVerb extends Strategy {
 
     return {results, generate: null};
   }
-};
+}

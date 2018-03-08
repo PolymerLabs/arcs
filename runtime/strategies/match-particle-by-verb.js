@@ -42,4 +42,4 @@ export default class MatchParticleByVerb extends Strategy {
 
     return {results, generate: null};
   }
-};
+}

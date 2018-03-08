@@ -29,8 +29,8 @@ class Slot {
   set id(id) { this._id = id; }
   get localName() { return this._localName; }
   set localName(localName) { this._localName = localName; }
-  get name() { return this._name; };
-  set name(name) { this._name = name; };
+  get name() { return this._name; }
+  set name(name) { this._name = name; }
   get tags() { return this._tags; }
   set tags(tags) { this._tags = tags; }
   get formFactor() { return this._formFactor; }

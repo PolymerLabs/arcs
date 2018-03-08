@@ -7,7 +7,7 @@
 
 export default function assert(test, message) {
   if (!test) {
-    debugger;
+    
     throw new Error(message);
   }
-};
+}
