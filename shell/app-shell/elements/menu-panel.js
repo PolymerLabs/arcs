@@ -110,15 +110,15 @@ class MenuPanel extends Xen.Base {
     return template;
   }
   static get observedAttributes() {
-    return ['open', 'friends', 'avatar_title', 'avatar_style'];
+    return ['arc', 'open', 'friends', 'avatars', 'avatar_title', 'avatar_style'];
   }
-  _render({open, avatar_title, avatar_style, friends}, state) {
+  _render({arc, open, avatar_title, avatar_style, friends, avatars}, state) {
     const {selected, isProfile, isShared, isOpen, shouldOpen} = state;
     //`shouldOpen` exists to allow parent to update before we try to transition
     state.isOpen = state.shouldOpen;
     if (open && !isOpen) {
       state.shouldOpen = true;
-      setTimeout(() => this._invalidate(), 40);
+      setTimeout(() => this._invalidate(), 80);
     }
     if (!open) {
       state.shouldOpen = state.isOpen = false;
@@ -134,7 +134,7 @@ class MenuPanel extends Xen.Base {
     if (friends) {
       render.friends = {
         template: User,
-        models: friends.map((friend, i) => this._renderUser(selected, friend.rawData, i))
+        models: friends.map((friend, i) => this._renderUser(arc, selected, friend.rawData, avatars, i))
       };
     }
     return render;
@@ -142,12 +142,22 @@ class MenuPanel extends Xen.Base {
   _didRender({}, {isOpen}) {
     Xen.setBoolAttribute(this, 'open', isOpen);
   }
-  _renderUser(selected, user, i) {
-    const url = user.avatar || `${shellPath}/assets/avatars/user (0).png`;
+  _renderUser(arc, selected, user, avatars, i) {
+    let avatar = user.avatar;
+    if (arc && !avatar && avatars) {
+      avatar = (avatars.find(a => a.owner === user.id) || Object).url;
+      if (avatar) {
+        avatar = arc._loader._resolve(avatar);
+      }
+    }
+    if (!avatar) {
+      avatar = `${shellPath}/assets/avatars/user (0).png`;
+    }
+    //const url = user.avatar || `${shellPath}/assets/avatars/user (0).png`;
     return {
       key: user.id,
       name: user.name,
-      style: `background-image: url("${url}");`,
+      style: `background-image: url("${avatar}");`,
       selected: user.id === selected
     };
   }

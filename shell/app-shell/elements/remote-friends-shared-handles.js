@@ -142,6 +142,8 @@ class RemoteFriendsSharedHandles extends Xen.Base {
     if (box) {
       if (box.handle) {
         this._addHandleData(box.handle, data, friend);
+        // inform owner that we updated this handle
+        this._fire('handle', box.handle);
       } else {
         //RemoteFriendsSharedHandles.log(`caching friend's shared handle for boxing as [${id}]`);
         box.pending.push({data});
@@ -155,6 +157,8 @@ class RemoteFriendsSharedHandles extends Xen.Base {
       };
       box.handle = await this._requireHandle(arc, id, type, name, tags);
       box.pending.forEach(m => this._addHandleData(box.handle, m.data, friend));
+      // inform owner that we updated this handle
+      this._fire('handle', box.handle);
     }
   }
   async _requireHandle(arc, id, type, name, tags) {
