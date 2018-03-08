@@ -5,8 +5,10 @@ let connections = {};
 chrome.runtime.onConnect.addListener(function(port) {
   // Message from the DevTools page.
   let extensionListener = function(message, sender, sendResponse) {
+    console.log(`Received "${message.name}" message from DevTools page for tab.${message.tabId}.`);
     switch (message.name) {
       case 'init':
+        console.log(`Establishing connection for tab.${message.tabId}.`);
         connections[message.tabId] = port;
         chrome.tabs.sendMessage(message.tabId, {messageType: 'init-debug'});
         break;
@@ -20,7 +22,10 @@ chrome.runtime.onConnect.addListener(function(port) {
   port.onDisconnect.addListener(function(port) {
     port.onMessage.removeListener(extensionListener);
     for (let tabId of Object.keys(connections)) {
-      if (connections[tabId] === port) delete connections[tabId];
+      if (connections[tabId] === port) {
+        console.log(`DevTools port for tab.${tabId} got disconnected. Removing the connection.`);
+        delete connections[tabId];
+      }
     }
   });
 });
@@ -30,6 +35,9 @@ chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
   let tabId = sender.tab.id;
   if (tabId in connections) {
     connections[tabId].postMessage(message);
+    console.log(`Forwarded ${message.length} messages from tab.${tabId} to its DevTools page`);
+  } else {
+    console.log(`Missing connection for tab.${tabId} that is sending messages.`);
   }
   return true;
 });
@@ -40,6 +48,7 @@ chrome.webNavigation.onCommitted.addListener(function(details) {
   }
   let tabId = details.tabId;
   if (tabId in connections) {
+    console.log(`Registered page refresh for tab.${tabId}.`);
     connections[tabId].postMessage([{messageType: 'page-refresh'}]);
     chrome.tabs.sendMessage(tabId, {messageType: 'init-debug'});
   }
