@@ -51,9 +51,22 @@ module.exports = {
     browser: false,
 
     // globals it would be good to figure out how to remove
+    // - selenium tests
     target: false,
     assert: false,
     pierceShadows: false,
     pierceShadowsSingle: false,
+    // - extension tests
+    filter: false,
+    flatten: false,
+    deduplicate: false,
+    _prepareResults: false,
+    extractEntities: false,
+    // - shell tests
+    db: false,
+    FakeDatabase: false,
+    PersistentArc: false,
+
+
   },
 };

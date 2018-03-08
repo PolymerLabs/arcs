@@ -29,7 +29,7 @@
   function initializeWindow(w) {
     if (windowForEvents) return;
     windowForEvents = w;
-    for (msg of msgQueue) fire(msg);
+    for (let msg of msgQueue) fire(msg);
     msgQueue.length = 0;
     w.document.addEventListener('command', e => sendMessage(e.detail));
   }

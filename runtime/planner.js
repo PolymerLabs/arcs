@@ -220,7 +220,7 @@ class Planner {
         if (this._arc.search) {
           if (!plan.search) {
             // This plan wasn't constructed based on the provided search terms.
-            if (description.toLowerCase().indexOf(arc.search) < 0) {
+            if (description.toLowerCase().indexOf(this._arc.search) < 0) {
               // Description must contain the full search string.
               // TODO: this could be a strategy, if description was already available during strategies execution.
               continue;
