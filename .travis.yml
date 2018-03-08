@@ -2,21 +2,21 @@ language: node_js
 node_js:
   - "9"
 env:
-  - TEST_DIR: .
-  - TEST_DIR: extension
-  - TEST_DIR: shell
+  global:
+    # an encrypted 'GITHUB_TOKEN=<token>' for the PolymerLabs/arcs repo
+    secure: "qFfvf0YAK5NWkH5fj708Z+1qIHtOFrmNhslB+n14rt5J3fJjY0A/4lbLbhx2jACYME+OU2m66maxh5abEZCF4ZGi4zpJa01IUYesTTa3qdM9kozB2TfFcl0d1xffuGpAh9kPchaadCvx/BU9fYFzkd8CLD5mQWCybwqM+6xpoO/KULDXhlcOPGbzg65xmPJANZH+ldH0NgfVLqofeFUg1j0bke1n+7DLf+Oh4ZiYZavciJjhuYx561TkkSEd1gqQGImEfkmKmhz82E8curx6uJW+kD9WagNbLj4FvEsBETIM7BSE8sei2vOVO42OnzvCej+P98IUelEqBS6sTeUNp79f8cC8n7nSYUJwTpshturBFoIFfcVQNoebdaao6gWpnxhUEnsc36AMl0DpIT0DsA9SxZQRjqhAEZmAWmASJMc5t/jWIjmJrqQxDy80HGJPEhIMTOAZfAiFqwyQwYTvJ0tOTW+jk2P9oriLHwi0Pr88uPGD5HWS6ULPoAutQAWMKCYgb5PoOiB8vbUZT9RTXfdLkHLkpw0ICaj5sam2o32CMLm8KZzfNVLJ/kUgdnkYUpC0vo+PGfguiJX8fvZxB06+niljW9iHteqVuoP1tADQwby4jS2ob3eL7TgCGuGk6gQkvHkLmOzlagKeXu1YZ0ow5vq6C+vSEfKEzIDrhXk="
+  matrix:
+    - TEST_DIR: .
+    - TEST_DIR: extension
+    - TEST_DIR: shell
 
 # todo: remove this once travis fixes their upstream issue (travis-ci/travis-ci#8836)
 sudo: required
 addons:
   chrome: stable
 
-script: "cd ${TRAVIS_BUILD_DIR}/$TEST_DIR && npm install && npm test"
+script: "cd ${TRAVIS_BUILD_DIR}/${TEST_DIR} && npm install && npm test"
 
-env:
-  global:
-    # an encrypted 'GITHUB_TOKEN=<token>' for the PolymerLabs/arcs repo
-    secure: "qFfvf0YAK5NWkH5fj708Z+1qIHtOFrmNhslB+n14rt5J3fJjY0A/4lbLbhx2jACYME+OU2m66maxh5abEZCF4ZGi4zpJa01IUYesTTa3qdM9kozB2TfFcl0d1xffuGpAh9kPchaadCvx/BU9fYFzkd8CLD5mQWCybwqM+6xpoO/KULDXhlcOPGbzg65xmPJANZH+ldH0NgfVLqofeFUg1j0bke1n+7DLf+Oh4ZiYZavciJjhuYx561TkkSEd1gqQGImEfkmKmhz82E8curx6uJW+kD9WagNbLj4FvEsBETIM7BSE8sei2vOVO42OnzvCej+P98IUelEqBS6sTeUNp79f8cC8n7nSYUJwTpshturBFoIFfcVQNoebdaao6gWpnxhUEnsc36AMl0DpIT0DsA9SxZQRjqhAEZmAWmASJMc5t/jWIjmJrqQxDy80HGJPEhIMTOAZfAiFqwyQwYTvJ0tOTW+jk2P9oriLHwi0Pr88uPGD5HWS6ULPoAutQAWMKCYgb5PoOiB8vbUZT9RTXfdLkHLkpw0ICaj5sam2o32CMLm8KZzfNVLJ/kUgdnkYUpC0vo+PGfguiJX8fvZxB06+niljW9iHteqVuoP1tADQwby4jS2ob3eL7TgCGuGk6gQkvHkLmOzlagKeXu1YZ0ow5vq6C+vSEfKEzIDrhXk="
 
 before_deploy:
   # Travis pages deploys skips artifacts from .gitignore. We need some of those, so
