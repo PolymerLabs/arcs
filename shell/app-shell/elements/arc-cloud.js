@@ -31,7 +31,7 @@ const template = Xen.html`
   <!-- handles, database syncing -->
   <persistent-handles arc="{{arc}}" key="{{key}}"></persistent-handles>
   <remote-profile-handles arc="{{arc}}" user="{{user}}" on-profile="_onProfile"></remote-profile-handles>
-  <remote-friends-shared-handles arc="{{arc}}" friends="{{friends}}" user="{{user}}"></remote-friends-shared-handles>
+  <remote-friends-shared-handles arc="{{arc}}" friends="{{friends}}" user="{{user}}" on-handle="_onHandle"></remote-friends-shared-handles>
   <!-- set of arcs visited by user, only used by launcher -->
   <remote-visited-arcs user="{{launcherUser}}" arcs="{{visitedArcs}}" on-arcs="_onData"></remote-visited-arcs>
 `;
@@ -59,6 +59,7 @@ class ArcCloud extends Xen.Base {
     this._consumeSteps(steps, metadata);
     this._fire('users', state.users);
     this._fire('friends', state.friends);
+    this._fire('avatars', state.avatars);
     this._fire('manifests', state.manifests);
     this._fire('exclusions', state.exclusions);
     this._fire('user', state.user);
@@ -123,6 +124,22 @@ class ArcCloud extends Xen.Base {
       //const data = handleData && (handleData.rawData || Object.values(handleData).map(e => e.rawData));
       const data = handleData && (handleData.rawData || handleData);
       ArcCloud.log(profile.id, data);
+      this._setIfDirty({[property]: data});
+    }
+  }
+  async _onHandle(e, handle) {
+    if (handle) {
+      let property;
+      switch (handle.id) {
+        case 'BOXED_avatar':
+          property = 'avatars';
+          break;
+        default:
+          return;
+      }
+      const handleData = await ArcsUtils.getHandleData(handle);
+      const data = handleData && handleData.map(d => d.rawData);
+      ArcCloud.log(handle.id, data);
       this._setIfDirty({[property]: data});
     }
   }

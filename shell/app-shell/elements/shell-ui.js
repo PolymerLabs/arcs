@@ -51,6 +51,7 @@ const Main = Xen.html`
   on-exclusions="_onData"
   on-user="_onData"
   on-friends="_onData"
+  on-avatars="_onData"
   on-key="_onData"
   on-metadata="_onData"
   on-step="_onData"
@@ -69,10 +70,12 @@ const Main = Xen.html`
   </app-dialog>
 
   <menu-panel
+    arc="{{arc}}"
     open="{{menuOpen}}"
     avatar_title="{{avatarTitle}}"
     avatar_style="{{avatarStyle}}"
     friends="{{friends}}"
+    avatars="{{avatars}}"
     on-close="_onMenuClose"
     on-user="_onSelectUser"
     on-cast="_onMenuCast"></menu-panel>
@@ -210,7 +213,7 @@ class ShellUi extends Xen.Base {
       selectedUser,
       configkey,
       user,
-      arcsToolsVisible: config.arcsToolsVisible
+      //toolsVisible: config.arcsToolsVisible
     });
   }
   _consumePlans(plans, search) {
@@ -232,6 +235,7 @@ class ShellUi extends Xen.Base {
     user,
     users,
     friends,
+    avatars,
     selectedUser,
     userPickerOpen,
     sharePickerOpen,
@@ -270,6 +274,7 @@ class ShellUi extends Xen.Base {
       user,
       hostConfig: user && config,
       friends,
+      avatars,
       manifests,
       exclusions,
       arc,
