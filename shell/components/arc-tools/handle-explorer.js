@@ -11,9 +11,15 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 import '../data-explorer.js';
 import Xen from '../xen/xen.js';
 
-const template = Xen.Template.createTemplate(
-  `<style>
-    handle-explorer > [banner] {
+// notes:
+// Xen memoizes template parsing when given a <template> instead of String
+// Xen.Template.html converts a String to a <template>
+// we assign to `html` so syntax-highlighters treat the literals as HTML
+const html = Xen.Template.html;
+
+const template = html`
+  <style>
+    [banner] {
       padding: 6px 4px;
       background-color: whitesmoke;
       margin-bottom: 8px;
@@ -25,17 +31,17 @@ const template = Xen.Template.createTemplate(
   <div style="padding: 8px;">{{arcHandles}}</div>
 
   <div banner>Context Handles</div>
-  <div style="padding: 8px;">{{contextHandles}}</div>`
-);
+  <div style="padding: 8px;">{{contextHandles}}</div>
+`;
 
-const handleTemplate = Xen.Template.createTemplate(
-  `<!--<div style="margin-bottom: 8px;">
+const handleTemplate = html`
+  <!--<div style="margin-bottom: 8px;">
     <span>{{name}}</span>
     <a href="{{href}}" target="_blank"><i class="material-icons" style="font-size: 0.8em; vertical-align: middle;">open_in_new</i></a>
   </div>-->
   <data-explorer style="font-size: 0.8em;" object="{{data}}"></data-explorer>
-  <br>`
-);
+  <br>
+`;
 
 class HandleExplorer extends Xen.Base {
   static get observedAttributes() { return ['arc']; }
