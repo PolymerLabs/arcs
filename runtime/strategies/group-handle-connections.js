@@ -111,4 +111,4 @@ export default class GroupHandleConnections extends Strategy {
       generate: null,
     };
   }
-};
+}

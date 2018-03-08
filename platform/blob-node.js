@@ -13,4 +13,4 @@ export default class Blob {
     this._values = values;
     this._options = options;
   }
-};
+}

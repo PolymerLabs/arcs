@@ -18,4 +18,4 @@ export default class DeviceInfo {
     // Convert bytes to gigabytes.
     return os.totalmem() / Math.pow(1024, 3);
   }
-};
+}

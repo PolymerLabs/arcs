@@ -154,7 +154,7 @@ class Arc {
         case 'firebase':
           handles += `view View${id++} of ${handle.type.toString()} '${handle.id}' @${handle._version} at '${handle.storageKey}'\n`;
           break;
-        case 'in-memory':
+        case 'in-memory': {
           resources += `resource View${id}Resource\n`;
           let indent = '  ';
           resources += indent + 'start\n';
@@ -177,6 +177,7 @@ class Arc {
           resources += '\n';
           handles += `view View${id} of ${handle.type.toString()} '${handle.id}' @${handle._version} in View${id++}Resource\n`;
           break;
+        }
       }
     }
 
@@ -286,7 +287,7 @@ ${this.activeRecipe.toString()}`;
       if (this._handleDescriptions.has(handle)) {
         arc._handleDescriptions.set(clone, this._handleDescriptions.get(handle));
       }
-    };
+    }
     this.particleHandleMaps.forEach((value, key) => {
       arc.particleHandleMaps.set(key, {
         spec: value.spec,

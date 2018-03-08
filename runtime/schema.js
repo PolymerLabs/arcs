@@ -198,7 +198,6 @@ class Schema {
           throw new TypeError(
               `Type mismatch ${op}ting field ${name} (union [${fieldType.types}]); ` +
               `value '${value}' is type ${typeof(value)}`);
-          break;
 
         case 'schema-tuple':
           // Value must be an array whose contents match each of the tuple types.

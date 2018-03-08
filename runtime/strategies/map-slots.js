@@ -24,11 +24,11 @@ export default class MapSlots extends Strategy {
         let selectedSlot;
         let internalSlots = [];
         if (slotConnection.targetSlot) {
-          if (!!slotConnection.targetSlot.sourceConnection) {
+          if (slotConnection.targetSlot.sourceConnection) {
             // Target slot assigned within the current recipe.
             return;
           }
-          if (!!slotConnection.targetSlot.id) {
+          if (slotConnection.targetSlot.id) {
             // Target slot assigned from preexisting slots in the arc.
             return;
           }

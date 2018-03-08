@@ -252,10 +252,11 @@ ${styles}
               length: 60
             }
           ];
+          break;
         case 1:
         case 3:
         case 5:
-          return [
+          calendar = [
             {
               name: 'Drop off dry cleaning',
               time: '08:00',
@@ -272,8 +273,9 @@ ${styles}
               length: 120
             }
           ];
+          break;
         default:
-          return [
+          calendar = [
             {
               name: 'Running club',
               time: '07:00',
@@ -290,6 +292,7 @@ ${styles}
               length: 60
             }
           ];
+          break;
       }
 
       calendar.forEach(event => event.style = this._getStyleForTimeBlock(event.time, event.length));
@@ -324,9 +327,10 @@ ${styles}
           return `at ${timeString}`;
         case 1:
           return `tomorrow, at ${timeString}`;
-        default:
+        default: {
           const day = t.toString().slice(0, now.getFullYear() === t.getFullYear() ? 10 : 15);
           return `at ${timeString} on ${day}`;
+        }
       }
     }
     _convertStartTimeToMinutes(startTime) {

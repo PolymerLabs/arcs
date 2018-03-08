@@ -63,7 +63,7 @@ export default class SearchTokensToParticles extends Strategy {
           };
         });
       }
-    };
+    }
     this._walker = new Walker(RecipeWalker.Permuted);
   }
 
@@ -88,4 +88,4 @@ export default class SearchTokensToParticles extends Strategy {
       generate: null,
     };
   }
-};
+}

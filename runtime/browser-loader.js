@@ -34,4 +34,4 @@ export default class BrowserLoader extends Loader {
     delete self.defineParticle;
     return this.unwrapParticle(result[0]);
   }
-};
+}

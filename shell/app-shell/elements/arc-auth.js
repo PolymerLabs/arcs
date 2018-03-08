@@ -33,20 +33,17 @@ class ArcAuth extends Xen.Base {
         this._credential(user);
       } else {
         let provider = new firebase.auth.GoogleAuthProvider();
-        if (false) {
-          firebase.auth().signInWithPopup(provider).then(this._credential.bind(this));
-        } else {
-          firebase.auth().signInWithRedirect(provider);
-          /*
-          firebase.auth().getRedirectResult().then(result => {
-            if (result.user === null) {
-              firebase.auth().signInWithRedirect(provider);
-            } else {
-              this._credential(result);
-            }
-          });
-          */
-        }
+        // firebase.auth().signInWithPopup(provider).then(this._credential.bind(this));
+        firebase.auth().signInWithRedirect(provider);
+        /*
+        firebase.auth().getRedirectResult().then(result => {
+          if (result.user === null) {
+            firebase.auth().signInWithRedirect(provider);
+          } else {
+            this._credential(result);
+          }
+        });
+        */
       }
     });
   }

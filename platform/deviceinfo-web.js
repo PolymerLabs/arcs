@@ -15,4 +15,4 @@ export default class DeviceInfo {
   static deviceMemory() {
     return navigator.deviceMemory;
   }
-};
+}

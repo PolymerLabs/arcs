@@ -1,13 +1,15 @@
 module.exports = {
-  "extends": "google",
+  extends: [
+    "eslint:recommended",
+    "google",
+  ],
   "parserOptions": {
     "ecmaVersion": 2017,
     "sourceType": "module",
   },
   "rules": {
-    "no-undef": "error",
-
     // Things we do, but probably shouldn't.
+    "no-console": "off",
     "no-throw-literal": "off",
     "one-var": "off",
     "brace-style": "off",
@@ -15,6 +17,7 @@ module.exports = {
     "no-unused-vars": "off",
     "new-cap": "off",
     "arrow-parens": "off", // puts parens around single arg arrow functions
+    "no-useless-escape": "off", // eg. [\.] in a regex, there are just too many to fix by hand atm.
 
     // Things we don't care about.
     "require-jsdoc": "off",
@@ -66,7 +69,5 @@ module.exports = {
     db: false,
     FakeDatabase: false,
     PersistentArc: false,
-
-
   },
 };

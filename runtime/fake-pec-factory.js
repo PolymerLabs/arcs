@@ -18,4 +18,4 @@ export default function(id) {
   let channel = new MessageChannel();
   new InnerPec(channel.port1, `${id}:inner`, new Loader());
   return channel.port2;
-};
+}

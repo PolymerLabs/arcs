@@ -32,4 +32,4 @@ export default class Bytes {
     return `Bytes{blob=${this._blob}}`;
   }
   // TODO(wkorman): Perhaps rangeUrl, type (mimetype), size.
-};
+}

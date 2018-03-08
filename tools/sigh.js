@@ -387,8 +387,8 @@ async function run(funsAndArgs) {
     console.error(e);
   } finally {
     console.log(result ? `🎉  ${rot13('Nqinapr Nhfgenyvn!')} 🇳🇿` : '😱');
-    return result;
   }
+  return result;
 }
 
 (async () => {

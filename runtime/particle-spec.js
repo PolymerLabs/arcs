@@ -205,10 +205,10 @@ class ParticleSpec {
       });
     });
     // Description
-    if (!!this.pattern) {
+    if (this.pattern) {
       results.push(`  description \`${this.pattern}\``);
       this.connections.forEach(cs => {
-        if (!!cs.pattern) {
+        if (cs.pattern) {
           results.push(`    ${cs.name} \`${cs.pattern}\``);
         }
       });

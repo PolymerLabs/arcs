@@ -52,4 +52,4 @@ export default class CombinedStrategy extends Strategy {
 
     return {results, generate: null};
   }
-};
+}
