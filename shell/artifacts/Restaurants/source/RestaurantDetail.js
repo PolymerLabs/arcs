@@ -200,9 +200,9 @@ ${styles}
       };
       let detail;
       if (state.detail) {
-        var url =
+        let url =
             state.detail.website &&
-            state.detail.website.replace(/^(?:https?:\/\/)?(?:www\.)?/i, "").split('/')[0];
+            state.detail.website.replace(/^(?:https?:\/\/)?(?:www\.)?/i, '').split('/')[0];
         detail = {
           rating: state.detail.rating,
           starStyle: `width: ${Math.round( (state.detail.rating || 0) / 5 * 100)}%`,
