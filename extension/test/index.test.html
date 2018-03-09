@@ -10,19 +10,19 @@ http://polymer.github.io/PATENTS.txt
 <head>
   <meta charset="utf-8">
   <title>Arcs Extension Mocha Tests</title>
-  <link href="./node_modules/mocha/mocha.css" rel="stylesheet" />
+  <link href="../../node_modules/mocha/mocha.css" rel="stylesheet" />
 </head>
 <div id="mocha"></div>
 <div id="target"></div>
-<script src="./node_modules/chai/chai.js"></script>
-<script src="./node_modules/mocha/mocha.js"></script>
+<script src="../../node_modules/chai/chai.js"></script>
+<script src="../../node_modules/mocha/mocha.js"></script>
 <script>mocha.setup('bdd')</script>
 
-<script src="page-extractor.js"></script>
-<script src="test/page-extractor-webtest.js"></script>
+<script src="../page-extractor.js"></script>
+<script src="page-extractor-webtest.js"></script>
 
-<script src="event-page-data.js"></script>
-<script src="test/event-page-data-webtest.js"></script>
+<script src="../event-page-data.js"></script>
+<script src="event-page-data-webtest.js"></script>
 <script>
   mocha.checkLeaks();
   mocha.run();
