@@ -20,10 +20,10 @@ export default class NameUnnamedConnections extends Strategy {
           return; // the particle doesn't have spec yet.
 
         let possibleSpecConns = handleConnection.particle.spec.connections.filter(specConn => {
-          // filter specs with matching types that don't have views bound to the corresponding view connection.
+          // filter specs with matching types that don't have handles bound to the corresponding handle connection.
           return !specConn.isOptional &&
-                 handleConnection.view.type.equals(specConn.type) &&
-                 !handleConnection.particle.getConnectionByName(specConn.name).view;
+                 handleConnection.handle.type.equals(specConn.type) &&
+                 !handleConnection.particle.getConnectionByName(specConn.name).handle;
         });
 
         return possibleSpecConns.map(specConn => {

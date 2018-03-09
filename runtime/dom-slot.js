@@ -19,7 +19,7 @@ class DomSlot extends Slot {
   constructor(consumeConn, arc, containerKind) {
     super(consumeConn, arc);
     this._templateName = [this.consumeConn.particle.name, this.consumeConn.name].concat(
-        Object.values(this.consumeConn.particle.connections).filter(conn => conn.type.isInterface).map(conn => conn.view.id)).join('::');
+        Object.values(this.consumeConn.particle.connections).filter(conn => conn.type.isInterface).map(conn => conn.handle.id)).join('::');
     this._model = null;
     this._observer = this._initMutationObserver();
     this._containerKind = containerKind;
@@ -96,7 +96,7 @@ class DomSlot extends Slot {
     this.eventHandler = handler;
     if (Object.keys(content).indexOf('model') >= 0) {
       if (content.model) {
-        this._model = Object.assign(content.model, await this.populateViewDescriptions());
+        this._model = Object.assign(content.model, await this.populateHandleDescriptions());
       } else {
         this._model = undefined;
       }

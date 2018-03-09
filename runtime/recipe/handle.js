@@ -31,7 +31,7 @@ class Handle {
   _copyInto(recipe) {
     let handle = undefined;
     if (this._id !== null && ['map', 'use', 'copy'].includes(this.fate))
-      handle = recipe.findView(this._id);
+      handle = recipe.findHandle(this._id);
 
     if (handle == undefined) {
       handle = recipe.newHandle();

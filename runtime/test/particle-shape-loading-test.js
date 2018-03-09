@@ -113,17 +113,17 @@ describe('particle-shape-loading', function() {
     particle.spec = outerParticleSpec;
 
     let recipeShapeView = recipe.newHandle();
-    particle.connections['particle'].connectToView(recipeShapeView);
+    particle.connections['particle'].connectToHandle(recipeShapeView);
     recipeShapeView.fate = 'use';
     recipeShapeView.mapToView(shapeView);
 
     let recipeOutView = recipe.newHandle();
-    particle.connections['output'].connectToView(recipeOutView);
+    particle.connections['output'].connectToHandle(recipeOutView);
     recipeOutView.fate = 'use';
     recipeOutView.mapToView(outView);
 
     let recipeInView = recipe.newHandle();
-    particle.connections['input'].connectToView(recipeInView);
+    particle.connections['input'].connectToHandle(recipeInView);
     recipeInView.fate = 'use';
     recipeInView.mapToView(inView);
 

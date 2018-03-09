@@ -901,13 +901,13 @@ recipe
       let recipe = results[0].result;
       assert.equal(4, recipe.handles.length);
       // Verify all connections are bound to handles.
-      assert.isUndefined(recipe.handleConnections.find(hc => !hc.view));
+      assert.isUndefined(recipe.handleConnections.find(hc => !hc.handle));
       // Verify all handles have non-empty connections list.
       assert.isUndefined(recipe.handles.find(v => v.connections.length == 0));
     });
   });
   describe('CombinedStrategy', function() {
-    it('combined strategy with search tokens and group view connections', async () => {
+    it('combined strategy with search tokens and group handle connections', async () => {
       let manifest = (await Manifest.parse(`
         schema Energy
         schema Height

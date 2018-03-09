@@ -70,11 +70,11 @@ class Slot {
     }
   }
 
-  async populateViewDescriptions() {
+  async populateHandleDescriptions() {
     let descriptions = {};
-    await Promise.all(Object.values(this.consumeConn.particle.connections).map(async viewConn => {
-      if (viewConn.view) {
-        descriptions[`${viewConn.name}.description`] = (await this._arc.description.getHandleDescription(viewConn.view)).toString();
+    await Promise.all(Object.values(this.consumeConn.particle.connections).map(async handleConn => {
+      if (handleConn.handle) {
+        descriptions[`${handleConn.name}.description`] = (await this._arc.description.getHandleDescription(handleConn.handle)).toString();
       }
     }));
     return descriptions;

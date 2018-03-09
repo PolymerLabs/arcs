@@ -92,9 +92,9 @@ recipe
     recipe.normalize();
     assert.isTrue(recipe.isResolved());
     let ifooHandleConn = recipe.handleConnections.find(hc => hc.particle.name == 'A' && hc.name == 'ifoo');
-    let ifooView = ifooHandleConn ? ifooHandleConn.view : null;
+    let ifooView = ifooHandleConn ? ifooHandleConn.handle : null;
     let ofoosHandleConn = recipe.handleConnections.find(hc => hc.particle.name == 'A' && hc.name == 'ofoos');
-    let ofoosView = ofoosHandleConn ? ofoosHandleConn.view : null;
+    let ofoosView = ofoosHandleConn ? ofoosHandleConn.handle : null;
     arc._activeRecipe = recipe;
     return {arc, recipe, ifooView, ofoosView, fooView, foosView};
   }
@@ -267,7 +267,7 @@ ${recipeManifest}
 
       await test.verifySuggestion('Read from best-new-foo and populate my-foos.', description);
       assert.equal('best-new-foo', await description.getHandleDescription(ifooView));
-      let oBFooView = recipe.handleConnections.find(hc => hc.particle.name == 'B' && hc.name == 'ofoo').view;
+      let oBFooView = recipe.handleConnections.find(hc => hc.particle.name == 'B' && hc.name == 'ofoo').handle;
       assert.equal('best-new-foo', await description.getHandleDescription(oBFooView));
       assert.equal('my-foos', await description.getHandleDescription(ofoosView));
 
@@ -318,7 +318,7 @@ recipe
     consume root as slot0
       provide action as slot1
     `));
-      let aFooView = recipe.handleConnections.find(hc => hc.particle.name == 'A' && hc.name == 'ifoo').view;
+      let aFooView = recipe.handleConnections.find(hc => hc.particle.name == 'A' && hc.name == 'ifoo').handle;
 
       let description = new Description(arc);
 
@@ -469,7 +469,7 @@ recipe
       let description = new Description(arc);
 
       await test.verifySuggestion('Create &lt;new> &lt;&lt;my-foo>>.', description);
-      let view = recipe.handleConnections.find(hc => hc.particle.name == 'A' && hc.name == 'ofoo').view;
+      let view = recipe.handleConnections.find(hc => hc.particle.name == 'A' && hc.name == 'ofoo').handle;
       assert.equal('&lt;my-foo>', await description.getHandleDescription(view, arc));
     });
   });
@@ -507,8 +507,8 @@ recipe
         let description = new Description(arc);
 
         await test.verifySuggestion('Make my best type list from my best type.', description);
-        let tRecipeView = recipe.handleConnections.find(hc => hc.particle.name == 'P' && hc.name == 't').view;
-        let tsRecipeView = recipe.handleConnections.find(hc => hc.particle.name == 'P' && hc.name == 'ts').view;
+        let tRecipeView = recipe.handleConnections.find(hc => hc.particle.name == 'P' && hc.name == 't').handle;
+        let tsRecipeView = recipe.handleConnections.find(hc => hc.particle.name == 'P' && hc.name == 'ts').handle;
         assert.equal('my best type', await description.getHandleDescription(tRecipeView));
         assert.equal('my best type list', await description.getHandleDescription(tsRecipeView));
 

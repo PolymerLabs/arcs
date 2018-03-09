@@ -95,7 +95,7 @@ export default class MapSlots extends Strategy {
         }
 
         // Match handles of the provided slot with the slot-connection particle's handles.
-        if (!this._handlesMatch(slotConnection.particle, slot.handleConnections.map(connection => connection.view))) {
+        if (!this._handlesMatch(slotConnection.particle, slot.handleConnections.map(connection => connection.handle))) {
           return false;
         }
 
@@ -116,8 +116,8 @@ export default class MapSlots extends Strategy {
           return true; // slot is not limited to specific handles
         }
         return Object.values(consumingParticle.connections).find(handleConn => {
-          return providingSlotHandles.includes(handleConn.view) ||
-                 (handleConn.view && handleConn.view.id && providingSlotHandles.map(sh => sh.id).includes(handleConn.view.id));
+          return providingSlotHandles.includes(handleConn.handle) ||
+                 (handleConn.handle && handleConn.handle.id && providingSlotHandles.map(sh => sh.id).includes(handleConn.handle.id));
         });
       }
 

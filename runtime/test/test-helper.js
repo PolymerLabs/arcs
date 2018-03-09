@@ -158,7 +158,7 @@ export default class TestHelper {
     let particle = this.arc.activeRecipe.particles.find(p => p.name == particleName);
     assert(particle, `Particle ${particle} doesn't exist in active recipe`);
     assert(particle.connections[connectionName], `Connection ${connectionName} doesn't existing in particle ${particleName}`);
-    let handleId = particle.connections[connectionName].view.id;
+    let handleId = particle.connections[connectionName].handle.id;
     assert(handleId, `No handle ID for ${particleName}::${connectionName}`);
     let handle = this.arc.findHandleById(handleId);
     assert(handle, `Handle '${handleId}' (${particleName}::${connectionName}) not found in active recipe`);

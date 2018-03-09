@@ -10,7 +10,7 @@
 
 import assert from '../platform/assert-web.js';
 
-// ShapeView {name, direction, type}
+// ShapeHandle {name, direction, type}
 // Slot {name, direction, isRequired, isSet}
 
 function _fromLiteral(member) {
@@ -29,18 +29,18 @@ const handleFields = ['type', 'name', 'direction'];
 const slotFields = ['name', 'direction', 'isRequired', 'isSet'];
 
 class Shape {
-  constructor(name, views, slots) {
+  constructor(name, handles, slots) {
     assert(name);
-    assert(views !== undefined);
+    assert(handles !== undefined);
     assert(slots !== undefined);
     this.name = name;
-    this.views = views;
+    this.handles = handles;
     this.slots = slots;
     this._typeVars = [];
-    for (let view of views)
+    for (let handle of handles)
       for (let field of handleFields)
-        if (Shape.isTypeVar(view[field]))
-          this._typeVars.push({object: view, field});
+        if (Shape.isTypeVar(handle[field]))
+          this._typeVars.push({object: handle, field});
 
     for (let slot of slots)
       for (let field of slotFields)
@@ -62,7 +62,7 @@ class Shape {
   }
 
   _handlesToManifestString() {
-    return this.views
+    return this.handles
       .map(handle => {
         let type = handle.type.resolvedType();
         return `${handle.direction ? handle.direction + ' ': ''}${type.toString()}${handle.name ? ' ' + handle.name : ''}`;
@@ -85,21 +85,21 @@ ${this._slotsToManifestString()}
   }
 
   static fromLiteral(data) {
-    let views = data.views.map(view => ({type: _fromLiteral(view.type), name: _fromLiteral(view.name), direction: _fromLiteral(view.direction)}));
+    let handles = data.handles.map(handle => ({type: _fromLiteral(handle.type), name: _fromLiteral(handle.name), direction: _fromLiteral(handle.direction)}));
     let slots = data.slots.map(slot => ({name: _fromLiteral(slot.name), direction: _fromLiteral(slot.direction), isRequired: _fromLiteral(slot.isRequired), isSet: _fromLiteral(slot.isSet)}));
-    return new Shape(data.name, views, slots);
+    return new Shape(data.name, handles, slots);
   }
 
   toLiteral() {
-    let views = this.views.map(view => ({type: _toLiteral(view.type), name: _toLiteral(view.name), direction: _toLiteral(view.direction)}));
+    let handles = this.handles.map(handle => ({type: _toLiteral(handle.type), name: _toLiteral(handle.name), direction: _toLiteral(handle.direction)}));
     let slots = this.slots.map(slot => ({name: _toLiteral(slot.name), direction: _toLiteral(slot.direction), isRequired: _toLiteral(slot.isRequired), isSet: _toLiteral(slot.isSet)}));
-    return {name: this.name, views, slots};
+    return {name: this.name, handles, slots};
   }
 
   clone() {
-    let views = this.views.map(({name, direction, type}) => ({name, direction, type}));
+    let handles = this.handles.map(({name, direction, type}) => ({name, direction, type}));
     let slots = this.slots.map(({name, direction, isRequired, isSet}) => ({name, direction, isRequired, isSet}));
-    return new Shape(this.name, views, slots);
+    return new Shape(this.name, handles, slots);
   }
 
   resolvedType() {
@@ -110,11 +110,11 @@ ${this._slotsToManifestString()}
   }
 
   equals(other) {
-    if (this.views.length !== other.views.length)
+    if (this.handles.length !== other.handles.length)
       return false;
 
     // TODO: this isn't quite right as it doesn't deal with duplicates properly
-    if (!this._equalItems(other.views, this.views, this._equalView)) {
+    if (!this._equalItems(other.handles, this.handles, this._equalHandle)) {
       return false;
     }
 
@@ -124,8 +124,8 @@ ${this._slotsToManifestString()}
     return true;
   }
 
-  _equalView(view, otherView) {
-    return view.name == otherView.name && view.direction == otherView.direction && view.type.equals(otherView.type);
+  _equalHandle(handle, otherHandle) {
+    return handle.name == otherHandle.name && handle.direction == otherHandle.direction && handle.type.equals(otherHandle.type);
   }
 
   _equalSlot(slot, otherSlot) {
@@ -156,17 +156,17 @@ ${this._slotsToManifestString()}
     return !(reference == undefined || Shape.isTypeVar(reference));
   }
 
-  static viewsMatch(shapeView, particleView) {
-    if (Shape.mustMatch(shapeView.name) && shapeView.name !== particleView.name)
+  static handlesMatch(shapeHandle, particleHandle) {
+    if (Shape.mustMatch(shapeHandle.name) && shapeHandle.name !== particleHandle.name)
       return false;
     // TODO: direction subsetting?
-    if (Shape.mustMatch(shapeView.direction) && shapeView.direction !== particleView.direction)
+    if (Shape.mustMatch(shapeHandle.direction) && shapeHandle.direction !== particleHandle.direction)
       return false;
-    if (shapeView.type == undefined)
+    if (shapeHandle.type == undefined)
       return true;
-    if (shapeView.type.isVariableReference)
+    if (shapeHandle.type.isVariableReference)
       return false;
-    let [left, right] = Type.unwrapPair(shapeView.type, particleView.type);
+    let [left, right] = Type.unwrapPair(shapeHandle.type, particleHandle.type);
     if (left.isVariable) {
       return [{var: left, value: right}];
     } else {
@@ -198,8 +198,8 @@ ${this._slotsToManifestString()}
 
   _restrictThis(particleSpec) {
 
-    let viewMatches = this.views.map(
-      view => particleSpec.connections.map(connection => ({match: connection, result: Shape.viewsMatch(view, connection)}))
+    let handleMatches = this.handles.map(
+      handle => particleSpec.connections.map(connection => ({match: connection, result: Shape.handlesMatch(handle, connection)}))
                                       .filter(a => a.result !== false));
 
     let particleSlots = [];
@@ -233,13 +233,13 @@ ${this._slotsToManifestString()}
       return false;
     }
     
-    let viewOptions = choose(viewMatches, []);
+    let handleOptions = choose(handleMatches, []);
     let slotOptions = choose(slotMatches, []);
 
-    if (viewOptions === false || slotOptions === false)
+    if (handleOptions === false || slotOptions === false)
       return false;
 
-    for (let constraint of viewOptions)
+    for (let constraint of handleOptions)
       if (!constraint.var.variable.resolution)
         constraint.var.variable.resolution = constraint.value;
 

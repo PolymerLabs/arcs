@@ -71,8 +71,8 @@ export default class ConvertConstraintsToConnections extends Strategy {
                   recipeView.fate = 'create';
                   recipeMap[view] = recipeView;
                 }
-                if (recipeHandleConnection.view == null)
-                  recipeHandleConnection.connectToView(recipeView);
+                if (recipeHandleConnection.handle == null)
+                  recipeHandleConnection.connectToHandle(recipeView);
               }
             }
             recipe.clearConnectionConstraints();

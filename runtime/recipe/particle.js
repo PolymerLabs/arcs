@@ -187,7 +187,7 @@ class Particle {
   }
 
   nameConnection(connection, name) {
-    assert(!this._connections[name].view, `Connection "${name}" already has a view`);
+    assert(!this._connections[name].handle, `Connection "${name}" already has a handle`);
 
     let idx = this._unnamedConnections.indexOf(connection);
     assert(idx >= 0, `Cannot name '${name}' nonexistent unnamed connection.`);
