@@ -33,11 +33,8 @@ defineParticle(({DomParticle}) => {
     get template() {
       return template;
     }
-    _shouldRender(props, state) {
-      return Boolean(props.person);
-    }
-    _render(props, state) {
-      let {person} = props;
+    _shouldRender({person}) { return Boolean(person); }
+    _render({person}) {
       let name = (person && person.name) || 'n/a';
       let occasion = (person && person.occasion) || 'n/a';
       let inOneWeek =
@@ -48,10 +45,7 @@ defineParticle(({DomParticle}) => {
         occasion,
         occasionDate: inOneWeek,
         date: inOneWeek
-        //people: [{value: name}],
-        //occasions: [{value: 'Birthday'}]
       };
     }
   };
-
 });

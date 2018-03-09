@@ -16,6 +16,14 @@ import {DomContext} from './dom-context.js';
 import DescriptionDomFormatter from './description-dom-formatter.js';
 
 class SlotComposer {
+  /**
+   * |options| must contain:
+   * - affordance: the UI affordance the slots composer render to (for example: dom).
+   * - rootContext: the context containing top level context to be used for slots.
+   * and may contain:
+   * - containerKind: the type of container wrapping each slot's context (for example, div).
+   * - suggestionsContext: the context for rendering suggestions.
+   */
   constructor(options) {
     assert(options.affordance, 'Affordance is mandatory');
     assert(options.rootContext, 'Root context is mandatory');
