@@ -105,7 +105,7 @@ ManifestStorage
   {
     items = optional(items, extractIndented, []);
     return {
-      kind: 'view',
+      kind: 'store',
       location: location(),
       name,
       type,
@@ -635,7 +635,7 @@ RecipeHandle
   = type:('?' / 'use' / 'map' / 'create' / 'copy') ref:(whiteSpace HandleOrSlotRef)? name:(whiteSpace Name)? eolWhiteSpace
   {
     return {
-      kind: 'view',
+      kind: 'handle',
       location: location(),
       name: optional(name, name => name[1], null),
       ref: optional(ref, ref => ref[1], null),
@@ -688,7 +688,7 @@ HandleOrSlotRef
   = id:id tags:SpaceTagList?
   {
     return {
-      kind: 'view-ref',
+      kind: 'handle-ref',
       location: location(),
       id,
       tags: tags || [],
@@ -697,7 +697,7 @@ HandleOrSlotRef
   / name:upperIdent tags:SpaceTagList?
   {
     return {
-      kind: 'view-ref',
+      kind: 'handle-ref',
       location: location(),
       name,
       tags: tags || [],
@@ -706,7 +706,7 @@ HandleOrSlotRef
   / tags:TagList
   {
     return {
-      kind: 'view-ref',
+      kind: 'handle-ref',
       location: location(),
       tags,
     };

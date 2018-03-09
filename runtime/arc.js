@@ -220,7 +220,7 @@ ${this.activeRecipe.toString()}`;
       context: manifest
     });
     // TODO: pass tags through too
-    manifest.views.forEach(view => arc._registerHandle(view, []));
+    manifest.handles.forEach(handle => arc._registerHandle(handle, []));
     let recipe = manifest.activeRecipe.clone();
     let options = {errors: new Map()};
     assert(recipe.normalize(options), `Couldn't normalize recipe ${recipe.toString()}:\n${[...options.errors.values()].join('\n')}`);
@@ -245,12 +245,12 @@ ${this.activeRecipe.toString()}`;
     this.particleHandleMaps.set(id, handleMap);
 
     for (let [name, connection] of Object.entries(recipeParticle.connections)) {
-      if (!connection.view) {
+      if (!connection.handle) {
         assert(connection.isOptional);
         continue;
       }
-      let handle = this.findHandleById(connection.view.id);
-      assert(handle, `can't find handle of id ${connection.view.id}`);
+      let handle = this.findHandleById(connection.handle.id);
+      assert(handle, `can't find handle of id ${connection.handle.id}`);
       this._connectParticleToHandle(id, recipeParticle, name, handle);
     }
 

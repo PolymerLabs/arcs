@@ -14,15 +14,15 @@ export default class CreateDescriptionHandle extends Strategy {
   async generate(strategizer) {
     let results = Recipe.over(this.getResults(strategizer), new class extends RecipeWalker {
       onHandleConnection(recipe, handleConnection) {
-        if (handleConnection.view)
+        if (handleConnection.handle)
           return;
         if (handleConnection.name != 'descriptions')
           return;
 
         return (recipe, handleConnection) => {
-          let view = recipe.newHandle();
-          view.fate = 'create';
-          handleConnection.connectToView(view);
+          let handle = recipe.newHandle();
+          handle.fate = 'create';
+          handleConnection.connectToHandle(handle);
           return 1;
         };
       }

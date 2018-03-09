@@ -38,12 +38,12 @@ export default class Description {
     return this._arc.activeRecipe.name;
   }
 
-  async getHandleDescription(recipeView) {
-    assert(recipeView.connections.length > 0, 'view has no connections?');
+  async getHandleDescription(recipeHandle) {
+    assert(recipeHandle.connections.length > 0, 'handle has no connections?');
 
     let formatter = new DescriptionFormatter(this);
     formatter.excludeValues = true;
-    return await formatter.getHandleDescription(recipeView);
+    return await formatter.getHandleDescription(recipeHandle);
   }
 }
 
@@ -53,7 +53,7 @@ export class DescriptionFormatter {
     this._arc = description._arc;
     this._particleDescriptions = [];
 
-    this.seenViews = new Set();
+    this.seenHandles = new Set();
     this.seenParticles = new Set();
     this.excludeValues = false;
   }
@@ -80,12 +80,12 @@ export class DescriptionFormatter {
     return !!desc.pattern;
   }
 
-  async getHandleDescription(recipeView) {
+  async getHandleDescription(recipeHandle) {
     await this._updateDescriptionHandles(this._description);
 
-    let handleConnection = this._selectHandleConnection(recipeView) || recipeView.connections[0];
-    let view = this._arc.findHandleById(recipeView.id);
-    return this._formatDescription(handleConnection, view);
+    let handleConnection = this._selectHandleConnection(recipeHandle) || recipeHandle.connections[0];
+    let handle = this._arc.findHandleById(recipeHandle.id);
+    return this._formatDescription(handleConnection, handle);
   }
 
   async _updateDescriptionHandles(description) {
@@ -123,12 +123,12 @@ export class DescriptionFormatter {
 
     let descByName = await this._getPatternByNameFromDescriptionHandle(particle) || {};
     pDesc = Object.assign(pDesc, this._populateParticleDescription(particle, descByName));
-    Object.values(particle.connections).forEach(viewConn => {
-      let specConn = particle.spec.connectionMap.get(viewConn.name);
-      let pattern = descByName[viewConn.name] || specConn.pattern;
+    Object.values(particle.connections).forEach(handleConn => {
+      let specConn = particle.spec.connectionMap.get(handleConn.name);
+      let pattern = descByName[handleConn.name] || specConn.pattern;
       if (pattern) {
-        let viewDescription = {pattern: pattern, _viewConn: viewConn, _view: this._arc.findHandleById(viewConn.view.id)};
-        pDesc._connections[viewConn.name] = viewDescription;
+        let handleDescription = {pattern: pattern, _handleConn: handleConn, _handle: this._arc.findHandleById(handleConn.handle.id)};
+        pDesc._connections[handleConn.name] = handleDescription;
       }
     });
     return pDesc;
@@ -136,10 +136,10 @@ export class DescriptionFormatter {
 
   async _getPatternByNameFromDescriptionHandle(particle) {
     let descriptionConn = particle.connections['descriptions'];
-    if (descriptionConn && descriptionConn.view && descriptionConn.view.id) {
-      let descView = this._arc.findHandleById(descriptionConn.view.id);
-      if (descView) {
-        let descList = await descView.toList();
+    if (descriptionConn && descriptionConn.handle && descriptionConn.handle.id) {
+      let descHandle = this._arc.findHandleById(descriptionConn.handle.id);
+      if (descHandle) {
+        let descList = await descHandle.toList();
         let descByName = {};
         descList.forEach(d => descByName[d.rawData.key] = d.rawData.value);
         return descByName;
@@ -222,16 +222,16 @@ export class DescriptionFormatter {
     let handleNames = valueTokens[1].split('.');
     let extra = valueTokens.length == 3 ? valueTokens[2] : undefined;
     let valueToken;
-    let viewConn = particle.connections[handleNames[0]];
-    if (viewConn) { // view connection
-      assert(viewConn.view && viewConn.view.id, 'Missing id???');
+    let handleConn = particle.connections[handleNames[0]];
+    if (handleConn) { // handle connection
+      assert(handleConn.handle && handleConn.handle.id, 'Missing id???');
       return {
         fullName: valueTokens[0],
-        viewName: viewConn.name,
+        handleName: handleConn.name,
         properties: handleNames.splice(1),
         extra,
-        _viewConn: viewConn,
-        _view: this._arc.findHandleById(viewConn.view.id)};
+        _handleConn: handleConn,
+        _handle: this._arc.findHandleById(handleConn.handle.id)};
     }
 
     // slot connection
@@ -245,59 +245,59 @@ export class DescriptionFormatter {
     if (token.text) {
       return token.text;
     }
-    if (token.viewName) {
-      return this._viewTokenToString(token);
+    if (token.handleName) {
+      return this._handleTokenToString(token);
     } else if (token.consumeSlotName && token.provideSlotName) {
       return this._slotTokenToString(token);
     }
-    assert(false, 'no view or slot name');
+    assert(false, 'no handle or slot name');
   }
 
-  async _viewTokenToString(token) {
+  async _handleTokenToString(token) {
     switch (token.extra) {
       case '_type_':
-        return token._viewConn.type.toPrettyString().toLowerCase();
+        return token._handleConn.type.toPrettyString().toLowerCase();
       case '_values_':
-        return this._formatViewValue(token.viewName, token._view);
+        return this._formatHandleValue(token.handleName, token._handle);
       case '_name_':
-        return this._formatDescription(token._viewConn, token._view);
+        return this._formatDescription(token._handleConn, token._handle);
       default:
         assert(!token.extra, `Unrecognized extra ${token.extra}`);
 
         // Transformation's hosted particle.
-        if (token._viewConn.type.isInterface) {
-          let particleSpec = ParticleSpec.fromLiteral(await token._view.get());
+        if (token._handleConn.type.isInterface) {
+          let particleSpec = ParticleSpec.fromLiteral(await token._handle.get());
           // TODO: call this.patternToSuggestion(...) to resolved expressions in the pattern template.
           return particleSpec.pattern;
         }
 
-        // singleton view property.
+        // singleton handle property.
         if (token.properties && token.properties.length > 0) {
-          return this._propertyTokenToString(token.viewName, token._view, token.properties);
+          return this._propertyTokenToString(token.handleName, token._handle, token.properties);
         }
 
-        // full view description
-        let description = (await this._formatDescriptionPattern(token._viewConn)) ||
-                          this._formatViewDescription(token._viewConn, token._view);
-        let viewValue = await this._formatViewValue(token.viewName, token._view);
+        // full handle description
+        let description = (await this._formatDescriptionPattern(token._handleConn)) ||
+                          this._formatHandleDescription(token._handleConn, token._handle);
+        let handleValue = await this._formatHandleValue(token.handleName, token._handle);
         if (!description) {
-          // For singleton view, if there is no real description (the type was used), use the plain value for description.
-          if (viewValue && !token._view.type.isSetView && !this.excludeValues) {
-            return viewValue;
+          // For singleton handle, if there is no real description (the type was used), use the plain value for description.
+          if (handleValue && !token._handle.type.isSetView && !this.excludeValues) {
+            return handleValue;
           }
         }
 
-        description = description || this._formatViewType(token._viewConn);
-        if (viewValue && !this.excludeValues && !this.seenViews.has(token._view.id)) {
-          this.seenViews.add(token._view.id);
-          return this._combineDescriptionAndValue(token, description, viewValue);
+        description = description || this._formatHandleType(token._handleConn);
+        if (handleValue && !this.excludeValues && !this.seenHandles.has(token._handle.id)) {
+          this.seenHandles.add(token._handle.id);
+          return this._combineDescriptionAndValue(token, description, handleValue);
         }
         return description;
     }
   }
 
-  _combineDescriptionAndValue(token, description, viewValue) {
-    return `${description} (${viewValue})`;
+  _combineDescriptionAndValue(token, description, handleValue) {
+    return `${description} (${handleValue})`;
   }
 
   async _slotTokenToString(token) {
@@ -319,65 +319,65 @@ export class DescriptionFormatter {
     return this._joinDescriptions(results);
   }
 
-  async _propertyTokenToString(viewName, view, properties) {
-    assert(!view.type.isSetView, `Cannot return property ${properties.join(',')} for set-view`);
+  async _propertyTokenToString(handleName, handle, properties) {
+    assert(!handle.type.isSetView, `Cannot return property ${properties.join(',')} for set-view`);
     // Use singleton value's property (eg. "09/15" for person's birthday)
-    let viewVar = await view.get();
-    if (viewVar) {
-      let value = viewVar.rawData;
+    let handleVar = await handle.get();
+    if (handleVar) {
+      let value = handleVar.rawData;
       properties.forEach(p => {
         if (value) {
           value = value[p];
         }
       });
       if (value) {
-        return this._formatEntityProperty(viewName, properties, value);
+        return this._formatEntityProperty(handleName, properties, value);
       }
     }
   }
 
-  _formatEntityProperty(viewName, properties, value) {
+  _formatEntityProperty(handleName, properties, value) {
     return value;
   }
 
-  async _formatViewValue(viewName, view) {
-    if (!view) {
+  async _formatHandleValue(handleName, handle) {
+    if (!handle) {
       return;
     }
-    if (view.type.isSetView) {
-      let viewList = await view.toList();
-      if (viewList && viewList.length > 0) {
-        return this._formatSetView(viewName, viewList);
+    if (handle.type.isSetView) {
+      let handleList = await handle.toList();
+      if (handleList && handleList.length > 0) {
+        return this._formatSetHandle(handleName, handleList);
       }
     } else {
-      let viewVar = await view.get();
-      if (viewVar) {
-        return this._formatSingleton(viewName, viewVar);
+      let handleVar = await handle.get();
+      if (handleVar) {
+        return this._formatSingleton(handleName, handleVar);
       }
     }
   }
 
-  _formatSetView(viewName, viewList) {
-    if (viewList[0].rawData.name) {
-      if (viewList.length > 2) {
-        return `${viewList[0].rawData.name} plus ${viewList.length-1} other items`;
+  _formatSetHandle(handleName, handleList) {
+    if (handleList[0].rawData.name) {
+      if (handleList.length > 2) {
+        return `${handleList[0].rawData.name} plus ${handleList.length-1} other items`;
       }
-      return viewList.map(v => v.rawData.name).join(', ');
+      return handleList.map(v => v.rawData.name).join(', ');
     } else {
-      return `${viewList.length} items`;
+      return `${handleList.length} items`;
     }
   }
 
-  _formatSingleton(viewName, viewVar) {
-    if (viewVar.rawData.name) {
-      return viewVar.rawData.name;
+  _formatSingleton(handleName, handleVar) {
+    if (handleVar.rawData.name) {
+      return handleVar.rawData.name;
     }
   }
 
-  async _formatDescription(handleConnection, view) {
+  async _formatDescription(handleConnection, handle) {
     return (await this._formatDescriptionPattern(handleConnection)) ||
-           this._formatViewDescription(handleConnection, view) ||
-           this._formatViewType(handleConnection);
+           this._formatHandleDescription(handleConnection, handle) ||
+           this._formatHandleType(handleConnection);
   }
 
   async _formatDescriptionPattern(handleConnection) {
@@ -386,36 +386,36 @@ export class DescriptionFormatter {
     // For "out" connection, use its own description
     // For "in" connection, use description of the highest ranked out connection with description.
     if (!chosenConnection.spec.isOutput) {
-      let otherConnection = this._selectHandleConnection(handleConnection.view);
+      let otherConnection = this._selectHandleConnection(handleConnection.handle);
       if (otherConnection) {
         chosenConnection = otherConnection;
       }
     }
 
     let chosenParticleDescription = this._particleDescriptions.find(desc => desc._particle == chosenConnection.particle);
-    let viewDescription = chosenParticleDescription ? chosenParticleDescription._connections[chosenConnection.name] : null;
+    let handleDescription = chosenParticleDescription ? chosenParticleDescription._connections[chosenConnection.name] : null;
     // Add description to result array.
-    if (viewDescription) {
+    if (handleDescription) {
       // Add the connection spec's description pattern.
-      return await this.patternToSuggestion(viewDescription.pattern, chosenParticleDescription);
+      return await this.patternToSuggestion(handleDescription.pattern, chosenParticleDescription);
     }
   }
-  _formatViewDescription(viewConn, view) {
-    if (view) {
-      let viewDescription = this._arc.getHandleDescription(view);
-      let viewType = this._formatViewType(viewConn);
-      // Use the view description available in the arc (if it is different than type name).
-      if (!!viewDescription && viewDescription != viewType) {
-        return viewDescription;
+  _formatHandleDescription(handleConn, handle) {
+    if (handle) {
+      let handleDescription = this._arc.getHandleDescription(handle);
+      let handleType = this._formatHandleType(handleConn);
+      // Use the handle description available in the arc (if it is different than type name).
+      if (!!handleDescription && handleDescription != handleType) {
+        return handleDescription;
       }
     }
   }
-  _formatViewType(handleConnection) {
+  _formatHandleType(handleConnection) {
     return handleConnection.type.toPrettyString().toLowerCase();
   }
 
-  _selectHandleConnection(recipeView) {
-    let possibleConnections = recipeView.connections.filter(connection => {
+  _selectHandleConnection(recipeHandle) {
+    let possibleConnections = recipeHandle.connections.filter(connection => {
       // Choose connections with patterns (manifest-based or dynamic).
       let connectionSpec = connection.spec;
       let particleDescription = this._particleDescriptions.find(desc => desc._particle == connection.particle);

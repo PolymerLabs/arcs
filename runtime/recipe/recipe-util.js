@@ -9,47 +9,47 @@ import Recipe from './recipe.js';
 import assert from '../../platform/assert-web.js';
 
 class Shape {
-  constructor(recipe, particles, views, hcs) {
+  constructor(recipe, particles, handles, hcs) {
     this.recipe = recipe;
     this.particles = particles;
-    this.views = views;
+    this.handles = handles;
     this.reverse = new Map();
     for (let p in particles)
       this.reverse.set(particles[p], p);
-    for (let v in views)
-      this.reverse.set(views[v], v);
+    for (let h in handles)
+      this.reverse.set(handles[h], h);
     for (let hc in hcs)
       this.reverse.set(hcs[hc], hc);
   }
 }
 
 class RecipeUtil {
-  static makeShape(particles, views, map, recipe) {
+  static makeShape(particles, handles, map, recipe) {
     recipe = recipe || new Recipe();
     let pMap = {};
-    let vMap = {};
+    let hMap = {};
     let hcMap = {};
     particles.forEach(particle => pMap[particle] = recipe.newParticle(particle));
-    views.forEach(view => vMap[view] = recipe.newHandle());
+    handles.forEach(handle => hMap[handle] = recipe.newHandle());
     Object.keys(map).forEach(key => {
       Object.keys(map[key]).forEach(name => {
-        let view = map[key][name];
-        pMap[key].addConnectionName(name).connectToView(vMap[view]);
+        let handle = map[key][name];
+        pMap[key].addConnectionName(name).connectToHandle(hMap[handle]);
         hcMap[key + ':' + name] = pMap[key].connections[name];
       });
     });
-    return new Shape(recipe, pMap, vMap, hcMap);
+    return new Shape(recipe, pMap, hMap, hcMap);
   }
 
   static recipeToShape(recipe) {
     let particles = {};
     let id = 0;
     recipe.particles.forEach(particle => particles[particle.name] = particle);
-    let views = {};
-    recipe.handles.forEach(view => views['v' + id++] = view);
+    let handles = {};
+    recipe.handles.forEach(handle => handles['h' + id++] = handle);
     let hcs = {};
     recipe.handleConnections.forEach(hc => hcs[hc.particle.name + ':' + hc.name] = hc);
-    return new Shape(recipe, particles, views, hcs);
+    return new Shape(recipe, particles, handles, hcs);
   }
 
   static find(recipe, shape) {
@@ -86,19 +86,19 @@ class RecipeUtil {
         // shapeHC doesn't necessarily reference a handle, but if it does
         // then recipeHC needs to reference the matching handle, or one
         // that isn't yet mapped, or no handle yet.
-        if (shapeHC.view && recipeHC.view) {
-          if (reverse.has(recipeHC.view)) {
-            if (reverse.get(recipeHC.view) != shapeHC.view)
+        if (shapeHC.handle && recipeHC.handle) {
+          if (reverse.has(recipeHC.handle)) {
+            if (reverse.get(recipeHC.handle) != shapeHC.handle)
               continue;
-          } else if (forward.has(shapeHC.view) && forward.get(shapeHC.view) !== null) {
+          } else if (forward.has(shapeHC.handle) && forward.get(shapeHC.handle) !== null) {
             continue;
           }
-          // Check whether shapeHC and recipeHC reference the same view.
-          // Note: the id of a view with 'copy' fate changes during recipe instantiation, hence comparing to original id too.
-          // Skip the check if views have 'create' fate (their ids are arbitrary).
-          if ((shapeHC.view.fate != 'create' || (recipeHC.view.fate != 'create' && recipeHC.view.originalFate != 'create')) &&
-              shapeHC.view.id != recipeHC.view.id && shapeHC.view.id != recipeHC.view.originalId) {
-            // this is a different view.
+          // Check whether shapeHC and recipeHC reference the same handle.
+          // Note: the id of a handle with 'copy' fate changes during recipe instantiation, hence comparing to original id too.
+          // Skip the check if handles have 'create' fate (their ids are arbitrary).
+          if ((shapeHC.handle.fate != 'create' || (recipeHC.handle.fate != 'create' && recipeHC.handle.originalFate != 'create')) &&
+              shapeHC.handle.id != recipeHC.handle.id && shapeHC.handle.id != recipeHC.handle.originalId) {
+            // this is a different handle.
             continue;
           }
         }
@@ -108,15 +108,15 @@ class RecipeUtil {
         assert(!newMatch.forward.has(shapeHC.particle) || newMatch.forward.get(shapeHC.particle) == recipeHC.particle);
         newMatch.forward.set(shapeHC.particle, recipeHC.particle);
         newMatch.reverse.set(recipeHC.particle, shapeHC.particle);
-        if (shapeHC.view) {
-          if (!recipeHC.view) {
-            if (!newMatch.forward.has(shapeHC.view)) {
-              newMatch.forward.set(shapeHC.view, null);
+        if (shapeHC.handle) {
+          if (!recipeHC.handle) {
+            if (!newMatch.forward.has(shapeHC.handle)) {
+              newMatch.forward.set(shapeHC.handle, null);
               newMatch.score -= 2;
             }
           } else {
-            newMatch.forward.set(shapeHC.view, recipeHC.view);
-            newMatch.reverse.set(recipeHC.view, shapeHC.view);
+            newMatch.forward.set(shapeHC.handle, recipeHC.handle);
+            newMatch.reverse.set(recipeHC.handle, shapeHC.handle);
           }
         }
         newMatch.forward.set(shapeHC, recipeHC);
@@ -128,8 +128,8 @@ class RecipeUtil {
         let newMatches = [];
         _buildNewParticleMatches(recipe, shapeHC.particle, match, newMatches);
         newMatches.forEach(newMatch => {
-          if (shapeHC.view && !newMatch.forward.has(shapeHC.view)) {
-            newMatch.forward.set(shapeHC.view, null);
+          if (shapeHC.handle && !newMatch.forward.has(shapeHC.handle)) {
+            newMatch.forward.set(shapeHC.handle, null);
             newMatch.score -= 2;
           }
           newMatch.forward.set(shapeHC, null);
@@ -166,34 +166,34 @@ class RecipeUtil {
       }
     }
 
-    function _assignViewsToEmptyPosition(match, emptyViews, nullViews) {
-      if (emptyViews.length == 1) {
+    function _assignHandlesToEmptyPosition(match, emptyHandles, nullHandles) {
+      if (emptyHandles.length == 1) {
         let matches = [];
         let {forward, reverse, score} = match;
-        for (let nullView of nullViews) {
+        for (let nullHandle of nullHandles) {
           let newMatch = {forward: new Map(forward), reverse: new Map(reverse), score: score + 1};
-          newMatch.forward.set(nullView, emptyViews[0]);
-          newMatch.reverse.set(emptyViews[0], nullView);
+          newMatch.forward.set(nullHandle, emptyHandles[0]);
+          newMatch.reverse.set(emptyHandles[0], nullHandle);
           matches.push(newMatch);
         }
         return matches;
       }
-      let thisView = emptyViews.pop();
-      let matches = _assignViewsToEmptyPosition(match, emptyViews, nullViews);
+      let thisHandle = emptyHandles.pop();
+      let matches = _assignHandlesToEmptyPosition(match, emptyHandles, nullHandles);
       let newMatches = [];
       for (let match of matches) {
-        let nullViews = Object.values(shape.views).filter(view => match.forward.get(view) == null);
-        if (nullViews.length > 0)
-          newMatches = newMatches.concat(_assignViewsToEmptyPosition(match, [thisView], nullViews));
+        let nullHandles = Object.values(shape.handle).filter(handle => match.forward.get(handle) == null);
+        if (nullHandles.length > 0)
+          newMatches = newMatches.concat(_assignHandlesToEmptyPosition(match, [thisHandle], nullHandles));
         else
           newMatches.concat(match);
       }
       return newMatches;
     }
 
-    // Particles and Views are initially stored by a forward map from
+    // Particles and Handles are initially stored by a forward map from
     // shape component to recipe component.
-    // View connections, particles and views are also stored by a reverse map
+    // Handle connections, particles and handles are also stored by a reverse map
     // from recipe component to shape component.
 
     // Start with a single, empty match
@@ -201,7 +201,7 @@ class RecipeUtil {
     for (let shapeHC of shape.recipe.handleConnections) {
       let newMatches = [];
       for (let match of matches) {
-        // collect matching view connections into a new matches list
+        // collect matching handle connections into a new matches list
         _buildNewHCMatches(recipe, shapeHC, match, newMatches);
       }
       matches = newMatches;
@@ -218,14 +218,14 @@ class RecipeUtil {
       matches = newMatches;
     }
 
-    let emptyViews = recipe.handles.filter(view => view.connections.length == 0);
+    let emptyHandles = recipe.handles.filter(handle => handle.connections.length == 0);
 
-    if (emptyViews.length > 0) {
+    if (emptyHandles.length > 0) {
       let newMatches = [];
       for (let match of matches) {
-        let nullViews = Object.values(shape.views).filter(view => match.forward.get(view) == null);
-        if (nullViews.length > 0)
-          newMatches = newMatches.concat(_assignViewsToEmptyPosition(match, emptyViews, nullViews));
+        let nullHandles = Object.values(shape.handles).filter(handle => match.forward.get(handle) == null);
+        if (nullHandles.length > 0)
+          newMatches = newMatches.concat(_assignHandlesToEmptyPosition(match, emptyHandles, nullHandles));
         else
           newMatches.concat(match);
       }
@@ -239,9 +239,9 @@ class RecipeUtil {
     });
   }
 
-  static directionCounts(view) {
+  static directionCounts(handle) {
     let counts = {'in': 0, 'out': 0, 'inout': 0, 'unknown': 0};
-    for (let connection of view.connections) {
+    for (let connection of handle.connections) {
       let direction = connection.direction;
       if (counts[direction] == undefined)
         direction = 'unknown';

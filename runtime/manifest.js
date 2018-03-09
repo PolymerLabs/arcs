@@ -116,7 +116,7 @@ class Manifest {
   get fileName() {
     return this._fileName;
   }
-  get views() {
+  get handles() {
     return this._handles;
   }
   get scheduler() {
@@ -193,7 +193,7 @@ class Manifest {
   findParticlesByVerb(verb) {
     return [...this._findAll(manifest => Object.values(manifest._particles).filter(particle => particle.primaryVerb == verb))];
   }
-  findViewByName(name) {
+  findHandleByName(name) {
     return this._find(manifest => manifest._handles.find(handle => handle.name == name));
   }
   findHandleById(id) {
@@ -339,14 +339,14 @@ ${e.message}
       // processing meta sections should come first as this contains identifying
       // information that might need to be used in other sections. For example,
       // the meta.name, if present, becomes the manifest id which is relevant
-      // when constructing manifest views.
+      // when constructing manifest handles.
       await processItems('meta', meta => manifest.applyMeta(meta.items));
       // similarly, resources may be referenced from other parts of the manifest.
       await processItems('resource', item => this._processResource(manifest, item));
       await processItems('schema', item => this._processSchema(manifest, item));
       await processItems('shape', item => this._processShape(manifest, item));
       await processItems('particle', item => this._processParticle(manifest, item, loader));
-      await processItems('view', item => this._processView(manifest, item, loader));
+      await processItems('store', item => this._processStore(manifest, item, loader));
       await processItems('recipe', item => this._processRecipe(manifest, item, loader));
     } catch (e) {
       dumpWarnings(manifest);
@@ -486,7 +486,7 @@ ${e.message}
         arg.type = arg.type.model;
       }
     }
-    let views = shapeItem.interface.args;
+    let handles = shapeItem.interface.args;
     let slots = [];
     for (let slotItem of shapeItem.slots) {
       slots.push({
@@ -497,7 +497,7 @@ ${e.message}
       });
     }
     // TODO: move shape to recipe/ and add shape builder?
-    let shape = new Shape(shapeItem.name, views, slots);
+    let shape = new Shape(shapeItem.name, handles, slots);
     manifest._shapes.push(shape);
   }
   static async _processRecipe(manifest, recipeItem, loader) {
@@ -505,8 +505,8 @@ ${e.message}
     let recipe = manifest._newRecipe(recipeItem.name);
     recipe.annotation = recipeItem.annotation;
     let items = {
-      views: recipeItem.items.filter(item => item.kind == 'view'),
-      byView: new Map(),
+      handles: recipeItem.items.filter(item => item.kind == 'handle'),
+      byHandle: new Map(),
       particles: recipeItem.items.filter(item => item.kind == 'particle'),
       byParticle: new Map(),
       slots: recipeItem.items.filter(item => item.kind == 'slot'),
@@ -539,28 +539,28 @@ ${e.message}
       recipe.search = new Search(items.search.phrase, items.search.tokens);
     }
 
-    for (let item of items.views) {
-      let view = recipe.newHandle();
+    for (let item of items.handles) {
+      let handle = recipe.newHandle();
       let ref = item.ref || {tags: []};
       if (ref.id) {
-        view.id = ref.id;
-        let targetView = manifest.findHandleById(view.id);
-        if (targetView)
-          view.mapToView(targetView);
+        handle.id = ref.id;
+        let targetHandle = manifest.findHandleById(handle.id);
+        if (targetHandle)
+          handle.mapToView(targetHandle);
       } else if (ref.name) {
-        let targetView = manifest.findViewByName(ref.name);
+        let targetHandle = manifest.findHandleByName(ref.name);
         // TODO: Error handling.
-        assert(targetView, `Could not find view ${ref.name}`);
-        view.mapToView(targetView);
+        assert(targetHandle, `Could not find handle ${ref.name}`);
+        handle.mapToView(targetHandle);
       }
-      view.tags = ref.tags;
+      handle.tags = ref.tags;
       if (item.name) {
         assert(!items.byName.has(item.name));
-        view.localName = item.name;
-        items.byName.set(item.name, {item: item, view: view});
+        handle.localName = item.name;
+        items.byName.set(item.name, {item, handle});
       }
-      view.fate = item.fate;
-      items.byView.set(view, item);
+      handle.fate = item.fate;
+      items.byHandle.set(handle, item);
     }
 
     for (let item of items.slots) {
@@ -594,7 +594,7 @@ ${e.message}
         // TODO: errors.
         assert(!items.byName.has(item.name));
         particle.localName = item.name;
-        items.byName.set(item.name, {item: item, particle: particle});
+        items.byName.set(item.name, {item, particle});
       }
       items.byParticle.set(particle, item);
 
@@ -653,7 +653,7 @@ ${e.message}
           connection.direction = direction;
         }
 
-        let targetView;
+        let targetHandle;
         let targetParticle;
 
         if (connectionItem.target && connectionItem.target.name) {
@@ -663,8 +663,8 @@ ${e.message}
                 connectionItem.location,
                 `Could not find handle '${connectionItem.target.name}'`);
           }
-          if (entry.item.kind == 'view') {
-            targetView = entry.view;
+          if (entry.item.kind == 'handle') {
+            targetHandle = entry.handle;
           } else if (entry.item.kind == 'particle') {
             targetParticle = entry.particle;
           } else {
@@ -672,7 +672,7 @@ ${e.message}
           }
         }
 
-        // Handle implicit view connections in the form `param = SomeParticle`
+        // Handle implicit handle connections in the form `param = SomeParticle`
         if (connectionItem.target && connectionItem.target.particle) {
           let hostedParticle = manifest.findParticleByName(connectionItem.target.particle);
           if (!hostedParticle) {
@@ -689,15 +689,15 @@ ${e.message}
           }
           let id = `${manifest.generateID()}:immediate${hostedParticle.name}`;
           // TODO: Mark as immediate.
-          targetView = recipe.newHandle();
-          targetView.fate = 'copy';
+          targetHandle = recipe.newHandle();
+          targetHandle.fate = 'copy';
           let handle = await manifest.newHandle(type, null, id, []);
           // TODO: loader should not be optional.
           if (hostedParticle.implFile && loader) {
             hostedParticle.implFile = loader.join(manifest.fileName, hostedParticle.implFile);
           }
           handle.set(hostedParticle.clone().toLiteral());
-          targetView.mapToView(handle);
+          targetHandle.mapToView(handle);
         }
 
         if (targetParticle) {
@@ -713,16 +713,16 @@ ${e.message}
             // TODO: direction?
           }
 
-          targetView = targetConnection.view;
-          if (!targetView) {
+          targetHandle = targetConnection.handle;
+          if (!targetHandle) {
             // TODO: tags?
-            targetView = recipe.newHandle();
-            targetConnection.connectToView(targetView);
+            targetHandle = recipe.newHandle();
+            targetConnection.connectToHandle(targetHandle);
           }
         }
 
-        if (targetView) {
-          connection.connectToView(targetView);
+        if (targetHandle) {
+          connection.connectToHandle(targetHandle);
         }
       }
 
@@ -770,7 +770,7 @@ ${e.message}
     }
     return null;
   }
-  static async _processView(manifest, item, loader) {
+  static async _processStore(manifest, item, loader) {
     let name = item.name;
     let id = item.id;
     let type = item.type.model;
@@ -869,9 +869,9 @@ ${e.message}
       results.push(r.toString(options));
     });
 
-    let views = [...this.views].sort(util.compareComparables);
-    views.forEach(v => {
-      results.push(v.toString(this._handleTags.get(v)));
+    let handles = [...this.handles].sort(util.compareComparables);
+    handles.forEach(h => {
+      results.push(h.toString(this._handleTags.get(h)));
     });
 
     return results.join('\n');

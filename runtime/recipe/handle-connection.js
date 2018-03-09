@@ -77,19 +77,20 @@ class HandleConnection {
   get isOutput() {
     return this.direction == 'out' || this.direction == 'inout';
   }
-  get view() { return this._handle; } // View?
+  get view() {assert(false, 'Ha!');}
+  get handle() { return this._handle; } // Handle?
   get particle() { return this._particle; } // never null
 
   set tags(tags) { this._tags = tags; }
   set type(type) {
     this._rawType = type;
     this._type = undefined;
-    this._resetViewType();
+    this._resetHandleType();
   }
 
   set direction(direction) {
     this._direction = direction;
-    this._resetViewType();
+    this._resetHandleType();
   }
 
   get spec() {
@@ -150,24 +151,24 @@ class HandleConnection {
       }
       return false;
     }
-    if (!this.view) {
+    if (!this.handle) {
       if (options) {
-        options.details = 'missing view';
+        options.details = 'missing handle';
       }
       return false;
     }
     return true;
   }
 
-  _resetViewType() {
+  _resetHandleType() {
     if (this._handle)
       this._handle._type = undefined;
   }
 
-  connectToView(handle) {
+  connectToHandle(handle) {
     assert(handle.recipe == this.recipe);
     this._handle = handle;
-    this._resetViewType();
+    this._resetHandleType();
     this._handle.connections.push(this);
   }
 
@@ -176,8 +177,8 @@ class HandleConnection {
     result.push(this.name || '*');
     // TODO: better deal with unspecified direction.
     result.push({'in': '<-', 'out': '->', 'inout': '=', 'host': '='}[this.direction] || this.direction || '=');
-    if (this.view) {
-      result.push(`${(nameMap && nameMap.get(this.view)) || this.view.localName}`);
+    if (this.handle) {
+      result.push(`${(nameMap && nameMap.get(this.handle)) || this.handle.localName}`);
     }
     result.push(...this.tags);
 

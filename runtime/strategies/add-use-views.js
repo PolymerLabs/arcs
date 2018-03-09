@@ -24,14 +24,14 @@ export default class AddUseViews extends Strategy {
 
         // TODO: "description" handles are always created, and in the future they need to be "optional" (blocked by optional handles
         // not being properly supported in arc instantiation). For now just hardcode skiping them.
-        let disconnectedConnections = recipe.handleConnections.filter(hc => hc.view == null && !hc.isOptional && hc.name != 'descriptions');
+        let disconnectedConnections = recipe.handleConnections.filter(hc => hc.handle == null && !hc.isOptional && hc.name != 'descriptions');
 
         return recipe => {
           disconnectedConnections.forEach(hc => {
             let clonedHC = recipe.updateToClone({hc}).hc;
             let handle = recipe.newHandle();
             handle.fate = 'use';
-            clonedHC.connectToView(handle);
+            clonedHC.connectToHandle(handle);
           });
           return 0;
         };

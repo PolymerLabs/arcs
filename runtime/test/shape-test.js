@@ -15,7 +15,7 @@ import Manifest from '../manifest.js';
 
 
 describe('shape', function() {
-  it('finds type variable references in views', function() {
+  it('finds type variable references in handles', function() {
     let shape = new Shape('Test', [{type: Type.newVariable({name: 'a'})}], []);
     assert.equal(shape._typeVars.length, 1);
     assert.equal(shape._typeVars[0].field, 'type');
@@ -46,8 +46,8 @@ describe('shape', function() {
     assert(map.has('a'));
     assert(map.has('b'));
     shape = type.interfaceShape;
-    assert.strictEqual(shape.views[0].name.variable, shape.slots[0].name.variable);
-    assert.strictEqual(shape.views[1].type, shape.views[2].type.setViewType);
+    assert.strictEqual(shape.handles[0].name.variable, shape.slots[0].name.variable);
+    assert.strictEqual(shape.handles[1].type, shape.handles[2].type.setViewType);
   });
 
   it('matches particleSpecs', async () => {

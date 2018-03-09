@@ -161,7 +161,7 @@ class Recipe {
            this._connectionConstraints.length == 0;
   }
 
-  findView(id) {
+  findHandle(id) {
     for (let handle of this.handles) {
       if (handle.id == id)
         return handle;
@@ -248,9 +248,9 @@ class Recipe {
         particles.push(connection.particle);
         seenParticles.add(connection.particle);
       }
-      if (connection.view && !seenHandles.has(connection.view)) {
-        handles.push(connection.view);
-        seenHandles.add(connection.view);
+      if (connection.handle && !seenHandles.has(connection.handle)) {
+        handles.push(connection.handle);
+        seenHandles.add(connection.handle);
       }
     }
 

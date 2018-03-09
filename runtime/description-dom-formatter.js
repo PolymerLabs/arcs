@@ -97,7 +97,7 @@ export default class DescriptionDomFormatter extends DescriptionFormatter {
     tokens.forEach((token, i) => {
       if (token.text) {
         template = template.concat(`${index == 0 && i == 0 ? token.text[0].toUpperCase() + token.text.slice(1) : token.text}`);
-      } else { // view or slot handle.
+      } else { // handle or slot handle.
         let sanitizedFullName = token.fullName.replace(/[.{}_\$]/g, '');
         let attribute = '';
         // TODO(mmandlis): capitalize the data in the model instead.
@@ -168,52 +168,52 @@ export default class DescriptionDomFormatter extends DescriptionFormatter {
     };
   }
 
-  _combineDescriptionAndValue(token, description, viewValue) {
+  _combineDescriptionAndValue(token, description, handleValue) {
     if (!!description.template && !!description.model) {
       return {
-        template: `${description.template} (${viewValue.template})`,
-        model: Object.assign(description.model, viewValue.model)
+        template: `${description.template} (${handleValue.template})`,
+        model: Object.assign(description.model, handleValue.model)
       };
     }
-    let descKey = `${token.viewName}Description${++this._nextID}`;
+    let descKey = `${token.handleName}Description${++this._nextID}`;
     return {
-      template: `<span>{{${descKey}}}</span> (${viewValue.template})`,
-      model: Object.assign({[descKey]: description}, viewValue.model)
+      template: `<span>{{${descKey}}}</span> (${handleValue.template})`,
+      model: Object.assign({[descKey]: description}, handleValue.model)
     };
   }
 
-  _formatEntityProperty(viewName, properties, value) {
-    let key = `${viewName}${properties.join('')}Value${++this._nextID}`;
+  _formatEntityProperty(handleName, properties, value) {
+    let key = `${handleName}${properties.join('')}Value${++this._nextID}`;
     return {
       template: `<b>{{${key}}}</b>`,
       model: {[`${key}`]: value}
     };
   }
 
-  _formatSetView(viewName, viewList) {
-    let viewKey = `${viewName}${++this._nextID}`;
-    if (viewList[0].rawData.name) {
-      if (viewList.length > 2) {
+  _formatSetHandle(handleName, handleList) {
+    let handleKey = `${handleName}${++this._nextID}`;
+    if (handleList[0].rawData.name) {
+      if (handleList.length > 2) {
         return {
-          template: `<b>{{${viewKey}FirstName}}</b> plus <b>{{${viewKey}OtherCount}}</b> other items`,
-          model: {[`${viewKey}FirstName`]: viewList[0].rawData.name, [`${viewKey}OtherCount`]: viewList.length - 1}
+          template: `<b>{{${handleKey}FirstName}}</b> plus <b>{{${handleKey}OtherCount}}</b> other items`,
+          model: {[`${handleKey}FirstName`]: handleList[0].rawData.name, [`${handleKey}OtherCount`]: handleList.length - 1}
         };
       }
       return {
-        template: viewList.map((v, i) => `<b>{{${viewKey}${i}}}</b>`).join(', '),
-        model: Object.assign(...viewList.map((v, i) => ({[`${viewKey}${i}`]: v.rawData.name} )))
+        template: handleList.map((v, i) => `<b>{{${handleKey}${i}}}</b>`).join(', '),
+        model: Object.assign(...handleList.map((v, i) => ({[`${handleKey}${i}`]: v.rawData.name} )))
       };
     }
     return {
-      template: `<b>{{${viewKey}Length}}</b> items`,
-      model: {[`${viewKey}Length`]: viewList.length}
+      template: `<b>{{${handleKey}Length}}</b> items`,
+      model: {[`${handleKey}Length`]: handleList.length}
     };
   }
-  _formatSingleton(viewName, viewVar) {
-    if (viewVar.rawData.name) {
+  _formatSingleton(handleName, handleVar) {
+    if (handleVar.rawData.name) {
       return {
-        template: `<b>{{${viewName}Var}}</b>`,
-        model: {[`${viewName}Var`]: viewVar.rawData.name}
+        template: `<b>{{${handleName}Var}}</b>`,
+        model: {[`${handleName}Var`]: handleVar.rawData.name}
       };
     }
   }

@@ -23,7 +23,7 @@ export default class GroupHandleConnections extends Strategy {
         // Find all unique types used in the recipe that have unbound handle connections.
         let types = new Set();
         recipe.handleConnections.forEach(hc => {
-          if (!hc.isOptional && !hc.view && !Array.from(types).find(t => t.equals(hc.type))) {
+          if (!hc.isOptional && !hc.handle && !Array.from(types).find(t => t.equals(hc.type))) {
             types.add(hc.type);
           }
         });
@@ -32,20 +32,20 @@ export default class GroupHandleConnections extends Strategy {
         types.forEach(type => {
           // Find the particle with the largest number of unbound connections of the same type.
           let countConnectionsByType = (connections) => Object.values(connections).filter(conn => {
-            return !conn.isOptional && !conn.view && type.equals(conn.type);
+            return !conn.isOptional && !conn.handle && type.equals(conn.type);
           }).length;
           let sortedParticles = [...recipe.particles].sort((p1, p2) => {
             return countConnectionsByType(p2.connections) - countConnectionsByType(p1.connections);
           }).filter(p => countConnectionsByType(p.connections) > 0);
           assert(sortedParticles.length > 0);
 
-          // View connections of the same particle cannot be bound to the same view. Iterate on view connections of the particle
-          // with the most connections of the given type, and group each of them with same typed view connections of other particles.
+          // HJandle connections of the same particle cannot be bound to the same handle. Iterate on handle connections of the particle
+          // with the most connections of the given type, and group each of them with same typed handle connections of other particles.
           let particleWithMostConnectionsOfType = sortedParticles[0];
           let groups = new Map();
           groupsByType.set(type, groups);
           let allTypeHandleConnections = recipe.handleConnections.filter(c => {
-            return !c.isOptional && !c.view && type.equals(c.type) && (c.particle != particleWithMostConnectionsOfType);
+            return !c.isOptional && !c.handle && type.equals(c.type) && (c.particle != particleWithMostConnectionsOfType);
           });
 
           let iteration = 0;
@@ -63,7 +63,7 @@ export default class GroupHandleConnections extends Strategy {
               let possibleConnections = allTypeHandleConnections.filter(c => !group.find(gc => gc.particle == c.particle));
               let selectedConn = possibleConnections.find(c => handleConnection.isInput != c.isInput || handleConnection.isOutput != c.isOutput);
               // TODO: consider tags.
-              // TODO: Slots view restrictions should also be accounted for when grouping.
+              // TODO: Slots handle restrictions should also be accounted for when grouping.
               if (!selectedConn) {
                 if (possibleConnections.length == 0 || iteration == 0) {
                   // During first iteration only bind opposite direction connections ("in" with "out" and vice versa)
@@ -90,10 +90,10 @@ export default class GroupHandleConnections extends Strategy {
         return recipe => {
           groupsByType.forEach((groups, type) => {
             groups.forEach(group => {
-              let recipeView = recipe.newHandle();
+              let recipeHandle = recipe.newHandle();
               group.forEach(conn => {
                 let cloneConn = recipe.updateToClone({conn}).conn;
-                cloneConn.connectToView(recipeView);
+                cloneConn.connectToHandle(recipeHandle);
               });
             });
           });

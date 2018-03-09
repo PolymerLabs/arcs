@@ -643,7 +643,7 @@ ${particleStr1}
       },
     };
     let manifest = await Manifest.load('the.manifest', loader);
-    let view = manifest.findViewByName('View0');
+    let view = manifest.findHandleByName('View0');
     assert(view);
     assert.deepEqual(await view.toList(), [
       {
@@ -685,7 +685,7 @@ Error parsing JSON from 'EntityList' (Unexpected token h in JSON at position 1)'
 
       view View0 of [Thing] in EntityList
     `, {fileName: 'the.manifest'});
-    let view = manifest.findViewByName('View0');
+    let view = manifest.findHandleByName('View0');
     assert(view);
     assert.deepEqual(await view.toList(), [
       {
@@ -942,8 +942,8 @@ Expected " ", "#", "//", "\\n", "\\r", [ ], [A-Z], or [a-z] but "?" found.
   view ClairesWishlist of [Product] #wishlist in 'wishlist.json'
     description \`Claire's wishlist\``, {loader});
     let verify = (manifest) => {
-      assert.equal(manifest.views.length, 1);
-      assert.deepEqual(['#wishlist'], manifest._handleTags.get(manifest.views[0]));
+      assert.equal(manifest.handles.length, 1);
+      assert.deepEqual(['#wishlist'], manifest._handleTags.get(manifest.handles[0]));
     };
     verify(manifest);
     verify(await Manifest.parse(manifest.toString(), {loader}));

@@ -74,7 +74,7 @@ describe('dom-slot', function() {
       ++doRenderCount;
       _doRenderImpl.call(slot);
     };
-    slot.populateViewDescriptions = async () => {};
+    slot.populateHandleDescriptions = async () => {};
     assert.isNull(slot._model);
 
     // model and context are null; set content to null - nothing happens.
