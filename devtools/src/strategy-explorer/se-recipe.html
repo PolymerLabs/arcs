@@ -122,12 +122,16 @@ http://polymer.github.io/PATENTS.txt
         this.$['recipe-box'].addEventListener('click', e => {
           if (document._selectedBox !== undefined) {
             document._selectedBox.selected = false;
-
             document._selectedBox.parents.forEach(parent => parent.selectedParent = false);
             document._selectedBox.ancestors.forEach(ancestor => ancestor.selectedAncestor = false);
             document._selectedBox.childrens.forEach(child => child.selectedChild = false);
             document._selectedBox.descendants.forEach(descendant => descendant.selectedDescendant = false);
             recipeView.unpin();
+
+            if (document._selectedBox === this) {
+              document._selectedBox = undefined;
+              return;
+            }
           }
           this.selected = true;
           this.parents.forEach(parent => parent.selectedParent = true);
