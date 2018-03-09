@@ -282,7 +282,7 @@ ParticleItem
   = ParticleInterface
   / ParticleAffordance
   / ParticleSlot
-  / ParticleDescription
+  / Description
 
 ParticleInterface
   = verb:(upperIdent / lowerIdent) '(' args:ParticleArgumentList? ')' eolWhiteSpace
@@ -457,8 +457,8 @@ ParticleProvidedSlotView
     };
   }
 
-ParticleDescription
-  = 'description' whiteSpace pattern:backquotedString eolWhiteSpace viewDescriptions:(Indent (SameIndent ParticleViewDescription)+)?
+Description
+  = 'description' whiteSpace pattern:backquotedString eolWhiteSpace viewDescriptions:(Indent (SameIndent ParticleHandleDescription)+)?
   {
     return {
       kind: 'description',
@@ -476,7 +476,7 @@ ParticleDescription
     };
   }
 
-ParticleViewDescription
+ParticleHandleDescription
   = name:lowerIdent whiteSpace pattern:backquotedString eolWhiteSpace
   {
     return {
@@ -505,6 +505,7 @@ RecipeItem
   / RecipeSlot
   / RecipeConnection
   / RecipeSearch
+  / Description
 
 Name
   = 'as' whiteSpace name:lowerIdent
@@ -756,16 +757,20 @@ SchemaInlineField
   }
 
 Schema
-  = 'schema' whiteSpace name:TopLevelIdent parent:ExtendsList? eolWhiteSpace sections:(Indent (SameIndent SchemaSection)*)?
+  = 'schema' whiteSpace name:TopLevelIdent parent:ExtendsList? eolWhiteSpace items:(Indent (SameIndent SchemaItem)*)?
   {
     return {
       kind: 'schema',
       location: location(),
       name: name,
       parents: optional(parent, parent => parent, []),
-      sections: optional(sections, extractIndented, []),
+      items: optional(items, extractIndented, []),
     };
   }
+
+SchemaItem
+  = SchemaSection
+  / Description
 
 SchemaSection
   = sectionType:('normative' / 'optional') eolWhiteSpace fields:(Indent (SameIndent SchemaField eolWhiteSpace)+)

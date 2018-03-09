@@ -239,9 +239,35 @@ class Type {
     assert(false, `Add support to serializing type: ${JSON.stringify(this)}`);
   }
 
+  getEntitySchema() {
+    if (this.isSetView) {
+      return this.primitiveType().getEntitySchema();
+    }
+    if (this.isEntity) {
+      return this.entitySchema;
+    }
+    if (this.isVariable) {
+      if (this.variable.isResolved()) {
+        return this.resolvedType().getEntitySchema();
+      }
+    }
+  }
+
   toPrettyString() {
-    if (this.isRelation)
+    // Try extract the description from schema spec.
+    let entitySchema = this.getEntitySchema();
+    if (entitySchema) {
+      if (this.isSetView && entitySchema.description.plural) {
+        return entitySchema.description.plural;
+      }
+      if (this.isEntity && entitySchema.description.pattern) {
+        return entitySchema.description.pattern;
+      }
+    }
+
+    if (this.isRelation) {
       return JSON.stringify(this.data);
+    }
     if (this.isSetView) {
       return `${this.primitiveType().toPrettyString()} List`;
     }
@@ -275,3 +301,4 @@ import Schema from './schema.js';
 import TypeVariable from './type-variable.js';
 import TupleFields from './tuple-fields.js';
 import TypeChecker from './recipe/type-checker.js';
+

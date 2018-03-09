@@ -30,6 +30,8 @@ class Recipe {
 
     // TODO: Change to array, if needed for search strings of merged recipes.
     this._search = null;
+
+    this._pattern = null;
   }
 
   newConnectionConstraint(from, fromConnection, to, toConnection) {
@@ -173,6 +175,20 @@ class Recipe {
       if (slot.id == id)
         return slot;
     }
+  }
+  get pattern() { return this._pattern; }
+  set description(description) {
+    let pattern = description.find(desc => desc.name == 'pattern');
+    if (pattern) {
+      this._pattern = pattern.pattern;
+    }
+    description.forEach(desc => {
+      if (desc.name != 'pattern') {
+        let handle = this.handles.find(handle => handle.localName == desc.name);
+        assert(handle, `Cannot set description pattern for nonexistent handle ${desc.name}.`);
+        handle.pattern = desc.pattern;
+      }
+    });
   }
 
   async digest() {
@@ -425,6 +441,14 @@ class Recipe {
     }
     for (let particle of this.particles) {
       result.push(particle.toString(nameMap, options).replace(/^|(\n)/g, '$1  '));
+    }
+    if (this.pattern || this.handles.find(h => h.pattern)) {
+      result.push(`  description \`${this.pattern}\``);
+      this.handles.forEach(h => {
+        if (h.pattern) {
+          result.push(`    ${h.localName} \`${h.pattern}\``);
+        }
+      });
     }
     return result.join('\n');
   }

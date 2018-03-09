@@ -25,6 +25,11 @@ describe('manifest', function() {
   it('can parse a manifest containing a recipe', async () => {
     let manifest = await Manifest.parse(`
       schema S
+        optional
+          Text t
+        description \`one-s\`
+          plural \`many-ses\`
+          value \`s:\${t}\`
       particle SomeParticle in 'some-particle.js'
         work(out S someParam)
 
@@ -32,7 +37,9 @@ describe('manifest', function() {
         map #someView
         create #newView as view0
         SomeParticle
-          someParam -> #tag`);
+          someParam -> #tag
+        description \`hello world\`
+          view0 \`best view\``);
     let verify = (manifest) => {
       let recipe = manifest.recipes[0];
       assert(recipe);
@@ -43,6 +50,16 @@ describe('manifest', function() {
       assert.equal(recipe.handles[1].fate, 'create');
       assert.equal(recipe.handleConnections.length, 1);
       assert.sameMembers(recipe.handleConnections[0].tags, ['#tag']);
+      assert.equal(recipe.pattern, 'hello world');
+      assert.equal(recipe.handles[1].pattern, 'best view');
+      let type = recipe.handleConnections[0].rawType;
+      assert.equal('one-s', type.toPrettyString());
+      assert.equal('many-ses', type.setViewOf().toPrettyString());
+
+      assert.equal(1, Object.keys(manifest.schemas).length);
+      let schema = Object.values(manifest.schemas)[0];
+      assert.equal(3, Object.keys(schema.description).length);
+      assert.deepEqual(Object.keys(schema.description), ['pattern', 'plural', 'value']);
     };
     verify(manifest);
     verify(await Manifest.parse(manifest.toString(), {}));

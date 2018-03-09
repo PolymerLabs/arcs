@@ -14,3 +14,5 @@ schema Product extends Thing
     Text seller
     Text price
     Number shipDays
+  description `product`
+    plural `products`

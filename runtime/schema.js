@@ -17,6 +17,10 @@ class Schema {
     this.parents = (model.parents || []).map(parent => new Schema(parent));
     this._normative = {};
     this._optional = {};
+    this.description = {};
+    if (model.description) {
+      model.description.description.forEach(desc => this.description[desc.name] = desc.pattern);
+    }
 
     assert(model.sections, `${JSON.stringify(model)} should have sections`);
     for (let section of model.sections) {
@@ -332,6 +336,15 @@ class Schema {
     // TODO: skip properties that already written as part of parent schema serialization?
     propertiesToString(this.normative, 'normative');
     propertiesToString(this.optional, 'optional');
+
+    if (Object.keys(this.description).length > 0) {
+      results.push(`  description \`${this.description.pattern}\``);
+      Object.keys(this.description).forEach(name => {
+        if (name != 'pattern') {
+          results.push(`    ${name} \`${this.description[name]}\``);
+        }
+      });
+    }
     return results.join('\n');
   }
 
