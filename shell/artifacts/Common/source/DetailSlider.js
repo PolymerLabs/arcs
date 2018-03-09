@@ -62,6 +62,13 @@ defineParticle(({DomParticle, resolver, html, log}) => {
   [${host}] > [dialog] > [buttons] > [back-button]:active {
     background-color: #b0e3ff;
   }
+  [${host}] > [dialog] > [slot-content] {
+    position: absolute;
+    top: 57px;
+    right: 0;
+    left: 0;
+    bottom: 0;
+  }
 </style>
 
 <div ${host} modal open$="{{open}}">
