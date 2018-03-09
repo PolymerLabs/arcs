@@ -25,6 +25,7 @@ class Handle {
     this._connections = [];
     this._mappedType = undefined;
     this._storageKey = undefined;
+    this._pattern = undefined;
   }
 
   _copyInto(recipe) {
@@ -107,6 +108,8 @@ class Handle {
   get connections() { return this._connections; } // HandleConnection*
   get storageKey() { return this._storageKey; }
   set storageKey(key) { this._storageKey = key; }
+  get pattern() { return this._pattern; }
+  set pattern(pattern) { this._pattern = pattern; }
 
   _isValid(options) {
     let typeSet = [];
@@ -189,7 +192,7 @@ class Handle {
     result.push(`as ${(nameMap && nameMap.get(this)) || this.localName}`);
     if (this.type) {
       result.push('//');
-      result.push(this.type.toPrettyString());
+      result.push(this.type.toString());
     }
     if (options && options.showUnresolved) {
       let options = {};

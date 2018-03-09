@@ -432,6 +432,10 @@ ${e.message}
     visitor.traverse(items);
   }
   static _processSchema(manifest, schemaItem) {
+    let items = {
+      sections: schemaItem.items.filter(item => item.kind == 'schema-section'),
+      description: schemaItem.items.find(item => item.kind == 'description')
+    };
     manifest._schemas[schemaItem.name] = new Schema({
       name: schemaItem.name,
       parents: schemaItem.parents.map(parent => {
@@ -443,7 +447,7 @@ ${e.message}
         }
         return result.toLiteral();
       }),
-      sections: schemaItem.sections.map(section => {
+      sections: items.sections.map(section => {
         let fields = {};
         for (let field of section.fields) {
           fields[field.name] = field.type;
@@ -453,6 +457,7 @@ ${e.message}
           fields,
         };
       }),
+      description: items.description
     });
   }
   static _processResource(manifest, schemaItem) {
@@ -513,7 +518,8 @@ ${e.message}
       bySlot: new Map(),
       byName: new Map(),
       connections: recipeItem.items.filter(item => item.kind == 'connection'),
-      search: recipeItem.items.find(item => item.kind == 'search')
+      search: recipeItem.items.find(item => item.kind == 'search'),
+      description: recipeItem.items.find(item => item.kind == 'description')
     };
 
     for (let connection of items.connections) {
@@ -757,6 +763,10 @@ ${e.message}
         }
         particle.consumedSlotConnections[slotConnectionItem.param].connectToSlot(targetSlot);
       }
+    }
+
+    if (items.description && items.description.description) {
+      recipe.description = items.description.description;
     }
   }
   resolveReference(name) {

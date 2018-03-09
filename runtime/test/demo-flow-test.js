@@ -26,12 +26,12 @@ describe('demo flow', function() {
 
   it('flows like a demo', async function() {
     let expectedPlanString = `recipe
-  create as view0 // Product List
-  copy 'manifest:./shell/artifacts/Products/Products.recipes:view0' #shortlist as view1 // Product List
-  map 'manifest:./shell/artifacts/Products/Products.recipes:view1' #wishlist as view2 // Product List
-  create as view3 // Description List
-  copy 'manifest:./shell/artifacts/Products/Products.recipes::9:immediateAlsoOn' as view4 // SHAAAAPE
-  copy 'manifest:./shell/artifacts/Products/Products.recipes::8:immediateShowProduct' as view5 // SHAAAAPE
+  create as view0 // [~a]
+  copy 'manifest:./shell/artifacts/Products/Products.recipes:view0' #shortlist as view1 // [Product]
+  map 'manifest:./shell/artifacts/Products/Products.recipes:view1' #wishlist as view2 // [Product]
+  create as view3 // [Description]
+  copy 'manifest:./shell/artifacts/Products/Products.recipes::9:immediateAlsoOn' as view4 // HostedParticleShape2
+  copy 'manifest:./shell/artifacts/Products/Products.recipes::8:immediateShowProduct' as view5 // HostedParticleShape
   slot 'rootslotid-root' #root as slot3
   Chooser as particle0
     choices <- view0
