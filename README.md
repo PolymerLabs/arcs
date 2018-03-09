@@ -15,8 +15,8 @@ $ ./tools/sigh
 
 ## Starting Arcs
 
-After the full build (`npm install && tools/sigh`) run: (note that `npm start`
-will block, so you'll have to run the second command in a new shell):
+After the full build (`tools/install && tools/sigh`) run: (note that `npm
+start` will block, so you'll have to run the second command in a new shell):
 
 ```
 $ npm start
@@ -48,17 +48,17 @@ commands will install all packages, run a build, start a background server,
 run all the tests, and kill the background server:
 
 ```
-npm install
-npm test
+$ tools/install
+$ npm test-with-start
 ```
 
 There are additional targets provided to run subsets of those commands.
 
 - To start a server, run `npm start`. This will spin up a server in the
   current directory serving on 8080.
-- To build packed artifacts, run `npm run build`.
+- To build packed artifacts, run `tools/sigh`.
 - To run tests against a currently running server, with the current set of
-  built artifacts, run `npm run test-test`.
+  built artifacts, run `npm run test`.
 
 ### Debugging tests
 

@@ -8,9 +8,8 @@
   },
   "scripts": {
     "start": "cross-env http-server -a ${npm_package_config_host} -p ${npm_package_config_port}",
-    "test-with-start": "run-p --print-name --race start test-after-build",
-    "test": "run-s --print-name --continue-on-error test-mocha test-mocha-words test-wdio test-sigh",
-    "test-after-build": "run-s --print-name build test-test",
+    "test-with-start": "run-p --print-name --race start test",
+    "test": "run-s --print-name --continue-on-error test-sigh test-mocha test-mocha-words test-wdio",
     "test-sigh": "tools/sigh",
     "test-mocha": "mocha-chrome shell/test/index.test.html",
     "test-mocha-words": "mocha-chrome shell/artifacts/Words/index.test.html",
