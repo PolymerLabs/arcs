@@ -28,6 +28,8 @@ class TypeVariable {
     let constraint1 = variable1.constraint;
     let constraint2 = variable2.constraint;
 
+    assert(constraint1 || constraint2);
+
     if (constraint1 && constraint2) {
       if (!constraint1.isEntity || !constraint2.isEntity) {
         throw new Error('merging constraints not implemented for ${constraint1.type} and ${constraint2.type}');
@@ -41,28 +43,6 @@ class TypeVariable {
     } else {
       return constraint1 || constraint2;
     }
-  }
-
-  tryMergeFrom(other) {
-    assert(other instanceof TypeVariable);
-
-    let constraint1 = this.constraint;
-    let constraint2 = other.constraint;
-
-    if (constraint1 && constraint2) {
-      if (!constraint1.isEntity || !constraint2.isEntity) {
-        throw new Error('merging constraints not implemented for ${constraint1.type} and ${constraint2.type}');
-      }
-  
-      let mergedSchema = Schema.maybeMerge(constraint1.entitySchema, constraint2.entitySchema);
-      if (!mergedSchema) {
-        return false;
-      }
-      this.constraint = Type.newEntity(mergedSchema);
-    } else {
-      this.constraint = constraint1 || constraint2;
-    }
-    return true;
   }
 
   isSatisfiedBy(type) {

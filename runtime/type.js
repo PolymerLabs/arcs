@@ -87,9 +87,12 @@ class Type {
         variable = this;
         variableMap.set(name, this);
       } else {
-        if (!variable.variable.tryMergeFrom(this.variable)) {
-          // TODO: what do?
-          throw new Error('could not merge type variables');
+        if (variable.variable.constraint || this.variable.constraint) {
+          let mergedConstraint = TypeVariable.maybeMergeConstraints(variable.variable, this.variable);
+          if (!mergedConstraint) {
+            throw new Error('could not merge type variables');
+          }
+          variable.variable.constraint = mergedConstraint;
         }
       }
       return variable;
