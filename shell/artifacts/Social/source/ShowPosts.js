@@ -260,5 +260,5 @@ defineParticle(({DomParticle, resolver, log}) => {
         };
       }
     }
-  }
+  };
 });
