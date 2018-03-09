@@ -5,7 +5,7 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-var assert = chai.assert;
+let assert = chai.assert;
 
 describe('TileBoard', function() {
   const savePickCharWithFrequencies = TileBoard.pickCharWithFrequencies;
@@ -17,7 +17,7 @@ describe('TileBoard', function() {
         for (let i = 0; i < letters.length; i++)
           lettersWithStyle += `${letters.charAt(i)}${normalStyle}`;
         return lettersWithStyle;
-      }
+      };
 
   function createDefaultBoard(shuffleCount) {
     if (shuffleCount == undefined)

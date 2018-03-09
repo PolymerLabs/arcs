@@ -235,12 +235,12 @@ defineParticle(({DomParticle, resolver}) => {
         if (gameOver)
           info('Ending game.');
         this._setStats(Scoring.applyMoveStats(props.person, props.stats, word, score));
+        const gameState = gameOver ? TileBoard.State.GAME_OVER :
+                    TileBoard.State.ACTIVE;
         this._setBoard({
           letters: tileBoard.toString(),
           shuffleAvailableCount: tileBoard.shuffleAvailableCount,
-          state: TileBoard.StateToNumber
-                     [gameOver ? TileBoard.State.GAME_OVER :
-                                 TileBoard.State.ACTIVE]
+          state: TileBoard.StateToNumber[gameState]
         });
       }
       moveData = {coordinates: ''};

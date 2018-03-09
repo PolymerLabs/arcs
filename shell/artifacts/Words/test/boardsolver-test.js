@@ -5,7 +5,7 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-var assert = chai.assert;
+let assert = chai.assert;
 
 describe('BoardSolver', function() {
   describe('#getValidWords()', function() {
@@ -27,7 +27,7 @@ describe('BoardSolver', function() {
           for (let i = 0; i < letters.length; i++)
             lettersWithStyle += `${letters.charAt(i)}${normalStyle}`;
           return lettersWithStyle;
-        }
+        };
 
     it('should return single word', function() {
       const dictionary = new Dictionary('cat');

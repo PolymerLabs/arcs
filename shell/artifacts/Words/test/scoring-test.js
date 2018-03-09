@@ -5,7 +5,7 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-var assert = chai.assert;
+let assert = chai.assert;
 
 describe('Scoring', function() {
   describe('#isMinimumWordLength()', function() {
@@ -85,7 +85,7 @@ describe('Scoring', function() {
 
   describe('#applyMoveStats()', function() {
     const validateStats = (actual, expected) => {
-      var actualCopy = Object.assign({}, actual);
+      let actualCopy = Object.assign({}, actual);
       // TODO(wkorman): We hack in Post data currently. Revisit this and add
       // specific relevant tests.
       delete actualCopy.author;
@@ -104,7 +104,7 @@ describe('Scoring', function() {
         moveCount: 0,
         startstamp: 7331
       };
-      const user = { id: '42'};
+      const user = {id: '42'};
       const actual = Scoring.applyMoveStats(user, stats, 'short', 38);
       validateStats(actual, {
         highestScoringWord: 'highest',
@@ -127,7 +127,7 @@ describe('Scoring', function() {
         moveCount: 0,
         startstamp: 7331
       };
-      const user = { id: '42'};
+      const user = {id: '42'};
       const actual = Scoring.applyMoveStats(user, stats, 'higher', 100);
       validateStats(actual, {
         highestScoringWord: 'higher',
@@ -150,7 +150,7 @@ describe('Scoring', function() {
         moveCount: 0,
         startstamp: 7331
       };
-      const user = { id: '42'};
+      const user = {id: '42'};
       const actual = Scoring.applyMoveStats(user, stats, 'higher', 100);
       validateStats(actual, {
         highestScoringWord: 'higher',
@@ -173,7 +173,7 @@ describe('Scoring', function() {
         moveCount: 0,
         startstamp: 7331
       };
-      const user = { id: '42'};
+      const user = {id: '42'};
       const actual = Scoring.applyMoveStats(user, stats, 'evenlonger', 23);
       validateStats(actual, {
         highestScoringWord: 'highest',
@@ -196,7 +196,7 @@ describe('Scoring', function() {
         moveCount: 0,
         startstamp: 7331
       };
-      const user = { id: '42'};
+      const user = {id: '42'};
       const actual = Scoring.applyMoveStats(user, stats, 'evenlonger', 23);
       validateStats(actual, {
         highestScoringWord: 'highest',
@@ -219,7 +219,7 @@ describe('Scoring', function() {
         moveCount: 345,
         startstamp: 7331
       };
-      const user = { id: '42'};
+      const user = {id: '42'};
       const actual = Scoring.applyMoveStats(user, stats, 'evenlonger', 2300);
       validateStats(actual, {
         highestScoringWord: 'evenlonger',
