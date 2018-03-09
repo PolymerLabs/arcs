@@ -9,9 +9,10 @@
   "scripts": {
     "start": "cross-env http-server -a ${npm_package_config_host} -p ${npm_package_config_port}",
     "test-with-start": "run-p --print-name --race start test",
-    "test": "run-s --print-name --continue-on-error test-sigh test-mocha test-mocha-words test-wdio",
+    "test": "run-s --print-name --continue-on-error test-sigh test-mocha test-mocha-words test-wdio test-extension",
     "test-sigh": "tools/sigh",
     "test-mocha": "mocha-chrome shell/test/index.test.html",
+    "test-extension": "mocha-chrome extension/test/index.test.html",
     "test-mocha-words": "mocha-chrome shell/artifacts/Words/index.test.html",
     "test-wdio": "cross-env wdio -b http://${npm_package_config_host}:${npm_package_config_port}/ shell/test/wdio.conf.js"
   },

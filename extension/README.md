@@ -60,7 +60,7 @@ are triggered from the browser (either via the popup or new tab).
 ## Testing
 
 Unit tests can be run in browser by opening index.test.html or on the command
-line with `npm install && npm test`.
+line (from arcs) with `tools/install && npm test`.
 
 For manual testing, there are a few scenarios that should reliably work after
 enabling the extension.
