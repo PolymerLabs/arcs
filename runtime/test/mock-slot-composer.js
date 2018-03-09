@@ -22,6 +22,8 @@ class MockSlot extends Slot {
     this._content = {};
   }
   setContent(content, handler) {
+    // Mimics the behaviour of DomSlot::setContent, where template is only set at first,
+    // and model is overriden every time.
     if (content.template) {
       this._content.template = content.template;
     }
@@ -63,6 +65,10 @@ class MockContext {
  *   await mockSlotComposer.expectationsCompleted();
  */
 class MockSlotComposer extends SlotComposer {
+  /**
+   * |options| may contain:
+   * - strict: whether unexpected render slot requests cause an assert or a warning log (default: true)
+   */
   constructor(options) {
     super({rootContext: new MockContext('dummy-context'), affordance: 'mock'});
     this.expectQueue = [];
