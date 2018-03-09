@@ -87,7 +87,7 @@ function loadSeleniumUtils() {
   const result = browser.execute(function(baseUrl) {
     const script = document.createElement('script');
     script.type = 'text/javascript';
-    script.src = `${baseUrl}/test/selenium-utils.js`;
+    script.src = `${baseUrl}/shell/test/selenium-utils.js`;
     document.getElementsByTagName('head')[0].appendChild(script);
   }, browser.options.baseUrl);
   browser.waitUntil(() => {
@@ -223,7 +223,7 @@ function initTestWithNewArc() {
   // TODO(smalls) should we create a user on the fly?
   // note - baseUrl (currently specified on the command line) must end in a
   // trailing '/', and this must not begin with a preceding '/'.
-  browser.url(`apps/web/?user=-L-YGQo_7f3izwPg6RBn`);
+  browser.url(`shell/apps/web/?user=-L-YGQo_7f3izwPg6RBn`);
 
   assert.equal('Arcs', browser.getTitle());
 
@@ -235,7 +235,7 @@ function initTestWithNewArc() {
   browser.url(
     `${browser.getUrl()}&solo=${
       browser.options.baseUrl
-    }artifacts/canonical.manifest`
+    }shell/artifacts/canonical.manifest`
   );
   loadSeleniumUtils();
 
