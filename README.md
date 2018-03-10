@@ -9,13 +9,13 @@ Particle developers should visit our [particle developer website](https://polyme
 Note that you need a **recent** version of Node because we use new ES6 features. v9 is definitely OK.
 
 ```
-$ ./tools/install
+$ npm install
 $ ./tools/sigh
 ```
 
 ## Starting Arcs
 
-After the full build (`tools/install && tools/sigh`) run: (note that `npm
+After the full build (`npm install && tools/sigh`) run: (note that `npm
 start` will block, so you'll have to run the second command in a new shell):
 
 ```
@@ -48,8 +48,8 @@ commands will install all packages, run a build, start a background server,
 run all the tests, and kill the background server:
 
 ```
-$ ./tools/install
-$ npm run test-with-start
+$ npm install
+$ npm test-with-start
 ```
 
 There are additional targets provided to run subsets of those commands.
