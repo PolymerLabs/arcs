@@ -48,8 +48,8 @@ commands will install all packages, run a build, start a background server,
 run all the tests, and kill the background server:
 
 ```
-$ tools/install
-$ npm test-with-start
+$ ./tools/install
+$ npm run test-with-start
 ```
 
 There are additional targets provided to run subsets of those commands.
