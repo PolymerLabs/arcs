@@ -131,11 +131,15 @@ class DomContext {
       // First problem: click event firing multiple times as it bubbles up the tree, minimalist solution
       // is to enforce a 'first listener' rule by executing `stopPropagation`.
       event.stopPropagation();
+      // propagate keyboard information
+      const {altKey, ctrlKey, metaKey, shiftKey, code, key, repeat} = event;
       eventHandler({
         handler: handlerName,
         data: {
+          // TODO(sjmiles): this is a data-key (as in key-value pair), may be confusing vs `keys`
           key: node.key,
-          value: node.value
+          value: node.value,
+          keys: {altKey, ctrlKey, metaKey, shiftKey, code, key, repeat}
         }
       });
     });
