@@ -10,25 +10,25 @@
 
 'use strict';
 
-defineParticle(({DomParticle, log}) => {
+defineParticle(({DomParticle, html, log}) => {
+
   const host = `social-edit-post`;
 
-  const template = `
+  const template = html`
 <style>
+[${host}] {
+  font-family: 'Google Sans', sans-serif;
+  flex: 1;
+  display: flex;
+  padding: 56px 8px 8px 8px;
+}
 [${host}] textarea {
+  flex: 1;
   border: none;
   font-family: 'Google Sans', sans-serif;
   font-size: 16pt;
-  /* TODO(wkorman|sjmiles): Rework in conjunction with DetailSlider to allow
-     something functionally like height: 100%. */
-  height: 300px;
-  width: 100%;
   outline: none;
   resize: none;
-}
-[${host}] {
-  font-family: 'Google Sans', sans-serif;
-  padding: 8px;
 }
 [${host}] [post-buttons] {
   position: absolute;
@@ -54,7 +54,7 @@ defineParticle(({DomParticle, log}) => {
     <i class="material-icons" on-click="_onAttachPhoto">attach_file</i>
     <i class="{{saveClasses}}" on-click="_onSavePost">done</i>
   </div>
-  <textarea on-change="_onCaptureText" value="{{message}}" on-input="_onUpdatePostButtonState"></textarea>
+  <textarea value="{{message}}" on-input="_onTextInput"></textarea>
 </div>
   `.trim();
 
@@ -62,61 +62,38 @@ defineParticle(({DomParticle, log}) => {
     get template() {
       return template;
     }
-    _getInitialState() {
-      return {message: ''};
+    willReceiveProps({post}, state) {
+      state.message = post && post.message;
     }
-    willReceiveProps(props) {
-      if (props.user) {
-        this._setState({user: props.user});
+    render({user, post}, {message, savePost}) {
+      if (savePost) {
+        this.savePost(user, message);
       }
-    }
-    update(props, state, lastProps, lastState) {
-      const {post} = props;
-      // TODO(wkorman): We have to use _update here because we need lastProps
-      // which isn't currently available in render. The overall hijinks in
-      // which we engage below are in order to make sure we only update the
-      // textarea text when a new message is supplied by WritePosts. An
-      // alternate implementation could be to scrutinize the message id and if
-      // it changes we know it's time to start over and so we clear everything
-      // out.
-      const lastMessage = lastProps.post ? lastProps.post.message : null;
-      state.textMessage = null;
-      if (post && post.message !== lastMessage) {
-        state.textMessage = post.message;
-        this._updateSaveButton(post.message);
-      }
-    }
-    render({post}, state) {
-      let saveClasses = ['material-icons'];
-      if (state.saveButtonActive) {
-        saveClasses.push('button-live');
-      }
-      saveClasses = saveClasses.join(' ');
-      const model = {saveClasses};
-      if (state.textMessage !== null) {
-        model.message = state.textMessage;
-      }
+      const saveButtonActive = message && (message.trim().length > 0);
+      const model = {
+        saveClasses: saveButtonActive ? 'material-icons button-live' : 'material-icons',
+        message
+      };
       return model;
     }
-    _updateSaveButton(message) {
-      this._setState({saveButtonActive: message.trim().length > 0});
+    setHandle(name, data) {
+      const handle = this._views.get(name);
+      handle.set(new (handle.entityClass)(data));
     }
-    _onUpdatePostButtonState(e, state) {
-      this._updateSaveButton(e.data.value);
+    savePost(user, message) {
+      this.setHandle('post', {
+        message: message,
+        createdTimestamp: Date.now(),
+        author: user.id
+      });
+      this._setState({savePost: false});
+    }
+    _onTextInput(e) {
+      this._setIfDirty({message: e.data.value});
     }
     // TODO(wkorman): Add onDeletePost, onAttachPost.
-    _onSavePost(e, state) {
-      const Post = this._views.get('posts').entityClass;
-      this._views.get('post').set(new Post({
-        message: state.message,
-        createdTimestamp: Date.now(),
-        author: state.user.id
-      }));
-    }
-    _onCaptureText(e, state) {
-      if (state.message !== e.data.value) {
-        this._setState({message: e.data.value});
-      }
+    _onSavePost(e) {
+      this._setIfDirty({savePost: true});
     }
   };
 });
