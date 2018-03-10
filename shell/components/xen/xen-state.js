@@ -58,20 +58,24 @@ export default Base => class extends Base {
       this._validator = this._async(this._validate);
     }
   }
+  _getStateArgs() {
+    return [this._props, this._state, this._lastProps, this._lastState];
+  }
   _validate() {
+    const stateArgs = this._getStateArgs();
     // try..catch to ensure we nullify `validator` before return
     try {
       // TODO(sjmiles): should be a replace instead of a merge
       Object.assign(this._props, this._pendingProps);
       if (this._propsInvalid) {
         // TODO(sjmiles): should/can have different timing from rendering?
-        this._willReceiveProps(this._props, this._state, this._lastProps, this._lastState);
+        this._willReceiveProps(...stateArgs);
         this._propsInvalid = false;
       }
-      if (this._shouldUpdate(this._props, this._state, this._lastProps, this._lastState)) {
+      if (this._shouldUpdate(...stateArgs)) {
         // TODO(sjmiles): consider throttling render to rAF
         this._ensureMount();
-        this._update(this._props, this._state, this._lastProps, this._lastState);
+        this._update(...stateArgs);
       }
     } catch (x) {
       console.error(x);
@@ -79,21 +83,21 @@ export default Base => class extends Base {
     // nullify validator _after_ methods so state changes don't reschedule validation
     // TODO(sjmiles): can/should there ever be state changes fom inside _update()? In React no, in Xen yes (until I have a good reason not too).
     this._validator = null;
+    // invalidation is live in _didUpdate
+    this._didUpdate(...stateArgs);
     // save the old props and state
-    // TODO(sjmiles): don't need to create these for default _shouldUpdate
     this._lastProps = Object.assign(nob(), this._props);
     this._lastState = Object.assign(nob(), this._state);
-    this._didUpdate(this._props, this._state, this._lastProps, this._lastState);
   }
   _ensureMount() {
   }
-  _willReceiveProps(props, state) {
+  _willReceiveProps() {
   }
-  _shouldUpdate(props, state, lastProps, lastState) {
+  _shouldUpdate() {
     return true;
   }
-  _update(props, state, lastProps, lastState) {
+  _update() {
   }
-  _didUpdate(props, state, lastProps, lastState) {
+  _didUpdate() {
   }
 };
