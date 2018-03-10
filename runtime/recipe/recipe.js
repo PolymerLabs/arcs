@@ -177,6 +177,7 @@ class Recipe {
     }
   }
   get pattern() { return this._pattern; }
+  set pattern(pattern) { this._pattern = pattern; }
   set description(description) {
     let pattern = description.find(desc => desc.name == 'pattern');
     if (pattern) {
@@ -351,6 +352,13 @@ class Recipe {
     this._connectionConstraints.forEach(cloneTheThing);
     if (this.search) {
       this.search._copyInto(recipe);
+    }
+    if (this.pattern) {
+      if (recipe.pattern) {
+        // TODO(mmandlis): Join |this.pattern| with the pattern already existing in the recipe.
+      } else {
+        recipe.pattern = this.pattern;
+      }
     }
   }
 

@@ -15,6 +15,8 @@ import Manifest from '../manifest.js';
 import Loader from '../loader.js';
 import Planner from '../planner.js';
 import MockSlotComposer from './mock-slot-composer.js';
+import MessageChannel from '../message-channel.js';
+import InnerPec from '../inner-PEC.js';
 
 /** @class TestHelper
  * Helper class to recipe instantiation and replanning.
@@ -32,11 +34,18 @@ export default class TestHelper {
    */
   constructor(options) {
     options = options || {};
-    this.loader = new Loader();
+    let loader = options.loader || new Loader();
     this.slotComposer = new MockSlotComposer({strict: options ? options.slotComposerStrict : undefined});
+    let pecFactory = function(id) {
+      let channel = new MessageChannel();
+      new InnerPec(channel.port1, `${id}:inner`, loader);
+      return channel.port2;
+    };
+    this.loader = loader;
+
     this.arc = new Arc({
       id: 'demo',
-      pecFactory: null,
+      pecFactory,
       slotComposer: this.slotComposer,
       loader: this.loader
     });
@@ -50,6 +59,20 @@ export default class TestHelper {
   static async loadManifestAndPlan(manifestFilename, options) {
     let helper = new TestHelper(options);
     await helper.loadManifest(manifestFilename);
+    await helper.makePlans(options);
+    return helper;
+  }
+
+  /** @static @method parseManifestAndPlan(manifestFilename, options)
+   * Creates and returns a TestHelper instance, parses a manifest string and makes planning.
+   */
+  static async parseManifestAndPlan(manifestString, options) {
+    options = options || {};
+    options.loader = options.loader || new class extends Loader {
+      loadResource(fileName) { return `defineParticle(({Particle}) => { return class P extends Particle {} });`; }
+    };
+    let helper = new TestHelper(options);
+    await helper.parseManifest(manifestString);
     await helper.makePlans(options);
     return helper;
   }
