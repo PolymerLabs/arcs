@@ -49,6 +49,21 @@ export default Base => class extends Base {
     Object.assign(this._state, state);
     this._invalidate();
   }
+  _setIfDirty(object) {
+    let dirty = false;
+    const state = this._state;
+    for (const property in object) {
+      const value = object[property];
+      if (state[property] !== value) {
+        dirty = true;
+        state[property] = value;
+      }
+    }
+    if (dirty) {
+      this._invalidate();
+      return true;
+    }
+  }
   _async(fn) {
     return Promise.resolve().then(fn.bind(this));
     //return setTimeout(fn.bind(this), 10);
