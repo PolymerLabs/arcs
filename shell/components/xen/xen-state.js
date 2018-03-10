@@ -37,7 +37,7 @@ export default Base => class extends Base {
     return (typeof value === 'object') || (this._props[name] !== value);
   }
   _setProps(props) {
-    // TODO(sjmiles): should this be a replace instead of a merge?
+    // TODO(sjmiles): should be a replace instead of a merge
     Object.assign(this._pendingProps, props);
     this._invalidateProps();
   }
@@ -50,7 +50,6 @@ export default Base => class extends Base {
     this._invalidate();
   }
   _async(fn) {
-    // TODO(sjmiles): SystemJS throws unless `Promise` is `window.Promise`
     return Promise.resolve().then(fn.bind(this));
     //return setTimeout(fn.bind(this), 10);
   }
@@ -62,7 +61,7 @@ export default Base => class extends Base {
   _validate() {
     // try..catch to ensure we nullify `validator` before return
     try {
-      // TODO(sjmiles): should this be a replace instead of a merge?
+      // TODO(sjmiles): should be a replace instead of a merge
       Object.assign(this._props, this._pendingProps);
       if (this._propsInvalid) {
         // TODO(sjmiles): should/can have different timing from rendering?
