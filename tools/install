@@ -1,6 +1,0 @@
-#!/bin/sh
-
-ROOT=$(dirname $0)/..
-(cd $ROOT && npm install)
-npm install -g bower
-(cd $ROOT/devtools && bower install)

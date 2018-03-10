@@ -7,6 +7,7 @@
     "host": "localhost"
   },
   "scripts": {
+    "prepare": "cd devtools && bower install",
     "start": "cross-env http-server -a ${npm_package_config_host} -p ${npm_package_config_port}",
     "test-with-start": "run-p --print-name --race start test",
     "test": "run-s --print-name --continue-on-error test-sigh test-mocha test-mocha-words test-wdio test-extension",
@@ -17,6 +18,7 @@
     "test-wdio": "cross-env wdio -b http://${npm_package_config_host}:${npm_package_config_port}/ shell/test/wdio.conf.js"
   },
   "devDependencies": {
+    "bower": "^1.8.2",
     "chai": "^4.1.2",
     "chokidar": "^1.7.0",
     "chromedriver": "^2.35.0",
