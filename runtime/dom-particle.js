@@ -75,7 +75,7 @@ class DomParticle extends XenStateMixin(Particle) {
     // TODO(sjmiles): getter that does work is a bad idea, this is temporary
     return {
       views: this.spec.inputs.map(i => i.name),
-      // TODO(mmandlis): this.spec needs to be replace with a particle-spec loaded from
+      // TODO(mmandlis): this.spec needs to be replaced with a particle-spec loaded from
       // .manifest files, instead of .ptcl ones.
       slotNames: [...this.spec.slots.values()].map(s => s.name)
     };
@@ -86,15 +86,13 @@ class DomParticle extends XenStateMixin(Particle) {
   async setViews(views) {
     this._views = views;
     let config = this.config;
-    //let readableViews = config.views.filter(name => views.get(name).canRead);
-    //this.when([new ViewChanges(views, readableViews, 'change')], async () => {
     this.when([new ViewChanges(views, config.views, 'change')], async () => {
-      await this._updateAllViews(views, config);
+      await this._handlesToProps(views, config);
     });
     // make sure we invalidate once, even if there are no incoming views
     this._setState({});
   }
-  async _updateAllViews(views, config) {
+  async _handlesToProps(views, config) {
     // acquire (async) list data from views
     let data = await Promise.all(
       config.views
@@ -132,6 +130,7 @@ class DomParticle extends XenStateMixin(Particle) {
   }
   fireEvent(slotName, {handler, data}) {
     if (this[handler]) {
+      // TODO(sjmiles): remove `this._state` parameter
       this[handler]({data}, this._state);
     }
   }

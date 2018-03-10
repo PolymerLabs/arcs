@@ -26,7 +26,7 @@ defineParticle(({TransformationDomParticle}) => {
     async setViews(views) {
       let arc = await this.constructInnerArc();
       this.on(views, 'foos', 'change', async e => {
-        this._updateAllViews(views, this.config);
+        this._handlesToProps(views, this.config);
 
         let foosView = views.get('foos');
         let foosList = await foosView.toList();
