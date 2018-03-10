@@ -90,7 +90,8 @@ const locateNodes = function(root, locator, map) {
     const loc = locator[n];
     if (loc) {
       const node = root.childNodes[n];
-      map[loc.key] = node;
+      // TODO(sjmiles): text-nodes sometimes evacipate when stamped, so map to the parentElement instead
+      map[loc.key] = (node.nodeType === Node.TEXT_NODE) ? node.parentElement : node;
       if (loc.sub) {
         // recurse
         locateNodes(node, loc.sub, map);
