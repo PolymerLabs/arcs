@@ -22,10 +22,10 @@ class TransformationDomParticle extends DomParticle {
   getTemplate(slotName) {
     return this._state.template;
   }
-  _render(props, state) {
+  render(props, state) {
     return state.renderModel;
   }
-  _shouldRender(props, state) {
+  shouldRender(props, state) {
     return Boolean(state.template && state.renderModel);
   }
 

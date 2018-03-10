@@ -72,7 +72,7 @@ ${styles}
     get template() {
       return template;
     }
-    _willReceiveProps({event}, state) {
+    willReceiveProps({event}, state) {
       if (event && !event.participants) {
         this._setParticipants(2);
       }
@@ -82,10 +82,10 @@ ${styles}
       event.participants = Number(size);
       this._views.get('event').set(event);
     }
-    _shouldRender({event}) {
+    shouldRender({event}) {
       return Boolean(event);
     }
-    _render({event}) {
+    render({event}) {
       const partySize = event.participants;
       const selected = {};
       for (let i = 1; i <= 21; ++i) {

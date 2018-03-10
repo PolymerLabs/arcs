@@ -9,6 +9,8 @@
  */
 'use strict';
 
+/* global defineParticle, importScripts */
+
 defineParticle(({DomParticle, resolver}) => {
   function importLibrary(filename) {
     importScripts(resolver(`GamePane/${filename}`));
@@ -18,6 +20,8 @@ defineParticle(({DomParticle, resolver}) => {
   importLibrary('Scoring.js');
   importLibrary('Tile.js');
   importLibrary('TileBoard.js');
+
+  /* global Dictionary, Tile, TileBoard, Scoring, BoardSolver, CHANCE_OF_FIRE_ON_REFILL, BOARD_WIDTH */
 
   const host = `move-picker`;
 
@@ -248,7 +252,7 @@ defineParticle(({DomParticle, resolver}) => {
       moveTiles = [];
       return [moveData, moveTiles, score];
     }
-    _update(props, state, lastProps, lastState) {
+    update(props, state, lastProps, lastState) {
       // info('update [props=', props, 'state=', state, '].');
       this._ensureDictionaryLoaded(state);
       let propsBoard = props.board;
@@ -271,7 +275,6 @@ defineParticle(({DomParticle, resolver}) => {
         score: props.stats ? props.stats.score : 0,
         moveSubmitted: false
       });
-      super._update(props, state, lastProps, lastState);
     }
     _topPixelForHorizontalTransition(fromTile, toTile) {
       let topPixel = fromTile.y * 50 + 18 + fromTile.y;
@@ -332,7 +335,7 @@ defineParticle(({DomParticle, resolver}) => {
       }
       return models;
     }
-    _render(props, state) {
+    render(props, state) {
       // info('render [props=', props, 'state=', state, '].');
       if (!state.tileBoard)
         return {

@@ -59,7 +59,7 @@ defineParticle(({DomParticle}) => {
     get template() {
       return template;
     }
-    _render(props) {
+    render(props) {
       if (props.stats && props.person)
         return {
             // TODO

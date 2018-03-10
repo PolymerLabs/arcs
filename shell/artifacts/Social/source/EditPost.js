@@ -65,15 +65,15 @@ defineParticle(({DomParticle, log}) => {
     _getInitialState() {
       return {message: ''};
     }
-    _willReceiveProps(props) {
+    willReceiveProps(props) {
       if (props.user) {
         this._setState({user: props.user});
       }
     }
-    _update(props, state, lastProps, lastState) {
+    update(props, state, lastProps, lastState) {
       const {post} = props;
-      // TODO(wkorman): We have to use update here because we need lastProps
-      // which isn't currently available in _render. The overall hijinks in
+      // TODO(wkorman): We have to use _update here because we need lastProps
+      // which isn't currently available in render. The overall hijinks in
       // which we engage below are in order to make sure we only update the
       // textarea text when a new message is supplied by WritePosts. An
       // alternate implementation could be to scrutinize the message id and if
@@ -85,9 +85,8 @@ defineParticle(({DomParticle, log}) => {
         state.textMessage = post.message;
         this._updateSaveButton(post.message);
       }
-      super._update(props, state, lastProps, lastState);
     }
-    _render({post}, state) {
+    render({post}, state) {
       let saveClasses = ['material-icons'];
       if (state.saveButtonActive) {
         saveClasses.push('button-live');

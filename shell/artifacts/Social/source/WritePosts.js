@@ -46,10 +46,10 @@ defineParticle(({DomParticle, resolver, log}) => {
     get template() {
       return template;
     }
-    _shouldRender({post, posts}) {
+    shouldRender({post, posts}) {
       return posts;
     }
-    _render({post, posts}, state) {
+    render({post, posts}, state) {
       // TODO(wkorman|sjmiles): Generalize or somehow clean up or document
       // the overall pattern between WritePosts and EditPost.
       if (post && post.message) {

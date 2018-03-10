@@ -13,7 +13,7 @@ defineParticle(({TransformationDomParticle}) => {
       this._handleIds = new Set();
     }
 
-    _willReceiveProps(props) {
+    willReceiveProps(props) {
       this._setState({renderModel: {items: TransformationDomParticle.propsToItems(props.foos)}});
     }
 

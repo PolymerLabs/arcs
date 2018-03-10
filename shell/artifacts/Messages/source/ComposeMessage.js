@@ -41,7 +41,7 @@ defineParticle(({DomParticle}) => {
     get template() {
       return template;
     }
-    _render(props) {
+    render(props) {
       let {messages, user} = props;
       if (messages && user) {
         return {

@@ -87,10 +87,10 @@ ${styles}
     get template() {
       return template;
     }
-    _shouldRender(props) {
+    shouldRender(props) {
       return !!props.product;
     }
-    _render(props) {
+    render(props) {
       let {product} = props;
       if (product) {
         let item = Object.assign({}, product.rawData);

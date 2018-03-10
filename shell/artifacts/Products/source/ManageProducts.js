@@ -143,7 +143,7 @@ ${productStyles}
     get template() {
       return template;
     }
-    _willReceiveProps(props) {
+    willReceiveProps(props) {
       let items = props.list.map(({id, rawData}, i) => {
         // TODO(sjmiles): rawData provides POJO access, but shortcuts schema-enforcing getters
         let item = Object.assign({}, rawData);
@@ -161,7 +161,7 @@ ${productStyles}
         }
       });
     }
-    _render(props, state) {
+    render(props, state) {
       return state.renderModel;
     }
     _onChooseValue(e, state) {

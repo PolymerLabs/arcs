@@ -75,7 +75,7 @@ defineParticle(({DomParticle, html, log}) => {
     get template() {
       return template;
     }
-    _render({selected}, state) {
+    render({selected}, state) {
       let hide = true;
       const open = Boolean(selected && (selected.name || selected.id));
       if (open || state.open) {

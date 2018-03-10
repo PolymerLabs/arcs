@@ -70,7 +70,7 @@ ${styles}
     get template() {
       return template;
     }
-    _render(props, state) {
+    render(props, state) {
       let food = props.food && props.food && props.food.food || '';
       return {
         [`selected${food}`]: true

@@ -134,7 +134,7 @@ defineParticle(({DomParticle, html}) => {
     get template() {
       return template;
     }
-    _willReceiveProps(props) {
+    willReceiveProps(props) {
       let items = props.list.map(({rawData}, i) => {
         return Object.assign({
           index: i,
@@ -144,7 +144,7 @@ defineParticle(({DomParticle, html}) => {
       });
       this._setState({items});
     }
-    _render(props, state) {
+    render(props, state) {
       return {
         items: state.items,
         count: state.items ? state.items.length : 0

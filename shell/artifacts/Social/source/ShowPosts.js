@@ -154,7 +154,7 @@ defineParticle(({DomParticle, resolver, log}) => {
         }
       }
     }
-    _willReceiveProps(props) {
+    willReceiveProps(props) {
       if (props.posts || props.stats) {
         this._initBlogMetadata(props);
         const metadataHandle = this._views.get('metadata');
@@ -231,7 +231,7 @@ defineParticle(({DomParticle, resolver, log}) => {
         owner: this._state.people[post.author]
       };
     }
-    _render({user, metadata}, {posts, avatars}) {
+    render({user, metadata}, {posts, avatars}) {
       const blogAuthor = this._blogOwnerName(metadata);
       const blogAvatarStyle = this._blogOwnerAvatarStyle(metadata, avatars);
       const blogDescription = this._blogDescription(user, metadata);

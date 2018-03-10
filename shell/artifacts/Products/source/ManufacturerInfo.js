@@ -20,10 +20,10 @@ defineParticle(({DomParticle}) => {
     get template() {
       return template;
     }
-    _shouldRender(props) {
+    shouldRender(props) {
       return !!props && !!props.product;
     }
-    _render(props) {
+    render(props) {
       let {product} = props;
       let msg = '';
       switch (product.name) {

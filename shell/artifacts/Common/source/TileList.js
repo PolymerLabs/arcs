@@ -53,10 +53,10 @@ defineParticle(({DomParticle, html, log}) => {
     get template() {
       return template;
     }
-    _shouldRender({items}) {
+    shouldRender({items}) {
       return Boolean(items);
     }
-    async _willReceiveProps({items, selected}) {
+    async willReceiveProps({items, selected}) {
       if (selected && selected.delete) {
         this._views.get('selected').clear();
         log('request to delete', selected);
@@ -67,7 +67,7 @@ defineParticle(({DomParticle, html, log}) => {
         }
       }
     }
-    _render({items}) {
+    render({items}) {
       const sorted = items.sort((a, b) => a.name > b.name ? 1 : a.name === b.name ? 0 : -1);
       return {
         items: {

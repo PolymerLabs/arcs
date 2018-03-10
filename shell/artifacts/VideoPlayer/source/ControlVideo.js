@@ -23,7 +23,7 @@ defineParticle(({DomParticle}) => {
 <button on-click="_upVolume">++</button>
   `.trim();
 */
-  
+
   let template = `
 <style>
   [video-controller] button {
@@ -47,7 +47,7 @@ defineParticle(({DomParticle}) => {
 
   let Play = 'play';
   let Pause = 'pause';
-  
+
   return class Compose extends DomParticle {
     get template() {
       return template;
@@ -55,7 +55,7 @@ defineParticle(({DomParticle}) => {
     _getInitialState() {
       return {mode: undefined, position: 0, ts: Date.now(), volume: 20};
     }
-    _willReceiveProps(props) {
+    willReceiveProps(props) {
       if (props.controls && props.controls.length) {
         let last = props.controls[props.controls.length - 1];
         this._setState({
@@ -102,7 +102,7 @@ defineParticle(({DomParticle}) => {
     _muteVolume(e, state) {
       this._setState({changed: true, volume: 0});
     }
-    _render(props, state) {
+    render(props, state) {
       if (state.changed) {
         this._setVideoPlayback(state);
         state.changed = false;
