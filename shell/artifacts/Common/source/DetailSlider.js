@@ -35,7 +35,8 @@ defineParticle(({DomParticle, resolver, html, log}) => {
     background-color: gray;
     opacity: 0.25;
   }
-  [${host}] > [dialog] {
+  [${host}] > [modal] {
+    display: flex;
     position: absolute;
     top: 4px;
     right: 4px;
@@ -46,11 +47,11 @@ defineParticle(({DomParticle, resolver, html, log}) => {
     border-radius: 16px;
     overflow: auto;
   }
-  [${host}] > [dialog] > [buttons] {
+  [${host}] > [modal] > [buttons] {
     border-bottom: 1px solid lightgrey;
     height: 56px;
   }
-  [${host}] > [dialog] > [buttons] > [back-button] {
+  [${host}] > [modal] > [buttons] > [back-button] {
     background-color: transparent;
     border: none;
     border-radius: 100%;
@@ -59,14 +60,22 @@ defineParticle(({DomParticle, resolver, html, log}) => {
     top: 8px;
     padding: 8px;
   }
-  [${host}] > [dialog] > [buttons] > [back-button]:active {
+  [${host}] > [modal] > [buttons] > [back-button]:active {
     background-color: #b0e3ff;
+  }
+  [${host}] > [modal] > [slot-content] {
+    flex: 1;
+    display: flex;
+  }
+  [${host}] > [modal] > [slot-content] > [particle-host] {
+    flex: 1;
+    display: flex;
   }
 </style>
 
 <div ${host} modal open$="{{open}}">
   <div scrim></div>
-  <div dialog>
+  <div modal>
     <div buttons>
       <i back-button class="material-icons" on-click="onBack">close</i>
     </div>
