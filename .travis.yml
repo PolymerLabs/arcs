@@ -24,6 +24,11 @@ before_deploy:
 
 deploy:
   provider: pages
+
+  # todo: remove this once travis fixes their upstream issue (travis-ci/travis-ci#9312)
+  edge:
+    branch: pages-ivar-set
+
   skip-cleanup: true
   github-token: $GITHUB_TOKEN
   keep-history: true
