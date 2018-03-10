@@ -56,8 +56,6 @@ export default Base => class extends Base {
   }
   _invalidate() {
     if (!this._validator) {
-      //this._log('register _async validate');
-      //console.log(this.localName + (this.id ? '#' + this.id : '') + ': invalidated');
       this._validator = this._async(this._validate);
     }
   }
@@ -92,10 +90,6 @@ export default Base => class extends Base {
   }
   _willReceiveProps(props, state) {
   }
-  /*
-  _willReceiveState(props, state) {
-  }
-  */
   _shouldUpdate(props, state, lastProps, lastState) {
     return true;
   }
