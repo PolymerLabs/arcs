@@ -42,7 +42,6 @@ class Annotator {
     this.opts = opts || 0;
     this.key = this.opts.key || 0;
     notes.locator = this._annotateSubtree(node);
-    //console.log('notes:', notes);
     return notes;
   }
   // walking subtree at `node`
@@ -73,11 +72,8 @@ class Annotator {
     let key = this.key++;
     let shouldLocate = this.cb(node, key, this.notes, this.opts);
     // recurse
-    //console.group(node.localName||'#text');
     let locators = this._annotateSubtree(node);
-    //console.groupEnd();
     if (shouldLocate || locators) {
-      //console.log('capturing', key, '('+(node.localName||'#text')+')');
       let cl = Object.create(null);
       cl.key = key;
       if (locators) {
@@ -91,16 +87,10 @@ class Annotator {
 const locateNodes = function(root, locator, map) {
   map = map || [];
   for (let n in locator) {
-    let loc = locator[n];
+    const loc = locator[n];
     if (loc) {
-      let node = root.childNodes[n];
-      if (node.nodeType == Node.TEXT_NODE && node.parentElement) {
-        // TODO(mmandlis): remove this line and the (property === 'textContent') clause
-        // in _set() method, in favor of explicit innerHTML binding.
-        map[loc.key] = node.parentElement;
-      } else {
-        map[loc.key] = node;
-      }
+      const node = root.childNodes[n];
+      map[loc.key] = node;
       if (loc.sub) {
         // recurse
         locateNodes(node, loc.sub, map);
@@ -186,7 +176,6 @@ const annotateEvent = function(node, key, notes, name, value) {
 const takeNote = function(notes, key, group, name, note) {
   let n$ = notes[key] || (notes[key] = Object.create(null));
   (n$[group] || (n$[group] = {}))[name] = note;
-  //console.log('[%s]::%s.{{%s}}:', key, group, name, note);
 };
 
 const annotator = new Annotator(annotatorImpl);
@@ -240,8 +229,8 @@ const set = function(notes, map, scope, controller) {
 };
 
 const _set = function(node, property, value, controller) {
+  // TODO(sjmiles): the property conditionals here could be precompiled
   let modifier = property.slice(-1);
-  //console.log('_set: %s, %s, '%s'', node.localName || '(text)', property, value);
   if (property === 'style%' || property === 'style') {
     if (typeof value === 'string') {
       node.style.cssText = value;
@@ -263,6 +252,11 @@ const _set = function(node, property, value, controller) {
     }
   } else if (property === 'unsafe-html') {
     node.innerHTML = value || '';
+  } else if (property === 'value') {
+    // TODO(sjmiles): specifically dirty-check `value` to avoid resetting input elements
+    if (node.value !== value) {
+      node.value = value;
+    }
   } else {
     node[property] = value;
   }
@@ -287,6 +281,7 @@ const _setSubTemplate = function(node, value, controller) {
   } else {
     template = maybeStringToTemplate(template);
   }
+  // TODO(sjmiles): reuse nodes instead of punting them
   node.textContent = '';
   if (template && value.models) {
     for (let m of value.models) {
