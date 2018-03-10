@@ -33,7 +33,7 @@ const template = Xen.html`
   <remote-profile-handles arc="{{arc}}" user="{{user}}" on-profile="_onProfile"></remote-profile-handles>
   <remote-friends-shared-handles arc="{{arc}}" friends="{{friends}}" user="{{user}}" on-handle="_onHandle"></remote-friends-shared-handles>
   <!-- set of arcs visited by user, only used by launcher -->
-  <remote-visited-arcs user="{{launcherUser}}" arcs="{{visitedArcs}}" on-arcs="_onData"></remote-visited-arcs>
+  <remote-visited-arcs user="{{launcherUser}}" arcs="{{launcherarcs}}" on-arcs="_onData"></remote-visited-arcs>
 `;
 
 // PROPS
@@ -48,15 +48,20 @@ class ArcCloud extends Xen.Base {
     return template;
   }
   static get observedAttributes() {
-    return ['config', 'userid', 'manifests', 'arc', 'key', 'metadata', 'plans', 'plan'];
+    return ['config', 'userid', 'manifests', 'arc', 'key', 'metadata', 'plans', 'plan', 'exclusions', 'share', 'launcherarcs'];
   }
   _update(props, state) {
-    const {user, avatar, steps, metadata} = state;
+    const {share} = props;
+    const {user, avatar, steps, metadata, key} = state;
     if (user && avatar) {
       // TODO(sjmiles): double-time encapsulation breakage
       user.avatar = props.arc._loader._resolve(avatar.url);
     }
+    if (props.exclusions) {
+      state.exclusions = props.exclusions;
+    }
     this._consumeSteps(steps, metadata);
+    this._consumeShareState(user, key, share);
     this._fire('users', state.users);
     this._fire('friends', state.friends);
     this._fire('avatars', state.avatars);
@@ -66,10 +71,11 @@ class ArcCloud extends Xen.Base {
     this._fire('key', state.key);
     this._fire('metadata', state.metadata);
     this._fire('step', state.step && state.step.plan);
+    this._fire('arcs', state.arcs);
     super._update(props, state);
   }
-  _render({config, userid, arc, key, metadata, plans, plan}, {manifests, exclusions, user, friends}) {
-    //ArcCloud.log(this._props, this._state);
+  _render({config, userid, arc, key, metadata, plans, plan, launcherarcs}, {manifests, exclusions, user, friends}) {
+    //log(this._props, this._state);
     const render = {
       configkey: config && config.key,
       userid,
@@ -83,26 +89,51 @@ class ArcCloud extends Xen.Base {
       metadata,
       steps: metadata && metadata.steps,
       plans,
-      plan
+      plan,
+      launcherarcs
     };
     return render;
   }
   _consumeSteps(steps, metadata) {
-    // steps are part of metadata, metadata is checked for changing by JSON serialization
-    /*
+    // steps are part of metadata, metadata is dirty-checked via JSON serialization
     if (steps && metadata && steps !== metadata.steps) {
-      ArcCloud.log(`mutating metadata for new steps`);
-      // metadata is immutable, make a new object
-      metadata = Object.assign(Object.create(null), metadata);
+      log(`setting new steps to metadata`);
       metadata.steps = steps;
-      // set new object to state
       this._setState({metadata});
     }
-    */
+  }
+  _consumeShareState(user, key, share) {
+    let dirty = false;
+    const profileState = share > 0;
+    const shareState = share > 1;
+    if (user && key) {
+      if (!user.profiles || (Boolean(user.profiles[key]) !== profileState)) {
+        dirty = true;
+        user.profiles = user.profiles || Object.create(null);
+        if (profileState) {
+          user.profiles[key] = true;
+        } else {
+          delete user.profiles[key];
+        }
+      }
+      if (!user.shares || (Boolean(user.shares[key]) !== shareState)) {
+        dirty = true;
+        user.shares = user.shares || Object.create(null);
+        if (shareState) {
+          user.shares[key] = true;
+        } else {
+          delete user.shares[key];
+        }
+      }
+    }
+    if (dirty) {
+      // `state.user` is considered immutable, need a copy
+      this._setState({user: Object.assign(Object.create(null), user)});
+    }
   }
   _onData(e, data) {
     if (this._setIfDirty({[e.type]: data})) {
-      ArcCloud.log(e.type, data);
+      log(e.type, data);
     }
   }
   async _onProfile(e, profile) {
@@ -123,7 +154,7 @@ class ArcCloud extends Xen.Base {
       // expects the full Entities, and I can't change that code right now.
       //const data = handleData && (handleData.rawData || Object.values(handleData).map(e => e.rawData));
       const data = handleData && (handleData.rawData || handleData);
-      ArcCloud.log(profile.id, data);
+      log(profile.id, data);
       this._setIfDirty({[property]: data});
     }
   }
@@ -139,11 +170,11 @@ class ArcCloud extends Xen.Base {
       }
       const handleData = await ArcsUtils.getHandleData(handle);
       const data = handleData && handleData.map(d => d.rawData);
-      ArcCloud.log(handle.id, data);
+      log(handle.id, data);
       this._setIfDirty({[property]: data});
     }
   }
 }
 
-ArcCloud.log = Xen.Base.logFactory('ArcCloud', '#bb4d00');
+const log = Xen.Base.logFactory('ArcCloud', '#bb4d00');
 customElements.define('arc-cloud', ArcCloud);
