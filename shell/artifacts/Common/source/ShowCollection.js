@@ -153,7 +153,7 @@ recipe
       let hostedItems = this._state.hostedItems || [];
       let listIndex = hostedItems.findIndex(item => item.subId == subId);
       let item = Object.assign({}, content.model, {subId});
-      if (listIndex >= 0 && listIndex < items.length) {
+      if (listIndex >= 0 && listIndex < hostedItems.length) {
         hostedItems[listIndex] = item;
       } else {
         hostedItems.push(item);
