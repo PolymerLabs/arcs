@@ -84,6 +84,10 @@ const template = Xen.html`
   <span>Star this arc</span>
   <icon>star_border</icon>
 </section>
+<section bar on-click="_onToolsClick">
+  <span>Toggle tools panel</span>
+  <icon>business_center</icon>
+</section>
 <section bar on-click="_onCastClick">
   <span>Cast this arc</span>
   <icon>cast</icon>
@@ -137,6 +141,8 @@ class MenuPanel extends Xen.Base {
         models: friends.map((friend, i) => this._renderUser(arc, selected, friend.rawData, avatars, i))
       };
     }
+    const shareState = isShared ? 2 : isProfile ? 1 : 0;
+    setTimeout(() => this._fire('share', shareState), 100);
     return render;
   }
   _didRender({}, {isOpen}) {
@@ -169,7 +175,7 @@ class MenuPanel extends Xen.Base {
       if (afterEvent) {
         this._fire(afterEvent);
       }
-    }, 300);
+    }, 220);
   }
   _onClose() {
     this._close();
@@ -178,7 +184,12 @@ class MenuPanel extends Xen.Base {
     this._close('user');
   }
   _onCastClick() {
-    this._close('cast');
+    this._fire('cast');
+    //this._close();
+  }
+  _onToolsClick() {
+    this._fire('tools');
+    //this._close();
   }
   _onProfileClick() {
     let {isProfile, isShared} = this._state;

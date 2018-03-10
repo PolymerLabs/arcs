@@ -96,9 +96,10 @@ export default Xen.html`
     align-items: center;
     padding-right: 0;
   }
-  toolbar-buttons > a {
+  toolbar a {
     color: inherit;
     text-decoration: none;
+    height: 24px;
   }
   [launcher] toolbar-buttons {
     display: none;

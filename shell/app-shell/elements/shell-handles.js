@@ -89,39 +89,18 @@ class ShellHandles extends Xen.Base {
     if (users && (users !== lastProps.users || !state.usersHandleData)) {
       state.usersHandleData = this._renderUsers(users);
     }
-    if (visited && (visited != lastProps.visited)) {
-      state.arcsHandleData = this._renderVisited(user, visited);
+    if (visited) {
+      const serial = JSON.stringify(visited);
+      if (serial !== state.serialVisited) {
+        state.serialVisited = serial;
+        state.arcsHandleData = this._renderVisited(user, visited);
+      }
     }
     super._update(props, state);
   }
   _render(props, state) {
-    ShellHandles.log(props, state);
+    //log(props, state);
     return [state, props];
-  }
-  X_render({arc}, {
-      themeData,
-      arcsHandleOptions,
-      arcsHandleData,
-      themeHandleOptions,
-      userHandleOptions,
-      userHandleData,
-      usersHandleOptions,
-      usersHandleData,
-      boxedAvatarHandleOptions}) {
-    ShellHandles.log(this._props, this._state);
-    const render = {
-      arc,
-      themeData,
-      arcsHandleOptions,
-      arcsHandleData,
-      themeHandleOptions,
-      userHandleOptions,
-      userHandleData,
-      usersHandleOptions,
-      usersHandleData,
-      boxedAvatarHandleOptions
-    };
-    return render;
   }
   _renderUser(user, geoCoords) {
     return {
@@ -167,15 +146,20 @@ class ShellHandles extends Xen.Base {
   }
   _onData(e, data) {
     if (this._setIfDirty({[e.type]: data})) {
-      ShellHandles.log(e.type, data);
+      log(e.type, data);
     }
   }
   async _onShellThemeChange(e, handle) {
     const theme = (await ArcsUtils.getHandleData(handle)).rawData;
-    ShellHandles.log('ShellThemeChange', theme);
+    log('onShellThemeChange', theme);
     this._fire('theme', theme);
+  }
+  async _onArcsHandleChange(e, handle) {
+    const arcs = (await ArcsUtils.getHandleData(handle));
+    log('onArcsHandleChange', arcs);
+    this._fire('launcherarcs', arcs);
   }
 }
 
-ShellHandles.log = Xen.Base.logFactory('ShellHandles', '#004f00');
+const log = Xen.Base.logFactory('ShellHandles', '#004f00');
 customElements.define('shell-handles', ShellHandles);

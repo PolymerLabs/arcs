@@ -32,19 +32,19 @@ class RemoteVisitedArcs extends Xen.Base {
     if (user && user.arcs) {
       RemoteVisitedArcs.log(`watching visited arcs`);
       // build an object for mapping arc keys to arc metadata
-      let data = Object.create(null);
+      let arcs = Object.create(null);
       // user.arcs contains arc keys
       return Object.keys(user.arcs).map(key => {
         return {
           node: db.child(`arcs/${key}/`),
-          handler: snap => this._watchHandler(data, user, snap)
+          handler: snap => this._watchHandler(arcs, user, snap)
         };
       });
     } else {
       this._fire('arcs', []);
     }
   }
-  _watchHandler(data, user, snap) {
+  _watchHandler(arcs, user, snap) {
     // arc metadata record
     let record = snap.val();
     // there should always be a record, but the DB might be damaged
@@ -54,22 +54,22 @@ class RemoteVisitedArcs extends Xen.Base {
         record.profile = snap.key;
       }
       // stuff this record into our list of arc metadata
-      data[snap.key] = record;
-      RemoteVisitedArcs.log('READING (_watchHandler)', data);
+      arcs[snap.key] = record;
+      RemoteVisitedArcs.log('READING (_watchHandler)', arcs);
       // produce our deliverable
-      this._fire('arcs', data);
+      this._fire('arcs', arcs);
     }
   }
   _updateVisitedArcs(arcs, user) {
     // update list of visited arcs (`user.arcs`) to match input list (`arcs`, minus New Arc [*])
-    let keys = arcs.map(a => a.rawData.key).filter(key => key != '*');
+    const keys = arcs.map(a => a.rawData.key).filter(key => key != '*');
     // no-op if data matches
     // right now the only change we support is removal, so length check is enough
     if (user.arcs && keys.length !== Object.keys(user.arcs).length) {
       //RemoteVisitedArcs.log('updateVisitedArcs', keys, user.arcs);
-      let visited = Object.create(null);
+      const visited = Object.create(null);
       keys.forEach(key => {
-        let arc = user.arcs[key];
+        const arc = user.arcs[key];
         if (arc) {
           visited[key] = arc;
         }

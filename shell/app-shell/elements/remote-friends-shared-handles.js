@@ -22,9 +22,9 @@ class RemoteFriendsSharedHandles extends Xen.Base {
       boxes: {}
     };
   }
-  _update(props, state, lastProps) {
-    if (props.arc && props.user && props.friends && props.friends !== lastProps.friends) {
-      state.group.watches = this._watchFriends(state.db, state.group, props.arc, props.friends, props.user);
+  _update({arc, user, friends}, state, lastProps) {
+    if (arc && user && friends && friends !== lastProps.friends) {
+      state.group.watches = this._watchFriends(state.db, state.group, arc, friends, user);
     }
   }
   //
@@ -107,7 +107,7 @@ class RemoteFriendsSharedHandles extends Xen.Base {
       // acquire type record for a Set of the base type
       const setType = arcsType.isSetView ? arcsType : arcsType.setViewOf();
       // combine the data into a box
-      this._addToBox(arc, boxId, setType, name, [`#${boxId}`], data);
+      this._addToBox(arc, boxId, setType, name, [`#${boxId}`], data, friend);
     }
   }
   // convert firebase format to handle-data format, embed friend id as owner
@@ -132,7 +132,7 @@ class RemoteFriendsSharedHandles extends Xen.Base {
     const handle = await this._requireHandle(arc, id, type, name, tags);
     const typeName = handle.type.toPrettyString().toLowerCase();
     handle.description = ArcsUtils._getHandleDescription(typeName, handle.tags, this._props.user.name, friend.name);
-    this._addHandleData(handle, data);
+    this._addHandleData(handle, data, friend);
   }
   async _addToBox(arc, id, type, name, tags, data, friend) {
     const {boxes} = this._state;
@@ -142,8 +142,8 @@ class RemoteFriendsSharedHandles extends Xen.Base {
     if (box) {
       if (box.handle) {
         this._addHandleData(box.handle, data, friend);
-        // inform owner that we updated this handle
-        this._fire('handle', box.handle);
+      // inform owner that we updated this handle
+      this._fire('handle', box.handle);
       } else {
         //RemoteFriendsSharedHandles.log(`caching friend's shared handle for boxing as [${id}]`);
         box.pending.push({data});
