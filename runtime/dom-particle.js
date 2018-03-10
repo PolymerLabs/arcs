@@ -67,7 +67,6 @@ class DomParticle extends XenStateMixin(Particle) {
     }
     this.config.slotNames.forEach(s => this.renderSlot(s, ['model']));
   }
-
   /** @method get config()
    * Override if necessary, to modify superclass config.
    */
