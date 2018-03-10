@@ -166,7 +166,7 @@ ${styles}
     get template() {
       return template;
     }
-    _willReceiveProps(props) {
+    willReceiveProps(props) {
       let {selected} = props;
       if (selected) {
         let item = selected;
@@ -186,10 +186,10 @@ ${styles}
       // console.log(detail);
       this._setState({detail});
     }
-    _shouldRender(props, state) {
+    shouldRender(props, state) {
       return Boolean(state.item);
     }
-    _render(props, state) {
+    render(props, state) {
       let model = {
         style: {
           backgroundImage: `url(${state.item.photo})`

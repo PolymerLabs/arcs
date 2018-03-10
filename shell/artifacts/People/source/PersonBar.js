@@ -48,7 +48,7 @@ defineParticle(({DomParticle, resolver}) => {
     get template() {
       return template;
     }
-    _willReceiveProps(props) {
+    willReceiveProps(props) {
       // TODO(sjmiles): best way to translate entity data into POJO?
       let people = props.people.map((person, i) => {
         return {
@@ -59,9 +59,9 @@ defineParticle(({DomParticle, resolver}) => {
         };
       });
       this._setState({people});
-      setInterval(() => this._willReceiveProps(this._props), 60000);
+      setInterval(() => this.willReceiveProps(this._props), 60000);
     }
-    _render(props, state) {
+    render(props, state) {
       return {
         people: {
           $template: 'people',

@@ -130,7 +130,7 @@ recipe
       });
 
     }
-    _willReceiveProps(props) {
+    willReceiveProps(props) {
       let propsItems = TransformationDomParticle.propsToItems(props.collection);
 
       this._updateRenderModel(propsItems, this._state.hostedItems || []);

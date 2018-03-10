@@ -26,7 +26,7 @@ defineParticle(({DomParticle, resolver}) => {
     get template() {
       return template;
     }
-    _willReceiveProps(props, state) {
+    willReceiveProps(props, state) {
       if (props.restaurants && !state.count) {
         this._fetchPlaces(props.location);
       }
@@ -62,7 +62,7 @@ defineParticle(({DomParticle, resolver}) => {
       });
       this._setState({count: places.results.length});
     }
-    _render(props, state) {
+    render(props, state) {
       return {
         complete: state.count > 0
       };

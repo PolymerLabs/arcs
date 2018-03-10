@@ -57,7 +57,7 @@ ${styles}
     get template() {
       return template;
     }
-    _render(props, state) {
+    render(props, state) {
       let user = props.person || {};
       let friends = props.friends || [];
       let people = (props.people || []).filter(p => p.id !== user.id);

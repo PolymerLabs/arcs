@@ -53,7 +53,7 @@ ${styles}
     get template() {
       return template;
     }
-    _render(props, state) {
+    render(props, state) {
       let avatar = props.avatar || 0;
       let avatars = [];
       for (let i=0; i<23; i++) {

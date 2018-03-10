@@ -192,7 +192,7 @@ class InnerPEC {
       }
 
       particle._slotByName.set(slotName, new Slotlet(this, particle, slotName));
-      particle.render(slotName, contentTypes);
+      particle.renderSlot(slotName, contentTypes);
     };
 
     this._apiPort.onStopRender = ({particle, slotName}) => {

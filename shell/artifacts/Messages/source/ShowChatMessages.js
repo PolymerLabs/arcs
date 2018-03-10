@@ -84,7 +84,7 @@ defineParticle(({DomParticle, resolver}) => {
     get userName() {
       return this._props.user && this._props.user.name || '';
     }
-    _render(props) {
+    render(props) {
       let {messages, user, avatars} = props;
       if (messages && user) {
         return {

@@ -49,7 +49,7 @@ describe('particle-api', function() {
                   var output = views.get("result");
                   input.synchronize('change', model => {
                     output.set(new output.entityClass({value: '' + model.length}));
-                  }, update => undefined, this);
+                  }, _update => undefined, this);
                 }
               }
             });

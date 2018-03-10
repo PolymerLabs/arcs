@@ -34,10 +34,10 @@ defineParticle(({DomParticle}) => {
     get template() {
       return template;
     }
-    _shouldRender(props) {
+    shouldRender(props) {
       return props.restaurants && props.food;
     }
-    _render(props, state) {
+    render(props, state) {
       const list = props.restaurants;
       const food = props.food && props.food.food || '';
       return {

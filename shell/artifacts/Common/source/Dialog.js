@@ -59,7 +59,7 @@ defineParticle(({DomParticle, resolver, html, log}) => {
     get template() {
       return template;
     }
-    _render({uiState}) {
+    render({uiState}) {
       return {
         open: Boolean(uiState && uiState.open)
       };

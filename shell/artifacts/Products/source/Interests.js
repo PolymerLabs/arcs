@@ -24,7 +24,7 @@ defineParticle(({DomParticle}) => {
     get template() {
       return template;
     }
-    _willReceiveProps(props) {
+    willReceiveProps(props) {
       if (props.list) {
         let items = [];
         props.list.forEach(item => {
@@ -37,10 +37,10 @@ defineParticle(({DomParticle}) => {
         this._setState({items});
       }
     }
-    _shouldRender(props, state) {
+    shouldRender(props, state) {
       return Boolean(state.items);
     }
-    _render(props, state) {
+    render(props, state) {
       return {items: state.items};
     }
   };

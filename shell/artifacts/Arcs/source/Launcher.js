@@ -81,14 +81,14 @@ ${style}
     get template() {
       return template;
     }
-    _willReceiveProps({arcs}) {
+    willReceiveProps({arcs}) {
       const collation = this._collateItems(arcs);
       this._setState(collation);
     }
-    _shouldRender(props, state) {
+    shouldRender(props, state) {
       return Boolean(state.items);
     }
-    _render(props, {items, profileItems}) {
+    render(props, {items, profileItems}) {
       const all = items.concat(profileItems);
       const pivot = (all.length + 1) >> 1;
       const columns = [all.slice(0, pivot), all.slice(pivot)];

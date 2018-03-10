@@ -130,7 +130,7 @@ ${productStyles}
     get template() {
       return template;
     }
-    _willReceiveProps(props) {
+    willReceiveProps(props) {
       let result = [...difference(props.choices, props.resultList)];
       if (result.length > 0) {
         this.relevance = 10;
@@ -139,10 +139,10 @@ ${productStyles}
         values: result
       });
     }
-    _shouldRender(props, state) {
+    shouldRender(props, state) {
       return Boolean(state.values && state.values.length);
     }
-    _render(props, state) {
+    render(props, state) {
       return {
         items: state.values.map(({rawData, id}, index) => {
           return Object.assign(Object.assign({}, rawData), {

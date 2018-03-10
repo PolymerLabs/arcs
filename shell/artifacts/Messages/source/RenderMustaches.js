@@ -18,7 +18,7 @@ defineParticle(({DomParticle}) => {
     get template() {
       return template;
     }
-    _render(props, state) {
+    render(props, state) {
       if (props.messages && props.messages.length) {
         return {
           items: props.messages.map((m, i) => {

@@ -117,7 +117,7 @@ ${styles}
     get template() {
       return template;
     }
-    _willReceiveProps(props, state) {
+    willReceiveProps(props, state) {
       let event;
 
       if (!props.event || !props.event.startDate) {
@@ -217,10 +217,10 @@ ${styles}
         ? `Table for ${participants} available at ${closest}`
         : `No table for ${participants} available within 2 hours`;
     }
-    _shouldRender(props, state) {
+    shouldRender(props, state) {
       return Boolean(state.currentEvent);
     }
-    _render(props, state) {
+    render(props, state) {
       // TODO(noelutz): remove code that handles list rendering.
       // It has moved to ReservationAnnotation.js.
       const selectedRestaurant = props.selected;

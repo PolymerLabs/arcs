@@ -33,8 +33,8 @@ defineParticle(({DomParticle}) => {
     get template() {
       return template;
     }
-    _shouldRender({person}) { return Boolean(person); }
-    _render({person}) {
+    shouldRender({person}) { return Boolean(person); }
+    render({person}) {
       let name = (person && person.name) || 'n/a';
       let occasion = (person && person.occasion) || 'n/a';
       let inOneWeek =

@@ -195,7 +195,7 @@ ${styles}
     get template() {
       return template;
     }
-    _willReceiveProps(props, state) {
+    willReceiveProps(props, state) {
       const event = Object.assign({}, props.event && props.event.rawData || {});
       this._event = event;
       this._savedStartDate = event.startDate || (new Date()).toJSON().slice(0, 16);
@@ -211,7 +211,7 @@ ${styles}
         '. Select a different time from your calendar');
 
     }
-    _render(props, state) {
+    render(props, state) {
       const events = this._getEventsForDate(this._savedStartDate);
       this._savedStartDate = this._savedStartDate || '';
       const startTime = this._savedStartDate.slice(11);

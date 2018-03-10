@@ -60,7 +60,7 @@ defineParticle(({DomParticle}) => {
         return 'chat';
       }
     }
-    _willReceiveProps(props) {
+    willReceiveProps(props) {
       if (props.participants && props.participants.length && props.messages && props.messages.length) {
         let latest = new Map();
         props.messages.forEach(c => {
@@ -73,7 +73,7 @@ defineParticle(({DomParticle}) => {
         this._setState({latest});
       }
     }
-    _render(props, state) {
+    render(props, state) {
       if (state.latest && props.participants) {
         return {
           items: props.participants.map(p => this._renderInner(p, state.latest.get(p.name)))
@@ -84,8 +84,8 @@ defineParticle(({DomParticle}) => {
       if (message !== undefined) {
         let model = {name: p.name, message};
         if (this.mode == 'mustache') {
-          model.position = mustache[p.name] ? mustache[p.name].position : '';   
-          model.opacity = '1';            
+          model.position = mustache[p.name] ? mustache[p.name].position : '';
+          model.opacity = '1';
         }
         return {
           subId: p.name,

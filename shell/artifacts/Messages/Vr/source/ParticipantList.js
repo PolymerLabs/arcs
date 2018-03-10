@@ -58,7 +58,7 @@ defineParticle(({DomParticle}) => {
     get template() {
       return template;
     }
-    _render(props, state) {
+    render(props, state) {
       if (props.participants) {
         return {
           participants: {

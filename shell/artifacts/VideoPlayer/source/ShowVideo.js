@@ -24,7 +24,7 @@ defineParticle(({DomParticle}) => {
     get template() {
       return template;
     }
-    _render(props, state) {
+    render(props, state) {
       if (props.controls && props.controls.length) {
         let c = props.controls[props.controls.length - 1];
         return {

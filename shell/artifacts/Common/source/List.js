@@ -29,10 +29,10 @@ defineParticle(({DomParticle, resolver, html}) => {
     get template() {
       return template;
     }
-    _shouldRender(props) {
+    shouldRender(props) {
       return Boolean(props.items);
     }
-    _render({items}) {
+    render({items}) {
       return {
         items: {
           $template: 'items',

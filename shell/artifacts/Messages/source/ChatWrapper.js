@@ -103,10 +103,10 @@ defineParticle(({DomParticle, resolver}) => {
     _getInitialState() {
       return {open: false, animations: []};
     }
-    _shouldRender(props) {
+    shouldRender(props) {
       return props.messages && props.avatars;
     }
-    _render(props, state) {
+    render(props, state) {
       let {messages, avatars} = props;
       let count = messages && messages.length;
       // Last points to the last non-custom message.

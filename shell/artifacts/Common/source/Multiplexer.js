@@ -90,7 +90,7 @@ recipe
         }
 
         // Update props of all particle's views.
-        this._updateAllViews(views, this.config);
+        this._handlesToProps(views, this.config);
       });
     }
 

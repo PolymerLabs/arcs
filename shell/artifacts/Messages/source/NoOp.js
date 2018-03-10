@@ -13,7 +13,7 @@ defineParticle(({DomParticle}) => {
     get template() {
       return '';
     }
-    _render(props) {
+    render(props) {
     }
   };
 });

@@ -8,7 +8,7 @@
 
 defineParticle(({DomParticle}) => {
   return class ExtractLocation extends DomParticle {
-    _willReceiveProps(props, state, lastProps) {
+    willReceiveProps(props, state, lastProps) {
       if (props.person && props.person.name && props.person.location
           && JSON.stringify(props.person.location) !==
           JSON.stringify(lastProps.person && lastProps.person.location)) {

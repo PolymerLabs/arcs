@@ -16,7 +16,7 @@ defineParticle(({DomParticle}) => {
     _getInitialState() {
       return {participants: new Set()};
     }
-    _willReceiveProps(props) {
+    willReceiveProps(props) {
       if (props.messages && props.participants) {
         let participants = new Set([
           ...this._state.participants,
@@ -34,7 +34,7 @@ defineParticle(({DomParticle}) => {
         }
       }
     }
-    _render(props, state) {
+    render(props, state) {
       if (state.changes) {
         let changes = state.changes;
         state.participants = new Set([...state.participants, ...state.changes]);

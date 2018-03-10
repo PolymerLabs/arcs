@@ -42,7 +42,7 @@ ${styles}
     get template() {
       return template;
     }
-    _render(props) {
+    render(props) {
       if (props.location) {
         const {latitude, longitude} = props.location;
         return {latitude, longitude};

@@ -129,7 +129,7 @@ ${styles}
     get template() {
       return template;
     }
-    _willReceiveProps(props, state) {
+    willReceiveProps(props, state) {
       if (!props.event) {
         const now = this.toDateInputValue(new Date());
         const event = {startDate: now, endDate: now, participants: 2};
@@ -178,7 +178,7 @@ ${styles}
 
       return result;
     }
-    _render(props, state) {
+    render(props, state) {
       if (props.list && props.list.length) {
         return this._renderList(props.list, state.currentEvent.startDate, parseInt(state.currentEvent.participants) || 2);
       }

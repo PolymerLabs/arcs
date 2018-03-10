@@ -22,10 +22,10 @@ defineParticle(({DomParticle}) => {
     get template() {
       return template;
     }
-    _shouldRender(props) {
+    shouldRender(props) {
       return !!props && !!props.product;
     }
-    _render(props) {
+    render(props) {
       let {product} = props;
       let now = Date.now();
       let needed = new Date('2017-12-04').getTime();
