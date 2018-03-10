@@ -39,7 +39,7 @@ class Arc {
     this._speculative = !!speculative; // undefined => false
     this._nextLocalID = 0;
     this._activeRecipe = new Recipe();
-    // TODO: rename: this are just tuples of {particles, handles, slots} of instantiated recipes merged into active recipe..
+    // TODO: rename: this are just tuples of {particles, handles, slots, pattern} of instantiated recipes merged into active recipe.
     this._recipes = [];
     this._loader = loader;
     this._scheduler = scheduler;
@@ -298,7 +298,7 @@ ${this.activeRecipe.toString()}`;
    let {particles, handles, slots} = this._activeRecipe.mergeInto(arc._activeRecipe);
    let particleIndex = 0, handleIndex = 0, slotIndex = 0;
    this._recipes.forEach(recipe => {
-     let arcRecipe = {particles: [], handles: [], slots: [], innerArcs: new Map()};
+     let arcRecipe = {particles: [], handles: [], slots: [], innerArcs: new Map(), pattern: recipe.pattern};
      recipe.particles.forEach(p => {
        arcRecipe.particles.push(particles[particleIndex++]);
        if (recipe.innerArcs.has(p)) {
@@ -354,7 +354,7 @@ ${this.activeRecipe.toString()}`;
       currentArc = innerArcs.get(innerArc.particle);
     }
     let {handles, particles, slots} = recipe.mergeInto(currentArc.activeRecipe);
-    currentArc.recipes.push({particles, handles, slots, innerArcs: new Map()});
+    currentArc.recipes.push({particles, handles, slots, innerArcs: new Map(), pattern: recipe.pattern});
     slots.forEach(slot => slot.id = slot.id || `slotid-${this.generateID()}`);
 
     for (let recipeHandle of handles) {

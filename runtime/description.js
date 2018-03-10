@@ -23,14 +23,14 @@ export default class Description {
   set relevance(relevance) { this._relevance = relevance; }
 
   async getArcDescription(formatterClass) {
-    let desc = await new (formatterClass || DescriptionFormatter)(this).getDescription(this._arc.activeRecipe.particles);
+    let desc = await new (formatterClass || DescriptionFormatter)(this).getDescription(this._arc.activeRecipe);
     if (desc) {
       return desc;
     }
   }
 
   async getRecipeSuggestion(formatterClass) {
-    let desc = await new (formatterClass || DescriptionFormatter)(this).getDescription(this._arc.recipes[this._arc.recipes.length - 1].particles);
+    let desc = await new (formatterClass || DescriptionFormatter)(this).getDescription(this._arc.recipes[this._arc.recipes.length - 1]);
     if (desc) {
       return desc;
     }
@@ -58,11 +58,18 @@ export class DescriptionFormatter {
     this.excludeValues = false;
   }
 
-  async getDescription(particles) {
+  async getDescription(recipe) {
     await this._updateDescriptionHandles(this._description);
 
+    if (recipe.pattern) {
+      let recipeDesc = this.patternToSuggestion(recipe.pattern);
+      if (recipeDesc) {
+        return recipeDesc;
+      }
+    }
+
     // Choose particles, sort them by rank and generate suggestions.
-    let particlesSet = new Set(particles);
+    let particlesSet = new Set(recipe.particles);
     let selectedDescriptions = this._particleDescriptions
       .filter(desc => (particlesSet.has(desc._particle) && this._isSelectedDescription(desc)));
     // Prefer particles that render UI, if any.
@@ -183,7 +190,7 @@ export class DescriptionFormatter {
   }
 
   async patternToSuggestion(pattern, particleDescription) {
-    let tokens = this._initTokens(pattern, particleDescription._particle);
+    let tokens = this._initTokens(pattern, particleDescription);
     let tokenPromises = tokens.map(async token => await this.tokenToString(token));
     let tokenResults = await Promise.all(tokenPromises);
     if (tokenResults.filter(res => res == undefined).length == 0) {
@@ -191,7 +198,7 @@ export class DescriptionFormatter {
     }
   }
 
-  _initTokens(pattern, particle) {
+  _initTokens(pattern, particleDescription) {
     pattern = pattern.replace(/</g, '&lt;');
     let results = [];
     while (pattern.length > 0) {
@@ -210,18 +217,34 @@ export class DescriptionFormatter {
       if (nextToken.length > 0)
         results.push({text: nextToken});
       if (firstToken.length > 0) {
-        results.push(this._initHandleToken(firstToken, particle));
+        results.push(this._initHandleToken(firstToken, particleDescription));
       }
       pattern = pattern.substring(tokenIndex + firstToken.length);
     }
     return results;
   }
 
-  _initHandleToken(pattern, particle) {
+  _initHandleToken(pattern, particleDescription) {
     let valueTokens = pattern.match(/\${([a-zA-Z0-9\.]+)}(?:\.([_a-zA-Z]+))?/);
     let handleNames = valueTokens[1].split('.');
     let extra = valueTokens.length == 3 ? valueTokens[2] : undefined;
     let valueToken;
+
+    // Fetch the particle description by name from the value token - if it wasn't passed, this is a recipe description.
+    if (!particleDescription) {
+      assert(handleNames.length > 1, `'${valueTokens[1]}' must contain dot-separated particle and handle connection name.`);
+      let particleName = handleNames.shift();
+      assert(particleName[0] === particleName[0].toUpperCase(), `Expected particle name, got '${particleName}' instead.`);
+      let particleDescriptions = this._particleDescriptions.filter(desc => desc._particle.name == particleName);
+      debugger;
+      assert(particleDescriptions.length > 0, `Cannot find particles with name ${particleName}.`);
+      if (particleDescriptions.length > 1) {
+        console.warn(`Multiple particles with name ${particleName}.`);
+      }
+      particleDescription = particleDescriptions[0];
+    }
+    let particle = particleDescription._particle;
+
     let handleConn = particle.connections[handleNames[0]];
     if (handleConn) { // handle connection
       assert(handleConn.handle && handleConn.handle.id, 'Missing id???');

@@ -47,6 +47,7 @@ class Handle {
       // the connections are re-established when Particles clone their
       // attached HandleConnection objects.
       handle._connections = [];
+      handle._pattern = this._pattern;
     }
     return handle;
   }

@@ -45,7 +45,7 @@ export default class DescriptionDomFormatter extends DescriptionFormatter {
       let {template, model} = this._retrieveTemplateAndModel(particleDesc, index);
 
       let success = await Promise.all(Object.keys(model).map(async tokenKey => {
-        let token = this._initHandleToken(model[tokenKey], particleDesc._particle);
+        let token = this._initHandleToken(model[tokenKey], particleDesc);
         let tokenValue = await this.tokenToString(token);
 
         if (tokenValue == undefined) {
@@ -92,7 +92,7 @@ export default class DescriptionDomFormatter extends DescriptionFormatter {
     assert(particleDesc.pattern, 'Description must contain template and model, or pattern');
     let template = '';
     let model = {};
-    let tokens = this._initTokens(particleDesc.pattern, particleDesc._particle);
+    let tokens = this._initTokens(particleDesc.pattern, particleDesc);
 
     tokens.forEach((token, i) => {
       if (token.text) {
