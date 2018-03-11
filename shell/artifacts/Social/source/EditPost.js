@@ -50,11 +50,11 @@ defineParticle(({DomParticle, html, log}) => {
 </style>
 <div ${host}>
   <div post-buttons>
-    <i class="material-icons" on-click="_onDeletePost">delete</i>
-    <i class="material-icons" on-click="_onAttachPhoto">attach_file</i>
-    <i class="{{saveClasses}}" on-click="_onSavePost">done</i>
+    <i class="material-icons" on-click="onDeletePost">delete</i>
+    <i class="material-icons" on-click="onAttachPhoto">attach_file</i>
+    <i class="{{saveClasses}}" on-click="onSavePost">done</i>
   </div>
-  <textarea value="{{message}}" on-input="_onTextInput"></textarea>
+  <textarea value="{{message}}" on-input="onTextInput"></textarea>
 </div>
   `.trim();
 
@@ -88,11 +88,11 @@ defineParticle(({DomParticle, html, log}) => {
       });
       this._setState({savePost: false});
     }
-    _onTextInput(e) {
+    onTextInput(e) {
       this._setIfDirty({message: e.data.value});
     }
     // TODO(wkorman): Add onDeletePost, onAttachPost.
-    _onSavePost(e) {
+    onSavePost(e) {
       this._setIfDirty({savePost: true});
     }
   };
