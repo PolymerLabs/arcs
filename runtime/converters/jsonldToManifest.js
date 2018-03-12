@@ -89,14 +89,13 @@ class JsonldToManifest {
       s += ` extends ${superNames.join(', ')}`;
 
     if (relevantProperties.length > 0) {
-      s += '\n  optional';
       for (let property of relevantProperties) {
         let type;
         if (property.type.length > 1)
           type = '(' + property.type.join(' or ') + ')';
         else
           type = property.type[0];
-        s += `\n    ${type} ${property.name}`;
+        s += `\n  ${type} ${property.name}`;
       }
     }
     s += '\n';

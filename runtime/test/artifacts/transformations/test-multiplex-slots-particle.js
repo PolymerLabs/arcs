@@ -44,8 +44,7 @@ defineParticle(({TransformationDomParticle}) => {
 
           let recipe = `
             schema Foo
-              optional
-                Text value
+              Text value
 
             particle ${hostedParticle.name} in '${hostedParticle.implFile}'
               ${hostedParticle.name}(in Foo foo)

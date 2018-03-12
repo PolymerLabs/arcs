@@ -132,8 +132,7 @@ describe('View', function() {
   it('uses default storage keys', async () => {
     let manifest = await Manifest.parse(`
     schema Bar
-      normative
-        Text value
+      Text value
     `);
     let arc = new Arc({id: 'test', storageKey: 'firebase://test-firebase-45a3e.firebaseio.com/AIzaSyBLqThan3QCOICj0JZ-nEwk27H4gmnADP8/'});
     let resolver;

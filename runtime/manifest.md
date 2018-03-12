@@ -10,10 +10,8 @@ as inputs and outputs of Particles.
 
 ```
 schema MyThing
-  normative
-    Text someValue
-  optional
-    URL someURL
+  Text someValue
+  URL someURL
 ```
 
 A schema can extend another schema defined or imported into the same manifest.
@@ -22,11 +20,9 @@ A schema can extend another schema defined or imported into the same manifest.
 schema YourThing
 
 schema MyThing extends YourThing
-  optional
-    Text myStuff
+  Text myStuff
 ```
 
-* TODO: normative vs optional
 * TODO: value types
 
 ## Particles
@@ -122,7 +118,7 @@ Given the schema:
 
 ```
 schema Product
-  optional Text name
+  Text name
 ```
 
 A corresponding JSON file might look like:

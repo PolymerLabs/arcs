@@ -24,12 +24,10 @@ describe('particle-api', function() {
         return {
           manifest: `
           schema Input
-            normative
-              Text value
+            Text value
 
           schema Result
-            normative
-              Text value
+            Text value
 
           particle P in 'a.js'
             P(in [Input] inputs, out Result result)
@@ -93,8 +91,7 @@ describe('particle-api', function() {
         return {
           manifest: `
             schema Result
-              normative
-                Text value
+              Text value
 
             particle P in 'a.js'
               P(out Result result)
@@ -155,8 +152,7 @@ describe('particle-api', function() {
         return {
           manifest: `
             schema Result
-              normative
-                Text value
+              Text value
 
             particle P in 'a.js'
               P(out Result result)
@@ -180,8 +176,7 @@ describe('particle-api', function() {
                   try {
                     await arc.loadRecipe(\`
                       schema Result
-                        normative
-                          Text value
+                        Text value
 
                       particle PassThrough in 'pass-through.js'
                         PassThrough(in Result a, out Result b)
@@ -251,8 +246,7 @@ describe('particle-api', function() {
         return {
           manifest: `
             schema Result
-              normative
-                Text value
+              Text value
 
             particle P in 'a.js'
               P(in [Result] inputs, inout [Result] results)
@@ -281,8 +275,7 @@ describe('particle-api', function() {
                     try {
                       let done = await arc.loadRecipe(\`
                         schema Result
-                          normative
-                            Text value
+                          Text value
 
                         particle PassThrough in 'pass-through.js'
                           PassThrough(in Result a, out Result b)

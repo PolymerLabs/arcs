@@ -179,8 +179,7 @@ describe('Planner', function() {
   it('can speculate in parallel', async () => {
     const manifest = `
           schema Thing
-            optional
-              Text name
+            Text name
 
           particle A in 'A.js'
             A(out Thing thing)
@@ -1192,8 +1191,7 @@ describe('Description', async () => {
   it('description generated from speculative execution arc', async () => {
     const manifest = `
     schema Thing
-      optional
-        Text name
+      Text name
 
     particle A in 'A.js'
       A(out Thing thing)

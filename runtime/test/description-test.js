@@ -50,17 +50,14 @@ let tests = [
 describe('Description', function() {
   let schemaManifest = `
 schema Foo
-  optional
-    Text name
-    Text fooValue
+  Text name
+  Text fooValue
 schema Bar
-  optional
-    Text name
-    Text barValue
+  Text name
+  Text barValue
 schema Far
-  optional
-    Text name
-    Text farValue`;
+  Text name
+  Text farValue`;
   let aParticleManifest = `
 particle A
   A(in Foo ifoo, out [Foo] ofoos)
@@ -481,8 +478,7 @@ recipe
     it('multiword type and no name property in description ' + test.name, async () => {
       let manifestStr = `
         schema MyBESTType
-          optional
-            Text property
+          Text property
         particle P
           P(in MyBESTType t, out [MyBESTType] ts)
           description \`make \${ts} from \${t}\`
@@ -531,8 +527,7 @@ recipe
     it('particle slots description ' + test.name, async () => {
       let manifestStr = `
 schema Foo
-  optional
-    Text name
+  Text name
 particle A
   A(inout Foo foo)
   consume root
@@ -610,13 +605,11 @@ describe('Dynamic description', function() {
   async function prepareRecipeAndArc() {
     let manifestStr = `
 schema Foo
-  optional
-    Text name
-    Text fooValue
+  Text name
+  Text fooValue
 schema Description
-  optional
-    Text key
-    Text value
+  Text key
+  Text value
 particle B
   B(out Foo ofoo, out [Description] descriptions)
   consume root

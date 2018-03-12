@@ -7,15 +7,13 @@
 // http://polymer.github.io/PATENTS.txt
 
 schema Post
-  normative
-    // Time this post was created in milliseconds since the epoch.
-    Number createdTimestamp
-    // The primary message content of the post.
-    Text message
-    // The opaque user id of the post author.
-    Text author
-  optional
-    // The opaque user id of the post author as populated by sharing logic.
-    // Note this is only populated for friends of the viewing user, and so
-    // is not always present, and one may as well just use the |author| field.
-    Text owner
+  // Time this post was created in milliseconds since the epoch.
+  Number createdTimestamp
+  // The primary message content of the post.
+  Text message
+  // The opaque user id of the post author.
+  Text author
+  // The opaque user id of the post author as populated by sharing logic.
+  // Note this is only populated for friends of the viewing user, and so
+  // is not always present, and one may as well just use the |author| field.
+  Text owner

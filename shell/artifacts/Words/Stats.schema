@@ -9,21 +9,20 @@
 import 'https://$cdn/artifacts/Social/Post.schema'
 
 schema Stats extends Post
-  normative
-    // TODO(wkorman): Add a copy of game state (in progress or game over).
-    // Current or ending (if over) game score.
-    Number score
-    // Total number of moves made in game thus far (or total, if over).
-    Number moveCount
-    // Timestamp at which the game was first created.
-    Number startstamp
-    // Timestamp at which the game ended or undefined if not yet over.
-    Number endstamp
-    // Longest word (text)
-    Text longestWord
-    // Longest word (score)
-    Number longestWordScore
-    // Highest scoring word (text)
-    Text highestScoringWord
-    // Highest scoring word (score)
-    Number highestScoringWordScore
+  // TODO(wkorman): Add a copy of game state (in progress or game over).
+  // Current or ending (if over) game score.
+  Number score
+  // Total number of moves made in game thus far (or total, if over).
+  Number moveCount
+  // Timestamp at which the game was first created.
+  Number startstamp
+  // Timestamp at which the game ended or undefined if not yet over.
+  Number endstamp
+  // Longest word (text)
+  Text longestWord
+  // Longest word (score)
+  Number longestWordScore
+  // Highest scoring word (text)
+  Text highestScoringWord
+  // Highest scoring word (score)
+  Number highestScoringWordScore

@@ -7,8 +7,7 @@
 // http://polymer.github.io/PATENTS.txt
 
 schema UiState
-  optional
-    Boolean open
+  Boolean open
 
 particle Opener in 'source/Opener.js'
   Opener(inout UiState uiState)

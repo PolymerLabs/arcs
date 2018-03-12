@@ -7,9 +7,8 @@
 // http://polymer.github.io/PATENTS.txt
 
 schema PostalAddress
-  optional
-    Text streetAddress
-    Text addressLocality
-    Text addressRegion
-    Text postalCode
-    Text addressCountry
+  Text streetAddress
+  Text addressLocality
+  Text addressRegion
+  Text postalCode
+  Text addressCountry

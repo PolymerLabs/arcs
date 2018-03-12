@@ -8,8 +8,7 @@
 
 
 schema Foo
-  optional
-    Text value
+  Text value
 
 particle SingleSlotParticle in 'test-single-slot-particle.js'
   SingleSlotParticle(in Foo foo)

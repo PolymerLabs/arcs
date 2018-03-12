@@ -6,12 +6,10 @@
 // http://polymer.github.io/PATENTS.txt
 
 schema Product
-  normative
-    Text name
+  Text name
 
 schema Lego extends Product
-  normative
-    Text setID
+  Text setID
 
 particle WritesLego
   WritesLego(out [Lego] lego)
