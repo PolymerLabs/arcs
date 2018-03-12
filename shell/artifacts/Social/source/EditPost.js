@@ -20,7 +20,12 @@ defineParticle(({DomParticle, html, log}) => {
   font-family: 'Google Sans', sans-serif;
   flex: 1;
   display: flex;
+  flex-direction: column;
   padding: 56px 8px 8px 8px;
+}
+[${host}] img {
+  display: block;
+  width: 256px;
 }
 [${host}] textarea {
   flex: 1;
@@ -35,25 +40,29 @@ defineParticle(({DomParticle, html, log}) => {
   right: 8px;
   top: 8px;
 }
-[${host}] [post-buttons] i {
+[${host}] [post-buttons] > * {
   border-radius: 100%;
   color: lightgrey;
   display: inline-block;
   padding: 8px;
 }
-[${host}] [post-buttons] i:active {
+[${host}] [post-buttons] > *:active {
   background-color: #b0e3ff;
 }
-[${host}] [post-buttons] .button-live {
+[${host}] [post-buttons] > [active] {
+  color: black;
+}
+[${host}] [post-buttons] > [active][primary] {
   color: green;
 }
 </style>
 <div ${host}>
   <div post-buttons>
     <i class="material-icons" on-click="onDeletePost">delete</i>
-    <i class="material-icons" on-click="onAttachPhoto">attach_file</i>
-    <i class="{{saveClasses}}" on-click="onSavePost">done</i>
+    <firebase-upload active accept="image/*" on-upload="onAttachPhoto"><i class="material-icons">attach_file</i></firebase-upload>
+    <i class="material-icons" primary active$="{{saveButtonActive}}" on-click="onSavePost">done</i>
   </div>
+  <img src="{{imageUrl}}">
   <textarea value="{{message}}" on-input="onTextInput"></textarea>
 </div>
   `.trim();
@@ -65,14 +74,15 @@ defineParticle(({DomParticle, html, log}) => {
     willReceiveProps({post}, state) {
       state.message = post && post.message;
     }
-    render({user, post}, {message, savePost}) {
+    render({user, post}, {message, savePost, imageUrl}) {
       if (savePost) {
         this.savePost(user, message);
       }
       const saveButtonActive = message && (message.trim().length > 0);
       const model = {
-        saveClasses: saveButtonActive ? 'material-icons button-live' : 'material-icons',
-        message
+        saveButtonActive,
+        message,
+        imageUrl: imageUrl || ''
       };
       return model;
     }
@@ -91,9 +101,13 @@ defineParticle(({DomParticle, html, log}) => {
     onTextInput(e) {
       this.setIfDirty({message: e.data.value});
     }
-    // TODO(wkorman): Add onDeletePost, onAttachPost.
+    // TODO(wkorman): Add onDeletePost.
     onSavePost(e) {
       this.setIfDirty({savePost: true});
+    }
+    onAttachPhoto(e) {
+      log(`image uploaded: `, e.data.value);
+      this.setState({imageUrl: e.data.value});
     }
   };
 });
