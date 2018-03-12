@@ -86,14 +86,14 @@ defineParticle(({DomParticle, html, log}) => {
         createdTimestamp: Date.now(),
         author: user.id
       });
-      this._setState({savePost: false});
+      this.setState({savePost: false});
     }
     onTextInput(e) {
-      this._setIfDirty({message: e.data.value});
+      this.setIfDirty({message: e.data.value});
     }
     // TODO(wkorman): Add onDeletePost, onAttachPost.
     onSavePost(e) {
-      this._setIfDirty({savePost: true});
+      this.setIfDirty({savePost: true});
     }
   };
 });
