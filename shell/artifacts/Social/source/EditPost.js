@@ -11,7 +11,6 @@
 'use strict';
 
 defineParticle(({DomParticle, html, log}) => {
-
   const host = `social-edit-post`;
 
   const template = html`
@@ -62,7 +61,7 @@ defineParticle(({DomParticle, html, log}) => {
     <firebase-upload active accept="image/*" on-upload="onAttachPhoto"><i class="material-icons">attach_file</i></firebase-upload>
     <i class="material-icons" primary active$="{{saveButtonActive}}" on-click="onSavePost">done</i>
   </div>
-  <img src="{{imageUrl}}">
+  <img src="{{image}}">
   <textarea value="{{message}}" on-input="onTextInput"></textarea>
 </div>
   `.trim();
@@ -73,29 +72,24 @@ defineParticle(({DomParticle, html, log}) => {
     }
     willReceiveProps({post}, state) {
       state.message = post && post.message;
+      state.image = post && post.image;
     }
-    render({user, post}, {message, savePost, imageUrl}) {
+    render({user, post}, {message, image, savePost}) {
       if (savePost) {
-        this.savePost(user, message);
+        this.savePost(user, message, image);
       }
-      const saveButtonActive = message && (message.trim().length > 0);
-      const model = {
-        saveButtonActive,
-        message,
-        imageUrl: imageUrl || ''
-      };
+      const saveButtonActive = Boolean(message && (message.trim().length > 0));
+      const model = {saveButtonActive, message, image: image || ''};
       return model;
     }
     setHandle(name, data) {
       const handle = this._views.get(name);
       handle.set(new (handle.entityClass)(data));
     }
-    savePost(user, message) {
-      this.setHandle('post', {
-        message: message,
-        createdTimestamp: Date.now(),
-        author: user.id
-      });
+    savePost(user, message, image) {
+      this.setHandle(
+          'post',
+          {message, image, createdTimestamp: Date.now(), author: user.id});
       this.setState({savePost: false});
     }
     onTextInput(e) {
@@ -106,8 +100,8 @@ defineParticle(({DomParticle, html, log}) => {
       this.setIfDirty({savePost: true});
     }
     onAttachPhoto(e) {
-      log(`image uploaded: `, e.data.value);
-      this.setState({imageUrl: e.data.value});
+      const image = e.data.value;
+      this.setIfDirty({image});
     }
   };
 });
