@@ -18,10 +18,10 @@ import Relation from './relation.js';
 function testEntityClass(type) {
   return new Schema({
     name: type,
-    sections: [{
-      sectionType: 'normative',
-      fields: {'id': 'Number', 'value': 'Text'}
-    }],
+    fields: {
+      id: 'Number',
+      value: 'Text',
+    },
     parents: [],
   }).entityClass();
 }
@@ -30,7 +30,6 @@ let BasicEntity = testEntityClass('BasicEntity');
 
 export default {
   Entity,
-  BasicEntity,
   Relation,
   testing: {
     testEntityClass,

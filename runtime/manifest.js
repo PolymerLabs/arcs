@@ -381,10 +381,10 @@ ${e.message}
                     node.location,
                     `Could not infer type of '${name}' field`);
               }
-              type = externalSchema.normative[name] || externalSchema.optional[name];
+              type = externalSchema.fields[name];
             }
             if (externalSchema) {
-              let externalType = externalSchema.normative[name] || externalSchema.optional[name];
+              let externalType = externalSchema.fields[name];
               if (!Schema.typesEqual(externalType, type)) {
                 throw new ManifestError(
                     node.location,
@@ -396,10 +396,7 @@ ${e.message}
           node.model = Type.newEntity(new Schema({
             name: node.name,
             parents: [],
-            sections: [{
-              sectionType: 'normative',
-              fields,
-            }],
+            fields,
           }));
           return;
         case 'variable-type':
@@ -432,12 +429,41 @@ ${e.message}
     visitor.traverse(items);
   }
   static _processSchema(manifest, schemaItem) {
-    let items = {
-      sections: schemaItem.items.filter(item => item.kind == 'schema-section'),
-      description: schemaItem.items.find(item => item.kind == 'description')
-    };
+    let description;
+    let fields = {};
+    for (let item of schemaItem.items) {
+      switch (item.kind) {
+        case 'schema-field': {
+          let field = item;
+          if (fields[field.name]) {
+            throw new ManifestError(field.location, `Duplicate definition of field '${field.name}'`)
+          }
+          fields[field.name] = field.type;
+          break;
+        }
+        case 'schema-section': {
+          let section = item;
+          manifest._warnings.push(new ManifestError(section.location, `Schema sections are deprecated`));
+          for (let field of section.fields) {
+            if (fields[field.name]) {
+              throw new ManifestError(field.location, `Duplicate definition of field '${field.name}'`)
+            }
+            fields[field.name] = field.type;
+          }
+          break;
+        }
+        case 'description': {
+          if (description) {
+            throw new ManifestError(item.location, `Duplicate schema description`);
+          }
+          description = item;
+        }
+      }
+    }
+
     manifest._schemas[schemaItem.name] = new Schema({
       name: schemaItem.name,
+      description: description,
       parents: schemaItem.parents.map(parent => {
         let result = manifest.findSchemaByName(parent);
         if (!result) {
@@ -447,17 +473,7 @@ ${e.message}
         }
         return result.toLiteral();
       }),
-      sections: items.sections.map(section => {
-        let fields = {};
-        for (let field of section.fields) {
-          fields[field.name] = field.type;
-        }
-        return {
-          sectionType: section.sectionType,
-          fields,
-        };
-      }),
-      description: items.description
+      fields,
     });
   }
   static _processResource(manifest, schemaItem) {

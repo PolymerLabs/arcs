@@ -38,11 +38,10 @@ describe('schema', function() {
   it('schemas load recursively', async function() {
     let manifest = await Manifest.load('Product.schema', loader);
     let schema = manifest.findSchemaByName('Product');
-    assert.deepEqual(schema.normative, {name: 'Text'});
-    assert.deepEqual(schema.optional, {description: 'Text', image: 'URL', category: 'Text',
-                                       price: 'Text', seller: 'Text', shipDays: 'Number',
-                                       url: 'URL', identifier: 'Text', isReal: 'Boolean',
-                                       brand: 'Object'});
+    assert.deepEqual(schema.fields, {description: 'Text', image: 'URL', category: 'Text',
+                                     price: 'Text', seller: 'Text', shipDays: 'Number',
+                                     url: 'URL', identifier: 'Text', isReal: 'Boolean',
+                                     brand: 'Object', name: 'Text'});
     assert.equal(schema.name, 'Product');
     assert.equal(schema.parents[0].name, 'Thing');
   });

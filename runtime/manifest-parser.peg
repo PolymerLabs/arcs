@@ -770,10 +770,11 @@ Schema
 
 SchemaItem
   = SchemaSection
+  / SchemaField
   / Description
 
 SchemaSection
-  = sectionType:('normative' / 'optional') eolWhiteSpace fields:(Indent (SameIndent SchemaField eolWhiteSpace)+)
+  = sectionType:('normative' / 'optional') eolWhiteSpace fields:(Indent (SameIndent SchemaField)+)
   {
     return {
       kind: 'schema-section',
@@ -784,7 +785,7 @@ SchemaSection
   }
 
 SchemaField
-  = type:SchemaType whiteSpace name:lowerIdent
+  = type:SchemaType whiteSpace name:lowerIdent eolWhiteSpace
   {
     return {
       kind: 'schema-field',
