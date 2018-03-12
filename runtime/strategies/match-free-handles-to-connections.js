@@ -24,12 +24,12 @@ export default class MatchFreeHandlesToConnections extends Strategy {
         if (handle.connections.length > 0)
           return;
 
-        let matchingConnections = recipe.handleConnections.filter(connection => connection.view == undefined);
+        let matchingConnections = recipe.handleConnections.filter(connection => connection.handle == undefined);
            
         return matchingConnections.map(connection => {
           return (recipe, handle) => {
             let newConnection = recipe.updateToClone({connection}).connection;
-            newConnection.connectToView(handle);
+            newConnection.connectToHandle(handle);
             return 1;
           };
         });
