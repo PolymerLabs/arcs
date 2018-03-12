@@ -37,40 +37,46 @@ defineParticle(({TransformationDomParticle}) => {
           this._connByHostedConn.set(hostedOtherConnection.name, connectionName);
         }
       }
+      this.setState({arc, type: views.get('list').type, hostedParticle, otherMappedViews, otherConnections});
 
-      this.on(views, 'list', 'change', async e => {
-        let listHandle = views.get('list');
-        let list = await listHandle.toList();
+      super.setViews(views);
+    }
 
-        if (list.length > 0) {
-          this.relevance = 0.1;
+    async willReceiveProps({list}) {
+      if (list.length > 0) {
+        this.relevance = 0.1;
+      }
+      let arc = this._state.arc;
+      let type = this._state.type;
+      let hostedParticle = this._state.hostedParticle;
+      let otherMappedViews = this._state.otherMappedViews;
+      let otherConnections = this._state.otherConnections;
+
+      for (let [index, item] of list.entries()) {
+        if (this.handleIds[item.id]) {
+          let itemView = await this.handleIds[item.id];
+          itemView.set(item);
+          continue;
         }
 
-        for (let [index, item] of list.entries()) {
-          if (this.handleIds[item.id]) {
-            let itemView = await this.handleIds[item.id];
-            itemView.set(item);
-            continue;
-          }
+        let itemViewPromise = arc.createHandle(type.primitiveType(), 'item' + index);
+        this.handleIds[item.id] = itemViewPromise;
 
-          let itemViewPromise = arc.createHandle(listHandle.type.primitiveType(), 'item' + index);
-          this.handleIds[item.id] = itemViewPromise;
+        let itemView = await itemViewPromise;
 
-          let itemView = await itemViewPromise;
+        let hostedSlotName = [...hostedParticle.slots.keys()][0];
+        let slotName = [...this.spec.slots.values()][0].name;
 
-          let hostedSlotName = [...hostedParticle.slots.keys()][0];
-          let slotName = [...this.spec.slots.values()][0].name;
+        let slotId = await arc.createSlot(this, slotName, hostedParticle.name, hostedSlotName);
 
-          let slotId = await arc.createSlot(this, slotName, hostedParticle.name, hostedSlotName);
+        if (!slotId) {
+          continue;
+        }
 
-          if (!slotId) {
-            continue;
-          }
-
-          this._itemSubIdByHostedSlotId.set(slotId, item.id);
+        this._itemSubIdByHostedSlotId.set(slotId, item.id);
 
 
-          let recipe = `
+        let recipe = `
 ${this.serializeSchema(hostedParticle)}
 recipe
   use '${itemView._id}' as v1
@@ -80,18 +86,14 @@ recipe
     ${hostedParticle.connections[0].name} <- v1
     ${otherConnections.join('\n')}
     consume ${hostedSlotName} as s1
-`;
-          try {
-            await arc.loadRecipe(recipe, this);
-            itemView.set(item);
-          } catch (e) {
-            console.log(e);
-          }
+  `;
+        try {
+          await arc.loadRecipe(recipe, this);
+          itemView.set(item);
+        } catch (e) {
+          console.log(e);
         }
-
-        // Update props of all particle's views.
-        this._handlesToProps(views, this.config);
-      });
+      }
     }
 
     combineHostedModel(slotName, hostedSlotId, content) {
