@@ -436,7 +436,7 @@ ${e.message}
         case 'schema-field': {
           let field = item;
           if (fields[field.name]) {
-            throw new ManifestError(field.location, `Duplicate definition of field '${field.name}'`)
+            throw new ManifestError(field.location, `Duplicate definition of field '${field.name}'`);
           }
           fields[field.name] = field.type;
           break;
