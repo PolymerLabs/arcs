@@ -12,6 +12,16 @@ import assert from '../platform/assert-web.js';
 
 class Schema {
   constructor(model) {
+    // TODO: remove this (remnants of normative/optional)
+    if (model.sections) {
+      console.warn(`Schema ${model.name} was serialized with legacy format`);
+      assert(!model.fields);
+      model.fields = {};
+      for (let section of model.sections) {
+        Object.assign(model.fields, section.fields);
+      }
+      delete model.sections;
+    }
     assert(model.fields);
     this._model = model;
     this.name = model.name;
