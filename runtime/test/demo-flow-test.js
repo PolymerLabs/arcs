@@ -103,11 +103,18 @@ describe('demo flow', function() {
     await helper.makePlans({expectedNumPlans: 6, expectedSuggestions});
 
     // 2. Move an element from recommended list to shortlist.
+    let verifyShowCollection = (num, content) => {
+      assert(content.model, `Content doesn't have model`);
+      assert(content.model.items, `Content model doesn\'t have items`);
+      assert(content.model.items.models, `Content model items doesn\'t have models (${num} expected}`);
+      assert(content.model.items.models.length <= num, `Too many items (${content.model.items.models.length}), while only ${num} were expected.`);  
+      return content.model.items.models.length == num && content.model.items.models.every(i => !!i.resolvedImage);
+    };
+
     helper.slotComposer
       .newExpectations()
-        .expectRenderSlot('ShowCollection', 'master', ['model'])
+        .expectRenderSlotVerify('ShowCollection', 'master', verifyShowCollection.bind(null, 4))
         .expectRenderSlot('ShowProduct', 'root', ['model'])
-        .expectRenderSlot('ShowCollection', 'master', ['model'])
         .expectRenderSlotVerify('Chooser', 'action', helper.slotComposer.expectContentItemsNumber.bind(null, 2))
         .expectRenderSlot('AlsoOn', 'annotation', ['model'])
         .expectRenderSlotVerify('Multiplexer2', 'annotation', helper.slotComposer.expectContentItemsNumber.bind(null, 4));
@@ -137,7 +144,7 @@ describe('demo flow', function() {
     // 4. Move another element from recommended list to shortlist.
     helper.slotComposer
       .newExpectations()
-        .expectRenderSlot('ShowCollection', 'master', ['model'], 2)
+        .expectRenderSlotVerify('ShowCollection', 'master', verifyShowCollection.bind(null, 5))
         .expectRenderSlot('ShowProduct', 'root', ['model'])
         .expectRenderSlotVerify('Chooser', 'action', helper.slotComposer.expectContentItemsNumber.bind(null, 1))
         .expectRenderSlot('AlsoOn', 'annotation', ['model'])
@@ -160,7 +167,7 @@ describe('demo flow', function() {
     // 6. Move the last element to shortlist.
     helper.slotComposer
       .newExpectations()
-        .expectRenderSlot('ShowCollection', 'master', ['model'], 2)
+        .expectRenderSlotVerify('ShowCollection', 'master', verifyShowCollection.bind(null, 6))
         .expectRenderSlot('ShowProduct', 'root', ['model'])
         .expectRenderSlotVerify('Chooser', 'action', (content) => !content.model)
         .expectRenderSlotVerify('Multiplexer2', 'annotation', helper.slotComposer.expectContentItemsNumber.bind(null, 6))

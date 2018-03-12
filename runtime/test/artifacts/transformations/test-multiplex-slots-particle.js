@@ -13,10 +13,6 @@ defineParticle(({TransformationDomParticle}) => {
       this._handleIds = new Set();
     }
 
-    willReceiveProps(props) {
-      this._setState({renderModel: {items: TransformationDomParticle.propsToItems(props.foos)}});
-    }
-
     combineHostedTemplate(slotName, hostedSlotId, content) {
       if (content.template) {
         this._setState({template: content.template});
@@ -25,47 +21,52 @@ defineParticle(({TransformationDomParticle}) => {
 
     async setViews(views) {
       let arc = await this.constructInnerArc();
-      this.on(views, 'foos', 'change', async e => {
-        this._handlesToProps(views, this.config);
+      let hostedParticle = await views.get('particle').get();
 
-        let foosView = views.get('foos');
-        let foosList = await foosView.toList();
-        for (let [index, foo] of foosList.entries()) {
-          if (this._handleIds.has(foo.id)) {
-            // The element already exists.
-            continue;
-          }
-          let fooView = await arc.createHandle(foosView.type.primitiveType(), 'foo' + index);
-          this._handleIds.add(foo.id);
-          let hostedParticle = await views.get('particle').get();
-          let hostedSlotName = [...hostedParticle.slots.keys()][0];
-          let slotName = [...this.spec.slots.values()][0].name;
-          let slotId = await arc.createSlot(this, slotName, hostedParticle.name, hostedSlotName);
+      this.setState({arc, hostedParticle, type: views.get('foos').type});
 
-          let recipe = `
-            schema Foo
-              Text value
+      super.setViews(views);
+    }
 
-            particle ${hostedParticle.name} in '${hostedParticle.implFile}'
-              ${hostedParticle.name}(in Foo foo)
-              consume ${hostedSlotName}
-
-            recipe
-              use '${fooView._id}' as v1
-              slot '${slotId}' as s1
-              ${hostedParticle.name}
-                foo <- v1
-                consume ${hostedSlotName} as s1
-          `;
-
-          try {
-            await arc.loadRecipe(recipe, this);
-            fooView.set(foo);
-          } catch (e) {
-            console.log(e);
-          }
+    async willReceiveProps({foos}) {
+      let arc = this._state.arc;
+      let hostedParticle = this._state.hostedParticle;
+      let type = this._state.type;
+      for (let [index, foo] of foos.entries()) {
+        if (this._handleIds.has(foo.id)) {
+          // The element already exists.
+          continue;
         }
-      });
+        let fooView = await arc.createHandle(type.primitiveType(), 'foo' + index);
+        this._handleIds.add(foo.id);
+        let hostedSlotName = [...hostedParticle.slots.keys()][0];
+        let slotName = [...this.spec.slots.values()][0].name;
+        let slotId = await arc.createSlot(this, slotName, hostedParticle.name, hostedSlotName);
+        let recipe = `
+          schema Foo
+            Text value
+
+          particle ${hostedParticle.name} in '${hostedParticle.implFile}'
+            ${hostedParticle.name}(in Foo foo)
+            consume ${hostedSlotName}
+
+          recipe
+            use '${fooView._id}' as v1
+            slot '${slotId}' as s1
+            ${hostedParticle.name}
+              foo <- v1
+              consume ${hostedSlotName} as s1
+        `;
+
+        try {
+          await arc.loadRecipe(recipe, this);
+          fooView.set(foo);
+        } catch (e) {
+          console.log(e);
+        }
+      }
+
+      this._setState({renderModel: {items: TransformationDomParticle.propsToItems(foos)}});
     }
   };
 });

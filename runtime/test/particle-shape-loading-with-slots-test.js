@@ -72,7 +72,7 @@ describe('particle-shape-loading-with-slots', function() {
       .newExpectations()
       .expectRenderSlot('SingleSlotParticle', 'annotation', ['template', 'model'], 2)
       .expectRenderSlot('MultiplexSlotsParticle', 'annotationsSet', ['template', 'model'])
-      .maybeRenderSlot('MultiplexSlotsParticle', 'annotationsSet', ['model']);
+      .maybeRenderSlot('MultiplexSlotsParticle', 'annotationsSet', ['model'], 2);
     await slotComposer.arc.pec.idle;
     await slotComposer.expectationsCompleted();
 
@@ -88,7 +88,7 @@ describe('particle-shape-loading-with-slots', function() {
       .newExpectations()
       .expectRenderSlot('SingleSlotParticle', 'annotation', ['model'])
       .expectRenderSlot('MultiplexSlotsParticle', 'annotationsSet', ['model'])
-      .maybeRenderSlot('MultiplexSlotsParticle', 'annotationsSet', ['model']);
+      .maybeRenderSlot('MultiplexSlotsParticle', 'annotationsSet', ['model'], 2);
     await slotComposer.arc.pec.idle;
     await slotComposer.expectationsCompleted();
 
@@ -118,7 +118,7 @@ describe('particle-shape-loading-with-slots', function() {
       .newExpectations()
       .expectRenderSlot('SingleSlotParticle', 'annotation', ['template', 'model'], 2)
       .expectRenderSlot('MultiplexSlotsParticle', 'annotationsSet', ['template', 'model'])
-      .maybeRenderSlot('MultiplexSlotsParticle', 'annotationsSet', ['model']);
+      .maybeRenderSlot('MultiplexSlotsParticle', 'annotationsSet', ['model'], 2);
     await slotComposer.arc.pec.idle;
     await slotComposer.expectationsCompleted();
 
@@ -135,7 +135,7 @@ describe('particle-shape-loading-with-slots', function() {
       .newExpectations()
       .expectRenderSlot('SingleSlotParticle', 'annotation', ['model'])
       .expectRenderSlot('MultiplexSlotsParticle', 'annotationsSet', ['model'])
-      .maybeRenderSlot('MultiplexSlotsParticle', 'annotationsSet', ['model']);
+      .maybeRenderSlot('MultiplexSlotsParticle', 'annotationsSet', ['model'], 2);
     await slotComposer.arc.pec.idle;
     await slotComposer.expectationsCompleted();
 
