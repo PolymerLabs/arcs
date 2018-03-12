@@ -13,47 +13,51 @@ defineParticle(({DomParticle}) => {
   let styles = `
 <style>
   [${host}] {
-    padding: 6px 0;
-    text-align: center;
+    // padding: 6px 0;
+    // text-align: center;
   }
   [${host}] > * {
     vertical-align: middle;
-    padding: 6px 0;
+    // padding: 6px 0;
   }
   [${host}] .x-select {
     display: inline-block;
     position: relative;
+    border-right: 1px solid rgba(0,0,0,.1);
+    height: 100%;
+
   }
   [${host}] .x-select::after {
     content: '▼';
     display: block;
     position: absolute;
     right: 8px;
-    bottom: 8px;
-    transform: scaleY(0.6);
+    bottom: 2px;
+    transform: scaleY(0.4) scaleX(0.8);
     pointer-events: none;
   }
   [${host}] .x-select > select {
     position: relative;
     margin: 0;
-    padding: 8px 24px 10px 6px;
+    padding: 0;
     border: 0;
-    border-bottom: 1px solid #ddd;
+    // border-bottom: 1px solid #ddd;
     background-color: transparent;
     border-radius: 0;
-    font-size: 14px;
-    font-weight: 300;
+    font-size: 16px;
     overflow: hidden;
     outline: none;
     -webkit-appearance: none;
     vertical-align: top;
   }
   [${host}] input {
-    padding: 6px;
-    font-size: 14px;
+    padding: 0;
     vertical-align: top;
     border: 0;
     background: transparent;
+    font-family: 'Google Sans';
+    font-size: 16px;
+    line-height: 24px;
   }
   [${host}] input::-webkit-clear-button {
     display: none;
@@ -85,23 +89,30 @@ defineParticle(({DomParticle}) => {
     // box-shadow: 0 8px 17px 0 rgba(0, 0, 0, 0.2);
     // transition-delay: 0s;
   }
+  [${host}] [time-picker] {
+    display:flex;
+    flex-direction:row;
+    border-bottom: 1px solid rgba(0,0,0,.1);
+    height: 56px;
+    align-items: center;
+  }
 </style>
   `;
 
   let template = `
 ${styles}
 <div ${host} id={{subId}}>
-  <div>{{timePicker}}</div>
+  <div time-picker>{{timePicker}}</div>
   <div times>{{availableTimes}}</div>
 </div>
 
 <template time-picker>
   <div class="x-select">
     <select on-change="_onPartySizeChanged">
-      <option value="1" selected$={{selected1}}>1 person</option>
-      <option value="2" selected$={{selected2}}>2 people</option>
+      <option value="1" selected$={{selected1}}>For 1</option>
+      <option value="2" selected$={{selected2}}>For 2</option>
       ${[3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
-        .map(i => `<option value="${i}" selected$={{selected${i}}}>${i} people</option>`).join('')}
+        .map(i => `<option value="${i}" selected$={{selected${i}}}>For ${i}</option>`).join('')}
       <option value="21" selected$={{selected21}}>Larger party</option>
     </select>
   </div>

@@ -122,7 +122,10 @@ background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAKQAAAAkCAYA
     line-height: 24px;
     margin-bottom: 18px;
   }
-
+  [${host}] [control-panel] {
+    box-shadow: 0 0 8px 0px rgba(0,0,0,.15);
+    border-radius: 8px;
+  }
 </style>
   `;
 
@@ -153,7 +156,7 @@ ${styles}
       </div>
     </div>
 
-    <div slotid="action"></div>
+    <div control-panel slotid="action"></div>
 
   </div>
 </div>
