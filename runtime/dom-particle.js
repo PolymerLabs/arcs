@@ -57,6 +57,12 @@ class DomParticle extends XenStateMixin(Particle) {
   render() {
     return {};
   }
+  setState(state) {
+    this._setState(state);
+  }
+  setIfDirty(state) {
+    this._setIfDirty(state);
+  }
   _willReceiveProps(...args) {
     this.willReceiveProps(...args);
   }
