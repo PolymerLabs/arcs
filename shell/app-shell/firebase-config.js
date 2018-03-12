@@ -12,10 +12,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 // apps/web/index.html and see comment there for more.
 const firebase = window.firebase;
 
-//let version = typeof Arcs === 'undefined' || !Arcs.version ? '/' : Arcs.version.replace(/\./g, '_');
-let db_version = '0_3_beta_3';
+const version = '0_3_beta_3';
 
-let firebaseConfig = {
+const firebaseConfig = {
   apiKey: 'AIzaSyBme42moeI-2k8WgXh-6YK_wYyjEXo4Oz8',
   authDomain: 'arcs-storage.firebaseapp.com',
   databaseURL: 'https://arcs-storage.firebaseio.com',
@@ -24,17 +23,26 @@ let firebaseConfig = {
   messagingSenderId: '779656349412'
 };
 
-let _db = firebase.initializeApp(firebaseConfig/*, 'arcs-storage'*/).database();
-let db = _db.ref(db_version);
+const app = firebase.initializeApp(firebaseConfig/*, 'arcs-storage'*/);
 
-/* for debugging only */
+const database = app.database();
+const db = database.ref(version);
+
+const storage = app.storage();
+
+// for debugging only
 db.dump = () => db.once('value').then(snap => console.log(db.data = snap.val()));
 
-window._db = _db;
+const Firebase = {
+  firebase,
+  database,
+  db,
+  version,
+  storage
+};
+
+window.Firebase = Firebase;
+window._db = database;
 window.db = db;
 
-export {
-  _db as database,
-  db,
-  db_version as version
-};
+export default Firebase;
