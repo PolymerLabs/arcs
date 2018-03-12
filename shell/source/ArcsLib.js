@@ -8,15 +8,15 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import Arc from '../../../arcs/runtime/arc.js';
-import Description from '../../../arcs/runtime/description.js';
-import Manifest from '../../../arcs/runtime/manifest.js';
-import Planner from '../../../arcs/runtime/planner.js';
-import SlotComposer from '../../../arcs/runtime/slot-composer.js';
-import Type from '../../../arcs/runtime/type.js';
+import Arc from '../../runtime/arc.js';
+import Description from '../../runtime/description.js';
+import Manifest from '../../runtime/manifest.js';
+import Planner from '../../runtime/planner.js';
+import SlotComposer from '../../runtime/slot-composer.js';
+import Type from '../../runtime/type.js';
 import BrowserLoader from './browser-loader.js';
-import Tracing from '../../../arcs/tracelib/trace.js';
-import scheduler from '../../../arcs/runtime/scheduler.js';
+import Tracing from '../../tracelib/trace.js';
+import scheduler from '../../runtime/scheduler.js';
 
 //Tracing.enable();
 
