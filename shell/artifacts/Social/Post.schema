@@ -13,6 +13,9 @@ schema Post
   Text message
   // The opaque user id of the post author.
   Text author
+  // An optional image associated with the message content for the post.
+  // Populated only if the user chose to attach one when creating/editing.
+  URL image
   // The opaque user id of the post author as populated by sharing logic.
   // Note this is only populated for friends of the viewing user, and so
   // is not always present, and one may as well just use the |author| field.

@@ -77,7 +77,11 @@ defineParticle(({DomParticle, resolver, log}) => {
     margin-top: 18px;
   }
   [${host}] [msg] [content] {
-    margin-left: 56px;
+    margin: 0 16px 0 56px;
+  }
+  [${host}] [msg] [content] img {
+    display: block;
+    width: 256px;
   }
   [${host}] [owner] {
     font-size: 14pt;
@@ -109,7 +113,10 @@ defineParticle(({DomParticle, resolver, log}) => {
             <i class="material-icons md-14" style%="{{style}}" value="{{id}}" on-click="_onDeletePost">delete</i>
             <br>
           </div>
-          <div content value="{{id}}">{{message}}</div>
+          <div content value="{{id}}">
+            <img src="{{image}}">
+            <span>{{message}}</span>
+          </div>
         </div>
         </template>
     </x-list>
@@ -217,18 +224,18 @@ defineParticle(({DomParticle, resolver, log}) => {
         return b.createdTimestamp - a.createdTimestamp;
       });
     }
-    _postToModel(visible, post) {
+    _postToModel(visible, {createdTimestamp, message, image, id, author}) {
       return {
-        message: post.message,
-        id: post.id,
-        time: new Date(post.createdTimestamp).toLocaleDateString('en-US', {
+        message,
+        image: image || '',
+        id,
+        time: new Date(createdTimestamp).toLocaleDateString('en-US', {
           'month': 'short',
           'day': 'numeric'
         }),
         style: {display: visible ? 'inline' : 'none'},
-        avatarStyle:
-            this._avatarToStyle(resolver(this._state.avatars[post.author])),
-        owner: this._state.people[post.author]
+        avatarStyle: this._avatarToStyle(resolver(this._state.avatars[author])),
+        owner: this._state.people[author]
       };
     }
     render({user, metadata}, {posts, avatars}) {
@@ -238,26 +245,17 @@ defineParticle(({DomParticle, resolver, log}) => {
       // TODO(wkorman): We'll be splitting the aggregated feed into its own
       // particle soon, so the below flag is just an interim hack.
       const isAggregatedFeed = !metadata;
+      const model =
+          {isAggregatedFeed, blogAuthor, blogAvatarStyle, blogDescription};
       if (posts && posts.length > 0) {
         const sortedPosts = this._sortPostsByDateAscending(posts);
         const visible = this._views.get('posts').canWrite;
-        return {
+        return Object.assign(model, {
           hideZeroState: true,
-          isAggregatedFeed,
-          blogAuthor,
-          blogAvatarStyle,
-          blogDescription,
           posts: sortedPosts.map(p => this._postToModel(visible, p))
-        };
+        });
       } else {
-        return {
-          hideZeroState: false,
-          isAggregatedFeed,
-          blogAuthor,
-          blogAvatarStyle,
-          blogDescription,
-          posts: []
-        };
+        return Object.assign(model, {hideZeroState: false, posts: []});
       }
     }
   };
