@@ -77,7 +77,6 @@ class HandleConnection {
   get isOutput() {
     return this.direction == 'out' || this.direction == 'inout';
   }
-  get view() {assert(false, 'Ha!');}
   get handle() { return this._handle; } // Handle?
   get particle() { return this._particle; } // never null
 
