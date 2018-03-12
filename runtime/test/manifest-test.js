@@ -110,7 +110,7 @@ ${particleStr1}
       schema Bar
         normative
           Text value`);
-    let verify = (manifest) => assert.equal(manifest.schemas.Bar.normative.value, 'Text');
+    let verify = (manifest) => assert.equal(manifest.schemas.Bar.fields.value, 'Text');
     verify(manifest);
     verify(await Manifest.parse(manifest.toString(), {}));
   });
@@ -120,7 +120,7 @@ ${particleStr1}
         normative
           Text value
       schema Bar extends Foo`);
-    let verify = (manifest) => assert.equal(manifest.schemas.Bar.normative.value, 'Text');
+    let verify = (manifest) => assert.equal(manifest.schemas.Bar.fields.value, 'Text');
     verify(manifest);
     verify(await Manifest.parse(manifest.toString(), {}));
   });
@@ -397,7 +397,7 @@ ${particleStr1}
       },
     };
     let manifest = await Manifest.load('a', loader, {registry});
-    assert.equal(manifest.schemas.Bar.normative.value, 'Text');
+    assert.equal(manifest.schemas.Bar.fields.value, 'Text');
   });
   it('can find all imported recipes', async () => {
     let loader = {
@@ -431,7 +431,7 @@ ${particleStr1}
           Text test
           (Number, Number, Boolean) t`);
     let verify = (manifest) => {
-      let opt = manifest.schemas.Foo.optional;
+      let opt = manifest.schemas.Foo.fields;
       assert.equal(opt.u.kind, 'schema-union');
       assert.deepEqual(opt.u.types, ['Text', 'URL']);
       assert.equal(opt.t.kind, 'schema-tuple');

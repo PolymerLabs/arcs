@@ -95,7 +95,7 @@ class RemoteFriendsSharedHandles extends Xen.Base {
       // acquire type record
       const arcsType = ArcsUtils.typeFromMetaType(type);
       const schema = arcsType.isSetView ? arcsType.setViewType.entitySchema : arcsType.entitySchema;
-      const hasOwnerField = schema.optional.owner;
+      const hasOwnerField = schema.fields.owner;
       // convert firebase format to handle-data format, embed friend id as owner
       const data = this._valuesToData(values, friend, hasOwnerField);
       // formulate id

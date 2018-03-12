@@ -17,12 +17,7 @@ import Handle from '../handle.js';
 
 describe('entity', async function() {
   it('can be created, stored, and restored', async () => {
-    let schema = new Schema({name: 'TestSchema', parents: [], sections: [{
-        sectionType: 'normative',
-        fields: {
-            'value': 'Text'
-        }
-    }]});
+    let schema = new Schema({name: 'TestSchema', parents: [], fields: {'value': 'Text'}});
 
     let arc = new Arc({slotComposer: new SlotComposer({rootContext: 'test', affordance: 'mock'}), id: 'test'});
     let entity = new (schema.entityClass())({value: 'hello world'});

@@ -55,8 +55,7 @@ ${super.template}
    * TODO(smalls) pull this all out into something more maintainable.
    */
   _filterBySchema(entities, schema) {
-    const validSchemaKeys =
-        Object.keys(schema.optional).concat(Object.keys(schema.normative));
+    const validSchemaKeys = Object.keys(schema.fields);
 
     let filteredEntities = entities.map(
         entity => Object.entries(entity)
