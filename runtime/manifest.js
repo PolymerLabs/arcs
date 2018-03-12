@@ -446,7 +446,7 @@ ${e.message}
           manifest._warnings.push(new ManifestError(section.location, `Schema sections are deprecated`));
           for (let field of section.fields) {
             if (fields[field.name]) {
-              throw new ManifestError(field.location, `Duplicate definition of field '${field.name}'`)
+              throw new ManifestError(field.location, `Duplicate definition of field '${field.name}'`);
             }
             fields[field.name] = field.type;
           }
