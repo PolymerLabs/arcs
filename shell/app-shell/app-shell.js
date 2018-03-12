@@ -40,6 +40,7 @@ import '../components/toggle-button.js';
 import '../components/corellia-xen/cx-input.js';
 import '../components/good-map.js';
 import '../components/video-controller.js';
+import '../components/firebase-upload.js';
 // TODO(sjmiles): deprecated
 import '../components/x-list.js';
 
