@@ -91,15 +91,14 @@ export default Base => class extends Base {
         // TODO(sjmiles): consider throttling render to rAF
         this._ensureMount();
         this._update(...stateArgs);
+        // affordance for post-render tasks
+        this._didUpdate(...stateArgs);
       }
     } catch (x) {
       console.error(x);
     }
     // nullify validator _after_ methods so state changes don't reschedule validation
-    // TODO(sjmiles): can/should there ever be state changes fom inside _update()? In React no, in Xen yes (until I have a good reason not too).
     this._validator = null;
-    // invalidation is live in _didUpdate
-    this._didUpdate(...stateArgs);
     // save the old props and state
     this._lastProps = Object.assign(nob(), this._props);
     this._lastState = Object.assign(nob(), this._state);
