@@ -155,9 +155,8 @@ describe('manifest parser', function() {
   it('parses a schema with a bytes field', () => {
     parse(`
       schema Avatar
-        normative
-          Text name
-          Bytes profileImage
+        Text name
+        Bytes profileImage
       `);
   });
 });

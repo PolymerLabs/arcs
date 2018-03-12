@@ -10,6 +10,5 @@ import 'Thing.schema'
 
 // Based on http://schema.org/GeoCoordinates
 schema GeoCoordinates extends Thing
-  normative
-    Number latitude
-    Number longitude
+  Number latitude
+  Number longitude

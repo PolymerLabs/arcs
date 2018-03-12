@@ -9,8 +9,7 @@
 import 'https://$cdn/artifacts/Things/Thing.schema'
 
 schema VideoControls extends Thing
-  normative
-    Text mode
-    Number ts
-    Number position
-    Number volume
+  Text mode
+  Number ts
+  Number position
+  Number volume

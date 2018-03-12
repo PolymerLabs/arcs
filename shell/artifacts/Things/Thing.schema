@@ -7,10 +7,8 @@
 // http://polymer.github.io/PATENTS.txt
 
 schema Thing
-  normative
-    Text name
-  optional
-    Text description
-    URL image
-    URL url
-    Text identifier
+  Text name
+  Text description
+  URL image
+  URL url
+  Text identifier

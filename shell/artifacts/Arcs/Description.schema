@@ -7,6 +7,5 @@
 // http://polymer.github.io/PATENTS.txt
 
 schema Description
-  optional
-    Text key
-    Text value
+  Text key
+  Text value

@@ -7,8 +7,7 @@
 // http://polymer.github.io/PATENTS.txt
 
 schema Event
-  normative
-    Text endDate
-    Text startDate
-    Number participants
-    Text description
+  Text endDate
+  Text startDate
+  Number participants
+  Text description

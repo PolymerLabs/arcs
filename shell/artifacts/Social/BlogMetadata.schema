@@ -7,8 +7,7 @@
 // http://polymer.github.io/PATENTS.txt
 
 schema BlogMetadata
-  normative
-    // The brief user-entered description of the blog.
-    Text description
-    // The opaque user id of the blog owner.
-    Text blogOwner
+  // The brief user-entered description of the blog.
+  Text description
+  // The opaque user id of the blog owner.
+  Text blogOwner

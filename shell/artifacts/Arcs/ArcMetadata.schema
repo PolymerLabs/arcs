@@ -6,13 +6,12 @@
 // http://polymer.github.io/PATENTS.txt
 
 schema ArcMetadata
-  optional
-    Text description
-    Text icon
-    Text key
-    Text href
-    Text bg
-    Text color
-    Text profile
-    Text blurb
-    URL externalManifest
+  Text description
+  Text icon
+  Text key
+  Text href
+  Text bg
+  Text color
+  Text profile
+  Text blurb
+  URL externalManifest

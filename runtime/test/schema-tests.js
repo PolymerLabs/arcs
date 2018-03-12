@@ -19,13 +19,12 @@ describe('schema', function() {
         return `
         import './shell/artifacts/Things/Thing.schema'
         schema Product extends Thing
-            optional
-              Text category
-              Text seller
-              Text price
-              Number shipDays
-              Boolean isReal
-              Object brand
+          Text category
+          Text seller
+          Text price
+          Number shipDays
+          Boolean isReal
+          Object brand
         `;
       }
       return new Loader().loadResource(fileName);
@@ -168,10 +167,8 @@ describe('schema', function() {
   it('union types', async function() {
     let manifest = await Manifest.parse(`
       schema Unions
-        optional
-          (Text or Number) u1
-        normative
-          (URL or Object or Boolean) u2`);
+        (Text or Number) u1
+        (URL or Object or Boolean) u2`);
     let Unions = manifest.findSchemaByName('Unions').entityClass();
     let unions = new Unions({u1: 'foo', u2: true});
     assert.equal(unions.u1, 'foo');
@@ -198,10 +195,8 @@ describe('schema', function() {
   it('tuple types', async function() {
     let manifest = await Manifest.parse(`
       schema Tuples
-        optional
-          (Text, Number) t1
-        normative
-          (URL, Object, Boolean) t2`);
+        (Text, Number) t1
+        (URL, Object, Boolean) t2`);
     let Tuples = manifest.findSchemaByName('Tuples').entityClass();
     let tuples = new Tuples({t1: ['foo', 55], t2: [null, undefined, true]});
     assert.deepEqual(tuples.t1, ['foo', 55]);
@@ -240,8 +235,7 @@ describe('schema', function() {
   it('field with a single parenthesised value is a tuple not a union', async function() {
     let manifest = await Manifest.parse(`
       schema SingleValueTuple
-        optional
-          (Number) t`);
+        (Number) t`);
     let SingleValueTuple = manifest.findSchemaByName('SingleValueTuple').entityClass();
     let svt = new SingleValueTuple({t: [12]});
     assert.deepEqual(svt.t, [12]);

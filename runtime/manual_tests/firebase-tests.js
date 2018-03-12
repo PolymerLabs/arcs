@@ -18,8 +18,7 @@ describe('firebase', function() {
   it('can host a variable', async () => {
     let manifest = await Manifest.parse(`
       schema Bar
-        normative
-          Text value
+        Text value
     `);
     let arc = new Arc({id: 'test'});
     let storage = new StorageProviderFactory(arc.id);
@@ -35,8 +34,7 @@ describe('firebase', function() {
   it('can host a collection', async () => {
     let manifest = await Manifest.parse(`
       schema Bar
-        normative
-          Text value
+        Text value
     `);
     let arc = new Arc({id: 'test'});
     let storage = new StorageProviderFactory(arc.id);

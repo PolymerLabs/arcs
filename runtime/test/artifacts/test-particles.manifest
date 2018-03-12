@@ -6,11 +6,9 @@
 // http://polymer.github.io/PATENTS.txt
 
 schema Foo
-  optional
-    Text value
+  Text value
 schema Bar
-  optional
-    Text value
+  Text value
 schema Far
 
 particle TestParticle in 'test-particle.js'

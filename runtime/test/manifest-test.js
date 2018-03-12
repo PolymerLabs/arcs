@@ -108,8 +108,7 @@ ${particleStr1}
   it('can parse a manifest containing a schema', async () => {
     let manifest = await Manifest.parse(`
       schema Bar
-        normative
-          Text value`);
+        Text value`);
     let verify = (manifest) => assert.equal(manifest.schemas.Bar.fields.value, 'Text');
     verify(manifest);
     verify(await Manifest.parse(manifest.toString(), {}));
@@ -117,8 +116,7 @@ ${particleStr1}
   it('can parse a manifest containing an extended schema', async () => {
     let manifest = await Manifest.parse(`
       schema Foo
-        normative
-          Text value
+        Text value
       schema Bar extends Foo`);
     let verify = (manifest) => assert.equal(manifest.schemas.Bar.fields.value, 'Text');
     verify(manifest);
@@ -385,8 +383,7 @@ ${particleStr1}
               schema Bar extends Foo`,
           b: `
               schema Foo
-                normative
-                  Text value`
+                Text value`
         }[path];
       },
       path(fileName) {
@@ -426,10 +423,9 @@ ${particleStr1}
   it('can parse a schema with union typing', async () => {
     let manifest = await Manifest.parse(`
       schema Foo
-        optional
-          (Text or URL) u
-          Text test
-          (Number, Number, Boolean) t`);
+        (Text or URL) u
+        Text test
+        (Number, Number, Boolean) t`);
     let verify = (manifest) => {
       let opt = manifest.schemas.Foo.fields;
       assert.equal(opt.u.kind, 'schema-union');
@@ -1073,8 +1069,7 @@ resource SomeName
   it('can resolve inline schemas against out of line schemas', async () => {
     let manifest = await Manifest.parse(`
       schema T
-        normative
-          Text value
+        Text value
       particle P
         P(in * {Text value} foo)
       particle P2
@@ -1123,8 +1118,7 @@ resource SomeName
   it('can infer field types of inline schemas from external schemas', async () => {
     let manifest = await Manifest.parse(`
       schema Thing
-        normative
-          Text value
+        Text value
       particle P
         P(in Thing {value} foo)
       particle P2
@@ -1145,8 +1139,7 @@ resource SomeName
   it('can parse a manifest with storage key handle definitions', async () => {
     let manifest = await Manifest.parse(`
       schema Bar
-        normative
-          Text value
+        Text value
 
       particle P
         P(in Bar foo)
@@ -1166,9 +1159,8 @@ resource SomeName
   it('can relate inline schemas to generic connections', async () => {
     let manifest = await Manifest.parse(`
       schema Thing
-        normative
-          Text value
-          Number num
+        Text value
+        Number num
 
       particle P
         P(in ~a with Thing {value} inThing, out ~a outThing)

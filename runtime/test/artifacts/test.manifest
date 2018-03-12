@@ -6,8 +6,7 @@
 // http://polymer.github.io/PATENTS.txt
 
 schema Text
-  normative
-    Text value
+  Text value
 
 particle Hello in 'hello.js'
   Hello(out Text text)

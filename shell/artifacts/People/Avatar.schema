@@ -7,6 +7,5 @@
 // http://polymer.github.io/PATENTS.txt
 
 schema Avatar
-  optional
-    URL url
-    Text owner
+  URL url
+  Text owner
