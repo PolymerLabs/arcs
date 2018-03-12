@@ -18,7 +18,18 @@ document.addEventListener('arcs-debug', e => {
   }
 });
 
+let channelReady = false;
+let pendingMessages = [];
+
+function sendPendingMessages() {
+  console.log('sendPendingMessages');
+  channelReady = true;
+  pendingMessages.forEach(message => window.postMessage({source: 'extension', type: 'planner', msg: message}, '*'));
+  pendingMessages = [];
+}
+
 chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
+  console.log(message.messageType);
   switch (message.messageType) {
     case 'init-debug':
       log('init-debug message received, injecting run-init-debug script.');
@@ -43,10 +54,33 @@ chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
           break;
       }
       break;
+    case 'planner':
+      console.log('planner', channelReady, message.messageBody);
+      if (channelReady)
+        window.postMessage({source: 'extension', type: 'planner', msg: message.messageBody}, '*');
+      else
+        pendingMessages.push(message.messageBody);
+
+      break;
   }
 });
 
+window.addEventListener('message', function(event) {
+  if (event.source !== window)
+    return;
+  
+  if (event.data == 'debug-inited') {
+    sendPendingMessages();
+    return;
+  }
+
+  if (event.data.source && (event.data.source == 'page')) {
+    chrome.runtime.sendMessage([{messageType: 'planner', messageBody: event.data.msg}]);
+  }
+}, false);
+
 function addInitDebugScript() {
+  console.log('addInitDebugScript');
   let script = document.createElement('script');
   script.setAttribute('type', 'module');
   script.setAttribute('src', chrome.extension.getURL('/src/run-init-debug.js'));

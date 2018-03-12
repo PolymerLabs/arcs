@@ -1,0 +1,74 @@
+<link rel="import" href="../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../bower_components/paper-dropdown-menu/paper-dropdown-menu.html">
+<link rel="import" href="../bower_components/paper-item/paper-item.html">
+<link rel="import" href="../bower_components/paper-input/paper-textarea.html">
+<link rel="import" href="arcs-shared.html">
+
+<dom-module id="arcs-strategy-thingo">
+  <template>
+    <style include="shared-styles">
+      :host {
+        display: block;
+        padding: 8px;
+      }
+
+      #results div {
+        white-space: pre;
+      }
+    </style>
+    <paper-button raised on-tap="runPlanner">Do the thing</paper-button>
+    <paper-dropdown-menu class="strategy-selector" label="Strategy" horizontal-align="left">
+      <paper-listbox slot="dropdown-content" selected="{{selectedStrategy}}" attr-for-selected="name">
+        <template is="dom-repeat" items="[[strategies]]">
+          <paper-item name="[[item]]">[[item]]</paper-item>
+        </template>
+      </paper-listbox>
+    </paper-dropdown-menu>
+    <paper-textarea value={{recipe}}></paper-textarea>
+    <div id='results'>
+      <template is="dom-repeat" items="[[results]]">
+        <div>{{item.result}}</div>
+        <template is="dom-repeat" items="{{item.errors}}">
+          <div><span>{{item.id}}</span><span>{{item.error}}</span></div>
+        </template>
+        <div>{{item.normalized}}</div>
+      </template>
+    </div>
+  </template>
+  <script>
+    class ArcsStrategyThingo extends Polymer.Element {
+      static get is() { return 'arcs-strategy-thingo'; }
+
+      static get properties() {
+        return {
+          strategies: { type: Array},
+          recipe: {type: String},
+          selectedStrategy: {type: String},
+          results: {type: Array}
+        }
+      }
+
+      onMessages(e) {
+        if (e.filter(a => a.messageType == "page-refresh").length > 0) {
+          this.dispatchEvent(new CustomEvent('message', {detail: {type: 'planner', msgBody: {op: 'fetch-strategies'}}}));
+          return;
+        }
+
+        let strategies = e.filter(a => a.messageType == 'planner' && a.messageBody.op == 'strategies').map(a => a.messageBody.strategies);
+        if (strategies.length > 0)
+          this.set("strategies", strategies[0]);
+  
+        let results = e.filter(a => a.messageType == 'planner' && a.messageBody.op == 'planner-results').map(a => a.messageBody.results);
+        if (results.length > 0)
+        this.set("results", results[0]);
+    }
+
+      runPlanner(e) {
+        this.dispatchEvent(new CustomEvent('message', {detail: {type: 'planner', msgBody: {op: 'invoke', data: {recipe: this.recipe, strategy: this.selectedStrategy}}}}));
+      }
+    };
+
+    window.customElements.define(ArcsStrategyThingo.is, ArcsStrategyThingo);
+  </script>
+</dom-module>

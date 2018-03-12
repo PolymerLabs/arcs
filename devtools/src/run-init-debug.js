@@ -1,4 +1,6 @@
 import {initDebug} from '../shared/arc-registry.js';
+import {initPlannerComponent} from '../shared/invoke-planner.js';
+
 if (initDebug().preExistingArcs) {
   document.dispatchEvent(new CustomEvent('arcs-debug', {
     detail: [{
@@ -7,3 +9,9 @@ if (initDebug().preExistingArcs) {
     }]
   }));
 }
+
+initPlannerComponent();
+
+window.postMessage('debug-inited', '*');
+
+
