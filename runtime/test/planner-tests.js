@@ -773,6 +773,38 @@ describe('MatchRecipeByVerb', function() {
     assert.equal(results[0].result.particles.length, 0);
     assert.deepEqual(results[0].result.toString(), 'recipe\n  JumpingBoots.e -> NuclearReactor.e\n  JumpingBoots.f -> FootFactory.f');
   });
+  it('plays nicely with constraints', async () => {
+    let manifest = await Manifest.parse(`
+      schema S
+      particle P in 'A.js'
+        P(out S p)
+      particle Q in 'B.js'
+        Q(in S q)  
+    
+      recipe
+        P.p -> Q.q
+        particle can a
+      
+      recipe a
+        P
+    `);
+
+    let arc = createTestArc('test-plan-arc', manifest, 'dom');
+    let strategizer = {generated: [{result: manifest.recipes[0], score: 1}]};
+    let mrv = new MatchRecipeByVerb(arc);
+    let {results} = await mrv.generate(strategizer);
+    assert.equal(results.length, 1);
+    let cctc = new ConvertConstraintsToConnections(arc);
+    let output = await cctc.generate({generated: results});
+    assert.equal(output.results.length, 1);
+    assert.deepEqual(output.results[0].result.toString(), 
+`recipe
+  create as view0 // S
+  P as particle0
+    p -> view0
+  Q as particle1
+    q <- view0`);
+  });
 });
 
 describe('MatchParticleByVerb', function() {

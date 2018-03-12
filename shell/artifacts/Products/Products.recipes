@@ -18,12 +18,16 @@ import 'Arrivinator.manifest'
 import 'ManufacturerInfo.manifest'
 import 'ShowProduct.manifest'
 
-// See [person]'s wishlist
-recipe
-  map #wishlist as wishlist
+// show a list
+recipe showList
   ShowCollection
-    collection <- wishlist
     hostedParticle = ShowProduct
+
+
+// See [person]'s wishlist
+recipe 
+  map #wishlist as wishlist
+  particle can showList
 
 // Create shortlist with [product, ...] and suggest similar products from [person]'s wish list
 recipe

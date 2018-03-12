@@ -97,8 +97,10 @@ describe('demo flow', function() {
       'products from your browsing context (Minecraft Book plus 2 other items), and estimate ' +
       'arrival date for products recommended based on products from your ' +
       'browsing context and Claire\'s wishlist (Book: How to Draw plus 2 other items).',
-      'Recommendations based on Claire\'s wishlist (Book: How to Draw plus 2 other items).'];
-    await helper.makePlans({expectedNumPlans: 4, expectedSuggestions});
+      'Recommendations based on Claire\'s wishlist (Book: How to Draw plus 2 other items).',
+      'Show products from your browsing context (Minecraft Book plus 2 other items).',
+      'Show products recommended based on products from your browsing context and Claire\'s wishlist (Book: How to Draw plus 2 other items).'];
+    await helper.makePlans({expectedNumPlans: 6, expectedSuggestions});
 
     // 2. Move an element from recommended list to shortlist.
     helper.slotComposer
@@ -115,7 +117,7 @@ describe('demo flow', function() {
 
     // Replanning.
     await helper.makePlans({
-      expectedNumPlans: 4,
+      expectedNumPlans: 6,
       expectedSuggestions: expectedSuggestions.map(suggestion => {
           return suggestion.replace('Minecraft Book plus 2 other items', 'Minecraft Book plus 3 other items');
       })
@@ -147,7 +149,7 @@ describe('demo flow', function() {
     await helper.verifySetSize('Chooser', 'choices', 3);
 
     // 5. Select "Check manufacturer information..." suggestion
-    await helper.makePlans({expectedNumPlans: 3});
+    await helper.makePlans({expectedNumPlans: 5});
     helper.slotComposer
       .newExpectations()
         .expectRenderSlot('Multiplexer', 'annotation', ['template'])
@@ -171,12 +173,12 @@ describe('demo flow', function() {
     await helper.verifySetSize('Chooser', 'choices', 3);
 
     // 7. Accept 'Recommendations based on...' suggestion
-    await helper.makePlans({expectedNumPlans: 2});
+    await helper.makePlans({expectedNumPlans: 4});
     helper.slotComposer
       .newExpectations()
       .expectRenderSlot('Interests', 'postamble', ['template', 'model']);
     await helper.acceptSuggestion({particles: ['Interests']});
-    await helper.makePlans({expectedNumPlans: 1});
+    await helper.makePlans({expectedNumPlans: 3});
 
     // TODO(mmandlis): Provide methods in helper to verify slot contents (helper.slotComposer._slots[i]._content).
   }).timeout(10000);
