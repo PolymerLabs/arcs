@@ -13,19 +13,28 @@ defineParticle(({DomParticle}) => {
 
 <style>
   [${host}] {
-    padding: 6px 0;
-    text-align: center;
+    padding: 0 16px;
   }
   [${host}] > * {
     vertical-align: middle;
-    padding: 6px 0;
+  }
+  [${host}] [icon-favorite] {
+    color: #1A73E8;
+    font-size: 14px;
+  }
+  [${host}] [label] {
+    color: #1A73E8;
+    font-family: 'Google Sans';
+    font-size: 14px;
+    margin-left: 8px;
   }
 </style>
 
 <div ${host} id={{subId}}>{{haveFavoriteFood}}</div>
 
 <template have-favorite-food>
-  <span>They have your favorite food <b>{{food}}</b>!</span>
+  <i icon-favorite class="material-icons">favorite</i>
+  <span label>They have your favorite food <b>{{food}}</b>!</span>
 </template>
 
     `.trim();

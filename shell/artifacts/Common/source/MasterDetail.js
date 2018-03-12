@@ -43,6 +43,7 @@ defineParticle(({DomParticle}) => {
     position: absolute;
     right: 0;
     top: 0;
+    padding: 16px;
   }
   button:focus {
     outline:0;

@@ -13,15 +13,15 @@ defineParticle(({DomParticle}) => {
   let styles = `
 <style>
   [${host}] {
-    padding: 6px 0;
     text-align: center;
   }
   [${host}] > * {
     vertical-align: middle;
-    padding: 6px 0;
+    // padding: 6px 0;
   }
   [${host}] .x-select {
-    display: inline-block;
+    padding-left: 16px;
+    display: flex;
     position: relative;
   }
   [${host}] .x-select::after {
@@ -29,38 +29,39 @@ defineParticle(({DomParticle}) => {
     display: block;
     position: absolute;
     right: 8px;
-    bottom: 8px;
-    transform: scaleY(0.6);
+    bottom: 16px;
+    transform: scaleY(0.4) scaleX(0.8);
     pointer-events: none;
   }
   [${host}] .x-select > select {
     position: relative;
     margin: 0;
-    padding: 8px 24px 10px 6px;
+    padding: 0;
     border: 0;
-    border-bottom: 1px solid #ddd;
+    // border-bottom: 1px solid #ddd;
     background-color: transparent;
     border-radius: 0;
-    font-size: 14px;
-    font-weight: 300;
+    font-size: 16px;
     overflow: hidden;
     outline: none;
     -webkit-appearance: none;
     vertical-align: top;
   }
   [${host}] input {
-    padding: 6px;
-    font-size: 14px;
+    font-family: 'Google Sans';
+    font-size: 16px;
     vertical-align: top;
     border: 0;
     background: transparent;
+    padding-left: 16px;
   }
   [${host}] input::-webkit-clear-button {
     display: none;
   }
   [${host}] [times] {
     display: flex;
-    justify-content: space-around
+    justify-content: space-between;
+    padding: 16px 8px;
   }
   [${host}] .x-button {
     display: inline-flex;
@@ -102,7 +103,7 @@ defineParticle(({DomParticle}) => {
   let template = `
 ${styles}
 <div ${host} id={{subId}}>
-  <div>{{timePicker}}</div>
+  <div style="display:flex; flex-direction:row;">{{timePicker}}</div>
   <div times>{{availableTimes}}</div>
 </div>
 

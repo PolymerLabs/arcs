@@ -9,9 +9,6 @@
 defineParticle(({DomParticle, html}) => {
 
   const item = html`
-  <div class="close-button" on-click="_onBack">
-    <i class="material-icons">close</i>
-  </div>
 <div item style%="{{image}}" style="position: relative;">
   <div scrim></div>
   <div style="flex: 1"></div>
@@ -29,7 +26,7 @@ defineParticle(({DomParticle, html}) => {
     </div>
   </div>
 </div>
-<div slotid="annotation" subid="{{id}}" style="padding-top:8px;">
+<div slotid="annotation" subid="{{id}}" style="padding:16px 0;">
 
 `;
 
