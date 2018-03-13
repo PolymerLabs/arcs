@@ -18,8 +18,11 @@ class ArcHandle extends Xen.Base {
     let lastData = lastProps.data;
     let {arc, options, data} = props;
     if (arc && !state.handle) {
+      if (options && options.manifest) {
+        state.manifest = options.manifest;
+      }
       if (!state.manifest && options && options.schemas) {
-        Arcs.Manifest.load(options.schemas, arc.loader).then(manifest => this._setState({manifest}));
+        state.manifest = await Arcs.Manifest.load(options.schemas, arc.loader);
       }
       if (state.manifest && options) {
         state.handle = await this._createHandle(arc, state.manifest, options);
