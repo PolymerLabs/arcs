@@ -157,13 +157,13 @@ class ShellUi extends Xen.Base {
       config.key = 'launcher';
     }
     if (config.key === 'launcher') {
-      config.soloPath = 'artifacts/launcher.manifest';
+      config.soloPath = '../web/artifacts/launcher.manifest';
       config.launcher = true;
       configkey = '';
       state.description = 'Launcher';
     }
     if (config.key === 'profile') {
-      config.soloPath = 'artifacts/profile.manifest';
+      config.soloPath = '../web/artifacts/profile.manifest';
       config.profiler = true;
       configkey = '*';
     }
