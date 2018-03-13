@@ -7,7 +7,8 @@
 // http://polymer.github.io/PATENTS.txt
 
 import 'Product.schema'
+import '../Things/Thing.schema'
 
 particle AlsoOn in 'source/AlsoOn.js'
-  AlsoOn(in Product product, in [Product] choices)
+  AlsoOn(in Thing product, in [Thing] choices)
   consume annotation
