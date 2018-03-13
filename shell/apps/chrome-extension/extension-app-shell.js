@@ -34,20 +34,22 @@ ${template}
   }
 
   consumeBrowerData(props, state) {
-    const {browserData, manifests, arc} = state;
+    const {browserData, manifests, arc, scannedManifests} = state;
 
     // If this is our first time through, set some parameters about what
     // we're loading in this session.
-    if (!state.extensionConfig) {
-      const manifestsNeedLoading = browserData.manifests && !browserData.manifests.every(
-        manifest => manifests.indexOf(manifest) >= 0
-      );
-      state.extensionConfig = {manifestsNeedLoading};
+    if (!('manifestsNeedLoading' in state)) {
+      state.manifestsNeedLoading =
+          browserData.manifests && !browserData.manifests.every(
+              manifest => manifests.indexOf(manifest) >= 0
+          );
     }
-    const {extensionConfig} = state;
+
+    const {manifestsNeedLoading, manifestsLoaded} = state;
 
     // set additional manifests up for loading
-    if (extensionConfig.manifestsNeedLoading && !extensionConfig.manifestsLoaded) {
+    if (manifestsNeedLoading && !manifestsLoaded) {
+      state.manifestsLoaded = true;
       let manifests = manifests.slice();
       browserData.manifests.forEach(manifest => {
         if (manifests.indexOf(manifest) < 0) {
@@ -61,7 +63,7 @@ ${template}
 
     // after manifests are loaded (if needed), create handles and indicate
     // readiness.
-    if (!extensionConfig.manifestsNeedLoading || extensionConfig.manifestsLoaded) {
+    if (!manifestsNeedLoading || manifestsLoaded) {
       if (browserData.entities) {
         this._consumeEntities(browserData.entities, arc);
         state.plans = null;
@@ -94,53 +96,19 @@ ${template}
           fqTypeName} or ${shortTypeName}, skipping`);
       return;
     }
+
     const schema = arc._context.findSchemaByName(foundSchemaName);
     const data = this._filterBySchema(entity[1], schema);
 
-    const handleName = `browserData${shortTypeName}Data`;
-
     // see if we've already made a handle
-    if (arc._context._handles.find(
-            handle => handle.name == handleName)) {
+    const handleName = `browserData${shortTypeName}Data`;
+    if (arc._context._handles.find(handle => handle.name == handleName)) {
       ExtensionAppShell.log(
           `we've already created a handle with name ${handleName}`);
       return;
     }
 
     this._createArcHandle(arc, foundSchemaName, handleName, shortTypeName, data);
-  }
-
-  _createArcHandle(arc, foundSchemaName, handleName, shortTypeName, data) {
-    ExtensionAppShell.log(`creating ArcHandle with name ${handleName}`);
-    const arcHandle = Object.assign(document.createElement('arc-handle'), {
-      arc,
-      options: {
-        manifest: arc._context,
-        type: `[${foundSchemaName}]`,
-        name: handleName,
-        id: handleName,
-        tags:
-            [shortTypeName == 'Product' ? '#shortlist' :
-                                          `#${shortTypeName}`],
-        asContext: true
-      },
-      data: data
-    });
-  }
-
-  _onBrowserData(e, browserData) {
-    ExtensionAppShell.log('received browserData', browserData);
-    this._setState({browserData});
-  }
-
-  _onPlans(e, plans) {
-    super._onPlans(e, plans);
-    const {extensionConfig} = this._state;
-    if (extensionConfig && extensionConfig.manifestsNeedLoading && !extensionConfig.manifestsLoaded) {
-      // receiving plans is our trigger that the manifests have been loaded.
-      extensionConfig.manifestsLoaded = true;
-      ExtensionAppShell.log(`manifests are loaded`);
-    }
   }
 
   /**
@@ -175,6 +143,39 @@ ${template}
       });
     }
     return filteredEntities;
+  }
+
+  _createArcHandle(arc, foundSchemaName, handleName, shortTypeName, data) {
+    ExtensionAppShell.log(`creating ArcHandle with name ${handleName}`);
+    const arcHandle = Object.assign(document.createElement('arc-handle'), {
+      arc,
+      data,
+      options: {
+        manifest: arc._context,
+        type: `[${foundSchemaName}]`,
+        name: handleName,
+        id: handleName,
+        tags:
+            [shortTypeName == 'Product' ? '#shortlist' :
+                                          `#${shortTypeName}`],
+        asContext: true
+      }
+    });
+  }
+
+  _onBrowserData(e, browserData) {
+    ExtensionAppShell.log('received browserData', browserData);
+    this._setState({browserData});
+  }
+
+  _onPlans(e, plans) {
+    super._onPlans(e, plans);
+    const {extensionConfig} = this._state;
+    if (extensionConfig && extensionConfig.manifestsNeedLoading && !extensionConfig.manifestsLoaded) {
+      // receiving plans is our trigger that the manifests have been loaded.
+      extensionConfig.manifestsLoaded = true;
+      ExtensionAppShell.log(`manifests are loaded`);
+    }
   }
 
 }
