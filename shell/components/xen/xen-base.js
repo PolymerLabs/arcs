@@ -32,19 +32,19 @@ class XenBase extends XenElement(XenState(HTMLElement)) {
       }
     });
   }
-  _update(...args) {
-    let model = this._render(...args);
+  _doUpdate(...stateArgs) {
+    this._update(...stateArgs);
+    let model = this._render(...stateArgs);
     if (this._dom) {
       if (Array.isArray(model)) {
         model = model.reduce((sum, value) => Object.assign(sum, value), Object.create(null));
       }
       this._dom.set(model);
     }
+    this._didUpdate(...stateArgs);
+    this._didRender(...stateArgs);
   }
   _render() {
-  }
-  _didUpdate(...args) {
-    this._didRender(...args);
   }
   _didRender() {
   }
