@@ -42,15 +42,10 @@ defineParticle(({TransformationDomParticle}) => {
       super.setViews(views);
     }
 
-    async willReceiveProps({list}) {
+    async willReceiveProps({list}, {arc, type, hostedParticle, otherMappedViews, otherConnections}) {
       if (list.length > 0) {
         this.relevance = 0.1;
       }
-      let arc = this._state.arc;
-      let type = this._state.type;
-      let hostedParticle = this._state.hostedParticle;
-      let otherMappedViews = this._state.otherMappedViews;
-      let otherConnections = this._state.otherConnections;
 
       for (let [index, item] of list.entries()) {
         if (this.handleIds[item.id]) {
