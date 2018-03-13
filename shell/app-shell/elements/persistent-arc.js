@@ -13,6 +13,8 @@ import ArcsUtils from '../lib/arcs-utils.js';
 import Xen from '../../components/xen/xen.js';
 const db = window.db;
 
+const log = Xen.Base.logFactory('PersistentArc', '#a30000');
+
 class PersistentArc extends Xen.Base {
   static get observedAttributes() { return ['key', 'metadata']; }
   _getInitialState() {
@@ -52,7 +54,7 @@ class PersistentArc extends Xen.Base {
           metadata.externalManifest = externalManifest;
         }
         if (this._hasMetadataChanged(metadata)) {
-          PersistentArc.log('WRITING (update) metadata', metadata);
+          log('WRITING (update) metadata', metadata);
           state.db.child(key).child('metadata').update(metadata);
         }
       }
@@ -63,9 +65,10 @@ class PersistentArc extends Xen.Base {
     const state = this._state;
     const serial = JSON.stringify(metadata);
     if (serial !== state.serial) {
-      PersistentArc.groupCollapsed('metadata changed');
-        PersistentArc.log('new meta:', metadata); //serial);
-        PersistentArc.log('old meta:', state.serial ? JSON.parse(state.serial) : state.serial);
+      log('metadata changed');
+      //PersistentArc.groupCollapsed('metadata changed');
+      //  log('new meta:', metadata); //serial);
+      //  log('old meta:', state.serial ? JSON.parse(state.serial) : state.serial);
       console.groupEnd();
       state.serial = serial;
       return true;
@@ -79,7 +82,7 @@ class PersistentArc extends Xen.Base {
     this._assignColors(data);
     let key = db.push({'metadata': data}).key;
     this._setState({key});
-    PersistentArc.log('providing key (_createKey)', key);
+    log('providing key (_createKey)', key);
     this._fire('key', key);
   }
   _assignColors(metadata) {
@@ -91,12 +94,12 @@ class PersistentArc extends Xen.Base {
   }
   _watchKey(db, key) {
     let arcMetadata = db.child(key).child('metadata');
-    PersistentArc.log('watching', String(arcMetadata));
+    log('watching', String(arcMetadata));
     const state = this._state;
     return {
       node: arcMetadata,
       handler: snap => {
-        PersistentArc.log('READING', String(arcMetadata));
+        log('READING', String(arcMetadata));
         let metadata = snap.val();
         if (this._hasMetadataChanged(metadata)) {
           this._fire('metadata', metadata);
@@ -105,6 +108,4 @@ class PersistentArc extends Xen.Base {
     };
   }
 }
-PersistentArc.log = Xen.Base.logFactory('PersistentArc', '#a30000');
-PersistentArc.groupCollapsed = Xen.Base.logFactory('PersistentArc', '#a30000', 'groupCollapsed');
 customElements.define('persistent-arc', PersistentArc);

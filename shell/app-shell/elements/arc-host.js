@@ -147,7 +147,7 @@ class ArcHost extends Xen.Base {
     this._fire('plans', null);
   }
   _runtimeHandlesUpdated() {
-    log('_runtimeHandlesUpdated');
+    !this._state.planning && log('runtimeHandlesUpdated');
     this._schedulePlanning();
   }
   async _schedulePlanning() {

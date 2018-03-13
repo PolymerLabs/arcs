@@ -38,23 +38,19 @@ class ArcHandle extends Xen.Base {
     }
   }
   async _createHandle(arc, manifest, {name, tags, type, id, asContext}) {
-    let handleOf = false;
+    let setOf = false;
     if (type[0] == '[') {
-      handleOf = true;
+      setOf = true;
       type = type.slice(1, -1);
     }
-    let schema = manifest.findSchemaByName(type);
-    let typeOf = handleOf ? schema.type.setViewOf() : schema.type;
-    tags = tags.concat(['#nosync']);
+    const schema = manifest.findSchemaByName(type);
+    const typeOf = setOf ? schema.type.setViewOf() : schema.type;
+    //tags = tags.concat(['#nosync']);
     id = id || arc.generateID();
-    let handle;
-    if (asContext) {
-      // manifest-handle, for `map`, `copy`, `?`
-      handle = await arc.context.newHandle(typeOf, name, id, tags);
-    } else {
-      // arc-handle, suitable for `use`, `?`
-      handle = await arc.createHandle(typeOf, name, id, tags);
-    }
+    // context-handles are for `map`, `copy`, `?`
+    // arc-handles are for `use`, `?`
+    const factory = asContext ? arc.context.newHandle.bind(arc.context) : arc.createHandle.bind(arc);
+    const handle = await factory(typeOf, name, id, tags);
     // observe handle
     handle.on('change', () => this._handleChanged(handle), arc);
     log('created handle', name, tags);
