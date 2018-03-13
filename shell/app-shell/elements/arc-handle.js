@@ -12,12 +12,14 @@ import ArcsUtils from '../lib/arcs-utils.js';
 import Xen from '../../components/xen/xen.js';
 const Arcs = window.Arcs;
 
+const log = Xen.Base.logFactory('ArcHandle', '#c6a700');
+
 class ArcHandle extends Xen.Base {
   static get observedAttributes() { return ['arc', 'options', 'data']; }
-  async _update(props, state, lastProps) {
-    let lastData = lastProps.data;
+  async _update(props, state) {
     let {arc, options, data} = props;
-    if (arc && !state.handle) {
+    if (arc && !state.handle && !state.working) {
+      state.working = true;
       if (options && options.manifest) {
         state.manifest = options.manifest;
       }
@@ -27,12 +29,12 @@ class ArcHandle extends Xen.Base {
       if (state.manifest && options) {
         state.handle = await this._createHandle(arc, state.manifest, options);
       }
-      lastData = null;
+      state.working = false;
     }
-    if (state.handle && data != lastData) {
+    if (state.handle && data != state.data) {
+      state.data = data;
       // (re)populate
       this._updateHandle(state.handle, data, arc);
-      //this._fire('handle', state.handle);
     }
   }
   async _createHandle(arc, manifest, {name, tags, type, id, asContext}) {
@@ -55,11 +57,11 @@ class ArcHandle extends Xen.Base {
     }
     // observe handle
     handle.on('change', () => this._handleChanged(handle), arc);
-    ArcHandle.log('created handle', name, tags);
+    log('created handle', name, tags);
     return handle;
   }
   _updateHandle(handle, data, arc) {
-    ArcHandle.log('updating handle', handle.name, data);
+    log('updating handle', handle.name, data);
     if (handle.toList) {
       data = Object.keys(data).map(key => {
         return {id: arc.generateID(), rawData: data[key]};
@@ -73,5 +75,4 @@ class ArcHandle extends Xen.Base {
     handle.debouncer = ArcsUtils.debounce(handle.debouncer, () => this._fire('change', handle), 500);
   }
 }
-ArcHandle.log = Xen.Base.logFactory('ArcHandle', '#c6a700');
 customElements.define('arc-handle', ArcHandle);
