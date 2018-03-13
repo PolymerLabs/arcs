@@ -177,6 +177,19 @@ export class Particle {
     }
     return false;
   }
+  _matchTypes(connection, handle) {
+    let connType = connection.type;
+    let handleType = handle.type;
+    if ((connType.isSetView || connType.isEntity) && (handleType.isSetView || handleType.isEntity)) {
+      if (connType.isSetView != handleType.isSetView) {
+        return false;
+      }
+      let connSchema = (connType.isSetView ? connType.primitiveType() : connType).entitySchema;
+      let handleSchema = (handleType.isSetView ? handleType.primitiveType() : handleType).entitySchema;
+      return handleSchema.contains(connSchema);
+    }
+    return connType.equals(handleType);
+  }
   // TODO: Move to transformation-particle class.
   // TODO: Don't serialize schemas, once partial schemas are in use.
   serializeSchema(hostedParticle) {

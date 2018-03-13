@@ -6,8 +6,6 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import 'Product.schema'
-
 particle Chooser in 'source/Chooser.js'
   Chooser(in [~a] choices, inout [~a] resultList)
   consume action
