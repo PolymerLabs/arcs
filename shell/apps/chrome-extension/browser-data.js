@@ -9,61 +9,58 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 */
 
 import Xen from '../../components/xen/xen.js';
-
 import {deduplicate, flatten} from './data-processing.js';
 
-class BrowserDataReceiver extends Xen.Base {
+const manifestMimeType = 'text/x-arcs-manifest';
 
+class BrowserDataReceiver extends Xen.Base {
   static get observedAttributes() {
     return ['arc'];
   }
-
-  _update(props, state, lastProps, lastState) {
-    const manifestMimeType = 'text/x-arcs-manifest';
-
-    // if there isn't a listener attached for data, attach that
-    if (!state.listenerAttached) {
-      state.listenerAttached = window.addEventListener('message', event => {
-        if (event.source != window || event.data.method != 'injectArcsData' ||
-            !event.data || !event.data.entities) {
-          return;
-        }
-        BrowserDataReceiver.log(
-            `received event ${event.data.method} from ${event.source}`,
-            event.data);
-
-        state.processedData = {
-          'entities': deduplicate(flatten(event.data.entities))
-        };
-        if (state.processedData.entities[manifestMimeType]) {
-          state.processedData.manifests =
-              state.processedData.entities[manifestMimeType].map(
-                  manifest => manifest.url);
-          delete state.processedData.entities[manifestMimeType];
-        }
-
-        // The `sentData` check is an optimization, and could be removed. It
-        // prevents sending the same data again (since we don't currently
-        // support dynamic data).
-        if (state.processedData && !state.sentData) {
-          this._fire('data', state.processedData);
-          state.sentData = true;
-          BrowserDataReceiver.log(
-              'sent processed data out to Arcs for processing',
-              state.processedData);
-        }
-      });
-    }
-
+  _didMount() {
+    window.addEventListener('message', event => this.onMessage(event));
+  }
+  _update({arc}, state) {
+    const {requestedDataInjection} = state;
     // A populated arc is a proxy for the document reaching an idle state,
     // which indicates the content script is ready to receive events. Fire off
     // a request for a page load.
-    if (props.arc && !state.requestedDataInjection) {
-      window.postMessage({method: 'pleaseInjectArcsData'}, '*');
+    if (arc && !requestedDataInjection) {
       state.requestedDataInjection = true;
-      BrowserDataReceiver.log('requested injection of browser data');
+      window.postMessage({method: 'pleaseInjectArcsData'}, '*');
+      log('requested injection of browser data');
     }
   }
+  onMessage(event) {
+    const {sentData} = this._state;
+    if (event.source !== window || event.data.method !== 'injectArcsData' || !event.data || !event.data.entities) {
+      return;
+    }
+    log(
+        `received event ${event.data.method} from ${event.source}`,
+        event.data
+    );
+    const entities = deduplicate(flatten(event.data.entities));
+    let manifests;
+    if (entities[manifestMimeType]) {
+      manifests = entities[manifestMimeType].map(manifest => manifest.url);
+      delete entities[manifestMimeType];
+    }
+    const processedData = {entities, manifests};
+    // The `sentData` check is an optimization, and could be removed. It
+    // prevents sending the same data again (since we don't currently
+    // support dynamic data).
+    if (!sentData) {
+      this._fire('data', processedData);
+      this._setState({sentData: true});
+      log(
+          'sent processed data out to Arcs for processing',
+          processedData
+      );
+    }
+    this._setState({processedData});
+  }
 }
-BrowserDataReceiver.log = Xen.Base.logFactory('BrowserDataReceiver', '#883997');
+
+const log = Xen.Base.logFactory('BrowserDataReceiver', '#883997');
 customElements.define('browser-data-receiver', BrowserDataReceiver);
