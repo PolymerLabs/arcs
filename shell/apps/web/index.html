@@ -11,13 +11,18 @@
   <link rel="shortcut icon" href="../logo_64.png">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Google+Sans">
   <link rel="stylesheet" href="index.css">
-  
+
   <script type="module" src="index.js"></script>
 
 </head>
 <body>
 
-  <app-shell></app-shell>
+  <app-shell>
+    <div slotid="toproot"></div>
+    <div slotid="root"></div>
+    <div slotid="modal"></div>
+    <div slotid="suggestions" slot="suggestions"></div>
+  </app-shell>
 
 </body>
 </html>

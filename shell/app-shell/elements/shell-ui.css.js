@@ -117,12 +117,12 @@ export default Xen.html`
     background-color: white;
     color: black;
   }
-  [slotid=suggestions] {
+  ::slotted([slotid=suggestions]) {
     max-height: 356px;
     overflow-y: auto;
     overflow-x: hidden;
   }
-  [slotid=modal] {
+  ::slotted([slotid=modal]) {
     position: fixed;
     top: var(--toolbar-height);
     bottom: var(--footer-height)
