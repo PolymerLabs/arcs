@@ -135,7 +135,7 @@ recipe
 
       this._updateRenderModel(propsItems, this._state.hostedItems || []);
 
-      if (propsItems.length == 0 && !this._state.template) {
+      if (propsItems.length > 0 && !this._state.template) {
         this._setState({template: this.template});
       }
 
