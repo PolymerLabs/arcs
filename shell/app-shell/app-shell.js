@@ -34,7 +34,6 @@ class AppShell extends Xen.Base {
     super._update(props, state);
   }
   _render({}, {}) {
-    AppShell.log(this._state);
     const render = {};
     return render;
   }
@@ -48,3 +47,5 @@ class AppShell extends Xen.Base {
 
 AppShell.log = Xen.Base.logFactory('AppShell', '#6660ac');
 customElements.define('app-shell', AppShell);
+
+export default AppShell;
