@@ -9,11 +9,10 @@
 import 'https://$cdn/artifacts/Things/Thing.schema'
 
 schema Restaurant extends Thing
- normative
-    Text id
-    Text reference
-    Text icon
-    Text photos
-    Text photo
-    Number rating
-    Text address
+  Text id
+  Text reference
+  Text icon
+  Text photos
+  Text photo
+  Number rating
+  Text address
