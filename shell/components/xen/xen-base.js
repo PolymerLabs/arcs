@@ -1,6 +1,6 @@
 import XenState from './xen-state.js';
 import XenElement from './xen-element.js';
-import Xen from './xen-template.js';
+import XenTemplate from './xen-template.js';
 
 class XenBase extends XenElement(XenState(HTMLElement)) {
   get template() {
@@ -18,11 +18,11 @@ class XenBase extends XenElement(XenState(HTMLElement)) {
   _stamp() {
     let template = this.template;
     if (template) {
-      // TODO(sjmiles): can just do `events(this)` for default listener (`events(this)`), but we use a custom listener
+      // TODO(sjmiles): can just do `events(this)` for default listener, but we use a custom listener
       // so we can append (props, state) to handler signature. All we are really altering is the delegation,
       // not the listening, maybe there could be another customization point just for that. Perhaps the default
       // listener could invoke a delegator if it exists, then fallback to original behavior.
-      this._dom = Xen.stamp(this.template).events(this._listener.bind(this)).appendTo(this.host);
+      this._dom = XenTemplate.stamp(this.template).events(this._listener.bind(this)).appendTo(this.host);
     }
   }
   _listener(node, name, handler) {
@@ -32,8 +32,8 @@ class XenBase extends XenElement(XenState(HTMLElement)) {
       }
     });
   }
-  _update(props, state, lastProps, lastState) {
-    let model = this._render(props, state, lastProps, lastState);
+  _update(...args) {
+    let model = this._render(...args);
     if (this._dom) {
       if (Array.isArray(model)) {
         model = model.reduce((sum, value) => Object.assign(sum, value), Object.create(null));
@@ -41,12 +41,12 @@ class XenBase extends XenElement(XenState(HTMLElement)) {
       this._dom.set(model);
     }
   }
-  _render(/*props, state, lastProps, lastState*/) {
+  _render() {
   }
-  _didUpdate(props, state, lastProps, lastState) {
-    this._didRender(props, state, lastProps, lastState);
+  _didUpdate(...args) {
+    this._didRender(...args);
   }
-  _didRender(/*props, state, lastProps, lastState*/) {
+  _didRender() {
   }
 }
 XenBase.logFactory = (preamble, color, log='log') => console[log].bind(console, `%c${preamble}`, `background: ${color}; color: white; padding: 1px 6px 2px 7px; border-radius: 6px;`);
