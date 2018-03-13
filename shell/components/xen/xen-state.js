@@ -45,11 +45,7 @@ export default Base => class extends Base {
     this._propsInvalid = true;
     this._invalidate();
   }
-  _setState(state) {
-    Object.assign(this._state, state);
-    this._invalidate();
-  }
-  _setIfDirty(object) {
+  _setState(object) {
     let dirty = false;
     const state = this._state;
     for (const property in object) {
@@ -63,6 +59,10 @@ export default Base => class extends Base {
       this._invalidate();
       return true;
     }
+  }
+  // TODO(sjmiles): deprecated
+  _setIfDirty(object) {
+    return this._setState(object);
   }
   _async(fn) {
     return Promise.resolve().then(fn.bind(this));
