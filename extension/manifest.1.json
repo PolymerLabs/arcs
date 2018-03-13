@@ -16,11 +16,6 @@
       "js": ["page-extractor.js", "arcs-content-script.js"]
     }
   ],
-  /*
-  "chrome_url_overrides" : {
-    "newtab": "redirect-to-arcs.html"
-  },
-  */
   "content_security_policy": "script-src 'self' 'sha256-rdk56h4D+jfInKWMNE+DL5C923/KiX9j3/l0Cdvgj0c='; object-src 'self'",
   "icons": {
     "16": "artifacts/logo_16x16_1x.png",
