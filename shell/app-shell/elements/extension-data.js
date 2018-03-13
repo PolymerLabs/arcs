@@ -18,23 +18,22 @@ const template = Xen.html`
 
 `;
 
-class ExtensionAppShell extends AppShell {
+class ExtensionData extends Xen.Base {
   get template() {
-    return `
-${super.template}
-${template}
-      `;
+    return template;
   }
 
   _render(props, state) {
     if (state.browserData) {
       this._consumeBrowserData(props, state);
     }
-    return super._render(props, state);
+    if (state.manifests) {
+      this._fire('manifests', state.manifests);
+    }
   }
 
   _onBrowserData(e, browserData) {
-    ExtensionAppShell.log('received browserData', browserData);
+    log('received browserData', browserData);
     this._setState({browserData});
   }
 
@@ -44,7 +43,7 @@ ${template}
     if (extensionConfig && extensionConfig.manifestsNeedLoading && !extensionConfig.manifestsLoaded) {
       // receiving plans is our trigger that the manifests have been loaded.
       extensionConfig.manifestsLoaded = true;
-      ExtensionAppShell.log(`manifests are loaded`);
+      log(`manifests are loaded`);
     }
   }
 
@@ -68,10 +67,10 @@ ${template}
       browserData.manifests.forEach(manifest => {
         if (manifests.indexOf(manifest) < 0) {
           manifests.push(manifest);
-          ExtensionAppShell.log(`appending manifest ${manifest}`);
+          log(`appending manifest ${manifest}`);
         }
       });
-      //state.manifests = manifests;
+      state.manifests = manifests;
       state.plans = null;
     }
 
@@ -107,7 +106,7 @@ ${template}
     } else if (arc._context.findSchemaByName(shortTypeName)) {
       foundSchemaName = shortTypeName;
     } else {
-      ExtensionAppShell.log(`didn't find a schema for type ${
+      log(`didn't find a schema for type ${
           fqTypeName} or ${shortTypeName}, skipping`);
       return;
     }
@@ -118,7 +117,7 @@ ${template}
     // see if we've already made a handle
     const handleName = `browserData${shortTypeName}Data`;
     if (arc._context._handles.find(handle => handle.name == handleName)) {
-      ExtensionAppShell.log(
+      log(
           `we've already created a handle with name ${handleName}`);
       return;
     }
@@ -161,7 +160,7 @@ ${template}
   }
 
   _createArcHandle(arc, foundSchemaName, handleName, shortTypeName, data) {
-    ExtensionAppShell.log(`creating ArcHandle with name ${handleName}`);
+    log(`creating ArcHandle with name ${handleName}`);
     const arcHandle = Object.assign(document.createElement('arc-handle'), {
       arc,
       data,
@@ -179,5 +178,5 @@ ${template}
   }
 
 }
-ExtensionAppShell.log = Xen.Base.logFactory('ExtensionAppShell', '#2277a8');
-customElements.define('extension-app-shell', ExtensionAppShell);
+const log = Xen.Base.logFactory('ExtensionData', '#2277a8');
+customElements.define('extension-data', ExtensionData);

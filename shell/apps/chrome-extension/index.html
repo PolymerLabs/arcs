@@ -13,11 +13,16 @@
 
   <script type="module" src="index.debug.js"></script>
   <script type="module" src="extension-app-shell.js"></script>
-  
+
 </head>
 <body>
 
-  <extension-app-shell></extension-app-shell>
+  <extension-app-shell>
+    <div slotid="toproot"></div>
+    <div slotid="root"></div>
+    <div slotid="modal"></div>
+    <div slotid="suggestions" slot="suggestions"></div>
+  </extension-app-shell>
 
 </body>
 </html>

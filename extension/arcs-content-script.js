@@ -8,7 +8,7 @@
 // TODO(smalls) there should be a better way to detect an arcs page we can
 // inject data into.
 const isExtensionAppShellPage =
-    document.body.getElementsByTagName('extension-app-shell').length > 0;
+    document.body.getElementsByTagName('app-shell').length > 0;
 
 if (isExtensionAppShellPage) {
   // Listen for requests to send entities.
