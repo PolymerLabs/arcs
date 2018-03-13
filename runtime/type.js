@@ -131,6 +131,15 @@ class Type {
     return TypeChecker.compareTypes({type: this}, {type}, false).valid;
   }
 
+  equalsOrSubclass(type) {
+    let thisSchema = this.getEntitySchema();
+    let typeSchema = type.getEntitySchema();
+    if (thisSchema && typeSchema) {
+      return (this.isSetView == type.isSetView) && thisSchema.contains(typeSchema);
+    }
+    return this.equals(type);
+  }
+
   _applyExistenceTypeTest(test) {
     if (this.isSetView)
       return this.primitiveType()._applyExistenceTypeTest(test);
