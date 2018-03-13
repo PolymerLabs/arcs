@@ -112,7 +112,7 @@ class DomParticle extends XenStateMixin(Particle) {
     this._setProps(props);
   }
   renderSlot(slotName, contentTypes) {
-    const stateArgs = [this._props, this._state, this._lastProps, this._lastState];
+    const stateArgs = this._getStateArgs();
     let slot = this.getSlot(slotName);
     if (!slot) {
       return; // didn't receive StartRender.
