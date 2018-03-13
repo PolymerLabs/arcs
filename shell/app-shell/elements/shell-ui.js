@@ -3,21 +3,13 @@ import ArcsUtils from '../lib/arcs-utils.js';
 import Xen from '../../components/xen/xen.js';
 
 // elements
-import './arc-cloud.js';
-import './shell-handles.js';
 import './user-picker.js';
 import './menu-panel.js';
-import './arc-host.js';
 import './arc-footer.js';
 
 // components
 import '../../components/toggle-button.js';
 import '../../components/simple-tabs.js';
-import '../../components/corellia-xen/cx-input.js';
-import '../../components/good-map.js';
-import '../../components/video-controller.js';
-
-// tools
 import '../../components/arc-tools/handle-explorer.js';
 import '../../components/arc-tools/local-data.js';
 import '../../components/arc-tools/xen-explorer.js';
@@ -57,6 +49,7 @@ const Main = Xen.html`
     </app-toolbar>
   </toolbar>
 
+<!--
   <arc-host
     config="{{hostConfig}}"
     manifests="{{manifests}}"
@@ -68,8 +61,10 @@ const Main = Xen.html`
     on-plans="_onData"
     on-plan="_onPlan"
   >
-    <slot></slot>
   </arc-host>
+-->
+
+  <slot></slot>
 
   <!-- footer is here only to reserve space in the static flow (see also: toolbar) -->
   <footer>
@@ -102,7 +97,7 @@ const log = Xen.Base.logFactory('ShellUi', '#294740');
 
 class ShellUi extends Xen.Base {
   static get observedAttributes() {
-    return ['config', 'manifests', 'exclusions', 'user', 'key', 'metadata', 'theme', 'step'];
+    return ['config', 'manifests', 'exclusions', 'user', 'key', 'arc', 'metadata', 'theme', 'step'];
   }
   get css() {
     return Css;
@@ -126,10 +121,8 @@ class ShellUi extends Xen.Base {
     };
   }
   _update(props, state, lastProps, lastState) {
-    // TODO(sjmiles): only for console debugging
-    window.arc = state.arc;
-    const {config, key, user} = props;
-    const {plan, plans, search, metadata, description} = state;
+    const {config, key, user, metadata} = props;
+    const {plan, plans, search, description} = state;
     if (config && config !== lastProps.config) {
       this._consumeConfig(config, state);
     }
@@ -143,9 +136,9 @@ class ShellUi extends Xen.Base {
     if (key) {
       ArcsUtils.setUrlParam('arc', key);
     }
-    if (plans && (plans !== lastState.plans || search !== lastState.search)) {
-      this._consumePlans(state.plans, state.search);
-    }
+    // if (plans && (plans !== lastState.plans || search !== lastState.search)) {
+    //   this._consumePlans(state.plans, state.search);
+    // }
     //if (!plan && plans && plans.length && (config.launcher || config.profiler)) {
     //  state.step = plans[0].plan;
     //}
@@ -153,10 +146,11 @@ class ShellUi extends Xen.Base {
       state.description = metadata.description;
     }
     this._fire('exclusions', state.exclusions);
-    this._fire('arc', state.arc);
-    this._fire('plans', state.plans);
+    //this._fire('arc', state.arc);
+    //this._fire('plans', state.plans);
   }
   _consumeConfig(config) {
+    /*
     let user = null;
     let selectedUser = config.user;
     if (selectedUser === 'new') {
@@ -164,41 +158,42 @@ class ShellUi extends Xen.Base {
       user = this._newUserPrompt();
       log('new user', user);
     }
+    */
     this._setState({
-      selectedUser,
-      user,
+      //selectedUser,
+      //user,
       toolsVisible: config.arcsToolsVisible
     });
   }
-  _consumePlans(plans, search) {
-    let suggestions = plans;
-    // If there is a search, plans are already filtered
-    if (!search) {
-      // Otherwise only show plans that don't populate a root.
-      suggestions = plans.filter(
-        // TODO(seefeld): Don't hardcode `root`
-        // TODO(sjmiles|mmandlis): name.includes catches all variants of `root` (e.g. `toproot`), the tags
-        // test only catches `#root` specifically
-        ({plan}) => plan.slots && !plan.slots.find(s => s.name.includes('root') || s.tags.includes('#root'))
-      );
-    }
-    this._setState({suggestions});
-  }
-  _render({config, manifests, exclusions, key, user, theme, step}, state) {
+  // _consumePlans(plans, search) {
+  //   let suggestions = plans;
+  //   // If there is a search, plans are already filtered
+  //   if (!search) {
+  //     // Otherwise only show plans that don't populate a root.
+  //     suggestions = plans.filter(
+  //       // TODO(seefeld): Don't hardcode `root`
+  //       // TODO(sjmiles|mmandlis): name.includes catches all variants of `root` (e.g. `toproot`), the tags
+  //       // test only catches `#root` specifically
+  //       ({plan}) => plan.slots && !plan.slots.find(s => s.name.includes('root') || s.tags.includes('#root'))
+  //     );
+  //   }
+  //   this._setState({suggestions});
+  // }
+  _render({config, manifests, exclusions, user, key, arc, theme, step}, state) {
     //log(this._state);
-    const {metadata} = state;
     const avatarUrl = user && user.avatar ? user.avatar : `${shellPath}/assets/avatars/user (0).png`;
     const render = {
-      config,
+      //config,
       manifests,
       exclusions,
-      key,
-      user,
-      step,
+      //key,
+      //user,
+      //step,
+      arc,
       avatarStyle: `background: url('${avatarUrl}') center no-repeat; background-size: cover;`,
       avatarTitle: user && user.name || '',
       modalShown: Boolean(state.userPickerOpen || state.sharePickerOpen || state.menuOpen),
-      hostConfig: user && config,
+      //hostConfig: user && config,
       shellStyle: {
         backgroundColor: theme && theme.mainBackground,
         color: theme && theme.mainColor
@@ -214,6 +209,11 @@ class ShellUi extends Xen.Base {
       log(state);
     }
   }
+  _onData(e, data) {
+    if (this._setState({[e.type]: data})) {
+      log(data);
+    }
+  }
   _onToolsClick() {
     const {toolsVisible} = this._state;
     this._setState({toolsVisible: !toolsVisible});
@@ -223,9 +223,6 @@ class ShellUi extends Xen.Base {
   }
   _onSelectedUser(e, selectedUser) {
     this._setState({selectedUser, userPickerOpen: false});
-  }
-  _onData(e, data) {
-    this._setState({[e.type]: data});
   }
   // TODO(sjmiles): need to collapse (at least some) logic into update to handle arc correctly
   _onSearch(e, {search}) {
