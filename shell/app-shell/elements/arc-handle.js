@@ -32,7 +32,7 @@ class ArcHandle extends Xen.Base {
       //this._fire('handle', state.handle);
     }
   }
-  async _createHandle(arc, manifest, {name, tags, type, id, asContext}) {
+  async _createHandle(arc, manifest, {name, tags, type, id, asContext, description}) {
     let handleOf = false;
     if (type[0] == '[') {
       handleOf = true;
@@ -50,6 +50,7 @@ class ArcHandle extends Xen.Base {
       // arc-handle, suitable for `use`, `?`
       handle = await arc.createHandle(typeOf, name, id, tags);
     }
+    handle.description = description;
     // observe handle
     handle.on('change', () => this._handleChanged(handle), arc);
     ArcHandle.log('created handle', name, tags);
