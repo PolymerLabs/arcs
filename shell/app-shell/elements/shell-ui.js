@@ -34,13 +34,7 @@ import AppIcon from './icon.svg.js';
 // templates
 const Main = Xen.html`
 
-<arc-cloud
-  config="{{config}}" userid="{{selectedUser}}" manifests="{{persistedManifests}}" exclusions="{{exclusions}}" arc="{{arc}}" key="{{key}}" metadata="{{metadata}}" plans="{{plans}}" plan="{{plan}}" share="{{share}}" launcherarcs="{{launcherarcs}}"
-  on-users="_onData" on-manifests="_onData" on-exclusions="_onData" on-user="_onData" on-friends="_onData" on-avatars="_onData" on-key="_onData" on-metadata="_onData" on-step="_onData" on-arcs="_onData"
-></arc-cloud>
-<shell-handles users="{{users}}" user="{{user}}" arc="{{arc}}" visited="{{arcs}}" on-theme="_onData" on-launcherarcs="_onData"></shell-handles>
 <app-modal shown$="{{modalShown}}" on-click="_onScrimClick">
-
   <app-dialog open$="{{userPickerOpen}}">
     <user-picker users="{{users}}" on-selected="_onSelectedUser"></user-picker>
   </app-dialog>
@@ -48,10 +42,9 @@ const Main = Xen.html`
     arc="{{arc}}" open="{{menuOpen}}" avatar_title="{{avatarTitle}}" avatar_style="{{avatarStyle}}" friends="{{friends}}" avatars="{{avatars}}"
     on-close="_onMenuClose" on-user="_onSelectUser" on-cast="_onMenuCast" on-tools="_onToolsClick" on-share="_onData"
   ></menu-panel>
-
 </app-modal>
-<app-main launcher$="{{launcher}}" style="{{shellStyle}}">
 
+<app-main launcher$="{{launcher}}" style="{{shellStyle}}">
   <!-- toolbar is here only to reserve space in the static flow (see also: footer) -->
   <toolbar>
     <!-- app-toolbar is position-fixed -->
@@ -64,20 +57,30 @@ const Main = Xen.html`
     </app-toolbar>
   </toolbar>
 
-  <arc-host config="{{hostConfig}}" manifests="{{manifests}}" exclusions="{{exclusions}}" plans="{{plans}}" plan="{{step}}" suggestions="{{suggestions}}" on-arc="_onData" on-plans="_onData" on-plan="_onPlan">
+  <arc-host
+    config="{{hostConfig}}"
+    manifests="{{manifests}}"
+    exclusions="{{exclusions}}"
+    plans="{{plans}}"
+    plan="{{step}}"
+    suggestions="{{suggestions}}"
+    on-arc="_onData"
+    on-plans="_onData"
+    on-plan="_onPlan"
+  >
     <slot></slot>
   </arc-host>
 
+  <!-- footer is here only to reserve space in the static flow (see also: toolbar) -->
   <footer>
     <!-- arc-footer is position-fixed -->
     <arc-footer dots="{{dots}}" on-suggest="_onSuggest" on-search="_onSearch">
       <slot name="suggestions"></slot>
     </arc-footer>
   </footer>
-
 </app-main>
-<app-tools>
 
+<app-tools>
   <shell-particles arc="{{arc}}"></shell-particles>
   <simple-tabs>
     <div tab="Handle Explorer">
@@ -91,7 +94,6 @@ const Main = Xen.html`
       <manifest-data manifests="{{manifests}}" exclusions="{{exclusions}}" on-exclusions="_onData"></manifest-data>
     </div>
   </simple-tabs>
-
 </app-tools>
 
 `;
@@ -99,7 +101,9 @@ const Main = Xen.html`
 const log = Xen.Base.logFactory('ShellUi', '#294740');
 
 class ShellUi extends Xen.Base {
-  static get observedAttributes() { return ['config']; }
+  static get observedAttributes() {
+    return ['config', 'manifests', 'exclusions', 'user', 'key', 'metadata', 'theme', 'step'];
+  }
   get css() {
     return Css;
   }
@@ -124,9 +128,8 @@ class ShellUi extends Xen.Base {
   _update(props, state, lastProps, lastState) {
     // TODO(sjmiles): only for console debugging
     window.arc = state.arc;
-    //
-    const {config} = props;
-    const {user, key, plan, plans, search, metadata, description} = state;
+    const {config, key, user} = props;
+    const {plan, plans, search, metadata, description} = state;
     if (config && config !== lastProps.config) {
       this._consumeConfig(config, state);
     }
@@ -143,13 +146,15 @@ class ShellUi extends Xen.Base {
     if (plans && (plans !== lastState.plans || search !== lastState.search)) {
       this._consumePlans(state.plans, state.search);
     }
-    if (!plan && plans && plans.length && (config.launcher || config.profiler)) {
-      state.step = plans[0].plan;
-    }
+    //if (!plan && plans && plans.length && (config.launcher || config.profiler)) {
+    //  state.step = plans[0].plan;
+    //}
     if (metadata && metadata.description) {
       state.description = metadata.description;
     }
-    super._update(props, state);
+    this._fire('exclusions', state.exclusions);
+    this._fire('arc', state.arc);
+    this._fire('plans', state.plans);
   }
   _consumeConfig(config) {
     let user = null;
@@ -170,21 +175,26 @@ class ShellUi extends Xen.Base {
     // If there is a search, plans are already filtered
     if (!search) {
       // Otherwise only show plans that don't populate a root.
-      // TODO(seefeld): Don't hardcode `root`
       suggestions = plans.filter(
+        // TODO(seefeld): Don't hardcode `root`
         // TODO(sjmiles|mmandlis): name.includes catches all variants of `root` (e.g. `toproot`), the tags
         // test only catches `#root` specifically
         ({plan}) => plan.slots && !plan.slots.find(s => s.name.includes('root') || s.tags.includes('#root'))
       );
     }
-    this._setIfDirty({suggestions});
+    this._setState({suggestions});
   }
-  _render({config}, state) {
+  _render({config, manifests, exclusions, key, user, theme, step}, state) {
     //log(this._state);
-    const {user, metadata, theme} = state;
+    const {metadata} = state;
     const avatarUrl = user && user.avatar ? user.avatar : `${shellPath}/assets/avatars/user (0).png`;
     const render = {
       config,
+      manifests,
+      exclusions,
+      key,
+      user,
+      step,
       avatarStyle: `background: url('${avatarUrl}') center no-repeat; background-size: cover;`,
       avatarTitle: user && user.name || '',
       modalShown: Boolean(state.userPickerOpen || state.sharePickerOpen || state.menuOpen),
@@ -199,23 +209,23 @@ class ShellUi extends Xen.Base {
   _didRender(props, {toolsVisible}) {
     Xen.Template.setBoolAttribute(this, 'expanded', Boolean(toolsVisible));
   }
-  _setIfDirty(state) {
-    if (super._setIfDirty(state)) {
+  _setState(state) {
+    if (super._setState(state)) {
       log(state);
     }
   }
   _onToolsClick() {
     const {toolsVisible} = this._state;
-    this._setIfDirty({toolsVisible: !toolsVisible});
+    this._setState({toolsVisible: !toolsVisible});
   }
   _onSelectUser() {
-    this._setIfDirty({userPickerOpen: true});
+    this._setState({userPickerOpen: true});
   }
   _onSelectedUser(e, selectedUser) {
-    this._setIfDirty({selectedUser, userPickerOpen: false});
+    this._setState({selectedUser, userPickerOpen: false});
   }
   _onData(e, data) {
-    this._setIfDirty({[e.type]: data});
+    this._setState({[e.type]: data});
   }
   // TODO(sjmiles): need to collapse (at least some) logic into update to handle arc correctly
   _onSearch(e, {search}) {
@@ -234,12 +244,12 @@ class ShellUi extends Xen.Base {
     }
   }
   _onSuggest(e, step) {
-    if (this._setIfDirty({step})) {
+    if (this._setState({step})) {
       log('step', step);
     }
   }
   _onPlan(e, plan) {
-    if (this._setIfDirty({plan})) {
+    if (this._setState({plan})) {
       log('plan', plan);
       const {arc, metadata} = this._state;
       if (metadata) {
