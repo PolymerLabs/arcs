@@ -29,6 +29,7 @@ import FallbackFate from './strategies/fallback-fate.js';
 import GroupHandleConnections from './strategies/group-handle-connections.js';
 import CombinedStrategy from './strategies/combined-strategy.js';
 import MatchFreeHandlesToConnections from './strategies/match-free-handles-to-connections.js';
+import ResolveHandles from './strategies/resolve-handles.js';
 
 import Speculator from './speculator.js';
 import Description from './description.js';
@@ -87,7 +88,8 @@ class Planner {
       new NameUnnamedConnections(arc),
       new AddUseViews(),
       new CreateDescriptionHandle(),
-      new MatchFreeHandlesToConnections()
+      new MatchFreeHandlesToConnections(),
+      new ResolveHandles(arc)
     ];
     this.strategizer = new Strategizer(strategies, [], {
       maxPopulation: 100,
