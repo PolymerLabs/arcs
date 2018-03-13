@@ -3,7 +3,6 @@ import ArcsUtils from '../lib/arcs-utils.js';
 import Xen from '../../components/xen/xen.js';
 
 // elements
-import './arc-config.js';
 import './arc-cloud.js';
 import './shell-handles.js';
 import './user-picker.js';
@@ -35,7 +34,6 @@ import AppIcon from './icon.svg.js';
 // templates
 const Main = Xen.html`
 
-<arc-config rootpath="{{shellPath}}" on-config="_onData"></arc-config>
 <arc-cloud
   config="{{config}}" userid="{{selectedUser}}" manifests="{{persistedManifests}}" exclusions="{{exclusions}}" arc="{{arc}}" key="{{key}}" metadata="{{metadata}}" plans="{{plans}}" plan="{{plan}}" share="{{share}}" launcherarcs="{{launcherarcs}}"
   on-users="_onData" on-manifests="_onData" on-exclusions="_onData" on-user="_onData" on-friends="_onData" on-avatars="_onData" on-key="_onData" on-metadata="_onData" on-step="_onData" on-arcs="_onData"
@@ -101,7 +99,7 @@ const Main = Xen.html`
 const log = Xen.Base.logFactory('ShellUi', '#294740');
 
 class ShellUi extends Xen.Base {
-  static get observedAttributes() { return []; }
+  static get observedAttributes() { return ['config']; }
   get css() {
     return Css;
   }
@@ -126,9 +124,11 @@ class ShellUi extends Xen.Base {
   _update(props, state, lastProps, lastState) {
     // TODO(sjmiles): only for console debugging
     window.arc = state.arc;
-    const {config, user, key, plan, plans, search, metadata, description} = state;
-    if (config && config !== lastState.config) {
-      this._consumeConfig(state, config);
+    //
+    const {config} = props;
+    const {user, key, plan, plans, search, metadata, description} = state;
+    if (config && config !== lastProps.config) {
+      this._consumeConfig(config, state);
     }
     if (config) {
       localStorage.setItem('0-3-arcs-dev-tools', state.toolsVisible ? 'open' : 'closed');
@@ -151,22 +151,7 @@ class ShellUi extends Xen.Base {
     }
     super._update(props, state);
   }
-  _consumeConfig(state, config) {
-    let configkey = config.key || '';
-    if (!config.key) {
-      config.key = 'launcher';
-    }
-    if (config.key === 'launcher') {
-      config.soloPath = '../web/artifacts/launcher.manifest';
-      config.launcher = true;
-      configkey = '';
-      state.description = 'Launcher';
-    }
-    if (config.key === 'profile') {
-      config.soloPath = '../web/artifacts/profile.manifest';
-      config.profiler = true;
-      configkey = '*';
-    }
+  _consumeConfig(config) {
     let user = null;
     let selectedUser = config.user;
     if (selectedUser === 'new') {
@@ -176,7 +161,6 @@ class ShellUi extends Xen.Base {
     }
     this._setState({
       selectedUser,
-      configkey,
       user,
       toolsVisible: config.arcsToolsVisible
     });
@@ -195,11 +179,12 @@ class ShellUi extends Xen.Base {
     }
     this._setIfDirty({suggestions});
   }
-  _render({}, state) {
+  _render({config}, state) {
     //log(this._state);
-    const {user, metadata, theme, config} = state;
+    const {user, metadata, theme} = state;
     const avatarUrl = user && user.avatar ? user.avatar : `${shellPath}/assets/avatars/user (0).png`;
     const render = {
+      config,
       avatarStyle: `background: url('${avatarUrl}') center no-repeat; background-size: cover;`,
       avatarTitle: user && user.name || '',
       modalShown: Boolean(state.userPickerOpen || state.sharePickerOpen || state.menuOpen),
