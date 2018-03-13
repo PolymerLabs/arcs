@@ -87,11 +87,7 @@ defineParticle(({TransformationDomParticle, resolver}) => {
       super.setViews(views);
     }
 
-    async willReceiveProps({collection}) {
-      let arc = this._state.arc;
-      let hostedParticle = this._state.hostedParticle;
-      let type = this._state.type;
-
+    async willReceiveProps({collection}, {arc, hostedParticle, type}) {
       for (let [index, item] of collection.entries()) {
         if (this.handleIds[item.id]) {
           let itemView = await this.handleIds[item.id];
