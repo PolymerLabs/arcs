@@ -13,6 +13,8 @@ import '../components/suggestion-element.js';
 import '../components/corellia-xen/cx-input.js';
 import '../components/good-map.js';
 import '../components/video-controller.js';
+// deprecated!
+import '../components/x-list.js';
 
 // code libs
 import Xen from '../components/xen/xen.js';
