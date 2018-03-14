@@ -89,13 +89,14 @@ class DomParticle extends XenStateMixin(Particle) {
     return `---------- DomParticle::[${this.spec.name}]`;
   }
   async setViews(views) {
+    this.handles = views;
     this._views = views;
     let config = this.config;
     this.when([new ViewChanges(views, config.views, 'change')], async () => {
       await this._handlesToProps(views, config);
     });
     // make sure we invalidate once, even if there are no incoming views
-    this._setState({});
+    this._invalidate();
   }
   async _handlesToProps(views, config) {
     // acquire (async) list data from views
