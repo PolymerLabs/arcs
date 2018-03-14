@@ -251,12 +251,12 @@ class AppShell extends Xen.Base {
   }
   _onData(e, data) {
     const property = e.type;
-    if (this._setIfDirty({[property]: data})) {
+    if (this._setState({[property]: data})) {
       log(property, data);
     }
   }
   _onExclusions(e, persistedExclusions) {
-    this._setIfDirty({persistedExclusions});
+    this._setState({persistedExclusions});
   }
   _onExtensionManifests(e, manifests) {
     log('recieved extension manifests: ', manifests);

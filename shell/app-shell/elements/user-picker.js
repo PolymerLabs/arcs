@@ -90,7 +90,7 @@ class UserPicker extends Xen.Base {
   }
   _onSelect(e) {
     const selected = e.currentTarget.key;
-    this._setIfDirty({selected});
+    this._setState({selected});
     this._fire('selected', selected);
   }
 }

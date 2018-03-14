@@ -134,7 +134,7 @@ class ArcCloud extends Xen.Base {
     }
   }
   _onData(e, data) {
-    if (this._setIfDirty({[e.type]: data})) {
+    if (this._setState({[e.type]: data})) {
       log(e.type, data);
     }
   }
@@ -157,7 +157,7 @@ class ArcCloud extends Xen.Base {
       //const data = handleData && (handleData.rawData || Object.values(handleData).map(e => e.rawData));
       const data = handleData && (handleData.rawData || handleData);
       log(profile.id, data);
-      this._setIfDirty({[property]: data});
+      this._setState({[property]: data});
     }
   }
   async _onHandle(e, handle) {
@@ -173,7 +173,7 @@ class ArcCloud extends Xen.Base {
       const handleData = await ArcsUtils.getHandleData(handle);
       const data = handleData && handleData.map(d => d.rawData);
       log(handle.id, data);
-      this._setIfDirty({[property]: data});
+      this._setState({[property]: data});
     }
   }
 }

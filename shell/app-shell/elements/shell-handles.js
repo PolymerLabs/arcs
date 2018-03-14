@@ -145,7 +145,7 @@ class ShellHandles extends Xen.Base {
     return data;
   }
   _onData(e, data) {
-    if (this._setIfDirty({[e.type]: data})) {
+    if (this._setState({[e.type]: data})) {
       log(e.type, data);
     }
   }
