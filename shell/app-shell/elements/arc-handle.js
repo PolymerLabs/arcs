@@ -45,7 +45,7 @@ class ArcHandle extends Xen.Base {
     }
     const schema = manifest.findSchemaByName(type);
     const typeOf = setOf ? schema.type.setViewOf() : schema.type;
-    //tags = tags.concat(['#nosync']);
+    tags = tags.concat(['#nosync']);
     id = id || arc.generateID();
     // context-handles are for `map`, `copy`, `?`
     // arc-handles are for `use`, `?`
