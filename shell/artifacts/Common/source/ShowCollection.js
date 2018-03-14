@@ -8,8 +8,7 @@
 
 'use strict';
 
-defineParticle(({TransformationDomParticle, resolver}) => {
-
+defineParticle(({DomParticle, resolver}) => {
   let host = `show-collection`;
 
   let styles = `
@@ -59,7 +58,10 @@ defineParticle(({TransformationDomParticle, resolver}) => {
 
   <div empty hidden="{{hasItems}}">List is empty</div>
 
-  <template items>{{hostedParticle}}</template>
+  <template items>
+    <div slotid="item" subid="{{id}}"></div>
+    <div slotid="annotation" subid="{{id}}"></div>
+  </template>
   <div items>{{items}}</div>
 
   <div slotid="action"></div>
@@ -67,137 +69,23 @@ defineParticle(({TransformationDomParticle, resolver}) => {
   <div slotid="postamble"></div>
 </div>
     `.trim();
-
-  return class extends TransformationDomParticle {
-    constructor() {
-      super();
-      this._itemSubIdByHostedSlotId = new Map();
+  return class extends DomParticle {
+    get template() {
+      return template;
     }
-    get template() { return template; }
-    async setViews(views) {
-      this.handleIds = {};
-      this._views = views;
-      this._template = null;
-      let arc = await this.constructInnerArc();
-      let hostedParticle = await views.get('hostedParticle').get();
-
-      this.relevance = 0.1;
-
-      this._setState({arc, hostedParticle, type: views.get('collection').type});
-      super.setViews(views);
-    }
-
-    async willReceiveProps({collection}, {arc, hostedParticle, type}) {
-      for (let [index, item] of collection.entries()) {
-        if (this.handleIds[item.id]) {
-          let itemView = await this.handleIds[item.id];
-          itemView.set(item);
-          continue;
+    render(props) {
+      let {collection} = props;
+      return {
+        hasItems: collection && collection.length > 0,
+        items: {
+          $template: 'items',
+          models: collection ? collection.map(item => {
+            return {
+              id: item.id
+            };
+          }) : []
         }
-
-        let itemViewPromise = arc.createHandle(type.primitiveType(), 'item' + index);
-        this.handleIds[item.id] = itemViewPromise;
-        let itemView = await itemViewPromise;
-
-        let hostedSlotName = [...hostedParticle.slots.keys()][0];
-        let slotName = [...this.spec.slots.values()][0].name;
-        let slotId = await arc.createSlot(this, slotName, hostedParticle.name, hostedSlotName);
-        if (!slotId) {
-          continue;
-        }
-
-        this._itemSubIdByHostedSlotId.set(slotId, item.id);
-
-        let recipe = `
-${this.serializeSchema(hostedParticle)}
-recipe
-  use '${itemView._id}' as v1
-  slot '${slotId}' as s1
-  ${hostedParticle.name}
-    ${hostedParticle.connections[0].name} <- v1
-    consume ${hostedSlotName} as s1
-    `;
-
-        try {
-          itemView.set(item);
-          await arc.loadRecipe(recipe, this);
-        } catch (e) {
-          console.log(e);
-        }
-      }
-
-      let propsItems = TransformationDomParticle.propsToItems(collection);
-
-      this._updateRenderModel(propsItems, this._state.hostedItems || []);
-
-      if (propsItems.length == 0 && !this._state.template) {
-        this._setState({template: this.template});
-      }
-
-      // This is for description capabilities demo purposes.
-      // this._setDynamicDescription(propsItems);
-      // this._setDynamicDomDescription();
-    }
-
-    combineHostedModel(slotName, hostedSlotId, content) {
-      let subId = this._itemSubIdByHostedSlotId.get(hostedSlotId);
-      if (!subId) {
-        return;
-      }
-
-      let hostedItems = this._state.hostedItems || [];
-      let listIndex = hostedItems.findIndex(item => item.subId == subId);
-      let item = Object.assign({}, content.model, {subId});
-      if (listIndex >= 0 && listIndex < hostedItems.length) {
-        hostedItems[listIndex] = item;
-      } else {
-        hostedItems.push(item);
-      }
-      this._updateRenderModel(this._state.propsItems || [], hostedItems);
-    }
-
-    _updateRenderModel(propsItems, hostedItems) {
-      let models = propsItems.map(item => Object.assign(item, hostedItems.find(hostedItem => hostedItem.subId == item.subId) || {}));
-      this._setState({
-        propsItems,
-        hostedItems,
-        renderModel: {
-          hasItems: propsItems.length > 0,
-          items: {
-            $template: 'items',
-            models
-          }
-        }
-      });
-    }
-
-    combineHostedTemplate(slotName, hostedSlotId, content) {
-      if (!this._state.template && !!content.template) {
-        let template = TransformationDomParticle.combineTemplates(this.template, content.template);
-        this._setState({template});
-      }
-    }
-
-    _setDynamicDescription(items) {
-      if (items.length >= 6) {
-        this.setParticleDescription('Show a lot of items ${collection}');
-        this.setDescriptionPattern('collection', 'my long list');
-      } else if (items.length > 3) {
-        this.setParticleDescription('Show a few items: ${collection}');
-        this.setDescriptionPattern('collection', 'my short list');
-      }
-    }
-
-    _setDynamicDomDescription() {
-      let template = `
-          <span>Show <u><span>{{collection}}</span></u><span hidden="{{actionEmpty}}"> and <i><span style='color:blue'>{{action}}</span></i></span></span>
-          `.trim();
-      let model = {
-        collection: '${collection}',
-        action: '${master.action}',
-        actionEmpty: '${master.action}._empty_'
       };
-      this.setParticleDescription({template, model});
     }
   };
-});
+ });

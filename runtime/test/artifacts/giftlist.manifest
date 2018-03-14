@@ -22,7 +22,6 @@ recipe
     population <- wishlist
   ShowCollection
     collection <- view0
-    hostedParticle = ShowProduct
     descriptions -> descriptions
 
 

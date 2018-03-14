@@ -8,14 +8,8 @@
 
 import '../Arcs/Description.schema'
 
-// TODO: fix "consume" unnamed slot in the shape requiring a trailing whitespace.
-shape HostedParticleShape
-  HostedParticleShape(in ~a)
-  consume
-  provide annotation
-
 particle ShowCollection in 'source/ShowCollection.js'
-  ShowCollection(in [~a] collection, host HostedParticleShape hostedParticle, out [Description] descriptions)
+  ShowCollection(in [~a] collection, out [Description] descriptions)
   affordance dom
   affordance dom-touch
   consume master #root
@@ -23,6 +17,8 @@ particle ShowCollection in 'source/ShowCollection.js'
       view collection
     provide preamble
     provide postamble
+    provide set of item
+      view collection
     provide set of annotation
       view collection
   description `show ${collection}`

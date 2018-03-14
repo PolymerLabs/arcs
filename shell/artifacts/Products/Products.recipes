@@ -20,9 +20,13 @@ import 'ShowProduct.manifest'
 
 // show a list
 recipe showList
+  ShowCollection.collection -> Multiplexer.list
   ShowCollection
+    consume master
+      provide item as itemSlot
+  Multiplexer
     hostedParticle = ShowProduct
-
+    consume annotation as itemSlot
 
 // See [person]'s wishlist
 recipe 
@@ -32,7 +36,6 @@ recipe
 // Create shortlist with [product, ...] and suggest similar products from [person]'s wish list
 recipe
   Chooser.choices -> Recommend.recommendations
-  //Chooser.resultList -> ManageProducts.list
   Chooser.resultList -> ShowCollection.collection
   Chooser.resultList -> Recommend.known
   Chooser.resultList -> Multiplexer2.list
@@ -43,11 +46,13 @@ recipe
     population <- wishlist
   ShowCollection
     collection <- shortlist
-    hostedParticle = ShowProduct
-  //ManageProducts
-    //list = shortlist
     consume master
+      provide item as itemSlot
       provide annotation as annotationSlot
+  Multiplexer
+    list <- shortlist
+    hostedParticle = ShowProduct
+    consume annotation as itemSlot
   Multiplexer2
     hostedParticle = AlsoOn
     consume annotation as annotationSlot

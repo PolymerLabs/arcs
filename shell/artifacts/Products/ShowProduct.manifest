@@ -12,7 +12,5 @@ particle ShowProduct in 'source/ShowProduct.js'
   ShowProduct(in Product product)
   affordance dom
   affordance dom-touch
-  consume root
-    provide annotation
-      view product
-  description `show product`
+  consume item
+  //description `show product`

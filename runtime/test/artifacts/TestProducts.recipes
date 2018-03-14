@@ -16,8 +16,6 @@ recipe
   ShowCollection.collection -> ProductFilter.results
   map 'mylist' as mylist
   create as books
-  ShowCollection
-    hostedParticle = ShowProduct
   ProductFilter
     products <- mylist
     hostedParticle = ProductIsBook

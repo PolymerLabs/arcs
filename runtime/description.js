@@ -177,7 +177,7 @@ export class DescriptionFormatter {
     // "A and b."
     // "A, b, ..., and z." (Oxford comma ftw)
     let delim = ['', '', ' and ', ', and '][Math.min(3, count)];
-    return nonEmptyStrings.slice(0, -1).join(', ') + delim + strings.pop();
+    return nonEmptyStrings.slice(0, -1).join(', ') + delim + nonEmptyStrings[count - 1];
   }
 
   _joinTokens(tokens) {
