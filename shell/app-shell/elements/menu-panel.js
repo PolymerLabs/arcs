@@ -13,7 +13,7 @@ const template = html`
 
 <style>
   :host {
-    /*display: none;*/
+    display: block;
     transform: translate3d(100%, 0, 0);
     transition: transform 200ms ease-out;
     position: absolute;
@@ -32,7 +32,6 @@ const template = html`
     --large-avatar-size: 40px;
   }
   :host([open]) {
-    /*display: block;*/
     transform: translate3d(0, 0, 0);
   }
   section {

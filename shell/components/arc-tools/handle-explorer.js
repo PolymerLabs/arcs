@@ -48,9 +48,6 @@ class HandleExplorer extends Xen.Base {
   get template() {
     return template;
   }
-  // get host() {
-  //   return this;
-  // }
   _wouldChangeProp() {
     return true;
   }

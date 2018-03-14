@@ -42,6 +42,7 @@ class ToggleButton extends Xen.Base {
   }
   _getInitialState() {
     return {
+      // TODO(sjmiles): `state` is a confusing name (vis a vis `_setState` and so on), use something else
       state: 0,
       icons: []
     };
@@ -60,7 +61,6 @@ class ToggleButton extends Xen.Base {
   _onToggle() {
     let {state, icons} = this._state;
     state = (state + 1) % icons.length;
-    //this._setState({state});
     // TODO(sjmiles): better to fire after updating the display, how hard is that logic?
     this._fire('state', state);
   }

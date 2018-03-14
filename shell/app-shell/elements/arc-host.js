@@ -13,6 +13,7 @@ import ArcsUtils from '../lib/arcs-utils.js';
 
 const Arcs = window.Arcs;
 const log = Xen.Base.logFactory('ArcHost', '#007ac1');
+const error = Xen.Base.logFactory('ArcHost', '#007ac1', 'error');
 
 const template = Xen.Template.createTemplate(
   `<style>
@@ -157,23 +158,22 @@ class ArcHost extends Xen.Base {
     // only wait for one _beginPlanning at a time
     if (!state.planning) {
       state.planning = true;
-      // old plans are stale, evacipate them
-      //log('clearing old plans');
-      //this._fire('plans', null);
-      // TODO(sjmiles): primitive attempt to throttle planning
-      //setTimeout(async () => {
-        await this._beginPlanning(state);
-        state.planning = false;
-      //}, 500); //this._lastProps.plans ? 10000 : 0);
+      try {
+        await this.__beginPlanning(state);
+      } catch (x) {
+        error(x);
+      }
+      state.planning = false;
     }
   }
-  async _beginPlanning(state) {
+  // TODO(sjmiles): only to be called from _schedulePlanning which protects re-entrancy
+  async __beginPlanning(state) {
     log(`planning...`);
     let time = Date.now();
     let plans;
     while (state.invalid) {
       state.invalid = false;
-      plans = await ArcsUtils.makePlans(state.arc, 5000) || [];
+      plans = await ArcsUtils.makePlans(state.arc, state.config.plannerTimeout) || [];
     }
     time = ((Date.now() - time) / 1000).toFixed(2);
     log(`plans`, plans, `${time}s`);
