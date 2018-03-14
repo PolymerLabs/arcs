@@ -55,7 +55,7 @@ export default class ViewMapperBase extends Strategy {
           return;
         }
         let views = self.getMappableViews(type, tags, counts);
-        if (views.length == 0)
+        if (views.length < 2)
           return;
 
         let responses = views.map(newView =>

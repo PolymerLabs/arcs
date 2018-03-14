@@ -14,7 +14,8 @@ http://polymer.github.io/PATENTS.txt
 <link rel="import" href="se-explorer.html"></link>
 <link rel="import" href="se-legend.html"></link>
 <link rel="import" href="se-recipe-view.html"></link>
-<link rel="import" href="../arcs-shared.html">
+<link rel="import" href="se-stats.html"></link>
+<link rel="import" href="../arcs-shared.html"></link>
 
 <dom-module id='strategy-explorer'>
   <template>
@@ -49,6 +50,7 @@ http://polymer.github.io/PATENTS.txt
         <se-recipe-view></se-recipe-view>
         <se-arc-view></se-arc-view>
         <se-legend></se-legend>
+        <se-stats results='{{results}}'></se-stats>
       </aside>
     </resizable-panels>
   </template>

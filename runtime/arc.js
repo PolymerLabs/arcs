@@ -486,7 +486,7 @@ ${this.activeRecipe.toString()}`;
       return false;
     });
 
-    if (options && options.tags) {
+    if (options && options.tags && options.tags.length > 0) {
       handles = handles.filter(handle => options.tags.filter(tag => !this._handleTags.get(handle).has(tag)).length == 0);
     }
     return handles;
