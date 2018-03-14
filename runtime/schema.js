@@ -14,7 +14,7 @@ class Schema {
   constructor(model) {
     // TODO: remove this (remnants of normative/optional)
     if (model.sections) {
-      //console.warn(`Schema ${model.name} was serialized with legacy format`);
+      console.warn(`Schema ${model.name} was serialized with legacy format`);
       assert(!model.fields);
       model.fields = {};
       for (let section of model.sections) {
