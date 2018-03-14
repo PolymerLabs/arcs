@@ -1132,9 +1132,36 @@ resource SomeName
           foo = view
     `);
     let [validRecipe] = manifest.recipes;
+    debugger;
     assert(validRecipe.normalize());
     assert(validRecipe.isResolved());
   });
+
+  it('supports inline schemas with multiple names', async () => {
+    let manifest = await Manifest.parse(`
+      schema Thing1
+        Text value1
+      schema Thing2
+        Number value2
+      particle P
+        P(in Thing1 Thing2 {value1, value2} foo)
+      particle P2
+        P2(in * {Text value1, Number value2} foo)
+
+      recipe
+        create as view
+        P
+          foo = view
+        P2
+          foo = view
+    `);
+    let [validRecipe] = manifest.recipes;
+    debugger;
+    assert(validRecipe.normalize());
+    assert(validRecipe.isResolved());
+
+  });
+
 
   it('can parse a manifest with storage key handle definitions', async () => {
     let manifest = await Manifest.parse(`

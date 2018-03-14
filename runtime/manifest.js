@@ -366,36 +366,44 @@ ${e.message}
         visitChildren();
         switch (node.kind) {
         case 'schema-inline':
-          let externalSchema;
-          if (node.name != null) {
-            let resolved = manifest.resolveReference(node.name);
+          let externalSchemas = [];
+          for (let name of node.names) {
+            let resolved = manifest.resolveReference(name);
             if (resolved && resolved.schema) {
-              externalSchema = resolved.schema;
+              externalSchemas.push(resolved.schema);
             }
           }
           let fields = {};
           for (let {name, type} of node.fields) {
-            if (!type) {
-              if (!externalSchema) {
-                throw new ManifestError(
-                    node.location,
-                    `Could not infer type of '${name}' field`);
+            for (let schema of externalSchemas) {
+              if (!type) {
+                // If we don't have a type, try to infer one from the schema.
+                type = schema.fields[name];
+              } else {
+                // Validate that the specified or inferred type matches the schema.
+                let externalType = schema.fields[name];
+                if (externalType && !Schema.typesEqual(externalType, type)) {
+                  throw new ManifestError(
+                      node.location,
+                      `Type of '${name}' does not match schema (${type} vs ${externalType})`);
+                }
               }
-              type = externalSchema.fields[name];
             }
-            if (externalSchema) {
-              let externalType = externalSchema.fields[name];
-              if (!Schema.typesEqual(externalType, type)) {
-                throw new ManifestError(
-                    node.location,
-                    `Type of '${name}' does not match schema (${type} vs ${externalType})`);
-              }
+            if (!type) {
+              throw new ManifestError(
+                  node.location,
+                  `Could not infer type of '${name}' field`);
             }
             fields[name] = type;
           }
-          node.model = Type.newEntity(new Schema({
-            name: node.name,
+          let parents = node.names.slice(1).map(name => ({
+            name,
             parents: [],
+            fields: {},
+          }));
+          node.model = Type.newEntity(new Schema({
+            name: node.names[0] || null,
+            parents,
             fields,
           }));
           return;
