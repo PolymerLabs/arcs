@@ -5,27 +5,28 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import './browser-data.js';
+import './browser-data-receiver.js';
 import '../../app-shell/elements/arc-handle.js';
 
-import AppShell from '../../app-shell/app-shell.js';
 import ArcsUtils from '../../app-shell/lib/arcs-utils.js';
 import Xen from '../../components/xen/xen.js';
 
 const template = Xen.html`
-
-  <browser-data-receiver arc='{{arc}}' on-data="_onBrowserData"></browser-data-receiver>
-
+  <browser-data-receiver on-data="_onBrowserData"></browser-data-receiver>
 `;
 
 class ExtensionData extends Xen.Base {
+  static get observedAttributes() {
+    return ['arc'];
+  }
+
   get template() {
     return template;
   }
 
-  _render(props, state) {
-    if (state.browserData) {
-      this._consumeBrowserData(props, state);
+  _render({arc}, state) {
+    if (arc && state.browserData) {
+      this._consumeBrowserData(arc, state);
     }
     if (state.manifests) {
       this._fire('manifests', state.manifests);
@@ -47,31 +48,36 @@ class ExtensionData extends Xen.Base {
     }
   }
 
-  _consumeBrowserData(props, state) {
-    const {browserData, manifests, arc, scannedManifests} = state;
+  _consumeBrowserData(arc, state) {
+    const {browserData} = state;
+
     // If this is our first time through, set some parameters about what
     // we're loading in this session.
     if (!('manifestsNeedLoading' in state)) {
       state.manifestsNeedLoading =
-          Boolean(browserData.manifests) && !browserData.manifests.every(
+          Boolean(browserData.manifests);
+            // TODO(sjmiles): checks for duplicates in an input list that no longer exists
+            /* && !browserData.manifests.every(
               manifest => manifests.indexOf(manifest) >= 0
-          );
+          );*/
     }
 
     const {manifestsNeedLoading, manifestsLoaded} = state;
 
     // set additional manifests up for loading
     if (manifestsNeedLoading && !manifestsLoaded) {
+      // TODO(sjmiles): this is a lie
       state.manifestsLoaded = true;
-      let manifests = manifests.slice();
+      /*
+      const manifests = []; //manifests.slice();
       browserData.manifests.forEach(manifest => {
         if (manifests.indexOf(manifest) < 0) {
           manifests.push(manifest);
           log(`appending manifest ${manifest}`);
         }
       });
-      state.manifests = manifests;
-      state.plans = null;
+      */
+      state.manifests = browserData.manifests;
     }
 
     // after manifests are loaded (if needed), create handles and indicate
@@ -80,9 +86,7 @@ class ExtensionData extends Xen.Base {
       if (browserData.entities) {
         this._consumeEntities(browserData.entities, arc);
         browserData.entities = null;
-        state.plans = null;
       }
-      state.extensionReady = true;
     }
   }
 
@@ -161,7 +165,7 @@ class ExtensionData extends Xen.Base {
 
   _createArcHandle(arc, foundSchemaName, handleName, shortTypeName, data) {
     log(`creating ArcHandle with name ${handleName}`);
-    const arcHandle = Object.assign(document.createElement('arc-handle'), {
+    Object.assign(document.createElement('arc-handle'), {
       arc,
       data,
       options: {

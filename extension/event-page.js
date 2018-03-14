@@ -5,6 +5,8 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
+/* global chrome, _prepareResults */
+
 chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
   console.log('event page received message ' + request.method, request);
   if (request.method == 'loadAllEntities') {

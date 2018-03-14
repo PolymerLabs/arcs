@@ -5,6 +5,8 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
+/* global chrome, extractEntities */
+
 // TODO(smalls) there should be a better way to detect an arcs page we can
 // inject data into.
 const isExtensionAppShellPage =

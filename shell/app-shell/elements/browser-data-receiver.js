@@ -15,9 +15,6 @@ const manifestMimeType = 'text/x-arcs-manifest';
 const log = Xen.Base.logFactory('ExtBrowserDataReceiver', '#883997');
 
 class BrowserDataReceiver extends Xen.Base {
-  static get observedAttributes() {
-    return ['arc'];
-  }
   _didMount() {
     window.addEventListener('message', event => this.onMessage(event));
     if (!this._documentReady()) {
