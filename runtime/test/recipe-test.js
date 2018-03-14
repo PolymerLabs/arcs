@@ -47,11 +47,11 @@ describe('recipe', function() {
         particle P1
           P1(in MyType inMy)
         particle P2
-          P2(out MyType inMy)
+          P2(out MyType outMy)
         particle P3
           P3(in MySubType inMy)
         particle P4
-          P4(out MySubType inMy)
+          P4(out MySubType outMy)
         particle P5
           P5(in [MyType] inMys)
     `);
@@ -62,36 +62,36 @@ describe('recipe', function() {
 
     // MyType and MySubType (sub class of MyType) are valid types for (in MyType)
     let p1ConnSpec = manifest.particles.find(p => p.name == 'P1').connections[0];
-    assert.isTrue(p1ConnSpec.isValidType(MyType));
-    assert.isTrue(p1ConnSpec.isValidType(MySubType));
-    assert.isFalse(p1ConnSpec.isValidType(OtherType));
-    assert.isFalse(p1ConnSpec.isValidType(MyType.setViewOf()));
-    assert.isFalse(p1ConnSpec.isValidType(MySubType.setViewOf()));
+    assert.isTrue(p1ConnSpec.isCompatibleType(MyType));
+    assert.isTrue(p1ConnSpec.isCompatibleType(MySubType));
+    assert.isFalse(p1ConnSpec.isCompatibleType(OtherType));
+    assert.isFalse(p1ConnSpec.isCompatibleType(MyType.setViewOf()));
+    assert.isFalse(p1ConnSpec.isCompatibleType(MySubType.setViewOf()));
 
     // Only MyType are valid types for (out MyType)
     let p2ConnSpec = manifest.particles.find(p => p.name == 'P2').connections[0];
-    assert.isTrue(p2ConnSpec.isValidType(MyType));
-    assert.isFalse(p2ConnSpec.isValidType(MySubType));
-    assert.isFalse(p2ConnSpec.isValidType(OtherType));
+    assert.isTrue(p2ConnSpec.isCompatibleType(MyType));
+    assert.isFalse(p2ConnSpec.isCompatibleType(MySubType));
+    assert.isFalse(p2ConnSpec.isCompatibleType(OtherType));
 
     // Only MySubType is a valid types for (in MySubType)
     let p3ConnSpec = manifest.particles.find(p => p.name == 'P3').connections[0];
-    assert.isFalse(p3ConnSpec.isValidType(MyType));
-    assert.isTrue(p3ConnSpec.isValidType(MySubType));
-    assert.isFalse(p3ConnSpec.isValidType(OtherType));
+    assert.isFalse(p3ConnSpec.isCompatibleType(MyType));
+    assert.isTrue(p3ConnSpec.isCompatibleType(MySubType));
+    assert.isFalse(p3ConnSpec.isCompatibleType(OtherType));
 
     // MyType and MySubType are valid types for (out MySubType)
     let p4ConnSpec = manifest.particles.find(p => p.name == 'P4').connections[0];
-    assert.isTrue(p4ConnSpec.isValidType(MyType));
-    assert.isTrue(p4ConnSpec.isValidType(MySubType));
-    assert.isFalse(p4ConnSpec.isValidType(OtherType));
+    assert.isTrue(p4ConnSpec.isCompatibleType(MyType));
+    assert.isTrue(p4ConnSpec.isCompatibleType(MySubType));
+    assert.isFalse(p4ConnSpec.isCompatibleType(OtherType));
 
     // MyType and MySubType are valid types for (in [MyType])
     let p5ConnSpec = manifest.particles.find(p => p.name == 'P5').connections[0];
-    assert.isFalse(p5ConnSpec.isValidType(MyType));
-    assert.isFalse(p5ConnSpec.isValidType(MySubType));
-    assert.isFalse(p5ConnSpec.isValidType(OtherType));
-    assert.isTrue(p5ConnSpec.isValidType(MyType.setViewOf()));
-    assert.isTrue(p5ConnSpec.isValidType(MySubType.setViewOf()));
+    assert.isFalse(p5ConnSpec.isCompatibleType(MyType));
+    assert.isFalse(p5ConnSpec.isCompatibleType(MySubType));
+    assert.isFalse(p5ConnSpec.isCompatibleType(OtherType));
+    assert.isTrue(p5ConnSpec.isCompatibleType(MyType.setViewOf()));
+    assert.isTrue(p5ConnSpec.isCompatibleType(MySubType.setViewOf()));
   });
 });
