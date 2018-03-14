@@ -61,7 +61,7 @@ defineParticle(({DomParticle, html, log}) => {
   -->
   <div detail-panel>
     <div abs-panel open$="{{open}}" hide$="{{hide}}">
-      <button on-click="_onBack" class="material-icons">close</button>
+      <button on-click="_onBack"><icon>close</icon></button>
       <div slotid="detail"></div>
     </div>
   </div>
