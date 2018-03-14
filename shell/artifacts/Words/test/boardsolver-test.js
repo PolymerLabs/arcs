@@ -5,8 +5,6 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-let assert = chai.assert;
-
 describe('BoardSolver', function() {
   describe('#getValidWords()', function() {
     it('should return empty list with no valid words', function() {

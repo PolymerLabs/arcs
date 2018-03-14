@@ -8,6 +8,8 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
+/* global browser */
+
 const assert = require('assert');
 const {URL} = require('url');
 
@@ -81,8 +83,9 @@ function searchElementsForText(elements, textQuery) {
 function loadSeleniumUtils() {
   // wait for the page to load a bit. In the future, if we use this with
   // non-arcs pages, we should move this out.
-  browser.waitForVisible('<app-main>');
-  browser.waitForVisible('<footer>');
+  //browser.waitForVisible('<app-main>');
+  //browser.waitForVisible('<footer>');
+  browser.waitForVisible('<app-shell>');
 
   const result = browser.execute(function(baseUrl) {
     const script = document.createElement('script');
@@ -127,6 +130,8 @@ function waitForVisible(selectors) {
 
 function dancingDotsElement() {
   return pierceShadowsSingle([
+    'app-shell',
+    'shell-ui',
     'arc-footer',
     'x-toast[app-footer]',
     'dancing-dots'
@@ -209,7 +214,7 @@ function openSuggestionDrawer() {
 }
 
 function getFooterPath() {
-  return ['arc-footer', 'x-toast[app-footer]'];
+  return ['app-shell', 'shell-ui', 'arc-footer', 'x-toast[app-footer]'];
 }
 
 function initTestWithNewArc() {
@@ -328,7 +333,8 @@ function _waitForAndMaybeAcceptSuggestion(textSubstring, accept) {
 }
 
 function particleSelectors(slotName, selectors) {
-  return ['arc-host', `div[slotid="${slotName}"]`].concat(selectors);
+  //return [`div[slotid="${slotName}"]`].concat(selectors);
+  return selectors;
 }
 
 /**
