@@ -77,7 +77,7 @@ defineParticle(({DomParticle, resolver, html, log}) => {
   <div scrim></div>
   <div modal>
     <div buttons>
-      <i back-button class="material-icons" on-click="onBack">close</i>
+      <icon back-button on-click="onBack">close</icon>
     </div>
     <div slot-content slotid="content"></div>
   </div>
