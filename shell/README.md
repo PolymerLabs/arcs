@@ -1,16 +1,16 @@
-# arcs-cdn
+# shell: parent folder for Arcs front-end source
 
-## Arcs Applications
+## Front-ends
 
-### Arcs Webapp
+### Web
 
 https://polymerlabs.github.io/arcs-live/apps/web/
 
-### Arcs VR
+### VR
 
 https://polymerlabs.github.io/arcs-live/apps/vr/
 
-### Arcs ChromeCast
+### ChromeCast
 
 https://polymerlabs.github.io/arcs-live/apps/chromecast/
 
