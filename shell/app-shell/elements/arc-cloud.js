@@ -39,6 +39,7 @@ const template = Xen.html`
 // PROPS
 // `plans` are all possible plans
 // `plan` is the most recently applied plan
+//
 // STATE
 // `steps` are plans objects stored in arc metadata
 // `step` is the first plan in `steps` that matches a plan in `plans` that hasn't already been applied
@@ -48,7 +49,7 @@ class ArcCloud extends Xen.Base {
     return template;
   }
   static get observedAttributes() {
-    return ['config', 'userid', 'manifests', 'arc', 'key', 'metadata', 'plans', 'plan', 'exclusions', 'share', 'launcherarcs'];
+    return ['config', 'userid', 'manifests', 'arc', 'key', 'metadata', 'plans', 'step', 'plan', 'exclusions', 'share', 'launcherarcs'];
   }
   _update(props, state) {
     const {share} = props;
@@ -74,7 +75,7 @@ class ArcCloud extends Xen.Base {
     this._fire('arcs', state.arcs);
     super._update(props, state);
   }
-  _render({config, userid, arc, key, metadata, plans, plan, launcherarcs}, {manifests, exclusions, user, friends}) {
+  _render({config, userid, arc, key, metadata, plans, step, plan, launcherarcs}, {manifests, exclusions, user, friends}) {
     //log(this._props, this._state);
     const render = {
       configkey: config && config.key,
@@ -89,6 +90,7 @@ class ArcCloud extends Xen.Base {
       metadata,
       steps: metadata && metadata.steps,
       plans,
+      step,
       plan,
       launcherarcs
     };

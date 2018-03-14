@@ -33,10 +33,6 @@ class ArcSteps extends Xen.Base {
       // find a step from `steps` that correspondes to a plan in `plans` but hasn't been `applied`
       this._providePlanStep(plans, state.steps, state.applied);
     }
-    //if (step) {
-    //  ArcSteps.log('host consumed a step');
-    //  state.applied[step.hash] = true;
-    //}
   }
   _addStep(plan, generations, steps, applied) {
     const step = this._createStep(plan, generations);
@@ -53,7 +49,7 @@ class ArcSteps extends Xen.Base {
       const planStep = this._findPlanForStep(step, plans);
       if (planStep) {
         ArcSteps.log('found suggestion for step'); //, planStep);
-        this._state.applied[step.hash] = true;
+        applied[step.hash] = true;
         this._fire('step', planStep);
         return;
       } else {
