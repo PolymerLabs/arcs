@@ -58,10 +58,12 @@ class DomParticle extends XenStateMixin(Particle) {
     return {};
   }
   setState(state) {
-    this._setState(state);
+    return this._setState(state);
   }
+  // TODO(sjmiles): deprecated, just use setState
   setIfDirty(state) {
-    this._setIfDirty(state);
+    console.warn('DomParticle: `setIfDirty` is deprecated, please use `setState` instead');
+    return this._setState(state);
   }
   _willReceiveProps(...args) {
     this.willReceiveProps(...args);
