@@ -16,6 +16,7 @@ import '../components/video-controller.js';
 
 // code libs
 import Xen from '../components/xen/xen.js';
+import ArcsUtils from './lib/arcs-utils.js';
 
 // globals
 /* global shellPath */
@@ -79,6 +80,7 @@ const template = Xen.html`
   ></arc-cloud>
 
   <!--
+    shell-handles
       visited: visited arc data from Firebase
       on-launcherarcs: arc data formatted for local handle
       TODO: isolate conversions so data doesn't criss-cross like this
@@ -88,8 +90,8 @@ const template = Xen.html`
     user="{{user}}"
     arc="{{arc}}"
     visited="{{arcs}}"
-    on-theme="_onData"
     on-launcherarcs="_onData"
+    on-theme="_onData"
   ></shell-handles>
 
   <arc-host
@@ -105,7 +107,7 @@ const template = Xen.html`
   >
   </arc-host>
 
-  <extension-data></extension-data>
+  <extension-data arc="{{arc}}" on-manifests="_onExtensionManifests"></extension-data>
 
   <shell-ui
     config="{{config}}"
@@ -119,7 +121,8 @@ const template = Xen.html`
     step="{{step}}"
     on-exclusions="_onExclusions"
     on-share="_onData"
-    Xon-plan="_onData"
+    on-suggest="_onData"
+    on-search="_onData"
   >
     <slot></slot>
     <slot name="suggestions" slot="suggestions"></slot>
@@ -145,7 +148,7 @@ class AppShell extends Xen.Base {
     };
   }
   _update(props, state, oldProps, oldState) {
-    const {config, plan, plans, search} = state;
+    const {config, arc, metadata, plans, search, suggest, plan} = state;
     // TODO(sjmiles): only for console debugging
     window.arc = state.arc;
     // ^
@@ -158,9 +161,19 @@ class AppShell extends Xen.Base {
     if (plans && (plans !== oldState.plans || search !== oldState.search)) {
       this._consumePlans(plans, search);
     }
+    if (suggest) {
+      state.suggest = null;
+      state.step = suggest;
+    }
+    if (search !== oldState.search) {
+      this._consumeSearch(search, arc);
+    }
+    if (plan && plan !== oldState.plan && metadata) {
+      this._consumePlan(arc, metadata);
+    }
   }
   _render({}, state) {
-    const {step, injectedStep, user, config} = state;
+    const {user, config, step, injectedStep} = state;
     const render = {
       shellPath,
       hostConfig: user && config,
@@ -199,19 +212,40 @@ class AppShell extends Xen.Base {
       key
     });
   }
+  _consumeSearch(search, arc) {
+    search = (search || '').trim().toLowerCase();
+    // TODO(sjmiles): setting search to '' causes an exception at init-search.js|L#29)
+    search = (search !== '') && (search !== '*') ? search : null;
+    // re-plan only if the search has changed (beyond simple filtering)
+    if (search !== arc.search) {
+      this._setState({plans: null});
+    }
+    // TODO(sjmiles): installing the search term should probably be the job of arc-host
+    arc.search = search;
+  }
   _consumePlans(plans, search) {
     let suggestions = plans;
     // If there is a search, plans are already filtered
-    if (false && !search) {
+    if (!search) {
       // Otherwise only show plans that don't populate a root.
       suggestions = plans.filter(
         // TODO(seefeld): Don't hardcode `root`
-        // TODO(sjmiles|mmandlis): name.includes catches all variants of `root` (e.g. `toproot`), the tags
+        // TODO(sjmiles|mmandlis): name.includes catches all variants of `root` (e.g. `toproot`), the `tags`
         // test only catches `#root` specifically
         ({plan}) => plan.slots && !plan.slots.find(s => s.name.includes('root') || s.tags.includes('#root'))
       );
     }
     this._setState({suggestions});
+  }
+  async _consumePlan(arc, metadata) {
+    if (metadata) {
+      const description = await ArcsUtils.describeArc(arc);
+      if (description && metadata.description !== description) {
+        metadata.description = description;
+        this._invalidate();
+        //this._setState({metadata: Object.assign(Object.create(null), metadata)});
+      }
+    }
   }
   _onData(e, data) {
     const property = e.type;
@@ -221,6 +255,9 @@ class AppShell extends Xen.Base {
   }
   _onExclusions(e, persistedExclusions) {
     this._setIfDirty({persistedExclusions});
+  }
+  _onExtensionManifests(e, manifests) {
+    log('recieved extension manifests: ', manifests);
   }
 }
 
