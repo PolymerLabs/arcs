@@ -552,6 +552,32 @@ ${particleStr1}
     assert.equal(recipeSlot.id, 'slot-id0');
     assert.deepEqual(recipeSlot.tags, ['#aa', '#aaa']);
   });
+  it('recipe slots with different names', async () => {
+    let manifest = await Manifest.parse(`
+      particle ParticleA in 'some-particle.js'
+        ParticleA()
+        consume slotA
+      particle ParticleB in 'some-particle.js'
+        ParticleB()
+        consume slotB1
+          provide slotB2
+      recipe
+        slot 'slot-id0' as s0
+        ParticleA
+          consume slotA as mySlot
+        ParticleB
+          consume slotB1 as s0
+            provide slotB2 as mySlot
+    `);
+    assert.equal(manifest.particles.length, 2);
+    assert.equal(manifest.recipes.length, 1);
+    let recipe = manifest.recipes[0];
+    assert.equal(recipe.slots.length, 2);
+    assert.equal(recipe.particles.find(p => p.name == 'ParticleB').consumedSlotConnections['slotB1'].providedSlots['slotB2'],
+                 recipe.particles.find(p => p.name == 'ParticleA').consumedSlotConnections['slotA'].targetSlot);
+    recipe.normalize();
+    assert.isTrue(recipe.isResolved());
+  });
   it('incomplete aliasing', async () => {
     let recipe = (await Manifest.parse(`
       particle P1 in 'some-particle.js'
