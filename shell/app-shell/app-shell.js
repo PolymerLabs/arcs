@@ -27,6 +27,13 @@ const template = Xen.html`
   <arc-config rootpath="{{shellPath}}" on-config="_onData"></arc-config>
 
   <!--
+    General notes on steps:
+      'step' comes out of arc-cloud (replay) or footer (user interaction)
+      'step' is sent to arc-host for instantiation
+      'plan' comes out of arc-host and is sent to arc-cloud to save in 'steps'
+  -->
+
+  <!--
     arc-cloud
       TODO: refator into more meaningful concerns ('cloud' is ad-hoc, there are too many properties)
 
@@ -65,6 +72,7 @@ const template = Xen.html`
     metadata="{{metadata}}"
     share="{{share}}"
     plans="{{plans}}"
+    step="{{step}}"
     plan="{{plan}}"
     launcherarcs="{{launcherarcs}}"
     on-manifests="_onData"
@@ -94,6 +102,10 @@ const template = Xen.html`
     on-theme="_onData"
   ></shell-handles>
 
+  <!--
+      plan: schedules the plan for instantiation ('step' goes in)
+      on-plan: most recent plan to be instantiated ('plan' comes out)
+  -->
   <arc-host
     config="{{hostConfig}}"
     manifests="{{manifests}}"
@@ -103,7 +115,7 @@ const template = Xen.html`
     suggestions="{{suggestions}}"
     on-arc="_onData"
     on-plans="_onData"
-    on-plan="_onPlan"
+    on-plan="_onData"
   >
   </arc-host>
 
@@ -118,10 +130,9 @@ const template = Xen.html`
     arc="{{arc}}"
     metadata="{{metadata}}"
     theme="{{theme}}"
-    step="{{step}}"
     on-exclusions="_onExclusions"
     on-share="_onData"
-    on-suggest="_onData"
+    on-step="_onData"
     on-search="_onData"
   >
     <slot></slot>
@@ -135,9 +146,6 @@ const launcherKey = 'launcher';
 const profileKey = 'profile';
 
 class AppShell extends Xen.Base {
-  // get host() {
-  //   return this;
-  // }
   get template() {
     return template;
   }
@@ -148,9 +156,10 @@ class AppShell extends Xen.Base {
     };
   }
   _update(props, state, oldProps, oldState) {
-    const {config, arc, metadata, plans, search, suggest, plan} = state;
+    const {config, arc, metadata, plans, search, plan, step} = state;
     // TODO(sjmiles): only for console debugging
     window.arc = state.arc;
+    window.app = this;
     // ^
     if (config && config !== oldState.config) {
       this._consumeConfig(state, config);
@@ -160,10 +169,6 @@ class AppShell extends Xen.Base {
     }
     if (plans && (plans !== oldState.plans || search !== oldState.search)) {
       this._consumePlans(plans, search);
-    }
-    if (suggest) {
-      state.suggest = null;
-      state.step = suggest;
     }
     if (search !== oldState.search) {
       this._consumeSearch(search, arc);

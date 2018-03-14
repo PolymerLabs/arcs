@@ -202,7 +202,7 @@ class ShellUi extends Xen.Base {
     }
   }
   _onSuggest(e, suggest) {
-    this._fire('suggest', suggest);
+    this._fire('step', suggest);
   }
 }
 
