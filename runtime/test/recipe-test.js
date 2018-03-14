@@ -39,4 +39,59 @@ describe('recipe', function() {
     recipe.handles.forEach(handle => assert.isTrue(options.errors.has(handle)));
     options.errors.has(recipe.slots[1]);
   });
+  it('validate handle connection types', async () => {
+    let manifest = await Manifest.parse(`
+        schema MyType
+        schema MySubType extends MyType
+        schema OtherType
+        particle P1
+          P1(in MyType inMy)
+        particle P2
+          P2(out MyType inMy)
+        particle P3
+          P3(in MySubType inMy)
+        particle P4
+          P4(out MySubType inMy)
+        particle P5
+          P5(in [MyType] inMys)
+    `);
+
+    let MyType = manifest.findSchemaByName('MyType').entityClass().type;
+    let MySubType = manifest.findSchemaByName('MySubType').entityClass().type;
+    let OtherType = manifest.findSchemaByName('OtherType').entityClass().type;
+
+    // MyType and MySubType (sub class of MyType) are valid types for (in MyType)
+    let p1ConnSpec = manifest.particles.find(p => p.name == 'P1').connections[0];
+    assert.isTrue(p1ConnSpec.isValidType(MyType));
+    assert.isTrue(p1ConnSpec.isValidType(MySubType));
+    assert.isFalse(p1ConnSpec.isValidType(OtherType));
+    assert.isFalse(p1ConnSpec.isValidType(MyType.setViewOf()));
+    assert.isFalse(p1ConnSpec.isValidType(MySubType.setViewOf()));
+
+    // Only MyType are valid types for (out MyType)
+    let p2ConnSpec = manifest.particles.find(p => p.name == 'P2').connections[0];
+    assert.isTrue(p2ConnSpec.isValidType(MyType));
+    assert.isFalse(p2ConnSpec.isValidType(MySubType));
+    assert.isFalse(p2ConnSpec.isValidType(OtherType));
+
+    // Only MySubType is a valid types for (in MySubType)
+    let p3ConnSpec = manifest.particles.find(p => p.name == 'P3').connections[0];
+    assert.isFalse(p3ConnSpec.isValidType(MyType));
+    assert.isTrue(p3ConnSpec.isValidType(MySubType));
+    assert.isFalse(p3ConnSpec.isValidType(OtherType));
+
+    // MyType and MySubType are valid types for (out MySubType)
+    let p4ConnSpec = manifest.particles.find(p => p.name == 'P4').connections[0];
+    assert.isTrue(p4ConnSpec.isValidType(MyType));
+    assert.isTrue(p4ConnSpec.isValidType(MySubType));
+    assert.isFalse(p4ConnSpec.isValidType(OtherType));
+
+    // MyType and MySubType are valid types for (in [MyType])
+    let p5ConnSpec = manifest.particles.find(p => p.name == 'P5').connections[0];
+    assert.isFalse(p5ConnSpec.isValidType(MyType));
+    assert.isFalse(p5ConnSpec.isValidType(MySubType));
+    assert.isFalse(p5ConnSpec.isValidType(OtherType));
+    assert.isTrue(p5ConnSpec.isValidType(MyType.setViewOf()));
+    assert.isTrue(p5ConnSpec.isValidType(MySubType.setViewOf()));
+  });
 });
