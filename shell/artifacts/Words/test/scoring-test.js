@@ -5,8 +5,6 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-let assert = chai.assert;
-
 describe('Scoring', function() {
   describe('#isMinimumWordLength()', function() {
     it('should report word length requirements correctly', function() {

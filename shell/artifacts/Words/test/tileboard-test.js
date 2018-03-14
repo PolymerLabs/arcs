@@ -5,12 +5,10 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-let assert = chai.assert;
-
 describe('TileBoard', function() {
   const savePickCharWithFrequencies = TileBoard.pickCharWithFrequencies;
 
-  lettersToBoardString =
+  const lettersToBoardString =
       (letters) => {
         let lettersWithStyle = '';
         const normalStyle = Tile.StyleToNumber[Tile.Style.NORMAL];
