@@ -35,15 +35,16 @@ describe('products test', function() {
 
     helper.slotComposer
         .newExpectations()
-          .expectRenderSlot('ShowCollection', 'master', ['template', 'model'])
-          .maybeRenderSlot('ShowCollection', 'master', ['model'])
-          .expectRenderSlot('ShowProduct', 'root', ['model'])
-          .expectRenderSlotVerify('ShowCollection', 'master', (content) => {
-            return content.model && content.model.hasItems
+          .expectRenderSlot('ShowCollection', 'master', {contentTypes: ['template']})
+          .expectRenderSlot('ShowCollection', 'master', {contentTypes: ['model'], verify: (content) => {
+            let verified = content.model && content.model.hasItems
                 && content.model.items['$template'].length > 0
-                && 1 == content.model.items.models.length
-                && 'Harry Potter' === content.model.items.models[0].name;
-          });
+                && 1 == content.model.items.models.length;
+            if (verified) {
+              assert.equal('Harry Potter', helper.arc._handles[0]._items.get(content.model.items.models[0].id).rawData.name);
+            }
+            return verified;
+          }});
 
     await helper.acceptSuggestion({particles: ['ShowCollection', 'ProductFilter']});
 

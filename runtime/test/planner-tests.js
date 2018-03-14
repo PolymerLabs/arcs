@@ -113,7 +113,7 @@ describe('Planner', function() {
       return planner.strategizer.population.length;
     };
     let results = await planFromManifest(manifest, {testSteps});
-    assert.equal(results, 5);
+    assert.equal(results, 6);
   });
 
   // TODO: rewrite or remove this, it doesn't test anything more than the above test?
@@ -134,7 +134,7 @@ describe('Planner', function() {
       return planner.strategizer.population.length;
     };
     let results = await planFromManifest(manifest, {arcFactory, testSteps});
-    assert.equal(results, 5);
+    assert.equal(results, 6);
   });
 
   it('can map remote handles structurally', async () => {

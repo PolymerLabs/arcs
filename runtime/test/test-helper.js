@@ -111,9 +111,15 @@ export default class TestHelper {
       if (options.expectedSuggestions) {
         let suggestions = await Promise.all(this.plans.map(async p => await p.description.getRecipeSuggestion()));
         let missingSuggestions = options.expectedSuggestions.filter(expectedSuggestion => !suggestions.find(s => s === expectedSuggestion));
-        assert.equal(0, missingSuggestions.length, `Missing suggestions: ${missingSuggestions.join('\n')}`);
         let unexpectedSuggestions = suggestions.filter(suggestion => !options.expectedSuggestions.find(s => s === suggestion));
-        assert.equal(0, unexpectedSuggestions.length, `Unexpected suggestions: ${unexpectedSuggestions.join('\n')}`);
+        let errors = [];
+        if (missingSuggestions.length > 0) {
+          errors.push(`Missing suggestions:\n\t ${missingSuggestions.join('\n\t')}`);
+        }
+        if (unexpectedSuggestions.length > 0) {
+          errors.push(`Unexpected suggestions:\n\t ${unexpectedSuggestions.join('\n\t')}`);
+        }
+        assert.equal(0, missingSuggestions.length + unexpectedSuggestions.length, errors.join('\n'));
       }
       if (options.verify) {
         await options.verify(this.plans);
@@ -143,6 +149,10 @@ export default class TestHelper {
     if (!plan) {
       plan = this.plan;
     }
+    await this.instantiatePlan(plan);
+  }
+
+  async instantiatePlan(plan) {
     assert(plan, `Cannot accept suggestion, no plan could be selected.`);
     await this.arc.instantiate(plan);
     await this.idle();

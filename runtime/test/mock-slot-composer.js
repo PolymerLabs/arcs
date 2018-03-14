@@ -57,10 +57,10 @@ class MockContext {
  * Usage example:
  *   mockSlotComposer
  *       .newExpectations()
- *           .expectRenderSlot('MyParticle1', 'mySlot1', ['template', 'model']);
- *           .expectRenderSlot('MyParticle1', 'mySlot1', ['model'], 2)
- *           .expectRenderSlotVerify('MyParticle2', 'mySlot2', (content) => !!content.myParam)
- *           .maybeRenderSlot('MyOptionalParticle', 'myOptionalSlot', ['template', 'model'])
+ *           .expectRenderSlot('MyParticle1', 'mySlot1', {contentTypes: ['template']});
+ *           .expectRenderSlot('MyParticle1', 'mySlot1', {contentTypes: ['model'], times: 2})
+ *           .expectRenderSlot('MyParticle2', 'mySlot2', {verify: (content) => !!content.myParam})
+ *           .expectRenderSlot('MyOptionalParticle', 'myOptionalSlot', {contentTypes: ['template', 'model'], isOptional: true})
  *   mockSlotComposer.sendEvent('MyParticle1', 'mySlot1', '_onMyEvent', {key: 'value'});
  *   await mockSlotComposer.expectationsCompleted();
  */
@@ -116,39 +116,27 @@ class MockSlotComposer extends SlotComposer {
     return content.model.items.length == num;
   }
 
-  /** @method maybeRenderSlot(num, content)
-   * Adds an optional rendering expectation - a group of expectations is considered satifsied if only optional expectation remain.
-   * The optional expectation can only be executed within its own expectations group.
+  /** @method expectRenderSlot(particleName, slotName, options)
+   * Adds a rendering expectation for the given particle and slot names, where options may contain:
+   * times: number of time the rendering request will occur
+   * contentTypes: the types appearing in the rendering content
+   * isOptional: whether this expectation is optional (default: false)
+   * hostedParticle: for transformation particles, the name of the hosted particle
+   * verify: an additional optional handler that determines whether the incoming render request satisfies the expectation
    */
-  maybeRenderSlot(particleName, slotName, contentTypes, times) {
-    times = times || 1;
+  expectRenderSlot(particleName, slotName, options) {
+    let times = options.times || 1;
     for (let i = 0; i < times; ++i) {
-      this._addRenderExpectation({particleName, slotName, contentTypes, isOptional: true});
+      this._addRenderExpectation({
+        particleName,
+        slotName,
+        contentTypes: options.contentTypes,
+        isOptional: options.isOptional,
+        hostedParticle: options.hostedParticle,
+        verifyComplete: options.verify
+      });
     }
     return this;
-  }
-
-  /** @method expectRenderSlot(particleName, slotName, contentTypes)
-   * Adds a rendering expectation.
-   * particleName, slot name: the expected rendering particle and slot name
-   * contentTypes: the expected set of keys in the content object of the render request
-   */
-  expectRenderSlot(particleName, slotName, contentTypes, times) {
-    times = times || 1;
-    for (let i = 0; i < times; ++i) {
-      this._addRenderExpectation({particleName, slotName, contentTypes});
-    }
-    return this;
-  }
-
-  /** @method expectRenderSlotVerify(particleName, slotName, verifyComplete)
-   * Adds a rendering expectation.
-   * particleName, slot name: the expected rendering particle and slot name
-   * verifyComplete: an additional optional handler that determines whether the incoming render request satisfies the expectation.
-   */
-  expectRenderSlotVerify(particleName, slotName, verifyComplete) {
-    let expectation = {particleName, slotName, verifyComplete};
-    return this._addRenderExpectation(expectation);
   }
 
   /** @method expectationsCompleted()
@@ -171,9 +159,14 @@ class MockSlotComposer extends SlotComposer {
   }
 
   _addRenderExpectation(expectation) {
-    let current = this.expectQueue.find(e => e.particleName == expectation.particleName && e.slotName == expectation.slotName && e.isOptional == expectation.isOptional);
+    let current = this.expectQueue.find(e => {
+      return e.particleName == expectation.particleName
+          && e.slotName == expectation.slotName
+          && e.hostedParticle == expectation.hostedParticle
+          && e.isOptional == expectation.isOptional;
+    });
     if (!current) {
-      current = {type: 'render', particleName: expectation.particleName, slotName: expectation.slotName, isOptional: expectation.isOptional};
+      current = {type: 'render', particleName: expectation.particleName, slotName: expectation.slotName, hostedParticle: expectation.hostedParticle, isOptional: expectation.isOptional};
       this.expectQueue.push(current);
     }
     if (expectation.verifyComplete) {
@@ -189,8 +182,20 @@ class MockSlotComposer extends SlotComposer {
     return this.expectQueue.find(e => e.type == 'render' && e.ignoreUnexpected);
   }
 
+  _getHostedParticleNames(particle) {
+    return Object.values(particle.connections)
+        .filter(conn => conn.type.isInterface)
+        .map(conn => this.arc.findHandleById(conn.handle.id)._stored.name);
+  }
+
   _verifyRenderContent(particle, slotName, content) {
-    let index = this.expectQueue.findIndex(e => e.type == 'render' && e.particleName == particle.name && e.slotName == slotName);
+    let index = this.expectQueue.findIndex(e => {
+      return e.type == 'render'
+          && e.particleName == particle.name
+          && e.slotName == slotName
+          && (!e.hostedParticle ||
+             ((names) => names.length == 1 && names[0] == e.hostedParticle)(this._getHostedParticleNames(particle)));
+    });
     if (index < 0) {
       return false;
     }
@@ -221,7 +226,7 @@ class MockSlotComposer extends SlotComposer {
   }
 
   async renderSlot(particle, slotName, content) {
-    // console.log(`renderSlot ${particle.name}:${slotName}`, Object.keys(content).join(', '));
+    // console.log(`renderSlot ${particle.name} ${((names) => names.length > 0 ? `(${names.join(',')}) ` : '')(this._getHostedParticleNames(particle))}: ${slotName} - ${Object.keys(content).join(', ')}`);
     assert(this.expectQueue.length > 0,
       `Got a renderSlot from ${particle.name}:${slotName} (content types: ${Object.keys(content).join(', ')}), but not expecting anything further.`);
 

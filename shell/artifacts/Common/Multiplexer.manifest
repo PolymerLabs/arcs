@@ -8,7 +8,7 @@
 
 shape HostedParticleShape
   HostedParticleShape(in ~a)
-  consume annotation
+  consume
 
 // TODO: This particle should use generic slot name.
 particle Multiplexer in 'source/Multiplexer.js'
@@ -19,7 +19,7 @@ particle Multiplexer in 'source/Multiplexer.js'
 // Same as Multiplexer above, but with an additional connection.
 shape HostedParticleShape2
   HostedParticleShape2(in ~a, in [~a])
-  consume annotation
+  consume
 
 particle Multiplexer2 in 'source/Multiplexer.js'
   Multiplexer2(host HostedParticleShape2 hostedParticle, in [~a] list, in [~a] others)

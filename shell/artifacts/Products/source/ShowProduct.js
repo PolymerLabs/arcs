@@ -78,10 +78,9 @@ ${styles}
         <img src="{{resolvedImage}}">
       </div>
     </div>
-    <div slotid="annotation" subid="{{subId}}">
     </div>
   </div>
-  `;
+  `.trim();
 
   return class extends DomParticle {
     get template() {
@@ -90,8 +89,7 @@ ${styles}
     shouldRender(props) {
       return !!props.product;
     }
-    render(props) {
-      let {product} = props;
+    render({product}) {
       if (product) {
         let item = Object.assign({}, product.rawData);
         item.resolvedImage = resolver ? resolver(product.image) : product.image;
