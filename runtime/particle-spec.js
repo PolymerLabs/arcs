@@ -31,7 +31,7 @@ class ConnectionSpec {
     return this.direction == 'out' || this.direction == 'inout';
   }
 
-  isValidType(type) {
+  isCompatibleType(type) {
     return TypeChecker.compareTypes({type}, {type: this.type, direction: this.direction}, false).valid;
   }
 }

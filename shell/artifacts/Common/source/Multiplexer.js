@@ -31,7 +31,7 @@ defineParticle(({TransformationDomParticle}) => {
           continue;
         }
         otherMappedViews.push(`map '${await arc.mapHandle(otherView._proxy)}' as v${index}`);
-        let hostedOtherConnection = hostedParticle.connections.find(conn => conn.isValidType(otherView.type));
+        let hostedOtherConnection = hostedParticle.connections.find(conn => conn.isCompatibleType(otherView.type));
         if (hostedOtherConnection) {
           otherConnections.push(`${hostedOtherConnection.name} <- v${index++}`);
           this._connByHostedConn.set(hostedOtherConnection.name, connectionName);
