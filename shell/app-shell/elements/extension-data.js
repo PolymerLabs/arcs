@@ -5,14 +5,14 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import './browser-data-receiver.js';
+import './extension-data-receiver.js';
 import '../../app-shell/elements/arc-handle.js';
 
 import ArcsUtils from '../../app-shell/lib/arcs-utils.js';
 import Xen from '../../components/xen/xen.js';
 
 const template = Xen.html`
-  <browser-data-receiver on-data="_onBrowserData"></browser-data-receiver>
+  <extension-data-receiver on-data="_onBrowserData"></extension-data-receiver>
 `;
 
 class ExtensionData extends Xen.Base {
@@ -91,7 +91,6 @@ class ExtensionData extends Xen.Base {
   }
 
   _consumeEntities(entities, arc) {
-    //const container = document.querySelector('extension-app-shell agents');
     // let's load some handle data
     Object.entries(entities).forEach(entity => this._consumeEntity(entity, arc));
   }

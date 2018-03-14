@@ -1,6 +1,7 @@
 // code
 import ArcsUtils from '../lib/arcs-utils.js';
 import Xen from '../../components/xen/xen.js';
+import Const from '../constants.js';
 
 // elements
 import './persistent-arc.js';
@@ -106,8 +107,8 @@ class ArcCloud extends Xen.Base {
   }
   _consumeShareState(user, key, share) {
     let dirty = false;
-    const profileState = share > 0;
-    const shareState = share > 1;
+    const shareState = (share == Const.SHARE.friends);
+    const profileState = shareState || (share === Const.SHARE.profile);
     if (user && key) {
       if (!user.profiles || (Boolean(user.profiles[key]) !== profileState)) {
         dirty = true;

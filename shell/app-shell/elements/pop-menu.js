@@ -1,6 +1,5 @@
 // code
 import Xen from '../../components/xen/xen.js';
-// elements
 // strings
 import icons from '../icons.css.js';
 

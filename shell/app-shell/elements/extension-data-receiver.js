@@ -12,9 +12,9 @@ import Xen from '../../components/xen/xen.js';
 
 const manifestMimeType = 'text/x-arcs-manifest';
 
-const log = Xen.Base.logFactory('ExtBrowserDataReceiver', '#883997');
+const log = Xen.Base.logFactory('ExtensionDataReceiver', '#883997');
 
-class BrowserDataReceiver extends Xen.Base {
+class ExtensionDataReceiver extends Xen.Base {
   _didMount() {
     window.addEventListener('message', event => this.onMessage(event));
     if (!this._documentReady()) {
@@ -60,7 +60,7 @@ class BrowserDataReceiver extends Xen.Base {
   }
 }
 
-customElements.define('browser-data-receiver', BrowserDataReceiver);
+customElements.define('extension-data-receiver', ExtensionDataReceiver);
 
 /**
  * Reduce the deeply nested structure of url=>entities-of-many-types to a

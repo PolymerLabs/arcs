@@ -1,0 +1,7 @@
+The `firebase.4.2.0.js` artifact was sourced from https://www.gstatic.com/firebasejs/4.2.0/firebase.js but has
+two changes to support esm import.
+
+1. initial `var` is replaced by `export default`
+2. `k=this` is replaced by `k=window`
+
+
