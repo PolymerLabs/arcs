@@ -27,13 +27,25 @@ import AppIcon from './icon.svg.js';
 const Main = Xen.html`
 
 <app-modal shown$="{{modalShown}}" on-click="_onScrimClick">
+
   <app-dialog open$="{{userPickerOpen}}">
     <user-picker users="{{users}}" on-selected="_onSelectedUser"></user-picker>
   </app-dialog>
+
   <menu-panel
-    arc="{{arc}}" open="{{menuOpen}}" avatar_title="{{avatarTitle}}" avatar_style="{{avatarStyle}}" friends="{{friends}}" avatars="{{avatars}}"
-    on-close="_onMenuClose" on-user="_onSelectUser" on-cast="_onMenuCast" on-tools="_onToolsClick" on-share="_onData"
+    arc="{{arc}}"
+    open="{{menuOpen}}"
+    avatar_title="{{avatarTitle}}"
+    avatar_style="{{avatarStyle}}"
+    friends="{{friends}}"
+    avatars="{{avatars}}"
+    on-close="_onMenuClose"
+    on-user="_onSelectUser"
+    on-cast="_onMenuCast"
+    on-tools="_onToolsClick"
+    on-share="_onData"
   ></menu-panel>
+
 </app-modal>
 
 <app-main launcher$="{{launcher}}" style="{{shellStyle}}">
@@ -48,21 +60,6 @@ const Main = Xen.html`
       </toolbar-buttons>
     </app-toolbar>
   </toolbar>
-
-<!--
-  <arc-host
-    config="{{hostConfig}}"
-    manifests="{{manifests}}"
-    exclusions="{{exclusions}}"
-    plans="{{plans}}"
-    plan="{{step}}"
-    suggestions="{{suggestions}}"
-    on-arc="_onData"
-    on-plans="_onData"
-    on-plan="_onPlan"
-  >
-  </arc-host>
--->
 
   <slot></slot>
 
@@ -97,7 +94,7 @@ const log = Xen.Base.logFactory('ShellUi', '#294740');
 
 class ShellUi extends Xen.Base {
   static get observedAttributes() {
-    return ['config', 'manifests', 'exclusions', 'user', 'key', 'arc', 'metadata', 'theme', 'step'];
+    return ['config', 'manifests', 'exclusions', 'user', 'key', 'arc', 'metadata', 'theme'];
   }
   get css() {
     return Css;
@@ -136,64 +133,25 @@ class ShellUi extends Xen.Base {
     if (key) {
       ArcsUtils.setUrlParam('arc', key);
     }
-    // if (plans && (plans !== lastState.plans || search !== lastState.search)) {
-    //   this._consumePlans(state.plans, state.search);
-    // }
-    //if (!plan && plans && plans.length && (config.launcher || config.profiler)) {
-    //  state.step = plans[0].plan;
-    //}
     if (metadata && metadata.description) {
       state.description = metadata.description;
     }
     this._fire('exclusions', state.exclusions);
-    //this._fire('arc', state.arc);
-    //this._fire('plans', state.plans);
   }
   _consumeConfig(config) {
-    /*
-    let user = null;
-    let selectedUser = config.user;
-    if (selectedUser === 'new') {
-      selectedUser = null;
-      user = this._newUserPrompt();
-      log('new user', user);
-    }
-    */
     this._setState({
-      //selectedUser,
-      //user,
       toolsVisible: config.arcsToolsVisible
     });
   }
-  // _consumePlans(plans, search) {
-  //   let suggestions = plans;
-  //   // If there is a search, plans are already filtered
-  //   if (!search) {
-  //     // Otherwise only show plans that don't populate a root.
-  //     suggestions = plans.filter(
-  //       // TODO(seefeld): Don't hardcode `root`
-  //       // TODO(sjmiles|mmandlis): name.includes catches all variants of `root` (e.g. `toproot`), the tags
-  //       // test only catches `#root` specifically
-  //       ({plan}) => plan.slots && !plan.slots.find(s => s.name.includes('root') || s.tags.includes('#root'))
-  //     );
-  //   }
-  //   this._setState({suggestions});
-  // }
-  _render({config, manifests, exclusions, user, key, arc, theme, step}, state) {
-    //log(this._state);
+  _render({config, manifests, exclusions, user, key, arc, theme}, state) {
     const avatarUrl = user && user.avatar ? user.avatar : `${shellPath}/assets/avatars/user (0).png`;
     const render = {
-      //config,
       manifests,
       exclusions,
-      //key,
-      //user,
-      //step,
       arc,
       avatarStyle: `background: url('${avatarUrl}') center no-repeat; background-size: cover;`,
       avatarTitle: user && user.name || '',
       modalShown: Boolean(state.userPickerOpen || state.sharePickerOpen || state.menuOpen),
-      //hostConfig: user && config,
       shellStyle: {
         backgroundColor: theme && theme.mainBackground,
         color: theme && theme.mainColor
@@ -216,7 +174,7 @@ class ShellUi extends Xen.Base {
   }
   _onToolsClick() {
     const {toolsVisible} = this._state;
-    this._setState({toolsVisible: !toolsVisible});
+    this._setState({toolsVisible: !toolsVisible, menuOpen: false});
   }
   _onSelectUser() {
     this._setState({userPickerOpen: true});
@@ -226,41 +184,7 @@ class ShellUi extends Xen.Base {
   }
   // TODO(sjmiles): need to collapse (at least some) logic into update to handle arc correctly
   _onSearch(e, {search}) {
-    const state = this._state;
-    if (search !== state.search && state.arc) {
-      log('search', search);
-      search = search.trim().toLowerCase();
-      // TODO(sjmiles): installing the search term should be the job of arc-host
-      // TODO(sjmiles): setting search to '' causes an exception at init-search.js|L#29)
-      state.arc.search = search && search !== '*' ? search : null;
-      // re-plan only if the search has changed (beyond simple filtering)
-      if ((state.search && search && search !== '*') || (state.search !== '*' && search && search !== '*')) {
-        this._setState({plans: null});
-      }
-      this._setState({search});
-    }
-  }
-  _onSuggest(e, step) {
-    if (this._setState({step})) {
-      log('step', step);
-    }
-  }
-  _onPlan(e, plan) {
-    if (this._setState({plan})) {
-      log('plan', plan);
-      const {arc, metadata} = this._state;
-      if (metadata) {
-        this._updateArcDescription(arc, metadata);
-      }
-    }
-  }
-  async _updateArcDescription(arc, metadata) {
-    // TODO(sjmiles): move to update
-    const description = await ArcsUtils.describeArc(arc);
-    if (description && metadata.description !== description) {
-      metadata.description = description;
-      this._setState({metadata: Object.assign(Object.create(null), metadata)});
-    }
+    this._fire('search', search);
   }
   _onMenuClick(e) {
     this._setState({menuOpen: true});
@@ -276,6 +200,9 @@ class ShellUi extends Xen.Base {
         menuOpen: false
       });
     }
+  }
+  _onSuggest(e, suggest) {
+    this._fire('suggest', suggest);
   }
 }
 

@@ -110,7 +110,7 @@ class ArcFooter extends Xen.Base {
   // three user actions can affect search
   // 1: clicking the search icon (sets search to '*')
   _onSearchClick() {
-    this._commitSearch('*');
+    this._commitSearch(this._state.search === '*' ? '' : '*');
   }
   // 2. typing in the search box (w/debouncing)
   _onSearchChange(e) {
