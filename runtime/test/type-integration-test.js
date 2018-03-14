@@ -57,17 +57,4 @@ describe('type integration', () => {
     assert(recipe.handles.length == 1);
     assert(recipe.handles[0].type.primitiveType().entitySchema.name == 'Lego');
   });
-
-  it('equals or subclass', async () => {
-    let manifest = await setup();
-    let productType = manifest.findSchemaByName('Product').entityClass().type;
-    let legoType = manifest.findSchemaByName('Lego').entityClass().type;
-    assert.isTrue(productType.equalsOrSubclass(productType));
-    assert.isTrue(legoType.equalsOrSubclass(legoType));
-    assert.isTrue(legoType.equalsOrSubclass(productType));
-    assert.isTrue(legoType.setViewOf().equalsOrSubclass(productType.setViewOf()));
-
-    assert.isFalse(productType.equalsOrSubclass(legoType));
-    assert.isFalse(legoType.setViewOf().equalsOrSubclass(productType));
-  });
 });

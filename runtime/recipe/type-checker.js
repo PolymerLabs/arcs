@@ -113,8 +113,8 @@ class TypeChecker {
     // guarantees that the view's type will be preserved, and that the fact
     // that the type comes from a view rather than a connection will also
     // be preserved.
-    let superDirection = superclass.connection ? superclass.connection.direction : 'inout';
-    let subDirection = subclass.connection ? subclass.connection.direction : 'inout';
+    let superDirection = superclass.direction || (superclass.connection ? superclass.connection.direction : 'inout');
+    let subDirection = subclass.direction || (subclass.connection ? subclass.connection.direction : 'inout');
     if (superDirection == 'in') {
       return {type: subclass, valid: true};
     }

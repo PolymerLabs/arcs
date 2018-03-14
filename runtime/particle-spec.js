@@ -9,6 +9,7 @@
  */
 
 import Type from './type.js';
+import TypeChecker from './recipe/type-checker.js';
 import Shape from './shape.js';
 import assert from '../platform/assert-web.js';
 
@@ -28,6 +29,10 @@ class ConnectionSpec {
 
   get isOutput() {
     return this.direction == 'out' || this.direction == 'inout';
+  }
+
+  isValidType(type) {
+    return TypeChecker.compareTypes({type}, {type: this.type, direction: this.direction}, false).valid;
   }
 }
 
