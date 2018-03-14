@@ -1,6 +1,7 @@
 // code libs
 import ArcsUtils from '../lib/arcs-utils.js';
 import Xen from '../../components/xen/xen.js';
+import Const from '../constants.js';
 
 // elements
 import './user-picker.js';
@@ -124,7 +125,7 @@ class ShellUi extends Xen.Base {
       this._consumeConfig(config, state);
     }
     if (config) {
-      localStorage.setItem('0-3-arcs-dev-tools', state.toolsVisible ? 'open' : 'closed');
+      localStorage.setItem(Const.LOCALSTORAGE.tools, state.toolsVisible ? 'open' : 'closed');
     }
     if (user) {
       state.selectedUser = user.id;

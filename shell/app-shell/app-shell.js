@@ -17,6 +17,7 @@ import '../components/video-controller.js';
 // code libs
 import Xen from '../components/xen/xen.js';
 import ArcsUtils from './lib/arcs-utils.js';
+import Const from './constants.js';
 
 // globals
 /* global shellPath */
@@ -35,7 +36,7 @@ const template = Xen.html`
 
   <!--
     arc-cloud
-      TODO: refator into more meaningful concerns ('cloud' is ad-hoc, there are too many properties)
+      TODO: refactor into more meaningful concerns ('cloud' is ad-hoc, there are too many properties)
 
       manifests: are persisted to Firebase
       exclusions: are persisted to localStorage
@@ -104,7 +105,7 @@ const template = Xen.html`
 
   <!--
       plan: schedules the plan for instantiation ('step' goes in)
-      on-plan: most recent plan to be instantiated ('plan' comes out)
+      on-plan: most recent plan that was instantiated ('plan' comes out)
   -->
   <arc-host
     config="{{hostConfig}}"
@@ -141,9 +142,6 @@ const template = Xen.html`
 `;
 
 const log = Xen.logFactory('AppShell', '#6660ac');
-
-const launcherKey = 'launcher';
-const profileKey = 'profile';
 
 class AppShell extends Xen.Base {
   get template() {
@@ -189,15 +187,15 @@ class AppShell extends Xen.Base {
   _consumeConfig(state, config) {
     let key = config.key || '';
     if (!config.key) {
-      config.key = launcherKey;
+      config.key = Const.KEYS.launcher;
     }
-    if (config.key === launcherKey) {
+    if (config.key === Const.KEYS.launcher) {
       state.description = 'Launcher';
       config.soloPath = state.launcherSoloPath;
       config.launcher = true;
       key = '';
     }
-    if (config.key === profileKey) {
+    if (config.key === Const.KEYS.profile) {
       config.soloPath = state.profileSoloPath;
       config.profiler = true;
       key = '*';
@@ -248,7 +246,6 @@ class AppShell extends Xen.Base {
       if (description && metadata.description !== description) {
         metadata.description = description;
         this._invalidate();
-        //this._setState({metadata: Object.assign(Object.create(null), metadata)});
       }
     }
   }

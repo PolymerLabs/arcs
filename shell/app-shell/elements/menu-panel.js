@@ -1,12 +1,15 @@
 // code
 import Xen from '../../components/xen/xen.js';
+import Const from '../constants.js';
 // elements
 // strings
 import icons from '../icons.css.js';
 // globals
 /* global shellPath */
 
-const template = Xen.html`
+const html = Xen.Template.html;
+
+const template = html`
 
 <style>
   :host {
@@ -103,7 +106,7 @@ const template = Xen.html`
 <section friends>{{friends}}</section>
 `;
 
-const User = Xen.Template.html`
+const userTemplate = html`
   <user-item selected$="{{selected}}" on-click="_onSelect" key="{{key}}">
     <avatar style="{{style}}"></avatar> <name>{{name}}</name>
   </user-item>
@@ -137,16 +140,22 @@ class MenuPanel extends Xen.Base {
     };
     if (friends) {
       render.friends = {
-        template: User,
+        template: userTemplate,
         models: friends.map((friend, i) => this._renderUser(arc, selected, friend.rawData, avatars, i))
       };
     }
-    const shareState = isShared ? 2 : isProfile ? 1 : 0;
+    const shareState = this._shareFlagsToShareState(isShared, isProfile);
+    // TODO(sjmiles): delay notification to allow DOM changes to settle before triggering heavy-lifting;
+    // shouldn't be here
     setTimeout(() => this._fire('share', shareState), 100);
     return render;
   }
   _didRender({}, {isOpen}) {
     Xen.setBoolAttribute(this, 'open', isOpen);
+  }
+  _shareFlagsToShareState(isShared, isProfile) {
+    return isShared ? Const.SHARE.friends : isProfile ? Const.SHARE.self : Const.SHARE.private;
+
   }
   _renderUser(arc, selected, user, avatars, i) {
     let avatar = user.avatar;
@@ -159,7 +168,6 @@ class MenuPanel extends Xen.Base {
     if (!avatar) {
       avatar = `${shellPath}/assets/avatars/user (0).png`;
     }
-    //const url = user.avatar || `${shellPath}/assets/avatars/user (0).png`;
     return {
       key: user.id,
       name: user.name,
@@ -185,11 +193,9 @@ class MenuPanel extends Xen.Base {
   }
   _onCastClick() {
     this._fire('cast');
-    //this._close();
   }
   _onToolsClick() {
     this._fire('tools');
-    //this._close();
   }
   _onProfileClick() {
     let {isProfile, isShared} = this._state;
