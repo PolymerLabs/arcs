@@ -116,9 +116,9 @@ class MenuPanel extends Xen.Base {
     return template;
   }
   static get observedAttributes() {
-    return ['arc', 'open', 'friends', 'avatars', 'avatar_title', 'avatar_style'];
+    return ['arc', 'open', 'friends', 'avatars', 'avatar_title', 'avatar_style', 'share'];
   }
-  _render({arc, open, avatar_title, avatar_style, friends, avatars}, state) {
+  _render({arc, open, avatar_title, avatar_style, friends, avatars, share}, state) {
     const {selected, isProfile, isShared, isOpen, shouldOpen} = state;
     //`shouldOpen` exists to allow parent to update before we try to transition
     state.isOpen = state.shouldOpen;
@@ -143,18 +143,20 @@ class MenuPanel extends Xen.Base {
         models: friends.map((friend, i) => this._renderUser(arc, selected, friend.rawData, avatars, i))
       };
     }
-    const shareState = this._shareFlagsToShareState(isShared, isProfile);
-    // TODO(sjmiles): delay notification to allow DOM changes to settle before triggering heavy-lifting;
-    // shouldn't be here
-    setTimeout(() => this._fire('share', shareState), 100);
+    this._setState(this._shareStateToFlags(share));
     return render;
   }
   _didRender({}, {isOpen}) {
     Xen.setBoolAttribute(this, 'open', isOpen);
   }
-  _shareFlagsToShareState(isShared, isProfile) {
+  _shareStateToFlags(share) {
+    return {
+      isShared: (share == Const.SHARE.friends),
+      isProfile: (share == Const.SHARE.friends) || (share === Const.SHARE.self)
+    };
+  }
+  _shareFlagsToShareState(isProfile, isShared) {
     return isShared ? Const.SHARE.friends : isProfile ? Const.SHARE.self : Const.SHARE.private;
-
   }
   _renderUser(arc, selected, user, avatars, i) {
     let avatar = user.avatar;
@@ -182,6 +184,11 @@ class MenuPanel extends Xen.Base {
       if (afterEvent) {
         this._fire(afterEvent);
       }
+      if ('share' in this._state) {
+        // TODO(sjmiles): delay notification to allow DOM changes to settle before triggering heavy-lifting?
+        //   this problem shouldn't be handled here...
+        setTimeout(() => this._fire('share', this._state.share), 100);
+      }
     }, 220);
   }
   _onClose() {
@@ -197,20 +204,17 @@ class MenuPanel extends Xen.Base {
     this._fire('tools');
   }
   _onProfileClick() {
-    let {isProfile, isShared} = this._state;
-    isProfile = !isProfile;
-    this._setState({
-      isProfile,
-      isShared: isShared && isProfile
-    });
+    const {isProfile, isShared} = this._state;
+    this._changeSharing(!isProfile, isShared);
   }
   _onShareClick() {
-    let {isProfile, isShared} = this._state;
-    isShared = !isShared;
-    this._setState({
-      isProfile: isProfile || isShared,
-      isShared: isShared
-    });
+    const {isProfile, isShared} = this._state;
+    this._changeSharing(isProfile, !isShared);
+  }
+  _changeSharing(isProfile, isShared) {
+    isProfile = isProfile || isShared;
+    const share = this._shareFlagsToShareState(isProfile, isShared);
+    this._setState({isProfile, isShared, share});
   }
 }
 

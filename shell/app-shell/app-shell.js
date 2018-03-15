@@ -132,6 +132,9 @@ const template = Xen.html`
     key="{{key}}"
     arc="{{arc}}"
     metadata="{{metadata}}"
+    friends="{{friends}}"
+    avatars="{{avatars}}"
+    share="{{share}}"
     theme="{{theme}}"
     on-exclusions="_onExclusions"
     on-share="_onData"
@@ -156,7 +159,7 @@ class AppShell extends Xen.Base {
     };
   }
   _update(props, state, oldProps, oldState) {
-    const {config, arc, metadata, plans, search, plan, step} = state;
+    const {config, user, key, arc, metadata, share, plans, search, plan, step} = state;
     // TODO(sjmiles): only for console debugging
     window.arc = state.arc;
     window.app = this;
@@ -175,6 +178,9 @@ class AppShell extends Xen.Base {
     }
     if (plan && plan !== oldState.plan && metadata) {
       this._consumePlan(arc, metadata);
+    }
+    if (config && user && key && share === undefined) {
+      state.share = this._calculateShareState(config, key, user);
     }
   }
   _render({}, state) {
@@ -216,6 +222,12 @@ class AppShell extends Xen.Base {
       user,
       key
     });
+  }
+  _calculateShareState(config, key, user) {
+    // calculate sharing state
+    let isProfile = user.profiles && user.profiles[key];
+    let isShared = user.shares && user.shares[key];
+    return isShared ? Const.SHARE.friends : isProfile ? Const.SHARE.self : Const.SHARE.private;
   }
   _consumeSearch(search, arc) {
     search = (search || '').trim().toLowerCase();
