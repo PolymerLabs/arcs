@@ -50,9 +50,7 @@ const ArcsUtils = {
       'assets': `${cdnRoot}/assets`,
       'https://$cdn': `${cdnRoot}`,
       // TODO(sjmiles): map must always contain (explicitly, no prefixing) a mapping for `worker-entry-cdn.js`
-      'worker-entry.js': `${cdnRoot}/${lib}/worker-entry.js`,
-      // TODO(sjmiles): make this conditional somehow
-      'https://sjmiles.github.io': `https://localhost/projects/arcs`
+      'worker-entry.js': `${cdnRoot}/${lib}/worker-entry.js`
     };
   },
   async makePlans(arc, timeout) {
