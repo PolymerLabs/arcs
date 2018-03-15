@@ -62,7 +62,7 @@ export class DescriptionFormatter {
     await this._updateDescriptionHandles(this._description);
 
     if (recipe.pattern) {
-      let recipeDesc = this.patternToSuggestion(recipe.pattern);
+      let recipeDesc = await this.patternToSuggestion(recipe.pattern);
       if (recipeDesc) {
         return recipeDesc;
       }
