@@ -10,8 +10,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
 import Xen from '../xen/xen.js';
 
-const template = Xen.Template.createTemplate(
-  `<style>
+const html = Xen.Template.html;
+const template = html`
+  <style>
     :host {
       display: inline-flex;
       flex-direction: column;
@@ -120,33 +121,36 @@ const template = Xen.Template.createTemplate(
   <div id="decorator" class$="{{decoratorClass}}" class="decorator" aria-hidden="true" error-messsage="{{error}}">
     <slot name="label" class="{{labelClass}}"></slot>
     <div class$="{{underlineClass}}" class="underline"></div>
-  </div>`
-);
+  </div>
+`;
 
 // TODO(sorvell): clicking on label should focus input.
 class CorelliaXenInput extends Xen.Base {
   static get observedAttributes() {
-    return ['error'];
+    return ['error', 'value'];
   }
   get template() { return template; }
-  _render(props, state) {
+  _render({error, value}, state) {
     let input = this.querySelector('input');
     if (state.input !== input) {
       state.input = input;
-      input.onblur = input.onfocus = () => this._invalidate();
+      input.onblur = input.onfocus = input.onchange = () => this._invalidate();
       if (!input.placeholder) {
         input.placeholder = ' ';
       }
     }
+    if (value && value !== input.value) {
+      input.value = value;
+    }
     let focused, invalid, placeholderShown;
-    if (state.input) {
+    if (input) {
       focused = input.matches(':focus');
       invalid = input.matches(':invalid');
       placeholderShown = input.matches(':placeholder-shown');
     }
     let invalidClass = !focused && !placeholderShown && invalid ? 'invalid' : '';
     return {
-      error: props.error,
+      error,
       underlineClass: focused ? 'underline underline-focus' : 'underline',
       decoratorClass: `decorator ${invalidClass}`,
       labelClass: [
