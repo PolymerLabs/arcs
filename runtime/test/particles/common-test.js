@@ -14,7 +14,7 @@ import {assert} from '../chai-web.js';
 import TestHelper from '../test-helper.js';
 
 describe('common particles test', function() {
-  it.only('copy handle test', async () => {
+  it('copy handle test', async () => {
     let helper = await TestHelper.loadManifestAndPlan(
         './runtime/test/artifacts/copy-collection-test.recipes',
         {expectedNumPlans: 1, expectedSuggestions: ['copy all things!']});
