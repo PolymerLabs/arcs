@@ -1,5 +1,5 @@
 // @license
-// Copyright (c) 2017 Google Inc. All rights reserved.
+// Copyright (c) 2018 Google Inc. All rights reserved.
 // This code may only be used under the BSD style license found at
 // http://polymer.github.io/LICENSE.txt
 // Code distributed by Google as part of this project is also
@@ -15,7 +15,7 @@ defineParticle(({Particle}) => {
         let inputHandle = views.get('input');
         inputHandle.toList().then(input => {
           input.forEach(elem => views.get('output').store(elem));
-          this.relevance = Math.max(input.length, 5);
+          this.relevance = input.length; // TODO: set appropriate relevance.
         });
       });
     }
