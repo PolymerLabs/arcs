@@ -10,7 +10,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
 import WatchGroup from './watch-group.js';
 import Xen from '../../components/xen/xen.js';
-import Const from "../constants.js";
+import Const from '../constants.js';
 
 const db = window.db;
 
