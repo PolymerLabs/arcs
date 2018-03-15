@@ -238,23 +238,25 @@ class Manifest {
   static async load(fileName, loader, options) {
     options = options || {};
     let {registry, id} = options;
+    registry = registry || {};
     if (registry && registry[fileName]) {
-      return registry[fileName];
+      return await registry[fileName];
     }
-    let content = await loader.loadResource(fileName);
-    assert(content !== undefined, `${fileName} unable to be loaded by Manifest parser`);
-    let manifest = await Manifest.parse(content, {
-      id,
-      fileName,
-      loader,
-      registry,
-      position: {line: 1, column: 0}
-    });
-    if (manifest && registry) {
-      registry[fileName] = manifest;
-    }
-    return manifest;
+    registry[fileName] = (async () => {
+      let content = await loader.loadResource(fileName);
+      // TODO: When does this happen? The loader should probably throw an exception here.
+      assert(content !== undefined, `${fileName} unable to be loaded by Manifest parser`);
+      return await Manifest.parse(content, {
+        id,
+        fileName,
+        loader,
+        registry,
+        position: {line: 1, column: 0}
+      });
+    })();
+    return await registry[fileName];
   }
+
   static async parse(content, options) {
     options = options || {};
     let {id, fileName, position, loader, registry} = options;
@@ -316,16 +318,9 @@ ${e.message}
     manifest._fileName = fileName;
 
     try {
-      let processItems = async (kind, f) => {
-        for (let item of items) {
-          if (item.kind == kind) {
-            Manifest._augmentAstWithTypes(manifest, item);
-            await f(item);
-          }
-        }
-      };
-
-      await processItems('import', async item => {
+      // Loading of imported manifests is triggered in parallel to avoid a serial loading
+      // of resources over the network. 
+      await Promise.all(items.filter(item => item.kind == 'import').map(async item => {
         let path = loader.path(manifest.fileName);
         let target = loader.join(path, item.path);
         try {
@@ -334,7 +329,16 @@ ${e.message}
           manifest._warnings.push(e);
           manifest._warnings.push(new ManifestError(item.location, `Error importing '${target}'`));
         }
-      });
+      }));
+
+      let processItems = async (kind, f) => {
+        for (let item of items) {
+          if (item.kind == kind) {
+            Manifest._augmentAstWithTypes(manifest, item);
+            await f(item);
+          }
+        }
+      };
 
       // processing meta sections should come first as this contains identifying
       // information that might need to be used in other sections. For example,

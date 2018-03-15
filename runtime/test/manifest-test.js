@@ -325,7 +325,7 @@ ${particleStr1}
     };
     let manifest = await Manifest.load('some-path', loader, {registry});
     assert(manifest.recipes[0]);
-    assert.equal(manifest, registry['some-path']);
+    assert.equal(manifest, await registry['some-path']);
   });
   it('can load a manifest with imports', async () => {
     let registry = {};
@@ -344,8 +344,8 @@ ${particleStr1}
       },
     };
     let manifest = await Manifest.load('a', loader, {registry});
-    assert.equal(registry.a, manifest);
-    assert.equal(manifest.imports[0], registry.b);
+    assert.equal(await registry.a, manifest);
+    assert.equal(manifest.imports[0], await registry.b);
   });
   it('can resolve recipe particles imported from another manifest', async () => {
     let registry = {};
@@ -371,7 +371,7 @@ ${particleStr1}
       },
     };
     let manifest = await Manifest.load('a', loader, {registry});
-    assert.isTrue(manifest.recipes[0].particles[0].spec.equals(registry.b.findParticleByName('ParticleB')));
+    assert.isTrue(manifest.recipes[0].particles[0].spec.equals((await registry.b).findParticleByName('ParticleB')));
   });
   it('can parse a schema extending a schema in another manifest', async () => {
     let registry = {};
