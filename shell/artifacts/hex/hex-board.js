@@ -7,6 +7,7 @@
 
 defineParticle(({DomParticle}) => {
   const size = 8;
+  const padding = (size - 1) / 2 |0;
   const template = `
     <style>
     hex-board {
@@ -17,7 +18,7 @@ defineParticle(({DomParticle}) => {
       --hex-x-offset: calc(0.5 * var(--hex-width));
       --hex-y-offset: calc(0.25 * var(--hex-height));
       display: grid;
-      grid-template-columns: repeat(${size * 2 - 3}, calc(var(--hex-width) - var(--hex-border)));
+      grid-template-columns: repeat(${size + padding}, calc(var(--hex-width) - var(--hex-border)));
       grid-template-rows: repeat(${size}, calc(0.75 * var(--hex-height) - var(--hex-border)));
     }
     
@@ -91,7 +92,7 @@ defineParticle(({DomParticle}) => {
           for (let col = 0; col < size; col++) {
             result.push(`<hexa-gon${offset ? ' offset' : ''}></hexa-gon>`);
           }
-          for (let i = (row - offset) / 2; i < size - 3; i++) {
+          for (let i = (row - offset) / 2; i < padding; i++) {
             result.push(`<hexa-gon padding${offset ? ' offset' : ''}></hexa-gon>`);
           }
         }
