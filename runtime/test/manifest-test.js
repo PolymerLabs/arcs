@@ -1158,7 +1158,6 @@ resource SomeName
           foo = view
     `);
     let [validRecipe] = manifest.recipes;
-    debugger;
     assert(validRecipe.normalize());
     assert(validRecipe.isResolved());
   });
@@ -1182,7 +1181,6 @@ resource SomeName
           foo = view
     `);
     let [validRecipe] = manifest.recipes;
-    debugger;
     assert(validRecipe.normalize());
     assert(validRecipe.isResolved());
 

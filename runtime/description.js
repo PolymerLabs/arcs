@@ -236,7 +236,6 @@ export class DescriptionFormatter {
       let particleName = handleNames.shift();
       assert(particleName[0] === particleName[0].toUpperCase(), `Expected particle name, got '${particleName}' instead.`);
       let particleDescriptions = this._particleDescriptions.filter(desc => desc._particle.name == particleName);
-      debugger;
       assert(particleDescriptions.length > 0, `Cannot find particles with name ${particleName}.`);
       if (particleDescriptions.length > 1) {
         console.warn(`Multiple particles with name ${particleName}.`);
