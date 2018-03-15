@@ -10,8 +10,8 @@
 
 'use strict';
 
-import {assert} from './chai-web.js';
-import TestHelper from './test-helper.js';
+import {assert} from '../chai-web.js';
+import TestHelper from '../test-helper.js';
 
 describe('products test', function() {
   let testProductsManifestFile = './runtime/test/artifacts/TestProducts.recipes';
