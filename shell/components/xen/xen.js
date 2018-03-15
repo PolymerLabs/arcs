@@ -8,6 +8,8 @@ const html = (strings, ...values) => {
   return (strings[0] + values.map((v, i) => v + strings[i + 1]).join('')).trim();
 };
 
+Template.html = (...args) => Template.createTemplate(html.apply(null, args)); // eslint-disable-line prefer-spread
+
 const walker = (node, tree) => {
   let subtree = tree;
   if (!subtree) {

@@ -1,11 +1,8 @@
 // code
 import Xen from '../../components/xen/xen.js';
-// elements
-// strings
+
 // globals
 const shellPath = window.shellPath;
-
-Xen.Template.html = (...args) => Xen.Template.createTemplate(Xen.html.apply(null, args));
 
 const Main = Xen.html`
 <style>
