@@ -39,6 +39,9 @@ defineParticle(({DomParticle, log, html}) => {
   [${host}] [chip]:hover [delete] {
     visibility: visible;
   }
+  [${host}] [share] {
+    margin-top: 16px;
+  }
   [${host}] [share] icon:not([show]) {
     display: none;
   }
@@ -59,14 +62,13 @@ ${style}
 <template column>
   <a href="{{href}}">
     <div chip style="{{chipStyle}}">
-      <icon delete class="material-icons" key="{{arcId}}" on-click="_onDelete">remove_circle_outline</icon>
+      <icon delete key="{{arcId}}" on-click="_onDelete">remove_circle_outline</icon>
         <div description title="{{description}}" unsafe-html="{{blurb}}"></div>
         <div style="flex: 1;"></div>
-        <div share style="margin-top: 16px;">
+        <div share>
           <icon show$="{{self}}">account_circle</icon>
           <icon show$="{{friends}}">people</icon>
         </div>
-        <!-- <div style="margin-top: 32px;"><icon>account_circle</icon><icon>account_circle</icon><icon>account_circle</icon><icon>account_circle</icon></div> -->
     </div>
   </a>
 </template>
@@ -112,7 +114,6 @@ ${style}
         const chipStyle = {
           backgroundColor: a.bg || a.color || 'gray',
           color: a.bg ? a.color : 'white',
-          //border: a.profile ? '2px solid gray' : 'none'
         };
         // populate the selected list
         list.push({
