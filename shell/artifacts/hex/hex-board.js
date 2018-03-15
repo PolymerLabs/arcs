@@ -30,12 +30,12 @@ defineParticle(({DomParticle}) => {
       visibility: hidden;
     }
     
-    /* This actually paints the border. */
+    /* Clipped hexagon tile. */
     hexa-gon {
+      position: relative;
       display: inline-block;
       width: var(--hex-width);
       height: var(--hex-height);
-      background: black;
       clip-path: polygon(
           0% 25%,
           50% 0%,
@@ -45,9 +45,9 @@ defineParticle(({DomParticle}) => {
           0% 75%);
     }
 
-    /* The real contents of the cell. */
+    /* Border on top of the tile. */
     hexa-gon:before {
-      display: inline-block;
+      position: absolute;
       content: '';
       width: var(--hex-width);
       height: var(--hex-height);
@@ -56,16 +56,24 @@ defineParticle(({DomParticle}) => {
       --75: calc(var(--hex-border) + (100% - 2 * var(--hex-border)) * 0.75);
       --100: calc(100% - var(--hex-border));
       clip-path: polygon(
-          var(--0) var(--25),
-          50% var(--0),
-          var(--100) var(--25),
-          var(--100) var(--75),
-          50% var(--100),
-          var(--0) var(--75));
-      background: white;
+        0% 25%,
+        50% 0%,
+        100% 25%,
+        100% 75%,
+        50% 100%,
+        0% 75%,
+        0% 25%,
+        var(--0) var(--25),
+        var(--0) var(--75),
+        50% var(--100),
+        var(--100) var(--75),
+        var(--100) var(--25),
+        50% var(--0),
+        var(--0) var(--25));
+      background: black;
     }
     
-    hexa-gon:hover:before {
+    hexa-gon:hover {
       background: #F44336;
     }
     </style>
