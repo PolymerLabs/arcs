@@ -134,10 +134,8 @@ class ShellUi extends Xen.Base {
     if (key) {
       ArcsUtils.setUrlParam('arc', key);
     }
-    if (metadata) {
-      if (metadata.description) {
-        state.description = metadata.description;
-      }
+    if (metadata && metadata.description) {
+      state.description = metadata.description;
     }
     this._fire('exclusions', state.exclusions);
   }
