@@ -33,8 +33,7 @@ class ArcSteps extends Xen.Base {
     if (steps) {
       state.steps = steps;
     }
-    if (plans && plan !== lastProps.plan) {
-      log('adding step from host');
+    if (plans && plan) {
       // `plan` has been instantiated into host, record it into `steps`
       this._addStep(plan, plans.generations, state.steps, state.applied);
     }
@@ -46,6 +45,7 @@ class ArcSteps extends Xen.Base {
   _addStep(plan, generations, steps, applied) {
     const step = this._createStep(plan, generations);
     if (step && !steps.find(s => s.hash === step.hash)) {
+      ArcSteps.log('adding step from host');
       steps.push(step);
       applied[step.hash] = true;
       this._fire('steps', steps);
