@@ -96,7 +96,7 @@ const log = Xen.Base.logFactory('ShellUi', '#294740');
 
 class ShellUi extends Xen.Base {
   static get observedAttributes() {
-    return ['config', 'manifests', 'exclusions', 'user', 'friends', 'avatars', 'key', 'arc', 'metadata', 'share', 'theme'];
+    return ['config', 'manifests', 'exclusions', 'users', 'user', 'friends', 'avatars', 'key', 'arc', 'metadata', 'share', 'theme'];
   }
   get css() {
     return Css;
@@ -128,8 +128,9 @@ class ShellUi extends Xen.Base {
       localStorage.setItem(Const.LOCALSTORAGE.tools, state.toolsVisible ? 'open' : 'closed');
     }
     if (user) {
-      state.selectedUser = user.id;
+      localStorage.setItem(Const.LOCALSTORAGE.user, user.id);
       ArcsUtils.setUrlParam('user', user.id);
+      state.selectedUser = user.id;
     }
     if (key) {
       ArcsUtils.setUrlParam('arc', key);
@@ -144,11 +145,12 @@ class ShellUi extends Xen.Base {
       toolsVisible: config.arcsToolsVisible
     });
   }
-  _render({config, manifests, exclusions, user, friends, avatars, key, arc, share, theme}, state) {
+  _render({config, manifests, exclusions, users, user, friends, avatars, key, arc, share, theme}, state) {
     const avatarUrl = user && user.avatar ? user.avatar : `${shellPath}/assets/avatars/user (0).png`;
     const render = {
       manifests,
       exclusions,
+      users,
       arc,
       friends,
       avatars,
@@ -184,7 +186,8 @@ class ShellUi extends Xen.Base {
     this._setState({userPickerOpen: true});
   }
   _onSelectedUser(e, selectedUser) {
-    this._setState({selectedUser, userPickerOpen: false});
+    this._fire('select-user', selectedUser);
+    this._setState({userPickerOpen: false});
   }
   // TODO(sjmiles): need to collapse (at least some) logic into update to handle arc correctly
   _onSearch(e, {search}) {

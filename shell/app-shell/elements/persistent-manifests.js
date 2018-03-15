@@ -10,6 +10,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
 import WatchGroup from './watch-group.js';
 import Xen from '../../components/xen/xen.js';
+import Const from "../constants.js";
+
 const db = window.db;
 
 class PersistentManifests extends Xen.Base {
@@ -53,14 +55,14 @@ class PersistentManifests extends Xen.Base {
   }
   _readExclusions() {
     try {
-      return JSON.parse(localStorage.getItem('0-3-arcs-exclusions') || '[]');
+      return JSON.parse(localStorage.getItem(Const.LOCALSTORAGE.exclusions) || '[]');
     } catch (x) {
       console.warn(x);
       return [];
     }
   }
   _writeExclusions(exclusions) {
-    localStorage.setItem('0-3-arcs-exclusions', JSON.stringify(exclusions));
+    localStorage.setItem(Const.LOCALSTORAGE.exclusions, JSON.stringify(exclusions));
   }
 }
 PersistentManifests.log = Xen.Base.logFactory('PersistentManifests', '#883997');
