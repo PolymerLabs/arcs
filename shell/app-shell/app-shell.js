@@ -282,7 +282,7 @@ class AppShell extends Xen.Base {
     this._setState({persistedExclusions});
   }
   _onExtensionManifests(e, manifests) {
-    log('recieved extension manifests: ', manifests);
+    log('received extension manifests: ', manifests);
   }
   _onSelectUser(e, selectedUser) {
     this._setState({selectedUser});
