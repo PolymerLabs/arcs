@@ -15,41 +15,32 @@ defineParticle(({DomParticle, log, html}) => {
   const style = html`
 <style>
   [${host}] a {
+    display: block;
     color: inherit;
     text-decoration: none;
   }
-  [${host}] i {
-    font-size: 48px;
-  }
-  [${host}] .material-icons {
-    font-family: 'Material Icons';
-    font-style: normal;
-    -webkit-font-feature-settings: 'liga';
-    -webkit-font-smoothing: antialiased;
-    vertical-align: middle;
-    cursor: pointer;
-    font-size: 24px;
-    padding-right: 4px;
-  }
-  [${host}] [arc-chip] {
+  [${host}] [chip] {
     position: relative;
     display: flex;
     flex-direction: column;
-    padding: 16px;
+    padding: 20px 20px 16px 16px;
     margin: 4px;
     font-size: 18px;
     color: whitesmoke;
     border-radius: 9px;
-    min-height: 56px;
+    min-height: 64px;
   }
   [${host}] [delete] {
     position: absolute;
     right: 2px;
-    top: 4px;
+    top: 3px;
     visibility: hidden;
   }
-  [${host}] [arc-chip]:hover [delete] {
+  [${host}] [chip]:hover [delete] {
     visibility: visible;
+  }
+  [${host}] [share] icon:not([show]) {
+    display: none;
   }
 </style>
 `;
@@ -66,14 +57,18 @@ ${style}
 </div>
 
 <template column>
-  <div arc-chip style="{{backStyle}}">
-    <div delete class="material-icons" key="{{arcId}}" on-click="_onDelete">remove_circle_outline</div>
-    <a href="{{href}}" Xtarget="_blank">
-      <div description title="{{description}}" unsafe-html="{{blurb}}"></div>
-      <div style="flex: 1;"></div>
-      <div style="margin-top: 32px;"><i class="material-icons">account_circle</i><i class="material-icons">account_circle</i><i class="material-icons">account_circle</i><i class="material-icons">account_circle</i></div>
-    </a>
-  </div>
+  <a href="{{href}}">
+    <div chip style="{{chipStyle}}">
+      <icon delete class="material-icons" key="{{arcId}}" on-click="_onDelete">remove_circle_outline</icon>
+        <div description title="{{description}}" unsafe-html="{{blurb}}"></div>
+        <div style="flex: 1;"></div>
+        <div share style="margin-top: 16px;">
+          <icon show$="{{self}}">account_circle</icon>
+          <icon show$="{{friends}}">people</icon>
+        </div>
+        <!-- <div style="margin-top: 32px;"><icon>account_circle</icon><icon>account_circle</icon><icon>account_circle</icon><icon>account_circle</icon></div> -->
+    </div>
+  </a>
 </template>
 `;
 
@@ -104,20 +99,21 @@ ${style}
       };
     }
     _collateItems(arcs) {
-      let result = {
+      const result = {
         items: [],
         profileItems: []
       };
       arcs.forEach((a, i) => {
         // each item goes in either the `items` or `profileItems` list
-        let list = a.profile ? result.profileItems : result.items;
+        const list = a.profile ? result.profileItems : result.items;
         // massage the description
-        let blurb =
-          a.description.length > 70
-            ? a.description.slice(0, 70) + '...'
-            : a.description;
-        let bg = a.bg || a.color || 'gray';
-        let color = a.bg ? a.color : 'white';
+        //const blurb = a.description.length > 70 ? a.description.slice(0, 70) + '...' : a.description;
+        const blurb = a.description;
+        const chipStyle = {
+          backgroundColor: a.bg || a.color || 'gray',
+          color: a.bg ? a.color : 'white',
+          //border: a.profile ? '2px solid gray' : 'none'
+        };
         // populate the selected list
         list.push({
           arcId: a.id,
@@ -127,10 +123,8 @@ ${style}
           blurb,
           description: a.description,
           icon: a.icon,
-          backStyle: {
-            color: color,
-            backgroundColor: bg
-          }
+          chipStyle,
+          self: Boolean(a.profile)
         });
       });
       return result;
