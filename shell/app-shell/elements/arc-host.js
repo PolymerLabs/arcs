@@ -118,12 +118,15 @@ class ArcHost extends Xen.Base {
     return loader;
   }
   async _loadManifest(config, loader) {
-    let manifest, {folder, content} = this._fetchManifestContent(config);
+    const {folder, content} = this._fetchManifestContent(config);
+    // TODO(sjmiles): used to be `${folder}/`, which is `./` which isn't descriptive
+    const manifestFileName = './computed.manifest';
+    let manifest;
     try {
-      manifest = await ArcsUtils.parseManifest(`${folder}/`, content, loader);
+      manifest = await ArcsUtils.parseManifest(manifestFileName, content, loader);
     } catch (x) {
       console.warn(x);
-      manifest = ArcsUtils.parseManifest(`${folder}/`, '', loader);
+      manifest = ArcsUtils.parseManifest(manifestFileName, '', loader);
     }
     return manifest;
   }
