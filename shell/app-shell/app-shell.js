@@ -276,11 +276,7 @@ class AppShell extends Xen.Base {
     }
   }
   _onData(e, data) {
-    const property = e.type;
-    this._setState({[property]: data});
-    // if (this._setState({[property]: data})) {
-    //   log(property, data);
-    // }
+    this._setState({[e.type]: data});
   }
   _onExclusions(e, persistedExclusions) {
     this._setState({persistedExclusions});
