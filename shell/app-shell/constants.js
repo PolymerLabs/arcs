@@ -1,7 +1,8 @@
 export default {
   LOCALSTORAGE: {
     user: '0-3-currentUser',
-    tools: '0-3-arcs-dev-tools'
+    tools: '0-3-arcs-dev-tools',
+    exclusions: '0-3-arcs-exclusions'
   },
   KEYS: {
     launcher: 'launcher',

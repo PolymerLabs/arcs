@@ -128,6 +128,7 @@ const template = Xen.html`
     config="{{config}}"
     manifests="{{manifests}}"
     exclusions="{{exclusions}}"
+    users="{{users}}"
     user="{{user}}"
     key="{{key}}"
     arc="{{arc}}"
@@ -140,6 +141,7 @@ const template = Xen.html`
     on-share="_onData"
     on-step="_onData"
     on-search="_onData"
+    on-select-user="_onSelectUser"
   >
     <slot></slot>
     <slot name="suggestions" slot="suggestions"></slot>
@@ -159,13 +161,16 @@ class AppShell extends Xen.Base {
     };
   }
   _update(props, state, oldProps, oldState) {
-    const {config, user, key, arc, metadata, share, plans, search, plan, step} = state;
+    const {config, selectedUser, user, key, arc, metadata, share, plans, search, plan, step} = state;
     // TODO(sjmiles): only for console debugging
     window.arc = state.arc;
     window.app = this;
     // ^
     if (config && config !== oldState.config) {
       this._consumeConfig(state, config);
+    }
+    if (selectedUser) {
+      this._consumeSelectedUser(user, selectedUser);
     }
     if (!plan && plans && plans.length && (config.launcher || config.profiler)) {
       state.injectedStep = plans[0].plan;
@@ -208,20 +213,21 @@ class AppShell extends Xen.Base {
       config.profiler = true;
       key = '*';
     }
+    const selectedUser = config.user;
+    this._setState({key, selectedUser});
+  }
+  _consumeSelectedUser(user, selectedUser) {
     // TODO(sjmiles): explain `user` vs `selectedUser`
-    let user = null;
-    let selectedUser = config.user;
-    if (selectedUser === 'new') {
-      selectedUser = null;
-      log('new user', user);
-      // TODO(sjmiles): need to port _newUserPrompt from old shell
-      user = this._newUserPrompt();
+    if (!user || user.id !== selectedUser) {
+      user = null;
+      if (selectedUser === 'new') {
+        selectedUser = null;
+        log('new user', user);
+        // TODO(sjmiles): need to port _newUserPrompt from old shell
+        user = this._newUserPrompt();
+      }
+      this._setState({selectedUser, user});
     }
-    this._setState({
-      selectedUser,
-      user,
-      key
-    });
   }
   _calculateShareState(config, key, user) {
     // calculate sharing state
@@ -263,17 +269,27 @@ class AppShell extends Xen.Base {
       }
     }
   }
+  _setState(state) {
+    if (super._setState(state)) {
+      log(state);
+      return true;
+    }
+  }
   _onData(e, data) {
     const property = e.type;
-    if (this._setState({[property]: data})) {
-      log(property, data);
-    }
+    this._setState({[property]: data});
+    // if (this._setState({[property]: data})) {
+    //   log(property, data);
+    // }
   }
   _onExclusions(e, persistedExclusions) {
     this._setState({persistedExclusions});
   }
   _onExtensionManifests(e, manifests) {
     log('recieved extension manifests: ', manifests);
+  }
+  _onSelectUser(e, selectedUser) {
+    this._setState({selectedUser});
   }
 }
 
