@@ -63,7 +63,9 @@ class ArcCloud extends Xen.Base {
       state.exclusions = props.exclusions;
     }
     this._consumeSteps(steps, metadata);
-    this._consumeShareState(user, key, share);
+    if (user & key && share !== undefined) {
+      this._consumeShareState(user, key, share);
+    }
     this._fire('users', state.users);
     this._fire('friends', state.friends);
     this._fire('avatars', state.avatars);
@@ -106,9 +108,10 @@ class ArcCloud extends Xen.Base {
     }
   }
   _consumeShareState(user, key, share) {
+    log('modulating share state');
     let dirty = false;
     const shareState = (share == Const.SHARE.friends);
-    const profileState = shareState || (share === Const.SHARE.profile);
+    const profileState = shareState || (share === Const.SHARE.self);
     if (user && key) {
       if (!user.profiles || (Boolean(user.profiles[key]) !== profileState)) {
         dirty = true;

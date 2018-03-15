@@ -34,17 +34,18 @@ const Main = Xen.html`
   </app-dialog>
 
   <menu-panel
-    arc="{{arc}}"
     open="{{menuOpen}}"
+    arc="{{arc}}"
     avatar_title="{{avatarTitle}}"
     avatar_style="{{avatarStyle}}"
     friends="{{friends}}"
     avatars="{{avatars}}"
+    share="{{share}}"
     on-close="_onMenuClose"
     on-user="_onSelectUser"
     on-cast="_onMenuCast"
     on-tools="_onToolsClick"
-    on-share="_onData"
+    on-share="_onShare"
   ></menu-panel>
 
 </app-modal>
@@ -95,7 +96,7 @@ const log = Xen.Base.logFactory('ShellUi', '#294740');
 
 class ShellUi extends Xen.Base {
   static get observedAttributes() {
-    return ['config', 'manifests', 'exclusions', 'user', 'key', 'arc', 'metadata', 'theme'];
+    return ['config', 'manifests', 'exclusions', 'user', 'friends', 'avatars', 'key', 'arc', 'metadata', 'share', 'theme'];
   }
   get css() {
     return Css;
@@ -112,7 +113,6 @@ class ShellUi extends Xen.Base {
   _getInitialState() {
     return {
       shellPath,
-      share: 0,
       userPickerOpen: false,
       sharePickerOpen: false,
       launcherUrl: `${location.origin}${location.pathname}`
@@ -134,8 +134,10 @@ class ShellUi extends Xen.Base {
     if (key) {
       ArcsUtils.setUrlParam('arc', key);
     }
-    if (metadata && metadata.description) {
-      state.description = metadata.description;
+    if (metadata) {
+      if (metadata.description) {
+        state.description = metadata.description;
+      }
     }
     this._fire('exclusions', state.exclusions);
   }
@@ -144,12 +146,15 @@ class ShellUi extends Xen.Base {
       toolsVisible: config.arcsToolsVisible
     });
   }
-  _render({config, manifests, exclusions, user, key, arc, theme}, state) {
+  _render({config, manifests, exclusions, user, friends, avatars, key, arc, share, theme}, state) {
     const avatarUrl = user && user.avatar ? user.avatar : `${shellPath}/assets/avatars/user (0).png`;
     const render = {
       manifests,
       exclusions,
       arc,
+      friends,
+      avatars,
+      share,
       avatarStyle: `background: url('${avatarUrl}') center no-repeat; background-size: cover;`,
       avatarTitle: user && user.name || '',
       modalShown: Boolean(state.userPickerOpen || state.sharePickerOpen || state.menuOpen),
@@ -204,6 +209,9 @@ class ShellUi extends Xen.Base {
   }
   _onSuggest(e, suggest) {
     this._fire('step', suggest);
+  }
+  _onShare(e, share) {
+    this._fire('share', share);
   }
 }
 
