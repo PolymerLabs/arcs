@@ -85,6 +85,7 @@ class HandleExplorer extends Xen.Base {
           tags: tags ? [...tags].join(', ') : '',
           id: handle.id,
           storage: handle.storageKey,
+          type: handle.type,
           //values: JSON.stringify(handle.toList ? await handle.toList() : `await handle.get()`, null, '  ')
           values
         };
