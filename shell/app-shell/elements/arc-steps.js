@@ -10,22 +10,34 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
 import Xen from '../../components/xen/xen.js';
 
+const log = Xen.Base.logFactory('ArcSteps', '#7b5e57');
+const warn = Xen.Base.logFactory('ArcSteps', '#7b5e57', 'warn');
+
 class ArcSteps extends Xen.Base {
+  static get observedAttributes() {
+    return ['plans', 'steps', 'step', 'plan'];
+  }
   _getInitialState() {
     return {
       steps: [],
       applied: []
     };
   }
-  static get observedAttributes() {
-    return ['plans', 'steps', 'step', 'plan'];
+  _willReceiveProps(props) {
+    //log('props', props);
+  }
+  _setState(state) {
+    if (super._setState(state)) {
+      log(state);
+      return true;
+    }
   }
   _update({plans, plan, steps, step}, state, lastProps) {
     if (steps) {
       state.steps = steps;
     }
     if (plans && plan !== lastProps.plan) {
-      ArcSteps.log('adding step from host');
+      log('adding step from host');
       // `plan` has been instantiated into host, record it into `steps`
       this._addStep(plan, plans.generations, state.steps, state.applied);
     }
@@ -48,12 +60,12 @@ class ArcSteps extends Xen.Base {
     for (let step of candidates) {
       const planStep = this._findPlanForStep(step, plans);
       if (planStep) {
-        ArcSteps.log('found suggestion for step'); //, planStep);
+        log('found suggestion for step'); //, planStep);
         applied[step.hash] = true;
         this._fire('step', planStep);
         return;
       } else {
-        ArcSteps.log('rejecting step'); //, step);
+        log('rejecting step'); //, step);
       }
     }
   }
@@ -98,7 +110,7 @@ class ArcSteps extends Xen.Base {
       generation => last_generation = generation.find(member => member.result == plan)
     );
     if (!last_generation) {
-      ArcSteps.log('no originating generation found for', plan);
+      log('no originating generation found for', plan);
     } else {
       // Walk derivation tree up to root. All paths will lead to the same root,
       // hence we can always take the first branch.
@@ -112,7 +124,7 @@ class ArcSteps extends Xen.Base {
   findStep(plan, generations) {
     let step = this._createOriginatingStep(plan, generations);
     if (!step) {
-      ArcSteps.warn(`can't find first generation of`, plan, 'in', generations);
+      warn(`can't find first generation of`, plan, 'in', generations);
     } else {
       // TODO: Allow re-applying same step unless its on the root slot.
       // Will make sense once verbs, etc. work and different slots, etc.
@@ -123,12 +135,10 @@ class ArcSteps extends Xen.Base {
           return matchingStep;
         } else {
           let nearMiss = this._steps.find(s => s.hash == step.hash);
-          nearMiss && ArcSteps.log('Almost auto-applied step: ', nearMiss);
+          nearMiss && log('Almost auto-applied step: ', nearMiss);
         }
       }
     }
   }
 }
-ArcSteps.log = Xen.Base.logFactory('ArcSteps', '#7b5e57');
-ArcSteps.warn = Xen.Base.logFactory('ArcSteps', '#7b5e57', 'warn');
 customElements.define('arc-steps', ArcSteps);

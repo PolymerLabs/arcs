@@ -160,6 +160,12 @@ class AppShell extends Xen.Base {
       profileSoloPath: '../web/artifacts/profile.manifest'
     };
   }
+  _setState(state) {
+    if (super._setState(state)) {
+      log(state);
+      return true;
+    }
+  }
   _update(props, state, oldProps, oldState) {
     const {config, selectedUser, user, key, arc, metadata, share, plans, search, plan, step} = state;
     // TODO(sjmiles): only for console debugging
@@ -267,12 +273,6 @@ class AppShell extends Xen.Base {
         metadata.description = description;
         this._invalidate();
       }
-    }
-  }
-  _setState(state) {
-    if (super._setState(state)) {
-      log(state);
-      return true;
     }
   }
   _onData(e, data) {
