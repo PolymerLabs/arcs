@@ -61,7 +61,7 @@ describe('demo flow', function() {
       provide postamble as slot5
       provide preamble as slot6`;
     let helper = await TestHelper.loadManifestAndPlan('./shell/artifacts/Products/Products.recipes', {
-      expectedNumPlans: 1, // TODO: should be 2 plans, when #988 is fixed
+      expectedNumPlans: 2,
       verify: async (plans) => {
         let {plan, description} = plans.find(p => p.plan.toString() == expectedPlanString);
         assert.equal('Show products from your browsing context (Minecraft Book plus 2 other items) ' +
@@ -87,7 +87,6 @@ describe('demo flow', function() {
         .expectRenderSlot('Multiplexer2', 'annotation', {contentTypes: ['template']})
         .expectRenderSlot('Multiplexer2', 'annotation', {verify: helper.slotComposer.expectContentItemsNumber.bind(null, 3)})
         .expectRenderSlot('AlsoOn', 'annotation', {contentTypes: ['model'], times: 3, isOptional: true});
-
     await helper.acceptSuggestion({particles: ['ShowCollection', 'Multiplexer', 'Chooser', 'Recommend', 'Multiplexer2']});
 
     assert.equal(2, helper.arc.findHandlesByType(helper.arc.context.findSchemaByName('Product').entityClass().type.setViewOf()).length);
@@ -105,12 +104,13 @@ describe('demo flow', function() {
       'arrival date for products recommended based on products from your ' +
       'browsing context and Claire\'s wishlist (Book: How to Draw plus 2 other items).',
       'Recommendations based on Claire\'s wishlist (Book: How to Draw plus 2 other items).',
-      // 'Show Claire\'s wishlist (Book: How to Draw plus 2 other items).', // TODO: uncomment when #988 is fixed
-      // 'Show products from your browsing context (Minecraft Book plus 2 other items).', // TODO: uncomment when #988 is fixed
+      'Show Claire\'s wishlist (Book: How to Draw plus 2 other items).',
+      // TODO: consider whether the 'showList' recipe should resolve to these suggestions?
+      // 'Show products from your browsing context (Minecraft Book plus 2 other items).',
       // 'Show products recommended based on products from your browsing context and Claire\'s wishlist (Book: How to Draw plus 2 other items).'
     ];
     await helper.makePlans({
-      expectedNumPlans: 3, // TODO: should be 5 plans, when #988 is fixed
+      expectedNumPlans: 4,
       expectedSuggestions});
       helper.log('----------------------------------------');
 
@@ -136,7 +136,7 @@ describe('demo flow', function() {
 
     // Replanning.
     await helper.makePlans({
-      expectedNumPlans: 3, // TODO: should be 5 plans, when #988 is fixed
+      expectedNumPlans: 4,
       expectedSuggestions: expectedSuggestions.map(suggestion => {
           return suggestion.replace('Minecraft Book plus 2 other items', 'Minecraft Book plus 3 other items');
       })
@@ -173,7 +173,7 @@ describe('demo flow', function() {
     helper.log('----------------------------------------');
 
     // 5. Select "Check manufacturer information..." suggestion
-    await helper.makePlans({expectedNumPlans: 2}); // TODO: should be 4 plans, when #988 is fixed
+    await helper.makePlans({expectedNumPlans: 3});
     helper.slotComposer
       .newExpectations()
         .expectRenderSlot('Multiplexer', 'annotation', {contentTypes: ['template'], hostedParticle: 'ManufacturerInfo'})
@@ -202,12 +202,12 @@ describe('demo flow', function() {
     helper.log('----------------------------------------');
 
     // 7. Accept 'Recommendations based on...' suggestion
-    await helper.makePlans({expectedNumPlans: 1}); // TODO: should be 3 plans, when #988 is fixed
+    await helper.makePlans({expectedNumPlans: 2});
     helper.slotComposer
       .newExpectations()
       .expectRenderSlot('Interests', 'postamble', {contentTypes: ['template', 'model']});
     await helper.acceptSuggestion({particles: ['Interests']});
-    await helper.makePlans({expectedNumPlans: 0}); // TODO: should be 2 plans, when #988 is fixed
+    await helper.makePlans({expectedNumPlans: 1});
     helper.log('----------------------------------------');
 
     // TODO(mmandlis): Provide methods in helper to verify slot contents (helper.slotComposer._slots[i]._content).

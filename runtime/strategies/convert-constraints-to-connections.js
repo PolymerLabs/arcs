@@ -27,6 +27,7 @@ export default class ConvertConstraintsToConnections extends Strategy {
         if (recipe.connectionConstraints.length == 0) {
           return;
         }
+
         for (let constraint of recipe.connectionConstraints) {
           if (affordance && (!constraint.fromParticle.matchAffordance(affordance) || !constraint.toParticle.matchAffordance(affordance))) {
             return;
@@ -62,7 +63,7 @@ export default class ConvertConstraintsToConnections extends Strategy {
               if (resolvedHandles[handle]) {
                 continue;
               }
-              if (match[handle]) {
+              if (match.match[handle]) {
                 resolvedHandles[handle] = true;
               } else {
                 let spec = particlesByName[particle];

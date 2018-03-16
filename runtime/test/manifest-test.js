@@ -25,8 +25,7 @@ describe('manifest', function() {
   it('can parse a manifest containing a recipe', async () => {
     let manifest = await Manifest.parse(`
       schema S
-        optional
-          Text t
+        Text t
         description \`one-s\`
           plural \`many-ses\`
           value \`s:\${t}\`
