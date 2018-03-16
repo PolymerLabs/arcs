@@ -10,55 +10,51 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
 import ArcsUtils from '../lib/arcs-utils.js';
 import Xen from '../../components/xen/xen.js';
+import Icons from '../../components/icons.css.js';
 import '../../components/dancing-dots.js';
 import '../../components/x-toast.js';
+import '../../components/speech-input.js';
 
 const template = Xen.html`
-  <style>
-    :host {
-      display: block;
-    }
-    x-toast {
-      background-color: white;
-      /*border: 1px solid silver;*/
-      border-bottom: 0;
-      border-radius: 16px 16px 0 0;
-      overflow: hidden;
-      box-shadow: 0px 0px 6px 2px rgba(102,102,102,0.15);
-    }
-    i {
-      font-family: 'Material Icons';
-      font-size: 32px;
-      font-style: normal;
-      -webkit-font-feature-settings: 'liga';
-      -webkit-font-smoothing: antialiased;
-      vertical-align: middle;
-      cursor: pointer;
-    }
-    [search] {
-      display: flex;
-      align-items: center;
-      padding: 0 8px 8px 8px;
-      border-bottom: 1px dotted silver;
-    }
-    [search] input {
-      flex: 1;
-      font-size: 1.2em;
-      padding: 7px;
-      margin: 0 8px;
-      border: none;
-      outline: none;
-    }
-  </style>
-  <x-toast app-footer open="{{toastOpen}}" on-toggle="_onToggle" suggestion-container>
-    <dancing-dots slot="toast-header" disabled="{{dotsDisabled}}" active="{{dotsActive}}"></dancing-dots>
-    <div search>
-      <i class="material-icons" on-click="_onSearchClick" id="search-button">search</i>
-      <input placeholder="Search" value="{{searchText}}" on-keypress="_onKeypress" on-input="_onSearchChange" on-blur="_onSearchCommit">
-      <i class="material-icons" on-click="_onSearchClick">add</i>
-    </div>
-    <slot></slot>
-  </x-toast>
+<style>
+  ${Icons}
+  :host {
+    display: block;
+  }
+  x-toast {
+    background-color: white;
+    /*border: 1px solid silver;*/
+    border-bottom: 0;
+    border-radius: 16px 16px 0 0;
+    overflow: hidden;
+    box-shadow: 0px 0px 6px 2px rgba(102,102,102,0.15);
+  }
+  [search] {
+    display: flex;
+    align-items: center;
+    padding: 0 8px 8px 8px;
+    border-bottom: 1px dotted silver;
+  }
+  [search] input {
+    flex: 1;
+    font-size: 1.2em;
+    padding: 7px;
+    margin: 0 8px;
+    border: none;
+    outline: none;
+  }
+</style>
+
+<x-toast app-footer open="{{toastOpen}}" on-toggle="_onToggle" suggestion-container>
+  <dancing-dots slot="toast-header" disabled="{{dotsDisabled}}" active="{{dotsActive}}"></dancing-dots>
+  <div search>
+    <icon on-click="_onSearchClick" id="search-button">search</icon>
+    <input placeholder="Search" value="{{searchText}}" on-keypress="_onKeypress" on-input="_onSearchChange" on-blur="_onSearchCommit">
+    <!-- <icon on-click="_onSearchClick">add</icon> -->
+    <speech-input on-result="_onSpeechInput" on-end="_onSpeechEnd"></speech-input>
+  </div>
+  <slot></slot>
+</x-toast>
 `;
 
 class ArcFooter extends Xen.Base {
@@ -107,7 +103,7 @@ class ArcFooter extends Xen.Base {
     this._commitSearch('');
     this._setState({open: false});
   }
-  // three user actions can affect search
+  // four user actions can affect search
   // 1: clicking the search icon (sets search to '*')
   _onSearchClick() {
     this._commitSearch(this._state.search === '*' ? '' : '*');
@@ -131,15 +127,22 @@ class ArcFooter extends Xen.Base {
       this._commitSearch(e.target.value || '*');
     }
   }
+  // 4. using speech input
+  _onSpeechInput(e, transcript) {
+    this._setState({search: transcript});
+  }
+  _onSpeechEnd(e, transcript) {
+    this._commitSearch(transcript);
+  }
   _onSearchCommit(e) {
     this._commitSearch(e.target.value);
   }
   _commitSearch(search) {
     search = search || '';
-    if (this._state.search !== search) {
+    //if (this._state.search !== search) {
       this._setState({search, open: true});
       this._fire('search', {search});
-    }
+    //}
   }
 }
 ArcFooter.log = Xen.Base.logFactory('ArcFooter', '#673AB7');
