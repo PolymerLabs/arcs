@@ -269,7 +269,7 @@ describe('ConvertConstraintsToConnections', async () => {
     let strategizer = {generated: [{result: recipe, score: 1}]};
     let cctc = new ConvertConstraintsToConnections({pec: {}});
     let {results} = await cctc.generate(strategizer);
-    assert(results.length == 1);
+    assert.equal(1, results.length);
     let {result, score} = results[0];
     assert.deepEqual(result.toString(),
 `recipe
@@ -293,7 +293,25 @@ describe('ConvertConstraintsToConnections', async () => {
     let strategizer = {generated: [{result: recipe, score: 1}]};
     let cctc = new ConvertConstraintsToConnections({pec: {}});
     let {results} = await cctc.generate(strategizer);
-    assert(results.length == 0);
+    assert.equal(0, results.length);
+  });
+
+  it('only input handles with mapped handle are resolved', async () => {
+    let recipe = (await Manifest.parse(`
+      schema S
+        Text name
+      particle A
+        A(in S b)
+      particle C
+        C(in S d)
+
+      recipe
+        map as v0
+        A.b -> C.d`)).recipes[0];
+    let strategizer = {generated: [{result: recipe, score: 1}]};
+    let cctc = new ConvertConstraintsToConnections({pec: {}});
+    let {results} = await cctc.generate(strategizer);
+    assert.equal(1, results.length);
   });
 
   it('fills out a constraint, reusing a single particle', async () => {
@@ -310,7 +328,7 @@ describe('ConvertConstraintsToConnections', async () => {
     let strategizer = {generated: [{result: recipe, score: 1}]};
     let cctc = new ConvertConstraintsToConnections({pec: {}});
     let {results} = await cctc.generate(strategizer);
-    assert(results.length == 1);
+    assert.equal(1, results.length);
     let {result, score} = results[0];
     assert.deepEqual(result.toString(),
 `recipe

@@ -78,9 +78,8 @@ describe('manifest parser', function() {
   it('parses manifests with views', () => {
     parse(`
       schema Person
-        optional
-          Text lastName
-          Text firstName
+        Text lastName
+        Text firstName
         description \`person\`
           plural \`people\`
           value \`\${firstName} \${lastName}\`
