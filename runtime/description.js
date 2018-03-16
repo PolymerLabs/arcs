@@ -170,14 +170,15 @@ export class DescriptionFormatter {
   }
 
   _joinDescriptions(strings) {
-    let nonEmptyStrings = strings.filter(str => !!str);
+    let nonEmptyStrings = strings.filter(str => str);
     let count = nonEmptyStrings.length;
     // Combine descriptions into a sentence:
     // "A."
     // "A and b."
     // "A, b, ..., and z." (Oxford comma ftw)
     let delim = ['', '', ' and ', ', and '][Math.min(3, count)];
-    return nonEmptyStrings.slice(0, -1).join(', ') + delim + nonEmptyStrings[count - 1];
+    const lastString = nonEmptyStrings.pop();
+    return `${nonEmptyStrings.join(', ')}${delim}${lastString}`;
   }
 
   _joinTokens(tokens) {
