@@ -9,69 +9,126 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 */
 
 import Xen from './xen/xen.js';
+import Icons from './icons.css.js';
 
 const html = Xen.Template.html;
 const template = html`
 
 <style>
-  :host {
+  ${Icons}
+  icon {
+  }
+  icon[disabled] {
+    color: gray;
+  }
+  icon[on] {
+    color: red;
   }
 </style>
-
+<icon on$="{{recognizing}}" on-click="_onStartClick">mic</icon>
 `;
 
-let recognizing;
-let ignore_onend;
-let final_transcript = '';
-let start_timestamp;
-let recognition;
-
 class SpeechInput extends Xen.Base {
+  get template() {
+    return template;
+  }
+  _getInitialState() {
+    return {
+      duration: 3
+    };
+  }
   _didMount() {
-    if ('webkitSpeechRecognition' in window) {
-
-      //start_button.style.display = 'inline-block';
-      recognition = new window.webkitSpeechRecognition();
-      recognition.continuous = true;
-      recognition.interimResults = true;
-
-      recognition.onstart = function() {
-        recognizing = true;
-        //showInfo('info_speak_now');
-        //start_img.src = 'mic-animate.gif';
-      };
-
-      recognition.onerror = function(event) {
-        if (event.error == 'no-speech') {
-          //start_img.src = 'mic.gif';
-          //showInfo('info_no_speech');
-          ignore_onend = true;
-        }
-        if (event.error == 'audio-capture') {
-          //start_img.src = 'mic.gif';
-          //showInfo('info_no_microphone');
-          ignore_onend = true;
-        }
-        if (event.error == 'not-allowed') {
-          //if (event.timeStamp - start_timestamp < 100) {
-          //  showInfo('info_blocked');
-          //} else {
-          //  showInfo('info_denied');
-          //}
-          ignore_onend = true;
-        }
-      };
-
-      recognition.onend = function() {
-        recognizing = false;
-        if (ignore_onend) {
-          return;
-        }
-        //start_img.src = 'mic.gif';
-        if (!final_transcript) {
-          //showInfo('info_start');
-          return;
-        }
+    if (this._supportsSpeech()) {
+      this._initSpeech();
+    }
+  }
+  _render(props, state) {
+    return state;
+  }
+  _supportsSpeech() {
+    return ('webkitSpeechRecognition' in window);
+  }
+  _initSpeech(state) {
+    //start_button.style.display = 'inline-block';
+    const recognition = new window.webkitSpeechRecognition();
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.onstart = this._onRecognitionStart.bind(this);
+    recognition.onerror = this._onRecognitionError.bind(this);
+    recognition.onend = this._onRecognitionEnd.bind(this);
+    recognition.onresult = this._onRecognitionResult.bind(this);
+    this._setState({recognition});
+  }
+  start() {
+    const {recognition, recognizing, finalTranscript} = this._state;
+    if (recognition) {
+      this._start();
+    } // else complain
+  }
+  _start() {
+    const {recognition, recognizing, duration, finalTranscript} = this._state;
+    if (recognizing) {
+      recognition.stop();
+      return;
+    }
+    //recognition.lang = select_dialect.value;
+    recognition.start();
+    this._setState({
+      finalTranscript: '',
+      ignoreOnEnd: false
+    });
+    this._fire('start');
+    //showInfo('info_allow');
+    //start_timestamp = event.timeStamp;
+    setTimeout(() => recognition.stop(), duration*1000);
+  }
+  _onStartClick() {
+    this.start();
+  }
+  _onRecognitionStart() {
+    this._setState({recognizing: true});
+  }
+  _onRecognitionError() {
+    if (event.error == 'no-speech') {
+      //showInfo('info_no_speech');
+    }
+    if (event.error == 'audio-capture') {
+      //showInfo('info_no_microphone');
+    }
+    if (event.error == 'not-allowed') {
+      //if (event.timeStamp - start_timestamp < 100) {
+      //  showInfo('info_blocked');
+      //} else {
+      //  showInfo('info_denied');
+      //}
+    }
+    this._setState({ignoreOnEnd: true});
+  }
+  _onRecognitionResult() {
+    let {ignoreOnEnd, finalTranscript} = this._state;
+    let interimTranscript = '';
+    for (let i = event.resultIndex; i < event.results.length; ++i) {
+      if (event.results[i].isFinal) {
+        finalTranscript += event.results[i][0].transcript;
+      } else {
+        interimTranscript += event.results[i][0].transcript;
+      }
+    }
+    this._setState({interimTranscript, finalTranscript});
+    //if (finalTranscript || interimTranscript) {
+    //  showButtons('inline-block');
+    //}
+    const transcript = `${finalTranscript}${interimTranscript}`;
+    this.value = transcript;
+    this._fire('result', transcript);
+  }
+  _onRecognitionEnd() {
+    const {ignoreOnEnd, finalTranscript} = this._state;
+    this._setState({recognizing: false});
+    if (!ignoreOnEnd) {
+      if (!finalTranscript) {
+        //showInfo('info_start');
+      } else {
         //showInfo('');
         // if (window.getSelection) {
         //   window.getSelection().removeAllRanges();
@@ -83,54 +140,10 @@ class SpeechInput extends Xen.Base {
         //  create_email = false;
         //  createEmail();
         //}
-      };
-
-      recognition.onresult = function(event) {
-        let interim_transcript = '';
-        for (let i = event.resultIndex; i < event.results.length; ++i) {
-          if (event.results[i].isFinal) {
-            final_transcript += event.results[i][0].transcript;
-          } else {
-            interim_transcript += event.results[i][0].transcript;
-          }
-        }
-        final_transcript = capitalize(final_transcript);
-        final_span.innerHTML = linebreak(final_transcript);
-        interim_span.innerHTML = linebreak(interim_transcript);
-        //if (final_transcript || interim_transcript) {
-        //  showButtons('inline-block');
-        //}
-      };
+      }
     }
-  }
-  start() {
-    if (recognizing) {
-      recognition.stop();
-      return;
-    }
-    final_transcript = '';
-    //recognition.lang = select_dialect.value;
-    recognition.start();
-    ignore_onend = false;
-    final_span.innerHTML = '';
-    interim_span.innerHTML = '';
-    //start_img.src = 'mic-slash.gif';
-    //showInfo('info_allow');
-    //showButtons('none');
-    //start_timestamp = event.timeStamp;
-    setTimeout(() => recognition.stop(), 10*1000);
+    this.value = finalTranscript;
+    this._fire('end', finalTranscript);
   }
 }
-
 customElements.define('speech-input', SpeechInput);
-
-const final_span = window.final_span;
-const interim_span = window.interim_span;
-
-const two_line = /\n\n/g;
-const one_line = /\n/g;
-const linebreak = s => s.replace(two_line, '<p></p>').replace(one_line, '<br>');
-
-const first_char = /\S/;
-const capitalize = s => s.replace(first_char, m => m.toUpperCase());
-
