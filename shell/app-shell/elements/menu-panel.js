@@ -28,6 +28,7 @@ const template = html`
     margin-left: 56px;
     font-family: 'Google Sans';
     font-size: 16px;
+    user-select: none;
     --avatar-size: 24px;
     --large-avatar-size: 40px;
   }
