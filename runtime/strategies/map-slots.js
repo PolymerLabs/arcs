@@ -22,6 +22,7 @@ export default class MapSlots extends Strategy {
     let results = Recipe.over(this.getResults(strategizer), new class extends RecipeWalker {
       onSlotConnection(recipe, slotConnection) {
         let selectedSlot;
+        let internalSlots = [];
         if (slotConnection.targetSlot) {
           if (!!slotConnection.targetSlot.sourceConnection) {
             // Target slot assigned within the current recipe.
@@ -32,19 +33,16 @@ export default class MapSlots extends Strategy {
             return;
           }
         } else {
-          // Attempt to match the slot connection with a slot within the recipe.
-          selectedSlot = this._findSlotCandidate(slotConnection, recipe.slots);
+          internalSlots = this._findSlotCandidates(slotConnection, recipe.slots);
         }
+        let candidates = arc.pec.slotComposer.getAvailableSlots();
+        let arcSlots = this._findSlotCandidates(slotConnection, candidates);
 
-        if (!selectedSlot) {
-          // Attempt to fetch the slot connection with a preexiting slot.
-          let candidates = arc.pec.slotComposer.getAvailableSlots();
-          selectedSlot = this._findSlotCandidate(slotConnection, candidates);
-        }
-
-        if (!selectedSlot) {
+        if (internalSlots.length + arcSlots.length < 2)
           return;
-        }
+
+        selectedSlot = internalSlots[0] ? internalSlots[0] : arcSlots[0];
+        assert(selectedSlot);
 
         return (recipe, slotConnection) => {
           if (!slotConnection.targetSlot) {
@@ -72,12 +70,10 @@ export default class MapSlots extends Strategy {
 
       // Helper methods.
       // Chooses the best slot out of the given slot candidates.
-      _findSlotCandidate(slotConnection, slots) {
+      _findSlotCandidates(slotConnection, slots) {
         let possibleSlots = slots.filter(s => this._filterSlot(slotConnection, s));
-        if (possibleSlots.length >= 0) {
-          possibleSlots.sort(this._sortSlots);
-          return possibleSlots[0];
-        }
+        possibleSlots.sort(this._sortSlots);
+        return possibleSlots;
       }
 
       // Returns true, if the given slot is a viable candidate for the slotConnection.
