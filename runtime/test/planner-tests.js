@@ -18,6 +18,7 @@ import Recipe from '../recipe/recipe.js';
 import ConvertConstraintsToConnections from '../strategies/convert-constraints-to-connections.js';
 import InitPopulation from '../strategies/init-population.js';
 import MapSlots from '../strategies/map-slots.js';
+import ResolveRecipe from '../strategies/resolve-recipe.js';
 import MatchParticleByVerb from '../strategies/match-particle-by-verb.js';
 import MatchRecipeByVerb from '../strategies/match-recipe-by-verb.js';
 import SearchTokensToParticles from '../strategies/search-tokens-to-particles.js';
@@ -468,7 +469,7 @@ describe('ConvertConstraintsToConnections', async () => {
   });
 });
 
-describe('MapSlots', function() {
+describe('ResolveRecipe/MapSlots', function() {
   let particlesSpec = `
     particle A in 'A.js'
       A()
@@ -478,7 +479,7 @@ describe('MapSlots', function() {
       B()
       consume root`;
 
-  let testManifest = async (recipeManifest, expectedSlots) => {
+  let testManifest = async (recipeManifest, expectedSlots, Strategy) => {
     let manifest = (await Manifest.parse(`
       ${particlesSpec}
 
@@ -486,11 +487,16 @@ describe('MapSlots', function() {
     `));
     let strategizer = {generated: [{result: manifest.recipes[0], score: 1}]};
     let arc = createTestArc('test-plan-arc', manifest, 'dom');
-    let strategy = new MapSlots(arc);
+    
+    let {results} = await new MapSlots(arc).generate(strategizer);
+    if (results.length == 1) {
+      strategizer = {generated: [{result: results[0].result, score: 1}]};
+    }
 
-    let {results} = await strategy.generate(strategizer);
-    assert.equal(results.length, 1);
-    let recipe = results[0].result;
+    let resultStruct = await new ResolveRecipe(arc).generate(strategizer);
+    assert.equal(resultStruct.results.length, 1);
+    let recipe = resultStruct.results[0].result;
+
     if (expectedSlots >= 0) {
       assert.isTrue(recipe.isResolved());
       assert.equal(recipe.slots.length, expectedSlots);
@@ -568,6 +574,13 @@ describe('MapSlots', function() {
     assert.equal(results.length, 1);
 
     let plan = results[0].result;
+
+    strategy = new ResolveRecipe(arc);
+    let resultStruct = await strategy.generate({generated: [{result: plan, score: 1}]});
+    assert.equal(resultStruct.results.length, 1);
+
+    plan = resultStruct.results[0].result;
+
     assert.equal(plan.slots.length, 2);
     plan.normalize();
     assert.isTrue(plan.isResolved());
