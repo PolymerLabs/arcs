@@ -139,6 +139,7 @@ class ArcFooter extends Xen.Base {
   }
   _commitSearch(search) {
     search = search || '';
+    // TODO(sjmiles): removed this check so speech-input can update the search box, is it harmful?
     //if (this._state.search !== search) {
       this._setState({search, open: true});
       this._fire('search', {search});

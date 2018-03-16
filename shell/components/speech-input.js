@@ -1,6 +1,6 @@
 /*
 @license
-Copyright (c) 2016 The Polymer Project Authors. All rights reserved.
+Copyright (c) 2018 The Polymer Project Authors. All rights reserved.
 This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
 The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
 The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
@@ -49,7 +49,6 @@ class SpeechInput extends Xen.Base {
     return ('webkitSpeechRecognition' in window);
   }
   _initSpeech(state) {
-    //start_button.style.display = 'inline-block';
     const recognition = new window.webkitSpeechRecognition();
     recognition.continuous = true;
     recognition.interimResults = true;
@@ -71,15 +70,12 @@ class SpeechInput extends Xen.Base {
       recognition.stop();
       return;
     }
-    //recognition.lang = select_dialect.value;
     recognition.start();
     this._setState({
       finalTranscript: '',
       ignoreOnEnd: false
     });
     this._fire('start');
-    //showInfo('info_allow');
-    //start_timestamp = event.timeStamp;
     setTimeout(() => recognition.stop(), duration*1000);
   }
   _onStartClick() {
@@ -90,17 +86,10 @@ class SpeechInput extends Xen.Base {
   }
   _onRecognitionError() {
     if (event.error == 'no-speech') {
-      //showInfo('info_no_speech');
     }
     if (event.error == 'audio-capture') {
-      //showInfo('info_no_microphone');
     }
     if (event.error == 'not-allowed') {
-      //if (event.timeStamp - start_timestamp < 100) {
-      //  showInfo('info_blocked');
-      //} else {
-      //  showInfo('info_denied');
-      //}
     }
     this._setState({ignoreOnEnd: true});
   }
@@ -115,9 +104,6 @@ class SpeechInput extends Xen.Base {
       }
     }
     this._setState({interimTranscript, finalTranscript});
-    //if (finalTranscript || interimTranscript) {
-    //  showButtons('inline-block');
-    //}
     const transcript = `${finalTranscript}${interimTranscript}`;
     this.value = transcript;
     this._fire('result', transcript);
@@ -125,23 +111,14 @@ class SpeechInput extends Xen.Base {
   _onRecognitionEnd() {
     const {ignoreOnEnd, finalTranscript} = this._state;
     this._setState({recognizing: false});
+    // TODO(sjmiles): these conditionals in original demo code, leaving here in case I figure out why
+    /*
     if (!ignoreOnEnd) {
       if (!finalTranscript) {
-        //showInfo('info_start');
       } else {
-        //showInfo('');
-        // if (window.getSelection) {
-        //   window.getSelection().removeAllRanges();
-        //   let range = document.createRange();
-        //   range.selectNode(document.getElementById('final_span'));
-        //   window.getSelection().addRange(range);
-        // }
-        //if (create_email) {
-        //  create_email = false;
-        //  createEmail();
-        //}
       }
     }
+    */
     this.value = finalTranscript;
     this._fire('end', finalTranscript);
   }
