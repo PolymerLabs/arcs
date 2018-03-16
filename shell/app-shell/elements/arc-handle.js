@@ -37,7 +37,7 @@ class ArcHandle extends Xen.Base {
       this._updateHandle(state.handle, data, arc);
     }
   }
-  async _createHandle(arc, manifest, {name, tags, type, id, asContext}) {
+  async _createHandle(arc, manifest, {name, tags, type, id, asContext, description}) {
     let setOf = false;
     if (type[0] == '[') {
       setOf = true;
@@ -51,6 +51,9 @@ class ArcHandle extends Xen.Base {
     // arc-handles are for `use`, `?`
     const factory = asContext ? arc.context.newHandle.bind(arc.context) : arc.createHandle.bind(arc);
     const handle = await factory(typeOf, name, id, tags);
+    if (description) {
+      handle.description = description;
+    }
     // observe handle
     handle.on('change', () => this._handleChanged(handle), arc);
     log('created handle', name, tags);
