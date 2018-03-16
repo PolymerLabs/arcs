@@ -266,7 +266,7 @@ function allSuggestions() {
   openSuggestionDrawer();
 
   const magnifier = pierceShadowsSingle(
-    getFooterPath().concat(['div[search]', 'i#search-button'])
+    getFooterPath().concat(['[search]', '#search-button'])
   );
   console.log(`click: allSuggestions`);
   browser.elementIdClick(magnifier.value.ELEMENT);
@@ -274,7 +274,7 @@ function allSuggestions() {
 
 function getAtLeastOneSuggestion() {
   const allSuggestions = pierceShadows([
-    'div[slotid="suggestions"]',
+    '[slotid="suggestions"]',
     'suggestion-element'
   ]);
   if (!allSuggestions.value || 0 == allSuggestions.value) {
