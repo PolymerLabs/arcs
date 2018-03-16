@@ -7,6 +7,7 @@
 // http://polymer.github.io/PATENTS.txt
 
 import '../../../shell/artifacts/Common/ShowCollection.manifest'
+import '../../../shell/artifacts/Common/Multiplexer.manifest'
 import '../../../shell/artifacts/Products/ProductFilter.manifest'
 import '../../../shell/artifacts/Products/ProductIsBook.manifest'
 import '../../../shell/artifacts/Products/ShowProduct.manifest'
@@ -14,8 +15,11 @@ import '../../../shell/artifacts/Products/ShowProduct.manifest'
 // Filter books and display them.
 recipe
   ShowCollection.collection -> ProductFilter.results
+  Multiplexer.list -> ShowCollection.collection
   map 'mylist' as mylist
   create as books
+  Multiplexer
+    hostedParticle = ShowProduct
   ProductFilter
     products <- mylist
     hostedParticle = ProductIsBook

@@ -44,9 +44,15 @@ describe('products test', function() {
               assert.equal('Harry Potter', helper.arc._handles[0]._items.get(content.model.items.models[0].id).rawData.name);
             }
             return verified;
+          }})
+          .expectRenderSlot('ShowProduct', 'item', {contentTypes: ['template', 'model']})
+          .expectRenderSlot('Multiplexer', 'annotation', {hostedParticle: 'ShowProduct', verify: (content) => {
+            return content.model
+                && 1 == content.model.items.length
+                && 'Harry Potter' === content.model.items[0].name;
           }});
 
-    await helper.acceptSuggestion({particles: ['ShowCollection', 'ProductFilter']});
+    await helper.acceptSuggestion({particles: ['ShowCollection', 'Multiplexer', 'ProductFilter']});
 
     await helper.verifyData('ProductFilter', 'results', verifyFilteredBook);
   });

@@ -193,7 +193,7 @@ class Handle {
     result.push(`as ${(nameMap && nameMap.get(this)) || this.localName}`);
     if (this.type) {
       result.push('//');
-      result.push(this.type.toString());
+      result.push(this.type.resolvedType().toString());
     }
     if (options && options.showUnresolved) {
       let options = {};
