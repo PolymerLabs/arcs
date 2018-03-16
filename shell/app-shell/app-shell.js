@@ -241,7 +241,7 @@ class AppShell extends Xen.Base {
     search = (search !== '') && (search !== '*') ? search : null;
     // re-plan only if the search has changed (beyond simple filtering)
     if (search !== arc.search) {
-      this._setState({plans: null});
+      this._setState({plans: null, suggestions: null});
     }
     // TODO(sjmiles): installing the search term should probably be the job of arc-host
     arc.search = search;
