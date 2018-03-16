@@ -196,17 +196,23 @@ export default class TestHelper {
     let handle = this.arc.findHandleById(handleId);
     assert(handle, `Handle '${handleId}' (${particleName}::${connectionName}) not found in active recipe`);
 
-    // TODO: setTimeout is needed, because pec becomes idle before hosted particles complete. Get rid of it.
-    setTimeout(async () => {
-      await expectationHandler(handle);
-    }, 100);
+    return new Promise((resolve, reject) => {
+      // TODO: setTimeout is needed, because pec becomes idle before hosted particles complete. Get rid of it.
+      setTimeout(async () => {
+        await expectationHandler(handle);
+        resolve();
+      }, 100);
+    });
   }
 
   /** @method verifySetSize(particleName, connectionName, expectedSetSize)
    * Verifies the size of data collection in handle |connectionName| of |particleName|.
    */
   async verifySetSize(particleName, connectionName, expectedSetSize) {
-    return this.verifyData(particleName, connectionName, async (handle) => assert.equal(expectedSetSize, (await handle.toList()).length));
+    this.log(`Verifying ${particleName}:${connectionName} size is: ${expectedSetSize}`);
+    return this.verifyData(particleName, connectionName, async (handle) => {
+      assert.equal(expectedSetSize, (await handle.toList()).length, `${particleName}:${connectionName} expected size ${expectedSetSize}`);
+    });
   };
 
   // TODO: add more helper methods to verify data and slots.

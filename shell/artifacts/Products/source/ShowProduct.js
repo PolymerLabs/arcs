@@ -8,11 +8,11 @@
 
 'use strict';
 
-defineParticle(({DomParticle, resolver}) => {
+defineParticle(({DomParticle, resolver, html}) => {
 
   let host = `[show-product]`;
 
-  let styles = `
+  let styles = html`
 <style>
   ${host} [item] {
     padding: 4px 8px;
@@ -64,7 +64,7 @@ defineParticle(({DomParticle, resolver}) => {
 </style>
   `;
 
-  let template = `
+  let template = html`
 ${styles}
   <div item show-product>
     <div row>
@@ -80,7 +80,7 @@ ${styles}
     </div>
     </div>
   </div>
-  `.trim();
+  `;
 
   return class extends DomParticle {
     get template() {

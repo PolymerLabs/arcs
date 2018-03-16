@@ -16,6 +16,7 @@ import particle from './particle.js';
 import DomParticle from './dom-particle.js';
 import TransformationDomParticle from './transformation-dom-particle.js';
 import JsonldToManifest from './converters/jsonldToManifest.js';
+const html = (strings, ...values) => (strings[0] + values.map((v, i) => v + strings[i + 1]).join('')).trim();
 
 function schemaLocationFor(name) {
   return `../entities/${name}.schema`;
@@ -88,7 +89,7 @@ class Loader {
   }
 
   unwrapParticle(particleWrapper) {
-    return particleWrapper({particle, Particle: particle.Particle, DomParticle, TransformationDomParticle});
+    return particleWrapper({particle, Particle: particle.Particle, DomParticle, TransformationDomParticle, html});
   }
 
 }
