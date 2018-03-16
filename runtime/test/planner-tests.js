@@ -460,7 +460,7 @@ describe('ConvertConstraintsToConnections', async () => {
     let recipes = (await Manifest.parse(`
       schema S
       particle A in 'A.js'
-        A(in S b)
+        A(out S b)
         affordance voice
         consume root
       particle C in 'C.js'
