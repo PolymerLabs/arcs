@@ -45,12 +45,23 @@ const template = Xen.html`
 // `steps` are plans objects stored in arc metadata
 // `step` is the first plan in `steps` that matches a plan in `plans` that hasn't already been applied
 
+const log = Xen.Base.logFactory('ArcCloud', '#bb4d00');
+
 class ArcCloud extends Xen.Base {
+  static get observedAttributes() {
+    return ['config', 'userid', 'manifests', 'arc', 'key', 'metadata', 'plans', 'step', 'plan', 'exclusions', 'share', 'launcherarcs'];
+  }
   get template() {
     return template;
   }
-  static get observedAttributes() {
-    return ['config', 'userid', 'manifests', 'arc', 'key', 'metadata', 'plans', 'step', 'plan', 'exclusions', 'share', 'launcherarcs'];
+  _willReceiveProps(props) {
+    //log('props', props);
+  }
+  _setState(state) {
+    if (super._setState(state)) {
+      log(state);
+      return true;
+    }
   }
   _update(props, state) {
     const {share} = props;
@@ -138,9 +149,7 @@ class ArcCloud extends Xen.Base {
     }
   }
   _onData(e, data) {
-    if (this._setState({[e.type]: data})) {
-      log(e.type, data);
-    }
+    this._setState({[e.type]: data});
   }
   async _onProfile(e, profile) {
     if (profile) {
@@ -181,6 +190,4 @@ class ArcCloud extends Xen.Base {
     }
   }
 }
-
-const log = Xen.Base.logFactory('ArcCloud', '#bb4d00');
 customElements.define('arc-cloud', ArcCloud);
