@@ -54,9 +54,17 @@ class ArcCloud extends Xen.Base {
   get template() {
     return template;
   }
+  _wouldChangeProp(name, value) {
+    if (super._wouldChangeProp(name, value)) {
+      if (!(name in this._pendingProps) || (this._pendingProps[name] !== value)) {
+        log('props', {[name]: value});
+        return true;
+      }
+    }
+  }
   _setState(state) {
     if (super._setState(state)) {
-      log(state);
+      log('state', state);
       return true;
     }
   }
