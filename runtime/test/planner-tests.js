@@ -113,7 +113,7 @@ describe('Planner', function() {
       return planner.strategizer.population.length;
     };
     let results = await planFromManifest(manifest, {testSteps});
-    assert.equal(results, 6);
+    assert.equal(results, 5);
   });
 
   // TODO: rewrite or remove this, it doesn't test anything more than the above test?
@@ -134,7 +134,7 @@ describe('Planner', function() {
       return planner.strategizer.population.length;
     };
     let results = await planFromManifest(manifest, {arcFactory, testSteps});
-    assert.equal(results, 6);
+    assert.equal(results, 5);
   });
 
   it('can map remote handles structurally', async () => {
@@ -386,7 +386,7 @@ describe('ConvertConstraintsToConnections', async () => {
     let strategizer = {generated: [{result: recipe, score: 1}]};
     let cctc = new ConvertConstraintsToConnections({pec: {}});
     let {results} = await cctc.generate(strategizer);
-    assert(results.length == 1);
+    assert.equal(1, results.length);
     let {result, score} = results[0];
     assert.deepEqual(result.toString(),
 `recipe
@@ -413,7 +413,7 @@ describe('ConvertConstraintsToConnections', async () => {
     let strategizer = {generated: [{result: recipe, score: 1}]};
     let cctc = new ConvertConstraintsToConnections({pec: {}});
     let {results} = await cctc.generate(strategizer);
-    assert(results.length == 1);
+    assert.equal(1, results.length);
     let {result, score} = results[0];
     assert.deepEqual(result.toString(),
 `recipe
@@ -441,7 +441,7 @@ describe('ConvertConstraintsToConnections', async () => {
     let strategizer = {generated: [{result: recipe, score: 1}]};
     let cctc = new ConvertConstraintsToConnections({pec: {}});
     let {results} = await cctc.generate(strategizer);
-    assert(results.length == 1);
+    assert.equal(1, results.length);
     let {result, score} = results[0];
     assert.deepEqual(result.toString(),
 `recipe
@@ -469,7 +469,7 @@ describe('ConvertConstraintsToConnections', async () => {
     let strategizer = {generated: [{result: recipe, score: 1}]};
     let cctc = new ConvertConstraintsToConnections({pec: {}});
     let {results} = await cctc.generate(strategizer);
-    assert(results.length == 1);
+    assert.equal(1, results.length);
     let {result, score} = results[0];
     assert.deepEqual(result.toString(),
 `recipe
@@ -498,7 +498,7 @@ describe('ConvertConstraintsToConnections', async () => {
     let strategizer = {generated: [{result: recipe, score: 1}]};
     let cctc = new ConvertConstraintsToConnections({pec: {}});
     let {results} = await cctc.generate(strategizer);
-    assert(results.length == 1);
+    assert.equal(1, results.length);
     let {result, score} = results[0];
     assert.deepEqual(result.toString(), `recipe
   use as view0 // S

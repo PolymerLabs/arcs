@@ -26,7 +26,7 @@ describe('demo flow', function() {
 
   it('flows like a demo', async function() {
     let expectedPlanString = `recipe
-  create as view0 // [~a]
+  create as view0 // [Product]
   copy 'manifest:./shell/artifacts/Products/Products.recipes:view0' #shortlist as view1 // [Product]
   map 'manifest:./shell/artifacts/Products/Products.recipes:view1' #wishlist as view2 // [Product]
   create as view3 // [Description]
