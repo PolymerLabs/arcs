@@ -125,7 +125,7 @@ class ExtensionData extends Xen.Base {
       return;
     }
 
-    this._createArcHandle(arc, foundSchemaName, handleName, shortTypeName, data);
+    this._createArcHandle(arc, schema, handleName, shortTypeName, data);
   }
 
   /**
@@ -162,20 +162,26 @@ class ExtensionData extends Xen.Base {
     return filteredEntities;
   }
 
-  _createArcHandle(arc, foundSchemaName, handleName, shortTypeName, data) {
+  _createArcHandle(arc, schema, handleName, shortTypeName, data) {
     log(`creating ArcHandle with name ${handleName}`);
+    let typeDescription = schema.description && schema.description.plural ?
+      schema.description.plural :
+      shortTypeName;
+    typeDescription =
+        typeDescription.charAt(0).toUpperCase() + typeDescription.slice(1);
     Object.assign(document.createElement('arc-handle'), {
       arc,
       data,
       options: {
         manifest: arc._context,
-        type: `[${foundSchemaName}]`,
+        type: `[${schema.name}]`,
         name: handleName,
         id: handleName,
         tags:
             [shortTypeName == 'Product' ? '#shortlist' :
                                           `#${shortTypeName}`],
-        asContext: true
+        asContext: true,
+        description: `${typeDescription} from your browsing context`
       }
     });
   }
