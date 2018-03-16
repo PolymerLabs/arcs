@@ -23,9 +23,6 @@ class ArcSteps extends Xen.Base {
       applied: []
     };
   }
-  _willReceiveProps(props) {
-    //log('props', props);
-  }
   _setState(state) {
     if (super._setState(state)) {
       log(state);
