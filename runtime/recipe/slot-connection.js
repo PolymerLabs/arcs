@@ -125,6 +125,16 @@ class SlotConnection {
     return true;
   }
 
+  isConnectedToInternalSlot() {
+    return this.targetSlot && (!!this.targetSlot.sourceConnection);
+  }
+  isConnectedToRemoteSlot() {
+    return this.targetSlot && (!!this.targetSlot.id);
+  }
+  isConnected() {
+    return this.isConnectedToInternalSlot() || this.isConnectedToRemoteSlot();
+  }
+
   toString(nameMap, options) {
     let consumeRes = [];
     consumeRes.push('consume');

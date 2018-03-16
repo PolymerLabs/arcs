@@ -21,56 +21,21 @@ export default class MapSlots extends Strategy {
 
     let results = Recipe.over(this.getResults(strategizer), new class extends RecipeWalker {
       onSlotConnection(recipe, slotConnection) {
-        let selectedSlot;
-        let internalSlots = [];
-        if (slotConnection.targetSlot) {
-          if (slotConnection.targetSlot.sourceConnection) {
-            // Target slot assigned within the current recipe.
-            return;
-          }
-          if (slotConnection.targetSlot.id) {
-            // Target slot assigned from preexisting slots in the arc.
-            return;
-          }
-        } else {
-          internalSlots = MapSlots._findSlotCandidates(slotConnection, recipe.slots);
-        }
-        let candidates = arc.pec.slotComposer.getAvailableSlots();
-        let arcSlots = MapSlots._findSlotCandidates(slotConnection, candidates);
-
-        if (internalSlots.length + arcSlots.length < 2)
+        if (slotConnection.isConnected()) {
           return;
+        }
 
-        selectedSlot = internalSlots[0] ? internalSlots[0] : arcSlots[0];
-        assert(selectedSlot);
+        let selectedSlots = MapSlots.findAllSlotCandidates(slotConnection, arc);
+        if (selectedSlots.length < 2) {
+          return;
+        }
+
+        let selectedSlot = selectedSlots[0]; // TODO: return combinatorial results?
 
         return (recipe, slotConnection) => {
-          if (!slotConnection.targetSlot) {
-            let clonedSlot = recipe.updateToClone({selectedSlot}).selectedSlot;
-
-            if (!clonedSlot) {
-              clonedSlot = recipe.slots.find(s => selectedSlot.id && selectedSlot.id == s.id);
-              if (clonedSlot == undefined) {
-                clonedSlot = recipe.newSlot(selectedSlot.name);
-                clonedSlot.id = selectedSlot.id;
-              }
-            }
-            slotConnection.connectToSlot(clonedSlot);
-          }
-
-          assert(!selectedSlot.id || !slotConnection.targetSlot.id || (selectedSlot.id == slotConnection.targetSlot.id),
-                 `Cannot override slot id '${slotConnection.targetSlot.id}' with '${selectedSlot.id}'`);
-          slotConnection.targetSlot.id = selectedSlot.id || slotConnection.targetSlot.id;
-
-          // TODO: need to concat to existing tags and dedup?
-          slotConnection.targetSlot.tags = [...selectedSlot.tags];
+          MapSlots.connectSlotConnection(slotConnection, selectedSlot);
           return 1;
         };
-      }
-
-      _sortSlots(slot1, slot2) {
-        // TODO: implement.
-        return slot1.name < slot2.name;
       }
     }(RecipeWalker.Permuted), this);
 
@@ -78,10 +43,49 @@ export default class MapSlots extends Strategy {
   }
 
   // Helper methods.
+  // Connect the given slot connection to the selectedSlot, create the slot, if needed.
+  static connectSlotConnection(slotConnection, selectedSlot) {
+    let recipe = slotConnection.recipe;
+    if (!slotConnection.targetSlot) {
+      let clonedSlot = recipe.updateToClone({selectedSlot}).selectedSlot;
+
+      if (!clonedSlot) {
+        clonedSlot = recipe.slots.find(s => selectedSlot.id && selectedSlot.id == s.id);
+        if (clonedSlot == undefined) {
+          clonedSlot = recipe.newSlot(selectedSlot.name);
+          clonedSlot.id = selectedSlot.id;
+        }
+      }
+      slotConnection.connectToSlot(clonedSlot);
+    }
+
+    assert(!selectedSlot.id || !slotConnection.targetSlot.id || (selectedSlot.id == slotConnection.targetSlot.id),
+           `Cannot override slot id '${slotConnection.targetSlot.id}' with '${selectedSlot.id}'`);
+    slotConnection.targetSlot.id = selectedSlot.id || slotConnection.targetSlot.id;
+
+    // TODO: need to concat to existing tags and dedup?
+    slotConnection.targetSlot.tags = [...selectedSlot.tags];
+  }
+
+  // Returns all possible slot candidates, sorted by "quality"
+  static findAllSlotCandidates(slotConnection, arc) {
+    let selectedSlots = [];
+    if (!slotConnection.targetSlot) {
+      // Note: during manfiest parsing, target slot is only set in slot connection, if the slot exists in the recipe.
+      // If this slot is internal to the recipe, it has the sourceConnection set to the providing connection
+      // (and hence the consuming connection is considered connected already). Otherwise, this may only be a remote slot.
+      selectedSlots = MapSlots._findSlotCandidates(slotConnection, slotConnection.recipe.slots);
+    }
+    return selectedSlots.concat(MapSlots._findSlotCandidates(slotConnection, arc.pec.slotComposer.getAvailableSlots()));
+  }
+
   // Returns the given slot candidates, sorted by "quality".
   static _findSlotCandidates(slotConnection, slots) {
     let possibleSlots = slots.filter(s => this._filterSlot(slotConnection, s));
-    possibleSlots.sort(this._sortSlots);
+    possibleSlots.sort((slot1, slot2) => {
+        // TODO: implement.
+        return slot1.name < slot2.name;
+    });
     return possibleSlots;
   }
 
