@@ -118,7 +118,7 @@ class MenuPanel extends Xen.Base {
   static get observedAttributes() {
     return ['arc', 'open', 'friends', 'avatars', 'avatar_title', 'avatar_style', 'share'];
   }
-  _render({arc, open, avatar_title, avatar_style, friends, avatars, share}, state) {
+  _render({arc, open, avatar_title, avatar_style, friends, avatars, share}, state, oldProps) {
     const {selected, isProfile, isShared, isOpen, shouldOpen} = state;
     //`shouldOpen` exists to allow parent to update before we try to transition
     state.isOpen = state.shouldOpen;
@@ -143,7 +143,9 @@ class MenuPanel extends Xen.Base {
         models: friends.map((friend, i) => this._renderUser(arc, selected, friend.rawData, avatars, i))
       };
     }
-    this._setState(this._shareStateToFlags(share));
+    if (oldProps.share !== share) {
+      this._setState(this._shareStateToFlags(share));
+    }
     return render;
   }
   _didRender({}, {isOpen}) {
@@ -204,15 +206,18 @@ class MenuPanel extends Xen.Base {
     this._fire('tools');
   }
   _onProfileClick() {
-    const {isProfile, isShared} = this._state;
-    this._changeSharing(!isProfile, isShared);
+    let {isProfile, isShared} = this._state;
+    isProfile = !isProfile;
+    isShared = isProfile ? isShared : false;
+    this._changeSharing(isProfile, isShared);
   }
   _onShareClick() {
-    const {isProfile, isShared} = this._state;
-    this._changeSharing(isProfile, !isShared);
+    let {isProfile, isShared} = this._state;
+    isShared = !isShared;
+    isProfile = isShared ? true : isProfile;
+    this._changeSharing(isProfile, isShared);
   }
   _changeSharing(isProfile, isShared) {
-    isProfile = isProfile || isShared;
     const share = this._shareFlagsToShareState(isProfile, isShared);
     this._setState({isProfile, isShared, share});
   }
