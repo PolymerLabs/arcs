@@ -60,48 +60,22 @@ export default class ResolveRecipe extends Strategy {
       }
 
       onSlotConnection(recipe, slotConnection) {
-        if (this._slotIsConnected(slotConnection))
+        if (slotConnection.isConnected()) {
           return;
+        }
         
-        let selectedSlots = [];
-        if (!slotConnection.targetSlot)
-          selectedSlots = MapSlots._findSlotCandidates(slotConnection, recipe.slots);
-        
-        selectedSlots = selectedSlots.concat(MapSlots._findSlotCandidates(slotConnection, arc.pec.slotComposer.getAvailableSlots()));
-      
-        if (selectedSlots.length !== 1)
+        let selectedSlots = MapSlots.findAllSlotCandidates(slotConnection, arc);
+        if (selectedSlots.length !== 1) {
           return;
+        }
         
         let selectedSlot = selectedSlots[0];
 
         return (recipe, slotConnection) => {
-          if (!slotConnection.targetSlot) {
-            let clonedSlot = recipe.updateToClone({selectedSlot}).selectedSlot;
-
-            if (!clonedSlot) {
-              clonedSlot = recipe.slots.find(s => selectedSlot.id && selectedSlot.id == s.id);
-              if (clonedSlot == undefined)
-                clonedSlot = recipe.newSlot(selectedSlot.name);
-                clonedSlot.id = selectedSlot.id;
-            }
-            slotConnection.connectToSlot(clonedSlot);
-          }
-
-          assert(!selectedSlot.id || !slotConnection.targetSlot.id || (selectedSlot.id == slotConnection.targetSlot.id),
-            `Cannot override slot id '${slotConnection.targetSlot.id}' with '${selectedSlot.id}'`);
-          slotConnection.targetSlot.id = selectedSlot.id || slotConnection.targetSlot.id;
-
-          // TODO: need to concat to existing tags and dedup?
-          slotConnection.targetSlot.tags = [...selectedSlot.tags];
+          MapSlots.connectSlotConnection(slotConnection, selectedSlot);
           return 1;
         };
       }
-
-      // TODO: move to SlotConnection.
-      _slotIsConnected(slotConnection) {
-        return slotConnection.targetSlot && ((!!slotConnection.targetSlot.sourceConnection) || (!!slotConnection.targetSlot.id));
-      }
-
     }(RecipeWalker.Permuted), this);
 
     return {results, generate: null};
