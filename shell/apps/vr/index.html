@@ -13,9 +13,11 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Google+Sans">
 
   <script>
-    const debug = (new URL(document.location)).searchParams.has('debug');
-    const runtime = debug ? '../../source/ArcsLib.js' : '../../build/ArcsLib.js';
-    document.head.appendChild(Object.assign(document.createElement('script'), {type: 'module', src: runtime}));
+    (() => {
+      const debug = (new URL(document.location)).searchParams.has('debug');
+      const runtime = debug ? '../../source/ArcsLib.js' : '../../build/ArcsLib.js';
+      document.head.appendChild(Object.assign(document.createElement('script'), {type: 'module', src: runtime}));
+    })();
   </script>
 
   <link rel="stylesheet" href="../common/index.css">
