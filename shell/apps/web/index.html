@@ -7,12 +7,22 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
 
-  <link rel="manifest" href="manifest.json"/>
-  <link rel="shortcut icon" href="../logo_64.png">
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Google+Sans">
-  <link rel="stylesheet" href="index.css">
+  <link rel="manifest" href="../common/manifest.json"/>
+  <link rel="shortcut icon" href="../common/logo_64.png">
 
-  <script type="module" src="index.js"></script>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Google+Sans">
+
+  <script>
+    const debug = (new URL(document.location)).searchParams.has('debug');
+    const runtime = debug ? '../../source/ArcsLib.js' : '../../build/ArcsLib.js';
+    document.head.appendChild(Object.assign(document.createElement('script'), {type: 'module', src: runtime}));
+  </script>
+
+  <link rel="stylesheet" href="../common/index.css">
+  <script type="module" src="../common/index.js"></script>
+
+  <script type="module" src="../../app-shell/app-shell.js"></script>
+
 
 </head>
 <body>
