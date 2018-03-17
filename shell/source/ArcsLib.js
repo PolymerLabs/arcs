@@ -20,7 +20,7 @@ import scheduler from '../../runtime/scheduler.js';
 
 //Tracing.enable();
 
-window.Arcs = {
+const Arcs = {
   version: '0.3',
   Arc,
   Description,
@@ -32,3 +32,10 @@ window.Arcs = {
   Tracing,
   scheduler
 };
+
+// TODO(sjmiles): can't export because WebPack can't/doesn't make a built version with a module export
+// Instead we fall back to populating a global (possibly already created in app-shell/lib/arcs.js).
+//export default Arcs;
+
+window.Arcs = window.Arcs ? Object.assign(window.Arcs, Arcs) : Arcs;
+
