@@ -3,57 +3,50 @@
 <head>
 
   <title>Arcs</title>
+
   <meta charset="utf-8">
-  <link rel="manifest" href="manifest.json"/>
   <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
-  <link rel="shortcut icon" href="../logo_64.png">
-  <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
+
+  <link rel="manifest" href="../common/manifest.json"/>
+  <link rel="shortcut icon" href="../common/logo_64.png">
+
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Google+Sans">
+
+  <script src="../../source/ArcsLib.js"></script>
+
+  <link rel="stylesheet" href="../common/index.css">
+  <script type="module" src="../common/index.js"></script>
+
+  <script src="https://rawgit.com/aframevr/aframe/f8cb168/dist/aframe-master.js"></script>
+  <script type="module" src="vr-app-shell.js"></script>
 
   <style>
     body {
-      font-family: 'Roboto', sans-serif;
-      margin: 0;
-      overflow-x: hidden;
-      overflow-y: scroll;
+      --max-width: none;
+      --min-width: 320px;
     }
-    @font-face {
-      font-family: 'Material Icons';
-      font-style: normal;
-      font-weight: 400;
-      src: url(https://fonts.gstatic.com/s/materialicons/v30/2fcrYFNaTjcS6g4U3t-Y5ZjZjT5FdEJ140U2DJYC3mY.woff2) format('woff2');
+    a-scene {
+      position: absolute !important;
+      height: calc(100vh - 80px) !important;
     }
   </style>
-
-  <script>
-    window.shellPath = "../..";
-  </script>
-
-  <!-- TODO(wkorman): Ideally move Firebase script load to arc-store.js.
-      Currently the FireBase library is not ES Module compatible.
-      See also https://github.com/firebase/firebase-js-sdk/issues/100 -->
-  <script src="https://www.gstatic.com/firebasejs/4.2.0/firebase.js"></script>
-  <!-- firebase config is required before loading runtime -->
-  <script type="module" src="../../app-shell/firebase-config.js"></script>
-
-  <!-- load runtime (from build [build] or source [source])
-  <!--<script type="module" src="../../build/ArcsLib.js"></script>-->
-  <script type="module" src="../../source/ArcsLib.js"></script>
-
-  <script src="https://rawgit.com/aframevr/aframe/f8cb168/dist/aframe-master.js"></script>
-  <!--
-  <script src="https://unpkg.com/aframe-event-set-component@3.0.3/dist/aframe-event-set-component.min.js"></script>
-  <script src="https://unpkg.com/aframe-physics-system@1.4.0/dist/aframe-physics-system.min.js"></script>
-  <script src="https://unpkg.com/aframe-draw-component@1.5.0/dist/aframe-draw-component.js"></script>
-  <script src="https://unpkg.com/aframe-htmltexture-component@0.2.1/dist/aframe-htmltexture-component.min.js"></script>
-  <script src="https://rawgit.com/dbradleyfl/aframe-gridhelper/master/dist/aframe-gridhelper-component.min.js"></script>
-  -->
 
 </head>
 <body>
 
-  <script type="module" src="vr-app-shell.js"></script>
-
-  <vr-app-shell></vr-app-shell>
+  <vr-app-shell>
+    <a-scene id="particles">
+      <a-entity light="type:directional; castShadow: true;" position="1 1 1"></a-entity>
+      <a-sky color="#DCDCDC" src="assets/tokyo (candy bar).jpg"></a-sky>
+      <a-camera position="0 0 0"></a-camera>
+      <a-assets timeout="60000" slotid="assets"></a-assets>
+      <!-- particles go here -->
+      <a-entity slotid="toproot"></a-entity>
+      <a-entity slotid="root"></a-entity>
+      <a-entity slotid="modal"></a-entity>
+    </a-scene>
+    <div slotid="suggestions" slot="suggestions"></div>
+  </vr-app-shell>
 
 </body>
 </html>
