@@ -12,7 +12,7 @@ Template.html = (...args) => Template.createTemplate(html.apply(null, args)); //
 
 const Debug = (Base, log) => class extends Base {
   _wouldChangeProp(name, value) {
-    let result = true;
+    let result = false;
     if (typeof value === 'object') {
       result = true;
     }
