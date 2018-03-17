@@ -15,7 +15,7 @@ const db = window.db;
 
 const log = Xen.Base.logFactory('PersistentArc', '#a30000');
 
-class PersistentArc extends Xen.Base {
+class PersistentArc extends Xen.Debug(Xen.Base, log) {
   static get observedAttributes() { return ['key', 'metadata']; }
   _getInitialState() {
     return {
@@ -69,7 +69,7 @@ class PersistentArc extends Xen.Base {
       //PersistentArc.groupCollapsed('metadata changed');
       //  log('new meta:', metadata); //serial);
       //  log('old meta:', state.serial ? JSON.parse(state.serial) : state.serial);
-      console.groupEnd();
+      //console.groupEnd();
       state.serial = serial;
       return true;
     }
@@ -99,9 +99,10 @@ class PersistentArc extends Xen.Base {
     return {
       node: arcMetadata,
       handler: snap => {
-        log('READING', String(arcMetadata));
+        //log('READING', String(arcMetadata));
         let metadata = snap.val();
         if (this._hasMetadataChanged(metadata)) {
+          log('READING', metadata);
           this._fire('metadata', metadata);
         }
       }
