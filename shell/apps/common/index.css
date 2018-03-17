@@ -1,5 +1,5 @@
 body {
-  --max-width: 512px;
+  --max-width: 460px;
   --min-width: 320px;
 }
 
@@ -10,6 +10,24 @@ body {
   overflow-y: scroll;
   background-color: gray;
   background-image: url("../../assets/black-linen.png");
+}
+
+[slotid=suggestions] {
+  max-height: 356px;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+[slotid=modal] {
+  position: fixed;
+  top: var(--toolbar-height);
+  bottom: var(--footer-height);
+  max-width: var(--max-width);
+  width: 100vw;
+  margin: 0 auto;
+  box-sizing: border-box;
+  pointer-events: none;
+  color: black;
 }
 
 @font-face {
@@ -34,20 +52,3 @@ icon {
   overflow: hidden;;
 }
 
-[slotid=suggestions] {
-  max-height: 356px;
-  overflow-y: auto;
-  overflow-x: hidden;
-}
-
-[slotid=modal] {
-  position: fixed;
-  top: var(--toolbar-height);
-  bottom: var(--footer-height);
-  max-width: var(--max-width);
-  width: 100vw;
-  margin: 0 auto;
-  box-sizing: border-box;
-  pointer-events: none;
-  color: black;
-}
