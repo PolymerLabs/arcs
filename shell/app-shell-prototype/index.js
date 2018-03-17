@@ -1,10 +1,10 @@
 // global configuration
 import './config.js';
 // firebase runtime (customized by sjmiles@ for import-ability)
-import '../../components/firebase.4.2.0.js';
+import '../components/firebase.4.2.0.js';
 // firebase config is required before loading arcs runtime
-import '../../app-shell/firebase-config.js';
+import '../app-shell/firebase-config.js';
 // arcs runtime
-import '../../build/ArcsLib.js';
+import '../build/ArcsLib.js';
 // elements
-import '../../app-shell/app-shell.js';
+import 'app-shell-prototype.js';
