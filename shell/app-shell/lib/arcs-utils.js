@@ -9,7 +9,7 @@
  */
 
 import Xen from '../../components/xen/xen.js';
-const Arcs = window.Arcs;
+import Arcs from './arcs.js';
 
 const ArcsUtils = {
   createArc({id, urlMap, slotComposer, context, loader}) {

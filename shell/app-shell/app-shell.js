@@ -25,18 +25,14 @@ import Const from './constants.js';
 /* global shellPath */
 
 // templates
-const template = Xen.html`
+const html = Xen.html;
+/*
 
-  <arc-config rootpath="{{shellPath}}" on-config="_onData"></arc-config>
-
-  <!--
     General notes on steps:
       'step' comes out of arc-cloud (replay) or footer (user interaction)
       'step' is sent to arc-host for instantiation
       'plan' comes out of arc-host and is sent to arc-cloud to save in 'steps'
-  -->
 
-  <!--
     arc-cloud
       TODO: refactor into more meaningful concerns ('cloud' is ad-hoc, there are too many properties)
 
@@ -64,7 +60,17 @@ const template = Xen.html`
       on-arcs: arcs metadata for arcs owner by user from Firebase,
                fed to arc-handles for conversion to launcherarcs
                TODO: isolate conversions so data doesn't criss-cross like this
-  -->
+
+*/
+const template = html`
+  <style>
+    :host {
+      display: block;
+    }
+  </style>
+
+  <arc-config rootpath="{{shellPath}}" on-config="_onData"></arc-config>
+
   <arc-cloud
     manifests="{{persistedManifests}}"
     exclusions="{{persistedExclusions}}"
@@ -89,13 +95,14 @@ const template = Xen.html`
     on-metadata="_onData"
     on-step="_onData"
   ></arc-cloud>
+` /*
 
-  <!--
     shell-handles
       visited: visited arc data from Firebase
       on-launcherarcs: arc data formatted for local handle
       TODO: isolate conversions so data doesn't criss-cross like this
-  -->
+
+*/ + html`
   <shell-handles
     users="{{users}}"
     user="{{user}}"
@@ -104,11 +111,12 @@ const template = Xen.html`
     on-launcherarcs="_onData"
     on-theme="_onData"
   ></shell-handles>
+` /*
 
-  <!--
       plan: schedules the plan for instantiation ('step' goes in)
       on-plan: most recent plan that was instantiated ('plan' comes out)
-  -->
+
+*/ + html`
   <arc-host
     config="{{hostConfig}}"
     manifests="{{manifests}}"
@@ -150,7 +158,7 @@ const template = Xen.html`
 
 const log = Xen.logFactory('AppShell', '#6660ac');
 
-class AppShell extends Xen.Base {
+class AppShell extends Xen.Debug(Xen.Base, log) {
   get template() {
     return template;
   }
@@ -159,12 +167,6 @@ class AppShell extends Xen.Base {
       launcherSoloPath: '../web/artifacts/launcher.manifest',
       profileSoloPath: '../web/artifacts/profile.manifest'
     };
-  }
-  _setState(state) {
-    if (super._setState(state)) {
-      log(state);
-      return true;
-    }
   }
   _update(props, state, oldProps, oldState) {
     const {config, selectedUser, user, key, arc, metadata, share, plans, search, plan, step} = state;
@@ -271,9 +273,10 @@ class AppShell extends Xen.Base {
       const description = await ArcsUtils.describeArc(arc);
       if (description && metadata.description !== description) {
         metadata.description = description;
-        this._invalidate();
       }
     }
+    // we consumed a plan, need new ones
+    this._setState({plans: null});
   }
   _onData(e, data) {
     this._setState({[e.type]: data});

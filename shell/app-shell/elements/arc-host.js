@@ -9,37 +9,21 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 */
 
 import Xen from '../../components/xen/xen.js';
+import Arcs from '../lib/arcs.js';
 import ArcsUtils from '../lib/arcs-utils.js';
 
-const Arcs = window.Arcs;
 const log = Xen.Base.logFactory('ArcHost', '#007ac1');
 const error = Xen.Base.logFactory('ArcHost', '#007ac1', 'error');
 
-const template = Xen.Template.createTemplate(
-  `<style>
-    :host {
-      display: block;
-      box-sizing: border-box;
-    }
-  </style>
-  <slot></slot>`
-);
-
-class ArcHost extends Xen.Base {
+class ArcHost extends Xen.Debug(Xen.Base, log) {
   static get observedAttributes() {
     return ['config', 'plans', 'suggestions', 'plan', 'manifests', 'exclusions'];
   }
-  get template() { return template; }
   _getInitialState() {
     return {
       pendingPlans: [],
       invalid: 0
     };
-  }
-  _setState(state) {
-    if (super._setState(state)) {
-      log(state);
-    }
   }
   _willReceiveProps(props, state, lastProps) {
     const changed = name => props[name] !== lastProps[name];
