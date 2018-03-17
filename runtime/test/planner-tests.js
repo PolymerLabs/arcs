@@ -296,7 +296,7 @@ describe('ConvertConstraintsToConnections', async () => {
     assert.equal(0, results.length);
   });
 
-  it('only input handles with mapped handle are resolved', async () => {
+  it('can resolve input only handle connection with a mapped handle', async () => {
     let recipe = (await Manifest.parse(`
       schema S
       particle A
