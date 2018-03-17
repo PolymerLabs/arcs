@@ -8,9 +8,9 @@ Code distributed by Google as part of the polymer project is also
 subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
 */
 
-import ArcsUtils from '../lib/arcs-utils.js';
 import Xen from '../../components/xen/xen.js';
-const Arcs = window.Arcs;
+import Arcs from '../lib/arcs.js';
+import ArcsUtils from '../lib/arcs-utils.js';
 
 const log = Xen.Base.logFactory('ArcHandle', '#c6a700');
 

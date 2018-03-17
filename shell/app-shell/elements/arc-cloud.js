@@ -47,26 +47,12 @@ const template = Xen.html`
 
 const log = Xen.Base.logFactory('ArcCloud', '#bb4d00');
 
-class ArcCloud extends Xen.Base {
+class ArcCloud extends Xen.Debug(Xen.Base, log) {
   static get observedAttributes() {
     return ['config', 'userid', 'manifests', 'arc', 'key', 'metadata', 'plans', 'step', 'plan', 'exclusions', 'share', 'launcherarcs'];
   }
   get template() {
     return template;
-  }
-  _wouldChangeProp(name, value) {
-    if (super._wouldChangeProp(name, value)) {
-      if (!(name in this._pendingProps) || (this._pendingProps[name] !== value)) {
-        log('props', {[name]: value});
-        return true;
-      }
-    }
-  }
-  _setState(state) {
-    if (super._setState(state)) {
-      log('state', state);
-      return true;
-    }
   }
   _update(props, state) {
     const {share} = props;
