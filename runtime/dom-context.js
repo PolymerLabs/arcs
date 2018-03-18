@@ -86,9 +86,10 @@ class DomContext {
     }
     assert(false);
   }
-  getSubId(node) {
-    // TODO(sjmiles): remember that the property/attribute is lower-case (`subid`)
-    return node.subid || node.getAttribute('subid');
+  // get a value from node that could be an attribute, if not a property
+  getNodeValue(node, name) {
+    // TODO(sjmiles): remember that attribute names from HTML are lower-case
+    return node[name] || node.getAttribute(name);
   }
   initInnerContexts(slotSpec) {
     this._innerContextBySlotName = {};
@@ -97,10 +98,10 @@ class DomContext {
         // Skip inner slots of an inner slot of the given slot.
         return;
       }
-      const slotId = s.getAttribute('slotid');
+      const slotId = this.getNodeValue(s, 'slotid');
       const providedSlotSpec = slotSpec.getProvidedSlotSpec(slotId);
       if (providedSlotSpec) { // Skip non-declared slots
-        const subId = this.getSubId(s);
+        const subId = this.getNodeValue(s, 'subid');
         assert(!subId || providedSlotSpec.isSet,
             `Slot provided in ${slotSpec.name} sub-id ${subId} doesn't match set spec: ${providedSlotSpec.isSet}`);
         if (providedSlotSpec.isSet) {
