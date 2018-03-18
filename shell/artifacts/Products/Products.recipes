@@ -44,18 +44,9 @@ recipe
   copy #shortlist as shortlist
   Recommend
     population <- wishlist
-  ShowCollection
-    collection <- shortlist
-    consume master
-      provide item as itemSlot
-      provide annotation as annotationSlot
-  Multiplexer
-    list <- shortlist
-    hostedParticle = ShowProduct
-    consume annotation as itemSlot
+  particle can showList
   Multiplexer2
     hostedParticle = AlsoOn
-    consume annotation as annotationSlot
 
 // Buying for [person]'s [occasion] in [timeframe]? Product [X] arrives too late.
 recipe
