@@ -103,8 +103,8 @@ class ArcCloud extends Xen.Debug(Xen.Base, log) {
   }
   _consumeSteps(steps, metadata) {
     // steps are part of metadata, metadata is dirty-checked via JSON serialization
-    if (steps && metadata && steps !== metadata.steps) {
-      log(`setting new steps to metadata`);
+    if (steps && metadata) {
+      log(`setting steps to metadata`);
       metadata.steps = steps;
       this._setState({metadata});
     }
