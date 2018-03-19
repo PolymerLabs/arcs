@@ -57,9 +57,9 @@ defineParticle(({DomParticle, html, log}) => {
 </style>
 <div ${host}>
   <div post-buttons>
-    <i class="material-icons" on-click="onDeletePost">delete</i>
-    <firebase-upload active accept="image/*" on-upload="onAttachPhoto"><i class="material-icons">attach_file</i></firebase-upload>
-    <i class="material-icons" primary active$="{{saveButtonActive}}" on-click="onSavePost">done</i>
+    <icon on-click="onDeletePost">delete</icon>
+    <firebase-upload active accept="image/*" on-upload="onAttachPhoto"><icon>attach_file</icon></firebase-upload>
+    <icon primary active$="{{saveButtonActive}}" on-click="onSavePost">done</icon>
   </div>
   <img src="{{image}}">
   <textarea value="{{message}}" on-input="onTextInput"></textarea>
