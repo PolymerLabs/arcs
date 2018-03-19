@@ -14,11 +14,6 @@ defineParticle(({DomParticle, log, html}) => {
 
   const style = html`
 <style>
-  [${host}] a {
-    display: block;
-    color: inherit;
-    text-decoration: none;
-  }
   [${host}] [chip] {
     position: relative;
     display: flex;
@@ -28,6 +23,11 @@ defineParticle(({DomParticle, log, html}) => {
     font-size: 18px;
     color: whitesmoke;
     border-radius: 9px;
+  }
+  [${host}] a {
+    display: block;
+    color: inherit;
+    text-decoration: none;
     min-height: 64px;
   }
   [${host}] [delete] {
