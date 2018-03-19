@@ -13,7 +13,7 @@ defineParticle(({DomParticle, resolver, log}) => {
 
   const template = `
 <style>
-  [${host}] .material-icons.md-14 {
+  [${host}] icon {
     float: right;
     margin-right: 1em;
   }
@@ -110,7 +110,7 @@ defineParticle(({DomParticle, resolver, log}) => {
         <div msg>
           <div title>
             <span avatar style='{{avatarStyle}}'></span><span owner>{{owner}}</span><span when>{{time}}</span>
-            <i class="material-icons md-14" style%="{{style}}" value="{{id}}" on-click="_onDeletePost">delete</i>
+            <icon style%="{{style}}" value="{{id}}" on-click="_onDeletePost">delete</icon>
             <br>
           </div>
           <div content value="{{id}}">
