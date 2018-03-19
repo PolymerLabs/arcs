@@ -99,10 +99,10 @@ class PersistentArc extends Xen.Debug(Xen.Base, log) {
     return {
       node: arcMetadata,
       handler: snap => {
-        //log('READING', String(arcMetadata));
+        log('watch fired on current arc metadata', String(arcMetadata));
         let metadata = snap.val();
         if (this._hasMetadataChanged(metadata)) {
-          log('READING', metadata);
+          log('installing new remote metadata', metadata);
           this._fire('metadata', metadata);
         }
       }
