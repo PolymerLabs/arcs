@@ -60,17 +60,17 @@ ${style}
 </div>
 
 <template column>
-  <a href="{{href}}">
-    <div chip style="{{chipStyle}}">
-      <icon delete key="{{arcId}}" on-click="_onDelete">remove_circle_outline</icon>
+  <div chip style="{{chipStyle}}">
+    <icon delete key="{{arcId}}" on-click="_onDelete">remove_circle_outline</icon>
+      <a href="{{href}}">
         <div description title="{{description}}" unsafe-html="{{blurb}}"></div>
         <div style="flex: 1;"></div>
         <div share>
           <icon show$="{{self}}">account_circle</icon>
           <icon show$="{{friends}}">people</icon>
         </div>
-    </div>
-  </a>
+      </a>
+  </div>
 </template>
 `;
 
