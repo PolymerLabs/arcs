@@ -18,6 +18,7 @@
   "permissions": ["<all_urls>", "activeTab", "webNavigation"],
   "web_accessible_resources" : [
     "shared/arc-registry.js",
+    "shared/invoke-planner.js",
     "src/run-init-debug.js",
     "img/*.png"
   ],

@@ -16,6 +16,7 @@
 <link rel="import" href="arcs-shared.html">
 <link rel="import" href="arcs-notifications.html">
 <link rel="import" href="strategy-explorer/strategy-explorer.html">
+<link rel="import" href="arcs-strategy-thingo.html">
 
 <dom-module id="arcs-devtools-app">
   <template>
@@ -107,12 +108,14 @@
           <a name="overview" href="#overview"><iron-icon icon="timeline"></iron-icon>Overview</a>
           <a name="dataflow" href="#dataflow"><iron-icon icon="swap-horiz"></iron-icon>Dataflow</a>
           <a name="strategyExplorer" href="#strategyExplorer"><iron-icon icon="settings-applications"></iron-icon>Strategy Explorer</a>
+          <a name="strategyThingo" href="#strategyThingo"><iron-icon icon="pets"></iron-icon>Strategy Thingo</a>
         </iron-selector>
       </nav>
       <iron-pages selected="[[routeData.page]]" attr-for-selected="name" role="main" id="pages">
         <arcs-overview name="overview"></arcs-overview>
         <arcs-dataflow id="dataflow" name="dataflow" query-params="{{queryParams}}"></arcs-dataflow>
         <strategy-explorer name="strategyExplorer"></strategy-explorer>
+        <arcs-strategy-thingo name="strategyThingo"  on-message="sendMessage"></arcs-strategy-thingo>
       </iron-pages>
     </div>
   </template>
@@ -160,6 +163,11 @@
           this.$.illuminateToggle.setAttribute('active', '');
           this.$.channel.send('illuminate', 'on');
         }
+      }
+
+      sendMessage(e) {
+        console.log(e);
+        this.$.channel.send(e.detail.type, e.detail.msgBody);
       }
     }
 
