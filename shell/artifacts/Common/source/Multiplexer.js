@@ -70,25 +70,30 @@ defineParticle(({TransformationDomParticle}) => {
 
         this._itemSubIdByHostedSlotId.set(slotId, item.id);
 
-
-        let recipe = `
-${this.serializeSchema(hostedParticle)}
-recipe
-  use '${itemView._id}' as v1
-  ${otherMappedViews.join('\n')}
-  slot '${slotId}' as s1
-  ${hostedParticle.name}
-    ${hostedParticle.connections[0].name} <- v1
-    ${otherConnections.join('\n')}
-    consume ${hostedSlotName} as s1
-  `;
         try {
-          await arc.loadRecipe(recipe, this);
+          await arc.loadRecipe(this.constructInnerRecipe(hostedParticle, itemView, {name: hostedSlotName, id: slotId}, {connections: otherConnections, views: otherMappedViews}), this);
           itemView.set(item);
         } catch (e) {
           console.log(e);
         }
       }
+    }
+
+    constructInnerRecipe(hostedParticle, itemView, slot, other) {
+      if (itemView.recipe) {
+        return itemView.recipe;
+      }
+      return `
+${this.serializeSchema(hostedParticle)}
+recipe
+  use '${itemView._id}' as v1
+  ${other.views.join('\n')}
+  slot '${slot.id}' as s1
+  ${hostedParticle.name}
+    ${hostedParticle.connections[0].name} <- v1
+    ${other.connections.join('\n')}
+    consume ${slot.name} as s1
+  `;
     }
 
     combineHostedModel(slotName, hostedSlotId, content) {
