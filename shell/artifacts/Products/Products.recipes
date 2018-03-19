@@ -15,6 +15,7 @@ import 'GiftList.manifest'
 import 'Interests.manifest'
 import 'AlsoOn.manifest'
 import 'Arrivinator.manifest'
+import 'AlternateShipping.manifest'
 import 'ManufacturerInfo.manifest'
 import 'ShowProduct.manifest'
 
@@ -70,6 +71,9 @@ recipe
   Multiplexer
     list <- view3
     hostedParticle = Arrivinator
+  //AlternateShipping
+  //  consume shippingAnnotation
+    
 
 // Check manufacturer information for products.
 recipe
@@ -77,6 +81,20 @@ recipe
   Multiplexer
     list <- shortlist
     hostedParticle <- ManufacturerInfo
+
+// Check arrival information for products
+recipe
+  use #shortlist as shortlist
+  Multiplexer
+    list <- shortlist
+    hostedParticle <- Arrivinator
+
+// Check arrival information for products
+recipe
+  use #shortlist as shortlist
+  Multiplexer
+    list <- shortlist
+    hostedParticle <- AlternateShipping
 
 // Recommendations based on Claire's interest in field hockey.
 recipe

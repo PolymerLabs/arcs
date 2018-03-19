@@ -8,11 +8,11 @@
 
 import 'Product.schema'
 
-particle Arrivinator in 'source/Arrivinator.js'
-  Arrivinator(in Product product)
+particle AlternateShipping in 'source/AlternateShipping.js'
+  AlternateShipping(in Product product)
+  // consume shippingAnnotation
   consume annotation
-    provide shippingAnnotation
-  description `estimate arrival date`
+  description `find alternate shipping`
   // TODO: add support for patterns:
   //description `estimate ${product} arrival date`
     //product `my best product`
