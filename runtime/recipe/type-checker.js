@@ -96,6 +96,7 @@ class TypeChecker {
 
     let isSub = leftType.entitySchema.contains(rightType.entitySchema);
     let isSuper = rightType.entitySchema.contains(leftType.entitySchema);
+
     if (isSuper && isSub) {
        return {type: left, valid: true};
     }
