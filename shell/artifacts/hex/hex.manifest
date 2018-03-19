@@ -5,10 +5,28 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
+schema Cell
+  Text color
+
+schema HexGameState
+
+particle HexCell in 'hex-cell.js'
+  HexCell(in Cell cell, inout Cell selected)
+  consume cell
+
 particle HexBoard in 'hex-board.js'
   HexBoard()
+  consume board
+    provide set of cell
+
+particle HexGame in 'hex-game.js'
+  // HexGame(in Person player, inout HexGameState state)
+  HexGame()
   consume root
+    provide board
+  consume set of cell
   description `Play hex`
 
 recipe
+  HexGame
   HexBoard
