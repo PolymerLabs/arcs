@@ -13,7 +13,7 @@ import Xen from '../../components/xen/xen.js';
 const log = Xen.Base.logFactory('ArcSteps', '#7b5e57');
 const warn = Xen.Base.logFactory('ArcSteps', '#7b5e57', 'warn');
 
-class ArcSteps extends Xen.Base {
+class ArcSteps extends Xen.Debug(Xen.Base, log) {
   static get observedAttributes() {
     return ['plans', 'steps', 'step', 'plan'];
   }
@@ -23,34 +23,28 @@ class ArcSteps extends Xen.Base {
       applied: []
     };
   }
-  _setState(state) {
-    if (super._setState(state)) {
-      log(state);
-      return true;
-    }
-  }
   _update({plans, plan, steps, step}, state, lastProps) {
-    if (steps) {
-      state.steps = steps;
-    }
     if (plans && plan !== lastProps.plan) {
-      log('adding step from host');
       // `plan` has been instantiated into host, record it into `steps`
       this._addStep(plan, plans.generations, state.steps, state.applied);
     }
-    if (state.steps && plans) {
+    if (plans && steps) {
       // find a step from `steps` that correspondes to a plan in `plans` but hasn't been `applied`
-      this._providePlanStep(plans, state.steps, state.applied);
+      this._providePlanStep(plans, steps, state.applied);
     }
+    //this._fire('steps', steps);
   }
   _addStep(plan, generations, steps, applied) {
     const step = this._createStep(plan, generations);
+    // TODO(sjmiles): when it comes back from Firebase, steps can be an object (with numeric indices) instead of an Array
+    steps = Object.values(steps);
     if (step && !steps.find(s => s.hash === step.hash)) {
+      log('adding step from host');
       steps.push(step);
       applied[step.hash] = true;
+      //this._setImmutableState('steps', steps);
       this._fire('steps', steps);
     }
-    return steps;
   }
   _providePlanStep(plans, steps, applied) {
     const candidates = steps.filter(s => !applied[s.hash]);
@@ -118,6 +112,7 @@ class ArcSteps extends Xen.Base {
       return origin;
     }
   }
+  /*
   findStep(plan, generations) {
     let step = this._createOriginatingStep(plan, generations);
     if (!step) {
@@ -137,5 +132,6 @@ class ArcSteps extends Xen.Base {
       }
     }
   }
+  */
 }
 customElements.define('arc-steps', ArcSteps);

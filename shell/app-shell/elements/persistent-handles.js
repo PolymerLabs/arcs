@@ -13,22 +13,25 @@ import Xen from '../../components/xen/xen.js';
 
 const db = window.db;
 
-class PersistentHandles extends Xen.Base {
+const log = Xen.Base.logFactory('PersistentHandles', '#aa00c7');
+
+class PersistentHandles extends Xen.Debug(Xen.Base, log) {
   static get observedAttributes() { return ['arc', 'key', 'handles']; }
   _getInitialState() {
     return {
       watchers: []
     };
   }
-  _update(props, state) {
+  _update(props, state, lastProps, lastState) {
     if (props.key && props.arc && !props.handles) {
+    //if (props.key && props.arc !== lastProps.arc) {
       state.db = db.child(`arcs/${props.key}`);
       this._watchHandles(props.arc, state);
       this._fire('handles', true);
     }
   }
   _watchHandles(arc, state) {
-    PersistentHandles.log('Syncing handles');
+    log('Syncing handles');
     state.watchers.forEach(w => w && w());
     state.watching = new Set();
     state.watchers = [...arc._handleTags].map(tagEntry => this._watchHandle(arc, state, tagEntry));
@@ -52,11 +55,11 @@ class PersistentHandles extends Xen.Base {
     });
     let remoteHandle = remoteHandleMeta.child('values');
     if (localHandle.type.isSetView) {
-      PersistentHandles.log(`Syncing set [${handleId}]`);
+      log(`Syncing set [${handleId}]`);
       return this._syncSet(arc, localHandle, remoteHandle);
     }
     if (localHandle.type.isEntity) {
-      PersistentHandles.log(`Syncing variable [${handleId}]`);
+      log(`Syncing variable [${handleId}]`);
       return this._syncVariable(arc, localHandle, remoteHandle);
     }
   }
@@ -66,6 +69,7 @@ class PersistentHandles extends Xen.Base {
     const callback = remoteVariable.on('value', snapshot => {
       const localValue = localVariable._stored;
       const remoteValue = snapshot.val();
+      log('got REMOTE variable-value', localVariable, remoteValue);
       if (localValue && !remoteValue) {
         localVariable.clear();
       } else if (JSON.stringify(localValue) !== JSON.stringify(remoteValue)) {
@@ -76,6 +80,7 @@ class PersistentHandles extends Xen.Base {
         // local changes and applying those to the remote variable.
         initialLoad = false;
         localVariable.on('change', change => {
+          log('got LOCAL variable-value', localVariable, change.data);
           if (change.data && JSON.stringify(change.data) !== JSON.stringify(remoteValue)) {
             remoteVariable.set(ArcsUtils.removeUndefined(change.data));
           } else if (change.data === undefined) {
@@ -123,12 +128,11 @@ class PersistentHandles extends Xen.Base {
             });
           });
         } else {
-          PersistentHandles.log('Unsupported change', change);
+          log('Unsupported change', change);
         }
       }, arc);
     });
     return () => off.forEach(w => w && w());
   }
 }
-PersistentHandles.log = Xen.Base.logFactory('PersistentHandles', '#aa00c7');
 customElements.define('persistent-handles', PersistentHandles);

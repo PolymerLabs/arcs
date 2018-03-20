@@ -197,7 +197,7 @@ class AppShell extends Xen.Debug(Xen.Base, log) {
     }
   }
   _render({}, state) {
-    const {user, config, step, injectedStep} = state;
+    const {config, user, step, injectedStep} = state;
     const render = {
       shellPath,
       hostConfig: user && config,
@@ -273,6 +273,7 @@ class AppShell extends Xen.Debug(Xen.Base, log) {
       const description = await ArcsUtils.describeArc(arc);
       if (description && metadata.description !== description) {
         metadata.description = description;
+        this._setImmutableState({metadata});
       }
     }
     // we consumed a plan, need new ones

@@ -10,6 +10,9 @@ const html = (strings, ...values) => {
 
 Template.html = (...args) => Template.createTemplate(html.apply(null, args)); // eslint-disable-line prefer-spread
 
+// TODO(sjmiles): cloning prevents console log from showing values from the future
+const clone = obj => typeof obj === 'object' ? Object.assign(Object.create(null), obj) : obj;
+
 const Debug = (Base, log) => class extends Base {
   _wouldChangeProp(name, value) {
     let result = false;
@@ -18,17 +21,45 @@ const Debug = (Base, log) => class extends Base {
     }
     if (((name in this._pendingProps) && (this._pendingProps[name] !== value)) || (this._props[name] !== value)) {
       result = true;
-      log('props', {[name]: value});
+      log('props', clone({[name]: value}));
     }
     return result;
   }
   _setState(state) {
     if (super._setState(state)) {
-      log('state', state);
+      if (Debug.lastFire) {
+        //Debug.lastFire.log('fire', {[Debug.lastFire.name]: Debug.lastFire.detail});
+        Debug.lastFire.log('fire', Debug.lastFire.name, Debug.lastFire.detail);
+      }
+      log('state', clone(state));
       return true;
     }
   }
+  _setImmutableState(name, value) {
+    log('state [immutable]', {[name]: value});
+    super._setImmutableState(name, value);
+  }
+  _fire(name, detail) {
+    Debug.lastFire = {name, detail: clone(detail), log};
+    super._fire(name, detail);
+    Debug.lastFire = null;
+  }
+  _doUpdate(...args) {
+    if (Debug.level > 2) {
+      log('updating...');
+    }
+    return super._doUpdate(...args);
+  }
+  _invalidate() {
+    if (Debug.level > 2) {
+      if (!this._validator) {
+        log('invalidating...');
+      }
+    }
+    super._invalidate();
+  }
 };
+Debug.level = 2;
 
 const walker = (node, tree) => {
   let subtree = tree;
