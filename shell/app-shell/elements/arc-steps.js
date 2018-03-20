@@ -32,7 +32,6 @@ class ArcSteps extends Xen.Debug(Xen.Base, log) {
       // find a step from `steps` that correspondes to a plan in `plans` but hasn't been `applied`
       this._providePlanStep(plans, steps, state.applied);
     }
-    //this._fire('steps', steps);
   }
   _addStep(plan, generations, steps, applied) {
     const step = this._createStep(plan, generations);
@@ -42,7 +41,6 @@ class ArcSteps extends Xen.Debug(Xen.Base, log) {
       log('adding step from host');
       steps.push(step);
       applied[step.hash] = true;
-      //this._setImmutableState('steps', steps);
       this._fire('steps', steps);
     }
   }
@@ -112,26 +110,5 @@ class ArcSteps extends Xen.Debug(Xen.Base, log) {
       return origin;
     }
   }
-  /*
-  findStep(plan, generations) {
-    let step = this._createOriginatingStep(plan, generations);
-    if (!step) {
-      warn(`can't find first generation of`, plan, 'in', generations);
-    } else {
-      // TODO: Allow re-applying same step unless its on the root slot.
-      // Will make sense once verbs, etc. work and different slots, etc.
-      // resolve differently.
-      if (!this._applied[step.hash]) {
-        let matchingStep = this._steps.find(s => s.hash == step.hash && s.mappedHandles == step.mappedHandles);
-        if (matchingStep) {
-          return matchingStep;
-        } else {
-          let nearMiss = this._steps.find(s => s.hash == step.hash);
-          nearMiss && log('Almost auto-applied step: ', nearMiss);
-        }
-      }
-    }
-  }
-  */
 }
 customElements.define('arc-steps', ArcSteps);

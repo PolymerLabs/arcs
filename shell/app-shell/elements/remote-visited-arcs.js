@@ -78,26 +78,6 @@ class RemoteVisitedArcs extends Xen.Debug(Xen.Base, log) {
         db.child(`users/${user.id}/arcs`).set(user.arcs);
       }
     }
-    /*
-    // update list of visited arcs (`user.arcs`) to match input list (`arcs`, minus New Arc [*])
-    const keys = arcs.map(a => a.rawData.key).filter(key => key != '*');
-    // no-op if data matches
-    // right now the only change we support is removal, so length check is enough
-    if (user.arcs && keys.length !== Object.keys(user.arcs).length) {
-      //log('updateVisitedArcs', keys, user.arcs);
-      const visited = Object.create(null);
-      keys.forEach(key => {
-        const arc = user.arcs[key];
-        if (arc) {
-          visited[key] = arc;
-        }
-      });
-      log('WRITING (updateVisitedArcs)', visited);
-      // TODO(sjmiles): turned off when revealed buggy just before demo, fix
-      // to support deleting of Arcs from visited list
-      db.child(`users/${user.id}/arcs`).set(visited);
-    }
-    */
   }
 }
 customElements.define('remote-visited-arcs', RemoteVisitedArcs);

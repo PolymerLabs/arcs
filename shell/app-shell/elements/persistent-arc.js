@@ -97,6 +97,7 @@ class PersistentArc extends Xen.Debug(Xen.Base, log) {
     };
   }
   _hasMetadataChanged(metadata) {
+    // TODO(sjmles): use a revisionId instead of a magic cookie
     const state = this._state;
     if (!metadata.cookie || (metadata.cookie !== state.cookie)) {
       state.cookie = Math.floor((Math.random()+1)*1e8);
