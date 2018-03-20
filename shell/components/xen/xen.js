@@ -14,16 +14,11 @@ Template.html = (...args) => Template.createTemplate(html.apply(null, args)); //
 const clone = obj => typeof obj === 'object' ? Object.assign(Object.create(null), obj) : obj;
 
 const Debug = (Base, log) => class extends Base {
-  _wouldChangeProp(name, value) {
-    let result = false;
-    if (typeof value === 'object') {
-      result = true;
-    }
+  _setProperty(name, value) {
     if (((name in this._pendingProps) && (this._pendingProps[name] !== value)) || (this._props[name] !== value)) {
-      result = true;
       log('props', clone({[name]: value}));
     }
-    return result;
+    return super._setProperty(name, value);
   }
   _setState(state) {
     if (super._setState(state)) {
