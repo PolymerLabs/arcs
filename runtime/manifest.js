@@ -274,7 +274,7 @@ class Manifest {
     }
 
     function processError(e, parseError) {
-      if (!(e instanceof ManifestError) || !e.location) {
+      if (!((e instanceof ManifestError) || e.location)) {
         return e;
       }
       let lines = content.split('\n');
