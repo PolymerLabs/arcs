@@ -26,7 +26,7 @@ const template = Xen.html`
   <!-- manifest lists -->
   <persistent-manifests manifests="{{manifests}}" on-manifests="_onData" exclusions="{{exclusions}}" on-exclusions="_onData"></persistent-manifests>
   <!-- provisions arc database keys and provides metadata -->
-  <persistent-arc key="{{configkey}}" on-key="_onData" metadata="{{metadata}}" on-metadata="_onData"></persistent-arc>
+  <persistent-arc key="{{key}}" on-key="_onKey" metadata="{{metadata}}" on-metadata="_onMetadata"></persistent-arc>
   <!-- access to playback data -->
   <arc-steps plans="{{plans}}" plan="{{plan}}" steps="{{steps}}" step="{{step}}" on-step="_onData" on-steps="_onData"></arc-steps>
   <!-- handles, database syncing -->
@@ -34,7 +34,7 @@ const template = Xen.html`
   <remote-profile-handles arc="{{arc}}" user="{{user}}" on-profile="_onProfile"></remote-profile-handles>
   <remote-friends-shared-handles arc="{{arc}}" friends="{{friends}}" user="{{user}}" on-handle="_onHandle"></remote-friends-shared-handles>
   <!-- set of arcs visited by user, only used by launcher -->
-  <remote-visited-arcs user="{{launcherUser}}" arcs="{{launcherarcs}}" on-arcs="_onData"></remote-visited-arcs>
+  <remote-visited-arcs user="{{launcherUser}}" arcs="{{launcherarcs}}" on-arcs="_onArcs"></remote-visited-arcs>
 `;
 
 // PROPS
@@ -55,8 +55,8 @@ class ArcCloud extends Xen.Debug(Xen.Base, log) {
     return template;
   }
   _update(props, state) {
-    const {share} = props;
-    const {user, avatar, steps, metadata, key} = state;
+    const {share, metadata, key} = props;
+    const {user, avatar, steps} = state;
     if (user && avatar) {
       // TODO(sjmiles): double-time encapsulation breakage
       user.avatar = props.arc._loader._resolve(avatar.url);
@@ -64,9 +64,11 @@ class ArcCloud extends Xen.Debug(Xen.Base, log) {
     if (props.exclusions) {
       state.exclusions = props.exclusions;
     }
-    this._consumeSteps(steps, metadata);
     if (user && key && share !== undefined) {
       this._consumeShareState(user, key, share);
+    }
+    if (steps && metadata) {
+      this._consumeSteps(steps, metadata);
     }
     this._fire('users', state.users);
     this._fire('friends', state.friends);
@@ -74,16 +76,15 @@ class ArcCloud extends Xen.Debug(Xen.Base, log) {
     this._fire('manifests', state.manifests);
     this._fire('exclusions', state.exclusions);
     this._fire('user', state.user);
-    this._fire('key', state.key);
-    this._fire('metadata', state.metadata);
+    //this._fire('key', state.key);
+    //this._fire('metadata', state.metadata);
     this._fire('step', state.step && state.step.plan);
     this._fire('arcs', state.arcs);
     super._update(props, state);
   }
   _render({config, userid, arc, key, metadata, plans, step, plan, launcherarcs}, {manifests, exclusions, user, friends}) {
-    //log(this._props, this._state);
     const render = {
-      configkey: config && config.key,
+      //configkey: config && config.key,
       userid,
       user,
       launcherUser: config && config.launcher && user,
@@ -102,11 +103,15 @@ class ArcCloud extends Xen.Debug(Xen.Base, log) {
     return render;
   }
   _consumeSteps(steps, metadata) {
-    // steps are part of metadata, metadata is dirty-checked via JSON serialization
+    // steps are part of metadata, metadata is dirty-checked via JSON serialization,
     if (steps && metadata) {
-      log(`setting steps to metadata`);
-      metadata.steps = steps;
-      this._setState({metadata});
+      if ((steps.length || metadata.steps) && (metadata.steps != steps)) {
+        log(`setting steps to metadata`);
+        metadata.steps = steps;
+        this._fire('metadata', metadata);
+        this._setState({steps: null});
+        //this._setImmutableState('metadata', metadata);
+      }
     }
   }
   _consumeShareState(user, key, share) {
@@ -124,7 +129,7 @@ class ArcCloud extends Xen.Debug(Xen.Base, log) {
         }
       }
       if (!user.shares || (Boolean(user.shares[key]) !== shareState)) {
-        log('modulating share state');
+        //log('modulating share state');
         dirty = true;
         user.shares = user.shares || Object.create(null);
         if (shareState) {
@@ -136,11 +141,24 @@ class ArcCloud extends Xen.Debug(Xen.Base, log) {
     }
     if (dirty) {
       // `state.user` is considered immutable, need a copy
-      this._setState({user: Object.assign(Object.create(null), user)});
+      this._setImmutableState('user', user);
     }
   }
   _onData(e, data) {
-    this._setState({[e.type]: data});
+    //if (!this._validator) {
+      this._setState({[e.type]: data});
+    //} else {
+    //  log(`ignored [${e.type}] because of invalid state`, data);
+    //}
+  }
+  _onArcs(e, arcs) {
+    this._setImmutableState('arcs', arcs);
+  }
+  _onKey(e, key) {
+    this._fire('key', key);
+  }
+  _onMetadata(e, metadata) {
+    this._fire('metadata', metadata);
   }
   async _onProfile(e, profile) {
     if (profile) {

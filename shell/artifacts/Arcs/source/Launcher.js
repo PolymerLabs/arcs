@@ -39,6 +39,9 @@ defineParticle(({DomParticle, log, html}) => {
   [${host}] [chip]:hover [delete] {
     visibility: visible;
   }
+  [${host}] [delete][hide] {
+    display: none;
+  }
   [${host}] [share] {
     margin-top: 16px;
   }
@@ -61,7 +64,7 @@ ${style}
 
 <template column>
   <div chip style="{{chipStyle}}">
-    <icon delete key="{{arcId}}" on-click="_onDelete">remove_circle_outline</icon>
+    <icon delete hide$="{{noDelete}}" key="{{arcId}}" on-click="_onDelete">remove_circle_outline</icon>
     <a href="{{href}}">
       <div description title="{{description}}" unsafe-html="{{blurb}}"></div>
       <div style="flex: 1;"></div>
@@ -106,27 +109,29 @@ ${style}
         profileItems: []
       };
       arcs.forEach((a, i) => {
-        // each item goes in either the `items` or `profileItems` list
-        const list = a.profile ? result.profileItems : result.items;
-        // massage the description
-        //const blurb = a.description.length > 70 ? a.description.slice(0, 70) + '...' : a.description;
-        const blurb = a.description;
-        const chipStyle = {
-          backgroundColor: a.bg || a.color || 'gray',
-          color: a.bg ? a.color : 'white',
-        };
-        // populate the selected list
-        list.push({
-          arcId: a.id,
-          // Don't allow deleting the 'New Arc' arc.
-          disallowDelete: i == 0,
-          href: a.href,
-          blurb,
-          description: a.description,
-          icon: a.icon,
-          chipStyle,
-          self: Boolean(a.profile)
-        });
+        if (!a.deleted) {
+          // each item goes in either the `items` or `profileItems` list
+          const list = a.profile ? result.profileItems : result.items;
+          // massage the description
+          //const blurb = a.description.length > 70 ? a.description.slice(0, 70) + '...' : a.description;
+          const blurb = a.description;
+          const chipStyle = {
+            backgroundColor: a.bg || a.color || 'gray',
+            color: a.bg ? a.color : 'white',
+          };
+          // populate the selected list
+          list.push({
+            arcId: a.id,
+            // Don't allow deleting the 'New Arc' arc.
+            noDelete: i === 0,
+            href: a.href,
+            blurb,
+            description: a.description,
+            icon: a.icon,
+            chipStyle,
+            self: Boolean(a.profile)
+          });
+        }
       });
       return result;
     }
@@ -136,9 +141,17 @@ ${style}
       if (!arc) {
         log(`Couldn't find arc to delete [arcId=${arcId}].`);
       } else {
-        log(`Removing arc [arcId=${arcId}].`);
-        this._views.get('arcs').remove(arc);
+        const arcs = this.handles.get('arcs');
+        arcs.remove(arc);
+        arc.deleted = true;
+        arcs.store(arc);
+        log(`Marking arc [arcId=${arcId}] for deletion.`);
+        //this._views.get('arcs').remove(arc);
       }
+    }
+    setHandle(name, data) {
+      const handle = this._views.get(name);
+      handle.set(new (handle.entityClass)(data));
     }
   };
 });

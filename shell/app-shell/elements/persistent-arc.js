@@ -35,9 +35,9 @@ class PersistentArc extends Xen.Debug(Xen.Base, log) {
   }
   _update({key, metadata}, state, lastProps) {
     if (key === '*' && lastProps.key != key) {
-      this._createKey(state.db);
+      this._fire('key', this._createKey(state.db));
     }
-    if (key && key !== '*') {
+    if (key && key !== '*' && key !== 'launcher') {
       if (key !== lastProps.key) {
         state.watch.watches = [this._watchKey(state.db, key)];
       }
@@ -52,26 +52,15 @@ class PersistentArc extends Xen.Debug(Xen.Base, log) {
         const externalManifest = this._getExternalManifest();
         if (externalManifest != metadata.externalManifest) {
           metadata.externalManifest = externalManifest;
+          this._fire('metadata', metadata);
         }
-        if (this._hasMetadataChanged(metadata)) {
-          log('WRITING (update) metadata', metadata);
-          state.db.child(key).child('metadata').update(metadata);
-        }
+        state.metadata = null;
       }
-      this._fire('key', key);
-    }
-  }
-  _hasMetadataChanged(metadata) {
-    const state = this._state;
-    const serial = JSON.stringify(metadata);
-    if (serial !== state.serial) {
-      log('metadata changed');
-      //PersistentArc.groupCollapsed('metadata changed');
-      //  log('new meta:', metadata); //serial);
-      //  log('old meta:', state.serial ? JSON.parse(state.serial) : state.serial);
-      //console.groupEnd();
-      state.serial = serial;
-      return true;
+      if (metadata !== state.metadata) {
+        log('WRITING metadata', metadata);
+        state.db.child(key).child('metadata').update(metadata);
+        state.metadata = metadata;
+      }
     }
   }
   _createKey(db) {
@@ -80,10 +69,9 @@ class PersistentArc extends Xen.Debug(Xen.Base, log) {
       externalManifest: this._getExternalManifest()
     };
     this._assignColors(data);
-    let key = db.push({'metadata': data}).key;
-    this._setState({key});
-    log('providing key (_createKey)', key);
-    this._fire('key', key);
+    const key = db.push({'metadata': data}).key;
+    log('_createKey', key);
+    return key;
   }
   _assignColors(metadata) {
     let bgs = ['#5EF4BD', '#20E7FF', '#607D8B', '#FF7364', '#2FADE6', '#FFB843', '#FFF153', '#17C497'];
@@ -94,19 +82,27 @@ class PersistentArc extends Xen.Debug(Xen.Base, log) {
   }
   _watchKey(db, key) {
     let arcMetadata = db.child(key).child('metadata');
-    log('watching', String(arcMetadata));
+    //log('watching', String(arcMetadata));
     const state = this._state;
     return {
       node: arcMetadata,
       handler: snap => {
-        log('watch fired on current arc metadata', String(arcMetadata));
+        log('watch triggered on metadata', String(arcMetadata));
         let metadata = snap.val();
         if (this._hasMetadataChanged(metadata)) {
-          log('installing new remote metadata', metadata);
+          log('remote metadata changed', metadata);
           this._fire('metadata', metadata);
         }
       }
     };
+  }
+  _hasMetadataChanged(metadata) {
+    const state = this._state;
+    if (!metadata.cookie || (metadata.cookie !== state.cookie)) {
+      state.cookie = Math.floor((Math.random()+1)*1e8);
+      metadata.cookie = state.cookie;
+      return true;
+    }
   }
 }
 customElements.define('persistent-arc', PersistentArc);

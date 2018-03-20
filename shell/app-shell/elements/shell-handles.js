@@ -96,7 +96,6 @@ class ShellHandles extends Xen.Base {
         state.arcsHandleData = this._renderVisited(user, visited);
       }
     }
-    super._update(props, state);
   }
   _render(props, state) {
     //log(props, state);

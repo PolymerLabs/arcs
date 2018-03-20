@@ -18,7 +18,11 @@ class ArcHandle extends Xen.Base {
   static get observedAttributes() { return ['arc', 'options', 'data']; }
   async _update(props, state) {
     let {arc, options, data} = props;
-    if (arc && !state.handle && !state.working) {
+    if (arc && !state.handle) {
+      if (state.working) {
+        state.invalid = true;
+        return;
+      }
       state.working = true;
       if (options && options.manifest) {
         state.manifest = options.manifest;
@@ -30,6 +34,10 @@ class ArcHandle extends Xen.Base {
         state.handle = await this._createHandle(arc, state.manifest, options);
       }
       state.working = false;
+      if (state.invalid) {
+        this._invalidate();
+        state.invalid = false;
+      }
     }
     if (state.handle && data != state.data) {
       state.data = data;

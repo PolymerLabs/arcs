@@ -33,8 +33,20 @@ export default Base => class extends Base {
       this._invalidateProps();
     }
   }
+  _wouldChangeValue(map, name, value) {
+    // TODO(sjmiles): fundamental dirty-checking issue here. Can be overridden to change
+    // behavior, but the default implementation will use strict reference checking.
+    // To modify structured values one must create a new Object with the new values.
+    // See `_setImmutableState`.
+    return (map[name] !== value);
+    // TODO(sjmiles): an example of dirty-checking that instead simply punts on structured data
+    //return (typeof value === 'object') || (map[name] !== value);
+  }
   _wouldChangeProp(name, value) {
-    return (typeof value === 'object') || (this._props[name] !== value);
+    return this._wouldChangeValue(this._props, name, value);
+  }
+  _wouldChangeState(name, value) {
+    return this._wouldChangeValue(this._state, name, value);
   }
   _setProps(props) {
     // TODO(sjmiles): should be a replace instead of a merge
@@ -45,12 +57,19 @@ export default Base => class extends Base {
     this._propsInvalid = true;
     this._invalidate();
   }
+  _setImmutableState(name, value) {
+    if (typeof value === 'object') {
+      value = Object.assign(Object.create(null), value);
+    }
+    this._state[name] = value;
+    this._invalidate();
+  }
   _setState(object) {
     let dirty = false;
     const state = this._state;
     for (const property in object) {
       const value = object[property];
-      if (state[property] !== value) {
+      if (this._wouldChangeState(property, value)) {
         dirty = true;
         state[property] = value;
       }

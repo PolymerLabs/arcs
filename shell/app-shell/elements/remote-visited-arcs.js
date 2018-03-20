@@ -12,7 +12,9 @@ import WatchGroup from './watch-group.js';
 import Xen from '../../components/xen/xen.js';
 const db = window.db;
 
-class RemoteVisitedArcs extends Xen.Base {
+const log = Xen.Base.logFactory('RemoteVisitedArcs', '#00796b');
+
+class RemoteVisitedArcs extends Xen.Debug(Xen.Base, log) {
   static get observedAttributes() { return ['user', 'arcs']; }
   _getInitialState() {
     return {
@@ -30,7 +32,7 @@ class RemoteVisitedArcs extends Xen.Base {
   }
   _watchVisitedArcs(user) {
     if (user && user.arcs) {
-      RemoteVisitedArcs.log(`watching visited arcs`);
+      log(`watching visited arcs`);
       // build an object for mapping arc keys to arc metadata
       let arcs = Object.create(null);
       // user.arcs contains arc keys
@@ -55,18 +57,34 @@ class RemoteVisitedArcs extends Xen.Base {
       }
       // stuff this record into our list of arc metadata
       arcs[snap.key] = record;
-      RemoteVisitedArcs.log('READING (_watchHandler)', arcs);
+      log('READING (_watchHandler)', arcs);
       // produce our deliverable
       this._fire('arcs', arcs);
     }
   }
   _updateVisitedArcs(arcs, user) {
+    if (user.arcs) {
+      let dirty = false;
+      const keys = arcs.map(a => a.rawData.key);
+      arcs.forEach(arc => {
+        if (arc.rawData.deleted) {
+          log('arc marked for deletion, removing from user arcs', arc);
+          delete user.arcs[arc.rawData.key];
+          dirty = true;
+        }
+      });
+      if (dirty) {
+        log('WRITING (updateVisitedArcs)', user.arcs);
+        db.child(`users/${user.id}/arcs`).set(user.arcs);
+      }
+    }
+    /*
     // update list of visited arcs (`user.arcs`) to match input list (`arcs`, minus New Arc [*])
     const keys = arcs.map(a => a.rawData.key).filter(key => key != '*');
     // no-op if data matches
     // right now the only change we support is removal, so length check is enough
     if (user.arcs && keys.length !== Object.keys(user.arcs).length) {
-      //RemoteVisitedArcs.log('updateVisitedArcs', keys, user.arcs);
+      //log('updateVisitedArcs', keys, user.arcs);
       const visited = Object.create(null);
       keys.forEach(key => {
         const arc = user.arcs[key];
@@ -74,12 +92,12 @@ class RemoteVisitedArcs extends Xen.Base {
           visited[key] = arc;
         }
       });
-      RemoteVisitedArcs.log('WRITING (updateVisitedArcs)', visited);
+      log('WRITING (updateVisitedArcs)', visited);
       // TODO(sjmiles): turned off when revealed buggy just before demo, fix
       // to support deleting of Arcs from visited list
       db.child(`users/${user.id}/arcs`).set(visited);
     }
+    */
   }
 }
-RemoteVisitedArcs.log = Xen.Base.logFactory('RemoteVisitedArcs', '#00796b');
 customElements.define('remote-visited-arcs', RemoteVisitedArcs);
