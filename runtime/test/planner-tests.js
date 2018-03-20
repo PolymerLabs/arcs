@@ -1397,8 +1397,8 @@ describe('Planner paths go better than expected', function() {
   it('AAAAAAAAAHHHH', async () => {
     let manifest = await Manifest.parse(`
 
-    schema Product
     schema Thing
+    schema Product extends Thing
     schema Description
 
     particle ShowCollection in 'source/ShowCollection.js'
@@ -1488,10 +1488,13 @@ describe('Planner paths go better than expected', function() {
 
   console.log(recipes[1].toString());
 
+  console.log(recipes[1].handles[3]);
   console.log(recipes[1].handles[3].connections.map(a => JSON.stringify(a.type)));
+  console.log(recipes[1].handles[3].connections.map(a => a.direction));
 
   let errors = new Map();
   recipes[1].normalize({errors});
+  console.log(errors);
 
   //recipe = await onlyResult(ConvertConstraintsToConnections, recipe);
   //recipe = await onlyResult(ResolveRecipe, recipe);

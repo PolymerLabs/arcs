@@ -12,20 +12,31 @@ import assert from '../../platform/assert-web.js';
 class TypeChecker {
 
   // list: [{type, direction, connection}]
-  static processTypeList(list) {
+  static processTypeList(baseType, list) {
     if (list.length == 0) {
-      return {type: {type: undefined}, valid: true};
-    }
-    let baseType = list[0];
-    for (let i = 1; i < list.length; i++) {
-      let result = TypeChecker.compareTypes(baseType, list[i]);
-      baseType = result.type;
-      if (!result.valid) {
-        return {valid: false};
-      }
+      return {type: baseType, valid: true};
     }
 
-    return {type: baseType, valid: true};
+    let constraints = TypeChecker.typeToConstraints(baseType);
+    let variables = [];
+
+    for (let i = 0; i < list.length; i++) {
+      let success = TypeChecker.mergeConstraintsOrFailTypeComparison(constraints, list[i]);
+      if (!success)
+        return {valid: false};
+    
+      if (list[i].isVariable)
+        variables.push(list[i]);
+    }
+
+    for (let i = 1; i < variables.length; i++) {
+      TypeChecker.mergeVariables(variables[0], variables[i]);
+    }
+
+    if (variables.length > 0) {
+      TypeChecker.applyConstraintsToVariable(constraints, variables[0]);
+
+    return {type: TypeChecker.constraintsToType(constraints), valid: true};
   }
 
   static restrictType(type, instance) {
