@@ -213,7 +213,7 @@ export default class TestHelper {
     return this.verifyData(particleName, connectionName, async (handle) => {
       assert.equal(expectedSetSize, (await handle.toList()).length, `${particleName}:${connectionName} expected size ${expectedSetSize}`);
     });
-  };
+  }
 
   // TODO: add more helper methods to verify data and slots.
 

@@ -56,7 +56,7 @@ class FirebaseUpload extends Xen.Base {
       this._fire('upload');
     } catch (error) {
       console.error('Error getting download url', error);
-    };
+    }
   }
 }
 customElements.define('firebase-upload', FirebaseUpload);

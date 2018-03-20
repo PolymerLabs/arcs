@@ -57,7 +57,7 @@ class TypeChecker {
             leftType.constraint = mergedConstraint;
             rightType.variable.resolution = leftType;
           }
-        };
+        }
         return {type: left, valid: true};
       } else if (leftType.isVariable) {
         if (!leftType.variable.isSatisfiedBy(rightType)) {
