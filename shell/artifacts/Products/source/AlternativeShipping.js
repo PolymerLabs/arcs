@@ -13,10 +13,8 @@
 defineParticle(({DomParticle}) => {
 
   let template = `
-    <div style%="{{style}}"><span>{{arrival}}</span></div>
+    Alternatives that will arrive in time: {{alternatives}}
     `.trim();
-
-  let daysToMs = 24*60*60*1000;
 
   return class extends DomParticle {
     get template() {
@@ -26,25 +24,9 @@ defineParticle(({DomParticle}) => {
       return !!props && !!props.product;
     }
     render(props) {
-      let {product} = props;
-      let now = Date.now();
-      let needed = new Date('2017-12-04').getTime();
-      let style = null;
-      let arrival = '';
-      if (product.shipDays) {
-        let then = new Date(now + product.shipDays * daysToMs);
-        if (then > needed) {
-          style = {color: 'orange', fontWeight: 'bold', fontStyle: 'normal'};
-        } else {
-          style = {color: 'green'};
-        }
-        arrival = `Arrives ${then.toDateString()}`;
-      } else {
-        arrival = `No shipping info.`;
-      }
+      let alternatives = ['Target', 'Cole Hardware'];
       return {
-        arrival,
-        style
+        alternatives
       };
     }
   };

@@ -10,8 +10,8 @@ import 'Product.schema'
 
 particle AlternateShipping in 'source/AlternateShipping.js'
   AlternateShipping(in Product product)
-  // consume shippingAnnotation
-  consume annotation
+  consume shippingAnnotation
+  // consume annotation
   description `find alternate shipping`
   // TODO: add support for patterns:
   //description `estimate ${product} arrival date`

@@ -71,8 +71,6 @@ recipe
   Multiplexer
     list <- view3
     hostedParticle = Arrivinator
-  //AlternateShipping
-  //  consume shippingAnnotation
     
 
 // Check manufacturer information for products.
@@ -90,11 +88,22 @@ recipe
     hostedParticle <- Arrivinator
 
 // Check arrival information for products
+//shape HostedAlternateShipping
+//  HostedAlternateShipping(in ~a)
+//  consume
+//particle MultiplexerAlternateShipping in '../Common/source/Multiplexer.js'
+//  MultiplexerAlternateShipping(host HostedAlternateShipping hostedParticle, in [~a] list)
+//  consume set of shippingAnnotation
+//  description `${hostedParticle} for ${list}`
+//recipe
+//  use #shortlist as shortlist
+//  MultiplexerAlternateShipping
+//    list <- shortlist
+//    hostedParticle <- AlternateShipping
 recipe
-  use #shortlist as shortlist
-  Multiplexer
-    list <- shortlist
-    hostedParticle <- AlternateShipping
+  use #product as product
+  AlternateShipping
+    consume shippingAnnotation
 
 // Recommendations based on Claire's interest in field hockey.
 recipe

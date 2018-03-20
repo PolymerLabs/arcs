@@ -12,6 +12,7 @@ particle Arrivinator in 'source/Arrivinator.js'
   Arrivinator(in Product product)
   consume annotation
     provide shippingAnnotation
+      view product
   description `estimate arrival date`
   // TODO: add support for patterns:
   //description `estimate ${product} arrival date`
