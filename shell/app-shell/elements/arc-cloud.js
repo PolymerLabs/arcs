@@ -76,15 +76,12 @@ class ArcCloud extends Xen.Debug(Xen.Base, log) {
     this._fire('manifests', state.manifests);
     this._fire('exclusions', state.exclusions);
     this._fire('user', state.user);
-    //this._fire('key', state.key);
-    //this._fire('metadata', state.metadata);
     this._fire('step', state.step && state.step.plan);
     this._fire('arcs', state.arcs);
     super._update(props, state);
   }
   _render({config, userid, arc, key, metadata, plans, step, plan, launcherarcs}, {manifests, exclusions, user, friends}) {
     const render = {
-      //configkey: config && config.key,
       userid,
       user,
       launcherUser: config && config.launcher && user,
@@ -110,7 +107,6 @@ class ArcCloud extends Xen.Debug(Xen.Base, log) {
         metadata.steps = steps;
         this._fire('metadata', metadata);
         this._setState({steps: null});
-        //this._setImmutableState('metadata', metadata);
       }
     }
   }
@@ -145,11 +141,7 @@ class ArcCloud extends Xen.Debug(Xen.Base, log) {
     }
   }
   _onData(e, data) {
-    //if (!this._validator) {
-      this._setState({[e.type]: data});
-    //} else {
-    //  log(`ignored [${e.type}] because of invalid state`, data);
-    //}
+    this._setState({[e.type]: data});
   }
   _onArcs(e, arcs) {
     this._setImmutableState('arcs', arcs);
