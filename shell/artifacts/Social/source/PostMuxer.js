@@ -10,19 +10,10 @@
 'use strict';
 
 defineParticle(({MultiplexerDomParticle}) => {
-  return class Multiplexer extends MultiplexerDomParticle {
+  return class PostMultiplexer extends MultiplexerDomParticle {
     constructInnerRecipe(hostedParticle, itemView, slot, other) {
-      return `
-${this.serializeSchema(hostedParticle)}
-recipe
-  use '${itemView._id}' as v1
-  ${other.views.join('\n')}
-  slot '${slot.id}' as s1
-  ${hostedParticle.name}
-    ${hostedParticle.connections[0].name} <- v1
-    ${other.connections.join('\n')}
-    consume ${slot.name} as s1
-  `;
+      // TODO: replace itemView._id and slot.id (and slot.name?) here!
+      return itemView.recipe;
     }
   };
 });
