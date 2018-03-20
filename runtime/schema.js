@@ -303,7 +303,7 @@ class Schema {
         typeString = type;
       }
       results.push(`  ${typeString} ${name}`);
-    };
+    }
 
     if (Object.keys(this.description).length > 0) {
       results.push(`  description \`${this.description.pattern}\``);

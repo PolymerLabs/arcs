@@ -274,7 +274,7 @@ class Manifest {
     }
 
     function processError(e, parseError) {
-      if (!e instanceof ManifestError || !e.location) {
+      if (!(e instanceof ManifestError) || !e.location) {
         return e;
       }
       let lines = content.split('\n');
@@ -514,7 +514,7 @@ ${e.message}
   // TODO: Move this to a generic pass over the AST and merge with resolveReference.
   static _processShape(manifest, shapeItem) {
     for (let arg of shapeItem.interface.args) {
-      if (!!arg.type) {
+      if (arg.type) {
         // TODO: we should copy rather than mutate the AST like this
         arg.type = arg.type.model;
       }
