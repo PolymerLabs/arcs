@@ -7,16 +7,24 @@
 
 defineParticle(({DomParticle}) => {
   const rootTemplate = `hex-game <div slotid="board"></div>`;
+  const cellTemplate = `<div>{{test}}</div>`;
 
   let i = 0;
   return class extends DomParticle {
     getTemplate(slotName) {
       if (slotName == 'root')
         return rootTemplate;
-      else 
-        return slotName + i++;
+      else if (slotName == 'cell')
+        return cellTempalte;
     }
     render(props, state) {
+      if (this.currentSlotName == 'cell') {
+        return {
+          items: [
+            {subid: '1-1', test: 'test'},
+          ],
+        };
+      }
     }
   };
 });
