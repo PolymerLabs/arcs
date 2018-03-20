@@ -86,10 +86,13 @@ class SpeechInput extends Xen.Base {
   }
   _onRecognitionError() {
     if (event.error == 'no-speech') {
+      // TODO: something?
     }
     if (event.error == 'audio-capture') {
+      // TODO: something?
     }
     if (event.error == 'not-allowed') {
+      // TODO: something?
     }
     this._setState({ignoreOnEnd: true});
   }
