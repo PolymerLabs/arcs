@@ -22,7 +22,7 @@ class DomContext {
   }
   static createContext(context, content) {
     let domContext = new DomContext(context);
-    domContext.stampTemplate(DomContext.createTemplateElement(content.template), () => {});
+    domContext.stampTemplate(domContext.createTemplateElement(content.template), () => {});
     domContext.updateModel(content.model);
     return domContext;
   }
@@ -55,6 +55,9 @@ class DomContext {
   }
   static createTemplateElement(template) {
     return Object.assign(document.createElement('template'), {innerHTML: template});
+  }
+  createTemplateElement(template) {
+    return DomContext.createTemplateElement(template);
   }
   stampTemplate(template, eventHandler) {
     if (!this._liveDom) {
@@ -190,8 +193,24 @@ class SetDomContext {
   clear() {
     Object.values(this._contextBySubId).forEach(context => context.clear());
   }
+  createTemplateElement(template) {
+    let templates = {};
+    if (typeof template === 'string') {
+      templates[''] = DomContext.createTemplateElement(template);
+    } else {
+      Object.keys(template).forEach(subId => {
+        templates[subId] = this._contextBySubId[subId].createTemplateElement(template[subId]);
+      });
+    }
+    return templates;
+  }
   stampTemplate(template, eventHandler, eventMapper) {
-    Object.values(this._contextBySubId).forEach(context => context.stampTemplate(template, eventHandler, eventMapper));
+    Object.keys(this._contextBySubId).forEach(subId => {
+      let templateForSubId = template[subId] || template[''];
+      if (templateForSubId) {
+        this._contextBySubId[subId].stampTemplate(templateForSubId, eventHandler, eventMapper);
+      }
+    });
   }
   observe(observer) {
     Object.values(this._contextBySubId).forEach(context => context.observe(observer));

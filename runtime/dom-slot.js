@@ -91,7 +91,7 @@ class DomSlot extends Slot {
         // Template is being replaced.
         this.getContext().clear();
       }
-      templates.set(this._templateName, DomContext.createTemplateElement(content.template));
+      templates.set(this._templateName, this.getContext().createTemplateElement(content.template));
     }
     this.eventHandler = handler;
     if (Object.keys(content).indexOf('model') >= 0) {

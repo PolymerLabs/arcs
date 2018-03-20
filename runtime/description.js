@@ -64,7 +64,7 @@ export class DescriptionFormatter {
     if (recipe.pattern) {
       let recipeDesc = await this.patternToSuggestion(recipe.pattern);
       if (recipeDesc) {
-        return recipeDesc;
+        return this._combineSelectedDescriptions([{pattern: recipeDesc}]);
       }
     }
 
@@ -186,8 +186,9 @@ export class DescriptionFormatter {
   }
 
   _capitalizeAndPunctuate(sentence) {
-    // "Capitalize, punctuate."
-    return sentence[0].toUpperCase() + sentence.slice(1) + '.';
+    // "Capitalize, punctuate." (if the sentence doesn't end with a punctuation character).
+    let last = sentence.length - 1;
+    return `${sentence[0].toUpperCase()}${sentence.slice(1, last)}${sentence[last]}${sentence[last].match(/[a-z0-9\(\)'>\]]/i) ? '.' : ''}`;
   }
 
   async patternToSuggestion(pattern, particleDescription) {

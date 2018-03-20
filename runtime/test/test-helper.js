@@ -142,14 +142,17 @@ export default class TestHelper {
           return planParticles.length == options.particles.length && planParticles.every(p => options.particles.includes(p));
         });
         assert.equal(1, plans.length);
-        plan = plans[0].plan;
-        this.log(`Accepting suggestion: '${await (async (str) => str.substring(0, str.indexOf(' ', 30)).concat('...'))((await plans[0].description.getRecipeSuggestion()))}'`);
+        plan = plans[0];
+      } else if (options.descriptionText) {
+        plan = this.plans.find(p => p.descriptionText == options.descriptionText);
       }
     }
     if (!plan) {
-      plan = this.plan;
+      assert.equal(1, this.plans.length);
+      plan = this.plans[0];
     }
-    await this.instantiatePlan(plan);
+    this.log(`Accepting suggestion: '${((str) => str.length > 50 ? str.substring(0, Math.min(str.length, 50)).concat('...') : str)(plan.descriptionText)}'`);
+    await this.instantiatePlan(plan.plan);
   }
 
   async instantiatePlan(plan) {
@@ -214,6 +217,11 @@ export default class TestHelper {
       assert.equal(expectedSetSize, (await handle.toList()).length, `${particleName}:${connectionName} expected size ${expectedSetSize}`);
     });
   }
+
+  verifySlots(numSlots, verifyHandler) {
+    assert.equal(numSlots, this.slotComposer._slots.length);
+    this.slotComposer._slots.forEach(s => verifyHandler(s.consumeConn.particle.name, s.consumeConn.name, s._content));
+  } 
 
   // TODO: add more helper methods to verify data and slots.
 
