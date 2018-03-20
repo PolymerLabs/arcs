@@ -36,7 +36,7 @@ recipe
   CompareBoxes
     all <- handle0
     biggest -> handle1
-  description \`The winner is: '\${CompareBoxes.biggest}' of all '\${CompareBoxes.all}'\`
+  description \`the winner is: '\${CompareBoxes.biggest}' of all '\${CompareBoxes.all}'\`
   `;
 
   it('generate recipe description', async function() {
@@ -46,6 +46,6 @@ recipe
     let description = await helper.plans[0].description.getRecipeSuggestion();
 
     // console.log('Description is: ', description);
-    assert.equal('The winner is: \'box\' of all \'boxes\'', description);
+    assert.equal('The winner is: \'box\' of all \'boxes\'.', description);
   });
 });

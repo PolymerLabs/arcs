@@ -1,0 +1,63 @@
+// @license
+// Copyright (c) 2017 Google Inc. All rights reserved.
+// This code may only be used under the BSD style license found at
+// http://polymer.github.io/LICENSE.txt
+// Code distributed by Google as part of this project is also
+// subject to an additional IP rights grant found at
+// http://polymer.github.io/PATENTS.txt
+
+schema Thing
+  Text name
+
+particle AskAndAnswer in 'source/AskAndAnswer.js'
+  AskAndAnswer(in Thing thing)
+  consume question
+  consume answer
+  consume set of hints
+
+recipe
+  slot 'rootslotid-root' as rootSlot
+  map 'mything' as mything
+  AskAndAnswer
+    consume question as rootSlot
+  description `show question`
+
+recipe
+  slot 'rootslotid-root' as rootSlot
+  map 'mything' as mything
+  AskAndAnswer
+    consume answer as rootSlot
+  description `show answer`
+
+recipe
+  map 'mything' as mything
+  slot 'rootslotid-root' as rootSlot
+  AskAndAnswer
+    consume question as rootSlot
+    consume answer as rootSlot
+  description `show question and answer`
+
+particle ShowHints in 'source/ShowHints.js'
+  ShowHints()
+  consume root
+    provide question
+    provide set of hints
+
+recipe
+  map 'mything' as mything
+  ShowHints
+    consume root
+      provide question as questionSlot
+      provide hints as hintsSlot
+  AskAndAnswer
+    consume question as questionSlot
+    consume hints as hintsSlot
+  description `show question and hints`
+
+resource MyThing
+  start
+  [
+    {"name": "something"}
+  ]
+
+view View0 of Thing 'mything' in MyThing

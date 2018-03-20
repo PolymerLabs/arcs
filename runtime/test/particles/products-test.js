@@ -14,7 +14,7 @@ import {assert} from '../chai-web.js';
 import TestHelper from '../test-helper.js';
 
 describe('products test', function() {
-  let testProductsManifestFile = './runtime/test/artifacts/TestProducts.recipes';
+  let testProductsManifestFile = './runtime/test/particles/artifacts/products-test.recipes';
 
   let verifyFilteredBook = async (handle) => {
     let list = await handle.toList();

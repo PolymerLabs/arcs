@@ -16,8 +16,8 @@ import TestHelper from '../test-helper.js';
 describe('common particles test', function() {
   it('copy handle test', async () => {
     let helper = await TestHelper.loadManifestAndPlan(
-        './runtime/test/artifacts/copy-collection-test.recipes',
-        {expectedNumPlans: 1, expectedSuggestions: ['copy all things!']});
+        './runtime/test/particles/artifacts/copy-collection-test.recipes',
+        {expectedNumPlans: 1, expectedSuggestions: ['Copy all things!']});
     assert.equal(0, helper.arc._handles.length);
 
     await helper.acceptSuggestion({particles: ['CopyCollection', 'CopyCollection']});

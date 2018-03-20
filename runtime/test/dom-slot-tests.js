@@ -26,10 +26,12 @@ class MockDomContext {
   initContext(context) {
     this.context = context;
   }
+  createTemplateElement(template) {
+    return template;
+  }
 }
 DomSlot.prototype._createDomContext = () => new MockDomContext();
 DomSlot.prototype._initMutationObserver = () => {};
-DomContext.createTemplateElement = (template) => template;
 
 function createDomSlot(slotName) {
   // slotName should differ in each test case to avoid collision in DomSlot::templates.

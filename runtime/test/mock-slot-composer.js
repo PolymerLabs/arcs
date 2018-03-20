@@ -31,7 +31,7 @@ class MockSlot extends Slot {
 
   }
   getInnerContext(slotName) {
-    if (this._content.template && this._content.template.indexOf('slotid="annotation"') > 0) {
+    if (this._content.template && this._content.template.indexOf(`slotid="${slotName}"`) > 0) {
       return new MockContext('dummy-context');
     }
   }
@@ -241,7 +241,7 @@ class MockSlotComposer extends SlotComposer {
 
     this._expectationsMet();
 
-    super.renderSlot(particle, slotName, content);
+    await super.renderSlot(particle, slotName, content);
     let slot = this.getSlot(particle, slotName);
     if (slot) {
       await super.updateInnerSlots(slot);
@@ -274,6 +274,7 @@ class MockSlotComposer extends SlotComposer {
     console.log(`${this.expectQueue.length} expectations : {${Object.keys(expectationsByParticle).map(p => {
       return `${p}: (${Object.keys(expectationsByParticle[p]).map(key => `${key}=${expectationsByParticle[p][key]}`).join('; ')})`;
     }).join(', ')}}`);
+    return this;
   }
 }
 
