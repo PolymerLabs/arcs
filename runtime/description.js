@@ -284,7 +284,7 @@ export class DescriptionFormatter {
         return this._formatHandleValue(token.handleName, token._handle);
       case '_name_':
         return this._formatDescription(token._handleConn, token._handle);
-      default:
+      default: {
         assert(!token.extra, `Unrecognized extra ${token.extra}`);
 
         // Transformation's hosted particle.
@@ -316,6 +316,7 @@ export class DescriptionFormatter {
           return this._combineDescriptionAndValue(token, description, handleValue);
         }
         return description;
+      }
     }
   }
 

@@ -369,7 +369,7 @@ ${e.message}
         //     errors relating to failed merges can reference the manifest source.
         visitChildren();
         switch (node.kind) {
-        case 'schema-inline':
+        case 'schema-inline': {
           let externalSchemas = [];
           for (let name of node.names) {
             let resolved = manifest.resolveReference(name);
@@ -411,11 +411,13 @@ ${e.message}
             fields,
           }));
           return;
-        case 'variable-type':
+        }
+        case 'variable-type': {
           let constraint = node.constraint && node.constraint.model;
           node.model = Type.newVariable({name: node.name, constraint});
           return;
-        case 'reference-type':
+        }
+        case 'reference-type': {
           let resolved = manifest.resolveReference(node.name);
           if (!resolved) {
             throw new ManifestError(
@@ -430,6 +432,7 @@ ${e.message}
             throw new Error('Expected {shape} or {schema}');
           }
           return;
+        }
         case 'list-type':
           node.model = Type.newSetView(node.type.model);
           return;
