@@ -53,8 +53,8 @@ class PersistentArc extends Xen.Debug(Xen.Base, log) {
         if (externalManifest != metadata.externalManifest) {
           metadata.externalManifest = externalManifest;
           this._fire('metadata', metadata);
+          state.metadata = null;
         }
-        state.metadata = null;
       }
       if (metadata !== state.metadata) {
         log('WRITING metadata', metadata);
