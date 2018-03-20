@@ -59,18 +59,18 @@ recipe
     consume annotation as annotationSlot
 
 // Buying for [person]'s [occasion] in [timeframe]? Product [X] arrives too late.
-recipe
-  map as view1
-  use #shortlist as view2
-  use as view3
-  GiftList
-    person <- view1
-  Multiplexer
-    list <- view2
-    hostedParticle = Arrivinator
-  Multiplexer
-    list <- view3
-    hostedParticle = Arrivinator
+//recipe
+//  map as view1
+//  use #shortlist as view2
+//  use as view3
+//  GiftList
+//    person <- view1
+//  Multiplexer
+//    list <- view2
+//    hostedParticle = Arrivinator
+//  Multiplexer
+//    list <- view3
+//    hostedParticle = Arrivinator
     
 
 // Check manufacturer information for products.
@@ -87,23 +87,12 @@ recipe
     list <- shortlist
     hostedParticle <- Arrivinator
 
-// Check arrival information for products
-//shape HostedAlternateShipping
-//  HostedAlternateShipping(in ~a)
-//  consume
-//particle MultiplexerAlternateShipping in '../Common/source/Multiplexer.js'
-//  MultiplexerAlternateShipping(host HostedAlternateShipping hostedParticle, in [~a] list)
-//  consume set of shippingAnnotation
-//  description `${hostedParticle} for ${list}`
-//recipe
-//  use #shortlist as shortlist
-//  MultiplexerAlternateShipping
-//    list <- shortlist
-//    hostedParticle <- AlternateShipping
+// If the shipping date won't work, look for extra products
 recipe
-  use #product as product
-  AlternateShipping
-    consume shippingAnnotation
+  use #shortlist as shortlist
+  Multiplexer
+    list <- shortlist
+    hostedParticle <- AlternateShipping
 
 // Recommendations based on Claire's interest in field hockey.
 recipe

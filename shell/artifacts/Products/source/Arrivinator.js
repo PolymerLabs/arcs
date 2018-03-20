@@ -14,7 +14,6 @@ defineParticle(({DomParticle}) => {
 
   let template = `
     <div style%="{{style}}"><span>{{arrival}}</span></div>
-    <div slotid="shippingAnnotation"></div>
     `.trim();
 
   let daysToMs = 24*60*60*1000;

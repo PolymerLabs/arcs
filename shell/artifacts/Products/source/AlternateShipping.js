@@ -13,7 +13,7 @@
 defineParticle(({DomParticle}) => {
 
   let template = `
-    Alternatives that will arrive in time: {{alternatives}}
+    Alternatives that will arrive in time: <span>{{alternatives}}</span>
     `.trim();
 
   return class extends DomParticle {
@@ -24,7 +24,7 @@ defineParticle(({DomParticle}) => {
       return !!props && !!props.product;
     }
     render(props) {
-      let alternatives = ['Target', 'Cole Hardware'];
+      let alternatives = ['Target', 'Cole Hardware'].join(', ');
       return {
         alternatives
       };
