@@ -13,6 +13,7 @@ import '../components/suggestion-element.js';
 import '../components/corellia-xen/cx-input.js';
 import '../components/good-map.js';
 import '../components/video-controller.js';
+import '../components/file-upload.js';
 // deprecated!
 import '../components/x-list.js';
 
