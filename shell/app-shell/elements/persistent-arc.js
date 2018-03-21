@@ -52,16 +52,20 @@ class PersistentArc extends Xen.Debug(Xen.Base, log) {
         const externalManifest = this._getExternalManifest();
         if (externalManifest != metadata.externalManifest) {
           metadata.externalManifest = externalManifest;
-          this._fire('metadata', metadata);
           state.metadata = null;
+          //this._fire('metadata', metadata);
         }
       }
       if (metadata !== state.metadata) {
+        this._reviseMetadata(metadata);
+        state.metadata = metadata;
         log('WRITING metadata', metadata);
         state.db.child(key).child('metadata').update(metadata);
-        state.metadata = metadata;
       }
     }
+  }
+  _reviseMetadata(metadata) {
+    metadata.rev = (metadata.rev || 0) + 1;
   }
   _createKey(db) {
     let data = {
@@ -91,17 +95,15 @@ class PersistentArc extends Xen.Debug(Xen.Base, log) {
         let metadata = snap.val();
         if (this._hasMetadataChanged(metadata)) {
           log('remote metadata changed', metadata);
+          state.metadata = metadata;
           this._fire('metadata', metadata);
         }
       }
     };
   }
   _hasMetadataChanged(metadata) {
-    // TODO(sjmles): use a revisionId instead of a magic cookie
     const state = this._state;
-    if (!metadata.cookie || (metadata.cookie !== state.cookie)) {
-      state.cookie = Math.floor((Math.random()+1)*1e8);
-      metadata.cookie = state.cookie;
+    if (!state.metadata || (metadata.rev > state.metadata.rev)) {
       return true;
     }
   }
