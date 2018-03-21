@@ -8,7 +8,7 @@
 import assert from '../platform/assert-web.js';
 
 export class Strategizer {
-  constructor(strategies, evaluators, {maxPopulation, generationSize, discardSize}) {
+  constructor(strategies, evaluators, {maxPopulation, generationSize, discardSize, ruleset}) {
     this._strategies = strategies;
     this._evaluators = evaluators;
     this._generation = 0;
@@ -16,6 +16,7 @@ export class Strategizer {
     this._population = [];
     this._generated = [];
     this._terminal = [];
+    this._ruleset = ruleset;
     this._options = {
       maxPopulation,
       generationSize,
@@ -51,11 +52,12 @@ export class Strategizer {
     let generation = this.generation + 1;
     let individualsPerStrategy = Math.floor(this._options.generationSize / this._strategies.length);
     let generated = await Promise.all(this._strategies.map(strategy => {
+      let recipeFilter = recipe => this._ruleset.isAllowed(strategy, recipe);
       return strategy.generate({
         generation: this.generation,
-        generated: this.generated,
-        terminal: this.terminal,
-        population: this.population,
+        generated: this.generated.filter(recipeFilter),
+        terminal: this.terminal.filter(recipeFilter),
+        population: this.population.filter(recipeFilter),
         outputLimit: individualsPerStrategy
       });
     }));
@@ -281,3 +283,88 @@ export class Strategy {
     return individuals.map(() => NaN);
   }
 }
+
+export class Ruleset {
+  constructor(orderingRules) {
+    this._orderingRules = orderingRules;
+  }
+
+  isAllowed(strategy, recipe) {
+    let forbiddenAncestors = this._orderingRules.get(strategy.constructor);
+    if (!forbiddenAncestors) return true;
+    // TODO: This can be sped up with AND-ing bitsets of derivation strategies and forbiddenAncestors.
+    return !recipe.derivation.some(d => forbiddenAncestors.has(d.strategy.constructor));
+  }
+}
+
+Ruleset.Builder = class {
+  constructor() {
+    // Strategy -> [Strategy*]
+    this._orderingRules = new Map();
+  }
+
+  /**
+   * When invoked for strategies (A, B), ensures that B will never follow A in
+   * the chain of derivations of all generated recipes.
+   *
+   * Following sequences are therefore valid: A, B, AB, AAABB, AC, DBC, CADCBCBD
+   * Following sequences are therefore invalid: BA, ABA, BCA, DBCA
+   *
+   * Transitive closure of the ordering is computed.
+   * I.e. For orderings (A, B) and (B, C), the ordering (A, C) is implied.
+   *
+   * Method can be called with multiple strategies at once.
+   * E.g. (A, B, C) implies (A, B), (B, C) and transitively (A, C).
+   *
+   * Method can be called with arrays of strategies, which represent groups.
+   * The ordering in the group is not enforced, but the ordering between them is.
+   * E.g. ([A, B], [C, D], E) is a shorthand for:
+   * (A, C), (A, D), (B, C), (B, D), (C, E), (D, E).
+   */
+  order(...strategiesOrGroups) {
+    for (let i = 0; i < strategiesOrGroups.length - 1; i++) {
+      let current = strategiesOrGroups[i], next = strategiesOrGroups[i + 1];
+      for (let strategy of Array.isArray(current) ? current : [current]) {
+        let set = this._orderingRules.get(strategy);
+        if (!set) {
+          this._orderingRules.set(strategy, set = new Set());
+        }
+        for (let nextStrategy of Array.isArray(next) ? next : [next]) {
+          set.add(nextStrategy);
+        }
+      }
+    }
+    return this;
+  }
+
+  build() {
+    // Making the ordering transitive.
+    let beingExpanded = new Set();
+    let alreadyExpanded = new Set();
+    for (let strategy of this._orderingRules.keys()) {
+      this._transitiveClosureFor(strategy, beingExpanded, alreadyExpanded);
+    }
+    return new Ruleset(this._orderingRules);
+  }
+
+  _transitiveClosureFor(strategy, beingExpanded, alreadyExpanded) {
+    assert(!beingExpanded.has(strategy), 'Detected a loop in the ordering rules');
+
+    let followingStrategies = this._orderingRules.get(strategy);
+    if (alreadyExpanded.has(strategy)) return followingStrategies || [];
+
+    if (followingStrategies) {
+      beingExpanded.add(strategy);
+      for (let following of followingStrategies) {
+        for (let expanded of this._transitiveClosureFor(
+            following, beingExpanded, alreadyExpanded)) {
+          followingStrategies.add(expanded);
+        }
+      }
+      beingExpanded.delete(strategy);
+    }
+    alreadyExpanded.add(strategy);
+
+    return followingStrategies || [];
+  }
+};
