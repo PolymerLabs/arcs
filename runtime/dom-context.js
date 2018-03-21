@@ -30,6 +30,7 @@ class DomContext {
     assert(context);
     if (!this._context) {
       this._context = document.createElement(this._containerKind || 'div');
+      this._context.setAttribute('particle-host', '');
       context.appendChild(this._context);
     } else {
       assert(this._context.parentNode == context,
