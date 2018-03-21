@@ -79,7 +79,6 @@ defineParticle(({DomParticle}) => {
     }
   }
 
-  let i = 0;
   return class extends DomParticle {
     constructor() {
       super();
