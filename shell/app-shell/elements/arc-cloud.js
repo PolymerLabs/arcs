@@ -159,7 +159,7 @@ class ArcCloud extends Xen.Debug(Xen.Base, log) {
     this._setImmutableState('arcs', arcs);
   }
   _onUser(e, user) {
-    this._setState('user', user);
+    this._setState({user});
   }
   _onKey(e, key) {
     this._fire('key', key);
