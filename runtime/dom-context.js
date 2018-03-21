@@ -209,7 +209,12 @@ class SetDomContext {
     Object.keys(this._contextBySubId).forEach(subId => {
       let templateForSubId = template[subId] || template[''];
       if (templateForSubId) {
-        this._contextBySubId[subId].stampTemplate(templateForSubId, eventHandler, eventMapper);
+        // TODO: Clean up this hack that allows the subId to reach the event handler.
+        let wrappedHandler = (...args) => {
+          args[0].data.subId = subId;
+          eventHandler(...args);
+        };
+        this._contextBySubId[subId].stampTemplate(templateForSubId, wrappedHandler, eventMapper);
       }
     });
   }

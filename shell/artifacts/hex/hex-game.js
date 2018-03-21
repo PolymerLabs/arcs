@@ -57,7 +57,8 @@ defineParticle(({DomParticle}) => {
     }
 
     setCell(x, y, value) {
-      this._board[x + this.size * y] = value;
+      if (!this._board[x + this.size * y])
+        this._board[x + this.size * y] = value;
     }
 
     cell(x, y) {
@@ -94,22 +95,26 @@ defineParticle(({DomParticle}) => {
     render(props, state) {
       if (this.currentSlotName == 'root') {
         return {
-          player: this._player,
+          player: state.player,
         };
       }
       if (this.currentSlotName == 'cell') {
         return {
-          items: this._board.toModel(),
+          items: state.cells || [],
         };
       }
     }
-    onCellClick() {
-      // TODO: who clicked me?
-      let x = Math.random() * this._board.size |0;
-      let y = Math.random() * this._board.size |0;
+    onCellClick(e) {
+      let subId = e.data.subId;
+      let [x, y] = subId.split('-');
+      x = Number(x);
+      y = Number(y);
       this._board.setCell(x, y, this._player);
       this._player = this._player == 'p1' ? 'p2' : 'p1';
-      this.setState({a: Math.random()});
+      this.setState({
+        player: this._player,
+        cells: this._board.toModel(),
+      });
     }
   };
 });
