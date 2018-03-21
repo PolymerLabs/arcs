@@ -71,10 +71,10 @@ export default class SearchTokensToParticles extends Strategy {
     return this._walker;
   }
 
-  getResults(strategizer) {
-    assert(strategizer);
-    let generated = super.getResults(strategizer).filter(result => !result.result.isResolved());
-    let terminal = strategizer.terminal;
+  getResults(inputParams) {
+    assert(inputParams);
+    let generated = super.getResults(inputParams).filter(result => !result.result.isResolved());
+    let terminal = inputParams.terminal;
     return [...generated, ...terminal];
   }
 
@@ -82,10 +82,7 @@ export default class SearchTokensToParticles extends Strategy {
     this._byToken[token] = this._byToken[token] || [];
     this._byToken[token].push(particle);
   }
-  async generate(strategizer) {
-    return {
-      results: Recipe.over(this.getResults(strategizer), this.walker, this),
-      generate: null,
-    };
+  async generate(inputParams) {
+    return Recipe.over(this.getResults(inputParams), this.walker, this);
   }
 }

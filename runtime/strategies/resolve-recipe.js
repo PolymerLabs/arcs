@@ -18,9 +18,9 @@ export default class ResolveRecipe extends Strategy {
     this._arc = arc;
   }
 
-  async generate(strategizer) {
+  async generate(inputParams) {
     let arc = this._arc;
-    let results = Recipe.over(this.getResults(strategizer), new class extends RecipeWalker {
+    return Recipe.over(this.getResults(inputParams), new class extends RecipeWalker {
       onView(recipe, handle) {
         if (handle.connections.length == 0 || handle.id || (!handle.type) || (!handle.fate))
           return;
@@ -55,7 +55,7 @@ export default class ResolveRecipe extends Strategy {
         if (mappable.length == 1) {
           return (recipe, handle) => {
             handle.mapToView(mappable[0]);
-          };            
+          };
         }
       }
 
@@ -63,12 +63,12 @@ export default class ResolveRecipe extends Strategy {
         if (slotConnection.isConnected()) {
           return;
         }
-        
+
         let selectedSlots = MapSlots.findAllSlotCandidates(slotConnection, arc);
         if (selectedSlots.length !== 1) {
           return;
         }
-        
+
         let selectedSlot = selectedSlots[0];
 
         return (recipe, slotConnection) => {
@@ -77,7 +77,5 @@ export default class ResolveRecipe extends Strategy {
         };
       }
     }(RecipeWalker.Permuted), this);
-
-    return {results, generate: null};
   }
 }

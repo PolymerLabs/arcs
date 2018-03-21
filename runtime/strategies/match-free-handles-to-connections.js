@@ -16,16 +16,16 @@ import assert from '../../platform/assert-web.js';
  * to connections.
  */
 export default class MatchFreeHandlesToConnections extends Strategy {
-  async generate(strategizer) {
+  async generate(inputParams) {
     let self = this;
 
-    let results = Recipe.over(this.getResults(strategizer), new class extends RecipeWalker {
+    return Recipe.over(this.getResults(inputParams), new class extends RecipeWalker {
       onView(recipe, handle) {
         if (handle.connections.length > 0)
           return;
 
         let matchingConnections = recipe.handleConnections.filter(connection => connection.handle == undefined && connection.name !== 'descriptions');
-           
+
         return matchingConnections.map(connection => {
           return (recipe, handle) => {
             let newConnection = recipe.updateToClone({connection}).connection;
@@ -35,7 +35,5 @@ export default class MatchFreeHandlesToConnections extends Strategy {
         });
       }
     }(RecipeWalker.Permuted), this);
-
-    return {results, generate: null};
   }
 }

@@ -12,11 +12,15 @@ import Recipe from '../recipe/recipe.js';
 import RecipeWalker from '../recipe/walker.js';
 
 export default class FallbackFate extends Strategy {
-  async generate(strategizer) {
-    assert(strategizer);
-    let generated = strategizer.generated.filter(result => !result.result.isResolved());
-    let terminal = strategizer.terminal;
-    let results = Recipe.over([...generated, ...terminal], new class extends RecipeWalker {
+  getResults(inputParams) {
+    assert(inputParams);
+    let generated = inputParams.generated.filter(result => !result.result.isResolved());
+    let terminal = inputParams.terminal;
+    return [...generated, ...terminal];
+  }
+
+  async generate(inputParams) {
+    return Recipe.over(this.getResults(inputParams), new class extends RecipeWalker {
       onView(recipe, view) {
         // Only apply this strategy only to user query based recipes with resolved tokens.
         if (!recipe.search || (recipe.search.resolvedTokens.length == 0)) {
@@ -40,7 +44,5 @@ export default class FallbackFate extends Strategy {
         };
       }
     }(RecipeWalker.Permuted), this);
-
-    return {results, generate: null};
   }
 }

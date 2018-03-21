@@ -16,10 +16,10 @@ export default class MapSlots extends Strategy {
     super();
     this._arc = arc;
   }
-  async generate(strategizer) {
+  async generate(inputParams) {
     let arc = this._arc;
 
-    let results = Recipe.over(this.getResults(strategizer), new class extends RecipeWalker {
+    return Recipe.over(this.getResults(inputParams), new class extends RecipeWalker {
       onSlotConnection(recipe, slotConnection) {
         if (slotConnection.isConnected()) {
           return;
@@ -38,8 +38,6 @@ export default class MapSlots extends Strategy {
         };
       }
     }(RecipeWalker.Permuted), this);
-
-    return {results, generate: null};
   }
 
   // Helper methods.
@@ -112,7 +110,7 @@ export default class MapSlots extends Strategy {
   }
 
   // Returns true, if the slot connection's tags intersection with slot's tags is nonempty.
-  // TODO: replace with generic tag matcher      
+  // TODO: replace with generic tag matcher
   static _tagsMatch(slotConnection, slot) {
     let consumeConnTags = slotConnection.slotSpec.tags || [];
     let slotTags = new Set([].concat(slot.tags, slot.getProvidedSlotSpec().tags || []));
@@ -121,7 +119,7 @@ export default class MapSlots extends Strategy {
   }
 
   // Returns true, if the providing slot handle restrictions are satisfied by the consuming slot connection.
-      // TODO: should we move some of this logic to the recipe? Or type matching?  
+      // TODO: should we move some of this logic to the recipe? Or type matching?
   static _handlesMatch(consumingParticle, providingSlotHandles) {
     if (providingSlotHandles.length == 0) {
       return true; // slot is not limited to specific handles

@@ -105,10 +105,7 @@ export default class GroupHandleConnections extends Strategy {
   get walker() {
     return this._walker;
   }
-  async generate(strategizer) {
-    return {
-      results: Recipe.over(this.getResults(strategizer), this.walker, this),
-      generate: null,
-    };
+  async generate(inputParams) {
+    return Recipe.over(this.getResults(inputParams), this.walker, this);
   }
 }

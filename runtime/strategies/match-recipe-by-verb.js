@@ -15,9 +15,9 @@ export default class MatchRecipeByVerb extends Strategy {
     this._arc = arc;
   }
 
-  async generate(strategizer) {
+  async generate(inputParams) {
     let arc = this._arc;
-    let results = Recipe.over(this.getResults(strategizer), new class extends RecipeWalker {
+    return Recipe.over(this.getResults(inputParams), new class extends RecipeWalker {
       onParticle(recipe, particle) {
         if (particle.name) {
           // Particle already has explicit name.
@@ -42,7 +42,5 @@ export default class MatchRecipeByVerb extends Strategy {
         });
       }
     }(RecipeWalker.Permuted), this);
-
-    return {results, generate: null};
   }
 }
