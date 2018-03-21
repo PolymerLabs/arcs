@@ -69,6 +69,7 @@ http://polymer.github.io/PATENTS.txt
     attached: function() {
       document.strategyExplorer = this;
       this.reset();
+      this.timeoutId = null;
     },
     onMessages: function(messages) {
       for (let msg of messages) {
@@ -76,7 +77,12 @@ http://polymer.github.io/PATENTS.txt
           case 'generations':
             if (JSON.stringify(this.results) !== JSON.stringify(msg.messageBody)) {
               this.reset();
-              setTimeout(()=>this.set('results', msg.messageBody), 0);
+              if (this.timeoutId) {
+                // Clear previous timeout if it hasn't fired yet. Prevents
+                // race conditions between multiple reset() and setting results.
+                clearTimeout(this.timeoutId);
+              }
+              this.timeoutId = setTimeout(()=>this.set('results', msg.messageBody), 0);
             }
             break;
           case 'page-refresh':
