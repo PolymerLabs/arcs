@@ -75,7 +75,7 @@ const Main = Xen.html`
 </app-main>
 
 <app-tools>
-  <shell-particles arc="{{arc}}"></shell-particles>
+  <shell-particles arc="{{arc}}" plan="{{plan}}"></shell-particles>
   <simple-tabs>
     <div tab="Handle Explorer">
       <handle-explorer arc="{{arc}}"></handle-explorer>
@@ -96,7 +96,7 @@ const log = Xen.Base.logFactory('ShellUi', '#294740');
 
 class ShellUi extends Xen.Debug(Xen.Base, log) {
   static get observedAttributes() {
-    return ['config', 'manifests', 'exclusions', 'users', 'user', 'friends', 'avatars', 'key', 'arc', 'metadata', 'share', 'theme'];
+    return ['config', 'manifests', 'exclusions', 'users', 'user', 'friends', 'avatars', 'key', 'arc', 'plan', 'metadata', 'share', 'theme'];
   }
   get css() {
     return Css;
@@ -145,13 +145,14 @@ class ShellUi extends Xen.Debug(Xen.Base, log) {
       toolsVisible: config.arcsToolsVisible
     });
   }
-  _render({config, manifests, exclusions, users, user, friends, avatars, key, arc, share, theme}, state) {
+  _render({config, manifests, exclusions, users, user, friends, avatars, key, arc, plan, share, theme}, state) {
     const avatarUrl = user && user.avatar ? user.avatar : `${shellPath}/assets/avatars/user (0).png`;
     const render = {
       manifests,
       exclusions,
       users,
       arc,
+      plan,
       friends,
       avatars,
       share,

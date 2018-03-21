@@ -141,6 +141,7 @@ const template = html`
     user="{{user}}"
     key="{{key}}"
     arc="{{arc}}"
+    plan="{{plan}}"
     metadata="{{metadata}}"
     friends="{{friends}}"
     avatars="{{avatars}}"
