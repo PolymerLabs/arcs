@@ -87,9 +87,11 @@ defineParticle(({DomParticle, html, log}) => {
       handle.set(new (handle.entityClass)(data));
     }
     savePost(user, message, image) {
+      // TODO(wkorman): Fill in post specific rendering recipe below.
+      const recipe = 'TODO';
       this.setHandle(
           'post',
-          {message, image, createdTimestamp: Date.now(), author: user.id});
+          {message, image, createdTimestamp: Date.now(), author: user.id, recipe});
       this.setState({savePost: false});
     }
     onTextInput(e) {

@@ -35,18 +35,19 @@ defineParticle(({DomParticle, html}) => {
 <div ${host} content value="{{id}}">
   <img src="{{image}}">
   <span>{{message}}</span>
-</div>
-    `.trim();
+</div>`;
 
   return class extends DomParticle {
     get template() {
       return template;
     }
-    render({message, image, id}) {
+    render({post}) {
       // TODO(wkorman): Maybe we need to render the author avatar and time of
       // post here as well. It will be rendered identically for different post
       // types, so currently hoping we can do it generically in the containing
       // aggregated feed particle on a per-post basis somehow.
+      if (!post) return {};
+      const {message, image, id} = post;
       return {
         message,
         image: image || '',

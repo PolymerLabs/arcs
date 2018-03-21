@@ -112,6 +112,8 @@ class Scoring {
     updatedValues.createdTimestamp = stats.startstamp;
     updatedValues.message = Scoring.scoreToMessage(updatedValues);
     updatedValues.author = user.id;
+    // TODO(wkorman): Fill in game specific rendering recipe below.
+    updatedValues.recipe = 'TODO';
 
     return updatedValues;
   }

@@ -8,7 +8,7 @@
 
 shape HostedParticleShape
   HostedParticleShape(in ~a)
-  consume item
+  consume
 
 particle ItemMultiplexer in 'source/Multiplexer.js'
   ItemMultiplexer(host HostedParticleShape hostedParticle, in [~a] list)

@@ -8,6 +8,8 @@
 
 import 'Particles.manifest'
 import 'https://$cdn/artifacts/Common/Detail.manifest'
+import 'https://$cdn/artifacts/Common/List.manifest'
+import 'https://$cdn/artifacts/Words/ShowSingleStats.manifest'
 
 // Allows creating multiple posts by the author and viewing all posts created
 // in this Arc.
@@ -36,17 +38,25 @@ recipe
     selected = post
 
 // A feed that aggregates everything a user and friends say.
+// recipe
+//   map #BOXED_posts as posts
+//   // TODO(wkorman): Genericize stats integration via polymorphic recipe antics.
+//   map #BOXED_stats as stats
+//   map #BOXED_avatar as avatars
+//   use #user as user
+//   use #identities as people
+//
+//   OnlyShowPosts
+//     posts <- posts
+//     stats <- stats
+//     user <- user
+//     avatars <- avatars
+//     people <- people
+
 recipe
   map #BOXED_posts as posts
-  // TODO(wkorman): Genericize stats integration via polymorphic recipe antics.
-  map #BOXED_stats as stats
-  map #BOXED_avatar as avatars
-  use #user as user
-  use #identities as people
-
-  OnlyShowPosts
-    posts <- posts
-    stats <- stats
-    user <- user
-    avatars <- avatars
-    people <- people
+  List
+    items = posts
+  ItemMultiplexer
+    list = posts
+    hostedParticle = ShowSinglePost
