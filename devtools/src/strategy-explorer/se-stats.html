@@ -15,26 +15,50 @@ http://polymer.github.io/PATENTS.txt
     <style include='shared-styles se-shared-styles'>
       :host {
         display: block;
+        background: white;
+        border: 1px solid var(--mid-gray);
+        overflow: hidden;
+      }
+      .section {
+        border-bottom: 1px solid var(--mid-gray);
+        padding: 5px;
+      }
+      .section > :first-child {
+        text-align: center;
+        font-size: 75%;
+        padding-bottom: 5px;
       }
     </style>
+    <div class='section'>
+      <div>Summary</div>
+      <div>total: {{totalResults(results)}}</div>
+      <div>resolved: {{resolvedResults(results)}}</div>
+    </div>
     <template is='dom-repeat' items='{{results}}'>
-      <template is='dom-repeat' items='{{item.population}}'>
-        <div>{{populationSize(item)}}</div>
-      </template>
-      <div>{{generationSize(item.population)}}</div>
+      <div class='section'>
+        <div>Generation [[index]]</div>
+        <template is='dom-repeat' items='{{item.population}}'>
+          <div>[[item.strategy]]: [[item.recipes.length]]</div>
+        </template>
+        <div>total: {{generationSize(item)}}</div>
+      </div>
     </template>
   </template>
   <script>
-    Polymer({is: 'se-stats',
-  
-      populationSize: function(strategy) {
-        return `${strategy.strategy}: ${strategy.recipes.length}`;
-      }, 
 
-      generationSize: function(population) {
-        return `total: ${population.reduce((a, b) => a + b.recipes.length, 0)}`;
-      }
-  
+    Polymer({is: 'se-stats',
+
+      resolvedResults: function(results) {
+        return this.totalResults(results, r => r.resolved);
+      },
+
+      totalResults: function(results, recipeFilter = (x => true)) {
+        return results.reduce((a, b) => a + this.generationSize(b, recipeFilter), 0);
+      },
+
+      generationSize: function(generation, recipeFilter = (x => true)) {
+        return generation.population.reduce((a, b) => a + b.recipes.filter(recipeFilter).length, 0);
+      },
     });
   </script>
 </dom-module>
