@@ -6,11 +6,11 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-defineParticle(({DomParticle}) => {
+defineParticle(({DomParticle, html}) => {
 
   let host = `restaurant-detail`;
 
-  let styles = `
+  let styles = html`
 <style>
   [${host}] {
     position: relative;
@@ -19,6 +19,7 @@ defineParticle(({DomParticle}) => {
     flex-direction: column;
     width: 100%;
   }
+  /*
   [${host}] star {
     display: inline-block;
     width: 14px;
@@ -31,6 +32,7 @@ defineParticle(({DomParticle}) => {
   [${host}] star[hollow] {
     background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABwAAAAaCAQAAAAOXfQCAAAA/0lEQVR4AZ3SW0sCQRjG8Skzkw5EGAWCCApJeBFFQSEtSGEURGoElnaw3fn+3+AfDDE7G3No9n2u3neen96scA+H7IkywwUn5eAzj2XYFpKUWjw8RiLpxsM7BYexrMJSwXdW4mAL+ZuDODjQ8DwOvmo4dZc6jJkUMkUamfzJE63845oh/5kX9s1/rZIQRhlXVDTSuM3Cy95oCvuwwcjJhqwL39CzoJSOCA0NpCU7YXhmhf0wHFvhfYjVyazwmzU/PDLKM+bG1vbDW11MqFLjRu/XPrbKpyot8t+ny4e6zX2wqSoj6oXrJg/q3nDDS77oWV/6LDl1w4Rt59suA3P/AYHdZDfGturmAAAAAElFTkSuQmCC);
   }
+  */
   [${host}] [content] {
     position: relative;
     top: 168px;
@@ -89,11 +91,9 @@ defineParticle(({DomParticle}) => {
   }
   [${host}] [stars-container] {
     display: inline-block;
-    /* width: 100px; */
-    /* height: 20px; */
     width: 82px;
     height: 18px;
-background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAKQAAAAkCAYAAAAHBZGZAAAAAXNSR0IArs4c6QAAA0xJREFUeAHtmdtqFEEQhrtneqMrHogkYA4eIRGE3OTKS/UdfBhRcASD+hy58yE8kBtRyE0gF4kghkQ8XAQ0ZpPs9JRbMePWZnudKTsToacWhq2p/rv+5cvPzmZGKXkJASEgBISAEBACQkAICAEhIATqTgCeXT+Dx//iIP7h8DdHEaLd1tbYwZwfRzGPO0P8w+Efcf/4Lj1YO4aHa+04euIfDn/vQEIyfqqh4SweWB9HAKmH+IfF3zuQKo2734y0pqmpsqaetK7Sk86mnrSmmipr6knrKj3pbOpJa6ph1N6BTKF7qaY14zN4Saknrb2GMjZTT1ozRnhJqSetvYYyNlNPWjNG9Ei9AgnJlZM6tsP5RKyxl59X/S7+4fH3CuROCt3L9UH6XL2qgunycvXEvxoCLtauHsfdK5AG2n2BdPU4H4ijdXm5epyZHK3Ly9XjzORoXV6uHmcmR+vycvU4M/UgMSQTkzazM0rBkdyr7ProNI7iJZ1srHd7/ZX415P/wEBiRPCWStpWs/R3Yn90ynfAxpumoRZ18mm7zC7xrx//vwYSQwMAWj2anLJpOq0iVah3Bi1TEBuzoh6ur2qtwakZ0BT/evEvHTB4cmk4bdlZrVLWzW9QZts040V9b21zQOZKtcW/HvxLBxJTAy9vmfaLlZlI28kyKcogXm/cmV7St1+lZfRFGvEPnz8rkHlg9u5P3IzidDQ/d71n1nwbmtt441rz7Yl/uPzZt33g+d040/Z8UahQg9oiHXdd/MPmzw7kz+V3oyaCwqChBrXcwBXpxT9s/uxADtm9vpvhoOIdPA6HyaU9rOGeu2aKfzj8WYGEJIkynV2gIcqs/mKi4dd4YN2z1tHiHtrzqcU/fP7MpzDzI+bPkxudtbMTy825jx+U+pzn7G3rweWrjWj3Rud/8ui3dn6ks/g1F/i9i3/o/FnfXm27s3+57txb3Iqj0wvNxxjG3hf2cA01uJLv6VX921k+S/zD5V86kPjERHcuwRmYNRNNLejk/fdBscI11KAW9+w/bRkkLtkX/3rz74sJPL12DpKL430LBQ3cg3sLZIXL4l9v/oUBEYEQEAJCQAgIASEgBISAEBACQkAICAEhIASEgBAQAkKgJIFfs5ALEOK9FakAAAAASUVORK5CYII=);
+    background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAKQAAAAkCAYAAAAHBZGZAAAAAXNSR0IArs4c6QAAA0xJREFUeAHtmdtqFEEQhrtneqMrHogkYA4eIRGE3OTKS/UdfBhRcASD+hy58yE8kBtRyE0gF4kghkQ8XAQ0ZpPs9JRbMePWZnudKTsToacWhq2p/rv+5cvPzmZGKXkJASEgBISAEBACQkAICAEhIATqTgCeXT+Dx//iIP7h8DdHEaLd1tbYwZwfRzGPO0P8w+Efcf/4Lj1YO4aHa+04euIfDn/vQEIyfqqh4SweWB9HAKmH+IfF3zuQKo2734y0pqmpsqaetK7Sk86mnrSmmipr6knrKj3pbOpJa6ph1N6BTKF7qaY14zN4Saknrb2GMjZTT1ozRnhJqSetvYYyNlNPWjNG9Ei9AgnJlZM6tsP5RKyxl59X/S7+4fH3CuROCt3L9UH6XL2qgunycvXEvxoCLtauHsfdK5AG2n2BdPU4H4ijdXm5epyZHK3Ly9XjzORoXV6uHmcmR+vycvU4M/UgMSQTkzazM0rBkdyr7ProNI7iJZ1srHd7/ZX415P/wEBiRPCWStpWs/R3Yn90ynfAxpumoRZ18mm7zC7xrx//vwYSQwMAWj2anLJpOq0iVah3Bi1TEBuzoh6ur2qtwakZ0BT/evEvHTB4cmk4bdlZrVLWzW9QZts040V9b21zQOZKtcW/HvxLBxJTAy9vmfaLlZlI28kyKcogXm/cmV7St1+lZfRFGvEPnz8rkHlg9u5P3IzidDQ/d71n1nwbmtt441rz7Yl/uPzZt33g+d040/Z8UahQg9oiHXdd/MPmzw7kz+V3oyaCwqChBrXcwBXpxT9s/uxADtm9vpvhoOIdPA6HyaU9rOGeu2aKfzj8WYGEJIkynV2gIcqs/mKi4dd4YN2z1tHiHtrzqcU/fP7MpzDzI+bPkxudtbMTy825jx+U+pzn7G3rweWrjWj3Rud/8ui3dn6ks/g1F/i9i3/o/FnfXm27s3+57txb3Iqj0wvNxxjG3hf2cA01uJLv6VX921k+S/zD5V86kPjERHcuwRmYNRNNLejk/fdBscI11KAW9+w/bRkkLtkX/3rz74sJPL12DpKL430LBQ3cg3sLZIXL4l9v/oUBEYEQEAJCQAgIASEgBISAEBACQkAICAEhIASEgBAQAkKgJIFfs5ALEOK9FakAAAAASUVORK5CYII=);
     background-size: cover;
   }
   [${host}] [stars] {
@@ -129,7 +129,7 @@ background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAKQAAAAkCAYA
 </style>
   `;
 
-  let template = `
+  let template = html`
 ${styles}
 <div ${host}>
   <div banner style%="{{style}}">

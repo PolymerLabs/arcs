@@ -6,11 +6,11 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-defineParticle(({DomParticle}) => {
+defineParticle(({DomParticle, html}) => {
 
   let host = `master-detail`;
 
-  let template = `
+  let template = html`
 <style>
   [${host}] .x-button {
     display: inline-flex;
@@ -26,15 +26,16 @@ defineParticle(({DomParticle}) => {
   [${host}] .x-button:disabled {
     opacity: 0.3;
   }
+  /*
   [${host}] .x-button.raised {
-    // transition: box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    // transition-delay: 0.2s;
-
+    transition: box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    transition-delay: 0.2s;
   }
   [${host}] .x-button.raised:active:not(:disabled) {
-    // box-shadow: 0 8px 17px 0 rgba(0, 0, 0, 0.2);
-    // transition-delay: 0s;
+    box-shadow: 0 8px 17px 0 rgba(0, 0, 0, 0.2);
+    transition-delay: 0s;
   }
+  */
   [${host}] .detail-wrapper {
     position: relative;
   }
@@ -51,7 +52,7 @@ defineParticle(({DomParticle}) => {
 </style>
 <div ${host}>
   <div class="detail-wrapper" style%="{{tab0}}">
-    <button on-click="_onBack" class="close-button material-icons">close</button>
+    <icon class="close-button" on-click="_onBack">close</icon>
     <div slotid="detail"></div>
   </div>
   <div style%="{{tab1}}">
