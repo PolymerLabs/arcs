@@ -22,7 +22,7 @@ class DomContext {
   }
   static createContext(context, content) {
     let domContext = new DomContext(context);
-    domContext.stampTemplate(domContext.createTemplateElement(content.template), () => {});
+    domContext.stampTemplate(domContext.createTemplateElement(content.template), () => { });
     domContext.updateModel(content.model);
     return domContext;
   }
@@ -34,7 +34,7 @@ class DomContext {
       context.appendChild(this._context);
     } else {
       assert(this._context.parentNode == context,
-             'TODO: add support for moving slot to different context');
+        'TODO: add support for moving slot to different context');
     }
   }
   get context() { return this._context; }
@@ -55,7 +55,7 @@ class DomContext {
 
   }
   static createTemplateElement(template) {
-    return Object.assign(document.createElement('template'), {innerHTML: template});
+    return Object.assign(document.createElement('template'), { innerHTML: template });
   }
   createTemplateElement(template) {
     return DomContext.createTemplateElement(template);
@@ -65,13 +65,13 @@ class DomContext {
       // TODO(sjmiles): hack to allow subtree elements (e.g. x-list) to marshal events
       this._context._eventMapper = this._eventMapper.bind(this, eventHandler);
       this._liveDom = Template
-          .stamp(template)
-          .events(this._context._eventMapper)
-          .appendTo(this._context);
+        .stamp(template)
+        .events(this._context._eventMapper)
+        .appendTo(this._context);
     }
   }
   observe(observer) {
-    observer.observe(this._context, {childList: true, subtree: true});
+    observer.observe(this._context, { childList: true, subtree: true });
   }
   getInnerContext(innerSlotName) {
     return this._innerContextBySlotName[innerSlotName];
@@ -107,13 +107,13 @@ class DomContext {
       if (providedSlotSpec) { // Skip non-declared slots
         const subId = this.getNodeValue(s, 'subid');
         assert(!subId || providedSlotSpec.isSet,
-            `Slot provided in ${slotSpec.name} sub-id ${subId} doesn't match set spec: ${providedSlotSpec.isSet}`);
+          `Slot provided in ${slotSpec.name} sub-id ${subId} doesn't match set spec: ${providedSlotSpec.isSet}`);
         if (providedSlotSpec.isSet) {
           if (!this._innerContextBySlotName[slotId]) {
             this._innerContextBySlotName[slotId] = {};
           }
           assert(!this._innerContextBySlotName[slotId][subId],
-                 `Slot ${slotSpec.name} cannot provide multiple ${slotId}:${subId} inner slots`);
+            `Slot ${slotSpec.name} cannot provide multiple ${slotId}:${subId} inner slots`);
           this._innerContextBySlotName[slotId][subId] = s;
         } else {
           this._innerContextBySlotName[slotId] = s;
@@ -141,14 +141,14 @@ class DomContext {
       // is to enforce a 'first listener' rule by executing `stopPropagation`.
       event.stopPropagation();
       // propagate keyboard information
-      const {altKey, ctrlKey, metaKey, shiftKey, code, key, repeat} = event;
+      const { altKey, ctrlKey, metaKey, shiftKey, code, key, repeat } = event;
       eventHandler({
         handler: handlerName,
         data: {
           // TODO(sjmiles): this is a data-key (as in key-value pair), may be confusing vs `keys`
           key: node.key,
           value: node.value,
-          keys: {altKey, ctrlKey, metaKey, shiftKey, code, key, repeat}
+          keys: { altKey, ctrlKey, metaKey, shiftKey, code, key, repeat }
         }
       });
     });
@@ -176,16 +176,14 @@ class SetDomContext {
   }
   isEqual(context) {
     return Object.keys(this._contextBySubId).length == Object.keys(context).length &&
-           !Object.keys(this._contextBySubId).find(c => this._contextBySubId[c] != context[c]);
+      !Object.keys(this._contextBySubId).find(c => this._contextBySubId[c] != context[c]);
   }
   updateModel(model) {
     assert(model.items, `Model must contain items`);
     model.items.forEach(item => {
-      Object.keys(model).forEach(key => {
-        if (key != 'items') {
-          item[key] = model[key];
-        }
-      });
+      // Properties from item override properties from model.
+      item = Object.assign(Object.assign({}, model), item);
+      delete item.items;
       if (this._contextBySubId[item.subId]) {
         this._contextBySubId[item.subId].updateModel(item);
       }
@@ -209,12 +207,7 @@ class SetDomContext {
     Object.keys(this._contextBySubId).forEach(subId => {
       let templateForSubId = template[subId] || template[''];
       if (templateForSubId) {
-        // TODO: Clean up this hack that allows the subId to reach the event handler.
-        let wrappedHandler = (...args) => {
-          args[0].data.subId = subId;
-          eventHandler(...args);
-        };
-        this._contextBySubId[subId].stampTemplate(templateForSubId, wrappedHandler, eventMapper);
+        this._contextBySubId[subId].stampTemplate(templateForSubId, eventHandler, eventMapper);
       }
     });
   }
