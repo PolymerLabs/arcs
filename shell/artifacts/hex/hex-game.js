@@ -9,14 +9,14 @@ defineParticle(({DomParticle}) => {
   const rootTemplate = `
     <style>
       hex-game {
-        --hex-p1: #F44336;
-        --hex-p2: #2196F3;
+        --hex-x: #F44336;
+        --hex-y: #2196F3;
       }
-      hex-game[player=p1] {
-        --current-player-color: var(--hex-p1);
+      hex-game[player=x] {
+        --current-player-color: var(--hex-x);
       }
-      hex-game[player=p2] {
-        --current-player-color: var(--hex-p2);
+      hex-game[player=y] {
+        --current-player-color: var(--hex-y);
       }
       hex-game[can-swap] {
         --swap-color: var(--current-player-color);
@@ -37,11 +37,11 @@ defineParticle(({DomParticle}) => {
         background: var(--current-player-color);
         opacity: 0.5;
       }
-      hex-cell[player=p1] {
-        background: var(--hex-p1);
+      hex-cell[player=x] {
+        background: var(--hex-x);
       }
-      hex-cell[player=p2] {
-        background: var(--hex-p2);
+      hex-cell[player=y] {
+        background: var(--hex-y);
       }
     </style>
     hex-game <hex-game player$="{{player}}" can-swap$="{{canSwap}}" slotid="board"></hex-game>`;
@@ -51,9 +51,9 @@ defineParticle(({DomParticle}) => {
     constructor(size) {
       this._size = size;
       this._board = [];
-      this._board.length = size * size;
       this._player = 0;
       this._moves = 0;
+      this._winner = null;
     }
 
     get size() {
@@ -65,21 +65,73 @@ defineParticle(({DomParticle}) => {
     }
 
     get player() {
-      return this._player ? 'p1' : 'p2';
+      return this.winner ? null : this._player ? 'x' : 'y';
+    }
+
+    get winner() {
+      return this._winner;
+    }
+
+    _tryFindWinner(x, y, seen) {
+      seen = seen || {};
+      if (x == undefined) {
+        // Start a search along one x and one y edge.
+        for (let i = 0; i < size; i++) {
+          if (this._tryFindWinner(0, i, seen) || this._tryFindWinner(i, 0, seen))
+            return true;
+        }
+        return false;
+      }
+      // Traverse all cells adjacent to {x, y} that are set to the same value.
+      // If we can traverse both extremities then we have found a connecting path.
+      let target = this.cell(x, y);
+      if (!target) {
+        return false;
+      }
+      let queue = [[x, y]];
+      let min = Infinity;
+      let max = -Infinity;
+      let size = this.size;
+      while (queue.length) {
+        let [x, y] = queue.pop();
+        seen[x + '-' + y] = true;
+        let neighbours = [
+          [x+0, y-1],
+          [x+1, y-1],
+          [x-1, y+0],
+          [x+1, y+0],
+          [x-1, y+1],
+          [x+0, y+1],
+        ];
+        queue.push(...neighbours.filter(([x, y]) => this.cell(x, y) == target && !seen[x + '-' + y]));
+        let value = target == 'x' ? x : y;
+        min = Math.min(value, min);
+        max = Math.max(value, max);
+      }
+      if (min == 0 && max == size - 1) {
+        this._winner = target;
+        return true;
+      }
+      return false;
     }
 
     trySetCell(x, y) {
+      if (this._winner) {
+        return false;
+      }
       if (!this._board[x + this.size * y] || this.canSwap) {
         this._board[x + this.size * y] = this.player;
         this._player ^= 1;
         this._moves++;
+        this._tryFindWinner(x, y);
         return true;
       }
       return false;
     }
 
     cell(x, y) {
-      return this._board[x + this.size * y];
+      if (x >= 0 && x < this.size && y >= 0 && y < this.size)
+        return this._board[x + this.size * y];
     }
 
     toModel() {
@@ -100,7 +152,7 @@ defineParticle(({DomParticle}) => {
     constructor() {
       super();
       this._board = new Board(8);
-      this._player = 'p1';
+      this._player = 'x';
     }
     getTemplate(slotName) {
       if (slotName == 'root')
