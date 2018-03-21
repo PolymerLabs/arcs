@@ -274,7 +274,7 @@ class AppShell extends Xen.Debug(Xen.Base, log) {
       const description = await ArcsUtils.describeArc(arc);
       if (description && metadata.description !== description) {
         metadata.description = description;
-        this._setImmutableState({metadata});
+        this._setImmutableState('metadata', metadata);
       }
     }
     // we consumed a plan, need new ones
