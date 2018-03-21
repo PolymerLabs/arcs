@@ -10,10 +10,6 @@ schema Cell
 
 schema HexGameState
 
-particle HexCell in 'hex-cell.js'
-  HexCell(in Cell cell, inout Cell selected)
-  consume cell
-
 particle HexBoard in 'hex-board.js'
   HexBoard()
   consume board
