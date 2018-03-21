@@ -19,18 +19,17 @@ class ArcSteps extends Xen.Debug(Xen.Base, log) {
   }
   _getInitialState() {
     return {
-      steps: [],
       applied: []
     };
   }
-  _update({plans, plan, steps, step}, state, lastProps) {
+  _update({plans, plan, steps, step}, {applied}, lastProps) {
     if (plans && plan !== lastProps.plan) {
       // `plan` has been instantiated into host, record it into `steps`
-      this._addStep(plan, plans.generations, state.steps, state.applied);
+      this._addStep(plan, plans.generations, steps || [], applied);
     }
     if (plans && steps) {
       // find a step from `steps` that correspondes to a plan in `plans` but hasn't been `applied`
-      this._providePlanStep(plans, steps, state.applied);
+      this._providePlanStep(plans, steps, applied);
     }
   }
   _addStep(plan, generations, steps, applied) {
@@ -38,7 +37,7 @@ class ArcSteps extends Xen.Debug(Xen.Base, log) {
     // TODO(sjmiles): when it comes back from Firebase, steps can be an object (with numeric indices) instead of an Array
     steps = Object.values(steps);
     if (step && !steps.find(s => s.hash === step.hash)) {
-      log('adding step from host');
+      log('adding step from host', step.hash);
       steps.push(step);
       applied[step.hash] = true;
       this._fire('steps', steps);
@@ -49,12 +48,12 @@ class ArcSteps extends Xen.Debug(Xen.Base, log) {
     for (let step of candidates) {
       const planStep = this._findPlanForStep(step, plans);
       if (planStep) {
-        log('found suggestion for step'); //, planStep);
+        log('found suggestion for step', step.hash);
         applied[step.hash] = true;
         this._fire('step', planStep);
         return;
       } else {
-        log('rejecting step'); //, step);
+        log('rejecting step', step.hash);
       }
     }
   }
