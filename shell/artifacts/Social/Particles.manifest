@@ -36,3 +36,7 @@ particle EditPost in 'source/EditPost.js'
   EditPost(inout Post post, inout [Post] posts, in Person user)
   consume content
   description `edit a post`
+
+particle PostMuxer in 'source/PostMuxer.js'
+  PostMuxer(in [Post] posts)
+  consume set of items
