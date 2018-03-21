@@ -45,7 +45,7 @@ defineParticle(({DomParticle}) => {
       }
     </style>
     hex-game <hex-game player$="{{player}}" can-swap$="{{canSwap}}" slotid="board"></hex-game>`;
-  const cellTemplate = `<hex-cell player$="{{player}}" on-click="onCellClick"></hex-cell>`;
+  const cellTemplate = `<hex-cell player$="{{move}}" on-click="onCellClick" key="{{key}}"></hex-cell>`;
 
   class Board {
     constructor(size) {
@@ -138,10 +138,15 @@ defineParticle(({DomParticle}) => {
       let result = [];
       for (let x = 0; x < this.size; x++) {
         for (let y = 0; y < this.size; y++) {
-          let value = this.cell(x, y);
-          if (value) {
-            result.push({subId: `${x}-${y}`, player: value});
+          let model = {
+            subId: `${x}-${y}`,
+            key: {x, y},
+          };
+          let move = this.cell(x, y);
+          if (move) {
+            model.move = move;
           }
+          result.push(model);
         }
       }
       return result;
@@ -153,6 +158,13 @@ defineParticle(({DomParticle}) => {
       super();
       this._board = new Board(8);
       this._player = 'x';
+
+      let board = this._board;
+      this.setState({
+        player: board.player,
+        canSwap: board.canSwap,
+        cells: board.toModel(),
+      });
     }
     getTemplate(slotName) {
       if (slotName == 'root')
@@ -161,23 +173,13 @@ defineParticle(({DomParticle}) => {
         return cellTemplate;
     }
     render(props, state) {
-      if (this.currentSlotName == 'root') {
-        return {
-          player: state.player,
-          canSwap: state.canSwap,
-        };
-      }
-      if (this.currentSlotName == 'cell') {
-        return {
-          items: state.cells || [],
-        };
-      }
+      return {
+        player: state.player,
+        canSwap: state.canSwap,
+        items: state.cells,
+      };
     }
-    onCellClick(e) {
-      let subId = e.data.subId;
-      let [x, y] = subId.split('-');
-      x = Number(x);
-      y = Number(y);
+    onCellClick({data: {key: {x, y}}}) {
       let board = this._board;
       board.trySetCell(x, y);
       this.setState({
