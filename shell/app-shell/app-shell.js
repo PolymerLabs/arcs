@@ -95,6 +95,7 @@ const template = html`
     on-key="_onData"
     on-metadata="_onData"
     on-step="_onData"
+    on-share="_onData"
   ></arc-cloud>
 ` /*
 
@@ -193,9 +194,6 @@ class AppShell extends Xen.Debug(Xen.Base, log) {
     if (plan && plan !== oldState.plan && metadata) {
       this._consumePlan(arc, metadata);
     }
-    if (config && user && key && share === undefined) {
-      state.share = this._calculateShareState(config, key, user);
-    }
   }
   _render({}, state) {
     const {config, user, step, injectedStep} = state;
@@ -237,12 +235,6 @@ class AppShell extends Xen.Debug(Xen.Base, log) {
       }
       this._setState({selectedUser, user});
     }
-  }
-  _calculateShareState(config, key, user) {
-    // calculate sharing state
-    let isProfile = user.profiles && user.profiles[key];
-    let isShared = user.shares && user.shares[key];
-    return isShared ? Const.SHARE.friends : isProfile ? Const.SHARE.self : Const.SHARE.private;
   }
   _consumeSearch(search, arc) {
     search = (search || '').trim().toLowerCase();

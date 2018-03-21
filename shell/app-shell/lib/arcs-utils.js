@@ -14,8 +14,8 @@ import Arcs from './arcs.js';
 const ArcsUtils = {
   createArc({id, urlMap, slotComposer, context, loader}) {
     // worker paths are relative to worker location, remap urls from there to here
-    let remap = ArcsUtils._expandUrls(urlMap);
-    let pecFactory = ArcsUtils._createPecWorker.bind(null, urlMap[`worker-entry.js`], remap);
+    const remap = ArcsUtils._expandUrls(urlMap);
+    const pecFactory = ArcsUtils._createPecWorker.bind(null, urlMap[`worker-entry.js`], remap);
     return new Arcs.Arc({id, pecFactory, slotComposer, context, loader});
   },
   _expandUrls(urlMap) {

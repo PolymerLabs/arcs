@@ -47,17 +47,18 @@ export default class BrowserLoader extends Loader {
     return this._loadURL(this._resolve(name));
   }
   requireParticle(fileName) {
-    let path = this._resolve(fileName);
+    const path = this._resolve(fileName);
     // inject path to this particle into the UrlMap,
     // allows "foo.js" particle to invoke `importScripts(resolver('foo/othermodule.js'))`
     this.mapParticleUrl(path);
-    let result = [];
+    const result = [];
     self.defineParticle = function(particleWrapper) {
       result.push(particleWrapper);
     };
     importScripts(path);
     delete self.defineParticle;
-    return this.unwrapParticle(result[0], logFactory(fileName.split('/').pop(), 'blue'));
+    const logger = logFactory(fileName.split('/').pop(), 'blue');
+    return this.unwrapParticle(result[0], logger);
   }
   mapParticleUrl(path) {
     let parts = path.split('/');
@@ -71,6 +72,15 @@ export default class BrowserLoader extends Loader {
     //  _resolve method allows particles to request remapping of assets paths
     //  for use in DOM
     let resolver = this._resolve.bind(this);
-    return particleWrapper({particle, Particle: particle.Particle, DomParticle, TransformationDomParticle, resolver, log, html});
+    return particleWrapper({
+      particle,
+      Particle: particle.Particle,
+      DomParticle,
+      SimpleParticle: DomParticle,
+      TransformationDomParticle,
+      resolver,
+      log,
+      html
+    });
   }
 }
