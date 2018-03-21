@@ -39,8 +39,8 @@ import StrategyExplorerAdapter from './debug/strategy-explorer-adapter.js';
 
 class CreateViews extends Strategy {
   // TODO: move generation to use an async generator.
-  async generate(strategizer) {
-    let results = Recipe.over(this.getResults(strategizer), new class extends RecipeWalker {
+  async generate(inputParams) {
+    return Recipe.over(this.getResults(inputParams), new class extends RecipeWalker {
       onView(recipe, view) {
         let counts = RecipeUtil.directionCounts(view);
 
@@ -59,8 +59,6 @@ class CreateViews extends Strategy {
         }
       }
     }(RecipeWalker.Permuted), this);
-
-    return {results, generate: null};
   }
 }
 

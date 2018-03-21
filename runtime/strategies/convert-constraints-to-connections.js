@@ -15,9 +15,9 @@ export default class ConvertConstraintsToConnections extends Strategy {
     super();
     this.affordance = arc.pec.slotComposer ? arc.pec.slotComposer.affordance : null;
   }
-  async generate(strategizer) {
+  async generate(inputParams) {
     let affordance = this.affordance;
-    let results = Recipe.over(this.getResults(strategizer), new class extends RecipeWalker {
+    return Recipe.over(this.getResults(inputParams), new class extends RecipeWalker {
       onRecipe(recipe) {
         let particles = new Set();
         let views = new Set();
@@ -104,7 +104,5 @@ export default class ConvertConstraintsToConnections extends Strategy {
         });
       }
     }(RecipeWalker.Independent), this);
-
-    return {results, generate: null};
   }
 }

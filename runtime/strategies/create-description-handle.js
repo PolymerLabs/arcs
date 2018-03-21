@@ -11,8 +11,8 @@ import Recipe from '../recipe/recipe.js';
 import RecipeWalker from '../recipe/walker.js';
 
 export default class CreateDescriptionHandle extends Strategy {
-  async generate(strategizer) {
-    let results = Recipe.over(this.getResults(strategizer), new class extends RecipeWalker {
+  async generate(inputParams) {
+    return Recipe.over(this.getResults(inputParams), new class extends RecipeWalker {
       onHandleConnection(recipe, handleConnection) {
         if (handleConnection.handle)
           return;
@@ -27,7 +27,5 @@ export default class CreateDescriptionHandle extends Strategy {
         };
       }
     }(RecipeWalker.Permuted), this);
-
-    return {results, generate: null};
   }
 }

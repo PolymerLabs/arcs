@@ -31,8 +31,8 @@ export default class CombinedStrategy extends Strategy {
     });
     return resultsList.filter(r => !recipeByParent.has(r));
   }
-  async generate(strategizer) {
-    let results = this._strategies[0].getResults(strategizer);
+  async generate(inputParams) {
+    let results = this._strategies[0].getResults(inputParams);
     let totalResults = new Map();
     for (let strategy of this._strategies) {
       results = Recipe.over(results, strategy.walker, strategy);
@@ -50,6 +50,6 @@ export default class CombinedStrategy extends Strategy {
       results = this._getLeaves(totalResults);
     }
 
-    return {results, generate: null};
+    return results;
   }
 }

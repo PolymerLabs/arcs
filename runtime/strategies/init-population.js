@@ -28,21 +28,16 @@ export default class InitPopulation extends Strategy {
     }
     this._loadedParticles = new Set(arc.loadedParticles().map(spec => spec.implFile));
   }
-  async generate(strategizer) {
-    if (strategizer.generation != 0) {
-      return {results: [], generate: null};
+  async generate({generation}) {
+    if (generation != 0) {
+      return [];
     }
-    let results = this._recipes.map(recipe => ({
+    return this._recipes.map(recipe => ({
       result: recipe,
       score: 1 - recipe.particles.filter(particle => particle.spec && this._loadedParticles.has(particle.spec.implFile)).length,
       derivation: [{strategy: this, parent: undefined}],
       hash: recipe.digest(),
       valid: Object.isFrozen(recipe),
     }));
-
-    return {
-      results: results,
-      generate: null,
-    };
   }
 }

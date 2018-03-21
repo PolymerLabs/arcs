@@ -11,8 +11,8 @@ import RecipeWalker from '../recipe/walker.js';
 
 export default class AddUseViews extends Strategy {
   // TODO: move generation to use an async generator.
-  async generate(strategizer) {
-    let results = Recipe.over(this.getResults(strategizer), new class extends RecipeWalker {
+  async generate(inputParams) {
+    return Recipe.over(this.getResults(inputParams), new class extends RecipeWalker {
       onRecipe(recipe) {
         // Don't add use handles while there are outstanding constraints
         if (recipe.connectionConstraints.length > 0)
@@ -40,7 +40,5 @@ export default class AddUseViews extends Strategy {
         };
       }
     }(RecipeWalker.Permuted), this);
-
-    return {results, generate: null};
   }
 }

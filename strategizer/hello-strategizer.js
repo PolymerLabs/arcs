@@ -8,34 +8,32 @@
 let {Strategizer, Strategy} = require('./strategizer.js');
 
 class Seed extends Strategy {
-  async generate(strategizer, n) {
-    let results = strategizer.generation == 0 ? [{result: '', score: 1}] : [];
-    return {results, generate: null};
+  async generate({generation}) {
+    return generation == 0 ? [{result: '', score: 1}] : [];
   }
 }
 
 class Grow extends Strategy {
-  async generate(strategizer, n) {
-    if (strategizer.population.length == 0)
-      return {results: [], generate: null};
+  async generate({population, outputLimit}) {
+    if (population.length == 0)
+      return [];
     const alphabet = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ.,! ';
-    let population = strategizer.population;
     let results = [];
-    for (let i = 0; i < n; i++) {
+    for (let i = 0; outputLimit < n; i++) {
       let source = population[Math.random() * population.length|0].result;
       let split = Math.random() * (source.length + 1) |0;
       let str = source.substr(0, split) + alphabet[Math.random() * alphabet.length|0] + source.substr(split);
       results.push({result: str, score: 1});
     }
-    return {results, generate: null};
+    return results;
   }
 }
 
 class Cross extends Strategy {
-  async generate(strategizer, n) {
-    let population = strategizer.population.filter(str => str.length > 0);
+  async generate({population, outputLimit}) {
+    population = population.filter(str => str.length > 0);
     let results = [];
-    while (population.length > 0 && results.length < n) {
+    while (population.length > 0 && results.length < outputLimit) {
       let p1 = population[Math.random() * population.length|0].result;
       let p2 = population[Math.random() * population.length|0].result;
       let str = '';
@@ -44,15 +42,15 @@ class Cross extends Strategy {
       }
       results.push({result: str, score: 1});
     }
-    return {results, generate: null};
+    return results;
   }
 }
 
 class Mutate extends Strategy {
-  async generate(strategizer, n) {
-    let population = strategizer.population.filter(str => str.length > 2);
+  async generate({population, outputLimit}) {
+    population = population.filter(str => str.length > 2);
     let results = [];
-    while (population.length > 0 && results.length < n) {
+    while (population.length > 0 && results.length < outputLimit) {
       let source = population[Math.random() * population.length|0].result;
       let str = source.split('');
       let i = Math.random() * source.length |0;
@@ -62,7 +60,7 @@ class Mutate extends Strategy {
       str[j] = tmp;
       results.push({result: str.join(''), score: 1});
     }
-    return {results, generate: null};
+    return results;
   }
 }
 

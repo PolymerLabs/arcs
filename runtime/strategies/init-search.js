@@ -15,12 +15,9 @@ export default class InitSearch extends Strategy {
     // TODO: Figure out where this should really come from.
     this._search = arc.search;
   }
-  async generate(strategizer) {
-    if (this._search == null || strategizer.generation != 0) {
-      return {
-        results: [],
-        generate: null,
-      };
+  async generate({generation}) {
+    if (this._search == null || generation != 0) {
+      return [];
     }
 
     let recipe = new Recipe();
@@ -28,14 +25,11 @@ export default class InitSearch extends Strategy {
     assert(recipe.normalize());
     assert(!recipe.isResolved());
 
-    return {
-      results: [{
-        result: recipe,
-        score: 0,
-        derivation: [{strategy: this, parent: undefined}],
-        hash: recipe.digest(),
-      }],
-      generate: null,
-    };
+    return [{
+      result: recipe,
+      score: 0,
+      derivation: [{strategy: this, parent: undefined}],
+      hash: recipe.digest(),
+    }];
   }
 }

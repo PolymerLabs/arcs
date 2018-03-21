@@ -51,7 +51,13 @@ export class Strategizer {
     let generation = this.generation + 1;
     let individualsPerStrategy = Math.floor(this._options.generationSize / this._strategies.length);
     let generated = await Promise.all(this._strategies.map(strategy => {
-      return strategy.generate(this, individualsPerStrategy);
+      return strategy.generate({
+        generation: this.generation,
+        generated: this.generated,
+        terminal: this.terminal,
+        population: this.population,
+        outputLimit: individualsPerStrategy
+      });
     }));
 
     let record = {};
@@ -59,10 +65,9 @@ export class Strategizer {
     record.sizeOfLastGeneration = this.generated.length;
     record.outputSizesOfStrategies = {};
     for (let i = 0; i < this._strategies.length; i++) {
-      record.outputSizesOfStrategies[this._strategies[i].constructor.name] = generated[i].results.length;
+      record.outputSizesOfStrategies[this._strategies[i].constructor.name] = generated[i].length;
     }
 
-    generated = generated.map(({results}) => results);
     generated = [].concat(...generated);
 
     // TODO: get rid of this additional asynchrony
@@ -264,10 +269,10 @@ export class Strategy {
     // generated individuals and evaluations.
     return {generate: 0, evaluate: 0};
   }
-  getResults(strategizer) {
-    return strategizer.generated;
+  getResults(inputParams) {
+    return inputParams.generated;
   }
-  async generate(strategizer, n) {
+  async generate(inputParams) {
     return [];
   }
   discard(individuals) {

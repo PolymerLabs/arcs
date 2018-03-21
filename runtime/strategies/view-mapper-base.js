@@ -12,10 +12,10 @@ import RecipeUtil from '../recipe/recipe-util.js';
 import assert from '../../platform/assert-web.js';
 
 export default class ViewMapperBase extends Strategy {
-  async generate(strategizer) {
+  async generate(inputParams) {
     let self = this;
 
-    let results = Recipe.over(this.getResults(strategizer), new class extends RecipeWalker {
+    return Recipe.over(this.getResults(inputParams), new class extends RecipeWalker {
       onView(recipe, view) {
         if (view.fate !== self.fate)
           return;
@@ -78,7 +78,5 @@ export default class ViewMapperBase extends Strategy {
         return responses;
       }
     }(RecipeWalker.Permuted), this);
-
-    return {results, generate: null};
   }
 }
