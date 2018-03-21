@@ -95,7 +95,7 @@ defineParticle(({DomParticle}) => {
             result.push(`<hexa-gon padding${offset ? ' offset' : ''}></hexa-gon>`);
           }
           for (let col = 0; col < size; col++) {
-            result.push(`<hexa-gon${offset ? ' offset' : ''} slotid="cell" subid="${row}-${col}"></hexa-gon>`);
+            result.push(`<hexa-gon${offset ? ' offset' : ''} slotid="cell" subid="${col}-${row}"></hexa-gon>`);
           }
           for (let i = (row - offset) / 2; i < padding; i++) {
             result.push(`<hexa-gon padding${offset ? ' offset' : ''}></hexa-gon>`);
