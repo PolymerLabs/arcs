@@ -35,7 +35,7 @@ const steps = {
   devtools: [devtools],
   watch: [watch],
   lint: [lint],
-  default: [peg, railroad, test, webpack, lint],
+  default: [peg, railroad, test, devtools, webpack, lint],
 };
 
 // Paths to `watch` for the `watch` step.
