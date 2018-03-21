@@ -73,10 +73,6 @@ defineParticle(({DomParticle}) => {
         var(--0) var(--25));
       background: black;
     }
-    
-    hexa-gon:hover {
-      background: #F44336;
-    }
     </style>
     <hex-board>
       ${(() => {
