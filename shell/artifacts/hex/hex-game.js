@@ -18,6 +18,9 @@ defineParticle(({DomParticle}) => {
       hex-game[player=p2] {
         --current-player-color: var(--hex-p2);
       }
+      hex-game[can-swap] {
+        --swap-color: var(--current-player-color);
+      }
 
       /* TODO: Remove this once we switch slots to use shadow dom */
       hexa-gon > div {
@@ -29,20 +32,19 @@ defineParticle(({DomParticle}) => {
         height: 100%;
         display: block;
       }
-      hex-cell:hover {
+      hex-game[can-swap] hex-cell:hover,
+      hex-cell:not([player]):hover {
         background: var(--current-player-color);
         opacity: 0.5;
       }
       hex-cell[player=p1] {
         background: var(--hex-p1);
-        opacity: 1;
       }
       hex-cell[player=p2] {
         background: var(--hex-p2);
-        opacity: 1;
       }
     </style>
-    hex-game <hex-game player$="{{player}}" slotid="board"></hex-game>`;
+    hex-game <hex-game player$="{{player}}" can-swap$="{{canSwap}}" slotid="board"></hex-game>`;
   const cellTemplate = `<hex-cell player$="{{player}}" on-click="onCellClick"></hex-cell>`;
 
   class Board {
@@ -50,15 +52,27 @@ defineParticle(({DomParticle}) => {
       this._size = size;
       this._board = [];
       this._board.length = size * size;
+      this._player = 0;
+      this._moves = 0;
     }
 
     get size() {
       return this._size;
     }
 
-    trySetCell(x, y, value) {
-      if (!this._board[x + this.size * y]) {
-        this._board[x + this.size * y] = value;
+    get canSwap() {
+      return this._moves == 1;
+    }
+
+    get player() {
+      return this._player ? 'p1' : 'p2';
+    }
+
+    trySetCell(x, y) {
+      if (!this._board[x + this.size * y] || this.canSwap) {
+        this._board[x + this.size * y] = this.player;
+        this._player ^= 1;
+        this._moves++;
         return true;
       }
       return false;
@@ -98,6 +112,7 @@ defineParticle(({DomParticle}) => {
       if (this.currentSlotName == 'root') {
         return {
           player: state.player,
+          canSwap: state.canSwap,
         };
       }
       if (this.currentSlotName == 'cell') {
@@ -111,12 +126,12 @@ defineParticle(({DomParticle}) => {
       let [x, y] = subId.split('-');
       x = Number(x);
       y = Number(y);
-      if (this._board.trySetCell(x, y, this._player)) {
-        this._player = this._player == 'p1' ? 'p2' : 'p1';
-      }
+      let board = this._board;
+      board.trySetCell(x, y);
       this.setState({
-        player: this._player,
-        cells: this._board.toModel(),
+        player: board.player,
+        canSwap: board.canSwap,
+        cells: board.toModel(),
       });
     }
   };
