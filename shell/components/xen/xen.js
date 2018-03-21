@@ -23,6 +23,10 @@ const Debug = (Base, log) => class extends Base {
     return super._setProperty(name, value);
   }
   _setState(state) {
+    if (typeof state !== 'object') {
+      console.warn(`Xen::_setState argument must be an object`);
+      return false;
+    }
     if (super._setState(state)) {
       if (Debug.level > 1) {
         if (Debug.lastFire) {
@@ -59,7 +63,7 @@ const Debug = (Base, log) => class extends Base {
   }
 };
 
-Debug.level = 1;
+Debug.level = 2;
 
 const walker = (node, tree) => {
   let subtree = tree;
