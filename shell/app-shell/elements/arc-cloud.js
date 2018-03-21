@@ -22,7 +22,7 @@ const template = Xen.html`
   <!-- systemwide user list -->
   <persistent-users on-users="_onData"></persistent-users>
   <!-- user data from database -->
-  <persistent-user id="{{userid}}" user="{{user}}" key="{{key}}" on-user="_onData"></persistent-user>
+  <persistent-user id="{{userid}}" user="{{user}}" key="{{key}}" on-user="_onUser"></persistent-user>
   <!-- manifest lists -->
   <persistent-manifests manifests="{{manifests}}" on-manifests="_onData" exclusions="{{exclusions}}" on-exclusions="_onData"></persistent-manifests>
   <!-- provisions arc database keys and provides metadata -->
@@ -54,7 +54,7 @@ class ArcCloud extends Xen.Debug(Xen.Base, log) {
   get template() {
     return template;
   }
-  _update(props, state) {
+  _update(props, state, oldProps, oldState) {
     const {share, metadata, key} = props;
     const {user, avatar, steps} = state;
     if (user && avatar) {
@@ -64,9 +64,15 @@ class ArcCloud extends Xen.Debug(Xen.Base, log) {
     if (props.exclusions) {
       state.exclusions = props.exclusions;
     }
-    if (user && key && share !== undefined) {
+    //
+    if (user && key && ((user !== oldState.user) || (key !== oldState.key))) {
+      state.share = this._calculateShareState(user, key);
+    }
+    if (user && key && share !== oldProps.share) {
       this._consumeShareState(user, key, share);
     }
+    this._fire('share', state.share);
+    //
     if (steps && metadata) {
       this._consumeSteps(steps, metadata);
     }
@@ -110,6 +116,12 @@ class ArcCloud extends Xen.Debug(Xen.Base, log) {
       }
     }
   }
+  _calculateShareState(user, key) {
+    // calculate sharing state
+    let isProfile = user.profiles && user.profiles[key];
+    let isShared = user.shares && user.shares[key];
+    return isShared ? Const.SHARE.friends : isProfile ? Const.SHARE.self : Const.SHARE.private;
+  }
   _consumeShareState(user, key, share) {
     let dirty = false;
     const shareState = (share == Const.SHARE.friends);
@@ -145,6 +157,9 @@ class ArcCloud extends Xen.Debug(Xen.Base, log) {
   }
   _onArcs(e, arcs) {
     this._setImmutableState('arcs', arcs);
+  }
+  _onUser(e, user) {
+    this._setState('user', user);
   }
   _onKey(e, key) {
     this._fire('key', key);

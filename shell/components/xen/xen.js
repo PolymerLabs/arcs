@@ -15,18 +15,22 @@ const clone = obj => typeof obj === 'object' ? Object.assign(Object.create(null)
 
 const Debug = (Base, log) => class extends Base {
   _setProperty(name, value) {
-    if (((name in this._pendingProps) && (this._pendingProps[name] !== value)) || (this._props[name] !== value)) {
-      log('props', clone({[name]: value}));
+    if (Debug.level > 1) {
+      if (((name in this._pendingProps) && (this._pendingProps[name] !== value)) || (this._props[name] !== value)) {
+        log('props', clone({[name]: value}));
+      }
     }
     return super._setProperty(name, value);
   }
   _setState(state) {
     if (super._setState(state)) {
-      if (Debug.lastFire) {
-        //Debug.lastFire.log('fire', {[Debug.lastFire.name]: Debug.lastFire.detail});
-        Debug.lastFire.log('fire', Debug.lastFire.name, Debug.lastFire.detail);
+      if (Debug.level > 1) {
+        if (Debug.lastFire) {
+          //Debug.lastFire.log('fire', {[Debug.lastFire.name]: Debug.lastFire.detail});
+          Debug.lastFire.log('fire', Debug.lastFire.name, Debug.lastFire.detail);
+        }
+        log('state', clone(state));
       }
-      log('state', clone(state));
       return true;
     }
   }
@@ -54,7 +58,8 @@ const Debug = (Base, log) => class extends Base {
     super._invalidate();
   }
 };
-Debug.level = 2;
+
+Debug.level = 1;
 
 const walker = (node, tree) => {
   let subtree = tree;
