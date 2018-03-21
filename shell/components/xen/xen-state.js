@@ -58,6 +58,11 @@ export default Base => class extends Base {
     this._invalidate();
   }
   _setImmutableState(name, value) {
+    if (typeof name === 'object') {
+      console.warn('Xen:: _setImmutableState takes name and value args for a single property, dictionaries not supported.');
+      value = Object.values(name)[0];
+      name = Object.names(name)[0];
+    }
     if (typeof value === 'object') {
       value = Object.assign(Object.create(null), value);
     }
