@@ -6,6 +6,7 @@
 // http://polymer.github.io/PATENTS.txt
 
 import {Strategy, Strategizer} from '../strategizer/strategizer.js';
+import * as Rulesets from './strategies/rulesets.js';
 import assert from '../platform/assert-web.js';
 import DeviceInfo from '../platform/deviceinfo-web.js';
 import Recipe from './recipe/recipe.js';
@@ -40,9 +41,9 @@ import StrategyExplorerAdapter from './debug/strategy-explorer-adapter.js';
 
 class Planner {
   // TODO: Use context.arc instead of arc
-  init(arc) {
+  init(arc, {strategies, ruleset} = {}) {
     this._arc = arc;
-    let strategies = [
+    strategies = strategies || [
       new InitPopulation(arc),
       new InitSearch(arc),
       new CombinedStrategy([
@@ -68,6 +69,7 @@ class Planner {
       maxPopulation: 100,
       generationSize: 100,
       discardSize: 20,
+      ruleset: ruleset || Rulesets.Empty
     });
   }
 
