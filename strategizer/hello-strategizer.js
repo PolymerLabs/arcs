@@ -30,8 +30,16 @@ class Grow extends Strategy {
 }
 
 class Cross extends Strategy {
+<<<<<<< HEAD
   async generate({population, outputLimit}) {
     population = population.filter(str => str.length > 0);
+||||||| merged common ancestors
+  async generate(strategizer, n) {
+    let population = strategizer.population.filter(str => str.length > 0);
+=======
+  async generate({population, outputLimit}) {
+    let population = population.filter(str => str.length > 0);
+>>>>>>> Refactoring of strategies
     let results = [];
     while (population.length > 0 && results.length < outputLimit) {
       let p1 = population[Math.random() * population.length|0].result;
@@ -47,8 +55,16 @@ class Cross extends Strategy {
 }
 
 class Mutate extends Strategy {
+<<<<<<< HEAD
   async generate({population, outputLimit}) {
     population = population.filter(str => str.length > 2);
+||||||| merged common ancestors
+  async generate(strategizer, n) {
+    let population = strategizer.population.filter(str => str.length > 2);
+=======
+  async generate({population, outputLimit}) {
+    let population = population.filter(str => str.length > 2);
+>>>>>>> Refactoring of strategies
     let results = [];
     while (population.length > 0 && results.length < outputLimit) {
       let source = population[Math.random() * population.length|0].result;
