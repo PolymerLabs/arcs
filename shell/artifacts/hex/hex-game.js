@@ -56,9 +56,12 @@ defineParticle(({DomParticle}) => {
       return this._size;
     }
 
-    setCell(x, y, value) {
-      if (!this._board[x + this.size * y])
+    trySetCell(x, y, value) {
+      if (!this._board[x + this.size * y]) {
         this._board[x + this.size * y] = value;
+        return true;
+      }
+      return false;
     }
 
     cell(x, y) {
@@ -108,8 +111,9 @@ defineParticle(({DomParticle}) => {
       let [x, y] = subId.split('-');
       x = Number(x);
       y = Number(y);
-      this._board.setCell(x, y, this._player);
-      this._player = this._player == 'p1' ? 'p2' : 'p1';
+      if (this._board.trySetCell(x, y, this._player)) {
+        this._player = this._player == 'p1' ? 'p2' : 'p1';
+      }
       this.setState({
         player: this._player,
         cells: this._board.toModel(),
