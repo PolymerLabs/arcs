@@ -5,18 +5,54 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
+schema GameState
+  // TODO: With repeated fields this might be a list of players.
+  // TODO: This should be some kind of relation. We need the name and id of player.
+  Text player1 
+  Text player2
+  Text nextPlayer
+  Text winner
+
+schema HexGameState extends GameState
+  Text board
+  Boolean swapped
+
+particle SummarizeGame in 'summarize-game.js'
+  SummarizeGame(in GameState gameState)
+  consume summary
+
+particle JoinGame in 'join-game.js'
+  // TODO: This particle probably shouldn't be able to create an instance of ~a.
+  //       But for now this creates the HexGameState the first time someone joins.
+  // TODO: This should be `in` with `mutate` capability of just GameState {p1/p2}.
+  JoinGame(inout ~a with GameState {player1, player2} gameState, in Person {Text id} user)
+  consume summary
+  description `Join a game`
+
+// TODO: Factor out logic to be independent of HexGame. UI should be a seperate concern.
+particle HexGame in 'hex-game.js'
+  // TODO: gameState should be `in` with `mutate`
+  HexGame(inout HexGameState gameState, in Person {Text id} user)
+  consume root
+    provide summary
+    provide board
+  consume set of cell
+  description `Play hex`
+
 particle HexBoard in 'hex-board.js'
   HexBoard()
   consume board
     provide set of cell
 
-particle HexGame in 'hex-game.js'
-  HexGame()
-  consume root
-    provide board
-  consume set of cell
-  description `Play hex`
-
 recipe
+  create #game as game 
+  use #user as user
   HexGame
+    gameState = game
+    user = user
   HexBoard
+  SummarizeGame
+    gameState = game
+  JoinGame
+    gameState = game
+    user = user

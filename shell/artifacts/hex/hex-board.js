@@ -9,7 +9,6 @@ defineParticle(({DomParticle}) => {
   const size = 8;
   const padding = (size - 1) / 2 |0;
   const template = `
-    hex-board
     <style>
     hex-board {
       --hex-side: 26px;
