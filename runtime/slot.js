@@ -11,7 +11,7 @@
 
 import assert from '../platform/assert-web.js';
 
-class Slot {
+export default class Slot {
   constructor(consumeConn, arc) {
     assert(consumeConn);
     assert(arc);
@@ -48,8 +48,14 @@ class Slot {
   }
   startRender() {
     if (this.startRenderCallback) {
-      let contentTypes = this.constructRenderRequest();
-      this.startRenderCallback({particle: this.consumeConn.particle, slotName: this.consumeConn.name, contentTypes});
+      const slotName = this.consumeConn.name;
+      const particle = this.consumeConn.particle;
+      const context = this.getContext();
+      if (context.updateParticleName) {
+        context.updateParticleName(slotName, particle.name);
+      }
+      const contentTypes = this.constructRenderRequest();
+      this.startRenderCallback({particle, slotName, contentTypes});
 
       for (let hostedSlot of this._hostedSlotById.values()) {
         if (hostedSlot.particle) {
@@ -107,11 +113,9 @@ class Slot {
     }
   }
 
-  // absract
+  // Abstract methods.
   async setContent(content, handler) {}
   getInnerContext(slotName) {}
   constructRenderRequest() {}
   static findRootSlots(context) { }
 }
-
-export default Slot;
