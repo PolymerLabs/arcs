@@ -15,7 +15,6 @@ import '../../components/arc-tools/handle-explorer.js';
 import '../../components/arc-tools/local-data.js';
 import '../../components/arc-tools/xen-explorer.js';
 import '../../components/arc-tools/manifest-data.js';
-import '../../components/arc-tools/shell-particles.js';
 
 // strings
 import Css from './shell-ui.css.js';
@@ -75,7 +74,6 @@ const Main = Xen.html`
 </app-main>
 
 <app-tools>
-  <shell-particles arc="{{arc}}"></shell-particles>
   <simple-tabs>
     <div tab="Handle Explorer">
       <handle-explorer arc="{{arc}}"></handle-explorer>

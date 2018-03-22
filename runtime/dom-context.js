@@ -30,12 +30,18 @@ class DomContext {
     assert(context);
     if (!this._context) {
       this._context = document.createElement(this._containerKind || 'div');
-      this._context.setAttribute('particle-host', '');
+      this._setParticleName('');
       context.appendChild(this._context);
     } else {
       assert(this._context.parentNode == context,
              'TODO: add support for moving slot to different context');
     }
+  }
+  updateParticleName(slotName, particleName) {
+    this._setParticleName(`${slotName}::${particleName}`);
+  }
+  _setParticleName(name) {
+    this._context.setAttribute('particle-host', name);
   }
   get context() { return this._context; }
   isEqual(context) {
