@@ -10,8 +10,6 @@
 'use strict';
 
 defineParticle(({DomParticle, html}) => {
-  importScripts(resolver(`GamePane/Scoring.js`));
-
   const host = `show-single-stats`;
 
   const template = html`
@@ -22,8 +20,15 @@ defineParticle(({DomParticle, html}) => {
     get template() {
       return template;
     }
+    scoreToMessage(stats) {
+      return `Words Puzzle Game Stats -- Highest scoring word: ${
+          stats.highestScoringWord} (${
+          stats.highestScoringWordScore}). Longest word: ${stats.longestWord} (${
+          stats.longestWordScore}). Score: ${stats.score}. Moves: ${
+          stats.moveCount}.`;
+    }
     render({stats}) {
-      const message = stats ? Scoring.scoreToMessage(stats) : '';
+      const message = stats ? this.scoreToMessage(stats) : '';
       return {message};
     }
   };

@@ -54,9 +54,10 @@ recipe
     people <- people
 
 recipe
-  map #BOXED_posts as posts
-  map #BOXED_avatar as avatars
+  map #BOXED_stats as posts
   // TODO(wkorman): Merge together posts and stats with CopyCollection if needed.
+  // map #BOXED_posts as posts
+  map #BOXED_avatar as avatars
   List
     items = posts
   PostMuxer

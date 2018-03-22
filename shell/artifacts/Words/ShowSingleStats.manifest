@@ -10,5 +10,5 @@ import 'Stats.schema'
 
 particle ShowSingleStats in 'source/ShowSingleStats.js'
   ShowSingleStats(in Stats stats)
-  consume root
+  consume item
   description `show ${stats}`

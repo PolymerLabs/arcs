@@ -12,8 +12,14 @@ import 'Stats.schema'
 
 import 'https://$cdn/artifacts/People/Person.schema'
 
+// TODO(wkorman): Should we just use HostedParticleShape as
+// defined in Multiplexer.manifest directly?
+shape RenderParticleShape
+  RenderParticleShape(in Stats)
+  consume
+
 particle GamePane in 'source/GamePane.js'
-  GamePane(in Person person, inout Board board, inout Move move, inout Stats stats)
+  GamePane(host RenderParticleShape renderParticle, in Person person, inout Board board, inout Move move, inout Stats stats)
   affordance dom
   consume root
 //    provide leaderboard
