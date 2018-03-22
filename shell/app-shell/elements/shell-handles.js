@@ -69,15 +69,22 @@ class ShellHandles extends Xen.Base {
     };
   }
   _watchGeolocation() {
+    const fallback = () => this._maybeUpdateGeoCoords(
+        {latitude: 37.7610927, longitude: -122.4208173}); // San Francisco
+
     if ('geolocation' in navigator) {
-      navigator.geolocation.watchPosition(({coords}) => {
-        const {geoCoords} = this._state;
-        const {latitude, longitude} = coords;
-        // Skip setting the position if it's the same as what we've already got.
-        if (!geoCoords || geoCoords.latitude != latitude || geoCoords.longitude != longitude) {
-          this._setState({geoCoords: {latitude, longitude}});
-        }
-      });
+      navigator.geolocation.watchPosition(
+        ({coords}) => this._maybeUpdateGeoCoords(coords),
+        fallback, {timeout: 3000, maximumAge: Infinity});
+    } else {
+      fallback();
+    }
+  }
+  _maybeUpdateGeoCoords({latitude, longitude}) {
+    const {geoCoords} = this._state;
+    // Skip setting the position if it's the same as what we've already got.
+    if (!geoCoords || geoCoords.latitude != latitude || geoCoords.longitude != longitude) {
+      this._setState({geoCoords: {latitude, longitude}});
     }
   }
   _update(props, state, lastProps, lastState) {
