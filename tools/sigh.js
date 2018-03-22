@@ -138,9 +138,9 @@ function railroad() {
   });
 
   let data = {
-      title: `Railroad diagram for ${sources.peg.grammar}`,
-      style: readProjectFile(diagramStyle) + '\n' + readProjectFile(appStyle),
-      grammars: grammars
+    title: `Railroad diagram for ${sources.peg.grammar}`,
+    style: readProjectFile(diagramStyle) + '\n' + readProjectFile(appStyle),
+    grammars: grammars
   };
   let template = handlebars.compile(readProjectFile(baseTemplate));
   fs.writeFileSync(path.resolve(projectRoot, sources.peg.railroad), template(data));
