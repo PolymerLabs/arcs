@@ -15,4 +15,4 @@ particle ShopFor in 'source/ShopFor.js'
   consume root
     provide set of annotation
       view choices
-  description `shop for`
+  description `shop for ${person.name}'s ${person.occasion}`

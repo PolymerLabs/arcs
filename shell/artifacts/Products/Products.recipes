@@ -8,6 +8,7 @@
 
 import '../Common/Multiplexer.manifest'
 import '../Common/ShowCollection.manifest'
+import '../Common/CopyCollection.manifest'
 import 'Product.schema'
 import 'Recommend.manifest'
 import 'Chooser.manifest'
@@ -74,7 +75,7 @@ recipe
 //     hostedParticle = Arrivinator
     
 recipe
-  map #shortlist as shortlist
+  copy #shortlist as shortlist
   copy #giftsforclaire as giftsforclaire
   map as person
  
@@ -83,23 +84,38 @@ recipe
     basket = giftsforclaire
     person <- person
 
+// TODO this could eventually read not from a hardcoded wishlist but from
+// Claire's shared wishlist (which in turn was populated from browser
+// context).
+recipe
+  use #shortlist as shortlist
+  map #wishlist as wishlist
+
+  CopyCollection
+    input <- wishlist
+    output -> shortlist
+
+  description `pull in Claire's wishlist`
+
+
+
 // Check manufacturer information for products.
 recipe
-  map #shortlist as shortlist
+  use #shortlist as shortlist
   Multiplexer
     list <- shortlist
     hostedParticle <- ManufacturerInfo
 
 // Check arrival information for products
 recipe
-  map #shortlist as shortlist
+  use #shortlist as shortlist
   Multiplexer
     list <- shortlist
     hostedParticle <- Arrivinator
 
 // If the shipping date won't work, look for extra products
 recipe
-  map #shortlist as shortlist
+  use #shortlist as shortlist
   Multiplexer
     list <- shortlist
     hostedParticle <- AlternateShipping
@@ -112,8 +128,11 @@ recipe
     list <- wishlist
 
 // TODO: move these to separate manifests for claire's wishlist / page
+
+// TODO should this be from browser context?
 view PageProducts of [Product] #shortlist in 'data/products.json'
-  description `products from your browsing context`
+  description `products you've considered`
+
 view ClairesWishlist of [Product] #wishlist in 'data/wishlist.json'
   description `Claire's wishlist`
 view GiftsForClaire of [Product] #giftsforclaire in 'data/empty.json'
