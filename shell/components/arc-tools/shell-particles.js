@@ -10,7 +10,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 import Xen from '../xen/xen.js';
 
 class ShellParticles extends Xen.Base {
-  static get observedAttributes() { return ['arc']; }
+  static get observedAttributes() { return ['arc', 'plan']; }
   _update(props, state, lastProps) {
     if (props.arc) {
       let slots = props.arc.pec.slotComposer._slots;
