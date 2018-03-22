@@ -96,7 +96,7 @@ const log = Xen.Base.logFactory('ShellUi', '#294740');
 
 class ShellUi extends Xen.Debug(Xen.Base, log) {
   static get observedAttributes() {
-    return ['config', 'manifests', 'exclusions', 'users', 'user', 'friends', 'avatars', 'key', 'arc', 'metadata', 'share', 'theme'];
+    return ['config', 'manifests', 'exclusions', 'users', 'user', 'friends', 'avatars', 'key', 'arc', 'description', 'share', 'theme'];
   }
   get css() {
     return Css;
@@ -119,8 +119,8 @@ class ShellUi extends Xen.Debug(Xen.Base, log) {
     };
   }
   _update(props, state, lastProps, lastState) {
-    const {config, key, user, metadata} = props;
-    const {plan, plans, search, description} = state;
+    const {config, key, user, description} = props;
+    const {plan, plans, search} = state;
     if (config && config !== lastProps.config) {
       this._consumeConfig(config, state);
     }
@@ -135,9 +135,6 @@ class ShellUi extends Xen.Debug(Xen.Base, log) {
     if (key) {
       ArcsUtils.setUrlParam('arc', key);
     }
-    if (metadata && metadata.description) {
-      state.description = metadata.description;
-    }
     this._fire('exclusions', state.exclusions);
   }
   _consumeConfig(config) {
@@ -145,13 +142,14 @@ class ShellUi extends Xen.Debug(Xen.Base, log) {
       toolsVisible: config.arcsToolsVisible
     });
   }
-  _render({config, manifests, exclusions, users, user, friends, avatars, key, arc, share, theme}, state) {
+  _render({config, manifests, exclusions, users, user, friends, avatars, key, arc, description, share, theme}, state) {
     const avatarUrl = user && user.avatar ? user.avatar : `${shellPath}/assets/avatars/user (0).png`;
     const render = {
       manifests,
       exclusions,
       users,
       arc,
+      description,
       friends,
       avatars,
       share,

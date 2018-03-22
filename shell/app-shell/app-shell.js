@@ -77,6 +77,7 @@ const template = html`
     exclusions="{{persistedExclusions}}"
     config="{{config}}"
     userid="{{selectedUser}}"
+    user="{{user}}"
     key="{{key}}"
     arc="{{arc}}"
     metadata="{{metadata}}"
@@ -142,7 +143,7 @@ const template = html`
     user="{{user}}"
     key="{{key}}"
     arc="{{arc}}"
-    metadata="{{metadata}}"
+    description="{{description}}"
     friends="{{friends}}"
     avatars="{{avatars}}"
     share="{{share}}"
@@ -156,6 +157,7 @@ const template = html`
     <slot></slot>
     <slot name="suggestions" slot="suggestions"></slot>
   </shell-ui>
+
 `;
 
 const log = Xen.logFactory('AppShell', '#6660ac');
@@ -171,7 +173,7 @@ class AppShell extends Xen.Debug(Xen.Base, log) {
     };
   }
   _update(props, state, oldProps, oldState) {
-    const {config, selectedUser, user, key, arc, metadata, share, plans, search, plan, step} = state;
+    const {config, selectedUser, user, key, arc, description, metadata, share, plans, search, plan, step} = state;
     // TODO(sjmiles): only for console debugging
     window.arc = state.arc;
     window.app = this;
@@ -191,8 +193,12 @@ class AppShell extends Xen.Debug(Xen.Base, log) {
     if (search !== oldState.search) {
       this._consumeSearch(search, arc);
     }
-    if (plan && plan !== oldState.plan && metadata) {
-      this._consumePlan(arc, metadata);
+    if (metadata) {
+      state.description = metadata.description;
+    }
+    if (plan && plan !== state.consumedPlan) {
+      state.consumedPlan = plan;
+      this._consumePlan(arc, description, metadata);
     }
   }
   _render({}, state) {
@@ -261,10 +267,13 @@ class AppShell extends Xen.Debug(Xen.Base, log) {
     }
     this._setState({suggestions});
   }
-  async _consumePlan(arc, metadata) {
+  async _consumePlan(arc, description, metadata) {
+    // arc has changed, generate new description
+    description = await ArcsUtils.describeArc(arc) || description;
+    this._setState({description});
+    // push description into metadata
     if (metadata) {
-      const description = await ArcsUtils.describeArc(arc);
-      if (description && metadata.description !== description) {
+      if (metadata.description !== description) {
         metadata.description = description;
         this._setImmutableState('metadata', metadata);
       }
