@@ -16,15 +16,15 @@ const projectRoot = path.resolve(__dirname, '..');
 process.chdir(projectRoot);
 
 const sources = {
-  peg: [
-    ['runtime/manifest-parser.peg', 'runtime/build/manifest-parser.js', 'manifest-railroad.html'],
-  ],
-  pack: [
-    {
-      src: ['shell/source/worker-entry.js', 'shell/source/ArcsLib.js', 'shell/source/Tracelib.js'],
-      dst: 'shell/build',
-    }
-  ],
+  peg: {
+    grammar: 'runtime/manifest-parser.peg',
+    output: 'runtime/build/manifest-parser.js',
+    railroad: 'manifest-railroad.html',
+  },
+  pack: {
+    inputs: ['shell/source/worker-entry.js', 'shell/source/ArcsLib.js', 'shell/source/Tracelib.js'],
+    buildDir: 'shell/build',
+  }
 };
 
 const steps = {
@@ -41,6 +41,7 @@ const steps = {
 // Paths to `watch` for the `watch` step.
 const watchPaths = [
   './platform',
+  './runtime',
   './strategizer',
   './tracelib',
 ];
@@ -66,21 +67,44 @@ function* findProjectFiles(dir, predicate) {
   }
 }
 
+function readProjectFile(relativePath) {
+  return fs.readFileSync(path.resolve(projectRoot, relativePath), 'utf-8');
+}
+
+function targetIsUpToDate(relativeTarget, relativeDeps) {
+  let target = path.resolve(projectRoot, relativeTarget);
+  if (!fs.existsSync(target)) {
+    return false;
+  }
+
+  let targetTime = fs.statSync(target).mtimeMs;
+  for (let relativePath of relativeDeps) {
+    if (fs.statSync(path.resolve(projectRoot, relativePath)).mtimeMs >= targetTime) {
+      return false;
+    }
+  }
+
+  console.log(`Skipping step; '${relativeTarget}' is up-to-date`);
+  return true;
+}
+
 function peg() {
   const peg = require('pegjs');
-  for (let [grammarFile, outputFile] of sources.peg) {
-    let grammar = fs.readFileSync(path.resolve(projectRoot, grammarFile), 'utf8');
-    let source = peg.generate(grammar, {
-      format: 'bare',
-      output: 'source',
-    });
-    let prefix = 'export default ';
-    let dir = path.dirname(path.resolve(projectRoot, outputFile));
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir);
-    }
-    fs.writeFileSync(path.resolve(projectRoot, outputFile), prefix + source);
+
+  if (targetIsUpToDate(sources.peg.output, [sources.peg.grammar])) {
+    return true;
   }
+
+  let source = peg.generate(readProjectFile(sources.peg.grammar), {
+    format: 'bare',
+    output: 'source',
+  });
+  let outputFile = path.resolve(projectRoot, sources.peg.output);
+  let dir = path.dirname(outputFile);
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir);
+  }
+  fs.writeFileSync(outputFile, 'export default ' + source);
   return true;
 }
 
@@ -89,45 +113,37 @@ function railroad() {
   const {transform} = require('grammkit/lib/util');
   const handlebars = require('handlebars');
 
-  let renderTemplate = function(data, templatePath) {
-    let raw_template = fs.readFileSync(templatePath);
-    let template = handlebars.compile(raw_template.toString());
-    return template(data);
-  };
+  let diagramStyle = 'node_modules/grammkit/app/diagram.css';
+  let appStyle = 'node_modules/grammkit/app/app.css';
+  let baseTemplate = 'node_modules/grammkit/template/viewer.html';
 
-  for (let [grammarFile, _a, railroadFile] of sources.peg) {
-    let grammar = fs.readFileSync(path.resolve(projectRoot, grammarFile), 'utf8');
-    let result = transform(grammar);
+  let deps = [sources.peg.grammar, diagramStyle, appStyle, baseTemplate];
+  if (targetIsUpToDate(sources.peg.railroad, deps)) {
+    return true;
+  }
 
-    let grammars = result.procesedGrammars.map(({rules, references, name}) => {
-      rules = rules.map(function(rule) {
-        const ref = references[rule.name] || {};
-        return {
-          name: rule.name,
-          diagram: rule.diagram,
-          usedBy: ref.usedBy,
-          references: ref.references
-        };
-      });
-
+  let result = transform(readProjectFile(sources.peg.grammar));
+  let grammars = result.procesedGrammars.map(({rules, references, name}) => {
+    rules = rules.map(function(rule) {
+      const ref = references[rule.name] || {};
       return {
-        name,
-        rules
+        name: rule.name,
+        diagram: rule.diagram,
+        usedBy: ref.usedBy,
+        references: ref.references
       };
     });
 
-    let style = fs.readFileSync(path.resolve(projectRoot, path.join('node_modules', 'grammkit', 'app', 'diagram.css')), 'utf-8') + '\n' +
-                fs.readFileSync(path.resolve(projectRoot, path.join('node_modules', 'grammkit', 'app', 'app.css')), 'utf-8');
-    let data = {
-        title: `Railroad diagram for ${grammarFile}`,
-        style: style,
-        grammars: grammars
-    };
+    return {name, rules};
+  });
 
-    let output = renderTemplate(data, path.resolve(projectRoot, path.join('node_modules', 'grammkit', 'template', 'viewer.html')));
-
-    fs.writeFileSync(path.resolve(projectRoot, railroadFile), output);
-  }
+  let data = {
+      title: `Railroad diagram for ${sources.peg.grammar}`,
+      style: readProjectFile(diagramStyle) + '\n' + readProjectFile(appStyle),
+      grammars: grammars
+  };
+  let template = handlebars.compile(readProjectFile(baseTemplate));
+  fs.writeFileSync(path.resolve(projectRoot, sources.peg.railroad), template(data));
 
   return true;
 }
@@ -182,29 +198,28 @@ async function webpack() {
     minimist: 'empty',
   };
 
-  for (let {src, dst} of sources.pack) {
-    if (!fs.existsSync(dst)) {
-      fs.mkdirSync(dst);
-    }
+  let buildDir = path.resolve(projectRoot, sources.pack.buildDir);
+  if (!fs.existsSync(buildDir)) {
+    fs.mkdirSync(buildDir);
+  }
 
-    for (let file of src) {
-      await new Promise((resolve, reject) => {
-        webpack({
-          entry: path.resolve(projectRoot, file),
-          output: {
-            filename: `${dst}/${path.basename(file)}`,
-          },
-          node,
-          devtool: 'sourcemap',
-        }, (err, stats) => {
-          if (err) {
-            reject(err);
-          }
-          console.log(stats.toString({colors: true, verbose: false, chunks: false}));
-          resolve();
-        });
+  for (let file of sources.pack.inputs) {
+    await new Promise((resolve, reject) => {
+      webpack({
+        entry: path.resolve(projectRoot, file),
+        output: {
+          filename: `${sources.pack.buildDir}/${path.basename(file)}`,
+        },
+        node,
+        devtool: 'sourcemap',
+      }, (err, stats) => {
+        if (err) {
+          reject(err);
+        }
+        console.log(stats.toString({colors: true, verbose: false, chunks: false}));
+        resolve();
       });
-    }
+    });
   }
   return true;
 }
@@ -347,7 +362,7 @@ async function watch([arg, ...moreArgs]) {
     changes.add(path);
     await task;
     if (current <= version) {
-      console.log(`Rebuilding due to changes to:\n  ${[...changes].join('  \n')}`);
+      console.log(`\nRebuilding due to changes to:\n  ${[...changes].join('  \n')}`);
       changes.clear();
       task = run(funsAndArgs);
     }
