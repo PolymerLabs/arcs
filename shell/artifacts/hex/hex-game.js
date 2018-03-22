@@ -18,9 +18,6 @@ defineParticle(({DomParticle}) => {
       hex-game[player=y] {
         --current-player-color: var(--hex-y);
       }
-      hex-game[can-swap] {
-        --swap-color: var(--current-player-color);
-      }
 
       /* TODO: Remove this once we switch slots to use shadow dom */
       hexa-gon > div {
@@ -32,8 +29,8 @@ defineParticle(({DomParticle}) => {
         height: 100%;
         display: block;
       }
-      hex-game[can-swap] hex-cell:hover,
-      hex-cell:not([player]):hover {
+      hex-game[can-move][can-swap] hex-cell:hover,
+      hex-game[can-move] hex-cell:not([player]):hover {
         background: var(--current-player-color);
         opacity: 0.5;
       }
@@ -44,16 +41,14 @@ defineParticle(({DomParticle}) => {
         background: var(--hex-y);
       }
     </style>
-    hex-game <hex-game player$="{{player}}" can-swap$="{{canSwap}}" slotid="board"></hex-game>`;
+    <div slotid="summary"></div>
+    <hex-game player$="{{player}}" can-move$="{{canMove}}" can-swap$="{{canSwap}}" slotid="board"></hex-game>`;
   const cellTemplate = `<hex-cell player$="{{move}}" on-click="onCellClick" key="{{key}}"></hex-cell>`;
 
   class Board {
     constructor(size) {
       this._size = size;
-      this._board = [];
-      this._player = 0;
-      this._moves = 0;
-      this._winner = null;
+      this.reset({});
     }
 
     get size() {
@@ -65,7 +60,7 @@ defineParticle(({DomParticle}) => {
     }
 
     get player() {
-      return this.winner ? null : this._player ? 'x' : 'y';
+      return this.winner ? null : this._moves % 2 ? 'x' : 'y';
     }
 
     get winner() {
@@ -76,7 +71,7 @@ defineParticle(({DomParticle}) => {
       seen = seen || {};
       if (x == undefined) {
         // Start a search along one x and one y edge.
-        for (let i = 0; i < size; i++) {
+        for (let i = 0; i < this._size; i++) {
           if (this._tryFindWinner(0, i, seen) || this._tryFindWinner(i, 0, seen))
             return true;
         }
@@ -151,6 +146,29 @@ defineParticle(({DomParticle}) => {
       }
       return result;
     }
+
+    serialize() {
+      let filledCells = this._board.reduce((acc, v) => acc + (v ? 1 : 0), 0);
+      return {
+        board: this._board.map(v => v || ' ').join(''),
+        swapped: this._moves != filledCells,
+      };
+    }
+
+    reset({board, swapped}) {
+      if (!board) {
+        this._board = [];
+        for (let i = 0; i < this._size * this._size; i++) {
+          this._board.push(null);
+        }
+        this._moves = 0;
+        this._winner = null;
+        return;
+      }
+      this._board = board.split('').map(v => v == ' ' ? null : v);
+      this._moves = this._board.reduce((acc, v) => acc + (v ? 1 : 0), 0) + (swapped ? 1 : 0);
+      this._tryFindWinner();
+    }
   }
 
   return class extends DomParticle {
@@ -158,12 +176,11 @@ defineParticle(({DomParticle}) => {
       super();
       this._board = new Board(8);
       this._player = 'x';
-
       let board = this._board;
       this.setState({
         player: board.player,
         canSwap: board.canSwap,
-        cells: board.toModel(),
+        items: board.toModel(),
       });
     }
     getTemplate(slotName) {
@@ -172,21 +189,43 @@ defineParticle(({DomParticle}) => {
       else if (slotName == 'cell')
         return cellTemplate;
     }
+    willReceiveProps(props, state, oldProps, oldState) {
+      if (!props.user || !props.gameState) {
+        state.canMove = false;
+        return;
+      }
+      let board = this._board;
+      if (!oldProps.gameState || props.gameState.board != oldProps.gameState.board) {
+        board.reset(props.gameState);
+        state.player = board.player;
+        state.canSwap = board.canSwap;
+        state.items = board.toModel();
+      }
+      state.canMove = board.player == 'x' && props.user.name == props.gameState.player1 
+                   || board.player == 'y' && props.user.name == props.gameState.player2;
+    }
     render(props, state) {
-      return {
-        player: state.player,
-        canSwap: state.canSwap,
-        items: state.cells,
-      };
+      return state;
     }
     onCellClick({data: {key: {x, y}}}) {
-      let board = this._board;
-      board.trySetCell(x, y);
-      this.setState({
-        player: board.player,
-        canSwap: board.canSwap,
-        cells: board.toModel(),
-      });
+      if (!this._state.canMove) {
+        return;
+      }
+      if (this._board.trySetCell(x, y)) {
+        let newGameState = Object.assign({}, this._props.gameState.rawData);
+        Object.assign(newGameState, this._board.serialize());
+        if (this._board.winner) {
+          newGameState.winner = this._board.winner == 'x' ? newGameState.player1 : newGameState.player2;
+        }
+        newGameState.nextPlayer =
+            this._board.player 
+                ? this._board.player == 'x'
+                      ? newGameState.player1
+                      : newGameState.player2 
+                : null;
+        const handle = this._views.get('gameState');
+        handle.set(new (handle.entityClass)(newGameState));
+      }
     }
   };
 });
