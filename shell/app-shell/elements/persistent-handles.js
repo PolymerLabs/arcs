@@ -96,8 +96,9 @@ class PersistentHandles extends Xen.Debug(Xen.Base, log) {
   }
   _syncSet(arc, localSet, remoteSet) {
     let off = [];
-    let cb = remoteSet.on('child_added', data => {
-      if (!data.val().id.startsWith(arc.id)) {
+    let cb = remoteSet.on('child_added', async data => {
+      const localValues = await localSet.toList();
+      if (!localValues.find(v => v.id === String(data.val().id))) {
         localSet.store(data.val());
       }
     });
@@ -116,11 +117,8 @@ class PersistentHandles extends Xen.Debug(Xen.Base, log) {
       // At this point we're guaranteed the initial remote load is done.
       localSet.on('change', change => {
         if (change.add) {
-          change.add.forEach(a => {
-            // Only store changes that were made locally.
-            if (a.id.startsWith(arc.id)) {
-              remoteSet.push(ArcsUtils.removeUndefined(a));
-            }
+          change.add.forEach(record => {
+            remoteSet.push(ArcsUtils.removeUndefined(record));
           });
         } else if (change.remove) {
           change.remove.forEach(r => {
