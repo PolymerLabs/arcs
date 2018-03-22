@@ -22,11 +22,22 @@ class ArcSteps extends Xen.Debug(Xen.Base, log) {
       applied: []
     };
   }
-  _update({plans, plan, steps, step}, {applied}, lastProps) {
-    if (plans && plan !== lastProps.plan) {
-      // `plan` has been instantiated into host, record it into `steps`
-      this._addStep(plan, plans.generations, steps || [], applied);
+  _update({plans, plan, steps, step}, state, lastProps) {
+    const {applied} = state;
+    if (plans) {
+      // TODO(sjmiles): `plans` can become NULL before `plan` is propagated here
+      // we should probably attach `plans` (or at least the `.generations`) instead to `plan`
+      // after instantiating, but `plan` is a Recipe object and it's frozen.
+      // Instead we will need to create a wrapper object for `plan` that can contain the recipe
+      // and metadata. In the interim, we will just cache last non-null `plans`.
+      state.plans = plans;
     }
+    // TODO(sjmiles): using cached plans
+    if (state.plans && plan !== lastProps.plan) {
+      // `plan` has been instantiated into host, record it into `steps`
+      this._addStep(plan, state.plans.generations, steps || [], applied);
+    }
+    // TODO(sjmiles): using latest plans
     if (plans && steps) {
       // find a step from `steps` that correspondes to a plan in `plans` but hasn't been `applied`
       this._providePlanStep(plans, steps, applied);
