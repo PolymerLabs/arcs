@@ -84,6 +84,9 @@ class ArcFooter extends Xen.Base {
       //ArcFooter.log('opening: old, new: [${state.oldInnerHTML}] !== [${html}]');
       this._setState({open: true, html});
     }
+    if (props.search && props.search !== state.search) {
+      this._commitSearch(props.search);
+    }
   }
   _render(props, state) {
     return {

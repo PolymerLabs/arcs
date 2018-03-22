@@ -15,6 +15,7 @@ import '../../components/arc-tools/handle-explorer.js';
 import '../../components/arc-tools/local-data.js';
 import '../../components/arc-tools/xen-explorer.js';
 import '../../components/arc-tools/manifest-data.js';
+import '../../components/mic-input.js';
 
 // strings
 import Css from './shell-ui.css.js';
@@ -25,6 +26,8 @@ import AppIcon from './icon.svg.js';
 
 // templates
 const Main = Xen.html`
+
+<mic-input on-start="_onMicStart" on-end="_onMicEnd"></mic-input>
 
 <app-modal shown$="{{modalShown}}" on-click="_onScrimClick">
 
@@ -57,6 +60,7 @@ const Main = Xen.html`
       <a href="{{launcherUrl}}" title="Go to Launcher">${AppIcon}</a>
       <arc-title style="{{titleStatic}}" on-click="_onStartEditingTitle" unsafe-html="{{description}}"></arc-title>
       <toolbar-buttons>
+        <icon hidden$="{{micHidden}}">mic</icon>
         <icon on-click="_onMenuClick">more_vert</icon>
       </toolbar-buttons>
     </app-toolbar>
@@ -67,7 +71,7 @@ const Main = Xen.html`
   <!-- footer is here only to reserve space in the static flow (see also: toolbar) -->
   <footer>
     <!-- arc-footer is position-fixed -->
-    <arc-footer dots="{{dots}}" on-suggest="_onSuggest" on-search="_onSearch">
+    <arc-footer dots="{{dots}}" search="{{search}}" on-suggest="_onSuggest" on-search="_onSearch">
       <slot name="suggestions"></slot>
     </arc-footer>
   </footer>
@@ -113,7 +117,8 @@ class ShellUi extends Xen.Debug(Xen.Base, log) {
       shellPath,
       userPickerOpen: false,
       sharePickerOpen: false,
-      launcherUrl: `${location.origin}${location.pathname}`
+      launcherUrl: `${location.origin}${location.pathname}`,
+      micHidden: true
     };
   }
   _update(props, state, lastProps, lastState) {
@@ -187,6 +192,7 @@ class ShellUi extends Xen.Debug(Xen.Base, log) {
   }
   // TODO(sjmiles): need to collapse (at least some) logic into update to handle arc correctly
   _onSearch(e, {search}) {
+    this._setState({search});
     this._fire('search', search);
   }
   _onMenuClick(e) {
@@ -209,6 +215,13 @@ class ShellUi extends Xen.Debug(Xen.Base, log) {
   }
   _onShare(e, share) {
     this._fire('share', share);
+  }
+  _onMicStart() {
+    this._setState({micHidden: false});
+  }
+  _onMicEnd(e) {
+    const finalTranscript = e.detail;
+    this._setState({micHidden: true, search: finalTranscript});
   }
 }
 
