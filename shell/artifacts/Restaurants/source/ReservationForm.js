@@ -6,19 +6,14 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-defineParticle(({DomParticle}) => {
+defineParticle(({DomParticle, html}) => {
 
   let host = `reservation-form`;
 
-  let styles = `
+  let styles = html`
 <style>
-  [${host}] {
-    // padding: 6px 0;
-    // text-align: center;
-  }
   [${host}] > * {
     vertical-align: middle;
-    // padding: 6px 0;
   }
   [${host}] .x-select {
     display: inline-block;
@@ -41,7 +36,6 @@ defineParticle(({DomParticle}) => {
     margin: 0;
     padding: 0;
     border: 0;
-    // border-bottom: 1px solid #ddd;
     background-color: transparent;
     border-radius: 0;
     font-size: 16px;
@@ -81,14 +75,6 @@ defineParticle(({DomParticle}) => {
   [${host}] .x-button:disabled {
     opacity: 0.3;
   }
-  [${host}] .x-button.raised {
-    // transition: box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    // transition-delay: 0.2s;
-  }
-  [${host}] .x-button.raised:active:not(:disabled) {
-    // box-shadow: 0 8px 17px 0 rgba(0, 0, 0, 0.2);
-    // transition-delay: 0s;
-  }
   [${host}] [time-picker] {
     display:flex;
     flex-direction:row;
@@ -99,7 +85,7 @@ defineParticle(({DomParticle}) => {
 </style>
   `;
 
-  let template = `
+  let template = html`
 ${styles}
 <div ${host} id={{subId}}>
   <div time-picker>{{timePicker}}</div>
