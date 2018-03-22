@@ -22,6 +22,9 @@ class PersistentHandles extends Xen.Debug(Xen.Base, log) {
       watchers: []
     };
   }
+  _wouldChangeProp() {
+    return true;
+  }
   _update(props, state, lastProps, lastState) {
     if (props.key && props.arc && !props.handles) {
     //if (props.key && props.arc !== lastProps.arc) {

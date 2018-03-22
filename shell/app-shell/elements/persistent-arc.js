@@ -85,14 +85,14 @@ class PersistentArc extends Xen.Debug(Xen.Base, log) {
     metadata.bg = bgs[choice];
   }
   _watchKey(db, key) {
-    let arcMetadata = db.child(key).child('metadata');
+    const metadataNode = db.child(key).child('metadata');
     //log('watching', String(arcMetadata));
     const state = this._state;
     return {
-      node: arcMetadata,
+      node: metadataNode,
       handler: snap => {
-        log('watch triggered on metadata', String(arcMetadata));
-        let metadata = snap.val();
+        log('watch triggered on metadata', String(metadataNode));
+        const metadata = snap.val();
         if (this._hasMetadataChanged(metadata)) {
           log('remote metadata changed', metadata);
           state.metadata = metadata;

@@ -17,7 +17,9 @@ const firebase = window.firebase;
 const log = Xen.Base.logFactory('PersistentUser', '#65499c');
 
 class PersistentUser extends Xen.Debug(Xen.Base, log) {
-  static get observedAttributes() { return ['id', 'user', 'key']; }
+  static get observedAttributes() {
+    return ['id', 'user', 'key'];
+  }
   _getInitialState() {
     return {
       watch: new WatchGroup(),
@@ -25,61 +27,56 @@ class PersistentUser extends Xen.Debug(Xen.Base, log) {
     };
   }
   _update(props, state, lastProps, lastState) {
-    // if there's no id, create a new user from input record
-    if (!props.id && props.user && props.user.name && (props.user !== lastProps.user)) {
-      state.user = this._createUser(state.db, props.user);
-      this._fire('user', state.user);
+    // if there is no id, but there is a user record with a name, it's a request for a new user
+    if (!props.id && props.user && props.user.name) {
+      const user = this._createUser(state.db, props.user);
+      this._fire('user', user);
     }
-    // if we have acquired a user that doesn't match the requested id, discard the user
-    if (state.user && state.user.id !== props.id) {
-      state.user = null;
-      this._fire('user', state.user);
-    }
-    // if we have an id and user has mutated, write the mutations to the database
-    if (props.id && props.user && props.user !== state.user && props.user !== lastProps.user) {
-      log('WRITING user', props.user);
-      state.db.child(props.user.id).set(props.user);
-    }
-    // if we have a new id, watch the user data in the database
-    if (props.id && props.id !== lastProps.id) {
-      log('WATCHING user', props.id);
+    // if there is a new id, watch the corresponding database record
+    if (props.id && state.id !== props.id) {
+      state.id = props.id;
       state.watch.watches = [this._watchUser(state.db, props.id)];
     }
-    // TODO(sjmiles): none of this `key` stuff should be in this module
-    // if we have a fresh (current Arc) key, store it for processing when we have a user
-    if (props.key !== lastProps.key) {
-      state.key = props.key;
+    // if user record doesn't reference check with our cache, write to database
+    if (props.user != state.user) {
+      this._writeUser(state.db, props.user);
     }
-    // if we have a key to process and a user, then...
-    if (state.key && state.user) {
-      log(`WRITING into [${state.user.name}].arcs`, state.key);
+    // if user opens a new arc, touch the key in the user record
+    if (props.user && props.key != state.key) {
+      state.key = props.key;
+      log(`WRITING into [${props.user.name}].arcs (touching arc)`, props.key);
       // record that the user touched this arc
-      state.db.child(`${state.user.id}/arcs/${state.key}`).update({
+      state.db.child(`${props.user.id}/arcs/${props.key}`).update({
         touched: firebase.database.ServerValue.TIMESTAMP
       });
-      // done processing key
-      state.key = '';
     }
   }
   _createUser(db, user) {
     log('WRITING user (createUser)', user);
     // TODO(sjmiles): user in the database doesn't host it's own id field (equivalent to it's key)
-    // but the field in RAM does, is this a footgun? Hosting the id field in the database requires
-    // two writes which causes observer thrash.
+    // but the field in RAM does, is this a footgun?
+    // Modifying this record after creating it could cause thrash (do we write it again right away?)
     user.id = db.push(user).key;
     return user;
   }
+  _writeUser(db, user) {
+    log('WRITING user (writeUser)', user);
+    db.child(user.id).set(user);
+  }
   _watchUser(db, id) {
+    const state = this._state;
     return {
       node: db.child(id),
       handler: snap => {
         let user = snap.val();
-        if (user) {
-          user.id = id;
-        }
-        log('READING user (watchUser)', user, 'from', String(snap.ref));
+        log('READ user', user, 'from', String(snap.ref));
+        // force user record to host it's own id
+        user.id = id;
+        // cache user for reference checking
+        state.user = user;
+        // TODO(sjmiles): this is considered a new user record, but it might have the same deep-value
+        // relative to what the reciever has. We could test for deep-equality against some cached value.
         this._fire('user', user);
-        this._setState({user});
       }
     };
   }

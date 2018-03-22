@@ -104,5 +104,6 @@ export default {
   html,
   walker,
   logFactory: Base.logFactory,
-  setBoolAttribute: Template.setBoolAttribute
+  setBoolAttribute: Template.setBoolAttribute,
+  clone
 };

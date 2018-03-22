@@ -49,29 +49,46 @@ const log = Xen.Base.logFactory('ArcCloud', '#bb4d00');
 
 class ArcCloud extends Xen.Debug(Xen.Base, log) {
   static get observedAttributes() {
-    return ['config', 'userid', 'manifests', 'arc', 'key', 'metadata', 'plans', 'step', 'plan', 'exclusions', 'share', 'launcherarcs'];
+    return ['config', 'userid', 'user', 'manifests', 'arc', 'key', 'metadata',
+        'plans', 'step', 'plan', 'exclusions', 'share', 'launcherarcs'];
   }
   get template() {
     return template;
   }
   _update(props, state, oldProps, oldState) {
-    const {share, metadata, key} = props;
-    const {user, avatar, steps} = state;
+    const {user, share, metadata, key} = props;
+    const {avatar, steps} = state;
+    //
     if (user && avatar) {
       // TODO(sjmiles): double-time encapsulation breakage
       user.avatar = props.arc._loader._resolve(avatar.url);
     }
+    //
     if (props.exclusions) {
       state.exclusions = props.exclusions;
     }
-    //
-    if (user && key && ((user !== oldState.user) || (key !== oldState.key))) {
-      state.share = this._calculateShareState(user, key);
+    if (key && user) {
+      // `share` setting is implicit in user record, and explicit in `share` property,
+      // disambiguate here (user record wins)
+      if (user !== state.user) {
+        const share = this._calculateShareState(user, key);
+        log('have novel user/key combo, calcuated share as', share);
+        this._fire('share', share);
+      } else if (share !== share.state) {
+        if (this._consumeShareState(user, key, share)) {
+          log('have novel share, calcuated user as', user);
+          this._fire('user', Xen.clone(user));
+        }
+      }
+      state.user = user;
+      state.share = share;
     }
-    if (user && key && share !== oldProps.share) {
+    // Assumption is that user, key, and share are Truth from On High ... if they ever are not, we have a problem.
+    // This means intermediaries must never store values fired from here and send them back to us if they
+    // are also sending them farther up the tree.
+    if (user && key && share) {
       this._consumeShareState(user, key, share);
     }
-    this._fire('share', state.share);
     //
     if (steps && metadata) {
       this._consumeSteps(steps, metadata);
@@ -81,12 +98,11 @@ class ArcCloud extends Xen.Debug(Xen.Base, log) {
     this._fire('avatars', state.avatars);
     this._fire('manifests', state.manifests);
     this._fire('exclusions', state.exclusions);
-    this._fire('user', state.user);
     this._fire('step', state.step && state.step.plan);
     this._fire('arcs', state.arcs);
     super._update(props, state);
   }
-  _render({config, userid, arc, key, metadata, plans, step, plan, launcherarcs}, {manifests, exclusions, user, friends}) {
+  _render({config, userid, user, arc, key, metadata, plans, step, plan, launcherarcs}, {manifests, exclusions, friends}) {
     const render = {
       userid,
       user,
@@ -111,7 +127,7 @@ class ArcCloud extends Xen.Debug(Xen.Base, log) {
       if ((steps.length || metadata.steps) && (metadata.steps != steps)) {
         log(`setting steps to metadata`);
         metadata.steps = steps;
-        this._fire('metadata', metadata);
+        this._fire('metadata', Xen.clone(metadata));
         this._setState({steps: null});
       }
     }
@@ -147,10 +163,7 @@ class ArcCloud extends Xen.Debug(Xen.Base, log) {
         }
       }
     }
-    if (dirty) {
-      // `state.user` is considered immutable, need a copy
-      this._setImmutableState('user', user);
-    }
+    return dirty;
   }
   _onData(e, data) {
     this._setState({[e.type]: data});
@@ -159,7 +172,7 @@ class ArcCloud extends Xen.Debug(Xen.Base, log) {
     this._setImmutableState('arcs', arcs);
   }
   _onUser(e, user) {
-    this._setState({user});
+    this._fire('user', user);
   }
   _onKey(e, key) {
     this._fire('key', key);
