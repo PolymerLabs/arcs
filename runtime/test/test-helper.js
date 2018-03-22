@@ -14,9 +14,13 @@ import Arc from '../arc.js';
 import Manifest from '../manifest.js';
 import Loader from '../loader.js';
 import Planner from '../planner.js';
+import Random from '../random.js';
 import MockSlotComposer from './mock-slot-composer.js';
 import MessageChannel from '../message-channel.js';
 import InnerPec from '../inner-PEC.js';
+
+// Makes tests deterministic, which aids debugging.
+Random.seedForTests();
 
 /** @class TestHelper
  * Helper class to recipe instantiation and replanning.
@@ -221,7 +225,7 @@ export default class TestHelper {
   verifySlots(numSlots, verifyHandler) {
     assert.equal(numSlots, this.slotComposer._slots.length);
     this.slotComposer._slots.forEach(s => verifyHandler(s.consumeConn.particle.name, s.consumeConn.name, s._content));
-  } 
+  }
 
   // TODO: add more helper methods to verify data and slots.
 

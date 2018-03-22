@@ -9,6 +9,7 @@
  */
 
 import assert from '../platform/assert-web.js';
+import Random from './random.js';
 
 export default class Id {
   constructor(currentSession) {
@@ -18,7 +19,7 @@ export default class Id {
     this._components = [];
   }
   static newSessionId() {
-    let session = Math.floor(Math.random() * Math.pow(2, 50)) + '';
+    let session = Math.floor(Random.next() * Math.pow(2, 50)) + '';
     return new Id(session);
   }
 
@@ -68,7 +69,7 @@ export default class Id {
     for (let i = 0; i < id._components.length; i++)
       if (id._components[i] !== this._components[i])
         return false;
-    
+
     return true;
   }
 }
