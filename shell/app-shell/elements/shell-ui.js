@@ -169,11 +169,6 @@ class ShellUi extends Xen.Debug(Xen.Base, log) {
   _didRender(props, {toolsVisible}) {
     Xen.Template.setBoolAttribute(this, 'expanded', Boolean(toolsVisible));
   }
-  _setState(state) {
-    if (super._setState(state)) {
-      log(state);
-    }
-  }
   _onData(e, data) {
     if (this._setState({[e.type]: data})) {
       log(data);
@@ -239,44 +234,37 @@ class ShellUi extends Xen.Debug(Xen.Base, log) {
       return match;
     };
     // find all nodes with `trigger` attribute
-    const nodes = document.querySelectorAll('[trigger]');
+    let nodes = document.querySelectorAll('[trigger]');
+    nodes = Array.from(nodes).concat(Array.from(this.host.querySelectorAll('[trigger]')));
     // find the node that contains `finalTranscript` with the least number of non-matching characters
     let match;
     for (const node of nodes) {
-      //if (!({input: 1, textarea: 1}[node.localName])) {
-        const trigger = node.getAttribute('trigger').toLowerCase().replace(/[^A-Za-z0-9 ]/g, '');
-        match = findMatch(node, trigger, finalTranscript, match);
-      //}
+      const trigger = node.getAttribute('trigger').toLowerCase().replace(/[^A-Za-z0-9 ]/g, '');
+      match = findMatch(node, trigger, finalTranscript, match);
     }
-    // if there is a matching node, install value and click it
+    // if we matched, value is the transcript
     if (match) {
-      let value = finalTranscript;
-      // if the trigger is a prefix of value
-      const trigger = match.node.getAttribute('trigger');
-      if (value.startsWith(trigger)) {
-        // replace value with the postfix
-        value = value.slice(trigger.length).trim();
-      }
-      match.node.value = value;
-      match.node.click();
-      return;
+      match.value = finalTranscript;
     }
-    /*
-    // find an input node whose trigger is a prefix of finalTranscript
-    for (const node of nodes) {
-      const trigger = node.getAttribute('trigger');
-      if (({input: 1, textarea: 1}[node.localName]) || trigger==='search') {
+    // if not, look for a prefix-match
+    else {
+      for (const node of nodes) {
+        const trigger = node.getAttribute('trigger').toLowerCase().replace(/[^A-Za-z0-9 ]/g, '');
         if (finalTranscript.startsWith(trigger)) {
-          // install the postfix into the search box
-          const value = finalTranscript.slice(trigger.length).trim();
-          node.value = value;
-          node.click();
-          // TODO(sjmiles): how to make it notice
-          return;
+          match = {
+            node: node,
+            value: finalTranscript.slice(trigger.length).trim(),
+          };
+          break;
         }
       }
     }
-    */
+    // if there is a matching node, install value and click it
+    if (match) {
+      match.node.value = match.value;
+      match.node.click();
+      return;
+    }
     // find a suggestion matching finalTranscript?
     const suggestions = document.querySelectorAll('suggestion-element');
     match = null;
