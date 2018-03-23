@@ -397,13 +397,6 @@ async function watch([arg, ...moreArgs]) {
   return new Promise(() => {});
 }
 
-async function defaultSteps() {
-  return check() &&
-      await peg() &&
-      await test() &&
-      await webpack();
-}
-
 // Runs a chain of `[[fun, args]]` by calling `fun(args)`, logs emoji, and returns whether
 // all the functions returned `true`.
 async function run(funsAndArgs) {
