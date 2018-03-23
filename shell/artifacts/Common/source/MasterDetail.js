@@ -28,7 +28,7 @@ defineParticle(({DomParticle, html}) => {
 </style>
 <div ${host}>
   <div class="detail-wrapper" style%="{{tab0}}">
-    <icon class="close-button" on-click="_onBack">close</icon>
+    <icon trigger="close" class="close-button" on-click="_onBack">close</icon>
     <div slotid="detail"></div>
   </div>
   <div style%="{{tab1}}">
