@@ -29,6 +29,7 @@ import FallbackFate from './strategies/fallback-fate.js';
 import GroupHandleConnections from './strategies/group-handle-connections.js';
 import CombinedStrategy from './strategies/combined-strategy.js';
 import MatchFreeHandlesToConnections from './strategies/match-free-handles-to-connections.js';
+import CreateViews from './strategies/create-views.js';
 import ResolveRecipe from './strategies/resolve-recipe.js';
 
 import Speculator from './speculator.js';
@@ -36,32 +37,6 @@ import Description from './description.js';
 import Tracing from '../tracelib/trace.js';
 
 import StrategyExplorerAdapter from './debug/strategy-explorer-adapter.js';
-
-class CreateViews extends Strategy {
-  // TODO: move generation to use an async generator.
-  async generate(inputParams) {
-    return Recipe.over(this.getResults(inputParams), new class extends RecipeWalker {
-      onView(recipe, view) {
-        let counts = RecipeUtil.directionCounts(view);
-
-        let score = 1;
-        if (counts.in == 0 || counts.out == 0) {
-          if (counts.unknown > 0)
-            return;
-          if (counts.in == 0)
-            score = -1;
-          else
-            score = 0;
-        }
-
-        if (!view.id && view.fate == '?') {
-          return (recipe, view) => {view.fate = 'create'; return score;};
-        }
-      }
-    }(RecipeWalker.Permuted), this);
-  }
-}
-
 
 class Planner {
   // TODO: Use context.arc instead of arc
