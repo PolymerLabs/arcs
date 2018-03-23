@@ -50,6 +50,27 @@
       #recipe-box[combined] {
         background-color: lightgrey;
       }
+
+      [diff='add'] {
+        box-shadow: 0 0 2px 2px green;
+      }
+
+      [diff='remove'] {
+        box-shadow: 0 0 2px 2px red;
+      }
     </style>
   </template>
+  <script>
+    const resolvedResults = function(results) {
+      return totalResults(results, r => r.resolved);
+    }
+
+    const totalResults = function(results, recipeFilter = (x => true)) {
+      return results.reduce((a, b) => a + generationSize(b, recipeFilter), 0);
+    }
+
+    const generationSize = function(generation, recipeFilter = (x => true)) {
+      return generation.population.reduce((a, b) => a + b.recipes.filter(recipeFilter).length, 0);
+    }
+  </script>
 </dom-module>

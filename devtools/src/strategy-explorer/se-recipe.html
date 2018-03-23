@@ -43,6 +43,7 @@ http://polymer.github.io/PATENTS.txt
       terminal$='{{terminal}}'
       resolved$='{{recipe.resolved}}'
       combined$='{{recipe.combined}}'
+      diff$='[[recipe._diff]]'
     ><div>{{recipe.score}}</div><div id='hash'>{{shortHash}}</div></div>
   </template>
 
@@ -53,7 +54,14 @@ http://polymer.github.io/PATENTS.txt
         shortHash: String,
       },
       attached: function() {
-        document.strategyExplorer.idMap.set(this.recipe.id, this);
+        let recipeView = document.strategyExplorer.shadowRoot.querySelector('se-recipe-view');
+        this.$['recipe-box'].addEventListener('mouseenter', e => {
+          recipeView.over = this;
+          recipeView.recipe = this.recipe;
+        });
+        this.$['recipe-box'].addEventListener('mouseleave', e => {
+          recipeView.resetToPinned();
+        });
 
         this.ancestors = new Set();
         this.childrens = new Set();
@@ -61,6 +69,12 @@ http://polymer.github.io/PATENTS.txt
         this.descendants = new Set();
         this.parents = new Set();
         this.strategyMap = new Map();
+
+        // Disable everything apart from the recipe diff on hover
+        // for 'missing' recipes in the diff between planner runs.
+        if (this.recipe._diff === 'remove') return;
+
+        document.strategyExplorer.idMap.set(this.recipe.id, this);
 
         this.recipe.derivation.forEach(derivation => {
           if (derivation.parent !== undefined) {
@@ -111,14 +125,6 @@ http://polymer.github.io/PATENTS.txt
         if (document.strategyExplorer.pendingActions.has(this.recipe.id)) {
           document.strategyExplorer.pendingActions.get(this.recipe.id).forEach(action => action(this));
         }
-        let recipeView = document.strategyExplorer.shadowRoot.querySelector('se-recipe-view');
-        this.$['recipe-box'].addEventListener('mouseenter', e => {
-          recipeView.over = this;
-          recipeView.recipe = this.recipe;
-        });
-        this.$['recipe-box'].addEventListener('mouseleave', e => {
-          recipeView.resetToPinned();
-        });
         this.$['recipe-box'].addEventListener('click', e => {
           if (document._selectedBox !== undefined) {
             document._selectedBox.selected = false;
