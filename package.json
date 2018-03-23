@@ -7,7 +7,7 @@
     "host": "localhost"
   },
   "scripts": {
-    "prepare": "cd devtools && bower install",
+    "prepare": "tools/sigh check && cd devtools && bower install",
     "start": "cross-env http-server -a ${npm_package_config_host} -p ${npm_package_config_port}",
     "test-with-start": "run-p --print-name --race start test",
     "test": "run-s --print-name --continue-on-error test-sigh test-mocha test-mocha-words test-wdio test-extension",
