@@ -65,7 +65,7 @@ ${style}
 <template column>
   <div chip style="{{chipStyle}}">
     <icon delete hide$="{{noDelete}}" key="{{arcId}}" on-click="_onDelete">remove_circle_outline</icon>
-    <a href="{{href}}">
+    <a href="{{href}}" trigger$="{{description}}">
       <div description title="{{description}}" unsafe-html="{{blurb}}"></div>
       <div style="flex: 1;"></div>
       <div share>
