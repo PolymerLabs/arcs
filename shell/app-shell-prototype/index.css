@@ -8,8 +8,7 @@ body {
   margin: 0;
   overflow-x: hidden;
   overflow-y: scroll;
-  background-color: gray;
-  background-image: url("../assets/black-linen.png");
+  background-color: white;
 }
 
 @font-face {
