@@ -57,7 +57,7 @@ const Main = Xen.html`
   <toolbar>
     <!-- app-toolbar is position-fixed -->
     <app-toolbar style="{{shellStyle}}">
-      <a href="{{launcherUrl}}" title="Go to Launcher">${AppIcon}</a>
+      <a trigger="launcher" href="{{launcherUrl}}" title="Go to Launcher">${AppIcon}</a>
       <arc-title style="{{titleStatic}}" on-click="_onStartEditingTitle" unsafe-html="{{description}}"></arc-title>
       <toolbar-buttons>
         <icon hidden$="{{micHidden}}">mic</icon>
