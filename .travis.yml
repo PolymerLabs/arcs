@@ -13,6 +13,8 @@ addons:
 
 script: "cd ${TRAVIS_BUILD_DIR} && npm install && npm run test-with-start"
 
+before_install:
+  - npm install -g npm@latest
 
 before_deploy:
   # Travis pages deploys skips artifacts from .gitignore. We need some of those, so
