@@ -65,14 +65,12 @@ class MicInput extends Xen.Base {
         finalTranscript: '',
         ignoreOnEnd: false
       });
-      this._fire('start');
     }
   }
   _stop() {
     const {recognition, recognizing, duration, finalTranscript} = this._state;
     if (recognizing) {
       recognition.stop();
-      this._fire('end');
     }
   }
   _onStartClick() {
@@ -80,6 +78,7 @@ class MicInput extends Xen.Base {
   }
   _onRecognitionStart() {
     this._setState({recognizing: true});
+    this._fire('start');
   }
   _onRecognitionError() {
     if (event.error == 'no-speech') {
@@ -128,7 +127,6 @@ class MicInput extends Xen.Base {
       if (e.key == 'Shift') {
         this._setState({active: true});
       }
-      //this._start();
     }
   }
   _onKeyup(e) {
@@ -137,7 +135,6 @@ class MicInput extends Xen.Base {
       if (e.key == 'Shift') {
         this._setState({active: false});
       }
-      //this._stop();
     }
   }
 }

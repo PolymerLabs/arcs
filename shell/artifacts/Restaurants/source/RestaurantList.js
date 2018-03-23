@@ -31,7 +31,7 @@ defineParticle(({DomParticle, html}) => {
 `;
 
   const selectable = html`
-<div selectable-item on-click="_onSelect" key="{{index}}">
+<div selectable-item on-click="_onSelect" key="{{index}}" trigger$="{{name}}">
   ${item}
 </div>
   `;

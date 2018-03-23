@@ -220,8 +220,77 @@ class ShellUi extends Xen.Debug(Xen.Base, log) {
     this._setState({micHidden: false});
   }
   _onMicEnd(e) {
-    const finalTranscript = e.detail;
-    this._setState({micHidden: true, search: finalTranscript});
+    this._setState({micHidden: true});
+    const finalTranscript = e.detail.toLowerCase().replace(/[^A-Za-z0-9 ]/g, '');
+    log(`voice trigger: [${finalTranscript}]`);
+    if (!finalTranscript) {
+      return;
+    }
+    // see if `node` is a better match for `search` than `match`
+    const findMatch = (node, trigger, search, match) => {
+      log(`node "${node.localName}" has trigger "${trigger}"`);
+      if (trigger.includes(search)) {
+        const diff = trigger.length - search.length;
+        if (!match || match.diff > diff) {
+          log(`matched "${trigger}"`);
+          match = {diff, node};
+        }
+      }
+      return match;
+    };
+    // find all nodes with `trigger` attribute
+    const nodes = document.querySelectorAll('[trigger]');
+    // find the node that contains `finalTranscript` with the least number of non-matching characters
+    let match;
+    for (const node of nodes) {
+      //if (!({input: 1, textarea: 1}[node.localName])) {
+        const trigger = node.getAttribute('trigger').toLowerCase().replace(/[^A-Za-z0-9 ]/g, '');
+        match = findMatch(node, trigger, finalTranscript, match);
+      //}
+    }
+    // if there is a matching node, install value and click it
+    if (match) {
+      let value = finalTranscript;
+      // if the trigger is a prefix of value
+      const trigger = match.node.getAttribute('trigger');
+      if (value.startsWith(trigger)) {
+        // replace value with the postfix
+        value = value.slice(trigger.length).trim();
+      }
+      match.node.value = value;
+      match.node.click();
+      return;
+    }
+    /*
+    // find an input node whose trigger is a prefix of finalTranscript
+    for (const node of nodes) {
+      const trigger = node.getAttribute('trigger');
+      if (({input: 1, textarea: 1}[node.localName]) || trigger==='search') {
+        if (finalTranscript.startsWith(trigger)) {
+          // install the postfix into the search box
+          const value = finalTranscript.slice(trigger.length).trim();
+          node.value = value;
+          node.click();
+          // TODO(sjmiles): how to make it notice
+          return;
+        }
+      }
+    }
+    */
+    // find a suggestion matching finalTranscript?
+    const suggestions = document.querySelectorAll('suggestion-element');
+    match = null;
+    for (const suggestion of suggestions) {
+      const trigger = suggestion.textContent.toLowerCase();
+      match = findMatch(suggestion, trigger, finalTranscript, match);
+    }
+    // if there is a matching suggestion, click it
+    if (match) {
+      match.node.click();
+      return;
+    }
+    // if all else fails, use finalTranscript as suggestions search
+    this._setState({search: finalTranscript});
   }
 }
 
