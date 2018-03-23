@@ -28,6 +28,9 @@ particle CompareBoxes in 'test.js'
 particle ProvideBoxes in 'test.js'
   ProvideBoxes(out [Box] boxes)
   description \`ignore this description too\`
+particle DisplayBox in 'test.js'
+  DisplayBox(in Box biggest)
+  description \`ignore this description too\`
 recipe
   ? as handle0
   ? as handle1
@@ -36,6 +39,8 @@ recipe
   CompareBoxes
     all <- handle0
     biggest -> handle1
+  DisplayBox
+    biggest <- handle1
   description \`the winner is: '\${CompareBoxes.biggest}' of all '\${CompareBoxes.all}'\`
   `;
 

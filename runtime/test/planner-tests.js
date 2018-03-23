@@ -29,18 +29,8 @@ import FallbackFate from '../strategies/fallback-fate.js';
 import MessageChannel from '../message-channel.js';
 import InnerPec from '../inner-PEC.js';
 import Particle from '../particle.js';
+import StrategyTestHelper from './strategies/strategy-test-helper.js';
 let loader = new Loader();
-
-function createTestArc(id, context, affordance) {
-  return new Arc({
-    id,
-    context,
-    slotComposer: {
-      affordance,
-      getAvailableSlots: (() => { return [{name: 'root', id: 'r0', tags: ['#root'], handles: [], handleConnections: [], getProvidedSlotSpec: () => { return {isSet: false}; }}]; })
-    }
-  });
-}
 
 async function planFromManifest(manifest, {arcFactory, testSteps}={}) {
   if (typeof manifest == 'string') {
@@ -48,7 +38,7 @@ async function planFromManifest(manifest, {arcFactory, testSteps}={}) {
     manifest = await Manifest.parse(manifest, {loader, fileName});
   }
 
-  arcFactory = arcFactory || ((manifest) => createTestArc('test', manifest, 'dom'));
+  arcFactory = arcFactory || ((manifest) => StrategyTestHelper.createTestArc('test', manifest, 'dom'));
   testSteps = testSteps || ((planner) => planner.plan(Infinity));
 
   let arc = await arcFactory(manifest);
@@ -120,7 +110,7 @@ describe('Planner', function() {
   it('can make a plan with handles', async () => {
     let manifest = await Manifest.load('./runtime/test/artifacts/giftlist.manifest', loader);
     let arcFactory = async manifest => {
-      let arc = createTestArc('test-plan-arc', manifest, 'dom');
+      let arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'dom');
       let Person = manifest.findSchemaByName('Person').entityClass();
       let Product = manifest.findSchemaByName('Product').entityClass();
       let personView = await arc.createHandle(Person.type.setViewOf(), 'aperson');
@@ -553,7 +543,7 @@ describe('ResolveRecipe/MapSlots', function() {
       ${recipeManifest}
     `));
     let inputParams = {generated: [{result: manifest.recipes[0], score: 1}]};
-    let arc = createTestArc('test-plan-arc', manifest, 'dom');
+    let arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'dom');
 
     let results = await new MapSlots(arc).generate(inputParams);
     if (results.length == 1) {
@@ -634,7 +624,7 @@ describe('ResolveRecipe/MapSlots', function() {
         B
     `));
     let inputParams = {generated: [{result: manifest.recipes[0], score: 1}]};
-    let arc = createTestArc('test-plan-arc', manifest, 'dom');
+    let arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'dom');
 
     let strategy = new MapSlots(arc);
     let results = await strategy.generate(inputParams);
@@ -679,7 +669,7 @@ describe('AssignOrCopyRemoteViews', function() {
       manifest.newHandle(schema.type.setViewOf(), 'Test2', 'test-2', ['#tag2']);
       manifest.newHandle(schema.type.setViewOf(), 'Test2', 'test-3', []);
 
-      let arc = createTestArc('test-plan-arc', manifest, 'dom');
+      let arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'dom');
 
       let planner = new Planner();
       planner.init(arc);
@@ -809,7 +799,7 @@ describe('SearchTokensToParticles', function() {
       recipe
         search \`jump or fly or run and Rester\`
     `));
-    let arc = createTestArc('test-plan-arc', manifest, 'dom');
+    let arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'dom');
     let recipe = manifest.recipes[0];
     assert(recipe.normalize());
     assert(!recipe.isResolved());
@@ -845,7 +835,7 @@ describe('MatchRecipeByVerb', function() {
         JumpingBoots.e <- NuclearReactor.e
     `);
 
-    let arc = createTestArc('test-plan-arc', manifest, 'dom');
+    let arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'dom');
     let inputParams = {generated: [{result: manifest.recipes[0], score: 1}]};
     let mrv = new MatchRecipeByVerb(arc);
     let results = await mrv.generate(inputParams);
@@ -869,7 +859,7 @@ describe('MatchRecipeByVerb', function() {
         P
     `);
 
-    let arc = createTestArc('test-plan-arc', manifest, 'dom');
+    let arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'dom');
     let inputParams = {generated: [{result: manifest.recipes[0], score: 1}]};
     let mrv = new MatchRecipeByVerb(arc);
     let results = await mrv.generate(inputParams);
@@ -920,7 +910,7 @@ describe('MatchParticleByVerb', function() {
 
   it('particles by verb strategy', async () => {
     let manifest = (await Manifest.parse(manifestStr));
-    let arc = createTestArc('test-plan-arc', manifest, 'dom');
+    let arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'dom');
     // Apply MatchParticleByVerb strategy.
     let inputParams = {generated: [{result: manifest.recipes[0], score: 1}]};
     let mpv = new MatchParticleByVerb(arc);
@@ -936,7 +926,7 @@ describe('MatchParticleByVerb', function() {
     recipe.handles[0].mapToView({id: 'test1', type: manifest.findSchemaByName('Height').entityClass().type});
     recipe.handles[1].mapToView({id: 'test2', type: manifest.findSchemaByName('Energy').entityClass().type});
 
-    let arc = createTestArc('test-plan-arc', manifest, 'dom');
+    let arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'dom');
 
     // Apply all strategies to resolve recipe where particles are referenced by verbs.
     let planner = new Planner();
@@ -972,7 +962,7 @@ recipe
   D
       `));
       let inputParams = {generated: [{result: manifest.recipes[0], score: 1}]};
-      let arc = createTestArc('test-plan-arc', manifest, 'dom');
+      let arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'dom');
       arc._search = 'ShowCollection and chooser alsoon recommend';
       let ghc = new GroupHandleConnections(arc);
 
@@ -1001,7 +991,7 @@ recipe
       `));
       manifest.recipes[0].normalize();
       let inputParams = {generated: [{result: manifest.recipes[0], score: 1}], terminal: []};
-      let arc = createTestArc('test-plan-arc', manifest, 'dom');
+      let arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'dom');
       let strategy = new CombinedStrategy([
         new SearchTokensToParticles(arc),
         new GroupHandleConnections(arc),
@@ -1034,7 +1024,7 @@ describe('FallbackFate', function() {
     let recipe = manifest.recipes[0];
     recipe.handles.forEach(v => v._originalFate = '?');
     assert(recipe.normalize());
-    let arc = createTestArc('test-plan-arc', manifest, 'dom');
+    let arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'dom');
     let inputParams = {generated: [{result: manifest.recipes[0], score: 1}], terminal: []};
     let strategy = new FallbackFate(arc);
 
@@ -1069,7 +1059,7 @@ describe('FallbackFate', function() {
     let recipe = manifest.recipes[0];
     recipe.handles.forEach(v => v._originalFate = '?');
     assert(recipe.normalize());
-    let arc = createTestArc('test-plan-arc', manifest, 'dom');
+    let arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'dom');
     let inputParams = {generated: [{result: manifest.recipes[0], score: 1}], terminal: []};
 
     let strategy = new FallbackFate(arc);
@@ -1086,7 +1076,7 @@ describe('Type variable resolution', function() {
     };
     let manifest = (await Manifest.parse(manifestStr, {loader}));
 
-    let arc = createTestArc('test-plan-arc', manifest, 'dom');
+    let arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'dom');
     let planner = new Planner();
     planner.init(arc);
     return planner.plan(Infinity);
