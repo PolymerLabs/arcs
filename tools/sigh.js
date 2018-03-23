@@ -91,9 +91,8 @@ function targetIsUpToDate(relativeTarget, relativeDeps) {
 }
 
 function check() {
-
-  const nodeRequiredVersion = '9.2.0';
-  const npmRequiredVersion = '5.7.1';
+  const nodeRequiredVersion = '>=9.2.0';
+  const npmRequiredVersion = '>=5.7.1';
 
   if (!semver.satisfies(process.version, nodeRequiredVersion)) {
     throw new Error(`at least node ${nodeRequiredVersion} is required, you have ${process.version}`);
