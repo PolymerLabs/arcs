@@ -29,7 +29,8 @@ The strategy is not executed on recipes with outstanding constraints or with fre
 [add-use-views.js](https://github.com/PolymerLabs/arcs/blob/master/runtime/strategies/add-use-views.js)
 
 ## CreateViews
-Sets view’s fate to “create”, if its fate was unknown and ID was undefined.<br/>
+Sets view’s fate to “create”, if its fate was unknown and ID was undefined.
+Requires that there are at least 2 particles connected, at least one reading and one writing.<br/>
 [planner.js](https://github.com/PolymerLabs/arcs/blob/master/runtime/planner.js#L34)
 
 ## MapSlots
