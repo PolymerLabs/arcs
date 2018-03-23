@@ -328,9 +328,7 @@
       }
 
       _formatTimestamp(timestamp) {
-        let d = new Date(timestamp);
-        let time = [ d.getHours(), d.getMinutes(), d.getSeconds() ].map(x => String(x).padStart(2, '0'));
-        return `${time.join(":")}.${String(d.getMilliseconds()).padStart(3, '0')}`;
+        return formatTime(timestamp, true /* with millis */);
       }
 
       _truncate(data) {

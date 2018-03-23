@@ -7,11 +7,12 @@ subject to an additional IP rights grant found at
 http://polymer.github.io/PATENTS.txt
 -->
 <link rel="import" href="../../bower_components/polymer/polymer.html">
-<link rel="import" href="se-recipe.html"></link>
+<link rel="import" href="se-recipe.html">
+<link rel="import" href="se-shared.html">
 
 <dom-module id='se-population'>
   <template>
-    <style>
+    <style include='se-shared-styles'>
     :host {
       display: block;
       margin: 2px;
@@ -34,7 +35,7 @@ http://polymer.github.io/PATENTS.txt
     </style>
     <div class='strategy-container'>
       <template is='dom-repeat' items='{{population}}'>
-        <div class='strategy-box'>
+        <div class='strategy-box' diff$='[[item._diff]]'>
           {{camelCaseToRegularForm(item.strategy)}}
           <div class='recipe-container'>
             <template is='dom-repeat' items='{{item.recipes}}'>

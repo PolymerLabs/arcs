@@ -54,4 +54,13 @@
 
 <script>
   const writeOps = ['set', 'store', 'clear', 'remove'];
+
+  const formatTime = function(timestamp, withMillis) {
+    let d = new Date(timestamp);
+    let time = [ d.getHours(), d.getMinutes(), d.getSeconds() ].map(x => String(x).padStart(2, '0')).join(':');
+    if (withMillis) {
+      time += '.' + String(d.getMilliseconds()).padStart(3, '0');
+    }
+    return time;
+  }
 </script>
