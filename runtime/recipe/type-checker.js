@@ -11,32 +11,133 @@ import assert from '../../platform/assert-web.js';
 
 class TypeChecker {
 
-  // list: [{type, direction, connection}]
+  // resolve a list of handleConnection types against a handle
+  // base type.
   static processTypeList(baseType, list) {
-    if (list.length == 0) {
-      return {type: baseType, valid: true};
-    }
+    if (baseType == undefined)
+      baseType = Type.newVariable(new TypeVariable('a'));
 
-    let constraints = TypeChecker.typeToConstraints(baseType);
-    let variables = [];
+    let concreteTypes = [];
 
-    for (let i = 0; i < list.length; i++) {
-      let success = TypeChecker.mergeConstraintsOrFailTypeComparison(constraints, list[i]);
-      if (!success)
-        return {valid: false};
+    // baseType might be a variable (and is definitely a variable if no baseType was available).
+    // Some of the list might contain variables too.
     
-      if (list[i].isVariable)
-        variables.push(list[i]);
+    // First attempt to merge all the variables into the baseType
+    //
+    // If the baseType is a variable then this results in a single place to manipulate the constraints
+    // of all the other connected variables at the same time.
+    for (let item of list) {
+      if (item.type.resolvedType().hasVariable) {
+        baseType = TypeChecker.tryMergeTypeVariable(baseType, item.type);
+        if (baseType == null)
+          return null;
+      } else {
+        concreteTypes.push(item);
+      }
     }
 
-    for (let i = 1; i < variables.length; i++) {
-      TypeChecker.mergeVariables(variables[0], variables[i]);
+    for (let item of concreteTypes) {
+      let success = TypeChecker.tryMergeConstraints(baseType, item);
+      if (!success)
+        return null;
     }
 
-    if (variables.length > 0) {
-      TypeChecker.applyConstraintsToVariable(constraints, variables[0]);
+    let candidate = baseType.resolvedType();
+    if (candidate.isSetView)
+      candidate = candidate.primitiveType();
+    
+    if (candidate.canReadSubset == null || candidate.canWriteSuperset == null || candidate.canReadSubset.entitySchema.contains(candidate.canWriteSuperset.entitySchema))
+      return baseType.resolvedType();
+    
+    return null;
+  }
 
-    return {type: TypeChecker.constraintsToType(constraints), valid: true};
+  static tryMergeTypeVariable(base, onto) {
+    let [primitiveBase, primitiveOnto] = Type.unwrapPair(base.resolvedType(), onto.resolvedType());
+
+    if (primitiveBase.isVariable) {
+      if (primitiveOnto.isVariable) {
+        // base, onto both variables.
+        let result = primitiveBase.variable.maybeMergeConstraints(primitiveOnto.variable);
+        if (result == false)
+          return null;
+        primitiveOnto.variable.resolution = primitiveBase;
+      } else {
+        // base variable, onto not.
+        primitiveBase.variable.resolution = primitiveOnto;
+      }
+    } else if (primitiveOnto.isVariable) {
+      // onto variable, base not.
+      primitiveOnto.variable.resolution = primitiveBase;
+      return onto;
+    } else {
+      assert(false, "tryMergeTypeVariable shouldn't be called on two types without any type variables");
+    }
+    
+    return base;
+  }
+
+  static tryMergeConstraints(handleType, { type, direction }) {
+    let [primitiveHandleType, primitiveConnectionType] = Type.unwrapPair(handleType.resolvedType(), type.resolvedType());
+    if (primitiveHandleType.isVariable) {
+      // if this is an undifferentiated variable then we need to create structure to match against. That's
+      // allowed because this variable could represent anything, and it needs to represent this structure
+      // in order for type resolution to succeed.
+      if (primitiveConnectionType.isSetView) {
+        assert(primitiveHandleType.variable.resolution == null && primitiveHandleType.variable.canReadSubset == null && primitiveHandleType.variable.canWriteSuperset == null);
+        primitiveHandleType.variable.resolution = Type.newSetView(Type.newVariable(new TypeVariable('a')));
+        let unwrap = Type.unwrapPair(primitiveHandleType.resolvedType(), primitiveConnectionType);
+        primitiveHandleType = unwrap[0];
+        primitiveConnectionType = unwrap[1];
+      }
+
+      if (direction == 'out' || direction == 'inout') {
+        // the canReadSubset of the handle represents the maximal type that can be read from the
+        // handle, so we need to intersect out any type that is more specific than the maximal type
+        // that could be written.
+        if (!primitiveHandleType.variable.maybeMergeCanReadSubset(primitiveConnectionType.canWriteSuperset))
+          return false;
+      }
+      if (direction == 'in' || direction == 'inout') {
+        // the canWriteSuperset of the handle represents the maximum lower-bound type that is read from the handle,
+        // so we need to union it with the type that wants to be read here.
+        if (!primitiveHandleType.variable.maybeMergeCanWriteSuperset(primitiveConnectionType.canReadSubset))
+          return false;
+      }
+    } else {
+      if (direction == 'out' || direction == 'inout')
+        if (!TypeChecker.writeConstraintsApply(primitiveHandleType, primitiveConnectionType))
+          return false;
+      if (direction == 'in' || direction == 'inout')
+        if (!TypeChecker.readConstraintsApply(primitiveHandleType, primitiveConnectionType))
+          return false;
+    }
+
+    return true;
+  }
+
+  static writeConstraintsApply(handleType, connectionType) {
+    // this connection wants to write to this handle. If the written type is
+    // more specific than the canReadSubset then it isn't violating the maximal type
+    // that can be read.
+    let writtenType = connectionType.canWriteSuperset;
+    if (writtenType == null || handleType.canReadSubset == null)
+      return true;
+    if (writtenType.entitySchema.contains(handleType.canReadSubset.entitySchema))
+      return true;
+    return false;
+  }
+
+  static readConstraintsApply(handleType, connectionType) {
+    // this connection wants to read from this handle. If the read type
+    // is less specific than the canWriteSuperset, then it isn't violating
+    // the maximum lower-bound read type.
+    let readType = connectionType.canReadSubset;
+    if (readType == null|| handleType.canWriteSuperset == null)
+      return true;
+    if (handleType.canWriteSuperset.entitySchema.contains(readType.entitySchema))
+      return true;
+    return false;
   }
 
   static restrictType(type, instance) {

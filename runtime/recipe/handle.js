@@ -114,8 +114,6 @@ class Handle {
 
   _isValid(options) {
     let typeSet = [];
-    if (this._mappedType)
-      typeSet.push({type: this._mappedType});
     let tags = new Set();
     for (let connection of this._connections) {
       // A remote view cannot be connected to an output param.
@@ -130,16 +128,18 @@ class Handle {
       }
       connection.tags.forEach(tag => tags.add(tag));
     }
-    let {type, valid} = TypeChecker.processTypeList(typeSet);
-    if (valid) {
-      this._type = type.type;
+    let type = TypeChecker.processTypeList(this._mappedType, typeSet);
+    if (type) {
+      this._type = type;
       this._tags.forEach(tag => tags.add(tag));
       this._tags = [...tags];
-    } else if (options && options.errors) {
+      return true;
+    }
+    if (options && options.errors) {
       // TODO: pass options to TypeChecker.processTypeList for better error.
       options.errors.set(this, `Type validations failed for handle '${this.id || this.name || this.localName || this.tags.join(' ')}'`);
     }
-    return valid;
+    return false;
   }
 
   isResolved(options) {

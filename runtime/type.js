@@ -125,6 +125,7 @@ class Type {
     return [type1, type2];
   }
 
+
   // TODO: update call sites to use the type checker instead (since they will
   // have additional information about direction etc.)
   equals(type) {
@@ -176,6 +177,22 @@ class Type {
   isResolved() {
     // TODO: one of these should not exist.
     return !this.hasUnresolvedVariable;
+  }
+
+  get canWriteSuperset() {
+    if (this.isVariable)
+      return this.variable.canWriteSuperset;
+    if (this.isEntity)
+      return this;
+    assert(false, `canWriteSuperset not implemented for ${this}`);
+  }
+
+  get canReadSubset() {
+    if (this.isVariable)
+      return this.variable.canReadSubset;
+    if (this.isEntity)
+      return this;
+    assert(false, `canReadSubset not implemented for ${this}`);
   }
 
   toLiteral() {

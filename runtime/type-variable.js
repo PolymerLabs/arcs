@@ -10,29 +10,51 @@
 import Type from './type.js';
 import assert from '../platform/assert-web.js';
 import Schema from './schema.js';
+import TypeChecker from './recipe/type-checker.js';
 
 class TypeVariable {
-  constructor(name, constraint) {
+  constructor(name, canWriteSuperset, canReadSubset) {
     assert(typeof name == 'string');
-    assert(constraint == null || constraint instanceof Type);
+    assert(canWriteSuperset == null || canWriteSuperset instanceof Type);
+    assert(canReadSubset == null || canReadSubset instanceof Type);
     this.name = name;
-    this._constraint = constraint;
+    this._canWriteSuperset = canWriteSuperset;
+    this._canReadSubset = canReadSubset;
     this._resolution = null;
   }
 
 
-  static maybeMergeConstraints(variable1, variable2) {
+  static _maybeMergeConstraints(variable1, variable2) {
     assert(variable1 instanceof TypeVariable);
     assert(variable2 instanceof TypeVariable);
 
-    let constraint1 = variable1.constraint;
-    let constraint2 = variable2.constraint;
+    let canWriteSuperset;
+    if (variable2._canWriteSuperset) {
+      canWriteSuperset = TypeVariable._maybeMergeConstraintPair(variable1._canWriteSuperset, variable2._canWriteSuperset);
+      if (canWriteSuperset == null)
+        return null;
+    } else {
+      canWriteSuperset = variable1._canWriteSuperset;
+    }
 
+    let canReadSubset;
+    if (variable2._canReadSubset) {
+      canReadSubset = TypeVariable._maybeMergeConstraintPair(variable1._canReadSubset, variable2._canReadSubset);
+      if (canReadSubset == null)
+        return null;
+    } else {
+      canReadSubset = variable1._canReadSubset;
+    }
+
+    return {canWriteSuperset, canReadSubset};
+  }
+
+  static _maybeMergeConstraintPair(constraint1, constraint2) {
     assert(constraint1 || constraint2);
 
     if (constraint1 && constraint2) {
       if (!constraint1.isEntity || !constraint2.isEntity) {
-        throw new Error('merging constraints not implemented for ${constraint1.type} and ${constraint2.type}');
+        throw new Error(`merging constraints not implemented for ${constraint1.type} and ${constraint2.type}`);
       }
   
       let mergedSchema = Schema.maybeMerge(constraint1.entitySchema, constraint2.entitySchema);
@@ -45,8 +67,49 @@ class TypeVariable {
     }
   }
 
+  maybeMergeConstraints(variable) {
+    let result = TypeVariable._maybeMergeConstraints(this, variable);
+    if (result == null)
+      return false;
+    this.canReadSubset = result.canReadSubset;
+    this.canWriteSuperset = result.canWriteSuperset;
+    return true;
+  }
+
+  maybeMergeCanReadSubset(constraint) {
+    if (constraint == null)
+      return true;
+    
+    if (this.canReadSubset == null) {
+      this.canReadSubset = constraint;
+      assert(this.canReadSubset !== undefined);      
+      return true;
+    }
+
+    if (!this.canReadSubset.isEntity || !constraint.isEntity)
+      throw new Error(`merging read subsets not implemented for ${this.canReadSubset.type} and ${constraint.type}`);
+    
+    let mergedSchema = Schema.intersect(this.canReadSubset.entitySchema, constraint.entitySchema);
+    if (!mergedSchema)
+      return false;
+    
+    this.canReadSubset = Type.newEntity(mergedSchema);
+    assert(this.canReadSubset !== undefined);
+    return true;
+  }
+
+  maybeMergeCanWriteSuperset(constraint) {
+    if (constraint == null)
+      return true;
+    let result = TypeVariable._maybeMergeConstraintPair(this.canWriteSuperset, constraint);
+    if (result == null)
+      return false;
+    this.canWriteSuperset = result;
+    return true;
+  }
+
   isSatisfiedBy(type) {
-    let constraint = this.constraint;
+    let constraint = this._canWriteSuperset;
     if (!constraint) {
       return true;
     }
@@ -67,41 +130,63 @@ class TypeVariable {
     assert(value instanceof Type);
     assert(!this._resolution);
     this._resolution = value;
-    this._constraint = null;
+    this._canWriteSuperset = null;
   }
 
-  get constraint() {
+  get canWriteSuperset() {
     if (this._resolution) {
-      assert(!this._constraint);
+      assert(!this._canWriteSuperset);
       if (this._resolution.isVariable) {
-        return this._resolution.variable.constraint;
+        return this._resolution.variable.canWriteSuperset;
       }
       return null;
     }
-    return this._constraint;
+    return this._canWriteSuperset;
   }
 
-  set constraint(value) {
+  set canWriteSuperset(value) {
     assert(!this._resolution);
-    this._constraint = value;
+    this._canWriteSuperset = value;
+  }
+
+  get canReadSubset() {
+    if (this._resolution) {
+      assert(!this._canReadSubset);
+      if (this._resolution.isVariable) {
+        return this._resolution.variable.canReadSubset;
+      }
+      return null;
+    }
+    return this._canReadSubset;
+  }
+
+  set canReadSubset(value) {
+    assert(!this._resolution);
+    this._canReadSubset = value;
   }
 
   toLiteral() {
     assert(this.resolution == null);
     return {
       name: this.name,
-      constraint: this._constraint && this._constraint.toLiteral(),
+      canWriteSuperset: this._canWriteSuperset && this._canWriteSuperset.toLiteral(),
+      canReadSubset: this._canReadSubset && this._canReadSubset.toLiteral()
     };
   }
 
   static fromLiteral(data) {
     return new TypeVariable(
         data.name,
-        data.constraint ? Type.fromLiteral(data.constraint) : null);
+        data.canWriteSuperset ? Type.fromLiteral(data.canWriteSuperset) : null,
+        data.canReadSubset ? Type.fromLiteral(data.canReadSubset) : null);
   }
 
   isResolved() {
-    return this._resolution && this._resolution.isResolved();
+    if (this._resolution && this._resolution.isResolved())
+      return true;
+    if (this._canReadSubset && this._canWriteSuperset)
+      return true;
+    return false;
   }
 }
 

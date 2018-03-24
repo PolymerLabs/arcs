@@ -63,7 +63,7 @@ class Schema {
       return null;
     }
 
-    let names = [...new Set(...schema1._names(), ...schema2._names())];
+    let names = [...new Set([...schema1._names()].concat(...schema2._names()))];
     let fields = {};
 
     for (let [field, type] of [...Object.entries(schema1.fields), ...Object.entries(schema2.fields)]) {
@@ -82,9 +82,20 @@ class Schema {
       parents: names.slice(1).map(name => ({
         name,
         parents: [],
-        sections: [],
+        fields: [],
       })),
     });
+  }
+
+  static intersect(schema1, schema2) {
+    if (schema1.contains(schema2))
+      return schema2;
+    else if (schema2.contains(schema1))
+      return schema1;
+    
+    // TODO: Don't be lazy
+    assert(false, "non-trivial intersection of schemas not implemented.");
+    return null;
   }
 
   equals(otherSchema) {
@@ -132,8 +143,8 @@ class Schema {
   hasCommonName(otherSchema) {
     if (!this.name || !otherSchema.name)
       return true;
-    let otherNames = new Set(names(otherSchema));
-    for (let name of names(this)) {
+    let otherNames = new Set(otherSchema._names());
+    for (let name of this._names()) {
       if (otherNames.has(name)) {
         return true;
       }
