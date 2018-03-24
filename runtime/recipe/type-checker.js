@@ -42,14 +42,28 @@ class TypeChecker {
         return null;
     }
 
+    let getResolution = candidate => {
+      if (candidate.canReadSubset == null || candidate.canWriteSuperset == null)
+      return candidate;
+      if (candidate.canReadSubset.entitySchema.contains(candidate.canWriteSuperset.entitySchema)) {
+        if (candidate.canWriteSuperset.entitySchema.contains(candidate.canReadSubset.entitySchema))
+          return candidate.canReadSubset;
+        return candidate;
+      }  
+      return null;
+    }
+
     let candidate = baseType.resolvedType();
-    if (candidate.isSetView)
+
+    if (candidate.isSetView) {
       candidate = candidate.primitiveType();
-    
-    if (candidate.canReadSubset == null || candidate.canWriteSuperset == null || candidate.canReadSubset.entitySchema.contains(candidate.canWriteSuperset.entitySchema))
-      return baseType.resolvedType();
-    
-    return null;
+      let resolution = getResolution(candidate);
+      if (resolution == null)
+        return null;
+      return resolution.setViewOf();
+    }
+
+    return getResolution(candidate);
   }
 
   static tryMergeTypeVariable(base, onto) {
