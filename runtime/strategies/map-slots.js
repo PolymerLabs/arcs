@@ -24,16 +24,9 @@ export default class MapSlots extends Strategy {
         if (slotConnection.isConnected()) {
           return;
         }
-<<<<<<< HEAD
 
         let selectedSlots = MapSlots.findAllSlotCandidates(slotConnection, arc);
         if (selectedSlots.length < 2) {
-=======
-        let candidates = arc.pec.slotComposer.getAvailableSlots();
-        let arcSlots = MapSlots._findSlotCandidates(slotConnection, candidates);
-
-        if (internalSlots.length + arcSlots.length < 2)
->>>>>>> remove logging
           return;
         }
 
