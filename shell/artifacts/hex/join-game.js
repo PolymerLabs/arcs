@@ -5,10 +5,10 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-defineParticle(({SimpleParticle}) => {
+defineParticle(({SimpleParticle, html}) => {
   return class extends SimpleParticle {
     getTemplate(slotName) {
-      return `<join-game on-click="onJoin">Join the game!</join-game>`;
+      return html`<join-game on-click="onJoin">Join the game!</join-game>`;
     }
     willReceiveProps(props, state) {
       if (props.user && props.user.name) {
