@@ -41,8 +41,8 @@ function createTestArc(id, context, affordance) {
 }
 
 let run = (arc, clazz, recipe) => new clazz(arc).generate({generated: [{result: recipe, score: 1}], terminal: []});
-let onlyResult = (arc, clazz, recipe) => run(arc, clazz, recipe).then(result => { assert.equal(result.results.length, 1); return result.results[0].result;});
-let theResults = (arc, clazz, recipe) => run(arc, clazz, recipe).then(results => results.results.map(result => result.result)); // chicken chicken
+let onlyResult = (arc, clazz, recipe) => run(arc, clazz, recipe).then(result => { assert.equal(result.length, 1); return result[0].result;});
+let theResults = (arc, clazz, recipe) => run(arc, clazz, recipe).then(results => results.map(result => result.result)); // chicken chicken
 
 describe('A Strategy Sequence', function() {
   it('resolves a verb substitution and slot mapping', async () => {
