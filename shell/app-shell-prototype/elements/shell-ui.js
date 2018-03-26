@@ -1,8 +1,11 @@
 // elements
 import './suggestion-element.js';
+import './settings-panel.js';
 // code libs
 import Xen from '../../components/xen/xen.js';
 import IconStyle from '../../components/icons.css.js';
+// strings
+import AppIcon from '../icon.svg.js';
 
 // globals
 /* global shellPath */
@@ -23,6 +26,9 @@ const template = html`
     }
     :host {
       display: block;
+    }
+    a {
+      color: currentColor;
     }
     [scrim] {
       position: fixed;
@@ -75,15 +81,52 @@ const template = html`
     [bar][state="open"] {
       transform: translate3d(0, 0, 0);
     }
+    [toolbars] {
+      display: inline-block;
+      white-space: nowrap;
+      width: 100%;
+      overflow: hidden;
+      box-sizing: border-box;
+      border-bottom: 1px solid rgba(0,0,0,0.05);
+    }
     [toolbar] {
-      display: flex;
+      display: inline-flex;
       align-items: center;
       height: 56px;
-      box-sizing: border-box;
-      border: 1px solid rgba(0,0,0,0.05);
+      width: 100%;
+      transition: transform 100ms ease-in-out;
     }
     [toolbar] > * {
       padding: 12px 16px;
+    }
+    [main][toolbar]:not([open]) {
+      transform: translate3d(-100%, 0, 0);
+    }
+    [search][toolbar][open] {
+      transform: translate3d(-100%, 0, 0);
+    }
+    [settings][toolbar][open] {
+      transform: translate3d(-200%, 0, 0);
+    }
+    [contents] {
+      display: inline-block;
+      white-space: nowrap;
+      width: 100%;
+      overflow: hidden;
+      /* consume margin leaking out of suggestion-element */
+      margin-top: -6px;
+    }
+    [content] {
+      display: inline-block;
+      width: 100%;
+      vertical-align: top;
+      transition: transform 100ms ease-in-out;
+    }
+    [suggestions][content]:not([open]) {
+      transform: translate3d(-100%, 0, 0);
+    }
+    [settings][content][open] {
+      transform: translate3d(-100%, 0, 0);
     }
     [modal] {
       padding: 32px;
@@ -112,7 +155,7 @@ const template = html`
       max-height: 356px;
       overflow-y: auto;
       overflow-x: hidden;
-      padding: 10px;
+      padding: 6px 10px 10px 10px;
     }
   </style>
 
@@ -123,13 +166,30 @@ const template = html`
   <div barSpacer></div>
   <div bar state$="{{barState}}" open$="{{barOpen}}" over$="{{barOver}}" on-mouseenter="_onBarEnter" on-mouseleave="_onBarLeave">
     <div touchbar on-click="_onTouchbarClick"></div>
-    <div toolbar on-click="_onBarClick">
-      <icon>location_searching</icon>
-      <span style="flex: 1;"></span>
-      <icon>search</icon>
-      <icon>settings</icon>
+    <div toolbars on-click="_onBarClick">
+      <div main toolbar open$="{{mainToolbarOpen}}">
+        <a href="{{launcherHref}}" title="Go to Launcher">${AppIcon}</a>
+        <span style="flex: 1;"></span>
+        <icon on-click="_onSearchClick">search</icon>
+        <icon on-click="_onSettingsClick">settings</icon>
+      </div>
+      <div search toolbar open$="{{searchToolbarOpen}}">
+        <icon on-click="_onMainClick">arrow_back</icon>
+        <span style="flex: 1;"></span>
+        <icon>search</icon>
+      </div>
+      <div settings toolbar open$="{{settingsToolbarOpen}}">
+        <icon on-click="_onMainClick">arrow_back</icon>
+        <span style="flex: 1;"></span>
+        <icon>settings</icon>
+      </div>
     </div>
-    <slot name="suggestions" slot="suggestions" on-plan-choose="_onPlanChoose"></slot>
+    <div contents>
+      <div suggestions content open$="{{suggestionsContentOpen}}">
+        <slot name="suggestions" slot="suggestions" on-plan-choose="_onPlanChoose"></slot>
+      </div>
+      <settings-panel settings content open$="{{settingsContentOpen}}"></settings-panel>
+    </div>
   </div>
 `;
 
@@ -142,14 +202,26 @@ class ShellUi extends Xen.Debug(Xen.Base, log) {
   }
   _getInitialState() {
     return {
-      barState: 'peek'
+      barState: 'peek',
+      toolState: 'main',
+      // TODO(sjmiles): include manifest or other directives?
+      launcherHref: `${location.origin}${location.pathname}`
     };
   }
   _update({}, {}, oldProps, oldState) {
   }
   _render({}, state) {
+    const {toolState} = state;
+    const mainOpen = toolState === 'main';
+    const searchOpen = toolState === 'search';
+    const settingsOpen = toolState === 'settings';
     const renderModel = {
-      scrimOpen: state.barState === 'open'
+      scrimOpen: state.barState === 'open',
+      mainToolbarOpen: mainOpen,
+      searchToolbarOpen: searchOpen,
+      suggestionsContentOpen: mainOpen || searchOpen,
+      settingsToolbarOpen: settingsOpen,
+      settingsContentOpen: settingsOpen,
     };
     return [state, renderModel];
   }
@@ -178,6 +250,18 @@ class ShellUi extends Xen.Debug(Xen.Base, log) {
           break;
       }
     }
+  }
+  _onSearchClick(e) {
+    e.stopPropagation();
+    this._setState({toolState: 'search', barState: 'open'});
+  }
+  _onMainClick(e) {
+    e.stopPropagation();
+    this._setState({toolState: 'main', barState: 'open'});
+  }
+  _onSettingsClick(e) {
+    e.stopPropagation();
+    this._setState({toolState: 'settings', barState: 'open'});
   }
   _onPlanChoose(e, plan) {
     e.stopPropagation();
