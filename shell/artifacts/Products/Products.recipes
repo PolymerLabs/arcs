@@ -75,7 +75,7 @@ recipe
 //     hostedParticle = Arrivinator
 
 recipe
-  copy #shortlist as shortlist
+  copy #browser as shortlist
   copy #giftsforclaire as giftsforclaire
   map as person
   create #desiredShipping as desiredShipping
@@ -90,7 +90,7 @@ recipe
 // Claire's shared wishlist (which in turn was populated from browser
 // context).
 recipe
-  use #shortlist as shortlist
+  use #browser as shortlist
   map #wishlist as wishlist
 
   CopyCollection
@@ -103,14 +103,14 @@ recipe
 
 // Check manufacturer information for products.
 recipe
-  use #shortlist as shortlist
+  use #browser as shortlist
   Multiplexer
     list <- shortlist
     hostedParticle <- ManufacturerInfo
 
 // Check arrival information for products
 recipe
-  use #shortlist as shortlist
+  use #browser as shortlist
   use #desiredShipping as desiredShipping
 
   FixedOtherMultiplexer
@@ -120,7 +120,7 @@ recipe
 
 // If the shipping date won't work, look for extra products
 recipe
-  use #shortlist as shortlist
+  use #browser as shortlist
   use #desiredShipping as desiredShipping
 
   FixedOtherMultiplexer
@@ -134,12 +134,6 @@ recipe
   map #wishlist as wishlist
   Interests
     list <- wishlist
-
-// TODO: move these to separate manifests for claire's wishlist / page
-
-// TODO should this be from browser context?
-view PageProducts of [Product] #shortlist in 'data/products.json'
-  description `products you've considered`
 
 view ClairesWishlist of [Product] #wishlist in 'data/wishlist.json'
   description `Claire's wishlist`
