@@ -25,18 +25,26 @@ defineParticle(({DomParticle, html, log}) => {
     margin: 8px;
     width: calc(50% - 24px);
   }
-  @media (min-width: 720px) {
+  @media (min-width: 540px) {
     [${host}] > [card] {
       width: calc(33% - 24px);
     }
   }
-  /*
-  @media (min-width: 1200px) {
+  @media (min-width: 800px) {
     [${host}] > [card] {
       width: calc(25% - 24px);
     }
   }
-  */
+  @media (min-width: 1000px) {
+    [${host}] > [card] {
+      width: calc(20% - 24px);
+    }
+  }
+  @media (min-width: 1400px) {
+    [${host}] > [card] {
+      width: calc(10% - 24px);
+    }
+  }
 </style>
 
 <template tiled-items>
