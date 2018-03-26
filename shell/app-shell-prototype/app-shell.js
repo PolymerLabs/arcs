@@ -1,11 +1,16 @@
 // elements
 import './elements/arc-config.js';
 import './elements/arc-host.js';
-import './elements/app-bar.js';
+import './elements/shell-ui.js';
 import './elements/shell-handles.js';
 // components
-// for particle use
-// deprecated!
+// components for particle use
+import '../components/corellia-xen/cx-input.js';
+import '../components/good-map.js';
+import '../components/video-controller.js';
+import '../components/firebase-upload.js';
+// components for particle use: deprecated
+import '../components/x-list.js';
 // code libs
 import Xen from '../components/xen/xen.js';
 import ArcsUtils from '../app-shell/lib/arcs-utils.js';
@@ -33,15 +38,15 @@ const template = html`
   </style>
 
   <arc-config rootpath="{{shellPath}}" on-config="_onConfig"></arc-config>
-  <arc-host config="{{config}}" manifest="{{manifest}}" plan="{{plan}}" on-arc="_onArc"></arc-host>
+  <arc-host config="{{config}}" manifest="{{manifest}}"  suggestions="{{suggestions}}" plan="{{plan}}" on-arc="_onArc" on-plans="_onPlans"></arc-host>
 
   <shell-handles arc="{{arc}}"></shell-handles>
 
-  <app-bar on-plan="_onPlan">
+  <shell-ui showhint="{{showhint}}" on-plan="_onPlan">
     <slot></slot>
     <slot name="modal" slot="modal"></slot>
     <slot name="suggestions" slot="suggestions"></slot>
-  </app-bar>
+  </shell-ui>
 
 `;
 
@@ -80,8 +85,11 @@ import 'http://localhost/projects/arcs/arcs-stories/0.3/PlaidAccounts/PlaidAccou
   _onPlan(e, suggestion) {
     this._setState({plan: suggestion.plan});
   }
+  _onPlans(e, plans) {
+    this._setState({suggestions: plans, showhint: plans.length > 0});
+  }
 }
 
-customElements.define('app-shell-prototype', AppShell);
+customElements.define('app-shell', AppShell);
 
 export default AppShell;

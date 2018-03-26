@@ -7,4 +7,4 @@ import '../apps/common/firebase-config.js';
 // arcs runtime
 import '../build/ArcsLib.js';
 // elements
-import './app-shell-prototype.js';
+import './app-shell.js';
