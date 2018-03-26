@@ -28,7 +28,7 @@ defineParticle(({DomParticle}) => {
     render(props) {
       let {product} = props;
       let now = Date.now();
-      let needed = new Date('2017-12-04').getTime();
+      let needed = new Date(props.desiredShipping.desiredShippingDate);
       let style = null;
       let arrival = '';
       if (product.shipDays) {

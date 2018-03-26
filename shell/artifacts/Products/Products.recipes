@@ -78,7 +78,7 @@ recipe
   copy #shortlist as shortlist
   copy #giftsforclaire as giftsforclaire
   map as person
-  create as desiredShipping
+  create #desiredShipping as desiredShipping
  
   ShopFor
     choices <- shortlist
@@ -111,8 +111,11 @@ recipe
 // Check arrival information for products
 recipe
   use #shortlist as shortlist
-  Multiplexer
+  use #desiredShipping as desiredShipping
+
+  FixedOtherMultiplexer
     list <- shortlist
+    other <- desiredShipping
     hostedParticle <- Arrivinator
 
 // If the shipping date won't work, look for extra products

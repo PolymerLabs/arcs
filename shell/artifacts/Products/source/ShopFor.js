@@ -153,7 +153,7 @@ ${productStyles}
 
       if (!props.desiredShipping) {
         let shipDate = new Date();
-        shipDate.setDate(shipDate.getDate() + 7);
+        shipDate.setDate(shipDate.getDate() + 8);
 
         this._updateDesiredShipping(shipDate);
         model.shipDate = shipDate.toISOString().slice(0, 10);
