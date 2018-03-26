@@ -16,7 +16,7 @@ import particle from './particle.js';
 import DomParticle from './dom-particle.js';
 import TransformationDomParticle from './transformation-dom-particle.js';
 import JsonldToManifest from './converters/jsonldToManifest.js';
-const html = (strings, ...values) => (strings[0] + values.map((v, i) => v + strings[i + 1]).join('')).trim();
+const html = String.raw;
 
 function schemaLocationFor(name) {
   return `../entities/${name}.schema`;

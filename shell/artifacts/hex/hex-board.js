@@ -5,10 +5,10 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-defineParticle(({DomParticle}) => {
+defineParticle(({DomParticle, html}) => {
   const size = 11;
   const padding = (size - 1) / 2 |0;
-  const template = `
+  const template = html`
     <style>
     hex-board {
       --hex-side: 17px;
@@ -91,13 +91,13 @@ defineParticle(({DomParticle}) => {
           // .PpPpXxXxXxXxXxXx
           let offset = row % 2;
           for (let i = 0; i < (row - offset) / 2; i++) {
-            result.push(`<hexa-gon padding${offset ? ' offset' : ''}></hexa-gon>`);
+            result.push(html`<hexa-gon padding${offset ? ' offset' : ''}></hexa-gon>`);
           }
           for (let col = 0; col < size; col++) {
-            result.push(`<hexa-gon${offset ? ' offset' : ''} slotid="cell" subid="${col}-${row}"></hexa-gon>`);
+            result.push(html`<hexa-gon${offset ? ' offset' : ''} slotid="cell" subid="${col}-${row}"></hexa-gon>`);
           }
           for (let i = (row - offset) / 2; i < padding; i++) {
-            result.push(`<hexa-gon padding${offset ? ' offset' : ''}></hexa-gon>`);
+            result.push(html`<hexa-gon padding${offset ? ' offset' : ''}></hexa-gon>`);
           }
         }
         return result.join('');
