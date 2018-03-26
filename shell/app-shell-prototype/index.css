@@ -1,9 +1,4 @@
 body {
-  --max-width: 512px;
-  --min-width: 320px;
-}
-
-body {
   font-family: sans-serif;
   margin: 0;
   overflow-x: hidden;
@@ -39,14 +34,3 @@ icon {
   overflow-x: hidden;
 }
 
-[slotid=modal] {
-  position: fixed;
-  top: var(--toolbar-height);
-  bottom: var(--footer-height);
-  max-width: var(--max-width);
-  width: 100vw;
-  margin: 0 auto;
-  box-sizing: border-box;
-  pointer-events: none;
-  color: black;
-}
