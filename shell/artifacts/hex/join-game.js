@@ -7,9 +7,6 @@
 
 defineParticle(({SimpleParticle}) => {
   return class extends SimpleParticle {
-    constructor() {
-      super();
-    }
     getTemplate(slotName) {
       return `<join-game on-click="onJoin">Join the game!</join-game>`;
     }

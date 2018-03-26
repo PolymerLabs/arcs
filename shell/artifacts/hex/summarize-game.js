@@ -7,9 +7,6 @@
 
 defineParticle(({SimpleParticle}) => {
   return class extends SimpleParticle {
-    constructor() {
-      super();
-    }
     getTemplate(slotName) {
       return `
         <div>{{message}}</div>`;
