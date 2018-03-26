@@ -52,6 +52,27 @@ class Shape {
     return 'SHAAAAPE';
   }
 
+  get canReadSubset() {
+    return this._cloneAndUpdate(typeVar => typeVar.canReadSubset);
+  }
+
+  get canWriteSuperset() {
+    return this._cloneAndUpdate(typeVar => typeVar.canWriteSuperset);
+  }
+
+  contains(other) {
+    if (this.handles.length !== other.handles.length || this.slots.length !== other.slots.length)
+      return false;
+    // TODO: should probably confirm that handles and slots actually match.
+    for (var i = 0; i < this._typeVars.length; i++) {
+      let thisTypeVar = this._typeVars[i];
+      let otherTypeVar = other._typeVars[i];
+      if (!thistypeVar.object[thistypeVar.field].contains(othertypeVar.object[othertypeVar.field]))
+        return false;
+    }
+    return true;
+  }
+
   _applyExistenceTypeTest(test) {
     for (let typeRef of this._typeVars) {
       if (test(typeRef.object[typeRef.field]))
@@ -103,10 +124,7 @@ ${this._slotsToManifestString()}
   }
 
   resolvedType() {
-    let result = this.clone();
-    for (let typeVar of result._typeVars)
-      typeVar.object[typeVar.field] = typeVar.object[typeVar.field].resolvedType();
-    return result;
+    return this._cloneAndUpdate(typeVar => typeVar.resolvedType());
   }
 
   equals(other) {
@@ -146,6 +164,16 @@ ${this._slotsToManifestString()}
     }
 
     return true;
+  }
+
+  _cloneAndUpdate(update) {
+    let copy = this.clone();
+    copy._typeVars.forEach(typeVar => Shape._updateTypeVar(typeVar, update));
+    return copy;
+  }
+
+  static _updateTypeVar(typeVar, update) {
+    typeVar.object[typeVar.field] = update(typeVar.object[typeVar.field]);
   }
 
   static isTypeVar(reference) {

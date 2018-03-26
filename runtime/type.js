@@ -184,6 +184,8 @@ class Type {
       return this.variable.canWriteSuperset;
     if (this.isEntity)
       return this;
+    if (this.isInterface)
+      return this.interfaceShape.canReadSubset;
     assert(false, `canWriteSuperset not implemented for ${this}`);
   }
 
@@ -192,7 +194,19 @@ class Type {
       return this.variable.canReadSubset;
     if (this.isEntity)
       return this;
+    if (this.isInterface)
+      return Type.newInterface(this.interfaceShape.canReadSubset);
     assert(false, `canReadSubset not implemented for ${this}`);
+  }
+
+  contains(type) {
+    if (this.tag !== type.tag)
+      return false;
+    if (this.isEntity)
+      return this.entitySchema.contains(type.entitySchema);
+    if (this.isInterface)
+      return this.interfaceShape.contains(type.interfaceShape);
+    assert(false, 'contains not implemented for ${this}');
   }
 
   toLiteral() {

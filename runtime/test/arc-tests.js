@@ -23,8 +23,8 @@ async function setup() {
   let manifest = await Manifest.parse(`
     import 'runtime/test/artifacts/test-particles.manifest'
     recipe TestRecipe
-      use 'test:1' as view0
-      use 'test:2' as view1
+      use as view0
+      use as view1
       TestParticle
         foo <- view0
         bar -> view1
@@ -44,7 +44,9 @@ describe('Arc', function() {
     let fooView = await arc.createHandle(Foo.type, undefined, 'test:1');
     let barView = await arc.createHandle(Bar.type, undefined, 'test:2');
     await handle.handleFor(fooView).set(new Foo({value: 'a Foo'}));
-    recipe.normalize();
+    recipe.handles[0].mapToView(fooView);
+    recipe.handles[1].mapToView(barView); 
+    assert(recipe.normalize());
     await arc.instantiate(recipe);
     await util.assertSingletonWillChangeTo(barView, Bar, 'a Foo1');
   });
@@ -53,6 +55,8 @@ describe('Arc', function() {
     let {arc, recipe, Foo, Bar} = await setup();
     let fooView = await arc.createHandle(Foo.type, undefined, 'test:1');
     let barView = await arc.createHandle(Bar.type, undefined, 'test:2');
+    recipe.handles[0].mapToView(fooView);
+    recipe.handles[1].mapToView(barView); 
     recipe.normalize();
     await arc.instantiate(recipe);
 
@@ -74,6 +78,8 @@ describe('Arc', function() {
     let fooView = await arc.createHandle(Foo.type, undefined, 'test:1');
     handle.handleFor(fooView).set(new Foo({value: 'a Foo'}));
     let barView = await arc.createHandle(Bar.type, undefined, 'test:2');
+    recipe.handles[0].mapToView(fooView);
+    recipe.handles[1].mapToView(barView); 
     recipe.normalize();
     await arc.instantiate(recipe);
     await util.assertSingletonWillChangeTo(barView, Bar, 'a Foo1');
@@ -97,7 +103,7 @@ describe('Arc', function() {
       
       recipe
         slot 'slotid' as s0
-        use 'test:1' as v0
+        use as v0
         Multiplexer
           hostedParticle = ConsumerParticle
           consume annotation as s0
@@ -106,8 +112,7 @@ describe('Arc', function() {
     `, {loader, fileName: './manifest.manifest'});
 
     let recipe = manifest.recipes[0];
-    assert(recipe.normalize());
-    assert(recipe.isResolved());
+
     let slotComposer = new SlotComposer({affordance: 'mock', rootContext: 'slotid'});
 
     let slotComposer_createHostedSlot = slotComposer.createHostedSlot;
@@ -123,6 +128,10 @@ describe('Arc', function() {
 
     let barType = manifest.findTypeByName('Bar');
     let handle = await arc.createHandle(barType.setViewOf(), undefined, 'test:1');
+    recipe.handles[0].mapToView(handle);
+    
+    assert(recipe.normalize());
+    assert(recipe.isResolved());
 
     await arc.instantiate(recipe);
     await arc.idle;

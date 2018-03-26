@@ -77,12 +77,12 @@ describe('particle-api', function() {
     inputView.store({id: 2, text: 'There'});
 
     let Result = manifest.findSchemaByName('Result').entityClass();
-    let resultView = await arc.createHandle(Result.type, undefined, 'test:2');
+    let resultHandle = await arc.createHandle(Result.type, undefined, 'test:2');
     let recipe = manifest.recipes[0];
     recipe.normalize();
     await arc.instantiate(recipe);
 
-    await util.assertSingletonWillChangeTo(resultView, Result, '2');
+    await util.assertSingletonWillChangeTo(resultHandle, Result, '2');
   }),
   it('contains a constructInnerArc call', async () => {
     let registry = {};
@@ -97,7 +97,7 @@ describe('particle-api', function() {
               P(out Result result)
 
             recipe
-              use 'test:1' as view0
+              use as view0
               P
                 result -> view0
 
@@ -109,10 +109,10 @@ describe('particle-api', function() {
               return class P extends Particle {
                 async setViews(views) {
                   let arc = await this.constructInnerArc();
-                  var resultView = views.get('result');
-                  let view = await arc.createHandle(resultView.type, "a view");
-                  view.set(new resultView.entityClass({value: 'success'}));
-                  resultView.set(new resultView.entityClass({value: 'done'}));
+                  var resultHandle = views.get('result');
+                  let view = await arc.createHandle(resultHandle.type, "a view");
+                  view.set(new resultHandle.entityClass({value: 'success'}));
+                  resultHandle.set(new resultHandle.entityClass({value: 'done'}));
                 }
               }
             });
@@ -134,12 +134,13 @@ describe('particle-api', function() {
     };
     let arc = new Arc({id: 'test', pecFactory});
     let Result = manifest.findSchemaByName('Result').entityClass();
-    let resultView = await arc.createHandle(Result.type, undefined, 'test:1');
+    let resultHandle = await arc.createHandle(Result.type, undefined, 'test:1');
     let recipe = manifest.recipes[0];
+    recipe.handles[0].mapToView(resultHandle);
     recipe.normalize();
     await arc.instantiate(recipe);
 
-    await util.assertSingletonWillChangeTo(resultView, Result, 'done');
+    await util.assertSingletonWillChangeTo(resultHandle, Result, 'done');
     let newView = arc.findHandlesByType(Result.type)[1];
     assert(newView.name == 'a view');
     await util.assertSingletonIs(newView, Result, 'success');
@@ -170,9 +171,9 @@ describe('particle-api', function() {
               return class P extends Particle {
                 async setViews(views) {
                   let arc = await this.constructInnerArc();
-                  var resultView = views.get('result');
-                  let inView = await arc.createHandle(resultView.type, "in view");
-                  let outView = await arc.createHandle(resultView.type, "out view");
+                  var resultHandle = views.get('result');
+                  let inView = await arc.createHandle(resultHandle.type, "in view");
+                  let outView = await arc.createHandle(resultHandle.type, "out view");
                   try {
                     await arc.loadRecipe(\`
                       schema Result
@@ -189,10 +190,10 @@ describe('particle-api', function() {
                           b -> v2
 
                     \`);
-                    inView.set(new resultView.entityClass({value: 'success'}));
-                    resultView.set(new resultView.entityClass({value: 'done'}));
+                    inView.set(new resultHandle.entityClass({value: 'success'}));
+                    resultHandle.set(new resultHandle.entityClass({value: 'done'}));
                   } catch (e) {
-                    resultView.set(new resultView.entityClass({value: e}));
+                    resultHandle.set(new resultHandle.entityClass({value: e}));
                   }
                 }
               }
@@ -228,12 +229,12 @@ describe('particle-api', function() {
     };
     let arc = new Arc({id: 'test', pecFactory, loader});
     let Result = manifest.findSchemaByName('Result').entityClass();
-    let resultView = await arc.createHandle(Result.type, undefined, 'test:1');
+    let resultHandle = await arc.createHandle(Result.type, undefined, 'test:1');
     let recipe = manifest.recipes[0];
     recipe.normalize();
     await arc.instantiate(recipe);
 
-    await util.assertSingletonWillChangeTo(resultView, Result, 'done');
+    await util.assertSingletonWillChangeTo(resultHandle, Result, 'done');
     let newView = arc.findHandlesByType(Result.type)[2];
     assert(newView.name == 'out view');
     await util.assertSingletonWillChangeTo(newView, Result, 'success');

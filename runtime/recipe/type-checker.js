@@ -43,10 +43,12 @@ class TypeChecker {
     }
 
     let getResolution = candidate => {
+      if (candidate.isVariable == false)
+        return candidate;
       if (candidate.canReadSubset == null || candidate.canWriteSuperset == null)
-      return candidate;
-      if (candidate.canReadSubset.entitySchema.contains(candidate.canWriteSuperset.entitySchema)) {
-        if (candidate.canWriteSuperset.entitySchema.contains(candidate.canReadSubset.entitySchema))
+        return candidate;
+      if (candidate.canReadSubset.contains(candidate.canWriteSuperset)) {
+        if (candidate.canWriteSuperset.contains(candidate.canReadSubset))
           return candidate.canReadSubset;
         return candidate;
       }  

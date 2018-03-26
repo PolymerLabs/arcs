@@ -182,11 +182,7 @@ class TypeVariable {
   }
 
   isResolved() {
-    if (this._resolution && this._resolution.isResolved())
-      return true;
-    if (this._canReadSubset && this._canWriteSuperset)
-      return true;
-    return false;
+    return (this._resolution && this._resolution.isResolved());
   }
 }
 

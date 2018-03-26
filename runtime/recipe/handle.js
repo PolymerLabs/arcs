@@ -150,7 +150,7 @@ class Handle {
       }
       return false;
     }
-    if (!this.type.isResolved()) {
+    if (!this.type.isResolved() && this.fate !== 'create') {
       if (options) {
         options.details = 'unresolved type';
       }
