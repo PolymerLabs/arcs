@@ -49,7 +49,7 @@ class TypeChecker {
         return candidate;
       if (candidate.canReadSubset.isMoreSpecificThan(candidate.canWriteSuperset)) {
         if (candidate.canWriteSuperset.isMoreSpecificThan(candidate.canReadSubset))
-          return candidate.canReadSubset;
+          candidate.variable.resolution = candidate.canReadSubset;
         return candidate;
       }  
       return null;
