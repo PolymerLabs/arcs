@@ -214,16 +214,17 @@ class ShellUi extends Xen.Debug(Xen.Base, log) {
   _onMicStart() {
     this._setState({micHidden: false});
   }
-  _onMicEnd(e) {
+  _onMicEnd(e, finalTranscript) {
+    const lettersOnly = s => s.toLowerCase().replace(/[^A-Za-z0-9 ]/g, '');
     this._setState({micHidden: true});
-    const finalTranscript = e.detail.toLowerCase().replace(/[^A-Za-z0-9 ]/g, '');
-    log(`voice trigger: [${finalTranscript}]`);
+    finalTranscript = lettersOnly(finalTranscript);
     if (!finalTranscript) {
       return;
     }
+    log(`voice trigger: [${finalTranscript}]`);
     // see if `node` is a better match for `search` than `match`
     const findMatch = (node, trigger, search, match) => {
-      log(`node "${node.localName}" has trigger "${trigger}"`);
+      //log(`node "${node.localName}" has trigger "${trigger}"`);
       if (trigger.includes(search)) {
         const diff = trigger.length - search.length;
         if (!match || match.diff > diff) {
@@ -239,7 +240,7 @@ class ShellUi extends Xen.Debug(Xen.Base, log) {
     // find the node that contains `finalTranscript` with the least number of non-matching characters
     let match;
     for (const node of nodes) {
-      const trigger = node.getAttribute('trigger').toLowerCase().replace(/[^A-Za-z0-9 ]/g, '');
+      const trigger = lettersOnly(node.getAttribute('trigger'));
       match = findMatch(node, trigger, finalTranscript, match);
     }
     // if we matched, value is the transcript
@@ -249,12 +250,13 @@ class ShellUi extends Xen.Debug(Xen.Base, log) {
     // if not, look for a prefix-match
     else {
       for (const node of nodes) {
-        const trigger = node.getAttribute('trigger').toLowerCase().replace(/[^A-Za-z0-9 ]/g, '');
+        const trigger = lettersOnly(node.getAttribute('trigger'));
         if (finalTranscript.startsWith(trigger)) {
           match = {
-            node: node,
+            node,
             value: finalTranscript.slice(trigger.length).trim(),
           };
+          log(`matched prefix "${trigger}"`);
           break;
         }
       }
@@ -274,6 +276,7 @@ class ShellUi extends Xen.Debug(Xen.Base, log) {
     }
     // if there is a matching suggestion, click it
     if (match) {
+      log(`voice: matched suggestion "${match.node.textContent}"`);
       match.node.click();
       return;
     }
