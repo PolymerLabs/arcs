@@ -70,8 +70,10 @@ export default Base => class extends Base {
   }
   _didMount() {
   }
-  _fire(eventName, detail, node) {
-    const event = new CustomEvent(eventName, {detail});
+  _fire(eventName, detail, node, init) {
+    const eventInit = init || {};
+    eventInit.detail = detail;
+    const event = new CustomEvent(eventName, eventInit);
     (node || this).dispatchEvent(event);
     return event.detail;
   }
