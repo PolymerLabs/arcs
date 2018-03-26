@@ -363,10 +363,9 @@ ${this.activeRecipe.toString()}`;
         let type = recipeHandle.type;
         if (recipeHandle.fate == 'create')
           assert(type.maybeEnsureResolved(), "Can't assign resolved type to ${type}");
-        else
-          assert(type.isResolved());
 
         type = type.resolvedType();
+        assert(type.isResolved(), `Can't create handle for unresolved type ${type}`);
 
         let handle = await this.createHandle(type, /* name= */ null, this.generateID(), recipeHandle.tags);
         if (recipeHandle.fate === 'copy') {

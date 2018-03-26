@@ -184,6 +184,8 @@ class Type {
       assert(false, `maybeEnsureResolved not implemented for ${this}`);
     if (this.isVariable)
       return this.variable.maybeEnsureResolved();
+    if (this.isSetView)
+      return this.primitiveType().maybeEnsureResolved();
     return true;
   }
 
@@ -193,7 +195,7 @@ class Type {
     if (this.isEntity)
       return this;
     if (this.isInterface)
-      return this.interfaceShape.canReadSubset;
+      return Type.newInterface(this.interfaceShape.canWriteSuperset);
     assert(false, `canWriteSuperset not implemented for ${this}`);
   }
 

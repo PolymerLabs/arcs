@@ -139,7 +139,7 @@ class TypeChecker {
     let writtenType = connectionType.canWriteSuperset;
     if (writtenType == null || handleType.canReadSubset == null)
       return true;
-    if (writtenType.entitySchema.contains(handleType.canReadSubset.entitySchema))
+    if (writtenType.contains(handleType.canReadSubset))
       return true;
     return false;
   }
@@ -151,7 +151,7 @@ class TypeChecker {
     let readType = connectionType.canReadSubset;
     if (readType == null|| handleType.canWriteSuperset == null)
       return true;
-    if (handleType.canWriteSuperset.entitySchema.contains(readType.entitySchema))
+    if (handleType.canWriteSuperset.contains(readType))
       return true;
     return false;
   }
