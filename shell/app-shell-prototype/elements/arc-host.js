@@ -142,8 +142,6 @@ class ArcHost extends Xen.Debug(Xen.Base, log) {
     time = ((Date.now() - time) / 1000).toFixed(2);
     log(`plans`, plans, `${time}s`);
     this._fire('plans', plans);
-    //
-    this.suggestions = plans;
   }
   async _instantiatePlan(arc, plan) {
     // aggressively remove old suggestions when a suggestion is applied
