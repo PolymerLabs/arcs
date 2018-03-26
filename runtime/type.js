@@ -129,7 +129,7 @@ class Type {
   // TODO: update call sites to use the type checker instead (since they will
   // have additional information about direction etc.)
   equals(type) {
-    return TypeChecker.compareTypes({type: this}, {type}, false).valid;
+    return TypeChecker.compareTypes({type: this}, {type});
   }
 
   _applyExistenceTypeTest(test) {

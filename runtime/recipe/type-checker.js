@@ -166,7 +166,7 @@ class TypeChecker {
   }
 
   // left, right: {type, direction, connection}
-  static compareTypes(left, right, resolve=true) {
+  static compareTypes(left, right) {
     let resolvedLeft = left.type.resolvedType();
     let resolvedRight = right.type.resolvedType();
     let [leftType, rightType] = Type.unwrapPair(resolvedLeft, resolvedRight);
@@ -174,62 +174,52 @@ class TypeChecker {
     if (leftType.isVariable || rightType.isVariable) {
       if (leftType.isVariable && rightType.isVariable) {
         if (leftType.variable === rightType.variable) {
-          return {type: left, valid: true};
+          return true;
         }
         if (leftType.variable.constraint || rightType.variable.constraint) {
           let mergedConstraint = TypeVariable.maybeMergeConstraints(leftType.variable, rightType.variable);
           if (!mergedConstraint) {
-            return {valid: false};
-          }
-          if (resolve) {
-            leftType.constraint = mergedConstraint;
-            rightType.variable.resolution = leftType;
+            return false;
           }
         }
         return {type: left, valid: true};
       } else if (leftType.isVariable) {
         if (!leftType.variable.isSatisfiedBy(rightType)) {
-          return {valid: false};
-        }
-        if (resolve) {
-          leftType.variable.resolution = rightType;
+          return false;
         }
         return {type: right, valid: true};
       } else if (rightType.isVariable) {
         if (!rightType.variable.isSatisfiedBy(leftType)) {
-          return {valid: false};
+          return false;
         }
-        if (resolve) {
-          rightType.variable.resolution = leftType;
-        }
-        return {type: left, valid: true};
+        return true;
       }
     }
 
     if (leftType.type != rightType.type) {
-      return {valid: false};
+      return false;
     }
 
     // TODO: we need a generic way to evaluate type compatibility
     //       shapes + entities + etc
     if (leftType.isInterface && rightType.isInterface) {
       if (leftType.interfaceShape.equals(rightType.interfaceShape)) {
-        return {type: left, valid: true};
+        return true;
       }
     }
 
     if (!leftType.isEntity || !rightType.isEntity) {
-      return {valid: false};
+      return false;
     }
 
     let leftIsSub = leftType.entitySchema.isMoreSpecificThan(rightType.entitySchema);
     let leftIsSuper = rightType.entitySchema.isMoreSpecificThan(leftType.entitySchema);
 
     if (leftIsSuper && leftIsSub) {
-       return {type: left, valid: true};
+       return true;
     }
     if (!leftIsSuper && !leftIsSub) {
-      return {valid: false};
+      return false;
     }
     let [superclass, subclass] = leftIsSuper ? [left, right] : [right, left];
 
@@ -245,12 +235,12 @@ class TypeChecker {
     let superDirection = superclass.direction || (superclass.connection ? superclass.connection.direction : 'inout');
     let subDirection = subclass.direction || (subclass.connection ? subclass.connection.direction : 'inout');
     if (superDirection == 'in') {
-      return {type: subclass, valid: true};
+      return true;
     }
     if (subDirection == 'out') {
-      return {type: superclass, valid: true};
+      return true;
     }
-    return {valid: false};
+    return false;
   }
 }
 

@@ -32,7 +32,7 @@ class ConnectionSpec {
   }
 
   isCompatibleType(type) {
-    return TypeChecker.compareTypes({type}, {type: this.type, direction: this.direction}, false).valid;
+    return TypeChecker.compareTypes({type}, {type: this.type, direction: this.direction});
   }
 }
 

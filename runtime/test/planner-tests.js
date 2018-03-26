@@ -1276,8 +1276,6 @@ view MyThings2 of [Thing2] #mythings2 in 'things.json'`);
   });
 });
 
-<<<<<<< HEAD
-=======
 describe('Planner paths go better than expected', function() {
   it('resolves a verb substitution and slot mapping', async () => {
     let manifest = await Manifest.parse(`
@@ -1493,7 +1491,6 @@ describe('Planner paths go better than expected', function() {
   });
 });
 
->>>>>>> More tests
 describe('CreateDescriptionHandle', function() {
   it('descriptions handle created', async () => {
     let manifest = (await Manifest.parse(`
