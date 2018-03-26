@@ -49,7 +49,7 @@ export default Base => class extends Base {
     return this._wouldChangeValue(this._state, name, value);
   }
   _setProps(props) {
-    // TODO(sjmiles): should be a replace instead of a merge
+    // TODO(sjmiles): should be a replace instead of a merge?
     Object.assign(this._pendingProps, props);
     this._invalidateProps();
   }
