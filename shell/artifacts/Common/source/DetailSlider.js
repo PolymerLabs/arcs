@@ -38,12 +38,12 @@ defineParticle(({DomParticle, resolver, html, log}) => {
   [${host}] > [modal] {
     display: flex;
     position: absolute;
-    top: 0px;
-    right: 0px;
-    bottom: 0px;
-    left: 0px;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
     background-color: white;
-    box-shadow: 0px 0px 8px 4px rgba(102,102,102,0.25);
+    box-shadow: 0 0 8px 4px rgba(102,102,102,0.25);
     border-radius: 16px;
     overflow: auto;
   }
