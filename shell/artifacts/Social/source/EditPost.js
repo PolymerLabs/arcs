@@ -63,23 +63,18 @@ defineParticle(({DomParticle, html, log}) => {
   </div>
   <img src="{{image}}">
   <textarea value="{{message}}" on-input="onTextInput"></textarea>
-</div>
-  `.trim();
+</div>`;
 
   return class extends DomParticle {
     get template() {
       return template;
-    }
-    willReceiveProps({post}, state) {
-      state.message = post && post.message;
-      state.image = post && post.image;
     }
     render({user, post}, {message, image, savePost}) {
       if (savePost) {
         this.savePost(user, message, image);
       }
       const saveButtonActive = Boolean(message && (message.trim().length > 0));
-      const model = {saveButtonActive, message, image: image || ''};
+      const model = {saveButtonActive, message: message || '', image: image || ''};
       return model;
     }
     setHandle(name, data) {
@@ -90,7 +85,7 @@ defineParticle(({DomParticle, html, log}) => {
       this.setHandle(
           'post',
           {message, image, createdTimestamp: Date.now(), author: user.id});
-      this.setState({savePost: false});
+      this.setState({savePost: false, message: '', image: ''});
     }
     onTextInput(e) {
       this.setIfDirty({message: e.data.value});
