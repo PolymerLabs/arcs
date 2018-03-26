@@ -90,7 +90,7 @@ class Schema {
       return schema1;
     
     // TODO: Don't be lazy
-    assert(false, "non-trivial intersection of schemas not implemented.");
+    assert(false, 'non-trivial intersection of schemas not implemented.');
     return null;
   }
 

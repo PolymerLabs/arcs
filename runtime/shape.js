@@ -64,7 +64,7 @@ class Shape {
     if (this.handles.length !== other.handles.length || this.slots.length !== other.slots.length)
       return false;
     // TODO: should probably confirm that handles and slots actually match.
-    for (var i = 0; i < this._typeVars.length; i++) {
+    for (let i = 0; i < this._typeVars.length; i++) {
       let thisTypeVar = this._typeVars[i];
       let otherTypeVar = other._typeVars[i];
       if (!thistypeVar.object[thistypeVar.field].isMoreSpecificThan(othertypeVar.object[othertypeVar.field]))

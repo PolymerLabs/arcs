@@ -362,7 +362,7 @@ ${this.activeRecipe.toString()}`;
       if (['copy', 'create'].includes(recipeHandle.fate)) {
         let type = recipeHandle.type;
         if (recipeHandle.fate == 'create')
-          assert(type.maybeEnsureResolved(), "Can't assign resolved type to ${type}");
+          assert(type.maybeEnsureResolved(), 'Can\'t assign resolved type to ${type}');
 
         type = type.resolvedType();
         assert(type.isResolved(), `Can't create handle for unresolved type ${type}`);

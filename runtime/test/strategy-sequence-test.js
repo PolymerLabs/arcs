@@ -35,16 +35,16 @@ function createTestArc(id, context, affordance) {
     context,
     slotComposer: {
       affordance,
-      getAvailableSlots: (() => { return [{ name: 'root', id: 'r0', tags: ['#root'], handles: [], handleConnections: [], getProvidedSlotSpec: () => { return { isSet: false }; } }]; })
+      getAvailableSlots: (() => { return [{name: 'root', id: 'r0', tags: ['#root'], handles: [], handleConnections: [], getProvidedSlotSpec: () => { return {isSet: false}; }}]; })
     }
   });
 }
 
-let run = (arc, clazz, recipe) => new clazz(arc).generate({ generated: [{ result: recipe, score: 1 }], terminal: [] });
-let onlyResult = (arc, clazz, recipe) => run(arc, clazz, recipe).then(result => { assert.equal(result.results.length, 1); return result.results[0].result});
+let run = (arc, clazz, recipe) => new clazz(arc).generate({generated: [{result: recipe, score: 1}], terminal: []});
+let onlyResult = (arc, clazz, recipe) => run(arc, clazz, recipe).then(result => { assert.equal(result.results.length, 1); return result.results[0].result;});
 let theResults = (arc, clazz, recipe) => run(arc, clazz, recipe).then(results => results.results.map(result => result.result)); // chicken chicken
 
-describe('A Strategy Sequence', function () {
+describe('A Strategy Sequence', function() {
   it('resolves a verb substitution and slot mapping', async () => {
     let manifest = await Manifest.parse(`  
       particle P in 'A.js'

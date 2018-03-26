@@ -53,7 +53,7 @@ class TypeChecker {
         return candidate;
       }  
       return null;
-    }
+    };
 
     let candidate = baseType.resolvedType();
 
@@ -87,13 +87,13 @@ class TypeChecker {
       primitiveOnto.variable.resolution = primitiveBase;
       return onto;
     } else {
-      assert(false, "tryMergeTypeVariable shouldn't be called on two types without any type variables");
+      assert(false, 'tryMergeTypeVariable shouldn\'t be called on two types without any type variables');
     }
     
     return base;
   }
 
-  static tryMergeConstraints(handleType, { type, direction }) {
+  static tryMergeConstraints(handleType, {type, direction}) {
     let [primitiveHandleType, primitiveConnectionType] = Type.unwrapPair(handleType.resolvedType(), type.resolvedType());
     if (primitiveHandleType.isVariable) {
       // if this is an undifferentiated variable then we need to create structure to match against. That's
