@@ -151,12 +151,16 @@ ${productStyles}
         model.occasionDate = new Date(model.occasionDate).toDateString();
       }
 
-      if (!state.shipDate) {
+      if (!props.desiredShipping) {
         let shipDate = new Date();
         shipDate.setDate(shipDate.getDate() + 7);
-        state.shipDate = shipDate;
+
+        this._updateDesiredShipping(shipDate);
+        model.shipDate = shipDate.toISOString().slice(0, 10);
+      } else {
+        const shipDate = new Date(props.desiredShipping.desiredShippingDate);
+        model.shipDate = shipDate.toISOString().slice(0, 10);
       }
-      model.shipDate = state.shipDate.toISOString().slice(0, 10);
 
       for (let product of model.items) {
         const isInBasket = props.basket.find(basketProduct => product.name == basketProduct.name);
@@ -176,7 +180,13 @@ ${productStyles}
       }
     }
     _onChangeDelivery(e, state) {
-      state.shipDate = new Date(e.data.value+'T00:00:00');
+      const shipDate = new Date(e.data.value+'T00:00:00');
+      this._updateDesiredShipping(shipDate);
+    }
+    _updateDesiredShipping(desiredShippingDate) {
+      const shippingView = this._views.get('desiredShipping');
+      const DesiredShipping = shippingView.entityClass;
+      shippingView.set(new DesiredShipping({desiredShippingDate: desiredShippingDate.toISOString()}));
     }
   };
 });

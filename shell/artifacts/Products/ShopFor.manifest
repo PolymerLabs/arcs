@@ -11,7 +11,7 @@ import '../People/Person.schema'
 
 particle ShopFor in 'source/ShopFor.js'
   // TODO add desired arrival date
-  ShopFor(in [Product] choices, inout [Product] basket, in Person person)
+  ShopFor(in [Product] choices, inout [Product] basket, in Person person, inout DesiredShipping desiredShipping)
   consume root
     provide set of annotation
       view choices

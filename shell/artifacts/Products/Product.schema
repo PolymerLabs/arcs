@@ -15,3 +15,6 @@ schema Product extends Thing
   Number shipDays
   description `product`
     plural `products`
+
+schema DesiredShipping
+  Text desiredShippingDate

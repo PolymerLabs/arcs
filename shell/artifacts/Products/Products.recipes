@@ -73,16 +73,18 @@ recipe
 //   Multiplexer
 //     list <- view3
 //     hostedParticle = Arrivinator
-    
+
 recipe
   copy #shortlist as shortlist
   copy #giftsforclaire as giftsforclaire
   map as person
+  create as desiredShipping
  
   ShopFor
     choices <- shortlist
     basket = giftsforclaire
     person <- person
+    desiredShipping = desiredShipping
 
 // TODO this could eventually read not from a hardcoded wishlist but from
 // Claire's shared wishlist (which in turn was populated from browser
