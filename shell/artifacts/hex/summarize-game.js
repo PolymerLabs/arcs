@@ -5,11 +5,10 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-defineParticle(({SimpleParticle}) => {
+defineParticle(({SimpleParticle, html}) => {
   return class extends SimpleParticle {
     getTemplate(slotName) {
-      return `
-        <div>{{message}}</div>`;
+      return html`<div>{{message}}</div>`;
     }
     willReceiveProps(props, state) {
       if (!props.gameState) {

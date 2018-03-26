@@ -5,8 +5,8 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-defineParticle(({DomParticle}) => {
-  const rootTemplate = `
+defineParticle(({DomParticle, html}) => {
+  const rootTemplate = html`
     <style>
       hex-game {
         --hex-x: #F44336;
@@ -43,7 +43,7 @@ defineParticle(({DomParticle}) => {
     </style>
     <div slotid="summary"></div>
     <hex-game player$="{{player}}" can-move$="{{canMove}}" can-swap$="{{canSwap}}" slotid="board"></hex-game>`;
-  const cellTemplate = `<hex-cell player$="{{move}}" on-click="onCellClick" key="{{key}}"></hex-cell>`;
+  const cellTemplate = html`<hex-cell player$="{{move}}" on-click="onCellClick" key="{{key}}"></hex-cell>`;
 
   class Board {
     constructor(size) {
