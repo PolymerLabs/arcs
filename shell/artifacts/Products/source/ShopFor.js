@@ -112,7 +112,8 @@ defineParticle(({DomParticle, resolver}) => {
   let template = `
 ${styles}
 ${productStyles}
-<p>Shopping for <span>{{person}}</span>'s <span>{{occasion}}</span> on <span>{{occasion_date}}</span>.</p>
+<p>Shopping for <span>{{person}}</span>'s <span>{{occasion}}</span> on <span>{{occasionDate}}</span>.</p>
+<p>Desired delivery date: <input type="date" value="{{shipDate}}" on-change="_onChangeDelivery"></p>
 <div chooser>
   <x-list items="{{items}}">
     ${productTemplate}
@@ -127,7 +128,7 @@ ${productStyles}
     shouldRender(props) {
       return props.choices && props.choices.length
     }
-    render(props) {
+    render(props, state) {
       let model = {
         items: props.choices.map(({rawData, id}, index) => {
           return Object.assign(Object.assign({}, rawData), {
@@ -138,8 +139,24 @@ ${productStyles}
         }),
         person: props.person.name,
         occasion: props.person.occasion,
-        occasion_date: props.person.date
+        occasionDate: props.person.date
       };
+
+      const today = new Date();
+      if (new Date(model.occasionDate) < today) {
+        const occasionDate = today;
+        occasionDate.setDate(occasionDate.getDate() + 14);
+        model.occasionDate = occasionDate.toDateString();
+      } else {
+        model.occasionDate = new Date(model.occasionDate).toDateString();
+      }
+
+      if (!state.shipDate) {
+        let shipDate = new Date();
+        shipDate.setDate(shipDate.getDate() + 7);
+        state.shipDate = shipDate;
+      }
+      model.shipDate = state.shipDate.toISOString().slice(0, 10);
 
       for (let product of model.items) {
         const isInBasket = props.basket.find(basketProduct => product.name == basketProduct.name);
@@ -157,6 +174,9 @@ ${productStyles}
       } else {
         this._views.get('basket').store(choice);
       }
+    }
+    _onChangeDelivery(e, state) {
+      state.shipDate = new Date(e.data.value+'T00:00:00');
     }
   };
 });
