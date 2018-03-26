@@ -1,8 +1,5 @@
 // elements
-// components
 import './suggestion-element.js';
-// for particle use
-// deprecated!
 // code libs
 import Xen from '../../components/xen/xen.js';
 import IconStyle from '../../components/icons.css.js';
@@ -17,7 +14,7 @@ const template = html`
     ${IconStyle}
     :host {
       --bar-max-width: 400px;
-      --bar-max-height: 33vh;
+      --bar-max-height: 50vh;
       --bar-hint-height: 112px;
       --bar-small-height: 56px;
       --bar-peek-height: 16px;
@@ -136,9 +133,10 @@ const template = html`
   </div>
 `;
 
-const log = Xen.logFactory('AppBar', '#ac6066');
+const log = Xen.logFactory('ShellUi', '#ac6066');
 
-class AppBar extends Xen.Debug(Xen.Base, log) {
+class ShellUi extends Xen.Debug(Xen.Base, log) {
+  static get observedAttributes() { return ['showhint']; }
   get template() {
     return template;
   }
@@ -147,7 +145,7 @@ class AppBar extends Xen.Debug(Xen.Base, log) {
       barState: 'peek'
     };
   }
-  _update(props, state, oldProps, oldState) {
+  _update({}, {}, oldProps, oldState) {
   }
   _render({}, state) {
     const renderModel = {
@@ -159,8 +157,7 @@ class AppBar extends Xen.Debug(Xen.Base, log) {
     this._setState({barState: 'peek'});
   }
   _onTouchbarClick() {
-    const {barState} = this._state;
-    if (barState !== 'over') {
+    if (this._state.barState !== 'over') {
       this._setState({barState: 'open'});
     }
   }
@@ -169,13 +166,11 @@ class AppBar extends Xen.Debug(Xen.Base, log) {
   }
   _onBarEnter(e) {
     if ((e.target === e.currentTarget) && (this._state.barState === 'peek')) {
-      log(e.type);
-      this._setState({barState: Math.random() > 0.5 ? 'over' : 'hint'});
+      this._setState({barState: this._props.showhint ? 'hint' : 'over'});
     }
   }
   _onBarLeave(e) {
     if ((e.target === e.currentTarget) && (window.innerHeight - e.clientY) > 8) {
-      log(e.type);
       switch (this._state.barState) {
         case 'over':
         case 'hint':
@@ -191,4 +186,4 @@ class AppBar extends Xen.Debug(Xen.Base, log) {
   }
 }
 
-customElements.define('app-bar', AppBar);
+customElements.define('shell-ui', ShellUi);
