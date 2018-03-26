@@ -6,12 +6,12 @@
 // http://polymer.github.io/PATENTS.txt
 
 defineParticle(({DomParticle}) => {
-  const size = 8;
+  const size = 11;
   const padding = (size - 1) / 2 |0;
   const template = `
     <style>
     hex-board {
-      --hex-side: 26px;
+      --hex-side: 17px;
       --hex-border: 1px;
       --hex-width: calc(1.73205080757 * var(--hex-side));
       --hex-height: calc(2 * var(--hex-side));
