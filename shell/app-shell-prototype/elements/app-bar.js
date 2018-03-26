@@ -1,10 +1,11 @@
 // elements
 // components
+import './suggestion-element.js';
 // for particle use
 // deprecated!
 // code libs
-import Xen from '../components/xen/xen.js';
-import IconStyle from '../components/icons.css.js';
+import Xen from '../../components/xen/xen.js';
+import IconStyle from '../../components/icons.css.js';
 
 // globals
 /* global shellPath */
@@ -15,26 +16,43 @@ const template = html`
   <style>
     ${IconStyle}
     :host {
+      --bar-max-width: 400px;
+      --bar-max-height: 33vh;
+      --bar-hint-height: 112px;
+      --bar-small-height: 56px;
+      --bar-peek-height: 16px;
+      --bar-touch-height: 32px;
+      --bar-space-height: 48px;
+    }
+    :host {
       display: block;
     }
-    [barSpacer] {
-      height: var(--bar-small-height);
-      background-color: yellow;
-    }
     [scrim] {
-      position: absolute;
+      position: fixed;
       top: 0;
       right: 0;
-      bottom: 0;
+      /*bottom: 0;*/
       left: 0;
-      opacity: 0.8;
+      height: 100vh;
+      opacity: 0;
       background-color: white;
       z-index: -1;
       pointer-events: none;
+      transition: opacity 200ms ease-in;
     }
     [scrim][open] {
       z-index: 9000;
       pointer-events: auto;
+      opacity: 0.8;
+    }
+    [barSpacer] {
+      height: var(--bar-space-height);
+    }
+    [touchbar] {
+      margin-top: calc(var(--bar-touch-height) * -1);
+      height: var(--bar-touch-height);
+      background-color: transparent;
+      /*border: 1px solid rgba(0,0,0,0.01);*/
     }
     [bar] {
       position: fixed;
@@ -60,12 +78,6 @@ const template = html`
     [bar][state="open"] {
       transform: translate3d(0, 0, 0);
     }
-    [touchbar] {
-      margin-top: -40px;
-      height: 40px;
-      background-color: transparent;
-      /*border: 1px solid rgba(0,0,0,0.01);*/
-    }
     [toolbar] {
       display: flex;
       align-items: center;
@@ -85,21 +97,42 @@ const template = html`
       position: relative;
       z-index: 0;
     }
+    ::slotted([slotid=modal]) {
+      position: fixed;
+      top: 0;
+      bottom: 0;
+      max-width: var(--max-width);
+      width: 100vw;
+      margin: 0 auto;
+      padding-bottom: var(--bar-space-width);
+      box-sizing: border-box;
+      pointer-events: none;
+      color: black;
+    }
+    ::slotted([slotid=suggestions]) {
+      display: flex;
+      flex-direction: column;
+      max-height: 356px;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding: 10px;
+    }
   </style>
 
   <div scrim open$="{{scrimOpen}}" on-click="_onBarEscape"></div>
-  <div modal>Behind?</div>
+  <slot name="modal"></slot>
   <slot></slot>
+  <!-- adds space at the bottom of the static flow so no actual content is ever covered by the app-bar -->
   <div barSpacer></div>
-  <div bar state$="{{barState}}" open$="{{barOpen}}" over$="{{barOver}}">
+  <div bar state$="{{barState}}" open$="{{barOpen}}" over$="{{barOver}}" on-mouseenter="_onBarEnter" on-mouseleave="_onBarLeave">
     <div touchbar on-click="_onTouchbarClick"></div>
-    <div toolbar on-click="_onBarClick" on-mouseenter="_onBarEnter" on-mouseleave="_onBarLeave">
+    <div toolbar on-click="_onBarClick">
       <icon>location_searching</icon>
       <span style="flex: 1;"></span>
       <icon>search</icon>
       <icon>settings</icon>
     </div>
-    <slot name="suggestions" slot="suggestions"></slot>
+    <slot name="suggestions" slot="suggestions" on-plan-choose="_onPlanChoose"></slot>
   </div>
 `;
 
@@ -118,11 +151,9 @@ class AppBar extends Xen.Debug(Xen.Base, log) {
   }
   _render({}, state) {
     const renderModel = {
-      scrimOpen: Boolean(state.barOpen)
+      scrimOpen: state.barState === 'open'
     };
     return [state, renderModel];
-  }
-  _consumeConfig(state, config) {
   }
   _onBarEscape() {
     this._setState({barState: 'peek'});
@@ -138,13 +169,25 @@ class AppBar extends Xen.Debug(Xen.Base, log) {
   }
   _onBarEnter(e) {
     if ((e.target === e.currentTarget) && (this._state.barState === 'peek')) {
-      this._setState({barState: Math.random() > 0.2 ? 'over' : 'hint'});
+      log(e.type);
+      this._setState({barState: Math.random() > 0.5 ? 'over' : 'hint'});
     }
   }
   _onBarLeave(e) {
-    if ((e.target === e.currentTarget) && (this._state.barState === 'over') && (window.innerHeight - e.clientY) > 0) {
-      this._setState({barState: 'peek'});
+    if ((e.target === e.currentTarget) && (window.innerHeight - e.clientY) > 8) {
+      log(e.type);
+      switch (this._state.barState) {
+        case 'over':
+        case 'hint':
+          this._setState({barState: 'peek'});
+          break;
+      }
     }
+  }
+  _onPlanChoose(e, plan) {
+    e.stopPropagation();
+    this._fire('plan', plan);
+    this._setState({barState: 'peek'});
   }
 }
 

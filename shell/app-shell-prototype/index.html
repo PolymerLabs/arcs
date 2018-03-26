@@ -12,15 +12,20 @@
 
   <script type="module" src="index.js"></script>
 
+  <style>
+    body {
+      font-family: 'Google Sans', serif;
+      background: url('../assets/black-linen.png');
+    }
+  </style>
+
 </head>
 <body>
 
   <app-shell-prototype>
     <div slotid="toproot"></div>
-    <div slotid="root">
-      <div style="padding: 700px 32px;">Le Stuff</div>
-    </div>
-    <div slotid="modal"></div>
+    <div slotid="root"></div>
+    <div slotid="modal" slot="modal"></div>
     <div slotid="suggestions" slot="suggestions"></div>
   </app-shell-prototype>
 
