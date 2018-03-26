@@ -53,7 +53,6 @@ recipe
     list <- shortlist
     hostedParticle = ShowProduct
     consume annotation as itemSlot
-  // particle can showList
   Multiplexer2
     hostedParticle = AlsoOn
     consume annotation as annotationSlot
