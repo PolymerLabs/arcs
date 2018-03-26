@@ -47,8 +47,8 @@ class TypeChecker {
         return candidate;
       if (candidate.canReadSubset == null || candidate.canWriteSuperset == null)
         return candidate;
-      if (candidate.canReadSubset.contains(candidate.canWriteSuperset)) {
-        if (candidate.canWriteSuperset.contains(candidate.canReadSubset))
+      if (candidate.canReadSubset.isMoreSpecificThan(candidate.canWriteSuperset)) {
+        if (candidate.canWriteSuperset.isMoreSpecificThan(candidate.canReadSubset))
           return candidate.canReadSubset;
         return candidate;
       }  
@@ -139,7 +139,7 @@ class TypeChecker {
     let writtenType = connectionType.canWriteSuperset;
     if (writtenType == null || handleType.canReadSubset == null)
       return true;
-    if (writtenType.contains(handleType.canReadSubset))
+    if (writtenType.isMoreSpecificThan(handleType.canReadSubset))
       return true;
     return false;
   }
@@ -151,7 +151,7 @@ class TypeChecker {
     let readType = connectionType.canReadSubset;
     if (readType == null|| handleType.canWriteSuperset == null)
       return true;
-    if (handleType.canWriteSuperset.contains(readType))
+    if (handleType.canWriteSuperset.isMoreSpecificThan(readType))
       return true;
     return false;
   }
@@ -222,16 +222,16 @@ class TypeChecker {
       return {valid: false};
     }
 
-    let isSub = leftType.entitySchema.contains(rightType.entitySchema);
-    let isSuper = rightType.entitySchema.contains(leftType.entitySchema);
+    let leftIsSub = leftType.entitySchema.isMoreSpecificThan(rightType.entitySchema);
+    let leftIsSuper = rightType.entitySchema.isMoreSpecificThan(leftType.entitySchema);
 
-    if (isSuper && isSub) {
+    if (leftIsSuper && leftIsSub) {
        return {type: left, valid: true};
     }
-    if (!isSuper && !isSub) {
+    if (!leftIsSuper && !leftIsSub) {
       return {valid: false};
     }
-    let [superclass, subclass] = isSuper ? [left, right] : [right, left];
+    let [superclass, subclass] = leftIsSuper ? [left, right] : [right, left];
 
     // TODO: this arbitrarily chooses type restriction when
     // super direction is 'in' and sub direction is 'out'. Eventually

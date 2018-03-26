@@ -57,7 +57,7 @@ class TypeVariable {
         throw new Error(`merging constraints not implemented for ${constraint1.type} and ${constraint2.type}`);
       }
   
-      let mergedSchema = Schema.maybeMerge(constraint1.entitySchema, constraint2.entitySchema);
+      let mergedSchema = Schema.union(constraint1.entitySchema, constraint2.entitySchema);
       if (!mergedSchema) {
         return null;
       }

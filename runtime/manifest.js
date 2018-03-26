@@ -214,7 +214,7 @@ class Manifest {
       if (subtype) {
         let [left, right] = Type.unwrapPair(view.type, resolvedType);
         if (left.isEntity && right.isEntity) {
-          return left.entitySchema.contains(right.entitySchema);
+          return left.entitySchema.isMoreSpecificThan(right.entitySchema);
         }
         return false;
       }

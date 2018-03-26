@@ -209,13 +209,13 @@ class Type {
     assert(false, `canReadSubset not implemented for ${this}`);
   }
 
-  contains(type) {
+  isMoreSpecificThan(type) {
     if (this.tag !== type.tag)
       return false;
     if (this.isEntity)
-      return this.entitySchema.contains(type.entitySchema);
+      return this.entitySchema.isMoreSpecificThan(type.entitySchema);
     if (this.isInterface)
-      return this.interfaceShape.contains(type.interfaceShape);
+      return this.interfaceShape.isMoreSpecificThan(type.interfaceShape);
     assert(false, 'contains not implemented for ${this}');
   }
 

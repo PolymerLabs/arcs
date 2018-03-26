@@ -58,11 +58,7 @@ class Schema {
     return JSON.stringify(fieldType1) == JSON.stringify(fieldType2);
   }
 
-  static maybeMerge(schema1, schema2) {
-    if (!schema1.hasCommonName(schema2)) {
-      return null;
-    }
-
+  static union(schema1, schema2) {
     let names = [...new Set([...schema1._names()].concat(...schema2._names()))];
     let fields = {};
 
@@ -88,9 +84,9 @@ class Schema {
   }
 
   static intersect(schema1, schema2) {
-    if (schema1.contains(schema2))
+    if (schema1.isMoreSpecificThan(schema2))
       return schema2;
-    else if (schema2.contains(schema1))
+    else if (schema2.isMoreSpecificThan(schema1))
       return schema1;
     
     // TODO: Don't be lazy
@@ -101,11 +97,11 @@ class Schema {
   equals(otherSchema) {
     return this === otherSchema || (this.name == otherSchema.name
        // TODO: Check equality without calling contains.
-       && this.contains(otherSchema)
-       && otherSchema.contains(this));
+       && this.isMoreSpecificThan(otherSchema)
+       && otherSchema.isMoreSpecificThan(this));
   }
 
-  contains(otherSchema) {
+  isMoreSpecificThan(otherSchema) {
     if (!this._containsNames(otherSchema)) {
       return false;
     }
