@@ -106,7 +106,6 @@ export default Xen.html`
   }
   footer {
     display: block;
-    position: relative;
     height: var(--footer-height);
   }
   arc-footer {
