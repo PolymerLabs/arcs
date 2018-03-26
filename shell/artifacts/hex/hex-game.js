@@ -174,7 +174,7 @@ defineParticle(({DomParticle}) => {
   return class extends DomParticle {
     constructor() {
       super();
-      this._board = new Board(8);
+      this._board = new Board(11);
       this._player = 'x';
       let board = this._board;
       this.setState({
