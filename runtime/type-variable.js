@@ -129,8 +129,18 @@ class TypeVariable {
   set resolution(value) {
     assert(value instanceof Type);
     assert(!this._resolution);
+    let probe = value;
+    while (probe) {
+      if (!probe.isVariable)
+        break;
+      if (probe.variable == this)
+        return;
+      probe = probe.resolution;
+    }
+
     this._resolution = value;
     this._canWriteSuperset = null;
+    this._canReadSubset = null;
   }
 
   get canWriteSuperset() {
@@ -163,6 +173,20 @@ class TypeVariable {
   set canReadSubset(value) {
     assert(!this._resolution);
     this._canReadSubset = value;
+  }
+
+  maybeEnsureResolved() {
+    if (this._resolution)
+      return this._resolution.maybeEnsureResolved();
+    if (this._canWriteSuperset) {
+      this._resolution = this._canWriteSuperset;
+      return true;
+    }
+    if (this._canReadSubset) {
+      this._resolution = this._canReadSubset;
+      return true;
+    }
+    return false;
   }
 
   toLiteral() {

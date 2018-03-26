@@ -179,6 +179,14 @@ class Type {
     return !this.hasUnresolvedVariable;
   }
 
+  maybeEnsureResolved() {
+    if (this.isInterface)
+      assert(false, `maybeEnsureResolved not implemented for ${this}`);
+    if (this.isVariable)
+      return this.variable.maybeEnsureResolved();
+    return true;
+  }
+
   get canWriteSuperset() {
     if (this.isVariable)
       return this.variable.canWriteSuperset;

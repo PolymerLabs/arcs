@@ -1483,21 +1483,11 @@ describe('Planner paths go better than expected', function() {
   let onlyResult = (clazz, recipe) => run(clazz, recipe).then(result => result.results[0].result);
   let theResults = (clazz, recipe) => run(clazz, recipe).then(results => results.results.map(result => result.result)); // chicken chicken
 
-  recipe = await onlyResult(MatchRecipeByVerb, recipe);
+  recipe = await onlyResult(MatchRecipeByVerb, recipe);  
   let recipes = await theResults(ConvertConstraintsToConnections, recipe);
+  recipe = await onlyResult(ResolveRecipe, recipes[1]);
 
-  console.log(recipes[1].toString());
-
-  console.log(recipes[1].handles[3]);
-  console.log(recipes[1].handles[3].connections.map(a => JSON.stringify(a.type)));
-  console.log(recipes[1].handles[3].connections.map(a => a.direction));
-
-  let errors = new Map();
-  recipes[1].normalize({errors});
-  console.log(errors);
-
-  //recipe = await onlyResult(ConvertConstraintsToConnections, recipe);
-  //recipe = await onlyResult(ResolveRecipe, recipe);
+  console.log(recipe.toString());
 
   
   });
