@@ -6,10 +6,11 @@ import ArcsUtils from '../lib/arcs-utils.js';
 import './arc-handle.js';
 
 // globals
-const shellPath = window.shellPath;
+/* global shellPath */
 
 // templates
-const template = Xen.html`
+const html = Xen.Template.html;
+const template = html`
 
   <arc-handle arc="{{arc}}" data="{{themeData}}" options="{{themeHandleOptions}}" on-change="_onShellThemeChange"></arc-handle>
   <arc-handle arc="{{arc}}" data="{{usersHandleData}}" options="{{usersHandleOptions}}"></arc-handle>
@@ -20,7 +21,9 @@ const template = Xen.html`
 
 `;
 
-class ShellHandles extends Xen.Base {
+const log = Xen.Base.logFactory('ShellHandles', '#004f00');
+
+class ShellHandles extends Xen.Debug(Xen.Base, log) {
   static get observedAttributes() {
     return ['arc', 'users', 'user', 'visited'];
   }
@@ -68,25 +71,6 @@ class ShellHandles extends Xen.Base {
       }
     };
   }
-  _watchGeolocation() {
-    const fallback = () => this._maybeUpdateGeoCoords(
-        {latitude: 37.7610927, longitude: -122.4208173}); // San Francisco
-
-    if ('geolocation' in navigator) {
-      navigator.geolocation.watchPosition(
-        ({coords}) => this._maybeUpdateGeoCoords(coords),
-        fallback, {timeout: 3000, maximumAge: Infinity});
-    } else {
-      fallback();
-    }
-  }
-  _maybeUpdateGeoCoords({latitude, longitude}) {
-    const {geoCoords} = this._state;
-    // Skip setting the position if it's the same as what we've already got.
-    if (!geoCoords || geoCoords.latitude != latitude || geoCoords.longitude != longitude) {
-      this._setState({geoCoords: {latitude, longitude}});
-    }
-  }
   _update(props, state, lastProps, lastState) {
     const {users, user, visited, arc} = props;
     const {geoCoords} = state;
@@ -105,7 +89,6 @@ class ShellHandles extends Xen.Base {
     }
   }
   _render(props, state) {
-    //log(props, state);
     return [state, props];
   }
   _renderUser(user, geoCoords) {
@@ -150,6 +133,24 @@ class ShellHandles extends Xen.Base {
     });
     return data;
   }
+  _watchGeolocation() {
+    const fallback = () => this._maybeUpdateGeoCoords(
+        {latitude: 37.7610927, longitude: -122.4208173}); // San Francisco
+    if ('geolocation' in navigator) {
+      navigator.geolocation.watchPosition(
+        ({coords}) => this._maybeUpdateGeoCoords(coords),
+        fallback, {timeout: 3000, maximumAge: Infinity});
+    } else {
+      fallback();
+    }
+  }
+  _maybeUpdateGeoCoords({latitude, longitude}) {
+    const {geoCoords} = this._state;
+    // Skip setting the position if it's the same as what we've already got.
+    if (!geoCoords || geoCoords.latitude != latitude || geoCoords.longitude != longitude) {
+      this._setState({geoCoords: {latitude, longitude}});
+    }
+  }
   _onData(e, data) {
     if (this._setState({[e.type]: data})) {
       log(e.type, data);
@@ -166,6 +167,4 @@ class ShellHandles extends Xen.Base {
     this._fire('launcherarcs', arcs);
   }
 }
-
-const log = Xen.Base.logFactory('ShellHandles', '#004f00');
 customElements.define('shell-handles', ShellHandles);
