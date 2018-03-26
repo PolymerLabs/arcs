@@ -14,10 +14,6 @@ import Icons from './icons.css.js';
 const log = Xen.logFactory('MicInput', 'blue');
 
 class MicInput extends Xen.Base {
-  _getInitialState() {
-    return {
-    };
-  }
   _didMount() {
     if (this._supportsSpeech()) {
       this._initSpeech();
@@ -121,21 +117,17 @@ class MicInput extends Xen.Base {
     this.value = finalTranscript;
     this._fire('end', finalTranscript);
   }
-  _onKeydown(e) {
+  _handleListenKey(e, keyIsDown) {
     const name = e.target.localName;
-    if (!{textarea: 1, input: 1}[name]) {
-      if (e.key == 'Shift') {
-        this._setState({active: true});
-      }
+    if (!{textarea: 1, input: 1}[name] && (e.key === 'Shift')) {
+      this._setState({active: keyIsDown});
     }
   }
+  _onKeydown(e) {
+    this._handleListenKey(e, true);
+  }
   _onKeyup(e) {
-    const name = e.target.localName;
-    if (!{textarea: 1, input: 1}[name]) {
-      if (e.key == 'Shift') {
-        this._setState({active: false});
-      }
-    }
+    this._handleListenKey(e, false);
   }
 }
 customElements.define('mic-input', MicInput);
