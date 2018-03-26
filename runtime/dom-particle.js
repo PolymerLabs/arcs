@@ -21,6 +21,11 @@ import XenStateMixin from '../shell/components/xen/xen-state.js';
  * Particle that does stuff with DOM.
  */
 class DomParticle extends XenStateMixin(Particle) {
+  constructor() {
+    super();
+    this.state = this._state;
+    this.props = this._props;
+  }
   /** @method get template()
    * Override to return a String defining primary markup.
    */
@@ -130,10 +135,10 @@ class DomParticle extends XenStateMixin(Particle) {
     if (this.shouldRender(...stateArgs)) {
       let content = {};
       if (slot._requestedContentTypes.has('template')) {
-        content['template'] = this.getTemplate(slot.slotName);
+        content.template = this.getTemplate(slot.slotName);
       }
       if (slot._requestedContentTypes.has('model')) {
-        content['model'] = this.render(...stateArgs);
+        content.model = this.render(...stateArgs);
       }
       slot.render(content);
     } else if (slot.isRendered) {
