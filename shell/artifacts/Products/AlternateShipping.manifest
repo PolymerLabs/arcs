@@ -9,6 +9,6 @@
 import 'Product.schema'
 
 particle AlternateShipping in 'source/AlternateShipping.js'
-  AlternateShipping(in Product product)
+  AlternateShipping(in Product product, in DesiredShipping desiredShipping)
   consume annotation
   description `find alternate shipping for products which won't make it on time`

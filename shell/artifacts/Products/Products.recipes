@@ -121,8 +121,11 @@ recipe
 // If the shipping date won't work, look for extra products
 recipe
   use #shortlist as shortlist
-  Multiplexer
+  use #desiredShipping as desiredShipping
+
+  FixedOtherMultiplexer
     list <- shortlist
+    other <- desiredShipping
     hostedParticle <- AlternateShipping
 
 // Recommendations based on Claire's interest in field hockey.

@@ -13,7 +13,7 @@
 defineParticle(({DomParticle}) => {
 
   let template = `
-    Alternatives that will arrive in time: <span>{{alternatives}}</span>
+    <div hidden="{{hidden}}">Alternate stores that can ship to you in time: <span>{{alternatives}}</span></div>
     `.trim();
 
   return class extends DomParticle {
@@ -24,9 +24,22 @@ defineParticle(({DomParticle}) => {
       return !!props && !!props.product;
     }
     render(props) {
-      let alternatives = ['Target', 'Cole Hardware'].join(', ');
+      const {product, desiredShipping} = props;
+
+      let hidden = true;
+      if (props.product.shipDays) {
+        const needed = new Date(desiredShipping.desiredShippingDate);
+        const estimated = new Date(new Date().toDateString());
+        estimated.setDate(estimated.getDate() + product.shipDays);
+
+        hidden = estimated <= needed;
+      }
+
+      const alternatives = ['<not yet implemented>'].join(', ');
+
       return {
-        alternatives
+        alternatives,
+        hidden
       };
     }
   };
