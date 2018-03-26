@@ -19,9 +19,9 @@ import TypeVariable from '../type-variable.js';
 
 
 describe('TypeChecker', () => {
-  it('resolves a trio of in [~a], out [~a], in [Product]', async () => {
+  it('resolves a trio of in [~a], out [~b], in [Product]', async () => {
     let a = Type.newVariable(new TypeVariable('a')).setViewOf();
-    let b = Type.newVariable(new TypeVariable('a')).setViewOf();
+    let b = Type.newVariable(new TypeVariable('b')).setViewOf();
     let c = Type.newEntity(new Schema({name: 'Product', fields: []})).setViewOf();
     let result = TypeChecker.processTypeList(undefined, [{type: a, direction: 'in'}, {type: b, direction: 'out'}, {type: c, direction: 'in'}]);
     assert.equal(a.resolvedType().primitiveType().canWriteSuperset.entitySchema.name, 'Product');
@@ -47,9 +47,9 @@ describe('TypeChecker', () => {
     assert.equal(result.primitiveType().canWriteSuperset.entitySchema.name, 'Thing');
   });
 
-  it('resolves a trio of in [~a] (is Thing), in [~a] (is Thing), out [Product]', async () => {
+  it('resolves a trio of in [~a] (is Thing), in [~b] (is Thing), out [Product]', async () => {
     let a = Type.newVariable(new TypeVariable('a')).setViewOf();
-    let b = Type.newVariable(new TypeVariable('a')).setViewOf();
+    let b = Type.newVariable(new TypeVariable('b')).setViewOf();
     let resolution = Type.newEntity(new Schema({name: 'Thing', fields: []}));
     a.primitiveType().variable.resolution = resolution;
     b.primitiveType().variable.resolution = resolution;
@@ -88,15 +88,15 @@ describe('TypeChecker', () => {
     assert.equal(result, null);
   });
 
-  it('resolves inout [~a] (is Thing), in [~a] (is Thing), in [Product], in [~a], in [~a] (is Product)', async () => {
+  it('resolves inout [~a] (is Thing), in [~b] (is Thing), in [Product], in [~c], in [~d] (is Product)', async () => {
     let a = Type.newVariable(new TypeVariable('a')).setViewOf();
-    let b = Type.newVariable(new TypeVariable('a')).setViewOf();
+    let b = Type.newVariable(new TypeVariable('b')).setViewOf();
     let resolution = Type.newEntity(new Schema({name: 'Thing', fields: []}));
     a.primitiveType().variable.resolution = resolution;
     b.primitiveType().variable.resolution = resolution;
     let c = Type.newEntity(new Schema({name: 'Product', parents: [{name: 'Thing', fields: []}], fields: []})).setViewOf();
-    let d = Type.newVariable(new TypeVariable('a')).setViewOf();
-    let e = Type.newVariable(new TypeVariable('a')).setViewOf();
+    let d = Type.newVariable(new TypeVariable('c')).setViewOf();
+    let e = Type.newVariable(new TypeVariable('d')).setViewOf();
     resolution = Type.newEntity(new Schema({name: 'Product', parents: [{name: 'Thing', fields: []}], fields: []}));
     e.primitiveType().variable.resolution = resolution;
     let result = TypeChecker.processTypeList(undefined, [{type: a, direction: 'inout'}, {type: b, direction: 'in'}, {type: c, direction: 'in'}, {type: d, direction: 'in'}, {type: e, direction: 'in'}]);

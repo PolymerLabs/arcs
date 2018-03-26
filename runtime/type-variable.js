@@ -23,88 +23,52 @@ class TypeVariable {
     this._resolution = null;
   }
 
-
-  static _maybeMergeConstraints(variable1, variable2) {
-    assert(variable1 instanceof TypeVariable);
-    assert(variable2 instanceof TypeVariable);
-
-    let canWriteSuperset;
-    if (variable2._canWriteSuperset) {
-      canWriteSuperset = TypeVariable._maybeMergeConstraintPair(variable1._canWriteSuperset, variable2._canWriteSuperset);
-      if (canWriteSuperset == null)
-        return null;
-    } else {
-      canWriteSuperset = variable1._canWriteSuperset;
-    }
-
-    let canReadSubset;
-    if (variable2._canReadSubset) {
-      canReadSubset = TypeVariable._maybeMergeConstraintPair(variable1._canReadSubset, variable2._canReadSubset);
-      if (canReadSubset == null)
-        return null;
-    } else {
-      canReadSubset = variable1._canReadSubset;
-    }
-
-    return {canWriteSuperset, canReadSubset};
-  }
-
-  static _maybeMergeConstraintPair(constraint1, constraint2) {
-    assert(constraint1 || constraint2);
-
-    if (constraint1 && constraint2) {
-      if (!constraint1.isEntity || !constraint2.isEntity) {
-        throw new Error(`merging constraints not implemented for ${constraint1.type} and ${constraint2.type}`);
-      }
-  
-      let mergedSchema = Schema.union(constraint1.entitySchema, constraint2.entitySchema);
-      if (!mergedSchema) {
-        return null;
-      }
-      return Type.newEntity(mergedSchema);
-    } else {
-      return constraint1 || constraint2;
-    }
-  }
-
+  // Merge both the read subset (upper bound) and write superset (lower bound) constraints
+  // of two variables together. Use this when two separate type variables need to resolve
+  // to the same value.
   maybeMergeConstraints(variable) {
-    let result = TypeVariable._maybeMergeConstraints(this, variable);
-    if (result == null)
+    assert(variable instanceof TypeVariable);
+
+    if (!this.maybeMergeCanReadSubset(variable.canReadSubset))
       return false;
-    this.canReadSubset = result.canReadSubset;
-    this.canWriteSuperset = result.canWriteSuperset;
-    return true;
+    return this.maybeMergeCanWriteSuperset(variable.canWriteSuperset);
   }
 
+  // merge a type variable's read subset (upper bound) constraints into this variable.
+  // This is used to accumulate read constraints when resolving a handle's type.
   maybeMergeCanReadSubset(constraint) {
     if (constraint == null)
       return true;
     
     if (this.canReadSubset == null) {
       this.canReadSubset = constraint;
-      assert(this.canReadSubset !== undefined);      
       return true;
     }
 
-    if (!this.canReadSubset.isEntity || !constraint.isEntity)
-      throw new Error(`merging read subsets not implemented for ${this.canReadSubset.type} and ${constraint.type}`);
-    
     let mergedSchema = Schema.intersect(this.canReadSubset.entitySchema, constraint.entitySchema);
     if (!mergedSchema)
       return false;
     
     this.canReadSubset = Type.newEntity(mergedSchema);
-    assert(this.canReadSubset !== undefined);
     return true;
   }
 
+  // merge a type variable's write superset (lower bound) constraints into this variable.
+  // This is used to accumulate write constraints when resolving a handle's type.
   maybeMergeCanWriteSuperset(constraint) {
     if (constraint == null)
       return true;
-    let result = TypeVariable._maybeMergeConstraintPair(this.canWriteSuperset, constraint);
-    if (result == null)
+
+    if (this.canWriteSuperset == null) {
+      this.canWriteSuperset = constraint;
+      return true;
+    }
+
+    let mergedSchema = Schema.union(this.canWriteSuperset.entitySchema, constraint.entitySchema);
+    if (!mergedSchema)
       return false;
-    this.canWriteSuperset = result;
+
+    this.canWriteSuperset = Type.newEntity(mergedSchema);
     return true;
   }
 
@@ -114,9 +78,9 @@ class TypeVariable {
       return true;
     }
     if (!constraint.isEntity || !type.isEntity) {
-      throw new Error('constraint checking not implemented for ${constraint1.type} and ${constraint2.type}');
+      throw new Error(`constraint checking not implemented for ${this} and ${type}`);
     }
-    return type.entitySchema.contains(constraint.entitySchema);
+    return type.entitySchema.isMoreSpecificThan(constraint.entitySchema);
   }
 
   get resolution() {
@@ -173,6 +137,12 @@ class TypeVariable {
   set canReadSubset(value) {
     assert(!this._resolution);
     this._canReadSubset = value;
+  }
+
+  canEnsureResolved() {
+    if (this._resolution)
+      return this._resolution.canEnsureResolved();
+    return (this._canWriteSuperset || this._canReadSubset);
   }
 
   maybeEnsureResolved() {

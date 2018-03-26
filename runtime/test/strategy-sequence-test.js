@@ -9,10 +9,8 @@
  */
 import Arc from '../arc.js';
 import Loader from '../loader.js';
-import Planner from '../planner.js';
 import {assert} from './chai-web.js';
 import Manifest from '../manifest.js';
-import Recipe from '../recipe/recipe.js';
 import ConvertConstraintsToConnections from '../strategies/convert-constraints-to-connections.js';
 import InitPopulation from '../strategies/init-population.js';
 import MapSlots from '../strategies/map-slots.js';
@@ -24,9 +22,6 @@ import GroupHandleConnections from '../strategies/group-handle-connections.js';
 import CombinedStrategy from '../strategies/combined-strategy.js';
 import CreateDescriptionHandle from '../strategies/create-description-handle.js';
 import FallbackFate from '../strategies/fallback-fate.js';
-import MessageChannel from '../message-channel.js';
-import InnerPec from '../inner-PEC.js';
-import Particle from '../particle.js';
 let loader = new Loader();
 
 function createTestArc(id, context, affordance) {

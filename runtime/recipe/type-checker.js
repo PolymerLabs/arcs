@@ -12,7 +12,12 @@ import assert from '../../platform/assert-web.js';
 class TypeChecker {
 
   // resolve a list of handleConnection types against a handle
-  // base type.
+  // base type. This is the core type resolution mechanism, but should only
+  // be used when types can actually be associated with each other / constrained.
+  //
+  // By design this function is called exactly once per handle in a recipe during
+  // normalization, and should provide the same final answers regardless of the 
+  // ordering of handles within that recipe
   static processTypeList(baseType, list) {
     if (baseType == undefined)
       baseType = Type.newVariable(new TypeVariable('a'));
@@ -28,7 +33,7 @@ class TypeChecker {
     // of all the other connected variables at the same time.
     for (let item of list) {
       if (item.type.resolvedType().hasVariable) {
-        baseType = TypeChecker.tryMergeTypeVariable(baseType, item.type);
+        baseType = TypeChecker._tryMergeTypeVariable(baseType, item.type);
         if (baseType == null)
           return null;
       } else {
@@ -37,7 +42,7 @@ class TypeChecker {
     }
 
     for (let item of concreteTypes) {
-      let success = TypeChecker.tryMergeConstraints(baseType, item);
+      let success = TypeChecker._tryMergeConstraints(baseType, item);
       if (!success)
         return null;
     }
@@ -68,7 +73,7 @@ class TypeChecker {
     return getResolution(candidate);
   }
 
-  static tryMergeTypeVariable(base, onto) {
+  static _tryMergeTypeVariable(base, onto) {
     let [primitiveBase, primitiveOnto] = Type.unwrapPair(base.resolvedType(), onto.resolvedType());
 
     if (primitiveBase.isVariable) {
@@ -93,7 +98,7 @@ class TypeChecker {
     return base;
   }
 
-  static tryMergeConstraints(handleType, {type, direction}) {
+  static _tryMergeConstraints(handleType, {type, direction}) {
     let [primitiveHandleType, primitiveConnectionType] = Type.unwrapPair(handleType.resolvedType(), type.resolvedType());
     if (primitiveHandleType.isVariable) {
       // if this is an undifferentiated variable then we need to create structure to match against. That's
@@ -122,17 +127,17 @@ class TypeChecker {
       }
     } else {
       if (direction == 'out' || direction == 'inout')
-        if (!TypeChecker.writeConstraintsApply(primitiveHandleType, primitiveConnectionType))
+        if (!TypeChecker._writeConstraintsApply(primitiveHandleType, primitiveConnectionType))
           return false;
       if (direction == 'in' || direction == 'inout')
-        if (!TypeChecker.readConstraintsApply(primitiveHandleType, primitiveConnectionType))
+        if (!TypeChecker._readConstraintsApply(primitiveHandleType, primitiveConnectionType))
           return false;
     }
 
     return true;
   }
 
-  static writeConstraintsApply(handleType, connectionType) {
+  static _writeConstraintsApply(handleType, connectionType) {
     // this connection wants to write to this handle. If the written type is
     // more specific than the canReadSubset then it isn't violating the maximal type
     // that can be read.
@@ -144,7 +149,7 @@ class TypeChecker {
     return false;
   }
 
-  static readConstraintsApply(handleType, connectionType) {
+  static _readConstraintsApply(handleType, connectionType) {
     // this connection wants to read from this handle. If the read type
     // is less specific than the canWriteSuperset, then it isn't violating
     // the maximum lower-bound read type.
@@ -156,6 +161,7 @@ class TypeChecker {
     return false;
   }
 
+  // TODO: what is this? Does it still belong here?
   static restrictType(type, instance) {
     assert(type.isInterface, `restrictType not implemented for ${type}`);
 
@@ -165,6 +171,12 @@ class TypeChecker {
     return Type.newInterface(shape);
   }
 
+  // Compare two types to see if they could be potentially resolved (in the absence of other
+  // information). This is used as a filter when selecting compatible handles or checking 
+  // validity of recipes. This function returning true never implies that full type resolution
+  // will succeed, but if the function returns false for a pair of types that are associated
+  // then type resolution is guaranteed to fail.
+  //
   // left, right: {type, direction, connection}
   static compareTypes(left, right) {
     let resolvedLeft = left.type.resolvedType();
@@ -172,28 +184,9 @@ class TypeChecker {
     let [leftType, rightType] = Type.unwrapPair(resolvedLeft, resolvedRight);
 
     if (leftType.isVariable || rightType.isVariable) {
-      if (leftType.isVariable && rightType.isVariable) {
-        if (leftType.variable === rightType.variable) {
-          return true;
-        }
-        if (leftType.variable.constraint || rightType.variable.constraint) {
-          let mergedConstraint = TypeVariable.maybeMergeConstraints(leftType.variable, rightType.variable);
-          if (!mergedConstraint) {
-            return false;
-          }
-        }
-        return {type: left, valid: true};
-      } else if (leftType.isVariable) {
-        if (!leftType.variable.isSatisfiedBy(rightType)) {
-          return false;
-        }
-        return {type: right, valid: true};
-      } else if (rightType.isVariable) {
-        if (!rightType.variable.isSatisfiedBy(leftType)) {
-          return false;
-        }
-        return true;
-      }
+      // TODO: everything should use this, eventually. Need to implement the
+      // right functionality in Shapes first, though.
+      return Type.canMergeConstraints(leftType, rightType);
     }
 
     if (leftType.type != rightType.type) {
@@ -222,11 +215,6 @@ class TypeChecker {
       return false;
     }
     let [superclass, subclass] = leftIsSuper ? [left, right] : [right, left];
-
-    // TODO: this arbitrarily chooses type restriction when
-    // super direction is 'in' and sub direction is 'out'. Eventually
-    // both possibilities should be encoded so we can maximise resolution
-    // opportunities
 
     // treat view types as if they were 'inout' connections. Note that this
     // guarantees that the view's type will be preserved, and that the fact
