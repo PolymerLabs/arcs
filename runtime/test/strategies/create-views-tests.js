@@ -16,7 +16,7 @@
  import {assert} from '../chai-web.js';
 
 describe('CreateViews', function() {
-  let testManifest = async (recipeManifest, expectedToAssignFate) => {
+  const testManifest = async (recipeManifest, expectedToAssignFate) => {
     let manifest = (await Manifest.parse(`
       schema Thing
 
@@ -41,79 +41,75 @@ describe('CreateViews', function() {
     }
   };
 
-  it('Single reader', async () => {
-    await testManifest(`
+  const assertAssignsFate = async recipeManifest => testManifest(recipeManifest, true);
+  const assertDoesntAssignFate = async recipeManifest => testManifest(recipeManifest, false);
+
+  it('doesnt work with a single reader', async () => {
+    await assertDoesntAssignFate(`
       recipe
         ? as view
         Reader
-          foo <- view
-    `, /* expectedToAssignFate = */ false);
+          foo <- view`);
   });
 
-  it('Single writer', async () => {
-    await testManifest(`
+  it('doesnt work with a single writer', async () => {
+    await assertDoesntAssignFate(`
       recipe
         ? as view
         Writer
-          foo -> view
-    `, /* expectedToAssignFate = */ false);
+          foo -> view`);
   });
 
-  it('Single reader-writer', async () => {
-    await testManifest(`
+  it('doesnt work with a single reader-writer', async () => {
+    await assertDoesntAssignFate(`
       recipe
         ? as view
         ReadWriter
-          foo = view
-    `, /* expectedToAssignFate = */ false);
+          foo = view`);
   });
 
-  it('Many readers', async () => {
-    await testManifest(`
+  it('doesnt work with many readers', async () => {
+    await assertDoesntAssignFate(`
       recipe
         ? as view
         Reader
           foo <- view
         Reader
-          foo <- view
-    `, /* expectedToAssignFate = */ false);
+          foo <- view`);
   });
 
-  it('Many writers', async () => {
-    await testManifest(`
+  it('doesnt work with many writers', async () => {
+    await assertDoesntAssignFate(`
       recipe
         ? as view
         Writer
           foo -> view
         Writer
-          foo -> view
-    `, /* expectedToAssignFate = */ false);
+          foo -> view`);
   });
 
-  it('Many reader-writers', async () => {
-    await testManifest(`
+  it('works with many reader-writers', async () => {
+    await assertAssignsFate(`
       recipe
         ? as view
         ReadWriter
           foo = view
         ReadWriter
-          foo = view
-    `, /* expectedToAssignFate = */ true);
+          foo = view`);
   });
 
-  it('Read-Write', async () => {
-    await testManifest(`
+  it('works with one reader and one writer', async () => {
+    await assertAssignsFate(`
       recipe
         ? as view
         Reader
           foo <- view
         Writer
-          foo -> view
-    `, /* expectedToAssignFate = */ true);
+          foo -> view`);
   });
 
-  it('Big Mix', async () => {
-    await testManifest(`
+  it('works with multiple different connections', async () => {
+    await assertAssignsFate(`
       recipe
         ? as view
         Reader
@@ -123,7 +119,6 @@ describe('CreateViews', function() {
         ReadWriter
           foo = view
         Reader
-          foo <- view
-    `, /* expectedToAssignFate = */ true);
+          foo <- view`);
   });
 });
