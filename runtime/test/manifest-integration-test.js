@@ -34,13 +34,13 @@ describe('manifest integration', () => {
   it('can produce a recipe that can be instantiated in an arc', async () => {
     let {arc, recipe} = await setup();
     await arc.instantiate(recipe);
-    await arc.pec.idle;
+    await arc.idle;
     let type = recipe.handles[0].type;
     let [view] = arc.findHandlesByType(type);
     assert(view);
     let theHandle = handle.handleFor(view);
     // TODO: This should not be necessary.
-    theHandle.entityClass = type.entitySchema.entityClass();
+    theHandle.entityClass = type.resolvedType().entitySchema.entityClass();
     let result = await theHandle.get();
     assert.equal(result.value, 'Hello, world!');
   });

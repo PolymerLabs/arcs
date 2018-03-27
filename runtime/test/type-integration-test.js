@@ -33,7 +33,8 @@ describe('type integration', () => {
     assert(recipe.normalize());
     assert(recipe.isResolved());
     assert(recipe.handles.length == 1);
-    assert(recipe.handles[0].type.primitiveType().entitySchema.name == 'Lego');
+    assert(recipe.handles[0].type.primitiveType().canReadSubset.entitySchema.name == 'Lego');
+    assert(recipe.handles[0].type.primitiveType().canWriteSuperset.entitySchema.name == 'Product');
   });
 
   it('a subtype matches to a supertype that wants to be read when a view exists', async () => {

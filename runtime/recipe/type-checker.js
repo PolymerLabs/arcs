@@ -11,23 +11,160 @@ import assert from '../../platform/assert-web.js';
 
 class TypeChecker {
 
-  // list: [{type, direction, connection}]
-  static processTypeList(list) {
-    if (list.length == 0) {
-      return {type: {type: undefined}, valid: true};
-    }
-    let baseType = list[0];
-    for (let i = 1; i < list.length; i++) {
-      let result = TypeChecker.compareTypes(baseType, list[i]);
-      baseType = result.type;
-      if (!result.valid) {
-        return {valid: false};
+  // resolve a list of handleConnection types against a handle
+  // base type. This is the core type resolution mechanism, but should only
+  // be used when types can actually be associated with each other / constrained.
+  //
+  // By design this function is called exactly once per handle in a recipe during
+  // normalization, and should provide the same final answers regardless of the 
+  // ordering of handles within that recipe
+  //
+  // NOTE: you probably don't want to call this function, if you think you
+  // do, talk to shans@.
+  static processTypeList(baseType, list) {
+    if (baseType == undefined)
+      baseType = Type.newVariable(new TypeVariable('a'));
+
+    let concreteTypes = [];
+
+    // baseType might be a variable (and is definitely a variable if no baseType was available).
+    // Some of the list might contain variables too.
+    
+    // First attempt to merge all the variables into the baseType
+    //
+    // If the baseType is a variable then this results in a single place to manipulate the constraints
+    // of all the other connected variables at the same time.
+    for (let item of list) {
+      if (item.type.resolvedType().hasVariable) {
+        baseType = TypeChecker._tryMergeTypeVariable(baseType, item.type);
+        if (baseType == null)
+          return null;
+      } else {
+        concreteTypes.push(item);
       }
     }
 
-    return {type: baseType, valid: true};
+    for (let item of concreteTypes) {
+      let success = TypeChecker._tryMergeConstraints(baseType, item);
+      if (!success)
+        return null;
+    }
+
+    let getResolution = candidate => {
+      if (candidate.isVariable == false)
+        return candidate;
+      if (candidate.canReadSubset == null || candidate.canWriteSuperset == null)
+        return candidate;
+      if (candidate.canReadSubset.isMoreSpecificThan(candidate.canWriteSuperset)) {
+        if (candidate.canWriteSuperset.isMoreSpecificThan(candidate.canReadSubset))
+          candidate.variable.resolution = candidate.canReadSubset;
+        return candidate;
+      }  
+      return null;
+    };
+
+    let candidate = baseType.resolvedType();
+
+    if (candidate.isSetView) {
+      candidate = candidate.primitiveType();
+      let resolution = getResolution(candidate);
+      if (resolution == null)
+        return null;
+      return resolution.setViewOf();
+    }
+
+    return getResolution(candidate);
   }
 
+  static _tryMergeTypeVariable(base, onto) {
+    let [primitiveBase, primitiveOnto] = Type.unwrapPair(base.resolvedType(), onto.resolvedType());
+
+    if (primitiveBase.isVariable) {
+      if (primitiveOnto.isVariable) {
+        // base, onto both variables.
+        let result = primitiveBase.variable.maybeMergeConstraints(primitiveOnto.variable);
+        if (result == false)
+          return null;
+        primitiveOnto.variable.resolution = primitiveBase;
+      } else {
+        // base variable, onto not.
+        primitiveBase.variable.resolution = primitiveOnto;
+      }
+    } else if (primitiveOnto.isVariable) {
+      // onto variable, base not.
+      primitiveOnto.variable.resolution = primitiveBase;
+      return onto;
+    } else {
+      assert(false, 'tryMergeTypeVariable shouldn\'t be called on two types without any type variables');
+    }
+    
+    return base;
+  }
+
+  static _tryMergeConstraints(handleType, {type, direction}) {
+    let [primitiveHandleType, primitiveConnectionType] = Type.unwrapPair(handleType.resolvedType(), type.resolvedType());
+    if (primitiveHandleType.isVariable) {
+      // if this is an undifferentiated variable then we need to create structure to match against. That's
+      // allowed because this variable could represent anything, and it needs to represent this structure
+      // in order for type resolution to succeed.
+      if (primitiveConnectionType.isSetView) {
+        assert(primitiveHandleType.variable.resolution == null && primitiveHandleType.variable.canReadSubset == null && primitiveHandleType.variable.canWriteSuperset == null);
+        primitiveHandleType.variable.resolution = Type.newSetView(Type.newVariable(new TypeVariable('a')));
+        let unwrap = Type.unwrapPair(primitiveHandleType.resolvedType(), primitiveConnectionType);
+        primitiveHandleType = unwrap[0];
+        primitiveConnectionType = unwrap[1];
+      }
+
+      if (direction == 'out' || direction == 'inout') {
+        // the canReadSubset of the handle represents the maximal type that can be read from the
+        // handle, so we need to intersect out any type that is more specific than the maximal type
+        // that could be written.
+        if (!primitiveHandleType.variable.maybeMergeCanReadSubset(primitiveConnectionType.canWriteSuperset))
+          return false;
+      }
+      if (direction == 'in' || direction == 'inout') {
+        // the canWriteSuperset of the handle represents the maximum lower-bound type that is read from the handle,
+        // so we need to union it with the type that wants to be read here.
+        if (!primitiveHandleType.variable.maybeMergeCanWriteSuperset(primitiveConnectionType.canReadSubset))
+          return false;
+      }
+    } else {
+      if (direction == 'out' || direction == 'inout')
+        if (!TypeChecker._writeConstraintsApply(primitiveHandleType, primitiveConnectionType))
+          return false;
+      if (direction == 'in' || direction == 'inout')
+        if (!TypeChecker._readConstraintsApply(primitiveHandleType, primitiveConnectionType))
+          return false;
+    }
+
+    return true;
+  }
+
+  static _writeConstraintsApply(handleType, connectionType) {
+    // this connection wants to write to this handle. If the written type is
+    // more specific than the canReadSubset then it isn't violating the maximal type
+    // that can be read.
+    let writtenType = connectionType.canWriteSuperset;
+    if (writtenType == null || handleType.canReadSubset == null)
+      return true;
+    if (writtenType.isMoreSpecificThan(handleType.canReadSubset))
+      return true;
+    return false;
+  }
+
+  static _readConstraintsApply(handleType, connectionType) {
+    // this connection wants to read from this handle. If the read type
+    // is less specific than the canWriteSuperset, then it isn't violating
+    // the maximum lower-bound read type.
+    let readType = connectionType.canReadSubset;
+    if (readType == null|| handleType.canWriteSuperset == null)
+      return true;
+    if (handleType.canWriteSuperset.isMoreSpecificThan(readType))
+      return true;
+    return false;
+  }
+
+  // TODO: what is this? Does it still belong here?
   static restrictType(type, instance) {
     assert(type.isInterface, `restrictType not implemented for ${type}`);
 
@@ -37,77 +174,50 @@ class TypeChecker {
     return Type.newInterface(shape);
   }
 
+  // Compare two types to see if they could be potentially resolved (in the absence of other
+  // information). This is used as a filter when selecting compatible handles or checking 
+  // validity of recipes. This function returning true never implies that full type resolution
+  // will succeed, but if the function returns false for a pair of types that are associated
+  // then type resolution is guaranteed to fail.
+  //
   // left, right: {type, direction, connection}
-  static compareTypes(left, right, resolve=true) {
+  static compareTypes(left, right) {
     let resolvedLeft = left.type.resolvedType();
     let resolvedRight = right.type.resolvedType();
     let [leftType, rightType] = Type.unwrapPair(resolvedLeft, resolvedRight);
 
     if (leftType.isVariable || rightType.isVariable) {
-      if (leftType.isVariable && rightType.isVariable) {
-        if (leftType.variable === rightType.variable) {
-          return {type: left, valid: true};
-        }
-        if (leftType.variable.constraint || rightType.variable.constraint) {
-          let mergedConstraint = TypeVariable.maybeMergeConstraints(leftType.variable, rightType.variable);
-          if (!mergedConstraint) {
-            return {valid: false};
-          }
-          if (resolve) {
-            leftType.constraint = mergedConstraint;
-            rightType.variable.resolution = leftType;
-          }
-        }
-        return {type: left, valid: true};
-      } else if (leftType.isVariable) {
-        if (!leftType.variable.isSatisfiedBy(rightType)) {
-          return {valid: false};
-        }
-        if (resolve) {
-          leftType.variable.resolution = rightType;
-        }
-        return {type: right, valid: true};
-      } else if (rightType.isVariable) {
-        if (!rightType.variable.isSatisfiedBy(leftType)) {
-          return {valid: false};
-        }
-        if (resolve) {
-          rightType.variable.resolution = leftType;
-        }
-        return {type: left, valid: true};
-      }
+      // TODO: everything should use this, eventually. Need to implement the
+      // right functionality in Shapes first, though.
+      return Type.canMergeConstraints(leftType, rightType);
     }
 
     if (leftType.type != rightType.type) {
-      return {valid: false};
+      return false;
     }
 
     // TODO: we need a generic way to evaluate type compatibility
     //       shapes + entities + etc
     if (leftType.isInterface && rightType.isInterface) {
       if (leftType.interfaceShape.equals(rightType.interfaceShape)) {
-        return {type: left, valid: true};
+        return true;
       }
     }
 
     if (!leftType.isEntity || !rightType.isEntity) {
-      return {valid: false};
+      return false;
     }
 
-    let isSub = leftType.entitySchema.contains(rightType.entitySchema);
-    let isSuper = rightType.entitySchema.contains(leftType.entitySchema);
-    if (isSuper && isSub) {
-       return {type: left, valid: true};
-    }
-    if (!isSuper && !isSub) {
-      return {valid: false};
-    }
-    let [superclass, subclass] = isSuper ? [left, right] : [right, left];
+    let leftIsSub = leftType.entitySchema.isMoreSpecificThan(rightType.entitySchema);
+    let leftIsSuper = rightType.entitySchema.isMoreSpecificThan(leftType.entitySchema);
 
-    // TODO: this arbitrarily chooses type restriction when
-    // super direction is 'in' and sub direction is 'out'. Eventually
-    // both possibilities should be encoded so we can maximise resolution
-    // opportunities
+    if (leftIsSuper && leftIsSub) {
+       return true;
+    }
+    if (!leftIsSuper && !leftIsSub) {
+      return false;
+    }
+    let [superclass, subclass] = leftIsSuper ? [left, right] : [right, left];
 
     // treat view types as if they were 'inout' connections. Note that this
     // guarantees that the view's type will be preserved, and that the fact
@@ -116,12 +226,12 @@ class TypeChecker {
     let superDirection = superclass.direction || (superclass.connection ? superclass.connection.direction : 'inout');
     let subDirection = subclass.direction || (subclass.connection ? subclass.connection.direction : 'inout');
     if (superDirection == 'in') {
-      return {type: subclass, valid: true};
+      return true;
     }
     if (subDirection == 'out') {
-      return {type: superclass, valid: true};
+      return true;
     }
-    return {valid: false};
+    return false;
   }
 }
 

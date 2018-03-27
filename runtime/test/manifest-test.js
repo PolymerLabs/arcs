@@ -1119,6 +1119,8 @@ resource SomeName
         P2(in * {Text value, Text value2} foo)
       particle P3
         P3(in * {Text value, Text value3} foo)
+      particle P4
+        P4(in * {Text value, Number value2} foo)
 
       recipe
         create as view
@@ -1133,10 +1135,18 @@ resource SomeName
           foo = view
         P3
           foo = view
+        
+      recipe
+        create as view
+        P2
+          foo = view
+        P4
+          foo = view
     `);
-    let [validRecipe, invalidRecipe] = manifest.recipes;
+    let [validRecipe, suspiciouslyValidRecipe, invalidRecipe] = manifest.recipes;
     assert(validRecipe.normalize());
     assert(validRecipe.isResolved());
+    assert(suspiciouslyValidRecipe.normalize());
     assert(!invalidRecipe.normalize());
   });
 

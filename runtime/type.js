@@ -125,10 +125,11 @@ class Type {
     return [type1, type2];
   }
 
+
   // TODO: update call sites to use the type checker instead (since they will
   // have additional information about direction etc.)
   equals(type) {
-    return TypeChecker.compareTypes({type: this}, {type}, false).valid;
+    return TypeChecker.compareTypes({type: this}, {type});
   }
 
   _applyExistenceTypeTest(test) {
@@ -176,6 +177,85 @@ class Type {
   isResolved() {
     // TODO: one of these should not exist.
     return !this.hasUnresolvedVariable;
+  }
+
+  canEnsureResolved() {
+    if (this.isResolved())
+      return true;
+    if (this.isInterface)
+      assert(false, `canEnsureResolved not implemented for ${this}`);
+    if (this.isVariable)
+      return this.variable.canEnsureResolved();
+    if (this.isSetView)
+      return this.primitiveType().canEnsureResolved();
+    return true; 
+  }
+
+  maybeEnsureResolved() {
+    if (this.isInterface)
+      assert(false, `maybeEnsureResolved not implemented for ${this}`);
+    if (this.isVariable)
+      return this.variable.maybeEnsureResolved();
+    if (this.isSetView)
+      return this.primitiveType().maybeEnsureResolved();
+    return true;
+  }
+
+  get canWriteSuperset() {
+    if (this.isVariable)
+      return this.variable.canWriteSuperset;
+    if (this.isEntity)
+      return this;
+    if (this.isInterface)
+      return Type.newInterface(this.interfaceShape.canWriteSuperset);
+    assert(false, `canWriteSuperset not implemented for ${this}`);
+  }
+
+  get canReadSubset() {
+    if (this.isVariable)
+      return this.variable.canReadSubset;
+    if (this.isEntity)
+      return this;
+    if (this.isInterface)
+      return Type.newInterface(this.interfaceShape.canReadSubset);
+    assert(false, `canReadSubset not implemented for ${this}`);
+  }
+
+  isMoreSpecificThan(type) {
+    if (this.tag !== type.tag)
+      return false;
+    if (this.isEntity)
+      return this.entitySchema.isMoreSpecificThan(type.entitySchema);
+    if (this.isInterface)
+      return this.interfaceShape.isMoreSpecificThan(type.interfaceShape);
+    assert(false, 'contains not implemented for ${this}');
+  }
+
+  static _canMergeCanReadSubset(type1, type2) {
+    if (type1.canReadSubset && type2.canReadSubset) {
+      if (type1.canReadSubset.tag !== type2.canReadSubset.tag)
+        return false;
+      if (type1.canReadSubset.isEntity)
+        return Schema.intersect(type1.canReadSubset.entitySchema, type2.canReadSubset.entitySchema) !== null;
+      assert(false, `_canMergeCanReadSubset not implemented for types tagged with ${type1.canReadSubset.tag}`);
+    }
+    return true;
+  }
+
+  static _canMergeCanWriteSuperset(type1, type2) {
+    if (type1.canWriteSuperset && type2.canWriteSuperset) {
+      if (type1.canWriteSuperset.tag !== type2.canWriteSuperset.tag)
+        return false;
+      if (type1.canWriteSuperset.isEntity)
+        return Schema.union(type1.canWriteSuperset.entitySchema, type2.canWriteSuperset.entitySchema) !== null;
+      
+    }
+    return true;
+  }
+
+  // Tests whether two types' constraints are compatible with each other
+  static canMergeConstraints(type1, type2) {
+    return Type._canMergeCanReadSubset(type1, type2) && Type._canMergeCanWriteSuperset(type1, type2);
   }
 
   toLiteral() {

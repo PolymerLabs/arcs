@@ -35,8 +35,6 @@ describe('Multiplexer', function() {
     `, {loader, fileName: './manifest.manifest'});
 
     let recipe = manifest.recipes[0];
-    assert(recipe.normalize());
-    assert(recipe.isResolved());
 
     let barType = manifest.findTypeByName('Bar');
 
@@ -53,6 +51,10 @@ describe('Multiplexer', function() {
 
     let arc = new Arc({id: 'test', context: manifest, slotComposer});
     let handle = await arc.createHandle(barType.setViewOf(), null, 'test:1');
+    recipe.handles[0].mapToView(handle);
+    assert(recipe.normalize());
+    assert(recipe.isResolved());
+
     await arc.instantiate(recipe);
 
     await arc.idle;

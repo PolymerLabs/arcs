@@ -423,7 +423,8 @@ class Recipe {
 
   // TODO: Add a normalize() which strips local names and puts and nested
   //       lists into a normal ordering.
-
+  //
+  // use { showUnresolved: true } in options to see why a recipe can't resolve.
   toString(options) {
     let nameMap = this._makeLocalNameMap();
     let result = [];
