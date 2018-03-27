@@ -8,7 +8,9 @@
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
-const spawn = require('child_process').spawnSync;
+
+// Use saneSpawn or saneSpawnWithOutput instead, this is not cross-platform.
+const _DO_NOT_USE_spawn = require('child_process').spawnSync;
 const minimist = require('minimist');
 const chokidar = require('chokidar');
 const semver = require('semver');
@@ -98,7 +100,7 @@ function check() {
     throw new Error(`at least node ${nodeRequiredVersion} is required, you have ${process.version}`);
   }
 
-  const npmCmd = spawn('npm', ['-v']);
+  const npmCmd = saneSpawnWithOutput('npm', ['-v']);
   const npmVersion = String(npmCmd.stdout);
   if (!semver.satisfies(npmVersion, npmRequiredVersion)) {
     throw new Error(`at least npm ${npmRequiredVersion} is required, you have ${npmVersion}`);
@@ -246,13 +248,29 @@ async function webpack() {
 // make spawn work more or less the same way cross-platform
 function saneSpawn(cmd, args, opts) {
   cmd = path.normalize(cmd);
+  opts = opts || {};
   opts.shell = true;
-  let result = spawn(cmd, args, opts);
+  // it's OK, I know what I'm doing
+  let result = _DO_NOT_USE_spawn(cmd, args, opts);
   if (result.error) {
     console.warn(result.error);
     return false;
   }
   return result.status == 0;
+}
+
+// make spawn work more or less the same way cross-platform
+function saneSpawnWithOutput(cmd, args, opts) {
+  cmd = path.normalize(cmd);
+  opts = opts || {};
+  opts.shell = true;
+  // it's OK, I know what I'm doing  
+  let result = _DO_NOT_USE_spawn(cmd, args, opts);
+  if (result.error) {
+    console.warn(result.error);
+    return false;
+  }
+  return {status: result.status == 0, stdout: result.stdout};
 }
 
 async function devtools() {
@@ -355,13 +373,13 @@ function test(args) {
   }
 
   let runner = buildTestRunner();
-  return spawn('node', [
+  return saneSpawn('node', [
     '--experimental-modules',
     '--trace-warnings',
     ...extraFlags,
     '--loader', fixPathForWindows(path.join(__dirname, 'custom-loader.mjs')),
     runner
-  ], {stdio: 'inherit'}).status == 0;
+  ], {stdio: 'inherit'});
 }
 
 
