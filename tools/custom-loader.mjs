@@ -18,7 +18,7 @@ export function resolve(specifier, parent, resolve) {
   if (specifier.includes('-web.js')) {
     specifier = specifier.replace('-web.js', '-node.js');
   }
-  const resolved = new url.URL(specifier, parent);
+  const resolved = new url.URL(specifier, parent || 'file:///');
   let result = {
     url: resolved.href,
     format: 'esm'
