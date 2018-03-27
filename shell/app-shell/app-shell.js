@@ -70,7 +70,7 @@ const template = html`
     }
   </style>
 
-  <arc-config rootpath="{{shellPath}}" on-config="_onData"></arc-config>
+  <arc-config rootpath="{{shellPath}}" on-config="_onStateData"></arc-config>
 
   <arc-cloud
     manifests="{{persistedManifests}}"
@@ -86,17 +86,17 @@ const template = html`
     step="{{step}}"
     plan="{{plan}}"
     launcherarcs="{{launcherarcs}}"
-    on-manifests="_onData"
-    on-exclusions="_onData"
-    on-users="_onData"
-    on-user="_onData"
-    on-friends="_onData"
-    on-avatars="_onData"
-    on-arcs="_onData"
-    on-key="_onData"
-    on-metadata="_onData"
-    on-step="_onData"
-    on-share="_onData"
+    on-manifests="_onStateData"
+    on-exclusions="_onStateData"
+    on-users="_onStateData"
+    on-user="_onStateData"
+    on-friends="_onStateData"
+    on-avatars="_onStateData"
+    on-arcs="_onStateData"
+    on-key="_onStateData"
+    on-metadata="_onStateData"
+    on-step="_onStateData"
+    on-share="_onStateData"
   ></arc-cloud>
 ` /*
 
@@ -111,8 +111,8 @@ const template = html`
     user="{{user}}"
     arc="{{arc}}"
     visited="{{arcs}}"
-    on-launcherarcs="_onData"
-    on-theme="_onData"
+    on-launcherarcs="_onStateData"
+    on-theme="_onStateData"
   ></shell-handles>
 ` /*
 
@@ -127,9 +127,9 @@ const template = html`
     plans="{{plans}}"
     plan="{{step}}"
     suggestions="{{suggestions}}"
-    on-arc="_onData"
-    on-plans="_onData"
-    on-plan="_onData"
+    on-arc="_onStateData"
+    on-plans="_onStateData"
+    on-plan="_onStateData"
   >
   </arc-host>
 
@@ -148,10 +148,12 @@ const template = html`
     avatars="{{avatars}}"
     share="{{share}}"
     theme="{{theme}}"
+    open="{{open}}"
     on-exclusions="_onExclusions"
-    on-share="_onData"
-    on-step="_onData"
-    on-search="_onData"
+    on-share="_onStateData"
+    on-step="_onStateData"
+    on-search="_onStateData"
+    on-open="_onStateData"
     on-select-user="_onSelectUser"
   >
     <slot></slot>
@@ -173,7 +175,7 @@ class AppShell extends Xen.Debug(Xen.Base, log) {
     };
   }
   _update(props, state, oldProps, oldState) {
-    const {config, selectedUser, user, key, arc, description, metadata, share, plans, search, plan, step} = state;
+    const {config, selectedUser, user, key, arc, description, metadata, share, plans, suggestions, search, plan, step} = state;
     // TODO(sjmiles): only for console debugging
     window.arc = state.arc;
     window.app = this;
@@ -188,7 +190,7 @@ class AppShell extends Xen.Debug(Xen.Base, log) {
       state.injectedStep = plans[0].plan;
     }
     if (plans && (plans !== oldState.plans || search !== oldState.search)) {
-      this._consumePlans(plans, search);
+      this._consumePlans(plans, search, suggestions);
     }
     if (search !== oldState.search) {
       this._consumeSearch(search, arc);
@@ -253,7 +255,7 @@ class AppShell extends Xen.Debug(Xen.Base, log) {
     // TODO(sjmiles): installing the search term should probably be the job of arc-host
     arc.search = search;
   }
-  _consumePlans(plans, search) {
+  _consumePlans(plans, search, oldSuggestions) {
     let suggestions = plans;
     // If there is a search, plans are already filtered
     if (!search) {
@@ -265,7 +267,11 @@ class AppShell extends Xen.Debug(Xen.Base, log) {
         ({plan}) => plan.slots && !plan.slots.find(s => s.name.includes('root') || s.tags.includes('#root'))
       );
     }
-    this._setState({suggestions});
+    // Are the new suggestions actually different?
+    const dirty = !oldSuggestions || oldSuggestions.some((s, i) => suggestions[i].hash !== s.hash);
+    if (dirty) {
+      this._setState({suggestions, drawerOpen: true});
+    }
   }
   async _consumePlan(arc, description, metadata) {
     // arc has changed, generate new description
@@ -281,7 +287,7 @@ class AppShell extends Xen.Debug(Xen.Base, log) {
     // we consumed a plan, need new ones
     this._setState({plans: null});
   }
-  _onData(e, data) {
+  _onStateData(e, data) {
     this._setState({[e.type]: data});
   }
   _onExclusions(e, persistedExclusions) {
