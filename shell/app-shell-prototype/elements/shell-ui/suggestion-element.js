@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import Xen from '../../components/xen/xen.js';
+import Xen from '../../../components/xen/xen.js';
 
 const html = Xen.Template.html;
 const template = html`

@@ -1,9 +1,9 @@
 // code
-import Xen from '../../components/xen/xen.js';
-import Const from '../constants.js';
+import Xen from '../../../components/xen/xen.js';
+import Const from '../../constants.js';
 // elements
 // strings
-import IconStyle from '../../components/icons.css.js';
+import IconStyle from '../../../components/icons.css.js';
 // globals
 /* global shellPath */
 
@@ -61,20 +61,20 @@ const template = html`
   }
 </style>
 
-<section bar>
-  <avatar title="{{avatar_title}}" style="{{avatar_style}}" on-click="_onSelectUser"></avatar>
-  <span></span>
-  <icon on-click="_onClose">chevron_right</icon>
+<section bar on-click="_onSelectUser">
+  <avatar title="{{avatar_title}}" style="{{avatar_style}}"></avatar>
+  <span>{{name}}</span>
+  <icon>chevron_right</icon>
 </section>
-<section bar>
+<section bar style="opacity: 0.4">
   <span>Star this arc</span>
   <icon>star_border</icon>
 </section>
-<section bar on-click="_onToolsClick">
+<section bar style="opacity: 0.4" on-click="_onToolsClick">
   <span>Toggle tools panel</span>
   <icon>business_center</icon>
 </section>
-<section bar on-click="_onCastClick">
+<section bar style="opacity: 0.4" on-click="_onCastClick">
   <span>Cast this arc</span>
   <icon>cast</icon>
 </section>
@@ -100,11 +100,12 @@ class SettingsPanel extends Xen.Base {
     return template;
   }
   static get observedAttributes() {
-    return ['arc', 'open', 'friends', 'avatars', 'avatar_title', 'avatar_style', 'share'];
+    return ['arc', 'user', 'friends', 'avatars', 'avatar_title', 'avatar_style', 'share'];
   }
-  _render({arc, open, avatar_title, avatar_style, friends, avatars, share}, state, oldProps) {
+  _render({arc, user, avatar_title, avatar_style, friends, avatars, share}, state, oldProps) {
     const {selected, isProfile, isShared} = state;
     const render = {
+      name: user && user.name,
       avatar_title,
       avatar_style,
       profileIcon: isProfile ? 'check' : 'check_box_outline_blank',
@@ -115,7 +116,8 @@ class SettingsPanel extends Xen.Base {
     if (friends) {
       render.friends = {
         template: userTemplate,
-        models: friends.map((friend, i) => this._renderUser(arc, selected, friend.rawData, avatars, i))
+        models: Object.values(friends).map((friend, i) => this._renderUser(arc, selected, friend, avatars, i))
+        //models:friends.map((friend, i) => this._renderUser(arc, selected, friend.rawData, avatars, i))
       };
     }
     if (oldProps.share !== share) {
