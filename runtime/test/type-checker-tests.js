@@ -22,7 +22,7 @@ describe('TypeChecker', () => {
   it('resolves a trio of in [~a], out [~b], in [Product]', async () => {
     let a = Type.newVariable(new TypeVariable('a')).setViewOf();
     let b = Type.newVariable(new TypeVariable('b')).setViewOf();
-    let c = Type.newEntity(new Schema({name: 'Product', fields: []})).setViewOf();
+    let c = Type.newEntity(new Schema({names: ['Product'], fields: {}})).setViewOf();
     let result = TypeChecker.processTypeList(undefined, [{type: a, direction: 'in'}, {type: b, direction: 'out'}, {type: c, direction: 'in'}]);
     assert.equal(a.resolvedType().primitiveType().canWriteSuperset.entitySchema.name, 'Product');
     assert.equal(result.resolvedType().primitiveType().canWriteSuperset.entitySchema.name, 'Product');
@@ -30,18 +30,18 @@ describe('TypeChecker', () => {
   });
 
   it('resolves a trio of in [Thing], in [Thing], out [Product]', async () => {
-    let a = Type.newEntity(new Schema({name: 'Thing', fields: []})).setViewOf();
-    let b = Type.newEntity(new Schema({name: 'Thing', fields: []})).setViewOf();
-    let c = Type.newEntity(new Schema({name: 'Product', parents: [{name: 'Thing', fields: []}], fields: []})).setViewOf();
+    let a = Type.newEntity(new Schema({names: ['Thing'], fields: {}})).setViewOf();
+    let b = Type.newEntity(new Schema({names: ['Thing'], fields: {}})).setViewOf();
+    let c = Type.newEntity(new Schema({names: ['Product', 'Thing'], fields: {}})).setViewOf();
     let result = TypeChecker.processTypeList(undefined, [{type: a, direction: 'in'}, {type: b, direction: 'in'}, {type: c, direction: 'out'}]);
     assert.equal(result.primitiveType().canReadSubset.entitySchema.name, 'Product');
     assert.equal(result.primitiveType().canWriteSuperset.entitySchema.name, 'Thing');
   });
 
   it('resolves a trio of out [Product], in [Thing], in [Thing]', async () => {
-    let a = Type.newEntity(new Schema({name: 'Thing', fields: []})).setViewOf();
-    let b = Type.newEntity(new Schema({name: 'Thing', fields: []})).setViewOf();
-    let c = Type.newEntity(new Schema({name: 'Product', parents: [{name: 'Thing', fields: []}], fields: []})).setViewOf();
+    let a = Type.newEntity(new Schema({names: ['Thing'], fields: {}})).setViewOf();
+    let b = Type.newEntity(new Schema({names: ['Thing'], fields: {}})).setViewOf();
+    let c = Type.newEntity(new Schema({names: ['Product', 'Thing'], fields: {}})).setViewOf();
     let result = TypeChecker.processTypeList(undefined, [{type: c, direction: 'out'}, {type: a, direction: 'in'}, {type: b, direction: 'in'}]);
     assert.equal(result.primitiveType().canReadSubset.entitySchema.name, 'Product');
     assert.equal(result.primitiveType().canWriteSuperset.entitySchema.name, 'Thing');
@@ -50,10 +50,10 @@ describe('TypeChecker', () => {
   it('resolves a trio of in [~a] (is Thing), in [~b] (is Thing), out [Product]', async () => {
     let a = Type.newVariable(new TypeVariable('a')).setViewOf();
     let b = Type.newVariable(new TypeVariable('b')).setViewOf();
-    let resolution = Type.newEntity(new Schema({name: 'Thing', fields: []}));
+    let resolution = Type.newEntity(new Schema({names: ['Thing'], fields: {}}));
     a.primitiveType().variable.resolution = resolution;
     b.primitiveType().variable.resolution = resolution;
-    let c = Type.newEntity(new Schema({name: 'Product', parents: [{name: 'Thing', fields: []}], fields: []})).setViewOf();
+    let c = Type.newEntity(new Schema({names: ['Product', 'Thing'], fields: {}})).setViewOf();
     let result = TypeChecker.processTypeList(undefined, [{type: a, direction: 'in'}, {type: b, direction: 'in'}, {type: c, direction: 'out'}]);
     assert.equal(result.primitiveType().canReadSubset.entitySchema.name, 'Product');
     assert.equal(result.primitiveType().canWriteSuperset.entitySchema.name, 'Thing');
@@ -61,29 +61,29 @@ describe('TypeChecker', () => {
 
   it('resolves a pair of in [~a] (is Thing), out [Product]', async () => {
     let a = Type.newVariable(new TypeVariable('a')).setViewOf();
-    let resolution = Type.newEntity(new Schema({name: 'Thing', fields: []}));
+    let resolution = Type.newEntity(new Schema({names: ['Thing'], fields: {}}));
     a.primitiveType().variable.resolution = resolution;
-    let c = Type.newEntity(new Schema({name: 'Product', parents: [{name: 'Thing', fields: []}], fields: []})).setViewOf();
+    let c = Type.newEntity(new Schema({names: ['Product', 'Thing'], fields: {}})).setViewOf();
     let result = TypeChecker.processTypeList(undefined, [{type: a, direction: 'in'}, {type: c, direction: 'out'}]);
     assert.equal(result.primitiveType().canReadSubset.entitySchema.name, 'Product');
-    assert.equal(result.primitiveType().canReadSubset.entitySchema.parents[0].name, 'Thing');
+    assert.include(result.primitiveType().canReadSubset.entitySchema.names, 'Thing');
     assert.equal(result.primitiveType().canWriteSuperset.entitySchema.name, 'Thing');
   });
 
   it('doesn\'t resolve a pair of out [~a (is Thing)], in [Product]', async () => {
     let a = Type.newVariable(new TypeVariable('a')).setViewOf();
-    let resolution = Type.newEntity(new Schema({name: 'Thing', fields: []}));
+    let resolution = Type.newEntity(new Schema({names: ['Thing'], fields: {}}));
     a.primitiveType().variable.resolution = resolution;
-    let c = Type.newEntity(new Schema({name: 'Product', parents: [{name: 'Thing', fields: []}], fields: []})).setViewOf();
+    let c = Type.newEntity(new Schema({names: ['Product', 'Thing'], fields: {}})).setViewOf();
     let result = TypeChecker.processTypeList(undefined, [{type: a, direction: 'out'}, {type: c, direction: 'in'}]);
     assert.equal(result, null);
   });
   
   it('doesn\'t resolve a pair of out [~a (is Thing)], inout [Product]', async () => {
     let a = Type.newVariable(new TypeVariable('a')).setViewOf();
-    let resolution = Type.newEntity(new Schema({name: 'Thing', fields: []}));
+    let resolution = Type.newEntity(new Schema({names: ['Thing'], fields: {}}));
     a.primitiveType().variable.resolution = resolution;
-    let c = Type.newEntity(new Schema({name: 'Product', parents: [{name: 'Thing', fields: []}], fields: []})).setViewOf();
+    let c = Type.newEntity(new Schema({names: ['Product', 'Thing'], fields: {}})).setViewOf();
     let result = TypeChecker.processTypeList(undefined, [{type: a, direction: 'out'}, {type: c, direction: 'inout'}]);
     assert.equal(result, null);
   });
@@ -91,13 +91,13 @@ describe('TypeChecker', () => {
   it('resolves inout [~a] (is Thing), in [~b] (is Thing), in [Product], in [~c], in [~d] (is Product)', async () => {
     let a = Type.newVariable(new TypeVariable('a')).setViewOf();
     let b = Type.newVariable(new TypeVariable('b')).setViewOf();
-    let resolution = Type.newEntity(new Schema({name: 'Thing', fields: []}));
+    let resolution = Type.newEntity(new Schema({names: ['Thing'], fields: {}}));
     a.primitiveType().variable.resolution = resolution;
     b.primitiveType().variable.resolution = resolution;
-    let c = Type.newEntity(new Schema({name: 'Product', parents: [{name: 'Thing', fields: []}], fields: []})).setViewOf();
+    let c = Type.newEntity(new Schema({names: ['Product', 'Thing'], fields: {}})).setViewOf();
     let d = Type.newVariable(new TypeVariable('c')).setViewOf();
     let e = Type.newVariable(new TypeVariable('d')).setViewOf();
-    resolution = Type.newEntity(new Schema({name: 'Product', parents: [{name: 'Thing', fields: []}], fields: []}));
+    resolution = Type.newEntity(new Schema({names: ['Product', 'Thing'], fields: {}}));
     e.primitiveType().variable.resolution = resolution;
     let result = TypeChecker.processTypeList(undefined, [{type: a, direction: 'inout'}, {type: b, direction: 'in'}, {type: c, direction: 'in'}, {type: d, direction: 'in'}, {type: e, direction: 'in'}]);
     assert.equal(result, null);
@@ -105,8 +105,8 @@ describe('TypeChecker', () => {
 
   it('doesn\'t depend on ordering in assigning a resolution to a type variable', async () => {
     let a = Type.newVariable(new TypeVariable('a'));
-    let b = Type.newEntity(new Schema({name: 'Product', parents: [{name: 'Thing', fields: []}], fields: []}));
-    let c = Type.newEntity(new Schema({name: 'Thing', fields: []}));
+    let b = Type.newEntity(new Schema({names: ['Product', 'Thing'], fields: {}}));
+    let c = Type.newEntity(new Schema({names: ['Thing'], fields: {}}));
     let result = TypeChecker.processTypeList(undefined, [{type: a, direction: 'in'}, {type: b, direction: 'out'}, {type: c, direction: 'in'}]);
     assert.equal(a.variable.canReadSubset.entitySchema.name, 'Product');
     assert.equal(a.variable.canWriteSuperset.entitySchema.name, 'Thing');

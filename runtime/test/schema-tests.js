@@ -42,7 +42,7 @@ describe('schema', function() {
                                      url: 'URL', identifier: 'Text', isReal: 'Boolean',
                                      brand: 'Object', name: 'Text'});
     assert.equal(schema.name, 'Product');
-    assert.equal(schema.parents[0].name, 'Thing');
+    assert.include(schema.names, 'Thing');
   });
 
   it('constructs an appropriate entity subclass', async function() {

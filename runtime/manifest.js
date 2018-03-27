@@ -400,14 +400,8 @@ ${e.message}
             }
             fields[name] = type;
           }
-          let parents = node.names.slice(1).map(name => ({
-            name,
-            parents: [],
-            fields: {},
-          }));
           node.model = Type.newEntity(new Schema({
-            name: node.names[0] || null,
-            parents,
+            names: node.names,
             fields,
           }));
           return;
@@ -446,6 +440,7 @@ ${e.message}
   static _processSchema(manifest, schemaItem) {
     let description;
     let fields = {};
+    let names = [...schemaItem.names];
     for (let item of schemaItem.items) {
       switch (item.kind) {
         case 'schema-field': {
@@ -476,18 +471,22 @@ ${e.message}
       }
     }
 
-    manifest._schemas[schemaItem.name] = new Schema({
-      name: schemaItem.name,
+    for (let parent of schemaItem.parents) {
+      let result = manifest.findSchemaByName(parent);
+      if (!result) {
+        throw new ManifestError(
+            schemaItem.location,
+            `Could not find parent schema '${parent}'`);
+      }
+      // TODO: Validate field compatibility.
+      Object.assign(fields, result.fields);
+      names.push(...result.names);
+    } 
+    names = [names[0], ...names.filter(name => name != names[0])];
+
+    manifest._schemas[names[0]] = new Schema({
+      names,
       description: description,
-      parents: schemaItem.parents.map(parent => {
-        let result = manifest.findSchemaByName(parent);
-        if (!result) {
-          throw new ManifestError(
-              schemaItem.location,
-              `Could not find parent schema '${parent}'`);
-        }
-        return result.toLiteral();
-      }),
       fields,
     });
   }
