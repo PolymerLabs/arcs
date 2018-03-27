@@ -3,6 +3,7 @@ import './elements/arc-config.js';
 import './elements/arc-host.js';
 import './elements/shell-ui.js';
 import './elements/shell-handles.js';
+import './elements/cloud-data.js';
 // components
 // components for particle use
 import '../components/corellia-xen/cx-input.js';
@@ -41,8 +42,9 @@ const template = html`
   <arc-host config="{{config}}" manifest="{{manifest}}"  suggestions="{{suggestions}}" plan="{{plan}}" on-arc="_onArc" on-plans="_onPlans"></arc-host>
 
   <shell-handles arc="{{arc}}"></shell-handles>
+  <cloud-data on-users="_onUsers"></cloud-data>
 
-  <shell-ui showhint="{{showhint}}" on-plan="_onPlan">
+  <shell-ui showhint="{{showhint}}" users="{{users}}" on-plan="_onPlan" on-select-user="_onSelectUser">
     <slot></slot>
     <slot name="modal" slot="modal"></slot>
     <slot name="suggestions" slot="suggestions"></slot>
@@ -87,6 +89,13 @@ import 'http://localhost/projects/arcs/arcs-stories/0.3/PlaidAccounts/PlaidAccou
   }
   _onPlans(e, plans) {
     this._setState({suggestions: plans, showhint: plans.length > 0});
+  }
+  _onUsers(e, users) {
+    this._setState({users});
+  }
+  _onSelectUser(e, user) {
+    this._setState({user});
+
   }
 }
 

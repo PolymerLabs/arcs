@@ -30,8 +30,8 @@ const Debug = (Base, log) => class extends Base {
     if (super._setState(state)) {
       if (Debug.level > 1) {
         if (Debug.lastFire) {
-          //Debug.lastFire.log('fire', {[Debug.lastFire.name]: Debug.lastFire.detail});
-          Debug.lastFire.log('fire', Debug.lastFire.name, Debug.lastFire.detail);
+          Debug.lastFire.log('fire', {[Debug.lastFire.name]: Debug.lastFire.detail});
+          //Debug.lastFire.log('fire', Debug.lastFire.name, Debug.lastFire.detail);
         }
         log('state', clone(state));
       }

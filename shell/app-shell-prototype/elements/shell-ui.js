@@ -1,6 +1,17 @@
+/*
+@license
+Copyright (c) 2018 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+*/
+
 // elements
-import './suggestion-element.js';
-import './settings-panel.js';
+import './shell-ui/suggestion-element.js';
+import './shell-ui/settings-panel.js';
+import './shell-ui/user-picker.js';
 // code libs
 import Xen from '../../components/xen/xen.js';
 import IconStyle from '../../components/icons.css.js';
@@ -58,6 +69,8 @@ const template = html`
       /*border: 1px solid rgba(0,0,0,0.01);*/
     }
     [bar] {
+      display: flex;
+      flex-direction: column;
       position: fixed;
       z-index: 10000;
       right: 0;
@@ -84,6 +97,7 @@ const template = html`
     [toolbars] {
       display: inline-block;
       white-space: nowrap;
+      height: 57px;
       width: 100%;
       overflow: hidden;
       box-sizing: border-box;
@@ -96,25 +110,35 @@ const template = html`
       width: 100%;
       transition: transform 100ms ease-in-out;
     }
-    [toolbar] > * {
-      padding: 12px 16px;
+    [toolbar] > icon, [toolbar] > a {
+      padding: 16px;
     }
     [main][toolbar]:not([open]) {
       transform: translate3d(-100%, 0, 0);
     }
+    /* TODO(sjmiles): where are these extra px coming from? */
     [search][toolbar][open] {
-      transform: translate3d(-100%, 0, 0);
+      transform: translate3d(calc(-100% - 4px), 0, 0);
+    }
+    [search][toolbar] input {
+      flex: 1;
+      outline: none;
+      font-size: 18px;
+      border: none;
+      line-height: 24px;
     }
     [settings][toolbar][open] {
-      transform: translate3d(-200%, 0, 0);
+      transform: translate3d(calc(-200% - 7px), 0, 0);
     }
     [contents] {
+      flex: 1;
       display: inline-block;
       white-space: nowrap;
       width: 100%;
       overflow: hidden;
-      /* consume margin leaking out of suggestion-element */
-      margin-top: -6px;
+    }
+    [bar][state="open"] [contents] {
+      overflow-y: auto;
     }
     [content] {
       display: inline-block;
@@ -126,7 +150,10 @@ const template = html`
       transform: translate3d(-100%, 0, 0);
     }
     [settings][content][open] {
-      transform: translate3d(-100%, 0, 0);
+      transform: translate3d(calc(-100% - 3px), 0, 0);
+    }
+    [user][content][open] {
+      transform: translate3d(calc(-200% - 6px), 0, 0);
     }
     [modal] {
       padding: 32px;
@@ -169,13 +196,13 @@ const template = html`
     <div toolbars on-click="_onBarClick">
       <div main toolbar open$="{{mainToolbarOpen}}">
         <a href="{{launcherHref}}" title="Go to Launcher">${AppIcon}</a>
-        <span style="flex: 1;"></span>
+        <span style="flex: 1;" title="{{title}}">{{title}}</span>
         <icon on-click="_onSearchClick">search</icon>
         <icon on-click="_onSettingsClick">settings</icon>
       </div>
       <div search toolbar open$="{{searchToolbarOpen}}">
         <icon on-click="_onMainClick">arrow_back</icon>
-        <span style="flex: 1;"></span>
+        <input placeholder="Search" value="{{searchText}}" on-keypress="_onKeypress" on-input="_onSearchChange" on-blur="_onSearchCommit">
         <icon>search</icon>
       </div>
       <div settings toolbar open$="{{settingsToolbarOpen}}">
@@ -188,7 +215,8 @@ const template = html`
       <div suggestions content open$="{{suggestionsContentOpen}}">
         <slot name="suggestions" slot="suggestions" on-plan-choose="_onPlanChoose"></slot>
       </div>
-      <settings-panel settings content open$="{{settingsContentOpen}}"></settings-panel>
+      <settings-panel settings content open$="{{settingsContentOpen}}" friends="{{users}}" user="{{user}}" on-user="_onSettingsUser"></settings-panel>
+      <user-picker user content open$="{{userContentOpen}}" users="{{users}}" on-selected="_onSelectUser"></user-picker>
     </div>
   </div>
 `;
@@ -196,7 +224,7 @@ const template = html`
 const log = Xen.logFactory('ShellUi', '#ac6066');
 
 class ShellUi extends Xen.Debug(Xen.Base, log) {
-  static get observedAttributes() { return ['showhint']; }
+  static get observedAttributes() { return ['showhint', 'users']; }
   get template() {
     return template;
   }
@@ -204,26 +232,44 @@ class ShellUi extends Xen.Debug(Xen.Base, log) {
     return {
       barState: 'peek',
       toolState: 'main',
+      title: 'Arc Title',
       // TODO(sjmiles): include manifest or other directives?
       launcherHref: `${location.origin}${location.pathname}`
     };
   }
   _update({}, {}, oldProps, oldState) {
   }
-  _render({}, state) {
+  _render(props, state) {
+    /*
+    if (state.barState === 'peek') {
+      state.toolState = 'main';
+    }
+    */
     const {toolState} = state;
     const mainOpen = toolState === 'main';
     const searchOpen = toolState === 'search';
     const settingsOpen = toolState === 'settings';
+    const userOpen = toolState === 'user';
     const renderModel = {
       scrimOpen: state.barState === 'open',
       mainToolbarOpen: mainOpen,
       searchToolbarOpen: searchOpen,
       suggestionsContentOpen: mainOpen || searchOpen,
-      settingsToolbarOpen: settingsOpen,
+      settingsToolbarOpen: settingsOpen || userOpen,
       settingsContentOpen: settingsOpen,
+      userContentOpen: userOpen
     };
-    return [state, renderModel];
+    return [props, state, renderModel];
+  }
+  _didRender(props, state, oldProps, oldState) {
+    if (state.toolState === 'search' && oldState.toolState !== 'search') {
+      const input = this.host.querySelector('input');
+      // TODO(sjmiles): without timeout, rendering gets destroyed (Blink bug?)
+      setTimeout(() => {
+        input.focus();
+        input.select();
+      }, 300);
+    }
   }
   _onBarEscape() {
     this._setState({barState: 'peek'});
@@ -234,15 +280,22 @@ class ShellUi extends Xen.Debug(Xen.Base, log) {
     }
   }
   _onBarClick() {
-    this._setState({barState: this._state.barState === 'open' ? 'peek' : 'open'});
+    if (this._state.barState !== 'open') {
+      this._setState({barState: 'open'});
+    }
+    //this._setState({barState: this._state.barState === 'open' ? 'peek' : 'open'});
   }
   _onBarEnter(e) {
-    if ((e.target === e.currentTarget) && (this._state.barState === 'peek')) {
-      this._setState({barState: this._props.showhint ? 'hint' : 'over'});
+    if (/*(e.target === e.currentTarget) &&*/ (this._state.barState === 'peek')) {
+      let barState = 'over';
+      if (this._props.showhint && this._state.toolState === 'main') {
+        barState = 'hint';
+      }
+      this._setState({barState});
     }
   }
   _onBarLeave(e) {
-    if ((e.target === e.currentTarget) && (window.innerHeight - e.clientY) > 8) {
+    if (/*(e.target === e.currentTarget) &&*/ (window.innerHeight - e.clientY) > 8) {
       switch (this._state.barState) {
         case 'over':
         case 'hint':
@@ -257,7 +310,16 @@ class ShellUi extends Xen.Debug(Xen.Base, log) {
   }
   _onMainClick(e) {
     e.stopPropagation();
-    this._setState({toolState: 'main', barState: 'open'});
+    let {toolState} = this._state;
+    switch (toolState) {
+      case 'user':
+        toolState = 'settings';
+        break;
+      default:
+        toolState = 'main';
+        break;
+    }
+    this._setState({toolState, barState: 'open'});
   }
   _onSettingsClick(e) {
     e.stopPropagation();
@@ -267,6 +329,13 @@ class ShellUi extends Xen.Debug(Xen.Base, log) {
     e.stopPropagation();
     this._fire('plan', plan);
     this._setState({barState: 'peek'});
+  }
+  _onSettingsUser(e) {
+    this._setState({toolState: 'user'});
+  }
+  _onSelectUser(e, user) {
+    this._fire('select-user', user);
+    this._setState({toolState: 'settings'});
   }
 }
 
