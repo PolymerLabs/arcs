@@ -90,11 +90,13 @@ out Tesla param
 
 # Importing Schemas
 
-Todo:
-*   Creating new entities should require a fully defined schema.
-    *   It should be defined fully in the manifest alongside the particle.
-    *   Or imported via a handle.
-        *   This feature seems only for convenience since the schema of a handle/particle cannot change.
+TODO:
+* Should it be possible to import schemas?
+  * Perhaps during developement, but not in a published manifest.
+* Creating new entities should require a fully defined schema:
+  * Fully in the manifest alongside the particle.
+  * Or imported via a handle.
+   * Again, perhaps this is only a development feature, since the schema of a handle/particle cannot change.
 
 # Anonymous and Empty Schemas
 
@@ -110,11 +112,11 @@ in * {} param
 # Field types
 
 Primitive Types
-*   Text
-*   Boolean
-*   URL
-*   Number
-*   Object (an object that can be serialized as JSON)
+* Text
+* Boolean
+* URL
+* Number
+* Object (an object that can be serialized as JSON)
 
 Structured Types
 * Union (one of a set of primitive types)*
