@@ -40,7 +40,9 @@ class Slot {
   set sourceConnection(sourceConnection) { this._sourceConnection = sourceConnection; }
   get consumeConnections() { return this._consumerConnections; }
   getProvidedSlotSpec() {
-    return this.sourceConnection ? this.sourceConnection.slotSpec.getProvidedSlotSpec(this.name) : {isSet: false, tags: []};
+    // TODO: should this return something that indicates this isn't available yet instead of 
+    // the constructed {isSet: false, tags: []}?
+    return (this.sourceConnection && this.sourceConnection.slotSpec) ? this.sourceConnection.slotSpec.getProvidedSlotSpec(this.name) : {isSet: false, tags: []};
   }
 
   _copyInto(recipe, cloneMap) {
@@ -82,6 +84,18 @@ class Slot {
     if ((cmp = util.compareStrings(this.formFactor, other.formFactor)) != 0) return cmp;
     if ((cmp = util.compareArrays(this._tags, other._tags, util.compareStrings)) != 0) return cmp;
     return 0;
+  }
+
+  removeConsumeConnection(slotConnection) {
+    let idx = this._consumerConnections.indexOf(slotConnection);
+    assert(idx > -1);
+    this._consumerConnections.splice(idx, 1);
+    if (this._consumerConnections.length == 0)
+      this.remove();
+  }
+
+  remove() {
+    this._recipe.removeSlot(this);
   }
 
   isResolved(options) {

@@ -27,10 +27,13 @@ export default class MatchRecipeByVerb extends Strategy {
         if (particle.allConnections().length > 0)
           return;
 
-        if (Object.keys(particle.consumedSlotConnections).length > 0)
-          return;
-
         let recipes = arc.context.findRecipesByVerb(particle.primaryVerb);
+
+        let slotConstraints = {}
+        for (let consumeSlot of Object.values(particle.consumedSlotConnections))
+          slotConstraints[consumeSlot.name] = Object.keys(consumeSlot.providedSlots);
+
+        recipes = recipes.filter(recipe => MatchRecipeByVerb.satisfiesSlotConstraints(recipe, slotConstraints));
 
         return recipes.map(recipe => {
           return (outputRecipe, particle) => {
@@ -42,5 +45,25 @@ export default class MatchRecipeByVerb extends Strategy {
         });
       }
     }(RecipeWalker.Permuted), this);
+  }
+
+  static satisfiesSlotConstraints(recipe, slotConstraints) {
+    for (let slotName in slotConstraints)
+      if (!MatchRecipeByVerb.satisfiesSlotConnection(recipe, slotName, slotConstraints[slotName]))
+        return false;
+    return true;
+  }
+
+  static satisfiesSlotConnection(recipe, slotName, providesSlots) {
+    let satisfyingList = recipe.particles.filter(particle => Object.keys(particle.consumedSlotConnections).includes(slotName));
+    return satisfyingList.filter(particle => MatchRecipeByVerb.satisfiesSlotProvision(particle.consumedSlotConnections[slotName], providesSlots)).length > 0;
+  }
+
+  static satisfiesSlotProvision(slotConnection, providesSlots) {
+    let recipeProvidesSlots = Object.keys(slotConnection.providedSlots);
+    for (let providesSlot of providesSlots)
+      if (!recipeProvidesSlots.includes(providesSlot))
+        return false;
+    return true;
   }
 }

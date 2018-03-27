@@ -650,6 +650,7 @@ ${e.message}
           if (!providedSlot) {
             providedSlot = recipe.newSlot(ps.param);
             providedSlot.localName = ps.name;
+            providedSlot.sourceConnection = slotConn;
             assert(!items.byName.has(ps.name));
             items.byName.set(ps.name, providedSlot);
             items.bySlot.set(providedSlot, ps);
