@@ -15,7 +15,8 @@ import '../../components/dancing-dots.js';
 import '../../components/x-toast.js';
 import '../../components/speech-input.js';
 
-const template = Xen.html`
+const html = Xen.Template.html;
+const template = html`
 <style>
   ${Icons}
   :host {
@@ -45,7 +46,7 @@ const template = Xen.html`
   }
 </style>
 
-<x-toast app-footer open="{{toastOpen}}" on-toggle="_onToggle" suggestion-container>
+<x-toast app-footer open="{{open}}" on-toggle="_onToggle" suggestion-container>
   <dancing-dots slot="toast-header" disabled="{{dotsDisabled}}" active="{{dotsActive}}"></dancing-dots>
   <div search>
     <icon on-click="_onSearchClick" id="search-button">search</icon>
@@ -57,9 +58,15 @@ const template = Xen.html`
 </x-toast>
 `;
 
+<<<<<<< HEAD
 const log = Xen.logFactory('ArcFooter', '#673AB7');
 
 class ArcFooter extends Xen.Base {
+=======
+const log = Xen.Base.logFactory('ArcFooter', '#673AB7');
+
+class ArcFooter extends Xen.Debug(Xen.Base, log) {
+>>>>>>> plumbing footer open state through the app
   static get observedAttributes() {
     return ['dots', 'open', 'search'];
   }
@@ -68,7 +75,6 @@ class ArcFooter extends Xen.Base {
   }
   _getInitialState() {
     return {
-      open: false,
       html: ''
     };
   }
@@ -78,14 +84,6 @@ class ArcFooter extends Xen.Base {
     document.addEventListener('plan-choose', e => this._onPlanSelected(e, e.detail));
   }
   _willReceiveProps(props, state) {
-    // TODO(seefeld):
-    //  This is a hack to open the footer only if the actual contents of the suggestions changed.
-    //  Should happen upstream instead.
-    let html = this.firstElementChild.innerHTML;
-    if (!state.open && html !== state.html) {
-      //log('opening: old, new: [${state.oldInnerHTML}] !== [${html}]');
-      this._setState({open: true, html});
-    }
     if (props.search && props.search !== state.search) {
       this._commitSearch(props.search);
     }
@@ -95,18 +93,25 @@ class ArcFooter extends Xen.Base {
       dotsDisabled: props.dots == 'disabled',
       dotsActive: props.dots == 'active',
       searchText: state.search || '',
-      toastOpen: state.open // == undefined ? true : state.open
+      open: Boolean(props.open)
     };
   }
+  _didRender(props, state, oldProps) {
+    if (props.open && !oldProps.open) {
+      this.host.querySelector('input').focus();
+    }
+  }
   _onToggle() {
-    this._setState({open: !this._state.open});
+    this._fire('open', !this._props.open);
+    //this._setState({open: !this._state.open});
     // TODO(sjmiles): breaks the idiom
-    this.host.querySelector('input').focus();
+    //this.host.querySelector('input').focus();
   }
   _onPlanSelected(e, suggestion) {
     this._fire('suggest', suggestion.plan);
     this._commitSearch('');
-    this._setState({open: false});
+    //this._setState({open: false});
+    this._fire('open', false);
   }
   // four user actions can affect search
   // 1: clicking the search icon (sets search to '*')
@@ -146,8 +151,9 @@ class ArcFooter extends Xen.Base {
     search = search || '';
     // TODO(sjmiles): removed this check so speech-input can update the search box, is it harmful?
     //if (this._state.search !== search) {
-      this._setState({search, open: true});
+      this._setState({search});
       this._fire('search', {search});
+      this._fire('open', true);
     //}
   }
 }
