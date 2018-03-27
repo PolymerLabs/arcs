@@ -20,8 +20,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       display: flex;
     }
     [toc] {
-      /*flex: 1;
-      max-*/width: 128px;
+      width: 128px;
       padding: 16px;
     }
     [docs] {
@@ -36,9 +35,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       margin-left: -1rem;
       padding: 1rem;
       font-size: 1.3rem;
-      /*
-      border-bottom: 1px dotted silver;
-      */
     }
     [dclass] > [desc] {
       margin: 0.6em 0 1.2em;
@@ -56,9 +52,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       font-weight: bold;
     }
     [end] {
-      /*
-      border-bottom: 2px dashed silver;
-      */
       margin-bottom: 2em;
     }
     [pre] {
@@ -69,21 +62,18 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       background-color: #f6f8fa;
     }
     code {
-      /*display: block;*/
       font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
       background-color: #f6f8fa;
     }
   </style>
 
-  <link rel="import" href="components/doc-scraper.html">
-
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/remarkable/1.7.1/remarkable.js"></script>
-  <!--<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/0.3.6/marked.min.js"></script>-->
-
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/remarkable/1.7.1/remarkable.js"></script>
+  <script src="./doc-urls.js"></script>
 
-  <script src="docs/doc-urls.js"></script>
+  <link rel="import" href="../components/doc-scraper.html">
+
 
 </head>
 <body>
