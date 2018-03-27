@@ -239,7 +239,7 @@ class Type {
         return Schema.intersect(type1.canReadSubset.entitySchema, type2.canReadSubset.entitySchema) !== null;
       assert(false, `_canMergeCanReadSubset not implemented for types tagged with ${type1.canReadSubset.tag}`);
     }
-    return true
+    return true;
   }
 
   static _canMergeCanWriteSuperset(type1, type2) {

@@ -18,6 +18,9 @@ class TypeChecker {
   // By design this function is called exactly once per handle in a recipe during
   // normalization, and should provide the same final answers regardless of the 
   // ordering of handles within that recipe
+  //
+  // NOTE: you probably don't want to call this function, if you think you
+  // do, talk to shans@.
   static processTypeList(baseType, list) {
     if (baseType == undefined)
       baseType = Type.newVariable(new TypeVariable('a'));
