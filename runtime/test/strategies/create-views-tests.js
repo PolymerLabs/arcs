@@ -7,13 +7,13 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
- 'use strict';
+'use strict';
 
- import Manifest from '../../manifest.js';
- import Recipe from '../../recipe/recipe.js';
- import StrategyTestHelper from './strategy-test-helper.js';
- import CreateViews from '../../strategies/create-views.js';
- import {assert} from '../chai-web.js';
+import Manifest from '../../manifest.js';
+import Recipe from '../../recipe/recipe.js';
+import StrategyTestHelper from './strategy-test-helper.js';
+import CreateViews from '../../strategies/create-views.js';
+import {assert} from '../chai-web.js';
 
 describe('CreateViews', function() {
   const testManifest = async (recipeManifest, expectedToAssignFate) => {
