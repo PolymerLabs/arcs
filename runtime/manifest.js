@@ -478,7 +478,12 @@ ${e.message}
             schemaItem.location,
             `Could not find parent schema '${parent}'`);
       }
-      // TODO: Validate field compatibility.
+      for (let [name, type] of Object.entries(result.fields)) {
+        if (fields[name] && !Schema.typesEqual(fields[name], type)) {
+          throw new ManifestError(schemaItem.location,
+              `'${parent}' defines incompatible type for field '${name}'`);
+        }
+      }
       Object.assign(fields, result.fields);
       names.push(...result.names);
     } 
