@@ -17,12 +17,11 @@ import Relation from './relation.js';
 
 function testEntityClass(type) {
   return new Schema({
-    name: type,
+    names: [type],
     fields: {
       id: 'Number',
       value: 'Text',
     },
-    parents: [],
   }).entityClass();
 }
 
