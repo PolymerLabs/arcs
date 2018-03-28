@@ -191,5 +191,5 @@ class ArcHost extends Xen.Debug(Xen.Base, log) {
     this._fire('plans', null);
   }
 }
-ArcHost.groupCollapsed = Xen.Base.logFactory('ArcHost', '#007ac1', 'groupCollapsed');
+ArcHost.groupCollapsed = Xen.logFactory('ArcHost', '#007ac1', 'groupCollapsed');
 customElements.define('arc-host', ArcHost);

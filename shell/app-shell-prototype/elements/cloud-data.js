@@ -27,7 +27,7 @@ const template = html`
 
 `;
 
-const log = Xen.Base.logFactory('CloudData', '#004f00');
+const log = Xen.logFactory('CloudData', '#004f00');
 
 class CloudData extends Xen.Debug(Xen.Base, log) {
   static get observedAttributes() {
