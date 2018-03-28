@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright (c) 2017 Google Inc. All rights reserved.
+ * Copyright (c) 2018 Google Inc. All rights reserved.
  * This code may only be used under the BSD style license found at
  * http://polymer.github.io/LICENSE.txt
  * Code distributed by Google as part of this project is also
@@ -10,18 +10,18 @@
 
 'use strict';
 
-defineParticle(({DomParticle}) => {
+defineParticle(({DomParticle, html}) => {
 
-  let template = `
+  let template = html`
     <div hidden="{{hidden}}">Alternate stores that can ship to you in time: <span>{{alternatives}}</span></div>
-    `.trim();
+    `;
 
   return class extends DomParticle {
     get template() {
       return template;
     }
     shouldRender(props) {
-      return !!props && !!props.product;
+      return Boolean(props && props.product);
     }
     render(props) {
       const {product, desiredShipping} = props;
@@ -29,7 +29,10 @@ defineParticle(({DomParticle}) => {
       let hidden = true;
       if (props.product.shipDays) {
         const needed = new Date(desiredShipping.desiredShippingDate);
+
+        // create a date-only Date (with a time of 00:00:00etc)
         const estimated = new Date(new Date().toDateString());
+
         estimated.setDate(estimated.getDate() + product.shipDays);
 
         hidden = estimated <= needed;

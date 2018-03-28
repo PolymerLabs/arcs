@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright (c) 2017 Google Inc. All rights reserved.
+ * Copyright (c) 2018 Google Inc. All rights reserved.
  * This code may only be used under the BSD style license found at
  * http://polymer.github.io/LICENSE.txt
  * Code distributed by Google as part of this project is also
@@ -10,11 +10,11 @@
 
 'use strict';
 
-defineParticle(({DomParticle, resolver}) => {
+defineParticle(({DomParticle, resolver, html}) => {
 
   const host = `[chooser]`;
 
-  const productStyles = `
+  const productStyles = html`
     <style>
       ${host} > x-list [row] {
         display: flex;
@@ -58,7 +58,7 @@ defineParticle(({DomParticle, resolver}) => {
     </style>
       `;
 
-    let styles = `
+    let styles = html`
 <style>
   ${host} {
     padding: 0 16px;
@@ -89,7 +89,7 @@ defineParticle(({DomParticle, resolver}) => {
 </style>
   `;
 
-  let productTemplate = `
+  let productTemplate = html`
 <template>
   <div item>
     <div row>
@@ -109,7 +109,7 @@ defineParticle(({DomParticle, resolver}) => {
 </template>
   `;
 
-  let template = `
+  let template = html`
 ${styles}
 ${productStyles}
 <p>Shopping for <span>{{person}}</span>'s <span>{{occasion}}</span> on <span>{{occasionDate}}</span>.</p>
@@ -118,15 +118,14 @@ ${productStyles}
   <x-list items="{{items}}">
     ${productTemplate}
   </x-list>
-</div>
-    `.trim();
+</div>`;
 
   return class ShopFor extends DomParticle {
     get template() {
       return template;
     }
     shouldRender(props) {
-      return props.choices && props.choices.length;
+      return Boolean(props.choices && props.choices.length);
     }
     render(props, state) {
       let model = {

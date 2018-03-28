@@ -13,8 +13,7 @@ import 'Product.schema'
 // guesses at an argument list of ([DesiredShipping], Product). That doesn't
 // match anything, so it seems that the system should try the correct
 // ([Product], DesiredShipping). Once this is generic it could be added to
-// Multiplexer.(manifest,js).
-// TODO(smalls) File an issue and create a link here.
+// Multiplexer.(manifest,js). See https://github.com/PolymerLabs/arcs/issues/1076.
 shape FixedOtherHostedParticle
   FixedOtherHostedParticle(in ~a, in DesiredShipping)
   consume

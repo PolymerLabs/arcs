@@ -38,7 +38,7 @@ recipe
 
 recipe
   copy #browser as shortlist
-  copy #giftsforclaire as giftsforclaire
+  create #giftsforclaire as giftsforclaire
   map as person
   create #desiredShipping as desiredShipping
  
@@ -114,6 +114,4 @@ recipe
 //  Interests
 //    list <- wishlist
 
-view GiftsForClaire of [Product] #giftsforclaire in 'data/empty.json'
-  description `Gifts for Claire`
 view APerson of Person in 'data/people.json'
