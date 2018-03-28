@@ -10,6 +10,7 @@
 'use strict';
 
 import Arc from '../../arc.js';
+import {assert} from '../chai-web.js';
 
 export default class StrategyTestHelper {
   static createTestArc(id, context, affordance) {
@@ -21,5 +22,14 @@ export default class StrategyTestHelper {
         getAvailableSlots: (() => { return [{name: 'root', id: 'r0', tags: ['#root'], handles: [], handleConnections: [], getProvidedSlotSpec: () => { return {isSet: false}; }}]; })
       }
     });
+  }
+  static run(arc, clazz, recipe) {
+    return new clazz(arc).generate({generated: [{result: recipe, score: 1}], terminal: []});
+  }
+  static onlyResult(arc, clazz, recipe) {
+    return StrategyTestHelper.run(arc, clazz, recipe).then(result => { assert.equal(result.length, 1); return result[0].result;});
+  }
+  static theResults(arc, clazz, recipe) {
+    return StrategyTestHelper.run(arc, clazz, recipe).then(results => results.map(result => result.result)); // chicken chicken
   }
 }
