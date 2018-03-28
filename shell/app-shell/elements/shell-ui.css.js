@@ -75,6 +75,7 @@ export default Xen.html`
     margin-right: 16px;
   }
   arc-title {
+    font-family: 'Google Sans';
     flex: 1;
     min-height: 0.6em;
     padding-top: 0.1em;
