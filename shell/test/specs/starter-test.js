@@ -417,7 +417,7 @@ describe('test Arcs demo flows', function() {
     // });
   });
 
-  it('can use the gift shopping demo flow', function() {
+  it.skip('can use the gift shopping demo flow', function() {
     initTestWithNewArc();
 
     allSuggestions();

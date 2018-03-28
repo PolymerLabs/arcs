@@ -24,7 +24,9 @@ describe('demo flow', function() {
     await Manifest.load('./shell/artifacts/Products/Products.recipes', new Loader());
   });
 
-  it('flows like a demo', async function() {
+  // TODO(smalls) either bring this up to the new demo flow or remove it?
+  // Also uncomment the timout() call below.
+  it.skip('flows like a demo', async function() {
     let expectedPlanString = `recipe
   create as view0 // [Product]
   copy 'manifest:./shell/artifacts/Products/Products.recipes:view0' #shortlist as view1 // [Product]
@@ -211,5 +213,5 @@ describe('demo flow', function() {
     helper.log('----------------------------------------');
 
     // TODO(mmandlis): Provide methods in helper to verify slot contents (helper.slotComposer._slots[i]._content).
-  }).timeout(10000);
+  })/*.timeout(10000)*/;
 });

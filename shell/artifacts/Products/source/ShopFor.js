@@ -126,7 +126,7 @@ ${productStyles}
       return template;
     }
     shouldRender(props) {
-      return props.choices && props.choices.length
+      return props.choices && props.choices.length;
     }
     render(props, state) {
       let model = {
