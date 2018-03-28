@@ -52,7 +52,6 @@ const template = html`
       position: fixed;
       top: 0;
       right: 0;
-      /*bottom: 0;*/
       left: 0;
       height: 100vh;
       opacity: 0;
@@ -193,11 +192,6 @@ const template = html`
     ::slotted([slotid=suggestions]) {
       display: flex;
       flex-direction: column;
-      /*
-      max-height: 356px;
-      overflow-y: auto;
-      overflow-x: hidden;
-      */
       padding: 6px 10px 10px 10px;
     }
     [tools] {
@@ -348,10 +342,9 @@ class ShellUi extends Xen.Debug(Xen.Base, log) {
     if (this._state.barState !== 'open') {
       this._setState({barState: 'open'});
     }
-    //this._setState({barState: this._state.barState === 'open' ? 'peek' : 'open'});
   }
   _onBarEnter(e) {
-    if (/*(e.target === e.currentTarget) &&*/ (this._state.barState === 'peek')) {
+    if (this._state.barState === 'peek') {
       let barState = 'over';
       if (this._props.showhint && this._state.toolState === 'main') {
         barState = 'hint';
@@ -360,7 +353,7 @@ class ShellUi extends Xen.Debug(Xen.Base, log) {
     }
   }
   _onBarLeave(e) {
-    if (/*(e.target === e.currentTarget) &&*/ (window.innerHeight - e.clientY) > 8) {
+    if ((window.innerHeight - e.clientY) > 10) {
       switch (this._state.barState) {
         case 'over':
         case 'hint':
@@ -394,7 +387,7 @@ class ShellUi extends Xen.Debug(Xen.Base, log) {
   }
   _onSelectUser(e, user) {
     this._fire('select-user', user);
-    this._setState({/*toolState: 'settings',*/userPickerOpen: false});
+    this._setState({userPickerOpen: false});
   }
   _onExperimentClick(e) {
     e.stopPropagation();
@@ -403,9 +396,6 @@ class ShellUi extends Xen.Debug(Xen.Base, log) {
   _onToolsClick() {
     this._setState({toolsOpen: !this._state.toolsOpen});
   }
-  // _onToolsEnter() {
-  //   this._setState({toolsOpen: true});
-  // }
   _onAvatarClick() {
     this._setState({userPickerOpen: !this._state.userPickerOpen});
   }
