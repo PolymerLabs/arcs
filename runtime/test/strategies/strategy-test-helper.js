@@ -24,7 +24,7 @@ export default class StrategyTestHelper {
     });
   }
   static run(arc, clazz, recipe) {
-    return new clazz(arc).generate({generated: [{result: recipe, score: 1}], terminal: []})
+    return new clazz(arc).generate({generated: [{result: recipe, score: 1}], terminal: []});
   }
   static onlyResult(arc, clazz, recipe) {
     return StrategyTestHelper.run(arc, clazz, recipe).then(result => { assert.equal(result.length, 1); return result[0].result;});
