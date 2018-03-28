@@ -56,7 +56,7 @@ exports.config = {
     }
   ],
   // debug hint: uncomment to attach a debugger
-  //execArgv: ['--inspect'],
+  // execArgv: ['--inspect'],
   //
   // ===================
   // Test Configurations
