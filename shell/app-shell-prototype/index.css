@@ -1,12 +1,9 @@
 body {
+  font-family: sans-serif;
   margin: 0;
   overflow-x: hidden;
   overflow-y: scroll;
-  background: url('../assets/black-linen.png');
-}
-
-body, button, input {
-  font-family: 'Google Sans', sans-serif;
+  background-color: white;
 }
 
 @font-face {
