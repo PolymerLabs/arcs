@@ -374,6 +374,10 @@ ${e.message}
           for (let name of node.names) {
             let resolved = manifest.resolveReference(name);
             if (resolved && resolved.schema) {
+              if (resolved.schema.isAlias) {
+                throw new ManifestError(node.location,
+                   `Attempt to use schema alias '${name}' as schema name`);
+              }
               externalSchemas.push(resolved.schema);
             }
           }
@@ -488,17 +492,21 @@ ${e.message}
       names.push(...result.names);
     } 
     names = [names[0], ...names.filter(name => name != names[0])];
-    let alias = schemaItem.alias || names[0];
-    if (!alias) {
+    let name = schemaItem.alias || names[0];
+    if (!name) {
       throw new ManifestError(
           schemaItem.location,
           `Schema defined without name or alias`);
     }
-    manifest._schemas[alias] = new Schema({
+    let schema = new Schema({
       names,
       description: description,
       fields,
     });
+    if (schemaItem.alias) {
+      schema.isAlias = true;
+    }
+    manifest._schemas[name] = schema;
   }
   static _processResource(manifest, schemaItem) {
     manifest._resources[schemaItem.name] = schemaItem.data;

@@ -1218,13 +1218,27 @@ resource SomeName
     assert(validRecipe.isResolved());
   });
 
-  it('can process a schema with an alias', async () => {
+  it('can process a schema alias', async () => {
     let manifest = await Manifest.parse(`
-      schema Thing as SchemaAlias
-      schema Extended extends SchemaAlias
+      alias schema This That as SchemaAlias
+      alias schema * extends SchemaAlias as Extended
     `);
     assert.isNotNull(manifest.findSchemaByName('SchemaAlias'));
-    assert.sameMembers(manifest.findSchemaByName('Extended').names, ['Thing', 'Extended']);
+    assert.sameMembers(manifest.findSchemaByName('Extended').names, ['This', 'That']);
+  });
+
+  it('does not allow schema alias to be used as schema name', async () => {
+    try {
+      let manifest = await Manifest.parse(`
+        alias schema * as Thingy
+          Text field
+        particle P in 'p.js'
+          P(in Thingy {field} param)
+      `);
+      assert.fail();
+    } catch (e) {
+      assert.include(e.message, 'Attempt to use schema alias');
+    }
   });
 
   it('can relate inline schemas to generic connections', async () => {

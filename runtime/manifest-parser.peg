@@ -70,9 +70,10 @@ Manifest
 
 ManifestItem
   = Recipe
-  / Particle
+  / ParticleDefinition
   / Import
-  / Schema
+  / SchemaDefinition
+  / SchemaAliasDefinition
   / ManifestStorage
   / Shape
   / Meta
@@ -228,7 +229,7 @@ MetaStorageKey = 'storageKey' whiteSpace? ':' whiteSpace? key:id eolWhiteSpace
   return {key: 'storageKey', value: key, location: location(), kind: 'storageKey' }
 };
 
-Particle
+ParticleDefinition
   = 'particle' whiteSpace name:TopLevelIdent implFile:(whiteSpace 'in' whiteSpace id)? eolWhiteSpace items:(Indent (SameIndent ParticleItem)*)? eolWhiteSpace?
   {
     let args = null;
@@ -752,17 +753,34 @@ SchemaInlineField
     };
   }
 
-Schema
-  = 'schema' whiteSpace name:TopLevelIdent names:(whiteSpace TopLevelIdent)* parents:SchemaExtends? alias:(whiteSpace TopLevelAlias)? eolWhiteSpace items:(Indent (SameIndent SchemaItem)*)?
+SchemaSpec
+  = 'schema' names:(whiteSpace ('*' / TopLevelIdent))+ parents:SchemaExtends?
   {
     return {
+      names: names.map(name => name[1]).filter(name => name != '*'),
+      parents: optional(parents, parents => parents, []),
+    };
+  }
+
+SchemaAliasDefinition
+  = 'alias' whiteSpace spec:SchemaSpec whiteSpace alias:TopLevelAlias eolWhiteSpace items:(Indent (SameIndent SchemaItem)*)?
+  {
+    return Object.assign(spec, {
       kind: 'schema',
       location: location(),
-      names: [name, ...names.map(name => name[1])],
-      alias: optional(alias, alias => alias[1], null),
-      parents: optional(parents, parents => parents, []),
       items: optional(items, extractIndented, []),
-    };
+      alias,
+    });
+  }
+
+SchemaDefinition
+  = spec:SchemaSpec eolWhiteSpace items:(Indent (SameIndent SchemaItem)*)?
+  {
+    return Object.assign(spec, {
+      kind: 'schema',
+      location: location(),
+      items: optional(items, extractIndented, []),
+    });
   }
 
 SchemaExtends
@@ -774,7 +792,6 @@ SchemaExtends
   }
   return list;
 }
-
 
 SchemaItem
   = SchemaSection
