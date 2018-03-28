@@ -35,8 +35,8 @@ defineParticle(({Particle}) => {
           let resultView = await arc.createHandle(productsView.type.primitiveType(), 'result' + index);
           this._handleIds.add(product.id);
 
-          let recipe = `
-${this.serializeSchema(hostedParticle)}
+          let recipe = Particle.buildManifest`
+${hostedParticle}
 recipe
   use '${productView._id}' as v1
   use '${resultView._id}' as v2
