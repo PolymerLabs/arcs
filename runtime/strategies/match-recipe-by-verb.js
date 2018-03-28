@@ -42,9 +42,11 @@ export default class MatchRecipeByVerb extends Strategy {
 
         let slotConstraints = {}
         for (let consumeSlot of Object.values(particle.consumedSlotConnections)) {
-          slotConstraints[consumeSlot.name] = {};
+          let targetSlot = consumeSlot.targetSlot.sourceConnection ? consumeSlot.targetSlot : null;
+          slotConstraints[consumeSlot.name] = {targetSlot, providedSlots: {}};
           for (let providedSlot of Object.keys(consumeSlot.providedSlots)) {
-            slotConstraints[consumeSlot.name][providedSlot] = consumeSlot.providedSlots[providedSlot];
+            let sourceSlot = consumeSlot.providedSlots[providedSlot].consumeConnections.length > 0 ? consumeSlot.providedSlots[providedSlot] : null;
+            slotConstraints[consumeSlot.name].providedSlots[providedSlot] = sourceSlot;
           }
         }
 
@@ -57,8 +59,19 @@ export default class MatchRecipeByVerb extends Strategy {
             particle.remove();
 
             for (let consumeSlot in slotConstraints) {
-              for (let provideSlot in slotConstraints[consumeSlot]) {
-                let slot = slotConstraints[consumeSlot][provideSlot];
+              if (slotConstraints[consumeSlot].targetSlot) {
+                let {mappedSlot} = outputRecipe.updateToClone({mappedSlot: slotConstraints[consumeSlot].targetSlot});
+                for (let particle of particles) {
+                  if (particle.consumedSlotConnections[consumeSlot] && particle.consumedSlotConnections[consumeSlot].targetSlot == null) {
+                    particle.consumedSlotConnections[consumeSlot]._targetSlot = mappedSlot;
+                    mappedSlot._consumerConnections.push(particle.consumedSlotConnections[consumeSlot]); 
+                    break;
+                  }
+                }
+              }
+
+              for (let provideSlot in slotConstraints[consumeSlot].providedSlots) {
+                let slot = slotConstraints[consumeSlot].providedSlots[provideSlot];
                 let {mappedSlot} = outputRecipe.updateToClone({mappedSlot: slot});
                 for (let particle of particles) {
                   if (particle.consumedSlotConnections[consumeSlot]) {
@@ -84,7 +97,7 @@ export default class MatchRecipeByVerb extends Strategy {
 
   static satisfiesSlotConstraints(recipe, slotConstraints) {
     for (let slotName in slotConstraints)
-      if (!MatchRecipeByVerb.satisfiesSlotConnection(recipe, slotName, slotConstraints[slotName]))
+      if (!MatchRecipeByVerb.satisfiesSlotConnection(recipe, slotName, slotConstraints[slotName].providedSlots))
         return false;
     return true;
   }
