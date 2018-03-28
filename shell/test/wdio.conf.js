@@ -50,13 +50,13 @@ exports.config = {
       chromeOptions: {
         args: [
           // debug hint: comment this out to see the system running
-          //'--headless'
+          '--headless'
         ]
       }
     }
   ],
   // debug hint: uncomment to attach a debugger
-  execArgv: ['--inspect'],
+  //execArgv: ['--inspect'],
   //
   // ===================
   // Test Configurations
