@@ -95,6 +95,9 @@ const walker = (node, tree) => {
 };
 window.walker = walker;
 
+const _logFactory = (preamble, color, log='log') => console[log].bind(console, `%c${preamble}`, `background: ${color}; color: white; padding: 1px 6px 2px 7px; border-radius: 6px;`);
+const logFactory = (preamble, color, log) => (Debug.level > 0) ? _logFactory(preamble, color, log) : () => {};
+
 export default {
   State,
   Template,
@@ -103,7 +106,7 @@ export default {
   Debug,
   html,
   walker,
-  logFactory: Base.logFactory,
+  logFactory,
   setBoolAttribute: Template.setBoolAttribute,
   clone
 };

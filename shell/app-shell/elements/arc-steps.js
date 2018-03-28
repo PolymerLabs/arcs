@@ -10,8 +10,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
 import Xen from '../../components/xen/xen.js';
 
-const log = Xen.Base.logFactory('ArcSteps', '#7b5e57');
-const warn = Xen.Base.logFactory('ArcSteps', '#7b5e57', 'warn');
+const log = Xen.logFactory('ArcSteps', '#7b5e57');
+const warn = Xen.logFactory('ArcSteps', '#7b5e57', 'warn');
 
 class ArcSteps extends Xen.Debug(Xen.Base, log) {
   static get observedAttributes() {

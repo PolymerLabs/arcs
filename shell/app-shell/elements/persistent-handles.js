@@ -13,7 +13,7 @@ import Xen from '../../components/xen/xen.js';
 
 const db = window.db;
 
-const log = Xen.Base.logFactory('PersistentHandles', '#aa00c7');
+const log = Xen.logFactory('PersistentHandles', '#aa00c7');
 
 class PersistentHandles extends Xen.Debug(Xen.Base, log) {
   static get observedAttributes() { return ['arc', 'key', 'handles']; }

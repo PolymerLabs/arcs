@@ -13,6 +13,8 @@ import ArcsUtils from '../lib/arcs-utils.js';
 import Xen from '../../components/xen/xen.js';
 const db = window.db;
 
+const log = Xen.logFactory('RemoteFriendsSHs', '#805acb');
+
 class RemoteFriendsSharedHandles extends Xen.Base {
   static get observedAttributes() { return ['arc', 'friends', 'user']; }
   _getInitialState() {
@@ -35,7 +37,7 @@ class RemoteFriendsSharedHandles extends Xen.Base {
     // include `user` in friends, so we can access generic shared info this way
     // TODO(sjmiles): is this the right decision? this data is already available in another handle
     friends.push({id: user.id});
-    RemoteFriendsSharedHandles.log('got raw FRIENDS', friends);
+    log('got raw FRIENDS', friends);
     return friends.map(friend => {
       return {
         // TODO(sjmiles): watch the entire friend record because today we need
@@ -59,19 +61,19 @@ class RemoteFriendsSharedHandles extends Xen.Base {
     // get friend's user record
     let user = snap.val();
     friend.name = user.name;
-    //RemoteFriendsSharedHandles.log(`READING friend's user [${user.name}]`); // from`, String(snap.ref));
+    //log(`READING friend's user [${user.name}]`); // from`, String(snap.ref));
     // find keys for user's shared arcs
     return ArcsUtils.getUserShareKeys(user).map(key => {
-      RemoteFriendsSharedHandles.log(`watching friend's [${user.name}] shared handles`); // from`, String(snap.ref));
+      log(`watching friend's [${user.name}] shared handles`); // from`, String(snap.ref));
       return {
         node: db.child(`arcs/${key}/views`),
         handler: snap => {
           let handles = snap.val();
           if (handles) {
-            RemoteFriendsSharedHandles.log(`READING friend's [${user.name}] shared handles`); // from`, String(snap.ref));
+            log(`READING friend's [${user.name}] shared handles`); // from`, String(snap.ref));
             this._remoteFriendSharedHandlesChanged(arc, friend, handles);
           } else {
-            RemoteFriendsSharedHandles.log(`friend [${user.name}] has EMPTY share`); // from`, String(snap.ref));
+            log(`friend [${user.name}] has EMPTY share`); // from`, String(snap.ref));
           }
         }
       };
@@ -82,7 +84,7 @@ class RemoteFriendsSharedHandles extends Xen.Base {
   //
   // TODO(sjmiles): need to delete vestigial handles
   _remoteFriendSharedHandlesChanged(arc, friend, handles) {
-    //RemoteFriendsSharedHandles.log(`friend's shared handles`, friend, handles);
+    //log(`friend's shared handles`, friend, handles);
     Object.keys(handles).forEach(async key => this._remoteFriendSharedHandleChanged(arc, friend, handles[key]));
   }
   _remoteFriendSharedHandleChanged(arc, friend, handle) {
@@ -145,13 +147,13 @@ class RemoteFriendsSharedHandles extends Xen.Base {
         // inform owner that we updated this handle
         this._fire('handle', box.handle);
       } else {
-        //RemoteFriendsSharedHandles.log(`caching friend's shared handle for boxing as [${id}]`);
+        //log(`caching friend's shared handle for boxing as [${id}]`);
         box.pending.push({data});
       }
     }
     // if box doesn't exist, create it, cache the values, and trigger async handle creation
     else {
-      //RemoteFriendsSharedHandles.log(`creating box [${id}] for friend's shared handle `);
+      //log(`creating box [${id}] for friend's shared handle `);
       box = boxes[id] = {
         pending: [{data}]
       };
@@ -166,9 +168,8 @@ class RemoteFriendsSharedHandles extends Xen.Base {
   }
   _addHandleData(handle, data, friend) {
     ArcsUtils.addHandleData(handle, data);
-    RemoteFriendsSharedHandles.log(`added [${friend.name}'s] shared data to handle [${handle.id}]`, data);
+    log(`added [${friend.name}'s] shared data to handle [${handle.id}]`, data);
   }
 }
 
-RemoteFriendsSharedHandles.log = Xen.Base.logFactory('RemoteFriendsSHs', '#805acb');
 customElements.define('remote-friends-shared-handles', RemoteFriendsSharedHandles);

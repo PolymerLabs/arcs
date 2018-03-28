@@ -12,7 +12,7 @@ import Xen from '../../components/xen/xen.js';
 
 const manifestMimeType = 'text/x-arcs-manifest';
 
-const log = Xen.Base.logFactory('ExtensionDataReceiver', '#883997');
+const log = Xen.logFactory('ExtensionDataReceiver', '#883997');
 
 class ExtensionDataReceiver extends Xen.Base {
   _didMount() {

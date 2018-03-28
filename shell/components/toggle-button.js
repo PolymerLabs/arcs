@@ -35,6 +35,8 @@ let template = Xen.html`
 `;
 template = Xen.Template.createTemplate(template);
 
+const log = Xen.logFactory('ToggleButton', '#00701a');
+
 class ToggleButton extends Xen.Base {
   static get observedAttributes() { return ['icons', 'state', 'noauto']; }
   get template() {
@@ -65,8 +67,6 @@ class ToggleButton extends Xen.Base {
     this._fire('state', state);
   }
 }
-
-ToggleButton.log = Xen.Base.logFactory('ToggleButton', '#00701a');
 customElements.define('toggle-button', ToggleButton);
 
 export default ToggleButton;

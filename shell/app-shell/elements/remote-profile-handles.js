@@ -13,6 +13,8 @@ import ArcsUtils from '../lib/arcs-utils.js';
 import Xen from '../../components/xen/xen.js';
 const db = window.db;
 
+const log = Xen.logFactory('RemotePHs', '#003c8f');
+
 class RemoteProfileHandles extends Xen.Base {
   static get observedAttributes() { return ['arc', 'user']; }
   _getInitialState() {
@@ -44,16 +46,15 @@ class RemoteProfileHandles extends Xen.Base {
   _remoteHandlesChanged(arc, friends, key, remotes) {
     if (remotes) {
       // TODO(sjmiles): `remotes` are remote-fb-nodes-describing-a-handle ... cow needs a name
-      RemoteProfileHandles.log(`READING handles`, remotes);
+      log(`READING handles`, remotes);
       Object.keys(remotes).forEach(async key => {
         // TODO(sjmiles): `key` used to mean `amkey`, at some point I accidentally started sending _handle_ keys
         // but nothing broke ... I assume this was not injurious because these data are remote and not persistent
         let handle = await ArcsUtils.createOrUpdateHandle(arc, remotes[key], 'PROFILE');
-        RemoteProfileHandles.log('created/updated handle', handle.id);
+        log('created/updated handle', handle.id);
         this._fire('profile', handle);
       });
     }
   }
 }
-RemoteProfileHandles.log = Xen.Base.logFactory('RemotePHs', '#003c8f');
 customElements.define('remote-profile-handles', RemoteProfileHandles);

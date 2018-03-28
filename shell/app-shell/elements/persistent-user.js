@@ -14,7 +14,7 @@ import Xen from '../../components/xen/xen.js';
 const db = window.db;
 const firebase = window.firebase;
 
-const log = Xen.Base.logFactory('PersistentUser', '#65499c');
+const log = Xen.logFactory('PersistentUser', '#65499c');
 
 class PersistentUser extends Xen.Debug(Xen.Base, log) {
   static get observedAttributes() {

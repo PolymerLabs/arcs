@@ -12,6 +12,8 @@ import Xen from '../../components/xen/xen.js';
 import ArcsUtils from '../lib/arcs-utils.js';
 const db = window.db;
 
+const log = Xen.logFactory('PersistentUsers', '#883997');
+
 class PersistentUsers extends Xen.Base {
   static get observedAttributes() { return []; }
   _update(props, state, lastProps) {
@@ -33,7 +35,7 @@ class PersistentUsers extends Xen.Base {
   async _connect() {
     this._disconnect();
     let node = this._usersdb;
-    PersistentUsers.log('watching', String(node));
+    log('watching', String(node));
     let watch = node.on('value', snap => this._debounceRemoteChanged(snap));
     this._off = () => node.off('value', watch);
   }
@@ -46,9 +48,8 @@ class PersistentUsers extends Xen.Base {
     let users = snap.val() || [];
     Object.keys(users).forEach(k => users[k].id = k);
     this._setState({users});
-    PersistentUsers.log('remoteChanged', users);
+    log('remoteChanged', users);
     this._disconnect();
   }
 }
-PersistentUsers.log = Xen.Base.logFactory('PersistentUsers', '#883997');
 customElements.define('persistent-users', PersistentUsers);
