@@ -12,12 +12,18 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 import './shell-ui/suggestion-element.js';
 import './shell-ui/settings-panel.js';
 import './shell-ui/user-picker.js';
+
+// components
+import '../../components/simple-tabs.js';
 import '../../components/arc-tools/handle-explorer.js';
-// code libs
+import '../../components/arc-tools/xen-explorer.js';
+
+// libs
 import Xen from '../../components/xen/xen.js';
-import IconStyle from '../../components/icons.css.js';
+
 // strings
 import AppIcon from '../icon.svg.js';
+import IconStyle from '../../components/icons.css.js';
 
 // globals
 /* global shellPath */
@@ -67,7 +73,6 @@ const template = html`
       margin-top: calc(var(--bar-touch-height) * -1);
       height: var(--bar-touch-height);
       background-color: transparent;
-      /*border: 1px solid rgba(0,0,0,0.01);*/
     }
     [bar] {
       display: flex;
@@ -77,12 +82,10 @@ const template = html`
       right: 0;
       bottom: 0;
       left: 0;
+      margin: 0 auto;
       box-sizing: border-box;
       max-width: var(--bar-max-width);
       max-height: var(--bar-max-height);
-      /*max-height: var(--bar-peek-height);
-      transform: translate3d(0, calc(100% - var(--bar-peek-height)), 0);*/
-      margin: 0 auto;
       background-color: white;
       box-shadow: 0px 0px 32px 3px rgba(0,0,0,0.13);
       transition: transform 200ms ease-out;
@@ -254,7 +257,17 @@ const template = html`
   </div>
   <icon style="position: fixed; right: 16px; top: 16px;" on-click="_onToolsClick">assessment</icon>
   <div tools open$="{{toolsOpen}}" on-click="_onToolsClick">
-    <handle-explorer arc="{{arc}}"></handle-explorer>
+    <simple-tabs>
+      <div tab="Handle Explorer">
+        <handle-explorer arc="{{arc}}"></handle-explorer>
+      </div>
+      <div tab="Xen Explorer">
+        <xen-explorer></xen-explorer>
+      </div>
+      <!-- <div tab="Manifests">
+        <manifest-data manifests="{{manifests}}" exclusions="{{exclusions}}" on-exclusions="_onData"></manifest-data>
+      </div> -->
+    </simple-tabs>
   </div>
 `;
 
