@@ -724,16 +724,6 @@ RecipeSlot
     }
   }
 
-ExtendsList
-  = whiteSpace 'extends' whiteSpace first:upperIdent rest:(whiteSpace? ',' whiteSpace upperIdent)*
-{
-  var list = [first];
-  for (let item of rest) {
-    list.push(item[3]);
-  }
-  return list;
-}
-
 SchemaInline
   = names:((upperIdent / '*') whiteSpace)+ '{' fields:(SchemaInlineField (',' whiteSpace SchemaInlineField)*)? '}'
   {
@@ -757,16 +747,27 @@ SchemaInlineField
   }
 
 Schema
-  = 'schema' whiteSpace name:TopLevelIdent parent:ExtendsList? eolWhiteSpace items:(Indent (SameIndent SchemaItem)*)?
+  = 'schema' whiteSpace name:TopLevelIdent names:(whiteSpace TopLevelIdent)* parents:SchemaExtends? eolWhiteSpace items:(Indent (SameIndent SchemaItem)*)?
   {
     return {
       kind: 'schema',
       location: location(),
-      name: name,
-      parents: optional(parent, parent => parent, []),
+      names: [name, ...names.map(name => name[1])],
+      parents: optional(parents, parents => parents, []),
       items: optional(items, extractIndented, []),
     };
   }
+
+SchemaExtends
+  = whiteSpace 'extends' whiteSpace first:upperIdent rest:(whiteSpace? ',' whiteSpace upperIdent)*
+{
+  var list = [first];
+  for (let item of rest) {
+    list.push(item[3]);
+  }
+  return list;
+}
+
 
 SchemaItem
   = SchemaSection
@@ -858,12 +859,6 @@ SameOrMoreIndent = &(i:" "* &{
 
 TopLevelIdent
   = upperIdent
-  / lowerIdent
-  {
-    let fixed = text();
-    fixed = fixed.replace(/^(.)/, l => l.toUpperCase());
-    expected(`a top level identifier (e.g. "${fixed}")`);
-  }
 
 backquotedString = '`' pattern:([^`]+) '`' { return pattern.join(''); }
 id = "'" id:[^']+ "'" {return id.join('')}
