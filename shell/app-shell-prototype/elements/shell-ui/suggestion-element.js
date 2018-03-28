@@ -16,7 +16,7 @@ const template = html`
     :host {
       display: flex;
       align-items: center;
-      border: 1px solid rgba(90%, 90%, 90%);
+      border: 1px solid #E6E6E6;
       border-radius: 16px;
       background-color: white;
       color: black;
@@ -27,7 +27,7 @@ const template = html`
       transition: all 150ms;
     }
     :host(:hover) {
-      background-color: rgb(96%, 96%, 96%);
+      background-color: #E6E6E6;
       color: black;
     }
     :host > div {

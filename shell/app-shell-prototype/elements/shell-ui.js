@@ -121,6 +121,7 @@ const template = html`
     }
     [toolbar] > icon, [toolbar] > a {
       padding: 16px;
+      height: 24px;
     }
     [main][toolbar]:not([open]) {
       transform: translate3d(-100%, 0, 0);
@@ -277,11 +278,9 @@ class ShellUi extends Xen.Debug(Xen.Base, log) {
   _update({}, {}, oldProps, oldState) {
   }
   _render(props, state) {
-    /*
     if (state.barState === 'peek') {
       state.toolState = 'main';
     }
-    */
     const {toolState, barState, toolsOpen} = state;
     const barOpen = barState === 'open';
     const mainOpen = toolState === 'main';

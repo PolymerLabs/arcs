@@ -113,7 +113,6 @@ import '../artifacts/canonical.manifest'
     this._setState({plan: suggestion.plan});
   }
   _onPlans(e, plans) {
-    //plans = plans && plans.slice(0, 4);
     this._setState({suggestions: plans, showhint: plans && plans.length > 0});
   }
   _onUsers(e, users) {
