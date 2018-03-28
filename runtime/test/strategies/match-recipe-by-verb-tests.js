@@ -131,7 +131,7 @@ describe('MatchRecipeByVerb', function() {
     assert.equal(results[0].result.particles[0].name, 'P');
     assert.equal(results[1].result.particles.length, 2);
   });
-  it('carries slot assignments across verb substitution', async() => {
+  it('carries slot assignments across verb substitution', async () => {
     let manifest = await Manifest.parse(`
       particle P in 'A.js'
         P()

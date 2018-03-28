@@ -40,7 +40,7 @@ export default class MatchRecipeByVerb extends Strategy {
 
         let recipes = arc.context.findRecipesByVerb(particle.primaryVerb);
 
-        let slotConstraints = {}
+        let slotConstraints = {};
         for (let consumeSlot of Object.values(particle.consumedSlotConnections)) {
           let targetSlot = consumeSlot.targetSlot.sourceConnection ? consumeSlot.targetSlot : null;
           slotConstraints[consumeSlot.name] = {targetSlot, providedSlots: {}};
