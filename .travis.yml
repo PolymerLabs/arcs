@@ -1,4 +1,6 @@
 language: node_js
+node_js:
+  - "9"
 env:
   global:
     # an encrypted 'GITHUB_TOKEN=<token>' for the PolymerLabs/arcs repo
