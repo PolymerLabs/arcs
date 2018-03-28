@@ -6,11 +6,11 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-defineParticle(({DomParticle}) => {
+defineParticle(({DomParticle, html}) => {
 
-  let host = `party-size`;
+  const host = `party-size`;
 
-  let styles = `
+  const template = html`
 <style>
   [${host}] {
     padding: 6px 0;
@@ -19,42 +19,35 @@ defineParticle(({DomParticle}) => {
   [${host}] > * {
     vertical-align: middle;
   }
-  [${host}] select {
-    padding: 6px;
-    font-size: 14px;
-  }
   [${host}] .x-select {
     display: inline-block;
     position: relative;
+    height: 100%;
   }
   [${host}] .x-select::after {
     content: '▼';
     display: block;
     position: absolute;
-    right: 8px;
-    bottom: 6px;
-    transform: scaleY(0.6);
+    right: 4px;
+    bottom: 0;
+    transform: scaleY(0.4) scaleX(0.8);
     pointer-events: none;
   }
   [${host}] .x-select > select {
     position: relative;
     margin: 0;
-    padding: 8px 24px 8px 6px;
+    padding: 0;
     border: 0;
-    border-bottom: 1px solid #ddd;
     background-color: transparent;
     border-radius: 0;
-    font-size: 14px;
-    font-weight: 300;
+    font-size: 16px;
     overflow: hidden;
     outline: none;
     -webkit-appearance: none;
+    vertical-align: top;
   }
 </style>
-  `;
 
-  let template = `
-${styles}
 <div ${host}>
   <div class="x-select">
     <select on-change="_onPartySizeChanged">
@@ -66,7 +59,8 @@ ${styles}
     </select>
   </div>
 </div>
-    `.trim();
+
+`;
 
   return class extends DomParticle {
     get template() {
