@@ -58,15 +58,9 @@ const template = html`
 </x-toast>
 `;
 
-<<<<<<< HEAD
 const log = Xen.logFactory('ArcFooter', '#673AB7');
 
 class ArcFooter extends Xen.Base {
-=======
-const log = Xen.Base.logFactory('ArcFooter', '#673AB7');
-
-class ArcFooter extends Xen.Debug(Xen.Base, log) {
->>>>>>> plumbing footer open state through the app
   static get observedAttributes() {
     return ['dots', 'open', 'search'];
   }
