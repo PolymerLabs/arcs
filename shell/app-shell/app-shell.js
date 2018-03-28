@@ -25,44 +25,52 @@ import Const from './constants.js';
 // globals
 /* global shellPath */
 
+/*
+  General notes on steps:
+    'step' comes out of arc-cloud (replay) or footer (user interaction)
+    'step' is sent to arc-host for instantiation
+    'plan' comes out of arc-host and is sent to arc-cloud to save in 'steps'
+
+  arc-cloud
+    TODO: refactor into more meaningful concerns ('cloud' is ad-hoc, there are too many properties)
+
+    manifests: are persisted to Firebase
+    exclusions: are persisted to localStorage
+
+    on-manifests: manifests from Firebase
+    on-exclusions: manifests read from localStorage
+
+    config: supplies arc key suggestion (could be a metakey, like '*', 'launcher', 'profiler')
+            supplies launcher flag used to generate luancheruser
+            (TODO: doesn't need 'config' for these two things)
+    on-key: actual arc key determined after studying config.key
+    on-metadata: metadata belonging to arc identified by key from on-key
+    on-step: next step to playback based on arc metadata
+
+    userid: used to construct faux 'user' record
+    on-user: constructed 'user' record
+
+    on-friends: friends data scraped out of handle boxing
+    on-avatars: avatars data scraped out of handle boxing
+
+    launcherarcs: local handle data for arcs data from arc-handles (can be modified by UI),
+                  studies in order to update Firebase data
+    on-arcs: arcs metadata for arcs owner by user from Firebase,
+              fed to arc-handles for conversion to launcherarcs
+              TODO: isolate conversions so data doesn't criss-cross like this
+
+  shell-handles
+    visited: visited arc data from Firebase
+    on-launcherarcs: arc data formatted for local handle
+    TODO: isolate conversions so data doesn't criss-cross like this
+
+  arc-host
+    plan: schedules the plan for instantiation ('step' goes in)
+    on-plan: most recent plan that was instantiated ('plan' comes out)
+*/
+
 // templates
 const html = Xen.html;
-/*
-
-    General notes on steps:
-      'step' comes out of arc-cloud (replay) or footer (user interaction)
-      'step' is sent to arc-host for instantiation
-      'plan' comes out of arc-host and is sent to arc-cloud to save in 'steps'
-
-    arc-cloud
-      TODO: refactor into more meaningful concerns ('cloud' is ad-hoc, there are too many properties)
-
-      manifests: are persisted to Firebase
-      exclusions: are persisted to localStorage
-
-      on-manifests: manifests from Firebase
-      on-exclusions: manifests read from localStorage
-
-      config: supplies arc key suggestion (could be a metakey, like '*', 'launcher', 'profiler')
-              supplies launcher flag used to generate luancheruser
-              (TODO: doesn't need 'config' for these two things)
-      on-key: actual arc key determined after studying config.key
-      on-metadata: metadata belonging to arc identified by key from on-key
-      on-step: next step to playback based on arc metadata
-
-      userid: used to construct faux 'user' record
-      on-user: constructed 'user' record
-
-      on-friends: friends data scraped out of handle boxing
-      on-avatars: avatars data scraped out of handle boxing
-
-      launcherarcs: local handle data for arcs data from arc-handles (can be modified by UI),
-                    studies in order to update Firebase data
-      on-arcs: arcs metadata for arcs owner by user from Firebase,
-               fed to arc-handles for conversion to launcherarcs
-               TODO: isolate conversions so data doesn't criss-cross like this
-
-*/
 const template = html`
   <style>
     :host {
@@ -98,14 +106,7 @@ const template = html`
     on-step="_onStateData"
     on-share="_onStateData"
   ></arc-cloud>
-` /*
 
-    shell-handles
-      visited: visited arc data from Firebase
-      on-launcherarcs: arc data formatted for local handle
-      TODO: isolate conversions so data doesn't criss-cross like this
-
-*/ + html`
   <shell-handles
     users="{{users}}"
     user="{{user}}"
@@ -114,12 +115,7 @@ const template = html`
     on-launcherarcs="_onStateData"
     on-theme="_onStateData"
   ></shell-handles>
-` /*
 
-      plan: schedules the plan for instantiation ('step' goes in)
-      on-plan: most recent plan that was instantiated ('plan' comes out)
-
-*/ + html`
   <arc-host
     config="{{hostConfig}}"
     manifests="{{manifests}}"
@@ -148,12 +144,12 @@ const template = html`
     avatars="{{avatars}}"
     share="{{share}}"
     theme="{{theme}}"
-    open="{{open}}"
+    open="{{drawerOpen}}"
     on-exclusions="_onExclusions"
     on-share="_onStateData"
     on-step="_onStateData"
     on-search="_onStateData"
-    on-open="_onStateData"
+    on-open="_onDrawerOpen"
     on-select-user="_onSelectUser"
   >
     <slot></slot>
@@ -268,7 +264,7 @@ class AppShell extends Xen.Debug(Xen.Base, log) {
       );
     }
     // Are the new suggestions actually different?
-    const dirty = !oldSuggestions || oldSuggestions.some((s, i) => suggestions[i].hash !== s.hash);
+    const dirty = !oldSuggestions || oldSuggestions.length !== suggestions.length || oldSuggestions.some((s, i) => suggestions[i].hash !== s.hash);
     if (dirty) {
       this._setState({suggestions, drawerOpen: true});
     }
@@ -298,6 +294,9 @@ class AppShell extends Xen.Debug(Xen.Base, log) {
   }
   _onSelectUser(e, selectedUser) {
     this._setState({selectedUser});
+  }
+  _onDrawerOpen(e, drawerOpen) {
+    this._setState({drawerOpen});
   }
 }
 
