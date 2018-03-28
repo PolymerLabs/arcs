@@ -38,13 +38,37 @@ const template = html`
     }
   </style>
 
-  <arc-config rootpath="{{shellPath}}" on-config="_onConfig"></arc-config>
-  <arc-host config="{{config}}" manifest="{{manifest}}"  suggestions="{{suggestions}}" plan="{{plan}}" on-arc="_onArc" on-plans="_onPlans"></arc-host>
+  <arc-config
+    rootpath="{{shellPath}}"
+    on-config="_onConfig"
+  ></arc-config>
 
-  <shell-handles arc="{{arc}}"></shell-handles>
-  <cloud-data on-users="_onUsers"></cloud-data>
+  <arc-host
+    config="{{config}}"
+    manifest="{{manifest}}"
+    suggestions="{{suggestions}}"
+    plan="{{plan}}"
+    serialization="{{serialization}}"
+    on-arc="_onArc"
+    on-plans="_onPlans"
+  ></arc-host>
 
-  <shell-ui showhint="{{showhint}}" users="{{users}}" on-plan="_onPlan" on-select-user="_onSelectUser">
+  <shell-handles
+    arc="{{arc}}"
+    on-theme="_onStateData"
+  ></shell-handles>
+  <cloud-data
+    on-users="_onUsers"
+  ></cloud-data>
+
+  <shell-ui
+    arc="{{arc}}"
+    showhint="{{showhint}}"
+    users="{{users}}"
+    on-plan="_onPlan"
+    on-select-user="_onSelectUser"
+    on-experiment="_onExperiment"
+  >
     <slot></slot>
     <slot name="modal" slot="modal"></slot>
     <slot name="suggestions" slot="suggestions"></slot>
@@ -62,21 +86,22 @@ class AppShell extends Xen.Debug(Xen.Base, log) {
     return {
       shellPath,
       manifest: `
-import 'http://localhost/projects/arcs/arcs-stories/0.3/Test/Test.recipes'
-import 'http://localhost/projects/arcs/arcs-stories/0.3/GitHubDash/GitHubDash.recipes'
-import 'http://localhost/projects/arcs/arcs-stories/0.3/TV/TV.recipes'
-import 'http://localhost/projects/arcs/arcs-stories/0.3/PlaidAccounts/PlaidAccounts.recipes'
-
-//import 'https://shaper.github.io/arcs-stories/social/Social/Social.recipes'
-//import 'http://localhost/projects/arcs/arcs/shell/artifacts/canonical.manifest'
-//import 'http://localhost/projects/arcs/arcs/shell/artifacts/Profile/Profile.recipes'
-`
-    };
+import 'https://sjmiles.github.io/arcs-stories/0.3/GitHubDash/GitHubDash.recipes'
+import 'https://sjmiles.github.io/arcs-stories/0.3/TV/TV.recipes'
+import 'https://sjmiles.github.io/arcs-stories/0.3/PlaidAccounts/PlaidAccounts.recipes'
+import '../artifacts/canonical.manifest'
+    `};
   }
   _update(props, state, oldProps, oldState) {
+    // TODO(sjmiles): for debugging only
+    window.app = this;
+    window.arc = state.arc;
   }
   _render({}, state) {
     return state;
+  }
+  _onStateData(e, data) {
+    this._setState({[e.type]: data});
   }
   _onConfig(e, config) {
     this._setState({config});
@@ -88,14 +113,19 @@ import 'http://localhost/projects/arcs/arcs-stories/0.3/PlaidAccounts/PlaidAccou
     this._setState({plan: suggestion.plan});
   }
   _onPlans(e, plans) {
-    this._setState({suggestions: plans, showhint: plans.length > 0});
+    //plans = plans && plans.slice(0, 4);
+    this._setState({suggestions: plans, showhint: plans && plans.length > 0});
   }
   _onUsers(e, users) {
     this._setState({users});
   }
   _onSelectUser(e, user) {
     this._setState({user});
-
+  }
+  async _onExperiment(e) {
+    const {arc} = this._state;
+    this._setState({serialization: null});
+    this._setState({serialization: await arc.serialize()});
   }
 }
 

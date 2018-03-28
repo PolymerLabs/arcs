@@ -28,9 +28,4 @@ icon {
   overflow: hidden;;
 }
 
-[slotid=suggestions] {
-  max-height: 356px;
-  overflow-y: auto;
-  overflow-x: hidden;
-}
 

@@ -12,6 +12,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 import './shell-ui/suggestion-element.js';
 import './shell-ui/settings-panel.js';
 import './shell-ui/user-picker.js';
+import '../../components/arc-tools/handle-explorer.js';
 // code libs
 import Xen from '../../components/xen/xen.js';
 import IconStyle from '../../components/icons.css.js';
@@ -29,8 +30,8 @@ const template = html`
     :host {
       --bar-max-width: 400px;
       --bar-max-height: 50vh;
-      --bar-hint-height: 112px;
-      --bar-small-height: 56px;
+      --bar-hint-height: 33vh;
+      --bar-over-height: 56px;
       --bar-peek-height: 16px;
       --bar-touch-height: 32px;
       --bar-space-height: 48px;
@@ -78,20 +79,28 @@ const template = html`
       left: 0;
       box-sizing: border-box;
       max-width: var(--bar-max-width);
-      height: var(--bar-max-height);
-      transform: translate3d(0, calc(var(--bar-max-height) - var(--bar-peek-height)), 0);
+      max-height: var(--bar-max-height);
+      /*max-height: var(--bar-peek-height);
+      transform: translate3d(0, calc(100% - var(--bar-peek-height)), 0);*/
       margin: 0 auto;
       background-color: white;
       box-shadow: 0px 0px 32px 3px rgba(0,0,0,0.13);
       transition: transform 200ms ease-out;
     }
+    [bar] > * {
+      flex-shrink: 0;
+    }
+    [bar][state="peek"] {
+      transform: translate3d(0, calc(100% - var(--bar-peek-height)), 0);
+    }
     [bar][state="hint"] {
-      transform: translate3d(0, calc(var(--bar-max-height) - var(--bar-hint-height)), 0);
+      transform: translate3d(0, calc(100% - var(--bar-hint-height)), 0);
     }
     [bar][state="over"] {
-      transform: translate3d(0, calc(var(--bar-max-height) - var(--bar-small-height)), 0);
+      transform: translate3d(0, calc(100% - var(--bar-over-height)), 0);
     }
     [bar][state="open"] {
+      height: var(--bar-max-height);
       transform: translate3d(0, 0, 0);
     }
     [toolbars] {
@@ -146,6 +155,10 @@ const template = html`
       vertical-align: top;
       transition: transform 100ms ease-in-out;
     }
+    [content]:not([open]) {
+      height: 0px;
+      overflow: hidden;
+    }
     [suggestions][content]:not([open]) {
       transform: translate3d(-100%, 0, 0);
     }
@@ -179,14 +192,32 @@ const template = html`
     ::slotted([slotid=suggestions]) {
       display: flex;
       flex-direction: column;
+      /*
       max-height: 356px;
       overflow-y: auto;
       overflow-x: hidden;
+      */
       padding: 6px 10px 10px 10px;
+    }
+    [tools] {
+      position: fixed;
+      right: 0;
+      width: 80vw;
+      top: 0;
+      bottom: 0;
+      box-shadow: 0px 0px 32px 3px rgba(0,0,0,0.13);
+      transform: translate3d(100%, 0, 0);
+      transition: transform 200ms ease-in-out;
+      overflow: auto;
+      background-color: white;
+    }
+    [tools][open] {
+      z-index: 10000;
+      transform: translate3d(0,0,0);
     }
   </style>
 
-  <div scrim open$="{{scrimOpen}}" on-click="_onBarEscape"></div>
+  <div scrim open$="{{scrimOpen}}" on-click="_onScrimClick"></div>
   <slot name="modal"></slot>
   <slot></slot>
   <!-- adds space at the bottom of the static flow so no actual content is ever covered by the app-bar -->
@@ -197,6 +228,7 @@ const template = html`
       <div main toolbar open$="{{mainToolbarOpen}}">
         <a href="{{launcherHref}}" title="Go to Launcher">${AppIcon}</a>
         <span style="flex: 1;" title="{{title}}">{{title}}</span>
+        <icon on-click="_onExperimentClick">update</icon>
         <icon on-click="_onSearchClick">search</icon>
         <icon on-click="_onSettingsClick">settings</icon>
       </div>
@@ -219,12 +251,16 @@ const template = html`
       <user-picker user content open$="{{userContentOpen}}" users="{{users}}" on-selected="_onSelectUser"></user-picker>
     </div>
   </div>
+  <icon style="position: fixed; right: 16px; top: 16px;" on-click="_onToolsClick">assessment</icon>
+  <div tools open$="{{toolsOpen}}" on-click="_onToolsClick">
+    <handle-explorer arc="{{arc}}"></handle-explorer>
+  </div>
 `;
 
 const log = Xen.logFactory('ShellUi', '#ac6066');
 
 class ShellUi extends Xen.Debug(Xen.Base, log) {
-  static get observedAttributes() { return ['showhint', 'users']; }
+  static get observedAttributes() { return ['arc', 'showhint', 'users']; }
   get template() {
     return template;
   }
@@ -234,7 +270,8 @@ class ShellUi extends Xen.Debug(Xen.Base, log) {
       toolState: 'main',
       title: 'Arc Title',
       // TODO(sjmiles): include manifest or other directives?
-      launcherHref: `${location.origin}${location.pathname}`
+      launcherHref: `${location.origin}${location.pathname}`,
+      toolsOpen: false
     };
   }
   _update({}, {}, oldProps, oldState) {
@@ -245,13 +282,14 @@ class ShellUi extends Xen.Debug(Xen.Base, log) {
       state.toolState = 'main';
     }
     */
-    const {toolState} = state;
+    const {toolState, barState, toolsOpen} = state;
+    const barOpen = barState === 'open';
     const mainOpen = toolState === 'main';
     const searchOpen = toolState === 'search';
     const settingsOpen = toolState === 'settings';
     const userOpen = toolState === 'user';
     const renderModel = {
-      scrimOpen: state.barState === 'open',
+      scrimOpen: barOpen || toolsOpen,
       mainToolbarOpen: mainOpen,
       searchToolbarOpen: searchOpen,
       suggestionsContentOpen: mainOpen || searchOpen,
@@ -271,8 +309,12 @@ class ShellUi extends Xen.Debug(Xen.Base, log) {
       }, 300);
     }
   }
-  _onBarEscape() {
-    this._setState({barState: 'peek'});
+  _onScrimClick() {
+    if (this._state.toolsOpen) {
+      this._setState({toolsOpen: false});
+    } else {
+      this._setState({barState: 'peek'});
+    }
   }
   _onTouchbarClick() {
     if (this._state.barState !== 'over') {
@@ -336,6 +378,16 @@ class ShellUi extends Xen.Debug(Xen.Base, log) {
   _onSelectUser(e, user) {
     this._fire('select-user', user);
     this._setState({toolState: 'settings'});
+  }
+  _onExperimentClick(e) {
+    e.stopPropagation();
+    this._fire('experiment');
+  }
+  _onToolsClick() {
+    this._setState({toolsOpen: !this._state.toolsOpen});
+  }
+  _onToolsEnter() {
+    this._setState({toolsOpen: true});
   }
 }
 
