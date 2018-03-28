@@ -1218,6 +1218,15 @@ resource SomeName
     assert(validRecipe.isResolved());
   });
 
+  it('can process a schema with an alias', async () => {
+    let manifest = await Manifest.parse(`
+      schema Thing as SchemaAlias
+      schema Extended extends SchemaAlias
+    `);
+    assert.isNotNull(manifest.findSchemaByName('SchemaAlias'));
+    assert.sameMembers(manifest.findSchemaByName('Extended').names, ['Thing', 'Extended']);
+  });
+
   it('can relate inline schemas to generic connections', async () => {
     let manifest = await Manifest.parse(`
       schema Thing

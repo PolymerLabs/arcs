@@ -488,8 +488,13 @@ ${e.message}
       names.push(...result.names);
     } 
     names = [names[0], ...names.filter(name => name != names[0])];
-
-    manifest._schemas[names[0]] = new Schema({
+    let alias = schemaItem.alias || names[0];
+    if (!alias) {
+      throw new ManifestError(
+          schemaItem.location,
+          `Schema defined without name or alias`);
+    }
+    manifest._schemas[alias] = new Schema({
       names,
       description: description,
       fields,

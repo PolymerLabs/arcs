@@ -507,14 +507,20 @@ RecipeItem
   / RecipeSearch
   / Description
 
-Name
+LocalName
   = 'as' whiteSpace name:lowerIdent
   {
     return name;
   }
 
+TopLevelAlias
+  = 'as' whiteSpace name:upperIdent
+  {
+    return name;
+  }
+
 RecipeParticle
-  = ref:ParticleRef name:(whiteSpace Name)? eolWhiteSpace connections:(Indent (SameIndent RecipeParticleItem)*)?
+  = ref:ParticleRef name:(whiteSpace LocalName)? eolWhiteSpace connections:(Indent (SameIndent RecipeParticleItem)*)?
   {
     let handleConnections = [];
     let slotConnections = [];
@@ -552,7 +558,7 @@ RecipeParticleConnection
   }
 
 RecipeParticleSlotConnection
-  = 'consume' whiteSpace param:lowerIdent name:(whiteSpace Name)? eolWhiteSpace providedSlots:(Indent (SameIndent RecipeParticleProvidedSlot)*)?
+  = 'consume' whiteSpace param:lowerIdent name:(whiteSpace LocalName)? eolWhiteSpace providedSlots:(Indent (SameIndent RecipeParticleProvidedSlot)*)?
   {
     return {
       kind: 'slot-connection',
@@ -564,7 +570,7 @@ RecipeParticleSlotConnection
   }
 
 RecipeParticleProvidedSlot
-  = 'provide' whiteSpace param:lowerIdent name:(whiteSpace Name)? eolWhiteSpace
+  = 'provide' whiteSpace param:lowerIdent name:(whiteSpace LocalName)? eolWhiteSpace
   {
     return {
       kind: 'provided-slot',
@@ -633,7 +639,7 @@ ConnectionTarget
   }
 
 RecipeHandle
-  = type:('?' / 'use' / 'map' / 'create' / 'copy') ref:(whiteSpace HandleOrSlotRef)? name:(whiteSpace Name)? eolWhiteSpace
+  = type:('?' / 'use' / 'map' / 'create' / 'copy') ref:(whiteSpace HandleOrSlotRef)? name:(whiteSpace LocalName)? eolWhiteSpace
   {
     return {
       kind: 'handle',
@@ -714,7 +720,7 @@ HandleOrSlotRef
   }
 
 RecipeSlot
-  = 'slot' ref:(whiteSpace HandleOrSlotRef)? name:(whiteSpace Name)? eolWhiteSpace
+  = 'slot' ref:(whiteSpace HandleOrSlotRef)? name:(whiteSpace LocalName)? eolWhiteSpace
   {
     return {
       kind: 'slot',
@@ -747,12 +753,13 @@ SchemaInlineField
   }
 
 Schema
-  = 'schema' whiteSpace name:TopLevelIdent names:(whiteSpace TopLevelIdent)* parents:SchemaExtends? eolWhiteSpace items:(Indent (SameIndent SchemaItem)*)?
+  = 'schema' whiteSpace name:TopLevelIdent names:(whiteSpace TopLevelIdent)* parents:SchemaExtends? alias:(whiteSpace TopLevelAlias)? eolWhiteSpace items:(Indent (SameIndent SchemaItem)*)?
   {
     return {
       kind: 'schema',
       location: location(),
       names: [name, ...names.map(name => name[1])],
+      alias: optional(alias, alias => alias[1], null),
       parents: optional(parents, parents => parents, []),
       items: optional(items, extractIndented, []),
     };
