@@ -18,7 +18,7 @@ const error = Xen.logFactory('ArcHost', '#007ac1', 'error');
 
 class ArcHost extends Xen.Debug(Xen.Base, log) {
   static get observedAttributes() {
-    return ['config', 'manifest', 'plans', 'suggestions', 'plan'];
+    return ['config', 'manifest', 'plans', 'suggestions', 'plan', 'serialization'];
   }
   _getInitialState() {
     return {
@@ -28,7 +28,7 @@ class ArcHost extends Xen.Debug(Xen.Base, log) {
   }
   _willReceiveProps(props, state, lastProps) {
     const changed = name => props[name] !== lastProps[name];
-    const {manifest, config, plan, suggestions} = props;
+    const {manifest, config, plan, suggestions, serialization} = props;
     if (config && (config !== state.appliedConfig) && manifest) {
       state.appliedConfig = config;
       this._initArc(config, manifest);
@@ -42,6 +42,9 @@ class ArcHost extends Xen.Debug(Xen.Base, log) {
     }
     if (suggestions && changed('suggestions')) {
       state.slotComposer.setSuggestions(suggestions);
+    }
+    if (serialization && changed('serialization')) {
+      this._consumeSerialization(serialization);
     }
   }
   _update({plans}, {arc, pendingPlans}) {
@@ -68,17 +71,11 @@ class ArcHost extends Xen.Debug(Xen.Base, log) {
     // load manifest
     const context = await this._createContext(loader, manifest);
     // composer
-    const slotComposer = new Arcs.SlotComposer({
-      rootContext: document.body, //this.parentElement,
-      affordance: config.affordance,
-      containerKind: config.containerKind,
-      // TODO(sjmiles): typically resolved via `slotid="suggestions"`, but override is allowed here via config
-      suggestionsContext: config.suggestionsNode
-    });
-    // capture composer so we can push suggestions there
-    this._setState({slotComposer});
+    const slotComposer = this._createSlotComposer(config);
     // send urlMap to the Arc so worker-entry*.js can create mapping loaders
     const urlMap = loader._urlMap;
+    // capture composer (so we can push suggestions there) and loader
+    this._setState({slotComposer, loader});
     // Arc!
     return ArcsUtils.createArc({id, urlMap, slotComposer, context, loader});
   }
@@ -107,9 +104,18 @@ class ArcHost extends Xen.Debug(Xen.Base, log) {
     }
     return context;
   }
+  _createSlotComposer(config) {
+    return new Arcs.SlotComposer({
+      rootContext: document.body,
+      affordance: config.affordance,
+      containerKind: config.containerKind,
+      // TODO(sjmiles): typically resolved via `slotid="suggestions"`, but override is allowed here via config
+      suggestionsContext: config.suggestionsNode
+    });
+  }
   async _reloadManifest(arc, config, manifest) {
-    arc._context = await this._createContext(loader, manifest);
-    this._fire('plans', null);
+    //arc._context = await this._createContext(loader, manifest);
+    //this._fire('plans', null);
   }
   _runtimeHandlesUpdated() {
     !this._state.planning && log('runtimeHandlesUpdated');
@@ -149,6 +155,40 @@ class ArcHost extends Xen.Debug(Xen.Base, log) {
     log('instantiated plan', plan);
     await arc.instantiate(plan);
     this._fire('plan', plan);
+  }
+  async _consumeSerialization(serialization) {
+    const {config, manifest} = this._props;
+    const {arc, loader} = this._state;
+    //
+    const badImport = `import './shell.manifest'`;
+    if (serialization.includes(badImport)) {
+      serialization = serialization.replace(badImport, '');
+      log(`serialization contained [${badImport}]`);
+    }
+    //
+    serialization = `${manifest}\n${serialization}`;
+    // serialize old arc
+    console.groupCollapsed('serializing...');
+    log(serialization);
+    console.groupEnd();
+    // remove rendered particle DOM
+    Array.from(document.querySelectorAll('[slotid')).forEach(n => n.textContent = '');
+    // generate new slotComposer
+    const slotComposer = this._createSlotComposer(config);
+    // generate new arc via deserialization
+    const newArc = await Arcs.Arc.deserialize({
+      serialization,
+      loader,
+      slotComposer,
+      context: arc.context,
+      pecFactory: arc._pecFactory,
+      fileName: './synthetic.manifest'
+    });
+    // cache new arc
+    this._setState({arc: newArc});
+    // notify owner
+    this._fire('arc', arc);
+    this._fire('plans', null);
   }
 }
 ArcHost.groupCollapsed = Xen.Base.logFactory('ArcHost', '#007ac1', 'groupCollapsed');

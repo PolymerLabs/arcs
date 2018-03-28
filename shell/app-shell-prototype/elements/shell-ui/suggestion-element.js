@@ -20,9 +20,9 @@ const template = html`
       border-radius: 16px;
       background-color: white;
       color: black;
-      padding: 0 13px;
+      padding: 12px 13px 11px;
       margin: 6px 0;
-      line-height: 32px;
+      /*line-height: 32px;*/
       cursor: pointer;
       transition: all 150ms;
     }
@@ -53,6 +53,9 @@ class SuggestionElement extends Xen.Base {
     if (plan) {
       this.setAttribute('hash', plan.hash);
     }
+  }
+  _didRender() {
+    this.setAttribute('title', this.textContent);
   }
   _onClick() {
     const {plan} = this._props;

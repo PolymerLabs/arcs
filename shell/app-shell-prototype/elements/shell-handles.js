@@ -75,6 +75,11 @@ class ShellHandles extends Xen.Base {
         tags: ['#BOXED_avatar'],
         id: 'BOXED_avatar',
         asContext: true
+      },
+      userHandleData: {
+        id: 'f4',
+        name: 'Gomer',
+        location: {latitude: 0, longitude: 0}
       }
     };
   }
