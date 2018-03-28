@@ -7,8 +7,6 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-import Arc from '../arc.js';
-import Loader from '../loader.js';
 import {assert} from './chai-web.js';
 import Manifest from '../manifest.js';
 import ConvertConstraintsToConnections from '../strategies/convert-constraints-to-connections.js';
@@ -22,22 +20,9 @@ import GroupHandleConnections from '../strategies/group-handle-connections.js';
 import CombinedStrategy from '../strategies/combined-strategy.js';
 import CreateDescriptionHandle from '../strategies/create-description-handle.js';
 import FallbackFate from '../strategies/fallback-fate.js';
-let loader = new Loader();
+import StrategyTestHelper from './strategies/strategy-test-helper.js';
 
-function createTestArc(id, context, affordance) {
-  return new Arc({
-    id,
-    context,
-    slotComposer: {
-      affordance,
-      getAvailableSlots: (() => { return [{name: 'root', id: 'r0', tags: ['#root'], handles: [], handleConnections: [], getProvidedSlotSpec: () => { return {isSet: false}; }}]; })
-    }
-  });
-}
-
-let run = (arc, clazz, recipe) => new clazz(arc).generate({generated: [{result: recipe, score: 1}], terminal: []});
-let onlyResult = (arc, clazz, recipe) => run(arc, clazz, recipe).then(result => { assert.equal(result.length, 1); return result[0].result;});
-let theResults = (arc, clazz, recipe) => run(arc, clazz, recipe).then(results => results.map(result => result.result)); // chicken chicken
+let {createTestArc, onlyResult, theResults} = StrategyTestHelper;
 
 describe('A Strategy Sequence', function() {
   it('resolves a verb substitution and slot mapping', async () => {
