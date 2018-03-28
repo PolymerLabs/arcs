@@ -181,5 +181,5 @@ class ShellHandles extends Xen.Base {
   }
 }
 
-const log = Xen.Base.logFactory('ShellHandles', '#004f00');
+const log = Xen.logFactory('ShellHandles', '#004f00');
 customElements.define('shell-handles', ShellHandles);
