@@ -12,7 +12,7 @@ import WatchGroup from './watch-group.js';
 import Xen from '../../components/xen/xen.js';
 const db = window.db;
 
-const log = Xen.Base.logFactory('RemoteVisitedArcs', '#00796b');
+const log = Xen.logFactory('RemoteVisitedArcs', '#00796b');
 
 class RemoteVisitedArcs extends Xen.Debug(Xen.Base, log) {
   static get observedAttributes() { return ['user', 'arcs']; }

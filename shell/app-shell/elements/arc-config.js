@@ -29,7 +29,8 @@ class ArcConfig extends Xen.Base {
       key: params.get('arc') || null,
       search: params.get('search'),
       arcsToolsVisible: localStorage.getItem(Const.LOCALSTORAGE.tools) === 'open',
-      urls: {}
+      urls: {},
+      logging: params.get('log')
     };
   }
 }

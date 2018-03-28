@@ -12,8 +12,8 @@ import Xen from '../../components/xen/xen.js';
 import Arcs from '../lib/arcs.js';
 import ArcsUtils from '../lib/arcs-utils.js';
 
-const log = Xen.Base.logFactory('ArcHost', '#007ac1');
-const error = Xen.Base.logFactory('ArcHost', '#007ac1', 'error');
+const log = Xen.logFactory('ArcHost', '#007ac1');
+const error = Xen.logFactory('ArcHost', '#007ac1', 'error');
 
 class ArcHost extends Xen.Debug(Xen.Base, log) {
   static get observedAttributes() {
@@ -174,5 +174,5 @@ class ArcHost extends Xen.Debug(Xen.Base, log) {
     this._fire('plan', plan);
   }
 }
-ArcHost.groupCollapsed = Xen.Base.logFactory('ArcHost', '#007ac1', 'groupCollapsed');
+ArcHost.groupCollapsed = Xen.logFactory('ArcHost', '#007ac1', 'groupCollapsed');
 customElements.define('arc-host', ArcHost);

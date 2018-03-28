@@ -21,7 +21,7 @@ const template = html`
 
 `;
 
-const log = Xen.Base.logFactory('ShellHandles', '#004f00');
+const log = Xen.logFactory('ShellHandles', '#004f00');
 
 class ShellHandles extends Xen.Debug(Xen.Base, log) {
   static get observedAttributes() {

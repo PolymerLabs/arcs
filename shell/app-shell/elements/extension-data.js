@@ -187,5 +187,5 @@ class ExtensionData extends Xen.Base {
   }
 
 }
-const log = Xen.Base.logFactory('ExtensionData', '#2277a8');
+const log = Xen.logFactory('ExtensionData', '#2277a8');
 customElements.define('extension-data', ExtensionData);

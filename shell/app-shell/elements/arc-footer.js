@@ -57,6 +57,8 @@ const template = Xen.html`
 </x-toast>
 `;
 
+const log = Xen.logFactory('ArcFooter', '#673AB7');
+
 class ArcFooter extends Xen.Base {
   static get observedAttributes() {
     return ['dots', 'open', 'search'];
@@ -81,7 +83,7 @@ class ArcFooter extends Xen.Base {
     //  Should happen upstream instead.
     let html = this.firstElementChild.innerHTML;
     if (!state.open && html !== state.html) {
-      //ArcFooter.log('opening: old, new: [${state.oldInnerHTML}] !== [${html}]');
+      //log('opening: old, new: [${state.oldInnerHTML}] !== [${html}]');
       this._setState({open: true, html});
     }
     if (props.search && props.search !== state.search) {
@@ -149,5 +151,4 @@ class ArcFooter extends Xen.Base {
     //}
   }
 }
-ArcFooter.log = Xen.Base.logFactory('ArcFooter', '#673AB7');
 customElements.define('arc-footer', ArcFooter);

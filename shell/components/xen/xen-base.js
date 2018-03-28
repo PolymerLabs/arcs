@@ -49,7 +49,5 @@ class XenBase extends XenElement(XenState(HTMLElement)) {
   _didRender() {
   }
 }
-XenBase.logFactory = (preamble, color, log='log') => console[log].bind(console, `%c${preamble}`, `background: ${color}; color: white; padding: 1px 6px 2px 7px; border-radius: 6px;`);
-XenBase.log = XenBase.logFactory('XenBase', '#673AB7');
 
 export default XenBase;

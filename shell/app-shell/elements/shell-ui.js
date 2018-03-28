@@ -94,7 +94,7 @@ const Main = Xen.html`
 
 `;
 
-const log = Xen.Base.logFactory('ShellUi', '#294740');
+const log = Xen.logFactory('ShellUi', '#294740');
 
 class ShellUi extends Xen.Debug(Xen.Base, log) {
   static get observedAttributes() {

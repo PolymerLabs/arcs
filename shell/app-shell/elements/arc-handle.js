@@ -12,7 +12,7 @@ import Xen from '../../components/xen/xen.js';
 import Arcs from '../lib/arcs.js';
 import ArcsUtils from '../lib/arcs-utils.js';
 
-const log = Xen.Base.logFactory('ArcHandle', '#c6a700');
+const log = Xen.logFactory('ArcHandle', '#c6a700');
 
 class ArcHandle extends Xen.Base {
   static get observedAttributes() { return ['arc', 'options', 'data']; }
