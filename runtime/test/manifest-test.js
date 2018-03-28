@@ -1227,17 +1227,30 @@ resource SomeName
     assert.sameMembers(manifest.findSchemaByName('Extended').names, ['This', 'That']);
   });
 
-  it('does not allow schema alias to be used as schema name', async () => {
+  it('expands schema aliases', async () => {
+    let manifest = await Manifest.parse(`
+      alias schema Name1 as Thing1
+        Text field1
+      alias schema Name2 as Thing2
+        Text field2
+      particle P in 'p.js'
+        P(in Thing1 Thing2 {Text field1, Text field3} param)
+    `);
+  });
+
+  it('fails when expanding conflicting schema aliases', async () => {
     try {
       let manifest = await Manifest.parse(`
-        alias schema * as Thingy
-          Text field
+        alias schema Name1 as Thing1
+          Text field1
+        alias schema Name2 as Thing2
+          Number field1
         particle P in 'p.js'
-          P(in Thingy {field} param)
+          P(in Thing1 Thing2 {} param)
       `);
       assert.fail();
     } catch (e) {
-      assert.include(e.message, 'Attempt to use schema alias');
+      assert.include(e.message, 'Could not merge schema aliases');
     }
   });
 

@@ -370,20 +370,23 @@ ${e.message}
         visitChildren();
         switch (node.kind) {
         case 'schema-inline': {
-          let externalSchemas = [];
+          let schemas = [];
+          let aliases = [];
+          let names = [];
           for (let name of node.names) {
             let resolved = manifest.resolveReference(name);
             if (resolved && resolved.schema) {
               if (resolved.schema.isAlias) {
-                throw new ManifestError(node.location,
-                   `Attempt to use schema alias '${name}' as schema name`);
+                aliases.push(resolved.schema);
+              } else {
+                names.push(name);
               }
-              externalSchemas.push(resolved.schema);
+              schemas.push(resolved.schema);
             }
           }
           let fields = {};
           for (let {name, type} of node.fields) {
-            for (let schema of externalSchemas) {
+            for (let schema of schemas) {
               if (!type) {
                 // If we don't have a type, try to infer one from the schema.
                 type = schema.fields[name];
@@ -404,10 +407,19 @@ ${e.message}
             }
             fields[name] = type;
           }
-          node.model = Type.newEntity(new Schema({
+          let schema = new Schema({
             names: node.names,
             fields,
-          }));
+          });
+          for (let alias of aliases) {
+            schema = Schema.union(alias, schema);
+            if (!schema) {
+              throw new ManifestError(
+                  node.location,
+                  `Could not merge schema aliases`);
+            }
+          }
+          node.model = Type.newEntity(schema);
           return;
         }
         case 'variable-type': {

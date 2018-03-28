@@ -77,6 +77,12 @@ Alias usage: specify exactly what is required through use of a schema alias. Usi
 in CarDoors param
 ```
 
+Alias widening: specify additional fields to complement an alias.
+
+```
+in CarDoors {Boolean bioweaponDefenceMode} param
+```
+
 Disambiguation: add names and fields to further restrict the possible resolutions of a recipe (just `Tesla` or `Car` might work here, but including both will further restrict potential handles).
 
 ```
