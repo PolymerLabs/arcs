@@ -628,7 +628,9 @@ ${e.message}
       particle.verbs = item.ref.verbs;
       if (item.ref.name) {
         let spec = manifest.findParticleByName(item.ref.name);
-        assert(spec, `could not find particle ${item.ref.name}`);
+        if (!spec) {
+          throw new ManifestError(item.location, `could not find particle ${item.ref.name}`);
+        }
         particle.spec = spec.clone();
       }
       if (item.name) {
@@ -903,7 +905,7 @@ ${e.message}
     });
 
     Object.values(this._schemas).forEach(s => {
-      results.push(s.toString());
+      results.push(s.toManifestString());
     });
 
     Object.values(this._particles).forEach(p => {

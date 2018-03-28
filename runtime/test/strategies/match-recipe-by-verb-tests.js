@@ -70,7 +70,7 @@ describe('MatchRecipeByVerb', function() {
     assert.equal(results.length, 1);
     assert.deepEqual(results[0].result.toString(),
 `recipe
-  create as view0 // S
+  create as view0 // S {}
   P as particle0
     p -> view0
   Q as particle1

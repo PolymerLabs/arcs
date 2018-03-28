@@ -177,21 +177,6 @@ export class Particle {
     }
     return false;
   }
-  // TODO: Move to transformation-particle class.
-  // TODO: Don't serialize schemas, once partial schemas are in use.
-  serializeSchema(hostedParticle) {
-    let hostedConnSchemas = new Set();
-    hostedParticle.connections.forEach(conn => {
-      let type = conn.type.isSetView ? conn.type.primitiveType() : conn.type;
-      if (type.isEntity) {
-        hostedConnSchemas.add(type.entitySchema.toString());
-      }
-    });
-    let schemaString =
-`${[...hostedConnSchemas].map(schema => schema.toString()).join('\n\r')}
-${hostedParticle.toString()}`;
-    return schemaString;
-  }
 }
 
 export class ViewChanges {

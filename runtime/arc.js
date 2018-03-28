@@ -120,13 +120,11 @@ class Arc {
   }
 
   async _serializeHandles() {
-    let schemas = '';
     let handles = '';
     let resources = '';
     let interfaces = '';
 
     let id = 0;
-    let schemaSet = new Set();
     let importSet = new Set();
     for (let handle of this._activeRecipe.handles) {
       if (handle.fate == 'map')
@@ -139,13 +137,6 @@ class Arc {
       let type = handle.type;
       if (type.isSetView)
         type = type.primitiveType();
-      if (type.isEntity) {
-        let schema = type.entitySchema.toString();
-        if (!schemaSet.has(schema)) {
-          schemaSet.add(schema);
-          schemas += schema + '\n';
-        }
-      }
       if (type.isInterface) {
         interfaces += type.interfaceShape.toString() + '\n';
       }
@@ -181,7 +172,7 @@ class Arc {
       }
     }
 
-    return resources + interfaces + schemas + handles;
+    return resources + interfaces + handles;
   }
 
   _serializeParticles() {

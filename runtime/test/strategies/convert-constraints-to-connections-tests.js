@@ -33,7 +33,7 @@ describe('ConvertConstraintsToConnections', async () => {
     let {result, score} = results[0];
     assert.deepEqual(result.toString(),
 `recipe
-  create as view0 // S
+  create as view0 // S {}
   A as particle0
     b = view0
   C as particle1
@@ -125,7 +125,7 @@ describe('ConvertConstraintsToConnections', async () => {
     let {result, score} = results[0];
     assert.deepEqual(result.toString(),
 `recipe
-  create as view0 // S
+  create as view0 // S {}
   A as particle0
     b = view0
   C as particle1
@@ -150,7 +150,7 @@ describe('ConvertConstraintsToConnections', async () => {
     let {result, score} = results[0];
     assert.deepEqual(result.toString(),
 `recipe
-  create as view0 // S
+  create as view0 // S {}
   A as particle0
     b = view0
   C as particle1
@@ -177,7 +177,7 @@ describe('ConvertConstraintsToConnections', async () => {
     let {result, score} = results[0];
     assert.deepEqual(result.toString(),
 `recipe
-  create as view0 // S
+  create as view0 // S {}
   A as particle0
     b = view0
   C as particle1
@@ -205,7 +205,7 @@ describe('ConvertConstraintsToConnections', async () => {
     let {result, score} = results[0];
     assert.deepEqual(result.toString(),
 `recipe
-  use as view0 // S
+  use as view0 // S {}
   A as particle0
     b = view0
   C as particle1
@@ -233,7 +233,7 @@ describe('ConvertConstraintsToConnections', async () => {
     let {result, score} = results[0];
     assert.deepEqual(result.toString(),
 `recipe
-  use as view0 // S
+  use as view0 // S {}
   A as particle0
     b = view0
   C as particle1
@@ -261,7 +261,7 @@ describe('ConvertConstraintsToConnections', async () => {
     assert.equal(1, results.length);
     let {result, score} = results[0];
     assert.deepEqual(result.toString(), `recipe
-  use as view0 // S
+  use as view0 // S {}
   A as particle0
     b = view0
   C as particle1

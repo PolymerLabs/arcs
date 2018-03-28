@@ -52,15 +52,17 @@ describe('manifest', function() {
       assert.equal(recipe.pattern, 'hello world');
       assert.equal(recipe.handles[1].pattern, 'best view');
       let type = recipe.handleConnections[0].rawType;
-      assert.equal('one-s', type.toPrettyString());
-      assert.equal('many-ses', type.setViewOf().toPrettyString());
-
       assert.equal(1, Object.keys(manifest.schemas).length);
       let schema = Object.values(manifest.schemas)[0];
       assert.equal(3, Object.keys(schema.description).length);
       assert.deepEqual(Object.keys(schema.description), ['pattern', 'plural', 'value']);
     };
     verify(manifest);
+    // TODO(dstockwell): The connection between particles and schemas does
+    //                   not roundtrip the same way.
+    let type = manifest.recipes[0].handleConnections[0].rawType;
+    assert.equal('one-s', type.toPrettyString());
+    assert.equal('many-ses', type.setViewOf().toPrettyString());
     verify(await Manifest.parse(manifest.toString(), {}));
   });
   it('can parse a manifest containing a particle specification', async () => {
@@ -70,7 +72,7 @@ schema Person
     `;
     let particleStr0 =
 `particle TestParticle in 'testParticle.js'
-  TestParticle(in [Product] list, out Person person)
+  TestParticle(in [Product {}] list, out Person {} person)
   affordance dom
   affordance dom-touch
   must consume root #master #main

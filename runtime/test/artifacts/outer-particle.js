@@ -20,9 +20,6 @@ defineParticle(({Particle}) => {
       let particle = await views.get('particle').get();
 
       let recipe = Particle.buildManifest`
-        ${inputView.type.entitySchema}
-        ${outputView.type.entitySchema}
-
         ${particle}
 
         recipe
