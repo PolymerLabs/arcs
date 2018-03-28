@@ -11,15 +11,18 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 import './data-explorer.js';
 import Xen from './xen/xen.js';
 
-const template = Xen.Template.createTemplate(
-  `<left title="{{name}}" on-click="_onExpandClick">{{name}}</left>
+const html = Xen.Template.html;
+const template = html`
+
+<left title="{{name}}" on-click="_onExpandClick"><span>{{name}}</span>:</left>
   <right>
     <div hidden="{{hideexpand}}" on-click="_onExpandClick">+</div>
     <div hidden="{{notbool}}" title="{{name}}"><input type="checkbox" checked="{{value}}" on-click="_onCheckInput"></div>
     <div hidden="{{notstring}}" title="{{title}}">{{value}}</div>
     <data-explorer hidden="{{notobject}}" object="{{object}}"></data-explorer>
-  </right>`
-);
+  </right>
+
+`;
 
 class DataItem extends Xen.Base {
   static get observedAttributes() { return ['name', 'value']; }
