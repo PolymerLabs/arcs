@@ -6,11 +6,11 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-defineParticle(({DomParticle}) => {
+defineParticle(({DomParticle, html}) => {
 
-  let host = `calendar`;
+  const host = `calendar`;
 
-  let styles = `
+  const styles = html`
 <style>
   [${host}] {
     padding: 6px;
@@ -142,25 +142,17 @@ defineParticle(({DomParticle}) => {
   [${host}] .x-button:disabled {
     opacity: 0.3;
   }
-  [${host}] .x-button.raised {
-    // transition: box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    // transition-delay: 0.2s;
-  }
-  [${host}] .x-button.raised:active:not(:disabled) {
-    // box-shadow: 0 8px 17px 0 rgba(0, 0, 0, 0.2);
-    // transition-delay: 0s;
-  }
 </style>
   `;
 
-  let template = `
+  let template = html`
 ${styles}
 <div ${host} expanded$="{{expanded}}">
   <div class="date-picker">
-    <i class="material-icons schedule-icon">schedule</i>
-    <button class="x-button raised" on-click="_onPreviousDayClick"><i class="material-icons">keyboard_arrow_left</i></button>
+    <icon class="schedule-icon">schedule</icon>
+    <button class="x-button raised" on-click="_onPreviousDayClick"><icon trigger="day before">keyboard_arrow_left</icon></button>
     <input type="date" value="{{date}}" on-change="_onDateChanged">
-    <button class="x-button raised" on-click="_onNextDayClick"><i class="material-icons">keyboard_arrow_right</i></button>
+    <button class="x-button raised" on-click="_onNextDayClick"><icon trigger="next day">keyboard_arrow_right</icon></button>
   </div>
 
   <div class="scroll-container">
@@ -186,8 +178,8 @@ ${styles}
     </div>
   </div>
 
-  <button class="expand-button" on-click="_expandCalendar"><i class="material-icons">expand_more</i></button>
-  <button class="collapse-button" on-click="_collapseCalendar"><i class="material-icons">expand_less</i></button>
+  <button class="expand-button" on-click="_expandCalendar"><icon>expand_more</icon></button>
+  <button class="collapse-button" on-click="_collapseCalendar"><icon>expand_less</icon></button>
 </div>
     `.trim();
 
