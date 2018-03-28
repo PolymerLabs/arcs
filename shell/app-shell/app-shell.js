@@ -264,10 +264,18 @@ class AppShell extends Xen.Debug(Xen.Base, log) {
       );
     }
     // Are the new suggestions actually different?
-    const dirty = !oldSuggestions || oldSuggestions.length !== suggestions.length || oldSuggestions.some((s, i) => suggestions[i].hash !== s.hash);
-    if (dirty) {
+    if (this._suggestionsDiffer(oldSuggestions, suggestions)) {
+      // ...then apply them and open the drawer
       this._setState({suggestions, drawerOpen: true});
     }
+  }
+  _suggestionsDiffer(old, neo) {
+    let dirty =
+        !old ||
+        old.length !== neo.length ||
+        old.some((s, i) => neo[i].hash !== s.hash || neo[i].descriptionText != s.descriptionText)
+        ;
+    return dirty;
   }
   async _consumePlan(arc, description, metadata) {
     // arc has changed, generate new description
