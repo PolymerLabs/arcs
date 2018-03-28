@@ -17,7 +17,7 @@ defineParticle(({SimpleParticle, html}) => {
       }
     }
     onJoin(e) {
-      let gameState = this._props.gameSate;
+      let gameState = this._props.gameState;
       let name = this._props.user.name;
       let newGameState = gameState ? Object.assign({}, gameState.rawData) : {};
       if (!gameState || !gameState.player1) {
