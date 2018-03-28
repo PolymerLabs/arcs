@@ -36,44 +36,6 @@ recipe
   map #wishlist as wishlist
   particle can showList
 
-// // Create shortlist with [product, ...] and suggest similar products from [person]'s wish list
-// recipe
-//   // Chooser.choices -> Recommend.recommendations
-//   Chooser.resultList -> ShowCollection.collection
-//   // Chooser.resultList -> Recommend.known
-//   Chooser.resultList -> Multiplexer2.list
-//   Chooser.choices -> Multiplexer2.others
-//   map #wishlist as wishlist
-//   copy #shortlist as shortlist
-//   // Recommend
-//   //   population <- wishlist
-//   ShowCollection
-//     collection <- shortlist
-//     consume master
-//       provide item as itemSlot
-//       provide annotation as annotationSlot
-//   Multiplexer
-//     list <- shortlist
-//     hostedParticle = ShowProduct
-//     consume annotation as itemSlot
-//   Multiplexer2
-//     hostedParticle = AlsoOn
-//     consume annotation as annotationSlot
-// 
-// // Buying for [person]'s [occasion] in [timeframe]? Product [X] arrives too late.
-// recipe
-//   map as view1
-//   use #shortlist as view2
-//   use as view3
-//   GiftList
-//     person <- view1
-//   Multiplexer
-//     list <- view2
-//     hostedParticle = Arrivinator
-//   Multiplexer
-//     list <- view3
-//     hostedParticle = Arrivinator
-
 recipe
   copy #browser as shortlist
   copy #giftsforclaire as giftsforclaire
@@ -86,9 +48,6 @@ recipe
     person <- person
     desiredShipping = desiredShipping
 
-// TODO this could eventually read not from a hardcoded wishlist but from
-// Claire's shared wishlist (which in turn was populated from browser
-// context).
 recipe
   use #browser as shortlist
   copy #wishlist as wishlist
