@@ -76,4 +76,106 @@ describe('MatchRecipeByVerb', function() {
   Q as particle1
     q <- view0`);
   });
+  it('listens to slot constraints', async () => {
+    let manifest = await Manifest.parse(`
+      particle P in 'A.js'
+        P()
+        consume foo
+          provide bar
+    
+      particle Q in 'B.js'
+        Q()
+        consume boo
+          provide far
+
+      recipe verb
+        P
+
+      recipe verb
+        Q
+
+      recipe verb
+        P
+        Q
+
+      recipe
+        particle can verb
+
+      recipe
+        particle can verb
+          consume boo
+
+      recipe
+        particle can verb
+          consume foo
+            provide bar
+    `);
+
+    let arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'dom');
+    let inputParams = {generated: [{result: manifest.recipes[3], score: 1}]};
+    let mrv = new MatchRecipeByVerb(arc);
+    let results = await mrv.generate(inputParams);
+    assert.equal(results.length, 3);
+
+    inputParams = {generated: [{result: manifest.recipes[4], score: 1}]};
+    results = await mrv.generate(inputParams);
+    assert.equal(results.length, 2);
+    assert.equal(results[0].result.particles.length, 1);
+    assert.equal(results[0].result.particles[0].name, 'Q');
+    assert.equal(results[1].result.particles.length, 2);
+
+    inputParams = {generated: [{result: manifest.recipes[5], score: 1}]};
+    results = await mrv.generate(inputParams);
+    assert.equal(results.length, 2);
+    assert.equal(results[0].result.particles.length, 1);
+    assert.equal(results[0].result.particles[0].name, 'P');
+    assert.equal(results[1].result.particles.length, 2);
+  });
+  it('carries slot assignments across verb substitution', async () => {
+    let manifest = await Manifest.parse(`
+      particle P in 'A.js'
+        P()
+        consume foo
+          provide bar  
+
+      particle S in 'B.js'
+        S()
+        consume bar
+          provide foo
+
+      recipe verb
+        P
+    
+      recipe
+        particle can verb
+          consume foo
+            provide bar as s0
+        S
+          consume bar as s0
+
+      recipe
+        particle can verb
+          consume foo as s0
+        S
+          consume bar
+            provide foo as s0
+    `);
+
+    let arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'dom');
+    let inputParams = {generated: [{result: manifest.recipes[1], score: 1}]};
+    let mrv = new MatchRecipeByVerb(arc);
+    let results = await mrv.generate(inputParams);
+    assert.equal(results.length, 1);
+    let recipe = results[0].result;
+    assert.equal(recipe.particles[0].consumedSlotConnections.foo.providedSlots.bar, recipe.particles[1].consumedSlotConnections.bar.targetSlot);
+    assert.equal(recipe.slots[0].consumeConnections[0], recipe.particles[1].consumedSlotConnections.bar);
+    assert.equal(recipe.slots[0].sourceConnection, recipe.particles[0].consumedSlotConnections.foo);
+    
+    inputParams = {generated: [{result: manifest.recipes[2], score: 1}]};
+    results = await mrv.generate(inputParams);
+    recipe = results[0].result;
+    assert.equal(recipe.particles[0].consumedSlotConnections.foo.targetSlot, recipe.particles[1].consumedSlotConnections.bar.providedSlots.foo);
+    assert.equal(recipe.slots[1].consumeConnections[0], recipe.particles[0].consumedSlotConnections.foo);
+    assert.equal(recipe.slots[1].sourceConnection, recipe.particles[1].consumedSlotConnections.bar);
+  });
 });

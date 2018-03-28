@@ -1244,4 +1244,22 @@ resource SomeName
     assert(validRecipe.normalize());
     assert(validRecipe.isResolved());
   });
+
+  it('can parse a recipe with slot constraints on verbs', async () => {
+    let manifest = await Manifest.parse(`
+      recipe
+        particle can verb
+          consume consumeSlot
+            provide provideSlot
+    `);
+
+    let recipe = manifest.recipes[0];
+    assert(recipe.normalize());
+
+    assert.equal(recipe.particles[0]._verbs[0], 'verb');
+    assert.equal(recipe.particles[0]._spec, undefined);
+    let slotConnection = recipe.particles[0]._consumedSlotConnections.consumeSlot;
+    assert(slotConnection._providedSlots.provideSlot);
+    assert.equal(slotConnection._providedSlots.provideSlot.sourceConnection, slotConnection);
+  });
 });

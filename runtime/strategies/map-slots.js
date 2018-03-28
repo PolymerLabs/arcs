@@ -21,6 +21,12 @@ export default class MapSlots extends Strategy {
 
     return Recipe.over(this.getResults(inputParams), new class extends RecipeWalker {
       onSlotConnection(recipe, slotConnection) {
+        // don't try to connect verb constraints
+        // TODO: is this right? Should constraints be connectible, in order to precompute the
+        // recipe side once the verb is substituted?
+        if (slotConnection.slotSpec == undefined)
+          return;
+
         if (slotConnection.isConnected()) {
           return;
         }
@@ -89,6 +95,10 @@ export default class MapSlots extends Strategy {
 
   // Returns true, if the given slot is a viable candidate for the slotConnection.
   static _filterSlot(slotConnection, slot) {
+    // if there's no slotSpec, this is just a slot constraint on a verb
+    if (!slotConnection.slotSpec)
+      return false;
+
     if (slotConnection.slotSpec.isSet != slot.getProvidedSlotSpec().isSet) {
       return false;
     }
