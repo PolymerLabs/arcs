@@ -375,12 +375,12 @@ ${e.message}
           let names = [];
           for (let name of node.names) {
             let resolved = manifest.resolveReference(name);
+            if (resolved && resolved.schema && resolved.schema.isAlias) {
+              aliases.push(resolved.schema);
+            } else {
+              names.push(name);
+            }
             if (resolved && resolved.schema) {
-              if (resolved.schema.isAlias) {
-                aliases.push(resolved.schema);
-              } else {
-                names.push(name);
-              }
               schemas.push(resolved.schema);
             }
           }
@@ -408,7 +408,7 @@ ${e.message}
             fields[name] = type;
           }
           let schema = new Schema({
-            names: node.names,
+            names,
             fields,
           });
           for (let alias of aliases) {
