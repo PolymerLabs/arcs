@@ -4,14 +4,7 @@ import './elements/arc-host.js';
 import './elements/shell-ui.js';
 import './elements/shell-handles.js';
 import './elements/cloud-data.js';
-// components
-// components for particle use
-import '../components/corellia-xen/cx-input.js';
-import '../components/good-map.js';
-import '../components/video-controller.js';
-import '../components/firebase-upload.js';
-// components for particle use: deprecated
-import '../components/x-list.js';
+
 // code libs
 import Xen from '../components/xen/xen.js';
 import ArcsUtils from '../app-shell/lib/arcs-utils.js';
@@ -113,7 +106,6 @@ import '../artifacts/canonical.manifest'
     this._setState({plan: suggestion.plan});
   }
   _onPlans(e, plans) {
-    //plans = plans && plans.slice(0, 4);
     this._setState({suggestions: plans, showhint: plans && plans.length > 0});
   }
   _onUsers(e, users) {

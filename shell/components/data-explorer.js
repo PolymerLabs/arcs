@@ -11,44 +11,63 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 import './data-item.js';
 import Xen from './xen/xen.js';
 
-const template = Xen.Template.createTemplate(
-  `<style>
-    data-explorer {
-      display: block;
-    }
-    data-item {
-      display: flex;
-    }
-    data-item > * {
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      border: 1px dotted silver;
-      border-left: none;
-      border-top: none;
-    }
-    data-item > left {
-      display: flex;
-      align-items: center;
-      padding: 4px 8px 4px 4px;
-      justify-content: flex-end;
-      font-weight: bold;
-      font-size: 0.9em;
-      width: 96px;
-      background-color: whitesmoke;
-    }
-    data-item > right {
-      flex: 3;
-    }
-    data-item > right > div {
-      padding: 4px;
-    }</style>
-    <div>{{items}}</div>`
-);
+const html = Xen.Template.html;
+const template = html`
 
-const templateDataItem = Xen.Template.createTemplate(
-  `<data-item name="{{name}}" value="{{value}}" on-item-change="_onItemChange"></data-item>`
-);
+<style>
+  data-explorer {
+    display: block;
+    border-bottom: 1px solid hsl(0,0%,75%);
+  }
+  data-item {
+    display: flex;
+    /*border-bottom: 1px solid hsl(0,0%,75%);*/
+  }
+  data-item > * {
+    white-space: nowrap;
+    /*
+    overflow: hidden;
+    text-overflow: ellipsis;
+    border: 1px dotted silver;
+    border-left: none;
+    border-top: none;
+    */
+  }
+  data-item > left {
+    display: flex;
+    flex-shrink: 0;
+    /*align-items: center;*/
+    padding: 4px 8px 4px 4px;
+    justify-content: flex-end;
+    font-weight: bold;
+    font-size: 0.9em;
+    /*
+    width: 96px;
+    */
+    background-color: whitesmoke;
+  }
+  /*
+  data-item > right {
+    flex: 3;
+  }
+  */
+  data-item > right > div {
+    padding: 4px;
+  }
+  right > data-explorer:not([hidden]) {
+    padding-top: 1em;
+  }
+</style>
+
+<div>{{items}}</div>
+
+`;
+
+const templateDataItem = html`
+
+<data-item name="{{name}}" value="{{value}}" on-item-change="_onItemChange"></data-item>
+
+`;
 
 class DataExplorer extends Xen.Base {
   static get observedAttributes() { return ['object']; }
