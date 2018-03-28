@@ -138,7 +138,7 @@ const ArcsUtils = {
     return handle;
   },
   metaTypeFromType(type) {
-    return JSON.stringify(type ? type.toLiteral() : null);
+    return JSON.stringify(type ? type.resolvedType().toLiteral() : null);
   },
   typeFromMetaType(metaType) {
     return Arcs.Type.fromLiteral(JSON.parse(metaType));
