@@ -91,7 +91,7 @@ recipe
 // context).
 recipe
   use #browser as shortlist
-  map #wishlist as wishlist
+  copy #wishlist as wishlist
 
   CopyCollection
     input <- wishlist
@@ -99,6 +99,26 @@ recipe
 
   description `pull in Claire's wishlist`
 
+// Create a wishlist by selecting items from the browsing context
+recipe
+  map #browser as shortlist
+  create #wishlist as wishlist
+
+  Chooser
+    choices <- shortlist
+    resultList = wishlist
+
+  ShowCollection
+    collection = wishlist
+    consume master
+      provide item as itemSlot
+      provide annotation as annotationSlot
+  Multiplexer
+    list <- shortlist
+    hostedParticle = ShowProduct
+    consume annotation as itemSlot
+
+  description `create your wishlist`
 
 
 // Check manufacturer information for products.
@@ -130,14 +150,11 @@ recipe
 
 // Recommendations based on Claire's interest in field hockey.
 // TODO - transition to annotation?
-recipe
-  map #wishlist as wishlist
-  Interests
-    list <- wishlist
+//recipe
+//  map #wishlist as wishlist
+//  Interests
+//    list <- wishlist
 
-view ClairesWishlist of [Product] #wishlist in 'data/wishlist.json'
-  description `Claire's wishlist`
 view GiftsForClaire of [Product] #giftsforclaire in 'data/empty.json'
   description `Gifts for Claire`
 view APerson of Person in 'data/people.json'
-//view ThePeople of Person in 'data/people.json'
