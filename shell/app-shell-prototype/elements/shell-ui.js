@@ -122,8 +122,8 @@ const template = html`
       width: 100%;
       transition: transform 100ms ease-in-out;
     }
-    [toolbar] > icon, [toolbar] > a {
-      padding: 16px;
+    [toolbar] > *:not(span) {
+      margin: 16px;
       height: 24px;
     }
     [main][toolbar]:not([open]) {
@@ -168,9 +168,6 @@ const template = html`
     }
     [settings][content][open] {
       transform: translate3d(calc(-100% - 3px), 0, 0);
-    }
-    [user][content][open] {
-      transform: translate3d(calc(-200% - 6px), 0, 0);
     }
     [modal] {
       padding: 32px;
@@ -219,13 +216,27 @@ const template = html`
       z-index: 10000;
       transform: translate3d(0,0,0);
     }
+    avatar {
+      --avatar-size: 24px;
+      --large-avatar-size: 40px;
+      display: inline-block;
+      height: var(--avatar-size);
+      width: var(--avatar-size);
+      min-width: var(--avatar-size);
+      border-radius: 100%;
+      border: 1px solid whitesmoke;
+      background: gray center no-repeat;
+      background-size: cover;
+    }
   </style>
-
+  <!-- -->
   <div scrim open$="{{scrimOpen}}" on-click="_onScrimClick"></div>
+  <!-- -->
   <slot name="modal"></slot>
   <slot></slot>
   <!-- adds space at the bottom of the static flow so no actual content is ever covered by the app-bar -->
   <div barSpacer></div>
+  <!-- -->
   <div bar state$="{{barState}}" open$="{{barOpen}}" over$="{{barOver}}" on-mouseenter="_onBarEnter" on-mouseleave="_onBarLeave">
     <div touchbar on-click="_onTouchbarClick"></div>
     <div toolbars on-click="_onBarClick">
@@ -244,19 +255,19 @@ const template = html`
       <div settings toolbar open$="{{settingsToolbarOpen}}">
         <icon on-click="_onMainClick">arrow_back</icon>
         <span style="flex: 1;"></span>
-        <icon>settings</icon>
+        <avatar title="{{avatar_title}}" style="{{avatar_style}}" on-click="_onAvatarClick"></avatar>
       </div>
     </div>
     <div contents>
       <div suggestions content open$="{{suggestionsContentOpen}}">
         <slot name="suggestions" slot="suggestions" on-plan-choose="_onPlanChoose"></slot>
       </div>
-      <settings-panel settings content open$="{{settingsContentOpen}}" friends="{{users}}" user="{{user}}" on-user="_onSettingsUser"></settings-panel>
-      <user-picker user content open$="{{userContentOpen}}" users="{{users}}" on-selected="_onSelectUser"></user-picker>
+      <settings-panel settings content open$="{{settingsContentOpen}}" users="{{users}}" user="{{user}}" user_picker_open="{{userPickerOpen}}" friends="{{users}}" on-user="_onSelectUser"></settings-panel>
     </div>
   </div>
-  <icon style="position: fixed; right: 16px; top: 16px;" on-click="_onToolsClick">assessment</icon>
-  <div tools open$="{{toolsOpen}}" on-click="_onToolsClick">
+  <!-- -->
+  <icon style="position: fixed; right: 0px; bottom: 0px;" on-click="_onToolsClick">assessment</icon>
+  <div tools open$="{{toolsOpen}}">
     <simple-tabs>
       <div tab="Handle Explorer">
         <handle-explorer arc="{{arc}}"></handle-explorer>
@@ -366,9 +377,6 @@ class ShellUi extends Xen.Debug(Xen.Base, log) {
     e.stopPropagation();
     let {toolState} = this._state;
     switch (toolState) {
-      case 'user':
-        toolState = 'settings';
-        break;
       default:
         toolState = 'main';
         break;
@@ -384,12 +392,9 @@ class ShellUi extends Xen.Debug(Xen.Base, log) {
     this._fire('plan', plan);
     this._setState({barState: 'peek'});
   }
-  _onSettingsUser(e) {
-    this._setState({toolState: 'user'});
-  }
   _onSelectUser(e, user) {
     this._fire('select-user', user);
-    this._setState({toolState: 'settings'});
+    this._setState({/*toolState: 'settings',*/userPickerOpen: false});
   }
   _onExperimentClick(e) {
     e.stopPropagation();
@@ -398,8 +403,11 @@ class ShellUi extends Xen.Debug(Xen.Base, log) {
   _onToolsClick() {
     this._setState({toolsOpen: !this._state.toolsOpen});
   }
-  _onToolsEnter() {
-    this._setState({toolsOpen: true});
+  // _onToolsEnter() {
+  //   this._setState({toolsOpen: true});
+  // }
+  _onAvatarClick() {
+    this._setState({userPickerOpen: !this._state.userPickerOpen});
   }
 }
 
