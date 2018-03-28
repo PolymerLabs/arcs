@@ -6,5 +6,7 @@ import '../components/firebase.4.2.0.js';
 import './firebase-config.js';
 // arcs runtime
 import '../build/ArcsLib.js';
+// components for particle use
+import './whitelisted.js';
 // elements
 import './app-shell.js';
