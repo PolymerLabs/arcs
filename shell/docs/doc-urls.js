@@ -1,4 +1,4 @@
-const runtime = `../../../arcs/runtime`;
+const runtime = `../../runtime`;
 window.docUrls = [
   `${runtime}/inner-PEC.js`,
   `${runtime}/particle.js`,

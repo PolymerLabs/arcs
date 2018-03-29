@@ -110,7 +110,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     // Convert this-type-of_variables ToCamelNotation.
     let toCamel = fn => {
       return fn.replace(/.*\/([^/.]+)\.\w+/, "$1").replace(/^[a-z]|(-[a-z])|(_[a-z])/g, v => {
-        return v.length < 2 ? v.toUpperCase() : " " + v[1].toLowerCase();
+        return v.length < 2 ? v.toUpperCase() : v[1].toUpperCase();
       })
     };
 
@@ -122,8 +122,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       let values = await Promise.all(mds.map(async f => {
         let response = await fetch(f);
         let text = await response.text();
+        let name = toCamel(f);
         return {
-          name: toCamel(f),
+          name,
           chapter: f.startsWith('docs') ? 'Background' : 'Reference',
           description: buildMdRenderer(f).render(text)
         };
@@ -184,6 +185,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
     let updateTopic = () => {
       let name = location.hash.slice(1) || `Manifest`;
+      debugger;
       let topic = corpus.classes.find(c => c.name === name);
       doc.innerHTML = topic ? renderTopic(topic) : 'n/a';
     };
