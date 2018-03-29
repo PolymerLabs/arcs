@@ -38,11 +38,11 @@ class PersistentUser extends Xen.Debug(Xen.Base, log) {
       state.watch.watches = [this._watchUser(state.db, props.id)];
     }
     // if user record doesn't reference check with our cache, write to database
-    if (props.user != state.user) {
+    if (props.user && props.user != state.user) {
       this._writeUser(state.db, props.user);
     }
     // if user opens a new arc, touch the key in the user record
-    if (props.user && props.key != state.key) {
+    if (props.user && props.key && props.key != state.key) {
       state.key = props.key;
       log(`WRITING into [${props.user.name}].arcs (touching arc)`, props.key);
       // record that the user touched this arc
