@@ -13,6 +13,8 @@ import Arcs from '../lib/arcs.js';
 import ArcsUtils from '../lib/arcs-utils.js';
 
 const log = Xen.logFactory('ArcHost', '#007ac1');
+const groupCollapsed = Xen.logFactory('ArcHost', '#007ac1', 'groupCollapsed');
+const groupEnd = Xen.logFactory('ArcHost', '#007ac1', 'groupEnd');
 const warn = Xen.logFactory('ArcHost', '#007ac1', 'warn');
 const error = Xen.logFactory('ArcHost', '#007ac1', 'error');
 
@@ -168,9 +170,9 @@ class ArcHost extends Xen.Debug(Xen.Base, log) {
     //
     serialization = `${manifest}\n${serialization}`;
     // serialize old arc
-    console.groupCollapsed('serializing...');
+    groupCollapsed('serializing...');
     log(serialization);
-    console.groupEnd();
+    groupEnd();
     // remove rendered particle DOM
     Array.from(document.querySelectorAll('[slotid]')).forEach(n => n.textContent = '');
     // generate new slotComposer

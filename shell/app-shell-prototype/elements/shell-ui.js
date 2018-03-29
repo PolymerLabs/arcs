@@ -83,8 +83,9 @@ const template = html`
       left: 0;
       margin: 0 auto;
       box-sizing: border-box;
+      height: var(--bar-max-height);
       max-width: var(--bar-max-width);
-      max-height: var(--bar-max-height);
+      max-height: var(--bar-hint-height);
       background-color: white;
       box-shadow: 0px 0px 32px 3px rgba(0,0,0,0.13);
       transition: transform 200ms ease-out;
@@ -96,13 +97,13 @@ const template = html`
       transform: translate3d(0, calc(100% - var(--bar-peek-height)), 0);
     }
     [bar][state="hint"] {
-      transform: translate3d(0, calc(100% - var(--bar-hint-height)), 0);
+      transform: translate3d(0, 0, 0);
     }
     [bar][state="over"] {
       transform: translate3d(0, calc(100% - var(--bar-over-height)), 0);
     }
     [bar][state="open"] {
-      height: var(--bar-max-height);
+      max-height: var(--bar-max-height);
       transform: translate3d(0, 0, 0);
     }
     [toolbars] {
