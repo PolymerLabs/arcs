@@ -238,5 +238,5 @@ describe('MatchRecipeByVerb', function() {
   assert.equal(recipe.slots[1].sourceConnection, recipe.particles[1].consumedSlotConnections.bar);
   assert.equal(recipe.particles[2].consumedSlotConnections.foo.targetSlot, recipe.particles[1].consumedSlotConnections.bar.providedSlots.foo);
   assert.equal(recipe.slots[1].consumeConnections[1], recipe.particles[2].consumedSlotConnections.foo);
-  })
+  });
 });
