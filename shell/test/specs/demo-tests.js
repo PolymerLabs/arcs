@@ -471,8 +471,11 @@ describe('Arcs demos', function() {
     // Rather than trying to mock this out let's just grab the first
     // restaurant.
     const restaurantSelectors = particleSelectors('root', ['#webtest-title']);
+    // wait for the page to load (using some fairly vague indications)
     waitForVisible(restaurantSelectors);
     waitForSuggestion('Make a reservation');
+
+    // click on the first restaurant in the list
     let restaurantNodes = pierceShadows(restaurantSelectors);
     console.log(`click: restaurantSelectors`);
     browser.elementIdClick(restaurantNodes.value[0].ELEMENT);
