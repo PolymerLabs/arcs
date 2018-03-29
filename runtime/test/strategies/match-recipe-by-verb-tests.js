@@ -178,4 +178,65 @@ describe('MatchRecipeByVerb', function() {
     assert.equal(recipe.slots[1].consumeConnections[0], recipe.particles[0].consumedSlotConnections.foo);
     assert.equal(recipe.slots[1].sourceConnection, recipe.particles[1].consumedSlotConnections.bar);
   });
+
+  it.only('carries slot assignments across when they\'re assigned elsewhere too', async () => {
+    let manifest = await Manifest.parse(`
+    particle P in 'A.js'
+      P()
+      consume foo
+        provide bar  
+
+    particle S in 'B.js'
+      S()
+      consume bar
+        provide foo
+
+    particle T in 'C.js'
+      T()
+      consume bar
+      consume foo
+
+    recipe verb
+      P
+  
+    recipe
+      particle can verb
+        consume foo
+          provide bar as s0
+      S
+        consume bar as s0
+      T
+        consume bar as s0
+
+    recipe
+      particle can verb
+        consume foo as s0
+      S
+        consume bar
+          provide foo as s0
+      T
+        consume foo as s0
+  `);
+
+  let arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'dom');
+  let inputParams = {generated: [{result: manifest.recipes[1], score: 1}]};
+  let mrv = new MatchRecipeByVerb(arc);
+  let results = await mrv.generate(inputParams);
+  assert.equal(results.length, 1);
+  let recipe = results[0].result;
+  assert.equal(recipe.particles[0].consumedSlotConnections.foo.providedSlots.bar, recipe.particles[1].consumedSlotConnections.bar.targetSlot);
+  assert.equal(recipe.slots[0].consumeConnections[0], recipe.particles[1].consumedSlotConnections.bar);
+  assert.equal(recipe.slots[0].sourceConnection, recipe.particles[0].consumedSlotConnections.foo);
+  assert.equal(recipe.particles[0].consumedSlotConnections.foo.providedSlots.bar, recipe.particles[2].consumedSlotConnections.bar.targetSlot);
+  assert.equal(recipe.slots[0].consumeConnections[1], recipe.particles[2].consumedSlotConnections.bar);
+  
+  inputParams = {generated: [{result: manifest.recipes[2], score: 1}]};
+  results = await mrv.generate(inputParams);
+  recipe = results[0].result;
+  assert.equal(recipe.particles[0].consumedSlotConnections.foo.targetSlot, recipe.particles[1].consumedSlotConnections.bar.providedSlots.foo);
+  assert.equal(recipe.slots[1].consumeConnections[0], recipe.particles[0].consumedSlotConnections.foo);
+  assert.equal(recipe.slots[1].sourceConnection, recipe.particles[1].consumedSlotConnections.bar);
+  assert.equal(recipe.particles[2].consumedSlotConnections.foo.targetSlot, recipe.particles[1].consumedSlotConnections.bar.providedSlots.foo);
+  assert.equal(recipe.slots[1].consumeConnections[1], recipe.particles[2].consumedSlotConnections.foo);
+  })
 });
