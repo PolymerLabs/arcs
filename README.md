@@ -90,6 +90,14 @@ There are some debugging hints (code and configuration you can uncomment to
 make debugging easier) in `test/specs/starter-test.js` and `test/wdio.conf.js`
 marked with the phrase `debug hint`.
 
+To activate a sane set of helpful debugging flags, there's a `wdio-debug`
+command line argument that you can pass in. This will run Chrome in a
+non-headless fashion, and will increase timeouts.
+
+Through npm: `npm run test-wdio --wdio-debug=true` (or `npm test
+--wdio-debug=true`).  Directly through wdio: `node_modules/.bin/wdio
+--wdio-debug=true shell/test/wdio.conf.js`.
+
 #### Graphical (non-headless)
 
 It may be easiest to see the problem in a browser window to diagnose it. Edit
