@@ -11,6 +11,7 @@
 import Loader from '../../runtime/loader.js';
 import particle from '../../runtime/particle.js';
 import DomParticle from '../../runtime/dom-particle.js';
+import MultiplexerDomParticle from '../../runtime/multiplexer-dom-particle.js';
 import TransformationDomParticle from '../../runtime/transformation-dom-particle.js';
 
 const logFactory = (preamble, color, log='log') => console[log].bind(console, `Ptcl:%c${preamble}`, `background: ${color}; color: white; padding: 1px 6px 2px 7px; border-radius: 4px;`);
@@ -76,6 +77,7 @@ export default class BrowserLoader extends Loader {
       particle,
       Particle: particle.Particle,
       DomParticle,
+      MultiplexerDomParticle,
       SimpleParticle: DomParticle,
       TransformationDomParticle,
       resolver,

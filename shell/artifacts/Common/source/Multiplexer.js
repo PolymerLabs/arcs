@@ -9,114 +9,21 @@
  */
 'use strict';
 
-defineParticle(({Particle, TransformationDomParticle}) => {
-  return class Multiplexer extends TransformationDomParticle {
-    constructor() {
-      super();
-      this._itemSubIdByHostedSlotId = new Map();
-      this._connByHostedConn = new Map();
-    }
-    async setViews(views) {
-      this.handleIds = {};
-      let arc = await this.constructInnerArc();
-
-      let hostedParticle = await views.get('hostedParticle').get();
-
-      // Map all additional connections.
-      let otherMappedViews = [];
-      let otherConnections = [];
-      let index = 2;
-      for (let [connectionName, otherView] of views) {
-        if (['list', 'hostedParticle'].includes(connectionName)) {
-          continue;
-        }
-        otherMappedViews.push(`map '${await arc.mapHandle(otherView._proxy)}' as v${index}`);
-        let hostedOtherConnection = hostedParticle.connections.find(conn => conn.isCompatibleType(otherView.type));
-        if (hostedOtherConnection) {
-          otherConnections.push(`${hostedOtherConnection.name} <- v${index++}`);
-          this._connByHostedConn.set(hostedOtherConnection.name, connectionName);
-        }
-      }
-      this.setState({arc, type: views.get('list').type, hostedParticle, otherMappedViews, otherConnections});
-
-      super.setViews(views);
-    }
-
-    async willReceiveProps({list}, {arc, type, hostedParticle, otherMappedViews, otherConnections}) {
-      if (list.length > 0) {
-        this.relevance = 0.1;
-      }
-
-      for (let [index, item] of list.entries()) {
-        if (this.handleIds[item.id]) {
-          let itemView = await this.handleIds[item.id];
-          itemView.set(item);
-          continue;
-        }
-
-        let itemViewPromise = arc.createHandle(type.primitiveType(), 'item' + index);
-        this.handleIds[item.id] = itemViewPromise;
-
-        let itemView = await itemViewPromise;
-
-        let hostedSlotName = [...hostedParticle.slots.keys()][0];
-        let slotName = [...this.spec.slots.values()][0].name;
-
-        let slotId = await arc.createSlot(this, slotName, hostedParticle.name, hostedSlotName);
-
-        if (!slotId) {
-          continue;
-        }
-
-        this._itemSubIdByHostedSlotId.set(slotId, item.id);
-
-
-        let recipe = Particle.buildManifest`
+defineParticle(({Particle, MultiplexerDomParticle}) => {
+  return class Multiplexer extends MultiplexerDomParticle {
+    constructInnerRecipe(hostedParticle, item, itemView, slot, other) {
+      let recipe = Particle.buildManifest`
 ${hostedParticle}
 recipe
   use '${itemView._id}' as v1
-  ${otherMappedViews.join('\n')}
-  slot '${slotId}' as s1
+  ${other.views.join('\n')}
+  slot '${slot.id}' as s1
   ${hostedParticle.name}
     ${hostedParticle.connections[0].name} <- v1
-    ${otherConnections.join('\n')}
-    consume ${hostedSlotName} as s1
+    ${other.connections.join('\n')}
+    consume ${slot.name} as s1
   `;
-        try {
-          await arc.loadRecipe(recipe, this);
-          itemView.set(item);
-        } catch (e) {
-          console.log(e);
-        }
-      }
-    }
-
-    combineHostedModel(slotName, hostedSlotId, content) {
-      let subId = this._itemSubIdByHostedSlotId.get(hostedSlotId);
-      if (!subId) {
-        return;
-      }
-      let items = this._state.renderModel ? this._state.renderModel.items : [];
-      let listIndex = items.findIndex(item => item.subId == subId);
-      let item = Object.assign({}, content.model, {subId});
-      if (listIndex >= 0 && listIndex < items.length) {
-        items[listIndex] = item;
-      } else {
-        items.push(item);
-      }
-      this._setState({renderModel: {items}});
-    }
-
-    combineHostedTemplate(slotName, hostedSlotId, content) {
-      if (!this._state.template && !!content.template) {
-        let template = content.template;
-        // Replace hosted particle connection in template with the corresponding this particle connection names.
-        // TODO: make this generic!
-        this._connByHostedConn.forEach((conn, hostedConn) => {
-          template = template.replace(new RegExp(`{{${hostedConn}.description}}`, 'g'), `{{${conn}.description}}`);
-        });
-        this._setState({template});
-      }
+      return recipe;
     }
   };
 });
