@@ -8,6 +8,7 @@
 
 import '../Common/Multiplexer.manifest'
 import '../Common/ShowCollection.manifest'
+import '../Common/CopyCollection.manifest'
 import 'Product.schema'
 import 'Recommend.manifest'
 import 'Chooser.manifest'
@@ -15,8 +16,10 @@ import 'GiftList.manifest'
 import 'Interests.manifest'
 import 'AlsoOn.manifest'
 import 'Arrivinator.manifest'
+import 'AlternateShipping.manifest'
 import 'ManufacturerInfo.manifest'
 import 'ShowProduct.manifest'
+import 'ShopFor.manifest'
 
 // show a list
 recipe showList
@@ -33,19 +36,39 @@ recipe
   map #wishlist as wishlist
   particle can showList
 
-// Create shortlist with [product, ...] and suggest similar products from [person]'s wish list
 recipe
-  Chooser.choices -> Recommend.recommendations
-  Chooser.resultList -> ShowCollection.collection
-  Chooser.resultList -> Recommend.known
-  Chooser.resultList -> Multiplexer2.list
-  Chooser.choices -> Multiplexer2.others
-  map #wishlist as wishlist
-  copy #shortlist as shortlist
-  Recommend
-    population <- wishlist
+  copy #browser as shortlist
+  create #giftsforclaire as giftsforclaire
+  map as person
+  create #desiredShipping as desiredShipping
+ 
+  ShopFor
+    choices <- shortlist
+    basket = giftsforclaire
+    person <- person
+    desiredShipping = desiredShipping
+
+recipe
+  use #browser as shortlist
+  copy #wishlist as wishlist
+
+  CopyCollection
+    input <- wishlist
+    output -> shortlist
+
+  description `pull in Claire's wishlist`
+
+// Create a wishlist by selecting items from the browsing context
+recipe
+  map #browser as shortlist
+  create #wishlist as wishlist
+
+  Chooser
+    choices <- shortlist
+    resultList = wishlist
+
   ShowCollection
-    collection <- shortlist
+    collection = wishlist
     consume master
       provide item as itemSlot
       provide annotation as annotationSlot
@@ -53,41 +76,42 @@ recipe
     list <- shortlist
     hostedParticle = ShowProduct
     consume annotation as itemSlot
-  Multiplexer2
-    hostedParticle = AlsoOn
-    consume annotation as annotationSlot
 
-// Buying for [person]'s [occasion] in [timeframe]? Product [X] arrives too late.
-recipe
-  map as view1
-  use #shortlist as view2
-  use as view3
-  GiftList
-    person <- view1
-  Multiplexer
-    list <- view2
-    hostedParticle = Arrivinator
-  Multiplexer
-    list <- view3
-    hostedParticle = Arrivinator
+  description `create your wishlist`
+
 
 // Check manufacturer information for products.
 recipe
-  use #shortlist as shortlist
+  use #browser as shortlist
   Multiplexer
     list <- shortlist
     hostedParticle <- ManufacturerInfo
 
-// Recommendations based on Claire's interest in field hockey.
+// Check arrival information for products
 recipe
-  map #wishlist as wishlist
-  Interests
-    list <- wishlist
+  use #browser as shortlist
+  use #desiredShipping as desiredShipping
 
-// TODO: move these to separate manifests for claire's wishlist / page
-view PageProducts of [Product] #shortlist in 'data/products.json'
-  description `products from your browsing context`
-view ClairesWishlist of [Product] #wishlist in 'data/wishlist.json'
-  description `Claire's wishlist`
+  FixedOtherMultiplexer
+    list <- shortlist
+    other <- desiredShipping
+    hostedParticle <- Arrivinator
+
+// If the shipping date won't work, look for extra products
+recipe
+  use #browser as shortlist
+  use #desiredShipping as desiredShipping
+
+  FixedOtherMultiplexer
+    list <- shortlist
+    other <- desiredShipping
+    hostedParticle <- AlternateShipping
+
+// Recommendations based on Claire's interest in field hockey.
+// TODO - transition to annotation?
+//recipe
+//  map #wishlist as wishlist
+//  Interests
+//    list <- wishlist
+
 view APerson of Person in 'data/people.json'
-//view ThePeople of Person in 'data/people.json'

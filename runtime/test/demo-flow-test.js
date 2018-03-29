@@ -24,7 +24,7 @@ describe('demo flow', function() {
     await Manifest.load('./shell/artifacts/Products/Products.recipes', new Loader());
   });
 
-  it('flows like a demo', async function() {
+  it.skip('flows like a demo', async function() {
     let helper = await TestHelper.loadManifestAndPlan('./shell/artifacts/Products/Products.recipes', {
       expectedNumPlans: 2,
       verify: async (plans) => {
@@ -175,5 +175,5 @@ describe('demo flow', function() {
     helper.log('----------------------------------------');
 
     // TODO(mmandlis): Provide methods in helper to verify slot contents (helper.slotComposer._slots[i]._content).
-  }).timeout(10000);
+  })/*.timeout(10000)*/;
 });
