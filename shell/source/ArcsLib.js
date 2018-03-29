@@ -13,6 +13,7 @@ import Description from '../../runtime/description.js';
 import Manifest from '../../runtime/manifest.js';
 import Planner from '../../runtime/planner.js';
 import SlotComposer from '../../runtime/slot-composer.js';
+import DomSlot from '../../runtime/dom-slot.js';
 import Type from '../../runtime/type.js';
 import BrowserLoader from './browser-loader.js';
 import Tracing from '../../tracelib/trace.js';
@@ -27,15 +28,16 @@ const Arcs = {
   Manifest,
   Planner,
   SlotComposer,
+  DomSlot,
   Type,
   BrowserLoader,
   Tracing,
   scheduler
 };
 
-// TODO(sjmiles): can't export because WebPack can't/doesn't make a built version with a module export
+// TODO(sjmiles): can't export because WebPack won't make a built version with a module export
 // Instead we fall back to populating a global (possibly already created in app-shell/lib/arcs.js).
-//export default Arcs;
+// export default Arcs;
 
 window.Arcs = window.Arcs ? Object.assign(window.Arcs, Arcs) : Arcs;
 
