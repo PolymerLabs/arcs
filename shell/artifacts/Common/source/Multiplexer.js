@@ -9,7 +9,7 @@
  */
 'use strict';
 
-defineParticle(({TransformationDomParticle}) => {
+defineParticle(({Particle, TransformationDomParticle}) => {
   return class Multiplexer extends TransformationDomParticle {
     constructor() {
       super();
@@ -71,8 +71,8 @@ defineParticle(({TransformationDomParticle}) => {
         this._itemSubIdByHostedSlotId.set(slotId, item.id);
 
 
-        let recipe = `
-${this.serializeSchema(hostedParticle)}
+        let recipe = Particle.buildManifest`
+${hostedParticle}
 recipe
   use '${itemView._id}' as v1
   ${otherMappedViews.join('\n')}

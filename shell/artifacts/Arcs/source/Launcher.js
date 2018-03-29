@@ -15,14 +15,15 @@ defineParticle(({DomParticle, log, html}) => {
   const style = html`
 <style>
   [${host}] [chip] {
+    font-family: 'Google Sans';
     position: relative;
     display: flex;
     flex-direction: column;
-    padding: 20px 20px 16px 16px;
-    margin: 4px;
+    padding: 16px 16px 16px 16px;
+    margin: 0 4px 8px 4px;
     font-size: 18px;
     color: whitesmoke;
-    border-radius: 9px;
+    border-radius: 8px;
   }
   [${host}] a {
     display: block;
@@ -56,7 +57,7 @@ defineParticle(({DomParticle, log, html}) => {
 ${style}
 
 <div ${host}>
-  <div style="display: flex;">
+  <div style="display: flex; margin: 0px 4px 4px 4px;">
     <div style="flex: 1;">{{columnA}}</div>
     <div style="flex: 1;">{{columnB}}</div>
   </div>

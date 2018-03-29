@@ -52,7 +52,7 @@ class ArcAuth extends Xen.Base {
     this._fire('auth', user);
   }
 }
-ArcAuth.log = Xen.Base.logFactory('ArcAuth', '#00701a');
+ArcAuth.log = Xen.logFactory('ArcAuth', '#00701a');
 customElements.define('arc-auth', ArcAuth);
 
 export default ArcAuth;

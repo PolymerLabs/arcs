@@ -14,6 +14,8 @@ import Const from '../constants.js';
 
 const db = window.db;
 
+const log = Xen.logFactory('PersistentManifests', '#883997');
+
 class PersistentManifests extends Xen.Base {
   static get observedAttributes() { return ['manifests', 'exclusions']; }
   _getInitialState() {
@@ -33,7 +35,7 @@ class PersistentManifests extends Xen.Base {
     }
     if (props.manifests && state.manifests !== props.manifests && props.manifests !== lastProps.manifests) {
       state.manifests = props.manifests;
-      PersistentManifests.log('WRITING', state.manifests);
+      log('WRITING', state.manifests);
       state.db.set(state.manifests);
     }
     if (props.exclusions && props.exclusions !== state.exclusions) {
@@ -42,12 +44,12 @@ class PersistentManifests extends Xen.Base {
     }
   }
   async _connect(node, group) {
-    PersistentManifests.log('watching', String(node));
+    log('watching', String(node));
     group.watches = [{
       node: node,
       handler: snap => {
         let manifests = (snap.val() || []).filter(m => Boolean(m));
-        PersistentManifests.log('READING', manifests);
+        log('READING', manifests);
         this._state.manifests = manifests;
         this._fire('manifests', manifests);
       }
@@ -65,5 +67,4 @@ class PersistentManifests extends Xen.Base {
     localStorage.setItem(Const.LOCALSTORAGE.exclusions, JSON.stringify(exclusions));
   }
 }
-PersistentManifests.log = Xen.Base.logFactory('PersistentManifests', '#883997');
 customElements.define('persistent-manifests', PersistentManifests);

@@ -11,6 +11,8 @@
 import Xen from '../../components/xen/xen.js';
 import Arcs from './arcs.js';
 
+const log = Xen.logFactory('ArcsUtils', '#4a148c');
+
 const ArcsUtils = {
   createArc({id, urlMap, slotComposer, context, loader}) {
     // worker paths are relative to worker location, remap urls from there to here
@@ -131,12 +133,12 @@ const ArcsUtils = {
     let handle = arc.context.findHandleById(id);
     if (!handle) {
       handle = await arc.context.newHandle(type, name, id, tags);
-      ArcsUtils.log('synthesized handle', id, tags);
+      log('synthesized handle', id, tags);
     }
     return handle;
   },
   metaTypeFromType(type) {
-    return JSON.stringify(type ? type.toLiteral() : null);
+    return JSON.stringify(type ? type.resolvedType().toLiteral() : null);
   },
   typeFromMetaType(metaType) {
     return Arcs.Type.fromLiteral(JSON.parse(metaType));
@@ -187,8 +189,7 @@ const ArcsUtils = {
   },
   html(strings, ...values) {
     return (strings[0] + values.map((v, i) => v + strings[i + 1]).join('')).trim();
-  },
-  log: Xen.Base.logFactory('ArcsUtils', '#4a148c'),
+  }
 };
 
 export default ArcsUtils;

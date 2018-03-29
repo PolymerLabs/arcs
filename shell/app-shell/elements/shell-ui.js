@@ -71,7 +71,7 @@ const Main = Xen.html`
   <!-- footer is here only to reserve space in the static flow (see also: toolbar) -->
   <footer>
     <!-- arc-footer is position-fixed -->
-    <arc-footer dots="{{dots}}" search="{{search}}" on-suggest="_onSuggest" on-search="_onSearch">
+    <arc-footer dots="{{dots}}" open="{{open}}" search="{{search}}" on-suggest="_onSuggest" on-search="_onSearch" on-open="_onOpen">
       <slot name="suggestions"></slot>
     </arc-footer>
   </footer>
@@ -94,11 +94,11 @@ const Main = Xen.html`
 
 `;
 
-const log = Xen.Base.logFactory('ShellUi', '#294740');
+const log = Xen.logFactory('ShellUi', '#294740');
 
 class ShellUi extends Xen.Debug(Xen.Base, log) {
   static get observedAttributes() {
-    return ['config', 'manifests', 'exclusions', 'users', 'user', 'friends', 'avatars', 'key', 'arc', 'description', 'share', 'theme'];
+    return ['config', 'manifests', 'exclusions', 'users', 'user', 'friends', 'avatars', 'key', 'arc', 'description', 'share', 'theme', 'open'];
   }
   get css() {
     return Css;
@@ -145,17 +145,10 @@ class ShellUi extends Xen.Debug(Xen.Base, log) {
       toolsVisible: config.arcsToolsVisible
     });
   }
-  _render({config, manifests, exclusions, users, user, friends, avatars, key, arc, description, share, theme}, state) {
+  _render(props, state) {
+    const {config, user, key, theme} = props;
     const avatarUrl = user && user.avatar ? user.avatar : `${shellPath}/assets/avatars/user (0).png`;
     const render = {
-      manifests,
-      exclusions,
-      users,
-      arc,
-      description,
-      friends,
-      avatars,
-      share,
       avatarStyle: `background: url('${avatarUrl}') center no-repeat; background-size: cover;`,
       avatarTitle: user && user.name || '',
       modalShown: Boolean(state.userPickerOpen || state.sharePickerOpen || state.menuOpen),
@@ -164,7 +157,7 @@ class ShellUi extends Xen.Debug(Xen.Base, log) {
         color: theme && theme.mainColor
       }
     };
-    return [state, render];
+    return [props, state, render];
   }
   _didRender(props, {toolsVisible}) {
     Xen.Template.setBoolAttribute(this, 'expanded', Boolean(toolsVisible));
@@ -173,6 +166,9 @@ class ShellUi extends Xen.Debug(Xen.Base, log) {
     if (this._setState({[e.type]: data})) {
       log(data);
     }
+  }
+  _onOpen(e, open) {
+    this._fire('open', open);
   }
   _onToolsClick() {
     const {toolsVisible} = this._state;

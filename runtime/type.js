@@ -305,7 +305,7 @@ class Type {
     if (this.isSetView)
       return `[${this.primitiveType().toString()}]`;
     if (this.isEntity)
-      return this.entitySchema.name;
+      return this.entitySchema.toInlineSchemaString();
     if (this.isInterface)
       return this.interfaceShape.name;
     if (this.isTuple)

@@ -52,15 +52,17 @@ describe('manifest', function() {
       assert.equal(recipe.pattern, 'hello world');
       assert.equal(recipe.handles[1].pattern, 'best view');
       let type = recipe.handleConnections[0].rawType;
-      assert.equal('one-s', type.toPrettyString());
-      assert.equal('many-ses', type.setViewOf().toPrettyString());
-
       assert.equal(1, Object.keys(manifest.schemas).length);
       let schema = Object.values(manifest.schemas)[0];
       assert.equal(3, Object.keys(schema.description).length);
       assert.deepEqual(Object.keys(schema.description), ['pattern', 'plural', 'value']);
     };
     verify(manifest);
+    // TODO(dstockwell): The connection between particles and schemas does
+    //                   not roundtrip the same way.
+    let type = manifest.recipes[0].handleConnections[0].rawType;
+    assert.equal('one-s', type.toPrettyString());
+    assert.equal('many-ses', type.setViewOf().toPrettyString());
     verify(await Manifest.parse(manifest.toString(), {}));
   });
   it('can parse a manifest containing a particle specification', async () => {
@@ -70,7 +72,7 @@ schema Person
     `;
     let particleStr0 =
 `particle TestParticle in 'testParticle.js'
-  TestParticle(in [Product] list, out Person person)
+  TestParticle(in [Product {}] list, out Person {} person)
   affordance dom
   affordance dom-touch
   must consume root #master #main
@@ -1216,6 +1218,59 @@ resource SomeName
     assert(validRecipe.isResolved());
   });
 
+  it('can process a schema alias', async () => {
+    let manifest = await Manifest.parse(`
+      alias schema This That as SchemaAlias
+      alias schema * extends SchemaAlias as Extended
+    `);
+    assert.isNotNull(manifest.findSchemaByName('SchemaAlias'));
+    assert.sameMembers(manifest.findSchemaByName('Extended').names, ['This', 'That']);
+  });
+
+  it('expands schema aliases', async () => {
+    let manifest = await Manifest.parse(`
+      alias schema Name1 as Thing1
+        Text field1
+      alias schema Name2 as Thing2
+        Text field2
+      particle P in 'p.js'
+        P(in Thing1 Thing2 Name3 {Text field1, Text field3} param)
+    `);
+    let paramSchema = manifest.findParticleByName('P').inputs[0].type.entitySchema;
+    assert.sameMembers(paramSchema.names, ['Name1', 'Name2', 'Name3']);
+    assert.sameMembers(Object.keys(paramSchema.fields), ['field1', 'field2', 'field3']);
+  });
+
+  it('fails when expanding conflicting schema aliases', async () => {
+    try {
+      let manifest = await Manifest.parse(`
+        alias schema Name1 as Thing1
+          Text field1
+        alias schema Name2 as Thing2
+          Number field1
+        particle P in 'p.js'
+          P(in Thing1 Thing2 {} param)
+      `);
+      assert.fail();
+    } catch (e) {
+      assert.include(e.message, 'Could not merge schema aliases');
+    }
+  });
+
+  it('fails when inline schema specifies a field type that does not match alias expansion', async () => {
+    try {
+      let manifest = await Manifest.parse(`
+        alias schema Name1 as Thing1
+          Text field1
+        particle P in 'p.js'
+          P(in Thing1 {Number field1} param)
+      `);
+      assert.fail();
+    } catch (e) {
+      assert.include(e.message, 'does not match schema');
+    }
+  });
+
   it('can relate inline schemas to generic connections', async () => {
     let manifest = await Manifest.parse(`
       schema Thing
@@ -1241,5 +1296,23 @@ resource SomeName
     let [validRecipe] = manifest.recipes;
     assert(validRecipe.normalize());
     assert(validRecipe.isResolved());
+  });
+
+  it('can parse a recipe with slot constraints on verbs', async () => {
+    let manifest = await Manifest.parse(`
+      recipe
+        particle can verb
+          consume consumeSlot
+            provide provideSlot
+    `);
+
+    let recipe = manifest.recipes[0];
+    assert(recipe.normalize());
+
+    assert.equal(recipe.particles[0]._verbs[0], 'verb');
+    assert.equal(recipe.particles[0]._spec, undefined);
+    let slotConnection = recipe.particles[0]._consumedSlotConnections.consumeSlot;
+    assert(slotConnection._providedSlots.provideSlot);
+    assert.equal(slotConnection._providedSlots.provideSlot.sourceConnection, slotConnection);
   });
 });

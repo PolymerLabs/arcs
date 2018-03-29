@@ -6,6 +6,10 @@ body {
   background-color: white;
 }
 
+body, button, input {
+  font-family: 'Google Sans', sans-serif;
+}
+
 @font-face {
   font-family: 'Material Icons';
   font-style: normal;

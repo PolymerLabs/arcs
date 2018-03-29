@@ -41,9 +41,6 @@ describe('particle-shape-loading', function() {
                 let particle = await views.get('particle').get();
 
                 var recipe = Particle.buildManifest\`
-                  \${inputView.type.entitySchema}
-                  \${outputView.type.entitySchema}
-
                   \${particle}
 
                   recipe

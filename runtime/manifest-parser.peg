@@ -70,9 +70,10 @@ Manifest
 
 ManifestItem
   = Recipe
-  / Particle
+  / ParticleDefinition
   / Import
-  / Schema
+  / SchemaDefinition
+  / SchemaAliasDefinition
   / ManifestStorage
   / Shape
   / Meta
@@ -228,7 +229,7 @@ MetaStorageKey = 'storageKey' whiteSpace? ':' whiteSpace? key:id eolWhiteSpace
   return {key: 'storageKey', value: key, location: location(), kind: 'storageKey' }
 };
 
-Particle
+ParticleDefinition
   = 'particle' whiteSpace name:TopLevelIdent implFile:(whiteSpace 'in' whiteSpace id)? eolWhiteSpace items:(Indent (SameIndent ParticleItem)*)? eolWhiteSpace?
   {
     let args = null;
@@ -507,14 +508,20 @@ RecipeItem
   / RecipeSearch
   / Description
 
-Name
+LocalName
   = 'as' whiteSpace name:lowerIdent
   {
     return name;
   }
 
+TopLevelAlias
+  = 'as' whiteSpace name:upperIdent
+  {
+    return name;
+  }
+
 RecipeParticle
-  = ref:ParticleRef name:(whiteSpace Name)? eolWhiteSpace connections:(Indent (SameIndent RecipeParticleItem)*)?
+  = ref:ParticleRef name:(whiteSpace LocalName)? eolWhiteSpace connections:(Indent (SameIndent RecipeParticleItem)*)?
   {
     let handleConnections = [];
     let slotConnections = [];
@@ -552,7 +559,7 @@ RecipeParticleConnection
   }
 
 RecipeParticleSlotConnection
-  = 'consume' whiteSpace param:lowerIdent name:(whiteSpace Name)? eolWhiteSpace providedSlots:(Indent (SameIndent RecipeParticleProvidedSlot)*)?
+  = 'consume' whiteSpace param:lowerIdent name:(whiteSpace LocalName)? eolWhiteSpace providedSlots:(Indent (SameIndent RecipeParticleProvidedSlot)*)?
   {
     return {
       kind: 'slot-connection',
@@ -564,7 +571,7 @@ RecipeParticleSlotConnection
   }
 
 RecipeParticleProvidedSlot
-  = 'provide' whiteSpace param:lowerIdent name:(whiteSpace Name)? eolWhiteSpace
+  = 'provide' whiteSpace param:lowerIdent name:(whiteSpace LocalName)? eolWhiteSpace
   {
     return {
       kind: 'provided-slot',
@@ -633,7 +640,7 @@ ConnectionTarget
   }
 
 RecipeHandle
-  = type:('?' / 'use' / 'map' / 'create' / 'copy') ref:(whiteSpace HandleOrSlotRef)? name:(whiteSpace Name)? eolWhiteSpace
+  = type:('?' / 'use' / 'map' / 'create' / 'copy') ref:(whiteSpace HandleOrSlotRef)? name:(whiteSpace LocalName)? eolWhiteSpace
   {
     return {
       kind: 'handle',
@@ -714,7 +721,7 @@ HandleOrSlotRef
   }
 
 RecipeSlot
-  = 'slot' ref:(whiteSpace HandleOrSlotRef)? name:(whiteSpace Name)? eolWhiteSpace
+  = 'slot' ref:(whiteSpace HandleOrSlotRef)? name:(whiteSpace LocalName)? eolWhiteSpace
   {
     return {
       kind: 'slot',
@@ -746,16 +753,34 @@ SchemaInlineField
     };
   }
 
-Schema
-  = 'schema' whiteSpace name:TopLevelIdent names:(whiteSpace TopLevelIdent)* parents:SchemaExtends? eolWhiteSpace items:(Indent (SameIndent SchemaItem)*)?
+SchemaSpec
+  = 'schema' names:(whiteSpace ('*' / TopLevelIdent))+ parents:SchemaExtends?
   {
     return {
+      names: names.map(name => name[1]).filter(name => name != '*'),
+      parents: optional(parents, parents => parents, []),
+    };
+  }
+
+SchemaAliasDefinition
+  = 'alias' whiteSpace spec:SchemaSpec whiteSpace alias:TopLevelAlias eolWhiteSpace items:(Indent (SameIndent SchemaItem)*)?
+  {
+    return Object.assign(spec, {
       kind: 'schema',
       location: location(),
-      names: [name, ...names.map(name => name[1])],
-      parents: optional(parents, parents => parents, []),
       items: optional(items, extractIndented, []),
-    };
+      alias,
+    });
+  }
+
+SchemaDefinition
+  = spec:SchemaSpec eolWhiteSpace items:(Indent (SameIndent SchemaItem)*)?
+  {
+    return Object.assign(spec, {
+      kind: 'schema',
+      location: location(),
+      items: optional(items, extractIndented, []),
+    });
   }
 
 SchemaExtends
@@ -767,7 +792,6 @@ SchemaExtends
   }
   return list;
 }
-
 
 SchemaItem
   = SchemaSection

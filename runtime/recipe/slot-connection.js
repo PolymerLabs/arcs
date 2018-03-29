@@ -22,6 +22,10 @@ class SlotConnection {
     this._providedSlots = {}; // Slot*
   }
 
+  remove() {
+    this._particle.removeSlotConnection(this);
+  }
+
   get recipe() { return this._recipe; }
   get particle() { return this._particle; }
   get name() { return this._name; }
@@ -57,6 +61,13 @@ class SlotConnection {
     targetSlot.consumeConnections.push(this);
   }
 
+  disconnectFromSlot() {
+    if (this._targetSlot) {
+      this._targetSlot.removeConsumeConnection(this);
+      this._targetSlot = undefined;
+    }
+  }
+  
   _clone(particle, cloneMap) {
     if (cloneMap.has(this)) {
       return cloneMap.get(this);
@@ -155,8 +166,13 @@ class SlotConnection {
       let providedSlot = this.providedSlots[psName];
       let provideRes = [];
       provideRes.push('  provide');
-      let providedSlotSpec = this.slotSpec.getProvidedSlotSpec(psName);
-      assert(providedSlotSpec, `Cannot find providedSlotSpec for ${psName}`);
+      
+      // Only assert that there's a spec for this provided slot if there's a spec for
+      // the consumed slot .. otherwise this is just a constraint.
+      if (this.slotSpec) {
+        let providedSlotSpec = this.slotSpec.getProvidedSlotSpec(psName);
+        assert(providedSlotSpec, `Cannot find providedSlotSpec for ${psName}`);
+      }
       provideRes.push(`${psName} as ${(nameMap && nameMap.get(providedSlot)) || providedSlot}`);
       result.push(provideRes.join(' '));
     });

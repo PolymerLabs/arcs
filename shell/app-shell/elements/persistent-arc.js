@@ -13,7 +13,7 @@ import ArcsUtils from '../lib/arcs-utils.js';
 import Xen from '../../components/xen/xen.js';
 const db = window.db;
 
-const log = Xen.Base.logFactory('PersistentArc', '#a30000');
+const log = Xen.logFactory('PersistentArc', '#a30000');
 
 class PersistentArc extends Xen.Debug(Xen.Base, log) {
   static get observedAttributes() { return ['key', 'metadata']; }

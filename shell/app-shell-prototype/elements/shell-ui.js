@@ -12,12 +12,18 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 import './shell-ui/suggestion-element.js';
 import './shell-ui/settings-panel.js';
 import './shell-ui/user-picker.js';
+
+// components
+import '../../components/simple-tabs.js';
 import '../../components/arc-tools/handle-explorer.js';
-// code libs
+import '../../components/arc-tools/xen-explorer.js';
+
+// libs
 import Xen from '../../components/xen/xen.js';
-import IconStyle from '../../components/icons.css.js';
+
 // strings
 import AppIcon from '../icon.svg.js';
+import IconStyle from '../../components/icons.css.js';
 
 // globals
 /* global shellPath */
@@ -46,7 +52,6 @@ const template = html`
       position: fixed;
       top: 0;
       right: 0;
-      /*bottom: 0;*/
       left: 0;
       height: 100vh;
       opacity: 0;
@@ -67,7 +72,6 @@ const template = html`
       margin-top: calc(var(--bar-touch-height) * -1);
       height: var(--bar-touch-height);
       background-color: transparent;
-      /*border: 1px solid rgba(0,0,0,0.01);*/
     }
     [bar] {
       display: flex;
@@ -77,12 +81,11 @@ const template = html`
       right: 0;
       bottom: 0;
       left: 0;
-      box-sizing: border-box;
-      max-width: var(--bar-max-width);
-      max-height: var(--bar-max-height);
-      /*max-height: var(--bar-peek-height);
-      transform: translate3d(0, calc(100% - var(--bar-peek-height)), 0);*/
       margin: 0 auto;
+      box-sizing: border-box;
+      height: var(--bar-max-height);
+      max-width: var(--bar-max-width);
+      max-height: var(--bar-hint-height);
       background-color: white;
       box-shadow: 0px 0px 32px 3px rgba(0,0,0,0.13);
       transition: transform 200ms ease-out;
@@ -94,13 +97,13 @@ const template = html`
       transform: translate3d(0, calc(100% - var(--bar-peek-height)), 0);
     }
     [bar][state="hint"] {
-      transform: translate3d(0, calc(100% - var(--bar-hint-height)), 0);
+      transform: translate3d(0, 0, 0);
     }
     [bar][state="over"] {
       transform: translate3d(0, calc(100% - var(--bar-over-height)), 0);
     }
     [bar][state="open"] {
-      height: var(--bar-max-height);
+      max-height: var(--bar-max-height);
       transform: translate3d(0, 0, 0);
     }
     [toolbars] {
@@ -119,8 +122,9 @@ const template = html`
       width: 100%;
       transition: transform 100ms ease-in-out;
     }
-    [toolbar] > icon, [toolbar] > a {
-      padding: 16px;
+    [toolbar] > *:not(span) {
+      margin: 16px;
+      height: 24px;
     }
     [main][toolbar]:not([open]) {
       transform: translate3d(-100%, 0, 0);
@@ -165,9 +169,6 @@ const template = html`
     [settings][content][open] {
       transform: translate3d(calc(-100% - 3px), 0, 0);
     }
-    [user][content][open] {
-      transform: translate3d(calc(-200% - 6px), 0, 0);
-    }
     [modal] {
       padding: 32px;
       border: 1px solid orange;
@@ -192,11 +193,6 @@ const template = html`
     ::slotted([slotid=suggestions]) {
       display: flex;
       flex-direction: column;
-      /*
-      max-height: 356px;
-      overflow-y: auto;
-      overflow-x: hidden;
-      */
       padding: 6px 10px 10px 10px;
     }
     [tools] {
@@ -215,13 +211,27 @@ const template = html`
       z-index: 10000;
       transform: translate3d(0,0,0);
     }
+    avatar {
+      --avatar-size: 24px;
+      --large-avatar-size: 40px;
+      display: inline-block;
+      height: var(--avatar-size);
+      width: var(--avatar-size);
+      min-width: var(--avatar-size);
+      border-radius: 100%;
+      border: 1px solid whitesmoke;
+      background: gray center no-repeat;
+      background-size: cover;
+    }
   </style>
-
+  <!-- -->
   <div scrim open$="{{scrimOpen}}" on-click="_onScrimClick"></div>
+  <!-- -->
   <slot name="modal"></slot>
   <slot></slot>
   <!-- adds space at the bottom of the static flow so no actual content is ever covered by the app-bar -->
   <div barSpacer></div>
+  <!-- -->
   <div bar state$="{{barState}}" open$="{{barOpen}}" over$="{{barOver}}" on-mouseenter="_onBarEnter" on-mouseleave="_onBarLeave">
     <div touchbar on-click="_onTouchbarClick"></div>
     <div toolbars on-click="_onBarClick">
@@ -240,20 +250,30 @@ const template = html`
       <div settings toolbar open$="{{settingsToolbarOpen}}">
         <icon on-click="_onMainClick">arrow_back</icon>
         <span style="flex: 1;"></span>
-        <icon>settings</icon>
+        <avatar title="{{avatar_title}}" style="{{avatar_style}}" on-click="_onAvatarClick"></avatar>
       </div>
     </div>
     <div contents>
       <div suggestions content open$="{{suggestionsContentOpen}}">
         <slot name="suggestions" slot="suggestions" on-plan-choose="_onPlanChoose"></slot>
       </div>
-      <settings-panel settings content open$="{{settingsContentOpen}}" friends="{{users}}" user="{{user}}" on-user="_onSettingsUser"></settings-panel>
-      <user-picker user content open$="{{userContentOpen}}" users="{{users}}" on-selected="_onSelectUser"></user-picker>
+      <settings-panel settings content open$="{{settingsContentOpen}}" users="{{users}}" user="{{user}}" user_picker_open="{{userPickerOpen}}" friends="{{users}}" on-user="_onSelectUser"></settings-panel>
     </div>
   </div>
-  <icon style="position: fixed; right: 16px; top: 16px;" on-click="_onToolsClick">assessment</icon>
-  <div tools open$="{{toolsOpen}}" on-click="_onToolsClick">
-    <handle-explorer arc="{{arc}}"></handle-explorer>
+  <!-- -->
+  <icon style="position: fixed; right: 0px; bottom: 0px;" on-click="_onToolsClick">assessment</icon>
+  <div tools open$="{{toolsOpen}}">
+    <simple-tabs>
+      <div tab="Handle Explorer">
+        <handle-explorer arc="{{arc}}"></handle-explorer>
+      </div>
+      <div tab="Xen Explorer">
+        <xen-explorer></xen-explorer>
+      </div>
+      <!-- <div tab="Manifests">
+        <manifest-data manifests="{{manifests}}" exclusions="{{exclusions}}" on-exclusions="_onData"></manifest-data>
+      </div> -->
+    </simple-tabs>
   </div>
 `;
 
@@ -277,11 +297,9 @@ class ShellUi extends Xen.Debug(Xen.Base, log) {
   _update({}, {}, oldProps, oldState) {
   }
   _render(props, state) {
-    /*
     if (state.barState === 'peek') {
       state.toolState = 'main';
     }
-    */
     const {toolState, barState, toolsOpen} = state;
     const barOpen = barState === 'open';
     const mainOpen = toolState === 'main';
@@ -325,10 +343,9 @@ class ShellUi extends Xen.Debug(Xen.Base, log) {
     if (this._state.barState !== 'open') {
       this._setState({barState: 'open'});
     }
-    //this._setState({barState: this._state.barState === 'open' ? 'peek' : 'open'});
   }
   _onBarEnter(e) {
-    if (/*(e.target === e.currentTarget) &&*/ (this._state.barState === 'peek')) {
+    if (this._state.barState === 'peek') {
       let barState = 'over';
       if (this._props.showhint && this._state.toolState === 'main') {
         barState = 'hint';
@@ -337,7 +354,7 @@ class ShellUi extends Xen.Debug(Xen.Base, log) {
     }
   }
   _onBarLeave(e) {
-    if (/*(e.target === e.currentTarget) &&*/ (window.innerHeight - e.clientY) > 8) {
+    if ((window.innerHeight - e.clientY) > 10) {
       switch (this._state.barState) {
         case 'over':
         case 'hint':
@@ -354,9 +371,6 @@ class ShellUi extends Xen.Debug(Xen.Base, log) {
     e.stopPropagation();
     let {toolState} = this._state;
     switch (toolState) {
-      case 'user':
-        toolState = 'settings';
-        break;
       default:
         toolState = 'main';
         break;
@@ -372,12 +386,9 @@ class ShellUi extends Xen.Debug(Xen.Base, log) {
     this._fire('plan', plan);
     this._setState({barState: 'peek'});
   }
-  _onSettingsUser(e) {
-    this._setState({toolState: 'user'});
-  }
   _onSelectUser(e, user) {
     this._fire('select-user', user);
-    this._setState({toolState: 'settings'});
+    this._setState({userPickerOpen: false});
   }
   _onExperimentClick(e) {
     e.stopPropagation();
@@ -386,8 +397,8 @@ class ShellUi extends Xen.Debug(Xen.Base, log) {
   _onToolsClick() {
     this._setState({toolsOpen: !this._state.toolsOpen});
   }
-  _onToolsEnter() {
-    this._setState({toolsOpen: true});
+  _onAvatarClick() {
+    this._setState({userPickerOpen: !this._state.userPickerOpen});
   }
 }
 

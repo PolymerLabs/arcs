@@ -45,7 +45,7 @@ const template = Xen.html`
 // `steps` are plans objects stored in arc metadata
 // `step` is the first plan in `steps` that matches a plan in `plans` that hasn't already been applied
 
-const log = Xen.Base.logFactory('ArcCloud', '#bb4d00');
+const log = Xen.logFactory('ArcCloud', '#bb4d00');
 
 class ArcCloud extends Xen.Debug(Xen.Base, log) {
   static get observedAttributes() {

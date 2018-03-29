@@ -16,8 +16,6 @@ const template = html`
     display: block;
     box-sizing: border-box;
     user-select: none;
-    --avatar-size: 24px;
-    --large-avatar-size: 40px;
   }
   section {
     display: block;
@@ -59,12 +57,25 @@ const template = html`
     min-width: var(--large-avatar-size);
     margin-right: 16px;
   }
+  [user] {
+    max-height: 0;
+    overflow: hidden;
+    /*overflow: auto;*/
+    transition: max-height 300ms ease-in-out;
+  }
+  [user][open] {
+    max-height: 100vh;
+    /*max-height: 20vh;*/
+  }
 </style>
 
-<section bar on-click="_onSelectUser">
+<!-- <section bar on-click="_onSelectUser">
   <avatar title="{{avatar_title}}" style="{{avatar_style}}"></avatar>
   <span>{{name}}</span>
   <icon>chevron_right</icon>
+</section> -->
+<section user open$="{{user_picker_open}}">
+  <user-picker users="{{users}}" on-selected="_onSelectUser"></user-picker>
 </section>
 <section bar style="opacity: 0.4">
   <span>Star this arc</span>
@@ -100,14 +111,13 @@ class SettingsPanel extends Xen.Base {
     return template;
   }
   static get observedAttributes() {
-    return ['arc', 'user', 'friends', 'avatars', 'avatar_title', 'avatar_style', 'share'];
+    return ['arc', 'users', 'user_picker_open', 'user', 'friends', 'avatars', 'avatar_title', 'avatar_style', 'share'];
   }
-  _render({arc, user, avatar_title, avatar_style, friends, avatars, share}, state, oldProps) {
+  _render(props, state, oldProps) {
+    const {arc, user, friends, avatars, share} = props;
     const {selected, isProfile, isShared} = state;
     const render = {
       name: user && user.name,
-      avatar_title,
-      avatar_style,
       profileIcon: isProfile ? 'check' : 'check_box_outline_blank',
       profileStyle: isProfile ? 'color: #1A73E8' : '',
       shareIcon: isShared ? 'check' : 'check_box_outline_blank',
@@ -123,7 +133,7 @@ class SettingsPanel extends Xen.Base {
     if (oldProps.share !== share) {
       this._setState(this._shareStateToFlags(share));
     }
-    return render;
+    return [props, render];
   }
   _shareStateToFlags(share) {
     return {
@@ -152,8 +162,8 @@ class SettingsPanel extends Xen.Base {
       selected: user.id === selected
     };
   }
-  _onSelectUser() {
-    this._fire('user');
+  _onSelectUser(e, user) {
+    this._fire('user', user);
   }
   _onCastClick() {
     this._fire('cast');

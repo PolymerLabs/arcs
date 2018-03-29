@@ -370,16 +370,23 @@ ${e.message}
         visitChildren();
         switch (node.kind) {
         case 'schema-inline': {
-          let externalSchemas = [];
+          let schemas = [];
+          let aliases = [];
+          let names = [];
           for (let name of node.names) {
             let resolved = manifest.resolveReference(name);
+            if (resolved && resolved.schema && resolved.schema.isAlias) {
+              aliases.push(resolved.schema);
+            } else {
+              names.push(name);
+            }
             if (resolved && resolved.schema) {
-              externalSchemas.push(resolved.schema);
+              schemas.push(resolved.schema);
             }
           }
           let fields = {};
           for (let {name, type} of node.fields) {
-            for (let schema of externalSchemas) {
+            for (let schema of schemas) {
               if (!type) {
                 // If we don't have a type, try to infer one from the schema.
                 type = schema.fields[name];
@@ -400,10 +407,19 @@ ${e.message}
             }
             fields[name] = type;
           }
-          node.model = Type.newEntity(new Schema({
-            names: node.names,
+          let schema = new Schema({
+            names,
             fields,
-          }));
+          });
+          for (let alias of aliases) {
+            schema = Schema.union(alias, schema);
+            if (!schema) {
+              throw new ManifestError(
+                  node.location,
+                  `Could not merge schema aliases`);
+            }
+          }
+          node.model = Type.newEntity(schema);
           return;
         }
         case 'variable-type': {
@@ -488,12 +504,21 @@ ${e.message}
       names.push(...result.names);
     } 
     names = [names[0], ...names.filter(name => name != names[0])];
-
-    manifest._schemas[names[0]] = new Schema({
+    let name = schemaItem.alias || names[0];
+    if (!name) {
+      throw new ManifestError(
+          schemaItem.location,
+          `Schema defined without name or alias`);
+    }
+    let schema = new Schema({
       names,
       description: description,
       fields,
     });
+    if (schemaItem.alias) {
+      schema.isAlias = true;
+    }
+    manifest._schemas[name] = schema;
   }
   static _processResource(manifest, schemaItem) {
     manifest._resources[schemaItem.name] = schemaItem.data;
@@ -628,7 +653,9 @@ ${e.message}
       particle.verbs = item.ref.verbs;
       if (item.ref.name) {
         let spec = manifest.findParticleByName(item.ref.name);
-        assert(spec, `could not find particle ${item.ref.name}`);
+        if (!spec) {
+          throw new ManifestError(item.location, `could not find particle ${item.ref.name}`);
+        }
         particle.spec = spec.clone();
       }
       if (item.name) {
@@ -654,6 +681,7 @@ ${e.message}
           if (!providedSlot) {
             providedSlot = recipe.newSlot(ps.param);
             providedSlot.localName = ps.name;
+            providedSlot.sourceConnection = slotConn;
             assert(!items.byName.has(ps.name));
             items.byName.set(ps.name, providedSlot);
             items.bySlot.set(providedSlot, ps);
@@ -768,19 +796,25 @@ ${e.message}
       }
 
       for (let slotConnectionItem of item.slotConnections) {
-        // Validate consumed and provided slots names are according to spec.
-        if (!particle.spec.slots.has(slotConnectionItem.param)) {
-          throw new ManifestError(
-              slotConnectionItem.location,
-              `Consumed slot '${slotConnectionItem.param}' is not defined by '${particle.name}'`);
-        }
-        slotConnectionItem.providedSlots.forEach(ps => {
-          if (!particle.spec.slots.get(slotConnectionItem.param).getProvidedSlotSpec(ps.param)) {
+        // particles that reference verbs should store slot connection information as constraints to be used 
+        // during verb matching. However, if there's a spec then the slots need to be validated against it
+        // instead.
+        if (particle.spec !== undefined) {
+          // Validate consumed and provided slots names are according to spec.
+          if (!particle.spec.slots.has(slotConnectionItem.param)) {
             throw new ManifestError(
-                ps.location,
-                `Provided slot '${ps.param}' is not defined by '${particle.name}'`);
+                slotConnectionItem.location,
+                `Consumed slot '${slotConnectionItem.param}' is not defined by '${particle.name}'`);
           }
-        });
+          slotConnectionItem.providedSlots.forEach(ps => {
+            if (!particle.spec.slots.get(slotConnectionItem.param).getProvidedSlotSpec(ps.param)) {
+              throw new ManifestError(
+                  ps.location,
+                  `Provided slot '${ps.param}' is not defined by '${particle.name}'`);
+            }
+          });
+        }
+
         let targetSlot = items.byName.get(slotConnectionItem.name);
         if (targetSlot) {
           assert(items.bySlot.has(targetSlot));
@@ -903,7 +937,7 @@ ${e.message}
     });
 
     Object.values(this._schemas).forEach(s => {
-      results.push(s.toString());
+      results.push(s.toManifestString());
     });
 
     Object.values(this._particles).forEach(p => {

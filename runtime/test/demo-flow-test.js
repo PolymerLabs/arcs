@@ -24,52 +24,14 @@ describe('demo flow', function() {
     await Manifest.load('./shell/artifacts/Products/Products.recipes', new Loader());
   });
 
-  // TODO(smalls) either bring this up to the new demo flow or remove it?
-  // Also uncomment the timout() call below.
   it.skip('flows like a demo', async function() {
-    let expectedPlanString = `recipe
-  create as view0 // [Product]
-  copy 'manifest:./shell/artifacts/Products/Products.recipes:view0' #shortlist as view1 // [Product]
-  map 'manifest:./shell/artifacts/Products/Products.recipes:view1' #wishlist as view2 // [Product]
-  create as view3 // [Description]
-  copy 'manifest:./shell/artifacts/Products/Products.recipes::8:immediateShowProduct' as view4 // HostedParticleShape
-  copy 'manifest:./shell/artifacts/Products/Products.recipes::9:immediateAlsoOn' as view5 // HostedParticleShape2
-  slot 'rootslotid-root' #root as slot4
-  Chooser as particle0
-    choices <- view0
-    resultList = view1
-    consume action as slot0
-      provide annotation as slot1
-  Multiplexer as particle1
-    hostedParticle = view4
-    list <- view1
-    consume annotation as slot2
-  Multiplexer2 as particle2
-    hostedParticle = view5
-    list <- view1
-    others <- view0
-    consume annotation as slot3
-  Recommend as particle3
-    known <- view1
-    population <- view2
-    recommendations -> view0
-  ShowCollection as particle4
-    collection <- view1
-    descriptions -> view3
-    consume master as slot4
-      provide action as slot0
-      provide annotation as slot3
-      provide item as slot2
-      provide postamble as slot5
-      provide preamble as slot6`;
     let helper = await TestHelper.loadManifestAndPlan('./shell/artifacts/Products/Products.recipes', {
       expectedNumPlans: 2,
       verify: async (plans) => {
-        let {plan, description} = plans.find(p => p.plan.toString() == expectedPlanString);
-        assert.equal('Show products from your browsing context (Minecraft Book plus 2 other items) ' +
+        let descriptions = await Promise.all(plans.map(plan => plan.description.getRecipeSuggestion()));
+        assert.include(descriptions, 'Show products from your browsing context (Minecraft Book plus 2 other items) ' +
                      'and choose from products recommended based on products from your browsing context ' +
-                     'and Claire\'s wishlist (Book: How to Draw plus 2 other items).',
-                     await description.getRecipeSuggestion());
+                     'and Claire\'s wishlist (Book: How to Draw plus 2 other items).');
       },
       // Note: options below are useful to debug a failing demo-flow-test.
       // slotComposerStrict: false,

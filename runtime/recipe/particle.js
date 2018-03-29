@@ -210,6 +210,11 @@ class Particle {
     return slotConn;
   }
 
+  removeSlotConnection(slotConnection) {
+    this._consumedSlotConnections[slotConnection._name] = null;
+    slotConnection.disconnectFromSlot();
+  }
+
   remove() {
     this.recipe.removeParticle(this);
   }

@@ -120,32 +120,28 @@ class Arc {
   }
 
   async _serializeHandles() {
-    let schemas = '';
     let handles = '';
     let resources = '';
     let interfaces = '';
 
     let id = 0;
-    let schemaSet = new Set();
     let importSet = new Set();
+    let handleSet = new Set();
     for (let handle of this._activeRecipe.handles) {
       if (handle.fate == 'map')
         importSet.add(this.context.findManifestUrlForHandleId(handle.id));
+      else 
+        handleSet.add(handle.id);
     }
     for (let url of importSet.values())
       resources += `import '${url}'\n`;
 
-    for (let handle of this._handlesById.values()) {
+    for (let handle of this._handles) {
+      if (!handleSet.has(handle.id))
+        continue;
       let type = handle.type;
       if (type.isSetView)
         type = type.primitiveType();
-      if (type.isEntity) {
-        let schema = type.entitySchema.toString();
-        if (!schemaSet.has(schema)) {
-          schemaSet.add(schema);
-          schemas += schema + '\n';
-        }
-      }
       if (type.isInterface) {
         interfaces += type.interfaceShape.toString() + '\n';
       }
@@ -181,11 +177,11 @@ class Arc {
       }
     }
 
-    return resources + interfaces + schemas + handles;
+    return resources + interfaces + handles;
   }
 
   _serializeParticles() {
-    return [...this.particleHandleMaps.values()].map(entry => entry.spec.toString()).join('\n');
+    return this._activeRecipe.particles.map(entry => entry.spec.toString()).join('\n');
   }
 
   _serializeStorageKey() {
@@ -209,7 +205,7 @@ ${this._serializeParticles()}
 ${this.activeRecipe.toString()}`;
   }
 
-  static async deserialize({serialization, pecFactory, slotComposer, loader, fileName}) {
+  static async deserialize({serialization, pecFactory, slotComposer, loader, fileName, context}) {
     let manifest = await Manifest.parse(serialization, {loader, fileName});
     let arc = new Arc({
       id: manifest.meta.name,
@@ -218,7 +214,7 @@ ${this.activeRecipe.toString()}`;
       pecFactory,
       loader,
       storageProviderFactory: manifest._storageProviderFactory,
-      context: manifest
+      context
     });
     // TODO: pass tags through too
     manifest.handles.forEach(handle => arc._registerHandle(handle, []));
