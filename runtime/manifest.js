@@ -370,16 +370,23 @@ ${e.message}
         visitChildren();
         switch (node.kind) {
         case 'schema-inline': {
-          let externalSchemas = [];
+          let schemas = [];
+          let aliases = [];
+          let names = [];
           for (let name of node.names) {
             let resolved = manifest.resolveReference(name);
+            if (resolved && resolved.schema && resolved.schema.isAlias) {
+              aliases.push(resolved.schema);
+            } else {
+              names.push(name);
+            }
             if (resolved && resolved.schema) {
-              externalSchemas.push(resolved.schema);
+              schemas.push(resolved.schema);
             }
           }
           let fields = {};
           for (let {name, type} of node.fields) {
-            for (let schema of externalSchemas) {
+            for (let schema of schemas) {
               if (!type) {
                 // If we don't have a type, try to infer one from the schema.
                 type = schema.fields[name];
@@ -400,10 +407,19 @@ ${e.message}
             }
             fields[name] = type;
           }
-          node.model = Type.newEntity(new Schema({
-            names: node.names,
+          let schema = new Schema({
+            names,
             fields,
-          }));
+          });
+          for (let alias of aliases) {
+            schema = Schema.union(alias, schema);
+            if (!schema) {
+              throw new ManifestError(
+                  node.location,
+                  `Could not merge schema aliases`);
+            }
+          }
+          node.model = Type.newEntity(schema);
           return;
         }
         case 'variable-type': {
@@ -488,12 +504,21 @@ ${e.message}
       names.push(...result.names);
     } 
     names = [names[0], ...names.filter(name => name != names[0])];
-
-    manifest._schemas[names[0]] = new Schema({
+    let name = schemaItem.alias || names[0];
+    if (!name) {
+      throw new ManifestError(
+          schemaItem.location,
+          `Schema defined without name or alias`);
+    }
+    let schema = new Schema({
       names,
       description: description,
       fields,
     });
+    if (schemaItem.alias) {
+      schema.isAlias = true;
+    }
+    manifest._schemas[name] = schema;
   }
   static _processResource(manifest, schemaItem) {
     manifest._resources[schemaItem.name] = schemaItem.data;

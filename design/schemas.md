@@ -54,10 +54,11 @@ schema Car
 
 ## Aliasing
 
-For the purpose of manifest parsing and referencing, the schema is identified by the first name. This is not always desirable as there could for example be conflicting definitions of the `Tesla` schema during serialization. To avoid such conflicts, aliases may be assigned using `as`.
+To reduce the amount of redundant declarations amongst manifests that define less specific schemas, schema aliases are introduced to provide reusable groupings of sets of names and fields. 
 
 ```
-schema Tesla Car Thing as MyTeslaSchema
+alias schema Car as CarDoors
+  Number doors
 ```
 
 ## Inline Schemas
@@ -68,6 +69,18 @@ Typical usage: specify exactly what is required. This example is less specific t
 
 ```
 in Tesla {Boolean bioweaponDefenceMode} param
+```
+
+Alias usage: specify exactly what is required through use of a schema alias. Using the definition of `CarDoors` from above, the following is equivalent to `in Car {Number doors}`.
+
+```
+in CarDoors param
+```
+
+Alias widening: specify additional fields to complement an alias.
+
+```
+in CarDoors {Boolean bioweaponDefenceMode} param
 ```
 
 Disambiguation: add names and fields to further restrict the possible resolutions of a recipe (just `Tesla` or `Car` might work here, but including both will further restrict potential handles).
@@ -82,10 +95,10 @@ Inference: The type may be inferred from Tesla & Car at the top level for brevit
 in Tesla Car {doors} param
 ```
 
-Referencing: When producing new entities an entire schema is typically referenced for brevity. This will fail unless Tesla can be located via top level definition or import
+Referencing: When producing new entities a concrete schema is required to be referenced. This will fail unless Tesla can be located via top level definition or import
 
 ```
-out Tesla param
+create Tesla param
 ```
 
 # Importing Schemas

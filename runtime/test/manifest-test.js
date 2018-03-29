@@ -1218,6 +1218,59 @@ resource SomeName
     assert(validRecipe.isResolved());
   });
 
+  it('can process a schema alias', async () => {
+    let manifest = await Manifest.parse(`
+      alias schema This That as SchemaAlias
+      alias schema * extends SchemaAlias as Extended
+    `);
+    assert.isNotNull(manifest.findSchemaByName('SchemaAlias'));
+    assert.sameMembers(manifest.findSchemaByName('Extended').names, ['This', 'That']);
+  });
+
+  it('expands schema aliases', async () => {
+    let manifest = await Manifest.parse(`
+      alias schema Name1 as Thing1
+        Text field1
+      alias schema Name2 as Thing2
+        Text field2
+      particle P in 'p.js'
+        P(in Thing1 Thing2 Name3 {Text field1, Text field3} param)
+    `);
+    let paramSchema = manifest.findParticleByName('P').inputs[0].type.entitySchema;
+    assert.sameMembers(paramSchema.names, ['Name1', 'Name2', 'Name3']);
+    assert.sameMembers(Object.keys(paramSchema.fields), ['field1', 'field2', 'field3']);
+  });
+
+  it('fails when expanding conflicting schema aliases', async () => {
+    try {
+      let manifest = await Manifest.parse(`
+        alias schema Name1 as Thing1
+          Text field1
+        alias schema Name2 as Thing2
+          Number field1
+        particle P in 'p.js'
+          P(in Thing1 Thing2 {} param)
+      `);
+      assert.fail();
+    } catch (e) {
+      assert.include(e.message, 'Could not merge schema aliases');
+    }
+  });
+
+  it('fails when inline schema specifies a field type that does not match alias expansion', async () => {
+    try {
+      let manifest = await Manifest.parse(`
+        alias schema Name1 as Thing1
+          Text field1
+        particle P in 'p.js'
+          P(in Thing1 {Number field1} param)
+      `);
+      assert.fail();
+    } catch (e) {
+      assert.include(e.message, 'does not match schema');
+    }
+  });
+
   it('can relate inline schemas to generic connections', async () => {
     let manifest = await Manifest.parse(`
       schema Thing
