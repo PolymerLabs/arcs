@@ -42,7 +42,7 @@ class PersistentUser extends Xen.Debug(Xen.Base, log) {
       this._writeUser(state.db, props.user);
     }
     // if user opens a new arc, touch the key in the user record
-    if (props.user && props.key != state.key) {
+    if (props.user && props.key && props.key != state.key) {
       state.key = props.key;
       log(`WRITING into [${props.user.name}].arcs (touching arc)`, props.key);
       // record that the user touched this arc
