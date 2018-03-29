@@ -172,6 +172,7 @@ class ArcHost extends Xen.Debug(Xen.Base, log) {
     log(serialization);
     console.groupEnd();
     // remove rendered particle DOM
+    Arcs.DomSlot.disconnectObservers();
     Array.from(document.querySelectorAll('[slotid]')).forEach(n => n.textContent = '');
     // generate new slotComposer
     const slotComposer = this._createSlotComposer(config);

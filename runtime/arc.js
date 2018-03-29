@@ -200,7 +200,7 @@ ${this._serializeParticles()}
 ${this.activeRecipe.toString()}`;
   }
 
-  static async deserialize({serialization, pecFactory, slotComposer, loader, fileName}) {
+  static async deserialize({serialization, pecFactory, slotComposer, loader, fileName, context}) {
     let manifest = await Manifest.parse(serialization, {loader, fileName});
     let arc = new Arc({
       id: manifest.meta.name,
@@ -209,7 +209,7 @@ ${this.activeRecipe.toString()}`;
       pecFactory,
       loader,
       storageProviderFactory: manifest._storageProviderFactory,
-      context: manifest
+      context
     });
     // TODO: pass tags through too
     manifest.handles.forEach(handle => arc._registerHandle(handle, []));
