@@ -1,3 +1,17 @@
+
+/*
+ * This file controls the configuration for the wdio/selenium tests.
+ *
+ * Mostly, this file should remain untouched. There are some 'debug hints'
+ * (marked as such) scattered throughout, and some command-line switches to
+ * activate a sane default set of them documented in the top-level README.md.
+ */
+
+let process = require('process');
+let debug = process.env.npm_config_wdio_debug || process.argv.includes('--wdio-debug=true');
+
+const HEADLESS = '--headless';
+
 exports.config = {
   // This port & path are hardcoded to match chromedriver. See
   // wdio-chromedriver-service for more information.
@@ -50,7 +64,7 @@ exports.config = {
       chromeOptions: {
         args: [
           // debug hint: comment this out to see the system running
-          '--headless'
+          HEADLESS
         ]
       }
     }
@@ -92,7 +106,7 @@ exports.config = {
   //
   // Default timeout for all waitFor* commands.
   // debug hint: increase this for debugging
-  waitforTimeout: 30002,
+  waitforTimeout: debug ? 3000002 : 30002,
   //
   // Default timeout in milliseconds for request
   // if Selenium Grid doesn't send response
@@ -141,7 +155,7 @@ exports.config = {
   mochaOpts: {
     ui: 'bdd',
     // debug hint: increase this timeout for debugging
-    timeout: 60006
+    timeout: debug ? 6000006 : 60006
   }
   //
   // =====
@@ -255,3 +269,12 @@ exports.config = {
   // onComplete: function(exitCode, config, capabilities) {
   // }
 };
+
+if (debug) {
+  const capabilities = exports.config.capabilities;
+  if (capabilities.length!=1) {
+    throw new Error(`New capabilities have been introduced; that's a good thing! But this code needs updating to take that into account.`);
+  }
+  const chromeOptions = capabilities[0].chromeOptions;
+  chromeOptions.args = chromeOptions.args.filter(arg => arg!=HEADLESS);
+}
