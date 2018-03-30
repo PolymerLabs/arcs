@@ -70,8 +70,8 @@ class PersistentUser extends Xen.Debug(Xen.Base, log) {
       handler: snap => {
         let user = snap.val();
         log('READ user', user, 'from', String(snap.ref));
-        // force user record to host it's own id
-        user.id = id;
+        // restore missing fields
+        this._repairUser(user, id);
         // cache user for reference checking
         state.user = user;
         // TODO(sjmiles): this is considered a new user record, but it might have the same deep-value
@@ -79,6 +79,12 @@ class PersistentUser extends Xen.Debug(Xen.Base, log) {
         this._fire('user', user);
       }
     };
+  }
+  _repairUser(user, id) {
+    user.id = id;
+    user.arcs = user.arcs || Xen.nob();
+    user.profiles = user.profiles || Xen.nob();
+    user.shares = user.shares || Xen.nob();
   }
 }
 customElements.define('persistent-user', PersistentUser);
