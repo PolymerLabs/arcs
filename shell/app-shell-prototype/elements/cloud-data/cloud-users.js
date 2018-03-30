@@ -11,43 +11,43 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 import Xen from '../../../components/xen/xen.js';
 import ArcsUtils from '../../lib/arcs-utils.js';
 import Firebase from './firebase.js';
+import WatchGroup from './watch-group.js';
 
 const log = Xen.logFactory('CloudUsers', '#883997');
 
 class CloudUsers extends Xen.Base {
+  _getInitialState() {
+    return {
+      watch: new WatchGroup()
+    };
+  }
   _update(props, state, lastProps) {
     if (!state.connected) {
       state.connected = true;
-      this._connect();
+      this._connect(state);
     }
   }
   get _usersdb() {
     return Firebase.db.child('users');
   }
-  _disconnect() {
-    if (this._off) {
-      this._off();
-      this._off = null;
-    }
+  async _connect(state) {
+    state.watch.watches = [{
+      path: `users`,
+      handler: snap => this._debounceRemoteChanged(snap, state)
+    }];
+    log('watching `users`');
   }
-  async _connect() {
-    this._disconnect();
-    const node = this._usersdb;
-    const watch = node.on('value', snap => this._debounceRemoteChanged(snap));
-    this._off = () => node.off('value', watch);
-    log('watching', String(node));
-  }
-  _debounceRemoteChanged(snap) {
+  _debounceRemoteChanged(snap, state) {
     // debounce if we already have some users data
-    const delay = this._state.users ? 3000 : 1;
-    this._debounce = ArcsUtils.debounce(this._debounce, () => this._remoteChanged(snap), delay);
+    const delay = state.users ? 3000 : 1;
+    state.debounce = ArcsUtils.debounce(state.debounce, () => this._remoteChanged(snap), delay);
   }
   _remoteChanged(snap) {
     let users = snap.val() || [];
     Object.keys(users).forEach(k => users[k].id = k);
     log('READ `users` from cloud', users);
-    this._fire('users', users);
     this._setState({users});
+    this._fire('users', users);
   }
 }
 customElements.define('cloud-users', CloudUsers);
