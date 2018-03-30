@@ -7,7 +7,7 @@ import './elements/cloud-data.js';
 
 // code libs
 import Xen from '../components/xen/xen.js';
-import ArcsUtils from '../app-shell/lib/arcs-utils.js';
+import ArcsUtils from './lib/arcs-utils.js';
 import Const from '../app-shell/constants.js';
 
 // globals
@@ -33,7 +33,7 @@ const template = html`
 
   <arc-config
     rootpath="{{shellPath}}"
-    on-config="_onConfig"
+    on-config="_onStateData"
   ></arc-config>
 
   <arc-host
@@ -42,20 +42,27 @@ const template = html`
     suggestions="{{suggestions}}"
     plan="{{plan}}"
     serialization="{{serialization}}"
-    on-arc="_onArc"
+    on-arc="_onStateData"
     on-plans="_onPlans"
   ></arc-host>
 
   <shell-handles
     arc="{{arc}}"
+    users="{{users}}"
     on-theme="_onStateData"
   ></shell-handles>
+
   <cloud-data
-    on-users="_onUsers"
+    key="{{key}}"
+    metadata="{{metadata}}"
+    on-users="_onStateData"
+    on-key="_onStateData"
+    on-metadata="_onStateData"
   ></cloud-data>
 
   <shell-ui
     arc="{{arc}}"
+    title="{{title}}"
     showhint="{{showhint}}"
     users="{{users}}"
     on-plan="_onPlan"
@@ -89,9 +96,20 @@ import '../artifacts/canonical.manifest'
     // TODO(sjmiles): for debugging only
     window.app = this;
     window.arc = state.arc;
+    //
+    const params = (new URL(document.location)).searchParams;
+    if (!state.key) {
+      state.key = ArcsUtils.getUrlParam('key') || '*';
+    } else if (state.key !== '*') {
+      ArcsUtils.setUrlParam('key', state.key);
+    }
   }
   _render({}, state) {
-    return state;
+    const {metadata} = state;
+    const render = {
+      title: metadata && metadata.description
+    };
+    return [state, render];
   }
   _onStateData(e, data) {
     this._setState({[e.type]: data});
@@ -99,17 +117,11 @@ import '../artifacts/canonical.manifest'
   _onConfig(e, config) {
     this._setState({config});
   }
-  _onArc(e, arc) {
-    this._setState({arc});
-  }
   _onPlan(e, suggestion) {
     this._setState({plan: suggestion.plan});
   }
   _onPlans(e, plans) {
     this._setState({suggestions: plans, showhint: plans && plans.length > 0});
-  }
-  _onUsers(e, users) {
-    this._setState({users});
   }
   _onSelectUser(e, user) {
     this._setState({user});
