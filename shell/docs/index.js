@@ -1,6 +1,8 @@
 import DocScraper from '../components/doc-scraper.js';
 import docUrls from './doc-urls.js';
 
+/* global Remarkable, hljs */
+
 const toc = document.querySelector(`[toc]`);
 const doc = document.querySelector(`[docs]`);
 
@@ -40,13 +42,13 @@ const scrape = async urls => {
   let mds = urls.filter(f => ismd(f));
   let others = urls.filter(f => !ismd(f));
   let classes = await new DocScraper().addUrls(others);
-  let values = await Promise.all(mds.map(async f => {
-    let response = await fetch(f);
+  let values = await Promise.all(mds.map(async path => {
+    let response = await fetch(path);
     let text = await response.text();
     return {
-      name,
-      chapter: f.startsWith('docs') ? 'Background' : 'Reference',
-      description: buildMdRenderer(f).render(text)
+      name: toCamel(path),
+      chapter: path.startsWith('docs') ? 'Background' : 'Reference',
+      description: buildMdRenderer(path).render(text)
     };
   }));
   return classes.concat(values);
