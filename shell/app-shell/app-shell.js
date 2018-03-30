@@ -234,7 +234,7 @@ class AppShell extends Xen.Debug(Xen.Base, log) {
   }
   _consumeSelectedUser(user, selectedUser) {
     // TODO(sjmiles): explain `user` vs `selectedUser`
-    if (user.id !== selectedUser) {
+    if (user && user.id !== selectedUser) {
       this._setState({selectedUser, user});
     }
   }
