@@ -32,7 +32,7 @@ const Main = Xen.html`
 <app-modal shown$="{{modalShown}}" on-click="_onScrimClick">
 
   <app-dialog open$="{{userPickerOpen}}">
-    <user-picker users="{{users}}" on-selected="_onSelectedUser"></user-picker>
+    <user-picker users="{{users}}" on-selected="_onSelectedUser" on-new-user="_onNewUser"></user-picker>
   </app-dialog>
 
   <menu-panel
@@ -98,7 +98,7 @@ const log = Xen.logFactory('ShellUi', '#294740');
 
 class ShellUi extends Xen.Debug(Xen.Base, log) {
   static get observedAttributes() {
-    return ['config', 'manifests', 'exclusions', 'users', 'user', 'friends', 'avatars', 'key', 'arc', 'description', 'share', 'theme', 'open'];
+    return ['config', 'manifests', 'exclusions', 'users', 'user', 'friends', 'avatars', 'key', 'arc', 'description', 'share', 'theme', 'open', 'requestnewuser'];
   }
   get css() {
     return Css;
@@ -122,7 +122,7 @@ class ShellUi extends Xen.Debug(Xen.Base, log) {
     };
   }
   _update(props, state, lastProps, lastState) {
-    const {config, key, user, description} = props;
+    const {config, key, user, description, requestnewuser} = props;
     const {plan, plans, search} = state;
     if (config && config !== lastProps.config) {
       this._consumeConfig(config, state);
@@ -137,6 +137,9 @@ class ShellUi extends Xen.Debug(Xen.Base, log) {
     }
     if (key) {
       ArcsUtils.setUrlParam('arc', key);
+    }
+    if (requestnewuser && requestnewuser!=lastProps.requestnewuser) {
+      this._setState({userPickerOpen: true});
     }
     this._fire('exclusions', state.exclusions);
   }
@@ -180,6 +183,10 @@ class ShellUi extends Xen.Debug(Xen.Base, log) {
   _onSelectedUser(e, selectedUser) {
     this._fire('select-user', selectedUser);
     this._setState({userPickerOpen: false});
+  }
+  _onNewUser(e, newUser) {
+    this._setState({userPickerOpen: false});
+    this._fire('new-user', newUser);
   }
   // TODO(sjmiles): need to collapse (at least some) logic into update to handle arc correctly
   _onSearch(e, {search}) {

@@ -1,11 +1,13 @@
 // code
 import Xen from '../../components/xen/xen.js';
+import Icons from '../../components/icons.css.js';
 
 // globals
 const shellPath = window.shellPath;
 
 const Main = Xen.html`
 <style>
+  ${Icons}
   :host {
     display: block;
     padding: 8px;
@@ -37,6 +39,11 @@ const Main = Xen.html`
     border-radius: 8px;
   }
 </style>
+<div>
+  New user: <input placeholder="New user's name" value="{{newUserName}}"
+      on-keypress="_onNewUserKeyPress" on-input="_onNewUserChange">
+  <icon on-click="_onNewUserClick">add</icon>
+</div>
 <div>{{users}}</div>
 
 `;
@@ -64,8 +71,9 @@ class UserPicker extends Xen.Base {
       selected: 0
     };
   }
-  _render({users}, {selected, avatars}) {
+  _render({users}, {selected, avatars, newUserName}) {
     const render = {
+      newUserName: newUserName || ''
     };
     if (users) {
       render.users = {
@@ -89,6 +97,19 @@ class UserPicker extends Xen.Base {
     const selected = e.currentTarget.key;
     this._setState({selected});
     this._fire('selected', selected);
+  }
+  _onNewUserChange(e) {
+    this._setState({newUserName: e.target.value});
+  }
+  _onNewUserKeyPress(e) {
+    if (e.key == 'Enter') {
+      console.log(`create a new user ${this._state.newUserName}`, e);
+      this._fire('new-user', this._state.newUserName);
+    }
+  }
+  _onNewUserClick(e) {
+    console.log(`create a new user ${this._state.newUserName}`, e);
+    this._fire('new-user', this._state.newUserName);
   }
 }
 
