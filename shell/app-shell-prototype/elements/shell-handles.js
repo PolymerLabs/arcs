@@ -79,7 +79,7 @@ class ShellHandles extends Xen.Base {
       userHandleData: {
         id: 'f4',
         name: 'Gomer',
-        location: {latitude: 0, longitude: 0}
+        location: {latitude: 37.7610927, longitude: -122.4208173}
       }
     };
   }
