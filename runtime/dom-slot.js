@@ -13,7 +13,7 @@ import assert from '../platform/assert-web.js';
 import Slot from './slot.js';
 import {DomContext, SetDomContext} from './dom-context.js';
 
-let templates = new Map();
+const templates = new Map();
 
 class DomSlot extends Slot {
   constructor(consumeConn, arc, containerKind) {
@@ -60,10 +60,13 @@ class DomSlot extends Slot {
     const observers = DomSlot._observers || (DomSlot._observers = []);
     observers.push(observer);
   }
-  static disconnectObservers() {
+  static dispose() {
+    // disconnect observers
     const observers = DomSlot._observers;
     observers && observers.forEach(o => o.disconnect());
     DomSlot._observers = [];
+    // empty template cache
+    templates.clear();
   }
   _initMutationObserver() {
     const observer = this.__initMutationObserver();

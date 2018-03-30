@@ -159,6 +159,10 @@ class ArcHost extends Xen.Debug(Xen.Base, log) {
     this._fire('plan', plan);
   }
   async _consumeSerialization(serialization) {
+    // Clean up from last arc
+    Arcs.DomSlot.dispose();
+    Array.from(document.querySelectorAll('[slotid]')).forEach(n => n.textContent = '');
+    //
     const {config, manifest} = this._props;
     const {arc, loader} = this._state;
     //
@@ -170,12 +174,9 @@ class ArcHost extends Xen.Debug(Xen.Base, log) {
     //
     serialization = `${manifest}\n${serialization}`;
     // serialize old arc
-    groupCollapsed('serializing...');
+    groupCollapsed('serialized arc:');
     log(serialization);
     groupEnd();
-    // remove rendered particle DOM
-    Arcs.DomSlot.disconnectObservers();
-    Array.from(document.querySelectorAll('[slotid]')).forEach(n => n.textContent = '');
     // generate new slotComposer
     const slotComposer = this._createSlotComposer(config);
     // generate new arc via deserialization
