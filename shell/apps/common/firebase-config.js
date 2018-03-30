@@ -11,16 +11,35 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 // firebase runtime (customized by sjmiles@ for import-ability)
 import firebase from '../../components/firebase.4.2.0.js';
 
-const version = '0_3_beta_3';
+const {firebaseConfig, version} = (() => {
+  const testFirebaseKey = (new URL(document.location)).searchParams.get('testFirebaseKey');
 
-const firebaseConfig = {
-  apiKey: 'AIzaSyBme42moeI-2k8WgXh-6YK_wYyjEXo4Oz8',
-  authDomain: 'arcs-storage.firebaseapp.com',
-  databaseURL: 'https://arcs-storage.firebaseio.com',
-  projectId: 'arcs-storage',
-  storageBucket: 'arcs-storage.appspot.com',
-  messagingSenderId: '779656349412'
-};
+  let version;
+  let firebaseConfig;
+  if (!testFirebaseKey) {
+    version = '0_3_beta_3';
+    firebaseConfig = {
+      apiKey: 'AIzaSyBme42moeI-2k8WgXh-6YK_wYyjEXo4Oz8',
+      authDomain: 'arcs-storage.firebaseapp.com',
+      databaseURL: 'https://arcs-storage.firebaseio.com',
+      projectId: 'arcs-storage',
+      storageBucket: 'arcs-storage.appspot.com',
+      messagingSenderId: '779656349412'
+    };
+  } else {
+    version = testFirebaseKey;
+    firebaseConfig = {
+      apiKey: 'AIzaSyCbauC2RwA8Ao87tKV4Vzq6qIZiytpo4ws',
+      authDomain: 'arcs-storage-test.firebaseapp.com',
+      databaseURL: 'https://arcs-storage-test.firebaseio.com',
+      projectId: 'arcs-storage-test',
+      storageBucket: 'arcs-storage-test.appspot.com',
+      messagingSenderId: '419218095277'
+    };
+  }
+
+  return {firebaseConfig, version};
+})();
 
 const app = firebase.initializeApp(firebaseConfig/*, 'arcs-storage'*/);
 
