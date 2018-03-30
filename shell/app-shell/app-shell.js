@@ -282,11 +282,10 @@ class AppShell extends Xen.Debug(Xen.Base, log) {
     description = await ArcsUtils.describeArc(arc) || description;
     this._setState({description});
     // push description into metadata
-    if (metadata) {
-      if (metadata.description !== description) {
-        metadata.description = description;
-        this._setImmutableState('metadata', metadata);
-      }
+    if (!metadata || metadata.description !== description) {
+      metadata = metadata ? Xen.clone(metadata) : Xen.nob();
+      metadata.description = description;
+      this._setState({metadata});
     }
     // we consumed a plan, need new ones
     this._setState({plans: null});

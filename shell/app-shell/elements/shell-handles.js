@@ -109,6 +109,9 @@ class ShellHandles extends Xen.Debug(Xen.Base, log) {
   _renderVisited(user, visited) {
     const data = Object.keys(visited).map(key => {
       let {metadata, profile} = visited[key];
+      if (!metadata) {
+        metadata = Object;
+      }
       let href = `${location.origin}${location.pathname}?arc=${key}&user=${user.id}`;
       if (metadata.externalManifest) {
         href += `&manifest=${metadata.externalManifest}`;
@@ -116,8 +119,8 @@ class ShellHandles extends Xen.Debug(Xen.Base, log) {
       return {
         key: key,
         description: metadata.description || key.slice(1),
-        color: metadata.color || 'gray',
-        bg: metadata.bg,
+        color: metadata.color || 'white',
+        bg: metadata.bg || 'gray',
         href: href,
         profile: profile
       };

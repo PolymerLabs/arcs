@@ -70,17 +70,18 @@ class ArcCloud extends Xen.Debug(Xen.Base, log) {
     if (key && user) {
       // `share` setting is implicit in user record, and explicit in `share` property,
       // disambiguate here (user record wins)
-      if (user !== state.user) {
+      if (user !== state.user || key !== state.key) {
         const share = this._calculateShareState(user, key);
-        log('have novel user/key combo, calcuated share as', share);
+        log('have new user, calcuated share as', share);
         this._fire('share', share);
-      } else if (share !== share.state) {
+      } else if (share !== state.share) {
         if (this._consumeShareState(user, key, share)) {
           log('have novel share, calcuated user as', user);
           this._fire('user', Xen.clone(user));
         }
       }
       state.user = user;
+      state.key = key;
       state.share = share;
     }
     // Assumption is that user, key, and share are Truth from On High ... if they ever are not, we have a problem.
@@ -123,11 +124,12 @@ class ArcCloud extends Xen.Debug(Xen.Base, log) {
   }
   _consumeSteps(steps, metadata) {
     // steps are part of metadata, metadata is dirty-checked via JSON serialization,
-    if (steps && metadata) {
+    if (steps) {
+      metadata = metadata ? Xen.clone(metadata) : Xen.nob();
       if ((steps.length || metadata.steps) && (metadata.steps != steps)) {
         log(`setting steps to metadata`);
         metadata.steps = steps;
-        this._fire('metadata', Xen.clone(metadata));
+        this._fire('metadata', metadata);
         this._setState({steps: null});
       }
     }
@@ -140,22 +142,19 @@ class ArcCloud extends Xen.Debug(Xen.Base, log) {
   }
   _consumeShareState(user, key, share) {
     let dirty = false;
-    const shareState = (share == Const.SHARE.friends);
+    const shareState = (share === Const.SHARE.friends);
     const profileState = shareState || (share === Const.SHARE.self);
     if (user && key) {
-      if (!user.profiles || (Boolean(user.profiles[key]) !== profileState)) {
+      if ((Boolean(user.profiles[key]) !== profileState)) {
         dirty = true;
-        user.profiles = user.profiles || Object.create(null);
         if (profileState) {
           user.profiles[key] = true;
         } else {
           delete user.profiles[key];
         }
       }
-      if (!user.shares || (Boolean(user.shares[key]) !== shareState)) {
-        //log('modulating share state');
+      if ((Boolean(user.shares[key]) !== shareState)) {
         dirty = true;
-        user.shares = user.shares || Object.create(null);
         if (shareState) {
           user.shares[key] = true;
         } else {
