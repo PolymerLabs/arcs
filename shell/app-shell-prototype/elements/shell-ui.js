@@ -280,7 +280,7 @@ const template = html`
 const log = Xen.logFactory('ShellUi', '#ac6066');
 
 class ShellUi extends Xen.Debug(Xen.Base, log) {
-  static get observedAttributes() { return ['arc', 'showhint', 'users']; }
+  static get observedAttributes() { return ['showhint', 'arc', 'title', 'users']; }
   get template() {
     return template;
   }
@@ -288,7 +288,6 @@ class ShellUi extends Xen.Debug(Xen.Base, log) {
     return {
       barState: 'peek',
       toolState: 'main',
-      title: 'Arc Title',
       // TODO(sjmiles): include manifest or other directives?
       launcherHref: `${location.origin}${location.pathname}`,
       toolsOpen: false
