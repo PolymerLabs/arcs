@@ -145,12 +145,14 @@ const template = html`
     share="{{share}}"
     theme="{{theme}}"
     open="{{drawerOpen}}"
+    requestnewuser="{{requestNewUser}}"
     on-exclusions="_onExclusions"
     on-share="_onStateData"
     on-step="_onStateData"
     on-search="_onStateData"
     on-open="_onDrawerOpen"
     on-select-user="_onSelectUser"
+    on-new-user="_onNewUser"
   >
     <slot></slot>
     <slot name="suggestions" slot="suggestions"></slot>
@@ -181,6 +183,9 @@ class AppShell extends Xen.Debug(Xen.Base, log) {
     }
     if (selectedUser) {
       this._consumeSelectedUser(user, selectedUser);
+    }
+    if (config && config === oldState.config && !user && !selectedUser) {
+      this._setState({requestNewUser: true});
     }
     if (!plan && plans && plans.length && (config.launcher || config.profiler)) {
       state.injectedStep = plans[0].plan;
@@ -229,14 +234,7 @@ class AppShell extends Xen.Debug(Xen.Base, log) {
   }
   _consumeSelectedUser(user, selectedUser) {
     // TODO(sjmiles): explain `user` vs `selectedUser`
-    if (!user || user.id !== selectedUser) {
-      user = null;
-      if (selectedUser === 'new') {
-        selectedUser = null;
-        log('new user', user);
-        // TODO(sjmiles): need to port _newUserPrompt from old shell
-        user = this._newUserPrompt();
-      }
+    if (user.id !== selectedUser) {
       this._setState({selectedUser, user});
     }
   }
@@ -301,6 +299,9 @@ class AppShell extends Xen.Debug(Xen.Base, log) {
   }
   _onSelectUser(e, selectedUser) {
     this._setState({selectedUser});
+  }
+  _onNewUser(e, name) {
+    this._setState({user: {name}, requestNewUser: false});
   }
   _onDrawerOpen(e, drawerOpen) {
     this._setState({drawerOpen});

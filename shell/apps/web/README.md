@@ -2,7 +2,7 @@
 
 ## Arcs Webapp
 
-https://polymerlabs.github.io/arcs-cdn/v0.3/apps/web/
+https://polymerlabs.github.io/arcs-live/shell/apps/web/
 
 The webapp can be configured with URL parameters:
 
@@ -23,4 +23,4 @@ The webapp can be configured with URL parameters:
 
 Example:
 
-https://polymerlabs.github.io/arcs-cdn/v0.3/apps/web/?solo=local.manifest
+https://polymerlabs.github.io/arcs-live/shell/apps/web/?solo=local.manifest
