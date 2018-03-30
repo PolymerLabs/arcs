@@ -124,11 +124,12 @@ class ArcCloud extends Xen.Debug(Xen.Base, log) {
   }
   _consumeSteps(steps, metadata) {
     // steps are part of metadata, metadata is dirty-checked via JSON serialization,
-    if (steps && metadata) {
+    if (steps) {
+      metadata = metadata ? Xen.clone(metadata) : Xen.nob();
       if ((steps.length || metadata.steps) && (metadata.steps != steps)) {
         log(`setting steps to metadata`);
         metadata.steps = steps;
-        this._fire('metadata', Xen.clone(metadata));
+        this._fire('metadata', metadata);
         this._setState({steps: null});
       }
     }
