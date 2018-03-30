@@ -67,8 +67,14 @@ const ArcsUtils = {
     return await Arcs.Manifest.parse(content,
       {id: null, fileName, loader, registry: null, position: {line: 1, column: 0}});
   },
+  getUrlParam(name) {
+    // TODO(sjmiles): memoize url
+    const url = new URL(document.location.href);
+    return url.searchParams.get(name);
+  },
   setUrlParam(name, value) {
-    let url = new URL(document.location.href);
+    // TODO(sjmiles): memoize url
+    const url = new URL(document.location.href);
     url.searchParams.set(name, value);
     window.history.replaceState({}, '', decodeURIComponent(url.href));
   },
