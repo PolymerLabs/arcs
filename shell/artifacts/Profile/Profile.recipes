@@ -14,7 +14,6 @@ recipe
   create #address as address
   create #avatar as avatar
   create #friends as friends
-  create #favorite as food
   use #user as person
   use #identities as people
   map #BOXED_avatar as avatars
@@ -26,9 +25,6 @@ recipe
     friends = friends
     avatars <- avatars
     people <- people
-  FavoriteFoodPicker
-    food = food
-    person <- person
   AddressForm
     address = address
 
