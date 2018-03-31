@@ -6,64 +6,86 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-defineParticle(({DomParticle}) => {
+defineParticle(({DomParticle, html, resolver}) => {
 
-  let host = `favorite-food-picker`;
+  const host = `favorite-food-picker`;
 
-  let styles = `
+  const foods = {
+    Hotdogs: '1f32d',
+    Tacos: '1f32e',
+    Burritos: '1f32f',
+    Corn: '1f33d',
+    Rice: '1f35a',
+    Udon: '1f35c',
+    Spaghetti: '1f35d',
+    Bread: '1f35e',
+    Fries: '1f35f',
+    Cookies: '1f36a',
+    Chocolate: '1f36b',
+    Flan: '1f36e',
+    Beer: '1f37a',
+    Burrito: '1f32f',
+    Popcorn: '1f37f',
+    Tomato: '1f345',
+    Eggplant: '1f346',
+    Watermelon: '1f349',
+    Hamburger: '1f354',
+    Pizza: '1f355',
+    Beef: '1f356',
+    Chicken: '1f357',
+    Sushi: '1f363',
+    Icecream: '1f368',
+    Donuts: '1f369',
+    Bento: '1f371',
+    Eggs: '1f373',
+  };
+
+  const template = html`
+
 <style>
   [${host}] {
-    padding: 6px 0;
+    padding: 24px;
     text-align: center;
   }
-  [${host}] > * {
-    vertical-align: middle;
-  }
-  [${host}] select {
-    padding: 6px;
-    font-size: 14px;
-  }
-  [${host}] .x-select {
+  [${host}] > [foods] {
     display: inline-block;
-    position: relative;
   }
-  [${host}] .x-select::after {
-    content: '▼';
+  [${host}] > [foods] > div {
+    display: inline-block;
+    width: 88px;
+    height: 88px;
+    padding: 16px;
+    color: silver;
+    border-radius: 16px;
+    text-align: center;
+  }
+  [${host}] > [foods] > div[selected] {
+    background: #eeeeee;
+    color: gray;
+  }
+  [${host}] > [foods] > div > * {
     display: block;
-    position: absolute;
-    right: 8px;
-    bottom: 6px;
-    transform: scaleY(0.6);
-    pointer-events: none;
   }
-  [${host}] .x-select > select {
-    position: relative;
-    margin: 0;
-    padding: 8px 24px 8px 6px;
-    border: 0;
-    border-bottom: 1px solid #ddd;
-    background-color: transparent;
-    border-radius: 0;
-    font-size: 14px;
-    font-weight: 300;
-    overflow: hidden;
-    outline: none;
-    -webkit-appearance: none;
+  [${host}] > [foods] > div img {
+    display: block;
+    width: 64px;
+    margin: 0 auto 16px;
   }
 </style>
-  `;
 
-  let template = `
-${styles}
 <div ${host}>
-  <div class="x-select">
-    My favorite food is:
-    <select on-change="_onFavoriteFoodChanged">
-      ${['Pizza', 'Bacon', 'Lobster', 'Tim Tam', 'Kale']
-        .map(i => `<option value="${i}" selected$={{selected${i}}}>${i}</option>`).join('')}
-    </select>
+  <div selector>
+    My favorite Food
   </div>
+  <div foods>{{foods}}</div>
+  <template foodTemplate>
+    <div value="{{name}}" selected$="{{selected}}" on-click="onSelectFood">
+      <img src="{{src}}">
+      <div>{{name}}</div>
+    </div>
+  </template>
 </div>
+
     `.trim();
 
   return class extends DomParticle {
@@ -71,15 +93,28 @@ ${styles}
       return template;
     }
     render(props, state) {
-      let food = props.food && props.food && props.food.food || '';
+      const favorite = props.food && props.food.food;
+      const path = resolver('FavoriteFoodPicker');
+      const models = Object.keys(foods).map(name => {
+        return {
+          name: name,
+          src: `${path}/../assets/noto-emoji-128/emoji_u${foods[name]}.png`,
+          selected: name === favorite
+        };
+      });
       return {
-        [`selected${food}`]: true
+        foods: {$template: 'foodTemplate', models}
       };
     }
+    setFavoriteFood(food) {
+      const foodHandle = this.handles.get('food');
+      foodHandle.set(new foodHandle.entityClass({food}));
+    }
     _onFavoriteFoodChanged(e, state) {
-      const food = this._views.get('food');
-
-      food.set(new food.entityClass({food: e.data.value}));
+      this.setFavoriteFood(e.data.value);
+    }
+    onSelectFood(e) {
+      this.setFavoriteFood(e.data.value);
     }
   };
 
