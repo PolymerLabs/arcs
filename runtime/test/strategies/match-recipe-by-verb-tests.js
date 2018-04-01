@@ -179,7 +179,7 @@ describe('MatchRecipeByVerb', function() {
     assert.equal(recipe.slots[1].sourceConnection, recipe.particles[1].consumedSlotConnections.bar);
   });
 
-  it.only('carries slot assignments across when they\'re assigned elsewhere too', async () => {
+  it('carries slot assignments across when they\'re assigned elsewhere too', async () => {
     let manifest = await Manifest.parse(`
     particle P in 'A.js'
       P()
