@@ -35,11 +35,13 @@ export default class MatchRecipeByVerb extends Strategy {
           return;
         }
 
-        if (particle.allConnections().length > 0)
-          return;
-
         let recipes = arc.context.findRecipesByVerb(particle.primaryVerb);
 
+        // Extract slot information from recipe. This is extracted in the form:
+        // {consume-slot-name: targetSlot: <slot>, providedSlots: {provide-slot-name: <slot>}}
+        // 
+        // Note that slots are only included if connected to other components of the recipe - e.g.
+        // the target slot has a source connection. 
         let slotConstraints = {};
         for (let consumeSlot of Object.values(particle.consumedSlotConnections)) {
           let targetSlot = consumeSlot.targetSlot.sourceConnection ? consumeSlot.targetSlot : null;
@@ -50,7 +52,16 @@ export default class MatchRecipeByVerb extends Strategy {
           }
         }
 
-        recipes = recipes.filter(recipe => MatchRecipeByVerb.satisfiesSlotConstraints(recipe, slotConstraints));
+        let handleConstraints = {named: {}, unnamed: []}
+        for (let handleConnection of Object.values(particle.connections)) {
+          handleConstraints.named[handleConnection.name] = {direction: handleConnection.direction};
+        }
+        for (let unnamedConnection of particle.unnamedConnections) {
+          handleConstraints.unnamed.push({direction: unnamedConnection.direction});
+        }
+
+        recipes = recipes.filter(recipe => MatchRecipeByVerb.satisfiesSlotConstraints(recipe, slotConstraints))
+                         .filter(recipe => MatchRecipeByVerb.satisfiesHandleConstraints(recipe, handleConstraints));
 
         return recipes.map(recipe => {
           return (outputRecipe, particle) => {
@@ -93,6 +104,37 @@ export default class MatchRecipeByVerb extends Strategy {
         });
       }
     }(RecipeWalker.Permuted), this);
+  }
+
+  static satisfiesHandleConstraints(recipe, handleConstraints) {
+    for (let handleName in handleConstraints.named)
+      if (!MatchRecipeByVerb.satisfiesHandleConnection(recipe, handleName, handleConstraints.named[handleName]))
+        return false;
+    for (let handleData of handleConstraints.unnamed) {
+      if (!MatchRecipeByVerb.satisfiesUnnamedHandleConnection(recipe, handleData))
+        return false;
+    }
+    return true;
+  }
+
+  static satisfiesUnnamedHandleConnection(recipe, handleData) {
+    for (let particle of recipe.particles) {
+      for (let connection of Object.values(particle.connections)) {
+        if (connection.direction == handleData.direction)
+          return true;
+      }
+    }
+    return false;
+  }
+
+  static satisfiesHandleConnection(recipe, handleName, handleData) {
+    for(let particle of recipe.particles) {
+      if (particle.connections[handleName]) {
+        if (particle.connections[handleName].direction == handleData.direction)
+          return true;
+      }
+    }
+    return false;
   }
 
   static satisfiesSlotConstraints(recipe, slotConstraints) {

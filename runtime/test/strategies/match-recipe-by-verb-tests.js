@@ -76,6 +76,82 @@ describe('MatchRecipeByVerb', function() {
   Q as particle1
     q <- view0`);
   });
+  it.only('listens to handle constraints', async () => {
+    let manifest = await Manifest.parse(`
+    particle P in 'A.js'
+      P(out S {} a)
+    
+    particle Q in 'B.js'
+      Q(in S {} a, out S {} b)
+
+    particle R in 'C.js'
+      R(in S {} c)
+
+    recipe verb
+      P
+    
+    recipe verb
+      P
+      Q
+    
+    recipe verb
+      Q
+
+    recipe verb
+      R
+
+    recipe 
+      particle can verb
+    
+    recipe
+      particle can verb
+        a ->
+    
+    recipe
+      particle can verb
+        a <-
+    
+    recipe
+      particle can verb
+        a <-
+        b ->
+    
+    recipe
+      particle can verb
+        * ->
+    `);
+
+    let arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'dom');
+    let inputParams = {generated: [{result: manifest.recipes[4], score: 1}]};
+    let mrv = new MatchRecipeByVerb(arc);
+    let results = await mrv.generate(inputParams);
+    assert.equal(results.length, 4);
+
+    inputParams = {generated: [{result: manifest.recipes[5], score: 1}]};
+    results = await mrv.generate(inputParams);
+    assert.equal(results.length, 2);
+    assert.equal(results[0].result.particles.length, 1);
+    assert.equal(results[0].result.particles[0].name, 'P');
+    assert.equal(results[1].result.particles.length, 2);
+    
+    inputParams = {generated: [{result: manifest.recipes[6], score: 1}]};
+    results = await mrv.generate(inputParams);
+    assert.equal(results.length, 2);
+    assert.equal(results[1].result.particles.length, 1);
+    assert.equal(results[1].result.particles[0].name, 'Q');
+    assert.equal(results[0].result.particles.length, 2);
+    
+    inputParams = {generated: [{result: manifest.recipes[7], score: 1}]};
+    results = await mrv.generate(inputParams);
+    assert.equal(results.length, 2);
+    assert.equal(results[1].result.particles.length, 1);
+    assert.equal(results[1].result.particles[0].name, 'Q');
+    assert.equal(results[0].result.particles.length, 2);
+
+    inputParams = {generated: [{result: manifest.recipes[8], score: 1}]};
+    results = await mrv.generate(inputParams);
+    assert.equal(results.length, 3);
+  })
   it('listens to slot constraints', async () => {
     let manifest = await Manifest.parse(`
       particle P in 'A.js'
