@@ -54,20 +54,20 @@ export default class MatchRecipeByVerb extends Strategy {
 
         let handleConstraints = {named: {}, unnamed: []}
         for (let handleConnection of Object.values(particle.connections)) {
-          handleConstraints.named[handleConnection.name] = {direction: handleConnection.direction};
+          handleConstraints.named[handleConnection.name] = {direction: handleConnection.direction, handle: handleConnection.handle};
         }
         for (let unnamedConnection of particle.unnamedConnections) {
-          handleConstraints.unnamed.push({direction: unnamedConnection.direction});
+          handleConstraints.unnamed.push({direction: unnamedConnection.direction, handle: unnamedConnection.handle});
         }
 
         recipes = recipes.filter(recipe => MatchRecipeByVerb.satisfiesSlotConstraints(recipe, slotConstraints))
                          .filter(recipe => MatchRecipeByVerb.satisfiesHandleConstraints(recipe, handleConstraints));
 
         return recipes.map(recipe => {
-          return (outputRecipe, particle) => {
+          return (outputRecipe, particleForReplacing) => {
             let {handles, particles, slots} = recipe.mergeInto(outputRecipe);
 
-            particle.remove();
+            particleForReplacing.remove();
 
             for (let consumeSlot in slotConstraints) {
               if (slotConstraints[consumeSlot].targetSlot) {
@@ -95,9 +95,25 @@ export default class MatchRecipeByVerb extends Strategy {
                     }
                   }                  
                 }
-              }
+              }              
             }
 
+            for (let handleConnection in handleConstraints.named) {
+              if (handleConstraints.named[handleConnection].handle) {
+                let {mappedHandle} = outputRecipe.updateToClone({mappedHandle: handleConstraints.named[handleConnection].handle});
+                for (let particle of particles) {
+                  if (particle.connections[handleConnection]) {
+                    particle.connections[handleConnection]._handle = mappedHandle;
+                    for (let i = 0; i < mappedHandle.connections.length; i++) {
+                      let mappedConnection = mappedHandle.connections[i];                      
+                      if (mappedConnection.particle == particleForReplacing && mappedConnection.name == handleConnection)
+                        mappedHandle.connections[i] = particle.connections[handleConnection];
+                    }
+                    mappedHandle.connections.push(particle.connections[handleConnection]);
+                  }
+                }
+              }
+            }
 
             return 1;
           };
