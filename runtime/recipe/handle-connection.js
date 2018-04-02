@@ -93,10 +93,14 @@ class HandleConnection {
   }
 
   get spec() {
+    if (this.particle.spec == null)
+      return null;
     return this.particle.spec.connectionMap.get(this.name);
   }
 
   get isOptional() {
+    if (this.spec == null)
+      return false;
     return this.spec.isOptional;
   }
 

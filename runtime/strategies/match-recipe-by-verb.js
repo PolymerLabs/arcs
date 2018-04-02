@@ -8,6 +8,7 @@
 import {Strategy} from '../../strategizer/strategizer.js';
 import Recipe from '../recipe/recipe.js';
 import RecipeWalker from '../recipe/walker.js';
+import Handle from '../recipe/handle.js';
 import assert from '../../platform/assert-web.js';
 
 // This strategy substitutes 'particle can verb' declarations with recipes, 
@@ -53,7 +54,7 @@ export default class MatchRecipeByVerb extends Strategy {
           }
         }
 
-        let handleConstraints = {named: {}, unnamed: []}
+        let handleConstraints = {named: {}, unnamed: []};
         for (let handleConnection of Object.values(particle.connections)) {
           handleConstraints.named[handleConnection.name] = {direction: handleConnection.direction, handle: handleConnection.handle};
         }
@@ -99,24 +100,46 @@ export default class MatchRecipeByVerb extends Strategy {
               }              
             }
 
-            for (let handleConnection in handleConstraints.named) {
-              if (handleConstraints.named[handleConnection].handle) {
-                let {mappedHandle} = outputRecipe.updateToClone({mappedHandle: handleConstraints.named[handleConnection].handle});
-                for (let particle of particles) {
-                  if (particle.connections[handleConnection]) {
-                    particle.connections[handleConnection]._handle = mappedHandle;
-                    let replacedConnection = false;
-                    for (let i = 0; i < mappedHandle.connections.length; i++) {
-                      let mappedConnection = mappedHandle.connections[i];                      
-                      if (mappedConnection.particle == particleForReplacing && mappedConnection.name == handleConnection) {
-                        mappedHandle.connections[i] = particle.connections[handleConnection];
-                        replacedConnection = true;
-                      }
-                    }
-                    assert(replacedConnection);
+            function tryApplyHandleConstraint(name, connection, constraint, handle) {
+              if (connection.handle != null)
+                return false;
+              if (!MatchRecipeByVerb.connectionMatchesConstraint(connection, constraint))
+                return false;
+              for (let i = 0; i < handle.connections.length; i++) {
+                let candidate = handle.connections[i];
+                if (candidate.particle == particleForReplacing && candidate.name == name) {
+                  connection._handle = handle;
+                  handle.connections[i] = connection;
+                  return true;
+                }              
+              }
+              return false;
+            }
+
+            function applyHandleConstraint(name, constraint, handle) {
+              let {mappedHandle} = outputRecipe.updateToClone({mappedHandle: handle});
+              for (let particle of particles) {
+                if (name) {
+                  if (tryApplyHandleConstraint(name, particle.connections[name], constraint, mappedHandle))
+                    return true;
+                } else {
+                  for (let connection of Object.values(particle.connections)) {
+                    if (tryApplyHandleConstraint(name, connection, constraint, mappedHandle))
+                      return true;
                   }
                 }
               }
+              return false;
+            } 
+
+            for (let name in handleConstraints.named) {
+              if (handleConstraints.named[name].handle)
+                assert(applyHandleConstraint(name, handleConstraints.named[name], handleConstraints.named[name].handle));
+            }
+
+            for (let connection of handleConstraints.unnamed) {
+              if (connection.handle)
+                assert(applyHandleConstraint(null, connection, connection.handle));
             }
 
             return 1;
@@ -138,9 +161,12 @@ export default class MatchRecipeByVerb extends Strategy {
   }
 
   static satisfiesUnnamedHandleConnection(recipe, handleData) {
+    // refuse to match unnamed handle connections unless some type information is present.
+    if (!handleData.handle)
+      return false;
     for (let particle of recipe.particles) {
       for (let connection of Object.values(particle.connections)) {
-        if (connection.direction == handleData.direction)
+        if (MatchRecipeByVerb.connectionMatchesConstraint(connection, handleData))
           return true;
       }
     }
@@ -148,13 +174,21 @@ export default class MatchRecipeByVerb extends Strategy {
   }
 
   static satisfiesHandleConnection(recipe, handleName, handleData) {
-    for(let particle of recipe.particles) {
+    for (let particle of recipe.particles) {
       if (particle.connections[handleName]) {
-        if (particle.connections[handleName].direction == handleData.direction)
+        if (MatchRecipeByVerb.connectionMatchesConstraint(particle.connections[handleName], handleData))
           return true;
       }
     }
     return false;
+  }
+
+  static connectionMatchesConstraint(connection, handleData) {
+    if (connection.direction !== handleData.direction)
+      return false;
+    if (!handleData.handle)
+      return true;
+    return Handle.effectiveType(handleData.handle._mappedType, handleData.handle.connections.concat(connection)) != null;
   }
 
   static satisfiesSlotConstraints(recipe, slotConstraints) {
