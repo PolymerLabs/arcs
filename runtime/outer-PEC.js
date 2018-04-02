@@ -92,18 +92,28 @@ class OuterPEC extends PEC {
       let error = undefined;
       let recipe0 = manifest.recipes[0];
       if (recipe0) {
+        const missingHandles = [];
         for (let handle of recipe0.handles) {
-          handle.mapToView(this._arc.findHandleById(handle.id));
-        }
-        let options = {errors: new Map()};
-        if (recipe0.normalize(options)) {
-          if (recipe0.isResolved()) {
-            this._arc.instantiate(recipe0, arc);
-          } else {
-            error = `Recipe is not resolvable ${recipe0.toString({showUnresolved: true})}`;
+          const fromHandle = this._arc.findHandleById(handle.id);
+          if (!fromHandle) {
+            missingHandles.push(handle);
+            continue;
           }
+          handle.mapToView(fromHandle);
+        }
+        if (missingHandles.length > 0) {
+          error = `Recipe couldn't load due to missing handles [recipe=${recipe0}, missingHandles=${missingHandles.join('\n')}].`;
         } else {
-          error = `Recipe ${recipe0.toString()} could not be normalized:\n${[...options.errors.values()].join('\n')}`;
+          let options = {errors: new Map()};
+          if (recipe0.normalize(options)) {
+            if (recipe0.isResolved()) {
+              this._arc.instantiate(recipe0, arc);
+            } else {
+              error = `Recipe is not resolvable ${recipe0.toString({showUnresolved: true})}`;
+            }
+          } else {
+            error = `Recipe ${recipe0} could not be normalized:\n${[...options.errors.values()].join('\n')}`;
+          }
         }
       } else {
         error = 'No recipe defined';
