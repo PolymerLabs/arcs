@@ -235,8 +235,7 @@ describe('MatchRecipeByVerb', function() {
     let recipe = results[0].result;
     assert.equal(recipe.particles[0].connections.a.handle, recipe.particles[1].connections.b.handle);
     assert.equal(recipe.particles[0].connections.a.handle.connections[0].particle, recipe.particles[0]);
-    // XXX: WHY is there 3 connections from this handle?!
-    assert.equal(recipe.particles[1].connections.b.handle.connections[2].particle, recipe.particles[1]);
+    assert.equal(recipe.particles[1].connections.b.handle.connections[1].particle, recipe.particles[1]);
   });
   it('carries slot assignments across verb substitution', async () => {
     let manifest = await Manifest.parse(`

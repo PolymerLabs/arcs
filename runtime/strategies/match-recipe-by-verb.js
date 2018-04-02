@@ -8,6 +8,7 @@
 import {Strategy} from '../../strategizer/strategizer.js';
 import Recipe from '../recipe/recipe.js';
 import RecipeWalker from '../recipe/walker.js';
+import assert from '../../platform/assert-web.js';
 
 // This strategy substitutes 'particle can verb' declarations with recipes, 
 // according to the following conditions:
@@ -104,12 +105,15 @@ export default class MatchRecipeByVerb extends Strategy {
                 for (let particle of particles) {
                   if (particle.connections[handleConnection]) {
                     particle.connections[handleConnection]._handle = mappedHandle;
+                    let replacedConnection = false;
                     for (let i = 0; i < mappedHandle.connections.length; i++) {
                       let mappedConnection = mappedHandle.connections[i];                      
-                      if (mappedConnection.particle == particleForReplacing && mappedConnection.name == handleConnection)
+                      if (mappedConnection.particle == particleForReplacing && mappedConnection.name == handleConnection) {
                         mappedHandle.connections[i] = particle.connections[handleConnection];
+                        replacedConnection = true;
+                      }
                     }
-                    mappedHandle.connections.push(particle.connections[handleConnection]);
+                    assert(replacedConnection);
                   }
                 }
               }
