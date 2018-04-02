@@ -4,6 +4,23 @@
 
 Particle developers should visit our [particle developer website](https://polymerlabs.github.io/arcs-live/shell/docs/) instead of reading this document which is more geared towards Arcs core system developers.
 
+
+A hosted version of Arcs is available in both tagged & bleeding edge forms.
+Neither is stable - both the db and front-end are iterating rapidly.
+
+
+Tagged release URLs have the form
+`https://cdn.rawgit.com/PolymerLabs/arcs-live/<release_number>/shell/apps/web/index.html`
+(the list of releases is
+[here](https://github.com/PolymerLabs/arcs-live/releases)). A recent version
+(latest as of this writing) is
+[v0.3.3.2](https://cdn.rawgit.com/PolymerLabs/arcs-live/v0.3.3.2/shell/apps/web/index.html).
+
+Bleeding edge often works and is available via github pages:
+https://polymerlabs.github.io/arcs-live/shell/apps/web/.
+
+
+
 ## Install
 
 Note that you need a **recent** version of Node because we use new ES6 features. v9 is definitely OK.
