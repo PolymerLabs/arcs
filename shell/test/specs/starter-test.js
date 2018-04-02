@@ -112,15 +112,24 @@ function loadSeleniumUtils() {
   });
 }
 
-/** Wait until the element specified by selectors is visible. Unlike the
+/**
+ * Wait until the element specified by selectors is visible. Unlike the
  * normal #waitForVisible()
  * (http://webdriver.io/api/utility/waitForVisible.html) this will traverse
- * the shadow DOM. */
+ * the shadow DOM.
+ */
 function waitForVisible(selectors) {
   browser.waitUntil(
     () => {
       const selected = pierceShadows(selectors);
-      return selected.value && selected.value.length > 0;
+      if(!selected.value || selected.value.length <= 0) {
+        return false;
+      }
+
+      return browser.unify(
+        selected.value.map(elem => browser.elementIdDisplayed(elem.ELEMENT)),
+        {extractValue: true}
+      );
     },
     2500,
     `selectors ${selectors} never selected anything`,
@@ -217,7 +226,7 @@ function getFooterPath() {
   return ['app-shell', 'shell-ui', 'arc-footer', 'x-toast[app-footer]'];
 }
 
-function initTestWithNewArc() {
+function initTestWithNewArc(title) {
   // clean up extra open tabs
   const openTabs = browser.getTabIds();
   browser.switchTab(openTabs[0]);
@@ -225,23 +234,34 @@ function initTestWithNewArc() {
     browser.close(tabToClose);
   });
 
-  // TODO(smalls) should we create a user on the fly?
+  let firebaseKey = new Date().toISOString() + title;
+  firebaseKey = firebaseKey.replace(/\W+/g, '-').replace(/\./g, '_');
+  console.log(`running test "${title}" with firebaseKey "${firebaseKey}"`);
+
+  const urlParams = [
+    `testFirebaseKey=${firebaseKey}`,
+    `solo=${browser.options.baseUrl}shell/artifacts/canonical.manifest`
+  ];
+
   // note - baseUrl (currently specified on the command line) must end in a
-  // trailing '/', and this must not begin with a preceding '/'.
-  browser.url(`shell/apps/web/?user=-L-YGQo_7f3izwPg6RBn`);
+  // trailing `/`, and this must not begin with a preceding `/`.
+  // `browser.url()` will prefix its argument with baseUrl, and avoiding a
+  // doubling `//` situation avoids some bugs.
+  browser.url(`shell/apps/web/?${urlParams.join('&')}`);
 
   assert.equal('Arcs', browser.getTitle());
 
-  // create a new arc, switch to that tab (toggling back to the first tab to
-  // reset the webdriver window state).
+  console.log('XXX before createNewUser');
+
+  createNewUserIfNotLoggedIn();
   createNewArc();
 
+  console.log('XXX after createNewArc');
+
   // use a solo URL pointing to our local recipes
-  browser.url(
-    `${browser.getUrl()}&solo=${
-      browser.options.baseUrl
-    }shell/artifacts/canonical.manifest`
-  );
+  browser.url(`${browser.getUrl()}&${urlParams.join('&')}`);
+
+  // that reload (`browser.url()`) will drop our utils, so load again.
   loadSeleniumUtils();
 
   // check out some basic structure relative to the app footer
@@ -250,6 +270,29 @@ function initTestWithNewArc() {
   assert.ok(pierceShadowsSingle(footerPath).value);
 }
 
+function createNewUserIfNotLoggedIn() {
+  loadSeleniumUtils();
+
+  if (browser.getUrl().includes('user=')) {
+    return;
+  }
+
+  const newUsersNameSelectors = ['app-shell', 'shell-ui', 'user-picker', '#new-users-name'];
+  waitForVisible(newUsersNameSelectors);
+
+  const element = pierceShadowsSingle(newUsersNameSelectors);
+  const elementId = element.value.ELEMENT;
+
+  // create a user 'Selenium'
+  browser.elementIdValue(elementId, ['Selenium', 'Enter']);
+
+  waitForStillness();
+}
+
+/**
+ * Create a new arc, switch to that tab (toggling back to the first tab to
+ * reset the webdriver window state).
+ */
 function createNewArc() {
   assert.equal(1, browser.windowHandles().value.length);
 
@@ -381,9 +424,9 @@ function clickInParticles(slotName, selectors, textQuery) {
   );
 }
 
-describe('test Arcs demo flows', function() {
-  it('can use the restaurant demo flow', function() {
-    initTestWithNewArc();
+describe('Arcs demos', function() {
+  it('can book a restaurant', function() {
+    initTestWithNewArc(this.test.fullTitle());
 
     allSuggestions();
 
@@ -417,8 +460,8 @@ describe('test Arcs demo flows', function() {
     // });
   });
 
-  it.skip('can use the gift shopping demo flow', function() {
-    initTestWithNewArc();
+  it.skip('can buy gifts', function() {
+    initTestWithNewArc(this.test.fullTitle());
 
     allSuggestions();
 
@@ -449,9 +492,13 @@ describe('test Arcs demo flows', function() {
     assert.equal(6, annotations.length);
     assert.ok(annotations.length > 0 && annotations.every(a => a.length > 0));
   });
+});
 
-  it('can use an arc with the default global manifests', function() {
-    initTestWithNewArc();
+describe('Arcs system', function() {
+  it('can load with global manifests', function() {
+    initTestWithNewArc(this.test.fullTitle());
+
+    console.log('XXX after initTestWithNewArc');
 
     // remove solo from our URL to use the default
     const url = new URL(browser.getUrl());
