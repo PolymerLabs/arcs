@@ -71,9 +71,9 @@ class PersistentUser extends Xen.Debug(Xen.Base, log) {
         let user = snap.val();
         log('READ user', user, 'from', String(snap.ref));
         if (!user) {
-          // TODO Rather than an exception, should we fire an event to clear
-          // `id`, and let that trigger the new user flow?
-          throw new Error(`no remote user (${user}) for id ${id}; user missing from db? Consider removing that field from your local storage.`);
+          console.log(`no remote user (${user}) for id ${id}; user missing from db?`);
+          this._fire('user', null);
+          return;
         }
         // restore missing fields
         this._repairUser(user, id);

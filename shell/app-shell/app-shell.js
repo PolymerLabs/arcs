@@ -97,7 +97,7 @@ const template = html`
     on-manifests="_onStateData"
     on-exclusions="_onStateData"
     on-users="_onStateData"
-    on-user="_onStateData"
+    on-user="_onUser"
     on-friends="_onStateData"
     on-avatars="_onStateData"
     on-arcs="_onStateData"
@@ -287,6 +287,14 @@ class AppShell extends Xen.Debug(Xen.Base, log) {
     }
     // we consumed a plan, need new ones
     this._setState({plans: null});
+  }
+  _onUser(e, data) {
+    // if clearing `user`, also clear `selectedUser`
+    if (e.type==='user' && !data) {
+      this._setState({selectedUser: data});
+    }
+
+    this._setState({user: data});
   }
   _onStateData(e, data) {
     this._setState({[e.type]: data});
