@@ -12,7 +12,7 @@ Template.html = (...args) => Template.createTemplate(html.apply(null, args)); //
 
 // TODO(sjmiles): cloning prevents console log from showing values from the future,
 // but this must be a deep clone. Circular objects are not cloned.
-const deepishClone = obj => {
+const deepishClone = (obj, depth) => {
   if (typeof obj !== 'object') {
     return obj;
   }
@@ -22,7 +22,9 @@ const deepishClone = obj => {
     try {
       value = JSON.parse(JSON.stringify(value));
     } catch (x) {
-      // lint?
+      if (depth < 1) {
+        value = deepishClone(obj, (depth || 0) + 1);
+      }
     }
     clone[n] = value;
   }
