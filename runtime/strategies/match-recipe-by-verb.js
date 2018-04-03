@@ -71,33 +71,33 @@ export default class MatchRecipeByVerb extends Strategy {
 
             particleForReplacing.remove();
 
+
             for (let consumeSlot in slotConstraints) {
-              if (slotConstraints[consumeSlot].targetSlot) {
-                let {mappedSlot} = outputRecipe.updateToClone({mappedSlot: slotConstraints[consumeSlot].targetSlot});
+              if (slotConstraints[consumeSlot].targetSlot || Object.values(slotConstraints[consumeSlot].providedSlots).filter(a => a != null).length > 0) {
+                let slotMapped = false;                
                 for (let particle of particles) {
-                  if (particle.consumedSlotConnections[consumeSlot] && particle.consumedSlotConnections[consumeSlot].targetSlot == null) {
-                    particle.consumedSlotConnections[consumeSlot]._targetSlot = mappedSlot;
-                    mappedSlot._consumerConnections.push(particle.consumedSlotConnections[consumeSlot]); 
+                  if (MatchRecipeByVerb.slotsMatchConstraint(particle.consumedSlotConnections, consumeSlot, slotConstraints[consumeSlot].providedSlots)) {
+                    if (slotConstraints[consumeSlot].targetSlot) {
+                      let {mappedSlot} = outputRecipe.updateToClone({mappedSlot: slotConstraints[consumeSlot].targetSlot});
+                      particle.consumedSlotConnections[consumeSlot]._targetSlot = mappedSlot;
+                      mappedSlot._consumerConnections.push(particle.consumedSlotConnections[consumeSlot]); 
+                    }
+                    for (let slotName in slotConstraints[consumeSlot].providedSlots) {
+                      let slot = slotConstraints[consumeSlot].providedSlots[slotName];
+                      if (slot == null)
+                        continue;
+                      let {mappedSlot} = outputRecipe.updateToClone({mappedSlot: slot});
+                      let oldSlot = particle.consumedSlotConnections[consumeSlot].providedSlots[slotName];
+                      oldSlot.remove();
+                      particle.consumedSlotConnections[consumeSlot].providedSlots[slotName] = mappedSlot;
+                      mappedSlot._sourceConnection = particle.consumedSlotConnections[consumeSlot];
+                    }
+                    slotMapped = true;
                     break;
                   }
                 }
+                assert(slotMapped);
               }
-
-              for (let provideSlot in slotConstraints[consumeSlot].providedSlots) {
-                let slot = slotConstraints[consumeSlot].providedSlots[provideSlot];
-                let {mappedSlot} = outputRecipe.updateToClone({mappedSlot: slot});
-                for (let particle of particles) {
-                  if (particle.consumedSlotConnections[consumeSlot]) {
-                    if (particle.consumedSlotConnections[consumeSlot].providedSlots[provideSlot]) {
-                      let oldSlot = particle.consumedSlotConnections[consumeSlot].providedSlots[provideSlot];
-                      oldSlot.remove();
-                      particle.consumedSlotConnections[consumeSlot].providedSlots[provideSlot] = mappedSlot;
-                      mappedSlot._sourceConnection = particle.consumedSlotConnections[consumeSlot];
-                      break;
-                    }
-                  }                  
-                }
-              }              
             }
 
             function tryApplyHandleConstraint(name, connection, constraint, handle) {
@@ -193,20 +193,26 @@ export default class MatchRecipeByVerb extends Strategy {
 
   static satisfiesSlotConstraints(recipe, slotConstraints) {
     for (let slotName in slotConstraints)
-      if (!MatchRecipeByVerb.satisfiesSlotConnection(recipe, slotName, slotConstraints[slotName].providedSlots))
+      if (!MatchRecipeByVerb.satisfiesSlotConnection(recipe, slotName, slotConstraints[slotName]))
         return false;
     return true;
   }
 
-  static satisfiesSlotConnection(recipe, slotName, providesSlots) {
-    let satisfyingList = recipe.particles.filter(particle => Object.keys(particle.consumedSlotConnections).includes(slotName));
-    return satisfyingList.filter(particle => MatchRecipeByVerb.satisfiesSlotProvision(particle.consumedSlotConnections[slotName], providesSlots)).length > 0;
+  static satisfiesSlotConnection(recipe, slotName, constraints) {
+    for (let particle of recipe.particles) {
+      if (MatchRecipeByVerb.slotsMatchConstraint(particle.consumedSlotConnections, slotName, constraints))
+        return true;
+    }
+    return false;
   }
 
-  static satisfiesSlotProvision(slotConnection, providesSlots) {
-    let recipeProvidesSlots = Object.keys(slotConnection.providedSlots);
-    for (let providesSlot of Object.keys(providesSlots))
-      if (!recipeProvidesSlots.includes(providesSlot))
+  static slotsMatchConstraint(connections, name, constraints) {
+    if (connections[name] == null)
+      return false;
+    if (connections[name]._targetSlot != null && constraints.targetSlot != null)
+      return false;
+    for (let provideName in constraints.providedSlots)
+      if (connections[name].providedSlots[provideName] == null)
         return false;
     return true;
   }
