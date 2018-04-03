@@ -20,7 +20,10 @@ schema Post
   // polymorphic display of and interaction with the post, as the
   // particles creating or updating the Post entity can set whatever
   // recipe they deem appropriate for the Post (or Post subclass).
-  Text recipe
+  Text renderRecipe
+  // A JSON representation of the primary particle referenced in
+  // |renderRecipe| intended for use in displaying this post.
+  Text renderParticleSpec
   // The opaque user id of the post author as populated by sharing logic.
   // Note this is only populated for friends of the viewing user, and so
   // is not always present, and one may as well just use the |author| field.
