@@ -76,6 +76,83 @@ describe('MatchRecipeByVerb', function() {
   Q as particle1
     q <- view0`);
   });
+  it('listens to handle constraints', async () => {
+    let manifest = await Manifest.parse(`
+    particle P in 'A.js'
+      P(out S {} a)
+    
+    particle Q in 'B.js'
+      Q(in S {} a, out S {} b)
+
+    particle R in 'C.js'
+      R(in S {} c)
+
+    recipe verb
+      P
+    
+    recipe verb
+      P
+      Q
+    
+    recipe verb
+      Q
+
+    recipe verb
+      R
+
+    recipe 
+      particle can verb
+    
+    recipe
+      particle can verb
+        a ->
+    
+    recipe
+      particle can verb
+        a <-
+    
+    recipe
+      particle can verb
+        a <-
+        b ->
+    
+    recipe
+      create as v0
+      particle can verb
+        * -> v0
+    `);
+
+    let arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'dom');
+    let inputParams = {generated: [{result: manifest.recipes[4], score: 1}]};
+    let mrv = new MatchRecipeByVerb(arc);
+    let results = await mrv.generate(inputParams);
+    assert.equal(results.length, 4);
+
+    inputParams = {generated: [{result: manifest.recipes[5], score: 1}]};
+    results = await mrv.generate(inputParams);
+    assert.equal(results.length, 2);
+    assert.equal(results[0].result.particles.length, 1);
+    assert.equal(results[0].result.particles[0].name, 'P');
+    assert.equal(results[1].result.particles.length, 2);
+    
+    inputParams = {generated: [{result: manifest.recipes[6], score: 1}]};
+    results = await mrv.generate(inputParams);
+    assert.equal(results.length, 2);
+    assert.equal(results[1].result.particles.length, 1);
+    assert.equal(results[1].result.particles[0].name, 'Q');
+    assert.equal(results[0].result.particles.length, 2);
+    
+    inputParams = {generated: [{result: manifest.recipes[7], score: 1}]};
+    results = await mrv.generate(inputParams);
+    assert.equal(results.length, 2);
+    assert.equal(results[1].result.particles.length, 1);
+    assert.equal(results[1].result.particles[0].name, 'Q');
+    assert.equal(results[0].result.particles.length, 2);
+
+    inputParams = {generated: [{result: manifest.recipes[8], score: 1}]};
+    results = await mrv.generate(inputParams);
+    assert.equal(results.length, 3);
+  });
   it('listens to slot constraints', async () => {
     let manifest = await Manifest.parse(`
       particle P in 'A.js'
@@ -130,6 +207,100 @@ describe('MatchRecipeByVerb', function() {
     assert.equal(results[0].result.particles.length, 1);
     assert.equal(results[0].result.particles[0].name, 'P');
     assert.equal(results[1].result.particles.length, 2);
+  });
+  it('carries handle assignments across verb substitution', async () => {
+    let manifest = await Manifest.parse(`
+    
+      particle P in 'A.js'
+        P(in S {} a)
+      
+      particle Q in 'B.js'
+        Q(out S {} b)
+
+      recipe verb
+        P
+
+      recipe
+        create as v0
+        particle can verb
+          a <- v0
+        Q
+          b -> v0
+    `);
+
+    let arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'dom');
+    let inputParams = {generated: [{result: manifest.recipes[1], score: 1}]};
+    let mrv = new MatchRecipeByVerb(arc);
+    let results = await mrv.generate(inputParams);
+    assert.equal(results.length, 1);
+    let recipe = results[0].result;
+    assert.equal(recipe.particles[0].connections.a.handle, recipe.particles[1].connections.b.handle);
+    assert.equal(recipe.particles[0].connections.a.handle.connections[0].particle, recipe.particles[0]);
+    assert.equal(recipe.particles[1].connections.b.handle.connections[1].particle, recipe.particles[1]);
+  });
+  it('carries handle assignments across verb substitution with generic binding', async () => {
+    let manifest = await Manifest.parse(`
+    
+      particle P in 'A.js'
+        P(in S {} a)
+      
+      particle Q in 'B.js'
+        Q(out S {} b)
+
+      recipe verb
+        P
+
+      recipe
+        create as v0
+        particle can verb
+          * <- v0
+        Q
+          b -> v0
+    `);
+
+    let arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'dom');
+    let inputParams = {generated: [{result: manifest.recipes[1], score: 1}]};
+    let mrv = new MatchRecipeByVerb(arc);
+    let results = await mrv.generate(inputParams);
+    assert.equal(results.length, 1);
+    let recipe = results[0].result;
+    assert.equal(recipe.particles[0].connections.a.handle, recipe.particles[1].connections.b.handle);
+    assert.equal(recipe.particles[0].connections.a.handle.connections[0].particle, recipe.particles[0]);
+    assert.equal(recipe.particles[1].connections.b.handle.connections[1].particle, recipe.particles[1]);
+  });
+  it('selects the appropriate generic binding when handle assignments carry type information', async () => {
+    let manifest = await Manifest.parse(`
+    
+      particle O in 'Z.js'
+        O(in R {} x, out S {} y)
+
+      particle P in 'A.js'
+        P(in R {} x, out S {} y, in S {} a)
+      
+      particle Q in 'B.js'
+        Q(out S {} b)
+
+      recipe verb
+        O
+        P
+
+      recipe
+        create as v0
+        particle can verb
+          * <- v0
+        Q
+          b -> v0
+    `);
+
+    let arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'dom');
+    let inputParams = {generated: [{result: manifest.recipes[1], score: 1}]};
+    let mrv = new MatchRecipeByVerb(arc);
+    let results = await mrv.generate(inputParams);
+    assert.equal(results.length, 1);
+    let recipe = results[0].result;
+    assert.equal(recipe.particles[1].connections.a.handle, recipe.particles[2].connections.b.handle);
+    assert.equal(recipe.particles[1].connections.a.handle.connections[0].particle, recipe.particles[1]);
+    assert.equal(recipe.particles[2].connections.b.handle.connections[1].particle, recipe.particles[2]);
   });
   it('carries slot assignments across verb substitution', async () => {
     let manifest = await Manifest.parse(`

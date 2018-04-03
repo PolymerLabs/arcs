@@ -112,8 +112,12 @@ class Handle {
   get pattern() { return this._pattern; }
   set pattern(pattern) { this._pattern = pattern; }
 
+  static effectiveType(handleType, connections) {
+    let typeSet = connections.filter(connection => connection.type != null).map(connection => ({type: connection.type, direction: connection.direction, connection}));
+    return TypeChecker.processTypeList(handleType, typeSet);          
+  }
+
   _isValid(options) {
-    let typeSet = [];
     let tags = new Set();
     for (let connection of this._connections) {
       // A remote view cannot be connected to an output param.
@@ -123,12 +127,9 @@ class Handle {
         }
         return false;
       }
-      if (connection.type) {
-        typeSet.push({type: connection.type, direction: connection.direction, connection});
-      }
       connection.tags.forEach(tag => tags.add(tag));
     }
-    let type = TypeChecker.processTypeList(this._mappedType, typeSet);
+    let type = Handle.effectiveType(this._mappedType, this._connections);
     if (type) {
       this._type = type;
       this._tags.forEach(tag => tags.add(tag));

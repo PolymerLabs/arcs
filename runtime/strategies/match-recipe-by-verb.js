@@ -8,6 +8,8 @@
 import {Strategy} from '../../strategizer/strategizer.js';
 import Recipe from '../recipe/recipe.js';
 import RecipeWalker from '../recipe/walker.js';
+import Handle from '../recipe/handle.js';
+import assert from '../../platform/assert-web.js';
 
 // This strategy substitutes 'particle can verb' declarations with recipes, 
 // according to the following conditions:
@@ -35,11 +37,13 @@ export default class MatchRecipeByVerb extends Strategy {
           return;
         }
 
-        if (particle.allConnections().length > 0)
-          return;
-
         let recipes = arc.context.findRecipesByVerb(particle.primaryVerb);
 
+        // Extract slot information from recipe. This is extracted in the form:
+        // {consume-slot-name: targetSlot: <slot>, providedSlots: {provide-slot-name: <slot>}}
+        // 
+        // Note that slots are only included if connected to other components of the recipe - e.g.
+        // the target slot has a source connection. 
         let slotConstraints = {};
         for (let consumeSlot of Object.values(particle.consumedSlotConnections)) {
           let targetSlot = consumeSlot.targetSlot.sourceConnection ? consumeSlot.targetSlot : null;
@@ -50,13 +54,22 @@ export default class MatchRecipeByVerb extends Strategy {
           }
         }
 
-        recipes = recipes.filter(recipe => MatchRecipeByVerb.satisfiesSlotConstraints(recipe, slotConstraints));
+        let handleConstraints = {named: {}, unnamed: []};
+        for (let handleConnection of Object.values(particle.connections)) {
+          handleConstraints.named[handleConnection.name] = {direction: handleConnection.direction, handle: handleConnection.handle};
+        }
+        for (let unnamedConnection of particle.unnamedConnections) {
+          handleConstraints.unnamed.push({direction: unnamedConnection.direction, handle: unnamedConnection.handle});
+        }
+
+        recipes = recipes.filter(recipe => MatchRecipeByVerb.satisfiesSlotConstraints(recipe, slotConstraints))
+                         .filter(recipe => MatchRecipeByVerb.satisfiesHandleConstraints(recipe, handleConstraints));
 
         return recipes.map(recipe => {
-          return (outputRecipe, particle) => {
+          return (outputRecipe, particleForReplacing) => {
             let {handles, particles, slots} = recipe.mergeInto(outputRecipe);
 
-            particle.remove();
+            particleForReplacing.remove();
 
             for (let consumeSlot in slotConstraints) {
               if (slotConstraints[consumeSlot].targetSlot) {
@@ -84,15 +97,98 @@ export default class MatchRecipeByVerb extends Strategy {
                     }
                   }                  
                 }
-              }
+              }              
             }
 
+            function tryApplyHandleConstraint(name, connection, constraint, handle) {
+              if (connection.handle != null)
+                return false;
+              if (!MatchRecipeByVerb.connectionMatchesConstraint(connection, constraint))
+                return false;
+              for (let i = 0; i < handle.connections.length; i++) {
+                let candidate = handle.connections[i];
+                if (candidate.particle == particleForReplacing && candidate.name == name) {
+                  connection._handle = handle;
+                  handle.connections[i] = connection;
+                  return true;
+                }              
+              }
+              return false;
+            }
+
+            function applyHandleConstraint(name, constraint, handle) {
+              let {mappedHandle} = outputRecipe.updateToClone({mappedHandle: handle});
+              for (let particle of particles) {
+                if (name) {
+                  if (tryApplyHandleConstraint(name, particle.connections[name], constraint, mappedHandle))
+                    return true;
+                } else {
+                  for (let connection of Object.values(particle.connections)) {
+                    if (tryApplyHandleConstraint(name, connection, constraint, mappedHandle))
+                      return true;
+                  }
+                }
+              }
+              return false;
+            } 
+
+            for (let name in handleConstraints.named) {
+              if (handleConstraints.named[name].handle)
+                assert(applyHandleConstraint(name, handleConstraints.named[name], handleConstraints.named[name].handle));
+            }
+
+            for (let connection of handleConstraints.unnamed) {
+              if (connection.handle)
+                assert(applyHandleConstraint(null, connection, connection.handle));
+            }
 
             return 1;
           };
         });
       }
     }(RecipeWalker.Permuted), this);
+  }
+
+  static satisfiesHandleConstraints(recipe, handleConstraints) {
+    for (let handleName in handleConstraints.named)
+      if (!MatchRecipeByVerb.satisfiesHandleConnection(recipe, handleName, handleConstraints.named[handleName]))
+        return false;
+    for (let handleData of handleConstraints.unnamed) {
+      if (!MatchRecipeByVerb.satisfiesUnnamedHandleConnection(recipe, handleData))
+        return false;
+    }
+    return true;
+  }
+
+  static satisfiesUnnamedHandleConnection(recipe, handleData) {
+    // refuse to match unnamed handle connections unless some type information is present.
+    if (!handleData.handle)
+      return false;
+    for (let particle of recipe.particles) {
+      for (let connection of Object.values(particle.connections)) {
+        if (MatchRecipeByVerb.connectionMatchesConstraint(connection, handleData))
+          return true;
+      }
+    }
+    return false;
+  }
+
+  static satisfiesHandleConnection(recipe, handleName, handleData) {
+    for (let particle of recipe.particles) {
+      if (particle.connections[handleName]) {
+        if (MatchRecipeByVerb.connectionMatchesConstraint(particle.connections[handleName], handleData))
+          return true;
+      }
+    }
+    return false;
+  }
+
+  static connectionMatchesConstraint(connection, handleData) {
+    if (connection.direction !== handleData.direction)
+      return false;
+    if (!handleData.handle)
+      return true;
+    return Handle.effectiveType(handleData.handle._mappedType, handleData.handle.connections.concat(connection)) != null;
   }
 
   static satisfiesSlotConstraints(recipe, slotConstraints) {

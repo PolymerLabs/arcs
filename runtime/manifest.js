@@ -714,7 +714,7 @@ ${e.message}
                 `'${connectionItem.dir}' not compatible with '${connection.direction}' param of '${particle.name}'`);
           }
         } else {
-          if (connectionItem.param != '*') {
+          if (connectionItem.param != '*' && particle.spec !== undefined) {
             throw new ManifestError(
                 connectionItem.location,
                 `param '${connectionItem.param}' is not defined by '${particle.name}'`);
