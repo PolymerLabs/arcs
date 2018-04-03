@@ -41,9 +41,11 @@ class SlotSpec {
     this.name = slotModel.name;
     this.isRequired = slotModel.isRequired;
     this.isSet = slotModel.isSet;
-    this.tags = slotModel.tags;
+    this.tags = slotModel.tags || [];
     this.formFactor = slotModel.formFactor; // TODO: deprecate form factors?
     this.providedSlots = [];
+    if (!slotModel.providedSlots)
+      return;
     slotModel.providedSlots.forEach(ps => {
       this.providedSlots.push(new ProvidedSlotSpec(ps.name, ps.isSet, ps.tags, ps.formFactor, ps.views));
     });
