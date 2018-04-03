@@ -37,11 +37,12 @@ const template = html`
   ></arc-config>
 
   <arc-host
+    key="{{key}}"
     config="{{config}}"
     manifest="{{manifest}}"
     suggestions="{{suggestions}}"
     plan="{{plan}}"
-    serialization="{{serialization}}"
+    serialization="{{serialized}}"
     on-arc="_onStateData"
     on-plans="_onPlans"
   ></arc-host>
@@ -54,10 +55,13 @@ const template = html`
 
   <cloud-data
     key="{{key}}"
+    arc="{{arc}}"
     metadata="{{metadata}}"
+    plan="{{plan}}"
     on-users="_onStateData"
     on-key="_onStateData"
     on-metadata="_onStateData"
+    on-serialized="_onStateData"
   ></cloud-data>
 
   <shell-ui
@@ -128,8 +132,8 @@ import '../artifacts/canonical.manifest'
   }
   async _onExperiment(e) {
     const {arc} = this._state;
-    this._setState({serialization: null});
-    this._setState({serialization: await arc.serialize()});
+    this._setState({serialized: null});
+    this._setState({serialized: await arc.serialize()});
   }
 }
 

@@ -14,25 +14,31 @@ import Xen from '../../../components/xen/xen.js';
 const db = window.db;
 
 const log = Xen.logFactory('CloudArc', '#a30000');
+const groupCollapsed = Xen.logFactory('CloudArc', '#a30000', 'groupCollapsed');
+const groupEnd = Xen.logFactory('CloudArc', '#a30000', 'groupEnd');
 
 class CloudArc extends Xen.Debug(Xen.Base, log) {
-  static get observedAttributes() { return ['key', 'metadata']; }
+  static get observedAttributes() { return ['key', 'metadata', 'arc', 'plan']; }
   _getInitialState() {
     return {
       watch: new WatchGroup(),
       db: db.child('arcs')
     };
   }
-  _update({key, metadata}, state, lastProps) {
-    if (key === '*' && key !== lastProps.key) {
+  _update({key, arc, metadata, plan}, state, oldProps) {
+    if (plan !== oldProps.plan) {
+      log('plan changed, good time to serialize?');
+      this._serialize(state.db, key, arc);
+    }
+    if (key === '*' && key !== oldProps.key) {
       this._fire('key', this._createKey(state.db));
     }
     if (key && key !== '*' && key !== 'launcher') {
-      if (key !== lastProps.key) {
-        state.watch.watches = [{
-          path: `arcs/${key}/metadata`,
-          handler: snap => this._metadataReceived(snap, key)
-        }];
+      if (key !== oldProps.key) {
+        state.watch.watches = [
+          {path: `arcs/${key}/metadata`, handler: snap => this._metadataReceived(snap, key)},
+          {path: `arcs/${key}/serialized`, handler: snap => this._serializedReceived(snap, key)}
+        ];
       }
       /*
       if (metadata) {
@@ -57,6 +63,18 @@ class CloudArc extends Xen.Debug(Xen.Base, log) {
         log('WRITING metadata', metadata);
         state.db.child(`${key}/metadata`).update(metadata);
       }
+    }
+  }
+  async _serialize(db, key, arc) {
+    const serialized = await arc.serialize();
+    if (serialized !== this._state.serialized) {
+      // must cache first, Firebase update can fire callback synchronously
+      this._state.serialized = serialized;
+      const node = db.child(`${key}/serialized`);
+      groupCollapsed('writing serialized arc', String(node));
+      log(serialized);
+      groupEnd();
+      node.set(serialized);
     }
   }
   _createKey(db) {
@@ -98,6 +116,14 @@ class CloudArc extends Xen.Debug(Xen.Base, log) {
     // Prioritize manifest over solo, semi-arbitrarily, since usually we'll
     // only see one or the other.
     return ArcsUtils.getUrlParam('solo') || ArcsUtils.getUrlParam('manifest');
+  }
+  _serializedReceived(snap, key) {
+    log('watch triggered on serialized arc', `${key}/serialized`);
+    const serialized = snap.val() || '';
+    if (serialized !== this._state.serialized) {
+      this._state.serialized = serialized;
+      this._fire('serialized', serialized);
+    }
   }
 }
 customElements.define('cloud-arc', CloudArc);

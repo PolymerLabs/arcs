@@ -11,6 +11,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 import Xen from '../../components/xen/xen.js';
 import Arcs from '../lib/arcs.js';
 import ArcsUtils from '../lib/arcs-utils.js';
+import Firebase from './cloud-data/firebase.js';
 
 const log = Xen.logFactory('ArcHost', '#007ac1');
 const groupCollapsed = Xen.logFactory('ArcHost', '#007ac1', 'groupCollapsed');
@@ -20,7 +21,7 @@ const error = Xen.logFactory('ArcHost', '#007ac1', 'error');
 
 class ArcHost extends Xen.Debug(Xen.Base, log) {
   static get observedAttributes() {
-    return ['config', 'manifest', 'plans', 'suggestions', 'plan', 'serialization'];
+    return ['key', 'config', 'manifest', 'plans', 'suggestions', 'plan', 'serialization'];
   }
   _getInitialState() {
     return {
@@ -30,26 +31,36 @@ class ArcHost extends Xen.Debug(Xen.Base, log) {
   }
   _willReceiveProps(props, state, lastProps) {
     const changed = name => props[name] !== lastProps[name];
-    const {manifest, config, plan, suggestions, serialization} = props;
-    if (config && (config !== state.appliedConfig) && manifest) {
+    const {key, manifest, config, plan, suggestions, serialization} = props;
+    if (config && (config !== state.appliedConfig) && manifest && key && (key !== '*')) {
+      state.id = null;
       state.appliedConfig = config;
-      this._initArc(config, manifest);
+      this._initArc(config, manifest, key);
     }
-    else if (state.arc && changed('manifest')) {
+    // TODO(sjmiles): absence of serialization is null/undefined,
+    // an empty serialization is empty string
+    if (serialization != null && changed('serialization')) {
+      state.pendingSerialization = serialization;
+    }
+    /*
+    if (state.arc && changed('manifest')) {
       log('reloading');
       this._reloadManifest(state.arc, config, manifest);
     }
+    */
     if (plan && changed('plan')) {
       state.pendingPlans.push(plan);
     }
     if (suggestions && changed('suggestions')) {
       state.slotComposer.setSuggestions(suggestions);
     }
-    if (serialization && changed('serialization')) {
-      this._consumeSerialization(serialization);
-    }
   }
-  _update({plans}, {arc, pendingPlans}) {
+  _update({plans}, state) {
+    const {id, arc, pendingPlans, pendingSerialization} = state;
+    if (pendingSerialization != null && id) {
+      this._consumeSerialization(arc, pendingSerialization);
+      state.pendingSerialization = null;
+    }
     if (arc && pendingPlans.length) {
       this._instantiatePlan(arc, pendingPlans.shift());
     }
@@ -57,29 +68,35 @@ class ArcHost extends Xen.Debug(Xen.Base, log) {
       this._schedulePlanning();
     }
   }
-  async _initArc(config, manifest) {
-    const arc = await this._createArc(config, manifest);
+  async _initArc(config, manifest, key) {
+    await this._createArc(config, manifest, key);
+    /*
     // TODO(sjmiles): IIUC callback that is invoked by runtime onIdle event
     arc.makeSuggestions = () => this._runtimeHandlesUpdated();
     log('created arc', arc);
     this._setState({arc});
     this._fire('arc', arc);
+    */
   }
-  async _createArc(config, manifest) {
+  async _createArc(config, manifest, key) {
     // make an id
-    const id = 'demo-' + ArcsUtils.randomId();
+    const id = 'app-shell-' + ArcsUtils.randomId();
     // create a system loader
     const loader = this._createLoader(config);
     // load manifest
     const context = await this._createContext(loader, manifest);
     // composer
-    const slotComposer = this._createSlotComposer(config);
-    // send urlMap to the Arc so worker-entry*.js can create mapping loaders
+    //const slotComposer = this._createSlotComposer(config);
+    // need urlMap so worker-entry*.js can create mapping loaders
     const urlMap = loader._urlMap;
-    // capture composer (so we can push suggestions there) and loader
-    this._setState({slotComposer, loader});
+    // pec factory
+    const pecFactory = ArcsUtils.createPecFactory(urlMap);
+    // construct storageKey
+    const storageKey = `${Firebase.storageKey}/arcs/${key}`;
+    // capture composer (so we can push suggestions there), loader, etc.
+    this._setState({id, loader, context, pecFactory, /*, slotComposer*/urlMap, storageKey});
     // Arc!
-    return ArcsUtils.createArc({id, urlMap, slotComposer, context, loader});
+    //return ArcsUtils.createArc({id, urlMap, slotComposer, context, loader, storageKey});
   }
   _createLoader(config) {
     // create default URL map
@@ -158,40 +175,61 @@ class ArcHost extends Xen.Debug(Xen.Base, log) {
     await arc.instantiate(plan);
     this._fire('plan', plan);
   }
-  async _consumeSerialization(serialization) {
-    // Clean up from last arc
-    Arcs.DomSlot.dispose();
-    Array.from(document.querySelectorAll('[slotid]')).forEach(n => n.textContent = '');
+  async _consumeSerialization(arc, serialization) {
+    if (arc) {
+      // Clean up from last arc
+      Arcs.DomSlot.dispose();
+      Array.from(document.querySelectorAll('[slotid]')).forEach(n => n.textContent = '');
+      // old arc is no more
+      this._fire('arc', null);
+      this._setState({arc: null});
+    }
     //
     const {config, manifest} = this._props;
-    const {arc, loader} = this._state;
+    const state = this._state;
     //
     const badImport = `import './shell.manifest'`;
     if (serialization.includes(badImport)) {
       serialization = serialization.replace(badImport, '');
       log(`serialization contained [${badImport}]`);
     }
+    //serialization = `${manifest}\n${serialization}`;
     //
-    serialization = `${manifest}\n${serialization}`;
     // serialize old arc
     groupCollapsed('serialized arc:');
     log(serialization);
     groupEnd();
     // generate new slotComposer
     const slotComposer = this._createSlotComposer(config);
-    // generate new arc via deserialization
-    const newArc = await Arcs.Arc.deserialize({
-      serialization,
-      loader,
-      slotComposer,
-      context: arc.context,
-      pecFactory: arc._pecFactory,
-      fileName: './synthetic.manifest'
-    });
-    // cache new arc
-    this._setState({arc: newArc});
+    let newArc;
+    if (serialization) {
+      // generate new arc via deserialization
+      newArc = await Arcs.Arc.deserialize({
+        serialization,
+        fileName: './serialized.manifest',
+        //
+        pecFactory: state.pecFactory,
+        slotComposer,
+        loader: state.loader,
+        context: state.context,
+        storageKey: state.storageKey
+      });
+    } else {
+      newArc = new Arcs.Arc({
+        id: state.id,
+        //
+        pecFactory: state.pecFactory,
+        slotComposer,
+        loader: state.loader,
+        context: state.context,
+        storageKey: state.storageKey
+      });
+    }
+    newArc.makeSuggestions = () => this._runtimeHandlesUpdated();
+    // cache new objects
+    this._setState({slotComposer, arc: newArc});
     // notify owner
-    this._fire('arc', arc);
+    this._fire('arc', newArc);
     this._fire('plans', null);
   }
 }

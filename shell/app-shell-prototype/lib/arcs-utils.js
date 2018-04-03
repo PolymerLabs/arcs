@@ -14,11 +14,14 @@ import Arcs from './arcs.js';
 const log = Xen.logFactory('ArcsUtils', '#4a148c');
 
 const ArcsUtils = {
-  createArc({id, urlMap, slotComposer, context, loader}) {
+  createArc({id, urlMap, slotComposer, context, loader, storageKey}) {
+    const pecFactory = ArcsUtils.createPecFactory(urlMap);
+    return new Arcs.Arc({id, pecFactory, slotComposer, context, loader, storageKey});
+  },
+  createPecFactory(urlMap) {
     // worker paths are relative to worker location, remap urls from there to here
     const remap = ArcsUtils._expandUrls(urlMap);
-    const pecFactory = ArcsUtils._createPecWorker.bind(null, urlMap[`worker-entry.js`], remap);
-    return new Arcs.Arc({id, pecFactory, slotComposer, context, loader});
+    return ArcsUtils._createPecWorker.bind(null, urlMap[`worker-entry.js`], remap);
   },
   _expandUrls(urlMap) {
     let remap = {};
@@ -64,8 +67,9 @@ const ArcsUtils = {
     return plans;
   },
   async parseManifest(fileName, content, loader) {
-    return await Arcs.Manifest.parse(content,
-      {id: null, fileName, loader, registry: null, position: {line: 1, column: 0}});
+    return await Arcs.Manifest.parse(content, {loader, fileName});
+    //return await Arcs.Manifest.parse(content,
+    //  {id: null, fileName, loader, registry: null, position: {line: 1, column: 0}});
   },
   getUrlParam(name) {
     // TODO(sjmiles): memoize url
