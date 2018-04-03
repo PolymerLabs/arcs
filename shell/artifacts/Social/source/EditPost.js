@@ -74,17 +74,46 @@ defineParticle(({DomParticle, html, log}) => {
         this.savePost(user, message, image);
       }
       const saveButtonActive = Boolean(message && (message.trim().length > 0));
-      const model = {saveButtonActive, message: message || '', image: image || ''};
+      const model = {
+        saveButtonActive,
+        message: message || '',
+        image: image || ''
+      };
       return model;
     }
     setHandle(name, data) {
       const handle = this._views.get(name);
       handle.set(new (handle.entityClass)(data));
     }
-    savePost(user, message, image) {
-      this.setHandle(
-          'post',
-          {message, image, createdTimestamp: Date.now(), author: user.id});
+    async _renderRecipe() {
+      const renderParticle = await this._views.get('renderParticle').get();
+      return [
+        JSON.stringify(renderParticle.toLiteral()),
+        DomParticle
+            .buildManifest`
+${renderParticle}
+recipe
+  use '{{item_id}}' as v1
+  slot '{{slot_id}}' as s1
+  {{other_views}}
+  ${renderParticle.name}
+    ${renderParticle.connections[0].name} <- v1
+    {{other_connections}}
+    consume item as s1
+      `.trim()
+      ];
+    }
+    async savePost(user, message, image) {
+      const [renderParticleSpec, renderRecipe] = await this._renderRecipe();
+      console.log(`Setting item recipe: ${renderRecipe}`);
+      this.setHandle('post', {
+        message,
+        image,
+        renderRecipe,
+        renderParticleSpec,
+        createdTimestamp: Date.now(),
+        author: user.id
+      });
       this.setState({savePost: false, message: '', image: ''});
     }
     onTextInput(e) {

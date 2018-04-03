@@ -8,7 +8,7 @@
 
 'use strict';
 
-defineParticle(({DomParticle, html}) => {
+defineParticle(({DomParticle, html, log, resolver}) => {
   const host = `social-show-single-post`;
 
   const template = html`
@@ -24,15 +24,28 @@ defineParticle(({DomParticle, html}) => {
     border-bottom: solid 0.5px;
     border-bottom-color: #d4d4d4;
   }
-  [${host}] [content] {
+  [${host}][content] {
     margin: 0 16px 0 56px;
   }
-  [${host}] [content] img {
+  [${host}][content] [avatar] {
+    display: inline-block;
+    height: 24px;
+    width: 24px;
+    min-width: 24px;
+    border-radius: 100%;
+    margin-left: 16px;
+    margin-right: 16px;
+    vertical-align: bottom;
+  }
+  [${host}][content] img {
     display: block;
     width: 256px;
   }
 </style>
 <div ${host} content value="{{id}}">
+  <div title>
+    <span avatar style='{{avatarStyle}}'></span>
+  </div>
   <img src="{{image}}">
   <span>{{message}}</span>
 </div>
@@ -42,15 +55,34 @@ defineParticle(({DomParticle, html}) => {
     get template() {
       return template;
     }
-    render({message, image, id}) {
-      // TODO(wkorman): Maybe we need to render the author avatar and time of
-      // post here as well. It will be rendered identically for different post
-      // types, so currently hoping we can do it generically in the containing
-      // aggregated feed particle on a per-post basis somehow.
+    _avatarSetToMap(avatars) {
+      const avatarMap = {};
+      if (avatars)
+        avatars.map(a => avatarMap[a.owner] = a.url);
+      return avatarMap;
+    }
+    _avatarToStyle(url) {
+      return `background: url('${
+          url}') center no-repeat; background-size: cover;`;
+    }
+    willReceiveProps(props) {
+      // log(`willReceiveProps [post=${props.post}].`);
+      if (props.post) {
+        this._setState({
+          avatars: this._avatarSetToMap(props.avatars),
+        });
+      }
+    }
+    render(props) {
+      // log(`render [post=${props.post}].`);
+      if (!props.post)
+        return {};
+      const {message, image, id, author} = props.post;
       return {
         message,
         image: image || '',
-        id
+        id,
+        avatarStyle: this._avatarToStyle(resolver(this._state.avatars[author]))
       };
     }
   };

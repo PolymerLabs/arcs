@@ -8,6 +8,7 @@
 
 import 'Particles.manifest'
 import 'https://$cdn/artifacts/Common/Detail.manifest'
+import 'https://$cdn/artifacts/Common/List.manifest'
 
 // Allows creating multiple posts by the author and viewing all posts created
 // in this Arc.
@@ -26,6 +27,7 @@ recipe
     posts = posts
     post = post
     user <- user
+    renderParticle = ShowSinglePost
   ShowPosts
     posts = posts
     metadata = metadata
@@ -50,3 +52,13 @@ recipe
     user <- user
     avatars <- avatars
     people <- people
+
+recipe
+  map #BOXED_posts as posts
+  map #BOXED_avatar as avatars
+  // TODO(wkorman): Merge together posts and stats with CopyCollection if needed.
+  List
+    items = posts
+  PostMuxer
+    list = posts
+    avatars = avatars
