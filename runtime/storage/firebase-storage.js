@@ -54,7 +54,9 @@ async function realTransaction(reference, transactionFunction) {
   return reference.transaction(data => {
     if (data == null)
       data = realData;
-    return transactionFunction(data);
+    let result = transactionFunction(data);
+    assert(result);
+    return result;
   }, undefined, false);
 }
 
@@ -108,6 +110,7 @@ export default class FirebaseStorage {
       if (!shouldExist) {
         return {version: 0};
       }
+     assert(data);     
       return data;
     });
 

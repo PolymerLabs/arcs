@@ -454,7 +454,7 @@ ${e.message}
     visitor.traverse(items);
   }
   static _processSchema(manifest, schemaItem) {
-    let description;
+    let description = '';
     let fields = {};
     let names = [...schemaItem.names];
     for (let item of schemaItem.items) {
