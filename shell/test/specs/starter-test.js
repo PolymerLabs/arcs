@@ -251,12 +251,8 @@ function initTestWithNewArc(title) {
 
   assert.equal('Arcs', browser.getTitle());
 
-  console.log('XXX before createNewUser');
-
   createNewUserIfNotLoggedIn();
   createNewArc();
-
-  console.log('XXX after createNewArc');
 
   // use a solo URL pointing to our local recipes
   browser.url(`${browser.getUrl()}&${urlParams.join('&')}`);
@@ -497,8 +493,6 @@ describe('Arcs demos', function() {
 describe('Arcs system', function() {
   it('can load with global manifests', function() {
     initTestWithNewArc(this.test.fullTitle());
-
-    console.log('XXX after initTestWithNewArc');
 
     // remove solo from our URL to use the default
     const url = new URL(browser.getUrl());
