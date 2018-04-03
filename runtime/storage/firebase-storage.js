@@ -110,7 +110,7 @@ export default class FirebaseStorage {
       if (!shouldExist) {
         return {version: 0};
       }
-     assert(data);     
+      assert(data);     
       return data;
     });
 
