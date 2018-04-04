@@ -71,7 +71,7 @@ class PersistentUser extends Xen.Debug(Xen.Base, log) {
         let user = snap.val();
         log('READ user', user, 'from', String(snap.ref));
         if (!user) {
-          console.log(`no remote user (${user}) for id ${id}; user missing from db?`);
+          log(`no remote user (${user}) for id ${id}; user missing from db?`);
           this._fire('user', null);
           return;
         }
