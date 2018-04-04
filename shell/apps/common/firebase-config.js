@@ -12,7 +12,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 import firebase from '../../components/firebase.4.2.0.js';
 
 const {firebaseConfig, version} = (() => {
-  const testFirebaseKey = (new URL(document.location)).searchParams.get('testFirebaseKey');
+  const testFirebaseKey =
+      (new URL(document.location)).searchParams.get('testFirebaseKey');
 
   let version;
   let firebaseConfig;
@@ -41,7 +42,7 @@ const {firebaseConfig, version} = (() => {
   return {firebaseConfig, version};
 })();
 
-const app = firebase.initializeApp(firebaseConfig/*, 'arcs-storage'*/);
+const app = firebase.initializeApp(firebaseConfig /*, 'arcs-storage'*/);
 
 const database = app.database();
 const db = database.ref(version);
@@ -49,7 +50,8 @@ const db = database.ref(version);
 const storage = app.storage();
 
 // for debugging only
-db.dump = () => db.once('value').then(snap => console.log(db.data = snap.val()));
+db.dump = () =>
+    db.once('value').then(snap => console.log(db.data = snap.val()));
 
 const Firebase = {
   firebase,

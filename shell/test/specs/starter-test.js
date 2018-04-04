@@ -226,7 +226,7 @@ function getFooterPath() {
   return ['app-shell', 'shell-ui', 'arc-footer', 'x-toast[app-footer]'];
 }
 
-function initTestWithNewArc(title) {
+function initTestWithNewArc(testTitle) {
   // clean up extra open tabs
   const openTabs = browser.getTabIds();
   browser.switchTab(openTabs[0]);
@@ -234,9 +234,9 @@ function initTestWithNewArc(title) {
     browser.close(tabToClose);
   });
 
-  let firebaseKey = new Date().toISOString() + title;
+  let firebaseKey = new Date().toISOString() + testTitle;
   firebaseKey = firebaseKey.replace(/\W+/g, '-').replace(/\./g, '_');
-  console.log(`running test "${title}" with firebaseKey "${firebaseKey}"`);
+  console.log(`running test "${testTitle}" with firebaseKey "${firebaseKey}"`);
 
   const urlParams = [
     `testFirebaseKey=${firebaseKey}`,
