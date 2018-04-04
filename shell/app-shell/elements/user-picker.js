@@ -40,7 +40,7 @@ const Main = Xen.html`
   }
 </style>
 <div>
-  New user: <input placeholder="New user's name" value="{{newUserName}}"
+  New user: <input id="new-users-name" placeholder="New user's name" value="{{newUserName}}"
       on-keypress="_onNewUserKeyPress" on-input="_onNewUserChange">
   <icon on-click="_onNewUserClick">add</icon>
 </div>
