@@ -201,7 +201,7 @@ class AppShell extends Xen.Debug(Xen.Base, log) {
     }
     if (plan && plan !== state.consumedPlan) {
       state.consumedPlan = plan;
-      this._consumePlan(arc, description, metadata);
+      this._consumePlan(arc, description);
     }
   }
   _render({}, state) {
@@ -275,10 +275,12 @@ class AppShell extends Xen.Debug(Xen.Base, log) {
         ;
     return dirty;
   }
-  async _consumePlan(arc, description, metadata) {
+  async _consumePlan(arc, description) {
     // arc has changed, generate new description
     description = await ArcsUtils.describeArc(arc) || description;
     this._setState({description});
+    // update metadata (should be done in persistent-arc instead)
+    let metadata = this._state.metadata;
     // push description into metadata
     if (!metadata || metadata.description !== description) {
       metadata = metadata ? Xen.clone(metadata) : Xen.nob();
