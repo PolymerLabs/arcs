@@ -33,7 +33,7 @@ defineParticle(({DomParticle}) => {
 <div ${host} id={{subId}}>{{haveFavoriteFood}}</div>
 
 <template have-favorite-food>
-  <i icon-favorite class="material-icons">favorite</i>
+  <icon icon-favorite>favorite</icon>
   <span label>They have your favorite food <b>{{food}}</b>!</span>
 </template>
 

@@ -10,21 +10,9 @@
 
 'use strict';
 
-defineParticle(({DomParticle}) => {
+defineParticle(({DomParticle, html}) => {
 
-  /*
-    let template = `
-<span>{{mode}}</span> @ <span>{{position}}</span>
-<button on-click="_play">Play</button>
-<button on-click="_pause">Pause</button>
-<button on-click="_restart">Restart</button><br>
-<button on-click="_downVolume">--</button>
-<button on-click="_muteVolume">mute</button>
-<button on-click="_upVolume">++</button>
-  `.trim();
-*/
-
-  let template = `
+  const template = html`
 <style>
   [video-controller] button {
     background-color: transparent;
@@ -34,19 +22,19 @@ defineParticle(({DomParticle}) => {
 </style>
 <div video-controller style="padding: 4px;">
   <div style="display: flex;">
-    <button on-click="_play"><i class="material-icons">play_arrow</i></button>
-    <button on-click="_pause"><i class="material-icons">pause</i></button>
-    <button on-click="_restart"><i class="material-icons">replay</i></button>
+    <button on-click="_play"><icon>play_arrow</icon></button>
+    <button on-click="_pause"><icon>pause</icon></button>
+    <button on-click="_restart"><icon>replay</icon></button>
     <div style="flex: 1; text-align: center; font-size: 0.7em;"><span>{{mode}}</span> @ <span>{{position}}</span></div>
-    <button on-click="_muteVolume"><i class="material-icons">volume_mute</i></button>
-    <button on-click="_downVolume"><i class="material-icons">volume_down</i></button>
-    <button on-click="_upVolume"><i class="material-icons">volume_up</i></button>
+    <button on-click="_muteVolume"><icon>volume_mute</icon></button>
+    <button on-click="_downVolume"><icon>volume_down</icon></button>
+    <button on-click="_upVolume"><icon>volume_up</icon></button>
   </div>
 </div>
   `.trim();
 
-  let Play = 'play';
-  let Pause = 'pause';
+  const Play = 'play';
+  const Pause = 'pause';
 
   return class Compose extends DomParticle {
     get template() {

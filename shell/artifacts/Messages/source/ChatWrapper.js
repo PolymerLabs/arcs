@@ -78,7 +78,7 @@ defineParticle(({DomParticle, resolver}) => {
 
 <div ${host}>
   <div header on-click="_onOpenClick">
-    <i class="material-icons">chat</i>
+    <icon>chat</icon>
     <span>{{messageCount}}</span>
     <img show$="{{show}}" src="{{avatar}}">
     <div message show$="{{show}}">{{message}}</div>
