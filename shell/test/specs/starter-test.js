@@ -122,7 +122,7 @@ function waitForVisible(selectors) {
   browser.waitUntil(
     () => {
       const selected = pierceShadows(selectors);
-      if(!selected.value || selected.value.length <= 0) {
+      if (!selected.value || selected.value.length <= 0) {
         return false;
       }
 
@@ -421,7 +421,7 @@ function clickInParticles(slotName, selectors, textQuery) {
 }
 
 describe('Arcs demos', function() {
-  it('can book a restaurant', function() {
+  it('can book a restaurant', /** @this Context */ function() {
     initTestWithNewArc(this.test.fullTitle());
 
     allSuggestions();
@@ -456,7 +456,7 @@ describe('Arcs demos', function() {
     // });
   });
 
-  it.skip('can buy gifts', function() {
+  it.skip('can buy gifts', /** @this Context */ function() {
     initTestWithNewArc(this.test.fullTitle());
 
     allSuggestions();
@@ -491,7 +491,7 @@ describe('Arcs demos', function() {
 });
 
 describe('Arcs system', function() {
-  it('can load with global manifests', function() {
+  it('can load with global manifests', /** @this Context */ function() {
     initTestWithNewArc(this.test.fullTitle());
 
     // remove solo from our URL to use the default
