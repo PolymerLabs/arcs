@@ -40,26 +40,7 @@ class CloudArc extends Xen.Debug(Xen.Base, log) {
           {path: `arcs/${key}/serialized`, handler: snap => this._serializedReceived(snap, key)}
         ];
       }
-      /*
-      if (metadata) {
-        // Typical developer workflow involves creating a new arc and
-        // subsequently modifying the url to include a specific recipe via a
-        // solo or manifest query param, thus we have to look for such a param
-        // at arc update time. Alternatively we could have the developer
-        // include the param in the main launcher page and have the app shell
-        // pass it along to the 'New Arc' url, but that is not the current
-        // state of the world.
-        const externalManifest = this._getExternalManifest();
-        if (externalManifest != metadata.externalManifest) {
-          metadata.externalManifest = externalManifest;
-          state.metadata = null;
-          //this._fire('metadata', metadata);
-        }
-      }
-      */
       if (metadata !== state.metadata) {
-        //this._reviseMetadata(metadata);
-        //state.metadata = metadata;
         log('WRITING metadata', metadata);
         state.db.child(`${key}/metadata`).update(metadata);
       }
@@ -77,6 +58,14 @@ class CloudArc extends Xen.Debug(Xen.Base, log) {
       node.set(serialized);
     }
   }
+  _serializedReceived(snap, key) {
+    log('watch triggered on serialized arc', `${key}/serialized`);
+    const serialized = snap.val() || '';
+    if (serialized !== this._state.serialized) {
+      this._state.serialized = serialized;
+      this._fire('serialized', serialized);
+    }
+  }
   _createKey(db) {
     let data = {
       description: ArcsUtils.randomName(),
@@ -87,6 +76,11 @@ class CloudArc extends Xen.Debug(Xen.Base, log) {
     log('_createKey', key);
     return key;
   }
+  _getExternalManifest() {
+    // Prioritize manifest over solo, semi-arbitrarily, since usually we'll
+    // only see one or the other.
+    return ArcsUtils.getUrlParam('solo') || ArcsUtils.getUrlParam('manifest');
+  }
   _assignColors(metadata) {
     let bgs =/**/['#5EF4BD', '#20E7FF', '#607D8B', '#FF7364', '#2FADE6', '#FFB843', '#FFF153', '#17C497'];
     let colors = ['#212121', '#212121', '#FFFFFF', '#FFFFFF', '#FFFFFF', '#212121', '#212121', '#FFFFFF'];
@@ -94,36 +88,11 @@ class CloudArc extends Xen.Debug(Xen.Base, log) {
     metadata.color = colors[choice];
     metadata.bg = bgs[choice];
   }
-  // _reviseMetadata(metadata) {
-  //   metadata.rev = (metadata.rev || 0) + 1;
-  // }
   _metadataReceived(snap, key) {
     log('watch triggered on metadata', `${key}/metadata`);
     const metadata = snap.val();
-    //if (this._hasMetadataChanged(metadata)) {
-      //log('remote metadata changed', metadata);
-      this._state.metadata = metadata;
-      this._fire('metadata', metadata);
-    //}
-  }
-  // _hasMetadataChanged(metadata) {
-  //   const state = this._state;
-  //   if (!state.metadata || (metadata.rev > state.metadata.rev)) {
-  //     return true;
-  //   }
-  // }
-  _getExternalManifest() {
-    // Prioritize manifest over solo, semi-arbitrarily, since usually we'll
-    // only see one or the other.
-    return ArcsUtils.getUrlParam('solo') || ArcsUtils.getUrlParam('manifest');
-  }
-  _serializedReceived(snap, key) {
-    log('watch triggered on serialized arc', `${key}/serialized`);
-    const serialized = snap.val() || '';
-    if (serialized !== this._state.serialized) {
-      this._state.serialized = serialized;
-      this._fire('serialized', serialized);
-    }
+    this._state.metadata = metadata;
+    this._fire('metadata', metadata);
   }
 }
 customElements.define('cloud-arc', CloudArc);
