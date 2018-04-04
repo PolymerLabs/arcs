@@ -173,7 +173,7 @@ ${styles}
         <div class="event" style="{{eventOneStyle}}">{{eventOneName}}</div>
         <div class="event" style="{{eventTwoStyle}}">{{eventTwoName}}</div>
         <div class="event" style="{{eventThreeStyle}}">{{eventThreeName}}</div>
-        <div class="selected-event" style="{{selectedEventStyle}}">Selected Time <i class="date-icon material-icons">date_range</i></div>
+        <div class="selected-event" style="{{selectedEventStyle}}">Selected Time <icon class="date-icon">date_range</icon></div>
       </div>
     </div>
   </div>
