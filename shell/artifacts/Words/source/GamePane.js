@@ -11,7 +11,7 @@
 
 /* global defineParticle, importScripts */
 
-defineParticle(({DomParticle, resolver}) => {
+defineParticle(({DomParticle, log, resolver}) => {
   function importLibrary(filename) {
     importScripts(resolver(`GamePane/${filename}`));
   }
@@ -221,11 +221,29 @@ defineParticle(({DomParticle, resolver}) => {
     _tilesToWord(tiles) {
       return tiles.map(t => t.letter).join('');
     }
+    willReceiveProps({renderParticle}, state) {
+      if (renderParticle && !state.renderParticleSpec) {
+        const renderParticleSpec = JSON.stringify(renderParticle.toLiteral());
+        const renderRecipe = DomParticle
+                                 .buildManifest`
+${renderParticle}
+recipe
+  use '{{item_id}}' as v1
+  slot '{{slot_id}}' as s1
+  {{other_views}}
+  ${renderParticle.name}
+    ${renderParticle.connections[0].name} <- v1
+    {{other_connections}}
+    consume item as s1
+      `.trim();
+        this._setState({renderParticleSpec, renderRecipe});
+      }
+    }
     _processSubmittedMove(props, state, tileBoard) {
       let moveData = props.move ? props.move.rawData : {coordinates: ''};
       let moveTiles = this._moveToTiles(tileBoard, props.move);
       let score = 0;
-      if (!state.dictionary || !state.moveSubmitted)
+      if (!state.dictionary || !state.moveSubmitted || !state.renderRecipe)
         return [moveData, moveTiles, score];
       const word = this._tilesToWord(moveTiles);
       if (!Scoring.isMinimumWordLength(moveTiles.length)) {
@@ -238,9 +256,15 @@ defineParticle(({DomParticle, resolver}) => {
         const gameOver = tileBoard.applyMove(moveTiles);
         if (gameOver)
           info('Ending game.');
-        this._setStats(Scoring.applyMoveStats(props.person, props.stats, word, score));
-        const gameState = gameOver ? TileBoard.State.GAME_OVER :
-                    TileBoard.State.ACTIVE;
+        this._setStats(Scoring.applyMoveStats(
+            state.renderParticleSpec,
+            state.renderRecipe,
+            props.person,
+            props.stats,
+            word,
+            score));
+        const gameState =
+            gameOver ? TileBoard.State.GAME_OVER : TileBoard.State.ACTIVE;
         this._setBoard({
           letters: tileBoard.toString(),
           shuffleAvailableCount: tileBoard.shuffleAvailableCount,

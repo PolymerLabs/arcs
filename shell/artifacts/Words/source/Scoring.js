@@ -83,7 +83,13 @@ class Scoring {
         stats.longestWordScore}). Score: ${stats.score}. Moves: ${
         stats.moveCount}.`;
   }
-  static applyMoveStats(user, stats, word, score) {
+  static applyMoveStats(
+      renderParticleSpec,
+      renderRecipe,
+      user,
+      stats,
+      word,
+      score) {
     let updatedValues = {
       highestScoringWord: stats.highestScoringWord,
       highestScoringWordScore: stats.highestScoringWordScore,
@@ -112,6 +118,9 @@ class Scoring {
     updatedValues.createdTimestamp = stats.startstamp;
     updatedValues.message = Scoring.scoreToMessage(updatedValues);
     updatedValues.author = user.id;
+
+    updatedValues.renderParticleSpec = renderParticleSpec;
+    updatedValues.renderRecipe = renderRecipe;
 
     return updatedValues;
   }
