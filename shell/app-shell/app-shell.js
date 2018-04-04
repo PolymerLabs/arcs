@@ -290,7 +290,7 @@ class AppShell extends Xen.Debug(Xen.Base, log) {
   }
   _onUser(e, data) {
     // if clearing `user`, also clear `selectedUser`
-    if (e.type==='user' && !data) {
+    if (!data) {
       this._setState({selectedUser: data});
     }
 
