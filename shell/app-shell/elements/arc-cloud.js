@@ -28,7 +28,7 @@ const template = Xen.html`
   <!-- provisions arc database keys and provides metadata -->
   <persistent-arc key="{{key}}" on-key="_onKey" metadata="{{metadata}}" on-metadata="_onMetadata"></persistent-arc>
   <!-- access to playback data -->
-  <arc-steps plans="{{plans}}" plan="{{plan}}" steps="{{steps}}" step="{{step}}" on-step="_onData" on-steps="_onData"></arc-steps>
+  <arc-steps plans="{{plans}}" plan="{{plan}}" steps="{{steps}}" step="{{step}}" on-step="_onStep" on-steps="_onData"></arc-steps>
   <!-- handles, database syncing -->
   <persistent-handles arc="{{arc}}" key="{{key}}"></persistent-handles>
   <remote-profile-handles arc="{{arc}}" user="{{user}}" on-profile="_onProfile"></remote-profile-handles>
@@ -99,7 +99,6 @@ class ArcCloud extends Xen.Debug(Xen.Base, log) {
     this._fire('avatars', state.avatars);
     this._fire('manifests', state.manifests);
     this._fire('exclusions', state.exclusions);
-    this._fire('step', state.step && state.step.plan);
     this._fire('arcs', state.arcs);
     super._update(props, state);
   }
@@ -178,6 +177,9 @@ class ArcCloud extends Xen.Debug(Xen.Base, log) {
   }
   _onMetadata(e, metadata) {
     this._fire('metadata', metadata);
+  }
+  _onStep(e, step) {
+    this._fire('step', step.plan);
   }
   async _onProfile(e, profile) {
     if (profile) {
