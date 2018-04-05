@@ -126,7 +126,7 @@ defineParticle(({DomParticle, resolver, log}) => {
   <div blogDescription>{{blogDescription}}</div>
 </template>
 <template blog-description-editable>
-  <div blogDescription><input value="{{blogDescription}}" on-blur="_onBlurDescription"></div>
+  <div blogDescription><input value="{{blogDescription}}" placeholder="Name your blog" on-blur="_onBlurDescription"></div>
 </template>
     `.trim();
 
@@ -210,8 +210,7 @@ defineParticle(({DomParticle, resolver, log}) => {
     }
     _blogDescription(user, metadata) {
       const blogDescription = (metadata && metadata.description) ?
-          metadata.description :
-          'Add a description';
+          metadata.description : '';
       return {
         $template: (metadata && metadata.blogOwner == user.id) ?
             'blog-description-editable' :
