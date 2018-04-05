@@ -44,14 +44,14 @@ http://polymer.github.io/PATENTS.txt
     </style>
     <div on-click="_onSelected">
       <header id="current" current class="entry" selected$="[[current.selected]]">
-        Most Recent: #[[current.total]], ✓[[current.resolved]]
+        Most Recent: ⊕[[current.surviving]], ✓[[current.resolved]]
         <template is="dom-if" if="[[!current.added]]">
           <iron-icon id="addCurrent" title="Add to Library" icon="av:playlist-add" on-click="_addCurrent"></iron-icon>
         </template>
       </header>
       <template is='dom-repeat' items='{{library}}'>
         <div id="[[item.id]]" class="entry" selected$="[[item.selected]]">
-          @[[item.time]] : #[[item.total]], ✓[[item.resolved]]
+          @[[item.time]] : ⊕[[item.surviving]], ✓[[item.resolved]]
           <iron-icon hidden$=[[item.selected]] id="compare" title="Compare" icon="image:exposure"></iron-icon></div>
       </template>
     </div>
@@ -83,10 +83,11 @@ http://polymer.github.io/PATENTS.txt
           return;
         }
 
+        let stats = summaryStats(this.results);
         this.current = {
           id: 'current',
-          total: totalResults(this.results),
-          resolved: resolvedResults(this.results),
+          surviving: stats.survivingDerivations,
+          resolved: stats.resolvedDerivations,
           selected: true,
           results
         };

@@ -61,16 +61,107 @@
     </style>
   </template>
   <script>
-    const resolvedResults = function(results) {
-      return totalResults(results, r => r.resolved);
+    // Basic stats for the entire run.
+    function summaryStats(results) {
+      return results.map(r => r.record).reduce((acc, recorc) => {
+        let result = {};
+        for (let name of [
+            'generatedDerivations',
+            'duplicateDerivations',
+            'duplicateSameParentDerivations',
+            'invalidDerivations',
+            'nullDerivations',
+            'survivingDerivations',
+            'resolvedDerivations',
+        ]) {
+          result[name] = recorc[name] + (acc[name] || 0);
+        }
+        return result;
+      }, {});
     }
 
-    const totalResults = function(results, recipeFilter = (x => true)) {
-      return results.reduce((a, b) => a + generationSize(b, recipeFilter), 0);
+    // Returning a one element array to get around inability to use
+    // function call followed by property access in the polymer template :(
+    function summaryStatsForTemplate(results) {
+      return [summaryStats(results)];
     }
 
-    const generationSize = function(generation, recipeFilter = (x => true)) {
-      return generation.population.reduce((a, b) => a + b.recipes.filter(recipeFilter).length, 0);
+    // Computes [{Header, [PerStrategyStats]}], where first element pertains
+    // to all generations summed up, following by one element per generation.
+    function strategySummary(results) {
+      let summaries = results.map(x => ({
+        header: `Generation ${x.record.generation}`,
+        strategies: perStrategyRecord(x)
+      }));
+
+      summaries = [{
+        header: 'Strategy Summary',
+        strategies: collapseStrategyMaps(summaries.map(summary => summary.strategies))
+      }, ...summaries];
+
+      for (let summary of summaries) {
+        // Array for iterating over with a template.
+        summary.strategies = Array.from(summary.strategies.values());
+      }
+
+      // Filter out empty generations, i.e. sometimes the last one.
+      return summaries.filter(summary => summary.strategies.length > 0);
+    }
+
+    // Returns a Map(Strategy -> Stats)
+    function perStrategyRecord(generation) {
+      let result = new Map();
+      for (let [field, perStrategyField] of [
+        ['generatedDerivations', 'generatedDerivationsByStrategy'],
+        ['duplicateDerivations', 'duplicateDerivationsByStrategy'],
+        ['duplicateSameParentDerivations', 'duplicateSameParentDerivationsByStrategy'],
+        ['invalidDerivations', 'invalidDerivationsByStrategy'],
+        ['nullDerivations', 'nullDerivationsByStrategy'],
+        ['resolvedDerivations', 'resolvedDerivationsByStrategy'],
+      ]) {
+        for (let strategy of Object.getOwnPropertyNames(generation.record[perStrategyField])) {
+          let value = generation.record[perStrategyField][strategy];
+          if (value > 0) {
+            let obj = {strategy};
+            obj[field] = value;
+            result.set(strategy, Object.assign(result.get(strategy) || {}, obj));
+          };
+        }
+      }
+
+      result.forEach(r => {
+        r.survivingDerivations = r.generatedDerivations
+            - (r.duplicateDerivations || 0)
+            - (r.invalidDerivations || 0)
+            - (r.nullDerivations || 0)
+            - (r.duplicateSameParentDerivations || 0);
+      });
+
+      return result;
+    }
+
+    // Collapses a [Map(Strategy -> Stats)] into a single Map(Strategy -> Stats).
+    function collapseStrategyMaps(strategyMaps) {
+      let result = new Map();
+      for (let map of strategyMaps) {
+        map.forEach((props, strategy) => {
+          let prevProps = result.get(strategy) || {};
+          let newProps = {strategy};
+          for (let name of [
+              'generatedDerivations',
+              'duplicateDerivations',
+              'duplicateSameParentDerivations',
+              'invalidDerivations',
+              'nullDerivations',
+              'survivingDerivations',
+              'resolvedDerivations',
+          ]) {
+            newProps[name] = props[name] + (prevProps[name] || 0);
+          }
+          result.set(strategy, newProps);
+        });
+      }
+      return result;
     }
   </script>
 </dom-module>

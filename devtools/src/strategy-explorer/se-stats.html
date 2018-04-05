@@ -28,19 +28,76 @@ http://polymer.github.io/PATENTS.txt
         font-size: 75%;
         padding-bottom: 5px;
       }
+      .generated {
+        color: gray;
+      }
+      .duplicate {
+        color: blue;
+      }
+      .sameParentDuplicate {
+        color: purple;
+      }
+      .invalid {
+        color: red;
+      }
+      .null {
+        color: olive;
+      }
+      .surviving {
+        font-weight: bold;
+      }
+      .resolved {
+        font-weight: bold;
+        color: green;
+      }
     </style>
     <div class='section'>
-      <div>Summary</div>
-      <div>total: {{totalResults(results)}}</div>
-      <div>resolved: {{resolvedResults(results)}}</div>
-    </div>
-    <template is='dom-repeat' items='{{results}}'>
-      <div class='section'>
-        <div>Generation [[index]]</div>
-        <template is='dom-repeat' items='{{item.population}}'>
-          <div>[[item.strategy]]: [[item.recipes.length]]</div>
+      <div>Totals Summary</div>
+      <template is='dom-repeat' items='{{summaryStatsForTemplate(results)}}'>
+        <div class="generated">Generated: Σ{{item.generatedDerivations}}</div>
+        <template is='dom-if' if='{{item.duplicateDerivations}}'>
+          <div class="duplicate">Duplicate: ={{item.duplicateDerivations}}</div>
         </template>
-        <div>total: {{generationSize(item)}}</div>
+        <template is='dom-if' if='{{item.duplicateSameParentDerivations}}'>
+          <div class="sameParentDuplicate">Same Parent Duplicate: ≡{{item.duplicateSameParentDerivations}}</div>
+        </template>
+        <template is='dom-if' if='{{item.nullDerivations}}'>
+          <div class="null">Null: ∅{{item.nullDerivations}}</div>
+        </template>
+        <template is='dom-if' if='{{item.invalidDerivations}}'>
+          <div class="invalid">Invalid: ✘{{item.invalidDerivations}}</div>
+        </template>
+        <div class="surviving">Surviving: ⊕{{item.survivingDerivations}}</div>
+        <div class="resolved">Resolved: ✓{{item.resolvedDerivations}}</div>
+      </template>
+    </div>
+    <template is='dom-repeat' items='{{strategySummary(results)}}'>
+      <div class='section'>
+        <div>[[item.header]]</div>
+        <template is='dom-repeat' items='{{item.strategies}}'>
+          <div>
+            [[item.strategy]]:
+            <span class="generated">Σ[[item.generatedDerivations]]</span>
+            <template is='dom-if' if='{{item.duplicateDerivations}}'>
+              <span class="duplicate">={{item.duplicateDerivations}}</span>
+            </template>
+            <template is='dom-if' if='{{item.duplicateSameParentDerivations}}'>
+              <span class="sameParentDuplicate">≡{{item.duplicateSameParentDerivations}}</span>
+            </template>
+            <template is='dom-if' if='{{item.nullDerivations}}'>
+              <span class="null">∅{{item.nullDerivations}}</span>
+            </template>
+            <template is='dom-if' if='{{item.invalidDerivations}}'>
+              <span class="invalid">✘[[item.invalidDerivations]]</span>
+            </template>
+            <template is='dom-if' if='{{item.survivingDerivations}}'>
+              <span class="surviving">⊕{{item.survivingDerivations}}</span>
+            </template>
+            <template is='dom-if' if='{{item.resolvedDerivations}}'>
+              <span class="resolved">✓{{item.resolvedDerivations}}</span>
+            </template>
+          </div>
+        </template>
       </div>
     </template>
   </template>
@@ -48,9 +105,8 @@ http://polymer.github.io/PATENTS.txt
 
     Polymer({is: 'se-stats',
       // Methods from se-shared for using in DOM
-      resolvedResults,
-      totalResults,
-      generationSize,
+      summaryStatsForTemplate,
+      strategySummary
     });
   </script>
 </dom-module>

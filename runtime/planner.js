@@ -73,11 +73,6 @@ class Planner {
     });
   }
 
-  async generate() {
-    let log = await this.strategizer.generate();
-    return this.strategizer.generated;
-  }
-
   // Specify a timeout value less than zero to disable timeouts.
   async plan(timeout, generations) {
     let trace = Tracing.async({cat: 'planning', name: 'Planner::plan', args: {timeout}});
@@ -86,12 +81,13 @@ class Planner {
     let now = () => (typeof performance == 'object') ? performance.now() : process.hrtime();
     let start = now();
     do {
-      let generated = await trace.wait(() => this.generate());
+      let record = await trace.wait(() => this.strategizer.generate());
+      let generated = this.strategizer.generated;
       trace.resume({args: {
-        generated: this.strategizer.generated.length,
+        generated: generated.length,
       }});
       if (generations) {
-        generations.push(generated);
+        generations.push({generated, record});
       }
 
       let resolved = this.strategizer.generated
@@ -230,7 +226,7 @@ class Planner {
   _updateGeneration(generations, hash, handler) {
     if (generations) {
       generations.forEach(g => {
-        g.forEach(gg => {
+        g.generated.forEach(gg => {
           if (gg.hash.endsWith(hash)) {
             handler(gg);
           }

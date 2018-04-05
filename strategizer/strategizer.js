@@ -65,9 +65,9 @@ export class Strategizer {
     let record = {};
     record.generation = generation;
     record.sizeOfLastGeneration = this.generated.length;
-    record.outputSizesOfStrategies = {};
+    record.generatedDerivationsByStrategy = {};
     for (let i = 0; i < this._strategies.length; i++) {
-      record.outputSizesOfStrategies[this._strategies[i].constructor.name] = generated[i].length;
+      record.generatedDerivationsByStrategy[this._strategies[i].constructor.name] = generated[i].length;
     }
 
     generated = [].concat(...generated);
@@ -78,13 +78,15 @@ export class Strategizer {
       return result;
     }));
 
-    record.rawGenerated = generated.length;
+    record.generatedDerivations = generated.length;
     record.nullDerivations = 0;
     record.invalidDerivations = 0;
     record.duplicateDerivations = 0;
+    record.duplicateSameParentDerivations = 0;
     record.nullDerivationsByStrategy = {};
-    record.duplicateDerivationsByStrategy = {};
     record.invalidDerivationsByStrategy = {};
+    record.duplicateDerivationsByStrategy = {};
+    record.duplicateSameParentDerivationsByStrategy = {};
 
     generated = generated.filter(result => {
       let strategy = result.derivation[0].strategy.constructor.name;
@@ -97,11 +99,15 @@ export class Strategizer {
               record.nullDerivationsByStrategy[strategy] = 0;
             record.nullDerivationsByStrategy[strategy]++;
           } else if (existingResult.derivation.map(a => a.parent).indexOf(result.derivation[0].parent) != -1) {
+            record.duplicateSameParentDerivations += 1;
+            if (record.duplicateSameParentDerivationsByStrategy[strategy] == undefined)
+              record.duplicateSameParentDerivationsByStrategy[strategy] = 0;
+            record.duplicateSameParentDerivationsByStrategy[strategy]++;
+          } else {
             record.duplicateDerivations += 1;
             if (record.duplicateDerivationsByStrategy[strategy] == undefined)
               record.duplicateDerivationsByStrategy[strategy] = 0;
             record.duplicateDerivationsByStrategy[strategy]++;
-          } else {
             this.populationHash.get(result.hash).derivation.push(result.derivation[0]);
           }
           return false;
@@ -110,7 +116,7 @@ export class Strategizer {
       }
       if (result.valid === false) {
         record.invalidDerivations++;
-        record.invalidDerivationsByStrategy[strategy] = (record.duplicateDerivationsByStrategy[strategy] || 0) + 1;
+        record.invalidDerivationsByStrategy[strategy] = (record.invalidDerivationsByStrategy[strategy] || 0) + 1;
         return false;
       }
       return true;
@@ -129,7 +135,7 @@ export class Strategizer {
     }
     terminal = [...terminal.values()];
 
-    record.totalGenerated = generated.length;
+    record.survivingDerivations = generated.length;
 
     generated.sort((a, b) => {
       if (a.score > b.score)
