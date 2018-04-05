@@ -56,7 +56,7 @@ defineParticle(({DomParticle}) => {
     willReceiveProps(props) {
       if (props.me && props.messages) {
         this._setState({
-          me: props.me.name,
+          me: props.me,
           messages: props.messages,
         });
       }
@@ -71,7 +71,7 @@ defineParticle(({DomParticle}) => {
     _onClick(e, state) {
       const Message = this._views.get('messages').entityClass;
       this._views.get('messages').store(new Message({
-        name: state.me,
+        name: state.me.name,
         type: 'mustache',
         userid: state.me.id,
         time: new Date().toLocaleString(),
