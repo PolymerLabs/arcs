@@ -29,15 +29,10 @@ function wait(msToWait) {
   let msWaited = 0;
   const msIncrement = 100;
   const start = Date.now();
-  browser.waitUntil(
-    () => {
-      msWaited += msIncrement;
-      return msWaited > msToWait;
-    },
-    10000,
-    `we should have exited after a few iterations`,
-    msIncrement
-  );
+  browser.waitUntil(() => {
+    msWaited += msIncrement;
+    return msWaited > msToWait;
+  }, 10000, `we should have exited after a few iterations`, msIncrement);
 }
 
 /**
@@ -66,9 +61,13 @@ function searchElementsForText(elements, textQuery) {
   assert.equal(textToId.length, elements.length);
 
   const matches = textToId.reduce((accumulator, currentValue) => {
-    const found = currentValue.text.toLowerCase().includes(textQuery.toLowerCase()) ? currentValue : null;
+    const found =
+        currentValue.text.toLowerCase().includes(textQuery.toLowerCase()) ?
+        currentValue :
+        null;
     if (accumulator && found) {
-      throw Error(`found two matches:\nmatch 1: ${JSON.stringify(accumulator)}\nmatch 2: ${JSON.stringify(found)}`);
+      throw Error(`found two matches:\nmatch 1: ${
+          JSON.stringify(accumulator)}\nmatch 2: ${JSON.stringify(found)}`);
     } else if (accumulator) {
       return accumulator;
     }
@@ -102,8 +101,8 @@ function loadSeleniumUtils() {
     } catch (e) {
       if (e.message.includes('pierceShadows is not defined')) {
         console.log(
-          `spin-waiting for pierceShadows to load; the error indicates it's not yet loaded so waitUntil will try again (up to a point). Error: ${e}`
-        );
+            `spin-waiting for pierceShadows to load; the error indicates it's not yet loaded so waitUntil will try again (up to a point). Error: ${
+                e}`);
         return false;
       }
       throw e;
@@ -119,22 +118,16 @@ function loadSeleniumUtils() {
  * the shadow DOM.
  */
 function waitForVisible(selectors) {
-  browser.waitUntil(
-    () => {
-      const selected = pierceShadows(selectors);
-      if (!selected.value || selected.value.length <= 0) {
-        return false;
-      }
+  browser.waitUntil(() => {
+    const selected = pierceShadows(selectors);
+    if (!selected.value || selected.value.length <= 0) {
+      return false;
+    }
 
-      return browser.unify(
+    return browser.unify(
         selected.value.map(elem => browser.elementIdDisplayed(elem.ELEMENT)),
-        {extractValue: true}
-      );
-    },
-    2500,
-    `selectors ${selectors} never selected anything`,
-    500
-  );
+        {extractValue: true});
+  }, 2500, `selectors ${selectors} never selected anything`, 500);
 }
 
 function dancingDotsElement() {
@@ -166,25 +159,19 @@ function waitForStillness() {
   //   ever stopping. Check the console (comment out headless in
   //   `wdio.conf.js` to get the browser visible; see README.md for more
   //   information) and see if there's an error.
-  browser.waitUntil(
-    () => {
-      const result = browser.elementIdAttribute(element.value.ELEMENT, 'animate');
-      if (null == result.value) {
-        matches += 1;
-      } else {
-        if (matches > 0) {
-          console.log(
-            `The dots restarted their dance. This may indicate a bug, or that global data was changed by another client.`
-          );
-        }
-        matches = 0;
+  browser.waitUntil(() => {
+    const result = browser.elementIdAttribute(element.value.ELEMENT, 'animate');
+    if (null == result.value) {
+      matches += 1;
+    } else {
+      if (matches > 0) {
+        console.log(
+            `The dots restarted their dance. This may indicate a bug, or that global data was changed by another client.`);
       }
-      return matches > desiredMatches;
-    },
-    20000,
-    `the dancing dots can't stop won't stop`,
-    500
-  );
+      matches = 0;
+    }
+    return matches > desiredMatches;
+  }, 20000, `the dancing dots can't stop won't stop`, 500);
 }
 
 /**
@@ -205,11 +192,10 @@ function openSuggestionDrawer() {
 
     // registering the 'open' state may take a little bit
     browser.waitUntil(
-      _isSuggestionsDrawerOpen,
-      1000,
-      `the suggestions drawer isn't registering with state 'open' after a click`,
-      100
-    );
+        _isSuggestionsDrawerOpen,
+        1000,
+        `the suggestions drawer isn't registering with state 'open' after a click`,
+        100);
 
     // after the 'open' state, wait a beat for the animation to finish. This
     // should only be 80ms but in practice we need a bit more.
@@ -273,7 +259,8 @@ function createNewUserIfNotLoggedIn() {
     return;
   }
 
-  const newUsersNameSelectors = ['app-shell', 'shell-ui', 'user-picker', '#new-users-name'];
+  const newUsersNameSelectors =
+      ['app-shell', 'shell-ui', 'user-picker', '#new-users-name'];
   waitForVisible(newUsersNameSelectors);
 
   const element = pierceShadowsSingle(newUsersNameSelectors);
@@ -305,17 +292,14 @@ function allSuggestions() {
   openSuggestionDrawer();
 
   const magnifier = pierceShadowsSingle(
-    getFooterPath().concat(['[search]', '#search-button'])
-  );
+      getFooterPath().concat(['[search]', '#search-button']));
   console.log(`click: allSuggestions`);
   browser.elementIdClick(magnifier.value.ELEMENT);
 }
 
 function getAtLeastOneSuggestion() {
-  const allSuggestions = pierceShadows([
-    '[slotid="suggestions"]',
-    'suggestion-element'
-  ]);
+  const allSuggestions =
+      pierceShadows(['[slotid="suggestions"]', 'suggestion-element']);
   if (!allSuggestions.value || 0 == allSuggestions.value) {
     console.log('No suggestions found.');
     return false;
@@ -337,36 +321,31 @@ function _waitForAndMaybeAcceptSuggestion(textSubstring, accept) {
   openSuggestionDrawer();
   let footerPath = getFooterPath();
 
-  browser.waitUntil(
-    () => {
-      const allSuggestions = getAtLeastOneSuggestion();
-      try {
-        const desiredSuggestion = searchElementsForText(
-          allSuggestions.value,
-          textSubstring
-        );
-        if (!desiredSuggestion) {
-          console.log(`Couldn't find suggestion '${textSubstring}'.`);
-          return false;
-        }
-
-        console.log(`found: desiredSuggestion "${desiredSuggestion}"`);
-        if (accept) browser.elementIdClick(desiredSuggestion.id);
-        return true;
-      } catch (e) {
-        if (e.message.includes('stale element reference')) {
-          console.log(
-            `got a not-entirely-unexpected error, but waitUntil will try again (up to a point). Error: ${e}`
-          );
-          return false;
-        }
-
-        throw e;
+  browser.waitUntil(() => {
+    const allSuggestions = getAtLeastOneSuggestion();
+    try {
+      const desiredSuggestion =
+          searchElementsForText(allSuggestions.value, textSubstring);
+      if (!desiredSuggestion) {
+        console.log(`Couldn't find suggestion '${textSubstring}'.`);
+        return false;
       }
-    },
-    5000,
-    `couldn't find suggestion ${textSubstring}`
-  );
+
+      console.log(`found: desiredSuggestion "${desiredSuggestion}"`);
+      if (accept)
+        browser.elementIdClick(desiredSuggestion.id);
+      return true;
+    } catch (e) {
+      if (e.message.includes('stale element reference')) {
+        console.log(
+            `got a not-entirely-unexpected error, but waitUntil will try again (up to a point). Error: ${
+                e}`);
+        return false;
+      }
+
+      throw e;
+    }
+  }, 5000, `couldn't find suggestion ${textSubstring}`);
   // TODO: return the full suggestion text for further verification.
   console.log(`${accept ? 'Accepted' : 'Found'} suggestion: ${textSubstring}`);
 }
@@ -383,41 +362,41 @@ function particleSelectors(slotName, selectors) {
 function clickInParticles(slotName, selectors, textQuery) {
   waitForStillness();
 
-  if (!selectors) selectors = [];
+  if (!selectors)
+    selectors = [];
   const realSelectors = particleSelectors(slotName, selectors);
 
   browser.waitUntil(
-    () => {
-      const pierced = pierceShadows(realSelectors);
-      assert.ok(pierced);
-      if (!pierced.value || pierced.value.length == 0) {
-        return false;
-      }
-
-      let selected;
-      if (textQuery) {
-        selected = searchElementsForText(pierced.value, textQuery).id;
-      } else {
-        if (1 == pierced.value.length) {
-          selected = pierced.value[0].ELEMENT;
-        } else {
-          throw Error(
-            `found multiple matches for ${realSelectors}: ${pierced.value}`
-          );
+      () => {
+        const pierced = pierceShadows(realSelectors);
+        assert.ok(pierced);
+        if (!pierced.value || pierced.value.length == 0) {
+          return false;
         }
-      }
 
-      if (selected) {
-        console.log(`click: clickInParticles`);
-        browser.elementIdClick(selected);
-        return true;
-      } else {
-        return false;
-      }
-    },
-    5000,
-    `couldn't find anything to click with selectors ${realSelectors} textQuery ${textQuery}`
-  );
+        let selected;
+        if (textQuery) {
+          selected = searchElementsForText(pierced.value, textQuery).id;
+        } else {
+          if (1 == pierced.value.length) {
+            selected = pierced.value[0].ELEMENT;
+          } else {
+            throw Error(`found multiple matches for ${realSelectors}: ${
+                pierced.value}`);
+          }
+        }
+
+        if (selected) {
+          console.log(`click: clickInParticles`);
+          browser.elementIdClick(selected);
+          return true;
+        } else {
+          return false;
+        }
+      },
+      5000,
+      `couldn't find anything to click with selectors ${
+          realSelectors} textQuery ${textQuery}`);
 }
 
 describe('Arcs demos', function() {
@@ -462,8 +441,7 @@ describe('Arcs demos', function() {
     allSuggestions();
 
     acceptSuggestion(
-      `Show products from your browsing context (Minecraft Book plus 2 other items) and choose from Products recommended based on products from your browsing context and Claire's wishlist (Book: How to Draw plus 2 other items)`
-    );
+        `Show products from your browsing context (Minecraft Book plus 2 other items) and choose from Products recommended based on products from your browsing context and Claire's wishlist (Book: How to Draw plus 2 other items)`);
 
     browser.waitForVisible('div[slotid="action"]');
     browser.waitForVisible('div[slotid="annotation"]');
@@ -473,14 +451,12 @@ describe('Arcs demos', function() {
     // (2) verify 'action' slot is not visible after all products were moved.
 
     acceptSuggestion(
-      'Buy gifts for Claire\'s Birthday on 2017-08-04, Estimate arrival date for products'
-    );
+        'Buy gifts for Claire\'s Birthday on 2017-08-04, Estimate arrival date for products');
     acceptSuggestion(
-      'Check manufacturer information for products from your browsing context'
-    );
+        'Check manufacturer information for products from your browsing context');
     acceptSuggestion(
-      `Recommendations based on Claire\'s wishlist`
-      // TODO: add 'and Claire\'s wishlist' when regex is supported.
+        `Recommendations based on Claire\'s wishlist`
+        // TODO: add 'and Claire\'s wishlist' when regex is supported.
     );
 
     // Verify each product has non empty annotation text.
@@ -504,15 +480,14 @@ describe('Arcs system', function() {
 
     waitForStillness();
     browser.waitUntil(
-      () => {
-        getAtLeastOneSuggestion();
+        () => {
+          getAtLeastOneSuggestion();
 
-        // we hit at least a single suggestion, good enough!
-        return true;
-      },
-      5000,
-      `couldn't find any suggestions; this might indicate that a global manifest failed to load`
-    );
+          // we hit at least a single suggestion, good enough!
+          return true;
+        },
+        5000,
+        `couldn't find any suggestions; this might indicate that a global manifest failed to load`);
 
     // treat the fact that we found any suggestions as a good enough
     // indication that there aren't any major issues with globally available
