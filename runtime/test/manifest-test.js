@@ -503,7 +503,8 @@ ${particleStr1}
           consume slotC
     `);
     let recipe = manifest.recipes[0];
-    assert.equal(2, recipe.slots.length);
+    assert.equal(2, recipe.slotConnections.length);
+    assert.equal(0, recipe.slots.length);
   });
   it('multiple consumed slots', async () => {
     let parseRecipe = async (args) => {
@@ -534,6 +535,9 @@ ${particleStr1}
           provide slotB #bbb
         recipe
           slot 'slot-id0' #aa #aaa as s0
+          SomeParticle
+            consume slotA #aa #hello as s0
+              provide slotB
     `);
     // verify particle spec
     assert.equal(manifest.particles.length, 1);
@@ -548,10 +552,15 @@ ${particleStr1}
     // verify recipe slots
     assert.equal(manifest.recipes.length, 1);
     let recipe = manifest.recipes[0];
-    assert.equal(recipe.slots.length, 1);
-    let recipeSlot = recipe.slots[0];
-    assert.equal(recipeSlot.id, 'slot-id0');
+    assert.equal(recipe.slots.length, 2);
+    let recipeSlot = recipe.slots.find(s => s.id == 'slot-id0');
+    assert(recipeSlot);
     assert.deepEqual(recipeSlot.tags, ['#aa', '#aaa']);
+
+    let slotConn = recipe.particles[0].consumedSlotConnections['slotA'];
+    assert(slotConn);
+    assert.deepEqual(['#aa', '#hello'], slotConn.tags);
+    assert.equal(1, Object.keys(slotConn.providedSlots).length);
   });
   it('recipe slots with different names', async () => {
     let manifest = await Manifest.parse(`
@@ -597,14 +606,15 @@ ${particleStr1}
     `)).recipes[0];
     recipe.normalize();
 
-    assert.equal(recipe.slots.length, 2);
-    let slotA = recipe.slots.find(s => s.name === 'slotA');
-    assert.equal(slotA.consumeConnections.length, 1);
-    assert.isUndefined(slotA.sourceConnection);
+    assert.equal(2, recipe.slotConnections.length);
+    let slotConnA = recipe.slotConnections.find(s => s.name === 'slotA');
+    assert.isUndefined(slotConnA.sourceConnection);
 
-    let slotB = recipe.slots.find(s => s.name === 'slotB');
+    assert.equal(recipe.slots.length, 1);
+    let slotB = recipe.slots[0];
+    assert.equal('slotB', slotB.name);
     assert.equal(slotB.consumeConnections.length, 1);
-    assert.equal(slotB.sourceConnection, slotA.consumeConnections[0]);
+    assert.equal(slotB.sourceConnection, slotConnA);
   });
   it('relies on the loader to combine paths', async () => {
     let registry = {};

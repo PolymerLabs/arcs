@@ -130,4 +130,31 @@ describe('resolve recipe', function() {
     recipe = await onlyResult(arc, ResolveRecipe, recipe);
     assert.isTrue(recipe.isResolved());
   });
+
+  it('map slots by slot connection tags', async () => {
+    let manifest = (await Manifest.parse(`
+      particle A in 'A.js'
+        A()
+        consume master #root
+          provide detail #info #detail
+      particle B in 'B.js'
+        B()
+        consume info
+      recipe
+        //slot 'id0' #root as s0
+        A
+        B
+          consume info #detail
+    `));
+    let arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'dom');
+
+    let strategy = new ResolveRecipe(arc);
+    let results = await strategy.generate({generated: [{result: manifest.recipes[0], score: 1}]});
+    assert.equal(results.length, 1);
+
+    let plan = results[0].result;
+    assert.equal(plan.slots.length, 2);
+    plan.normalize();
+    assert.isTrue(plan.isResolved());
+  });
 });

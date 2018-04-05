@@ -84,16 +84,13 @@ describe('MapSlots', function() {
     `, /* expectedSlots= */ 1);
   });
   it('predefined remote slots both explicit', async () => {
-    // This recipe is invalid, because particles consume different names,
-    // but only one suitable slot is provided. This results in 2 duplicate recipe slots
-    // being assigned the same slot ID, which is invalid.
     await testManifest(`
       recipe
         A as particle0
           consume root
         B as particle1
           consume root
-    `, /* expectedSlots= */ -1);
+    `, /* expectedSlots= */ 1);
   });
 
   it('map slots by tags', async () => {

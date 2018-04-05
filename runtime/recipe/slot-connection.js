@@ -20,6 +20,7 @@ class SlotConnection {
     this._slotSpec = undefined; // isRequired + formFactor
     this._targetSlot = undefined; // Slot?
     this._providedSlots = {}; // Slot*
+    this._tags = [];
   }
 
   remove() {
@@ -32,6 +33,8 @@ class SlotConnection {
   get slotSpec() { return this._slotSpec; }
   get targetSlot() { return this._targetSlot; }
   get providedSlots() { return this._providedSlots; }
+  get tags() { return this._tags; }
+  set tags(tags) { this._tags = tags; }
 
   set slotSpec(slotSpec) {
     assert(this.name == slotSpec.name);
@@ -74,6 +77,7 @@ class SlotConnection {
     }
 
     let slotConnection = particle.addSlotConnection(this.name);
+    slotConnection.tags = this.tags;
     if (this.slotSpec) {
       slotConnection._slotSpec = particle.spec.getSlotSpec(this.name);
     }

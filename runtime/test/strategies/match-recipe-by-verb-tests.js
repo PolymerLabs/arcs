@@ -346,8 +346,9 @@ describe('MatchRecipeByVerb', function() {
     results = await mrv.generate(inputParams);
     recipe = results[0].result;
     assert.equal(recipe.particles[0].consumedSlotConnections.foo.targetSlot, recipe.particles[1].consumedSlotConnections.bar.providedSlots.foo);
-    assert.equal(recipe.slots[1].consumeConnections[0], recipe.particles[0].consumedSlotConnections.foo);
-    assert.equal(recipe.slots[1].sourceConnection, recipe.particles[1].consumedSlotConnections.bar);
+    let slotFoo = recipe.slots.find(s => s.name == 'foo');
+    assert.equal(slotFoo.consumeConnections[0], recipe.particles[0].consumedSlotConnections.foo);
+    assert.equal(slotFoo.sourceConnection, recipe.particles[1].consumedSlotConnections.bar);
   });
 
   it('carries slot assignments across when they\'re assigned elsewhere too', async () => {
@@ -405,9 +406,10 @@ describe('MatchRecipeByVerb', function() {
   results = await mrv.generate(inputParams);
   recipe = results[0].result;
   assert.equal(recipe.particles[0].consumedSlotConnections.foo.targetSlot, recipe.particles[1].consumedSlotConnections.bar.providedSlots.foo);
-  assert.equal(recipe.slots[1].consumeConnections[0], recipe.particles[0].consumedSlotConnections.foo);
-  assert.equal(recipe.slots[1].sourceConnection, recipe.particles[1].consumedSlotConnections.bar);
+  let slotFoo = recipe.slots.find(s => s.name == 'foo');
+  assert.equal(slotFoo.consumeConnections[0], recipe.particles[0].consumedSlotConnections.foo);
+  assert.equal(slotFoo.sourceConnection, recipe.particles[1].consumedSlotConnections.bar);
   assert.equal(recipe.particles[2].consumedSlotConnections.foo.targetSlot, recipe.particles[1].consumedSlotConnections.bar.providedSlots.foo);
-  assert.equal(recipe.slots[1].consumeConnections[1], recipe.particles[2].consumedSlotConnections.foo);
+  assert.equal(slotFoo.consumeConnections[1], recipe.particles[2].consumedSlotConnections.foo);
   });
 });

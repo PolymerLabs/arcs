@@ -122,7 +122,7 @@ export default class MapSlots extends Strategy {
   // Returns true, if the slot connection's tags intersection with slot's tags is nonempty.
   // TODO: replace with generic tag matcher
   static _tagsMatch(slotConnection, slot) {
-    let consumeConnTags = slotConnection.slotSpec.tags || [];
+    let consumeConnTags = [].concat(slotConnection.slotSpec.tags || [], slotConnection.tags);
     let slotTags = new Set([].concat(slot.tags, slot.getProvidedSlotSpec().tags || []));
     // Consume connection tags aren't empty and intersection with the slot isn't empty.
     return consumeConnTags.length > 0 && consumeConnTags.filter(t => slotTags.has(t)).length > 0;
