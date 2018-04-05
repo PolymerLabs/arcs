@@ -21,7 +21,8 @@ const error = Xen.logFactory('ArcHost', '#007ac1', 'error');
 
 class ArcHost extends Xen.Debug(Xen.Base, log) {
   static get observedAttributes() {
-    return ['key', 'config', 'manifest', 'plans', 'suggestions', 'plan', 'serialization'];
+    return ['config', 'key', 'manifest', 'plans', 'suggestions',
+        'suggestion', 'serialization', 'search'];
   }
   _getInitialState() {
     return {
@@ -31,7 +32,7 @@ class ArcHost extends Xen.Debug(Xen.Base, log) {
   }
   _willReceiveProps(props, state, lastProps) {
     const changed = name => props[name] !== lastProps[name];
-    const {key, manifest, config, plan, suggestions, serialization} = props;
+    const {key, manifest, config, suggestions, suggestion, serialization} = props;
     if (config && (config !== state.appliedConfig) && manifest && key && (key !== '*')) {
       state.id = null;
       state.appliedConfig = config;
@@ -48,14 +49,14 @@ class ArcHost extends Xen.Debug(Xen.Base, log) {
       this._reloadManifest(state.arc, config, manifest);
     }
     */
-    if (plan && changed('plan')) {
-      state.pendingPlans.push(plan);
+    if (suggestion && changed('suggestion')) {
+      state.pendingPlans.push(suggestion.plan);
     }
     if (suggestions && changed('suggestions')) {
       state.slotComposer.setSuggestions(suggestions);
     }
   }
-  _update({plans}, state) {
+  _update({plans, search}, state) {
     const {id, arc, pendingPlans, pendingSerialization} = state;
     if (pendingSerialization != null && id) {
       this._consumeSerialization(arc, pendingSerialization);
@@ -66,6 +67,16 @@ class ArcHost extends Xen.Debug(Xen.Base, log) {
     }
     if (arc && !plans) {
       this._schedulePlanning();
+    }
+    if (arc && (search || search==='')) {
+      search = (search || '').trim().toLowerCase();
+      // TODO(sjmiles): setting search to '' causes an exception at init-search.js|L#29)
+      search = (search !== '') && (search !== '*') ? search : null;
+      // re-plan only if the search has changed (beyond simple filtering)
+      if (search !== arc.search) {
+        arc.search = search;
+        this._fire('plans', null);
+      }
     }
   }
   async _initArc(config, manifest, key) {

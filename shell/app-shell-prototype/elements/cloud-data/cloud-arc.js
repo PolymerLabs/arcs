@@ -18,14 +18,14 @@ const groupCollapsed = Xen.logFactory('CloudArc', '#a30000', 'groupCollapsed');
 const groupEnd = Xen.logFactory('CloudArc', '#a30000', 'groupEnd');
 
 class CloudArc extends Xen.Debug(Xen.Base, log) {
-  static get observedAttributes() { return ['key', 'metadata', 'arc', 'plan']; }
+  static get observedAttributes() { return ['key', 'metadata', 'description', 'arc', 'plan']; }
   _getInitialState() {
     return {
       watch: new WatchGroup(),
       db: db.child('arcs')
     };
   }
-  _update({key, arc, metadata, plan}, state, oldProps) {
+  _update({key, arc, metadata, description, plan}, state, oldProps) {
     if (plan !== oldProps.plan) {
       log('plan changed, good time to serialize?');
       this._serialize(state.db, key, arc);
@@ -40,11 +40,21 @@ class CloudArc extends Xen.Debug(Xen.Base, log) {
           {path: `arcs/${key}/serialized`, handler: snap => this._serializedReceived(snap, key)}
         ];
       }
-      if (metadata !== state.metadata) {
-        log('WRITING metadata', metadata);
-        state.db.child(`${key}/metadata`).update(metadata);
-      }
     }
+    if (metadata && description) {
+      metadata = this._describeArc(metadata, description);
+    }
+    if (metadata !== state.metadata) {
+      log('WRITING metadata', metadata);
+      state.db.child(`${key}/metadata`).update(metadata);
+    }
+  }
+  _describeArc(metadata, description) {
+    if (metadata.description !== description) {
+      metadata = Xen.clone(metadata);
+      metadata.description = description;
+    }
+    return metadata;
   }
   async _serialize(db, key, arc) {
     const serialized = await arc.serialize();

@@ -14,7 +14,7 @@ import Const from '../app-shell/constants.js';
 /* global shellPath */
 
 // templates
-const html = Xen.html;
+const html = Xen.Template.html;
 const template = html`
 
   <style>
@@ -41,10 +41,12 @@ const template = html`
     config="{{config}}"
     manifest="{{manifest}}"
     suggestions="{{suggestions}}"
-    plan="{{plan}}"
+    search="{{search}}"
+    suggestion="{{suggestion}}"
     serialization="{{serialized}}"
     on-arc="_onStateData"
     on-plans="_onPlans"
+    on-plan="_onStateData"
   ></arc-host>
 
   <shell-handles
@@ -57,6 +59,7 @@ const template = html`
     key="{{key}}"
     arc="{{arc}}"
     metadata="{{metadata}}"
+    description="{{description}}"
     plan="{{plan}}"
     on-users="_onStateData"
     on-key="_onStateData"
@@ -69,7 +72,8 @@ const template = html`
     title="{{title}}"
     showhint="{{showhint}}"
     users="{{users}}"
-    on-plan="_onPlan"
+    on-search="_onStateData"
+    on-suggestion="_onStateData"
     on-select-user="_onSelectUser"
     on-experiment="_onExperiment"
   >
@@ -107,6 +111,10 @@ import '../artifacts/canonical.manifest'
     } else if (state.key !== '*') {
       ArcsUtils.setUrlParam('key', state.key);
     }
+    if (state.plan && state.plan !== oldState.plan) {
+      // arc has implemented new plan so generate new description
+      this._describeArc(state.arc, state.description);
+    }
   }
   _render({}, state) {
     const {metadata} = state;
@@ -115,14 +123,12 @@ import '../artifacts/canonical.manifest'
     };
     return [state, render];
   }
+  async _describeArc(arc, description) {
+    description = await ArcsUtils.describeArc(arc) || description;
+    this._setState({description});
+  }
   _onStateData(e, data) {
     this._setState({[e.type]: data});
-  }
-  _onConfig(e, config) {
-    this._setState({config});
-  }
-  _onPlan(e, suggestion) {
-    this._setState({plan: suggestion.plan});
   }
   _onPlans(e, plans) {
     this._setState({suggestions: plans, showhint: plans && plans.length > 0});

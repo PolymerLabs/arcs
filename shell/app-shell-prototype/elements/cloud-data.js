@@ -19,14 +19,13 @@ import './cloud-data/cloud-arc.js';
 // globals
 /* global shellPath*/
 
-const html = Xen.Template.html;
-
 // templates
+const html = Xen.Template.html;
 const template = html`
 
-  <cloud-users on-users="_onUsers"></cloud-users>
-  <cloud-arc key="{{key}}" arc="{{arc}}" metadata="{{metadata}}" plan="{{plan}}"
-      on-key="_onKey" on-metadata="_onMetadata" on-serialized="_onSerialized"></cloud-users>
+  <cloud-users on-users="_onForward"></cloud-users>
+  <cloud-arc key="{{key}}" arc="{{arc}}" metadata="{{metadata}}" description="{{description}}" plan="{{plan}}"
+      on-key="_onForward" on-metadata="_onForward" on-serialized="_onForward"></cloud-arc>
 
 `;
 
@@ -34,7 +33,7 @@ const log = Xen.logFactory('CloudData', '#004f00');
 
 class CloudData extends Xen.Debug(Xen.Base, log) {
   static get observedAttributes() {
-    return ['key', 'metadata', 'plan', 'arc'];
+    return ['key', 'metadata', 'description', 'plan', 'arc'];
   }
   get template() {
     return template;
@@ -44,18 +43,6 @@ class CloudData extends Xen.Debug(Xen.Base, log) {
   }
   _onForward(e, data) {
     this._fire(e.type, data);
-  }
-  _onUsers(e, users) {
-    this._fire('users', users);
-  }
-  _onKey(e, key) {
-    this._fire('key', key);
-  }
-  _onMetadata(e, metadata) {
-    this._fire('metadata', metadata);
-  }
-  _onSerialized(e, serialized) {
-    this._fire('serialized', serialized);
   }
 }
 customElements.define('cloud-data', CloudData);

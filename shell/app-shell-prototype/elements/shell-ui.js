@@ -20,6 +20,7 @@ import '../../components/arc-tools/xen-explorer.js';
 
 // libs
 import Xen from '../../components/xen/xen.js';
+import ArcsUtils from '../lib/arcs-utils.js';
 
 // strings
 import AppIcon from '../icon.svg.js';
@@ -84,6 +85,7 @@ const template = html`
       margin: 0 auto;
       box-sizing: border-box;
       height: var(--bar-max-height);
+      width: 90vw;
       max-width: var(--bar-max-width);
       max-height: var(--bar-hint-height);
       background-color: white;
@@ -122,9 +124,14 @@ const template = html`
       width: 100%;
       transition: transform 100ms ease-in-out;
     }
-    [toolbar] > *:not(span) {
+    [toolbar] > *:not(span):not(input) {
       margin: 16px;
       height: 24px;
+    }
+    [toolbar] > span {
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
     [main][toolbar]:not([open]) {
       transform: translate3d(-100%, 0, 0);
@@ -237,8 +244,8 @@ const template = html`
     <div toolbars on-click="_onBarClick">
       <div main toolbar open$="{{mainToolbarOpen}}">
         <a href="{{launcherHref}}" title="Go to Launcher">${AppIcon}</a>
-        <span style="flex: 1;" title="{{title}}">{{title}}</span>
-        <icon on-click="_onExperimentClick">update</icon>
+        <span title="{{title}}">{{title}}</span>
+        <!-- <icon on-click="_onExperimentClick">update</icon> -->
         <icon on-click="_onSearchClick">search</icon>
         <icon on-click="_onSettingsClick">settings</icon>
       </div>
@@ -255,7 +262,7 @@ const template = html`
     </div>
     <div contents>
       <div suggestions content open$="{{suggestionsContentOpen}}">
-        <slot name="suggestions" slot="suggestions" on-plan-choose="_onPlanChoose"></slot>
+        <slot name="suggestions" slot="suggestions" on-plan-choose="_onChooseSuggestion"></slot>
       </div>
       <settings-panel settings content open$="{{settingsContentOpen}}" users="{{users}}" user="{{user}}" user_picker_open="{{userPickerOpen}}" friends="{{users}}" on-user="_onSelectUser"></settings-panel>
     </div>
@@ -380,9 +387,9 @@ class ShellUi extends Xen.Debug(Xen.Base, log) {
     e.stopPropagation();
     this._setState({toolState: 'settings', barState: 'open'});
   }
-  _onPlanChoose(e, plan) {
+  _onChooseSuggestion(e, suggestion) {
     e.stopPropagation();
-    this._fire('plan', plan);
+    this._fire('suggestion', suggestion);
     this._setState({barState: 'peek'});
   }
   _onSelectUser(e, user) {
@@ -398,6 +405,24 @@ class ShellUi extends Xen.Debug(Xen.Base, log) {
   }
   _onAvatarClick() {
     this._setState({userPickerOpen: !this._state.userPickerOpen});
+  }
+  _onSearchChange(e) {
+    // TODO(sjmiles): backend search is a bit slow to do while typing, perhaps we use simple-mode
+    // text search to provide immediate results?
+    const search = e.target.value;
+    // throttle re-planning until typing has stopped
+    const delay = 500;
+    const commit = () => this._commitSearch(search);
+    this._searchDebounce = ArcsUtils.debounce(this._searchDebounce, commit, delay);
+  }
+  _commitSearch(search) {
+    search = search || '';
+    // TODO(sjmiles): removed this check so speech-input can update the search box, is it harmful?
+    //if (this._state.search !== search) {
+      //this._setState({search});
+      this._fire('search', search);
+      //this._fire('open', true);
+    //}
   }
 }
 
