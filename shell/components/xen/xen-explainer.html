@@ -29,11 +29,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     }
   </style>
 
-  <!-- TODO(sjmiles): Xen uses module format now, so we can't easily import and use it in index.html anymore.
-       This page won't run property until this is fixed, but the real value has always been the source itself.
-  -->
-  <!-- <script type="module" src="xen-template.js"></script> -->
-
 </head>
 <body>
 
@@ -49,7 +44,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
       <!--
         Mustache expressions used in attributes map a model value to an element *property*.
-        The expression below is essentially: `li.hidden = hide;`.
+        The expression below is essentially `li.hidden = hide;`.
         Gotcha: attribute names are forced to lowercase by the parser, so we can only map
         model values to property names that are all lowercase.
       -->
@@ -58,16 +53,16 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
       <!--
         Bind to a mixed-case property using the extended syntax below.
-        In this case, the attribute defining the binding (`scroll` in the example)
+        In this case, the attribute defining the binding (`scrolltop` in the example)
         is unused, but must be unique (duplicates are ignored by the html parser).
-        The expression below is essentially: `div.scrollTop = top`
+        The expression below is essentially `div.scrollTop = top`
       -->
-      <div scroll="{{scrollTop:top}}"></div>
+      <div scrolltop="{{scrollTop:top}}"></div>
 
       <!--
         Add a `$` and the model value will be mapped to the element *attribute*
         instead of the property.
-        The expression below is essentially: `li.setAttribute('class', class);`.
+        The expression below is essentially `li.setAttribute('class', class);`.
       -->
       <li class$="{{class}}">Inverted via CSS class.</li>
 
@@ -107,11 +102,13 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     <li>{{point}}</li>
   </template>
 
-  <script>
+  <script type="module">
+    import Xen from './xen-template.js';
+
     // `stamp` produces a dom subtree from the input template and returns
     // an agent whose methods operate on that subtree
     // methods on the agent can be chained (each one returns the agent)
-    let agent = Xen.stamp(template_one)
+    const agent = Xen.stamp(template_one)
       // specify an object that contains event handlers
       .events({
         onClick: e => alert('onClick!')
@@ -128,10 +125,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       .appendTo(container)
     ;
 
-    // iterating
-
+    // iterating:
     // given some array data
-    let points = [
+    const points = [
       {point: "Point Alpha"},
       {point: "Point Beta"},
       {point: "Point Gamma"}
