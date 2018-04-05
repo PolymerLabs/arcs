@@ -23,9 +23,9 @@ defineParticle(({DomParticle}) => {
         return {
           items: props.messages.map((m, i) => {
             if (m.type == 'mustache') {
-              return {subId: i, name: m.name, message: m.content, style: {}};
+              return {subId: i+1, name: m.name, message: m.content, style: {}};
             } else {
-              return {subId: i, style: {display: 'none'}};
+              return {subId: i+1, style: {display: 'none'}};
             }
           })
         };
