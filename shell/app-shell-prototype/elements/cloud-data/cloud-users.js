@@ -22,32 +22,27 @@ class CloudUsers extends Xen.Base {
     };
   }
   _update(props, state, lastProps) {
-    if (!state.connected) {
-      state.connected = true;
-      this._connect(state);
+    if (!state.watch.watches) {
+      log('watching `users`');
+      state.watch.watches = [{
+        path: `users`,
+        handler: snap => this._debounceRemoteChanged(snap, state)
+      }];
     }
   }
-  get _usersdb() {
-    return Firebase.db.child('users');
-  }
-  async _connect(state) {
-    state.watch.watches = [{
-      path: `users`,
-      handler: snap => this._debounceRemoteChanged(snap, state)
-    }];
-    log('watching `users`');
-  }
   _debounceRemoteChanged(snap, state) {
-    // debounce if we already have some users data
+    // throttle notifications if we already have some users data
     const delay = state.users ? 3000 : 1;
     state.debounce = ArcsUtils.debounce(state.debounce, () => this._remoteChanged(snap), delay);
   }
   _remoteChanged(snap) {
-    let users = snap.val() || [];
-    Object.keys(users).forEach(k => users[k].id = k);
+    const users = snap.val() || [];
+    // ensure every user contains it's own id
+    //Object.keys(users).forEach(k => users[k].id = k);
     log('READ `users` from cloud', users);
-    this._setState({users});
     this._fire('users', users);
+    // save `users` in state for throttling notifications
+    this._setState({users});
   }
 }
 customElements.define('cloud-users', CloudUsers);
