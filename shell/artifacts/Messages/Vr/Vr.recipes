@@ -52,11 +52,12 @@ recipe
   use #user as user
   use #participants as participants
 
-  // This is a no-op particle in VR
   ComposeMustache
     messages = messages
     me <- user
-
   RenderMustaches
+    messages <- messages
+    participants <- participants
+  RenderMustachesSpatial
     messages <- messages
     participants <- participants
