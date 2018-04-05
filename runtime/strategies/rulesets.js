@@ -32,11 +32,14 @@ export const ExperimentalPhased = new Ruleset.Builder().order(
   [
     InitPopulation,
     InitSearch
-  ], [
+  ],
+  SearchTokensToParticles,
+  [
     MatchRecipeByVerb,
     MatchParticleByVerb
   ],
   ConvertConstraintsToConnections,
+  GroupHandleConnections,
   [
     CreateViews,
     AddUseViews,
@@ -54,9 +57,11 @@ export const ExperimentalPhased = new Ruleset.Builder().order(
 export const ExperimentalLinear = new Ruleset.Builder().order(
   InitPopulation,
   InitSearch,
+  SearchTokensToParticles,
   MatchRecipeByVerb,
   MatchParticleByVerb,
   ConvertConstraintsToConnections,
+  GroupHandleConnections,
   MatchFreeHandlesToConnections,
   CreateViews,
   AddUseViews,

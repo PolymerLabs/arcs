@@ -564,3 +564,79 @@ describe('Description', async () => {
     assert.equal(0, arc._handlesById.size);
   });
 });
+
+describe('Automatic handle resolution', function() {
+  let loadAndPlan = async (manifestStr, arcCreatedCallback) => {
+    return planFromManifest(manifestStr, {
+      arcFactory: async manifest => {
+        let arc = StrategyTestHelper.createTestArc('test', manifest, 'dom');
+        if (arcCreatedCallback) await arcCreatedCallback(arc, manifest);
+        return arc;
+      }
+    });
+  };
+  let verifyResolvedPlan = async (manifestStr, arcCreatedCallback) => {
+    let plans = await loadAndPlan(manifestStr, arcCreatedCallback);
+    assert.lengthOf(plans, 1);
+
+    let recipe = plans[0];
+    recipe.normalize();
+    assert.isTrue(recipe.isResolved());
+
+    return recipe;
+  };
+  let verifyUnresolvedPlan = async (manifestStr, arcCreatedCallback) => {
+    let plans = await loadAndPlan(manifestStr, arcCreatedCallback);
+    assert.lengthOf(plans, 0);
+  };
+
+  it('introduces create handles for particle communication', async () => {
+    // A new handle can be introduced to facilitate A -> B communication.
+    let recipe = await verifyResolvedPlan(`
+      schema Thing
+      particle A
+        A(out Thing thing)
+      particle B
+        B(in Thing thing)
+
+      recipe
+        A
+        B`);
+    assert.lengthOf(recipe.handles, 1);
+    assert.equal('create', recipe.handles[0].fate);
+
+    // A new handle cannot be introduced if both particles only read.
+    await verifyUnresolvedPlan(`
+      schema Thing
+      particle A
+        A(in Thing thing)
+      particle B
+        B(in Thing thing)
+
+      recipe
+        A
+        B`);
+  });
+
+  it('uses existing handle from the arc', async () => {
+    // An existing handle from the arc can be used as input to a recipe
+    let recipe = await verifyResolvedPlan(`
+      schema Thing
+      particle A
+        A(in Thing thing)
+
+      recipe
+        A
+      `,
+      async (arc, manifest) => {
+        let Thing = manifest.findSchemaByName('Thing').entityClass();
+        await arc.createHandle(Thing.type, undefined, 'test:1');
+      }
+    );
+
+    assert.lengthOf(recipe.handles, 1);
+    let [handle] = recipe.handles;
+    assert.equal('use', handle.fate);
+    assert.equal('test:1', handle.id);
+  });
+});
