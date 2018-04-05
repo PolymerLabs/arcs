@@ -69,9 +69,11 @@ defineParticle(({DomParticle, html, log}) => {
     get template() {
       return template;
     }
-    render({user, post}, {message, image, savePost}) {
+    render(
+        {user, post},
+        {message, image, savePost, renderParticleSpec, renderRecipe}) {
       if (savePost) {
-        this.savePost(user, message, image);
+        this.savePost(renderParticleSpec, renderRecipe, user, message, image);
       }
       const saveButtonActive = Boolean(message && (message.trim().length > 0));
       const model = {
@@ -85,12 +87,13 @@ defineParticle(({DomParticle, html, log}) => {
       const handle = this._views.get(name);
       handle.set(new (handle.entityClass)(data));
     }
-    async _renderRecipe() {
-      const renderParticle = await this._views.get('renderParticle').get();
-      return [
-        JSON.stringify(renderParticle.toLiteral()),
-        DomParticle
-            .buildManifest`
+    willReceiveProps({renderParticle}, state) {
+      // TODO(wkorman): Consider sharing recipe with analogous Words item logic,
+      // for example, we could move more of it into PostMuxer.
+      if (renderParticle && !state.renderParticleSpec) {
+        const renderParticleSpec = JSON.stringify(renderParticle.toLiteral());
+        const renderRecipe = DomParticle
+                                 .buildManifest`
 ${renderParticle}
 recipe
   use '{{item_id}}' as v1
@@ -100,17 +103,16 @@ recipe
     ${renderParticle.connections[0].name} <- v1
     {{other_connections}}
     consume item as s1
-      `.trim()
-      ];
+      `.trim();
+        this._setState({renderParticleSpec, renderRecipe});
+      }
     }
-    async savePost(user, message, image) {
-      const [renderParticleSpec, renderRecipe] = await this._renderRecipe();
-      console.log(`Setting item recipe: ${renderRecipe}`);
+    savePost(renderParticleSpec, renderRecipe, user, message, image) {
       this.setHandle('post', {
+        renderParticleSpec,
+        renderRecipe,
         message,
         image,
-        renderRecipe,
-        renderParticleSpec,
         createdTimestamp: Date.now(),
         author: user.id
       });
