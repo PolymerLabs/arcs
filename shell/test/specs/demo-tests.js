@@ -424,7 +424,7 @@ function testAroundRefresh() {
         }
 
         return actualValues;
-      }
+      };
 
 
   const expectedValues = getOrCompare();
