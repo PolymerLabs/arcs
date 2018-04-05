@@ -141,7 +141,6 @@ describe('resolve recipe', function() {
         B()
         consume info
       recipe
-        //slot 'id0' #root as s0
         A
         B
           consume info #detail
