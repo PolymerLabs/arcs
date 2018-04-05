@@ -65,9 +65,13 @@ const template = html`
     background-size: cover;
   }
   user-item {
+    cursor: pointer;
+  }
+  user-item a {
+    color: inherit;
+    text-decoration: none;
     display: flex;
     align-items: center;
-    cursor: pointer;
     padding: 8px 0;
   }
   user-item avatar {
@@ -109,7 +113,7 @@ const template = html`
 
 const userTemplate = html`
   <user-item selected$="{{selected}}" on-click="_onSelect" key="{{key}}">
-    <avatar style="{{style}}"></avatar> <name>{{name}}</name>
+    <a href="{{href}}" target="_blank"><avatar style="{{style}}"></avatar> <name>{{name}}</name></a>
   </user-item>
 `;
 
@@ -173,11 +177,14 @@ class MenuPanel extends Xen.Base {
     if (!avatar) {
       avatar = `${shellPath}/assets/avatars/user (0).png`;
     }
+    const url = new URL(document.location.href);
+    url.searchParams.set('user', user.id);
     return {
       key: user.id,
       name: user.name,
       style: `background-image: url("${avatar}");`,
-      selected: user.id === selected
+      selected: user.id === selected,
+      href: url.href
     };
   }
   _close(afterEvent) {
