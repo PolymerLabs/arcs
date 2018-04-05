@@ -104,7 +104,7 @@ defineParticle(({DomParticle, resolver}) => {
           iscustom: Boolean(m.type && m.type.length),
           content: m.content,
           name: m.name,
-          subId: i,
+          subId: i+1,
           blurb: m.time || '',
           isme: m.name === user.name,
           src: resolver(src)
