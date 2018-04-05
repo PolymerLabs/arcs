@@ -106,7 +106,7 @@ class ArcSteps extends Xen.Debug(Xen.Base, log) {
     // Search generations in reverse order for the accepted plan
     let last_generation;
     generations.reverse().find(
-      generation => last_generation = generation.find(member => member.result == plan)
+      generation => last_generation = generation.generated.find(member => member.result == plan)
     );
     if (!last_generation) {
       log('no originating generation found for', plan);
