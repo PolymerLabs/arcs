@@ -162,6 +162,7 @@ class OuterPEC extends PEC {
     }
 
     // TODO: rename this concept to something like instantiatedParticle, handle or registration.
+    // console.log(`InstantiateParticle [spec=${particleSpec}].`);
     this._apiPort.InstantiateParticle(particleSpec, {id, spec, handles});
     return particleSpec;
   }

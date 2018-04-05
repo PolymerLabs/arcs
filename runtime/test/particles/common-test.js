@@ -14,7 +14,7 @@ import {assert} from '../chai-web.js';
 import TestHelper from '../test-helper.js';
 
 describe('common particles test', function() {
-  it('copy handle test', async () => {
+  it('can copy two sets into one', async () => {
     let helper = await TestHelper.loadManifestAndPlan(
         './runtime/test/particles/artifacts/copy-collection-test.recipes',
         {expectedNumPlans: 1, expectedSuggestions: ['Copy all things!']});
@@ -24,5 +24,17 @@ describe('common particles test', function() {
 
     // Copied 2 and 3 entities from two collections.
     assert.equal(5, helper.arc._handles[0]._items.size);
+  });
+
+  it('can copy two sets of differing types with the same base class into one set', async () => {
+    let helper = await TestHelper.loadManifestAndPlan(
+        './runtime/test/particles/artifacts/copy-collection-multiple-types-test.recipes',
+        {expectedNumPlans: 1, expectedSuggestions: ['Copy all of the prosimians!']});
+    assert.equal(0, helper.arc._handles.length);
+
+    await helper.acceptSuggestion({particles: ['CopyCollection', 'CopyCollection']});
+
+    // Copied 2 and 3 entities from two collections.
+    assert.equal(3, helper.arc._handles[0]._items.size);
   });
 });

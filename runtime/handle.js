@@ -84,6 +84,8 @@ class Handle {
 
   _restore(entry) {
     assert(this.entityClass, 'Handles need entity classes for deserialization');
+    console.log(`handle._restore: ${this.entityClass.name}`, this.entityClass.type);
+    // debugger;
     return restore(entry, this.entityClass);
   }
 
