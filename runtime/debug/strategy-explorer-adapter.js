@@ -23,7 +23,7 @@ export default class StrategyExplorerAdapter {
     this.lastID = 0;
   }
   adapt(generations) {
-    return generations.map(pop => this._preparePopulation(pop));
+    return generations.map(pop => this._preparePopulation(pop.generated, pop.record));
   }
   _addExtraPredecessor(parent, hash) {
     let extras = [];
@@ -42,7 +42,11 @@ export default class StrategyExplorerAdapter {
     }
     return extras;
   }
-  _preparePopulation(population) {
+  _preparePopulation(population, record) {
+    // Adding those here to reuse recipe resolution computation.
+    record.resolvedDerivations = 0;
+    record.resolvedDerivationsByStrategy = {};
+
     let extras = [];
     population = population.map(recipe => {
       let {result, score, derivation, description, hash, valid, active} = recipe;
@@ -62,6 +66,13 @@ export default class StrategyExplorerAdapter {
         return {parent, strategy};
       });
       item.resolved = item.result.isResolved();
+      if (item.resolved) {
+        record.resolvedDerivations++;
+        let strategy = item.derivation[0].strategy;
+        if (record.resolvedDerivationsByStrategy[strategy] === undefined)
+          record.resolvedDerivationsByStrategy[strategy] = 0;
+        record.resolvedDerivationsByStrategy[strategy]++;
+      }
       let options = {showUnresolved: true, showInvalid: false, details: ''};
       item.result = item.result.toString(options);
     });
@@ -71,7 +82,7 @@ export default class StrategyExplorerAdapter {
         populationMap[item.derivation[0].strategy] = [];
       populationMap[item.derivation[0].strategy].push(item);
     });
-    let result = {population: []};
+    let result = {population: [], record};
     Object.keys(populationMap).forEach(strategy => {
       result.population.push({strategy: strategy, recipes: populationMap[strategy]});
     });

@@ -62,7 +62,7 @@ async function initSlotComposer(recipeStr) {
   arc.pec.startRender = ({particle, slotName, contentTypes}) => { startRenderParticles.push(particle.name); };
   let planner = new Planner();
   planner.init(arc);
-  await planner.generate();
+  await planner.strategizer.generate();
   assert.equal(planner.strategizer.population.length, 1);
   let plan = planner.strategizer.population[0].result;
   return {arc, slotComposer, plan, startRenderParticles};

@@ -89,9 +89,9 @@ describe('Planner', function() {
   it('can generate things', async () => {
     let manifest = await Manifest.load('./runtime/test/artifacts/giftlist.manifest', loader);
     let testSteps = async planner => {
-      await planner.generate();
-      await planner.generate();
-      await planner.generate();
+      await planner.strategizer.generate();
+      await planner.strategizer.generate();
+      await planner.strategizer.generate();
       return planner.strategizer.population.length;
     };
     let results = await planFromManifest(manifest, {testSteps});
@@ -110,9 +110,9 @@ describe('Planner', function() {
       return arc;
     };
     let testSteps = async planner => {
-      await planner.generate();
-      await planner.generate();
-      await planner.generate();
+      await planner.strategizer.generate();
+      await planner.strategizer.generate();
+      await planner.strategizer.generate();
       return planner.strategizer.population.length;
     };
     let results = await planFromManifest(manifest, {arcFactory, testSteps});

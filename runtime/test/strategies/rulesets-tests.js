@@ -103,7 +103,7 @@ describe('Rulesets', () => {
     planner.init(arc, options);
     let generations = [];
     await planner.plan(Infinity, generations);
-    let recipes = [].concat(...generations);
+    let recipes = [].concat(...generations.map(instance => instance.generated));
     return {
       total: recipes.length,
       fateAssigned: recipes.reduce((acc, r) => acc + (r.result.handles.every(h => h.fate !== '?')), 0),
