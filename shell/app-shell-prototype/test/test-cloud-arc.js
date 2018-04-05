@@ -56,7 +56,7 @@ describe('CloudArc', function() {
     };
     cloudArc.key = 'KEY';
   });
-  it(`given metadata, updates db as needed`, function(done) {
+  it(`given metadata, updates db`, function(done) {
     db.update = metadata => {
       try {
         assert.deepEqual(metadata, cloudArc.metadata);
