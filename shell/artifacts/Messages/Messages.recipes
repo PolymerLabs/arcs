@@ -23,6 +23,7 @@ recipe
   map #BOXED_avatar as avatars
   use #user as user
   create #participants #nosync as participants
+  description `chat with friends`
 
   ChatWrapper
     messages <- messages

@@ -21,3 +21,6 @@ recipe
   RenderMustaches
     messages <- messages
     participants <- participants
+  RenderMustachesSpatial
+    messages <- messages
+    participants <- participants
