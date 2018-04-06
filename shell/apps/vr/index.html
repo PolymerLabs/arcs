@@ -23,7 +23,10 @@
   <link rel="stylesheet" href="../common/index.css">
   <script type="module" src="../common/index.js"></script>
 
-  <script src="https://rawgit.com/aframevr/aframe/f8cb168/dist/aframe-master.js"></script>
+  <script src="https://aframe.io/releases/0.8.0/aframe.min.js"></script>
+  <script src="https://unpkg.com/aframe-html-shader@0.2.0/dist/aframe-html-shader.min.js"></script>
+
+  <script type="module" src="../../components/a-frame/aframe-html.js"></script>
   <script type="module" src="vr-app-shell.js"></script>
 
   <style>
@@ -46,13 +49,16 @@
       <a-sky color="#DCDCDC" src="assets/tokyo (candy bar).jpg"></a-sky>
       <a-camera position="0 0 0"></a-camera>
       <a-assets timeout="60000" slotid="assets"></a-assets>
-      <!-- particles go here -->
+
       <a-entity slotid="toproot"></a-entity>
       <a-entity slotid="root"></a-entity>
       <a-entity slotid="modal"></a-entity>
+
     </a-scene>
     <div slotid="suggestions" slot="suggestions"></div>
   </vr-app-shell>
+
+  <div vrhtml style="width: 500%; height: 100%; position: fixed; left: 0; top: 0; z-index: -1; overflow: hidden"></div>
 
 </body>
 </html>
