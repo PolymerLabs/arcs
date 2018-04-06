@@ -265,8 +265,10 @@ class Recipe {
 
     let seenHandles = new Set();
     let seenParticles = new Set();
+    let seenSlots = new Set();
     let particles = [];
     let handles = [];
+    let slots = [];
     // Reorder connections so that interfaces come last.
     // TODO: update handle-connection comparison method instead?
     for (let connection of connections.filter(c => !c.type || !c.type.isInterface).concat(connections.filter(c => !!c.type && !!c.type.isInterface))) {
@@ -280,17 +282,6 @@ class Recipe {
       }
     }
 
-    let orphanedHandles = this._handles.filter(handle => !seenHandles.has(handle));
-    orphanedHandles.sort(util.compareComparables);
-    handles.push(...orphanedHandles);
-
-    let orphanedParticles = this._particles.filter(particle => !seenParticles.has(particle));
-    orphanedParticles.sort(util.compareComparables);
-    particles.push(...orphanedParticles);
-
-    // TODO: redo slots as above.
-    let seenSlots = new Set();
-    let slots = [];
     for (let slotConnection of slotConnections) {
       if (slotConnection.targetSlot && !seenSlots.has(slotConnection.targetSlot)) {
         slots.push(slotConnection.targetSlot);
@@ -303,6 +294,18 @@ class Recipe {
         }
       });
     }
+
+    let orphanedHandles = this._handles.filter(handle => !seenHandles.has(handle));
+    orphanedHandles.sort(util.compareComparables);
+    handles.push(...orphanedHandles);
+
+    let orphanedParticles = this._particles.filter(particle => !seenParticles.has(particle));
+    orphanedParticles.sort(util.compareComparables);
+    particles.push(...orphanedParticles);
+
+    let orphanedSlots = this._slots.filter(slot => !seenSlots.has(slot));
+    orphanedSlots.sort(util.compareComparables);
+    slots.push(...orphanedSlots);
 
     // Put particles and handles in their final ordering.
     this._particles = particles;
