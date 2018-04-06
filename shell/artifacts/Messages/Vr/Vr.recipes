@@ -16,6 +16,7 @@ import 'ComposeMustache.manifest'
 import 'Participants.manifest'
 import 'ComposeMessage.manifest'
 import 'ChatWrapper.manifest'
+import 'GitHubPRs.manifest'
 
 // Render chat transcript in VR + mustaches.
 recipe
@@ -57,4 +58,10 @@ recipe
     participants <- participants
   RenderMustachesSpatial
     messages <- messages
+    participants <- participants
+
+recipe
+  use #participants as participants
+
+  GitHubPRs
     participants <- participants
