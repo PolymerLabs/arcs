@@ -8,7 +8,6 @@
  */
 'use strict';
 
-import Identifier from './identifier.js';
 import Entity from './entity.js';
 import Relation from './relation.js';
 import Symbols from './symbols.js';
