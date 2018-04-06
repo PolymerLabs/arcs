@@ -495,7 +495,7 @@ ${this.activeRecipe.toString()}`;
   findHandleById(id) {
     let handle = this._handlesById.get(id);
     if (handle == null) {
-      handle = this._context.findHandleById(id);
+      handle = this._context.findStorageById(id);
     }
     return handle;
   }

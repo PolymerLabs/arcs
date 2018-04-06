@@ -79,12 +79,12 @@ recipe
     assert(1, manifest.recipes.length);
     let recipe = manifest.recipes[0];
     let Foo = manifest.findSchemaByName('Foo').entityClass();
-    recipe.handles[0].mapToView({id: 'test:1', type: Foo.type});
+    recipe.handles[0].mapToStorage({id: 'test:1', type: Foo.type});
     if (recipe.handles.length > 1) {
-      recipe.handles[1].mapToView({id: 'test:2', type: Foo.type.setViewOf()});
+      recipe.handles[1].mapToStorage({id: 'test:2', type: Foo.type.setViewOf()});
     }
     if (recipe.handles.length > 2) {
-      recipe.handles[2].mapToView({id: 'test:3', type: Foo.type});
+      recipe.handles[2].mapToStorage({id: 'test:3', type: Foo.type});
     }
     let arc = createTestArc();
     let fooView = await arc.createHandle(Foo.type, undefined, 'test:1');
@@ -362,8 +362,8 @@ recipe
       assert(1, manifest.recipes.length);
       let recipe = manifest.recipes[0];
       let Foo = manifest.findSchemaByName('Foo').entityClass();
-      recipe.handles[0].mapToView({id: 'test:1', type: Foo.type.setViewOf()});
-      recipe.handles[1].mapToView({id: 'test:2', type: Foo.type.setViewOf()});
+      recipe.handles[0].mapToStorage({id: 'test:1', type: Foo.type.setViewOf()});
+      recipe.handles[1].mapToStorage({id: 'test:2', type: Foo.type.setViewOf()});
       let arc = createTestArc();
       let fooView1 = await arc.createHandle(Foo.type.setViewOf(), undefined, 'test:1');
       let fooView2 = await arc.createHandle(Foo.type.setViewOf(), undefined, 'test:2');
@@ -495,8 +495,8 @@ recipe
         assert(1, manifest.recipes.length);
         let recipe = manifest.recipes[0];
         let MyBESTType = manifest.findSchemaByName('MyBESTType').entityClass();
-        recipe.handles[0].mapToView({id: 'test:1', type: MyBESTType.type});
-        recipe.handles[1].mapToView({id: 'test:2', type: MyBESTType.type.setViewOf()});
+        recipe.handles[0].mapToStorage({id: 'test:1', type: MyBESTType.type});
+        recipe.handles[1].mapToStorage({id: 'test:2', type: MyBESTType.type.setViewOf()});
         let arc = createTestArc();
         let tView = await arc.createHandle(MyBESTType.type, undefined, 'test:1');
         let tsView = await arc.createHandle(MyBESTType.type.setViewOf(), undefined, 'test:2');
@@ -627,8 +627,8 @@ recipe
     let recipe = manifest.recipes[0];
     let Foo = manifest.findSchemaByName('Foo').entityClass();
     let DescriptionType = manifest.findSchemaByName('Description').entityClass();
-    recipe.handles[0].mapToView({id: 'test:1', type: Foo.type});
-    recipe.handles[1].mapToView({id: 'test:2', type: DescriptionType.type.setViewOf()});
+    recipe.handles[0].mapToStorage({id: 'test:1', type: Foo.type});
+    recipe.handles[1].mapToStorage({id: 'test:2', type: DescriptionType.type.setViewOf()});
     let arc = createTestArc();
     let fooView = await arc.createHandle(Foo.type, undefined, 'test:1');
     let descriptionView = await arc.createHandle(DescriptionType.type.setViewOf(), undefined, 'test:2');

@@ -79,8 +79,8 @@ describe('particle-api', function() {
     let Result = manifest.findSchemaByName('Result').entityClass();
     let resultHandle = await arc.createHandle(Result.type, undefined, 'test:2');
     let recipe = manifest.recipes[0];
-    recipe.handles[0].mapToView(inputView);
-    recipe.handles[1].mapToView(resultHandle);
+    recipe.handles[0].mapToStorage(inputView);
+    recipe.handles[1].mapToStorage(resultHandle);
     recipe.normalize();
     await arc.instantiate(recipe);
 
@@ -138,7 +138,7 @@ describe('particle-api', function() {
     let Result = manifest.findSchemaByName('Result').entityClass();
     let resultHandle = await arc.createHandle(Result.type, undefined, 'test:1');
     let recipe = manifest.recipes[0];
-    recipe.handles[0].mapToView(resultHandle);
+    recipe.handles[0].mapToStorage(resultHandle);
     recipe.normalize();
     await arc.instantiate(recipe);
 
@@ -233,7 +233,7 @@ describe('particle-api', function() {
     let Result = manifest.findSchemaByName('Result').entityClass();
     let resultHandle = await arc.createHandle(Result.type, undefined, 'test:1');
     let recipe = manifest.recipes[0];
-    recipe.handles[0].mapToView(resultHandle);
+    recipe.handles[0].mapToStorage(resultHandle);
     recipe.normalize();
     await arc.instantiate(recipe);
 
@@ -346,8 +346,8 @@ describe('particle-api', function() {
     inputsView.store({id: '2', rawData: {value: 'world'}});
     let resultsView = await arc.createHandle(Result.type.setViewOf(), undefined, 'test:2');
     let recipe = manifest.recipes[0];
-    recipe.handles[0].mapToView(inputsView);
-    recipe.handles[1].mapToView(resultsView);
+    recipe.handles[0].mapToStorage(inputsView);
+    recipe.handles[1].mapToStorage(resultsView);
     recipe.normalize();
     await arc.instantiate(recipe);
 

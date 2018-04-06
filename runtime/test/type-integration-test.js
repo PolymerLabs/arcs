@@ -41,7 +41,7 @@ describe('type integration', () => {
     let manifest = await setup();
 
     let recipe = manifest.recipes[1];
-    recipe.handles[0].mapToView({id: 'test1', type: manifest.findSchemaByName('Product').entityClass().type.setViewOf()});
+    recipe.handles[0].mapToStorage({id: 'test1', type: manifest.findSchemaByName('Product').entityClass().type.setViewOf()});
     assert(recipe.normalize());
     assert(recipe.isResolved());
     assert(recipe.handles.length == 1);
@@ -52,7 +52,7 @@ describe('type integration', () => {
     let manifest = await setup();
 
     let recipe = manifest.recipes[1];
-    recipe.handles[0].mapToView({id: 'test1', type: manifest.findSchemaByName('Lego').entityClass().type.setViewOf()});
+    recipe.handles[0].mapToStorage({id: 'test1', type: manifest.findSchemaByName('Lego').entityClass().type.setViewOf()});
     assert(recipe.normalize());
     assert(recipe.isResolved());
     assert(recipe.handles.length == 1);

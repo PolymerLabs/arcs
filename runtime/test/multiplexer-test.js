@@ -51,7 +51,7 @@ describe('Multiplexer', function() {
 
     let arc = new Arc({id: 'test', context: manifest, slotComposer});
     let handle = await arc.createHandle(barType.setViewOf(), null, 'test:1');
-    recipe.handles[0].mapToView(handle);
+    recipe.handles[0].mapToStorage(handle);
     assert(recipe.normalize());
     assert(recipe.isResolved());
 

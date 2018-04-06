@@ -73,7 +73,7 @@ class Manifest {
     // TODO: These should be lists, possibly with a separate flattened map.
     this._particles = {};
     this._schemas = {};
-    this._handles = [];
+    this._stores = [];
     this._shapes = [];
     this._handleTags = new Map();
     this._fileName = null;
@@ -117,7 +117,7 @@ class Manifest {
     return this._fileName;
   }
   get handles() {
-    return this._handles;
+    return this._stores;
   }
   get scheduler() {
     return this._scheduler;
@@ -138,23 +138,23 @@ class Manifest {
   }
   // TODO: newParticle, Schema, etc.
   // TODO: simplify() / isValid().
-  async newHandle(type, name, id, tags) {
+  async newStore(type, name, id, tags) {
     assert(!type.hasVariableReference, `handles can't have variable references`);
     let handle = await this.storageProviderFactory.construct(id, type, `in-memory://${this.id}`);
     assert(handle._version !== null);
     handle.name = name;
     this._handleManifestUrls.set(handle.id, this.fileName);
-    return this._addHandle(handle, tags);
+    return this._addStore(handle, tags);
   }
 
-  _addHandle(handle, tags) {
-    this._handles.push(handle);
+  _addStore(handle, tags) {
+    this._stores.push(handle);
     this._handleTags.set(handle, tags ? tags : []);
     return handle;
   }
 
-  newHandleStub(type, name, id, storageKey, tags) {
-    return this._addHandle({type, id, name, storageKey}, tags);
+  newStorageStub(type, name, id, storageKey, tags) {
+    return this._addStore({type, id, name, storageKey}, tags);
   }
 
   _find(manifestFinder) {
@@ -193,38 +193,38 @@ class Manifest {
   findParticlesByVerb(verb) {
     return [...this._findAll(manifest => Object.values(manifest._particles).filter(particle => particle.primaryVerb == verb))];
   }
-  findHandleByName(name) {
-    return this._find(manifest => manifest._handles.find(handle => handle.name == name));
+  findStorageByName(name) {
+    return this._find(manifest => manifest._stores.find(store => store.name == name));
   }
-  findHandleById(id) {
-    return this._find(manifest => manifest._handles.find(handle => handle.id == id));
+  findStorageById(id) {
+    return this._find(manifest => manifest._stores.find(store => store.id == id));
   }
   findManifestUrlForHandleId(id) {
     return this._find(manifest => manifest._handleManifestUrls.get(id));
   }
-  findHandlesByType(type, options={}) {
+  findStorageByType(type, options={}) {
     let tags = options.tags || [];
     let subtype = options.subtype || false;
-    function typePredicate(view) {
+    function typePredicate(store) {
       let resolvedType = type.resolvedType();
       if (!resolvedType.isResolved()) {
-        return type.isSetView == view.type.isSetView;
+        return type.isCollection == store.type.isCollection;
       }
 
       if (subtype) {
-        let [left, right] = Type.unwrapPair(view.type, resolvedType);
+        let [left, right] = Type.unwrapPair(store.type, resolvedType);
         if (left.isEntity && right.isEntity) {
           return left.entitySchema.isMoreSpecificThan(right.entitySchema);
         }
         return false;
       }
 
-      return view.type.equals(type);
+      return store.type.equals(type);
     }
     function tagPredicate(manifest, handle) {
       return tags.filter(tag => !manifest._handleTags.get(handle).includes(tag)).length == 0;
     }
-    return [...this._findAll(manifest => manifest._handles.filter(handle => typePredicate(handle) && tagPredicate(manifest, handle)))];
+    return [...this._findAll(manifest => manifest._stores.filter(store => typePredicate(store) && tagPredicate(manifest, store)))];
   }
   findShapeByName(name) {
     return this._find(manifest => manifest._shapes.find(shape => shape.name == name));
@@ -444,7 +444,7 @@ ${e.message}
           return;
         }
         case 'list-type':
-          node.model = Type.newSetView(node.type.model);
+          node.model = Type.newCollection(node.type.model);
           return;
         default:
           return;
@@ -610,14 +610,14 @@ ${e.message}
       let ref = item.ref || {tags: []};
       if (ref.id) {
         handle.id = ref.id;
-        let targetHandle = manifest.findHandleById(handle.id);
-        if (targetHandle)
-          handle.mapToView(targetHandle);
+        let targetStore = manifest.findStorageById(handle.id);
+        if (targetStore)
+          handle.mapToStorage(targetStore);
       } else if (ref.name) {
-        let targetHandle = manifest.findHandleByName(ref.name);
+        let targetStore = manifest.findStorageByName(ref.name);
         // TODO: Error handling.
-        assert(targetHandle, `Could not find handle ${ref.name}`);
-        handle.mapToView(targetHandle);
+        assert(targetStore, `Could not find handle ${ref.name}`);
+        handle.mapToStorage(targetStore);
       }
       handle.tags = ref.tags;
       if (item.name) {
@@ -761,13 +761,13 @@ ${e.message}
           // TODO: Mark as immediate.
           targetHandle = recipe.newHandle();
           targetHandle.fate = 'copy';
-          let handle = await manifest.newHandle(type, null, id, []);
+          let store = await manifest.newStore(type, null, id, []);
           // TODO: loader should not be optional.
           if (hostedParticle.implFile && loader) {
             hostedParticle.implFile = loader.join(manifest.fileName, hostedParticle.implFile);
           }
-          handle.set(hostedParticle.clone().toLiteral());
-          targetHandle.mapToView(handle);
+          store.set(hostedParticle.clone().toLiteral());
+          targetHandle.mapToStorage(store);
         }
 
         if (targetParticle) {
@@ -857,20 +857,20 @@ ${e.message}
     let id = item.id;
     let type = item.type.model;
     if (id == null) {
-      id = `${manifest._id}view${manifest._handles.length}`;
+      id = `${manifest._id}store${manifest._stores.length}`;
     }
     let tags = item.tags;
     if (tags == null)
       tags = [];
 
     if (item.origin == 'storage') {
-      manifest.newHandleStub(type, name, id, item.source, tags);
+      manifest.newStorageStub(type, name, id, item.source, tags);
       return;
     }
 
-    let view = await manifest.newHandle(type, name, id, tags);
-    view.source = item.source;
-    view.description = item.description;
+    let store = await manifest.newStore(type, name, id, tags);
+    store.source = item.source;
+    store.description = item.description;
     let json;
     let source;
     if (item.origin == 'file') {
@@ -881,7 +881,7 @@ ${e.message}
       source = item.source;
       json = manifest.resources[source];
       if (json == undefined)
-        throw new Error(`Resource '${source}' referenced by view '${id}' is not defined in this manifest`);
+        throw new Error(`Resource '${source}' referenced by store '${id}' is not defined in this manifest`);
     }
     let entities;
     try {
@@ -891,7 +891,7 @@ ${e.message}
     }
 
     let unitType;
-    if (!type.isSetView) {
+    if (!type.isCollection) {
       if (entities.length == 0)
         return;
       entities = entities.slice(entities.length - 1);
@@ -912,10 +912,10 @@ ${e.message}
 
     let version = item.version || 0;
 
-    if (type.isSetView) {
-      view._fromListWithVersion(entities, version);
+    if (type.isCollection) {
+      store._fromListWithVersion(entities, version);
     } else {
-      view._setWithVersion(entities[0], version);
+      store._setWithVersion(entities[0], version);
     }
   }
   _newRecipe(name) {

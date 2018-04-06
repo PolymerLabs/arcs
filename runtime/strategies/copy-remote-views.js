@@ -22,6 +22,6 @@ export default class CopyRemoteViews extends ViewMapperBase {
   }
 
   getMappableViews(type, tags=[]) {
-    return this._arc.context.findHandlesByType(type, {tags, subtype: true});
+    return this._arc.context.findStorageByType(type, {tags, subtype: true});
   }
 }

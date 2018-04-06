@@ -693,7 +693,7 @@ ${particleStr1}
       },
     };
     let manifest = await Manifest.load('the.manifest', loader);
-    let view = manifest.findHandleByName('View0');
+    let view = manifest.findStorageByName('View0');
     assert(view);
     assert.deepEqual(await view.toList(), [
       {
@@ -735,7 +735,7 @@ Error parsing JSON from 'EntityList' (Unexpected token h in JSON at position 1)'
 
       view View0 of [Thing] in EntityList
     `, {fileName: 'the.manifest'});
-    let view = manifest.findHandleByName('View0');
+    let view = manifest.findStorageByName('View0');
     assert(view);
     assert.deepEqual(await view.toList(), [
       {
@@ -750,9 +750,9 @@ Error parsing JSON from 'EntityList' (Unexpected token h in JSON at position 1)'
   it('resolves view names to ids', async () => {
     let manifestSource = `
         schema Thing
-        view View0 of [Thing] in 'entities.json'
+        store Store0 of [Thing] in 'entities.json'
         recipe
-          map View0 as myView`;
+          map Store0 as myStore`;
     let entitySource = JSON.stringify([]);
     let loader = {
       loadResource(path) {
@@ -770,7 +770,7 @@ Error parsing JSON from 'EntityList' (Unexpected token h in JSON at position 1)'
     };
     let manifest = await Manifest.load('the.manifest', loader);
     let recipe = manifest.recipes[0];
-    assert.deepEqual(recipe.toString(), 'recipe\n  map \'manifest:the.manifest:view0\' as myView');
+    assert.deepEqual(recipe.toString(), 'recipe\n  map \'manifest:the.manifest:store0\' as myStore');
   });
   it('has prettyish syntax errors', async () => {
     try {
