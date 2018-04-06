@@ -63,7 +63,7 @@
   <script>
     // Basic stats for the entire run.
     function summaryStats(results) {
-      return results.map(r => r.record).reduce((acc, recorc) => {
+      return results.map(r => r.record).reduce((acc, record) => {
         let result = {};
         for (let name of [
             'generatedDerivations',
@@ -74,7 +74,7 @@
             'survivingDerivations',
             'resolvedDerivations',
         ]) {
-          result[name] = recorc[name] + (acc[name] || 0);
+          result[name] = (record[name] || 0) + (acc[name] || 0);
         }
         return result;
       }, {});
@@ -156,7 +156,7 @@
               'survivingDerivations',
               'resolvedDerivations',
           ]) {
-            newProps[name] = props[name] + (prevProps[name] || 0);
+            newProps[name] = (props[name] || 0) + (prevProps[name] || 0);
           }
           result.set(strategy, newProps);
         });
