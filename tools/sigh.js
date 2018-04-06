@@ -57,7 +57,7 @@ const output = console;
 function* findProjectFiles(dir, predicate) {
   let tests = [];
   for (let entry of fs.readdirSync(dir)) {
-    if (/\b(node_modules|bower_components|build)\b/.test(entry)
+    if (/\b(node_modules|bower_components|build|min\.js)\b/.test(entry)
        || entry.startsWith('.')) {
       continue;
     }
@@ -180,7 +180,7 @@ async function lint(args) {
   if (options.fix) {
     extra.push('--fix');
   }
-  let jsSources = [...findProjectFiles(process.cwd(), fullPath => /\.js$/.test(fullPath) && !/\.min\.js$/.test(fullPath))];
+  let jsSources = [...findProjectFiles(process.cwd(), fullPath => /\.js$/.test(fullPath))];
   let finalResult = true;
   while (jsSources.length > 0) {
     let theseSources = jsSources.splice(0, LOL_WINDOWS_YOU_SO_FUNNY_WITH_YOUR_COMMAND_SIZE_LIMITS_NUM_FILES);
