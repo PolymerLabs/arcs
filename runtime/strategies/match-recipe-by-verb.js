@@ -47,7 +47,7 @@ export default class MatchRecipeByVerb extends Strategy {
         let slotConstraints = {};
         for (let consumeSlot of Object.values(particle.consumedSlotConnections)) {
           let targetSlot = consumeSlot.targetSlot && consumeSlot.targetSlot.sourceConnection ? consumeSlot.targetSlot : null;
-          slotConstraints[consumeSlot.name] = {targetSlot, providedSlots: {}};
+          slotConstraints[consumeSlot.name] = {tags: consumeSlot.tags, targetSlot, providedSlots: {}};
           for (let providedSlot of Object.keys(consumeSlot.providedSlots)) {
             let sourceSlot = consumeSlot.providedSlots[providedSlot].consumeConnections.length > 0 ? consumeSlot.providedSlots[providedSlot] : null;
             slotConstraints[consumeSlot.name].providedSlots[providedSlot] = sourceSlot;
@@ -71,26 +71,27 @@ export default class MatchRecipeByVerb extends Strategy {
 
             particleForReplacing.remove();
 
-
             for (let consumeSlot in slotConstraints) {
-              if (slotConstraints[consumeSlot].targetSlot || Object.values(slotConstraints[consumeSlot].providedSlots).filter(a => a != null).length > 0) {
+              if (slotConstraints[consumeSlot].tags.length > 0 || slotConstraints[consumeSlot].targetSlot || Object.values(slotConstraints[consumeSlot].providedSlots).filter(a => a != null).length > 0) {
                 let slotMapped = false;                
                 for (let particle of particles) {
                   if (MatchRecipeByVerb.slotsMatchConstraint(particle.consumedSlotConnections, consumeSlot, slotConstraints[consumeSlot].providedSlots)) {
+                    let particleConsumeSlotConn = particle.consumedSlotConnections[consumeSlot];
+                    particleConsumeSlotConn.tags = particleConsumeSlotConn.tags.concat(slotConstraints[consumeSlot].tags);
                     if (slotConstraints[consumeSlot].targetSlot) {
                       let {mappedSlot} = outputRecipe.updateToClone({mappedSlot: slotConstraints[consumeSlot].targetSlot});
-                      particle.consumedSlotConnections[consumeSlot]._targetSlot = mappedSlot;
-                      mappedSlot._consumerConnections.push(particle.consumedSlotConnections[consumeSlot]); 
+                      particleConsumeSlotConn._targetSlot = mappedSlot;
+                      mappedSlot._consumerConnections.push(particleConsumeSlotConn);
                     }
                     for (let slotName in slotConstraints[consumeSlot].providedSlots) {
                       let slot = slotConstraints[consumeSlot].providedSlots[slotName];
                       if (slot == null)
                         continue;
                       let {mappedSlot} = outputRecipe.updateToClone({mappedSlot: slot});
-                      let oldSlot = particle.consumedSlotConnections[consumeSlot].providedSlots[slotName];
+                      let oldSlot = particleConsumeSlotConn.providedSlots[slotName];
                       oldSlot.remove();
-                      particle.consumedSlotConnections[consumeSlot].providedSlots[slotName] = mappedSlot;
-                      mappedSlot._sourceConnection = particle.consumedSlotConnections[consumeSlot];
+                      particleConsumeSlotConn.providedSlots[slotName] = mappedSlot;
+                      mappedSlot._sourceConnection = particleConsumeSlotConn;
                     }
                     slotMapped = true;
                     break;
