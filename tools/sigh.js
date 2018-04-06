@@ -57,7 +57,7 @@ const output = console;
 function* findProjectFiles(dir, predicate) {
   let tests = [];
   for (let entry of fs.readdirSync(dir)) {
-    if (/\b(node_modules|bower_components|build)\b/.test(entry)
+    if (/\b(node_modules|bower_components|build|third_party)\b/.test(entry)
        || entry.startsWith('.')) {
       continue;
     }
