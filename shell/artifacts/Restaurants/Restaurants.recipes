@@ -11,25 +11,26 @@ import 'RestaurantList.manifest'
 import 'RestaurantDetail.manifest'
 import '../Places/ExtractLocation.manifest'
 
-recipe
+recipe locateUser
   use #user as person
-  create as location
-  create as selected
-  create #restaurants #nosync as restaurants
   ExtractLocation
-    person <- person
+
+recipe displayRestaurants
+  RestaurantMasterDetail.selected -> RestaurantList.selected
+  RestaurantDetail.selected -> RestaurantList.selected
+  RestaurantMasterDetail.list -> RestaurantList.list
+  RestaurantList
+
+recipe
+  create as location
+  create #restaurants #nosync as restaurants
+  particle can locateUser
     location -> location
   FindRestaurants
     location <- location
     restaurants = restaurants
-  RestaurantMasterDetail
+  particle can displayRestaurants
     list <- restaurants
-    selected = selected
-  RestaurantList
-    list <- restaurants
-    selected = selected
-  RestaurantDetail
-    selected <- selected
 
 import '../Events/Event.schema'
 import '../Events/PartySize.manifest'
