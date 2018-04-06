@@ -422,7 +422,7 @@ ParticleProvidedSlot
   = 'provide' whiteSpace isSet:('set of' whiteSpace)? name:(lowerIdent) tags:(whiteSpace TagList)? eolWhiteSpace items:(Indent (SameIndent ParticleProvidedSlotItem)*)?
   {
     let formFactor = null;
-    let views = [];
+    let handles = [];
     items = items ? extractIndented(items) : [];
     items.forEach(item => {
       if (item.kind == 'form-factor') {
@@ -430,7 +430,7 @@ ParticleProvidedSlot
           error('duplicate form factor for a slot');
         formFactor = item.formFactor;
       } else {
-        views.push(item.view);
+        handles.push(item.handle);
       }
     });
     return {
@@ -440,26 +440,26 @@ ParticleProvidedSlot
       tags: optional(tags, tags => tags[1], []),
       isSet: !!isSet,
       formFactor,
-      views
+      handles
     };
   }
 
 ParticleProvidedSlotItem
   = SlotFormFactor
-  / ParticleProvidedSlotView
+  / ParticleProvidedSlotHandle
 
-ParticleProvidedSlotView
-  = ('view' / 'handle') whiteSpace view:lowerIdent eolWhiteSpace
+ParticleProvidedSlotHandle
+  = ('view' / 'handle') whiteSpace handle:lowerIdent eolWhiteSpace
   {
     return {
-      kind: 'particle-provided-slot-view',
+      kind: 'particle-provided-slot-handle',
       location: location(),
-      view,
+      handle,
     };
   }
 
 Description
-  = 'description' whiteSpace pattern:backquotedString eolWhiteSpace viewDescriptions:(Indent (SameIndent ParticleHandleDescription)+)?
+  = 'description' whiteSpace pattern:backquotedString eolWhiteSpace handleDescriptions:(Indent (SameIndent ParticleHandleDescription)+)?
   {
     return {
       kind: 'description',
@@ -472,7 +472,7 @@ Description
           name: 'pattern',
           pattern: pattern,
         },
-        ...optional(viewDescriptions, extractIndented, []),
+        ...optional(handleDescriptions, extractIndented, []),
       ],
     };
   }
@@ -481,7 +481,7 @@ ParticleHandleDescription
   = name:lowerIdent whiteSpace pattern:backquotedString eolWhiteSpace
   {
     return {
-      kind: 'view-description',
+      kind: 'handle-description',
       location: location(),
       name,
       pattern,

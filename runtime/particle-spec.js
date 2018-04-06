@@ -47,7 +47,7 @@ class SlotSpec {
     if (!slotModel.providedSlots)
       return;
     slotModel.providedSlots.forEach(ps => {
-      this.providedSlots.push(new ProvidedSlotSpec(ps.name, ps.isSet, ps.tags, ps.formFactor, ps.views));
+      this.providedSlots.push(new ProvidedSlotSpec(ps.name, ps.isSet, ps.tags, ps.formFactor, ps.handles));
     });
   }
 
@@ -57,12 +57,12 @@ class SlotSpec {
 }
 
 class ProvidedSlotSpec {
-  constructor(name, isSet, tags, formFactor, views) {
+  constructor(name, isSet, tags, formFactor, handles) {
     this.name = name;
     this.isSet = isSet;
     this.tags = tags;
     this.formFactor = formFactor; // TODO: deprecate form factors?
-    this.views = views;
+    this.handles = handles;
   }
 }
 
@@ -94,7 +94,7 @@ class ParticleSpec {
     // Verify provided slots use valid view connection names.
     this.slots.forEach(slot => {
       slot.providedSlots.forEach(ps => {
-        ps.views.forEach(v => assert(this.connectionMap.has(v), 'Cannot provide slot for nonexistent view constraint ', v));
+        ps.handles.forEach(v => assert(this.connectionMap.has(v), 'Cannot provide slot for nonexistent view constraint ', v));
       });
     });
   }
@@ -156,11 +156,11 @@ class ParticleSpec {
   }
 
   _toShape() {
-    const views = this._model.args;
+    const handles = this._model.args;
     // TODO: wat do?
     assert(!this.slots.length, 'please implement slots toShape');
     const slots = [];
-    return new Shape(views, slots);
+    return new Shape(handles, slots);
   }
 
   toString() {
@@ -202,7 +202,7 @@ class ParticleSpec {
         if (ps.formFactor) {
           results.push(`      formFactor ${ps.formFactor}`);
         }
-        ps.views.forEach(psv => results.push(`      view ${psv}`));
+        ps.handles.forEach(psv => results.push(`      view ${psv}`));
       });
     });
     // Description

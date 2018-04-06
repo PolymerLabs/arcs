@@ -48,7 +48,7 @@ class SlotConnection {
         this.providedSlots[providedSlot.name] = slot;
       }
       assert(slot.handleConnections.length == 0, 'Handle connections must be empty');
-      providedSlot.views.forEach(handle => slot.handleConnections.push(this.particle.connections[handle]));
+      providedSlot.handles.forEach(handle => slot.handleConnections.push(this.particle.connections[handle]));
       assert(slot._name == providedSlot.name);
       assert(!slot.formFactor);
       slot.formFactor = providedSlot.formFactor;
