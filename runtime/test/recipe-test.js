@@ -94,4 +94,22 @@ describe('recipe', function() {
     assert.isTrue(p5ConnSpec.isCompatibleType(MyType.setViewOf()));
     assert.isTrue(p5ConnSpec.isCompatibleType(MySubType.setViewOf()));
   });
+  it('keeps orphaned slots, handles and particles', async () => {
+    let manifest = await Manifest.parse(`
+      particle A in 'A.js'
+        A()
+
+      recipe
+        create #data as h0
+        slot #master as s0
+        A
+    `);
+
+    let [recipe] = manifest.recipes;
+    assert.isTrue(recipe.normalize());
+
+    assert.lengthOf(recipe.slots, 1);
+    assert.lengthOf(recipe.particles, 1);
+    assert.lengthOf(recipe.handles, 1);
+  });
 });
