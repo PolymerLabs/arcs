@@ -79,6 +79,16 @@ class Type {
     return this.variable;
   }
 
+  // TODO: rename SetView to Collection
+  // Once everything's moved over to this, we can change the
+  // underlying representation
+  get isCollection() {
+    return this.isSetView;
+  }
+  static newCollection(type) {
+    return Type.newSetView(type);
+  }
+
   mergeTypeVariablesByName(variableMap) {
     if (this.isVariable) {
       let name = this.variable.name;

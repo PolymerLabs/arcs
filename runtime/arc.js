@@ -46,8 +46,6 @@ class Arc {
 
     // All the handles, mapped by handle ID
     this._handlesById = new Map();
-    // .. and mapped by Type
-    this._handlesByType = new Map();
 
     // information about last-seen-versions of handles
     this._lastSeenVersion = new Map();
@@ -140,7 +138,7 @@ class Arc {
       if (!handleSet.has(handle.id))
         continue;
       let type = handle.type;
-      if (type.isSetView)
+      if (type.isCollection)
         type = type.primitiveType();
       if (type.isInterface) {
         interfaces += type.interfaceShape.toString() + '\n';
@@ -148,10 +146,10 @@ class Arc {
       let key = this._storageProviderFactory.parseStringAsKey(handle.storageKey);
       switch (key.protocol) {
         case 'firebase':
-          handles += `view View${id++} of ${handle.type.toString()} '${handle.id}' @${handle._version} at '${handle.storageKey}'\n`;
+          handles += `store Store${id++} of ${handle.type.toString()} '${handle.id}' @${handle._version} at '${handle.storageKey}'\n`;
           break;
         case 'in-memory': {
-          resources += `resource View${id}Resource\n`;
+          resources += `resource Store${id}Resource\n`;
           let indent = '  ';
           resources += indent + 'start\n';
 
@@ -171,7 +169,7 @@ class Arc {
           let data = JSON.stringify(serializedData);
           resources += data.split('\n').map(line => indent + line).join('\n');
           resources += '\n';
-          handles += `view View${id} of ${handle.type.toString()} '${handle.id}' @${handle._version} in View${id++}Resource\n`;
+          handles += `store Store${id} of ${handle.type.toString()} '${handle.id}' @${handle._version} in Store${id++}Resource\n`;
           break;
         }
       }
@@ -376,7 +374,7 @@ ${this.activeRecipe.toString()}`;
         recipeHandle.id = handle.id;
         recipeHandle.fate = 'use';
         recipeHandle.storageKey = handle.storageKey;
-        // TODO: move the call to OuterPEC's DefineView to here
+        // TODO: move the call to OuterPEC's DefineHandle to here
       }
 
       let storageKey = recipeHandle.storageKey;
@@ -398,7 +396,7 @@ ${this.activeRecipe.toString()}`;
   _connectParticleToHandle(particleId, particle, name, targetHandle) {
     assert(targetHandle, 'no target handle provided');
     let handleMap = this.particleHandleMaps.get(particleId);
-    assert(handleMap.spec.connectionMap.get(name) !== undefined, 'can\'t connect handle to a view slot that doesn\'t exist');
+    assert(handleMap.spec.connectionMap.get(name) !== undefined, 'can\'t connect handle to a connection that doesn\'t exist');
     handleMap.handles.set(name, targetHandle);
   }
 
@@ -406,7 +404,7 @@ ${this.activeRecipe.toString()}`;
     assert(type instanceof Type, `can't createHandle with type ${type} that isn't a Type`);
 
     if (type.isRelation) {
-      type = Type.newSetView(type);
+      type = Type.newCollection(type);
     }
 
     if (id == undefined)
@@ -433,9 +431,6 @@ ${this.activeRecipe.toString()}`;
       `tag ${tag} must start with '#'`));
 
     this._handlesById.set(handle.id, handle);
-    let byType = this._handlesByType.get(Arc._viewKey(handle.type)) || [];
-    byType.push(handle);
-    this._handlesByType.set(Arc._viewKey(handle.type), byType);
 
     if (tags.length) {
       for (let tag of tags) {
@@ -449,38 +444,42 @@ ${this.activeRecipe.toString()}`;
     this._storageKeys[handle.id] = handle.storageKey;
   }
 
-  // TODO: Don't use this, we should be testing the schemas for compatiblity
-  //       instead of using just the name.
-  static _viewKey(type) {
-    if (type.isSetView) {
-      let key = this._viewKey(type.primitiveType());
+  // Convert a type to a normalized key that we can use for
+  // equality testing.
+  //
+  // TODO: we should be testing the schemas for compatiblity instead of using just the name.
+  // TODO: now that this is only used to implement findHandlesByType we can probably replace
+  // the check there with a type system equality check or similar.
+  static _typeToKey(type) {
+    if (type.isCollection) {
+      let key = this._typeToKey(type.primitiveType());
       if (key) {
         return `list:${key}`;
       }
     } else if (type.isEntity) {
       return type.entitySchema.name;
     } else if (type.isShape) {
-      // TODO we need to fix this too, otherwise all views of shape type will
+      // TODO we need to fix this too, otherwise all handles of shape type will
       // be of the 'same type' when searching by type.
       return type.shapeShape;
     } else if (type.isVariable && type.isResolved()) {
-      return Arc._viewKey(type.resolvedType());
+      return Arc._typeToKey(type.resolvedType());
     }
   }
 
   findHandlesByType(type, options) {
     // TODO: dstockwell to rewrite this to use constraints and more
-    let typeKey = Arc._viewKey(type);
+    let typeKey = Arc._typeToKey(type);
     let handles = [...this._handlesById.values()].filter(handle => {
       if (typeKey) {
-        let handleKey = Arc._viewKey(handle.type);
+        let handleKey = Arc._typeToKey(handle.type);
         if (typeKey === handleKey) {
           return true;
         }
       } else {
         if (type.isVariable && !type.isResolved() && handle.type.isEntity) {
           return true;
-        } else if (type.isSetView && type.primitiveType().isVariable && !type.primitiveType().isResolved() && handle.type.isSetView) {
+        } else if (type.isCollection && type.primitiveType().isVariable && !type.primitiveType().isResolved() && handle.type.isCollection) {
           return true;
         }
       }

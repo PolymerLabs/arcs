@@ -449,7 +449,7 @@ ParticleProvidedSlotItem
   / ParticleProvidedSlotView
 
 ParticleProvidedSlotView
-  = 'view' whiteSpace view:lowerIdent eolWhiteSpace
+  = ('view' / 'handle') whiteSpace view:lowerIdent eolWhiteSpace
   {
     return {
       kind: 'particle-provided-slot-view',
