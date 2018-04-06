@@ -559,14 +559,26 @@ RecipeParticleConnection
   }
 
 RecipeParticleSlotConnection
-  = 'consume' whiteSpace param:lowerIdent name:(whiteSpace LocalName)? eolWhiteSpace providedSlots:(Indent (SameIndent RecipeParticleProvidedSlot)*)?
+  = 'consume' whiteSpace ref:RecipeSlotConnectionRef name:(whiteSpace LocalName)? eolWhiteSpace providedSlots:(Indent (SameIndent RecipeParticleProvidedSlot)*)?
   {
     return {
       kind: 'slot-connection',
       location: location(),
-      param,
+      param: ref.param,
+      tags: ref.tags,
       name: optional(name, name=>name[1], null),
       providedSlots: optional(providedSlots, extractIndented, [])
+    };
+  }
+
+RecipeSlotConnectionRef
+  = param:lowerIdent tags:SpaceTagList?
+  {
+    return {
+      kind: 'slot-connection-ref',
+      location: location(),
+      param,
+      tags,
     };
   }
 

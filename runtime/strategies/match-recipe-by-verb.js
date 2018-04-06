@@ -46,7 +46,7 @@ export default class MatchRecipeByVerb extends Strategy {
         // the target slot has a source connection. 
         let slotConstraints = {};
         for (let consumeSlot of Object.values(particle.consumedSlotConnections)) {
-          let targetSlot = consumeSlot.targetSlot.sourceConnection ? consumeSlot.targetSlot : null;
+          let targetSlot = consumeSlot.targetSlot && consumeSlot.targetSlot.sourceConnection ? consumeSlot.targetSlot : null;
           slotConstraints[consumeSlot.name] = {targetSlot, providedSlots: {}};
           for (let providedSlot of Object.keys(consumeSlot.providedSlots)) {
             let sourceSlot = consumeSlot.providedSlots[providedSlot].consumeConnections.length > 0 ? consumeSlot.providedSlots[providedSlot] : null;

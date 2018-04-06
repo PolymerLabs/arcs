@@ -671,6 +671,7 @@ ${e.message}
         if (!slotConn) {
           slotConn = particle.addSlotConnection(slotConnectionItem.param);
         }
+        slotConn.tags = slotConnectionItem.tags || [];
         slotConnectionItem.providedSlots.forEach(ps => {
           let providedSlot = slotConn.providedSlots[ps.param];
           if (providedSlot) {
@@ -823,14 +824,16 @@ ${e.message}
           }
           assert(targetSlot == items.byName.get(slotConnectionItem.name),
                  `Target slot ${targetSlot.name} doesn't match slot connection ${slotConnectionItem.param}`);
-        } else {
+        } else if (slotConnectionItem.name) {
           targetSlot = recipe.newSlot(slotConnectionItem.param);
           targetSlot.localName = slotConnectionItem.name;
           if (slotConnectionItem.name)
             items.byName.set(slotConnectionItem.name, targetSlot);
           items.bySlot.set(targetSlot, slotConnectionItem);
         }
-        particle.consumedSlotConnections[slotConnectionItem.param].connectToSlot(targetSlot);
+        if (targetSlot) {
+          particle.consumedSlotConnections[slotConnectionItem.param].connectToSlot(targetSlot);
+        }
       }
     }
 
