@@ -89,8 +89,6 @@ describe('Scoring', function() {
       delete actualCopy.author;
       delete actualCopy.createdTimestamp;
       delete actualCopy.message;
-      delete actualCopy.renderParticleSpec;
-      delete actualCopy.renderRecipe;
       assert.deepEqual(actualCopy, expected);
     };
 
@@ -104,9 +102,11 @@ describe('Scoring', function() {
         moveCount: 0,
         startstamp: 7331
       };
+      const gameId = '8118';
       const user = {id: '42'};
-      const actual = Scoring.applyMoveStats('renderParticleSpec', 'renderRecipe', user, stats, 'short', 38);
+      const actual = Scoring.applyMoveStats(gameId, user, stats, 'short', 38);
       validateStats(actual, {
+        gameId,
         highestScoringWord: 'highest',
         highestScoringWordScore: 43,
         longestWord: 'longest',
@@ -127,9 +127,11 @@ describe('Scoring', function() {
         moveCount: 0,
         startstamp: 7331
       };
+      const gameId = '8118';
       const user = {id: '42'};
-      const actual = Scoring.applyMoveStats('renderParticleSpec', 'renderRecipe', user, stats, 'higher', 100);
+      const actual = Scoring.applyMoveStats(gameId, user, stats, 'higher', 100);
       validateStats(actual, {
+        gameId,
         highestScoringWord: 'higher',
         highestScoringWordScore: 100,
         longestWord: 'longest',
@@ -150,9 +152,11 @@ describe('Scoring', function() {
         moveCount: 0,
         startstamp: 7331
       };
+      const gameId = '8118';
       const user = {id: '42'};
-      const actual = Scoring.applyMoveStats('renderParticleSpec', 'renderRecipe', user, stats, 'higher', 100);
+      const actual = Scoring.applyMoveStats(gameId, user, stats, 'higher', 100);
       validateStats(actual, {
+        gameId,
         highestScoringWord: 'higher',
         highestScoringWordScore: 100,
         longestWord: 'longest',
@@ -173,9 +177,11 @@ describe('Scoring', function() {
         moveCount: 0,
         startstamp: 7331
       };
+      const gameId = '8118';
       const user = {id: '42'};
-      const actual = Scoring.applyMoveStats('renderParticleSpec', 'renderRecipe', user, stats, 'evenlonger', 23);
+      const actual = Scoring.applyMoveStats(gameId, user, stats, 'evenlonger', 23);
       validateStats(actual, {
+        gameId,
         highestScoringWord: 'highest',
         highestScoringWordScore: 43,
         longestWord: 'evenlonger',
@@ -196,9 +202,11 @@ describe('Scoring', function() {
         moveCount: 0,
         startstamp: 7331
       };
+      const gameId = '8118';
       const user = {id: '42'};
-      const actual = Scoring.applyMoveStats('renderParticleSpec', 'renderRecipe', user, stats, 'evenlonger', 23);
+      const actual = Scoring.applyMoveStats(gameId, user, stats, 'evenlonger', 23);
       validateStats(actual, {
+        gameId,
         highestScoringWord: 'highest',
         highestScoringWordScore: 43,
         longestWord: 'evenlonger',
@@ -219,9 +227,11 @@ describe('Scoring', function() {
         moveCount: 345,
         startstamp: 7331
       };
+      const gameId = '8118';
       const user = {id: '42'};
-      const actual = Scoring.applyMoveStats('renderParticleSpec', 'renderRecipe', user, stats, 'evenlonger', 2300);
+      const actual = Scoring.applyMoveStats(gameId, user, stats, 'evenlonger', 2300);
       validateStats(actual, {
+        gameId,
         highestScoringWord: 'evenlonger',
         highestScoringWordScore: 2300,
         longestWord: 'evenlonger',

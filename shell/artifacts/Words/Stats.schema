@@ -6,10 +6,9 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import 'https://$cdn/artifacts/Social/Post.schema'
-
-schema Stats extends Post
-  // TODO(wkorman): Add a copy of game state (in progress or game over).
+schema Stats
+  // The unique game id of the associated Words game.
+  Text gameId
   // Current or ending (if over) game score.
   Number score
   // Total number of moves made in game thus far (or total, if over).
@@ -26,3 +25,11 @@ schema Stats extends Post
   Text highestScoringWord
   // Highest scoring word (score)
   Number highestScoringWordScore
+  // TODO(wkorman): Below are temporary fields copied from Post while we
+  // rework social feed to use muxing embedded recipes.
+  // Time this post was created in milliseconds since the epoch.
+  Number createdTimestamp
+  // The primary message content of the post.
+  Text message
+  // The opaque user id of the post author.
+  Text author

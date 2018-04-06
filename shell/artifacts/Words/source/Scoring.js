@@ -83,13 +83,7 @@ class Scoring {
         stats.longestWordScore}). Score: ${stats.score}. Moves: ${
         stats.moveCount}.`;
   }
-  static applyMoveStats(
-      renderParticleSpec,
-      renderRecipe,
-      user,
-      stats,
-      word,
-      score) {
+  static applyMoveStats(gameId, user, stats, word, score) {
     let updatedValues = {
       highestScoringWord: stats.highestScoringWord,
       highestScoringWordScore: stats.highestScoringWordScore,
@@ -110,6 +104,7 @@ class Scoring {
       updatedValues.longestWordScore = score;
     }
 
+    updatedValues.gameId = gameId;
     updatedValues.score = stats.score + score;
     updatedValues.moveCount = stats.moveCount + 1;
 
@@ -119,17 +114,17 @@ class Scoring {
     updatedValues.message = Scoring.scoreToMessage(updatedValues);
     updatedValues.author = user.id;
 
-    updatedValues.renderParticleSpec = renderParticleSpec;
-    updatedValues.renderRecipe = renderRecipe;
-
     return updatedValues;
   }
-  static create(user) {
+  static create(user, gameId) {
     const now = Date.now();
     return {
+      gameId,
       score: 0,
       moveCount: 0,
       startstamp: now,
+      // TODO(wkorman): Write the below into a Post entity that references
+      // the associated Stats instance and other affiliated game entities.
       author: user.id,
       createdTimestamp: now,
       message: 'Word Puzzle Game Stats - New game.'

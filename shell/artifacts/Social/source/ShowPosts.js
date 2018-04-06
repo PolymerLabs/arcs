@@ -209,8 +209,8 @@ defineParticle(({DomParticle, resolver, log}) => {
       return this._avatarToStyle(avatarUrl);
     }
     _blogDescription(user, metadata) {
-      const blogDescription = (metadata && metadata.description) ?
-          metadata.description : '';
+      const blogDescription =
+          (metadata && metadata.description) ? metadata.description : '';
       return {
         $template: (metadata && metadata.blogOwner == user.id) ?
             'blog-description-editable' :

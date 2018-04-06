@@ -7,6 +7,7 @@
 // http://polymer.github.io/PATENTS.txt
 
 import 'Particles.manifest'
+import 'https://$cdn/artifacts/Common/CopyCollection.manifest'
 import 'https://$cdn/artifacts/Common/Detail.manifest'
 import 'https://$cdn/artifacts/Common/List.manifest'
 
@@ -54,12 +55,16 @@ recipe
     people <- people
 
 recipe
-  map #BOXED_stats as posts
-  // TODO(wkorman): Merge together posts and stats with CopyCollection if needed.
-  // map #BOXED_posts as posts
-  map #BOXED_avatar as avatars
+  map #BOXED_stats as game_posts
+  map #BOXED_posts as social_posts
+  create as posts
+  CopyCollection
+    input <- game_posts
+    output -> posts
+  CopyCollection
+    input <- social_posts
+    output -> posts
   List
     items = posts
   PostMuxer
     list = posts
-    avatars = avatars
