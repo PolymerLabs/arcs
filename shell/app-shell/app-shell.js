@@ -22,6 +22,7 @@ import '../components/x-list.js';
 import Xen from '../components/xen/xen.js';
 import ArcsUtils from './lib/arcs-utils.js';
 import Const from './constants.js';
+import './elements/link-jack.js';
 
 // globals
 /* global shellPath */
