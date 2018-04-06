@@ -1,3 +1,4 @@
+// @license
 // Copyright (c) 2017 Google Inc. All rights reserved.
 // This code may only be used under the BSD style license found at
 // http://polymer.github.io/LICENSE.txt
@@ -5,26 +6,8 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import 'VrSphere.manifest'
-recipe
-  VrSphere
 
-import 'VrBox.manifest'
-recipe
-  VrBox
-
-import 'VrPot.manifest'
-recipe
-   VrPot
-
-import 'VrFlower.manifest'
-recipe
-  VrFlower
-
-import 'VrOtherFlower.manifest'
-recipe
-  VrOtherFlower
-
-import 'VrHtml.manifest'
-recipe
-  VrHtml
+particle VrHtml in 'source/VrHtml.js'
+  VrHtml()
+  consume root
+  description `Show HTML in VR`
