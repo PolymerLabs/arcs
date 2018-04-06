@@ -39,11 +39,10 @@ export default class GroupHandleConnections extends Strategy {
           }).filter(p => countConnectionsByType(p.connections) > 0);
           assert(sortedParticles.length > 0);
 
-          // HJandle connections of the same particle cannot be bound to the same handle. Iterate on handle connections of the particle
+          // Handle connections of the same particle cannot be bound to the same handle. Iterate on handle connections of the particle
           // with the most connections of the given type, and group each of them with same typed handle connections of other particles.
           let particleWithMostConnectionsOfType = sortedParticles[0];
           let groups = new Map();
-          groupsByType.set(type, groups);
           let allTypeHandleConnections = recipe.handleConnections.filter(c => {
             return !c.isOptional && !c.handle && type.equals(c.type) && (c.particle != particleWithMostConnectionsOfType);
           });
@@ -85,9 +84,13 @@ export default class GroupHandleConnections extends Strategy {
               otherConns.push(conn);
             }
           });
+
+          if (groups.size !== 0) {
+            groupsByType.set(type, groups);
+          }
         });
 
-        return recipe => {
+        if (groupsByType.size > 0) return recipe => {
           groupsByType.forEach((groups, type) => {
             groups.forEach(group => {
               let recipeHandle = recipe.newHandle();

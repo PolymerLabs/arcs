@@ -26,6 +26,8 @@ describe('GroupHandleConnections', function() {
       C(in Thing ithingC1, out Thing othingC2, inout [OtherThing] iootherthingC1)
     particle D
       D(in Thing ithingD1, in Thing ithingD2, out Thing othingD3)
+    particle E
+      E(out Thing othingE1)
       `;
   it('group in and out view connections', async () => {
     // TODO: add another Type view connections to the recipe!
@@ -38,9 +40,7 @@ describe('GroupHandleConnections', function() {
         D
     `));
     let inputParams = {generated: [{result: manifest.recipes[0], score: 1}]};
-    let arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'dom');
-    arc._search = 'ShowCollection and chooser alsoon recommend';
-    let ghc = new GroupHandleConnections(arc);
+    let ghc = new GroupHandleConnections();
 
     let results = await ghc.generate(inputParams);
     assert.equal(results.length, 1);
@@ -50,5 +50,23 @@ describe('GroupHandleConnections', function() {
     assert.isUndefined(recipe.handleConnections.find(hc => !hc.handle));
     // Verify all handles have non-empty connections list.
     assert.isUndefined(recipe.handles.find(v => v.connections.length == 0));
+  });
+  it('does nothing if no grouping is possible', async () => {
+    // TODO: add another Type view connections to the recipe!
+    let manifest = (await Manifest.parse(`
+      ${schemaAndParticlesStr}
+      recipe
+        create as thing
+        E
+          othingE1 -> thing
+        A
+          ithingA1 <- thing
+        B
+    `));
+    let inputParams = {generated: [{result: manifest.recipes[0], score: 1}]};
+    let ghc = new GroupHandleConnections();
+
+    let results = await ghc.generate(inputParams);
+    assert.lengthOf(results, 0);
   });
 });
