@@ -32,7 +32,7 @@ class AFrameHtml extends Xen.Base {
     return {
       id,
       position: `0 0.1 -2`,
-      material: `shader: html; target: #${id}; ratio: height; fps: 0;`,
+      material: `shader: html; target: #${id}; ratio: height; fps: 5;`,
       html: 'Hello World'
     };
   }

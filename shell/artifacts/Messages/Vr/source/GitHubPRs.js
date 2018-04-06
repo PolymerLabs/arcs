@@ -6,9 +6,9 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-"use strict";
+'use strict';
 
-defineParticle(({ DomParticle, html, log }) => {
+defineParticle(({DomParticle, html, log}) => {
 
   const template = html`
     <aframe-html id={{subId}} anchor="center" height="1" width="2" position="0 1 0" html="{{pr}}"></aframe-html>
@@ -29,7 +29,7 @@ defineParticle(({ DomParticle, html, log }) => {
     get template() {
       return template;
     }
-    render({ participants }, { prs, issues }) {
+    render({participants}, {prs, issues}) {
       if (!prs) {
         this.fetchPRs();
       }
@@ -39,15 +39,13 @@ defineParticle(({ DomParticle, html, log }) => {
       return {
         items: Object.keys(githubIds).map(name => {
           const githubAccount = githubIds[name];
-          console.log("looking for PRs for", name, githubAccount);
+          console.log('looking for PRs for', name, githubAccount);
 
           const last = prs && prs.find(pr => pr.user.login === githubAccount);
           if (!last) return {};
 
-          const needReview = last.requested_reviewers;
-          const title = last.title.replace(';', ',');
-
-          const reviewers = last.requested_reviewers ? `• reviews requested from ${last.requested_reviewers.map(r => r.login)}` : '';
+          const reviewers = last.requested_reviewers && last.requested_reviewers.length
+            ? `• reviews requested from ${last.requested_reviewers.map(r => r.login)}` : '';
 
           const content = html`
             <div style="background: #F8F8F8; color: #333; font-size: 24px; padding: 32px; border-radius: 16px;">
@@ -60,14 +58,14 @@ defineParticle(({ DomParticle, html, log }) => {
           return {
             subId: name,
             pr: content
-          }
+          };
         })
       };
     }
     async fetchPRs() {
       const response = await fetch(`${service}/repos/PolymerLabs/arcs/pulls`);
       const prs = await response.json();
-      this.setState({ prs });
+      this.setState({prs});
     }
   };
 
