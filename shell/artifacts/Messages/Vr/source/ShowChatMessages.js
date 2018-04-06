@@ -14,7 +14,7 @@ defineParticle(({DomParticle}) => {
     <a-entity id={{subId}}>{{inner}}</a-entity>
 
     <template chat>
-      <aframe-html id$="{{name}}" html$="{{message}}"></a-text>
+      <a-text id$="{{name}}" value$="{{message}}"></a-text>
     </template>
 
     <template mustache>
@@ -82,13 +82,10 @@ defineParticle(({DomParticle}) => {
     }
     _renderInner(p, message) {
       if (message !== undefined) {
-        let model = {name: p.name};
+        let model = {name: p.name, message};
         if (this.mode == 'mustache') {
           model.position = mustache[p.name] ? mustache[p.name].position : '';
           model.opacity = '1';
-          model.message = message;
-        } else {
-          model.message = `<div style="background: #fcfcfc; border-radius: 5px; padding: 10px">${message}</div>`;
         }
         return {
           subId: p.name,
