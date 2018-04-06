@@ -69,13 +69,13 @@ defineParticle(({DomParticle}) => {
       }
     }
     renderParticipants(participants) {
-      return participants.map((p, i) => {
+      return Object.keys(data).map((p, i) => {
         return {
-          subId: p.name,
-          name: p.name,
-          position: data[p.name] ? data[p.name].position : '',
-          rotation: data[p.name] ? data[p.name].rotation : '',
-          scale: data[p.name] ? data[p.name].scale : '',
+          subId: p,
+          name: p,
+          position: data[p].position,
+          rotation: data[p].rotation,
+          scale: data[p].scale,
         };
       });
     }

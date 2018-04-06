@@ -6,10 +6,9 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import '../Message.schema'
 import 'https://$cdn/artifacts/People/Person.schema'
 
-particle ComposeMustache in '../source/NoOp.js'
-  ComposeMustache(in Person me, inout [Message] messages)
-  consume compose
-  description `chat mustaches with friends`
+particle GitHubPRs in 'source/GitHubPRs.js'
+  GitHubPRs(in [Person] participants)
+  consume set of topofhead
+  description `show pending pull requests`
