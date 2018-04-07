@@ -83,6 +83,10 @@ class DomContext {
     return this._innerContextBySlotName[innerSlotName];
   }
   isDirectInnerSlot(slot) {
+    if (slot === this._context) {
+      return true;
+    }
+
     let parentNode = slot.parentNode;
     while (parentNode) {
       if (parentNode == this._context) {
@@ -101,7 +105,7 @@ class DomContext {
     // TODO(sjmiles): remember that attribute names from HTML are lower-case
     return node[name] || node.getAttribute(name);
   }
-  initInnerContexts(slotSpec) {
+  initInnerContexts(slotSpec, globalSubId) {
     this._innerContextBySlotName = {};
     Array.from(this._context.querySelectorAll('[slotid]')).forEach(s => {
       if (!this.isDirectInnerSlot(s)) {
@@ -111,10 +115,12 @@ class DomContext {
       const slotId = this.getNodeValue(s, 'slotid');
       const providedSlotSpec = slotSpec.getProvidedSlotSpec(slotId);
       if (providedSlotSpec) { // Skip non-declared slots
+        assert(!globalSubId || !this.getNodeValue(s, 'subid') || globalSubId == this.getNodeValue(s, 'subid'),
+               `Unexpected sub-id ${this.getNodeValue(s, 'subid')}, expecting ${globalSubId}`);
         const subId = this.getNodeValue(s, 'subid');
-        assert(!subId || providedSlotSpec.isSet,
+        assert(Boolean(globalSubId || subId) === providedSlotSpec.isSet,
             `Slot provided in ${slotSpec.name} sub-id ${subId} doesn't match set spec: ${providedSlotSpec.isSet}`);
-        if (providedSlotSpec.isSet) {
+        if (subId) {
           if (!this._innerContextBySlotName[slotId]) {
             this._innerContextBySlotName[slotId] = {};
           }
@@ -180,6 +186,9 @@ class SetDomContext {
       }
     });
   }
+  updateParticleName(slotName, particleName) {
+    Object.values(this._contextBySubId).forEach(context => context.updateParticleName(slotName, particleName));
+  }
   isEqual(context) {
     return Object.keys(this._contextBySubId).length == Object.keys(context).length &&
            !Object.keys(this._contextBySubId).find(c => this._contextBySubId[c] != context[c]);
@@ -228,7 +237,10 @@ class SetDomContext {
     return innerContexts;
   }
   initInnerContexts(slotSpec) {
-    Object.values(this._contextBySubId).forEach(context => context.initInnerContexts(slotSpec));
+    Object.keys(this._contextBySubId).forEach(subId => this._contextBySubId[subId].initInnerContexts(slotSpec, subId));
+  }
+  isDirectInnerSlot(slot) {
+    return Object.values(this._contextBySubId).find(context => context.isDirectInnerSlot(slot)) != null;
   }
 }
 
