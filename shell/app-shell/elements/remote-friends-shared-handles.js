@@ -164,7 +164,7 @@ class RemoteFriendsSharedHandles extends Xen.Base {
     }
   }
   async _requireHandle(arc, id, type, name, tags) {
-    return arc.context.findHandleById(id) || await arc.context.newHandle(type, name, id, tags);
+    return arc.context.findStorageById(id) || await arc.context.newStore(type, name, id, tags);
   }
   _addHandleData(handle, data, friend) {
     ArcsUtils.addHandleData(handle, data);
