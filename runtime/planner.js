@@ -28,7 +28,6 @@ import InitSearch from './strategies/init-search.js';
 import SearchTokensToParticles from './strategies/search-tokens-to-particles.js';
 import FallbackFate from './strategies/fallback-fate.js';
 import GroupHandleConnections from './strategies/group-handle-connections.js';
-import CombinedStrategy from './strategies/combined-strategy.js';
 import MatchFreeHandlesToConnections from './strategies/match-free-handles-to-connections.js';
 import CreateViews from './strategies/create-views.js';
 import ResolveRecipe from './strategies/resolve-recipe.js';
@@ -46,10 +45,8 @@ class Planner {
     strategies = strategies || [
       new InitPopulation(arc),
       new InitSearch(arc),
-      new CombinedStrategy([
-        new SearchTokensToParticles(arc),
-        new GroupHandleConnections(),
-      ]),
+      new SearchTokensToParticles(arc),
+      new GroupHandleConnections(),
       new FallbackFate(),
       new CreateViews(),
       new AssignViewsByTagAndType(arc),
