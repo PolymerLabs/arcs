@@ -13,15 +13,9 @@ recipe
   create #board as board
   create #move as move
   create #stats as stats
-  // map #friends_avatar as avatars
   GamePane
     move = move
     board = board
     stats = stats
     person <- person
     renderParticle = ShowSingleStats
-
-//  LeaderboardPane
-//    avatars <- avatars
-//    person <- person
-//    stats = stats
