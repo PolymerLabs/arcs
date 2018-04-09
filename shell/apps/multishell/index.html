@@ -9,19 +9,34 @@
     height: 100vh;
   }
   iframe {
-    border: 2px solid blue;
+    border: none;
+    /*border: 2px solid blue;*/
     flex: 1;
   }
 </style>
-
-<script>
-  document.addEventListener('click', e => {
-    console.log(e);
-  });
-</script>
 
 <columns>
   <iframe src="../web/"></iframe>
   <iframe src="../web/"></iframe>
 </columns>
 
+<script type="module">
+  // hijacking one's own links is allowed (same-origin policy)
+  import jackLinks from './link-jack.js';
+  const jackIframe = (iframe, handler) => {
+    jackLinks(iframe.contentWindow, anchor => handler(iframe, anchor));
+  }
+  const routeIframe = (iframe, href, linkHandler) => {
+    iframe.contentWindow.location = href;
+    iframe.contentWindow.onload = () => {
+      jackIframe(iframe, linkHandler);
+    }
+  }
+  const linkHandler = (iframe, anchor) => {
+    console.log(anchor.href);
+    routeIframe(iframe, anchor.href, linkHandler);
+  }
+  for (const iframe of document.querySelectorAll('iframe')) {
+    jackIframe(iframe, linkHandler);
+  }
+</script>
