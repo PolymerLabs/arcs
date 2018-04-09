@@ -96,6 +96,7 @@ defineParticle(({DomParticle, html, log}) => {
                                  .buildManifest`
 ${renderParticle}
 recipe
+  map #BOXED_avatar as avatars
   use '{{item_id}}' as v1
   slot '{{slot_id}}' as s1
   {{other_views}}

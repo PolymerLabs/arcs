@@ -13,9 +13,11 @@ recipe
   create #board as board
   create #move as move
   create #stats as stats
+  create #post as post
   GamePane
     move = move
     board = board
     stats = stats
+    post = post
     person <- person
     renderParticle = ShowSingleStats

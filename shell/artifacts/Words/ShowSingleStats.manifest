@@ -6,9 +6,9 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import 'Stats.schema'
+import '../Social/Post.schema'
 
 particle ShowSingleStats in 'source/ShowSingleStats.js'
-  ShowSingleStats(in Stats stats)
+  ShowSingleStats(in Post post)
   consume item
   description `show ${stats}`

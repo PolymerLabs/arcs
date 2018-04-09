@@ -23,9 +23,9 @@ defineParticle(({DomParticle, html}) => {
     scoreToMessage(stats) {
       return `Words Puzzle Game Stats -- Highest scoring word: ${
           stats.highestScoringWord} (${
-          stats.highestScoringWordScore}). Longest word: ${stats.longestWord} (${
-          stats.longestWordScore}). Score: ${stats.score}. Moves: ${
-          stats.moveCount}.`;
+          stats.highestScoringWordScore}). Longest word: ${
+          stats.longestWord} (${stats.longestWordScore}). Score: ${
+          stats.score}. Moves: ${stats.moveCount}.`;
     }
     render({stats}) {
       const message = stats ? this.scoreToMessage(stats) : '';

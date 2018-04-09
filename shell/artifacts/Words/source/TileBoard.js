@@ -29,6 +29,7 @@ const CHANCE_OF_FIRE_ON_REFILL = 0.1;
 class TileBoard {
   constructor(board) {
     console.assert(board, 'Input board values must not be null.');
+    this._gameId = board.gameId;
     this._shuffleAvailableCount = board.shuffleAvailableCount;
     this._state = board.state !== undefined ?
         TileBoard.NumberToState[board.state] :
@@ -62,6 +63,9 @@ class TileBoard {
   }
   get size() {
     return TILE_COUNT;
+  }
+  get gameId() {
+    return this._gameId;
   }
   tileAt(x, y) {
     return this._rows[y][x];
@@ -221,7 +225,12 @@ class TileBoard {
     for (let i = 0; i < TILE_COUNT; i++) {
       tiles.push(new Tile(i, TileBoard.pickCharWithFrequencies()));
     }
+    // Unique id generation is a hack swiped from ArcsUtils. We could perhaps
+    // use the Board entity id, or a more legitimate id generator if needed.
+    const gameId = Date.now().toString(36).substr(2) +
+        Math.random().toString(36).substr(2);
     return {
+      gameId,
       letters: tiles.map(t => `${t.letter}${t.styleAsNumber}`).join(''),
       shuffleAvailableCount: DEFAULT_SHUFFLE_AVAILABLE_COUNT,
       state: TileBoard.StateToNumber[TileBoard.State.ACTIVE]

@@ -6,20 +6,15 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
+import '../Common/List.manifest'
+import '../People/Person.schema'
+import '../Social/Post.schema'
 import 'Board.schema'
 import 'Move.schema'
 import 'Stats.schema'
 
-import 'https://$cdn/artifacts/People/Person.schema'
-
-// TODO(wkorman): Should we just use HostedParticleShape as
-// defined in Multiplexer.manifest directly?
-shape RenderParticleShape
-  RenderParticleShape(in Stats)
-  consume
-
 particle GamePane in 'source/GamePane.js'
-  GamePane(host RenderParticleShape renderParticle, in Person person, inout Board board, inout Move move, inout Stats stats)
+  GamePane(host HostedParticleShape renderParticle, in Person person, inout Board board, inout Move move, inout Stats stats, inout Post post)
   affordance dom
   consume root
   description `play Words`

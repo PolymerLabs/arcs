@@ -224,6 +224,7 @@ defineParticle(({DomParticle, log, resolver}) => {
     willReceiveProps({renderParticle}, state) {
       if (renderParticle && !state.renderParticleSpec) {
         const renderParticleSpec = JSON.stringify(renderParticle.toLiteral());
+        // TODO(wkorman): Include the game unique id in the below recipe.
         const renderRecipe = DomParticle
                                  .buildManifest`
 ${renderParticle}
@@ -237,6 +238,7 @@ recipe
     consume item as s1
       `.trim();
         this._setState({renderParticleSpec, renderRecipe});
+        // TODO(wkorman): Write or update the game's Post entity.
       }
     }
     _processSubmittedMove(props, state, tileBoard) {
@@ -257,21 +259,17 @@ recipe
         if (gameOver)
           info('Ending game.');
         this._setStats(Scoring.applyMoveStats(
-            state.renderParticleSpec,
-            state.renderRecipe,
-            props.person,
-            props.stats,
-            word,
-            score));
+            tileBoard.gameId, props.person, props.stats, word, score));
         const gameState =
             gameOver ? TileBoard.State.GAME_OVER : TileBoard.State.ACTIVE;
         this._setBoard({
+          gameId: tileBoard.gameId,
           letters: tileBoard.toString(),
           shuffleAvailableCount: tileBoard.shuffleAvailableCount,
           state: TileBoard.StateToNumber[gameState]
         });
       }
-      moveData = {coordinates: ''};
+      moveData = {coordinates: '', gameId: tileBoard.gameId};
       this._setMove(moveData);
       moveTiles = [];
       return [moveData, moveTiles, score];
@@ -285,7 +283,7 @@ recipe
         this._setBoard(propsBoard);
       }
       if (!props.stats && props.person)
-        this._setStats(Scoring.create(props.person));
+        this._setStats(Scoring.create(props.person, propsBoard.gameId));
       // TODO(wkorman): Only construct tile board when none yet exists in state.
       const tileBoard = new TileBoard(propsBoard);
       tileBoard.chanceOfFireOnRefill = CHANCE_OF_FIRE_ON_REFILL;
@@ -361,7 +359,7 @@ recipe
     }
     render(props, state) {
       // info('render [props=', props, 'state=', state, '].');
-      if (!state.tileBoard)
+      if (!state.tileBoard || !state.dictionary)
         return {
           hideDictionaryLoading: false,
           hideGameInfo: true,
@@ -445,7 +443,8 @@ recipe
       }
       state.move.coordinates = newCoordinates;
       // TODO(wkorman): Consider making Move purely state.
-      this._setMove({coordinates: newCoordinates});
+      this._setMove(
+          {gameId: state.tileBoard.gameId, coordinates: newCoordinates});
       this._setState({
         move: state.move,
         lastTileMoused: state.lastTileMoused,
