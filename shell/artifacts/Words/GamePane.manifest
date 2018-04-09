@@ -22,5 +22,4 @@ particle GamePane in 'source/GamePane.js'
   GamePane(host RenderParticleShape renderParticle, in Person person, inout Board board, inout Move move, inout Stats stats)
   affordance dom
   consume root
-//    provide leaderboard
   description `play Words`
