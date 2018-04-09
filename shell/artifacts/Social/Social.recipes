@@ -7,9 +7,9 @@
 // http://polymer.github.io/PATENTS.txt
 
 import 'Particles.manifest'
-import 'https://$cdn/artifacts/Common/CopyCollection.manifest'
-import 'https://$cdn/artifacts/Common/Detail.manifest'
-import 'https://$cdn/artifacts/Common/List.manifest'
+import '../Common/CopyCollection.manifest'
+import '../Common/Detail.manifest'
+import '../Common/List.manifest'
 
 // Allows creating multiple posts by the author and viewing all posts created
 // in this Arc.

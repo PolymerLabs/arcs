@@ -6,9 +6,9 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import 'https://$cdn/artifacts/Common/List.manifest'
-import 'https://$cdn/artifacts/People/Person.schema'
-import 'https://$cdn/artifacts/Social/Post.schema'
+import '../Common/List.manifest'
+import '../People/Person.schema'
+import '../Social/Post.schema'
 import 'Board.schema'
 import 'Move.schema'
 import 'Stats.schema'
