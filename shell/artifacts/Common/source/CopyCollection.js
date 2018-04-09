@@ -14,7 +14,10 @@ defineParticle(({Particle}) => {
       this.on(views, 'input', 'change', e => {
         let inputHandle = views.get('input');
         inputHandle.toList().then(input => {
-          input.forEach(elem => views.get('output').store(elem));
+          input.forEach(elem => {
+            console.log(`Copying item [elem=${elem}].`);
+            views.get('output').store(elem);
+          });
           this.relevance = input.length; // TODO: set appropriate relevance.
         });
       });

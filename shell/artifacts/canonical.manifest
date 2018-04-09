@@ -10,12 +10,12 @@
 // grows the current alphabetized list will stop scaling, and we should
 // consider moving these into separate files or grouping by demo/test.
 
-import 'Events/Events.recipes'
-import 'Messages/Messages.recipes'
-import 'Products/Products.recipes'
-import 'Profile/Profile.recipes'
-import 'Restaurants/Restaurants.recipes'
+// import 'Events/Events.recipes'
+// import 'Messages/Messages.recipes'
+// import 'Products/Products.recipes'
+// import 'Profile/Profile.recipes'
+// import 'Restaurants/Restaurants.recipes'
 import 'Social/Social.recipes'
-import 'VideoPlayer/VideoPlayer.recipes'
-import 'Words/Words.recipes'
-import 'hex/hex.manifest'
+// import 'VideoPlayer/VideoPlayer.recipes'
+// import 'Words/Words.recipes'
+// import 'hex/hex.manifest'
