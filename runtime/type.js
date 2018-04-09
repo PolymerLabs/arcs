@@ -88,7 +88,10 @@ class Type {
   static newCollection(type) {
     return Type.newSetView(type);
   }
-
+  collectionOf() {
+    return Type.newSetView(this);
+  }
+  
   mergeTypeVariablesByName(variableMap) {
     if (this.isVariable) {
       let name = this.variable.name;

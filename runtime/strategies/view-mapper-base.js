@@ -67,7 +67,7 @@ export default class ViewMapperBase extends Strategy {
             let tscore = 0;
 
             assert(newView.id);
-            clonedView.mapToView(newView);
+            clonedView.mapToStorage(newView);
             if (clonedView.fate != 'copy') {
               clonedView.fate = fate;
             }

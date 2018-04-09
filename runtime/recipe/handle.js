@@ -97,12 +97,12 @@ class Handle {
     }
     this._id = id;
   }
-  mapToView(view) {
-    this._id = view.id;
+  mapToStorage(storage) {
+    this._id = storage.id;
     this._type = undefined;
-    assert(view.type == undefined || !(view.type.hasVariableReference), `variable references shouldn't be part of handle types`);
-    this._mappedType = view.type;
-    this._storageKey = view.storageKey;
+    assert(storage.type == undefined || !(storage.type.hasVariableReference), `variable references shouldn't be part of handle types`);
+    this._mappedType = storage.type;
+    this._storageKey = storage.storageKey;
   }
   get localName() { return this._localName; }
   set localName(name) { this._localName = name; }

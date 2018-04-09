@@ -35,7 +35,7 @@ export default class ResolveRecipe extends Strategy {
             break;
           case 'map':
           case 'copy':
-            mappable = arc.context.findHandlesByType(handle.type, {tags: handle.tags, subtype: true});
+            mappable = arc.context.findStorageByType(handle.type, {tags: handle.tags, subtype: true});
             break;
           case 'create':
           case '?':
@@ -54,7 +54,7 @@ export default class ResolveRecipe extends Strategy {
 
         if (mappable.length == 1) {
           return (recipe, handle) => {
-            handle.mapToView(mappable[0]);
+            handle.mapToStorage(mappable[0]);
           };
         }
       }

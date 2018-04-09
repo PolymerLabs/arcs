@@ -112,17 +112,17 @@ describe('particle-shape-loading', function() {
     let recipeShapeView = recipe.newHandle();
     particle.connections['particle'].connectToHandle(recipeShapeView);
     recipeShapeView.fate = 'use';
-    recipeShapeView.mapToView(shapeView);
+    recipeShapeView.mapToStorage(shapeView);
 
     let recipeOutView = recipe.newHandle();
     particle.connections['output'].connectToHandle(recipeOutView);
     recipeOutView.fate = 'use';
-    recipeOutView.mapToView(outView);
+    recipeOutView.mapToStorage(outView);
 
     let recipeInView = recipe.newHandle();
     particle.connections['input'].connectToHandle(recipeInView);
     recipeInView.fate = 'use';
-    recipeInView.mapToView(inView);
+    recipeInView.mapToStorage(inView);
 
     assert(recipe.normalize(), 'can\'t normalize recipe');
     assert(recipe.isResolved(), 'recipe isn\'t resolved');

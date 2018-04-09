@@ -99,7 +99,7 @@ class OuterPEC extends PEC {
             missingHandles.push(handle);
             continue;
           }
-          handle.mapToView(fromHandle);
+          handle.mapToStorage(fromHandle);
         }
         if (missingHandles.length > 0) {
           error = `Recipe couldn't load due to missing handles [recipe=${recipe0}, missingHandles=${missingHandles.join('\n')}].`;

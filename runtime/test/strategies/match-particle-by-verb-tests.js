@@ -61,8 +61,8 @@ describe('MatchParticleByVerb', function() {
   it('particles by verb recipe fully resolved', async () => {
     let manifest = (await Manifest.parse(manifestStr));
     let recipe = manifest.recipes[0];
-    recipe.handles[0].mapToView({id: 'test1', type: manifest.findSchemaByName('Height').entityClass().type});
-    recipe.handles[1].mapToView({id: 'test2', type: manifest.findSchemaByName('Energy').entityClass().type});
+    recipe.handles[0].mapToStorage({id: 'test1', type: manifest.findSchemaByName('Height').entityClass().type});
+    recipe.handles[1].mapToStorage({id: 'test2', type: manifest.findSchemaByName('Energy').entityClass().type});
 
     let arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'dom');
 

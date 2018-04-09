@@ -44,8 +44,8 @@ describe('Arc', function() {
     let fooView = await arc.createHandle(Foo.type, undefined, 'test:1');
     let barView = await arc.createHandle(Bar.type, undefined, 'test:2');
     await handle.handleFor(fooView).set(new Foo({value: 'a Foo'}));
-    recipe.handles[0].mapToView(fooView);
-    recipe.handles[1].mapToView(barView); 
+    recipe.handles[0].mapToStorage(fooView);
+    recipe.handles[1].mapToStorage(barView); 
     assert(recipe.normalize());
     await arc.instantiate(recipe);
     await util.assertSingletonWillChangeTo(barView, Bar, 'a Foo1');
@@ -55,8 +55,8 @@ describe('Arc', function() {
     let {arc, recipe, Foo, Bar} = await setup();
     let fooView = await arc.createHandle(Foo.type, undefined, 'test:1');
     let barView = await arc.createHandle(Bar.type, undefined, 'test:2');
-    recipe.handles[0].mapToView(fooView);
-    recipe.handles[1].mapToView(barView); 
+    recipe.handles[0].mapToStorage(fooView);
+    recipe.handles[1].mapToStorage(barView); 
     recipe.normalize();
     await arc.instantiate(recipe);
 
@@ -78,8 +78,8 @@ describe('Arc', function() {
     let fooView = await arc.createHandle(Foo.type, undefined, 'test:1');
     handle.handleFor(fooView).set(new Foo({value: 'a Foo'}));
     let barView = await arc.createHandle(Bar.type, undefined, 'test:2');
-    recipe.handles[0].mapToView(fooView);
-    recipe.handles[1].mapToView(barView); 
+    recipe.handles[0].mapToStorage(fooView);
+    recipe.handles[1].mapToStorage(barView); 
     recipe.normalize();
     await arc.instantiate(recipe);
     await util.assertSingletonWillChangeTo(barView, Bar, 'a Foo1');
@@ -128,7 +128,7 @@ describe('Arc', function() {
 
     let barType = manifest.findTypeByName('Bar');
     let handle = await arc.createHandle(barType.setViewOf(), undefined, 'test:1');
-    recipe.handles[0].mapToView(handle);
+    recipe.handles[0].mapToStorage(handle);
     
     assert(recipe.normalize());
     assert(recipe.isResolved());
