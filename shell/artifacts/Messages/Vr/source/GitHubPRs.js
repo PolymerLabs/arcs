@@ -39,7 +39,6 @@ defineParticle(({DomParticle, html, log}) => {
       return {
         items: Object.keys(githubIds).map(name => {
           const githubAccount = githubIds[name];
-          console.log('looking for PRs for', name, githubAccount);
 
           const last = prs && prs.find(pr => pr.user.login === githubAccount);
           if (!last) return {};
@@ -54,7 +53,6 @@ defineParticle(({DomParticle, html, log}) => {
             </div>
           `;
 
-          console.log('rendering PR', last.number, content);
           return {
             subId: name,
             pr: content
