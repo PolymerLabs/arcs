@@ -178,7 +178,8 @@ class ExtensionData extends Xen.Base {
         name: handleName,
         id: handleName,
         tags:
-            [`#${typeDescription}`, '#browser'],
+            [shortTypeName == 'Product' ? '#shortlist' :
+                                          `#${shortTypeName}`],
         asContext: true,
         description: `${typeDescription} from your browsing context`
       }

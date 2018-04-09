@@ -26,13 +26,16 @@ defineParticle(({DomParticle}) => {
     render(props) {
       let {product} = props;
       let msg = '';
-      if (product.name.toLowerCase().includes('mustang')) {
-        msg = [
-          `Manufacturer recommends a more appropriate gift for a 13yo.`,
-          `Newer version available: 5.0`
-        ];
-      } else if (product.name.toLowerCase().includes('minecraft')) {
-        msg = `Manufacturer recommends ${product.name}`;
+      switch (product.name) {
+        case 'Power Tool Set':
+          msg = `Newer version available: ${product.name} v2.`;
+          break;
+        case 'Guardian of the Galaxy Figure':
+          msg = `Manufacturer recommends a more appropriate gift for a 13yo.`;
+          break;
+        case 'Book: How to Draw':
+          msg = `Award-winning book!`;
+          break;
       }
       return {msg};
     }

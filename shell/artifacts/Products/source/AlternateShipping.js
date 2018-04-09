@@ -24,12 +24,12 @@ defineParticle(({DomParticle, html}) => {
       return Boolean(props && props.product);
     }
     render(props) {
-      const {product, desiredShipping} = props;
+      const {product} = props;
+      const needed = new Date();
+      needed.setDate(needed.getDate() + 12);
 
       let hidden = true;
       if (props.product.shipDays) {
-        const needed = new Date(desiredShipping.desiredShippingDate);
-
         // create a date-only Date (with a time of 00:00:00etc)
         const estimated = new Date(new Date().toDateString());
 

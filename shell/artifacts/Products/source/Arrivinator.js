@@ -26,14 +26,16 @@ defineParticle(({DomParticle}) => {
       return !!props && !!props.product;
     }
     render(props) {
-      const {product, desiredShipping} = props;
+      const {product} = props;
+      const needed = new Date();
+      needed.setDate(needed.getDate() + 12);
+
       let style = null;
       let arrival = '';
       if (product.shipDays) {
         // create a Date-only Date (with a time of 00:00:00etc)
         const estimated = new Date(new Date().toDateString());
         estimated.setDate(estimated.getDate() + product.shipDays);
-        const needed = new Date(desiredShipping.desiredShippingDate);
         if (estimated > needed) {
           style = {color: 'orange', fontWeight: 'bold', fontStyle: 'normal'};
         } else {
