@@ -77,8 +77,10 @@ class HandleExplorer extends Xen.Base {
         if (handle.toList) {
           const list = await handle.toList();
           values = list.map(item => item.rawData);
-        } else {
+        } else if (handle.get) {
           values = await handle.get();
+        } else {
+          // lint?
         }
         const data = {
           name: handle.name,

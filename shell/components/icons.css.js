@@ -8,6 +8,7 @@ export default
     vertical-align: middle;
     cursor: pointer;
     user-select: none;
+    flex-shrink: 0;
     /* partial FOUC prevention */
     width: 24px;
     height: 24px;

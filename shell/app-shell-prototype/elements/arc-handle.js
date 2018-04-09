@@ -39,7 +39,7 @@ class ArcHandle extends Xen.Base {
         state.invalid = false;
       }
     }
-    if (state.handle && data != state.data) {
+    if (arc && state.handle && data != state.data) {
       state.data = data;
       // (re)populate
       this._updateHandle(state.handle, data, arc);
@@ -54,6 +54,7 @@ class ArcHandle extends Xen.Base {
     const schema = manifest.findSchemaByName(type);
     const typeOf = setOf ? schema.type.setViewOf() : schema.type;
     tags = tags.concat(['#nosync']);
+    const storageKey = 'in-memory';
     id = id || arc.generateID();
     // context-handles are for `map`, `copy`, `?`
     // arc-handles are for `use`, `?`

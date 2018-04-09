@@ -14,16 +14,18 @@ import ArcsUtils from '../lib/arcs-utils.js';
 
 // elements
 import './cloud-data/cloud-users.js';
+import './cloud-data/cloud-arc.js';
 
 // globals
 /* global shellPath*/
 
-const html = Xen.Template.html;
-
 // templates
+const html = Xen.Template.html;
 const template = html`
 
-  <cloud-users on-users="_onUsers"></cloud-users>
+  <cloud-users on-users="_onForward"></cloud-users>
+  <cloud-arc key="{{key}}" arc="{{arc}}" metadata="{{metadata}}" description="{{description}}" plan="{{plan}}"
+      on-key="_onForward" on-metadata="_onForward" on-serialized="_onForward"></cloud-arc>
 
 `;
 
@@ -31,13 +33,16 @@ const log = Xen.logFactory('CloudData', '#004f00');
 
 class CloudData extends Xen.Debug(Xen.Base, log) {
   static get observedAttributes() {
-    return ['arc', 'users', 'user', 'visited'];
+    return ['key', 'metadata', 'description', 'plan', 'arc'];
   }
   get template() {
     return template;
   }
-  _onUsers(e, users) {
-    this._fire('users', users);
+  _render(props, state, oldProps) {
+    return [props, state];
+  }
+  _onForward(e, data) {
+    this._fire(e.type, data);
   }
 }
 customElements.define('cloud-data', CloudData);

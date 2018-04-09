@@ -98,7 +98,8 @@ const log = Xen.logFactory('ShellUi', '#294740');
 
 class ShellUi extends Xen.Debug(Xen.Base, log) {
   static get observedAttributes() {
-    return ['config', 'manifests', 'exclusions', 'users', 'user', 'friends', 'avatars', 'key', 'arc', 'description', 'share', 'theme', 'open', 'requestnewuser'];
+    return ['config', 'manifests', 'exclusions', 'users', 'user', 'friends', 'avatars',
+        'key', 'arc', 'description', 'share', 'theme', 'open', 'requestnewuser'];
   }
   get css() {
     return Css;

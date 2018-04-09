@@ -60,9 +60,9 @@ class ProvidedSlotSpec {
   constructor(name, isSet, tags, formFactor, handles) {
     this.name = name;
     this.isSet = isSet;
-    this.tags = tags;
+    this.tags = tags || [];
     this.formFactor = formFactor; // TODO: deprecate form factors?
-    this.handles = handles;
+    this.handles = handles || [];
   }
 }
 

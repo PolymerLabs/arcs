@@ -7,14 +7,14 @@ import './elements/cloud-data.js';
 
 // code libs
 import Xen from '../components/xen/xen.js';
-import ArcsUtils from '../app-shell/lib/arcs-utils.js';
+import ArcsUtils from './lib/arcs-utils.js';
 import Const from '../app-shell/constants.js';
 
 // globals
 /* global shellPath */
 
 // templates
-const html = Xen.html;
+const html = Xen.Template.html;
 const template = html`
 
   <style>
@@ -33,32 +33,47 @@ const template = html`
 
   <arc-config
     rootpath="{{shellPath}}"
-    on-config="_onConfig"
+    on-config="_onStateData"
   ></arc-config>
 
   <arc-host
+    key="{{key}}"
     config="{{config}}"
     manifest="{{manifest}}"
     suggestions="{{suggestions}}"
-    plan="{{plan}}"
-    serialization="{{serialization}}"
-    on-arc="_onArc"
+    search="{{search}}"
+    suggestion="{{suggestion}}"
+    serialization="{{serialized}}"
+    on-arc="_onStateData"
     on-plans="_onPlans"
+    on-plan="_onStateData"
   ></arc-host>
 
   <shell-handles
     arc="{{arc}}"
+    users="{{users}}"
     on-theme="_onStateData"
   ></shell-handles>
+
   <cloud-data
-    on-users="_onUsers"
+    key="{{key}}"
+    arc="{{arc}}"
+    metadata="{{metadata}}"
+    description="{{description}}"
+    plan="{{plan}}"
+    on-users="_onStateData"
+    on-key="_onStateData"
+    on-metadata="_onStateData"
+    on-serialized="_onStateData"
   ></cloud-data>
 
   <shell-ui
     arc="{{arc}}"
+    title="{{title}}"
     showhint="{{showhint}}"
     users="{{users}}"
-    on-plan="_onPlan"
+    on-search="_onStateData"
+    on-suggestion="_onStateData"
     on-select-user="_onSelectUser"
     on-experiment="_onExperiment"
   >
@@ -89,35 +104,42 @@ import '../artifacts/canonical.manifest'
     // TODO(sjmiles): for debugging only
     window.app = this;
     window.arc = state.arc;
+    //
+    const params = (new URL(document.location)).searchParams;
+    if (!state.key) {
+      state.key = ArcsUtils.getUrlParam('key') || '*';
+    } else if (state.key !== '*') {
+      ArcsUtils.setUrlParam('key', state.key);
+    }
+    if (state.plan && state.plan !== oldState.plan) {
+      // arc has implemented new plan so generate new description
+      this._describeArc(state.arc, state.description);
+    }
   }
   _render({}, state) {
-    return state;
+    const {metadata} = state;
+    const render = {
+      title: metadata && metadata.description
+    };
+    return [state, render];
+  }
+  async _describeArc(arc, description) {
+    description = await ArcsUtils.describeArc(arc) || description;
+    this._setState({description});
   }
   _onStateData(e, data) {
     this._setState({[e.type]: data});
   }
-  _onConfig(e, config) {
-    this._setState({config});
-  }
-  _onArc(e, arc) {
-    this._setState({arc});
-  }
-  _onPlan(e, suggestion) {
-    this._setState({plan: suggestion.plan});
-  }
   _onPlans(e, plans) {
     this._setState({suggestions: plans, showhint: plans && plans.length > 0});
-  }
-  _onUsers(e, users) {
-    this._setState({users});
   }
   _onSelectUser(e, user) {
     this._setState({user});
   }
   async _onExperiment(e) {
     const {arc} = this._state;
-    this._setState({serialization: null});
-    this._setState({serialization: await arc.serialize()});
+    this._setState({serialized: null});
+    this._setState({serialized: await arc.serialize()});
   }
 }
 
