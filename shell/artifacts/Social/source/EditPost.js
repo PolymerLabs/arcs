@@ -119,15 +119,15 @@ recipe
       this.setState({savePost: false, message: '', image: ''});
     }
     onTextInput(e) {
-      this.setIfDirty({message: e.data.value});
+      this.setState({message: e.data.value});
     }
     // TODO(wkorman): Add onDeletePost.
     onSavePost(e) {
-      this.setIfDirty({savePost: true});
+      this.setState({savePost: true});
     }
     onAttachPhoto(e) {
       const image = e.data.value;
-      this.setIfDirty({image});
+      this.setState({image});
     }
   };
 });
