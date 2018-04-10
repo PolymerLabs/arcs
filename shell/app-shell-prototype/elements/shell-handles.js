@@ -104,25 +104,20 @@ class ShellHandles extends Xen.Debug(Xen.Base, log) {
       this._setState({geoCoords: {latitude, longitude}});
     }
   }
-  _update(props, state, lastProps, lastState) {
+  _update(props, state, oldProps, oldState) {
     const {users, user, visited, arc} = props;
     const {geoCoords} = state;
-    if (user && (user !== lastProps.user || geoCoords !== lastState.geoCoords)) {
+    if (user && (user !== oldProps.user || geoCoords !== oldState.geoCoords)) {
       state.userHandleData = this._renderUser(user, geoCoords);
     }
-    if (users && (users !== lastProps.users || !state.usersHandleData)) {
+    if (users && (users !== oldProps.users || !state.usersHandleData)) {
       state.usersHandleData = this._renderUsers(users);
     }
-    if (visited) {
-      const serial = JSON.stringify(visited);
-      if (serial !== state.serialVisited) {
-        state.serialVisited = serial;
-        state.arcsHandleData = this._renderVisited(user, visited);
-      }
+    if (visited !== oldProps.visited) {
+      state.arcsHandleData = this._renderVisited(user, visited);
     }
   }
   _render(props, state) {
-    //log(props, state);
     return [state, props];
   }
   _renderUser(user, geoCoords) {
@@ -141,7 +136,7 @@ class ShellHandles extends Xen.Debug(Xen.Base, log) {
     });
   }
   _renderVisited(user, visited) {
-    const data = Object.keys(visited).map(key => {
+    const data = Object.keys(visited || Object).map(key => {
       let {metadata, profile} = visited[key];
       // TODO(sjmiles): not supposed to happen, fault tolerance here
       if (!metadata) {
