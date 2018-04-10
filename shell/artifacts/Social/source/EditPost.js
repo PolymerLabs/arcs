@@ -69,13 +69,17 @@ defineParticle(({DomParticle, html, log}) => {
     get template() {
       return template;
     }
+    hasContent(value) {
+      return Boolean(value && value.trim().length > 0);
+    }
     render(
         {user, post},
         {message, image, savePost, renderParticleSpec, renderRecipe}) {
       if (savePost) {
         this.savePost(renderParticleSpec, renderRecipe, user, message, image);
       }
-      const saveButtonActive = Boolean(message && (message.trim().length > 0));
+      const saveButtonActive =
+          this.hasContent(message) || this.hasContent(image);
       const model = {
         saveButtonActive,
         message: message || '',
