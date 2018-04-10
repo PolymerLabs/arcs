@@ -49,16 +49,21 @@ defineParticle(({DomParticle, resolver, log}) => {
     shouldRender({post, posts}) {
       return posts;
     }
+    hasContent(value) {
+      return Boolean(value && value.trim().length > 0);
+    }
     render({post, posts}, state) {
       // TODO(wkorman|sjmiles): Generalize or somehow clean up or document
       // the overall pattern between WritePosts and EditPost.
-      if (post && post.message) {
+      if (post &&
+          (this.hasContent(post.message) || this.hasContent(post.image))) {
         // Set the post into the right place in the posts set. If we find it
         // already present replace it, otherwise, add it.
         // TODO(dstockwell): Replace this with happy entity mutation approach.
         const targetPost = posts.find(p => p.id === post.id);
         if (targetPost) {
-          if (targetPost.message !== post.message) {
+          if (targetPost.message !== post.message ||
+              targetPost.image !== post.image) {
             this._views.get('posts').remove(targetPost);
             this._views.get('posts').store(post);
           }
@@ -78,7 +83,7 @@ defineParticle(({DomParticle, resolver, log}) => {
     _onOpenEditor(e, state) {
       const Post = this._views.get('posts').entityClass;
       // TODO(wkorman): Set existing post data to edit existing.
-      this._views.get('post').set(new Post({message: ''}));
+      this._views.get('post').set(new Post({message: '', image: ''}));
     }
   };
 });
