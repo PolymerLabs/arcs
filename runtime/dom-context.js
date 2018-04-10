@@ -121,18 +121,17 @@ class DomContext {
         console.warn(`Slot ${slotSpec.name} has unexpected inner slot ${slotId}`);
         return;
       }
-      this._initInnerSlotContext(providedSlotSpec, elem);
+      const subId = this.getNodeValue(elem, 'subid');
+      this._validateSubId(providedSlotSpec, subId);
+      this._initInnerSlotContext(slotId, subId, elem);
     });
   }
-  _initInnerSlotContext(providedSlotSpec, elem) {
-    const subId = this.getNodeValue(elem, 'subid');
-    this._validateSubId(providedSlotSpec, subId);
+  _initInnerSlotContext(slotId, subId, elem) {
     if (subId) {
       if (!this._innerContextBySlotName[slotId]) {
         this._innerContextBySlotName[slotId] = {};
       }
-      assert(!this._innerContextBySlotName[slotId][subId],
-              `Slot ${slotSpec.name} cannot provide multiple ${slotId}:${subId} inner slots`);
+      assert(!this._innerContextBySlotName[slotId][subId], `Multiple ${slotId}:${subId} inner slots cannot be provided`);
       this._innerContextBySlotName[slotId][subId] = elem;
     } else {
       this._innerContextBySlotName[slotId] = elem;
@@ -141,7 +140,7 @@ class DomContext {
   _validateSubId(providedSlotSpec, subId) {
     assert(!this.subId || !subId || this.subId == subId, `Unexpected sub-id ${subId}, expecting ${this.subId}`);
     assert(Boolean(this.subId || subId) === providedSlotSpec.isSet,
-        `Slot provided in ${slotSpec.name} sub-id ${subId} doesn't match set spec: ${providedSlotSpec.isSet}`);
+        `Sub-id ${subId} for provided slot ${providedSlotSpec.name} doesn't match set spec: ${providedSlotSpec.isSet}`);
   }
   findRootSlots() {
     let innerSlotById = {};
