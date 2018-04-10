@@ -1,6 +1,3 @@
-
-# Arcs Glossary
-
 ## **Arcs** ![Public](images/public.png)
 
 Arcs is an [open source](https://github.com/PolymerLabs/arcs) project started by Google's Chrome team. The goal of the project is to create a open computing platform for the **assistive web** enabling delightful journeys for users.
