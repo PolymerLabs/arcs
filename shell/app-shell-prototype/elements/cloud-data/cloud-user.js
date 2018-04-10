@@ -22,10 +22,13 @@ class CloudUser extends Xen.Debug(Xen.Base, log) {
     };
   }
   _update(props, state, lastProps) {
-    state.watch.watches = [{
-      path: `arcs`,
-      handler: snap => this._arcsChanged(snap)
-    }];
+    if (!state.watching) {
+      state.watching = true;
+      state.watch.watches = [{
+        path: `arcs`,
+        handler: snap => this._arcsChanged(snap)
+      }];
+    }
   }
   _arcsChanged(snap) {
     const arcs = snap.val();
