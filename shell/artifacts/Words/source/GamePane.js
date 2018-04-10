@@ -125,7 +125,10 @@ defineParticle(({DomParticle, log, resolver}) => {
   const template = `
  ${styles}
  <div ${host}>
-   <div class="loadingDictionary" hidden="{{hideDictionaryLoading}}">
+   <div hidden="{{hideStartGame}}">
+     <button on-click="_onStartGame">Start Game</button>
+   </div>
+   <div hidden="{{hideDictionaryLoading}}">
      Loading dictionary&hellip;
    </div>
    <div class="gameInfo" hidden="{{hideGameInfo}}" tabindex="-1" on-keypress="_onKeyPress">
@@ -203,21 +206,6 @@ defineParticle(({DomParticle, log, resolver}) => {
       }
       return tiles;
     }
-    _ensureDictionaryLoaded(state) {
-      if (!state.dictionaryLoadingStarted) {
-        this._setState({dictionaryLoadingStarted: true});
-        const particleRef = this;
-        const startstamp = performance.now();
-        fetch(DICTIONARY_URL).then(response => response.text().then(text => {
-          const dictionary = new Dictionary(text);
-          const endstamp = performance.now();
-          const elapsed = Math.floor(endstamp - startstamp);
-          info(`Loaded dictionary [time=${elapsed}ms, wordCount=${
-              dictionary.size}].`);
-          particleRef._setState({dictionary});
-        }));
-      }
-    }
     _tilesToWord(tiles) {
       return tiles.map(t => t.letter).join('');
     }
@@ -273,30 +261,6 @@ recipe
       this._setMove(moveData);
       moveTiles = [];
       return [moveData, moveTiles, score];
-    }
-    update(props, state, lastProps, lastState) {
-      // info('update [props=', props, 'state=', state, '].');
-      this._ensureDictionaryLoaded(state);
-      let propsBoard = props.board;
-      if (!propsBoard) {
-        propsBoard = TileBoard.create();
-        this._setBoard(propsBoard);
-      }
-      if (!props.stats && props.person)
-        this._setStats(Scoring.create(props.person, propsBoard.gameId));
-      // TODO(wkorman): Only construct tile board when none yet exists in state.
-      const tileBoard = new TileBoard(propsBoard);
-      tileBoard.chanceOfFireOnRefill = CHANCE_OF_FIRE_ON_REFILL;
-      let [moveData, moveTiles, moveScore] =
-          this._processSubmittedMove(props, state, tileBoard);
-      this._setState({
-        tileBoard,
-        move: moveData,
-        selectedTiles: moveTiles,
-        moveScore: Scoring.wordScore(moveTiles),
-        score: props.stats ? props.stats.score : 0,
-        moveSubmitted: false
-      });
     }
     _topPixelForHorizontalTransition(fromTile, toTile) {
       let topPixel = fromTile.y * 50 + 18 + fromTile.y;
@@ -358,13 +322,44 @@ recipe
       return models;
     }
     render(props, state) {
-      // info('render [props=', props, 'state=', state, '].');
-      if (!state.tileBoard || !state.dictionary)
+      if (!state.gameStarted) {
         return {
+          hideStartGame: false,
+          hideDictionaryLoading: true,
+          hideGameInfo: true,
+          hideGameOver: true
+        };
+      }
+      if (!state.dictionary)
+        return {
+          hideStartGame: true,
           hideDictionaryLoading: false,
           hideGameInfo: true,
           hideGameOver: true
         };
+      let propsBoard = props.board;
+      if (!propsBoard) {
+        propsBoard = TileBoard.create();
+        this._setBoard(propsBoard);
+      }
+      if (!props.stats && props.person)
+        this._setStats(Scoring.create(props.person, propsBoard.gameId));
+      // TODO(wkorman): Only construct tile board when none yet exists in state,
+      // and clean up the dregs of mess below from merging update() and render()
+      // and olden times when I hadn't yet grokked state vs props in general.
+      const tileBoard = new TileBoard(propsBoard);
+      tileBoard.chanceOfFireOnRefill = CHANCE_OF_FIRE_ON_REFILL;
+      let [moveData, moveTiles, moveScore] =
+          this._processSubmittedMove(props, state, tileBoard);
+      this._setState({
+        tileBoard,
+        move: moveData,
+        selectedTiles: moveTiles,
+        moveScore: Scoring.wordScore(moveTiles),
+        score: props.stats ? props.stats.score : 0,
+        moveSubmitted: false
+      });
+
       let boardModels = this._boardToModels(
           state.tileBoard, state.move ? state.move.coordinates : '');
       let annotationModels = this._selectedTilesToModels(state.selectedTiles);
@@ -386,6 +381,7 @@ recipe
         submitMoveDisabled: gameOver || !submitMoveEnabled,
         shuffleDisabled: gameOver || state.tileBoard.shuffleAvailableCount <= 0,
         hideSolve: !state.debugMode,
+        hideStartGame: true,
         hideDictionaryLoading: true,
         hideGameInfo: false,
         hideGameOver: !gameOver
@@ -462,6 +458,24 @@ recipe
           shuffleAvailableCount: state.tileBoard.shuffleAvailableCount
         });
       }
+    }
+    _onStartGame(e, state) {
+      const particleRef = this;
+      const startstamp = performance.now();
+      fetch(DICTIONARY_URL).then(response => response.text().then(text => {
+        const dictionary = new Dictionary(text);
+        const endstamp = performance.now();
+        const elapsed = Math.floor(endstamp - startstamp);
+        info(`Loaded dictionary [time=${elapsed}ms, wordCount=${
+            dictionary.size}].`);
+        particleRef._setState({dictionary});
+      }));
+      this._setState({
+        gameStarted: true,
+        dictionaryLoadingStarted: true,
+        hideStartGame: true,
+        hideDictionaryLoading: false
+      });
     }
     _onSolve(e, state) {
       const solver = new BoardSolver(state.dictionary, state.tileBoard);
