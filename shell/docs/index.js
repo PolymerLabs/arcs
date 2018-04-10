@@ -9,7 +9,7 @@ const doc = document.querySelector(`[docs]`);
 const strcmp = (a, b)=>(a<b)?-1:((a>b)?1:0);
 
 const buildMdRenderer = file => {
-  let md = new Remarkable({
+  const md = new Remarkable({
     highlight: (str, lang) => {
       if (lang && hljs.getLanguage(lang)) {
         try {
@@ -21,8 +21,8 @@ const buildMdRenderer = file => {
       return ''; // use external default escaping
     }
   });
-  let pathPrefix = file.replace(/(.*\/)[^/]+/, '$1');
-  let imgRule = md.renderer.rules.image;
+  const pathPrefix = file.replace(/(.*\/)[^/]+/, '$1');
+  const imgRule = md.renderer.rules.image;
   md.renderer.rules.image = (tokens, idx, options) => {
     tokens[idx].src = pathPrefix + tokens[idx].src;
     return imgRule(tokens, idx, options);
@@ -38,13 +38,13 @@ const toCamel = fn => {
 };
 
 const scrape = async urls => {
-  let ismd = url => url.toLowerCase().endsWith('.md');
-  let mds = urls.filter(f => ismd(f));
-  let others = urls.filter(f => !ismd(f));
-  let classes = await new DocScraper().addUrls(others);
-  let values = await Promise.all(mds.map(async path => {
-    let response = await fetch(path);
-    let text = await response.text();
+  const ismd = url => url.toLowerCase().endsWith('.md');
+  const mds = urls.filter(f => ismd(f));
+  const others = urls.filter(f => !ismd(f));
+  const classes = await new DocScraper().addUrls(others);
+  const values = await Promise.all(mds.map(async path => {
+    const response = await fetch(path);
+    const text = await response.text();
     return {
       name: toCamel(path),
       chapter: path.startsWith('docs') ? 'Background' : 'Reference',
@@ -55,7 +55,7 @@ const scrape = async urls => {
 };
 
 const renderTopic = topic => {
-  let html = [];
+  const html = [];
   html.push(`
     <div dclass>
       <div name>${topic.name}</div>
@@ -85,12 +85,12 @@ const renderDocs = docs => {
 
 const renderToc = data => {
   // TODO: add @chapter pragma to the source code.
-  let chapter = cls => cls.chapter || 'Reference';
-  let html = [];
+  const chapter = cls => cls.chapter || 'Reference';
+  const html = [];
   new Set(data.classes.map(cls => chapter(cls))).forEach(c => {
-    let topics = data.classes.filter(cls => chapter(cls) == c).map(c => c.name);
-    html.push(`<div chapter><span name>${c}</span>`);
-    Array.prototype.push.apply(html, topics.map(t => `<div><a href="#${t}" title="${t}">${t}</a></div>`));
+    const topics = data.classes.filter(cls => chapter(cls) == c).map(c => c.name);
+    html.push(`<div chapter><div name>${c}</div>`);
+    Array.prototype.push.apply(html, topics.map(t => `<div list><a href="#${t}" title="${t}">${t}</a></div>`));
     html.push('</div>');
   });
   toc.innerHTML = html.join('');
@@ -106,9 +106,14 @@ scrape(docUrls).then(classes => {
 });
 
 const updateTopic = () => {
-  let name = decodeURIComponent(location.hash).slice(1) || `Manifest`;
-  let topic = corpus.classes.find(c => c.name === name);
+  const name = decodeURIComponent(location.hash).slice(1) || `Manifest`;
+  const topic = corpus.classes.find(c => c.name === name);
   doc.innerHTML = topic ? renderTopic(topic) : 'n/a';
+  // update toc selection
+  const tocLinks = toc.querySelectorAll('a');
+  tocLinks.forEach(m => {
+    m.classList.toggle('selected', m.getAttribute('title') === name);
+  });
 };
 
 window.onhashchange = e => {

@@ -1,5 +1,3 @@
-# Schemas
-
 ## Schema definition
 
 A schema is defined by a set of names, a set of referenced parent schemas to extend, and a set of named field types.
@@ -54,7 +52,7 @@ schema Car
 
 ## Aliasing
 
-To reduce the amount of redundant declarations amongst manifests that define less specific schemas, schema aliases are introduced to provide reusable groupings of sets of names and fields. 
+To reduce the amount of redundant declarations amongst manifests that define less specific schemas, schema aliases are introduced to provide reusable groupings of sets of names and fields.
 
 ```
 alias schema Car as CarDoors
