@@ -19,7 +19,10 @@ class DomContext {
     // TODO(sjmiles): _liveDom needs new name
     this._liveDom = null;
     this._innerContextBySlotName = {};
+    this._subId = null;
   }
+  get subId() {return this._subId; }
+  set subId(subId) { this._subId = subId; }
   static createContext(context, content) {
     let domContext = new DomContext(context);
     domContext.stampTemplate(domContext.createTemplateElement(content.template), () => {});
@@ -105,35 +108,40 @@ class DomContext {
     // TODO(sjmiles): remember that attribute names from HTML are lower-case
     return node[name] || node.getAttribute(name);
   }
-  initInnerContexts(slotSpec, globalSubId) {
+  initInnerContexts(slotSpec) {
     this._innerContextBySlotName = {};
-    Array.from(this._context.querySelectorAll('[slotid]')).forEach(s => {
-      if (!this.isDirectInnerSlot(s)) {
+    Array.from(this._context.querySelectorAll('[slotid]')).forEach(elem => {
+      if (!this.isDirectInnerSlot(elem)) {
         // Skip inner slots of an inner slot of the given slot.
         return;
       }
-      const slotId = this.getNodeValue(s, 'slotid');
+      const slotId = this.getNodeValue(elem, 'slotid');
       const providedSlotSpec = slotSpec.getProvidedSlotSpec(slotId);
-      if (providedSlotSpec) { // Skip non-declared slots
-        assert(!globalSubId || !this.getNodeValue(s, 'subid') || globalSubId == this.getNodeValue(s, 'subid'),
-               `Unexpected sub-id ${this.getNodeValue(s, 'subid')}, expecting ${globalSubId}`);
-        const subId = this.getNodeValue(s, 'subid');
-        assert(Boolean(globalSubId || subId) === providedSlotSpec.isSet,
-            `Slot provided in ${slotSpec.name} sub-id ${subId} doesn't match set spec: ${providedSlotSpec.isSet}`);
-        if (subId) {
-          if (!this._innerContextBySlotName[slotId]) {
-            this._innerContextBySlotName[slotId] = {};
-          }
-          assert(!this._innerContextBySlotName[slotId][subId],
-                 `Slot ${slotSpec.name} cannot provide multiple ${slotId}:${subId} inner slots`);
-          this._innerContextBySlotName[slotId][subId] = s;
-        } else {
-          this._innerContextBySlotName[slotId] = s;
-        }
-      } else {
+      if (!providedSlotSpec) { // Skip non-declared slots
         console.warn(`Slot ${slotSpec.name} has unexpected inner slot ${slotId}`);
+        return;
       }
+      this._initInnerSlotContext(providedSlotSpec, elem);
     });
+  }
+  _initInnerSlotContext(providedSlotSpec, elem) {
+    const subId = this.getNodeValue(elem, 'subid');
+    this._validateSubId(providedSlotSpec, subId);
+    if (subId) {
+      if (!this._innerContextBySlotName[slotId]) {
+        this._innerContextBySlotName[slotId] = {};
+      }
+      assert(!this._innerContextBySlotName[slotId][subId],
+              `Slot ${slotSpec.name} cannot provide multiple ${slotId}:${subId} inner slots`);
+      this._innerContextBySlotName[slotId][subId] = elem;
+    } else {
+      this._innerContextBySlotName[slotId] = elem;
+    }
+  }
+  _validateSubId(providedSlotSpec, subId) {
+    assert(!this.subId || !subId || this.subId == subId, `Unexpected sub-id ${subId}, expecting ${this.subId}`);
+    assert(Boolean(this.subId || subId) === providedSlotSpec.isSet,
+        `Slot provided in ${slotSpec.name} sub-id ${subId} doesn't match set spec: ${providedSlotSpec.isSet}`);
   }
   findRootSlots() {
     let innerSlotById = {};
@@ -176,6 +184,7 @@ class SetDomContext {
     Object.keys(context).forEach(subId => {
       if (!this._contextBySubId[subId] || !this._contextBySubId[subId].isEqual(context[subId])) {
         this._contextBySubId[subId] = new DomContext(null, this._containerKind);
+        this._contextBySubId[subId].subId = subId;
       }
       this._contextBySubId[subId].initContext(context[subId]);
     });
