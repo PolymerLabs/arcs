@@ -73,11 +73,10 @@ class DomSlot extends Slot {
     DomSlot.addObserver(observer);
     return observer;
   }
-
   __initMutationObserver() {
-    const observer = new MutationObserver(async () => {
+    const observer = new MutationObserver(async (records) => {
       this._observer.disconnect();
-      if (this.getContext()) {
+      if (this.getContext() && records.some(r => this.getContext().isDirectInnerSlot(r.target))) {
         // Update inner slots.
         this.getContext().initInnerContexts(this.consumeConn.slotSpec);
         this.innerSlotsUpdateCallback(this);

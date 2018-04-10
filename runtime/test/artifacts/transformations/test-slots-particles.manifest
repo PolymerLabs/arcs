@@ -6,7 +6,6 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-
 schema Foo
   Text value
 
@@ -22,5 +21,4 @@ shape HostedParticleShape
 particle MultiplexSlotsParticle in 'test-multiplex-slots-particle.js'
   MultiplexSlotsParticle(host HostedParticleShape particle, in [Foo] foos)
   consume set of annotationsSet
-    provide annotation
   description `outer test slot particle`
