@@ -11,6 +11,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 import WatchGroup from './watch-group.js';
 import ArcsUtils from '../../lib/arcs-utils.js';
 import Xen from '../../../components/xen/xen.js';
+import Const from '../../constants.js';
 const db = window.db;
 
 const log = Xen.logFactory('CloudArc', '#a30000');
@@ -26,27 +27,33 @@ class CloudArc extends Xen.Debug(Xen.Base, log) {
     };
   }
   _update({key, arc, metadata, description, plan}, state, oldProps) {
-    if (plan !== oldProps.plan) {
-      log('plan changed, good time to serialize?');
-      this._serialize(state.db, key, arc);
-    }
-    if (key === '*' && key !== oldProps.key) {
-      this._fire('key', this._createKey(state.db));
-    }
-    if (key && key !== '*' && key !== 'launcher') {
+    if (key === '*') {
       if (key !== oldProps.key) {
+        this._fire('serialized', null);
+        this._fire('key', this._createKey(state.db));
+      }
+    }
+    else if (Const.SHELLKEYS[key]) {
+      log('sending empty serialization for non-persistent key');
+      this._fire('serialized', '');
+    } else {
+      if (plan !== oldProps.plan && key !== 'launcher') {
+        log('plan changed, good time to serialize?');
+        this._serialize(state.db, key, arc);
+      }
+      if (key && key !== oldProps.key) {
         state.watch.watches = [
           {path: `arcs/${key}/metadata`, handler: snap => this._metadataReceived(snap, key)},
           {path: `arcs/${key}/serialized`, handler: snap => this._serializedReceived(snap, key)}
         ];
       }
-    }
-    if (metadata && description) {
-      metadata = this._describeArc(metadata, description);
-    }
-    if (metadata !== state.metadata) {
-      log('WRITING metadata', metadata);
-      state.db.child(`${key}/metadata`).update(metadata);
+      if (metadata && description) {
+        metadata = this._describeArc(metadata, description);
+      }
+      if (metadata && metadata !== state.metadata) {
+        log('WRITING metadata', metadata);
+        state.db.child(`${key}/metadata`).update(metadata);
+      }
     }
   }
   _describeArc(metadata, description) {

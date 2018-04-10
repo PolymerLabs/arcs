@@ -14,6 +14,7 @@ import ArcsUtils from '../lib/arcs-utils.js';
 
 // elements
 import './cloud-data/cloud-users.js';
+import './cloud-data/cloud-user.js';
 import './cloud-data/cloud-arc.js';
 
 // globals
@@ -26,7 +27,7 @@ const template = html`
   <cloud-users on-users="_onForward"></cloud-users>
   <cloud-arc key="{{key}}" arc="{{arc}}" metadata="{{metadata}}" description="{{description}}" plan="{{plan}}"
       on-key="_onForward" on-metadata="_onForward" on-serialized="_onForward"></cloud-arc>
-
+  <cloud-user on-arcs="_onForward"></cloud-user>
 `;
 
 const log = Xen.logFactory('CloudData', '#004f00');
