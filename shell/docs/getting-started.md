@@ -1,5 +1,3 @@
-# Getting Started: Hello, World!
-
 [Code](https://glitch.com/edit/#!/arcs-hello-world?path=arc.manifest)
 [Demo](https://arcs-hello-world.glitch.me/)
 

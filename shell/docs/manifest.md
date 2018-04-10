@@ -1,4 +1,4 @@
-# Manifest
+
 An Arcs Manifest declares collections of Schemas, Particles, Recipes and Views. It's used as an input to the system from which suggestions can be produced.
 
 By convention a manifest is stored in a file with the `.manifest` extension.

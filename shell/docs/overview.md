@@ -1,4 +1,3 @@
-# Overview: What is Arcs?
 
 Arcs is an [open source](https://github.com/PolymerLabs/arcs) framework initiated by Google for third-party developers to build **composable** **assistive experiences** on the web.
 
