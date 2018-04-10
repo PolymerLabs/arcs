@@ -186,7 +186,7 @@ import '../somewhere/another.manifest'
 import 'https://fancy-thing.glitch.io/everything.manifest'
 ```
 
-Everything in the heirarichy of imported manifests is then made available in the manifest scope.
+Everything in the hierarchy of imported manifests is then made available in the manifest scope.
 
 ## Indentation
 Indentation is significant. It is used to group blocks of manifest items together. The indentation rules require that items at the same level have the same indentation. By convention this is usually in increments of two spaces.
