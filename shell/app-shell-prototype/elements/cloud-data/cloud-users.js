@@ -26,7 +26,7 @@ class CloudUsers extends Xen.Base {
       log('watching `users`');
       state.watch.watches = [{
         path: `users`,
-        handler: snap => this._debounceRemoteChanged(snap, state)
+        handler: snap => this._debounceRemoteChanged(snap, this._state)
       }];
     }
   }

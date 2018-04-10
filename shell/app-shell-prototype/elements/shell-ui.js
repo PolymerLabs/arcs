@@ -209,7 +209,7 @@ const template = html`
       top: 0;
       bottom: 0;
       box-shadow: 0px 0px 32px 3px rgba(0,0,0,0.13);
-      transform: translate3d(100%, 0, 0);
+      transform: translate3d(120%, 0, 0);
       transition: transform 200ms ease-in-out;
       overflow: auto;
       background-color: white;

@@ -39,7 +39,6 @@ const db = database.ref(version);
 // firebase storage
 const storage = app.storage();
 
-
 // for debugging only
 db.dump = () => db.once('value').then(snap => console.log(db.data = snap.val()));
 

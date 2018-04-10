@@ -8,7 +8,8 @@ import './elements/cloud-data.js';
 // code libs
 import Xen from '../components/xen/xen.js';
 import ArcsUtils from './lib/arcs-utils.js';
-import Const from '../app-shell/constants.js';
+import LinkJack from './lib/link-jack.js';
+import Const from './constants.js';
 
 // globals
 /* global shellPath */
@@ -52,6 +53,8 @@ const template = html`
   <shell-handles
     arc="{{arc}}"
     users="{{users}}"
+    user="{{user}}"
+    visited="{{arcs}}"
     on-theme="_onStateData"
   ></shell-handles>
 
@@ -62,6 +65,7 @@ const template = html`
     description="{{description}}"
     plan="{{plan}}"
     on-users="_onStateData"
+    on-arcs="_onStateData"
     on-key="_onStateData"
     on-metadata="_onStateData"
     on-serialized="_onStateData"
@@ -93,27 +97,64 @@ class AppShell extends Xen.Debug(Xen.Base, log) {
   _getInitialState() {
     return {
       shellPath,
-      manifest: `
+      defaultManifest: `
 import 'https://sjmiles.github.io/arcs-stories/0.3/GitHubDash/GitHubDash.recipes'
 import 'https://sjmiles.github.io/arcs-stories/0.3/TV/TV.recipes'
 import 'https://sjmiles.github.io/arcs-stories/0.3/PlaidAccounts/PlaidAccounts.recipes'
 import '../artifacts/canonical.manifest'
-    `};
+import '../artifacts/0.4/Arcs/Arcs.recipes'
+      `,
+      user: {
+        id: 'f4',
+        name: 'Gomer'
+      }
+    };
+  }
+  _didMount() {
+    LinkJack(window, anchor => this._routeLink(anchor));
   }
   _update(props, state, oldProps, oldState) {
     // TODO(sjmiles): for debugging only
-    window.app = this;
-    window.arc = state.arc;
-    //
+    this._globalsForDebug(state);
+    // end for debugging
+    let {key, plan, suggestions, suggestion, pendingSuggestion} = state;
+    // TODO(sjmiles): shouldn't some of this be handled in arc-config.js?
     const params = (new URL(document.location)).searchParams;
-    if (!state.key) {
-      state.key = ArcsUtils.getUrlParam('key') || '*';
-    } else if (state.key !== '*') {
-      ArcsUtils.setUrlParam('key', state.key);
+    if (!key) {
+      state.key = ArcsUtils.getUrlParam('key') || Const.SHELLKEYS.launcher;
+    } else if (key !== '*') {
+      ArcsUtils.setUrlParam('key', key);
+    } else {
+      // does nothing but prevent us from testing for '*' later in this method
+      key = null;
     }
-    if (state.plan && state.plan !== oldState.plan) {
+    //const manifest = (key === Const.SHELLKEYS.launcher) ? Const.MANIFESTS.launcher : state.defaultManifest;
+    const manifest = state.defaultManifest;
+    this._setState({manifest});
+    if (plan && plan !== oldState.plan) {
       // arc has implemented new plan so generate new description
       this._describeArc(state.arc, state.description);
+    }
+    if (key === Const.SHELLKEYS.launcher) {
+      if (!suggestion && !plan && suggestions && suggestions.length) {
+        const suggestion = state.suggestions.find(s => s.descriptionText === 'Arcs launcher.');
+        if (suggestion) {
+          state.suggestion = suggestion;
+        }
+        //log(state.suggestions);
+        //state.suggestion = suggestions[0];
+      }
+      else if (suggestion && suggestion !== oldState.suggestion) {
+        state.pendingSuggestion = suggestion;
+        state.suggestion = null;
+        state.description = null;
+        state.suggestions = null;
+        state.key = '*';
+      }
+    }
+    if (key && !Const.SHELLKEYS[key] && suggestions && pendingSuggestion) {
+      state.suggestion = suggestions.find(s => s.descriptionText === pendingSuggestion.descriptionText);
+      state.pendingSuggestion = null;
     }
   }
   _render({}, state) {
@@ -122,6 +163,19 @@ import '../artifacts/canonical.manifest'
       title: metadata && metadata.description
     };
     return [state, render];
+  }
+  _globalsForDebug(state) {
+    window.app = this;
+    window.arc = state.arc;
+  }
+  _routeLink(anchor) {
+    const url = new URL(anchor.href, document.location);
+    const params = url.searchParams;
+    log(/*url,*/ anchor.href, Array.from(params.keys()));
+    const key = params.get('arc');
+    if (key) {
+      this._setState({key});
+    }
   }
   async _describeArc(arc, description) {
     description = await ArcsUtils.describeArc(arc) || description;

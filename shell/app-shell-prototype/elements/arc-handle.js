@@ -59,7 +59,7 @@ class ArcHandle extends Xen.Base {
     // context-handles are for `map`, `copy`, `?`
     // arc-handles are for `use`, `?`
     const factory = asContext ? arc.context.newStore.bind(arc.context) : arc.createHandle.bind(arc);
-    const handle = await factory(typeOf, name, id, tags);
+    const handle = await factory(typeOf, name, id, tags, storageKey);
     if (description) {
       handle.description = description;
     }

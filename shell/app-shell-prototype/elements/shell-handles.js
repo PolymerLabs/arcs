@@ -30,7 +30,10 @@ const template = Xen.html`
 
 `;
 
-class ShellHandles extends Xen.Base {
+const log = Xen.logFactory('ShellHandles', '#004f00');
+const warn = Xen.logFactory('ShellHandles', '#004f00', 'warn');
+
+class ShellHandles extends Xen.Debug(Xen.Base, log) {
   static get observedAttributes() {
     return ['arc', 'users', 'user', 'visited'];
   }
@@ -75,12 +78,12 @@ class ShellHandles extends Xen.Base {
         tags: ['#BOXED_avatar'],
         id: 'BOXED_avatar',
         asContext: true
-      },
-      userHandleData: {
-        id: 'f4',
-        name: 'Gomer',
-        location: {latitude: 37.7610927, longitude: -122.4208173}
-      }
+      }//,
+      // userHandleData: {
+      //   id: 'f4',
+      //   name: 'Gomer',
+      //   location: {latitude: 37.7610927, longitude: -122.4208173}
+      // }
     };
   }
   _watchGeolocation() {
@@ -126,7 +129,7 @@ class ShellHandles extends Xen.Base {
     return {
       id: user.id,
       name: user.name,
-      location: geoCoords
+      location: geoCoords || null
     };
   }
   _renderUsers(users) {
@@ -140,13 +143,20 @@ class ShellHandles extends Xen.Base {
   _renderVisited(user, visited) {
     const data = Object.keys(visited).map(key => {
       let {metadata, profile} = visited[key];
+      // TODO(sjmiles): not supposed to happen, fault tolerance here
+      if (!metadata) {
+        warn(`arc [${key}] is missing metadata`);
+        metadata = {
+          description: '(untitled)'
+        };
+      }
       let href = `${location.origin}${location.pathname}?arc=${key}&user=${user.id}`;
       if (metadata.externalManifest) {
         href += `&manifest=${metadata.externalManifest}`;
       }
       return {
         key: key,
-        description: metadata.description || key.slice(1),
+        description: metadata.description,
         color: metadata.color || 'gray',
         bg: metadata.bg,
         href: href,
@@ -180,6 +190,4 @@ class ShellHandles extends Xen.Base {
     this._fire('launcherarcs', arcs);
   }
 }
-
-const log = Xen.logFactory('ShellHandles', '#004f00');
 customElements.define('shell-handles', ShellHandles);
