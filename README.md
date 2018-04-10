@@ -66,7 +66,7 @@ run all the tests, and kill the background server:
 
 ```
 $ npm install
-$ npm test-with-start
+$ npm run test-with-start
 ```
 
 There are additional targets provided to run subsets of those commands.
