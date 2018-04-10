@@ -54,12 +54,19 @@ defineParticle(({DomParticle, html, log}) => {
 [${host}] [post-buttons] > [active][primary] {
   color: green;
 }
+[${host}] [upload-progress] {
+  text-align: center;
+  font-size: 32px;
+}
 </style>
 <div ${host}>
   <div post-buttons>
     <icon on-click="onDeletePost">delete</icon>
-    <firebase-upload active accept="image/*" on-upload="onAttachPhoto"><icon>attach_file</icon></firebase-upload>
+    <firebase-upload active accept="image/*" on-upload="onAttachPhoto" on-progress="onProgressPhoto" on-error="onErrorPhoto"><icon>attach_file</icon></firebase-upload>
     <icon primary active$="{{saveButtonActive}}" on-click="onSavePost">done</icon>
+  </div>
+  <div hidden="{{hideUploadProgress}}" upload-progress>
+    <span>{{uploadPercent}}</span>%
   </div>
   <img src="{{image}}">
   <textarea value="{{message}}" on-input="onTextInput"></textarea>
@@ -72,9 +79,15 @@ defineParticle(({DomParticle, html, log}) => {
     hasContent(value) {
       return Boolean(value && value.trim().length > 0);
     }
-    render(
-        {user, post},
-        {message, image, savePost, renderParticleSpec, renderRecipe}) {
+    render({user, post}, {
+      message,
+      image,
+      savePost,
+      renderParticleSpec,
+      renderRecipe,
+      uploading,
+      uploadPercent
+    }) {
       if (savePost) {
         this.savePost(renderParticleSpec, renderRecipe, user, message, image);
       }
@@ -83,7 +96,9 @@ defineParticle(({DomParticle, html, log}) => {
       const model = {
         saveButtonActive,
         message: message || '',
-        image: image || ''
+        image: image || '',
+        hideUploadProgress: !uploading,
+        uploadPercent
       };
       return model;
     }
@@ -132,7 +147,14 @@ recipe
     }
     onAttachPhoto(e) {
       const image = e.data.value;
-      this.setState({image});
+      this.setState({uploading: false, uploadPercent: '0', image});
+    }
+    onProgressPhoto(e) {
+      const uploadPercent = String(e.data.value);
+      this.setState({uploading: true, uploadPercent});
+    }
+    onErrorPhoto(e) {
+      this.setState({uploading: false, uploadPercent: '0'});
     }
   };
 });

@@ -45,14 +45,16 @@ class FirebaseUpload extends Xen.Base {
   _uploadFile(file, uploadPath) {
     const imageRef = storage.ref().child(uploadPath);
     const next = snapshot => {
-      const percentProgress = (snapshot.bytesTransferred / snapshot.totalBytes);
-      log(`Upload progress [percent=${
-          Math.floor(percentProgress * 100.0)}%, state=${snapshot.state}].`);
-      // TODO(wkorman): Report progress update to client.
+      const percent =
+          Math.floor((snapshot.bytesTransferred / snapshot.totalBytes) * 100.0);
+      log(`Upload progress [percent=${percent}%, state=${snapshot.state}].`);
+      this.value = percent;
+      this._fire('progress');
     };
     const error = error => {
       logError('Error uploading', error);
-      // TODO(wkorman): Report error to client.
+      this.value = error;
+      this._fire('error');
     };
     const complete = () => this._uploadComplete(imageRef);
     imageRef.put(file).on(
@@ -65,6 +67,8 @@ class FirebaseUpload extends Xen.Base {
       this._fire('upload');
     } catch (error) {
       logError('Error getting download url', error);
+      this.value = error;
+      this._fire('error');
     }
   }
 }
