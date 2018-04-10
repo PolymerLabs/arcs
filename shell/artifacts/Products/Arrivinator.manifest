@@ -8,22 +8,8 @@
 
 import 'Product.schema'
 
-
-// TODO without specifying the type of the second parameter, the system
-// guesses at an argument list of ([DesiredShipping], Product). That doesn't
-// match anything, so it seems that the system should try the correct
-// ([Product], DesiredShipping). Once this is generic it could be added to
-// Multiplexer.(manifest,js). See https://github.com/PolymerLabs/arcs/issues/1076.
-shape FixedOtherHostedParticle
-  FixedOtherHostedParticle(in ~a, in DesiredShipping)
-  consume
-particle FixedOtherMultiplexer in '../Common/source/Multiplexer.js'
-  FixedOtherMultiplexer(host FixedOtherHostedParticle hostedParticle, in [~a] list, in DesiredShipping other)
-  consume set of annotation
-  description `${hostedParticle} for ${list}`
-
 particle Arrivinator in 'source/Arrivinator.js'
-  Arrivinator(in Product product, in DesiredShipping desiredShipping)
+  Arrivinator(in Product product)
   consume annotation
   description `estimate arrival date`
   // TODO: add support for patterns:

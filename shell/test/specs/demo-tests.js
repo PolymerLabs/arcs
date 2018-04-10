@@ -435,7 +435,7 @@ describe('Arcs demos', function() {
     // });
   });
 
-  it.skip('can buy gifts', /** @this Context */ function() {
+  it('can buy gifts', /** @this Context */ function() {
     initTestWithNewArc(this.test.fullTitle());
 
     allSuggestions();
@@ -454,6 +454,8 @@ describe('Arcs demos', function() {
         'Buy gifts for Claire\'s Birthday on 2017-08-04, Estimate arrival date for products');
     acceptSuggestion(
         'Check manufacturer information for products from your browsing context');
+    acceptSuggestion(
+        'Find alternate shipping');
     acceptSuggestion(
         `Recommendations based on Claire\'s wishlist`
         // TODO: add 'and Claire\'s wishlist' when regex is supported.
