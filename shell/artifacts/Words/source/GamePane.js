@@ -467,7 +467,7 @@ recipe
         hideDictionaryLoading: false
       });
       const startstamp = performance.now();
-      const response = await fetch(DICTIONARY_URL)
+      const response = await fetch(DICTIONARY_URL);
       const text = await response.text();
       const dictionary = new Dictionary(text);
       const endstamp = performance.now();
