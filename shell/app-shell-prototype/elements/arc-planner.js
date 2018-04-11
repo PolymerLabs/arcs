@@ -85,11 +85,11 @@ class ArcPlanner extends Xen.Debug(Xen.Base, log) {
     log(`planning...`);
     let time = Date.now();
     let plans;
-    // if the `invalid` state goes true before `makePlans` completes, start over
-    while (state.invalid) {
+    do {
       state.invalid = false;
       plans = await ArcsUtils.makePlans(props.arc, props.config.plannerTimeout) || [];
-    }
+      // if the `invalid` state goes true before `makePlans` completes, start over
+    } while (state.invalid);
     time = ((Date.now() - time) / 1000).toFixed(2);
     log(`plans`, plans, `${time}s`);
     this._fire('plans', plans);

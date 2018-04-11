@@ -36,12 +36,12 @@ class CloudArc extends Xen.Debug(Xen.Base, log) {
     else if (Const.SHELLKEYS[key]) {
       log('sending empty serialization for non-persistent key');
       this._fire('serialized', '');
-    } else {
+    } else if (key) {
       if (plan !== oldProps.plan && key !== 'launcher') {
         log('plan changed, good time to serialize?');
         this._serialize(state.db, key, arc);
       }
-      if (key && key !== oldProps.key) {
+      if (key !== oldProps.key) {
         state.watch.watches = [
           {path: `arcs/${key}/metadata`, handler: snap => this._metadataReceived(snap, key)},
           {path: `arcs/${key}/serialized`, handler: snap => this._serializedReceived(snap, key)}

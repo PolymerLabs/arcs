@@ -32,6 +32,9 @@ defineParticle(({DomParticle, log, html}) => {
     display: flex;
     margin: 0px 4px 4px 4px;
     padding: 24px;
+    /* temporary: pending responsiveness */
+    max-width: 600px;
+    margin: 0 auto;
   }
   [${host}] [chip] {
     font-family: 'Google Sans';

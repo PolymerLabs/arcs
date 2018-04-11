@@ -42,6 +42,8 @@ const template = html`
       --bar-peek-height: 16px;
       --bar-touch-height: 32px;
       --bar-space-height: 48px;
+      --avatar-size: 24px;
+      --large-avatar-size: 40px;
     }
     :host {
       display: block;
@@ -219,8 +221,6 @@ const template = html`
       transform: translate3d(0,0,0);
     }
     avatar {
-      --avatar-size: 24px;
-      --large-avatar-size: 40px;
       display: inline-block;
       height: var(--avatar-size);
       width: var(--avatar-size);
@@ -286,7 +286,9 @@ const template = html`
 const log = Xen.logFactory('ShellUi', '#ac6066');
 
 class ShellUi extends Xen.Debug(Xen.Base, log) {
-  static get observedAttributes() { return ['showhint', 'arc', 'title', 'users']; }
+  static get observedAttributes() {
+    return ['users', 'user', 'arc', 'title', 'showhint'];
+  }
   get template() {
     return template;
   }
@@ -320,6 +322,12 @@ class ShellUi extends Xen.Debug(Xen.Base, log) {
       settingsContentOpen: settingsOpen,
       userContentOpen: userOpen
     };
+    const {user} = props;
+    if (user && user.info) {
+      renderModel.avatar_title = user.info.name;
+      const avatar_style = user.info.avatar ? `background-image: url("${user.info.avatar}");` : '';
+      renderModel.avatar_style = avatar_style;
+    }
     return [props, state, renderModel];
   }
   _didRender(props, state, oldProps, oldState) {
@@ -345,8 +353,8 @@ class ShellUi extends Xen.Debug(Xen.Base, log) {
     }
   }
   _onBarClick(e) {
-    const barState = (e.target.localName !== 'a') ? 'peek' : 'open';
-    this._setState({barState});
+    const wasAnchorClick = e.path.find(n => n.localName === 'a');
+    this._setState({barState: wasAnchorClick ? 'peek' : 'open'});
   }
   _onBarEnter(e) {
     if (this._state.barState === 'peek') {
@@ -387,8 +395,9 @@ class ShellUi extends Xen.Debug(Xen.Base, log) {
   }
   _onChooseSuggestion(e, suggestion) {
     e.stopPropagation();
-    this._fire('suggestion', suggestion);
     this._setState({barState: 'peek'});
+    // TODO(sjmiles): wait for animation to complete to reduce jank
+    setTimeout(() => this._fire('suggestion', suggestion), 300);
   }
   _onSelectUser(e, user) {
     this._fire('select-user', user);

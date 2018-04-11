@@ -88,6 +88,7 @@ const template = html`
     title="{{title}}"
     showhint="{{showhint}}"
     users="{{users}}"
+    user="{{user}}"
     on-search="_onStateData"
     on-suggestion="_onStateData"
     on-select-user="_onSelectUser"
@@ -127,35 +128,50 @@ import '../artifacts/0.4/Arcs/Arcs.recipes'
   _didMount() {
     LinkJack(window, anchor => this._routeLink(anchor));
   }
-  _update(props, state, oldProps, oldState) {
-    // TODO(sjmiles): for debugging only
-    this._globalsForDebug(state);
-    // end for debugging
-    let {key, plan, suggestions, suggestion, pendingSuggestion} = state;
+  _update({}, state, {}, oldState) {
+    this._updateDebugGlobals(state);
+    this._updateKey(state, oldState);
+    this._updateManifest(state);
+    this._updateDescription(state, oldState);
+    this._updateLauncher(state, oldState);
+    this._updateSuggestions(state, oldState);
+  }
+  _updateDebugGlobals(state) {
+    window.app = this;
+    window.arc = state.arc;
+  }
+  _updateKey(state, oldState) {
+    let {key, arc} = state;
     // TODO(sjmiles): shouldn't some of this be handled in arc-config.js?
     const params = (new URL(document.location)).searchParams;
-    if (!key) {
+    if (!key && (key === oldState.key)) {
       key = state.key = ArcsUtils.getUrlParam('key') || Const.SHELLKEYS.launcher;
     }
     ArcsUtils.setUrlParam('key', !Const.SHELLKEYS[key] ? key : '');
-    //const manifest = (key === Const.SHELLKEYS.launcher) ? Const.MANIFESTS.launcher : state.defaultManifest;
-    const manifest = state.defaultManifest;
-    this._setState({manifest});
-    if (plan && plan !== oldState.plan) {
+  }
+  _updateManifest(state) {
+    this._setState({manifest: state.defaultManifest});
+  }
+  _updateDescription(state, oldState) {
+    let {arc, description, plan} = state;
+    if (arc && plan && plan !== oldState.plan) {
       // arc has implemented new plan so generate new description
-      this._describeArc(state.arc, state.description);
+      this._describeArc(arc, description);
     }
+  }
+  _updateLauncher(state, oldState) {
+    let {key, arc, plan, suggestions, suggestion, pendingSuggestion} = state;
     if (key === Const.SHELLKEYS.launcher) {
       if (!suggestion && !plan && suggestions && suggestions.length) {
+        // TODO(sjmiles): need a better way to find the launcher suggestion
         const suggestion = state.suggestions.find(s => s.descriptionText === 'Arcs launcher.');
         if (suggestion) {
           state.suggestion = suggestion;
         }
-        //log(state.suggestions);
-        //state.suggestion = suggestions[0];
       }
       else if (suggestion && suggestion !== oldState.suggestion) {
         log('suggestion registered from launcher, set key to *');
+        state.pendingSuggestion = suggestion;
         this._setKey('*');
       }
     }
@@ -165,6 +181,19 @@ import '../artifacts/0.4/Arcs/Arcs.recipes'
       state.pendingSuggestion = null;
     }
   }
+  _updateSuggestions(state, oldState) {
+    let {key, search, suggestions, plan} = state;
+    // filter out root suggestions if we aren't launcher, have a plan, and aren't searching directly
+    if (suggestions && (plan && !Const.SHELLKEYS[key]) && !search) {
+      // Otherwise only show suggestions that don't populate a root.
+      state.suggestions = suggestions.filter(
+        // TODO(seefeld): Don't hardcode `root`
+        // TODO(sjmiles|mmandlis): name.includes catches all variants of `root` (e.g. `toproot`), the `tags`
+        // test only catches `#root` specifically
+        ({plan}) => plan.slots && !plan.slots.find(s => s.name.includes('root') || s.tags.includes('#root'))
+      );
+    }
+  }
   _render({}, state) {
     const {metadata} = state;
     const render = {
@@ -172,16 +201,15 @@ import '../artifacts/0.4/Arcs/Arcs.recipes'
     };
     return [state, render];
   }
-  _globalsForDebug(state) {
-    window.app = this;
-    window.arc = state.arc;
-  }
   _routeLink(anchor) {
     const url = new URL(anchor.href, document.location);
     const params = url.searchParams;
     log(/*url,*/ anchor.href, Array.from(params.keys()));
     const key = params.get('arc');
-    this._setKey(key || Const.SHELLKEYS.launcher);
+    // loopback not supported
+    if ((key !== this._state.key) && (key || this._state.key !== Const.SHELLKEYS.launcher)) {
+      this._setKey(key);
+    }
   }
   _setKey(key) {
     log('registered new key, begin arc rebuild procedure');
