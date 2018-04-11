@@ -145,7 +145,7 @@ class SettingsPanel extends Xen.Base {
     return isShared ? Const.SHARE.friends : isProfile ? Const.SHARE.self : Const.SHARE.private;
   }
   _renderUser(arc, selected, user, avatars, i) {
-    let avatar = user.avatar;
+    let avatar = user.info && user.info.avatar;
     if (arc && !avatar && avatars) {
       avatar = (avatars.find(a => a.owner === user.id) || Object).url;
       if (avatar) {
@@ -157,7 +157,7 @@ class SettingsPanel extends Xen.Base {
     }
     return {
       key: user.id,
-      name: user.name,
+      name: user.info && user.info.name || '',
       style: `background-image: url("${avatar}");`,
       selected: user.id === selected
     };
