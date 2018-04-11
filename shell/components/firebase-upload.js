@@ -56,14 +56,31 @@ class FirebaseUpload extends Xen.Base {
       this.value = error;
       this._fire('error');
     };
-    const complete = () => this._uploadComplete(imageRef);
+    const complete = () => this._uploadComplete(file, imageRef);
     imageRef.put(file).on(
         firebase.storage.TaskEvent.STATE_CHANGED, {next, error, complete});
   }
-  async _uploadComplete(ref) {
+  async _getImageDimensions(file) {
+    return new Promise((resolve, reject) => {
+      const image = new Image();
+      const url = URL.createObjectURL(file);
+      image.onload = () => {
+        URL.revokeObjectURL(url);
+        resolve({width: image.width, height: image.height});
+      };
+      image.onerror = () => {
+        URL.revokeObjectURL(url);
+        reject({});
+      };
+      image.src = url;
+    });
+  }
+  async _uploadComplete(file, ref) {
     try {
       const url = await ref.getDownloadURL();
-      this.value = url;
+      const {width, height} = await this._getImageDimensions(file);
+      log(`Image dimensions [width=${width}, height=${height}].`);
+      this.value = {width, height, url};
       this._fire('upload');
     } catch (error) {
       logError('Error getting download url', error);
