@@ -123,7 +123,7 @@ class ShellHandles extends Xen.Debug(Xen.Base, log) {
   _renderUser(user, geoCoords) {
     return {
       id: user.id,
-      name: user.name,
+      name: user.info.name,
       location: geoCoords || null
     };
   }
@@ -131,7 +131,7 @@ class ShellHandles extends Xen.Debug(Xen.Base, log) {
     return Object.keys(users).map(id => {
       return {
         id: id,
-        name: users[id].name
+        name: users[id].info.name
       };
     });
   }

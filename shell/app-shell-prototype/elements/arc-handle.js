@@ -16,8 +16,12 @@ const log = Xen.logFactory('ArcHandle', '#c6a700');
 
 class ArcHandle extends Xen.Base {
   static get observedAttributes() { return ['arc', 'options', 'data']; }
-  async _update(props, state) {
+  async _update(props, state, oldProps) {
     let {arc, options, data} = props;
+    if (oldProps.arc && oldProps.arc !== arc) {
+      // drop stale handle on the floor (will it GC?)
+      state.handle = null;
+    }
     if (arc && !state.handle) {
       if (state.working) {
         state.invalid = true;
@@ -32,6 +36,7 @@ class ArcHandle extends Xen.Base {
       }
       if (state.manifest && options) {
         state.handle = await this._createHandle(arc, state.manifest, options);
+        state.data = null;
       }
       state.working = false;
       if (state.invalid) {

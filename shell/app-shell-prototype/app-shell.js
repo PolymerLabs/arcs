@@ -1,6 +1,7 @@
 // elements
 import './elements/arc-config.js';
 import './elements/arc-host.js';
+import './elements/arc-planner.js';
 import './elements/shell-ui.js';
 import './elements/shell-handles.js';
 import './elements/cloud-data.js';
@@ -50,6 +51,16 @@ const template = html`
     on-plan="_onStateData"
   ></arc-host>
 
+  <arc-planner
+    config="{{config}}"
+    arc="{{arc}}"
+    search="{{search}}"
+    suggestions="{{suggestions}}"
+    suggestion="{{suggestion}}"
+    on-plans="_onPlans"
+    on-plan="_onStateData"
+  ></arc-planner>
+
   <shell-handles
     arc="{{arc}}"
     users="{{users}}"
@@ -59,6 +70,7 @@ const template = html`
   ></shell-handles>
 
   <cloud-data
+    user="{{user}}"
     key="{{key}}"
     arc="{{arc}}"
     metadata="{{metadata}}"
@@ -79,7 +91,6 @@ const template = html`
     on-search="_onStateData"
     on-suggestion="_onStateData"
     on-select-user="_onSelectUser"
-    on-experiment="_onExperiment"
   >
     <slot></slot>
     <slot name="modal" slot="modal"></slot>
@@ -106,7 +117,10 @@ import '../artifacts/0.4/Arcs/Arcs.recipes'
       `,
       user: {
         id: 'f4',
-        name: 'Gomer'
+        info: {
+          name: 'Gomer',
+          avatar: `data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wCEAAkGBwgHBgkIBwgKCgkLDRUPDQwMGRoUGhAWIB0iIiAdHxskKDQsJCYxJxsfLT0tMTU3Ojo6Iys/RD84PDQ5OjcBCgoKBQUFDgUFDisZExkrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrK//AABEIADIAMgMBIgACEQEDEQH/xAAcAAACAQUBAAAAAAAAAAAAAAAABwYBAgMFCAT/xAA6EAABAwIEAgYHBQkAAAAAAAABAgMEABEFBhIhMUETIjJCUXEHFCNSYYGxNWJykaEVJTNTc8Hh8PH/xAAUAQEAAAAAAAAAAAAAAAAAAAAA/8QAFBEBAAAAAAAAAAAAAAAAAAAAAP/aAAwDAQACEQMRAD8A3M7MUzEcQbfZcXBiMNjoUd8qI7Tnht3d7UYznoQcHltyH0IxfoCppOoJSLg6VW+VRF0YklyMG5avbuJZZaYtdxZ5E02cq5SiYNFWZTbUzEZIHrUhwBWr7qb8Eig5zht4zmbElFQdnTHSFOLeOlCfDUf7VNWMm5ww2MXojmFWSLlsCwPw1GqxMOhftnGkQ4TsmGxiLzbMdKi2Eqv3vEC1hfap/GlLn4Y/C6KO8tlwtpSpPVWLbAjlQQz0cZmnRM1xsFxNC4SZKleyWSpKzY20qv73/adSkUvk4GyzjGByVwIrT0eV0qmWR1QdBFx4b6T8qYqk0GVAGhPkKKuR2E+VFAkvRcmNHxky8YfbUk9SAXFag2s87nskjYfPxpzJFjXL6ZK0QEgEFCbm/j/t632H55x3BkKZRPedi6QNCiFKb/CVXt5UEux3BXcq5sl4qFpOGYy/caduidtchXLrdYismXp0SHiMhiRibOt6YXI7KgELWFC1viPClJmfO2O4zOQrEZ7jzLK06W0jQjbgdA2v8aYOVMy4NIYTJmzgy/t7Eo1FVvdPPy4igYIfgPZhisS30tKIPQoWbdIvjpHxtUrNJHPSX5kSDiERC2pSZyFxEE6Vcf051NIecZyFhMlLLw71wUKTegn6eyPKitO3mGMW0koPAcxRQc0zoUnBJEvDMVaLDzNlFs7i1r7HmDVsZRmF5ska7a0g8+vb6U5fSzl2Ni+WncVSlKZuHM6wv32u8g/Uf5pGNPCI8xLQo6k3SofdNBnW00hKXXEJU2R0bw8N9j8j9aujRX4aSjDlsokKWFJUvc2T7t+HEVmDjDjqis9R4Dq22N+NWxHEIaUw91vV1W6RPaCeRtztwoNjiecJWKvwEPNBmRFsnS32NgesPmfpXtZxt16WXmf4je+n+Yk8fyP6GoaEhWJvOkjSAd08N/CtlCcEey7qCgsHy+FBPkZhZ0Jugg2G16rUfEzDiAVxxr71lc6rQOfMO+S8Yvv+73uP9M1y6oksDflRRQbSN9mMnmFbfnRF+0JX4aKKDzMgetSNh2k17ZQAYTYAdfl5VWig1ZJvxNFFFB//2Q==`
+        }
       }
     };
   }
@@ -121,13 +135,9 @@ import '../artifacts/0.4/Arcs/Arcs.recipes'
     // TODO(sjmiles): shouldn't some of this be handled in arc-config.js?
     const params = (new URL(document.location)).searchParams;
     if (!key) {
-      state.key = ArcsUtils.getUrlParam('key') || Const.SHELLKEYS.launcher;
-    } else if (key !== '*') {
-      ArcsUtils.setUrlParam('key', key);
-    } else {
-      // does nothing but prevent us from testing for '*' later in this method
-      key = null;
+      key = state.key = ArcsUtils.getUrlParam('key') || Const.SHELLKEYS.launcher;
     }
+    ArcsUtils.setUrlParam('key', !Const.SHELLKEYS[key] ? key : '');
     //const manifest = (key === Const.SHELLKEYS.launcher) ? Const.MANIFESTS.launcher : state.defaultManifest;
     const manifest = state.defaultManifest;
     this._setState({manifest});
@@ -145,14 +155,12 @@ import '../artifacts/0.4/Arcs/Arcs.recipes'
         //state.suggestion = suggestions[0];
       }
       else if (suggestion && suggestion !== oldState.suggestion) {
-        state.pendingSuggestion = suggestion;
-        state.suggestion = null;
-        state.description = null;
-        state.suggestions = null;
-        state.key = '*';
+        log('suggestion registered from launcher, set key to *');
+        this._setKey('*');
       }
     }
     if (key && !Const.SHELLKEYS[key] && suggestions && pendingSuggestion) {
+      log('instantiating pending launcher suggestion');
       state.suggestion = suggestions.find(s => s.descriptionText === pendingSuggestion.descriptionText);
       state.pendingSuggestion = null;
     }
@@ -173,9 +181,18 @@ import '../artifacts/0.4/Arcs/Arcs.recipes'
     const params = url.searchParams;
     log(/*url,*/ anchor.href, Array.from(params.keys()));
     const key = params.get('arc');
-    if (key) {
-      this._setState({key});
-    }
+    this._setKey(key || Const.SHELLKEYS.launcher);
+  }
+  _setKey(key) {
+    log('registered new key, begin arc rebuild procedure');
+    this._setState({
+      key,
+      description: null,
+      serialized: null,
+      suggestions: null,
+      suggestion: null,
+      plan: null
+    });
   }
   async _describeArc(arc, description) {
     description = await ArcsUtils.describeArc(arc) || description;
@@ -189,11 +206,6 @@ import '../artifacts/0.4/Arcs/Arcs.recipes'
   }
   _onSelectUser(e, user) {
     this._setState({user});
-  }
-  async _onExperiment(e) {
-    const {arc} = this._state;
-    this._setState({serialized: null});
-    this._setState({serialized: await arc.serialize()});
   }
 }
 
