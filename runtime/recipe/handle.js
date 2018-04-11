@@ -114,7 +114,7 @@ class Handle {
 
   static effectiveType(handleType, connections) {
     let typeSet = connections.filter(connection => connection.type != null).map(connection => ({type: connection.type, direction: connection.direction, connection}));
-    return TypeChecker.processTypeList(handleType, typeSet);          
+    return TypeChecker.processTypeList(handleType, typeSet);
   }
 
   _isValid(options) {
@@ -123,7 +123,7 @@ class Handle {
       // A remote view cannot be connected to an output param.
       if (this.fate == 'map' && ['out', 'inout'].includes(connection.direction)) {
         if (options && options.errors) {
-          options.errors.set(this, `Invalid fate '${this.fate}' for handle '${this.id || this.name || this.localName || this.tags.join(' ')}'; it is used for '${connection.direction}' ${connection.particle.name}::${connection.name} connection`);
+          options.errors.set(this, `Invalid fate '${this.fate}' for handle '${this}'; it is used for '${connection.direction}' ${connection.particle.name}::${connection.name} connection`);
         }
         return false;
       }
@@ -138,7 +138,7 @@ class Handle {
     }
     if (options && options.errors) {
       // TODO: pass options to TypeChecker.processTypeList for better error.
-      options.errors.set(this, `Type validations failed for handle '${this.id || this.name || this.localName || this.tags.join(' ')}'`);
+      options.errors.set(this, `Type validations failed for handle '${this}'`);
     }
     return false;
   }
