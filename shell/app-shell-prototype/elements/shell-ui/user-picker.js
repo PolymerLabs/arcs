@@ -80,11 +80,11 @@ class UserPicker extends Xen.Base {
     return render;
   }
   _renderUser(selected, user, i) {
-    const url = user.avatar || `${shellPath}/assets/avatars/user (0).png`;
+    const url = user.info.avatar || `${shellPath}/assets/avatars/user (0).png`;
     return {
       user: user,
       key: user.id,
-      name: user.name,
+      name: user.info.name,
       style: `background-image: url("${url}");`,
       selected: user.id === selected
     };

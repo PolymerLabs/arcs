@@ -245,7 +245,6 @@ const template = html`
       <div main toolbar open$="{{mainToolbarOpen}}">
         <a href="{{launcherHref}}" title="Go to Launcher">${AppIcon}</a>
         <span title="{{title}}">{{title}}</span>
-        <!-- <icon on-click="_onExperimentClick">update</icon> -->
         <icon on-click="_onSearchClick">search</icon>
         <icon on-click="_onSettingsClick">settings</icon>
       </div>
@@ -345,10 +344,9 @@ class ShellUi extends Xen.Debug(Xen.Base, log) {
       this._setState({barState: 'open'});
     }
   }
-  _onBarClick() {
-    if (this._state.barState !== 'open') {
-      this._setState({barState: 'open'});
-    }
+  _onBarClick(e) {
+    const barState = (e.target.localName !== 'a') ? 'peek' : 'open';
+    this._setState({barState});
   }
   _onBarEnter(e) {
     if (this._state.barState === 'peek') {
@@ -396,10 +394,6 @@ class ShellUi extends Xen.Debug(Xen.Base, log) {
     this._fire('select-user', user);
     this._setState({userPickerOpen: false});
   }
-  _onExperimentClick(e) {
-    e.stopPropagation();
-    this._fire('experiment');
-  }
   _onToolsClick() {
     this._setState({toolsOpen: !this._state.toolsOpen});
   }
@@ -418,11 +412,7 @@ class ShellUi extends Xen.Debug(Xen.Base, log) {
   _commitSearch(search) {
     search = search || '';
     // TODO(sjmiles): removed this check so speech-input can update the search box, is it harmful?
-    //if (this._state.search !== search) {
-      //this._setState({search});
-      this._fire('search', search);
-      //this._fire('open', true);
-    //}
+    this._fire('search', search);
   }
 }
 

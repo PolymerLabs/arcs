@@ -12,7 +12,7 @@ import WatchGroup from './watch-group.js';
 import ArcsUtils from '../../lib/arcs-utils.js';
 import Xen from '../../../components/xen/xen.js';
 import Const from '../../constants.js';
-const db = window.db;
+import Firebase from './firebase.js';
 
 const log = Xen.logFactory('CloudArc', '#a30000');
 const groupCollapsed = Xen.logFactory('CloudArc', '#a30000', 'groupCollapsed');
@@ -23,7 +23,7 @@ class CloudArc extends Xen.Debug(Xen.Base, log) {
   _getInitialState() {
     return {
       watch: new WatchGroup(),
-      db: db.child('arcs')
+      db: Firebase.db.child('arcs')
     };
   }
   _update({key, arc, metadata, description, plan}, state, oldProps) {
