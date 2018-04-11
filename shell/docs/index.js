@@ -114,6 +114,7 @@ const updateTopic = () => {
   tocLinks.forEach(m => {
     m.classList.toggle('selected', m.getAttribute('title') === name);
   });
+  doc.scrollTop = 0;
 };
 
 window.onhashchange = e => {
