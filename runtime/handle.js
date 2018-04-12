@@ -160,8 +160,8 @@ class Collection extends Handle {
  * the current recipe identifies which handles are connected.
  */
 class Variable extends Handle {
-  constructor(variable, canRead, canWrite, particleId) {
-    super(variable, canRead, canWrite, particleId);
+  constructor(proxy, particleId, canRead, canWrite) {
+    super(proxy, particleId, canRead, canWrite);
   }
 
   /** @method async get()
