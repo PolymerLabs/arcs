@@ -16,6 +16,10 @@ schema Post
   // An optional image associated with the message content for the post.
   // Populated only if the user chose to attach one when creating/editing.
   URL image
+  // The width of the full size image in pixels, if an image is present.
+  Number imageWidth
+  // The height of the full size image in pixels, if an image is present.
+  Number imageHeight
   // A recipe that can be used to display this post's content. Allows for
   // polymorphic display of and interaction with the post, as the
   // particles creating or updating the Post entity can set whatever

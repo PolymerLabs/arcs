@@ -92,11 +92,11 @@ defineParticle(({DomParticle, html, log}) => {
         this.savePost(renderParticleSpec, renderRecipe, user, message, image);
       }
       const saveButtonActive =
-          this.hasContent(message) || this.hasContent(image);
+          this.hasContent(message) || (image && this.hasContent(image.url));
       const model = {
         saveButtonActive,
         message: message || '',
-        image: image || '',
+        image: image ? image.url : '',
         hideUploadProgress: !uploading,
         uploadPercent
       };
@@ -132,11 +132,13 @@ recipe
         renderParticleSpec,
         renderRecipe,
         message,
-        image,
+        image: image.url,
+        imageWidth: image.width,
+        imageHeight: image.height,
         createdTimestamp: Date.now(),
         author: user.id
       });
-      this.setState({savePost: false, message: '', image: ''});
+      this.setState({savePost: false, message: '', image: null});
     }
     onTextInput(e) {
       this.setState({message: e.data.value});

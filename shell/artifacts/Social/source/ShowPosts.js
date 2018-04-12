@@ -81,7 +81,6 @@ defineParticle(({DomParticle, resolver, log}) => {
   }
   [${host}] [msg] [content] img {
     display: block;
-    width: 256px;
   }
   [${host}] [owner] {
     font-size: 14pt;
@@ -114,7 +113,7 @@ defineParticle(({DomParticle, resolver, log}) => {
             <br>
           </div>
           <div content value="{{id}}">
-            <img src="{{image}}">
+            <img src="{{image}}" width="{{imageWidth}}" height="{{imageHeight}}">
             <span>{{message}}</span>
           </div>
         </div>
@@ -223,10 +222,32 @@ defineParticle(({DomParticle, resolver, log}) => {
         return b.createdTimestamp - a.createdTimestamp;
       });
     }
-    _postToModel(visible, {createdTimestamp, message, image, id, author}) {
+    clampSize(width, height) {
+      if (!width || !height) {
+        return {clampedWidth: width, clampedHeight: height};
+      }
+      const ratio = width / height;
+      const maxWidth = 256;
+      const clampedWidth = Math.min(maxWidth, width);
+      const clampedHeight = clampedWidth / ratio;
+      return {clampedWidth, clampedHeight};
+    }
+    _postToModel(visible, {
+      createdTimestamp,
+      message,
+      image,
+      imageWidth,
+      imageHeight,
+      id,
+      author
+    }) {
+      const {clampedWidth, clampedHeight} =
+          this.clampSize(imageWidth, imageHeight);
       return {
         message,
         image: image || '',
+        imageWidth: clampedWidth,
+        imageHeight: clampedHeight,
         id,
         time: new Date(createdTimestamp).toLocaleDateString('en-US', {
           'month': 'short',
