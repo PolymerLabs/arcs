@@ -78,11 +78,11 @@ class Planner {
     let now = () => (typeof performance == 'object') ? performance.now() : process.hrtime();
     let start = now();
     do {
-      let record = await trace.wait(() => this.strategizer.generate());
+      let record = await trace.wait(this.strategizer.generate());
       let generated = this.strategizer.generated;
-      trace.resume({args: {
+      trace.addArgs({
         generated: generated.length,
-      }});
+      });
       if (generations) {
         generations.push({generated, record});
       }
@@ -144,10 +144,9 @@ class Planner {
     return groups;
   }
   async suggest(timeout, generations) {
-    if (!generations && this._arc._debugging) generations = [];
     let trace = Tracing.async({cat: 'planning', name: 'Planner::suggest', args: {timeout}});
-    let plans = await trace.wait(() => this.plan(timeout, generations));
-    trace.resume();
+    if (!generations && this._arc._debugging) generations = [];
+    let plans = await trace.wait(this.plan(timeout, generations));
     let suggestions = [];
     let speculator = new Speculator();
     // We don't actually know how many threads the VM will decide to use to
@@ -157,7 +156,7 @@ class Planner {
     // efficient work distribution.
     const threadCount = this._speculativeThreadCount();
     const planGroups = this._splitToGroups(plans, threadCount);
-    let results = await trace.wait(() => Promise.all(planGroups.map(async (group, groupIndex) => {
+    let results = await trace.wait(Promise.all(planGroups.map(async (group, groupIndex) => {
       let results = [];
       for (let plan of group) {
         let hash = ((hash) => { return hash.substring(hash.length - 4);})(await plan.digest());
@@ -210,15 +209,13 @@ class Planner {
       }
       return results;
     })));
-    trace.resume();
     results = [].concat(...results);
-    trace.end();
 
     if (this._arc._debugging) {
       StrategyExplorerAdapter.processGenerations(generations);
     }
 
-    return results;
+    return trace.endWith(results);
   }
   _updateGeneration(generations, hash, handler) {
     if (generations) {

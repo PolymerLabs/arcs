@@ -264,7 +264,7 @@ function saneSpawnWithOutput(cmd, args, opts) {
   cmd = path.normalize(cmd);
   opts = opts || {};
   opts.shell = true;
-  // it's OK, I know what I'm doing  
+  // it's OK, I know what I'm doing
   let result = _DO_NOT_USE_spawn(cmd, args, opts);
   if (result.error) {
     console.warn(result.error);

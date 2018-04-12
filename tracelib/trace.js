@@ -19,8 +19,7 @@ let now;
 if (typeof document == 'object') {
   pid = 42;
   now = function() {
-    let t = performance.now();
-    return t;
+    return performance.now() * 1000;
   };
 } else {
   pid = process.pid;
@@ -56,14 +55,8 @@ module.exports.enable = function() {
 
 function init() {
   let result = {
-    wait: function(f) {
-      if (f instanceof Function) {
-        return f();
-      }
-      return f;
-    },
-    resume: function() {
-      return this;
+    wait: async function(v) {
+      return v;
     },
     start: function() {
       return this;
@@ -74,8 +67,10 @@ function init() {
     step: function() {
       return this;
     },
-    endWrap: function(fn) {
-      return fn;
+    addArgs: function() {
+    },
+    endWith: async function(v) {
+      return v;
     },
   };
   module.exports.wrap = function(info, fn) {
@@ -89,8 +84,6 @@ function init() {
   };
   module.exports.flow = function(info, fn) {
     return result;
-  };
-  module.exports.dump = function() {
   };
 
   if (!module.exports.enabled) {
@@ -112,6 +105,9 @@ function init() {
     let args = info.args || {};
     let begin = now();
     return {
+      addArgs: function(extraInfo) {
+        Object.assign(args, extraInfo);
+      },
       end: function(endInfo) {
         if (endInfo && endInfo.args) {
           Object.assign(args, endInfo.args);
@@ -129,30 +125,27 @@ function init() {
     };
   };
   // TODO: perhaps this should just be the only API, it acts the same as
-  //       start() when there is no call to wait/resume().
+  //       start() when there is no call to wait().
   module.exports.async = function(info) {
     let trace = module.exports.start(info);
     let flow;
     let baseInfo = {cat: info.cat, name: info.name + ' (async)'};
-    let n = 0;
     return {
-      async wait(v) {
-        let result = await v;
+      async wait(v, info) {
         if (!flow) {
           flow = module.exports.flow(baseInfo).start();
         }
-        trace.end();
+        trace.end(info);
         trace = null;
-        return result;
-      },
-      resume(info) {
-        if (info) {
-          Object.assign(info, baseInfo);
-        } else {
-          info = baseInfo;
+        try {
+          return await v;
+        } finally {
+          trace = module.exports.start(baseInfo);
+          flow.step(baseInfo);
         }
-        trace = module.exports.start(info);
-        flow.step(baseInfo);
+      },
+      addArgs(info) {
+        trace.addArgs(info);
       },
       end(endInfo) {
         if (flow) {
@@ -160,6 +153,19 @@ function init() {
         }
         trace.end(endInfo);
       },
+      async endWith(v, endInfo) {
+        if (Promise.resolve(v) === v) { // If v is a promise.
+          v = this.wait(v);
+          try {
+            return await v;
+          } finally {
+            this.end(endInfo);
+          }
+        } else { // If v is not a promise.
+          this.end(endInfo);
+          return v;
+        }
+      }
     };
   };
   module.exports.flow = function(info) {
