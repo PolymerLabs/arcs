@@ -45,7 +45,7 @@ const template = html`
     suggestions="{{suggestions}}"
     search="{{search}}"
     suggestion="{{suggestion}}"
-    serialization="{{serialized}}"
+    serialization="{{serialization}}"
     on-arc="_onStateData"
     on-plans="_onPlans"
     on-plan="_onStateData"
@@ -67,20 +67,24 @@ const template = html`
     user="{{user}}"
     visited="{{arcs}}"
     on-theme="_onStateData"
+    on-arcs="_onStateData"
   ></shell-handles>
 
   <cloud-data
+    userid="{{userid}}"
     user="{{user}}"
+    arcs="{{arcs}}"
     key="{{key}}"
     arc="{{arc}}"
     metadata="{{metadata}}"
     description="{{description}}"
     plan="{{plan}}"
+    on-user="_onStateData"
     on-users="_onStateData"
     on-arcs="_onStateData"
     on-key="_onStateData"
     on-metadata="_onStateData"
-    on-serialized="_onStateData"
+    on-serialization="_onStateData"
   ></cloud-data>
 
   <shell-ui
@@ -116,13 +120,14 @@ import 'https://sjmiles.github.io/arcs-stories/0.3/PlaidAccounts/PlaidAccounts.r
 import '../artifacts/canonical.manifest'
 import '../artifacts/0.4/Arcs/Arcs.recipes'
       `,
-      user: {
-        id: 'f4',
-        info: {
-          name: 'Gomer',
-          avatar: `data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wCEAAkGBwgHBgkIBwgKCgkLDRUPDQwMGRoUGhAWIB0iIiAdHxskKDQsJCYxJxsfLT0tMTU3Ojo6Iys/RD84PDQ5OjcBCgoKBQUFDgUFDisZExkrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrK//AABEIADIAMgMBIgACEQEDEQH/xAAcAAACAQUBAAAAAAAAAAAAAAAABwYBAgMFCAT/xAA6EAABAwIEAgYHBQkAAAAAAAABAgMEABEFBhIhMUETIjJCUXEHFCNSYYGxNWJykaEVJTNTc8Hh8PH/xAAUAQEAAAAAAAAAAAAAAAAAAAAA/8QAFBEBAAAAAAAAAAAAAAAAAAAAAP/aAAwDAQACEQMRAD8A3M7MUzEcQbfZcXBiMNjoUd8qI7Tnht3d7UYznoQcHltyH0IxfoCppOoJSLg6VW+VRF0YklyMG5avbuJZZaYtdxZ5E02cq5SiYNFWZTbUzEZIHrUhwBWr7qb8Eig5zht4zmbElFQdnTHSFOLeOlCfDUf7VNWMm5ww2MXojmFWSLlsCwPw1GqxMOhftnGkQ4TsmGxiLzbMdKi2Eqv3vEC1hfap/GlLn4Y/C6KO8tlwtpSpPVWLbAjlQQz0cZmnRM1xsFxNC4SZKleyWSpKzY20qv73/adSkUvk4GyzjGByVwIrT0eV0qmWR1QdBFx4b6T8qYqk0GVAGhPkKKuR2E+VFAkvRcmNHxky8YfbUk9SAXFag2s87nskjYfPxpzJFjXL6ZK0QEgEFCbm/j/t632H55x3BkKZRPedi6QNCiFKb/CVXt5UEux3BXcq5sl4qFpOGYy/caduidtchXLrdYismXp0SHiMhiRibOt6YXI7KgELWFC1viPClJmfO2O4zOQrEZ7jzLK06W0jQjbgdA2v8aYOVMy4NIYTJmzgy/t7Eo1FVvdPPy4igYIfgPZhisS30tKIPQoWbdIvjpHxtUrNJHPSX5kSDiERC2pSZyFxEE6Vcf051NIecZyFhMlLLw71wUKTegn6eyPKitO3mGMW0koPAcxRQc0zoUnBJEvDMVaLDzNlFs7i1r7HmDVsZRmF5ska7a0g8+vb6U5fSzl2Ni+WncVSlKZuHM6wv32u8g/Uf5pGNPCI8xLQo6k3SofdNBnW00hKXXEJU2R0bw8N9j8j9aujRX4aSjDlsokKWFJUvc2T7t+HEVmDjDjqis9R4Dq22N+NWxHEIaUw91vV1W6RPaCeRtztwoNjiecJWKvwEPNBmRFsnS32NgesPmfpXtZxt16WXmf4je+n+Yk8fyP6GoaEhWJvOkjSAd08N/CtlCcEey7qCgsHy+FBPkZhZ0Jugg2G16rUfEzDiAVxxr71lc6rQOfMO+S8Yvv+73uP9M1y6oksDflRRQbSN9mMnmFbfnRF+0JX4aKKDzMgetSNh2k17ZQAYTYAdfl5VWig1ZJvxNFFFB//2Q==`
-        }
-      }
+      // user: {
+      //   id: 'f4',
+      //   info: {
+      //     name: 'Gomer',
+      //     avatar: `data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wCEAAkGBwgHBgkIBwgKCgkLDRUPDQwMGRoUGhAWIB0iIiAdHxskKDQsJCYxJxsfLT0tMTU3Ojo6Iys/RD84PDQ5OjcBCgoKBQUFDgUFDisZExkrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrK//AABEIADIAMgMBIgACEQEDEQH/xAAcAAACAQUBAAAAAAAAAAAAAAAABwYBAgMFCAT/xAA6EAABAwIEAgYHBQkAAAAAAAABAgMEABEFBhIhMUETIjJCUXEHFCNSYYGxNWJykaEVJTNTc8Hh8PH/xAAUAQEAAAAAAAAAAAAAAAAAAAAA/8QAFBEBAAAAAAAAAAAAAAAAAAAAAP/aAAwDAQACEQMRAD8A3M7MUzEcQbfZcXBiMNjoUd8qI7Tnht3d7UYznoQcHltyH0IxfoCppOoJSLg6VW+VRF0YklyMG5avbuJZZaYtdxZ5E02cq5SiYNFWZTbUzEZIHrUhwBWr7qb8Eig5zht4zmbElFQdnTHSFOLeOlCfDUf7VNWMm5ww2MXojmFWSLlsCwPw1GqxMOhftnGkQ4TsmGxiLzbMdKi2Eqv3vEC1hfap/GlLn4Y/C6KO8tlwtpSpPVWLbAjlQQz0cZmnRM1xsFxNC4SZKleyWSpKzY20qv73/adSkUvk4GyzjGByVwIrT0eV0qmWR1QdBFx4b6T8qYqk0GVAGhPkKKuR2E+VFAkvRcmNHxky8YfbUk9SAXFag2s87nskjYfPxpzJFjXL6ZK0QEgEFCbm/j/t632H55x3BkKZRPedi6QNCiFKb/CVXt5UEux3BXcq5sl4qFpOGYy/caduidtchXLrdYismXp0SHiMhiRibOt6YXI7KgELWFC1viPClJmfO2O4zOQrEZ7jzLK06W0jQjbgdA2v8aYOVMy4NIYTJmzgy/t7Eo1FVvdPPy4igYIfgPZhisS30tKIPQoWbdIvjpHxtUrNJHPSX5kSDiERC2pSZyFxEE6Vcf051NIecZyFhMlLLw71wUKTegn6eyPKitO3mGMW0koPAcxRQc0zoUnBJEvDMVaLDzNlFs7i1r7HmDVsZRmF5ska7a0g8+vb6U5fSzl2Ni+WncVSlKZuHM6wv32u8g/Uf5pGNPCI8xLQo6k3SofdNBnW00hKXXEJU2R0bw8N9j8j9aujRX4aSjDlsokKWFJUvc2T7t+HEVmDjDjqis9R4Dq22N+NWxHEIaUw91vV1W6RPaCeRtztwoNjiecJWKvwEPNBmRFsnS32NgesPmfpXtZxt16WXmf4je+n+Yk8fyP6GoaEhWJvOkjSAd08N/CtlCcEey7qCgsHy+FBPkZhZ0Jugg2G16rUfEzDiAVxxr71lc6rQOfMO+S8Yvv+73uP9M1y6oksDflRRQbSN9mMnmFbfnRF+0JX4aKKDzMgetSNh2k17ZQAYTYAdfl5VWig1ZJvxNFFFB//2Q==`
+      //   }
+      // }
+      userid: `-L8ZV0oJ3btRhU9wj7Le`
     };
   }
   _didMount() {
@@ -141,13 +146,14 @@ import '../artifacts/0.4/Arcs/Arcs.recipes'
     window.arc = state.arc;
   }
   _updateKey(state, oldState) {
-    let {key, arc} = state;
-    // TODO(sjmiles): shouldn't some of this be handled in arc-config.js?
-    const params = (new URL(document.location)).searchParams;
-    if (!key && (key === oldState.key)) {
-      key = state.key = ArcsUtils.getUrlParam('key') || Const.SHELLKEYS.launcher;
+    let {config, user, key, arc} = state;
+    if (user) {
+      // TODO(sjmiles): shouldn't some of this be handled in arc-config.js?
+      if (!key && (key === oldState.key)) {
+        key = state.key = config.key || Const.SHELLKEYS.launcher;
+      }
+      ArcsUtils.setUrlParam('key', !Const.SHELLKEYS[key] ? key : '');
     }
-    ArcsUtils.setUrlParam('key', !Const.SHELLKEYS[key] ? key : '');
   }
   _updateManifest(state) {
     this._setState({manifest: state.defaultManifest});
@@ -170,7 +176,7 @@ import '../artifacts/0.4/Arcs/Arcs.recipes'
         }
       }
       else if (suggestion && suggestion !== oldState.suggestion) {
-        log('suggestion registered from launcher, set key to *');
+        log('suggestion registered from launcher, generate new arc (set key to *)');
         state.pendingSuggestion = suggestion;
         this._setKey('*');
       }
@@ -216,7 +222,7 @@ import '../artifacts/0.4/Arcs/Arcs.recipes'
     this._setState({
       key,
       description: null,
-      serialized: null,
+      serialization: null,
       suggestions: null,
       suggestion: null,
       plan: null

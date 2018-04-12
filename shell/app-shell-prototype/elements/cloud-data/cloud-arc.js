@@ -29,13 +29,13 @@ class CloudArc extends Xen.Debug(Xen.Base, log) {
   _update({key, arc, metadata, description, plan}, state, oldProps) {
     if (key === '*') {
       if (key !== oldProps.key) {
-        this._fire('serialized', null);
+        this._fire('serialization', null);
         this._fire('key', this._createKey(state.db));
       }
     }
     else if (Const.SHELLKEYS[key]) {
       log('sending empty serialization for non-persistent key');
-      this._fire('serialized', '');
+      this._fire('serialization', '');
     } else if (key) {
       if (plan !== oldProps.plan && key !== 'launcher') {
         log('plan changed, good time to serialize?');
@@ -44,7 +44,7 @@ class CloudArc extends Xen.Debug(Xen.Base, log) {
       if (key !== oldProps.key) {
         state.watch.watches = [
           {path: `arcs/${key}/metadata`, handler: snap => this._metadataReceived(snap, key)},
-          {path: `arcs/${key}/serialized`, handler: snap => this._serializedReceived(snap, key)}
+          {path: `arcs/${key}/serialization`, handler: snap => this._serializationReceived(snap, key)}
         ];
       }
       if (metadata && description) {
@@ -64,23 +64,23 @@ class CloudArc extends Xen.Debug(Xen.Base, log) {
     return metadata;
   }
   async _serialize(db, key, arc) {
-    const serialized = await arc.serialize();
-    if (serialized !== this._state.serialized) {
+    const serialization = await arc.serialize();
+    if (serialization !== this._state.serialization) {
       // must cache first, Firebase update can fire callback synchronously
-      this._state.serialized = serialized;
-      const node = db.child(`${key}/serialized`);
-      groupCollapsed('writing serialized arc', String(node));
-      log(serialized);
+      this._state.serialization = serialization;
+      const node = db.child(`${key}/serialization`);
+      groupCollapsed('writing serialization arc', String(node));
+      log(serialization);
       groupEnd();
-      node.set(serialized);
+      node.set(serialization);
     }
   }
-  _serializedReceived(snap, key) {
-    log('watch triggered on serialized arc', `${key}/serialized`);
-    const serialized = snap.val() || '';
-    if (serialized !== this._state.serialized) {
-      this._state.serialized = serialized;
-      this._fire('serialized', serialized);
+  _serializationReceived(snap, key) {
+    log('watch triggered on serialization arc', `${key}/serialization`);
+    const serialization = snap.val() || '';
+    if (serialization !== this._state.serialization) {
+      this._state.serialization = serialization;
+      this._fire('serialization', serialization);
     }
   }
   _createKey(db) {

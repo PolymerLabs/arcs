@@ -85,7 +85,7 @@ ${style}
   <cx-tabs>
     <cx-tab>ALL</cx-tab>
     <cx-tab selected>RECENT</cx-tab>
-    <cx-tab>FAVORITE</cx-tab>
+    <cx-tab>STARRED</cx-tab>
     <cx-tab>SHARED</cx-tab>
   </cx-tabs>
   <div columns>
@@ -97,7 +97,7 @@ ${style}
 <template column>
   <div chip style="{{chipStyle}}">
     <div hovering>
-      <icon delete hide$="{{noDelete}}" key="{{arcId}}" on-click="_onDelete">star_border</icon>
+      <icon delete hide$="{{noDelete}}" key="{{arcId}}" on-click="_onStar">{{starred}}</icon>
       <icon delete hide$="{{noDelete}}" key="{{arcId}}" on-click="_onDelete">remove_circle_outline</icon>
     </div>
     <a href="{{href}}" trigger$="{{description}}">
@@ -124,7 +124,7 @@ ${style}
       return Boolean(state.items);
     }
     render(props, {items, profileItems}) {
-      const all = items.concat(profileItems);
+      const all = items; //.concat(profileItems);
       const pivot = (all.length + 1) >> 1;
       const columns = [all.slice(0, pivot), all.slice(pivot)];
       return {
@@ -141,34 +141,45 @@ ${style}
     _collateItems(arcs) {
       const result = {
         items: [],
-        profileItems: []
+        shared: [],
+        starred: [],
+        recent: [],
       };
       arcs.forEach((a, i) => {
         if (!a.deleted) {
-          // each item goes in either the `items` or `profileItems` list
-          const list = a.profile ? result.profileItems : result.items;
-          // massage the description
-          //const blurb = a.description.length > 70 ? a.description.slice(0, 70) + '...' : a.description;
-          const blurb = a.description;
-          const chipStyle = {
-            backgroundColor: a.bg || a.color || 'gray',
-            color: a.bg ? a.color : 'white',
-          };
-          // populate the selected list
-          list.push({
-            arcId: a.id,
-            // Don't allow deleting the 'New Arc' arc.
-            noDelete: i === 0,
-            href: a.href,
-            blurb,
-            description: a.description,
-            icon: a.icon,
-            chipStyle,
-            self: Boolean(a.profile)
-          });
+          let model = this._renderArc(a);
+          result.items.push(model);
+          if (a.starred) {
+            result.starred.push(model);
+          }
+          if (a.profile) {
+            result.shared.push(model);
+          }
         }
       });
       return result;
+    }
+    _renderArc(arc) {
+      // massage the description
+      //const blurb = arc.description.length > 70 ? arc.description.slice(0, 70) + '...' : arc.description;
+      const blurb = arc.description;
+      const chipStyle = {
+        backgroundColor: arc.bg || arc.color || 'gray',
+        color: arc.bg ? arc.color : 'white',
+      };
+      // populate a render model
+      return {
+        arcId: arc.id,
+        // Don't allow deleting the 'New Arc' arc.
+        noDelete: arc.key === '*',
+        href: arc.href,
+        blurb,
+        description: arc.description,
+        icon: arc.icon,
+        starred: arc.starred ? 'star' : 'star_border',
+        chipStyle,
+        self: Boolean(arc.profile)
+      };
     }
     _onDelete(e) {
       const arcId = e.data.key;
@@ -180,8 +191,20 @@ ${style}
         arcs.remove(arc);
         arc.deleted = true;
         arcs.store(arc);
-        log(`Marking arc [arcId=${arcId}] for deletion.`);
-        //this._views.get('arcs').remove(arc);
+        log(`Marking arc [${arc.key}] for deletion.`);
+      }
+    }
+    _onStar(e) {
+      const arcId = e.data.key;
+      const arc = this._props.arcs.find(a => a.id === arcId);
+      if (!arc) {
+        log(`Couldn't find arc to star [arcId=${arcId}].`);
+      } else {
+        const arcs = this.handles.get('arcs');
+        arc.starred = !arc.starred;
+        arcs.remove(arc);
+        arcs.store(arc);
+        log(`Toggled "starred" for arc [${arc.key}].`, arc);
       }
     }
     setHandle(name, data) {
