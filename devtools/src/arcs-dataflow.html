@@ -328,7 +328,7 @@
       }
 
       _formatTimestamp(timestamp) {
-        return formatTime(timestamp, true /* with millis */);
+        return formatTime(timestamp, 3 /* with millis */);
       }
 
       _truncate(data) {
@@ -338,8 +338,7 @@
       }
 
       _indentPrint(thing) {
-        if (typeof thing === "string") thing = JSON.parse(thing)
-        return JSON.stringify(thing, null, 2);
+        return indentPrint(thing); // from arcs-shared
       }
 
       _operationCssClass(operation) {

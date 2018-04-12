@@ -2,6 +2,7 @@
 <link rel="import" href="../bower_components/app-route/app-route.html">
 <link rel="import" href="../bower_components/iron-icons/iron-icons.html">
 <link rel="import" href="../bower_components/iron-icons/social-icons.html">
+<link rel="import" href="../bower_components/iron-icons/communication-icons.html">
 <link rel="import" href="../bower_components/iron-pages/iron-pages.html">
 <link rel="import" href="../bower_components/iron-selector/iron-selector.html">
 <link rel="import" href="../bower_components/neon-animation/web-animations.html">
@@ -15,6 +16,7 @@
 <link rel="import" href="arcs-communication-channel.html">
 <link rel="import" href="arcs-shared.html">
 <link rel="import" href="arcs-notifications.html">
+<link rel="import" href="arcs-tracing.html">
 <link rel="import" href="strategy-explorer/strategy-explorer.html">
 
 <dom-module id="arcs-devtools-app">
@@ -105,12 +107,14 @@
       <nav>
         <iron-selector selected="[[routeData.page]]" attr-for-selected="name" class="nav-list" role="navigation">
           <a name="overview" href="#overview"><iron-icon icon="timeline"></iron-icon>Overview</a>
+          <a name="traces" href="#traces"><iron-icon icon="communication:clear-all"></iron-icon>Traces</a>          
           <a name="dataflow" href="#dataflow"><iron-icon icon="swap-horiz"></iron-icon>Dataflow</a>
           <a name="strategyExplorer" href="#strategyExplorer"><iron-icon icon="settings-applications"></iron-icon>Strategy Explorer</a>
         </iron-selector>
       </nav>
-      <iron-pages selected="[[routeData.page]]" attr-for-selected="name" role="main" id="pages">
+      <iron-pages selected="[[routeData.page]]" attr-for-selected="name" selected-attribute="active" role="main" id="pages">
         <arcs-overview name="overview"></arcs-overview>
+        <arcs-tracing name="traces"></arcs-tracing>
         <arcs-dataflow id="dataflow" name="dataflow" query-params="{{queryParams}}"></arcs-dataflow>
         <strategy-explorer name="strategyExplorer"></strategy-explorer>
       </iron-pages>

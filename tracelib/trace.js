@@ -41,6 +41,16 @@ function parseInfo(info) {
   return info;
 }
 
+let streamingCallbacks = [];
+function pushEvent(e) {
+  events.push(e);
+  for (let {callback, predicate} of streamingCallbacks) {
+    Promise.resolve().then(() => {
+      if (!predicate || predicate(e)) callback(e);
+    });
+  }
+}
+
 let module = {exports: {}};
 export default module.exports;
 module.exports.enabled = false;
@@ -113,15 +123,18 @@ function init() {
           Object.assign(args, endInfo.args);
         }
         let end = now();
-        events.push({
+        pushEvent({
           ph: 'X',
           ts: begin,
           dur: end - begin,
           cat: info.cat,
           name: info.name,
+          ov: info.overview,
           args: args,
         });
       },
+      // TODO(piotrs): Clean up on when merging async() and start() APIs.
+      ts: begin
     };
   };
   // TODO: perhaps this should just be the only API, it acts the same as
@@ -129,11 +142,13 @@ function init() {
   module.exports.async = function(info) {
     let trace = module.exports.start(info);
     let flow;
-    let baseInfo = {cat: info.cat, name: info.name + ' (async)'};
+    let baseInfo = {cat: info.cat, name: info.name + ' (async)', overview: info.overview};
     return {
       async wait(v, info) {
         if (!flow) {
-          flow = module.exports.flow(baseInfo).start();
+          // Use start time of the first trace as timestamp to for flow start,
+          // to display a range encompassing all duration events in devtools.
+          flow = module.exports.flow(Object.assign({ts: trace.ts}, baseInfo)).start();
         }
         trace.end(info);
         trace = null;
@@ -174,13 +189,14 @@ function init() {
     let started = false;
     return {
       start: function() {
-        let begin = now();
+        let begin = info.ts || now();
         started = true;
-        events.push({
+        pushEvent({
           ph: 's',
           ts: begin,
           cat: info.cat,
           name: info.name,
+          ov: info.overview,
           args: info.args,
           id: id,
         });
@@ -190,12 +206,13 @@ function init() {
         if (!started) return;
         let end = now();
         endInfo = parseInfo(endInfo);
-        events.push({
+        pushEvent({
           ph: 'f',
           bp: 'e', // binding point is enclosing slice.
           ts: end,
           cat: info.cat,
           name: info.name,
+          ov: info.overview,
           args: endInfo && endInfo.args,
           id: id,
         });
@@ -205,11 +222,12 @@ function init() {
         if (!started) return;
         let step = now();
         stepInfo = parseInfo(stepInfo);
-        events.push({
+        pushEvent({
           ph: 't',
           ts: step,
           cat: info.cat,
           name: info.name,
+          ov: info.overview,
           args: stepInfo && stepInfo.args,
           id: id,
         });
@@ -235,6 +253,10 @@ function init() {
     a.download = 'trace.json';
     a.href = 'data:text/plain;base64,' + btoa(JSON.stringify(module.exports.save()));
     a.click();
+  };
+  module.exports.now = now;
+  module.exports.stream = function(callback, predicate) {
+    streamingCallbacks.push({callback, predicate});
   };
 }
 

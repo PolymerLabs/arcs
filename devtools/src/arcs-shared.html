@@ -1,3 +1,5 @@
+<script src="../bower_components/vis/dist/vis.min.js"></script>
+
 <dom-module id="shared-styles">
   <template>
     <style>
@@ -48,6 +50,21 @@
       .nav-list a iron-icon {
         margin-right: 3px;
       }
+      resizable-panels {
+        height: 100%;
+        --resizable-panels-knob: {
+          background-color: var(--light-gray);
+          border-left: 1px solid var(--mid-gray);
+        };
+      }
+      resizable-panels > aside {
+        background-color: var(--light-gray);
+        overflow: scroll;
+        width: 200px; /* Initial width before resizing */
+      }
+      resizable-panels > aside > * {
+        margin: 5px 5px 5px 2px;
+      }
     </style>
   </template>
 </dom-module>
@@ -55,12 +72,15 @@
 <script>
   const writeOps = ['set', 'store', 'clear', 'remove'];
 
-  const formatTime = function(timestamp, withMillis) {
+  function formatTime(timestamp, digits = 0) {
     let d = new Date(timestamp);
     let time = [ d.getHours(), d.getMinutes(), d.getSeconds() ].map(x => String(x).padStart(2, '0')).join(':');
-    if (withMillis) {
-      time += '.' + String(d.getMilliseconds()).padStart(3, '0');
-    }
+    if (digits > 0) time += (timestamp / 1000 % 1).toFixed(digits).substr(1);
     return time;
+  }
+
+  function indentPrint(thing) {
+    if (typeof thing === "string") thing = JSON.parse(thing)
+    return JSON.stringify(thing, null, 2);
   }
 </script>

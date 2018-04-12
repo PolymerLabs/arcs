@@ -11,7 +11,6 @@
 
 import runtime from './runtime.js';
 import assert from '../platform/assert-web.js';
-import tracing from '../tracelib/trace.js';
 import Type from './type.js';
 import Relation from './relation.js';
 import handle from './handle.js';
@@ -25,6 +24,7 @@ import StorageProviderFactory from './storage/storage-provider-factory.js';
 import scheduler from './scheduler.js';
 import {registerArc} from '../devtools/shared/arc-registry.js';
 import Id from './id.js';
+import {enableTracingAdapter} from './debug/tracing-adapter.js';
 
 class Arc {
   constructor({id, context, pecFactory, slotComposer, loader, storageKey, storageProviderFactory, speculative}) {
@@ -128,7 +128,7 @@ class Arc {
     for (let handle of this._activeRecipe.handles) {
       if (handle.fate == 'map')
         importSet.add(this.context.findManifestUrlForHandleId(handle.id));
-      else 
+      else
         handleSet.add(handle.id);
     }
     for (let url of importSet.values())
@@ -540,6 +540,7 @@ ${this.activeRecipe.toString()}`;
   }
 
   initDebug() {
+    enableTracingAdapter();
     this._debugging = true;
     this.pec.initDebug();
   }
