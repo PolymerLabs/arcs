@@ -121,13 +121,25 @@ function waitForVisible(selectors) {
   browser.waitUntil(() => {
     const selected = pierceShadows(selectors);
     if (!selected.value || selected.value.length <= 0) {
+      console.log(`Couldn't find element with selector ${selectors}`);
       return false;
     }
 
-    return browser.unify(
-        selected.value.map(elem => browser.elementIdDisplayed(elem.ELEMENT)),
-        {extractValue: true});
-  }, 2500, `selectors ${selectors} never selected anything`, 500);
+    let visible = selected.value.reduce((elem, currentValue) => {
+      let eid = browser.elementIdDisplayed(selected.value[0].ELEMENT);
+      return currentValue && eid.value;
+    }, true);
+
+    if (!visible) {
+      console.log(`A selected element not visible (element ${
+          selected.value} of selector ${selectors})`);
+      return false;
+    } else {
+      console.log(`All selected elements are visible (element ${
+          selected.value} of selector ${selectors})`);
+      return true;
+    }
+  }, 10000, `selectors ${selectors} never selected anything`, 500);
 }
 
 function dancingDotsElement() {
@@ -226,7 +238,8 @@ function initTestWithNewArc(testTitle) {
 
   const urlParams = [
     `testFirebaseKey=${firebaseKey}`,
-    `solo=${browser.options.baseUrl}shell/artifacts/canonical.manifest`
+    `solo=${browser.options.baseUrl}shell/artifacts/canonical.manifest`,
+    `log=true`
   ];
 
   // note - baseUrl (currently specified on the command line) must end in a
@@ -454,8 +467,7 @@ describe('Arcs demos', function() {
         'Buy gifts for Claire\'s Birthday on 2017-08-04, Estimate arrival date for products');
     acceptSuggestion(
         'Check manufacturer information for products from your browsing context');
-    acceptSuggestion(
-        'Find alternate shipping');
+    acceptSuggestion('Find alternate shipping');
     acceptSuggestion(
         `Recommendations based on Claire\'s wishlist`
         // TODO: add 'and Claire\'s wishlist' when regex is supported.
