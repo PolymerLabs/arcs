@@ -9,7 +9,7 @@
  */
 
 import Loader from '../../runtime/loader.js';
-import particle from '../../runtime/particle.js';
+import {Particle} from '../../runtime/particle.js';
 import DomParticle from '../../runtime/dom-particle.js';
 import MultiplexerDomParticle from '../../runtime/multiplexer-dom-particle.js';
 import TransformationDomParticle from '../../runtime/transformation-dom-particle.js';
@@ -74,8 +74,7 @@ export default class BrowserLoader extends Loader {
     //  for use in DOM
     let resolver = this._resolve.bind(this);
     return particleWrapper({
-      particle,
-      Particle: particle.Particle,
+      Particle,
       DomParticle,
       MultiplexerDomParticle,
       SimpleParticle: DomParticle,

@@ -28,9 +28,6 @@ export class Particle {
     this._idle = Promise.resolve();
     this._idleResolver = null;
     this._busy = 0;
-    this.slotHandlers = [];
-    this.stateHandlers = new Map();
-    this.states = new Map();
     this._slotByName = new Map();
     this.capabilities = capabilities || {};
   }
@@ -102,24 +99,6 @@ export class Particle {
     return this._slotByName.get(name);
   }
 
-  addSlotHandler(f) {
-    this.slotHandlers.push(f);
-  }
-
-  addStateHandler(states, f) {
-    states.forEach(state => {
-      if (!this.stateHandlers.has(state)) {
-        this.stateHandlers.set(state, []);
-      }
-      this.stateHandlers.get(state).push(f);
-    });
-  }
-
-  emit(state, value) {
-    this.states.set(state, value);
-    this.stateHandlers.get(state).forEach(f => f(value));
-  }
-
   /** @method on(views, names, kind, f)
    * Convenience method for registering a callback on multiple views at once.
    *
@@ -134,10 +113,6 @@ export class Particle {
     let trace = tracing.start({cat: 'particle', names: this.constructor.name + '::on', args: {view: names, event: kind}});
     names.forEach(name => views.get(name).on(kind, tracing.wrap({cat: 'particle', name: this.constructor.name, args: {view: name, event: kind}}, f), this));
     trace.end();
-  }
-
-  when(changes, f) {
-    changes.forEach(change => change.register(this, f));
   }
 
   fireEvent(slotName, event) {
@@ -169,6 +144,7 @@ export class Particle {
   setParticleDescription(pattern) {
     return this.setDescriptionPattern('_pattern_', pattern);
   }
+
   setDescriptionPattern(connectionName, pattern) {
     let descriptions = this._views.get('descriptions');
     if (descriptions) {
@@ -178,43 +154,3 @@ export class Particle {
     return false;
   }
 }
-
-export class ViewChanges {
-  constructor(views, names, type) {
-    if (typeof names == 'string')
-      names = [names];
-    this.names = names;
-    this.views = views;
-    this.type = type;
-  }
-  register(particle, f) {
-    let modelCount = 0;
-    let afterAllModels = () => { if (++modelCount == this.names.length) { f(); } };
-
-    for (let name of this.names) {
-      let view = this.views.get(name);
-      view.synchronize(this.type, afterAllModels, f, particle);
-    }
-  }
-}
-
-export class SlotChanges {
-  constructor() {
-  }
-  register(particle, f) {
-    particle.addSlotHandler(f);
-  }
-}
-
-export class StateChanges {
-  constructor(states) {
-    if (typeof states == 'string')
-      states = [states];
-    this.states = states;
-  }
-  register(particle, f) {
-    particle.addStateHandler(this.states, f);
-  }
-}
-
-export default {Particle, ViewChanges, SlotChanges, StateChanges};
