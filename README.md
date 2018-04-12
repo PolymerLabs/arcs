@@ -210,3 +210,32 @@ Integration](https://nodejs.org/api/debugger.html) which may be easier to use
 Adding `debugger;` statements may be the easiest way to activate the debugger.
 Using `browser.debug();` statements to pause execution to give you time to
 attach a debugger may be helpful as well.
+
+## Releasing
+
+Our release process is pretty minimal, but requires a few steps across the
+[arcs](https://github.com/PolymerLabs/arcs) and
+[arcs-live](https://github.com/PolymerLabs/arcs-live) repositories.
+
+1) In order to keep the mainline data roughly consistent, clone the data at
+  the current firebase key to the new mainline release number. To do this, I
+  used the firebase web interface to "Export JSON" for the current tree, and
+  upload it to the new tree.
+
+  Note that if the web interface is read-only due to too many nodes, you can
+  visit (and create!) new nodes directly by changing the URL.
+
+1) Update the version in `shell/apps/common/firebase-config.js` to a
+  reasonable stable version. See
+  [#1114](https://github.com/PolymerLabs/arcs/pull/1114) for an example.
+
+1) Once the deploy is done to
+  [arcs-live](https://github.com/PolymerLabs/arcs-live), create a new
+  [release](https://github.com/PolymerLabs/arcs-live/releases). Note that we
+  remap the versions slightly between the two systems for legibility in
+  different systems - a version of `0_3_4` (in `firebase-config.js`) becomes
+  `v0.3.4` (in the arcs-live repo).
+
+1) Update the version in `shell/apps/common/firebase-config.js` to a
+  reasonable mainline development version (perhaps using the `-alpha` suffix).
+  See [#1155](https://github.com/PolymerLabs/arcs/pull/1155) for an example.
