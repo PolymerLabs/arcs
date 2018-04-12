@@ -41,7 +41,9 @@ class ArcPlanner extends Xen.Debug(Xen.Base, log) {
       this._instantiatePlan(arc, pendingPlans.shift());
     }
     if (arc && !suggestions) {
-      this._schedulePlanning();
+      //this._schedulePlanning();
+      // TODO(sjmiles): experiment, change name of this method if keeping this code
+      this._runtimeHandlesUpdated();
     }
     if (arc && (search || search==='')) {
       search = (search || '').trim().toLowerCase();
