@@ -26,15 +26,15 @@ const template = html`
 
   <cloud-users on-users="_onForward"></cloud-users>
   <cloud-arc key="{{key}}" arc="{{arc}}" metadata="{{metadata}}" description="{{description}}" plan="{{plan}}"
-      on-key="_onForward" on-metadata="_onForward" on-serialized="_onForward"></cloud-arc>
-  <cloud-user on-arcs="_onForward"></cloud-user>
+      on-key="_onForward" on-metadata="_onForward" on-serialization="_onForward"></cloud-arc>
+  <cloud-user userid="{{userid}}" user="{{user}}" arcs="{{arcs}}" on-user="_onForward" on-arcs="_onForward"></cloud-user>
 `;
 
 const log = Xen.logFactory('CloudData', '#004f00');
 
 class CloudData extends Xen.Debug(Xen.Base, log) {
   static get observedAttributes() {
-    return ['key', 'metadata', 'description', 'plan', 'arc'];
+    return ['userid', 'user', 'arcs', 'key', 'metadata', 'description', 'plan', 'arc'];
   }
   get template() {
     return template;

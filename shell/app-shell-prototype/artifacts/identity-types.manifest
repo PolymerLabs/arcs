@@ -5,15 +5,5 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-schema ArcMetadata
-  Text description
-  Text icon
-  Text key
-  Text href
-  Text bg
-  Text color
-  Text profile
-  Text blurb
-  Boolean deleted
-  Boolean starred
-  URL externalManifest
+import '../../artifacts/People/Person.schema'
+import '../../artifacts/People/Avatar.schema'

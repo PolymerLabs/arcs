@@ -42,7 +42,7 @@ class ShellHandles extends Xen.Debug(Xen.Base, log) {
   }
   _getInitialState() {
     this._watchGeolocation();
-    const typesPath = `${shellPath}/app-shell/artifacts`;
+    const typesPath = `${shellPath}/app-shell-prototype/artifacts`;
     return {
       themeData: {
         mainBackground: 'white'
@@ -180,9 +180,33 @@ class ShellHandles extends Xen.Debug(Xen.Base, log) {
     this._fire('theme', theme);
   }
   async _onArcsHandleChange(e, handle) {
-    const arcs = (await ArcsUtils.getHandleData(handle));
-    log('onArcsHandleChange', arcs);
-    this._fire('launcherarcs', arcs);
+    const old = this._props.visited;
+    const data = (await ArcsUtils.getHandleData(handle));
+    log('onArcsHandleChange', data);
+    let dirty = false;
+    // This implementation keeps transformation between Firebase data and Handle data
+    // entirely in this module (doesn't leak Handle data format), which is good.
+    // However, it's probably better to construct a change set and plumb that through
+    // to cloud-data which can use the deltas to update the database more selectively.
+    const arcs = {};
+    data.forEach(entity => {
+      const meta = entity.rawData;
+      let arc = old[meta.key];
+      if (arc) {
+        if (meta.deleted) {
+          dirty = true;
+          arc.metadata.deleted = meta.deleted;
+        } else if (meta.starred !== arc.metadata.starred) {
+          dirty = true;
+          arc = Xen.clone(arc);
+          arc.metadata.starred = meta.starred;
+        }
+        arcs[meta.key] = arc;
+      }
+    });
+    if (dirty) {
+      this._fire('arcs', arcs);
+    }
   }
 }
 customElements.define('shell-handles', ShellHandles);
