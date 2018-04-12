@@ -158,6 +158,7 @@ class ShellHandles extends Xen.Debug(Xen.Base, log) {
         profile: profile
       };
     });
+    /*
     // prepend New Arc item
     data.unshift({
       key: '*',
@@ -167,6 +168,7 @@ class ShellHandles extends Xen.Debug(Xen.Base, log) {
       color: 'white',
       href: `?arc=*&user=${user.id}`
     });
+    */
     return data;
   }
   _onData(e, data) {
@@ -181,31 +183,33 @@ class ShellHandles extends Xen.Debug(Xen.Base, log) {
   }
   async _onArcsHandleChange(e, handle) {
     const old = this._props.visited;
-    const data = (await ArcsUtils.getHandleData(handle));
-    log('onArcsHandleChange', data);
-    let dirty = false;
-    // This implementation keeps transformation between Firebase data and Handle data
-    // entirely in this module (doesn't leak Handle data format), which is good.
-    // However, it's probably better to construct a change set and plumb that through
-    // to cloud-data which can use the deltas to update the database more selectively.
-    const arcs = {};
-    data.forEach(entity => {
-      const meta = entity.rawData;
-      let arc = old[meta.key];
-      if (arc) {
-        if (meta.deleted) {
-          dirty = true;
-          arc.metadata.deleted = meta.deleted;
-        } else if (meta.starred !== arc.metadata.starred) {
-          dirty = true;
-          arc = Xen.clone(arc);
-          arc.metadata.starred = meta.starred;
+    if (old) {
+      const data = await ArcsUtils.getHandleData(handle);
+      log('onArcsHandleChange', data);
+      let dirty = false;
+      // This implementation keeps transformation between Firebase data and Handle data
+      // entirely in this module (doesn't leak Handle data format), which is good.
+      // However, it's probably better to construct a change set and plumb that through
+      // to cloud-data which can use the deltas to update the database more selectively.
+      const arcs = {};
+      data.forEach(entity => {
+        const meta = entity.rawData;
+        let arc = old[meta.key];
+        if (arc) {
+          if (meta.deleted) {
+            dirty = true;
+            arc.metadata.deleted = meta.deleted;
+          } else if (meta.starred !== arc.metadata.starred) {
+            dirty = true;
+            arc = Xen.clone(arc);
+            arc.metadata.starred = meta.starred;
+          }
+          arcs[meta.key] = arc;
         }
-        arcs[meta.key] = arc;
+      });
+      if (dirty) {
+        this._fire('arcs', arcs);
       }
-    });
-    if (dirty) {
-      this._fire('arcs', arcs);
     }
   }
 }
