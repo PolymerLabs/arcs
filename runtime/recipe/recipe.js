@@ -325,7 +325,7 @@ class Recipe {
   clone(cloneMap) {
     // for now, just copy everything
 
-    let recipe = new Recipe();
+    let recipe = new Recipe(this.name);
 
     if (cloneMap == undefined)
       cloneMap = new Map();

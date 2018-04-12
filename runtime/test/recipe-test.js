@@ -39,6 +39,17 @@ describe('recipe', function() {
     recipe.handles.forEach(handle => assert.isTrue(options.errors.has(handle)));
     options.errors.has(recipe.slots[1]);
   });
+  it('clones recipe', async () => {
+    let manifest = await Manifest.parse(`
+        particle Particle1
+          Particle1()
+        recipe MyRecipe
+          Particle1
+    `);
+    let recipe = manifest.recipes[0];
+    let clonedRecipe = recipe.clone();
+    assert.equal(recipe.toString(), clonedRecipe.toString());
+  });
   it('validate handle connection types', async () => {
     let manifest = await Manifest.parse(`
         schema MyType
