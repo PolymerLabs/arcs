@@ -145,6 +145,14 @@ export default class TestHelper {
           let planParticles = p.plan.particles.map(particle => particle.name);
           return planParticles.length == options.particles.length && planParticles.every(p => options.particles.includes(p));
         });
+        if (options.hostedParticles) {
+          plans = plans.filter(p => {
+            return options.hostedParticles.every(hosted => {
+              let interfaceHandles = p.plan.handles.filter(h => h.type.isInterface);
+              return interfaceHandles.find(handle => this.arc.findHandleById(handle.id)._stored.name == hosted);
+            });
+          });
+        }
         assert.equal(1, plans.length);
         plan = plans[0];
       } else if (options.descriptionText) {
