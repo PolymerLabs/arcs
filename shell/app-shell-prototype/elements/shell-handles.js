@@ -35,7 +35,7 @@ const warn = Xen.logFactory('ShellHandles', '#004f00', 'warn');
 
 class ShellHandles extends Xen.Debug(Xen.Base, log) {
   static get observedAttributes() {
-    return ['arc', 'users', 'user', 'visited'];
+    return ['arc', 'users', 'user', 'arcs'];
   }
   get template() {
     return template;
@@ -105,7 +105,7 @@ class ShellHandles extends Xen.Debug(Xen.Base, log) {
     }
   }
   _update(props, state, oldProps, oldState) {
-    const {users, user, visited, arc} = props;
+    const {users, user, arcs, arc} = props;
     const {geoCoords} = state;
     if (user && (user !== oldProps.user || geoCoords !== oldState.geoCoords)) {
       state.userHandleData = this._renderUser(user, geoCoords);
@@ -113,8 +113,8 @@ class ShellHandles extends Xen.Debug(Xen.Base, log) {
     if (users && (users !== oldProps.users || !state.usersHandleData)) {
       state.usersHandleData = this._renderUsers(users);
     }
-    if (visited !== oldProps.visited) {
-      state.arcsHandleData = this._renderVisited(user, visited);
+    if (arcs !== oldProps.arcs) {
+      state.arcsHandleData = this._renderArcs(user, arcs);
     }
   }
   _render(props, state) {
@@ -135,28 +135,23 @@ class ShellHandles extends Xen.Debug(Xen.Base, log) {
       };
     });
   }
-  _renderVisited(user, visited) {
-    const data = Object.keys(visited || Object).map(key => {
-      let {metadata, profile} = visited[key];
-      // TODO(sjmiles): not supposed to happen, fault tolerance here
-      if (!metadata) {
-        warn(`arc [${key}] is missing metadata`);
-        metadata = {
-          description: '(untitled)'
-        };
+  _renderArcs(user, arcs) {
+    const data = [];
+    Object.keys(arcs || Object).forEach(key => {
+      const arc = arcs[key];
+      if (!arc.deleted) {
+        let metadata = arc.metadata || {};
+        const href = `${location.origin}${location.pathname}?arc=${key}&user=${user.id}`;
+        data.push({
+          key: key,
+          href: href,
+          description: metadata.description,
+          color: metadata.color || 'gray',
+          bg: metadata.bg,
+          touched: arc.touched,
+          starred: arc.starred
+        });
       }
-      let href = `${location.origin}${location.pathname}?arc=${key}&user=${user.id}`;
-      if (metadata.externalManifest) {
-        href += `&manifest=${metadata.externalManifest}`;
-      }
-      return {
-        key: key,
-        description: metadata.description,
-        color: metadata.color || 'gray',
-        bg: metadata.bg,
-        href: href,
-        profile: profile
-      };
     });
     /*
     // prepend New Arc item
@@ -182,10 +177,11 @@ class ShellHandles extends Xen.Debug(Xen.Base, log) {
     this._fire('theme', theme);
   }
   async _onArcsHandleChange(e, handle) {
-    const old = this._props.visited;
+    const old = this._props.arcs;
     if (old) {
+      log('onArcsHandleChange: waiting to getHandleData');
       const data = await ArcsUtils.getHandleData(handle);
-      log('onArcsHandleChange', data);
+      log('onArcsHandleChange: got data: ', data);
       let dirty = false;
       // This implementation keeps transformation between Firebase data and Handle data
       // entirely in this module (doesn't leak Handle data format), which is good.
@@ -193,18 +189,18 @@ class ShellHandles extends Xen.Debug(Xen.Base, log) {
       // to cloud-data which can use the deltas to update the database more selectively.
       const arcs = {};
       data.forEach(entity => {
-        const meta = entity.rawData;
-        let arc = old[meta.key];
+        entity = entity.rawData;
+        let arc = old[entity.key];
         if (arc) {
-          if (meta.deleted) {
+          if (entity.deleted) {
             dirty = true;
-            arc.metadata.deleted = meta.deleted;
-          } else if (meta.starred !== arc.metadata.starred) {
+            arc.deleted = entity.deleted;
+          } else if (entity.starred !== arc.starred) {
             dirty = true;
             arc = Xen.clone(arc);
-            arc.metadata.starred = meta.starred;
+            arc.starred = Boolean(entity.starred);
           }
-          arcs[meta.key] = arc;
+          arcs[entity.key] = arc;
         }
       });
       if (dirty) {

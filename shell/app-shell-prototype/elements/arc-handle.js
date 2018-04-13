@@ -14,7 +14,7 @@ import ArcsUtils from '../lib/arcs-utils.js';
 
 const log = Xen.logFactory('ArcHandle', '#c6a700');
 
-class ArcHandle extends Xen.Base {
+class ArcHandle extends Xen.Debug(Xen.Base, log) {
   static get observedAttributes() { return ['arc', 'options', 'data']; }
   async _update(props, state, oldProps) {
     let {arc, options, data} = props;

@@ -37,7 +37,7 @@ class CloudArc extends Xen.Debug(Xen.Base, log) {
       log('sending empty serialization for non-persistent key');
       this._fire('serialization', '');
     } else if (key) {
-      if (plan !== oldProps.plan && key !== 'launcher') {
+      if (plan && plan !== oldProps.plan && key !== 'launcher') {
         log('plan changed, good time to serialize?');
         this._serialize(state.db, key, arc);
       }
@@ -65,18 +65,18 @@ class CloudArc extends Xen.Debug(Xen.Base, log) {
   }
   async _serialize(db, key, arc) {
     const serialization = await arc.serialize();
-    if (serialization !== this._state.serialization) {
+    if (this._props.arc && serialization !== this._state.serialization) {
       // must cache first, Firebase update can fire callback synchronously
       this._state.serialization = serialization;
       const node = db.child(`${key}/serialization`);
-      groupCollapsed('writing serialization arc', String(node));
+      groupCollapsed('writing arc serialization', String(node));
       log(serialization);
       groupEnd();
       node.set(serialization);
     }
   }
   _serializationReceived(snap, key) {
-    log('watch triggered on serialization arc', `${key}/serialization`);
+    log('watch triggered on arc serialization', `${key}/serialization`);
     const serialization = snap.val() || '';
     if (serialization !== this._state.serialization) {
       this._state.serialization = serialization;
