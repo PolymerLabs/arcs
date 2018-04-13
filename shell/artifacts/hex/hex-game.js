@@ -29,6 +29,28 @@ defineParticle(({DomParticle, html}) => {
         height: 100%;
         display: block;
       }
+      hex-cell[border=xy] {
+        --border-rotation: 30deg;
+      }
+      hex-cell[border=yX] {
+        --border-rotation: -60deg;
+      }
+      hex-cell[border=xY] {
+        --border-rotation: 120deg;
+      }
+      hex-cell[border=XY] {
+        --border-rotation: 210deg;
+      }
+      hex-cell[border] {
+        background: linear-gradient(var(--border-rotation), var(--hex-x) 0%, var(--hex-x) 50%, var(--hex-y) 50%, var(--hex-y) 0%);
+        opacity: 0.25;
+      }
+      hex-cell[border=x i] {
+        background: var(--hex-x);
+      }
+      hex-cell[border=y i] {
+        background: var(--hex-y);
+      }
       hex-game[can-move][can-swap] hex-cell:hover,
       hex-game[can-move] hex-cell:not([player]):hover {
         background: var(--current-player-color);
@@ -36,14 +58,16 @@ defineParticle(({DomParticle, html}) => {
       }
       hex-cell[player=x] {
         background: var(--hex-x);
+        opacity: 1;
       }
       hex-cell[player=y] {
         background: var(--hex-y);
+        opacity: 1;
       }
     </style>
     <div slotid="summary"></div>
     <hex-game player$="{{player}}" can-move$="{{canMove}}" can-swap$="{{canSwap}}" slotid="board"></hex-game>`;
-  const cellTemplate = html`<hex-cell player$="{{move}}" on-click="onCellClick" key="{{key}}"></hex-cell>`;
+  const cellTemplate = html`<hex-cell player$="{{move}}" border$="{{border}}" on-click="onCellClick" key="{{key}}"></hex-cell>`;
 
   class Board {
     constructor(size) {
@@ -133,10 +157,18 @@ defineParticle(({DomParticle, html}) => {
       let result = [];
       for (let x = 0; x < this.size; x++) {
         for (let y = 0; y < this.size; y++) {
+          let border = [];
+          if (x == 0) border.push('x');
+          if (y == 0) border.push('y');
+          if (x == this.size - 1) border.push('X');
+          if (y == this.size - 1) border.push('Y');
           let model = {
             subId: `${x}-${y}`,
             key: {x, y},
           };
+          if (border.length) {
+            model.border = border.join('');
+          }
           let move = this.cell(x, y);
           if (move) {
             model.move = move;
