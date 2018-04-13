@@ -10,7 +10,13 @@ install:
 
 build: off
 
+# Instead of specific targets, this should use `npm test`.
+# But, that needs some work, and the tests themselves aren't stable so I'm
+# going to wait to add more sources of possible failure.
 test_script:
   - node --version
   - npm --version
-  - npm test
+  - npm run test-sigh
+  - npm run test-mocha
+  - npm run test-extension
+  - npm run test-mocha-words
