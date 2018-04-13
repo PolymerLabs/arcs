@@ -8,3 +8,4 @@
 
 particle CopyCollection in 'source/CopyCollection.js'
   CopyCollection(in [~a] input, out [~a] output)
+  description `copy ${input} to ${output}`
