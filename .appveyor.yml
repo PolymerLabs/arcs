@@ -1,5 +1,7 @@
+version: '0.0.${build}'
+
 environment:
-  nodejs_version: "9"
+  nodejs_version: '9'
 
 install:
   - ps: Install-Product node $env:nodejs_version
