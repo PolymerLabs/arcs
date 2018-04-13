@@ -13,7 +13,7 @@ afterEach(function() {
 });
 
 describe('SeleniumUtils', function() {
-  describe('#pierceShadowsSingle()', function() {
+  describe('#pierceShadowsSingle', function() {
     it('should cross a simple shadow boundary', function() {
       target.innerHTML = `
         <div outer>
@@ -107,7 +107,7 @@ describe('SeleniumUtils', function() {
       assert.equal(result.textContent, 'goal');
     });
   });
-  describe('#pierceShadows()', function() {
+  describe('#pierceShadows', function() {
     it('should return multiple valid matches', function() {
       target.innerHTML = `
         <div outer>

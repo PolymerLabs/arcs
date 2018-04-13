@@ -256,7 +256,7 @@ function initTestWithNewArc(testTitle) {
   // use a solo URL pointing to our local recipes
   browser.url(`${browser.getUrl()}&${urlParams.join('&')}`);
 
-  // that page load (`browser.url()`) will drop our utils, so load again.
+  // that reload (`browser.url()`) will drop our utils, so load again.
   loadSeleniumUtils();
 
   // check out some basic structure relative to the app footer
@@ -412,44 +412,6 @@ function clickInParticles(slotName, selectors, textQuery) {
           realSelectors} textQuery ${textQuery}`);
 }
 
-/**
- * Grab some data from the page, refresh the page, and validate that the data
- * hasn't changed.
- */
-function testAroundRefresh() {
-  const getOrCompare =
-      expectedValues => {
-        let actualValues = {};
-
-        const titleElem =
-            pierceShadowsSingle(['app-shell', 'shell-ui', '#arc-title']);
-        actualValues.title = browser.elementIdText(titleElem.value.ELEMENT);
-
-        const suggestionsElement = getAtLeastOneSuggestion();
-        actualValues.suggestions = suggestionsElement ?
-            suggestionsElement.value.map(suggestion => {
-              return browser.elementIdText(suggestion.ELEMENT).value;
-            }) :
-            [];
-
-        for (let key in expectedValues) {
-          assert.equal(actualValues[key].value, expectedValues[key].value);
-        }
-
-        return actualValues;
-      };
-
-
-  const expectedValues = getOrCompare();
-
-  browser.refresh();
-  loadSeleniumUtils();
-
-  waitForStillness();
-
-  getOrCompare(expectedValues);
-}
-
 describe('Arcs demos', function() {
   it('can book a restaurant', /** @this Context */ function() {
     initTestWithNewArc(this.test.fullTitle());
@@ -474,8 +436,6 @@ describe('Arcs demos', function() {
 
     acceptSuggestion('Table for 2');
     acceptSuggestion('from your calendar');
-
-    testAroundRefresh();
 
     // debug hint: to drop into debug mode with a REPL; also a handy way to
     // see the state at the end of the test:
