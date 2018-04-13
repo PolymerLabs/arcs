@@ -21,26 +21,12 @@ http://polymer.github.io/PATENTS.txt
 <dom-module id='strategy-explorer'>
   <template>
     <style include='shared-styles'>
-      resizable-panels {
-        height: 100%;
-        --resizable-panels-knob: {
-          background-color: var(--light-gray);
-          border-left: 1px solid var(--mid-gray);
-        };
-      }
       .se-explorer-container {
         overflow: scroll;
         flex-grow: 1;
       }
       aside {
-        background-color: var(--light-gray);
-        overflow: scroll;
-        width: 200px; /* Initial width before resizing */
         flex-shrink: 0;
-      }
-      aside > * {
-        /* Weird CSS, but padding-right causes issues with resizable-panels */
-        margin: 5px 5px 5px 2px;
       }
     </style>
     <resizable-panels>

@@ -1,3 +1,5 @@
+const startupTime = Date.now();
+
 let log = console.log.bind(console,
   '%cArcsExplorer',
   'background: #000; color: white; padding: 1px 6px 2px 7px; border-radius: 6px;');
@@ -31,6 +33,10 @@ chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
           }
         };
       }
+      chrome.runtime.sendMessage([{
+        messageType: 'startup-time',
+        messageBody: startupTime
+      }]);
       break;
     case 'illuminate': {
       let shell = document.getElementsByTagName('app-shell')[0];
@@ -48,8 +54,5 @@ chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
 });
 
 function addInitDebugScript() {
-  let script = document.createElement('script');
-  script.setAttribute('type', 'module');
-  script.setAttribute('src', chrome.extension.getURL('/src/run-init-debug.js'));
-  document.getElementsByTagName('body')[0].appendChild(script);
+  document.body.appendChild(Object.assign(document.createElement('script'), {type: 'module', src: chrome.extension.getURL('/src/run-init-debug.js')}));
 }
