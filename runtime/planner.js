@@ -72,7 +72,7 @@ class Planner {
 
   // Specify a timeout value less than zero to disable timeouts.
   async plan(timeout, generations) {
-    let trace = Tracing.async({cat: 'planning', name: 'Planner::plan', overview: true, args: {timeout}});
+    let trace = Tracing.start({cat: 'planning', name: 'Planner::plan', overview: true, args: {timeout}});
     timeout = timeout || -1;
     let allResolved = [];
     let now = () => (typeof performance == 'object') ? performance.now() : process.hrtime();
@@ -144,7 +144,7 @@ class Planner {
     return groups;
   }
   async suggest(timeout, generations) {
-    let trace = Tracing.async({cat: 'planning', name: 'Planner::suggest', overview: true, args: {timeout}});
+    let trace = Tracing.start({cat: 'planning', name: 'Planner::suggest', overview: true, args: {timeout}});
     if (!generations && this._arc._debugging) generations = [];
     let plans = await trace.wait(this.plan(timeout, generations));
     let suggestions = [];
