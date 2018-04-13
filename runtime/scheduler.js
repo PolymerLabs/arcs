@@ -17,14 +17,14 @@ class Scheduler {
     this._finishNotifiers = [];
     this._idle = Promise.resolve();
     this._idleResolver = null;
-    this._idleCallback = null;
+    this._idleCallbacks = [];
   }
 
   clone() {
     return new Scheduler();
   }
 
-  set idleCallback(idleCallback) { this._idleCallback = idleCallback; }
+  registerIdleCallback(callback) { this._idleCallbacks.push(callback); }
 
   enqueue(handle, eventRecords) {
     let trace = tracing.flow({cat: 'handle', name: 'ViewBase::_fire flow'}).start();
@@ -74,9 +74,7 @@ class Scheduler {
       if (this.frameQueue.length == 0) {
         this._idleResolver();
         this._idleResolver = null;
-        if (this._idleCallback) {
-          this._idleCallback();
-        }
+        this._triggerIdleCallback();
       }
     });
   }
@@ -95,6 +93,10 @@ class Scheduler {
     frame.traces.forEach(trace => trace.end());
 
     trace.end();
+  }
+
+  _triggerIdleCallback() {
+    this._idleCallbacks.forEach(callback => callback(/* pass info about what was updated */));
   }
 }
 

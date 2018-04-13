@@ -28,7 +28,7 @@ const template = Xen.html`
   <!-- provisions arc database keys and provides metadata -->
   <persistent-arc key="{{key}}" on-key="_onKey" metadata="{{metadata}}" on-metadata="_onMetadata"></persistent-arc>
   <!-- access to playback data -->
-  <arc-steps plans="{{plans}}" plan="{{plan}}" steps="{{steps}}" step="{{step}}" on-step="_onStep" on-steps="_onData"></arc-steps>
+  <arc-steps planificator="{{planificator}}" plan="{{plan}}" steps="{{steps}}" on-step="_onStep" on-steps="_onData"></arc-steps>
   <!-- handles, database syncing -->
   <persistent-handles arc="{{arc}}" key="{{key}}"></persistent-handles>
   <remote-profile-handles arc="{{arc}}" user="{{user}}" on-profile="_onProfile"></remote-profile-handles>
@@ -38,19 +38,18 @@ const template = Xen.html`
 `;
 
 // PROPS
-// `plans` are all possible plans
+// `planificator` is the component responsible for generating plans
 // `plan` is the most recently applied plan
 //
 // STATE
 // `steps` are plans objects stored in arc metadata
-// `step` is the first plan in `steps` that matches a plan in `plans` that hasn't already been applied
 
 const log = Xen.logFactory('ArcCloud', '#bb4d00');
 
 class ArcCloud extends Xen.Debug(Xen.Base, log) {
   static get observedAttributes() {
     return ['config', 'userid', 'user', 'manifests', 'arc', 'key', 'metadata',
-        'plans', 'step', 'plan', 'exclusions', 'share', 'launcherarcs'];
+        'planificator', 'plan', 'exclusions', 'share', 'launcherarcs'];
   }
   get template() {
     return template;
@@ -102,7 +101,7 @@ class ArcCloud extends Xen.Debug(Xen.Base, log) {
     this._fire('arcs', state.arcs);
     super._update(props, state);
   }
-  _render({config, userid, user, arc, key, metadata, plans, step, plan, launcherarcs}, {manifests, exclusions, friends}) {
+  _render({config, userid, user, arc, key, metadata, planificator, plan, launcherarcs}, {manifests, exclusions, friends}) {
     const render = {
       userid,
       user,
@@ -114,8 +113,7 @@ class ArcCloud extends Xen.Debug(Xen.Base, log) {
       arc,
       metadata,
       steps: metadata && metadata.steps,
-      plans,
-      step,
+      planificator,
       plan,
       launcherarcs
     };

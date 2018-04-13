@@ -76,6 +76,10 @@ class Arc {
     this._debugging = false;
 
     registerArc(this);
+
+    // Callbacks for tracking various changes in the arc.
+    this._instantiatePlanCallbacks = [];
+    this._searchChangeCallbacks = [];
   }
   get loader() {
     return this._loader;
@@ -86,7 +90,13 @@ class Arc {
   }
 
   set search(search) {
-    this._search = search ? search.toLowerCase().trim() : null;
+    let newSearch = search ? search.toLowerCase().trim() : null;
+    newSearch = (newSearch !== '') ? newSearch : null;
+    if (this._search !== newSearch) {
+      let oldSearch = this._search;
+      this._search = newSearch;
+      this._searchChangeCallbacks.forEach(callback => callback(this.search, oldSearch));
+    }
   }
 
   get search() {
@@ -95,10 +105,11 @@ class Arc {
 
   get description() { return this._description; }
 
-  get makeSuggestions() { return this._makeSuggestions; }
-  set makeSuggestions(callback) {
-    this._makeSuggestions = callback;
-    this._scheduler.idleCallback = callback;
+  registerInstantiatePlanCallback(callback) {
+    this._instantiatePlanCallbacks.push(callback);
+  }
+  registerSearchChangeCallback(callback) {
+    this._searchChangeCallbacks.push(callback);
   }
 
   get idle() {
@@ -390,6 +401,11 @@ ${this.activeRecipe.toString()}`;
     if (this.pec.slotComposer) {
       // TODO: pass slot-connections instead
       this.pec.slotComposer.initializeRecipe(particles);
+    }
+
+    if (!this.isSpeculative && !innerArc) {
+      // Note: callbacks not triggered for inner-arc recipe instantiation or speculative arcs.
+      this._instantiatePlanCallbacks.forEach(callback => callback(recipe));
     }
   }
 

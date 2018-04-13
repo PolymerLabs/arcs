@@ -15,32 +15,31 @@ const warn = Xen.logFactory('ArcSteps', '#7b5e57', 'warn');
 
 class ArcSteps extends Xen.Debug(Xen.Base, log) {
   static get observedAttributes() {
-    return ['plans', 'steps', 'step', 'plan'];
+    return ['planificator', 'steps', 'plan'];
   }
   _getInitialState() {
     return {
       applied: []
     };
   }
-  _update({plans, plan, steps, step}, state, lastProps) {
+  _update({planificator, plan, steps}, state, lastProps) {
     const {applied} = state;
-    if (plans) {
-      // TODO(sjmiles): `plans` can become NULL before `plan` is propagated here
-      // we should probably attach `plans` (or at least the `.generations`) instead to `plan`
-      // after instantiating, but `plan` is a Recipe object and it's frozen.
-      // Instead we will need to create a wrapper object for `plan` that can contain the recipe
-      // and metadata. In the interim, we will just cache last non-null `plans`.
-      state.plans = plans;
-    }
-    // TODO(sjmiles): using cached plans
-    if (state.plans && plan !== lastProps.plan) {
-      // `plan` has been instantiated into host, record it into `steps`
-      this._addStep(plan, state.plans.generations, steps || [], applied);
-    }
-    // TODO(sjmiles): using latest plans
-    if (plans && steps) {
-      // find a step from `steps` that correspondes to a plan in `plans` but hasn't been `applied`
-      this._providePlanStep(plans, steps, applied);
+    if (planificator) {
+      if (!state.planificator) {
+        let current = planificator.getCurrentPlans();
+        this._onPlansOrStepsChanged(current.plans, current.generations, steps, applied);
+        planificator.registerPlansChangedCallback((current) => {
+          this._onPlansOrStepsChanged(current.plans, current.generations, steps, applied);
+        });
+        state.planificator = planificator;
+      }
+
+      let past = planificator.getLastActivatedPlan();
+      if (past.activePlan && past.activePlan !== state.lastActivePlan) {
+        // A plan has been instantiated, record it into `steps `
+        this._addStep(past.activePlan, past.generations, steps || [], applied);
+        state.lastActivePlan = past.activePlan;
+      }
     }
   }
   _addStep(plan, generations, steps, applied) {
@@ -54,10 +53,15 @@ class ArcSteps extends Xen.Debug(Xen.Base, log) {
       this._fire('steps', steps);
     }
   }
-  _providePlanStep(plans, steps, applied) {
+  _onPlansOrStepsChanged(plans, generations, steps, applied) {
+    if (plans && steps) {
+      this._providePlanStep(plans, generations, steps, applied);
+    }
+  }
+  _providePlanStep(plans, generations, steps, applied) {
     const candidates = steps.filter(s => !applied[s.hash]);
     for (let step of candidates) {
-      const planStep = this._findPlanForStep(step, plans);
+      const planStep = this._findPlanForStep(step, plans, generations);
       if (planStep) {
         log('found suggestion for step', step.hash);
         applied[step.hash] = true;
@@ -68,11 +72,11 @@ class ArcSteps extends Xen.Debug(Xen.Base, log) {
       }
     }
   }
-  _findPlanForStep(step, plans) {
+  _findPlanForStep(step, plans, generations) {
     for (let plan of plans) {
       // TODO(sjmiles): should be (weak) map?
       if (!plan._step) {
-        plan._step = this._createStep(plan.plan, plans.generations);
+        plan._step = this._createStep(plan.plan, generations);
       }
       if (plan._step.hash === step.hash && plan._step.mappedHandles === step.mappedHandles) {
         return plan;
