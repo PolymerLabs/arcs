@@ -12,6 +12,7 @@ import '../components/suggestion-element.js';
 // for particle use
 import '../components/corellia-xen/cx-input.js';
 import '../components/good-map.js';
+import '../components/model-input.js';
 import '../components/video-controller.js';
 import '../components/firebase-upload.js';
 // deprecated!
