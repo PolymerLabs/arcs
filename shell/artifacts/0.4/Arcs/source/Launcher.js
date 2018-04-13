@@ -41,7 +41,7 @@ defineParticle(({DomParticle, log, html}) => {
     position: relative;
     display: flex;
     flex-direction: column;
-    padding: 24px 16px 16px 16px;
+    padding: 28px 16px 16px 16px;
     margin: 0 4px 8px 4px;
     font-size: 18px;
     color: whitesmoke;
@@ -82,7 +82,7 @@ defineParticle(({DomParticle, log, html}) => {
 ${style}
 
 <div ${host}>
-  <cx-tabs>
+  <cx-tabs on-select="_onTabSelect">
     <cx-tab>ALL</cx-tab>
     <cx-tab selected>RECENT</cx-tab>
     <cx-tab>STARRED</cx-tab>
@@ -116,6 +116,11 @@ ${style}
     get template() {
       return template;
     }
+    getInitialState() {
+      return {
+        selected: 1
+      };
+    }
     willReceiveProps({arcs}) {
       const collation = this._collateItems(arcs);
       this._setState(collation);
@@ -123,10 +128,14 @@ ${style}
     shouldRender(props, state) {
       return Boolean(state.items);
     }
-    render(props, {items, profileItems}) {
-      const all = items; //.concat(profileItems);
-      const pivot = (all.length + 1) >> 1;
-      const columns = [all.slice(0, pivot), all.slice(pivot)];
+    render(props, {items, shared, starred, recent, selected}) {
+      const all = [items, recent, starred, shared][selected || 0];
+      const columns = [[], []];
+      all.forEach((item, i) => {
+        columns[i % 2].push(item);
+      });
+      //const pivot = (all.length + 1) >> 1;
+      //const columns = [all.slice(0, pivot), all.slice(pivot)];
       return {
         columnA: {
           $template: 'column',
@@ -145,6 +154,7 @@ ${style}
         starred: [],
         recent: [],
       };
+      let firstTouch = Infinity;
       arcs.forEach((a, i) => {
         if (!a.deleted) {
           let model = this._renderArc(a);
@@ -154,6 +164,19 @@ ${style}
           }
           if (a.profile) {
             result.shared.push(model);
+          }
+          if (a.touched) {
+            firstTouch = Math.min(firstTouch, a.touched);
+          }
+        }
+      });
+      // times in ms
+      const hours = 60 * 60 * 1000;
+      const recent = 1 * hours;
+      arcs.forEach((a, i) => {
+        if (!a.deleted) {
+          if (a.touched && a.touched - firstTouch < recent) {
+            result.recent.push(this._renderArc(a));
           }
         }
       });
@@ -180,6 +203,10 @@ ${style}
         chipStyle,
         self: Boolean(arc.profile)
       };
+    }
+    _onTabSelect(e) {
+      const selected = e.data.value;
+      this._setState({selected});
     }
     _onDelete(e) {
       const arcId = e.data.key;

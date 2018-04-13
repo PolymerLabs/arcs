@@ -63,10 +63,14 @@ class CorelliaXenTabs extends Xen.Base {
     if (previousTab !== selectedTab) {
       this.setAttribute('animating', '');
       this._setState({from: previousTab, to: selectedTab});
+      // TODO(sjmiles): this is a hack because I forgot to handle selection events
+      // and don't have time to fix it properly right now
+      this.value = Array.from(this.children).indexOf(selectedTab);
     }
   }
   _onSliderDone() {
     this.removeAttribute('animating');
+    this._fire('select');
   }
 }
 customElements.define('cx-tabs', CorelliaXenTabs);

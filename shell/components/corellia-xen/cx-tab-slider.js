@@ -66,9 +66,9 @@ class CorelliaXenTabSlider extends Xen.Base {
     const fromBox = fromTab.getBoundingClientRect();
     const toBox = toTab.getBoundingClientRect();
     const easing = 'ease-in-out';
-    const duration = 100;
+    const duration = 50;
     const fill = 'both';
-    const edgeDelay = 100;
+    const edgeDelay = 50;
     const animations = [
       this.animate([
           {top: `${fromBox.top - originBox.top}px`},

@@ -64,7 +64,7 @@ class ArcPlanner extends Xen.Debug(Xen.Base, log) {
       this._state.invalid = true;
       this._schedulePlanning();
     };
-    this._debouncer = ArcsUtils.debounce(this._debouncer, replan, 500);
+    this._debouncer = ArcsUtils.debounce(this._debouncer, replan, 1000);
   }
   async _schedulePlanning() {
     const props = this._props;

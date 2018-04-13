@@ -65,7 +65,7 @@ const template = html`
     arc="{{arc}}"
     users="{{users}}"
     user="{{user}}"
-    visited="{{arcs}}"
+    arcs="{{arcs}}"
     on-theme="_onStateData"
     on-arcs="_onStateData"
   ></shell-handles>
@@ -147,11 +147,14 @@ import '../artifacts/0.4/Arcs/Arcs.recipes'
   }
   _updateKey(state, oldState) {
     let {config, user, key, arc} = state;
-    if (user) {
-      // TODO(sjmiles): shouldn't some of this be handled in arc-config.js?
-      if (!key && (key === oldState.key)) {
-        key = state.key = config.key || Const.SHELLKEYS.launcher;
+    if (config && user) {
+      if (!key && !oldState.key) {
+        key = config.key;
       }
+      if (!key) {
+        key = Const.SHELLKEYS.launcher;
+      }
+      state.key = key;
       ArcsUtils.setUrlParam('key', !Const.SHELLKEYS[key] ? key : '');
     }
   }
