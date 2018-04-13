@@ -69,7 +69,7 @@ defineParticle(({DomParticle, html, log}) => {
     <span>{{uploadPercent}}</span>%
   </div>
   <img src="{{image}}">
-  <textarea value="{{message}}" on-input="onTextInput"></textarea>
+  <textarea value="{{message}}" on-keydown="onKeyDown" on-input="onTextInput"></textarea>
 </div>`;
 
   return class extends DomParticle {
@@ -127,6 +127,9 @@ recipe
         this._setState({renderParticleSpec, renderRecipe});
       }
     }
+    clearPostState() {
+      this.setState({savePost: false, message: '', image: null});
+    }
     savePost(renderParticleSpec, renderRecipe, user, message, image) {
       this.setHandle('post', {
         renderParticleSpec,
@@ -138,7 +141,15 @@ recipe
         createdTimestamp: Date.now(),
         author: user.id
       });
-      this.setState({savePost: false, message: '', image: null});
+      this.clearPostState();
+    }
+    onKeyDown(e) {
+      if (e.data.keys.code === 'Escape') {
+        this._views.get('post').clear();
+        this.clearPostState();
+      } else if (e.data.keys.code === 'Enter' && e.data.keys.ctrlKey) {
+        this.setState({savePost: true});
+      }
     }
     onTextInput(e) {
       this.setState({message: e.data.value});
