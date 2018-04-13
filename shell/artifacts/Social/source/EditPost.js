@@ -20,11 +20,15 @@ defineParticle(({DomParticle, html, log}) => {
   flex: 1;
   display: flex;
   flex-direction: column;
-  padding: 56px 8px 8px 8px;
+  padding: 56px 16px 16px 16px;;
 }
 [${host}] img {
   display: block;
   width: 256px;
+}
+[${host}] model-input {
+  display: flex;
+  flex: 1;
 }
 [${host}] textarea {
   flex: 1;
@@ -69,7 +73,9 @@ defineParticle(({DomParticle, html, log}) => {
     <span>{{uploadPercent}}</span>%
   </div>
   <img src="{{image}}">
-  <textarea value="{{message}}" on-keydown="onKeyDown" on-input="onTextInput"></textarea>
+  <model-input focus="{{focus}}">
+    <textarea value="{{message}}" on-keydown="onKeyDown" on-input="onTextInput"></textarea>
+  </model-input>
 </div>`;
 
   return class extends DomParticle {
@@ -78,6 +84,9 @@ defineParticle(({DomParticle, html, log}) => {
     }
     hasContent(value) {
       return Boolean(value && value.trim().length > 0);
+    }
+    getDefaultImage() {
+      return {url: '', width: 0, height: 0};
     }
     render({user, post}, {
       message,
@@ -88,23 +97,21 @@ defineParticle(({DomParticle, html, log}) => {
       uploading,
       uploadPercent
     }) {
+      image = image || this.getDefaultImage();
       if (savePost) {
         this.savePost(renderParticleSpec, renderRecipe, user, message, image);
       }
       const saveButtonActive =
-          this.hasContent(message) || (image && this.hasContent(image.url));
+          Boolean(this.hasContent(message) || this.hasContent(image.url));
       const model = {
         saveButtonActive,
         message: message || '',
-        image: image ? image.url : '',
+        image: image.url,
         hideUploadProgress: !uploading,
-        uploadPercent
+        uploadPercent,
+        focus: Boolean(post)
       };
       return model;
-    }
-    setHandle(name, data) {
-      const handle = this._views.get(name);
-      handle.set(new (handle.entityClass)(data));
     }
     willReceiveProps({renderParticle}, state) {
       // TODO(wkorman): Consider sharing recipe with analogous Words item logic,
@@ -128,10 +135,10 @@ recipe
       }
     }
     clearPostState() {
-      this.setState({savePost: false, message: '', image: null});
+      this.setState({savePost: false, message: '', image: this.getDefaultImage()});
     }
     savePost(renderParticleSpec, renderRecipe, user, message, image) {
-      this.setHandle('post', {
+      this.updateVariable('post', {
         renderParticleSpec,
         renderRecipe,
         message,

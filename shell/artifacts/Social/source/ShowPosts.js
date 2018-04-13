@@ -8,10 +8,10 @@
 
 'use strict';
 
-defineParticle(({DomParticle, resolver, log}) => {
+defineParticle(({DomParticle, resolver, log, html}) => {
   const host = `social-show-posts`;
 
-  const template = `
+  const template = html`
 <style>
   [${host}] icon {
     float: right;
@@ -126,8 +126,7 @@ defineParticle(({DomParticle, resolver, log}) => {
 </template>
 <template blog-description-editable>
   <div blogDescription><input value="{{blogDescription}}" placeholder="Name your blog" on-blur="_onBlurDescription"></div>
-</template>
-    `.trim();
+</template>`;
 
   return class extends DomParticle {
     get template() {
