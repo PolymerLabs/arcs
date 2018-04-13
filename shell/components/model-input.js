@@ -17,11 +17,10 @@ class ModelInput extends Xen.Base {
   _wouldChangeProps() {
     return true;
   }
-  _render(props, state) {
+  _render({focus}) {
     const input = this.querySelector('input') || this.querySelector('textarea');
-    if (input && props.focus) {
-      // TODO(sjmiles): why needing timeout?
-      setTimeout(() => input.focus(), 500);
+    if (input && focus) {
+      input.focus();
     }
   }
 }
