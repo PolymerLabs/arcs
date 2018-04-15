@@ -12,10 +12,10 @@
 import Manifest from '../../manifest.js';
 import Recipe from '../../recipe/recipe.js';
 import StrategyTestHelper from './strategy-test-helper.js';
-import CreateViews from '../../strategies/create-views.js';
+import CreateHandles from '../../strategies/create-handles.js';
 import {assert} from '../chai-web.js';
 
-describe('CreateViews', function() {
+describe('CreateHandles', function() {
   const testManifest = async (recipeManifest, expectedToAssignFate) => {
     let manifest = (await Manifest.parse(`
       schema Thing
@@ -31,7 +31,7 @@ describe('CreateViews', function() {
     `));
     let inputParams = {generated: [{result: manifest.recipes[0], score: 1}]};
     let arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'dom');
-    let results = await new CreateViews(arc).generate(inputParams);
+    let results = await new CreateHandles(arc).generate(inputParams);
 
     if (!expectedToAssignFate) {
       assert.equal(results.length, 0);

@@ -10,7 +10,7 @@ import Recipe from '../recipe/recipe.js';
 import RecipeUtil from '../recipe/recipe-util.js';
 import RecipeWalker from '../recipe/walker.js';
 
-export default class CreateViews extends Strategy {
+export default class CreateHandles extends Strategy {
   // TODO: move generation to use an async generator.
   async generate(inputParams) {
     return Recipe.over(this.getResults(inputParams), new class extends RecipeWalker {

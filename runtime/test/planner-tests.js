@@ -198,7 +198,7 @@ describe('Planner', function() {
   });
 });
 
-describe('AssignOrCopyRemoteViews', function() {
+describe('AssignOrCopyRemoteHandles', function() {
   it('finds tagged remote handles', async () => {
     let particlesSpec = `
     schema Foo
