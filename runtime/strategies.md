@@ -7,29 +7,29 @@ Loads recipes from arc’s context recipes.<br/>
 [init-population.js](https://github.com/PolymerLabs/arcs/blob/master/runtime/strategies/init-population.js)
 
 ## ConvertConstraintsToConnections
-Converts connection constraints (eg ParticleA.viewA -> particleB.viewB) in the recipe into actual particles and view connections.
+Converts connection constraints (eg ParticleA.handleA -> particleB.handleB) in the recipe into actual particles and handle connections.
 Note: arrow direction are ignored at this time.<br/>
 [convert-constraints-to-connections.js](https://github.com/PolymerLabs/arcs/blob/master/runtime/strategies/convert-constraints-to-connections.js)
 
-## AssignViewsByTagAndType
-Maps recipe view with “use” fate to a local view in the arc matching type and tags.<br/>
-[assign-views-by-tag-and-type.js](https://github.com/PolymerLabs/arcs/blob/master/runtime/strategies/assign-views-by-tag-and-type.js)
+## AssignHandlesByTagAndType
+Maps recipe handle with “use” fate to a local handle in the arc matching type and tags.<br/>
+[assign-handles-by-tag-and-type.js](https://github.com/PolymerLabs/arcs/blob/master/runtime/strategies/assign-handles-by-tag-and-type.js)
 
-## AssignRemoteViews
-Maps recipe view with “map” fate to a remote view in the arc context matching type and tags.<br/>
-[assign-remote-views.js](https://github.com/PolymerLabs/arcs/blob/master/runtime/strategies/assign-remote-views.js)
+## AssignRemoteHandles
+Maps recipe handle with “map” fate to a remote handle in the arc context matching type and tags.<br/>
+[assign-remote-handles.js](https://github.com/PolymerLabs/arcs/blob/master/runtime/strategies/assign-remote-handles.js)
 
-## CopyRemoteViews
-Maps recipe view with “copy” fate to a remote view in the arc context matching type and tags. On execution a new view will be created and contents of the remote view copied into it.<br/>
-[copy-remote-views.js](https://github.com/PolymerLabs/arcs/blob/master/runtime/strategies/copy-remote-views.js)
+## CopyRemoteHandles
+Maps recipe handle with “copy” fate to a remote handle in the arc context matching type and tags. On execution a new handle will be created and contents of the remote handle copied into it.<br/>
+[copy-remote-handles.js](https://github.com/PolymerLabs/arcs/blob/master/runtime/strategies/copy-remote-handles.js)
 
-## AddUseViews
-Creates a new recipe view with a “use” fate for each view connection that is not bound to a recipe view.
-The strategy is not executed on recipes with outstanding constraints or with free views (ie view with no corresponding view connections).<br/>
-[add-use-views.js](https://github.com/PolymerLabs/arcs/blob/master/runtime/strategies/add-use-views.js)
+## AddUseHandles
+Creates a new recipe handle with a “use” fate for each handle connection that is not bound to a recipe handle.
+The strategy is not executed on recipes with outstanding constraints or with free handles (ie handle with no corresponding handle connections).<br/>
+[add-use-handles.js](https://github.com/PolymerLabs/arcs/blob/master/runtime/strategies/add-use-handles.js)
 
-## CreateViews
-Sets view’s fate to “create”, if its fate was unknown and ID was undefined.
+## CreateHandles
+Sets handle’s fate to “create”, if its fate was unknown and ID was undefined.
 Requires that there are at least 2 particles connected, at least one reading and one writing.<br/>
 [planner.js](https://github.com/PolymerLabs/arcs/blob/master/runtime/planner.js#L34)
 
@@ -59,7 +59,7 @@ Currently this strategy is used to execute SearchTokensToParticles together with
 [combined-strategy.js](https://github.com/PolymerLabs/arcs/blob/master/runtime/strategies/combined-strategy.js)
 
 ## FallbackFate
-For user search query based recipes, if the view’s fate wasn’t explicitly defined in the recipe and failed to resolve (while set to “use” by default”), try to set the fate to “map” or “copy” (depending on the view’s connections directions).<br/>
+For user search query based recipes, if the handle’s fate wasn’t explicitly defined in the recipe and failed to resolve (while set to “use” by default), try to set the fate to “map” or “copy” (depending on the handle’s connections directions).<br/>
 [fallback-fate.js](https://github.com/PolymerLabs/arcs/blob/master/runtime/strategies/fallback-fate.js)
 
 ## MatchParticleByVerb

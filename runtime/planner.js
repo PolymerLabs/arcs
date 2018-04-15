@@ -13,15 +13,15 @@ import Recipe from './recipe/recipe.js';
 import RecipeUtil from './recipe/recipe-util.js';
 import RecipeWalker from './recipe/walker.js';
 import ConvertConstraintsToConnections from './strategies/convert-constraints-to-connections.js';
-import AssignRemoteViews from './strategies/assign-remote-views.js';
-import CopyRemoteViews from './strategies/copy-remote-views.js';
-import AssignViewsByTagAndType from './strategies/assign-views-by-tag-and-type.js';
+import AssignRemoteHandles from './strategies/assign-remote-handles.js';
+import CopyRemoteHandles from './strategies/copy-remote-handles.js';
+import AssignHandlesByTagAndType from './strategies/assign-handles-by-tag-and-type.js';
 import InitPopulation from './strategies/init-population.js';
 import MapSlots from './strategies/map-slots.js';
 import MatchParticleByVerb from './strategies/match-particle-by-verb.js';
 import MatchRecipeByVerb from './strategies/match-recipe-by-verb.js';
 import NameUnnamedConnections from './strategies/name-unnamed-connections.js';
-import AddUseViews from './strategies/add-use-views.js';
+import AddUseHandles from './strategies/add-use-handles.js';
 import CreateDescriptionHandle from './strategies/create-description-handle.js';
 import Manifest from './manifest.js';
 import InitSearch from './strategies/init-search.js';
@@ -29,7 +29,7 @@ import SearchTokensToParticles from './strategies/search-tokens-to-particles.js'
 import FallbackFate from './strategies/fallback-fate.js';
 import GroupHandleConnections from './strategies/group-handle-connections.js';
 import MatchFreeHandlesToConnections from './strategies/match-free-handles-to-connections.js';
-import CreateViews from './strategies/create-views.js';
+import CreateHandles from './strategies/create-handles.js';
 import ResolveRecipe from './strategies/resolve-recipe.js';
 
 import Speculator from './speculator.js';
@@ -48,16 +48,16 @@ class Planner {
       new SearchTokensToParticles(arc),
       new GroupHandleConnections(),
       new FallbackFate(),
-      new CreateViews(),
-      new AssignViewsByTagAndType(arc),
+      new CreateHandles(),
+      new AssignHandlesByTagAndType(arc),
       new ConvertConstraintsToConnections(arc),
       new MapSlots(arc),
-      new AssignRemoteViews(arc),
-      new CopyRemoteViews(arc),
+      new AssignRemoteHandles(arc),
+      new CopyRemoteHandles(arc),
       new MatchParticleByVerb(arc),
       new MatchRecipeByVerb(arc),
       new NameUnnamedConnections(arc),
-      new AddUseViews(),
+      new AddUseHandles(),
       new CreateDescriptionHandle(),
       new MatchFreeHandlesToConnections(),
       new ResolveRecipe(arc)

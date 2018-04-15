@@ -9,16 +9,16 @@ import {Strategy} from '../../strategizer/strategizer.js';
 import RecipeWalker from '../recipe/walker.js';
 import Recipe from '../recipe/recipe.js';
 import RecipeUtil from '../recipe/recipe-util.js';
-import ViewMapperBase from './view-mapper-base.js';
+import HandleMapperBase from './handle-mapper-base.js';
 import Schema from '../schema.js';
 
 import assert from '../../platform/assert-web.js';
 
-export default class CopyRemoteViews extends ViewMapperBase {
+export default class AssignRemoteHandles extends HandleMapperBase {
   constructor(arc) {
     super();
     this._arc = arc;
-    this.fate = 'copy';
+    this.fate = 'map';
   }
 
   getMappableViews(type, tags=[]) {

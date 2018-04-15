@@ -11,7 +11,7 @@ import Recipe from '../recipe/recipe.js';
 import RecipeUtil from '../recipe/recipe-util.js';
 import assert from '../../platform/assert-web.js';
 
-export default class ViewMapperBase extends Strategy {
+export default class HandleMapperBase extends Strategy {
   async generate(inputParams) {
     let self = this;
 
