@@ -16,27 +16,27 @@ export default class HandleMapperBase extends Strategy {
     let self = this;
 
     return Recipe.over(this.getResults(inputParams), new class extends RecipeWalker {
-      onView(recipe, view) {
-        if (view.fate !== self.fate)
+      onHandle(recipe, handle) {
+        if (handle.fate !== self.fate)
           return;
 
-        if (view.connections.length == 0)
+        if (handle.connections.length == 0)
           return;
 
-        if (view.id)
+        if (handle.id)
           return;
 
-        if (!view.type)
+        if (!handle.type)
           return;
 
         // TODO: using the connection to retrieve type information is wrong.
-        // Once validation of recipes generates type information on the view
+        // Once validation of recipes generates type information on the handle
         // we should switch to using that instead.
-        let counts = RecipeUtil.directionCounts(view);
-        return this.mapView(view, view.tags, view.type, counts);
+        let counts = RecipeUtil.directionCounts(handle);
+        return this.mapHandle(handle, handle.tags, handle.type, counts);
       }
 
-      mapView(view, tags, type, counts) {
+      mapHandle(handle, tags, type, counts) {
         let score = -1;
         if (counts.in == 0 || counts.out == 0) {
           if (counts.unknown > 0)
@@ -54,27 +54,27 @@ export default class HandleMapperBase extends Strategy {
         if (counts.out > 0 && fate == 'map') {
           return;
         }
-        let views = self.getMappableViews(type, tags, counts);
-        if (views.length < 2)
+        let handles = self.getMappableHandles(type, tags, counts);
+        if (handles.length < 2)
           return;
 
-        let responses = views.map(newView =>
-          ((recipe, clonedView) => {
-            for (let existingView of recipe.handles)
-              // TODO: Why don't we link the view connections to the existingView?
-              if (existingView.id == newView.id)
+        let responses = handles.map(newHandle =>
+          ((recipe, clonedHandle) => {
+            for (let existingHandle of recipe.handles)
+              // TODO: Why don't we link the handle connections to the existingHandle?
+              if (existingHandle.id == newHandle.id)
                 return 0;
             let tscore = 0;
 
-            assert(newView.id);
-            clonedView.mapToStorage(newView);
-            if (clonedView.fate != 'copy') {
-              clonedView.fate = fate;
+            assert(newHandle.id);
+            clonedHandle.mapToStorage(newHandle);
+            if (clonedHandle.fate != 'copy') {
+              clonedHandle.fate = fate;
             }
             return score + tscore;
           }));
 
-        responses.push(null); // "do nothing" for this view.
+        responses.push(null); // "do nothing" for this handle.
         return responses;
       }
     }(RecipeWalker.Permuted), this);

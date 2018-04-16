@@ -21,7 +21,7 @@ export default class ResolveRecipe extends Strategy {
   async generate(inputParams) {
     let arc = this._arc;
     return Recipe.over(this.getResults(inputParams), new class extends RecipeWalker {
-      onView(recipe, handle) {
+      onHandle(recipe, handle) {
         if (handle.connections.length == 0 || handle.id || (!handle.type) || (!handle.fate))
           return;
 

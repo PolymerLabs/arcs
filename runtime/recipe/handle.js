@@ -60,7 +60,7 @@ class Handle {
 
   _finishNormalize() {
     for (let connection of this._connections) {
-      assert(Object.isFrozen(connection), `View connection '${connection.name}' is not frozen.`);
+      assert(Object.isFrozen(connection), `Handle connection '${connection.name}' is not frozen.`);
     }
     this._connections.sort(util.compareComparables);
     Object.freeze(this);
@@ -76,7 +76,7 @@ class Handle {
     return 0;
   }
 
-  // a resolved View has either an id or create=true
+  // a resolved Handle has either an id or create=true
   get fate() { return this._fate || '?'; }
   set fate(fate) {
     if (this._originalFate == null) {
@@ -87,7 +87,7 @@ class Handle {
   get originalFate() { return this._originalFate || '?'; }
   get originalId() { return this._originalId; }
   get recipe() { return this._recipe; }
-  get tags() { return this._tags; } // only tags owned by the view
+  get tags() { return this._tags; } // only tags owned by the handle
   set tags(tags) { this._tags = tags; }
   get type() { return this._type; } // nullable
   get id() { return this._id; }
@@ -120,7 +120,7 @@ class Handle {
   _isValid(options) {
     let tags = new Set();
     for (let connection of this._connections) {
-      // A remote view cannot be connected to an output param.
+      // A remote handle cannot be connected to an output param.
       if (this.fate == 'map' && ['out', 'inout'].includes(connection.direction)) {
         if (options && options.errors) {
           options.errors.set(this, `Invalid fate '${this.fate}' for handle '${this}'; it is used for '${connection.direction}' ${connection.particle.name}::${connection.name} connection`);
@@ -199,7 +199,7 @@ class Handle {
     if (options && options.showUnresolved) {
       let options = {};
       if (!this.isResolved(options)) {
-        result.push(` // unresolved view: ${options.details}`);
+        result.push(` // unresolved handle: ${options.details}`);
       }
     }
 

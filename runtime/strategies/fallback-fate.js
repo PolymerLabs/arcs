@@ -21,25 +21,25 @@ export default class FallbackFate extends Strategy {
 
   async generate(inputParams) {
     return Recipe.over(this.getResults(inputParams), new class extends RecipeWalker {
-      onView(recipe, view) {
+      onHandle(recipe, handle) {
         // Only apply this strategy only to user query based recipes with resolved tokens.
         if (!recipe.search || (recipe.search.resolvedTokens.length == 0)) {
           return;
         }
 
-        // Only apply to views whose fate is set, but wasn't explicitly defined in the recipe.
-        if (view.isResolved() || view.fate == '?' || view.originalFate != '?') {
+        // Only apply to handles whose fate is set, but wasn't explicitly defined in the recipe.
+        if (handle.isResolved() || handle.fate == '?' || handle.originalFate != '?') {
           return;
         }
 
-        let hasOutConns = view.connections.some(hc => hc.isOutput);
+        let hasOutConns = handle.connections.some(hc => hc.isOutput);
         let newFate = hasOutConns ? 'copy' : 'map';
-        if (view.fate == newFate) {
+        if (handle.fate == newFate) {
           return;
         }
 
-        return (recipe, clonedView) => {
-          clonedView.fate = newFate;
+        return (recipe, clonedHandle) => {
+          clonedHandle.fate = newFate;
           return 0;
         };
       }

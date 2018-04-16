@@ -14,19 +14,19 @@ export default class CreateHandles extends Strategy {
   // TODO: move generation to use an async generator.
   async generate(inputParams) {
     return Recipe.over(this.getResults(inputParams), new class extends RecipeWalker {
-      onView(recipe, view) {
-        let counts = RecipeUtil.directionCounts(view);
+      onHandle(recipe, handle) {
+        let counts = RecipeUtil.directionCounts(handle);
 
         // Don't make a 'create' handle, unless there is someone reading,
         // someone writing and at least 2 particles invloved.
         if (counts.in == 0 || counts.out == 0
             // TODO: Allow checking number of particles without touching privates.
-            || new Set(view.connections.map(hc => hc._particle)).size <= 1) {
+            || new Set(handle.connections.map(hc => hc._particle)).size <= 1) {
           return;
         }
 
-        if (!view.id && view.fate == '?') {
-          return (recipe, view) => {view.fate = 'create'; return 1;};
+        if (!handle.id && handle.fate == '?') {
+          return (recipe, handle) => {handle.fate = 'create'; return 1;};
         }
       }
     }(RecipeWalker.Permuted), this);
