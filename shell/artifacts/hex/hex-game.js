@@ -222,7 +222,7 @@ defineParticle(({DomParticle, html}) => {
         return cellTemplate;
     }
     willReceiveProps(props, state, oldProps, oldState) {
-      if (!props.user || !props.gameState) {
+      if (!props.user || !props.gameState || !props.gameState.player1 || !props.gameState.player2) {
         state.canMove = false;
         return;
       }
@@ -235,6 +235,11 @@ defineParticle(({DomParticle, html}) => {
       }
       state.canMove = board.player == 'x' && props.user.name == props.gameState.player1 
                    || board.player == 'y' && props.user.name == props.gameState.player2;
+      // TODO: both players should be able to publish the initial state, but due
+      //       to a race in the storage shim we can end up looping forever.
+      if (props.user.name == props.gameState.player1 && !props.gameState.nextPlayer && !props.gameState.winner) {
+        this.publishGameState(props.gameState);
+      }
     }
     render(props, state) {
       return state;
@@ -244,20 +249,27 @@ defineParticle(({DomParticle, html}) => {
         return;
       }
       if (this._board.trySetCell(x, y)) {
-        let newGameState = Object.assign({}, this._props.gameState.rawData);
-        Object.assign(newGameState, this._board.serialize());
-        if (this._board.winner) {
-          newGameState.winner = this._board.winner == 'x' ? newGameState.player1 : newGameState.player2;
-        }
-        newGameState.nextPlayer =
-            this._board.player 
-                ? this._board.player == 'x'
-                      ? newGameState.player1
-                      : newGameState.player2 
-                : null;
-        const handle = this._views.get('gameState');
-        handle.set(new (handle.entityClass)(newGameState));
+        this.publishGameState();
       }
+    }
+    publishGameState(gameState) {
+      if (!gameState) {
+        gameState = this._props.gameState;
+      }
+
+      let newGameState = Object.assign({}, gameState.rawData);
+      Object.assign(newGameState, this._board.serialize());
+      if (this._board.winner) {
+        newGameState.winner = this._board.winner == 'x' ? newGameState.player1 : newGameState.player2;
+      }
+      newGameState.nextPlayer =
+          this._board.player 
+              ? this._board.player == 'x'
+                    ? newGameState.player1
+                    : newGameState.player2 
+              : null;
+      const handle = this._views.get('gameState');
+      handle.set(new (handle.entityClass)(newGameState));
     }
   };
 });
