@@ -98,9 +98,9 @@ class InMemoryCollection extends InMemoryStorageProvider {
   }
 
   clone() {
-    let view = new InMemoryCollection(this._type, this._arcId, this.name, this.id);
-    view.cloneFrom(this);
-    return view;
+    let handle = new InMemoryCollection(this._type, this._arcId, this.name, this.id);
+    handle.cloneFrom(this);
+    return handle;
   }
 
   async cloneFrom(handle) {
@@ -130,10 +130,10 @@ class InMemoryCollection extends InMemoryStorageProvider {
   }
 
   async store(entity) {
-    let trace = tracing.start({cat: 'view', name: 'InMemoryCollection::store', args: {name: this.name}});
+    let trace = tracing.start({cat: 'handle', name: 'InMemoryCollection::store', args: {name: this.name}});
     let entityWasPresent = this._items.has(entity.id);
     if (entityWasPresent && (JSON.stringify(this._items.get(entity.id)) == JSON.stringify(entity))) {
-      trace.end({args: {entity}});    
+      trace.end({args: {entity}});
       return;
     }
     this._items.set(entity.id, entity);
@@ -144,7 +144,7 @@ class InMemoryCollection extends InMemoryStorageProvider {
   }
 
   async remove(id) {
-    let trace = tracing.start({cat: 'view', name: 'InMemoryCollection::remove', args: {name: this.name}});
+    let trace = tracing.start({cat: 'handle', name: 'InMemoryCollection::remove', args: {name: this.name}});
     if (!this._items.has(id)) {
       return;
     }

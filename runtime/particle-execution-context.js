@@ -11,15 +11,15 @@ class ParticleExecutionContext {
   constructor() {
   }
 
-  // Instantiates `particle` in this context, connecting `views` to the particle's inputs and outputs.
-  // `mutateCallback` will be called each time the particle mutates a view or entity.
+  // Instantiates `particle` in this context, connecting `handles` to the particle's inputs and outputs.
+  // `mutateCallback` will be called each time the particle mutates a handle or entity.
   // Returns an identifier to refer to the particle (in `dispatch`).
-  instantiate(particle, views, mutateCallback) {
-    // views => {name => viewId}
+  instantiate(particle, handles, mutateCallback) {
+    // handles => {name => handleId}
     throw 'unimplemented';
   }
 
-  // Dispatches an event to the particle identified by `particleId` for the view or entity identified
+  // Dispatches an event to the particle identified by `particleId` for the handle or entity identified
   // by `entityId` concerning `eventDetails. The `morePending` flag indicates whether there are any
   // known further events to be dispatched to the same particle.
   dispatch(particleId, entityId, eventDetails, morePending) {
