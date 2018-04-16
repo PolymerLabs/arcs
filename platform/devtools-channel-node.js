@@ -23,6 +23,8 @@ export default class WebSocketChannel extends AbstractDevtoolsChannel {
         if (msg === 'init') {
           initDebug();
           this._makeReady();
+        } else {
+          this._handleMessage(JSON.parse(msg));
         }
       });
     });

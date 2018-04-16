@@ -29,9 +29,10 @@
   function initializeWindow(w) {
     if (windowForEvents) return;
     windowForEvents = w;
+    w.document.addEventListener('command', e => sendMessage(e.detail));
     for (let msg of msgQueue) fire(msg);
     msgQueue.length = 0;
-    w.document.addEventListener('command', e => sendMessage(e.detail));
+    w.document.dispatchEvent(new Event('arcs-communication-channel-ready'));
   }
 
   function connectViaExtensionApi() {
@@ -67,11 +68,7 @@
         if (retriesLeft--) setTimeout(createWebSocket, 300);
       };
     })();
-    return message => {
-      // TODO: Add the message itself and figure out how this will work
-      // when we implement first DevTools -> NodeJS command.
-      ws.send('command');
-    };
+    return msg => ws.send(JSON.stringify(msg));
   }
 
   function queueOrFire(msg) {

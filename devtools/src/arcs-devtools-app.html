@@ -18,6 +18,7 @@
 <link rel="import" href="arcs-notifications.html">
 <link rel="import" href="arcs-tracing.html">
 <link rel="import" href="strategy-explorer/strategy-explorer.html">
+<link rel="import" href="arcs-strategy-runner.html">
 
 <dom-module id="arcs-devtools-app">
   <template>
@@ -85,7 +86,7 @@
       }
     </style>
     <div id="container">
-      <arcs-communication-channel id="channel" on-messages="onMessages"></arcs-communication-channel>
+      <arcs-communication-channel id="channel" on-messages="onMessageBundle"></arcs-communication-channel>
       <app-location
         route="{{route}}"
         query-params="{{queryParams}}"
@@ -107,9 +108,10 @@
       <nav>
         <iron-selector selected="[[routeData.page]]" attr-for-selected="name" class="nav-list" role="navigation">
           <a name="overview" href="#overview"><iron-icon icon="timeline"></iron-icon>Overview</a>
-          <a name="traces" href="#traces"><iron-icon icon="communication:clear-all"></iron-icon>Traces</a>          
+          <a name="traces" href="#traces"><iron-icon icon="communication:clear-all"></iron-icon>Traces</a>
           <a name="dataflow" href="#dataflow"><iron-icon icon="swap-horiz"></iron-icon>Dataflow</a>
           <a name="strategyExplorer" href="#strategyExplorer"><iron-icon icon="settings-applications"></iron-icon>Strategy Explorer</a>
+          <a name="strategyRunner" href="#strategyRunner"><iron-icon icon="av:repeat-one"></iron-icon>Strategy Runner</a>
         </iron-selector>
       </nav>
       <iron-pages selected="[[routeData.page]]" attr-for-selected="name" selected-attribute="active" role="main" id="pages">
@@ -117,6 +119,7 @@
         <arcs-tracing name="traces"></arcs-tracing>
         <arcs-dataflow id="dataflow" name="dataflow" query-params="{{queryParams}}"></arcs-dataflow>
         <strategy-explorer name="strategyExplorer"></strategy-explorer>
+        <arcs-strategy-runner name="strategyRunner" on-message="sendMessage"></arcs-strategy-runner>
       </iron-pages>
     </div>
   </template>
@@ -140,12 +143,24 @@
           this.set('routeData.page', 'overview');
         }
         this._messageReceivers.push(this.$.notifications);
-        this.$.pages.childNodes.forEach(
-          page => {if (page.onMessages) this._messageReceivers.push(page)});
+        this.$.pages.childNodes.forEach(page => {
+          if (page.onMessage || page.onMessageBundle) this._messageReceivers.push(page)
+        });
       }
 
-      onMessages(e) {
-        this._messageReceivers.forEach(receiver => receiver.onMessages(e.detail));
+
+      onMessageBundle(e) {
+        for (let receiver of this._messageReceivers) {
+          Promise.resolve().then(() => {
+            if (receiver.onMessage) {
+              for (let msg of e.detail) {
+                receiver.onMessage(msg);
+              }
+            } else {
+              receiver.onMessageBundle(e.detail);
+            }
+          });
+        }
       }
 
       toggleNav() {
@@ -164,6 +179,10 @@
           this.$.illuminateToggle.setAttribute('active', '');
           this.$.channel.send('illuminate', 'on');
         }
+      }
+
+      sendMessage(e) {
+        this.$.channel.send(e.detail.messageType, e.detail.messageBody, e.detail.arcId);
       }
     }
 
