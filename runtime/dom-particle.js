@@ -10,11 +10,7 @@
 'use strict';
 
 import assert from '../platform/assert-web.js';
-import {
-  Particle,
-  ViewChanges
-} from './particle.js';
-
+import {Particle} from './particle.js';
 import XenStateMixin from '../shell/components/xen/xen-state.js';
 
 /** @class DomParticle
@@ -99,9 +95,14 @@ class DomParticle extends XenStateMixin(Particle) {
     this.handles = views;
     this._views = views;
     let config = this.config;
-    this.when([new ViewChanges(views, config.views, 'change')], async () => {
-      await this._handlesToProps(views, config);
-    });
+
+    let callback = async () => { await this._handlesToProps(views, config); };
+    let modelCount = 0;
+    let afterAllModels = () => { if (++modelCount == config.views.length) { callback(); } };
+    for (let name of config.views) {
+      views.get(name).synchronize('change', afterAllModels, callback, this);
+    }
+
     // make sure we invalidate once, even if there are no incoming views
     this._invalidate();
   }
