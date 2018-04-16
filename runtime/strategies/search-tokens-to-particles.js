@@ -13,7 +13,7 @@ import RecipeWalker from '../recipe/walker.js';
 export default class SearchTokensToParticles extends Strategy {
   constructor(arc) {
     super();
-    // TODO: Recipes. Views?
+    // TODO: Recipes. Handles?
     this._byToken = {};
     for (let particle of arc.context.particles) {
       let name = particle.name.toLowerCase();

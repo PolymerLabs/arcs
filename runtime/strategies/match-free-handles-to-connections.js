@@ -20,7 +20,7 @@ export default class MatchFreeHandlesToConnections extends Strategy {
     let self = this;
 
     return Recipe.over(this.getResults(inputParams), new class extends RecipeWalker {
-      onView(recipe, handle) {
+      onHandle(recipe, handle) {
         if (handle.connections.length > 0)
           return;
 

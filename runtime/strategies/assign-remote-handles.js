@@ -21,7 +21,7 @@ export default class AssignRemoteHandles extends HandleMapperBase {
     this.fate = 'map';
   }
 
-  getMappableViews(type, tags=[]) {
+  getMappableHandles(type, tags=[]) {
     return this._arc.context.findStorageByType(type, {tags, subtype: true});
   }
 }

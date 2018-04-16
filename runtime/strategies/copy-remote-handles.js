@@ -21,7 +21,7 @@ export default class CopyRemoteHandles extends HandleMapperBase {
     this.fate = 'copy';
   }
 
-  getMappableViews(type, tags=[]) {
+  getMappableHandles(type, tags=[]) {
     return this._arc.context.findStorageByType(type, {tags, subtype: true});
   }
 }

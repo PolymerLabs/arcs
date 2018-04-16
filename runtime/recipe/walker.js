@@ -15,7 +15,7 @@ class Walker extends WalkerBase {
     let updateList = [];
 
     // update phase - walk through recipe and call onRecipe,
-    // onView, etc.
+    // onHandle, etc.
 
     if (this.onRecipe) {
       result = this.onRecipe(recipe, result);
@@ -36,11 +36,11 @@ class Walker extends WalkerBase {
           updateList.push({continuation: result, context: handleConnection});
       }
     }
-    for (let view of recipe.handles) {
-      if (this.onView) {
-        let result = this.onView(recipe, view);
+    for (let handle of recipe.handles) {
+      if (this.onHandle) {
+        let result = this.onHandle(recipe, handle);
         if (!this.isEmptyResult(result))
-          updateList.push({continuation: result, context: view});
+          updateList.push({continuation: result, context: handle});
       }
     }
     for (let slotConnection of recipe.slotConnections) {

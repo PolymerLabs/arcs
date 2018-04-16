@@ -9,7 +9,7 @@ import {Strategy} from '../../strategizer/strategizer.js';
 import Recipe from '../recipe/recipe.js';
 import RecipeWalker from '../recipe/walker.js';
 
-export default class AddUseViews extends Strategy {
+export default class AddUseHandles extends Strategy {
   // TODO: move generation to use an async generator.
   async generate(inputParams) {
     return Recipe.over(this.getResults(inputParams), new class extends RecipeWalker {

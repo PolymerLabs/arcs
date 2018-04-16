@@ -20,7 +20,7 @@ export default class AssignHandlesByTagAndType extends HandleMapperBase {
     this.fate = 'use';
   }
 
-  getMappableViews(type, tags, counts) {
+  getMappableHandles(type, tags, counts) {
     // We can use a handle that has a subtype only when all of the connections
     // are inputs.
     let subtype = counts.out == 0;

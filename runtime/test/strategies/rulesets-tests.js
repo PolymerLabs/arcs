@@ -48,10 +48,10 @@ class FateAssigner extends Strategy {
   async generate(inputParams) {
     let self = this;
     return Recipe.over(this.getResults(inputParams), new class extends RecipeWalker {
-      onView(recipe, view) {
-        if (view.fate === '?') {
+      onHandle(recipe, handle) {
+        if (handle.fate === '?') {
           return [
-            (recipe, viewCopy) => {viewCopy.fate = self.fate; return 1;},
+            (recipe, handleCopy) => {handleCopy.fate = self.fate; return 1;},
             null
           ];
         }
@@ -67,11 +67,11 @@ class AssignFateC extends FateAssigner {constructor() {super('C');}}
 class Resolve extends Strategy {
   async generate(inputParams) {
     return Recipe.over(this.getResults(inputParams), new class extends RecipeWalker {
-      onView(recipe, view) {
-        if (view.fate !== '?' && !view.id.endsWith('resolved')) {
+      onHandle(recipe, handle) {
+        if (handle.fate !== '?' && !handle.id.endsWith('resolved')) {
           return [
-            (recipe, viewCopy) => {
-              viewCopy.id += '-resolved';
+            (recipe, handleCopy) => {
+              handleCopy.id += '-resolved';
               return 1;
             }
           ];
@@ -117,8 +117,8 @@ describe('Rulesets', () => {
     const strategies = [
       new InitPopulation(`
         recipe
-          ? 'id1' as view1
-          ? 'id2' as view2`),
+          ? 'id1' as handle1
+          ? 'id2' as handle2`),
       new AssignFateA(),
       new AssignFateB()
     ];
@@ -160,9 +160,9 @@ describe('Rulesets', () => {
     const strategies = [
       new InitPopulation(`
         recipe
-          ? 'id1' as view1
-          ? 'id2' as view2
-          ? 'id3' as view3`),
+          ? 'id1' as handle1
+          ? 'id2' as handle2
+          ? 'id3' as handle3`),
       new AssignFateA(),
       new AssignFateB(),
       new AssignFateC(),
