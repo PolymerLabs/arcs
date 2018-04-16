@@ -65,6 +65,8 @@ export default class ResolveRecipe extends Strategy {
         }
 
         let selectedSlots = MapSlots.findAllSlotCandidates(slotConnection, arc);
+
+        // MapSlots handles a multi-slot case.
         if (selectedSlots.length !== 1) {
           return;
         }

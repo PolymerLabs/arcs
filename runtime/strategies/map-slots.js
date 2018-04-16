@@ -32,16 +32,16 @@ export default class MapSlots extends Strategy {
         }
 
         let selectedSlots = MapSlots.findAllSlotCandidates(slotConnection, arc);
+
+        // ResolveRecipe handles one-slot case.
         if (selectedSlots.length < 2) {
           return;
         }
 
-        let selectedSlot = selectedSlots[0]; // TODO: return combinatorial results?
-
-        return (recipe, slotConnection) => {
-          MapSlots.connectSlotConnection(slotConnection, selectedSlot);
+        return selectedSlots.map(slot => ((recipe, slotConnection) => {
+          MapSlots.connectSlotConnection(slotConnection, slot);
           return 1;
-        };
+        }));
       }
     }(RecipeWalker.Permuted), this);
   }
