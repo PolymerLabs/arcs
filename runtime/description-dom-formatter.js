@@ -18,6 +18,10 @@ export default class DescriptionDomFormatter extends DescriptionFormatter {
     this._nextID = 0;
   }
 
+  descriptionFromString(str) {
+    return {template: super.descriptionFromString(str), model: {}};
+  }
+
   _isSelectedDescription(desc) {
     return super._isSelectedDescription(desc) || (!!desc.template && !!desc.model);
   }
@@ -209,6 +213,7 @@ export default class DescriptionDomFormatter extends DescriptionFormatter {
       model: {[`${handleKey}Length`]: handleList.length}
     };
   }
+
   _formatSingleton(handleName, handleVar) {
     if (handleVar.rawData.name) {
       return {
