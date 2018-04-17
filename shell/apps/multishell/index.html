@@ -3,6 +3,7 @@
 <style>
   body {
     margin: 0;
+    font-family: sans-serif;
   }
   columns {
     display: flex;
@@ -20,8 +21,13 @@
     height: 48px;
     padding: 0 16px;
     z-index: 100;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    border-top: none;
     box-shadow: 0 1px 5px rgba(0, 0, 0, 0.15);
+  }
+  dynamic-frame > div > input {
+    border: none;
+    outline: none;
   }
   iframe {
     border: none;
@@ -35,21 +41,23 @@
 </columns>
 
 <template frame>
-  <div><span style="flex: 1;">Shell</span><icon on-click="onClose">close</icon></div>
+  <div><input style="flex: 1;" value="{{title}}"><icon on-click="onClose">close</icon></div>
   <iframe src="../web/"></iframe>
 </template>
 
 <script type="module">
-  import Xen from '../../components/xen/xen.js';
   // hijacking one's own links is allowed (same-origin policy)
   import jackLinks from './link-jack.js';
+  import Xen from '../../components/xen/xen.js';
+
   const template = document.querySelector('[frame]');
   const columns = document.querySelector('columns');
+
   const jackIframe = (iframe, handler) => {
     const target = iframe.contentWindow;
-    //const target = iframe.contentWindow.document;
     jackLinks(target, (event, anchor) => handler(event, iframe, anchor));
   }
+
   const linkHandler = (event, iframe, anchor) => {
     console.log(anchor.href);
     if (event.shiftKey) {
@@ -58,23 +66,33 @@
       routeIframe(iframe, anchor.href, linkHandler);
     }
   }
+
   const routeIframe = (iframe, href, linkHandler) => {
     console.log('routeIframe');
-    //jackIframe(iframe, linkHandler);
-    //iframe.contentWindow.onload = () => {
-      jackIframe(iframe, linkHandler);
-    //}
-    iframe.contentWindow.location = href;
-  }
-  for (const iframe of document.querySelectorAll('iframe')) {
     jackIframe(iframe, linkHandler);
+    iframe.contentWindow.location = href;
+    const resolved = href;
+    //const resolved = new URL(href, document.location.href).href;
+    iframe.dom.set({title: resolved});
   }
+
   const spawnShell = src => {
     const frame = columns.appendChild(document.createElement('dynamic-frame'));
-    const dom = Xen.Template.stamp(template).appendTo(frame);
+    const handlers = {
+      onClose() {
+        frame.remove();
+      }
+    };
+    const dom = Xen.Template.stamp(template).appendTo(frame).events(handlers);
     const iframe = dom.$('iframe');
-    //const iframe = columns.appendChild(document.createElement('iframe'));
+    iframe.dom = dom;
     routeIframe(iframe, src, linkHandler);
   }
-  spawnShell('../web');
+
+  const params = new URL(document.location.href).searchParams;
+  let app = params.get('app') || 'web';
+  if (app[0] !== '.') {
+    app = `../${app}`;
+  }
+  spawnShell(app);
 </script>
