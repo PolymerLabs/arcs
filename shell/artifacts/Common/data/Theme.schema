@@ -8,3 +8,5 @@
 schema Theme
   Text mainBackground
   Text mainColor
+  Text title
+  Text key
