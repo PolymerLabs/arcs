@@ -14,7 +14,7 @@ export default class StorageProviderBase {
   constructor(type, arcId, name, id, key) {
     assert(id, 'id must be provided when constructing StorageProviders');
     assert(!type.hasUnresolvedVariable, 'Storage types must be concrete');
-    let trace = tracing.start({cat: 'view', name: 'StorageProviderBase::constructor', args: {type: type.key, name: name}});
+    let trace = tracing.start({cat: 'handle', name: 'StorageProviderBase::constructor', args: {type: type.key, name: name}});
     this._type = type;
     this._arcId = arcId;
     this._listeners = new Map();
@@ -57,7 +57,7 @@ export default class StorageProviderBase {
     if (!listenerMap || listenerMap.size == 0)
       return;
 
-    let callTrace = tracing.start({cat: 'view', name: 'StorageProviderBase::_fire', args: {kind, type: this._type.key,
+    let callTrace = tracing.start({cat: 'handle', name: 'StorageProviderBase::_fire', args: {kind, type: this._type.key,
         name: this.name, listeners: listenerMap.size}});
 
     // TODO: wire up a target (particle)
@@ -82,24 +82,24 @@ export default class StorageProviderBase {
     return 0;
   }
 
-  toString(viewTags) {
+  toString(handleTags) {
     let results = [];
-    let viewStr = [];
-    viewStr.push(`view`);
+    let handleStr = [];
+    handleStr.push(`view`);
     if (this.name) {
-      viewStr.push(`${this.name}`);
+      handleStr.push(`${this.name}`);
     }
-    viewStr.push(`of ${this.type.toString()}`);
+    handleStr.push(`of ${this.type.toString()}`);
     if (this.id) {
-      viewStr.push(`'${this.id}'`);
+      handleStr.push(`'${this.id}'`);
     }
-    if (viewTags && viewTags.length) {
-      viewStr.push(`${[...viewTags].join(' ')}`);
+    if (handleTags && handleTags.length) {
+      handleStr.push(`${[...handleTags].join(' ')}`);
     }
     if (this.source) {
-      viewStr.push(`in '${this.source}'`);
+      handleStr.push(`in '${this.source}'`);
     }
-    results.push(viewStr.join(' '));
+    results.push(handleStr.join(' '));
     if (this.description)
       results.push(`  description \`${this.description}\``);
     return results.join('\n');

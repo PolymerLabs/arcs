@@ -26,8 +26,8 @@ class Scheduler {
 
   set idleCallback(idleCallback) { this._idleCallback = idleCallback; }
 
-  enqueue(view, eventRecords) {
-    let trace = tracing.flow({cat: 'view', name: 'ViewBase::_fire flow'}).start();
+  enqueue(handle, eventRecords) {
+    let trace = tracing.flow({cat: 'handle', name: 'ViewBase::_fire flow'}).start();
     if (this.frameQueue.length == 0 && eventRecords.length > 0)
       this._asyncProcess();
     if (!this._idleResolver) {
@@ -36,20 +36,20 @@ class Scheduler {
     for (let record of eventRecords) {
       let frame = this.targetMap.get(record.target);
       if (frame == undefined) {
-        frame = {target: record.target, views: new Map(), traces: []};
+        frame = {target: record.target, handles: new Map(), traces: []};
         this.frameQueue.push(frame);
         this.targetMap.set(record.target, frame);
       }
       frame.traces.push(trace);
-      let viewEvents = frame.views.get(view);
-      if (viewEvents == undefined) {
-        viewEvents = new Map();
-        frame.views.set(view, viewEvents);
+      let handleEvents = frame.handles.get(handle);
+      if (handleEvents == undefined) {
+        handleEvents = new Map();
+        frame.handles.set(handle, handleEvents);
       }
-      let kindEvents = viewEvents.get(record.kind);
+      let kindEvents = handleEvents.get(record.kind);
       if (kindEvents == undefined) {
         kindEvents = [];
-        viewEvents.set(record.kind, kindEvents);
+        handleEvents.set(record.kind, kindEvents);
       }
       kindEvents.push(record);
     }
@@ -85,7 +85,7 @@ class Scheduler {
     let trace = tracing.start({cat: 'scheduler', name: 'Scheduler::_applyFrame', args: {target: frame.target ? frame.target.constructor.name : 'NULL TARGET'}});
 
     let totalRecords = 0;
-    for (let [view, kinds] of frame.views.entries()) {
+    for (let [handle, kinds] of frame.handles.entries()) {
       for (let [kind, records] of kinds.entries()) {
         let record = records[records.length - 1];
         record.callback(record.details);

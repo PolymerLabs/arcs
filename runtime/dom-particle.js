@@ -86,7 +86,7 @@ class DomParticle extends XenStateMixin(Particle) {
   get config() {
     // TODO(sjmiles): getter that does work is a bad idea, this is temporary
     return {
-      views: this.spec.inputs.map(i => i.name),
+      handles: this.spec.inputs.map(i => i.name),
       // TODO(mmandlis): this.spec needs to be replaced with a particle-spec loaded from
       // .manifest files, instead of .ptcl ones.
       slotNames: [...this.spec.slots.values()].map(s => s.name)
@@ -95,26 +95,26 @@ class DomParticle extends XenStateMixin(Particle) {
   _info() {
     return `---------- DomParticle::[${this.spec.name}]`;
   }
-  async setViews(views) {
-    this.handles = views;
-    this._views = views;
+  async setViews(handles) {
+    this.handles = handles;
+    this._views = handles;
     let config = this.config;
-    this.when([new ViewChanges(views, config.views, 'change')], async () => {
-      await this._handlesToProps(views, config);
+    this.when([new ViewChanges(handles, config.handles, 'change')], async () => {
+      await this._handlesToProps(handles, config);
     });
-    // make sure we invalidate once, even if there are no incoming views
+    // make sure we invalidate once, even if there are no incoming handles
     this._invalidate();
   }
-  async _handlesToProps(views, config) {
-    // acquire (async) list data from views
+  async _handlesToProps(handles, config) {
+    // acquire (async) list data from handles
     let data = await Promise.all(
-      config.views
-      .map(name => views.get(name))
-      .map(view => view.toList ? view.toList() : view.get())
+      config.handles
+      .map(name => handles.get(name))
+      .map(handle => handle.toList ? handle.toList() : handle.get())
     );
-    // convert view data (array) into props (dictionary)
+    // convert handle data (array) into props (dictionary)
     let props = Object.create(null);
-    config.views.forEach((name, i) => {
+    config.handles.forEach((name, i) => {
       props[name] = data[i];
     });
     this._setProps(props);
