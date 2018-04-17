@@ -111,6 +111,7 @@ const template = html`
   <shell-handles
     users="{{users}}"
     user="{{user}}"
+    key="{{key}}"
     arc="{{arc}}"
     visited="{{arcs}}"
     on-launcherarcs="_onStateData"

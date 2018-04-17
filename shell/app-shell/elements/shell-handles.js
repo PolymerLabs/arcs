@@ -25,7 +25,7 @@ const log = Xen.logFactory('ShellHandles', '#004f00');
 
 class ShellHandles extends Xen.Debug(Xen.Base, log) {
   static get observedAttributes() {
-    return ['arc', 'users', 'user', 'visited'];
+    return ['key', 'arc', 'users', 'user', 'visited'];
   }
   get template() {
     return template;
@@ -34,7 +34,7 @@ class ShellHandles extends Xen.Debug(Xen.Base, log) {
     this._watchGeolocation();
     const typesPath = `${shellPath}/app-shell/artifacts`;
     return {
-      themeData: {
+      defaultThemeData: {
         mainBackground: 'white'
       },
       arcsHandleOptions: {
@@ -72,8 +72,11 @@ class ShellHandles extends Xen.Debug(Xen.Base, log) {
     };
   }
   _update(props, state, lastProps, lastState) {
-    const {users, user, visited, arc} = props;
+    const {users, user, visited, key, arc} = props;
     const {geoCoords} = state;
+    if (key && (key !== lastProps.key)) {
+      state.themeData = Object.assign({key}, state.defaultThemeData);
+    }
     if (user && (user !== lastProps.user || geoCoords !== lastState.geoCoords)) {
       state.userHandleData = this._renderUser(user, geoCoords);
     }
