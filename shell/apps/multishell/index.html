@@ -8,35 +8,73 @@
     display: flex;
     height: 100vh;
   }
+  dynamic-frame {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    overflow: hidden;
+  }
+  dynamic-frame > div {
+    display: flex;
+    align-items: center;
+    height: 48px;
+    padding: 0 16px;
+    z-index: 100;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.2);
+    box-shadow: 0 1px 5px rgba(0, 0, 0, 0.15);
+  }
   iframe {
     border: none;
-    /*border: 2px solid blue;*/
     flex: 1;
   }
 </style>
 
+<link href="../../components/icons.css" rel="stylesheet">
+
 <columns>
-  <iframe src="../web/"></iframe>
-  <iframe src="../web/"></iframe>
 </columns>
 
+<template frame>
+  <div><span style="flex: 1;">Shell</span><icon on-click="onClose">close</icon></div>
+  <iframe src="../web/"></iframe>
+</template>
+
 <script type="module">
+  import Xen from '../../components/xen/xen.js';
   // hijacking one's own links is allowed (same-origin policy)
   import jackLinks from './link-jack.js';
+  const template = document.querySelector('[frame]');
+  const columns = document.querySelector('columns');
   const jackIframe = (iframe, handler) => {
-    jackLinks(iframe.contentWindow, anchor => handler(iframe, anchor));
+    const target = iframe.contentWindow;
+    //const target = iframe.contentWindow.document;
+    jackLinks(target, (event, anchor) => handler(event, iframe, anchor));
   }
-  const routeIframe = (iframe, href, linkHandler) => {
-    iframe.contentWindow.location = href;
-    iframe.contentWindow.onload = () => {
-      jackIframe(iframe, linkHandler);
+  const linkHandler = (event, iframe, anchor) => {
+    console.log(anchor.href);
+    if (event.shiftKey) {
+      spawnShell(anchor.href);
+    } else {
+      routeIframe(iframe, anchor.href, linkHandler);
     }
   }
-  const linkHandler = (iframe, anchor) => {
-    console.log(anchor.href);
-    routeIframe(iframe, anchor.href, linkHandler);
+  const routeIframe = (iframe, href, linkHandler) => {
+    console.log('routeIframe');
+    //jackIframe(iframe, linkHandler);
+    //iframe.contentWindow.onload = () => {
+      jackIframe(iframe, linkHandler);
+    //}
+    iframe.contentWindow.location = href;
   }
   for (const iframe of document.querySelectorAll('iframe')) {
     jackIframe(iframe, linkHandler);
   }
+  const spawnShell = src => {
+    const frame = columns.appendChild(document.createElement('dynamic-frame'));
+    const dom = Xen.Template.stamp(template).appendTo(frame);
+    const iframe = dom.$('iframe');
+    //const iframe = columns.appendChild(document.createElement('iframe'));
+    routeIframe(iframe, src, linkHandler);
+  }
+  spawnShell('../web');
 </script>
