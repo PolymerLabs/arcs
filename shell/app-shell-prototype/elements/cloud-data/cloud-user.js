@@ -62,13 +62,11 @@ class CloudUser extends Xen.Debug(Xen.Base, log) {
   }
   _userInfoChanged(userid, snap) {
     log(`[users/${userid}/info] node fired a change event`);
-    const user = snap.val();
-    this._validateUser(userid, user);
+    const user = {
+      id: userid,
+      info: snap.val() || {}
+    };
     this._fire('user', user);
-  }
-  _validateUser(userid, user) {
-    user.id = userid;
-    user.info = user.info || {};
   }
   _userArcsChanged(userid, snap) {
     log(`[users/${userid}/arcs] node fired a change event`);
