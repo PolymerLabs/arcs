@@ -304,12 +304,12 @@
 
       _onParticleFilterChanged() {
         if (!this.queryParams) return;
-        this.set('queryParams.particleFilter', this.selectedParticleIds.join(','));
+        this.set('queryParams.particleFilter', this.selectedParticleIds.join(',') || null);
       }
 
       _onHandleFilterChanged() {
         if (!this.queryParams) return;
-        this.set('queryParams.handleFilter', this.selectedHandleIds.join(','));
+        this.set('queryParams.handleFilter', this.selectedHandleIds.join(',') || null);
       }
 
       _onQueryParams() {
