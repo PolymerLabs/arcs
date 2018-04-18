@@ -109,7 +109,7 @@ defineParticle(({DomParticle, resolver, log, html}) => {
         <div msg>
           <div title>
             <span avatar style='{{avatarStyle}}'></span><span owner>{{owner}}</span><span when>{{time}}</span>
-            <icon style%="{{style}}" value="{{id}}" on-click="_onDeletePost">delete</icon>
+            <icon style%="{{style}}" value="{{id}}" on-click="onDeletePost">delete</icon>
             <br>
           </div>
           <div content value="{{id}}">
@@ -125,72 +125,66 @@ defineParticle(({DomParticle, resolver, log, html}) => {
   <div blogDescription>{{blogDescription}}</div>
 </template>
 <template blog-description-editable>
-  <div blogDescription><input value="{{blogDescription}}" placeholder="Name your blog" on-blur="_onBlurDescription"></div>
+  <div blogDescription><input value="{{blogDescription}}" placeholder="Name your blog" on-blur="onBlurDescription"></div>
 </template>`;
 
   return class extends DomParticle {
     get template() {
       return template;
     }
-    _peopleSetToMap(people) {
+    peopleSetToMap(people) {
       const peopleMap = {};
       if (people)
         people.map(p => peopleMap[p.id] = p.name);
       return peopleMap;
     }
-    _avatarSetToMap(avatars) {
+    avatarSetToMap(avatars) {
       const avatarMap = {};
       if (avatars)
         avatars.map(a => avatarMap[a.owner] = a.url);
       return avatarMap;
     }
-    _initBlogMetadata(props) {
+    initBlogMetadata(props) {
       if (!props.metadata) {
-        const metadataHandle = this._views.get('metadata');
         // Note that the aggregated feed recipe use case for this particle does
         // not provide a metadata handle at all.
         // TODO(wkorman): Consider splitting this particle into separate
         // ones -- one for working with a single miniblog and a separate one
         // to act as the feed, as differing logic is starting to get complex.
-        if (metadataHandle) {
-          const BlogMetadata = metadataHandle.entityClass;
-          metadataHandle.set(
-              new BlogMetadata({blogOwner: props.user.id, description: ''}));
+        if (this.handles.get('metadata')) {
+          this.updateVariable('metadata', {blogOwner: props.user.id, description: ''});
         }
       }
     }
     willReceiveProps(props) {
       if (props.posts || props.stats) {
-        this._initBlogMetadata(props);
-        const metadataHandle = this._views.get('metadata');
+        this.initBlogMetadata(props);
         // Filter posts with no time stamp, in case somehow people have for
         // example old game stats that don't have a createdTimestamp written.
         const allPosts = (props.posts || [])
                              .concat(props.stats || [])
                              .filter(p => p.createdTimestamp);
-        this._setState({
+        this.setState({
           posts: allPosts,
-          people: this._peopleSetToMap(props.people),
-          avatars: this._avatarSetToMap(props.avatars),
+          people: this.peopleSetToMap(props.people),
+          avatars: this.avatarSetToMap(props.avatars),
         });
       }
     }
-    _onDeletePost(e, state) {
+    onDeletePost(e, state) {
       const targetPost = state.posts.find(p => p.id == e.data.value);
       if (targetPost)
-        this._views.get('posts').remove(targetPost);
+        this.handles.get('posts').remove(targetPost);
     }
-    _onBlurDescription(e, state) {
-      const metadataHandle = this._views.get('metadata');
-      const BlogMetadata = metadataHandle.entityClass;
-      metadataHandle.set(new BlogMetadata(
-          {blogOwner: this._props.user.id, description: e.data.value}));
+    onBlurDescription(e, state) {
+      this.updateVariable('metadata',
+          {blogOwner: this._props.user.id, description: e.data.value});
     }
-    _avatarToStyle(url) {
+    avatarToStyle(url) {
       return `background: url('${
           url}') center no-repeat; background-size: cover;`;
     }
-    _blogOwnerName(metadata) {
+    blogOwnerName(metadata) {
       const unknownName = 'Unknown';
       let name = unknownName;
       if (metadata) {
@@ -198,15 +192,15 @@ defineParticle(({DomParticle, resolver, log, html}) => {
       }
       return name;
     }
-    _blogOwnerAvatarStyle(metadata, avatars) {
+    blogOwnerAvatarStyle(metadata, avatars) {
       const unknownAvatarUrl = '';
       let avatarUrl = unknownAvatarUrl;
       if (metadata) {
         avatarUrl = resolver(avatars[metadata.blogOwner]) || unknownAvatarUrl;
       }
-      return this._avatarToStyle(avatarUrl);
+      return this.avatarToStyle(avatarUrl);
     }
-    _blogDescription(user, metadata) {
+    blogDescription(user, metadata) {
       const blogDescription =
           (metadata && metadata.description) ? metadata.description : '';
       return {
@@ -216,7 +210,7 @@ defineParticle(({DomParticle, resolver, log, html}) => {
         models: [{blogDescription}]
       };
     }
-    _sortPostsByDateAscending(posts) {
+    sortPostsByDateAscending(posts) {
       return posts.sort((a, b) => {
         return b.createdTimestamp - a.createdTimestamp;
       });
@@ -231,7 +225,7 @@ defineParticle(({DomParticle, resolver, log, html}) => {
       const clampedHeight = clampedWidth / ratio;
       return {clampedWidth, clampedHeight};
     }
-    _postToModel(visible, {
+    postToModel(visible, {
       createdTimestamp,
       message,
       image,
@@ -253,25 +247,25 @@ defineParticle(({DomParticle, resolver, log, html}) => {
           'day': 'numeric'
         }),
         style: {display: visible ? 'inline' : 'none'},
-        avatarStyle: this._avatarToStyle(resolver(this._state.avatars[author])),
+        avatarStyle: this.avatarToStyle(resolver(this._state.avatars[author])),
         owner: this._state.people[author]
       };
     }
     render({user, metadata}, {posts, avatars}) {
-      const blogAuthor = this._blogOwnerName(metadata);
-      const blogAvatarStyle = this._blogOwnerAvatarStyle(metadata, avatars);
-      const blogDescription = this._blogDescription(user, metadata);
+      const blogAuthor = this.blogOwnerName(metadata);
+      const blogAvatarStyle = this.blogOwnerAvatarStyle(metadata, avatars);
+      const blogDescription = this.blogDescription(user, metadata);
       // TODO(wkorman): We'll be splitting the aggregated feed into its own
       // particle soon, so the below flag is just an interim hack.
       const isAggregatedFeed = !metadata;
       const model =
           {isAggregatedFeed, blogAuthor, blogAvatarStyle, blogDescription};
       if (posts && posts.length > 0) {
-        const sortedPosts = this._sortPostsByDateAscending(posts);
-        const visible = this._views.get('posts').canWrite;
+        const sortedPosts = this.sortPostsByDateAscending(posts);
+        const visible = this.handles.get('posts').canWrite;
         return Object.assign(model, {
           hideZeroState: true,
-          posts: sortedPosts.map(p => this._postToModel(visible, p))
+          posts: sortedPosts.map(p => this.postToModel(visible, p))
         });
       } else {
         return Object.assign(model, {hideZeroState: false, posts: []});
