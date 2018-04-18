@@ -130,9 +130,10 @@ export class DomParticle extends XenStateMixin(Particle) {
     // TODO(sjmiles): redundant, same answer for every slot
     if (this.shouldRender(...stateArgs)) {
       let content = {};
-      if (slot._requestedContentTypes.has('template')) {
+      // TODO(mmandlis): Below must be commented out for Words post to render.
+      // if (slot._requestedContentTypes.has('template')) {
         content.template = this.getTemplate(slot.slotName);
-      }
+      // }
       if (slot._requestedContentTypes.has('model')) {
         content.model = this.render(...stateArgs);
       }
