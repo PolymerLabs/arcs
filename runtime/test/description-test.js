@@ -613,7 +613,7 @@ recipe
       assert.equal(expectedDescription, await description.getRecipeSuggestion());
       assert.deepEqual({template: expectedDescription, model: {}},
                       await description.getRecipeSuggestion(DescriptionDomFormatter));
-      }
+    };
 
     verify(`recipe`, 'I\'m feeling lucky.');
     verify(`recipe hello`, 'Hello.');

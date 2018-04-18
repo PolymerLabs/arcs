@@ -174,7 +174,10 @@ export class DescriptionFormatter {
         suggestions.push(await this.patternToSuggestion(particle.pattern, particle));
       }
     }));
-    return this._capitalizeAndPunctuate(this._joinDescriptions(suggestions));
+    let jointDescription = this._joinDescriptions(suggestions);
+    if (jointDescription) {
+      return this._capitalizeAndPunctuate(jointDescription);
+    }
   }
 
   _joinDescriptions(strings) {
@@ -196,11 +199,10 @@ export class DescriptionFormatter {
   }
 
   _capitalizeAndPunctuate(sentence) {
-    if (sentence) {
-      // "Capitalize, punctuate." (if the sentence doesn't end with a punctuation character).
-      let last = sentence.length - 1;
-      return `${sentence[0].toUpperCase()}${sentence.slice(1, last)}${sentence[last]}${sentence[last].match(/[a-z0-9\(\)'>\]]/i) ? '.' : ''}`;
-    }
+    assert(sentence);
+    // "Capitalize, punctuate." (if the sentence doesn't end with a punctuation character).
+    let last = sentence.length - 1;
+    return `${sentence[0].toUpperCase()}${sentence.slice(1, last)}${sentence[last]}${sentence[last].match(/[a-z0-9\(\)'>\]]/i) ? '.' : ''}`;
   }
 
   async patternToSuggestion(pattern, particleDescription) {
