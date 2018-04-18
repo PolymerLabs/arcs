@@ -164,7 +164,9 @@ class DomParticle extends XenStateMixin(Particle) {
   }
   updateVariable(handleName, record) {
     const handle = this.handles.get(handleName);
-    handle.set(new (handle.entityClass)(record));
+    const newRecord = new (handle.entityClass)(record);
+    handle.set(newRecord);
+    return newRecord;
   }
   updateSet(handleName, record) {
     // Set the record into the right place in the set. If we find it
