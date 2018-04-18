@@ -91,7 +91,7 @@ const template = html`
     arc="{{arc}}"
     metadata="{{metadata}}"
     share="{{share}}"
-    planificator="{{planificator}}"
+    plans="{{plans}}"
     plan="{{plan}}"
     launcherarcs="{{launcherarcs}}"
     on-manifests="_onStateData"
@@ -188,15 +188,20 @@ class AppShell extends Xen.Debug(Xen.Base, log) {
     if (arc && !planificator) {
       let planificator = ArcsUtils.createPlanificator(arc);
       planificator.registerPlansChangedCallback((current) => {
-        this._updateSuggestions(arc, planificator, this._state.search);
-        if (!plan && current.plans && current.plans.length && (config.launcher || config.profiler)) {
-          state.injectedStep = current.plans[0].plan;
+        let plans = current.plans;
+        if (!plan && plans && plans.length && (config.launcher || config.profiler)) {
+          state.injectedStep = plans[0].plan;
         }
+        plans.generations = current.generations;
+        this._setState({plans});
+      });
+      planificator.registerSuggestChangedCallback((suggestions) => {
+        this._setState({drawerOpen: Boolean(suggestions)});
       });
       state.planificator = planificator;
     }
     if (search !== oldState.search) {
-      this._consumeSearch(search, arc, planificator);
+      planificator.setSearch(search);
     }
     if (metadata) {
       state.description = metadata.description;
@@ -205,14 +210,6 @@ class AppShell extends Xen.Debug(Xen.Base, log) {
       state.consumedPlan = plan;
       this._consumePlan(arc, description);
     }
-  }
-  _updateSuggestions(arc, planificator, search) {
-    let suggestions = (planificator.getCurrentSuggestions() || [])
-        .filter(({plan}) => plan.slots && (search || !plan.slots.find(s => s.name.includes('root') || s.tags.includes('#root')))) || [];
-    // TODO(mmandlis): Move suggestions setting into planificator.
-    // TODO(mmandlis): check whether suggestions changed.
-    arc.pec.slotComposer.setSuggestions(suggestions);
-    this._setState({suggestions, drawerOpen: Boolean(suggestions)});
   }
   _render({}, state) {
     const {config, user, step, injectedStep} = state;
@@ -247,12 +244,6 @@ class AppShell extends Xen.Debug(Xen.Base, log) {
     if (user && user.id !== selectedUser) {
       this._setState({selectedUser, user});
     }
-  }
-  _consumeSearch(search, arc, planificator) {
-    search = (search || '').trim().toLowerCase();
-    // TODO(sjmiles): installing the search term should probably be the job of arc-host
-    arc.search = (search !== '*') ? search : null;
-    this._updateSuggestions(arc, planificator, search);
   }
   async _consumePlan(arc, description) {
     // arc has changed, generate new description

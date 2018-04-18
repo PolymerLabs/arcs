@@ -30,7 +30,7 @@ class TestPlanificator extends Planificator {
   }
 
   async allPlanningDone() {
-    return Promise.all(this.schedulePromises).then(() => this.schedulePromises = []);    
+    return Promise.all(this.schedulePromises).then(() => this.schedulePromises = []);
   }
 
   async _doNextPlans(timeout) {
@@ -46,6 +46,17 @@ class TestPlanificator extends Planificator {
     }).then((next) => this._next = next);
   }
 
+  plannerReturnFakeResults(planHashes) {
+    let plans = [];
+    planHashes.forEach(hash => {
+      let plan = new Recipe(`recipe${hash}`);
+      plan.normalize();
+      plans.push({plan, hash});
+    });
+    this.plannerReturnResults(plans);
+    return plans;
+  }
+
   plannerReturnResults(plans) {
     if (this.plannerPromise) {
       this.plannerPromise({plans, generations: []});
@@ -58,6 +69,9 @@ class TestPlanificator extends Planificator {
 
 function createPlanificator() {
   let arc = new Arc({id: 'demo-test'});
+  arc.pec = {slotComposer: {}};
+  arc.pec.slotComposer.setSuggestions = (suggestions) => arc.suggestions = suggestions;
+  arc.pec.slotComposer.initializeRecipe = async () => {};
   return new TestPlanificator(arc);
 }
 
@@ -77,8 +91,8 @@ describe('Planificator', function() {
       assert.isTrue(planificator.isPlanning);
     }
 
-    planificator.plannerReturnResults([1, 2, 3]);
-    planificator.plannerReturnResults([3, 4, 5, 6]);
+    planificator.plannerReturnFakeResults([1, 2, 3]);
+    planificator.plannerReturnFakeResults([3, 4, 5, 6]);
 
     await planificator.allPlanningDone();
 
@@ -99,7 +113,7 @@ describe('Planificator', function() {
     assert.isTrue(planificator.isPlanning);
     assert.lengthOf(planificator.getCurrentPlans().plans, 0);
 
-    planificator.plannerReturnResults([1, 2, 3]);
+    planificator.plannerReturnFakeResults([1, 2, 3]);
     await planificator.allPlanningDone();
     assert.isFalse(planificator.isPlanning);
     assert.lengthOf(planificator.getCurrentPlans().plans, 3);
@@ -110,16 +124,15 @@ describe('Planificator', function() {
     assert.isTrue(planificator.isPlanning);
     // Current plans are still available.
     assert.lengthOf(planificator.getCurrentPlans().plans, 3);
+    planificator.suggestFilter = {showAll: true};
     assert.lengthOf(planificator.getCurrentSuggestions(), 3);
     assert.lengthOf(Object.keys(planificator._past), 0);
   });
-  
+
   it('replans triggered by plan instantiation', async () => {
     let planificator = createPlanificator();
     planificator.requestPlanning();
-    let plan = new Recipe('test');
-    plan.normalize();
-    planificator.plannerReturnResults([{plan}]);
+    let plan = planificator.plannerReturnFakeResults(['test'])[0].plan;
     await planificator.allPlanningDone();
     assert.lengthOf(planificator.getCurrentSuggestions(), 1);
     assert.equal(plan, planificator.getCurrentSuggestions()[0].plan);
@@ -146,20 +159,18 @@ describe('Planificator', function() {
     assert.equal(0, planChanged);
 
     // Planning is done and plans are set, both - state and plans change.
-    let plan = new Recipe('test');
-    plan.normalize();
-    planificator.plannerReturnResults([{plan}]);
+    let plan = planificator.plannerReturnFakeResults(['test'])[0].plan;
     await planificator.allPlanningDone();
     assert.equal(2, stateChanged);
     assert.equal(1, planChanged);
 
     // Plan is being instantiated, both - state and plans change.
-    planificator._arc.instantiate(plan);
+    await planificator._arc.instantiate(plan);
     assert.equal(3, stateChanged);
     assert.equal(2, planChanged);
-    
+
     // Planning is done and plans are set, both - state and plans change.
-    planificator.plannerReturnResults([{hash: 1}]);
+    planificator.plannerReturnFakeResults([1]);
     await planificator.allPlanningDone();
     assert.equal(4, stateChanged);
     assert.equal(3, planChanged);
@@ -170,9 +181,12 @@ describe('Planificator', function() {
     assert.equal(3, planChanged);
 
     // Same plan is returned - state chagnes, plans do not.
-    planificator.plannerReturnResults([{hash: 1}]);
+    planificator.plannerReturnFakeResults([1]);
     await planificator.allPlanningDone();
     assert.equal(6, stateChanged);
     assert.equal(3, planChanged);
   });
+  // TODO: Add tests:
+  // 1. suggestions filtering and callback
+  // 2. setting search string.
 });

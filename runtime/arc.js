@@ -77,9 +77,7 @@ class Arc {
 
     registerArc(this);
 
-    // Callbacks for tracking various changes in the arc.
     this._instantiatePlanCallbacks = [];
-    this._searchChangeCallbacks = [];
   }
   get loader() {
     return this._loader;
@@ -90,13 +88,7 @@ class Arc {
   }
 
   set search(search) {
-    let newSearch = search ? search.toLowerCase().trim() : null;
-    newSearch = (newSearch !== '') ? newSearch : null;
-    if (this._search !== newSearch) {
-      let oldSearch = this._search;
-      this._search = newSearch;
-      this._searchChangeCallbacks.forEach(callback => callback(this.search, oldSearch));
-    }
+    this._search = search ? search.toLowerCase().trim() : null;
   }
 
   get search() {
@@ -107,9 +99,6 @@ class Arc {
 
   registerInstantiatePlanCallback(callback) {
     this._instantiatePlanCallbacks.push(callback);
-  }
-  registerSearchChangeCallback(callback) {
-    this._searchChangeCallbacks.push(callback);
   }
 
   get idle() {

@@ -21,14 +21,17 @@ export default class Planificator {
     this._next = {plans: [], generations: []}; // {plans, generations}
     // The current set plans to be presented to the user (full or subset)
     this._current = {plans: [], generations: []}; // {plans, generations}
+    this._suggestFilter = {showAll: false};
     // The previous set of suggestions with the plan that was instantiated - copied over from the `current`
     // set, once suggestion is being accepted. Other sets of generated plans aren't stored.
     this._past = {}; // {activePlan, plans, generations}
 
     // Callbacks triggered when the `current` set of plans is being updated.
     this._plansChangedCallbacks = [];
+    // Callbacks triggered when the current set of suggestions is being updated.
+    this._suggestChangedCallbacks = [];
     // Callbacks triggered when Planificator isPlanning state changes.
-    this._stateChangedCallbacks = []; 
+    this._stateChangedCallbacks = [];
 
     // planning state
     this._isPlanning = false; // whether planning is ongoing
@@ -42,9 +45,10 @@ export default class Planificator {
     // TODO(mmandlis): PlannerController subscribes to various change events.
     // Later, it will evaluate and batch events and trigger replanning intelligently.
     // Currently, just trigger replanning for each event.
-    this._arc.registerSearchChangeCallback(this.onSearchChanged.bind(this));
     this._arc.registerInstantiatePlanCallback(this.onPlanInstantiated.bind(this));
     this._arc._scheduler.registerIdleCallback(this.requestPlanning.bind(this));
+
+    this.registerSuggestChangedCallback((suggestions) => this._arc.pec.slotComposer.setSuggestions(suggestions));
   }
 
   get isPlanning() { return this._isPlanning; }
@@ -54,6 +58,31 @@ export default class Planificator {
       this._stateChangedCallbacks.forEach(callback => callback(this._isPlanning));
     }
   }
+  get suggestFilter() { return this._suggestFilter; }
+  set suggestFilter(suggestFilter) {
+    assert(!suggestFilter.showAll || !suggestFilter.search);
+    this._suggestFilter = suggestFilter;
+  }
+
+  setSearch(search) {
+    search = search ? search.toLowerCase().trim() : null;
+    search = (search !== '') ? search : null;
+    let showAll = search === '*';
+    search = showAll ? null : search;
+    if (showAll == this.suggestFilter.showAll && search == this.suggestFilter.search) {
+      return;
+    }
+
+    let previousSuggestions = this.getCurrentSuggestions();
+    this.suggestFilter = {showAll, search};
+    let suggestions = this.getCurrentSuggestions();
+
+    if (this._plansDiffer(suggestions, previousSuggestions)) {
+      this._suggestChangedCallbacks.forEach(callback => callback(suggestions));
+      this._arc.search = search;
+      this.requestPlanning();
+    }
+  }
   getLastActivatedPlan() {
     return this._past; // {activePlan, plans, generations}
   }
@@ -61,11 +90,22 @@ export default class Planificator {
     return this._current; // {plans, generations}
   }
   getCurrentSuggestions() {
-    return this._current.plans;
+    let suggestions = this._current.plans.filter(plan => plan.plan.slots) || [];
+    if (!this.suggestFilter.showAll) {
+      if (this.suggestFilter.search) {
+        suggestions = suggestions.filter(suggestion => suggestion.descriptionText.toLowerCase().includes(this.suggestFilter.search));
+      } else {
+        suggestions = suggestions.filter(suggestion => !suggestion.plan.slots.find(s => s.name.includes('root') || s.tags.includes('#root')));
+      }
+    }
+    return suggestions || [];
   }
 
   registerPlansChangedCallback(callback) {
     this._plansChangedCallbacks.push(callback);
+  }
+  registerSuggestChangedCallback(callback) {
+    this._suggestChangedCallbacks.push(callback);
   }
   registerStateChangedCallback(callback) {
     this._stateChangedCallbacks.push(callback);
@@ -80,12 +120,6 @@ export default class Planificator {
     this._past = {activePlan: plan, plans: this._current.plans, generations: this._current.generations};
     this._setCurrent({plans: [], generations: []});
 
-    this.requestPlanning();
-  }
-
-  onSearchChanged(newSearch, oldSearch) {
-    // TODO(mmandlis): Move plans filtering by description here and update
-    // getCurrentSuggestions to only return plans that match the search term.
     this.requestPlanning();
   }
 
@@ -105,9 +139,7 @@ export default class Planificator {
         console.error(x);
       }
       this.isPlanning = false;
-      if (this._plansDiffer(this._next.plans, this._current.plans)) {
-        this._setCurrent({plans: this._next.plans, generations: this._next.generations});
-      }
+      this._setCurrent({plans: this._next.plans, generations: this._next.generations});
     }
   }
 
@@ -135,7 +167,14 @@ export default class Planificator {
   }
 
   _setCurrent(current) {
-    this._current = current;
-    this._plansChangedCallbacks.forEach(callback => callback(this._current));
+    if (this._plansDiffer(current.plans, this._current.plans)) {
+      let previousSuggestions = this.getCurrentSuggestions();
+      this._current = current;
+      this._plansChangedCallbacks.forEach(callback => callback(this._current));
+      let suggestions = this.getCurrentSuggestions();
+      if (this._plansDiffer(suggestions, previousSuggestions)) {
+        this._suggestChangedCallbacks.forEach(callback => callback(suggestions));
+      }
+    }
   }
 }
