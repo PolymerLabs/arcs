@@ -32,3 +32,5 @@ schema Post
   // Note this is only populated for friends of the viewing user, and so
   // is not always present, and one may as well just use the |author| field.
   Text owner
+  // The key of the arc from which this Post originated.
+  Text arcKey
