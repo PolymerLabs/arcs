@@ -599,6 +599,25 @@ recipe
       await test.verifySuggestion('Populate foo-name.', description);
     });
   });
+
+  it('has no particles description', async () => {
+    let verify = async (manifestStr, expectedDescription) => {
+      let recipe = (await Manifest.parse(manifestStr)).recipes[0];
+      let arc = createTestArc();
+      recipe.normalize();
+      assert.isTrue(recipe.isResolved());
+      arc._activeRecipe = recipe;
+      arc.recipes.push({particles: recipe.particles, handles: recipe.handles, slots: recipe.slots, innerArcs: new Map(), pattern: recipe.pattern});
+      let description = new Description(arc);
+
+      assert.equal(expectedDescription, await description.getRecipeSuggestion());
+      assert.deepEqual({template: expectedDescription, model: {}},
+                      await description.getRecipeSuggestion(DescriptionDomFormatter));
+    };
+
+    verify(`recipe`, 'I\'m feeling lucky.');
+    verify(`recipe hello`, 'Hello.');
+  });
 });
 
 describe('Dynamic description', function() {
