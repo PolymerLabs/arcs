@@ -113,7 +113,7 @@ Stores can reference their underlying data in one of three ways:
 Stores backed by json or local resources are immutable. They may be mapped, or copied via a
 Recipe into an arc.
 
-Stpres can contain a simple description:
+Stores can contain a simple description:
 
 ```
 store MyProducts of [Product] in 'my-products.json'
