@@ -243,6 +243,112 @@ describe('particle-api', function() {
     await util.assertSingletonWillChangeTo(newView, Result, 'success');
   });
 
+  it('can load a recipe referencing a manifest store', async () => {
+    let registry = {};
+    let loader = new class extends Loader {
+      loadResource(path) {
+        return {
+          manifest: `
+            schema Result
+              Text value
+
+            particle P in 'a.js'
+              P(out Result result)
+
+            recipe
+              use 'test:1' as view0
+              P
+                result -> view0
+
+          `,
+          'a.js': `
+            "use strict";
+
+            defineParticle(({Particle}) => {
+              return class P extends Particle {
+                async setViews(views) {
+                  let arc = await this.constructInnerArc();
+                  var resultHandle = views.get('result');
+                  let inView = await arc.createHandle(resultHandle.type, "in view");
+                  let outView = await arc.createHandle(resultHandle.type, "out view");
+                  try {
+                    await arc.loadRecipe(\`
+                      schema Result
+                        Text value
+
+                      store NobId of NobIdStore {Text nobId} in NobIdJson
+                       resource NobIdJson
+                         start
+                         [{"nobId": "12345"}]
+
+                       particle PassThrough in 'pass-through.js'
+                         PassThrough(in NobIdStore {Text nobId} nobId, in Result a, out Result b)
+
+                       recipe
+                         map NobId as nobId
+                         use '\${inView._id}' as v1
+                         use '\${outView._id}' as v2
+                         PassThrough
+                           nobId <- nobId
+                           a <- v1
+                           b -> v2
+
+                    \`);
+                    inView.set(new resultHandle.entityClass({value: 'success'}));
+                    resultHandle.set(new resultHandle.entityClass({value: 'done'}));
+                  } catch (e) {
+                    resultHandle.set(new resultHandle.entityClass({value: e}));
+                  }
+                }
+              }
+            });
+          `,
+          'pass-through.js': `
+            "use strict";
+
+            defineParticle(({Particle}) => {
+              return class PassThrough extends Particle {
+                setViews(views) {
+                  views.get('a').get().then(resultA => {
+                    views.get('nobId').get().then(resultNob => {
+                      if (resultNob.nobId === '12345') {
+                        views.get('b').set(resultA);
+                      }
+                    })
+                  });
+                }
+              }
+            });
+          `
+        }[path];
+      }
+      path(fileName) {
+        return fileName;
+      }
+      join(_, file) {
+        return file;
+      }
+    };
+    let manifest = await Manifest.load('manifest', loader, {registry});
+    let pecFactory = function(id) {
+      let channel = new MessageChannel();
+      new InnerPec(channel.port1, `${id}:inner`, loader);
+      return channel.port2;
+    };
+    let arc = new Arc({id: 'test', pecFactory, loader});
+    let Result = manifest.findSchemaByName('Result').entityClass();
+    let resultHandle = await arc.createHandle(Result.type, undefined, 'test:1');
+    let recipe = manifest.recipes[0];
+    recipe.handles[0].mapToStorage(resultHandle);
+    recipe.normalize();
+    await arc.instantiate(recipe);
+
+    await util.assertSingletonWillChangeTo(resultHandle, Result, 'done');
+    let newView = arc.findHandlesByType(Result.type)[2];
+    assert(newView.name == 'out view');
+    await util.assertSingletonWillChangeTo(newView, Result, 'success');
+  });
+
   it('multiplexing', async () => {
     let registry = {};
     let loader = new class extends Loader {
