@@ -88,7 +88,7 @@ defineParticle(({DomParticle, html, log}) => {
     getDefaultImage() {
       return {url: '', width: 0, height: 0};
     }
-    render({user, post}, {
+    render({user, post, shellTheme}, {
       message,
       image,
       savePost,
@@ -99,7 +99,7 @@ defineParticle(({DomParticle, html, log}) => {
     }) {
       image = image || this.getDefaultImage();
       if (savePost) {
-        this.savePost(renderParticleSpec, renderRecipe, user, message, image);
+        this.savePost(renderParticleSpec, renderRecipe, user, message, image, shellTheme.arcKey);
       }
       const saveButtonActive =
           Boolean(this.hasContent(message) || this.hasContent(image.url));
@@ -137,7 +137,7 @@ recipe
     clearPostState() {
       this.setState({savePost: false, message: '', image: this.getDefaultImage()});
     }
-    savePost(renderParticleSpec, renderRecipe, user, message, image) {
+    savePost(renderParticleSpec, renderRecipe, user, message, image, arcKey) {
       this.updateVariable('post', {
         renderParticleSpec,
         renderRecipe,
@@ -146,7 +146,8 @@ recipe
         imageWidth: image.width,
         imageHeight: image.height,
         createdTimestamp: Date.now(),
-        author: user.id
+        author: user.id,
+        arcKey
       });
       this.clearPostState();
     }

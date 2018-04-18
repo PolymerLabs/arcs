@@ -20,6 +20,7 @@ recipe
   map #BOXED_avatar as avatars
   use #user as user
   use #identities as people
+  use #shelltheme as shellTheme
 
   WritePosts
     posts = posts
@@ -29,6 +30,7 @@ recipe
     post = post
     user <- user
     renderParticle = ShowSinglePost
+    shellTheme <- shellTheme
   ShowPosts
     posts = posts
     metadata = metadata

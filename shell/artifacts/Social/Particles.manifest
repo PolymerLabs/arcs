@@ -7,6 +7,7 @@
 // http://polymer.github.io/PATENTS.txt
 
 import '../Common/List.manifest'
+import '../Common/data/Theme.schema'
 import '../People/Person.schema'
 import '../People/Avatar.schema'
 import '../Words/Stats.schema'
@@ -34,7 +35,7 @@ particle WritePosts in 'source/WritePosts.js'
   description `write posts`
 
 particle EditPost in 'source/EditPost.js'
-  EditPost(host HostedParticleShape renderParticle, inout Post post, inout [Post] posts, in Person user)
+  EditPost(host HostedParticleShape renderParticle, inout Post post, inout [Post] posts, in Person user, in Theme shellTheme)
   consume content
   description `edit a post`
 
