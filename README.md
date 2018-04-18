@@ -73,11 +73,11 @@ $ npm run test-with-start
 
 There are additional targets provided to run subsets of those commands.
 
-- To start a server, run `npm start`. This will spin up a server in the
-  current directory serving on 8080.
-- To build packed artifacts, run `tools/sigh`.
-- To run tests against a currently running server, with the current set of
-  built artifacts, run `npm run test`.
+- `npm start`: spins up a server (and blocks), serving in port 8080.
+- `tools/sigh`: run a subset of tests and build packed artifacts.
+- `npm test`: run all tests (using currently built artifacts) against an
+  already-running server (assumed to be port 8080).
+- `npm run test-no-web`: run all non-web tests.
 
 ### Debugging tests
 

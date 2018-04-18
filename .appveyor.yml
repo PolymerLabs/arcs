@@ -16,7 +16,4 @@ build: off
 test_script:
   - node --version
   - npm --version
-  - npm run test-sigh
-  - npm run test-mocha
-  - npm run test-extension
-  - npm run test-mocha-words
+  - npm run test-no-web
