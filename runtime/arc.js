@@ -24,7 +24,7 @@ import StorageProviderFactory from './storage/storage-provider-factory.js';
 import scheduler from './scheduler.js';
 import {registerArc} from '../devtools/shared/arc-registry.js';
 import Id from './id.js';
-import {enableTracingAdapter} from './debug/tracing-adapter.js';
+import {ArcDebugHandler} from './debug/arc-debug-handler.js';
 
 class Arc {
   constructor({id, context, pecFactory, slotComposer, loader, storageKey, storageProviderFactory, speculative}) {
@@ -540,7 +540,7 @@ ${this.activeRecipe.toString()}`;
   }
 
   initDebug() {
-    enableTracingAdapter();
+    new ArcDebugHandler(this);
     this._debugging = true;
     this.pec.initDebug();
   }

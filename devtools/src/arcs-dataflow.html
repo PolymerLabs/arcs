@@ -1,3 +1,5 @@
+<link rel="import" href="../bower_components/paper-dropdown-menu/paper-dropdown-menu.html">
+<link rel="import" href="../bower_components/paper-item/paper-item.html">
 <link rel="import" href="../bower_components/vaadin-grid/vaadin-grid.html">
 <link rel="import" href="../bower_components/vaadin-grid/vaadin-grid-sorter.html">
 <link rel="import" href="../bower_components/polymer/polymer-element.html">
@@ -225,7 +227,7 @@
         };
       }
 
-      onMessages(messages) {
+      onMessageBundle(messages) {
         let current = [];
         let filtered = [];
         let rest = new Map();

@@ -83,4 +83,11 @@
     if (typeof thing === "string") thing = JSON.parse(thing)
     return JSON.stringify(thing, null, 2);
   }
+  
+  /* @polymerMixin */
+  const MessageSenderMixin = subclass => class extends subclass {
+    send(message) {
+      this.dispatchEvent(new CustomEvent('message', {detail: message}));
+    }
+  }
 </script>

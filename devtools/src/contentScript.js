@@ -6,7 +6,7 @@ let log = console.log.bind(console,
 
 let informedAboutVersionMismatch = false;
 
-document.addEventListener('arcs-debug', e => {
+document.addEventListener('arcs-debug-out', e => {
   try {
     chrome.runtime.sendMessage(e.detail);
   } catch (error) {
@@ -50,6 +50,8 @@ chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
       }
       break;
     }
+    default:
+      document.dispatchEvent(new CustomEvent('arcs-debug-in', {detail: message}));
   }
 });
 

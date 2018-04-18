@@ -70,7 +70,7 @@ http://polymer.github.io/PATENTS.txt
 
       this.timeoutId = setTimeout(() => this.set('results', results), 0);
     },
-    onMessages: function(messages) {
+    onMessageBundle: function(messages) {
       for (let msg of messages) {
         switch (msg.messageType) {
           case 'generations':

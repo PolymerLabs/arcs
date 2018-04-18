@@ -14,10 +14,11 @@ import AbstractDevtoolsChannel from '../runtime/debug/abstract-devtools-channel.
 export default class ChromeExtensionChannel extends AbstractDevtoolsChannel {
   constructor() {
     super();
+    document.addEventListener('arcs-debug-in', e => this._handleMessage(e.detail));
     this._makeReady(); // TODO: Consider readiness if connecting via extension.
   }
 
   _flush(messages) {
-    document.dispatchEvent(new CustomEvent('arcs-debug', {detail: messages}));
+    document.dispatchEvent(new CustomEvent('arcs-debug-out', {detail: messages}));
   }
 }
