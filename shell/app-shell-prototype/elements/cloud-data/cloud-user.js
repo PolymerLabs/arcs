@@ -27,8 +27,11 @@ class CloudUser extends Xen.Debug(Xen.Base, log) {
       arcsWatch: new WatchGroup()
     };
   }
-  _update({userid, user, arcs, key}, state, oldProps) {
+  _willReceiveProps({userid, user, arcs, key}, state, oldProps) {
     if (userid && (!user || user.id !== userid)) {
+      // arcs data from fb is invalid
+      state.arcs = null;
+      this._fire('arcs', null);
       // read user from fb
       state.userInfoWatch.watches = [{
         path: `users/${userid}/info`,
@@ -40,7 +43,7 @@ class CloudUser extends Xen.Debug(Xen.Base, log) {
       }];
     }
     if (user && (user.id === userid)) {
-      if (arcs && arcs !== state.arcs) {
+      if (arcs && state.arcs && arcs !== state.arcs) {
         this._localArcsChanged(Firebase.db, arcs);
       }
       //if (user.info && !user.id) {
@@ -70,7 +73,7 @@ class CloudUser extends Xen.Debug(Xen.Base, log) {
   }
   _userArcsChanged(userid, snap) {
     log(`[users/${userid}/arcs] node fired a change event`);
-    const arcs = snap.val();
+    const arcs = snap.val() || {};
     this._state.arcs = arcs;
     this._watchArcs(arcs);
   }

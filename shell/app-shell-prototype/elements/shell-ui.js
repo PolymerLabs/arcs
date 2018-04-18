@@ -263,7 +263,7 @@ const template = html`
       <div suggestions content open$="{{suggestionsContentOpen}}">
         <slot name="suggestions" slot="suggestions" on-plan-choose="_onChooseSuggestion"></slot>
       </div>
-      <settings-panel settings content open$="{{settingsContentOpen}}" users="{{users}}" user="{{user}}" user_picker_open="{{userPickerOpen}}" friends="{{users}}" on-user="_onSelectUser"></settings-panel>
+      <settings-panel settings content open$="{{settingsContentOpen}}" users="{{users}}" user="{{user}}" user_picker_open="{{userPickerOpen}}" friends="{{users}}" share="{{share}}" on-user="_onSelectUser" on-share="_onShare"></settings-panel>
     </div>
   </div>
   <!-- -->
@@ -287,7 +287,7 @@ const log = Xen.logFactory('ShellUi', '#ac6066');
 
 class ShellUi extends Xen.Debug(Xen.Base, log) {
   static get observedAttributes() {
-    return ['users', 'user', 'arc', 'title', 'showhint'];
+    return ['showhint', 'users', 'user', 'arc', 'title', 'share'];
   }
   get template() {
     return template;
@@ -400,8 +400,11 @@ class ShellUi extends Xen.Debug(Xen.Base, log) {
     setTimeout(() => this._fire('suggestion', suggestion), 300);
   }
   _onSelectUser(e, user) {
-    this._fire('select-user', user);
+    this._fire('select-user', user.id);
     this._setState({userPickerOpen: false});
+  }
+  _onShare(e, share) {
+    this._fire('share', share);
   }
   _onToolsClick() {
     this._setState({toolsOpen: !this._state.toolsOpen});

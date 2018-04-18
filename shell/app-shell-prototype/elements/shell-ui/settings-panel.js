@@ -81,10 +81,12 @@ const template = html`
   <span>Star this arc</span>
   <icon>star_border</icon>
 </section>
+<!--
 <section bar style="opacity: 0.4" on-click="_onToolsClick">
   <span>Toggle tools panel</span>
   <icon>business_center</icon>
 </section>
+-->
 <section bar style="opacity: 0.4" on-click="_onCastClick">
   <span>Cast this arc</span>
   <icon>cast</icon>
@@ -113,8 +115,16 @@ class SettingsPanel extends Xen.Base {
   static get observedAttributes() {
     return ['arc', 'users', 'user_picker_open', 'user', 'friends', 'avatars', 'avatar_title', 'avatar_style', 'share'];
   }
+  _willReceiveProps({user_picker_open, share}, state, oldProps) {
+    if (user_picker_open && user_picker_open !== oldProps.user_picker_open) {
+      this.scrollTop = 0;
+    }
+    if (oldProps.share !== share) {
+      this._setState(this._shareStateToFlags(share));
+    }
+  }
   _render(props, state, oldProps) {
-    const {arc, user, friends, avatars, share} = props;
+    const {arc, user, friends, avatars} = props;
     const {selected, isProfile, isShared} = state;
     const render = {
       name: user && user.name,
@@ -130,15 +140,12 @@ class SettingsPanel extends Xen.Base {
         //models:friends.map((friend, i) => this._renderUser(arc, selected, friend.rawData, avatars, i))
       };
     }
-    if (oldProps.share !== share) {
-      this._setState(this._shareStateToFlags(share));
-    }
     return [props, render];
   }
   _shareStateToFlags(share) {
     return {
-      isShared: (share == Const.SHARE.friends),
-      isProfile: (share == Const.SHARE.friends) || (share === Const.SHARE.self)
+      isProfile: (share == Const.SHARE.friends) || (share === Const.SHARE.self),
+      isShared: (share == Const.SHARE.friends)
     };
   }
   _shareFlagsToShareState(isProfile, isShared) {
@@ -186,6 +193,7 @@ class SettingsPanel extends Xen.Base {
   _changeSharing(isProfile, isShared) {
     const share = this._shareFlagsToShareState(isProfile, isShared);
     this._setState({isProfile, isShared, share});
+    this._fire('share', share);
   }
 }
 

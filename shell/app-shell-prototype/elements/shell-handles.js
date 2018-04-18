@@ -149,7 +149,8 @@ class ShellHandles extends Xen.Debug(Xen.Base, log) {
           color: metadata.color || 'gray',
           bg: metadata.bg,
           touched: arc.touched,
-          starred: arc.starred
+          starred: arc.starred,
+          share: metadata.share
         });
       }
     });

@@ -18,7 +18,6 @@ defineParticle(({DomParticle, log, html}) => {
   [${host}] {
   }
   [${host}] cx-tabs {
-    margin-bottom: 24px;
     border-bottom: 2px solid silver;
   }
   [${host}] cx-tab {
@@ -59,8 +58,6 @@ defineParticle(({DomParticle, log, html}) => {
     top: 3px;
     visibility: hidden;
   }
-  [${host}] [delete] {
-  }
   [${host}] [chip]:hover [hovering] {
     visibility: visible;
   }
@@ -68,6 +65,8 @@ defineParticle(({DomParticle, log, html}) => {
     display: none;
   }
   [${host}] [share] {
+    display: flex;
+    align-items: center;
     margin-top: 16px;
   }
   [${host}] [share] icon:not([show]) {
@@ -97,17 +96,18 @@ ${style}
 <template column>
   <div chip style="{{chipStyle}}">
     <div hovering>
-      <icon delete hide$="{{noDelete}}" key="{{arcId}}" on-click="_onStar">{{starred}}</icon>
       <icon delete hide$="{{noDelete}}" key="{{arcId}}" on-click="_onDelete">remove_circle_outline</icon>
     </div>
     <a href="{{href}}" trigger$="{{description}}">
       <div description title="{{description}}" unsafe-html="{{blurb}}"></div>
       <div style="flex: 1;"></div>
-      <div share>
-        <icon show$="{{self}}">account_circle</icon>
-        <icon show$="{{friends}}">people</icon>
-      </div>
     </a>
+    <div share>
+      <icon show$="{{self}}">account_circle</icon>
+      <icon show$="{{friends}}">people</icon>
+      <span style="flex: 1;"></span>
+      <icon star show key="{{arcId}}" on-click="_onStar">{{starred}}</icon>
+    </div>
   </div>
 </template>
 `;
@@ -129,13 +129,13 @@ ${style}
       return Boolean(state.items);
     }
     render(props, {items, shared, starred, recent, selected}) {
-      const all = [items, recent, starred, shared][selected || 0];
       const columns = [[], []];
-      all.forEach((item, i) => {
+      const chosen = [items, recent, starred, shared][selected || 0];
+      chosen.sort((a, b) => a.key > b.key ? 1 : a.key < b.key ? -1 : 0);
+      log(chosen);
+      chosen.forEach((item, i) => {
         columns[i % 2].push(item);
       });
-      //const pivot = (all.length + 1) >> 1;
-      //const columns = [all.slice(0, pivot), all.slice(pivot)];
       return {
         columnA: {
           $template: 'column',
@@ -162,7 +162,7 @@ ${style}
           if (a.starred) {
             result.starred.push(model);
           }
-          if (a.profile) {
+          if (a.share) {
             result.shared.push(model);
           }
           if (a.touched) {
@@ -193,6 +193,7 @@ ${style}
       // populate a render model
       return {
         arcId: arc.id,
+        key: arc.key,
         // Don't allow deleting the 'New Arc' arc.
         noDelete: arc.key === '*',
         href: arc.href,
@@ -201,7 +202,8 @@ ${style}
         icon: arc.icon,
         starred: arc.starred ? 'star' : 'star_border',
         chipStyle,
-        self: Boolean(arc.profile)
+        self: Boolean(arc.share >= 1),
+        friends: Boolean(arc.share >= 2)
       };
     }
     _onTabSelect(e) {

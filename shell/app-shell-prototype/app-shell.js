@@ -77,6 +77,7 @@ const template = html`
     key="{{key}}"
     arc="{{arc}}"
     metadata="{{metadata}}"
+    share="{{share}}"
     description="{{description}}"
     plan="{{plan}}"
     on-user="_onStateData"
@@ -84,6 +85,7 @@ const template = html`
     on-arcs="_onStateData"
     on-key="_onStateData"
     on-metadata="_onStateData"
+    on-share="_onStateData"
     on-serialization="_onStateData"
   ></cloud-data>
 
@@ -93,9 +95,11 @@ const template = html`
     showhint="{{showhint}}"
     users="{{users}}"
     user="{{user}}"
+    share="{{share}}"
     on-search="_onStateData"
     on-suggestion="_onStateData"
     on-select-user="_onSelectUser"
+    on-share="_onStateData"
   >
     <slot></slot>
     <slot name="modal" slot="modal"></slot>
@@ -204,9 +208,9 @@ import '../artifacts/0.4/Arcs/Arcs.recipes'
     }
   }
   _render({}, state) {
-    const {metadata} = state;
+    const {description} = state;
     const render = {
-      title: metadata && metadata.description
+      title: description
     };
     return [state, render];
   }
@@ -241,8 +245,8 @@ import '../artifacts/0.4/Arcs/Arcs.recipes'
   _onPlans(e, plans) {
     this._setState({suggestions: plans, showhint: plans && plans.length > 0});
   }
-  _onSelectUser(e, user) {
-    this._setState({user});
+  _onSelectUser(e, userid) {
+    this._setState({userid});
   }
 }
 

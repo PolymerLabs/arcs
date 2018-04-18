@@ -25,8 +25,18 @@ const html = Xen.Template.html;
 const template = html`
 
   <cloud-users on-users="_onForward"></cloud-users>
-  <cloud-arc key="{{key}}" arc="{{arc}}" metadata="{{metadata}}" description="{{description}}" plan="{{plan}}"
-      on-key="_onForward" on-metadata="_onForward" on-serialization="_onForward"></cloud-arc>
+  <cloud-arc
+    key="{{key}}"
+    arc="{{arc}}"
+    metadata="{{metadata}}"
+    description="{{description}}"
+    share="{{share}}"
+    plan="{{plan}}"
+    on-key="_onForward"
+    on-metadata="_onForward"
+    on-share="_onForward"
+    on-serialization="_onForward"
+  ></cloud-arc>
   <cloud-user userid="{{userid}}" user="{{user}}" arcs="{{arcs}}" key="{{key}}" on-user="_onForward" on-arcs="_onForward"></cloud-user>
 `;
 
@@ -34,7 +44,7 @@ const log = Xen.logFactory('CloudData', '#004f00');
 
 class CloudData extends Xen.Debug(Xen.Base, log) {
   static get observedAttributes() {
-    return ['userid', 'user', 'arcs', 'key', 'metadata', 'description', 'plan', 'arc'];
+    return ['userid', 'user', 'arcs', 'key', 'metadata', 'description', 'share', 'plan', 'arc'];
   }
   get template() {
     return template;

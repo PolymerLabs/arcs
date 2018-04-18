@@ -19,14 +19,14 @@ const groupCollapsed = Xen.logFactory('CloudArc', '#a30000', 'groupCollapsed');
 const groupEnd = Xen.logFactory('CloudArc', '#a30000', 'groupEnd');
 
 class CloudArc extends Xen.Debug(Xen.Base, log) {
-  static get observedAttributes() { return ['key', 'metadata', 'description', 'arc', 'plan']; }
+  static get observedAttributes() { return ['key', 'metadata', 'description', 'share', 'arc', 'plan']; }
   _getInitialState() {
     return {
       watch: new WatchGroup(),
       db: Firebase.db.child('arcs')
     };
   }
-  _update({key, arc, metadata, description, plan}, state, oldProps) {
+  _willReceiveProps({key, arc, metadata, description, share, plan}, state, oldProps) {
     if (key === '*') {
       if (key !== oldProps.key) {
         this._fire('serialization', null);
@@ -36,7 +36,8 @@ class CloudArc extends Xen.Debug(Xen.Base, log) {
     else if (Const.SHELLKEYS[key]) {
       log('sending empty serialization for non-persistent key');
       this._fire('serialization', '');
-    } else if (key) {
+    }
+    else if (key) {
       if (plan && plan !== oldProps.plan && key !== 'launcher') {
         log('plan changed, good time to serialize?');
         this._serialize(state.db, key, arc);
@@ -47,21 +48,19 @@ class CloudArc extends Xen.Debug(Xen.Base, log) {
           {path: `arcs/${key}/serialization`, handler: snap => this._serializationReceived(snap, key)}
         ];
       }
-      if (metadata && description) {
-        metadata = this._describeArc(metadata, description);
+      if (metadata && share && share !== oldProps.share && metadata.share !== share) {
+        metadata.share = share;
+        state.metadata = null;
+      }
+      if (metadata && description && description !== oldProps.description && metadata.description !== description) {
+        metadata.description = description;
+        state.metadata = null;
       }
       if (metadata && metadata !== state.metadata) {
         log('WRITING metadata', metadata);
         state.db.child(`${key}/metadata`).update(metadata);
       }
     }
-  }
-  _describeArc(metadata, description) {
-    if (metadata.description !== description) {
-      metadata = Xen.clone(metadata);
-      metadata.description = description;
-    }
-    return metadata;
   }
   async _serialize(db, key, arc) {
     const serialization = await arc.serialize();
@@ -110,6 +109,8 @@ class CloudArc extends Xen.Debug(Xen.Base, log) {
     const metadata = snap.val();
     this._state.metadata = metadata;
     this._fire('metadata', metadata);
+    const share = metadata.share || Const.SHARE.private;
+    this._fire('share', share);
   }
 }
 customElements.define('cloud-arc', CloudArc);
