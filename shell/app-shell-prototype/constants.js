@@ -14,8 +14,8 @@ export default {
     //profile: `import '../apps/web/artifacts/profile.manifest'`
   },
   SHARE: {
-    private: 0,
-    self: 1,
-    friends: 2
+    private: 1,
+    self: 2,
+    friends: 3
   }
 };
