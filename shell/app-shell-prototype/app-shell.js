@@ -79,6 +79,7 @@ const template = html`
     metadata="{{metadata}}"
     share="{{share}}"
     description="{{description}}"
+    suggestions="{{suggestions}}"
     plan="{{plan}}"
     on-user="_onStateData"
     on-users="_onStateData"
