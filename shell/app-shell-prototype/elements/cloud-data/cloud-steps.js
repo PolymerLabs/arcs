@@ -73,31 +73,6 @@ class CloudSteps extends Xen.Debug(Xen.Base, log) {
       db.child(`arcs/${key}/steps/`).set(steps);
     }
   }
-  _providePlanStep(plans, steps, applied) {
-    const candidates = steps.filter(s => !applied[s.hash]);
-    for (const step of candidates) {
-      const planStep = this._findPlanForStep(step, plans);
-      if (planStep) {
-        log('found suggestion for step', step.hash);
-        applied[step.hash] = true;
-        this._fire('suggestion', planStep);
-        return;
-      } else {
-        log('rejecting step', step.hash);
-      }
-    }
-  }
-  _findPlanForStep(step, plans) {
-    for (let plan of plans) {
-      // TODO(sjmiles): should be (weak) map?
-      if (!plan._step) {
-        plan._step = this._createStep(plan.plan, plans.generations);
-      }
-      if (plan._step.hash === step.hash && plan._step.mappedHandles === step.mappedHandles) {
-        return plan;
-      }
-    }
-  }
   _createStep(plan, generations) {
     let origin = this._findFirstGeneration(plan, generations);
     if (origin) {
@@ -106,8 +81,6 @@ class CloudSteps extends Xen.Debug(Xen.Base, log) {
       // do something smarter than literal matching anyway...
       // Find all mapped handles to be remembered.
       // Store as string, as we'll only use it to find exact matches later. (String is easier to compare)
-      // TODO(wkorman): Rename `views` below to `handles` which may
-      // necessitate revising the launcher.
       let mappedHandles = plan.handles
         .filter(v => (v.fate == 'map') && (v.id.substr(0, 7) == 'shared:'))
         .map(v => v.id)
@@ -138,6 +111,31 @@ class CloudSteps extends Xen.Debug(Xen.Base, log) {
         origin = origin.derivation[0].parent;
       }
       return origin;
+    }
+  }
+  _providePlanStep(plans, steps, applied) {
+    const candidates = steps.filter(s => !applied[s.hash]);
+    for (const step of candidates) {
+      const planStep = this._findPlanForStep(step, plans);
+      if (planStep) {
+        log('found suggestion for step', step.hash);
+        applied[step.hash] = true;
+        this._fire('suggestion', planStep);
+        return;
+      } else {
+        log('rejecting step', step.hash);
+      }
+    }
+  }
+  _findPlanForStep(step, plans) {
+    for (let plan of plans) {
+      // TODO(sjmiles): should be (weak) map?
+      if (!plan._step) {
+        plan._step = this._createStep(plan.plan, plans.generations);
+      }
+      if (plan._step.hash === step.hash && plan._step.mappedHandles === step.mappedHandles) {
+        return plan;
+      }
     }
   }
 }

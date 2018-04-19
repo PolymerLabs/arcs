@@ -90,6 +90,7 @@ const template = html`
       width: 90vw;
       max-width: var(--bar-max-width);
       max-height: var(--bar-hint-height);
+      color: black;
       background-color: white;
       box-shadow: 0px 0px 32px 3px rgba(0,0,0,0.13);
       transition: transform 200ms ease-out;
