@@ -98,61 +98,34 @@ describe('MapSlots', function() {
       particle A in 'A.js'
         A()
         consume master #root
+          provide detail #info #detail
+
+      particle B in 'B.js'
+        B()
+        consume info #detail #more
 
       recipe
         slot 'id0' #root as s0
         A
-    `));
-
-    let inputParams = {generated: [{result: manifest.recipes[0], score: 1}]};
-    let arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'dom');
-
-    let strategy = new MapSlots(arc);
-    let results = await strategy.generate(inputParams);
-    // consue #root can be bound to the local 'id0' slot or the root slot.
-    assert.equal(results.length, 2);
-  });
-
-  it('allows to bind by name to any available slot', async () => {
-    let manifest = (await Manifest.parse(`
-      particle A in 'A.js'
-        A()
-        consume root
-          provide detail
-
-      particle B in 'B.js'
-        B()
-        consume root
-          provide detail
-
-      particle C in 'C.js'
-        C()
-        consume detail
-
-      recipe
-        A
         B
-        C
     `));
     let inputParams = {generated: [{result: manifest.recipes[0], score: 1}]};
     let arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'dom');
 
     let strategy = new MapSlots(arc);
     let results = await strategy.generate(inputParams);
-    assert.equal(results.length, 2);
+    assert.equal(results.length, 1);
 
-    results = await new ResolveRecipe(arc).generate({
-      generated: results.map(r => ({
-        result: r.result,
-        score: 1
-      }))
-    });
+    let plan = results[0].result;
 
-    assert.equal(results.length, 2);
-    for (let result of results) {
-      let plan = result.result;
-      plan.normalize();
-      assert.isTrue(plan.isResolved());
-    }
+    strategy = new ResolveRecipe(arc);
+    results = await strategy.generate({generated: [{result: plan, score: 1}]});
+    assert.equal(results.length, 1);
+
+    plan = results[0].result;
+
+    assert.equal(plan.slots.length, 2);
+    plan.normalize();
+    assert.isTrue(plan.isResolved());
   });
 });
