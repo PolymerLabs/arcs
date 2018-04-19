@@ -60,7 +60,7 @@
 
   const linkHandler = (event, iframe, anchor) => {
     console.log(anchor.href);
-    if (event.shiftKey) {
+    if (event.ctrlKey) {
       spawnShell(anchor.href);
     } else {
       routeIframe(iframe, anchor.href, linkHandler);
