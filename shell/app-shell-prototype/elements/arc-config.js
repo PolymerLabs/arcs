@@ -11,18 +11,18 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 import Xen from '../../components/xen/xen.js';
 import Const from '../constants.js';
 
+/* global shellPath */
+
 class ArcConfig extends Xen.Base {
-  static get observedAttributes() { return ['rootpath']; }
-  _update(props, state, lastProps) {
-    if (props.rootpath !== lastProps.rootpath) {
-      this._fire('config', this._configure(props.rootpath));
-    }
+  static get observedAttributes() { return ['']; }
+  _update(props, state) {
+    this._fire('config', this._configure());
   }
-  _configure(rootPath) {
+  _configure() {
     let params = (new URL(document.location)).searchParams;
     return {
       affordance: 'dom',
-      root: params.get('root') || rootPath,
+      root: params.get('root') || shellPath,
       manifestPath: params.get('manifest'),
       soloPath: params.get('solo'),
       user: params.get('user') || localStorage.getItem(Const.LOCALSTORAGE.user),

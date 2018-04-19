@@ -12,9 +12,6 @@ import ArcsUtils from './lib/arcs-utils.js';
 import LinkJack from './lib/link-jack.js';
 import Const from './constants.js';
 
-// globals
-/* global shellPath */
-
 // templates
 const html = Xen.Template.html;
 const template = html`
@@ -34,7 +31,6 @@ const template = html`
   </style>
 
   <arc-config
-    rootpath="{{shellPath}}"
     on-config="_onStateData"
   ></arc-config>
 
@@ -120,7 +116,7 @@ class AppShell extends Xen.Debug(Xen.Base, log) {
   }
   _getInitialState() {
     return {
-      shellPath,
+      search: '',
       defaultManifest: `
 import 'https://sjmiles.github.io/arcs-stories/0.3/GitHubDash/GitHubDash.recipes'
 import 'https://sjmiles.github.io/arcs-stories/0.3/TV/TV.recipes'
