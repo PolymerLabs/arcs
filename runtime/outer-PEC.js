@@ -13,6 +13,7 @@ import PEC from './particle-execution-context.js';
 import assert from '../platform/assert-web.js';
 import {PECOuterPort} from './api-channel.js';
 import Manifest from './manifest.js';
+import {RecipeResolver} from './recipe/recipe-resolver.js';
 
 // TODO: fix
 import Loader from './loader.js';
@@ -90,6 +91,8 @@ class OuterPEC extends PEC {
     this._apiPort.onArcLoadRecipe = async ({arc, recipe, callback}) => {
       let manifest = await Manifest.parse(recipe, {loader: this._arc._loader, fileName: ''});
       let error = undefined;
+      // TODO(wkorman): Consider reporting an error or at least warning if
+      // there's more than one recipe since currently we silently ignore them.
       let recipe0 = manifest.recipes[0];
       if (recipe0) {
         const missingHandles = [];
@@ -102,10 +105,18 @@ class OuterPEC extends PEC {
           handle.mapToStorage(fromHandle);
         }
         if (missingHandles.length > 0) {
-          error = `Recipe couldn't load due to missing handles [recipe=${recipe0}, missingHandles=${missingHandles.join('\n')}].`;
-        } else {
+          const resolvedRecipe = await new RecipeResolver(this._arc).resolve(recipe0);
+          if (!resolvedRecipe) {
+            error = `Recipe couldn't load due to missing handles [recipe=${recipe0}, missingHandles=${missingHandles.join('\n')}].`;
+          } else {
+            recipe0 = resolvedRecipe;
+          }
+        }
+        if (!error) {
           let options = {errors: new Map()};
-          if (recipe0.normalize(options)) {
+          // If we had missing handles but we made it here, then we ran recipe
+          // resolution which will have already normalized the recipe.
+          if ((missingHandles.length > 0) || recipe0.normalize(options)) {
             if (recipe0.isResolved()) {
               // TODO: pass tags through too, and reconcile with similar logic
               // in Arc.deserialize.
