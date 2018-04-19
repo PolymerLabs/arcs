@@ -93,6 +93,7 @@ const template = html`
   ></cloud-data>
 
   <shell-ui
+    style="{{shellStyle}}"
     arc="{{arc}}"
     title="{{title}}"
     showhint="{{showhint}}"
@@ -213,9 +214,11 @@ import '../artifacts/0.4/Arcs/Arcs.recipes'
     }
   }
   _render({}, state) {
-    const {description} = state;
+    const {description, theme} = state;
+    const shellStyle = theme ? `background-color: ${theme.mainBackground}; color: ${theme.mainColor};` : '';
     const render = {
-      title: description
+      title: description,
+      shellStyle
     };
     return [state, render];
   }
