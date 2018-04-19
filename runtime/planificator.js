@@ -24,7 +24,7 @@ export default class Planificator {
     this._suggestFilter = {showAll: false};
     // The previous set of suggestions with the plan that was instantiated - copied over from the `current`
     // set, once suggestion is being accepted. Other sets of generated plans aren't stored.
-    this._past = {}; // {activePlan, plans, generations}
+    this._past = {}; // {plan, plans, generations}
 
     // Callbacks triggered when the `current` set of plans is being updated.
     this._plansChangedCallbacks = [];
@@ -85,7 +85,7 @@ export default class Planificator {
   }
 
   getLastActivatedPlan() {
-    return this._past; // {activePlan, plans, generations}
+    return this._past; // {plan, plans, generations}
   }
   getCurrentPlans() {
     return this._current; // {plans, generations}
@@ -118,9 +118,8 @@ export default class Planificator {
       assert(false, `The plan being instantiated (${plan.description}) doesn't appear in the current list of plans`);
     }
     // Move current to past, and clear current;
-    this._past = {activePlan: plan, plans: this._current.plans, generations: this._current.generations};
+    this._past = {plan, plans: this._current.plans, generations: this._current.generations};
     this._setCurrent({plans: [], generations: []});
-
     this.requestPlanning();
   }
 

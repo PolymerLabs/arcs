@@ -92,7 +92,7 @@ const template = html`
     metadata="{{metadata}}"
     share="{{share}}"
     plans="{{plans}}"
-    plan="{{plan}}"
+    active="{{active}}"
     launcherarcs="{{launcherarcs}}"
     on-manifests="_onStateData"
     on-exclusions="_onStateData"
@@ -171,7 +171,8 @@ class AppShell extends Xen.Debug(Xen.Base, log) {
     };
   }
   _update(props, state, oldProps, oldState) {
-    const {config, selectedUser, user, key, arc, description, metadata, share, planificator, search, plan, step} = state;
+    const {config, selectedUser, user, key, arc, description, metadata, share, planificator, search, active, step} = state;
+    let plan = active ? active.plan : null;
     // TODO(sjmiles): only for console debugging
     window.arc = arc;
     window.app = this;
@@ -192,8 +193,10 @@ class AppShell extends Xen.Debug(Xen.Base, log) {
         if (!plan && plans && plans.length && (config.launcher || config.profiler)) {
           state.injectedStep = plans[0].plan;
         }
-        plans.generations = current.generations;
-        this._setState({plans});
+        if (plans && plans.length) {
+          plans.generations = current.generations;
+        }
+        this._setState({plans, active: planificator.getLastActivatedPlan()});
       });
       planificator.registerSuggestChangedCallback((suggestions) => {
         this._setState({drawerOpen: Boolean(suggestions)});

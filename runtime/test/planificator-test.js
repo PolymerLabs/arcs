@@ -148,7 +148,7 @@ describe('Planificator', function() {
     // Planning is triggered and previous suggestions are no long available.
     assert.isTrue(planificator.isPlanning);
     assert.lengthOf(planificator.getCurrentSuggestions(), 0);
-    assert.equal(plan, planificator.getLastActivatedPlan().activePlan);
+    assert.equal(plan, planificator.getLastActivatedPlan().plan);
     assert.lengthOf(planificator.getLastActivatedPlan().plans, 1);
   });
 

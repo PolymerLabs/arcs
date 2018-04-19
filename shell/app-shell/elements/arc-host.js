@@ -130,7 +130,6 @@ class ArcHost extends Xen.Debug(Xen.Base, log) {
   async _instantiatePlan(arc, plan) {
     log('instantiated plan', plan);
     await arc.instantiate(plan);
-    this._fire('plan', plan);
   }
 }
 ArcHost.groupCollapsed = Xen.logFactory('ArcHost', '#007ac1', 'groupCollapsed');

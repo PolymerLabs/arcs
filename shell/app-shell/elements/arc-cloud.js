@@ -28,7 +28,7 @@ const template = Xen.html`
   <!-- provisions arc database keys and provides metadata -->
   <persistent-arc key="{{key}}" on-key="_onKey" metadata="{{metadata}}" on-metadata="_onMetadata"></persistent-arc>
   <!-- access to playback data -->
-  <arc-steps plans="{{plans}}" plan="{{plan}}" steps="{{steps}}" on-step="_onStep" on-steps="_onData"></arc-steps>
+  <arc-steps plans="{{plans}}" active="{{active}}" steps="{{steps}}" on-step="_onStep" on-steps="_onData"></arc-steps>
   <!-- handles, database syncing -->
   <persistent-handles arc="{{arc}}" key="{{key}}"></persistent-handles>
   <remote-profile-handles arc="{{arc}}" user="{{user}}" on-profile="_onProfile"></remote-profile-handles>
@@ -49,7 +49,7 @@ const log = Xen.logFactory('ArcCloud', '#bb4d00');
 class ArcCloud extends Xen.Debug(Xen.Base, log) {
   static get observedAttributes() {
     return ['config', 'userid', 'user', 'manifests', 'arc', 'key', 'metadata',
-        'plans', 'plan', 'exclusions', 'share', 'launcherarcs'];
+        'plans', 'active', 'exclusions', 'share', 'launcherarcs'];
   }
   get template() {
     return template;
@@ -101,7 +101,7 @@ class ArcCloud extends Xen.Debug(Xen.Base, log) {
     this._fire('arcs', state.arcs);
     super._update(props, state);
   }
-  _render({config, userid, user, arc, key, metadata, plans, plan, launcherarcs}, {manifests, exclusions, friends}) {
+  _render({config, userid, user, arc, key, metadata, plans, active, launcherarcs}, {manifests, exclusions, friends}) {
     const render = {
       userid,
       user,
@@ -114,7 +114,7 @@ class ArcCloud extends Xen.Debug(Xen.Base, log) {
       metadata,
       steps: metadata && metadata.steps,
       plans,
-      plan,
+      active,
       launcherarcs
     };
     return render;
