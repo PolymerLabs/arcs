@@ -131,25 +131,6 @@ describe('resolve recipe', function() {
     assert.isTrue(recipe.isResolved());
   });
 
-  it('maps slots by tags', async () => {
-    let manifest = (await Manifest.parse(`
-      particle A in 'A.js'
-        A()
-        consume master #parent
-
-      recipe
-        slot 'id0' #parent as s0
-        A
-    `));
-    let [recipe] = manifest.recipes;
-    let arc = createTestArc('test-plan-arc', manifest, 'dom');
-    assert.isTrue(recipe.normalize());
-
-
-    recipe = await onlyResult(arc, ResolveRecipe, recipe);
-    assert.isTrue(recipe.isResolved());
-  });
-
   it('map slots by slot connection tags', async () => {
     let manifest = (await Manifest.parse(`
       particle A in 'A.js'
