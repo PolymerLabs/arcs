@@ -202,8 +202,8 @@ ${style}
         icon: arc.icon,
         starred: arc.starred ? 'star' : 'star_border',
         chipStyle,
-        self: Boolean(arc.share >= 1),
-        friends: Boolean(arc.share >= 2)
+        self: Boolean(arc.share >= 2),
+        friends: Boolean(arc.share >= 3)
       };
     }
     _onTabSelect(e) {

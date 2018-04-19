@@ -71,6 +71,7 @@ const template = html`
   ></shell-handles>
 
   <cloud-data
+    config="{{config}}"
     userid="{{userid}}"
     user="{{user}}"
     arcs="{{arcs}}"
@@ -88,6 +89,7 @@ const template = html`
     on-metadata="_onStateData"
     on-share="_onStateData"
     on-serialization="_onStateData"
+    on-suggestion="_onStateData"
   ></cloud-data>
 
   <shell-ui
@@ -159,8 +161,10 @@ import '../artifacts/0.4/Arcs/Arcs.recipes'
       if (!key) {
         key = Const.SHELLKEYS.launcher;
       }
-      state.key = key;
-      ArcsUtils.setUrlParam('key', !Const.SHELLKEYS[key] ? key : '');
+      if (key !== oldState.key) {
+        state.key = key;
+        ArcsUtils.setUrlParam('arc', !Const.SHELLKEYS[key] ? key : '');
+      }
     }
   }
   _updateManifest(state) {

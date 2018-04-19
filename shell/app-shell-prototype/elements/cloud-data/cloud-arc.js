@@ -19,14 +19,14 @@ const groupCollapsed = Xen.logFactory('CloudArc', '#a30000', 'groupCollapsed');
 const groupEnd = Xen.logFactory('CloudArc', '#a30000', 'groupEnd');
 
 class CloudArc extends Xen.Debug(Xen.Base, log) {
-  static get observedAttributes() { return ['key', 'metadata', 'description', 'share', 'arc', 'plan']; }
+  static get observedAttributes() { return ['config', 'key', 'metadata', 'description', 'share', 'arc', 'plan']; }
   _getInitialState() {
     return {
       watch: new WatchGroup(),
       db: Firebase.db.child('arcs')
     };
   }
-  _willReceiveProps({key, arc, metadata, description, share, plan}, state, oldProps) {
+  _willReceiveProps({config, key, arc, metadata, description, share, plan}, state, oldProps) {
     if (key === '*') {
       if (key !== oldProps.key) {
         this._fire('serialization', null);
@@ -38,15 +38,16 @@ class CloudArc extends Xen.Debug(Xen.Base, log) {
       this._fire('serialization', '');
     }
     else if (key) {
-      if (plan && plan !== oldProps.plan && key !== 'launcher') {
-        log('plan changed, good time to serialize?');
-        this._serialize(state.db, key, arc);
-      }
       if (key !== oldProps.key) {
+        state.serialization = null;
         state.watch.watches = [
           {path: `arcs/${key}/metadata`, handler: snap => this._metadataReceived(snap, key)},
           {path: `arcs/${key}/serialization`, handler: snap => this._serializationReceived(snap, key)}
         ];
+      }
+      if (plan && plan !== oldProps.plan && key !== 'launcher' && config.useStorage) {
+        log('plan changed, good time to serialize?');
+        this._serialize(state.db, key, arc);
       }
       if (metadata && share && share !== oldProps.share && metadata.share !== share) {
         metadata.share = share;
@@ -106,7 +107,7 @@ class CloudArc extends Xen.Debug(Xen.Base, log) {
   }
   _metadataReceived(snap, key) {
     log('watch triggered on metadata', `${key}/metadata`);
-    const metadata = snap.val();
+    const metadata = snap.val() || {};
     this._state.metadata = metadata;
     this._fire('metadata', metadata);
     const share = metadata.share || Const.SHARE.private;

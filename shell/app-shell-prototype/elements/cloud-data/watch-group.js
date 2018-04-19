@@ -14,16 +14,13 @@ const db = window.db;
 const log = Xen.logFactory('WatchGroup', '#aa00c7');
 
 class WatchGroup extends Xen.Base {
-  static get observedAttributes() { return ['watches', 'db']; }
+  static get observedAttributes() {
+    return ['watches', 'db'];
+  }
   // TODO(sjmiles): a sign that this shouldn't be an Element at all
   static create(initializedCallback) {
-    return Object.assign(new WatchGroup(), {
-      initializedCallback
-    });
+    return Object.assign(new WatchGroup(), {initializedCallback});
   }
-  // add(watches) {
-  //   this._watchAll(this._state.db, watches, this._state.plugs);
-  // }
   _getInitialState() {
     return {
       plugs: new Set(),
