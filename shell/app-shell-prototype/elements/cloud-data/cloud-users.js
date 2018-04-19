@@ -38,8 +38,12 @@ class CloudUsers extends Xen.Base {
   _remoteChanged(snap) {
     const users = snap.val() || [];
     log('READ `users` from cloud', users);
-    // ensure every user contains it's own id
-    Object.keys(users).forEach(k => users[k].id = k);
+    // ensure every user contains it's own id and an info record
+    Object.keys(users).forEach(k => {
+      const user = users[k];
+      user.id = k;
+      user.info = user.info || {name: 'Anonymous'};
+    });
     this._fire('users', users);
     // save `users` in state for throttling notifications
     this._setState({users});

@@ -67,7 +67,7 @@ class CloudUser extends Xen.Debug(Xen.Base, log) {
     log(`[users/${userid}/info] node fired a change event`);
     const user = {
       id: userid,
-      info: snap.val() || {}
+      info: snap.val() || {name: 'Anonymous'}
     };
     this._fire('user', user);
   }
@@ -114,9 +114,6 @@ class CloudUser extends Xen.Debug(Xen.Base, log) {
   }
   _createUser(db, user) {
     log('WRITING user (createUser)', user);
-    // TODO(sjmiles): user in the database doesn't host it's own id field (equivalent to it's key)
-    // but the field in RAM does, is this a footgun?
-    // Modifying this record after creating it could cause thrash (do we write it again right away?)
     user.id = db.child('users').push(user).key;
     return user;
   }
