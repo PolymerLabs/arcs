@@ -13,36 +13,34 @@ import {assert} from './chai-web.js';
 import Slot from '../slot.js';
 
 describe('slot', function() {
-  it('setting context', async () => {
+  it('updates context', async () => {
     let slot = new Slot('dummy-consumeConn', 'dummy-arc');
-    let startRenderCount = 0;
-    let stopRenderCount = 0;
-    slot.startRenderCallback = () => { ++startRenderCount; };
-    slot.stopRenderCallback = () => { ++stopRenderCount; };
+    let contextInitCount = 0;
+    slot.onContextInitialized = () => { ++ contextInitCount; };
+    assert.isNull(slot.getContext());
 
     // context was null, set to null: nothing happens.
     await slot.updateContext(null);
-    assert.equal(startRenderCount, 0);
-    assert.equal(stopRenderCount, 0);
+    assert.isNull(slot.getContext());
+    assert.equal(contextInitCount, 0);
 
-    // context was null, set to non-null: startRender is called.
+    // context was null, set to non-null: context initialization callback triggered
     await slot.updateContext('dummy-context');
-    assert.equal(startRenderCount, 1);
-    assert.equal(stopRenderCount, 0);
+    assert.isNotNull(slot.getContext());
+    assert.equal(contextInitCount, 1);
 
     // context was not null, set to another non-null context: nothing happens.
     assert.isFalse(slot.isSameContext('other-context'));
     await slot.updateContext('other-context');
-    assert.equal(startRenderCount, 1);
-    assert.equal(stopRenderCount, 0);
+    assert.isNotNull(slot.getContext());
+    assert.equal(contextInitCount, 1);
 
-    // context was not null, set to null: stopRender is called.
+    // context was not null, set to null.
     await slot.updateContext(null);
-    assert.equal(startRenderCount, 1);
-    assert.equal(stopRenderCount, 1);
+    assert.isNull(slot.getContext());
+    assert.equal(contextInitCount, 1);
   });
-  it('hosted slots', async () => {
-    assert(true);
+  it('renders hosted slots', async () => {
     let transformationSlotName = 'myTransformationSlotName';
     let slot = new Slot({particle: {name: 'myTransformationParticle'}, name: transformationSlotName}, 'dummy-arc');
     let hostedSlotId = 'id-0';
@@ -60,18 +58,15 @@ describe('slot', function() {
     slot.initHostedSlot(hostedSlotId, hostedParticle);
     assert.isDefined(slot.findHostedSlot(hostedParticle, hostedSlotName));
 
-    let startRenderSlotNames = new Set();
-    let stopRenderSlotNames = new Set();
-    // Start render hosted slots
-    slot.startRenderCallback = ({particle, slotName, contentTypes}) => { startRenderSlotNames.add(slotName); };
-    slot.stopRenderCallback = ({particle, slotName}) => { stopRenderSlotNames.add(slotName); };
+    // Render hosted slots.
+    let hostedSlotIds = [];
+    slot.hostedSlotUpdateCallback = (hostedSlotId, content) => { hostedSlotIds.push(hostedSlotId); };
+    slot.setHostedSlotContent(hostedSlotId, 'content');
     await slot.updateContext('dummy-context');
-    assert.equal(2, startRenderSlotNames.size);
-    assert.isTrue(startRenderSlotNames.has(transformationSlotName));
-    assert.isTrue(startRenderSlotNames.has(hostedSlotName));
-    startRenderSlotNames.clear();
+    assert.deepEqual([hostedSlotId], hostedSlotIds);
+    hostedSlotIds = [];
 
-    // Add another hosted slot and have startRender trigger immediately.
+    // Add another hosted slot and have hosted slot update callback trigger immediately.
     let otherHostedSlotId = 'id-1';
     let otherHostedParticleName = 'particle-1';
     let otherHostedSlotName = 'slot-2';
@@ -79,14 +74,16 @@ describe('slot', function() {
     slot.addHostedSlot(otherHostedSlotId, otherHostedParticleName, otherHostedSlotName);
     assert.isDefined(slot.getHostedSlot(otherHostedSlotId));
     slot.initHostedSlot(otherHostedSlotId, otherHostedParticle);
-    assert.equal(1, startRenderSlotNames.size);
-    assert.isTrue(startRenderSlotNames.has(otherHostedSlotName));
+    slot.setHostedSlotContent(otherHostedSlotId, 'other-content');
+    assert.deepEqual([otherHostedSlotId], hostedSlotIds);
+    hostedSlotIds = [];
 
-    // Trigger StopRender for both transformation and hosted slots.
+    // Slot context set to null - hosted slot update callback is not triggered.
     await slot.updateContext(null);
-    assert.equal(3, stopRenderSlotNames.size);
-    assert.isTrue(stopRenderSlotNames.has(transformationSlotName));
-    assert.isTrue(stopRenderSlotNames.has(hostedSlotName));
-    assert.isTrue(stopRenderSlotNames.has(otherHostedSlotName));
+    slot.setHostedSlotContent(hostedSlotId, 'new-content');
+    slot.setHostedSlotContent(otherHostedSlotId, 'new-other-content');
+    assert.lengthOf(hostedSlotIds, 0);
+    assert.equal('new-content', slot.getHostedSlot(hostedSlotId).content);
+    assert.equal('new-other-content', slot.getHostedSlot(otherHostedSlotId).content);
   });
 });

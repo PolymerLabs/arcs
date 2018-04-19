@@ -58,14 +58,12 @@ async function initSlotComposer(recipeStr) {
     pecFactory,
     slotComposer,
   });
-  let startRenderParticles = [];
-  arc.pec.startRender = ({particle, slotName, contentTypes}) => { startRenderParticles.push(particle.name); };
   let planner = new Planner();
   planner.init(arc);
   await planner.strategizer.generate();
   assert.equal(planner.strategizer.population.length, 1);
   let plan = planner.strategizer.population[0].result;
-  return {arc, slotComposer, plan, startRenderParticles};
+  return {arc, slotComposer, plan};
 }
 
 describe('slot composer', function() {
@@ -98,7 +96,7 @@ recipe
   C
     consume otherSlot as slot2
         `;
-    let {arc, slotComposer, plan, startRenderParticles} = await initSlotComposer(manifestStr);
+    let {arc, slotComposer, plan} = await initSlotComposer(manifestStr);
     plan = plan.clone();
 
     // "root" slot is always available
@@ -109,7 +107,7 @@ recipe
     assert.isTrue(plan.isResolved());
     assert.equal(arc.pec.slotComposer, slotComposer);
     await arc.instantiate(plan);
-    assert.deepEqual(['A'], startRenderParticles);
+    assert.deepEqual(['A'], slotComposer._slots.filter(s => s.getContext()).map(s => s.consumeConn.particle.name));
 
     // render root slot
     let particle = arc.activeRecipe.particles[0];
@@ -118,10 +116,9 @@ recipe
     assert.equal('dummy-content', rootSlot.content);
 
     // update inner slots
-    startRenderParticles.length = 0;
     rootSlot.getInnerContext = (providedSlotName) => providedSlotName == 'mySlot' ? 'dummy-inner-context' : null;
     await slotComposer.updateInnerSlots(rootSlot);
-    assert.deepEqual(['B', 'BB'], startRenderParticles);
+    assert.deepEqual(['A', 'B', 'BB'], slotComposer._slots.filter(s => s.getContext()).map(s => s.consumeConn.particle.name));
 
     assert.deepEqual(['mySlot', 'otherSlot', 'root'], slotComposer.getAvailableSlots().map(s => s.name));
   });

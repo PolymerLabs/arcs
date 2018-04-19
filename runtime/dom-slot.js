@@ -105,16 +105,6 @@ class DomSlot extends Slot {
       this._model = null;
       return;
     }
-    if (!this.getContext()) {
-      return;
-    }
-    if (content.template) {
-      if (this.getTemplate()) {
-        // Template is being replaced.
-        this.getContext().clear();
-      }
-      templates.set(this._templateName, this.getContext().createTemplateElement(content.template));
-    }
     this.eventHandler = handler;
     if (Object.keys(content).indexOf('model') >= 0) {
       if (content.model) {
@@ -123,7 +113,23 @@ class DomSlot extends Slot {
         this._model = undefined;
       }
     }
-    this._doRender();
+
+    if (!templates.has(this._templateName)) {
+      templates.set(this._templateName, {});
+    }
+    let template = templates.get(this._templateName);
+    if (content.template) {
+      if (content.template != template.text) {
+        if (template.text && this.getContext()) {
+          this.getContext().clear();
+        }
+        template.text = content.template;
+      }
+    }
+
+    if (this.getContext()) {
+      this._doRender();
+    }
   }
 
   _doRender() {
@@ -132,8 +138,12 @@ class DomSlot extends Slot {
     this.getContext().observe(this._observer);
 
     // Initialize template, if possible.
-    if (this.getTemplate()) {
-      this.getContext().stampTemplate(this.getTemplate(), this.eventHandler);
+    let template = this.getTemplate();
+    if (template) {
+      if (!template.element) {
+        template.element = this.getContext().createTemplateElement(template.text);
+      }
+      this.getContext().stampTemplate(template.element, this.eventHandler);
     }
     // else {
     // TODO: should trigger request to particle, if template missing?
@@ -145,13 +155,6 @@ class DomSlot extends Slot {
   }
   getInnerContext(slotName) {
     return this.getContext() && this.getContext().getInnerContext(slotName);
-  }
-  constructRenderRequest() {
-    let request = ['model'];
-    if (!this.getTemplate()) {
-      request.push('template');
-    }
-    return request;
   }
   static findRootSlots(context) {
     return new DomContext(context, this._containerKind).findRootSlots(context);

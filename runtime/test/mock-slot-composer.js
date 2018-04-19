@@ -35,12 +35,6 @@ class MockSlot extends Slot {
       return new MockContext('dummy-context');
     }
   }
-   constructRenderRequest() {
-     if (this._content.template) {
-       return ['model'];
-     }
-     return ['template', 'model'];
-   }
 }
 
 class MockContext {

@@ -18,9 +18,11 @@ describe('multi-slot test', function() {
     return await TestHelper.loadManifestAndPlan(
       './runtime/test/particles/artifacts/multi-slot-test.manifest', {
         expectedNumPlans: 4,
-        expectedSuggestions: ['Show question.', 'Show answer.', 'Show question and answer.', 'Show question and hints.']
+        expectedSuggestions: ['Show question.', 'Show answer.', 'Show question and answer.', 'Show question and hints.'],
+        // The tested particles consume multiple slots and not all of them are provided in all tests.
+        slotComposerStrict: false,
     });
-  }
+}
 
   let verifyHandler = (expectedSlotNames, particleName, slotName, content) => {
     assert.isTrue(expectedSlotNames.includes(slotName), `Unexpected slot ${slotName}`);

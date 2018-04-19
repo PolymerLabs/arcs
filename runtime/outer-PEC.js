@@ -168,12 +168,6 @@ class OuterPEC extends PEC {
     this._apiPort.InstantiateParticle(particleSpec, {id, spec, handles});
     return particleSpec;
   }
-  startRender({particle, slotName, contentTypes}) {
-    this._apiPort.StartRender({particle, slotName, contentTypes});
-  }
-  stopRender({particle, slotName}) {
-    this._apiPort.StopRender({particle, slotName});
-  }
   innerArcRender(transformationParticle, transformationSlotName, hostedSlotId, content) {
     this._apiPort.InnerArcRender({transformationParticle, transformationSlotName, hostedSlotId, content});
   }
