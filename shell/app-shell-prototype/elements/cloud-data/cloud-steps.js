@@ -40,20 +40,20 @@ class CloudSteps extends Xen.Debug(Xen.Base, log) {
       }
       if (suggestions && suggestions.generations) {
         // TODO(sjmiles): `suggestions` can become NULL before `plan` is propagated here
-        // we should probably attach `plans` (or at least the `.generations`) instead to `plan`
+        // we should probably attach `suggestions` (or at least the `.generations`) instead to `plan`
         // after instantiating, but `plan` is a Recipe object and it's frozen.
         // Instead we will need to create a wrapper object for `plan` that can contain the recipe
-        // and metadata. In the interim, we will just cache last non-null `plans`.
+        // and metadata. In the interim, we will just cache last non-null `suggestions`.
         state.suggestions = suggestions;
       }
-      // TODO(sjmiles): using cached plans
+      // TODO(sjmiles): using cached suggestions
       if (plan && plan !== oldProps.plan && state.suggestions && state.suggestions.generations) {
         // `plan` has been instantiated into host, record it into `steps`
         this._addStep(key, plan, state.suggestions.generations, steps || [], applied);
       }
-      // TODO(sjmiles): using latest plans
+      // TODO(sjmiles): using latest suggestions
       if (suggestions && steps) {
-        // find a step from `steps` that correspondes to a plan in `plans` but hasn't been `applied`
+        // find a step from `steps` that correspondes to a plan in `suggestions` but hasn't been `applied`
         this._providePlanStep(suggestions, steps, applied);
       }
     }

@@ -45,8 +45,8 @@ class ArcHost extends Xen.Debug(Xen.Base, log) {
       state.slotComposer.setSuggestions(suggestions);
     }
   }
-  _update({plans, search}, state) {
-    const {id, arc, pendingPlans, pendingSerialization} = state;
+  _update({}, state) {
+    const {id, pendingSerialization} = state;
     if (id && pendingSerialization != null) {
       state.pendingSerialization = null;
       this._consumeSerialization(pendingSerialization);
@@ -145,9 +145,10 @@ class ArcHost extends Xen.Debug(Xen.Base, log) {
     const arc = await this._constructArc(state.id, serialization, params);
     // cache new objects
     this._setState({slotComposer, arc});
-    // notify owner
+    // no suggestions yet
+    this._fire('suggestions', null);
+    // new arc
     this._fire('arc', arc);
-    this._fire('plans', null);
   }
   async _constructArc(id, serialization, params) {
     if (serialization) {

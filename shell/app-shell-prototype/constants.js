@@ -1,8 +1,8 @@
 export default {
   LOCALSTORAGE: {
-    user: '0-3-currentUser',
-    tools: '0-3-arcs-dev-tools',
-    exclusions: '0-3-arcs-exclusions'
+    user: '0-4-user',
+    tools: '0-4-tools',
+    exclusions: '0-4-exclusions'
   },
   SHELLKEYS: {
     '*': '*',

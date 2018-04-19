@@ -50,6 +50,7 @@ const template = html`
     }
     a {
       color: currentColor;
+      text-decoration: none;
     }
     [scrim] {
       position: fixed;
@@ -62,6 +63,28 @@ const template = html`
       z-index: -1;
       pointer-events: none;
       transition: opacity 200ms ease-in;
+    }
+    [glowable]::before {
+      position: absolute;
+      content: '';
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: -1;
+      height: 100%;
+      width: 100%;
+      margin: 0 auto;
+      filter: blur(12px);
+      background: rgba(0,0,0,.15);
+      animation: stopGlow 1.5s ease 1;
+    }
+    [glowable][glowing]::before {
+      filter: blur(20px);
+      background: rgba(94,213,227,1);
+      animation: animateGlow 1.5s ease infinite;
+    }
+    [glowable][glowing][state="open"]::before {
+      background: rgba(94,213,227,.5);
     }
     [scrim][open] {
       z-index: 9000;
@@ -119,6 +142,7 @@ const template = html`
       overflow: hidden;
       box-sizing: border-box;
       border-bottom: 1px solid rgba(0,0,0,0.05);
+      background-color: white;
     }
     [toolbar] {
       display: inline-flex;
@@ -159,6 +183,7 @@ const template = html`
       white-space: nowrap;
       width: 100%;
       overflow: hidden;
+      background-color: white;
     }
     [bar][state="open"] [contents] {
       overflow-y: auto;
@@ -231,6 +256,42 @@ const template = html`
       background: gray center no-repeat;
       background-size: cover;
     }
+    @keyframes animateGlow {
+      0%  {
+        filter: blur(20px);
+        opacity: 1;
+        -webkit-animation-timing-function: ease-in;
+      }
+      50% {
+        filter: blur(12px);
+        opacity: .5;
+        -webkit-animation-timing-function: linear;
+      }
+      100% {
+        opacity: 1;
+        filter: blur(20px);
+        -webkit-animation-timing-function: ease-out;
+      }
+    }
+    @keyframes stopGlow {
+      0%  {
+        filter: blur(20px);
+        opacity: 1;
+        background: rgba(94,213,227,.5);
+        -webkit-animation-timing-function: ease-in;
+      }
+      50% {
+        filter: blur(12px);
+        opacity: .5;
+        -webkit-animation-timing-function: linear;
+      }
+      100% {
+        filter: blur(12px);
+        background: rgba(0,0,0,.15);
+        opacity: 1;
+        -webkit-animation-timing-function: ease-out;
+      }
+    }
   </style>
   <!-- -->
   <div scrim open$="{{scrimOpen}}" on-click="_onScrimClick"></div>
@@ -240,19 +301,20 @@ const template = html`
   <!-- adds space at the bottom of the static flow so no actual content is ever covered by the app-bar -->
   <div barSpacer></div>
   <!-- -->
-  <div bar state$="{{barState}}" open$="{{barOpen}}" over$="{{barOver}}" on-mouseenter="_onBarEnter" on-mouseleave="_onBarLeave">
+  <div bar glowing$="{{glows}}" glowable state$="{{barState}}" open$="{{barOpen}}" over$="{{barOver}}" on-mouseenter="_onBarEnter" on-mouseleave="_onBarLeave">
     <div touchbar on-click="_onTouchbarClick"></div>
     <div toolbars on-click="_onBarClick">
       <div main toolbar open$="{{mainToolbarOpen}}">
-        <a href="{{launcherHref}}" title="Go to Launcher">${AppIcon}</a>
+        <!-- <a href="{{launcherHref}}" title="Go to Launcher">${AppIcon}</a> -->
+        <a href="{{launcherHref}}" title="Go to Launcher"><icon>apps</icon></a>
         <span title="{{title}}">{{title}}</span>
         <icon on-click="_onSearchClick">search</icon>
         <icon on-click="_onSettingsClick">settings</icon>
       </div>
       <div search toolbar open$="{{searchToolbarOpen}}">
         <icon on-click="_onMainClick">arrow_back</icon>
-        <input placeholder="Search" value="{{searchText}}" on-keypress="_onKeypress" on-input="_onSearchChange" on-blur="_onSearchCommit">
-        <icon>search</icon>
+        <input placeholder="Search" value="{{search}}" on-input="_onSearchChange" on-blur="_onSearchCommit">
+        <icon on-click="_onResetSearch">search</icon>
       </div>
       <div settings toolbar open$="{{settingsToolbarOpen}}">
         <icon on-click="_onMainClick">arrow_back</icon>
@@ -288,7 +350,7 @@ const log = Xen.logFactory('ShellUi', '#ac6066');
 
 class ShellUi extends Xen.Debug(Xen.Base, log) {
   static get observedAttributes() {
-    return ['showhint', 'users', 'user', 'arc', 'title', 'share'];
+    return ['glows', 'showhint', 'users', 'user', 'arc', 'title', 'share', 'search'];
   }
   get template() {
     return template;
@@ -301,8 +363,6 @@ class ShellUi extends Xen.Debug(Xen.Base, log) {
       launcherHref: `${location.origin}${location.pathname}`,
       toolsOpen: false
     };
-  }
-  _update({}, {}, oldProps, oldState) {
   }
   _render(props, state) {
     if (state.barState === 'peek') {
@@ -321,7 +381,8 @@ class ShellUi extends Xen.Debug(Xen.Base, log) {
       suggestionsContentOpen: mainOpen || searchOpen,
       settingsToolbarOpen: settingsOpen || userOpen,
       settingsContentOpen: settingsOpen,
-      userContentOpen: userOpen
+      userContentOpen: userOpen,
+      glows: Boolean(props.glows)
     };
     const {user} = props;
     if (user && user.info) {
@@ -421,6 +482,9 @@ class ShellUi extends Xen.Debug(Xen.Base, log) {
     const delay = 500;
     const commit = () => this._commitSearch(search);
     this._searchDebounce = ArcsUtils.debounce(this._searchDebounce, commit, delay);
+  }
+  _onResetSearch(e) {
+    this._commitSearch('*');
   }
   _commitSearch(search) {
     search = search || '';

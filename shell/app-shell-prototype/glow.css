@@ -1,4 +1,5 @@
 [glowable] {
+  /*
   position: absolute;
   content: '';
   top: 0;
@@ -8,16 +9,19 @@
   height: 100%;
   width: 100%;
   margin: 0 auto;
+  */
   filter: blur(12px);
   background: rgba(0,0,0,.15);
   animation: stopGlow 1.5s ease 1;
 }
+
 [glowing] [glowable] {
   filter: blur(20px);
   background: rgba(94,213,227,1);
   /* rgba(32,231,255,1); */
   animation: animateGlow 1.5s ease infinite;
 }
+
 [glowing] [glowable] {
   background: rgba(94,213,227,.5);
 }

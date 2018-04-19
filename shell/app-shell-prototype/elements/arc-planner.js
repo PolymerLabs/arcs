@@ -33,6 +33,9 @@ class ArcPlanner extends Xen.Debug(Xen.Base, log) {
       state.pendingPlans.push(suggestion.plan);
     }
     if (arc && changed('arc')) {
+      if (oldProps.arc) {
+        oldProps.arc.makeSuggestions = null;
+      }
       arc.makeSuggestions = () => this._runtimeHandlesUpdated();
     }
   }
@@ -45,14 +48,14 @@ class ArcPlanner extends Xen.Debug(Xen.Base, log) {
       // TODO(sjmiles): experiment, change name of this method if keeping this code
       this._runtimeHandlesUpdated();
     }
-    if (arc && (search || search==='')) {
-      search = (search || '').trim().toLowerCase();
+    if (arc && (search != null)) {
+      search = search.trim().toLowerCase();
       // TODO(sjmiles): setting search to '' causes an exception at init-search.js|L#29)
       search = (search !== '') && (search !== '*') ? search : null;
       // re-plan only if the search has changed (beyond simple filtering)
       if (search !== arc.search) {
         arc.search = search;
-        this._fire('plans', null);
+        this._fire('suggestions', null);
       }
     }
   }
@@ -86,22 +89,27 @@ class ArcPlanner extends Xen.Debug(Xen.Base, log) {
   async __beginPlanning(props, state) {
     log(`planning...`);
     let time = Date.now();
-    let plans;
+    let suggestions;
     do {
       state.invalid = false;
-      plans = await ArcsUtils.makePlans(props.arc, props.config.plannerTimeout) || [];
+      suggestions = await ArcsUtils.makePlans(props.arc, props.config.plannerTimeout) || [];
       // if the `invalid` state goes true before `makePlans` completes, start over
     } while (state.invalid);
     time = ((Date.now() - time) / 1000).toFixed(2);
-    log(`plans`, plans, `${time}s`);
-    this._fire('plans', plans);
+    log(`suggestions`, suggestions, `${time}s`);
+    this._fire('suggestions', suggestions);
   }
   async _instantiatePlan(arc, plan) {
     log('instantiating plan', plan);
     this._state.planning = true;
     await arc.instantiate(plan);
     this._state.planning = false;
+    // newly instantiated plan
     this._fire('plan', plan);
+    // search term is used up
+    this._fire('search', '');
+    // need new suggestions
+    this._fire('suggestions', null);
   }
 }
 customElements.define('arc-planner', ArcPlanner);
