@@ -415,14 +415,24 @@ function clickInParticles(slotName, selectors, textQuery) {
 /**
  * Grab some data from the page, refresh the page, and validate that the data
  * hasn't changed.
+ * additionalSelectors is a set of additional selectors; the corresponding
+ * elements' text will be retrieved and verified to be the same across the
+ * reload. If the elements can't be selected they'll be skipped.
  */
-function testAroundRefresh() {
+function testAroundRefresh(additionalSelectors) {
   const getOrCompare = expectedValues => {
     let actualValues = {};
 
     const titleElem =
         pierceShadowsSingle(['app-shell', 'shell-ui', '#arc-title']);
     actualValues.title = browser.elementIdText(titleElem.value.ELEMENT).value;
+
+    additionalSelectors.forEach(selector => {
+      const selected = pierceShadowsSingle(selector);
+      const selectedText =
+          selected && selected.value ? browser.elementIdText(selected.value.ELEMENT) : [];
+      actualValues[selector] = selectedText ? selectedText.value : '';
+    });
 
     // Disable verification of suggestions through a reload until #697 is
     // fixed.
@@ -479,7 +489,9 @@ describe('Arcs demos', function() {
     acceptSuggestion('Table for 2');
     acceptSuggestion('from your calendar');
 
-    testAroundRefresh();
+    // Once #697 is fixed, the additional verification
+    // `['app-shell', '#restaurant-name']` can be added.
+    testAroundRefresh([]);
 
     // debug hint: to drop into debug mode with a REPL; also a handy way to
     // see the state at the end of the test:

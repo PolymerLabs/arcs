@@ -138,7 +138,7 @@ ${styles}
   </div>
 
   <div content>
-    <div name>{{name}}</div>
+    <div id="restaurant-name" name>{{name}}</div>
     <div row>
       <div flex style="margin-top: 22px;">
         <div detail-caption>Address</div>
