@@ -46,12 +46,18 @@ class TestPlanificator extends Planificator {
     }).then((next) => this._next = next);
   }
 
-  plannerReturnFakeResults(planHashes) {
+  plannerReturnFakeResults(planInfos) {
     let plans = [];
-    planHashes.forEach(hash => {
-      let plan = new Recipe(`recipe${hash}`);
+    planInfos.forEach(info => {
+      if (!info.hash) {
+        info = {hash: info};
+      }
+      let plan = new Recipe(`recipe${info.hash}`);
+      if (!info.options || !info.options.invisible) {
+        plan.newSlot('slot0').id = 'id0';
+      }
       plan.normalize();
-      plans.push({plan, hash});
+      plans.push({plan, hash: info.hash});
     });
     this.plannerReturnResults(plans);
     return plans;
@@ -150,43 +156,105 @@ describe('Planificator', function() {
     let planificator = createPlanificator();
     let stateChanged = 0;
     let planChanged = 0;
+    let suggestChanged = 0;
     planificator.registerStateChangedCallback(() => { ++stateChanged; });
     planificator.registerPlansChangedCallback(() => { ++planChanged; });
+    planificator.registerSuggestChangedCallback(() => { ++suggestChanged; });
 
     // Request replanning - state changes, plans do not.
     planificator.requestPlanning();
     assert.equal(1, stateChanged);
     assert.equal(0, planChanged);
+    assert.equal(0, suggestChanged);
 
     // Planning is done and plans are set, both - state and plans change.
-    let plan = planificator.plannerReturnFakeResults(['test'])[0].plan;
+    let plan = planificator.plannerReturnFakeResults([1])[0].plan;
     await planificator.allPlanningDone();
     assert.equal(2, stateChanged);
     assert.equal(1, planChanged);
+    assert.equal(1, suggestChanged);
 
     // Plan is being instantiated, both - state and plans change.
     await planificator._arc.instantiate(plan);
     assert.equal(3, stateChanged);
     assert.equal(2, planChanged);
+    assert.equal(2, suggestChanged);
 
     // Planning is done and plans are set, both - state and plans change.
-    planificator.plannerReturnFakeResults([1]);
+    planificator.plannerReturnFakeResults([2]);
     await planificator.allPlanningDone();
     assert.equal(4, stateChanged);
     assert.equal(3, planChanged);
+    assert.equal(3, suggestChanged);
 
     // Request replanning - state changes, plans do not.
     planificator.requestPlanning();
     assert.equal(5, stateChanged);
     assert.equal(3, planChanged);
+    assert.equal(3, suggestChanged);
 
     // Same plan is returned - state chagnes, plans do not.
-    planificator.plannerReturnFakeResults([1]);
+    planificator.plannerReturnFakeResults([2]);
     await planificator.allPlanningDone();
     assert.equal(6, stateChanged);
     assert.equal(3, planChanged);
+    assert.equal(3, suggestChanged);
+
+    // Additional plan returned, but it doesn't have any slots, so not included in suggestions -
+    // state and plans change, but suggestions do not.
+    planificator.requestPlanning();
+    planificator.plannerReturnFakeResults([2, {hash: 3, options: {invisible: true}}]);
+    await planificator.allPlanningDone();
+    assert.equal(8, stateChanged);
+    assert.equal(4, planChanged);
+    assert.equal(3, suggestChanged);
   });
-  // TODO: Add tests:
-  // 1. suggestions filtering and callback
-  // 2. setting search string.
+  it('retrieves and filters suggestions', async () => {
+    let planificator = createPlanificator();
+    planificator.requestPlanning();
+
+    let plans = [];
+    let addPlan = (name, options) => {
+      let plan = new Recipe(name);
+      options = options || {};
+      if (options.hasSlot) {
+        let slot = plan.newSlot(options.hasRootSlot ? 'root' : 'slot0');
+        slot.id = 'id0';
+      }
+      plans.push({plan, hash: plan.name, descriptionText: options.descriptionText});
+    };
+    addPlan('1', {hasSlot: false, descriptionText: 'invisible plan'});
+    addPlan('2', {hasSlot: true, descriptionText: '-2- -23- -24- -25- -234- -235- -245- -2345-'});
+    addPlan('3', {hasSlot: true, descriptionText: '-3- -23- -34- -35- -234- -235- -345- -2345-'});
+    addPlan('4', {hasSlot: true, hasRootSlot: true, descriptionText: '-4- -24- -34- -45- -234- -245- -345- -2345-'});
+    addPlan('5', {hasSlot: true, hasRootSlot: true, descriptionText: '-5- -25- -35- -45- -235- -245- -345- -2345-'});
+
+    planificator.plannerReturnResults(plans);
+    await planificator.allPlanningDone();
+
+    assert.lengthOf(planificator.getCurrentPlans().plans, plans.length);
+    assert.deepEqual(['2', '3'], planificator.getCurrentSuggestions().map(p => p.hash));
+
+    // Search for already visible plan.
+    planificator.setSearch('-3-');
+    assert.deepEqual(['3'], planificator.getCurrentSuggestions().map(p => p.hash));
+
+    // Search for otherwise nonvisible plan.
+    planificator.setSearch('-4-');
+    assert.deepEqual(['4'], planificator.getCurrentSuggestions().map(p => p.hash));
+
+    // Search for a mix of visible and nonvisible plans
+    planificator.setSearch('-245-');
+    assert.deepEqual(['2', '4', '5'], planificator.getCurrentSuggestions().map(p => p.hash));
+
+    // Search for all plans
+    planificator.setSearch('-2345-');
+    assert.deepEqual(['2', '3', '4', '5'], planificator.getCurrentSuggestions().map(p => p.hash));
+    planificator.setSearch('*');
+    assert.deepEqual(['2', '3', '4', '5'], planificator.getCurrentSuggestions().map(p => p.hash));
+
+   // Search for plans that aren't available.
+   planificator.setSearch('nosuchplan');
+   assert.lengthOf(planificator.getCurrentSuggestions(), 0);
+  });
 });

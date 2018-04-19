@@ -83,6 +83,7 @@ export default class Planificator {
       this.requestPlanning();
     }
   }
+
   getLastActivatedPlan() {
     return this._past; // {activePlan, plans, generations}
   }
@@ -90,7 +91,7 @@ export default class Planificator {
     return this._current; // {plans, generations}
   }
   getCurrentSuggestions() {
-    let suggestions = this._current.plans.filter(plan => plan.plan.slots) || [];
+    let suggestions = this._current.plans.filter(plan => plan.plan.slots.length > 0) || [];
     if (!this.suggestFilter.showAll) {
       if (this.suggestFilter.search) {
         suggestions = suggestions.filter(suggestion => suggestion.descriptionText.toLowerCase().includes(this.suggestFilter.search));
