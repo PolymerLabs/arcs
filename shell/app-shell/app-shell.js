@@ -92,8 +92,7 @@ const template = html`
     metadata="{{metadata}}"
     share="{{share}}"
     plans="{{plans}}"
-    step="{{step}}"
-    plan="{{plan}}"
+    active="{{active}}"
     launcherarcs="{{launcherarcs}}"
     on-manifests="_onStateData"
     on-exclusions="_onStateData"
@@ -122,11 +121,8 @@ const template = html`
     config="{{hostConfig}}"
     manifests="{{manifests}}"
     exclusions="{{exclusions}}"
-    plans="{{plans}}"
     plan="{{step}}"
-    suggestions="{{suggestions}}"
     on-arc="_onStateData"
-    on-plans="_onStateData"
     on-plan="_onStateData"
   >
   </arc-host>
@@ -175,9 +171,10 @@ class AppShell extends Xen.Debug(Xen.Base, log) {
     };
   }
   _update(props, state, oldProps, oldState) {
-    const {config, selectedUser, user, key, arc, description, metadata, share, plans, suggestions, search, plan, step} = state;
+    const {config, selectedUser, user, key, arc, description, metadata, share, planificator, search, active, step} = state;
+    let plan = active ? active.plan : null;
     // TODO(sjmiles): only for console debugging
-    window.arc = state.arc;
+    window.arc = arc;
     window.app = this;
     // ^
     if (config && config !== oldState.config) {
@@ -189,14 +186,25 @@ class AppShell extends Xen.Debug(Xen.Base, log) {
     if (config && config === oldState.config && !user && !selectedUser) {
       this._setState({requestNewUser: true});
     }
-    if (!plan && plans && plans.length && (config.launcher || config.profiler)) {
-      state.injectedStep = plans[0].plan;
-    }
-    if (plans && (plans !== oldState.plans || search !== oldState.search)) {
-      this._consumePlans(plans, search, suggestions);
+    if (arc && !planificator) {
+      let planificator = ArcsUtils.createPlanificator(arc);
+      planificator.registerPlansChangedCallback((current) => {
+        let plans = current.plans;
+        if (!plan && plans && plans.length && (config.launcher || config.profiler)) {
+          state.injectedStep = plans[0].plan;
+        }
+        if (plans && plans.length) {
+          plans.generations = current.generations;
+        }
+        this._setState({plans, active: planificator.getLastActivatedPlan()});
+      });
+      planificator.registerSuggestChangedCallback((suggestions) => {
+        this._setState({drawerOpen: Boolean(suggestions)});
+      });
+      state.planificator = planificator;
     }
     if (search !== oldState.search) {
-      this._consumeSearch(search, arc);
+      planificator.setSearch(search);
     }
     if (metadata) {
       state.description = metadata.description;
@@ -240,43 +248,6 @@ class AppShell extends Xen.Debug(Xen.Base, log) {
       this._setState({selectedUser, user});
     }
   }
-  _consumeSearch(search, arc) {
-    search = (search || '').trim().toLowerCase();
-    // TODO(sjmiles): setting search to '' causes an exception at init-search.js|L#29)
-    search = (search !== '') && (search !== '*') ? search : null;
-    // re-plan only if the search has changed (beyond simple filtering)
-    if (search !== arc.search) {
-      this._setState({plans: null, suggestions: null});
-    }
-    // TODO(sjmiles): installing the search term should probably be the job of arc-host
-    arc.search = search;
-  }
-  _consumePlans(plans, search, oldSuggestions) {
-    let suggestions = plans;
-    // If there is a search, plans are already filtered
-    if (!search) {
-      // Otherwise only show plans that don't populate a root.
-      suggestions = plans.filter(
-        // TODO(seefeld): Don't hardcode `root`
-        // TODO(sjmiles|mmandlis): name.includes catches all variants of `root` (e.g. `toproot`), the `tags`
-        // test only catches `#root` specifically
-        ({plan}) => plan.slots && !plan.slots.find(s => s.name.includes('root') || s.tags.includes('#root'))
-      );
-    }
-    // Are the new suggestions actually different?
-    if (this._suggestionsDiffer(oldSuggestions, suggestions)) {
-      // ...then apply them and open the drawer
-      this._setState({suggestions, drawerOpen: true});
-    }
-  }
-  _suggestionsDiffer(old, neo) {
-    let dirty =
-        !old ||
-        old.length !== neo.length ||
-        old.some((s, i) => neo[i].hash !== s.hash || neo[i].descriptionText != s.descriptionText)
-        ;
-    return dirty;
-  }
   async _consumePlan(arc, description) {
     // arc has changed, generate new description
     description = await ArcsUtils.describeArc(arc) || description;
@@ -289,8 +260,6 @@ class AppShell extends Xen.Debug(Xen.Base, log) {
       metadata.description = description;
       this._setState({metadata});
     }
-    // we consumed a plan, need new ones
-    this._setState({plans: null});
   }
   _onUser(e, data) {
     // if clearing `user`, also clear `selectedUser`

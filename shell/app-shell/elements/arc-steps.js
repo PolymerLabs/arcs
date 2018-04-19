@@ -15,27 +15,18 @@ const warn = Xen.logFactory('ArcSteps', '#7b5e57', 'warn');
 
 class ArcSteps extends Xen.Debug(Xen.Base, log) {
   static get observedAttributes() {
-    return ['plans', 'steps', 'step', 'plan'];
+    return ['plans', 'steps', 'active'];
   }
   _getInitialState() {
     return {
       applied: []
     };
   }
-  _update({plans, plan, steps, step}, state, lastProps) {
+  _update({plans, active, steps}, state, lastProps) {
     const {applied} = state;
-    if (plans) {
-      // TODO(sjmiles): `plans` can become NULL before `plan` is propagated here
-      // we should probably attach `plans` (or at least the `.generations`) instead to `plan`
-      // after instantiating, but `plan` is a Recipe object and it's frozen.
-      // Instead we will need to create a wrapper object for `plan` that can contain the recipe
-      // and metadata. In the interim, we will just cache last non-null `plans`.
-      state.plans = plans;
-    }
-    // TODO(sjmiles): using cached plans
-    if (state.plans && plan !== lastProps.plan) {
+    if (active && active.plan && active != lastProps.active) {
       // `plan` has been instantiated into host, record it into `steps`
-      this._addStep(plan, state.plans.generations, steps || [], applied);
+      this._addStep(active.plan, active.generations, steps || [], applied);
     }
     // TODO(sjmiles): using latest plans
     if (plans && steps) {

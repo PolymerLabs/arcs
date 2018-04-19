@@ -20,6 +20,9 @@ const ArcsUtils = {
     const pecFactory = ArcsUtils._createPecWorker.bind(null, urlMap[`worker-entry.js`], remap);
     return new Arcs.Arc({id, pecFactory, slotComposer, context, loader});
   },
+  createPlanificator(arc) {
+    return new Arcs.Planificator(arc);
+  },
   _expandUrls(urlMap) {
     let remap = {};
     Object.keys(urlMap).forEach(k => {
@@ -54,14 +57,6 @@ const ArcsUtils = {
       // TODO(sjmiles): map must always contain (explicitly, no prefixing) a mapping for `worker-entry-cdn.js`
       'worker-entry.js': `${cdnRoot}/${lib}/worker-entry.js`
     };
-  },
-  async makePlans(arc, timeout) {
-    const generations = [];
-    const planner = new Arcs.Planner();
-    planner.init(arc);
-    const plans = await planner.suggest(timeout || 5000, generations);
-    plans.generations = generations;
-    return plans;
   },
   async parseManifest(fileName, content, loader) {
     return await Arcs.Manifest.parse(content,

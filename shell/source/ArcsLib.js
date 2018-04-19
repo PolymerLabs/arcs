@@ -11,6 +11,7 @@
 import Arc from '../../runtime/arc.js';
 import Description from '../../runtime/description.js';
 import Manifest from '../../runtime/manifest.js';
+import Planificator from '../../runtime/planificator.js';
 import Planner from '../../runtime/planner.js';
 import SlotComposer from '../../runtime/slot-composer.js';
 import DomSlot from '../../runtime/dom-slot.js';
@@ -26,6 +27,7 @@ const Arcs = {
   Arc,
   Description,
   Manifest,
+  Planificator,
   Planner,
   SlotComposer,
   DomSlot,

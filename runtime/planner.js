@@ -183,21 +183,6 @@ class Planner {
         // before returning.
         relevance.newArc.stop();
 
-        // Filter plans based on arc._search string.
-        if (this._arc.search) {
-          if (!plan.search) {
-            // This plan wasn't constructed based on the provided search terms.
-            if (description.toLowerCase().indexOf(this._arc.search) < 0) {
-              // Description must contain the full search string.
-              // TODO: this could be a strategy, if description was already available during strategies execution.
-              continue;
-            }
-          } else {
-            // This mean the plan was constructed based on provided search terms,
-            // and at least one of them were resolved (in order for the plan to be resolved).
-          }
-        }
-
         results.push({
           plan,
           rank,

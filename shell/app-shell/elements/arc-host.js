@@ -17,7 +17,7 @@ const error = Xen.logFactory('ArcHost', '#007ac1', 'error');
 
 class ArcHost extends Xen.Debug(Xen.Base, log) {
   static get observedAttributes() {
-    return ['config', 'plans', 'suggestions', 'plan', 'manifests', 'exclusions'];
+    return ['config', 'plan', 'manifests', 'exclusions'];
   }
   _getInitialState() {
     return {
@@ -27,7 +27,7 @@ class ArcHost extends Xen.Debug(Xen.Base, log) {
   }
   _willReceiveProps(props, state, lastProps) {
     const changed = name => props[name] !== lastProps[name];
-    const {manifests, exclusions, config, plan, suggestions} = props;
+    const {manifests, exclusions, config, plan} = props;
     if (manifests && exclusions) {
       state.effectiveManifests = this._intersectManifests(props.manifests, props.exclusions);
     }
@@ -43,16 +43,10 @@ class ArcHost extends Xen.Debug(Xen.Base, log) {
     if (plan && changed('plan')) {
       state.pendingPlans.push(plan);
     }
-    if (suggestions && changed('suggestions')) {
-      state.slotComposer.setSuggestions(suggestions);
-    }
   }
-  _update({plans}, {arc, pendingPlans}) {
+  _update({}, {arc, pendingPlans}) {
     if (arc && pendingPlans.length) {
       this._instantiatePlan(arc, pendingPlans.shift());
-    }
-    if (arc && !plans) {
-      this._schedulePlanning();
     }
   }
   _intersectManifests(manifests, exclusions) {
@@ -60,8 +54,6 @@ class ArcHost extends Xen.Debug(Xen.Base, log) {
   }
   async _applyConfig(config) {
     let arc = await this._createArc(config);
-    // TODO(sjmiles): IIUC callback that is invoked by runtime onIdle event
-    arc.makeSuggestions = () => this._runtimeHandlesUpdated();
     log('created arc', arc);
     this._setState({arc});
     this._fire('arc', arc);
@@ -132,46 +124,12 @@ class ArcHost extends Xen.Debug(Xen.Base, log) {
   async _reloadManifests() {
     let {arc} = this._state;
     arc._context = await this._loadManifest(this._props.config, arc.loader);
-    this._fire('plans', null);
-  }
-  _runtimeHandlesUpdated() {
-    !this._state.planning && log('runtimeHandlesUpdated');
-    this._schedulePlanning();
-  }
-  async _schedulePlanning() {
-    const state = this._state;
-    // results obtained before now are invalid
-    state.invalid = true;
-    // only wait for one _beginPlanning at a time
-    if (!state.planning) {
-      state.planning = true;
-      try {
-        await this.__beginPlanning(state);
-      } catch (x) {
-        error(x);
-      }
-      state.planning = false;
-    }
-  }
-  // TODO(sjmiles): only to be called from _schedulePlanning which protects re-entrancy
-  async __beginPlanning(state) {
-    log(`planning...`);
-    let time = Date.now();
-    let plans;
-    while (state.invalid) {
-      state.invalid = false;
-      plans = await ArcsUtils.makePlans(state.arc, state.config.plannerTimeout) || [];
-    }
-    time = ((Date.now() - time) / 1000).toFixed(2);
-    log(`plans`, plans, `${time}s`);
-    this._fire('plans', plans);
+    // TODO: create helper method for settings arc's context, with callbacks for planificator inside.
+    // this._fire('plans', null);
   }
   async _instantiatePlan(arc, plan) {
-    // aggressively remove old suggestions when a suggestion is applied
-    this._setState({suggestions: []});
     log('instantiated plan', plan);
     await arc.instantiate(plan);
-    this._fire('plan', plan);
   }
 }
 ArcHost.groupCollapsed = Xen.logFactory('ArcHost', '#007ac1', 'groupCollapsed');
