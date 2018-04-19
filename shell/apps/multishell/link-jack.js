@@ -4,6 +4,8 @@ const jackLinks = (target, cb) => {
     target.addEventListener('click', e => {
       const anchor = e.path.find(el => el.localName === 'a');
       if (anchor) {
+        e.stopImmediatePropagation();
+        e.stopPropagation();
         e.preventDefault();
         cb(e, anchor);
       }

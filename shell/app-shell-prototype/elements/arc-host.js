@@ -80,7 +80,7 @@ class ArcHost extends Xen.Debug(Xen.Base, log) {
     // pec factory
     const pecFactory = ArcsUtils.createPecFactory(urlMap);
     // construct storageKey
-    const storageKey = `${Firebase.storageKey}/arcs/${key}`;
+    const storageKey = config.useStorage ? `${Firebase.storageKey}/arcs/${key}` : null;
     // capture composer (so we can push suggestions there), loader, etc.
     this._setState({id, loader, context, pecFactory, /*, slotComposer*/urlMap, storageKey});
   }
