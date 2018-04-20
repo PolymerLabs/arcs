@@ -9,6 +9,7 @@
  */
 'use strict';
 
+import Arc from '../../arc.js';
 import Manifest from '../../manifest.js';
 import StrategyTestHelper from './strategy-test-helper.js';
 import MapSlots from '../../strategies/map-slots.js';
@@ -25,23 +26,14 @@ describe('MapSlots', function() {
       B()
       consume root`;
 
-  let testManifest = async (recipeManifest, expectedSlots, Strategy) => {
+  let testManifest = async (recipeManifest, expectedSlots) => {
     let manifest = (await Manifest.parse(`
       ${particlesSpec}
 
       ${recipeManifest}
     `));
-    let inputParams = {generated: [{result: manifest.recipes[0], score: 1}]};
     let arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'dom');
-
-    let results = await new MapSlots(arc).generate(inputParams);
-    if (results.length == 1) {
-      inputParams = {generated: [{result: results[0].result, score: 1}]};
-    }
-
-    results = await new ResolveRecipe(arc).generate(inputParams);
-    assert.equal(results.length, 1);
-    let recipe = results[0].result;
+    let recipe = await runMapSlotsAndResolveRecipe(arc, manifest.recipes[0]);
 
     if (expectedSlots >= 0) {
       assert.isTrue(recipe.isResolved());
@@ -49,6 +41,17 @@ describe('MapSlots', function() {
     } else {
       assert.isFalse(recipe.normalize());
     }
+  };
+
+  let runMapSlotsAndResolveRecipe = async (arc, recipe, expectedSlots) => {
+    let results = await StrategyTestHelper.theResults(arc, MapSlots, recipe);
+    if (results.length == 1) {
+      recipe = results[0];
+    }
+
+    results = await StrategyTestHelper.theResults(arc, ResolveRecipe, recipe);
+    assert.equal(results.length, 1);
+    return results[0];
   };
 
   it('predefined remote slots no alias', async () => {
@@ -97,20 +100,15 @@ describe('MapSlots', function() {
     let manifest = (await Manifest.parse(`
       particle A in 'A.js'
         A()
-        consume master #root
+        consume master #fancy
 
       recipe
-        slot 'id0' #root as s0
+        slot 'id0' #fancy as s0
         A
     `));
 
-    let inputParams = {generated: [{result: manifest.recipes[0], score: 1}]};
     let arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'dom');
-
-    let strategy = new MapSlots(arc);
-    let results = await strategy.generate(inputParams);
-    // consue #root can be bound to the local 'id0' slot or the root slot.
-    assert.equal(results.length, 2);
+    await StrategyTestHelper.onlyResult(arc, ResolveRecipe, manifest.recipes[0]);
   });
 
   it('allows to bind by name to any available slot', async () => {
@@ -154,5 +152,54 @@ describe('MapSlots', function() {
       plan.normalize();
       assert.isTrue(plan.isResolved());
     }
+  });
+
+  it('prefers local slots if available', async () => {
+    // Arc has both a 'root' and an 'action' slot.
+    let arc = new Arc({id: 'test-plan-arc', slotComposer: {
+      affordance: 'dom',
+      getAvailableSlots: (() => [
+        {name: 'root', id: 'r0', tags: ['#root'], handles: [], handleConnections: [], getProvidedSlotSpec: () => { return {isSet: false}; }},
+        {name: 'action', id: 'r1', tags: ['#remote'], handles: [], handleConnections: [], getProvidedSlotSpec: () => { return {isSet: false}; }},
+      ])
+    }});
+
+    let particles = `
+      particle A in 'A.js'
+        A()
+        consume root
+          provide action
+
+      particle B in 'B.js'
+        B()
+        consume action`;
+
+    async function assertActionSlotTags(recipe, tags) {
+      let manifest = await Manifest.parse(
+      `${particles}
+       ${recipe}`);
+
+      let result = await runMapSlotsAndResolveRecipe(arc, manifest.recipes[0]);
+      assert.isTrue(result.isResolved());
+      
+      let actionSlots = result.slots.filter(s => s.name === 'action');
+      assert.lengthOf(actionSlots, 1);
+      assert.deepEqual(actionSlots[0].tags, tags);
+    }
+
+    // 'action' slot of particle B will bind to the remote slot
+    // if no local slot is available.
+    await assertActionSlotTags(`
+      recipe
+        B`,
+      ['#remote']);
+
+    // 'action' slot of particle B will bind to the local slot
+    // provided by particle A if available.
+    await assertActionSlotTags(`
+      recipe
+        A
+        B`,
+      []);
   });
 });
