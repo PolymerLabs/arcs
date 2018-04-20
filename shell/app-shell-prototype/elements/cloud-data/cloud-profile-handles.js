@@ -9,52 +9,58 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 */
 
 import WatchGroup from './watch-group.js';
-import ArcsUtils from '../lib/arcs-utils.js';
 import Firebase from './firebase.js';
-import Xen from '../../components/xen/xen.js';
+import Const from '../../constants.js';
+import ArcsUtils from '../../lib/arcs-utils.js';
+import Xen from '../../../components/xen/xen.js';
 
 const log = Xen.logFactory('CloudProfileHandles', '#003c8f');
 
 class CloudProfileHandles extends Xen.Debug(Xen.Base, log) {
-  static get observedAttributes() { return ['arc', 'user']; }
+  static get observedAttributes() {
+    return ['arc', 'user', 'arcs'];
+  }
   _getInitialState() {
     return {
       watch: new WatchGroup()
     };
   }
-  _update(props, state, lastProps) {
-    if (props.user && props.user !== lastProps.user) {
-      state.user = props.user;
-    }
-    if (props.arc && state.user) {
-      state.user = null;
-      state.watch.watches = this._watchProfileHandles(props.user, props.arc, state.friends);
+  _update({arc, arcs}, state, oldProps) {
+    if (arc && arcs && (arc !== oldProps.arc || arcs !== oldProps.arcs)) {
+      state.watch.watches = this._collateHandleWatches(arc, arcs);
     }
   }
-  _watchProfileHandles(user, arc, friends) {
-    let profiles = ArcsUtils.getUserProfileKeys(user);
-    return profiles.map(key => {
-      return {
-        // TODO(sjmiles): path is technically not firebase specific
-        // TODO(wkorman): Rename `views` to `handles` below on the next database rebuild.
-        path: `arcs/${key}/views`,
-        // TODO(sjmiles): firebase knowledge here
-        handler: snapshot => this._remoteHandlesChanged(arc, friends, snapshot.key, snapshot.val())
-      };
+  _collateHandleWatches(arc, arcs) {
+    const watches = [];
+    Object.keys(arcs).forEach(key => {
+      const {metadata: {share}} = arcs[key];
+      if (share > Const.SHARE.private) {
+        log(`[${key}] contains shared handles`);
+        watches.push({
+          path: `arcs/${key}/handles`,
+          handler: snap => this._handlesChanged(arc, key, snap)
+        });
+      }
+    });
+    return watches;
+  }
+  _handlesChanged(arc, key, snap) {
+    const handles = snap.val();
+    log(`handlesChanged [${key}]`, handles);
+    Object.keys(handles).forEach(async id => {
+      const handle = await this._createOrUpdateHandle(arc, `PROFILE_${id}`, id, handles[id]);
+      log('created/updated handle', handle.id);
+      this._fire('profile', handle);
     });
   }
-  _remoteHandlesChanged(arc, friends, key, remotes) {
-    if (remotes) {
-      // TODO(sjmiles): `remotes` are remote-fb-nodes-describing-a-handle ... cow needs a name
-      log(`READING handles`, remotes);
-      Object.keys(remotes).forEach(async key => {
-        // TODO(sjmiles): `key` used to mean `amkey`, at some point I accidentally started sending _handle_ keys
-        // but nothing broke ... I assume this was not injurious because these data are remote and not persistent
-        let handle = await ArcsUtils.createOrUpdateHandle(arc, remotes[key], 'PROFILE');
-        log('created/updated handle', handle.id);
-        this._fire('profile', handle);
-      });
-    }
+  async _createOrUpdateHandle(arc, id, tag, handleInfo) {
+    const {metadata, values} = handleInfo;
+    // construct type object
+    const type = ArcsUtils.typeFromMetaType(metadata.type);
+    // find or create a handle in the arc context
+    const handle = await ArcsUtils._requireHandle(arc, type, metadata.name, id, [tag]);
+    await ArcsUtils.setHandleData(handle, values);
+    return handle;
   }
 }
 customElements.define('cloud-profile-handles', CloudProfileHandles);

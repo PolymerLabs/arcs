@@ -18,9 +18,7 @@ import './cloud-data/cloud-user.js';
 import './cloud-data/cloud-arc.js';
 import './cloud-data/cloud-steps.js';
 import './cloud-data/cloud-handles.js';
-
-// globals
-/* global shellPath*/
+import './cloud-data/cloud-profile-handles.js';
 
 // templates
 const html = Xen.Template.html;
@@ -65,6 +63,11 @@ const template = html`
     arc="{{arc}}"
     suggestions="{{suggestions}}"
   ></cloud-handles>
+
+  <cloud-profile-handles
+    arc="{{arc}}"
+    arcs="{{arcs}}"
+  ></cloud-profile-handles>
 `;
 
 const log = Xen.logFactory('CloudData', '#004f00');
