@@ -42,7 +42,7 @@ class CloudHandles extends Xen.Debug(Xen.Base, log) {
   _handleToPath(paths, key, [localHandle, tags]) {
     if (tags && tags.size > 0 && !tags.has('#nosync')) {
       const contextId = ArcsUtils.getContextHandleId(localHandle.type, tags);
-      const path = `arcs/${key}/handles/${contextId}`;
+      const path = `arcs/${key}/${Const.DBLABELS.handles}/${contextId}`;
       paths[path] = localHandle;
     }
   }

@@ -37,7 +37,7 @@ class CloudProfileHandles extends Xen.Debug(Xen.Base, log) {
       if (share > Const.SHARE.private) {
         log(`[${key}] contains shared handles`);
         watches.push({
-          path: `arcs/${key}/handles`,
+          path: `arcs/${key}/${Const.DBLABELS.handles}`,
           handler: snap => this._handlesChanged(arc, key, snap)
         });
       }
@@ -54,12 +54,12 @@ class CloudProfileHandles extends Xen.Debug(Xen.Base, log) {
     });
   }
   async _createOrUpdateHandle(arc, id, tag, handleInfo) {
-    const {metadata, values} = handleInfo;
+    const {metadata, data} = handleInfo;
     // construct type object
     const type = ArcsUtils.typeFromMetaType(metadata.type);
     // find or create a handle in the arc context
     const handle = await ArcsUtils._requireHandle(arc, type, metadata.name, id, [tag]);
-    await ArcsUtils.setHandleData(handle, values);
+    await ArcsUtils.setHandleData(handle, data);
     return handle;
   }
 }

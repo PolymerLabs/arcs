@@ -17,5 +17,8 @@ export default {
     private: 1,
     self: 2,
     friends: 3
+  },
+  DBLABELS: {
+    handles: 'shim_handles'
   }
 };
