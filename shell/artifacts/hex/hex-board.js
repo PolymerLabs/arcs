@@ -8,22 +8,36 @@
 defineParticle(({DomParticle, html}) => {
   const size = 11;
   const padding = (size - 1) / 2 |0;
+  const rows = size;
+  const columns = size + padding;
+  const ratio = 1 / Math.sqrt(3) * 1.5 * rows / columns;
   const template = html`
     <style>
+    hex-board-ratio {
+      position: relative;
+      display: block;
+      width: 100%;
+    }
+    hex-board-ratio:before {
+      display: block;
+      content: '';
+      /* % in padding is based on width, this lets us size height relative to width */
+      padding-top: ${ratio * 100}%;
+    }
     hex-board {
-      --hex-side: 17px;
+      position: absolute;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      right: 0;
       --hex-border: 1px;
-      --hex-width: calc(1.73205080757 * var(--hex-side));
-      --hex-height: calc(2 * var(--hex-side));
-      --hex-x-offset: calc(0.5 * var(--hex-width));
-      --hex-y-offset: calc(0.25 * var(--hex-height));
       display: grid;
-      grid-template-columns: repeat(${size + padding}, calc(var(--hex-width) - var(--hex-border)));
-      grid-template-rows: repeat(${size}, calc(0.75 * var(--hex-height) - var(--hex-border)));
+      grid-template-columns: repeat(${columns}, 1fr);
+      grid-template-rows: repeat(${rows}, 1fr);
     }
     
     hexa-gon[offset] {
-      margin-left: calc(1 * var(--hex-x-offset) - var(--hex-border)/2);
+      margin-left: calc(50% - var(--hex-border)/2);
     }
 
     hexa-gon[padding] {
@@ -34,8 +48,8 @@ defineParticle(({DomParticle, html}) => {
     hexa-gon {
       position: relative;
       display: inline-block;
-      width: var(--hex-width);
-      height: var(--hex-height);
+      width: calc(100% + var(--hex-border));
+      height: calc(4/3 * 100% + var(--hex-border));
       clip-path: polygon(
           0% 25%,
           50% 0%,
@@ -49,8 +63,8 @@ defineParticle(({DomParticle, html}) => {
     hexa-gon:before {
       position: absolute;
       content: '';
-      width: var(--hex-width);
-      height: var(--hex-height);
+      width: 100%;
+      height: 100%;
       --0: calc(var(--hex-border) + 0%);
       --25: calc(var(--hex-border) + (100% - 2 * var(--hex-border)) * 0.25);
       --75: calc(var(--hex-border) + (100% - 2 * var(--hex-border)) * 0.75);
@@ -73,6 +87,7 @@ defineParticle(({DomParticle, html}) => {
       background: black;
     }
     </style>
+    <hex-board-ratio>
     <hex-board>
       ${(() => {
         let result = [];
@@ -102,7 +117,8 @@ defineParticle(({DomParticle, html}) => {
         }
         return result.join('');
       })()}
-    </hex-board>`;
+    </hex-board>
+    </hex-board-ratio>`;
 
   return class extends DomParticle {
     get template() {
