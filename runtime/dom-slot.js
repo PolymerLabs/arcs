@@ -101,6 +101,7 @@ class DomSlot extends Slot {
     if (!content || Object.keys(content).length == 0) {
       if (this.getContext()) {
         this.getContext().clear();
+        this.innerSlotsUpdateCallback && this.innerSlotsUpdateCallback(this);
       }
       this._model = null;
       return;
