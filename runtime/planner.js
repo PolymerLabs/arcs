@@ -143,12 +143,12 @@ class Planner {
     }
     return groups;
   }
-  async suggest(timeout, generations) {
+  async suggest(timeout, generations, speculator) {
     let trace = Tracing.start({cat: 'planning', name: 'Planner::suggest', overview: true, args: {timeout}});
     if (!generations && this._arc._debugging) generations = [];
     let plans = await trace.wait(this.plan(timeout, generations));
     let suggestions = [];
-    let speculator = new Speculator();
+    speculator = speculator || new Speculator();
     // We don't actually know how many threads the VM will decide to use to
     // handle the parallel speculation, but at least we know we won't kick off
     // more than this number and so can somewhat limit resource utilization.
@@ -168,7 +168,7 @@ class Planner {
 
         // TODO(wkorman): Look at restoring trace.wait() here, and whether we
         // should do similar for the async getRecipeSuggestion() below as well?
-        let relevance = await speculator.speculate(this._arc, plan);
+        let relevance = await speculator.speculate(this._arc, plan, hash);
         if (!relevance.isRelevant(plan)) {
           continue;
         }

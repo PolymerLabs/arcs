@@ -10,7 +10,8 @@
 'use strict';
 
 class Relevance {
-  constructor() {
+  constructor(arcState) {
+    this.arcState = arcState;
     this.relevanceMap = new Map();
   }
 
