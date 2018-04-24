@@ -33,8 +33,8 @@ class CloudProfileHandles extends Xen.Debug(Xen.Base, log) {
   _collateHandleWatches(arc, arcs) {
     const watches = [];
     Object.keys(arcs).forEach(key => {
-      const {metadata: {share}} = arcs[key];
-      if (share > Const.SHARE.private) {
+      const {metadata} = arcs[key];
+      if (metadata && metadata.share > Const.SHARE.private) {
         log(`[${key}] contains shared handles`);
         watches.push({
           path: `arcs/${key}/${Const.DBLABELS.handles}`,
@@ -48,7 +48,7 @@ class CloudProfileHandles extends Xen.Debug(Xen.Base, log) {
     const handles = snap.val();
     log(`handlesChanged [${key}]`, handles);
     Object.keys(handles).forEach(async id => {
-      const handle = await this._createOrUpdateHandle(arc, `PROFILE_${id}`, id, handles[id]);
+      const handle = await this._createOrUpdateHandle(arc, `$profile_${id}`, `#$profile_${id}`, handles[id]);
       log('created/updated handle', handle.id);
       this._fire('profile', handle);
     });

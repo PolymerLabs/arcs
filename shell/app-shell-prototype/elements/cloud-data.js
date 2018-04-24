@@ -19,6 +19,7 @@ import './cloud-data/cloud-arc.js';
 import './cloud-data/cloud-steps.js';
 import './cloud-data/cloud-handles.js';
 import './cloud-data/cloud-profile-handles.js';
+import './cloud-data/cloud-shared-handles.js';
 
 // templates
 const html = Xen.Template.html;
@@ -67,23 +68,56 @@ const template = html`
   <cloud-profile-handles
     arc="{{arc}}"
     arcs="{{arcs}}"
+    on-profile="_onProfile"
   ></cloud-profile-handles>
+
+  <cloud-shared-handles
+    arc="{{arc}}"
+    userid="{{userid}}"
+    profile="{{profile}}"
+    on-shared="_onShared"
+  ></cloud-shared-handles>
 `;
 
 const log = Xen.logFactory('CloudData', '#004f00');
 
 class CloudData extends Xen.Debug(Xen.Base, log) {
   static get observedAttributes() {
-    return ['config', 'userid', 'user', 'arcs', 'key', 'metadata', 'description', 'share', 'suggestions', 'plan', 'arc'];
+    return ['config', 'userid', 'user', 'profile', 'arcs', 'key', 'metadata', 'description', 'share', 'suggestions', 'plan', 'arc'];
   }
   get template() {
     return template;
+  }
+  _getInitialState() {
+    return {
+      userProfile: {}
+    };
   }
   _render(props, state, oldProps) {
     return [props, state];
   }
   _onForward(e, data) {
     this._fire(e.type, data);
+  }
+  _onShared(e, info) {
+    // if (info.user === this._props.userid) {
+    //   this._onProfile(e, info.handle);
+    // }
+  }
+  async _onProfile(e, profile) {
+    // assume pattern PROFILE_{property}
+    const property = profile.id.split('_').slice(1).join('_');
+    // extract data from handle
+    const handleData = await ArcsUtils.getHandleData(profile);
+    const data = handleData && (handleData.rawData || Object.values(handleData).map(e => e.rawData));
+    // mutate userProfile object so it will pass dirty checks
+    const state = this._state;
+    state.userProfile = Xen.clone(state.userProfile);
+    // install new profile data
+    state.userProfile[property] = data;
+    // notify owner
+    log(state.userProfile);
+    this._fire('profile', state.userProfile);
   }
 }
 customElements.define('cloud-data', CloudData);

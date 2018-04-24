@@ -318,15 +318,15 @@ const template = html`
       </div>
       <div settings toolbar open$="{{settingsToolbarOpen}}">
         <icon on-click="_onMainClick">arrow_back</icon>
-        <span style="flex: 1;"></span>
+        <span style="flex: 1;">Settings</span>
         <avatar title="{{avatar_title}}" style="{{avatar_style}}" on-click="_onAvatarClick"></avatar>
       </div>
     </div>
-    <div contents>
+    <div contents scrolltop="{{scrollTop:contentsScrollTop}}">
       <div suggestions content open$="{{suggestionsContentOpen}}">
         <slot name="suggestions" slot="suggestions" on-plan-choose="_onChooseSuggestion"></slot>
       </div>
-      <settings-panel settings content open$="{{settingsContentOpen}}" users="{{users}}" user="{{user}}" user_picker_open="{{userPickerOpen}}" friends="{{users}}" share="{{share}}" on-user="_onSelectUser" on-share="_onShare"></settings-panel>
+      <settings-panel settings content open$="{{settingsContentOpen}}" key="{{key}}" users="{{users}}" user="{{user}}" profile="{{profile}}" share="{{share}}" user_picker_open="{{userPickerOpen}}" on-user="_onSelectUser" on-share="_onShare"></settings-panel>
     </div>
   </div>
   <!-- -->
@@ -350,7 +350,7 @@ const log = Xen.logFactory('ShellUi', '#ac6066');
 
 class ShellUi extends Xen.Debug(Xen.Base, log) {
   static get observedAttributes() {
-    return ['glows', 'showhint', 'users', 'user', 'arc', 'title', 'share', 'search'];
+    return ['key', 'glows', 'showhint', 'users', 'user', 'profile', 'arc', 'title', 'share', 'search'];
   }
   get template() {
     return template;
@@ -364,7 +364,7 @@ class ShellUi extends Xen.Debug(Xen.Base, log) {
       toolsOpen: false
     };
   }
-  _render(props, state) {
+  _render(props, state, oldProps, oldState) {
     if (state.barState === 'peek') {
       state.toolState = 'main';
     }
@@ -384,6 +384,9 @@ class ShellUi extends Xen.Debug(Xen.Base, log) {
       userContentOpen: userOpen,
       glows: Boolean(props.glows)
     };
+    if (state.userPickerOpen && state.userPickerOpen !== oldState.userPickerOpen) {
+      renderModel.contentsScrollTop = 0;
+    }
     const {user} = props;
     if (user && user.info) {
       renderModel.avatar_title = user.info.name;
@@ -392,8 +395,8 @@ class ShellUi extends Xen.Debug(Xen.Base, log) {
     }
     return [props, state, renderModel];
   }
-  _didRender(props, state, oldProps, oldState) {
-    if (state.toolState === 'search' && oldState.toolState !== 'search') {
+  _didRender(props, {toolState}, oldProps, oldState) {
+    if (toolState === 'search' && oldState.toolState !== 'search') {
       const input = this.host.querySelector('input');
       // TODO(sjmiles): without timeout, rendering gets destroyed (Blink bug?)
       setTimeout(() => {
@@ -475,10 +478,8 @@ class ShellUi extends Xen.Debug(Xen.Base, log) {
     this._setState({userPickerOpen: !this._state.userPickerOpen});
   }
   _onSearchChange(e) {
-    // TODO(sjmiles): backend search is a bit slow to do while typing, perhaps we use simple-mode
-    // text search to provide immediate results?
     const search = e.target.value;
-    // throttle re-planning until typing has stopped
+    // don't re-plan until typing has stopped for this length of time
     const delay = 500;
     const commit = () => this._commitSearch(search);
     this._searchDebounce = ArcsUtils.debounce(this._searchDebounce, commit, delay);

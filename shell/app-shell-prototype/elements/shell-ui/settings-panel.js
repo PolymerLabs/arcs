@@ -1,11 +1,6 @@
-// code
 import Xen from '../../../components/xen/xen.js';
 import Const from '../../constants.js';
-// elements
-// strings
 import IconStyle from '../../../components/icons.css.js';
-// globals
-/* global shellPath */
 
 const html = Xen.Template.html;
 const template = html`
@@ -28,6 +23,10 @@ const template = html`
     height: 56px;
     display: flex;
     align-items: center;
+  }
+  section[bar][disabled] {
+    opacity: 0.4;
+    pointer-events: none;
   }
   section span {
     flex: 1
@@ -69,37 +68,29 @@ const template = html`
   }
 </style>
 
-<!-- <section bar on-click="_onSelectUser">
-  <avatar title="{{avatar_title}}" style="{{avatar_style}}"></avatar>
-  <span>{{name}}</span>
-  <icon>chevron_right</icon>
-</section> -->
 <section user open$="{{user_picker_open}}">
   <user-picker users="{{users}}" on-selected="_onSelectUser"></user-picker>
 </section>
-<section bar style="opacity: 0.4">
+<section bar disabled>
   <span>Star this arc</span>
   <icon>star_border</icon>
 </section>
-<!--
-<section bar style="opacity: 0.4" on-click="_onToolsClick">
-  <span>Toggle tools panel</span>
-  <icon>business_center</icon>
-</section>
--->
-<section bar style="opacity: 0.4" on-click="_onCastClick">
+<section bar disabled on-click="_onCastClick">
   <span>Cast this arc</span>
   <icon>cast</icon>
 </section>
-<section bar on-click="_onProfileClick" style="{{profileStyle}}">
+<section bar disabled$="{{nopersist}}" on-click="_onProfileClick" style="{{profileStyle}}">
   <span>Use for suggestions</span>
   <icon>{{profileIcon}}</icon>
 </section>
-<section bar on-click="_onShareClick" style="{{shareStyle}}">
+<section bar disabled$="{{nopersist}}" on-click="_onShareClick" style="{{shareStyle}}">
   <span>Use for friends' suggestions</span>
   <icon>{{shareIcon}}</icon>
 </section>
-<section friends>{{friends}}</section>
+<section friends>
+  <span>Friends</span><br>
+  <div style="padding-top: 8px;">{{friends}}</div>
+</section>
 `;
 
 const userTemplate = html`
@@ -108,59 +99,53 @@ const userTemplate = html`
   </user-item>
 `;
 
-class SettingsPanel extends Xen.Base {
+const log = Xen.logFactory('SettingsPanel', '#bb4d00');
+
+class SettingsPanel extends Xen.Debug(Xen.Base, log) {
+  static get observedAttributes() {
+    return ['key', 'users', 'user', 'profile', 'share', 'user_picker_open'];
+  }
   get template() {
     return template;
   }
-  static get observedAttributes() {
-    return ['arc', 'users', 'user_picker_open', 'user', 'friends', 'avatars', 'avatar_title', 'avatar_style', 'share'];
-  }
   _willReceiveProps({user_picker_open, share}, state, oldProps) {
-    if (user_picker_open && user_picker_open !== oldProps.user_picker_open) {
-      this.scrollTop = 0;
-    }
     if (oldProps.share !== share) {
       this._setState(this._shareStateToFlags(share));
     }
   }
   _render(props, state, oldProps) {
-    const {arc, user, friends, avatars} = props;
+    const {key, users, user, profile, avatars} = props;
     const {selected, isProfile, isShared} = state;
     const render = {
       name: user && user.name,
       profileIcon: isProfile ? 'check' : 'check_box_outline_blank',
       profileStyle: isProfile ? 'color: #1A73E8' : '',
       shareIcon: isShared ? 'check' : 'check_box_outline_blank',
-      shareStyle: isShared ? 'color: #1A73E8' : ''
+      shareStyle: isShared ? 'color: #1A73E8' : '',
+      nopersist: Boolean(Const.SHELLKEYS[key])
     };
-    if (friends) {
-      render.friends = {
-        template: userTemplate,
-        models: Object.values(friends).map((friend, i) => this._renderUser(arc, selected, friend, avatars, i))
-        //models:friends.map((friend, i) => this._renderUser(arc, selected, friend.rawData, avatars, i))
-      };
+    if (profile && profile.friends) {
+      render.friends = this._renderUsers(selected, profile.friends, users);
     }
     return [props, render];
   }
-  _shareStateToFlags(share) {
+  _renderUsers(selected, friends, users) {
+    const models = [];
+    friends.forEach((friend, i) => {
+      const user = users[friend.id];
+      if (user) {
+        models.push(this._renderUser(selected, user, i));
+      }
+    });
     return {
-      isProfile: (share == Const.SHARE.friends) || (share === Const.SHARE.self),
-      isShared: (share == Const.SHARE.friends)
+      template: userTemplate,
+      models
     };
   }
-  _shareFlagsToShareState(isProfile, isShared) {
-    return isShared ? Const.SHARE.friends : isProfile ? Const.SHARE.self : Const.SHARE.private;
-  }
-  _renderUser(arc, selected, user, avatars, i) {
+  _renderUser(selected, user, i) {
     let avatar = user.info && user.info.avatar;
-    if (arc && !avatar && avatars) {
-      avatar = (avatars.find(a => a.owner === user.id) || Object).url;
-      if (avatar) {
-        avatar = arc._loader._resolve(avatar);
-      }
-    }
     if (!avatar) {
-      avatar = `${shellPath}/assets/avatars/user (0).png`;
+      avatar = ``; //`${this._props.config.root}/assets/avatars/user (0).png`;
     }
     return {
       key: user.id,
@@ -195,7 +180,14 @@ class SettingsPanel extends Xen.Base {
     this._setState({isProfile, isShared, share});
     this._fire('share', share);
   }
+  _shareStateToFlags(share) {
+    return {
+      isProfile: (share == Const.SHARE.friends) || (share === Const.SHARE.self),
+      isShared: (share == Const.SHARE.friends)
+    };
+  }
+  _shareFlagsToShareState(isProfile, isShared) {
+    return isShared ? Const.SHARE.friends : isProfile ? Const.SHARE.self : Const.SHARE.private;
+  }
 }
-
-const log = Xen.logFactory('SettingsPanel', '#bb4d00');
 customElements.define('settings-panel', SettingsPanel);

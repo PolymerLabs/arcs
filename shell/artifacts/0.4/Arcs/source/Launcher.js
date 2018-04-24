@@ -96,7 +96,7 @@ ${style}
 <template column>
   <div chip style="{{chipStyle}}">
     <div hovering>
-      <icon delete hide$="{{noDelete}}" key="{{arcId}}" on-click="_onDelete">remove_circle_outline</icon>
+      <icon delete hide$="{{noDelete}}" key="{{arcId}}" on-click="_onDelete">delete_forever</icon>
     </div>
     <a href="{{href}}" trigger$="{{description}}">
       <div description title="{{description}}" unsafe-html="{{blurb}}"></div>
@@ -162,7 +162,7 @@ ${style}
           if (a.starred) {
             result.starred.push(model);
           }
-          if (a.share) {
+          if (a.share > 1) {
             result.shared.push(model);
           }
           if (a.touched) {

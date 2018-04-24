@@ -72,6 +72,7 @@ const template = html`
 
   <cloud-data
     config="{{config}}"
+    profile="{{profile}}"
     userid="{{userid}}"
     user="{{user}}"
     arcs="{{arcs}}"
@@ -83,6 +84,7 @@ const template = html`
     suggestions="{{suggestions}}"
     plan="{{plan}}"
     on-user="_onStateData"
+    on-profile="_onStateData"
     on-users="_onStateData"
     on-arcs="_onStateData"
     on-key="_onStateData"
@@ -93,11 +95,13 @@ const template = html`
   ></cloud-data>
 
   <shell-ui
+    key="{{key}}"
     arc="{{arc}}"
     title="{{title}}"
     showhint="{{showhint}}"
     users="{{users}}"
     user="{{user}}"
+    profile="{{profile}}"
     share="{{share}}"
     search="{{search}}"
     glows="{{glows}}"
@@ -122,7 +126,8 @@ class AppShell extends Xen.Debug(Xen.Base, log) {
   _getInitialState() {
     return {
       defaultManifest: `
-import 'https://sjmiles.github.io/arcs-stories/0.3/GitHubDash/GitHubDash.recipes'
+//import 'https://sjmiles.github.io/arcs-stories/0.3/GitHubDash/GitHubDash.recipes'
+import '../../../arcs-stories/0.3/GitHubDash/GitHubDash.recipes'
 import 'https://sjmiles.github.io/arcs-stories/0.3/TV/TV.recipes'
 import 'https://sjmiles.github.io/arcs-stories/0.3/PlaidAccounts/PlaidAccounts.recipes'
 import '../artifacts/canonical.manifest'
@@ -206,24 +211,22 @@ import '../artifacts/0.4/Arcs/Arcs.recipes'
       // Otherwise only show suggestions that don't populate a root.
       state.filteredSuggestions = suggestions.filter(
         // TODO(seefeld): Don't hardcode `root`
-        // TODO(sjmiles|mmandlis): name.includes catches all variants of `root` (e.g. `toproot`), the `tags`
-        // test only catches `#root` specifically
+        // TODO(sjmiles|mmandlis): `name.includes` catches all variants of `root` (e.g. `toproot`), but
+        // `tags.includes` only catches `#root` tag specifically
         ({plan}) => plan.slots && !plan.slots.find(s => s.name.includes('root') || s.tags.includes('#root'))
       );
     }
   }
   _render({}, state) {
-    const {description, theme, suggestions} = state;
-    //const shellStyle = theme ? `background-color: ${theme.mainBackground}; color: ${theme.mainColor};` : '';
+    const {userid, description, theme, suggestions} = state;
     const render = {
       title: description,
-      //shellStyle,
-      glows: Boolean(suggestions == null)
+      glows: userid && (suggestions == null)
     };
+    state.shellStyle = theme ? `background-color: ${theme.mainBackground}; color: ${theme.mainColor};` : '';
     return [state, render];
   }
-  _didRender({}, {theme}) {
-    const shellStyle = theme ? `background-color: ${theme.mainBackground}; color: ${theme.mainColor};` : '';
+  _didRender({}, {shellStyle}) {
     this.style.cssText = shellStyle;
   }
   _routeLink(anchor) {
