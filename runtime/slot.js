@@ -18,9 +18,8 @@ export default class Slot {
     this._consumeConn = consumeConn;
     this._arc = arc;
     this._context = null;
-    this.startRenderCallback = null;
-    this.stopRenderCallback = null;
     this._hostedSlotById = new Map();
+    this.hostedSlotUpdateCallback = null;
   }
   get consumeConn() { return this._consumeConn; }
   get arc() { return this._arc; }
@@ -38,41 +37,8 @@ export default class Slot {
     // update the context;
     let wasNull = !this.getContext();
     this.setContext(context);
-    if (this.getContext()) {
-      if (wasNull) {
-        this.startRender();
-      }
-    } else {
-      this.stopRender();
-    }
-  }
-  startRender() {
-    if (this.startRenderCallback) {
-      const slotName = this.consumeConn.name;
-      const particle = this.consumeConn.particle;
-      const context = this.getContext();
-      if (context.updateParticleName) {
-        context.updateParticleName(slotName, particle.name);
-      }
-      const contentTypes = this.constructRenderRequest();
-      this.startRenderCallback({particle, slotName, contentTypes});
-
-      for (let hostedSlot of this._hostedSlotById.values()) {
-        if (hostedSlot.particle) {
-          // Note: hosted particle may still not be set, if the hosted slot was already created, but the inner recipe wasn't instantiate yet.
-          this.startRenderCallback({particle: hostedSlot.particle, slotName: hostedSlot.slotName, contentTypes});
-        }
-      }
-    }
-  }
-
-  stopRender() {
-    if (this.stopRenderCallback) {
-      this.stopRenderCallback({particle: this.consumeConn.particle, slotName: this.consumeConn.name});
-
-      for (let hostedSlot of this._hostedSlotById.values()) {
-        this.stopRenderCallback({particle: hostedSlot.particle, slotName: hostedSlot.slotName});
-      }
+    if (wasNull && this.getContext()) {
+      this.onContextInitialized();
     }
   }
 
@@ -86,15 +52,25 @@ export default class Slot {
     return descriptions;
   }
 
+  onContextInitialized() {
+    for (let hostedSlot of this._hostedSlotById.values()) {
+      if (hostedSlot.content) {
+        this.hostedSlotUpdateCallback && this.hostedSlotUpdateCallback(hostedSlot.slotId, hostedSlot.content);
+      }
+    }
+  }
+
   addHostedSlot(hostedSlotId, hostedParticleName, hostedSlotName) {
     assert(hostedSlotId, `Hosted slot ID must be provided`);
     assert(!this._hostedSlotById.has(hostedSlotId), `Hosted slot ${hostedSlotId} already exists`);
     this._hostedSlotById.set(hostedSlotId, {slotId: hostedSlotId, particleName: hostedParticleName, slotName: hostedSlotName});
     return hostedSlotId;
   }
+
   getHostedSlot(hostedSlotId) {
     return this._hostedSlotById.get(hostedSlotId);
   }
+
   findHostedSlot(hostedParticle, hostedSlotName) {
     for (let hostedSlot of this._hostedSlotById.values()) {
       if (hostedSlot.particle == hostedParticle && hostedSlot.slotName == hostedSlotName) {
@@ -102,20 +78,28 @@ export default class Slot {
       }
     }
   }
+
   initHostedSlot(hostedSlotId, hostedParticle) {
     let hostedSlot = this.getHostedSlot(hostedSlotId);
     assert(hostedSlot, `Hosted slot ${hostedSlotId} doesn't exist`);
     assert(hostedSlot.particleName == hostedParticle.name,
            `Unexpected particle name ${hostedParticle.name} for slot ${hostedSlotId}; expected: ${hostedSlot.particleName}`);
     hostedSlot.particle = hostedParticle;
-    if (this.getContext() && this.startRenderCallback) {
-      this.startRenderCallback({particle: hostedSlot.particle, slotName: hostedSlot.slotName, contentTypes: this.constructRenderRequest()});
+  }
+
+  setHostedSlotContent(hostedSlotId, content) {
+    let hostedSlot = this.getHostedSlot(hostedSlotId);
+    assert(hostedSlot, `Cannot find hosted slot for ${hostedSlotId}`);
+    assert(hostedSlot.particle, `Cannot set content of a hosted slot ${hostedSlotId} with no particle.`);
+    hostedSlot.content = content;
+
+    if (this.getContext()) {
+      this.hostedSlotUpdateCallback && this.hostedSlotUpdateCallback(hostedSlot.slotId, content);
     }
   }
 
   // Abstract methods.
   async setContent(content, handler) {}
   getInnerContext(slotName) {}
-  constructRenderRequest() {}
-  static findRootSlots(context) { }
+  static findRootSlots(context) {}
 }

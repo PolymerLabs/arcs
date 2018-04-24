@@ -139,61 +139,6 @@ class InnerPEC {
       });
 
     this._apiPort.onUIEvent = ({particle, slotName, event}) => particle.fireEvent(slotName, event);
-
-    this._apiPort.onStartRender = ({particle, slotName, contentTypes}) => {
-      /** @class Slot
-       * A representation of a consumed slot. Retrieved from a particle using
-       * particle.getSlot(name)
-       */
-      class Slotlet {
-        constructor(pec, particle, slotName) {
-          this._slotName = slotName;
-          this._particle = particle;
-          this._handlers = new Map();
-          this._pec = pec;
-          this._requestedContentTypes = new Set();
-        }
-        get particle() { return this._particle; }
-        get slotName() { return this._slotName; }
-        get isRendered() { return this._isRendered; }
-        /** @method render(content)
-         * renders content to the slot.
-         */
-        render(content) {
-          this._pec._apiPort.Render({particle, slotName, content});
-
-          Object.keys(content).forEach(key => { this._requestedContentTypes.delete(key); });
-          // Slot is considered rendered, if a non-empty content was sent and all requested content types were fullfilled.
-          this._isRendered = this._requestedContentTypes.size == 0 && (Object.keys(content).length > 0);
-        }
-        /** @method registerEventHandler(name, f)
-         * registers a callback to be invoked when 'name' event happens.
-         */
-        registerEventHandler(name, f) {
-          if (!this._handlers.has(name)) {
-            this._handlers.set(name, []);
-          }
-          this._handlers.get(name).push(f);
-        }
-        clearEventHandlers(name) {
-          this._handlers.set(name, []);
-        }
-        fireEvent(event) {
-          for (let handler of this._handlers.get(event.handler) || []) {
-            handler(event);
-          }
-        }
-      }
-
-      particle._slotByName.set(slotName, new Slotlet(this, particle, slotName));
-      particle.renderSlot(slotName, contentTypes);
-    };
-
-    this._apiPort.onStopRender = ({particle, slotName}) => {
-      assert(particle._slotByName.has(slotName),
-        `Stop render called for particle ${particle.name} slot ${slotName} without start render being called.`);
-      particle._slotByName.delete(slotName);
-    };
   }
 
   generateIDComponents() {
@@ -279,10 +224,55 @@ class InnerPEC {
         localHandle.entityClass = schemaModel.entityClass();
     }
 
+    /** @class Slot
+     * A representation of a consumed slot. Retrieved from a particle using
+     * particle.getSlot(name)
+     */
+    class Slotlet {
+      constructor(pec, particle, slotName) {
+        this._slotName = slotName;
+        this._particle = particle;
+        this._handlers = new Map();
+        this._pec = pec;
+        this._requestedContentTypes = new Set();
+      }
+      get particle() { return this._particle; }
+      get slotName() { return this._slotName; }
+      get isRendered() { return this._isRendered; }
+      /** @method render(content)
+       * renders content to the slot.
+       */
+      render(content) {
+        this._pec._apiPort.Render({particle: this.particle, slotName: this.slotName, content});
+
+        Object.keys(content).forEach(key => { this._requestedContentTypes.delete(key); });
+        // Slot is considered rendered, if a non-empty content was sent and all requested content types were fullfilled.
+        this._isRendered = this._requestedContentTypes.size == 0 && (Object.keys(content).length > 0);
+      }
+      /** @method registerEventHandler(name, f)
+       * registers a callback to be invoked when 'name' event happens.
+       */
+      registerEventHandler(name, f) {
+        if (!this._handlers.has(name)) {
+          this._handlers.set(name, []);
+        }
+        this._handlers.get(name).push(f);
+      }
+      clearEventHandlers(name) {
+        this._handlers.set(name, []);
+      }
+      fireEvent(event) {
+        for (let handler of this._handlers.get(event.handler) || []) {
+          handler(event);
+        }
+      }
+    }
+
     return [particle, async () => {
       resolve();
       let idx = this._pendingLoads.indexOf(p);
       this._pendingLoads.splice(idx, 1);
+      spec.slots.forEach((slotSpec, slotName) => particle._slotByName.set(slotName, new Slotlet(this, particle, slotName)));
       await particle.setViews(handleMap);
     }];
   }

@@ -123,7 +123,7 @@ class DomParticle extends XenStateMixin(Particle) {
     const stateArgs = this._getStateArgs();
     let slot = this.getSlot(slotName);
     if (!slot) {
-      return; // didn't receive StartRender.
+      return;
     }
 
     // Set this to support multiple slots consumed by a particle, without needing
@@ -134,7 +134,8 @@ class DomParticle extends XenStateMixin(Particle) {
     // TODO(sjmiles): redundant, same answer for every slot
     if (this.shouldRender(...stateArgs)) {
       let content = {};
-      if (slot._requestedContentTypes.has('template')) {
+      // TODO(mmandlis): the particle should not send the template unless explicitly requested.
+      if (!slot.isRendered) {
         content.template = this.getTemplate(slot.slotName);
       }
       if (slot._requestedContentTypes.has('model')) {

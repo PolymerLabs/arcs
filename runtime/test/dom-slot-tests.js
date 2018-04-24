@@ -29,6 +29,9 @@ class MockDomContext {
   createTemplateElement(template) {
     return template;
   }
+  isEqual(context) {
+    return this.context === context;
+  }
 }
 DomSlot.prototype._createDomContext = () => new MockDomContext();
 DomSlot.prototype._initMutationObserver = () => {};
@@ -50,25 +53,25 @@ describe('dom-slot', function() {
     assert.isNull(slot._context);
 
     // context was null; set none null - initializes DOM context
-    slot.setContext('dummy-context');
+    slot.updateContext('dummy-context');
     assert.isTrue(slot.getContext() instanceof MockDomContext);
-    let clearCount = 0;
-    slot.getContext().clear = () => { clearCount++; };
     assert.equal('dummy-context', slot.getContext().context);
     assert.equal(0, doRenderCount);
 
     // context was NOT null; set none null - updates DOM context, and calls doRender
-    slot.setContext('other-dummy-context');
+    let clearCount = 0;
+    slot.getContext().clear = () => { clearCount++; };
+    slot.updateContext('other-dummy-context');
     assert.equal(1, clearCount);
     assert.equal(1, doRenderCount);
     assert.equal('other-dummy-context', slot.getContext().context);
 
     // set context to NULL.
-    slot.setContext(null);
+    slot.updateContext(null);
     assert.equal(1, doRenderCount);
     assert.isNull(slot._context);
   });
-  it('set content', async () => {
+  it('can set content', async () => {
     let slot = createDomSlot('testContentSlot');
     let doRenderCount = 0;
     let _doRenderImpl = slot._doRender;
@@ -106,10 +109,10 @@ describe('dom-slot', function() {
     assert.equal(0, updateModelCount);
 
     // Set content with template: templates map is updated and slot is rendered.
-    assert.isUndefined(slot.getTemplate());
+    assert.isUndefined(slot.getTemplate().text);
     await slot.setContent({template: 'my template'});
     assert.isNull(slot._model);
-    assert.equal('my template', slot.getTemplate());
+    assert.equal('my template', slot.getTemplate().text);
     assert.equal(1, doRenderCount);
     assert.equal(1, clearCount);
     assert.equal(1, stampTemplateCount);
@@ -118,7 +121,7 @@ describe('dom-slot', function() {
     // Set content with template and model - template is overriden, model is set and slot is re-rendered.
     await slot.setContent({template: 'my other template', model: {foo: 'bar'}});
     assert.deepEqual({foo: 'bar'}, slot._model);
-    assert.equal('my other template', slot.getTemplate());
+    assert.equal('my other template', slot.getTemplate().text);
     assert.equal(2, doRenderCount);
     assert.equal(2, clearCount);
     assert.equal(2, stampTemplateCount);
@@ -127,7 +130,7 @@ describe('dom-slot', function() {
     // Set content with only model - model is set and slot is re-rendered.
     await slot.setContent({model: {foo: 'far'}});
     assert.deepEqual({foo: 'far'}, slot._model);
-    assert.equal('my other template', slot.getTemplate());
+    assert.equal('my other template', slot.getTemplate().text);
     assert.equal(3, doRenderCount);
     assert.equal(2, clearCount);
     assert.equal(3, stampTemplateCount);
@@ -136,18 +139,8 @@ describe('dom-slot', function() {
     // set content to null - context is cleared, and model is set to null.
     await slot.setContent(null);
     assert.isNull(slot._model);
-    assert.equal('my other template', slot.getTemplate());
+    assert.equal('my other template', slot.getTemplate().text);
     assert.equal(3, doRenderCount);
     assert.equal(3, clearCount);
-  });
-  it('construct render request', function() {
-    let slot = createDomSlot('testRequestSlot');
-    // request template, if not available yet.
-    assert.deepEqual(['model', 'template'], slot.constructRenderRequest());
-
-    // only request model, if template already found.
-    slot._context = new MockDomContext();
-    slot.setContent({template: 'dummy-template'}, {});
-    assert.deepEqual(['model'], slot.constructRenderRequest());
   });
 });

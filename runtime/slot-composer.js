@@ -165,8 +165,7 @@ class SlotComposer {
         }
 
         let slot = new this._slotClass(cs, this.arc, this._containerKind);
-        slot.startRenderCallback = this.arc.pec.startRender.bind(this.arc.pec);
-        slot.stopRenderCallback = this.arc.pec.stopRender.bind(this.arc.pec);
+        slot.hostedSlotUpdateCallback = this.arc.pec.innerArcRender.bind(this.arc.pec, p, cs.name);
         slot.innerSlotsUpdateCallback = this.updateInnerSlots.bind(this);
         newSlots.push(slot);
       });
@@ -205,6 +204,8 @@ class SlotComposer {
   }
 
   async renderSlot(particle, slotName, content) {
+    assert(particle.spec.slots.has(slotName), `Cannot find slot (or hosted slot) ${slotName} for particle ${particle.name}`);
+
     let slot = this.getSlot(particle, slotName);
     if (slot) {
       // Set the slot's new content.
@@ -217,8 +218,6 @@ class SlotComposer {
     if (this._renderHostedSlot(particle, slotName, content)) {
       return;
     }
-
-    assert(slot, `Cannot find slot (or hosted slot) ${slotName} for particle ${particle.name}`);
   }
 
   _renderHostedSlot(particle, slotName, content) {
@@ -229,8 +228,7 @@ class SlotComposer {
     let transformationSlot = this._findSlotByHostedSlotId(hostedSlot.slotId);
     assert(transformationSlot, `No transformation slot found for ${hostedSlot.slotId}`);
 
-    this.arc.pec.innerArcRender(transformationSlot.consumeConn.particle, transformationSlot.consumeConn.name, hostedSlot.slotId, content);
-
+    transformationSlot.setHostedSlotContent(hostedSlot.slotId, content);
     return true;
   }
 

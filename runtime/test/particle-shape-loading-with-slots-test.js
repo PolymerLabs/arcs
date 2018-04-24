@@ -103,6 +103,12 @@ describe('particle-shape-loading-with-slots', function() {
     // after the hosted particles are also instantiated.
     // This verifies a different start-render call in slot-composer.
     let {fooType, inView, slotComposer} = await instantiateRecipe();
+
+    slotComposer
+      .newExpectations()
+      .expectRenderSlot('SingleSlotParticle', 'annotation', {contentTypes: ['template', 'model'], times: 2})
+      .expectRenderSlot('MultiplexSlotsParticle', 'annotationsSet', {contentTypes: ['template', 'model']})
+      .expectRenderSlot('MultiplexSlotsParticle', 'annotationsSet', {contentTypes: ['model'], times: 2, isOptional: true});
     // Wait for the hosted slots to be initialized in slot-composer.
     await new Promise((resolve, reject) => {
       let myInterval = setInterval(function() {
@@ -113,12 +119,6 @@ describe('particle-shape-loading-with-slots', function() {
       }, 10);
     });
     slotComposer._slots[0].updateContext({});
-
-    slotComposer
-      .newExpectations()
-      .expectRenderSlot('SingleSlotParticle', 'annotation', {contentTypes: ['template', 'model'], times: 2})
-      .expectRenderSlot('MultiplexSlotsParticle', 'annotationsSet', {contentTypes: ['template', 'model']})
-      .expectRenderSlot('MultiplexSlotsParticle', 'annotationsSet', {contentTypes: ['model'], times: 2, isOptional: true});
     await slotComposer.arc.pec.idle;
     await slotComposer.expectationsCompleted();
 

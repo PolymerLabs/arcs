@@ -54,6 +54,7 @@ const loadTestArcAndRunSpeculation = async (manifest, manifestLoadedCallback) =>
       let clazz = class {
         constructor() {
           this.relevances = [1];
+          this._slotByName = new Map();
         }
         async setViews(views) {
           let thingView = views.get('thing');

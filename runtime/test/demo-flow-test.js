@@ -42,7 +42,8 @@ describe('demo flow', function() {
     helper.slotComposer
       .newExpectations()
         .expectRenderSlot('ShowCollection', 'master', {contentTypes: ['template']})
-        .expectRenderSlot('ShowCollection', 'master', {contentTypes: ['model'], times: 3})
+        .expectRenderSlot('ShowCollection', 'master',
+            {verify: (content) => content.model && content.model.items && content.model.items.models.length == 3})
         .expectRenderSlot('ShowProduct', 'item', {contentTypes: ['template', 'model'], times: 3})
         .expectRenderSlot('Multiplexer', 'annotation', {contentTypes: ['template'], hostedParticle: 'ShowProduct'})
         .expectRenderSlot('Multiplexer', 'annotation', {contentTypes: ['model'], hostedParticle: 'ShowProduct', times: 3})
