@@ -174,7 +174,7 @@ class CloudSharedHandles extends Xen.Debug(Xen.Base, log) {
   }
   _addBoxData(handle, data, friend) {
     ArcsUtils.addHandleData(handle, data);
-    log(`added [${friend.name}'s] shared data to handle [${handle.id}]`, data);
+    log(`added [${friend}'s] shared data to handle [${handle.id}]`, data);
   }
   // low-level
   _addWatch(path, kind, handler) {
