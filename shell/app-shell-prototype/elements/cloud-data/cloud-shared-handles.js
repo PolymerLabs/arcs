@@ -23,7 +23,8 @@ class CloudSharedHandles extends Xen.Debug(Xen.Base, log) {
   _getInitialState() {
     return {
       watcher: new WatchGroup(),
-      watches: {}
+      watches: {},
+      boxes: {}
     };
   }
   _update({userid, profile, arc}, state, oldProps) {
@@ -72,7 +73,7 @@ class CloudSharedHandles extends Xen.Debug(Xen.Base, log) {
     }
   }
   _arcChanged(arc, watched, user, key, snap) {
-    log('arcChanged', key);
+    log('arc data changed in cloud', key);
     const data = snap.val();
     const {metadata} = data;
     if (metadata) {
@@ -86,21 +87,94 @@ class CloudSharedHandles extends Xen.Debug(Xen.Base, log) {
   }
   _handlesChanged(arc, user, key, snap) {
     const handles = snap.val();
-    Object.keys(handles).forEach(async id => {
-      const handle = await this._createOrUpdateHandle(arc, ArcsUtils.randomId(), `#${id}`, handles[id]);
-      //const handle = await this._createOrUpdateHandle(arc, `$shared_${id}`, `#${id}`, handles[id]);
-      this._fire('shared', {user, handle});
+    if (handles) {
+      Object.keys(handles).forEach(async id => {
+        const handle = await this._createOrUpdateHandle(arc, user, ArcsUtils.randomId(), id, handles[id]);
+        //const handle = await this._createOrUpdateHandle(arc, `$shared_${id}`, `#${id}`, handles[id]);
+        if (handle) {
+          this._fire('shared', {user, handle});
+        }
+      });
+    }
+  }
+  async _createOrUpdateHandle(arc, user, id, tag, handleInfo) {
+    const {metadata, data} = handleInfo;
+    if (data) {
+      // construct type object
+      const type = ArcsUtils.typeFromMetaType(metadata.type);
+      // find or create a handle in the arc context
+      const handle = await ArcsUtils._requireHandle(arc, type, metadata.name, id, [`#${tag}`]);
+      log('createOrUpdate handle', handle.id, data);
+      await ArcsUtils.setHandleData(handle, data);
+      this._boxHandle(arc, user, type, data, tag);
+      return handle;
+    }
+  }
+  _boxHandle(arc, user, type, values, tag) {
+    const schema = type.isSetView ? type.setViewType.entitySchema : type.entitySchema;
+    const hasOwnerField = schema.fields.owner;
+    // convert firebase format to handle-data format, embed friend id as owner
+    const data = this._valuesToData(values, user, hasOwnerField);
+    // formulate box id
+    const boxId = `$boxed_${tag}`;
+    // acquire type record for a Set of the base type
+    const setType = type.isSetView ? type : type.setViewOf();
+    log('boxing data into', boxId);
+    // combine the data into a box
+    this._addToBox(arc, boxId, setType, name, [`#${boxId}`], data, user);
+  }
+  // convert firebase format to handle-data format, embed friend id as owner
+  _valuesToData(values, friend, provideOwner) {
+    // TODO(sjmiles):
+    if ('id' in values) {
+      values = [values];
+    } else {
+      values = Object.values(values);
+    }
+    return values.map(v => {
+      // TODO(sjmiles): `owner` not generally in schema, should be Entity metadata?
+      if (provideOwner) {
+        v.rawData.owner = friend.id;
+      }
+      return {
+        id: v.id,
+        rawData: v.rawData
+      };
     });
   }
-  async _createOrUpdateHandle(arc, id, tag, handleInfo) {
-    const {metadata, data} = handleInfo;
-    // construct type object
-    const type = ArcsUtils.typeFromMetaType(metadata.type);
-    // find or create a handle in the arc context
-    const handle = await ArcsUtils._requireHandle(arc, type, metadata.name, id, [tag]);
-    await ArcsUtils.setHandleData(handle, data);
-    log('created/updated handle', handle.id, data);
-    return handle;
+  async _addToBox(arc, id, type, name, tags, data, friend) {
+    const {boxes} = this._state;
+    // find a pre-existing box construct for this id
+    let box = boxes[id];
+    // if box exists, install the values if we have a handle, otherwise cache them
+    if (box) {
+      if (box.handle) {
+        this._addBoxData(box.handle, data, friend);
+        // inform owner that we updated this handle
+        this._fire('handle', box.handle);
+      } else {
+        //log(`caching friend's shared handle for boxing as [${id}]`);
+        box.pending.push({data});
+      }
+    }
+    // if box doesn't exist, create it, cache the values, and trigger async handle creation
+    else {
+      //log(`creating box [${id}] for friend's shared handle `);
+      box = boxes[id] = {
+        pending: [{data}]
+      };
+      box.handle = await this._requireHandle(arc, id, type, name, tags);
+      box.pending.forEach(m => this._addBoxData(box.handle, m.data, friend));
+      // inform owner that we updated this handle
+      this._fire('handle', box.handle);
+    }
+  }
+  async _requireHandle(arc, id, type, name, tags) {
+    return arc.context.findStorageById(id) || await arc.context.newStore(type, name, id, tags);
+  }
+  _addBoxData(handle, data, friend) {
+    ArcsUtils.addHandleData(handle, data);
+    log(`added [${friend.name}'s] shared data to handle [${handle.id}]`, data);
   }
   // low-level
   _addWatch(path, kind, handler) {
