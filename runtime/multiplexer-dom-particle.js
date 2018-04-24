@@ -87,6 +87,7 @@ export default class MultiplexerDomParticle extends TransformationDomParticle {
     }
 
     for (let [index, item] of list.entries()) {
+      let resolvedHostedParticle = hostedParticle;
       if (this.handleIds[item.id]) {
         let itemView = await this.handleIds[item.id];
         itemView.set(item);
@@ -99,14 +100,14 @@ export default class MultiplexerDomParticle extends TransformationDomParticle {
 
       let itemView = await itemViewPromise;
 
-      if (!hostedParticle) {
+      if (!resolvedHostedParticle) {
         // If we're muxing on behalf of an item with an embedded recipe, the
         // hosted particle should be retrievable from the item itself. Else we
         // just skip this item.
         if (!item.renderParticleSpec) {
           continue;
         }
-        hostedParticle =
+        resolvedHostedParticle =
             ParticleSpec.fromLiteral(JSON.parse(item.renderParticleSpec));
         // Re-map compatible handles and compute the connections specific
         // to this item's render particle.
@@ -116,14 +117,14 @@ export default class MultiplexerDomParticle extends TransformationDomParticle {
             await this._mapParticleConnections(
                 listHandleName,
                 particleHandleName,
-                hostedParticle,
+                resolvedHostedParticle,
                 this._views,
                 arc);
       }
-      let hostedSlotName = [...hostedParticle.slots.keys()][0];
+      let hostedSlotName = [...resolvedHostedParticle.slots.keys()][0];
       let slotName = [...this.spec.slots.values()][0].name;
       let slotId = await arc.createSlot(
-          this, slotName, hostedParticle.name, hostedSlotName);
+          this, slotName, resolvedHostedParticle.name, hostedSlotName);
 
       if (!slotId) {
         continue;
@@ -134,7 +135,7 @@ export default class MultiplexerDomParticle extends TransformationDomParticle {
       try {
         await arc.loadRecipe(
             this.constructInnerRecipe(
-                hostedParticle,
+                resolvedHostedParticle,
                 item,
                 itemView,
                 {name: hostedSlotName, id: slotId},
