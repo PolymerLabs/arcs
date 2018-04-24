@@ -418,7 +418,7 @@ class ShellUi extends Xen.Debug(Xen.Base, log) {
     }
   }
   _onBarClick(e) {
-    const wasAnchorClick = e.path.find(n => n.localName === 'a');
+    const wasAnchorClick = e.composedPath().find(n => n.localName === 'a');
     this._setState({barState: wasAnchorClick ? 'peek' : 'open'});
   }
   _onBarEnter(e) {
