@@ -126,8 +126,8 @@ class AppShell extends Xen.Debug(Xen.Base, log) {
   _getInitialState() {
     return {
       defaultManifest: `
-//import 'https://sjmiles.github.io/arcs-stories/0.3/GitHubDash/GitHubDash.recipes'
-import '../../../arcs-stories/0.3/GitHubDash/GitHubDash.recipes'
+import 'https://sjmiles.github.io/arcs-stories/0.3/GitHubDash/GitHubDash.recipes'
+//import '../../../arcs-stories/0.4/GitHubDash/GitHubDash.recipes'
 import 'https://sjmiles.github.io/arcs-stories/0.3/TV/TV.recipes'
 import 'https://sjmiles.github.io/arcs-stories/0.3/PlaidAccounts/PlaidAccounts.recipes'
 import '../artifacts/canonical.manifest'
@@ -216,6 +216,7 @@ import '../artifacts/0.4/Arcs/Arcs.recipes'
         ({plan}) => plan.slots && !plan.slots.find(s => s.name.includes('root') || s.tags.includes('#root'))
       );
     }
+    state.showhint = Boolean(state.filteredSuggestions && state.filteredSuggestions.length > 0);
   }
   _render({}, state) {
     const {userid, description, theme, suggestions} = state;
@@ -258,7 +259,7 @@ import '../artifacts/0.4/Arcs/Arcs.recipes'
     this._setState({[e.type]: data});
   }
   _onSuggestions(e, suggestions) {
-    this._setState({suggestions, filteredSuggestions: suggestions, showhint: suggestions && suggestions.length > 0});
+    this._setState({suggestions, filteredSuggestions: suggestions});
   }
   _onSelectUser(e, userid) {
     this._setState({userid});
