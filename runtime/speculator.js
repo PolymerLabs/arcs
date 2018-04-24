@@ -14,11 +14,22 @@ import tracing from '../tracelib/trace.js';
 import Relevance from './relevance.js';
 
 class Speculator {
+  constructor() {
+    this._relevanceByHash = new Map();
+  }
 
-  async speculate(arc, plan) {
+  async speculate(arc, plan, hash) {
+    if (this._relevanceByHash.has(hash)) {
+      let relevance = this._relevanceByHash.get(hash);
+      if (arc.isSameState(relevance.arcState)) {
+        return relevance;
+      }
+    }
+
     let trace = tracing.start({cat: 'speculator', name: 'Speculator::speculate'});
     let newArc = await arc.cloneForSpeculativeExecution();
-    let relevance = new Relevance();
+    let relevance = new Relevance(arc.getHandlesState());
+    let relevanceByHash = this._relevanceByHash;
     async function awaitCompletion() {
       await newArc.scheduler.idle;
       let messageCount = newArc.pec.messageCount;
@@ -28,6 +39,7 @@ class Speculator {
         return awaitCompletion();
       else {
         relevance.newArc = newArc;
+        relevanceByHash.set(hash, relevance);
         return relevance;
       }
     }

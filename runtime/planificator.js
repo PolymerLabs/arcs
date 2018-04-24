@@ -9,12 +9,14 @@
 import assert from '../platform/assert-web.js';
 import Type from './type.js';
 import Planner from './planner.js';
+import Speculator from './speculator.js';
 
 let defaultTimeoutMs = 5000;
 
 export default class Planificator {
   constructor(arc) {
     this._arc = arc;
+    this._speculator = new Speculator();
 
     // The latest results of a Planner session. These may become 'current', or be disposed as transient,
     // if a new replanning request came in during the Planner execution.
@@ -42,7 +44,7 @@ export default class Planificator {
   }
 
   _init() {
-    // TODO(mmandlis): PlannerController subscribes to various change events.
+    // TODO(mmandlis): Planificator subscribes to various change events.
     // Later, it will evaluate and batch events and trigger replanning intelligently.
     // Currently, just trigger replanning for each event.
     this._arc.registerInstantiatePlanCallback(this.onPlanInstantiated.bind(this));
@@ -163,7 +165,7 @@ export default class Planificator {
     this._next = {generations: []};
     let planner = new Planner();
     planner.init(this._arc);
-    this._next.plans = await planner.suggest(timeout || defaultTimeoutMs, this._next.generations);
+    this._next.plans = await planner.suggest(timeout || defaultTimeoutMs, this._next.generations, this._speculator);
   }
 
   _setCurrent(current) {

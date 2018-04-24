@@ -510,6 +510,21 @@ ${this.activeRecipe.toString()}`;
     return this._handleDescriptions.get(handle) || handle.description;
   }
 
+  getHandlesState() {
+    let versionById = new Map();
+    this._handlesById.forEach((handle, id) => versionById.set(id, handle._version));
+    return versionById;
+  }
+
+  isSameState(handlesState) {
+    for (let [id, version] of handlesState ) {
+      if (!this._handlesById.has(id) || this._handlesById.get(id)._version != version) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   keyForId(id) {
     return this._storageKeys[id];
   }
