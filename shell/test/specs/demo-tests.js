@@ -420,9 +420,10 @@ function testAroundRefresh() {
   const getOrCompare = expectedValues => {
     let actualValues = {};
 
-    const titleElem =
-        pierceShadowsSingle(['app-shell', 'shell-ui', '#arc-title']);
-    actualValues.title = browser.elementIdText(titleElem.value.ELEMENT).value;
+    // Unfortunately, the title isn't consistent either. See #697.
+    //const titleElem =
+    //    pierceShadowsSingle(['app-shell', 'shell-ui', '#arc-title']);
+    //actualValues.title = browser.elementIdText(titleElem.value.ELEMENT).value;
 
     // Disable verification of suggestions through a reload until #697 is
     // fixed.
