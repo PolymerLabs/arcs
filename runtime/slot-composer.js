@@ -7,7 +7,6 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-'use strict';
 
 import assert from '../platform/assert-web.js';
 import Slot from './slot.js';
@@ -22,7 +21,6 @@ class SlotComposer {
    * - rootContext: the context containing top level context to be used for slots.
    * and may contain:
    * - containerKind: the type of container wrapping each slot's context (for example, div).
-   * - suggestionsContext: the context for rendering suggestions.
    */
   constructor(options) {
     assert(options.affordance, 'Affordance is mandatory');
@@ -38,8 +36,6 @@ class SlotComposer {
       // fallback to single 'root' slot using the rootContext.
       slotContextByName['root'] = options.rootContext;
     }
-
-    this._suggestionsContext = options.suggestionsContext || slotContextByName['suggestions'];
 
     this._contextSlots = [];
     Object.keys(slotContextByName).forEach(slotName => {
@@ -60,56 +56,6 @@ class SlotComposer {
       default:
         assert('unsupported affordance ', this._affordance);
     }
-  }
-  _getSuggestionContext() {
-    switch (this._affordance) {
-      case 'dom':
-      case 'dom-touch':
-      case 'vr':
-        return DomContext;
-      default:
-        assert('unsupported affordance ', this._affordance);
-    }
-  }
-  _getDescriptionFormatter() {
-    switch (this._affordance) {
-      case 'dom':
-      case 'dom-touch':
-      case 'vr':
-        return DescriptionDomFormatter;
-      default:
-        assert('unsupported affordance ', this._affordance);
-    }
-  }
-
-  async setSuggestions(suggestions) {
-    // TODO(mmandlis): slot composer should not be familiar with suggestions concept - they should just be slots.
-    if (!this._suggestionsContext) {
-      return;
-    }
-
-    this._suggestionsContext.textContent = '';
-
-    suggestions.forEach(async suggestion => {
-      let suggestionContent =
-        await suggestion.description.getRecipeSuggestion(this._getDescriptionFormatter());
-
-      if (!suggestionContent) {
-        suggestionContent = 'No suggestion content was generated (unnamed recipe and no describable particles)';
-      }
-
-      this._getSuggestionContext().createContext(
-          this.createSuggestionElement(this._suggestionsContext, suggestion),
-          suggestionContent
-      );
-    });
-  }
-
-  createSuggestionElement(container, plan) {
-    let suggest = Object.assign(document.createElement('suggestion-element'), {plan});
-    // TODO(sjmiles): LIFO is weird, iterate top-down elsewhere?
-    container.insertBefore(suggest, container.firstElementChild);
-    return suggest;
   }
 
   getSlot(particle, slotName) {

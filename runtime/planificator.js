@@ -52,8 +52,6 @@ export default class Planificator {
 
     this._schedulerCallback = this.requestPlanning.bind(this);
     this._arc._scheduler.registerIdleCallback(this._schedulerCallback);
-
-    this.registerSuggestChangedCallback((suggestions) => this._arc.pec.slotComposer.setSuggestions(suggestions));
   }
 
   dispose() {

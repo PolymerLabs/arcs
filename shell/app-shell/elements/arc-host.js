@@ -70,8 +70,6 @@ class ArcHost extends Xen.Debug(Xen.Base, log) {
       rootContext: document.body, //this.parentElement,
       affordance: config.affordance,
       containerKind: config.containerKind,
-      // TODO(sjmiles): typically resolved via `slotid="suggestions"`, but override is allowed here via config
-      suggestionsContext: config.suggestionsNode
     });
     // capture composer so we can push suggestions there
     this._state.slotComposer = slotComposer;

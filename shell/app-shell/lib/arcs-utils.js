@@ -21,7 +21,12 @@ const ArcsUtils = {
     return new Arcs.Arc({id, pecFactory, slotComposer, context, loader});
   },
   createPlanificator(arc) {
-    return new Arcs.Planificator(arc);
+    let planificator = new Arcs.Planificator(arc);
+    if (arc.pec.slotComposer) {
+      let suggestionComposer = new Arcs.SuggestionComposer(arc.pec.slotComposer);
+      planificator.registerSuggestChangedCallback((suggestions) => suggestionComposer.setSuggestions(suggestions));
+    }
+    return planificator;
   },
   _expandUrls(urlMap) {
     let remap = {};
