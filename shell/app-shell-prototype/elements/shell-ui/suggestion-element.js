@@ -22,7 +22,6 @@ const template = html`
       color: black;
       padding: 12px 13px 11px;
       margin: 6px 0;
-      /*line-height: 32px;*/
       cursor: pointer;
       transition: all 150ms;
     }
@@ -34,10 +33,11 @@ const template = html`
       flex: 1;
       overflow: hidden;
       text-overflow: ellipsis;
-      white-space: nowrap;
+      white-space: normal;
     }
   </style>
-  <div style="flex: 1;" on-click="_onClick">
+
+  <div on-click="_onClick">
     <slot on-mouseover="_onMouseover" on-mouseout="_onMouseout"></slot>
   </div>
 `;
