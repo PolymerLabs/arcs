@@ -4,10 +4,10 @@
 // Code distributed by Google as part of this project is also
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
-'use strict';
 
 import assert from '../platform/assert-web.js';
 import Type from './type.js';
+import InitSearch from './strategies/init-search.js';
 import Planner from './planner.js';
 import Speculator from './speculator.js';
 
@@ -81,8 +81,21 @@ export default class Planificator {
 
     if (this._plansDiffer(suggestions, previousSuggestions)) {
       this._suggestChangedCallbacks.forEach(callback => callback(suggestions));
+    }
+
+    if (showAll || !search) {
+      // No need to replan: whatever search was before, it was only affecting suggestions filters,
+      // comparing to the current sesarch.
+      return;
+    }
+
+    if (this._arc.search !== search) {
       this._arc.search = search;
-      this.requestPlanning();
+      this.requestPlanning({}, {
+        // Don't include InitPopulation strategies in replanning.
+        strategies: [InitSearch].concat(Planner.ResolutionStrategies).map(strategy => new strategy(this._arc)),
+        append: true
+      });
     }
   }
 
@@ -96,9 +109,14 @@ export default class Planificator {
     let suggestions = this._current.plans.filter(plan => plan.plan.slots.length > 0) || [];
     if (!this.suggestFilter.showAll) {
       if (this.suggestFilter.search) {
-        suggestions = suggestions.filter(suggestion => suggestion.descriptionText.toLowerCase().includes(this.suggestFilter.search));
+        suggestions = suggestions.filter(suggestion => {
+          if (suggestion.plan.search && this.suggestFilter.search.includes(suggestion.plan.search.phrase)) {
+            return true;
+          }
+          return suggestion.descriptionText.toLowerCase().includes(this.suggestFilter.search);
+        });
       } else {
-        suggestions = suggestions.filter(suggestion => !suggestion.plan.slots.find(s => s.name.includes('root') || s.tags.includes('#root')));
+        suggestions = suggestions.filter(suggestion => !suggestion.plan.search && !suggestion.plan.slots.find(s => s.name.includes('root') || s.tags.includes('#root')));
       }
     }
     return suggestions || [];
@@ -125,31 +143,32 @@ export default class Planificator {
     this.requestPlanning();
   }
 
-  requestPlanning(event) {
+  requestPlanning(event, options) {
     // Activate replanning and trigger subscribed callbacks.
-    return this._schedulePlanning();
+    return this._schedulePlanning(options || {});
   }
 
-  async _schedulePlanning(timeout) {
+  async _schedulePlanning(options) {
     this._valid = false;
     let results;
     if (!this.isPlanning) {
       this.isPlanning = true;
       try {
-        await this._runPlanning(timeout);
+        await this._runPlanning(options);
       } catch (x) {
         console.error(x);
       }
       this.isPlanning = false;
-      this._setCurrent({plans: this._next.plans, generations: this._next.generations});
+      this._setCurrent({plans: this._next.plans, generations: this._next.generations},
+                       options.append || false);
     }
   }
 
-  async _runPlanning(timeout) {
+  async _runPlanning(options) {
     let time = Date.now();
     while (!this._valid) {
       this._valid = true;
-      await this._doNextPlans(timeout);
+      await this._doNextPlans(options);
     }
     time = ((Date.now() - time) / 1000).toFixed(2);
     console.log(`Produced ${this._next.plans.length} in ${time}s.`);
@@ -161,17 +180,31 @@ export default class Planificator {
         oldPlans.some((s, i) => newPlans[i].hash !== s.hash || newPlans[i].descriptionText != s.descriptionText);
   }
 
-  async _doNextPlans(timeout) {
+  async _doNextPlans(options) {
     this._next = {generations: []};
     let planner = new Planner();
-    planner.init(this._arc);
-    this._next.plans = await planner.suggest(timeout || defaultTimeoutMs, this._next.generations, this._speculator);
+    planner.init(this._arc, {strategies: (options.strategies || null)});
+    this._next.plans = await planner.suggest(options.timeout || defaultTimeoutMs, this._next.generations, this._speculator);
   }
 
-  _setCurrent(current) {
-    if (this._plansDiffer(current.plans, this._current.plans)) {
+  _setCurrent(current, append) {
+    let hasChange = false;
+    let newPlans = [];
+    if (append) {
+      newPlans = current.plans.filter(newPlan => !this._current.plans.find(currentPlan => currentPlan.hash == newPlan.hash));
+      hasChange = newPlans.length > 0;
+    } else {
+      hasChange = this._plansDiffer(current.plans, this._current.plans);
+    }
+
+    if (hasChange) {
       let previousSuggestions = this.getCurrentSuggestions();
-      this._current = current;
+      if (append) {
+        this._current.plans.push(...newPlans);
+        this._current.generations.push(...current.generations);
+      } else {
+        this._current = current;
+      }
       this._plansChangedCallbacks.forEach(callback => callback(this._current));
       let suggestions = this.getCurrentSuggestions();
       if (this._plansDiffer(suggestions, previousSuggestions)) {
