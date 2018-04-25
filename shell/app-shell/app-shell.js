@@ -175,6 +175,7 @@ class AppShell extends Xen.Debug(Xen.Base, log) {
     let plan = active ? active.plan : null;
     // TODO(sjmiles): only for console debugging
     window.arc = arc;
+    window.planificator = planificator;
     window.app = this;
     // ^
     if (config && config !== oldState.config) {
