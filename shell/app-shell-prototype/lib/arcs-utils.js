@@ -160,13 +160,17 @@ const ArcsUtils = {
   async getHandleData(handle) {
     return handle.toList ? await handle.toList() : {id: handle.id, rawData: handle._stored && handle._stored.rawData || {}};
   },
-  async setHandleData(handle, data) {
-    await this.clearHandle(handle);
+  setHandleData(handle, data) {
+    this.clearHandle(handle);
     this.addHandleData(handle, data);
   },
-  async clearHandle(handle) {
+  clearHandle(handle) {
     if (handle.toList) {
-      let entities = await handle.toList();
+      // TODO(sjmiles): if we go async here, we have nasty re-entry issues, so
+      // hacking handle API to fix for now. Probably we need low-level support
+      // for 'setHandleData' above.
+      const entities = [...handle._items.values()];
+      //const entities = await handle.toList();
       entities.forEach(e => handle.remove(e.id));
     } else {
       // TODO(sjmiles): necessary? correct semantics?
