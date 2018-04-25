@@ -26,6 +26,12 @@ class Scheduler {
 
   registerIdleCallback(callback) { this._idleCallbacks.push(callback); }
 
+  unregisterIdleCallback(callback) {
+    let index = this._idleCallbacks.indexOf(callback);
+    assert(index >= 0, 'Cannot unregister nonexisted callback');
+    this._idleCallbacks.splice(index, 1);
+  }
+
   enqueue(handle, eventRecords) {
     let trace = tracing.flow({cat: 'handle', name: 'ViewBase::_fire flow'}).start();
     if (this.frameQueue.length == 0 && eventRecords.length > 0)

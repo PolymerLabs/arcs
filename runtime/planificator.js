@@ -47,10 +47,23 @@ export default class Planificator {
     // TODO(mmandlis): Planificator subscribes to various change events.
     // Later, it will evaluate and batch events and trigger replanning intelligently.
     // Currently, just trigger replanning for each event.
-    this._arc.registerInstantiatePlanCallback(this.onPlanInstantiated.bind(this));
-    this._arc._scheduler.registerIdleCallback(this.requestPlanning.bind(this));
+    this._arcCallback = this.onPlanInstantiated.bind(this);
+    this._arc.registerInstantiatePlanCallback(this._arcCallback);
+
+    this._schedulerCallback = this.requestPlanning.bind(this);
+    this._arc._scheduler.registerIdleCallback(this._schedulerCallback);
 
     this.registerSuggestChangedCallback((suggestions) => this._arc.pec.slotComposer.setSuggestions(suggestions));
+  }
+
+  dispose() {
+    // clear all callbacks the planificator has registered.
+    this._arc.unregisterInstantiatePlanCallback(this._arcCallback);
+    this._arc._scheduler.unregisterIdleCallback(this._schedulerCallback);
+    // clear all planificator's callbacks.
+    this._plansChangedCallbacks = [];
+    this._suggestChangedCallbacks = [];
+    this._stateChangedCallbacks = [];
   }
 
   get isPlanning() { return this._isPlanning; }

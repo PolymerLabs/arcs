@@ -84,10 +84,20 @@ function createPlanificator() {
 describe('Planificator', function() {
   it('creates a planificator', () => {
     let planificator = createPlanificator();
+    assert.lengthOf(planificator._arc._instantiatePlanCallbacks, 1);
+    assert.lengthOf(planificator._arc._scheduler._idleCallbacks, 1);
+
     assert.isFalse(planificator.isPlanning);
     assert.equal(0, Object.keys(planificator.getLastActivatedPlan()));
     let {plans} = planificator.getCurrentPlans();
     assert.lengthOf(plans, 0);
+
+    planificator.dispose();
+    assert.lengthOf(planificator._arc._instantiatePlanCallbacks, 0);
+    assert.lengthOf(planificator._arc._scheduler._idleCallbacks, 0);
+    assert.lengthOf(planificator._stateChangedCallbacks, 0);
+    assert.lengthOf(planificator._plansChangedCallbacks, 0);
+    assert.lengthOf(planificator._suggestChangedCallbacks, 0);
   });
 
   it('makes replanning requests', async () => {
