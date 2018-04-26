@@ -117,5 +117,6 @@ export default class Slot {
   async setContent(content, handler) {}
   getInnerContext(slotName) {}
   constructRenderRequest() {}
-  static findRootSlots(context) { }
+  dispose() {}
+  static findRootSlots(context) {}
 }

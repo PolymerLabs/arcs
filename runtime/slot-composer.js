@@ -257,6 +257,11 @@ class SlotComposer {
     });
     return availableSlots;
   }
+
+  dispose() {
+    this._slots.forEach(slot => slot.dispose());
+    this._slotClass.dispose();
+  }
 }
 
 export default SlotComposer;

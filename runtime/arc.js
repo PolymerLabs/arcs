@@ -101,6 +101,18 @@ class Arc {
     this._instantiatePlanCallbacks.push(callback);
   }
 
+  unregisterInstantiatePlanCallback(callback) {
+    let index = this._instantiatePlanCallbacks.indexOf(callback);
+    assert(index >= 0, 'Cannot unregister nonexisted callback');
+    this._instantiatePlanCallbacks.splice(index, 1);
+  }
+
+  dispose() {
+    this._instantiatePlanCallbacks = [];
+    this._scheduler.unregisterArc(this);
+    this.pec.slotComposer.dispose();
+  }
+
   get idle() {
     let awaitCompletion = async () => {
       await this.scheduler.idle;

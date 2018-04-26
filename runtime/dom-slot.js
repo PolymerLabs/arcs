@@ -51,29 +51,14 @@ class DomSlot extends Slot {
     return new DomContext(null, this._containerKind);
   }
 
-  // TODO(sjmiles): next three functions are a quick-fix for cleaning up MOs when there is
-  // an Arcpocalypse (dropping one Arc, producing another).
-  // Where there are other situations where a DomSlot is dropped, we have to make sure
-  // we disconnect the observer.
-  // Perhaps we need `Arc.cleanup()` or `Arc.dispose()` as a clearing-house for these tasks.
-  static addObserver(observer) {
-    const observers = DomSlot._observers || (DomSlot._observers = []);
-    observers.push(observer);
+  dispose() {
+    this._observer.disconnect();
   }
   static dispose() {
-    // disconnect observers
-    const observers = DomSlot._observers;
-    observers && observers.forEach(o => o.disconnect());
-    DomSlot._observers = [];
     // empty template cache
     templates.clear();
   }
   _initMutationObserver() {
-    const observer = this.__initMutationObserver();
-    DomSlot.addObserver(observer);
-    return observer;
-  }
-  __initMutationObserver() {
     const observer = new MutationObserver(async (records) => {
       this._observer.disconnect();
       if (this.getContext() && records.some(r => this.getContext().isDirectInnerSlot(r.target))) {
