@@ -1,3 +1,10 @@
+// libs
+import Xen from '../components/xen/xen.js';
+import ArcsUtils from './lib/arcs-utils.js';
+import LinkJack from './lib/link-jack.js';
+import Const from './constants.js';
+import Arcs from './lib/arcs.js';
+
 // elements
 import './elements/arc-config.js';
 import './elements/arc-host.js';
@@ -5,12 +12,6 @@ import './elements/arc-planner.js';
 import './elements/shell-ui.js';
 import './elements/shell-handles.js';
 import './elements/cloud-data.js';
-
-// code libs
-import Xen from '../components/xen/xen.js';
-import ArcsUtils from './lib/arcs-utils.js';
-import LinkJack from './lib/link-jack.js';
-import Const from './constants.js';
 
 // templates
 const html = Xen.Template.html;
@@ -47,7 +48,6 @@ const template = html`
     serialization="{{serialization}}"
     on-arc="_onStateData"
     on-suggestions="_onSuggestions"
-    on-plan="_onStateData"
   ></arc-host>
 
   <arc-planner
@@ -56,12 +56,14 @@ const template = html`
     search="{{search}}"
     suggestions="{{suggestions}}"
     suggestion="{{suggestion}}"
-    on-suggestions="_onSuggestions"
+    on-suggestions="_onStateData"
+    on-filtered-suggestions="_onFilteredSuggestions"
     on-plan="_onStateData"
     on-search="_onStateData"
   ></arc-planner>
 
   <shell-handles
+    config="{{config}}"
     arc="{{arc}}"
     users="{{users}}"
     user="{{user}}"
@@ -126,8 +128,7 @@ class AppShell extends Xen.Debug(Xen.Base, log) {
   _getInitialState() {
     return {
       defaultManifest: `
-import 'https://sjmiles.github.io/arcs-stories/0.3/GitHubDash/GitHubDash.recipes'
-//import '../../../arcs-stories/0.4/GitHubDash/GitHubDash.recipes'
+import 'https://sjmiles.github.io/arcs-stories/0.4/GitHubDash/GitHubDash.recipes'
 import 'https://sjmiles.github.io/arcs-stories/0.3/TV/TV.recipes'
 import 'https://sjmiles.github.io/arcs-stories/0.3/PlaidAccounts/PlaidAccounts.recipes'
 import '../artifacts/canonical.manifest'
@@ -168,7 +169,14 @@ import '../artifacts/0.4/Arcs/Arcs.recipes'
         key = Const.SHELLKEYS.launcher;
       }
       if (key !== oldState.key) {
-        state.key = key;
+        this._setState({
+          key,
+          description: null,
+          serialization: null,
+          suggestions: null,
+          suggestion: null,
+          plan: null
+        });
       }
     }
   }
@@ -197,12 +205,14 @@ import '../artifacts/0.4/Arcs/Arcs.recipes'
     }
     if (key && !Const.SHELLKEYS[key] && suggestions && pendingSuggestion) {
       log('instantiating pending launcher suggestion');
-      // TODO(sjmiles): need a better way to find the launcher suggestion
+      // TODO(sjmiles): need a better way to match the suggestion
       state.suggestion = suggestions.find(s => s.descriptionText === pendingSuggestion.descriptionText);
       state.pendingSuggestion = null;
     }
   }
+
   _updateSuggestions(state, oldState) {
+    /*
     let {key, search, suggestions, plan} = state;
     state.filteredSuggestions = state.suggestions;
     // filter out root suggestions if we aren't searching directly
@@ -216,6 +226,7 @@ import '../artifacts/0.4/Arcs/Arcs.recipes'
         ({plan}) => plan.slots && !plan.slots.find(s => s.name.includes('root') || s.tags.includes('#root'))
       );
     }
+    */
     state.showhint = Boolean(state.filteredSuggestions && state.filteredSuggestions.length > 0);
   }
   _render({}, state) {
@@ -243,23 +254,22 @@ import '../artifacts/0.4/Arcs/Arcs.recipes'
   _setKey(key) {
     log('registered new key, begin arc rebuild procedure');
     this._setState({
-      key,
+      key/*,
       description: null,
       serialization: null,
       suggestions: null,
       suggestion: null,
-      plan: null
+      plan: null*/
     });
   }
   async _describeArc(arc, description) {
-    description = await ArcsUtils.describeArc(arc) || description;
-    this._setState({description});
+    this._setState({description: await ArcsUtils.describeArc(arc) || description});
   }
   _onStateData(e, data) {
     this._setState({[e.type]: data});
   }
-  _onSuggestions(e, suggestions) {
-    this._setState({suggestions, filteredSuggestions: suggestions});
+  _onFilteredSuggestions(e, filteredSuggestions) {
+    this._setState({filteredSuggestions});
   }
   _onSelectUser(e, userid) {
     this._setState({userid});

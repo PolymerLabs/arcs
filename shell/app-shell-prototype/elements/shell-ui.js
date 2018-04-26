@@ -26,9 +26,6 @@ import ArcsUtils from '../lib/arcs-utils.js';
 import AppIcon from '../icon.svg.js';
 import IconStyle from '../../components/icons.css.js';
 
-// globals
-/* global shellPath */
-
 // templates
 const html = Xen.html;
 const template = html`
@@ -350,7 +347,7 @@ const log = Xen.logFactory('ShellUi', '#ac6066');
 
 class ShellUi extends Xen.Debug(Xen.Base, log) {
   static get observedAttributes() {
-    return ['key', 'glows', 'showhint', 'users', 'user', 'profile', 'arc', 'title', 'share', 'search'];
+    return ['users', 'user', 'profile', 'key', 'arc', 'title', 'share', 'search', 'glows', 'showhint'];
   }
   get template() {
     return template;

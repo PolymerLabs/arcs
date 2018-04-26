@@ -8,15 +8,10 @@ Code distributed by Google as part of the polymer project is also
 subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
 */
 
-// code
 import Xen from '../../components/xen/xen.js';
 import ArcsUtils from '../lib/arcs-utils.js';
-
-// elements
+import Const from '../constants.js';
 import './arc-handle.js';
-
-// globals
-/* global shellPath*/
 
 // templates
 const template = Xen.html`
@@ -35,18 +30,61 @@ const warn = Xen.logFactory('ShellHandles', '#004f00', 'warn');
 
 class ShellHandles extends Xen.Debug(Xen.Base, log) {
   static get observedAttributes() {
-    return ['arc', 'users', 'user', 'arcs'];
+    return ['config', 'users', 'user', 'arcs', 'arc'];
   }
   get template() {
     return template;
   }
   _getInitialState() {
     this._watchGeolocation();
-    const typesPath = `${shellPath}/app-shell-prototype/artifacts`;
     return {
       themeData: {
         mainBackground: 'white'
-      },
+      }
+    };
+  }
+  _watchGeolocation() {
+    const fallback = () => this._maybeUpdateGeoCoords({latitude: 37.7610927, longitude: -122.4208173}); // San Francisco
+    if ('geolocation' in navigator) {
+      navigator.geolocation.watchPosition(
+        ({coords}) => this._maybeUpdateGeoCoords(coords),
+        fallback, {timeout: 3000, maximumAge: Infinity});
+    } else {
+      fallback();
+    }
+  }
+  _maybeUpdateGeoCoords({latitude, longitude}) {
+    const {geoCoords} = this._state;
+    // Skip setting the position if it's the same as what we've already got.
+    if (!geoCoords || geoCoords.latitude != latitude || geoCoords.longitude != longitude) {
+      this._setState({geoCoords: {latitude, longitude}});
+    }
+  }
+  _update(props, state, oldProps, oldState) {
+    const {config, users, user, arcs, arc} = props;
+    if (config) {
+      if (!state.config) {
+        state.config = config;
+        this._configState(config);
+      }
+      const {geoCoords} = state;
+      if (user && (user !== oldProps.user || geoCoords !== oldState.geoCoords)) {
+        state.userHandleData = this._renderUser(user, geoCoords);
+      }
+      if (users && (users !== oldProps.users || !state.usersHandleData)) {
+        state.usersHandleData = this._renderUsers(users);
+      }
+      if (arcs !== oldProps.arcs) {
+        state.arcsHandleData = this._renderArcs(user, arcs);
+      }
+    }
+  }
+  _render(props, state) {
+    return [state, props];
+  }
+  _configState(config) {
+    const typesPath = `${config.root}/app-shell-prototype/artifacts`;
+    this._setState({
       arcsHandleOptions: {
         schemas: `${typesPath}/arc-types.manifest`,
         type: '[ArcMetadata]',
@@ -75,50 +113,11 @@ class ShellHandles extends Xen.Debug(Xen.Base, log) {
         schemas: `${typesPath}/identity-types.manifest`,
         type: '[Avatar]',
         name: 'Avatars',
-        tags: ['#$boxed_avatar'],
-        id: '$boxed_avatar',
+        tags: [`${Const.HANDLES.boxed}_avatar`],
+        id: `${Const.HANDLES.boxed}_avatar`,
         asContext: true
-      }//,
-      // userHandleData: {
-      //   id: 'f4',
-      //   name: 'Gomer',
-      //   location: {latitude: 37.7610927, longitude: -122.4208173}
-      // }
-    };
-  }
-  _watchGeolocation() {
-    const fallback = () => this._maybeUpdateGeoCoords(
-        {latitude: 37.7610927, longitude: -122.4208173}); // San Francisco
-    if ('geolocation' in navigator) {
-      navigator.geolocation.watchPosition(
-        ({coords}) => this._maybeUpdateGeoCoords(coords),
-        fallback, {timeout: 3000, maximumAge: Infinity});
-    } else {
-      fallback();
-    }
-  }
-  _maybeUpdateGeoCoords({latitude, longitude}) {
-    const {geoCoords} = this._state;
-    // Skip setting the position if it's the same as what we've already got.
-    if (!geoCoords || geoCoords.latitude != latitude || geoCoords.longitude != longitude) {
-      this._setState({geoCoords: {latitude, longitude}});
-    }
-  }
-  _update(props, state, oldProps, oldState) {
-    const {users, user, arcs, arc} = props;
-    const {geoCoords} = state;
-    if (user && (user !== oldProps.user || geoCoords !== oldState.geoCoords)) {
-      state.userHandleData = this._renderUser(user, geoCoords);
-    }
-    if (users && (users !== oldProps.users || !state.usersHandleData)) {
-      state.usersHandleData = this._renderUsers(users);
-    }
-    if (arcs !== oldProps.arcs) {
-      state.arcsHandleData = this._renderArcs(user, arcs);
-    }
-  }
-  _render(props, state) {
-    return [state, props];
+      }
+    });
   }
   _renderUser(user, geoCoords) {
     return {
@@ -154,17 +153,6 @@ class ShellHandles extends Xen.Debug(Xen.Base, log) {
         });
       }
     });
-    /*
-    // prepend New Arc item
-    data.unshift({
-      key: '*',
-      blurb: 'New Arc',
-      description: 'New Arc',
-      bg: 'black',
-      color: 'white',
-      href: `?arc=*&user=${user.id}`
-    });
-    */
     return data;
   }
   _onData(e, data) {

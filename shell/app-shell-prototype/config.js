@@ -6,3 +6,11 @@ Xen.Debug.level = ((new URL(document.location)).searchParams.has('log')) ? 2 : d
 
 // common shell resources are here
 window.shellPath = '..';
+
+// path redirects
+window.shellUrls = {};
+
+// magic redirect for Scott's servers
+if (document.location.pathname.includes('projects')) {
+  window.shellUrls['https://sjmiles.github.io/'] = `../../../`;
+}

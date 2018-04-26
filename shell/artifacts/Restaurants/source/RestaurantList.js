@@ -63,7 +63,7 @@ defineParticle(({DomParticle, html}) => {
     /* text-shadow: 0px 0px 10px rgba(0, 0, 0, 1); */
     background-repeat: no-repeat;
     background-size: cover;
-    background-position: bottom;
+    /*background-position: bottom;*/
     /* this autosizes to width with correct AR, but it doesn't support flexing :( */
     /*
     padding-bottom: 60%;

@@ -49,7 +49,7 @@ class CloudProfileHandles extends Xen.Debug(Xen.Base, log) {
     log(`handlesChanged [${key}]`, handles);
     if (handles) {
       Object.keys(handles).forEach(async id => {
-        const handle = await this._createOrUpdateHandle(arc, `$profile_${id}`, `#$profile_${id}`, handles[id]);
+        const handle = await this._createOrUpdateHandle(arc, `${Const.HANDLES.profile}_${id}`, `#${Const.HANDLES.profile}_${id}`, handles[id]);
         log('created/updated handle', handle.id);
         this._fire('profile', handle);
       });

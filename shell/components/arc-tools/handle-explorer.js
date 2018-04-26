@@ -19,6 +19,9 @@ const html = Xen.Template.html;
 
 const template = html`
   <style>
+    button {
+      margin: 8px;
+    }
     [banner] {
       padding: 6px 4px;
       background-color: whitesmoke;
@@ -26,6 +29,8 @@ const template = html`
       border-top: 1px dotted silver;
     }
   </style>
+
+  <div><button on-click="_onUpdate">Update</button></div>
 
   <div banner>Arc Handles</div>
   <div style="padding: 8px;">{{arcHandles}}</div>
@@ -51,11 +56,27 @@ class HandleExplorer extends Xen.Base {
   _wouldChangeProp() {
     return true;
   }
-  _willReceiveProps(props) {
+  _willReceiveProps(props, state) {
+    state.needsQuery = true;
+  }
+  _update(props, state) {
     this._setState({arcHandles: null, contextHandles: null});
-    if (props.arc) {
+    if (props.arc && state.needsQuery) {
+      state.needsQuery = false;
       this._queryHandles(props.arc);
     }
+  }
+  _render(props, state) {
+    return {
+      arcHandles: {
+        template: handleTemplate,
+        models: state.arcHandles
+      },
+      contextHandles: {
+        template: handleTemplate,
+        models: state.contextHandles
+      }
+    };
   }
   async _queryHandles(arc) {
     const arcHandles = await this._digestHandles(arc._handleTags);
@@ -103,17 +124,8 @@ class HandleExplorer extends Xen.Base {
     }
     return result;
   }
-  _render(props, state) {
-    return {
-      arcHandles: {
-        template: handleTemplate,
-        models: state.arcHandles
-      },
-      contextHandles: {
-        template: handleTemplate,
-        models: state.contextHandles
-      }
-    };
+  _onUpdate() {
+    this._setState({needsQuery: true});
   }
 }
 customElements.define('handle-explorer', HandleExplorer);

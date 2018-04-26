@@ -20,5 +20,9 @@ export default {
   },
   DBLABELS: {
     handles: 'shim_handles'
+  },
+  HANDLES: {
+    boxed: 'BOXED',
+    profile: 'PROFILE'
   }
 };

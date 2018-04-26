@@ -100,23 +100,31 @@ class CloudSharedHandles extends Xen.Debug(Xen.Base, log) {
   async _createOrUpdateHandle(arc, user, id, tag, handleInfo) {
     const {metadata, data} = handleInfo;
     if (data) {
+      let handle;
       // construct type object
       const type = ArcsUtils.typeFromMetaType(metadata.type);
-      // find or create a handle in the arc context
-      const handle = await ArcsUtils._requireHandle(arc, type, metadata.name, id, [`#${tag}`]);
-      log('createOrUpdate handle', handle.id, data);
-      await ArcsUtils.setHandleData(handle, data);
+      // TODO(sjmiles): needs refactoring
+      if (this._props.userid !== user) {
+        // find or create a handle in the arc context
+        handle = await ArcsUtils._requireHandle(arc, type, metadata.name, id, [`#${tag}`]);
+        log('createOrUpdate handle', handle.id, data);
+        await ArcsUtils.setHandleData(handle, data);
+        // TODO(sjmiles): how to marshal user information (names)?
+        // Append user-id as handle metadata and work out description elsewhere?
+        const typeName = handle.type.toPrettyString().toLowerCase();
+        handle.description = ArcsUtils._getHandleDescription(typeName, handle.tags, this._props.userid, user);
+      }
       this._boxHandle(arc, user, type, data, tag);
       return handle;
     }
   }
   _boxHandle(arc, user, type, values, tag) {
     const schema = type.isSetView ? type.setViewType.entitySchema : type.entitySchema;
-    const hasOwnerField = schema.fields.owner;
+    const hasOwnerField = Boolean(schema.fields.owner);
     // convert firebase format to handle-data format, embed friend id as owner
     const data = this._valuesToData(values, user, hasOwnerField);
     // formulate box id
-    const boxId = `$boxed_${tag}`;
+    const boxId = `${Const.HANDLES.boxed}_${tag}`;
     // acquire type record for a Set of the base type
     const setType = type.isSetView ? type : type.setViewOf();
     log('boxing data into', boxId);
@@ -124,7 +132,7 @@ class CloudSharedHandles extends Xen.Debug(Xen.Base, log) {
     this._addToBox(arc, boxId, setType, name, [`#${boxId}`], data, user);
   }
   // convert firebase format to handle-data format, embed friend id as owner
-  _valuesToData(values, friend, provideOwner) {
+  _valuesToData(values, friend, hasOwnerField) {
     // TODO(sjmiles):
     if ('id' in values) {
       values = [values];
@@ -133,8 +141,8 @@ class CloudSharedHandles extends Xen.Debug(Xen.Base, log) {
     }
     return values.map(v => {
       // TODO(sjmiles): `owner` not generally in schema, should be Entity metadata?
-      if (provideOwner) {
-        v.rawData.owner = friend.id;
+      if (hasOwnerField) {
+        v.rawData.owner = friend;
       }
       return {
         id: v.id,

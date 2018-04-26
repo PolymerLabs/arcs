@@ -18,7 +18,7 @@ const error = Xen.logFactory('ArcPlanner', '#104a91', 'error');
 
 class ArcPlanner extends Xen.Debug(Xen.Base, log) {
   static get observedAttributes() {
-    return ['config', 'arc', 'suggestions', 'suggestion', 'search'];
+    return ['config', 'arc', /*'suggestions',*/ 'suggestion', 'search'];
   }
   _getInitialState() {
     return {
@@ -27,22 +27,40 @@ class ArcPlanner extends Xen.Debug(Xen.Base, log) {
     };
   }
   _willReceiveProps(props, state, oldProps) {
+    const {arc, /*suggestions,*/ suggestion, search} = props;
     const changed = name => props[name] !== oldProps[name];
-    const {arc, suggestions, suggestion} = props;
     if (suggestion && changed('suggestion')) {
       state.pendingPlans.push(suggestion.plan);
     }
-    if (arc && changed('arc')) {
-      if (oldProps.arc) {
-        oldProps.arc.makeSuggestions = null;
+    if (arc) {
+      let {planificator} = state;
+      if (planificator && changed('arc')) {
+        // TODO(sjmiles): need `dispose` routine for planificator
+        planificator._plansChangedCallbacks = [];
+        planificator._suggestChangedCallbacks = [];
+        planificator._stateChangedCallbacks = [];
+        planificator = null;
       }
-      arc.makeSuggestions = () => this._runtimeHandlesUpdated();
+      if (!planificator) {
+        planificator = new Arcs.Planificator(arc);
+        planificator.registerPlansChangedCallback(current => this._plansChanged(current.plans, planificator.getLastActivatedPlan()));
+        planificator.registerSuggestChangedCallback(suggestions => this._suggestionsChanged(suggestions));
+        planificator.setSearch(search);
+      } else if (changed('search')) {
+        planificator.setSearch(search);
+      }
+      this._setState({planificator});
+      // if (oldProps.arc) {
+      //   oldProps.arc.makeSuggestions = null;
+      // }
+      //arc.makeSuggestions = () => this._runtimeHandlesUpdated();
     }
   }
-  _update({arc, suggestions, search}, {pendingPlans}) {
+  _update({arc, suggestions, search, planificator}, {pendingPlans}) {
     if (arc && pendingPlans.length) {
       this._instantiatePlan(arc, pendingPlans.shift());
     }
+    /*
     if (arc && !suggestions) {
       //this._schedulePlanning();
       // TODO(sjmiles): experiment, change name of this method if keeping this code
@@ -58,7 +76,17 @@ class ArcPlanner extends Xen.Debug(Xen.Base, log) {
         this._fire('suggestions', null);
       }
     }
+    */
   }
+  _plansChanged(plans, plan) {
+    //log('activated plan:', plan);
+    this._fire('plan', plan);
+    this._fire('suggestions', plans);
+  }
+  _suggestionsChanged(suggestions) {
+    this._fire('filtered-suggestions', suggestions);
+  }
+  /*
   _runtimeHandlesUpdated() {
     !this._state.invalid && log('runtimeHandlesUpdated');
     const replan = () => {
@@ -99,13 +127,14 @@ class ArcPlanner extends Xen.Debug(Xen.Base, log) {
     log(`suggestions`, suggestions, `${time}s`);
     this._fire('suggestions', suggestions);
   }
+  */
   async _instantiatePlan(arc, plan) {
     log('instantiating plan', plan);
-    this._state.planning = true;
+    //this._state.planning = true;
     await arc.instantiate(plan);
-    this._state.planning = false;
+    //this._state.planning = false;
     // newly instantiated plan
-    this._fire('plan', plan);
+    //this._fire('plan', plan);
     // search term is used up
     this._fire('search', '');
     // need new suggestions

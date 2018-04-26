@@ -12,8 +12,6 @@ import Xen from '../../components/xen/xen.js';
 import Const from '../constants.js';
 import Utils from '../lib/arcs-utils.js';
 
-/* global shellPath */
-
 class ArcConfig extends Xen.Base {
   static get observedAttributes() {
     return ['userid', 'key', 'search'];
@@ -39,13 +37,13 @@ class ArcConfig extends Xen.Base {
     const params = (new URL(document.location)).searchParams;
     return {
       affordance: 'dom',
-      root: params.get('root') || shellPath,
+      root: params.get('root') || window.shellPath,
       manifestPath: params.get('manifest'),
       soloPath: params.get('solo'),
       userid: params.get('user') || localStorage.getItem(Const.LOCALSTORAGE.user),
       key: params.get('arc') || null,
       search: params.get('search') || '',
-      urls: {},
+      urls: window.shellUrls || {},
       useStorage: false
     };
   }

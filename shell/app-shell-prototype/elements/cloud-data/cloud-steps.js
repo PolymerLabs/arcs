@@ -38,6 +38,7 @@ class CloudSteps extends Xen.Debug(Xen.Base, log) {
           handler: snap => this._receiveSteps(snap)
         }];
       }
+      /*
       if (suggestions && suggestions.generations) {
         // TODO(sjmiles): `suggestions` can become NULL before `plan` is propagated here
         // we should probably attach `suggestions` (or at least the `.generations`) instead to `plan`
@@ -46,10 +47,13 @@ class CloudSteps extends Xen.Debug(Xen.Base, log) {
         // and metadata. In the interim, we will just cache last non-null `suggestions`.
         state.suggestions = suggestions;
       }
+      */
       // TODO(sjmiles): using cached suggestions
-      if (plan && plan !== oldProps.plan && state.suggestions && state.suggestions.generations) {
+      if (plan && plan !== state.plan && plan.generations /*&& state.suggestions && state.suggestions.generations*/) {
+        state.plan = plan;
         // `plan` has been instantiated into host, record it into `steps`
-        this._addStep(key, plan, state.suggestions.generations, steps || [], applied);
+        //this._addStep(key, plan, state.suggestions.generations, steps || [], applied);
+        this._addStep(key, plan.plan, plan.generations, steps || [], applied);
       }
       // TODO(sjmiles): using latest suggestions
       if (suggestions && steps) {

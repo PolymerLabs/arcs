@@ -41,9 +41,9 @@ class ArcHost extends Xen.Debug(Xen.Base, log) {
     if (serialization != null && changed('serialization')) {
       state.pendingSerialization = serialization;
     }
-    if (suggestions && changed('suggestions')) {
-      state.slotComposer.setSuggestions(suggestions);
-    }
+    //if (suggestions && changed('suggestions')) {
+    //  state.slotComposer.setSuggestions(suggestions);
+    //}
   }
   _update({}, state) {
     const {id, pendingSerialization} = state;
@@ -122,15 +122,16 @@ class ArcHost extends Xen.Debug(Xen.Base, log) {
     const {config, manifest} = this._props;
     const state = this._state;
     //
-    const badImport = `import './shell.manifest'`;
-    if (serialization.includes(badImport)) {
-      serialization = serialization.replace(badImport, '');
-      log(`serialization contained bad import [${badImport}]`);
+    if (serialization) {
+      const badImport = `import './shell.manifest'`;
+      if (serialization.includes(badImport)) {
+        serialization = serialization.replace(badImport, '');
+        log(`serialization contained bad import [${badImport}]`);
+      }
+      groupCollapsed('serialized arc:');
+      log(serialization);
+      groupEnd();
     }
-    //
-    groupCollapsed('serialized arc:');
-    log(serialization);
-    groupEnd();
     //
     // generate new slotComposer
     const slotComposer = this._createSlotComposer(config);

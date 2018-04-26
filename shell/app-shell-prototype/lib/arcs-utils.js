@@ -158,7 +158,8 @@ const ArcsUtils = {
     return Arcs.Type.fromLiteral(JSON.parse(metaType));
   },
   async getHandleData(handle) {
-    return handle.toList ? await handle.toList() : {id: handle.id, rawData: handle._stored && handle._stored.rawData || {}};
+    //return handle.toList ? await handle.toList() : {id: handle.id, rawData: handle._stored && handle._stored.rawData || {}};
+    return handle.type.isSetView ? await handle.toList() : await handle.get();
   },
   setHandleData(handle, data) {
     this.clearHandle(handle);
@@ -173,12 +174,11 @@ const ArcsUtils = {
       //const entities = await handle.toList();
       entities.forEach(e => handle.remove(e.id));
     } else {
-      // TODO(sjmiles): necessary? correct semantics?
       handle.clear();
     }
   },
   addHandleData(handle, data) {
-    if (handle.toList) {
+    if (handle.type.isSetView) {
       data && Object.values(data).forEach(e => handle.store(e));
     } else {
       data && handle.set(data);
