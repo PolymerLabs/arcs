@@ -32,6 +32,11 @@ class Scheduler {
     this._idleCallbacks.splice(index, 1);
   }
 
+  unregisterArc(arc) {
+    this.targetMap.delete(arc);
+    this.frameQueue = this.frameQueue.filter(frame => frame.target !== arc);
+  }
+
   enqueue(handle, eventRecords) {
     let trace = tracing.flow({cat: 'handle', name: 'ViewBase::_fire flow'}).start();
     if (this.frameQueue.length == 0 && eventRecords.length > 0)

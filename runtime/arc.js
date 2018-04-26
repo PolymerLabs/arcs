@@ -109,6 +109,7 @@ class Arc {
 
   dispose() {
     this._instantiatePlanCallbacks = [];
+    this._scheduler.unregisterArc(this);
     this.pec.slotComposer.dispose();
   }
 
