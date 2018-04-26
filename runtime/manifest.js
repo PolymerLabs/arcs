@@ -21,6 +21,7 @@ import StorageProviderFactory from './storage/storage-provider-factory.js';
 import scheduler from './scheduler.js';
 import ManifestMeta from './manifest-meta.js';
 import TypeChecker from './recipe/type-checker.js';
+import Id from './id.js';
 
 class ManifestError extends Error {
   constructor(location, message) {
@@ -78,7 +79,8 @@ class Manifest {
     this._handleTags = new Map();
     this._fileName = null;
     this._nextLocalID = 0;
-    this._id = id;
+    const sessionId = Id.newSessionId();
+    this._id = sessionId.fromString(id);
     this._storageProviderFactory = undefined;
     this._scheduler = scheduler;
     this._meta = new ManifestMeta();
@@ -319,7 +321,7 @@ ${e.message}
 
     try {
       // Loading of imported manifests is triggered in parallel to avoid a serial loading
-      // of resources over the network. 
+      // of resources over the network.
       await Promise.all(items.filter(item => item.kind == 'import').map(async item => {
         let path = loader.path(manifest.fileName);
         let target = loader.join(path, item.path);
@@ -502,7 +504,7 @@ ${e.message}
       }
       Object.assign(fields, result.fields);
       names.push(...result.names);
-    } 
+    }
     names = [names[0], ...names.filter(name => name != names[0])];
     let name = schemaItem.alias || names[0];
     if (!name) {
@@ -797,7 +799,7 @@ ${e.message}
       }
 
       for (let slotConnectionItem of item.slotConnections) {
-        // particles that reference verbs should store slot connection information as constraints to be used 
+        // particles that reference verbs should store slot connection information as constraints to be used
         // during verb matching. However, if there's a spec then the slots need to be validated against it
         // instead.
         if (particle.spec !== undefined) {

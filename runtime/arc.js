@@ -34,8 +34,8 @@ class Arc {
     this._pecFactory = pecFactory || FakePecFactory.bind(null);
 
     // for now, every Arc gets its own session
-    this.sessionId = Id.newSessionId();
-    this.id = this.sessionId.fromString(id);
+    const sessionId = Id.newSessionId();
+    this.id = sessionId.fromString(id);
     this._speculative = !!speculative; // undefined => false
     this._nextLocalID = 0;
     this._activeRecipe = new Recipe();
