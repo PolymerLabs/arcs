@@ -31,7 +31,12 @@ The strategy is not executed on recipes with outstanding constraints or with fre
 ## CreateHandles
 Sets handle’s fate to “create”, if its fate was unknown and ID was undefined.
 Requires that there are at least 2 particles connected, at least one reading and one writing.<br/>
-[planner.js](https://github.com/PolymerLabs/arcs/blob/master/runtime/planner.js#L34)
+[create-handles.js](https://github.com/PolymerLabs/arcs/blob/master/runtime/strategies/create-handles.js)
+
+## CreateHandleGroup
+Creates a new 'create' handle connecting a broadest possible set of unresolved connections.
+Will never connect 2 connections from the same particle and requires at least one writing and one reading particle.<br/>
+[create-handle-group.js](https://github.com/PolymerLabs/arcs/blob/master/runtime/strategies/create-handle-group.js)
 
 ## MapSlots
 Maps consumed slots with provided slots within the same recipe and pre existing slots (provided by slot-composer).<br/>
