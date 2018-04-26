@@ -146,8 +146,11 @@ describe('dom-slot', function() {
     assert.deepEqual(['model', 'template'], slot.constructRenderRequest());
 
     // only request model, if template already found.
+    // TODO(wkorman): Review and potentially restore this optimization.
+    // See https://github.com/PolymerLabs/arcs/issues/1233.
     slot._context = new MockDomContext();
     slot.setContent({template: 'dummy-template'}, {});
-    assert.deepEqual(['model'], slot.constructRenderRequest());
+    // assert.deepEqual(['model'], slot.constructRenderRequest());
+    assert.deepEqual(['model', 'template'], slot.constructRenderRequest());
   });
 });

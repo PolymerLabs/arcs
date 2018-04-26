@@ -31,7 +31,14 @@ class MockSlot extends Slot {
 
   }
   getInnerContext(slotName) {
-    if (this._content.template && this._content.template.indexOf(`slotid="${slotName}"`) > 0) {
+    let templateValue = null;
+    if (this._content.template) {
+      // Slot templates can either be the template directly, or an object whose
+      // keys are subids and values are the associated templates.
+      templateValue = (typeof this._content.template === 'object') ?
+          Object.values(this._content.template)[0] : this._content.template;
+    }
+    if (templateValue && templateValue.indexOf(`slotid="${slotName}"`) > 0) {
       return new MockContext('dummy-context');
     }
   }
