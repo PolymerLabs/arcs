@@ -11,6 +11,7 @@
 import {assert} from './chai-web.js';
 import Loader from '../loader.js';
 import Manifest from '../manifest.js';
+import Schema from '../schema.js';
 
 describe('schema', function() {
   let loader = new class extends Loader {
@@ -25,6 +26,17 @@ describe('schema', function() {
           Number shipDays
           Boolean isReal
           Object brand
+
+        schema Animal extends Thing
+          Boolean isReal
+
+        schema Person
+          Text name
+          Text surname
+          Number price
+
+        schema AlienLife
+          Boolean isBasedOnDna
         `;
       }
       return new Loader().loadResource(fileName);
@@ -245,5 +257,77 @@ describe('schema', function() {
                   'Cannot set tuple t with non-array value');
     assert.throws(() => { svt.t = 78; }, TypeError,
                   'Cannot set tuple t with non-array value');
+  });
+
+  it('handles schema unions', async function() {
+    let manifest = await Manifest.load('Product.schema', loader);
+    let Person = manifest.findSchemaByName('Person');
+    let Animal = manifest.findSchemaByName('Animal');
+
+    assert.deepEqual(Schema.union(Person, Animal), new Schema({
+      names: ['Person', 'Animal', 'Thing'],
+      fields: Object.assign({}, Person.fields, Animal.fields)
+    }));
+  });
+
+  it('handles field type conflict in schema unions', async function() {
+    let manifest = await Manifest.load('Product.schema', loader);
+    let Person = manifest.findSchemaByName('Person');
+    let Product = manifest.findSchemaByName('Product');
+
+    assert.isNull(Schema.union(Person, Product),
+      'price fields of different types forbid an union');
+  });
+
+  it('handles schema intersection of subtypes', async function() {
+    let manifest = await Manifest.load('Product.schema', loader);
+    let Thing = manifest.findSchemaByName('Thing');
+    let Product = manifest.findSchemaByName('Product');
+
+    assert.deepEqual(Schema.intersect(Product, Thing), Thing);
+    assert.deepEqual(Schema.intersect(Thing, Product), Thing);
+  });
+
+  it('handles schema intersection for shared supertypes', async function() {
+    let manifest = await Manifest.load('Product.schema', loader);
+    let Thing = manifest.findSchemaByName('Thing');
+    let Product = manifest.findSchemaByName('Product');
+    let Animal = manifest.findSchemaByName('Animal');
+
+    assert.deepEqual(Schema.intersect(Animal, Product), new Schema({
+      names: ['Thing'],
+      fields: Object.assign({}, Thing.fields, {
+        isReal: 'Boolean'
+      })
+    }));
+  });
+
+  it('handles schema intersection if no shared supertype and a conflicting field', async function() {
+    let manifest = await Manifest.load('Product.schema', loader);
+    let Product = manifest.findSchemaByName('Product');
+    let Person = manifest.findSchemaByName('Person');
+    let intersection = Schema.intersect(Person, Product);
+
+    assert.isDefined(Person.fields.price);
+    assert.isDefined(Product.fields.price);
+    assert.isFalse(Schema.typesEqual(Person.fields.price, Product.fields.price));
+    assert.isUndefined(intersection.fields.price);
+
+    assert.deepEqual(Schema.intersect(Person, Product), new Schema({
+      names: [],
+      fields: {
+        name: 'Text'
+      }
+    }));
+  });
+
+  it('handles empty schema intersection as empty object', async function() {
+    let manifest = await Manifest.load('Product.schema', loader);
+    let Person = manifest.findSchemaByName('Person');
+    let AlienLife = manifest.findSchemaByName('AlienLife');
+    assert.deepEqual(Schema.intersect(Person, AlienLife), new Schema({
+      names: [],
+      fields: {}
+    }));
   });
 });
