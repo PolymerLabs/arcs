@@ -8,6 +8,12 @@
 
 const functions = require('firebase-functions');
 const request = require('request-promise-native');
+require('babel-polyfill');
+
+/** transforms an object into a query string. */
+function toQueryString(query) {
+  return Object.entries(query).map(elem => elem.join('=')).join('&');
+}
 
 /** Proxy for the Places API */
 exports.places = functions.https.onRequest((req, res) => {
@@ -16,10 +22,15 @@ exports.places = functions.https.onRequest((req, res) => {
 
   const serviceUrl =
       'https://maps.googleapis.com/maps/api/place/nearbysearch/json';
+  const queryString = toQueryString({
+    location,
+    radius,
+    type,
+    key: placesKey
+  });
 
   return request({
-           uri: `${serviceUrl}?location=${location}&radius=${radius}&type=${
-               type}&key=${placesKey}`,
+           uri: `${serviceUrl}?${queryString}`,
            method: 'GET',
            resolveWithFullResponse: true
          })
@@ -32,8 +43,7 @@ exports.places = functions.https.onRequest((req, res) => {
 exports.placePhotos = functions.https.onRequest((req, res) => {
   const placesKey = functions.config().places.key;
   const query = Object.assign({'key': placesKey}, req.query);
-  const queryString =
-      Object.entries(query).map(elem => elem.join('=')).join('&');
+  const queryString = toQueryString(query);
 
   const serviceUrl = 'https://maps.googleapis.com/maps/api/place/photo';
 
