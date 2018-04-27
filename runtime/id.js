@@ -25,6 +25,7 @@ export default class Id {
 
   fromString(string) {
     let components = string.split(':');
+
     let id = new Id(this._currentSession);
 
     if (components[0][0] == '!') {
