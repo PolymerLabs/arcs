@@ -162,8 +162,8 @@ ${styles}
 </div>
     `.trim();
 
-  let services = `https://xenonjs.com/services/http/php`;
-  let detailsService =`${services}/place-details.php`;
+  let services = `http://localhost:5000/`;
+  let detailsService =`${services}/place-details`;
 
   return class extends DomParticle {
     get template() {

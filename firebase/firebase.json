@@ -13,7 +13,8 @@
     ],
     "rewrites": [
       { "source": "/places", "function": "places" },
-      { "source": "/place-photos", "function": "placePhotos" }
+      { "source": "/place-photos", "function": "placePhotos" },
+      { "source": "/place-details", "function": "placeDetails" }
     ]
   }
 }

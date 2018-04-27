@@ -24,12 +24,7 @@ exports.places = functions.https.onRequest((req, res) => {
 
     const serviceUrl =
         'https://maps.googleapis.com/maps/api/place/nearbysearch/json';
-    const queryString = toQueryString({
-      location,
-      radius,
-      type,
-      key: placesKey
-    });
+    const queryString = toQueryString({location, radius, type, key: placesKey});
 
     return request({
              uri: `${serviceUrl}?${queryString}`,
@@ -42,17 +37,30 @@ exports.places = functions.https.onRequest((req, res) => {
   });
 });
 
-/** Proxy for the Place Photos API */
-exports.placePhotos = functions.https.onRequest((req, res) => {
+function proxyPlacesCall(url, parameters, response) {
   const placesKey = functions.config().places.key;
-  const query = Object.assign({'key': placesKey}, req.query);
+  const query = Object.assign({'key': placesKey}, parameters);
   const queryString = toQueryString(query);
 
-  const serviceUrl = 'https://maps.googleapis.com/maps/api/place/photo';
+  return request({uri: `${url}?${queryString}`, method: 'GET'}).pipe(response);
+}
 
-  return request({
-           uri: `${serviceUrl}?${queryString}`,
-           method: 'GET'
-         })
-      .pipe(res);
+/** Proxy for the Place Photos API */
+exports.placePhotos = functions.https.onRequest((req, res) => {
+  cors(
+      req,
+      res,
+      () => proxyPlacesCall(
+          'https://maps.googleapis.com/maps/api/place/photo', req.query, res));
+});
+
+/** Proxy for the Place Photos API */
+exports.placeDetails = functions.https.onRequest((req, res) => {
+  cors(
+      req,
+      res,
+      () => proxyPlacesCall(
+          'https://maps.googleapis.com/maps/api/place/details/json',
+          req.query,
+          res));
 });
