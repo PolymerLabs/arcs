@@ -12,3 +12,4 @@ shell/build
 shell/test/errorShots
 firebase/functions/.runtimeconfig.json
 firebase/firebase-debug.log
+firebase/npm-debug.log
