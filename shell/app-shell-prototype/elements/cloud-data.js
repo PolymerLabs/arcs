@@ -54,7 +54,7 @@ const template = html`
 
   <cloud-steps
     key="{{key}}"
-    suggestions="{{suggestions}}"
+    plans="{{plans}}"
     plan="{{plan}}"
     on-suggestion="_onForward"
   ></cloud-steps>
@@ -62,7 +62,7 @@ const template = html`
   <cloud-handles
     key="{{key}}"
     arc="{{arc}}"
-    suggestions="{{suggestions}}"
+    plans="{{plans}}"
   ></cloud-handles>
 
   <cloud-profile-handles
@@ -72,6 +72,7 @@ const template = html`
   ></cloud-profile-handles>
 
   <cloud-shared-handles
+    users="{{users}}"
     arc="{{arc}}"
     userid="{{userid}}"
     profile="{{profile}}"
@@ -83,7 +84,7 @@ const log = Xen.logFactory('CloudData', '#004f00');
 
 class CloudData extends Xen.Debug(Xen.Base, log) {
   static get observedAttributes() {
-    return ['config', 'userid', 'user', 'profile', 'arcs', 'key', 'metadata', 'description', 'share', 'suggestions', 'plan', 'arc'];
+    return ['config', 'users', 'userid', 'user', 'profile', 'arcs', 'key', 'metadata', 'description', 'share', 'plans', 'plan', 'arc'];
   }
   get template() {
     return template;
@@ -100,9 +101,7 @@ class CloudData extends Xen.Debug(Xen.Base, log) {
     this._fire(e.type, data);
   }
   _onShared(e, info) {
-    // if (info.user === this._props.userid) {
-    //   this._onProfile(e, info.handle);
-    // }
+    // no op
   }
   async _onProfile(e, profile) {
     // assume pattern PROFILE_{property}

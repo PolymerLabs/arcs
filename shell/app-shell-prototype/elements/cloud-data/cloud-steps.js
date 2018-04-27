@@ -18,7 +18,7 @@ const warn = Xen.logFactory('CloudSteps', '#7b5e57', 'warn');
 
 class CloudSteps extends Xen.Debug(Xen.Base, log) {
   static get observedAttributes() {
-    return ['key', 'suggestions', 'plan'];
+    return ['key', 'plans', 'plan'];
   }
   _getInitialState() {
     return {
@@ -28,7 +28,7 @@ class CloudSteps extends Xen.Debug(Xen.Base, log) {
       watch: new WatchGroup()
     };
   }
-  _update({key, suggestions, plan}, state, oldProps) {
+  _update({key, plans, plan}, state, oldProps) {
     const {applied, steps} = state;
     if (key && !Const.SHELLKEYS[key]) {
       if (key !== oldProps.key) {
@@ -38,27 +38,15 @@ class CloudSteps extends Xen.Debug(Xen.Base, log) {
           handler: snap => this._receiveSteps(snap)
         }];
       }
-      /*
-      if (suggestions && suggestions.generations) {
-        // TODO(sjmiles): `suggestions` can become NULL before `plan` is propagated here
-        // we should probably attach `suggestions` (or at least the `.generations`) instead to `plan`
-        // after instantiating, but `plan` is a Recipe object and it's frozen.
-        // Instead we will need to create a wrapper object for `plan` that can contain the recipe
-        // and metadata. In the interim, we will just cache last non-null `suggestions`.
-        state.suggestions = suggestions;
-      }
-      */
-      // TODO(sjmiles): using cached suggestions
-      if (plan && plan !== state.plan && plan.generations /*&& state.suggestions && state.suggestions.generations*/) {
+      if (plan && plan !== state.plan && plan.generations) {
         state.plan = plan;
         // `plan` has been instantiated into host, record it into `steps`
-        //this._addStep(key, plan, state.suggestions.generations, steps || [], applied);
         this._addStep(key, plan.plan, plan.generations, steps || [], applied);
       }
       // TODO(sjmiles): using latest suggestions
-      if (suggestions && steps) {
+      if (plans && steps.length) {
         // find a step from `steps` that correspondes to a plan in `suggestions` but hasn't been `applied`
-        this._providePlanStep(suggestions, steps, applied);
+        this._providePlanStep(plans.plans, plans.generations, steps, applied);
       }
     }
   }
@@ -117,10 +105,10 @@ class CloudSteps extends Xen.Debug(Xen.Base, log) {
       return origin;
     }
   }
-  _providePlanStep(plans, steps, applied) {
+  _providePlanStep(plans, generations, steps, applied) {
     const candidates = steps.filter(s => !applied[s.hash]);
     for (const step of candidates) {
-      const planStep = this._findPlanForStep(step, plans);
+      const planStep = this._findPlanForStep(step, plans, generations);
       if (planStep) {
         log('found suggestion for step', step.hash);
         applied[step.hash] = true;
@@ -131,11 +119,11 @@ class CloudSteps extends Xen.Debug(Xen.Base, log) {
       }
     }
   }
-  _findPlanForStep(step, plans) {
+  _findPlanForStep(step, plans, generations) {
     for (let plan of plans) {
       // TODO(sjmiles): should be (weak) map?
       if (!plan._step) {
-        plan._step = this._createStep(plan.plan, plans.generations);
+        plan._step = this._createStep(plan.plan, generations);
       }
       if (plan._step.hash === step.hash && plan._step.mappedHandles === step.mappedHandles) {
         return plan;

@@ -16,9 +16,15 @@ import Firebase from './cloud-data/firebase.js';
 const log = Xen.logFactory('ArcPlanner', '#104a91');
 const error = Xen.logFactory('ArcPlanner', '#104a91', 'error');
 
+// proposed:
+// plans -> map of plans, generations
+// plan -> map of plans, generations, (simple-)plan
+// suggestions -> filtered array of (simple-)plans
+// suggestion -> (simple-)plan
+
 class ArcPlanner extends Xen.Debug(Xen.Base, log) {
   static get observedAttributes() {
-    return ['config', 'arc', /*'suggestions',*/ 'suggestion', 'search'];
+    return ['config', 'arc', 'suggestion', 'search'];
   }
   _getInitialState() {
     return {
@@ -27,7 +33,7 @@ class ArcPlanner extends Xen.Debug(Xen.Base, log) {
     };
   }
   _willReceiveProps(props, state, oldProps) {
-    const {arc, /*suggestions,*/ suggestion, search} = props;
+    const {arc, suggestion, search} = props;
     const changed = name => props[name] !== oldProps[name];
     if (suggestion && changed('suggestion')) {
       state.pendingPlans.push(suggestion.plan);
@@ -43,98 +49,30 @@ class ArcPlanner extends Xen.Debug(Xen.Base, log) {
       }
       if (!planificator) {
         planificator = new Arcs.Planificator(arc);
-        planificator.registerPlansChangedCallback(current => this._plansChanged(current.plans, planificator.getLastActivatedPlan()));
+        planificator.registerPlansChangedCallback(current => this._plansChanged(current, planificator.getLastActivatedPlan()));
         planificator.registerSuggestChangedCallback(suggestions => this._suggestionsChanged(suggestions));
         planificator.setSearch(search);
       } else if (changed('search')) {
         planificator.setSearch(search);
       }
       this._setState({planificator});
-      // if (oldProps.arc) {
-      //   oldProps.arc.makeSuggestions = null;
-      // }
-      //arc.makeSuggestions = () => this._runtimeHandlesUpdated();
     }
   }
   _update({arc, suggestions, search, planificator}, {pendingPlans}) {
     if (arc && pendingPlans.length) {
       this._instantiatePlan(arc, pendingPlans.shift());
     }
-    /*
-    if (arc && !suggestions) {
-      //this._schedulePlanning();
-      // TODO(sjmiles): experiment, change name of this method if keeping this code
-      this._runtimeHandlesUpdated();
-    }
-    if (arc && (search != null)) {
-      search = search.trim().toLowerCase();
-      // TODO(sjmiles): setting search to '' causes an exception at init-search.js|L#29)
-      search = (search !== '') && (search !== '*') ? search : null;
-      // re-plan only if the search has changed (beyond simple filtering)
-      if (search !== arc.search) {
-        arc.search = search;
-        this._fire('suggestions', null);
-      }
-    }
-    */
   }
-  _plansChanged(plans, plan) {
-    //log('activated plan:', plan);
+  _plansChanged(context, plan) {
+    this._fire('plans', context);
     this._fire('plan', plan);
-    this._fire('suggestions', plans);
   }
   _suggestionsChanged(suggestions) {
-    this._fire('filtered-suggestions', suggestions);
-  }
-  /*
-  _runtimeHandlesUpdated() {
-    !this._state.invalid && log('runtimeHandlesUpdated');
-    const replan = () => {
-      log('replanning from debounced runtimeHandlesUpdated');
-      // results obtained before now are invalid
-      this._state.invalid = true;
-      this._schedulePlanning();
-    };
-    this._debouncer = ArcsUtils.debounce(this._debouncer, replan, 1000);
-  }
-  async _schedulePlanning() {
-    const props = this._props;
-    const state = this._state;
-    if (props.arc) {
-      // only wait for one _beginPlanning at a time
-      if (!state.planning) {
-        state.planning = true;
-        try {
-          await this.__beginPlanning(props, state);
-        } catch (x) {
-          error(x);
-        }
-        state.planning = false;
-      }
-    }
-  }
-  // TODO(sjmiles): only to be called from _schedulePlanning which protects re-entrancy
-  async __beginPlanning(props, state) {
-    log(`planning...`);
-    let time = Date.now();
-    let suggestions;
-    do {
-      state.invalid = false;
-      suggestions = await ArcsUtils.makePlans(props.arc, props.config.plannerTimeout) || [];
-      // if the `invalid` state goes true before `makePlans` completes, start over
-    } while (state.invalid);
-    time = ((Date.now() - time) / 1000).toFixed(2);
-    log(`suggestions`, suggestions, `${time}s`);
     this._fire('suggestions', suggestions);
   }
-  */
   async _instantiatePlan(arc, plan) {
     log('instantiating plan', plan);
-    //this._state.planning = true;
     await arc.instantiate(plan);
-    //this._state.planning = false;
-    // newly instantiated plan
-    //this._fire('plan', plan);
     // search term is used up
     this._fire('search', '');
     // need new suggestions

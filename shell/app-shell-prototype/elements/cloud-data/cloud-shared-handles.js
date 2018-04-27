@@ -18,7 +18,7 @@ const log = Xen.logFactory('CloudSharedHandles', '#3c008f');
 
 class CloudSharedHandles extends Xen.Debug(Xen.Base, log) {
   static get observedAttributes() {
-    return ['arc', 'userid', 'profile'];
+    return ['users', 'arc', 'userid', 'profile'];
   }
   _getInitialState() {
     return {
@@ -104,7 +104,8 @@ class CloudSharedHandles extends Xen.Debug(Xen.Base, log) {
       // construct type object
       const type = ArcsUtils.typeFromMetaType(metadata.type);
       // TODO(sjmiles): needs refactoring
-      if (this._props.userid !== user) {
+      const {userid, users} = this._props;
+      if (userid !== user) {
         // find or create a handle in the arc context
         handle = await ArcsUtils._requireHandle(arc, type, metadata.name, id, [`#${tag}`]);
         log('createOrUpdate handle', handle.id, data);
@@ -112,7 +113,9 @@ class CloudSharedHandles extends Xen.Debug(Xen.Base, log) {
         // TODO(sjmiles): how to marshal user information (names)?
         // Append user-id as handle metadata and work out description elsewhere?
         const typeName = handle.type.toPrettyString().toLowerCase();
-        handle.description = ArcsUtils._getHandleDescription(typeName, handle.tags, this._props.userid, user);
+        handle.description = ArcsUtils._getHandleDescription(typeName, handle.tags,
+          users[userid].info.name, users[user].info.name);
+          //this._props.userid, user);
       }
       this._boxHandle(arc, user, type, data, tag);
       return handle;

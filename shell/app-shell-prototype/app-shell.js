@@ -42,22 +42,20 @@ const template = html`
     key="{{key}}"
     config="{{config}}"
     manifest="{{manifest}}"
-    suggestions="{{filteredSuggestions}}"
     search="{{search}}"
     suggestion="{{suggestion}}"
     serialization="{{serialization}}"
     on-arc="_onStateData"
-    on-suggestions="_onSuggestions"
+    on-suggestions="_onStateData"
   ></arc-host>
 
   <arc-planner
     config="{{config}}"
     arc="{{arc}}"
     search="{{search}}"
-    suggestions="{{suggestions}}"
     suggestion="{{suggestion}}"
+    on-plans="_onStateData"
     on-suggestions="_onStateData"
-    on-filtered-suggestions="_onFilteredSuggestions"
     on-plan="_onStateData"
     on-search="_onStateData"
   ></arc-planner>
@@ -74,6 +72,7 @@ const template = html`
 
   <cloud-data
     config="{{config}}"
+    users="{{users}}"
     profile="{{profile}}"
     userid="{{userid}}"
     user="{{user}}"
@@ -83,7 +82,7 @@ const template = html`
     metadata="{{metadata}}"
     share="{{share}}"
     description="{{description}}"
-    suggestions="{{suggestions}}"
+    plans="{{plans}}"
     plan="{{plan}}"
     on-user="_onStateData"
     on-profile="_onStateData"
@@ -186,16 +185,16 @@ import '../artifacts/0.4/Arcs/Arcs.recipes'
   _updateDescription(state, oldState) {
     let {arc, description, plan} = state;
     if (arc && plan && plan !== oldState.plan) {
-      // arc has implemented new plan so generate new description
+      // arc has instantiated a plan so generate new description
       this._describeArc(arc, description);
     }
   }
   _updateLauncher(state, oldState) {
-    const {key, arc, plan, suggestions, suggestion, pendingSuggestion} = state;
+    const {key, arc, plan, plans, suggestion, pendingSuggestion} = state;
     if (key === Const.SHELLKEYS.launcher) {
-      if (!suggestion && !plan && suggestions && suggestions.length) {
+      if (!suggestion && (!plan || !plan.plan) && plans && plans.plans.length) {
         // TODO(sjmiles): need a better way to find the launcher suggestion
-        state.suggestion = suggestions.find(s => s.descriptionText === 'Arcs launcher.');
+        state.suggestion = plans.plans.find(s => s.descriptionText === 'Arcs launcher.');
       }
       else if (suggestion && suggestion !== oldState.suggestion) {
         log('suggestion registered from launcher, generate new arc (set key to *)');
@@ -203,14 +202,13 @@ import '../artifacts/0.4/Arcs/Arcs.recipes'
         this._setKey('*');
       }
     }
-    if (key && !Const.SHELLKEYS[key] && suggestions && pendingSuggestion) {
+    if (key && !Const.SHELLKEYS[key] && plans && pendingSuggestion) {
       log('instantiating pending launcher suggestion');
       // TODO(sjmiles): need a better way to match the suggestion
-      state.suggestion = suggestions.find(s => s.descriptionText === pendingSuggestion.descriptionText);
+      state.suggestion = plans.plans.find(s => s.descriptionText === pendingSuggestion.descriptionText);
       state.pendingSuggestion = null;
     }
   }
-
   _updateSuggestions(state, oldState) {
     /*
     let {key, search, suggestions, plan} = state;
@@ -227,13 +225,13 @@ import '../artifacts/0.4/Arcs/Arcs.recipes'
       );
     }
     */
-    state.showhint = Boolean(state.filteredSuggestions && state.filteredSuggestions.length > 0);
+    state.showhint = Boolean(state.suggestions && state.suggestions.length > 0);
   }
   _render({}, state) {
-    const {userid, description, theme, suggestions} = state;
+    const {userid, description, theme, plans} = state;
     const render = {
       title: description,
-      glows: userid && (suggestions == null)
+      glows: userid && (plans == null)
     };
     state.shellStyle = theme ? `background-color: ${theme.mainBackground}; color: ${theme.mainColor};` : '';
     return [state, render];
@@ -268,9 +266,9 @@ import '../artifacts/0.4/Arcs/Arcs.recipes'
   _onStateData(e, data) {
     this._setState({[e.type]: data});
   }
-  _onFilteredSuggestions(e, filteredSuggestions) {
-    this._setState({filteredSuggestions});
-  }
+  // _onFilteredSuggestions(e, filteredSuggestions) {
+  //   this._setState({filteredSuggestions});
+  // }
   _onSelectUser(e, userid) {
     this._setState({userid});
   }

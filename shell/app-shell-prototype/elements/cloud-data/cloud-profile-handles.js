@@ -61,6 +61,8 @@ class CloudProfileHandles extends Xen.Debug(Xen.Base, log) {
     const type = ArcsUtils.typeFromMetaType(metadata.type);
     // find or create a handle in the arc context
     const handle = await ArcsUtils._requireHandle(arc, type, metadata.name, id, [tag]);
+    const typeName = handle.type.toPrettyString().toLowerCase();
+    handle.description = ArcsUtils._getHandleDescription(typeName, handle.tags, 'user', 'user');
     await ArcsUtils.setHandleData(handle, data);
     return handle;
   }

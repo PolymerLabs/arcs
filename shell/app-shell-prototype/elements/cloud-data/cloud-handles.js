@@ -18,7 +18,7 @@ const warn = Xen.logFactory('CloudHandles', '#aa00c7', 'warn');
 
 class CloudHandles extends Xen.Debug(Xen.Base, log) {
   static get observedAttributes() {
-    return ['key', 'arc', 'suggestions'];
+    return ['key', 'arc', 'plans'];
   }
   _getInitialState() {
     return {

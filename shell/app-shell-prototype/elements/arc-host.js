@@ -21,11 +21,11 @@ const warn = Xen.logFactory('ArcHost', '#007ac1', 'warn');
 
 class ArcHost extends Xen.Debug(Xen.Base, log) {
   static get observedAttributes() {
-    return ['config', 'key', 'manifest', 'suggestions', 'serialization'];
+    return ['config', 'key', 'manifest', 'serialization'];
   }
   _willReceiveProps(props, state, oldProps) {
     const changed = name => props[name] !== oldProps[name];
-    const {key, manifest, config, suggestions, suggestion, serialization} = props;
+    const {key, manifest, config, suggestion, serialization} = props;
     // dispose arc if key has changed, but we don't have a new key yet
     if (key === '*' && changed('key')) {
       this._teardownArc(state.arc);
@@ -41,9 +41,6 @@ class ArcHost extends Xen.Debug(Xen.Base, log) {
     if (serialization != null && changed('serialization')) {
       state.pendingSerialization = serialization;
     }
-    //if (suggestions && changed('suggestions')) {
-    //  state.slotComposer.setSuggestions(suggestions);
-    //}
   }
   _update({}, state) {
     const {id, pendingSerialization} = state;

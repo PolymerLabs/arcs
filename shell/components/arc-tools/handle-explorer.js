@@ -60,9 +60,9 @@ class HandleExplorer extends Xen.Base {
     state.needsQuery = true;
   }
   _update(props, state) {
-    this._setState({arcHandles: null, contextHandles: null});
     if (props.arc && state.needsQuery) {
       state.needsQuery = false;
+      //this._setState({arcHandles: null, contextHandles: null});
       this._queryHandles(props.arc);
     }
   }

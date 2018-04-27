@@ -135,13 +135,13 @@ const ArcsUtils = {
       ;
   },
   _getHandleDescription(name, tags, user, owner) {
-      let proper = (user === owner) ? 'my' : `${owner}'s`;
-      if (tags && tags.length) {
-        return `${proper} ${tags[0].substring(1)}`;
-      }
-      if (name) {
-        return `${proper} ${name}`;
-      }
+    let proper = (user === owner) ? 'my' : `${owner}'s`;
+    if (tags && tags.length) {
+      return `${proper} ${tags[0].substring(1)}`;
+    }
+    if (name) {
+      return `${proper} ${name}`;
+    }
   },
   async _requireHandle(arc, type, name, id, tags) {
     let store = arc.context.findStorageById(id);
@@ -184,6 +184,7 @@ const ArcsUtils = {
       data && handle.set(data);
     }
   },
+  /*
   getUserProfileKeys(user) {
     return ArcsUtils.intersectArcKeys(user.arcs, user.profiles);
   },
@@ -196,6 +197,7 @@ const ArcsUtils = {
     // The corrected set is the intersection of `user.arcs` and `user.[profiles|shares]`.
     return arcs && other ? Object.keys(arcs).filter(key => Boolean(other[key])) : [];
   },
+  */
   // usage: this._debouncer = debounce(this._debouncer, task, 100);
   debounce(key, action, delay) {
     if (key) {

@@ -44,7 +44,13 @@ class CloudUser extends Xen.Debug(Xen.Base, log) {
     }
     if (user && (user.id === userid)) {
       if (arcs && state.arcs && arcs !== state.arcs) {
-        this._localArcsChanged(Firebase.db, arcs);
+        // TODO(sjmiles): identify why this is required
+        // Possible answer: `state.arcs` is cached when this object is invalid
+        // (has pending inputs), so there is one update pass where `props.arcs`
+        // is stale.
+        if (JSON.stringify(arcs) !== JSON.stringify(state.arcs)) {
+          this._localArcsChanged(Firebase.db, arcs);
+        }
       }
       //if (user.info && !user.id) {
       //  this._createUser(Firebase.db, user);

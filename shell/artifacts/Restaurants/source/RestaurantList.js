@@ -27,7 +27,6 @@ defineParticle(({DomParticle, html}) => {
   </div>
 </div>
 <div slotid="annotation" subid="{{id}}" style="padding:16px 0;">
-
 `;
 
   const selectable = html`
@@ -63,7 +62,7 @@ defineParticle(({DomParticle, html}) => {
     /* text-shadow: 0px 0px 10px rgba(0, 0, 0, 1); */
     background-repeat: no-repeat;
     background-size: cover;
-    /*background-position: bottom;*/
+    background-position: center;
     /* this autosizes to width with correct AR, but it doesn't support flexing :( */
     /*
     padding-bottom: 60%;
