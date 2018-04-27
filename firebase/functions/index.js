@@ -52,7 +52,5 @@ exports.placePhotos = functions.https.onRequest((req, res) => {
            method: 'GET',
            resolveWithFullResponse: true
          })
-      .then(({statusCode, body}) => {
-        res.status(statusCode).send(body);
-      });
+      .pipe(res);
 });
