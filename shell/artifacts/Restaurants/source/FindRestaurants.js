@@ -18,9 +18,9 @@ defineParticle(({DomParticle, resolver}) => {
 
   `.trim();
 
-  let service = `https://xenonjs.com/services/http/php`;
-  let placesService =`${service}/places.php`;
-  let photoService = `${service}/place-photo.php`;
+  let service = `http://localhost:5000`;
+  let placesService =`${service}/places`;
+  let photoService = `${service}/place-photos`;
 
   return class extends DomParticle {
     get template() {
