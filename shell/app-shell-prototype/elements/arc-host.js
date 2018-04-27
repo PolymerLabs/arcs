@@ -55,6 +55,7 @@ class ArcHost extends Xen.Debug(Xen.Base, log) {
       log('arc teardown');
       log('------------');
       // Clean up from last arc
+      //arc.dispose();
       Arcs.DomSlot.dispose();
       Array.from(document.querySelectorAll('[slotid]')).forEach(n => n.textContent = '');
       // old arc is no more

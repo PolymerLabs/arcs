@@ -172,6 +172,7 @@ import '../artifacts/0.4/Arcs/Arcs.recipes'
           key,
           description: null,
           serialization: null,
+          plans: null,
           suggestions: null,
           suggestion: null,
           plan: null

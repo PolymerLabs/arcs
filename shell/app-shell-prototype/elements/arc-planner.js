@@ -41,10 +41,7 @@ class ArcPlanner extends Xen.Debug(Xen.Base, log) {
     if (arc) {
       let {planificator} = state;
       if (planificator && changed('arc')) {
-        // TODO(sjmiles): need `dispose` routine for planificator
-        planificator._plansChangedCallbacks = [];
-        planificator._suggestChangedCallbacks = [];
-        planificator._stateChangedCallbacks = [];
+        planificator.dispose();
         planificator = null;
       }
       if (!planificator) {
