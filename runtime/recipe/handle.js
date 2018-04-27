@@ -183,12 +183,30 @@ class Handle {
     }
   }
 
+  // Options:
+  // - showUnresolved: if true, includes unresolved handle details if
+  //   handle is in fact unresolved and they're available.
+  // - stripManifestSessionFromId: if true, strips any manifest session
+  //   id prefix from the handle id.
   toString(nameMap, options) {
     // TODO: type? maybe output in a comment
     let result = [];
     result.push(this.fate);
     if (this.id) {
-      result.push(`'${this.id}'`);
+      let outputId = this.id.toString();
+      if (options && options.stripManifestSessionFromId) {
+        const isEntity = this.type.isEntity || (this.type.isCollection && this.type.primitiveType().isEntity);
+        // TODO(wkorman): `Manifest._processRecipe` has a TODO currently to mark
+        // a handle as immediate. Until we've a cleaner way to identify, we just
+        // scrutinize the handle id for a clear marker. A sample immediate
+        // handle id looks like:
+        // '!130690574120708:manifest:./manifest.manifest::0:immediateB'
+        const isImmediate = /:immediate[^:]+$/.test(this.id);
+        if (isEntity || isImmediate) {
+          outputId = outputId.replace(/^![^:]+:/, '');
+        }
+      }
+      result.push(`'${outputId}'`);
     }
     result.push(...this.tags);
     result.push(`as ${(nameMap && nameMap.get(this)) || this.localName}`);

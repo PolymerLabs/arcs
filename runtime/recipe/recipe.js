@@ -202,7 +202,7 @@ class Recipe {
   }
 
   async digest() {
-    return digest(this.toString());
+    return digest(this.toString({stripManifestSessionFromId: true}));
   }
 
   normalize(options) {
@@ -436,7 +436,10 @@ class Recipe {
   // TODO: Add a normalize() which strips local names and puts and nested
   //       lists into a normal ordering.
   //
-  // use { showUnresolved: true } in options to see why a recipe can't resolve.
+  // Options:
+  // - showUnresolved: if true, includes detail on why a recipe can't resolve.
+  // - stripManifestSessionFromId: if true, strips any manifest session
+  //   id prefix from handle ids.
   toString(options) {
     let nameMap = this._makeLocalNameMap();
     let result = [];
