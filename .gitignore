@@ -10,3 +10,5 @@ manifest-railroad.html
 **/*.code-workspace
 shell/build
 shell/test/errorShots
+firebase/functions/.runtimeconfig.json
+firebase/firebase-debug.log
