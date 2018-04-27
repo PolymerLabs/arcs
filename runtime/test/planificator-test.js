@@ -7,6 +7,7 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
+
 import {assert} from './chai-web.js';
 import Arc from '../arc.js';
 import Planificator from '../planificator.js';
@@ -79,6 +80,16 @@ function createPlanificator() {
   arc.pec.slotComposer.setSuggestions = (suggestions) => arc.suggestions = suggestions;
   arc.pec.slotComposer.initializeRecipe = async () => {};
   return new TestPlanificator(arc);
+}
+
+function newPlan(name, options) {
+  let plan = new Recipe(name);
+  options = options || {};
+  if (options.hasSlot) {
+    let slot = plan.newSlot(options.hasRootSlot ? 'root' : 'slot0');
+    slot.id = 'id0';
+  }
+  return {plan, hash: options.hash || plan.name, descriptionText: options.descriptionText};
 }
 
 describe('Planificator', function() {
@@ -225,13 +236,7 @@ describe('Planificator', function() {
 
     let plans = [];
     let addPlan = (name, options) => {
-      let plan = new Recipe(name);
-      options = options || {};
-      if (options.hasSlot) {
-        let slot = plan.newSlot(options.hasRootSlot ? 'root' : 'slot0');
-        slot.id = 'id0';
-      }
-      plans.push({plan, hash: plan.name, descriptionText: options.descriptionText});
+      plans.push(newPlan(name, options));
     };
     addPlan('1', {hasSlot: false, descriptionText: 'invisible plan'});
     addPlan('2', {hasSlot: true, descriptionText: '-2- -23- -24- -25- -234- -235- -245- -2345-'});
@@ -266,5 +271,44 @@ describe('Planificator', function() {
    // Search for plans that aren't available.
    planificator.setSearch('nosuchplan');
    assert.lengthOf(planificator.getCurrentSuggestions(), 0);
+  });
+  it('sets or appends current', function() {
+    let planificator = createPlanificator();
+    let planChanged = 0;
+    planificator.registerPlansChangedCallback(() => { ++planChanged; });
+
+    planificator._setCurrent({plans: [], generations: []});
+    assert.lengthOf(planificator._current.plans, 0);
+    assert.equal(0, planChanged);
+
+    // Sets current plans
+    planificator._setCurrent({plans: [newPlan('1'), newPlan('2')], generations: []});
+    assert.deepEqual(['1', '2'], planificator._current.plans.map(p => p.hash));
+    assert.equal(1, planChanged);
+
+    // Overrides current plans
+    planificator._setCurrent({plans: [newPlan('3'), newPlan('4')], generations: []});
+    assert.deepEqual(['3', '4'], planificator._current.plans.map(p => p.hash));
+    assert.equal(2, planChanged);
+
+    // Appends to current plans.
+    planificator._setCurrent({plans: [newPlan('3'), newPlan('5')], generations: []}, true);
+    assert.deepEqual(['3', '4', '5'], planificator._current.plans.map(p => p.hash));
+    assert.equal(3, planChanged);
+
+    // Appends already existing plans.
+    planificator._setCurrent({plans: [newPlan('4'), newPlan('5')], generations: []}, true);
+    assert.deepEqual(['3', '4', '5'], planificator._current.plans.map(p => p.hash));
+    assert.equal(3, planChanged);
+    
+    // Appends empty to current plans.
+    planificator._setCurrent({plans: [], generations: []}, true);
+    assert.deepEqual(['3', '4', '5'], planificator._current.plans.map(p => p.hash));
+    assert.equal(3, planChanged);
+
+    // Override with empty plans.
+    planificator._setCurrent({plans: [], generations: []});
+    assert.lengthOf(planificator._current.plans, 0);
+    assert.equal(4, planChanged);
   });
 });

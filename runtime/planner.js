@@ -42,26 +42,7 @@ class Planner {
   // TODO: Use context.arc instead of arc
   init(arc, {strategies, ruleset} = {}) {
     this._arc = arc;
-    strategies = strategies || [
-      new InitPopulation(arc),
-      new InitSearch(arc),
-      new SearchTokensToParticles(arc),
-      new GroupHandleConnections(),
-      new FallbackFate(),
-      new CreateHandles(),
-      new AssignHandlesByTagAndType(arc),
-      new ConvertConstraintsToConnections(arc),
-      new MapSlots(arc),
-      new AssignRemoteHandles(arc),
-      new CopyRemoteHandles(arc),
-      new MatchParticleByVerb(arc),
-      new MatchRecipeByVerb(arc),
-      new NameUnnamedConnections(arc),
-      new AddUseHandles(),
-      new CreateDescriptionHandle(),
-      new MatchFreeHandlesToConnections(),
-      new ResolveRecipe(arc)
-    ];
+    strategies = strategies || Planner.AllStrategies.map(strategy => new strategy(arc));
     this.strategizer = new Strategizer(strategies, [], {
       maxPopulation: 100,
       generationSize: 100,
@@ -214,5 +195,31 @@ class Planner {
     }
   }
 }
+
+Planner.InitializationStrategies = [
+  InitPopulation,
+  InitSearch
+];
+
+Planner.ResolutionStrategies = [
+  SearchTokensToParticles,
+  GroupHandleConnections,
+  FallbackFate,
+  CreateHandles,
+  AssignHandlesByTagAndType,
+  ConvertConstraintsToConnections,
+  MapSlots,
+  AssignRemoteHandles,
+  CopyRemoteHandles,
+  MatchParticleByVerb,
+  MatchRecipeByVerb,
+  NameUnnamedConnections,
+  AddUseHandles,
+  CreateDescriptionHandle,
+  MatchFreeHandlesToConnections,
+  ResolveRecipe
+];
+
+Planner.AllStrategies = Planner.InitializationStrategies.concat(Planner.ResolutionStrategies);
 
 export default Planner;
