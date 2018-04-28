@@ -124,6 +124,25 @@ ${particleStr1}
     verify(manifest);
     verify(await Manifest.parse(manifest.toString(), {}));
   });
+  it('two manifests with stores with the same filename and store name have different ids', async () => {
+    let manifestA = await Manifest.parse(`
+      store NobId of NobIdStore {Text nobId} in NobIdJson
+       resource NobIdJson
+         start
+         [{"nobId": "12345"}]
+        `, {fileName: 'the.manifest'});
+
+    let manifestB = await Manifest.parse(`
+      store NobId of NobIdStore {Text nobId} in NobIdJson
+       resource NobIdJson
+         start
+         [{"nobId": "67890"}]
+        `, {fileName: 'the.manifest'});
+
+    assert.match(manifestA.handles[0].id.toString(), /^!\d+:manifest:the.manifest:store0$/);
+    assert.match(manifestB.handles[0].id.toString(), /^!\d+:manifest:the.manifest:store0$/);
+    assert.notEqual(manifestA.handles[0].id.toString(), manifestB.handles[0].id.toString());
+  });
   it('supports recipes specified with bidirectional connections', async () => {
     let manifest = await Manifest.parse(`
       schema S
@@ -696,9 +715,10 @@ ${particleStr1}
     let manifest = await Manifest.load('the.manifest', loader);
     let view = manifest.findStorageByName('View0');
     assert(view);
+    assert.match(manifest.id.toString(), /^!\d+:manifest:the.manifest:/);
     assert.deepEqual(await view.toList(), [
       {
-        id: 'manifest:the.manifest::0',
+        id: `${manifest.id}:0`,
         rawData: {someProp: 'someValue'},
       }, {
         id: 'entity-id',
@@ -738,9 +758,10 @@ Error parsing JSON from 'EntityList' (Unexpected token h in JSON at position 1)'
     `, {fileName: 'the.manifest'});
     let view = manifest.findStorageByName('View0');
     assert(view);
+    assert.match(manifest.id.toString(), /^!\d+:manifest:the.manifest:/);
     assert.deepEqual(await view.toList(), [
       {
-        id: 'manifest:the.manifest::0',
+        id: `${manifest.id}:0`,
         rawData: {someProp: 'someValue'},
       }, {
         id: 'entity-id',
@@ -771,7 +792,8 @@ Error parsing JSON from 'EntityList' (Unexpected token h in JSON at position 1)'
     };
     let manifest = await Manifest.load('the.manifest', loader);
     let recipe = manifest.recipes[0];
-    assert.deepEqual(recipe.toString(), 'recipe\n  map \'manifest:the.manifest:store0\' as myStore');
+    assert.match(manifest.id.toString(), /^!\d+:manifest:the.manifest:/);
+    assert.deepEqual(recipe.toString(), `recipe\n  map \'${manifest.id}store0\' as myStore`);
   });
   it('has prettyish syntax errors', async () => {
     try {
@@ -1148,7 +1170,7 @@ resource SomeName
           foo = view
         P3
           foo = view
-        
+
       recipe
         create as view
         P2
@@ -1218,7 +1240,7 @@ resource SomeName
         P(in Bar foo)
 
       view Foo of Bar 'test' @0 at 'firebase://testing'
-      
+
       recipe
         map Foo as myView
         P
