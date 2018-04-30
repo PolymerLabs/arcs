@@ -42,4 +42,33 @@ describe('SearchTokensToParticles', function() {
     assert.deepEqual(['fly', 'jump', 'rester'], results[0].result.search.resolvedTokens);
     assert.deepEqual(['and', 'or', 'or', 'run'], results[0].result.search.unresolvedTokens);
   });
+
+  it('recipes by verb strategy', async () => {
+    let manifest = (await Manifest.parse(`
+      particle SimpleJumper in 'A.js'
+        jump()
+      particle FlightPreparation in 'AA.js'
+        FlightPreparation()
+      particle GalaxyFlyer in 'AA.js'
+        GalaxyFlyer()
+      recipe fly
+        FlightPreparation
+        GalaxyFlyer
+
+      recipe
+        search \`jump or fly\`
+    `));
+    let arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'dom');
+    let recipe = manifest.recipes[1];
+    assert(recipe.normalize());
+    assert(!recipe.isResolved());
+    let inputParams = {generated: [], terminal: [{result: recipe, score: 1}]};
+    let stp = new SearchTokensToParticles(arc);
+    let results = await stp.generate(inputParams);
+    assert.equal(results.length, 1);
+    let result = results[0].result;
+    assert.deepEqual(['FlightPreparation', 'GalaxyFlyer', 'SimpleJumper'], result.particles.map(p => p.name).sort());
+    assert.deepEqual(['fly', 'jump'], result.search.resolvedTokens);
+    assert.deepEqual(['or'], result.search.unresolvedTokens);
+  });
 });
