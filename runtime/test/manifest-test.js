@@ -107,6 +107,17 @@ ${particleStr1}
     verify(manifest);
     verify(await Manifest.parse(manifest.toString(), {}));
   });
+  it('can parse a manifest containing a particle with an argument list', async () => {
+    let manifest = await Manifest.parse(`
+    particle TestParticle in 'a.js'
+      in [Product {}] list
+      out Person {} person
+      consume thing
+        provide otherThing
+    `);
+    assert.equal(manifest.particles.length, 1);
+    assert.equal(manifest.particles[0].connections.length, 2);
+  });
   it('can parse a manifest containing a schema', async () => {
     let manifest = await Manifest.parse(`
       schema Bar
