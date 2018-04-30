@@ -9,6 +9,7 @@
  */
 
 import {assert} from './chai-web.js';
+import Loader from '../../runtime/loader.js';
 import Manifest from '../manifest.js';
 import Recipe from '../recipe/recipe.js';
 
@@ -122,5 +123,79 @@ describe('recipe', function() {
     assert.lengthOf(recipe.slots, 1);
     assert.lengthOf(recipe.particles, 1);
     assert.lengthOf(recipe.handles, 1);
+  });
+
+  const getFirstRecipeHash = async manifestContent => {
+    let loader = new Loader();
+    let manifest = await Manifest.parse(manifestContent,
+        {loader, fileName: './manifest.manifest'});
+    let [recipe] = manifest.recipes;
+    assert.isTrue(recipe.normalize());
+    return recipe.digest();
+  };
+
+  it('generates the same hash on manifest re-parse for immediates', async () => {
+    const manifestContent = `
+      shape HostedParticleShape
+        HostedParticleShape(in ~a)
+        consume
+
+      schema Foo
+
+      particle A in 'A.js'
+        A(host HostedParticleShape hostedParticle)
+        consume set of annotation
+
+      particle B in 'B.js'
+        B(in Foo foo)
+        consume annotation
+
+      recipe
+        A
+          hostedParticle <- B
+    `;
+    const digestA = await getFirstRecipeHash(manifestContent);
+    const digestB = await getFirstRecipeHash(manifestContent);
+    assert.equal(digestA, digestB);
+  });
+
+  it('generates the same hash on manifest re-parse for stores', async () => {
+    const manifestContent = `
+      store NobId of NobIdStore {Text nobId} in NobIdJson
+       resource NobIdJson
+         start
+         [{"nobId": "12345"}]
+
+      particle A in 'A.js'
+        A(in NobIdStore {Text nobId} foo)
+
+      recipe
+        use NobId as foo
+        A
+          foo <- foo
+    `;
+    const digestA = await getFirstRecipeHash(manifestContent);
+    const digestB = await getFirstRecipeHash(manifestContent);
+    assert.equal(digestA, digestB);
+  });
+
+  it('generates the same hash on manifest re-parse for stores of collections', async () => {
+    const manifestContent = `
+      store NobId of [NobIdStore {Text nobId}] in NobIdJson
+       resource NobIdJson
+         start
+         [{"nobId": "12345"}, {"nobId": "67890"}]
+
+      particle A in 'A.js'
+        A(in [NobIdStore {Text nobId}] foo)
+
+      recipe
+        use NobId as foo
+        A
+          foo <- foo
+    `;
+    const digestA = await getFirstRecipeHash(manifestContent);
+    const digestB = await getFirstRecipeHash(manifestContent);
+    assert.equal(digestA, digestB);
   });
 });
