@@ -9,7 +9,7 @@
 import 'Product.schema'
 
 particle Arrivinator in 'source/Arrivinator.js'
-  Arrivinator(in Product product)
+  in Product product
   consume annotation
   description `estimate arrival date`
   // TODO: add support for patterns:

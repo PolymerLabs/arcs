@@ -123,7 +123,7 @@ describe('Planner', function() {
     let results = await planFromManifest(`
       view AView of * {Text text, Text moreText} in './shell/artifacts/Things/empty.json'
       particle P1 in './some-particle.js'
-        P1(in * {Text text} text)
+        in * {Text text} text
       recipe
         map as view
         P1
@@ -136,7 +136,7 @@ describe('Planner', function() {
     let results = await planFromManifest(`
       view AView of * {Text text, Text moreText} in './shell/artifacts/Things/empty.json'
       particle P1 in './some-particle.js'
-        P1(in * {Text text} text)
+        in * {Text text} text
       recipe
         copy as view
         P1
@@ -148,7 +148,6 @@ describe('Planner', function() {
   it('can resolve multiple consumed slots', async () => {
     let results = await planFromManifest(`
       particle P1 in './some-particle.js'
-        P1()
         consume one
         consume two
       recipe
@@ -165,7 +164,7 @@ describe('Planner', function() {
             Text name
 
           particle A in 'A.js'
-            A(out Thing thing)
+            out Thing thing
             consume root
             description \`Make \${thing}\`
 
@@ -204,11 +203,11 @@ describe('AssignOrCopyRemoteHandles', function() {
     schema Foo
 
     particle A in 'A.js'
-      A(in [Foo] list)
+      in [Foo] list
       consume root
 
     particle B in 'A.js'
-      B(inout [Foo] list)
+      inout [Foo] list
       consume root
     `;
     let testManifest = async (recipeManifest, expectedResults) => {
@@ -369,7 +368,7 @@ describe('Type variable resolution', function() {
     await verifyUnresolvedPlan(`
       schema Thing
       particle P
-        P(in ~a thing)
+        in ~a thing
       recipe
         map #mythings as mythings
         P
@@ -380,7 +379,7 @@ describe('Type variable resolution', function() {
     await verifyUnresolvedPlan(`
       schema Thing
       particle P
-        P(in [~a] things)
+        in [~a] things
       recipe
         map #mything as mything
         P
@@ -392,7 +391,8 @@ describe('Type variable resolution', function() {
       schema Thing1
       schema Thing2
       particle P
-        P(in [~a] manyThings, out ~a oneThing)
+        in [~a] manyThings
+        out ~a oneThing
       recipe
         map #manything as manythings
         copy #onething as onething
@@ -407,9 +407,9 @@ describe('Type variable resolution', function() {
     await verifyResolvedPlan(`
       schema Thing1
       particle P1
-        P1(in [Thing1] things)
+        in [Thing1] things
       particle P2
-        P2(in [~a] things)
+        in [~a] things
       recipe
         map #mythings as mythings
         P1
@@ -422,7 +422,7 @@ describe('Type variable resolution', function() {
       schema Thing1
       schema Thing2
       particle P2
-        P2(in [~a] things)
+        in [~a] things
       recipe
         map #mythings1 as mythings1
         map #mythings2 as mythings2
@@ -437,7 +437,8 @@ describe('Type variable resolution', function() {
       schema Thing1
       schema Thing2
       particle P2
-        P2(in [~a] things, in [Thing2] things2)
+        in [~a] things
+        in [Thing2] things2
       recipe
         map #mythings1 as mythings1
         map #mythings2 as mythings2
@@ -450,9 +451,9 @@ describe('Type variable resolution', function() {
     await verifyResolvedPlan(`
       schema Thing
       particle P1
-        P1(in [~a] things1)
+        in [~a] things1
       particle P2
-        P2(in [~b] things2)
+        in [~b] things2
       recipe
         map #mythings as mythings
         P1
@@ -467,9 +468,11 @@ describe('Type variable resolution', function() {
 shape HostedShape
   HostedShape(in ~a)
 particle P1
-  P1(in Thing1 input)
+  in Thing1 input
 particle Muxer in 'Muxer.js'
-  Muxer(host HostedShape hostedParticle, in [~a] list)`;
+  host HostedShape hostedParticle
+  in [~a] list
+`;
 
     // One transformation particle
     await verifyResolvedPlan(`
@@ -543,7 +546,7 @@ describe('Description', async () => {
       Text name
 
     particle A in 'A.js'
-      A(out Thing thing)
+      out Thing thing
       consume root
       description \`Make \${thing}\`
 
@@ -595,9 +598,9 @@ describe('Automatic handle resolution', function() {
     let recipe = await verifyResolvedPlan(`
       schema Thing
       particle A
-        A(out Thing thing)
+        out Thing thing
       particle B
-        B(in Thing thing)
+        in Thing thing
 
       recipe
         A
@@ -609,9 +612,9 @@ describe('Automatic handle resolution', function() {
     await verifyUnresolvedPlan(`
       schema Thing
       particle A
-        A(in Thing thing)
+        in Thing thing
       particle B
-        B(in Thing thing)
+        in Thing thing
 
       recipe
         A
@@ -623,7 +626,7 @@ describe('Automatic handle resolution', function() {
     let recipe = await verifyResolvedPlan(`
       schema Thing
       particle A
-        A(in Thing thing)
+        in Thing thing
 
       recipe
         A

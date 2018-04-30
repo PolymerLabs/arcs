@@ -60,7 +60,6 @@ describe('RecipeResolver', function() {
     const recipe = await buildRecipe({
       manifest: `
       particle P in 'A.js'
-        P()
         consume root
         affordance dom
 
@@ -86,7 +85,7 @@ describe('RecipeResolver', function() {
     const recipe = await buildRecipe({
       manifest: `
       particle P in 'A.js'
-        P(out * {Text value} text)
+        out * {Text value} text
         consume root
         affordance dom
 
@@ -105,7 +104,6 @@ describe('RecipeResolver', function() {
     const recipe = await buildRecipe({
       manifest: `
       particle P in 'A.js'
-        P()
 
       recipe
         P

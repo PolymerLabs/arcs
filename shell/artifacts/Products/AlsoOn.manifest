@@ -10,5 +10,6 @@ import 'Product.schema'
 import '../Things/Thing.schema'
 
 particle AlsoOn in 'source/AlsoOn.js'
-  AlsoOn(in Thing product, in [Thing] choices)
+  in Thing product
+  in [Thing] choices
   consume annotation

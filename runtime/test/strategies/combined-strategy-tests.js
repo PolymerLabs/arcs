@@ -21,10 +21,11 @@ describe('CombinedStrategy', function() {
     let manifest = (await Manifest.parse(`
       schema Energy
       schema Height
-      particle Energizer in 'A.js'
-        prepare(out Energy energy)
-      particle Jumper in 'AA.js'
-        jump(in Energy energy, out Height height)
+      particle Energizer #prepare in 'A.js'
+        out Energy energy
+      particle Jumper #jump in 'AA.js'
+        in Energy energy
+        out Height height
 
       recipe
         search \`prepare and jump\`

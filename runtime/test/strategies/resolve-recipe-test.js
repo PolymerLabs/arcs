@@ -23,7 +23,7 @@ describe('resolve recipe', function() {
         Boolean bioweaponDefenceMode
 
       particle P in 'p.js'
-        P(in Tesla param)
+        in Tesla param
 
       recipe
         copy as handle
@@ -52,7 +52,7 @@ describe('resolve recipe', function() {
         Boolean bioweaponDefenceMode
 
       particle P in 'p.js'
-        P(out Tesla param)
+        out Tesla param
 
       recipe
         copy as handle
@@ -81,7 +81,7 @@ describe('resolve recipe', function() {
         Boolean bioweaponDefenceMode
 
       particle P in 'p.js'
-        P(in Car param)
+        in Car param
 
       recipe
         copy as handle
@@ -110,7 +110,7 @@ describe('resolve recipe', function() {
         Boolean bioweaponDefenceMode
 
       particle P in 'p.js'
-        P(in Tesla param)
+        in Tesla param
 
       recipe
         copy as handle
@@ -134,7 +134,6 @@ describe('resolve recipe', function() {
   it('maps slots by tags', async () => {
     let manifest = (await Manifest.parse(`
       particle A in 'A.js'
-        A()
         consume master #parent
 
       recipe
@@ -153,11 +152,9 @@ describe('resolve recipe', function() {
   it('map slots by slot connection tags', async () => {
     let manifest = (await Manifest.parse(`
       particle A in 'A.js'
-        A()
         consume master #root
           provide detail #info #detail
       particle B in 'B.js'
-        B()
         consume info
       recipe
         A

@@ -60,11 +60,12 @@ schema Far
   Text farValue`;
   let aParticleManifest = `
 particle A
-  A(in Foo ifoo, out [Foo] ofoos)
+  in Foo ifoo
+  out [Foo] ofoos
   consume root`;
   let bParticleManifest = `
 particle B
-  B(out Foo ofoo)`;
+  out Foo ofoo`;
   let recipeManifest = `
 recipe
   create as fooView   // Foo
@@ -287,17 +288,17 @@ ${recipeManifest}
       let {arc, recipe, ifooHandleConn, fooView} = (await prepareRecipeAndArc(`
 ${schemaManifest}
 particle X1
-  X1(out Foo ofoo)
+  out Foo ofoo
   consume action
   description \`create X1::\${ofoo}\`
     ofoo \`X1-foo\`
 particle X2
-  X2(out Foo ofoo)
+  out Foo ofoo
   consume action
   description \`create X2::\${ofoo}\`
     ofoo \`X2-foo\`
 particle A
-  A(in Foo ifoo)
+  in Foo ifoo
   consume root
     provide action
   description \`display \${ifoo}\`
@@ -342,7 +343,7 @@ recipe
       let manifestStr = `
 ${schemaManifest}
 particle X
-  X(out [Foo] ofoo)
+  out [Foo] ofoo
   consume root
   description \`write to \${ofoo}\`
     ofoo \`X-foo\`
@@ -453,7 +454,7 @@ recipe
       let {arc, recipe} = (await prepareRecipeAndArc(`
 ${schemaManifest}
 particle A
-  A(out Foo ofoo)
+  out Foo ofoo
   consume root
   description \`create <new> <\${ofoo}>\`
     ofoo \`<my-foo>\`
@@ -480,7 +481,8 @@ recipe
         schema MyBESTType
           Text property
         particle P
-          P(in MyBESTType t, out [MyBESTType] ts)
+          in MyBESTType t
+          out [MyBESTType] ts
           description \`make \${ts} from \${t}\`
           consume root
         recipe
@@ -529,21 +531,21 @@ recipe
 schema Foo
   Text name
 particle A
-  A(inout Foo foo)
+  inout Foo foo
   consume root
     provide aslot
     provide otherslot
   description \`hello \${root.aslot}, see you at \${root.otherslot}\`
 particle B1
-  B1(out Foo foo)
+  out Foo foo
   consume aslot
   description \`first b\`
 particle B2
-  B2(out Foo foo)
+  out Foo foo
   consume aslot
   description \`second b\`
 particle C
-  C(in Foo foo)
+  in Foo foo
   consume otherslot
   description \`only c\`
 recipe
@@ -630,7 +632,8 @@ schema Description
   Text key
   Text value
 particle B
-  B(out Foo ofoo, out [Description] descriptions)
+  out Foo ofoo
+  out [Description] descriptions
   consume root
 recipe
   create 'test:1' as view0  // Foo

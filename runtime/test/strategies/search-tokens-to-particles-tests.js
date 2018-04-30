@@ -17,14 +17,10 @@ import {assert} from '../chai-web.js';
 describe('SearchTokensToParticles', function() {
   it('particles by verb strategy', async () => {
     let manifest = (await Manifest.parse(`
-      particle SimpleJumper in 'A.js'
-        jump()
-      particle StarJumper in 'AA.js'
-        jump()
-      particle GalaxyFlyer in 'AA.js'
-        fly()
-      particle Rester in 'AA.js'
-        rest()
+      particle SimpleJumper #jump in 'A.js'
+      particle StarJumper #jump in 'AA.js'
+      particle GalaxyFlyer #fly in 'AA.js'
+      particle Rester #rest in 'AA.js'
 
       recipe
         search \`jump or fly or run and Rester\`

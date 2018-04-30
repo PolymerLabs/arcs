@@ -12,7 +12,8 @@ shape HostedParticleShape
 
 // TODO: This particle should use generic slot name.
 particle Multiplexer in 'source/Multiplexer.js'
-  Multiplexer(host HostedParticleShape hostedParticle, in [~a] list)
+  host HostedParticleShape hostedParticle
+  in [~a] list
   consume set of annotation
   description `${hostedParticle} for ${list}`
 
@@ -22,6 +23,8 @@ shape HostedParticleShape2
   consume
 
 particle Multiplexer2 in 'source/Multiplexer.js'
-  Multiplexer2(host HostedParticleShape2 hostedParticle, in [~a] list, in [~a] others)
+  host HostedParticleShape2 hostedParticle
+  in [~a] list
+  in [~a] others
   consume set of annotation
   description `${hostedParticle} for ${list}`

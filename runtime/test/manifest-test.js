@@ -29,8 +29,8 @@ describe('manifest', function() {
         description \`one-s\`
           plural \`many-ses\`
           value \`s:\${t}\`
-      particle SomeParticle in 'some-particle.js'
-        work(out S someParam)
+      particle SomeParticle #work in 'some-particle.js'
+        out S someParam
 
       recipe SomeRecipe
         map #someView
@@ -73,7 +73,8 @@ schema Person
     `;
     let particleStr0 =
 `particle TestParticle in 'testParticle.js'
-  TestParticle(in [Product {}] list, out Person {} person)
+  in [Product {}] list
+  out Person {} person
   affordance dom
   affordance dom-touch
   must consume root #master #main
@@ -92,7 +93,6 @@ schema Person
 
     let particleStr1 =
 `particle NoArgsParticle in 'noArgsParticle.js'
-  NoArgsParticle()
   affordance dom`;
     let manifest = await Manifest.parse(`
 ${schemaStr}
@@ -139,9 +139,9 @@ ${particleStr1}
     let manifest = await Manifest.parse(`
       schema S
       particle P1
-        P1(out S x)
+        out S x
       particle P2
-        P2(out S x)
+        out S x
 
       recipe Bidirectional
         P1 as p1
@@ -167,9 +167,9 @@ ${particleStr1}
     let manifest = await Manifest.parse(`
       schema S
       particle A
-        A(in S a)
+        in S a
       particle B
-        B(in S b)
+        in S b
 
       recipe Constrained
         A.a -> B.b`);
@@ -190,9 +190,11 @@ ${particleStr1}
     let manifest = await Manifest.parse(`
       schema S
       particle P1
-        P1(out S x, out S y)
+        out S x
+        out S y
       particle P2
-        P2(out S x, out S y)
+        out S x
+        out S y
 
       recipe
         ? #things as thingView
@@ -220,7 +222,7 @@ ${particleStr1}
     let manifest = await Manifest.parse(`
       schema S
       particle P1
-        P1(out S x)
+        out S x
       particle P2
 
       recipe
@@ -248,7 +250,7 @@ ${particleStr1}
     let manifest = await Manifest.parse(`
       schema S
       particle P1
-        P1(out S x)
+        out S x
 
       recipe
         use as v1
@@ -275,22 +277,13 @@ ${particleStr1}
       schema Something
       schema Someother
       particle Thing in 'thing.js'
-        Thing(in [Something] someThings, out [Someother] someOthers)
+        in [Something] someThings
+        out [Someother] someOthers
       recipe
         Thing`);
     let verify = (manifest) => assert(manifest.recipes[0].particles[0].spec);
     verify(manifest);
     verify(await Manifest.parse(manifest.toString(), {}));
-  });
-  it('throws an error when a particle has no appropriate body definition', async () => {
-    try {
-      let manifest = await Manifest.parse(`
-        schema Thixthpenthe
-        particle Thing in 'thing.js'`);
-      assert(false);
-    } catch (e) {
-      assert.equal(e.message, 'no valid body defined for this particle');
-    }
   });
   it('treats a failed import as non-fatal', async () => {
     let manifests = {
@@ -315,7 +308,7 @@ ${particleStr1}
       let manifest = await Manifest.parse(`
         schema Foo
         particle Thing in 'thing.js'
-          Thing(in Foo foo)
+          in Foo foo
           description \`Does thing\`
             bar \`my-bar\``);
       assert(false);
@@ -373,7 +366,7 @@ ${particleStr1}
           b: `
               schema Thing
               particle ParticleB in 'b.js'
-                ParticleB(in Thing thing)`
+                in Thing thing`
         }[path];
       },
       path(fileName) {
@@ -453,7 +446,7 @@ ${particleStr1}
     let manifest = await Manifest.parse(`
       schema Thing
       particle SomeParticle in 'some-particle.js'
-        SomeParticle(in Thing someParam)
+        in Thing someParam
         consume mySlot
           formFactor big
           provide otherSlot
@@ -462,7 +455,7 @@ ${particleStr1}
             formFactor small
 
       particle OtherParticle
-        OtherParticle(out Thing aParam)
+        out Thing aParam
         consume mySlot
         consume oneMoreSlot
 
@@ -501,11 +494,9 @@ ${particleStr1}
   });
   it('unnamed consume slots', async () => {
     let manifest = await Manifest.parse(`
-      particle SomeParticle in 'some-particle.js'
-        work()
+      particle SomeParticle #work in 'some-particle.js'
         consume slotA
-      particle SomeParticle1 in 'some-particle.js'
-        rest()
+      particle SomeParticle1 #rest in 'some-particle.js'
         consume slotC
 
       recipe
@@ -522,7 +513,6 @@ ${particleStr1}
     let parseRecipe = async (args) => {
       let recipe = (await Manifest.parse(`
         particle SomeParticle in 'some-particle.js'
-          SomeParticle()
           ${args.isRequiredSlotA ? 'must ' : ''}consume slotA
           ${args.isRequiredSlotB ? 'must ' : ''}consume slotB
 
@@ -542,7 +532,6 @@ ${particleStr1}
   it('recipe slots with tags', async () => {
     let manifest = await Manifest.parse(`
       particle SomeParticle in 'some-particle.js'
-        SomeParticle()
         consume slotA #aaa
           provide slotB #bbb
         recipe
@@ -577,10 +566,8 @@ ${particleStr1}
   it('recipe slots with different names', async () => {
     let manifest = await Manifest.parse(`
       particle ParticleA in 'some-particle.js'
-        ParticleA()
         consume slotA
       particle ParticleB in 'some-particle.js'
-        ParticleB()
         consume slotB1
           provide slotB2
       recipe
@@ -603,11 +590,9 @@ ${particleStr1}
   it('incomplete aliasing', async () => {
     let recipe = (await Manifest.parse(`
       particle P1 in 'some-particle.js'
-        P1()
         consume slotA
           provide slotB
       particle P2 in 'some-particle.js'
-        P2()
         consume slotB
       recipe
         P1
@@ -800,7 +785,9 @@ Expected " ", "#", "//", "\\n", "\\r", [ ], [A-Z], or [a-z] but "?" found.
     let manifest = `
         schema Thing
         particle TestParticle in 'tp.js'
-          TestParticle(in Thing iny, out Thing outy, inout Thing inouty)
+          in Thing iny
+          out Thing outy
+          inout Thing inouty
         recipe
           create as x
           TestParticle
@@ -819,7 +806,7 @@ Expected " ", "#", "//", "\\n", "\\r", [ ], [A-Z], or [a-z] but "?" found.
     let manifest = `
         schema Thing
         particle TestParticle in 'tp.js'
-          TestParticle(in Thing a)
+          in Thing a
         recipe
           create as x
           TestParticle
@@ -837,7 +824,7 @@ Expected " ", "#", "//", "\\n", "\\r", [ ], [A-Z], or [a-z] but "?" found.
     let manifest = `
         schema S
         particle A
-          A(in S s)
+          in S s
         recipe
           A
             s = noSuchHandle`;
@@ -852,7 +839,6 @@ Expected " ", "#", "//", "\\n", "\\r", [ ], [A-Z], or [a-z] but "?" found.
   it('errors when the manifest references a missing consumed slot', async () => {
     let manifest = `
         particle TestParticle in 'tp.js'
-          TestParticle()
           consume root
         recipe
           TestParticle
@@ -868,7 +854,6 @@ Expected " ", "#", "//", "\\n", "\\r", [ ], [A-Z], or [a-z] but "?" found.
   it('errors when the manifest references a missing provided slot', async () => {
     let manifest = `
         particle TestParticle in 'tp.js'
-          TestParticle()
           consume root
             provide action
         recipe
@@ -921,7 +906,7 @@ Expected " ", "#", "//", "\\n", "\\r", [ ], [A-Z], or [a-z] but "?" found.
     let manifestToParam = `
         schema Thing
         particle ParticleA
-          particleA(in Thing paramA)
+          in Thing paramA
         particle ParticleB
         recipe
           ParticleA.paramA -> ParticleB.paramB`;
@@ -1055,7 +1040,7 @@ resource SomeName
       shape Shape
         AnyThing(in Foo foo)
       particle ShapeParticle
-        ShapeParticle(host Shape shape)
+        host Shape shape
       recipe
         create as view0
         ShapeParticle
@@ -1067,7 +1052,8 @@ resource SomeName
     let manifest = await Manifest.parse(`
       schema Something
       particle Thing in 'thing.js'
-        Thing(in [Something] inThing, out [Something]? maybeOutThings)
+        in [Something] inThing
+        out [Something]? maybeOutThings
       recipe
         create as view0 // [Something]
         Thing
@@ -1090,10 +1076,11 @@ resource SomeName
         HostedShape(in S foo)
 
       particle Hosted
-        Hosted(in S foo, in S bar)
+        in S foo
+        in S bar
 
-      particle Transformation in '...js'
-        work(host HostedShape hosted)
+      particle Transformation #work in '...js'
+        host HostedShape hosted
 
       recipe
         Transformation
@@ -1105,7 +1092,7 @@ resource SomeName
   it('can resolve a particle with an inline schema', async () => {
     let manifest = await Manifest.parse(`
       particle P
-        P(in * {Text value} foo)
+        in * {Text value} foo
       recipe
         create as view
         P
@@ -1120,9 +1107,9 @@ resource SomeName
       schema T
         Text value
       particle P
-        P(in * {Text value} foo)
+        in * {Text value} foo
       particle P2
-        P2(out T foo)
+        out T foo
 
       recipe
         create as view
@@ -1138,13 +1125,13 @@ resource SomeName
   it('can resolve view types from inline schemas', async () => {
     let manifest = await Manifest.parse(`
       particle P
-        P(in * {Text value} foo)
+        in * {Text value} foo
       particle P2
-        P2(in * {Text value, Text value2} foo)
+        in * {Text value, Text value2} foo
       particle P3
-        P3(in * {Text value, Text value3} foo)
+        in * {Text value, Text value3} foo
       particle P4
-        P4(in * {Text value, Number value2} foo)
+        in * {Text value, Number value2} foo
 
       recipe
         create as view
@@ -1179,9 +1166,9 @@ resource SomeName
       schema Thing
         Text value
       particle P
-        P(in Thing {value} foo)
+        in Thing {value} foo
       particle P2
-        P2(in * {Text value} foo)
+        in * {Text value} foo
 
       recipe
         create as view
@@ -1202,9 +1189,9 @@ resource SomeName
       schema Thing2
         Number value2
       particle P
-        P(in Thing1 Thing2 {value1, value2} foo)
+        in Thing1 Thing2 {value1, value2} foo
       particle P2
-        P2(in * {Text value1, Number value2} foo)
+        in * {Text value1, Number value2} foo
 
       recipe
         create as view
@@ -1226,7 +1213,7 @@ resource SomeName
         Text value
 
       particle P
-        P(in Bar foo)
+        in Bar foo
 
       view Foo of Bar 'test' @0 at 'firebase://testing'
       
@@ -1256,7 +1243,7 @@ resource SomeName
       alias schema Name2 as Thing2
         Text field2
       particle P in 'p.js'
-        P(in Thing1 Thing2 Name3 {Text field1, Text field3} param)
+        in Thing1 Thing2 Name3 {Text field1, Text field3} param
     `);
     let paramSchema = manifest.findParticleByName('P').inputs[0].type.entitySchema;
     assert.sameMembers(paramSchema.names, ['Name1', 'Name2', 'Name3']);
@@ -1271,7 +1258,7 @@ resource SomeName
         alias schema Name2 as Thing2
           Number field1
         particle P in 'p.js'
-          P(in Thing1 Thing2 {} param)
+          in Thing1 Thing2 {} param
       `);
       assert.fail();
     } catch (e) {
@@ -1285,7 +1272,7 @@ resource SomeName
         alias schema Name1 as Thing1
           Text field1
         particle P in 'p.js'
-          P(in Thing1 {Number field1} param)
+          in Thing1 {Number field1} param
       `);
       assert.fail();
     } catch (e) {
@@ -1300,7 +1287,8 @@ resource SomeName
         Number num
 
       particle P
-        P(in ~a with Thing {value} inThing, out ~a outThing)
+        in ~a with Thing {value} inThing
+        out ~a outThing
 
       resource Things
         start

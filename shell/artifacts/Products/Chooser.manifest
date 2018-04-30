@@ -7,7 +7,8 @@
 // http://polymer.github.io/PATENTS.txt
 
 particle Chooser in 'source/Chooser.js'
-  Chooser(in [~a] choices, inout [~a] resultList)
+  in [~a] choices
+  inout [~a] resultList
   consume action
     provide set of annotation
       view choices

@@ -21,11 +21,11 @@ describe('CreateHandles', function() {
       schema Thing
 
       particle Reader in 'test.js'
-        Reader(in Thing foo)
+        in Thing foo
       particle Writer in 'test.js'
-        Writer(out Thing foo)
+        out Thing foo
       particle ReadWriter in 'test.js'
-        ReadWriter(inout Thing foo)
+        inout Thing foo
 
       ${recipeManifest}
     `));

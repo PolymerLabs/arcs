@@ -56,16 +56,22 @@ describe('shape', function() {
         schema NotTest
 
         particle P
-          P(in Test foo)
+          in Test foo
 
         particle Q
-          Q(in Test foo, in Test foo, in Test foo)
+          in Test foo
+          in Test foo2
+          in Test foo3
 
         particle R
-          R(out NotTest foo, in NotTest bar, out Test far)
+          out NotTest foo
+          in NotTest bar
+          out Test far
 
         particle S
-          S(in NotTest bar, out Test far, out NotTest foo)
+          in NotTest bar
+          out Test far
+          out NotTest foo
       `);
       let type = Type.newEntity(manifest.schemas.Test);
       let shape = new Shape('Test', [{name: 'foo'}, {direction: 'in'}, {type}], []);
@@ -80,19 +86,19 @@ describe('shape', function() {
         schema Test
 
         particle P
-          P(in Test foo)
+          in Test foo
 
         particle Q
-          Q(in Test foo)
+          in Test foo
           consume one
 
         particle R
-          R(in Test foo)
+          in Test foo
           consume one
             provide set of other
 
         particle S
-          S(in Test foo)
+          in Test foo
           consume notTest
             provide one
             provide set of randomSlot
