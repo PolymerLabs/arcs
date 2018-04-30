@@ -112,14 +112,20 @@ export default class Schema {
   }
 
   static intersect(schema1, schema2) {
-    if (schema1.isMoreSpecificThan(schema2))
-      return schema2;
-    else if (schema2.isMoreSpecificThan(schema1))
-      return schema1;
-    
-    // TODO: Don't be lazy
-    assert(false, 'non-trivial intersection of schemas not implemented.');
-    return null;
+    let names = [...schema1.names].filter(name => schema2.names.includes(name));
+    let fields = {};
+
+    for (let [field, type] of Object.entries(schema1.fields)) {
+      let otherType = schema2.fields[field];
+      if (otherType && Schema.typesEqual(type, otherType)) {
+        fields[field] = type;
+      }
+    }
+
+    return new Schema({
+      names,
+      fields,
+    });
   }
 
   equals(otherSchema) {
@@ -294,7 +300,7 @@ export default class Schema {
     let fields = Object.entries(this.fields).map(([name, type]) => `${Schema._typeString(type)} ${name}`).join(', ');
     return `${names} {${fields}}`;
   }
-  
+
   toManifestString() {
     let results = [];
     results.push(`schema ${this.names.join(' ')}`);

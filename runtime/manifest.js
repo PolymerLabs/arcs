@@ -454,7 +454,7 @@ ${e.message}
     visitor.traverse(items);
   }
   static _processSchema(manifest, schemaItem) {
-    let description = '';
+    let description;
     let fields = {};
     let names = [...schemaItem.names];
     for (let item of schemaItem.items) {
@@ -510,11 +510,9 @@ ${e.message}
           schemaItem.location,
           `Schema defined without name or alias`);
     }
-    let schema = new Schema({
-      names,
-      description: description,
-      fields,
-    });
+    let model = {names, fields};
+    if (description) model.description = description;
+    let schema = new Schema(model);
     if (schemaItem.alias) {
       schema.isAlias = true;
     }
