@@ -20,8 +20,7 @@ export class CreateHandles extends Strategy {
         // Don't make a 'create' handle, unless there is someone reading,
         // someone writing and at least 2 particles invloved.
         if (counts.in == 0 || counts.out == 0
-            // TODO: Allow checking number of particles without touching privates.
-            || new Set(handle.connections.map(hc => hc._particle)).size <= 1) {
+            || new Set(handle.connections.map(hc => hc.particle)).size <= 1) {
           return;
         }
 

@@ -74,3 +74,8 @@ For recipe particles identified by verb rather than name, find particles matchin
 ## NameUnnamedConnections
 Names unnamed connections of a particle based on its spec.<br/>
 [name-unnamed-connections.js](https://github.com/PolymerLabs/arcs/blob/master/runtime/strategies/name-unnamed-connections.js)
+
+## CoalesceRecipes
+Merges 2 unresolved terminal recipes and connects them through merging one unresolved handle from each recipe.
+Handles that are merged need to be one of use/map/copy fate, connected to particles on both sides, and need to facilitate communication (everyone writing or everyone reading is not valid) and have connections of types and directions that allow such merge.
+[coalesce-recipes.js](https://github.com/PolymerLabs/arcs/blob/master/runtime/strategies/coalesce-recipes.js)

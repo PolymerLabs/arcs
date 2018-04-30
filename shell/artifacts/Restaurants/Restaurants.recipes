@@ -12,7 +12,6 @@ import 'RestaurantDetail.manifest'
 import '../Places/ExtractLocation.manifest'
 
 recipe locateUser
-  use #user as person
   ExtractLocation
 
 recipe displayRestaurants
@@ -22,12 +21,8 @@ recipe displayRestaurants
   RestaurantList
 
 recipe
-  create as location
   create #restaurants #nosync as restaurants
-  particle can locateUser
-    location -> location
   FindRestaurants
-    location <- location
     restaurants = restaurants
   particle can displayRestaurants
     list <- restaurants
