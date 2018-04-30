@@ -232,7 +232,7 @@ MetaStorageKey = 'storageKey' whiteSpace? ':' whiteSpace? key:id eolWhiteSpace
 ParticleDefinition
   = 'particle' whiteSpace name:TopLevelIdent implFile:(whiteSpace 'in' whiteSpace id)? eolWhiteSpace items:(Indent (SameIndent ParticleItem)*)? eolWhiteSpace?
   {
-    let args = null;
+    let args = [];
     let verbs = [];
     let affordance = [];
     let slots = [];
@@ -245,6 +245,8 @@ ParticleDefinition
         }
         verbs.push(item.verb);
         args = item.args;
+      } else if (item.kind == 'particle-argument') {
+        args.push(item);
       } else if (item.kind == 'particle-slot') {
         slots.push(item);
       } else if (item.kind == 'description') {
@@ -281,6 +283,7 @@ ParticleDefinition
 
 ParticleItem
   = ParticleInterface
+  / ParticleHandle
   / ParticleAffordance
   / ParticleSlot
   / Description
@@ -294,6 +297,12 @@ ParticleInterface
       verb,
       args: args || []
     };
+  }
+
+ParticleHandle
+  = arg:ParticleArgument eolWhiteSpace
+  {
+    return arg;
   }
 
 ParticleArgumentList
