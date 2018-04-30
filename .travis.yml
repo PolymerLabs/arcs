@@ -14,7 +14,9 @@ addons:
 script: "cd ${TRAVIS_BUILD_DIR} && npm install && npm run test-with-start"
 
 before_install:
-  - npm install -g npm@latest
+  - npm install -g npm@5.8.0
+  - node --version
+  - npm --version
 
 before_deploy:
   # Travis pages deploys skips artifacts from .gitignore. We need some of those, so
