@@ -232,7 +232,7 @@ MetaStorageKey = 'storageKey' whiteSpace? ':' whiteSpace? key:id eolWhiteSpace
 ParticleDefinition
   = 'particle' whiteSpace name:TopLevelIdent implFile:(whiteSpace 'in' whiteSpace id)? eolWhiteSpace items:(Indent (SameIndent ParticleItem)*)? eolWhiteSpace?
   {
-    let args = null;
+    let args = [];
     let verbs = [];
     let affordance = [];
     let slots = [];
@@ -246,11 +246,6 @@ ParticleDefinition
         verbs.push(item.verb);
         args = item.args;
       } else if (item.kind == 'particle-argument') {
-        // Do this here instead of setting the default value for args to be [], so
-        // that we can detect when no 'interface' or 'particle-argument's are 
-        // provided, as this is invalid.
-        if (args == null)
-          args = [];
         args.push(item);
       } else if (item.kind == 'particle-slot') {
         slots.push(item);
