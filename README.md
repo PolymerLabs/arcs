@@ -1,5 +1,5 @@
 [![Build Status](https://travis-ci.org/PolymerLabs/arcs.svg?branch=master)](https://travis-ci.org/PolymerLabs/arcs)
-[![Appveyor Build status](https://ci.appveyor.com/api/projects/status/rswlpkq2vtp9cns0?svg=true)](https://ci.appveyor.com/project/smalls/arcs-3i77k)
+[![Appveyor Build status](https://ci.appveyor.com/api/projects/status/rswlpkq2vtp9cns0?svg=true)](https://ci.appveyor.com/project/arcs/arcs-3i77k)
 
 
 # arcs
