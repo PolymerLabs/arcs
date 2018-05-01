@@ -18,7 +18,6 @@ import Shape from './shape.js';
 import Type from './type.js';
 import util from './recipe/util.js';
 import StorageProviderFactory from './storage/storage-provider-factory.js';
-import scheduler from './scheduler.js';
 import ManifestMeta from './manifest-meta.js';
 import TypeChecker from './recipe/type-checker.js';
 
@@ -80,7 +79,6 @@ class Manifest {
     this._nextLocalID = 0;
     this._id = id;
     this._storageProviderFactory = undefined;
-    this._scheduler = scheduler;
     this._meta = new ManifestMeta();
     this._resources = {};
     this._handleManifestUrls = new Map();
@@ -118,9 +116,6 @@ class Manifest {
   }
   get handles() {
     return this._stores;
-  }
-  get scheduler() {
-    return this._scheduler;
   }
   get shapes() {
     return this._shapes;
