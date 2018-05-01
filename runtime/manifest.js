@@ -539,9 +539,9 @@ ${e.message}
 
     if (particleItem.hasParticleArgument) {
       let warning = new ManifestError(particleItem.location, `Particle uses deprecated argument body`);
-      warning.key = "hasParticleArgument";
+      warning.key = 'hasParticleArgument';
       manifest._warnings.push(warning);
-      debugger;
+      
     }
 
     // TODO: loader should not be optional.
