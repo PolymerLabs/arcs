@@ -4,17 +4,18 @@ export default {
     tools: '0-3-arcs-dev-tools',
     exclusions: '0-3-arcs-exclusions'
   },
-  KEYS: {
+  SHELLKEYS: {
+    '*': '*',
     launcher: 'launcher',
-    profile: 'profile'
+    //profile: 'profile'
   },
-  PATHS: {
-    launcherManifest: '../web/artifacts/launcher.manifest',
-    profileManifest: '../web/artifacts/profile.manifest'
+  MANIFESTS: {
+    launcher: `import './artifacts/launcher.manifest'`,
+    //profile: `import '../apps/web/artifacts/profile.manifest'`
   },
   SHARE: {
-    private: 0,
-    self: 1,
-    friends: 2
+    private: 1,
+    self: 2,
+    friends: 3
   }
 };

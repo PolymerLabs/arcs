@@ -14,19 +14,25 @@ const db = window.db;
 const log = Xen.logFactory('WatchGroup', '#aa00c7');
 
 class WatchGroup extends Xen.Base {
-  static get observedAttributes() { return ['watches', 'db']; }
-  add(watches) {
-    this._watchAll(this._state.db, watches, this._state.plugs);
+  static get observedAttributes() {
+    return ['watches', 'db'];
+  }
+  // TODO(sjmiles): a sign that this shouldn't be an Element at all
+  static create(initializedCallback) {
+    return Object.assign(new WatchGroup(), {initializedCallback});
   }
   _getInitialState() {
     return {
-      plugs: new Set()
+      plugs: new Set(),
+      initializedCallback: () => {}
     };
   }
   _update(props, state, lastProps) {
     state.db = props.db || db;
     if (props.watches !== lastProps.watches) {
       this._unplug(state.plugs);
+      state.initialized = false;
+      state.callbacksFired = 0;
       this._watchAll(state.db, props.watches, state.plugs);
     }
   }
@@ -36,33 +42,41 @@ class WatchGroup extends Xen.Base {
   }
   _watchAll(db, watches, plugs) {
     if (watches) {
-      for (let watch of watches) {
-        let pull = watch.path ? this._watchPath(db, watch) : this._watch(watch.node, watch.handler);
-        // for nested watches, if we pull the plug on this watch, pull the plug on nested group too
-        // note that it's `watch.handler`'s job to install watches into `watch.group`, we only do clean-up
-        if (watch.group) {
-          let off = pull;
-          pull = () => {
-            off();
-            watch.group.watches = null;
-          };
-        }
-        plugs.add(pull);
+      for (const watch of watches) {
+        this._watchOne(db, watch, plugs);
       }
-      //log('total watches', WatchGroup.watchCount);
     }
+  }
+  _watchOne(db, watch, plugs) {
+    let pull = watch.path ? this._watchPath(db, watch) : this._watchNode(watch.node, watch.handler);
+    // for nested watches, if we pull the plug on this watch, pull the plug on nested group too
+    // note that it's `watch.handler`'s job to install watches into `watch.group`, we only do clean-up
+    if (watch.group) {
+      let off = pull;
+      pull = () => {
+        off();
+        watch.group.watches = null;
+      };
+    }
+    plugs.add(pull);
   }
   _watchPath(db, {path, handler, group}) {
     let node = db.child(path);
-    return this._watch(node, handler);
+    return this._watchNode(node, handler);
   }
-  _watch(node, handler) {
+  _watchNode(node, handler) {
     WatchGroup.watchCount++;
-    let handle = node.on('value', handler);
+    let handle = node.on('value', snap => {
+      const state = this._state;
+      if (++state.callbacksFired === state.plugs.length) {
+        state.initialized = true;
+        state.initializedCallback();
+      }
+      handler(snap);
+    });
     return () => {
       node.off('value', handle);
       WatchGroup.watchCount--;
-      //log('total watches', WatchGroup.watchCount);
     };
   }
 }

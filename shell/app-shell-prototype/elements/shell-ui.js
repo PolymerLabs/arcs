@@ -42,6 +42,8 @@ const template = html`
       --bar-peek-height: 16px;
       --bar-touch-height: 32px;
       --bar-space-height: 48px;
+      --avatar-size: 24px;
+      --large-avatar-size: 40px;
     }
     :host {
       display: block;
@@ -88,6 +90,7 @@ const template = html`
       width: 90vw;
       max-width: var(--bar-max-width);
       max-height: var(--bar-hint-height);
+      color: black;
       background-color: white;
       box-shadow: 0px 0px 32px 3px rgba(0,0,0,0.13);
       transition: transform 200ms ease-out;
@@ -122,10 +125,12 @@ const template = html`
       align-items: center;
       height: 56px;
       width: 100%;
-      transition: transform 100ms ease-in-out;
+      /* transition: transform 100ms ease-in-out; */
+      padding: 0 8px;
+      box-sizing: border-box;
     }
     [toolbar] > *:not(span):not(input) {
-      margin: 16px;
+      margin: 16px 8px;
       height: 24px;
     }
     [toolbar] > span {
@@ -164,7 +169,7 @@ const template = html`
       display: inline-block;
       width: 100%;
       vertical-align: top;
-      transition: transform 100ms ease-in-out;
+      /* transition: transform 100ms ease-in-out; */
     }
     [content]:not([open]) {
       height: 0px;
@@ -200,7 +205,7 @@ const template = html`
     ::slotted([slotid=suggestions]) {
       display: flex;
       flex-direction: column;
-      padding: 6px 10px 10px 10px;
+      padding: 10px;
     }
     [tools] {
       position: fixed;
@@ -209,7 +214,7 @@ const template = html`
       top: 0;
       bottom: 0;
       box-shadow: 0px 0px 32px 3px rgba(0,0,0,0.13);
-      transform: translate3d(100%, 0, 0);
+      transform: translate3d(120%, 0, 0);
       transition: transform 200ms ease-in-out;
       overflow: auto;
       background-color: white;
@@ -219,8 +224,6 @@ const template = html`
       transform: translate3d(0,0,0);
     }
     avatar {
-      --avatar-size: 24px;
-      --large-avatar-size: 40px;
       display: inline-block;
       height: var(--avatar-size);
       width: var(--avatar-size);
@@ -244,15 +247,13 @@ const template = html`
     <div toolbars on-click="_onBarClick">
       <div main toolbar open$="{{mainToolbarOpen}}">
         <a href="{{launcherHref}}" title="Go to Launcher">${AppIcon}</a>
-        <span title="{{title}}">{{title}}</span>
-        <!-- <icon on-click="_onExperimentClick">update</icon> -->
+        <span title="{{title}}" style="text-indent:4px;">{{title}}</span>
         <icon on-click="_onSearchClick">search</icon>
         <icon on-click="_onSettingsClick">settings</icon>
       </div>
       <div search toolbar open$="{{searchToolbarOpen}}">
         <icon on-click="_onMainClick">arrow_back</icon>
         <input placeholder="Search" value="{{searchText}}" on-keypress="_onKeypress" on-input="_onSearchChange" on-blur="_onSearchCommit">
-        <icon>search</icon>
       </div>
       <div settings toolbar open$="{{settingsToolbarOpen}}">
         <icon on-click="_onMainClick">arrow_back</icon>
@@ -264,7 +265,7 @@ const template = html`
       <div suggestions content open$="{{suggestionsContentOpen}}">
         <slot name="suggestions" slot="suggestions" on-plan-choose="_onChooseSuggestion"></slot>
       </div>
-      <settings-panel settings content open$="{{settingsContentOpen}}" users="{{users}}" user="{{user}}" user_picker_open="{{userPickerOpen}}" friends="{{users}}" on-user="_onSelectUser"></settings-panel>
+      <settings-panel settings content open$="{{settingsContentOpen}}" users="{{users}}" user="{{user}}" user_picker_open="{{userPickerOpen}}" friends="{{users}}" share="{{share}}" on-user="_onSelectUser" on-share="_onShare"></settings-panel>
     </div>
   </div>
   <!-- -->
@@ -287,7 +288,9 @@ const template = html`
 const log = Xen.logFactory('ShellUi', '#ac6066');
 
 class ShellUi extends Xen.Debug(Xen.Base, log) {
-  static get observedAttributes() { return ['showhint', 'arc', 'title', 'users']; }
+  static get observedAttributes() {
+    return ['showhint', 'users', 'user', 'arc', 'title', 'share'];
+  }
   get template() {
     return template;
   }
@@ -321,6 +324,12 @@ class ShellUi extends Xen.Debug(Xen.Base, log) {
       settingsContentOpen: settingsOpen,
       userContentOpen: userOpen
     };
+    const {user} = props;
+    if (user && user.info) {
+      renderModel.avatar_title = user.info.name;
+      const avatar_style = user.info.avatar ? `background-image: url("${user.info.avatar}");` : '';
+      renderModel.avatar_style = avatar_style;
+    }
     return [props, state, renderModel];
   }
   _didRender(props, state, oldProps, oldState) {
@@ -345,10 +354,9 @@ class ShellUi extends Xen.Debug(Xen.Base, log) {
       this._setState({barState: 'open'});
     }
   }
-  _onBarClick() {
-    if (this._state.barState !== 'open') {
-      this._setState({barState: 'open'});
-    }
+  _onBarClick(e) {
+    const wasAnchorClick = e.path.find(n => n.localName === 'a');
+    this._setState({barState: wasAnchorClick ? 'peek' : 'open'});
   }
   _onBarEnter(e) {
     if (this._state.barState === 'peek') {
@@ -389,16 +397,16 @@ class ShellUi extends Xen.Debug(Xen.Base, log) {
   }
   _onChooseSuggestion(e, suggestion) {
     e.stopPropagation();
-    this._fire('suggestion', suggestion);
     this._setState({barState: 'peek'});
+    // TODO(sjmiles): wait for animation to complete to reduce jank
+    setTimeout(() => this._fire('suggestion', suggestion), 300);
   }
   _onSelectUser(e, user) {
-    this._fire('select-user', user);
+    this._fire('select-user', user.id);
     this._setState({userPickerOpen: false});
   }
-  _onExperimentClick(e) {
-    e.stopPropagation();
-    this._fire('experiment');
+  _onShare(e, share) {
+    this._fire('share', share);
   }
   _onToolsClick() {
     this._setState({toolsOpen: !this._state.toolsOpen});
@@ -418,11 +426,7 @@ class ShellUi extends Xen.Debug(Xen.Base, log) {
   _commitSearch(search) {
     search = search || '';
     // TODO(sjmiles): removed this check so speech-input can update the search box, is it harmful?
-    //if (this._state.search !== search) {
-      //this._setState({search});
-      this._fire('search', search);
-      //this._fire('open', true);
-    //}
+    this._fire('search', search);
   }
 }
 

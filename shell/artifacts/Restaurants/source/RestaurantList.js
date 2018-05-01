@@ -26,7 +26,7 @@ defineParticle(({DomParticle, html}) => {
     </div>
   </div>
 </div>
-<div slotid="annotation" subid="{{id}}" style="padding:16px 0;">
+<div slotid="annotation" subid="{{id}}" style="padding:4px 0;">
 
 `;
 
@@ -45,12 +45,31 @@ defineParticle(({DomParticle, html}) => {
   }
   [${host}] [header] {
     padding: 12px 16px;
+    display: none;
     /* border-bottom: 1px solid #bbb; */
   }
   [${host}] [selectable-item] {
     /* border-bottom: 1px dotted silver; */
     cursor: pointer;
     box-sizing: border-box;
+  }
+
+  @media (min-width: 960px) {
+    [${host}] [selectable-item]{
+      width: 50%;
+      display: inline-block;
+      padding-left: 4px;
+      padding-right: 4px;
+    }
+    [${host}] {
+      padding: 8px 4px;
+    }
+  }
+  @media (min-width: 1280px) {
+    [${host}] [selectable-item]{
+      width: 33.33%;
+      display: inline-block;
+    }
   }
   [${host}] [selectable-item]:last-child {
     border-bottom: none;
@@ -149,6 +168,7 @@ defineParticle(({DomParticle, html}) => {
     }
     _onSelect(e, state) {
       this._views.get('selected').set(this._props.list[e.data.key]);
+      
     }
   };
 

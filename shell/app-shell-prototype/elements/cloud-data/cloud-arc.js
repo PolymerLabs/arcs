@@ -11,69 +11,76 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 import WatchGroup from './watch-group.js';
 import ArcsUtils from '../../lib/arcs-utils.js';
 import Xen from '../../../components/xen/xen.js';
-const db = window.db;
+import Const from '../../constants.js';
+import Firebase from './firebase.js';
 
 const log = Xen.logFactory('CloudArc', '#a30000');
 const groupCollapsed = Xen.logFactory('CloudArc', '#a30000', 'groupCollapsed');
 const groupEnd = Xen.logFactory('CloudArc', '#a30000', 'groupEnd');
 
 class CloudArc extends Xen.Debug(Xen.Base, log) {
-  static get observedAttributes() { return ['key', 'metadata', 'description', 'arc', 'plan']; }
+  static get observedAttributes() { return ['config', 'key', 'metadata', 'description', 'share', 'arc', 'plan']; }
   _getInitialState() {
     return {
       watch: new WatchGroup(),
-      db: db.child('arcs')
+      db: Firebase.db.child('arcs')
     };
   }
-  _update({key, arc, metadata, description, plan}, state, oldProps) {
-    if (plan !== oldProps.plan) {
-      log('plan changed, good time to serialize?');
-      this._serialize(state.db, key, arc);
-    }
-    if (key === '*' && key !== oldProps.key) {
-      this._fire('key', this._createKey(state.db));
-    }
-    if (key && key !== '*' && key !== 'launcher') {
+  _willReceiveProps({config, key, arc, metadata, description, share, plan}, state, oldProps) {
+    if (key === '*') {
       if (key !== oldProps.key) {
-        state.watch.watches = [
-          {path: `arcs/${key}/metadata`, handler: snap => this._metadataReceived(snap, key)},
-          {path: `arcs/${key}/serialized`, handler: snap => this._serializedReceived(snap, key)}
-        ];
+        this._fire('serialization', null);
+        this._fire('key', this._createKey(state.db));
       }
     }
-    if (metadata && description) {
-      metadata = this._describeArc(metadata, description);
+    else if (Const.SHELLKEYS[key]) {
+      log('sending empty serialization for non-persistent key');
+      this._fire('serialization', '');
     }
-    if (metadata !== state.metadata) {
-      log('WRITING metadata', metadata);
-      state.db.child(`${key}/metadata`).update(metadata);
+    else if (key) {
+      if (key !== oldProps.key) {
+        state.serialization = null;
+        state.watch.watches = [
+          {path: `arcs/${key}/metadata`, handler: snap => this._metadataReceived(snap, key)},
+          {path: `arcs/${key}/serialization`, handler: snap => this._serializationReceived(snap, key)}
+        ];
+      }
+      if (plan && plan !== oldProps.plan && key !== 'launcher' && config.useStorage) {
+        log('plan changed, good time to serialize?');
+        this._serialize(state.db, key, arc);
+      }
+      if (metadata && share && share !== oldProps.share && metadata.share !== share) {
+        metadata.share = share;
+        state.metadata = null;
+      }
+      if (metadata && description && description !== oldProps.description && metadata.description !== description) {
+        metadata.description = description;
+        state.metadata = null;
+      }
+      if (metadata && metadata !== state.metadata) {
+        log('WRITING metadata', metadata);
+        state.db.child(`${key}/metadata`).update(metadata);
+      }
     }
-  }
-  _describeArc(metadata, description) {
-    if (metadata.description !== description) {
-      metadata = Xen.clone(metadata);
-      metadata.description = description;
-    }
-    return metadata;
   }
   async _serialize(db, key, arc) {
-    const serialized = await arc.serialize();
-    if (serialized !== this._state.serialized) {
+    const serialization = await arc.serialize();
+    if (this._props.arc && serialization !== this._state.serialization) {
       // must cache first, Firebase update can fire callback synchronously
-      this._state.serialized = serialized;
-      const node = db.child(`${key}/serialized`);
-      groupCollapsed('writing serialized arc', String(node));
-      log(serialized);
+      this._state.serialization = serialization;
+      const node = db.child(`${key}/serialization`);
+      groupCollapsed('writing arc serialization', String(node));
+      log(serialization);
       groupEnd();
-      node.set(serialized);
+      node.set(serialization);
     }
   }
-  _serializedReceived(snap, key) {
-    log('watch triggered on serialized arc', `${key}/serialized`);
-    const serialized = snap.val() || '';
-    if (serialized !== this._state.serialized) {
-      this._state.serialized = serialized;
-      this._fire('serialized', serialized);
+  _serializationReceived(snap, key) {
+    log('watch triggered on arc serialization', `${key}/serialization`);
+    const serialization = snap.val() || '';
+    if (serialization !== this._state.serialization) {
+      this._state.serialization = serialization;
+      this._fire('serialization', serialization);
     }
   }
   _createKey(db) {
@@ -100,9 +107,11 @@ class CloudArc extends Xen.Debug(Xen.Base, log) {
   }
   _metadataReceived(snap, key) {
     log('watch triggered on metadata', `${key}/metadata`);
-    const metadata = snap.val();
+    const metadata = snap.val() || {};
     this._state.metadata = metadata;
     this._fire('metadata', metadata);
+    const share = metadata.share || Const.SHARE.private;
+    this._fire('share', share);
   }
 }
 customElements.define('cloud-arc', CloudArc);
