@@ -183,7 +183,7 @@ import '../artifacts/0.4/Arcs/Arcs.recipes'
     if (key === Const.SHELLKEYS.launcher) {
       if (!suggestion && !plan && suggestions && suggestions.length) {
         // TODO(sjmiles): need a better way to find the launcher suggestion
-        const suggestion = state.suggestions.find(s => s.descriptionText === 'Arcs launcher.');
+        const suggestion = state.suggestions.find(s => s.descriptionText === 'Arcs launcher');
         if (suggestion) {
           state.suggestion = suggestion;
         }

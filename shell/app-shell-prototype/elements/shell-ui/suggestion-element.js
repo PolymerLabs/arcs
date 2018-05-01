@@ -20,24 +20,26 @@ const template = html`
       border-radius: 16px;
       background-color: white;
       color: black;
-      padding: 12px 13px 11px;
-      margin: 6px 0;
-      /*line-height: 32px;*/
+      padding: 6px 16px 4px 16px;
+      margin: 6px;
+      line-height: 20px;
       cursor: pointer;
       transition: all 150ms;
+      font-size: 14px;
+      letter-spacing: .25px;
     }
     :host(:hover) {
       background-color: #E6E6E6;
       color: black;
     }
     :host > div {
-      flex: 1;
+      /* flex: 1; */
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
     }
   </style>
-  <div style="flex: 1;" on-click="_onClick">
+  <div on-click="_onClick">
     <slot on-mouseover="_onMouseover" on-mouseout="_onMouseout"></slot>
   </div>
 `;

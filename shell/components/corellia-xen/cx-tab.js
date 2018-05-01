@@ -17,10 +17,10 @@ const template = html`
   :host {
     position: relative;
     display: inline-block;
-    padding: 1em;
+    padding: 15px 24px 13px 24px;
     cursor: pointer;
     user-select: none;
-    text-transform: uppercase;
+    /* text-transform: uppercase; */
     background-color: transparent;
   }
   :host(:focus) {
@@ -35,10 +35,10 @@ const template = html`
     right: 0px;
     bottom: 0px;
     left: 0px;
-    border-width: var(--cx-tab-slider-width, 0px 0px 2px 0px);
+    border-width: var(--cx-tab-slider-width, 0px 0px 1px 0px);
     border-style: var(--cx-tab-slider-style, solid);
     border-color: var(--cx-tab-slider-color, blue);
-    margin-bottom: -2px;
+    margin-bottom: -1px;
   }
   :host(:not([selected])) #selectionBar {
     display: none;

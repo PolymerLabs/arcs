@@ -63,6 +63,12 @@ defineParticle(({DomParticle}) => {
     justify-content: space-between;
     padding: 16px 8px;
   }
+  @media (min-width:480px) {
+    [${host}] [times] {
+      padding: 16px 20px;
+    }
+  }
+
   [${host}] .x-button {
     display: inline-flex;
     align-items: center;

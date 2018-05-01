@@ -125,10 +125,12 @@ const template = html`
       align-items: center;
       height: 56px;
       width: 100%;
-      transition: transform 100ms ease-in-out;
+      /* transition: transform 100ms ease-in-out; */
+      padding: 0 8px;
+      box-sizing: border-box;
     }
     [toolbar] > *:not(span):not(input) {
-      margin: 16px;
+      margin: 16px 8px;
       height: 24px;
     }
     [toolbar] > span {
@@ -167,7 +169,7 @@ const template = html`
       display: inline-block;
       width: 100%;
       vertical-align: top;
-      transition: transform 100ms ease-in-out;
+      /* transition: transform 100ms ease-in-out; */
     }
     [content]:not([open]) {
       height: 0px;
@@ -203,7 +205,7 @@ const template = html`
     ::slotted([slotid=suggestions]) {
       display: flex;
       flex-direction: column;
-      padding: 6px 10px 10px 10px;
+      padding: 10px;
     }
     [tools] {
       position: fixed;
@@ -245,14 +247,13 @@ const template = html`
     <div toolbars on-click="_onBarClick">
       <div main toolbar open$="{{mainToolbarOpen}}">
         <a href="{{launcherHref}}" title="Go to Launcher">${AppIcon}</a>
-        <span title="{{title}}">{{title}}</span>
+        <span title="{{title}}" style="text-indent:4px;">{{title}}</span>
         <icon on-click="_onSearchClick">search</icon>
         <icon on-click="_onSettingsClick">settings</icon>
       </div>
       <div search toolbar open$="{{searchToolbarOpen}}">
         <icon on-click="_onMainClick">arrow_back</icon>
         <input placeholder="Search" value="{{searchText}}" on-keypress="_onKeypress" on-input="_onSearchChange" on-blur="_onSearchCommit">
-        <icon>search</icon>
       </div>
       <div settings toolbar open$="{{settingsToolbarOpen}}">
         <icon on-click="_onMainClick">arrow_back</icon>

@@ -47,6 +47,12 @@ defineParticle(({DomParticle, resolver, html, log}) => {
     border-radius: 16px;
     overflow: auto;
   }
+  @media(min-width: 600px) {
+    [${host}] > [modal] {
+      max-width: 480px;
+      margin: 16px auto;
+    }
+  }
   [${host}] > [modal] > [buttons] {
     border-bottom: 1px solid lightgrey;
     height: 56px;
