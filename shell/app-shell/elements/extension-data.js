@@ -119,7 +119,9 @@ class ExtensionData extends Xen.Base {
 
     // see if we've already made a handle
     const handleName = `browserData${shortTypeName}Data`;
-    if (arc._context._handles.find(handle => handle.name == handleName)) {
+    // TODO(smalls) Is arc._context._handles still the right spot to check?
+    if (arc._context._handles &&
+        arc._context._handles.find(handle => handle.name == handleName)) {
       log(
           `we've already created a handle with name ${handleName}`);
       return;
