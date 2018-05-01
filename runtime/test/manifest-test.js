@@ -118,6 +118,17 @@ ${particleStr1}
     assert.equal(manifest.particles.length, 1);
     assert.equal(manifest.particles[0].connections.length, 2);
   });
+  it('can parse a manifest with dependent handles', async () => {
+    let manifest = await Manifest.parse(`
+    particle TestParticle in 'a.js'
+      in [Product {}] input
+        out [Product {}] output
+      consume thing
+        provide otherThing
+    `);
+    assert.equal(manifest.particles.length, 1);
+    assert.equal(manifest.particles[0].connections.length, 2);
+  });
   it('can parse a manifest containing a schema', async () => {
     let manifest = await Manifest.parse(`
       schema Bar

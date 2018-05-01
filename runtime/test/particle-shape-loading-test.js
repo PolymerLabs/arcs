@@ -92,9 +92,9 @@ describe('particle-shape-loading', function() {
       name: 'outerParticle',
       implFile: 'outer-particle.js',
       args: [
-        {direction: 'host', type: shapeType, name: 'particle'},
-        {direction: 'in', type: fooType, name: 'input'},
-        {direction: 'out', type: barType, name: 'output'}
+        {direction: 'host', type: shapeType, name: 'particle', dependentConnections: []},
+        {direction: 'in', type: fooType, name: 'input', dependentConnections: []},
+        {direction: 'out', type: barType, name: 'output', dependentConnections: []}
       ],
     });
 

@@ -303,8 +303,10 @@ ParticleInterface
   }
 
 ParticleHandle
-  = arg:ParticleArgument eolWhiteSpace
+  = arg:ParticleArgument eolWhiteSpace dependentConnections:(Indent (SameIndent ParticleHandle)*)?
   {
+    dependentConnections = optional(dependentConnections, extractIndented, []);
+    arg.dependentConnections = dependentConnections;
     return arg;
   }
 

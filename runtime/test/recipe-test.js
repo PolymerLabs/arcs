@@ -142,11 +142,11 @@ describe('recipe', function() {
       schema Foo
 
       particle A in 'A.js'
-        A(host HostedParticleShape hostedParticle)
+        host HostedParticleShape hostedParticle
         consume set of annotation
 
       particle B in 'B.js'
-        B(in Foo foo)
+        in Foo foo
         consume annotation
 
       recipe
@@ -166,7 +166,7 @@ describe('recipe', function() {
          [{"nobId": "12345"}]
 
       particle A in 'A.js'
-        A(in NobIdStore {Text nobId} foo)
+        in NobIdStore {Text nobId} foo
 
       recipe
         use NobId as foo
@@ -186,7 +186,7 @@ describe('recipe', function() {
          [{"nobId": "12345"}, {"nobId": "67890"}]
 
       particle A in 'A.js'
-        A(in [NobIdStore {Text nobId}] foo)
+        in [NobIdStore {Text nobId}] foo
 
       recipe
         use NobId as foo
