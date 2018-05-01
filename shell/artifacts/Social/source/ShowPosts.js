@@ -67,14 +67,30 @@ defineParticle(({DomParticle, resolver, log, html}) => {
     text-align: center;
     text-decoration: underline lightgrey;
   }
+  [${host}] [blogDescription] input:focus {
+    text-decoration: underline #03A9F4;
+    color: #03A9F4;
+  }
   [${host}] [msg] {
     padding-bottom: 16px;
     border-bottom: solid 0.5px;
     border-bottom-color: #d4d4d4;
   }
+  @media(min-width: 600px) {
+    [${host}] [msg] {
+      border: none;
+      box-shadow: 0 0 2px rgba(0,0,0,.15);
+      max-width: 480px;
+      margin: 0 auto;
+      padding: 1px 0 16px 0;
+    }
+    [${host}] [header] {
+      margin-bottom: 16px;
+    }
+  }
   [${host}] [msg] [title] {
     margin-bottom: 14px;
-    margin-top: 18px;
+    margin-top: 16px;
   }
   [${host}] [msg] [content] {
     margin: 0 16px 0 56px;
@@ -89,6 +105,9 @@ defineParticle(({DomParticle, resolver, log, html}) => {
   [${host}] [when] {
     font-size: 12pt;
     color: rgba(0, 0, 0, 0.4);
+  }
+  [${host}] input:focus {
+    outline: 0;
   }
 </style>
 <div ${host}>

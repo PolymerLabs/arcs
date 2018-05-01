@@ -10,7 +10,7 @@ import 'FriendsPicker.manifest'
 import 'FavoriteFoodPicker.manifest'
 import '../Places/AddressForm.manifest'
 
-recipe
+recipe BasicUserProfile
   create #address as address
   create #avatar as avatar
   create #friends as friends
@@ -28,7 +28,7 @@ recipe
   AddressForm
     address = address
 
-recipe
+recipe FavoriteFood
   use #user as person
   create #favorite as food
   FavoriteFoodPicker

@@ -39,9 +39,14 @@ const db = database.ref(version);
 // firebase storage
 const storage = app.storage();
 
-
 // for debugging only
 db.dump = () => db.once('value').then(snap => console.log(db.data = snap.val()));
+db.get = async path => {
+  const snap = await db.child(path).once('value');
+  const value = snap.val();
+  console.log(value);
+  return value;
+};
 
 // exportables
 const Firebase = {

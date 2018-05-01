@@ -79,7 +79,11 @@ const ArcsUtils = {
   setUrlParam(name, value) {
     // TODO(sjmiles): memoize url
     const url = new URL(document.location.href);
-    url.searchParams.set(name, value);
+    if (!value) {
+      url.searchParams.delete(name);
+    } else {
+      url.searchParams.set(name, value);
+    }
     window.history.replaceState({}, '', decodeURIComponent(url.href));
   },
   // TODO: move this randomId to the backend.

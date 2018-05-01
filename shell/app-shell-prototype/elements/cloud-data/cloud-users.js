@@ -26,7 +26,7 @@ class CloudUsers extends Xen.Base {
       log('watching `users`');
       state.watch.watches = [{
         path: `users`,
-        handler: snap => this._debounceRemoteChanged(snap, state)
+        handler: snap => this._debounceRemoteChanged(snap, this._state)
       }];
     }
   }
@@ -37,9 +37,9 @@ class CloudUsers extends Xen.Base {
   }
   _remoteChanged(snap) {
     const users = snap.val() || [];
-    // ensure every user contains it's own id
-    //Object.keys(users).forEach(k => users[k].id = k);
     log('READ `users` from cloud', users);
+    // ensure every user contains it's own id
+    Object.keys(users).forEach(k => users[k].id = k);
     this._fire('users', users);
     // save `users` in state for throttling notifications
     this._setState({users});
