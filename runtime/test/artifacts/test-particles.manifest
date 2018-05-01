@@ -12,18 +12,23 @@ schema Bar
 schema Far
 
 particle TestParticle in 'test-particle.js'
-  TestParticle(in Foo foo, out Bar bar)
+  in Foo foo
+  out Bar bar
   description `test particle`
 
 particle TwoInputTestParticle in 'two-input-test-particle.js'
-  TwoInputTestParticle(in Foo foo, in Bar bar, out Far far)
+  in Foo foo
+  in Bar bar
+  out Far far
 
 shape TestShape
   AnyThing(in Foo foo, out Bar bar)
 
 particle OuterParticle in 'outer-particle.js'
-  OuterParticle(host TestShape particle, in Foo input, out Bar output)
+  host TestShape particle
+  in Foo input
+  out Bar output
 
 particle ConsumerParticle in 'consumer-particle.js'
-  ConsumerParticle(in Bar input)
+  in Bar input
   consume annotation

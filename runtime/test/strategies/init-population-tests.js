@@ -20,7 +20,7 @@ describe('InitPopulation', async () => {
       schema Product
 
       particle A in 'A.js'
-        A(in Product product)
+        in Product product
 
       recipe
         create as v1

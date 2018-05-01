@@ -18,7 +18,7 @@ describe('CreateDescriptionHandle', function() {
     let manifest = (await Manifest.parse(`
       schema Description
       particle DoSomething in 'AA.js'
-        DoSomething(out [Description] descriptions)
+        out [Description] descriptions
 
       recipe
         DoSomething as particle0

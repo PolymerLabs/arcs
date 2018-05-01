@@ -9,6 +9,6 @@
 import 'Product.schema'
 
 particle Interests in 'source/Interests.js'
-  Interests(in [Product] list)
+  in [Product] list
   consume postamble
   description `recommendations based on ${list}`

@@ -41,7 +41,8 @@ describe('loader', function() {
         schema A
         schema B
         particle Foo in 'foo.js'
-          Foo(in A a, out B b)`, options);
+          in A a
+          out B b`, options);
     let spec = manifest.findParticleByName('Foo');
     assert.equal(spec.implFile, 'somewhere/foo.js');
     let clazz = await testLoader.loadParticleClass(spec);

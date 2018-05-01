@@ -19,24 +19,26 @@ describe('MatchParticleByVerb', function() {
   let manifestStr = `
     schema Energy
     schema Height
-    particle SimpleJumper in 'A.js'
-      jump(in Energy e, out Height h)
+    particle SimpleJumper #jump in 'A.js'
+      in Energy e
+      out Height h
       affordance dom
       consume root
-    particle StarJumper in 'AA.js'
-      jump(in Energy e, inout Height h)
+    particle StarJumper #jump in 'AA.js'
+      in Energy e
+      inout Height h
       affordance dom
       consume root
-    particle VoiceStarJumper in 'AA.js'  // wrong affordance
-      jump(in Energy e, out Height h)
+    particle VoiceStarJumper #jump in 'AA.js'  // wrong affordance
+      in Energy e
+      out Height h
       affordance voice
       consume root
-    particle GalaxyJumper in 'AA.js'  // wrong connections
-      jump(in Energy e)
+    particle GalaxyJumper #jump in 'AA.js'  // wrong connections
+      in Energy e
       affordance dom
       consume root
-    particle StarFlyer in 'AA.js'  // wrong verb
-      fly()
+    particle StarFlyer #fly in 'AA.js'  // wrong verb
 
     recipe
       use as height

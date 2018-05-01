@@ -9,7 +9,8 @@
 import '../Arcs/Description.schema'
 
 particle ShowCollection in 'source/ShowCollection.js'
-  ShowCollection(in [~a] collection, out [Description] descriptions)
+  in [~a] collection
+  out [Description] descriptions
   affordance dom
   affordance dom-touch
   consume master #root

@@ -19,7 +19,8 @@ describe('FallbackFate', function() {
     let manifest = (await Manifest.parse(`
       schema Thing
       particle DoSomething in 'AA.js'
-        DoSomething(in Thing inthing, out Thing outthing)
+        in Thing inthing
+        out Thing outthing
 
       recipe
         search \`DoSomething DoSomethingElse\`
@@ -55,7 +56,8 @@ describe('FallbackFate', function() {
     let manifest = (await Manifest.parse(`
       schema Thing
       particle DoSomething in 'AA.js'
-        DoSomething(in Thing inthing, out Thing outthing)
+        in Thing inthing
+        out Thing outthing
 
       recipe
         use as view0

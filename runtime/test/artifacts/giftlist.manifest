@@ -26,7 +26,6 @@ recipe
 
 
 particle VrTestParticle in 'VrTestParticle.js'
-  VrTestParticle()
   affordance vr
   consume root
 

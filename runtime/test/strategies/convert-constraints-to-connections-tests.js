@@ -20,9 +20,9 @@ describe('ConvertConstraintsToConnections', async () => {
     let recipe = (await Manifest.parse(`
       schema S
       particle A
-        A(inout S b)
+        inout S b
       particle C
-        C(inout S d)
+        inout S d
 
       recipe
         A.b -> C.d`)).recipes[0];
@@ -44,9 +44,9 @@ describe('ConvertConstraintsToConnections', async () => {
     let recipe = (await Manifest.parse(`
       schema S
       particle A
-        A(in S b)
+        in S b
       particle C
-        C(in S d)
+        in S d
 
       recipe
         A.b -> C.d`)).recipes[0];
@@ -60,9 +60,9 @@ describe('ConvertConstraintsToConnections', async () => {
     let recipe = (await Manifest.parse(`
       schema S
       particle A
-        A(in S b)
+        in S b
       particle C
-        C(in S d)
+        in S d
 
       recipe
         map as v0
@@ -77,11 +77,11 @@ describe('ConvertConstraintsToConnections', async () => {
     let createRecipe = async (constraint1, constraint2) => (await Manifest.parse(`
       schema S
       particle A
-        A(in S b)
+        in S b
       particle C
-        C(in S d)
+        in S d
       particle E
-        E(out S f)
+        out S f
 
       recipe
         ${constraint1}
@@ -111,9 +111,9 @@ describe('ConvertConstraintsToConnections', async () => {
     let recipe = (await Manifest.parse(`
       schema S
       particle A
-        A(inout S b)
+        inout S b
       particle C
-        C(inout S d)
+        inout S d
 
       recipe
         A.b -> C.d
@@ -136,9 +136,9 @@ describe('ConvertConstraintsToConnections', async () => {
     let recipe = (await Manifest.parse(`
       schema S
       particle A
-        A(inout S b)
+        inout S b
       particle C
-        C(inout S d)
+        inout S d
 
       recipe
         A.b -> C.d
@@ -162,9 +162,9 @@ describe('ConvertConstraintsToConnections', async () => {
     let recipe = (await Manifest.parse(`
       schema S
       particle A
-        A(inout S b)
+        inout S b
       particle C
-        C(inout S d)
+        inout S d
 
       recipe
         A.b -> C.d
@@ -188,9 +188,9 @@ describe('ConvertConstraintsToConnections', async () => {
     let recipe = (await Manifest.parse(`
       schema S
       particle A
-        A(inout S b)
+        inout S b
       particle C
-        C(inout S d)
+        inout S d
 
       recipe
         A.b -> C.d
@@ -216,9 +216,9 @@ describe('ConvertConstraintsToConnections', async () => {
     let recipe = (await Manifest.parse(`
       schema S
       particle A
-        A(inout S b)
+        inout S b
       particle C
-        C(inout S d)
+        inout S d
 
       recipe
         A.b -> C.d
@@ -244,9 +244,9 @@ describe('ConvertConstraintsToConnections', async () => {
     let recipe = (await Manifest.parse(`
       schema S
       particle A
-        A(inout S b)
+        inout S b
       particle C
-        C(inout S d)
+        inout S d
 
       recipe
         A.b -> C.d
@@ -272,15 +272,15 @@ describe('ConvertConstraintsToConnections', async () => {
     let recipes = (await Manifest.parse(`
       schema S
       particle A in 'A.js'
-        A(out S b)
+        out S b
         affordance voice
         consume root
       particle C in 'C.js'
-        C(in S d)
+        in S d
         affordance voice
         consume root
       particle E in 'E.js'
-        E(in S f)
+        in S f
         consume root
 
       recipe

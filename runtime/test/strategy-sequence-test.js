@@ -28,11 +28,9 @@ describe('A Strategy Sequence', function() {
   it('resolves a verb substitution and slot mapping', async () => {
     let manifest = await Manifest.parse(`  
       particle P in 'A.js'
-        P()
         consume foo
 
       particle Q in 'B.js'
-        Q()
         consume root
           provide foo
 
@@ -58,14 +56,13 @@ describe('A Strategy Sequence', function() {
       schema S
 
       particle P in 'A.js'
-        P(in S s)
+        in S s
         consume foo
 
       particle R in 'C.js'
-        R(out S s)
+        out S s
 
       particle Q in 'B.js'
-        Q()
         consume root
           provide foo
 
@@ -92,19 +89,19 @@ describe('A Strategy Sequence', function() {
       schema S
 
       particle P in 'A.js'
-        P(in S s)
+        in S s
         consume foo
 
       particle R in 'C.js'
-        R(out S s)
+        out S s
 
       particle Q in 'B.js'
-        Q(in S s)
+        in S s
         consume root
           provide foo
 
       particle T in 'D.js'
-        T(out S s)
+        out S s
 
       recipe verb
         P.s -> R.s
@@ -132,7 +129,8 @@ describe('A Strategy Sequence', function() {
       schema Description
   
       particle ShowCollection in 'source/ShowCollection.js'
-        ShowCollection(in [~a] collection, out [Description] descriptions)
+        in [~a] collection
+        out [Description] descriptions
         affordance dom
         affordance dom-touch
         consume master #root
@@ -146,13 +144,14 @@ describe('A Strategy Sequence', function() {
             view collection
       
       particle ShowProduct in 'source/ShowProduct.js'
-        ShowProduct(in Product product)
+        in Product product
         affordance dom
         affordance dom-touch
         consume item
   
       particle AlsoOn in 'source/AlsoOn.js'
-        AlsoOn(in Thing product, in [Thing] choices)
+        in Thing product
+        in [Thing] choices
         consume annotation
   
       shape HostedParticleShape
@@ -160,24 +159,30 @@ describe('A Strategy Sequence', function() {
         consume
   
       particle Multiplexer in 'source/Multiplexer.js'
-        Multiplexer(host HostedParticleShape hostedParticle, in [~a] list)
+        host HostedParticleShape hostedParticle
+        in [~a] list
         consume set of annotation
   
       particle Chooser in 'source/Chooser.js'
-        Chooser(in [~a] choices, inout [~a] resultList)
+        in [~a] choices
+        inout [~a] resultList
         consume action
           provide set of annotation
             view choices
   
       particle Recommend in 'source/Recommend.js'
-        Recommend(in [Product] known, in [Product] population, out [Product] recommendations)
+        in [Product] known
+        in [Product] population
+        out [Product] recommendations
   
       shape HostedParticleShape2
         HostedParticleShape2(in ~a, in [~a])
         consume
         
       particle Multiplexer2 in 'source/Multiplexer.js'
-        Multiplexer2(host HostedParticleShape2 hostedParticle, in [~a] list, in [~a] others)
+        host HostedParticleShape2 hostedParticle
+        in [~a] list
+        in [~a] others
         consume set of annotation
   
       recipe showList

@@ -10,7 +10,7 @@ schema Foo
   Text value
 
 particle SingleSlotParticle in 'test-single-slot-particle.js'
-  SingleSlotParticle(in Foo foo)
+  in Foo foo
   consume annotation
   description `test slot particle`
 
@@ -19,6 +19,7 @@ shape HostedParticleShape
   consume annotation
 
 particle MultiplexSlotsParticle in 'test-multiplex-slots-particle.js'
-  MultiplexSlotsParticle(host HostedParticleShape particle, in [Foo] foos)
+  host HostedParticleShape particle
+  in [Foo] foos
   consume set of annotationsSet
   description `outer test slot particle`

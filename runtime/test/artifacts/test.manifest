@@ -9,7 +9,7 @@ schema Text
   Text value
 
 particle Hello in 'hello.js'
-  Hello(out Text text)
+  out Text text
 
 recipe
   create as viewA

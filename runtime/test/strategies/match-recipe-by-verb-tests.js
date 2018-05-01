@@ -25,11 +25,12 @@ describe('MatchRecipeByVerb', function() {
       schema Energy
 
       particle JumpingBoots in 'A.js'
-        JumpingBoots(in Feet f, in Energy e)
+        in Feet f
+        in Energy e
       particle FootFactory in 'B.js'
-        FootFactory(out Feet f)
+        out Feet f
       particle NuclearReactor in 'C.js'
-        NuclearReactor(out Energy e)
+        out Energy e
 
       recipe jump
         JumpingBoots.f <- FootFactory.f
@@ -48,9 +49,9 @@ describe('MatchRecipeByVerb', function() {
     let manifest = await Manifest.parse(`
       schema S
       particle P in 'A.js'
-        P(out S p)
+        out S p
       particle Q in 'B.js'
-        Q(in S q)
+        in S q
 
       recipe
         P.p -> Q.q
@@ -79,13 +80,14 @@ describe('MatchRecipeByVerb', function() {
   it('listens to handle constraints', async () => {
     let manifest = await Manifest.parse(`
     particle P in 'A.js'
-      P(out S {} a)
+      out S {} a
     
     particle Q in 'B.js'
-      Q(in S {} a, out S {} b)
+      in S {} a
+      out S {} b
 
     particle R in 'C.js'
-      R(in S {} c)
+      in S {} c
 
     recipe verb
       P
@@ -156,12 +158,10 @@ describe('MatchRecipeByVerb', function() {
   it('listens to slot constraints', async () => {
     let manifest = await Manifest.parse(`
       particle P in 'A.js'
-        P()
         consume foo
           provide bar
     
       particle Q in 'B.js'
-        Q()
         consume boo
           provide far
 
@@ -212,10 +212,10 @@ describe('MatchRecipeByVerb', function() {
     let manifest = await Manifest.parse(`
     
       particle P in 'A.js'
-        P(in S {} a)
+        in S {} a
       
       particle Q in 'B.js'
-        Q(out S {} b)
+        out S {} b
 
       recipe verb
         P
@@ -242,10 +242,10 @@ describe('MatchRecipeByVerb', function() {
     let manifest = await Manifest.parse(`
     
       particle P in 'A.js'
-        P(in S {} a)
+        in S {} a
       
       particle Q in 'B.js'
-        Q(out S {} b)
+        out S {} b
 
       recipe verb
         P
@@ -272,13 +272,16 @@ describe('MatchRecipeByVerb', function() {
     let manifest = await Manifest.parse(`
     
       particle O in 'Z.js'
-        O(in R {} x, out S {} y)
+        in R {} x
+        out S {} y
 
       particle P in 'A.js'
-        P(in R {} x, out S {} y, in S {} a)
+        in R {} x
+        out S {} y
+        in S {} a
       
       particle Q in 'B.js'
-        Q(out S {} b)
+        out S {} b
 
       recipe verb
         O
@@ -305,12 +308,10 @@ describe('MatchRecipeByVerb', function() {
   it('carries slot assignments across verb substitution', async () => {
     let manifest = await Manifest.parse(`
       particle P in 'A.js'
-        P()
         consume foo
           provide bar  
 
       particle S in 'B.js'
-        S()
         consume bar
           provide foo
 
@@ -354,17 +355,14 @@ describe('MatchRecipeByVerb', function() {
   it('carries slot assignments across when they\'re assigned elsewhere too', async () => {
     let manifest = await Manifest.parse(`
     particle P in 'A.js'
-      P()
       consume foo
         provide bar  
 
     particle S in 'B.js'
-      S()
       consume bar
         provide foo
 
     particle T in 'C.js'
-      T()
       consume bar
       consume foo
 

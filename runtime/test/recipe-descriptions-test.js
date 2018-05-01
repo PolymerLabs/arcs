@@ -23,13 +23,14 @@ schema Box
     plural \`boxes\`
     value \`\${height}*\${width}\`
 particle CompareBoxes in 'test.js'
-  CompareBoxes(in [Box] all, out Box biggest)
+  in [Box] all
+  out Box biggest
   description \`ignore this description\`
 particle ProvideBoxes in 'test.js'
-  ProvideBoxes(out [Box] boxes)
+  out [Box] boxes
   description \`ignore this description too\`
 particle DisplayBox in 'test.js'
-  DisplayBox(in Box biggest)
+  in Box biggest
   description \`ignore this description too\`
 recipe
   ? as handle0

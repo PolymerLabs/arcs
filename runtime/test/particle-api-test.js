@@ -30,7 +30,8 @@ describe('particle-api', function() {
             Text value
 
           particle P in 'a.js'
-            P(in [Input] inputs, out Result result)
+            in [Input] inputs
+            out Result result
 
           recipe
             use 'test:1' as view0
@@ -96,7 +97,7 @@ describe('particle-api', function() {
               Text value
 
             particle P in 'a.js'
-              P(out Result result)
+              out Result result
 
             recipe
               use as view0
@@ -158,7 +159,7 @@ describe('particle-api', function() {
               Text value
 
             particle P in 'a.js'
-              P(out Result result)
+              out Result result
 
             recipe
               use 'test:1' as view0
@@ -182,7 +183,8 @@ describe('particle-api', function() {
                         Text value
 
                       particle PassThrough in 'pass-through.js'
-                        PassThrough(in Result a, out Result b)
+                        in Result a
+                        out Result b
 
                       recipe
                         use '\${inView._id}' as v1
@@ -253,7 +255,7 @@ describe('particle-api', function() {
               Text value
 
             particle P in 'a.js'
-              P(out Result result)
+              out Result result
 
             recipe
               use 'test:1' as view0
@@ -282,7 +284,9 @@ describe('particle-api', function() {
                          [{"nobId": "12345"}]
 
                        particle PassThrough in 'pass-through.js'
-                         PassThrough(in NobIdStore {Text nobId} nobId, in Result a, out Result b)
+                         in NobIdStore {Text nobId} nobId
+                         in Result a
+                         out Result b
 
                        recipe
                          map NobId as nobId
@@ -362,7 +366,8 @@ describe('particle-api', function() {
               Text bar
 
             particle P in 'a.js'
-              P(out Result result, in Foo target)
+              out Result result
+              in Foo target
 
             recipe
               use 'test:1' as view0
@@ -391,7 +396,9 @@ describe('particle-api', function() {
                          Text value
 
                        particle PassThrough in 'pass-through.js'
-                         PassThrough(in Foo target, in Result a, out Result b)
+                         in Foo target
+                         in Result a
+                         out Result b
 
                        recipe
                          use #target as target
@@ -477,7 +484,7 @@ describe('particle-api', function() {
                [{"nobId": "12345"}]
 
             particle P in 'a.js'
-              P(out Result result)
+              out Result result
 
             recipe
               use 'test:1' as view0
@@ -501,7 +508,9 @@ describe('particle-api', function() {
                          Text value
 
                        particle PassThrough in 'pass-through.js'
-                         PassThrough(in NobIdStore {Text nobId} target, in Result a, out Result b)
+                         in NobIdStore {Text nobId} target
+                         in Result a
+                         out Result b
 
                        recipe
                          use #target as target
@@ -578,7 +587,8 @@ describe('particle-api', function() {
               Text value
 
             particle P in 'a.js'
-              P(in [Result] inputs, inout [Result] results)
+              in [Result] inputs
+              inout [Result] results
 
             recipe
               use 'test:1' as view0
@@ -607,7 +617,8 @@ describe('particle-api', function() {
                           Text value
 
                         particle PassThrough in 'pass-through.js'
-                          PassThrough(in Result a, out Result b)
+                          in Result a
+                          out Result b
 
                         recipe
                           use '\${inView._id}' as v1

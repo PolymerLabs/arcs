@@ -72,18 +72,14 @@ describe('slot composer', function() {
   it('initialize recipe and render slots', async () => {
     let manifestStr = `
 particle A in 'a.js'
-  A()
   consume root
     provide mySlot
     provide otherSlot
 particle B in 'b.js'
-  B()
   consume mySlot
 particle BB in 'bb.js'
-  BB()
   consume mySlot
 particle C in 'c.js'
-  C()
   consume otherSlot
 recipe
   slot 'rootslotid-root' as slot0

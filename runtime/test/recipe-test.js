@@ -19,7 +19,8 @@ describe('recipe', function() {
         schema S1
         schema S2
         particle P1
-          P1(in S1 s1, out S2 s2)
+          in S1 s1
+          out S2 s2
         recipe
           map as view1
           map 'h0' as view2
@@ -43,7 +44,6 @@ describe('recipe', function() {
   it('clones recipe', async () => {
     let manifest = await Manifest.parse(`
         particle Particle1
-          Particle1()
         recipe MyRecipe
           Particle1
     `);
@@ -57,15 +57,15 @@ describe('recipe', function() {
         schema MySubType extends MyType
         schema OtherType
         particle P1
-          P1(in MyType inMy)
+          in MyType inMy
         particle P2
-          P2(out MyType outMy)
+          out MyType outMy
         particle P3
-          P3(in MySubType inMy)
+          in MySubType inMy
         particle P4
-          P4(out MySubType outMy)
+          out MySubType outMy
         particle P5
-          P5(in [MyType] inMys)
+          in [MyType] inMys
     `);
 
     let MyType = manifest.findSchemaByName('MyType').entityClass().type;
@@ -109,7 +109,6 @@ describe('recipe', function() {
   it('keeps orphaned slots, handles and particles', async () => {
     let manifest = await Manifest.parse(`
       particle A in 'A.js'
-        A()
 
       recipe
         create #data as h0

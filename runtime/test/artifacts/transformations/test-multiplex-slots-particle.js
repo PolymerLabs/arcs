@@ -47,7 +47,7 @@ defineParticle(({TransformationDomParticle}) => {
             Text value
 
           particle ${hostedParticle.name} in '${hostedParticle.implFile}'
-            ${hostedParticle.name}(in Foo foo)
+            in Foo foo
             consume ${hostedSlotName}
 
           recipe

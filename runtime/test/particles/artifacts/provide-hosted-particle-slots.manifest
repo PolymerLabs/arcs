@@ -10,12 +10,12 @@ schema Foo
   Text bar
 
 particle ShowFoo in 'source/ShowFoo.js'
-  ShowFoo(in Foo foo)
+  in Foo foo
   consume item #item
     provide annotation
 
 particle ShowFooAnnotation in 'source/ShowFooAnnotation.js'
-  ShowFooAnnotation(in Foo foo)
+  in Foo foo
   consume annotation
 
 shape FooShape
@@ -28,16 +28,18 @@ shape FooAnnotationShape
   consume
 
 particle Fooxer in '../../../../shell/artifacts/Common/source/Multiplexer.js'
-  Fooxer(host FooShape hostedParticle, in [Foo] list)
+  host FooShape hostedParticle
+  in [Foo] list
   consume set of item
     provide set of annotation
 
 particle FooAnnotationMuxer in '../../../../shell/artifacts/Common/source/Multiplexer.js'
-  FooAnnotationMuxer(host FooAnnotationShape hostedParticle, in [Foo] list)
+  host FooAnnotationShape hostedParticle
+  in [Foo] list
   consume set of annotation
 
 particle FooList in '../../../../shell/artifacts/Common/source/List.js'
-  FooList(in [Foo] items)
+  in [Foo] items
   consume root
     provide set of item
     provide set of action // unused

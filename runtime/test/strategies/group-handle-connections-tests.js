@@ -19,15 +19,21 @@ describe('GroupHandleConnections', function() {
     schema Thing
     schema OtherThing
     particle A
-      A(in Thing ithingA1)
+      in Thing ithingA1
     particle B
-      B(in Thing ithingB1, in Thing ithingB2, in [OtherThing] iotherthingB1)
+      in Thing ithingB1
+      in Thing ithingB2
+      in [OtherThing] iotherthingB1
     particle C
-      C(in Thing ithingC1, out Thing othingC2, inout [OtherThing] iootherthingC1)
+      in Thing ithingC1
+      out Thing othingC2
+      inout [OtherThing] iootherthingC1
     particle D
-      D(in Thing ithingD1, in Thing ithingD2, out Thing othingD3)
+      in Thing ithingD1
+      in Thing ithingD2
+      out Thing othingD3
     particle E
-      E(out Thing othingE1)
+      out Thing othingE1
       `;
   it('group in and out view connections', async () => {
     // TODO: add another Type view connections to the recipe!

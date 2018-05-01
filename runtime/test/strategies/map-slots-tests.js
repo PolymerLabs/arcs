@@ -19,11 +19,9 @@ import {assert} from '../chai-web.js';
 describe('MapSlots', function() {
   let particlesSpec = `
     particle A in 'A.js'
-      A()
       consume root
 
     particle B in 'B.js'
-      B()
       consume root`;
 
   let testManifest = async (recipeManifest, expectedSlots) => {
@@ -99,7 +97,6 @@ describe('MapSlots', function() {
   it('map slots by tags', async () => {
     let manifest = (await Manifest.parse(`
       particle A in 'A.js'
-        A()
         consume master #fancy
 
       recipe
@@ -114,17 +111,14 @@ describe('MapSlots', function() {
   it('allows to bind by name to any available slot', async () => {
     let manifest = (await Manifest.parse(`
       particle A in 'A.js'
-        A()
         consume root
           provide detail
 
       particle B in 'B.js'
-        B()
         consume root
           provide detail
 
       particle C in 'C.js'
-        C()
         consume detail
 
       recipe
@@ -166,12 +160,10 @@ describe('MapSlots', function() {
 
     let particles = `
       particle A in 'A.js'
-        A()
         consume root
           provide action
 
       particle B in 'B.js'
-        B()
         consume action`;
 
     async function assertActionSlotTags(recipe, tags) {

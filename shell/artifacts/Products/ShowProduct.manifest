@@ -9,7 +9,7 @@
 import 'Product.schema'
 
 particle ShowProduct in 'source/ShowProduct.js'
-  ShowProduct(in Product product)
+  in Product product
   affordance dom
   affordance dom-touch
   consume item

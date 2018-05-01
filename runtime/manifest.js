@@ -66,6 +66,8 @@ class ManifestVisitor {
   }
 }
 
+let globalWarningKeys = new Set();
+
 class Manifest {
   constructor({id}) {
     this._recipes = [];
@@ -269,6 +271,11 @@ class Manifest {
         // TODO: make a decision as to whether we should be logging these here, or if it should
         //       be a responsibility of the caller.
         // TODO: figure out how to have node print the correct message and stack trace
+        if (warning.key) {
+          if (globalWarningKeys.has(warning.key))
+            continue;     
+          globalWarningKeys.add(warning.key);
+        }  
         console.warn(processError(warning).message);
       }
     }
@@ -529,6 +536,14 @@ ${e.message}
     if (!particleItem.args) {
       particleItem.args = [];
     }
+
+    if (particleItem.hasParticleArgument) {
+      let warning = new ManifestError(particleItem.location, `Particle uses deprecated argument body`);
+      warning.key = 'hasParticleArgument';
+      manifest._warnings.push(warning);
+      
+    }
+
     // TODO: loader should not be optional.
     if (particleItem.implFile && loader) {
       particleItem.implFile = loader.join(manifest.fileName, particleItem.implFile);

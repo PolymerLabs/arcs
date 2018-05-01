@@ -13,6 +13,8 @@ shape HostedParticleShape
 
 // TODO: This particle should use generic handle type and slot name.
 particle ProductFilter in 'source/ProductFilter.js'
-  ProductFilter(host HostedParticleShape hostedParticle, in [Product] products, out [Product] results)
+  host HostedParticleShape hostedParticle
+  in [Product] products
+  out [Product] results
   description `show filtered products`
     results `filtered list of products`

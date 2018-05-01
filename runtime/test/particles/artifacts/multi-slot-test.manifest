@@ -10,7 +10,7 @@ schema Thing
   Text name
 
 particle AskAndAnswer in 'source/AskAndAnswer.js'
-  AskAndAnswer(in Thing thing)
+  in Thing thing
   consume question
   consume answer
   consume set of hints
@@ -38,7 +38,6 @@ recipe
   description `show question and answer`
 
 particle ShowHints in 'source/ShowHints.js'
-  ShowHints()
   consume root
     provide question
     provide set of hints

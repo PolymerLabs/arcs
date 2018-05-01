@@ -12,10 +12,10 @@ schema Lego extends Product
   Text setID
 
 particle WritesLego
-  WritesLego(out [Lego] lego)
+  out [Lego] lego
 
 particle ReadsProduct
-  ReadsProduct(in [Product] product)
+  in [Product] product
 
 recipe MatchBasic
   create as v0

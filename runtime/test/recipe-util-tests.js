@@ -17,9 +17,9 @@ describe('recipe-util', function() {
     let manifest = await Manifest.parse(`
       schema S
       particle A
-        A(out S a)
+        out S a
       particle B
-        B(out S b)
+        out S b
 
       recipe Recipe
         map as v1
@@ -42,11 +42,11 @@ describe('recipe-util', function() {
     let manifest = await Manifest.parse(`
       schema S
       particle A
-        A(out S a)
+        out S a
       particle B
-        B(out S b)
+        out S b
       particle C
-        C(out S c)
+        out S c
 
       recipe Recipe
         map as v1
@@ -98,9 +98,9 @@ describe('recipe-util', function() {
     let manifest = await Manifest.parse(`
       schema S
       particle A
-        A(out S a)
+        out S a
       particle B
-        B(out S b)
+        out S b
 
       recipe Recipe
         map as v1
