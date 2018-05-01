@@ -20,10 +20,6 @@ class Scheduler {
     this._idleCallbacks = [];
   }
 
-  clone() {
-    return new Scheduler();
-  }
-
   registerIdleCallback(callback) { this._idleCallbacks.push(callback); }
 
   unregisterIdleCallback(callback) {
@@ -111,5 +107,4 @@ class Scheduler {
   }
 }
 
-// TODO: Scheduler needs to be per arc, once multi-arc support is implemented.
-export default new Scheduler();
+export default Scheduler;
