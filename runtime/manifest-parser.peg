@@ -325,6 +325,7 @@ ParticleArgument
       direction,
       type: type,
       isOptional: !!isOptional,
+      dependentConnections: [],
       name,
     };
   }
