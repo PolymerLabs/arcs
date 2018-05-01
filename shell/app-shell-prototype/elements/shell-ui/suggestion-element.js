@@ -16,12 +16,15 @@ const template = html`
     :host {
       display: flex;
       align-items: center;
+      padding: 6px 16px 4px 16px;
+      margin: 6px;
+      line-height: 20px;
+      font-size: 14px;
+      letter-spacing: 0.25px;
       border: 1px solid #E6E6E6;
       border-radius: 16px;
       background-color: white;
       color: black;
-      padding: 12px 13px 11px;
-      margin: 6px 0;
       cursor: pointer;
       transition: all 150ms;
     }
@@ -30,7 +33,7 @@ const template = html`
       color: black;
     }
     :host > div {
-      flex: 1;
+      /*flex: 1;*/
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: normal;

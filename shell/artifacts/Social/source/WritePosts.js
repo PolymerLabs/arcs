@@ -19,11 +19,13 @@ defineParticle(({DomParticle, resolver, log, html}) => {
     background-color: white;
     cursor: pointer;
     position: fixed;
-    margin-left: 328px;
+    /* margin-left: 328px; */
+    /* right: 16px; */
+    left: calc(100% - 20px - 64px);
     bottom: 50px;
     padding: 8px;
     border-radius: 100%;
-    box-shadow: 1px 1px 5px 0px rgba(0,0,0,0.75);
+    box-shadow: 0px 1px 8px 0px rgba(0,0,0,0.25);
     box-sizing: border-box;
   }
   [${host}] i {

@@ -6,18 +6,17 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-defineParticle(({DomParticle}) => {
+defineParticle(({DomParticle, html}) => {
 
-  let host = `reservation-form`;
+  const host = `reservation-form`;
 
-  let styles = `
+  const styles = html`
 <style>
   [${host}] {
     text-align: center;
   }
   [${host}] > * {
     vertical-align: middle;
-    // padding: 6px 0;
   }
   [${host}] .x-select {
     padding-left: 16px;
@@ -38,7 +37,6 @@ defineParticle(({DomParticle}) => {
     margin: 0;
     padding: 0;
     border: 0;
-    // border-bottom: 1px solid #ddd;
     background-color: transparent;
     border-radius: 0;
     font-size: 16px;
@@ -63,16 +61,17 @@ defineParticle(({DomParticle}) => {
     justify-content: space-between;
     padding: 16px 8px;
   }
+  @media (min-width:480px) {
+    [${host}] [times] {
+      padding: 16px 20px;
+    }
+  }
+
   [${host}] .x-button {
     display: inline-flex;
     align-items: center;
     position: relative;
-    // padding: 10px 16px;
-    // border-radius: 3px;
     -webkit-appearance: none;
-    // background-color: #4285f4;
-    // color: #fff;
-    // border: 0;
     outline: none;
     background: white;
     border: 2px solid #1A73E8;
@@ -89,18 +88,10 @@ defineParticle(({DomParticle}) => {
   [${host}] .x-button:disabled {
     opacity: 0.3;
   }
-  [${host}] .x-button.raised {
-    // transition: box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    // transition-delay: 0.2s;
-  }
-  [${host}] .x-button.raised:active:not(:disabled) {
-    // box-shadow: 0 8px 17px 0 rgba(0, 0, 0, 0.2);
-    // transition-delay: 0s;
-  }
 </style>
-  `;
+`;
 
-  let template = `
+  const template = html`
 ${styles}
 <div ${host} id={{subId}}>
   <div style="display:flex; flex-direction:row;">{{timePicker}}</div>
@@ -124,7 +115,7 @@ ${styles}
 <template available-times>
   <button class="x-button raised" disabled$={{notAvailable}}>{{time}}</button>
 </template>
-    `.trim();
+`;
 
   return class extends DomParticle {
     get template() {

@@ -160,6 +160,9 @@ const template = html`
     [main][toolbar]:not([open]) {
       transform: translate3d(-100%, 0, 0);
     }
+    [main][toolbar][title] {
+      text-indent: 4px;
+    }
     /* TODO(sjmiles): where are these extra px coming from? */
     [search][toolbar][open] {
       transform: translate3d(calc(-100% - 4px), 0, 0);
@@ -189,7 +192,6 @@ const template = html`
       display: inline-block;
       width: 100%;
       vertical-align: top;
-      transition: transform 100ms ease-in-out;
     }
     [content]:not([open]) {
       height: 0px;
@@ -225,7 +227,7 @@ const template = html`
     ::slotted([slotid=suggestions]) {
       display: flex;
       flex-direction: column;
-      padding: 6px 10px 10px 10px;
+      padding: 10px;
     }
     [tools] {
       position: fixed;

@@ -18,10 +18,13 @@ defineParticle(({DomParticle, log, html}) => {
   [${host}] {
   }
   [${host}] cx-tabs {
-    border-bottom: 2px solid silver;
+    border-bottom: 1px solid #ccc;
+    justify-content: center;
   }
   [${host}] cx-tab {
-    font-weight: bold;
+    font-weight: 500;
+    font-size: 14px;
+    letter-spacing: .25px;
     color: #999;
   }
   [${host}] cx-tab[selected] {
@@ -29,8 +32,7 @@ defineParticle(({DomParticle, log, html}) => {
   }
   [${host}] [columns] {
     display: flex;
-    margin: 0px 4px 4px 4px;
-    padding: 24px;
+    padding: 16px;
     /* temporary: pending responsiveness */
     max-width: 600px;
     margin: 0 auto;
@@ -40,7 +42,7 @@ defineParticle(({DomParticle, log, html}) => {
     position: relative;
     display: flex;
     flex-direction: column;
-    padding: 28px 16px 16px 16px;
+    padding: 16px 16px 16px 16px;
     margin: 0 4px 8px 4px;
     font-size: 18px;
     color: whitesmoke;
@@ -54,8 +56,8 @@ defineParticle(({DomParticle, log, html}) => {
   }
   [${host}] [hovering] {
     position: absolute;
-    right: 2px;
-    top: 3px;
+    right: 16px;
+    bottom: 16px;
     visibility: hidden;
   }
   [${host}] [chip]:hover [hovering] {
@@ -82,10 +84,10 @@ ${style}
 
 <div ${host}>
   <cx-tabs on-select="_onTabSelect">
-    <cx-tab>ALL</cx-tab>
-    <cx-tab selected>RECENT</cx-tab>
-    <cx-tab>STARRED</cx-tab>
-    <cx-tab>SHARED</cx-tab>
+    <cx-tab>All</cx-tab>
+    <cx-tab selected>Recent</cx-tab>
+    <cx-tab>Starred</cx-tab>
+    <cx-tab>Shared</cx-tab>
   </cx-tabs>
   <div columns>
     <div style="flex: 1;">{{columnA}}</div>
@@ -96,7 +98,9 @@ ${style}
 <template column>
   <div chip style="{{chipStyle}}">
     <div hovering>
-      <icon delete hide$="{{noDelete}}" key="{{arcId}}" on-click="_onDelete">delete_forever</icon>
+      <span style="flex: 1;"></span>
+      <icon delete hide$="{{noDelete}}" key="{{arcId}}" on-click="_onDelete" style="margin-right:8px;">remove_circle_outline</icon>
+      <icon star show key="{{arcId}}" on-click="_onStar">{{starred}}</icon>
     </div>
     <a href="{{href}}" trigger$="{{description}}">
       <div description title="{{description}}" unsafe-html="{{blurb}}"></div>
@@ -105,8 +109,7 @@ ${style}
     <div share>
       <icon show$="{{self}}">account_circle</icon>
       <icon show$="{{friends}}">people</icon>
-      <span style="flex: 1;"></span>
-      <icon star show key="{{arcId}}" on-click="_onStar">{{starred}}</icon>
+
     </div>
   </div>
 </template>
