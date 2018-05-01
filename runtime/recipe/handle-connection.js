@@ -111,21 +111,19 @@ class HandleConnection {
       }
       return false;
     }
-    if (this.type && this.particle && this.particle.spec) {
-      let connectionSpec = this.particle.spec.connectionMap.get(this.name);
-      if (connectionSpec) {
-        if (!connectionSpec.isCompatibleType(this.rawType)) {
-          if (options && options.errors) {
-            options.errors.set(this, `Type '${this.rawType} for handle connection '${this.particle.name}::${this.name}' doesn't match particle spec's type '${connectionSpec.type}'`);
-          }
-          return false;
+    if (this.type && this.spec) {
+      let connectionSpec = this.spec;
+      if (!connectionSpec.isCompatibleType(this.rawType)) {
+        if (options && options.errors) {
+          options.errors.set(this, `Type '${this.rawType} for handle connection '${this.particle.name}::${this.name}' doesn't match particle spec's type '${connectionSpec.type}'`);
         }
-        if (this.direction != connectionSpec.direction) {
-          if (options && options.errors) {
-            options.errors.set(this, `Direction '${this.direction}' for handle connection '${this.particle.name}::${this.name}' doesn't match particle spec's direction '${connectionSpec.direction}'`);
-          }
-          return false;
+        return false;
+      }
+      if (this.direction != connectionSpec.direction) {
+        if (options && options.errors) {
+          options.errors.set(this, `Direction '${this.direction}' for handle connection '${this.particle.name}::${this.name}' doesn't match particle spec's direction '${connectionSpec.direction}'`);
         }
+        return false;
       }
     }
     return true;
@@ -137,6 +135,10 @@ class HandleConnection {
     if (this.isOptional) {
       return true;
     }
+
+    let parent;
+    if (this.spec && this.spec.parentConnection)
+      parent = this.particle.connections[this.spec.parentConnection.name];
 
     // TODO: This should use this._type, or possibly not consider type at all.
     if (!this.type) {
@@ -152,10 +154,19 @@ class HandleConnection {
       return false;
     }
     if (!this.handle) {
+      if (parent && parent.isOptional && !parent.handle)
+        return true;
       if (options) {
         options.details = 'missing handle';
       }
       return false;
+    } else if (parent) {
+      if (!parent.handle) {
+        if (options) {
+          options.details = 'parent connection missing handle';
+        }
+        return false;
+      }
     }
     return true;
   }

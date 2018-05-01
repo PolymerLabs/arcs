@@ -25,7 +25,6 @@ class ConnectionSpec {
 
   instantiateDependentConnections(particle, typeVarMap) {
     for (let dependentArg of this.rawData.dependentConnections) {
-      dependentArg.type = dependentArg.type.model;
       let dependentConnection = particle.createConnection(dependentArg, typeVarMap);
       dependentConnection.parentConnection = this;
       this.dependentConnections.push(dependentConnection);

@@ -123,6 +123,49 @@ describe('recipe', function() {
     assert.lengthOf(recipe.particles, 1);
     assert.lengthOf(recipe.handles, 1);
   });
+  it(`is resolved if an optional handle with dependents is not connected`, async () => {
+    let manifest = await Manifest.parse(`
+      particle A in 'A.js'
+        in [Foo {}]? optionalIn
+          out [Foo {}] dependentOut
+      
+      recipe
+        A
+    `);
+
+    let [recipe] = manifest.recipes;
+    assert.isTrue(recipe.normalize());
+    assert.isTrue(recipe.isResolved());
+  });
+
+  it(`is not resolved if a handle is connected but its parent isn't`, async () => {
+    let manifest = await Manifest.parse(`
+      particle A in 'A.js'
+        in [Foo {}]? optionalIn
+          out [Foo {}] dependentOut
+      
+      particle B in 'B.js'
+        in [Foo {}] parentIn
+          out [Foo {}] dependentOut
+  
+      recipe
+        create as h0
+        A
+          dependentOut -> h0
+      
+      recipe
+        create as h0
+        B
+          dependentOut -> h0
+    `);
+
+    let [recipe1, recipe2] = manifest.recipes;
+    assert.isTrue(recipe1.normalize());
+    assert.isFalse(recipe1.isResolved());
+
+    assert.isTrue(recipe2.normalize());
+    assert.isFalse(recipe2.isResolved());
+  });
 
   const getFirstRecipeHash = async manifestContent => {
     let loader = new Loader();
