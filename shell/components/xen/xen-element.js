@@ -21,6 +21,24 @@ export default Base => class extends Base {
     // by attaching _class reference to element constructors (not provided)
     return (this.constructor._class || this.constructor);
   }
+  __configureAccessors() {
+    // only do this once per prototype
+    const p = Object.getPrototypeOf(this);
+    if (!p.hasOwnProperty('__$xenPropsConfigured')) {
+      p.__$xenPropsConfigured = true;
+      const a = this._class.observedAttributes;
+      a && a.forEach(n => {
+        Object.defineProperty(p, n, {
+          get() {
+            return this._getProperty(n); // abstract
+          },
+          set(value) {
+            this._setProperty(n, value); // abstract
+          }
+        });
+      });
+    }
+  }
   __lazyAcquireProps() {
     const a = this._class.observedAttributes;
     a && a.forEach(n=>{
@@ -32,29 +50,13 @@ export default Base => class extends Base {
         delete this[n];
         this[n] = value;
       } else if (this.hasAttribute(n)) {
-        this[n] = this.getAttribute(n);
+        this._setValueFromAttribute(n, this.getAttribute(n));
       }
     });
   }
-  __configureAccessors() {
-    // only do this once per prototype
-    const p = Object.getPrototypeOf(this);
-    if (!p.hasOwnProperty('__$xenPropsConfigured')) {
-      p.__$xenPropsConfigured = true;
-      const a = this._class.observedAttributes;
-      a && a.forEach(n => {
-        Object.defineProperty(p, n, {
-          get() {
-            // abstract
-            return this._getProperty(n);
-          },
-          set(value) {
-            // abstract
-            this._setProperty(n, value);
-          }
-        });
-      });
-    }
+  // provide hook for type coercion (attributes are always String valued)
+  _setValueFromAttribute(name, value) {
+    this[name] = value;
   }
   connectedCallback() {
     this._mount();
