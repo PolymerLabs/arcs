@@ -95,7 +95,7 @@ const template = html`
 
 const userTemplate = html`
   <user-item selected$="{{selected}}" on-click="_onSelect" key="{{key}}">
-    <avatar style="{{style}}"></avatar> <name>{{name}}</name>
+    <a href="{{href}}" target="_blank"><avatar style="{{style}}"></avatar> <name>{{name}}</name></a>
   </user-item>
 `;
 
@@ -143,6 +143,8 @@ class SettingsPanel extends Xen.Debug(Xen.Base, log) {
     };
   }
   _renderUser(selected, user, i) {
+    const url = new URL(document.location.href);
+    url.searchParams.set('user', user.id);
     let avatar = user.info && user.info.avatar;
     if (!avatar) {
       avatar = ``; //`${this._props.config.root}/assets/avatars/user (0).png`;
@@ -151,7 +153,8 @@ class SettingsPanel extends Xen.Debug(Xen.Base, log) {
       key: user.id,
       name: user.info && user.info.name || '',
       style: `background-image: url("${avatar}");`,
-      selected: user.id === selected
+      selected: user.id === selected,
+      href: url.href
     };
   }
   _onSelectUser(e, user) {
