@@ -99,7 +99,7 @@ ${style}
   <div chip style="{{chipStyle}}">
     <div hovering>
       <span style="flex: 1;"></span>
-      <icon delete hide$="{{noDelete}}" key="{{arcId}}" on-click="_onDelete" style="margin-right:8px;">remove_circle_outline</icon>
+      <icon delete hide$="{{noDelete}}" key="{{arcId}}" on-click="_onDelete" style="margin-right:8px;">delete_forever</icon>
       <icon star show key="{{arcId}}" on-click="_onStar">{{starred}}</icon>
     </div>
     <a href="{{href}}" trigger$="{{description}}">
