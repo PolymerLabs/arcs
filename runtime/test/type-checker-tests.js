@@ -149,5 +149,5 @@ describe('TypeChecker', () => {
     recipe.normalize();
     assert.equal(true, recipe.isResolved());
 
-  })
+  });
 });
