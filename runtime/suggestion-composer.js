@@ -17,7 +17,7 @@ import DescriptionDomFormatter from './description-dom-formatter.js';
 class SuggestionComposer {
   constructor(slotComposer) {
     assert(slotComposer);
-    assert(slotComposer.getSlotClass() == DomSlot);
+    this._affordance = slotComposer.affordance;
     // TODO(mmandlis): find a cleaner way to fetch suggestions context.
     this._context = slotComposer._contextSlots.find(slot => slot.name == 'suggestions').context;
     assert(this._context);
@@ -42,12 +42,12 @@ class SuggestionComposer {
   }
 
   async _updateSuggestions(suggestions) {
-    this._context.textContent = '';
+    this._getContextClass().clear(this._context);
     return Promise.all(suggestions.map(async suggestion => {
       let suggestionContent =
-        await suggestion.description.getRecipeSuggestion(DescriptionDomFormatter);
+        await suggestion.description.getRecipeSuggestion(this._getDescriptionFormatter());
       assert(suggestionContent, 'No suggestion content available');
-      DomContext.createContext(
+      this._getContextClass().createContext(
           this.createSuggestionElement(this._context, suggestion), suggestionContent);
     }));
   }
@@ -57,6 +57,28 @@ class SuggestionComposer {
     // TODO(sjmiles): LIFO is weird, iterate top-down elsewhere?
     container.insertBefore(suggest, container.firstElementChild);
     return suggest;
+  }
+
+  _getContextClass() {
+    switch (this._affordance) {
+      case 'dom':
+      case 'dom-touch':
+      case 'vr':
+        return DomContext;
+      default:
+        assert('unsupported affordance ', this._affordance);
+    }
+  }
+
+  _getDescriptionFormatter() {
+    switch (this._affordance) {
+      case 'dom':
+      case 'dom-touch':
+      case 'vr':
+        return DescriptionDomFormatter;
+      default:
+        assert('unsupported affordance ', this._affordance);
+    }
   }
 }
 

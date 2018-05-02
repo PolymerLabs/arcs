@@ -10,6 +10,7 @@ import Type from './type.js';
 import InitSearch from './strategies/init-search.js';
 import Planner from './planner.js';
 import Speculator from './speculator.js';
+import SuggestionComposer from './suggestion-composer.js';
 
 let defaultTimeoutMs = 5000;
 
@@ -52,6 +53,11 @@ export default class Planificator {
 
     this._schedulerCallback = this.requestPlanning.bind(this);
     this._arc._scheduler.registerIdleCallback(this._schedulerCallback);
+
+    if (this._arc.pec.slotComposer) {
+      let suggestionComposer = new SuggestionComposer(this._arc.pec.slotComposer);
+      this.registerSuggestChangedCallback((suggestions) => suggestionComposer.setSuggestions(suggestions));
+    }
   }
 
   dispose() {

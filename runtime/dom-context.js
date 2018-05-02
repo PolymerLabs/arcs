@@ -23,6 +23,9 @@ class DomContext {
   }
   get subId() {return this._subId; }
   set subId(subId) { this._subId = subId; }
+  static clear(context) {
+    context.textContent = '';
+  }
   static createContext(context, content) {
     let domContext = new DomContext(context);
     domContext.stampTemplate(domContext.createTemplateElement(content.template), () => {});
