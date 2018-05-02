@@ -16,6 +16,8 @@ import Schema from '../schema.js';
 import Type from '../type.js';
 import TypeChecker from '../recipe/type-checker.js';
 import TypeVariable from '../type-variable.js';
+import Manifest from '../manifest.js';
+import Handle from '../recipe/handle.js';
 
 
 describe('TypeChecker', () => {
@@ -117,4 +119,32 @@ describe('TypeChecker', () => {
     assert.equal(a.variable.canWriteSuperset.entitySchema.name, 'Thing');
   });
 
+  it('blah', async () => {
+    let manifest = await Manifest.parse(`
+      shape Shape
+        Shape(in ~a item)
+
+      particle Concrete
+        in Product {} item
+
+      particle Transformation
+        host Shape particle
+        in [~a] collection 
+      
+      recipe
+        create as h0
+        Transformation
+          particle <- Concrete
+          collection <- h0
+    `);
+
+    let recipe = manifest.recipes[0];
+    let type = Handle.effectiveType(null, recipe.handles[0].connections);
+    assert.equal(false, type.isResolved());
+    assert.equal(true, type.canEnsureResolved());
+    assert.equal(true, type.maybeEnsureResolved());    
+    assert.equal(true, type.isResolved());
+    assert.equal('Product', type.resolvedType().primitiveType().entitySchema.names[0]);
+
+  })
 });

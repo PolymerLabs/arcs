@@ -142,7 +142,9 @@ class TypeVariable {
   canEnsureResolved() {
     if (this._resolution)
       return this._resolution.canEnsureResolved();
-    return (this._canWriteSuperset || this._canReadSubset);
+    if (this._canWriteSuperset || this._canReadSubset)
+      return true;
+    return false;
   }
 
   maybeEnsureResolved() {
