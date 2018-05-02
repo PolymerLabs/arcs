@@ -16,6 +16,7 @@ http://polymer.github.io/PATENTS.txt
 <link rel="import" href="se-recipe-view.html"></link>
 <link rel="import" href="se-stats.html"></link>
 <link rel="import" href="se-compare-populations.html"></link>
+<link rel="import" href="se-find.html"></link>
 <link rel="import" href="../arcs-shared.html"></link>
 
 <dom-module id='strategy-explorer'>
@@ -25,15 +26,19 @@ http://polymer.github.io/PATENTS.txt
         overflow: scroll;
         flex-grow: 1;
       }
+      .se-explorer-container[find-backlit] {
+        background-color: #ddd;
+      }
       aside {
         flex-shrink: 0;
       }
     </style>
     <resizable-panels>
-      <div class="se-explorer-container">
+      <div class="se-explorer-container" find-backlit$="[[findBacklit]]">
         <se-explorer results='{{results}}'></se-explorer>
       </div>
       <aside>
+        <se-find id="find" on-find-phrase="onFindPhrase"></se-find>
         <se-compare-populations results='{{results}}'></se-compare-populations>
         <se-recipe-view></se-recipe-view>
         <se-arc-view></se-arc-view>
@@ -47,7 +52,8 @@ http://polymer.github.io/PATENTS.txt
   Polymer({
     is: 'strategy-explorer',
     properties: {
-      results: Array
+      results: Array,
+      findBacklit: Boolean
     },
     reset: function() {
       this.set('results', []);
@@ -80,6 +86,13 @@ http://polymer.github.io/PATENTS.txt
             this.reset();
             break;
         }
+      }
+    },
+    onFindPhrase(e) {
+      const phrase = e.detail;
+      this.findBacklit = !!phrase;
+      for (let seRecipe of this.idMap.values()) {
+        seRecipe.setFindPhrase(phrase);
       }
     }
   });
