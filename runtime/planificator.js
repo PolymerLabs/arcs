@@ -13,6 +13,70 @@ import {SuggestionComposer} from './suggestion-composer.js';
 
 let defaultTimeoutMs = 5000;
 
+class ReplanQueue {
+  constructor(planificator, options) {
+    this._planificator = planificator;
+    this._options = options || {};
+    this._options.defaultReplanDelayMs = this._options.defaultReplanDelayMs || 3000;
+
+    this._changes = [];
+    this._replanTimer = null;
+  }
+  addChange() {
+    this._changes.push(Date.now());
+    if (this.isReplanningScheduled()) {
+      this.postponeReplan();
+    } else {
+      this.scheduleReplan(this._options.defaultReplanDelayMs);
+    }
+  }
+  isReplanningScheduled() {
+    return Boolean(this._replanTimer);
+  }
+  scheduleReplan(intervalMs) {
+    this.cancelReplanIfScheduled();
+    this._replanTimer = setTimeout(() => this._planificator.requestPlanning(), intervalMs);
+  }
+  cancelReplanIfScheduled() {
+    if (this.isReplanningScheduled()) {
+      clearTimeout(this._replanTimer);
+      this._replanTimer = null;
+    }
+  }
+  postponeReplan() {
+    if (this._changes.length <= 1) {
+      return;
+    }
+    let now = this._changes[this._changes.length - 1];
+    let sincePrevChangeMs = now - this._changes[this._changes.length - 2];
+    let sinceFirstChangeMs = now - this._changes[0];
+    if (this.isAdjacentChange(sincePrevChangeMs) && this.canPostponeReplan(sinceFirstChangeMs)) {
+      this.cancelReplanIfScheduled();
+      let nextReplanDelayMs = this._options.defaultReplanDelayMs;
+      if (this._options.maxNoReplanMs) {
+        nextReplanDelayMs = Math.min(nextReplanDelayMs, this._options.maxNoReplanMs - sinceFirstChangeMs);
+      }
+      this.scheduleReplan(nextReplanDelayMs);
+    }
+  }
+  isAdjacentChange(changesInterval) {
+    return !this._options.adjacentDataUpdateMs || changesInterval < this._options.adjacentDataUpdateMs;
+  }
+  canPostponeReplan(changesInterval) {
+    return !this._options.maxNoReplanMs || changesInterval < this._options.maxNoReplanMs;
+  }
+  onReplanDone() {
+    this.cancelReplanIfScheduled();
+    this._changes = [];
+  }
+}
+
+const defaultOptions = {
+  defaultReplanDelayMs: 2000,
+  adjacentDataUpdateMs: 200,
+  maxNoReplanMs: 10000
+};
+
 export class Planificator {
   constructor(arc) {
     this._arc = arc;
@@ -39,6 +103,8 @@ export class Planificator {
     this._isPlanning = false; // whether planning is ongoing
     this._valid = false; // whether replanning was requested (since previous planning was complete).
 
+    this._dataChangesQueue = new ReplanQueue(this, defaultOptions);
+
     // Set up all callbacks that trigger re-planning.
     this._init();
   }
@@ -50,7 +116,7 @@ export class Planificator {
     this._arcCallback = this.onPlanInstantiated.bind(this);
     this._arc.registerInstantiatePlanCallback(this._arcCallback);
 
-    this._schedulerCallback = this.requestPlanning.bind(this);
+    this._schedulerCallback = this.onDataChanged.bind(this);
     this._arc._scheduler.registerIdleCallback(this._schedulerCallback);
 
     if (this._arc.pec.slotComposer) {
@@ -159,7 +225,14 @@ export class Planificator {
     this.requestPlanning();
   }
 
+
+  onDataChanged() {
+    this._dataChangesQueue.addChange();
+  }
+
   requestPlanning(event, options) {
+    this._dataChangesQueue.onReplanDone();
+
     // Activate replanning and trigger subscribed callbacks.
     return this._schedulePlanning(options || {});
   }

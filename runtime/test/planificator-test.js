@@ -130,10 +130,15 @@ describe('Planificator', function() {
 
   it('replans triggered by scheduler', async () => {
     let planificator = createPlanificator();
+    planificator._dataChangesQueue._options.defaultReplanDelayMs = 2;
     assert.isFalse(planificator.isPlanning);
 
     // Trigger replanning
     planificator._arc._scheduler._triggerIdleCallback();
+    assert.lengthOf(planificator._dataChangesQueue._changes, 1);
+    assert.isNotNull(planificator._dataChangesQueue._replanTimer);
+    // setTimeout is needed on data changes replanning is delayed.
+    await new Promise((resolve, reject) => setTimeout(async () => resolve(), 10));
 
     assert.isTrue(planificator.isPlanning);
     assert.lengthOf(planificator.getCurrentPlans().plans, 0);
@@ -145,13 +150,90 @@ describe('Planificator', function() {
 
     // Trigger replanning again.
     planificator._arc._scheduler._triggerIdleCallback();
-
+    await new Promise((resolve, reject) => setTimeout(async () => resolve(), 10));
     assert.isTrue(planificator.isPlanning);
     // Current plans are still available.
     assert.lengthOf(planificator.getCurrentPlans().plans, 3);
     planificator.suggestFilter = {showAll: true};
     assert.lengthOf(planificator.getCurrentSuggestions(), 3);
     assert.lengthOf(Object.keys(planificator._past), 0);
+  });
+
+  it('groups data change triggered replanning', async () => {
+    let planificator = createPlanificator();
+    planificator._dataChangesQueue._options.defaultReplanDelayMs = 4;
+
+    // Add 3 data change events with intervals.
+    planificator._arc._scheduler._triggerIdleCallback();
+    await new Promise((resolve, reject) => setTimeout(async () => resolve(), 1));
+    planificator._arc._scheduler._triggerIdleCallback();
+    await new Promise((resolve, reject) => setTimeout(async () => resolve(), 1));
+    planificator._arc._scheduler._triggerIdleCallback();
+    assert.lengthOf(planificator._dataChangesQueue._changes, 3);
+    assert.isNotNull(planificator._dataChangesQueue._replanTimer);
+    assert.isFalse(planificator.isPlanning);
+
+    // Wait verify planning has started.
+    await new Promise((resolve, reject) => setTimeout(async () => resolve(), 5));
+    assert.isTrue(planificator.isPlanning);
+  });
+
+  it('caps replanning delay with max-no-replan value', async () => {
+    let planificator = createPlanificator();
+    planificator._dataChangesQueue._options = {defaultReplanDelayMs: 10, maxNoReplanMs: 11};
+
+    // Add 3 data change events with intervals.
+    planificator._arc._scheduler._triggerIdleCallback();
+    await new Promise((resolve, reject) => setTimeout(async () => resolve(), 1));
+    planificator._arc._scheduler._triggerIdleCallback();
+    await new Promise((resolve, reject) => setTimeout(async () => resolve(), 4));
+    planificator._arc._scheduler._triggerIdleCallback(); 
+    assert.lengthOf(planificator._dataChangesQueue._changes, 3);
+    assert.isNotNull(planificator._dataChangesQueue._replanTimer);
+    assert.isFalse(planificator.isPlanning);
+
+    // Wait and verify planning has started.
+    await new Promise((resolve, reject) => setTimeout(async () => resolve(), 5));
+    assert.isTrue(planificator.isPlanning);
+  });
+
+  it('does not postpone replanning for non adjacent data changes', async () => {
+    let planificator = createPlanificator();
+    planificator._dataChangesQueue._options = {defaultReplanDelayMs: 5, adjacentDataUpdateMs: 1};
+
+    // Add 2 non-adjacent data change events.
+    planificator._arc._scheduler._triggerIdleCallback();
+    await new Promise((resolve, reject) => setTimeout(async () => resolve(), 3));
+    planificator._arc._scheduler._triggerIdleCallback();
+    assert.lengthOf(planificator._dataChangesQueue._changes, 2);
+    assert.isNotNull(planificator._dataChangesQueue._replanTimer);
+    assert.isFalse(planificator.isPlanning);
+
+    // Planning wasn't posponed and is being triggered
+    await new Promise((resolve, reject) => setTimeout(async () => resolve(), 3));
+    assert.isTrue(planificator.isPlanning);
+    assert.lengthOf(planificator._dataChangesQueue._changes, 0);
+    assert.isNull(planificator._dataChangesQueue._replanTimer);
+  });
+
+  it('cancels data change triggered replaning if other replaning occured', async () => {
+    let planificator = createPlanificator();
+    let plan = new Recipe();
+    plan.normalize();
+    planificator._setCurrent({plans: [{plan}]});
+
+    // Add 2 non-adjacent data change events.
+    planificator._arc._scheduler._triggerIdleCallback();
+    planificator._arc._scheduler._triggerIdleCallback();
+    assert.lengthOf(planificator._dataChangesQueue._changes, 2);
+    assert.isNotNull(planificator._dataChangesQueue._replanTimer);
+    assert.isFalse(planificator.isPlanning);
+
+    // Plan instantiated, data change events triggered replanning scheduling is canceled.
+    await planificator._arc.instantiate(plan);
+    assert.isTrue(planificator.isPlanning);
+    assert.lengthOf(planificator._dataChangesQueue._changes, 0);
+    assert.isNull(planificator._dataChangesQueue._replanTimer);
   });
 
   it('replans triggered by plan instantiation', async () => {
