@@ -25,7 +25,9 @@ const template = html`
 `;
 
 class DataItem extends Xen.Base {
-  static get observedAttributes() { return ['name', 'value']; }
+  static get observedAttributes() {
+    return ['name', 'value', 'expand'];
+  }
   get template() {
     return template;
   }
@@ -35,6 +37,9 @@ class DataItem extends Xen.Base {
   _onCheckInput(e) {
     e.stopPropagation();
     this.dispatchEvent(new CustomEvent('item-change', {detail: e.target.checked}));
+  }
+  _willReceiveProps(props, state) {
+    state.expanded = Boolean(props.expand);
   }
   _render(props, state) {
     let type = typeof props.value;
