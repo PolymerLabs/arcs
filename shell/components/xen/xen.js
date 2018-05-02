@@ -100,6 +100,7 @@ const walker = (node, tree) => {
     if (clas) {
       const shadow = child.shadowRoot;
       const record = {
+        node: child,
         props: child._props,
         state: child._state
       };
