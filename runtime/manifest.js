@@ -549,9 +549,13 @@ ${e.message}
       particleItem.implFile = loader.join(manifest.fileName, particleItem.implFile);
     }
 
-    for (let arg of particleItem.args) {
-      arg.type = arg.type.model;
-    }
+    let processArgTypes = args => {
+      for (let arg of args) {      
+        arg.type = arg.type.model;
+        processArgTypes(arg.dependentConnections);
+      }
+    };
+    processArgTypes(particleItem.args);
 
     let particleSpec = new ParticleSpec(particleItem);
     manifest._particles[particleItem.name] = particleSpec;

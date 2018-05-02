@@ -20,6 +20,16 @@ class ConnectionSpec {
     this.name = rawData.name;
     this.type = rawData.type.mergeTypeVariablesByName(typeVarMap);
     this.isOptional = rawData.isOptional;
+    this.dependentConnections = [];
+  }
+
+  instantiateDependentConnections(particle, typeVarMap) {
+    for (let dependentArg of this.rawData.dependentConnections) {
+      let dependentConnection = particle.createConnection(dependentArg, typeVarMap);
+      dependentConnection.parentConnection = this;
+      this.dependentConnections.push(dependentConnection);
+    }
+
   }
 
   get isInput() {
@@ -72,7 +82,8 @@ class ParticleSpec {
     this.name = model.name;
     this.verbs = model.verbs;
     let typeVarMap = new Map();
-    this.connections = model.args.map(a => new ConnectionSpec(a, typeVarMap));
+    this.connections = [];
+    model.args.forEach(arg => this.createConnection(arg, typeVarMap));
     this.connectionMap = new Map();
     this.connections.forEach(a => this.connectionMap.set(a.name, a));
     this.inputs = this.connections.filter(a => a.isInput);
@@ -99,6 +110,13 @@ class ParticleSpec {
     });
   }
 
+  createConnection(arg, typeVarMap) {
+    let connection = new ConnectionSpec(arg, typeVarMap);
+    this.connections.push(connection);
+    connection.instantiateDependentConnections(this, typeVarMap);
+    return connection;
+  }
+
   isInput(param) {
     for (let input of this.inputs) if (input.name == param) return true;
   }
@@ -123,17 +141,15 @@ class ParticleSpec {
 
   toLiteral() {
     let {args, name, verbs, description, implFile, affordance, slots} = this._model;
-    args = args.map(a => {
-      let {type, direction, name, isOptional} = a;
-      type = type.toLiteral();
-      return {type, direction, name, isOptional};
-    });
+    let connectionToLiteral = ({type, direction, name, isOptional, dependentConnections}) => ({type: type.toLiteral(), direction, name, isOptional, dependentConnections: dependentConnections.map(connectionToLiteral)});
+    args = args.map(a => connectionToLiteral(a));
     return {args, name, verbs, description, implFile, affordance, slots};
   }
 
   static fromLiteral(literal) {
     let {args, name, verbs, description, implFile, affordance, slots} = literal;
-    args = args.map(({type, direction, name, isOptional}) => ({type: Type.fromLiteral(type), direction, name, isOptional}));
+    let connectionFromLiteral = ({type, direction, name, isOptional, dependentConnections}) => ({type: Type.fromLiteral(type), direction, name, isOptional, dependentConnections: dependentConnections.map(connectionFromLiteral)}); 
+    args = args.map(connectionFromLiteral);
     return new ParticleSpec({args, name, verbs, description, implFile, affordance, slots});
   }
 
@@ -167,8 +183,20 @@ class ParticleSpec {
     let results = [];
     let verbs = this.verbs.map(verb => `#${verb}`).join(' ');
     results.push(`particle ${this.name} in '${this.implFile}' ${verbs}`.trim());
-    for (let connection of this.connections)
-      results.push(`  ${connection.direction} ${connection.type.toString()}${connection.isOptional ? '?' : ''} ${connection.name}`);
+    let indent = '  ';
+    let writeConnection = (connection, indent) => {
+      results.push(`${indent}${connection.direction} ${connection.type.toString()}${connection.isOptional ? '?' : ''} ${connection.name}`);
+      for (let dependent of connection.dependentConnections) {
+        writeConnection(dependent, indent + '  ');
+      }
+    };
+
+    for (let connection of this.connections) {
+      if (connection.parentConnection)
+        continue;
+      writeConnection(connection, indent);
+    }
+
     this.affordance.filter(a => a != 'mock').forEach(a => results.push(`  affordance ${a}`));
     // TODO: support form factors
     this.slots.forEach(s => {
