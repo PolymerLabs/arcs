@@ -88,6 +88,10 @@ class InMemoryStorageProvider extends StorageProviderBase {
       return new InMemoryCollection(type, arcId, name, id, key);
     return new InMemoryVariable(type, arcId, name, id, key);
   }
+
+  assignVersionForTesting(v) {
+    this._version = v;
+  }
 }
 
 class InMemoryCollection extends InMemoryStorageProvider {
@@ -104,7 +108,7 @@ class InMemoryCollection extends InMemoryStorageProvider {
   }
 
   async cloneFrom(handle) {
-    let {list, version} = await handle._toListWithVersion();
+    let {list, version} = await handle.toListWithVersion();
     assert(version !== null);
     await this._fromListWithVersion(list, version);
   }
@@ -125,7 +129,7 @@ class InMemoryCollection extends InMemoryStorageProvider {
     return [...this._items.values()];
   }
 
-  async _toListWithVersion() {
+  async toListWithVersion() {
     return {list: [...this._items.values()], version: this._version};
   }
 
@@ -155,6 +159,10 @@ class InMemoryCollection extends InMemoryStorageProvider {
     trace.end({args: {entity}});
   }
 
+  clearItemsForTesting() {
+    this._items.clear();
+  }
+
   // TODO: Something about iterators??
   // TODO: Something about changing order?
 
@@ -176,7 +184,7 @@ class InMemoryVariable extends InMemoryStorageProvider {
   }
 
   async cloneFrom(handle) {
-    let {data, version} = await handle._getWithVersion();
+    let {data, version} = await handle.getWithVersion();
     await this._setWithVersion(data, version);
   }
 
@@ -193,7 +201,7 @@ class InMemoryVariable extends InMemoryStorageProvider {
     return this._stored;
   }
 
-  async _getWithVersion() {
+  async getWithVersion() {
     return {data: this._stored, version: this._version};
   }
 
@@ -206,7 +214,7 @@ class InMemoryVariable extends InMemoryStorageProvider {
   }
 
   async clear() {
-    this.set(undefined);
+    this.set(null);
   }
 
   serializedData() {

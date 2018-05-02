@@ -22,6 +22,7 @@ function cloneData(data) {
 }
 
 function restore(entry, entityClass) {
+  assert(entityClass, 'Handles need entity classes for deserialization');
   let {id, rawData} = entry;
   let entity = new entityClass(cloneData(rawData));
   if (entry.id) {
@@ -37,16 +38,23 @@ function restore(entry, entityClass) {
  * Base class for Collections and Variables.
  */
 class Handle {
-  constructor(proxy, particleId, canRead, canWrite) {
+  constructor(proxy, name, particleId, canRead, canWrite) {
     assert(!(proxy instanceof Handle));
     this._proxy = proxy;
+    this.name = name || this._proxy.name;
     this.canRead = canRead;
     this.canWrite = canWrite;
     this._particleId = particleId;
   }
+
   underlyingProxy() {
     return this._proxy;
   }
+
+  resync() {
+    return this._proxy.resync();
+  }
+
   /** @method on(kind, callback, target)
    * Register for callbacks every time the requested kind of event occurs.
    * Events are grouped into delivery sets by target, which should therefore
@@ -81,16 +89,8 @@ class Handle {
     };
   }
 
-  _restore(entry) {
-    assert(this.entityClass, 'Handles need entity classes for deserialization');
-    return restore(entry, this.entityClass);
-  }
-
   get type() {
     return this._proxy._type;
-  }
-  get name() {
-    return this._proxy.name;
   }
 
   get _id() {
@@ -110,13 +110,20 @@ class Handle {
  * which handles are connected.
  */
 class Collection extends Handle {
-  constructor(proxy, particleId, canRead, canWrite) {
+  constructor(proxy, name, particleId, canRead, canWrite) {
     // TODO: this should talk to an API inside the PEC.
-    super(proxy, particleId, canRead, canWrite);
+    super(proxy, name, particleId, canRead, canWrite);
   }
   query() {
     // TODO: things
   }
+
+  notify(particle, version, update) {
+    assert(this.canRead, 'notify should not be called for non-readable handles');
+    update.collection = this._restore(update.collection);
+    particle.onHandleUpdate(this, version, update);
+  }
+
   /** @method async toList()
    * Returns a list of the Entities contained by the handle.
    * throws: Error if this handle is not configured as a readable handle (i.e. 'in' or 'inout')
@@ -126,7 +133,11 @@ class Collection extends Handle {
     // TODO: remove this and use query instead
     if (!this.canRead)
       throw new Error('Handle not readable');
-    return (await this._proxy.toList(this._particleId)).map(a => this._restore(a));
+    return this._restore(await this._proxy.toList(this._particleId));
+  }
+
+  _restore(list) {
+    return (list != null) ? list.map(a => restore(a, this.entityClass)) : null;
   }
 
   /** @method store(entity)
@@ -148,7 +159,7 @@ class Collection extends Handle {
    */
   async remove(entity) {
     if (!this.canWrite)
-      throw new Error('View not writeable');
+      throw new Error('Handle not writeable');
     let serialization = this._serialize(entity);
     return this._proxy.remove(serialization.id, this._particleId);
   }
@@ -160,8 +171,14 @@ class Collection extends Handle {
  * the current recipe identifies which handles are connected.
  */
 class Variable extends Handle {
-  constructor(proxy, particleId, canRead, canWrite) {
-    super(proxy, particleId, canRead, canWrite);
+  constructor(proxy, name, particleId, canRead, canWrite) {
+    super(proxy, name, particleId, canRead, canWrite);
+  }
+
+  notify(particle, version, update) {
+    assert(this.canRead, 'notify should not be called for non-readable handles');
+    update.variable = this._restore(update.variable);
+    particle.onHandleUpdate(this, version, update);
   }
 
   /** @method async get()
@@ -172,15 +189,18 @@ class Variable extends Handle {
    */
   async get() {
     if (!this.canRead)
-      throw new Error('View not readable');
-    let result = await this._proxy.get(this._particleId);
-    if (result == null)
-      return undefined;
-    if (this.type.isEntity)
-      return this._restore(result);
-    if (this.type.isInterface)
-      return ParticleSpec.fromLiteral(result);
-    return result;
+      throw new Error('Handle not readable');
+    let model = await this._proxy.get(this._particleId);
+    return this._restore(model);
+  }
+
+  _restore(model) {
+    if (model == null)
+      return null;
+    if (this.type.isEntity) {
+      return restore(model, this.entityClass);
+    }
+    return this.type.isInterface ? ParticleSpec.fromLiteral(model) : model;
   }
 
   /** @method set(entity)
@@ -190,7 +210,7 @@ class Variable extends Handle {
    */
   async set(entity) {
     if (!this.canWrite)
-      throw new Error('View not writeable');
+      throw new Error('Handle not writeable');
     return this._proxy.set(this._serialize(entity), this._particleId);
   }
 
@@ -201,15 +221,15 @@ class Variable extends Handle {
    */
   async clear() {
     if (!this.canWrite)
-      throw new Error('View not writeable');
+      throw new Error('Handle not writeable');
     await this._proxy.clear(this._particleId);
   }
 }
 
-function handleFor(proxy, isSet, particleId, canRead = true, canWrite = true) {
+function handleFor(proxy, isSet, name, particleId, canRead = true, canWrite = true) {
   return (isSet || (isSet == undefined && proxy.type.isSetView))
-      ? new Collection(proxy, particleId, canRead, canWrite)
-      : new Variable(proxy, particleId, canRead, canWrite);
+      ? new Collection(proxy, name, particleId, canRead, canWrite)
+      : new Variable(proxy, name, particleId, canRead, canWrite);
 }
 
 export default {handleFor};
