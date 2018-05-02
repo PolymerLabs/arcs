@@ -76,9 +76,6 @@ class TestPlanificator extends Planificator {
 
 function createPlanificator() {
   let arc = new Arc({id: 'demo-test'});
-  arc.pec = {slotComposer: {}};
-  arc.pec.slotComposer.setSuggestions = (suggestions) => arc.suggestions = suggestions;
-  arc.pec.slotComposer.initializeRecipe = async () => {};
   return new TestPlanificator(arc);
 }
 
