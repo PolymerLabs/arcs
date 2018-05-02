@@ -129,6 +129,18 @@ ${particleStr1}
     assert.equal(manifest.particles.length, 1);
     assert.equal(manifest.particles[0].connections.length, 2);
   });
+  it('can round-trip particles with dependent handles', async () => {
+    let manifestString = `particle TestParticle in 'a.js'
+  in [Product {}] input
+    out [Product {}] output
+  affordance dom
+  consume thing
+    provide otherThing`;
+    
+    let manifest = await Manifest.parse(manifestString);
+    assert.equal(manifest.particles.length, 1);
+    assert.equal(manifestString, manifest.particles[0].toString());
+  });
   it('can parse a manifest containing a schema', async () => {
     let manifest = await Manifest.parse(`
       schema Bar

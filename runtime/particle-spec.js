@@ -183,8 +183,20 @@ class ParticleSpec {
     let results = [];
     let verbs = this.verbs.map(verb => `#${verb}`).join(' ');
     results.push(`particle ${this.name} in '${this.implFile}' ${verbs}`.trim());
-    for (let connection of this.connections)
-      results.push(`  ${connection.direction} ${connection.type.toString()}${connection.isOptional ? '?' : ''} ${connection.name}`);
+    let indent = '  ';
+    let writeConnection = (connection, indent) => {
+      results.push(`${indent}${connection.direction} ${connection.type.toString()}${connection.isOptional ? '?' : ''} ${connection.name}`);
+      for (let dependent of connection.dependentConnections) {
+        writeConnection(dependent, indent + '  ');
+      }
+    };
+
+    for (let connection of this.connections) {
+      if (connection.parentConnection)
+        continue;
+      writeConnection(connection, indent);
+    }
+
     this.affordance.filter(a => a != 'mock').forEach(a => results.push(`  affordance ${a}`));
     // TODO: support form factors
     this.slots.forEach(s => {
