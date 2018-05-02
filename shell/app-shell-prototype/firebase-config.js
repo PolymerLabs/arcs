@@ -14,7 +14,7 @@ import firebase from '../components/firebase.4.2.0.js';
 // arc data is under this child node on database root
 const version = '0_4';
 
-// server particulars
+// storage particulars
 const serverName = `arcs-storage.firebaseio.com`;
 const apiKey = 'AIzaSyBme42moeI-2k8WgXh-6YK_wYyjEXo4Oz8';
 
@@ -39,7 +39,7 @@ const db = database.ref(version);
 // firebase storage
 const storage = app.storage();
 
-// for debugging only
+// console tools
 db.dump = () => db.once('value').then(snap => console.log(db.data = snap.val()));
 db.get = async path => {
   const snap = await db.child(path).once('value');
@@ -47,16 +47,22 @@ db.get = async path => {
   console.log(value);
   return value;
 };
+db.newUser = name => {
+  const user = {info: {name}};
+  return db.child('users').push(user).key;
+};
 
+// fill in existing reference if necessary
+const Firebase = window.Firebase || {};
 // exportables
-const Firebase = {
+Object.assign(Firebase, {
   version,
   firebase,
   database,
   db,
   storage,
   storageKey
-};
+});
 
 // export as globals
 window.Firebase = Firebase;

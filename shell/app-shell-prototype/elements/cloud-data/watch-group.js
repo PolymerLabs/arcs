@@ -9,7 +9,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 */
 
 import Xen from '../../../components/xen/xen.js';
-const db = window.db;
+import Firebase from './firebase.js';
 
 const log = Xen.logFactory('WatchGroup', '#aa00c7');
 
@@ -28,7 +28,7 @@ class WatchGroup extends Xen.Base {
     };
   }
   _update(props, state, lastProps) {
-    state.db = props.db || db;
+    state.db = props.db || Firebase.db;
     if (props.watches !== lastProps.watches) {
       this._unplug(state.plugs);
       state.initialized = false;

@@ -16,7 +16,7 @@ import './shell-ui/user-picker.js';
 // components
 import '../../components/simple-tabs.js';
 import '../../components/arc-tools/handle-explorer.js';
-import '../../components/arc-tools/xen-explorer.js';
+import '../../components/xen-tools/xen-explorer.js';
 
 // libs
 import Xen from '../../components/xen/xen.js';
@@ -146,7 +146,6 @@ const template = html`
       align-items: center;
       height: 56px;
       width: 100%;
-      /* transition: transform 100ms ease-in-out; */
       padding-left: 6px;
       padding-right: 6px;
       box-sizing: border-box;

@@ -33,8 +33,8 @@ class ArcPlanner extends Xen.Debug(Xen.Base, log) {
     };
   }
   _willReceiveProps(props, state, oldProps) {
-    const {arc, suggestion, search} = props;
     const changed = name => props[name] !== oldProps[name];
+    const {arc, suggestion, search} = props;
     if (suggestion && changed('suggestion')) {
       state.pendingPlans.push(suggestion.plan);
     }
@@ -45,9 +45,7 @@ class ArcPlanner extends Xen.Debug(Xen.Base, log) {
         planificator = null;
       }
       if (!planificator) {
-        planificator = new Arcs.Planificator(arc);
-        planificator.registerPlansChangedCallback(current => this._plansChanged(current, planificator.getLastActivatedPlan()));
-        planificator.registerSuggestChangedCallback(suggestions => this._suggestionsChanged(suggestions));
+        planificator = this._createPlanificator(arc);
         planificator.setSearch(search);
       } else if (changed('search')) {
         planificator.setSearch(search);
@@ -59,6 +57,12 @@ class ArcPlanner extends Xen.Debug(Xen.Base, log) {
     if (arc && pendingPlans.length) {
       this._instantiatePlan(arc, pendingPlans.shift());
     }
+  }
+  _createPlanificator(arc) {
+    const planificator = new Arcs.Planificator(arc);
+    planificator.registerPlansChangedCallback(current => this._plansChanged(current, planificator.getLastActivatedPlan()));
+    planificator.registerSuggestChangedCallback(suggestions => this._suggestionsChanged(suggestions));
+    return planificator;
   }
   _plansChanged(context, plan) {
     this._fire('plans', context);
