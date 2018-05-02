@@ -1,26 +1,27 @@
-import db from './mock-db.js';
+import {MockDb} from './mock-db.js';
 import '../elements/cloud-data/cloud-arc.js';
 
 const assert = chai.assert;
 const expect = chai.expect;
-
-const mockdb = Object.assign({}, db);
+const Firebase = window.Firebase;
 
 let cloudArc;
 
 describe('CloudArc', function() {
   beforeEach(() => {
+    Firebase.db = new MockDb();
     cloudArc = document.createElement('cloud-arc');
     // TODO(sjmiles): attempt to initialize elements without
     // actually atttaching them to DOM
     cloudArc._mount();
-    Object.assign(db, mockdb);
+    //assert.equal(window.Firebase.db, Firebase.db);
+    assert.equal(Firebase.db, cloudArc._state.db);
   });
   it('can be tested', () => {
     assert(cloudArc);
   });
   it(`given key='*', generates a new meta arc`, function(done) {
-    db.push = ({metadata}) => {
+    Firebase.db.push = ({metadata}) => {
       expect(metadata).to.have.property('description');
       expect(metadata).to.have.property('color');
       expect(metadata).to.have.property('bg');
@@ -35,16 +36,16 @@ describe('CloudArc', function() {
     });
     cloudArc.key = '*';
   });
-  it(`given a key, watches arcs/[key]/metadata and arcs/[key]/serialized`, done => {
+  it(`given a key, watches arcs/[key]/metadata and arcs/[key]/serialization`, done => {
     let count = 0;
     let path = '';
-    db.child = _path => {
+    Firebase.db.child = _path => {
       path = _path;
-      return db;
+      return Firebase.db;
     };
-    const paths = ['arcs/KEY/metadata', 'arcs/KEY/serialized'];
+    const paths = ['arcs/KEY/metadata', 'arcs/KEY/serialization'];
     let error;
-    db.on = (name, callback) => {
+    Firebase.db.on = (name, callback) => {
       try {
         assert.equal(paths[count++], path);
         if (count == paths.length && !error) {
@@ -57,7 +58,7 @@ describe('CloudArc', function() {
     cloudArc.key = 'KEY';
   });
   it(`given metadata, updates db`, function(done) {
-    db.update = metadata => {
+    Firebase.db.update = metadata => {
       try {
         assert.deepEqual(metadata, cloudArc.metadata);
         done();

@@ -1,21 +1,22 @@
-// TODO(sjmiles): using db off window is bad news
-const nop = () => {};
-const db = {
-  child: (path) => {
-    db.lastPath = path;
-    return db;
-  },
-  ref: (path) => {
-    db.lastRef = path;
-    return db;
-  },
-  on: (name, callback) => {
-  },
-  once: nop,
-  set: nop,
-  store: nop,
-  push: () => ({key: 'KEY'})
-};
-window.db = db;
+class MockDb {
+  child(path) {
+    this.lastPath = path;
+    return this;
+  }
+  ref(path) {
+    this.lastRef = path;
+    return this;
+  }
+  push() {
+    return {key: 'KEY'};
+  }
+  on() {}
+  once() {}
+  set() {}
+  store() {}
+  update() {}
+}
 
-export default db;
+export {
+  MockDb
+};
