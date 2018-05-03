@@ -16,7 +16,7 @@ import MessageChannel from '../message-channel.js';
 import InnerPec from '../inner-PEC.js';
 import Loader from '../loader.js';
 
-async function setup(fileMap) {
+async function loadFilesIntoNewArc(fileMap) {
   let registry = {};
   let loader = new class extends Loader {
     loadResource(path) {
@@ -79,7 +79,7 @@ class ResultInspector {
 }
 
 async function setupProxySyncTests() {
-  let {manifest, arc} = await setup({
+  let {manifest, arc} = await loadFilesIntoNewArc({
     manifest: `
       schema Data
         Text value
@@ -247,7 +247,7 @@ describe('particle-api', function() {
   });
 
   it('contains view synchronize calls', async () => {
-    let {manifest, arc} = await setup({
+    let {manifest, arc} = await loadFilesIntoNewArc({
       manifest: `
         schema Input
           Text value
@@ -300,7 +300,7 @@ describe('particle-api', function() {
   });
 
   it('contains a constructInnerArc call', async () => {
-    let {manifest, arc} = await setup({
+    let {manifest, arc} = await loadFilesIntoNewArc({
       manifest: `
         schema Result
           Text value
@@ -344,7 +344,7 @@ describe('particle-api', function() {
   });
 
   it('can load a recipe', async () => {
-    let {manifest, arc} = await setup({
+    let {manifest, arc} = await loadFilesIntoNewArc({
       manifest: `
         schema Result
           Text value
@@ -422,7 +422,7 @@ describe('particle-api', function() {
   });
 
   it('can load a recipe referencing a manifest store', async () => {
-    let {manifest, arc} = await setup({
+    let {manifest, arc} = await loadFilesIntoNewArc({
       manifest: `
         schema Result
           Text value
@@ -512,7 +512,7 @@ describe('particle-api', function() {
   });
 
   it('can load a recipe referencing a tagged handle in containing arc', async () => {
-    let {manifest, arc} = await setup({
+    let {manifest, arc} = await loadFilesIntoNewArc({
       manifest: `
         schema Result
           Text value
@@ -610,7 +610,7 @@ describe('particle-api', function() {
   // potentially address either by including more strategies in the outer-PEC's
   // strategizer or adding such fallback to `arc.findHandlesByType`.
   it.skip('can load a recipe referencing a tagged handle in manifest', async () => {
-    let {manifest, arc} = await setup({
+    let {manifest, arc} = await loadFilesIntoNewArc({
       manifest: `
         schema Result
           Text value
@@ -700,7 +700,7 @@ describe('particle-api', function() {
   });
 
   it('multiplexing', async () => {
-    let {manifest, arc} = await setup({
+    let {manifest, arc} = await loadFilesIntoNewArc({
       manifest: `
         schema Result
           Text value
