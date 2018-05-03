@@ -71,18 +71,10 @@ class MockSlotComposer extends SlotComposer {
    */
   constructor(options) {
     super({rootContext: new MockContext('dummy-context'), affordance: 'mock'});
+    this._affordance._slotClass = MockSlot;
     this.expectQueue = [];
     this.onExpectationsComplete = () => undefined;
     this.strict = options && options.strict != undefined ? options.strict : true;
-  }
-
-  getSlotClass(affordance) {
-    switch (this.affordance) {
-      case 'mock':
-        return MockSlot;
-      default:
-        assert('unsupported affordance ', this.affordance);
-    }
   }
 
   /** @method newExpectations()

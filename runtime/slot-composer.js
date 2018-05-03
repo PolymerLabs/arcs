@@ -9,10 +9,7 @@
  */
 
 import assert from '../platform/assert-web.js';
-import {Slot} from './slot.js';
-import {DomSlot} from './dom-slot.js';
-import {DomContext} from './dom-context.js';
-import {DescriptionDomFormatter} from './description-dom-formatter.js';
+import {Affordance} from './affordance.js';
 
 class SlotComposer {
   /**
@@ -27,11 +24,10 @@ class SlotComposer {
     assert(options.rootContext, 'Root context is mandatory');
 
     this._containerKind = options.containerKind;
-    this._affordance = options.affordance;
-    this._slotClass = this.getSlotClass();
-    assert(this._slotClass);
+    this._affordance = Affordance.forName(options.affordance);
+    assert(this._affordance.slotClass);
 
-    let slotContextByName = this._slotClass.findRootSlots(options.rootContext) || {};
+    let slotContextByName = this._affordance.slotClass.findRootSlots(options.rootContext) || {};
     if (Object.keys(slotContextByName).length == 0) {
       // fallback to single 'root' slot using the rootContext.
       slotContextByName['root'] = options.rootContext;
@@ -44,19 +40,8 @@ class SlotComposer {
 
     this._slots = [];
   }
-  get affordance() { return this._affordance; }
-  getSlotClass() {
-    switch (this._affordance) {
-      case 'dom':
-      case 'dom-touch':
-      case 'vr':
-        return DomSlot;
-      case 'mock':
-        return Slot;
-      default:
-        assert('unsupported affordance ', this._affordance);
-    }
-  }
+
+  get affordance() { return this._affordance.name; }
 
   getSlot(particle, slotName) {
     return this._slots.find(s => s.consumeConn.particle == particle && s.consumeConn.name == slotName);
@@ -110,7 +95,7 @@ class SlotComposer {
           return;
         }
 
-        let slot = new this._slotClass(cs, this.arc, this._containerKind);
+        let slot = new this._affordance.slotClass(cs, this.arc, this._containerKind);
         slot.startRenderCallback = this.arc.pec.startRender.bind(this.arc.pec);
         slot.stopRenderCallback = this.arc.pec.stopRender.bind(this.arc.pec);
         slot.innerSlotsUpdateCallback = this.updateInnerSlots.bind(this);
@@ -206,7 +191,9 @@ class SlotComposer {
 
   dispose() {
     this._slots.forEach(slot => slot.dispose());
-    this._slotClass.dispose();
+    this._slots.forEach(slot => slot.setContext(null));
+    this._affordance.slotClass.dispose();
+    this._contextSlots.forEach(contextSlot => this._affordance.contextClass.clear(contextSlot));
   }
 }
 

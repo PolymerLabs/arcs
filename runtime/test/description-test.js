@@ -620,7 +620,7 @@ recipe
     verify(`recipe hello`, 'Hello.');
   });
 
-  it.only('generates type description', async () => {
+  it('generates type description', async () => {
     let manifest = (await Manifest.parse(`
 schema TVShow
 schema MyTVShow
