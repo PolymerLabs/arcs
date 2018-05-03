@@ -12,6 +12,10 @@ http://polymer.github.io/PATENTS.txt
 <dom-module id='se-recipe'>
   <template>
     <style include='se-shared-styles'>
+      :host([find-highlight]) {
+        background: white;
+      }
+
       #recipe-box {
         white-space: pre;
         font-family: consolas;
@@ -52,6 +56,10 @@ http://polymer.github.io/PATENTS.txt
       is: 'se-recipe',
       properties: {
         shortHash: String,
+        findHighlight: {
+          type: Boolean,
+          reflectToAttribute: true
+        }
       },
       attached: function() {
         let recipeView = document.strategyExplorer.shadowRoot.querySelector('se-recipe-view');
@@ -62,6 +70,8 @@ http://polymer.github.io/PATENTS.txt
         this.$['recipe-box'].addEventListener('mouseleave', e => {
           recipeView.resetToPinned();
         });
+        // Maintain find-highlight after results are reloaded.
+        this.setFindPhrase(document.strategyExplorer.$.find.phrase);
 
         this.ancestors = new Set();
         this.childrens = new Set();
@@ -155,7 +165,9 @@ http://polymer.github.io/PATENTS.txt
             this.$['recipe-box'].click();
           }
         });
-
+      },
+      setFindPhrase: function(phrase) {
+        this.findHighlight = !!phrase && this.recipe.result.toLowerCase().includes(phrase.toLowerCase());
       }
     });
   </script>
