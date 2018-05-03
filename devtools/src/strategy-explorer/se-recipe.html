@@ -89,9 +89,6 @@ http://polymer.github.io/PATENTS.txt
         this.recipe.derivation.forEach(derivation => {
           if (derivation.parent !== undefined) {
             let newParent = document.strategyExplorer.idMap.get(derivation.parent);
-            if (newParent == undefined) {
-              return;
-            }
 
             let setupContext = (newParent => {
               this.strategyMap.set(newParent, [[derivation.strategy]]);
