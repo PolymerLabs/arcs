@@ -21,13 +21,13 @@ import Description from './description.js';
 import util from './recipe/util.js';
 import FakePecFactory from './fake-pec-factory.js';
 import StorageProviderFactory from './storage/storage-provider-factory.js';
-import scheduler from './scheduler.js';
+import Scheduler from './scheduler.js';
 import {registerArc} from '../devtools/shared/arc-registry.js';
 import Id from './id.js';
 import {ArcDebugHandler} from './debug/arc-debug-handler.js';
 
 class Arc {
-  constructor({id, context, pecFactory, slotComposer, loader, storageKey, storageProviderFactory, speculative}) {
+  constructor({id, context, pecFactory, slotComposer, loader, storageKey, storageProviderFactory, speculative, scheduler}) {
     // TODO: context should not be optional.
     this._context = context || new Manifest({id});
     // TODO: pecFactory should not be optional. update all callers and fix here.
@@ -42,7 +42,7 @@ class Arc {
     // TODO: rename: this are just tuples of {particles, handles, slots, pattern} of instantiated recipes merged into active recipe.
     this._recipes = [];
     this._loader = loader;
-    this._scheduler = scheduler;
+    this._scheduler = scheduler || new Scheduler();
 
     // All the handles, mapped by handle ID
     this._handlesById = new Map();
@@ -284,7 +284,6 @@ ${this.activeRecipe.toString()}`;
   // Makes a copy of the arc used for speculative execution.
   async cloneForSpeculativeExecution() {
     let arc = new Arc({id: this.generateID().toString(), pecFactory: this._pecFactory, context: this.context, loader: this._loader, speculative: true});
-    arc._scheduler = this._scheduler.clone();
     let handleMap = new Map();
     for (let handle of this._handles) {
       let clone = await arc._storageProviderFactory.construct(handle.id, handle.type, 'in-memory');

@@ -12,7 +12,9 @@
 
 import {assert} from './chai-web.js';
 import handle from '../handle.js';
-import scheduler from '../scheduler.js';
+import Scheduler from '../scheduler.js';
+
+const scheduler = new Scheduler();
 
 function assertSingletonWillChangeTo(view, entityClass, expectation) {
   return new Promise((resolve, reject) => {
