@@ -80,7 +80,7 @@ describe('TypeChecker', () => {
     let result = TypeChecker.processTypeList(undefined, [{type: a, direction: 'out'}, {type: c, direction: 'in'}]);
     assert.equal(result, null);
   });
-  
+
   it('doesn\'t resolve a pair of out [~a (is Thing)], inout [Product]', async () => {
     let a = Type.newVariable(new TypeVariable('a')).setViewOf();
     let resolution = Type.newEntity(new Schema({names: ['Thing'], fields: {}}));
@@ -113,7 +113,7 @@ describe('TypeChecker', () => {
     assert.equal(a.variable.canReadSubset.entitySchema.name, 'Product');
     assert.equal(a.variable.canWriteSuperset.entitySchema.name, 'Thing');
 
-    a = Type.newVariable(new TypeVariable('a'));    
+    a = Type.newVariable(new TypeVariable('a'));
     result = TypeChecker.processTypeList(undefined, [{type: a, direction: 'in'}, {type: c, direction: 'in'}, {type: b, direction: 'out'}]);
     assert.equal(a.variable.canReadSubset.entitySchema.name, 'Product');
     assert.equal(a.variable.canWriteSuperset.entitySchema.name, 'Thing');
@@ -129,8 +129,8 @@ describe('TypeChecker', () => {
 
       particle Transformation
         host Shape particle
-        in [~a] collection 
-      
+        in [~a] collection
+
       recipe
         create as h0
         Transformation
@@ -142,12 +142,28 @@ describe('TypeChecker', () => {
     let type = Handle.effectiveType(null, recipe.handles[0].connections);
     assert.equal(false, type.isResolved());
     assert.equal(true, type.canEnsureResolved());
-    assert.equal(true, type.maybeEnsureResolved());    
+    assert.equal(true, type.maybeEnsureResolved());
     assert.equal(true, type.isResolved());
     assert.equal('Product', type.resolvedType().primitiveType().entitySchema.names[0]);
-  
+
     recipe.normalize();
     assert.equal(true, recipe.isResolved());
 
+  });
+
+  it('does not resolve Entity and SetView', async () => {
+    let entity = {
+      type: Type.newEntity(new Schema({names: ['Product', 'Thing'], fields: {}})),
+      direction: 'inout'
+    };
+    let setView = {
+      type: Type.newEntity(new Schema({names: ['Product', 'Thing'], fields: {}})).setViewOf(),
+      direction: 'inout'
+    };
+
+    assert.isNull(TypeChecker.processTypeList(entity.type, [setView]));
+    assert.isNull(TypeChecker.processTypeList(setView.type, [entity]));
+    assert.isNull(TypeChecker.processTypeList(undefined, [entity, setView]));
+    assert.isNull(TypeChecker.processTypeList(undefined, [setView, entity]));
   });
 });
