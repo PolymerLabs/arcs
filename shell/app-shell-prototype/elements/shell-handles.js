@@ -113,7 +113,7 @@ class ShellHandles extends Xen.Debug(Xen.Base, log) {
         schemas: `${typesPath}/identity-types.manifest`,
         type: '[Avatar]',
         name: 'Avatars',
-        tags: [`${Const.HANDLES.boxed}_avatar`],
+        tags: [`#${Const.HANDLES.boxed}_avatar`],
         id: `${Const.HANDLES.boxed}_avatar`,
         asContext: true
       }
