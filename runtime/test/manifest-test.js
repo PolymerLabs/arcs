@@ -136,7 +136,7 @@ ${particleStr1}
   affordance dom
   consume thing
     provide otherThing`;
-    
+
     let manifest = await Manifest.parse(manifestString);
     assert.equal(manifest.particles.length, 1);
     assert.equal(manifestString, manifest.particles[0].toString());
@@ -157,6 +157,40 @@ ${particleStr1}
     let verify = (manifest) => assert.equal(manifest.schemas.Bar.fields.value, 'Text');
     verify(manifest);
     verify(await Manifest.parse(manifest.toString(), {}));
+  });
+  it('two manifests with stores with the same filename, store name and data have the same ids', async () => {
+    let manifestA = await Manifest.parse(`
+        store NobId of NobIdStore {Text nobId} in NobIdJson
+        resource NobIdJson
+          start
+          [{"nobId": "12345"}]
+        `, {fileName: 'the.manifest'});
+
+    let manifestB = await Manifest.parse(`
+        store NobId of NobIdStore {Text nobId} in NobIdJson
+        resource NobIdJson
+          start
+          [{"nobId": "12345"}]
+        `, {fileName: 'the.manifest'});
+
+    assert.equal(manifestA.handles[0].id.toString(), manifestB.handles[0].id.toString());
+  });
+  it('two manifests with stores with the same filename and store name but different data have different ids', async () => {
+    let manifestA = await Manifest.parse(`
+        store NobId of NobIdStore {Text nobId} in NobIdJson
+        resource NobIdJson
+          start
+          [{"nobId": "12345"}]
+        `, {fileName: 'the.manifest'});
+
+    let manifestB = await Manifest.parse(`
+        store NobId of NobIdStore {Text nobId} in NobIdJson
+         resource NobIdJson
+           start
+           [{"nobId": "67890"}]
+          `, {fileName: 'the.manifest'});
+
+    assert.notEqual(manifestA.handles[0].id.toString(), manifestB.handles[0].id.toString());
   });
   it('supports recipes specified with bidirectional connections', async () => {
     let manifest = await Manifest.parse(`
@@ -790,7 +824,7 @@ Error parsing JSON from 'EntityList' (Unexpected token h in JSON at position 1)'
     };
     let manifest = await Manifest.load('the.manifest', loader);
     let recipe = manifest.recipes[0];
-    assert.deepEqual(recipe.toString(), 'recipe\n  map \'manifest:the.manifest:store0\' as myStore');
+    assert.deepEqual(recipe.toString(), 'recipe\n  map \'manifest:the.manifest:store0:97d170e1550eee4afc0af065b78cda302a97674c\' as myStore');
   });
   it('has prettyish syntax errors', async () => {
     try {
@@ -1184,7 +1218,7 @@ resource SomeName
           foo = view
         P3
           foo = view
-        
+
       recipe
         create as view
         P2
@@ -1254,7 +1288,7 @@ resource SomeName
         in Bar foo
 
       view Foo of Bar 'test' @0 at 'firebase://testing'
-      
+
       recipe
         map Foo as myView
         P

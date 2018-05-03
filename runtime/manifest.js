@@ -20,6 +20,7 @@ import util from './recipe/util.js';
 import StorageProviderFactory from './storage/storage-provider-factory.js';
 import {ManifestMeta} from './manifest-meta.js';
 import TypeChecker from './recipe/type-checker.js';
+import digest from './recipe/digest-web.js';
 
 class ManifestError extends Error {
   constructor(location, message) {
@@ -268,9 +269,9 @@ class Manifest {
         // TODO: figure out how to have node print the correct message and stack trace
         if (warning.key) {
           if (globalWarningKeys.has(warning.key))
-            continue;     
+            continue;
           globalWarningKeys.add(warning.key);
-        }  
+        }
         console.warn(processError(warning).message);
       }
     }
@@ -321,7 +322,7 @@ ${e.message}
 
     try {
       // Loading of imported manifests is triggered in parallel to avoid a serial loading
-      // of resources over the network. 
+      // of resources over the network.
       await Promise.all(items.filter(item => item.kind == 'import').map(async item => {
         let path = loader.path(manifest.fileName);
         let target = loader.join(path, item.path);
@@ -504,7 +505,7 @@ ${e.message}
       }
       Object.assign(fields, result.fields);
       names.push(...result.names);
-    } 
+    }
     names = [names[0], ...names.filter(name => name != names[0])];
     let name = schemaItem.alias || names[0];
     if (!name) {
@@ -536,7 +537,7 @@ ${e.message}
       let warning = new ManifestError(particleItem.location, `Particle uses deprecated argument body`);
       warning.key = 'hasParticleArgument';
       manifest._warnings.push(warning);
-      
+
     }
 
     // TODO: loader should not be optional.
@@ -545,7 +546,7 @@ ${e.message}
     }
 
     let processArgTypes = args => {
-      for (let arg of args) {      
+      for (let arg of args) {
         arg.type = arg.type.model;
         processArgTypes(arg.dependentConnections);
       }
@@ -770,16 +771,17 @@ ${e.message}
                 connectionItem.target.location,
                 `Hosted particle '${hostedParticle.name}' does not match shape '${connection.name}'`);
           }
-          let id = `${manifest.generateID()}:immediate${hostedParticle.name}`;
-          // TODO: Mark as immediate.
-          targetHandle = recipe.newHandle();
-          targetHandle.fate = 'copy';
-          let store = await manifest.newStore(type, null, id, []);
           // TODO: loader should not be optional.
           if (hostedParticle.implFile && loader) {
             hostedParticle.implFile = loader.join(manifest.fileName, hostedParticle.implFile);
           }
-          store.set(hostedParticle.clone().toLiteral());
+          const hostedParticleLiteral = hostedParticle.clone().toLiteral();
+          let particleSpecHash = digest(JSON.stringify(hostedParticleLiteral));
+          let id = `${manifest.generateID()}:${particleSpecHash}:${hostedParticle.name}`;
+          targetHandle = recipe.newHandle();
+          targetHandle.fate = 'copy';
+          let store = await manifest.newStore(type, null, id, []);
+          store.set(hostedParticleLiteral);
           targetHandle.mapToStorage(store);
         }
 
@@ -810,7 +812,7 @@ ${e.message}
       }
 
       for (let slotConnectionItem of item.slotConnections) {
-        // particles that reference verbs should store slot connection information as constraints to be used 
+        // particles that reference verbs should store slot connection information as constraints to be used
         // during verb matching. However, if there's a spec then the slots need to be validated against it
         // instead.
         if (particle.spec !== undefined) {
@@ -881,9 +883,6 @@ ${e.message}
       return;
     }
 
-    let store = await manifest.newStore(type, name, id, tags);
-    store.source = item.source;
-    store.description = item.description;
     let json;
     let source;
     if (item.origin == 'file') {
@@ -905,8 +904,10 @@ ${e.message}
 
     let unitType;
     if (!type.isCollection) {
-      if (entities.length == 0)
+      if (entities.length == 0) {
+        await Manifest._createStore(manifest, type, name, id, tags, item);
         return;
+      }
       entities = entities.slice(entities.length - 1);
       unitType = type;
     } else {
@@ -914,22 +915,38 @@ ${e.message}
     }
 
     if (unitType.isEntity) {
+      let hasSerializedId = false;
       entities = entities.map(entity => {
         if (entity == null)
           return null;
+        hasSerializedId = hasSerializedId || entity.$id;
         let id = entity.$id || manifest.generateID();
         delete entity.$id;
         return {id, rawData: entity};
       });
+      // TODO(wkorman): Efficiency improvement opportunities: (1) We could build
+      // array of entities in above map rather than mapping again below, (2) we
+      // could hash the object tree data directly rather than stringifying.
+      if (!item.id && !hasSerializedId) {
+        let entityHash = digest(JSON.stringify(entities.map(entity => entity.rawData)));
+        id = `${id}:${entityHash}`;
+      }
     }
 
     let version = item.version || 0;
 
+    let store = await Manifest._createStore(manifest, type, name, id, tags, item);
     if (type.isCollection) {
       store._fromListWithVersion(entities, version);
     } else {
       store._setWithVersion(entities[0], version);
     }
+  }
+  static async _createStore(manifest, type, name, id, tags, item) {
+    let store = await manifest.newStore(type, name, id, tags);
+    store.source = item.source;
+    store.description = item.description;
+    return store;
   }
   _newRecipe(name) {
     let recipe = new Recipe(name);
