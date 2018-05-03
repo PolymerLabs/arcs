@@ -15,65 +15,7 @@ import assert from '../platform/assert-web.js';
 import {PECInnerPort} from './api-channel.js';
 import ParticleSpec from './particle-spec.js';
 import Schema from './schema.js';
-
-class StorageProxy {
-  constructor(id, type, port, pec, name, version) {
-    this._id = id;
-    this._type = type;
-    this._port = port;
-    this._pec = pec;
-    this.name = name;
-    this._version = version;
-    this.state = 'outOfDate';
-  }
-
-  get id() {
-    return this._id;
-  }
-
-  get type() {
-    return this._type;
-  }
-
-  generateIDComponents() {
-    return this._pec.generateIDComponents();
-  }
-
-  on(type, callback, target, particleId) {
-    let dataFreeCallback = (d) => callback();
-    this.synchronize(type, dataFreeCallback, dataFreeCallback, target, particleId);
-  }
-
-  synchronize(type, modelCallback, callback, target, particleId) {
-    this._port.Synchronize({handle: this, modelCallback, callback, target, type, particleId});
-  }
-
-  get(particleId) {
-    return new Promise((resolve, reject) =>
-      this._port.HandleGet({callback: r => resolve(r), handle: this, particleId}));
-  }
-
-  toList(particleId) {
-    return new Promise((resolve, reject) =>
-      this._port.HandleToList({callback: r => resolve(r), handle: this, particleId}));
-  }
-
-  set(entity, particleId) {
-    this._port.HandleSet({data: entity, handle: this, particleId});
-  }
-
-  store(entity, particleId) {
-    this._port.HandleStore({data: entity, handle: this, particleId});
-  }
-
-  remove(entityId, particleId) {
-    this._port.HandleRemove({data: entityId, handle: this, particleId});
-  }
-
-  clear(particleId) {
-    this._port.HandleClear({handle: this, particleId});
-  }
-}
+import {StorageProxy} from './storage-proxy.js';
 
 class InnerPEC {
   constructor(port, idBase, loader) {
@@ -94,24 +36,22 @@ class InnerPEC {
      * specifications separated from particle classes - and
      * only keeping type information on the arc side.
      */
-    this._apiPort.onDefineHandle = ({type, identifier, name, version}) => {
-      return new StorageProxy(identifier, type, this._apiPort, this, name, version);
+    this._apiPort.onDefineHandle = ({type, identifier, name}) => {
+      let proxy = new StorageProxy(identifier, type, this._apiPort, this, name, null);
+      return [proxy, () => proxy._initialize()];
     };
 
     this._apiPort.onCreateHandleCallback = ({type, id, name, callback}) => {
       let proxy = new StorageProxy(id, type, this._apiPort, this, name, 0);
-      Promise.resolve().then(() => callback(proxy));
-      return proxy;
+      return [proxy, () => callback(proxy)];
     };
 
     this._apiPort.onMapHandleCallback = ({id, callback}) => {
-      Promise.resolve().then(() => callback(id));
-      return id;
+      return [id, () => callback(id)];
     };
 
     this._apiPort.onCreateSlotCallback = ({hostedSlotId, callback}) => {
-      Promise.resolve().then(() => callback(hostedSlotId));
-      return hostedSlotId;
+      return [hostedSlotId, () => callback(hostedSlotId)];
     };
 
     this._apiPort.onInnerArcRender = ({transformationParticle, transformationSlotName, hostedSlotId, content}) => {
@@ -210,8 +150,8 @@ class InnerPEC {
       createHandle: function(type, name) {
         return new Promise((resolve, reject) =>
           pec._apiPort.ArcCreateHandle({arc: arcId, type, name, callback: proxy => {
-            let v = handle.handleFor(proxy, proxy.type.isSetView, particleId);
-            v.entityClass = (proxy.type.isSetView ? proxy.type.primitiveType().entitySchema : proxy.type.entitySchema).entityClass();
+            let v = handle.handleFor(proxy, proxy.type.isSetView, name, particleId);
+            v.entityClass = (proxy.type.isSetView ? proxy.type.primitiveType() : proxy.type).entitySchema.entityClass();
             resolve(v);
           }}));
       },
@@ -262,28 +202,28 @@ class InnerPEC {
     this._particles.push(particle);
 
     let handleMap = new Map();
-    proxies.forEach((value, key) => {
-      handleMap.set(key, handle.handleFor(value, value.type.isSetView, id, spec.connectionMap.get(key).isInput, spec.connectionMap.get(key).isOutput));
-    });
-
-    for (let localHandle of handleMap.values()) {
-      let type = localHandle.underlyingProxy().type;
-      let schemaModel;
-      if (type.isSetView && type.primitiveType().isEntity) {
-        schemaModel = type.primitiveType().entitySchema;
-      } else if (type.isEntity) {
-        schemaModel = type.entitySchema;
+    let registerList = [];
+    proxies.forEach((proxy, name) => {
+      let connSpec = spec.connectionMap.get(name);
+      let hnd = handle.handleFor(proxy, proxy.type.isSetView, name, id, connSpec.isInput, connSpec.isOutput);
+      let type = proxy.type.isSetView ? proxy.type.primitiveType() : proxy.type;
+      if (type.isEntity) {
+        hnd.entityClass = type.entitySchema.entityClass();
       }
+      handleMap.set(name, hnd);
 
-      if (schemaModel)
-        localHandle.entityClass = schemaModel.entityClass();
-    }
+      // Defer notifications for initial handle data until after setViews is called.
+      if (hnd.canRead) {
+        registerList.push({proxy, particle, handle: hnd});
+      }
+    });
 
     return [particle, async () => {
       resolve();
       let idx = this._pendingLoads.indexOf(p);
       this._pendingLoads.splice(idx, 1);
       await particle.setViews(handleMap);
+      registerList.forEach(({proxy, particle, handle}) => proxy.register(particle, handle));
     }];
   }
 

@@ -162,7 +162,7 @@ class FirebaseVariable extends FirebaseStorageProvider {
   }
 
   async cloneFrom(store) {
-    let {data, version} = await store._getWithVersion();
+    let {data, version} = await store.getWithVersion();
     await this._setWithVersion(data, version);
   }
 
@@ -170,7 +170,7 @@ class FirebaseVariable extends FirebaseStorageProvider {
     return this.dataSnapshot.val().data;
   }
 
-  async _getWithVersion() {
+  async getWithVersion() {
     if (this.dataSnapshot == undefined) {
       return new Promise((resolve, reject) => {
         this._pendingGets.push(resolve);
@@ -206,7 +206,7 @@ class FirebaseCollection extends FirebaseStorageProvider {
       let data = dataSnapshot.val();
       this._pendingGets.forEach(_get => _get(data));
       this._pendingGets = [];
-      this._fire('change', {data: this._setToList(data.data), version: data.version});
+      this._fire('change', {list: this._setToList(data.data), version: data.version});
     });
   }
 
@@ -243,7 +243,7 @@ class FirebaseCollection extends FirebaseStorageProvider {
   }
 
   async cloneFrom(store) {
-    let {list, version} = await store._toListWithVersion();
+    let {list, version} = await store.toListWithVersion();
     await this._fromListWithVersion(list, version);
   }
 
@@ -269,7 +269,7 @@ class FirebaseCollection extends FirebaseStorageProvider {
     return this._setToList(this.dataSnapshot.val().data);
   }
 
-  async _toListWithVersion() {
+  async toListWithVersion() {
     if (this.dataSnapshot == undefined) {
       return new Promise((resolve, reject) => {
         this._pendingGets.push(resolve);

@@ -47,13 +47,9 @@ class Arc {
     // All the handles, mapped by handle ID
     this._handlesById = new Map();
 
-    // information about last-seen-versions of handles
-    this._lastSeenVersion = new Map();
-
     // storage keys for referenced handles
     this._storageKeys = {};
     this._storageKey = storageKey;
-
 
     this.particleHandleMaps = new Map();
     let pecId = this.generateID();
@@ -264,7 +260,7 @@ ${this.activeRecipe.toString()}`;
     // At least all non-optional connections must be resolved
     assert(handleMap.handles.size >= handleMap.spec.connections.filter(c => !c.isOptional).length,
            `Not all mandatory connections are resolved for {$particle}`);
-    this.pec.instantiate(recipeParticle, id, handleMap.spec, handleMap.handles, this._lastSeenVersion);
+    this.pec.instantiate(recipeParticle, id, handleMap.spec, handleMap.handles);
     recipeParticle._scheduler = this.scheduler;
     return id;
   }

@@ -47,6 +47,37 @@ export class Particle {
 
   }
 
+  /** @method onHandleUpdate(handle, data, add, remove)
+   * Called once after setViews() for each readable handle to establish the current handle values.
+   * Thereafter called whenever the data for a given handle has been updated to the next version.
+   *
+   * handle is the Handle instance that was updated.
+   * version is the received version number.
+   * update is an object with the following fields:
+   *   variable:   The Entity data, or null if the handle was not set prior to setViews or has been
+   *               explicitly cleared. Only defined for Variable-backed handles.
+   *   collection: An Array of Entities; empty if the handle does not contain any entities. Only
+   *               defined for Collection-backed handles.
+   *   added:      An Array of ids indicating which entities were added. Only defined for updates
+   *               to Collection-backed handles.
+   *   removed:    An Array of ids indicating which entities were removed. Only defined for updates
+   *               to Collection-backed handles.
+   */
+  onHandleUpdate(handle, version, update) {
+
+  }
+
+  /** @method onHandleDesync(handle)
+   * Called when an update event for a Collection-backed handle has been missed.
+   * The default implementation automatically resyncronizes the handle.
+   *
+   * handle is the Handle instance that has desynchronized.
+   * version is the received version number.
+   */
+  onHandleDesync(handle, version) {
+    handle.resync();
+  }
+
   constructInnerArc() {
     if (!this.capabilities.constructInnerArc)
       throw new Error('This particle is not allowed to construct inner arcs');

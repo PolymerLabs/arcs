@@ -263,6 +263,8 @@ class PECOuterPort extends APIPort {
     this.registerCall('StopRender', {particle: this.Mapped, slotName: this.Direct});
 
     this.registerHandler('Render', {particle: this.Mapped, slotName: this.Direct, content: this.Direct});
+    this.registerHandler('InitializeProxy', {handle: this.Mapped, callback: this.Direct});
+    this.registerHandler('ResyncHandle', {handle: this.Mapped, callback: this.Direct});
     this.registerHandler('Synchronize', {handle: this.Mapped, target: this.Mapped,
                                     type: this.Direct, callback: this.Direct,
                                     modelCallback: this.Direct, particleId: this.Direct});
@@ -311,6 +313,8 @@ class PECInnerPort extends APIPort {
     this.registerHandler('StopRender', {particle: this.Mapped, slotName: this.Direct});
 
     this.registerCall('Render', {particle: this.Mapped, slotName: this.Direct, content: this.Direct});
+    this.registerCall('InitializeProxy', {handle: this.Mapped, callback: this.LocalMapped});
+    this.registerCall('ResyncHandle', {handle: this.Mapped, callback: this.LocalMapped});
     this.registerCall('Synchronize', {handle: this.Mapped, target: this.Mapped,
                                  type: this.Direct, callback: this.LocalMapped,
                                  modelCallback: this.LocalMapped, particleId: this.Direct});

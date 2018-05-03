@@ -33,9 +33,32 @@ class OuterPEC extends PEC {
       }
     };
 
+    this._apiPort.onInitializeProxy = async ({handle, callback}) => {
+      let target = {_scheduler: this._arc.scheduler};
+      let model;
+      if (handle.toList === undefined) {
+        model = await handle.getWithVersion();
+      } else {
+        model = await handle.toListWithVersion();
+      }
+      this._apiPort.SimpleCallback({callback, data: model}, target);
+      handle.on('change', data => this._apiPort.SimpleCallback({callback, data}), target);
+    };
+
+    this._apiPort.onResyncHandle = async ({handle, callback}) => {
+      let target = {_scheduler: this._arc.scheduler};
+      let model;
+      if (handle.toList === undefined) {
+        model = await handle.getWithVersion();
+      } else {
+        model = await handle.toListWithVersion();
+      }
+      this._apiPort.SimpleCallback({callback, data: model}, target);
+    };
+
     this._apiPort.onSynchronize = async ({handle, target, callback, modelCallback, type}) => {
       let model;
-      if (handle.toList == undefined) {
+      if (handle.toList === undefined) {
         model = await handle.get();
       } else {
         model = await handle.toList();
@@ -159,11 +182,9 @@ class OuterPEC extends PEC {
     this._apiPort.UIEvent({particle, slotName, event});
   }
 
-  instantiate(particleSpec, id, spec, handles, lastSeenVersion) {
+  instantiate(particleSpec, id, spec, handles) {
     handles.forEach(handle => {
-      let version = lastSeenVersion.get(handle.id) || 0;
-      this._apiPort.DefineHandle(handle, {type: handle.type.resolvedType(), name: handle.name,
-                                       version});
+      this._apiPort.DefineHandle(handle, {type: handle.type.resolvedType(), name: handle.name});
     });
 
     // TODO: Can we just always define the particle and map a handle for use in later
