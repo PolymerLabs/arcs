@@ -620,6 +620,18 @@ recipe
     verify(`recipe`, 'I\'m feeling lucky.');
     verify(`recipe hello`, 'Hello.');
   });
+
+  it.only('generates type description', async () => {
+    let manifest = (await Manifest.parse(`
+schema TVShow
+schema MyTVShow
+schema MyTV
+schema GitHubDash`));
+    assert.equal('TV Show', manifest.findTypeByName('TVShow').toPrettyString());
+    assert.equal('My TV Show', manifest.findTypeByName('MyTVShow').toPrettyString());
+    assert.equal('My TV', manifest.findTypeByName('MyTV').toPrettyString());
+    assert.equal('Git Hub Dash', manifest.findTypeByName('GitHubDash').toPrettyString());
+  });
 });
 
 describe('Dynamic description', function() {
