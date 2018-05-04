@@ -134,9 +134,14 @@ class DomParticle extends XenStateMixin(Particle) {
     // TODO(sjmiles): redundant, same answer for every slot
     if (this.shouldRender(...stateArgs)) {
       let content = {};
-      if (slot._requestedContentTypes.has('template')) {
+      // TODO(wkorman): Consider (1) removing this optimization, or (2) evolve
+      // it to support sub id specific templates, or (3) rework it to
+      // differently handle caching (a) Xen templates and (b) not shipping the
+      // output template string over the api port repeatedly unnecessarily.
+      // See https://github.com/PolymerLabs/arcs/issues/1233.
+      // if (slot._requestedContentTypes.has('template')) {
         content.template = this.getTemplate(slot.slotName);
-      }
+      // }
       if (slot._requestedContentTypes.has('model')) {
         content.model = this.render(...stateArgs);
       }
