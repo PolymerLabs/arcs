@@ -25,36 +25,37 @@ export default class StrategyExplorerAdapter {
   adapt(generations) {
     return generations.map(pop => this._preparePopulation(pop.generated, pop.record));
   }
-  _addExtraPredecessor(parent, hash) {
-    let extras = [];
-    if (parent && !this.parentMap.has(parent)) {
-      this.parentMap.set(parent, this.lastID);
-      parent.derivation.forEach(d => extras = extras.concat(this._addExtraPredecessor(d.parent, hash)));
-      extras.push({result: parent.result,
-                   score: parent.score,
-                   derivation: parent.derivation,
-                   description: parent.description,
-                   hash: hash,
-                   valid: parent.valid,
-                   active: parent.active,
-                   combined: true,
-                   id: this.lastID++});
-    }
-    return extras;
-  }
   _preparePopulation(population, record) {
     // Adding those here to reuse recipe resolution computation.
     record.resolvedDerivations = 0;
     record.resolvedDerivationsByStrategy = {};
 
-    let extras = [];
-    population = population.map(recipe => {
-      let {result, score, derivation, description, hash, valid, active} = recipe;
-      recipe.derivation.forEach(d => extras = extras.concat(this._addExtraPredecessor(d.parent, hash)));
+    // Hidden predecessors are listed in recipe derivation, but not in the
+    // population itself. They currently come from the CombinedStrategy. We want
+    // to surface them in the StrategyExplorer for transparency.
+    let hiddenPredecessorsCandidates = [];
+    const addHiddenPredecessorsCandidates = ({parent}) => {
+      if (!parent || this.parentMap.has(parent)) return;
+      hiddenPredecessorsCandidates.push(parent);
+      parent.derivation.forEach(addHiddenPredecessorsCandidates);
+    };
+    const assignIdAndCopy = recipe => {
       this.parentMap.set(recipe, this.lastID);
+      let {result, score, derivation, description, hash, valid, active} = recipe;
       return {result, score, derivation, description, hash, valid, active, id: this.lastID++};
+    };
+    population = population.map(recipe => {
+      recipe.derivation.forEach(addHiddenPredecessorsCandidates);
+      return assignIdAndCopy(recipe);
     });
-    population = extras.concat(population);
+    // As a recipe might have regular predecessors in the current generation,
+    // the check for presence in the parentMap needs to re-evaluated after
+    // processing entire population to avoid false positives.
+    for (let predecessor of hiddenPredecessorsCandidates) {
+      if (!this.parentMap.has(predecessor)) {
+        population.push(Object.assign(assignIdAndCopy(predecessor), {combined: true}));
+      }
+    }
 
     population.forEach(item => {
       item.derivation = item.derivation.map(derivItem => {
