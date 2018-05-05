@@ -13,6 +13,7 @@ import Manifest from '../../manifest.js';
 import StrategyTestHelper from './strategy-test-helper.js';
 import MatchRecipeByVerb from '../../strategies/match-recipe-by-verb.js';
 import ConvertConstraintsToConnections from '../../strategies/convert-constraints-to-connections.js';
+import ResolveRecipe from '../../strategies/resolve-recipe.js';
 import {assert} from '../chai-web.js';
 
 describe('MatchRecipeByVerb', function() {
@@ -409,5 +410,43 @@ describe('MatchRecipeByVerb', function() {
   assert.equal(slotFoo.sourceConnection, recipe.particles[1].consumedSlotConnections.bar);
   assert.equal(recipe.particles[2].consumedSlotConnections.foo.targetSlot, recipe.particles[1].consumedSlotConnections.bar.providedSlots.foo);
   assert.equal(slotFoo.consumeConnections[1], recipe.particles[2].consumedSlotConnections.foo);
+  });
+
+  it('carries tags for slots slot connection', async () => {
+    let manifest = await Manifest.parse(`
+      particle P in 'A.js'
+        P()
+        consume root #root
+          provide bar #bar #baz
+
+      particle Q in 'B.js'
+        Q()
+        consume foo #foo
+
+      recipe verb
+        P
+        Q
+          consume foo #atag
+
+      recipe
+        particle can verb
+          consume foo #baz
+    `);
+
+    let arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'dom');
+    let inputParams = {generated: [{result: manifest.recipes[1], score: 1}]};
+    let mrv = new MatchRecipeByVerb(arc);
+    let results = await mrv.generate(inputParams);
+    assert.equal(results.length, 1);
+
+    let rr = new ResolveRecipe(arc);
+    results = await rr.generate({generated: [{result: results[0].result, score: 1}]});
+    assert.equal(results.length, 1);
+
+    let plan = results[0].result;
+    assert.isTrue(plan.isResolved());
+    let fooTags = plan.particles.find(p => p.name == 'Q').consumedSlotConnections['foo'].tags;
+    assert.lengthOf(fooTags, 2);
+    assert.isTrue(fooTags.includes('#baz'));
   });
 });
