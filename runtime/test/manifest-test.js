@@ -1071,6 +1071,21 @@ resource SomeName
     assert(manifest.findShapeByName('Shape'));
     assert(manifest.recipes[0].normalize());
   });
+  it('can parse shapes using new-style body syntax', async () => {
+    let manifest = await Manifest.parse(`
+      schema Foo
+      shape Shape
+        in Foo foo
+      particle ShapeParticle
+        host Shape shape
+      recipe
+        create as view0
+        ShapeParticle
+          shape = view0
+    `);
+    assert(manifest.findShapeByName('Shape'));
+    assert(manifest.recipes[0].normalize());
+  })
   it('can resolve optional handles', async () => {
     let manifest = await Manifest.parse(`
       schema Something
