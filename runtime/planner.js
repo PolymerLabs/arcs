@@ -21,6 +21,7 @@ import {NameUnnamedConnections} from './strategies/name-unnamed-connections.js';
 import {AddUseHandles} from './strategies/add-use-handles.js';
 import {CreateDescriptionHandle} from './strategies/create-description-handle.js';
 import {InitSearch} from './strategies/init-search.js';
+import {SearchTokensToHandles} from './strategies/search-tokens-to-handles.js';
 import {SearchTokensToParticles} from './strategies/search-tokens-to-particles.js';
 import {FallbackFate} from './strategies/fallback-fate.js';
 import {GroupHandleConnections} from './strategies/group-handle-connections.js';
@@ -197,6 +198,7 @@ Planner.InitializationStrategies = [
 
 Planner.ResolutionStrategies = [
   SearchTokensToParticles,
+  SearchTokensToHandles,
   GroupHandleConnections,
   FallbackFate,
   CreateHandles,
