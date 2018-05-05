@@ -36,7 +36,7 @@ defineParticle(({Particle}) => {
         inView.set(input);
         outView.on('change', async () => {
           let output = await outView.get();
-          if (output !== undefined)
+          if (output)
             outputView.set(output);
         }, this);
       } catch (e) {
