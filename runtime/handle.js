@@ -232,4 +232,4 @@ function handleFor(proxy, isSet, name, particleId, canRead = true, canWrite = tr
       : new Variable(proxy, name, particleId, canRead, canWrite);
 }
 
-export default {handleFor};
+export {handleFor};

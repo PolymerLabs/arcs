@@ -10,7 +10,7 @@
 'use strict';
 
 import Type from './type.js';
-import handle from './handle.js';
+import {handleFor} from './handle.js';
 import assert from '../platform/assert-web.js';
 import {PECInnerPort} from './api-channel.js';
 import ParticleSpec from './particle-spec.js';
@@ -150,9 +150,9 @@ class InnerPEC {
       createHandle: function(type, name) {
         return new Promise((resolve, reject) =>
           pec._apiPort.ArcCreateHandle({arc: arcId, type, name, callback: proxy => {
-            let v = handle.handleFor(proxy, proxy.type.isSetView, name, particleId);
-            v.entityClass = (proxy.type.isSetView ? proxy.type.primitiveType() : proxy.type).entitySchema.entityClass();
-            resolve(v);
+            let h = handleFor(proxy, proxy.type.isSetView, name, particleId);
+            h.entityClass = (proxy.type.isSetView ? proxy.type.primitiveType() : proxy.type).entitySchema.entityClass();
+            resolve(h);
           }}));
       },
       mapHandle: function(handle) {
@@ -205,16 +205,16 @@ class InnerPEC {
     let registerList = [];
     proxies.forEach((proxy, name) => {
       let connSpec = spec.connectionMap.get(name);
-      let hnd = handle.handleFor(proxy, proxy.type.isSetView, name, id, connSpec.isInput, connSpec.isOutput);
+      let handle = handleFor(proxy, proxy.type.isSetView, name, id, connSpec.isInput, connSpec.isOutput);
       let type = proxy.type.isSetView ? proxy.type.primitiveType() : proxy.type;
       if (type.isEntity) {
-        hnd.entityClass = type.entitySchema.entityClass();
+        handle.entityClass = type.entitySchema.entityClass();
       }
-      handleMap.set(name, hnd);
+      handleMap.set(name, handle);
 
       // Defer notifications for initial handle data until after setViews is called.
-      if (hnd.canRead) {
-        registerList.push({proxy, particle, handle: hnd});
+      if (handle.canRead) {
+        registerList.push({proxy, particle, handle});
       }
     });
 

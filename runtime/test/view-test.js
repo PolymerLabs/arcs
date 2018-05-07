@@ -13,15 +13,11 @@ import runtime from '../runtime.js';
 import Arc from '../arc.js';
 import {assert} from './chai-web.js';
 import SlotComposer from '../slot-composer.js';
-
-import handle from '../handle.js';
-
+import {handleFor} from '../handle.js';
 import Shape from '../shape.js';
 import Type from '../type.js';
-
 import Manifest from '../manifest.js';
 import Loader from '../loader.js';
-
 import StorageProviderFactory from '../storage/storage-provider-factory.js';
 
 let loader = new Loader();
@@ -72,7 +68,7 @@ describe('View', function() {
 
     let manifest = await Manifest.load('./runtime/test/artifacts/test-particles.manifest', loader);
     let Foo = manifest.schemas.Foo.entityClass();
-    let fooView = handle.handleFor(await arc.createHandle(Foo.type.setViewOf()));
+    let fooView = handleFor(await arc.createHandle(Foo.type.setViewOf()));
     fooView.entityClass = Foo;
 
     await fooView.store(new Foo({value: 'a Foo'}, 'first'));

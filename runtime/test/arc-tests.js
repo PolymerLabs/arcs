@@ -12,7 +12,7 @@ import Arc from '../arc.js';
 import {assert} from './chai-web.js';
 import SlotComposer from '../slot-composer.js';
 import * as util from './test-util.js';
-import handle from '../handle.js';
+import {handleFor} from '../handle.js';
 import Manifest from '../manifest.js';
 import Loader from '../loader.js';
 
@@ -43,7 +43,7 @@ describe('Arc', function() {
     let {arc, recipe, Foo, Bar} = await setup();
     let fooView = await arc.createHandle(Foo.type, undefined, 'test:1');
     let barView = await arc.createHandle(Bar.type, undefined, 'test:2');
-    await handle.handleFor(fooView).set(new Foo({value: 'a Foo'}));
+    await handleFor(fooView).set(new Foo({value: 'a Foo'}));
     recipe.handles[0].mapToStorage(fooView);
     recipe.handles[1].mapToStorage(barView); 
     assert(recipe.normalize());
@@ -60,7 +60,7 @@ describe('Arc', function() {
     recipe.normalize();
     await arc.instantiate(recipe);
 
-    handle.handleFor(fooView).set(new Foo({value: 'a Foo'}));
+    handleFor(fooView).set(new Foo({value: 'a Foo'}));
     await util.assertSingletonWillChangeTo(barView, Bar, 'a Foo1');
   });
 
@@ -76,7 +76,7 @@ describe('Arc', function() {
   it('deserializing a simple serialized arc produces that arc', async () => {
     let {arc, recipe, Foo, Bar} = await setup();
     let fooView = await arc.createHandle(Foo.type, undefined, 'test:1');
-    handle.handleFor(fooView).set(new Foo({value: 'a Foo'}));
+    handleFor(fooView).set(new Foo({value: 'a Foo'}));
     let barView = await arc.createHandle(Bar.type, undefined, 'test:2');
     recipe.handles[0].mapToStorage(fooView);
     recipe.handles[1].mapToStorage(barView); 

@@ -14,7 +14,7 @@ import {assert} from './chai-web.js';
 import Arc from '../arc.js';
 import Loader from '../loader.js';
 import Manifest from '../manifest.js';
-import handle from '../handle.js';
+import {handleFor} from '../handle.js';
 import Schema from '../schema.js';
 import Speculator from '../speculator.js';
 
@@ -38,10 +38,10 @@ describe('manifest integration', () => {
     let type = recipe.handles[0].type;
     let [view] = arc.findHandlesByType(type);
     assert(view);
-    let theHandle = handle.handleFor(view);
+    let handle = handleFor(view);
     // TODO: This should not be necessary.
-    theHandle.entityClass = type.resolvedType().entitySchema.entityClass();
-    let result = await theHandle.get();
+    handle.entityClass = type.resolvedType().entitySchema.entityClass();
+    let result = await handle.get();
     assert.equal(result.value, 'Hello, world!');
   });
   it('can produce a recipe that can be speculated', async () => {

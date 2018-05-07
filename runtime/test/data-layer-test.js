@@ -13,7 +13,7 @@ import Arc from '../arc.js';
 import Schema from '../schema.js';
 import SlotComposer from '../slot-composer.js';
 import Type from '../type.js';
-import Handle from '../handle.js';
+import {handleFor} from '../handle.js';
 
 describe('entity', async function() {
   it('can be created, stored, and restored', async () => {
@@ -23,7 +23,7 @@ describe('entity', async function() {
     let entity = new (schema.entityClass())({value: 'hello world'});
     assert.isDefined(entity);
     let storage = await arc.createHandle(Type.newEntity(schema).setViewOf());
-    let handle = Handle.handleFor(storage);
+    let handle = handleFor(storage);
     await handle.store(entity);
 
     let list = await arc.findHandlesByType(entity.constructor.type.setViewOf())[0].toList();
