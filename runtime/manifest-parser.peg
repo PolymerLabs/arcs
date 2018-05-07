@@ -644,12 +644,12 @@ RecipeParticleProvidedSlot
   }
 
 RecipeConnection
-  = from:ConnectionTarget whiteSpace dir:Direction whiteSpace to:ConnectionTarget eolWhiteSpace
+  = from:ConnectionTarget whiteSpace direction:Direction whiteSpace to:ConnectionTarget eolWhiteSpace
   {
     return {
       kind: 'connection',
       location: location(),
-      dir,
+      direction,
       from,
       to,
     };

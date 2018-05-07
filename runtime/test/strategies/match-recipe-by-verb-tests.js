@@ -43,7 +43,7 @@ describe('MatchRecipeByVerb', function() {
     let results = await mrv.generate(inputParams);
     assert.equal(results.length, 1);
     assert.equal(results[0].result.particles.length, 0);
-    assert.deepEqual(results[0].result.toString(), 'recipe\n  JumpingBoots.e -> NuclearReactor.e\n  JumpingBoots.f -> FootFactory.f');
+    assert.deepEqual(results[0].result.toString(), 'recipe\n  JumpingBoots.e <- NuclearReactor.e\n  JumpingBoots.f <- FootFactory.f');
   });
   it('plays nicely with constraints', async () => {
     let manifest = await Manifest.parse(`
