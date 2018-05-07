@@ -11,6 +11,9 @@ import './Board.schema'
 import './Stats.schema'
 
 particle ShowSingleStats in 'source/ShowSingleStats.js'
-  ShowSingleStats(in Post post, in [Stats] boxedStats, in [Board] boxedBoards, in GameIdStore {Text gameId} gameId)
+  in Post post
+  in [Stats] boxedStats
+  in [Board] boxedBoards
+  in GameIdStore {Text gameId} gameId
   consume item
   description `show Words ${stats}`
