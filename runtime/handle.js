@@ -79,6 +79,7 @@ class Handle {
   }
 
   _serialize(entity) {
+    assert(entity, 'can\'t serialize a null entity');
     if (!entity.isIdentified())
       entity.createIdentity(this.generateIDComponents());
     let id = entity[identifier];
