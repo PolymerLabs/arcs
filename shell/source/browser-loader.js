@@ -9,7 +9,7 @@
  */
 
 import {Loader} from '../../runtime/loader.js';
-import particle from '../../runtime/particle.js';
+import {Particle} from '../../runtime/particle.js';
 import {DomParticle} from '../../runtime/dom-particle.js';
 import {MultiplexerDomParticle} from '../../runtime/multiplexer-dom-particle.js';
 import {TransformationDomParticle} from '../../runtime/transformation-dom-particle.js';
@@ -19,7 +19,7 @@ const html = (strings, ...values) => (strings[0] + values.map((v, i) => v + stri
 
 const dumbCache = {};
 
-export default class BrowserLoader extends Loader {
+export class BrowserLoader extends Loader {
   constructor(urlMap) {
     super();
     this._urlMap = urlMap;
@@ -74,8 +74,7 @@ export default class BrowserLoader extends Loader {
     //  for use in DOM
     let resolver = this._resolve.bind(this);
     return particleWrapper({
-      particle,
-      Particle: particle.Particle,
+      Particle,
       DomParticle,
       MultiplexerDomParticle,
       SimpleParticle: DomParticle,

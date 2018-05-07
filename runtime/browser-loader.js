@@ -11,7 +11,7 @@
 
 import {Loader} from './loader.js';
 
-export default class BrowserLoader extends Loader {
+export class BrowserLoader extends Loader {
   constructor(base) {
     super();
     // TODO: Update all callers to pass a valid base URL to avoid the use of

@@ -17,7 +17,7 @@ import {Planner} from '../planner.js';
 import {Random} from '../random.js';
 import MockSlotComposer from './mock-slot-composer.js';
 import {MessageChannel} from '../message-channel.js';
-import InnerPec from '../inner-PEC.js';
+import {InnerPEC} from '../inner-PEC.js';
 
 // Makes tests deterministic, which aids debugging.
 Random.seedForTests();
@@ -42,7 +42,7 @@ export default class TestHelper {
     this.slotComposer = new MockSlotComposer({strict: options ? options.slotComposerStrict : undefined});
     let pecFactory = function(id) {
       let channel = new MessageChannel();
-      new InnerPec(channel.port1, `${id}:inner`, loader);
+      new InnerPEC(channel.port1, `${id}:inner`, loader);
       return channel.port2;
     };
     this.loader = loader;

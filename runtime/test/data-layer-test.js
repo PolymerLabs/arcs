@@ -12,7 +12,7 @@ import {assert} from './chai-web.js';
 import {Arc} from '../arc.js';
 import {Schema} from '../schema.js';
 import {SlotComposer} from '../slot-composer.js';
-import Type from '../type.js';
+import {Type} from '../type.js';
 import {handleFor} from '../handle.js';
 
 describe('entity', async function() {
