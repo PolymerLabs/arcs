@@ -144,8 +144,9 @@ defineParticle(({SimpleParticle, log, resolver}) => {
      </div>
    </div>
    <div class="board">
-   <div class="gameOver" hidden="{{hideGameOver}}">Game Over</div>
-     <span>{{boardCells}}</span><span>{{annotations}}</span></div>
+     <div class="gameOver" hidden="{{hideGameOver}}">Game Over</div>
+     <span>{{boardCells}}</span><span>{{annotations}}</span>
+   </div>
  </div>
  <template board-cell>
    <div class="{{classes}}" style%="{{style}}" on-mousedown="onTileMouseDown" on-mouseup="onTileMouseUp" on-mousemove="onTileMouseMove" value="{{index}}">
@@ -209,32 +210,46 @@ defineParticle(({SimpleParticle, log, resolver}) => {
     tilesToWord(tiles) {
       return tiles.map(t => t.letter).join('');
     }
-    willReceiveProps({renderParticle}, state) {
+    willReceiveProps({renderParticle, post, posts}, state) {
       if (renderParticle && !state.renderParticleSpec) {
         const renderParticleSpec = JSON.stringify(renderParticle.toLiteral());
-        // TODO(wkorman): Include the game unique id in the below recipe.
-        const renderRecipe = SimpleParticle
-                                 .buildManifest`
+        this.setState({renderParticleSpec});
+      }
+    }
+    buildRenderRecipe(renderParticle, gameId) {
+      return SimpleParticle
+          .buildManifest`
 ${renderParticle}
+
+store GameId of GameIdStore {Text gameId} in GameIdJson
+resource GameIdJson
+  start
+  [{"gameId": "${gameId}"}]
+
 recipe
+  map 'BOXED_board' as boxedBoards
+  map 'BOXED_stats' as boxedStats
+  map GameId as gameId
   use '{{item_id}}' as v1
   slot '{{slot_id}}' as s1
   {{other_views}}
   ${renderParticle.name}
     ${renderParticle.connections[0].name} <- v1
+    boxedBoards <- boxedBoards
+    boxedStats <- boxedStats
+    gameId <- gameId
     {{other_connections}}
     consume item as s1
-      `.trim();
-        this.setState({renderParticleSpec, renderRecipe});
-        // TODO(wkorman): Write or update the game's Post entity.
-      }
+    `.trim();
     }
     processSubmittedMove(props, state, tileBoard) {
       let moveData = props.move ? props.move.rawData : {coordinates: ''};
       let moveTiles = this.moveToTiles(tileBoard, props.move);
       let score = 0;
-      if (!state.dictionary || !state.moveSubmitted || !state.renderRecipe)
+      if (!state.dictionary || !state.moveSubmitted || !state.renderParticleSpec) {
+        info(`Skipping move submit due to missing requisite data.`);
         return [moveData, moveTiles, score];
+      }
       const word = this.tilesToWord(moveTiles);
       if (!Scoring.isMinimumWordLength(moveTiles.length)) {
         info(`Word is too short [word=${word}].`);
@@ -256,6 +271,19 @@ recipe
           shuffleAvailableCount: tileBoard.shuffleAvailableCount,
           state: TileBoard.StateToNumber[gameState]
         });
+        // TODO(wkorman): Rework the below for brevity and simplicity. We
+        // should only really need to write this once, and ideally to a
+        // single Post rather than a collection.
+        let postValues = {
+          author: props.person.id,
+          renderRecipe: this.buildRenderRecipe(props.renderParticle, tileBoard.gameId),
+          renderParticleSpec: state.renderParticleSpec
+        };
+        const newPost = this.updateVariable('post', postValues);
+        for (let i = props.posts.length - 1; i >= 0; i--) {
+          this.handles.get('posts').remove(props.posts[i]);
+        }
+        this.updateSet('posts', newPost);
       }
       moveData = {coordinates: '', gameId: tileBoard.gameId};
       this.setMove(moveData);
@@ -337,18 +365,16 @@ recipe
           hideGameInfo: true,
           hideGameOver: true
         };
-      let propsBoard = props.board;
-      if (!propsBoard) {
-        propsBoard = TileBoard.create();
-        this.setBoard(propsBoard);
+
+      let {board} = props;
+      if (!board) {
+        board = TileBoard.create();
+        this.setBoard(board);
       }
+      const tileBoard = new TileBoard(board);
       if (!props.stats && props.person)
-        this.setStats(Scoring.create(props.person, propsBoard.gameId));
-      // TODO(wkorman): Only construct tile board when none yet exists in state,
-      // and clean up the dregs of mess below from merging update() and render()
-      // and olden times when I hadn't yet grokked state vs props in general.
-      const tileBoard = new TileBoard(propsBoard);
-      tileBoard.chanceOfFireOnRefill = CHANCE_OF_FIRE_ON_REFILL;
+        this.setStats(Scoring.create(props.person, board.gameId));
+      board.chanceOfFireOnRefill = CHANCE_OF_FIRE_ON_REFILL;
       let [moveData, moveTiles, moveScore] =
           this.processSubmittedMove(props, state, tileBoard);
       this.setState({
@@ -501,17 +527,14 @@ recipe
           highestScore})].`);
     }
     setMove(values) {
-      this.setView('move', values);
+      this.updateVariable('move', values);
     }
     setBoard(values) {
-      this.setView('board', values);
+      // TODO(wkorman): See if we can preserve id and reuse existing instance.
+      this.updateVariable('board', values);
     }
     setStats(values) {
-      this.setView('stats', values);
-    }
-    setView(name, values) {
-      const view = this._views.get(name);
-      view.set(new view.entityClass(values));
+      this.updateVariable('stats', values);
     }
   };
 });

@@ -99,7 +99,7 @@ defineParticle(({DomParticle, html, log}) => {
     }) {
       image = image || this.getDefaultImage();
       if (savePost) {
-        this.savePost(renderParticleSpec, renderRecipe, user, message, image, shellTheme.arcKey);
+        this.savePost(renderParticleSpec, renderRecipe, user, message, image, shellTheme.key);
       }
       const saveButtonActive =
           Boolean(this.hasContent(message) || this.hasContent(image.url));
@@ -122,12 +122,17 @@ defineParticle(({DomParticle, html, log}) => {
                                  .buildManifest`
 ${renderParticle}
 recipe
-  map #BOXED_avatar as avatars
+  map 'BOXED_avatar' as avatars
+  use #identities as people
+  use #user as user
   use '{{item_id}}' as v1
   slot '{{slot_id}}' as s1
   {{other_views}}
   ${renderParticle.name}
     ${renderParticle.connections[0].name} <- v1
+    avatars <- avatars
+    people <- people
+    user <- user
     {{other_connections}}
     consume item as s1
       `.trim();

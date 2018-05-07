@@ -14,7 +14,7 @@ import 'Move.schema'
 import 'Stats.schema'
 
 particle GamePane in 'source/GamePane.js'
-  GamePane(host HostedParticleShape renderParticle, in Person person, inout Board board, inout Move move, inout Stats stats, inout Post post)
+  GamePane(host HostedParticleShape renderParticle, in Person person, inout Board board, inout Move move, inout Stats stats, inout [Post] posts, inout Post post)
   affordance dom
   consume root
   description `play Words`

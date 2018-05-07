@@ -13,11 +13,15 @@ recipe
   create #board as board
   create #move as move
   create #stats as stats
-  create #post as post
+  // TODO(wkorman): We only need one post but currently we need a set to produce
+  // the right boxing aggregation.
+  create #posts as posts
+  create as post
   GamePane
     move = move
     board = board
     stats = stats
+    posts = posts
     post = post
     person <- person
     renderParticle = ShowSingleStats

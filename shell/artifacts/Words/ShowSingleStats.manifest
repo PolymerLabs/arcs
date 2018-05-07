@@ -7,8 +7,10 @@
 // http://polymer.github.io/PATENTS.txt
 
 import '../Social/Post.schema'
+import './Board.schema'
+import './Stats.schema'
 
 particle ShowSingleStats in 'source/ShowSingleStats.js'
-  ShowSingleStats(in Post post)
+  ShowSingleStats(in Post post, in [Stats] boxedStats, in [Board] boxedBoards, in GameIdStore {Text gameId} gameId)
   consume item
-  description `show ${stats}`
+  description `show Words ${stats}`
