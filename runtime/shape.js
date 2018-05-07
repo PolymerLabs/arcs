@@ -277,4 +277,4 @@ ${this._slotsToManifestString()}
 
 export {Shape};
 
-import Type from './type.js';
+import {Type} from './type.js';

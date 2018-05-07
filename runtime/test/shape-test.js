@@ -10,7 +10,7 @@
 
 import {assert} from './chai-web.js';
 import {Shape} from '../shape.js';
-import Type from '../type.js';
+import {Type} from '../type.js';
 import {Manifest} from '../manifest.js';
 
 
