@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import Manifest from '../manifest.js';
+import {Manifest} from '../manifest.js';
 import RecipeUtil from '../recipe/recipe-util.js';
 import {assert} from './chai-web.js';
 

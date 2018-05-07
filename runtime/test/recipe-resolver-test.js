@@ -8,9 +8,9 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import Arc from '../arc.js';
-import Loader from '../loader.js';
-import Manifest from '../manifest.js';
+import {Arc} from '../arc.js';
+import {Loader} from '../loader.js';
+import {Manifest} from '../manifest.js';
 import {RecipeResolver} from '../recipe/recipe-resolver.js';
 
 import {assert} from './chai-web.js';

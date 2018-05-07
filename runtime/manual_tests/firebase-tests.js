@@ -9,8 +9,8 @@
  */
 
 import StorageProviderFactory from '../storage/storage-provider-factory.js';
-import Arc from '../arc.js';
-import Manifest from '../manifest.js';
+import {Arc} from '../arc.js';
+import {Manifest} from '../manifest.js';
 import Type from '../type.js';
 import assert from '../../platform/assert-web.js';
 

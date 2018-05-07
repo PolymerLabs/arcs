@@ -10,7 +10,6 @@ import RecipeWalker from '../recipe/walker.js';
 import Recipe from '../recipe/recipe.js';
 import RecipeUtil from '../recipe/recipe-util.js';
 import HandleMapperBase from './handle-mapper-base.js';
-import Schema from '../schema.js';
 
 import assert from '../../platform/assert-web.js';
 

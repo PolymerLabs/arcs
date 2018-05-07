@@ -9,9 +9,9 @@
  */
 
 import assert from '../platform/assert-web.js';
-import Random from './random.js';
+import {Random} from './random.js';
 
-export default class Id {
+class Id {
   constructor(currentSession) {
     this._session = currentSession;
     this._currentSession = currentSession;
@@ -73,3 +73,5 @@ export default class Id {
     return true;
   }
 }
+
+export {Id};

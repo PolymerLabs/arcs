@@ -81,4 +81,5 @@ class Relevance {
     return -1;
   }
 }
-export default Relevance;
+
+export {Relevance};

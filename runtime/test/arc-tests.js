@@ -8,13 +8,13 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import Arc from '../arc.js';
+import {Arc} from '../arc.js';
 import {assert} from './chai-web.js';
-import SlotComposer from '../slot-composer.js';
+import {SlotComposer} from '../slot-composer.js';
 import * as util from './test-util.js';
 import {handleFor} from '../handle.js';
-import Manifest from '../manifest.js';
-import Loader from '../loader.js';
+import {Manifest} from '../manifest.js';
+import {Loader} from '../loader.js';
 
 let loader = new Loader();
 

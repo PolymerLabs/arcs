@@ -9,10 +9,9 @@
  */
 
 import assert from '../platform/assert-web.js';
-import Slot from './slot.js';
-import DomSlot from './dom-slot.js';
+import {DomSlot} from './dom-slot.js';
 import {DomContext} from './dom-context.js';
-import DescriptionDomFormatter from './description-dom-formatter.js';
+import {DescriptionDomFormatter} from './description-dom-formatter.js';
 
 class SuggestionComposer {
   constructor(slotComposer) {
@@ -82,4 +81,4 @@ class SuggestionComposer {
   }
 }
 
-export default SuggestionComposer;
+export {SuggestionComposer};

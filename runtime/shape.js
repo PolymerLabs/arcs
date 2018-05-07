@@ -275,6 +275,6 @@ ${this._slotsToManifestString()}
   }
 }
 
-export default Shape;
+export {Shape};
 
 import Type from './type.js';

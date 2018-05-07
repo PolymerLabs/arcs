@@ -57,4 +57,4 @@ class MessageChannel {
   }
 }
 
-export default MessageChannel;
+export {MessageChannel};

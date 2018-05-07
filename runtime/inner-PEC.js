@@ -13,8 +13,6 @@ import Type from './type.js';
 import {handleFor} from './handle.js';
 import assert from '../platform/assert-web.js';
 import {PECInnerPort} from './api-channel.js';
-import ParticleSpec from './particle-spec.js';
-import Schema from './schema.js';
 import {StorageProxy} from './storage-proxy.js';
 
 class InnerPEC {

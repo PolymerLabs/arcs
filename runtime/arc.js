@@ -12,18 +12,17 @@
 import runtime from './runtime.js';
 import assert from '../platform/assert-web.js';
 import Type from './type.js';
-import Relation from './relation.js';
 import {handleFor} from './handle.js';
 import OuterPec from './outer-PEC.js';
 import Recipe from './recipe/recipe.js';
-import Manifest from './manifest.js';
-import Description from './description.js';
+import {Manifest} from './manifest.js';
+import {Description} from './description.js';
 import util from './recipe/util.js';
-import FakePecFactory from './fake-pec-factory.js';
+import {FakePecFactory} from './fake-pec-factory.js';
 import StorageProviderFactory from './storage/storage-provider-factory.js';
-import Scheduler from './scheduler.js';
+import {Scheduler} from './scheduler.js';
 import {registerArc} from '../devtools/shared/arc-registry.js';
-import Id from './id.js';
+import {Id} from './id.js';
 import {ArcDebugHandler} from './debug/arc-debug-handler.js';
 
 class Arc {
@@ -573,4 +572,4 @@ ${this.activeRecipe.toString()}`;
   }
 }
 
-export default Arc;
+export {Arc};

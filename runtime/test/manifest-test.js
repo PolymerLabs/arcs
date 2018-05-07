@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import Manifest from '../manifest.js';
+import {Manifest} from '../manifest.js';
 import parser from '../build/manifest-parser.js';
 import {assert} from './chai-web.js';
 import fs from '../../platform/fs-web.js';

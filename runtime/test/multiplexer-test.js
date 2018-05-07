@@ -10,10 +10,10 @@
 
 import {assert} from '../../runtime/test/chai-web.js';
 
-import Arc from '../../runtime/arc.js';
-import Loader from '../../runtime/loader.js';
-import Manifest from '../../runtime/manifest.js';
-import SlotComposer from '../../runtime/slot-composer.js';
+import {Arc} from '../../runtime/arc.js';
+import {Loader} from '../../runtime/loader.js';
+import {Manifest} from '../../runtime/manifest.js';
+import {SlotComposer} from '../../runtime/slot-composer.js';
 
 
 let loader = new Loader();

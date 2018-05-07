@@ -23,7 +23,6 @@ import MatchRecipeByVerb from './strategies/match-recipe-by-verb.js';
 import NameUnnamedConnections from './strategies/name-unnamed-connections.js';
 import AddUseHandles from './strategies/add-use-handles.js';
 import CreateDescriptionHandle from './strategies/create-description-handle.js';
-import Manifest from './manifest.js';
 import InitSearch from './strategies/init-search.js';
 import SearchTokensToParticles from './strategies/search-tokens-to-particles.js';
 import FallbackFate from './strategies/fallback-fate.js';
@@ -31,11 +30,8 @@ import GroupHandleConnections from './strategies/group-handle-connections.js';
 import MatchFreeHandlesToConnections from './strategies/match-free-handles-to-connections.js';
 import CreateHandles from './strategies/create-handles.js';
 import ResolveRecipe from './strategies/resolve-recipe.js';
-
-import Speculator from './speculator.js';
-import Description from './description.js';
+import {Speculator} from './speculator.js';
 import Tracing from '../tracelib/trace.js';
-
 import StrategyExplorerAdapter from './debug/strategy-explorer-adapter.js';
 
 class Planner {
@@ -222,4 +218,4 @@ Planner.ResolutionStrategies = [
 
 Planner.AllStrategies = Planner.InitializationStrategies.concat(Planner.ResolutionStrategies);
 
-export default Planner;
+export {Planner};

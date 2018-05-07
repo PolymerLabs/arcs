@@ -10,9 +10,9 @@
 
 import assert from '../platform/assert-web.js';
 import Type from './type.js';
-import Entity from './entity.js';
+import {Entity} from './entity.js';
 
-export default class Schema {
+class Schema {
   constructor(model) {
     let legacy = [];
     // TODO: remove this (remnants of normative/optional)
@@ -316,3 +316,5 @@ export default class Schema {
     return results.join('\n');
   }
 }
+
+export {Schema};

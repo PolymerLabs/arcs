@@ -12,7 +12,6 @@
 
 import {assert} from './chai-web.js';
 import TestHelper from './test-helper.js';
-import Loader from '../loader.js';
 
 describe('recipe descriptions test', function() {
   let manifestString = `

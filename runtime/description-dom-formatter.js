@@ -12,7 +12,7 @@
 import assert from '../platform/assert-web.js';
 import {DescriptionFormatter} from './description.js';
 
-export default class DescriptionDomFormatter extends DescriptionFormatter {
+class DescriptionDomFormatter extends DescriptionFormatter {
   constructor(description) {
     super(description);
     this._nextID = 0;
@@ -223,3 +223,5 @@ export default class DescriptionDomFormatter extends DescriptionFormatter {
     }
   }
 }
+
+export {DescriptionDomFormatter};

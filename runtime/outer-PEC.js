@@ -12,12 +12,9 @@
 import PEC from './particle-execution-context.js';
 import assert from '../platform/assert-web.js';
 import {PECOuterPort} from './api-channel.js';
-import Manifest from './manifest.js';
+import {Manifest} from './manifest.js';
 import {RecipeResolver} from './recipe/recipe-resolver.js';
 import {reportSystemException} from './arc-exceptions.js';
-
-// TODO: fix
-import Loader from './loader.js';
 
 class OuterPEC extends PEC {
   constructor(port, slotComposer, arc) {

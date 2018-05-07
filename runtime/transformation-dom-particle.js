@@ -10,7 +10,7 @@
 'use strict';
 
 import assert from '../platform/assert-web.js';
-import DomParticle from './dom-particle.js';
+import {DomParticle} from './dom-particle.js';
 
 // Regex to separate style and template.
 let re = /<style>((?:.|[\r\n])*)<\/style>((?:.|[\r\n])*)/;
@@ -59,4 +59,4 @@ class TransformationDomParticle extends DomParticle {
   }
 }
 
-export default TransformationDomParticle;
+export {TransformationDomParticle};

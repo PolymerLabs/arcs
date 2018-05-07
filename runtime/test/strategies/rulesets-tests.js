@@ -10,8 +10,8 @@
 'use strict';
 
 import {Strategy, Ruleset} from '../../../strategizer/strategizer.js';
-import Manifest from '../../manifest.js';
-import Planner from '../../planner.js';
+import {Manifest} from '../../manifest.js';
+import {Planner} from '../../planner.js';
 import Recipe from '../../recipe/recipe.js';
 import StrategyTestHelper from './strategy-test-helper.js';
 import {assert} from '../chai-web.js';

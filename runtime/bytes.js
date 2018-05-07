@@ -8,7 +8,7 @@
 
 // Represents a Blob of binary data. Intended for use in storing things such as
 // media data.
-export default class Bytes {
+class Bytes {
   constructor(blob) {
     this._blob = blob;
   }
@@ -33,3 +33,5 @@ export default class Bytes {
   }
   // TODO(wkorman): Perhaps rangeUrl, type (mimetype), size.
 }
+
+export {Bytes};

@@ -9,7 +9,7 @@
  */
 'use strict';
 
-import Arc from '../../arc.js';
+import {Arc} from '../../arc.js';
 import {assert} from '../chai-web.js';
 
 export default class StrategyTestHelper {

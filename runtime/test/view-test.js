@@ -10,14 +10,14 @@
 'use strict';
 
 import runtime from '../runtime.js';
-import Arc from '../arc.js';
+import {Arc} from '../arc.js';
 import {assert} from './chai-web.js';
-import SlotComposer from '../slot-composer.js';
+import {SlotComposer} from '../slot-composer.js';
 import {handleFor} from '../handle.js';
-import Shape from '../shape.js';
+import {Shape} from '../shape.js';
 import Type from '../type.js';
-import Manifest from '../manifest.js';
-import Loader from '../loader.js';
+import {Manifest} from '../manifest.js';
+import {Loader} from '../loader.js';
 import StorageProviderFactory from '../storage/storage-provider-factory.js';
 
 let loader = new Loader();

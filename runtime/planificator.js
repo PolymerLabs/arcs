@@ -8,13 +8,13 @@
 import assert from '../platform/assert-web.js';
 import Type from './type.js';
 import InitSearch from './strategies/init-search.js';
-import Planner from './planner.js';
-import Speculator from './speculator.js';
-import SuggestionComposer from './suggestion-composer.js';
+import {Planner} from './planner.js';
+import {Speculator} from './speculator.js';
+import {SuggestionComposer} from './suggestion-composer.js';
 
 let defaultTimeoutMs = 5000;
 
-export default class Planificator {
+class Planificator {
   constructor(arc) {
     this._arc = arc;
     this._speculator = new Speculator();
@@ -230,3 +230,5 @@ export default class Planificator {
     }
   }
 }
+
+export {Planificator};
