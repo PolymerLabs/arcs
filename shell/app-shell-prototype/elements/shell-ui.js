@@ -23,7 +23,7 @@ import Xen from '../../components/xen/xen.js';
 import ArcsUtils from '../lib/arcs-utils.js';
 
 // strings
-import AppIcon from '../icon.svg.js';
+import AppIcon from '../../apps/common/icon.svg.js';
 import IconStyle from '../../components/icons.css.js';
 
 // templates
@@ -169,12 +169,13 @@ const template = html`
     [search][toolbar][open] {
       transform: translate3d(calc(-100% - 4px), 0, 0);
     }
-    [search][toolbar] input {
+    [toolbar] input {
       flex: 1;
+      width: 0;
       outline: none;
       font-size: 18px;
       border: none;
-      line-height: 24px;
+      /*line-height: 24px;*/
     }
     [settings][toolbar][open] {
       transform: translate3d(calc(-200% - 7px), 0, 0);
@@ -306,10 +307,17 @@ const template = html`
     <div touchbar on-click="_onTouchbarClick"></div>
     <div toolbars on-click="_onBarClick">
       <div main toolbar open$="{{mainToolbarOpen}}">
-        <!-- <a href="{{launcherHref}}" title="Go to Launcher">${AppIcon}</a> -->
         <a href="{{launcherHref}}" title="Go to Launcher"><icon>apps</icon></a>
-        <!-- <span title="{{title}}">{{title}}</span> -->
-        <div style="flex:1; flex-direction:row; justify-content: center; display: flex; align-items: center;" on-click="_onSearchClick"><icon>search</icon><div style="margin-left:8px;">Search</div></div>
+        <div style="flex:1; flex-direction:row; justify-content: center; display: flex; align-items: center;" on-click="_onSearchClick">
+          <icon>search</icon><div style="margin-left:8px;">Search</div>
+        </div>
+<!--
+        <icon on-click="_onResetSearch">search</icon>
+        <input placeholder="Search" value="{{search}}" on-input="_onSearchChange" on-blur="_onSearchCommit">
+        <icon on-click="_onListen">mic</icon>
+  -->
+        <!-- <span title="{{title}}">{{title}}</span>
+        <icon on-click="_onSearchClick">search</icon> -->
         <icon on-click="_onSettingsClick">settings</icon>
       </div>
       <div search toolbar open$="{{searchToolbarOpen}}">
@@ -358,7 +366,7 @@ class ShellUi extends Xen.Debug(Xen.Base, log) {
   }
   _getInitialState() {
     return {
-      barState: 'peek',
+      barState: 'over',
       toolState: 'main',
       // TODO(sjmiles): include manifest or other directives?
       launcherHref: `${location.origin}${location.pathname}`,
@@ -410,7 +418,7 @@ class ShellUi extends Xen.Debug(Xen.Base, log) {
     if (this._state.toolsOpen) {
       this._setState({toolsOpen: false});
     } else {
-      this._setState({barState: 'peek'});
+      this._collapseBar();
     }
   }
   _onTouchbarClick() {
@@ -436,10 +444,17 @@ class ShellUi extends Xen.Debug(Xen.Base, log) {
       switch (this._state.barState) {
         case 'over':
         case 'hint':
-          this._setState({barState: 'peek'});
+          this._collapseBar();
           break;
       }
     }
+  }
+  _collapseBar() {
+    let barState = 'peek';
+    if (this._props.showhint) {
+      barState = 'hint';
+    }
+    this._setState({barState});
   }
   _onSearchClick(e) {
     e.stopPropagation();

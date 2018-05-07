@@ -130,8 +130,8 @@ class AppShell extends Xen.Debug(Xen.Base, log) {
 import 'https://sjmiles.github.io/arcs-stories/0.4/GitHubDash/GitHubDash.recipes'
 import 'https://sjmiles.github.io/arcs-stories/0.3/TV/TV.recipes'
 import 'https://sjmiles.github.io/arcs-stories/0.3/PlaidAccounts/PlaidAccounts.recipes'
-import '../artifacts/canonical.manifest'
-import '../artifacts/0.4/Arcs/Arcs.recipes'
+import '${window.shellPath}/artifacts/canonical.manifest'
+import '${window.shellPath}/artifacts/0.4/Arcs/Arcs.recipes'
       `
     };
   }
@@ -199,6 +199,7 @@ import '../artifacts/0.4/Arcs/Arcs.recipes'
       }
       else if (suggestion && suggestion !== oldState.suggestion) {
         log('suggestion registered from launcher, generate new arc (set key to *)');
+        state.suggestion = null;
         state.pendingSuggestion = suggestion;
         this._setKey('*');
       }

@@ -11,13 +11,14 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 // firebase runtime (customized by sjmiles@ for import-ability)
 import firebase from '../../components/firebase.4.2.0.js';
 
-// arc data is under this child node on database root
-const version = '0_4';
+const {firebaseConfig, version} = (() => {
+  const testFirebaseKey =
+      (new URL(document.location)).searchParams.get('testFirebaseKey');
 
   let version;
   let firebaseConfig;
   if (!testFirebaseKey) {
-    version = '0_3_6-alpha';
+    version = '0_3_5-alpha';
     firebaseConfig = {
       apiKey: 'AIzaSyBme42moeI-2k8WgXh-6YK_wYyjEXo4Oz8',
       authDomain: 'arcs-storage.firebaseapp.com',
@@ -38,56 +39,30 @@ const version = '0_4';
     };
   }
 
-// arc storage
-const storageKey = `firebase://${serverName}/${apiKey}/${version}`;
+  return {firebaseConfig, version};
+})();
 
-// firebase config
-const config = {
-  apiKey,
-  authDomain: 'arcs-storage.firebaseapp.com',
-  databaseURL: `https://${serverName}`,
-  projectId: 'arcs-storage',
-  storageBucket: 'arcs-storage.appspot.com',
-  messagingSenderId: '779656349412'
-};
+const app = firebase.initializeApp(firebaseConfig /*, 'arcs-storage'*/);
 
-// firebase app
-const app = firebase.initializeApp(config/*, 'arcs-storage'*/);
-// firebase database
 const database = app.database();
 const db = database.ref(version);
-// firebase storage
+
 const storage = app.storage();
 
-// console tools
-db.dump = () => db.once('value').then(snap => console.log(db.data = snap.val()));
-db.get = async path => {
-  const snap = await db.child(path).once('value');
-  const value = snap.val();
-  console.log(value);
-  return value;
-};
-db.newUser = name => {
-  const user = {info: {name}};
-  return db.child('users').push(user).key;
-};
+// for debugging only
+db.dump = () =>
+    db.once('value').then(snap => console.log(db.data = snap.val()));
 
-// fill in existing reference if necessary
-const Firebase = window.Firebase || {};
-// exportables
-Object.assign(Firebase, {
-  version,
+const Firebase = {
   firebase,
   database,
   db,
-  storage,
-  storageKey
-});
+  version,
+  storage
+};
 
-// export as globals
 window.Firebase = Firebase;
 window._db = database;
 window.db = db;
 
-// export as module
 export default Firebase;

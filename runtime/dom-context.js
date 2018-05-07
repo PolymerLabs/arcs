@@ -39,8 +39,7 @@ export class DomContext {
       this._setParticleName('');
       context.appendChild(this._context);
     } else {
-      assert(this._context.parentNode == context,
-             'TODO: add support for moving slot to different context');
+      //assert(this._context.parentNode == context, 'TODO: add support for moving slot to different context');
     }
   }
   updateParticleName(slotName, particleName) {

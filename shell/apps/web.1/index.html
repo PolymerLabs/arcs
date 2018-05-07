@@ -9,21 +9,21 @@
 
   <link rel="manifest" href="../common/manifest.json"/>
   <link rel="shortcut icon" href="../common/logo_64.png">
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Google+Sans:400,700">
-  <link rel="stylesheet" href="../common/index.css">
 
-  <script type="module">
-    // global configuration
-    import '../common/config.js';
-    // firebase config is required before loading arcs runtime
-    import '../common/firebase-config.js';
-    // arcs runtime
-    import '../../build/ArcsLib.js';
-    // elements
-    import '../../app-shell-prototype/app-shell.js';
-    // components for particle use
-    import '../common/whitelisted.js';
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Google+Sans:400,700">
+
+  <script>
+    (() => {
+      const debug = (new URL(document.location)).searchParams.has('debug');
+      const runtime = debug ? '../../source/ArcsLib.js' : '../../build/ArcsLib.js';
+      document.head.appendChild(Object.assign(document.createElement('script'), {type: 'module', src: runtime}));
+    })();
   </script>
+
+  <link rel="stylesheet" href="../common/index.css">
+  <script type="module" src="../common/index.js"></script>
+
+  <script type="module" src="../../app-shell/app-shell.js"></script>
 
 </head>
 <body>
@@ -31,7 +31,7 @@
   <app-shell>
     <div slotid="toproot"></div>
     <div slotid="root"></div>
-    <div slotid="modal" slot="modal"></div>
+    <div slotid="modal"></div>
     <div slotid="suggestions" slot="suggestions"></div>
   </app-shell>
 
