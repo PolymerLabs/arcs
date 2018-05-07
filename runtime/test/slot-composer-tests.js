@@ -10,6 +10,7 @@
 'use strict';
 
 import {Arc} from '../arc.js';
+import {Affordance} from '../affordance.js';
 import {assert} from './chai-web.js';
 import {Slot} from '../slot.js';
 import {SlotComposer} from '../slot-composer.js';
@@ -41,7 +42,7 @@ class MockContext {
 
 async function initSlotComposer(recipeStr) {
   let slotComposer = new SlotComposer({affordance: 'mock', rootContext: new MockContext('dummy-context')});
-  slotComposer._slotClass = MockSlot;
+  slotComposer._affordance._slotClass = MockSlot;
 
   let manifest = (await Manifest.parse(recipeStr));
   let loader = new class extends Loader {

@@ -21,6 +21,10 @@ class OuterPEC extends PEC {
     super();
     this._particles = [];
     this._apiPort = new PECOuterPort(port);
+    this.close = () => {
+      port.close();
+      this._apiPort.close();
+    };
     this._arc = arc;
     this._nextIdentifier = 0;
     this.slotComposer = slotComposer;

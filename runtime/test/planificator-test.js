@@ -100,6 +100,7 @@ describe('Planificator', function() {
     let {plans} = planificator.getCurrentPlans();
     assert.lengthOf(plans, 0);
 
+    planificator._arc.dispose();
     planificator.dispose();
     assert.lengthOf(planificator._arc._instantiatePlanCallbacks, 0);
     assert.lengthOf(planificator._arc._scheduler._idleCallbacks, 0);

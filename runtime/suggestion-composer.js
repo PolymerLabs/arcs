@@ -1,22 +1,19 @@
 /**
  * @license
- * Copyright (c) 2017 Google Inc. All rights reserved.
+ * Copyright (c) 2018 Google Inc. All rights reserved.
  * This code may only be used under the BSD style license found at
  * http://polymer.github.io/LICENSE.txt
  * Code distributed by Google as part of this project is also
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-
 import assert from '../platform/assert-web.js';
-import {DomSlot} from './dom-slot.js';
-import {DomContext} from './dom-context.js';
-import {DescriptionDomFormatter} from './description-dom-formatter.js';
+import {Affordance} from './affordance.js';
 
 class SuggestionComposer {
   constructor(slotComposer) {
     assert(slotComposer);
-    this._affordance = slotComposer.affordance;
+    this._affordance = Affordance.forName(slotComposer.affordance);
     // TODO(mmandlis): find a cleaner way to fetch suggestions context.
     this._context = slotComposer._contextSlots.find(slot => slot.name == 'suggestions').context;
     assert(this._context);
@@ -41,12 +38,12 @@ class SuggestionComposer {
   }
 
   async _updateSuggestions(suggestions) {
-    this._getContextClass().clear(this._context);
+    this._affordance.contextClass.clear(this._context);
     return Promise.all(suggestions.map(async suggestion => {
       let suggestionContent =
-        await suggestion.description.getRecipeSuggestion(this._getDescriptionFormatter());
+        await suggestion.description.getRecipeSuggestion(this._affordance.descriptionFormatter);
       assert(suggestionContent, 'No suggestion content available');
-      this._getContextClass().createContext(
+      this._affordance.contextClass.createContext(
           this.createSuggestionElement(this._context, suggestion), suggestionContent);
     }));
   }
@@ -56,28 +53,6 @@ class SuggestionComposer {
     // TODO(sjmiles): LIFO is weird, iterate top-down elsewhere?
     container.insertBefore(suggest, container.firstElementChild);
     return suggest;
-  }
-
-  _getContextClass() {
-    switch (this._affordance) {
-      case 'dom':
-      case 'dom-touch':
-      case 'vr':
-        return DomContext;
-      default:
-        assert('unsupported affordance ', this._affordance);
-    }
-  }
-
-  _getDescriptionFormatter() {
-    switch (this._affordance) {
-      case 'dom':
-      case 'dom-touch':
-      case 'vr':
-        return DescriptionDomFormatter;
-      default:
-        assert('unsupported affordance ', this._affordance);
-    }
   }
 }
 
