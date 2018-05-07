@@ -13,6 +13,14 @@ import {SuggestionComposer} from './suggestion-composer.js';
 
 let defaultTimeoutMs = 5000;
 
+const now = () => {
+  if (typeof performance == 'object') {
+    return performance.now();
+  }
+  let time = process.hrtime();
+  return time[0] * 1000 + time[1] / 1000000;
+};
+
 class ReplanQueue {
   constructor(planificator, options) {
     this._planificator = planificator;
@@ -23,7 +31,7 @@ class ReplanQueue {
     this._replanTimer = null;
   }
   addChange() {
-    this._changes.push(Date.now());
+    this._changes.push(now());
     if (this.isReplanningScheduled()) {
       this.postponeReplan();
     } else {
@@ -35,7 +43,7 @@ class ReplanQueue {
   }
   scheduleReplan(intervalMs) {
     this.cancelReplanIfScheduled();
-    this._replanTimer = setTimeout(() => this._planificator.requestPlanning(), intervalMs);
+    this._replanTimer = setTimeout(() => this._planificator._requestPlanning(), intervalMs);
   }
   cancelReplanIfScheduled() {
     if (this.isReplanningScheduled()) {
@@ -65,7 +73,7 @@ class ReplanQueue {
   canPostponeReplan(changesInterval) {
     return !this._options.maxNoReplanMs || changesInterval < this._options.maxNoReplanMs;
   }
-  onReplanDone() {
+  onReplanningStarted() {
     this.cancelReplanIfScheduled();
     this._changes = [];
   }
@@ -113,10 +121,10 @@ export class Planificator {
     // TODO(mmandlis): Planificator subscribes to various change events.
     // Later, it will evaluate and batch events and trigger replanning intelligently.
     // Currently, just trigger replanning for each event.
-    this._arcCallback = this.onPlanInstantiated.bind(this);
+    this._arcCallback = this._onPlanInstantiated.bind(this);
     this._arc.registerInstantiatePlanCallback(this._arcCallback);
 
-    this._schedulerCallback = this.onDataChanged.bind(this);
+    this._schedulerCallback = this._onDataChanged.bind(this);
     this._arc._scheduler.registerIdleCallback(this._schedulerCallback);
 
     if (this._arc.pec.slotComposer) {
@@ -173,7 +181,7 @@ export class Planificator {
 
     if (this._arc.search !== search) {
       this._arc.search = search;
-      this.requestPlanning({}, {
+      this._requestPlanning({}, {
         // Don't include InitPopulation strategies in replanning.
         strategies: [InitSearch].concat(Planner.ResolutionStrategies).map(strategy => new strategy(this._arc)),
         append: true
@@ -214,7 +222,7 @@ export class Planificator {
     this._stateChangedCallbacks.push(callback);
   }
 
-  onPlanInstantiated(plan) {
+  _onPlanInstantiated(plan) {
     // Check that plan is in this._current.plans;
     if (!this._current.plans.find(currentPlan => currentPlan.plan == plan)) {
       assert(false, `The plan being instantiated (${plan.description}) doesn't appear in the current list of plans`);
@@ -222,16 +230,16 @@ export class Planificator {
     // Move current to past, and clear current;
     this._past = {plan, plans: this._current.plans, generations: this._current.generations};
     this._setCurrent({plans: [], generations: []});
-    this.requestPlanning();
+    this._requestPlanning();
   }
 
 
-  onDataChanged() {
+  _onDataChanged() {
     this._dataChangesQueue.addChange();
   }
 
-  requestPlanning(event, options) {
-    this._dataChangesQueue.onReplanDone();
+  _requestPlanning(event, options) {
+    this._dataChangesQueue.onReplanningStarted();
 
     // Activate replanning and trigger subscribed callbacks.
     return this._schedulePlanning(options || {});
@@ -254,12 +262,12 @@ export class Planificator {
   }
 
   async _runPlanning(options) {
-    let time = Date.now();
+    let time = now();
     while (!this._valid) {
       this._valid = true;
       await this._doNextPlans(options);
     }
-    time = ((Date.now() - time) / 1000).toFixed(2);
+    time = ((now() - time) / 1000).toFixed(2);
     console.log(`Produced ${this._next.plans.length} in ${time}s.`);
   }
 
