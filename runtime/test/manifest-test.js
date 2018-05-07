@@ -1085,7 +1085,7 @@ resource SomeName
     `);
     assert(manifest.findShapeByName('Shape'));
     assert(manifest.recipes[0].normalize());
-  })
+  });
   it('can resolve optional handles', async () => {
     let manifest = await Manifest.parse(`
       schema Something
