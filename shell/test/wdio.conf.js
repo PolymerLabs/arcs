@@ -145,6 +145,12 @@ exports.config = {
   //     webdriverrtc: {},
   //     browserevent: {}
   // },
+
+  plugins: {
+    'wdio-screenshot': {}
+  },
+
+
   //
   // Test runner services
   // Services take over a specific job you don't want to take care of. They enhance
