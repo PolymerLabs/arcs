@@ -43,18 +43,40 @@ class Handle {
     this.canRead = canRead;
     this.canWrite = canWrite;
     this._particleId = particleId;
+    this.options = {
+      keepSynced: true,
+      notifySync: true,
+      notifyUpdate: true,
+      notifyDesync: false,
+    };
   }
 
-  raiseSystemException(exception, method, particleId) {
-    this._proxy.raiseSystemException(exception, method, particleId);
+  raiseSystemException(exception, method) {
+    this._proxy.raiseSystemException(exception, method, this._particleId);
   }
 
   underlyingProxy() {
     return this._proxy;
   }
 
-  resync() {
-    return this._proxy.resync();
+  // `options` may contain any of:
+  // - keepSynced (bool): load full data on startup, maintain data in proxy and resync as required
+  // - notifySync (bool): if keepSynced is true, call onHandleSync when the full data is received
+  // - notifyUpdate (bool): call onHandleUpdate for every change event received
+  // - notifyDesync (bool): if keepSynced is true, call onHandleDesync when desync is detected
+  configure(options) {
+    assert(this.canRead, 'configure can only be called on readable Handles');
+    try {
+      let keys = Object.keys(this.options);
+      let badKeys = Object.keys(options).filter(o => !keys.includes(o));
+      if (badKeys.length > 0) {
+        throw new Error(`Invalid option in Handle.configure(): ${badKeys}`);
+      }
+      Object.assign(this.options, options);
+    } catch (e) {
+      this.raiseSystemException(e, 'Handle::configure');
+      throw e;
+    }
   }
 
   /** @method on(kind, callback, target)
@@ -121,10 +143,19 @@ class Collection extends Handle {
     // TODO: things
   }
 
-  notify(particle, version, update) {
-    assert(this.canRead, 'notify should not be called for non-readable handles');
-    update.collection = this._restore(update.collection);
-    particle.onHandleUpdate(this, version, update);
+  // Called by StorageProxy.
+  _notify(forSync, particle, version, details) {
+    assert(this.canRead, '_notify should not be called for non-readable handles');
+    if (forSync) {
+      particle.onHandleSync(this, this._restore(details), version);
+    } else {
+      let update = {};
+      if ('add' in details)
+        update.added = this._restore(details.add);
+      if ('remove' in details)
+        update.removed = this._restore(details.remove);
+      particle.onHandleUpdate(this, update, version);
+    }
   }
 
   /** @method async toList()
@@ -140,7 +171,7 @@ class Collection extends Handle {
   }
 
   _restore(list) {
-    return (list != null) ? list.map(a => restore(a, this.entityClass)) : null;
+    return (list !== null) ? list.map(a => restore(a, this.entityClass)) : null;
   }
 
   /** @method store(entity)
@@ -178,10 +209,14 @@ class Variable extends Handle {
     super(proxy, name, particleId, canRead, canWrite);
   }
 
-  notify(particle, version, update) {
-    assert(this.canRead, 'notify should not be called for non-readable handles');
-    update.variable = this._restore(update.variable);
-    particle.onHandleUpdate(this, version, update);
+  // Called by StorageProxy.
+  _notify(forSync, particle, version, details) {
+    assert(this.canRead, '_notify should not be called for non-readable handles');
+    if (forSync) {
+      particle.onHandleSync(this, this._restore(details), version);
+    } else {
+      particle.onHandleUpdate(this, {data: this._restore(details.data)}, version);
+    }
   }
 
   /** @method async get()
@@ -198,7 +233,7 @@ class Variable extends Handle {
   }
 
   _restore(model) {
-    if (model == null)
+    if (model === null)
       return null;
     if (this.type.isEntity) {
       return restore(model, this.entityClass);
@@ -217,7 +252,7 @@ class Variable extends Handle {
         throw new Error('Handle not writeable');
       return this._proxy.set(this._serialize(entity), this._particleId);
     } catch (e) {
-      this.raiseSystemException(e, 'Handle::set', this._particleId);
+      this.raiseSystemException(e, 'Handle::set');
       throw e;
     }
   }

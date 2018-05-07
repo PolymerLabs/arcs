@@ -41,38 +41,49 @@ export class Particle {
    * Views is a map from view names to view handles.
    */
   setViews(views) {
-
   }
 
-  /** @method onHandleUpdate(handle, data, add, remove)
-   * Called once after setViews() for each readable handle to establish the current handle values.
-   * Thereafter called whenever the data for a given handle has been updated to the next version.
+  /** @method onHandleSync(handle, model, version)
+   * Called for handles that are configured with both keepSynced and notifySync, when they are
+   * updated with the full model of their data. This will occur once after setViews() and any time
+   * thereafter if the handle is resynchronized.
    *
-   * handle is the Handle instance that was updated.
-   * version is the received version number.
-   * update is an object with the following fields:
-   *   variable:   The Entity data, or null if the handle was not set prior to setViews or has been
-   *               explicitly cleared. Only defined for Variable-backed handles.
-   *   collection: An Array of Entities; empty if the handle does not contain any entities. Only
-   *               defined for Collection-backed handles.
-   *   added:      An Array of ids indicating which entities were added. Only defined for updates
-   *               to Collection-backed handles.
-   *   removed:    An Array of ids indicating which entities were removed. Only defined for updates
-   *               to Collection-backed handles.
+   * handle: The Handle instance that was updated.
+   * model: For Variable-backed Handles, the Entity data or null if the Variable is not set.
+   *        For Collection-backed Handles, the Array of Entities, which may be empty.
+   * version: The received version number.
    */
-  onHandleUpdate(handle, version, update) {
-
+  onHandleSync(handle, model, version) {
   }
 
-  /** @method onHandleDesync(handle)
-   * Called when an update event for a Collection-backed handle has been missed.
-   * The default implementation automatically resyncronizes the handle.
+  /** @method onHandleUpdate(handle, update, version)
+   * Called for handles that are configued with notifyUpdate, when change events are received from
+   * the backing store. For handles also configured with keepSynced these events will be correctly
+   * ordered, with some potentially skips if a desync occurs. For handles not configured with
+   * keepSynced, all change events will be passed through as they are received.
    *
-   * handle is the Handle instance that has desynchronized.
-   * version is the received version number.
+   * handle: The Handle instance that was updated.
+   * update: An object containing one of the following fields:
+   *    data: The full Entity for a Variable-backed Handle.
+   *    added: An Array of Entities added to a Collection-backed Handle.
+   *    removed: An Array of Entities removed from a Collection-backed Handle.
+   * version: The received version number.
+   */
+  onHandleUpdate(handle, update, version) {
+  }
+
+  /** @method onHandleDesync(handle, version)
+   * Called for handles that are configured with both keepSynced and notifyDesync, when they are
+   * detected as being out-of-date against the backing store. For Variables, the event that triggers
+   * this will also resync the data and thus this call may usually be ignored. For Collections, the
+   * underlying proxy will automatically request a full copy of the stored data to resynchronize.
+   * onHandleSync will be invoked when that is received.
+   *
+   * handle: The Handle instance that was desynchronized.
+   * version: The received version number, which will be more than one ahead of the previously
+   *          stored data.
    */
   onHandleDesync(handle, version) {
-    handle.resync();
   }
 
   constructInnerArc() {

@@ -34,12 +34,11 @@ export class InnerPEC {
      * only keeping type information on the arc side.
      */
     this._apiPort.onDefineHandle = ({type, identifier, name}) => {
-      let proxy = new StorageProxy(identifier, type, this._apiPort, this, name, null);
-      return [proxy, () => proxy._initialize()];
+      return new StorageProxy(identifier, type, this._apiPort, this, name);
     };
 
     this._apiPort.onCreateHandleCallback = ({type, id, name, callback}) => {
-      let proxy = new StorageProxy(id, type, this._apiPort, this, name, 0);
+      let proxy = new StorageProxy(id, type, this._apiPort, this, name);
       return [proxy, () => callback(proxy)];
     };
 
@@ -209,10 +208,9 @@ export class InnerPEC {
       }
       handleMap.set(name, handle);
 
-      // Defer notifications for initial handle data until after setViews is called.
-      if (handle.canRead) {
-        registerList.push({proxy, particle, handle});
-      }
+      // Defer registration of handles with proxies until after particles have a chance to
+      // configure them in setViews.
+      registerList.push({proxy, particle, handle});
     });
 
     return [particle, async () => {

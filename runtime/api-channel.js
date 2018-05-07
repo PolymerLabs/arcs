@@ -259,7 +259,7 @@ export class PECOuterPort extends APIPort {
 
     this.registerHandler('Render', {particle: this.Mapped, slotName: this.Direct, content: this.Direct});
     this.registerHandler('InitializeProxy', {handle: this.Mapped, callback: this.Direct});
-    this.registerHandler('ResyncHandle', {handle: this.Mapped, callback: this.Direct});
+    this.registerHandler('SynchronizeProxy', {handle: this.Mapped, callback: this.Direct});
     this.registerHandler('Synchronize', {handle: this.Mapped, target: this.Mapped,
                                     type: this.Direct, callback: this.Direct,
                                     modelCallback: this.Direct, particleId: this.Direct});
@@ -308,7 +308,7 @@ export class PECInnerPort extends APIPort {
 
     this.registerCall('Render', {particle: this.Mapped, slotName: this.Direct, content: this.Direct});
     this.registerCall('InitializeProxy', {handle: this.Mapped, callback: this.LocalMapped});
-    this.registerCall('ResyncHandle', {handle: this.Mapped, callback: this.LocalMapped});
+    this.registerCall('SynchronizeProxy', {handle: this.Mapped, callback: this.LocalMapped});
     this.registerCall('Synchronize', {handle: this.Mapped, target: this.Mapped,
                                  type: this.Direct, callback: this.LocalMapped,
                                  modelCallback: this.LocalMapped, particleId: this.Direct});
@@ -335,6 +335,6 @@ export class PECInnerPort extends APIPort {
     this.registerCall('ArcLoadRecipe', {arc: this.Direct, recipe: this.Direct, callback: this.LocalMapped});
 
     this.registerCall('RaiseSystemException', {exception: this.Direct, methodName: this.Direct, particleId: this.Direct});
-    
+
   }
 }

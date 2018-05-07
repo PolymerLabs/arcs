@@ -87,10 +87,6 @@ class InMemoryStorageProvider extends StorageProviderBase {
       return new InMemoryCollection(type, arcId, name, id, key);
     return new InMemoryVariable(type, arcId, name, id, key);
   }
-
-  assignVersionForTesting(v) {
-    this._version = v;
-  }
 }
 
 class InMemoryCollection extends InMemoryStorageProvider {

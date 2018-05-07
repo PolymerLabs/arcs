@@ -39,18 +39,16 @@ async function loadFilesIntoNewArc(fileMap) {
   return {manifest, arc};
 }
 
-async function setupProxySyncTests() {
+async function setupProxySyncTests(config = '') {
   let {manifest, arc} = await loadFilesIntoNewArc({
     manifest: `
       schema Data
-        Text value
-      schema Result
         Text value
 
       particle P in 'a.js'
         in Data foo
         inout [Data] bar
-        out [Result] res
+        out [Data] res
 
       recipe
         use 'test:0' as view0
@@ -68,32 +66,46 @@ async function setupProxySyncTests() {
         return class P extends Particle {
           setViews(views) {
             this._resHandle = views.get('res');
+            ${config}
           }
 
-          onHandleUpdate(handle, version, update) {
-            let res = \`\${handle.name}:\${version}:\`;
-            if ('variable' in update) {
-              res += (update.variable !== null) ? update.variable.value : '(null)';
-            }
-            if ('collection' in update) {
-              res += '[' + update.collection.map(v => v.rawData.value).join('|') + ']';
+          // model = null / Entity (for Variables); [] / [Entity] (for Collections)
+          onHandleSync(handle, model, version) {
+            this.addResult('sync', handle, version, this.toString(model));
+          }
+
+          // update = {data: Entity, added: [Entity], removed: [Entity]}
+          onHandleUpdate(handle, update, version) {
+            let details = '';
+            if ('data' in update) {
+              details += this.toString(update.data);
             }
             if ('added' in update) {
-              res += update.added.map(id => '+' + id);
+              details += '+' + this.toString(update.added);
             }
             if ('removed' in update) {
-              res += update.removed.map(id => '-' + id);
+              details += '-' + this.toString(update.removed);
             }
-            this.addResult(res);
+            this.addResult('update', handle, version, details);
           }
 
           onHandleDesync(handle, version) {
-            this.addResult(\`\${handle.name}:\${version}:<desync>\`);
-            handle.resync();
+            this.addResult('desync', handle, version, null);
           }
 
-          async addResult(msg) {
-            await this._resHandle.store(new this._resHandle.entityClass({value: msg}));
+          toString(item) {
+            if (item === null || item === undefined) {
+              return '(' + item + ')';
+            }
+            if (Array.isArray(item)) {
+              return '[' + item.map(v => v.value).join('|') + ']';
+            }
+            return item.value;
+          }
+
+          async addResult(method, handle, version, details) {
+            let result = [handle.name, method, version, details].filter(x => x != null).join(':');
+            await this._resHandle.store(new this._resHandle.entityClass({value: result}));
           }
         }
       });
@@ -101,112 +113,173 @@ async function setupProxySyncTests() {
   });
 
   let Data = manifest.findSchemaByName('Data').entityClass();
-  let Result = manifest.findSchemaByName('Result').entityClass();
-  let fooHandle = await arc.createHandle(Data.type, 'foo', 'test:0');
-  let barHandle = await arc.createHandle(Data.type.setViewOf(), 'bar', 'test:1');
-  let resHandle = await arc.createHandle(Result.type.setViewOf(), 'res', 'test:2');
-  let inspector = new util.ResultInspector(arc, resHandle, 'value');
+  let fooStore = await arc.createHandle(Data.type, 'foo', 'test:0');
+  let barStore = await arc.createHandle(Data.type.setViewOf(), 'bar', 'test:1');
+  let resStore = await arc.createHandle(Data.type.setViewOf(), 'res', 'test:2');
+  let inspector = new util.ResultInspector(arc, resStore, 'value');
 
   let recipe = manifest.recipes[0];
-  recipe.handles[0].mapToStorage(fooHandle);
-  recipe.handles[1].mapToStorage(barHandle);
-  recipe.handles[2].mapToStorage(resHandle);
+  recipe.handles[0].mapToStorage(fooStore);
+  recipe.handles[1].mapToStorage(barStore);
+  recipe.handles[2].mapToStorage(resStore);
   recipe.normalize();
-  return {arc, recipe, Data, fooHandle, barHandle, inspector};
+  return {arc, recipe, Data, fooStore, barStore, inspector};
 }
 
+// Calls set or store on a handle without triggering a change event.
+async function writeWithoutFiring(handle, entity) {
+  let fireFn = handle._fire;
+  handle._fire = () => {};
+  if (handle.set) {
+    await handle.set(entity);
+  } else {
+    await handle.store(entity);
+  }
+  handle._fire = fireFn;
+}
+
+// TODO: multi-particle tests
+// TODO: test with handles changing config options over time
 describe('particle-api', function() {
-  it('notifies on updates for initially empty handles', async function() {
-    let {arc, recipe, Data, fooHandle, barHandle, inspector} = await setupProxySyncTests();
+  it('notifies for updates to initially empty handles', async function() {
+    let {arc, recipe, Data, fooStore, barStore, inspector} = await setupProxySyncTests();
 
     await arc.instantiate(recipe);
-    await inspector.verify('foo:0:(null)', 'bar:0:[]');
+    await inspector.verify('foo:sync:0:(null)', 'bar:sync:0:[]');
 
-    await fooHandle.set(new Data({value: 'oh'}));
-    await barHandle.store({id: 'i1', rawData: {value: 'hai'}});
-    await inspector.verify('foo:1:oh', 'bar:1:[hai]+i1');
+    await fooStore.set(new Data({value: 'oh'}));
+    await barStore.store({id: 'i1', rawData: {value: 'hai'}});
+    await inspector.verify('foo:update:1:oh', 'bar:update:1:+[hai]');
+
+    await fooStore.clear();
+    await barStore.remove('i1');
+    await inspector.verify('foo:update:2:(null)', 'bar:update:2:-[hai]');
   });
 
-  it('notifies on updates for initially populated handles', async () => {
-    let {arc, recipe, Data, fooHandle, barHandle, inspector} = await setupProxySyncTests();
+  it('notifies for updates to initially populated handles', async () => {
+    let {arc, recipe, Data, fooStore, barStore, inspector} = await setupProxySyncTests();
 
-    await fooHandle.set(new Data({value: 'well'}));
-    await barHandle.store({id: 'i1', rawData: {value: 'hi'}});
-    await barHandle.store({id: 'i2', rawData: {value: 'there'}});
+    await fooStore.set(new Data({value: 'well'}));
+    await barStore.store({id: 'i1', rawData: {value: 'hi'}});
+    await barStore.store({id: 'i2', rawData: {value: 'there'}});
     await arc.instantiate(recipe);
-    await inspector.verify('foo:1:well', 'bar:2:[hi|there]');
+    await inspector.verify('foo:sync:1:well', 'bar:sync:2:[hi|there]');
 
-    await fooHandle.set(new Data({value: 'heeey'}));
-    await barHandle.store({id: 'i3', rawData: {value: 'buddy'}});
-    await inspector.verify('foo:2:heeey', 'bar:3:[hi|there|buddy]+i3');
+    await fooStore.set(new Data({value: 'heeey'}));
+    await barStore.store({id: 'i3', rawData: {value: 'buddy'}});
+    await inspector.verify('foo:update:2:heeey', 'bar:update:3:+[buddy]');
+
+    await fooStore.clear();
+    await barStore.remove('i2');
+    await inspector.verify('foo:update:3:(null)', 'bar:update:4:-[there]');
   });
 
-  it('notifies for Variables being cleared', async () => {
-    let {arc, recipe, Data, fooHandle, inspector} = await setupProxySyncTests();
+  it('handles dropped updates on a Variable with immediate resync', async function() {
+    let {arc, recipe, Data, fooStore, inspector} = await setupProxySyncTests(`
+      views.get('foo').configure({notifyDesync: true});
+    `);
 
-    await fooHandle.set(new Data({value: 'well'}));
     await arc.instantiate(recipe);
-    await inspector.verify('foo:1:well', 'bar:0:[]');
+    await inspector.verify('foo:sync:0:(null)', 'bar:sync:0:[]');
 
-    await fooHandle.clear();
-    await inspector.verify('foo:2:(null)');
+    // Drop event 2; desync is triggered by v3.
+    await fooStore.set(new Data({value: 'v1'}));
+    await writeWithoutFiring(fooStore, new Data({value: 'v2'}));
+    await fooStore.set(new Data({value: 'v3'}));
+    await inspector.verify('foo:update:1:v1', 'foo:desync:3', 'foo:sync:3:v3');
   });
 
-  it('notifies for items being removed from Collections', async () => {
-    let {arc, recipe, barHandle, inspector} = await setupProxySyncTests();
+  it('handles dropped updates on a Collection with immediate resync', async function() {
+    let {arc, recipe, barStore, inspector} = await setupProxySyncTests(`
+      views.get('bar').configure({notifyDesync: true});
+    `);
 
-    await barHandle.store({id: 'i1', rawData: {value: 'its'}});
-    await barHandle.store({id: 'i2', rawData: {value: 'ame'}});
-    await barHandle.store({id: 'i3', rawData: {value: 'mario'}});
     await arc.instantiate(recipe);
-    await inspector.verify('foo:0:(null)', 'bar:3:[its|ame|mario]');
+    await inspector.verify('foo:sync:0:(null)', 'bar:sync:0:[]');
 
-    await barHandle.remove('i1');
-    await barHandle.remove('i2');
-    await barHandle.remove('i3');
-    await inspector.verify('bar:4:[ame|mario]-i1', 'bar:5:[mario]-i2', 'bar:6:[]-i3');
+    // Drop event 2; desync is triggered by v3.
+    await barStore.store({id: 'i1', rawData: {value: 'v1'}});
+    await writeWithoutFiring(barStore, {id: 'i2', rawData: {value: 'v2'}});
+    await barStore.store({id: 'i3', rawData: {value: 'v3'}});
+    await inspector.verify('bar:update:1:+[v1]', 'bar:desync:3', 'bar:sync:3:[v1|v2|v3]');
   });
 
-  it('notifies on Collection desyncronized', async function() {
-    let {arc, recipe, Data, fooHandle, barHandle, inspector} = await setupProxySyncTests();
+  it('handles dropped updates on a Collection with delayed resync', async function() {
+    let {arc, recipe, barStore, inspector} = await setupProxySyncTests(`
+      views.get('bar').configure({notifyDesync: true});
+    `);
 
-    await barHandle.store({id: 'i1', rawData: {value: 'thelma'}});
     await arc.instantiate(recipe);
-    await inspector.verify('foo:0:(null)', 'bar:1:[thelma]');
+    await inspector.verify('foo:sync:0:(null)', 'bar:sync:0:[]');
 
-    // Fake a message being missed.
-    barHandle.assignVersionForTesting(2);
-    await barHandle.store({id: 'i3', rawData: {value: 'louise'}});
-    // Test particle auto-resyncs, so we should see a second update with the full set.
-    await inspector.verify('bar:3:<desync>', 'bar:3:[thelma|louise]');
+    // Drop event 2.
+    await barStore.store({id: 'i1', rawData: {value: 'v1'}});
+    await writeWithoutFiring(barStore, {id: 'i2', rawData: {value: 'v2'}});
+
+    // Delay the onSynchronizeProxy behaviour such that the sync request triggered by
+    // the v3 update arrives when the storage object is at v5, and the subsequent response
+    // to that only arrives at the proxy after the v6 and v7 updates have been sent:
+    //   v1 (v2) v3 <desync> v4 v5 (get-data-for-resync) v6 v7 <resync-with-v5>
+    let syncFn = arc.pec._apiPort.onSynchronizeProxy;
+    let syncCallback;
+    arc.pec._apiPort.onSynchronizeProxy = ({handle, callback}) => { syncCallback = callback; };
+    await barStore.store({id: 'i3', rawData: {value: 'v3'}});
+    await barStore.store({id: 'i4', rawData: {value: 'v4'}});
+    await barStore.store({id: 'i5', rawData: {value: 'v5'}});
+    let v5Data = await barStore.toListWithVersion();
+    await barStore.store({id: 'i6', rawData: {value: 'v6'}});
+    await barStore.remove('i1');
+    barStore.toListWithVersion = () => v5Data;
+    await syncFn({handle: barStore, callback: syncCallback});
+
+    await inspector.verify('bar:update:1:+[v1]', 'bar:desync:3', 'bar:sync:5:[v1|v2|v3|v4|v5]',
+                           'bar:update:6:+[v6]', 'bar:update:7:-[v1]');
   });
 
-  it('ignores updates for current and previous versions', async () => {
-    let {arc, recipe, Data, fooHandle, barHandle, inspector} = await setupProxySyncTests();
+  it('handles misorded updates on a Collection', async function() {
+    let {arc, recipe, barStore, inspector} = await setupProxySyncTests(`
+      views.get('bar').configure({notifyDesync: true});
+    `);
 
-    fooHandle.assignVersionForTesting(3);
-    barHandle.assignVersionForTesting(3);
-    await fooHandle.set(new Data({value: 'batman'}));
-    await barHandle.store({id: 'i4', rawData: {value: 'robin'}});
     await arc.instantiate(recipe);
-    await inspector.verify('foo:4:batman', 'bar:4:[robin]');
+    await inspector.verify('foo:sync:0:(null)', 'bar:sync:0:[]');
 
-    // Updates with previous version should be ignored.
-    fooHandle.assignVersionForTesting(2);
-    barHandle.assignVersionForTesting(2);
-    await fooHandle.set(new Data({value: 'gnatman'}));
-    await barHandle.store({id: 'i3', rawData: {value: 'bobbin'}});
+    // Reorder updates by fiddling with the stored version number.
+    await barStore.store({id: 'i1', rawData: {value: 'v1'}});
+    barStore._version = 2;
+    await barStore.store({id: 'i3', rawData: {value: 'v3'}});
+    barStore._version = 1;
+    await barStore.store({id: 'i2', rawData: {value: 'v2'}});
+    barStore._version = 3;
+    await barStore.store({id: 'i4', rawData: {value: 'v4'}});
+
+    // Desync is triggered, but the resync message is ignored because the updates
+    // "catch up" before the resync arrives.
+    await inspector.verify('bar:update:1:+[v1]', 'bar:desync:3', 'bar:update:2:+[v2]',
+                           'bar:update:3:+[v3]', 'bar:update:4:+[v4]');
+  });
+
+  it('sends update notifications with non-synced handles', async function() {
+    let {arc, recipe, Data, fooStore, barStore, inspector} = await setupProxySyncTests(`
+      views.get('foo').configure({keepSynced: false, notifyUpdate: true});
+      views.get('bar').configure({keepSynced: false, notifyUpdate: true});
+    `);
+
+    // Initial syncs are ignored.
+    await arc.instantiate(recipe);
     await inspector.verify();
 
-    // Updates with same version should be ignored.
-    await fooHandle.set(new Data({value: 'ratman'}));
-    await barHandle.store({id: 'i4', rawData: {value: 'sobbin'}});
-    await inspector.verify();
+    // Updates are sent.
+    await fooStore.set(new Data({value: 'v1'}));
+    await barStore.store({id: 'i1', rawData: {value: 'v1'}});
+    await inspector.verify('foo:update:1:v1', 'bar:update:1:+[v1]');
 
-    // Updates with a new version should not be ignored.
-    await fooHandle.set(new Data({value: 'statman'}));
-    await barHandle.store({id: 'i5', rawData: {value: 'globbin'}});
-    await inspector.verify('foo:5:statman', 'bar:5:[robin|globbin]+i5');
+    // Desync events ignored, resync events are just updates.
+    await writeWithoutFiring(fooStore, new Data({value: 'v2'}));
+    await writeWithoutFiring(barStore, {id: 'i2', rawData: {value: 'v2'}});
+    await fooStore.set(new Data({value: 'v3'}));
+    await barStore.store({id: 'i3', rawData: {value: 'v3'}});
+    await inspector.verify('foo:update:3:v3', 'bar:update:3:+[v3]');
   });
 
   it('contains view synchronize calls', async () => {
