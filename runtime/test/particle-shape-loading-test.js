@@ -56,7 +56,7 @@ describe('particle-shape-loading', function() {
                   inView.set(input);
                   outView.on('change', async () => {
                     var output = await outView.get();
-                    if (output !== undefined)
+                    if (output != null)
                       outputView.set(output);
                   }, this);
                 } catch (e) {

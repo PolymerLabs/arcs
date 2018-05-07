@@ -47,6 +47,10 @@ class Handle {
     this._particleId = particleId;
   }
 
+  raiseSystemException(exception, method, particleId) {
+    this._proxy.raiseSystemException(exception, method, particleId);
+  }
+
   underlyingProxy() {
     return this._proxy;
   }
@@ -79,6 +83,7 @@ class Handle {
   }
 
   _serialize(entity) {
+    assert(entity, 'can\'t serialize a null entity');
     if (!entity.isIdentified())
       entity.createIdentity(this.generateIDComponents());
     let id = entity[identifier];
@@ -209,9 +214,14 @@ class Variable extends Handle {
      in the particle's manifest.
    */
   async set(entity) {
-    if (!this.canWrite)
-      throw new Error('Handle not writeable');
-    return this._proxy.set(this._serialize(entity), this._particleId);
+    try {
+      if (!this.canWrite)
+        throw new Error('Handle not writeable');
+      return this._proxy.set(this._serialize(entity), this._particleId);
+    } catch (e) {
+      this.raiseSystemException(e, 'Handle::set', this._particleId);
+      throw e;
+    }
   }
 
   /** @method clear()

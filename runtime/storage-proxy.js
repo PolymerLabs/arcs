@@ -24,6 +24,11 @@ class StorageProxy {
     this._observers = [];
   }
 
+  raiseSystemException(exception, methodName, particleId) {
+
+    this._port.RaiseSystemException({exception: {message: exception.message, stack: exception.stack, name: exception.name}, methodName, particleId});
+  }
+
   get id() {
     return this._id;
   }
