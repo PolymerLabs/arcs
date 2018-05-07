@@ -14,6 +14,7 @@ import assert from '../platform/assert-web.js';
 import {PECOuterPort} from './api-channel.js';
 import Manifest from './manifest.js';
 import {RecipeResolver} from './recipe/recipe-resolver.js';
+import {reportSystemException} from './arc-exceptions.js';
 
 // TODO: fix
 import Loader from './loader.js';
@@ -156,6 +157,11 @@ class OuterPEC extends PEC {
         error = 'No recipe defined';
       }
       this._apiPort.SimpleCallback({callback, data: error});
+    };
+
+    this._apiPort.onRaiseSystemException = async ({exception, methodName, particleId}) => {
+     let particle = this._arc.particleHandleMaps.get(particleId).spec.name;
+      reportSystemException(exception, methodName, particle);
     };
   }
 
