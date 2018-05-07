@@ -25,7 +25,7 @@ particle OnlyShowPosts in 'source/ShowPosts.js'
   description `show ${posts}`
 
 particle ShowSinglePost in 'source/ShowSinglePost.js'
-  ShowSinglePost(in Post post, in [Avatar] avatars)
+  ShowSinglePost(in Post post, in [Avatar] avatars, in [Person] people, in Person user)
   consume item
   description `show ${post}`
 

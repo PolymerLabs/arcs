@@ -15,9 +15,11 @@ defineParticle(({MultiplexerDomParticle, log}) => {
       // log(`PostMuxer input recipe: `, item.renderRecipe);
       let value = item.renderRecipe.replace('{{slot_id}}', slot.id);
       value = value.replace('{{item_id}}', itemView._id);
-      value = value.replace('{{other_views}}', other.views.join('\n'));
+      // TODO(wkorman): Joining other_views and other_connections is a hack
+      // due to unknown required indentation for recipe compatibility.
+      value = value.replace('{{other_views}}', other.views.join('\n  '));
       value =
-          value.replace('{{other_connections}}', other.connections.join('\n'));
+          value.replace('{{other_connections}}', other.connections.join('\n    '));
       // log(`PostMuxer interpolated recipe: `, value);
       return value;
     }

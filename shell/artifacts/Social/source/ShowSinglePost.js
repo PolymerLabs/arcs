@@ -17,17 +17,20 @@ defineParticle(({DomParticle, html, log, resolver}) => {
     font-family: 'Google Sans', sans-serif;
     font-size: 16pt;
     color: rgba(0, 0, 0, 0.87);
-    border-top: 1px solid lightgrey;
-  }
-  [${host}] {
     padding-bottom: 16px;
     border-bottom: solid 0.5px;
     border-bottom-color: #d4d4d4;
+    text-decoration: none;
+    display: block;
   }
-  [${host}][content] {
+  [${host}] [content] {
     margin: 0 16px 0 56px;
   }
-  [${host}][content] [avatar] {
+  [${host}] [title] {
+    margin-bottom: 14px;
+    margin-top: 18px;
+  }
+  [${host}] [title] [avatar] {
     display: inline-block;
     height: 24px;
     width: 24px;
@@ -37,52 +40,66 @@ defineParticle(({DomParticle, html, log, resolver}) => {
     margin-right: 16px;
     vertical-align: bottom;
   }
-  [${host}][content] img {
+  [${host}] [content] img {
     display: block;
     width: 256px;
   }
+  [${host}] [owner] {
+    font-size: 14pt;
+    margin-right: 6px;
+  }
+  [${host}] [when] {
+    font-size: 12pt;
+    color: rgba(0, 0, 0, 0.4);
+  }
 </style>
-<div ${host} content value="{{id}}">
+<a ${host} href="{{blogHref}}" value="{{id}}">
   <div title>
-    <span avatar style='{{avatarStyle}}'></span>
+    <span avatar style='{{avatarStyle}}'></span><span owner>{{owner}}</span><span when>{{time}}</span>
   </div>
-  <img src="{{image}}">
-  <span>{{message}}</span>
-</div>
-    `.trim();
+  <div content>
+    <img src="{{image}}" width="{{imageWidth}}" height="{{imageHeight}}">
+    <span>{{message}}</span>
+  </div>
+</a>`;
 
   return class extends DomParticle {
     get template() {
       return template;
     }
-    _avatarSetToMap(avatars) {
-      const avatarMap = {};
-      if (avatars)
-        avatars.map(a => avatarMap[a.owner] = a.url);
-      return avatarMap;
-    }
-    _avatarToStyle(url) {
+    avatarToStyle(url) {
       return `background: url('${
           url}') center no-repeat; background-size: cover;`;
     }
-    willReceiveProps(props) {
-      // log(`willReceiveProps [post=${props.post}].`);
-      if (props.post) {
-        this._setState({
-          avatars: this._avatarSetToMap(props.avatars),
-        });
+    clampSize(width, height) {
+      if (!width || !height) {
+        return {clampedWidth: width, clampedHeight: height};
       }
+      const ratio = width / height;
+      const maxWidth = 256;
+      const clampedWidth = Math.min(maxWidth, width);
+      const clampedHeight = clampedWidth / ratio;
+      return {clampedWidth, clampedHeight};
     }
-    render(props) {
-      // log(`render [post=${props.post}].`);
-      if (!props.post)
+    render(props, state) {
+      if (!props.post || !props.user)
         return {};
-      const {message, image, id, author} = props.post;
+      const {arcKey, author, createdTimestamp, id, image, imageHeight, imageWidth, message} = props.post;
+      const {clampedWidth, clampedHeight} =
+          this.clampSize(imageWidth, imageHeight);
       return {
-        message,
-        image: image || '',
+        avatarStyle: this.avatarToStyle(resolver(props.avatars.find(a => a.owner == author).url)),
+        blogHref: `?arc=${arcKey}&user=${props.user.id}`,
         id,
-        avatarStyle: this._avatarToStyle(resolver(this._state.avatars[author]))
+        image: image || '',
+        imageWidth: clampedWidth,
+        imageHeight: clampedHeight,
+        message,
+        owner: props.people.find(p => p.id == author).name,
+        time: new Date(createdTimestamp).toLocaleDateString('en-US', {
+          'month': 'short',
+          'day': 'numeric'
+        })
       };
     }
   };
