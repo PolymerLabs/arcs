@@ -12,7 +12,7 @@ import vm from '../platform/vm-web.js';
 import fetch from './fetch-web.js';
 
 import assert from '../platform/assert-web.js';
-import particle from './particle.js';
+import {Particle} from './particle.js';
 import {DomParticle} from './dom-particle.js';
 import {MultiplexerDomParticle} from './multiplexer-dom-particle.js';
 import {TransformationDomParticle} from './transformation-dom-particle.js';
@@ -90,7 +90,7 @@ class Loader {
   }
 
   unwrapParticle(particleWrapper) {
-    return particleWrapper({particle, Particle: particle.Particle, DomParticle, TransformationDomParticle, MultiplexerDomParticle, html});
+    return particleWrapper({Particle, DomParticle, TransformationDomParticle, MultiplexerDomParticle, html});
   }
 
 }

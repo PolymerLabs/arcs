@@ -13,6 +13,7 @@
 import {assert} from './chai-web.js';
 import {handleFor} from '../handle.js';
 import {Scheduler} from '../scheduler.js';
+import {Schema} from '../schema.js';
 
 const scheduler = new Scheduler();
 
@@ -84,6 +85,16 @@ function initParticleSpec(name) {
   };
 }
 
+function testEntityClass(type) {
+  return new Schema({
+    names: [type],
+    fields: {
+      id: 'Number',
+      value: 'Text',
+    },
+  }).entityClass();
+}
+
 export {
   assertSingletonWillChangeTo,
   assertSingletonIs,
@@ -91,4 +102,5 @@ export {
   assertViewWillChangeTo,
   assertViewHas,
   initParticleSpec,
+  testEntityClass,
 };

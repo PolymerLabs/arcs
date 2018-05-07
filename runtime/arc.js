@@ -9,15 +9,14 @@
  */
 'use strict';
 
-import runtime from './runtime.js';
 import assert from '../platform/assert-web.js';
-import Type from './type.js';
+import util from './recipe/util.js';
+import {Type} from './type.js';
 import {handleFor} from './handle.js';
-import OuterPec from './outer-PEC.js';
+import {OuterPEC} from './outer-PEC.js';
 import Recipe from './recipe/recipe.js';
 import {Manifest} from './manifest.js';
 import {Description} from './description.js';
-import util from './recipe/util.js';
 import {FakePecFactory} from './fake-pec-factory.js';
 import StorageProviderFactory from './storage/storage-provider-factory.js';
 import {Scheduler} from './scheduler.js';
@@ -53,7 +52,7 @@ class Arc {
     this.particleHandleMaps = new Map();
     let pecId = this.generateID();
     let innerPecPort = this._pecFactory(pecId);
-    this.pec = new OuterPec(innerPecPort, slotComposer, this, `${pecId}:outer`);
+    this.pec = new OuterPEC(innerPecPort, slotComposer, this, `${pecId}:outer`);
     if (slotComposer) {
       slotComposer.arc = this;
     }

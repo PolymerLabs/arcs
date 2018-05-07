@@ -15,8 +15,8 @@ import {Planificator} from '../../runtime/planificator.js';
 import {Planner} from '../../runtime/planner.js';
 import {SlotComposer} from '../../runtime/slot-composer.js';
 import {DomSlot} from '../../runtime/dom-slot.js';
-import Type from '../../runtime/type.js';
-import BrowserLoader from './browser-loader.js';
+import {Type} from '../../runtime/type.js';
+import {BrowserLoader} from './browser-loader.js';
 import Tracing from '../../tracelib/trace.js';
 import {Scheduler} from '../../runtime/scheduler.js';
 

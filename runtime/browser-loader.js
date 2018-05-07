@@ -11,7 +11,7 @@
 
 import {Loader} from './loader.js';
 
-export default class BrowserLoader extends Loader {
+class BrowserLoader extends Loader {
   constructor(base) {
     super();
     // TODO: Update all callers to pass a valid base URL to avoid the use of
@@ -35,3 +35,5 @@ export default class BrowserLoader extends Loader {
     return this.unwrapParticle(result[0]);
   }
 }
+
+export {BrowserLoader};

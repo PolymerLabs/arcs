@@ -10,7 +10,7 @@
 'use strict';
 
 import assert from '../platform/assert-web.js';
-import Type from './type.js';
+import {Type} from './type.js';
 import {ParticleSpec} from './particle-spec.js';
 
 class Description {
