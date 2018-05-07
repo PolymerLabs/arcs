@@ -15,7 +15,7 @@ particle SingleSlotParticle in 'test-single-slot-particle.js'
   description `test slot particle`
 
 shape HostedParticleShape
-  HostedParticleShape(in Foo foo)
+  in Foo foo
   consume annotation
 
 particle MultiplexSlotsParticle in 'test-multiplex-slots-particle.js'

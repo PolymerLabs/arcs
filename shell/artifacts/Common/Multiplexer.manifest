@@ -7,7 +7,7 @@
 // http://polymer.github.io/PATENTS.txt
 
 shape HostedParticleShape
-  HostedParticleShape(in ~a)
+  in ~a *
   consume
 
 // TODO: This particle should use generic slot name.
@@ -19,7 +19,8 @@ particle Multiplexer in 'source/Multiplexer.js'
 
 // Same as Multiplexer above, but with an additional connection.
 shape HostedParticleShape2
-  HostedParticleShape2(in ~a, in [~a])
+  in ~a *
+  in [~a] *
   consume
 
 particle Multiplexer2 in 'source/Multiplexer.js'

@@ -122,7 +122,7 @@ describe('TypeChecker', () => {
   it('correctly applies then resolves a one-sided Entity constraint', async () => {
     let manifest = await Manifest.parse(`
       shape Shape
-        Shape(in ~a item)
+        in ~a item
 
       particle Concrete
         in Product {} item

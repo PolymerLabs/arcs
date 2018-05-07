@@ -22,7 +22,8 @@ particle TwoInputTestParticle in 'two-input-test-particle.js'
   out Far far
 
 shape TestShape
-  AnyThing(in Foo foo, out Bar bar)
+  in Foo foo
+  out Bar bar
 
 particle OuterParticle in 'outer-particle.js'
   host TestShape particle

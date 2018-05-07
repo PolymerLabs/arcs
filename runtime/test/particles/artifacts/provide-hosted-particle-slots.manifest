@@ -19,12 +19,12 @@ particle ShowFooAnnotation in 'source/ShowFooAnnotation.js'
   consume annotation
 
 shape FooShape
-  FooShape(in Foo)
+  in Foo *
   consume
   provide
 
 shape FooAnnotationShape
-  FooShape(in Foo)
+  in Foo *
   consume
 
 particle Fooxer in '../../../../shell/artifacts/Common/source/Multiplexer.js'

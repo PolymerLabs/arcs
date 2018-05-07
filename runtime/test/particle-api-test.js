@@ -87,7 +87,9 @@ async function setupProxySyncTests() {
         Text value
 
       particle P in 'a.js'
-        P(in Data foo, inout [Data] bar, out [Result] res)
+        in Data foo
+        inout [Data] bar
+        out [Result] res
 
       recipe
         use 'test:0' as view0

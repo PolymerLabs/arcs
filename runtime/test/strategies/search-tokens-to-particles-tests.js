@@ -41,12 +41,9 @@ describe('SearchTokensToParticles', function() {
 
   it('recipes by verb strategy', async () => {
     let manifest = (await Manifest.parse(`
-      particle SimpleJumper in 'A.js'
-        jump()
+      particle SimpleJumper #jump in 'A.js'
       particle FlightPreparation in 'AA.js'
-        FlightPreparation()
       particle GalaxyFlyer in 'AA.js'
-        GalaxyFlyer()
       recipe fly
         FlightPreparation
         GalaxyFlyer

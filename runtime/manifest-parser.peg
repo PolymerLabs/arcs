@@ -217,7 +217,7 @@ ShapeArgument
   }
   
 ShapeArgument2
-  = direction:(ParticleArgumentDirection)? whiteSpace? type:(ParticleArgumentType)? whiteSpace? name:(lowerIdent)
+  = direction:(ParticleArgumentDirection)? whiteSpace? type:(ParticleArgumentType)? whiteSpace? name:(lowerIdent / '*') ! {return name == 'consume' || name == 'provide'}
   {
     if (direction == 'host') {
       error(`Shape cannot have arguments with a 'host' direction.`);

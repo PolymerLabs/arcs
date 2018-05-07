@@ -557,13 +557,20 @@ ${e.message}
   }
   // TODO: Move this to a generic pass over the AST and merge with resolveReference.
   static _processShape(manifest, shapeItem) {
-    let handles = shapeItem.interface ? shapeItem.interface.args : shapeItem.args;
+    if (shapeItem.interface) {
+      let warning = new ManifestError(shapeItem.location, `Shape uses deprecated argument body`);
+      warning.key = 'hasShapeArgument';
+      manifest._warnings.push(warning);
+    }
+    let inHandles = shapeItem.interface ? shapeItem.interface.args : shapeItem.args;
+    let handles = [];
 
-    for (let arg of handles) {
-      if (arg.type) {
-        // TODO: we should copy rather than mutate the AST like this
-        arg.type = arg.type.model;
-      }
+    for (let arg of inHandles) {
+      let handle = {};
+      handle.name = arg.name == '*' ? undefined : arg.name;
+      handle.type = arg.type ? arg.type.model : undefined;
+      handle.direction = arg.direction;
+      handles.push(handle);
     }
     let slots = [];
     for (let slotItem of shapeItem.slots) {

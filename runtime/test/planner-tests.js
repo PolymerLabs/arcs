@@ -466,7 +466,7 @@ describe('Type variable resolution', function() {
   it('transformation particles type variable resolution', async () => {
     let particleSpecs = `
 shape HostedShape
-  HostedShape(in ~a)
+  in ~a *
 particle P1
   in Thing1 input
 particle Muxer in 'Muxer.js'
