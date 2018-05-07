@@ -471,8 +471,11 @@ describe('Arcs demos', function() {
     // Rather than trying to mock this out let's just grab the first
     // restaurant.
     const restaurantSelectors = particleSelectors('root', ['#webtest-title']);
+    // wait for the page to load (using some fairly vague indications)
     waitForVisible(restaurantSelectors);
     waitForSuggestion('Make a reservation');
+
+    // click on the first restaurant in the list
     let restaurantNodes = pierceShadows(restaurantSelectors);
     console.log(`click: restaurantSelectors`);
     browser.elementIdClick(restaurantNodes.value[0].ELEMENT);
@@ -496,10 +499,28 @@ describe('Arcs demos', function() {
   it('can buy gifts', /** @this Context */ function() {
     initTestWithNewArc(this.test.fullTitle());
 
+    // open some tabs with test data for the extension
+    const artifacts = browser.getUrl().split('?')[0].split('shell')[0] +
+        'shell/test/artifacts';
+    browser.newWindow(`${artifacts}/mustang.html`);
+    wait(1000);
+    browser.saveViewportScreenshot('mustang');
+    browser.newWindow(`${artifacts}/minecraft.html`);
+    wait(1000);
+    browser.saveViewportScreenshot('minecraft');
+    browser.switchTab();
+    wait(2000);   // small pause to give the other pages a change to load
+    browser.saveViewportScreenshot('start main tab');
+    browser.refresh();
+    loadSeleniumUtils();
+
     allSuggestions();
+    browser.saveViewportScreenshot('post refresh main tab');
+
+
 
     acceptSuggestion(
-        `Show products from your browsing context (Minecraft Book plus 2 other items) and choose from Products recommended based on products from your browsing context and Claire's wishlist (Book: How to Draw plus 2 other items)`);
+        `Show Products from your browsing context (1965 Ford Mustang, Minecraft (XBOX 360)) and choose from products recommended based on Products from your browsing context and Claire's wishlist (Book: How to Draw plus 2 other items).`);
 
     browser.waitForVisible('div[slotid="action"]');
     browser.waitForVisible('div[slotid="annotation"]');
@@ -509,9 +530,8 @@ describe('Arcs demos', function() {
     // (2) verify 'action' slot is not visible after all products were moved.
 
     acceptSuggestion(
-        'Buy gifts for Claire\'s Birthday on 2017-08-04, Estimate arrival date for products');
-    acceptSuggestion(
-        'Check manufacturer information for products from your browsing context');
+        `Buy gifts for Claire\'s Birthday on 2017-08-04, Estimate arrival date for products`);
+    acceptSuggestion('Check manufacturer information for products');
     acceptSuggestion('Find alternate shipping');
     acceptSuggestion(
         `Recommendations based on Claire\'s wishlist`
@@ -520,7 +540,7 @@ describe('Arcs demos', function() {
 
     // Verify each product has non empty annotation text.
     let annotations = browser.getText('div[slotid="annotation"]');
-    assert.equal(6, annotations.length);
+    assert.ok(annotations.length > 0);
     assert.ok(annotations.length > 0 && annotations.every(a => a.length > 0));
   });
 });

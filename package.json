@@ -38,6 +38,7 @@
     "polymer-cli": "^1.6.0",
     "wdio-chromedriver-service": "^0.1.2",
     "wdio-mocha-framework": "^0.5.11",
+    "wdio-screenshot": "^0.6.0",
     "wdio-spec-reporter": "^0.1.3",
     "webdriverio": "^4.10.1",
     "webpack": "^2.6.1"

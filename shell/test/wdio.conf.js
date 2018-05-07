@@ -1,4 +1,3 @@
-
 /*
  * This file controls the configuration for the wdio/selenium tests.
  *
@@ -7,10 +6,23 @@
  * activate a sane default set of them documented in the top-level README.md.
  */
 
+let path = require('path');
+let fs = require('fs');
+
 let process = require('process');
 let debug = process.env.npm_config_wdio_debug || process.argv.includes('--wdio-debug=true');
 
 const HEADLESS = '--headless';
+
+let extensionPath = path.resolve('extension');
+if (!fs.existsSync(extensionPath)) {
+  throw new Error(`extension not found at path ${extensionPath}`);
+}
+
+let devtoolsPath = path.resolve('devtools');
+if (!fs.existsSync(devtoolsPath)) {
+  throw new Error(`dev tools extension not found at path ${devtoolsPath}`);
+}
 
 exports.config = {
   // This port & path are hardcoded to match chromedriver. See
@@ -63,6 +75,7 @@ exports.config = {
       browserName: 'chrome',
       chromeOptions: {
         args: [
+          `--load-extension=${extensionPath},${devtoolsPath}`,
           // debug hint: comment this out to see the system running
           HEADLESS
         ]
@@ -132,6 +145,12 @@ exports.config = {
   //     webdriverrtc: {},
   //     browserevent: {}
   // },
+
+  plugins: {
+    'wdio-screenshot': {}
+  },
+
+
   //
   // Test runner services
   // Services take over a specific job you don't want to take care of. They enhance
