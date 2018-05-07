@@ -557,13 +557,14 @@ ${e.message}
   }
   // TODO: Move this to a generic pass over the AST and merge with resolveReference.
   static _processShape(manifest, shapeItem) {
-    for (let arg of shapeItem.interface.args) {
+    let handles = shapeItem.interface ? shapeItem.interface.args : shapeItem.args;
+
+    for (let arg of handles) {
       if (arg.type) {
         // TODO: we should copy rather than mutate the AST like this
         arg.type = arg.type.model;
       }
     }
-    let handles = shapeItem.interface.args;
     let slots = [];
     for (let slotItem of shapeItem.slots) {
       slots.push({

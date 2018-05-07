@@ -150,17 +150,30 @@ Import
 Shape
   = 'shape' whiteSpace name:TopLevelIdent typeVars:(whiteSpace? '<' whiteSpace? VariableTypeList whiteSpace? '>')? eolWhiteSpace items:(Indent (SameIndent ShapeItem)*)? eolWhiteSpace?
   {
-    return {
-      kind: 'shape',
-      location: location(),
-      name,
-      interface: optional(items, extractIndented, []).find(item => item.kind == 'shape-interface'),
-      slots: optional(items, extractIndented, []).filter(item => item.kind == 'shape-slot'),
+    var iface = optional(items, extractIndented, []).find(item => item.kind == 'shape-interface');
+    if (iface) {
+      return {
+        kind: 'shape',
+        location: location(),
+        name,
+        interface: iface,
+        slots: optional(items, extractIndented, []).filter(item => item.kind == 'shape-slot'),
+      };
+    } else {
+      return {
+        kind: 'shape',
+        location: location(),
+        name,
+        args: optional(items, extractIndented, []).filter(item => item.kind == 'shape-argument'),
+        slots: optional(items, extractIndented, []).filter(item => item.kind == 'shape-slot'),
+      };
+
     }
   }
 
 ShapeItem
   = ShapeInterface
+  / ShapeArgumentItem
   / ShapeSlot
 
 
@@ -175,6 +188,12 @@ ShapeInterface
     };
   }
 
+ShapeArgumentItem
+  = arg:ShapeArgument2 eolWhiteSpace
+  {
+    return arg;
+  }
+
 ShapeArgumentList
   = head:ShapeArgument tail:(',' whiteSpace ShapeArgument)*
   {
@@ -183,6 +202,22 @@ ShapeArgumentList
 
 ShapeArgument
   = direction:(ParticleArgumentDirection)? whiteSpace? type:(ParticleArgumentType)? whiteSpace? name:(lowerIdent)?
+  {
+    if (direction == 'host') {
+      error(`Shape cannot have arguments with a 'host' direction.`);
+    }
+
+    return {
+      kind: 'shape-argument',
+      location: location(),
+      direction,
+      type,
+      name,
+    };
+  }
+  
+ShapeArgument2
+  = direction:(ParticleArgumentDirection)? whiteSpace? type:(ParticleArgumentType)? whiteSpace? name:(lowerIdent)
   {
     if (direction == 'host') {
       error(`Shape cannot have arguments with a 'host' direction.`);
