@@ -11,14 +11,14 @@
  'use strict';
 
 import {assert} from './chai-web.js';
-import handle from '../handle.js';
+import {handleFor} from '../handle.js';
 import Scheduler from '../scheduler.js';
 
 const scheduler = new Scheduler();
 
 function assertSingletonWillChangeTo(view, entityClass, expectation) {
   return new Promise((resolve, reject) => {
-    let variable = handle.handleFor(view);
+    let variable = handleFor(view);
     variable.entityClass = entityClass;
     variable.on('change', () => variable.get().then(result => {
       if (result == undefined)
@@ -30,7 +30,7 @@ function assertSingletonWillChangeTo(view, entityClass, expectation) {
 }
 
 function assertSingletonIs(view, entityClass, expectation) {
-  let variable = handle.handleFor(view);
+  let variable = handleFor(view);
   variable.entityClass = entityClass;
   return variable.get().then(result => {
     assert(result !== undefined);
@@ -40,7 +40,7 @@ function assertSingletonIs(view, entityClass, expectation) {
 
 function assertViewWillChangeTo(setView, entityClass, field, expectations) {
   return new Promise((resolve, reject) => {
-    let view = handle.handleFor(setView, true);
+    let view = handleFor(setView, true);
     view.entityClass = entityClass;
     view.on('change', () => view.toList().then(result => {
       if (result == undefined)
@@ -57,7 +57,7 @@ function assertViewWillChangeTo(setView, entityClass, field, expectations) {
 
 function assertViewHas(view, entityClass, field, expectations) {
   return new Promise((resolve, reject) => {
-    view = handle.handleFor(view, true);
+    view = handleFor(view, true);
     view.entityClass = entityClass;
     view.toList().then(result => {
       assert.deepEqual(result.map(a => a[field]), expectations);

@@ -12,7 +12,7 @@ import {assert} from './chai-web.js';
 import Arc from '../arc.js';
 import Description from '../description.js';
 import DescriptionDomFormatter from '../description-dom-formatter.js';
-import handle from '../handle.js';
+import {handleFor} from '../handle.js';
 import Loader from '../loader.js';
 import Manifest from '../manifest.js';
 import Relevance from '../relevance.js';
@@ -663,7 +663,7 @@ recipe
       description: new Description(arc),
       fooView,
       Description: descriptionView.type.primitiveType().entitySchema.entityClass(),
-      descriptionHandle: handle.handleFor(descriptionView)
+      descriptionHandle: handleFor(descriptionView)
     };
   }
 

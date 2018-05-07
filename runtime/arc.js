@@ -13,7 +13,7 @@ import runtime from './runtime.js';
 import assert from '../platform/assert-web.js';
 import Type from './type.js';
 import Relation from './relation.js';
-import handle from './handle.js';
+import {handleFor} from './handle.js';
 import OuterPec from './outer-PEC.js';
 import Recipe from './recipe/recipe.js';
 import Manifest from './manifest.js';
@@ -541,7 +541,7 @@ ${this.activeRecipe.toString()}`;
       entity.identify(this.generateID());
     }
     for (let [entity, handle] of entityMap.entries()) {
-      new handle.handleFor(handle).store(entity);
+      new handleFor(handle).store(entity);
     }
   }
 

@@ -11,7 +11,7 @@
 import Manifest from '../manifest.js';
 import {assert} from './chai-web.js';
 import * as util from './test-util.js';
-import handle from '../handle.js';
+import {handleFor} from '../handle.js';
 import Arc from '../arc.js';
 import MessageChannel from '../message-channel.js';
 import InnerPec from '../inner-PEC.js';
@@ -52,7 +52,7 @@ describe('particle-shape-loading-with-slots', function() {
     await arc.instantiate(recipe);
 
     let fooType = manifest.findTypeByName('Foo');
-    let inView = handle.handleFor(arc.findHandlesByType(fooType.setViewOf())[0]);
+    let inView = handleFor(arc.findHandlesByType(fooType.setViewOf())[0]);
     inView.store(new (fooType.entitySchema.entityClass())({value: 'foo1'}));
     inView.store(new (fooType.entitySchema.entityClass())({value: 'foo2'}));
 
