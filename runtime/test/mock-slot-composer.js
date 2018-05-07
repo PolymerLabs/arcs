@@ -10,8 +10,8 @@
 'use strict';
 
 import {assert} from './chai-web.js';
-import Slot from '../slot.js';
-import SlotComposer from '../slot-composer.js';
+import {Slot} from '../slot.js';
+import {SlotComposer} from '../slot-composer.js';
 
 let logging = false;
 let log = (!logging || global.logging === false) ? () => {} : console.log.bind(console, '---------- MockSlotComposer::');

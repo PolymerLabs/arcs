@@ -9,8 +9,8 @@
  */
 
 import devtoolsChannelProvider from './devtools-channel-provider.js';
-import Planner from '../planner.js';
-import Manifest from '../manifest.js';
+import {Planner} from '../planner.js';
+import {Manifest} from '../manifest.js';
 
 export class ArcPlannerInvoker {
   constructor(arc) {

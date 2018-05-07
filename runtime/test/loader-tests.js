@@ -8,9 +8,9 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import Loader from '../loader.js';
+import {Loader} from '../loader.js';
 import {assert} from './chai-web.js';
-import Manifest from '../manifest.js';
+import {Manifest} from '../manifest.js';
 
 let loader = new Loader();
 

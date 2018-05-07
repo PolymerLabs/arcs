@@ -389,9 +389,8 @@ addType('Tuple', 'fields');
 
 export default Type;
 
-import Shape from './shape.js';
-import Schema from './schema.js';
-import TypeVariable from './type-variable.js';
-import TupleFields from './tuple-fields.js';
+import {Shape} from './shape.js';
+import {Schema} from './schema.js';
+import {TypeVariable} from './type-variable.js';
+import {TupleFields} from './tuple-fields.js';
 import TypeChecker from './recipe/type-checker.js';
-

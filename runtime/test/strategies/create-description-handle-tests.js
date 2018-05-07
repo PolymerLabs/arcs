@@ -9,7 +9,7 @@
  */
 'use strict';
 
-import Manifest from '../../manifest.js';
+import {Manifest} from '../../manifest.js';
 import CreateDescriptionHandle from '../../strategies/create-description-handle.js';
 import {assert} from '../chai-web.js';
 

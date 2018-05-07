@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 import {assert} from './chai-web.js';
-import Manifest from '../manifest.js';
+import {Manifest} from '../manifest.js';
 import ConvertConstraintsToConnections from '../strategies/convert-constraints-to-connections.js';
 import InitPopulation from '../strategies/init-population.js';
 import MapSlots from '../strategies/map-slots.js';

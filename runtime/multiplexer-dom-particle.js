@@ -9,10 +9,10 @@
  */
 'use strict';
 
-import ParticleSpec from './particle-spec.js';
-import TransformationDomParticle from './transformation-dom-particle.js';
+import {ParticleSpec} from './particle-spec.js';
+import {TransformationDomParticle} from './transformation-dom-particle.js';
 
-export default class MultiplexerDomParticle extends TransformationDomParticle {
+class MultiplexerDomParticle extends TransformationDomParticle {
   constructor() {
     super();
     this._itemSubIdByHostedSlotId = new Map();
@@ -182,3 +182,5 @@ export default class MultiplexerDomParticle extends TransformationDomParticle {
   constructInnerRecipe(hostedParticle, item, itemView, slot, other) {
   }
 }
+
+export {MultiplexerDomParticle};

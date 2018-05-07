@@ -9,7 +9,7 @@
  */
 'use strict';
 
-import Manifest from '../../manifest.js';
+import {Manifest} from '../../manifest.js';
 import StrategyTestHelper from './strategy-test-helper.js';
 import GroupHandleConnections from '../../strategies/group-handle-connections.js';
 import SearchTokensToParticles from '../../strategies/search-tokens-to-particles.js';

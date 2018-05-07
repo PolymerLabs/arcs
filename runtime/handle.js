@@ -8,12 +8,10 @@
  */
 'use strict';
 
-import Entity from './entity.js';
-import Relation from './relation.js';
+import {Entity} from './entity.js';
 import Symbols from './symbols.js';
-let identifier = Symbols.identifier;
 import assert from '../platform/assert-web.js';
-import ParticleSpec from './particle-spec.js';
+import {ParticleSpec} from './particle-spec.js';
 
 // TODO: This won't be needed once runtime is transferred between contexts.
 function cloneData(data) {
@@ -86,7 +84,7 @@ class Handle {
     assert(entity, 'can\'t serialize a null entity');
     if (!entity.isIdentified())
       entity.createIdentity(this.generateIDComponents());
-    let id = entity[identifier];
+    let id = entity[Symbols.identifier];
     let rawData = entity.dataClone();
     return {
       id,

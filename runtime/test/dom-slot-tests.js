@@ -10,10 +10,10 @@
 'use strict';
 
 import {assert} from './chai-web.js';
-import DomSlot from '../dom-slot.js';
+import {DomSlot} from '../dom-slot.js';
 import {DomContext} from '../dom-context.js';
 import * as util from './test-util.js';
-import Loader from '../loader.js';
+import {Loader} from '../loader.js';
 
 let loader = new Loader();
 

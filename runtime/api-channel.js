@@ -10,7 +10,7 @@
 'use strict';
 
 import assert from '../platform/assert-web.js';
-import ParticleSpec from './particle-spec.js';
+import {ParticleSpec} from './particle-spec.js';
 import Type from './type.js';
 import OuterPortAttachment from './debug/outer-port-attachment.js';
 
@@ -347,5 +347,4 @@ class PECInnerPort extends APIPort {
   }
 }
 
-export {PECOuterPort as PECOuterPort, PECInnerPort as PECInnerPort};
-export default {PECOuterPort, PECInnerPort};
+export {PECOuterPort, PECInnerPort};

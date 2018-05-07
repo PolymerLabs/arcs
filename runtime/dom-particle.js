@@ -182,4 +182,4 @@ class DomParticle extends XenStateMixin(Particle) {
   }
 }
 
-export default DomParticle;
+export {DomParticle};

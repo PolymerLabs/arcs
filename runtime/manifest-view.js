@@ -50,4 +50,4 @@ class ManifestView {
   }
 }
 
-export default ManifestView;
+export {ManifestView};

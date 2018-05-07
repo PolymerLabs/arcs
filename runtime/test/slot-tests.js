@@ -10,7 +10,7 @@
 'use strict';
 
 import {assert} from './chai-web.js';
-import Slot from '../slot.js';
+import {Slot} from '../slot.js';
 
 describe('slot', function() {
   it('setting context', async () => {

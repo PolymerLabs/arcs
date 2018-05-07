@@ -11,7 +11,7 @@
 
 import assert from '../platform/assert-web.js';
 
-export default class Slot {
+class Slot {
   constructor(consumeConn, arc) {
     assert(consumeConn);
     assert(arc);
@@ -120,3 +120,5 @@ export default class Slot {
   dispose() {}
   static findRootSlots(context) {}
 }
+
+export {Slot};

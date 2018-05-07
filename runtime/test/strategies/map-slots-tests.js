@@ -9,8 +9,8 @@
  */
 'use strict';
 
-import Arc from '../../arc.js';
-import Manifest from '../../manifest.js';
+import {Arc} from '../../arc.js';
+import {Manifest} from '../../manifest.js';
 import StrategyTestHelper from './strategy-test-helper.js';
 import MapSlots from '../../strategies/map-slots.js';
 import ResolveRecipe from '../../strategies/resolve-recipe.js';

@@ -10,7 +10,7 @@
 
 import Type from './type.js';
 import TypeChecker from './recipe/type-checker.js';
-import Shape from './shape.js';
+import {Shape} from './shape.js';
 import assert from '../platform/assert-web.js';
 
 class ConnectionSpec {
@@ -251,4 +251,4 @@ class ParticleSpec {
   }
 }
 
-export default ParticleSpec;
+export {ParticleSpec};

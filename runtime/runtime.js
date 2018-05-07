@@ -10,10 +10,10 @@
 
 import assert from '../platform/assert-web.js';
 import Symbols from './symbols.js';
-import Entity from './entity.js';
-import Schema from './schema.js';
+import {Entity} from './entity.js';
+import {Schema} from './schema.js';
 import Type from './type.js';
-import Relation from './relation.js';
+import {Relation} from './relation.js';
 
 function testEntityClass(type) {
   return new Schema({

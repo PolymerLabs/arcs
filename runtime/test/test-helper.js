@@ -10,13 +10,13 @@
 'use strict';
 
 import {assert} from './chai-web.js';
-import Arc from '../arc.js';
-import Manifest from '../manifest.js';
-import Loader from '../loader.js';
-import Planner from '../planner.js';
-import Random from '../random.js';
+import {Arc} from '../arc.js';
+import {Manifest} from '../manifest.js';
+import {Loader} from '../loader.js';
+import {Planner} from '../planner.js';
+import {Random} from '../random.js';
 import MockSlotComposer from './mock-slot-composer.js';
-import MessageChannel from '../message-channel.js';
+import {MessageChannel} from '../message-channel.js';
 import InnerPec from '../inner-PEC.js';
 
 // Makes tests deterministic, which aids debugging.

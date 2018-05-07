@@ -10,7 +10,7 @@
 'use strict';
 
 import assert from '../platform/assert-web.js';
-import Slot from './slot.js';
+import {Slot} from './slot.js';
 import {DomContext, SetDomContext} from './dom-context.js';
 
 const templates = new Map();
@@ -144,4 +144,4 @@ class DomSlot extends Slot {
   }
 }
 
-export default DomSlot;
+export {DomSlot};

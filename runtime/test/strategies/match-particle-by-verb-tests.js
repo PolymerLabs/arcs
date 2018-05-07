@@ -9,8 +9,8 @@
  */
 'use strict';
 
-import Manifest from '../../manifest.js';
-import Planner from '../../planner.js';
+import {Manifest} from '../../manifest.js';
+import {Planner} from '../../planner.js';
 import StrategyTestHelper from './strategy-test-helper.js';
 import MatchParticleByVerb from '../../strategies/match-particle-by-verb.js';
 import {assert} from '../chai-web.js';

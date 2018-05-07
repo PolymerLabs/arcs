@@ -9,9 +9,9 @@
  */
 
 import {assert} from './chai-web.js';
-import Loader from '../loader.js';
-import Manifest from '../manifest.js';
-import Schema from '../schema.js';
+import {Loader} from '../loader.js';
+import {Manifest} from '../manifest.js';
+import {Schema} from '../schema.js';
 
 describe('schema', function() {
   let loader = new class extends Loader {

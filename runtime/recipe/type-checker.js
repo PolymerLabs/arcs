@@ -6,7 +6,7 @@
 // http://polymer.github.io/PATENTS.txt
 
 import Type from '../type.js';
-import TypeVariable from '../type-variable.js';
+import {TypeVariable} from '../type-variable.js';
 import assert from '../../platform/assert-web.js';
 
 class TypeChecker {

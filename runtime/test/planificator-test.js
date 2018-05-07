@@ -9,8 +9,8 @@
  */
 
 import {assert} from './chai-web.js';
-import Arc from '../arc.js';
-import Planificator from '../planificator.js';
+import {Arc} from '../arc.js';
+import {Planificator} from '../planificator.js';
 import Recipe from '../recipe/recipe.js';
 
 class TestPlanificator extends Planificator {

@@ -9,14 +9,13 @@
 */
 
 import {assert} from './chai-web.js';
-import Arc from '../arc.js';
-import Description from '../description.js';
-import DescriptionDomFormatter from '../description-dom-formatter.js';
+import {Arc} from '../arc.js';
+import {Description} from '../description.js';
+import {DescriptionDomFormatter} from '../description-dom-formatter.js';
 import {handleFor} from '../handle.js';
-import Loader from '../loader.js';
-import Manifest from '../manifest.js';
-import Relevance from '../relevance.js';
-import SlotComposer from '../slot-composer.js';
+import {Manifest} from '../manifest.js';
+import {Relevance} from '../relevance.js';
+import {SlotComposer} from '../slot-composer.js';
 import Type from '../type.js';
 
 function createTestArc() {

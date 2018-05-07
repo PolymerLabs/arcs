@@ -8,18 +8,16 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import Manifest from '../manifest.js';
+import {Manifest} from '../manifest.js';
 import {assert} from './chai-web.js';
 import * as util from './test-util.js';
 import {handleFor} from '../handle.js';
-import Arc from '../arc.js';
-import MessageChannel from '../message-channel.js';
+import {Arc} from '../arc.js';
+import {MessageChannel} from '../message-channel.js';
 import InnerPec from '../inner-PEC.js';
-import Loader from '../loader.js';
+import {Loader} from '../loader.js';
 import Recipe from '../recipe/recipe.js';
 import Type from '../type.js';
-import Shape from '../shape.js';
-import ParticleSpec from '../particle-spec.js';
 import MockSlotComposer from './mock-slot-composer.js';
 
 describe('particle-shape-loading-with-slots', function() {

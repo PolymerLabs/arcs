@@ -10,10 +10,8 @@
 'use strict';
 
 import runtime from './runtime.js';
-import ParticleSpec from './particle-spec.js';
 import tracing from '../tracelib/trace.js';
 import assert from '../platform/assert-web.js';
-import Schema from './schema.js';
 
 /** @class Particle
  * A basic particle. For particles that provide UI, you may like to

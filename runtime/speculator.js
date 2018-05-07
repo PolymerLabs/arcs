@@ -11,7 +11,7 @@
 
 import assert from '../platform/assert-web.js';
 import tracing from '../tracelib/trace.js';
-import Relevance from './relevance.js';
+import {Relevance} from './relevance.js';
 
 class Speculator {
   constructor() {
@@ -48,4 +48,4 @@ class Speculator {
   }
 }
 
-export default Speculator;
+export {Speculator};

@@ -9,16 +9,16 @@
  */
  'use strict';
 
-import Arc from '../arc.js';
-import Loader from '../loader.js';
-import Planner from '../planner.js';
+import {Arc} from '../arc.js';
+import {Loader} from '../loader.js';
+import {Planner} from '../planner.js';
 import {assert} from './chai-web.js';
-import Manifest from '../manifest.js';
+import {Manifest} from '../manifest.js';
 import Recipe from '../recipe/recipe.js';
 import ConvertConstraintsToConnections from '../strategies/convert-constraints-to-connections.js';
 import ResolveRecipe from '../strategies/resolve-recipe.js';
 import MatchRecipeByVerb from '../strategies/match-recipe-by-verb.js';
-import MessageChannel from '../message-channel.js';
+import {MessageChannel} from '../message-channel.js';
 import InnerPec from '../inner-PEC.js';
 import Particle from '../particle.js';
 import StrategyTestHelper from './strategies/strategy-test-helper.js';
