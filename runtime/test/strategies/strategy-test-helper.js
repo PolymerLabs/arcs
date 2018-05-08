@@ -12,7 +12,7 @@
 import {Arc} from '../../arc.js';
 import {assert} from '../chai-web.js';
 
-export default class StrategyTestHelper {
+export class StrategyTestHelper {
   static createTestArc(id, context, affordance) {
     return new Arc({
       id,

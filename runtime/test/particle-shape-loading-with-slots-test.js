@@ -16,9 +16,9 @@ import {Arc} from '../arc.js';
 import {MessageChannel} from '../message-channel.js';
 import {InnerPEC} from '../inner-PEC.js';
 import {Loader} from '../loader.js';
-import Recipe from '../recipe/recipe.js';
+import {Recipe} from '../recipe/recipe.js';
 import {Type} from '../type.js';
-import MockSlotComposer from './mock-slot-composer.js';
+import {MockSlotComposer} from './mock-slot-composer.js';
 
 describe('particle-shape-loading-with-slots', function() {
   async function instantiateRecipe() {

@@ -7,10 +7,10 @@
 
 import assert from '../../platform/assert-web.js';
 import {Strategy} from '../../strategizer/strategizer.js';
-import Recipe from '../recipe/recipe.js';
-import RecipeWalker from '../recipe/walker.js';
+import {Recipe} from '../recipe/recipe.js';
+import {Walker} from '../recipe/walker.js';
 
-export default class SearchTokensToParticles extends Strategy {
+export class SearchTokensToParticles extends Strategy {
   constructor(arc) {
     super();
     // TODO: Recipes. Handles?
@@ -33,7 +33,7 @@ export default class SearchTokensToParticles extends Strategy {
 
     let findParticles = token => this._particleByToken[token] || [];
     let findRecipes = token => this._recipeByToken[token] || [];
-    class Walker extends RecipeWalker {
+    class SearchWalker extends Walker {
       onRecipe(recipe) {
         if (!recipe.search || !recipe.search.unresolvedTokens.length) {
           return;
@@ -81,7 +81,7 @@ export default class SearchTokensToParticles extends Strategy {
         });
       }
     }
-    this._walker = new Walker(RecipeWalker.Permuted);
+    this._walker = new SearchWalker(Walker.Permuted);
   }
 
   get walker() {

@@ -6,9 +6,9 @@
 // http://polymer.github.io/PATENTS.txt
 
 import assert from '../../platform/assert-web.js';
-import util from './util.js';
+import * as util from './util.js';
 
-class SlotConnection {
+export class SlotConnection {
   constructor(name, particle) {
     assert(particle);
     assert(particle.recipe);
@@ -183,5 +183,3 @@ class SlotConnection {
     return result.join('\n');
   }
 }
-
-export default SlotConnection;

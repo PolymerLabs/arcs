@@ -6,10 +6,10 @@
 // http://polymer.github.io/PATENTS.txt
 
 import {Strategy} from '../../strategizer/strategizer.js';
-import Recipe from '../recipe/recipe.js';
-import RecipeWalker from '../recipe/walker.js';
+import {Recipe} from '../recipe/recipe.js';
+import {Walker} from '../recipe/walker.js';
 
-export default class MatchParticleByVerb extends Strategy {
+export class MatchParticleByVerb extends Strategy {
   constructor(arc) {
     super();
     this._arc = arc;
@@ -17,7 +17,7 @@ export default class MatchParticleByVerb extends Strategy {
 
   async generate(inputParams) {
     let arc = this._arc;
-    return Recipe.over(this.getResults(inputParams), new class extends RecipeWalker {
+    return Recipe.over(this.getResults(inputParams), new class extends Walker {
       onParticle(recipe, particle) {
         if (particle.name) {
           // Particle already has explicit name.
@@ -38,6 +38,6 @@ export default class MatchParticleByVerb extends Strategy {
           };
         });
       }
-    }(RecipeWalker.Permuted), this);
+    }(Walker.Permuted), this);
   }
 }

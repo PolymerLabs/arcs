@@ -8,9 +8,9 @@
 
 import assert from '../../platform/assert-web.js';
 import tracing from '../../tracelib/trace.js';
-import util from '../recipe/util.js';
+import * as util from '../recipe/util.js';
 
-export default class StorageProviderBase {
+export class StorageProviderBase {
   constructor(type, arcId, name, id, key) {
     assert(id, 'id must be provided when constructing StorageProviders');
     assert(!type.hasUnresolvedVariable, 'Storage types must be concrete');

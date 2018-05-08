@@ -15,7 +15,7 @@ import {Manifest} from '../manifest.js';
 import {Loader} from '../loader.js';
 import {Planner} from '../planner.js';
 import {Random} from '../random.js';
-import MockSlotComposer from './mock-slot-composer.js';
+import {MockSlotComposer} from './mock-slot-composer.js';
 import {MessageChannel} from '../message-channel.js';
 import {InnerPEC} from '../inner-PEC.js';
 
@@ -29,7 +29,7 @@ Random.seedForTests();
  *   await helper.acceptSuggestion({particles: ['MyParticle1', 'MyParticle2']});
  *   await helper.verifyData('MyParticle1', 'myHandle1', async (handle) => { ... });
  */
-export default class TestHelper {
+export class TestHelper {
   /**
    * Initializes a single arc using a mock slot composer.
    * |options| may contain:

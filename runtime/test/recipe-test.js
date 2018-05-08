@@ -11,7 +11,7 @@
 import {assert} from './chai-web.js';
 import {Loader} from '../../runtime/loader.js';
 import {Manifest} from '../manifest.js';
-import Recipe from '../recipe/recipe.js';
+import {Recipe} from '../recipe/recipe.js';
 
 describe('recipe', function() {
   it('normalize errors', async () => {

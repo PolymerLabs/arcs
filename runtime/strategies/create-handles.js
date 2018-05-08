@@ -6,14 +6,14 @@
 // http://polymer.github.io/PATENTS.txt
 
 import {Strategy} from '../../strategizer/strategizer.js';
-import Recipe from '../recipe/recipe.js';
-import RecipeUtil from '../recipe/recipe-util.js';
-import RecipeWalker from '../recipe/walker.js';
+import {Recipe} from '../recipe/recipe.js';
+import {RecipeUtil} from '../recipe/recipe-util.js';
+import {Walker} from '../recipe/walker.js';
 
-export default class CreateHandles extends Strategy {
+export class CreateHandles extends Strategy {
   // TODO: move generation to use an async generator.
   async generate(inputParams) {
-    return Recipe.over(this.getResults(inputParams), new class extends RecipeWalker {
+    return Recipe.over(this.getResults(inputParams), new class extends Walker {
       onHandle(recipe, handle) {
         let counts = RecipeUtil.directionCounts(handle);
 
@@ -29,6 +29,6 @@ export default class CreateHandles extends Strategy {
           return (recipe, handle) => {handle.fate = 'create'; return 1;};
         }
       }
-    }(RecipeWalker.Permuted), this);
+    }(Walker.Permuted), this);
   }
 }

@@ -10,10 +10,10 @@
 'use strict';
 
 import {Manifest} from '../../manifest.js';
-import StrategyTestHelper from './strategy-test-helper.js';
-import GroupHandleConnections from '../../strategies/group-handle-connections.js';
-import SearchTokensToParticles from '../../strategies/search-tokens-to-particles.js';
-import CombinedStrategy from '../../strategies/combined-strategy.js';
+import {StrategyTestHelper} from './strategy-test-helper.js';
+import {GroupHandleConnections} from '../../strategies/group-handle-connections.js';
+import {SearchTokensToParticles} from '../../strategies/search-tokens-to-particles.js';
+import {CombinedStrategy} from '../../strategies/combined-strategy.js';
 import {assert} from '../chai-web.js';
 
 describe('CombinedStrategy', function() {

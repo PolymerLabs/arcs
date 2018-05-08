@@ -9,7 +9,7 @@
  */
 
 import {Manifest} from '../manifest.js';
-import RecipeUtil from '../recipe/recipe-util.js';
+import {RecipeUtil} from '../recipe/recipe-util.js';
 import {assert} from './chai-web.js';
 
 describe('recipe-util', function() {

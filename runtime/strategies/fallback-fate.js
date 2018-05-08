@@ -8,10 +8,10 @@
 
 import assert from '../../platform/assert-web.js';
 import {Strategy} from '../../strategizer/strategizer.js';
-import Recipe from '../recipe/recipe.js';
-import RecipeWalker from '../recipe/walker.js';
+import {Recipe} from '../recipe/recipe.js';
+import {Walker} from '../recipe/walker.js';
 
-export default class FallbackFate extends Strategy {
+export class FallbackFate extends Strategy {
   getResults(inputParams) {
     assert(inputParams);
     let generated = inputParams.generated.filter(result => !result.result.isResolved());
@@ -20,7 +20,7 @@ export default class FallbackFate extends Strategy {
   }
 
   async generate(inputParams) {
-    return Recipe.over(this.getResults(inputParams), new class extends RecipeWalker {
+    return Recipe.over(this.getResults(inputParams), new class extends Walker {
       onHandle(recipe, handle) {
         // Only apply this strategy only to user query based recipes with resolved tokens.
         if (!recipe.search || (recipe.search.resolvedTokens.length == 0)) {
@@ -43,6 +43,6 @@ export default class FallbackFate extends Strategy {
           return 0;
         };
       }
-    }(RecipeWalker.Permuted), this);
+    }(Walker.Permuted), this);
   }
 }

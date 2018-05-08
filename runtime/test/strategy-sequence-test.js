@@ -9,18 +9,10 @@
  */
 import {assert} from './chai-web.js';
 import {Manifest} from '../manifest.js';
-import ConvertConstraintsToConnections from '../strategies/convert-constraints-to-connections.js';
-import InitPopulation from '../strategies/init-population.js';
-import MapSlots from '../strategies/map-slots.js';
-import ResolveRecipe from '../strategies/resolve-recipe.js';
-import MatchParticleByVerb from '../strategies/match-particle-by-verb.js';
-import MatchRecipeByVerb from '../strategies/match-recipe-by-verb.js';
-import SearchTokensToParticles from '../strategies/search-tokens-to-particles.js';
-import GroupHandleConnections from '../strategies/group-handle-connections.js';
-import CombinedStrategy from '../strategies/combined-strategy.js';
-import CreateDescriptionHandle from '../strategies/create-description-handle.js';
-import FallbackFate from '../strategies/fallback-fate.js';
-import StrategyTestHelper from './strategies/strategy-test-helper.js';
+import {ConvertConstraintsToConnections} from '../strategies/convert-constraints-to-connections.js';
+import {ResolveRecipe} from '../strategies/resolve-recipe.js';
+import {MatchRecipeByVerb} from '../strategies/match-recipe-by-verb.js';
+import {StrategyTestHelper} from './strategies/strategy-test-helper.js';
 
 let {createTestArc, onlyResult, theResults} = StrategyTestHelper;
 

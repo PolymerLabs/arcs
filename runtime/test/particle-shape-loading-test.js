@@ -15,7 +15,7 @@ import {Arc} from '../arc.js';
 import {MessageChannel} from '../message-channel.js';
 import {InnerPEC} from '../inner-PEC.js';
 import {Loader} from '../loader.js';
-import Recipe from '../recipe/recipe.js';
+import {Recipe} from '../recipe/recipe.js';
 import {Type} from '../type.js';
 import {Shape} from '../shape.js';
 import {ParticleSpec} from '../particle-spec.js';

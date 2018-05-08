@@ -6,10 +6,10 @@
 // http://polymer.github.io/PATENTS.txt
 
 import {Strategy} from '../../strategizer/strategizer.js';
-import Recipe from '../recipe/recipe.js';
+import {Recipe} from '../recipe/recipe.js';
 import assert from '../../platform/assert-web.js';
 
-export default class InitSearch extends Strategy {
+export class InitSearch extends Strategy {
   constructor(arc) {
     super();
     // TODO: Figure out where this should really come from.

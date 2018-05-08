@@ -17,7 +17,7 @@ import {Schema} from '../schema.js';
 
 const scheduler = new Scheduler();
 
-function assertSingletonWillChangeTo(view, entityClass, expectation) {
+export function assertSingletonWillChangeTo(view, entityClass, expectation) {
   return new Promise((resolve, reject) => {
     let variable = handleFor(view);
     variable.entityClass = entityClass;
@@ -30,7 +30,7 @@ function assertSingletonWillChangeTo(view, entityClass, expectation) {
   });
 }
 
-function assertSingletonIs(view, entityClass, expectation) {
+export function assertSingletonIs(view, entityClass, expectation) {
   let variable = handleFor(view);
   variable.entityClass = entityClass;
   return variable.get().then(result => {
@@ -39,7 +39,7 @@ function assertSingletonIs(view, entityClass, expectation) {
   });
 }
 
-function assertViewWillChangeTo(setView, entityClass, field, expectations) {
+export function assertViewWillChangeTo(setView, entityClass, field, expectations) {
   return new Promise((resolve, reject) => {
     let view = handleFor(setView, true);
     view.entityClass = entityClass;
@@ -56,7 +56,7 @@ function assertViewWillChangeTo(setView, entityClass, field, expectations) {
   });
 }
 
-function assertViewHas(view, entityClass, field, expectations) {
+export function assertViewHas(view, entityClass, field, expectations) {
   return new Promise((resolve, reject) => {
     view = handleFor(view, true);
     view.entityClass = entityClass;
@@ -67,7 +67,7 @@ function assertViewHas(view, entityClass, field, expectations) {
   });
 }
 
-function assertSingletonEmpty(view) {
+export function assertSingletonEmpty(view) {
   return new Promise((resolve, reject) => {
     let variable = new handle.handleFor(view);
     variable.get().then(result => {
@@ -77,7 +77,7 @@ function assertSingletonEmpty(view) {
   });
 }
 
-function initParticleSpec(name) {
+export function initParticleSpec(name) {
   return {
     spec: {
       name,
@@ -85,7 +85,7 @@ function initParticleSpec(name) {
   };
 }
 
-function testEntityClass(type) {
+export function testEntityClass(type) {
   return new Schema({
     names: [type],
     fields: {
@@ -94,13 +94,3 @@ function testEntityClass(type) {
     },
   }).entityClass();
 }
-
-export {
-  assertSingletonWillChangeTo,
-  assertSingletonIs,
-  assertSingletonEmpty,
-  assertViewWillChangeTo,
-  assertViewHas,
-  initParticleSpec,
-  testEntityClass,
-};
