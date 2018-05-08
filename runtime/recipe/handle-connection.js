@@ -6,10 +6,10 @@
 // http://polymer.github.io/PATENTS.txt
 
 import assert from '../../platform/assert-web.js';
-import util from './util.js';
-import TypeChecker from './type-checker.js';
+import * as util from './util.js';
+import {TypeChecker} from './type-checker.js';
 
-class HandleConnection {
+export class HandleConnection {
   constructor(name, particle) {
     assert(particle);
     assert(particle.recipe);
@@ -202,5 +202,3 @@ class HandleConnection {
     return result.join(' ');
   }
 }
-
-export default HandleConnection;

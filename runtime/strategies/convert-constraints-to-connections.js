@@ -6,18 +6,18 @@
 // http://polymer.github.io/PATENTS.txt
 
 import {Strategy} from '../../strategizer/strategizer.js';
-import Recipe from '../recipe/recipe.js';
-import RecipeWalker from '../recipe/walker.js';
-import RecipeUtil from '../recipe/recipe-util.js';
+import {Recipe} from '../recipe/recipe.js';
+import {Walker} from '../recipe/walker.js';
+import {RecipeUtil} from '../recipe/recipe-util.js';
 
-export default class ConvertConstraintsToConnections extends Strategy {
+export class ConvertConstraintsToConnections extends Strategy {
   constructor(arc) {
     super();
     this.affordance = arc.pec.slotComposer ? arc.pec.slotComposer.affordance : null;
   }
   async generate(inputParams) {
     let affordance = this.affordance;
-    return Recipe.over(this.getResults(inputParams), new class extends RecipeWalker {
+    return Recipe.over(this.getResults(inputParams), new class extends Walker {
       onRecipe(recipe) {
         let particles = new Set();
         let handles = new Set();
@@ -103,6 +103,6 @@ export default class ConvertConstraintsToConnections extends Strategy {
           };
         });
       }
-    }(RecipeWalker.Independent), this);
+    }(Walker.Independent), this);
   }
 }

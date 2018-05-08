@@ -9,7 +9,7 @@ import {Type} from '../type.js';
 import {TypeVariable} from '../type-variable.js';
 import assert from '../../platform/assert-web.js';
 
-class TypeChecker {
+export class TypeChecker {
 
   // resolve a list of handleConnection types against a handle
   // base type. This is the core type resolution mechanism, but should only
@@ -241,5 +241,3 @@ class TypeChecker {
     return false;
   }
 }
-
-export default TypeChecker;

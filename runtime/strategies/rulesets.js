@@ -6,25 +6,23 @@
 // http://polymer.github.io/PATENTS.txt
 
 import {Ruleset} from '../../strategizer/strategizer.js';
-import ConvertConstraintsToConnections from './convert-constraints-to-connections.js';
-import AssignRemoteHandles from './assign-remote-handles.js';
-import CopyRemoteHandles from './copy-remote-handles.js';
-import AssignHandlesByTagAndType from './assign-handles-by-tag-and-type.js';
-import InitPopulation from './init-population.js';
-import MapSlots from './map-slots.js';
-import MatchParticleByVerb from './match-particle-by-verb.js';
-import MatchRecipeByVerb from './match-recipe-by-verb.js';
-import NameUnnamedConnections from './name-unnamed-connections.js';
-import AddUseHandles from './add-use-handles.js';
-import CreateDescriptionHandle from './create-description-handle.js';
-import InitSearch from './init-search.js';
-import SearchTokensToParticles from './search-tokens-to-particles.js';
-import FallbackFate from './fallback-fate.js';
-import GroupHandleConnections from './group-handle-connections.js';
-import CombinedStrategy from './combined-strategy.js';
-import MatchFreeHandlesToConnections from './match-free-handles-to-connections.js';
-import CreateHandles from './create-handles.js';
-import ResolveRecipe from './resolve-recipe.js';
+import {ConvertConstraintsToConnections} from './convert-constraints-to-connections.js';
+import {AssignRemoteHandles} from './assign-remote-handles.js';
+import {CopyRemoteHandles} from './copy-remote-handles.js';
+import {AssignHandlesByTagAndType} from './assign-handles-by-tag-and-type.js';
+import {InitPopulation} from './init-population.js';
+import {MapSlots} from './map-slots.js';
+import {MatchParticleByVerb} from './match-particle-by-verb.js';
+import {MatchRecipeByVerb} from './match-recipe-by-verb.js';
+import {AddUseHandles} from './add-use-handles.js';
+import {CreateDescriptionHandle} from './create-description-handle.js';
+import {InitSearch} from './init-search.js';
+import {SearchTokensToParticles} from './search-tokens-to-particles.js';
+import {FallbackFate} from './fallback-fate.js';
+import {GroupHandleConnections} from './group-handle-connections.js';
+import {MatchFreeHandlesToConnections} from './match-free-handles-to-connections.js';
+import {CreateHandles} from './create-handles.js';
+import {ResolveRecipe} from './resolve-recipe.js';
 
 export const Empty = new Ruleset.Builder().build();
 

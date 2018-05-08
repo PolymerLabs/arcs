@@ -7,15 +7,15 @@
 
 import assert from '../../platform/assert-web.js';
 import {Strategizer} from '../../strategizer/strategizer.js';
-import ConnectionConstraint from './connection-constraint.js';
-import Particle from './particle.js';
-import Search from './search.js';
-import Slot from './slot.js';
-import Handle from './handle.js';
-import util from './util.js';
-import digest from './digest-web.js';
+import {ConnectionConstraint} from './connection-constraint.js';
+import {Particle} from './particle.js';
+import {Search} from './search.js';
+import {Slot} from './slot.js';
+import {Handle} from './handle.js';
+import * as util from './util.js';
+import {digest} from './digest-web.js';
 
-class Recipe {
+export class Recipe {
   constructor(name) {
     this._particles = [];
     this._handles = [];
@@ -474,5 +474,3 @@ class Recipe {
     return result.join('\n');
   }
 }
-
-export default Recipe;

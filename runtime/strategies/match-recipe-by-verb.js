@@ -6,9 +6,9 @@
 // http://polymer.github.io/PATENTS.txt
 
 import {Strategy} from '../../strategizer/strategizer.js';
-import Recipe from '../recipe/recipe.js';
-import RecipeWalker from '../recipe/walker.js';
-import Handle from '../recipe/handle.js';
+import {Recipe} from '../recipe/recipe.js';
+import {Walker} from '../recipe/walker.js';
+import {Handle} from '../recipe/handle.js';
 import assert from '../../platform/assert-web.js';
 
 // This strategy substitutes 'particle can verb' declarations with recipes, 
@@ -22,7 +22,7 @@ import assert from '../../platform/assert-web.js';
 // Note that the recipe may have the slot pattern multiple times over, but
 // this strategy currently only connects the first instance of the pattern up
 // if there are multiple instances.
-export default class MatchRecipeByVerb extends Strategy {
+export class MatchRecipeByVerb extends Strategy {
   constructor(arc) {
     super();
     this._arc = arc;
@@ -30,7 +30,7 @@ export default class MatchRecipeByVerb extends Strategy {
 
   async generate(inputParams) {
     let arc = this._arc;
-    return Recipe.over(this.getResults(inputParams), new class extends RecipeWalker {
+    return Recipe.over(this.getResults(inputParams), new class extends Walker {
       onParticle(recipe, particle) {
         if (particle.name) {
           // Particle already has explicit name.
@@ -146,7 +146,7 @@ export default class MatchRecipeByVerb extends Strategy {
           };
         });
       }
-    }(RecipeWalker.Permuted), this);
+    }(Walker.Permuted), this);
   }
 
   static satisfiesHandleConstraints(recipe, handleConstraints) {

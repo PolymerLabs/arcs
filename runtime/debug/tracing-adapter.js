@@ -7,16 +7,16 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-import devtoolsChannelProvider from './devtools-channel-provider.js';
+import {getDevtoolsChannel} from './devtools-channel-provider.js';
 import Tracing from '../../tracelib/trace.js';
 
 let streamingToDevtools = false;
 
-function enableTracingAdapter() {
+export function enableTracingAdapter() {
   if (!streamingToDevtools) {
     if (!Tracing.enabled) Tracing.enable();
 
-    const channel = devtoolsChannelProvider.get();
+    const channel = getDevtoolsChannel();
 
     channel.send({
       messageType: 'trace-time-sync',
@@ -37,5 +37,3 @@ function enableTracingAdapter() {
     streamingToDevtools = true;
   }
 }
-
-export {enableTracingAdapter};

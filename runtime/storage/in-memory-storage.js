@@ -9,9 +9,8 @@
 
 import assert from '../../platform/assert-web.js';
 import tracing from '../../tracelib/trace.js';
-import util from '../recipe/util.js';
-import StorageProviderBase from './storage-provider-base.js';
-import KeyBase from './key-base.js';
+import {StorageProviderBase} from './storage-provider-base.js';
+import {KeyBase} from './key-base.js';
 
 class InMemoryKey extends KeyBase {
   constructor(key) {
@@ -40,7 +39,7 @@ class InMemoryKey extends KeyBase {
 
 let __storageCache = {};
 
-export default class InMemoryStorage {
+export class InMemoryStorage {
   constructor(arcId) {
       assert(arcId !== undefined, 'Arcs with storage must have ids');
       this._arcId = arcId;

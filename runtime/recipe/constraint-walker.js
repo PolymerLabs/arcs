@@ -5,10 +5,10 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import Recipe from './recipe.js';
-import WalkerBase from './walker-base.js';
+import {Recipe} from './recipe.js';
+import {WalkerBase} from './walker-base.js';
 
-class ConstraintWalker extends WalkerBase {
+export class ConstraintWalker extends WalkerBase {
   onResult(result) {
     super.onResult(result);
     let recipe = result.result;
@@ -25,5 +25,3 @@ class ConstraintWalker extends WalkerBase {
     this._runUpdateList(recipe, updateList);
   }
 }
-
-export default ConstraintWalker;

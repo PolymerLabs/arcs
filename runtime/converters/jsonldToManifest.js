@@ -10,7 +10,7 @@
 
 let supportedTypes = ['Text', 'URL', 'Number', 'Boolean'];
 
-class JsonldToManifest {
+export class JsonldToManifest {
   static convert(jsonld, theClass) {
     let obj = JSON.parse(jsonld);
     let classes = {};
@@ -103,5 +103,3 @@ class JsonldToManifest {
     return s;
   }
 }
-
-export default JsonldToManifest;

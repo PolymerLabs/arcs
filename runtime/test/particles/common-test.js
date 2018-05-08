@@ -11,7 +11,7 @@
 'use strict';
 
 import {assert} from '../chai-web.js';
-import TestHelper from '../test-helper.js';
+import {TestHelper} from '../test-helper.js';
 
 describe('common particles test', function() {
   it('copy handle test', async () => {

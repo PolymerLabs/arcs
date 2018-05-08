@@ -6,9 +6,8 @@
 // http://polymer.github.io/PATENTS.txt
 
 import assert from '../../platform/assert-web.js';
-import util from './util.js';
 
-class Search {
+export class Search {
   constructor(phrase, unresolvedTokens) {
     assert(phrase);
 
@@ -97,5 +96,3 @@ class Search {
     return result.join('\n');
   }
 }
-
-export default Search;

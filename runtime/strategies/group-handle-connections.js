@@ -7,14 +7,14 @@
 
 import assert from '../../platform/assert-web.js';
 import {Strategy} from '../../strategizer/strategizer.js';
-import Recipe from '../recipe/recipe.js';
-import RecipeWalker from '../recipe/walker.js';
+import {Recipe} from '../recipe/recipe.js';
+import {Walker} from '../recipe/walker.js';
 
-export default class GroupHandleConnections extends Strategy {
+export class GroupHandleConnections extends Strategy {
   constructor() {
     super();
 
-    this._walker = new class extends RecipeWalker {
+    this._walker = new class extends Walker {
       onRecipe(recipe) {
         // Only apply this strategy if ALL handle connections are named and have types.
         if (recipe.handleConnections.find(hc => !hc.type || !hc.name || hc.isOptional)) {
@@ -103,7 +103,7 @@ export default class GroupHandleConnections extends Strategy {
           // TODO: score!
         };
       }
-    }(RecipeWalker.Permuted);
+    }(Walker.Permuted);
   }
   get walker() {
     return this._walker;

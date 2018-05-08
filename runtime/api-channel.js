@@ -12,7 +12,7 @@
 import assert from '../platform/assert-web.js';
 import {ParticleSpec} from './particle-spec.js';
 import {Type} from './type.js';
-import OuterPortAttachment from './debug/outer-port-attachment.js';
+import {OuterPortAttachment} from './debug/outer-port-attachment.js';
 
 class ThingMapper {
   constructor(prefix) {

@@ -28,7 +28,7 @@ function addType(name, arg) {
     }});
 }
 
-class Type {
+export class Type {
   constructor(tag, data) {
     assert(typeof tag == 'string');
     assert(data);
@@ -387,10 +387,8 @@ addType('Relation', 'entities');
 addType('Interface', 'shape');
 addType('Tuple', 'fields');
 
-export {Type};
-
 import {Shape} from './shape.js';
 import {Schema} from './schema.js';
 import {TypeVariable} from './type-variable.js';
 import {TupleFields} from './tuple-fields.js';
-import TypeChecker from './recipe/type-checker.js';
+import {TypeChecker} from './recipe/type-checker.js';

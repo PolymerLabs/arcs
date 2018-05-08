@@ -5,7 +5,7 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import Recipe from './recipe.js';
+import {Recipe} from './recipe.js';
 import assert from '../../platform/assert-web.js';
 
 class Shape {
@@ -23,7 +23,7 @@ class Shape {
   }
 }
 
-class RecipeUtil {
+export class RecipeUtil {
   static makeShape(particles, handles, map, recipe) {
     recipe = recipe || new Recipe();
     let pMap = {};
@@ -252,5 +252,3 @@ class RecipeUtil {
     return counts;
   }
 }
-
-export default RecipeUtil;

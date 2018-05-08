@@ -9,7 +9,7 @@
  */
 'use strict';
 
-import AbstractDevtoolsChannel from '../runtime/debug/abstract-devtools-channel.js';
+import {AbstractDevtoolsChannel} from '../runtime/debug/abstract-devtools-channel.js';
 import {initDebug} from '../devtools/shared/arc-registry.js';
 import WebSocket from 'ws';
 

@@ -6,12 +6,12 @@
 // http://polymer.github.io/PATENTS.txt
 
 import {Strategy} from '../../strategizer/strategizer.js';
-import Recipe from '../recipe/recipe.js';
-import RecipeWalker from '../recipe/walker.js';
-import RecipeUtil from '../recipe/recipe-util.js';
+import {Recipe} from '../recipe/recipe.js';
+import {Walker} from '../recipe/walker.js';
+import {RecipeUtil} from '../recipe/recipe-util.js';
 import assert from '../../platform/assert-web.js';
 
-export default class MapSlots extends Strategy {
+export class MapSlots extends Strategy {
   constructor(arc) {
     super();
     this._arc = arc;
@@ -19,7 +19,7 @@ export default class MapSlots extends Strategy {
   async generate(inputParams) {
     let arc = this._arc;
 
-    return Recipe.over(this.getResults(inputParams), new class extends RecipeWalker {
+    return Recipe.over(this.getResults(inputParams), new class extends Walker {
       onSlotConnection(recipe, slotConnection) {
         // don't try to connect verb constraints
         // TODO: is this right? Should constraints be connectible, in order to precompute the
@@ -45,7 +45,7 @@ export default class MapSlots extends Strategy {
           return 1;
         }));
       }
-    }(RecipeWalker.Permuted), this);
+    }(Walker.Permuted), this);
   }
 
   // Helper methods.

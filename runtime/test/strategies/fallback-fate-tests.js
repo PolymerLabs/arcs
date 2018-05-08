@@ -10,8 +10,8 @@
 'use strict';
 
 import {Manifest} from '../../manifest.js';
-import StrategyTestHelper from './strategy-test-helper.js';
-import FallbackFate from '../../strategies/fallback-fate.js';
+import {StrategyTestHelper} from './strategy-test-helper.js';
+import {FallbackFate} from '../../strategies/fallback-fate.js';
 import {assert} from '../chai-web.js';
 
 describe('FallbackFate', function() {
