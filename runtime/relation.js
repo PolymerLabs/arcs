@@ -8,9 +8,9 @@
 'use strict';
 
 import assert from '../platform/assert-web.js';
-import {Entity} from './entity.js';
-import Type from './type.js';
 import Symbols from './symbols.js';
+import {Entity} from './entity.js';
+import {Type} from './type.js';
 
 // TODO: Should relations normalized by another layer, or here?
 class Relation extends Entity {

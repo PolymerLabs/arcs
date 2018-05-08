@@ -9,14 +9,14 @@
  */
 'use strict';
 
-import PEC from './particle-execution-context.js';
 import assert from '../platform/assert-web.js';
+import {ParticleExecutionContext} from './particle-execution-context.js';
 import {PECOuterPort} from './api-channel.js';
 import {Manifest} from './manifest.js';
 import {RecipeResolver} from './recipe/recipe-resolver.js';
 import {reportSystemException} from './arc-exceptions.js';
 
-class OuterPEC extends PEC {
+class OuterPEC extends ParticleExecutionContext {
   constructor(port, slotComposer, arc) {
     super();
     this._particles = [];
@@ -221,4 +221,4 @@ class OuterPEC extends PEC {
   }
 }
 
-export default OuterPEC;
+export {OuterPEC};

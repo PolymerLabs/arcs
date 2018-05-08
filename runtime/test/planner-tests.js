@@ -19,8 +19,8 @@ import ConvertConstraintsToConnections from '../strategies/convert-constraints-t
 import ResolveRecipe from '../strategies/resolve-recipe.js';
 import MatchRecipeByVerb from '../strategies/match-recipe-by-verb.js';
 import {MessageChannel} from '../message-channel.js';
-import InnerPec from '../inner-PEC.js';
-import Particle from '../particle.js';
+import {InnerPEC} from '../inner-PEC.js';
+import {Particle} from '../particle.js';
 import StrategyTestHelper from './strategies/strategy-test-helper.js';
 let loader = new Loader();
 
@@ -74,7 +74,7 @@ const loadTestArcAndRunSpeculation = async (manifest, manifestLoadedCallback) =>
 
   const pecFactory = function(id) {
     const channel = new MessageChannel();
-    new InnerPec(channel.port1, `${id}:inner`, loader);
+    new InnerPEC(channel.port1, `${id}:inner`, loader);
     return channel.port2;
   };
   const arc = new Arc({id: 'test-plan-arc', context: loadedManifest, pecFactory, loader});

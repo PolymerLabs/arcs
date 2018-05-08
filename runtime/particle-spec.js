@@ -8,10 +8,10 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import Type from './type.js';
+import assert from '../platform/assert-web.js';
+import {Type} from './type.js';
 import TypeChecker from './recipe/type-checker.js';
 import {Shape} from './shape.js';
-import assert from '../platform/assert-web.js';
 
 class ConnectionSpec {
   constructor(rawData, typeVarMap) {

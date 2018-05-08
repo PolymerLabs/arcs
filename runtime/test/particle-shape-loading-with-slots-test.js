@@ -10,22 +10,22 @@
 
 import {Manifest} from '../manifest.js';
 import {assert} from './chai-web.js';
-import * as util from './test-util.js';
 import {handleFor} from '../handle.js';
 import {Arc} from '../arc.js';
 import {MessageChannel} from '../message-channel.js';
-import InnerPec from '../inner-PEC.js';
+import {InnerPEC} from '../inner-PEC.js';
 import {Loader} from '../loader.js';
 import Recipe from '../recipe/recipe.js';
-import Type from '../type.js';
+import {Type} from '../type.js';
 import MockSlotComposer from './mock-slot-composer.js';
+import * as util from './test-util.js';
 
 describe('particle-shape-loading-with-slots', function() {
   async function instantiateRecipe() {
     let loader = new Loader();
     let pecFactory = function(id) {
       let channel = new MessageChannel();
-      new InnerPec(channel.port1, `${id}:inner`, loader);
+      new InnerPEC(channel.port1, `${id}:inner`, loader);
       return channel.port2;
     };
     let slotComposer = new MockSlotComposer();
