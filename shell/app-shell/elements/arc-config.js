@@ -10,27 +10,43 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
 import Xen from '../../components/xen/xen.js';
 import Const from '../constants.js';
+import Utils from '../lib/arcs-utils.js';
 
 class ArcConfig extends Xen.Base {
-  static get observedAttributes() { return ['rootpath']; }
-  _update(props, state, lastProps) {
-    if (props.rootpath !== lastProps.rootpath) {
-      this._fire('config', this._configure(props.rootpath));
-    }
+  static get observedAttributes() {
+    return ['userid', 'key', 'search'];
   }
-  _configure(rootPath) {
-    let params = (new URL(document.location)).searchParams;
+  _update({userid, key, search}, state, oldProps) {
+    if (!state.config) {
+      state.config = this._configure();
+      this._fire('config', state.config);
+    }
+    // TODO(sjmiles): persisting user makes it hard to share by copying URL
+    Utils.setUrlParam('user', null);
+    // if (userid && userid !== oldProps.userid) {
+    //   localStorage.setItem(Const.LOCALSTORAGE.user, userid);
+    //   Utils.setUrlParam('user', userid);
+    // }
+    if (key && key !== oldProps.key) {
+      Utils.setUrlParam('arc', !Const.SHELLKEYS[key] ? key : '');
+    }
+    // TODO(sjmiles): persisting search term is confusing in practice, avoid for now
+    // if (search && search !== oldProps.search) {
+    //   Utils.setUrlParam('search', search);
+    // }
+  }
+  _configure() {
+    const params = (new URL(document.location)).searchParams;
     return {
       affordance: 'dom',
-      root: params.get('root') || rootPath,
+      root: params.get('root') || window.shellPath,
       manifestPath: params.get('manifest'),
       soloPath: params.get('solo'),
-      user: params.get('user') || localStorage.getItem(Const.LOCALSTORAGE.user),
+      userid: params.get('user') || localStorage.getItem(Const.LOCALSTORAGE.user),
       key: params.get('arc') || null,
-      search: params.get('search'),
-      arcsToolsVisible: localStorage.getItem(Const.LOCALSTORAGE.tools) === 'open',
-      urls: {},
-      logging: params.get('log')
+      search: params.get('search') || '',
+      urls: window.shellUrls || {},
+      useStorage: false
     };
   }
 }

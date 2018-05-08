@@ -1,158 +1,118 @@
-// elements
-import './elements/shell-ui.js';
-import './elements/arc-config.js';
-import './elements/arc-cloud.js';
-import './elements/shell-handles.js';
-import './elements/extension-data.js';
-import './elements/arc-host.js';
-
-// components
-import '../components/suggestion-element.js';
-
-// for particle use
-import '../components/corellia-xen/cx-input.js';
-import '../components/good-map.js';
-import '../components/model-input.js';
-import '../components/video-controller.js';
-import '../components/firebase-upload.js';
-// deprecated!
-import '../components/x-list.js';
-
-// code libs
+// libs
 import Xen from '../components/xen/xen.js';
 import ArcsUtils from './lib/arcs-utils.js';
+import LinkJack from './lib/link-jack.js';
 import Const from './constants.js';
+import Arcs from './lib/arcs.js';
 
-// globals
-/* global shellPath */
-
-/*
-  General notes on steps:
-    'step' comes out of arc-cloud (replay) or footer (user interaction)
-    'step' is sent to arc-host for instantiation
-    'plan' comes out of arc-host and is sent to arc-cloud to save in 'steps'
-
-  arc-cloud
-    TODO: refactor into more meaningful concerns ('cloud' is ad-hoc, there are too many properties)
-
-    manifests: are persisted to Firebase
-    exclusions: are persisted to localStorage
-
-    on-manifests: manifests from Firebase
-    on-exclusions: manifests read from localStorage
-
-    config: supplies arc key suggestion (could be a metakey, like '*', 'launcher', 'profiler')
-            supplies launcher flag used to generate luancheruser
-            (TODO: doesn't need 'config' for these two things)
-    on-key: actual arc key determined after studying config.key
-    on-metadata: metadata belonging to arc identified by key from on-key
-    on-step: next step to playback based on arc metadata
-
-    userid: used to construct faux 'user' record
-    on-user: constructed 'user' record
-
-    on-friends: friends data scraped out of handle boxing
-    on-avatars: avatars data scraped out of handle boxing
-
-    launcherarcs: local handle data for arcs data from arc-handles (can be modified by UI),
-                  studies in order to update Firebase data
-    on-arcs: arcs metadata for arcs owner by user from Firebase,
-              fed to arc-handles for conversion to launcherarcs
-              TODO: isolate conversions so data doesn't criss-cross like this
-
-  shell-handles
-    visited: visited arc data from Firebase
-    on-launcherarcs: arc data formatted for local handle
-    TODO: isolate conversions so data doesn't criss-cross like this
-
-  arc-host
-    plan: schedules the plan for instantiation ('step' goes in)
-    on-plan: most recent plan that was instantiated ('plan' comes out)
-*/
+// elements
+import './elements/arc-config.js';
+import './elements/arc-host.js';
+import './elements/arc-planner.js';
+import './elements/shell-ui.js';
+import './elements/shell-handles.js';
+import './elements/cloud-data.js';
 
 // templates
-const html = Xen.html;
+const html = Xen.Template.html;
 const template = html`
+
   <style>
     :host {
+      /*--max-width: 420px;*/
+    }
+    :host {
       display: block;
+      position: relative;
+      min-height: 100vh;
+      max-width: var(--max-width);
+      margin: 0 auto;
+      background: white;
     }
   </style>
 
-  <arc-config rootpath="{{shellPath}}" on-config="_onStateData"></arc-config>
+  <arc-config
+    userid="{{userid}}"
+    key="{{key}}"
+    search="{{search}}"
+    on-config="_onStateData"
+  ></arc-config>
 
-  <arc-cloud
-    manifests="{{persistedManifests}}"
-    exclusions="{{persistedExclusions}}"
+  <arc-host
+    key="{{key}}"
     config="{{config}}"
-    userid="{{selectedUser}}"
+    manifest="{{manifest}}"
+    search="{{search}}"
+    suggestion="{{suggestion}}"
+    serialization="{{serialization}}"
+    on-arc="_onStateData"
+    on-suggestions="_onStateData"
+  ></arc-host>
+
+  <arc-planner
+    config="{{config}}"
+    arc="{{arc}}"
+    search="{{search}}"
+    suggestion="{{suggestion}}"
+    on-plans="_onStateData"
+    on-suggestions="_onStateData"
+    on-plan="_onStateData"
+    on-search="_onStateData"
+  ></arc-planner>
+
+  <shell-handles
+    config="{{config}}"
+    arc="{{arc}}"
+    users="{{users}}"
     user="{{user}}"
+    arcs="{{arcs}}"
+    on-theme="_onStateData"
+    on-arcs="_onStateData"
+  ></shell-handles>
+
+  <cloud-data
+    config="{{config}}"
+    users="{{users}}"
+    profile="{{profile}}"
+    userid="{{userid}}"
+    user="{{user}}"
+    arcs="{{arcs}}"
     key="{{key}}"
     arc="{{arc}}"
     metadata="{{metadata}}"
     share="{{share}}"
+    description="{{description}}"
     plans="{{plans}}"
-    active="{{active}}"
-    launcherarcs="{{launcherarcs}}"
-    on-manifests="_onStateData"
-    on-exclusions="_onStateData"
+    plan="{{plan}}"
+    on-user="_onStateData"
+    on-profile="_onStateData"
     on-users="_onStateData"
-    on-user="_onUser"
-    on-friends="_onStateData"
-    on-avatars="_onStateData"
     on-arcs="_onStateData"
     on-key="_onStateData"
     on-metadata="_onStateData"
-    on-step="_onStateData"
     on-share="_onStateData"
-  ></arc-cloud>
-
-  <shell-handles
-    users="{{users}}"
-    user="{{user}}"
-    key="{{key}}"
-    arc="{{arc}}"
-    visited="{{arcs}}"
-    on-launcherarcs="_onStateData"
-    on-theme="_onStateData"
-  ></shell-handles>
-
-  <arc-host
-    config="{{hostConfig}}"
-    manifests="{{manifests}}"
-    exclusions="{{exclusions}}"
-    plan="{{step}}"
-    on-arc="_onStateData"
-    on-plan="_onStateData"
-  >
-  </arc-host>
-
-  <extension-data arc="{{arc}}" on-manifests="_onExtensionManifests"></extension-data>
+    on-serialization="_onStateData"
+    on-suggestion="_onStateData"
+  ></cloud-data>
 
   <shell-ui
-    config="{{config}}"
-    manifests="{{manifests}}"
-    exclusions="{{exclusions}}"
-    users="{{users}}"
-    user="{{user}}"
     key="{{key}}"
     arc="{{arc}}"
-    description="{{description}}"
-    friends="{{friends}}"
-    avatars="{{avatars}}"
+    title="{{title}}"
+    showhint="{{showhint}}"
+    users="{{users}}"
+    user="{{user}}"
+    profile="{{profile}}"
     share="{{share}}"
-    theme="{{theme}}"
-    open="{{drawerOpen}}"
-    requestnewuser="{{requestNewUser}}"
-    on-exclusions="_onExclusions"
-    on-share="_onStateData"
-    on-step="_onStateData"
+    search="{{search}}"
+    glows="{{glows}}"
     on-search="_onStateData"
-    on-open="_onDrawerOpen"
+    on-suggestion="_onStateData"
     on-select-user="_onSelectUser"
-    on-new-user="_onNewUser"
+    on-share="_onStateData"
   >
     <slot></slot>
+    <slot name="modal" slot="modal"></slot>
     <slot name="suggestions" slot="suggestions"></slot>
   </shell-ui>
 
@@ -166,126 +126,153 @@ class AppShell extends Xen.Debug(Xen.Base, log) {
   }
   _getInitialState() {
     return {
-      launcherSoloPath: '../web/artifacts/launcher.manifest',
-      profileSoloPath: '../web/artifacts/profile.manifest'
+      defaultManifest: `
+import 'https://sjmiles.github.io/arcs-stories/0.4/GitHubDash/GitHubDash.recipes'
+import 'https://sjmiles.github.io/arcs-stories/0.3/TV/TV.recipes'
+import 'https://sjmiles.github.io/arcs-stories/0.3/PlaidAccounts/PlaidAccounts.recipes'
+import '${window.shellPath}/artifacts/canonical.manifest'
+import '${window.shellPath}/artifacts/0.4/Arcs/Arcs.recipes'
+      `
     };
   }
-  _update(props, state, oldProps, oldState) {
-    const {config, selectedUser, user, key, arc, description, metadata, share, planificator, search, active, step} = state;
-    let plan = active ? active.plan : null;
-    // TODO(sjmiles): only for console debugging
-    window.arc = arc;
+  _didMount() {
+    LinkJack(window, anchor => this._routeLink(anchor));
+  }
+  _update({}, state, {}, oldState) {
+    this._updateDebugGlobals(state);
+    this._updateConfig(state, oldState);
+    this._updateKey(state, oldState);
+    this._updateManifest(state);
+    this._updateDescription(state, oldState);
+    this._updateSuggestions(state, oldState);
+    this._updateLauncher(state, oldState);
+  }
+  _updateDebugGlobals(state) {
     window.app = this;
-    // ^
-    if (config && config !== oldState.config) {
-      this._consumeConfig(state, config);
+    window.arc = state.arc;
+  }
+  _updateConfig(state, oldState) {
+    const {config, user} = state;
+    if (config !== oldState.config) {
+      state.search = config.search;
+      state.userid = config.userid;
     }
-    if (selectedUser) {
-      this._consumeSelectedUser(user, selectedUser);
+  }
+  _updateKey(state, oldState) {
+    let {config, user, key, arc} = state;
+    if (config && user) {
+      if (!key && !oldState.key) {
+        key = config.key;
+      }
+      if (!key) {
+        key = Const.SHELLKEYS.launcher;
+      }
+      if (key !== oldState.key) {
+        this._setState({
+          key,
+          description: null,
+          serialization: null,
+          plans: null,
+          suggestions: null,
+          suggestion: null,
+          plan: null
+        });
+      }
     }
-    if (config && config === oldState.config && !user && !selectedUser) {
-      this._setState({requestNewUser: true});
+  }
+  _updateManifest(state) {
+    this._setState({manifest: state.defaultManifest});
+  }
+  _updateDescription(state, oldState) {
+    let {arc, description, plan} = state;
+    if (arc && plan && plan !== oldState.plan) {
+      // arc has instantiated a plan so generate new description
+      this._describeArc(arc, description);
     }
-    if (arc && !planificator) {
-      let planificator = ArcsUtils.createPlanificator(arc);
-      planificator.registerPlansChangedCallback((current) => {
-        let plans = current.plans;
-        if (!plan && plans && plans.length && (config.launcher || config.profiler)) {
-          state.injectedStep = plans[0].plan;
-        }
-        if (plans && plans.length) {
-          plans.generations = current.generations;
-        }
-        this._setState({plans, active: planificator.getLastActivatedPlan()});
-      });
-      planificator.registerSuggestChangedCallback((suggestions) => {
-        this._setState({drawerOpen: Boolean(suggestions)});
-      });
-      state.planificator = planificator;
+  }
+  _updateLauncher(state, oldState) {
+    const {key, arc, plan, plans, suggestion, pendingSuggestion} = state;
+    if (key === Const.SHELLKEYS.launcher) {
+      if (!suggestion && (!plan || !plan.plan) && plans && plans.plans.length) {
+        // TODO(sjmiles): need a better way to find the launcher suggestion
+        state.suggestion = plans.plans.find(s => s.descriptionText === 'Arcs launcher.');
+      }
+      else if (suggestion && suggestion !== oldState.suggestion) {
+        log('suggestion registered from launcher, generate new arc (set key to *)');
+        state.suggestion = null;
+        state.pendingSuggestion = suggestion;
+        this._setKey('*');
+      }
     }
-    if (search !== oldState.search) {
-      planificator.setSearch(search);
+    if (key && !Const.SHELLKEYS[key] && plans && pendingSuggestion) {
+      log('instantiating pending launcher suggestion');
+      // TODO(sjmiles): need a better way to match the suggestion
+      state.suggestion = plans.plans.find(s => s.descriptionText === pendingSuggestion.descriptionText);
+      state.pendingSuggestion = null;
     }
-    if (metadata) {
-      state.description = metadata.description;
+  }
+  _updateSuggestions(state, oldState) {
+    /*
+    let {key, search, suggestions, plan} = state;
+    state.filteredSuggestions = state.suggestions;
+    // filter out root suggestions if we aren't searching directly
+    // TODO(sjmiles): ...and if aren't launcher and there is one plan, otherwise suggestions are empty all the time
+    if (suggestions && !search && !Const.SHELLKEYS[key] && plan) {
+      // Otherwise only show suggestions that don't populate a root.
+      state.filteredSuggestions = suggestions.filter(
+        // TODO(seefeld): Don't hardcode `root`
+        // TODO(sjmiles|mmandlis): `name.includes` catches all variants of `root` (e.g. `toproot`), but
+        // `tags.includes` only catches `#root` tag specifically
+        ({plan}) => plan.slots && !plan.slots.find(s => s.name.includes('root') || s.tags.includes('#root'))
+      );
     }
-    if (plan && plan !== state.consumedPlan) {
-      state.consumedPlan = plan;
-      this._consumePlan(arc, description);
-    }
+    */
+    state.showhint = Boolean(state.suggestions && state.suggestions.length > 0);
   }
   _render({}, state) {
-    const {config, user, step, injectedStep} = state;
+    const {userid, description, theme, plans} = state;
     const render = {
-      shellPath,
-      hostConfig: user && config,
-      step: step || injectedStep
+      title: description,
+      glows: userid && (plans == null)
     };
+    state.shellStyle = theme ? `background-color: ${theme.mainBackground}; color: ${theme.mainColor};` : '';
     return [state, render];
   }
-  _consumeConfig(state, config) {
-    let key = config.key || '';
-    if (!config.key) {
-      config.key = Const.KEYS.launcher;
-    }
-    if (config.key === Const.KEYS.launcher) {
-      state.description = 'Launcher';
-      config.soloPath = state.launcherSoloPath;
-      config.launcher = true;
-      key = '';
-    }
-    if (config.key === Const.KEYS.profile) {
-      config.soloPath = state.profileSoloPath;
-      config.profiler = true;
-      key = '*';
-    }
-    const selectedUser = config.user;
-    this._setState({key, selectedUser});
+  _didRender({}, {shellStyle}) {
+    this.style.cssText = shellStyle;
   }
-  _consumeSelectedUser(user, selectedUser) {
-    // TODO(sjmiles): explain `user` vs `selectedUser`
-    if (user && user.id !== selectedUser) {
-      this._setState({selectedUser, user});
+  _routeLink(anchor) {
+    const url = new URL(anchor.href, document.location);
+    const params = url.searchParams;
+    log(/*url,*/ anchor.href, Array.from(params.keys()));
+    const key = params.get('arc');
+    // loopback not supported
+    if ((key !== this._state.key) && (key || this._state.key !== Const.SHELLKEYS.launcher)) {
+      this._setKey(key);
     }
   }
-  async _consumePlan(arc, description) {
-    // arc has changed, generate new description
-    description = await ArcsUtils.describeArc(arc) || description;
-    this._setState({description});
-    // update metadata (should be done in persistent-arc instead)
-    let metadata = this._state.metadata;
-    // push description into metadata
-    if (!metadata || metadata.description !== description) {
-      metadata = metadata ? Xen.clone(metadata) : Xen.nob();
-      metadata.description = description;
-      this._setState({metadata});
-    }
+  _setKey(key) {
+    log('registered new key, begin arc rebuild procedure');
+    this._setState({
+      key/*,
+      description: null,
+      serialization: null,
+      suggestions: null,
+      suggestion: null,
+      plan: null*/
+    });
   }
-  _onUser(e, data) {
-    // if clearing `user`, also clear `selectedUser`
-    if (!data) {
-      this._setState({selectedUser: data});
-    }
-
-    this._setState({user: data});
+  async _describeArc(arc, description) {
+    this._setState({description: await ArcsUtils.describeArc(arc) || description});
   }
   _onStateData(e, data) {
     this._setState({[e.type]: data});
   }
-  _onExclusions(e, persistedExclusions) {
-    this._setState({persistedExclusions});
-  }
-  _onExtensionManifests(e, manifests) {
-    log('received extension manifests: ', manifests);
-  }
-  _onSelectUser(e, selectedUser) {
-    this._setState({selectedUser});
-  }
-  _onNewUser(e, name) {
-    this._setState({user: {name}, requestNewUser: false});
-  }
-  _onDrawerOpen(e, drawerOpen) {
-    this._setState({drawerOpen});
+  // _onFilteredSuggestions(e, filteredSuggestions) {
+  //   this._setState({filteredSuggestions});
+  // }
+  _onSelectUser(e, userid) {
+    this._setState({userid});
   }
 }
 

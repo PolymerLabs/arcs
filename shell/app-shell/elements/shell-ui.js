@@ -1,291 +1,507 @@
-// code libs
-import ArcsUtils from '../lib/arcs-utils.js';
-import Xen from '../../components/xen/xen.js';
-import Const from '../constants.js';
+/*
+@license
+Copyright (c) 2018 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+*/
 
 // elements
-import './user-picker.js';
-import './menu-panel.js';
-import './arc-footer.js';
+import './shell-ui/suggestion-element.js';
+import './shell-ui/settings-panel.js';
+import './shell-ui/user-picker.js';
 
 // components
-import '../../components/toggle-button.js';
 import '../../components/simple-tabs.js';
 import '../../components/arc-tools/handle-explorer.js';
-import '../../components/arc-tools/local-data.js';
-import '../../components/arc-tools/xen-explorer.js';
-import '../../components/arc-tools/manifest-data.js';
-import '../../components/mic-input.js';
+import '../../components/xen-tools/xen-explorer.js';
+
+// libs
+import Xen from '../../components/xen/xen.js';
+import ArcsUtils from '../lib/arcs-utils.js';
 
 // strings
-import Css from './shell-ui.css.js';
-import AppIcon from './icon.svg.js';
-
-// globals
-/* global shellPath */
+import AppIcon from '../../apps/common/icon.svg.js';
+import IconStyle from '../../components/icons.css.js';
 
 // templates
-const Main = Xen.html`
-
-<mic-input on-start="_onMicStart" on-end="_onMicEnd"></mic-input>
-
-<app-modal shown$="{{modalShown}}" on-click="_onScrimClick">
-
-  <app-dialog open$="{{userPickerOpen}}">
-    <user-picker users="{{users}}" on-selected="_onSelectedUser" on-new-user="_onNewUser"></user-picker>
-  </app-dialog>
-
-  <menu-panel
-    open="{{menuOpen}}"
-    arc="{{arc}}"
-    avatar_title="{{avatarTitle}}"
-    avatar_style="{{avatarStyle}}"
-    friends="{{friends}}"
-    avatars="{{avatars}}"
-    share="{{share}}"
-    on-close="_onMenuClose"
-    on-user="_onSelectUser"
-    on-cast="_onMenuCast"
-    on-tools="_onToolsClick"
-    on-share="_onShare"
-  ></menu-panel>
-
-</app-modal>
-
-<app-main launcher$="{{launcher}}" style="{{shellStyle}}">
-  <!-- toolbar is here only to reserve space in the static flow (see also: footer) -->
-  <toolbar>
-    <!-- app-toolbar is position-fixed -->
-    <app-toolbar style="{{shellStyle}}">
-      <a trigger="launcher" href="{{launcherUrl}}" title="Go to Launcher">${AppIcon}</a>
-      <arc-title id="arc-title" style="{{titleStatic}}" on-click="_onStartEditingTitle" unsafe-html="{{description}}"></arc-title>
-      <toolbar-buttons>
-        <icon hidden$="{{micHidden}}">mic</icon>
-        <icon on-click="_onMenuClick">more_vert</icon>
-      </toolbar-buttons>
-    </app-toolbar>
-  </toolbar>
-
+const html = Xen.html;
+const template = html`
+  <style>
+    ${IconStyle}
+    :host {
+      --bar-max-width: 400px;
+      --bar-max-height: 50vh;
+      --bar-hint-height: 33vh;
+      --bar-over-height: 56px;
+      --bar-peek-height: 16px;
+      --bar-touch-height: 32px;
+      --bar-space-height: 48px;
+      --avatar-size: 24px;
+      --large-avatar-size: 40px;
+    }
+    :host {
+      display: block;
+    }
+    a {
+      color: currentColor;
+      text-decoration: none;
+    }
+    [scrim] {
+      position: fixed;
+      top: 0;
+      right: 0;
+      left: 0;
+      height: 100vh;
+      opacity: 0;
+      background-color: white;
+      z-index: -1;
+      pointer-events: none;
+      transition: opacity 200ms ease-in;
+    }
+    [glowable]::before {
+      position: absolute;
+      content: '';
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: -1;
+      height: 100%;
+      width: 100%;
+      margin: 0 auto;
+      filter: blur(12px);
+      background: rgba(0,0,0,.15);
+      animation: stopGlow 1.5s ease 1;
+    }
+    [glowable][glowing]::before {
+      filter: blur(20px);
+      background: rgba(94,213,227,1);
+      animation: animateGlow 1.5s ease infinite;
+    }
+    [glowable][glowing][state="open"]::before {
+      background: rgba(94,213,227,.5);
+    }
+    [scrim][open] {
+      z-index: 9000;
+      pointer-events: auto;
+      opacity: 0.8;
+    }
+    [barSpacer] {
+      height: var(--bar-space-height);
+    }
+    [touchbar] {
+      margin-top: calc(var(--bar-touch-height) * -1);
+      height: var(--bar-touch-height);
+      background-color: transparent;
+    }
+    [bar] {
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      z-index: 10000;
+      right: 0;
+      bottom: 0;
+      left: 0;
+      margin: 0 auto;
+      box-sizing: border-box;
+      height: var(--bar-max-height);
+      width: 90vw;
+      max-width: var(--bar-max-width);
+      max-height: var(--bar-hint-height);
+      color: black;
+      background-color: white;
+      box-shadow: 0px 0px 32px 3px rgba(0,0,0,0.13);
+      transition: transform 200ms ease-out;
+    }
+    [bar] > * {
+      flex-shrink: 0;
+    }
+    [bar][state="peek"] {
+      transform: translate3d(0, calc(100% - var(--bar-peek-height)), 0);
+    }
+    [bar][state="hint"] {
+      transform: translate3d(0, 0, 0);
+    }
+    [bar][state="over"] {
+      transform: translate3d(0, calc(100% - var(--bar-over-height)), 0);
+    }
+    [bar][state="open"] {
+      max-height: var(--bar-max-height);
+      transform: translate3d(0, 0, 0);
+    }
+    [toolbars] {
+      display: inline-block;
+      white-space: nowrap;
+      height: 57px;
+      width: 100%;
+      overflow: hidden;
+      box-sizing: border-box;
+      border-bottom: 1px solid rgba(0,0,0,0.05);
+      background-color: white;
+    }
+    [toolbar] {
+      display: inline-flex;
+      align-items: center;
+      height: 56px;
+      width: 100%;
+      padding-left: 6px;
+      padding-right: 6px;
+      box-sizing: border-box;
+    }
+    [toolbar] > *:not(span):not(input) {
+      margin: 16px 10px;
+      height: 24px;
+    }
+    [toolbar] > span {
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    [main][toolbar]:not([open]) {
+      transform: translate3d(-100%, 0, 0);
+    }
+    [main][toolbar][title] {
+      text-indent: 4px;
+    }
+    /* TODO(sjmiles): where are these extra px coming from? */
+    [search][toolbar][open] {
+      transform: translate3d(calc(-100% - 4px), 0, 0);
+    }
+    [toolbar] input {
+      flex: 1;
+      width: 0;
+      outline: none;
+      font-size: 18px;
+      border: none;
+      /*line-height: 24px;*/
+    }
+    [settings][toolbar][open] {
+      transform: translate3d(calc(-200% - 7px), 0, 0);
+    }
+    [contents] {
+      flex: 1;
+      display: inline-block;
+      white-space: nowrap;
+      width: 100%;
+      overflow: hidden;
+      background-color: white;
+    }
+    [bar][state="open"] [contents] {
+      overflow-y: auto;
+    }
+    [content] {
+      display: inline-block;
+      width: 100%;
+      vertical-align: top;
+    }
+    [content]:not([open]) {
+      height: 0px;
+      overflow: hidden;
+    }
+    [suggestions][content]:not([open]) {
+      transform: translate3d(-100%, 0, 0);
+    }
+    [settings][content][open] {
+      transform: translate3d(calc(-100% - 3px), 0, 0);
+    }
+    [modal] {
+      padding: 32px;
+      border: 1px solid orange;
+      z-index: 0;
+    }
+    [modal]:hover {
+      position: relative;
+      z-index: 0;
+    }
+    ::slotted([slotid=modal]) {
+      position: fixed;
+      top: 0;
+      bottom: 0;
+      max-width: var(--max-width);
+      width: 100vw;
+      margin: 0 auto;
+      padding-bottom: var(--bar-space-width);
+      box-sizing: border-box;
+      pointer-events: none;
+      color: black;
+    }
+    ::slotted([slotid=suggestions]) {
+      display: flex;
+      flex-direction: column;
+      padding: 10px;
+    }
+    [tools] {
+      position: fixed;
+      right: 0;
+      width: 80vw;
+      top: 0;
+      bottom: 0;
+      box-shadow: 0px 0px 32px 3px rgba(0,0,0,0.13);
+      transform: translate3d(120%, 0, 0);
+      transition: transform 200ms ease-in-out;
+      overflow: auto;
+      background-color: white;
+    }
+    [tools][open] {
+      z-index: 10000;
+      transform: translate3d(0,0,0);
+    }
+    avatar {
+      display: inline-block;
+      height: var(--avatar-size);
+      width: var(--avatar-size);
+      min-width: var(--avatar-size);
+      border-radius: 100%;
+      border: 1px solid whitesmoke;
+      background: gray center no-repeat;
+      background-size: cover;
+    }
+    @keyframes animateGlow {
+      0%  {
+        filter: blur(20px);
+        opacity: 1;
+        -webkit-animation-timing-function: ease-in;
+      }
+      50% {
+        filter: blur(12px);
+        opacity: .5;
+        -webkit-animation-timing-function: linear;
+      }
+      100% {
+        opacity: 1;
+        filter: blur(20px);
+        -webkit-animation-timing-function: ease-out;
+      }
+    }
+    @keyframes stopGlow {
+      0%  {
+        filter: blur(20px);
+        opacity: 1;
+        background: rgba(94,213,227,.5);
+        -webkit-animation-timing-function: ease-in;
+      }
+      50% {
+        filter: blur(12px);
+        opacity: .5;
+        -webkit-animation-timing-function: linear;
+      }
+      100% {
+        filter: blur(12px);
+        background: rgba(0,0,0,.15);
+        opacity: 1;
+        -webkit-animation-timing-function: ease-out;
+      }
+    }
+  </style>
+  <!-- -->
+  <div scrim open$="{{scrimOpen}}" on-click="_onScrimClick"></div>
+  <!-- -->
+  <slot name="modal"></slot>
   <slot></slot>
-
-  <!-- footer is here only to reserve space in the static flow (see also: toolbar) -->
-  <footer>
-    <!-- arc-footer is position-fixed -->
-    <arc-footer dots="{{dots}}" open="{{open}}" search="{{search}}" on-suggest="_onSuggest" on-search="_onSearch" on-open="_onOpen">
-      <slot name="suggestions"></slot>
-    </arc-footer>
-  </footer>
-</app-main>
-
-<app-tools>
-  <simple-tabs>
-    <div tab="Handle Explorer">
-      <handle-explorer arc="{{arc}}"></handle-explorer>
+  <!-- adds space at the bottom of the static flow so no actual content is ever covered by the app-bar -->
+  <div barSpacer></div>
+  <!-- -->
+  <div bar glowing$="{{glows}}" glowable state$="{{barState}}" open$="{{barOpen}}" over$="{{barOver}}" on-mouseenter="_onBarEnter" on-mouseleave="_onBarLeave">
+    <div touchbar on-click="_onTouchbarClick"></div>
+    <div toolbars on-click="_onBarClick">
+      <div main toolbar open$="{{mainToolbarOpen}}">
+        <a href="{{launcherHref}}" title="Go to Launcher"><icon>apps</icon></a>
+        <icon on-click="_onResetSearch">search</icon>
+        <input placeholder="Search" value="{{search}}" on-input="_onSearchChange" on-blur="_onSearchCommit">
+        <icon on-click="_onListen">mic</icon>
+        <!-- <span title="{{title}}">{{title}}</span>
+        <icon on-click="_onSearchClick">search</icon> -->
+        <icon on-click="_onSettingsClick">settings</icon>
+      </div>
+      <div search toolbar open$="{{searchToolbarOpen}}">
+        <icon on-click="_onMainClick">arrow_back</icon>
+        <input placeholder="Search" value="{{search}}" on-input="_onSearchChange" on-blur="_onSearchCommit">
+        <icon on-click="_onResetSearch">search</icon>
+      </div>
+      <div settings toolbar open$="{{settingsToolbarOpen}}">
+        <icon on-click="_onMainClick">arrow_back</icon>
+        <span style="flex: 1;">Settings</span>
+        <avatar title="{{avatar_title}}" style="{{avatar_style}}" on-click="_onAvatarClick"></avatar>
+      </div>
     </div>
-    <div tab="Xen Explorer">
-      <xen-explorer></xen-explorer>
+    <div contents scrolltop="{{scrollTop:contentsScrollTop}}">
+      <div suggestions content open$="{{suggestionsContentOpen}}">
+        <slot name="suggestions" slot="suggestions" on-plan-choose="_onChooseSuggestion"></slot>
+      </div>
+      <settings-panel settings content open$="{{settingsContentOpen}}" key="{{key}}" users="{{users}}" user="{{user}}" profile="{{profile}}" share="{{share}}" user_picker_open="{{userPickerOpen}}" on-user="_onSelectUser" on-share="_onShare"></settings-panel>
     </div>
-    <div tab="Manifests">
-      <!-- <local-data manifest="{{manifest}}" on-update-manifest="_onUpdateManifest" on-promote-manifest="_onPromoteManifest"></local-data> -->
-      <manifest-data manifests="{{manifests}}" exclusions="{{exclusions}}" on-exclusions="_onData"></manifest-data>
-    </div>
-  </simple-tabs>
-</app-tools>
-
+  </div>
+  <!-- -->
+  <icon style="position: fixed; right: 0px; bottom: 0px; z-index: 10000;" on-click="_onToolsClick">assessment</icon>
+  <div tools open$="{{toolsOpen}}">
+    <simple-tabs>
+      <div tab="Handle Explorer">
+        <handle-explorer arc="{{arc}}"></handle-explorer>
+      </div>
+      <div tab="Xen Explorer">
+        <xen-explorer></xen-explorer>
+      </div>
+      <!-- <div tab="Manifests">
+        <manifest-data manifests="{{manifests}}" exclusions="{{exclusions}}" on-exclusions="_onData"></manifest-data>
+      </div> -->
+    </simple-tabs>
+  </div>
 `;
 
-const log = Xen.logFactory('ShellUi', '#294740');
+const log = Xen.logFactory('ShellUi', '#ac6066');
 
 class ShellUi extends Xen.Debug(Xen.Base, log) {
   static get observedAttributes() {
-    return ['config', 'manifests', 'exclusions', 'users', 'user', 'friends', 'avatars',
-        'key', 'arc', 'description', 'share', 'theme', 'open', 'requestnewuser'];
-  }
-  get css() {
-    return Css;
-  }
-  get main() {
-    return Main;
+    return ['users', 'user', 'profile', 'key', 'arc', 'title', 'share', 'search', 'glows', 'showhint'];
   }
   get template() {
-    return `
-      ${this.css}
-      ${this.main}
-    `;
+    return template;
   }
   _getInitialState() {
     return {
-      shellPath,
-      userPickerOpen: false,
-      sharePickerOpen: false,
-      launcherUrl: `${location.origin}${location.pathname}`,
-      micHidden: true
+      barState: 'over',
+      toolState: 'main',
+      // TODO(sjmiles): include manifest or other directives?
+      launcherHref: `${location.origin}${location.pathname}`,
+      toolsOpen: false
     };
   }
-  _update(props, state, lastProps, lastState) {
-    const {config, key, user, description, requestnewuser} = props;
-    const {plan, plans, search} = state;
-    if (config && config !== lastProps.config) {
-      this._consumeConfig(config, state);
+  _render(props, state, oldProps, oldState) {
+    if (state.barState === 'peek') {
+      state.toolState = 'main';
     }
-    if (config) {
-      localStorage.setItem(Const.LOCALSTORAGE.tools, state.toolsVisible ? 'open' : 'closed');
+    const {toolState, barState, toolsOpen} = state;
+    const barOpen = barState === 'open';
+    const mainOpen = toolState === 'main';
+    const searchOpen = toolState === 'search';
+    const settingsOpen = toolState === 'settings';
+    const userOpen = toolState === 'user';
+    const renderModel = {
+      scrimOpen: barOpen || toolsOpen,
+      mainToolbarOpen: mainOpen,
+      searchToolbarOpen: searchOpen,
+      suggestionsContentOpen: mainOpen || searchOpen,
+      settingsToolbarOpen: settingsOpen || userOpen,
+      settingsContentOpen: settingsOpen,
+      userContentOpen: userOpen,
+      glows: Boolean(props.glows)
+    };
+    if (state.userPickerOpen && state.userPickerOpen !== oldState.userPickerOpen) {
+      renderModel.contentsScrollTop = 0;
     }
-    if (user) {
-      localStorage.setItem(Const.LOCALSTORAGE.user, user.id);
-      ArcsUtils.setUrlParam('user', user.id);
-      state.selectedUser = user.id;
+    const {user} = props;
+    if (user && user.info) {
+      renderModel.avatar_title = user.info.name;
+      const avatar_style = user.info.avatar ? `background-image: url("${user.info.avatar}");` : '';
+      renderModel.avatar_style = avatar_style;
     }
-    if (key) {
-      ArcsUtils.setUrlParam('arc', key);
-    }
-    if (requestnewuser && requestnewuser!=lastProps.requestnewuser) {
-      this._setState({userPickerOpen: true});
-    }
-    this._fire('exclusions', state.exclusions);
+    return [props, state, renderModel];
   }
-  _consumeConfig(config) {
-    this._setState({
-      toolsVisible: config.arcsToolsVisible
-    });
+  _didRender(props, {toolState}, oldProps, oldState) {
+    if (toolState === 'search' && oldState.toolState !== 'search') {
+      const input = this.host.querySelector('input');
+      // TODO(sjmiles): without timeout, rendering gets destroyed (Blink bug?)
+      setTimeout(() => {
+        input.focus();
+        input.select();
+      }, 300);
+    }
   }
-  _render(props, state) {
-    const {config, user, key, theme} = props;
-    const avatarUrl = user && user.avatar ? user.avatar : `${shellPath}/assets/avatars/user (0).png`;
-    const render = {
-      avatarStyle: `background: url('${avatarUrl}') center no-repeat; background-size: cover;`,
-      avatarTitle: user && user.name || '',
-      modalShown: Boolean(state.userPickerOpen || state.sharePickerOpen || state.menuOpen),
-      shellStyle: {
-        backgroundColor: theme && theme.mainBackground,
-        color: theme && theme.mainColor
+  _onScrimClick() {
+    if (this._state.toolsOpen) {
+      this._setState({toolsOpen: false});
+    } else {
+      this._collapseBar();
+    }
+  }
+  _onTouchbarClick() {
+    if (this._state.barState !== 'over') {
+      this._setState({barState: 'open'});
+    }
+  }
+  _onBarClick(e) {
+    const wasAnchorClick = e.composedPath().find(n => n.localName === 'a');
+    this._setState({barState: wasAnchorClick ? 'peek' : 'open'});
+  }
+  _onBarEnter(e) {
+    if (this._state.barState === 'peek') {
+      let barState = 'over';
+      if (this._props.showhint && this._state.toolState === 'main') {
+        barState = 'hint';
       }
-    };
-    return [props, state, render];
-  }
-  _didRender(props, {toolsVisible}) {
-    Xen.Template.setBoolAttribute(this, 'expanded', Boolean(toolsVisible));
-  }
-  _onData(e, data) {
-    if (this._setState({[e.type]: data})) {
-      log(data);
+      this._setState({barState});
     }
   }
-  _onOpen(e, open) {
-    this._fire('open', open);
-  }
-  _onToolsClick() {
-    const {toolsVisible} = this._state;
-    this._setState({toolsVisible: !toolsVisible, menuOpen: false});
-  }
-  _onSelectUser() {
-    this._setState({userPickerOpen: true});
-  }
-  _onSelectedUser(e, selectedUser) {
-    this._fire('select-user', selectedUser);
-    this._setState({userPickerOpen: false});
-  }
-  _onNewUser(e, newUser) {
-    this._setState({userPickerOpen: false});
-    this._fire('new-user', newUser);
-  }
-  // TODO(sjmiles): need to collapse (at least some) logic into update to handle arc correctly
-  _onSearch(e, {search}) {
-    this._setState({search});
-    this._fire('search', search);
-  }
-  _onMenuClick(e) {
-    this._setState({menuOpen: true});
-  }
-  _onMenuClose() {
-    this._setState({menuOpen: false});
-  }
-  _onScrimClick(e) {
-    if (e.target === e.currentTarget) {
-      this._setState({
-        userPickerOpen: false,
-        sharePickerOpen: false,
-        menuOpen: false
-      });
+  _onBarLeave(e) {
+    if ((window.innerHeight - e.clientY) > 10) {
+      switch (this._state.barState) {
+        case 'over':
+        case 'hint':
+          this._collapseBar();
+          break;
+      }
     }
   }
-  _onSuggest(e, suggest) {
-    this._fire('step', suggest);
+  _collapseBar() {
+    let barState = 'peek';
+    if (this._props.showhint) {
+      barState = 'hint';
+    }
+    this._setState({barState});
+  }
+  _onSearchClick(e) {
+    e.stopPropagation();
+    this._setState({toolState: 'search', barState: 'open'});
+  }
+  _onMainClick(e) {
+    e.stopPropagation();
+    let {toolState} = this._state;
+    switch (toolState) {
+      default:
+        toolState = 'main';
+        break;
+    }
+    this._setState({toolState, barState: 'open'});
+  }
+  _onSettingsClick(e) {
+    e.stopPropagation();
+    this._setState({toolState: 'settings', barState: 'open'});
+  }
+  _onChooseSuggestion(e, suggestion) {
+    e.stopPropagation();
+    this._setState({barState: 'peek'});
+    // TODO(sjmiles): wait for animation to complete to reduce jank
+    setTimeout(() => this._fire('suggestion', suggestion), 300);
+  }
+  _onSelectUser(e, user) {
+    this._fire('select-user', user.id);
+    this._setState({userPickerOpen: false});
   }
   _onShare(e, share) {
     this._fire('share', share);
   }
-  _onMicStart() {
-    this._setState({micHidden: false});
+  _onToolsClick() {
+    this._setState({toolsOpen: !this._state.toolsOpen});
   }
-  _onMicEnd(e, finalTranscript) {
-    const lettersOnly = s => s.toLowerCase().replace(/[^A-Za-z0-9 ]/g, '');
-    this._setState({micHidden: true});
-    finalTranscript = lettersOnly(finalTranscript);
-    if (!finalTranscript) {
-      return;
-    }
-    log(`voice trigger: [${finalTranscript}]`);
-    // see if `node` is a better match for `search` than `match`
-    const findMatch = (node, trigger, search, match) => {
-      //log(`node "${node.localName}" has trigger "${trigger}"`);
-      if (trigger.includes(search)) {
-        const diff = trigger.length - search.length;
-        if (!match || match.diff > diff) {
-          log(`matched "${trigger}"`);
-          match = {diff, node};
-        }
-      }
-      return match;
-    };
-    // find all nodes with `trigger` attribute
-    let nodes = document.querySelectorAll('[trigger]');
-    nodes = Array.from(nodes).concat(Array.from(this.host.querySelectorAll('[trigger]')));
-    // find the node that contains `finalTranscript` with the least number of non-matching characters
-    let match;
-    for (const node of nodes) {
-      const trigger = lettersOnly(node.getAttribute('trigger'));
-      match = findMatch(node, trigger, finalTranscript, match);
-    }
-    // if we matched, value is the transcript
-    if (match) {
-      match.value = finalTranscript;
-    }
-    // if not, look for a prefix-match
-    else {
-      for (const node of nodes) {
-        const trigger = lettersOnly(node.getAttribute('trigger'));
-        if (finalTranscript.startsWith(trigger)) {
-          match = {
-            node,
-            value: finalTranscript.slice(trigger.length).trim(),
-          };
-          log(`matched prefix "${trigger}"`);
-          break;
-        }
-      }
-    }
-    // if there is a matching node, install value and click it
-    if (match) {
-      match.node.value = match.value;
-      match.node.click();
-      return;
-    }
-    // find a suggestion matching finalTranscript?
-    const suggestions = document.querySelectorAll('suggestion-element');
-    match = null;
-    for (const suggestion of suggestions) {
-      const trigger = suggestion.textContent.toLowerCase();
-      match = findMatch(suggestion, trigger, finalTranscript, match);
-    }
-    // if there is a matching suggestion, click it
-    if (match) {
-      log(`voice: matched suggestion "${match.node.textContent}"`);
-      match.node.click();
-      return;
-    }
-    // if all else fails, use finalTranscript as suggestions search
-    this._setState({search: finalTranscript});
+  _onAvatarClick() {
+    this._setState({userPickerOpen: !this._state.userPickerOpen});
+  }
+  _onSearchChange(e) {
+    const search = e.target.value;
+    // don't re-plan until typing has stopped for this length of time
+    const delay = 500;
+    const commit = () => this._commitSearch(search);
+    this._searchDebounce = ArcsUtils.debounce(this._searchDebounce, commit, delay);
+  }
+  _onResetSearch(e) {
+    this._commitSearch('*');
+  }
+  _commitSearch(search) {
+    search = search || '';
+    // TODO(sjmiles): removed this check so speech-input can update the search box, is it harmful?
+    this._fire('search', search);
   }
 }
 

@@ -14,14 +14,14 @@ import Arcs from './arcs.js';
 const log = Xen.logFactory('ArcsUtils', '#4a148c');
 
 const ArcsUtils = {
-  createArc({id, urlMap, slotComposer, context, loader}) {
+  createArc({id, urlMap, slotComposer, context, loader, storageKey}) {
+    const pecFactory = ArcsUtils.createPecFactory(urlMap);
+    return new Arcs.Arc({id, pecFactory, slotComposer, context, loader, storageKey});
+  },
+  createPecFactory(urlMap) {
     // worker paths are relative to worker location, remap urls from there to here
     const remap = ArcsUtils._expandUrls(urlMap);
-    const pecFactory = ArcsUtils._createPecWorker.bind(null, urlMap[`worker-entry.js`], remap);
-    return new Arcs.Arc({id, pecFactory, slotComposer, context, loader});
-  },
-  createPlanificator(arc) {
-    return new Arcs.Planificator(arc);
+    return ArcsUtils._createPecWorker.bind(null, urlMap[`worker-entry.js`], remap);
   },
   _expandUrls(urlMap) {
     let remap = {};
@@ -43,7 +43,7 @@ const ArcsUtils = {
     worker.postMessage({id: `${id}:inner`, base: map}, [channel.port1]);
     return channel.port2;
   },
-  createUrlMap(cdnRoot) {
+  createUrlMap(shellRoot) {
     // Module import not available in workers yet, we have to use the build for now
     //const lib = document.URL.includes('debug') ? 'source' : 'build';
     const lib = 'build';
@@ -52,19 +52,40 @@ const ArcsUtils = {
       // side with fully-qualified URL when loading from worker context
       '/': '/',
       './': './',
-      'assets': `${cdnRoot}/assets`,
-      'https://$cdn': `${cdnRoot}`,
+      'assets': `${shellRoot}/assets`,
+      'https://$shell': `${shellRoot}`,
+      // BC
+      'https://$cdn': `${shellRoot}`,
       // TODO(sjmiles): map must always contain (explicitly, no prefixing) a mapping for `worker-entry-cdn.js`
-      'worker-entry.js': `${cdnRoot}/${lib}/worker-entry.js`
+      'worker-entry.js': `${shellRoot}/${lib}/worker-entry.js`
     };
   },
+  async makePlans(arc, timeout) {
+    const generations = [];
+    const planner = new Arcs.Planner();
+    planner.init(arc);
+    const plans = await planner.suggest(timeout || 5000, generations);
+    plans.generations = generations;
+    return plans;
+  },
   async parseManifest(fileName, content, loader) {
-    return await Arcs.Manifest.parse(content,
-      {id: null, fileName, loader, registry: null, position: {line: 1, column: 0}});
+    return await Arcs.Manifest.parse(content, {loader, fileName});
+    //return await Arcs.Manifest.parse(content,
+    //  {id: null, fileName, loader, registry: null, position: {line: 1, column: 0}});
+  },
+  getUrlParam(name) {
+    // TODO(sjmiles): memoize url
+    const url = new URL(document.location.href);
+    return url.searchParams.get(name);
   },
   setUrlParam(name, value) {
-    let url = new URL(document.location.href);
-    url.searchParams.set(name, value);
+    // TODO(sjmiles): memoize url
+    const url = new URL(document.location.href);
+    if (!value) {
+      url.searchParams.delete(name);
+    } else {
+      url.searchParams.set(name, value);
+    }
     window.history.replaceState({}, '', decodeURIComponent(url.href));
   },
   // TODO: move this randomId to the backend.
@@ -116,13 +137,13 @@ const ArcsUtils = {
       ;
   },
   _getHandleDescription(name, tags, user, owner) {
-      let proper = (user === owner) ? 'my' : `${owner}'s`;
-      if (tags && tags.length) {
-        return `${proper} ${tags[0].substring(1)}`;
-      }
-      if (name) {
-        return `${proper} ${name}`;
-      }
+    let proper = (user === owner) ? 'my' : `${owner}'s`;
+    if (tags && tags.length) {
+      return `${proper} ${tags[0].substring(1)}`;
+    }
+    if (name) {
+      return `${proper} ${name}`;
+    }
   },
   async _requireHandle(arc, type, name, id, tags) {
     let store = arc.context.findStorageById(id);
@@ -133,34 +154,39 @@ const ArcsUtils = {
     return store;
   },
   metaTypeFromType(type) {
-    return JSON.stringify(type ? type.resolvedType().toLiteral() : null);
+    return JSON.stringify(type ? type.toLiteral() : null);
   },
   typeFromMetaType(metaType) {
     return Arcs.Type.fromLiteral(JSON.parse(metaType));
   },
   async getHandleData(handle) {
-    return handle.toList ? await handle.toList() : {id: handle.id, rawData: handle._stored && handle._stored.rawData || {}};
+    //return handle.toList ? await handle.toList() : {id: handle.id, rawData: handle._stored && handle._stored.rawData || {}};
+    return handle.type.isSetView ? await handle.toList() : await handle.get();
   },
-  async setHandleData(handle, data) {
-    await this.clearHandle(handle);
+  setHandleData(handle, data) {
+    this.clearHandle(handle);
     this.addHandleData(handle, data);
   },
-  async clearHandle(handle) {
+  clearHandle(handle) {
     if (handle.toList) {
-      let entities = await handle.toList();
+      // TODO(sjmiles): if we go async here, we have nasty re-entry issues, so
+      // hacking handle API to fix for now. Probably we need low-level support
+      // for 'setHandleData' above.
+      const entities = [...handle._items.values()];
+      //const entities = await handle.toList();
       entities.forEach(e => handle.remove(e.id));
     } else {
-      // TODO(sjmiles): necessary? correct semantics?
       handle.clear();
     }
   },
   addHandleData(handle, data) {
-    if (handle.toList) {
+    if (handle.type.isSetView) {
       data && Object.values(data).forEach(e => handle.store(e));
     } else {
       data && handle.set(data);
     }
   },
+  /*
   getUserProfileKeys(user) {
     return ArcsUtils.intersectArcKeys(user.arcs, user.profiles);
   },
@@ -173,6 +199,7 @@ const ArcsUtils = {
     // The corrected set is the intersection of `user.arcs` and `user.[profiles|shares]`.
     return arcs && other ? Object.keys(arcs).filter(key => Boolean(other[key])) : [];
   },
+  */
   // usage: this._debouncer = debounce(this._debouncer, task, 100);
   debounce(key, action, delay) {
     if (key) {
