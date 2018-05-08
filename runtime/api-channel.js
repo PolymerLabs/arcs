@@ -301,9 +301,6 @@ class PECInnerPort extends APIPort {
     super(messagePort, 'i');
 
     this.registerHandler('Stop', {});
-    // particleFunction needs to be eval'd in context or it won't work.
-    this.registerHandler('DefineParticle',
-      {particleDefinition: this.Direct, particleFunction: this.Direct});
     this.registerInitializerHandler('DefineHandle', {type: this.ByLiteral(Type), name: this.Direct});
     this.registerInitializerHandler('InstantiateParticle',
       {id: this.Direct, spec: this.ByLiteral(ParticleSpec), handles: this.Map(this.Direct, this.Mapped)});
