@@ -34,7 +34,7 @@ import {Speculator} from './speculator.js';
 import Tracing from '../tracelib/trace.js';
 import StrategyExplorerAdapter from './debug/strategy-explorer-adapter.js';
 
-class Planner {
+export class Planner {
   // TODO: Use context.arc instead of arc
   init(arc, {strategies, ruleset} = {}) {
     this._arc = arc;
@@ -218,5 +218,3 @@ Planner.ResolutionStrategies = [
 ];
 
 Planner.AllStrategies = Planner.InitializationStrategies.concat(Planner.ResolutionStrategies);
-
-export {Planner};

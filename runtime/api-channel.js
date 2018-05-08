@@ -242,7 +242,7 @@ class APIPort {
   }
 }
 
-class PECOuterPort extends APIPort {
+export class PECOuterPort extends APIPort {
   constructor(messagePort) {
     super(messagePort, 'o');
 
@@ -291,7 +291,7 @@ class PECOuterPort extends APIPort {
   }
 }
 
-class PECInnerPort extends APIPort {
+export class PECInnerPort extends APIPort {
   constructor(messagePort) {
     super(messagePort, 'i');
 
@@ -338,5 +338,3 @@ class PECInnerPort extends APIPort {
     
   }
 }
-
-export {PECOuterPort, PECInnerPort};

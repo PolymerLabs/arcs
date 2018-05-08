@@ -12,7 +12,7 @@ import assert from '../platform/assert-web.js';
 import {Schema} from './schema.js';
 import TypeChecker from './recipe/type-checker.js';
 
-class TypeVariable {
+export class TypeVariable {
   constructor(name, canWriteSuperset, canReadSubset) {
     assert(typeof name == 'string');
     assert(canWriteSuperset == null || canWriteSuperset instanceof Type);
@@ -181,5 +181,3 @@ class TypeVariable {
     return (this._resolution && this._resolution.isResolved());
   }
 }
-
-export {TypeVariable};

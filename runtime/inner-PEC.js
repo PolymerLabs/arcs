@@ -15,7 +15,7 @@ import assert from '../platform/assert-web.js';
 import {PECInnerPort} from './api-channel.js';
 import {StorageProxy} from './storage-proxy.js';
 
-class InnerPEC {
+export class InnerPEC {
   constructor(port, idBase, loader) {
     this._apiPort = new PECInnerPort(port);
     this._particles = [];
@@ -254,5 +254,3 @@ class InnerPEC {
     return Promise.all(this._pendingLoads.concat(this._particles.map(particle => particle.idle))).then(() => this.idle);
   }
 }
-
-export {InnerPEC};

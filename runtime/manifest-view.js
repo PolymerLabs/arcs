@@ -9,7 +9,7 @@
 
 import assert from '../platform/assert-web.js';
 
-class ManifestView {
+export class ManifestView {
   constructor() {
     this._version = null;
     this._id = null;
@@ -49,5 +49,3 @@ class ManifestView {
     // TODO: duplicate entities? entities have id/rawData?
   }
 }
-
-export {ManifestView};

@@ -36,7 +36,7 @@ class MessageEvent {
   }
 }
 
-class MessageChannel {
+export class MessageChannel {
   constructor() {
     this.port1 = new MessagePort(this, 0, 1);
     this.port2 = new MessagePort(this, 1, 0);
@@ -56,5 +56,3 @@ class MessageChannel {
     }
   }
 }
-
-export {MessageChannel};

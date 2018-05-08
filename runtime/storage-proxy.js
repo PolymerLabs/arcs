@@ -11,7 +11,7 @@
 
 import assert from '../platform/assert-web.js';
 
-class StorageProxy {
+export class StorageProxy {
   constructor(id, type, port, pec, name, version) {
     this._id = id;
     this._type = type;
@@ -186,5 +186,3 @@ class StorageProxy {
     this._port.HandleClear({handle: this, particleId});
   }
 }
-
-export {StorageProxy};

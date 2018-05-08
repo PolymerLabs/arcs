@@ -11,7 +11,7 @@
 import assert from '../platform/assert-web.js';
 import {Type} from './type.js';
 
-class TupleFields {
+export class TupleFields {
   constructor(fieldList) {
     this.fieldList = fieldList;
   }
@@ -38,5 +38,3 @@ class TupleFields {
     return true;
   }
 }
-
-export {TupleFields};

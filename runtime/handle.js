@@ -234,10 +234,8 @@ class Variable extends Handle {
   }
 }
 
-function handleFor(proxy, isSet, name, particleId, canRead = true, canWrite = true) {
+export function handleFor(proxy, isSet, name, particleId, canRead = true, canWrite = true) {
   return (isSet || (isSet == undefined && proxy.type.isSetView))
       ? new Collection(proxy, name, particleId, canRead, canWrite)
       : new Variable(proxy, name, particleId, canRead, canWrite);
 }
-
-export {handleFor};
