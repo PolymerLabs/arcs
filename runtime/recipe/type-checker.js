@@ -5,7 +5,7 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import Type from '../type.js';
+import {Type} from '../type.js';
 import {TypeVariable} from '../type-variable.js';
 import assert from '../../platform/assert-web.js';
 

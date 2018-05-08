@@ -9,7 +9,7 @@
  */
 
 import assert from '../platform/assert-web.js';
-import Type from './type.js';
+import {Type} from './type.js';
 import {Entity} from './entity.js';
 
 class Schema {

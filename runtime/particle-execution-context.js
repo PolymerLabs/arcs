@@ -7,7 +7,7 @@
 // http://polymer.github.io/PATENTS.txt
 'use strict';
 
-class ParticleExecutionContext {
+export class ParticleExecutionContext {
   constructor() {
   }
 
@@ -38,4 +38,3 @@ class ParticleExecutionContext {
   }
 }
 
-export default ParticleExecutionContext;

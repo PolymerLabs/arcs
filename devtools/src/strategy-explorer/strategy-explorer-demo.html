@@ -14,14 +14,14 @@ http://polymer.github.io/PATENTS.txt
 
 <script type="module">
 import {Arc} from '../../../runtime/arc.js';
-import Loader from '../../../runtime/browser-loader.js';
+import {BrowserLoader} from '../../../runtime/browser-loader.js';
 import {Manifest} from '../../../runtime/manifest.js';
 import {Planner} from '../../../runtime/planner.js';
 import {SlotComposer} from '../../../runtime/slot-composer.js';
 import StrategyExplorerAdapter from '../../../runtime/debug/strategy-explorer-adapter.js';
 
 (async () => {
-  let loader = new Loader();
+  let loader = new BrowserLoader();
   let manifest = await Manifest.load('../../../shell/artifacts/Products/Products.recipes', loader)
   let a = new Arc({
     id: "test-plan-arc",

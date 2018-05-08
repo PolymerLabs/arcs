@@ -9,7 +9,6 @@
  */
 'use strict';
 
-import runtime from './runtime.js';
 import tracing from '../tracelib/trace.js';
 import assert from '../platform/assert-web.js';
 
@@ -246,4 +245,3 @@ export class StateChanges {
   }
 }
 
-export default {Particle, ViewChanges, SlotChanges, StateChanges};

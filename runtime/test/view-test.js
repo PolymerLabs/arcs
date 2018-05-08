@@ -9,21 +9,21 @@
  */
 'use strict';
 
-import runtime from '../runtime.js';
 import {Arc} from '../arc.js';
 import {assert} from './chai-web.js';
 import {SlotComposer} from '../slot-composer.js';
 import {handleFor} from '../handle.js';
 import {Shape} from '../shape.js';
-import Type from '../type.js';
+import {Type} from '../type.js';
 import {Manifest} from '../manifest.js';
 import {Loader} from '../loader.js';
 import StorageProviderFactory from '../storage/storage-provider-factory.js';
+import {testEntityClass} from './test-util.js';
 
 let loader = new Loader();
 
 const slotComposer = new SlotComposer({rootContext: 'test', affordance: 'mock'});
-const Bar = runtime.testing.testEntityClass('Bar');
+const Bar = testEntityClass('Bar');
 
 describe('View', function() {
 

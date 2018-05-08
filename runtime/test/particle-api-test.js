@@ -13,7 +13,7 @@ import {assert} from './chai-web.js';
 import * as util from './test-util.js';
 import {Arc} from '../arc.js';
 import {MessageChannel} from '../message-channel.js';
-import InnerPec from '../inner-PEC.js';
+import {InnerPEC} from '../inner-PEC.js';
 import {Loader} from '../loader.js';
 
 async function loadFilesIntoNewArc(fileMap) {
@@ -32,7 +32,7 @@ async function loadFilesIntoNewArc(fileMap) {
   let manifest = await Manifest.load('manifest', loader, {registry});
   let pecFactory = function(id) {
     let channel = new MessageChannel();
-    new InnerPec(channel.port1, `${id}:inner`, loader);
+    new InnerPEC(channel.port1, `${id}:inner`, loader);
     return channel.port2;
   };
   let arc = new Arc({id: 'test', pecFactory, loader});
