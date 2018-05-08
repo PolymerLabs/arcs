@@ -783,7 +783,7 @@ ${e.message}
             hostedParticle.implFile = loader.join(manifest.fileName, hostedParticle.implFile);
           }
           const hostedParticleLiteral = hostedParticle.clone().toLiteral();
-          let particleSpecHash = digest(JSON.stringify(hostedParticleLiteral));
+          let particleSpecHash = await digest(JSON.stringify(hostedParticleLiteral));
           let id = `${manifest.generateID()}:${particleSpecHash}:${hostedParticle.name}`;
           targetHandle = recipe.newHandle();
           targetHandle.fate = 'copy';
