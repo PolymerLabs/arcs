@@ -194,15 +194,6 @@ class OuterPEC extends ParticleExecutionContext {
       this._apiPort.DefineHandle(handle, {type: handle.type.resolvedType(), name: handle.name});
     });
 
-    // TODO: Can we just always define the particle and map a handle for use in later
-    //       calls to InstantiateParticle?
-    if (spec._model._isInline) {
-      this._apiPort.DefineParticle({
-        particleDefinition: spec._model._inlineDefinition,
-        particleFunction: spec._model._inlineUpdateFunction
-      });
-    }
-
     // TODO: rename this concept to something like instantiatedParticle, handle or registration.
     this._apiPort.InstantiateParticle(particleSpec, {id, spec, handles});
     return particleSpec;
