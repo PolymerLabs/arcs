@@ -8,7 +8,7 @@
 
 'use strict';
 
-import InnerPec from './inner-PEC.js';
+import {InnerPEC} from './inner-PEC.js';
 import {MessageChannel} from './message-channel.js';
 import {Loader} from './loader.js';
 
@@ -16,7 +16,7 @@ import {Loader} from './loader.js';
 // separate in-process browser pec-factory.
 function FakePecFactory(id) {
   let channel = new MessageChannel();
-  new InnerPec(channel.port1, `${id}:inner`, new Loader());
+  new InnerPEC(channel.port1, `${id}:inner`, new Loader());
   return channel.port2;
 }
 

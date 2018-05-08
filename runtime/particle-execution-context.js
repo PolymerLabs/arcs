@@ -38,4 +38,4 @@ class ParticleExecutionContext {
   }
 }
 
-export default ParticleExecutionContext;
+export {ParticleExecutionContext};

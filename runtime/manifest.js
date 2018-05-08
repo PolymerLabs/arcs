@@ -15,7 +15,7 @@ import {ParticleSpec} from './particle-spec.js';
 import {Schema} from './schema.js';
 import Search from './recipe/search.js';
 import {Shape} from './shape.js';
-import Type from './type.js';
+import {Type} from './type.js';
 import util from './recipe/util.js';
 import StorageProviderFactory from './storage/storage-provider-factory.js';
 import {ManifestMeta} from './manifest-meta.js';

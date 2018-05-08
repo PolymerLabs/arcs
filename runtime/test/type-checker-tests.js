@@ -13,7 +13,7 @@
 import {assert} from './chai-web.js';
 
 import {Schema} from '../schema.js';
-import Type from '../type.js';
+import {Type} from '../type.js';
 import TypeChecker from '../recipe/type-checker.js';
 import {TypeVariable} from '../type-variable.js';
 import {Manifest} from '../manifest.js';

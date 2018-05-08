@@ -387,7 +387,7 @@ addType('Relation', 'entities');
 addType('Interface', 'shape');
 addType('Tuple', 'fields');
 
-export default Type;
+export {Type};
 
 import {Shape} from './shape.js';
 import {Schema} from './schema.js';

@@ -9,7 +9,6 @@
  */
 'use strict';
 
-import runtime from './runtime.js';
 import tracing from '../tracelib/trace.js';
 import assert from '../platform/assert-web.js';
 
@@ -17,7 +16,7 @@ import assert from '../platform/assert-web.js';
  * A basic particle. For particles that provide UI, you may like to
  * instead use DOMParticle.
  */
-export class Particle {
+class Particle {
   constructor(capabilities) {
     this.spec = this.constructor.spec;
     if (this.spec.inputs.length == 0)
@@ -208,7 +207,7 @@ export class Particle {
   }
 }
 
-export class ViewChanges {
+class ViewChanges {
   constructor(views, names, type) {
     if (typeof names == 'string')
       names = [names];
@@ -227,7 +226,7 @@ export class ViewChanges {
   }
 }
 
-export class SlotChanges {
+class SlotChanges {
   constructor() {
   }
   register(particle, f) {
@@ -235,7 +234,7 @@ export class SlotChanges {
   }
 }
 
-export class StateChanges {
+class StateChanges {
   constructor(states) {
     if (typeof states == 'string')
       states = [states];
@@ -246,4 +245,4 @@ export class StateChanges {
   }
 }
 
-export default {Particle, ViewChanges, SlotChanges, StateChanges};
+export {Particle, ViewChanges, SlotChanges, StateChanges};
