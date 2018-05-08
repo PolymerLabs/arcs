@@ -95,11 +95,6 @@ class APIPort {
       unconvert: a => a
     };
 
-    this.Stringify = {
-      convert: a => a.toString(),
-      unconvert: a => eval(a)
-    };
-
     this.LocalMapped = {
       convert: a => this._mapper.maybeCreateMappingForThing(a),
       unconvert: a => this._mapper.thingForIdentifier(a)
