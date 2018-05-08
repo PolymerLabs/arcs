@@ -7,8 +7,8 @@
 
 import crypto from 'crypto';
 
-export default function(str) {
+export default async function(str) {
   let sha = crypto.createHash('sha1');
   sha.update(str);
-  return sha.digest('hex');
+  return Promise.resolve().then(() => sha.digest('hex'));
 }

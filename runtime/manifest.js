@@ -783,7 +783,7 @@ ${e.message}
             hostedParticle.implFile = loader.join(manifest.fileName, hostedParticle.implFile);
           }
           const hostedParticleLiteral = hostedParticle.clone().toLiteral();
-          let particleSpecHash = digest(JSON.stringify(hostedParticleLiteral));
+          let particleSpecHash = await digest(JSON.stringify(hostedParticleLiteral));
           let id = `${manifest.generateID()}:${particleSpecHash}:${hostedParticle.name}`;
           targetHandle = recipe.newHandle();
           targetHandle.fate = 'copy';
@@ -935,7 +935,7 @@ ${e.message}
       // array of entities in above map rather than mapping again below, (2) we
       // could hash the object tree data directly rather than stringifying.
       if (!item.id && !hasSerializedId) {
-        let entityHash = digest(JSON.stringify(entities.map(entity => entity.rawData)));
+        let entityHash = await digest(JSON.stringify(entities.map(entity => entity.rawData)));
         id = `${id}:${entityHash}`;
       }
     }
