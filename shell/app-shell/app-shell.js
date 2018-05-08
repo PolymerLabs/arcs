@@ -131,7 +131,7 @@ import 'https://sjmiles.github.io/arcs-stories/0.4/GitHubDash/GitHubDash.recipes
 import 'https://sjmiles.github.io/arcs-stories/0.3/TV/TV.recipes'
 import 'https://sjmiles.github.io/arcs-stories/0.3/PlaidAccounts/PlaidAccounts.recipes'
 import '${window.shellPath}/artifacts/canonical.manifest'
-import '${window.shellPath}/artifacts/0.4/Arcs/Arcs.recipes'
+import '${window.shellPath}/artifacts/Arcs/Arcs.recipes'
       `
     };
   }
