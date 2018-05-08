@@ -6,4 +6,4 @@
 // http://polymer.github.io/PATENTS.txt
 
 import path from 'path';
-export default path;
+export {path};

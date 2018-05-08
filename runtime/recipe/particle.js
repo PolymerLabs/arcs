@@ -5,7 +5,7 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import assert from '../../platform/assert-web.js';
+import {assert} from '../../platform/assert-web.js';
 import {SlotConnection} from './slot-connection.js';
 import {HandleConnection} from './handle-connection.js';
 import * as util from './util.js';

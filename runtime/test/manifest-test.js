@@ -9,10 +9,10 @@
  */
 
 import {Manifest} from '../manifest.js';
-import parser from '../build/manifest-parser.js';
+import {parser} from '../build/manifest-parser.js';
 import {assert} from './chai-web.js';
-import fs from '../../platform/fs-web.js';
-import path from '../../platform/path-web.js';
+import {fs} from '../../platform/fs-web.js';
+import {path} from '../../platform/path-web.js';
 
 async function assertRecipeParses(input, result) {
   // Strip common leading whitespace.

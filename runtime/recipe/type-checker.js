@@ -7,7 +7,7 @@
 
 import {Type} from '../type.js';
 import {TypeVariable} from '../type-variable.js';
-import assert from '../../platform/assert-web.js';
+import {assert} from '../../platform/assert-web.js';
 
 export class TypeChecker {
 

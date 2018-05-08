@@ -9,7 +9,7 @@
  */
 
 import {assert} from '../../runtime/test/chai-web.js';
-import Tracing from '../trace.js';
+import {Tracing} from '../trace.js';
 
 /**
  * For an explainer of event types and exact format google 'Trace Event Format',

@@ -9,7 +9,7 @@
  */
 'use strict';
 
-import assert from '../platform/assert-web.js';
+import {assert} from '../platform/assert-web.js';
 import {Type} from './type.js';
 import {handleFor} from './handle.js';
 import {OuterPEC} from './outer-PEC.js';

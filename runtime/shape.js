@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import assert from '../platform/assert-web.js';
+import {assert} from '../platform/assert-web.js';
 
 // ShapeHandle {name, direction, type}
 // Slot {name, direction, isRequired, isSet}

@@ -9,8 +9,8 @@
  */
 'use strict';
 
-import tracing from '../tracelib/trace.js';
-import assert from '../platform/assert-web.js';
+import {Tracing} from '../tracelib/trace.js';
+import {assert} from '../platform/assert-web.js';
 
 /** @class Particle
  * A basic particle. For particles that provide UI, you may like to
@@ -159,8 +159,8 @@ export class Particle {
   on(views, names, kind, f) {
     if (typeof names == 'string')
       names = [names];
-    let trace = tracing.start({cat: 'particle', names: this.constructor.name + '::on', args: {view: names, event: kind}});
-    names.forEach(name => views.get(name).on(kind, tracing.wrap({cat: 'particle', name: this.constructor.name, args: {view: name, event: kind}}, f), this));
+    let trace = Tracing.start({cat: 'particle', names: this.constructor.name + '::on', args: {view: names, event: kind}});
+    names.forEach(name => views.get(name).on(kind, Tracing.wrap({cat: 'particle', name: this.constructor.name, args: {view: name, event: kind}}, f), this));
     trace.end();
   }
 

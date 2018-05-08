@@ -9,7 +9,7 @@
  */
 'use strict';
 
-import DevtoolsChannel from '../../platform/devtools-channel-web.js';
+import {DevtoolsChannel} from '../../platform/devtools-channel-web.js';
 
 let instance = null;
 

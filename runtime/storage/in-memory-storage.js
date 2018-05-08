@@ -7,8 +7,8 @@
 // http://polymer.github.io/PATENTS.txt
 'use strict';
 
-import assert from '../../platform/assert-web.js';
-import tracing from '../../tracelib/trace.js';
+import {assert} from '../../platform/assert-web.js';
+import {Tracing} from '../../tracelib/trace.js';
 import {StorageProviderBase} from './storage-provider-base.js';
 import {KeyBase} from './key-base.js';
 
@@ -133,7 +133,7 @@ class InMemoryCollection extends InMemoryStorageProvider {
   }
 
   async store(entity) {
-    let trace = tracing.start({cat: 'handle', name: 'InMemoryCollection::store', args: {name: this.name}});
+    let trace = Tracing.start({cat: 'handle', name: 'InMemoryCollection::store', args: {name: this.name}});
     let entityWasPresent = this._items.has(entity.id);
     if (entityWasPresent && (JSON.stringify(this._items.get(entity.id)) == JSON.stringify(entity))) {
       trace.end({args: {entity}});
@@ -147,7 +147,7 @@ class InMemoryCollection extends InMemoryStorageProvider {
   }
 
   async remove(id) {
-    let trace = tracing.start({cat: 'handle', name: 'InMemoryCollection::remove', args: {name: this.name}});
+    let trace = Tracing.start({cat: 'handle', name: 'InMemoryCollection::remove', args: {name: this.name}});
     if (!this._items.has(id)) {
       return;
     }

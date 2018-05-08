@@ -6,4 +6,4 @@
 // http://polymer.github.io/PATENTS.txt
 
 import Mocha from 'mocha';
-export default new Mocha();
+export const mocha = new Mocha();

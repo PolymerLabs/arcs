@@ -6,4 +6,4 @@
 // http://polymer.github.io/PATENTS.txt
 
 import vm from 'vm';
-export default vm;
+export {vm};

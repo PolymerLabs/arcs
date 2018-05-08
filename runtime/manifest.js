@@ -8,8 +8,8 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import assert from '../platform/assert-web.js';
-import parser from './build/manifest-parser.js';
+import {assert} from '../platform/assert-web.js';
+import {parser} from './build/manifest-parser.js';
 import {Recipe} from './recipe/recipe.js';
 import {ParticleSpec} from './particle-spec.js';
 import {Schema} from './schema.js';

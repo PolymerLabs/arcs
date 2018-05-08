@@ -5,5 +5,5 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import * as firebase from 'firebase';
-export default firebase.default;
+import * as fb from 'firebase';
+export const firebase = fb.default;

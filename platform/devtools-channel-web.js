@@ -11,7 +11,7 @@
 
 import {AbstractDevtoolsChannel} from '../runtime/debug/abstract-devtools-channel.js';
 
-export default class ChromeExtensionChannel extends AbstractDevtoolsChannel {
+export class DevtoolsChannel extends AbstractDevtoolsChannel {
   constructor() {
     super();
     document.addEventListener('arcs-debug-in', e => this._handleMessage(e.detail));

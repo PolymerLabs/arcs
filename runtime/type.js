@@ -7,7 +7,7 @@
 // http://polymer.github.io/PATENTS.txt
 'use strict';
 
-import assert from '../platform/assert-web.js';
+import {assert} from '../platform/assert-web.js';
 
 function addType(name, arg) {
   let lowerName = name[0].toLowerCase() + name.substring(1);

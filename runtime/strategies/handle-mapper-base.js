@@ -9,7 +9,7 @@ import {Strategy} from '../../strategizer/strategizer.js';
 import {Walker} from '../recipe/walker.js';
 import {Recipe} from '../recipe/recipe.js';
 import {RecipeUtil} from '../recipe/recipe-util.js';
-import assert from '../../platform/assert-web.js';
+import {assert} from '../../platform/assert-web.js';
 
 export class HandleMapperBase extends Strategy {
   async generate(inputParams) {

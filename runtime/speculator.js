@@ -9,8 +9,8 @@
  */
 'use strict';
 
-import assert from '../platform/assert-web.js';
-import tracing from '../tracelib/trace.js';
+import {assert} from '../platform/assert-web.js';
+import {Tracing} from '../tracelib/trace.js';
 import {Relevance} from './relevance.js';
 
 export class Speculator {
@@ -26,7 +26,7 @@ export class Speculator {
       }
     }
 
-    let trace = tracing.start({cat: 'speculator', name: 'Speculator::speculate'});
+    let trace = Tracing.start({cat: 'speculator', name: 'Speculator::speculate'});
     let newArc = await arc.cloneForSpeculativeExecution();
     let relevance = new Relevance(arc.getHandlesState());
     let relevanceByHash = this._relevanceByHash;

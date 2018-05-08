@@ -8,7 +8,7 @@
 
 // TODO(wkorman): Implement further perhaps via
 // https://nodejs.org/api/buffer.html
-export default class Blob {
+export class Blob {
   constructor(values, options) {
     this._values = values;
     this._options = options;

@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import assert from '../platform/assert-web.js';
+import {assert} from '../platform/assert-web.js';
 import {Random} from './random.js';
 
 export class Id {

@@ -7,7 +7,7 @@
 
 import {HandleMapperBase} from './handle-mapper-base.js';
 
-import assert from '../../platform/assert-web.js';
+import {assert} from '../../platform/assert-web.js';
 
 export class AssignHandlesByTagAndType extends HandleMapperBase {
   constructor(arc) {

@@ -13,7 +13,7 @@ import {AbstractDevtoolsChannel} from '../runtime/debug/abstract-devtools-channe
 import {initDebug} from '../devtools/shared/arc-registry.js';
 import WebSocket from 'ws';
 
-export default class WebSocketChannel extends AbstractDevtoolsChannel {
+export class DevtoolsChannel extends AbstractDevtoolsChannel {
   constructor() {
     super();
     this.server = new WebSocket.Server({port: 8787});

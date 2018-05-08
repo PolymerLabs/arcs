@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 import {getDevtoolsChannel} from './devtools-channel-provider.js';
-import Tracing from '../../tracelib/trace.js';
+import {Tracing} from '../../tracelib/trace.js';
 
 let streamingToDevtools = false;
 

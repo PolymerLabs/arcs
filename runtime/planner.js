@@ -7,8 +7,8 @@
 
 import {Strategy, Strategizer} from '../strategizer/strategizer.js';
 import * as Rulesets from './strategies/rulesets.js';
-import assert from '../platform/assert-web.js';
-import DeviceInfo from '../platform/deviceinfo-web.js';
+import {assert} from '../platform/assert-web.js';
+import {DeviceInfo} from '../platform/deviceinfo-web.js';
 import {RecipeUtil} from './recipe/recipe-util.js';
 import {ConvertConstraintsToConnections} from './strategies/convert-constraints-to-connections.js';
 import {AssignRemoteHandles} from './strategies/assign-remote-handles.js';
@@ -29,7 +29,7 @@ import {MatchFreeHandlesToConnections} from './strategies/match-free-handles-to-
 import {CreateHandles} from './strategies/create-handles.js';
 import {ResolveRecipe} from './strategies/resolve-recipe.js';
 import {Speculator} from './speculator.js';
-import Tracing from '../tracelib/trace.js';
+import {Tracing} from '../tracelib/trace.js';
 import {StrategyExplorerAdapter} from './debug/strategy-explorer-adapter.js';
 
 export class Planner {

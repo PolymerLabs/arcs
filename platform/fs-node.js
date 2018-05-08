@@ -6,4 +6,4 @@
 // http://polymer.github.io/PATENTS.txt
 
 import fs from 'fs';
-export default fs;
+export {fs};

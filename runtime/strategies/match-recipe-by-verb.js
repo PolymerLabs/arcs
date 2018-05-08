@@ -9,7 +9,7 @@ import {Strategy} from '../../strategizer/strategizer.js';
 import {Recipe} from '../recipe/recipe.js';
 import {Walker} from '../recipe/walker.js';
 import {Handle} from '../recipe/handle.js';
-import assert from '../../platform/assert-web.js';
+import {assert} from '../../platform/assert-web.js';
 
 // This strategy substitutes 'particle can verb' declarations with recipes, 
 // according to the following conditions:

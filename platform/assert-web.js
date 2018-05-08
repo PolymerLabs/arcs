@@ -5,7 +5,7 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-export default function assert(test, message) {
+export function assert(test, message) {
   if (!test) {
     debugger; // eslint-disable-line no-debugger
     throw new Error(message);

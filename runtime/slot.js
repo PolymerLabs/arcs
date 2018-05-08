@@ -9,7 +9,7 @@
  */
 'use strict';
 
-import assert from '../platform/assert-web.js';
+import {assert} from '../platform/assert-web.js';
 
 export class Slot {
   constructor(consumeConn, arc) {

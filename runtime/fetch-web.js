@@ -5,4 +5,10 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-export default fetch;
+// 'export default fetch' works because 'fetch' is evaluated as an expression, which finds the
+// appropriate global definition - but we don't want to use default exports.
+// 'export {fetch}' doesn't work because 'fetch' is just a name in that context and is not defined.
+// So we need to use an expression to find the global fetch function then map that for export.
+
+const local_fetch = fetch;
+export {local_fetch as fetch};

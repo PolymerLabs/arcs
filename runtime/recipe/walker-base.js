@@ -7,7 +7,7 @@
 
 import {Strategizer} from '../../strategizer/strategizer.js';
 import {Recipe} from './recipe.js';
-import assert from '../../platform/assert-web.js';
+import {assert} from '../../platform/assert-web.js';
 
 /**
  * Walkers traverse an object, calling methods based on the
