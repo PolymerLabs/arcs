@@ -16,7 +16,7 @@ import XenStateMixin from '../shell/components/xen/xen-state.js';
 /** @class DomParticle
  * Particle that does stuff with DOM.
  */
-class DomParticle extends XenStateMixin(Particle) {
+export class DomParticle extends XenStateMixin(Particle) {
   constructor() {
     super();
     this.state = this._state;
@@ -177,5 +177,3 @@ class DomParticle extends XenStateMixin(Particle) {
     handle.store(record);
   }
 }
-
-export {DomParticle};

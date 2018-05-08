@@ -13,7 +13,7 @@ import {Type} from './type.js';
 import Symbols from './symbols.js';
 
 // TODO: Should relations normalized by another layer, or here?
-class Relation extends Entity {
+export class Relation extends Entity {
   constructor(...entities) {
     super();
     this.entities = entities;
@@ -26,5 +26,3 @@ class Relation extends Entity {
     return result;
   }
 }
-
-export {Relation};

@@ -14,7 +14,7 @@ import {SuggestionComposer} from './suggestion-composer.js';
 
 let defaultTimeoutMs = 5000;
 
-class Planificator {
+export class Planificator {
   constructor(arc) {
     this._arc = arc;
     this._speculator = new Speculator();
@@ -230,5 +230,3 @@ class Planificator {
     }
   }
 }
-
-export {Planificator};

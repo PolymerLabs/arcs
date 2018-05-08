@@ -12,7 +12,7 @@ import assert from '../platform/assert-web.js';
 import {Type} from './type.js';
 import {Entity} from './entity.js';
 
-class Schema {
+export class Schema {
   constructor(model) {
     let legacy = [];
     // TODO: remove this (remnants of normative/optional)
@@ -316,5 +316,3 @@ class Schema {
     return results.join('\n');
   }
 }
-
-export {Schema};

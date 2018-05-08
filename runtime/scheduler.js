@@ -10,7 +10,7 @@
 import tracing from '../tracelib/trace.js';
 import assert from '../platform/assert-web.js';
 
-class Scheduler {
+export class Scheduler {
   constructor() {
     this.frameQueue = [];
     this.targetMap = new Map();
@@ -106,5 +106,3 @@ class Scheduler {
     this._idleCallbacks.forEach(callback => callback(/* pass info about what was updated */));
   }
 }
-
-export {Scheduler};

@@ -16,7 +16,7 @@ import {Manifest} from './manifest.js';
 import {RecipeResolver} from './recipe/recipe-resolver.js';
 import {reportSystemException} from './arc-exceptions.js';
 
-class OuterPEC extends ParticleExecutionContext {
+export class OuterPEC extends ParticleExecutionContext {
   constructor(port, slotComposer, arc) {
     super();
     this._particles = [];
@@ -220,5 +220,3 @@ class OuterPEC extends ParticleExecutionContext {
     this._apiPort.initDebug(this._arc);
   }
 }
-
-export {OuterPEC};

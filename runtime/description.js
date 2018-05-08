@@ -13,7 +13,7 @@ import assert from '../platform/assert-web.js';
 import {Type} from './type.js';
 import {ParticleSpec} from './particle-spec.js';
 
-class Description {
+export class Description {
   constructor(arc) {
     this._arc = arc;
     this._relevance = null;
@@ -51,7 +51,7 @@ class Description {
 
 Description.defaultDescription = 'i\'m feeling lucky';
 
-class DescriptionFormatter {
+export class DescriptionFormatter {
   constructor(description) {
     this._description = description;
     this._arc = description._arc;
@@ -501,5 +501,3 @@ class DescriptionFormatter {
     return p2Slots - p1Slots;
   }
 }
-
-export {Description, DescriptionFormatter};

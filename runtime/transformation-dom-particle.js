@@ -18,7 +18,7 @@ let re = /<style>((?:.|[\r\n])*)<\/style>((?:.|[\r\n])*)/;
 /** @class TransformationDomParticle
  * Particle that does transformation stuff with DOM.
  */
-class TransformationDomParticle extends DomParticle {
+export class TransformationDomParticle extends DomParticle {
   getTemplate(slotName) {
     return this._state.template;
   }
@@ -58,5 +58,3 @@ class TransformationDomParticle extends DomParticle {
     return propsValues ? propsValues.map(({rawData, id}) => Object.assign({}, rawData, {subId: id})) : [];
   }
 }
-
-export {TransformationDomParticle};

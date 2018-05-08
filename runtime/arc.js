@@ -24,7 +24,7 @@ import {registerArc} from '../devtools/shared/arc-registry.js';
 import {Id} from './id.js';
 import {ArcDebugHandler} from './debug/arc-debug-handler.js';
 
-class Arc {
+export class Arc {
   constructor({id, context, pecFactory, slotComposer, loader, storageKey, storageProviderFactory, speculative, scheduler}) {
     // TODO: context should not be optional.
     this._context = context || new Manifest({id});
@@ -574,5 +574,3 @@ ${this.activeRecipe.toString()}`;
     this.pec.initDebug();
   }
 }
-
-export {Arc};

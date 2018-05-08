@@ -9,7 +9,7 @@
  */
 
 
-class ManifestMeta {
+export class ManifestMeta {
   constructor() {
     this.storageKey = null;
     this.name = null;
@@ -18,5 +18,3 @@ class ManifestMeta {
     items.forEach(item => { this[item.key] = item.value; });
   }
 }
-
-export {ManifestMeta};

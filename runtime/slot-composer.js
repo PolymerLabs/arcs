@@ -11,7 +11,7 @@
 import assert from '../platform/assert-web.js';
 import {Affordance} from './affordance.js';
 
-class SlotComposer {
+export class SlotComposer {
   /**
    * |options| must contain:
    * - affordance: the UI affordance the slots composer render to (for example: dom).
@@ -196,5 +196,3 @@ class SlotComposer {
     this._contextSlots.forEach(contextSlot => this._affordance.contextClass.clear(contextSlot));
   }
 }
-
-export {SlotComposer};

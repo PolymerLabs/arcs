@@ -15,7 +15,7 @@ const seededRandom = (() => {
   return () => (x = Math.pow(x + Math.E, Math.PI) % 1);
 })();
 
-class Random {
+export class Random {
   static next() {
     return random();
   }
@@ -24,5 +24,3 @@ class Random {
     random = seededRandom;
   }
 }
-
-export {Random};

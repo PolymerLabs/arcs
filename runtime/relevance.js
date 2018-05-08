@@ -9,7 +9,7 @@
  */
 'use strict';
 
-class Relevance {
+export class Relevance {
   constructor(arcState) {
     this.arcState = arcState;
     this.relevanceMap = new Map();
@@ -81,5 +81,3 @@ class Relevance {
     return -1;
   }
 }
-
-export {Relevance};

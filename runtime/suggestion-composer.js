@@ -10,7 +10,7 @@
 import assert from '../platform/assert-web.js';
 import {Affordance} from './affordance.js';
 
-class SuggestionComposer {
+export class SuggestionComposer {
   constructor(slotComposer) {
     assert(slotComposer);
     this._affordance = Affordance.forName(slotComposer.affordance);
@@ -55,5 +55,3 @@ class SuggestionComposer {
     return suggest;
   }
 }
-
-export {SuggestionComposer};

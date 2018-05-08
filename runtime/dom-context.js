@@ -12,7 +12,7 @@
 import assert from '../platform/assert-web.js';
 import Template from '../shell/components/xen/xen-template.js';
 
-class DomContext {
+export class DomContext {
   constructor(context, containerKind) {
     this._context = context;
     this._containerKind = containerKind;
@@ -177,7 +177,7 @@ class DomContext {
   }
 }
 
-class SetDomContext {
+export class SetDomContext {
   constructor(containerKind) {
     this._contextBySubId = {};
     this._containerKind = containerKind;
@@ -254,5 +254,3 @@ class SetDomContext {
     return Object.values(this._contextBySubId).find(context => context.isDirectInnerSlot(slot)) != null;
   }
 }
-
-export {DomContext, SetDomContext};

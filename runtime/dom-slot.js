@@ -15,7 +15,7 @@ import {DomContext, SetDomContext} from './dom-context.js';
 
 const templates = new Map();
 
-class DomSlot extends Slot {
+export class DomSlot extends Slot {
   constructor(consumeConn, arc, containerKind) {
     super(consumeConn, arc);
     this._templateName = [this.consumeConn.particle.name, this.consumeConn.name].concat(
@@ -143,5 +143,3 @@ class DomSlot extends Slot {
     return new DomContext(context, this._containerKind).findRootSlots(context);
   }
 }
-
-export {DomSlot};

@@ -68,7 +68,7 @@ class ManifestVisitor {
 
 let globalWarningKeys = new Set();
 
-class Manifest {
+export class Manifest {
   constructor({id}) {
     this._recipes = [];
     this._imports = [];
@@ -996,5 +996,3 @@ ${e.message}
     return results.join('\n');
   }
 }
-
-export {Manifest};

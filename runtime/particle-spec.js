@@ -76,7 +76,7 @@ class ProvidedSlotSpec {
   }
 }
 
-class ParticleSpec {
+export class ParticleSpec {
   constructor(model) {
     this._model = model;
     this.name = model.name;
@@ -250,5 +250,3 @@ class ParticleSpec {
     return this.toString();
   }
 }
-
-export {ParticleSpec};

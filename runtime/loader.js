@@ -23,7 +23,7 @@ function schemaLocationFor(name) {
   return `../entities/${name}.schema`;
 }
 
-class Loader {
+export class Loader {
   path(fileName) {
     let path = fileName.replace(/[\/][^\/]+$/, '/');
     return path;
@@ -94,5 +94,3 @@ class Loader {
   }
 
 }
-
-export {Loader};

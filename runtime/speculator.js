@@ -13,7 +13,7 @@ import assert from '../platform/assert-web.js';
 import tracing from '../tracelib/trace.js';
 import {Relevance} from './relevance.js';
 
-class Speculator {
+export class Speculator {
   constructor() {
     this._relevanceByHash = new Map();
   }
@@ -47,5 +47,3 @@ class Speculator {
     return trace.endWith(newArc.instantiate(plan).then(a => awaitCompletion()));
   }
 }
-
-export {Speculator};

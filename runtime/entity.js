@@ -11,7 +11,7 @@ import assert from '../platform/assert-web.js';
 import Symbols from './symbols.js';
 import {Type} from './type.js';
 
-class Entity {
+export class Entity {
   constructor(userIDComponent) {
     assert(!userIDComponent || userIDComponent.indexOf(':') == -1, 'user IDs must not contain the \':\' character');
     this[Symbols.identifier] = undefined;
@@ -59,5 +59,3 @@ class Entity {
     return Type.newEntity(this.key.schema);
   }
 }
-
-export {Entity};
