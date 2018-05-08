@@ -41,8 +41,8 @@ export default class StrategyExplorerAdapter {
     };
     const assignIdAndCopy = recipe => {
       this.parentMap.set(recipe, this.lastID);
-      let {result, score, derivation, description, hash, valid, active} = recipe;
-      return {result, score, derivation, description, hash, valid, active, id: this.lastID++};
+      let {result, score, derivation, description, hash, valid, active, irrelevant} = recipe;
+      return {result, score, derivation, description, hash, valid, active, irrelevant, id: this.lastID++};
     };
     population = population.map(recipe => {
       recipe.derivation.forEach(addHiddenPredecessorsCandidates);

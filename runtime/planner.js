@@ -147,6 +147,7 @@ class Planner {
         // should do similar for the async getRecipeSuggestion() below as well?
         let relevance = await speculator.speculate(this._arc, plan, hash);
         if (!relevance.isRelevant(plan)) {
+          this._updateGeneration(generations, hash, (g) => g.irrelevant = true);
           continue;
         }
         let rank = relevance.calcRelevanceScore();
