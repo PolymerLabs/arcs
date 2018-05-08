@@ -619,7 +619,7 @@ ${e.message}
         throw new ManifestError(connection.location, `param '${connection.to.param} is not defined by '${connection.to.particle}'`);
       }
       recipe.newConnectionConstraint(fromParticle, connection.from.param,
-                                     toParticle, connection.to.param);
+                                     toParticle, connection.to.param, connection.direction);
     }
 
     if (items.search) {

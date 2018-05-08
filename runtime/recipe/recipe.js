@@ -34,8 +34,8 @@ class Recipe {
     this._pattern = null;
   }
 
-  newConnectionConstraint(from, fromConnection, to, toConnection) {
-    this._connectionConstraints.push(new ConnectionConstraint(from, fromConnection, to, toConnection));
+  newConnectionConstraint(from, fromConnection, to, toConnection, direction) {
+    this._connectionConstraints.push(new ConnectionConstraint(from, fromConnection, to, toConnection, direction));
   }
 
   removeConstraint(constraint) {
