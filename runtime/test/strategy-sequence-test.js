@@ -155,7 +155,7 @@ describe('A Strategy Sequence', function() {
         consume annotation
   
       shape HostedParticleShape
-        HostedParticleShape(in ~a)
+        in ~a *
         consume
   
       particle Multiplexer in 'source/Multiplexer.js'
@@ -176,7 +176,8 @@ describe('A Strategy Sequence', function() {
         out [Product] recommendations
   
       shape HostedParticleShape2
-        HostedParticleShape2(in ~a, in [~a])
+        in ~a *
+        in [~a] *
         consume
         
       particle Multiplexer2 in 'source/Multiplexer.js'

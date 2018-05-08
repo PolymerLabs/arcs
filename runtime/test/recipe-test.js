@@ -179,7 +179,7 @@ describe('recipe', function() {
   it('generates the same hash on manifest re-parse for immediates', async () => {
     const manifestContent = `
       shape HostedParticleShape
-        HostedParticleShape(in ~a)
+        in ~a *
         consume
 
       schema Foo

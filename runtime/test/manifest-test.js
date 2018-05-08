@@ -1065,27 +1065,25 @@ resource SomeName
     let manifest = await Manifest.parse(`
       schema Foo
       shape FullShape
-        AnyThing(in Foo foo)
+        in Foo foo
         consume root
         provide action
       shape ShapeNoHandleName
-        AnyThing(in Foo)
+        in Foo *
       shape ShapeNoHandleType
-        AnyThing(inout foo)
+        inout foo
       shape ShapeNoHandleDirection
-        AnyThing(Foo foo)
+        Foo foo
       shape ShapeOnlyHandleDirection
-        AnyThing(out)
+        out *
       shape ShapeManyHandles
-        AnyThing(in Foo, out [~a])
+        in Foo *
+        out [~a] *
       shape ShapeConsumeNoName
-        Anything()
         consume
       shape ShapeConsumeRequiredSetSlot
-        Anything()
         must consume set of
       shape ShapeOnlyProvideSlots
-        AnyThing()
         provide action
     `);
     assert.equal(9, manifest.shapes.length);
@@ -1095,7 +1093,7 @@ resource SomeName
     let manifest = await Manifest.parse(`
       schema Foo
       shape Shape
-        AnyThing(in Foo foo)
+        in Foo foo
       particle ShapeParticle
         host Shape shape
       recipe
@@ -1145,7 +1143,7 @@ resource SomeName
     let manifest = await Manifest.parse(`
       schema S
       shape HostedShape
-        HostedShape(in S foo)
+        in S foo
 
       particle Hosted
         in S foo
