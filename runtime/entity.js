@@ -8,7 +8,7 @@
 'use strict';
 
 import assert from '../platform/assert-web.js';
-import Symbols from './symbols.js';
+import {Symbols} from './symbols.js';
 import {Type} from './type.js';
 
 export class Entity {

@@ -9,8 +9,8 @@
  */
 import {assert} from '../chai-web.js';
 import {Manifest} from '../../manifest.js';
-import ResolveRecipe from '../../strategies/resolve-recipe.js';
-import StrategyTestHelper from './strategy-test-helper.js';
+import {ResolveRecipe} from '../../strategies/resolve-recipe.js';
+import {StrategyTestHelper} from './strategy-test-helper.js';
 
 let {createTestArc, onlyResult, theResults} = StrategyTestHelper;
 

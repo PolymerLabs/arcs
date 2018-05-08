@@ -11,7 +11,7 @@
 
 import assert from '../../platform/assert-web.js';
 
-export default class AbstractDevtoolsChannel {
+export class AbstractDevtoolsChannel {
   constructor() {
     this.debouncedMessages = [];
     this.debouncing = false;

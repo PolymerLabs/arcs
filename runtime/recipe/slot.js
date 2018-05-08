@@ -6,9 +6,9 @@
 // http://polymer.github.io/PATENTS.txt
 
 import assert from '../../platform/assert-web.js';
-import util from './util.js';
+import * as util from './util.js';
 
-class Slot {
+export class Slot {
   constructor(recipe, name) {
     assert(recipe);
 
@@ -140,5 +140,3 @@ class Slot {
     }
   }
 }
-
-export default Slot;

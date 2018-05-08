@@ -64,7 +64,7 @@ class MockContext {
  *   mockSlotComposer.sendEvent('MyParticle1', 'mySlot1', '_onMyEvent', {key: 'value'});
  *   await mockSlotComposer.expectationsCompleted();
  */
-class MockSlotComposer extends SlotComposer {
+export class MockSlotComposer extends SlotComposer {
   /**
    * |options| may contain:
    * - strict: whether unexpected render slot requests cause an assert or a warning log (default: true)
@@ -269,5 +269,3 @@ class MockSlotComposer extends SlotComposer {
     return this;
   }
 }
-
-export default MockSlotComposer;

@@ -5,10 +5,10 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import util from './util.js';
+import * as util from './util.js';
 import assert from '../../platform/assert-web.js';
 
-class ConnectionConstraint {
+export class ConnectionConstraint {
   constructor(from, fromConnection, to, toConnection, direction) {
     assert(direction);
     this.fromParticle = from;
@@ -37,5 +37,3 @@ class ConnectionConstraint {
     return `${this.fromParticle.name}.${this.fromConnection} ${this.direction} ${this.toParticle.name}.${this.toConnection}`;
   }
 }
-
-export default ConnectionConstraint;

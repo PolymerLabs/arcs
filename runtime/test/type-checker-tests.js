@@ -14,10 +14,10 @@ import {assert} from './chai-web.js';
 
 import {Schema} from '../schema.js';
 import {Type} from '../type.js';
-import TypeChecker from '../recipe/type-checker.js';
+import {TypeChecker} from '../recipe/type-checker.js';
 import {TypeVariable} from '../type-variable.js';
 import {Manifest} from '../manifest.js';
-import Handle from '../recipe/handle.js';
+import {Handle} from '../recipe/handle.js';
 
 
 describe('TypeChecker', () => {

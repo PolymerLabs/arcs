@@ -7,10 +7,10 @@
 // http://polymer.github.io/PATENTS.txt
 'use strict';
 
-import InMemoryStorage from './in-memory-storage.js';
-import FirebaseStorage from './firebase-storage.js';
+import {InMemoryStorage} from './in-memory-storage.js';
+import {FirebaseStorage} from './firebase-storage.js';
 
-export default class StorageProviderFactory {
+export class StorageProviderFactory {
   constructor(arcId) {
     this._arcId = arcId;
     this._storageInstances = {'in-memory': new InMemoryStorage(arcId), 'firebase': new FirebaseStorage(arcId)};

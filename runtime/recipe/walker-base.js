@@ -6,7 +6,7 @@
 // http://polymer.github.io/PATENTS.txt
 
 import {Strategizer} from '../../strategizer/strategizer.js';
-import Recipe from './recipe.js';
+import {Recipe} from './recipe.js';
 import assert from '../../platform/assert-web.js';
 
 /**
@@ -34,7 +34,7 @@ import assert from '../../platform/assert-web.js';
  * if 3 methods return [a,b], [c,d,e], and [f] respectively,
  * then "Independent" will cause 6 outputs to be generated: [a,b,c,d,e,f]
  */
-class WalkerBase extends Strategizer.Walker {
+export class WalkerBase extends Strategizer.Walker {
   constructor(tactic) {
     super();
     assert(tactic);
@@ -124,5 +124,3 @@ class WalkerBase extends Strategizer.Walker {
 
 WalkerBase.Permuted = 'permuted';
 WalkerBase.Independent = 'independent';
-
-export default WalkerBase;

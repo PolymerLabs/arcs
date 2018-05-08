@@ -6,13 +6,13 @@
 // http://polymer.github.io/PATENTS.txt
 
 import {Strategy} from '../../strategizer/strategizer.js';
-import RecipeWalker from '../recipe/walker.js';
-import Recipe from '../recipe/recipe.js';
-import RecipeUtil from '../recipe/recipe-util.js';
+import {Walker} from '../recipe/walker.js';
+import {Recipe} from '../recipe/recipe.js';
+import {RecipeUtil} from '../recipe/recipe-util.js';
 import assert from '../../platform/assert-web.js';
-import MapSlots from './map-slots.js';
+import {MapSlots} from './map-slots.js';
 
-export default class ResolveRecipe extends Strategy {
+export class ResolveRecipe extends Strategy {
   constructor(arc) {
     super();
     this._arc = arc;
@@ -20,7 +20,7 @@ export default class ResolveRecipe extends Strategy {
 
   async generate(inputParams) {
     let arc = this._arc;
-    return Recipe.over(this.getResults(inputParams), new class extends RecipeWalker {
+    return Recipe.over(this.getResults(inputParams), new class extends Walker {
       onHandle(recipe, handle) {
         if (handle.connections.length == 0 || handle.id || (!handle.type) || (!handle.fate))
           return;
@@ -78,6 +78,6 @@ export default class ResolveRecipe extends Strategy {
           return 1;
         };
       }
-    }(RecipeWalker.Permuted), this);
+    }(Walker.Permuted), this);
   }
 }

@@ -9,9 +9,9 @@
  */
  'use strict';
 
-import devtoolsChannelProvider from './devtools-channel-provider.js';
+import {getDevtoolsChannel} from './devtools-channel-provider.js';
 
-export default class OuterPortAttachment {
+export class OuterPortAttachment {
   constructor(arc) {
     this._arcIdString = arc.id.toString();
     this._speculative = arc.isSpeculative;
@@ -21,7 +21,7 @@ export default class OuterPortAttachment {
 
   InstantiateParticle(particle, {id, spec, handles}) {
     this._particleRegistry[id] = spec;
-    devtoolsChannelProvider.get().send({
+    getDevtoolsChannel().send({
       messageType: 'InstantiateParticle',
       messageBody: Object.assign(
         this._arcMetadata(),
@@ -78,7 +78,7 @@ export default class OuterPortAttachment {
   _sendDataflowMessage(messageBody, data) {
     messageBody.data = JSON.stringify(data);
     messageBody.timestamp = Date.now();
-    devtoolsChannelProvider.get().send({messageType: 'dataflow', messageBody});
+    getDevtoolsChannel().send({messageType: 'dataflow', messageBody});
   }
 
   _describeHandleCall({operation, handle, particleId}) {

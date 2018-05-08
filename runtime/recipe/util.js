@@ -6,24 +6,28 @@
 // http://polymer.github.io/PATENTS.txt
 import assert from '../../platform/assert-web.js';
 
-function compareNulls(o1, o2) {
+export function compareNulls(o1, o2) {
   if (o1 == o2) return 0;
   if (o1 == null) return -1;
   return 1;
 }
-function compareStrings(s1, s2) {
+
+export function compareStrings(s1, s2) {
   if (s1 == null || s2 == null) return compareNulls(s1, s2);
   return s1.localeCompare(s2);
 }
-function compareNumbers(n1, n2) {
+
+export function compareNumbers(n1, n2) {
   if (n1 == null || n2 == null) return compareNulls(n1, n2);
   return n1 - n2;
 }
-function compareBools(b1, b2) {
+
+export function compareBools(b1, b2) {
   if (b1 == null || b2 == null) return compareNulls(b1, b2);
   return b1 - b2;
 }
-function compareArrays(a1, a2, compare) {
+
+export function compareArrays(a1, a2, compare) {
   assert(a1 != null);
   assert(a2 != null);
   if (a1.length != a2.length) return compareNumbers(a1.length, a2.length);
@@ -33,7 +37,8 @@ function compareArrays(a1, a2, compare) {
   }
   return 0;
 }
-function compareObjects(o1, o2, compare) {
+
+export function compareObjects(o1, o2, compare) {
   let keys = Object.keys(o1);
   let result;
   if ((result = compareNumbers(keys.length, Object.keys(o2).length)) != 0) return result;
@@ -42,17 +47,8 @@ function compareObjects(o1, o2, compare) {
   }
   return 0;
 }
-function compareComparables(o1, o2) {
+
+export function compareComparables(o1, o2) {
   if (o1 == null || o2 == null) return compareNulls(o1, o2);
   return o1._compareTo(o2);
 }
-
-export default {
-  compareNulls,
-  compareStrings,
-  compareNumbers,
-  compareBools,
-  compareArrays,
-  compareObjects,
-  compareComparables,
-};

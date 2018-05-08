@@ -11,7 +11,7 @@
 
 import {Arc} from '../../arc.js';
 import {Manifest} from '../../manifest.js';
-import InitPopulation from '../../strategies/init-population.js';
+import {InitPopulation} from '../../strategies/init-population.js';
 import {assert} from '../chai-web.js';
 
 describe('InitPopulation', async () => {
