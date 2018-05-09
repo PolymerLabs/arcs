@@ -14,7 +14,7 @@ import '../../../../shell/artifacts/Products/ShowProduct.manifest'
 
 // Filter books and display them.
 recipe
-  ShowCollection.collection -> ProductFilter.results
+  ShowCollection.collection <- ProductFilter.results
   Multiplexer.list -> ShowCollection.collection
   map 'mylist' as mylist
   create as books

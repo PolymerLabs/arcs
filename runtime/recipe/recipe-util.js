@@ -34,7 +34,18 @@ export class RecipeUtil {
     Object.keys(map).forEach(key => {
       Object.keys(map[key]).forEach(name => {
         let handle = map[key][name];
-        pMap[key].addConnectionName(name).connectToHandle(hMap[handle]);
+        let direction = '=';
+        if (handle.handle) {
+        // NOTE: for now, '=' on the shape means "accept anything". This is going
+        // to change when we redo capabilities; for now it's modeled by mapping '=' to
+        // '=' rather than to 'inout'.
+
+          direction = {'->': 'out', '<-': 'in', '=': '='}[handle.direction];
+          handle = handle.handle;
+        }
+        let connection = pMap[key].addConnectionName(name);
+        connection.direction = direction;
+        connection.connectToHandle(hMap[handle]);
         hcMap[key + ':' + name] = pMap[key].connections[name];
       });
     });
@@ -69,6 +80,12 @@ export class RecipeUtil {
 
         if (shapeHC.name && shapeHC.name != recipeHC.name)
           continue;
+
+        let acceptedDirections = {'in': ['in', 'inout'], 'out': ['out', 'inout'], '=': ['in', 'out', 'inout'], 'inout': ['inout'], 'host': ['host']};
+        if (recipeHC.direction) {
+          if (!acceptedDirections[shapeHC.direction].includes(recipeHC.direction))
+            continue;
+        }
 
         // recipeHC is a candidate for shapeHC. shapeHC references a
         // particle, so recipeHC must reference the matching particle,
