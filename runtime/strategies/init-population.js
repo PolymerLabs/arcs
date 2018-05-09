@@ -7,7 +7,7 @@
 
 import {Strategy} from '../../strategizer/strategizer.js';
 
-export default class InitPopulation extends Strategy {
+export class InitPopulation extends Strategy {
   constructor(arc) {
     super();
     this._recipes = [];

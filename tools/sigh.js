@@ -341,8 +341,8 @@ function test(args) {
       return `import '${fixPathForWindows(file)}';`;
     });
     if (options.explore) chainImports.push(`
-      import devtoolsChannelProvider from '${fixPathForWindows(path.resolve(__dirname, '../runtime/debug/devtools-channel-provider.js'))}';
-      let devtoolsChannel = devtoolsChannelProvider.get();
+      import {getDevtoolsChannel} from '${fixPathForWindows(path.resolve(__dirname, '../runtime/debug/devtools-channel-provider.js'))}';
+      let devtoolsChannel = getDevtoolsChannel();
       console.log("Waiting for Arcs Explorer");
     `);
     let runner = `

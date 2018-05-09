@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import devtoolsChannelProvider from './devtools-channel-provider.js';
+import {getDevtoolsChannel} from './devtools-channel-provider.js';
 import {Planner} from '../planner.js';
 import {Manifest} from '../manifest.js';
 
@@ -17,7 +17,7 @@ export class ArcPlannerInvoker {
     this.arc = arc;
     this.planner = new Planner();
     this.planner.init(arc);
-    this.devtoolsChannel = devtoolsChannelProvider.get();
+    this.devtoolsChannel = getDevtoolsChannel();
 
     this.devtoolsChannel.listen(arc, 'fetch-strategies', () => this.devtoolsChannel.send({
       messageType: 'planner-strategies',

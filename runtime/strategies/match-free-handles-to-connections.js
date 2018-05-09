@@ -6,20 +6,19 @@
 // http://polymer.github.io/PATENTS.txt
 
 import {Strategy} from '../../strategizer/strategizer.js';
-import RecipeWalker from '../recipe/walker.js';
-import Recipe from '../recipe/recipe.js';
-import RecipeUtil from '../recipe/recipe-util.js';
+import {Walker} from '../recipe/walker.js';
+import {Recipe} from '../recipe/recipe.js';
 import assert from '../../platform/assert-web.js';
 
 /*
  * Match free handles (i.e. handles that aren't connected to any connections)
  * to connections.
  */
-export default class MatchFreeHandlesToConnections extends Strategy {
+export class MatchFreeHandlesToConnections extends Strategy {
   async generate(inputParams) {
     let self = this;
 
-    return Recipe.over(this.getResults(inputParams), new class extends RecipeWalker {
+    return Recipe.over(this.getResults(inputParams), new class extends Walker {
       onHandle(recipe, handle) {
         if (handle.connections.length > 0)
           return;
@@ -34,6 +33,6 @@ export default class MatchFreeHandlesToConnections extends Strategy {
           };
         });
       }
-    }(RecipeWalker.Permuted), this);
+    }(Walker.Permuted), this);
   }
 }

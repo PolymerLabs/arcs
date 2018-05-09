@@ -6,16 +6,16 @@
 // http://polymer.github.io/PATENTS.txt
 
 import {Strategy} from '../../strategizer/strategizer.js';
-import RecipeWalker from '../recipe/walker.js';
-import Recipe from '../recipe/recipe.js';
-import RecipeUtil from '../recipe/recipe-util.js';
+import {Walker} from '../recipe/walker.js';
+import {Recipe} from '../recipe/recipe.js';
+import {RecipeUtil} from '../recipe/recipe-util.js';
 import assert from '../../platform/assert-web.js';
 
-export default class HandleMapperBase extends Strategy {
+export class HandleMapperBase extends Strategy {
   async generate(inputParams) {
     let self = this;
 
-    return Recipe.over(this.getResults(inputParams), new class extends RecipeWalker {
+    return Recipe.over(this.getResults(inputParams), new class extends Walker {
       onHandle(recipe, handle) {
         if (handle.fate !== self.fate)
           return;
@@ -77,6 +77,6 @@ export default class HandleMapperBase extends Strategy {
         responses.push(null); // "do nothing" for this handle.
         return responses;
       }
-    }(RecipeWalker.Permuted), this);
+    }(Walker.Permuted), this);
   }
 }

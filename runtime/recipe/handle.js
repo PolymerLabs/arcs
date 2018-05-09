@@ -6,10 +6,10 @@
 // http://polymer.github.io/PATENTS.txt
 
 import assert from '../../platform/assert-web.js';
-import util from './util.js';
-import TypeChecker from './type-checker.js';
+import * as util from './util.js';
+import {TypeChecker} from './type-checker.js';
 
-class Handle {
+export class Handle {
   constructor(recipe) {
     assert(recipe);
     this._recipe = recipe;
@@ -206,5 +206,3 @@ class Handle {
     return result.join(' ');
   }
 }
-
-export default Handle;

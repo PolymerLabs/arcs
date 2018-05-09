@@ -7,10 +7,9 @@
 
 import assert from '../../platform/assert-web.js';
 import {Strategy} from '../../strategizer/strategizer.js';
-import Recipe from '../recipe/recipe.js';
-import RecipeWalker from '../recipe/walker.js';
+import {Recipe} from '../recipe/recipe.js';
 
-export default class CombinedStrategy extends Strategy {
+export class CombinedStrategy extends Strategy {
   constructor(strategies) {
     super();
     assert(strategies.length > 1, 'Strategies must contain at least 2 elements.');

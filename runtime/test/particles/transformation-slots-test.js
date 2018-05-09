@@ -11,7 +11,7 @@
 'use strict';
 
 import {assert} from '../chai-web.js';
-import TestHelper from '../test-helper.js';
+import {TestHelper} from '../test-helper.js';
 
 describe('transformation slots', function() {
   it('combines hosted particles provided singleton slots into transformation provided set slot', async () => {

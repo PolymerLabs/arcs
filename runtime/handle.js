@@ -9,7 +9,7 @@
 'use strict';
 
 import {Entity} from './entity.js';
-import Symbols from './symbols.js';
+import {Symbols} from './symbols.js';
 import assert from '../platform/assert-web.js';
 import {ParticleSpec} from './particle-spec.js';
 

@@ -7,7 +7,7 @@
 // http://polymer.github.io/PATENTS.txt
 'use strict';
 
-export default class KeyBase {
+export class KeyBase {
   childKeyForHandle(id) {
     throw 'NotImplemented';
   }

@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import StorageProviderFactory from '../storage/storage-provider-factory.js';
+import {StorageProviderFactory} from '../storage/storage-provider-factory.js';
 import {Arc} from '../arc.js';
 import {Manifest} from '../manifest.js';
 import {Type} from '../type.js';

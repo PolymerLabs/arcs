@@ -28,7 +28,7 @@ function _toLiteral(member) {
 const handleFields = ['type', 'name', 'direction'];
 const slotFields = ['name', 'direction', 'isRequired', 'isSet'];
 
-class Shape {
+export class Shape {
   constructor(name, handles, slots) {
     assert(name);
     assert(handles !== undefined);
@@ -274,7 +274,5 @@ ${this._slotsToManifestString()}
     return this;
   }
 }
-
-export {Shape};
 
 import {Type} from './type.js';

@@ -9,7 +9,7 @@
  */
 'use strict';
 
-import AbstractDevtoolsChannel from '../runtime/debug/abstract-devtools-channel.js';
+import {AbstractDevtoolsChannel} from '../runtime/debug/abstract-devtools-channel.js';
 
 export default class ChromeExtensionChannel extends AbstractDevtoolsChannel {
   constructor() {

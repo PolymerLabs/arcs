@@ -7,12 +7,12 @@
 
 import assert from '../../platform/assert-web.js';
 import {Strategy} from '../../strategizer/strategizer.js';
-import Recipe from '../recipe/recipe.js';
-import RecipeWalker from '../recipe/walker.js';
+import {Recipe} from '../recipe/recipe.js';
+import {Walker} from '../recipe/walker.js';
 
-export default class CreateDescriptionHandle extends Strategy {
+export class CreateDescriptionHandle extends Strategy {
   async generate(inputParams) {
-    return Recipe.over(this.getResults(inputParams), new class extends RecipeWalker {
+    return Recipe.over(this.getResults(inputParams), new class extends Walker {
       onHandleConnection(recipe, handleConnection) {
         if (handleConnection.handle)
           return;
@@ -26,6 +26,6 @@ export default class CreateDescriptionHandle extends Strategy {
           return 1;
         };
       }
-    }(RecipeWalker.Permuted), this);
+    }(Walker.Permuted), this);
   }
 }

@@ -12,10 +12,10 @@
 import {Strategy, Ruleset} from '../../../strategizer/strategizer.js';
 import {Manifest} from '../../manifest.js';
 import {Planner} from '../../planner.js';
-import Recipe from '../../recipe/recipe.js';
-import StrategyTestHelper from './strategy-test-helper.js';
+import {Recipe} from '../../recipe/recipe.js';
+import {StrategyTestHelper} from './strategy-test-helper.js';
 import {assert} from '../chai-web.js';
-import RecipeWalker from '../../recipe/walker.js';
+import {Walker} from '../../recipe/walker.js';
 
 class InitPopulation extends Strategy {
   constructor(manifest) {
@@ -47,7 +47,7 @@ class FateAssigner extends Strategy {
 
   async generate(inputParams) {
     let self = this;
-    return Recipe.over(this.getResults(inputParams), new class extends RecipeWalker {
+    return Recipe.over(this.getResults(inputParams), new class extends Walker {
       onHandle(recipe, handle) {
         if (handle.fate === '?') {
           return [
@@ -56,7 +56,7 @@ class FateAssigner extends Strategy {
           ];
         }
       }
-    }(RecipeWalker.Permuted), this);
+    }(Walker.Permuted), this);
   }
 }
 
@@ -66,7 +66,7 @@ class AssignFateC extends FateAssigner {constructor() {super('C');}}
 
 class Resolve extends Strategy {
   async generate(inputParams) {
-    return Recipe.over(this.getResults(inputParams), new class extends RecipeWalker {
+    return Recipe.over(this.getResults(inputParams), new class extends Walker {
       onHandle(recipe, handle) {
         if (handle.fate !== '?' && !handle.id.endsWith('resolved')) {
           return [
@@ -77,7 +77,7 @@ class Resolve extends Strategy {
           ];
         }
       }
-    }(RecipeWalker.Permuted), this);
+    }(Walker.Permuted), this);
   }
 }
 

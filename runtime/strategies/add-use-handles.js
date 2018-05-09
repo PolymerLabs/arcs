@@ -6,13 +6,13 @@
 // http://polymer.github.io/PATENTS.txt
 
 import {Strategy} from '../../strategizer/strategizer.js';
-import Recipe from '../recipe/recipe.js';
-import RecipeWalker from '../recipe/walker.js';
+import {Recipe} from '../recipe/recipe.js';
+import {Walker} from '../recipe/walker.js';
 
-export default class AddUseHandles extends Strategy {
+export class AddUseHandles extends Strategy {
   // TODO: move generation to use an async generator.
   async generate(inputParams) {
-    return Recipe.over(this.getResults(inputParams), new class extends RecipeWalker {
+    return Recipe.over(this.getResults(inputParams), new class extends Walker {
       onRecipe(recipe) {
         // Don't add use handles while there are outstanding constraints
         if (recipe.connectionConstraints.length > 0)
@@ -39,6 +39,6 @@ export default class AddUseHandles extends Strategy {
           return 0;
         };
       }
-    }(RecipeWalker.Permuted), this);
+    }(Walker.Permuted), this);
   }
 }

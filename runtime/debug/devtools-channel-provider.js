@@ -12,9 +12,8 @@
 import DevtoolsChannel from '../../platform/devtools-channel-web.js';
 
 let instance = null;
-export default {
-  get: () => {
-    if (!instance) instance = new DevtoolsChannel();
-    return instance;
-  }
-};
+
+export function getDevtoolsChannel() {
+  if (!instance) instance = new DevtoolsChannel();
+  return instance;
+}
