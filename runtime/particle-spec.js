@@ -181,8 +181,10 @@ export class ParticleSpec {
 
   toString() {
     let results = [];
-    let verbs = this.verbs.map(verb => `#${verb}`).join(' ');
-    results.push(`particle ${this.name} in '${this.implFile}' ${verbs}`.trim());
+    let verbs = '';
+    if (this.verbs.length > 0)
+      verbs = ' ' + this.verbs.map(verb => `#${verb}`).join(' ');
+    results.push(`particle ${this.name}${verbs} in '${this.implFile}'`.trim());
     let indent = '  ';
     let writeConnection = (connection, indent) => {
       results.push(`${indent}${connection.direction} ${connection.type.toString()}${connection.isOptional ? '?' : ''} ${connection.name}`);
