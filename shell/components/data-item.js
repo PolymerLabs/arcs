@@ -18,7 +18,7 @@ const template = html`
   <right>
     <div hidden="{{hideexpand}}" on-click="_onExpandClick">+</div>
     <div hidden="{{notbool}}" title="{{name}}"><input type="checkbox" checked="{{value}}" on-click="_onCheckInput"></div>
-    <div hidden="{{notstring}}" title="{{title}}">{{value}}</div>
+    <div hidden="{{notstring}}" title="{{title}}" style="white-space: pre;">{{value}}</div>
     <data-explorer hidden="{{notobject}}" object="{{object}}"></data-explorer>
   </right>
 
