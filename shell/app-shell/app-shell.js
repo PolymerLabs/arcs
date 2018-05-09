@@ -111,6 +111,7 @@ const template = html`
     on-suggestion="_onStateData"
     on-select-user="_onSelectUser"
     on-share="_onStateData"
+    on-showhint="_onStateData"
   >
     <slot></slot>
     <slot name="modal" slot="modal"></slot>
@@ -213,7 +214,9 @@ import '${window.shellPath}/artifacts/Arcs/Arcs.recipes'
     }
   }
   _updateSuggestions(state, oldState) {
-    state.showhint = Boolean(state.suggestions && state.suggestions.length > 0);
+    if (state.suggestions !== oldState.suggestions) {
+      state.showhint = Boolean(state.suggestions && state.suggestions.length > 0);
+    }
   }
   _render({}, state) {
     const {userid, description, theme, plans} = state;

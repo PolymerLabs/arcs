@@ -1,4 +1,4 @@
-const defaultDebugLevel = 2;
+const defaultDebugLevel = 0;
 
 // must establish Debug level before using logFactory
 import Xen from '../../components/xen/xen.js';
