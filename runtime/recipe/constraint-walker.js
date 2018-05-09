@@ -5,7 +5,6 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import {Recipe} from './recipe.js';
 import {WalkerBase} from './walker-base.js';
 
 export class ConstraintWalker extends WalkerBase {

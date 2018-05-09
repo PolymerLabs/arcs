@@ -5,9 +5,8 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import {Strategy, Strategizer} from '../strategizer/strategizer.js';
+import {Strategizer} from '../strategizer/strategizer.js';
 import * as Rulesets from './strategies/rulesets.js';
-import {assert} from '../platform/assert-web.js';
 import {DeviceInfo} from '../platform/deviceinfo-web.js';
 import {RecipeUtil} from './recipe/recipe-util.js';
 import {ConvertConstraintsToConnections} from './strategies/convert-constraints-to-connections.js';

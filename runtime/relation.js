@@ -7,7 +7,6 @@
 // http://polymer.github.io/PATENTS.txt
 'use strict';
 
-import {assert} from '../platform/assert-web.js';
 import {Entity} from './entity.js';
 import {Type} from './type.js';
 import {Symbols} from './symbols.js';

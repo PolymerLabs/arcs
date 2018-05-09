@@ -8,7 +8,6 @@
 import {Strategy} from '../../strategizer/strategizer.js';
 import {Walker} from '../recipe/walker.js';
 import {Recipe} from '../recipe/recipe.js';
-import {assert} from '../../platform/assert-web.js';
 
 /*
  * Match free handles (i.e. handles that aren't connected to any connections)

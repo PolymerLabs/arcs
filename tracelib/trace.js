@@ -11,8 +11,6 @@
   limitations under the License.
 */
 
-import {fs} from '../platform/fs-web.js';
-
 let events = [];
 let pid;
 let now;

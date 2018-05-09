@@ -9,7 +9,6 @@
  */
 'use strict';
 
-import {assert} from '../platform/assert-web.js';
 import {DomParticle} from './dom-particle.js';
 
 // Regex to separate style and template.

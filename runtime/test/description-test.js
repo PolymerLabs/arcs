@@ -16,7 +16,6 @@ import {handleFor} from '../handle.js';
 import {Manifest} from '../manifest.js';
 import {Relevance} from '../relevance.js';
 import {SlotComposer} from '../slot-composer.js';
-import {Type} from '../type.js';
 
 function createTestArc() {
   const slotComposer = new SlotComposer({rootContext: 'test', affordance: 'mock'});

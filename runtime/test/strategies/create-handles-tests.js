@@ -10,7 +10,6 @@
 'use strict';
 
 import {Manifest} from '../../manifest.js';
-import {Recipe} from '../../recipe/recipe.js';
 import {StrategyTestHelper} from './strategy-test-helper.js';
 import {CreateHandles} from '../../strategies/create-handles.js';
 import {assert} from '../chai-web.js';
