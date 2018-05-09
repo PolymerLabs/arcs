@@ -7,6 +7,7 @@ import Arcs from './lib/arcs.js';
 
 // elements
 import './elements/arc-config.js';
+import './elements/arc-manifest.js';
 import './elements/arc-host.js';
 import './elements/arc-planner.js';
 import './elements/shell-ui.js';
@@ -36,6 +37,11 @@ const template = html`
     key="{{key}}"
     search="{{search}}"
     on-config="_onStateData"
+  ></arc-config>
+
+  <arc-manifest
+    config="{{config}}"
+    on-manifest="_onStateData"
   ></arc-config>
 
   <arc-host
@@ -126,17 +132,6 @@ class AppShell extends Xen.Debug(Xen.Base, log) {
   get template() {
     return template;
   }
-  _getInitialState() {
-    return {
-      defaultManifest: `
-import 'https://sjmiles.github.io/arcs-stories/0.4/GitHubDash/GitHubDash.recipes'
-import 'https://sjmiles.github.io/arcs-stories/0.3/TV/TV.recipes'
-import 'https://sjmiles.github.io/arcs-stories/0.3/PlaidAccounts/PlaidAccounts.recipes'
-import '${window.shellPath}/artifacts/canonical.manifest'
-import '${window.shellPath}/artifacts/Arcs/Arcs.recipes'
-      `
-    };
-  }
   _didMount() {
     LinkJack(window, anchor => this._routeLink(anchor));
   }
@@ -144,7 +139,6 @@ import '${window.shellPath}/artifacts/Arcs/Arcs.recipes'
     this._updateDebugGlobals(state);
     this._updateConfig(state, oldState);
     this._updateKey(state, oldState);
-    this._updateManifest(state);
     this._updateDescription(state, oldState);
     this._updateSuggestions(state, oldState);
     this._updateLauncher(state, oldState);
@@ -181,9 +175,6 @@ import '${window.shellPath}/artifacts/Arcs/Arcs.recipes'
         });
       }
     }
-  }
-  _updateManifest(state) {
-    this._setState({manifest: state.defaultManifest});
   }
   _updateDescription(state, oldState) {
     let {arc, description, plan} = state;

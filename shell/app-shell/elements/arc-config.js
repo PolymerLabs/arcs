@@ -41,7 +41,7 @@ class ArcConfig extends Xen.Base {
       affordance: 'dom',
       root: params.get('root') || window.shellPath,
       manifestPath: params.get('manifest'),
-      soloPath: params.get('solo'),
+      solo: params.get('solo'),
       userid: params.get('user') || localStorage.getItem(Const.LOCALSTORAGE.user),
       key: params.get('arc') || null,
       search: params.get('search') || '',
