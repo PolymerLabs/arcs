@@ -23,8 +23,8 @@ http://polymer.github.io/PATENTS.txt
 <script src="../apps/chrome-extension/test/data-processing-test.js"></script>
 -->
 
-<script src="../app-shell/elements/test/fake-database.js"></script>
-<script src="../app-shell/elements/test/fake-database-test.js"></script>
+<!-- <script src="../app-shell/elements/test/fake-database.js"></script>
+<script src="../app-shell/elements/test/fake-database-test.js"></script> -->
 
 <!-- TODO(wkorman): Restore the below unit tests once we fix ES module imports.
   See https://github.com/PolymerLabs/arcs/issues/713 -->
@@ -46,6 +46,10 @@ back to serving from the file system. -->
 
 <link rel="import" href="../components/good-map.html">
 <script src="../components/test/good-map-test.js"></script> -->
+
+<script>
+  const assert = chai.assert;
+</script>
 
 <script src="selenium-utils.js"></script>
 <script src="selenium-utils-test.js"></script>

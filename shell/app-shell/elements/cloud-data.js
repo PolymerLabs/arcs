@@ -36,6 +36,7 @@ const template = html`
     key="{{key}}"
     on-user="_onForward"
     on-arcs="_onForward"
+    on-userid="_onForward"
   ></cloud-user>
 
   <cloud-arc

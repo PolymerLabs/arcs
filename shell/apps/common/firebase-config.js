@@ -11,8 +11,34 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 // firebase runtime (customized by sjmiles@ for import-ability)
 import firebase from '../../components/firebase.4.2.0.js';
 
-// arc data is under this child node on database root
-const version = '0_4';
+const config = (() => {
+  const testFirebaseKey = (new URL(document.location)).searchParams.get('testFirebaseKey');
+  if (!testFirebaseKey) {
+    return {
+      // arc data is under this child node on database root
+      version: '0_4',
+      server: 'arcs-storage.firebaseio.com',
+      apiKey: 'AIzaSyBme42moeI-2k8WgXh-6YK_wYyjEXo4Oz8',
+      authDomain: 'arcs-storage.firebaseapp.com',
+      databaseURL: 'https://arcs-storage.firebaseio.com',
+      projectId: 'arcs-storage',
+      storageBucket: 'arcs-storage.appspot.com',
+      messagingSenderId: '779656349412'
+    };
+  } else {
+    return {
+      // arc data is under this child node on database root
+      version: testFirebaseKey,
+      server: 'arcs-storage-test.firebaseio.com',
+      apiKey: 'AIzaSyCbauC2RwA8Ao87tKV4Vzq6qIZiytpo4ws',
+      authDomain: 'arcs-storage-test.firebaseapp.com',
+      databaseURL: 'https://arcs-storage-test.firebaseio.com',
+      projectId: 'arcs-storage-test',
+      storageBucket: 'arcs-storage-test.appspot.com',
+      messagingSenderId: '419218095277'
+    };
+  }
+})();
 
   let version;
   let firebaseConfig;
@@ -52,10 +78,10 @@ const config = {
 };
 
 // firebase app
-const app = firebase.initializeApp(config/*, 'arcs-storage'*/);
+const app = firebase.initializeApp(config);
 // firebase database
 const database = app.database();
-const db = database.ref(version);
+const db = database.ref(config.version);
 // firebase storage
 const storage = app.storage();
 
@@ -72,11 +98,12 @@ db.newUser = name => {
   return db.child('users').push(user).key;
 };
 
-// fill in existing reference if necessary
+// fill in existing global reference if necessary
 const Firebase = window.Firebase || {};
+
 // exportables
 Object.assign(Firebase, {
-  version,
+  version: config.version,
   firebase,
   database,
   db,

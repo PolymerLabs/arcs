@@ -84,6 +84,7 @@ const template = html`
     description="{{description}}"
     plans="{{plans}}"
     plan="{{plan}}"
+    on-userid="_onStateData"
     on-user="_onStateData"
     on-profile="_onStateData"
     on-users="_onStateData"
@@ -212,21 +213,6 @@ import '${window.shellPath}/artifacts/Arcs/Arcs.recipes'
     }
   }
   _updateSuggestions(state, oldState) {
-    /*
-    let {key, search, suggestions, plan} = state;
-    state.filteredSuggestions = state.suggestions;
-    // filter out root suggestions if we aren't searching directly
-    // TODO(sjmiles): ...and if aren't launcher and there is one plan, otherwise suggestions are empty all the time
-    if (suggestions && !search && !Const.SHELLKEYS[key] && plan) {
-      // Otherwise only show suggestions that don't populate a root.
-      state.filteredSuggestions = suggestions.filter(
-        // TODO(seefeld): Don't hardcode `root`
-        // TODO(sjmiles|mmandlis): `name.includes` catches all variants of `root` (e.g. `toproot`), but
-        // `tags.includes` only catches `#root` tag specifically
-        ({plan}) => plan.slots && !plan.slots.find(s => s.name.includes('root') || s.tags.includes('#root'))
-      );
-    }
-    */
     state.showhint = Boolean(state.suggestions && state.suggestions.length > 0);
   }
   _render({}, state) {
@@ -253,14 +239,7 @@ import '${window.shellPath}/artifacts/Arcs/Arcs.recipes'
   }
   _setKey(key) {
     log('registered new key, begin arc rebuild procedure');
-    this._setState({
-      key/*,
-      description: null,
-      serialization: null,
-      suggestions: null,
-      suggestion: null,
-      plan: null*/
-    });
+    this._setState({key});
   }
   async _describeArc(arc, description) {
     this._setState({description: await ArcsUtils.describeArc(arc) || description});
@@ -268,9 +247,6 @@ import '${window.shellPath}/artifacts/Arcs/Arcs.recipes'
   _onStateData(e, data) {
     this._setState({[e.type]: data});
   }
-  // _onFilteredSuggestions(e, filteredSuggestions) {
-  //   this._setState({filteredSuggestions});
-  // }
   _onSelectUser(e, userid) {
     this._setState({userid});
   }

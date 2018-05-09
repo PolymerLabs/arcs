@@ -28,6 +28,11 @@ class CloudUser extends Xen.Debug(Xen.Base, log) {
     };
   }
   _willReceiveProps({userid, user, arcs, key}, state, oldProps) {
+    // TODO(sjmiles): hack(?) for test engine
+    if (userid[0] === '*') {
+      this._createUser(userid.slice(1));
+      return;
+    }
     if (userid && (!user || user.id !== userid)) {
       // arcs data from fb is invalid
       state.arcs = null;
@@ -118,10 +123,10 @@ class CloudUser extends Xen.Debug(Xen.Base, log) {
       }
     });
   }
-  _createUser(db, user) {
-    log('WRITING user (createUser)', user);
-    user.id = db.child('users').push(user).key;
-    return user;
+  _createUser(user) {
+    log('CREATING user', user);
+    const userid = Firebase.db.newUser(user);
+    this._fire('userid', userid);
   }
 }
 customElements.define('cloud-user', CloudUser);

@@ -308,7 +308,7 @@ const template = html`
     <div toolbars on-click="_onBarClick">
       <div main toolbar open$="{{mainToolbarOpen}}">
         <a href="{{launcherHref}}" title="Go to Launcher"><icon>apps</icon></a>
-        <icon on-click="_onResetSearch">search</icon>
+        <icon id="searchButton" on-click="_onResetSearch">search</icon>
         <input placeholder="Search" value="{{search}}" on-input="_onSearchChange" on-blur="_onSearchCommit">
         <icon on-click="_onListen">mic</icon>
         <!-- <span title="{{title}}">{{title}}</span>
@@ -413,7 +413,8 @@ class ShellUi extends Xen.Debug(Xen.Base, log) {
     if (this._state.toolsOpen) {
       this._setState({toolsOpen: false});
     } else {
-      this._collapseBar();
+      this._setState({barState: 'peek'});
+      //this._collapseBar();
     }
   }
   _onTouchbarClick() {
