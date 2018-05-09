@@ -56,6 +56,12 @@ const template = html`
     min-width: var(--large-avatar-size);
     margin-right: 16px;
   }
+  user-item a {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    color: inherit;
+  }
   [user] {
     max-height: 0;
     overflow: hidden;
