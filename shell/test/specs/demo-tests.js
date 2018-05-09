@@ -13,6 +13,8 @@
 const assert = require('assert');
 const {URL} = require('url');
 
+const divider = `\n`;
+
 function pierceShadows(selectors) {
   return browser.execute(function(selectors) {
     return pierceShadows(selectors);
@@ -88,10 +90,10 @@ function loadSeleniumUtils() {
   browser.waitForVisible('<app-shell>');
 
   const result = browser.execute(function(baseUrl) {
-    const script = document.createElement('script');
-    script.type = 'text/javascript';
-    script.src = `${baseUrl}/shell/test/selenium-utils.js`;
-    document.getElementsByTagName('head')[0].appendChild(script);
+    document.head.appendChild(Object.assign(document.createElement('script'), {
+      type: 'text/javascript',
+      src: `${baseUrl}/shell/test/selenium-utils.js`
+    }));
   }, browser.options.baseUrl);
 
   browser.waitUntil(() => {
@@ -183,6 +185,7 @@ function waitForStillness() {
 }
 
 function clickElement(selector) {
+  console.log(divider);
   const element = pierceShadowsSingle(['app-shell', 'shell-ui'].concat([selector]));
   if (!element) {
     console.warn(`demo-tests: couldn't find element [${selector}]`);
@@ -192,37 +195,6 @@ function clickElement(selector) {
   }
 }
 
-/**
- * The suggestions drawer animates open & closing.
- * Add additional logic to deal with this. */
-function openSearch() {
-  clickElement('#openSearch');
-  /*
-    // registering the 'open' state may take a little bit
-    browser.waitUntil(
-        _isSuggestionsDrawerOpen,
-        1000,
-        `the suggestions drawer isn't registering with state 'open' after a click`,
-        100);
-*/
-    // after the 'open' state, wait a beat for the animation to finish. This
-    // should only be 80ms but in practice we need a bit more.
-  wait(200);
-/*
-    if (!_isSuggestionsDrawerOpen()) {
-      console.log('suggestions drawer not opening?');
-      throw Error(`suggestions drawer never opened even after a click`);
-    }
-  }
-  */
-}
-
-/*
-function getFooterPath() {
-  return ['app-shell', 'shell-ui', 'arc-footer', 'x-toast[app-footer]'];
-}
-*/
-
 function initTestWithNewArc(testTitle, useSolo) {
   // clean up extra open tabs
   const openTabs = browser.getTabIds();
@@ -230,27 +202,23 @@ function initTestWithNewArc(testTitle, useSolo) {
   openTabs.slice(1).forEach(tabToClose => {
     browser.close(tabToClose);
   });
-
+  // setup url params
   let firebaseKey = new Date().toISOString() + testTitle;
   firebaseKey = firebaseKey.replace(/\W+/g, '-').replace(/\./g, '_');
   console.log(`running test "${testTitle}" with firebaseKey "${firebaseKey}"`);
-
   const urlParams = [
     `testFirebaseKey=${firebaseKey}`,
     //`log`,
-    'user=*testuser'
+    'user=*selenium'
   ];
-
   if (useSolo) {
     urlParams.push(`solo=${browser.options.baseUrl}shell/artifacts/canonical.manifest`);
   }
-
   // note - baseUrl (currently specified on the command line) must end in a
   // trailing `/`, and this must not begin with a preceding `/`.
   // `browser.url()` will prefix its argument with baseUrl, and avoiding a
   // doubling `//` situation avoids some bugs.
   browser.url(`shell/apps/web/?${urlParams.join('&')}`);
-
   assert.equal('Arcs', browser.getTitle());
 
   //createNewUserIfNotLoggedIn();
@@ -270,21 +238,16 @@ function initTestWithNewArc(testTitle, useSolo) {
 
 // function createNewUserIfNotLoggedIn() {
 //   loadSeleniumUtils();
-
 //   if (browser.getUrl().includes('user=')) {
 //     return;
 //   }
-
 //   const newUsersNameSelectors =
 //       ['app-shell', 'shell-ui', 'user-picker', '#new-users-name'];
 //   waitForVisible(newUsersNameSelectors);
-
 //   const element = pierceShadowsSingle(newUsersNameSelectors);
 //   const elementId = element.value.ELEMENT;
-
 //   // create a user 'Selenium'
 //   browser.elementIdValue(elementId, ['Selenium', 'Enter']);
-
 //   waitForStillness();
 // }
 
@@ -303,8 +266,14 @@ function initTestWithNewArc(testTitle, useSolo) {
 //   browser.switchTab(browser.windowHandles().value[1]);
 // }
 
+function openSystemUi() {
+  clickElement('[touchBar]');
+  wait(200);
+}
+
 function allSuggestions() {
   waitForStillness();
+  openSystemUi();
   clickElement('#openSearch');
   wait(200);
   clickElement('#searchButton');
@@ -328,18 +297,18 @@ function acceptSuggestion(substring) {
 }
 
 function _waitForAndMaybeAcceptSuggestion(substring, accept) {
-  console.log(`Waiting for: ${substring}`);
+  console.log(divider);
+  console.log(`waiting for suggestion [${substring}]`);
   waitForStillness();
-
   const findSuggestion = () => {
     const suggestions = getAtLeastOneSuggestion();
     try {
       const suggestion = searchElementsForText(suggestions.value, substring);
       if (!suggestion) {
-        console.log(`Couldn't find suggestion '${substring}'.`);
+        console.log(`couldn't find suggestion '${substring}'.`);
         return false;
       }
-      console.log(`found: suggestion "${suggestion.text}"`);
+      console.log(`found suggestion "${suggestion.text}"`);
       if (accept) {
         browser.elementIdClick(suggestion.id);
       }
@@ -352,9 +321,13 @@ function _waitForAndMaybeAcceptSuggestion(substring, accept) {
       throw e;
     }
   };
-  browser.waitUntil(findSuggestion, 5000, `couldn't find suggestion ${textSubstring}`);
+  browser.waitUntil(findSuggestion, 5000, `couldn't find suggestion ${substring}`);
+  //console.log(`${accept ? 'Accepted' : 'Found'} suggestion: ${substring}`);
+  if (accept) {
+    console.log(`accepted suggestion: ${substring}`);
+  }
+  console.log(divider);
   // TODO: return the full suggestion text for further verification.
-  console.log(`${accept ? 'Accepted' : 'Found'} suggestion: ${textSubstring}`);
 }
 
 function particleSelectors(slotName, selectors) {
@@ -408,7 +381,6 @@ function clickInParticles(slotName, selectors, textQuery) {
 function testAroundRefresh() {
   const getOrCompare = expectedValues => {
     let actualValues = {};
-
     // Unfortunately, the title isn't consistent either. See #697.
     //const titleElem = pierceShadowsSingle(['app-shell', 'shell-ui', '#arc-title']);
     //actualValues.title = browser.elementIdText(titleElem.value.ELEMENT).value;
@@ -435,26 +407,18 @@ function testAroundRefresh() {
 
     return actualValues;
   };
-
-
   const expectedValues = getOrCompare();
-
   browser.refresh();
   loadSeleniumUtils();
-
   waitForStillness();
-
   getOrCompare(expectedValues);
 }
 
 describe('Arcs demos', function() {
   it('can book a restaurant', /** @this Context */ function() {
     initTestWithNewArc(this.test.fullTitle(), true);
-
     allSuggestions();
-
     acceptSuggestion('Find restaurants');
-
     // Our location is relative to where you are now, so this list is dynamic.
     // Rather than trying to mock this out let's just grab the first
     // restaurant.
@@ -464,10 +428,8 @@ describe('Arcs demos', function() {
     let restaurantNodes = pierceShadows(restaurantSelectors);
     console.log(`click: restaurantSelectors`);
     browser.elementIdClick(restaurantNodes.value[0].ELEMENT);
-
     acceptSuggestion('Table for 2');
     acceptSuggestion('from your calendar');
-
     testAroundRefresh();
 
     // debug hint: to drop into debug mode with a REPL; also a handy way to
@@ -483,26 +445,25 @@ describe('Arcs demos', function() {
 
   it('can buy gifts', /** @this Context */ function() {
     initTestWithNewArc(this.test.fullTitle(), true);
-
     allSuggestions();
-
     acceptSuggestion(
         `Show products from your browsing context (Minecraft Book plus 2 other items) and choose from Products recommended based on products from your browsing context and Claire's wishlist (Book: How to Draw plus 2 other items)`);
-
     browser.waitForVisible('[slotid="action"]');
     browser.waitForVisible('[slotid="annotation"]');
-
     // TODO: click the 'Add' buttons to move products from recommended to shortlist and
     // (1) verify product was moved,
     // (2) verify 'action' slot is not visible after all products were moved.
-
     [
       'Buy gifts for Claire\'s Birthday on 2017-08-04, Estimate arrival date for products',
       'Check manufacturer information for products from your browsing context',
       'Find alternate shipping',
       `Recommendations based on Claire\'s wishlist`
       // TODO: add 'and Claire\'s wishlist' when regex is supported.
-    ].forEach(suggestion => acceptSuggestion(suggestion));
+    ].forEach(suggestion => {
+      wait(8000);
+      openSystemUi();
+      acceptSuggestion(suggestion);
+    });
 
     // Verify each product has non empty annotation text.
     let annotations = browser.getText('[slotid="annotation"]');
@@ -523,14 +484,14 @@ describe('Arcs system', function() {
     // load our utils in the new page
     //loadSeleniumUtils();
 
+    // () => {
+    //   getAtLeastOneSuggestion();
+    //   // we hit at least a single suggestion, good enough!
+    //   return true;
+    // },
+
     waitForStillness();
-    browser.waitUntil(
-        () => {
-          getAtLeastOneSuggestion();
-          // we hit at least a single suggestion, good enough!
-          return true;
-        },
-        5000,
+    browser.waitUntil(getAtLeastOneSuggestion, 5000,
         `couldn't find any suggestions; this might indicate that a global manifest failed to load`);
 
     // treat the fact that we found any suggestions as a good enough
