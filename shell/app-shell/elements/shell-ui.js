@@ -308,7 +308,7 @@ const template = html`
     <div toolbars on-click="_onBarClick">
       <div main toolbar open$="{{mainToolbarOpen}}">
         <a href="{{launcherHref}}" title="Go to Launcher"><icon>apps</icon></a>
-        <div style="flex:1; flex-direction:row; justify-content: center; display: flex; align-items: center; cursor: pointer;" on-click="_onSearchClick">
+        <div id="openSearch" style="flex:1; flex-direction:row; justify-content: center; display: flex; align-items: center; cursor: pointer;" on-click="_onSearchClick">
           <icon>search</icon>
           <div style="margin-left:8px;">Search</div>
         </div>
@@ -322,7 +322,7 @@ const template = html`
       <div search toolbar open$="{{searchToolbarOpen}}">
         <icon on-click="_onMainClick">arrow_back</icon>
         <input placeholder="Search" value="{{search}}" on-input="_onSearchChange" on-blur="_onSearchCommit">
-        <icon on-click="_onResetSearch">search</icon>
+        <icon id="searchButton" on-click="_onResetSearch">search</icon>
       </div>
       <div settings toolbar open$="{{settingsToolbarOpen}}">
         <icon on-click="_onMainClick">arrow_back</icon>

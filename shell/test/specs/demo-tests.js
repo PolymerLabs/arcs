@@ -189,11 +189,7 @@ function waitForVisible(selectors) {
 // TODO(sjmiles): factor stillness testing into a module
 
 function glowElement() {
-  return pierceShadowsSingle([
-    'app-shell',
-    'shell-ui',
-    '[glowable]'
-  ]);
+  return pierceShadowsSingle(['app-shell', 'shell-ui','[glowable]']);
 }
 
 /** Wait for the glow-throb to stop. */
@@ -259,6 +255,33 @@ function openSuggestionDrawer() {
     // should only be 80ms but in practice we need a bit more.
     wait(200);
 
+    if (!_isSuggestionsDrawerOpen()) {
+      console.log('suggestions drawer not opening?');
+      throw Error(`suggestions drawer never opened even after a click`);
+    }
+  }
+  */
+}
+
+/**
+ * The suggestions drawer animates open & closing.
+ * Add additional logic to deal with this. */
+function openSearch() {
+    const openSearch = pierceShadowsSingle(['app-shell', 'shell-ui', '#openSearch']);
+    console.log(`click: #openSearch`);
+    browser.elementIdClick(openSearch.value.ELEMENT);
+  /*
+    // registering the 'open' state may take a little bit
+    browser.waitUntil(
+        _isSuggestionsDrawerOpen,
+        1000,
+        `the suggestions drawer isn't registering with state 'open' after a click`,
+        100);
+*/
+    // after the 'open' state, wait a beat for the animation to finish. This
+    // should only be 80ms but in practice we need a bit more.
+    wait(200);
+/*
     if (!_isSuggestionsDrawerOpen()) {
       console.log('suggestions drawer not opening?');
       throw Error(`suggestions drawer never opened even after a click`);
@@ -351,6 +374,7 @@ function initTestWithNewArc(testTitle) {
 function allSuggestions() {
   waitForStillness();
   //openSuggestionDrawer();
+  openSearch();
 
   const magnifier = pierceShadowsSingle(['app-shell', 'shell-ui', '#searchButton']);
   //const magnifier = pierceShadowsSingle(getFooterPath().concat(['[search]', '#search-button']));
