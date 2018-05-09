@@ -11,7 +11,6 @@
 'use strict';
 
 import {assert} from './chai-web.js';
-import {Arc} from '../arc.js';
 import {Loader} from '../loader.js';
 import {Manifest} from '../manifest.js';
 

@@ -7,8 +7,6 @@
 
 import {ResolveRecipe} from '../strategies/resolve-recipe.js';
 
-import {Recipe} from './recipe.js';
-
 // Provides basic recipe resolution for recipes against a particular arc.
 export class RecipeResolver {
   constructor(arc) {

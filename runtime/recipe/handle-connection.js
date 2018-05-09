@@ -7,7 +7,6 @@
 
 import {assert} from '../../platform/assert-web.js';
 import * as util from './util.js';
-import {TypeChecker} from './type-checker.js';
 
 export class HandleConnection {
   constructor(name, particle) {

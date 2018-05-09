@@ -10,7 +10,6 @@
 
 'use strict';
 
-import {assert} from '../chai-web.js';
 import {TestHelper} from '../test-helper.js';
 
 describe('transformation slots', function() {

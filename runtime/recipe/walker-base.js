@@ -6,7 +6,6 @@
 // http://polymer.github.io/PATENTS.txt
 
 import {Strategizer} from '../../strategizer/strategizer.js';
-import {Recipe} from './recipe.js';
 import {assert} from '../../platform/assert-web.js';
 
 /**

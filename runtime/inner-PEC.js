@@ -9,7 +9,6 @@
  */
 'use strict';
 
-import {Type} from './type.js';
 import {handleFor} from './handle.js';
 import {assert} from '../platform/assert-web.js';
 import {PECInnerPort} from './api-channel.js';

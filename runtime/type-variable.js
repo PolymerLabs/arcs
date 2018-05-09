@@ -10,7 +10,6 @@
 import {Type} from './type.js';
 import {assert} from '../platform/assert-web.js';
 import {Schema} from './schema.js';
-import {TypeChecker} from './recipe/type-checker.js';
 
 export class TypeVariable {
   constructor(name, canWriteSuperset, canReadSubset) {

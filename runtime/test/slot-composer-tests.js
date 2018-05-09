@@ -10,7 +10,6 @@
 'use strict';
 
 import {Arc} from '../arc.js';
-import {Affordance} from '../affordance.js';
 import {assert} from './chai-web.js';
 import {Slot} from '../slot.js';
 import {SlotComposer} from '../slot-composer.js';
