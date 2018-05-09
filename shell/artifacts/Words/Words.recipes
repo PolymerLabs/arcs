@@ -13,6 +13,7 @@ recipe
   create #board as board
   create #move as move
   create #stats as stats
+  use #shelltheme as shellTheme
   // TODO(wkorman): We only need one post but currently we need a set to produce
   // the right boxing aggregation.
   create #posts as posts
@@ -25,3 +26,4 @@ recipe
     post = post
     person <- person
     renderParticle = ShowSingleStats
+    shellTheme <- shellTheme

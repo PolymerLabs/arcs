@@ -34,3 +34,7 @@ schema Post
   Text owner
   // The key of the arc from which this Post originated.
   Text arcKey
+  // Optional rank of this post amidst a collection of other posts. Useful when
+  // sorting for output and passing on to another particle, until we have
+  // support for ordered lists.
+  Number rank

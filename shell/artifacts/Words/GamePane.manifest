@@ -7,6 +7,7 @@
 // http://polymer.github.io/PATENTS.txt
 
 import '../Common/List.manifest'
+import '../Common/data/Theme.schema'
 import '../People/Person.schema'
 import '../Social/Post.schema'
 import 'Board.schema'
@@ -21,6 +22,7 @@ particle GamePane in 'source/GamePane.js'
   inout Stats stats
   inout [Post] posts
   inout Post post
+  in Theme shellTheme
   affordance dom
   consume root
   description `play Words`

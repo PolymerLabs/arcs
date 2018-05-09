@@ -10,7 +10,7 @@
 'use strict';
 
 defineParticle(({DomParticle, html, log, resolver}) => {
-  function importLibrary(filename) {
+  function importLibrary(clazzType, filename) {
     // TODO(wkorman): The use of a `cdn` url below is a surprising workaround to
     // allow code sharing with the main Words game logic. This particle runs,
     // from a `resolver` perspective, under the auspices and so code path of the
@@ -20,18 +20,54 @@ defineParticle(({DomParticle, html, log, resolver}) => {
     // force loading of our shared code from the right place. This is thus
     // fairly lo-fi. and we should eventually explore a cleaner way for embedded
     // recipe particle code to load known-to-be-associated library code.
-    importScripts(resolver(`https://$cdn/artifacts/Words/source/${filename}`));
+    if (clazzType === 'undefined')
+      importScripts(resolver(`https://$cdn/artifacts/Words/source/${filename}`));
   }
-  if (typeof Scoring === 'undefined') importLibrary('Scoring.js');
-  if (typeof Tile === 'undefined') importLibrary('Tile.js');
-  if (typeof TileBoard === 'undefined') importLibrary('TileBoard.js');
+  importLibrary(typeof Scoring, 'Scoring.js');
+  importLibrary(typeof Tile, 'Tile.js');
+  importLibrary(typeof TileBoard, 'TileBoard.js');
 
   const host = `show-single-stats`;
 
   const template = html`
 <style>
   [${host}] {
-    padding: 5px;
+    color: rgba(0, 0, 0, 0.87);
+    padding-bottom: 16px;
+    border-bottom: solid 0.5px;
+    border-bottom-color: #d4d4d4;
+    text-decoration: none;
+    display: block;
+  }
+  a[${host}]:visited {
+    color: inherit;
+  }
+  [${host}] [title] {
+    font-family: 'Google Sans', sans-serif;
+    font-size: 16pt;
+    margin-bottom: 14px;
+    margin-top: 18px;
+  }
+  [${host}] [title] [avatar] {
+    display: inline-block;
+    height: 24px;
+    width: 24px;
+    min-width: 24px;
+    border-radius: 100%;
+    margin-left: 16px;
+    margin-right: 16px;
+    vertical-align: bottom;
+  }
+  [${host}] [owner] {
+    font-size: 14pt;
+    margin-right: 6px;
+  }
+  [${host}] [when] {
+    font-size: 12pt;
+    color: rgba(0, 0, 0, 0.4);
+  }
+  [${host}] .gameInfo {
+    margin-bottom: 14px;
   }
   [${host}] .board {
     cursor: pointer;
@@ -52,7 +88,6 @@ defineParticle(({DomParticle, html, log, resolver}) => {
     color: black;
     display: inline-block;
     text-align: center;
-    font: sans-serif;
     line-height: 50px;
     width: 50px;
     height: 50px;
@@ -82,7 +117,10 @@ defineParticle(({DomParticle, html, log, resolver}) => {
     cursor: default;
   }
 </style>
-<div ${host}>
+<a ${host} href="{{gameHref}}" value="{{id}}">
+  <div title>
+    <span avatar style='{{avatarStyle}}'></span><span owner>{{owner}}</span><span when>{{time}}</span>
+  </div>
   <div class="gameInfo">
     <div class="score">Score: <span>{{score}}</span></div>
     <div class="longestWord">Longest word: <span>{{longestWord}}</span></div>
@@ -92,7 +130,7 @@ defineParticle(({DomParticle, html, log, resolver}) => {
     <div class="gameOver" hidden="{{hideGameOver}}">Game Over</div>
     <span>{{boardCells}}</span>
   </div>
-</div>
+</a>
 <template board-cell>
   <div class="{{classes}}" style%="{{style}}">
     <span>{{letter}}</span><div class="points">{{points}}</div>
@@ -103,6 +141,10 @@ defineParticle(({DomParticle, html, log, resolver}) => {
   return class extends DomParticle {
     get template() {
       return template;
+    }
+    avatarToStyle(url) {
+      return `background: url('${
+          url}') center no-repeat; background-size: cover;`;
     }
     // TODO(wkorman): Share the board to model conversion logic with GamePane.
     // This is a direct copy for now.
@@ -126,12 +168,10 @@ defineParticle(({DomParticle, html, log, resolver}) => {
       }
       return models;
     }
-    render({gameId, post, boxedStats, boxedBoards}) {
+    render({gameId, post, people, user, avatars, boxedStats, boxedBoards}) {
       if (!gameId || !post || !boxedStats || !boxedBoards) return {};
 
-      // TODO(wkorman):
-      // - Integrate and show the move data, if any.
-      // - Display user name and avatar to follow layout of social post.
+      // TODO(wkorman): Integrate and show the move data, if any.
 
       // TODO(wkorman): Until we have happy entity mutation, and/or improved
       // boxing, we hack things by leveraging our knowledge that updated data
@@ -144,12 +184,20 @@ defineParticle(({DomParticle, html, log, resolver}) => {
 
       const tileBoard = new TileBoard(board);
       let boardModels = this.boardToModels(tileBoard);
+      const {arcKey, author, createdTimestamp} = post;
       return {
+        avatarStyle: this.avatarToStyle(resolver(avatars.find(a => a.owner == author).url)),
         boardCells: {$template: 'board-cell', models: boardModels},
+        gameHref: `?arc=${arcKey}&user=${user.id}`,
         hideGameOver: true, // TODO(wkorman): Fix this.
-        longestWord: Scoring.longestWordText(stats),
         highestScoringWord: Scoring.highestScoringWordText(stats),
-        score: `${stats.score} (${stats.moveCount} moves)`
+        longestWord: Scoring.longestWordText(stats),
+        owner: people.find(p => p.id == author).name,
+        score: `${stats.score} (${stats.moveCount} moves)`,
+        time: new Date(createdTimestamp).toLocaleDateString('en-US', {
+          'month': 'short',
+          'day': 'numeric'
+        })
       };
     }
   };

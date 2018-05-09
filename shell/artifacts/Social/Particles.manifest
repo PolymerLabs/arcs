@@ -58,4 +58,3 @@ particle EditPost in 'source/EditPost.js'
 particle PostMuxer in 'source/PostMuxer.js'
   in [Post] list
   consume set of item
-  description `show morphed ${list}`
