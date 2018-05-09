@@ -6,6 +6,8 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
+import '../People/Person.schema'
+import '../People/Avatar.schema'
 import '../Social/Post.schema'
 import './Board.schema'
 import './Stats.schema'
@@ -15,5 +17,8 @@ particle ShowSingleStats in 'source/ShowSingleStats.js'
   in [Stats] boxedStats
   in [Board] boxedBoards
   in GameIdStore {Text gameId} gameId
+  in Person user
+  in [Person] people
+  in [Avatar] avatars
   consume item
   description `show Words ${stats}`

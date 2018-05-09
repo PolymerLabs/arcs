@@ -7,6 +7,7 @@
 // http://polymer.github.io/PATENTS.txt
 
 import 'Particles.manifest'
+import 'WordsScoreRanker.manifest'
 import '../Common/CopyCollection.manifest'
 import '../Common/Detail.manifest'
 import '../Common/List.manifest'
@@ -48,7 +49,7 @@ recipe
   map #BOXED_avatar as avatars
   use #user as user
   use #identities as people
-
+  description `Show social feed (original)`
   OnlyShowPosts
     posts <- posts
     stats <- stats
@@ -62,3 +63,16 @@ recipe
     items = posts
   PostMuxer
     list = posts
+
+recipe
+  map #BOXED_posts as posts
+  map #BOXED_stats as stats
+  create as rankedPosts
+  WordsScoreRanker
+    input = posts
+    stats = stats
+    output = rankedPosts
+  List
+    items = rankedPosts
+  PostMuxer
+    list = rankedPosts

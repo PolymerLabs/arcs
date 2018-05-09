@@ -227,9 +227,12 @@ resource GameIdJson
   [{"gameId": "${gameId}"}]
 
 recipe
+  map 'BOXED_avatar' as avatars
   map 'BOXED_board' as boxedBoards
   map 'BOXED_stats' as boxedStats
   map GameId as gameId
+  use #identities as people
+  use #user as user
   use '{{item_id}}' as v1
   slot '{{slot_id}}' as s1
   {{other_views}}
@@ -238,6 +241,9 @@ recipe
     boxedBoards <- boxedBoards
     boxedStats <- boxedStats
     gameId <- gameId
+    avatars <- avatars
+    people <- people
+    user <- user
     {{other_connections}}
     consume item as s1
     `.trim();
@@ -275,7 +281,9 @@ recipe
         // should only really need to write this once, and ideally to a
         // single Post rather than a collection.
         let postValues = {
+          arcKey: props.shellTheme.key,
           author: props.person.id,
+          createdTimestamp: Date.now(),
           renderRecipe: this.buildRenderRecipe(props.renderParticle, tileBoard.gameId),
           renderParticleSpec: state.renderParticleSpec
         };
