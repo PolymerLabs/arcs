@@ -307,7 +307,10 @@ function allSuggestions() {
   const magnifier = pierceShadowsSingle(
       getFooterPath().concat(['[search]', '#search-button']));
   console.log(`click: allSuggestions`);
-  browser.elementIdClick(magnifier.value.ELEMENT);
+  browser.waitUntil(() => {
+    browser.elementIdClick(magnifier.value.ELEMENT);
+    return getAtLeastOneSuggestion();
+  }, 5000, `couldn't find any suggestions`);
 }
 
 function getAtLeastOneSuggestion() {
