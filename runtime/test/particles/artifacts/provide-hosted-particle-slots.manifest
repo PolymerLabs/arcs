@@ -63,4 +63,4 @@ resource MyFoos
     {"bar": "my-other-foo"}
   ]
 
-view View0 of [Foo] 'myfoos' in MyFoos
+store Handle0 of [Foo] 'myfoos' in MyFoos
