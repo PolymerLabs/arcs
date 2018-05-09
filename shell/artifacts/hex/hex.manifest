@@ -18,21 +18,23 @@ schema HexGameState extends GameState
   Boolean swapped
 
 particle SummarizeGame in 'summarize-game.js'
-  SummarizeGame(in GameState gameState)
+  in GameState gameState
   consume summary
 
 particle JoinGame in 'join-game.js'
   // TODO: This particle probably shouldn't be able to create an instance of ~a.
   //       But for now this creates the HexGameState the first time someone joins.
   // TODO: This should be `in` with `mutate` capability of just GameState {p1/p2}.
-  JoinGame(inout ~a with GameState {player1, player2} gameState, in Person {Text id} user)
+  inout ~a with GameState {player1, player2} gameState
+  in Person {Text id} user
   consume summary
   description `Join a game`
 
 // TODO: Factor out logic to be independent of HexGame. UI should be a seperate concern.
 particle HexGame in 'hex-game.js'
   // TODO: gameState should be `in` with `mutate`
-  HexGame(inout HexGameState gameState, in Person {Text id} user)
+  inout HexGameState gameState
+  in Person {Text id} user
   consume root
     provide summary
     provide board
@@ -40,7 +42,6 @@ particle HexGame in 'hex-game.js'
   description `Play hex`
 
 particle HexBoard in 'hex-board.js'
-  HexBoard()
   consume board
     provide set of cell
 
