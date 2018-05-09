@@ -52,13 +52,13 @@ defineParticle(({DomParticle, log, html}) => {
     display: block;
     color: inherit;
     text-decoration: none;
-    min-height: 64px;
   }
   [${host}] [hovering] {
     position: absolute;
     right: 16px;
     bottom: 16px;
     visibility: hidden;
+    height: 24px;
   }
   [${host}] [chip]:hover [hovering] {
     visibility: visible;
@@ -69,7 +69,7 @@ defineParticle(({DomParticle, log, html}) => {
   [${host}] [share] {
     display: flex;
     align-items: center;
-    margin-top: 16px;
+    margin-top: 32px;
   }
   [${host}] [share] icon:not([show]) {
     display: none;

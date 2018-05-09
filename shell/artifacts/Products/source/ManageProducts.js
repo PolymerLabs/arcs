@@ -23,7 +23,6 @@ defineParticle(({DomParticle, resolver}) => {
     align-items: center;
     padding: 8px 0;
     color: #aaaaaa;
-    font-weight: bold;
   }
   ${host} > x-list [item] {
     padding: 4px 8px;
@@ -62,8 +61,7 @@ defineParticle(({DomParticle, resolver}) => {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 148px;
-    height: 128px;
+
     box-sizing: border-box;
     text-align: center;
     background-size: contain;

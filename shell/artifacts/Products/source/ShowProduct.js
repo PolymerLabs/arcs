@@ -24,7 +24,7 @@ defineParticle(({DomParticle, resolver, html}) => {
   }
   ${host} [row] {
     display: flex;
-    align-items: center;
+    /* align-items: center; */
   }
   ${host} [col0] {
     flex: 1;
@@ -37,29 +37,43 @@ defineParticle(({DomParticle, resolver, html}) => {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 148px;
-    height: 128px;
     box-sizing: border-box;
     text-align: center;
     background-size: contain;
   }
-  ${host} [col1] > img {
-    max-width: 128px;
-    max-height: 96px;
+  ${host} img {
+    max-width: 100%;
+    max-height: 320px;
+    margin: 0 auto;
   }
   ${host} [name] {
-    font-size: 0.95em;
+    margin-bottom: 4px;
+    /* margin-top: 16px; */
   }
   ${host} [category] {
     font-size: 0.7em;
     color: #cccccc;
   }
   ${host} [price] {
+    padding-right: 8px;
     color: #333333;
+    font-size: 14px;
+  }
+  ${host} [price]:empty {
+    display:none;
   }
   ${host} [seller] {
-    font-size: 0.8em;
+    /* font-size: 0.8em; */
     color: #cccccc;
+    font-size: 14px;
+  }
+  ${host} [thumb] {
+    width: 64px;
+    height: 64px;
+    background-position: center center;
+    border: 1px solid rgba(0,0,0,.08);
+    box-sizing: border-box;
+    background-size: cover;
   }
 </style>
   `;
@@ -70,12 +84,13 @@ ${styles}
     <div row>
       <div col0>
         <div name title="{{name}}">{{name}}</div>
-        <div category>{{category}}</div>
-        <div price>{{price}}</div>
-        <div seller>{{seller}}</div>
+        <div row>
+          <div price>{{price}}</div>
+          <div seller>{{seller}}</div>
+        </div>
       </div>
-      <div col1>
-        <img src="{{resolvedImage}}">
+      <div col1 style="text-align:center;">
+        <div thumb style="{{styleBackground}}" src="{{resolvedImage}}" >
       </div>
     </div>
     </div>
@@ -93,6 +108,7 @@ ${styles}
       if (product) {
         let item = Object.assign({}, product.rawData);
         item.resolvedImage = resolver ? resolver(product.image) : product.image;
+        item.styleBackground = 'background-image:url('+item.resolvedImage+')';
         return item;
       }
     }

@@ -146,10 +146,13 @@ const template = html`
       align-items: center;
       height: 56px;
       width: 100%;
-      transition: transform 100ms ease-in-out;
+      /* transition: transform 100ms ease-in-out; */
+      padding-left: 6px;
+      padding-right: 6px;
+      box-sizing: border-box;
     }
     [toolbar] > *:not(span):not(input) {
-      margin: 16px;
+      margin: 16px 10px;
       height: 24px;
     }
     [toolbar] > span {
@@ -306,14 +309,14 @@ const template = html`
       <div main toolbar open$="{{mainToolbarOpen}}">
         <!-- <a href="{{launcherHref}}" title="Go to Launcher">${AppIcon}</a> -->
         <a href="{{launcherHref}}" title="Go to Launcher"><icon>apps</icon></a>
-        <span title="{{title}}">{{title}}</span>
-        <icon on-click="_onSearchClick">search</icon>
+        <!-- <span title="{{title}}">{{title}}</span> -->
+        <div style="flex:1; flex-direction:row; justify-content: center; display: flex; align-items: center;" on-click="_onSearchClick"><icon>search</icon><div style="margin-left:8px;">Search</div></div>
         <icon on-click="_onSettingsClick">settings</icon>
       </div>
       <div search toolbar open$="{{searchToolbarOpen}}">
         <icon on-click="_onMainClick">arrow_back</icon>
         <input placeholder="Search" value="{{search}}" on-input="_onSearchChange" on-blur="_onSearchCommit">
-        <icon on-click="_onResetSearch">search</icon>
+        <icon on-click="_onMainClick">close</icon>
       </div>
       <div settings toolbar open$="{{settingsToolbarOpen}}">
         <icon on-click="_onMainClick">arrow_back</icon>

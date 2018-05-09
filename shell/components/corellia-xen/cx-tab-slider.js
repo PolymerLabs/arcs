@@ -22,10 +22,10 @@ const template = html`
     right: 0px;
     left: 0px;
     bottom: 0px;
-    border-width: var(--cx-tab-slider-width, 0px 0px 2px 0px);
+    border-width: var(--cx-tab-slider-width, 0px 0px 1px 0px);
     border-style: var(--cx-tab-slider-style, solid);
     border-color: var(--cx-tab-slider-color, blue);
-    margin-bottom: -4px;
+    margin-bottom: -2px;
   }
   :host([animating]) {
     display: block;

@@ -12,7 +12,7 @@ defineParticle(({DomParticle, resolver}) => {
 
   let template = `
 <div ${host}>
-  <div hidden="{{complete}}" style="padding: 10px 6px">Finding restaurants...</div>
+  <div hidden="{{complete}}" style="position:absolute;left:50%;top:50%;-webkit-transform: translate3d(-50%,-50%,0);">Finding restaurants...</div>
   <div slotid="masterdetail"></div>
 </div>
 
