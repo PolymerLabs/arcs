@@ -56,14 +56,14 @@ describe('manifest parser', function() {
   });
   it('parses manifests with comments', () => {
     parse(`
-    # comment
+    // comment
       recipe // comment
-        # comment
+        // comment
            // comment
         A//comment
-   # comment
-        # comment
-        B    #comment
+   // comment
+        // comment
+        B    //comment
       `);
   });
   it('parses recipes with recipe level connections', () => {
