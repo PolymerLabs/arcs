@@ -39,6 +39,7 @@ const steps = {
   watch: [watch],
   lint: [lint],
   check: [check],
+  clean: [clean],
   default: [check, peg, railroad, test, devtools, webpack, lint],
 };
 
@@ -107,6 +108,33 @@ function check() {
   }
 
   return true;
+}
+
+function clean() {
+  for (let file of [sources.peg.output, sources.peg.railroad]) {
+    if (fs.existsSync(file)) {
+      fs.unlinkSync(file);
+      console.log('Removed', file);
+    }
+  }
+
+  let recursiveDelete = (dir) => {
+    for (let entry of fs.readdirSync(dir)) {
+      entry = path.join(dir, entry);
+      if (fs.statSync(entry).isDirectory()) {
+        recursiveDelete(entry);
+      } else {
+        fs.unlinkSync(entry);
+      }
+    }
+    fs.rmdirSync(dir);
+  };
+  for (let buildDir of [sources.pack.buildDir, 'devtools/build']) {
+    if (fs.existsSync(buildDir)) {
+      recursiveDelete(buildDir);
+      console.log('Removed', buildDir);
+    }
+  }
 }
 
 function peg() {
