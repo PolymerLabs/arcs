@@ -10,7 +10,7 @@
 
 import {Entity} from './entity.js';
 import {Symbols} from './symbols.js';
-import assert from '../platform/assert-web.js';
+import {assert} from '../platform/assert-web.js';
 import {ParticleSpec} from './particle-spec.js';
 
 // TODO: This won't be needed once runtime is transferred between contexts.

@@ -9,7 +9,7 @@
  */
 'use strict';
 
-import assert from '../platform/assert-web.js';
+import {assert} from '../platform/assert-web.js';
 import Template from '../shell/components/xen/xen-template.js';
 
 export class DomContext {

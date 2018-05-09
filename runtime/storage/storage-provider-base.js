@@ -6,15 +6,15 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import assert from '../../platform/assert-web.js';
-import tracing from '../../tracelib/trace.js';
+import {assert} from '../../platform/assert-web.js';
+import {Tracing} from '../../tracelib/trace.js';
 import * as util from '../recipe/util.js';
 
 export class StorageProviderBase {
   constructor(type, arcId, name, id, key) {
     assert(id, 'id must be provided when constructing StorageProviders');
     assert(!type.hasUnresolvedVariable, 'Storage types must be concrete');
-    let trace = tracing.start({cat: 'handle', name: 'StorageProviderBase::constructor', args: {type: type.key, name: name}});
+    let trace = Tracing.start({cat: 'handle', name: 'StorageProviderBase::constructor', args: {type: type.key, name: name}});
     this._type = type;
     this._arcId = arcId;
     this._listeners = new Map();
@@ -57,7 +57,7 @@ export class StorageProviderBase {
     if (!listenerMap || listenerMap.size == 0)
       return;
 
-    let callTrace = tracing.start({cat: 'handle', name: 'StorageProviderBase::_fire', args: {kind, type: this._type.key,
+    let callTrace = Tracing.start({cat: 'handle', name: 'StorageProviderBase::_fire', args: {kind, type: this._type.key,
         name: this.name, listeners: listenerMap.size}});
 
     // TODO: wire up a target (particle)

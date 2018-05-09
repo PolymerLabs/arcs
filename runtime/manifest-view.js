@@ -7,7 +7,7 @@
 // http://polymer.github.io/PATENTS.txt
 'use strict';
 
-import assert from '../platform/assert-web.js';
+import {assert} from '../platform/assert-web.js';
 
 export class ManifestView {
   constructor() {

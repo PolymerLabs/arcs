@@ -11,7 +11,7 @@
   limitations under the License.
 */
 
-import fs from '../platform/fs-web.js';
+import {fs} from '../platform/fs-web.js';
 
 let events = [];
 let pid;
@@ -63,7 +63,7 @@ function pushEvent(event) {
 }
 
 let module = {exports: {}};
-export default module.exports;
+export const Tracing = module.exports;
 module.exports.enabled = false;
 module.exports.enable = function() {
   module.exports.enabled = true;

@@ -7,8 +7,8 @@
 // http://polymer.github.io/PATENTS.txt
 'use strict';
 
-import tracing from '../tracelib/trace.js';
-import assert from '../platform/assert-web.js';
+import {Tracing} from '../tracelib/trace.js';
+import {assert} from '../platform/assert-web.js';
 
 export class Scheduler {
   constructor() {
@@ -34,7 +34,7 @@ export class Scheduler {
   }
 
   enqueue(handle, eventRecords) {
-    let trace = tracing.flow({cat: 'handle', name: 'ViewBase::_fire flow'}).start();
+    let trace = Tracing.flow({cat: 'handle', name: 'ViewBase::_fire flow'}).start();
     if (this.frameQueue.length == 0 && eventRecords.length > 0)
       this._asyncProcess();
     if (!this._idleResolver) {
@@ -87,7 +87,7 @@ export class Scheduler {
   }
 
   _applyFrame(frame) {
-    let trace = tracing.start({cat: 'scheduler', name: 'Scheduler::_applyFrame', args: {target: frame.target ? frame.target.constructor.name : 'NULL TARGET'}});
+    let trace = Tracing.start({cat: 'scheduler', name: 'Scheduler::_applyFrame', args: {target: frame.target ? frame.target.constructor.name : 'NULL TARGET'}});
 
     let totalRecords = 0;
     for (let [handle, kinds] of frame.handles.entries()) {

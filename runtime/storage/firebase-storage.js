@@ -7,10 +7,10 @@
 // http://polymer.github.io/PATENTS.txt
 
 import {StorageProviderBase} from './storage-provider-base.js';
-import firebase from '../../platform/firebase-web.js';
-import assert from '../../platform/assert-web.js';
+import {firebase} from '../../platform/firebase-web.js';
+import {assert} from '../../platform/assert-web.js';
 import {KeyBase} from './key-base.js';
-import btoa from '../../platform/btoa-web.js';
+import {btoa} from '../../platform/btoa-web.js';
 
 class FirebaseKey extends KeyBase {
   constructor(key) {

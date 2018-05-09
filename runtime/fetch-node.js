@@ -6,4 +6,4 @@
 // http://polymer.github.io/PATENTS.txt
 
 import fetch from 'node-fetch';
-export default fetch;
+export {fetch};

@@ -6,7 +6,7 @@
 // http://polymer.github.io/PATENTS.txt
 
 // Provides access to device hardware resource metrics for a web browser.
-export default class DeviceInfo {
+export class DeviceInfo {
   // Returns the number of logical cores.
   static hardwareConcurrency() {
     return navigator.hardwareConcurrency;

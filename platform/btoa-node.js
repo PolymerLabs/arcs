@@ -6,4 +6,4 @@
 // http://polymer.github.io/PATENTS.txt
 
 import btoa from 'btoa';
-export default btoa;
+export {btoa};

@@ -7,7 +7,7 @@
 
 import {Strategy} from '../../strategizer/strategizer.js';
 import {Recipe} from '../recipe/recipe.js';
-import assert from '../../platform/assert-web.js';
+import {assert} from '../../platform/assert-web.js';
 
 export class InitSearch extends Strategy {
   constructor(arc) {

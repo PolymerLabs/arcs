@@ -11,7 +11,7 @@
 import {Type} from './type.js';
 import {TypeChecker} from './recipe/type-checker.js';
 import {Shape} from './shape.js';
-import assert from '../platform/assert-web.js';
+import {assert} from '../platform/assert-web.js';
 
 class ConnectionSpec {
   constructor(rawData, typeVarMap) {

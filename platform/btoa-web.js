@@ -7,4 +7,4 @@
 
 // Assume firebase has been loaded. We can't `import` it here as it does not
 // support strict mode.
-export default window.btoa;
+export const btoa = window.btoa;

@@ -8,7 +8,7 @@
 import os from 'os';
 
 // Provides access to device hardware resource metrics for a node process.
-export default class DeviceInfo {
+export class DeviceInfo {
   // Returns the number of logical cores.
   static hardwareConcurrency() {
     return os.cpus().length;

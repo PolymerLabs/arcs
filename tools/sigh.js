@@ -125,7 +125,7 @@ function peg() {
   if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir);
   }
-  fs.writeFileSync(outputFile, 'export default ' + source);
+  fs.writeFileSync(outputFile, 'export const parser = ' + source);
   return true;
 }
 
@@ -323,14 +323,14 @@ function test(args) {
     let mochaInstanceFile = fixPathForWindows(path.resolve(__dirname, '../platform/mocha-node.js'));
     for (let test of testsInDir(process.cwd())) {
       chain.push(`
-        import mocha from '${mochaInstanceFile}';
+        import {mocha} from '${mochaInstanceFile}';
         mocha.suite.emit('pre-require', global, '${test}', mocha);
       `);
       chain.push(`
         import '${fixPathForWindows(test)}';
       `);
       chain.push(`
-        import mocha from '${mochaInstanceFile}';
+        import {mocha} from '${mochaInstanceFile}';
         mocha.suite.emit('require', null, '${test}', mocha);
         mocha.suite.emit('post-require', global, '${test}', mocha);
       `);
@@ -346,7 +346,7 @@ function test(args) {
       console.log("Waiting for Arcs Explorer");
     `);
     let runner = `
-      import mocha from '${mochaInstanceFile}';
+      import {mocha} from '${mochaInstanceFile}';
       ${chainImports.join('\n      ')}
       (async () => {
         ${options.explore ? 'await devtoolsChannel.ready;' : ''}

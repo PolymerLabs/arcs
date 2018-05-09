@@ -6,7 +6,7 @@
 // http://polymer.github.io/PATENTS.txt
 
 import * as util from './util.js';
-import assert from '../../platform/assert-web.js';
+import {assert} from '../../platform/assert-web.js';
 
 export class ConnectionConstraint {
   constructor(from, fromConnection, to, toConnection, direction) {

@@ -6,4 +6,4 @@
 // http://polymer.github.io/PATENTS.txt
 'use strict';
 
-export default window.Blob;
+export const Blob = window.Blob;

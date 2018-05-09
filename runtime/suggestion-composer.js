@@ -7,7 +7,7 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-import assert from '../platform/assert-web.js';
+import {assert} from '../platform/assert-web.js';
 import {Affordance} from './affordance.js';
 
 export class SuggestionComposer {
