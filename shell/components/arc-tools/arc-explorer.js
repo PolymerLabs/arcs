@@ -11,8 +11,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 import '../data-explorer.js';
 import Xen from '../xen/xen.js';
 
-const template = Xen.Template.createTemplate(
-  `<style>
+const html = Xen.Template.html;
+const template = html`
+  <style>
     arc-explorer > [banner] {
       padding: 6px 4px;
       background-color: whitesmoke;
@@ -39,8 +40,8 @@ const template = Xen.Template.createTemplate(
   <!--
   <button on-click="dumpDb">Dump Database</button>
   <data-explorer style="font-size: 0.6em;" object="{{data}}"></data-explorer>
-  -->`
-);
+  -->
+`;
 
 const templateArc = Xen.Template.createTemplate(
   `<arc-item key="{{key}}" data="{{data}}"></arc-item><br>`

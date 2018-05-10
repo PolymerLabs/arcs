@@ -13,11 +13,14 @@
 const assert = require('assert');
 const {URL} = require('url');
 
+const divider = `\n`;
+
 function pierceShadows(selectors) {
   return browser.execute(function(selectors) {
     return pierceShadows(selectors);
   }, selectors);
 }
+
 function pierceShadowsSingle(selectors) {
   return browser.execute(function(selectors) {
     return pierceShadowsSingle(selectors);
@@ -87,11 +90,12 @@ function loadSeleniumUtils() {
   browser.waitForVisible('<app-shell>');
 
   const result = browser.execute(function(baseUrl) {
-    const script = document.createElement('script');
-    script.type = 'text/javascript';
-    script.src = `${baseUrl}/shell/test/selenium-utils.js`;
-    document.getElementsByTagName('head')[0].appendChild(script);
+    document.head.appendChild(Object.assign(document.createElement('script'), {
+      type: 'text/javascript',
+      src: `${baseUrl}/shell/test/selenium-utils.js`
+    }));
   }, browser.options.baseUrl);
+
   browser.waitUntil(() => {
     try {
       // To see if our selenium-utils has finished loading, try one of the
@@ -124,12 +128,10 @@ function waitForVisible(selectors) {
       console.log(`Couldn't find element with selector ${selectors}`);
       return false;
     }
-
     let visible = selected.value.reduce((elem, currentValue) => {
       let eid = browser.elementIdDisplayed(selected.value[0].ELEMENT);
       return currentValue && eid.value;
     }, true);
-
     if (!visible) {
       console.log(`A selected element not visible (element ${
           selected.value} of selector ${selectors})`);
@@ -142,19 +144,14 @@ function waitForVisible(selectors) {
   }, 10000, `selectors ${selectors} never selected anything`, 500);
 }
 
-function dancingDotsElement() {
-  return pierceShadowsSingle([
-    'app-shell',
-    'shell-ui',
-    'arc-footer',
-    'x-toast[app-footer]',
-    'dancing-dots'
-  ]);
+function glowElement() {
+  return pierceShadowsSingle(['app-shell', 'shell-ui', '[glowable]']);
 }
 
-/** Wait for the dancing dots to stop. */
+/** Wait for the glow-throb to stop. */
 function waitForStillness() {
-  const element = dancingDotsElement();
+  const element = glowElement();
+  const attribute = 'glowing';
 
   // Currently, the dots sometimes stop & start again. We're introducing a
   // fudge factor here - the dots have to be stopped for a few consecutive
@@ -171,203 +168,170 @@ function waitForStillness() {
   //   ever stopping. Check the console (comment out headless in
   //   `wdio.conf.js` to get the browser visible; see README.md for more
   //   information) and see if there's an error.
-  browser.waitUntil(() => {
-    const result = browser.elementIdAttribute(element.value.ELEMENT, 'animate');
+  const noGlow = () => {
+    const result = browser.elementIdAttribute(element.value.ELEMENT, attribute);
     if (null == result.value) {
       matches += 1;
     } else {
       if (matches > 0) {
         console.log(
-            `The dots restarted their dance. This may indicate a bug, or that global data was changed by another client.`);
+          `demo-tests: the glow restarted. This may indicate a bug, or that global data was changed by another client.`);
       }
       matches = 0;
     }
     return matches > desiredMatches;
-  }, 20000, `the dancing dots can't stop won't stop`, 500);
+  };
+  browser.waitUntil(noGlow, 20000, `the glow can't stop won't stop`, 500);
 }
 
-/**
- * The suggestions drawer animates open & closing.
- * Add additional logic to deal with this. */
-function openSuggestionDrawer() {
-  const _isSuggestionsDrawerOpen = () => {
-    const footer = pierceShadowsSingle(getFooterPath());
-    const isOpen = browser.elementIdAttribute(footer.value.ELEMENT, 'open');
-    return isOpen.value;
-  };
-
-  const suggestionsOpen = _isSuggestionsDrawerOpen();
-  if (!suggestionsOpen) {
-    const dancingDots = dancingDotsElement();
-    console.log(`click: suggestions drawer closed`);
-    browser.elementIdClick(dancingDots.value.ELEMENT);
-
-    // registering the 'open' state may take a little bit
-    browser.waitUntil(
-        _isSuggestionsDrawerOpen,
-        1000,
-        `the suggestions drawer isn't registering with state 'open' after a click`,
-        100);
-
-    // after the 'open' state, wait a beat for the animation to finish. This
-    // should only be 80ms but in practice we need a bit more.
-    wait(200);
-
-    if (!_isSuggestionsDrawerOpen()) {
-      console.log('suggestions drawer not opening?');
-      throw Error(`suggestions drawer never opened even after a click`);
-    }
+function clickElement(selector) {
+  console.log(divider);
+  const element = pierceShadowsSingle(['app-shell', 'shell-ui'].concat([selector]));
+  if (!element) {
+    console.warn(`demo-tests: couldn't find element [${selector}]`);
+  } else {
+    console.log(`demo-tests: clicking [${selector}]`);
+    browser.elementIdClick(element.value.ELEMENT);
   }
 }
 
-function getFooterPath() {
-  return ['app-shell', 'shell-ui', 'arc-footer', 'x-toast[app-footer]'];
-}
-
-function initTestWithNewArc(testTitle) {
+function initTestWithNewArc(testTitle, useSolo) {
   // clean up extra open tabs
   const openTabs = browser.getTabIds();
   browser.switchTab(openTabs[0]);
   openTabs.slice(1).forEach(tabToClose => {
     browser.close(tabToClose);
   });
-
+  // setup url params
   let firebaseKey = new Date().toISOString() + testTitle;
   firebaseKey = firebaseKey.replace(/\W+/g, '-').replace(/\./g, '_');
   console.log(`running test "${testTitle}" with firebaseKey "${firebaseKey}"`);
-
   const urlParams = [
     `testFirebaseKey=${firebaseKey}`,
-    `solo=${browser.options.baseUrl}shell/artifacts/canonical.manifest`,
-    `log=true`
+    //`log`,
+    'user=*selenium'
   ];
-
+  if (useSolo) {
+    urlParams.push(`solo=${browser.options.baseUrl}shell/artifacts/canonical.manifest`);
+  }
   // note - baseUrl (currently specified on the command line) must end in a
   // trailing `/`, and this must not begin with a preceding `/`.
   // `browser.url()` will prefix its argument with baseUrl, and avoiding a
   // doubling `//` situation avoids some bugs.
   browser.url(`shell/apps/web/?${urlParams.join('&')}`);
-
   assert.equal('Arcs', browser.getTitle());
 
-  createNewUserIfNotLoggedIn();
-  createNewArc();
+  //createNewUserIfNotLoggedIn();
+  //createNewArc();
 
   // use a solo URL pointing to our local recipes
-  browser.url(`${browser.getUrl()}&${urlParams.join('&')}`);
+  //browser.url(`${browser.getUrl()}&${urlParams.join('&')}`);
 
   // that page load (`browser.url()`) will drop our utils, so load again.
   loadSeleniumUtils();
 
   // check out some basic structure relative to the app footer
-  const footerPath = getFooterPath();
-  assert.ok(pierceShadowsSingle(footerPath.slice(0, 1)).value);
-  assert.ok(pierceShadowsSingle(footerPath).value);
+  //const footerPath = getFooterPath();
+  //assert.ok(pierceShadowsSingle(footerPath.slice(0, 1)).value);
+  //assert.ok(pierceShadowsSingle(footerPath).value);
 }
 
-function createNewUserIfNotLoggedIn() {
-  loadSeleniumUtils();
-
-  if (browser.getUrl().includes('user=')) {
-    return;
-  }
-
-  const newUsersNameSelectors =
-      ['app-shell', 'shell-ui', 'user-picker', '#new-users-name'];
-  waitForVisible(newUsersNameSelectors);
-
-  const element = pierceShadowsSingle(newUsersNameSelectors);
-  const elementId = element.value.ELEMENT;
-
-  // create a user 'Selenium'
-  browser.elementIdValue(elementId, ['Selenium', 'Enter']);
-
-  waitForStillness();
-}
+// function createNewUserIfNotLoggedIn() {
+//   loadSeleniumUtils();
+//   if (browser.getUrl().includes('user=')) {
+//     return;
+//   }
+//   const newUsersNameSelectors =
+//       ['app-shell', 'shell-ui', 'user-picker', '#new-users-name'];
+//   waitForVisible(newUsersNameSelectors);
+//   const element = pierceShadowsSingle(newUsersNameSelectors);
+//   const elementId = element.value.ELEMENT;
+//   // create a user 'Selenium'
+//   browser.elementIdValue(elementId, ['Selenium', 'Enter']);
+//   waitForStillness();
+// }
 
 /**
  * Create a new arc, switch to that tab (toggling back to the first tab to
  * reset the webdriver window state).
  */
-function createNewArc() {
-  assert.equal(1, browser.windowHandles().value.length);
+// function createNewArc() {
+//   assert.equal(1, browser.windowHandles().value.length);
 
-  // create a new arc, switch to that tab (toggling back to the first tab to
-  // reset the webdriver window state).
-  browser.waitForVisible('div[title="New Arc"]');
-  browser.click('div[title="New Arc"]');
-  browser.switchTab(browser.windowHandles().value[0]);
-  browser.switchTab(browser.windowHandles().value[1]);
+//   // create a new arc, switch to that tab (toggling back to the first tab to
+//   // reset the webdriver window state).
+//   browser.waitForVisible('div[title="New Arc"]');
+//   browser.click('div[title="New Arc"]');
+//   browser.switchTab(browser.windowHandles().value[0]);
+//   browser.switchTab(browser.windowHandles().value[1]);
+// }
+
+function openSystemUi() {
+  clickElement('[touchBar]');
+  wait(200);
 }
 
 function allSuggestions() {
   waitForStillness();
-  openSuggestionDrawer();
-
-  const magnifier = pierceShadowsSingle(
-      getFooterPath().concat(['[search]', '#search-button']));
-  console.log(`click: allSuggestions`);
-  browser.waitUntil(() => {
-    browser.elementIdClick(magnifier.value.ELEMENT);
-    return getAtLeastOneSuggestion();
-  }, 5000, `couldn't find any suggestions`);
+  openSystemUi();
+  clickElement('#openSearch');
+  wait(200);
+  clickElement('#searchButton');
 }
 
 function getAtLeastOneSuggestion() {
-  const allSuggestions =
-      pierceShadows(['[slotid="suggestions"]', 'suggestion-element']);
-  if (!allSuggestions.value || 0 == allSuggestions.value) {
+  const allSuggestions = pierceShadows(['[slotid="suggestions"]', 'suggestion-element']);
+  if (!allSuggestions.value) {
     console.log('No suggestions found.');
     return false;
   }
   return allSuggestions;
 }
 
-function waitForSuggestion(textSubstring) {
-  _waitForAndMaybeAcceptSuggestion(textSubstring, false);
+function waitForSuggestion(substring) {
+  _waitForAndMaybeAcceptSuggestion(substring, false);
 }
 
-function acceptSuggestion(textSubstring) {
-  _waitForAndMaybeAcceptSuggestion(textSubstring, true);
+function acceptSuggestion(substring) {
+  _waitForAndMaybeAcceptSuggestion(substring, true);
 }
 
-function _waitForAndMaybeAcceptSuggestion(textSubstring, accept) {
-  console.log(`Waiting for: ${textSubstring}`);
+function _waitForAndMaybeAcceptSuggestion(substring, accept) {
+  console.log(divider);
+  console.log(`waiting for suggestion [${substring}]`);
   waitForStillness();
-  openSuggestionDrawer();
-  let footerPath = getFooterPath();
-
-  browser.waitUntil(() => {
-    const allSuggestions = getAtLeastOneSuggestion();
+  const findSuggestion = () => {
+    const suggestions = getAtLeastOneSuggestion();
     try {
-      const desiredSuggestion =
-          searchElementsForText(allSuggestions.value, textSubstring);
-      if (!desiredSuggestion) {
-        console.log(`Couldn't find suggestion '${textSubstring}'.`);
+      const suggestion = searchElementsForText(suggestions.value, substring);
+      if (!suggestion) {
+        console.log(`couldn't find suggestion '${substring}'.`);
         return false;
       }
-
-      console.log(`found: desiredSuggestion "${desiredSuggestion}"`);
-      if (accept)
-        browser.elementIdClick(desiredSuggestion.id);
+      console.log(`found suggestion "${suggestion.text}"`);
+      if (accept) {
+        browser.elementIdClick(suggestion.id);
+      }
       return true;
     } catch (e) {
       if (e.message.includes('stale element reference')) {
-        console.log(
-            `got a not-entirely-unexpected error, but waitUntil will try again (up to a point). Error: ${
-                e}`);
+        console.log(`got a not-entirely-unexpected error, but waitUntil will try again (up to a point). Error: ${e}`);
         return false;
       }
-
       throw e;
     }
-  }, 5000, `couldn't find suggestion ${textSubstring}`);
+  };
+  browser.waitUntil(findSuggestion, 5000, `couldn't find suggestion ${substring}`);
+  //console.log(`${accept ? 'Accepted' : 'Found'} suggestion: ${substring}`);
+  if (accept) {
+    console.log(`accepted suggestion: ${substring}`);
+  }
+  console.log(divider);
   // TODO: return the full suggestion text for further verification.
-  console.log(`${accept ? 'Accepted' : 'Found'} suggestion: ${textSubstring}`);
 }
 
 function particleSelectors(slotName, selectors) {
-  //return [`div[slotid="${slotName}"]`].concat(selectors);
+  //return [`[slotid="${slotName}"]`].concat(selectors);
   return selectors;
 }
 
@@ -377,42 +341,37 @@ function particleSelectors(slotName, selectors) {
  */
 function clickInParticles(slotName, selectors, textQuery) {
   waitForStillness();
-
-  if (!selectors)
+  if (!selectors) {
     selectors = [];
+  }
   const realSelectors = particleSelectors(slotName, selectors);
-
-  browser.waitUntil(
-      () => {
-        const pierced = pierceShadows(realSelectors);
-        assert.ok(pierced);
-        if (!pierced.value || pierced.value.length == 0) {
-          return false;
-        }
-
-        let selected;
-        if (textQuery) {
-          selected = searchElementsForText(pierced.value, textQuery).id;
-        } else {
-          if (1 == pierced.value.length) {
-            selected = pierced.value[0].ELEMENT;
-          } else {
-            throw Error(`found multiple matches for ${realSelectors}: ${
-                pierced.value}`);
-          }
-        }
-
-        if (selected) {
-          console.log(`click: clickInParticles`);
-          browser.elementIdClick(selected);
-          return true;
-        } else {
-          return false;
-        }
-      },
-      5000,
-      `couldn't find anything to click with selectors ${
-          realSelectors} textQuery ${textQuery}`);
+  const clickSomething = () => {
+    const pierced = pierceShadows(realSelectors);
+    assert.ok(pierced);
+    if (!pierced.value || pierced.value.length == 0) {
+      return false;
+    }
+    let selected;
+    if (textQuery) {
+      selected = searchElementsForText(pierced.value, textQuery).id;
+    } else {
+      if (1 == pierced.value.length) {
+        selected = pierced.value[0].ELEMENT;
+      } else {
+        throw Error(`found multiple matches for ${realSelectors}: ${
+            pierced.value}`);
+      }
+    }
+    if (selected) {
+      console.log(`click: clickInParticles`);
+      browser.elementIdClick(selected);
+      return true;
+    } else {
+      return false;
+    }
+  };
+  browser.waitUntil(clickSomething, 5000,
+    `couldn't find anything to click with selectors ${realSelectors} textQuery ${textQuery}`);
 }
 
 /**
@@ -422,10 +381,8 @@ function clickInParticles(slotName, selectors, textQuery) {
 function testAroundRefresh() {
   const getOrCompare = expectedValues => {
     let actualValues = {};
-
     // Unfortunately, the title isn't consistent either. See #697.
-    //const titleElem =
-    //    pierceShadowsSingle(['app-shell', 'shell-ui', '#arc-title']);
+    //const titleElem = pierceShadowsSingle(['app-shell', 'shell-ui', '#arc-title']);
     //actualValues.title = browser.elementIdText(titleElem.value.ELEMENT).value;
 
     // Disable verification of suggestions through a reload until #697 is
@@ -450,26 +407,18 @@ function testAroundRefresh() {
 
     return actualValues;
   };
-
-
   const expectedValues = getOrCompare();
-
   browser.refresh();
   loadSeleniumUtils();
-
   waitForStillness();
-
   getOrCompare(expectedValues);
 }
 
 describe('Arcs demos', function() {
   it('can book a restaurant', /** @this Context */ function() {
-    initTestWithNewArc(this.test.fullTitle());
-
+    initTestWithNewArc(this.test.fullTitle(), true);
     allSuggestions();
-
     acceptSuggestion('Find restaurants');
-
     // Our location is relative to where you are now, so this list is dynamic.
     // Rather than trying to mock this out let's just grab the first
     // restaurant.
@@ -479,10 +428,8 @@ describe('Arcs demos', function() {
     let restaurantNodes = pierceShadows(restaurantSelectors);
     console.log(`click: restaurantSelectors`);
     browser.elementIdClick(restaurantNodes.value[0].ELEMENT);
-
     acceptSuggestion('Table for 2');
     acceptSuggestion('from your calendar');
-
     testAroundRefresh();
 
     // debug hint: to drop into debug mode with a REPL; also a handy way to
@@ -497,32 +444,29 @@ describe('Arcs demos', function() {
   });
 
   it('can buy gifts', /** @this Context */ function() {
-    initTestWithNewArc(this.test.fullTitle());
-
+    initTestWithNewArc(this.test.fullTitle(), true);
     allSuggestions();
-
     acceptSuggestion(
         `Show products from your browsing context (Minecraft Book plus 2 other items) and choose from Products recommended based on products from your browsing context and Claire's wishlist (Book: How to Draw plus 2 other items)`);
-
-    browser.waitForVisible('div[slotid="action"]');
-    browser.waitForVisible('div[slotid="annotation"]');
-
+    browser.waitForVisible('[slotid="action"]');
+    browser.waitForVisible('[slotid="annotation"]');
     // TODO: click the 'Add' buttons to move products from recommended to shortlist and
     // (1) verify product was moved,
     // (2) verify 'action' slot is not visible after all products were moved.
-
-    acceptSuggestion(
-        'Buy gifts for Claire\'s Birthday on 2017-08-04, Estimate arrival date for products');
-    acceptSuggestion(
-        'Check manufacturer information for products from your browsing context');
-    acceptSuggestion('Find alternate shipping');
-    acceptSuggestion(
-        `Recommendations based on Claire\'s wishlist`
-        // TODO: add 'and Claire\'s wishlist' when regex is supported.
-    );
+    [
+      'Buy gifts for Claire\'s Birthday on 2017-08-04, Estimate arrival date for products',
+      'Check manufacturer information for products from your browsing context',
+      'Find alternate shipping',
+      `Recommendations based on Claire\'s wishlist`
+      // TODO: add 'and Claire\'s wishlist' when regex is supported.
+    ].forEach(suggestion => {
+      wait(8000);
+      openSystemUi();
+      acceptSuggestion(suggestion);
+    });
 
     // Verify each product has non empty annotation text.
-    let annotations = browser.getText('div[slotid="annotation"]');
+    let annotations = browser.getText('[slotid="annotation"]');
     assert.equal(6, annotations.length);
     assert.ok(annotations.length > 0 && annotations.every(a => a.length > 0));
   });
@@ -533,22 +477,21 @@ describe('Arcs system', function() {
     initTestWithNewArc(this.test.fullTitle());
 
     // remove solo from our URL to use the default
-    const url = new URL(browser.getUrl());
-    url.searchParams.delete('solo');
-    browser.url(url.href);
+    //const url = new URL(browser.getUrl());
+    //url.searchParams.delete('solo');
+    //browser.url(url.href);
 
     // load our utils in the new page
-    loadSeleniumUtils();
+    //loadSeleniumUtils();
+
+    // () => {
+    //   getAtLeastOneSuggestion();
+    //   // we hit at least a single suggestion, good enough!
+    //   return true;
+    // },
 
     waitForStillness();
-    browser.waitUntil(
-        () => {
-          getAtLeastOneSuggestion();
-
-          // we hit at least a single suggestion, good enough!
-          return true;
-        },
-        5000,
+    browser.waitUntil(getAtLeastOneSuggestion, 5000,
         `couldn't find any suggestions; this might indicate that a global manifest failed to load`);
 
     // treat the fact that we found any suggestions as a good enough

@@ -16,16 +16,18 @@ defineParticle(({DomParticle, resolver}) => {
   [${host}] {
     padding: 16px;
     background-color: white;
+    max-width: 400px;
+    margin: 0 auto;
   }
   [${host}] > [head] {
     display: flex;
     align-items: center;
     padding: 8px 0;
     color: #aaaaaa;
-    font-weight: bold;
+    // font-weight: bold;
   }
   [${host}] > [items] [item] {
-    padding: 4px 8px;
+    // padding: 0 0 32px 0;
     background-color: white;
     border-bottom: 1px solid #eeeeee;
   }
@@ -59,7 +61,7 @@ defineParticle(({DomParticle, resolver}) => {
   <div empty hidden="{{hasItems}}">List is empty</div>
 
   <template items>
-    <div slotid="item" subid="{{id}}"></div>
+    <div slotid="item" subid="{{id}}" style="background: white;box-shadow: 0 0 2px rgba(0,0,0,.2); padding: 16px; "></div>
     <div slotid="annotation" subid="{{id}}"></div>
   </template>
   <div items>{{items}}</div>

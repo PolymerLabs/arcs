@@ -9,25 +9,25 @@
 
   <link rel="manifest" href="../common/manifest.json"/>
   <link rel="shortcut icon" href="../common/logo_64.png">
-
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Google+Sans">
-
-  <script>
-    (() => {
-      const debug = (new URL(document.location)).searchParams.has('debug');
-      const runtime = debug ? '../../source/ArcsLib.js' : '../../build/ArcsLib.js';
-      document.head.appendChild(Object.assign(document.createElement('script'), {type: 'module', src: runtime}));
-    })();
-  </script>
-
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Google+Sans:400,700">
   <link rel="stylesheet" href="../common/index.css">
-  <script type="module" src="../common/index.js"></script>
 
   <script src="https://aframe.io/releases/0.8.0/aframe.min.js"></script>
   <script src="https://unpkg.com/aframe-html-shader@0.2.0/dist/aframe-html-shader.min.js"></script>
-
   <script type="module" src="../../components/a-frame/aframe-html.js"></script>
-  <script type="module" src="vr-app-shell.js"></script>
+
+  <script type="module">
+    // global configuration
+    import '../common/config.js';
+    // firebase config is required before loading arcs runtime
+    import '../common/firebase-config.js';
+    // arcs runtime
+    import '../../build/ArcsLib.js';
+    // components for particle use
+    import '../common/whitelisted.js';
+    // shell
+    import './vr-app-shell.js';
+  </script>
 
   <style>
     body {
@@ -49,11 +49,9 @@
       <a-sky color="#DCDCDC" src="assets/tokyo (candy bar).jpg"></a-sky>
       <a-camera position="0 0 0"></a-camera>
       <a-assets timeout="60000" slotid="assets"></a-assets>
-
       <a-entity slotid="toproot"></a-entity>
       <a-entity slotid="root"></a-entity>
       <a-entity slotid="modal"></a-entity>
-
     </a-scene>
     <div slotid="suggestions" slot="suggestions"></div>
   </vr-app-shell>

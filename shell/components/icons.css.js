@@ -5,7 +5,7 @@ export default
     font-style: normal;
     -webkit-font-feature-settings: "liga";
     -webkit-font-smoothing: antialiased;
-    vertical-align: middle;
+    /*vertical-align: middle;*/
     cursor: pointer;
     user-select: none;
     flex-shrink: 0;

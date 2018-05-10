@@ -14,10 +14,14 @@ import ArcsUtils from '../lib/arcs-utils.js';
 
 const log = Xen.logFactory('ArcHandle', '#c6a700');
 
-class ArcHandle extends Xen.Base {
+class ArcHandle extends Xen.Debug(Xen.Base, log) {
   static get observedAttributes() { return ['arc', 'options', 'data']; }
-  async _update(props, state) {
+  async _update(props, state, oldProps) {
     let {arc, options, data} = props;
+    if (oldProps.arc && oldProps.arc !== arc) {
+      // drop stale handle on the floor (will it GC?)
+      state.handle = null;
+    }
     if (arc && !state.handle) {
       if (state.working) {
         state.invalid = true;
@@ -32,6 +36,7 @@ class ArcHandle extends Xen.Base {
       }
       if (state.manifest && options) {
         state.handle = await this._createHandle(arc, state.manifest, options);
+        state.data = null;
       }
       state.working = false;
       if (state.invalid) {
@@ -39,7 +44,7 @@ class ArcHandle extends Xen.Base {
         state.invalid = false;
       }
     }
-    if (state.handle && data != state.data) {
+    if (arc && state.handle && data != state.data) {
       state.data = data;
       // (re)populate
       this._updateHandle(state.handle, data, arc);
@@ -54,11 +59,12 @@ class ArcHandle extends Xen.Base {
     const schema = manifest.findSchemaByName(type);
     const typeOf = setOf ? schema.type.setViewOf() : schema.type;
     tags = tags.concat(['#nosync']);
+    const storageKey = 'in-memory';
     id = id || arc.generateID();
     // context-handles are for `map`, `copy`, `?`
     // arc-handles are for `use`, `?`
     const factory = asContext ? arc.context.newStore.bind(arc.context) : arc.createHandle.bind(arc);
-    const handle = await factory(typeOf, name, id, tags);
+    const handle = await factory(typeOf, name, id, tags, storageKey);
     if (description) {
       handle.description = description;
     }

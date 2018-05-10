@@ -26,7 +26,7 @@ defineParticle(({DomParticle, html}) => {
     </div>
   </div>
 </div>
-<div slotid="annotation" subid="{{id}}" style="padding:16px 0;">
+<div slotid="annotation" subid="{{id}}" style="padding:4px 0;">
 
 `;
 
@@ -43,14 +43,27 @@ defineParticle(({DomParticle, html}) => {
   [${host}] {
     overflow: auto;
   }
-  [${host}] [header] {
-    padding: 12px 16px;
-    /* border-bottom: 1px solid #bbb; */
-  }
   [${host}] [selectable-item] {
-    /* border-bottom: 1px dotted silver; */
     cursor: pointer;
     box-sizing: border-box;
+  }
+
+  @media (min-width: 960px) {
+    [${host}] [selectable-item]{
+      width: 50%;
+      display: inline-block;
+      padding-left: 4px;
+      padding-right: 4px;
+    }
+    [${host}] {
+      padding: 8px 4px;
+    }
+  }
+  @media (min-width: 1280px) {
+    [${host}] [selectable-item]{
+      width: 33.33%;
+      display: inline-block;
+    }
   }
   [${host}] [selectable-item]:last-child {
     border-bottom: none;
@@ -60,14 +73,9 @@ defineParticle(({DomParticle, html}) => {
     display: flex;
     flex-direction: column;
     color: white;
-    /* text-shadow: 0px 0px 10px rgba(0, 0, 0, 1); */
     background-repeat: no-repeat;
     background-size: cover;
     background-position: bottom;
-    /* this autosizes to width with correct AR, but it doesn't support flexing :( */
-    /*
-    padding-bottom: 60%;
-    */
     width: 100%;
     height: 288px;
     padding: 12px 16px;
@@ -85,7 +93,6 @@ defineParticle(({DomParticle, html}) => {
     font-size: 14px;
     font-weight: medium;
     opacity: 0.9;
-    /* padding: 24px 0; */
     padding-bottom: 4px;
     line-height: 18px;
     letter-spacing: .25px;
@@ -104,8 +111,6 @@ defineParticle(({DomParticle, html}) => {
   }
   [${host}] [stars-container] {
     display: inline-block;
-    /* width: 100px; */
-    /* height: 20px; */
     width: 56px;
     height: 12px;
     background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAHAAAAAYCAYAAAAiR3l8AAAAAXNSR0IArs4c6QAAAchJREFUaAXtmE9LAzEUxHdV9FIQBLWC4MGLoCe//2fw1IIXD4IHsXgQPLauM7xsievua7JGQZ1AzL+Xefobk4ZWlYoIiIAIiMBPEGiaZpe1dC7pGtExHLYyzThGPGvpIl0jms0h18AT5GEtXaRrRLM57KQ6gePN2EPGs1/X9TJ1rxcnXaMzlkPOCeTxZjxryWtUuubhKA45BsZXZ9y39ON/xlpxf7yi7Yy14v6f0q27fw2O8inmpt15jI9Qt8P8Cu1T6MfNI67Wh3ii7UvXSJTm8MlApkGSMzSXqK1hnPYKDZ3DvHsvSLpGpySHXgOZBkkmaK5R9zl2ygvWbmDeqxOzXpKuoSjFYdBApkESfkZeoJ5z3FPuMHcL89561ganpGtoSnBwHzHBmMWgE1W1yDWPWtI1oiU4uAYG47wXnLcWtg823l5vbVDwP/6+roE44rxi2xcpr8l5qO2VOQ0xgV1aI13jVILDpm9iDpBqD5UPFD5U+GDhZ+MzGj5w+NBhDMc5RbpG68scNj1irpCHJs9g3oevzmAi57m+xNoMbXLBXumC1ndxWBuBBPwPcUtKTFcgZU9KjHS7BDQWAREQAREQAREQgV9C4B0HvYA7BFwt2gAAAABJRU5ErkJggg==);
@@ -122,7 +127,6 @@ defineParticle(({DomParticle, html}) => {
 
 <div ${host}>
   <div slotid="modifier"></div>
-  <div header>Found <span>{{count}}</span> item(s).</div>
   <x-list items="{{items}}"><template>${selectable}</template></x-list>
 </div>
     `;

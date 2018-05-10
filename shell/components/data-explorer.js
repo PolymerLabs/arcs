@@ -17,7 +17,7 @@ const template = html`
 <style>
   data-explorer {
     display: block;
-    border-bottom: 1px solid hsl(0,0%,75%);
+    /*border-bottom: 1px solid hsl(0,0%,75%);*/
   }
   data-item {
     display: flex;
@@ -36,15 +36,15 @@ const template = html`
   data-item > left {
     display: flex;
     flex-shrink: 0;
-    /*align-items: center;*/
     padding: 4px 8px 4px 4px;
     justify-content: flex-end;
     font-weight: bold;
     font-size: 0.9em;
     /*
+    align-items: center;
     width: 96px;
-    */
     background-color: whitesmoke;
+    */
   }
   /*
   data-item > right {
@@ -65,25 +65,34 @@ const template = html`
 
 const templateDataItem = html`
 
-<data-item name="{{name}}" value="{{value}}" on-item-change="_onItemChange"></data-item>
+<data-item name="{{name}}" value="{{value}}" expand="{{expand}}" on-item-change="_onItemChange"></data-item>
 
 `;
 
 class DataExplorer extends Xen.Base {
-  static get observedAttributes() { return ['object']; }
+  static get observedAttributes() {
+    return ['object', 'expand'];
+  }
   get template() {
     return template;
+  }
+  _setValueFromAttribute(name, value) {
+    // convert boolean-attribute to boolean
+    if (name == 'expand') {
+      value = value != null;
+    }
+    super._setValueFromAttribute(name, value);
   }
   _render(props, state) {
     let o = props.object || Object;
     return {
       items: {
         template: templateDataItem,
-        models: this._formatValues(o)
+        models: this._formatValues(o, Boolean(props.expand))
       }
     };
   }
-  _formatValues(object) {
+  _formatValues(object, expand) {
     return Object.keys(object).map(n => {
       let v = object[n];
       if (v) {
@@ -93,7 +102,8 @@ class DataExplorer extends Xen.Base {
       }
       return {
         name: n,
-        value: v
+        value: v,
+        expand
       };
     });
   }

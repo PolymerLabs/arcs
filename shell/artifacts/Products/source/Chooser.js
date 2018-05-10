@@ -31,28 +31,32 @@ defineParticle(({DomParticle, resolver}) => {
         display: flex;
         align-items: center;
         justify-content: center;
-        width: 148px;
-        height: 128px;
+        width: 64px;
+        height: 64px;
         box-sizing: border-box;
         text-align: center;
         background-size: contain;
+        outline: 1px solid rgba(0,0,0,.08);
+        outline-offset: -1px;
       }
       ${host} > x-list [col1] > img {
-        max-width: 128px;
-        max-height: 96px;
+        max-width: 64px;
+        max-height: 64px;
+
       }
       ${host} > x-list [name] {
-        font-size: 0.95em;
+
       }
       ${host} > x-list [category] {
-        font-size: 0.7em;
         color: #cccccc;
       }
       ${host} > x-list [price] {
         color: #333333;
+        font-size: 14px;
       }
       ${host} > x-list [seller] {
-        font-size: 0.8em;
+        font-size: 14px;
+        margin-left: 8px;
         color: #cccccc;
       }
     </style>
@@ -68,7 +72,7 @@ defineParticle(({DomParticle, resolver}) => {
   }
   ${host} [chevron] {
     color: silver;
-    transform: translate3d(50%, -17px, 0);
+    transform: translate3d(50%, -18px, 0);
     height: 0;
   }
   ${host} [head] {
@@ -87,9 +91,9 @@ defineParticle(({DomParticle, resolver}) => {
     outline: none;
   }
   ${host} [item] {
-    padding: 4px 8px;
+    padding: 16px;
     background-color: white;
-    border-bottom: 8px solid #eeeeee;
+    border-bottom: 16px solid #eeeeee;
   }
 </style>
   `;
@@ -100,9 +104,9 @@ defineParticle(({DomParticle, resolver}) => {
     <div row>
       <div col0>
         <div name title="{{name}}">{{name}}</div>
-        <div category>{{category}}</div>
-        <div price>{{price}}</div>
-        <div seller>{{seller}}</div>
+
+        <div> <span price>{{price}}</span><span seller>{{seller}}</span></div>
+
         <div><button events key="{{index}}" on-click="_onChooseValue">Add</button></div>
       </div>
       <div col1>

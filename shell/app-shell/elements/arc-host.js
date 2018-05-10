@@ -11,124 +11,157 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 import Xen from '../../components/xen/xen.js';
 import Arcs from '../lib/arcs.js';
 import ArcsUtils from '../lib/arcs-utils.js';
+import Firebase from './cloud-data/firebase.js';
 
 const log = Xen.logFactory('ArcHost', '#007ac1');
-const error = Xen.logFactory('ArcHost', '#007ac1', 'error');
+const groupCollapsed = Xen.logFactory('ArcHost', '#007ac1', 'groupCollapsed');
+const groupEnd = Xen.logFactory('ArcHost', '#007ac1', 'groupEnd');
+const warn = Xen.logFactory('ArcHost', '#007ac1', 'warn');
+//const error = Xen.logFactory('ArcHost', '#007ac1', 'error');
 
 class ArcHost extends Xen.Debug(Xen.Base, log) {
   static get observedAttributes() {
-    return ['config', 'plan', 'manifests', 'exclusions'];
+    return ['config', 'key', 'manifest', 'serialization'];
   }
-  _getInitialState() {
-    return {
-      pendingPlans: [],
-      invalid: 0
-    };
-  }
-  _willReceiveProps(props, state, lastProps) {
-    const changed = name => props[name] !== lastProps[name];
-    const {manifests, exclusions, config, plan} = props;
-    if (manifests && exclusions) {
-      state.effectiveManifests = this._intersectManifests(props.manifests, props.exclusions);
+  _willReceiveProps(props, state, oldProps) {
+    const changed = name => props[name] !== oldProps[name];
+    const {key, manifest, config, suggestion, serialization} = props;
+    // dispose arc if key has changed, but we don't have a new key yet
+    if (key === '*' && changed('key')) {
+      this._teardownArc(state.arc);
     }
-    if (config && (config !== state.config) && state.effectiveManifests) {
-      state.config = config;
-      state.config.manifests = state.effectiveManifests;
-      this._applyConfig(state.config);
+    // rebuild arc if we have all the parts, but one of them has changed
+    if (config && manifest && key && (key !== '*') && (changed('config') || changed('key') || changed('manifest'))) {
+      state.id = null;
+      this._teardownArc(state.arc);
+      this._prepareArc(config, manifest, key);
     }
-    else if (state.arc && (changed('manifests') || changed('exclusions'))) {
-      log('reloading');
-      this._reloadManifests();
-    }
-    if (plan && changed('plan')) {
-      state.pendingPlans.push(plan);
+    // TODO(sjmiles): absence of serialization is null/undefined, as opposed to an
+    // empty serialization which is ''
+    if (serialization != null && changed('serialization')) {
+      state.pendingSerialization = serialization;
     }
   }
-  _update({}, {arc, pendingPlans}) {
-    if (arc && pendingPlans.length) {
-      this._instantiatePlan(arc, pendingPlans.shift());
+  _update({}, state) {
+    const {id, pendingSerialization} = state;
+    if (id && pendingSerialization != null) {
+      state.pendingSerialization = null;
+      this._consumeSerialization(pendingSerialization);
     }
   }
-  _intersectManifests(manifests, exclusions) {
-    return manifests.filter(m => !exclusions.includes(m));
+  _teardownArc(arc) {
+    if (arc) {
+      log('------------');
+      log('arc teardown');
+      log('------------');
+      arc.dispose();
+      // clean out DOM nodes
+      Array.from(document.querySelectorAll('[slotid]')).forEach(n => n.textContent = '');
+      // old arc is no more
+      this._setState({arc: null});
+      this._fire('arc', null);
+    }
   }
-  async _applyConfig(config) {
-    let arc = await this._createArc(config);
-    log('created arc', arc);
-    this._setState({arc});
-    this._fire('arc', arc);
-  }
-  async _createArc(config) {
+  async _prepareArc(config, manifest, key) {
+    log('---------------');
+    log('arc preparation');
+    log('---------------');
     // make an id
-    let id = 'demo-' + ArcsUtils.randomId();
+    const id = 'app-shell-' + ArcsUtils.randomId();
     // create a system loader
-    let loader = this._marshalLoader(config);
+    const loader = this._createLoader(config);
     // load manifest
-    let context = await this._loadManifest(config, loader);
-    // composer
-    let slotComposer = new Arcs.SlotComposer({
-      rootContext: document.body, //this.parentElement,
-      affordance: config.affordance,
-      containerKind: config.containerKind,
-    });
-    // capture composer so we can push suggestions there
-    this._state.slotComposer = slotComposer;
-    // send urlMap to the Arc so worker-entry*.js can create mapping loaders
-    let urlMap = loader._urlMap;
-    // Arc!
-    return ArcsUtils.createArc({id, urlMap, slotComposer, context, loader});
+    const context = await this._createContext(loader, manifest);
+    // need urlMap so worker-entry*.js can create mapping loaders
+    const urlMap = loader._urlMap;
+    // pec factory
+    const pecFactory = ArcsUtils.createPecFactory(urlMap);
+    // construct storageKey
+    const storageKey = config.useStorage ? `${Firebase.storageKey}/arcs/${key}` : null;
+    // capture composer (so we can push suggestions there), loader, etc.
+    this._setState({id, loader, context, pecFactory, /*, slotComposer*/urlMap, storageKey});
   }
-  _marshalLoader(config) {
+  _createLoader(config) {
     // create default URL map
-    let urlMap = ArcsUtils.createUrlMap(config.root);
+    const urlMap = ArcsUtils.createUrlMap(config.root);
     // create a system loader
     // TODO(sjmiles): `pecFactory` creates loader objects (via worker-entry*.js) for the innerPEC,
     // but we have to create one by hand for manifest loading
-    let loader = new Arcs.BrowserLoader(urlMap);
+    const loader = new Arcs.BrowserLoader(urlMap);
     // add `urls` to `urlMap` after a resolve pass
     if (config.urls) {
       Object.keys(config.urls).forEach(k => urlMap[k] = loader._resolve(config.urls[k]));
     }
     return loader;
   }
-  async _loadManifest(config, loader) {
-    const {folder, content} = this._fetchManifestContent(config);
-    // TODO(sjmiles): used to be `${folder}/`, which is `./` which isn't descriptive
-    const manifestFileName = './computed.manifest';
-    let manifest;
+  async _createContext(loader, content) {
+    // TODO(sjmiles): do we need to be able to `config` this value?
+    const manifestFileName = './shell.manifest';
+    let context;
     try {
-      manifest = await ArcsUtils.parseManifest(manifestFileName, content, loader);
+      context = await ArcsUtils.parseManifest(manifestFileName, content, loader);
     } catch (x) {
-      console.warn(x);
-      manifest = ArcsUtils.parseManifest(manifestFileName, '', loader);
+      warn(x);
+      context = ArcsUtils.parseManifest(manifestFileName, '', loader);
     }
-    return manifest;
+    return context;
   }
-  _fetchManifestContent(config) {
-    let manifests;
-    if (config.soloPath) {
-      manifests = [config.soloPath];
-    } else {
-      manifests = config.manifests ? config.manifests.slice() : [];
-      if (config.manifestPath) {
-        manifests.push(config.manifestPath);
+  _createSlotComposer(config) {
+    return new Arcs.SlotComposer({
+      rootContext: document.body,
+      affordance: config.affordance,
+      containerKind: config.containerKind,
+      // TODO(sjmiles): typically resolved via `slotid="suggestions"`, but override is allowed here via config
+      suggestionsContext: config.suggestionsNode
+    });
+  }
+  async _consumeSerialization(serialization) {
+    const {config, manifest} = this._props;
+    const state = this._state;
+    //
+    if (serialization) {
+      const badImport = `import './shell.manifest'`;
+      if (serialization.includes(badImport)) {
+        serialization = serialization.replace(badImport, '');
+        log(`serialization contained bad import [${badImport}]`);
       }
+      groupCollapsed('serialized arc:');
+      log(serialization);
+      groupEnd();
     }
-    return {
-      folder: '.',
-      content: manifests.map(u => `import '${u}'`).join('\n')
+    //
+    // generate new slotComposer
+    const slotComposer = this._createSlotComposer(config);
+    // collate general params for arc construction
+    const params = {
+      pecFactory: state.pecFactory,
+      slotComposer,
+      loader: state.loader,
+      context: state.context,
+      storageKey: state.storageKey
     };
+    const arc = await this._constructArc(state.id, serialization, params);
+    // cache new objects
+    this._setState({slotComposer, arc});
+    // no suggestions yet
+    this._fire('suggestions', null);
+    // new arc
+    this._fire('arc', arc);
   }
-  async _reloadManifests() {
-    let {arc} = this._state;
-    arc._context = await this._loadManifest(this._props.config, arc.loader);
-    // TODO: create helper method for settings arc's context, with callbacks for planificator inside.
-    // this._fire('plans', null);
-  }
-  async _instantiatePlan(arc, plan) {
-    log('instantiated plan', plan);
-    await arc.instantiate(plan);
+  async _constructArc(id, serialization, params) {
+    if (serialization) {
+      Object.assign(params, {
+        serialization,
+        fileName: './serialized.manifest'
+      });
+      // generate new arc via deserialization
+      return await Arcs.Arc.deserialize(params);
+    } else {
+      Object.assign(params, {
+        id: id
+      });
+      return new Arcs.Arc(params);
+    }
   }
 }
-ArcHost.groupCollapsed = Xen.logFactory('ArcHost', '#007ac1', 'groupCollapsed');
 customElements.define('arc-host', ArcHost);

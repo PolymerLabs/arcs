@@ -8,15 +8,15 @@
 
 'use strict';
 
-defineParticle(({DomParticle}) => {
+defineParticle(({DomParticle, html}) => {
 
-  let template = `
+  const template = html`
     <a-entity position="-0.3 -1.6 -1.3">
       <a-obj-model src="assets/3d-model.obj" scale="0.002 0.002 0.002"></a-obj-model>
       <a-entity slotid="soil"></a-entity>
       <a-entity slotid="soil2"></a-entity>
     </a-entity>
-  `.trim();
+  `;
 
   return class extends DomParticle {
     get template() {

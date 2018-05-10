@@ -8,11 +8,25 @@
 import AppShell from '../../app-shell/app-shell.js';
 
 class VrAppShell extends AppShell {
-  _consumeConfig(state, config) {
-    config.containerKind = 'a-entity';
-    config.soloPath = 'arc.manifest';
-    config.key = config.key || '*';
-    super._consumeConfig(state, config);
+  _getInitialState() {
+    const state = super._getInitialState();
+    state.defaultManifest = `
+import 'https://$shell/artifacts/Vr/recipes.manifest'
+import 'https://$shell/artifacts/VideoPlayer/Vr/VideoPlayer.recipes'
+import 'https://$shell/artifacts/Messages/Vr/Vr.recipes'
+    `;
+    return state;
+  }
+  _updateConfig(state, oldState) {
+    super._updateConfig(state, oldState);
+    const {config} = state;
+    if (config) {
+      config.containerKind = 'a-entity';
+      // vr only
+      config.soloPath = 'arc.manifest';
+      // no launcher
+      config.key = config.key || '*';
+    }
   }
 }
 customElements.define('vr-app-shell', VrAppShell);

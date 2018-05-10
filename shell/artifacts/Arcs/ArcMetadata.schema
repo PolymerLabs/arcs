@@ -14,5 +14,8 @@ schema ArcMetadata
   Text color
   Text profile
   Text blurb
+  Number share
+  Number touched
   Boolean deleted
+  Boolean starred
   URL externalManifest

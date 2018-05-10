@@ -1,0 +1,22 @@
+@font-face {
+  font-family: 'Material Icons';
+  font-style: normal;
+  font-weight: 400;
+  src: url(https://fonts.gstatic.com/s/materialicons/v30/2fcrYFNaTjcS6g4U3t-Y5ZjZjT5FdEJ140U2DJYC3mY.woff2) format('woff2');
+}
+
+icon {
+  font-family: "Material Icons";
+  font-size: 24px;
+  font-style: normal;
+  -webkit-font-feature-settings: "liga";
+  -webkit-font-smoothing: antialiased;
+  /*vertical-align: middle;*/
+  cursor: pointer;
+  user-select: none;
+  flex-shrink: 0;
+  /* partial FOUC prevention */
+  width: 24px;
+  height: 24px;
+  overflow: hidden;;
+}

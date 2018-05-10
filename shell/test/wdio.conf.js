@@ -59,7 +59,6 @@ exports.config = {
       // grid with only 5 firefox instances available you can make sure that not more than
       // 5 instances get started at a time.
       maxInstances: 5,
-
       browserName: 'chrome',
       chromeOptions: {
         args: [
@@ -148,7 +147,6 @@ exports.config = {
   //
   // Test reporter for stdout.
   reporters: ['spec'],
-
   //
   // Options to be passed to Mocha.
   // See the full list at http://mochajs.org/
@@ -272,9 +270,9 @@ exports.config = {
 
 if (debug) {
   const capabilities = exports.config.capabilities;
-  if (capabilities.length!=1) {
+  if (capabilities.length != 1) {
     throw new Error(`New capabilities have been introduced; that's a good thing! But this code needs updating to take that into account.`);
   }
   const chromeOptions = capabilities[0].chromeOptions;
-  chromeOptions.args = chromeOptions.args.filter(arg => arg!=HEADLESS);
+  chromeOptions.args = chromeOptions.args.filter(arg => arg != HEADLESS);
 }

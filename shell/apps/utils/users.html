@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+
+  <title>User Util</title>
+
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+
+</head>
+<body>
+
+  <div>
+    <button id="createUsers">Create Default Users</button>
+  </div>
+
+  <div id="consolas"></div>
+
+  <script type="module">
+    const log = msg => {
+      window.consolas.appendChild(Object.assign(document.createElement('pre'), {innerHTML: msg}));
+    };
+    const clearLog = () => {
+      window.consolas.textContent = '';
+    };
+    import Firebase from '../../app-shell/firebase-config.js';
+    const defaultUsers = [
+      'Berni',
+      'Doug',
+      'Maria',
+      'Matt',
+      'McNulty',
+      'Mike',
+      'Myk',
+      'Noé',
+      'Piotr',
+      'Scott',
+      'Shane',
+      'Stephan',
+      'Walt',
+      'Yuin'
+    ];
+    window.createUsers.onclick = async () => {
+      clearLog();
+      const snap = await db.child('users').once('value');
+      const userRecords = snap.val();
+      const users = [];
+      Object.values(userRecords).forEach(user => {
+        if (user && user.info && user.info.name) {
+          users.push(user.info.name);
+        }
+      });
+      log(`Existing users: ${users}`);
+      defaultUsers.forEach(user => {
+        if (users.indexOf(user) < 0) {
+          const key = Firebase.db.newUser(user);
+          log(`${user} assigned ${key}`)
+        } else {
+          log(`${user} already exists`);
+        }
+      });
+    }
+  </script>
+
+</body>
+</html>

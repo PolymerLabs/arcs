@@ -178,7 +178,7 @@ ${styles}
 
       while (n--) {
         // This seems somewhat balanced
-        let notAvailable = (seed*(hour*2+minute/30)*(ts/86400000))%10 <= partySize;
+        let notAvailable = false; //(seed*(hour*2+minute/30)*(ts/86400000))%10 <= partySize;
 
         result.push({
           time: `${hour}:${minute}`,

@@ -8,12 +8,21 @@
 
 defineParticle(({DomParticle, html}) => {
 
-  let host = `master-detail`;
+  const host = `master-detail`;
 
-  let template = html`
+  const template = html`
 <style>
   [${host}] > .detail-wrapper {
     position: relative;
+  }
+  @media (min-width: 640px) {
+    [${host}] > .detail-wrapper {
+      position: relative;
+      max-width: 480px;
+      margin: 16px auto;
+      box-shadow: 0px 1px 2px rgba(0,0,0,.2);
+      padding-bottom: 25%;
+    }
   }
   [${host}] > .detail-wrapper > .close-button {
     z-index: 100;
@@ -35,7 +44,7 @@ defineParticle(({DomParticle, html}) => {
     <div slotid="master"></div>
   </div>
 </div>
-    `.trim();
+`;
 
   return class extends DomParticle {
     get template() {

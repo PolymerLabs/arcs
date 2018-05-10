@@ -1,40 +1,13 @@
 body {
-  --max-width: auto;
-  --min-width: 320px;
-}
-
-@media (min-width: 600px) {
-  body {
-    --max-width: 460px;
-    --min-width: 320px;
-  }
-}
-
-body {
   font-family: sans-serif;
   margin: 0;
   overflow-x: hidden;
   overflow-y: scroll;
-  background-color: gray;
-  background-image: url("../../assets/black-linen.png");
+  background-color: white;
 }
 
-[slotid=suggestions] {
-  max-height: 356px;
-  overflow-y: auto;
-  overflow-x: hidden;
-}
-
-[slotid=modal] {
-  position: fixed;
-  top: var(--toolbar-height);
-  bottom: var(--footer-height);
-  max-width: var(--max-width);
-  width: 100vw;
-  margin: 0 auto;
-  box-sizing: border-box;
-  pointer-events: none;
-  color: black;
+body, button, input {
+  font-family: 'Google Sans', sans-serif;
 }
 
 @font-face {
@@ -50,12 +23,12 @@ icon {
   font-style: normal;
   -webkit-font-feature-settings: "liga";
   -webkit-font-smoothing: antialiased;
-  vertical-align: middle;
+  /*vertical-align: middle;*/
   cursor: pointer;
   user-select: none;
+  flex-shrink: 0;
   /* partial FOUC prevention */
   width: 24px;
   height: 24px;
   overflow: hidden;;
 }
-

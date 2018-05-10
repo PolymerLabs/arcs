@@ -13,7 +13,7 @@ Template.html = (...args) => Template.createTemplate(html.apply(null, args)); //
 // TODO(sjmiles): cloning prevents console log from showing values from the future,
 // but this must be a deep clone. Circular objects are not cloned.
 const deepishClone = (obj, depth) => {
-  if (typeof obj !== 'object') {
+  if (!obj || typeof obj !== 'object') {
     return obj;
   }
   const clone = Object.create(null);
@@ -48,10 +48,12 @@ const Debug = (Base, log) => class extends Base {
     if (super._setState(state)) {
       if (Debug.level > 1) {
         if (Debug.lastFire) {
-          Debug.lastFire.log('fire', {[Debug.lastFire.name]: Debug.lastFire.detail});
+          //Debug.lastFire.log('[next state change from] fire', {[Debug.lastFire.name]: Debug.lastFire.detail});
           //Debug.lastFire.log('fire', Debug.lastFire.name, Debug.lastFire.detail);
+          log('(fired -->) state', deepishClone(state));
+        } else {
+          log('state', deepishClone(state));
         }
-        log('state', deepishClone(state));
       }
       return true;
     }
@@ -62,6 +64,7 @@ const Debug = (Base, log) => class extends Base {
   }
   _fire(name, detail) {
     Debug.lastFire = {name, detail: deepishClone(detail), log};
+    log('fire', {[Debug.lastFire.name]: Debug.lastFire.detail});
     super._fire(name, detail);
     Debug.lastFire = null;
   }
@@ -97,6 +100,7 @@ const walker = (node, tree) => {
     if (clas) {
       const shadow = child.shadowRoot;
       const record = {
+        node: child,
         props: child._props,
         state: child._state
       };
@@ -115,7 +119,7 @@ window.walker = walker;
 
 const _logFactory = (preamble, color, log='log') => console[log].bind(console, `%c${preamble}`, `background: ${color}; color: white; padding: 1px 6px 2px 7px; border-radius: 6px;`);
 const logFactory = (preamble, color, log) => (Debug.level > 0) ? _logFactory(preamble, color, log) : () => {};
-const clone = obj => typeof obj === 'object' ? Object.assign(Object.create(null), obj) : obj;
+const clone = obj => typeof obj === 'object' ? Object.assign(Object.create(null), obj) : {};
 const nob = () => Object.create(null);
 
 const Xen = {

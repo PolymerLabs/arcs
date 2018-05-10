@@ -11,15 +11,13 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 // firebase runtime (customized by sjmiles@ for import-ability)
 import firebase from '../../components/firebase.4.2.0.js';
 
-const {firebaseConfig, version} = (() => {
-  const testFirebaseKey =
-      (new URL(document.location)).searchParams.get('testFirebaseKey');
-
-  let version;
-  let firebaseConfig;
+const config = (() => {
+  const testFirebaseKey = (new URL(document.location)).searchParams.get('testFirebaseKey');
   if (!testFirebaseKey) {
-    version = '0_3_6-alpha';
-    firebaseConfig = {
+    return {
+      // arc data is under this child node on database root
+      version: '0_4-alpha',
+      server: 'arcs-storage.firebaseio.com',
       apiKey: 'AIzaSyBme42moeI-2k8WgXh-6YK_wYyjEXo4Oz8',
       authDomain: 'arcs-storage.firebaseapp.com',
       databaseURL: 'https://arcs-storage.firebaseio.com',
@@ -28,8 +26,10 @@ const {firebaseConfig, version} = (() => {
       messagingSenderId: '779656349412'
     };
   } else {
-    version = testFirebaseKey;
-    firebaseConfig = {
+    return {
+      // arc data is under this child node on database root
+      version: testFirebaseKey,
+      server: 'arcs-storage-test.firebaseio.com',
       apiKey: 'AIzaSyCbauC2RwA8Ao87tKV4Vzq6qIZiytpo4ws',
       authDomain: 'arcs-storage-test.firebaseapp.com',
       databaseURL: 'https://arcs-storage-test.firebaseio.com',
@@ -38,31 +38,48 @@ const {firebaseConfig, version} = (() => {
       messagingSenderId: '419218095277'
     };
   }
-
-  return {firebaseConfig, version};
 })();
 
-const app = firebase.initializeApp(firebaseConfig /*, 'arcs-storage'*/);
+const storageKey = `firebase://${config.server}/${config.apiKey}/${config.version}`;
 
+// firebase app
+const app = firebase.initializeApp(config);
+// firebase database
 const database = app.database();
-const db = database.ref(version);
-
+const db = database.ref(config.version);
+// firebase storage
 const storage = app.storage();
 
-// for debugging only
-db.dump = () =>
-    db.once('value').then(snap => console.log(db.data = snap.val()));
+// console tools
+db.dump = () => db.once('value').then(snap => console.log(db.data = snap.val()));
+db.get = async path => {
+  const snap = await db.child(path).once('value');
+  const value = snap.val();
+  console.log(value);
+  return value;
+};
+db.newUser = name => {
+  const user = {info: {name}};
+  return db.child('users').push(user).key;
+};
 
-const Firebase = {
+// fill in existing global reference if necessary
+const Firebase = window.Firebase || {};
+
+// exportables
+Object.assign(Firebase, {
+  version: config.version,
   firebase,
   database,
   db,
-  version,
-  storage
-};
+  storage,
+  storageKey
+});
 
+// export as globals
 window.Firebase = Firebase;
 window._db = database;
 window.db = db;
 
+// export as module
 export default Firebase;
