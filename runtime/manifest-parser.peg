@@ -538,13 +538,14 @@ ParticleHandleDescription
   }
 
 Recipe
-  = 'recipe' name:(whiteSpace (upperIdent / lowerIdent))? tags:(whiteSpace TagList)? eolWhiteSpace items:(Indent (SameIndent RecipeItem)*)?
+  = 'recipe' name:(whiteSpace (upperIdent / lowerIdent))? verbs:(whiteSpace TagList)? eolWhiteSpace items:(Indent (SameIndent RecipeItem)*)?
   {
+    verbs = optional(verbs, parsedOutput => parsedOutput[1].map(verb => verb.slice(1)), []);
     return {
       kind: 'recipe',
       location: location(),
       name: optional(name, name => name[1], null),
-      tags: optional(tags, tags => tags[1], []),
+      verbs,
       items: optional(items, extractIndented, []),
     };
   }
