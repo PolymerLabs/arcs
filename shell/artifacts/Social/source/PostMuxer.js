@@ -23,5 +23,9 @@ defineParticle(({MultiplexerDomParticle, log}) => {
       // log(`PostMuxer interpolated recipe: `, value);
       return value;
     }
+
+    getListEntries(list) {
+      return list.sort((a, b) => a.rank - b.rank).entries();
+    }
   };
 });
