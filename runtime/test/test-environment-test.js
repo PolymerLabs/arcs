@@ -9,7 +9,7 @@ afterEach(function() {
     for (let {exception, name, particle} of exceptions) {
       let error = new Error(`${exception.name} when invoking system function ${name} on behalf of ${particle}`); 
       error.stack = exception.stack;
-      this.test.error(error); // eslint-disable-line no-invalid-this
+      this.test.ctx.currentTest.err = error; // eslint-disable-line no-invalid-this
     }
     exceptions = [];
   }
