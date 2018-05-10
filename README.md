@@ -240,6 +240,7 @@ databases, but to continue a single mainline/unstable database.
 1) Update the version in `shell/apps/common/firebase-config.js` to a
   reasonable stable version (in our example, `0.3.5`). See
   [#1114](https://github.com/PolymerLabs/arcs/pull/1114) for an example.
+  Update the links README.md (this file) to reflect this new version.
 
 1) Once the deploy is done to
   [arcs-live](https://github.com/PolymerLabs/arcs-live), create a new
