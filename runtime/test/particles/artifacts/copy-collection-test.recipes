@@ -27,7 +27,7 @@ resource BigThings
     {"name": "house"},
     {"name": "car"}
   ]
-store Handle0 of [Thing] 'bigthings' in BigThings
+store Store0 of [Thing] 'bigthings' in BigThings
 
 resource SmallThings
   start
@@ -36,4 +36,4 @@ resource SmallThings
     {"name": "spoon"},
     {"name": "ball"}
   ]
-store Handle1 of [Thing] 'smallthings' in SmallThings
+store Store1 of [Thing] 'smallthings' in SmallThings

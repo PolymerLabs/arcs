@@ -724,7 +724,7 @@ ${particleStr1}
   it('loads entities from json files', async () => {
     let manifestSource = `
         schema Thing
-        store Handle0 of [Thing] in 'entities.json'`;
+        store Store0 of [Thing] in 'entities.json'`;
     let entitySource = JSON.stringify([
       {someProp: 'someValue'},
       {
@@ -747,7 +747,7 @@ ${particleStr1}
       },
     };
     let manifest = await Manifest.load('the.manifest', loader);
-    let view = manifest.findStorageByName('Handle0');
+    let view = manifest.findStorageByName('Store0');
     assert(view);
     assert.deepEqual(await view.toList(), [
       {
@@ -767,13 +767,13 @@ ${particleStr1}
         start
         this is not json?
 
-      store Handle0 of [Thing] in EntityList`);
+      store Store0 of [Thing] in EntityList`);
       assert(false);
     } catch (e) {
       assert.deepEqual(e.message, `Post-parse processing error caused by \'undefined\' line 7.
 Error parsing JSON from 'EntityList' (Unexpected token h in JSON at position 1)'
-        store Handle0 of [Thing] in EntityList
-        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^`);
+        store Store0 of [Thing] in EntityList
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^`);
     }
   });
   it('loads entities from a resource section', async () => {
@@ -787,9 +787,9 @@ Error parsing JSON from 'EntityList' (Unexpected token h in JSON at position 1)'
           {"$id": "entity-id", "someProp": "someValue2"}
         ]
 
-      store Handle0 of [Thing] in EntityList
+      store Store0 of [Thing] in EntityList
     `, {fileName: 'the.manifest'});
-    let view = manifest.findStorageByName('Handle0');
+    let view = manifest.findStorageByName('Store0');
     assert(view);
     assert.deepEqual(await view.toList(), [
       {

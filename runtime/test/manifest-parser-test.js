@@ -83,9 +83,9 @@ describe('manifest parser', function() {
         description \`person\`
           plural \`people\`
           value \`\${firstName} \${lastName}\`
-      store Handle0 of [Person] in 'person.json'
+      store Store0 of [Person] in 'person.json'
         description \`my view\`
-      store Handle1 of Person 'some-id' @7 in 'people.json'`);
+      store Store1 of Person 'some-id' @7 in 'people.json'`);
   });
   it('fails to parse a nonsense argument list', () => {
     try {
