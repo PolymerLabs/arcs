@@ -16,7 +16,7 @@ Tagged release URLs have the form
 (the list of releases is
 [here](https://github.com/PolymerLabs/arcs-live/releases)). A recent version
 (latest as of this writing) is
-[v0.3.4](https://cdn.rawgit.com/PolymerLabs/arcs-live/v0.3.4/shell/apps/web/index.html).
+[v0.3.5](https://cdn.rawgit.com/PolymerLabs/arcs-live/v0.3.5/shell/apps/web/index.html).
 
 Bleeding edge often works and is available via github pages:
 https://polymerlabs.github.io/arcs-live/shell/apps/web/.
@@ -219,25 +219,37 @@ Our release process is pretty minimal, but requires a few steps across the
 [arcs](https://github.com/PolymerLabs/arcs) and
 [arcs-live](https://github.com/PolymerLabs/arcs-live) repositories.
 
+Our standard is to have the stable versions start with clean (empty)
+databases, but to continue a single mainline/unstable database.
+
+1) Decide what your new mainline and stable versions will be. For an example
+  here, I'll use `0.3.5-alpha` as the old mainline, `0.3.6-alpha` as the new
+  mainline, and `0.3.5` as the new stable version.
+
 1) In order to keep the mainline data roughly consistent, clone the data at
   the current firebase key to the new mainline release number. To do this, I
   used the firebase web interface to "Export JSON" for the current tree, and
-  upload it to the new tree.
+  "Import JSON" to the new tree.
 
-  Note that if the web interface is read-only due to too many nodes, you can
-  visit (and create!) new nodes directly by changing the URL.
+  For example, clone from `<snip>/database/arcs-storage/data/0_3_5-alpha` to
+  `<snip>/database/arcs-storage/data/0_3_6-alpha`.
+
+  If the web interface is read-only due to too many nodes, you can visit the
+  new version's URL directly to Import JSON.
 
 1) Update the version in `shell/apps/common/firebase-config.js` to a
-  reasonable stable version. See
+  reasonable stable version (in our example, `0.3.5`). See
   [#1114](https://github.com/PolymerLabs/arcs/pull/1114) for an example.
+  Update the links README.md (this file) to reflect this new version.
 
 1) Once the deploy is done to
   [arcs-live](https://github.com/PolymerLabs/arcs-live), create a new
   [release](https://github.com/PolymerLabs/arcs-live/releases). Note that we
   remap the versions slightly between the two systems for legibility in
-  different systems - a version of `0_3_4` (in `firebase-config.js`) becomes
-  `v0.3.4` (in the arcs-live repo).
+  different systems - a version of `0_3_5` (in `firebase-config.js`) becomes
+  `v0.3.5` (in the arcs-live repo).
 
-1) Update the version in `shell/apps/common/firebase-config.js` to a
-  reasonable mainline development version (perhaps using the `-alpha` suffix).
-  See [#1155](https://github.com/PolymerLabs/arcs/pull/1155) for an example.
+1) Update the version in `shell/apps/common/firebase-config.js` to the
+  new mainline development version (perhaps using the `-alpha` suffix; in our
+  example, `0.3.6-alpha`).  See
+  [#1155](https://github.com/PolymerLabs/arcs/pull/1155) for an example.
