@@ -13,7 +13,7 @@
  * selenium testing of arcs.
  */
 
-const debug = true;
+const debug = false;
 
 /**
  * Traverse the list of query selectors. After each selector, both the shadow
