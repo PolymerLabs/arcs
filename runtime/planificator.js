@@ -6,20 +6,13 @@
 // http://polymer.github.io/PATENTS.txt
 
 import {assert} from '../platform/assert-web.js';
+import {now} from '../platform/date-web.js';
 import {InitSearch} from './strategies/init-search.js';
 import {Planner} from './planner.js';
 import {Speculator} from './speculator.js';
 import {SuggestionComposer} from './suggestion-composer.js';
 
 let defaultTimeoutMs = 5000;
-
-const now = () => {
-  if (typeof performance == 'object') {
-    return performance.now();
-  }
-  let time = process.hrtime();
-  return time[0] * 1000 + time[1] / 1000000;
-};
 
 class ReplanQueue {
   constructor(planificator, options) {
@@ -29,59 +22,65 @@ class ReplanQueue {
 
     this._changes = [];
     this._replanTimer = null;
+    this._planificator.registerStateChangedCallback(this._onPlanningStateChanged.bind(this));
   }
   addChange() {
     this._changes.push(now());
-    if (this.isReplanningScheduled()) {
-      this.postponeReplan();
-    } else {
-      this.scheduleReplan(this._options.defaultReplanDelayMs);
+    if (this._isReplanningScheduled()) {
+      this._postponeReplan();
+    } else if (!this._planificator.isPlanning) {
+      this._scheduleReplan(this._options.defaultReplanDelayMs);
     }
   }
-  isReplanningScheduled() {
+
+  _onPlanningStateChanged(isPlanning) {
+    if (isPlanning) {
+      // Cancel scheduled planning.
+      this._cancelReplanIfScheduled();
+      this._changes = [];
+    } else if (this._changes.length > 0) {
+      // Schedule delayed planning.
+      let timeNow = now();
+      this._changes.forEach((ch, i) => this._changes[i] = timeNow);
+      this._scheduleReplan(this._options.defaultReplanDelayMs);
+    }
+  }
+  _isReplanningScheduled() {
     return Boolean(this._replanTimer);
   }
-  scheduleReplan(intervalMs) {
-    this.cancelReplanIfScheduled();
+  _scheduleReplan(intervalMs) {
+    this._cancelReplanIfScheduled();
     this._replanTimer = setTimeout(() => this._planificator._requestPlanning(), intervalMs);
   }
-  cancelReplanIfScheduled() {
-    if (this.isReplanningScheduled()) {
+  _cancelReplanIfScheduled() {
+    if (this._isReplanningScheduled()) {
       clearTimeout(this._replanTimer);
       this._replanTimer = null;
     }
   }
-  postponeReplan() {
+  _postponeReplan() {
     if (this._changes.length <= 1) {
       return;
     }
     let now = this._changes[this._changes.length - 1];
     let sincePrevChangeMs = now - this._changes[this._changes.length - 2];
     let sinceFirstChangeMs = now - this._changes[0];
-    if (this.isAdjacentChange(sincePrevChangeMs) && this.canPostponeReplan(sinceFirstChangeMs)) {
-      this.cancelReplanIfScheduled();
+    if (this._canPostponeReplan(sinceFirstChangeMs)) {
+      this._cancelReplanIfScheduled();
       let nextReplanDelayMs = this._options.defaultReplanDelayMs;
       if (this._options.maxNoReplanMs) {
         nextReplanDelayMs = Math.min(nextReplanDelayMs, this._options.maxNoReplanMs - sinceFirstChangeMs);
       }
-      this.scheduleReplan(nextReplanDelayMs);
+      this._scheduleReplan(nextReplanDelayMs);
     }
   }
-  isAdjacentChange(changesInterval) {
-    return !this._options.adjacentDataUpdateMs || changesInterval < this._options.adjacentDataUpdateMs;
-  }
-  canPostponeReplan(changesInterval) {
+  _canPostponeReplan(changesInterval) {
     return !this._options.maxNoReplanMs || changesInterval < this._options.maxNoReplanMs;
-  }
-  onReplanningStarted() {
-    this.cancelReplanIfScheduled();
-    this._changes = [];
   }
 }
 
 const defaultOptions = {
-  defaultReplanDelayMs: 2000,
-  adjacentDataUpdateMs: 200,
+  defaultReplanDelayMs: 200,
   maxNoReplanMs: 10000
 };
 
@@ -239,8 +238,6 @@ export class Planificator {
   }
 
   _requestPlanning(event, options) {
-    this._dataChangesQueue.onReplanningStarted();
-
     // Activate replanning and trigger subscribed callbacks.
     return this._schedulePlanning(options || {});
   }
