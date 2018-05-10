@@ -16,7 +16,7 @@ const config = (() => {
   if (!testFirebaseKey) {
     return {
       // arc data is under this child node on database root
-      version: '0_4',
+      version: '0_4-alpha',
       server: 'arcs-storage.firebaseio.com',
       apiKey: 'AIzaSyBme42moeI-2k8WgXh-6YK_wYyjEXo4Oz8',
       authDomain: 'arcs-storage.firebaseapp.com',
