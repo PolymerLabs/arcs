@@ -18,7 +18,7 @@ const {firebaseConfig, version} = (() => {
   let version;
   let firebaseConfig;
   if (!testFirebaseKey) {
-    version = '0_3_5-alpha';
+    version = '0_3_5';
     firebaseConfig = {
       apiKey: 'AIzaSyBme42moeI-2k8WgXh-6YK_wYyjEXo4Oz8',
       authDomain: 'arcs-storage.firebaseapp.com',
