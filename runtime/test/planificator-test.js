@@ -112,7 +112,7 @@ describe('Planificator', function() {
   it('makes replanning requests', async () => {
     let planificator = createPlanificator();
     for (let i = 0; i < 10; ++i) {
-      planificator.requestPlanning();
+      planificator._requestPlanning();
       assert.isTrue(planificator.isPlanning);
     }
 
@@ -134,6 +134,10 @@ describe('Planificator', function() {
 
     // Trigger replanning
     planificator._arc._scheduler._triggerIdleCallback();
+    assert.lengthOf(planificator._dataChangesQueue._changes, 1);
+    assert.isNotNull(planificator._dataChangesQueue._replanTimer);
+    // setTimeout is needed on data changes replanning is delayed.
+    await new Promise((resolve, reject) => setTimeout(async () => resolve(), 300));
 
     assert.isTrue(planificator.isPlanning);
     assert.lengthOf(planificator.getCurrentPlans().plans, 0);
@@ -145,7 +149,7 @@ describe('Planificator', function() {
 
     // Trigger replanning again.
     planificator._arc._scheduler._triggerIdleCallback();
-
+    await new Promise((resolve, reject) => setTimeout(async () => resolve(), 300));
     assert.isTrue(planificator.isPlanning);
     // Current plans are still available.
     assert.lengthOf(planificator.getCurrentPlans().plans, 3);
@@ -154,9 +158,90 @@ describe('Planificator', function() {
     assert.lengthOf(Object.keys(planificator._past), 0);
   });
 
+  it('groups data change triggered replanning', async () => {
+    let planificator = createPlanificator();
+
+    // Add 3 data change events with intervals.
+    planificator._arc._scheduler._triggerIdleCallback();
+    await new Promise((resolve, reject) => setTimeout(async () => resolve(), 100));
+    planificator._arc._scheduler._triggerIdleCallback();
+    await new Promise((resolve, reject) => setTimeout(async () => resolve(), 100));
+    planificator._arc._scheduler._triggerIdleCallback();
+    assert.lengthOf(planificator._dataChangesQueue._changes, 3);
+    assert.isNotNull(planificator._dataChangesQueue._replanTimer);
+    assert.isFalse(planificator.isPlanning);
+
+    // Wait verify planning has started.
+    await new Promise((resolve, reject) => setTimeout(async () => resolve(), 250));
+    assert.isTrue(planificator.isPlanning);
+  });
+
+  it('caps replanning delay with max-no-replan value', async () => {
+    let planificator = createPlanificator();
+    planificator._dataChangesQueue._options = {defaultReplanDelayMs: 10, maxNoReplanMs: 11};
+
+    // Add 3 data change events with intervals.
+    planificator._arc._scheduler._triggerIdleCallback();
+    await new Promise((resolve, reject) => setTimeout(async () => resolve(), 1));
+    planificator._arc._scheduler._triggerIdleCallback();
+    await new Promise((resolve, reject) => setTimeout(async () => resolve(), 4));
+    planificator._arc._scheduler._triggerIdleCallback(); 
+    assert.lengthOf(planificator._dataChangesQueue._changes, 3);
+    assert.isNotNull(planificator._dataChangesQueue._replanTimer);
+    assert.isFalse(planificator.isPlanning);
+
+    // Wait and verify planning has started.
+    await new Promise((resolve, reject) => setTimeout(async () => resolve(), 7));
+    assert.isTrue(planificator.isPlanning);
+  });
+
+  it('cancels data change triggered replanning if other replanning occured', async () => {
+    let planificator = createPlanificator();
+    let plan = new Recipe();
+    plan.normalize();
+    planificator._setCurrent({plans: [{plan}]});
+
+    // Add 2 data change events.
+    planificator._arc._scheduler._triggerIdleCallback();
+    planificator._arc._scheduler._triggerIdleCallback();
+    assert.lengthOf(planificator._dataChangesQueue._changes, 2);
+    assert.isNotNull(planificator._dataChangesQueue._replanTimer);
+    assert.isFalse(planificator.isPlanning);
+
+    // Plan instantiated, data change events triggered replanning scheduling is canceled.
+    await planificator._arc.instantiate(plan);
+    assert.isTrue(planificator.isPlanning);
+    assert.lengthOf(planificator._dataChangesQueue._changes, 0);
+    assert.isNull(planificator._dataChangesQueue._replanTimer);
+  });
+
+  it('delays data triggered replanning if planning is in progress', async () => {
+    let planificator = createPlanificator();
+
+    // Planning in progress.
+    planificator._requestPlanning();
+    assert.isTrue(planificator.isPlanning);
+
+    // Add 2 data change events - replanning now scheduled, because planning is in progress.
+    planificator._arc._scheduler._triggerIdleCallback();
+    planificator._arc._scheduler._triggerIdleCallback();
+    assert.lengthOf(planificator._dataChangesQueue._changes, 2);
+    assert.isNull(planificator._dataChangesQueue._replanTimer);
+
+    let plan = planificator.plannerReturnFakeResults(['test'])[0].plan;
+    await planificator.allPlanningDone();
+    assert.isFalse(planificator.isPlanning);
+
+    // Delayed replanning is started.
+    await new Promise((resolve, reject) => setTimeout(async () => resolve(), 100));
+    assert.isFalse(planificator.isPlanning);
+    await new Promise((resolve, reject) => setTimeout(async () => resolve(), 100));
+    assert.isTrue(planificator.isPlanning);
+  });
+
   it('replans triggered by plan instantiation', async () => {
     let planificator = createPlanificator();
-    planificator.requestPlanning();
+    planificator._requestPlanning();
     let plan = planificator.plannerReturnFakeResults(['test'])[0].plan;
     await planificator.allPlanningDone();
     assert.lengthOf(planificator.getCurrentSuggestions(), 1);
@@ -181,7 +266,7 @@ describe('Planificator', function() {
     planificator.registerSuggestChangedCallback(() => { ++suggestChanged; });
 
     // Request replanning - state changes, plans do not.
-    planificator.requestPlanning();
+    planificator._requestPlanning();
     assert.equal(1, stateChanged);
     assert.equal(0, planChanged);
     assert.equal(0, suggestChanged);
@@ -207,7 +292,7 @@ describe('Planificator', function() {
     assert.equal(3, suggestChanged);
 
     // Request replanning - state changes, plans do not.
-    planificator.requestPlanning();
+    planificator._requestPlanning();
     assert.equal(5, stateChanged);
     assert.equal(3, planChanged);
     assert.equal(3, suggestChanged);
@@ -221,7 +306,7 @@ describe('Planificator', function() {
 
     // Additional plan returned, but it doesn't have any slots, so not included in suggestions -
     // state and plans change, but suggestions do not.
-    planificator.requestPlanning();
+    planificator._requestPlanning();
     planificator.plannerReturnFakeResults([2, {hash: 3, options: {invisible: true}}]);
     await planificator.allPlanningDone();
     assert.equal(8, stateChanged);
@@ -230,7 +315,7 @@ describe('Planificator', function() {
   });
   it('retrieves and filters suggestions', async () => {
     let planificator = createPlanificator();
-    planificator.requestPlanning();
+    planificator._requestPlanning();
 
     let plans = [];
     let addPlan = (name, options) => {

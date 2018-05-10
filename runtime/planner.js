@@ -5,6 +5,7 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
+import {now} from '../platform/date-web.js';
 import {Strategizer} from '../strategizer/strategizer.js';
 import * as Rulesets from './strategies/rulesets.js';
 import {DeviceInfo} from '../platform/deviceinfo-web.js';
@@ -50,7 +51,6 @@ export class Planner {
     let trace = Tracing.start({cat: 'planning', name: 'Planner::plan', overview: true, args: {timeout}});
     timeout = timeout || -1;
     let allResolved = [];
-    let now = () => (typeof performance == 'object') ? performance.now() : process.hrtime();
     let start = now();
     do {
       let record = await trace.wait(this.strategizer.generate());

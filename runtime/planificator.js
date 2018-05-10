@@ -6,12 +6,83 @@
 // http://polymer.github.io/PATENTS.txt
 
 import {assert} from '../platform/assert-web.js';
+import {now} from '../platform/date-web.js';
 import {InitSearch} from './strategies/init-search.js';
 import {Planner} from './planner.js';
 import {Speculator} from './speculator.js';
 import {SuggestionComposer} from './suggestion-composer.js';
 
 let defaultTimeoutMs = 5000;
+
+class ReplanQueue {
+  constructor(planificator, options) {
+    this._planificator = planificator;
+    this._options = options || {};
+    this._options.defaultReplanDelayMs = this._options.defaultReplanDelayMs || 3000;
+
+    this._changes = [];
+    this._replanTimer = null;
+    this._planificator.registerStateChangedCallback(this._onPlanningStateChanged.bind(this));
+  }
+  addChange() {
+    this._changes.push(now());
+    if (this._isReplanningScheduled()) {
+      this._postponeReplan();
+    } else if (!this._planificator.isPlanning) {
+      this._scheduleReplan(this._options.defaultReplanDelayMs);
+    }
+  }
+
+  _onPlanningStateChanged(isPlanning) {
+    if (isPlanning) {
+      // Cancel scheduled planning.
+      this._cancelReplanIfScheduled();
+      this._changes = [];
+    } else if (this._changes.length > 0) {
+      // Schedule delayed planning.
+      let timeNow = now();
+      this._changes.forEach((ch, i) => this._changes[i] = timeNow);
+      this._scheduleReplan(this._options.defaultReplanDelayMs);
+    }
+  }
+  _isReplanningScheduled() {
+    return Boolean(this._replanTimer);
+  }
+  _scheduleReplan(intervalMs) {
+    this._cancelReplanIfScheduled();
+    this._replanTimer = setTimeout(() => this._planificator._requestPlanning(), intervalMs);
+  }
+  _cancelReplanIfScheduled() {
+    if (this._isReplanningScheduled()) {
+      clearTimeout(this._replanTimer);
+      this._replanTimer = null;
+    }
+  }
+  _postponeReplan() {
+    if (this._changes.length <= 1) {
+      return;
+    }
+    let now = this._changes[this._changes.length - 1];
+    let sincePrevChangeMs = now - this._changes[this._changes.length - 2];
+    let sinceFirstChangeMs = now - this._changes[0];
+    if (this._canPostponeReplan(sinceFirstChangeMs)) {
+      this._cancelReplanIfScheduled();
+      let nextReplanDelayMs = this._options.defaultReplanDelayMs;
+      if (this._options.maxNoReplanMs) {
+        nextReplanDelayMs = Math.min(nextReplanDelayMs, this._options.maxNoReplanMs - sinceFirstChangeMs);
+      }
+      this._scheduleReplan(nextReplanDelayMs);
+    }
+  }
+  _canPostponeReplan(changesInterval) {
+    return !this._options.maxNoReplanMs || changesInterval < this._options.maxNoReplanMs;
+  }
+}
+
+const defaultOptions = {
+  defaultReplanDelayMs: 200,
+  maxNoReplanMs: 10000
+};
 
 export class Planificator {
   constructor(arc) {
@@ -39,6 +110,8 @@ export class Planificator {
     this._isPlanning = false; // whether planning is ongoing
     this._valid = false; // whether replanning was requested (since previous planning was complete).
 
+    this._dataChangesQueue = new ReplanQueue(this, defaultOptions);
+
     // Set up all callbacks that trigger re-planning.
     this._init();
   }
@@ -47,10 +120,10 @@ export class Planificator {
     // TODO(mmandlis): Planificator subscribes to various change events.
     // Later, it will evaluate and batch events and trigger replanning intelligently.
     // Currently, just trigger replanning for each event.
-    this._arcCallback = this.onPlanInstantiated.bind(this);
+    this._arcCallback = this._onPlanInstantiated.bind(this);
     this._arc.registerInstantiatePlanCallback(this._arcCallback);
 
-    this._schedulerCallback = this.requestPlanning.bind(this);
+    this._schedulerCallback = this._onDataChanged.bind(this);
     this._arc._scheduler.registerIdleCallback(this._schedulerCallback);
 
     if (this._arc.pec.slotComposer) {
@@ -107,7 +180,7 @@ export class Planificator {
 
     if (this._arc.search !== search) {
       this._arc.search = search;
-      this.requestPlanning({}, {
+      this._requestPlanning({}, {
         // Don't include InitPopulation strategies in replanning.
         strategies: [InitSearch].concat(Planner.ResolutionStrategies).map(strategy => new strategy(this._arc)),
         append: true
@@ -148,7 +221,7 @@ export class Planificator {
     this._stateChangedCallbacks.push(callback);
   }
 
-  onPlanInstantiated(plan) {
+  _onPlanInstantiated(plan) {
     // Check that plan is in this._current.plans;
     if (!this._current.plans.find(currentPlan => currentPlan.plan == plan)) {
       assert(false, `The plan being instantiated (${plan.description}) doesn't appear in the current list of plans`);
@@ -156,10 +229,15 @@ export class Planificator {
     // Move current to past, and clear current;
     this._past = {plan, plans: this._current.plans, generations: this._current.generations};
     this._setCurrent({plans: [], generations: []});
-    this.requestPlanning();
+    this._requestPlanning();
   }
 
-  requestPlanning(event, options) {
+
+  _onDataChanged() {
+    this._dataChangesQueue.addChange();
+  }
+
+  _requestPlanning(event, options) {
     // Activate replanning and trigger subscribed callbacks.
     return this._schedulePlanning(options || {});
   }
@@ -181,12 +259,12 @@ export class Planificator {
   }
 
   async _runPlanning(options) {
-    let time = Date.now();
+    let time = now();
     while (!this._valid) {
       this._valid = true;
       await this._doNextPlans(options);
     }
-    time = ((Date.now() - time) / 1000).toFixed(2);
+    time = ((now() - time) / 1000).toFixed(2);
     console.log(`Produced ${this._next.plans.length} in ${time}s.`);
   }
 
