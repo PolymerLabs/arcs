@@ -100,6 +100,7 @@ class ShellUi extends Xen.Debug(Xen.Base, log) {
   }
   _getInitialState() {
     return {
+      intent: 'start',
       barState: 'over',
       toolState: 'main',
       // TODO(sjmiles): include manifest or other directives?
@@ -108,16 +109,28 @@ class ShellUi extends Xen.Debug(Xen.Base, log) {
     };
   }
   _render(props, state, oldProps, oldState) {
-    if (state.barState === 'hint' && !props.showHint) {
-      state.barState = 'peek';
+    if (props.arc && props.arc !== oldProps.arc) {
+      state.intent = 'start';
     }
-    if (state.barState === 'peek') {
-      state.toolState = 'main';
-      if (props.showhint) {
+    const {intent, toolState, barState, toolsOpen} = state;
+    // `start` intent means no minimization
+    if (intent === 'start') {
+      if (state.barState !== 'open') {
+        state.barState = props.showhint ? 'hint' : 'over';
+      }
+    }
+    // `auto` intent means minimziation or hint is a calculation
+    if (intent === 'auto') {
+      if (barState === 'hint' && !props.showhint) {
+        state.barState = 'peek';
+      }
+      else if (barState === 'peek' && props.showhint && !oldProps.showhint) {
         state.barState = 'hint';
       }
     }
-    const {toolState, barState, toolsOpen} = state;
+    if (state.barState === 'peek') {
+      state.toolState = 'main';
+    }
     const barOpen = barState === 'open';
     const mainOpen = toolState === 'main';
     const searchOpen = toolState === 'search';
@@ -136,10 +149,13 @@ class ShellUi extends Xen.Debug(Xen.Base, log) {
     if (state.userPickerOpen && state.userPickerOpen !== oldState.userPickerOpen) {
       renderModel.contentsScrollTop = 0;
     }
-    const {user} = props;
-    if (user && user.info) {
+    const {user, profile, arc} = props;
+    if (user && user.info && arc) {
       renderModel.avatar_title = user.info.name;
-      const avatar_style = user.info.avatar ? `background-image: url("${user.info.avatar}");` : '';
+      const avatar = profile && profile.avatar && profile.avatar.url || '';
+      // TODO(sjmiles): bad way to surface the resolver
+      const url = arc._loader._resolve(avatar);
+      const avatar_style = avatar ? `background-image: url("${url}");` : '';
       renderModel.avatar_style = avatar_style;
     }
     return [props, state, renderModel];
@@ -159,7 +175,7 @@ class ShellUi extends Xen.Debug(Xen.Base, log) {
       this._setState({toolsOpen: false});
     } else {
       this._fire('showhint', false);
-      this._setState({barState: 'peek'});
+      this._setState({barState: 'peek', intent: 'auto'});
     }
   }
   _onTouchbarClick() {
@@ -195,7 +211,7 @@ class ShellUi extends Xen.Debug(Xen.Base, log) {
     if (this._props.showhint) {
       barState = 'hint';
     }
-    this._setState({barState});
+    this._setState({barState, intent: 'auto'});
   }
   _onSearchClick(e) {
     e.stopPropagation();
@@ -246,7 +262,6 @@ class ShellUi extends Xen.Debug(Xen.Base, log) {
   }
   _commitSearch(search) {
     search = search || '';
-    // TODO(sjmiles): removed this check so speech-input can update the search box, is it harmful?
     this._fire('search', search);
   }
 }
