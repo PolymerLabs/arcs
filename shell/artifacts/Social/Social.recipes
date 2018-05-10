@@ -7,11 +7,11 @@
 // http://polymer.github.io/PATENTS.txt
 
 import 'Particles.manifest'
+import 'PostList.manifest'
 import 'PostTimeRanker.manifest'
 import 'WordsScoreRanker.manifest'
 import '../Common/CopyCollection.manifest'
 import '../Common/Detail.manifest'
-import '../Common/List.manifest'
 
 // Allows creating multiple posts by the author and viewing all posts created
 // in this Arc.
@@ -65,7 +65,7 @@ recipe
   PostTimeRanker
     input = posts
     output = rankedPosts
-  List
+  PostList
     items = rankedPosts
   PostMuxer
     list = rankedPosts
@@ -79,7 +79,7 @@ recipe
     input = posts
     stats = stats
     output = rankedPosts
-  List
+  PostList
     items = rankedPosts
   PostMuxer
     list = rankedPosts

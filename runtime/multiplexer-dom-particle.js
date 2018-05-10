@@ -86,7 +86,7 @@ export class MultiplexerDomParticle extends TransformationDomParticle {
       this.relevance = 0.1;
     }
 
-    for (let [index, item] of list.entries()) {
+    for (let [index, item] of this.getListEntries(list)) {
       let resolvedHostedParticle = hostedParticle;
       if (this.handleIds[item.id]) {
         let itemView = await this.handleIds[item.id];
@@ -178,7 +178,19 @@ export class MultiplexerDomParticle extends TransformationDomParticle {
     }
   }
 
-  // Abstract
-  constructInnerRecipe(hostedParticle, item, itemView, slot, other) {
+  // Abstract methods below.
+
+  // Called to produce a full interpolated recipe for loading into an inner
+  // arc for each item. Subclasses should override this method as by default
+  // it does nothing and so no recipe will be returned and content will not
+  // be loaded successfully into the inner arc.
+  constructInnerRecipe(hostedParticle, item, itemView, slot, other) {}
+
+  // Called with the list of items and by default returns the direct result of
+  // `Array.entries()`. Subclasses can override this method to alter the item
+  // order or otherwise permute the items as desired before their slots are
+  // created and contents are rendered.
+  getListEntries(list) {
+    return list.entries();
   }
 }
