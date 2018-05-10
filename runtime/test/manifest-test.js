@@ -32,7 +32,7 @@ describe('manifest', function() {
       particle SomeParticle #work in 'some-particle.js'
         out S someParam
 
-      recipe SomeRecipe
+      recipe SomeRecipe #someTag1 #someTag2
         map #someView
         create #newView as view0
         SomeParticle
@@ -43,6 +43,7 @@ describe('manifest', function() {
       let recipe = manifest.recipes[0];
       assert(recipe);
       assert.equal('SomeRecipe', recipe.name);
+      assert.deepEqual(['#someTag1', '#someTag2'], recipe.tags);
       assert.equal(manifest.findRecipesByVerb('SomeRecipe')[0], recipe);
       assert.equal(recipe.particles.length, 1);
       assert.equal(recipe.handles.length, 2);
