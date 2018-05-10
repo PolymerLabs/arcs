@@ -165,7 +165,9 @@ http://polymer.github.io/PATENTS.txt
         });
       },
       setFindPhrase: function(phrase) {
-        this.findHighlight = !!phrase && this.recipe.result.toLowerCase().includes(phrase.toLowerCase());
+        this.findHighlight = !!phrase &&
+            (this.recipe.result.toLowerCase().includes(phrase.toLowerCase()) ||
+            (this.recipe.description && this.recipe.description.toLowerCase().includes(phrase.toLowerCase())));
       }
     });
   </script>
