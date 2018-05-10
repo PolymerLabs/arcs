@@ -29,8 +29,8 @@ export class SearchTokensToParticles extends Strategy {
       if (recipe.name) {
         this._addRecipe(recipe.name.toLowerCase(), recipe);
       }
-      recipe.tags.forEach(tag => {
-        this._addRecipe(tag.toLowerCase().substring(1), recipe);
+      recipe.verbs.forEach(verb => {
+        this._addRecipe(verb, recipe);
       });
     }
 

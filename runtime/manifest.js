@@ -590,7 +590,7 @@ ${e.message}
     // TODO: annotate other things too
     let recipe = manifest._newRecipe(recipeItem.name);
     recipe.annotation = recipeItem.annotation;
-    recipe.tags = recipeItem.tags;
+    recipe.verbs = recipeItem.verbs;
     let items = {
       handles: recipeItem.items.filter(item => item.kind == 'handle'),
       byHandle: new Map(),

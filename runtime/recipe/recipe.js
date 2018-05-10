@@ -28,7 +28,7 @@ export class Recipe {
     // type to particles/handles.
     this._connectionConstraints = [];
 
-    this._tags = [];
+    this._verbs = [];
 
     // TODO: Change to array, if needed for search strings of merged recipes.
     this._search = null;
@@ -139,8 +139,8 @@ export class Recipe {
   get slots() { return this._slots; } // Slot*
   set slots(slots) { this._slots = slots; }
   get connectionConstraints() { return this._connectionConstraints; }
-  get tags() { return this._tags; }
-  set tags(tags) { this._tags = tags; }
+  get verbs() { return this._verbs; }
+  set verbs(verbs) { this._verbs = verbs; }
   get search() { return this._search; }
   set search(search) {
     this._search = search;
@@ -366,7 +366,7 @@ export class Recipe {
     this._particles.forEach(cloneTheThing);
     this._slots.forEach(cloneTheThing);
     this._connectionConstraints.forEach(cloneTheThing);
-    recipe.tags = recipe.tags.slice();
+    recipe.verbs = recipe.verbs.slice();
     if (this.search) {
       this.search._copyInto(recipe);
     }
@@ -445,7 +445,8 @@ export class Recipe {
   toString(options) {
     let nameMap = this._makeLocalNameMap();
     let result = [];
-    result.push(`recipe${this.name ? ' ' + this.name : ''}${this.tags.length > 0 ? ` ${this.tags.join(' ')}` : ''}`);
+    let verbs = this.verbs.length > 0 ? ` ${this.verbs.map(verb => `#${verb}`).join(' ')}` : '';
+    result.push(`recipe${this.name ? ` ${this.name}` : ''}${verbs}`);
     if (this.search) {
       result.push(this.search.toString(options).replace(/^|(\n)/g, '$1  '));
     }
