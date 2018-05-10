@@ -19,6 +19,8 @@ export class SearchTokensToHandles extends Strategy {
 
   async generate(inputParams) {
     let arc = this._arc;
+    // Finds stores matching the provided token and compatible with the provided handle's type,
+    // which are not already mapped into the provided handle's recipe
     let findMatchingStores = (token, handle) => {
       const counts = RecipeUtil.directionCounts(handle);
       let stores = arc.findHandlesByType(handle.type, {tags: [`#${token}`], subtype: counts.out == 0});
@@ -33,12 +35,7 @@ export class SearchTokensToHandles extends Strategy {
 
     return Recipe.over(this.getResults(inputParams), new class extends Walker {
       onHandle(recipe, handle) {
-        // The strategy only works on recipes that have some search tokens resolved to particles/recipes.
-        if (!recipe.search || !recipe.search.resolvedTokens.length || !recipe.search.unresolvedTokens.length) {
-          return;
-        }
-        // All constraints must be resolved
-        if (recipe.connectionConstraints.length > 0) {
+        if (!recipe.search || recipe.search.unresolvedTokens.length == 0) {
           return;
         }
         if (handle.isResolved() || handle.connections.length == 0) {
