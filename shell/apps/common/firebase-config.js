@@ -40,42 +40,7 @@ const config = (() => {
   }
 })();
 
-  let version;
-  let firebaseConfig;
-  if (!testFirebaseKey) {
-    version = '0_3_6-alpha';
-    firebaseConfig = {
-      apiKey: 'AIzaSyBme42moeI-2k8WgXh-6YK_wYyjEXo4Oz8',
-      authDomain: 'arcs-storage.firebaseapp.com',
-      databaseURL: 'https://arcs-storage.firebaseio.com',
-      projectId: 'arcs-storage',
-      storageBucket: 'arcs-storage.appspot.com',
-      messagingSenderId: '779656349412'
-    };
-  } else {
-    version = testFirebaseKey;
-    firebaseConfig = {
-      apiKey: 'AIzaSyCbauC2RwA8Ao87tKV4Vzq6qIZiytpo4ws',
-      authDomain: 'arcs-storage-test.firebaseapp.com',
-      databaseURL: 'https://arcs-storage-test.firebaseio.com',
-      projectId: 'arcs-storage-test',
-      storageBucket: 'arcs-storage-test.appspot.com',
-      messagingSenderId: '419218095277'
-    };
-  }
-
-// arc storage
-const storageKey = `firebase://${serverName}/${apiKey}/${version}`;
-
-// firebase config
-const config = {
-  apiKey,
-  authDomain: 'arcs-storage.firebaseapp.com',
-  databaseURL: `https://${serverName}`,
-  projectId: 'arcs-storage',
-  storageBucket: 'arcs-storage.appspot.com',
-  messagingSenderId: '779656349412'
-};
+const storageKey = `firebase://${config.server}/${config.apiKey}/${config.version}`;
 
 // firebase app
 const app = firebase.initializeApp(config);
