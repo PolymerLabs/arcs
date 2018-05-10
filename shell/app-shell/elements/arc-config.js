@@ -23,10 +23,9 @@ class ArcConfig extends Xen.Base {
     }
     // TODO(sjmiles): persisting user makes it hard to share by copying URL
     Utils.setUrlParam('user', null);
-    // if (userid && userid !== oldProps.userid) {
-    //   localStorage.setItem(Const.LOCALSTORAGE.user, userid);
-    //   Utils.setUrlParam('user', userid);
-    // }
+    if (userid && userid !== oldProps.userid) {
+      localStorage.setItem(Const.LOCALSTORAGE.user, userid);
+    }
     if (key && key !== oldProps.key) {
       Utils.setUrlParam('arc', !Const.SHELLKEYS[key] ? key : '');
     }
