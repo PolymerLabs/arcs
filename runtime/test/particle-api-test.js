@@ -39,45 +39,6 @@ async function loadFilesIntoNewArc(fileMap) {
   return {manifest, arc};
 }
 
-class ResultInspector {
-  constructor(arc, setView, field) {
-    this._arc = arc;
-    this._handle = setView;
-    this._field = field;
-  }
-
-  async verify(...expectations) {
-    await this._arc.idle;
-    let received = await this._handle.toList();
-    let misses = [];
-    for (let item of received.map(r => r.rawData[this._field])) {
-      let i = expectations.indexOf(item);
-      if (i >= 0) {
-        expectations.splice(i, 1);
-      } else {
-        misses.push(item);
-      }
-    }
-    this._handle.clearItemsForTesting();
-
-    let errors = [];
-    if (expectations.length) {
-      errors.push(`Expected, not received: ${expectations.join(' ')}`);
-    }
-    if (misses.length) {
-      errors.push(`Received, not expected: ${misses.join(' ')}`);
-    }
-
-    return new Promise((resolve, reject) => {
-      if (errors.length == 0) {
-        resolve();
-      } else {
-        reject(new Error(errors.join(' | ')));
-      }
-    });
-  }
-}
-
 async function setupProxySyncTests() {
   let {manifest, arc} = await loadFilesIntoNewArc({
     manifest: `
@@ -144,7 +105,7 @@ async function setupProxySyncTests() {
   let fooHandle = await arc.createHandle(Data.type, 'foo', 'test:0');
   let barHandle = await arc.createHandle(Data.type.setViewOf(), 'bar', 'test:1');
   let resHandle = await arc.createHandle(Result.type.setViewOf(), 'res', 'test:2');
-  let inspector = new ResultInspector(arc, resHandle, 'value');
+  let inspector = new util.ResultInspector(arc, resHandle, 'value');
 
   let recipe = manifest.recipes[0];
   recipe.handles[0].mapToStorage(fooHandle);
