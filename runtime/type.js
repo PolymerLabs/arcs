@@ -241,7 +241,7 @@ export class Type {
       return this.entitySchema.isMoreSpecificThan(type.entitySchema);
     if (this.isInterface)
       return this.interfaceShape.isMoreSpecificThan(type.interfaceShape);
-    assert(false, 'contains not implemented for ${this}');
+    assert(false, `contains not implemented for ${this}`);
   }
 
   static _canMergeCanReadSubset(type1, type2) {
