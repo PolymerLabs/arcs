@@ -7,6 +7,7 @@
 // http://polymer.github.io/PATENTS.txt
 
 import 'Particles.manifest'
+import 'PostTimeRanker.manifest'
 import 'WordsScoreRanker.manifest'
 import '../Common/CopyCollection.manifest'
 import '../Common/Detail.manifest'
@@ -41,10 +42,10 @@ recipe
   DetailSlider
     selected = post
 
-// A feed that aggregates everything a user and friends say.
+// Non-muxed post feed. Deprecated and to be removed once the muxed feeds below
+// are fully operational.
 recipe
   map #BOXED_posts as posts
-  // TODO(wkorman): Genericize stats integration via polymorphic recipe antics.
   map #BOXED_stats as stats
   map #BOXED_avatar as avatars
   use #user as user
@@ -57,13 +58,19 @@ recipe
     avatars <- avatars
     people <- people
 
+// Descending time ordered post feed.
 recipe
   map #BOXED_posts as posts
+  create as rankedPosts
+  PostTimeRanker
+    input = posts
+    output = rankedPosts
   List
-    items = posts
+    items = rankedPosts
   PostMuxer
-    list = posts
+    list = rankedPosts
 
+// Words game leaderboard feed.
 recipe
   map #BOXED_posts as posts
   map #BOXED_stats as stats
