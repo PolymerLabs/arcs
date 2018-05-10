@@ -88,8 +88,9 @@ class CloudSharedHandles extends Xen.Debug(Xen.Base, log) {
   _handlesChanged(arc, user, key, snap) {
     const handles = snap.val();
     if (handles) {
-      Object.keys(handles).forEach(async id => {
-        const handle = await this._createOrUpdateHandle(arc, user, ArcsUtils.randomId(), id, handles[id]);
+      Object.keys(handles).forEach(async handleKey => {
+        const id = `${handleKey}::${key}`; // ArcsUtils.randomId()
+        const handle = await this._createOrUpdateHandle(arc, user, id, handleKey, handles[handleKey]);
         //const handle = await this._createOrUpdateHandle(arc, `$shared_${id}`, `#${id}`, handles[id]);
         if (handle) {
           this._fire('shared', {user, handle});
@@ -97,7 +98,7 @@ class CloudSharedHandles extends Xen.Debug(Xen.Base, log) {
       });
     }
   }
-  async _createOrUpdateHandle(arc, user, id, tag, handleInfo) {
+  async _createOrUpdateHandle(arc, user, id, key, handleInfo) {
     const {metadata, data} = handleInfo;
     if (data) {
       let handle;
@@ -105,9 +106,9 @@ class CloudSharedHandles extends Xen.Debug(Xen.Base, log) {
       const type = ArcsUtils.typeFromMetaType(metadata.type);
       // TODO(sjmiles): needs refactoring
       const {userid, users} = this._props;
-      if (userid !== user) {
+      //if (userid !== user) {
         // find or create a handle in the arc context
-        handle = await ArcsUtils._requireHandle(arc, type, metadata.name, id, [`#${tag}`]);
+        handle = await ArcsUtils._requireHandle(arc, type, metadata.name, id, [`#${key}`]);
         log('createOrUpdate handle', handle.id, data);
         await ArcsUtils.setHandleData(handle, data);
         // TODO(sjmiles): how to marshal user information (names)?
@@ -116,8 +117,8 @@ class CloudSharedHandles extends Xen.Debug(Xen.Base, log) {
         handle.description = ArcsUtils._getHandleDescription(typeName, handle.tags,
           users[userid].info.name, users[user].info.name);
           //this._props.userid, user);
-      }
-      this._boxHandle(arc, user, type, data, tag);
+      //}
+      this._boxHandle(arc, user, type, data, key);
       return handle;
     }
   }
