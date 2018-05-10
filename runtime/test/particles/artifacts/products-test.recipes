@@ -41,4 +41,4 @@ resource ProductList
     {"name": "Harry Potter", "category": "book"}
   ]
 
-view View0 of [Product] 'mylist' in ProductList
+store Store0 of [Product] 'mylist' in ProductList

@@ -59,4 +59,4 @@ resource MyThing
     {"name": "something"}
   ]
 
-view View0 of Thing 'mything' in MyThing
+store Store0 of Thing 'mything' in MyThing

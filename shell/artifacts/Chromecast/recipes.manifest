@@ -8,7 +8,7 @@
 
 import 'https://noelutz.github.io/arcs-stories/artifacts/VideoPlayer/entities/VideoPlayback.manifest'
 
-view Controller of [VideoPlayback] in 'controller.json'
+store Controller of [VideoPlayback] in 'controller.json'
 
 import 'ControlVideo.manifest'
 import 'ShowVideo.manifest'

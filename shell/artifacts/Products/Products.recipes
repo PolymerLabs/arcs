@@ -93,9 +93,9 @@ recipe
     list <- wishlist
 
 // TODO: move these to separate manifests for claire's wishlist / page
-view PageProducts of [Product] #shortlist in 'data/products.json'
+store PageProducts of [Product] #shortlist in 'data/products.json'
   description `products from your browsing context`
-view ClairesWishlist of [Product] #wishlist in 'data/wishlist.json'
+store ClairesWishlist of [Product] #wishlist in 'data/wishlist.json'
   description `Claire's wishlist`
-view APerson of Person in 'data/people.json'
+store APerson of Person in 'data/people.json'
 //view ThePeople of Person in 'data/people.json'

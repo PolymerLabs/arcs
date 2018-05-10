@@ -116,7 +116,7 @@ describe('Planner', function() {
 
   it('can map remote handles structurally', async () => {
     let results = await planFromManifest(`
-      view AView of * {Text text, Text moreText} in './shell/artifacts/Things/empty.json'
+      store AStore of * {Text text, Text moreText} in './shell/artifacts/Things/empty.json'
       particle P1 in './some-particle.js'
         in * {Text text} text
       recipe
@@ -129,7 +129,7 @@ describe('Planner', function() {
 
   it('can copy remote handles structurally', async () => {
     let results = await planFromManifest(`
-      view AView of * {Text text, Text moreText} in './shell/artifacts/Things/empty.json'
+      store AStore of * {Text text, Text moreText} in './shell/artifacts/Things/empty.json'
       particle P1 in './some-particle.js'
         in * {Text text} text
       recipe
@@ -368,7 +368,7 @@ describe('Type variable resolution', function() {
         map #mythings as mythings
         P
           thing <- mythings
-      view MyThings of [Thing] #mythings in 'things.json'`);
+      store MyThings of [Thing] #mythings in 'things.json'`);
 
     // ~a doesn't resolve to [Thing]
     await verifyUnresolvedPlan(`
@@ -379,7 +379,7 @@ describe('Type variable resolution', function() {
         map #mything as mything
         P
           things <- mything
-      view MyThing of Thing #mything in 'thing.json'`);
+      store MyThing of Thing #mything in 'thing.json'`);
 
     // Different handles using the same type variable don't resolve to different type storages.
     await verifyUnresolvedPlan(`
@@ -394,8 +394,8 @@ describe('Type variable resolution', function() {
         P
           manyThings <- manythings
           oneThing -> onething
-      view ManyThings of [Thing1] #manythings in 'things.json'
-      view OneThing of Thing2 #onething in 'thing.json'`);
+      store ManyThings of [Thing1] #manythings in 'things.json'
+      store OneThing of Thing2 #onething in 'thing.json'`);
   });
 
   it('simple particles type variable resolution', async () => {
@@ -411,7 +411,7 @@ describe('Type variable resolution', function() {
           things <- mythings
         P2
           things <- mythings
-      view MyThings of [Thing1] #mythings in 'things.json'`);
+      store MyThings of [Thing1] #mythings in 'things.json'`);
 
     await verifyResolvedPlan(`
       schema Thing1
@@ -425,8 +425,8 @@ describe('Type variable resolution', function() {
           things <- mythings1
         P2
           things <- mythings2
-      view MyThings1 of [Thing1] #mythings1 in 'things1.json'
-      view MyThings2 of [Thing2] #mythings2 in 'things2.json'`);
+      store MyThings1 of [Thing1] #mythings1 in 'things1.json'
+      store MyThings2 of [Thing2] #mythings2 in 'things2.json'`);
 
     await verifyResolvedPlan(`
       schema Thing1
@@ -440,8 +440,8 @@ describe('Type variable resolution', function() {
         P2
           things <- mythings1
           things2 <- mythings2
-      view MyThings1 of [Thing1] #mythings1 in 'things1.json'
-      view MyThings2 of [Thing2] #mythings2 in 'things2.json'`);
+      store MyThings1 of [Thing1] #mythings1 in 'things1.json'
+      store MyThings2 of [Thing2] #mythings2 in 'things2.json'`);
 
     await verifyResolvedPlan(`
       schema Thing
@@ -455,7 +455,7 @@ describe('Type variable resolution', function() {
           things1 <- mythings
         P2
           things2 <- mythings
-      view MyThings of [Thing] #mythings in 'things.json'`);
+      store MyThings of [Thing] #mythings in 'things.json'`);
   });
 
   it('transformation particles type variable resolution', async () => {
@@ -478,7 +478,7 @@ recipe
     hostedParticle = P1
     list <- mythings
 schema Thing1
-view MyThings of [Thing1] #mythings in 'things.json'`);
+store MyThings of [Thing1] #mythings in 'things.json'`);
 
     // Two transformation particles hosting the same particle with same type storage.
     await verifyResolvedPlan(`
@@ -493,8 +493,8 @@ recipe
     hostedParticle = P1
     list <- mythings2
 schema Thing1
-view MyThings1 of [Thing1] #mythings1 in 'things.json'
-view MyThings2 of [Thing1] #mythings2 in 'things.json'`);
+store MyThings1 of [Thing1] #mythings1 in 'things.json'
+store MyThings2 of [Thing1] #mythings2 in 'things.json'`);
 
     // Transformations carry types through their interface, so P1 can't resolve with
     // Thing2
@@ -507,7 +507,7 @@ recipe
     list <- mythings
 schema Thing1
 schema Thing2
-view MyThings of [Thing2] #mythings in 'things.json'`);
+store MyThings of [Thing2] #mythings in 'things.json'`);
 
     // Two transformation particle hosting the same particle with different type storage.
     // NOTE: This doesn't work yet because we don't have a way of representing a concrete
@@ -527,9 +527,9 @@ recipe
     hostedParticle = P1
     list <- mythings2
 schema Thing1
-view MyThings1 of [Thing1] #mythings1 in 'things.json'
+store MyThings1 of [Thing1] #mythings1 in 'things.json'
 schema Thing2
-view MyThings2 of [Thing2] #mythings2 in 'things.json'`);
+store MyThings2 of [Thing2] #mythings2 in 'things.json'`);
   */
   });
 });
