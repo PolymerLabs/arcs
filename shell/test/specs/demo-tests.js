@@ -274,7 +274,7 @@ function openSystemUi() {
 function allSuggestions() {
   waitForStillness();
   openSystemUi();
-  clickElement('[search]');
+  clickElement('input[search]');
   browser.keys('*');
   //clickElement('[search]');
   //wait(200);
