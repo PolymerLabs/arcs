@@ -19,6 +19,10 @@ class ArcConfig extends Xen.Base {
   _update({userid, key, search}, state, oldProps) {
     if (!state.config) {
       state.config = this._configure();
+      // TODO(sjmiles): default to Gomer for now, but should have a proper 'no user' state
+      if (!state.config.userid) {
+        state.config.userid = `LAUKAIqnN0dB1ceeoT2`;
+      }
       this._fire('config', state.config);
     }
     // TODO(sjmiles): persisting user makes it hard to share by copying URL
