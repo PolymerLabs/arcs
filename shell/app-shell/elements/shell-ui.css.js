@@ -156,6 +156,7 @@ const StyleSheet = Xen.html`
     flex: 1;
     width: 0;
     outline: none;
+    font-family: "Google Sans", sans-serif;
     font-size: 18px;
     border: none;
     /*line-height: 24px;*/

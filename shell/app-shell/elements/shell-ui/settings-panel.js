@@ -65,12 +65,10 @@ const template = html`
   [user] {
     max-height: 0;
     overflow: hidden;
-    /*overflow: auto;*/
     transition: max-height 300ms ease-in-out;
   }
   [user][open] {
-    max-height: 100vh;
-    /*max-height: 20vh;*/
+    max-height: initial;
   }
 </style>
 
