@@ -33,10 +33,10 @@ const template = html`
       color: black;
     }
     :host > div {
-      /*flex: 1;*/
       overflow: hidden;
       text-overflow: ellipsis;
-      white-space: normal;
+      white-space: var(--suggestion-wrap);
+      /*white-space: normal;*/
     }
   </style>
 

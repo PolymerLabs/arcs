@@ -10,24 +10,23 @@
 
 import Xen from './xen/xen.js';
 
-const template = Xen.Template.createTemplate(
-  `<style>
-    :host {
-      display: block;
-      border-radius: 16px;
-      background-color: rgb(222, 222, 222);
-      color: black;
-      padding: 16px;
-      margin: 8px 16px;
-      cursor: pointer;
-    }
-    :host(:hover) {
-      background-color: rgb(221, 221, 255);
-      color: black;
-    }
-  </style>
-  <slot></slot>`
-);
+const html = Xen.Template.html;
+const template = html`
+<style>
+  :host {
+    display: block;
+    border-radius: 16px;
+    background-color: rgb(222, 222, 222);
+    padding: 16px;
+    margin: 8px 16px;
+    cursor: pointer;
+  }
+  :host(:hover) {
+    background-color: rgb(221, 221, 255);
+  }
+</style>
+<slot></slot>
+`;
 
 class SuggestionElement extends HTMLElement {
   connectedCallback() {

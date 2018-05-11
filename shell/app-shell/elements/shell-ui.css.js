@@ -17,7 +17,7 @@ const StyleSheet = Xen.html`
   :host {
     --bar-max-width: 400px;
     --bar-max-height: 50vh;
-    --bar-hint-height: 33vh;
+    --bar-hint-height: 160px;
     --bar-over-height: 56px;
     --bar-peek-height: 16px;
     --bar-touch-height: 32px;
@@ -230,6 +230,9 @@ const StyleSheet = Xen.html`
   [tools][open] {
     z-index: 10000;
     transform: translate3d(0,0,0);
+  }
+  [state="open"] {
+    --suggestion-wrap: normal;
   }
   avatar {
     display: inline-block;
