@@ -10,6 +10,7 @@ import 'Restaurant.schema'
 import '../Profile/FavoriteFood.schema'
 
 particle FavoriteFoodAnnotation in 'source/FavoriteFoodAnnotation.js'
-  FavoriteFoodAnnotation(in [Restaurant] restaurants, in FavoriteFood food)
+  in [Restaurant] restaurants
+  in FavoriteFood food
   consume set of annotation
   description `check restaurants for ${food}._name_ ${food.food}`

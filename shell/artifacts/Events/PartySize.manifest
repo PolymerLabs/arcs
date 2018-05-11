@@ -9,7 +9,7 @@
 import 'Event.schema'
 
 particle PartySize in 'source/PartySize.js'
-  PartySize(inout Event event)
+  inout Event event
   affordance dom
   consume modifier
 // removing description for now to clean up suggestions

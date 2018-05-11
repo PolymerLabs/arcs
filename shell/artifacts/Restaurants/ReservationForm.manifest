@@ -11,7 +11,9 @@ import '../Events/Event.schema'
 import '../Arcs/Description.schema'
 
 particle ReservationForm in 'source/ReservationForm.js'
-  ReservationForm(in Restaurant selected, inout Event event, out [Description] descriptions)
+  in Restaurant selected
+  inout Event event
+  out [Description] descriptions
   consume action
   description `make a reservation`
     event `reservation`

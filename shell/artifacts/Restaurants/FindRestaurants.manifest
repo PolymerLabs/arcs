@@ -10,7 +10,8 @@ import 'https://$cdn/artifacts/Things/GeoCoordinates.schema'
 import 'Restaurant.schema'
 
 particle FindRestaurants in 'source/FindRestaurants.js'
-  FindRestaurants(in GeoCoordinates location, inout [Restaurant] restaurants)
+  in GeoCoordinates location
+  inout [Restaurant] restaurants
   affordance dom
   consume root
     provide masterdetail
