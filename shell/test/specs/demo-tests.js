@@ -274,9 +274,11 @@ function openSystemUi() {
 function allSuggestions() {
   waitForStillness();
   openSystemUi();
-  clickElement('#openSearch');
-  wait(200);
-  clickElement('#searchButton');
+  clickElement('[search]');
+  browser.keys('*');
+  //clickElement('[search]');
+  //wait(200);
+  //clickElement('#searchButton');
 }
 
 function getAtLeastOneSuggestion() {

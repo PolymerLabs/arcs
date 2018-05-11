@@ -50,20 +50,20 @@ const template = html`
         </div>
         -->
         <!-- <icon id="searchButton" on-click="_onResetSearch">search</icon> -->
-        <input placeholder="Search" value="{{search}}" on-focus="_onSearchFocus" on-input="_onSearchChange" on-blur="_onSearchBlur" on-dblclick="_onResetSearch">
+        <input search placeholder="Search" value="{{search}}" on-focus="_onSearchFocus" on-input="_onSearchChange" on-blur="_onSearchBlur" on-dblclick="_onResetSearch">
         <icon hidden="{{hideMic}}" on-click="_onListen">mic</icon>
         <icon hidden="{{hideClear}}" on-click="_onClearSearch">highlight_off</icon>
         <!-- <span title="{{title}}">{{title}}</span>
         <icon on-click="_onSearchClick">search</icon> -->
         <icon on-click="_onSettingsClick">settings</icon>
       </div>
-      <div search toolbar open$="{{searchToolbarOpen}}">
+      <!-- <div search toolbar open$="{{searchToolbarOpen}}">
         <icon on-click="_onMainClick">arrow_back</icon>
         <icon id="searchButton" on-click="_onResetSearch">search</icon>
         <input placeholder="Search" value="{{search}}" on-input="_onSearchChange" on-blur="_onSearchBlur">
         <icon hidden="{{hideMic}}" on-click="_onListen">mic</icon>
         <icon hidden="{{hideClear}}" on-click="_onClearSearch">highlight_off</icon>
-      </div>
+      </div> -->
       <div settings toolbar open$="{{settingsToolbarOpen}}">
         <icon on-click="_onMainClick">arrow_back</icon>
         <span style="flex: 1;">Settings</span>
