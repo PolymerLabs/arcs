@@ -9,6 +9,7 @@
  */
 
 import {assert} from '../platform/assert-web.js';
+import {digest} from '../platform/digest-web.js';
 import {parser} from './build/manifest-parser.js';
 import {Recipe} from './recipe/recipe.js';
 import {ParticleSpec} from './particle-spec.js';
@@ -20,7 +21,6 @@ import * as util from './recipe/util.js';
 import {StorageProviderFactory} from './storage/storage-provider-factory.js';
 import {ManifestMeta} from './manifest-meta.js';
 import {TypeChecker} from './recipe/type-checker.js';
-import {digest} from './recipe/digest-web.js';
 
 class ManifestError extends Error {
   constructor(location, message) {
