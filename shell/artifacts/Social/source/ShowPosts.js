@@ -23,16 +23,6 @@ defineParticle(({DomParticle, resolver, log, html}) => {
     color: rgba(0, 0, 0, 0.87);
     border-top: 1px solid lightgrey;
   }
-  [${host}] [msg] [avatar] {
-    display: inline-block;
-    height: 24px;
-    width: 24px;
-    min-width: 24px;
-    border-radius: 100%;
-    margin-left: 16px;
-    margin-right: 16px;
-    vertical-align: bottom;
-  }
   [${host}] [header] {
     background-color: white;
     border-bottom: 1px solid lightgrey;
@@ -103,8 +93,15 @@ defineParticle(({DomParticle, resolver, log, html}) => {
     margin-right: 6px;
   }
   [${host}] [when] {
-    font-size: 12pt;
+    float: left;
+  }
+  [${host}] [when-month],
+  [${host}] [when-day] {
     color: rgba(0, 0, 0, 0.4);
+    display: block;
+    font-size: 12pt;
+    padding-left: 16px;
+    width: 40px;
   }
   [${host}] input:focus {
     outline: 0;
@@ -127,14 +124,17 @@ defineParticle(({DomParticle, resolver, log, html}) => {
         <template>
         <div msg>
           <div title>
-            <span avatar style='{{avatarStyle}}'></span><span owner>{{owner}}</span><span when>{{time}}</span>
+            <div when>
+              <span when-month>{{month}}</span>
+              <span when-day>{{day}}</span>
+            </div>
             <icon style%="{{style}}" value="{{id}}" on-click="onDeletePost">delete</icon>
-            <br>
           </div>
           <div content value="{{id}}">
             <img src="{{image}}" width="{{imageWidth}}" height="{{imageHeight}}">
             <span>{{message}}</span>
           </div>
+          <div style="clear: both;"></div>
         </div>
         </template>
     </x-list>
@@ -255,16 +255,17 @@ defineParticle(({DomParticle, resolver, log, html}) => {
     }) {
       const {clampedWidth, clampedHeight} =
           this.clampSize(imageWidth, imageHeight);
+      const when = new Date(createdTimestamp);
+      const month = when.toLocaleDateString('en-US', {'month': 'short'});
+      const day = when.toLocaleDateString('en-US', {'day': 'numeric'});
       return {
         message,
         image: image || '',
         imageWidth: clampedWidth,
         imageHeight: clampedHeight,
         id,
-        time: new Date(createdTimestamp).toLocaleDateString('en-US', {
-          'month': 'short',
-          'day': 'numeric'
-        }),
+        month,
+        day,
         style: {display: visible ? 'inline' : 'none'},
         avatarStyle: this.avatarToStyle(resolver(this._state.avatars[author])),
         owner: this._state.people[author]
