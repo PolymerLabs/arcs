@@ -38,12 +38,7 @@ export class Planner {
   init(arc, {strategies, ruleset} = {}) {
     this._arc = arc;
     strategies = strategies || Planner.AllStrategies.map(strategy => new strategy(arc));
-    this.strategizer = new Strategizer(strategies, [], {
-      maxPopulation: 100,
-      generationSize: 100,
-      discardSize: 20,
-      ruleset: ruleset || Rulesets.Empty
-    });
+    this.strategizer = new Strategizer(strategies, [], ruleset || Rulesets.Empty);
   }
 
   // Specify a timeout value less than zero to disable timeouts.

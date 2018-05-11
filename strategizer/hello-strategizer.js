@@ -101,11 +101,7 @@ class Eval extends Strategy {
 }
 
 let target = 'Hello, world.';
-let strategizer = new Strategizer([new Seed(), new Grow(), new Mutate(), new Cross()], [new Eval(target)], {
-  maxPopulation: 100,
-  generationSize: 1000,
-  discardSize: 20,
-});
+let strategizer = new Strategizer([new Seed(), new Grow(), new Mutate(), new Cross()], [new Eval(target)]);
 
 (async () => {
   do {
