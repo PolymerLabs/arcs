@@ -9,7 +9,7 @@
 import 'Restaurant.schema'
 
 particle RestaurantDetail in 'source/RestaurantDetail.js'
-  RestaurantDetail(in Restaurant selected)
+  in Restaurant selected
   affordance dom
   consume detail
     provide action

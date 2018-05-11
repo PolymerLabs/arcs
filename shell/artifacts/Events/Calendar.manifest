@@ -10,7 +10,8 @@ import 'Event.schema'
 import '../Arcs/Description.schema'
 
 particle Calendar in 'source/Calendar.js'
-  Calendar(inout Event event, out [Description] descriptions)
+  inout Event event
+  out [Description] descriptions
   consume action
   consume modifier
   description `Select a time from your calendar`

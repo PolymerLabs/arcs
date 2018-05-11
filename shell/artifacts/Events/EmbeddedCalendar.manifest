@@ -9,7 +9,7 @@
 import 'Event.schema'
 
 particle EmbeddedCalendar in 'source/Calendar.js'
-  EmbeddedCalendar(inout [Event] event)
+  inout [Event] event
   consume action
   consume modifier
   description `embedded calendar`

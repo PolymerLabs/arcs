@@ -9,7 +9,8 @@
 import 'Restaurant.schema'
 
 particle RestaurantMasterDetail in '../Common/source/MasterDetail.js'
-  RestaurantMasterDetail(in [Restaurant] list, inout Restaurant selected)
+  in [Restaurant] list
+  inout Restaurant selected
   consume masterdetail
     provide master
       view list
