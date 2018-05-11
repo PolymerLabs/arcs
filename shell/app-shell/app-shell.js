@@ -42,7 +42,7 @@ const template = html`
   <arc-manifest
     config="{{config}}"
     on-manifest="_onStateData"
-  ></arc-config>
+  ></arc-manifest>
 
   <arc-host
     key="{{key}}"

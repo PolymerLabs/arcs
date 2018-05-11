@@ -43,21 +43,26 @@ const template = html`
     <div toolbars on-click="_onBarClick">
       <div main toolbar open$="{{mainToolbarOpen}}">
         <a href="{{launcherHref}}" title="Go to Launcher"><icon>apps</icon></a>
+        <!--
         <div id="openSearch" style="flex:1; flex-direction:row; justify-content: center; display: flex; align-items: center; cursor: pointer;" on-click="_onSearchClick">
           <icon>search</icon>
           <div style="margin-left:8px;">Search</div>
         </div>
-        <!-- <icon id="searchButton" on-click="_onResetSearch">search</icon>
-        <input placeholder="Search" value="{{search}}" on-input="_onSearchChange" on-blur="_onSearchCommit">
-        <icon on-click="_onListen">mic</icon> -->
+        -->
+        <!-- <icon id="searchButton" on-click="_onResetSearch">search</icon> -->
+        <input placeholder="Search" value="{{search}}" on-focus="_onSearchFocus" on-input="_onSearchChange" on-blur="_onSearchBlur" on-dblclick="_onResetSearch">
+        <icon hidden="{{hideMic}}" on-click="_onListen">mic</icon>
+        <icon hidden="{{hideClear}}" on-click="_onClearSearch">highlight_off</icon>
         <!-- <span title="{{title}}">{{title}}</span>
         <icon on-click="_onSearchClick">search</icon> -->
         <icon on-click="_onSettingsClick">settings</icon>
       </div>
       <div search toolbar open$="{{searchToolbarOpen}}">
         <icon on-click="_onMainClick">arrow_back</icon>
-        <input placeholder="Search" value="{{search}}" on-input="_onSearchChange" on-blur="_onSearchCommit">
         <icon id="searchButton" on-click="_onResetSearch">search</icon>
+        <input placeholder="Search" value="{{search}}" on-input="_onSearchChange" on-blur="_onSearchBlur">
+        <icon hidden="{{hideMic}}" on-click="_onListen">mic</icon>
+        <icon hidden="{{hideClear}}" on-click="_onClearSearch">highlight_off</icon>
       </div>
       <div settings toolbar open$="{{settingsToolbarOpen}}">
         <icon on-click="_onMainClick">arrow_back</icon>
@@ -136,6 +141,7 @@ class ShellUi extends Xen.Debug(Xen.Base, log) {
     const searchOpen = toolState === 'search';
     const settingsOpen = toolState === 'settings';
     const userOpen = toolState === 'user';
+    const micVsClear = !props.search;
     const renderModel = {
       scrimOpen: barOpen || toolsOpen,
       mainToolbarOpen: mainOpen,
@@ -144,7 +150,9 @@ class ShellUi extends Xen.Debug(Xen.Base, log) {
       settingsToolbarOpen: settingsOpen || userOpen,
       settingsContentOpen: settingsOpen,
       userContentOpen: userOpen,
-      glows: Boolean(props.glows)
+      glows: Boolean(props.glows),
+      hideMic: !micVsClear,
+      hideClear: micVsClear
     };
     if (state.userPickerOpen && state.userPickerOpen !== oldState.userPickerOpen) {
       renderModel.contentsScrollTop = 0;
@@ -174,7 +182,7 @@ class ShellUi extends Xen.Debug(Xen.Base, log) {
     if (this._state.toolsOpen) {
       this._setState({toolsOpen: false});
     } else {
-      this._fire('showhint', false);
+      //this._fire('showhint', false);
       this._setState({barState: 'peek', intent: 'auto'});
     }
   }
@@ -250,12 +258,21 @@ class ShellUi extends Xen.Debug(Xen.Base, log) {
   _onAvatarClick() {
     this._setState({userPickerOpen: !this._state.userPickerOpen});
   }
+  _onSearchFocus(e) {
+    this._setState({searchFocus: true});
+  }
+  _onSearchBlur(e) {
+    this._setState({searchFocus: false});
+  }
   _onSearchChange(e) {
     const search = e.target.value;
     // don't re-plan until typing has stopped for this length of time
     const delay = 500;
     const commit = () => this._commitSearch(search);
     this._searchDebounce = ArcsUtils.debounce(this._searchDebounce, commit, delay);
+  }
+  _onClearSearch(e) {
+    this._commitSearch('');
   }
   _onResetSearch(e) {
     this._commitSearch('*');
