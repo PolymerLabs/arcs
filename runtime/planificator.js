@@ -85,7 +85,7 @@ const defaultOptions = {
 };
 
 export class Planificator {
-  constructor(arc) {
+  constructor(arc, options) {
     this._arc = arc;
     this._speculator = new Speculator();
 
@@ -110,7 +110,7 @@ export class Planificator {
     this._isPlanning = false; // whether planning is ongoing
     this._valid = false; // whether replanning was requested (since previous planning was complete).
 
-    this._dataChangesQueue = new ReplanQueue(this, defaultOptions);
+    this._dataChangesQueue = new ReplanQueue(this, options || defaultOptions);
 
     // Set up all callbacks that trigger re-planning.
     this._init();
