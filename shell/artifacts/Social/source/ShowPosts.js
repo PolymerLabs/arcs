@@ -16,6 +16,10 @@ defineParticle(({DomParticle, resolver, log, html}) => {
   [${host}] icon {
     float: right;
     margin-right: 1em;
+    visibility: hidden;
+  }
+  [${host}] [msg]:hover icon {
+    visibility: visible;
   }
   [${host}] {
     font-family: 'Google Sans', sans-serif;
