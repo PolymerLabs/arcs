@@ -28,11 +28,14 @@ class CloudSharedHandles extends Xen.Debug(Xen.Base, log) {
     };
   }
   _update({userid, profile, arc}, state, oldProps) {
-    if (profile && oldProps.profile !== profile) {
-      if (state.friends !== profile.friends) {
-        log('rebuilding handle watches');
+    const arcChanged = Boolean(arc && (arc !== oldProps.arc));
+    const userChanged = Boolean(profile && (profile.friends !== state.friends));
+    if (userChanged || arcChanged) {
+      log('rebuilding boxes and handle watches: arcChanged (', arcChanged, `userChanged:`, userChanged, ')');
+      state.boxes = {};
+      this._disposeWatches();
+      if (profile) {
         state.friends = profile.friends;
-        this._disposeWatches();
         state.watcher.watches = this._watchUsers(arc, state.friends.map(friend => friend.id).concat([userid]));
       }
     }
@@ -181,14 +184,14 @@ class CloudSharedHandles extends Xen.Debug(Xen.Base, log) {
       this._fire('handle', box.handle);
     }
   }
-  async _requireHandle(arc, id, type, name, tags) {
-    return arc.context.findStorageById(id) || await arc.context.newStore(type, name, id, tags);
-  }
   _addBoxData(handle, data, friend) {
     ArcsUtils.addHandleData(handle, data);
     log(`added [${friend}'s] shared data to handle [${handle.id}]`, data);
   }
   // low-level
+  async _requireHandle(arc, id, type, name, tags) {
+    return arc.context.findStorageById(id) || await arc.context.newStore(type, name, id, tags);
+  }
   _addWatch(path, kind, handler) {
     const {watches} = this._state;
     const id = `${kind}::${path}`;
