@@ -14,8 +14,8 @@ import {Planificator} from '../planificator.js';
 import {Recipe} from '../recipe/recipe.js';
 
 class TestPlanificator extends Planificator {
-  constructor(arc) {
-    super(arc);
+  constructor(arc, options) {
+    super(arc, options);
     this.plannerNextResults = [];
     this.plannerPromise = null;
     this.schedulePromises = [];
@@ -74,9 +74,9 @@ class TestPlanificator extends Planificator {
   }
 }
 
-function createPlanificator() {
+function createPlanificator(options) {
   let arc = new Arc({id: 'demo-test'});
-  return new TestPlanificator(arc);
+  return new TestPlanificator(arc, options);
 }
 
 function newPlan(name, options) {
@@ -177,21 +177,20 @@ describe('Planificator', function() {
   });
 
   it('caps replanning delay with max-no-replan value', async () => {
-    let planificator = createPlanificator();
-    planificator._dataChangesQueue._options = {defaultReplanDelayMs: 10, maxNoReplanMs: 11};
+    let planificator = createPlanificator({defaultReplanDelayMs: 100, maxNoReplanMs: 110});
 
     // Add 3 data change events with intervals.
     planificator._arc._scheduler._triggerIdleCallback();
-    await new Promise((resolve, reject) => setTimeout(async () => resolve(), 1));
+    await new Promise((resolve, reject) => setTimeout(async () => resolve(), 10));
     planificator._arc._scheduler._triggerIdleCallback();
-    await new Promise((resolve, reject) => setTimeout(async () => resolve(), 4));
+    await new Promise((resolve, reject) => setTimeout(async () => resolve(), 40));
     planificator._arc._scheduler._triggerIdleCallback(); 
     assert.lengthOf(planificator._dataChangesQueue._changes, 3);
     assert.isNotNull(planificator._dataChangesQueue._replanTimer);
     assert.isFalse(planificator.isPlanning);
 
     // Wait and verify planning has started.
-    await new Promise((resolve, reject) => setTimeout(async () => resolve(), 7));
+    await new Promise((resolve, reject) => setTimeout(async () => resolve(), 70));
     assert.isTrue(planificator.isPlanning);
   });
 
