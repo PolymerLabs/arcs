@@ -44,14 +44,16 @@ http://polymer.github.io/PATENTS.txt
       }
     </style>
     <template is='dom-if' if='{{shownRecipe}}'>
-      <div class='recipe-box'>{{strategyString}}<div hidden$="[[isDescriptionEmpty(shownRecipe.description)]]" class="description">
+      <div class='recipe-box'>{{strategyString}}<!--
+     --><div hidden$="[[isDescriptionEmpty(shownRecipe.description)]]" class="description">
           <span inner-h-t-m-l='{{shownRecipe.description}}'></span>
           <hr>
         </div>
         <span inner-h-t-m-l='{{shownRecipe.result}}'></span>
-      </div>
+        <span class="hash" inner-h-t-m-l='{{shownRecipe.hash}}'></span><!--
+   --></div>
+    </template>
   </template>
-</template>
   <script>
     Polymer({
       is: 'se-recipe-view',
@@ -68,10 +70,11 @@ http://polymer.github.io/PATENTS.txt
       },
       recipeChanged: function(recipe) {
         if (!this.pinned) {
-          this.shownRecipe = (({result, strategy, id, parent, score, description}) => ({result, strategy, id, parent, score, description}))(this.recipe);
+          this.shownRecipe = (({result, strategy, id, parent, score, description, hash}) => ({result, strategy, id, parent, score, description, hash}))(this.recipe);
         } else {
           if (recipe.id == this.shownRecipe.id) {
             this.set("shownRecipe.result", this.pinnedResult);
+            this.set("shownRecipe.hash", this.pinnedHash);
             this.strategyString = '';
             return;
           }
@@ -93,6 +96,7 @@ http://polymer.github.io/PATENTS.txt
             this.strategyString = "Strategies: [" + strategies.join(']\n[') + "]\n";
           else
             this.strategyString = '';
+          this.set("shownRecipe.hash", `<span class='added'>${this.pinnedHash}</span> <span class='removed'>${this.recipe.hash}</span>`);
         }
       },
       shownRecipeChanged: function(shownRecipe) {
@@ -108,6 +112,7 @@ http://polymer.github.io/PATENTS.txt
       pin: function() {
         this.pinned = true;
         this.pinnedResult = this.recipe.result;
+        this.pinnedHash = this.recipe.hash;
         this.to = this.over;
       },
       resetToPinned: function() {
@@ -119,7 +124,7 @@ http://polymer.github.io/PATENTS.txt
       },
       unpin: function() {
         this.pinned = false;
-        this.shownRecipe = (({result, strategy, id, parent, score, description}) => ({result, strategy, id, parent, score, description}))(this.recipe);
+        this.shownRecipe = (({result, strategy, id, parent, score, description, hash}) => ({result, strategy, id, parent, score, description, hash}))(this.recipe);
         this.strategyString = '';
         this.to = undefined;
       }
