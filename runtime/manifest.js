@@ -631,19 +631,21 @@ ${e.message}
 
     let prepareEndpoint = (connection, info) => {
       switch (info.targetType) {
-        case 'particle':
+        case 'particle': {
           let particle = manifest.findParticleByName(info.particle);
           if (!particle)
             throw new ManifestError(connection.location, `could not find particle '${info.particle}'`);
           if (!particle.connectionMap.has(info.param))
             throw new ManifestError(connection.location, `param '${info.param}' is not defined by '${info.particle}'`);
           return new ParticleConnection(particle, info.param);
-        case 'localName':
+        }
+        case 'localName': {
           if (!items.byName.has(info.name))
             throw new ManifestError(connection.location, `local name '${info.name}' does not exist in recipe`);
           if (info.param == null && info.tags.length == 0 && items.byName.get(info.name).handle)
             return new HandleEndPoint(items.byName.get(info.name).handle);
           throw new ManifestError(connection.location, `references to particles by local name not yet supported`);
+        }
       }
     };
 

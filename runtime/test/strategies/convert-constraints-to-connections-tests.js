@@ -292,4 +292,27 @@ describe('ConvertConstraintsToConnections', async () => {
     assert.equal(results.length, 1);
     assert.deepEqual(results[0].result.particles.map(p => p.name), ['A', 'C']);
   });
+
+  it('connects to handles', async () => {
+    let recipes = (await Manifest.parse(`
+      particle A
+        out S {} o
+      particle B
+        in S {} i
+      recipe
+        ? as h
+        A.o -> h
+        h -> B.i
+    `)).recipes;
+    let inputParams = {generated: [{result: recipes[0], score: 1}]};
+    let cctc = new ConvertConstraintsToConnections({pec: {}});
+    let results = await cctc.generate(inputParams);
+    assert.equal(results.length, 1);
+    assert.deepEqual(results[0].result.toString(), `recipe
+  ? as view0 // S {}
+  A as particle0
+    o -> view0
+  B as particle1
+    i <- view0`);
+  });
 });
