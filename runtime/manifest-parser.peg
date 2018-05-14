@@ -695,9 +695,9 @@ ConnectionTarget
   = VerbConnectionTarget / TagConnectionTarget / NameConnectionTarget / ParticleConnectionTarget
 
 VerbConnectionTarget
-  = "can" whiteSpace verbs:TagList components:ConnectionTargetHandleComponents
+  = "can" whiteSpace verbs:TagList components:ConnectionTargetHandleComponents?
   {
-    let {param, tags} = components;
+    let {param, tags} = optional(components, components => components, {param: null, tags: []});    
     return {
       kind: 'connection-target',
       location: location(),      
@@ -719,9 +719,9 @@ TagConnectionTarget
   }
 
 NameConnectionTarget
-  = name:lowerIdent components:ConnectionTargetHandleComponents
+  = name:lowerIdent components:ConnectionTargetHandleComponents?
   {
-    let {param, tags} = components;
+    let {param, tags} = optional(components, components => components, {param: null, tags: []});    
     return {
       kind: 'connection-target',
       targetType: 'localName',
@@ -733,9 +733,9 @@ NameConnectionTarget
   }
 
 ParticleConnectionTarget
-  = particle:upperIdent components:ConnectionTargetHandleComponents 
+  = particle:upperIdent components:ConnectionTargetHandleComponents? 
   {
-    let {param, tags} = components;    
+    let {param, tags} = optional(components, components => components, {param: null, tags: []});    
     return {
       kind: 'connection-target',
       targetType: 'particle',
@@ -747,10 +747,10 @@ ParticleConnectionTarget
   }
 
 ConnectionTargetHandleComponents
-  = param:('.' lowerIdent)? tags:(whiteSpace TagList)?
+  = '.' param:lowerIdent? tags:(whiteSpace? TagList)?
   {
     return {
-      param: optional(param, param => param[1], null),
+      param: optional(param, param => param, null),
       tags: optional(tags, tags => tags[1], []),
     }
   }
