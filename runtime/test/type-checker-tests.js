@@ -166,4 +166,17 @@ describe('TypeChecker', () => {
     assert.isNull(TypeChecker.processTypeList(undefined, [entity, setView]));
     assert.isNull(TypeChecker.processTypeList(undefined, [setView, entity]));
   });
+
+  it('does not modify an input baseType', async () => {
+    let baseType = Type.newVariable(new TypeVariable('a'));
+    let connection = {
+      type: Type.newEntity(new Schema({names: ['Thing'], fields: {}})),
+      direction: 'inout'
+    };
+
+    let newType = TypeChecker.processTypeList(baseType, [connection]);
+    assert.notStrictEqual(baseType, newType);
+    assert.isNull(baseType.variable.resolution);
+    assert.isNotNull(newType.variable.resolution);
+  });
 });
