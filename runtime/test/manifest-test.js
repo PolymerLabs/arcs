@@ -196,34 +196,6 @@ ${particleStr1}
 
     assert.notEqual(manifestA.handles[0].id.toString(), manifestB.handles[0].id.toString());
   });
-  it('supports recipes specified with bidirectional connections', async () => {
-    let manifest = await Manifest.parse(`
-      schema S
-      particle P1
-        out S x
-      particle P2
-        out S x
-
-      recipe Bidirectional
-        P1 as p1
-          x -> p2.x
-        P2 as p2
-          x -> p1.x`);
-    let verify = (manifest) => {
-      let recipe = manifest.recipes[0];
-      assert(recipe);
-      assert.equal(recipe.handles.length, 1);
-      assert.equal(recipe.handleConnections.length, 2);
-      assert.equal(recipe.toString(), `recipe Bidirectional
-  ? as view0
-  P1 as p1
-    x -> view0
-  P2 as p2
-    x -> view0`);
-    };
-    verify(manifest);
-    verify(await Manifest.parse(manifest.toString(), {}));
-  });
   it('supports recipes with constraints', async () => {
     let manifest = await Manifest.parse(`
       schema S
@@ -262,20 +234,16 @@ ${particleStr1}
         P1 as p1
           x -> thingView
         P2
-          x -> thingView
-          y -> p1.y`,
+          x -> thingView`,
       `particle P1
       particle P2
 
       recipe
         ? #things as thingView
-        ? as view0
         P1 as p1
           x -> thingView
-          y = view0
         P2 as particle0
-          x -> thingView
-          y -> view0`);
+          x -> thingView`);
     let deserializedManifest = (await Manifest.parse(manifest.toString(), {}));
   });
   // TODO: move these tests to new-recipe tests.

@@ -597,7 +597,7 @@ RecipeParticle
 RecipeParticleItem = RecipeParticleConnection / RecipeParticleSlotConnection
 
 RecipeParticleConnection
-  = param:(lowerIdent / '*') whiteSpace dir:Direction target:(whiteSpace ConnectionTarget)? eolWhiteSpace
+  = param:(lowerIdent / '*') whiteSpace dir:Direction target:(whiteSpace ParticleConnectionTargetComponents)? eolWhiteSpace
   {
     return {
       kind: 'handle-connection',
@@ -606,6 +606,28 @@ RecipeParticleConnection
       dir,
       target: optional(target, target => target[1], null),
     };
+  }
+
+ParticleConnectionTargetComponents
+  = param:(upperIdent / lowerIdent)? whiteSpace? tags:(TagList)?
+  {
+    param = optional(param, param => param, null);
+    let name = null;
+    let particle = null;
+    if (param) {
+      if (param[0].toUpperCase() == param[0])
+        particle = param;
+      else
+        name = param;
+    }
+
+    return {
+      kind: 'handle-connection-components',
+      location: location(),
+      name,
+      particle,
+      tags: optional(tags, tags => tags, []),
+    }
   }
 
 RecipeParticleSlotConnection
@@ -671,34 +693,67 @@ Direction
   = dir:('<-' / '->' / '=')
 
 ConnectionTarget
-  = ident:(upperIdent / lowerIdent) param:('.' lowerIdent)? tags:(whiteSpace TagList)?
-  {
-    let particle = null;
-    let name = null;
-    if (ident) {
-      if (/^[A-Z]/.test(ident)) {
-        particle = ident;
-      } else {
-        name = ident;
-      }
-    }
+  = VerbConnectionTarget / TagConnectionTarget / NameConnectionTarget / ParticleConnectionTarget
 
+VerbConnectionTarget
+  = "can" whiteSpace verbs:TagList components:ConnectionTargetHandleComponents?
+  {
+    let {param, tags} = optional(components, components => components, {param: null, tags: []});    
     return {
       kind: 'connection-target',
-      location: location(),
-      particle,
-      name,
-      param: optional(param, param => param[1], null),
-      tags: optional(tags, tags => tags[1], []),
+      location: location(),      
+      targetType: 'verb',
+      verbs,
+      param,
+      tags
     }
   }
-  / tags:TagList
-  {
+
+TagConnectionTarget
+  = "is" whiteSpace tags:TagList {
     return {
       kind: 'connection-target',
+      location: location(),      
+      targetType: 'tag',
+      tags
+    }
+  }
+
+NameConnectionTarget
+  = name:lowerIdent components:ConnectionTargetHandleComponents?
+  {
+    let {param, tags} = optional(components, components => components, {param: null, tags: []});    
+    return {
+      kind: 'connection-target',
+      targetType: 'localName',
       location: location(),
-      tags,
-    };
+      name,
+      param,
+      tags
+    }
+  }
+
+ParticleConnectionTarget
+  = particle:upperIdent components:ConnectionTargetHandleComponents? 
+  {
+    let {param, tags} = optional(components, components => components, {param: null, tags: []});    
+    return {
+      kind: 'connection-target',
+      targetType: 'particle',
+      location: location(),
+      particle,
+      param,
+      tags
+    }
+  }
+
+ConnectionTargetHandleComponents
+  = '.' param:lowerIdent? tags:(whiteSpace? TagList)?
+  {
+    return {
+      param: optional(param, param => param, null),
+      tags: optional(tags, tags => tags[1], []),
+    }
   }
 
 RecipeHandle

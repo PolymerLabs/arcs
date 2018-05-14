@@ -40,9 +40,7 @@ describe('manifest parser', function() {
         SomeParticle
           a -> #something
           b <- #somethingElse
-          * = SomeOtherParticle
-          * -> SomeOtherParticle #someTag
-          * -> SomeOtherParticle.param`);
+          * = #someOtherParticle`);
   });
   it('parses trivial particles', () => {
     parse(`
