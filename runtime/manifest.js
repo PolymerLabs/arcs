@@ -21,7 +21,7 @@ import * as util from './recipe/util.js';
 import {StorageProviderFactory} from './storage/storage-provider-factory.js';
 import {ManifestMeta} from './manifest-meta.js';
 import {TypeChecker} from './recipe/type-checker.js';
-import { ParticleConnection } from './recipe/connection-constraint.js';
+import {ParticleConnection} from './recipe/connection-constraint.js';
 
 class ManifestError extends Error {
   constructor(location, message) {
