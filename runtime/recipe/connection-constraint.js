@@ -30,6 +30,26 @@ export class ParticleConnection {
   }
 }
 
+export class HandleEndPoint {
+  constructor(handle) {
+    this.handle = handle;
+  }
+
+  _clone() {
+    return new HandleConnection(this.handle);
+  }
+
+  _compareTo(other) {
+    let cmp;
+    if ((cmp = util.compareStrings(this.handle.localName, other.handle.localName)) != 0) return cmp;
+    return 0;
+  }
+
+  toString() {
+    return `${this.handle.localName}`;
+  }
+}
+
 export class ConnectionConstraint {
   constructor(fromConnection, toConnection, direction) {
     assert(direction);

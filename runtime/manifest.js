@@ -21,7 +21,7 @@ import * as util from './recipe/util.js';
 import {StorageProviderFactory} from './storage/storage-provider-factory.js';
 import {ManifestMeta} from './manifest-meta.js';
 import {TypeChecker} from './recipe/type-checker.js';
-import {ParticleConnection} from './recipe/connection-constraint.js';
+import {ParticleConnection, HandleEndPoint} from './recipe/connection-constraint.js';
 
 class ManifestError extends Error {
   constructor(location, message) {
@@ -605,35 +605,6 @@ ${e.message}
       description: recipeItem.items.find(item => item.kind == 'description')
     };
 
-    for (let connection of items.connections) {
-      let fromParticle;
-      let toParticle;
-      if (connection.from.targetType == 'particle') {
-        fromParticle = manifest.findParticleByName(connection.from.particle);
-        if (!fromParticle) {
-          throw new ManifestError(connection.location, `could not find particle '${connection.from.particle}'`);
-        }
-        if (!fromParticle.connectionMap.has(connection.from.param)) {
-          throw new ManifestError(connection.location, `param '${connection.from.param} is not defined by '${connection.from.particle}'`);
-        }
-      }
-      if (connection.to.targetType == 'particle') {
-        toParticle = manifest.findParticleByName(connection.to.particle);
-        if (!toParticle) {
-          throw new ManifestError(connection.location, `could not find particle '${connection.to.particle}'`);
-        }
-        if (!toParticle.connectionMap.has(connection.to.param)) {
-          throw new ManifestError(connection.location, `param '${connection.to.param} is not defined by '${connection.to.particle}'`);
-        }  
-      }
-      recipe.newConnectionConstraint(new ParticleConnection(fromParticle, connection.from.param),
-                                     new ParticleConnection(toParticle, connection.to.param), connection.direction);
-    }
-
-    if (items.search) {
-      recipe.search = new Search(items.search.phrase, items.search.tokens);
-    }
-
     for (let item of items.handles) {
       let handle = recipe.newHandle();
       let ref = item.ref || {tags: []};
@@ -656,6 +627,34 @@ ${e.message}
       }
       handle.fate = item.fate;
       items.byHandle.set(handle, item);
+    }
+
+    let prepareEndpoint = (connection, info) => {
+      switch (info.targetType) {
+        case 'particle':
+          let particle = manifest.findParticleByName(info.particle);
+          if (!particle)
+            throw new ManifestError(connection.location, `could not find particle '${info.particle}'`);
+          if (!particle.connectionMap.has(info.param))
+            throw new ManifestError(connection.location, `param '${info.param}' is not defined by '${info.particle}'`);
+          return new ParticleConnection(particle, info.param);
+        case 'localName':
+          if (!items.byName.has(info.name))
+            throw new ManifestError(connection.location, `local name '${info.name}' does not exist in recipe`);
+          if (info.param == null && info.tags.length == 0 && items.byName.get(info.name).handle)
+            return new HandleEndPoint(items.byName.get(info.name).handle);
+          throw new ManifestError(connection.location, `references to particles by local name not yet supported`);
+      }
+    };
+
+    for (let connection of items.connections) {
+      let from = prepareEndpoint(connection, connection.from);
+      let to = prepareEndpoint(connection, connection.to);
+      recipe.newConnectionConstraint(from, to, connection.direction);
+    }
+
+    if (items.search) {
+      recipe.search = new Search(items.search.phrase, items.search.tokens);
     }
 
     for (let item of items.slots) {
