@@ -21,7 +21,7 @@ import * as util from './recipe/util.js';
 import {StorageProviderFactory} from './storage/storage-provider-factory.js';
 import {ManifestMeta} from './manifest-meta.js';
 import {TypeChecker} from './recipe/type-checker.js';
-import {ParticleConnection, HandleEndPoint} from './recipe/connection-constraint.js';
+import {ParticleEndPoint, HandleEndPoint} from './recipe/connection-constraint.js';
 
 class ManifestError extends Error {
   constructor(location, message) {
@@ -637,7 +637,7 @@ ${e.message}
             throw new ManifestError(connection.location, `could not find particle '${info.particle}'`);
           if (!particle.connectionMap.has(info.param))
             throw new ManifestError(connection.location, `param '${info.param}' is not defined by '${info.particle}'`);
-          return new ParticleConnection(particle, info.param);
+          return new ParticleEndPoint(particle, info.param);
         }
         case 'localName': {
           if (!items.byName.has(info.name))

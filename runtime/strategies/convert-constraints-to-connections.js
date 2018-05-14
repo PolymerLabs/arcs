@@ -9,7 +9,7 @@ import {Strategy} from '../../strategizer/strategizer.js';
 import {Recipe} from '../recipe/recipe.js';
 import {Walker} from '../recipe/walker.js';
 import {RecipeUtil} from '../recipe/recipe-util.js';
-import {ParticleConnection, HandleEndPoint} from '../recipe/connection-constraint.js';
+import {ParticleEndPoint, HandleEndPoint} from '../recipe/connection-constraint.js';
 
 export class ConvertConstraintsToConnections extends Strategy {
   constructor(arc) {
@@ -44,7 +44,7 @@ export class ConvertConstraintsToConnections extends Strategy {
 
           // Set up initial mappings & input to RecipeUtil.
           let handle;
-          if (constraint.from instanceof ParticleConnection) {
+          if (constraint.from instanceof ParticleEndPoint) {
             particles.add(constraint.from.particle.name);
             if (map[constraint.from.particle.name] == undefined) {
               map[constraint.from.particle.name] = {};
@@ -56,7 +56,7 @@ export class ConvertConstraintsToConnections extends Strategy {
             handle = {handle: constraint.from.handle, direction: reverse[constraint.direction]};
             handles.add(handle.handle);
           }
-          if (constraint.to instanceof ParticleConnection) {
+          if (constraint.to instanceof ParticleEndPoint) {
             particles.add(constraint.to.particle.name);
             if (map[constraint.to.particle.name] == undefined) {
               map[constraint.to.particle.name] = {};
@@ -85,7 +85,7 @@ export class ConvertConstraintsToConnections extends Strategy {
           };
 
           let direction = constraint.direction;
-          if (constraint.from instanceof ParticleConnection) {
+          if (constraint.from instanceof ParticleEndPoint) {
             let existingHandle = map[constraint.from.particle.name][constraint.from.connection];
             if (existingHandle) {
               direction = unionDirections(direction, existingHandle.direction);
@@ -96,7 +96,7 @@ export class ConvertConstraintsToConnections extends Strategy {
           }
 
           direction = reverse[constraint.direction];          
-          if (constraint.to instanceof ParticleConnection) {
+          if (constraint.to instanceof ParticleEndPoint) {
             let existingHandle = map[constraint.to.particle.name][constraint.to.connection];
             if (existingHandle) {
               direction = unionDirections(direction, existingHandle.direction);

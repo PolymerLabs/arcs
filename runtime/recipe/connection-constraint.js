@@ -8,14 +8,14 @@
 import * as util from './util.js';
 import {assert} from '../../platform/assert-web.js';
 
-export class ParticleConnection {
+export class ParticleEndPoint {
   constructor(particle, connection) {
     this.particle = particle;
     this.connection = connection;
   }
 
   _clone() {
-    return new ParticleConnection(this.particle, this.connection);
+    return new ParticleEndPoint(this.particle, this.connection);
   }
 
   _compareTo(other) {
