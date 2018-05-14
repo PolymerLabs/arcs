@@ -21,6 +21,7 @@ import * as util from './recipe/util.js';
 import {StorageProviderFactory} from './storage/storage-provider-factory.js';
 import {ManifestMeta} from './manifest-meta.js';
 import {TypeChecker} from './recipe/type-checker.js';
+import { ParticleConnection } from './recipe/connection-constraint.js';
 
 class ManifestError extends Error {
   constructor(location, message) {
@@ -605,22 +606,28 @@ ${e.message}
     };
 
     for (let connection of items.connections) {
-      let fromParticle = manifest.findParticleByName(connection.from.particle);
-      let toParticle = manifest.findParticleByName(connection.to.particle);
-      if (!fromParticle) {
-        throw new ManifestError(connection.location, `could not find particle '${connection.from.particle}'`);
+      let fromParticle;
+      let toParticle;
+      if (connection.from.targetType == 'particle') {
+        fromParticle = manifest.findParticleByName(connection.from.particle);
+        if (!fromParticle) {
+          throw new ManifestError(connection.location, `could not find particle '${connection.from.particle}'`);
+        }
+        if (!fromParticle.connectionMap.has(connection.from.param)) {
+          throw new ManifestError(connection.location, `param '${connection.from.param} is not defined by '${connection.from.particle}'`);
+        }
       }
-      if (!toParticle) {
-        throw new ManifestError(connection.location, `could not find particle '${connection.to.particle}'`);
+      if (connection.to.targetType == 'particle') {
+        toParticle = manifest.findParticleByName(connection.to.particle);
+        if (!toParticle) {
+          throw new ManifestError(connection.location, `could not find particle '${connection.to.particle}'`);
+        }
+        if (!toParticle.connectionMap.has(connection.to.param)) {
+          throw new ManifestError(connection.location, `param '${connection.to.param} is not defined by '${connection.to.particle}'`);
+        }  
       }
-      if (!fromParticle.connectionMap.has(connection.from.param)) {
-        throw new ManifestError(connection.location, `param '${connection.from.param} is not defined by '${connection.from.particle}'`);
-      }
-      if (!toParticle.connectionMap.has(connection.to.param)) {
-        throw new ManifestError(connection.location, `param '${connection.to.param} is not defined by '${connection.to.particle}'`);
-      }
-      recipe.newConnectionConstraint(fromParticle, connection.from.param,
-                                     toParticle, connection.to.param, connection.direction);
+      recipe.newConnectionConstraint(new ParticleConnection(fromParticle, connection.from.param),
+                                     new ParticleConnection(toParticle, connection.to.param), connection.direction);
     }
 
     if (items.search) {

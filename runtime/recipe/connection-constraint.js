@@ -8,32 +8,50 @@
 import * as util from './util.js';
 import {assert} from '../../platform/assert-web.js';
 
+export class ParticleConnection {
+  constructor(particle, connection) {
+    this.particle = particle;
+    this.connection = connection;
+  }
+
+  _clone() {
+    return new ParticleConnection(this.particle, this.connection);
+  }
+
+  _compareTo(other) {
+    let cmp;
+    if ((cmp = util.compareStrings(this.particle.name, other.particle.name)) != 0) return cmp;
+    if ((cmp = util.compareStrings(this.connection, other.connection)) != 0) return cmp;
+    return 0;
+  }
+
+  toString() {
+    return `${this.particle.name}.${this.connection}`;
+  }
+}
+
 export class ConnectionConstraint {
-  constructor(from, fromConnection, to, toConnection, direction) {
+  constructor(fromConnection, toConnection, direction) {
     assert(direction);
-    this.fromParticle = from;
-    this.fromConnection = fromConnection;
-    this.toParticle = to;
-    this.toConnection = toConnection;
+    this.from = fromConnection;
+    this.to = toConnection;
     this.direction = direction;
     Object.freeze(this);
   }
 
   _copyInto(recipe) {
-    return recipe.newConnectionConstraint(this.fromParticle, this.fromConnection, this.toParticle, this.toConnection, this.direction);
+    return recipe.newConnectionConstraint(this.from, this.to, this.direction);
   }
 
   _compareTo(other) {
     let cmp;
-    if ((cmp = util.compareStrings(this.fromParticle.name, other.fromParticle.name)) != 0) return cmp;
-    if ((cmp = util.compareStrings(this.fromConnection, other.fromConnection)) != 0) return cmp;
-    if ((cmp = util.compareStrings(this.toParticle.name, other.toParticle.name)) != 0) return cmp;
-    if ((cmp = util.compareStrings(this.toConnection, other.toConnection)) != 0) return cmp;
+    if ((cmp = this.from._compareTo(other.from)) != 0) return cmp;
+    if ((cmp = this.to._compareTo(other.to)) != 0) return cmp;
     if ((cmp = util.compareStrings(this.direction, other.direction)) != 0) return cmp;
     return 0;
   }
 
   toString() {
-    return `${this.fromParticle.name}.${this.fromConnection} ${this.direction} ${this.toParticle.name}.${this.toConnection}`;
+    return `${this.from} ${this.direction} ${this.to}`;
   }
 }

@@ -211,10 +211,10 @@ ${particleStr1}
       assert(recipe);
       assert.equal(recipe._connectionConstraints.length, 1);
       let constraint = recipe._connectionConstraints[0];
-      assert.equal(constraint.fromParticle.name, 'A');
-      assert.equal(constraint.fromConnection, 'a');
-      assert.equal(constraint.toParticle.name, 'B');
-      assert.equal(constraint.toConnection, 'b');
+      assert.equal(constraint.from.particle.name, 'A');
+      assert.equal(constraint.from.connection, 'a');
+      assert.equal(constraint.to.particle.name, 'B');
+      assert.equal(constraint.to.connection, 'b');
     };
     verify(manifest);
     verify(await Manifest.parse(manifest.toString(), {}));
@@ -911,6 +911,7 @@ Expected " ", "#", "//", "\\n", "\\r", [ ], [A-Z], or [a-z] but "?" found.
     // nonexistent toParticle
     let manifestTo = `
         particle ParticleA
+          in S {} paramA
         recipe
           ParticleA.paramA -> OtherParticle.paramB`;
     try {
