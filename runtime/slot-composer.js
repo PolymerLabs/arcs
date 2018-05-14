@@ -160,7 +160,8 @@ export class SlotComposer {
     let transformationSlot = this._findSlotByHostedSlotId(hostedSlot.slotId);
     assert(transformationSlot, `No transformation slot found for ${hostedSlot.slotId}`);
 
-    this.arc.pec.innerArcRender(transformationSlot.consumeConn.particle, transformationSlot.consumeConn.name, hostedSlot.slotId, content);
+    this.arc.pec.innerArcRender(transformationSlot.consumeConn.particle, transformationSlot.consumeConn.name, hostedSlot.slotId,
+      transformationSlot.formatHostedContent(hostedSlot, content));
 
     return true;
   }
@@ -192,7 +193,7 @@ export class SlotComposer {
   dispose() {
     this._slots.forEach(slot => slot.dispose());
     this._slots.forEach(slot => slot.setContext(null));
-    this._affordance.slotClass.dispose();
+    this._affordance.contextClass.dispose();
     this._contextSlots.forEach(contextSlot => this._affordance.contextClass.clear(contextSlot));
   }
 }

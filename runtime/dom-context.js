@@ -12,6 +12,8 @@
 import {assert} from '../platform/assert-web.js';
 import Template from '../shell/components/xen/xen-template.js';
 
+const templateByName = new Map();
+
 export class DomContext {
   constructor(context, containerKind) {
     this._context = context;
@@ -19,6 +21,7 @@ export class DomContext {
     // TODO(sjmiles): _liveDom needs new name
     this._liveDom = null;
     this._innerContextBySlotName = {};
+    this._templateName = null;
     this._subId = null;
   }
   get subId() {return this._subId; }
@@ -28,7 +31,7 @@ export class DomContext {
   }
   static createContext(context, content) {
     let domContext = new DomContext(context);
-    domContext.stampTemplate(domContext.createTemplateElement(content.template), () => {});
+    domContext._stampTemplate(domContext.createTemplateElement(content.template), () => {});
     domContext.updateModel(content.model);
     return domContext;
   }
@@ -52,6 +55,25 @@ export class DomContext {
   isEqual(context) {
     return this._context.parentNode == context;
   }
+  setTemplate(templatePrefix, templateName, template) {
+    this._templateName = [templatePrefix, templateName].filter(s => s).join('::');
+    if (templateByName.has(this._templateName)) {
+      // TODO: check whether the new template is different from the one that was previously used.
+      // Template is being replaced.
+      this.clear();
+    }
+    templateByName.set(this._templateName, this.createTemplateElement(template));
+  }
+  hasTemplate(templatePrefix) {
+    return DomContext.hasTemplate(templatePrefix);
+  }
+  static hasTemplate(templatePrefix) {
+    return [...templateByName.keys()].find(key => key.startsWith(templatePrefix));
+  }
+  static dispose() {
+    // empty template cache
+    templateByName.clear();
+  }
   updateModel(model) {
     if (this._liveDom) {
       this._liveDom.set(model);
@@ -71,7 +93,15 @@ export class DomContext {
   createTemplateElement(template) {
     return DomContext.createTemplateElement(template);
   }
-  stampTemplate(template, eventHandler) {
+  stampTemplate(eventHandler) {
+    if (this._templateName) {
+      let template = templateByName.get(this._templateName);
+      assert(template, `No template for ${this._templateName}`);
+      this._stampTemplate(template, eventHandler);
+    }
+  }
+
+  _stampTemplate(template, eventHandler) {
     if (!this._liveDom) {
       // TODO(sjmiles): hack to allow subtree elements (e.g. x-list) to marshal events
       this._context._eventMapper = this._eventMapper.bind(this, eventHandler);

@@ -41,6 +41,22 @@ export class DomSetContext {
     return Object.keys(this._contextBySubId).length == Object.keys(context).length &&
            !Object.keys(this._contextBySubId).find(c => this._contextBySubId[c] != context[c]);
   }
+  setTemplate(templatePrefix, templateName, template) {
+    let isStringTemplateName = typeof template == 'string';
+    let isStringTemplate = typeof template == 'string';
+    Object.keys(this._contextBySubId).forEach(subId => {
+      let templateNameForSubId = isStringTemplateName ? templateName : templateName[subId];
+      if (templateNameForSubId) {
+        let templateForSubId = isStringTemplate ? template : template[templateNameForSubId];
+        if (templateForSubId) {
+          this._contextBySubId[subId].setTemplate(templatePrefix, templateNameForSubId, templateForSubId);
+        }
+      }
+    });
+  }
+  hasTemplate(templatePrefix) {
+    return DomContext.hasTemplate(templatePrefix);
+  }
   updateModel(model) {
     assert(model.items, `Model must contain items`);
     model.items.forEach(item => {
@@ -58,7 +74,7 @@ export class DomSetContext {
   createTemplateElement(template) {
     let templates = {};
     if (typeof template === 'string') {
-      templates[''] = DomContext.createTemplateElement(template);
+      return DomContext.createTemplateElement(template);
     } else {
       Object.keys(template).forEach(subId => {
         templates[subId] = this._contextBySubId[subId].createTemplateElement(template[subId]);
@@ -66,12 +82,9 @@ export class DomSetContext {
     }
     return templates;
   }
-  stampTemplate(template, eventHandler, eventMapper) {
+  stampTemplate(eventHandler, eventMapper) {
     Object.keys(this._contextBySubId).forEach(subId => {
-      let templateForSubId = template[subId] || template[''];
-      if (templateForSubId) {
-        this._contextBySubId[subId].stampTemplate(templateForSubId, eventHandler, eventMapper);
-      }
+      this._contextBySubId[subId].stampTemplate(eventHandler, eventMapper);
     });
   }
   observe(observer) {

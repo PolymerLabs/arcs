@@ -21,6 +21,9 @@ export class TransformationDomParticle extends DomParticle {
   getTemplate(slotName) {
     return this._state.template;
   }
+  getTemplateName(slotName) {
+    return this._state.templateName;
+  }
   render(props, state) {
     return state.renderModel;
   }

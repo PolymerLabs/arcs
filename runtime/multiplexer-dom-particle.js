@@ -9,6 +9,7 @@
  */
 'use strict';
 
+import {assert} from '../platform/assert-web.js';
 import {ParticleSpec} from './particle-spec.js';
 import {TransformationDomParticle} from './transformation-dom-particle.js';
 
@@ -165,7 +166,14 @@ export class MultiplexerDomParticle extends TransformationDomParticle {
   }
 
   combineHostedTemplate(slotName, hostedSlotId, content) {
-    if (!this._state.template && !!content.template) {
+    let subId = this._itemSubIdByHostedSlotId.get(hostedSlotId);
+    if (!subId) {
+      return;
+    }
+    assert(content.templateName, `Template name is missing for slot '${slotName}' (hosted slot ID: '${hostedSlotId}')`);
+    this._setState({templateName: Object.assign(this._state.templateName || {}, {[subId]: `${content.templateName}`})});
+
+    if (content.template) {
       let template = content.template;
       // Replace hosted particle connection in template with the corresponding particle connection names.
       // TODO: make this generic!
@@ -174,7 +182,9 @@ export class MultiplexerDomParticle extends TransformationDomParticle {
             new RegExp(`{{${hostedConn}.description}}`, 'g'),
             `{{${conn}.description}}`);
       });
-      this._setState({template});
+      this._setState({template: Object.assign(this._state.template || {}, {[content.templateName]: template})});
+
+      this.forceRenderTemplate();
     }
   }
 
