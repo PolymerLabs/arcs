@@ -19,17 +19,18 @@ export class StrategyExplorerAdapter {
     });
   }
   static adapt(generations) {
+    // Make a copy of everything and assign IDs to recipes.
     const idMap = new Map(); // Recipe -> ID
     let lastID = 0;
-
-    // Make a copy of everything and assign IDs to recipes.
-    for (let pop of generations) {
-      pop.generated = pop.generated.map(function assignIdAndCopy(recipe) {
-        idMap.set(recipe, lastID);
-        let {result, score, derivation, description, hash, valid, active, irrelevant} = recipe;
-        return {result, score, derivation, description, hash, valid, active, irrelevant, id: lastID++};
-      });
-    }
+    const assignIdAndCopy = recipe => {
+      idMap.set(recipe, lastID);
+      let {result, score, derivation, description, hash, valid, active, irrelevant} = recipe;
+      return {result, score, derivation, description, hash, valid, active, irrelevant, id: lastID++};
+    };
+    generations = generations.map(pop => ({
+      record: pop.record,
+      generated: pop.generated.map(assignIdAndCopy)
+    }));
 
     // CombinedStrategy creates recipes with derivations that are missing
     // from the population. Re-adding them as 'combined'.
@@ -45,6 +46,7 @@ export class StrategyExplorerAdapter {
       }
     }
 
+    // Change recipes in derivation to IDs and compute resolved stats.
     return generations.map(pop => {
       let population = pop.generated;
       let record = pop.record;
@@ -53,7 +55,6 @@ export class StrategyExplorerAdapter {
       record.resolvedDerivationsByStrategy = {};
 
       population.forEach(item => {
-        // Change recipes in derivation to IDs.
         item.derivation = item.derivation.map(derivItem => {
           let parent, strategy;
           if (derivItem.parent)
