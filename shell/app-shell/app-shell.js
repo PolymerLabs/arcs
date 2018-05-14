@@ -71,6 +71,7 @@ const template = html`
     arc="{{arc}}"
     users="{{users}}"
     user="{{user}}"
+    key="{{key}}"
     arcs="{{arcs}}"
     on-theme="_onStateData"
     on-arcs="_onStateData"
