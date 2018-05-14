@@ -35,22 +35,22 @@ export class ConvertConstraintsToConnections extends Strategy {
 
         for (let constraint of recipe.connectionConstraints) {
           // Don't process constraints if their listed particles don't match the current affordance.
-          if (affordance && (!constraint.fromParticle.matchAffordance(affordance) || !constraint.toParticle.matchAffordance(affordance))) {
+          if (affordance && (!constraint.from.particle.matchAffordance(affordance) || !constraint.to.particle.matchAffordance(affordance))) {
             return;
           }
 
           // Set up initial mappings & input to RecipeUtil.
-          particles.add(constraint.fromParticle.name);
-          if (map[constraint.fromParticle.name] == undefined) {
-            map[constraint.fromParticle.name] = {};
-            particlesByName[constraint.fromParticle.name] = constraint.fromParticle;
+          particles.add(constraint.from.particle.name);
+          if (map[constraint.from.particle.name] == undefined) {
+            map[constraint.from.particle.name] = {};
+            particlesByName[constraint.from.particle.name] = constraint.from.particle;
           }
-          particles.add(constraint.toParticle.name);
-          if (map[constraint.toParticle.name] == undefined) {
-            map[constraint.toParticle.name] = {};
-            particlesByName[constraint.toParticle.name] = constraint.toParticle;
+          particles.add(constraint.to.particle.name);
+          if (map[constraint.to.particle.name] == undefined) {
+            map[constraint.to.particle.name] = {};
+            particlesByName[constraint.to.particle.name] = constraint.to.particle;
           }
-          let handle = map[constraint.fromParticle.name][constraint.fromConnection] || map[constraint.toParticle.name][constraint.toConnection];
+          let handle = map[constraint.from.particle.name][constraint.from.connection] || map[constraint.to.particle.name][constraint.to.connection];
           if (handle == undefined) {
             handle = {handle: 'v' + handleCount++, direction: constraint.direction};
             handles.add(handle.handle);
@@ -67,23 +67,23 @@ export class ConvertConstraintsToConnections extends Strategy {
             return a;
           };
 
-          let existingHandle = map[constraint.fromParticle.name][constraint.fromConnection];
+          let existingHandle = map[constraint.from.particle.name][constraint.from.connection];
           let direction = constraint.direction;
           if (existingHandle) {
             direction = unionDirections(direction, existingHandle.direction);
             if (direction == null)
               return;
           }
-          map[constraint.fromParticle.name][constraint.fromConnection] = {handle: handle.handle, direction};
+          map[constraint.from.particle.name][constraint.from.connection] = {handle: handle.handle, direction};
   
-          existingHandle = map[constraint.toParticle.name][constraint.toConnection];
+          existingHandle = map[constraint.to.particle.name][constraint.to.connection];
           direction = reverse[constraint.direction];
           if (existingHandle) {
             direction = unionDirections(direction, existingHandle.direction);
             if (direction == null)
               return;
           }
-          map[constraint.toParticle.name][constraint.toConnection] = {handle: handle.handle, direction};
+          map[constraint.to.particle.name][constraint.to.connection] = {handle: handle.handle, direction};
         }
         let shape = RecipeUtil.makeShape([...particles.values()], [...handles.values()], map);
         let results = RecipeUtil.find(recipe, shape);
