@@ -30,7 +30,7 @@ const warn = Xen.logFactory('ShellHandles', '#004f00', 'warn');
 
 class ShellHandles extends Xen.Debug(Xen.Base, log) {
   static get observedAttributes() {
-    return ['config', 'users', 'user', 'arcs', 'arc'];
+    return ['key', 'config', 'users', 'user', 'arcs', 'arc'];
   }
   get template() {
     return template;
@@ -38,7 +38,7 @@ class ShellHandles extends Xen.Debug(Xen.Base, log) {
   _getInitialState() {
     this._watchGeolocation();
     return {
-      themeData: {
+      defaultThemeData: {
         mainBackground: 'white'
       }
     };
@@ -61,13 +61,16 @@ class ShellHandles extends Xen.Debug(Xen.Base, log) {
     }
   }
   _update(props, state, oldProps, oldState) {
-    const {config, users, user, arcs, arc} = props;
+    const {config, users, user, arcs, arc, key} = props;
     if (config) {
       if (!state.config) {
         state.config = config;
         this._configState(config);
       }
       const {geoCoords} = state;
+      if (key && (key !== oldProps.key)) {
+        state.themeData = Object.assign({key}, state.defaultThemeData);
+      }
       if (user && (user !== oldProps.user || geoCoords !== oldState.geoCoords)) {
         state.userHandleData = this._renderUser(user, geoCoords);
       }
