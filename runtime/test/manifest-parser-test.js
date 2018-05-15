@@ -17,7 +17,7 @@ describe('manifest parser', function() {
     parse('');
   });
   it('parses a trivial recipe', () => {
-    parse(`recipe Recipe #tag1 #tag2`);
+    parse(`recipe Recipe &tag1 &tag2`);
   });
   it('parses with indentation', () => {
     parse(`

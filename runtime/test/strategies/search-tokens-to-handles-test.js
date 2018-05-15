@@ -21,7 +21,7 @@ describe('SearchTokensToHandles', function() {
   it('finds local handle by tags', async () => {
     let manifest = (await Manifest.parse(`
       schema Thing
-      particle ShowThing #show in 'A.js'
+      particle ShowThing &show in 'A.js'
         in Thing inThing
 
       recipe
@@ -63,7 +63,7 @@ store Things of [Foo] #manythings in ThingsJson
     `, {loader, fileName: ''}));
     let manifest = (await Manifest.parse(`
 import 'runtime/test/artifacts/test-particles.manifest'
-particle ChooseFoo #choose in 'A.js'
+particle ChooseFoo &choose in 'A.js'
   in [Foo] inFoos
   out Foo outFoo
 

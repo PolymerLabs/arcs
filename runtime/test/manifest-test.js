@@ -29,10 +29,10 @@ describe('manifest', function() {
         description \`one-s\`
           plural \`many-ses\`
           value \`s:\${t}\`
-      particle SomeParticle #work in 'some-particle.js'
+      particle SomeParticle &work in 'some-particle.js'
         out S someParam
 
-      recipe SomeRecipe #someVerb1 #someVerb2
+      recipe SomeRecipe &someVerb1 &someVerb2
         map #someView
         create #newView as view0
         SomeParticle
@@ -543,9 +543,9 @@ ${particleStr1}
   });
   it('unnamed consume slots', async () => {
     let manifest = await Manifest.parse(`
-      particle SomeParticle #work in 'some-particle.js'
+      particle SomeParticle &work in 'some-particle.js'
         consume slotA
-      particle SomeParticle1 #rest in 'some-particle.js'
+      particle SomeParticle1 &rest in 'some-particle.js'
         consume slotC
 
       recipe
@@ -843,7 +843,7 @@ Error parsing JSON from 'EntityList' (Unexpected token h in JSON at position 1)'
       assert(false);
     } catch (e) {
       assert.deepEqual(e.message, `Parse error in 'bad-file' line 1.
-Expected " ", "#", "//", "\\n", "\\r", [ ], [A-Z], or [a-z] but "?" found.
+Expected " ", "&", "//", "\\n", "\\r", [ ], [A-Z], or [a-z] but "?" found.
   recipe ?
          ^`);
     }
@@ -1161,7 +1161,7 @@ resource SomeName
         in S foo
         in S bar
 
-      particle Transformation #work in '...js'
+      particle Transformation &work in '...js'
         host HostedShape hosted
 
       recipe

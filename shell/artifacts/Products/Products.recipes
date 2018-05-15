@@ -20,7 +20,7 @@ import 'ManufacturerInfo.manifest'
 import 'ShowProduct.manifest'
 
 // show a list
-recipe showList #show
+recipe showList &show
   ShowCollection.collection -> Multiplexer.list
   ShowCollection
     consume master
