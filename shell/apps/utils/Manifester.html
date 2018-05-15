@@ -1,0 +1,70 @@
+<pre></pre>
+
+<script type="module">
+  //import {Arc} from '../../runtime/arc.js';
+  import {Manifest} from '../../../runtime/manifest.js';
+  import {BrowserLoader} from '../../source/browser-loader.js';
+  import ArcsUtils from '../../app-shell/lib/arcs-utils.js';
+  //
+  const randid = () => Math.floor((Math.random()+1)*1e3);
+  //
+  const out = document.querySelector('pre');
+  //
+  (async () => {
+    const urlMap = ArcsUtils.createUrlMap('../..');
+    const loader = new BrowserLoader(urlMap);
+    //
+    // Get Particle Domain
+    //
+    //const path = `../../artifacts/canonical.manifest`;
+    const path = `../../../../arcs-stories/0.4/TV/TV.recipes`;
+    const manifest = await Manifest.load(path, loader);
+    window.manifest= manifest;
+    console.log(manifest);
+    //
+    // Listify this particle
+    //
+    const renderer = 'TVShowTile';
+    //
+    // Lookup Particle To Listify
+    //
+    const particle = manifest.findParticleByName(renderer);
+    const handleKeys = particle.connectionMap.keys();
+    for (const key of handleKeys) {
+      console.log(`handle: ${key}`);
+    }
+    const slotKeys = particle.slots.keys();
+    for (const key of slotKeys) {
+      console.log(`slot: ${key}`);
+    }
+    //
+    const arranger = `${renderer}Renderer`;
+    //const renderer = `TVEpisodeItem`;
+    //const items = `episodes`;
+    //
+    const itemSlots = `itemSlots${randid()}`;
+    const items = `items${randid()}`;
+    const muxer = `Muxer${randid()}`;
+    const itemSlotAlias = `slot${randid()}`;
+    //
+    const text = `
+      //--------------------------------------
+      // Adapter Between Arranger and Renderer
+      //--------------------------------------
+      ${muxer}
+        list = ${items}
+        hostedParticle = ${renderer}
+        consume item as ${itemSlotAlias}
+
+      //----------------------
+      // Generic Item Arranger
+      //----------------------
+      ${arranger}
+        items = ${items}
+        consume ${itemSlots}
+          provide item as ${itemSlotAlias}
+    `;
+    out.textContent = text;
+    //
+  })();
+</script>

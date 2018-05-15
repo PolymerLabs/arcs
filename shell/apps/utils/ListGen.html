@@ -2,13 +2,14 @@
 
 <script>
   const out = document.querySelector('pre');
+  //
   const arranger = `TVEpisodeList`;
-  const arranger
   const renderer = `TVEpisodeItem`;
   const items = `episodes`;
   const itemSlots = `episodes`;
   //
-  const itemSlotAlias = `${itemSlots}Slot_` + Math.floor((Math.random()+1)*1000);
+  const randid = () => Math.floor((Math.random()+1)*1e6);
+  const itemSlotAlias = `slot${randid()}`;
   //
   const text = `
     //---------------------------------
@@ -24,6 +25,7 @@
     ItemMultiplexer
       list = ${items}
       hostedParticle = ${renderer}
-      consume item as episodeItemSlot
-`;
+      consume item as ${itemSlotAlias}
+  `;
+  out.textContent = text;
 </script>
