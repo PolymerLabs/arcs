@@ -707,7 +707,9 @@ ${e.message}
         slotConnectionItem.providedSlots.forEach(ps => {
           let providedSlot = slotConn.providedSlots[ps.param];
           if (providedSlot) {
-            items.byName.set(ps.name, providedSlot);
+            if (ps.name) {
+              items.byName.set(ps.name, providedSlot);
+            }
             items.bySlot.set(providedSlot, ps);
           } else
             providedSlot = items.byName.get(ps.name);
@@ -715,8 +717,10 @@ ${e.message}
             providedSlot = recipe.newSlot(ps.param);
             providedSlot.localName = ps.name;
             providedSlot.sourceConnection = slotConn;
-            assert(!items.byName.has(ps.name));
-            items.byName.set(ps.name, providedSlot);
+            if (ps.name) {
+              assert(!items.byName.has(ps.name));
+              items.byName.set(ps.name, providedSlot);
+            }
             items.bySlot.set(providedSlot, ps);
           }
           if (!slotConn.providedSlots[ps.param]) {
