@@ -8,14 +8,14 @@
 import * as util from './util.js';
 import {assert} from '../../platform/assert-web.js';
 
-export class ParticleConnection {
+export class ParticleEndPoint {
   constructor(particle, connection) {
     this.particle = particle;
     this.connection = connection;
   }
 
   _clone() {
-    return new ParticleConnection(this.particle, this.connection);
+    return new ParticleEndPoint(this.particle, this.connection);
   }
 
   _compareTo(other) {
@@ -30,6 +30,26 @@ export class ParticleConnection {
   }
 }
 
+export class HandleEndPoint {
+  constructor(handle) {
+    this.handle = handle;
+  }
+
+  _clone() {
+    return new HandleEndPoint(this.handle);
+  }
+
+  _compareTo(other) {
+    let cmp;
+    if ((cmp = util.compareStrings(this.handle.localName, other.handle.localName)) != 0) return cmp;
+    return 0;
+  }
+
+  toString() {
+    return `${this.handle.localName}`;
+  }
+}
+
 export class ConnectionConstraint {
   constructor(fromConnection, toConnection, direction) {
     assert(direction);
@@ -40,7 +60,7 @@ export class ConnectionConstraint {
   }
 
   _copyInto(recipe) {
-    return recipe.newConnectionConstraint(this.from, this.to, this.direction);
+    return recipe.newConnectionConstraint(this.from._clone(), this.to._clone(), this.direction);
   }
 
   _compareTo(other) {

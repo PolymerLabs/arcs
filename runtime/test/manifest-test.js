@@ -219,6 +219,26 @@ ${particleStr1}
     verify(manifest);
     verify(await Manifest.parse(manifest.toString(), {}));
   });
+  it('supports recipes with constraints that reference handles', async () => {
+    let manifest = await Manifest.parse(`
+      particle A
+        out S {} a
+
+      recipe Constrained
+        ? as localThing
+        A.a -> localThing`);
+    let verify = (manifest) => {
+      let recipe = manifest.recipes[0];
+      assert(recipe);
+      assert.equal(recipe._connectionConstraints.length, 1);
+      let constraint = recipe._connectionConstraints[0];
+      assert.equal(constraint.from.particle.name, 'A');
+      assert.equal(constraint.from.connection, 'a');
+      assert.equal(constraint.to.handle.localName, 'localThing');
+    };
+    verify(manifest);
+    verify(await Manifest.parse(manifest.toString(), {}));
+  });
   it('supports recipes with local names', async () => {
     let manifest = await Manifest.parse(`
       schema S
@@ -930,7 +950,7 @@ Expected " ", "#", "//", "\\n", "\\r", [ ], [A-Z], or [a-z] but "?" found.
       await Manifest.parse(manifestFromParam);
       assert.fail();
     } catch (e) {
-      assert.match(e.message, /paramA is not defined by 'ParticleA'/);
+      assert.match(e.message, /'paramA' is not defined by 'ParticleA'/);
     }
     // nonexistent connection name in toParticle
     let manifestToParam = `
@@ -944,7 +964,7 @@ Expected " ", "#", "//", "\\n", "\\r", [ ], [A-Z], or [a-z] but "?" found.
       await Manifest.parse(manifestToParam);
       assert.fail();
     } catch (e) {
-      assert.match(e.message, /paramB is not defined by 'ParticleB'/);
+      assert.match(e.message, /'paramB' is not defined by 'ParticleB'/);
     }
   });
 
