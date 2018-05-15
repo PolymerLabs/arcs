@@ -114,6 +114,7 @@ export class Strategizer {
     for (let candidate of this.generated) {
       terminal.set(candidate.result, candidate);
     }
+    // TODO(piotrs): This is inefficient, improve at some point.
     for (let result of this.populationHash.values()) {
       for (let {parent} of result.derivation) {
         if (parent && terminal.has(parent.result)) {
