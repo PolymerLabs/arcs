@@ -441,8 +441,6 @@ ${this.activeRecipe.toString()}`;
   _registerHandle(handle, tags) {
     tags = tags || [];
     tags = Array.isArray(tags) ? tags : [tags];
-    tags.forEach(tag => assert(tag.startsWith('#'),
-      `tag ${tag} must start with '#'`));
 
     this._handlesById.set(handle.id, handle);
 

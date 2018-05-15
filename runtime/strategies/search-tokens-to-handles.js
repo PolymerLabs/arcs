@@ -23,10 +23,10 @@ export class SearchTokensToHandles extends Strategy {
     // which are not already mapped into the provided handle's recipe
     let findMatchingStores = (token, handle) => {
       const counts = RecipeUtil.directionCounts(handle);
-      let stores = arc.findHandlesByType(handle.type, {tags: [`#${token}`], subtype: counts.out == 0});
+      let stores = arc.findHandlesByType(handle.type, {tags: [`${token}`], subtype: counts.out == 0});
       let fate = 'use';
       if (stores.length == 0) {
-        stores = arc._context.findStorageByType(handle.type, {tags: [`#${token}`], subtype: counts.out == 0});
+        stores = arc._context.findStorageByType(handle.type, {tags: [`${token}`], subtype: counts.out == 0});
         fate = counts.out == 0 ? 'map' : 'copy';
       }
       stores = stores.filter(store => !handle.recipe.handles.find(handle => handle.id == store.id));

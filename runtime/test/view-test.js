@@ -113,10 +113,6 @@ describe('View', function() {
     };
 
     await assert_throws_async(async () => await arc.createHandle('not a type'), /isn\'t a Type/);
-    await assert_throws_async(async () => await arc.createHandle(Bar.type, 'name', 'id', 'invalid'),
-      /must start/);
-    await assert_throws_async(async () => await arc.createHandle(Bar.type, 'name', 'id', ['#valid', 'invalid']),
-      /must start/);
 
     await arc.createHandle(Bar.type, 'name', 'id', '#sufficient');
     await arc.createHandle(Bar.type, 'name', 'id', ['#valid']);

@@ -271,7 +271,7 @@ ParticleDefinition
     let slots = [];
     let description = null;
     let hasParticleArgument = false;
-    verbs = optional(verbs, parsedOutput => parsedOutput[1].map(verb => verb.slice(1)), []);
+    verbs = optional(verbs, parsedOutput => parsedOutput[1], []);
     items = items ? extractIndented(items) : [];
     items.forEach(item => {
       if (item.kind == 'interface') {
@@ -540,7 +540,7 @@ ParticleHandleDescription
 Recipe
   = 'recipe' name:(whiteSpace (upperIdent / lowerIdent))? verbs:(whiteSpace TagList)? eolWhiteSpace items:(Indent (SameIndent RecipeItem)*)?
   {
-    verbs = optional(verbs, parsedOutput => parsedOutput[1].map(verb => verb.slice(1)), []);
+    verbs = optional(verbs, parsedOutput => parsedOutput[1], []);
     return {
       kind: 'recipe',
       location: location(),
@@ -769,7 +769,7 @@ RecipeHandle
   }
 
 Tag
-  = '#' [a-zA-Z][a-zA-Z0-9_]* {return text()}
+  = '#' [a-zA-Z][a-zA-Z0-9_]* {return text().substring(1);}
 
 TagList
   = head:Tag tail:(whiteSpace TagList)?
@@ -780,32 +780,21 @@ SpaceTagList
   { return tags; }
 
 ParticleRef
-  = name:upperIdent tags:SpaceTagList?
+  = name:upperIdent 
   {
     return {
       kind: 'particle-ref',
       location: location(),
       name,
-      tags: tags || [],
       verbs: [],
     };
   }
-  / tags:TagList
-  {
-    return {
-      kind: 'particle-ref',
-      location: location(),
-      tags,
-      verbs: [],
-    };
-  }
-  / 'particle can' whiteSpace verb:lowerIdent tags:SpaceTagList?
+  / 'particle can' whiteSpace verb:lowerIdent
   {
     return {
       kind: 'particle-ref',
       location: location(),
       verbs: [verb],
-      tags: tags || [],
     };
   }
 

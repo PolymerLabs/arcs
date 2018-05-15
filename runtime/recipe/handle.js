@@ -191,7 +191,7 @@ export class Handle {
     if (this.id) {
       result.push(`'${this.id}'`);
     }
-    result.push(...this.tags);
+    result.push(...this.tags.map(a => `#${a}`));
     result.push(`as ${(nameMap && nameMap.get(this)) || this.localName}`);
     if (this.type) {
       result.push('//');
