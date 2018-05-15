@@ -636,6 +636,25 @@ ${particleStr1}
     recipe.normalize();
     assert.isTrue(recipe.isResolved());
   });
+  it('recipe provided slot with no local name', async () => {
+    let manifest = await Manifest.parse(`
+      particle ParticleA in 'some-particle.js'
+        consume slotA1
+          provide slotA2
+      recipe
+        ParticleA
+          consume slotA1
+            provide slotA2
+    `);
+    assert.equal(manifest.particles.length, 1);
+    assert.equal(manifest.recipes.length, 1);
+    let recipe = manifest.recipes[0];
+    assert.equal(recipe.slots.length, 1);
+    assert.equal('slotA2', recipe.slots[0].name);
+    assert.isUndefined(recipe.particles[0].consumedSlotConnections['slotA1'].targetSlot);
+    recipe.normalize();
+    assert.isFalse(recipe.isResolved());
+  });
   it('incomplete aliasing', async () => {
     let recipe = (await Manifest.parse(`
       particle P1 in 'some-particle.js'
