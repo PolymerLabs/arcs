@@ -127,6 +127,13 @@ describe('manifest parser', function() {
           * <- energy
           * -> height`);
   });
+  it('parses recipe with particle verb shorthand', () => {
+    parse(`
+      recipe
+        &jump
+          * <- energy
+          * <- height`);
+  });
   it('parses inline schemas', () => {
     parse(`
       particle Foo
