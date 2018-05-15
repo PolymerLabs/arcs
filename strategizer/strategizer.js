@@ -114,7 +114,7 @@ export class Strategizer {
     for (let candidate of this.generated) {
       terminal.set(candidate.result, candidate);
     }
-    for (let result of generated) {
+    for (let result of this.populationHash.values()) {
       for (let {parent} of result.derivation) {
         if (parent && terminal.has(parent.result)) {
           terminal.delete(parent.result);

@@ -182,6 +182,13 @@ export class HandleConnection {
     this._handle.connections.push(this);
   }
 
+  disconnectHandle() {
+    let idx = this._handle.connections.indexOf(this);
+    assert(idx >= 0);
+    this._handle.connections.splice(idx, 1);
+    this._handle = undefined;
+  }
+
   toString(nameMap, options) {
     let result = [];
     result.push(this.name || '*');

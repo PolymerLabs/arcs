@@ -64,23 +64,30 @@ export class Recipe {
       slotConnection.remove();
   }
 
-  removeSlot(slot) {
-    assert(slot.consumeConnections.length == 0);
-    let idx = this._slots.indexOf(slot);
-    assert(idx > -1);
-    this._slots.splice(idx, 1);
-  }
-
   newHandle() {
     let handle = new Handle(this);
     this._handles.push(handle);
     return handle;
   }
 
+  removeHandle(handle) {
+    assert(handle.connections.length == 0);
+    let idx = this._handles.indexOf(handle);
+    assert(idx > -1);
+    this._handles.splice(idx, 1);
+  }
+
   newSlot(name) {
     let slot = new Slot(this, name);
     this._slots.push(slot);
     return slot;
+  }
+
+  removeSlot(slot) {
+    assert(slot.consumeConnections.length == 0);
+    let idx = this._slots.indexOf(slot);
+    assert(idx > -1);
+    this._slots.splice(idx, 1);
   }
 
   isResolved() {
@@ -352,7 +359,8 @@ export class Recipe {
     return {
       handles: recipe._handles.slice(numHandles),
       particles: recipe._particles.slice(numParticles),
-      slots: recipe._slots.slice(numSlots)
+      slots: recipe._slots.slice(numSlots),
+      cloneMap
     };
   }
 
