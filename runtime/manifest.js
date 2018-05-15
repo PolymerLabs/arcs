@@ -646,6 +646,8 @@ ${e.message}
             return new HandleEndPoint(items.byName.get(info.name).handle);
           throw new ManifestError(connection.location, `references to particles by local name not yet supported`);
         }
+        default:
+          assert(false, `endpoint ${info.targetType} not supported`);
       }
     };
 

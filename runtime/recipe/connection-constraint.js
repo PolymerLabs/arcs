@@ -36,7 +36,7 @@ export class HandleEndPoint {
   }
 
   _clone() {
-    return new HandleConnection(this.handle);
+    return new HandleEndPoint(this.handle);
   }
 
   _compareTo(other) {
@@ -60,7 +60,7 @@ export class ConnectionConstraint {
   }
 
   _copyInto(recipe) {
-    return recipe.newConnectionConstraint(this.from, this.to, this.direction);
+    return recipe.newConnectionConstraint(this.from._clone(), this.to._clone(), this.direction);
   }
 
   _compareTo(other) {
