@@ -32,7 +32,7 @@ import '../Events/PartySize.manifest'
 import 'ReservationForm.manifest'
 import 'ReservationAnnotation.manifest'
 
-recipe
+recipe makeReservation
   create #event as event
   ReservationForm
     event = event
