@@ -24,6 +24,10 @@ defineParticle(({DomParticle, html, log}) => {
   [${host}] > [card] {
     margin: 8px;
     width: calc(50% - 24px);
+    border: 3px solid transparent;
+  }
+  [${host}] > [card][selected] {
+    border: 3px solid #524c00;
   }
   @media (min-width: 540px) {
     [${host}] > [card] {
@@ -48,7 +52,7 @@ defineParticle(({DomParticle, html, log}) => {
 </style>
 
 <template tiled-items>
-  <div card>
+  <div card selected$="{{selected}}">
     <div slotid="action" subid="{{id}}"></div>
     <div slotid="tile" subid="{{id}}" key="{{id}}" on-click="_onSelect"></div>
   </div>
@@ -75,14 +79,18 @@ defineParticle(({DomParticle, html, log}) => {
         }
       }
     }
-    render({items}) {
+    render({items, selected}) {
       const sorted = items.sort((a, b) => a.name > b.name ? 1 : a.name === b.name ? 0 : -1);
+      const selectedId = selected && selected.id;
+      log(`selected: ${selectedId}`);
       return {
         items: {
           $template: 'tiled-items',
           models: sorted.map(item => {
+            log(`rendering: ${item.id}`);
             return {
-              id: item.id
+              id: item.id,
+              selected: selectedId === item.id
             };
           })
         }
