@@ -390,7 +390,7 @@ export class DescriptionFormatter {
     } else {
       let handleVar = await handle.get();
       if (handleVar) {
-        return this._formatSingleton(handleName, handleVar);
+        return this._formatSingleton(handleName, handleVar, handle.type.data.description.value);
       }
     }
   }
@@ -406,7 +406,15 @@ export class DescriptionFormatter {
     }
   }
 
-  _formatSingleton(handleName, handleVar) {
+  _formatSingleton(handleName, handleVar, handleDescription) {
+    if (handleDescription) {
+      let valueDescription = handleDescription;
+      let matches;
+      while (matches = valueDescription.match(/\${([a-zA-Z0-9\.]+)}/)) {
+        valueDescription = valueDescription.replace(matches[0], handleVar.rawData[matches[1]]);
+      }
+      return valueDescription;
+    }
     if (handleVar.rawData.name) {
       return handleVar.rawData.name;
     }
