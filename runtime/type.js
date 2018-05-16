@@ -271,9 +271,26 @@ export class Type {
     return Type._canMergeCanReadSubset(type1, type2) && Type._canMergeCanWriteSuperset(type1, type2);
   }
 
+  clone(variableMap) {
+    let type = this.resolvedType();
+    if (type.isVariable) {
+      if (variableMap.has(type.variable)) {
+        return new Type('Variable', variableMap.get(type.variable));
+      } else {
+        let newTypeVariable = TypeVariable.fromLiteral(type.variable.toLiteral());
+        variableMap.set(type.variable, newTypeVariable);
+        return new Type('Variable', newTypeVariable);
+      }
+    }
+    if (type.data.clone) {
+      return new Type(type.tag, type.data.clone(variableMap));
+    }
+    return Type.fromLiteral(type.toLiteral());
+  }
+
   toLiteral() {
-    if (this.isVariable && this.isResolved()) {
-      return this.resolvedType().toLiteral();
+    if (this.isVariable && this.variable.resolution) {
+      return this.variable.resolution.toLiteral();
     }
     if (this.data.toLiteral)
       return {tag: this.tag, data: this.data.toLiteral()};

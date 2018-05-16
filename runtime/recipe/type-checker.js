@@ -25,7 +25,7 @@ export class TypeChecker {
     baseType = baseType == undefined
         ? Type.newVariable(new TypeVariable('a'))
         : Type.fromLiteral(baseType.toLiteral()); // Copy for mutating.
-
+    
     let concreteTypes = [];
 
     // baseType might be a variable (and is definitely a variable if no baseType was available).

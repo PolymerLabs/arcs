@@ -63,6 +63,7 @@ export class Planner {
       let resolved = this.strategizer.generated
           .map(individual => individual.result)
           .filter(recipe => recipe.isResolved());
+
       allResolved.push(...resolved);
       const elapsed = now() - start;
       if (timeout >= 0 && elapsed > timeout) {

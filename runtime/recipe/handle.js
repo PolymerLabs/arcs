@@ -8,6 +8,7 @@
 import {assert} from '../../platform/assert-web.js';
 import * as util from './util.js';
 import {TypeChecker} from './type-checker.js';
+import {Type} from '../type.js';
 
 export class Handle {
   constructor(recipe) {
@@ -37,7 +38,7 @@ export class Handle {
       handle = recipe.newHandle();
       handle._id = this._id;
       handle._tags = [...this._tags];
-      handle._type = this._type;
+      handle._type = this._type ? Type.fromLiteral(this._type.toLiteral()) : undefined;
       handle._fate = this._fate;
       handle._originalFate = this._originalFate;
       handle._originalId = this._originalId;
@@ -113,7 +114,7 @@ export class Handle {
   set pattern(pattern) { this._pattern = pattern; }
 
   static effectiveType(handleType, connections) {
-    let typeSet = connections.filter(connection => connection.type != null).map(connection => ({type: connection.type, direction: connection.direction, connection}));
+    let typeSet = connections.filter(connection => connection.type != null).map(connection => ({type: connection.type, direction: connection.direction}));
     return TypeChecker.processTypeList(handleType, typeSet);
   }
 
@@ -194,7 +195,15 @@ export class Handle {
     result.push(`as ${(nameMap && nameMap.get(this)) || this.localName}`);
     if (this.type) {
       result.push('//');
-      result.push(this.type.resolvedType().toString());
+      if (this.type.isResolved()) {
+        result.push(this.type.resolvedType().toString());
+      } else if (this.type.canEnsureResolved()) {
+        let type = Type.fromLiteral(this.type.toLiteral());
+        type.maybeEnsureResolved();
+        result.push(type.resolvedType().toString());
+      } else {
+        result.push(this.type.toString());
+      }
     }
     if (options && options.showUnresolved) {
       let options = {};

@@ -7,6 +7,7 @@
 
 import {assert} from '../../platform/assert-web.js';
 import * as util from './util.js';
+import {Type} from '../type.js';
 
 export class HandleConnection {
   constructor(name, particle) {
@@ -28,7 +29,9 @@ export class HandleConnection {
     }
     let handleConnection = new HandleConnection(this._name, particle);
     handleConnection._tags = [...this._tags];
-    handleConnection._type = this._type;
+    // Note that _rawType will be cloned later by the particle that references this connection.
+    // Doing it there allows the particle to maintain variable associations across the particle
+    // scope.    
     handleConnection._rawType = this._rawType;
     handleConnection._direction = this._direction;
     if (this._handle != undefined) {

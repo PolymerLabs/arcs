@@ -39,6 +39,7 @@ describe('manifest integration', () => {
     assert(view);
     let handle = handleFor(view);
     // TODO: This should not be necessary.
+    type.maybeEnsureResolved();
     handle.entityClass = type.resolvedType().entitySchema.entityClass();
     let result = await handle.get();
     assert.equal(result.value, 'Hello, world!');
