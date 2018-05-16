@@ -14,7 +14,7 @@ addons:
 script: "cd ${TRAVIS_BUILD_DIR} && npm install && npm run test-with-start"
 
 before_install:
-  - npm install -g npm@5.7.1
+  - npm install -g npm@6.0.1
   - node --version
   - npm --version
 
