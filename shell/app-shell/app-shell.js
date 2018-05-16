@@ -234,7 +234,7 @@ class AppShell extends Xen.Debug(Xen.Base, log) {
   }
   _setKey(key) {
     log('registered new key, begin arc rebuild procedure');
-    this._setState({key});
+    this._setState({arc: null, key});
   }
   async _describeArc(arc, description) {
     this._setState({description: await ArcsUtils.describeArc(arc) || description});
