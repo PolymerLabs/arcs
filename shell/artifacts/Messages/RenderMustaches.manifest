@@ -7,12 +7,14 @@
 // http://polymer.github.io/PATENTS.txt
 
 import 'Message.schema'
-import 'https://$cdn/artifacts/People/Person.schema'
+import '../People/Person.schema'
 
 particle RenderMustaches in 'source/RenderMustaches.js'
-  RenderMustaches(in [Message] messages, in [Person] participants)
+  in [Message] messages
+  in [Person] participants
   consume set of custom_message
 
 particle RenderMustachesSpatial in 'source/NoOp.js'
-  RenderMustachesSpatial(in [Message] messages, in [Person] participants)
+  in [Message] messages
+  in [Person] participants
   consume set of mouth

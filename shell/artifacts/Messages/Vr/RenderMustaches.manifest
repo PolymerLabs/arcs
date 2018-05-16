@@ -7,7 +7,7 @@
 // http://polymer.github.io/PATENTS.txt
 
 import '../Message.schema'
-import 'https://$cdn/artifacts/People/Person.schema'
+import '../../People/Person.schema'
 
 particle RenderMustaches in '../source/NoOp.js'
   RenderMustaches(in [Message] messages, in [Person] participants)

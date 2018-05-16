@@ -7,8 +7,8 @@
 // http://polymer.github.io/PATENTS.txt
 
 import '../Message.schema'
-import 'https://$cdn/artifacts/People/Avatar.schema'
-import 'https://$cdn/artifacts/People/Person.schema'
+import '../../People/Avatar.schema'
+import '../../People/Person.schema'
 
 particle ShowChatMessages in 'source/ShowChatMessages.js'
   ShowChatMessages(in [Avatar] avatars, in Person user, inout [Message] messages, in [Person] participants)

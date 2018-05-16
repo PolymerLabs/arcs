@@ -6,7 +6,7 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import 'https://$cdn/artifacts/People/Person.schema'
+import '../../People/Person.schema'
 
 particle ParticipantList in 'source/ParticipantList.js'
   ParticipantList(in [Person] participants)

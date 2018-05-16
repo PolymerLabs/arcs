@@ -7,11 +7,13 @@
 //http://polymer.github.io/PATENTS.txt
 
 import 'Message.schema'
-import 'https://$cdn/artifacts/People/Avatar.schema'
-import 'https://$cdn/artifacts/People/Person.schema'
+import '../People/Avatar.schema'
+import '../People/Person.schema'
 
 particle ChatWrapper in 'source/ChatWrapper.js'
-  ChatWrapper(in [Message] messages, in [Avatar] avatars, in [Person] participants)
+  in [Message] messages
+  in [Avatar] avatars
+  in [Person] participants
   consume toproot
     provide chatmessages
     provide compose

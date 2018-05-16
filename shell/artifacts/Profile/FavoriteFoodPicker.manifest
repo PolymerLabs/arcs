@@ -7,10 +7,11 @@
 // http://polymer.github.io/PATENTS.txt
 
 import 'FavoriteFood.schema'
-import 'https://$cdn/artifacts/People/Person.schema'
+import '../People/Person.schema'
 
 particle FavoriteFoodPicker in 'source/FavoriteFoodPicker.js'
-  FavoriteFoodPicker(in Person person, inout FavoriteFood food)
+  in Person person
+  inout FavoriteFood food
   consume root
   description `select ${person}'s favorite foods`
     food `favorite food`
