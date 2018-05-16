@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+
+  <title>Arcs</title>
+
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+
+  <link rel="manifest" href="../common/manifest.json"/>
+  <link rel="shortcut icon" href="../common/logo_64.png">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Google+Sans:400,700">
+  <link rel="stylesheet" href="../common/index.css">
+
+  <script type="module">
+    // global configuration
+    import '../common/config.js';
+    // firebase config is required before loading arcs runtime
+    import '../common/firebase-config.js';
+    // arcs runtime
+    import '../../source/ArcsLib.js';
+    // elements
+    import '../../app-shell/app-shell.js';
+    // components for particle use
+    import '../common/whitelisted.js';
+  </script>
+
+</head>
+<body>
+
+  <app-shell>
+    <div slotid="toproot"></div>
+    <div slotid="root"></div>
+    <div slotid="modal" slot="modal"></div>
+    <div slotid="suggestions" slot="suggestions"></div>
+  </app-shell>
+
+</body>
+</html>
