@@ -53,6 +53,10 @@ class CloudUser extends Xen.Debug(Xen.Base, log) {
         // Possible answer: `state.arcs` is cached when this object is invalid
         // (has pending inputs), so there is one update pass where `props.arcs`
         // is stale.
+        // TODO(sjmiles): some error can cause an entry in state.arcs to have
+        // `deleted: true` which means it cannot be easily deleted because it
+        // will fail this test. Root cause original error and/or test for
+        // `deleted: true` fields which should never exist in the database.
         if (JSON.stringify(arcs) !== JSON.stringify(state.arcs)) {
           this._localArcsChanged(Firebase.db, arcs);
         }
@@ -83,8 +87,8 @@ class CloudUser extends Xen.Debug(Xen.Base, log) {
     this._fire('user', user);
   }
   _userArcsChanged(userid, snap) {
-    log(`[users/${userid}/arcs] node fired a change event`);
     const arcs = snap.val() || {};
+    log(`[users/${userid}/arcs] node fired a change event`, arcs);
     this._state.arcs = arcs;
     this._watchArcs(arcs);
   }
