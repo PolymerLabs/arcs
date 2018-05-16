@@ -226,6 +226,7 @@ const StyleSheet = Xen.html`
     transform: translate3d(120%, 0, 0);
     transition: transform 200ms ease-in-out;
     overflow: auto;
+    color: black;
     background-color: white;
   }
   [tools][open] {
