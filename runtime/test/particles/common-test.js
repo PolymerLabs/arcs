@@ -12,8 +12,60 @@
 
 import {assert} from '../chai-web.js';
 import {TestHelper} from '../test-helper.js';
+import {Manifest} from '../../manifest.js';
 
 describe('common particles test', function() {
+  it('resolves after cloning', async () => {
+    let manifest = await Manifest.parse(`
+  schema Thing
+    Text name
+    Text description
+    URL image
+    URL url
+    Text identifier
+
+  particle CopyCollection in 'source/CopyCollection.js'
+    in [~a] input
+    out [~a] output
+
+  recipe
+    map 'bigthings' as bigthings
+    map 'smallthings' as smallthings
+    create as things
+    CopyCollection
+      input <- bigthings
+      output -> things
+    CopyCollection
+      input <- smallthings
+      output -> things
+  
+  resource BigThings
+    start
+    [
+      {"name": "house"},
+      {"name": "car"}
+    ]
+  store Store0 of [Thing] 'bigthings' in BigThings
+  
+  resource SmallThings
+    start
+    [
+      {"name": "pen"},
+      {"name": "spoon"},
+      {"name": "ball"}
+    ]
+  store Store1 of [Thing] 'smallthings' in SmallThings
+    `);
+  
+    let recipe = manifest.recipes[0];
+    let newRecipe = recipe.clone();
+    recipe.normalize();
+    assert(recipe.isResolved());
+    newRecipe.normalize();
+    assert(newRecipe.isResolved());
+  });
+
+
   it('copy handle test', async () => {
     let helper = await TestHelper.loadManifestAndPlan(
         './runtime/test/particles/artifacts/copy-collection-test.recipes',

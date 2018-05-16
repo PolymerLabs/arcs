@@ -616,7 +616,7 @@ describe('Automatic handle resolution', function() {
         B`);
   });
 
-  it('coalesces recipes to resovle connections', async () => {
+  it('coalesces recipes to resolve connections', async () => {
     let result = await verifyResolvedPlan(`
       schema Thing
         Text id
@@ -649,8 +649,8 @@ describe('Automatic handle resolution', function() {
         D`);
 
     assert.equal(`recipe
-  create as view0 // ~a
-  create as view1 // ~a
+  create as view0 // Thing {Text id}
+  create as view1 //  {Number count}
   create as view2 // Location {Number lat, Number lng}
   A as particle0
     product -> view0

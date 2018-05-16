@@ -38,11 +38,22 @@ export class Particle {
       particle._connections[key] = this._connections[key]._clone(particle, cloneMap);
     });
     particle._unnamedConnections = this._unnamedConnections.map(connection => connection._clone(particle, cloneMap));
+    particle._cloneConnectionRawTypes();
     Object.keys(this._consumedSlotConnections).forEach(key => {
       particle._consumedSlotConnections[key] = this._consumedSlotConnections[key]._clone(particle, cloneMap);
     });
 
     return particle;
+  }
+
+  _cloneConnectionRawTypes() {
+    let map = new Map();
+    for (let connection of Object.values(this._connections))
+      if (connection._rawType)
+        connection._rawType = connection._rawType.clone(map);
+    for (let connection of this._unnamedConnections)
+      if (connection._rawType)
+        connection._rawType = connection._rawType.clone(map);
   }
 
   _startNormalize() {
