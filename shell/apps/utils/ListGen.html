@@ -1,0 +1,31 @@
+<pre></pre>
+
+<script>
+  const out = document.querySelector('pre');
+  //
+  const arranger = `TVEpisodeList`;
+  const renderer = `TVEpisodeItem`;
+  const items = `episodes`;
+  const itemSlots = `episodes`;
+  //
+  const randid = () => Math.floor((Math.random()+1)*1e6);
+  const itemSlotAlias = `slot${randid()}`;
+  //
+  const text = `
+    //---------------------------------
+    // Generic Item Arranger
+    //---------------------------------
+    ${arranger}
+      items = ${items}
+      consume ${itemSlots}
+        provide item as ${itemSlotAlias}
+    //---------------------------------
+    // Adapter Between Item Arranger (TVEpisodeList) and Item Renderer (TVEpisodeItem)
+    //---------------------------------
+    ItemMultiplexer
+      list = ${items}
+      hostedParticle = ${renderer}
+      consume item as ${itemSlotAlias}
+  `;
+  out.textContent = text;
+</script>

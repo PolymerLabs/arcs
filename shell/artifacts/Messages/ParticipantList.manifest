@@ -6,10 +6,10 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import 'https://$cdn/artifacts/People/Person.schema'
+import '../People/Person.schema'
 
 particle ParticipantList in 'source/NoOp.js'
-  ParticipantList(in [Person] participants)
+  in [Person] participants
   consume root
     provide set of mouth
     provide set of topofhead

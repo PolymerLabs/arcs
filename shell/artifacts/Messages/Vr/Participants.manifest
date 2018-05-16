@@ -7,7 +7,7 @@
 // http://polymer.github.io/PATENTS.txt
 
 import '../Message.schema'
-import 'https://$cdn/artifacts/People/Person.schema'
+import '../../People/Person.schema'
 
 particle Participants in 'source/Participants.js'
   Participants(in [Message] messages, inout [Person] participants)

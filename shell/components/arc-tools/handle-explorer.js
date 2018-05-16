@@ -94,9 +94,9 @@ class HandleExplorer extends Xen.Base {
     const result = [];
     if (handles) {
       for (let [handle, tags] of handles) {
-        if (handle.name === null) {
-          continue;
-        }
+        //if (handle.name === null) {
+        //  continue;
+        //}
         let values = `(don't know how to dereference)`;
         if (handle.toList) {
           const list = await handle.toList();

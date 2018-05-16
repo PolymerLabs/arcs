@@ -164,9 +164,12 @@ class ShellHandles extends Xen.Debug(Xen.Base, log) {
     }
   }
   async _onShellThemeChange(e, handle) {
-    const theme = (await ArcsUtils.getHandleData(handle)).rawData;
-    log('onShellThemeChange', theme);
-    this._fire('theme', theme);
+    const themeEntity = await ArcsUtils.getHandleData(handle);
+    if (themeEntity) {
+      const theme = themeEntity.rawData;
+      log('onShellThemeChange', theme);
+      this._fire('theme', theme);
+    }
   }
   async _onArcsHandleChange(e, handle) {
     const old = this._props.arcs;

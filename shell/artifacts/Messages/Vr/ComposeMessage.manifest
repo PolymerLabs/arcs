@@ -6,7 +6,7 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import 'https://$cdn/artifacts/People/Person.schema'
+import '../../People/Person.schema'
 import '../Message.schema'
 
 particle ComposeMessage in '../source/NoOp.js'

@@ -10,6 +10,8 @@ shape HostedParticleShape
   in ~a *
   consume item
 
+// row lists
+
 particle ItemMultiplexer in 'source/Multiplexer.js'
   host HostedParticleShape hostedParticle
   in [~a] list
@@ -29,6 +31,8 @@ particle SelectableList in 'source/List.js'
     provide set of item
     provide set of action
   description `show ${items}`
+
+// tile lists
 
 particle TileMultiplexer in 'source/Multiplexer.js'
   host HostedParticleShape hostedParticle

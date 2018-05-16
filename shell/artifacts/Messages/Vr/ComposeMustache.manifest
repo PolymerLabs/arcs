@@ -7,7 +7,7 @@
 // http://polymer.github.io/PATENTS.txt
 
 import '../Message.schema'
-import 'https://$cdn/artifacts/People/Person.schema'
+import '../../People/Person.schema'
 
 particle ComposeMustache in '../source/NoOp.js'
   ComposeMustache(in Person me, inout [Message] messages)
