@@ -141,7 +141,7 @@ function waitForVisible(selectors) {
           selected.value} of selector ${selectors})`);
       return true;
     }
-  }, 10000, `selectors ${selectors} never selected anything`, 500);
+  }, 20000, `selectors ${selectors} never selected anything`, 500);
 }
 
 function glowElement() {
@@ -417,7 +417,7 @@ function testAroundRefresh() {
 }
 
 describe('Arcs demos', function() {
-  it.skip('can book a restaurant', /** @this Context */ function() {
+  it('can book a restaurant', /** @this Context */ function() {
     initTestWithNewArc(this.test.fullTitle(), true);
     allSuggestions();
     acceptSuggestion('Find restaurants');
