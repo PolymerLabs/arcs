@@ -119,14 +119,6 @@ describe('TypeChecker', () => {
     assert.equal(a.variable.canWriteSuperset.entitySchema.name, 'Thing');
   });
 
-  it('resolves in [~a] (subset/superset)', async () => {
-    let a = Type.newVariable(new TypeVariable('a')).setViewOf();
-    a.data.variable.canReadSubset = Type.newEntity(new Schema({names: ['A'], fields: {'f': 'Text', 'g': 'Number'}}));
-    a.data.variable.canWriteSuperset = Type.newEntity(new Schema({names: ['A', 'B'], fields: {'d': 'Text', 'e': 'Text', 'f': 'Text', 'g': 'Numbers'}}));
-    let result = TypeChecker.processTypeList(undefined, [{type: a, direction: 'in'}]);
-    console.log(result);
-  });
-
   it('correctly applies then resolves a one-sided Entity constraint', async () => {
     let manifest = await Manifest.parse(`
       shape Shape
