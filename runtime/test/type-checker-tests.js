@@ -179,4 +179,10 @@ describe('TypeChecker', () => {
     assert.isNull(baseType.variable.resolution);
     assert.isNotNull(newType.variable.resolution);
   });
+  it('can compare a type variable with a set view', async () => {
+    let leftType = Type.newVariable(new TypeVariable('a')).setViewOf();
+    let rightType = Type.newVariable(new TypeVariable('b'));
+    assert(TypeChecker.compareTypes({type: leftType}, {type: rightType}));
+    assert(TypeChecker.compareTypes({type: rightType}, {type: leftType}));
+  });
 });
