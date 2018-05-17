@@ -11,7 +11,8 @@
 
 import {assert} from '../platform/assert-web.js';
 import {Slot} from './slot.js';
-import {DomContext, SetDomContext} from './dom-context.js';
+import {DomContext} from './dom-context.js';
+import {DomSetContext} from './dom-set-context.js';
 
 const templates = new Map();
 
@@ -46,7 +47,7 @@ export class DomSlot extends Slot {
   }
   _createDomContext() {
     if (this.consumeConn.slotSpec.isSet) {
-      return new SetDomContext(this._containerKind);
+      return new DomSetContext(this._containerKind);
     }
     return new DomContext(null, this._containerKind);
   }
