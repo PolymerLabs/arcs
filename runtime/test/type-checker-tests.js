@@ -182,7 +182,14 @@ describe('TypeChecker', () => {
   it('can compare a type variable with a set view', async () => {
     let leftType = Type.newVariable(new TypeVariable('a')).setViewOf();
     let rightType = Type.newVariable(new TypeVariable('b'));
-    assert(TypeChecker.compareTypes({type: leftType}, {type: rightType}));
-    assert(TypeChecker.compareTypes({type: rightType}, {type: leftType}));
+    assert.isTrue(TypeChecker.compareTypes({type: leftType}, {type: rightType}));
+    assert.isTrue(TypeChecker.compareTypes({type: rightType}, {type: leftType}));
+  });
+  it('can compare a type variable with a set view (with constraints)', async () => {
+    let canWrite = Type.newEntity(new Schema({names: ['Product', 'Thing'], fields: {}}));
+    let leftType = Type.newVariable(new TypeVariable('a')).setViewOf();
+    let rightType = Type.newVariable(new TypeVariable('b', canWrite));
+    assert.isFalse(TypeChecker.compareTypes({type: leftType}, {type: rightType}));
+    assert.isFalse(TypeChecker.compareTypes({type: rightType}, {type: leftType}));
   });
 });
