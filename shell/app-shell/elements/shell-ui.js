@@ -275,7 +275,10 @@ class ShellUi extends Xen.Debug(Xen.Base, log) {
     this._commitSearch('');
   }
   _onResetSearch(e) {
-    this._commitSearch('*');
+    // Doubleclick on empty search box searches for '*'
+    if (e.target.value === '') {
+      this._commitSearch('*');
+    }
   }
   _commitSearch(search) {
     search = search || '';
