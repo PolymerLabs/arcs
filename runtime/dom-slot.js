@@ -133,6 +133,7 @@ export class DomSlot extends Slot {
       if (typeof content.templateName == 'string') {
         content.templateName = `${hostedSlot.particleName}::${hostedSlot.slotName}::${content.templateName}`;
       } else {
+        // TODO(mmandlis): add support for hosted particle rendering set slot.
         assert(false, 'TODO: Implement this!');
       }
     }

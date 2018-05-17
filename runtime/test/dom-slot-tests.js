@@ -34,7 +34,7 @@ class MockDomContext {
     assert(template);
     templates[`${templatePrefix}::${templateName}`] = template;
   }
-  hasTemplate(templateName) { return Object.keys(templates).find(key => key.startsWith(templateName)); } //!!/*this.*/templates[templateName]; }
+  hasTemplate(templateName) { return Object.keys(templates).find(key => key.startsWith(templateName)); }
 }
 DomSlot.prototype._createDomContext = () => new MockDomContext();
 DomSlot.prototype._initMutationObserver = () => {};

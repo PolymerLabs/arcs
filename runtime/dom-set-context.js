@@ -42,7 +42,7 @@ export class DomSetContext {
            !Object.keys(this._contextBySubId).find(c => this._contextBySubId[c] != context[c]);
   }
   setTemplate(templatePrefix, templateName, template) {
-    let isStringTemplateName = typeof template == 'string';
+    let isStringTemplateName = typeof templateName == 'string';
     let isStringTemplate = typeof template == 'string';
     Object.keys(this._contextBySubId).forEach(subId => {
       let templateNameForSubId = isStringTemplateName ? templateName : templateName[subId];
