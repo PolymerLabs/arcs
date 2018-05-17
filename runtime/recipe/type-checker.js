@@ -194,6 +194,12 @@ export class TypeChecker {
     let resolvedRight = right.type.resolvedType();
     let [leftType, rightType] = Type.unwrapPair(resolvedLeft, resolvedRight);
 
+    // an unconstrained variable is compatible with a set.
+    if (leftType.isVariable && !(leftType.variable.canReadSubset) && !(leftType.variable.canWriteSuperset) && rightType.isSetView)
+      return true;
+    if (rightType.isVariable && !(rightType.variable.canReadSubset) && !(rightType.variable.canWriteSuperset) && leftType.isSetView)
+      return true;
+
     if (leftType.isVariable || rightType.isVariable) {
       // TODO: everything should use this, eventually. Need to implement the
       // right functionality in Shapes first, though.
