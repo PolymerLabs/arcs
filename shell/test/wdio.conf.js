@@ -7,8 +7,11 @@
  * activate a sane default set of them documented in the top-level README.md.
  */
 
-let process = require('process');
-let debug = process.env.npm_config_wdio_debug || process.argv.includes('--wdio-debug=true');
+const process = require('process');
+const fs = require('fs');
+const errorshot = require('wdio-errorshot-reporter');
+const request = require('request');
+const debug = process.env.npm_config_wdio_debug || process.argv.includes('--wdio-debug=true');
 
 const HEADLESS = '--headless';
 
@@ -146,7 +149,13 @@ exports.config = {
   framework: 'mocha',
   //
   // Test reporter for stdout.
-  reporters: ['spec'],
+  reporters: ['spec', errorshot],
+  reporterOptions: {
+    errorshotReporter: {
+      // Template for the screenshot name.
+      template: '%browser%_%timestamp%_%parent%-%title%'
+    }
+  },
   //
   // Options to be passed to Mocha.
   // See the full list at http://mochajs.org/
@@ -154,7 +163,7 @@ exports.config = {
     ui: 'bdd',
     // debug hint: increase this timeout for debugging
     timeout: debug ? 6000006 : 60006
-  }
+  },
   //
   // =====
   // Hooks
@@ -264,8 +273,27 @@ exports.config = {
    * @param {Object} config wdio configuration object
    * @param {Array.<Object>} capabilities list of capabilities details
    */
-  // onComplete: function(exitCode, config, capabilities) {
-  // }
+  onComplete: async function(exitCode, config, capabilities) {
+    if (!process.env.CONTINUOUS_INTEGRATION) return;
+    if (!fs.existsSync(exports.config.screenshotPath)) return;
+
+    const uploadEndpoint = 'https://us-central1-arcs-screenshot-uploader.cloudfunctions.net/arcs-screenshot/';
+
+    let screenshots = fs.readdirSync(exports.config.screenshotPath);
+    if (screenshots.length) console.log('Uploading screenshots...');
+    await Promise.all(screenshots.map(filename => new Promise((resolve, reject) => {
+      fs.createReadStream(exports.config.screenshotPath + filename)
+          .pipe(request.post(uploadEndpoint + filename, (err, response, body) => {
+            if (err) {
+              console.error(`Error on uploading screenshot ${filename}:\n`, err);
+              reject();
+            } else {
+              console.log(`View ${filename} at https://drive.google.com/file/d/${body}/view`);
+              resolve();
+            }
+          }));
+    })));
+  }
 };
 
 if (debug) {
