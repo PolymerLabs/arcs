@@ -136,7 +136,7 @@ class CloudSharedHandles extends Xen.Debug(Xen.Base, log) {
     const setType = type.isSetView ? type : type.setViewOf();
     log('boxing data into', boxId);
     // combine the data into a box
-    this._addToBox(arc, boxId, setType, name, [`#${boxId}`], data, user);
+    this._addToBox(arc, boxId, setType, name, [boxId], data, user);
   }
   // convert firebase format to handle-data format, embed friend id as owner
   _valuesToData(values, friend, hasOwnerField) {
