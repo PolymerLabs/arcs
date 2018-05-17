@@ -105,19 +105,6 @@ const ArcsUtils = {
   removeUndefined(object) {
     return JSON.parse(JSON.stringify(object));
   },
-  async createOrUpdateHandle(arc, remoteHandle, idPrefix) {
-    const {metadata, values} = remoteHandle;
-    // construct type object
-    const type = ArcsUtils.typeFromMetaType(metadata.type);
-    // construct id
-    const id = ArcsUtils.getContextHandleId(type, metadata.tags, idPrefix);
-    const tag = ArcsUtils.getContextHandleTag(metadata.tags, idPrefix);
-    // find or create a handle in the arc context
-    // TODO(sjmiles): crafting a tag now instead of propagation original tags, correct?
-    const handle = await ArcsUtils._requireHandle(arc, type, metadata.name, id, [tag]); //metadata.tags);
-    await ArcsUtils.setHandleData(handle, values);
-    return handle;
-  },
   // Returns the context handle id for the given params.
   getContextHandleId(type, tags, prefix) {
     return ''
@@ -128,12 +115,6 @@ const ArcsUtils = {
       // seem worth the ROI and it's less human-readable.
       //+ (`${type.toString().replace(' ', '-')}_`).replace(/[\[\]]/g, '!')
       + ((tags && [...tags].length) ? `${[...tags].sort().join('-').replace(/#/g, '')}` : '')
-      ;
-  },
-  getContextHandleTag(tags, prefix) {
-    return '#'
-      + (prefix ? `${prefix}_` : '')
-      + ((tags && [...tags].length) ? `${[...tags].sort().join('-').replace(/#/g, '')}` : 'tag')
       ;
   },
   _getHandleDescription(name, tags, user, owner) {
