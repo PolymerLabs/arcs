@@ -54,13 +54,19 @@ export class Slot {
       if (context.updateParticleName) {
         context.updateParticleName(slotName, particle.name);
       }
-      const contentTypes = this.constructRenderRequest();
-      this.startRenderCallback({particle, slotName, contentTypes});
+      this.startRenderCallback({particle, slotName, contentTypes: this.constructRenderRequest()});
 
       for (let hostedSlot of this._hostedSlotById.values()) {
         if (hostedSlot.particle) {
           // Note: hosted particle may still not be set, if the hosted slot was already created, but the inner recipe wasn't instantiate yet.
-          this.startRenderCallback({particle: hostedSlot.particle, slotName: hostedSlot.slotName, contentTypes});
+          this.startRenderCallback({
+              particle: hostedSlot.particle,
+              slotName: hostedSlot.slotName,
+              // TODO(mmandlis): Only one of each type of hosted particles need to send the particle template.
+              // The problem is with rendering content arriving out of order - currently can't track all slots using the same
+              // template and render them after the template is uploaded.
+              contentTypes: this.constructRenderRequest(hostedSlot)
+          });
         }
       }
     }
@@ -109,14 +115,22 @@ export class Slot {
            `Unexpected particle name ${hostedParticle.name} for slot ${hostedSlotId}; expected: ${hostedSlot.particleName}`);
     hostedSlot.particle = hostedParticle;
     if (this.getContext() && this.startRenderCallback) {
-      this.startRenderCallback({particle: hostedSlot.particle, slotName: hostedSlot.slotName, contentTypes: this.constructRenderRequest()});
+      this.startRenderCallback({
+          particle: hostedSlot.particle,
+          slotName: hostedSlot.slotName,
+          // TODO(mmandlis): Only one of each type of hosted particles need to send the particle template.
+          // The problem is with rendering content arriving out of order - currently can't track all slots using the same
+          // template and render them after the template is uploaded.
+          contentTypes: this.constructRenderRequest(hostedSlot)
+      });
     }
   }
+  formatHostedContent(hostedSlot, content) { return content; }
 
   // Abstract methods.
   async setContent(content, handler) {}
   getInnerContext(slotName) {}
-  constructRenderRequest() {}
+  constructRenderRequest(hostedSlot) {}
   dispose() {}
   static findRootSlots(context) {}
 }

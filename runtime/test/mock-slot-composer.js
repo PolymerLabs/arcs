@@ -24,6 +24,7 @@ class MockSlot extends Slot {
   setContent(content, handler) {
     // Mimics the behaviour of DomSlot::setContent, where template is only set at first,
     // and model is overriden every time.
+    this._content.templateName = content.templateName;
     if (content.template) {
       this._content.template = content.template;
     }
@@ -31,8 +32,11 @@ class MockSlot extends Slot {
 
   }
   getInnerContext(slotName) {
-    if (this._content.template && this._content.template.indexOf(`slotid="${slotName}"`) > 0) {
-      return new MockContext('dummy-context');
+    if (this._content.template) {
+      let template = typeof this._content.template == 'string' ? this._content.template : Object.values(this._content.template)[0];
+      if (template.indexOf(`slotid="${slotName}"`) > 0) {
+        return new MockContext('dummy-context');
+      }
     }
   }
    constructRenderRequest() {

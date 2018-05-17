@@ -35,6 +35,13 @@ export class DomParticle extends XenStateMixin(Particle) {
     // TODO: only supports a single template for now. add multiple templates support.
     return this.template;
   }
+  /** @method getTemplateName(slotName)
+   * Override to return a String defining the name of the template for the given slot name.
+   */
+  getTemplateName(slotName) {
+    // TODO: only supports a single template for now. add multiple templates support.
+    return `default`;
+  }
   /** @method willReceiveProps(props, state, oldProps, oldState)
    * Override if necessary, to do things when props change.
    */
@@ -136,6 +143,8 @@ export class DomParticle extends XenStateMixin(Particle) {
       if (slot._requestedContentTypes.has('model')) {
         content.model = this.render(...stateArgs);
       }
+      content.templateName = this.getTemplateName(slot.slotName);
+
       slot.render(content);
     } else if (slot.isRendered) {
       // Send empty object, to clear rendered slot contents.
@@ -144,6 +153,14 @@ export class DomParticle extends XenStateMixin(Particle) {
 
     this.currentSlotName = undefined;
   }
+  forceRenderTemplate(slotName) {
+    this._slotByName.forEach((slot, name) => {
+      if (!slotName || (name == slotName)) {
+        slot._requestedContentTypes.add('template');
+      }
+    });
+  }
+
   fireEvent(slotName, {handler, data}) {
     if (this[handler]) {
       // TODO(sjmiles): remove `this._state` parameter

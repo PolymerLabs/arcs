@@ -19,7 +19,12 @@ let re = /<style>((?:.|[\r\n])*)<\/style>((?:.|[\r\n])*)/;
  */
 export class TransformationDomParticle extends DomParticle {
   getTemplate(slotName) {
+    // TODO: add support for multiple slots.
     return this._state.template;
+  }
+  getTemplateName(slotName) {
+    // TODO: add support for multiple slots.
+    return this._state.templateName;
   }
   render(props, state) {
     return state.renderModel;
