@@ -13,6 +13,7 @@ import {assert} from '../platform/assert-web.js';
 import Template from '../shell/components/xen/xen-template.js';
 import {DomContext} from './dom-context.js';
 
+// Class for rendering set slots. Stores a map from entity subID to its corresponding DomContext object.
 export class DomSetContext {
   constructor(containerKind) {
     this._contextBySubId = {};
