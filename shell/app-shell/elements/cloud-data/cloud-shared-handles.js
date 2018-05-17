@@ -111,7 +111,7 @@ class CloudSharedHandles extends Xen.Debug(Xen.Base, log) {
       const {userid, users} = this._props;
       //if (userid !== user) {
         // find or create a handle in the arc context
-        handle = await ArcsUtils._requireHandle(arc, type, metadata.name, id, [`#${key}`]);
+        handle = await ArcsUtils._requireHandle(arc, type, metadata.name, id, [`${key}`]);
         log('createOrUpdate handle', handle.id, data);
         await ArcsUtils.setHandleData(handle, data);
         // TODO(sjmiles): how to marshal user information (names)?
