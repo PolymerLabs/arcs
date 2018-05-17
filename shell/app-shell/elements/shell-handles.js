@@ -92,31 +92,31 @@ class ShellHandles extends Xen.Debug(Xen.Base, log) {
         schemas: `${typesPath}/arc-types.manifest`,
         type: '[ArcMetadata]',
         name: 'ArcMetadata',
-        tags: ['#arcmetadata']
+        tags: ['arcmetadata']
       },
       themeHandleOptions: {
         schemas: `${typesPath}/arc-types.manifest`,
         type: 'Theme',
         name: 'ShellTheme',
-        tags: ['#shelltheme']
+        tags: ['shelltheme']
       },
       userHandleOptions: {
         schemas: `${typesPath}/identity-types.manifest`,
         type: 'Person',
         name: 'User',
-        tags: ['#user']
+        tags: ['user']
       },
       usersHandleOptions: {
         schemas: `${typesPath}/identity-types.manifest`,
         type: '[Person]',
         name: 'Users',
-        tags: ['#identities']
+        tags: ['identities']
       },
       boxedAvatarHandleOptions: {
         schemas: `${typesPath}/identity-types.manifest`,
         type: '[Avatar]',
         name: 'Avatars',
-        tags: [`#${Const.HANDLES.boxed}_avatar`],
+        tags: [`${Const.HANDLES.boxed}_avatar`],
         id: `${Const.HANDLES.boxed}_avatar`,
         asContext: true
       }
