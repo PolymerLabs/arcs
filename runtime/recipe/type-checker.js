@@ -196,9 +196,9 @@ export class TypeChecker {
 
     // a variable is compatible with a set only if it is unconstrained.
     if (leftType.isVariable && rightType.isSetView)
-      return !leftType.variable.canReadSubset && !leftType.variable.canWriteSuperset;
+      return !(leftType.variable.canReadSubset || leftType.variable.canWriteSuperset);
     if (rightType.isVariable && leftType.isSetView)
-      return !rightType.variable.canReadSubset && !rightType.variable.canWriteSuperset;
+      return !(rightType.variable.canReadSubset || rightType.variable.canWriteSuperset);
 
     if (leftType.isVariable || rightType.isVariable) {
       // TODO: everything should use this, eventually. Need to implement the
