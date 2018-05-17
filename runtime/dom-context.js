@@ -57,12 +57,14 @@ export class DomContext {
   }
   setTemplate(templatePrefix, templateName, template) {
     this._templateName = [templatePrefix, templateName].filter(s => s).join('::');
-    if (templateByName.has(this._templateName)) {
-      // TODO: check whether the new template is different from the one that was previously used.
-      // Template is being replaced.
-      this.clear();
+    if (template) {
+      if (templateByName.has(this._templateName)) {
+        // TODO: check whether the new template is different from the one that was previously used.
+        // Template is being replaced.
+        this.clear();
+      }
+      templateByName.set(this._templateName, this.createTemplateElement(template));
     }
-    templateByName.set(this._templateName, this.createTemplateElement(template));
   }
   hasTemplate(templatePrefix) {
     return DomContext.hasTemplate(templatePrefix);

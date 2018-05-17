@@ -85,7 +85,7 @@ export class DomSlot extends Slot {
     if (!this.getContext()) {
       return;
     }
-    if (content.template) {
+    if (content.templateName) {
       this.getContext().setTemplate(this.templatePrefix, content.templateName, content.template);
     }
     this.eventHandler = handler;

@@ -47,10 +47,8 @@ export class DomSetContext {
     Object.keys(this._contextBySubId).forEach(subId => {
       let templateNameForSubId = isStringTemplateName ? templateName : templateName[subId];
       if (templateNameForSubId) {
-        let templateForSubId = isStringTemplate ? template : template[templateNameForSubId];
-        if (templateForSubId) {
-          this._contextBySubId[subId].setTemplate(templatePrefix, templateNameForSubId, templateForSubId);
-        }
+        let templateForSubId = (!template || isStringTemplate) ? template : template[templateNameForSubId];
+        this._contextBySubId[subId].setTemplate(templatePrefix, templateNameForSubId, templateForSubId);
       }
     });
   }
