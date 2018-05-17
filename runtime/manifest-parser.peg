@@ -264,7 +264,7 @@ MetaStorageKey = 'storageKey' whiteSpace? ':' whiteSpace? key:id eolWhiteSpace
 };
 
 ParticleDefinition
-  = 'particle' whiteSpace name:TopLevelIdent verbs:(whiteSpace TagList)? implFile:(whiteSpace 'in' whiteSpace id)? eolWhiteSpace items:(Indent (SameIndent ParticleItem)*)? eolWhiteSpace?
+  = 'particle' whiteSpace name:TopLevelIdent verbs:(whiteSpace VerbList)? implFile:(whiteSpace 'in' whiteSpace id)? eolWhiteSpace items:(Indent (SameIndent ParticleItem)*)? eolWhiteSpace?
   {
     let args = [];
     let affordance = [];
@@ -538,7 +538,7 @@ ParticleHandleDescription
   }
 
 Recipe
-  = 'recipe' name:(whiteSpace (upperIdent / lowerIdent))? verbs:(whiteSpace TagList)? eolWhiteSpace items:(Indent (SameIndent RecipeItem)*)?
+  = 'recipe' name:(whiteSpace (upperIdent / lowerIdent))? verbs:(whiteSpace VerbList)? eolWhiteSpace items:(Indent (SameIndent RecipeItem)*)?
   {
     verbs = optional(verbs, parsedOutput => parsedOutput[1], []);
     return {
@@ -775,6 +775,14 @@ TagList
   = head:Tag tail:(whiteSpace TagList)?
   { return [head, ...(tail && tail[1] || [])]; }
 
+Verb
+  = '&' [a-zA-Z][a-zA-Z0-9_]* {return text().substring(1);}
+
+VerbList
+  = head:Verb tail:(whiteSpace VerbList)?
+  { return [head, ...(tail && tail[1] || [])]; }
+
+
 SpaceTagList
   = whiteSpace tags:TagList
   { return tags; }
@@ -790,6 +798,14 @@ ParticleRef
     };
   }
   / 'particle can' whiteSpace verb:lowerIdent
+  {
+    return {
+      kind: 'particle-ref',
+      location: location(),
+      verbs: [verb],
+    };
+  }
+  / verb:Verb
   {
     return {
       kind: 'particle-ref',

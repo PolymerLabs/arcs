@@ -21,9 +21,9 @@ describe('CombinedStrategy', function() {
     let manifest = (await Manifest.parse(`
       schema Energy
       schema Height
-      particle Energizer #prepare in 'A.js'
+      particle Energizer &prepare in 'A.js'
         out Energy energy
-      particle Jumper #jump in 'AA.js'
+      particle Jumper &jump in 'AA.js'
         in Energy energy
         out Height height
 

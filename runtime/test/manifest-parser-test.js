@@ -17,7 +17,7 @@ describe('manifest parser', function() {
     parse('');
   });
   it('parses a trivial recipe', () => {
-    parse(`recipe Recipe #tag1 #tag2`);
+    parse(`recipe Recipe &tag1 &tag2`);
   });
   it('parses with indentation', () => {
     parse(`
@@ -126,6 +126,13 @@ describe('manifest parser', function() {
         particle can jump
           * <- energy
           * -> height`);
+  });
+  it('parses recipe with particle verb shorthand', () => {
+    parse(`
+      recipe
+        &jump
+          * <- energy
+          * <- height`);
   });
   it('parses inline schemas', () => {
     parse(`

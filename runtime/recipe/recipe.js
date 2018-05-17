@@ -453,7 +453,7 @@ export class Recipe {
   toString(options) {
     let nameMap = this._makeLocalNameMap();
     let result = [];
-    let verbs = this.verbs.length > 0 ? ` ${this.verbs.map(verb => `#${verb}`).join(' ')}` : '';
+    let verbs = this.verbs.length > 0 ? ` ${this.verbs.map(verb => `&${verb}`).join(' ')}` : '';
     result.push(`recipe${this.name ? ` ${this.name}` : ''}${verbs}`);
     if (this.search) {
       result.push(this.search.toString(options).replace(/^|(\n)/g, '$1  '));
