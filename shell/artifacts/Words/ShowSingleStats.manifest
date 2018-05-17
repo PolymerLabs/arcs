@@ -10,12 +10,14 @@ import '../People/Person.schema'
 import '../People/Avatar.schema'
 import '../Social/Post.schema'
 import './Board.schema'
+import './Move.schema'
 import './Stats.schema'
 
 particle ShowSingleStats in 'source/ShowSingleStats.js'
   in Post post
-  in [Stats] boxedStats
   in [Board] boxedBoards
+  in [Move] boxedMoves
+  in [Stats] boxedStats
   in GameIdStore {Text gameId} gameId
   in Person user
   in [Person] people

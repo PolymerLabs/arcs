@@ -81,6 +81,7 @@ defineParticle(({DomParticle, html, log, resolver}) => {
     margin-left: auto;
     margin-right: auto;
     -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+    transform: scale(0.76);
   }
   [${host}] .board .tile {
     background-color: wheat;
@@ -102,6 +103,29 @@ defineParticle(({DomParticle, html, log, resolver}) => {
     right: 0.2em;
     color: #cc6600;
   }
+  [${host}] .board .selected {
+    background-color: goldenrod;
+    color: white;
+  }
+  [${host}] .board .selected .points {
+    color: white;
+  }
+  [${host}] .board .fire {
+    animation-name: fire;
+    animation-duration: 3s;
+    animation-iteration-count: infinite;
+    background-color: #ff9999;
+    color: white;
+  }
+  [${host}] .board .fire.selected {
+    animation-name: fireSelected;
+    animation-duration: 3s;
+    animation-iteration-count: infinite;
+    background-color: #ff99ff;
+  }
+  [${host}] .board .fire .points {
+    color: white;
+  }
   [${host}] .gameOver {
     text-align: center;
     font-size: 48px;
@@ -115,6 +139,16 @@ defineParticle(({DomParticle, html, log, resolver}) => {
     line-height: 381px;
     vertical-align: middle;
     cursor: default;
+  }
+  @keyframes fire {
+    0% { background-color: #ff9999; }
+    50% { background-color: #ff0000; }
+    100% { background-color: #ff9999; }
+  }
+  @keyframes fireSelected {
+    0% { background-color: #ff99ff; }
+    50% { background-color: #ff3399; }
+    100% { background-color: #ff99ff; }
   }
 </style>
 <a ${host} href="{{gameHref}}" value="{{id}}">
@@ -148,7 +182,7 @@ defineParticle(({DomParticle, html, log, resolver}) => {
     }
     // TODO(wkorman): Share the board to model conversion logic with GamePane.
     // This is a direct copy for now.
-    boardToModels(tileBoard) {
+    boardToModels(tileBoard, coordinates) {
       let models = [];
       for (let i = 0; i < tileBoard.size; i++) {
         const tile = tileBoard.tileAtIndex(i);
@@ -156,6 +190,8 @@ defineParticle(({DomParticle, html, log, resolver}) => {
         let yPixels = tile.y * 50 + tile.y;
         if (tile.isShiftedDown)
           yPixels += 25;
+        if (coordinates.indexOf(`(${tile.x},${tile.y})`) != -1)
+          letterClasses.push('selected');
         if (tile.style == Tile.Style.FIRE)
           letterClasses.push('fire');
         models.push({
@@ -168,22 +204,24 @@ defineParticle(({DomParticle, html, log, resolver}) => {
       }
       return models;
     }
-    render({gameId, post, people, user, avatars, boxedStats, boxedBoards}) {
+    findByGameId(entities, gameId) {
+      return entities.slice().reverse().find(item => item.gameId == gameId.gameId);
+    }
+    render({gameId, post, people, user, avatars, boxedStats, boxedBoards, boxedMoves}) {
       if (!gameId || !post || !boxedStats || !boxedBoards) return {};
-
-      // TODO(wkorman): Integrate and show the move data, if any.
 
       // TODO(wkorman): Until we have happy entity mutation, and/or improved
       // boxing, we hack things by leveraging our knowledge that updated data
       // gets boxed and tacked onto the end of the list.
-      const stats = boxedStats.slice().reverse().find(b => b.gameId == gameId.gameId);
-      const board = boxedBoards.slice().reverse().find(b => b.gameId == gameId.gameId);
+      const stats = this.findByGameId(boxedStats, gameId);
+      const board = this.findByGameId(boxedBoards, gameId);
+      const move = boxedMoves ? this.findByGameId(boxedMoves, gameId) : null;
       if (!stats || !board) {
         return {hideGameOver: true};
       }
 
       const tileBoard = new TileBoard(board);
-      let boardModels = this.boardToModels(tileBoard);
+      let boardModels = this.boardToModels(tileBoard, move ? move.coordinates : '');
       const {arcKey, author, createdTimestamp} = post;
       return {
         avatarStyle: this.avatarToStyle(resolver(avatars.find(a => a.owner == author).url)),
