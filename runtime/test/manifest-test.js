@@ -53,7 +53,7 @@ describe('manifest', function() {
       assert.equal(recipe.handles[0].fate, 'map');
       assert.equal(recipe.handles[1].fate, 'create');
       assert.equal(recipe.handleConnections.length, 1);
-      assert.sameMembers(recipe.handleConnections[0].tags, ['#tag']);
+      assert.sameMembers(recipe.handleConnections[0].tags, ['tag']);
       assert.equal(recipe.pattern, 'hello world');
       assert.equal(recipe.handles[1].pattern, 'best view');
       let type = recipe.handleConnections[0].rawType;
@@ -594,10 +594,10 @@ ${particleStr1}
     let spec = manifest.particles[0];
     assert.equal(spec.slots.size, 1);
     let slotSpec = [...spec.slots.values()][0];
-    assert.deepEqual(slotSpec.tags, ['#aaa']);
+    assert.deepEqual(slotSpec.tags, ['aaa']);
     assert.equal(slotSpec.providedSlots.length, 1);
     let providedSlotSpec = slotSpec.providedSlots[0];
-    assert.deepEqual(providedSlotSpec.tags, ['#bbb']);
+    assert.deepEqual(providedSlotSpec.tags, ['bbb']);
 
     // verify recipe slots
     assert.equal(manifest.recipes.length, 1);
@@ -605,11 +605,11 @@ ${particleStr1}
     assert.equal(recipe.slots.length, 2);
     let recipeSlot = recipe.slots.find(s => s.id == 'slot-id0');
     assert(recipeSlot);
-    assert.deepEqual(recipeSlot.tags, ['#aa', '#aaa']);
+    assert.deepEqual(recipeSlot.tags, ['aa', 'aaa']);
 
     let slotConn = recipe.particles[0].consumedSlotConnections['slotA'];
     assert(slotConn);
-    assert.deepEqual(['#aa', '#hello'], slotConn.tags);
+    assert.deepEqual(['aa', 'hello'], slotConn.tags);
     assert.equal(1, Object.keys(slotConn.providedSlots).length);
   });
   it('recipe slots with different names', async () => {
@@ -1059,7 +1059,7 @@ Expected " ", "#", "//", "\\n", "\\r", [ ], [A-Z], or [a-z] but "?" found.
     description \`Claire's wishlist\``, {loader});
     let verify = (manifest) => {
       assert.equal(manifest.handles.length, 1);
-      assert.deepEqual(['#wishlist'], manifest._handleTags.get(manifest.handles[0]));
+      assert.deepEqual(['wishlist'], manifest._handleTags.get(manifest.handles[0]));
     };
     verify(manifest);
     verify(await Manifest.parse(manifest.toString(), {loader}));

@@ -200,7 +200,7 @@ export class HandleConnection {
     if (this.handle) {
       result.push(`${(nameMap && nameMap.get(this.handle)) || this.handle.localName}`);
     }
-    result.push(...this.tags);
+    result.push(...this.tags.map(a => `#${a}`));
 
     if (options && options.showUnresolved) {
       if (!this.isResolved(options)) {

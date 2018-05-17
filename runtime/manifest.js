@@ -1005,7 +1005,7 @@ ${e.message}
 
     let handles = [...this.handles].sort(util.compareComparables);
     handles.forEach(h => {
-      results.push(h.toString(this._handleTags.get(h)));
+      results.push(h.toString(this._handleTags.get(h).map(a => `#${a}`)));
     });
 
     return results.join('\n');

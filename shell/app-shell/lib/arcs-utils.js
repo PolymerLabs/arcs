@@ -139,7 +139,7 @@ const ArcsUtils = {
   _getHandleDescription(name, tags, user, owner) {
     let proper = (user === owner) ? 'my' : `${owner}'s`;
     if (tags && tags.length) {
-      return `${proper} ${tags[0].substring(1)}`;
+      return `${proper} ${tags[0]}`;
     }
     if (name) {
       return `${proper} ${name}`;

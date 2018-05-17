@@ -213,7 +213,7 @@ export class ParticleSpec {
       }
       consume.push(s.name);
       if (s.tags.length > 0) {
-        consume.push(s.tags.join(' '));
+        consume.push(s.tags.map(a => `#${a}`).join(' '));
       }
       results.push(`  ${consume.join(' ')}`);
       if (s.formFactor) {
@@ -227,7 +227,7 @@ export class ParticleSpec {
         }
         provide.push(ps.name);
         if (ps.tags.length > 0) {
-          provide.push(ps.tags.join(' '));
+          provide.push(ps.tags.map(a => `#${a}`).join(' '));
         }
         results.push(`    ${provide.join(' ')}`);
         if (ps.formFactor) {

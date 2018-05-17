@@ -207,7 +207,7 @@ export class Planificator {
           return suggestion.descriptionText.toLowerCase().includes(this.suggestFilter.search);
         });
       } else {
-        suggestions = suggestions.filter(suggestion => !suggestion.plan.search && !suggestion.plan.slots.find(s => s.name.includes('root') || s.tags.includes('#root')));
+        suggestions = suggestions.filter(suggestion => !suggestion.plan.search && !suggestion.plan.slots.find(s => s.name.includes('root') || s.tags.includes('root')));
       }
     }
     return suggestions || [];
