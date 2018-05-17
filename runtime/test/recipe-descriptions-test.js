@@ -14,13 +14,15 @@ import {assert} from './chai-web.js';
 import {TestHelper} from './test-helper.js';
 
 describe('recipe descriptions test', function() {
-  let manifestString = `
+  function createManifestString(options) {
+    options = options || {};
+    return `
 schema Box
   Number height
-  Number width
-  description \`box\`
+  Number width ${options.includeSchemaDescription ? `
+  description \`booooox\`
     plural \`boxes\`
-    value \`\${height}*\${width}\`
+    value \`\${height}*\${width}\`` : ''}
 particle CompareBoxes in 'test.js'
   in [Box] all
   out Box biggest
@@ -33,7 +35,7 @@ particle DisplayBox in 'test.js'
   description \`ignore this description too\`
 recipe
   ? as handle0
-  ? as handle1
+  ${options.includeStore ? `use 'mybox'` : `?`} as handle1
   ProvideBoxes
     boxes -> handle0
   CompareBoxes
@@ -42,15 +44,38 @@ recipe
   DisplayBox
     biggest <- handle1
   description \`the winner is: '\${CompareBoxes.biggest}' of all '\${CompareBoxes.all}'\`
-  `;
 
-  it('generate recipe description', async function() {
-    let helper = await TestHelper.parseManifestAndPlan(manifestString);
+${options.includeStore ? `
+resource MyBox
+  start
+  [
+    {"height": 3, "width": 5}
+  ]
+
+store BoxStore of Box 'mybox' in MyBox` : ''}
+`;
+  }
+
+  async function testRecipeDescription(options, expectedDescription) {
+    let helper = await TestHelper.parseManifestAndPlan(createManifestString(options));
     assert.equal(helper.plans.length, 1);
 
     let description = await helper.plans[0].description.getRecipeSuggestion();
 
     // console.log('Description is: ', description);
-    assert.equal('The winner is: \'box\' of all \'boxes\'.', description);
+    assert.equal(expectedDescription, description);
+  }
+
+  it('generate recipe description', async function() {
+    await testRecipeDescription({includeSchemaDescription: false, includeStore: false}, 'The winner is: \'box\' of all \'box list\'.');
+  });
+  it('generate recipe description (with handle value)', async function() {
+    await testRecipeDescription({includeSchemaDescription: false, includeStore: true}, 'The winner is: \'box\' of all \'box list\'.');
+  });
+  it('generate recipe description (with schema description)', async function() {
+    await testRecipeDescription({includeSchemaDescription: true, includeStore: false}, 'The winner is: \'booooox\' of all \'boxes\'.');
+  });
+  it('generate recipe description (with schema description and handle value)', async function() {
+    await testRecipeDescription({includeSchemaDescription: true, includeStore: true}, 'The winner is: \'3*5\' of all \'boxes\'.');
   });
 });
