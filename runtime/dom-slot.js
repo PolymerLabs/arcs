@@ -135,6 +135,9 @@ export class DomSlot extends Slot {
   }
   constructRenderRequest() {
     let request = ['model'];
+    // TODO(mmandlis): Commenting out the `if` conditional below was suggested
+    // to fix Words post rendering but is insufficient (see similar TODO in
+    // dom-particle.js).
     if (!this.getTemplate()) {
       request.push('template');
     }

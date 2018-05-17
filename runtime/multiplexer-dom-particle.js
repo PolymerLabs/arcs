@@ -165,16 +165,32 @@ export class MultiplexerDomParticle extends TransformationDomParticle {
   }
 
   combineHostedTemplate(slotName, hostedSlotId, content) {
-    if (!this._state.template && !!content.template) {
+    let subId = this._itemSubIdByHostedSlotId.get(hostedSlotId);
+    if (!subId) {
+      if (!this._state.template && !!content.template) {
+       let template = content.template;
+       this._connByHostedConn.forEach((conn, hostedConn) => {
+           template = template.replace(
+               new RegExp(`{{${hostedConn}.description}}`, 'g'),
+               `{{${conn}.description}}`);
+           });
+       this._setState({template});
+      }
+      return;
+    }
+
+    if ((!this._state.template || !this._state.template[subId]) && !!content.template) {
       let template = content.template;
       // Replace hosted particle connection in template with the corresponding particle connection names.
       // TODO: make this generic!
+      // TODO(wkorman): This likely isn't operating correctly for embedded recipes.
       this._connByHostedConn.forEach((conn, hostedConn) => {
         template = template.replace(
             new RegExp(`{{${hostedConn}.description}}`, 'g'),
             `{{${conn}.description}}`);
       });
-      this._setState({template});
+      const mergedTemplates = Object.assign(this._state.template || {}, {[subId]: template});
+      this._setState({template: mergedTemplates});
     }
   }
 
