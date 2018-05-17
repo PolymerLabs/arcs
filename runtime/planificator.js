@@ -207,7 +207,16 @@ export class Planificator {
           return suggestion.descriptionText.toLowerCase().includes(this.suggestFilter.search);
         });
       } else {
-        suggestions = suggestions.filter(suggestion => !suggestion.plan.search && !suggestion.plan.slots.find(s => s.name.includes('root') || s.tags.includes('root')));
+        suggestions = suggestions.filter(suggestion => {
+          let plan = suggestion.plan;
+          let usesHandlesFromActiveRecipe = plan.handles.find(handle => {
+            return !!handle.id && this._arc._activeRecipe.handles.find(activeHandle => activeHandle.id == handle.id);
+          });
+          let usesRemoteNonRootSlots = plan.slots.find(slot => {
+            return !slot.name.includes('root') && !slot.tags.includes('root') && slot.id && !slot.id.includes('root');
+          });
+          return usesHandlesFromActiveRecipe || usesRemoteNonRootSlots;
+        });
       }
     }
     return suggestions || [];
