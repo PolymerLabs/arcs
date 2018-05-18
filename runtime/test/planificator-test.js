@@ -86,6 +86,12 @@ function newPlan(name, options) {
     let slot = plan.newSlot(options.hasRootSlot ? 'root' : 'slot0');
     slot.id = 'id0';
   }
+  if (options.handlesIds) {
+    options.handlesIds.forEach(id => {
+      let handle = plan.newHandle();
+      handle.id = id;
+    });
+  }
   return {plan, hash: options.hash || plan.name, descriptionText: options.descriptionText};
 }
 
@@ -353,6 +359,23 @@ describe('Planificator', function() {
    // Search for plans that aren't available.
    planificator.setSearch('nosuchplan');
    assert.lengthOf(planificator.getCurrentSuggestions(), 0);
+  });
+  it('shows suggestions involving handle from active recipe', async () => {
+    let plan = newPlan('0', {hasSlot: true, hasRootSlot: true, handlesIds: ['handle0']});
+
+    let planificator = createPlanificator();
+    planificator._requestPlanning();
+    planificator.plannerReturnResults([plan]);
+    await planificator.allPlanningDone();
+
+    // Plan '0' is excluded from default suggestions, because it renders to 'root' slot.
+    assert.isEmpty(planificator.getCurrentSuggestions());
+
+    // Add plan to active recipe.
+    newPlan('1', {handlesIds: ['handle0']}).plan.mergeInto(planificator._arc._activeRecipe);
+
+    // Plan '0' is included in default suggestions, because it reuses handle from the active recipe.
+    assert.deepEqual(['0'], planificator.getCurrentSuggestions().map(p => p.hash));
   });
   it('sets or appends current', function() {
     let planificator = createPlanificator();
