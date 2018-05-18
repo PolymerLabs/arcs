@@ -22,8 +22,10 @@ export class DomSetContext {
   initContext(context) {
     Object.keys(context).forEach(subId => {
       if (!this._contextBySubId[subId] || !this._contextBySubId[subId].isEqual(context[subId])) {
+        let templateName = this._contextBySubId[subId] ? this._contextBySubId[subId]._templateName : null;
         this._contextBySubId[subId] = new DomContext(null, this._containerKind);
         this._contextBySubId[subId].subId = subId;
+        this._contextBySubId[subId]._templateName = templateName;
       }
       this._contextBySubId[subId].initContext(context[subId]);
     });
