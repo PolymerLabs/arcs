@@ -417,7 +417,7 @@ function testAroundRefresh() {
 }
 
 describe('Arcs demos', function() {
-  it.skip('can book a restaurant', /** @this Context */ function() {
+  it('can book a restaurant', /** @this Context */ function() {
     initTestWithNewArc(this.test.fullTitle(), true);
     allSuggestions();
     acceptSuggestion('Find restaurants');
