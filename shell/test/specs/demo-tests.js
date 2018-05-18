@@ -424,7 +424,7 @@ describe('Arcs demos', function() {
     // Our location is relative to where you are now, so this list is dynamic.
     // Rather than trying to mock this out let's just grab the first
     // restaurant.
-    const restaurantSelectors = particleSelectors('root', ['#webtest-title']);
+    const restaurantSelectors = particleSelectors('root', ['#webtest-titlex']);
     waitForVisible(restaurantSelectors);
     waitForSuggestion('Make a reservation');
     let restaurantNodes = pierceShadows(restaurantSelectors);
