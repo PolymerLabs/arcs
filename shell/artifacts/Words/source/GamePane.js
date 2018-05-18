@@ -230,6 +230,7 @@ recipe
   map 'BOXED_avatar' as avatars
   map 'BOXED_board' as boxedBoards
   map 'BOXED_stats' as boxedStats
+  map 'BOXED_move' as boxedMoves
   map GameId as gameId
   use #identities as people
   use #user as user
@@ -240,6 +241,7 @@ recipe
     ${renderParticle.connections[0].name} <- v1
     boxedBoards <- boxedBoards
     boxedStats <- boxedStats
+    boxedMoves <- boxedMoves
     gameId <- gameId
     avatars <- avatars
     people <- people
