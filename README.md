@@ -117,6 +117,10 @@ Through npm: `npm run test-wdio --wdio-debug=true` (or `npm test
 --wdio-debug=true`).  Directly through wdio: `node_modules/.bin/wdio
 --wdio-debug=true shell/test/wdio.conf.js`.
 
+Webdriver takes screenshots of failures, which are saved to the
+`./shell/test/errorShots/` directory. When running on Travis, the screenshots
+are uploaded to the `Arcs Webdriver Screenshots` team drive.
+
 #### Graphical (non-headless)
 
 It may be easiest to see the problem in a browser window to diagnose it. Edit
