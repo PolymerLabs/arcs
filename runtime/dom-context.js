@@ -15,14 +15,14 @@ import Template from '../shell/components/xen/xen-template.js';
 const templateByName = new Map();
 
 export class DomContext {
-  constructor(context, containerKind) {
+  constructor(context, containerKind, subId, templateName) {
     this._context = context;
     this._containerKind = containerKind;
     // TODO(sjmiles): _liveDom needs new name
     this._liveDom = null;
     this._innerContextBySlotName = {};
-    this._templateName = null;
-    this._subId = null;
+    this._templateName = templateName || null;
+    this._subId = subId || null;
   }
   get subId() {return this._subId; }
   set subId(subId) { this._subId = subId; }
@@ -87,7 +87,6 @@ export class DomContext {
     }
     this._liveDom = null;
     this._innerContextBySlotName = {};
-
   }
   static createTemplateElement(template) {
     return Object.assign(document.createElement('template'), {innerHTML: template});
@@ -102,7 +101,6 @@ export class DomContext {
       this._stampTemplate(template, eventHandler);
     }
   }
-
   _stampTemplate(template, eventHandler) {
     if (!this._liveDom) {
       // TODO(sjmiles): hack to allow subtree elements (e.g. x-list) to marshal events
@@ -123,7 +121,6 @@ export class DomContext {
     if (slot === this._context) {
       return true;
     }
-
     let parentNode = slot.parentNode;
     while (parentNode) {
       if (parentNode == this._context) {

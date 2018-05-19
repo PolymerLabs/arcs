@@ -21,11 +21,14 @@ export class DomSetContext {
   }
   initContext(context) {
     Object.keys(context).forEach(subId => {
-      if (!this._contextBySubId[subId] || !this._contextBySubId[subId].isEqual(context[subId])) {
-        this._contextBySubId[subId] = new DomContext(null, this._containerKind);
-        this._contextBySubId[subId].subId = subId;
+      let subContext = this._contextBySubId[subId];
+      if (!subContext || !subContext.isEqual(context[subId])) {
+        // Replace the context corresponding to subId with a newly created context,
+        // while maintaining the template name.
+        subContext = new DomContext(null, this._containerKind, subId, subContext ? subContext._templateName : null);
+        this._contextBySubId[subId] = subContext;
       }
-      this._contextBySubId[subId].initContext(context[subId]);
+      subContext.initContext(context[subId]);
     });
     // Delete sub-contexts that are not found in the new context.
     Object.keys(this._contextBySubId).forEach(subId => {
