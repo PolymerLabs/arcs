@@ -361,21 +361,24 @@ describe('Planificator', function() {
    assert.lengthOf(planificator.getCurrentSuggestions(), 0);
   });
   it('shows suggestions involving handle from active recipe', async () => {
-    let plan = newPlan('0', {hasSlot: true, hasRootSlot: true, handlesIds: ['handle0']});
+    let plan0 = newPlan('0', {hasSlot: true, hasRootSlot: true, handlesIds: ['handle0']});
+    let plan1 = newPlan('1', {hasSlot: true, hasRootSlot: true, handlesIds: ['handle0']});
+    plan1.plan.newSlot('otherSlot').id = 'other-id0';
 
     let planificator = createPlanificator();
     planificator._requestPlanning();
-    planificator.plannerReturnResults([plan]);
+    planificator.plannerReturnResults([plan0, plan1]);
     await planificator.allPlanningDone();
 
     // Plan '0' is excluded from default suggestions, because it renders to 'root' slot.
     assert.isEmpty(planificator.getCurrentSuggestions());
 
     // Add plan to active recipe.
-    newPlan('1', {handlesIds: ['handle0']}).plan.mergeInto(planificator._arc._activeRecipe);
+    newPlan('2', {handlesIds: ['handle0']}).plan.mergeInto(planificator._arc._activeRecipe);
 
-    // Plan '0' is included in default suggestions, because it reuses handle from the active recipe.
-    assert.deepEqual(['0'], planificator.getCurrentSuggestions().map(p => p.hash));
+    // Plans '0' and '1' reuse a handle from the active recipe. Only '1' is included in the
+    // default suggestion, because it renders into a non-root slot.
+    assert.deepEqual(['1'], planificator.getCurrentSuggestions().map(p => p.hash));
   });
   it('sets or appends current', function() {
     let planificator = createPlanificator();

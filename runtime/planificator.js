@@ -217,7 +217,8 @@ export class Planificator {
           let usesRemoteNonRootSlots = plan.slots.find(slot => {
             return !slot.name.includes('root') && !slot.tags.includes('root') && slot.id && !slot.id.includes('root');
           });
-          return usesHandlesFromActiveRecipe || usesRemoteNonRootSlots;
+          let onlyUsesNonRootSlots = !plan.slots.find(s => s.name.includes('root') || s.tags.includes('root'));
+          return (usesHandlesFromActiveRecipe && usesRemoteNonRootSlots) || onlyUsesNonRootSlots;
         });
       }
     }
