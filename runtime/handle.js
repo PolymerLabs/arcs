@@ -136,7 +136,7 @@ class Collection extends Handle {
     // TODO: remove this and use query instead
     if (!this.canRead)
       throw new Error('Handle not readable');
-    return this._restore(await this._proxy.toList(this._particleId));
+    return this._restore(await this._proxy.toList());
   }
 
   _restore(list) {
@@ -152,7 +152,7 @@ class Collection extends Handle {
     if (!this.canWrite)
       throw new Error('Handle not writeable');
     let serialization = this._serialize(entity);
-    return this._proxy.store(serialization, this._particleId);
+    return this._proxy.store(serialization);
   }
 
   /** @method remove(entity)
@@ -164,7 +164,7 @@ class Collection extends Handle {
     if (!this.canWrite)
       throw new Error('Handle not writeable');
     let serialization = this._serialize(entity);
-    return this._proxy.remove(serialization.id, this._particleId);
+    return this._proxy.remove(serialization.id);
   }
 }
 
@@ -193,7 +193,7 @@ class Variable extends Handle {
   async get() {
     if (!this.canRead)
       throw new Error('Handle not readable');
-    let model = await this._proxy.get(this._particleId);
+    let model = await this._proxy.get();
     return this._restore(model);
   }
 
@@ -215,7 +215,7 @@ class Variable extends Handle {
     try {
       if (!this.canWrite)
         throw new Error('Handle not writeable');
-      return this._proxy.set(this._serialize(entity), this._particleId);
+      return this._proxy.set(this._serialize(entity));
     } catch (e) {
       this.raiseSystemException(e, 'Handle::set', this._particleId);
       throw e;
@@ -230,7 +230,7 @@ class Variable extends Handle {
   async clear() {
     if (!this.canWrite)
       throw new Error('Handle not writeable');
-    await this._proxy.clear(this._particleId);
+    await this._proxy.clear();
   }
 }
 
