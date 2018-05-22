@@ -123,6 +123,18 @@ ${this._slotsToManifestString()}
     return new Shape(this.name, handles, slots);
   }
 
+  canEnsureResolved() {
+    for (let typeVar of this._typeVars)
+      if (!typeVar.object[typeVar.field].canEnsureResolved()) return false;
+    return true;
+  }
+
+  maybeEnsureResolved() {
+    for (let typeVar of this._typeVars)
+      if (!typeVar.object[typeVar.field].maybeEnsureResolved()) return false;
+    return true;
+  }
+
   resolvedType() {
     return this._cloneAndUpdate(typeVar => typeVar.resolvedType());
   }
@@ -221,7 +233,7 @@ ${this._slotsToManifestString()}
 
   restrictType(particleSpec) {
     let newShape = this.clone();
-    return newShape._restrictThis(particleSpec); 
+    return newShape._restrictThis(particleSpec);
   }
 
   _restrictThis(particleSpec) {
@@ -260,7 +272,7 @@ ${this._slotsToManifestString()}
 
       return false;
     }
-    
+
     let handleOptions = choose(handleMatches, []);
     let slotOptions = choose(slotMatches, []);
 

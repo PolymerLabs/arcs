@@ -12,6 +12,8 @@ import {assert} from './chai-web.js';
 import {Shape} from '../shape.js';
 import {Type} from '../type.js';
 import {Manifest} from '../manifest.js';
+import {TypeChecker} from '../recipe/type-checker.js';
+import {Schema} from '../schema.js';
 
 
 describe('shape', function() {
@@ -110,5 +112,35 @@ describe('shape', function() {
       assert(!shape.particleMatches(manifest.particles[1]));
       assert(shape.particleMatches(manifest.particles[2]));
       assert(shape.particleMatches(manifest.particles[3]));
+  });
+
+  it('Cannot ensure resolved an unresolved type variable', () => {
+    let shape = new Shape('Test', [{type: Type.newVariable({name: 'a'})}], []);
+    assert.isFalse(shape.canEnsureResolved());
+  });
+
+  it('Can ensure and maybe resolved a constrained type variable', () => {
+    let constrainedType = TypeChecker.processTypeList(
+      Type.newVariable({name: 'a'}),
+      [{
+        type: Type.newEntity(new Schema({names: ['Thing'], fields: {}})),
+        direction: 'in'
+      }]
+    );
+
+    let shape = new Shape('Test', [{type: constrainedType}], []);
+
+    assert.isTrue(shape.canEnsureResolved());
+    assert.isFalse(constrainedType.isResolved());
+
+    assert.isTrue(shape.maybeEnsureResolved());
+    assert.isTrue(constrainedType.isResolved());
+  });
+
+  it('Can ensure resolved a schema type', () => {
+    let type = Type.newEntity(new Schema({names: ['Thing'], fields: {}}));
+    let shape = new Shape('Test', [{name: 'foo'}, {direction: 'in'}, {type}], []);
+    assert.isTrue(shape.canEnsureResolved());
+    assert.isTrue(shape.maybeEnsureResolved());
   });
 });
