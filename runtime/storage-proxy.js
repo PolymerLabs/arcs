@@ -15,11 +15,11 @@ import {assert} from '../platform/assert-web.js';
  * Mediates between one or more Handles and the backing store outside the PEC.
  *
  * This can operate in two modes, based on how observing handles are configured:
- * - synchronous: the proxy maintains a copy of the full data held by the backing store, keeping
- *                it in sync by listening to change events from the store.
- * - non-synchronous: the proxy simply passes through calls from Handles to the backing store.
+ * - synchronized: the proxy maintains a copy of the full data held by the backing store, keeping
+ *                 it in sync by listening to change events from the store.
+ * - unsynchronized: the proxy simply passes through calls from Handles to the backing store.
  *
- * In synchronous mode we maintain a queue of sorted update events received from the backing store.
+ * In synchronized mode we maintain a queue of sorted update events received from the backing store.
  * While events are received correctly - each update is one version ahead of our stored model - they
  * are processed immediately and observing handles are notified accordingly. If we receive an update
  * with a "future" version, the proxy is desynchronized:
@@ -72,7 +72,7 @@ export class StorageProxy {
       this._listenerAttached = true;
     }
 
-    // Change to synchronous mode as soon as we get any handle configured with keepSynced and send
+    // Change to synchronized mode as soon as we get any handle configured with keepSynced and send
     // a request to get the full model (once).
     // TODO: drop back to non-sync mode if all handles re-configure to !keepSynced
     if (handle.options.keepSynced) {
@@ -131,7 +131,7 @@ export class StorageProxy {
       }
     }
 
-    // Bail if we're not in synchronous mode or this is a stale event.
+    // Bail if we're not in synchronized mode or this is a stale event.
     if (!this._keepSynced)
       return;
     if (update.version <= this._version) {
