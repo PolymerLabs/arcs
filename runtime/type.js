@@ -91,7 +91,7 @@ export class Type {
   collectionOf() {
     return Type.newSetView(this);
   }
-  
+
   mergeTypeVariablesByName(variableMap) {
     if (this.isVariable) {
       let name = this.variable.name;
@@ -196,17 +196,17 @@ export class Type {
     if (this.isResolved())
       return true;
     if (this.isInterface)
-      assert(false, `canEnsureResolved not implemented for ${this}`);
+      return this.interfaceShape.canEnsureResolved();
     if (this.isVariable)
       return this.variable.canEnsureResolved();
     if (this.isSetView)
       return this.primitiveType().canEnsureResolved();
-    return true; 
+    return true;
   }
 
   maybeEnsureResolved() {
     if (this.isInterface)
-      assert(false, `maybeEnsureResolved not implemented for ${this}`);
+      return this.interfaceShape.maybeEnsureResolved();
     if (this.isVariable)
       return this.variable.maybeEnsureResolved();
     if (this.isSetView)
@@ -261,7 +261,7 @@ export class Type {
         return false;
       if (type1.canWriteSuperset.isEntity)
         return Schema.union(type1.canWriteSuperset.entitySchema, type2.canWriteSuperset.entitySchema) !== null;
-      
+
     }
     return true;
   }
@@ -387,7 +387,7 @@ export class Type {
       // Spit MyTypeFOO to My Type FOO
       if (this.entitySchema.name) {
         return this.entitySchema.name.replace(/([^A-Z])([A-Z])/g, '$1 $2').replace(/([A-Z][^A-Z])/g, ' $1').replace(/[\s]+/g, ' ').trim();
-      } 
+      }
       return JSON.stringify(this.entitySchema._model);
     }
     if (this.isTuple)
