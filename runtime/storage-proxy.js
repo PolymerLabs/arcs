@@ -162,27 +162,27 @@ export class StorageProxy {
 
   get(particleId) {
     return new Promise((resolve, reject) =>
-      this._port.HandleGet({callback: r => resolve(r), handle: this, particleId}));
+      this._port.HandleGet({callback: r => resolve(r), handle: this}));
   }
 
   toList(particleId) {
     return new Promise((resolve, reject) =>
-      this._port.HandleToList({callback: r => resolve(r), handle: this, particleId}));
+      this._port.HandleToList({callback: r => resolve(r), handle: this}));
   }
 
   set(entity, particleId) {
-    this._port.HandleSet({data: entity, handle: this, particleId});
+    this._port.HandleSet({data: entity, handle: this});
   }
 
   store(entity, particleId) {
-    this._port.HandleStore({data: entity, handle: this, particleId});
+    this._port.HandleStore({data: entity, handle: this});
   }
 
   remove(entityId, particleId) {
-    this._port.HandleRemove({data: entityId, handle: this, particleId});
+    this._port.HandleRemove({data: entityId, handle: this});
   }
 
   clear(particleId) {
-    this._port.HandleClear({handle: this, particleId});
+    this._port.HandleClear({handle: this});
   }
 }
