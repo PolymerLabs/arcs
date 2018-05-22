@@ -119,28 +119,52 @@ describe('shape', function() {
     assert.isFalse(shape.canEnsureResolved());
   });
 
-  it('Can ensure and maybe resolved a constrained type variable', () => {
-    let constrainedType = TypeChecker.processTypeList(
+  it('Can ensure resolved a schema type', () => {
+    let type = Type.newEntity(new Schema({names: ['Thing'], fields: {}}));
+    let shape = new Shape('Test', [{name: 'foo'}, {direction: 'in'}, {type}], []);
+    assert.isTrue(shape.canEnsureResolved());
+    assert.isTrue(shape.maybeEnsureResolved());
+  });
+
+  it('Maybe ensure resolved does not mutate on failure', () => {
+    let constrainedType1 = TypeChecker.processTypeList(
       Type.newVariable({name: 'a'}),
       [{
         type: Type.newEntity(new Schema({names: ['Thing'], fields: {}})),
         direction: 'in'
       }]
     );
+    let constrainedType2 = TypeChecker.processTypeList(
+      Type.newVariable({name: 'b'}),
+      [{
+        type: Type.newEntity(new Schema({names: ['Thing'], fields: {}})),
+        direction: 'out'
+      }]
+    );
+    let unconstrainedType = Type.newVariable({name: 'c'});
+    let allTypes = [constrainedType1, constrainedType2, unconstrainedType];
 
-    let shape = new Shape('Test', [{type: constrainedType}], []);
+    let allTypesShape = new Shape('Test', [
+      {type: constrainedType1},
+      {type: unconstrainedType},
+      {type: constrainedType2},
+    ], []);
+    assert.isTrue(allTypes.every(t => !t.isResolved()));
+    assert.isFalse(allTypesShape.canEnsureResolved());
+    assert.isTrue(allTypes.every(t => !t.isResolved()));
+    assert.isFalse(allTypesShape.maybeEnsureResolved());
+    assert.isTrue(allTypes.every(t => !t.isResolved()),
+        'Types should not have been modified by a failed maybeEnsureResolved()');
 
-    assert.isTrue(shape.canEnsureResolved());
-    assert.isFalse(constrainedType.isResolved());
-
-    assert.isTrue(shape.maybeEnsureResolved());
-    assert.isTrue(constrainedType.isResolved());
-  });
-
-  it('Can ensure resolved a schema type', () => {
-    let type = Type.newEntity(new Schema({names: ['Thing'], fields: {}}));
-    let shape = new Shape('Test', [{name: 'foo'}, {direction: 'in'}, {type}], []);
-    assert.isTrue(shape.canEnsureResolved());
-    assert.isTrue(shape.maybeEnsureResolved());
+    let constrainedOnlyShape = new Shape('Test', [
+      {type: constrainedType1},
+      {type: constrainedType2},
+    ], []);
+    assert.isTrue(allTypes.every(t => !t.isResolved()));
+    assert.isTrue(constrainedOnlyShape.canEnsureResolved());
+    assert.isTrue(allTypes.every(t => !t.isResolved()));
+    assert.isTrue(constrainedOnlyShape.maybeEnsureResolved());
+    assert.isTrue(constrainedType1.isResolved());
+    assert.isTrue(constrainedType2.isResolved());
   });
 });

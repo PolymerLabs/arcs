@@ -130,8 +130,13 @@ ${this._slotsToManifestString()}
   }
 
   maybeEnsureResolved() {
+    for (let typeVar of this._typeVars) {
+      let variable = typeVar.object[typeVar.field];
+      variable = variable.clone(new Map());
+      if (!variable.maybeEnsureResolved()) return false;
+    }
     for (let typeVar of this._typeVars)
-      if (!typeVar.object[typeVar.field].maybeEnsureResolved()) return false;
+      typeVar.object[typeVar.field].maybeEnsureResolved();
     return true;
   }
 
