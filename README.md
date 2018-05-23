@@ -283,3 +283,17 @@ databases, but to continue a single mainline/unstable database.
   new mainline development version (perhaps using the `-alpha` suffix; in our
   example, `0.3.6-alpha`).  See
   [#1155](https://github.com/PolymerLabs/arcs/pull/1155) for an example.
+
+## Hosted
+
+To build an image (no image is currently provided), run
+
+  > docker build -t test-with-asylo .
+
+To start a local version, use:
+
+  > docker run --network host test-with-asylo
+
+To start a local version but jump in for debugging:
+
+  > docker run --network host -it test-with-asylo /bin/bash
