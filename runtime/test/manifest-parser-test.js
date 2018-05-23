@@ -99,7 +99,9 @@ describe('manifest parser', function() {
   it('parses particles with optional handles', () => {
     parse(`
       particle MyParticle
-        MyParticle(in MyThing mandatory, in MyThing? optional1, out [MyThing]? optional2)`);
+        in MyThing mandatory
+        in MyThing? optional1
+        out [MyThing]? optional2`);
   });
   it('parses manifests with search', () => {
     parse(`
@@ -117,7 +119,8 @@ describe('manifest parser', function() {
   it('parses manifests particle verbs', () => {
     parse(`
       particle SomeParticle
-        jump(in Energy energy, out Height height)
+        in Energy energy
+        out Height height
         affordance dom`);
   });
   it('parses recipe with particle verbs', () => {
@@ -137,23 +140,23 @@ describe('manifest parser', function() {
   it('parses inline schemas', () => {
     parse(`
       particle Foo
-        Foo(in MySchema {Text value} mySchema)
+        in MySchema {Text value} mySchema
     `);
     parse(`
       particle Foo
-        Foo(in [MySchema {Text value}] mySchema)
+        in [MySchema {Text value}] mySchema
     `);
     parse(`
       particle Foo
-        Foo(in [* {Text value, Number num}] anonSchema)
+        in [* {Text value, Number num}] anonSchema
     `);
     parse(`
       particle Foo
-        Foo(in * {(Text or Number) value} union)
+        in * {(Text or Number) value} union
     `);
     parse(`
       particle Foo
-        Foo(in * {value} optionalType)
+        in * {value} optionalType
     `);
   });
   it('parses a schema with a bytes field', () => {
