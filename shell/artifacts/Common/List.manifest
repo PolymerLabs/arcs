@@ -34,8 +34,12 @@ particle SelectableList in 'source/List.js'
 
 // tile lists
 
+shape HostedTileParticleShape
+  in ~a *
+  consume tile
+
 particle TileMultiplexer in 'source/Multiplexer.js'
-  host HostedParticleShape hostedParticle
+  host HostedTileParticleShape hostedParticle
   in [~a] list
   consume set of tile
 

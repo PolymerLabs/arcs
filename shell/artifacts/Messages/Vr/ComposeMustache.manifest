@@ -10,6 +10,7 @@ import '../Message.schema'
 import '../../People/Person.schema'
 
 particle ComposeMustache in '../source/NoOp.js'
-  ComposeMustache(in Person me, inout [Message] messages)
+  in Person me
+  inout [Message] messages
   consume compose
   description `chat mustaches with friends`

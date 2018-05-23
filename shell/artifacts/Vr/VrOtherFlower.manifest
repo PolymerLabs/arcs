@@ -7,6 +7,5 @@
 // http://polymer.github.io/PATENTS.txt
 
 particle VrOtherFlower in 'source/VrOtherFlower.js'
-  VrOtherFlower()
   consume soil2
   description `Create Other Flower`

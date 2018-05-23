@@ -9,6 +9,6 @@
 import '../../People/Person.schema'
 
 particle GitHubPRs in 'source/GitHubPRs.js'
-  GitHubPRs(in [Person] participants)
+  in [Person] participants
   consume set of topofhead
   description `show pending pull requests`

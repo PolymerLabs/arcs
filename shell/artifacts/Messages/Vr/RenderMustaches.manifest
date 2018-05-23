@@ -10,9 +10,11 @@ import '../Message.schema'
 import '../../People/Person.schema'
 
 particle RenderMustaches in '../source/NoOp.js'
-  RenderMustaches(in [Message] messages, in [Person] participants)
+  in [Message] messages
+  in [Person] participants
   consume set of custom_message
 
 particle RenderMustachesSpatial in 'source/ShowChatMessages.js'
-  RenderMustachesSpatial(in [Message] messages, in [Person] participants)
+  in [Message] messages
+  in [Person] participants
   consume set of mouth

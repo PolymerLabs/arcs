@@ -12,6 +12,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 import './shell-ui/suggestion-element.js';
 import './shell-ui/settings-panel.js';
 import './shell-ui/user-picker.js';
+import './shell-ui/voice-driver.js';
 
 // components
 import '../../components/simple-tabs.js';
@@ -35,6 +36,8 @@ const template = html`
   <!-- -->
   <slot name="modal"></slot>
   <slot></slot>
+  <!-- -->
+  <voice-driver on-search="_onVoiceSearch"></voice-driver>
   <!-- adds space at the bottom of the static flow so no actual content is ever covered by the app-bar -->
   <div barSpacer></div>
   <!-- -->
@@ -280,9 +283,11 @@ class ShellUi extends Xen.Debug(Xen.Base, log) {
       this._commitSearch('*');
     }
   }
+  _onVoiceSearch(e, search) {
+    this._fire('search', search || '');
+  }
   _commitSearch(search) {
-    search = search || '';
-    this._fire('search', search);
+    this._fire('search', search || '');
   }
 }
 

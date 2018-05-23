@@ -9,7 +9,7 @@
 import '../../People/Person.schema'
 
 particle ParticipantList in 'source/ParticipantList.js'
-  ParticipantList(in [Person] participants)
+  in [Person] participants
   consume root
     provide set of mouth
       view participants

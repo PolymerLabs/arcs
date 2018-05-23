@@ -7,7 +7,6 @@
 // http://polymer.github.io/PATENTS.txt
 
 particle VrSphere in 'source/VrSphere.js'
-  VrSphere()
   consume root
     provide action
   description `Create Sphere`

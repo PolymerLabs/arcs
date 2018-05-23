@@ -8,6 +8,5 @@
 
 
 particle VrBox in 'source/VrBox.js'
-  VrBox()
   consume action
   description `Create Box`

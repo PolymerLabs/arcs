@@ -11,7 +11,10 @@ import '../../People/Avatar.schema'
 import '../../People/Person.schema'
 
 particle ShowChatMessages in 'source/ShowChatMessages.js'
-  ShowChatMessages(in [Avatar] avatars, in Person user, inout [Message] messages, in [Person] participants)
+  in [Avatar] avatars
+  in Person user
+  inout [Message] messages
+  in [Person] participants
   consume set of topofhead
   consume chatmessages
     provide preamble

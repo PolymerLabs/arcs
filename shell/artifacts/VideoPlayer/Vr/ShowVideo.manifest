@@ -9,6 +9,6 @@
 import '../VideoControls.schema'
 
 particle ShowVideo in 'source/ShowVideo.js'
-  ShowVideo(in [VideoControls] controls)
+  in [VideoControls] controls
   consume root
   description `show video`

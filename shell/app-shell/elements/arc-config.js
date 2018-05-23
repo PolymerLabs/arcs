@@ -45,6 +45,7 @@ class ArcConfig extends Xen.Base {
       root: params.get('root') || window.shellPath,
       manifestPath: params.get('manifest'),
       solo: params.get('solo'),
+      defaultManifest: window.defaultManifest,
       userid: params.get('user') || localStorage.getItem(Const.LOCALSTORAGE.user),
       key: params.get('arc') || null,
       search: params.get('search') || '',
