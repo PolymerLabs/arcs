@@ -7,6 +7,5 @@
 // http://polymer.github.io/PATENTS.txt
 
 particle VrFlower in 'source/VrFlower.js'
-  VrFlower()
   consume soil
   description `Create Flower`

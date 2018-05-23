@@ -8,6 +8,5 @@
 
 
 particle VrHtml in 'source/VrHtml.js'
-  VrHtml()
   consume root
   description `Show HTML in VR`

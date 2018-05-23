@@ -7,7 +7,6 @@
 // http://polymer.github.io/PATENTS.txt
 
 particle VrPot in 'source/VrPot.js'
-  VrPot()
   consume root
     provide soil
     provide soil2

@@ -10,6 +10,6 @@ import '../VideoControls.schema'
 
 particle ControlVideo in 'source/ControlVideo.js'
   // Should be a Variable but those don't get synced... yet.
-  ControlVideo(inout [VideoControls] controls)
+  inout [VideoControls] controls
   consume root
   description `control video`

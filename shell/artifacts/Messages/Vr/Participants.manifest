@@ -10,5 +10,6 @@ import '../Message.schema'
 import '../../People/Person.schema'
 
 particle Participants in 'source/Participants.js'
-  Participants(in [Message] messages, inout [Person] participants)
+  in [Message] messages
+  inout [Person] participants
   consume root

@@ -11,7 +11,9 @@ import '../../People/Avatar.schema'
 import '../Message.schema'
 
 particle ChatWrapper in '../source/NoOp.js'
-  ChatWrapper(in [Message] messages, in [Avatar] avatars, in [Person] participants)
+  in [Message] messages
+  in [Avatar] avatars
+  in [Person] participants
   consume toproot
     provide chatmessages
     provide compose
