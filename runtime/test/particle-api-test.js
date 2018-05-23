@@ -46,18 +46,21 @@ async function setupProxySyncTests(config = '') {
         Text value
 
       particle P in 'a.js'
-        in Data foo
-        inout [Data] bar
+        inout Data foo
+        in [Data] bar
         out [Data] res
+        in Data exe
 
       recipe
         use 'test:0' as view0
         use 'test:1' as view1
         use 'test:2' as view2
+        use 'test:3' as view3
         P
-          foo <- view0
-          bar = view1
+          foo = view0
+          bar <- view1
           res -> view2
+          exe <- view3
     `,
     'a.js': `
       'use strict';
@@ -65,17 +68,25 @@ async function setupProxySyncTests(config = '') {
       defineParticle(({Particle}) => {
         return class P extends Particle {
           setViews(views) {
-            this._resHandle = views.get('res');
+            this.fooHandle = views.get('foo');
+            this.resHandle = views.get('res');
+            views.get('exe').configure({keepSynced: false});
             ${config}
           }
 
           // model = null / Entity (for Variables); [] / [Entity] (for Collections)
           onHandleSync(handle, model, version) {
-            this.addResult('sync', handle, version, this.toString(model));
+            this.addNotifyResult('sync', handle, version, this.toString(model));
           }
 
           // update = {data: Entity, added: [Entity], removed: [Entity]}
+          // updates to 'exe' are executed as JS code; others are reported on 'res'
           onHandleUpdate(handle, update, version) {
+            if (handle.name == 'exe') {
+              eval(update.data.value);
+              return;
+            }
+
             let details = '';
             if ('data' in update) {
               details += this.toString(update.data);
@@ -86,11 +97,11 @@ async function setupProxySyncTests(config = '') {
             if ('removed' in update) {
               details += '-' + this.toString(update.removed);
             }
-            this.addResult('update', handle, version, details);
+            this.addNotifyResult('update', handle, version, details);
           }
 
           onHandleDesync(handle, version) {
-            this.addResult('desync', handle, version, null);
+            this.addNotifyResult('desync', handle, version, null);
           }
 
           toString(item) {
@@ -103,9 +114,12 @@ async function setupProxySyncTests(config = '') {
             return item.value;
           }
 
-          async addResult(method, handle, version, details) {
-            let result = [handle.name, method, version, details].filter(x => x != null).join(':');
-            await this._resHandle.store(new this._resHandle.entityClass({value: result}));
+          addNotifyResult(method, handle, version, details) {
+            this.addResult([handle.name, method, version, details].filter(x => x != null).join(':'));
+          }
+
+          async addResult(result) {
+            await this.resHandle.store(new this.resHandle.entityClass({value: result}));
           }
         }
       });
@@ -116,14 +130,16 @@ async function setupProxySyncTests(config = '') {
   let fooStore = await arc.createHandle(Data.type, 'foo', 'test:0');
   let barStore = await arc.createHandle(Data.type.setViewOf(), 'bar', 'test:1');
   let resStore = await arc.createHandle(Data.type.setViewOf(), 'res', 'test:2');
+  let exeStore = await arc.createHandle(Data.type, 'exe', 'test:3');
   let inspector = new util.ResultInspector(arc, resStore, 'value');
 
   let recipe = manifest.recipes[0];
   recipe.handles[0].mapToStorage(fooStore);
   recipe.handles[1].mapToStorage(barStore);
   recipe.handles[2].mapToStorage(resStore);
+  recipe.handles[3].mapToStorage(exeStore);
   recipe.normalize();
-  return {arc, recipe, Data, fooStore, barStore, inspector};
+  return {arc, recipe, Data, fooStore, barStore, exeStore, inspector};
 }
 
 // Calls set or store on a handle without triggering a change event.
@@ -143,7 +159,6 @@ async function writeWithoutFiring(handle, entity) {
 describe('particle-api', function() {
   it('notifies for updates to initially empty handles', async function() {
     let {arc, recipe, Data, fooStore, barStore, inspector} = await setupProxySyncTests();
-
     await arc.instantiate(recipe);
     await inspector.verify('foo:sync:0:(null)', 'bar:sync:0:[]');
 
@@ -178,7 +193,6 @@ describe('particle-api', function() {
     let {arc, recipe, Data, fooStore, inspector} = await setupProxySyncTests(`
       views.get('foo').configure({notifyDesync: true});
     `);
-
     await arc.instantiate(recipe);
     await inspector.verify('foo:sync:0:(null)', 'bar:sync:0:[]');
 
@@ -193,7 +207,6 @@ describe('particle-api', function() {
     let {arc, recipe, barStore, inspector} = await setupProxySyncTests(`
       views.get('bar').configure({notifyDesync: true});
     `);
-
     await arc.instantiate(recipe);
     await inspector.verify('foo:sync:0:(null)', 'bar:sync:0:[]');
 
@@ -208,7 +221,6 @@ describe('particle-api', function() {
     let {arc, recipe, barStore, inspector} = await setupProxySyncTests(`
       views.get('bar').configure({notifyDesync: true});
     `);
-
     await arc.instantiate(recipe);
     await inspector.verify('foo:sync:0:(null)', 'bar:sync:0:[]');
 
@@ -240,7 +252,6 @@ describe('particle-api', function() {
     let {arc, recipe, barStore, inspector} = await setupProxySyncTests(`
       views.get('bar').configure({notifyDesync: true});
     `);
-
     await arc.instantiate(recipe);
     await inspector.verify('foo:sync:0:(null)', 'bar:sync:0:[]');
 
@@ -280,6 +291,122 @@ describe('particle-api', function() {
     await fooStore.set(new Data({value: 'v3'}));
     await barStore.store({id: 'i3', rawData: {value: 'v3'}});
     await inspector.verify('foo:update:3:v3', 'bar:update:3:+[v3]');
+  });
+
+  it('reading from a synced proxy should not call the backing store', async function() {
+    let {arc, recipe, Data, fooStore, exeStore} = await setupProxySyncTests();
+    await arc.instantiate(recipe);
+    await arc.idle;
+
+    // Track whether fooStore.get is called (return value is not used).
+    let fooGetCalled = false;
+    fooStore.get = () => {
+      fooGetCalled = true;
+      return null;
+    };
+    await exeStore.set(new Data({value: 'this.fooHandle.get();'}));
+    await arc.idle;
+    assert(!fooGetCalled, 'fooStore.get was called when it should not have been');
+  });
+
+  it('reading from a desynced proxy should call the backing store', async function() {
+    let {arc, recipe, Data, fooStore, exeStore} = await setupProxySyncTests();
+    await arc.instantiate(recipe);
+    // Disable the SynchronizeProxy call to keep the proxy desynchronized.
+    arc.pec._apiPort.onSynchronizeProxy = () => {};
+    await arc.idle;
+
+    // Track whether fooStore.get is called (return value is not used).
+    let fooGetCalled = false;
+    fooStore.get = () => {
+      fooGetCalled = true;
+      return null;
+    };
+    await exeStore.set(new Data({value: 'this.fooHandle.get();'}));
+    await arc.idle;
+    assert(fooGetCalled, 'fooStore.get was not called when it should have been');
+  });
+
+  it('reading from a non-syncing proxy should call the backing store', async function() {
+    let {arc, recipe, Data, fooStore, exeStore} = await setupProxySyncTests(`
+      views.get('foo').configure({keepSynced: false});
+    `);
+    await arc.instantiate(recipe);
+    await arc.idle;
+
+    // Track whether fooStore.get is called (return value is not used).
+    let fooGetCalled = false;
+    fooStore.get = () => {
+      fooGetCalled = true;
+      return null;
+    };
+    await exeStore.set(new Data({value: 'this.fooHandle.get();'}));
+    await arc.idle;
+    assert(fooGetCalled, 'fooStore.get was not called when it should have been');
+  });
+
+  it('writing to a synced proxy desyncs it until the update is received', async function() {
+    let {arc, recipe, Data, fooStore, exeStore, inspector} = await setupProxySyncTests(`
+      views.get('bar').configure({keepSynced: false});
+    `);
+
+    // Set up sync on foo with an initial value.
+    await fooStore.set(new Data({value: 'start'}));
+    await arc.instantiate(recipe);
+    await inspector.verify('foo:sync:1:start');
+
+    // Read foo from the particle; should return the local copy and not call the backing store.
+    let fooGetCount = 0;
+    let getFn = fooStore.get;
+    fooStore.get = () => {
+      fooGetCount++;
+      return getFn.bind(fooStore)();
+    };
+    // The [#] counter makes each call to exeStore different to ensure the value is actually set.
+    await exeStore.set(new Data({value: `// [1]
+      this.fooHandle.get().then(
+        r => this.addResult('get:' + this.fooHandle._proxy._synchronized + ':' + r.value)
+      );
+    `}));
+    await inspector.verify('get:true:start');
+    assert(fooGetCount == 0, 'fooStore.get was called when it should not have been');
+
+    // Write to foo from the particle but delay the update event.
+    let latchedKind, latchedDetails;
+    let fireFn = fooStore._fire;
+    fooStore._fire = (kind, details) => {
+      latchedKind = kind, latchedDetails = details;
+    };
+    await exeStore.set(new Data({value: `// [2]
+      let entity = new this.fooHandle.entityClass({value: 'changed'});
+      this.fooHandle.set(entity).then(
+        () => this.addResult('set')
+      );
+    `}));
+    await inspector.verify('set');
+
+    // Read from foo again; this time the proxy is desynced and should call the backing store.
+    await exeStore.set(new Data({value: `// [3]
+      this.fooHandle.get().then(
+        r => this.addResult('get:' + this.fooHandle._proxy._synchronized + ':' + r.value)
+      );
+    `}));
+    await inspector.verify('get:false:changed');
+    assert(fooGetCount == 1, 'fooStore.get was not called when it should have been');
+
+    // Fire the delayed update event to resync the proxy.
+    fooStore._fire = fireFn;
+    fooStore._fire(latchedKind, latchedDetails);
+    await inspector.verify('foo:update:2:changed');
+
+    // Read foo one more time; should return the local copy again.
+    await exeStore.set(new Data({value: `// [4]
+      this.fooHandle.get().then(
+        r => this.addResult('get:' + this.fooHandle._proxy._synchronized + ':' + r.value)
+      );
+    `}));
+    await inspector.verify('get:true:changed');
+    assert(fooGetCount == 1, 'fooStore.get was called when it should not have been');
   });
 
   it('contains view synchronize calls', async () => {

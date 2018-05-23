@@ -215,29 +215,49 @@ export class StorageProxy {
     this._port.Synchronize({handle: this, modelCallback, callback, target, type, particleId});
   }
 
+  // Read ops: if we're synchronized we can just return the local copy of the data.
+  // Otherwise, send a request to the backing store.
+  // TODO: in synchronized mode, these should integrate with SynchronizeProxy rather than
+  //       sending a parallel request
   get(particleId) {
-    return new Promise((resolve, reject) =>
-      this._port.HandleGet({callback: r => resolve(r), handle: this, particleId}));
+    if (this._synchronized) {
+      return new Promise((resolve, reject) => resolve(this._model));
+    } else {
+      return new Promise((resolve, reject) =>
+        this._port.HandleGet({callback: r => resolve(r), handle: this, particleId}));
+    }
   }
 
   toList(particleId) {
-    return new Promise((resolve, reject) =>
-      this._port.HandleToList({callback: r => resolve(r), handle: this, particleId}));
+    if (this._synchronized) {
+      return new Promise((resolve, reject) => resolve(this._model));
+    } else {
+      return new Promise((resolve, reject) =>
+        this._port.HandleToList({callback: r => resolve(r), handle: this, particleId}));
+    }
   }
 
+  // Write ops: in synchronized mode, any write operation will desynchronize the proxy, so
+  // subsequent reads will call to the backing store until resync is established via the update
+  // event triggered by the write.
+  // TODO: handle concurrent writes from other parties to the backing store
   set(entity, particleId) {
     this._port.HandleSet({data: entity, handle: this, particleId});
+    this._synchronized = false;
   }
 
   store(entity, particleId) {
     this._port.HandleStore({data: entity, handle: this, particleId});
+    this._synchronized = false;
   }
 
   remove(entityId, particleId) {
     this._port.HandleRemove({data: entityId, handle: this, particleId});
+    this._synchronized = false;
   }
 
   clear(particleId) {
     this._port.HandleClear({handle: this, particleId});
+    this._synchronized = false;
   }
 }
