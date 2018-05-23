@@ -14,17 +14,12 @@ class ArcManifest extends Xen.Base {
   static get observedAttributes() {
     return ['config'];
   }
-  _getInitialState() {
-    return {
-      defaultManifest: window.defaultManifest
-    };
-  }
-  _update({config}, state, oldProps) {
+  _update({config}, state) {
     if (config && !state.manifest) {
       if (config.solo) {
         state.manifest = `import '${config.solo}'`;
       } else {
-        state.manifest = state.defaultManifest;
+        state.manifest = config.defaultManifest;
       }
       this._fire('manifest', state.manifest);
     }
