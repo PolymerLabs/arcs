@@ -11,16 +11,20 @@
 defineParticle(({DomParticle}) => {
   return class extends DomParticle {
     get template() {
-      return '';
+      return ' ';
     }
     _getInitialState() {
-      return {participants: new Set()};
+      return {
+        participants: new Set()
+      };
     }
-    willReceiveProps(props) {
+    willReceiveProps(props, state) {
       if (props.messages && props.participants) {
         let participants = new Set([
-          ...this._state.participants,
-          ...props.participants.map(p => p.name)]);
+          ...state.participants,
+          ...props.participants.map(p => p.name)
+        ]);
+        this._setState({participants});
         let changes = new Set();
         props.messages.forEach(m => {
           if (!participants.has(m.name)) {
@@ -28,13 +32,11 @@ defineParticle(({DomParticle}) => {
           }
         });
         if (changes.size) {
-          this._setState({changes, participants});
-        } else {
-          this._setState({participants});
+          this._setState({changes});
         }
       }
     }
-    render(props, state) {
+    update(props, state) {
       if (state.changes) {
         let changes = state.changes;
         state.participants = new Set([...state.participants, ...state.changes]);
