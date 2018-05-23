@@ -21,7 +21,7 @@ import * as util from './recipe/util.js';
 import {StorageProviderFactory} from './storage/storage-provider-factory.js';
 import {ManifestMeta} from './manifest-meta.js';
 import {TypeChecker} from './recipe/type-checker.js';
-import {ParticleEndPoint, HandleEndPoint} from './recipe/connection-constraint.js';
+import {ParticleEndPoint, HandleEndPoint, TagEndPoint} from './recipe/connection-constraint.js';
 
 class ManifestError extends Error {
   constructor(location, message) {
@@ -645,6 +645,9 @@ ${e.message}
           if (info.param == null && info.tags.length == 0 && items.byName.get(info.name).handle)
             return new HandleEndPoint(items.byName.get(info.name).handle);
           throw new ManifestError(connection.location, `references to particles by local name not yet supported`);
+        }
+        case 'tag': {
+          return new TagEndPoint(info.tags);
         }
         default:
           assert(false, `endpoint ${info.targetType} not supported`);

@@ -9,7 +9,7 @@ import {Strategy} from '../../strategizer/strategizer.js';
 import {Recipe} from '../recipe/recipe.js';
 import {Walker} from '../recipe/walker.js';
 import {RecipeUtil} from '../recipe/recipe-util.js';
-import {ParticleEndPoint, HandleEndPoint} from '../recipe/connection-constraint.js';
+import {ParticleEndPoint, HandleEndPoint, TagEndPoint} from '../recipe/connection-constraint.js';
 
 export class ConvertConstraintsToConnections extends Strategy {
   constructor(arc) {
@@ -73,6 +73,11 @@ export class ConvertConstraintsToConnections extends Strategy {
             handle = {handle: 'v' + handleCount++, direction: constraint.direction};
             handles.add(handle.handle);
           }
+          if (constraint.from instanceof TagEndPoint) {
+            handle.tags = constraint.from.tags;
+          } else if (constraint.to instanceof TagEndPoint) {
+            handle.tags = constraint.to.tags;
+          }
 
           let unionDirections = (a, b) => {
             if (a == '=')
@@ -92,7 +97,7 @@ export class ConvertConstraintsToConnections extends Strategy {
               if (direction == null)
                 return;
             }
-            map[constraint.from.particle.name][constraint.from.connection] = {handle: handle.handle, direction};
+            map[constraint.from.particle.name][constraint.from.connection] = {handle: handle.handle, direction, tags: handle.tags};
           }
 
           direction = reverse[constraint.direction];          
@@ -103,7 +108,7 @@ export class ConvertConstraintsToConnections extends Strategy {
               if (direction == null)
                 return;
             }
-            map[constraint.to.particle.name][constraint.to.connection] = {handle: handle.handle, direction};
+            map[constraint.to.particle.name][constraint.to.connection] = {handle: handle.handle, direction, tags: handle.tags};
           }
         }
         let shape = RecipeUtil.makeShape([...particles.values()], [...handles.values()], map);
