@@ -468,7 +468,7 @@ SlotFormFactor
   }
 
 ParticleProvidedSlot
-  = 'provide' whiteSpace isSet:('set of' whiteSpace)? name:(lowerIdent) tags:(whiteSpace TagList)? eolWhiteSpace items:(Indent (SameIndent ParticleProvidedSlotItem)*)?
+  = isRequired:('must' whiteSpace)? 'provide' whiteSpace isSet:('set of' whiteSpace)? name:(lowerIdent) tags:(whiteSpace TagList)? eolWhiteSpace items:(Indent (SameIndent ParticleProvidedSlotItem)*)?
   {
     let formFactor = null;
     let handles = [];
@@ -487,6 +487,7 @@ ParticleProvidedSlot
       location: location(),
       name,
       tags: optional(tags, tags => tags[1], []),
+      isRequired: optional(isRequired, isRequired => isRequired[0] == 'must', false),
       isSet: !!isSet,
       formFactor,
       handles

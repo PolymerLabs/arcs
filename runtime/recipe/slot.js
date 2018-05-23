@@ -21,7 +21,7 @@ export class Slot {
     this._formFactor = undefined;
     this._handleConnections = []; // HandleConnection* (can only be set if source connection is set and particle in slot connections is set)
     this._sourceConnection = undefined; // SlotConnection
-    this._consumerConnections = []; // SlotConnection*
+    this._consumeConnections = []; // SlotConnection*
   }
 
   get recipe() { return this._recipe; }
@@ -38,7 +38,7 @@ export class Slot {
   get handleConnections() { return this._handleConnections; }
   get sourceConnection() { return this._sourceConnection; }
   set sourceConnection(sourceConnection) { this._sourceConnection = sourceConnection; }
-  get consumeConnections() { return this._consumerConnections; }
+  get consumeConnections() { return this._consumeConnections; }
   getProvidedSlotSpec() {
     // TODO: should this return something that indicates this isn't available yet instead of 
     // the constructed {isSet: false, tags: []}?
@@ -61,7 +61,7 @@ export class Slot {
         slot.sourceConnection._providedSlots[slot.name] = slot;
       this._handleConnections.forEach(connection => slot._handleConnections.push(cloneMap.get(connection)));
     }
-    this._consumerConnections.forEach(connection => cloneMap.get(connection).connectToSlot(slot));
+    this._consumeConnections.forEach(connection => cloneMap.get(connection).connectToSlot(slot));
     return slot;
   }
 
@@ -72,8 +72,8 @@ export class Slot {
 
   _finishNormalize() {
     assert(Object.isFrozen(this._source));
-    this._consumerConnections.forEach(cc => assert(Object.isFrozen(cc)));
-    this._consumerConnections.sort(util.compareComparables);
+    this._consumeConnections.forEach(cc => assert(Object.isFrozen(cc)));
+    this._consumeConnections.sort(util.compareComparables);
     Object.freeze(this);
   }
 
@@ -87,10 +87,10 @@ export class Slot {
   }
 
   removeConsumeConnection(slotConnection) {
-    let idx = this._consumerConnections.indexOf(slotConnection);
+    let idx = this._consumeConnections.indexOf(slotConnection);
     assert(idx > -1);
-    this._consumerConnections.splice(idx, 1);
-    if (this._consumerConnections.length == 0)
+    this._consumeConnections.splice(idx, 1);
+    if (this._consumeConnections.length == 0)
       this.remove();
   }
 

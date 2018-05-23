@@ -22,7 +22,7 @@ describe('products test', function() {
     assert.equal('Harry Potter', list[0].rawData.name);
   };
 
-  it('filter', async function() {
+  it('filters', async function() {
     let helper = await TestHelper.loadManifestAndPlan(testProductsManifestFile);
 
     await helper.acceptSuggestion({particles: ['ProductFilter']});
@@ -30,7 +30,7 @@ describe('products test', function() {
     await helper.verifyData('ProductFilter', 'results', verifyFilteredBook);
   });
 
-  it('filter and display', async function() {
+  it('filters and displays', async function() {
     let helper = await TestHelper.loadManifestAndPlan(testProductsManifestFile);
 
     helper.slotComposer

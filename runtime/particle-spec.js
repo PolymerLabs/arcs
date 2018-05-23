@@ -57,7 +57,7 @@ class SlotSpec {
     if (!slotModel.providedSlots)
       return;
     slotModel.providedSlots.forEach(ps => {
-      this.providedSlots.push(new ProvidedSlotSpec(ps.name, ps.isSet, ps.tags, ps.formFactor, ps.handles));
+      this.providedSlots.push(new ProvidedSlotSpec(ps));
     });
   }
 
@@ -67,12 +67,13 @@ class SlotSpec {
 }
 
 class ProvidedSlotSpec {
-  constructor(name, isSet, tags, formFactor, handles) {
-    this.name = name;
-    this.isSet = isSet;
-    this.tags = tags || [];
-    this.formFactor = formFactor; // TODO: deprecate form factors?
-    this.handles = handles || [];
+  constructor(slotModel) {
+    this.name = slotModel.name;
+    this.isRequired = slotModel.isRequired;
+    this.isSet = slotModel.isSet;
+    this.tags = slotModel.tags || [];
+    this.formFactor = slotModel.formFactor; // TODO: deprecate form factors?
+    this.handles = slotModel.handles || [];
   }
 }
 
@@ -200,7 +201,6 @@ export class ParticleSpec {
     }
 
     this.affordance.filter(a => a != 'mock').forEach(a => results.push(`  affordance ${a}`));
-    // TODO: support form factors
     this.slots.forEach(s => {
       // Consume slot.
       let consume = [];
@@ -221,7 +221,11 @@ export class ParticleSpec {
       }
       // Provided slots.
       s.providedSlots.forEach(ps => {
-        let provide = ['provide'];
+        let provide = [];
+        if (ps.isRequired) {
+          provide.push('must');
+        }
+        provide.push('provide');
         if (ps.isSet) {
           provide.push('set of');
         }

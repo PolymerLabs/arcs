@@ -98,16 +98,9 @@ export class Recipe {
         && this._particles.every(particle => particle.isResolved())
         && this._slots.every(slot => slot.isResolved())
         && this.handleConnections.every(connection => connection.isResolved())
-        // Verify slot connections: all required slot connections must be resolved,
-        // and for each particle their must be an at least one resolved slot connection.
-        && this._particles.every(particle => {
-          let connections = Object.values(particle.consumedSlotConnections);
-          if (connections.length == 0) {
-            return true;
-          }
-          return !!connections.find(connection => connection.isResolved())
-              && connections.every(connection => !connection.slotSpec.isRequired || connection.isResolved());
-        });
+        && this.slotConnections.every(slotConnection => slotConnection.isResolved());
+
+    // TODO: check recipe level resolution requirements, eg there is no slot loops.
   }
 
   _findDuplicate(items, options) {

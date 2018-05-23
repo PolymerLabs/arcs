@@ -239,4 +239,65 @@ describe('recipe', function() {
     const digestB = await getFirstRecipeHash(manifestContent);
     assert.equal(digestA, digestB);
   });
+  it('verifies required consume and provide slot connections', async () => {
+    let manifest = await Manifest.parse(`
+      particle A
+        must consume slotA
+          must provide slotA1
+          provide slotA2
+        consume slotB
+          must provide slotB1
+          provide slotB2
+
+      particle AA
+        consume slotAA
+
+      recipe noRequiredConsumeSlot // 0
+        A
+
+      recipe noRequireProvideSlot // 1
+        slot '0' as slot0
+        A
+          consume slotA as slot0
+
+      recipe requiredSlotsOk // 2
+        slot '0' as slot0
+        A
+          consume slotA as slot0
+            provide slotA1 as slot1
+        AA
+          consume slotAA as slot1
+
+      recipe noRequiredSlotsInOptionalConsume // 3
+        slot '0' as slot0
+        slot '2' as slot2
+        A
+          consume slotA as slot0
+            provide slotA1 as slot1
+          consume slotB as slot2
+        AA
+          consume slotAA as slot1
+
+      recipe allRequiredSlotsOk // 4
+        slot '0' as slot0
+        slot '2' as slot2
+        A
+          consume slotA as slot0
+            provide slotA1 as slot1
+          consume slotB as slot2
+            provide slotB1 as slot3
+        AA
+          consume slotAA as slot1
+        AA
+          consume slotAA as slot3
+      `);
+
+    assert.lengthOf(manifest.recipes, 5);
+    manifest.recipes.forEach(recipe => assert(recipe.normalize()));
+    assert.isFalse(manifest.recipes[0].isResolved());
+    assert.isFalse(manifest.recipes[1].isResolved());
+    assert.isTrue(manifest.recipes[2].isResolved());
+    assert.isFalse(manifest.recipes[3].isResolved());
+    assert.isTrue(manifest.recipes[4].isResolved());
+  });
 });
