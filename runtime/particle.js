@@ -59,7 +59,7 @@ export class Particle {
   /** @method onHandleUpdate(handle, update, version)
    * Called for handles that are configued with notifyUpdate, when change events are received from
    * the backing store. For handles also configured with keepSynced these events will be correctly
-   * ordered, with some potentially skips if a desync occurs. For handles not configured with
+   * ordered, with some potential skips if a desync occurs. For handles not configured with
    * keepSynced, all change events will be passed through as they are received.
    *
    * handle: The Handle instance that was updated.
