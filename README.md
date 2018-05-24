@@ -297,3 +297,23 @@ To start a local version, use:
 To start a local version but jump in for debugging:
 
   > docker run --network host -it test-with-asylo /bin/bash
+
+
+
+
+### Start a CouchDB database
+
+Simple version:
+
+  arcs> docker run -d --name my-couchdb couchdb
+
+If this is a new db, you'll need to run some setup. You can start the db
+with a port available on the host (using `docker run -p 5984:5984 -d
+couchdb`) to access the setup screen at
+(http://127.0.0.1:5984/\_utils#setup). You set an admin password, something
+strong - although in these examples we'll assume admin:arcs.
+
+You'll need to add CORS support to CouchDB. An easy approach is to start the
+db with a port available on the host (instructions above), then use the
+[add-cors-to-couchdb](https://github.com/pouchdb/add-cors-to-couchdb)
+command available from npm: `add-cors-to-couchdb -u admin -p arcs`.

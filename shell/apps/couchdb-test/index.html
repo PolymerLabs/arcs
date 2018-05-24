@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+
+  <title>Arcs - CouchDB Test</title>
+
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+
+  <link rel="manifest" href="../common/manifest.json"/>
+  <link rel="shortcut icon" href="../common/logo_64.png">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Google+Sans:400,700">
+  <link rel="stylesheet" href="../common/index.css">
+
+  <script src="../../../node_modules/pouchdb/dist/pouchdb.min.js"></script>
+  <script type="text/javascript">
+    var db = new PouchDB('http://admin:arcs@localhost:5984/kittens')
+    db.get('mittens').then(doc => {
+      const newDate = new Date();
+      document.querySelectorAll('#output')[0].innerText = `Mittens' birthday was ${doc.birthday}, now is ${newDate}`;
+
+      doc.birthday = newDate;
+      db.put(doc);
+    }).catch(err => {
+      if (err.status==404) {
+        db.put({
+          _id: 'mittens',
+          name: 'Mittens',
+          lastUpdate: new Date()
+        });
+      } else {
+        console.log(err);
+      }
+    });
+  </script>
+</head>
+<body>
+  <p id="output">should be populated</p>
+</body>
+</html>
