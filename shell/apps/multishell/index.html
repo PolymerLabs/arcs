@@ -23,13 +23,6 @@
   dynamic-frame > [toolbar] {
     display: flex;
     flex-direction: column;
-    /*
-    align-items: center;
-    padding: 0 16px;
-    border: 1px solid rgba(0, 0, 0, 0.2);
-    border-top: none;
-    width: 40px;
-    */
     padding: 4px;
     z-index: 100;
     box-shadow: 0 1px 5px rgba(0, 0, 0, 0.15);
@@ -121,7 +114,7 @@
   // TODO(sjmiles): had all kinds of trouble listening to events from the page itself, I assume
   // these were timing related. Forcing the shell to fire an event on `window` (`window.top` from
   // shell's perspective) provided stability.
-  
+
   window.addEventListener('profile', e => {
     const {source, profile} = e.detail;
     const url = profile.avatar && profile.avatar.url;

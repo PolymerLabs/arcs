@@ -1,6 +1,7 @@
 import Xen from '../../../components/xen/xen.js';
 import Const from '../../constants.js';
 import IconStyle from '../../../components/icons.css.js';
+import {arcToRecipe} from './generalizer.js';
 
 const html = Xen.Template.html;
 const template = html`
@@ -90,6 +91,10 @@ const template = html`
 <section bar disabled$="{{nopersist}}" on-click="_onShareClick" style="{{shareStyle}}">
   <span>Use for friends' suggestions</span>
   <icon>{{shareIcon}}</icon>
+</section>
+<section bar on-click="_onExperimentClick">
+  <span>Convert Arc to Recipe</span>
+  <icon>transform</icon>
 </section>
 <section friends>
   <span>Friends</span><br>
@@ -195,6 +200,12 @@ class SettingsPanel extends Xen.Debug(Xen.Base, log) {
   }
   _shareFlagsToShareState(isProfile, isShared) {
     return isShared ? Const.SHARE.friends : isProfile ? Const.SHARE.self : Const.SHARE.private;
+  }
+  async _onExperimentClick() {
+    const {arc} = this._props;
+    if (arc) {
+      arcToRecipe(await arc.serialize());
+    }
   }
 }
 customElements.define('settings-panel', SettingsPanel);
