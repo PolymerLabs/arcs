@@ -1,6 +1,7 @@
 import Xen from '../../../components/xen/xen.js';
 import Const from '../../constants.js';
 import IconStyle from '../../../components/icons.css.js';
+import {arcToRecipe} from './generalizer.js';
 
 const html = Xen.Template.html;
 const template = html`
@@ -91,6 +92,10 @@ const template = html`
   <span>Use for friends' suggestions</span>
   <icon>{{shareIcon}}</icon>
 </section>
+<section bar on-click="_onExperimentClick">
+  <span>Convert Arc to Recipe</span>
+  <icon>transform</icon>
+</section>
 <section friends>
   <span>Friends</span><br>
   <div style="padding-top: 8px;">{{friends}}</div>
@@ -107,7 +112,7 @@ const log = Xen.logFactory('SettingsPanel', '#bb4d00');
 
 class SettingsPanel extends Xen.Debug(Xen.Base, log) {
   static get observedAttributes() {
-    return ['key', 'users', 'user', 'profile', 'share', 'user_picker_open'];
+    return ['key', 'arc', 'users', 'user', 'profile', 'share', 'user_picker_open'];
   }
   get template() {
     return template;
@@ -195,6 +200,12 @@ class SettingsPanel extends Xen.Debug(Xen.Base, log) {
   }
   _shareFlagsToShareState(isProfile, isShared) {
     return isShared ? Const.SHARE.friends : isProfile ? Const.SHARE.self : Const.SHARE.private;
+  }
+  async _onExperimentClick() {
+    const {arc} = this._props;
+    if (arc) {
+      arcToRecipe(await arc.serialize());
+    }
   }
 }
 customElements.define('settings-panel', SettingsPanel);

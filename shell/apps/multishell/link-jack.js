@@ -3,7 +3,7 @@ const jackLinks = (target, cb) => {
   setTimeout(() =>
     target.addEventListener('click', e => {
       const anchor = e.path.find(el => el.localName === 'a');
-      if (anchor) {
+      if (anchor && anchor.href) {
         e.stopImmediatePropagation();
         e.stopPropagation();
         e.preventDefault();

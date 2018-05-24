@@ -1,9 +1,13 @@
 <!doctype html>
 
+<link rel="shortcut icon" href="../common/logo_64.png">
+<title>Arcs Multiframe</title>
+
 <style>
   body {
-    margin: 0;
+    margin: 0 0 0 24px;
     font-family: sans-serif;
+    background: url('linen.png');
   }
   columns {
     display: flex;
@@ -11,22 +15,22 @@
   }
   dynamic-frame {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     flex: 1;
     overflow: hidden;
     max-width: 640px;
   }
-  dynamic-frame > div {
+  dynamic-frame > [toolbar] {
     display: flex;
-    align-items: center;
-    height: 40px;
-    padding: 0 16px;
+    flex-direction: column;
+    padding: 4px;
     z-index: 100;
-    border: 1px solid rgba(0, 0, 0, 0.2);
-    border-top: none;
     box-shadow: 0 1px 5px rgba(0, 0, 0, 0.15);
   }
-  dynamic-frame > div > input {
+  dynamic-frame > [toolbar] > icon {
+    color: #4d4d4d;
+  }
+  dynamic-frame > [toolbar] > input {
     border: none;
     outline: none;
   }
@@ -34,16 +38,33 @@
     border: none;
     flex: 1;
   }
+  avatar {
+    --size: 32px;
+    display: inline-block;
+    box-sizing: border-box;
+    height: var(--size);
+    width: var(--size);
+    min-width: var(--size);
+    border-radius: 100%;
+    background: gray center no-repeat;
+    background-size: cover;
+    vertical-align: middle;
+    padding: 4px;
+  }
 </style>
 
 <link href="../../components/icons.css" rel="stylesheet">
 
-<columns>
-</columns>
+<columns></columns>
 
 <template frame>
-  <div><input style="flex: 1;" value="{{title}}"><icon on-click="onClose">close</icon></div>
   <iframe src="../web/"></iframe>
+  <div toolbar>
+    <!-- <input style="flex: 1;" value="{{title}}"> -->
+    <!-- <icon on-click="onClose">close</icon> -->
+    <a href="{{url}}"><avatar style="{{avatarStyle}}" on-click="onClose"></avatar></a>
+    <!-- <span style="color: silver; font-size: 8px;">{{name}}</span> -->
+  </div>
 </template>
 
 <script type="module">
@@ -69,18 +90,20 @@
   }
 
   const routeIframe = (iframe, href, linkHandler) => {
-    console.log('routeIframe');
+    //console.log('routeIframe');
     jackIframe(iframe, linkHandler);
     iframe.contentWindow.location = href;
     const resolved = href;
     //const resolved = new URL(href, document.location.href).href;
-    iframe.dom.set({title: resolved});
+    iframe.dom.set({url: resolved, title: resolved});
   }
 
   const spawnShell = src => {
     const frame = columns.appendChild(document.createElement('dynamic-frame'));
     const handlers = {
-      onClose() {
+      onClose(e) {
+        e.stopPropagation();
+        e.preventDefault();
         frame.remove();
       }
     };
@@ -89,6 +112,26 @@
     iframe.dom = dom;
     routeIframe(iframe, src, linkHandler);
   }
+
+  // TODO(sjmiles): had all kinds of trouble listening to events from the page itself, I assume
+  // these were timing related. Forcing the shell to fire an event on `window` (`window.top` from
+  // shell's perspective) provided stability.
+
+  window.addEventListener('profile', e => {
+    const {source, profile} = e.detail;
+    const url = profile.avatar && profile.avatar.url;
+    const avatarStyle = !url ? '' : `background-image: url('${url}')`;
+    //console.log('got profile event', source, profile.name, avatarStyle);
+    const frames = document.querySelectorAll('iframe');
+    for (const frame of frames) {
+      if (frame.contentDocument.defaultView === source) {
+        frame.dom.set({
+          name: profile.name,
+          avatarStyle
+        });
+      }
+    }
+  });
 
   const params = new URL(document.location.href).searchParams;
   let app = params.get('app') || 'web';

@@ -62,10 +62,10 @@ const Debug = (Base, log) => class extends Base {
     log('state [immutable]', {[name]: value});
     super._setImmutableState(name, value);
   }
-  _fire(name, detail) {
+  _fire(name, detail, node, init) {
     Debug.lastFire = {name, detail: deepishClone(detail), log};
     log('fire', {[Debug.lastFire.name]: Debug.lastFire.detail});
-    super._fire(name, detail);
+    super._fire(name, detail, node, init);
     Debug.lastFire = null;
   }
   _doUpdate(...args) {
