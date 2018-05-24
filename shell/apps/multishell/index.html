@@ -62,7 +62,7 @@
   <div toolbar>
     <!-- <input style="flex: 1;" value="{{title}}"> -->
     <!-- <icon on-click="onClose">close</icon> -->
-    <avatar style="{{avatarStyle}}" on-click="onClose"></avatar>
+    <a href="{{url}}"><avatar style="{{avatarStyle}}" on-click="onClose"></avatar></a>
     <!-- <span style="color: silver; font-size: 8px;">{{name}}</span> -->
   </div>
 </template>
@@ -95,13 +95,15 @@
     iframe.contentWindow.location = href;
     const resolved = href;
     //const resolved = new URL(href, document.location.href).href;
-    iframe.dom.set({title: resolved});
+    iframe.dom.set({url: resolved, title: resolved});
   }
 
   const spawnShell = src => {
     const frame = columns.appendChild(document.createElement('dynamic-frame'));
     const handlers = {
-      onClose() {
+      onClose(e) {
+        e.stopPropagation();
+        e.preventDefault();
         frame.remove();
       }
     };
