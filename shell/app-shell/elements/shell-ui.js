@@ -77,7 +77,7 @@ const template = html`
       <div suggestions content open$="{{suggestionsContentOpen}}">
         <slot name="suggestions" slot="suggestions" on-plan-choose="_onChooseSuggestion"></slot>
       </div>
-      <settings-panel settings content open$="{{settingsContentOpen}}" key="{{key}}" users="{{users}}" user="{{user}}" profile="{{profile}}" share="{{share}}" user_picker_open="{{userPickerOpen}}" on-user="_onSelectUser" on-share="_onShare"></settings-panel>
+      <settings-panel settings content open$="{{settingsContentOpen}}" key="{{key}}" arc="{{arc}}" users="{{users}}" user="{{user}}" profile="{{profile}}" share="{{share}}" user_picker_open="{{userPickerOpen}}" on-user="_onSelectUser" on-share="_onShare"></settings-panel>
     </div>
   </div>
   <!-- -->

@@ -7,12 +7,13 @@ const out = document.querySelector('[out]');
 const publish = document.querySelector('button');
 const store = 'arcs-0.4-meta-recipes';
 
-const arcToRecipe = async (serialization) => {
-  let template = await templatize({serialization});
+const arcToRecipe = serialization => {
+  let template = templatize({serialization});
   template += '  description `user composed recipe (so meta)`';
   const recipes = JSON.parse(localStorage.getItem(store) || '{}');
   const key = 'meta';
   recipes[key] = template;
+  console.log('generalized:', template);
   localStorage.setItem(store, JSON.stringify(recipes));
 };
 
@@ -68,7 +69,7 @@ const viewFixer = line => {
   return line;
 };
 
-const templatize = async ({serialization}) => {
+const templatize = ({serialization}) => {
   // remove the following blocks
   //const prefixi = ['resource', 'meta', 'store', '@active'];
   const prefixi = ['meta', '@active'];

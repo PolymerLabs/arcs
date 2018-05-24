@@ -112,7 +112,7 @@ const log = Xen.logFactory('SettingsPanel', '#bb4d00');
 
 class SettingsPanel extends Xen.Debug(Xen.Base, log) {
   static get observedAttributes() {
-    return ['key', 'users', 'user', 'profile', 'share', 'user_picker_open'];
+    return ['key', 'arc', 'users', 'user', 'profile', 'share', 'user_picker_open'];
   }
   get template() {
     return template;
