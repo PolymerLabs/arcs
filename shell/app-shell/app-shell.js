@@ -93,7 +93,7 @@ const template = html`
     plan="{{plan}}"
     on-userid="_onStateData"
     on-user="_onStateData"
-    on-profile="_onStateData"
+    on-profile="_onProfile"
     on-users="_onStateData"
     on-arcs="_onStateData"
     on-key="_onStateData"
@@ -244,6 +244,22 @@ class AppShell extends Xen.Debug(Xen.Base, log) {
   }
   _onSelectUser(e, userid) {
     this._setState({userid});
+  }
+  _onProfile(e, data) {
+    this._onStateData(e, data);
+    if (window.top !== window) {
+      const {user, arc} = this._state;
+      if (data && user && user.info) {
+        data.name = user.info.name;
+      }
+      if (data.avatar && data.avatar.url) {
+        data.avatar.url = arc._loader._resolve(data.avatar.url);
+        //console.log(data.avatar);
+      }
+      //console.log('sending profile');
+      // for enclousre, e.g. multiapp
+      this._fire('profile', {profile: data, source: window}, window.top);
+    }
   }
 }
 
