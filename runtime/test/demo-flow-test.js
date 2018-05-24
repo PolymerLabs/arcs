@@ -21,9 +21,15 @@ describe('demo flow', function() {
     await Manifest.load('./shell/artifacts/Products/Products.recipes', new Loader());
   });
 
-  it('flows like a demo', async function() {
+  it('BORKED flows like a demo', async function() {
+
+    let timeout = setTimeout(function() {
+      helper.slotComposer.assertExpectationsCompleted();
+    }, 5000);
+
     let helper = await TestHelper.loadManifestAndPlan('./shell/artifacts/Products/Products.recipes', {
       expectedNumPlans: 2,
+      logging: true,
       verify: async (plans) => {
         let descriptions = await Promise.all(plans.map(plan => plan.description.getRecipeSuggestion()));
         assert.include(descriptions, 'Show products from your browsing context (Minecraft Book plus 2 other items) ' +
@@ -49,6 +55,7 @@ describe('demo flow', function() {
         .expectRenderSlot('Multiplexer2', 'annotation', {verify: helper.slotComposer.expectContentItemsNumber.bind(null, 3)})
         .expectRenderSlot('AlsoOn', 'annotation', {contentTypes: ['model'], times: 3, isOptional: true});
     await helper.acceptSuggestion({particles: ['ShowCollection', 'Multiplexer', 'Chooser', 'Recommend', 'Multiplexer2']});
+    clearTimeout(timeout);
 
     assert.equal(2, helper.arc.findStoresByType(helper.arc.context.findSchemaByName('Product').entityClass().type.collectionOf()).length);
     await helper.verifySetSize('ShowCollection', 'collection', 3);
@@ -174,5 +181,5 @@ describe('demo flow', function() {
     helper.log('----------------------------------------');
 
     // TODO(mmandlis): Provide methods in helper to verify slot contents (helper.slotComposer._slots[i]._content).
-  }).timeout(5000);
+  }).timeout(10000);
 });

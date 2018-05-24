@@ -109,12 +109,43 @@ export class DomParticle extends XenStateMixin(Particle) {
   async setHandles(handles) {
     this.handles = handles;
     let config = this.config;
-    this.when([new HandleChanges(handles, config.handles, 'change')], async () => {
-      await this._handlesToProps(handles, config);
-    });
+
+    console.log('\n' + this.id, 'setViews', [...handles.keys()]);
+    this.newApproach = true;
+    if (!this.newApproach) {
+      // calls _handlesToProps once all handles have been sent (via the afterAllModels/modelCallback logic)
+      // and then whenever the backing stores are changed (via the .on listener attached in onSynchronize)
+      this.when([new HandleChanges(handles, config.handles, 'change', this.id)], async () => {
+        await this._handlesToProps(handles, config);
+      });
+    }
+
+    // this.config isn't a static property; not sure how important it is to avoid re-generating
+    // it in the onHandle* functions
+    this._configSnapshot = config;
+    this._modelCount = this._configSnapshot.handles.length;
+    console.log(this.id, 'handle names:', this._configSnapshot.handles);
+
     // make sure we invalidate once, even if there are no incoming handles
     this._invalidate();
   }
+
+  // onHandleSync should replace the afterAllModels logic
+  // onHandleUpdate should replace the .on listener updates
+  async onHandleSync(handle, model, version) {
+    let warn = this._modelCount < 1 ? '*************************' : '';
+    console.log(this.id, 'onHandleSync', handle.name, this._modelCount, version, warn);
+    if (--this._modelCount == 0 && this.newApproach) {
+      await this._handlesToProps(this.handles, this._configSnapshot);
+    }
+  }
+  async onHandleUpdate(handle, update, version) {
+    console.log(this.id, 'onHandleUpdate', handle.name), this.id;
+    if (this.newApproach) {
+      await this._handlesToProps(this.handles, this._configSnapshot);
+    }
+  }
+
   async _handlesToProps(handles, config) {
     // acquire (async) list data from handles
     let data = await Promise.all(

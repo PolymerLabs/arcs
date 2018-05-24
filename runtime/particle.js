@@ -203,16 +203,23 @@ export class Particle {
 }
 
 export class HandleChanges {
-  constructor(handles, names, type) {
+  constructor(handles, names, type, particleId) {
     if (typeof names == 'string')
       names = [names];
     this.names = names;
     this.handles = handles;
     this.type = type;
+    this.particleId = particleId;
   }
   register(particle, f) {
     let modelCount = 0;
-    let afterAllModels = () => { if (++modelCount == this.names.length) { f(); } };
+    let afterAllModels = () => { 
+      console.log(this.particleId, 'afterAllModels', modelCount + 1);
+      if (++modelCount == this.names.length) { 
+        console.log(this.particleId, '-> calling _handlesToProps');
+        f();
+      }
+    };
 
     for (let name of this.names) {
       let handle = this.handles.get(name);
