@@ -61,7 +61,7 @@ const viewFixer = line => {
       // otherwise, remove id
       line = line.replace(/ \'[^']*\'/g, '');
       // and generalize fate
-      line = line.replace('use', '?')
+      line = line.replace('use', '?');
     }
   }
   // remove comments
