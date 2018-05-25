@@ -35,7 +35,7 @@ export class SlotComposer {
 
     this._contextSlots = [];
     Object.keys(slotContextByName).forEach(slotName => {
-      this._contextSlots.push({id: `rootslotid-${slotName}`, name: slotName, tags: [`${slotName}`], context: slotContextByName[slotName], handleConnections: [], views: 0, getProvidedSlotSpec: () => { return {isSet: false}; }});
+      this._contextSlots.push({id: `rootslotid-${slotName}`, name: slotName, tags: [`${slotName}`], context: slotContextByName[slotName], handleConnections: [], handles: 0, getProvidedSlotSpec: () => { return {isSet: false}; }});
     });
 
     this._slots = [];

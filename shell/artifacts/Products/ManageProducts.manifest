@@ -14,9 +14,9 @@ particle ManageProducts in 'source/ManageProducts.js'
   affordance dom-touch
   consume root
     provide action
-      view list
+      handle list
     provide preamble
     provide postamble
     provide set of annotation
-      view list
+      handle list
   description `manage ${list}`

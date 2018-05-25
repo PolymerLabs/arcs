@@ -233,9 +233,9 @@ export class TypeChecker {
     }
     let [superclass, subclass] = leftIsSuper ? [left, right] : [right, left];
 
-    // treat view types as if they were 'inout' connections. Note that this
-    // guarantees that the view's type will be preserved, and that the fact
-    // that the type comes from a view rather than a connection will also
+    // treat handle types as if they were 'inout' connections. Note that this
+    // guarantees that the handle's type will be preserved, and that the fact
+    // that the type comes from a handle rather than a connection will also
     // be preserved.
     let superDirection = superclass.direction || (superclass.connection ? superclass.connection.direction : 'inout');
     let subDirection = subclass.direction || (subclass.connection ? subclass.connection.direction : 'inout');

@@ -56,7 +56,7 @@ describe('MatchParticleByVerb', function() {
     let mpv = new MatchParticleByVerb(arc);
     let results = await mpv.generate(inputParams);
     assert.equal(results.length, 3);
-    // Note: view connections are not resolved yet.
+    // Note: handle connections are not resolved yet.
     assert.deepEqual(['GalaxyJumper', 'SimpleJumper', 'StarJumper'], results.map(r => r.result.particles[0].name).sort());
   });
 

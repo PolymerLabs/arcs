@@ -34,8 +34,8 @@ describe('GroupHandleConnections', function() {
     particle E
       out Thing othingE1
       `;
-  it('group in and out view connections', async () => {
-    // TODO: add another Type view connections to the recipe!
+  it('group in and out handle connections', async () => {
+    // TODO: add another Type handle connections to the recipe!
     let manifest = (await Manifest.parse(`
       ${schemaAndParticlesStr}
       recipe
@@ -57,7 +57,7 @@ describe('GroupHandleConnections', function() {
     assert.isUndefined(recipe.handles.find(v => v.connections.length == 0));
   });
   it('does nothing if no grouping is possible', async () => {
-    // TODO: add another Type view connections to the recipe!
+    // TODO: add another Type handle connections to the recipe!
     let manifest = (await Manifest.parse(`
       ${schemaAndParticlesStr}
       recipe

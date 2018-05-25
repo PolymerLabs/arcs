@@ -120,9 +120,9 @@ describe('Planner', function() {
       particle P1 in './some-particle.js'
         in * {Text text} text
       recipe
-        map as view
+        map as handle
         P1
-          text <- view
+          text <- handle
     `);
     assert.equal(results.length, 1);
   });
@@ -133,9 +133,9 @@ describe('Planner', function() {
       particle P1 in './some-particle.js'
         in * {Text text} text
       recipe
-        copy as view
+        copy as handle
         P1
-          text <- view
+          text <- handle
     `);
     assert.equal(results.length, 1);
   });
@@ -649,19 +649,19 @@ describe('Automatic handle resolution', function() {
         D`);
 
     assert.equal(`recipe
-  create as view0 // Thing {Text id}
-  create as view1 //  {Number count}
-  create as view2 // Location {Number lat, Number lng}
+  create as handle0 // Thing {Text id}
+  create as handle1 //  {Number count}
+  create as handle2 // Location {Number lat, Number lng}
   A as particle0
-    product -> view0
+    product -> handle0
   B as particle1
-    other -> view1
-    thing <- view0
+    other -> handle1
+    thing <- handle0
   C as particle2
-    location <- view2
-    something <- view1
+    location <- handle2
+    something <- handle1
   D as particle3
-    location = view2`, result.toString());
+    location = handle2`, result.toString());
   });
 
   it('uses existing handle from the arc', async () => {

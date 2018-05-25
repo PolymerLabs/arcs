@@ -12,7 +12,7 @@ particle ParticipantList in 'source/ParticipantList.js'
   in [Person] participants
   consume root
     provide set of mouth
-      view participants
+      handle participants
     provide set of topofhead
-      view participants
+      handle participants
   description `show people`

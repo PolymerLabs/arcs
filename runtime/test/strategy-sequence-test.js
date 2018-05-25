@@ -127,13 +127,13 @@ describe('A Strategy Sequence', function() {
         affordance dom-touch
         consume master #root
           provide action
-            view collection
+            handle collection
           provide preamble
           provide postamble
           provide set of item
-            view collection
+            handle collection
           provide set of annotation
-            view collection
+            handle collection
       
       particle ShowProduct in 'source/ShowProduct.js'
         in Product product
@@ -160,7 +160,7 @@ describe('A Strategy Sequence', function() {
         inout [~a] resultList
         consume action
           provide set of annotation
-            view choices
+            handle choices
   
       particle Recommend in 'source/Recommend.js'
         in [Product] known

@@ -31,11 +31,11 @@ describe('ConvertConstraintsToConnections', async () => {
     let {result, score} = results[0];
     assert.deepEqual(result.toString(),
 `recipe
-  create as view0 // S {}
+  create as handle0 // S {}
   A as particle0
-    b = view0
+    b = handle0
   C as particle1
-    d = view0`);
+    d = handle0`);
   });
 
   it('does not cause an input only handle to be created', async () => {
@@ -123,11 +123,11 @@ describe('ConvertConstraintsToConnections', async () => {
     let {result, score} = results[0];
     assert.deepEqual(result.toString(),
 `recipe
-  create as view0 // S {}
+  create as handle0 // S {}
   A as particle0
-    b = view0
+    b = handle0
   C as particle1
-    d = view0`);
+    d = handle0`);
   });
 
   it('fills out a constraint, reusing a single particle (2)', async () => {
@@ -148,11 +148,11 @@ describe('ConvertConstraintsToConnections', async () => {
     let {result, score} = results[0];
     assert.deepEqual(result.toString(),
 `recipe
-  create as view0 // S {}
+  create as handle0 // S {}
   A as particle0
-    b = view0
+    b = handle0
   C as particle1
-    d = view0`);
+    d = handle0`);
   });
 
 
@@ -175,14 +175,14 @@ describe('ConvertConstraintsToConnections', async () => {
     let {result, score} = results[0];
     assert.deepEqual(result.toString(),
 `recipe
-  create as view0 // S {}
+  create as handle0 // S {}
   A as particle0
-    b = view0
+    b = handle0
   C as particle1
-    d = view0`);
+    d = handle0`);
   });
 
-  it('fills out a constraint, reusing two particles and a view', async () => {
+  it('fills out a constraint, reusing two particles and a handle', async () => {
     let recipe = (await Manifest.parse(`
       schema S
       particle A
@@ -203,14 +203,14 @@ describe('ConvertConstraintsToConnections', async () => {
     let {result, score} = results[0];
     assert.deepEqual(result.toString(),
 `recipe
-  use as view0 // S {}
+  use as handle0 // S {}
   A as particle0
-    b = view0
+    b = handle0
   C as particle1
-    d = view0`);
+    d = handle0`);
   });
 
-  it('fills out a constraint, reusing two particles and a view (2)', async () => {
+  it('fills out a constraint, reusing two particles and a handle (2)', async () => {
     let recipe = (await Manifest.parse(`
       schema S
       particle A
@@ -231,11 +231,11 @@ describe('ConvertConstraintsToConnections', async () => {
     let {result, score} = results[0];
     assert.deepEqual(result.toString(),
 `recipe
-  use as view0 // S {}
+  use as handle0 // S {}
   A as particle0
-    b = view0
+    b = handle0
   C as particle1
-    d = view0`);
+    d = handle0`);
   });
 
   it('removes an already fulfilled constraint', async () => {
@@ -259,11 +259,11 @@ describe('ConvertConstraintsToConnections', async () => {
     assert.equal(1, results.length);
     let {result, score} = results[0];
     assert.deepEqual(result.toString(), `recipe
-  use as view0 // S {}
+  use as handle0 // S {}
   A as particle0
-    b = view0
+    b = handle0
   C as particle1
-    d = view0`);
+    d = handle0`);
   });
 
   it('verifies affordance', async () => {
@@ -309,11 +309,11 @@ describe('ConvertConstraintsToConnections', async () => {
     let results = await cctc.generate(inputParams);
     assert.equal(results.length, 1);
     assert.deepEqual(results[0].result.toString(), `recipe
-  ? as view0 // S {}
+  ? as handle0 // S {}
   A as particle0
-    o -> view0
+    o -> handle0
   B as particle1
-    i <- view0`);
+    i <- handle0`);
   });
 
   it('connects to tags', async () => {
@@ -332,11 +332,11 @@ describe('ConvertConstraintsToConnections', async () => {
     let results = await cctc.generate(inputParams);
     assert.equal(results.length, 1);
     assert.deepEqual(results[0].result.toString(), `recipe
-  ? #hashtag as view0 // S {}
-  create as view1 // S {}
+  ? #hashtag as handle0 // S {}
+  create as handle1 // S {}
   A as particle0
-    o -> view0
+    o -> handle0
   B as particle1
-    i -> view1`);
+    i -> handle1`);
   });
 });

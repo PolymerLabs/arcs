@@ -11,11 +11,11 @@
 
 defineParticle(({Particle, MultiplexerDomParticle}) => {
   return class Multiplexer extends MultiplexerDomParticle {
-    constructInnerRecipe(hostedParticle, item, itemView, slot, other) {
+    constructInnerRecipe(hostedParticle, item, itemHandle, slot, other) {
       let recipe = Particle.buildManifest`
 ${hostedParticle}
 recipe
-  use '${itemView._id}' as v1
+  use '${itemHandle._id}' as v1
   ${other.views.join('\n')}
   slot '${slot.id}' as s1
   ${hostedParticle.name}

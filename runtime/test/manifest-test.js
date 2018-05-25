@@ -33,12 +33,12 @@ describe('manifest', function() {
         out S someParam
 
       recipe SomeRecipe &someVerb1 &someVerb2
-        map #someView
-        create #newView as view0
+        map #someHandle
+        create #newHandle as handle0
         SomeParticle
           someParam -> #tag
         description \`hello world\`
-          view0 \`best view\``);
+          handle0 \`best handle\``);
     let verify = (manifest) => {
       let particle = manifest.particles[0];
       assert.equal('SomeParticle', particle.name);
@@ -55,7 +55,7 @@ describe('manifest', function() {
       assert.equal(recipe.handleConnections.length, 1);
       assert.sameMembers(recipe.handleConnections[0].tags, ['tag']);
       assert.equal(recipe.pattern, 'hello world');
-      assert.equal(recipe.handles[1].pattern, 'best view');
+      assert.equal(recipe.handles[1].pattern, 'best handle');
       let type = recipe.handleConnections[0].rawType;
       assert.equal(1, Object.keys(manifest.schemas).length);
       let schema = Object.values(manifest.schemas)[0];
@@ -85,7 +85,7 @@ schema Person
     formFactor big
     must provide action #large
       formFactor big
-      view list
+      handle list
     provide preamble
       formFactor medium
     provide annotation
@@ -250,20 +250,20 @@ ${particleStr1}
         out S y
 
       recipe
-        ? #things as thingView
+        ? #things as thingHandle
         P1 as p1
-          x -> thingView
+          x -> thingHandle
         P2
-          x -> thingView`,
+          x -> thingHandle`,
       `particle P1
       particle P2
 
       recipe
-        ? #things as thingView
+        ? #things as thingHandle
         P1 as p1
-          x -> thingView
+          x -> thingHandle
         P2 as particle0
-          x -> thingView`);
+          x -> thingHandle`);
     let deserializedManifest = (await Manifest.parse(manifest.toString(), {}));
   });
   // TODO: move these tests to new-recipe tests.
@@ -280,10 +280,10 @@ ${particleStr1}
           x -> v1
         P2
       recipe
-        ? as someView
+        ? as someHandle
         P2
         P1
-          x -> someView
+          x -> someHandle
         `, {});
     let [recipe1, recipe2] = manifest.recipes;
     assert.notEqual(recipe1.toString(), recipe2.toString());
@@ -499,7 +499,7 @@ ${particleStr1}
         consume mySlot
           formFactor big
           provide otherSlot
-            view someParam
+            handle someParam
           provide oneMoreSlot
             formFactor small
 
@@ -509,15 +509,15 @@ ${particleStr1}
         consume oneMoreSlot
 
       recipe SomeRecipe
-        ? #someView1 as myView
+        ? #someHandle1 as myHandle
         slot 'slotIDs:A' as slot0
         SomeParticle
-          someParam <- myView
+          someParam <- myHandle
           consume mySlot as slot0
             provide otherSlot as slot2
             provide oneMoreSlot as slot1
         OtherParticle
-          aParam -> myView
+          aParam -> myHandle
           consume mySlot as slot0
           consume oneMoreSlot as slot1
     `);
@@ -758,9 +758,9 @@ ${particleStr1}
       },
     };
     let manifest = await Manifest.load('the.manifest', loader);
-    let view = manifest.findStorageByName('Store0');
-    assert(view);
-    assert.deepEqual(await view.toList(), [
+    let store = manifest.findStorageByName('Store0');
+    assert(store);
+    assert.deepEqual(await store.toList(), [
       {
         id: 'manifest:the.manifest::0',
         rawData: {someProp: 'someValue'},
@@ -770,7 +770,7 @@ ${particleStr1}
       }
     ]);
   });
-  it('throws an error when a view has invalid json', async () => {
+  it('throws an error when a store has invalid json', async () => {
     try {
       let manifest = await Manifest.parse(`
       schema Thing
@@ -800,9 +800,9 @@ Error parsing JSON from 'EntityList' (Unexpected token h in JSON at position 1)'
 
       store Store0 of [Thing] in EntityList
     `, {fileName: 'the.manifest'});
-    let view = manifest.findStorageByName('Store0');
-    assert(view);
-    assert.deepEqual(await view.toList(), [
+    let store = manifest.findStorageByName('Store0');
+    assert(store);
+    assert.deepEqual(await store.toList(), [
       {
         id: 'manifest:the.manifest::0',
         rawData: {someProp: 'someValue'},
@@ -812,7 +812,7 @@ Error parsing JSON from 'EntityList' (Unexpected token h in JSON at position 1)'
       }
     ]);
   });
-  it('resolves view names to ids', async () => {
+  it('resolves store names to ids', async () => {
     let manifestSource = `
         schema Thing
         store Store0 of [Thing] in 'entities.json'
@@ -1040,7 +1040,7 @@ Expected " ", "&", "//", "\\n", "\\r", [ ], [A-Z], or [a-z] but "?" found.
     assert.deepEqual(['hello', 'world', 'morning'], recipe1.search.unresolvedTokens);
     assert.deepEqual(['good'], recipe1.search.resolvedTokens);
   });
-  it('can parse a manifest containing views', async () => {
+  it('can parse a manifest containing stores', async () => {
     let loader = {
       loadResource() {
         return '[]';
@@ -1110,9 +1110,9 @@ resource SomeName
       particle ShapeParticle
         host Shape shape
       recipe
-        create as view0
+        create as handle0
         ShapeParticle
-          shape = view0`);
+          shape = handle0`);
     assert(manifest.findShapeByName('Shape'));
     assert(manifest.recipes[0].normalize());
   });
@@ -1124,9 +1124,9 @@ resource SomeName
       particle ShapeParticle
         host Shape shape
       recipe
-        create as view0
+        create as handle0
         ShapeParticle
-          shape = view0
+          shape = handle0
     `);
     assert(manifest.findShapeByName('Shape'));
     assert(manifest.recipes[0].normalize());
@@ -1138,9 +1138,9 @@ resource SomeName
         in [Something] inThing
         out [Something]? maybeOutThings
       recipe
-        create as view0 // [Something]
+        create as handle0 // [Something]
         Thing
-          inThing <- view0`);
+          inThing <- handle0`);
     let verify = (manifest) => {
       assert.isFalse(manifest.particles[0].connections[0].isOptional);
       assert.isTrue(manifest.particles[0].connections[1].isOptional);
@@ -1152,7 +1152,7 @@ resource SomeName
     verify(manifest);
     verify(await Manifest.parse(manifest.toString(), {}));
   });
-  it('can resolve an immediate view specified by a particle target', async () => {
+  it('can resolve an immediate handle specified by a particle target', async () => {
     let manifest = await Manifest.parse(`
       schema S
       shape HostedShape
@@ -1177,9 +1177,9 @@ resource SomeName
       particle P
         in * {Text value} foo
       recipe
-        create as view
+        create as handle
         P
-          foo = view
+          foo = handle
     `);
     let [recipe] = manifest.recipes;
     assert(recipe.normalize());
@@ -1195,17 +1195,17 @@ resource SomeName
         out T foo
 
       recipe
-        create as view
+        create as handle
         P
-          foo = view
+          foo = handle
         P2
-          foo = view
+          foo = handle
     `);
     let [validRecipe, invalidRecipe] = manifest.recipes;
     assert(validRecipe.normalize());
     assert(validRecipe.isResolved());
   });
-  it('can resolve view types from inline schemas', async () => {
+  it('can resolve handle types from inline schemas', async () => {
     let manifest = await Manifest.parse(`
       particle P
         in * {Text value} foo
@@ -1217,25 +1217,25 @@ resource SomeName
         in * {Text value, Number value2} foo
 
       recipe
-        create as view
+        create as handle
         P
-          foo = view
+          foo = handle
         P2
-          foo = view
+          foo = handle
 
       recipe
-        create as view
+        create as handle
         P2
-          foo = view
+          foo = handle
         P3
-          foo = view
+          foo = handle
 
       recipe
-        create as view
+        create as handle
         P2
-          foo = view
+          foo = handle
         P4
-          foo = view
+          foo = handle
     `);
     let [validRecipe, suspiciouslyValidRecipe, invalidRecipe] = manifest.recipes;
     assert(validRecipe.normalize());
@@ -1254,11 +1254,11 @@ resource SomeName
         in * {Text value} foo
 
       recipe
-        create as view
+        create as handle
         P
-          foo = view
+          foo = handle
         P2
-          foo = view
+          foo = handle
     `);
     let [validRecipe] = manifest.recipes;
     assert(validRecipe.normalize());
@@ -1277,11 +1277,11 @@ resource SomeName
         in * {Text value1, Number value2} foo
 
       recipe
-        create as view
+        create as handle
         P
-          foo = view
+          foo = handle
         P2
-          foo = view
+          foo = handle
     `);
     let [validRecipe] = manifest.recipes;
     assert(validRecipe.normalize());
@@ -1301,9 +1301,9 @@ resource SomeName
       store Foo of Bar 'test' @0 at 'firebase://testing'
 
       recipe
-        map Foo as myView
+        map Foo as myHandle
         P
-          foo = myView
+          foo = myHandle
     `);
     let [validRecipe] = manifest.recipes;
     assert(validRecipe.normalize());
@@ -1377,10 +1377,10 @@ resource SomeName
         start
         []
 
-      store ThingView of Thing in Things
+      store ThingStore of Thing in Things
 
       recipe
-        map ThingView as input
+        map ThingStore as input
         create as output
         P
           inThing = input

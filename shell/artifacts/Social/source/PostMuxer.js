@@ -11,10 +11,10 @@
 
 defineParticle(({MultiplexerDomParticle, log}) => {
   return class PostMultiplexer extends MultiplexerDomParticle {
-    constructInnerRecipe(hostedParticle, item, itemView, slot, other) {
+    constructInnerRecipe(hostedParticle, item, itemHandle, slot, other) {
       // log(`PostMuxer input recipe: `, item.renderRecipe);
       let value = item.renderRecipe.replace('{{slot_id}}', slot.id);
-      value = value.replace('{{item_id}}', itemView._id);
+      value = value.replace('{{item_id}}', itemHandle._id);
       // TODO(wkorman): Joining other_views and other_connections is a hack
       // due to unknown required indentation for recipe compatibility.
       value = value.replace('{{other_views}}', other.views.join('\n  '));

@@ -71,11 +71,11 @@ describe('MatchRecipeByVerb', function() {
     assert.equal(results.length, 1);
     assert.deepEqual(results[0].result.toString(),
 `recipe
-  create as view0 // S {}
+  create as handle0 // S {}
   P as particle0
-    p -> view0
+    p -> handle0
   Q as particle1
-    q <- view0`);
+    q <- handle0`);
   });
   it('listens to handle constraints', async () => {
     let manifest = await Manifest.parse(`
