@@ -36,6 +36,7 @@ class TestVariable {
   }
 
   // `version` is optional; if not provided, current version is incremented.
+  // Returns the event that would usually be sent to any attached listeners.
   set(entity, version) {
     this._stored = entity;
     this._version = (version !== undefined) ? version : this._version + 1;
@@ -65,6 +66,7 @@ class TestCollection {
   }
 
   // `version` is optional; if not provided, current version is incremented.
+  // Returns the event that would usually be sent to any attached listeners.
   store(id, entity, version) {
     let entry = {id, rawData: entity.rawData};
     this._items.set(id, entry);
