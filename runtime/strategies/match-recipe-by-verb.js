@@ -80,7 +80,7 @@ export class MatchRecipeByVerb extends Strategy {
                     if (slotConstraints[consumeSlot].targetSlot) {
                       let {mappedSlot} = outputRecipe.updateToClone({mappedSlot: slotConstraints[consumeSlot].targetSlot});
                       particle.consumedSlotConnections[consumeSlot]._targetSlot = mappedSlot;
-                      mappedSlot._consumerConnections.push(particle.consumedSlotConnections[consumeSlot]); 
+                      mappedSlot.consumeConnections.push(particle.consumedSlotConnections[consumeSlot]); 
                     }
                     for (let slotName in slotConstraints[consumeSlot].providedSlots) {
                       let slot = slotConstraints[consumeSlot].providedSlots[slotName];

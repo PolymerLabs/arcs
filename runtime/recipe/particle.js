@@ -103,9 +103,9 @@ export class Particle {
 
   isResolved(options) {
     assert(Object.isFrozen(this));
-    // TODO: slots
-    if (this.consumedSlotConnections.length > 0) {
-      let fulfilledSlotConnections = this.consumedSlotConnections.filter(connection => connection.targetSlot !== undefined);
+    let consumedSlotConnections = Object.values(this.consumedSlotConnections);
+    if (consumedSlotConnections.length > 0) {
+      let fulfilledSlotConnections = consumedSlotConnections.filter(connection => connection.targetSlot !== undefined);
       if (fulfilledSlotConnections.length == 0) {
         if (options && options.showUnresolved) {
           options.details = 'unfullfilled slot connections';

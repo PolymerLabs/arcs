@@ -83,7 +83,7 @@ schema Person
   affordance dom-touch
   must consume root #master #main
     formFactor big
-    provide action #large
+    must provide action #large
       formFactor big
       view list
     provide preamble
@@ -1095,6 +1095,7 @@ resource SomeName
         consume
       shape ShapeConsumeRequiredSetSlot
         must consume set of
+        must provide
       shape ShapeOnlyProvideSlots
         provide action
     `);

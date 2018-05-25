@@ -18,7 +18,7 @@ particle ShowCollection in 'source/ShowCollection.js'
       view collection
     provide preamble
     provide postamble
-    provide set of item
+    must provide set of item
       view collection
     provide set of annotation
       view collection

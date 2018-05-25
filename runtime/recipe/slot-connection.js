@@ -132,12 +132,24 @@ export class SlotConnection {
       return false;
     }
     if (!this.targetSlot) {
-      if (options) {
-        options.details = 'missing target-slot';
+      if (this.slotSpec.isRequired) {
+        if (options) {
+          options.details = 'missing target-slot';
+        }
+        return false;
       }
-      return false;
+      return true;
     }
-    return true;
+
+    return this.slotSpec.providedSlots.every(providedSlot => {
+      if (providedSlot.isRequired && this.providedSlots[providedSlot.name].consumeConnections.length == 0) {
+        if (options) {
+          options.details = 'missing consuming slot';
+        }
+        return false;
+      }
+      return true;
+    });
   }
 
   isConnectedToInternalSlot() {

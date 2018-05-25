@@ -18,8 +18,12 @@ recipe
   Multiplexer.list -> ShowCollection.collection
   map 'mylist' as mylist
   create as books
+  ShowCollection
+    consume master
+      provide item as itemSlot
   Multiplexer
     hostedParticle = ShowProduct
+    consume annotation as itemSlot
   ProductFilter
     products <- mylist
     hostedParticle = ProductIsBook
