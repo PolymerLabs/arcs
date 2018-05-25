@@ -697,7 +697,7 @@ ConnectionTarget
   = VerbConnectionTarget / TagConnectionTarget / NameConnectionTarget / ParticleConnectionTarget
 
 VerbConnectionTarget
-  = "can" whiteSpace verbs:TagList components:ConnectionTargetHandleComponents?
+  = verbs:VerbList components:ConnectionTargetHandleComponents?
   {
     let {param, tags} = optional(components, components => components, {param: null, tags: []});    
     return {
@@ -711,7 +711,7 @@ VerbConnectionTarget
   }
 
 TagConnectionTarget
-  = "is" whiteSpace tags:TagList {
+  = tags:TagList {
     return {
       kind: 'connection-target',
       location: location(),      

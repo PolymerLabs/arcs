@@ -50,6 +50,26 @@ export class HandleEndPoint {
   }
 }
 
+export class TagEndPoint {
+  constructor(tags) {
+    this.tags = tags;
+  }
+
+  _clone() {
+    return new TagEndPoint(this.tags);
+  }
+
+  _compareTo(other) {
+    let cmp;
+    if ((cmp = util.compareArrays(this.handle.tags, other.handle.tags, util.compareStrings)) != 0) return cmp;
+    return 0;
+  }
+
+  toString() {
+    return this.tags.map(a => `#${a}`).join(' ');
+  }
+}
+
 export class ConnectionConstraint {
   constructor(fromConnection, toConnection, direction) {
     assert(direction);

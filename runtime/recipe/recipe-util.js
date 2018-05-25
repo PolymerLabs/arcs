@@ -35,16 +35,19 @@ export class RecipeUtil {
       Object.keys(map[key]).forEach(name => {
         let handle = map[key][name];
         let direction = '=';
+        let tags = [];
         if (handle.handle) {
         // NOTE: for now, '=' on the shape means "accept anything". This is going
         // to change when we redo capabilities; for now it's modeled by mapping '=' to
         // '=' rather than to 'inout'.
 
           direction = {'->': 'out', '<-': 'in', '=': '='}[handle.direction];
+          tags = handle.tags || [];
           handle = handle.handle;
         }
         let connection = pMap[key].addConnectionName(name);
         connection.direction = direction;
+        hMap[handle].tags = tags;
         connection.connectToHandle(hMap[handle]);
         hcMap[key + ':' + name] = pMap[key].connections[name];
       });
@@ -188,6 +191,15 @@ export class RecipeUtil {
         let matches = [];
         let {forward, reverse, score} = match;
         for (let nullHandle of nullHandles) {
+          let tagsMatch = true;
+          for (let tag of nullHandle.tags) {
+            if (!emptyHandles[0].tags.includes(tag)) {
+              tagsMatch = false;
+              break;
+            }
+          }
+          if (!tagsMatch)
+            continue;
           let newMatch = {forward: new Map(forward), reverse: new Map(reverse), score: score + 1};
           newMatch.forward.set(nullHandle, emptyHandles[0]);
           newMatch.reverse.set(emptyHandles[0], nullHandle);

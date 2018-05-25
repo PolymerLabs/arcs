@@ -69,6 +69,7 @@ describe('manifest parser', function() {
       recipe
         X -> Y
         X.a -> Y.a
+        &foo.bar -> &far.#bash #fash
         a = b
         a.a = b.b
         X.a #tag <- a.y`);

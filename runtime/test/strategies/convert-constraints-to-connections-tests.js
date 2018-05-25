@@ -315,4 +315,28 @@ describe('ConvertConstraintsToConnections', async () => {
   B as particle1
     i <- view0`);
   });
+
+  it('connects to tags', async () => {
+    let recipes = (await Manifest.parse(`
+    particle A
+      out S {} o
+    particle B
+      out S {} i
+    recipe
+      ? #hashtag
+      A.o -> #hashtag
+      #trashbag <- B.i
+    `)).recipes;
+    let inputParams = {generated: [{result: recipes[0], score: 1}]};
+    let cctc = new ConvertConstraintsToConnections({pec: {}});
+    let results = await cctc.generate(inputParams);
+    assert.equal(results.length, 1);
+    assert.deepEqual(results[0].result.toString(), `recipe
+  ? #hashtag as view0 // S {}
+  create as view1 // S {}
+  A as particle0
+    o -> view0
+  B as particle1
+    i -> view1`);
+  });
 });
