@@ -46,78 +46,78 @@ describe('CreateHandles', function() {
   it('doesnt work with a single reader', async () => {
     await assertDoesntAssignFate(`
       recipe
-        ? as view
+        ? as handle
         Reader
-          foo <- view`);
+          foo <- handle`);
   });
 
   it('doesnt work with a single writer', async () => {
     await assertDoesntAssignFate(`
       recipe
-        ? as view
+        ? as handle
         Writer
-          foo -> view`);
+          foo -> handle`);
   });
 
   it('doesnt work with a single reader-writer', async () => {
     await assertDoesntAssignFate(`
       recipe
-        ? as view
+        ? as handle
         ReadWriter
-          foo = view`);
+          foo = handle`);
   });
 
   it('doesnt work with many readers', async () => {
     await assertDoesntAssignFate(`
       recipe
-        ? as view
+        ? as handle
         Reader
-          foo <- view
+          foo <- handle
         Reader
-          foo <- view`);
+          foo <- handle`);
   });
 
   it('doesnt work with many writers', async () => {
     await assertDoesntAssignFate(`
       recipe
-        ? as view
+        ? as handle
         Writer
-          foo -> view
+          foo -> handle
         Writer
-          foo -> view`);
+          foo -> handle`);
   });
 
   it('works with many reader-writers', async () => {
     await assertAssignsFate(`
       recipe
-        ? as view
+        ? as handle
         ReadWriter
-          foo = view
+          foo = handle
         ReadWriter
-          foo = view`);
+          foo = handle`);
   });
 
   it('works with one reader and one writer', async () => {
     await assertAssignsFate(`
       recipe
-        ? as view
+        ? as handle
         Reader
-          foo <- view
+          foo <- handle
         Writer
-          foo -> view`);
+          foo -> handle`);
   });
 
   it('works with multiple different connections', async () => {
     await assertAssignsFate(`
       recipe
-        ? as view
+        ? as handle
         Reader
-          foo <- view
+          foo <- handle
         Writer
-          foo -> view
+          foo -> handle
         ReadWriter
-          foo = view
+          foo = handle
         Reader
-          foo <- view`);
+          foo <- handle`);
   });
 });

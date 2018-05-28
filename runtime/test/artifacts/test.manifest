@@ -12,6 +12,6 @@ particle Hello in 'hello.js'
   out Text text
 
 recipe
-  create as viewA
+  create as handleA
   Hello
-    text -> viewA
+    text -> handleA

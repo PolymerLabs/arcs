@@ -17,11 +17,11 @@ recipe
   Chooser.resultList -> Recommend.known
   map #giftlist as wishlist
   create #descriptions as descriptions
-  copy as view0
+  copy as handle0
   Recommend
     population <- wishlist
   ShowCollection
-    collection <- view0
+    collection <- handle0
     descriptions -> descriptions
 
 

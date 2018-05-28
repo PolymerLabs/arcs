@@ -13,6 +13,6 @@ particle RestaurantMasterDetail in '../Common/source/MasterDetail.js'
   inout Restaurant selected
   consume masterdetail
     provide master
-      view list
+      handle list
     provide detail
-      view selected
+      handle selected

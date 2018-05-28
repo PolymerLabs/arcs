@@ -66,12 +66,12 @@ particle B
   out Foo ofoo`;
   let recipeManifest = `
 recipe
-  create as fooView   // Foo
-  create as foosView  // [Foo]
+  create as fooHandle   // Foo
+  create as foosHandle  // [Foo]
   slot 'rootslotid-root' as slot0
   A
-    ifoo <- fooView
-    ofoos -> foosView
+    ifoo <- fooHandle
+    ofoos -> foosHandle
     consume root as slot0`;
   async function prepareRecipeAndArc(manifestStr) {
     let manifest = (await Manifest.parse(manifestStr));
@@ -86,21 +86,21 @@ recipe
       recipe.handles[2].mapToStorage({id: 'test:3', type: Foo.type});
     }
     let arc = createTestArc();
-    let fooView = await arc.createHandle(Foo.type, undefined, 'test:1');
-    let foosView = await arc.createHandle(Foo.type.setViewOf(), undefined, 'test:2');
+    let fooHandle = await arc.createHandle(Foo.type, undefined, 'test:1');
+    let foosHandle = await arc.createHandle(Foo.type.setViewOf(), undefined, 'test:2');
     recipe.normalize();
     assert.isTrue(recipe.isResolved());
     let ifooHandleConn = recipe.handleConnections.find(hc => hc.particle.name == 'A' && hc.name == 'ifoo');
-    let ifooView = ifooHandleConn ? ifooHandleConn.handle : null;
+    let ifooHandle = ifooHandleConn ? ifooHandleConn.handle : null;
     let ofoosHandleConn = recipe.handleConnections.find(hc => hc.particle.name == 'A' && hc.name == 'ofoos');
-    let ofoosView = ofoosHandleConn ? ofoosHandleConn.handle : null;
+    let ofoosHandle = ofoosHandleConn ? ofoosHandleConn.handle : null;
     arc._activeRecipe = recipe;
-    return {arc, recipe, ifooView, ofoosView, fooView, foosView};
+    return {arc, recipe, ifooHandle, ofoosHandle, fooHandle, foosHandle};
   }
 
   tests.forEach((test) => {
     it('one particle description ' + test.name, async () => {
-      let {arc, recipe, ifooView, ofoosView, fooView, foosView} = (await prepareRecipeAndArc(`
+      let {arc, recipe, ifooHandle, ofoosHandle, fooHandle, foosHandle} = (await prepareRecipeAndArc(`
 ${schemaManifest}
 ${aParticleManifest}
   description \`read from \${ifoo}\ and populate \${ofoos}\`
@@ -110,31 +110,31 @@ ${recipeManifest}
       let description = new Description(arc);
 
       await test.verifySuggestion('Read from foo and populate foo list.', description);
-      assert.equal('foo', await description.getHandleDescription(ifooView));
-      assert.equal('foo list', await description.getHandleDescription(ofoosView));
+      assert.equal('foo', await description.getHandleDescription(ifooHandle));
+      assert.equal('foo list', await description.getHandleDescription(ofoosHandle));
 
-      // Add value to singleton view.
-      fooView.set({id: 1, rawData: {name: 'foo-name', fooValue: 'the-FOO'}});
+      // Add value to a singleton handle.
+      fooHandle.set({id: 1, rawData: {name: 'foo-name', fooValue: 'the-FOO'}});
       await test.verifySuggestion('Read from foo-name and populate foo list.', description);
-      assert.equal('foo', await description.getHandleDescription(ifooView));
-      assert.equal('foo list', await description.getHandleDescription(ofoosView));
+      assert.equal('foo', await description.getHandleDescription(ifooHandle));
+      assert.equal('foo list', await description.getHandleDescription(ofoosHandle));
 
-      // Add values to set-view
-      foosView.store({id: 2, rawData: {name: 'foo-1', fooValue: 'foo-value-1'}});
-      foosView.store({id: 3, rawData: {name: 'foo-2', fooValue: 'foo-value-2'}});
+      // Add values to a collection handle.
+      foosHandle.store({id: 2, rawData: {name: 'foo-1', fooValue: 'foo-value-1'}});
+      foosHandle.store({id: 3, rawData: {name: 'foo-2', fooValue: 'foo-value-2'}});
       await test.verifySuggestion('Read from foo-name and populate foo list (foo-1, foo-2).', description);
-      assert.equal('foo', await description.getHandleDescription(ifooView));
-      assert.equal('foo list', await description.getHandleDescription(ofoosView));
+      assert.equal('foo', await description.getHandleDescription(ifooHandle));
+      assert.equal('foo list', await description.getHandleDescription(ofoosHandle));
 
-      // Add more values to set-view
-      foosView.store({id: 4, rawData: {name: 'foo-name', fooValue: 'foo-3'}});
+      // Add more values to the collection handle.
+      foosHandle.store({id: 4, rawData: {name: 'foo-name', fooValue: 'foo-3'}});
       await test.verifySuggestion('Read from foo-name and populate foo list (foo-1 plus 2 other items).', description);
     });
   });
 
   tests.forEach((test) => {
     it('one particle and connections descriptions ' + test.name, async () => {
-      let {arc, recipe, ifooView, ofoosView, fooView, foosView} = (await prepareRecipeAndArc(`
+      let {arc, recipe, ifooHandle, ofoosHandle, fooHandle, foosHandle} = (await prepareRecipeAndArc(`
 ${schemaManifest}
 ${aParticleManifest}
   description \`read from \${ifoo}\ and populate \${ofoos}\`
@@ -146,31 +146,31 @@ ${recipeManifest}
       let description = new Description(arc);
 
       await test.verifySuggestion('Read from my-in-foo and populate my-out-foos.', description);
-      assert.equal('my-in-foo', await description.getHandleDescription(ifooView));
-      assert.equal('my-out-foos', await description.getHandleDescription(ofoosView));
+      assert.equal('my-in-foo', await description.getHandleDescription(ifooHandle));
+      assert.equal('my-out-foos', await description.getHandleDescription(ofoosHandle));
 
-      // Add value to singleton view.
-      fooView.set({id: 1, rawData: {name: 'foo-name', fooValue: 'the-FOO'}});
+      // Add value to a singleton handle.
+      fooHandle.set({id: 1, rawData: {name: 'foo-name', fooValue: 'the-FOO'}});
       await test.verifySuggestion('Read from my-in-foo (foo-name) and populate my-out-foos.', description);
 
-      // Add values to set-view
-      foosView.store({id: 2, rawData: {name: 'foo-1', fooValue: 'foo-value-1'}});
-      foosView.store({id: 3, rawData: {name: 'foo-2', fooValue: 'foo-value-2'}});
+      // Add values to a collection handle.
+      foosHandle.store({id: 2, rawData: {name: 'foo-1', fooValue: 'foo-value-1'}});
+      foosHandle.store({id: 3, rawData: {name: 'foo-2', fooValue: 'foo-value-2'}});
       await test.verifySuggestion('Read from my-in-foo (foo-name) and populate my-out-foos (foo-1, foo-2).',
                             description);
 
-      // Add more values to set-view
-      foosView.store({id: 4, rawData: {name: 'foo-name', fooValue: 'foo-3'}});
+      // Add more values to the collection handle.
+      foosHandle.store({id: 4, rawData: {name: 'foo-name', fooValue: 'foo-3'}});
       await test.verifySuggestion('Read from my-in-foo (foo-name) and populate my-out-foos (foo-1 plus 2 other items).',
                             description);
-      assert.equal('my-in-foo', await description.getHandleDescription(ifooView));
-      assert.equal('my-out-foos', await description.getHandleDescription(ofoosView));
+      assert.equal('my-in-foo', await description.getHandleDescription(ifooHandle));
+      assert.equal('my-out-foos', await description.getHandleDescription(ofoosHandle));
     });
   });
 
   tests.forEach((test) => {
     it('one particle and connections descriptions references ' + test.name, async () => {
-      let {arc, recipe, ifooView, ofoosView, fooView, foosView} = (await prepareRecipeAndArc(`
+      let {arc, recipe, ifooHandle, ofoosHandle, fooHandle, foosHandle} = (await prepareRecipeAndArc(`
 ${schemaManifest}
 ${aParticleManifest}
   description \`read from \${ifoo}\ and populate \${ofoos}\`
@@ -182,22 +182,22 @@ ${recipeManifest}
       let description = new Description(arc);
 
       await test.verifySuggestion('Read from my-in-foo and populate The Foos from my-in-foo.', description);
-      assert.equal('my-in-foo', await description.getHandleDescription(ifooView));
-      assert.equal('The Foos from my-in-foo', await description.getHandleDescription(ofoosView));
+      assert.equal('my-in-foo', await description.getHandleDescription(ifooHandle));
+      assert.equal('The Foos from my-in-foo', await description.getHandleDescription(ofoosHandle));
 
-      fooView.set({id: 1, rawData: {name: 'foo-name', fooValue: 'the-FOO'}});
-      foosView.store({id: 2, rawData: {name: 'foo-1', fooValue: 'foo-value-1'}});
-      foosView.store({id: 3, rawData: {name: 'foo-2', fooValue: 'foo-value-2'}});
+      fooHandle.set({id: 1, rawData: {name: 'foo-name', fooValue: 'the-FOO'}});
+      foosHandle.store({id: 2, rawData: {name: 'foo-1', fooValue: 'foo-value-1'}});
+      foosHandle.store({id: 3, rawData: {name: 'foo-2', fooValue: 'foo-value-2'}});
       await test.verifySuggestion('Read from my-in-foo (foo-name) and populate The Foos from my-in-foo (foo-1, foo-2).',
                             description);
-      assert.equal('my-in-foo', await description.getHandleDescription(ifooView));
-      assert.equal('The Foos from my-in-foo', await description.getHandleDescription(ofoosView));
+      assert.equal('my-in-foo', await description.getHandleDescription(ifooHandle));
+      assert.equal('The Foos from my-in-foo', await description.getHandleDescription(ofoosHandle));
     });
   });
 
   tests.forEach((test) => {
     it('one particle and connections descriptions references no pattern ' + test.name, async () => {
-      let {arc, recipe, ifooView, ofoosView, fooView, foosView} = (await prepareRecipeAndArc(`
+      let {arc, recipe, ifooHandle, ofoosHandle, fooHandle, foosHandle} = (await prepareRecipeAndArc(`
 ${schemaManifest}
 ${aParticleManifest}
   description \`read from \${ifoo}\ and populate \${ofoos}\`
@@ -208,22 +208,22 @@ ${recipeManifest}
       let description = new Description(arc);
 
       await test.verifySuggestion('Read from foo and populate The Foos from foo.', description);
-      assert.equal('foo', await description.getHandleDescription(ifooView));
-      assert.equal('The Foos from foo', await description.getHandleDescription(ofoosView));
+      assert.equal('foo', await description.getHandleDescription(ifooHandle));
+      assert.equal('The Foos from foo', await description.getHandleDescription(ofoosHandle));
 
-      fooView.set({id: 1, rawData: {name: 'foo-name', fooValue: 'the-FOO'}});
-      foosView.store({id: 2, rawData: {name: 'foo-1', fooValue: 'foo-value-1'}});
-      foosView.store({id: 3, rawData: {name: 'foo-2', fooValue: 'foo-value-2'}});
+      fooHandle.set({id: 1, rawData: {name: 'foo-name', fooValue: 'the-FOO'}});
+      foosHandle.store({id: 2, rawData: {name: 'foo-1', fooValue: 'foo-value-1'}});
+      foosHandle.store({id: 3, rawData: {name: 'foo-2', fooValue: 'foo-value-2'}});
       await test.verifySuggestion('Read from foo-name and populate The Foos from foo-name (foo-1, foo-2).',
                             description);
-      assert.equal('foo', await description.getHandleDescription(ifooView));
-      assert.equal('The Foos from foo', await description.getHandleDescription(ofoosView));
+      assert.equal('foo', await description.getHandleDescription(ifooHandle));
+      assert.equal('The Foos from foo', await description.getHandleDescription(ofoosHandle));
     });
   });
 
   tests.forEach((test) => {
     it('one particle and connections descriptions with extras ' + test.name, async () => {
-      let {arc, recipe, ifooView, ofoosView, fooView, foosView} = (await prepareRecipeAndArc(`
+      let {arc, recipe, ifooHandle, ofoosHandle, fooHandle, foosHandle} = (await prepareRecipeAndArc(`
 ${schemaManifest}
 ${aParticleManifest}
   description \`read from \${ifoo}\ and populate \${ofoos}._name_\`
@@ -234,22 +234,22 @@ ${recipeManifest}
 
       let description = new Description(arc);
 
-      fooView.set({id: 1, rawData: {name: 'foo-name', fooValue: 'the-FOO'}});
-      foosView.store({id: 2, rawData: {name: 'foo-1', fooValue: 'foo-value-1'}});
-      foosView.store({id: 3, rawData: {name: 'foo-2', fooValue: 'foo-value-2'}});
+      fooHandle.set({id: 1, rawData: {name: 'foo-name', fooValue: 'the-FOO'}});
+      foosHandle.store({id: 2, rawData: {name: 'foo-1', fooValue: 'foo-value-1'}});
+      foosHandle.store({id: 3, rawData: {name: 'foo-2', fooValue: 'foo-value-2'}});
 
       await test.verifySuggestion('Read from [fooValue: the-FOO] (foo-name) and populate [A list of foo with values: foo-1, foo-2].',
                             description);
 
-      assert.equal('[fooValue: the-FOO]', await description.getHandleDescription(ifooView)); /// view description is an object?
+      assert.equal('[fooValue: the-FOO]', await description.getHandleDescription(ifooHandle));
       // Add mode getHandleDescription tests, to verify all are strings!
-      assert.equal('[A list of foo with values: foo-1, foo-2]', await description.getHandleDescription(ofoosView));
+      assert.equal('[A list of foo with values: foo-1, foo-2]', await description.getHandleDescription(ofoosHandle));
     });
   });
 
   tests.forEach((test) => {
     it('connection description from another particle ' + test.name, async () => {
-      let {arc, recipe, ifooView, ofoosView, fooView, foosView} = (await prepareRecipeAndArc(`
+      let {arc, recipe, ifooHandle, ofoosHandle, fooHandle, foosHandle} = (await prepareRecipeAndArc(`
 ${schemaManifest}
 ${aParticleManifest}
   description \`read from \${ifoo}\ and populate \${ofoos}\`
@@ -259,31 +259,31 @@ ${bParticleManifest}
     ofoo \`best-new-foo\`
 ${recipeManifest}
   B
-    ofoo -> fooView
+    ofoo -> fooHandle
     `));
 
       let description = new Description(arc);
 
       await test.verifySuggestion('Read from best-new-foo and populate my-foos.', description);
-      assert.equal('best-new-foo', await description.getHandleDescription(ifooView));
-      let oBFooView = recipe.handleConnections.find(hc => hc.particle.name == 'B' && hc.name == 'ofoo').handle;
-      assert.equal('best-new-foo', await description.getHandleDescription(oBFooView));
-      assert.equal('my-foos', await description.getHandleDescription(ofoosView));
+      assert.equal('best-new-foo', await description.getHandleDescription(ifooHandle));
+      let oBFooHandle = recipe.handleConnections.find(hc => hc.particle.name == 'B' && hc.name == 'ofoo').handle;
+      assert.equal('best-new-foo', await description.getHandleDescription(oBFooHandle));
+      assert.equal('my-foos', await description.getHandleDescription(ofoosHandle));
 
-      fooView.set({id: 1, rawData: {name: 'foo-name', fooValue: 'the-FOO'}});
-      foosView.store({id: 2, rawData: {name: 'foo-1', fooValue: 'foo-value-1'}});
-      foosView.store({id: 3, rawData: {name: 'foo-2', fooValue: 'foo-value-2'}});
+      fooHandle.set({id: 1, rawData: {name: 'foo-name', fooValue: 'the-FOO'}});
+      foosHandle.store({id: 2, rawData: {name: 'foo-1', fooValue: 'foo-value-1'}});
+      foosHandle.store({id: 3, rawData: {name: 'foo-2', fooValue: 'foo-value-2'}});
       await test.verifySuggestion('Read from best-new-foo (foo-name) and populate my-foos (foo-1, foo-2).',
                             description);
-      assert.equal('best-new-foo', await description.getHandleDescription(ifooView));
-      assert.equal('best-new-foo', await description.getHandleDescription(oBFooView));
-      assert.equal('my-foos', await description.getHandleDescription(ofoosView));
+      assert.equal('best-new-foo', await description.getHandleDescription(ifooHandle));
+      assert.equal('best-new-foo', await description.getHandleDescription(oBFooHandle));
+      assert.equal('my-foos', await description.getHandleDescription(ofoosHandle));
     });
   });
 
   tests.forEach((test) => {
     it('multiple particles ' + test.name, async () => {
-      let {arc, recipe, ifooHandleConn, fooView} = (await prepareRecipeAndArc(`
+      let {arc, recipe, ifooHandleConn, fooHandle} = (await prepareRecipeAndArc(`
 ${schemaManifest}
 particle X1
   out Foo ofoo
@@ -303,26 +303,26 @@ particle A
     ifoo \`A-foo\`
 
 recipe
-  create as fooView   // Foo
+  create as fooHandle   // Foo
   slot 'r0' as slot0
   slot 'action::slot' as slot1
   X1
-    ofoo -> fooView
+    ofoo -> fooHandle
     consume action as slot1
   X2
-    ofoo -> fooView
+    ofoo -> fooHandle
     consume action as slot1
   A
-    ifoo <- fooView
+    ifoo <- fooHandle
     consume root as slot0
       provide action as slot1
     `));
-      let aFooView = recipe.handleConnections.find(hc => hc.particle.name == 'A' && hc.name == 'ifoo').handle;
+      let aFooHandle = recipe.handleConnections.find(hc => hc.particle.name == 'A' && hc.name == 'ifoo').handle;
 
       let description = new Description(arc);
 
       await test.verifySuggestion('Display X1-foo, create X1::X1-foo, and create X2::X2-foo.', description);
-      assert.equal('X1-foo', await description.getHandleDescription(aFooView));
+      assert.equal('X1-foo', await description.getHandleDescription(aFooHandle));
 
       // Rank X2 higher than X2
       let relevance = new Relevance();
@@ -332,7 +332,7 @@ recipe
 
       description.relevance = relevance;
       await test.verifySuggestion('Display X2-foo, create X2::X2-foo, and create X1::X1-foo.', description);
-      assert.equal('X2-foo', await description.getHandleDescription(aFooView));
+      assert.equal('X2-foo', await description.getHandleDescription(aFooHandle));
     });
   });
 
@@ -347,14 +347,14 @@ particle X
     ofoo \`X-foo\`
 
 recipe
-  create as fooView1   // Foo
-  create as fooView2   // Foo
+  create as fooHandle1   // Foo
+  create as fooHandle2   // Foo
   slot 'r0' as slot0
   X
-    ofoo -> fooView1
+    ofoo -> fooHandle1
     consume root as slot0
   X
-    ofoo -> fooView2
+    ofoo -> fooHandle2
     consume root as slot0
     `;
       let manifest = (await Manifest.parse(manifestStr));
@@ -364,8 +364,8 @@ recipe
       recipe.handles[0].mapToStorage({id: 'test:1', type: Foo.type.setViewOf()});
       recipe.handles[1].mapToStorage({id: 'test:2', type: Foo.type.setViewOf()});
       let arc = createTestArc();
-      let fooView1 = await arc.createHandle(Foo.type.setViewOf(), undefined, 'test:1');
-      let fooView2 = await arc.createHandle(Foo.type.setViewOf(), undefined, 'test:2');
+      let fooHandle1 = await arc.createHandle(Foo.type.setViewOf(), undefined, 'test:1');
+      let fooHandle2 = await arc.createHandle(Foo.type.setViewOf(), undefined, 'test:2');
       recipe.normalize();
       assert.isTrue(recipe.isResolved());
       arc._activeRecipe = recipe;
@@ -376,16 +376,16 @@ recipe
       assert.equal('X-foo', await description.getHandleDescription(recipe.handles[0]));
       assert.equal('X-foo', await description.getHandleDescription(recipe.handles[1]));
 
-      // Add values to the second view.
-      fooView2.store({id: 1, rawData: {name: 'foo-1', fooValue: 'foo-value-1'}});
-      fooView2.store({id: 2, rawData: {name: 'foo-2', fooValue: 'foo-value-2'}});
+      // Add values to the second handle.
+      fooHandle2.store({id: 1, rawData: {name: 'foo-1', fooValue: 'foo-value-1'}});
+      fooHandle2.store({id: 2, rawData: {name: 'foo-2', fooValue: 'foo-value-2'}});
       await test.verifySuggestion('Write to X-foo and write to X-foo (foo-1, foo-2).', description);
       assert.equal('X-foo', await description.getHandleDescription(recipe.handles[0]));
       assert.equal('X-foo', await description.getHandleDescription(recipe.handles[1]));
 
-      // Add values to the first view also.
-      fooView1.store({id: 3, rawData: {name: 'foo-3', fooValue: 'foo-value-3'}});
-      fooView1.store({id: 4, rawData: {name: 'foo-4', fooValue: 'foo-value-4'}});
+      // Add values to the first handle also.
+      fooHandle1.store({id: 3, rawData: {name: 'foo-3', fooValue: 'foo-value-3'}});
+      fooHandle1.store({id: 4, rawData: {name: 'foo-4', fooValue: 'foo-value-4'}});
       await test.verifySuggestion('Write to X-foo (foo-3, foo-4) and write to X-foo (foo-1, foo-2).', description);
       assert.equal('X-foo', await description.getHandleDescription(recipe.handles[0]));
       assert.equal('X-foo', await description.getHandleDescription(recipe.handles[1]));
@@ -394,7 +394,7 @@ recipe
 
   tests.forEach((test) => {
     it('duplicate particles ' + test.name, async () => {
-      let {arc, recipe, ifooView, fooView} = (await prepareRecipeAndArc(`
+      let {arc, recipe, ifooHandle, fooHandle} = (await prepareRecipeAndArc(`
 ${schemaManifest}
 ${aParticleManifest}
     provide action
@@ -406,35 +406,35 @@ ${bParticleManifest}
     ofoo \`b-foo\`
 
 recipe
-  create as fooView1    // Foo
-  create as foosView    // [Foo]
-  create as fooView2    // Foo
+  create as fooHandle1    // Foo
+  create as foosHandle    // [Foo]
+  create as fooHandle2    // Foo
   slot 'r0' as slot0
   slot 'action::slot' as slot1
   B
-    ofoo -> fooView1
+    ofoo -> fooHandle1
     consume action as slot1
   A
-    ifoo <- fooView1
-    ofoos -> foosView
+    ifoo <- fooHandle1
+    ofoos -> foosHandle
     consume root as slot0
       provide action as slot1
   B
-    ofoo -> fooView2
+    ofoo -> fooHandle2
     consume action as slot1
     `));
 
       let description = new Description(arc);
 
       // Add values to both Foo handles
-      fooView.set({id: 1, rawData: {name: 'the-FOO'}});
-      let fooView2 = await arc.createHandle(fooView.type, undefined, 'test:3');
-      fooView2.set({id: 2, rawData: {name: 'another-FOO'}});
+      fooHandle.set({id: 1, rawData: {name: 'the-FOO'}});
+      let fooHandle2 = await arc.createHandle(fooHandle.type, undefined, 'test:3');
+      fooHandle2.set({id: 2, rawData: {name: 'another-FOO'}});
       await test.verifySuggestion('Do A with b-foo (the-FOO), output B to b-foo, and output B to b-foo (another-FOO).',
                             description);
-      assert.equal('b-foo', await description.getHandleDescription(ifooView));
+      assert.equal('b-foo', await description.getHandleDescription(ifooHandle));
 
-      // Rank B bound to fooView2 higher than B that is bound to fooView1.
+      // Rank B bound to fooHandle2 higher than B that is bound to fooHandle1.
       let relevance = new Relevance();
       relevance.newArc = arc;
       relevance.relevanceMap.set(recipe.particles.find(p => p.name == 'A'), [7]);
@@ -458,18 +458,18 @@ particle A
     ofoo \`<my-foo>\`
 
 recipe
-  create as fooView   // Foo
+  create as fooHandle   // Foo
   slot 'r0' as slot0
   A
-    ofoo -> fooView
+    ofoo -> fooHandle
     consume root as slot0
     `));
 
       let description = new Description(arc);
 
       await test.verifySuggestion('Create &lt;new> &lt;&lt;my-foo>>.', description);
-      let view = recipe.handleConnections.find(hc => hc.particle.name == 'A' && hc.name == 'ofoo').handle;
-      assert.equal('&lt;my-foo>', await description.getHandleDescription(view, arc));
+      let handle = recipe.handleConnections.find(hc => hc.particle.name == 'A' && hc.name == 'ofoo').handle;
+      assert.equal('&lt;my-foo>', await description.getHandleDescription(handle, arc));
     });
   });
 
@@ -484,12 +484,12 @@ recipe
           description \`make \${ts} from \${t}\`
           consume root
         recipe
-          create as tView
-          create as tsView
+          create as tHandle
+          create as tsHandle
           slot 'rootslotid-root' as slot0
           P
-           t = tView
-           ts = tsView
+           t = tHandle
+           ts = tsHandle
            consume root as slot0`;
         let manifest = (await Manifest.parse(manifestStr));
         assert(1, manifest.recipes.length);
@@ -498,8 +498,8 @@ recipe
         recipe.handles[0].mapToStorage({id: 'test:1', type: MyBESTType.type});
         recipe.handles[1].mapToStorage({id: 'test:2', type: MyBESTType.type.setViewOf()});
         let arc = createTestArc();
-        let tView = await arc.createHandle(MyBESTType.type, undefined, 'test:1');
-        let tsView = await arc.createHandle(MyBESTType.type.setViewOf(), undefined, 'test:2');
+        let tHandle = await arc.createHandle(MyBESTType.type, undefined, 'test:1');
+        let tsHandle = await arc.createHandle(MyBESTType.type.setViewOf(), undefined, 'test:2');
         recipe.normalize();
         assert.isTrue(recipe.isResolved());
 
@@ -507,18 +507,18 @@ recipe
         let description = new Description(arc);
 
         await test.verifySuggestion('Make my best type list from my best type.', description);
-        let tRecipeView = recipe.handleConnections.find(hc => hc.particle.name == 'P' && hc.name == 't').handle;
-        let tsRecipeView = recipe.handleConnections.find(hc => hc.particle.name == 'P' && hc.name == 'ts').handle;
-        assert.equal('my best type', await description.getHandleDescription(tRecipeView));
-        assert.equal('my best type list', await description.getHandleDescription(tsRecipeView));
+        let tRecipeHandle = recipe.handleConnections.find(hc => hc.particle.name == 'P' && hc.name == 't').handle;
+        let tsRecipeHandle = recipe.handleConnections.find(hc => hc.particle.name == 'P' && hc.name == 'ts').handle;
+        assert.equal('my best type', await description.getHandleDescription(tRecipeHandle));
+        assert.equal('my best type list', await description.getHandleDescription(tsRecipeHandle));
 
         // Add values to handles.
-        tView.set({id: 1, rawData: {property: 'value1'}});
-        tsView.store({id: 2, rawData: {property: 'value2'}});
+        tHandle.set({id: 1, rawData: {property: 'value1'}});
+        tsHandle.store({id: 2, rawData: {property: 'value2'}});
         await test.verifySuggestion('Make my best type list (1 items) from my best type.', description);
 
-        tsView.store({id: 3, rawData: {property: 'value3'}});
-        tsView.store({id: 4, rawData: {property: 'value4'}});
+        tsHandle.store({id: 3, rawData: {property: 'value3'}});
+        tsHandle.store({id: 4, rawData: {property: 'value4'}});
         await test.verifySuggestion('Make my best type list (3 items) from my best type.', description);
     });
   });
@@ -547,21 +547,21 @@ particle C
   consume otherslot
   description \`only c\`
 recipe
-  create 'test:1' as view0  // Foo
+  create 'test:1' as handle0  // Foo
   slot 'rootslotid-root' as slot0
   A as particle1
-    foo = view0
+    foo = handle0
     consume root as slot0
       provide aslot as slot1
       provide otherslot as slot2
   B1
-    foo -> view0
+    foo -> handle0
     consume aslot as slot1
   B2
-    foo -> view0
+    foo -> handle0
     consume aslot as slot1
   C
-    foo <- view0
+    foo <- handle0
     consume otherslot as slot2
 `;
       let manifest = (await Manifest.parse(manifestStr));
@@ -581,21 +581,21 @@ recipe
 
   tests.forEach((test) => {
     it('particle without UI description ' + test.name, async () => {
-      let {arc, recipe, fooView} = (await prepareRecipeAndArc(`
+      let {arc, recipe, fooHandle} = (await prepareRecipeAndArc(`
 ${schemaManifest}
 ${bParticleManifest}
   description \`Populate \${ofoo}\`
 recipe
-  create as fooView   // Foo
+  create as fooHandle   // Foo
   B
-    ofoo -> fooView
+    ofoo -> fooHandle
       `));
 
       let description = new Description(arc);
       await test.verifySuggestion('Populate foo.', description);
 
-      // Add value to singleton view.
-      fooView.set({id: 1, rawData: {name: 'foo-name', fooValue: 'the-FOO'}});
+      // Add value to a singleton handle.
+      fooHandle.set({id: 1, rawData: {name: 'foo-name', fooValue: 'the-FOO'}});
       await test.verifySuggestion('Populate foo-name.', description);
     });
   });
@@ -646,12 +646,12 @@ particle B
   out [Description] descriptions
   consume root
 recipe
-  create 'test:1' as view0  // Foo
-  create 'test:2' as view1  // [Description]
+  create 'test:1' as handle0  // Foo
+  create 'test:2' as handle1  // [Description]
   slot 'rootslotid-root' as slot0
   B as particle1
-    ofoo -> view0
-    descriptions -> view1
+    ofoo -> handle0
+    descriptions -> handle1
     consume root as slot0
 `;
     let manifest = (await Manifest.parse(manifestStr));
@@ -662,8 +662,8 @@ recipe
     recipe.handles[0].mapToStorage({id: 'test:1', type: Foo.type});
     recipe.handles[1].mapToStorage({id: 'test:2', type: DescriptionType.type.setViewOf()});
     let arc = createTestArc();
-    let fooView = await arc.createHandle(Foo.type, undefined, 'test:1');
-    let descriptionView = await arc.createHandle(DescriptionType.type.setViewOf(), undefined, 'test:2');
+    let fooHandle = await arc.createHandle(Foo.type, undefined, 'test:1');
+    let descriptionHandle = await arc.createHandle(DescriptionType.type.setViewOf(), undefined, 'test:2');
     recipe.normalize();
     assert.isTrue(recipe.isResolved());
 
@@ -671,15 +671,15 @@ recipe
     return {
       recipe,
       description: new Description(arc),
-      fooView,
-      Description: descriptionView.type.primitiveType().entitySchema.entityClass(),
-      descriptionHandle: handleFor(descriptionView)
+      fooHandle,
+      Description: descriptionHandle.type.primitiveType().entitySchema.entityClass(),
+      descriptionHandle: handleFor(descriptionHandle)
     };
   }
 
   tests.forEach((test) => {
     it('particle dynamic description ' + test.name, async () => {
-      let {recipe, description, fooView, Description, descriptionHandle} = await prepareRecipeAndArc();
+      let {recipe, description, fooHandle, Description, descriptionHandle} = await prepareRecipeAndArc();
 
       assert.isUndefined(await description.getArcDescription());
 
@@ -691,19 +691,19 @@ recipe
       descriptionHandle.store(new Description({key: '_pattern_', value: 'Return my foo'}));
       await test.verifySuggestion('Return my foo.', description);
 
-      // Particle description handle with view connections.
+      // Particle description handle with handle connections.
       descriptionHandle.store(new Description({key: '_pattern_', value: 'Return my temporary foo'}));
       descriptionHandle.store(new Description({key: '_pattern_', value: 'Return my ${ofoo}'}));
       let ofooDesc = new Description({key: 'ofoo', value: 'best-foo'});
       descriptionHandle.store(ofooDesc);
       await test.verifySuggestion('Return my best-foo.', description);
 
-      // Add value to connection's view.
-      fooView.set({id: 3, rawData: {name: 'foo-name', fooValue: 'the-FOO'}});
+      // Add value to connection's handle.
+      fooHandle.set({id: 3, rawData: {name: 'foo-name', fooValue: 'the-FOO'}});
       await test.verifySuggestion('Return my best-foo (foo-name).', description);
 
       // Remove connection's description.
-      fooView.set({id: 3, rawData: {name: 'foo-name', fooValue: 'the-FOO'}});
+      fooHandle.set({id: 3, rawData: {name: 'foo-name', fooValue: 'the-FOO'}});
       descriptionHandle.remove(ofooDesc);
       await test.verifySuggestion('Return my foo-name.', description);
     });
@@ -711,13 +711,13 @@ recipe
 
   tests.forEach((test) => {
     it('particle dynamic dom description ' + test.name, async () => {
-      let {recipe, description, fooView, Description, descriptionHandle} = await prepareRecipeAndArc();
+      let {recipe, description, fooHandle, Description, descriptionHandle} = await prepareRecipeAndArc();
       descriptionHandle.store(new Description({key: '_pattern_', value: 'return my ${ofoo} (text)'}));
       descriptionHandle.store(new Description({key: '_template_', value: 'Return my <span>{{ofoo}}</span> (dom)'}));
       descriptionHandle.store(new Description({key: '_model_', value: JSON.stringify({'ofoo': '${ofoo}'})}));
       await test.verifySuggestion(`Return my foo (${test.name}).`, description);
 
-      fooView.set({id: 5, rawData: {name: 'foo-name'}});
+      fooHandle.set({id: 5, rawData: {name: 'foo-name'}});
       await test.verifySuggestion(`Return my foo-name (${test.name}).`, description);
     });
   });

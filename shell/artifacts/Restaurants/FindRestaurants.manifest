@@ -15,5 +15,5 @@ particle FindRestaurants in 'source/FindRestaurants.js'
   affordance dom
   consume root
     provide masterdetail
-      view restaurants
+      handle restaurants
   description `find restaurants near ${location}`

@@ -15,11 +15,11 @@ particle ShowCollection in 'source/ShowCollection.js'
   affordance dom-touch
   consume master #root
     provide action
-      view collection
+      handle collection
     provide preamble
     provide postamble
     must provide set of item
-      view collection
+      handle collection
     provide set of annotation
-      view collection
+      handle collection
   description `show ${collection}`

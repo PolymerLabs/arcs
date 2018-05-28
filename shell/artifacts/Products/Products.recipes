@@ -60,16 +60,16 @@ recipe
 
 // Buying for [person]'s [occasion] in [timeframe]? Product [X] arrives too late.
 recipe
-  map as view1
-  use #shortlist as view2
-  use as view3
+  map as handle1
+  use #shortlist as handle2
+  use as handle3
   GiftList
-    person <- view1
+    person <- handle1
   Multiplexer
-    list <- view2
+    list <- handle2
     hostedParticle = Arrivinator
   Multiplexer
-    list <- view3
+    list <- handle3
     hostedParticle = Arrivinator
 
 // Check manufacturer information for products.
@@ -98,4 +98,4 @@ store PageProducts of [Product] #shortlist in 'data/products.json'
 store ClairesWishlist of [Product] #wishlist in 'data/wishlist.json'
   description `Claire's wishlist`
 store APerson of Person in 'data/people.json'
-//view ThePeople of Person in 'data/people.json'
+//store ThePeople of Person in 'data/people.json'

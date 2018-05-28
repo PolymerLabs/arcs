@@ -76,13 +76,13 @@ describe('recipe-util', function() {
     assert(results[1].match.v.localName == 'v2');
   });
 
-  it('can match a free view', async () => {
+  it('can match a free handle', async () => {
     let manifest = await Manifest.parse(`
       particle A
       particle B
 
       recipe Recipe
-        map as v1
+        map as h1
         A
         B`);
     let recipe = manifest.recipes[0];
@@ -91,10 +91,10 @@ describe('recipe-util', function() {
     let results = RecipeUtil.find(recipe, shape);
     assert(results.length == 1);
     assert(results[0].score == -3);
-    assert(results[0].match.v.localName == 'v1');
+    assert(results[0].match.v.localName == 'h1');
   });
 
-  it('can match dangling view connections', async () => {
+  it('can match dangling handle connections', async () => {
     let manifest = await Manifest.parse(`
       schema S
       particle A
@@ -103,19 +103,19 @@ describe('recipe-util', function() {
         out S b
 
       recipe Recipe
-        map as v1
+        map as h1
         A
           a -> //
         B
           b -> //
         `);
     let recipe = manifest.recipes[0];
-    let shape = RecipeUtil.makeShape(['A', 'B'], ['v'],
-      {'A': {'a': 'v'}, 'B': {'b': 'v'}});
+    let shape = RecipeUtil.makeShape(['A', 'B'], ['h'],
+      {'A': {'a': 'h'}, 'B': {'b': 'h'}});
     let results = RecipeUtil.find(recipe, shape);
     assert(results.length == 1);
     assert(results[0].score == -1);
-    assert(results[0].match.v.localName == 'v1');
+    assert(results[0].match.h.localName == 'h1');
     assert(results[0].match['A:a'].name == 'a');
     assert(results[0].match['B:b'].name == 'b');
   });

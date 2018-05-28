@@ -85,7 +85,7 @@ export class StorageProviderBase {
   toString(handleTags) {
     let results = [];
     let handleStr = [];
-    handleStr.push(`view`);
+    handleStr.push(`store`);
     if (this.name) {
       handleStr.push(`${this.name}`);
     }

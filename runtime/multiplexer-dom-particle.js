@@ -26,7 +26,7 @@ export class MultiplexerDomParticle extends TransformationDomParticle {
       hostedParticle,
       views,
       arc) {
-    let otherMappedViews = [];
+    let otherMappedHandles = [];
     let otherConnections = [];
     let index = 2;
     const skipConnectionNames = [listHandleName, particleHandleName];
@@ -37,7 +37,7 @@ export class MultiplexerDomParticle extends TransformationDomParticle {
       // TODO(wkorman): For items with embedded recipes we may need a map
       // (perhaps id to index) to make sure we don't map a handle into the inner
       // arc multiple times unnecessarily.
-      otherMappedViews.push(
+      otherMappedHandles.push(
           `map '${await arc.mapHandle(otherView._proxy)}' as v${index}`);
       let hostedOtherConnection = hostedParticle.connections.find(
           conn => conn.isCompatibleType(otherView.type));
@@ -49,7 +49,7 @@ export class MultiplexerDomParticle extends TransformationDomParticle {
         this._connByHostedConn.set(hostedOtherConnection.name, connectionName);
       }
     }
-    return [otherMappedViews, otherConnections];
+    return [otherMappedHandles, otherConnections];
   }
 
   async setViews(views) {
@@ -59,12 +59,12 @@ export class MultiplexerDomParticle extends TransformationDomParticle {
     const particleHandleName = 'hostedParticle';
     let particleView = views.get(particleHandleName);
     let hostedParticle = null;
-    let otherMappedViews = [];
+    let otherMappedHandles = [];
     let otherConnections = [];
     if (particleView) {
       hostedParticle = await particleView.get();
       if (hostedParticle) {
-        [otherMappedViews, otherConnections] =
+        [otherMappedHandles, otherConnections] =
             await this._mapParticleConnections(
                 listHandleName, particleHandleName, hostedParticle, views, arc);
       }
@@ -73,7 +73,7 @@ export class MultiplexerDomParticle extends TransformationDomParticle {
       arc,
       type: views.get(listHandleName).type,
       hostedParticle,
-      otherMappedViews,
+      otherMappedHandles,
       otherConnections
     });
 
@@ -82,7 +82,7 @@ export class MultiplexerDomParticle extends TransformationDomParticle {
 
   async willReceiveProps(
       {list},
-      {arc, type, hostedParticle, otherMappedViews, otherConnections}) {
+      {arc, type, hostedParticle, otherMappedHandles, otherConnections}) {
     if (list.length > 0) {
       this.relevance = 0.1;
     }
@@ -90,16 +90,16 @@ export class MultiplexerDomParticle extends TransformationDomParticle {
     for (let [index, item] of this.getListEntries(list)) {
       let resolvedHostedParticle = hostedParticle;
       if (this.handleIds[item.id]) {
-        let itemView = await this.handleIds[item.id];
-        itemView.set(item);
+        let itemHandle = await this.handleIds[item.id];
+        itemHandle.set(item);
         continue;
       }
 
-      let itemViewPromise =
+      let itemHandlePromise =
           arc.createHandle(type.primitiveType(), 'item' + index);
-      this.handleIds[item.id] = itemViewPromise;
+      this.handleIds[item.id] = itemHandlePromise;
 
-      let itemView = await itemViewPromise;
+      let itemHandle = await itemHandlePromise;
 
       if (!resolvedHostedParticle) {
         // If we're muxing on behalf of an item with an embedded recipe, the
@@ -114,7 +114,7 @@ export class MultiplexerDomParticle extends TransformationDomParticle {
         // to this item's render particle.
         const listHandleName = 'list';
         const particleHandleName = 'renderParticle';
-        [otherMappedViews, otherConnections] =
+        [otherMappedHandles, otherConnections] =
             await this._mapParticleConnections(
                 listHandleName,
                 particleHandleName,
@@ -138,11 +138,11 @@ export class MultiplexerDomParticle extends TransformationDomParticle {
             this.constructInnerRecipe(
                 resolvedHostedParticle,
                 item,
-                itemView,
+                itemHandle,
                 {name: hostedSlotName, id: slotId},
-                {connections: otherConnections, views: otherMappedViews}),
+                {connections: otherConnections, views: otherMappedHandles}),
             this);
-        itemView.set(item);
+        itemHandle.set(item);
       } catch (e) {
         console.log(e);
       }
@@ -194,7 +194,7 @@ export class MultiplexerDomParticle extends TransformationDomParticle {
   // arc for each item. Subclasses should override this method as by default
   // it does nothing and so no recipe will be returned and content will not
   // be loaded successfully into the inner arc.
-  constructInnerRecipe(hostedParticle, item, itemView, slot, other) {}
+  constructInnerRecipe(hostedParticle, item, itemHandle, slot, other) {}
 
   // Called with the list of items and by default returns the direct result of
   // `Array.entries()`. Subclasses can override this method to alter the item

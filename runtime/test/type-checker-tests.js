@@ -151,20 +151,20 @@ describe('TypeChecker', () => {
 
   });
 
-  it('does not resolve Entity and SetView', async () => {
+  it('does not resolve Entity and Collection', async () => {
     let entity = {
       type: Type.newEntity(new Schema({names: ['Product', 'Thing'], fields: {}})),
       direction: 'inout'
     };
-    let setView = {
+    let collection = {
       type: Type.newEntity(new Schema({names: ['Product', 'Thing'], fields: {}})).setViewOf(),
       direction: 'inout'
     };
 
-    assert.isNull(TypeChecker.processTypeList(entity.type, [setView]));
-    assert.isNull(TypeChecker.processTypeList(setView.type, [entity]));
-    assert.isNull(TypeChecker.processTypeList(undefined, [entity, setView]));
-    assert.isNull(TypeChecker.processTypeList(undefined, [setView, entity]));
+    assert.isNull(TypeChecker.processTypeList(entity.type, [collection]));
+    assert.isNull(TypeChecker.processTypeList(collection.type, [entity]));
+    assert.isNull(TypeChecker.processTypeList(undefined, [entity, collection]));
+    assert.isNull(TypeChecker.processTypeList(undefined, [collection, entity]));
   });
 
   it('does not modify an input baseType', async () => {
@@ -179,13 +179,13 @@ describe('TypeChecker', () => {
     assert.isNull(baseType.variable.resolution);
     assert.isNotNull(newType.variable.resolution);
   });
-  it('can compare a type variable with a set view', async () => {
+  it('can compare a type variable with a set handle', async () => {
     let leftType = Type.newVariable(new TypeVariable('a')).setViewOf();
     let rightType = Type.newVariable(new TypeVariable('b'));
     assert.isTrue(TypeChecker.compareTypes({type: leftType}, {type: rightType}));
     assert.isTrue(TypeChecker.compareTypes({type: rightType}, {type: leftType}));
   });
-  it('can compare a type variable with a set view (with constraints)', async () => {
+  it('can compare a type variable with a set handle (with constraints)', async () => {
     let canWrite = Type.newEntity(new Schema({names: ['Product', 'Thing'], fields: {}}));
     let leftType = Type.newVariable(new TypeVariable('a')).setViewOf();
     let rightType = Type.newVariable(new TypeVariable('b', canWrite));

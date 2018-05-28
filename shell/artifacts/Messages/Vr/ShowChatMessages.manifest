@@ -19,4 +19,4 @@ particle ShowChatMessages in 'source/ShowChatMessages.js'
   consume chatmessages
     provide preamble
     provide set of custom_message
-      view messages
+      handle messages

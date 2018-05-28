@@ -419,7 +419,7 @@ export class Recipe {
       let localName = handle.localName;
       if (!localName) {
         do {
-          localName = `view${i++}`;
+          localName = `handle${i++}`;
         } while (names.has(localName));
       }
       nameMap.set(handle, localName);

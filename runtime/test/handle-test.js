@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 'use strict';
-
+// TODO: rename to handle-test.js
 import {Arc} from '../arc.js';
 import {assert} from './chai-web.js';
 import {SlotComposer} from '../slot-composer.js';
@@ -25,14 +25,14 @@ let loader = new Loader();
 const slotComposer = new SlotComposer({rootContext: 'test', affordance: 'mock'});
 const Bar = testEntityClass('Bar');
 
-describe('View', function() {
+describe('Handle', function() {
 
-  it('clear singleton view', async () => {
+  it('clear singleton handle', async () => {
     let arc = new Arc({slotComposer, id: 'test'});
-    let barView = await arc.createHandle(Bar.type);
-    barView.set(new Bar({value: 'a Bar'}));
-    barView.clear();
-    assert.equal(await barView.get(), undefined);
+    let barHandle = await arc.createHandle(Bar.type);
+    barHandle.set(new Bar({value: 'a Bar'}));
+    barHandle.clear();
+    assert.equal(await barHandle.get(), undefined);
   });
 
   it('ignores duplicate stores of the same entity value (variable)', async () => {
@@ -68,25 +68,25 @@ describe('View', function() {
 
     let manifest = await Manifest.load('./runtime/test/artifacts/test-particles.manifest', loader);
     let Foo = manifest.schemas.Foo.entityClass();
-    let fooView = handleFor(await arc.createHandle(Foo.type.setViewOf()));
-    fooView.entityClass = Foo;
+    let fooHandle = handleFor(await arc.createHandle(Foo.type.setViewOf()));
+    fooHandle.entityClass = Foo;
 
-    await fooView.store(new Foo({value: 'a Foo'}, 'first'));
-    await fooView.store(new Foo({value: 'another Foo'}, 'second'));
-    await fooView.store(new Foo({value: 'a Foo, again'}, 'first'));
-    assert.equal((await fooView.toList()).length, 2);
+    await fooHandle.store(new Foo({value: 'a Foo'}, 'first'));
+    await fooHandle.store(new Foo({value: 'another Foo'}, 'second'));
+    await fooHandle.store(new Foo({value: 'a Foo, again'}, 'first'));
+    assert.equal((await fooHandle.toList()).length, 2);
   });
 
-  it('remove entry from view', async () => {
+  it('remove entry from handle', async () => {
     let arc = new Arc({slotComposer, id: 'test'});
-    let barView = await arc.createHandle(Bar.type.setViewOf());
+    let barHandle = await arc.createHandle(Bar.type.setViewOf());
     let bar = new Bar({id: 0, value: 'a Bar'});
-    barView.store(bar);
-    barView.remove(bar.id);
-    assert.equal((await barView.toList()).length, 0);
+    barHandle.store(bar);
+    barHandle.remove(bar.id);
+    assert.equal((await barHandle.toList()).length, 0);
   });
 
-  it('can store a particle in a shape view', async () => {
+  it('can store a particle in a shape handle', async () => {
     let arc = new Arc({slotComposer, id: 'test'});
     let manifest = await Manifest.load('./runtime/test/artifacts/test-particles.manifest', loader);
 
@@ -94,12 +94,12 @@ describe('View', function() {
                            {type: Type.newEntity(manifest.schemas.Bar)}], []);
     assert(shape.particleMatches(manifest.particles[0]));
 
-    let shapeView = await arc.createHandle(Type.newInterface(shape));
-    shapeView.set(manifest.particles[0]);
-    assert(await shapeView.get() == manifest.particles[0]);
+    let shapeHandle = await arc.createHandle(Type.newInterface(shape));
+    shapeHandle.set(manifest.particles[0]);
+    assert(await shapeHandle.get() == manifest.particles[0]);
   });
 
-  it('createHandle only allows valid tags & types in views', async () => {
+  it('createHandle only allows valid tags & types in handles', async () => {
     let arc = new Arc({slotComposer, id: 'test'});
     let manifest = await Manifest.load('./runtime/test/artifacts/test-particles.manifest', loader);
 

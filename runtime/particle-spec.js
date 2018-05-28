@@ -103,10 +103,10 @@ export class ParticleSpec {
     this.slots = new Map();
     if (model.slots)
       model.slots.forEach(s => this.slots.set(s.name, new SlotSpec(s)));
-    // Verify provided slots use valid view connection names.
+    // Verify provided slots use valid handle connection names.
     this.slots.forEach(slot => {
       slot.providedSlots.forEach(ps => {
-        ps.handles.forEach(v => assert(this.connectionMap.has(v), 'Cannot provide slot for nonexistent view constraint ', v));
+        ps.handles.forEach(v => assert(this.connectionMap.has(v), 'Cannot provide slot for nonexistent handle constraint ', v));
       });
     });
   }
@@ -237,7 +237,7 @@ export class ParticleSpec {
         if (ps.formFactor) {
           results.push(`      formFactor ${ps.formFactor}`);
         }
-        ps.handles.forEach(psv => results.push(`      view ${psv}`));
+        ps.handles.forEach(handle => results.push(`      handle ${handle}`));
       });
     });
     // Description
