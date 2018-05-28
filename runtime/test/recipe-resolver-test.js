@@ -9,7 +9,7 @@
  */
 
 import {Arc} from '../arc.js';
-import {Loader} from '../loader.js';
+import {StubLoader} from '../testing/stub-loader.js';
 import {Manifest} from '../manifest.js';
 import {RecipeResolver} from '../recipe/recipe-resolver.js';
 
@@ -18,17 +18,7 @@ import {assert} from './chai-web.js';
 describe('RecipeResolver', function() {
   const buildRecipe = async (content) => {
     let registry = {};
-    let loader = new class extends Loader {
-      loadResource(path) {
-        return content[path];
-      }
-      path(fileName) {
-        return fileName;
-      }
-      join(_, file) {
-        return file;
-      }
-    };
+    let loader = new StubLoader(content);
     let manifest = await Manifest.load('manifest', loader, {registry});
     return manifest.recipes[0];
   };

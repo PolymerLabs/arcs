@@ -15,6 +15,7 @@ import {Arc} from '../arc.js';
 import {MessageChannel} from '../message-channel.js';
 import {InnerPEC} from '../inner-PEC.js';
 import {Loader} from '../loader.js';
+import {StubLoader} from '../testing/stub-loader.js';
 import {Recipe} from '../recipe/recipe.js';
 import {Type} from '../type.js';
 import {Shape} from '../shape.js';
@@ -23,10 +24,8 @@ import {ParticleSpec} from '../particle-spec.js';
 describe('particle-shape-loading', function() {
 
   it('loads shapes into particles', async () => {
-    let loader = new class extends Loader {
-      loadResource(path) {
-        if (path == 'outer-particle.js')
-          return `
+    let loader = new StubLoader({
+      'outer-particle.js': `
           "use strict";
 
           defineParticle(({Particle}) => {
@@ -64,11 +63,7 @@ describe('particle-shape-loading', function() {
                 }
               }
             }
-          });
-          `;
-        return super.loadResource(path);
-      }
-    }();
+          });`});
 
     let pecFactory = function(id) {
       let channel = new MessageChannel();
@@ -153,7 +148,7 @@ describe('particle-shape-loading', function() {
           input <- v1
       `, {loader, fileName: './test.manifest'});
 
-    let arc = new Arc({id: 'test', pecFactory, context: manifest});  
+    let arc = new Arc({id: 'test', pecFactory, context: manifest});
 
     let fooType = manifest.findTypeByName('Foo');
     let barType = manifest.findTypeByName('Bar');

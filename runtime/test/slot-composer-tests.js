@@ -17,7 +17,7 @@ import {Manifest} from '../manifest.js';
 import {Planner} from '../planner.js';
 import {MessageChannel} from '../message-channel.js';
 import {InnerPEC} from '../inner-PEC.js';
-import {Loader} from '../loader.js';
+import {StubLoader} from '../testing/stub-loader.js';
 import * as util from '../testing/test-util.js';
 
 class MockSlot extends Slot {
@@ -44,9 +44,9 @@ async function initSlotComposer(recipeStr) {
   slotComposer._affordance._slotClass = MockSlot;
 
   let manifest = (await Manifest.parse(recipeStr));
-  let loader = new class extends Loader {
-    loadResource(fileName) { return `defineParticle(({Particle}) => { return class P extends Particle {} });`; }
-  };
+  let loader = new StubLoader({
+    '*': `defineParticle(({Particle}) => { return class P extends Particle {} });`
+  });
   const pecFactory = function(id) {
     const channel = new MessageChannel();
     new InnerPEC(channel.port1, `${id}:inner`, loader);
