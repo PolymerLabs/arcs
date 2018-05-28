@@ -10,10 +10,9 @@
 
 let random = Math.random;
 
-const seededRandom = (() => {
-  let x = 0;
-  return () => (x = Math.pow(x + Math.E, Math.PI) % 1);
-})();
+const seededRandom = () => {
+  return seededRandom.x = Math.pow(seededRandom.x + Math.E, Math.PI) % 1;
+};
 
 export class Random {
   static next() {
@@ -21,6 +20,7 @@ export class Random {
   }
 
   static seedForTests() {
+    seededRandom.x = 0; // Re-seed on each call for test isolation.
     random = seededRandom;
   }
 }
