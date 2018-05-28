@@ -276,6 +276,10 @@ export class Type {
   }
 
   static fromLiteral(literal) {
+    if (literal.tag == 'SetView') {
+      // TODO: SetView is deprecated, remove when possible.
+      literal.tag = 'Collection';
+    }
     return new Type(literal.tag, Type._deliteralizer(literal.tag)(literal.data));
   }
 

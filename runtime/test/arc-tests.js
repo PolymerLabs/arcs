@@ -39,61 +39,61 @@ async function setup() {
 const slotComposer = new SlotComposer({rootContext: 'test', affordance: 'mock'});
 
 describe('Arc', function() {
-  it('applies existing views to a particle', async () => {
+  it('applies existing stores to a particle', async () => {
     let {arc, recipe, Foo, Bar} = await setup();
-    let fooView = await arc.createHandle(Foo.type, undefined, 'test:1');
-    let barView = await arc.createHandle(Bar.type, undefined, 'test:2');
-    await handleFor(fooView).set(new Foo({value: 'a Foo'}));
-    recipe.handles[0].mapToStorage(fooView);
-    recipe.handles[1].mapToStorage(barView); 
+    let fooStore = await arc.createStore(Foo.type, undefined, 'test:1');
+    let barStore = await arc.createStore(Bar.type, undefined, 'test:2');
+    await handleFor(fooStore).set(new Foo({value: 'a Foo'}));
+    recipe.handles[0].mapToStorage(fooStore);
+    recipe.handles[1].mapToStorage(barStore); 
     assert(recipe.normalize());
     await arc.instantiate(recipe);
-    await util.assertSingletonWillChangeTo(barView, Bar, 'a Foo1');
+    await util.assertSingletonWillChangeTo(barStore, Bar, 'a Foo1');
   });
 
-  it('applies new views to a particle', async () => {
+  it('applies new stores to a particle', async () => {
     let {arc, recipe, Foo, Bar} = await setup();
-    let fooView = await arc.createHandle(Foo.type, undefined, 'test:1');
-    let barView = await arc.createHandle(Bar.type, undefined, 'test:2');
-    recipe.handles[0].mapToStorage(fooView);
-    recipe.handles[1].mapToStorage(barView); 
+    let fooStore = await arc.createStore(Foo.type, undefined, 'test:1');
+    let barStore = await arc.createStore(Bar.type, undefined, 'test:2');
+    recipe.handles[0].mapToStorage(fooStore);
+    recipe.handles[1].mapToStorage(barStore); 
     recipe.normalize();
     await arc.instantiate(recipe);
 
-    handleFor(fooView).set(new Foo({value: 'a Foo'}));
-    await util.assertSingletonWillChangeTo(barView, Bar, 'a Foo1');
+    handleFor(fooStore).set(new Foo({value: 'a Foo'}));
+    await util.assertSingletonWillChangeTo(barStore, Bar, 'a Foo1');
   });
 
   it('deserializing a serialized empty arc produces an empty arc', async () => {
     let arc = new Arc({slotComposer, loader, id: 'test'});
     let serialization = await arc.serialize();
     let newArc = await Arc.deserialize({serialization, loader, slotComposer});
-    assert(newArc._handlesById.size == 0);
-    assert(newArc.activeRecipe.toString() == arc.activeRecipe.toString());
-    assert(newArc.id.toStringWithoutSessionForTesting() == 'test');
+    assert.equal(newArc._storesById.size, 0);
+    assert.equal(newArc.activeRecipe.toString(), arc.activeRecipe.toString());
+    assert.equal(newArc.id.toStringWithoutSessionForTesting(), 'test');
   });
 
   it('deserializing a simple serialized arc produces that arc', async () => {
     let {arc, recipe, Foo, Bar} = await setup();
-    let fooView = await arc.createHandle(Foo.type, undefined, 'test:1');
-    handleFor(fooView).set(new Foo({value: 'a Foo'}));
-    let barView = await arc.createHandle(Bar.type, undefined, 'test:2');
-    recipe.handles[0].mapToStorage(fooView);
-    recipe.handles[1].mapToStorage(barView); 
+    let fooStore = await arc.createStore(Foo.type, undefined, 'test:1');
+    handleFor(fooStore).set(new Foo({value: 'a Foo'}));
+    let barStore = await arc.createStore(Bar.type, undefined, 'test:2');
+    recipe.handles[0].mapToStorage(fooStore);
+    recipe.handles[1].mapToStorage(barStore); 
     recipe.normalize();
     await arc.instantiate(recipe);
-    await util.assertSingletonWillChangeTo(barView, Bar, 'a Foo1');
-    assert.equal(fooView._version, 1);
-    assert.equal(barView._version, 1);
+    await util.assertSingletonWillChangeTo(barStore, Bar, 'a Foo1');
+    assert.equal(fooStore._version, 1);
+    assert.equal(barStore._version, 1);
 
     let serialization = await arc.serialize();
     arc.stop();
 
     let newArc = await Arc.deserialize({serialization, loader, slotComposer});
-    fooView = newArc.findHandleById(fooView.id);
-    barView = newArc.findHandleById(barView.id);
-    assert.equal(fooView._version, 1);
-    assert.equal(barView._version, 1);
+    fooStore = newArc.findStoreById(fooStore.id);
+    barStore = newArc.findStoreById(barStore.id);
+    assert.equal(fooStore._version, 1);
+    assert.equal(barStore._version, 1);
   });
 
   it('deserializing a serialized arc with a Transformation produces that arc', async () => {
@@ -127,8 +127,8 @@ describe('Arc', function() {
     let arc = new Arc({id: 'test', context: manifest, slotComposer});
 
     let barType = manifest.findTypeByName('Bar');
-    let handle = await arc.createHandle(barType.collectionOf(), undefined, 'test:1');
-    recipe.handles[0].mapToStorage(handle);
+    let store = await arc.createStore(barType.collectionOf(), undefined, 'test:1');
+    recipe.handles[0].mapToStorage(store);
     
     assert(recipe.normalize());
     assert(recipe.isResolved());
@@ -141,8 +141,8 @@ describe('Arc', function() {
 
     let newArc = await Arc.deserialize({serialization, loader, slotComposer, fileName: './manifest.manifest'});
     await newArc.idle;
-    handle = newArc._handlesById.get(handle.id);
-    await handle.store({id: 'a', rawData: {value: 'one'}});
+    store = newArc._storesById.get(store.id);
+    await store.store({id: 'a', rawData: {value: 'one'}});
 
     await newArc.idle;
     assert.equal(slotsCreated, 1);

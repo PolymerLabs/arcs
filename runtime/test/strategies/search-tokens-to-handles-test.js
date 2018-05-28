@@ -36,7 +36,7 @@ describe('SearchTokensToHandles', function() {
     `));
 
     let arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'dom');
-    arc._registerHandle(arc._context.handles[0], ['mything']);
+    arc._registerStore(arc._context.stores[0], ['mything']);
 
     let recipe = manifest.recipes[0];
     assert(recipe.normalize());

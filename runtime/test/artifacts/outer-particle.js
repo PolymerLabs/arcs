@@ -13,18 +13,18 @@ defineParticle(({Particle}) => {
   return class P extends Particle {
     async setViews(views) {
       let arc = await this.constructInnerArc();
-      let inputView = views.get('input');
-      let outputView = views.get('output');
-      let inView = await arc.createHandle(inputView.type, 'input');
-      let outView = await arc.createHandle(outputView.type, 'output');
+      let inputHandle = views.get('input');
+      let outputHandle = views.get('output');
+      let inHandle = await arc.createHandle(inputHandle.type, 'input');
+      let outHandle = await arc.createHandle(outputHandle.type, 'output');
       let particle = await views.get('particle').get();
 
       let recipe = Particle.buildManifest`
         ${particle}
 
         recipe
-          use ${inView} as v1
-          use ${outView} as v2
+          use ${inHandle} as v1
+          use ${outHandle} as v2
           ${particle.name}
             foo <- v1
             bar -> v2
@@ -32,12 +32,12 @@ defineParticle(({Particle}) => {
 
       try {
         await arc.loadRecipe(recipe);
-        let input = await inputView.get();
-        inView.set(input);
-        outView.on('change', async () => {
-          let output = await outView.get();
+        let input = await inputHandle.get();
+        inHandle.set(input);
+        outHandle.on('change', async () => {
+          let output = await outHandle.get();
           if (output != null) {
-            outputView.set(output);
+            outputHandle.set(output);
           }
         }, this);
       } catch (e) {

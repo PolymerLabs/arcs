@@ -27,40 +27,40 @@ const Bar = testEntityClass('Bar');
 
 describe('Handle', function() {
 
-  it('clear singleton handle', async () => {
+  it('clear singleton store', async () => {
     let arc = new Arc({slotComposer, id: 'test'});
-    let barHandle = await arc.createHandle(Bar.type);
-    barHandle.set(new Bar({value: 'a Bar'}));
-    barHandle.clear();
-    assert.equal(await barHandle.get(), undefined);
+    let barStore = await arc.createStore(Bar.type);
+    barStore.set(new Bar({value: 'a Bar'}));
+    barStore.clear();
+    assert.equal(await barStore.get(), undefined);
   });
 
   it('ignores duplicate stores of the same entity value (variable)', async () => {
     let arc = new Arc({slotComposer, id: 'test'});
-    let handle = await arc.createHandle(Bar.type);
-    assert.equal(handle._version, 0);
+    let store = await arc.createStore(Bar.type);
+    assert.equal(store._version, 0);
     let bar1 = {id: 'an id', value: 'a Bar'};
-    await handle.set(bar1);
-    assert.equal(handle._version, 1);
-    await handle.set(bar1);
-    assert.equal(handle._version, 1);
-    await handle.set({value: 'a Bar'});
-    assert.equal(handle._version, 2);
+    await store.set(bar1);
+    assert.equal(store._version, 1);
+    await store.set(bar1);
+    assert.equal(store._version, 1);
+    await store.set({value: 'a Bar'});
+    assert.equal(store._version, 2);
   });
 
   it('ignores duplicate stores of the same entity value (collection)', async () => {
     let arc = new Arc({slotComposer, id: 'test'});
-    let handle = await arc.createHandle(Bar.type.collectionOf());
-    assert.equal(handle._version, 0);
+    let barStore = await arc.createStore(Bar.type.collectionOf());
+    assert.equal(barStore._version, 0);
     let bar1 = {id: 'an id', value: 'a Bar'};
-    await handle.store(bar1);
-    assert.equal(handle._version, 1);
-    await handle.store(bar1);
-    assert.equal(handle._version, 1);
-    await handle.store({value: 'a Bar'});
-    assert.equal(handle._version, 2);
-    await handle.store(bar1);
-    assert.equal(handle._version, 2);
+    await barStore.store(bar1);
+    assert.equal(barStore._version, 1);
+    await barStore.store(bar1);
+    assert.equal(barStore._version, 1);
+    await barStore.store({value: 'a Bar'});
+    assert.equal(barStore._version, 2);
+    await barStore.store(bar1);
+    assert.equal(barStore._version, 2);
   });
 
   it('dedupes common user-provided ids', async () => {
@@ -68,7 +68,7 @@ describe('Handle', function() {
 
     let manifest = await Manifest.load('./runtime/test/artifacts/test-particles.manifest', loader);
     let Foo = manifest.schemas.Foo.entityClass();
-    let fooHandle = handleFor(await arc.createHandle(Foo.type.collectionOf()));
+    let fooHandle = handleFor(await arc.createStore(Foo.type.collectionOf()));
     fooHandle.entityClass = Foo;
 
     await fooHandle.store(new Foo({value: 'a Foo'}, 'first'));
@@ -77,16 +77,16 @@ describe('Handle', function() {
     assert.equal((await fooHandle.toList()).length, 2);
   });
 
-  it('remove entry from handle', async () => {
+  it('remove entry from store', async () => {
     let arc = new Arc({slotComposer, id: 'test'});
-    let barHandle = await arc.createHandle(Bar.type.collectionOf());
+    let barStore = await arc.createStore(Bar.type.collectionOf());
     let bar = new Bar({id: 0, value: 'a Bar'});
-    barHandle.store(bar);
-    barHandle.remove(bar.id);
-    assert.equal((await barHandle.toList()).length, 0);
+    barStore.store(bar);
+    barStore.remove(bar.id);
+    assert.equal((await barStore.toList()).length, 0);
   });
 
-  it('can store a particle in a shape handle', async () => {
+  it('can store a particle in a shape store', async () => {
     let arc = new Arc({slotComposer, id: 'test'});
     let manifest = await Manifest.load('./runtime/test/artifacts/test-particles.manifest', loader);
 
@@ -94,12 +94,12 @@ describe('Handle', function() {
                            {type: Type.newEntity(manifest.schemas.Bar)}], []);
     assert(shape.particleMatches(manifest.particles[0]));
 
-    let shapeHandle = await arc.createHandle(Type.newInterface(shape));
-    shapeHandle.set(manifest.particles[0]);
-    assert(await shapeHandle.get() == manifest.particles[0]);
+    let shapeStore = await arc.createStore(Type.newInterface(shape));
+    shapeStore.set(manifest.particles[0]);
+    assert.equal(await shapeStore.get(), manifest.particles[0]);
   });
 
-  it('createHandle only allows valid tags & types in handles', async () => {
+  it('createHandle only allows valid tags & types in stores', async () => {
     let arc = new Arc({slotComposer, id: 'test'});
     let manifest = await Manifest.load('./runtime/test/artifacts/test-particles.manifest', loader);
 
@@ -112,13 +112,13 @@ describe('Handle', function() {
       }
     };
 
-    await assert_throws_async(async () => await arc.createHandle('not a type'), /isn\'t a Type/);
+    await assert_throws_async(async () => await arc.createStore('not a type'), /isn\'t a Type/);
 
-    await arc.createHandle(Bar.type, 'name', 'id', '#sufficient');
-    await arc.createHandle(Bar.type, 'name', 'id', ['#valid']);
-    await arc.createHandle(Bar.type, 'name', 'id', ['#valid', '#good']);
+    await arc.createStore(Bar.type, 'name', 'id', '#sufficient');
+    await arc.createStore(Bar.type, 'name', 'id', ['#valid']);
+    await arc.createStore(Bar.type, 'name', 'id', ['#valid', '#good']);
     ['#sufficient', '#valid', '#good'].forEach(tag =>
-      assert(arc._tags.hasOwnProperty(tag),
+      assert([...arc._storeTags.values()].find(tags => tags.has(tag)),
         `tags ${arc._tags} should have included ${tag}`));
   });
   it('uses default storage keys', async () => {
@@ -135,8 +135,8 @@ describe('Handle', function() {
         return {type};
       }
     }(arc.id);
-    arc.createHandle(manifest.schemas.Bar.type, 'foo', 'test1');
+    arc.createStore(manifest.schemas.Bar.type, 'foo', 'test1');
     let result = await promise;
-    assert(result == 'firebase://test-firebase-45a3e.firebaseio.com/AIzaSyBLqThan3QCOICj0JZ-nEwk27H4gmnADP8/handles/test1');
+    assert.equal(result, 'firebase://test-firebase-45a3e.firebaseio.com/AIzaSyBLqThan3QCOICj0JZ-nEwk27H4gmnADP8/handles/test1');
   });
 });

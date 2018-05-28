@@ -30,7 +30,7 @@ export class MultiplexerDomParticle extends TransformationDomParticle {
     let otherConnections = [];
     let index = 2;
     const skipConnectionNames = [listHandleName, particleHandleName];
-    for (let [connectionName, otherView] of views) {
+    for (let [connectionName, otherHandle] of views) {
       if (skipConnectionNames.includes(connectionName)) {
         continue;
       }
@@ -38,9 +38,9 @@ export class MultiplexerDomParticle extends TransformationDomParticle {
       // (perhaps id to index) to make sure we don't map a handle into the inner
       // arc multiple times unnecessarily.
       otherMappedHandles.push(
-          `map '${await arc.mapHandle(otherView._proxy)}' as v${index}`);
+          `map '${await arc.mapHandle(otherHandle._proxy)}' as v${index}`);
       let hostedOtherConnection = hostedParticle.connections.find(
-          conn => conn.isCompatibleType(otherView.type));
+          conn => conn.isCompatibleType(otherHandle.type));
       if (hostedOtherConnection) {
         otherConnections.push(`${hostedOtherConnection.name} <- v${index++}`);
         // TODO(wkorman): For items with embedded recipes where we may have a
@@ -57,12 +57,12 @@ export class MultiplexerDomParticle extends TransformationDomParticle {
     let arc = await this.constructInnerArc();
     const listHandleName = 'list';
     const particleHandleName = 'hostedParticle';
-    let particleView = views.get(particleHandleName);
+    let particleHandle = views.get(particleHandleName);
     let hostedParticle = null;
     let otherMappedHandles = [];
     let otherConnections = [];
-    if (particleView) {
-      hostedParticle = await particleView.get();
+    if (particleHandle) {
+      hostedParticle = await particleHandle.get();
       if (hostedParticle) {
         [otherMappedHandles, otherConnections] =
             await this._mapParticleConnections(

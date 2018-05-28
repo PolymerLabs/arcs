@@ -19,9 +19,9 @@ export class AssignHandlesByTagAndType extends HandleMapperBase {
     // are inputs.
     let subtype = counts.out == 0;
     if (tags.length > 0) {
-      return this.arc.findHandlesByType(type, {tags, subtype});
+      return this.arc.findStoresByType(type, {tags, subtype});
     } else {
-      return this.arc.findHandlesByType(type);
+      return this.arc.findStoresByType(type);
     }
   }
 }

@@ -36,7 +36,7 @@ class CloudHandles extends Xen.Debug(Xen.Base, log) {
   }
   _scanHandles(key, arc, roots) {
     const paths = {};
-    [...arc._handleTags].forEach(tagEntry => this._handleToPath(paths, key, tagEntry));
+    [...arc._storeTags].forEach(tagEntry => this._handleToPath(paths, key, tagEntry));
     this._updateWatches(arc, roots, paths);
   }
   _handleToPath(paths, key, [localHandle, tags]) {

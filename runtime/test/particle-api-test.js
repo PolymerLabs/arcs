@@ -73,8 +73,8 @@ describe('particle-api', function() {
     });
 
     let Data = manifest.findSchemaByName('Data').entityClass();
-    let fooStore = await arc.createHandle(Data.type, 'foo', 'test:0');
-    let resStore = await arc.createHandle(Data.type.collectionOf(), 'res', 'test:1');
+    let fooStore = await arc.createStore(Data.type, 'foo', 'test:0');
+    let resStore = await arc.createStore(Data.type.collectionOf(), 'res', 'test:1');
     let inspector = new util.ResultInspector(arc, resStore, 'value');
     let recipe = manifest.recipes[0];
     recipe.handles[0].mapToStorage(fooStore);
@@ -99,7 +99,7 @@ describe('particle-api', function() {
     await inspector.verify('update:4:{"data":null}');
   });
 
-  it('contains view synchronize calls', async () => {
+  it('contains handle synchronize calls', async () => {
     let {manifest, arc} = await loadFilesIntoNewArc({
       manifest: `
         schema Input
@@ -137,14 +137,14 @@ describe('particle-api', function() {
     });
 
     let Input = manifest.findSchemaByName('Input').entityClass();
-    let inputView = await arc.createHandle(Input.type.collectionOf(), undefined, 'test:1');
-    inputView.store({id: '1', rawData: {value: 'Hi'}});
-    inputView.store({id: '2', rawData: {value: 'There'}});
+    let inputStore = await arc.createStore(Input.type.collectionOf(), undefined, 'test:1');
+    inputStore.store({id: '1', rawData: {value: 'Hi'}});
+    inputStore.store({id: '2', rawData: {value: 'There'}});
 
     let Result = manifest.findSchemaByName('Result').entityClass();
-    let resultHandle = await arc.createHandle(Result.type, undefined, 'test:2');
+    let resultHandle = await arc.createStore(Result.type, undefined, 'test:2');
     let recipe = manifest.recipes[0];
-    recipe.handles[0].mapToStorage(inputView);
+    recipe.handles[0].mapToStorage(inputStore);
     recipe.handles[1].mapToStorage(resultHandle);
     recipe.normalize();
     await arc.instantiate(recipe);
@@ -174,8 +174,8 @@ describe('particle-api', function() {
             async setViews(views) {
               let arc = await this.constructInnerArc();
               var resultHandle = views.get('result');
-              let view = await arc.createHandle(resultHandle.type, "a view");
-              view.set(new resultHandle.entityClass({value: 'success'}));
+              let handle = await arc.createHandle(resultHandle.type, "hello");
+              handle.set(new resultHandle.entityClass({value: 'success'}));
               resultHandle.set(new resultHandle.entityClass({value: 'done'}));
             }
           }
@@ -184,16 +184,16 @@ describe('particle-api', function() {
     });
 
     let Result = manifest.findSchemaByName('Result').entityClass();
-    let resultHandle = await arc.createHandle(Result.type, undefined, 'test:1');
+    let resultStore = await arc.createStore(Result.type, undefined, 'test:1');
     let recipe = manifest.recipes[0];
-    recipe.handles[0].mapToStorage(resultHandle);
+    recipe.handles[0].mapToStorage(resultStore);
     recipe.normalize();
     await arc.instantiate(recipe);
 
-    await util.assertSingletonWillChangeTo(resultHandle, Result, 'done');
-    let newView = arc.findHandlesByType(Result.type)[1];
-    assert(newView.name == 'a view');
-    await util.assertSingletonIs(newView, Result, 'success');
+    await util.assertSingletonWillChangeTo(resultStore, Result, 'done');
+    let newStore = arc.findStoresByType(Result.type)[1];
+    assert.equal(newStore.name, 'hello');
+    await util.assertSingletonIs(newStore, Result, 'success');
   });
 
   it('can load a recipe', async () => {
@@ -218,8 +218,8 @@ describe('particle-api', function() {
             async setViews(views) {
               let arc = await this.constructInnerArc();
               var resultHandle = views.get('result');
-              let inView = await arc.createHandle(resultHandle.type, "in view");
-              let outView = await arc.createHandle(resultHandle.type, "out view");
+              let inHandle = await arc.createHandle(resultHandle.type, "the-in");
+              let outHandle = await arc.createHandle(resultHandle.type, "the-out");
               try {
                 await arc.loadRecipe(\`
                   schema Result
@@ -230,14 +230,14 @@ describe('particle-api', function() {
                     out Result b
 
                   recipe
-                    use '\${inView._id}' as v1
-                    use '\${outView._id}' as v2
+                    use '\${inHandle._id}' as v1
+                    use '\${outHandle._id}' as v2
                     PassThrough
                       a <- v1
                       b -> v2
 
                 \`);
-                inView.set(new resultHandle.entityClass({value: 'success'}));
+                inHandle.set(new resultHandle.entityClass({value: 'success'}));
                 resultHandle.set(new resultHandle.entityClass({value: 'done'}));
               } catch (e) {
                 resultHandle.set(new resultHandle.entityClass({value: e}));
@@ -262,16 +262,16 @@ describe('particle-api', function() {
     });
 
     let Result = manifest.findSchemaByName('Result').entityClass();
-    let resultHandle = await arc.createHandle(Result.type, undefined, 'test:1');
+    let resultStore = await arc.createStore(Result.type, undefined, 'test:1');
     let recipe = manifest.recipes[0];
-    recipe.handles[0].mapToStorage(resultHandle);
+    recipe.handles[0].mapToStorage(resultStore);
     recipe.normalize();
     await arc.instantiate(recipe);
 
-    await util.assertSingletonWillChangeTo(resultHandle, Result, 'done');
-    let newView = arc.findHandlesByType(Result.type)[2];
-    assert(newView.name == 'out view');
-    await util.assertSingletonWillChangeTo(newView, Result, 'success');
+    await util.assertSingletonWillChangeTo(resultStore, Result, 'done');
+    let newStore = arc.findStoresByType(Result.type)[2];
+    assert.equal(newStore.name, 'the-out');
+    await util.assertSingletonWillChangeTo(newStore, Result, 'success');
   });
 
   it('can load a recipe referencing a manifest store', async () => {
@@ -296,8 +296,8 @@ describe('particle-api', function() {
             async setViews(views) {
               let arc = await this.constructInnerArc();
               var resultHandle = views.get('result');
-              let inView = await arc.createHandle(resultHandle.type, "in view");
-              let outView = await arc.createHandle(resultHandle.type, "out view");
+              let inHandle = await arc.createHandle(resultHandle.type, "the-in");
+              let outHandle = await arc.createHandle(resultHandle.type, "the-out");
               try {
                 await arc.loadRecipe(\`
                   schema Result
@@ -315,15 +315,15 @@ describe('particle-api', function() {
 
                    recipe
                      map NobId as nobId
-                     use '\${inView._id}' as v1
-                     use '\${outView._id}' as v2
+                     use '\${inHandle._id}' as v1
+                     use '\${outHandle._id}' as v2
                      PassThrough
                        nobId <- nobId
                        a <- v1
                        b -> v2
 
                 \`);
-                inView.set(new resultHandle.entityClass({value: 'success'}));
+                inHandle.set(new resultHandle.entityClass({value: 'success'}));
                 resultHandle.set(new resultHandle.entityClass({value: 'done'}));
               } catch (e) {
                 resultHandle.set(new resultHandle.entityClass({value: e}));
@@ -352,16 +352,16 @@ describe('particle-api', function() {
     });
 
     let Result = manifest.findSchemaByName('Result').entityClass();
-    let resultHandle = await arc.createHandle(Result.type, undefined, 'test:1');
+    let resultStore = await arc.createStore(Result.type, undefined, 'test:1');
     let recipe = manifest.recipes[0];
-    recipe.handles[0].mapToStorage(resultHandle);
+    recipe.handles[0].mapToStorage(resultStore);
     recipe.normalize();
     await arc.instantiate(recipe);
 
-    await util.assertSingletonWillChangeTo(resultHandle, Result, 'done');
-    let newView = arc.findHandlesByType(Result.type)[2];
-    assert(newView.name == 'out view');
-    await util.assertSingletonWillChangeTo(newView, Result, 'success');
+    await util.assertSingletonWillChangeTo(resultStore, Result, 'done');
+    let newStore = arc.findStoresByType(Result.type)[2];
+    assert.equal(newStore.name, 'the-out');
+    await util.assertSingletonWillChangeTo(newStore, Result, 'success');
   });
 
   it('can load a recipe referencing a tagged handle in containing arc', async () => {
@@ -392,8 +392,8 @@ describe('particle-api', function() {
             async setViews(views) {
               let arc = await this.constructInnerArc();
               var resultHandle = views.get('result');
-              let inView = await arc.createHandle(resultHandle.type, "in view");
-              let outView = await arc.createHandle(resultHandle.type, "out view");
+              let inHandle = await arc.createHandle(resultHandle.type, "the-in");
+              let outHandle = await arc.createHandle(resultHandle.type, "the-out");
               try {
                 await arc.loadRecipe(\`
                    schema Foo
@@ -409,15 +409,15 @@ describe('particle-api', function() {
 
                    recipe
                      use #target as target
-                     use '\${inView._id}' as v1
-                     use '\${outView._id}' as v2
+                     use '\${inHandle._id}' as v1
+                     use '\${outHandle._id}' as v2
                      PassThrough
                        target <- target
                        a <- v1
                        b -> v2
 
                 \`);
-                inView.set(new resultHandle.entityClass({value: 'success'}));
+                inHandle.set(new resultHandle.entityClass({value: 'success'}));
                 resultHandle.set(new resultHandle.entityClass({value: 'done'}));
               } catch (e) {
                 resultHandle.set(new resultHandle.entityClass({value: e}));
@@ -444,24 +444,24 @@ describe('particle-api', function() {
     });
 
     let Result = manifest.findSchemaByName('Result').entityClass();
-    let resultHandle = await arc.createHandle(Result.type, undefined, 'test:1');
+    let resultStore = await arc.createStore(Result.type, undefined, 'test:1');
     let recipe = manifest.recipes[0];
-    recipe.handles[0].mapToStorage(resultHandle);
+    recipe.handles[0].mapToStorage(resultStore);
     recipe.normalize();
     await arc.instantiate(recipe);
 
-    await util.assertSingletonWillChangeTo(resultHandle, Result, 'done');
-    let newView = arc.findHandlesByType(Result.type)[2];
-    assert(newView.name == 'out view');
-    await util.assertSingletonWillChangeTo(newView, Result, 'success');
+    await util.assertSingletonWillChangeTo(resultStore, Result, 'done');
+    let newStore = arc.findStoresByType(Result.type)[2];
+    assert.equal(newStore.name, 'the-out');
+    await util.assertSingletonWillChangeTo(newStore, Result, 'success');
   });
 
   // TODO(wkorman): The below test fails and is currently skipped as we're only
   // running basic recipe resolution, and `use` ends up in
-  // `arc.findHandlesByType` which doesn't fall back to considering handles in
-  // the arc's context as does, for example, `arc.findHandleById`. We could
+  // `arc.findStoresByType` which doesn't fall back to considering handles in
+  // the arc's context as does, for example, `arc.findStoreById`. We could
   // potentially address either by including more strategies in the outer-PEC's
-  // strategizer or adding such fallback to `arc.findHandlesByType`.
+  // strategizer or adding such fallback to `arc.findStoresByType`.
   it.skip('can load a recipe referencing a tagged handle in manifest', async () => {
     let {manifest, arc} = await loadFilesIntoNewArc({
       manifest: `
@@ -489,8 +489,8 @@ describe('particle-api', function() {
             async setViews(views) {
               let arc = await this.constructInnerArc();
               var resultHandle = views.get('result');
-              let inView = await arc.createHandle(resultHandle.type, "in view");
-              let outView = await arc.createHandle(resultHandle.type, "out view");
+              let inHandle = await arc.createHandle(resultHandle.type, "the-in");
+              let outHandle = await arc.createHandle(resultHandle.type, "the-out");
               try {
                 await arc.loadRecipe(\`
                    schema Result
@@ -503,15 +503,15 @@ describe('particle-api', function() {
 
                    recipe
                      use #target as target
-                     use '\${inView._id}' as v1
-                     use '\${outView._id}' as v2
+                     use '\${inHandle._id}' as v1
+                     use '\${outHandle._id}' as v2
                      PassThrough
                        target <- target
                        a <- v1
                        b -> v2
 
                 \`);
-                inView.set(new resultHandle.entityClass({value: 'success'}));
+                inHandle.set(new resultHandle.entityClass({value: 'success'}));
                 resultHandle.set(new resultHandle.entityClass({value: 'done'}));
               } catch (e) {
                 resultHandle.set(new resultHandle.entityClass({value: e}));
@@ -540,16 +540,16 @@ describe('particle-api', function() {
     });
 
     let Result = manifest.findSchemaByName('Result').entityClass();
-    let resultHandle = await arc.createHandle(Result.type, undefined, 'test:1');
+    let resultStore = await arc.createStore(Result.type, undefined, 'test:1');
     let recipe = manifest.recipes[0];
-    recipe.handles[0].mapToStorage(resultHandle);
+    recipe.handles[0].mapToStorage(resultStore);
     recipe.normalize();
     await arc.instantiate(recipe);
 
-    await util.assertSingletonWillChangeTo(resultHandle, Result, 'done');
-    let newView = arc.findHandlesByType(Result.type)[2];
-    assert(newView.name == 'out view');
-    await util.assertSingletonWillChangeTo(newView, Result, 'success');
+    await util.assertSingletonWillChangeTo(resultStore, Result, 'done');
+    let newStore = arc.findStoresByType(Result.type)[2];
+    assert.equal(newStore.name, 'the-out');
+    await util.assertSingletonWillChangeTo(newStore, Result, 'success');
   });
 
   it('multiplexing', async () => {
@@ -576,12 +576,12 @@ describe('particle-api', function() {
           return class P extends Particle {
             async setViews(views) {
               let arc = await this.constructInnerArc();
-              var inputsView = views.get('inputs');
-              var inputsList = await inputsView.toList();
-              var resultsView = views.get('results');
+              var inputsHandle = views.get('inputs');
+              var inputsList = await inputsHandle.toList();
+              var resultsHandle = views.get('results');
               for (let input of inputsList) {
-                let inView = await arc.createHandle(resultsView.type.primitiveType(), "in view");
-                let outView = await arc.createHandle(resultsView.type.primitiveType(), "out view");
+                let inHandle = await arc.createHandle(resultsHandle.type.primitiveType(), "the-in");
+                let outHandle = await arc.createHandle(resultsHandle.type.primitiveType(), "the-out");
                 try {
                   let done = await arc.loadRecipe(\`
                     schema Result
@@ -592,25 +592,25 @@ describe('particle-api', function() {
                       out Result b
 
                     recipe
-                      use '\${inView._id}' as v1
-                      use '\${outView._id}' as v2
+                      use '\${inHandle._id}' as v1
+                      use '\${outHandle._id}' as v2
                       PassThrough
                         a <- v1
                         b -> v2
 
                   \`);
-                  inView.set(input);
-                  let res = resultsView.store(new resultsView.entityClass({value: 'done'}));
+                  inHandle.set(input);
+                  let res = resultsHandle.store(new resultsHandle.entityClass({value: 'done'}));
 
-                  outView.on('change', () => {
-                    outView.get().then(result => {
+                  outHandle.on('change', () => {
+                    outHandle.get().then(result => {
                       if (result) {
-                        resultsView.store(result);
+                        resultsHandle.store(result);
                       }
                     })
                   }, this);
                 } catch (e) {
-                  resultsView.store(new resultsView.entityClass({value: e}));
+                  resultsHandle.store(new resultsHandle.entityClass({value: e}));
                 }
               }
             }
@@ -624,8 +624,8 @@ describe('particle-api', function() {
           return class PassThrough extends Particle {
             setViews(views) {
               views.get('a').get().then(result => {
-                var bView = views.get('b');
-                bView.set(new bView.entityClass({value:result.value.toUpperCase()}));
+                var bHandle = views.get('b');
+                bHandle.set(new bHandle.entityClass({value:result.value.toUpperCase()}));
               });
             }
           }
@@ -634,26 +634,26 @@ describe('particle-api', function() {
     });
 
     let Result = manifest.findSchemaByName('Result').entityClass();
-    let inputsView = await arc.createHandle(Result.type.collectionOf(), undefined, 'test:1');
-    inputsView.store({id: '1', rawData: {value: 'hello'}});
-    inputsView.store({id: '2', rawData: {value: 'world'}});
-    let resultsView = await arc.createHandle(Result.type.collectionOf(), undefined, 'test:2');
+    let inputsStore = await arc.createStore(Result.type.collectionOf(), undefined, 'test:1');
+    inputsStore.store({id: '1', rawData: {value: 'hello'}});
+    inputsStore.store({id: '2', rawData: {value: 'world'}});
+    let resultsStore = await arc.createStore(Result.type.collectionOf(), undefined, 'test:2');
     let recipe = manifest.recipes[0];
-    recipe.handles[0].mapToStorage(inputsView);
-    recipe.handles[1].mapToStorage(resultsView);
+    recipe.handles[0].mapToStorage(inputsStore);
+    recipe.handles[1].mapToStorage(resultsStore);
     recipe.normalize();
     await arc.instantiate(recipe);
 
-    await util.assertCollectionWillChangeTo(resultsView, Result, 'value', ['done', 'done', 'HELLO', 'WORLD']);
+    await util.assertCollectionWillChangeTo(resultsStore, Result, 'value', ['done', 'done', 'HELLO', 'WORLD']);
 
-    // TODO: how do i listen to inner arc's outView view-changes?
-    // await util.assertCollectionWillChangeTo(resultsView, Result, "value", ["HELLO", "WORLD"]);
-    let newView = arc.findHandlesByType(Result.type)[1];
-    assert(newView.name == 'out view', `Unexpected newView name: ${newView.name}`);
+    // TODO: how do i listen to inner arc's outStore view-changes?
+    // await util.assertCollectionWillChangeTo(resultsStore, Result, "value", ["HELLO", "WORLD"]);
+    let newStore = arc.findStoresByType(Result.type)[1];
+    assert.equal(newStore.name, 'the-out', `Unexpected newStore name: ${newStore.name}`);
 
-    util.assertSingletonIs(newView, Result, 'HELLO');
-    newView = arc.findHandlesByType(Result.type)[3];
-    assert(newView.name == 'out view', `Unexpected newView name: ${newView.name}`);
-    await util.assertSingletonIs(newView, Result, 'WORLD');
+    util.assertSingletonIs(newStore, Result, 'HELLO');
+    newStore = arc.findStoresByType(Result.type)[3];
+    assert.equal(newStore.name, 'the-out', `Unexpected newStore name: ${newStore.name}`);
+    await util.assertSingletonIs(newStore, Result, 'WORLD');
   });
 });

@@ -50,8 +50,8 @@ describe('Multiplexer', function() {
     };
 
     let arc = new Arc({id: 'test', context: manifest, slotComposer});
-    let handle = await arc.createHandle(barType.collectionOf(), null, 'test:1');
-    recipe.handles[0].mapToStorage(handle);
+    let barStore = await arc.createStore(barType.collectionOf(), null, 'test:1');
+    recipe.handles[0].mapToStorage(barStore);
     assert(recipe.normalize());
     assert(recipe.isResolved());
 
@@ -59,9 +59,9 @@ describe('Multiplexer', function() {
 
     await arc.idle;
 
-    await handle.store({id: 'a', rawData: {value: 'one'}});
-    await handle.store({id: 'b', rawData: {value: 'two'}});
-    await handle.store({id: 'c', rawData: {value: 'three'}});
+    await barStore.store({id: 'a', rawData: {value: 'one'}});
+    await barStore.store({id: 'b', rawData: {value: 'two'}});
+    await barStore.store({id: 'c', rawData: {value: 'three'}});
 
     await arc.idle;
 

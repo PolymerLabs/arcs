@@ -126,7 +126,7 @@ class CloudSharedHandles extends Xen.Debug(Xen.Base, log) {
     }
   }
   _boxHandle(arc, user, type, values, tag) {
-    const schema = type.isCollection ? type.setViewType.entitySchema : type.entitySchema;
+    const schema = type.isCollection ? type.collectionType.entitySchema : type.entitySchema;
     const hasOwnerField = Boolean(schema.fields.owner);
     // convert firebase format to handle-data format, embed friend id as owner
     const data = this._valuesToData(values, user, hasOwnerField);
@@ -190,7 +190,7 @@ class CloudSharedHandles extends Xen.Debug(Xen.Base, log) {
   }
   // low-level
   async _requireHandle(arc, id, type, name, tags) {
-    return arc.context.findStorageById(id) || await arc.context.newStore(type, name, id, tags);
+    return arc.context.findStoreById(id) || await arc.context.newStore(type, name, id, tags);
   }
   _addWatch(path, kind, handler) {
     const {watches} = this._state;
