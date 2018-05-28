@@ -64,4 +64,4 @@ Particles may also output DOM UI. Particles that output any DOM can inherit from
 
 It's important to note that DOM particles don't have unrestricted access to the main DOM. That would give particle authors a way to leak sensitive user data. Instead, DOM particles render templated shadow DOMs into slots that get sanitized before being rendered into the main DOM by the Arcs runtime. DomParticle uses the Xen templates. See the [Xen Template Explainer](https://polymerlabs.github.io/arcs-cdn/v0.0.4/components/xen-explainer.html) for a list of features.
 
-The Arcs library also includes various web components to allow more complex features such as rendering a list of templated content. A complete list of supported web components can be found [here](https://github.com/PolymerLabs/arcs/tree/master/runtime/browser/lib).
+The Arcs library also includes various web components to allow more complex features such as rendering a list of templated content. A complete list of supported web components can be found [here](https://github.com/PolymerLabs/arcs/tree/master/shell/components).
