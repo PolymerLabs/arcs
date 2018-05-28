@@ -66,12 +66,12 @@ export class TypeChecker {
 
     let candidate = baseType.resolvedType();
 
-    if (candidate.isSetView) {
+    if (candidate.isCollection) {
       candidate = candidate.primitiveType();
       let resolution = getResolution(candidate);
       if (resolution == null)
         return null;
-      return resolution.setViewOf();
+      return resolution.collectionOf();
     }
 
     return getResolution(candidate);
@@ -105,7 +105,7 @@ export class TypeChecker {
   static _tryMergeConstraints(handleType, {type, direction}) {
     let [primitiveHandleType, primitiveConnectionType] = Type.unwrapPair(handleType.resolvedType(), type.resolvedType());
     if (primitiveHandleType.isVariable) {
-      if (primitiveConnectionType.isSetView) {
+      if (primitiveConnectionType.isCollection) {
         if (primitiveHandleType.variable.resolution != null
             || primitiveHandleType.variable.canReadSubset != null
             || primitiveHandleType.variable.canWriteSuperset != null) {
@@ -115,7 +115,7 @@ export class TypeChecker {
         // If this is an undifferentiated variable then we need to create structure to match against. That's
         // allowed because this variable could represent anything, and it needs to represent this structure
         // in order for type resolution to succeed.
-        primitiveHandleType.variable.resolution = Type.newSetView(Type.newVariable(new TypeVariable('a')));
+        primitiveHandleType.variable.resolution = Type.newCollection(Type.newVariable(new TypeVariable('a')));
         let unwrap = Type.unwrapPair(primitiveHandleType.resolvedType(), primitiveConnectionType);
         primitiveHandleType = unwrap[0];
         primitiveConnectionType = unwrap[1];
@@ -195,9 +195,9 @@ export class TypeChecker {
     let [leftType, rightType] = Type.unwrapPair(resolvedLeft, resolvedRight);
 
     // a variable is compatible with a set only if it is unconstrained.
-    if (leftType.isVariable && rightType.isSetView)
+    if (leftType.isVariable && rightType.isCollection)
       return !(leftType.variable.canReadSubset || leftType.variable.canWriteSuperset);
-    if (rightType.isVariable && leftType.isSetView)
+    if (rightType.isVariable && leftType.isCollection)
       return !(rightType.variable.canReadSubset || rightType.variable.canWriteSuperset);
 
     if (leftType.isVariable || rightType.isVariable) {

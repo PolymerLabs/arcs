@@ -36,11 +36,11 @@ describe('particle-api', function() {
           out [Data] res
 
         recipe
-          use 'test:0' as view0
-          use 'test:1' as view1
+          use 'test:0' as handle0
+          use 'test:1' as handle1
           P
-            foo <- view0
-            res -> view1
+            foo <- handle0
+            res -> handle1
       `,
       'a.js': `
         'use strict';
@@ -74,7 +74,7 @@ describe('particle-api', function() {
 
     let Data = manifest.findSchemaByName('Data').entityClass();
     let fooStore = await arc.createHandle(Data.type, 'foo', 'test:0');
-    let resStore = await arc.createHandle(Data.type.setViewOf(), 'res', 'test:1');
+    let resStore = await arc.createHandle(Data.type.collectionOf(), 'res', 'test:1');
     let inspector = new util.ResultInspector(arc, resStore, 'value');
     let recipe = manifest.recipes[0];
     recipe.handles[0].mapToStorage(fooStore);
@@ -113,11 +113,11 @@ describe('particle-api', function() {
           out Result result
 
         recipe
-          use 'test:1' as view0
-          use 'test:2' as view1
+          use 'test:1' as handle0
+          use 'test:2' as handle1
           P
-            inputs <- view0
-            result -> view1
+            inputs <- handle0
+            result -> handle1
       `,
       'a.js': `
         "use strict";
@@ -137,7 +137,7 @@ describe('particle-api', function() {
     });
 
     let Input = manifest.findSchemaByName('Input').entityClass();
-    let inputView = await arc.createHandle(Input.type.setViewOf(), undefined, 'test:1');
+    let inputView = await arc.createHandle(Input.type.collectionOf(), undefined, 'test:1');
     inputView.store({id: '1', rawData: {value: 'Hi'}});
     inputView.store({id: '2', rawData: {value: 'There'}});
 
@@ -162,9 +162,9 @@ describe('particle-api', function() {
           out Result result
 
         recipe
-          use as view0
+          use as handle0
           P
-            result -> view0
+            result -> handle0
       `,
       'a.js': `
         "use strict";
@@ -206,9 +206,9 @@ describe('particle-api', function() {
           out Result result
 
         recipe
-          use 'test:1' as view0
+          use 'test:1' as handle0
           P
-            result -> view0
+            result -> handle0
       `,
       'a.js': `
         "use strict";
@@ -284,9 +284,9 @@ describe('particle-api', function() {
           out Result result
 
         recipe
-          use 'test:1' as view0
+          use 'test:1' as handle0
           P
-            result -> view0
+            result -> handle0
       `,
       'a.js': `
         "use strict";
@@ -378,10 +378,10 @@ describe('particle-api', function() {
           in Foo target
 
         recipe
-          use 'test:1' as view0
+          use 'test:1' as handle0
           create #target as target
           P
-            result -> view0
+            result -> handle0
             target <- target
       `,
       'a.js': `
@@ -477,9 +477,9 @@ describe('particle-api', function() {
           out Result result
 
         recipe
-          use 'test:1' as view0
+          use 'test:1' as handle0
           P
-            result -> view0
+            result -> handle0
       `,
       'a.js': `
         "use strict";
@@ -563,11 +563,11 @@ describe('particle-api', function() {
           inout [Result] results
 
         recipe
-          use 'test:1' as view0
-          use 'test:2' as view1
+          use 'test:1' as handle0
+          use 'test:2' as handle1
           P
-            inputs <- view0
-            results = view1
+            inputs <- handle0
+            results = handle1
       `,
       'a.js': `
         "use strict";
@@ -634,20 +634,20 @@ describe('particle-api', function() {
     });
 
     let Result = manifest.findSchemaByName('Result').entityClass();
-    let inputsView = await arc.createHandle(Result.type.setViewOf(), undefined, 'test:1');
+    let inputsView = await arc.createHandle(Result.type.collectionOf(), undefined, 'test:1');
     inputsView.store({id: '1', rawData: {value: 'hello'}});
     inputsView.store({id: '2', rawData: {value: 'world'}});
-    let resultsView = await arc.createHandle(Result.type.setViewOf(), undefined, 'test:2');
+    let resultsView = await arc.createHandle(Result.type.collectionOf(), undefined, 'test:2');
     let recipe = manifest.recipes[0];
     recipe.handles[0].mapToStorage(inputsView);
     recipe.handles[1].mapToStorage(resultsView);
     recipe.normalize();
     await arc.instantiate(recipe);
 
-    await util.assertViewWillChangeTo(resultsView, Result, 'value', ['done', 'done', 'HELLO', 'WORLD']);
+    await util.assertCollectionWillChangeTo(resultsView, Result, 'value', ['done', 'done', 'HELLO', 'WORLD']);
 
     // TODO: how do i listen to inner arc's outView view-changes?
-    // await util.assertViewWillChangeTo(resultsView, Result, "value", ["HELLO", "WORLD"]);
+    // await util.assertCollectionWillChangeTo(resultsView, Result, "value", ["HELLO", "WORLD"]);
     let newView = arc.findHandlesByType(Result.type)[1];
     assert(newView.name == 'out view', `Unexpected newView name: ${newView.name}`);
 

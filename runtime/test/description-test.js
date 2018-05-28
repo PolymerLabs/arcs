@@ -80,14 +80,14 @@ recipe
     let Foo = manifest.findSchemaByName('Foo').entityClass();
     recipe.handles[0].mapToStorage({id: 'test:1', type: Foo.type});
     if (recipe.handles.length > 1) {
-      recipe.handles[1].mapToStorage({id: 'test:2', type: Foo.type.setViewOf()});
+      recipe.handles[1].mapToStorage({id: 'test:2', type: Foo.type.collectionOf()});
     }
     if (recipe.handles.length > 2) {
       recipe.handles[2].mapToStorage({id: 'test:3', type: Foo.type});
     }
     let arc = createTestArc();
     let fooHandle = await arc.createHandle(Foo.type, undefined, 'test:1');
-    let foosHandle = await arc.createHandle(Foo.type.setViewOf(), undefined, 'test:2');
+    let foosHandle = await arc.createHandle(Foo.type.collectionOf(), undefined, 'test:2');
     recipe.normalize();
     assert.isTrue(recipe.isResolved());
     let ifooHandleConn = recipe.handleConnections.find(hc => hc.particle.name == 'A' && hc.name == 'ifoo');
@@ -361,11 +361,11 @@ recipe
       assert(1, manifest.recipes.length);
       let recipe = manifest.recipes[0];
       let Foo = manifest.findSchemaByName('Foo').entityClass();
-      recipe.handles[0].mapToStorage({id: 'test:1', type: Foo.type.setViewOf()});
-      recipe.handles[1].mapToStorage({id: 'test:2', type: Foo.type.setViewOf()});
+      recipe.handles[0].mapToStorage({id: 'test:1', type: Foo.type.collectionOf()});
+      recipe.handles[1].mapToStorage({id: 'test:2', type: Foo.type.collectionOf()});
       let arc = createTestArc();
-      let fooHandle1 = await arc.createHandle(Foo.type.setViewOf(), undefined, 'test:1');
-      let fooHandle2 = await arc.createHandle(Foo.type.setViewOf(), undefined, 'test:2');
+      let fooHandle1 = await arc.createHandle(Foo.type.collectionOf(), undefined, 'test:1');
+      let fooHandle2 = await arc.createHandle(Foo.type.collectionOf(), undefined, 'test:2');
       recipe.normalize();
       assert.isTrue(recipe.isResolved());
       arc._activeRecipe = recipe;
@@ -496,10 +496,10 @@ recipe
         let recipe = manifest.recipes[0];
         let MyBESTType = manifest.findSchemaByName('MyBESTType').entityClass();
         recipe.handles[0].mapToStorage({id: 'test:1', type: MyBESTType.type});
-        recipe.handles[1].mapToStorage({id: 'test:2', type: MyBESTType.type.setViewOf()});
+        recipe.handles[1].mapToStorage({id: 'test:2', type: MyBESTType.type.collectionOf()});
         let arc = createTestArc();
         let tHandle = await arc.createHandle(MyBESTType.type, undefined, 'test:1');
-        let tsHandle = await arc.createHandle(MyBESTType.type.setViewOf(), undefined, 'test:2');
+        let tsHandle = await arc.createHandle(MyBESTType.type.collectionOf(), undefined, 'test:2');
         recipe.normalize();
         assert.isTrue(recipe.isResolved());
 
@@ -660,10 +660,10 @@ recipe
     let Foo = manifest.findSchemaByName('Foo').entityClass();
     let DescriptionType = manifest.findSchemaByName('Description').entityClass();
     recipe.handles[0].mapToStorage({id: 'test:1', type: Foo.type});
-    recipe.handles[1].mapToStorage({id: 'test:2', type: DescriptionType.type.setViewOf()});
+    recipe.handles[1].mapToStorage({id: 'test:2', type: DescriptionType.type.collectionOf()});
     let arc = createTestArc();
     let fooHandle = await arc.createHandle(Foo.type, undefined, 'test:1');
-    let descriptionHandle = await arc.createHandle(DescriptionType.type.setViewOf(), undefined, 'test:2');
+    let descriptionHandle = await arc.createHandle(DescriptionType.type.collectionOf(), undefined, 'test:2');
     recipe.normalize();
     assert.isTrue(recipe.isResolved());
 

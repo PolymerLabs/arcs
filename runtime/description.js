@@ -319,7 +319,7 @@ export class DescriptionFormatter {
         let handleValue = await this._formatHandleValue(token.handleName, token._handle);
         if (!description) {
           // For singleton handle, if there is no real description (the type was used), use the plain value for description.
-          if (handleValue && !token._handle.type.isSetView && !this.excludeValues) {
+          if (handleValue && !token._handle.type.isCollection && !this.excludeValues) {
             return handleValue;
           }
         }
@@ -358,7 +358,7 @@ export class DescriptionFormatter {
   }
 
   async _propertyTokenToString(handleName, handle, properties) {
-    assert(!handle.type.isSetView, `Cannot return property ${properties.join(',')} for set-view`);
+    assert(!handle.type.isCollection, `Cannot return property ${properties.join(',')} for set-view`);
     // Use singleton value's property (eg. "09/15" for person's birthday)
     let handleVar = await handle.get();
     if (handleVar) {
@@ -382,7 +382,7 @@ export class DescriptionFormatter {
     if (!handle) {
       return;
     }
-    if (handle.type.isSetView) {
+    if (handle.type.isCollection) {
       let handleList = await handle.toList();
       if (handleList && handleList.length > 0) {
         return this._formatSetHandle(handleName, handleList);

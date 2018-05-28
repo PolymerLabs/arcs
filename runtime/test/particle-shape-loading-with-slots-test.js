@@ -31,11 +31,11 @@ describe('particle-shape-loading-with-slots', function() {
       import './runtime/test/artifacts/transformations/test-slots-particles.manifest'
 
       recipe
-        create as view0
+        create as handle0
         slot 'slotid-0' as slot0
         MultiplexSlotsParticle
           particle = SingleSlotParticle
-          foos <- view0
+          foos <- handle0
           consume annotationsSet as slot0
       `, {loader, fileName: './test.manifest'});
     let recipe = manifest.recipes[0];
@@ -48,7 +48,7 @@ describe('particle-shape-loading-with-slots', function() {
     await arc.instantiate(recipe);
 
     let fooType = manifest.findTypeByName('Foo');
-    let inView = handleFor(arc.findHandlesByType(fooType.setViewOf())[0]);
+    let inView = handleFor(arc.findHandlesByType(fooType.collectionOf())[0]);
     inView.store(new (fooType.entitySchema.entityClass())({value: 'foo1'}));
     inView.store(new (fooType.entitySchema.entityClass())({value: 'foo2'}));
 

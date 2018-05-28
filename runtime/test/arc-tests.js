@@ -23,11 +23,11 @@ async function setup() {
   let manifest = await Manifest.parse(`
     import 'runtime/test/artifacts/test-particles.manifest'
     recipe TestRecipe
-      use as view0
-      use as view1
+      use as handle0
+      use as handle1
       TestParticle
-        foo <- view0
-        bar -> view1
+        foo <- handle0
+        bar -> handle1
   `, {loader, fileName: process.cwd() + '/input.manifest'});
   return {
     arc,
@@ -127,7 +127,7 @@ describe('Arc', function() {
     let arc = new Arc({id: 'test', context: manifest, slotComposer});
 
     let barType = manifest.findTypeByName('Bar');
-    let handle = await arc.createHandle(barType.setViewOf(), undefined, 'test:1');
+    let handle = await arc.createHandle(barType.collectionOf(), undefined, 'test:1');
     recipe.handles[0].mapToStorage(handle);
     
     assert(recipe.normalize());

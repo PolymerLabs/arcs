@@ -36,7 +36,7 @@ describe('shape', function() {
       [
         {name: Type.newVariable({name: 'a'})},
         {type: Type.newVariable({name: 'b'}), name: 'singleton'},
-        {type: Type.newVariable({name: 'b'}).setViewOf(), name: 'set'}
+        {type: Type.newVariable({name: 'b'}).collectionOf(), name: 'set'}
       ],
       [
         {name: Type.newVariable({name: 'a'})},
@@ -49,7 +49,7 @@ describe('shape', function() {
     assert(map.has('b'));
     shape = type.interfaceShape;
     assert.strictEqual(shape.handles[0].name.variable, shape.slots[0].name.variable);
-    assert.strictEqual(shape.handles[1].type, shape.handles[2].type.setViewType);
+    assert.strictEqual(shape.handles[1].type, shape.handles[2].type.collectionType);
   });
 
   it('matches particleSpecs', async () => {

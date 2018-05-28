@@ -67,7 +67,7 @@ describe('manifest', function() {
     //                   not roundtrip the same way.
     let type = manifest.recipes[0].handleConnections[0].rawType;
     assert.equal('one-s', type.toPrettyString());
-    assert.equal('many-ses', type.setViewOf().toPrettyString());
+    assert.equal('many-ses', type.collectionOf().toPrettyString());
     verify(await Manifest.parse(manifest.toString(), {}));
   });
   it('can parse a manifest containing a particle specification', async () => {

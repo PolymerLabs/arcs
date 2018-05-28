@@ -41,7 +41,7 @@ describe('firebase', function() {
     let BarType = Type.newEntity(manifest.schemas.Bar);
     let value1 = 'Hi there' + Math.random();
     let value2 = 'Goodbye' + Math.random();
-    let collection = await storage.connect('test1', BarType.setViewOf(), 
+    let collection = await storage.connect('test1', BarType.collectionOf(), 
       'firebase://test-firebase-45a3e.firebaseio.com/AIzaSyBLqThan3QCOICj0JZ-nEwk27H4gmnADP8/collection/test');
     await collection.store({id: 'test0:test0', value: value1});
     await collection.store({id: 'test0:test1', value: value2});

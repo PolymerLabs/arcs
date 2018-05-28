@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 'use strict';
-// TODO: rename to handle-test.js
+
 import {Arc} from '../arc.js';
 import {assert} from './chai-web.js';
 import {SlotComposer} from '../slot-composer.js';
@@ -50,7 +50,7 @@ describe('Handle', function() {
 
   it('ignores duplicate stores of the same entity value (collection)', async () => {
     let arc = new Arc({slotComposer, id: 'test'});
-    let handle = await arc.createHandle(Bar.type.setViewOf());
+    let handle = await arc.createHandle(Bar.type.collectionOf());
     assert.equal(handle._version, 0);
     let bar1 = {id: 'an id', value: 'a Bar'};
     await handle.store(bar1);
@@ -68,7 +68,7 @@ describe('Handle', function() {
 
     let manifest = await Manifest.load('./runtime/test/artifacts/test-particles.manifest', loader);
     let Foo = manifest.schemas.Foo.entityClass();
-    let fooHandle = handleFor(await arc.createHandle(Foo.type.setViewOf()));
+    let fooHandle = handleFor(await arc.createHandle(Foo.type.collectionOf()));
     fooHandle.entityClass = Foo;
 
     await fooHandle.store(new Foo({value: 'a Foo'}, 'first'));
@@ -79,7 +79,7 @@ describe('Handle', function() {
 
   it('remove entry from handle', async () => {
     let arc = new Arc({slotComposer, id: 'test'});
-    let barHandle = await arc.createHandle(Bar.type.setViewOf());
+    let barHandle = await arc.createHandle(Bar.type.collectionOf());
     let bar = new Bar({id: 0, value: 'a Bar'});
     barHandle.store(bar);
     barHandle.remove(bar.id);

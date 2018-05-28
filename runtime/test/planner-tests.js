@@ -95,8 +95,8 @@ describe('Planner', function() {
       let arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'dom');
       let Person = manifest.findSchemaByName('Person').entityClass();
       let Product = manifest.findSchemaByName('Product').entityClass();
-      let personView = await arc.createHandle(Person.type.setViewOf(), 'aperson');
-      let productView = await arc.createHandle(Product.type.setViewOf(), 'products');
+      let personView = await arc.createHandle(Person.type.collectionOf(), 'aperson');
+      let productView = await arc.createHandle(Product.type.collectionOf(), 'products');
       return arc;
     };
     let testSteps = async planner => {

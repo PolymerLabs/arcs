@@ -22,11 +22,11 @@ describe('entity', async function() {
     let arc = new Arc({slotComposer: new SlotComposer({rootContext: 'test', affordance: 'mock'}), id: 'test'});
     let entity = new (schema.entityClass())({value: 'hello world'});
     assert.isDefined(entity);
-    let storage = await arc.createHandle(Type.newEntity(schema).setViewOf());
+    let storage = await arc.createHandle(Type.newEntity(schema).collectionOf());
     let handle = handleFor(storage);
     await handle.store(entity);
 
-    let list = await arc.findHandlesByType(entity.constructor.type.setViewOf())[0].toList();
+    let list = await arc.findHandlesByType(entity.constructor.type.collectionOf())[0].toList();
     let clone = list[0];
     assert.isDefined(clone);
     assert.deepEqual(clone.rawData, {value: 'hello world'});
@@ -42,7 +42,7 @@ describe.skip('relation', function() {
     let relation = new Relation(new BasicEntity('thing1'), new BasicEntity('thing2'));
     assert.isDefined(relation);
     arc.commit([relation]);
-    let clone = arc.findHandlesByType(relation.constructor.type.setViewOf())[0].toList()[0];
+    let clone = arc.findHandlesByType(relation.constructor.type.collectionOf())[0].toList()[0];
     assert.isDefined(clone);
     assert.equal(clone.entities[0].data, 'thing1');
     assert.notEqual(relation, clone);

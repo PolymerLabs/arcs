@@ -130,7 +130,7 @@ class FirebaseStorageProvider extends StorageProviderBase {
   }
 
   static newProvider(type, arcId, id, reference, key) {
-    if (type.isSetView)
+    if (type.isCollection)
       return new FirebaseCollection(type, arcId, id, reference, key);
     return new FirebaseVariable(type, arcId, id, reference, key);
   }

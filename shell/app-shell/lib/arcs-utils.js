@@ -142,7 +142,7 @@ const ArcsUtils = {
   },
   async getHandleData(handle) {
     //return handle.toList ? await handle.toList() : {id: handle.id, rawData: handle._stored && handle._stored.rawData || {}};
-    return handle.type.isSetView ? await handle.toList() : await handle.get();
+    return handle.type.isCollection ? await handle.toList() : await handle.get();
   },
   setHandleData(handle, data) {
     this.clearHandle(handle);
@@ -161,7 +161,7 @@ const ArcsUtils = {
     }
   },
   addHandleData(handle, data) {
-    if (handle.type.isSetView) {
+    if (handle.type.isCollection) {
       data && Object.values(data).forEach(e => handle.store(e));
     } else {
       data && handle.set(data);

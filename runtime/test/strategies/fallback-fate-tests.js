@@ -24,11 +24,11 @@ describe('FallbackFate', function() {
 
       recipe
         search \`DoSomething DoSomethingElse\`
-        use as view0
-        use as view1
+        use as handle0
+        use as handle1
         DoSomething as particle0
-          inthing <- view0
-          outthing -> view1
+          inthing <- handle0
+          outthing -> handle1
     `));
     let recipe = manifest.recipes[0];
     recipe.handles.forEach(v => v._originalFate = '?');
@@ -60,11 +60,11 @@ describe('FallbackFate', function() {
         out Thing outthing
 
       recipe
-        use as view0
-        use as view1
+        use as handle0
+        use as handle1
         DoSomething as particle0
-          inthing <- view0
-          outthing -> view1
+          inthing <- handle0
+          outthing -> handle1
     `));
     let recipe = manifest.recipes[0];
     recipe.handles.forEach(v => v._originalFate = '?');

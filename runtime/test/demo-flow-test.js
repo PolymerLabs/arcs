@@ -50,7 +50,7 @@ describe('demo flow', function() {
         .expectRenderSlot('AlsoOn', 'annotation', {contentTypes: ['model'], times: 3, isOptional: true});
     await helper.acceptSuggestion({particles: ['ShowCollection', 'Multiplexer', 'Chooser', 'Recommend', 'Multiplexer2']});
 
-    assert.equal(2, helper.arc.findHandlesByType(helper.arc.context.findSchemaByName('Product').entityClass().type.setViewOf()).length);
+    assert.equal(2, helper.arc.findHandlesByType(helper.arc.context.findSchemaByName('Product').entityClass().type.collectionOf()).length);
     await helper.verifySetSize('ShowCollection', 'collection', 3);
     await helper.verifySetSize('Multiplexer', 'list', 3);
     await helper.verifySetSize('Chooser', 'choices', 3);

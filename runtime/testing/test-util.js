@@ -39,7 +39,7 @@ const scheduler = new Scheduler();
 //   [test code]
 //     let {manifest, arc} = setUpManifestAndArc();
 //     let Result = manifest.findSchemaByName('Result').entityClass();
-//     let resHandle = await arc.createHandle(Result.type.setViewOf(), 'res');
+//     let resHandle = await arc.createHandle(Result.type.collectionOf(), 'res');
 //     let recipe = setUpRecipeWithResHandleMapped(resHandle);
 //
 //     let inspector = new util.ResultInspector(arc, resHandle, 'value');
@@ -55,7 +55,7 @@ export class ResultInspector {
   // handle: a Collection-based handle that should be connected as an output for the particle
   // field: the field within handle's contained Entity type that this inspector should observe
   constructor(arc, handle, field) {
-    assert(handle.type.isSetView, `ResultInspector given non-Collection handle: ${handle}`);
+    assert(handle.type.isCollection, `ResultInspector given non-Collection handle: ${handle}`);
     this._arc = arc;
     this._handle = handle;
     this._field = field;
@@ -118,9 +118,9 @@ export function assertSingletonIs(view, entityClass, expectation) {
   });
 }
 
-export function assertViewWillChangeTo(setView, entityClass, field, expectations) {
+export function assertCollectionWillChangeTo(collection, entityClass, field, expectations) {
   return new Promise((resolve, reject) => {
-    let view = handleFor(setView, true);
+    let view = handleFor(collection, true);
     view.entityClass = entityClass;
     view.on('change', () => view.toList().then(result => {
       if (result == undefined)

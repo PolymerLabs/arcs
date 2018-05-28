@@ -35,7 +35,7 @@ export class Type {
     if (tag == 'Entity') {
       assert(data instanceof Schema);
     }
-    if (tag == 'SetView') {
+    if (tag == 'Collection') {
       if (!(data instanceof Type) && data.tag && data.data) {
         data = new Type(data.tag, data.data);
       }
@@ -47,49 +47,6 @@ export class Type {
     }
     this.tag = tag;
     this.data = data;
-  }
-
-  static newHandle(type) {
-    console.warn('Type.newView is deprecated. Please use Type.newSetView instead');
-    return Type.newSetView(type);
-  }
-
-  get isView() {
-    console.warn('Type.isView is deprecated. Please use Type.isSetView instead');
-    return this.isSetView;
-  }
-
-  get viewType() {
-    console.warn('Type.viewType is deprecated. Please use Type.setViewType isntead');
-    return this.setViewType;
-  }
-
-  viewOf() {
-    console.warn('Type.viewOf is deprecated. Please use Type.setViewOf instead');
-    return this.setViewOf();
-  }
-
-  get manifestReferenceName() {
-    console.warn('Type.manifestReferenceName is deprecated. Please use Type.manifestReference instead');
-    return this.manifestReference;
-  }
-
-  get variableVariable() {
-    console.warn('Type.variableVariable is deprecated. Please use Type.variable instead');
-    return this.variable;
-  }
-
-  // TODO: rename SetView to Collection
-  // Once everything's moved over to this, we can change the
-  // underlying representation
-  get isCollection() {
-    return this.isSetView;
-  }
-  static newCollection(type) {
-    return Type.newSetView(type);
-  }
-  collectionOf() {
-    return Type.newSetView(this);
   }
 
   mergeTypeVariablesByName(variableMap) {
@@ -111,13 +68,13 @@ export class Type {
       return variable;
     }
 
-    if (this.isSetView) {
+    if (this.isCollection) {
       let primitiveType = this.primitiveType();
       let result = primitiveType.mergeTypeVariablesByName(variableMap);
       if (result === primitiveType) {
         return this;
       }
-      return result.setViewOf();
+      return result.collectionOf();
     }
 
     if (this.isInterface) {
@@ -133,7 +90,7 @@ export class Type {
   static unwrapPair(type1, type2) {
     assert(type1 instanceof Type);
     assert(type2 instanceof Type);
-    if (type1.isSetView && type2.isSetView)
+    if (type1.isCollection && type2.isCollection)
       return Type.unwrapPair(type1.primitiveType(), type2.primitiveType());
     return [type1, type2];
   }
@@ -146,7 +103,7 @@ export class Type {
   }
 
   _applyExistenceTypeTest(test) {
-    if (this.isSetView)
+    if (this.isCollection)
       return this.primitiveType()._applyExistenceTypeTest(test);
     if (this.isInterface)
       return this.data._applyExistenceTypeTest(test);
@@ -165,16 +122,20 @@ export class Type {
     return this._applyExistenceTypeTest(type => type.isVariableReference);
   }
 
-  // TODO: remove this in favor of a renamed setViewType
+  // TODO: remove this in favor of a renamed collectionType
   primitiveType() {
-    return this.setViewType;
+    return this.collectionType;
+  }
+
+  collectionOf() {
+    return Type.newCollection(this);
   }
 
   resolvedType() {
-    if (this.isSetView) {
+    if (this.isCollection) {
       let primitiveType = this.primitiveType();
       let resolvedPrimitiveType = primitiveType.resolvedType();
-      return primitiveType !== resolvedPrimitiveType ? resolvedPrimitiveType.setViewOf() : this;
+      return primitiveType !== resolvedPrimitiveType ? resolvedPrimitiveType.collectionOf() : this;
     }
     if (this.isVariable) {
       let resolution = this.variable.resolution;
@@ -199,7 +160,7 @@ export class Type {
       return this.interfaceShape.canEnsureResolved();
     if (this.isVariable)
       return this.variable.canEnsureResolved();
-    if (this.isSetView)
+    if (this.isCollection)
       return this.primitiveType().canEnsureResolved();
     return true;
   }
@@ -209,7 +170,7 @@ export class Type {
       return this.interfaceShape.maybeEnsureResolved();
     if (this.isVariable)
       return this.variable.maybeEnsureResolved();
-    if (this.isSetView)
+    if (this.isCollection)
       return this.primitiveType().maybeEnsureResolved();
     return true;
   }
@@ -303,7 +264,7 @@ export class Type {
         return Shape.fromLiteral;
       case 'Entity':
         return Schema.fromLiteral;
-      case 'SetView':
+      case 'Collection':
         return Type.fromLiteral;
       case 'Tuple':
         return TupleFields.fromLiteral;
@@ -318,21 +279,17 @@ export class Type {
     return new Type(literal.tag, Type._deliteralizer(literal.tag)(literal.data));
   }
 
-  setViewOf() {
-    return Type.newSetView(this);
-  }
-
   // TODO: is this the same as _applyExistenceTypeTest
   hasProperty(property) {
     if (property(this))
       return true;
-    if (this.isSetView)
-      return this.setViewType.hasProperty(property);
+    if (this.isCollection)
+      return this.collectionType.hasProperty(property);
     return false;
   }
 
   toString() {
-    if (this.isSetView)
+    if (this.isCollection)
       return `[${this.primitiveType().toString()}]`;
     if (this.isEntity)
       return this.entitySchema.toInlineSchemaString();
@@ -350,7 +307,7 @@ export class Type {
   }
 
   getEntitySchema() {
-    if (this.isSetView) {
+    if (this.isCollection) {
       return this.primitiveType().getEntitySchema();
     }
     if (this.isEntity) {
@@ -367,7 +324,7 @@ export class Type {
     // Try extract the description from schema spec.
     let entitySchema = this.getEntitySchema();
     if (entitySchema) {
-      if (this.isSetView && entitySchema.description.plural) {
+      if (this.isCollection && entitySchema.description.plural) {
         return entitySchema.description.plural;
       }
       if (this.isEntity && entitySchema.description.pattern) {
@@ -378,7 +335,7 @@ export class Type {
     if (this.isRelation) {
       return JSON.stringify(this.data);
     }
-    if (this.isSetView) {
+    if (this.isCollection) {
       return `${this.primitiveType().toPrettyString()} List`;
     }
     if (this.isVariable)
@@ -399,7 +356,7 @@ export class Type {
 
 addType('Entity', 'schema');
 addType('Variable');
-addType('SetView', 'type');
+addType('Collection', 'type');
 addType('Relation', 'entities');
 addType('Interface', 'shape');
 addType('Tuple', 'fields');
