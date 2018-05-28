@@ -11,6 +11,7 @@
 
 import {Arc} from '../arc.js';
 import {Loader} from '../loader.js';
+import {StubLoader} from '../testing/stub-loader.js';
 import {Planner} from '../planner.js';
 import {assert} from './chai-web.js';
 import {Manifest} from '../manifest.js';
@@ -41,9 +42,9 @@ const assertRecipeResolved = recipe => {
 
 const loadTestArcAndRunSpeculation = async (manifest, manifestLoadedCallback) => {
   const registry = {};
-  const loader = new class extends Loader {
-    loadResource(path) {
-      return {manifest}[path];
+  const loader = new class extends StubLoader {
+    constructor() {
+      super({manifest});
     }
     async requireParticle(fileName) {
       let clazz = class {
@@ -56,12 +57,6 @@ const loadTestArcAndRunSpeculation = async (manifest, manifestLoadedCallback) =>
         }
       };
       return clazz;
-    }
-    path(fileName) {
-      return fileName;
-    }
-    join(_, file) {
-      return file;
     }
   };
   const loadedManifest = await Manifest.load('manifest', loader, {registry});

@@ -12,31 +12,16 @@ import {Manifest} from '../manifest.js';
 import {assert} from './chai-web.js';
 import * as util from '../testing/test-util.js';
 import {Arc} from '../arc.js';
-import {MessageChannel} from '../message-channel.js';
-import {InnerPEC} from '../inner-PEC.js';
-import {Loader} from '../loader.js';
+import {StubLoader} from '../testing/stub-loader.js';
+import {TestHelper} from '../testing/test-helper.js';
 
 async function loadFilesIntoNewArc(fileMap) {
-  let registry = {};
-  let loader = new class extends Loader {
-    loadResource(path) {
-      return fileMap[path];
-    }
-    path(fileName) {
-      return fileName;
-    }
-    join(_, file) {
-      return file;
-    }
+  const testHelper = new TestHelper({loader: new StubLoader(fileMap)});
+  await testHelper.loadManifest('manifest');
+  return {
+    arc: testHelper.arc,
+    manifest: testHelper.arc._context
   };
-  let manifest = await Manifest.load('manifest', loader, {registry});
-  let pecFactory = function(id) {
-    let channel = new MessageChannel();
-    new InnerPEC(channel.port1, `${id}:inner`, loader);
-    return channel.port2;
-  };
-  let arc = new Arc({id: 'test', pecFactory, loader});
-  return {manifest, arc};
 }
 
 describe('particle-api', function() {

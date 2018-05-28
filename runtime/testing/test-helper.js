@@ -13,6 +13,7 @@ import {assert} from '../test/chai-web.js';
 import {Arc} from '../arc.js';
 import {Manifest} from '../manifest.js';
 import {Loader} from '../loader.js';
+import {StubLoader} from '../testing/stub-loader.js';
 import {Planner} from '../planner.js';
 import {Random} from '../random.js';
 import {MockSlotComposer} from '../testing/mock-slot-composer.js';
@@ -72,9 +73,9 @@ export class TestHelper {
    */
   static async parseManifestAndPlan(manifestString, options) {
     options = options || {};
-    options.loader = options.loader || new class extends Loader {
-      loadResource(fileName) { return `defineParticle(({Particle}) => { return class P extends Particle {} });`; }
-    };
+    options.loader = options.loader || new StubLoader({
+      '*': `defineParticle(({Particle}) => { return class P extends Particle {} });`
+    });
     let helper = new TestHelper(options);
     await helper.parseManifest(manifestString);
     await helper.makePlans(options);

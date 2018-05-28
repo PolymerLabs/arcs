@@ -9,15 +9,13 @@
  */
 
 import {assert} from './chai-web.js';
-import {Loader} from '../loader.js';
+import {StubLoader} from '../testing/stub-loader.js';
 import {Manifest} from '../manifest.js';
 import {Schema} from '../schema.js';
 
 describe('schema', function() {
-  let loader = new class extends Loader {
-    loadResource(fileName) {
-      if (fileName == 'Product.schema') {
-        return `
+  let loader = new StubLoader({
+    'Product.schema': `
         import './shell/artifacts/Things/Thing.schema'
         schema Product extends Thing
           Text category
@@ -37,14 +35,8 @@ describe('schema', function() {
 
         schema AlienLife
           Boolean isBasedOnDna
-        `;
-      }
-      return new Loader().loadResource(fileName);
-    }
-    join(_, file) {
-      return file;
-    }
-  };
+        `
+  });
 
   it('schemas load recursively', async function() {
     let manifest = await Manifest.load('Product.schema', loader);
