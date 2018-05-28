@@ -13,8 +13,8 @@
 import {Manifest} from '../manifest.js';
 import {Loader} from '../loader.js';
 import {assert} from './chai-web.js';
-import * as testUtil from './test-util.js';
-import {TestHelper} from './test-helper.js';
+import * as testUtil from '../testing/test-util.js';
+import {TestHelper} from '../testing/test-helper.js';
 
 describe('demo flow', function() {
   it('can load the recipe manifest', async function() {

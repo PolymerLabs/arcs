@@ -12,7 +12,7 @@
 import {assert} from './chai-web.js';
 import {DomContext} from '../dom-context.js';
 import {DomSlot} from '../dom-slot.js';
-import * as util from './test-util.js';
+import * as util from '../testing/test-util.js';
 import {Loader} from '../loader.js';
 
 let loader = new Loader();

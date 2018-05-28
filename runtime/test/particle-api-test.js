@@ -10,7 +10,7 @@
 
 import {Manifest} from '../manifest.js';
 import {assert} from './chai-web.js';
-import * as util from './test-util.js';
+import * as util from '../testing/test-util.js';
 import {Arc} from '../arc.js';
 import {MessageChannel} from '../message-channel.js';
 import {InnerPEC} from '../inner-PEC.js';

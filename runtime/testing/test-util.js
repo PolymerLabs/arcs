@@ -10,7 +10,7 @@
 
  'use strict';
 
-import {assert} from './chai-web.js';
+import {assert} from '../test/chai-web.js';
 import {handleFor} from '../handle.js';
 import {Scheduler} from '../scheduler.js';
 import {Schema} from '../schema.js';

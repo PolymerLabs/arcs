@@ -11,7 +11,7 @@
 import {Arc} from '../arc.js';
 import {assert} from './chai-web.js';
 import {SlotComposer} from '../slot-composer.js';
-import * as util from './test-util.js';
+import * as util from '../testing/test-util.js';
 import {handleFor} from '../handle.js';
 import {Manifest} from '../manifest.js';
 import {Loader} from '../loader.js';
