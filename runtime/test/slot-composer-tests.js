@@ -18,7 +18,7 @@ import {Planner} from '../planner.js';
 import {MessageChannel} from '../message-channel.js';
 import {InnerPEC} from '../inner-PEC.js';
 import {Loader} from '../loader.js';
-import * as util from './test-util.js';
+import * as util from '../testing/test-util.js';
 
 class MockSlot extends Slot {
   constructor(consumeConn, arc) {

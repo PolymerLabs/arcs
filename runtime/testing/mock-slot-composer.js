@@ -9,7 +9,7 @@
  */
 'use strict';
 
-import {assert} from './chai-web.js';
+import {assert} from '../test/chai-web.js';
 import {Slot} from '../slot.js';
 import {SlotComposer} from '../slot-composer.js';
 

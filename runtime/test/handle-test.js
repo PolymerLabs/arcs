@@ -18,7 +18,7 @@ import {Type} from '../type.js';
 import {Manifest} from '../manifest.js';
 import {Loader} from '../loader.js';
 import {StorageProviderFactory} from '../storage/storage-provider-factory.js';
-import {testEntityClass} from './test-util.js';
+import {testEntityClass} from '../testing/test-util.js';
 
 let loader = new Loader();
 

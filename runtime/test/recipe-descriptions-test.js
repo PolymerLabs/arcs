@@ -11,7 +11,7 @@
 'use strict';
 
 import {assert} from './chai-web.js';
-import {TestHelper} from './test-helper.js';
+import {TestHelper} from '../testing/test-helper.js';
 
 describe('recipe descriptions test', function() {
   function createManifestString(options) {
