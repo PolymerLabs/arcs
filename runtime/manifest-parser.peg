@@ -99,7 +99,7 @@ ResourceLine = [^\n]* eol { return text(); }
 
 // TODO: Entity syntax.
 ManifestStorage
-  = ('view' / 'store') whiteSpace name:TopLevelIdent whiteSpace 'of' whiteSpace type:(SchemaInline / ListType / ReferenceType) id:(whiteSpace id)?
+  = 'store' whiteSpace name:TopLevelIdent whiteSpace 'of' whiteSpace type:(SchemaInline / ListType / ReferenceType) id:(whiteSpace id)?
     version:(whiteSpace Version)? tags:(whiteSpace TagList)? whiteSpace source:ManifestStorageSource eolWhiteSpace
     items:(Indent (SameIndent ManifestStorageItem)+)?
   {
@@ -499,7 +499,7 @@ ParticleProvidedSlotItem
   / ParticleProvidedSlotHandle
 
 ParticleProvidedSlotHandle
-  = ('view' / 'handle') whiteSpace handle:lowerIdent eolWhiteSpace
+  = 'handle' whiteSpace handle:lowerIdent eolWhiteSpace
   {
     return {
       kind: 'particle-provided-slot-handle',
