@@ -20,9 +20,6 @@ import {MockSlotComposer} from '../testing/mock-slot-composer.js';
 import {MessageChannel} from '../message-channel.js';
 import {InnerPEC} from '../inner-PEC.js';
 
-// Makes tests deterministic, which aids debugging.
-Random.seedForTests();
-
 /** @class TestHelper
  * Helper class to recipe instantiation and replanning.
  * Usage example:

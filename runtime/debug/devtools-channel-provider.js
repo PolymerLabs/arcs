@@ -10,10 +10,13 @@
 'use strict';
 
 import {DevtoolsChannel} from '../../platform/devtools-channel-web.js';
+import {DevtoolsChannelStub} from './testing/devtools-channel-stub.js';
 
 let instance = null;
 
-export function getDevtoolsChannel() {
-  if (!instance) instance = new DevtoolsChannel();
+export function getDevtoolsChannel({useStub} = {}) {
+  if (!instance) {
+    instance = useStub ? new DevtoolsChannelStub() : new DevtoolsChannel();
+  }
   return instance;
 }
