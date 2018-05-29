@@ -98,7 +98,7 @@ export class DescriptionFormatter {
     await this._updateDescriptionHandles(this._description);
 
     let handleConnection = this._selectHandleConnection(recipeHandle) || recipeHandle.connections[0];
-    let handle = this._arc.findHandleById(recipeHandle.id);
+    let handle = this._arc.findStoreById(recipeHandle.id);
     return this._formatDescription(handleConnection, handle);
   }
 
@@ -141,7 +141,7 @@ export class DescriptionFormatter {
       let specConn = particle.spec.connectionMap.get(handleConn.name);
       let pattern = descByName[handleConn.name] || specConn.pattern;
       if (pattern) {
-        let handleDescription = {pattern: pattern, _handleConn: handleConn, _handle: this._arc.findHandleById(handleConn.handle.id)};
+        let handleDescription = {pattern: pattern, _handleConn: handleConn, _handle: this._arc.findStoreById(handleConn.handle.id)};
         pDesc._connections[handleConn.name] = handleDescription;
       }
     });
@@ -151,7 +151,7 @@ export class DescriptionFormatter {
   async _getPatternByNameFromDescriptionHandle(particle) {
     let descriptionConn = particle.connections['descriptions'];
     if (descriptionConn && descriptionConn.handle && descriptionConn.handle.id) {
-      let descHandle = this._arc.findHandleById(descriptionConn.handle.id);
+      let descHandle = this._arc.findStoreById(descriptionConn.handle.id);
       if (descHandle) {
         let descList = await descHandle.toList();
         let descByName = {};
@@ -268,7 +268,7 @@ export class DescriptionFormatter {
         properties: handleNames.splice(1),
         extra,
         _handleConn: handleConn,
-        _handle: this._arc.findHandleById(handleConn.handle.id)};
+        _handle: this._arc.findStoreById(handleConn.handle.id)};
     }
 
     // slot connection
@@ -319,7 +319,7 @@ export class DescriptionFormatter {
         let handleValue = await this._formatHandleValue(token.handleName, token._handle);
         if (!description) {
           // For singleton handle, if there is no real description (the type was used), use the plain value for description.
-          if (handleValue && !token._handle.type.isSetView && !this.excludeValues) {
+          if (handleValue && !token._handle.type.isCollection && !this.excludeValues) {
             return handleValue;
           }
         }
@@ -358,7 +358,7 @@ export class DescriptionFormatter {
   }
 
   async _propertyTokenToString(handleName, handle, properties) {
-    assert(!handle.type.isSetView, `Cannot return property ${properties.join(',')} for set-view`);
+    assert(!handle.type.isCollection, `Cannot return property ${properties.join(',')} for collection`);
     // Use singleton value's property (eg. "09/15" for person's birthday)
     let handleVar = await handle.get();
     if (handleVar) {
@@ -382,7 +382,7 @@ export class DescriptionFormatter {
     if (!handle) {
       return;
     }
-    if (handle.type.isSetView) {
+    if (handle.type.isCollection) {
       let handleList = await handle.toList();
       if (handleList && handleList.length > 0) {
         return this._formatSetHandle(handleName, handleList);
@@ -448,7 +448,7 @@ export class DescriptionFormatter {
   }
   _formatHandleDescription(handleConn, handle) {
     if (handle) {
-      let handleDescription = this._arc.getHandleDescription(handle);
+      let handleDescription = this._arc.getStoreDescription(handle);
       let handleType = this._formatHandleType(handleConn);
       // Use the handle description available in the arc (if it is different than type name).
       if (!!handleDescription && handleDescription != handleType) {

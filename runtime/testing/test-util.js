@@ -39,10 +39,10 @@ const scheduler = new Scheduler();
 //   [test code]
 //     let {manifest, arc} = setUpManifestAndArc();
 //     let Result = manifest.findSchemaByName('Result').entityClass();
-//     let resHandle = await arc.createHandle(Result.type.setViewOf(), 'res');
-//     let recipe = setUpRecipeWithResHandleMapped(resHandle);
+//     let resStore = await arc.createStore(Result.type.collectionOf(), 'res');
+//     let recipe = setUpRecipeWithResHandleMapped(resStore);
 //
-//     let inspector = new util.ResultInspector(arc, resHandle, 'value');
+//     let inspector = new util.ResultInspector(arc, resStore, 'value');
 //     await arc.instantiate(recipe);
 //     triggerParticleTestFunctionWith('one');
 //     triggerParticleTestFunctionWith('two');
@@ -55,7 +55,7 @@ export class ResultInspector {
   // handle: a Collection-based handle that should be connected as an output for the particle
   // field: the field within handle's contained Entity type that this inspector should observe
   constructor(arc, handle, field) {
-    assert(handle.type.isSetView, `ResultInspector given non-Collection handle: ${handle}`);
+    assert(handle.type.isCollection, `ResultInspector given non-Collection handle: ${handle}`);
     this._arc = arc;
     this._handle = handle;
     this._field = field;
@@ -96,9 +96,9 @@ export class ResultInspector {
   }
 }
 
-export function assertSingletonWillChangeTo(view, entityClass, expectation) {
+export function assertSingletonWillChangeTo(store, entityClass, expectation) {
   return new Promise((resolve, reject) => {
-    let variable = handleFor(view);
+    let variable = handleFor(store);
     variable.entityClass = entityClass;
     variable.on('change', () => variable.get().then(result => {
       if (result == undefined)
@@ -109,8 +109,8 @@ export function assertSingletonWillChangeTo(view, entityClass, expectation) {
   });
 }
 
-export function assertSingletonIs(view, entityClass, expectation) {
-  let variable = handleFor(view);
+export function assertSingletonIs(store, entityClass, expectation) {
+  let variable = handleFor(store);
   variable.entityClass = entityClass;
   return variable.get().then(result => {
     assert(result !== undefined);
@@ -118,11 +118,11 @@ export function assertSingletonIs(view, entityClass, expectation) {
   });
 }
 
-export function assertViewWillChangeTo(setView, entityClass, field, expectations) {
+export function assertCollectionWillChangeTo(collection, entityClass, field, expectations) {
   return new Promise((resolve, reject) => {
-    let view = handleFor(setView, true);
-    view.entityClass = entityClass;
-    view.on('change', () => view.toList().then(result => {
+    let handle = handleFor(collection, true);
+    handle.entityClass = entityClass;
+    handle.on('change', () => handle.toList().then(result => {
       if (result == undefined)
         return;
       if (result.length == expectations.length) {
@@ -135,20 +135,20 @@ export function assertViewWillChangeTo(setView, entityClass, field, expectations
   });
 }
 
-export function assertViewHas(view, entityClass, field, expectations) {
+export function assertHandleHas(store, entityClass, field, expectations) {
   return new Promise((resolve, reject) => {
-    view = handleFor(view, true);
-    view.entityClass = entityClass;
-    view.toList().then(result => {
+    handle = handleFor(store, true);
+    handle.entityClass = entityClass;
+    handle.toList().then(result => {
       assert.deepEqual(result.map(a => a[field]), expectations);
       resolve();
     });
   });
 }
 
-export function assertSingletonEmpty(view) {
+export function assertSingletonEmpty(store) {
   return new Promise((resolve, reject) => {
-    let variable = new handle.handleFor(view);
+    let variable = new handle.handleFor(store);
     variable.get().then(result => {
       assert.equal(result, undefined);
       resolve();

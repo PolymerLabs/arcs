@@ -42,8 +42,8 @@ export class Arc {
     this._loader = loader;
     this._scheduler = scheduler || new Scheduler();
 
-    // All the handles, mapped by handle ID
-    this._handlesById = new Map();
+    // All the stores, mapped by store ID
+    this._storesById = new Map();
 
     // storage keys for referenced handles
     this._storageKeys = {};
@@ -58,12 +58,10 @@ export class Arc {
     }
     this._storageProviderFactory = storageProviderFactory || new StorageProviderFactory(this.id);
 
-    // Dictionary from each tag string to a list of handles
-    this._tags = {};
-    // Map from each handle to a list of tags.
-    this._handleTags = new Map();
-    // Map from each handle to its description (originating in the manifest).
-    this._handleDescriptions = new Map();
+    // Map from each store to a set of tags.
+    this._storeTags = new Map();
+    // Map from each store to its description (originating in the manifest).
+    this._storeDescriptions = new Map();
 
     this._search = null;
     this._description = new Description(this);
@@ -144,7 +142,7 @@ export class Arc {
     for (let url of importSet.values())
       resources += `import '${url}'\n`;
 
-    for (let handle of this._handles) {
+    for (let handle of this._stores) {
       if (!handleSet.has(handle.id))
         continue;
       let type = handle.type;
@@ -225,7 +223,7 @@ ${this.activeRecipe.toString()}`;
       context
     });
     // TODO: pass tags through too
-    manifest.handles.forEach(handle => arc._registerHandle(handle, []));
+    manifest.stores.forEach(store => arc._registerStore(store, []));
     let recipe = manifest.activeRecipe.clone();
     let options = {errors: new Map()};
     assert(recipe.normalize(options), `Couldn't normalize recipe ${recipe.toString()}:\n${[...options.errors.values()].join('\n')}`);
@@ -254,7 +252,7 @@ ${this.activeRecipe.toString()}`;
         assert(connection.isOptional);
         continue;
       }
-      let handle = this.findHandleById(connection.handle.id);
+      let handle = this.findStoreById(connection.handle.id);
       assert(handle, `can't find handle of id ${connection.handle.id}`);
       this._connectParticleToHandle(id, recipeParticle, name, handle);
     }
@@ -275,20 +273,20 @@ ${this.activeRecipe.toString()}`;
     return {base: this.id, component: () => this._nextLocalID++};
   }
 
-  get _handles() {
-    return [...this._handlesById.values()];
+  get _stores() {
+    return [...this._storesById.values()];
   }
 
   // Makes a copy of the arc used for speculative execution.
   async cloneForSpeculativeExecution() {
     let arc = new Arc({id: this.generateID().toString(), pecFactory: this._pecFactory, context: this.context, loader: this._loader, speculative: true});
     let handleMap = new Map();
-    for (let handle of this._handles) {
+    for (let handle of this._stores) {
       let clone = await arc._storageProviderFactory.construct(handle.id, handle.type, 'in-memory');
       await clone.cloneFrom(handle);
       handleMap.set(handle, clone);
-      if (this._handleDescriptions.has(handle)) {
-        arc._handleDescriptions.set(clone, this._handleDescriptions.get(handle));
+      if (this._storeDescriptions.has(handle)) {
+        arc._storeDescriptions.set(clone, this._storeDescriptions.get(handle));
       }
     }
     this.particleHandleMaps.forEach((value, key) => {
@@ -341,7 +339,7 @@ ${this.activeRecipe.toString()}`;
 
     for (let v of handleMap.values()) {
       // FIXME: Tags
-      arc._registerHandle(v, []);
+      arc._registerStore(v, []);
     }
     return arc;
   }
@@ -370,19 +368,19 @@ ${this.activeRecipe.toString()}`;
         type = type.resolvedType();
         assert(type.isResolved(), `Can't create handle for unresolved type ${type}`);
 
-        let handle = await this.createHandle(type, /* name= */ null, this.generateID(), recipeHandle.tags);
+        let newStore = await this.createStore(type, /* name= */ null, this.generateID(), recipeHandle.tags);
         if (recipeHandle.fate === 'copy') {
-          let copiedHandle = this.findHandleById(recipeHandle.id);
-          assert(copiedHandle._version !== null);
-          await handle.cloneFrom(copiedHandle);
-          let copiedHandleDesc = this.getHandleDescription(copiedHandle);
-          if (copiedHandleDesc) {
-            this._handleDescriptions.set(handle, copiedHandleDesc);
+          let copiedStore = this.findStoreById(recipeHandle.id);
+          assert(copiedStore._version !== null);
+          await newStore.cloneFrom(copiedStore);
+          let copiedStoreDesc = this.getStoreDescription(copiedStore);
+          if (copiedStoreDesc) {
+            this._storeDescriptions.set(newStore, copiedStoreDesc);
           }
         }
-        recipeHandle.id = handle.id;
+        recipeHandle.id = newStore.id;
         recipeHandle.fate = 'use';
-        recipeHandle.storageKey = handle.storageKey;
+        recipeHandle.storageKey = newStore.storageKey;
         // TODO: move the call to OuterPEC's DefineHandle to here
       }
 
@@ -390,8 +388,8 @@ ${this.activeRecipe.toString()}`;
       if (!storageKey)
         storageKey = this.keyForId(recipeHandle.id);
       assert(storageKey, `couldn't find storage key for handle '${recipeHandle}'`);
-      let handle = await this._storageProviderFactory.connect(recipeHandle.id, recipeHandle.type, storageKey);
-      assert(handle, `handle '${recipeHandle.id}' was not found`);
+      let store = await this._storageProviderFactory.connect(recipeHandle.id, recipeHandle.type, storageKey);
+      assert(store, `store '${recipeHandle.id}' was not found`);
     }
 
     particles.forEach(recipeParticle => this._instantiateParticle(recipeParticle));
@@ -414,8 +412,8 @@ ${this.activeRecipe.toString()}`;
     handleMap.handles.set(name, targetHandle);
   }
 
-  async createHandle(type, name, id, tags, storageKey) {
-    assert(type instanceof Type, `can't createHandle with type ${type} that isn't a Type`);
+  async createStore(type, name, id, tags, storageKey) {
+    assert(type instanceof Type, `can't createStore with type ${type} that isn't a Type`);
 
     if (type.isRelation) {
       type = Type.newCollection(type);
@@ -430,37 +428,30 @@ ${this.activeRecipe.toString()}`;
     if (storageKey == undefined)
       storageKey = 'in-memory';
 
-    let handle = await this._storageProviderFactory.construct(id, type, storageKey);
-    assert(handle, 'handle with id ${id} already exists');
-    handle.name = name;
+    let store = await this._storageProviderFactory.construct(id, type, storageKey);
+    assert(store, 'stopre with id ${id} already exists');
+    store.name = name;
 
-    this._registerHandle(handle, tags);
-    return handle;
+    this._registerStore(store, tags);
+    return store;
   }
 
-  _registerHandle(handle, tags) {
+  _registerStore(store, tags) {
     tags = tags || [];
     tags = Array.isArray(tags) ? tags : [tags];
 
-    this._handlesById.set(handle.id, handle);
+    this._storesById.set(store.id, store);
 
-    if (tags.length) {
-      for (let tag of tags) {
-        if (this._tags[tag] == undefined)
-          this._tags[tag] = [];
-        this._tags[tag].push(handle);
-      }
-    }
-    this._handleTags.set(handle, new Set(tags));
+    this._storeTags.set(store, new Set(tags));
 
-    this._storageKeys[handle.id] = handle.storageKey;
+    this._storageKeys[store.id] = store.storageKey;
   }
 
   // Convert a type to a normalized key that we can use for
   // equality testing.
   //
   // TODO: we should be testing the schemas for compatiblity instead of using just the name.
-  // TODO: now that this is only used to implement findHandlesByType we can probably replace
+  // TODO: now that this is only used to implement findStoresByType we can probably replace
   // the check there with a type system equality check or similar.
   static _typeToKey(type) {
     if (type.isCollection) {
@@ -479,10 +470,10 @@ ${this.activeRecipe.toString()}`;
     }
   }
 
-  findHandlesByType(type, options) {
+  findStoresByType(type, options) {
     // TODO: dstockwell to rewrite this to use constraints and more
     let typeKey = Arc._typeToKey(type);
-    let handles = [...this._handlesById.values()].filter(handle => {
+    let stores = [...this._storesById.values()].filter(handle => {
       if (typeKey) {
         let handleKey = Arc._typeToKey(handle.type);
         if (typeKey === handleKey) {
@@ -499,33 +490,33 @@ ${this.activeRecipe.toString()}`;
     });
 
     if (options && options.tags && options.tags.length > 0) {
-      handles = handles.filter(handle => options.tags.filter(tag => !this._handleTags.get(handle).has(tag)).length == 0);
+      stores = stores.filter(store => options.tags.filter(tag => !this._storeTags.get(store).has(tag)).length == 0);
     }
-    return handles;
+    return stores;
   }
 
-  findHandleById(id) {
-    let handle = this._handlesById.get(id);
-    if (handle == null) {
-      handle = this._context.findStorageById(id);
+  findStoreById(id) {
+    let store = this._storesById.get(id);
+    if (store == null) {
+      store = this._context.findStoreById(id);
     }
-    return handle;
+    return store;
   }
 
-  getHandleDescription(handle) {
-    assert(handle, 'Cannot fetch description for nonexistent handle');
-    return this._handleDescriptions.get(handle) || handle.description;
+  getStoreDescription(store) {
+    assert(store, 'Cannot fetch description for nonexistent store');
+    return this._storeDescriptions.get(store) || store.description;
   }
 
-  getHandlesState() {
+  getStoresState() {
     let versionById = new Map();
-    this._handlesById.forEach((handle, id) => versionById.set(id, handle._version));
+    this._storesById.forEach((handle, id) => versionById.set(id, handle._version));
     return versionById;
   }
 
-  isSameState(handlesState) {
-    for (let [id, version] of handlesState ) {
-      if (!this._handlesById.has(id) || this._handlesById.get(id)._version != version) {
+  isSameState(storesState) {
+    for (let [id, version] of storesState ) {
+      if (!this._storesById.has(id) || this._storesById.get(id)._version != version) {
         return false;
       }
     }
@@ -536,27 +527,18 @@ ${this.activeRecipe.toString()}`;
     return this._storageKeys[id];
   }
 
-  newCommit(entityMap) {
-    for (let [entity, handle] of entityMap.entries()) {
-      entity.identify(this.generateID());
-    }
-    for (let [entity, handle] of entityMap.entries()) {
-      new handleFor(handle).store(entity);
-    }
-  }
-
   stop() {
     this.pec.stop();
   }
 
   toContextString(options) {
     let results = [];
-    let handles = [...this._handlesById.values()].sort(util.compareComparables);
-    handles.forEach(v => {
-      results.push(v.toString(this._handleTags.get(v)));
+    let stores = [...this._storesById.values()].sort(util.compareComparables);
+    stores.forEach(store => {
+      results.push(store.toString(this._storeTags.get(store)));
     });
 
-    // TODO: include handles entities
+    // TODO: include stores entities
     // TODO: include (remote) slots?
 
     if (!this._activeRecipe.isEmpty()) {

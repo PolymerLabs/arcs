@@ -31,11 +31,11 @@ export class ResolveRecipe extends Strategy {
 
         switch (handle.fate) {
           case 'use':
-            mappable = arc.findHandlesByType(handle.type, {tags: handle.tags, subtype: counts.out == 0});
+            mappable = arc.findStoresByType(handle.type, {tags: handle.tags, subtype: counts.out == 0});
             break;
           case 'map':
           case 'copy':
-            mappable = arc.context.findStorageByType(handle.type, {tags: handle.tags, subtype: true});
+            mappable = arc.context.findStoreByType(handle.type, {tags: handle.tags, subtype: true});
             break;
           case 'create':
           case '?':

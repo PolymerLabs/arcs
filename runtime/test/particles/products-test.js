@@ -41,7 +41,7 @@ describe('products test', function() {
                 && content.model.items['$template'].length > 0
                 && 1 == content.model.items.models.length;
             if (verified) {
-              assert.equal('Harry Potter', helper.arc._handles[0]._items.get(content.model.items.models[0].id).rawData.name);
+              assert.equal('Harry Potter', helper.arc._stores[0]._items.get(content.model.items.models[0].id).rawData.name);
             }
             return verified;
           }})

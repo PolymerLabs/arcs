@@ -25,7 +25,7 @@ window.defaultManifest = `
 import '${window.shellPath}/artifacts/Arcs/Arcs.recipes'
 import '${window.shellPath}/artifacts/canonical.manifest'
 import 'https://sjmiles.github.io/arcs-stories/0.4/Generic/Generic.recipes'
-import 'https://sjmiles.github.io/arcs-stories/0.4/TVShows/TVShows.recipes'
+import 'https://sjmiles.github.io/arcs-stories/0.4/TV/TV.recipes'
 import 'https://sjmiles.github.io/arcs-stories/0.4/PlaidAccounts/PlaidAccounts.recipes'
 import 'https://sjmiles.github.io/arcs-stories/0.4/GitHubDash/GitHubDash.recipes'
 import 'https://sjmiles.github.io/arcs-stories/0.4/Generated/Generated.recipes'

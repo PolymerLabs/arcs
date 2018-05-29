@@ -146,8 +146,8 @@ export class InnerPEC {
       createHandle: function(type, name) {
         return new Promise((resolve, reject) =>
           pec._apiPort.ArcCreateHandle({arc: arcId, type, name, callback: proxy => {
-            let h = handleFor(proxy, proxy.type.isSetView, name, particleId);
-            h.entityClass = (proxy.type.isSetView ? proxy.type.primitiveType() : proxy.type).entitySchema.entityClass();
+            let h = handleFor(proxy, proxy.type.isCollection, name, particleId);
+            h.entityClass = (proxy.type.isCollection ? proxy.type.primitiveType() : proxy.type).entitySchema.entityClass();
             resolve(h);
           }}));
       },
@@ -201,8 +201,8 @@ export class InnerPEC {
     let registerList = [];
     proxies.forEach((proxy, name) => {
       let connSpec = spec.connectionMap.get(name);
-      let handle = handleFor(proxy, proxy.type.isSetView, name, id, connSpec.isInput, connSpec.isOutput);
-      let type = proxy.type.isSetView ? proxy.type.primitiveType() : proxy.type;
+      let handle = handleFor(proxy, proxy.type.isCollection, name, id, connSpec.isInput, connSpec.isOutput);
+      let type = proxy.type.isCollection ? proxy.type.primitiveType() : proxy.type;
       if (type.isEntity) {
         handle.entityClass = type.entitySchema.entityClass();
       }

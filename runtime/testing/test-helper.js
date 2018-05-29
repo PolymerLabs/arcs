@@ -150,7 +150,7 @@ export class TestHelper {
           plans = plans.filter(p => {
             return options.hostedParticles.every(hosted => {
               let interfaceHandles = p.plan.handles.filter(h => h.type.isInterface);
-              return interfaceHandles.find(handle => this.arc.findHandleById(handle.id)._stored.name == hosted);
+              return interfaceHandles.find(handle => this.arc.findStoreById(handle.id)._stored.name == hosted);
             });
           });
         }
@@ -209,7 +209,7 @@ export class TestHelper {
     assert(particle.connections[connectionName], `Connection ${connectionName} doesn't existing in particle ${particleName}`);
     let handleId = particle.connections[connectionName].handle.id;
     assert(handleId, `No handle ID for ${particleName}::${connectionName}`);
-    let handle = this.arc.findHandleById(handleId);
+    let handle = this.arc.findStoreById(handleId);
     assert(handle, `Handle '${handleId}' (${particleName}::${connectionName}) not found in active recipe`);
 
     return new Promise((resolve, reject) => {

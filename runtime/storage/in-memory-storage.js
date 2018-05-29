@@ -83,7 +83,7 @@ export class InMemoryStorage {
 
 class InMemoryStorageProvider extends StorageProviderBase {
   static newProvider(type, arcId, name, id, key) {
-    if (type.isSetView)
+    if (type.isCollection)
       return new InMemoryCollection(type, arcId, name, id, key);
     return new InMemoryVariable(type, arcId, name, id, key);
   }

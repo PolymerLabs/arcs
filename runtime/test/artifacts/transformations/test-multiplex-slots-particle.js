@@ -37,7 +37,7 @@ defineParticle(({TransformationDomParticle}) => {
           // The element already exists.
           continue;
         }
-        let fooView = await arc.createHandle(type.primitiveType(), 'foo' + index);
+        let fooHandle = await arc.createHandle(type.primitiveType(), 'foo' + index);
         this._handleIds.add(foo.id);
         let hostedSlotName = [...hostedParticle.slots.keys()][0];
         let slotName = [...this.spec.slots.values()][0].name;
@@ -51,7 +51,7 @@ defineParticle(({TransformationDomParticle}) => {
             consume ${hostedSlotName}
 
           recipe
-            use '${fooView._id}' as v1
+            use '${fooHandle._id}' as v1
             slot '${slotId}' as s1
             ${hostedParticle.name}
               foo <- v1
@@ -60,7 +60,7 @@ defineParticle(({TransformationDomParticle}) => {
 
         try {
           await arc.loadRecipe(recipe, this);
-          fooView.set(foo);
+          fooHandle.set(foo);
         } catch (e) {
           console.log(e);
         }

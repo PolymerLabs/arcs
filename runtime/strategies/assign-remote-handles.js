@@ -15,6 +15,6 @@ export class AssignRemoteHandles extends HandleMapperBase {
   }
 
   getMappableHandles(type, tags=[]) {
-    return this._arc.context.findStorageByType(type, {tags, subtype: true});
+    return this._arc.context.findStoreByType(type, {tags, subtype: true});
   }
 }

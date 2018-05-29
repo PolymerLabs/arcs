@@ -36,7 +36,7 @@ class CloudHandles extends Xen.Debug(Xen.Base, log) {
   }
   _scanHandles(key, arc, roots) {
     const paths = {};
-    [...arc._handleTags].forEach(tagEntry => this._handleToPath(paths, key, tagEntry));
+    [...arc._storeTags].forEach(tagEntry => this._handleToPath(paths, key, tagEntry));
     this._updateWatches(arc, roots, paths);
   }
   _handleToPath(paths, key, [localHandle, tags]) {
@@ -53,7 +53,7 @@ class CloudHandles extends Xen.Debug(Xen.Base, log) {
         delete paths[path];
       } else {
         const handle = paths[path];
-        if (handle.type.isSetView) {
+        if (handle.type.isCollection) {
           this._unwatchSet(path);
         } else {
           this._unwatchVariable(path);
@@ -63,7 +63,7 @@ class CloudHandles extends Xen.Debug(Xen.Base, log) {
     // add watches for remaining paths
     Object.keys(paths).forEach(path => {
       const handle = paths[path];
-      if (handle.type.isSetView) {
+      if (handle.type.isCollection) {
         this._watchSet(arc, path, handle);
       } else {
         this._watchVariable(arc, path, handle);

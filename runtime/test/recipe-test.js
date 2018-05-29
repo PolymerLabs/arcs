@@ -21,14 +21,14 @@ describe('recipe', function() {
           in S1 s1
           out S2 s2
         recipe
-          map as view1
-          map 'h0' as view2
-          map 'h0' as view3
+          map as handle1
+          map 'h0' as handle2
+          map 'h0' as handle3
           slot 's0' as slot0
           slot 's0' as slot1
           P1
-            s1 = view1
-            s2 -> view2
+            s1 = handle1
+            s2 -> handle2
     `);
     let recipe = manifest.recipes[0];
     recipe.handles[0]._mappedType = recipe.particles[0].connections['s2'].type;
@@ -76,8 +76,8 @@ describe('recipe', function() {
     assert.isTrue(p1ConnSpec.isCompatibleType(MyType));
     assert.isTrue(p1ConnSpec.isCompatibleType(MySubType));
     assert.isFalse(p1ConnSpec.isCompatibleType(OtherType));
-    assert.isFalse(p1ConnSpec.isCompatibleType(MyType.setViewOf()));
-    assert.isFalse(p1ConnSpec.isCompatibleType(MySubType.setViewOf()));
+    assert.isFalse(p1ConnSpec.isCompatibleType(MyType.collectionOf()));
+    assert.isFalse(p1ConnSpec.isCompatibleType(MySubType.collectionOf()));
 
     // Only MyType are valid types for (out MyType)
     let p2ConnSpec = manifest.particles.find(p => p.name == 'P2').connections[0];
@@ -102,8 +102,8 @@ describe('recipe', function() {
     assert.isFalse(p5ConnSpec.isCompatibleType(MyType));
     assert.isFalse(p5ConnSpec.isCompatibleType(MySubType));
     assert.isFalse(p5ConnSpec.isCompatibleType(OtherType));
-    assert.isTrue(p5ConnSpec.isCompatibleType(MyType.setViewOf()));
-    assert.isTrue(p5ConnSpec.isCompatibleType(MySubType.setViewOf()));
+    assert.isTrue(p5ConnSpec.isCompatibleType(MyType.collectionOf()));
+    assert.isTrue(p5ConnSpec.isCompatibleType(MySubType.collectionOf()));
   });
   it('keeps orphaned slots, handles and particles', async () => {
     let manifest = await Manifest.parse(`

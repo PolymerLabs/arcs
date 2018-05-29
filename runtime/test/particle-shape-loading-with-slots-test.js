@@ -31,11 +31,11 @@ describe('particle-shape-loading-with-slots', function() {
       import './runtime/test/artifacts/transformations/test-slots-particles.manifest'
 
       recipe
-        create as view0
+        create as handle0
         slot 'slotid-0' as slot0
         MultiplexSlotsParticle
           particle = SingleSlotParticle
-          foos <- view0
+          foos <- handle0
           consume annotationsSet as slot0
       `, {loader, fileName: './test.manifest'});
     let recipe = manifest.recipes[0];
@@ -48,11 +48,11 @@ describe('particle-shape-loading-with-slots', function() {
     await arc.instantiate(recipe);
 
     let fooType = manifest.findTypeByName('Foo');
-    let inView = handleFor(arc.findHandlesByType(fooType.setViewOf())[0]);
-    inView.store(new (fooType.entitySchema.entityClass())({value: 'foo1'}));
-    inView.store(new (fooType.entitySchema.entityClass())({value: 'foo2'}));
+    let inHandle = handleFor(arc.findStoresByType(fooType.collectionOf())[0]);
+    inHandle.store(new (fooType.entitySchema.entityClass())({value: 'foo1'}));
+    inHandle.store(new (fooType.entitySchema.entityClass())({value: 'foo2'}));
 
-    return {fooType, inView, slotComposer};
+    return {fooType, inHandle, slotComposer};
   }
 
   function verifyFooItems(items, expectedValues) {
@@ -61,7 +61,7 @@ describe('particle-shape-loading-with-slots', function() {
   }
 
   it('multiplex recipe with slots', async () => {
-    let {fooType, inView, slotComposer} = await instantiateRecipe();
+    let {fooType, inHandle, slotComposer} = await instantiateRecipe();
     slotComposer._slots[0].updateContext({});
 
     slotComposer
@@ -79,7 +79,7 @@ describe('particle-shape-loading-with-slots', function() {
     verifyFooItems(slot._content.model.items, ['foo1', 'foo2']);
 
     // Add one more element.
-    inView.store(new (fooType.entitySchema.entityClass())({value: 'foo3'}));
+    inHandle.store(new (fooType.entitySchema.entityClass())({value: 'foo3'}));
     slotComposer
       .newExpectations()
       .expectRenderSlot('SingleSlotParticle', 'annotation', {contentTypes: ['model']})
@@ -98,7 +98,7 @@ describe('particle-shape-loading-with-slots', function() {
     // This test is different from the one above because it initializes the transformation particle context
     // after the hosted particles are also instantiated.
     // This verifies a different start-render call in slot-composer.
-    let {fooType, inView, slotComposer} = await instantiateRecipe();
+    let {fooType, inHandle, slotComposer} = await instantiateRecipe();
     // Wait for the hosted slots to be initialized in slot-composer.
     await new Promise((resolve, reject) => {
       let myInterval = setInterval(function() {
@@ -125,7 +125,7 @@ describe('particle-shape-loading-with-slots', function() {
     verifyFooItems(slot._content.model.items, ['foo1', 'foo2']);
 
     // Add one more element.
-    inView.store(new (fooType.entitySchema.entityClass())({value: 'foo3'}));
+    inHandle.store(new (fooType.entitySchema.entityClass())({value: 'foo3'}));
 
     slotComposer
       .newExpectations()

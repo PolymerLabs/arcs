@@ -78,14 +78,14 @@ export class Manifest {
     this._schemas = {};
     this._stores = [];
     this._shapes = [];
-    this._handleTags = new Map();
+    this._storeTags = new Map();
     this._fileName = null;
     this._nextLocalID = 0;
     this._id = id;
     this._storageProviderFactory = undefined;
     this._meta = new ManifestMeta();
     this._resources = {};
-    this._handleManifestUrls = new Map();
+    this._storeManifestUrls = new Map();
     this._warnings = [];
   }
   get id() {
@@ -118,7 +118,7 @@ export class Manifest {
   get fileName() {
     return this._fileName;
   }
-  get handles() {
+  get stores() {
     return this._stores;
   }
   get shapes() {
@@ -138,18 +138,18 @@ export class Manifest {
   // TODO: newParticle, Schema, etc.
   // TODO: simplify() / isValid().
   async newStore(type, name, id, tags) {
-    assert(!type.hasVariableReference, `handles can't have variable references`);
-    let handle = await this.storageProviderFactory.construct(id, type, `in-memory://${this.id}`);
-    assert(handle._version !== null);
-    handle.name = name;
-    this._handleManifestUrls.set(handle.id, this.fileName);
-    return this._addStore(handle, tags);
+    assert(!type.hasVariableReference, `stores can't have variable references`);
+    let store = await this.storageProviderFactory.construct(id, type, `in-memory://${this.id}`);
+    assert(store._version !== null);
+    store.name = name;
+    this._storeManifestUrls.set(store.id, this.fileName);
+    return this._addStore(store, tags);
   }
 
-  _addStore(handle, tags) {
-    this._stores.push(handle);
-    this._handleTags.set(handle, tags ? tags : []);
-    return handle;
+  _addStore(store, tags) {
+    this._stores.push(store);
+    this._storeTags.set(store, tags ? tags : []);
+    return store;
   }
 
   newStorageStub(type, name, id, storageKey, tags) {
@@ -192,16 +192,16 @@ export class Manifest {
   findParticlesByVerb(verb) {
     return [...this._findAll(manifest => Object.values(manifest._particles).filter(particle => particle.primaryVerb == verb))];
   }
-  findStorageByName(name) {
+  findStoreByName(name) {
     return this._find(manifest => manifest._stores.find(store => store.name == name));
   }
-  findStorageById(id) {
+  findStoreById(id) {
     return this._find(manifest => manifest._stores.find(store => store.id == id));
   }
   findManifestUrlForHandleId(id) {
-    return this._find(manifest => manifest._handleManifestUrls.get(id));
+    return this._find(manifest => manifest._storeManifestUrls.get(id));
   }
-  findStorageByType(type, options={}) {
+  findStoreByType(type, options={}) {
     let tags = options.tags || [];
     let subtype = options.subtype || false;
     function typePredicate(store) {
@@ -221,7 +221,7 @@ export class Manifest {
       return store.type.equals(type);
     }
     function tagPredicate(manifest, handle) {
-      return tags.filter(tag => !manifest._handleTags.get(handle).includes(tag)).length == 0;
+      return tags.filter(tag => !manifest._storeTags.get(handle).includes(tag)).length == 0;
     }
     return [...this._findAll(manifest => manifest._stores.filter(store => typePredicate(store) && tagPredicate(manifest, store)))];
   }
@@ -347,7 +347,7 @@ ${e.message}
       // processing meta sections should come first as this contains identifying
       // information that might need to be used in other sections. For example,
       // the meta.name, if present, becomes the manifest id which is relevant
-      // when constructing manifest handles.
+      // when constructing manifest stores.
       await processItems('meta', meta => manifest.applyMeta(meta.items));
       // similarly, resources may be referenced from other parts of the manifest.
       await processItems('resource', item => this._processResource(manifest, item));
@@ -610,11 +610,11 @@ ${e.message}
       let ref = item.ref || {tags: []};
       if (ref.id) {
         handle.id = ref.id;
-        let targetStore = manifest.findStorageById(handle.id);
+        let targetStore = manifest.findStoreById(handle.id);
         if (targetStore)
           handle.mapToStorage(targetStore);
       } else if (ref.name) {
-        let targetStore = manifest.findStorageByName(ref.name);
+        let targetStore = manifest.findStoreByName(ref.name);
         // TODO: Error handling.
         assert(targetStore, `Could not find handle ${ref.name}`);
         handle.mapToStorage(targetStore);
@@ -1006,9 +1006,9 @@ ${e.message}
       results.push(r.toString(options));
     });
 
-    let handles = [...this.handles].sort(util.compareComparables);
-    handles.forEach(h => {
-      results.push(h.toString(this._handleTags.get(h).map(a => `#${a}`)));
+    let stores = [...this.stores].sort(util.compareComparables);
+    stores.forEach(store => {
+      results.push(store.toString(this._storeTags.get(store).map(a => `#${a}`)));
     });
 
     return results.join('\n');

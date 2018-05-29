@@ -35,9 +35,9 @@ describe('manifest integration', () => {
     await arc.instantiate(recipe);
     await arc.idle;
     let type = recipe.handles[0].type;
-    let [view] = arc.findHandlesByType(type);
-    assert(view);
-    let handle = handleFor(view);
+    let [store] = arc.findStoresByType(type);
+    assert(store);
+    let handle = handleFor(store);
     // TODO: This should not be necessary.
     type.maybeEnsureResolved();
     handle.entityClass = type.resolvedType().entitySchema.entityClass();

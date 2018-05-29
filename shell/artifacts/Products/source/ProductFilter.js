@@ -22,24 +22,24 @@ defineParticle(({Particle}) => {
         if (!arc) {
           arc = await this.constructInnerArc();
         }
-        let productsView = views.get('products');
-        let productsList = await productsView.toList();
+        let productsHandle = views.get('products');
+        let productsList = await productsHandle.toList();
         let hostedParticle = await views.get('hostedParticle').get();
-        let resultsView = views.get('results');
+        let resultsHandle = views.get('results');
         for (let [index, product] of productsList.entries()) {
           if (this._handleIds.has(product.id)) {
             continue;
           }
 
-          let productView = await arc.createHandle(productsView.type.primitiveType(), 'product' + index);
-          let resultView = await arc.createHandle(productsView.type.primitiveType(), 'result' + index);
+          let productHandle = await arc.createHandle(productsHandle.type.primitiveType(), 'product' + index);
+          let resultHandle = await arc.createHandle(productsHandle.type.primitiveType(), 'result' + index);
           this._handleIds.add(product.id);
 
           let recipe = Particle.buildManifest`
 ${hostedParticle}
 recipe
-  use '${productView._id}' as v1
-  use '${resultView._id}' as v2
+  use '${productHandle._id}' as v1
+  use '${resultHandle._id}' as v2
   ${hostedParticle.name}
     ${hostedParticle.connections[0].name} <- v1
     ${hostedParticle.connections[1].name} -> v2
@@ -47,15 +47,15 @@ recipe
 
           try {
             await arc.loadRecipe(recipe, this);
-            productView.set(product);
+            productHandle.set(product);
           } catch (e) {
             console.log(e);
           }
 
-          resultView.on('change', async e => {
-            let result = await resultView.get();
+          resultHandle.on('change', async e => {
+            let result = await resultHandle.get();
             if (result) {
-              resultsView.store(result);
+              resultsHandle.store(result);
             }
           }, this);
         }

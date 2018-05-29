@@ -139,7 +139,7 @@ class TestEngine {
   }
 
   newCollection(name) {
-    return new TestCollection(this.type.setViewOf(), name);
+    return new TestCollection(this.type.collectionOf(), name);
   }
 
   newParticle() {
@@ -148,7 +148,7 @@ class TestEngine {
 
   newProxy(store, particle, canRead, canWrite) {
     let proxy = new StorageProxy('X' + this._idCounter++, store.type, this, {}, store.name);
-    let handle = handleFor(proxy, store.type.isSetView, store.name, particle.id, canRead, canWrite);
+    let handle = handleFor(proxy, store.type.isCollection, store.name, particle.id, canRead, canWrite);
     handle.entityClass = this.schema.entityClass();
     return [proxy, handle];
   }
@@ -247,7 +247,7 @@ describe('storage-proxy', function() {
     assert.equal(JSON.stringify(testDetails), JSON.stringify(realDetails));
 
     let testCollection = engine.newCollection('c');
-    let realCollection = await realStorage.construct('cid', engine.type.setViewOf(), 'in-memory');
+    let realCollection = await realStorage.construct('cid', engine.type.collectionOf(), 'in-memory');
     realCollection._fire = (kind, details) => realDetails = details;
 
     testDetails = testCollection.store('id1', entity, 1);

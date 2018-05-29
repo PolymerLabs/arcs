@@ -52,8 +52,8 @@ const loadTestArcAndRunSpeculation = async (manifest, manifestLoadedCallback) =>
           this.relevances = [1];
         }
         async setViews(views) {
-          let thingView = views.get('thing');
-          thingView.set(new thingView.entityClass({name: 'MYTHING'}));
+          let thingHandle = views.get('thing');
+          thingHandle.set(new thingHandle.entityClass({name: 'MYTHING'}));
         }
       };
       return clazz;
@@ -95,8 +95,8 @@ describe('Planner', function() {
       let arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'dom');
       let Person = manifest.findSchemaByName('Person').entityClass();
       let Product = manifest.findSchemaByName('Product').entityClass();
-      let personView = await arc.createHandle(Person.type.setViewOf(), 'aperson');
-      let productView = await arc.createHandle(Product.type.setViewOf(), 'products');
+      let personStore = await arc.createStore(Person.type.collectionOf(), 'aperson');
+      let productStore = await arc.createStore(Product.type.collectionOf(), 'products');
       return arc;
     };
     let testSteps = async planner => {
@@ -554,7 +554,7 @@ describe('Description', async () => {
     );
     assert.equal(plans.length, 1);
     assert.equal('Make MYTHING.', await plans[0].description.getRecipeSuggestion());
-    assert.equal(0, arc._handlesById.size);
+    assert.equal(0, arc._storesById.size);
   });
 });
 
@@ -671,7 +671,7 @@ describe('Automatic handle resolution', function() {
       `,
       async (arc, manifest) => {
         let Thing = manifest.findSchemaByName('Thing').entityClass();
-        await arc.createHandle(Thing.type, undefined, 'test:1');
+        await arc.createStore(Thing.type, undefined, 'test:1');
       }
     );
 

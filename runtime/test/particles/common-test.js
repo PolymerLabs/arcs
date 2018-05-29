@@ -70,11 +70,11 @@ describe('common particles test', function() {
     let helper = await TestHelper.loadManifestAndPlan(
         './runtime/test/particles/artifacts/copy-collection-test.recipes',
         {expectedNumPlans: 1, expectedSuggestions: ['Copy all things!']});
-    assert.equal(0, helper.arc._handles.length);
+    assert.equal(0, helper.arc._stores.length);
 
     await helper.acceptSuggestion({particles: ['CopyCollection', 'CopyCollection']});
 
     // Copied 2 and 3 entities from two collections.
-    assert.equal(5, helper.arc._handles[0]._items.size);
+    assert.equal(5, helper.arc._stores[0]._items.size);
   });
 });

@@ -32,18 +32,18 @@ describe('particle-shape-loading', function() {
             return class P extends Particle {
               async setViews(views) {
                 let arc = await this.constructInnerArc();
-                var inputView = views.get('input');
-                let outputView = views.get('output');
-                let inView = await arc.createHandle(inputView.type, "input");
-                let outView = await arc.createHandle(outputView.type, "output");
+                var inputHandle = views.get('input');
+                let outputHandle = views.get('output');
+                let inHandle = await arc.createHandle(inputHandle.type, "input");
+                let outHandle = await arc.createHandle(outputHandle.type, "output");
                 let particle = await views.get('particle').get();
 
                 var recipe = Particle.buildManifest\`
                   \${particle}
 
                   recipe
-                    use \${inView} as v1
-                    use \${outView} as v2
+                    use \${inHandle} as v1
+                    use \${outHandle} as v2
                     \${particle.name}
                       foo <- v1
                       bar -> v2
@@ -51,12 +51,12 @@ describe('particle-shape-loading', function() {
 
                 try {
                   await arc.loadRecipe(recipe);
-                  var input = await inputView.get();
-                  inView.set(input);
-                  outView.on('change', async () => {
-                    var output = await outView.get();
+                  var input = await inputHandle.get();
+                  inHandle.set(input);
+                  outHandle.on('change', async () => {
+                    var output = await outHandle.get();
                     if (output != null)
-                      outputView.set(output);
+                      outputHandle.set(output);
                   }, this);
                 } catch (e) {
                   console.log(e);
@@ -92,38 +92,38 @@ describe('particle-shape-loading', function() {
       ],
     });
 
-    let shapeView = await arc.createHandle(shapeType);
-    shapeView.set(manifest.particles[0].toLiteral());
-    let outView = await arc.createHandle(barType);
-    let inView = await arc.createHandle(fooType);
+    let shapeStore = await arc.createStore(shapeType);
+    shapeStore.set(manifest.particles[0].toLiteral());
+    let outStore = await arc.createStore(barType);
+    let inStore = await arc.createStore(fooType);
     let Foo = manifest.schemas.Foo.entityClass();
-    inView.set(new Foo({value: 'a foo'}));
+    inStore.set(new Foo({value: 'a foo'}));
 
     let recipe = new Recipe();
     let particle = recipe.newParticle('outerParticle');
     particle.spec = outerParticleSpec;
 
-    let recipeShapeView = recipe.newHandle();
-    particle.connections['particle'].connectToHandle(recipeShapeView);
-    recipeShapeView.fate = 'use';
-    recipeShapeView.mapToStorage(shapeView);
+    let recipeShapeHandle = recipe.newHandle();
+    particle.connections['particle'].connectToHandle(recipeShapeHandle);
+    recipeShapeHandle.fate = 'use';
+    recipeShapeHandle.mapToStorage(shapeStore);
 
-    let recipeOutView = recipe.newHandle();
-    particle.connections['output'].connectToHandle(recipeOutView);
-    recipeOutView.fate = 'use';
-    recipeOutView.mapToStorage(outView);
+    let recipeOutHandle = recipe.newHandle();
+    particle.connections['output'].connectToHandle(recipeOutHandle);
+    recipeOutHandle.fate = 'use';
+    recipeOutHandle.mapToStorage(outStore);
 
-    let recipeInView = recipe.newHandle();
-    particle.connections['input'].connectToHandle(recipeInView);
-    recipeInView.fate = 'use';
-    recipeInView.mapToStorage(inView);
+    let recipeInHandle = recipe.newHandle();
+    particle.connections['input'].connectToHandle(recipeInHandle);
+    recipeInHandle.fate = 'use';
+    recipeInHandle.mapToStorage(inStore);
 
     assert(recipe.normalize(), 'can\'t normalize recipe');
     assert(recipe.isResolved(), 'recipe isn\'t resolved');
 
     await arc.instantiate(recipe);
 
-    await util.assertSingletonWillChangeTo(outView, manifest.schemas.Bar.entityClass(), 'a foo1');
+    await util.assertSingletonWillChangeTo(outStore, manifest.schemas.Bar.entityClass(), 'a foo1');
 
   });
 
@@ -140,12 +140,12 @@ describe('particle-shape-loading', function() {
       import './runtime/test/artifacts/test-particles.manifest'
 
       recipe
-        create as v0
-        create as v1
+        create as h0
+        create as h1
         OuterParticle
           particle <- TestParticle
-          output -> v0
-          input <- v1
+          output -> h0
+          input <- h1
       `, {loader, fileName: './test.manifest'});
 
     let arc = new Arc({id: 'test', pecFactory, context: manifest});
@@ -162,9 +162,9 @@ describe('particle-shape-loading', function() {
 
     await arc.instantiate(recipe);
 
-    arc.findHandlesByType(fooType)[0].set(new (fooType.entitySchema.entityClass())({value: 'a foo'}));
+    arc.findStoresByType(fooType)[0].set(new (fooType.entitySchema.entityClass())({value: 'a foo'}));
 
-    await util.assertSingletonWillChangeTo(arc.findHandlesByType(barType)[0], barType.entitySchema.entityClass(), 'a foo1');
+    await util.assertSingletonWillChangeTo(arc.findStoresByType(barType)[0], barType.entitySchema.entityClass(), 'a foo1');
 
   });
 });

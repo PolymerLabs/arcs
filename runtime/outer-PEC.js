@@ -88,12 +88,12 @@ export class OuterPEC extends ParticleExecutionContext {
     };
 
     this._apiPort.onArcCreateHandle = async ({callback, arc, type, name}) => {
-      let handle = await this._arc.createHandle(type, name);
-      this._apiPort.CreateHandleCallback(handle, {type, name, callback, id: handle.id});
+      let store = await this._arc.createStore(type, name);
+      this._apiPort.CreateHandleCallback(store, {type, name, callback, id: store.id});
     };
 
     this._apiPort.onArcMapHandle = async ({callback, arc, handle}) => {
-      assert(this._arc.findHandleById(handle.id), `Cannot map nonexistent handle ${handle.id}`);
+      assert(this._arc.findStoreById(handle.id), `Cannot map nonexistent handle ${handle.id}`);
       // TODO: create hosted handles map with specially generated ids instead of returning the real ones?
       this._apiPort.MapHandleCallback({}, {callback, id: handle.id});
     };
@@ -115,7 +115,7 @@ export class OuterPEC extends ParticleExecutionContext {
       if (recipe0) {
         const missingHandles = [];
         for (let handle of recipe0.handles) {
-          const fromHandle = this._arc.findHandleById(handle.id) || manifest.findStorageById(handle.id);
+          const fromHandle = this._arc.findStoreById(handle.id) || manifest.findStoreById(handle.id);
           if (!fromHandle) {
             missingHandles.push(handle);
             continue;
@@ -138,7 +138,7 @@ export class OuterPEC extends ParticleExecutionContext {
             if (recipe0.isResolved()) {
               // TODO: pass tags through too, and reconcile with similar logic
               // in Arc.deserialize.
-              manifest.handles.forEach(handle => this._arc._registerHandle(handle, []));
+              manifest.stores.forEach(store => this._arc._registerStore(store, []));
               this._arc.instantiate(recipe0, arc);
             } else {
               error = `Recipe is not resolvable ${recipe0.toString({showUnresolved: true})}`;

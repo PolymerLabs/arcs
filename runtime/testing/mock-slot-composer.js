@@ -181,7 +181,7 @@ export class MockSlotComposer extends SlotComposer {
   _getHostedParticleNames(particle) {
     return Object.values(particle.connections)
         .filter(conn => conn.type.isInterface)
-        .map(conn => this.arc.findHandleById(conn.handle.id)._stored.name);
+        .map(conn => this.arc.findStoreById(conn.handle.id)._stored.name);
   }
 
   _verifyRenderContent(particle, slotName, content) {

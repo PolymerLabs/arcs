@@ -136,7 +136,7 @@ export class OuterPortAttachment {
     switch (handleType.constructor.name) {
       case 'Type':
         switch (handleType.tag) {
-          case 'SetView': return `[${this._describeHandleType(handleType.data)}]`;
+          case 'Collection': return `[${this._describeHandleType(handleType.data)}]`;
           case 'Entity': return this._describeHandleType(handleType.data);
           default: return `${handleType.tag} ${this._describeHandleType(handleType.data)}`;
         }

@@ -57,13 +57,13 @@ class ArcHandle extends Xen.Debug(Xen.Base, log) {
       type = type.slice(1, -1);
     }
     const schema = manifest.findSchemaByName(type);
-    const typeOf = setOf ? schema.type.setViewOf() : schema.type;
+    const typeOf = setOf ? schema.type.collectionOf() : schema.type;
     tags = tags.concat(['#nosync']);
     const storageKey = 'in-memory';
     id = id || arc.generateID();
     // context-handles are for `map`, `copy`, `?`
     // arc-handles are for `use`, `?`
-    const factory = asContext ? arc.context.newStore.bind(arc.context) : arc.createHandle.bind(arc);
+    const factory = asContext ? arc.context.newStore.bind(arc.context) : arc.createStore.bind(arc);
     const handle = await factory(typeOf, name, id, tags, storageKey);
     if (description) {
       handle.description = description;

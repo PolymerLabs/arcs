@@ -67,7 +67,7 @@ describe('manifest', function() {
     //                   not roundtrip the same way.
     let type = manifest.recipes[0].handleConnections[0].rawType;
     assert.equal('one-s', type.toPrettyString());
-    assert.equal('many-ses', type.setViewOf().toPrettyString());
+    assert.equal('many-ses', type.collectionOf().toPrettyString());
     verify(await Manifest.parse(manifest.toString(), {}));
   });
   it('can parse a manifest containing a particle specification', async () => {
@@ -177,7 +177,7 @@ ${particleStr1}
           [{"nobId": "12345"}]
         `, {fileName: 'the.manifest'});
 
-    assert.equal(manifestA.handles[0].id.toString(), manifestB.handles[0].id.toString());
+    assert.equal(manifestA.stores[0].id.toString(), manifestB.stores[0].id.toString());
   });
   it('two manifests with stores with the same filename and store name but different data have different ids', async () => {
     let manifestA = await Manifest.parse(`
@@ -194,7 +194,7 @@ ${particleStr1}
            [{"nobId": "67890"}]
           `, {fileName: 'the.manifest'});
 
-    assert.notEqual(manifestA.handles[0].id.toString(), manifestB.handles[0].id.toString());
+    assert.notEqual(manifestA.stores[0].id.toString(), manifestB.stores[0].id.toString());
   });
   it('supports recipes with constraints', async () => {
     let manifest = await Manifest.parse(`
@@ -758,7 +758,7 @@ ${particleStr1}
       },
     };
     let manifest = await Manifest.load('the.manifest', loader);
-    let store = manifest.findStorageByName('Store0');
+    let store = manifest.findStoreByName('Store0');
     assert(store);
     assert.deepEqual(await store.toList(), [
       {
@@ -800,7 +800,7 @@ Error parsing JSON from 'EntityList' (Unexpected token h in JSON at position 1)'
 
       store Store0 of [Thing] in EntityList
     `, {fileName: 'the.manifest'});
-    let store = manifest.findStorageByName('Store0');
+    let store = manifest.findStoreByName('Store0');
     assert(store);
     assert.deepEqual(await store.toList(), [
       {
@@ -1058,8 +1058,8 @@ Expected " ", "&", "//", "\\n", "\\r", [ ], [A-Z], or [a-z] but "?" found.
   store ClairesWishlist of [Product] #wishlist in 'wishlist.json'
     description \`Claire's wishlist\``, {loader});
     let verify = (manifest) => {
-      assert.equal(manifest.handles.length, 1);
-      assert.deepEqual(['wishlist'], manifest._handleTags.get(manifest.handles[0]));
+      assert.equal(manifest.stores.length, 1);
+      assert.deepEqual(['wishlist'], manifest._storeTags.get(manifest.stores[0]));
     };
     verify(manifest);
     verify(await Manifest.parse(manifest.toString(), {loader}));
