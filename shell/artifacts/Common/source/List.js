@@ -46,7 +46,7 @@ defineParticle(({DomParticle, resolver, html}) => {
     }
     _onSelect(e) {
       const item = this._props.items.find(i => i.id === e.data.key);
-      const selected = this._views.get('selected');
+      const selected = this.handles.get('selected');
       if (item && selected) {
         selected.set(item);
       }

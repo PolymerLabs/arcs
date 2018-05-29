@@ -11,7 +11,7 @@ instance.
 The extension reads out schema.org-compatible data from web pages that are
 open when you activate the extension (by opening a new tab, activating the
 browser action, or manually).  When you accept suggestions that contain those
-views, they are synchronized to a **public** firebase.
+stores, they are synchronized to a **public** firebase.
 
 Eventually, the sync will be to your private data store (perhaps firebase,
 but other options will be available).
@@ -82,16 +82,16 @@ enabling the extension.
 ## Notes and Limitations
 
 The extension automatically tags [Product] with #shortlist, and all other
-views with #browserContext.
+stores with #browserContext.
 
 ## TODOs
 
 Nothing is ever complete.
 
-- [ ] Tags are how we differentiate between views. Once firebase supports it,
-  put additional tags on all views created by the extension (as many as
+- [ ] Tags are how we differentiate between stores. Once firebase supports it,
+  put additional tags on all stores created by the extension (as many as
   possible - the more information in tags, the better matches we'll be able to
   find).
 - [ ] De-duplicate data - some pages embed entities multiple times, and
-  reloads can cause the same information to be in the view many times. Keep
+  reloads can cause the same information to be in the store many times. Keep
   track of what we've sent and only send new entities.

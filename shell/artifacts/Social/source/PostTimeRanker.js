@@ -10,9 +10,9 @@
 
 defineParticle(({Particle}) => {
   return class PostTimeRanker extends Particle {
-    setViews(views) {
-      this.on(views, 'input', 'change', e => {
-        let inputHandle = views.get('input');
+    setHandles(handles) {
+      this.on(handles, 'input', 'change', e => {
+        let inputHandle = handles.get('input');
         inputHandle.toList().then(input => {
           // Rank the posts by creation time.
           input.sort((a, b) => {
@@ -21,7 +21,7 @@ defineParticle(({Particle}) => {
           // Set the final set of posts into the output handle.
           input.forEach((post, index) => {
             post.rank = index;
-            views.get('output').store(post);
+            handles.get('output').store(post);
           });
         });
       });

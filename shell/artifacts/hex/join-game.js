@@ -25,7 +25,7 @@ defineParticle(({SimpleParticle, html}) => {
       } else {
         newGameState.player2 = name;
       }
-      const handle = this._views.get('gameState');
+      const handle = this.handles.get('gameState');
       handle.set(new (handle.entityClass)(newGameState));
     }
     shouldRender(props, state) {

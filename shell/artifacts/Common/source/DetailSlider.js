@@ -112,7 +112,7 @@ defineParticle(({DomParticle, resolver, html, log}) => {
     }
     onBack() {
       // remove selection
-      this._views.get('selected').clear();
+      this.handles.get('selected').clear();
     }
   };
 });

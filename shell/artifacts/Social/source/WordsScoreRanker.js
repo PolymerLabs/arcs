@@ -20,7 +20,7 @@ defineParticle(({Particle}) => {
       return targetStats.score;
     }
 
-    processInput(statsHandle, inputHandle, views) {
+    processInput(statsHandle, inputHandle, handles) {
       Promise.all([inputHandle.toList(), statsHandle.toList()])
           .then(([input, stats]) => {
             // Filter out only the Words game posts.
@@ -42,7 +42,7 @@ defineParticle(({Particle}) => {
             // Set the final set of posts into the output handle.
             wordsPosts.forEach((post, index) => {
               post.rank = index;
-              views.get('output').store(post);
+              handles.get('output').store(post);
             });
 
             // TODO: set appropriate relevance.
@@ -50,12 +50,12 @@ defineParticle(({Particle}) => {
           });
     }
 
-    setViews(views) {
-      this.on(views, ['stats', 'input'], 'change', e => {
-        this._statsHandle = views.get('stats');
-        this._inputHandle = views.get('input');
+    setHandles(handles) {
+      this.on(handles, ['stats', 'input'], 'change', e => {
+        this._statsHandle = handles.get('stats');
+        this._inputHandle = handles.get('input');
         if (this._statsHandle && this._inputHandle)
-          this.processInput(this._statsHandle, this._inputHandle, views);
+          this.processInput(this._statsHandle, this._inputHandle, handles);
       });
     }
   };

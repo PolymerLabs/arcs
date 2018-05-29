@@ -125,16 +125,16 @@ recipe
   map 'BOXED_avatar' as avatars
   use #identities as people
   use #user as user
-  use '{{item_id}}' as v1
-  slot '{{slot_id}}' as s1
-  {{other_views}}
+  use '{{item_id}}' as handle1
+  slot '{{slot_id}}' as slot1
+  {{other_handles}}
   ${renderParticle.name}
-    ${renderParticle.connections[0].name} <- v1
+    ${renderParticle.connections[0].name} <- handle1
     avatars <- avatars
     people <- people
     user <- user
     {{other_connections}}
-    consume item as s1
+    consume item as slot1
       `.trim();
         this._setState({renderParticleSpec, renderRecipe});
       }
@@ -158,7 +158,7 @@ recipe
     }
     onKeyDown(e) {
       if (e.data.keys.code === 'Escape') {
-        this._views.get('post').clear();
+        this.handles.get('post').clear();
         this.clearPostState();
       } else if (e.data.keys.code === 'Enter' && e.data.keys.ctrlKey) {
         this.setState({savePost: true});

@@ -47,9 +47,9 @@ describe('particle-api', function() {
 
         defineParticle(({Particle}) => {
           return class P extends Particle {
-            setViews(views) {
-              views.get('foo').configure({notifyDesync: true});
-              this.resHandle = views.get('res');
+            setHandles(handles) {
+              handles.get('foo').configure({notifyDesync: true});
+              this.resHandle = handles.get('res');
             }
 
             onHandleSync(handle, model, version) {
@@ -124,9 +124,9 @@ describe('particle-api', function() {
 
         defineParticle(({Particle}) => {
           return class P extends Particle {
-            async setViews(views) {
-              var input = views.get("inputs");
-              var output = views.get("result");
+            async setHandles(handles) {
+              var input = handles.get("inputs");
+              var output = handles.get("result");
               input.synchronize('change', model => {
                 output.set(new output.entityClass({value: '' + model.length}));
               }, _update => undefined, this);
@@ -171,9 +171,9 @@ describe('particle-api', function() {
 
         defineParticle(({Particle}) => {
           return class P extends Particle {
-            async setViews(views) {
+            async setHandles(handles) {
               let arc = await this.constructInnerArc();
-              var resultHandle = views.get('result');
+              var resultHandle = handles.get('result');
               let handle = await arc.createHandle(resultHandle.type, "hello");
               handle.set(new resultHandle.entityClass({value: 'success'}));
               resultHandle.set(new resultHandle.entityClass({value: 'done'}));
@@ -215,9 +215,9 @@ describe('particle-api', function() {
 
         defineParticle(({Particle}) => {
           return class P extends Particle {
-            async setViews(views) {
+            async setHandles(handles) {
               let arc = await this.constructInnerArc();
-              var resultHandle = views.get('result');
+              var resultHandle = handles.get('result');
               let inHandle = await arc.createHandle(resultHandle.type, "the-in");
               let outHandle = await arc.createHandle(resultHandle.type, "the-out");
               try {
@@ -230,11 +230,11 @@ describe('particle-api', function() {
                     out Result b
 
                   recipe
-                    use '\${inHandle._id}' as v1
-                    use '\${outHandle._id}' as v2
+                    use '\${inHandle._id}' as handle1
+                    use '\${outHandle._id}' as handle2
                     PassThrough
-                      a <- v1
-                      b -> v2
+                      a <- handle1
+                      b -> handle2
 
                 \`);
                 inHandle.set(new resultHandle.entityClass({value: 'success'}));
@@ -251,9 +251,9 @@ describe('particle-api', function() {
 
         defineParticle(({Particle}) => {
           return class PassThrough extends Particle {
-            setViews(views) {
-              views.get('a').get().then(result => {
-                views.get('b').set(result);
+            setHandles(handles) {
+              handles.get('a').get().then(result => {
+                handles.get('b').set(result);
               });
             }
           }
@@ -293,9 +293,9 @@ describe('particle-api', function() {
 
         defineParticle(({Particle}) => {
           return class P extends Particle {
-            async setViews(views) {
+            async setHandles(handles) {
               let arc = await this.constructInnerArc();
-              var resultHandle = views.get('result');
+              var resultHandle = handles.get('result');
               let inHandle = await arc.createHandle(resultHandle.type, "the-in");
               let outHandle = await arc.createHandle(resultHandle.type, "the-out");
               try {
@@ -315,12 +315,12 @@ describe('particle-api', function() {
 
                    recipe
                      map NobId as nobId
-                     use '\${inHandle._id}' as v1
-                     use '\${outHandle._id}' as v2
+                     use '\${inHandle._id}' as handle1
+                     use '\${outHandle._id}' as handle2
                      PassThrough
                        nobId <- nobId
-                       a <- v1
-                       b -> v2
+                       a <- handle1
+                       b -> handle2
 
                 \`);
                 inHandle.set(new resultHandle.entityClass({value: 'success'}));
@@ -337,11 +337,11 @@ describe('particle-api', function() {
 
         defineParticle(({Particle}) => {
           return class PassThrough extends Particle {
-            setViews(views) {
-              views.get('a').get().then(resultA => {
-                views.get('nobId').get().then(resultNob => {
+            setHandles(handles) {
+              handles.get('a').get().then(resultA => {
+                handles.get('nobId').get().then(resultNob => {
                   if (resultNob.nobId === '12345') {
-                    views.get('b').set(resultA);
+                    handles.get('b').set(resultA);
                   }
                 })
               });
@@ -389,9 +389,9 @@ describe('particle-api', function() {
 
         defineParticle(({Particle}) => {
           return class P extends Particle {
-            async setViews(views) {
+            async setHandles(handles) {
               let arc = await this.constructInnerArc();
-              var resultHandle = views.get('result');
+              var resultHandle = handles.get('result');
               let inHandle = await arc.createHandle(resultHandle.type, "the-in");
               let outHandle = await arc.createHandle(resultHandle.type, "the-out");
               try {
@@ -409,12 +409,12 @@ describe('particle-api', function() {
 
                    recipe
                      use #target as target
-                     use '\${inHandle._id}' as v1
-                     use '\${outHandle._id}' as v2
+                     use '\${inHandle._id}' as handle1
+                     use '\${outHandle._id}' as handle2
                      PassThrough
                        target <- target
-                       a <- v1
-                       b -> v2
+                       a <- handle1
+                       b -> handle2
 
                 \`);
                 inHandle.set(new resultHandle.entityClass({value: 'success'}));
@@ -431,10 +431,10 @@ describe('particle-api', function() {
 
         defineParticle(({Particle}) => {
           return class PassThrough extends Particle {
-            setViews(views) {
-              views.get('a').get().then(resultA => {
-                views.get('target').get().then(resultTarget => {
-                  views.get('b').set(resultA);
+            setHandles(handles) {
+              handles.get('a').get().then(resultA => {
+                handles.get('target').get().then(resultTarget => {
+                  handles.get('b').set(resultA);
                 })
               });
             }
@@ -486,9 +486,9 @@ describe('particle-api', function() {
 
         defineParticle(({Particle}) => {
           return class P extends Particle {
-            async setViews(views) {
+            async setHandles(handles) {
               let arc = await this.constructInnerArc();
-              var resultHandle = views.get('result');
+              var resultHandle = handles.get('result');
               let inHandle = await arc.createHandle(resultHandle.type, "the-in");
               let outHandle = await arc.createHandle(resultHandle.type, "the-out");
               try {
@@ -503,12 +503,12 @@ describe('particle-api', function() {
 
                    recipe
                      use #target as target
-                     use '\${inHandle._id}' as v1
-                     use '\${outHandle._id}' as v2
+                     use '\${inHandle._id}' as handle1
+                     use '\${outHandle._id}' as handle2
                      PassThrough
                        target <- target
-                       a <- v1
-                       b -> v2
+                       a <- handle1
+                       b -> handle2
 
                 \`);
                 inHandle.set(new resultHandle.entityClass({value: 'success'}));
@@ -525,11 +525,11 @@ describe('particle-api', function() {
 
         defineParticle(({Particle}) => {
           return class PassThrough extends Particle {
-            setViews(views) {
-              views.get('a').get().then(resultA => {
-                views.get('target').get().then(resultNob => {
+            setHandles(handles) {
+              handles.get('a').get().then(resultA => {
+                handles.get('target').get().then(resultNob => {
                   if (resultNob.nobId === '12345') {
-                    views.get('b').set(resultA);
+                    handles.get('b').set(resultA);
                   }
                 })
               });
@@ -574,11 +574,11 @@ describe('particle-api', function() {
 
         defineParticle(({Particle}) => {
           return class P extends Particle {
-            async setViews(views) {
+            async setHandles(handles) {
               let arc = await this.constructInnerArc();
-              var inputsHandle = views.get('inputs');
+              var inputsHandle = handles.get('inputs');
               var inputsList = await inputsHandle.toList();
-              var resultsHandle = views.get('results');
+              var resultsHandle = handles.get('results');
               for (let input of inputsList) {
                 let inHandle = await arc.createHandle(resultsHandle.type.primitiveType(), "the-in");
                 let outHandle = await arc.createHandle(resultsHandle.type.primitiveType(), "the-out");
@@ -592,11 +592,11 @@ describe('particle-api', function() {
                       out Result b
 
                     recipe
-                      use '\${inHandle._id}' as v1
-                      use '\${outHandle._id}' as v2
+                      use '\${inHandle._id}' as handle1
+                      use '\${outHandle._id}' as handle2
                       PassThrough
-                        a <- v1
-                        b -> v2
+                        a <- handle1
+                        b -> handle2
 
                   \`);
                   inHandle.set(input);
@@ -622,9 +622,9 @@ describe('particle-api', function() {
 
         defineParticle(({Particle}) => {
           return class PassThrough extends Particle {
-            setViews(views) {
-              views.get('a').get().then(result => {
-                var bHandle = views.get('b');
+            setHandles(handles) {
+              handles.get('a').get().then(result => {
+                var bHandle = handles.get('b');
                 bHandle.set(new bHandle.entityClass({value:result.value.toUpperCase()}));
               });
             }
@@ -646,7 +646,7 @@ describe('particle-api', function() {
 
     await util.assertCollectionWillChangeTo(resultsStore, Result, 'value', ['done', 'done', 'HELLO', 'WORLD']);
 
-    // TODO: how do i listen to inner arc's outStore view-changes?
+    // TODO: how do i listen to inner arc's outStore handle-changes?
     // await util.assertCollectionWillChangeTo(resultsStore, Result, "value", ["HELLO", "WORLD"]);
     let newStore = arc.findStoresByType(Result.type)[1];
     assert.equal(newStore.name, 'the-out', `Unexpected newStore name: ${newStore.name}`);

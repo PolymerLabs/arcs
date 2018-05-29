@@ -32,20 +32,26 @@ export class Particle {
     this.capabilities = capabilities || {};
   }
 
-  /** @method setViews(views)
-   * This method is invoked with a handle for each view this particle
-   * is registered to interact with, once those views are ready for
+  /** @method setHandles(handles)
+   * This method is invoked with a handle for each store this particle
+   * is registered to interact with, once those handles are ready for
    * interaction. Override the method to register for events from
-   * the views.
+   * the handles.
    *
-   * Views is a map from view names to view handles.
+   * Handles is a map from handle names to store handles.
+   */
+  setHandles(handles) {
+  }
+  
+  /** @method setViews(views)
+   * This method is deprecated. Use setHandles instead.
    */
   setViews(views) {
   }
 
   /** @method onHandleSync(handle, model, version)
    * Called for handles that are configured with both keepSynced and notifySync, when they are
-   * updated with the full model of their data. This will occur once after setViews() and any time
+   * updated with the full model of their data. This will occur once after setHandles() and any time
    * thereafter if the handle is resynchronized.
    *
    * handle: The Handle instance that was updated.
@@ -159,19 +165,19 @@ export class Particle {
     this.stateHandlers.get(state).forEach(f => f(value));
   }
 
-  /** @method on(views, names, kind, f)
-   * Convenience method for registering a callback on multiple views at once.
+  /** @method on(handles, names, kind, f)
+   * Convenience method for registering a callback on multiple handles at once.
    *
-   * views is a map from names to view handles
-   * names indicates the views which should have a callback installed on them
+   * handles is a map from names to store handles
+   * names indicates the handles which should have a callback installed on them
    * kind is the kind of event that should be registered for
    * f is the callback function
    */
-  on(views, names, kind, f) {
+  on(handles, names, kind, f) {
     if (typeof names == 'string')
       names = [names];
-    let trace = Tracing.start({cat: 'particle', names: this.constructor.name + '::on', args: {view: names, event: kind}});
-    names.forEach(name => views.get(name).on(kind, Tracing.wrap({cat: 'particle', name: this.constructor.name, args: {view: name, event: kind}}, f), this));
+    let trace = Tracing.start({cat: 'particle', names: this.constructor.name + '::on', args: {handle: names, event: kind}});
+    names.forEach(name => handles.get(name).on(kind, Tracing.wrap({cat: 'particle', name: this.constructor.name, args: {handle: name, event: kind}}, f), this));
     trace.end();
   }
 
@@ -209,7 +215,7 @@ export class Particle {
     return this.setDescriptionPattern('_pattern_', pattern);
   }
   setDescriptionPattern(connectionName, pattern) {
-    let descriptions = this._views.get('descriptions');
+    let descriptions = this.handles.get('descriptions');
     if (descriptions) {
       descriptions.store(new descriptions.entityClass({key: connectionName, value: pattern}, connectionName));
       return true;
@@ -218,12 +224,12 @@ export class Particle {
   }
 }
 
-export class ViewChanges {
-  constructor(views, names, type) {
+export class HandleChanges {
+  constructor(handles, names, type) {
     if (typeof names == 'string')
       names = [names];
     this.names = names;
-    this.views = views;
+    this.handles = handles;
     this.type = type;
   }
   register(particle, f) {
@@ -231,8 +237,8 @@ export class ViewChanges {
     let afterAllModels = () => { if (++modelCount == this.names.length) { f(); } };
 
     for (let name of this.names) {
-      let view = this.views.get(name);
-      view.synchronize(this.type, afterAllModels, f, particle);
+      let handle = this.handles.get(name);
+      handle.synchronize(this.type, afterAllModels, f, particle);
     }
   }
 }

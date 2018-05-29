@@ -70,12 +70,12 @@ defineParticle(({DomParticle, html, log}) => {
     }
     async willReceiveProps({items, selected}) {
       if (selected && selected.delete) {
-        this._views.get('selected').clear();
+        this.handles.get('selected').clear();
         log('request to delete', selected);
         const item = items.find(item => item.id === selected.id);
         if (item) {
-          this._views.get('items').remove(item);
-          log('new list', await this._views.get('items').toList());
+          this.handles.get('items').remove(item);
+          log('new list', await this.handles.get('items').toList());
         }
       }
     }
@@ -98,7 +98,7 @@ defineParticle(({DomParticle, html, log}) => {
     }
     _onSelect(e) {
       let item = this._props.items.find(i => i.id === e.data.key);
-      this._views.get('selected').set(item);
+      this.handles.get('selected').set(item);
     }
   };
 });

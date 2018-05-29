@@ -24,13 +24,13 @@ export class MultiplexerDomParticle extends TransformationDomParticle {
       listHandleName,
       particleHandleName,
       hostedParticle,
-      views,
+      handles,
       arc) {
     let otherMappedHandles = [];
     let otherConnections = [];
     let index = 2;
     const skipConnectionNames = [listHandleName, particleHandleName];
-    for (let [connectionName, otherHandle] of views) {
+    for (let [connectionName, otherHandle] of handles) {
       if (skipConnectionNames.includes(connectionName)) {
         continue;
       }
@@ -52,12 +52,12 @@ export class MultiplexerDomParticle extends TransformationDomParticle {
     return [otherMappedHandles, otherConnections];
   }
 
-  async setViews(views) {
+  async setHandles(handles) {
     this.handleIds = {};
     let arc = await this.constructInnerArc();
     const listHandleName = 'list';
     const particleHandleName = 'hostedParticle';
-    let particleHandle = views.get(particleHandleName);
+    let particleHandle = handles.get(particleHandleName);
     let hostedParticle = null;
     let otherMappedHandles = [];
     let otherConnections = [];
@@ -66,18 +66,18 @@ export class MultiplexerDomParticle extends TransformationDomParticle {
       if (hostedParticle) {
         [otherMappedHandles, otherConnections] =
             await this._mapParticleConnections(
-                listHandleName, particleHandleName, hostedParticle, views, arc);
+                listHandleName, particleHandleName, hostedParticle, handles, arc);
       }
     }
     this.setState({
       arc,
-      type: views.get(listHandleName).type,
+      type: handles.get(listHandleName).type,
       hostedParticle,
       otherMappedHandles,
       otherConnections
     });
 
-    super.setViews(views);
+    super.setHandles(handles);
   }
 
   async willReceiveProps(
@@ -119,7 +119,7 @@ export class MultiplexerDomParticle extends TransformationDomParticle {
                 listHandleName,
                 particleHandleName,
                 resolvedHostedParticle,
-                this._views,
+                this.handles,
                 arc);
       }
       let hostedSlotName = [...resolvedHostedParticle.slots.keys()][0];
@@ -140,7 +140,7 @@ export class MultiplexerDomParticle extends TransformationDomParticle {
                 item,
                 itemHandle,
                 {name: hostedSlotName, id: slotId},
-                {connections: otherConnections, views: otherMappedHandles}),
+                {connections: otherConnections, handles: otherMappedHandles}),
             this);
         itemHandle.set(item);
       } catch (e) {

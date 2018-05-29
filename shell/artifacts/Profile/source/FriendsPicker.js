@@ -85,11 +85,11 @@ ${styles}
     _onSelectAvatar(e, state) {
       let selectedId = e.data.value;
       let friend = this._props.friends.find(f => f.id === selectedId);
-      let friendsView = this._views.get('friends');
+      let friendsHandle = this.handles.get('friends');
       if (friend) {
-        friendsView.remove(friend);
+        friendsHandle.remove(friend);
       } else {
-        friendsView.store(new friendsView.entityClass({id: selectedId}));
+        friendsHandle.store(new friendsHandle.entityClass({id: selectedId}));
       }
     }
   };

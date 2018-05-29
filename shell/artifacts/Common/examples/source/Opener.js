@@ -32,7 +32,7 @@ defineParticle(({DomParticle, resolver, html, log}) => {
       this.openDialog();
     }
     openDialog() {
-      const handle = this._views.get('uiState');
+      const handle = this.handles.get('uiState');
       handle.set(new (handle.entityClass)({open: true}));
     }
   };

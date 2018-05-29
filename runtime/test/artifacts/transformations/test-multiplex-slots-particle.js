@@ -19,13 +19,13 @@ defineParticle(({TransformationDomParticle}) => {
       }
     }
 
-    async setViews(views) {
+    async setHandles(handles) {
       let arc = await this.constructInnerArc();
-      let hostedParticle = await views.get('particle').get();
+      let hostedParticle = await handles.get('particle').get();
 
-      this.setState({arc, hostedParticle, type: views.get('foos').type});
+      this.setState({arc, hostedParticle, type: handles.get('foos').type});
 
-      super.setViews(views);
+      super.setHandles(handles);
     }
 
     async willReceiveProps({foos}) {
@@ -51,11 +51,11 @@ defineParticle(({TransformationDomParticle}) => {
             consume ${hostedSlotName}
 
           recipe
-            use '${fooHandle._id}' as v1
-            slot '${slotId}' as s1
+            use '${fooHandle._id}' as handle1
+            slot '${slotId}' as slot1
             ${hostedParticle.name}
-              foo <- v1
-              consume ${hostedSlotName} as s1
+              foo <- handle1
+              consume ${hostedSlotName} as slot1
         `;
 
         try {

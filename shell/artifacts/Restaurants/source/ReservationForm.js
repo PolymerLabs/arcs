@@ -256,7 +256,7 @@ ${styles}
       this._storeNewEvent(newEvent);
     }
     _storeNewEvent(newEvent) {
-      const event = this._views.get('event');
+      const event = this.handles.get('event');
       event.set(new event.entityClass(newEvent));
     }
   };

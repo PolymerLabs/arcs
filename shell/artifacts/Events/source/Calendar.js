@@ -358,7 +358,7 @@ ${styles}
       this._setState({expanded: false});
     }
     _storeNewEvent(startDate) {
-      const event = this._views.get('event');
+      const event = this.handles.get('event');
       const newEvent = Object.assign({}, (this._event || {}), {
         startDate: startDate,
         endDate: startDate

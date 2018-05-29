@@ -234,11 +234,11 @@ recipe
   map GameId as gameId
   use #identities as people
   use #user as user
-  use '{{item_id}}' as v1
-  slot '{{slot_id}}' as s1
-  {{other_views}}
+  use '{{item_id}}' as handle1
+  slot '{{slot_id}}' as slot1
+  {{other_handles}}
   ${renderParticle.name}
-    ${renderParticle.connections[0].name} <- v1
+    ${renderParticle.connections[0].name} <- handle1
     boxedBoards <- boxedBoards
     boxedStats <- boxedStats
     boxedMoves <- boxedMoves
@@ -247,7 +247,7 @@ recipe
     people <- people
     user <- user
     {{other_connections}}
-    consume item as s1
+    consume item as slot1
     `.trim();
     }
     processSubmittedMove(props, state, tileBoard) {

@@ -30,23 +30,23 @@ describe('particle-shape-loading', function() {
 
           defineParticle(({Particle}) => {
             return class P extends Particle {
-              async setViews(views) {
+              async setHandles(handles) {
                 let arc = await this.constructInnerArc();
-                var inputHandle = views.get('input');
-                let outputHandle = views.get('output');
+                var inputHandle = handles.get('input');
+                let outputHandle = handles.get('output');
                 let inHandle = await arc.createHandle(inputHandle.type, "input");
                 let outHandle = await arc.createHandle(outputHandle.type, "output");
-                let particle = await views.get('particle').get();
+                let particle = await handles.get('particle').get();
 
                 var recipe = Particle.buildManifest\`
                   \${particle}
 
                   recipe
-                    use \${inHandle} as v1
-                    use \${outHandle} as v2
+                    use \${inHandle} as handle1
+                    use \${outHandle} as handle2
                     \${particle.name}
-                      foo <- v1
-                      bar -> v2
+                      foo <- handle1
+                      bar -> handle2
                 \`;
 
                 try {

@@ -23,9 +23,9 @@ describe('InitPopulation', async () => {
         in Product product
 
       recipe
-        create as v1
+        create as handle1
         A
-          product <- v1`);
+          product <- handle1`);
     let recipe = manifest.recipes[0];
     assert(recipe.normalize());
     let arc = new Arc({id: 'test-plan-arc', context: {recipes: [recipe]}});

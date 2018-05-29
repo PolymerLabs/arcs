@@ -63,7 +63,7 @@ describe('ConvertConstraintsToConnections', async () => {
         in S d
 
       recipe
-        map as v0
+        map as handle0
         A.b = C.d`)).recipes[0];
     let inputParams = {generated: [{result: recipe, score: 1}]};
     let cctc = new ConvertConstraintsToConnections({pec: {}});
@@ -192,9 +192,9 @@ describe('ConvertConstraintsToConnections', async () => {
 
       recipe
         A.b -> C.d
-        use as v1
+        use as handle1
         C
-          d = v1
+          d = handle1
         A`)).recipes[0];
     let inputParams = {generated: [{result: recipe, score: 1}]};
     let cctc = new ConvertConstraintsToConnections({pec: {}});
@@ -220,10 +220,10 @@ describe('ConvertConstraintsToConnections', async () => {
 
       recipe
         A.b -> C.d
-        use as v1
+        use as handle1
         C
         A
-          b = v1`)).recipes[0];
+          b = handle1`)).recipes[0];
     let inputParams = {generated: [{result: recipe, score: 1}]};
     let cctc = new ConvertConstraintsToConnections({pec: {}});
     let results = await cctc.generate(inputParams);
@@ -248,11 +248,11 @@ describe('ConvertConstraintsToConnections', async () => {
 
       recipe
         A.b -> C.d
-        use as v1
+        use as handle1
         C
-          d = v1
+          d = handle1
         A
-          b = v1`)).recipes[0];
+          b = handle1`)).recipes[0];
     let inputParams = {generated: [{result: recipe, score: 1}]};
     let cctc = new ConvertConstraintsToConnections({pec: {}});
     let results = await cctc.generate(inputParams);

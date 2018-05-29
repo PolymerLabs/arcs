@@ -10,7 +10,7 @@ An Arc is a concrete concept in Arcs that loosely maps to a user journey. E.g., 
 An Arc consists of
 
 * One or more recipes that run inside the Arc. Recipes are authored by developers or composed by the strategizer with user input.
-* Views that are owned by the Arc or were mapped into the Arc (from another Arc). Views correspond to data that may be read-only or writable by particles running inside the Arc.
+* Stores that are owned by the Arc or were mapped into the Arc (from another Arc). Stores correspond to data that may be read-only or writable by particles running inside the Arc.
 * Zero or more suggested follow-on recipes. E.g., a restaurant may expose an Arc with a few follow-on recipes to book a table or order takeout.
 
 An Arc can be
@@ -24,7 +24,7 @@ An Arc can be
 
 ## **Context** ![Internal](images/internal.png)
 
-Set of all slots and Arcs (and their Views) that are available to the Arcs runtime and more specifically to the Strategizer for composing new user journeys. At the extreme outset, the context contains the set of all websites that exist on the web. More locally, the context contains a user's current location, open tabs, today's calendar entries, browsing history, …
+Set of all slots and Arcs (and their Stores) that are available to the Arcs runtime and more specifically to the Strategizer for composing new user journeys. At the extreme outset, the context contains the set of all websites that exist on the web. More locally, the context contains a user's current location, open tabs, today's calendar entries, browsing history, …
 
 Changes to the context can trigger existing Arcs and recipes to run and propose suggestions to the user. Context changes may also trigger the strategizer to propose new recipes and Arcs.
 
@@ -36,7 +36,7 @@ Conceptually, the Arcs context is split into different spheres of context. The c
 
 ## **Isolation** ![Public](images/public.png)
 
-Each particle runs in an isolated execution environment that restricts the particle to only have side effects through very narrow interfaces: by rendering sanitized DOM through UX slots and through views.
+Each particle runs in an isolated execution environment that restricts the particle to only have side effects through very narrow interfaces: by rendering sanitized DOM through UX slots and through handles.
 
 In the Browser environment isolation is guaranteed by running particles in Web Workers that communicate to the Arcs runtime via serialized message passing.
 
@@ -45,25 +45,25 @@ In the Browser environment isolation is guaranteed by running particles in Web W
 
 A particle is the basic unit of computation in Arcs. A particle consists of a bit of JavaScript and UX code and is accompanied by a manifest.
 
-The manifest describes the particle's input and output views which corresponds to the data the particle operates on. Views are singleton entities or sets of typed entities whose types are specified in manifest files.
+The manifest describes the particle's input and output handles which corresponds to the data the particle operates on. Handles are singleton entities or collections of typed entities whose types are specified in manifest files.
 
 The manifest also describes the ways in which the particle interacts with the user through UX slots. A particle may occupy UX slots which essentially correspond to UI surfaces where the particle is allowed to render content into (e.g., snippets of HTML). A particle can also expose expose parts of the UI they occupy as new slots that other particles may render content into.
 
-Particles run in isolation of each other, are stateless and ephemeral. A particle may only communicate with other particles or with the Arcs runtime through its input and output views. Users interact with particles through UX that particles render in UX slots.
+Particles run in isolation of each other, are stateless and ephemeral. A particle may only communicate with other particles or with the Arcs runtime through its input and output handles. Users interact with particles through UX that particles render in UX slots.
 
 
 ## **Manifest** ![Public](images/public.png)
 
 A manifest specifies recipes, particles and schemas.
 
-A schema spec defines entity types that represent input and output views in particles.
+A schema spec defines entity types that represent input and output handles in particles.
 
 A particle spec includes:
 
 
 
-*   Particle name or verb acting on input and output views and rendering into and exposing UX slots.
-*   Input and output views are singleton entities or sets of entities with a certain schema and represent the inputs and outputs of the particle.
+*   Particle name or verb acting on input and output handles and rendering into and exposing UX slots.
+*   Input and output handles are singleton entities or collection of entities with a certain schema and represent the inputs and outputs of the particle.
 *   Rendered slots are UX slots the particle renders content into.
 *   Exposed slots are UX slots the particle exposes to other particles in the recipe.
 
@@ -71,13 +71,13 @@ A recipe spec includes:
 
 
 
-*   A list of particles, views and how they should be composed, i.e., describing the data flow.
+*   A list of particles, handles and how they should be composed, i.e., describing the data flow.
 *   A human readable description that explains what the recipe does.
 
 
 ## **Plan** ![Public](images/public.png)
 
-A plan is a fully specified recipe where all particle inputs and outputs are mapped to actual views from the context, where all slots are bound to real UX slots and where every particle in the recipe correspond to a concrete, fully specified particle.
+A plan is a fully specified recipe where all particle input and output handles are mapped to actual stores from the context, where all slots are bound to real UX slots and where every particle in the recipe correspond to a concrete, fully specified particle.
 
 In other words: a plan is a special type of a recipe that is fully specified and therefore can be instantiated and run in an Arc.
 
@@ -88,12 +88,12 @@ It is the job of the strategizer to convert higher-level recipes into concrete p
 
 Recipes are authored by developers and describe a high-level assistive behavior. E.g., "planning a group dinner with friends" or "allow bar guests w/ AR headset to refill (i.e., re-order) their beer glass w/ their favourite brew" might be recipes.
 
-A recipe is a list of particles that describes how data flows between particles to execute the assistive action. In other words, it describes how particles are stitched together with appropriate views and slots to be fulfilled and run. All elements in a recipe may be fully specified (in which case it's called a plan) or may be under specified. A developer may describe a recipe at a high-level without specifying exactly what particles need to be used at every stage of the recipe. Instead, the developer may describe abstract particles with certain input and output views that will be bound to one or more concrete particles by the Arcs strategizer at runtime.
+A recipe is a list of particles that describes how data flows between particles to execute the assistive action. In other words, it describes how particles are stitched together with appropriate handles and slots to be fulfilled and run. All elements in a recipe may be fully specified (in which case it's called a plan) or may be under specified. A developer may describe a recipe at a high-level without specifying exactly what particles need to be used at every stage of the recipe. Instead, the developer may describe abstract particles with certain input and output handles that will be bound to one or more concrete particles by the Arcs strategizer at runtime.
 
 
 ## **Resolver** ![Internal](images/internal.png)
 
-The resolver runs under the hood in Arcs as part of the strategizer. It's job is to find concrete particles for every abstract particle in an underspecified recipe. It also will find adequate adapters when views from the context aren't compatible with the views specified in a recipe.
+The resolver runs under the hood in Arcs as part of the strategizer. It's job is to find concrete particles for every abstract particle in an underspecified recipe. It also will find adequate adapters when stores from the context aren't compatible with the handles specified in a recipe.
 
 
 ## **Slot** ![Public](images/public.png)
@@ -110,7 +110,7 @@ The speculator runs under the hood in Arcs as part of the strategizer. It specul
 
 ## **Strategizer** ![Internal](images/internal.png)
 
-The strategizer represents a lot of the guts of Arcs and is where the "magic" happens. The strategizer reacts to changes in the context (new Arc, view changes, removed slots, …) and generates assistive recipes that are suggested and shown to the user.
+The strategizer represents a lot of the guts of Arcs and is where the "magic" happens. The strategizer reacts to changes in the context (new Arc, handle changes, removed slots, …) and generates assistive recipes that are suggested and shown to the user.
 
 E.g., the strategizer notices that you're approaching a train station and knows you're likely traveling from San Francisco to Berkeley (given past Arcs at that time of day). The strategizer may evaluate dozens of possible recipes for you in the background and eventually come up with and display two suggestions: "display BART schedule to Berkeley" and "purchase BART ticket to Berkeley with Android Pay". Picking one of these suggestions will cause the plan and recipe to be updated in the current Arc and will spawn the particles.
 
@@ -123,7 +123,7 @@ The figure above illustrates the role of the strategizer in generating suggested
 
 
 *   **Identify recipes** that may be useful given the context.
-*   **Resolve** underspecified parts of recipes by finding concrete slots, views and particles.
+*   **Resolve** underspecified parts of recipes by finding concrete slots, handles and particles.
 *   **Speculatively execute** *recipes* that look promising to further refine the recipe.
 *   **Evaluate** and score the set of currently suggested recipes
 
@@ -137,8 +137,6 @@ A user journey is a fuzzy concept that represents a user goal typically spanning
 In Arcs this fuzzy concept of user journey is concretely represented by an Arc. An Arc is an approximation of a user journey.
 
 
-## **View** ![Public](images/public.png)
+## **Store** ![Public](images/public.png)
 
-A view represents the data associated with an Arc and is owned by the Arc. Views may contain private user data (e.g., a user's calendar) or public data (e.g., a static website). Views are singleton entities or sets of entities typed according to schemas defined by the developer. Views are the inputs and outputs of particles.
-
-The term "view" comes from SQL views suggesting that the data actually is stored someplace else, possibly in a non-Arcs system,  and exposed in Arcs via views.
+A store represents the data associated with an Arc and is owned by the Arc. Stores may contain private user data (e.g., a user's calendar) or public data (e.g., a static website). Stores are singleton entities or collection of entities typed according to schemas defined by the developer. Store handles are the inputs and outputs of particles.

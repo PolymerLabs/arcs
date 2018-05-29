@@ -22,11 +22,11 @@ describe('recipe-util', function() {
         out S b
 
       recipe Recipe
-        map as v1
+        map as handle1
         A
-          a -> v1
+          a -> handle1
         B
-          b -> v1`);
+          b -> handle1`);
     let recipe = manifest.recipes[0];
     let shape = RecipeUtil.makeShape(['A', 'B'], ['v'],
       {'A': {'a': 'v'}, 'B': {'b': 'v'}});
@@ -35,7 +35,7 @@ describe('recipe-util', function() {
     assert(results[0].score == 0);
     assert(results[0].match.A.name == 'A');
     assert(results[0].match.B.name == 'B');
-    assert(results[0].match.v.localName == 'v1');
+    assert(results[0].match.v.localName == 'handle1');
   });
 
   it('can produce multiple partial shape matches to a simple recipe', async () => {
@@ -49,16 +49,16 @@ describe('recipe-util', function() {
         out S c
 
       recipe Recipe
-        map as v1
-        map as v2
+        map as handle1
+        map as handle2
         A
-          a -> v1
+          a -> handle1
         B
-          b -> v1
+          b -> handle1
         A
-          a -> v2
+          a -> handle2
         C
-          c -> v2`);
+          c -> handle2`);
     let recipe = manifest.recipes[0];
     let shape = RecipeUtil.makeShape(['A', 'B', 'C'], ['v'],
       {'A': {'a': 'v'}, 'B': {'b': 'v'}, 'C': {'c': 'v'}});
@@ -68,12 +68,12 @@ describe('recipe-util', function() {
     assert(results[0].match.A.name == 'A');
     assert(results[0].match.B.name == 'B');
     assert(results[0].match.C.name == 'C');
-    assert(results[0].match.v.localName == 'v1');
+    assert(results[0].match.v.localName == 'handle1');
     assert(results[1].score == -1);
     assert(results[1].match.A.name == 'A');
     assert(results[1].match.B.name == 'B');
     assert(results[1].match.C.name == 'C');
-    assert(results[1].match.v.localName == 'v2');
+    assert(results[1].match.v.localName == 'handle2');
   });
 
   it('can match a free handle', async () => {

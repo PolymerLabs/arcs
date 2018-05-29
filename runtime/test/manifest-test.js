@@ -275,9 +275,9 @@ ${particleStr1}
       particle P2
 
       recipe
-        ? as v1
+        ? as handle1
         P1
-          x -> v1
+          x -> handle1
         P2
       recipe
         ? as someHandle
@@ -302,19 +302,19 @@ ${particleStr1}
         out S x
 
       recipe
-        use as v1
-        use as v2
+        use as handle1
+        use as handle2
         P1
-          x -> v1
+          x -> handle1
         P1
-          x -> v2
+          x -> handle2
       recipe
-        use as v1
-        use as v2
+        use as handle1
+        use as handle2
         P1
-          x -> v2
+          x -> handle2
         P1
-          x -> v1`);
+          x -> handle1`);
     let [recipe1, recipe2] = manifest.recipes;
     assert.notEqual(recipe1.toString(), recipe2.toString());
     recipe1.normalize();

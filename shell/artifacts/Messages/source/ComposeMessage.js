@@ -53,8 +53,8 @@ defineParticle(({DomParticle}) => {
       }
     }
     addMessage(msg) {
-      const Message = this._views.get('messages').entityClass;
-      this._views.get('messages').store(new Message(msg));
+      const Message = this.handles.get('messages').entityClass;
+      this.handles.get('messages').store(new Message(msg));
     }
     onMessageChange(e) {
       let user = this._props.user;

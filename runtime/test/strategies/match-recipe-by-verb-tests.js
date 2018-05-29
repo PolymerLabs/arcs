@@ -119,9 +119,9 @@ describe('MatchRecipeByVerb', function() {
         b ->
     
     recipe
-      create as v0
+      create as handle0
       particle can verb
-        * -> v0
+        * -> handle0
     `);
 
     let arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'dom');
@@ -221,11 +221,11 @@ describe('MatchRecipeByVerb', function() {
         P
 
       recipe
-        create as v0
+        create as handle0
         particle can verb
-          a <- v0
+          a <- handle0
         Q
-          b -> v0
+          b -> handle0
     `);
 
     let arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'dom');
@@ -251,11 +251,11 @@ describe('MatchRecipeByVerb', function() {
         P
 
       recipe
-        create as v0
+        create as handle0
         particle can verb
-          * <- v0
+          * <- handle0
         Q
-          b -> v0
+          b -> handle0
     `);
 
     let arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'dom');
@@ -288,11 +288,11 @@ describe('MatchRecipeByVerb', function() {
         P
 
       recipe
-        create as v0
+        create as handle0
         particle can verb
-          * <- v0
+          * <- handle0
         Q
-          b -> v0
+          b -> handle0
     `);
 
     let arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'dom');

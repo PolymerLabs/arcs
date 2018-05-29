@@ -51,8 +51,8 @@ const loadTestArcAndRunSpeculation = async (manifest, manifestLoadedCallback) =>
         constructor() {
           this.relevances = [1];
         }
-        async setViews(views) {
-          let thingHandle = views.get('thing');
+        async setHandles(handles) {
+          let thingHandle = handles.get('thing');
           thingHandle.set(new thingHandle.entityClass({name: 'MYTHING'}));
         }
       };
@@ -159,17 +159,17 @@ describe('Planner', function() {
             description \`Make \${thing}\`
 
           recipe
-            create as v1
+            create as handle1
             slot 'root-slot' as slot0
             A
-              thing -> v1
+              thing -> handle1
               consume root as slot0
 
           recipe
-            create as v2
+            create as handle2
             slot 'root-slot2' as slot1
             A
-              thing -> v2
+              thing -> handle2
               consume root as slot1
           `;
     const {plans} = await loadTestArcAndRunSpeculation(manifest,
@@ -541,10 +541,10 @@ describe('Description', async () => {
       description \`Make \${thing}\`
 
     recipe
-      create as v1
+      create as handle1
       slot 'root-slot' as slot0
       A
-        thing -> v1
+        thing -> handle1
         consume root as slot0
     `;
     const {plans, arc} = await loadTestArcAndRunSpeculation(manifest,
