@@ -29,8 +29,8 @@ const scheduler = new Scheduler();
 //       out [Result] res
 //
 //   [particle code]
-//     setViews(views) {
-//       this._resHandle = views.get('res');
+//     setHandles(handles) {
+//       this._resHandle = handles.get('res');
 //     }
 //     testFunction(arg) {
 //       await this._resHandle.store(new this._resHandle.entityClass({value: arg}));

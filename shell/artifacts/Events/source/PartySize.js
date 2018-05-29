@@ -74,7 +74,7 @@ defineParticle(({DomParticle, html}) => {
     _setParticipants(size) {
       const event = this._props.event;
       event.participants = Number(size);
-      this._views.get('event').set(event);
+      this.handles.get('event').set(event);
     }
     shouldRender({event}) {
       return Boolean(event);

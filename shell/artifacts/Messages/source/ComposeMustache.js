@@ -69,8 +69,8 @@ defineParticle(({DomParticle}) => {
       }
     }
     _onClick(e, state) {
-      const Message = this._views.get('messages').entityClass;
-      this._views.get('messages').store(new Message({
+      const Message = this.handles.get('messages').entityClass;
+      this.handles.get('messages').store(new Message({
         name: state.me.name,
         type: 'mustache',
         userid: state.me.id,

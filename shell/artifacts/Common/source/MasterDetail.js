@@ -58,7 +58,7 @@ defineParticle(({DomParticle, html}) => {
       };
     }
     _onBack() {
-      this._views.get('selected').clear();
+      this.handles.get('selected').clear();
     }
   };
 

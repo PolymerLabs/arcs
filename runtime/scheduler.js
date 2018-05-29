@@ -34,7 +34,7 @@ export class Scheduler {
   }
 
   enqueue(handle, eventRecords) {
-    let trace = Tracing.flow({cat: 'handle', name: 'ViewBase::_fire flow'}).start();
+    let trace = Tracing.flow({cat: 'handle', name: 'StorageBase::_fire flow'}).start();
     if (this.frameQueue.length == 0 && eventRecords.length > 0)
       this._asyncProcess();
     if (!this._idleResolver) {

@@ -72,7 +72,7 @@ defineParticle(({DomParticle, resolver, html, log}) => {
       this.close();
     }
     close() {
-      const handle = this._views.get('uiState');
+      const handle = this.handles.get('uiState');
       handle.set(new (handle.entityClass)({open: false}));
     }
   };

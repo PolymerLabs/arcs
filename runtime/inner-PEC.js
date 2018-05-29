@@ -209,7 +209,7 @@ export class InnerPEC {
       handleMap.set(name, handle);
 
       // Defer registration of handles with proxies until after particles have a chance to
-      // configure them in setViews.
+      // configure them in setHandles.
       registerList.push({proxy, particle, handle});
     });
 
@@ -217,7 +217,7 @@ export class InnerPEC {
       resolve();
       let idx = this._pendingLoads.indexOf(p);
       this._pendingLoads.splice(idx, 1);
-      await particle.setViews(handleMap);
+      await particle.setHandles(handleMap);
       registerList.forEach(({proxy, particle, handle}) => proxy.register(particle, handle));
     }];
   }

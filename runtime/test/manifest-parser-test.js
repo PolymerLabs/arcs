@@ -23,7 +23,7 @@ describe('manifest parser', function() {
     parse(`
       recipe Recipe`);
   });
-  it('parses recipes that map views', () => {
+  it('parses recipes that map handles', () => {
     parse(`
       recipe Thing
         map #someTag
@@ -34,7 +34,7 @@ describe('manifest parser', function() {
       recipe Recipe
         SomeParticle`);
   });
-  it('parses recipes that connect particles to views', () => {
+  it('parses recipes that connect particles to handles', () => {
     parse(`
       recipe Recipe
         SomeParticle
@@ -46,7 +46,7 @@ describe('manifest parser', function() {
     parse(`
       particle SomeParticle`);
   });
-  it('parses recipes that name views and particles', () => {
+  it('parses recipes that name handles and particles', () => {
     parse(`
       recipe Recipe
         SomeParticle as thing
@@ -74,7 +74,7 @@ describe('manifest parser', function() {
         a.a = b.b
         X.a #tag <- a.y`);
   });
-  it('parses manifests with views', () => {
+  it('parses manifests with stores', () => {
     parse(`
       schema Person
         Text lastName

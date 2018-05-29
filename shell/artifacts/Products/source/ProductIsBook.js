@@ -10,15 +10,15 @@
 
 defineParticle(({Particle}) => {
   return class ProductIsBook extends Particle {
-    setViews(views) {
-      this.on(views, 'product', 'change', e => {
-        let productHandle = views.get('product');
+    setHandles(handles) {
+      this.on(handles, 'product', 'change', e => {
+        let productHandle = handles.get('product');
         productHandle.get().then(data => {
           let isBook = productHandle.type.entitySchema.name.toLowerCase().indexOf('book') >= 0 ||
                        data.category && data.category.toLowerCase().indexOf('book') >= 0 ||
                        data.name && data.name.toLowerCase().indexOf('book') >= 0;
           if (isBook) {
-            views.get('book').set(data);
+            handles.get('book').set(data);
             this.relevance = 5;
           }
         });

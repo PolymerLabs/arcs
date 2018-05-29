@@ -163,7 +163,7 @@ ${productStyles}
       return state.renderModel;
     }
     _onChooseValue(e, state) {
-      this._views.get('list').remove(state.values[e.data.key]);
+      this.handles.get('list').remove(state.values[e.data.key]);
     }
   };
 });

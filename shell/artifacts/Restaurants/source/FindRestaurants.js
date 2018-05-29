@@ -41,7 +41,7 @@ defineParticle(({DomParticle, resolver}) => {
         .then(places => this._receivePlaces(places));
     }
     _receivePlaces(places) {
-      let restaurants = this._views.get('restaurants');
+      let restaurants = this.handles.get('restaurants');
       let Restaurant = restaurants.entityClass;
       places.results.forEach(p => {
         let photo = p.photos && p.photos.length

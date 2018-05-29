@@ -268,7 +268,7 @@ defineParticle(({DomParticle, html}) => {
                     ? newGameState.player1
                     : newGameState.player2 
               : null;
-      const handle = this._views.get('gameState');
+      const handle = this.handles.get('gameState');
       handle.set(new (handle.entityClass)(newGameState));
     }
   };

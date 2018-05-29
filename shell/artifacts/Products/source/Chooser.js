@@ -158,7 +158,7 @@ ${productStyles}
       };
     }
     _onChooseValue(e, state) {
-      this._views.get('resultList').store(state.values[e.data.key]);
+      this.handles.get('resultList').store(state.values[e.data.key]);
     }
   };
 

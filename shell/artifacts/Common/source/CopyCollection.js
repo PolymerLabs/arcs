@@ -10,11 +10,11 @@
 
 defineParticle(({Particle}) => {
   return class CopyCollection extends Particle {
-    setViews(views) {
-      this.on(views, 'input', 'change', e => {
-        let inputHandle = views.get('input');
+    setHandles(handles) {
+      this.on(handles, 'input', 'change', e => {
+        let inputHandle = handles.get('input');
         inputHandle.toList().then(input => {
-          input.forEach(elem => views.get('output').store(elem));
+          input.forEach(elem => handles.get('output').store(elem));
           this.relevance = input.length; // TODO: set appropriate relevance.
         });
       });

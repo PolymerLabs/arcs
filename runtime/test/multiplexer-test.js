@@ -25,12 +25,12 @@ describe('Multiplexer', function() {
       import 'runtime/test/artifacts/test-particles.manifest'
       
       recipe
-        slot 'slotid' as s0
-        use 'test:1' as v0
+        slot 'slotid' as slot0
+        use 'test:1' as handle0
         Multiplexer
           hostedParticle = ConsumerParticle
-          consume annotation as s0
-          list <- v0
+          consume annotation as slot0
+          list <- handle0
 
     `, {loader, fileName: './manifest.manifest'});
 

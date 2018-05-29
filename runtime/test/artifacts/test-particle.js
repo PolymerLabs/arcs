@@ -10,10 +10,10 @@
 
 defineParticle(({Particle}) => {
   return class Hello extends Particle {
-    setViews(views) {
-      const Bar = views.get('bar').entityClass;
-      views.get('foo').get().then(result => {
-        let bar = views.get('bar');
+    setHandles(handles) {
+      const Bar = handles.get('bar').entityClass;
+      handles.get('foo').get().then(result => {
+        let bar = handles.get('bar');
         bar.set(new bar.entityClass({value: result.value + 1}));
       });
       // TODO: what is this meant to do?

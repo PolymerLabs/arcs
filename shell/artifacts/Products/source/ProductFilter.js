@@ -16,16 +16,16 @@ defineParticle(({Particle}) => {
       super();
       this._handleIds = new Set();
     }
-    setViews(views) {
+    setHandles(handles) {
       let arc = null;
-      this.on(views, 'products', 'change', async e => {
+      this.on(handles, 'products', 'change', async e => {
         if (!arc) {
           arc = await this.constructInnerArc();
         }
-        let productsHandle = views.get('products');
+        let productsHandle = handles.get('products');
         let productsList = await productsHandle.toList();
-        let hostedParticle = await views.get('hostedParticle').get();
-        let resultsHandle = views.get('results');
+        let hostedParticle = await handles.get('hostedParticle').get();
+        let resultsHandle = handles.get('results');
         for (let [index, product] of productsList.entries()) {
           if (this._handleIds.has(product.id)) {
             continue;
@@ -38,11 +38,11 @@ defineParticle(({Particle}) => {
           let recipe = Particle.buildManifest`
 ${hostedParticle}
 recipe
-  use '${productHandle._id}' as v1
-  use '${resultHandle._id}' as v2
+  use '${productHandle._id}' as handle1
+  use '${resultHandle._id}' as handle2
   ${hostedParticle.name}
-    ${hostedParticle.connections[0].name} <- v1
-    ${hostedParticle.connections[1].name} -> v2
+    ${hostedParticle.connections[0].name} <- handle1
+    ${hostedParticle.connections[1].name} -> handle2
 `;
 
           try {

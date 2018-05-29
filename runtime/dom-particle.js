@@ -10,7 +10,7 @@
 'use strict';
 
 import {assert} from '../platform/assert-web.js';
-import {Particle, ViewChanges} from './particle.js';
+import {Particle, HandleChanges} from './particle.js';
 import XenStateMixin from '../shell/components/xen/xen-state.js';
 
 /** @class DomParticle
@@ -98,11 +98,18 @@ export class DomParticle extends XenStateMixin(Particle) {
   _info() {
     return `---------- DomParticle::[${this.spec.name}]`;
   }
-  async setViews(handles) {
+  get _views() {
+    console.warn(`Particle ${this.spec.name} uses deprecated _views getter.`);
+    return this.handles;
+  }
+  async setViews(views) {
+    console.warn(`Particle ${this.spec.name} uses deprecated setViews method.`);
+    return this.setHandles(views);
+  }
+  async setHandles(handles) {
     this.handles = handles;
-    this._views = handles;
     let config = this.config;
-    this.when([new ViewChanges(handles, config.handles, 'change')], async () => {
+    this.when([new HandleChanges(handles, config.handles, 'change')], async () => {
       await this._handlesToProps(handles, config);
     });
     // make sure we invalidate once, even if there are no incoming handles

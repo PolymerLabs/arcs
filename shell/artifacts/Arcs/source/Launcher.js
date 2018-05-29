@@ -240,7 +240,7 @@ ${style}
       }
     }
     setHandle(name, data) {
-      const handle = this._views.get(name);
+      const handle = this.handles.get(name);
       handle.set(new (handle.entityClass)(data));
     }
   };

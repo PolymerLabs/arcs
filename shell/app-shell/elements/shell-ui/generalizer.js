@@ -46,15 +46,15 @@ const recipeFixer = block => {
   let lines = accumulate(block, 2)
     // remote `slot` and `description` pragmas
     .filter(line => !hasPrefix(line, ['  slot', '  description']))
-    .map(line => viewFixer(line))
+    .map(line => handleFixer(line))
     ;
   return lines.join('');
 };
 
 const hasPrefix = (s, prefixi) => prefixi.some(prefix => s.startsWith(prefix));
 
-const viewFixer = line => {
-  // for `use` views
+const handleFixer = line => {
+  // for `use` handles
   if (line.startsWith('  use')) {
     // retain ParticleShape as is
     if (!line.includes('ParticleShape')) {

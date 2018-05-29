@@ -74,7 +74,7 @@ ${styles}
     }
     _onSelectAvatar(e, state) {
       //console.log('avatar: ', e.data.value);
-      const avatar = this._views.get('avatar');
+      const avatar = this.handles.get('avatar');
       avatar.set(new avatar.entityClass({url: e.data.value}));
     }
   };

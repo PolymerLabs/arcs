@@ -41,9 +41,9 @@ defineParticle(({DomParticle}) => {
         let changes = state.changes;
         state.participants = new Set([...state.participants, ...state.changes]);
         state.changes = undefined;
-        let Person = this._views.get('participants').entityClass;
+        let Person = this.handles.get('participants').entityClass;
         changes.forEach(name => {
-          this._views.get('participants').store(new Person({name}));
+          this.handles.get('participants').store(new Person({name}));
         });
       }
     }

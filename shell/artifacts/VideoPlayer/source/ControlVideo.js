@@ -56,8 +56,8 @@ defineParticle(({DomParticle, html}) => {
       }
     }
     _setVideoPlayback({mode, ts, position, volume}) {
-      const VideoPlayback = this._views.get('controls').entityClass;
-      this._views.get('controls').store(new VideoPlayback({mode, ts, position, volume}));
+      const VideoPlayback = this.handles.get('controls').entityClass;
+      this.handles.get('controls').store(new VideoPlayback({mode, ts, position, volume}));
     }
     _updateState(newMode) {
       let {position, mode, ts} = this._state;
