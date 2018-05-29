@@ -35,8 +35,8 @@ describe('OuterPortAttachment', function() {
             P
               foo = foo`,
         'p.js': `defineParticle(({Particle}) => class P extends Particle {
-          async setViews(views) {
-            let foo = views.get('foo');
+          async setHandles(handles) {
+            let foo = handles.get('foo');
             foo.set(new foo.entityClass({value: 'FooBar'}));
           }
         });`
@@ -47,10 +47,10 @@ describe('OuterPortAttachment', function() {
     arc.initDebug();
 
     const Foo = arc._context.findSchemaByName('Foo').entityClass();
-    const fooHandle = await arc.createHandle(Foo.type, undefined, 'fooHandle');
+    const fooStore = await arc.createStore(Foo.type, undefined, 'fooStore');
 
     const recipe = arc._context.recipes[0];
-    recipe.handles[0].mapToStorage(fooHandle);
+    recipe.handles[0].mapToStorage(fooStore);
     recipe.normalize();
     await arc.instantiate(recipe);
 
@@ -65,7 +65,7 @@ describe('OuterPortAttachment', function() {
       connections: {
         foo: {
           direction: 'inout',
-          id: 'fooHandle',
+          id: 'fooStore',
           storageKey: 'in-memory://!158405822139616:demo^^in-memory-0',
           type: 'Foo'
         },
@@ -73,7 +73,7 @@ describe('OuterPortAttachment', function() {
       implFile: 'p.js'
     });
 
-    await util.assertSingletonWillChangeTo(fooHandle, Foo, 'FooBar');
+    await util.assertSingletonWillChangeTo(fooStore, Foo, 'FooBar');
     let dateflowSetCall = devtoolsChannelStub.messages.find(m =>
         m.messageType === 'dataflow' &&
         m.messageBody.operation === 'set').messageBody;
@@ -90,7 +90,7 @@ describe('OuterPortAttachment', function() {
         name: 'P'
       },
       handle: {
-        id: 'fooHandle',
+        id: 'fooStore',
         storageKey: 'in-memory://!158405822139616:demo^^in-memory-0',
         type: 'Foo'
       },
