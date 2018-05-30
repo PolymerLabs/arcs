@@ -98,7 +98,6 @@ export class DomSlot extends Slot {
     }
     this._doRender();
   }
-
   _doRender() {
     assert(this.getContext());
 
@@ -112,9 +111,6 @@ export class DomSlot extends Slot {
   }
   getInnerContext(slotName) {
     return this.getContext() && this.getContext().getInnerContext(slotName);
-  }
-  hasTemplate() {
-    return this.getContext().hasTemplate(this._templatePrefix);
   }
   constructRenderRequest(hostedSlot) {
     let request = ['model'];

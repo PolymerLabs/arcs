@@ -11,10 +11,12 @@
 import {assert} from '../../runtime/test/chai-web.js';
 
 import {Arc} from '../../runtime/arc.js';
+import {DomSlot} from '../../runtime/dom-slot.js';
 import {Loader} from '../../runtime/loader.js';
 import {Manifest} from '../../runtime/manifest.js';
+import {MockDomSlot, MockDomContext} from '../../runtime/testing/mock-dom-slot.js';
 import {SlotComposer} from '../../runtime/slot-composer.js';
-
+import {TestHelper} from '../../runtime/testing/test-helper.js';
 
 let loader = new Loader();
 
@@ -66,5 +68,73 @@ describe('Multiplexer', function() {
     await arc.idle;
 
     assert.equal(slotsCreated, 3);
+  });
+
+  it('renders polymorphic multiplexed slots', async function() {
+    let helper = new TestHelper();
+    await helper.loadManifest('./runtime/test/particles/artifacts/polymorphic-muxing.recipes');
+    let context = helper.arc._context;
+
+    let showOneParticle = context.particles.find(p => p.name == 'ShowOne');
+    let showTwoParticle = context.particles.find(p => p.name == 'ShowTwo');
+    let showOneSpec = JSON.stringify(showOneParticle.toLiteral());
+    let showTwoSpec = JSON.stringify(showTwoParticle.toLiteral());
+    let postsStore = context.stores[0];
+    let recipeOne = `${showOneParticle.toString()}\nrecipe\n  use '{{item_id}}' as v1\n  slot '{{slot_id}}' as s1\n  ShowOne\n    post <- v1\n    consume item as s1`;
+    let recipeTwo = `${showTwoParticle.toString()}\nrecipe\n  use '{{item_id}}' as v1\n  slot '{{slot_id}}' as s1\n  ShowTwo\n    post <- v1\n    consume item as s1`;
+    await postsStore.store({id: '1', rawData: {message: 'x', renderRecipe: recipeOne, renderParticleSpec: showOneSpec}});
+    await postsStore.store({id: '2', rawData: {message: 'y', renderRecipe: recipeTwo, renderParticleSpec: showTwoSpec}});
+    await postsStore.store({id: '3', rawData: {message: 'z', renderRecipe: recipeOne, renderParticleSpec: showOneSpec}});
+    await helper.makePlans();
+
+    // Render 3 posts
+    helper.slotComposer
+        .newExpectations()
+        .expectRenderSlot('List', 'root', {contentTypes: ['template', 'model']})
+        .expectRenderSlot('PostMuxer', 'item', {contentTypes: ['template', 'templateName', 'model']})
+        .expectRenderSlot('PostMuxer', 'item', {contentTypes: ['template', 'templateName', 'model'], times: 2, isOptional: true})
+        .expectRenderSlot('ShowOne', 'item', {contentTypes: ['template', 'templateName', 'model'], times: 2})
+        .expectRenderSlot('ShowTwo', 'item', {contentTypes: ['template', 'templateName', 'model']});
+    await helper.acceptSuggestion({particles: ['PostMuxer', 'List']});
+
+    // Add and render one more post
+    helper.slotComposer
+        .newExpectations()
+        .expectRenderSlot('List', 'root', {contentTypes: ['templateName', 'model']})
+        .expectRenderSlot('PostMuxer', 'item', {contentTypes: ['templateName', 'model']})
+        .expectRenderSlot('ShowOne', 'item', {contentTypes: ['templateName', 'model']})
+        .expectRenderSlot('PostMuxer', 'item', {contentTypes: ['templateName', 'model']});
+    await postsStore.store({id: '4', rawData: {message: 'w', renderRecipe: recipeOne, renderParticleSpec: showOneSpec}});
+    await helper.idle();
+    assert.lengthOf(helper.slotComposer._slots, 2);
+    let itemSlot = helper.slotComposer._slots.find(s => s.consumeConn.name == 'item');
+    assert(itemSlot);
+
+    // verify hosted slots
+    assert.equal(4, itemSlot._hostedSlotById.size);
+
+    // verify model
+    assert.lengthOf(itemSlot._model.items, 4);
+    [{subId: '1', message: 'x'}, {subId: '2', message: 'y'}, {subId: '3', message: 'z'}, {subId: '4', message: 'w'}].forEach(expected => {
+        assert(itemSlot._model.items.find(item => item.subId == expected.subId && item.message == expected.message),
+              `Cannot find item {subId: '${expected.subId}', message: '${expected.message}'`);
+    });
+
+    // verify context
+    let itemContext = itemSlot._context;
+    assert.deepEqual(['1', '2', '3', '4'], Object.keys(itemContext._contextBySubId).sort());
+    Object.values(itemContext._contextBySubId).forEach(context => {
+      if (context._subId == '2') {
+        assert.equal('PostMuxer::item::ShowTwo::item::default', context._templateName);
+      } else {
+        assert.equal('PostMuxer::item::ShowOne::item::default', context._templateName);
+      }
+    });
+
+    // verify template cache
+    MockDomContext.hasTemplate('PostMuxer::item::ShowOne::item::default');
+    MockDomContext.hasTemplate('PostMuxer::item::ShowTwo::item::default');
+    MockDomContext.hasTemplate('PostMuxer::item::default');
+    MockDomContext.hasTemplate('Root  ::item::ShowOne::item::default');
   });
 });

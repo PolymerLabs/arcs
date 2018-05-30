@@ -10,14 +10,14 @@
 'use strict';
 
 import {assert} from '../platform/assert-web.js';
-import Template from '../shell/components/xen/xen-template.js';
 import {DomContext} from './dom-context.js';
 
 // Class for rendering set slots. Stores a map from entity subID to its corresponding DomContext object.
 export class DomSetContext {
-  constructor(containerKind) {
+  constructor(containerKind, contextClass) {
     this._contextBySubId = {};
     this._containerKind = containerKind;
+    this._contextClass = contextClass || DomContext;
   }
   initContext(context) {
     Object.keys(context).forEach(subId => {
@@ -25,7 +25,7 @@ export class DomSetContext {
       if (!subContext || !subContext.isEqual(context[subId])) {
         // Replace the context corresponding to subId with a newly created context,
         // while maintaining the template name.
-        subContext = new DomContext(null, this._containerKind, subId, subContext ? subContext._templateName : null);
+        subContext = new this._contextClass(null, this._containerKind, subId, subContext ? subContext._templateName : null);
         this._contextBySubId[subId] = subContext;
       }
       subContext.initContext(context[subId]);
@@ -56,7 +56,7 @@ export class DomSetContext {
     });
   }
   hasTemplate(templatePrefix) {
-    return DomContext.hasTemplate(templatePrefix);
+    return this._contextClass.hasTemplate(templatePrefix);
   }
   updateModel(model) {
     assert(model.items, `Model must contain items`);
@@ -75,7 +75,7 @@ export class DomSetContext {
   createTemplateElement(template) {
     let templates = {};
     if (typeof template === 'string') {
-      return DomContext.createTemplateElement(template);
+      return this._contextClass.createTemplateElement(template);
     } else {
       Object.keys(template).forEach(subId => {
         templates[subId] = this._contextBySubId[subId].createTemplateElement(template[subId]);

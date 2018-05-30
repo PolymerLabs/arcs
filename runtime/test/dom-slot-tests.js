@@ -10,45 +10,16 @@
 'use strict';
 
 import {assert} from './chai-web.js';
-import {DomContext} from '../dom-context.js';
-import {DomSlot} from '../dom-slot.js';
 import * as util from '../testing/test-util.js';
-import {Loader} from '../loader.js';
+import {MockDomSlot, MockDomContext} from '../testing/mock-dom-slot.js';
 
-let loader = new Loader();
-
-let templates = {};
-class MockDomContext {
-  constructor() {
-    this.context = context;
-  }
-  observe(observer) {}
-  stampTemplate(eventHandler) {}
-  initContext(context) {
-    this.context = context;
-  }
-  createTemplateElement(template) {
-    return template;
-  }
-  setTemplate(templatePrefix, templateName, template) {
-    assert(template);
-    templates[`${templatePrefix}::${templateName}`] = template;
-  }
-  hasTemplate(templateName) { return Object.keys(templates).find(key => key.startsWith(templateName)); }
-}
-DomSlot.prototype._createDomContext = () => new MockDomContext();
-DomSlot.prototype._initMutationObserver = () => {};
-DomSlot.prototype._initMutationObserver = () => {};
-DomContext.hasTemplate = (templateName) => { return templates[templateName]; };
-
-function createDomSlot(slotName) {
-  // slotName should differ in each test case to avoid collision in DomSlot::templates.
-  return new DomSlot(/* consumeConn= */ {particle: {name: 'MyParticle', connections: []}, name: slotName}, 'dummy-arc');
+function createDomSlot() {
+  return new MockDomSlot(/* consumeConn= */ {particle: {name: 'MyParticle', connections: []}, slotSpec: {}, name: 'slotName'}, 'dummy-arc');
 }
 
 describe('dom-slot', function() {
   it('set context', function() {
-    let slot = createDomSlot('testContextSlot');
+    let slot = createDomSlot();
     let doRenderCount = 0;
     slot._doRender = () => { ++doRenderCount; };
     assert.isNull(slot._context);
@@ -77,7 +48,7 @@ describe('dom-slot', function() {
     assert.isNull(slot._context);
   });
   it('set content', async () => {
-    let slot = createDomSlot('testContentSlot');
+    let slot = createDomSlot();
     let doRenderCount = 0;
     let _doRenderImpl = slot._doRender;
     slot._doRender = () => {
@@ -117,7 +88,7 @@ describe('dom-slot', function() {
     assert.equal(0, updateModelCount);
 
     // Set content with template: templates map is updated and slot is rendered.
-    assert.isFalse(slot.hasTemplate());
+    assert.isFalse(slot.getContext().hasTemplate());
     await slot.setContent({template: 'my template', templateName: 'default'});
     assert.isNull(slot._model);
     assert.equal('my template', theTemplate);
@@ -129,7 +100,7 @@ describe('dom-slot', function() {
     // Set content with template and model - template is overriden, model is set and slot is re-rendered.
     await slot.setContent({template: 'my other template', templateName: 'default', model: {foo: 'bar'}});
     assert.deepEqual({foo: 'bar'}, slot._model);
-    assert.isTrue(slot.hasTemplate());
+    assert.isTrue(slot.getContext().hasTemplate());
     assert.equal('my other template', theTemplate);
     assert.equal(2, doRenderCount);
     assert.equal(2, stampTemplateCount);
@@ -150,7 +121,7 @@ describe('dom-slot', function() {
     assert.equal(3, doRenderCount);
   });
   it('construct render request', function() {
-    let slot = createDomSlot('testRequestSlot');
+    let slot = createDomSlot();
     slot._context = new MockDomContext();
     // request template, if not available yet.
     assert.deepEqual(['model', 'template'], slot.constructRenderRequest());
