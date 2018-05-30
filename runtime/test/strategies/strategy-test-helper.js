@@ -32,4 +32,8 @@ export class StrategyTestHelper {
   static theResults(arc, clazz, recipe) {
     return StrategyTestHelper.run(arc, clazz, recipe).then(results => results.map(result => result.result)); // chicken chicken
   }
+
+  static noResult(arc, clazz, recipe) {
+    return StrategyTestHelper.run(arc, clazz, recipe).then(result => { assert.equal(result.length, 0); });
+  }
 }

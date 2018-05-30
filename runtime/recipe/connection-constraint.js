@@ -26,7 +26,35 @@ export class ParticleEndPoint {
   }
 
   toString() {
+    if (!this.connection)
+      return `${this.particle.name}`;
     return `${this.particle.name}.${this.connection}`;
+  }
+}
+
+export class InstanceEndPoint {
+  constructor(instance, connection) {
+    assert(instance);
+    this.recipe = instance.recipe;
+    this.instance = instance;
+    this.connection = connection;
+  }
+
+  _clone(cloneMap) {
+    return new InstanceEndPoint(cloneMap.get(this.instance), this.connection);
+  }
+
+  _compareTo(other) {
+    let cmp;
+    if ((cmp = this.instance._compareTo(other.instance)) != 0) return cmp;
+    if ((cmp = util.compareStrings(this.connection, other.connection)) != 0) return cmp;
+    return 0;
+  }
+
+  toString(nameMap) {
+    if (!this.connection)
+      return `${nameMap.get(this.instance)}`;
+    return `${nameMap.get(this.instance)}.${this.connection}`;
   }
 }
 
@@ -71,18 +99,22 @@ export class TagEndPoint {
 }
 
 export class ConnectionConstraint {
-  constructor(fromConnection, toConnection, direction) {
+  constructor(fromConnection, toConnection, direction, type) {
     assert(direction);
+    assert(type);
     this.from = fromConnection;
     this.to = toConnection;
     this.direction = direction;
+    this.type = type;
     Object.freeze(this);
   }
 
-  _copyInto(recipe) {
-    return recipe.newConnectionConstraint(this.from._clone(), this.to._clone(), this.direction);
+  _copyInto(recipe, cloneMap) {
+    if (this.type == 'constraint')
+      return recipe.newConnectionConstraint(this.from._clone(), this.to._clone(), this.direction);
+    return recipe.newObligation(this.from._clone(cloneMap), this.to._clone(cloneMap), this.direction);
   }
-
+    
   _compareTo(other) {
     let cmp;
     if ((cmp = this.from._compareTo(other.from)) != 0) return cmp;
@@ -91,7 +123,11 @@ export class ConnectionConstraint {
     return 0;
   }
 
-  toString() {
-    return `${this.from} ${this.direction} ${this.to}`;
+  toString(nameMap, options) {
+    let unresolved = '';
+    if (options && options.showUnresolved == true && this.type == 'obligation') {
+      unresolved = ' // unresolved obligation';
+    }
+    return `${this.from.toString(nameMap)} ${this.direction} ${this.to.toString(nameMap)}${unresolved}`;
   }
 }

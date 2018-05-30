@@ -7,14 +7,17 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-import {assert} from './chai-web.js';
-import {Manifest} from '../manifest.js';
-import {ConvertConstraintsToConnections} from '../strategies/convert-constraints-to-connections.js';
-import {ResolveRecipe} from '../strategies/resolve-recipe.js';
-import {MatchRecipeByVerb} from '../strategies/match-recipe-by-verb.js';
-import {StrategyTestHelper} from './strategies/strategy-test-helper.js';
+import {assert} from '../chai-web.js';
+import {Manifest} from '../../manifest.js';
+import {ConvertConstraintsToConnections} from '../../strategies/convert-constraints-to-connections.js';
+import {GroupHandleConnections} from '../../strategies/group-handle-connections.js';
+import {ResolveRecipe} from '../../strategies/resolve-recipe.js';
+import {MatchRecipeByVerb} from '../../strategies/match-recipe-by-verb.js';
+import {StrategyTestHelper} from './strategy-test-helper.js';
+import {CreateHandles} from '../../strategies/create-handles.js';
+import {CreateHandleGroup} from '../../strategies/create-handle-group.js';
 
-let {createTestArc, onlyResult, theResults} = StrategyTestHelper;
+let {createTestArc, onlyResult, noResult, theResults} = StrategyTestHelper;
 
 describe('A Strategy Sequence', function() {
   it('resolves a verb substitution and slot mapping', async () => {
@@ -213,4 +216,69 @@ describe('A Strategy Sequence', function() {
     assert.equal(recipes.length, 2);
     recipe = await onlyResult(arc, ResolveRecipe, recipes[1]);
   });
+
+  it('connects particles together when there\'s only one possible connection', async () => {
+    let manifest = await Manifest.parse(`
+      particle A
+        out S {} o
+      particle B
+        in S {} i
+      recipe
+        A -> B
+    `);
+
+    let recipe = manifest.recipes[0];
+    let arc = createTestArc('test-plan-arc', manifest, 'dom');
+
+    recipe = await onlyResult(arc, ConvertConstraintsToConnections, recipe);
+    recipe = await onlyResult(arc, CreateHandleGroup, recipe);
+    recipe = await onlyResult(arc, ResolveRecipe, recipe);
+    assert.isTrue(recipe.isResolved());
+  });
+
+    it(`connects particles together when there's extra things that can't connect`, async () => {
+    let manifest = await Manifest.parse(`
+      particle A
+        out S {} o
+        in S {} i
+      particle B
+        in S {} i
+        in T {} i2
+      recipe
+        A -> B
+    `);
+
+    let recipe = manifest.recipes[0];
+    let arc = createTestArc('test-plan-arc', manifest, 'dom');
+
+    recipe = await onlyResult(arc, ConvertConstraintsToConnections, recipe);
+    await noResult(arc, ResolveRecipe, recipe);
+
+    recipe = await onlyResult(arc, CreateHandleGroup, recipe);
+    recipe = await onlyResult(arc, ResolveRecipe, recipe);
+    assert.equal(recipe.obligations.length, 0);
+  });
+
+  it('connects particles together with multiple connections', async () => {
+    let manifest = await Manifest.parse(`
+      particle A
+        out S {} o
+        in T {} i
+      particle B
+        in S {} i
+        out T {} o
+      recipe
+        A = B
+    `);
+
+    let recipe = manifest.recipes[0];
+    let arc = createTestArc('test-plan-arc', manifest, 'dom');
+
+    recipe = await onlyResult(arc, ConvertConstraintsToConnections, recipe);
+    recipe = await onlyResult(arc, CreateHandleGroup, recipe);
+    recipe = await onlyResult(arc, CreateHandleGroup, recipe);
+    recipe = await onlyResult(arc, ResolveRecipe, recipe);    
+    assert.isTrue(recipe.isResolved());
+  });
 });
+

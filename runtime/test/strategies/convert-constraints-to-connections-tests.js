@@ -339,4 +339,68 @@ describe('ConvertConstraintsToConnections', async () => {
   B as particle1
     i -> handle1`);
   });
+
+  it(`connects particles together when there's only one possible connection`, async () => {
+    let recipes = (await Manifest.parse(`
+    particle A
+      out S {} o
+    particle B
+      in S {} i
+    recipe
+      A -> B
+    `)).recipes;
+    let inputParams = {generated: [{result: recipes[0], score: 1}]};
+    let cctc = new ConvertConstraintsToConnections({pec: {}});
+    let results = await cctc.generate(inputParams);
+    assert.equal(results.length, 1);
+    let recipe = results[0].result;
+    assert.deepEqual(recipe.particles.map(p => p.name), ['A', 'B']);
+    assert.equal(recipe.obligations.length, 1);
+    assert.equal(recipe.obligations[0].from.instance, recipe.particles[0]);
+    assert.equal(recipe.obligations[0].to.instance, recipe.particles[1]);
+  });
+  
+  it(`connects particles together when there's extra things that can't connect`, async () => {
+    let recipes = (await Manifest.parse(`
+    particle A
+      out S {} o
+      in S {} i
+    particle B
+      in S {} i
+      in T {} i2
+    recipe
+      A -> B
+    `)).recipes;
+    let inputParams = {generated: [{result: recipes[0], score: 1}]};
+    let cctc = new ConvertConstraintsToConnections({pec: {}});
+    let results = await cctc.generate(inputParams);
+    assert.equal(results.length, 1);
+    let recipe = results[0].result;
+    assert.deepEqual(recipe.particles.map(p => p.name), ['A', 'B']);
+    assert.equal(recipe.obligations.length, 1);
+    assert.equal(recipe.obligations[0].from.instance, recipe.particles[0]);
+    assert.equal(recipe.obligations[0].to.instance, recipe.particles[1]);
+  });
+
+  it(`connects particles together with multiple connections`, async () => {
+    let recipes = (await Manifest.parse(`
+    particle A
+      out S {} o
+      in T {} i
+    particle B
+      in S {} i
+      out T {} o
+    recipe
+      A = B
+    `)).recipes;
+    let inputParams = {generated: [{result: recipes[0], score: 1}]};
+    let cctc = new ConvertConstraintsToConnections({pec: {}});
+    let results = await cctc.generate(inputParams);
+    assert.equal(results.length, 1);
+    let recipe = results[0].result;
+    assert.deepEqual(recipe.particles.map(p => p.name), ['A', 'B']);
+    assert.equal(recipe.obligations.length, 1);
+    assert.equal(recipe.obligations[0].from.instance, recipe.particles[0]);
+    assert.equal(recipe.obligations[0].to.instance, recipe.particles[1]);
+  });
 });

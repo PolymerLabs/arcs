@@ -78,6 +78,21 @@ export class ResolveRecipe extends Strategy {
           return 1;
         };
       }
+
+      onObligation(recipe, obligation) {
+        let fromParticle = obligation.from.instance;
+        let toParticle = obligation.to.instance;
+        for (let fromConnection of Object.values(fromParticle.connections)) {
+          for (let toConnection of Object.values(toParticle.connections)) {
+            if (fromConnection.handle && fromConnection.handle == toConnection.handle) {
+              return (recipe, obligation) => {
+                recipe.removeObligation(obligation);
+                return 1;
+              };
+            }
+          }
+        }
+      }
     }(Walker.Permuted), this);
   }
 }
