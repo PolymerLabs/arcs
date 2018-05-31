@@ -223,7 +223,7 @@ defineParticle(({DomParticle, html, log, resolver}) => {
       const tileBoard = new TileBoard(board);
       let boardModels = this.boardToModels(tileBoard, move ? move.coordinates : '');
       const {arcKey, author, createdTimestamp} = post;
-      const avatar = props.avatars.find(a => a.owner == author);
+      const avatar = avatars.find(a => a.owner == author);
       return {
         avatarStyle: avatar ? this.avatarToStyle(resolver(avatar.url)) : '',
         boardCells: {$template: 'board-cell', models: boardModels},
