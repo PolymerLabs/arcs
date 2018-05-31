@@ -18,6 +18,7 @@ defineParticle(({MultiplexerDomParticle, log}) => {
       // TODO(wkorman): Joining other_handles and other_connections is a hack
       // due to unknown required indentation for recipe compatibility.
       value = value.replace('{{other_handles}}', other.handles.join('\n  '));
+      value = value.replace('{{other_views}}', other.handles.join('\n  '));
       value =
           value.replace('{{other_connections}}', other.connections.join('\n    '));
       // log(`PostMuxer interpolated recipe: `, value);
