@@ -635,7 +635,7 @@ ${e.message}
           let particle = manifest.findParticleByName(info.particle);
           if (!particle)
             throw new ManifestError(connection.location, `could not find particle '${info.particle}'`);
-          if (!particle.connectionMap.has(info.param))
+          if (info.param !== null && !particle.connectionMap.has(info.param))
             throw new ManifestError(connection.location, `param '${info.param}' is not defined by '${info.particle}'`);
           return new ParticleEndPoint(particle, info.param);
         }

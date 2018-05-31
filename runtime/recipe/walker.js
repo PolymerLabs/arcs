@@ -56,6 +56,13 @@ export class Walker extends WalkerBase {
           updateList.push({continuation: result, context: slot});
       }
     }
+    for (let obligation of recipe.obligations) {
+      if (this.onObligation) {
+        let result = this.onObligation(recipe, obligation);
+        if (!this.isEmptyResult(result))
+          updateList.push({continuation: result, context: obligation});
+      }
+    }
 
     this._runUpdateList(recipe, updateList);
   }

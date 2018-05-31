@@ -28,6 +28,14 @@ export class Recipe {
     // type to particles/handles.
     this._connectionConstraints = [];
 
+    // Obligations are like connection constraints in that they describe
+    // required connections between particles/verbs. However, where 
+    // connection constraints can be acted upon in order to create these
+    // connections, obligations can't be. Instead, they describe requirements
+    // that must be discharged before a recipe can be considered to be
+    // resolved.
+    this._obligations = [];
+
     this._verbs = [];
 
     // TODO: Change to array, if needed for search strings of merged recipes.
@@ -36,8 +44,22 @@ export class Recipe {
     this._pattern = null;
   }
 
-  newConnectionConstraint(from, fromConnection, to, toConnection, direction) {
-    this._connectionConstraints.push(new ConnectionConstraint(from, fromConnection, to, toConnection, direction));
+  newConnectionConstraint(from, to, direction) {
+    let result = new ConnectionConstraint(from, to, direction, 'constraint');
+    this._connectionConstraints.push(result);
+    return result;
+  }
+
+  newObligation(from, to, direction) {
+    let result = new ConnectionConstraint(from, to, direction, 'obligation');
+    this._obligations.push(result);
+    return result;
+  }
+  
+  removeObligation(obligation) {
+    let idx = this._obligations.indexOf(obligation);
+    assert(idx > -1);
+    this._obligations.splice(idx, 1);
   }
 
   removeConstraint(constraint) {
@@ -92,6 +114,8 @@ export class Recipe {
 
   isResolved() {
     assert(Object.isFrozen(this), 'Recipe must be normalized to be resolved.');
+    if (this._obligations.length > 0)
+      return false;
     return this._connectionConstraints.length == 0
         && (this._search === null || this._search.isResolved())
         && this._handles.every(handle => handle.isResolved())
@@ -139,6 +163,7 @@ export class Recipe {
   get slots() { return this._slots; } // Slot*
   set slots(slots) { this._slots = slots; }
   get connectionConstraints() { return this._connectionConstraints; }
+  get obligations() { return this._obligations; }
   get verbs() { return this._verbs; }
   set verbs(verbs) { this._verbs = verbs; }
   get search() { return this._search; }
@@ -367,6 +392,7 @@ export class Recipe {
     this._particles.forEach(cloneTheThing);
     this._slots.forEach(cloneTheThing);
     this._connectionConstraints.forEach(cloneTheThing);
+    this._obligations.forEach(cloneTheThing);
     recipe.verbs = recipe.verbs.slice();
     if (this.search) {
       this.search._copyInto(recipe);
@@ -477,6 +503,13 @@ export class Recipe {
           result.push(`    ${h.localName} \`${h.pattern}\``);
         }
       });
+    }
+    if (this._obligations.length > 0) {
+      result.push('  obligations');
+      for (let obligation of this._obligations) {
+        let obligationStr = obligation.toString(nameMap, options).replace(/^|(\n)/g, '$1    ');
+        result.push(obligationStr);
+      }
     }
     return result.join('\n');
   }

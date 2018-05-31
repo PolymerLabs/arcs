@@ -144,10 +144,15 @@ export class RecipeUtil {
         outputList.push(newMatch);
         matchFound = true;
       }
+
       if (matchFound == false) {
+        // The current handle connection from the shape doesn't match anything
+        // in the recipe. Find (or create) a particle for it.
         let newMatches = [];
         _buildNewParticleMatches(recipe, shapeHC.particle, match, newMatches);
         newMatches.forEach(newMatch => {
+          // the shape references a handle, might also need to create a recipe
+          // handle for it (if there isn't already one from a previous match).
           if (shapeHC.handle && !newMatch.forward.has(shapeHC.handle)) {
             newMatch.forward.set(shapeHC.handle, null);
             newMatch.score -= 2;
