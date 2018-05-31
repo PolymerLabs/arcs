@@ -21,7 +21,8 @@ describe('Tracing', function() {
 
   function assertTimestampsIncreasing(...timestmaps) {
     for (let i = 1; i < timestmaps.length; i++) {
-      assert.isAbove(timestmaps[i], timestmaps[i - 1],
+      // Strict increasing can be flaky one some platforms, equality is good enough too.
+      assert.isAtLeast(timestmaps[i], timestmaps[i - 1],
         `Expected sequence of timestamps not increasing at position ${i}`);
     }
   }
@@ -70,9 +71,13 @@ describe('Tracing', function() {
     assert.equal(event.cat, 'Stuff');
     assert.equal(event.name, 'Thingy::thing');
     assert.isUndefined(event.args);
-    assert.isAbove(event.ts, beginMicros);
-    assert.isBelow(event.ts + event.dur, endMicros);
-    assert.isAbove(event.dur, 0);
+
+    assertTimestampsIncreasing(
+      beginMicros,
+      event.ts,
+      event.ts + event.dur,
+      endMicros
+    );
   });
 
   it('traces an asynchronous event', async () => {
