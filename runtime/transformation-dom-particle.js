@@ -30,7 +30,7 @@ export class TransformationDomParticle extends DomParticle {
     return state.renderModel;
   }
   shouldRender(props, state) {
-    return Boolean(state.template && state.renderModel);
+    return Boolean((state.template || state.templateName) && state.renderModel);
   }
 
   renderHostedSlot(slotName, hostedSlotId, content) {

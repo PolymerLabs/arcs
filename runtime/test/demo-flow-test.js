@@ -41,8 +41,8 @@ describe('demo flow', function() {
         .expectRenderSlot('ShowCollection', 'master', {contentTypes: ['template']})
         .expectRenderSlot('ShowCollection', 'master', {contentTypes: ['model'], times: 3})
         .expectRenderSlot('ShowProduct', 'item', {contentTypes: ['template', 'model'], times: 3})
-        .expectRenderSlot('Multiplexer', 'annotation', {contentTypes: ['template'], hostedParticle: 'ShowProduct'})
-        .expectRenderSlot('Multiplexer', 'annotation', {contentTypes: ['model'], hostedParticle: 'ShowProduct', times: 3})
+        .expectRenderSlot('Multiplexer', 'annotation', {contentTypes: ['template', 'model'], hostedParticle: 'ShowProduct'})
+        .expectRenderSlot('Multiplexer', 'annotation', {contentTypes: ['model'], hostedParticle: 'ShowProduct', times: 2, isOptional: true})
         .expectRenderSlot('Chooser', 'action', {contentTypes: ['template', 'model']})
         .expectRenderSlot('AlsoOn', 'annotation', {contentTypes: ['template', 'model'], times: 3})
         .expectRenderSlot('Multiplexer2', 'annotation', {contentTypes: ['template']})
@@ -110,7 +110,9 @@ describe('demo flow', function() {
         .expectRenderSlot('Multiplexer', 'annotation', {contentTypes: ['template'], times: 2})
         .expectRenderSlot('Multiplexer', 'annotation', {contentTypes: ['model'], times: 7})
         .expectRenderSlot('Multiplexer', 'annotation', {contentTypes: ['model'], times: 7, isOptional: true})
-        .expectRenderSlot('Arrivinator', 'annotation', {contentTypes: ['template', 'model'], times: 7});
+        .expectRenderSlot('Arrivinator', 'annotation', {contentTypes: ['template', 'templateName', 'model'], times: 4})
+        .expectRenderSlot('Arrivinator', 'annotation', {contentTypes: ['template'], times: 3, isOptional: true})
+        .expectRenderSlot('Arrivinator', 'annotation', {contentTypes: ['templateName', 'model'], times: 3});
     await helper.acceptSuggestion({particles: ['GiftList', 'Multiplexer', 'Multiplexer']});
     await helper.idle();
     helper.log('----------------------------------------');

@@ -10,51 +10,12 @@
 'use strict';
 
 import {assert} from '../test/chai-web.js';
-import {Slot} from '../slot.js';
+import {DomContext} from '../dom-context.js';
+import {MockDomSlot, MockDomContext} from '../testing/mock-dom-slot.js';
 import {SlotComposer} from '../slot-composer.js';
 
 let logging = false;
 let log = (!logging || global.logging === false) ? () => {} : console.log.bind(console, '---------- MockSlotComposer::');
-
-class MockSlot extends Slot {
-  constructor(consumeConn, arc) {
-    super(consumeConn, arc);
-    this._content = {};
-  }
-  setContent(content, handler) {
-    // Mimics the behaviour of DomSlot::setContent, where template is only set at first,
-    // and model is overriden every time.
-    this._content.templateName = content.templateName;
-    if (content.template) {
-      this._content.template = content.template;
-    }
-    this._content.model = content.model;
-
-  }
-  getInnerContext(slotName) {
-    if (this._content.template) {
-      let template = typeof this._content.template == 'string' ? this._content.template : Object.values(this._content.template)[0];
-      if (template.indexOf(`slotid="${slotName}"`) > 0) {
-        return new MockContext('dummy-context');
-      }
-    }
-  }
-   constructRenderRequest() {
-     if (this._content.template) {
-       return ['model'];
-     }
-     return ['template', 'model'];
-   }
-}
-
-class MockContext {
-  constructor(context) {
-    this.context = context;
-  }
-  isEqual(other) {
-    return this.context == other.context;
-  }
-}
 
 /** @class MockSlotComposer
  * Helper class to test with slot composer.
@@ -74,11 +35,14 @@ export class MockSlotComposer extends SlotComposer {
    * - strict: whether unexpected render slot requests cause an assert or a warning log (default: true)
    */
   constructor(options) {
-    super({rootContext: new MockContext('dummy-context'), affordance: 'mock'});
-    this._affordance._slotClass = MockSlot;
+    super({rootContext: 'root-context', affordance: 'mock'});
+    this._affordance = {name: 'mock', slotClass: MockDomSlot, contextClass: MockDomContext};
     this.expectQueue = [];
     this.onExpectationsComplete = () => undefined;
     this.strict = options && options.strict != undefined ? options.strict : true;
+
+    // Clear all cached templates
+    DomContext.dispose();
   }
 
   /** @method newExpectations()
@@ -222,7 +186,7 @@ export class MockSlotComposer extends SlotComposer {
   }
 
   async renderSlot(particle, slotName, content) {
-    // console.log(`renderSlot ${particle.name} ${((names) => names.length > 0 ? `(${names.join(',')}) ` : '')(this._getHostedParticleNames(particle))}: ${slotName} - ${Object.keys(content).join(', ')}`);
+    // console.log(`    renderSlot ${particle.name} ${((names) => names.length > 0 ? `(${names.join(',')}) ` : '')(this._getHostedParticleNames(particle))}: ${slotName} - ${Object.keys(content).join(', ')}`);
     assert(this.expectQueue.length > 0,
       `Got a renderSlot from ${particle.name}:${slotName} (content types: ${Object.keys(content).join(', ')}), but not expecting anything further.`);
 
