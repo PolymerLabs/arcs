@@ -13,6 +13,8 @@ particle ShowProduct in 'source/ShowProduct.js'
   affordance dom
   affordance dom-touch
   consume item
+  consume root
+    provide annotation
   // TODO: uncomment when 'Show products ... and Choose products' recipe can use the nested 'showList'
   // recipe and its description, instead of ShowCollection+Multiplexer explicit combination.
-  // description `show product`
+  description `show product`
