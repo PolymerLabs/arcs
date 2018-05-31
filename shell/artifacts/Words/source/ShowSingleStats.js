@@ -223,8 +223,9 @@ defineParticle(({DomParticle, html, log, resolver}) => {
       const tileBoard = new TileBoard(board);
       let boardModels = this.boardToModels(tileBoard, move ? move.coordinates : '');
       const {arcKey, author, createdTimestamp} = post;
+      const avatar = props.avatars.find(a => a.owner == author);
       return {
-        avatarStyle: this.avatarToStyle(resolver(avatars.find(a => a.owner == author).url)),
+        avatarStyle: avatar ? this.avatarToStyle(resolver(avatar.url)) : '',
         boardCells: {$template: 'board-cell', models: boardModels},
         gameHref: `?arc=${arcKey}&user=${user.id}`,
         hideGameOver: true, // TODO(wkorman): Fix this.

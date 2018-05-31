@@ -87,8 +87,9 @@ defineParticle(({DomParticle, html, log, resolver}) => {
       const {arcKey, author, createdTimestamp, id, image, imageHeight, imageWidth, message} = props.post;
       const {clampedWidth, clampedHeight} =
           this.clampSize(imageWidth, imageHeight);
+      const avatar = props.avatars.find(a => a.owner == author);
       return {
-        avatarStyle: this.avatarToStyle(resolver(props.avatars.find(a => a.owner == author).url)),
+        avatarStyle: avatar ? this.avatarToStyle(resolver(avatar.url)) : '',
         blogHref: `?arc=${arcKey}&user=${props.user.id}`,
         id,
         image: image || '',
