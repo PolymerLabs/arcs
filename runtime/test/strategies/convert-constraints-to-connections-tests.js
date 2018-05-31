@@ -333,11 +333,64 @@ describe('ConvertConstraintsToConnections', async () => {
     assert.equal(results.length, 1);
     assert.deepEqual(results[0].result.toString(), `recipe
   ? #hashtag as handle0 // S {}
-  create as handle1 // S {}
+  create #trashbag as handle1 // S {}
   A as particle0
     o -> handle0
   B as particle1
     i -> handle1`);
+  });
+
+  it('connects existing particles to tags', async () => {
+    let recipes = (await Manifest.parse(`
+    particle A
+      out S {} o
+    particle B
+      out S {} i
+    recipe
+      ? #hashtag
+      A.o -> #hashtag
+      #trashbag <- B.i
+      A
+      B
+    `)).recipes;
+    let inputParams = {generated: [{result: recipes[0], score: 1}]};
+    let cctc = new ConvertConstraintsToConnections({pec: {}});
+    let results = await cctc.generate(inputParams);
+    assert.equal(results.length, 1);
+    assert.deepEqual(results[0].result.toString(), `recipe
+  ? #hashtag as handle0 // S {}
+  create #trashbag as handle1 // S {}
+  A as particle0
+    o -> handle0
+  B as particle1
+    i -> handle1`);
+  });
+
+  it(`doesn't attempt to duplicate existing connections to tags`, async () => {
+    let recipes = (await Manifest.parse(`
+    particle A
+      out S {} o
+    particle B
+      out S {} i
+    recipe
+      ? #hashtag as handle0
+      A.o -> #hashtag
+      #trashbag <- B.i
+      A
+        o -> handle0
+      B
+        i -> handle0
+    `)).recipes;
+    let inputParams = {generated: [{result: recipes[0], score: 1}]};
+    let cctc = new ConvertConstraintsToConnections({pec: {}});
+    let results = await cctc.generate(inputParams);
+    assert.equal(results.length, 1);
+    assert.deepEqual(results[0].result.toString(), `recipe
+  ? #hashtag as handle0 // S {}
+  A as particle0
+    o -> handle0
+  B as particle1
+    i -> handle0`);
   });
 
   it(`connects particles together when there's only one possible connection`, async () => {
