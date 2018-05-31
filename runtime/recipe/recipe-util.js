@@ -16,8 +16,8 @@ class Shape {
     this.reverse = new Map();
     for (let p in particles)
       this.reverse.set(particles[p], p);
-    for (let h in handles)
-      this.reverse.set(handles[h], h);
+    for (let h of handles.keys())
+      this.reverse.set(handles.get(h), h);
     for (let hc in hcs)
       this.reverse.set(hcs[hc], hc);
   }
@@ -27,10 +27,10 @@ export class RecipeUtil {
   static makeShape(particles, handles, map, recipe) {
     recipe = recipe || new Recipe();
     let pMap = {};
-    let hMap = {};
+    let hMap = new Map();
     let hcMap = {};
     particles.forEach(particle => pMap[particle] = recipe.newParticle(particle));
-    handles.forEach(handle => hMap[handle] = recipe.newHandle());
+    handles.forEach(handle => hMap.set(handle, recipe.newHandle()));
     Object.keys(map).forEach(key => {
       Object.keys(map[key]).forEach(name => {
         let handle = map[key][name];
@@ -47,8 +47,8 @@ export class RecipeUtil {
         }
         let connection = pMap[key].addConnectionName(name);
         connection.direction = direction;
-        hMap[handle].tags = tags;
-        connection.connectToHandle(hMap[handle]);
+        hMap.get(handle).tags = tags;
+        connection.connectToHandle(hMap.get(handle));
         hcMap[key + ':' + name] = pMap[key].connections[name];
       });
     });
@@ -59,8 +59,8 @@ export class RecipeUtil {
     let particles = {};
     let id = 0;
     recipe.particles.forEach(particle => particles[particle.name] = particle);
-    let handles = {};
-    recipe.handles.forEach(handle => handles['h' + id++] = handle);
+    let handles = new Map();
+    recipe.handles.forEach(handle => handles.set('h' + id++, handle));
     let hcs = {};
     recipe.handleConnections.forEach(hc => hcs[hc.particle.name + ':' + hc.name] = hc);
     return new Shape(recipe, particles, handles, hcs);
@@ -257,7 +257,7 @@ export class RecipeUtil {
     if (emptyHandles.length > 0) {
       let newMatches = [];
       for (let match of matches) {
-        let nullHandles = Object.values(shape.handles).filter(handle => match.forward.get(handle) == null);
+        let nullHandles = [...shape.handles.values()].filter(handle => match.forward.get(handle) == null);
         if (nullHandles.length > 0)
           newMatches = newMatches.concat(_assignHandlesToEmptyPosition(match, emptyHandles, nullHandles));
         else

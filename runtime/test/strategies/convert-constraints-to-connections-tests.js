@@ -316,6 +316,84 @@ describe('ConvertConstraintsToConnections', async () => {
     i <- handle0`);
   });
 
+  it('connects existing particles to handles', async () => {
+    let recipes = (await Manifest.parse(`
+      particle A
+        out S {} o
+      particle B
+        in S {} i
+      recipe
+        ? as h
+        A.o -> h
+        h -> B.i
+        A
+        B
+    `)).recipes;
+    let inputParams = {generated: [{result: recipes[0], score: 1}]};
+    let cctc = new ConvertConstraintsToConnections({pec: {}});
+    let results = await cctc.generate(inputParams);
+    assert.equal(results.length, 1);
+    assert.deepEqual(results[0].result.toString(), `recipe
+  ? as handle0 // S {}
+  A as particle0
+    o -> handle0
+  B as particle1
+    i <- handle0`);
+  });
+
+  it(`doesn't attempt to duplicate existing handles to particles`, async () => {
+    let recipes = (await Manifest.parse(`
+      particle A
+        out S {} o
+      particle B
+        in S {} i
+      recipe
+        ? as h
+        A.o -> h
+        h -> B.i
+        A
+          o -> h
+        B
+    `)).recipes;
+    let inputParams = {generated: [{result: recipes[0], score: 1}]};
+    let cctc = new ConvertConstraintsToConnections({pec: {}});
+    let results = await cctc.generate(inputParams);
+    assert.equal(results.length, 1);
+    assert.deepEqual(results[0].result.toString(), `recipe
+  ? as handle0 // S {}
+  A as particle0
+    o -> handle0
+  B as particle1
+    i <- handle0`);
+  });
+
+  it(`duplicates particles to get handle connections right`, async () => {
+    let recipes = (await Manifest.parse(`
+      particle A
+        out S {} o
+      particle B
+        in S {} i
+      recipe
+        ? as h
+        ? as i
+        A.o -> h
+        h -> B.i
+        A
+          o -> i
+        B
+    `)).recipes;
+    let inputParams = {generated: [{result: recipes[0], score: 1}]};
+    let cctc = new ConvertConstraintsToConnections({pec: {}});
+    let results = await cctc.generate(inputParams);
+    assert.equal(results.length, 1);
+    assert.deepEqual(results[0].result.toString(), `recipe
+  ? as handle0 // S {}
+  A as particle0
+    o -> handle0
+  B as particle1
+    i <- handle0`);
+  });
+
   it('connects to tags', async () => {
     let recipes = (await Manifest.parse(`
     particle A
