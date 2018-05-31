@@ -1,4 +1,3 @@
-import {Manifest} from '../../../../runtime/manifest.js';
 import {BrowserLoader} from '../../../source/browser-loader.js';
 import ArcsUtils from '../../lib/arcs-utils.js';
 
