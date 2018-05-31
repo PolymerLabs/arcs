@@ -176,6 +176,15 @@ recipe
     consumes mySlot as slot0
 ```
 
+Can include a recipe description:
+```
+...
+recipe
+  MyParticle
+  description `do something`
+```
+If a recipe description is specified, it takes precedence over individual particle descriptions.
+
 ## Importing other manifests
 A manifest can be self contained or can import Schemas, Particles, Recipes and Stores from other manifest files.
 
