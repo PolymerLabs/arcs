@@ -11,19 +11,25 @@
 defineParticle(({Particle}) => {
   return class PostTimeRanker extends Particle {
     setHandles(handles) {
-      this.on(handles, 'input', 'change', e => {
-        let inputHandle = handles.get('input');
-        inputHandle.toList().then(input => {
-          // Rank the posts by creation time.
-          input.sort((a, b) => {
-            return b.createdTimestamp - a.createdTimestamp;
-          });
-          // Set the final set of posts into the output handle.
-          input.forEach((post, index) => {
-            post.rank = index;
-            handles.get('output').store(post);
-          });
-        });
+      this.handles = handles;
+    }
+    onHandleSync(handle, input, version) {
+      this.updateOutput(input);
+    }
+
+    onHandleUpdate(handle, update, version) {
+      handle.toList().then(input => this.updateOutput(input));
+    }
+
+    updateOutput(input) {
+      // Rank the posts by creation time.
+      input.sort((a, b) => {
+        return b.createdTimestamp - a.createdTimestamp;
+      });
+      // Set the final set of posts into the output handle.
+      input.forEach((post, index) => {
+        post.rank = index;
+        this.handles.get('output').store(post);
       });
     }
   };
