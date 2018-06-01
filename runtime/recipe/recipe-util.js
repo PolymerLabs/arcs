@@ -45,6 +45,9 @@ export class RecipeUtil {
           tags = handle.tags || [];
           handle = handle.handle;
         }
+        if (handle.localName)
+          hMap.get(handle).localName = handle.localName;
+
         let connection = pMap[key].addConnectionName(name);
         connection.direction = direction;
         hMap.get(handle).tags = tags;
@@ -89,6 +92,9 @@ export class RecipeUtil {
           if (!acceptedDirections[shapeHC.direction].includes(recipeHC.direction))
             continue;
         }
+
+        if (shapeHC.handle && recipeHC.handle && shapeHC.handle.localName && shapeHC.handle.localName !== recipeHC.handle.localName)
+          continue;
 
         // recipeHC is a candidate for shapeHC. shapeHC references a
         // particle, so recipeHC must reference the matching particle,
@@ -173,6 +179,22 @@ export class RecipeUtil {
 
         if (recipeParticle.name != shapeParticle.name)
           continue;
+
+        let handleNamesMatch = true;
+        for (let connectionName in recipeParticle.connections) {
+          let recipeConnection = recipeParticle.connections[connectionName];
+          if (!recipeConnection.handle)
+            continue;
+          let shapeConnection = shapeParticle.connections[connectionName];
+          if (shapeConnection && shapeConnection.handle && shapeConnection.handle.localName && shapeConnection.handle.localName !== recipeConnection.handle.localName) {
+            handleNamesMatch = false;
+            break;
+          }
+        }
+
+        if (!handleNamesMatch)
+          continue;
+
         let newMatch = {forward: new Map(forward), reverse: new Map(reverse), score};
         newMatch.forward.set(shapeParticle, recipeParticle);
         newMatch.reverse.set(recipeParticle, shapeParticle);

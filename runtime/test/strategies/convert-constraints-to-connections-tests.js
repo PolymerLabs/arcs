@@ -388,10 +388,13 @@ describe('ConvertConstraintsToConnections', async () => {
     assert.equal(results.length, 1);
     assert.deepEqual(results[0].result.toString(), `recipe
   ? as handle0 // S {}
+  ? as handle1 // S {}
   A as particle0
     o -> handle0
-  B as particle1
-    i <- handle0`);
+  A as particle1
+    o -> handle1
+  B as particle2
+    i <- handle1`);
   });
 
   it('connects to tags', async () => {
