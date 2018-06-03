@@ -10,6 +10,18 @@
 
 defineParticle(({Particle}) => {
   return class WordsScoreRanker extends Particle {
+    setHandles(handles) {
+      this.handles = handles;
+    }
+
+    onHandleSync(handle, input, version) {
+      this.updateOutput(handle, input);
+    }
+
+    onHandleUpdate(handle, update, version) {
+      handle.toList().then(input => this.updateOutput(handle, input));
+    }
+
     getGameScore(stats, post) {
       // TODO(wkorman): Consider particle refactor to push game specific score
       // ranking into a separate data particle. For now we hack via recipe's
@@ -20,42 +32,34 @@ defineParticle(({Particle}) => {
       return targetStats.score;
     }
 
-    processInput(statsHandle, inputHandle, handles) {
-      Promise.all([inputHandle.toList(), statsHandle.toList()])
-          .then(([input, stats]) => {
-            // Filter out only the Words game posts.
-            let wordsPosts = input.filter(post => {
-              if (post.renderParticleSpec) {
-                const renderParticle = JSON.parse(post.renderParticleSpec);
-                return renderParticle.name == 'ShowSingleStats';
-              }
-              return false;
-            });
+    updateOutput(handle, input) {
+      if (handle.name == 'input') {
+        this.inputValues = input;
+      } else if (handle.name == 'stats') {
+        this.statsValues = input;
+      }
+      if (!this.inputValues || !this.statsValues) return;
 
-            // Rank the Words posts by descending score.
-            wordsPosts.sort((a, b) => {
-              const scoreA = this.getGameScore(stats, a);
-              const scoreB = this.getGameScore(stats, b);
-              return (scoreA == scoreB) ? 0 : (scoreA > scoreB ? -1 : 1);
-            });
+      // Filter out only the Words game posts.
+      let wordsPosts = this.inputValues.filter(post => {
+        if (post.renderParticleSpec) {
+          const renderParticle = JSON.parse(post.renderParticleSpec);
+          return renderParticle.name == 'ShowSingleStats';
+        }
+        return false;
+      });
 
-            // Set the final set of posts into the output handle.
-            wordsPosts.forEach((post, index) => {
-              post.rank = index;
-              handles.get('output').store(post);
-            });
+      // Rank the Words posts by descending score.
+      wordsPosts.sort((a, b) => {
+        const scoreA = this.getGameScore(this.statsValues, a);
+        const scoreB = this.getGameScore(this.statsValues, b);
+        return (scoreA == scoreB) ? 0 : (scoreA > scoreB ? -1 : 1);
+      });
 
-            // TODO: set appropriate relevance.
-            this.relevance = wordsPosts.length;
-          });
-    }
-
-    setHandles(handles) {
-      this.on(handles, ['stats', 'input'], 'change', e => {
-        this._statsHandle = handles.get('stats');
-        this._inputHandle = handles.get('input');
-        if (this._statsHandle && this._inputHandle)
-          this.processInput(this._statsHandle, this._inputHandle, handles);
+      // Set the final set of posts into the output handle.
+      wordsPosts.forEach((post, index) => {
+        post.rank = index;
+        this.handles.get('output').store(post);
       });
     }
   };
