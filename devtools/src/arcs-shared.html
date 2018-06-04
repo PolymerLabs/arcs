@@ -43,6 +43,12 @@
         color: rgb(90, 90, 90);
         font-size: 12px;
       }
+      [nav-narrow] .nav-list a {
+        padding: 0 6px;
+      }
+      [nav-narrow] .nav-list a label {
+        display: none;
+      }
       .nav-list a.iron-selected {
         color: #fff;
         background-color: var(--highlight-blue);
@@ -83,7 +89,7 @@
     if (typeof thing === "string") thing = JSON.parse(thing)
     return JSON.stringify(thing, null, 2);
   }
-  
+
   /* @polymerMixin */
   const MessageSenderMixin = subclass => class extends subclass {
     send(message) {
