@@ -183,6 +183,15 @@ recipe
     consumes mySlot as slot0
 ```
 
+Can include a recipe description:
+```
+...
+recipe
+  MyParticle
+  description `do something`
+```
+If a recipe description is specified, it takes precedence over individual particle descriptions.
+
 ## Importing other manifests
 A manifest can be self contained or can import Schemas, Particles, Recipes and Stores from other manifest files.
 
@@ -193,7 +202,7 @@ import '../somewhere/another.manifest'
 import 'https://fancy-thing.glitch.io/everything.manifest'
 ```
 
-Everything in the heirarichy of imported manifests is then made available in the manifest scope.
+Everything in the hierarchy of imported manifests is then made available in the manifest scope.
 
 ## Indentation
 Indentation is significant. It is used to group blocks of manifest items together. The indentation rules require that items at the same level have the same indentation. By convention this is usually in increments of two spaces.
@@ -239,8 +248,8 @@ Recipes can refer to particles and stores by name:
 ```
 ...
 recipe
-  map MyStore  // 'MyStore' could be is defined in this manifest or imported
-  MyParticle  // 'MyParticle' could be is defined in this manifest or imported
+  map MyStore // 'MyStore' could be is defined in this manifest or imported
+  MyParticle // 'MyParticle' could be is defined in this manifest or imported
 ```
 
 Within a recipe; handles, particles, and slots can be given 'local names'. Local names are scoped to the recipe:

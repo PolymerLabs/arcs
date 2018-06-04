@@ -7,7 +7,7 @@ export default [
   `${runtime}/particle.js`,
   `${runtime}/dom-particle.js`,
   `${design}/schemas.md`,
-  './manifest.md',
+  `${runtime}/manifest.md`,
   './getting-started.md',
   './glossary.md',
   './overview.md',
