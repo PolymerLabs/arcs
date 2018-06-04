@@ -223,7 +223,11 @@ ${this.activeRecipe.toString()}`;
       context
     });
     // TODO: pass tags through too
-    manifest.stores.forEach(store => arc._registerStore(store, []));
+    manifest.stores.forEach(store => {
+      if (store.constructor.name == 'StorageStub')
+        store = store.inflate();
+      arc._registerStore(store, []);
+    });
     let recipe = manifest.activeRecipe.clone();
     let options = {errors: new Map()};
     assert(recipe.normalize(options), `Couldn't normalize recipe ${recipe.toString()}:\n${[...options.errors.values()].join('\n')}`);

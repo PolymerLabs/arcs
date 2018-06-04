@@ -30,6 +30,20 @@ class ManifestError extends Error {
   }
 }
 
+class StorageStub {
+  constructor(type, id, name, storageKey, storageProviderFactory) {
+    this.type = type;
+    this.id = id;
+    this.name = name;
+    this.storageKey = storageKey;
+    this.storageProviderFactory;
+  }
+
+  inflate() {
+    return this.storageProviderFactory.connect(this.id, this.type, this.storageKey);
+  }
+}
+
 // Calls `this.visit()` for each node in a manfest AST, parents before children.
 class ManifestVisitor {
   traverse(ast) {
@@ -153,7 +167,7 @@ export class Manifest {
   }
 
   newStorageStub(type, name, id, storageKey, tags) {
-    return this._addStore({type, id, name, storageKey}, tags);
+    return this._addStore(new StorageStub(type, id, name, storageKey, this.storageProviderFactory), tags);
   }
 
   _find(manifestFinder) {
@@ -903,6 +917,9 @@ ${e.message}
     if (tags == null)
       tags = [];
 
+
+    // Instead of creating links to remote firebase during manifest parsing,
+    // we generate storage stubs that contain the relevant information.
     if (item.origin == 'storage') {
       manifest.newStorageStub(type, name, id, item.source, tags);
       return;
