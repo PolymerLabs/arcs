@@ -152,12 +152,6 @@ export class Handle {
       }
       return false;
     }
-    if ((!this.type.isResolved() && this.fate !== 'create') || (!this.type.canEnsureResolved() && this.fate == 'create')) {
-      if (options) {
-        options.details = 'unresolved type';
-      }
-      return false;
-    }
     switch (this.fate) {
       case '?': {
         if (options) {
@@ -181,6 +175,12 @@ export class Handle {
         }
         assert(false, `Unexpected fate: ${this.fate}`);
       }
+    }
+    if ((!this.type.isResolved() && this.fate !== 'create') || (!this.type.canEnsureResolved() && this.fate == 'create')) {
+      if (options) {
+        options.details = 'unresolved type';
+      }
+      return false;
     }
   }
 
