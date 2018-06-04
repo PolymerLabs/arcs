@@ -35,8 +35,8 @@
           "header header"
           "sidebar main";
       }
-      #container[nav-hidden] {
-        grid-template-columns: 0px 1fr;
+      #container[nav-narrow] {
+        grid-template-columns: 36px 1fr;
       }
       header {
         grid-area: header;
@@ -51,7 +51,7 @@
       .nav-toggle {
         -webkit-mask-position: -112px 192px;
       }
-      #container[nav-hidden] .nav-toggle {
+      #container[nav-narrow] .nav-toggle {
         -webkit-mask-position: -167px 120px;
       }
       header iron-icon {
@@ -63,9 +63,6 @@
       }
       header iron-icon[active] {
         color: var(--highlight-blue);
-      }
-      [nav-hidden] nav {
-        display: none;
       }
       nav {
         grid-area: sidebar;
@@ -85,7 +82,7 @@
         right: 0;
       }
     </style>
-    <div id="container">
+    <div id="container" nav-narrow>
       <arcs-communication-channel id="channel" on-messages="onMessageBundle"></arcs-communication-channel>
       <app-location
         route="{{route}}"
@@ -107,11 +104,11 @@
       </header>
       <nav>
         <iron-selector selected="[[routeData.page]]" attr-for-selected="name" class="nav-list" role="navigation">
-          <a name="overview" href="#overview"><iron-icon icon="timeline"></iron-icon>Overview</a>
-          <a name="traces" href="#traces"><iron-icon icon="communication:clear-all"></iron-icon>Traces</a>
-          <a name="dataflow" href="#dataflow"><iron-icon icon="swap-horiz"></iron-icon>Dataflow</a>
-          <a name="strategyExplorer" href="#strategyExplorer"><iron-icon icon="settings-applications"></iron-icon>Strategy Explorer</a>
-          <a name="strategyRunner" href="#strategyRunner"><iron-icon icon="av:repeat-one"></iron-icon>Strategy Runner</a>
+          <a name="overview" href="#overview"><iron-icon icon="timeline"></iron-icon><label>Overview</label></a>
+          <a name="traces" href="#traces"><iron-icon icon="communication:clear-all"></iron-icon><label>Traces</label></a>
+          <a name="dataflow" href="#dataflow"><iron-icon icon="swap-horiz"></iron-icon><label>Dataflow</label></a>
+          <a name="strategyExplorer" href="#strategyExplorer"><iron-icon icon="settings-applications"></iron-icon><label>Strategy Explorer</label></a>
+          <a name="strategyRunner" href="#strategyRunner"><iron-icon icon="av:repeat-one"></iron-icon><label>Strategy Runner</label></a>
         </iron-selector>
       </nav>
       <iron-pages selected="[[routeData.page]]" attr-for-selected="name" selected-attribute="active" role="main" id="pages">
@@ -140,7 +137,7 @@
           this.$.illuminateToggle.style.display = 'none';
         }
         if (!this.routeData.page) {
-          this.set('routeData.page', 'overview');
+          this.set('routeData.page', 'strategyExplorer');
         }
         this._messageReceivers.push(this.$.notifications);
         this.$.pages.childNodes.forEach(page => {
@@ -164,10 +161,10 @@
       }
 
       toggleNav() {
-        if (this.$.container.hasAttribute('nav-hidden')) {
-          this.$.container.removeAttribute('nav-hidden');
+        if (this.$.container.hasAttribute('nav-narrow')) {
+          this.$.container.removeAttribute('nav-narrow');
         } else {
-          this.$.container.setAttribute('nav-hidden', '');
+          this.$.container.setAttribute('nav-narrow', '');
         }
       }
 
