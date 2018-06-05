@@ -60,14 +60,14 @@ const ArcsUtils = {
       'worker-entry.js': `${shellRoot}/${lib}/worker-entry.js`
     };
   },
-  async makePlans(arc, timeout) {
-    const generations = [];
-    const planner = new Arcs.Planner();
-    planner.init(arc);
-    const plans = await planner.suggest(timeout || 5000, generations);
-    plans.generations = generations;
-    return plans;
-  },
+  // async makePlans(arc, timeout) {
+  //   const generations = [];
+  //   const planner = new Arcs.Planner();
+  //   planner.init(arc);
+  //   const plans = await planner.suggest(timeout || 5000, generations);
+  //   plans.generations = generations;
+  //   return plans;
+  // },
   async parseManifest(fileName, content, loader) {
     return await Arcs.Manifest.parse(content, {loader, fileName});
     //return await Arcs.Manifest.parse(content,
