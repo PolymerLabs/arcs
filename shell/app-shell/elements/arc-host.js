@@ -126,7 +126,7 @@ class ArcHost extends Xen.Debug(Xen.Base, log) {
         log(`serialization contained bad import [${badImport}]`);
       }
       groupCollapsed('serialized arc:');
-      log(serialization);
+      log('serialization:', serialization);
       groupEnd();
     }
     //
