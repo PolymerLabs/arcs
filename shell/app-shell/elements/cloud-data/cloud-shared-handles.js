@@ -35,7 +35,7 @@ class CloudSharedHandles extends Xen.Debug(Xen.Base, log) {
       state.boxes = {};
       this._disposeWatches();
       if (profile) {
-        state.friends = profile.friends;
+        state.friends = profile.friends || [];
         state.watcher.watches = this._watchUsers(arc, state.friends.map(friend => friend.id).concat([userid]));
       }
     }
