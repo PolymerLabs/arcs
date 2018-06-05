@@ -109,16 +109,27 @@ export class Arc {
     this.pec.slotComposer && this.pec.slotComposer.dispose();
   }
 
-  get idle() {
-    let awaitCompletion = async () => {
+  // Returns a promise that spins sending a single `AwaitIdle` message until it
+  // sees no other messages were sent.
+  async _waitForIdle() {
+    let messageCount;
+    do {
       await this.scheduler.idle;
-      let messageCount = this.pec.messageCount;
+      messageCount = this.pec.messageCount;
       await this.pec.idle;
-      if (this.pec.messageCount !== messageCount + 1)
-        return awaitCompletion();
-    };
+    } while (this.pec.messageCount !== messageCount + 1);
+  }
 
-    return awaitCompletion();
+  get idle() {
+    if (!this._waitForIdlePromise) {
+      // Store one active completion promise for use by any subsequent callers.
+      // We explicitly want to avoid, for example, multiple simultaneous
+      // attempts to identify idle state each sending their own `AwaitIdle`
+      // message and expecting settlement that will never arrive.
+      this._waitForIdlePromise =
+          this._waitForIdle().then(() => this._waitForIdlePromise = null);
+    }
+    return this._waitForIdlePromise;
   }
 
   get isSpeculative() {
