@@ -110,15 +110,18 @@ export class Arc {
   }
 
   get idle() {
-    let awaitCompletion = async () => {
-      await this.scheduler.idle;
-      let messageCount = this.pec.messageCount;
-      await this.pec.idle;
-      if (this.pec.messageCount !== messageCount + 1)
-        return awaitCompletion();
-    };
-
-    return awaitCompletion();
+    if (!this._awaitCompletionPromise) {
+      let awaitCompletion = async () => {
+        await this.scheduler.idle;
+        let messageCount = this.pec.messageCount;
+        await this.pec.idle;
+        if (this.pec.messageCount !== messageCount + 1)
+          return awaitCompletion();
+        this._awaitCompletionPromise = null;
+      };
+      this._awaitCompletionPromise = awaitCompletion();
+    }
+    return this._awaitCompletionPromise;
   }
 
   get isSpeculative() {
