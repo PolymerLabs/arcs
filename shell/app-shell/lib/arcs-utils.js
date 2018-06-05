@@ -60,14 +60,6 @@ const ArcsUtils = {
       'worker-entry.js': `${shellRoot}/${lib}/worker-entry.js`
     };
   },
-  // async makePlans(arc, timeout) {
-  //   const generations = [];
-  //   const planner = new Arcs.Planner();
-  //   planner.init(arc);
-  //   const plans = await planner.suggest(timeout || 5000, generations);
-  //   plans.generations = generations;
-  //   return plans;
-  // },
   async parseManifest(fileName, content, loader) {
     return await Arcs.Manifest.parse(content, {loader, fileName});
     //return await Arcs.Manifest.parse(content,
@@ -141,7 +133,6 @@ const ArcsUtils = {
     return Arcs.Type.fromLiteral(JSON.parse(metaType));
   },
   async getHandleData(handle) {
-    //return handle.toList ? await handle.toList() : {id: handle.id, rawData: handle._stored && handle._stored.rawData || {}};
     return handle.type.isCollection ? await handle.toList() : await handle.get();
   },
   setHandleData(handle, data) {
@@ -167,20 +158,6 @@ const ArcsUtils = {
       data && handle.set(data);
     }
   },
-  /*
-  getUserProfileKeys(user) {
-    return ArcsUtils.intersectArcKeys(user.arcs, user.profiles);
-  },
-  getUserShareKeys(user) {
-    return ArcsUtils.intersectArcKeys(user.arcs, user.shares);
-  },
-  intersectArcKeys(arcs, other) {
-    // TODO(sjmiles): database has no referential integrity, so
-    // `user.[profiles|shares]` may contain dead keys (aka keys not in `arcs`).
-    // The corrected set is the intersection of `user.arcs` and `user.[profiles|shares]`.
-    return arcs && other ? Object.keys(arcs).filter(key => Boolean(other[key])) : [];
-  },
-  */
   // usage: this._debouncer = debounce(this._debouncer, task, 100);
   debounce(key, action, delay) {
     if (key) {
