@@ -60,9 +60,9 @@ class FateAssigner extends Strategy {
   }
 }
 
-class AssignFateA extends FateAssigner {constructor() {super('A');}}
-class AssignFateB extends FateAssigner {constructor() {super('B');}}
-class AssignFateC extends FateAssigner {constructor() {super('C');}}
+class AssignFateA extends FateAssigner {constructor() {super('copy');}}
+class AssignFateB extends FateAssigner {constructor() {super('map');}}
+class AssignFateC extends FateAssigner {constructor() {super('use');}}
 
 class Resolve extends Strategy {
   async generate(inputParams) {
