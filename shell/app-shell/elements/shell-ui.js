@@ -127,7 +127,7 @@ class ShellUi extends Xen.Debug(Xen.Base, log) {
         state.barState = props.showhint ? 'hint' : 'over';
       }
     }
-    // `auto` intent means minimziation or hint is a calculation
+    // `auto` intent means minimziation vs hint is a calculation
     if (intent === 'auto') {
       if (barState === 'hint' && !props.showhint) {
         state.barState = 'peek';
@@ -171,8 +171,9 @@ class ShellUi extends Xen.Debug(Xen.Base, log) {
     }
     return [props, state, renderModel];
   }
-  _didRender(props, {toolState}, oldProps, oldState) {
-    if (toolState === 'search' && oldState.toolState !== 'search') {
+  _didRender(props, {barState, toolState}, oldProps, oldState) {
+    if (barState === 'hint' && oldState.barState !== 'hint') {
+    //if (toolState === 'search' && oldState.toolState !== 'search') {
       const input = this.host.querySelector('input');
       // TODO(sjmiles): without timeout, rendering gets destroyed (Blink bug?)
       setTimeout(() => {
