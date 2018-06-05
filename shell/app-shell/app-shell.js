@@ -257,7 +257,7 @@ class AppShell extends Xen.Debug(Xen.Base, log) {
         //console.log(data.avatar);
       }
       //console.log('sending profile');
-      // for enclousre, e.g. multiapp
+      // for enclosure, e.g. multiapp
       this._fire('profile', {profile: data, source: window}, window.top);
     }
   }
