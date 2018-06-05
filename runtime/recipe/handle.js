@@ -146,42 +146,51 @@ export class Handle {
 
   isResolved(options) {
     assert(Object.isFrozen(this));
-    if (!this._type) {
+    let resolved;
+    if (this.type) {
+      if ((!this.type.isResolved() && this.fate !== 'create') || 
+          (!this.type.canEnsureResolved() && this.fate == 'create')) {
+        if (options) {
+          options.details = 'unresolved type';
+        }
+        resolved = false;
+      }
+    } else {
       if (options) {
         options.details = 'missing type';
       }
-      return false;
+      resolved = false;
     }
+
     switch (this.fate) {
       case '?': {
         if (options) {
-          options.details = 'missing fate';
+          options.details += 'missing fate';
         }
-        return false;
+        resolved = false;
+        break;
       }
       case 'copy':
       case 'map':
       case 'use': {
         if (options && this.id === null) {
-          options.details = 'missing id';
+          options.details += 'missing id';
         }
-        return this.id !== null;
+        resolved = this.id !== null;
+        break;
       }
       case 'create':
-        return true;
+        resolved = true;
+        break;
       default: {
         if (options) {
-          options.details = `invalid fate ${this.fate}`;
+          options.details += `invalid fate ${this.fate}`;
         }
         assert(false, `Unexpected fate: ${this.fate}`);
+        resolved = false;
       }
     }
-    if ((!this.type.isResolved() && this.fate !== 'create') || (!this.type.canEnsureResolved() && this.fate == 'create')) {
-      if (options) {
-        options.details = 'unresolved type';
-      }
-      return false;
-    }
+    return resolved;
   }
 
   toString(nameMap, options) {
