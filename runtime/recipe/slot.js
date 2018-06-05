@@ -127,7 +127,7 @@ export class Slot {
       result.push(`'${this.id}'`);
     }
     if (this.tags.length > 0) {
-      result.push(this.tags.join(' '));
+      result.push(this.tags.map(tag => `#${tag}`).join(' '));
     }
     result.push(`as ${(nameMap && nameMap.get(this)) || this.localName}`);
     let includeUnresolved = options && options.showUnresolved && !this.isResolved(options);

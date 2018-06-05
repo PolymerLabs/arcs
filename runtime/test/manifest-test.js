@@ -510,7 +510,7 @@ ${particleStr1}
 
       recipe SomeRecipe
         ? #someHandle1 as myHandle
-        slot 'slotIDs:A' as slot0
+        slot 'slotIDs:A' #someSlot as slot0
         SomeParticle
           someParam <- myHandle
           consume mySlot as slot0
