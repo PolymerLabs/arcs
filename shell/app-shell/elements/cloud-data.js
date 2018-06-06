@@ -106,18 +106,18 @@ class CloudData extends Xen.Debug(Xen.Base, log) {
     // no op
   }
   async _onProfile(e, profile) {
+    const state = this._state;
     // assume pattern PROFILE_{property}
     const property = profile.id.split('_').slice(1).join('_');
     // extract data from handle
     const handleData = await ArcsUtils.getHandleData(profile);
     const data = handleData && (handleData.rawData || Object.values(handleData).map(e => e.rawData));
     // mutate userProfile object so it will pass dirty checks
-    const state = this._state;
     state.userProfile = Xen.clone(state.userProfile);
     // install new profile data
     state.userProfile[property] = data;
-    // notify owner
     log(state.userProfile);
+    // notify owner
     this._fire('profile', state.userProfile);
   }
 }
