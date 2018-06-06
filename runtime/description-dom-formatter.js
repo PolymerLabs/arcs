@@ -18,10 +18,6 @@ export class DescriptionDomFormatter extends DescriptionFormatter {
     this._nextID = 0;
   }
 
-  descriptionFromString(str) {
-    return {template: super.descriptionFromString(str), model: {}};
-  }
-
   _isSelectedDescription(desc) {
     return super._isSelectedDescription(desc) || (!!desc.template && !!desc.model);
   }
@@ -121,6 +117,23 @@ export class DescriptionDomFormatter extends DescriptionFormatter {
     return {template, model};
   }
 
+  _capitalizeAndPunctuate(sentence) {
+    if (typeof sentence === 'string') {
+      return {template: super._capitalizeAndPunctuate(sentence), model: {}};
+    }
+
+    // Capitalize the first element in the DOM template.
+    let tokens = sentence.template.match(/<[a-zA-Z0-9]+>{{([a-zA-Z0-9]*)}}<\/[a-zA-Z0-9]+>/);
+    if (tokens && tokens.length > 1 && sentence.model[tokens[1]]) {
+      let modelToken = sentence.model[tokens[1]];
+      if (modelToken.length > 0) {
+        sentence.model[tokens[1]] = `${modelToken[0].toUpperCase()}${modelToken.substr(1)}`;
+      }
+    }
+    sentence.template += '.';
+    return sentence;
+  }
+
   _joinDescriptions(descs) {
     // // If all tokens are strings, just join them.
     if (descs.every(desc => typeof desc === 'string')) {
@@ -214,11 +227,12 @@ export class DescriptionDomFormatter extends DescriptionFormatter {
     };
   }
 
-  _formatSingleton(handleName, handleVar) {
-    if (handleVar.rawData.name) {
+  _formatSingleton(handleName, handleVar, handleDescription) {
+    let value = super._formatSingleton(handleName, handleVar, handleDescription);
+    if (value) {
       return {
         template: `<b>{{${handleName}Var}}</b>`,
-        model: {[`${handleName}Var`]: handleVar.rawData.name}
+        model: {[`${handleName}Var`]: value}
       };
     }
   }
