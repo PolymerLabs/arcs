@@ -33,6 +33,7 @@ const template = html`
       color: black;
     }
     :host > div {
+      flex: 1;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: var(--suggestion-wrap);

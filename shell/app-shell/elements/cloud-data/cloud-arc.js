@@ -64,8 +64,11 @@ class CloudArc extends Xen.Debug(Xen.Base, log) {
     }
   }
   async _serialize(db, key, arc) {
+    log('awaiting arc.serialize');
     const serialization = await arc.serialize();
-    if (this._props.arc && serialization !== this._state.serialization) {
+    log('finished arc serialize');
+    // on return from asynchrony, validate arc
+    if (arc === this._props.arc && serialization !== this._state.serialization) {
       // must cache first, Firebase update can fire callback synchronously
       this._state.serialization = serialization;
       const node = db.child(`${key}/serialization`);
