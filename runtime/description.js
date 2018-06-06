@@ -36,7 +36,7 @@ export class Description {
       return desc;
     }
 
-    return formatter.descriptionFromString(this._arc.activeRecipe.name || Description.defaultDescription);
+    return formatter._capitalizeAndPunctuate(this._arc.activeRecipe.name || Description.defaultDescription);
   }
 
   async getHandleDescription(recipeHandle) {
@@ -67,7 +67,7 @@ export class DescriptionFormatter {
     if (recipe.pattern) {
       let recipeDesc = await this.patternToSuggestion(recipe.pattern);
       if (recipeDesc) {
-        return this._combineSelectedDescriptions([{pattern: recipeDesc}]);
+        return this._capitalizeAndPunctuate(recipeDesc);
       }
     }
 
@@ -84,10 +84,6 @@ export class DescriptionFormatter {
     if (selectedDescriptions.length > 0) {
       return this._combineSelectedDescriptions(selectedDescriptions);
     }
-  }
-
-  descriptionFromString(str) {
-    return this._capitalizeAndPunctuate(str);
   }
 
   _isSelectedDescription(desc) {
