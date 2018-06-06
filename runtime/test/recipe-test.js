@@ -166,6 +166,25 @@ describe('recipe', function() {
     assert.isFalse(recipe2.isResolved());
   });
 
+  it(`is not resolved if a handle type is not resolved`, async () => {
+    let manifest = await Manifest.parse(`
+      particle A in 'B.js'
+        in ~a foo1
+        in ~a foo2
+      recipe
+        create as h0 // ~a
+        use 'foo-id' as h1 // ~a
+        A
+          foo1 <- h0
+          foo2 <- h1
+    `);
+    let recipe = manifest.recipes[0];
+    assert(recipe.normalize());
+    assert.isFalse(recipe.isResolved());
+    assert.isFalse(recipe.handles[0].isResolved());
+    assert.isFalse(recipe.handles[1].isResolved());
+  });
+
   const getFirstRecipeHash = async manifestContent => {
     let loader = new Loader();
     let manifest = await Manifest.parse(manifestContent,

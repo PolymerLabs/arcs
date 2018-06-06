@@ -146,7 +146,7 @@ export class Handle {
 
   isResolved(options) {
     assert(Object.isFrozen(this));
-    let resolved;
+    let resolved = true;
     if (this.type) {
       if ((!this.type.isResolved() && this.fate !== 'create') || 
           (!this.type.canEnsureResolved() && this.fate == 'create')) {
@@ -176,11 +176,10 @@ export class Handle {
         if (options && this.id === null) {
           options.details += 'missing id';
         }
-        resolved = this.id !== null;
+        resolved = resolved && (this.id !== null);
         break;
       }
       case 'create':
-        resolved = true;
         break;
       default: {
         if (options) {
