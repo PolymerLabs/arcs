@@ -29,7 +29,7 @@ describe('A Strategy Sequence', function() {
         consume root
           provide foo
 
-      recipe verb
+      recipe &verb
         P
       
       recipe
@@ -61,7 +61,7 @@ describe('A Strategy Sequence', function() {
         consume root
           provide foo
 
-      recipe verb
+      recipe &verb
         P.s -> R.s
       
       recipe
@@ -98,7 +98,7 @@ describe('A Strategy Sequence', function() {
       particle T in 'D.js'
         out S s
 
-      recipe verb
+      recipe &verb
         P.s -> R.s
       
       recipe
@@ -122,7 +122,7 @@ describe('A Strategy Sequence', function() {
       schema Thing
       schema Product extends Thing
       schema Description
-  
+
       particle ShowCollection in 'source/ShowCollection.js'
         in [~a] collection
         out [Description] descriptions
@@ -181,7 +181,7 @@ describe('A Strategy Sequence', function() {
         in [~a] others
         consume set of annotation
   
-      recipe showList
+      recipe &showList
         ShowCollection.collection -> Multiplexer.list
         ShowCollection
           consume master

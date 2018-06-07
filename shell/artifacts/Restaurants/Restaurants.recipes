@@ -11,10 +11,10 @@ import 'RestaurantList.manifest'
 import 'RestaurantDetail.manifest'
 import '../Places/ExtractLocation.manifest'
 
-recipe locateUser
+recipe &locateUser
   ExtractLocation
 
-recipe displayRestaurants
+recipe &displayRestaurants
   RestaurantMasterDetail.selected -> RestaurantList.selected
   RestaurantDetail.selected -> RestaurantList.selected
   RestaurantMasterDetail.list -> RestaurantList.list
@@ -32,7 +32,7 @@ import '../Events/PartySize.manifest'
 import 'ReservationForm.manifest'
 import 'ReservationAnnotation.manifest'
 
-recipe makeReservation
+recipe &makeReservation
   create #event as event
   ReservationForm
     event = event
