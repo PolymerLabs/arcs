@@ -615,7 +615,7 @@ recipe
     };
 
     verify(`recipe`, 'I\'m feeling lucky.');
-    verify(`recipe hello`, 'Hello.');
+    verify(`recipe Hello`, 'Hello.');
   });
 
   it('generates type description', async () => {
