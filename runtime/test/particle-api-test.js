@@ -52,16 +52,16 @@ describe('particle-api', function() {
               this.resHandle = handles.get('res');
             }
 
-            onHandleSync(handle, model, version) {
-              this.addResult('sync:' + version + ':' + JSON.stringify(model));
+            onHandleSync(handle, model) {
+              this.addResult('sync:' + JSON.stringify(model));
             }
 
-            onHandleUpdate(handle, update, version) {
-              this.addResult('update:' + version + ':' + JSON.stringify(update));
+            onHandleUpdate(handle, update) {
+              this.addResult('update:' + JSON.stringify(update));
             }
 
-            onHandleDesync(handle, version) {
-              this.addResult('desync:' + version);
+            onHandleDesync(handle) {
+              this.addResult('desync');
             }
 
             async addResult(value) {
@@ -82,7 +82,7 @@ describe('particle-api', function() {
     recipe.normalize();
 
     await arc.instantiate(recipe);
-    await inspector.verify('sync:0:null');
+    await inspector.verify('sync:null');
 
     // Drop event 2; desync is triggered by v3.
     await fooStore.set(new Data({value: 'v1'}));
@@ -91,12 +91,12 @@ describe('particle-api', function() {
     await fooStore.set(new Data({value: 'v2'}));
     fooStore._fire = fireFn;
     await fooStore.set(new Data({value: 'v3'}));
-    await inspector.verify('update:1:{"data":{"rawData":{"value":"v1"}}}',
-                           'desync:3',
-                           'sync:3:{"rawData":{"value":"v3"}}');
+    await inspector.verify('update:{"data":{"rawData":{"value":"v1"}}}',
+                           'desync',
+                           'sync:{"rawData":{"value":"v3"}}');
 
     await fooStore.clear();
-    await inspector.verify('update:4:{"data":null}');
+    await inspector.verify('update:{"data":null}');
   });
 
   it('contains handle synchronize calls', async () => {
