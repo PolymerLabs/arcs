@@ -106,28 +106,6 @@ export class Particle {
     return this._idle;
   }
 
-  /** @method setBusy()
-   * Prevents this particle from indicating that it's idle until a matching
-   * call to setIdle is made.
-   */
-  setBusy() {
-    if (this._busy == 0)
-    this._idle = new Promise((resolve, reject) => {
-      this._idleResolver = resolve;
-    });
-    this._busy++;
-  }
-
-  /** @method setIdle()
-   * Indicates that a busy period (initiated by a call to setBusy) has completed.
-   */
-  setIdle() {
-    assert(this._busy > 0);
-    this._busy--;
-    if (this._busy == 0)
-      this._idleResolver();
-  }
-
   set relevance(r) {
     this.relevances.push(r);
   }
