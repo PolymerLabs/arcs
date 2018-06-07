@@ -51,7 +51,7 @@ class ArcConfig extends Xen.Base {
       search: params.get('search') || '',
       urls: window.shellUrls || {},
       useStorage: false,
-      useSerialization: !params.has('noserial')
+      useSerialization: params.has('serial')
     };
   }
 }
