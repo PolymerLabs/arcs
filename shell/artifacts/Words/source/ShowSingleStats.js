@@ -32,7 +32,8 @@ defineParticle(({DomParticle, html, log, resolver}) => {
   const template = html`
 <style>
   [${host}] {
-    color: rgba(0, 0, 0, 0.87);
+    background-color: var(--stats-bg, inherit);
+    color: var(--stats-color, rgba(0, 0, 0, 0.87));
     padding-bottom: 16px;
     border-bottom: solid 0.5px;
     border-bottom-color: #d4d4d4;

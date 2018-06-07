@@ -58,3 +58,6 @@ particle EditPost in 'source/EditPost.js'
 particle PostMuxer in 'source/PostMuxer.js'
   in [Post] list
   consume set of item
+
+particle LeaderboardStatsTheme in 'source/LeaderboardStatsTheme.js'
+  consume toproot
