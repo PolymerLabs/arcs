@@ -127,7 +127,7 @@ describe('recipe', function() {
       particle A in 'A.js'
         in [Foo {}]? optionalIn
           out [Foo {}] dependentOut
-      
+
       recipe
         A
     `);
@@ -142,16 +142,16 @@ describe('recipe', function() {
       particle A in 'A.js'
         in [Foo {}]? optionalIn
           out [Foo {}] dependentOut
-      
+
       particle B in 'B.js'
         in [Foo {}] parentIn
           out [Foo {}] dependentOut
-  
+
       recipe
         create as h0
         A
           dependentOut -> h0
-      
+
       recipe
         create as h0
         B
@@ -252,15 +252,15 @@ describe('recipe', function() {
       particle AA
         consume slotAA
 
-      recipe noRequiredConsumeSlot // 0
+      recipe NoRequiredConsumeSlot // 0
         A
 
-      recipe noRequireProvideSlot // 1
+      recipe NoRequireProvideSlot // 1
         slot '0' as slot0
         A
           consume slotA as slot0
 
-      recipe requiredSlotsOk // 2
+      recipe RequiredSlotsOk // 2
         slot '0' as slot0
         A
           consume slotA as slot0
@@ -268,7 +268,7 @@ describe('recipe', function() {
         AA
           consume slotAA as slot1
 
-      recipe noRequiredSlotsInOptionalConsume // 3
+      recipe NoRequiredSlotsInOptionalConsume // 3
         slot '0' as slot0
         slot '2' as slot2
         A
@@ -278,7 +278,7 @@ describe('recipe', function() {
         AA
           consume slotAA as slot1
 
-      recipe allRequiredSlotsOk // 4
+      recipe AllRequiredSlotsOk // 4
         slot '0' as slot0
         slot '2' as slot2
         A
