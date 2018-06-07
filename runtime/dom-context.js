@@ -57,7 +57,7 @@ export class DomContext {
   }
   setTemplate(templatePrefix, templateName, template) {
     this._templateName = [templatePrefix, templateName].filter(s => s).join('::');
-    if (template) {
+    if (typeof template === 'string') {
       if (templateByName.has(this._templateName)) {
         // TODO: check whether the new template is different from the one that was previously used.
         // Template is being replaced.
