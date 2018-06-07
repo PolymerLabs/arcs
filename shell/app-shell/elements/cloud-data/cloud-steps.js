@@ -18,7 +18,7 @@ const warn = Xen.logFactory('CloudSteps', '#7b5e57', 'warn');
 
 class CloudSteps extends Xen.Debug(Xen.Base, log) {
   static get observedAttributes() {
-    return ['key', 'plans', 'plan'];
+    return ['config', 'key', 'plans', 'plan'];
   }
   _getInitialState() {
     return {
@@ -28,7 +28,11 @@ class CloudSteps extends Xen.Debug(Xen.Base, log) {
       watch: new WatchGroup()
     };
   }
-  _update({key, plans, plan}, state, oldProps) {
+  _update({config, key, plans, plan}, state, oldProps) {
+    // completely disable steps processing if we are using runtime serialization
+    if (!config || config.useSerialization) {
+      return;
+    }
     const {applied, steps} = state;
     if (key && !Const.SHELLKEYS[key]) {
       if (key !== oldProps.key) {

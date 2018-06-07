@@ -54,6 +54,7 @@ const template = html`
   ></cloud-arc>
 
   <cloud-steps
+    config="{{config}}"
     key="{{key}}"
     plans="{{plans}}"
     plan="{{plan}}"

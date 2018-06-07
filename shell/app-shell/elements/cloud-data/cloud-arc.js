@@ -45,7 +45,7 @@ class CloudArc extends Xen.Debug(Xen.Base, log) {
           {path: `arcs/${key}/serialization`, handler: snap => this._serializationReceived(snap, key)}
         ];
       }
-      if (plan && plan !== oldProps.plan && !Const.SHELLKEYS[key] && config.useStorage) {
+      if (plan && plan !== oldProps.plan && !Const.SHELLKEYS[key] && config.useSerialization) {
         log('plan changed, good time to serialize?');
         this._serialize(state.db, key, arc);
       }
@@ -73,7 +73,7 @@ class CloudArc extends Xen.Debug(Xen.Base, log) {
       this._state.serialization = serialization;
       const node = db.child(`${key}/serialization`);
       groupCollapsed('writing arc serialization', String(node));
-      log(serialization);
+      log('serialization:', serialization);
       groupEnd();
       node.set(serialization);
     }
