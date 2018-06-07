@@ -214,7 +214,7 @@ ShapeArgument
       name,
     };
   }
-  
+
 ShapeArgument2
   = direction:(ParticleArgumentDirection)? whiteSpace? type:(ParticleArgumentType)? whiteSpace? name:(lowerIdent / '*') ! {return name == 'consume' || name == 'provide'}
   {
@@ -539,7 +539,7 @@ ParticleHandleDescription
   }
 
 Recipe
-  = 'recipe' name:(whiteSpace (upperIdent / lowerIdent))? verbs:(whiteSpace VerbList)? eolWhiteSpace items:(Indent (SameIndent RecipeItem)*)?
+  = 'recipe' name:(whiteSpace TopLevelIdent)? verbs:(whiteSpace VerbList)? eolWhiteSpace items:(Indent (SameIndent RecipeItem)*)?
   {
     verbs = optional(verbs, parsedOutput => parsedOutput[1], []);
     return {
@@ -699,10 +699,10 @@ ConnectionTarget
 VerbConnectionTarget
   = verbs:VerbList components:ConnectionTargetHandleComponents?
   {
-    let {param, tags} = optional(components, components => components, {param: null, tags: []});    
+    let {param, tags} = optional(components, components => components, {param: null, tags: []});
     return {
       kind: 'connection-target',
-      location: location(),      
+      location: location(),
       targetType: 'verb',
       verbs,
       param,
@@ -714,7 +714,7 @@ TagConnectionTarget
   = tags:TagList {
     return {
       kind: 'connection-target',
-      location: location(),      
+      location: location(),
       targetType: 'tag',
       tags
     }
@@ -723,7 +723,7 @@ TagConnectionTarget
 NameConnectionTarget
   = name:lowerIdent components:ConnectionTargetHandleComponents?
   {
-    let {param, tags} = optional(components, components => components, {param: null, tags: []});    
+    let {param, tags} = optional(components, components => components, {param: null, tags: []});
     return {
       kind: 'connection-target',
       targetType: 'localName',
@@ -735,9 +735,9 @@ NameConnectionTarget
   }
 
 ParticleConnectionTarget
-  = particle:upperIdent components:ConnectionTargetHandleComponents? 
+  = particle:upperIdent components:ConnectionTargetHandleComponents?
   {
-    let {param, tags} = optional(components, components => components, {param: null, tags: []});    
+    let {param, tags} = optional(components, components => components, {param: null, tags: []});
     return {
       kind: 'connection-target',
       targetType: 'particle',
@@ -789,7 +789,7 @@ SpaceTagList
   { return tags; }
 
 ParticleRef
-  = name:upperIdent 
+  = name:upperIdent
   {
     return {
       kind: 'particle-ref',

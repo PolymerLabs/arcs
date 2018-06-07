@@ -47,7 +47,8 @@ describe('manifest', function() {
       assert(recipe);
       assert.equal('SomeRecipe', recipe.name);
       assert.deepEqual(['someVerb1', 'someVerb2'], recipe.verbs);
-      assert.equal(manifest.findRecipesByVerb('SomeRecipe')[0], recipe);
+      assert.sameMembers(manifest.findRecipesByVerb('someVerb1'), [recipe]);
+      assert.sameMembers(manifest.findRecipesByVerb('someVerb2'), [recipe]);
       assert.equal(recipe.particles.length, 1);
       assert.equal(recipe.handles.length, 2);
       assert.equal(recipe.handles[0].fate, 'map');
@@ -843,7 +844,7 @@ Error parsing JSON from 'EntityList' (Unexpected token h in JSON at position 1)'
       assert(false);
     } catch (e) {
       assert.deepEqual(e.message, `Parse error in 'bad-file' line 1.
-Expected " ", "&", "//", "\\n", "\\r", [ ], [A-Z], or [a-z] but "?" found.
+Expected " ", "&", "//", "\\n", "\\r", [ ], or [A-Z] but "?" found.
   recipe ?
          ^`);
     }

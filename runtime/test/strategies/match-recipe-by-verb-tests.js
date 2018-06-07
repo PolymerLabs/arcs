@@ -32,7 +32,7 @@ describe('MatchRecipeByVerb', function() {
       particle NuclearReactor in 'C.js'
         out Energy e
 
-      recipe jump
+      recipe &jump
         JumpingBoots.f <- FootFactory.f
         JumpingBoots.e <- NuclearReactor.e
     `);
@@ -57,7 +57,7 @@ describe('MatchRecipeByVerb', function() {
         P.p -> Q.q
         particle can a
 
-      recipe a
+      recipe &a
         P
     `);
 
@@ -89,17 +89,17 @@ describe('MatchRecipeByVerb', function() {
     particle R in 'C.js'
       in S {} c
 
-    recipe verb
+    recipe &verb
       P
     
-    recipe verb
+    recipe &verb
       P
       Q
     
-    recipe verb
+    recipe &verb
       Q
 
-    recipe verb
+    recipe &verb
       R
 
     recipe 
@@ -165,13 +165,13 @@ describe('MatchRecipeByVerb', function() {
         consume boo
           provide far
 
-      recipe verb
+      recipe &verb
         P
 
-      recipe verb
+      recipe &verb
         Q
 
-      recipe verb
+      recipe &verb
         P
         Q
 
@@ -217,7 +217,7 @@ describe('MatchRecipeByVerb', function() {
       particle Q in 'B.js'
         out S {} b
 
-      recipe verb
+      recipe &verb
         P
 
       recipe
@@ -247,7 +247,7 @@ describe('MatchRecipeByVerb', function() {
       particle Q in 'B.js'
         out S {} b
 
-      recipe verb
+      recipe &verb
         P
 
       recipe
@@ -283,7 +283,7 @@ describe('MatchRecipeByVerb', function() {
       particle Q in 'B.js'
         out S {} b
 
-      recipe verb
+      recipe &verb
         O
         P
 
@@ -315,7 +315,7 @@ describe('MatchRecipeByVerb', function() {
         consume bar
           provide foo
 
-      recipe verb
+      recipe &verb
         P
     
       recipe
@@ -366,7 +366,7 @@ describe('MatchRecipeByVerb', function() {
       consume bar
       consume foo
 
-    recipe verb
+    recipe &verb
       P
   
     recipe

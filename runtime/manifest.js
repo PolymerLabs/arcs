@@ -229,7 +229,7 @@ export class Manifest {
     return this._find(manifest => manifest._shapes.find(shape => shape.name == name));
   }
   findRecipesByVerb(verb) {
-    return [...this._findAll(manifest => manifest._recipes.filter(recipe => recipe.name == verb))];
+    return [...this._findAll(manifest => manifest._recipes.filter(recipe => recipe.verbs.includes(verb)))];
   }
   generateID() {
     return `${this.id}:${this._nextLocalID++}`;
