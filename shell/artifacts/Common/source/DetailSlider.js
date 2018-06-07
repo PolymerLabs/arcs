@@ -11,6 +11,7 @@ defineParticle(({DomParticle, resolver, html, log}) => {
   let host = `detail-slider`;
 
   const template = html`
+
 <style>
   [${host}] {
     position: absolute;
@@ -37,6 +38,7 @@ defineParticle(({DomParticle, resolver, html, log}) => {
   }
   [${host}] > [modal] {
     display: flex;
+    flex-direction: column;
     position: absolute;
     top: 0;
     right: 0;
@@ -55,16 +57,12 @@ defineParticle(({DomParticle, resolver, html, log}) => {
   }
   [${host}] > [modal] > [buttons] {
     border-bottom: 1px solid lightgrey;
-    height: 56px;
+    padding: 12px 12px 8px;
   }
   [${host}] > [modal] > [buttons] > [back-button] {
     background-color: transparent;
     border: none;
     border-radius: 100%;
-    position: absolute;
-    left: 8px;
-    top: 8px;
-    padding: 8px;
   }
   [${host}] > [modal] > [buttons] > [back-button]:active {
     background-color: #b0e3ff;
@@ -88,11 +86,15 @@ defineParticle(({DomParticle, resolver, html, log}) => {
     <div slot-content slotid="content"></div>
   </div>
 </div>
-    `.trim();
+
+`;
 
   return class extends DomParticle {
     get template() {
       return template;
+    }
+    shouldRender({selected}, {open}) {
+      return Boolean(selected || open);
     }
     render({selected}, state) {
       let hide = true;
