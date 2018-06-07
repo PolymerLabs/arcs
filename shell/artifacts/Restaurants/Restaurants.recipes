@@ -24,7 +24,7 @@ recipe
   create #restaurants #nosync as restaurants
   FindRestaurants
     restaurants = restaurants
-  particle can displayRestaurants
+  &displayRestaurants
     list <- restaurants
 
 import '../Events/Event.schema'

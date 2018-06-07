@@ -19,7 +19,7 @@ describe('MatchRecipeByVerb', function() {
   it('removes a particle and adds a recipe', async () => {
     let manifest = await Manifest.parse(`
       recipe
-        particle can jump
+        &jump
 
       schema Feet
       schema Energy
@@ -55,7 +55,7 @@ describe('MatchRecipeByVerb', function() {
 
       recipe
         P.p -> Q.q
-        particle can a
+        &a
 
       recipe &a
         P
@@ -103,24 +103,24 @@ describe('MatchRecipeByVerb', function() {
       R
 
     recipe 
-      particle can verb
+      &verb
     
     recipe
-      particle can verb
+      &verb
         a ->
     
     recipe
-      particle can verb
+      &verb
         a <-
     
     recipe
-      particle can verb
+      &verb
         a <-
         b ->
     
     recipe
       create as handle0
-      particle can verb
+      &verb
         * -> handle0
     `);
 
@@ -176,14 +176,14 @@ describe('MatchRecipeByVerb', function() {
         Q
 
       recipe
-        particle can verb
+        &verb
 
       recipe
-        particle can verb
+        &verb
           consume boo
 
       recipe
-        particle can verb
+        &verb
           consume foo
             provide bar
     `);
@@ -222,7 +222,7 @@ describe('MatchRecipeByVerb', function() {
 
       recipe
         create as handle0
-        particle can verb
+        &verb
           a <- handle0
         Q
           b -> handle0
@@ -252,7 +252,7 @@ describe('MatchRecipeByVerb', function() {
 
       recipe
         create as handle0
-        particle can verb
+        &verb
           * <- handle0
         Q
           b -> handle0
@@ -289,7 +289,7 @@ describe('MatchRecipeByVerb', function() {
 
       recipe
         create as handle0
-        particle can verb
+        &verb
           * <- handle0
         Q
           b -> handle0
@@ -319,14 +319,14 @@ describe('MatchRecipeByVerb', function() {
         P
     
       recipe
-        particle can verb
+        &verb
           consume foo
             provide bar as s0
         S
           consume bar as s0
 
       recipe
-        particle can verb
+        &verb
           consume foo as s0
         S
           consume bar
@@ -370,7 +370,7 @@ describe('MatchRecipeByVerb', function() {
       P
   
     recipe
-      particle can verb
+      &verb
         consume foo
           provide bar as s0
       S
@@ -379,7 +379,7 @@ describe('MatchRecipeByVerb', function() {
         consume bar as s0
 
     recipe
-      particle can verb
+      &verb
         consume foo as s0
       S
         consume bar

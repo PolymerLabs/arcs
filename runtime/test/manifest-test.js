@@ -1395,7 +1395,7 @@ resource SomeName
   it('can parse a recipe with slot constraints on verbs', async () => {
     let manifest = await Manifest.parse(`
       recipe
-        particle can verb
+        &verb
           consume consumeSlot
             provide provideSlot
     `);
