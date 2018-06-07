@@ -33,7 +33,7 @@ describe('A Strategy Sequence', function() {
         P
       
       recipe
-        particle can verb
+        &verb
         Q
     `);
 
@@ -65,7 +65,7 @@ describe('A Strategy Sequence', function() {
         P.s -> R.s
       
       recipe
-        particle can verb
+        &verb
         Q
     `);
 
@@ -103,7 +103,7 @@ describe('A Strategy Sequence', function() {
       
       recipe
         Q.s -> T.s
-        particle can verb
+        &verb
         
     `);
 
@@ -200,7 +200,7 @@ describe('A Strategy Sequence', function() {
         copy #shortlist as shortlist
         Recommend
           population <- wishlist
-        particle can showList
+        &showList
         Multiplexer2
           hostedParticle = AlsoOn    
       

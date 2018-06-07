@@ -127,7 +127,7 @@ describe('manifest parser', function() {
   it('parses recipe with particle verbs', () => {
     parse(`
       recipe
-        particle can jump
+        &jump
           * <- energy
           * -> height`);
   });

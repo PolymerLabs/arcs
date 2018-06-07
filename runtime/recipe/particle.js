@@ -235,7 +235,7 @@ export class Particle {
         result.push(`// verb=${this.primaryVerb}`);
       }
     } else { // verb must exist, if there is no name.
-      result.push(`particle can ${this.primaryVerb}`);
+      result.push(`&${this.primaryVerb}`);
     }
     if (options && options.showUnresolved) {
       if (!this.isResolved(options)) {
