@@ -55,10 +55,6 @@ class Handle {
     this._proxy.raiseSystemException(exception, method, this._particleId);
   }
 
-  underlyingProxy() {
-    return this._proxy;
-  }
-
   // `options` may contain any of:
   // - keepSynced (bool): load full data on startup, maintain data in proxy and resync as required
   // - notifySync (bool): if keepSynced is true, call onHandleSync when the full data is received

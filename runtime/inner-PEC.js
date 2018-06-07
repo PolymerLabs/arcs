@@ -236,11 +236,6 @@ export class InnerPEC {
   get busy() {
     if (this._pendingLoads.length > 0)
       return true;
-    for (let particle of this._particles) {
-      if (particle.busy) {
-        return true;
-      }
-    }
     return false;
   }
 
