@@ -32,7 +32,7 @@ recipe &showList &show
 // See [person]'s wishlist
 recipe
   map #wishlist as wishlist
-  particle can showList
+  &showList
 
 // Create shortlist with [product, ...] and suggest similar products from [person]'s wish list
 recipe

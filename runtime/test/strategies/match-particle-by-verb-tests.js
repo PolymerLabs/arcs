@@ -43,7 +43,7 @@ describe('MatchParticleByVerb', function() {
     recipe
       use as height
       use as energy
-      particle can jump
+      &jump
         * = height
         * <- energy
   `;
