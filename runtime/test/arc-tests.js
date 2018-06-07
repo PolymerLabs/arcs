@@ -39,13 +39,19 @@ async function setup() {
 const slotComposer = new SlotComposer({rootContext: 'test', affordance: 'mock'});
 
 describe('Arc', function() {
+  it('idle can safely be called multiple times', async () => {
+    const arc = new Arc({slotComposer, loader, id: 'test'});
+    const f = async () => { await arc.idle; };
+    await Promise.all([f(), f()]);
+  });
+
   it('applies existing stores to a particle', async () => {
     let {arc, recipe, Foo, Bar} = await setup();
     let fooStore = await arc.createStore(Foo.type, undefined, 'test:1');
     let barStore = await arc.createStore(Bar.type, undefined, 'test:2');
     await handleFor(fooStore).set(new Foo({value: 'a Foo'}));
     recipe.handles[0].mapToStorage(fooStore);
-    recipe.handles[1].mapToStorage(barStore); 
+    recipe.handles[1].mapToStorage(barStore);
     assert(recipe.normalize());
     await arc.instantiate(recipe);
     await util.assertSingletonWillChangeTo(barStore, Bar, 'a Foo1');
@@ -56,7 +62,7 @@ describe('Arc', function() {
     let fooStore = await arc.createStore(Foo.type, undefined, 'test:1');
     let barStore = await arc.createStore(Bar.type, undefined, 'test:2');
     recipe.handles[0].mapToStorage(fooStore);
-    recipe.handles[1].mapToStorage(barStore); 
+    recipe.handles[1].mapToStorage(barStore);
     recipe.normalize();
     await arc.instantiate(recipe);
 
@@ -79,7 +85,7 @@ describe('Arc', function() {
     handleFor(fooStore).set(new Foo({value: 'a Foo'}));
     let barStore = await arc.createStore(Bar.type, undefined, 'test:2');
     recipe.handles[0].mapToStorage(fooStore);
-    recipe.handles[1].mapToStorage(barStore); 
+    recipe.handles[1].mapToStorage(barStore);
     recipe.normalize();
     await arc.instantiate(recipe);
     await util.assertSingletonWillChangeTo(barStore, Bar, 'a Foo1');
@@ -100,7 +106,7 @@ describe('Arc', function() {
     let manifest = await Manifest.parse(`
       import 'shell/artifacts/Common/Multiplexer.manifest'
       import 'runtime/test/artifacts/test-particles.manifest'
-      
+
       recipe
         slot 'slotid' as slot0
         use as handle0
@@ -129,7 +135,7 @@ describe('Arc', function() {
     let barType = manifest.findTypeByName('Bar');
     let store = await arc.createStore(barType.collectionOf(), undefined, 'test:1');
     recipe.handles[0].mapToStorage(store);
-    
+
     assert(recipe.normalize());
     assert(recipe.isResolved());
 
