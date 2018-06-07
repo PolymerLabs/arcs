@@ -75,6 +75,7 @@ recipe
   map #BOXED_posts as posts
   map #BOXED_stats as stats
   create as rankedPosts
+  LeaderboardStatsTheme
   WordsScoreRanker
     input = posts
     stats = stats
