@@ -453,7 +453,8 @@ export class DescriptionFormatter {
     }
   }
   _formatHandleType(handleConnection) {
-    return handleConnection.type.toPrettyString().toLowerCase();
+    let type = handleConnection.handle && handleConnection.handle.type.isResolved() ? handleConnection.handle.type : handleConnection.type;
+    return type.toPrettyString().toLowerCase();
   }
 
   _selectHandleConnection(recipeHandle) {
