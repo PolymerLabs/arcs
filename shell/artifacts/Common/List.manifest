@@ -22,7 +22,14 @@ particle List in 'source/List.js'
   consume root
     provide set of item
     provide set of action
-  description `show ${items}`
+  description `list that can contain ${items}`
+
+particle ContentList in 'source/List.js'
+  in [~a] items
+  consume content
+    provide set of item
+    provide set of action
+  description `list that can contain ${items}`
 
 particle SelectableList in 'source/List.js'
   inout [~a] items
@@ -30,7 +37,7 @@ particle SelectableList in 'source/List.js'
   consume root
     provide set of item
     provide set of action
-  description `show ${items}`
+  description `list that can contain ${items} with selection`
 
 // tile lists
 
@@ -48,7 +55,7 @@ particle TileList in 'source/TileList.js'
   consume root
     provide set of tile
     provide set of action
-  description `show ${items}`
+  description `tiling that can contain ${items}`
 
 particle SelectableTileList in 'source/TileList.js'
   inout [~a] items
@@ -56,4 +63,4 @@ particle SelectableTileList in 'source/TileList.js'
   consume root
     provide set of tile
     provide set of action
-  description `show ${items}`
+  description `tiling that can contain ${items} with selection`
