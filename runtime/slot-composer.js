@@ -23,14 +23,15 @@ export class SlotComposer {
     assert(options.affordance, 'Affordance is mandatory');
     // TODO: Support rootContext for backward compatibility, remove when unused.
     options.rootContainer = options.rootContainer || options.rootContext;
-    assert(options.rootContainer, 'Root container is mandatory');
+    assert(options.rootContainer !== undefined ^ options.noRoot === true,
+      'Root container is mandatory unless it is explicitly skipped');
 
     this._containerKind = options.containerKind;
     this._affordance = Affordance.forName(options.affordance);
     assert(this._affordance.slotClass);
 
     let containerByName = this._affordance.slotClass.findRootContainers(options.rootContainer) || {};
-    if (Object.keys(containerByName).length == 0) {
+    if (Object.keys(containerByName).length == 0 && options.rootContainer) {
       // fallback to single 'root' slot using the rootContainer.
       containerByName['root'] = options.rootContainer;
     }

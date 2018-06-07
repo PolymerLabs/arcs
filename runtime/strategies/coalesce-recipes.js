@@ -17,13 +17,27 @@ import {Handle} from '../recipe/handle.js';
 // handle that allows to satisfy all constraints.
 export class CoalesceRecipes extends Strategy {
 
+  constructor(arc) {
+    super();
+    this._applicableHandles = new Promise(async resolve => {
+      let handles = [];
+      for (let candidate of await arc.recipeIndex.recipes) {
+        handles.push(...candidate.handles.filter(h =>
+            (h.fate === 'use' || h.fate === '?')
+            && !h.id
+            && h.connections.length !== 0
+            && h.name !== 'descriptions'));
+      }
+      resolve(handles.map(handle => [handle, RecipeUtil.directionCounts(handle)]));
+    });
+  }
+
   getResults(inputParams) {
     return inputParams.terminal.filter(result => !result.result.isResolved());
   }
 
   async generate(inputParams) {
-    let self = this;
-    let applicableHandles = null;
+    let applicableHandles = await this._applicableHandles;
     return Recipe.over(this.getResults(inputParams), new class extends Walker {
       onHandle(recipe, handle) {
         if (handle.fate === 'create'
@@ -32,16 +46,17 @@ export class CoalesceRecipes extends Strategy {
             || handle.name === 'descriptions') return;
 
         let counts = RecipeUtil.directionCounts(handle);
-
-        if (applicableHandles === null)
-          applicableHandles = self.findApplicableHandles(inputParams);
+        let particleNames = handle.connections.map(conn => conn.particle.name);
 
         let results = [];
 
         for (let [otherHandle, otherCounts] of applicableHandles) {
-          if (otherHandle.recipe === recipe
-              || otherCounts.in + counts.in === 0
+          let otherParticleNames = otherHandle.connections.map(conn => conn.particle.name);
+          if (otherCounts.in + counts.in === 0
               || otherCounts.out + counts.out === 0
+              // If we're connections the same sets of particles, that's probably not OK.
+              || new Set([...particleNames, ...otherParticleNames]).size
+                  === particleNames.length
               || recipe.particles.length + otherHandle.recipe.particles.length > 10
               || !Handle.effectiveType(handle._mappedType,
                   [...handle.connections, ...otherHandle.connections])) {
@@ -60,6 +75,10 @@ export class CoalesceRecipes extends Strategy {
             recipe.removeHandle(mergedOtherHandle);
             handle.fate = 'create';
 
+            // Clear verbs and recipe name after coalescing two recipes.
+            recipe.verbs.splice(0);
+            recipe.name = '';
+
             return 1;
           });
         }
@@ -67,29 +86,5 @@ export class CoalesceRecipes extends Strategy {
         return results;
       }
     }(Walker.Independent), this);
-  }
-
-  findApplicableHandles(inputParams) {
-    // We seek terminal unresolved recipes in an entire population.
-    let candidates = new Set(inputParams.population.filter(result => !result.result.isResolved()));
-    for (let result of inputParams.population) {
-      for (let deriv of result.derivation) {
-        if (deriv.parent && deriv.strategy !== this) candidates.delete(deriv.parent);
-      }
-    }
-    for (let result of inputParams.generated) {
-      // We don't know yet if recipes in the most recent generation are terminal.
-      candidates.delete(result);
-    }
-
-    let handles = [];
-    for (let candidate of candidates) {
-      handles.push(...candidate.result.handles.filter(h => h.fate !== 'create'
-          && !h.id
-          && h.connections.length !== 0
-          && h.name !== 'descriptions'));
-    }
-
-    return handles.map(handle => [handle, RecipeUtil.directionCounts(handle)]);
   }
 }
