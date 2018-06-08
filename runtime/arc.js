@@ -163,9 +163,10 @@ export class Arc {
         interfaces += type.interfaceShape.toString() + '\n';
       }
       let key = this._storageProviderFactory.parseStringAsKey(handle.storageKey);
+      let handleTags = [...this._storeTags.get(handle)].map(a => `#${a}`).join(' ');
       switch (key.protocol) {
         case 'firebase':
-          handles += `store Store${id++} of ${handle.type.toString()} '${handle.id}' @${handle._version} at '${handle.storageKey}'\n`;
+          handles += `store Store${id++} of ${handle.type.toString()} '${handle.id}' @${handle._version} ${handleTags} at '${handle.storageKey}'\n`;
           break;
         case 'in-memory': {
           resources += `resource Store${id}Resource\n`;
@@ -188,7 +189,7 @@ export class Arc {
           let data = JSON.stringify(serializedData);
           resources += data.split('\n').map(line => indent + line).join('\n');
           resources += '\n';
-          handles += `store Store${id} of ${handle.type.toString()} '${handle.id}' @${handle._version} in Store${id++}Resource\n`;
+          handles += `store Store${id} of ${handle.type.toString()} '${handle.id}' @${handle._version} ${handleTags} in Store${id++}Resource\n`;
           break;
         }
       }
@@ -233,11 +234,10 @@ ${this.activeRecipe.toString()}`;
       storageProviderFactory: manifest._storageProviderFactory,
       context
     });
-    // TODO: pass tags through too
     manifest.stores.forEach(store => {
       if (store.constructor.name == 'StorageStub')
         store = store.inflate();
-      arc._registerStore(store, []);
+      arc._registerStore(store, manifest._storeTags.get(store));
     });
     let recipe = manifest.activeRecipe.clone();
     let options = {errors: new Map()};
