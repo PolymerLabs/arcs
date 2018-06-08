@@ -29,10 +29,6 @@ class CloudSteps extends Xen.Debug(Xen.Base, log) {
     };
   }
   _update({config, key, plans, plan}, state, oldProps) {
-    // completely disable steps processing if we are using runtime serialization
-    if (!config || config.useSerialization) {
-      return;
-    }
     const {applied, steps} = state;
     if (key && !Const.SHELLKEYS[key]) {
       if (key !== oldProps.key) {
@@ -47,10 +43,12 @@ class CloudSteps extends Xen.Debug(Xen.Base, log) {
         // `plan` has been instantiated into host, record it into `steps`
         this._addStep(key, plan.plan, plan.generations, steps || [], applied);
       }
-      // TODO(sjmiles): using latest suggestions
-      if (plans && steps.length) {
-        // find a step from `steps` that correspondes to a plan in `suggestions` but hasn't been `applied`
-        this._providePlanStep(plans.plans, plans.generations, steps, applied);
+      // enable steps playback only if we are NOT using runtime serialization
+      if (config && !config.useSerialization) {
+        if (plans && steps.length) {
+          // find a step from `steps` that correspondes to a plan in `suggestions` but hasn't been `applied`
+          this._providePlanStep(plans.plans, plans.generations, steps, applied);
+        }
       }
     }
   }
