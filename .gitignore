@@ -12,3 +12,4 @@ manifest-railroad.html
 shell/build
 shell/test/errorShots
 devtools/deps
+host/*
