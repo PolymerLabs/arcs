@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
- 'use strict';
+'use strict';
 
 import {Manifest} from '../manifest.js';
 import {Loader} from '../loader.js';
@@ -21,15 +21,10 @@ describe('demo flow', function() {
     await Manifest.load('./shell/artifacts/Products/Products.recipes', new Loader());
   });
 
-  it('BORKED flows like a demo', async function() {
-
-    let timeout = setTimeout(function() {
-      helper.slotComposer.assertExpectationsCompleted();
-    }, 5000);
+  it('flows like a demo', async function() {
 
     let helper = await TestHelper.loadManifestAndPlan('./shell/artifacts/Products/Products.recipes', {
       expectedNumPlans: 2,
-      logging: true,
       verify: async (plans) => {
         let descriptions = await Promise.all(plans.map(plan => plan.description.getRecipeSuggestion()));
         assert.include(descriptions, 'Show products from your browsing context (Minecraft Book plus 2 other items) ' +
@@ -40,6 +35,8 @@ describe('demo flow', function() {
       // slotComposerStrict: false,
       // logging: true
     });
+
+    helper.setTimeout(5000);
 
     // 1. Accept "Show ... and choose ... products" suggestion.
     helper.slotComposer
@@ -55,7 +52,6 @@ describe('demo flow', function() {
         .expectRenderSlot('Multiplexer2', 'annotation', {verify: helper.slotComposer.expectContentItemsNumber.bind(null, 3)})
         .expectRenderSlot('AlsoOn', 'annotation', {contentTypes: ['model'], times: 3, isOptional: true});
     await helper.acceptSuggestion({particles: ['ShowCollection', 'Multiplexer', 'Chooser', 'Recommend', 'Multiplexer2']});
-    clearTimeout(timeout);
 
     assert.equal(2, helper.arc.findStoresByType(helper.arc.context.findSchemaByName('Product').entityClass().type.collectionOf()).length);
     await helper.verifySetSize('ShowCollection', 'collection', 3);
@@ -179,6 +175,8 @@ describe('demo flow', function() {
     await helper.acceptSuggestion({particles: ['Interests']});
     await helper.makePlans({expectedNumPlans: 2});
     helper.log('----------------------------------------');
+
+    helper.clearTimeout();
 
     // TODO(mmandlis): Provide methods in helper to verify slot contents (helper.slotComposer._slots[i]._content).
   }).timeout(10000);
