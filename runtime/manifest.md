@@ -25,6 +25,18 @@ schema MyThing extends YourThing
 
 * TODO: value types
 
+### Descriptions
+
+A schema can contain a description:, that will override the default representation of the schema in recipe descriptions.
+```
+schema USCity
+  Text name
+  Text state
+  description `city` // used as singular type description
+    plural `cities` // used as plural type description, instead of the default 'city list`
+    value `${name}, ${state}` // used as the city value format, insted of the default ${name}.
+```
+
 ## Particles
 
 Particle definitions define the shape of a Particle -- its parameters, the slots
@@ -186,9 +198,12 @@ recipe
 Can include a recipe description:
 ```
 ...
+particle MyParticle in '...'
+  in Thing myThing
+
 recipe
   MyParticle
-  description `do something`
+  description `do something with ${MyParticle.myThing}`
 ```
 If a recipe description is specified, it takes precedence over individual particle descriptions.
 
