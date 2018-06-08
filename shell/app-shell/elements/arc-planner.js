@@ -73,7 +73,11 @@ class ArcPlanner extends Xen.Debug(Xen.Base, log) {
   }
   async _instantiatePlan(arc, plan) {
     log('instantiating plan', plan);
-    await arc.instantiate(plan);
+    try {
+      await arc.instantiate(plan);
+    } catch (x) {
+      error('plan instantiation failed', x);
+    }
     // search term is used up
     this._fire('search', '');
     // need new suggestions
