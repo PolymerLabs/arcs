@@ -83,7 +83,7 @@ describe('Arc', function() {
     let {arc, recipe, Foo, Bar} = await setup();
     let fooStore = await arc.createStore(Foo.type, undefined, 'test:1');
     handleFor(fooStore).set(new Foo({value: 'a Foo'}));
-    let barStore = await arc.createStore(Bar.type, undefined, 'test:2');
+    let barStore = await arc.createStore(Bar.type, undefined, 'test:2', ['tag1', 'tag2']);
     recipe.handles[0].mapToStorage(fooStore);
     recipe.handles[1].mapToStorage(barStore);
     recipe.normalize();
@@ -100,6 +100,7 @@ describe('Arc', function() {
     barStore = newArc.findStoreById(barStore.id);
     assert.equal(fooStore._version, 1);
     assert.equal(barStore._version, 1);
+    assert.lengthOf(newArc.findStoresByType(Bar.type, {tags: ['tag1']}), 1);
   });
 
   it('deserializing a serialized arc with a Transformation produces that arc', async () => {
