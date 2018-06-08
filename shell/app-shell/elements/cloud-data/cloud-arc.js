@@ -80,7 +80,7 @@ class CloudArc extends Xen.Debug(Xen.Base, log) {
   }
   _serializationReceived(snap, key) {
     log('watch triggered on arc serialization', `${key}/serialization`);
-    const serialization = snap.val() || '';
+    const serialization = this._props.config.useSerialization ? (snap.val() || '') : '';
     if (serialization !== this._state.serialization) {
       this._state.serialization = serialization;
       this._fire('serialization', serialization);
