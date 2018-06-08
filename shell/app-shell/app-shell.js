@@ -28,7 +28,8 @@ const template = html`
       min-height: 100vh;
       max-width: var(--max-width);
       margin: 0 auto;
-      background: white;
+      background: var(--shell-bg, white);
+      color: var(--shell-color, black);
     }
   </style>
 
@@ -220,7 +221,7 @@ class AppShell extends Xen.Debug(Xen.Base, log) {
     return [state, render];
   }
   _didRender({}, {shellStyle}) {
-    this.style.cssText = shellStyle;
+    //this.style.cssText = shellStyle;
   }
   _routeLink(anchor) {
     const url = new URL(anchor.href, document.location);
