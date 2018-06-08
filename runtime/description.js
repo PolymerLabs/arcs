@@ -65,7 +65,7 @@ export class DescriptionFormatter {
     await this._updateDescriptionHandles(this._description);
 
     if (recipe.pattern) {
-      let recipeDesc = await this.patternToSuggestion(recipe.pattern);
+      let recipeDesc = await this.patternToSuggestion(recipe.pattern, {_recipe: recipe});
       if (recipeDesc) {
         return this._capitalizeAndPunctuate(recipeDesc);
       }
@@ -242,15 +242,18 @@ export class DescriptionFormatter {
     let valueToken;
 
     // Fetch the particle description by name from the value token - if it wasn't passed, this is a recipe description.
-    if (!particleDescription) {
+    if (!particleDescription._particle) {
       assert(handleNames.length > 1, `'${valueTokens[1]}' must contain dot-separated particle and handle connection name.`);
       let particleName = handleNames.shift();
       assert(particleName[0] === particleName[0].toUpperCase(), `Expected particle name, got '${particleName}' instead.`);
-      let particleDescriptions = this._particleDescriptions.filter(desc => desc._particle.name == particleName);
+      let particleDescriptions = this._particleDescriptions.filter(desc => {
+        return desc._particle.name == particleName
+            // The particle description is from the current recipe.
+            && particleDescription._recipe.particles.find(p => p == desc._particle);
+      });
       assert(particleDescriptions.length > 0, `Cannot find particles with name ${particleName}.`);
-      if (particleDescriptions.length > 1) {
-        console.warn(`Multiple particles with name ${particleName}.`);
-      }
+      assert(particleDescriptions.length == 1,
+             `Cannot reference duplicate particle '${particleName}' in recipe description.`);
       particleDescription = particleDescriptions[0];
     }
     let particle = particleDescription._particle;
