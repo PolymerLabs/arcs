@@ -1,0 +1,24 @@
+import 'Product.schema'
+import 'AlternateShipping.manifest'
+import 'ShowProduct.manifest'
+
+recipe
+  map #product as handle0
+  ShowProduct
+    product <- handle0
+  AlternateShipping
+    product <- handle0
+
+recipe
+  map #product
+  ShowProduct
+
+recipe
+  // ? #product as handle0  // FATE + TYPE REMAIN UNRESOLVED
+  //use #product  // TYPE IS UNRESOLVED
+  use as handle0
+  AlternateShipping
+    product <- handle0
+
+// A single product
+store AProduct of Product #product in 'data/products.json'
