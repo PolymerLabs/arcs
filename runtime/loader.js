@@ -25,7 +25,7 @@ function schemaLocationFor(name) {
 
 export class Loader {
   path(fileName) {
-    let path = fileName.replace(/[\/][^\/]+$/, '/');
+    let path = fileName.replace(/[/][^/]+$/, '/');
     return path;
   }
 

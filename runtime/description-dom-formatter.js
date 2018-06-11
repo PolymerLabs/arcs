@@ -98,7 +98,7 @@ export class DescriptionDomFormatter extends DescriptionFormatter {
       if (token.text) {
         template = template.concat(`${index == 0 && i == 0 ? token.text[0].toUpperCase() + token.text.slice(1) : token.text}`);
       } else { // handle or slot handle.
-        let sanitizedFullName = token.fullName.replace(/[.{}_\$]/g, '');
+        let sanitizedFullName = token.fullName.replace(/[.{}_$]/g, '');
         let attribute = '';
         // TODO(mmandlis): capitalize the data in the model instead.
         if (i == 0) {
