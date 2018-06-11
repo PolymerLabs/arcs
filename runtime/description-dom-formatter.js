@@ -185,17 +185,17 @@ export class DescriptionDomFormatter extends DescriptionFormatter {
     };
   }
 
-  _combineDescriptionAndValue(token, description, handleValue) {
+  _combineDescriptionAndValue(token, description, storeValue) {
     if (!!description.template && !!description.model) {
       return {
-        template: `${description.template} (${handleValue.template})`,
-        model: Object.assign(description.model, handleValue.model)
+        template: `${description.template} (${storeValue.template})`,
+        model: Object.assign(description.model, storeValue.model)
       };
     }
     let descKey = `${token.handleName}Description${++this._nextID}`;
     return {
-      template: `<span>{{${descKey}}}</span> (${handleValue.template})`,
-      model: Object.assign({[descKey]: description}, handleValue.model)
+      template: `<span>{{${descKey}}}</span> (${storeValue.template})`,
+      model: Object.assign({[descKey]: description}, storeValue.model)
     };
   }
 
@@ -207,32 +207,32 @@ export class DescriptionDomFormatter extends DescriptionFormatter {
     };
   }
 
-  _formatSetHandle(handleName, handleList) {
+  _formatCollection(handleName, values) {
     let handleKey = `${handleName}${++this._nextID}`;
-    if (handleList[0].rawData.name) {
-      if (handleList.length > 2) {
+    if (values[0].rawData.name) {
+      if (values.length > 2) {
         return {
           template: `<b>{{${handleKey}FirstName}}</b> plus <b>{{${handleKey}OtherCount}}</b> other items`,
-          model: {[`${handleKey}FirstName`]: handleList[0].rawData.name, [`${handleKey}OtherCount`]: handleList.length - 1}
+          model: {[`${handleKey}FirstName`]: values[0].rawData.name, [`${handleKey}OtherCount`]: values.length - 1}
         };
       }
       return {
-        template: handleList.map((v, i) => `<b>{{${handleKey}${i}}}</b>`).join(', '),
-        model: Object.assign(...handleList.map((v, i) => ({[`${handleKey}${i}`]: v.rawData.name} )))
+        template: values.map((v, i) => `<b>{{${handleKey}${i}}}</b>`).join(', '),
+        model: Object.assign(...values.map((v, i) => ({[`${handleKey}${i}`]: v.rawData.name} )))
       };
     }
     return {
       template: `<b>{{${handleKey}Length}}</b> items`,
-      model: {[`${handleKey}Length`]: handleList.length}
+      model: {[`${handleKey}Length`]: values.length}
     };
   }
 
-  _formatSingleton(handleName, handleVar, handleDescription) {
-    let value = super._formatSingleton(handleName, handleVar, handleDescription);
-    if (value) {
+  _formatSingleton(handleName, value, handleDescription) {
+    let formattedValue = super._formatSingleton(handleName, value, handleDescription);
+    if (formattedValue) {
       return {
         template: `<b>{{${handleName}Var}}</b>`,
-        model: {[`${handleName}Var`]: value}
+        model: {[`${handleName}Var`]: formattedValue}
       };
     }
   }
