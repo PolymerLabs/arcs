@@ -8,18 +8,15 @@
 import {assert} from '../platform/assert-web.js';
 import {now} from '../platform/date-web.js';
 import {InitSearch} from './strategies/init-search.js';
+import {logFactory} from '../platform/log-web.js';
 import {Planner} from './planner.js';
 import {Speculator} from './speculator.js';
 import {SuggestionComposer} from './suggestion-composer.js';
 
 let defaultTimeoutMs = 5000;
 
-const bindLog = (log) => {
-  return console[log].bind(console, `%cPlanificator`,
-      `background: #ff0090; color: white; padding: 1px 6px 2px 7px; border-radius: 6px;`);
-};
-const log = bindLog('log');
-const error = bindLog('error');
+const log = logFactory('Planificator', '#ff0090', 'log');
+const error = logFactory('Planificator', '#ff0090', 'error');
 
 class ReplanQueue {
   constructor(planificator, options) {

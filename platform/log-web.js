@@ -5,6 +5,9 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-export function now() {
-  return performance.now();
-}
+const logFactory = (preamble, color, log='log') => {
+  return console[log].bind(console, `%c${preamble}`,
+      `background: ${color}; color: white; padding: 1px 6px 2px 7px; border-radius: 6px;`);
+};
+
+export {logFactory};

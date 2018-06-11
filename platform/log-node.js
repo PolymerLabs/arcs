@@ -5,6 +5,11 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-export function now() {
-  return performance.now();
-}
+// TODO(wkorman): Incorporate debug levels. Consider outputting
+// preamble in the specified color via ANSI escape codes. Consider
+// sharing with similar log factory logic in `xen.js`.
+const logFactory = (preamble, color, log='log') => {
+  return console[log].bind(console, `(${preamble})`);
+};
+
+export {logFactory};
