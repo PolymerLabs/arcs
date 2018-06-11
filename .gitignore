@@ -13,3 +13,6 @@ shell/build
 shell/test/errorShots
 devtools/deps
 host/*
+asylo/bazel-*
+asylo/sdk
+asylo/toolchains

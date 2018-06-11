@@ -286,6 +286,36 @@ databases, but to continue a single mainline/unstable database.
 
 ## Hosted
 
+
+First, you'll need to build the [Asylo](http://asylo.dev) toolchain. More
+information and directions are available directly from Asylo's
+[INSTALL.MD](https://github.com/google/asylo/blob/master/INSTALL.md).
+
+```
+arcs/asylo> git clone https://github.com/google/asylo.git sdk
+arcs/asylo> sdk/asylo/distrib/sgx_x86_64/install-toolchain \
+  --user \
+  --prefix `pwd`/toolchains/sgx_x86_64
+
+```
+
+After this completes it'll leave some temporary files and directories in the
+current directory, probably `arcs/asylo`. Those can be removed with a command
+like `rm -fr binutils* gcc* newlib*`.)
+
+
+Then you can run commands like:
+
+```
+bazel run --config=enc-sim //quickstart -- --message="Asylo Rocks"
+```
+
+
+############################################
+###################### OLD FROM HERE ON DOWN
+############################################
+
+
 To build an image (no image is currently provided), run
 
   > docker build -t test-with-asylo .
@@ -299,16 +329,43 @@ To start a local version but jump in for debugging:
   > docker run --network host -it test-with-asylo /bin/bash
 
 
+### Set Up Storage
+
+Storage is encrypted using a key from 
+
+<!---
+
+I'm not sure this is required
+
+### Set Up Asylo
+
+ I don't think I need this
+Install the Asylo toolchain. Directions are provided here:
+https://github.com/google/asylo/blob/master/INSTALL.md. This guide assumes
+that your toolchain is installed to `arcs/asylo/toolchains/sgx_x86_64` with
+commands like
+
+```
+arcs/asylo> git clone https://github.com/google/asylo.git sdk
+arcs/asylo> sdk/asylo/distrib/sgx_x86_64/install-toolchain \
+  --user \
+  --prefix `pwd`/toolchains/sgx_x86_64
+
+```
+
+-->
 
 
 ### Start a CouchDB database
 
 Start by setting up CouchDB. Run
 
-  arcs> docker run -p 5984:5984 -d \
-    -v $(pwd)/host/couchdb/data:/opt/couchdb/data \
-    -v $(pwd)/host/couchdb/etc:/opt/couchdb/etc \
-    couchdb
+```
+arcs> docker run -p 5984:5984 -d \
+  -v $(pwd)/host/couchdb/data:/opt/couchdb/data \
+  -v $(pwd)/host/couchdb/etc:/opt/couchdb/etc \
+  couchdb
+```
 
 Access the setup screen at (http://127.0.0.1:5984/\_utils#setup). To keep
 things simple choose "Single Node", and set a strong admin password - although
