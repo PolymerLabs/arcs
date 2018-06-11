@@ -197,7 +197,7 @@ export class DescriptionFormatter {
     assert(sentence);
     // "Capitalize, punctuate." (if the sentence doesn't end with a punctuation character).
     let last = sentence.length - 1;
-    return `${sentence[0].toUpperCase()}${sentence.slice(1, last)}${sentence[last]}${sentence[last].match(/[a-z0-9\(\)'>\]]/i) ? '.' : ''}`;
+    return `${sentence[0].toUpperCase()}${sentence.slice(1, last)}${sentence[last]}${sentence[last].match(/[a-z0-9()'>\]]/i) ? '.' : ''}`;
   }
 
   async patternToSuggestion(pattern, particleDescription) {
@@ -213,7 +213,7 @@ export class DescriptionFormatter {
     pattern = pattern.replace(/</g, '&lt;');
     let results = [];
     while (pattern.length > 0) {
-      let tokens = pattern.match(/\${[a-zA-Z0-9\.]+}(?:\.[_a-zA-Z]+)?/g);
+      let tokens = pattern.match(/\${[a-zA-Z0-9.]+}(?:\.[_a-zA-Z]+)?/g);
       let firstToken;
       let tokenIndex;
       if (tokens) {
@@ -236,7 +236,7 @@ export class DescriptionFormatter {
   }
 
   _initHandleToken(pattern, particleDescription) {
-    let valueTokens = pattern.match(/\${([a-zA-Z0-9\.]+)}(?:\.([_a-zA-Z]+))?/);
+    let valueTokens = pattern.match(/\${([a-zA-Z0-9.]+)}(?:\.([_a-zA-Z]+))?/);
     let handleNames = valueTokens[1].split('.');
     let extra = valueTokens.length == 3 ? valueTokens[2] : undefined;
     let valueToken;
@@ -409,7 +409,7 @@ export class DescriptionFormatter {
     if (handleDescription) {
       let valueDescription = handleDescription;
       let matches;
-      while (matches = valueDescription.match(/\${([a-zA-Z0-9\.]+)}/)) {
+      while (matches = valueDescription.match(/\${([a-zA-Z0-9.]+)}/)) {
         valueDescription = valueDescription.replace(matches[0], value.rawData[matches[1]]);
       }
       return valueDescription;

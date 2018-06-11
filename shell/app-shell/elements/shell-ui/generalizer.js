@@ -58,7 +58,7 @@ const handleFixer = line => {
     // retain ParticleShape as is
     if (!line.includes('ParticleShape')) {
       // otherwise, remove id
-      line = line.replace(/ \'[^']*\'/g, '');
+      line = line.replace(/ '[^']*'/g, '');
       // and generalize fate
       line = line.replace('use', '?');
     }
@@ -76,7 +76,7 @@ const templatize = ({serialization}) => {
   blocks = blocks.filter(block => !hasPrefix(block, prefixi));
   //
   // flattens paths with `..` in them
-  blocks = blocks.map(block => block.replace(/(.*?\')[^']*?(\.\..*$)/m, '$1$2'));
+  blocks = blocks.map(block => block.replace(/(.*?')[^']*?(\.\..*$)/m, '$1$2'));
   //
   let manifest = [];
   blocks.forEach(block => {

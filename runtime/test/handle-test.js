@@ -112,7 +112,7 @@ describe('Handle', function() {
       }
     };
 
-    await assert_throws_async(async () => await arc.createStore('not a type'), /isn\'t a Type/);
+    await assert_throws_async(async () => await arc.createStore('not a type'), /isn't a Type/);
 
     await arc.createStore(Bar.type, 'name', 'id', '#sufficient');
     await arc.createStore(Bar.type, 'name', 'id', ['#valid']);

@@ -77,7 +77,7 @@ describe('demo flow', function() {
     // 2. Move an element from recommended list to shortlist.
     let verifyShowCollection = (num, content) => {
       assert(content.model, `Content doesn't have model`);
-      assert(content.model.items, `Content model doesn\'t have items, but expected ${num}.`);
+      assert(content.model.items, `Content model doesn't have items, but expected ${num}.`);
       return content.model.items.length == num && content.model.items.every(i => !!i.resolvedImage);
     };
     helper.slotComposer

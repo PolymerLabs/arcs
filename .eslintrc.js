@@ -17,7 +17,6 @@ module.exports = {
     "no-unused-vars": "off",
     "new-cap": "off",
     "arrow-parens": "off", // puts parens around single arg arrow functions
-    "no-useless-escape": "off", // eg. [\.] in a regex, there are just too many to fix by hand atm.
     "no-undef": "off", // Particles use importScripts+globals, need to move to JS modules to fix
     "no-empty-pattern": "off", // No {} in patterns, but sometimes we use {} to denote an unused argument?
 

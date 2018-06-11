@@ -71,7 +71,7 @@ export class MockSlotComposer extends SlotComposer {
    */
   expectContentItemsNumber(num, content) {
     assert(content.model, `Content doesn't have model`);
-    assert(content.model.items, `Content model doesn\'t have items (${num} expected}`);
+    assert(content.model.items, `Content model doesn't have items (${num} expected}`);
     assert(content.model.items.length <= num, `Too many items (${content.model.items.length}), while only ${num} were expected.`);
     return content.model.items.length == num;
   }

@@ -459,7 +459,7 @@ describe('Arcs demos', function() {
       'Buy gifts for Claire\'s Birthday on 2017-08-04, Estimate arrival date for products',
       'Check manufacturer information for products from your browsing context',
       'Find alternate shipping',
-      `Recommendations based on Claire\'s wishlist`
+      `Recommendations based on Claire's wishlist`
       // TODO: add 'and Claire\'s wishlist' when regex is supported.
     ].forEach(suggestion => {
       wait(8000);

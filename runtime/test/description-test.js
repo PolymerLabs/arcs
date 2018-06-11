@@ -103,7 +103,7 @@ recipe
       let {arc, recipe, ifooHandle, ofoosHandle, fooStore, foosStore} = (await prepareRecipeAndArc(`
 ${schemaManifest}
 ${aParticleManifest}
-  description \`read from \${ifoo}\ and populate \${ofoos}\`
+  description \`read from \${ifoo} and populate \${ofoos}\`
 ${recipeManifest}
       `));
 
@@ -137,7 +137,7 @@ ${recipeManifest}
       let {arc, recipe, ifooHandle, ofoosHandle, fooStore, foosStore} = (await prepareRecipeAndArc(`
 ${schemaManifest}
 ${aParticleManifest}
-  description \`read from \${ifoo}\ and populate \${ofoos}\`
+  description \`read from \${ifoo} and populate \${ofoos}\`
     ifoo \`my-in-foo\`
     ofoos \`my-out-foos\`
 ${recipeManifest}
@@ -172,7 +172,7 @@ ${recipeManifest}
       let {arc, recipe, ifooHandle, ofoosHandle, fooStore, foosStore} = (await prepareRecipeAndArc(`
 ${schemaManifest}
 ${aParticleManifest}
-  description \`read from \${ifoo}\ and populate \${ofoos}\`
+  description \`read from \${ifoo} and populate \${ofoos}\`
     ifoo \`my-in-foo\`
     ofoos \`The Foos from \${ifoo}\`
 ${recipeManifest}
@@ -199,7 +199,7 @@ ${recipeManifest}
       let {arc, recipe, ifooHandle, ofoosHandle, fooStore, foosStore} = (await prepareRecipeAndArc(`
 ${schemaManifest}
 ${aParticleManifest}
-  description \`read from \${ifoo}\ and populate \${ofoos}\`
+  description \`read from \${ifoo} and populate \${ofoos}\`
     ofoos \`The Foos from \${ifoo}\`
 ${recipeManifest}
     `));
@@ -225,7 +225,7 @@ ${recipeManifest}
       let {arc, recipe, ifooHandle, ofoosHandle, fooStore, foosStore} = (await prepareRecipeAndArc(`
 ${schemaManifest}
 ${aParticleManifest}
-  description \`read from \${ifoo}\ and populate \${ofoos}._name_\`
+  description \`read from \${ifoo} and populate \${ofoos}._name_\`
     ifoo \`[fooValue: \${ifoo.fooValue}]\`
     ofoos \`[A list of \${ifoo}._type_ with values: \${ofoos}._values_]\`
 ${recipeManifest}
@@ -251,7 +251,7 @@ ${recipeManifest}
       let {arc, recipe, ifooHandle, ofoosHandle, fooStore, foosStore} = (await prepareRecipeAndArc(`
 ${schemaManifest}
 ${aParticleManifest}
-  description \`read from \${ifoo}\ and populate \${ofoos}\`
+  description \`read from \${ifoo} and populate \${ofoos}\`
     ofoos \`my-foos\`
 ${bParticleManifest}
   description \`create the \${ofoo}\`

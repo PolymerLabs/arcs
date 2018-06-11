@@ -42,7 +42,7 @@ class DocScraper {
 
     matches.forEach(function(m) {
 
-      let lines = m.replace(/\r\n/g, '\n').replace(/^\s*\/\*\*|^\s*\*\/|^\s*\* ?|^\s*\<\!-\-|^s*\-\-\>/gm, '').split('\n');
+      let lines = m.replace(/\r\n/g, '\n').replace(/^\s*\/\*\*|^\s*\*\/|^\s*\* ?|^\s*<!--|^s*-->/gm, '').split('\n');
 
       let pragmas = [];
       lines = lines.filter(function(l) {
