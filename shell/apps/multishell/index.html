@@ -124,10 +124,9 @@
   const routeIframe = (iframe, href, linkHandler) => {
     //console.log('routeIframe');
     jackIframe(iframe, linkHandler);
-    iframe.contentWindow.location = href;
-    const resolved = href;
-    const vr = href.includes('/vr') ? href.replace('/vr', '/web') : href.replace('/web', '/vr');
-    //const resolved = new URL(href, document.location.href).href;
+    const resolved = new URL(href, window.top.location.href).href;
+    iframe.src = resolved;
+    const vr = resolved.includes('/vr') ? resolved.replace('/vr', '/web') : resolved.replace('/web', '/vr');
     iframe.dom.set({url: resolved, vr: vr, title: resolved});
   }
 
