@@ -272,26 +272,54 @@ const setBoolAttribute = function(node, attr, state) {
 };
 
 const _setSubTemplate = function(node, value, controller) {
-  // TODO(sjmiles): sub-template iteration ability
-  // specially implemented to support arcs (serialization boundary)
-  // Aim to re-implement as a plugin.
-  let template = value.template;
+  // TODO(sjmiles): sub-template iteration ability specially implemented to support arcs (serialization boundary)
+  // TODO(sjmiles): Aim to re-implement as a plugin.
+  let {template, models} = value;
   if (!template) {
     let container = node.getRootNode();
     template = container.querySelector(`template[${value.$template}]`);
   } else {
     template = maybeStringToTemplate(template);
   }
-  // TODO(sjmiles): reuse nodes instead of punting them
-  node.textContent = '';
-  if (template && value.models) {
-    for (let m of value.models) {
-      stamp(template).events(controller).set(m).appendTo(node);
-    }
+  _renderSubtemplates(node, controller, template, models);
+};
+
+const _renderSubtemplates = function(container, controller, template, models) {
+  //console.log('XList::_renderList:', props);
+  let next, child = container.firstElementChild;
+  if (template && models) {
+    models && models.forEach((model, i)=>{
+      next = child && child.nextElementSibling;
+      let dom;
+      // use existing node if possible
+      if (!child) {
+        dom = stamp(template).events(controller);
+        child = dom.root.firstElementChild;
+        if (child) {
+          child._subtreeDom = dom;
+          container.appendChild(dom.root);
+        }
+      }
+      if (child) {
+        child._subtreeDom.set(model);
+        child = next;
+      }
+    });
+  }
+  // remove extra nodes
+  while (child) {
+    next = child.nextElementSibling;
+    child.remove();
+    child = next;
   }
 };
 
+//window.stampCount = 0;
+//window.stampTime = 0;
+
 const stamp = function(template, opts) {
+  //const startTime = performance.now();
+  //window.stampCount++;
   template = maybeStringToTemplate(template);
   // construct (or use memoized) notes
   let notes = annotate(template, opts);
@@ -342,6 +370,7 @@ const stamp = function(template, opts) {
       return this;
     }
   };
+  //window.stampTime += performance.now() - startTime;
   return dom;
 };
 
