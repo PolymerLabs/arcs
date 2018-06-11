@@ -165,10 +165,10 @@ describe('resolve recipe', function() {
 
     let strategy = new ResolveRecipe(arc);
     let results = await strategy.generate({generated: [{result: manifest.recipes[0], score: 1}]});
-    assert.equal(results.length, 1);
+    assert.lengthOf(results, 1);
 
     let plan = results[0].result;
-    assert.equal(plan.slots.length, 2);
+    assert.lengthOf(plan.slots, 2);
     plan.normalize();
     assert.isTrue(plan.isResolved());
   });

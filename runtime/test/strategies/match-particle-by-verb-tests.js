@@ -55,7 +55,7 @@ describe('MatchParticleByVerb', function() {
     let inputParams = {generated: [{result: manifest.recipes[0], score: 1}]};
     let mpv = new MatchParticleByVerb(arc);
     let results = await mpv.generate(inputParams);
-    assert.equal(results.length, 3);
+    assert.lengthOf(results, 3);
     // Note: handle connections are not resolved yet.
     assert.deepEqual(['GalaxyJumper', 'SimpleJumper', 'StarJumper'], results.map(r => r.result.particles[0].name).sort());
   });
@@ -73,7 +73,7 @@ describe('MatchParticleByVerb', function() {
     planner.init(arc);
     let plans = await planner.plan(1000);
 
-    assert.equal(2, plans.length);
+    assert.lengthOf(plans, 2);
     assert.deepEqual([['SimpleJumper'], ['StarJumper']],
                      plans.map(plan => plan.particles.map(particle => particle.name)));
   });

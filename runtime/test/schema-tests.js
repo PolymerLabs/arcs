@@ -57,16 +57,16 @@ describe('schema', function() {
                                description: 'A sandwich with pickles and chicken',
                                image: 'http://www.example.com/pcs.jpg',
                                category: 'Delicious Food', shipDays: 5});
-    assert(product instanceof Product);
+    assert.instanceOf(product, Product);
     assert.equal(product.name, 'Pickled Chicken Sandwich');
     assert.equal(product.description, 'A sandwich with pickles and chicken');
     assert.equal(product.image, 'http://www.example.com/pcs.jpg');
     assert.equal(product.category, 'Delicious Food');
     assert.equal(product.shipDays, 5);
-    assert.equal(product.url, undefined);
-    assert.equal(product.identifier, undefined);
-    assert.equal(product.seller, undefined);
-    assert.equal(product.price, undefined);
+    assert.isUndefined(product.url);
+    assert.isUndefined(product.identifier);
+    assert.isUndefined(product.seller);
+    assert.isUndefined(product.price);
   });
 
   it('stores a copy of the constructor arguments', async function() {
@@ -78,7 +78,7 @@ describe('schema', function() {
     data.description = 'no seriously why';
     assert.equal(product.name, 'Seafood Ice Cream');
     assert.equal(product.category, 'Terrible Food');
-    assert.equal(product.description, undefined);
+    assert.isUndefined(product.description);
   });
 
   it('has accessors for all schema fields', async function() {
@@ -186,8 +186,8 @@ describe('schema', function() {
 
     unions.u1 = null;
     unions.u2 = undefined;
-    assert.equal(unions.u1, null);
-    assert.equal(unions.u2, undefined);
+    assert.isNull(unions.u1);
+    assert.isUndefined(unions.u2);
     assert.doesNotThrow(() => { new Unions({u1: null, u2: undefined}); });
 
     assert.throws(() => { new Unions({u1: false}); }, TypeError, 'Type mismatch setting field u1');
@@ -212,8 +212,8 @@ describe('schema', function() {
 
     tuples.t1 = null;
     tuples.t2 = undefined;
-    assert.equal(tuples.t1, null);
-    assert.equal(tuples.t2, undefined);
+    assert.isNull(tuples.t1);
+    assert.isUndefined(tuples.t2);
     assert.doesNotThrow(() => { new Tuples({t1: null, t2: undefined}); });
 
     assert.throws(() => { new Tuples({t1: 'foo'}); }, TypeError,

@@ -19,7 +19,7 @@ describe('SeleniumUtils', function() {
         <div outer>
         </div>`;
       const outer = target.querySelectorAll('div[outer]');
-      assert.equal(outer.length, 1);
+      assert.lengthOf(outer, 1);
       const shadow = outer[0].attachShadow({mode: 'open'});
       shadow.innerHTML = `
         <div inner>
@@ -39,7 +39,7 @@ describe('SeleniumUtils', function() {
         <div outer>
         </div>`;
       const outer = target.querySelectorAll('div[outer]');
-      assert.equal(outer.length, 1);
+      assert.lengthOf(outer, 1);
       const firstShadow = outer[0].attachShadow({mode: 'open'});
       firstShadow.innerHTML = `
         <div firstInner>
@@ -76,7 +76,7 @@ describe('SeleniumUtils', function() {
           </div>
         </div>`;
       const outer = target.querySelectorAll('div[outer]');
-      assert.equal(outer.length, 1);
+      assert.lengthOf(outer, 1);
       const firstShadow = outer[0].attachShadow({mode: 'open'});
       firstShadow.innerHTML = `
         <div firstInner>
@@ -113,7 +113,7 @@ describe('SeleniumUtils', function() {
         <div outer>
         </div>`;
       const outer = target.querySelectorAll('div[outer]');
-      assert.equal(outer.length, 1);
+      assert.lengthOf(outer, 1);
       const shadow = outer[0].attachShadow({mode: 'open'});
       shadow.innerHTML = `
         <div inner>

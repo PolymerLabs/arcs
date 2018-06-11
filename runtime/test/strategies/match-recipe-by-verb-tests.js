@@ -41,8 +41,8 @@ describe('MatchRecipeByVerb', function() {
     let inputParams = {generated: [{result: manifest.recipes[0], score: 1}]};
     let mrv = new MatchRecipeByVerb(arc);
     let results = await mrv.generate(inputParams);
-    assert.equal(results.length, 1);
-    assert.equal(results[0].result.particles.length, 0);
+    assert.lengthOf(results, 1);
+    assert.isEmpty(results[0].result.particles);
     assert.deepEqual(results[0].result.toString(), 'recipe\n  JumpingBoots.e <- NuclearReactor.e\n  JumpingBoots.f <- FootFactory.f');
   });
   it('plays nicely with constraints', async () => {
@@ -65,10 +65,10 @@ describe('MatchRecipeByVerb', function() {
     let inputParams = {generated: [{result: manifest.recipes[0], score: 1}]};
     let mrv = new MatchRecipeByVerb(arc);
     let results = await mrv.generate(inputParams);
-    assert.equal(results.length, 1);
+    assert.lengthOf(results, 1);
     let cctc = new ConvertConstraintsToConnections(arc);
     results = await cctc.generate({generated: results});
-    assert.equal(results.length, 1);
+    assert.lengthOf(results, 1);
     assert.deepEqual(results[0].result.toString(),
 `recipe
   create as handle0 // S {}
@@ -128,32 +128,32 @@ describe('MatchRecipeByVerb', function() {
     let inputParams = {generated: [{result: manifest.recipes[4], score: 1}]};
     let mrv = new MatchRecipeByVerb(arc);
     let results = await mrv.generate(inputParams);
-    assert.equal(results.length, 4);
+    assert.lengthOf(results, 4);
 
     inputParams = {generated: [{result: manifest.recipes[5], score: 1}]};
     results = await mrv.generate(inputParams);
-    assert.equal(results.length, 2);
-    assert.equal(results[0].result.particles.length, 1);
+    assert.lengthOf(results, 2);
+    assert.lengthOf(results[0].result.particles, 1);
     assert.equal(results[0].result.particles[0].name, 'P');
-    assert.equal(results[1].result.particles.length, 2);
+    assert.lengthOf(results[1].result.particles, 2);
     
     inputParams = {generated: [{result: manifest.recipes[6], score: 1}]};
     results = await mrv.generate(inputParams);
-    assert.equal(results.length, 2);
-    assert.equal(results[1].result.particles.length, 1);
+    assert.lengthOf(results, 2);
+    assert.lengthOf(results[1].result.particles, 1);
     assert.equal(results[1].result.particles[0].name, 'Q');
-    assert.equal(results[0].result.particles.length, 2);
+    assert.lengthOf(results[0].result.particles, 2);
     
     inputParams = {generated: [{result: manifest.recipes[7], score: 1}]};
     results = await mrv.generate(inputParams);
-    assert.equal(results.length, 2);
-    assert.equal(results[1].result.particles.length, 1);
+    assert.lengthOf(results, 2);
+    assert.lengthOf(results[1].result.particles, 1);
     assert.equal(results[1].result.particles[0].name, 'Q');
-    assert.equal(results[0].result.particles.length, 2);
+    assert.lengthOf(results[0].result.particles, 2);
 
     inputParams = {generated: [{result: manifest.recipes[8], score: 1}]};
     results = await mrv.generate(inputParams);
-    assert.equal(results.length, 3);
+    assert.lengthOf(results, 3);
   });
   it('listens to slot constraints', async () => {
     let manifest = await Manifest.parse(`
@@ -192,21 +192,21 @@ describe('MatchRecipeByVerb', function() {
     let inputParams = {generated: [{result: manifest.recipes[3], score: 1}]};
     let mrv = new MatchRecipeByVerb(arc);
     let results = await mrv.generate(inputParams);
-    assert.equal(results.length, 3);
+    assert.lengthOf(results, 3);
 
     inputParams = {generated: [{result: manifest.recipes[4], score: 1}]};
     results = await mrv.generate(inputParams);
-    assert.equal(results.length, 2);
-    assert.equal(results[0].result.particles.length, 1);
+    assert.lengthOf(results, 2);
+    assert.lengthOf(results[0].result.particles, 1);
     assert.equal(results[0].result.particles[0].name, 'Q');
-    assert.equal(results[1].result.particles.length, 2);
+    assert.lengthOf(results[1].result.particles, 2);
 
     inputParams = {generated: [{result: manifest.recipes[5], score: 1}]};
     results = await mrv.generate(inputParams);
-    assert.equal(results.length, 2);
-    assert.equal(results[0].result.particles.length, 1);
+    assert.lengthOf(results, 2);
+    assert.lengthOf(results[0].result.particles, 1);
     assert.equal(results[0].result.particles[0].name, 'P');
-    assert.equal(results[1].result.particles.length, 2);
+    assert.lengthOf(results[1].result.particles, 2);
   });
   it('carries handle assignments across verb substitution', async () => {
     let manifest = await Manifest.parse(`
@@ -232,7 +232,7 @@ describe('MatchRecipeByVerb', function() {
     let inputParams = {generated: [{result: manifest.recipes[1], score: 1}]};
     let mrv = new MatchRecipeByVerb(arc);
     let results = await mrv.generate(inputParams);
-    assert.equal(results.length, 1);
+    assert.lengthOf(results, 1);
     let recipe = results[0].result;
     assert.equal(recipe.particles[0].connections.a.handle, recipe.particles[1].connections.b.handle);
     assert.equal(recipe.particles[0].connections.a.handle.connections[0].particle, recipe.particles[0]);
@@ -262,7 +262,7 @@ describe('MatchRecipeByVerb', function() {
     let inputParams = {generated: [{result: manifest.recipes[1], score: 1}]};
     let mrv = new MatchRecipeByVerb(arc);
     let results = await mrv.generate(inputParams);
-    assert.equal(results.length, 1);
+    assert.lengthOf(results, 1);
     let recipe = results[0].result;
     assert.equal(recipe.particles[0].connections.a.handle, recipe.particles[1].connections.b.handle);
     assert.equal(recipe.particles[0].connections.a.handle.connections[0].particle, recipe.particles[0]);
@@ -299,7 +299,7 @@ describe('MatchRecipeByVerb', function() {
     let inputParams = {generated: [{result: manifest.recipes[1], score: 1}]};
     let mrv = new MatchRecipeByVerb(arc);
     let results = await mrv.generate(inputParams);
-    assert.equal(results.length, 1);
+    assert.lengthOf(results, 1);
     let recipe = results[0].result;
     assert.equal(recipe.particles[1].connections.a.handle, recipe.particles[2].connections.b.handle);
     assert.equal(recipe.particles[1].connections.a.handle.connections[0].particle, recipe.particles[1]);
@@ -337,7 +337,7 @@ describe('MatchRecipeByVerb', function() {
     let inputParams = {generated: [{result: manifest.recipes[1], score: 1}]};
     let mrv = new MatchRecipeByVerb(arc);
     let results = await mrv.generate(inputParams);
-    assert.equal(results.length, 1);
+    assert.lengthOf(results, 1);
     let recipe = results[0].result;
     assert.equal(recipe.particles[0].consumedSlotConnections.foo.providedSlots.bar, recipe.particles[1].consumedSlotConnections.bar.targetSlot);
     assert.equal(recipe.slots[0].consumeConnections[0], recipe.particles[1].consumedSlotConnections.bar);
@@ -392,7 +392,7 @@ describe('MatchRecipeByVerb', function() {
   let inputParams = {generated: [{result: manifest.recipes[1], score: 1}]};
   let mrv = new MatchRecipeByVerb(arc);
   let results = await mrv.generate(inputParams);
-  assert.equal(results.length, 1);
+  assert.lengthOf(results, 1);
   let recipe = results[0].result;
   assert.equal(recipe.particles[0].consumedSlotConnections.foo.providedSlots.bar, recipe.particles[1].consumedSlotConnections.bar.targetSlot);
   assert.equal(recipe.slots[0].consumeConnections[0], recipe.particles[1].consumedSlotConnections.bar);

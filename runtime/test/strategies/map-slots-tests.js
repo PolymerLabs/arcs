@@ -35,7 +35,7 @@ describe('MapSlots', function() {
 
     if (expectedSlots >= 0) {
       assert.isTrue(recipe.isResolved());
-      assert.equal(recipe.slots.length, expectedSlots);
+      assert.lengthOf(recipe.slots, expectedSlots);
     } else {
       assert.isFalse(recipe.normalize());
     }
@@ -48,7 +48,7 @@ describe('MapSlots', function() {
     }
 
     results = await StrategyTestHelper.theResults(arc, ResolveRecipe, recipe);
-    assert.equal(results.length, 1);
+    assert.lengthOf(results, 1);
     return results[0];
   };
 
@@ -131,7 +131,7 @@ describe('MapSlots', function() {
 
     let strategy = new MapSlots(arc);
     let results = await strategy.generate(inputParams);
-    assert.equal(results.length, 2);
+    assert.lengthOf(results, 2);
 
     results = await new ResolveRecipe(arc).generate({
       generated: results.map(r => ({
@@ -140,7 +140,7 @@ describe('MapSlots', function() {
       }))
     });
 
-    assert.equal(results.length, 2);
+    assert.lengthOf(results, 2);
     for (let result of results) {
       let plan = result.result;
       plan.normalize();

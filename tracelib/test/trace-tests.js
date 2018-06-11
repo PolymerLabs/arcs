@@ -271,7 +271,7 @@ describe('Tracing', function() {
     const events = [];
     Tracing.stream(event => events.push(event));
 
-    assert.lengthOf(events, 0);
+    assert.isEmpty(events);
 
     Tracing.start({cat: 'Stuff', name: 'Thingy::thing'}).end();
     await Promise.resolve(); // Streaming callback is scheduled on job queue.
@@ -293,7 +293,7 @@ describe('Tracing', function() {
     const events = [];
     Tracing.stream(event => events.push(event), event => event.name === 'I\'m Special');
 
-    assert.lengthOf(events, 0);
+    assert.isEmpty(events);
 
     Tracing.start({cat: 'Stuff', name: 'Thingy::thing'}).end();
     await Promise.resolve(); // Streaming callback is scheduled on job queue.

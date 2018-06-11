@@ -56,7 +56,7 @@ describe('particle-shape-loading-with-slots', function() {
   }
 
   function verifyFooItems(items, expectedValues) {
-    assert.equal(items.length, expectedValues.length);
+    assert.lengthOf(items, expectedValues.length);
     expectedValues.forEach(value => assert(items.find(item => item.value == value), `Cannot find item '${value}' in model`));
   }
 
@@ -73,9 +73,9 @@ describe('particle-shape-loading-with-slots', function() {
     await slotComposer.expectationsCompleted();
 
     // Verify slot template and models.
-    assert.equal(1, slotComposer._slots.length);
+    assert.lengthOf(slotComposer._slots, 1);
     let slot = slotComposer._slots[0];
-    assert.isTrue(slot._content.template.length > 0);
+    assert.isAbove(slot._content.template.length, 0);
     verifyFooItems(slot._content.model.items, ['foo1', 'foo2']);
 
     // Add one more element.
@@ -89,8 +89,8 @@ describe('particle-shape-loading-with-slots', function() {
     await slotComposer.expectationsCompleted();
 
     // Verify slot template and models.
-    assert.equal(1, slotComposer._slots.length);
-    assert.isTrue(slot._content.template.length > 0);
+    assert.lengthOf(slotComposer._slots, 1);
+    assert.isAbove(slot._content.template.length, 0);
     verifyFooItems(slot._content.model.items, ['foo1', 'foo2', 'foo3']);
   });
 
@@ -119,9 +119,9 @@ describe('particle-shape-loading-with-slots', function() {
     await slotComposer.expectationsCompleted();
 
     // Verify slot template and models.
-    assert.equal(1, slotComposer._slots.length);
+    assert.lengthOf(slotComposer._slots, 1);
     let slot = slotComposer._slots[0];
-    assert.isTrue(slot._content.template.length > 0);
+    assert.isAbove(slot._content.template.length, 0);
     verifyFooItems(slot._content.model.items, ['foo1', 'foo2']);
 
     // Add one more element.
@@ -136,8 +136,8 @@ describe('particle-shape-loading-with-slots', function() {
     await slotComposer.expectationsCompleted();
 
     // Verify slot template and models.
-    assert.equal(1, slotComposer._slots.length);
-    assert.isTrue(slot._content.template.length > 0);
+    assert.lengthOf(slotComposer._slots, 1);
+    assert.isAbove(slot._content.template.length, 0);
     verifyFooItems(slot._content.model.items, ['foo1', 'foo2', 'foo3']);
   });
 });

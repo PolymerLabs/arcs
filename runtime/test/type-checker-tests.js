@@ -78,7 +78,7 @@ describe('TypeChecker', () => {
     a.primitiveType().variable.resolution = resolution;
     let c = Type.newEntity(new Schema({names: ['Product', 'Thing'], fields: {}})).collectionOf();
     let result = TypeChecker.processTypeList(undefined, [{type: a, direction: 'out'}, {type: c, direction: 'in'}]);
-    assert.equal(result, null);
+    assert.isNull(result);
   });
 
   it('doesn\'t resolve a pair of out [~a (is Thing)], inout [Product]', async () => {
@@ -87,7 +87,7 @@ describe('TypeChecker', () => {
     a.primitiveType().variable.resolution = resolution;
     let c = Type.newEntity(new Schema({names: ['Product', 'Thing'], fields: {}})).collectionOf();
     let result = TypeChecker.processTypeList(undefined, [{type: a, direction: 'out'}, {type: c, direction: 'inout'}]);
-    assert.equal(result, null);
+    assert.isNull(result);
   });
 
   it('resolves inout [~a] (is Thing), in [~b] (is Thing), in [Product], in [~c], in [~d] (is Product)', async () => {
@@ -102,7 +102,7 @@ describe('TypeChecker', () => {
     resolution = Type.newEntity(new Schema({names: ['Product', 'Thing'], fields: {}}));
     e.primitiveType().variable.resolution = resolution;
     let result = TypeChecker.processTypeList(undefined, [{type: a, direction: 'inout'}, {type: b, direction: 'in'}, {type: c, direction: 'in'}, {type: d, direction: 'in'}, {type: e, direction: 'in'}]);
-    assert.equal(result, null);
+    assert.isNull(result);
   });
 
   it('doesn\'t depend on ordering in assigning a resolution to a type variable', async () => {

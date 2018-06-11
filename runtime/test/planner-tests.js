@@ -119,7 +119,7 @@ describe('Planner', function() {
         P1
           text <- handle
     `);
-    assert.equal(results.length, 1);
+    assert.lengthOf(results, 1);
   });
 
   it('can copy remote handles structurally', async () => {
@@ -132,7 +132,7 @@ describe('Planner', function() {
         P1
           text <- handle
     `);
-    assert.equal(results.length, 1);
+    assert.lengthOf(results, 1);
   });
 
   it('can resolve multiple consumed slots', async () => {
@@ -145,7 +145,7 @@ describe('Planner', function() {
         P1
           consume one as s0
     `);
-    assert.equal(results.length, 1);
+    assert.lengthOf(results, 1);
   });
 
   it('can speculate in parallel', async () => {
@@ -178,7 +178,7 @@ describe('Planner', function() {
         assertRecipeResolved(manifest.recipes[1]);
       }
     );
-    assert.equal(plans.length, 2);
+    assert.lengthOf(plans, 2);
     // Make sure the recipes were processed as separate async calls.
     assert.equal(plans[0].planIndex, 0);
     assert.equal(plans[1].planIndex, 1);
@@ -216,7 +216,7 @@ describe('AssignOrCopyRemoteHandles', function() {
       planner.init(arc);
       let plans = await planner.plan(1000);
 
-      assert.equal(plans.length, expectedResults, recipeManifest);
+      assert.lengthOf(plans, expectedResults, recipeManifest);
     };
 
     // map one
@@ -340,7 +340,7 @@ describe('Type variable resolution', function() {
   };
   let verifyResolvedPlan = async (manifestStr) => {
     let plans = await loadAndPlan(manifestStr);
-    assert.equal(1, plans.length);
+    assert.lengthOf(plans, 1);
 
     let recipe = plans[0];
     recipe.normalize();
@@ -349,7 +349,7 @@ describe('Type variable resolution', function() {
 
   let verifyUnresolvedPlan = async (manifestStr) => {
     let plans = await loadAndPlan(manifestStr);
-    assert.equal(0, plans.length);
+    assert.isEmpty(plans);
   };
   it('unresolved type variables', async () => {
     // [~a] doesn't resolve to Thing.
@@ -550,7 +550,7 @@ describe('Description', async () => {
         assertRecipeResolved(manifest.recipes[0]);
       }
     );
-    assert.equal(plans.length, 1);
+    assert.lengthOf(plans, 1);
     assert.equal('Make MYTHING.', await plans[0].description.getRecipeSuggestion());
     assert.equal(0, arc._storesById.size);
   });
@@ -578,7 +578,7 @@ describe('Automatic handle resolution', function() {
   };
   let verifyUnresolvedPlan = async (manifestStr, arcCreatedCallback) => {
     let plans = await loadAndPlan(manifestStr, arcCreatedCallback);
-    assert.lengthOf(plans, 0);
+    assert.isEmpty(plans);
   };
 
   it('introduces create handles for particle communication', async () => {

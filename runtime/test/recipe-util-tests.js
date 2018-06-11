@@ -31,11 +31,11 @@ describe('recipe-util', function() {
     let shape = RecipeUtil.makeShape(['A', 'B'], ['v'],
       {'A': {'a': 'v'}, 'B': {'b': 'v'}});
     let results = RecipeUtil.find(recipe, shape);
-    assert(results.length == 1);
-    assert(results[0].score == 0);
-    assert(results[0].match.A.name == 'A');
-    assert(results[0].match.B.name == 'B');
-    assert(results[0].match.v.localName == 'handle1');
+    assert.lengthOf(results, 1);
+    assert.equal(results[0].score, 0);
+    assert.equal(results[0].match.A.name, 'A');
+    assert.equal(results[0].match.B.name, 'B');
+    assert.equal(results[0].match.v.localName, 'handle1');
   });
 
   it('can produce multiple partial shape matches to a simple recipe', async () => {
@@ -63,17 +63,17 @@ describe('recipe-util', function() {
     let shape = RecipeUtil.makeShape(['A', 'B', 'C'], ['v'],
       {'A': {'a': 'v'}, 'B': {'b': 'v'}, 'C': {'c': 'v'}});
     let results = RecipeUtil.find(recipe, shape);
-    assert(results.length == 2);
-    assert(results[0].score == -1);
-    assert(results[0].match.A.name == 'A');
-    assert(results[0].match.B.name == 'B');
-    assert(results[0].match.C.name == 'C');
-    assert(results[0].match.v.localName == 'handle1');
-    assert(results[1].score == -1);
-    assert(results[1].match.A.name == 'A');
-    assert(results[1].match.B.name == 'B');
-    assert(results[1].match.C.name == 'C');
-    assert(results[1].match.v.localName == 'handle2');
+    assert.lengthOf(results, 2);
+    assert.equal(results[0].score, -1);
+    assert.equal(results[0].match.A.name, 'A');
+    assert.equal(results[0].match.B.name, 'B');
+    assert.equal(results[0].match.C.name, 'C');
+    assert.equal(results[0].match.v.localName, 'handle1');
+    assert.equal(results[1].score, -1);
+    assert.equal(results[1].match.A.name, 'A');
+    assert.equal(results[1].match.B.name, 'B');
+    assert.equal(results[1].match.C.name, 'C');
+    assert.equal(results[1].match.v.localName, 'handle2');
   });
 
   it('can match a free handle', async () => {
@@ -89,9 +89,9 @@ describe('recipe-util', function() {
     let shape = RecipeUtil.makeShape(['A', 'B'], ['v'],
       {'A': {'a': 'v'}, 'B': {'b': 'v'}});
     let results = RecipeUtil.find(recipe, shape);
-    assert(results.length == 1);
-    assert(results[0].score == -3);
-    assert(results[0].match.v.localName == 'h1');
+    assert.lengthOf(results, 1);
+    assert.equal(results[0].score, -3);
+    assert.equal(results[0].match.v.localName, 'h1');
   });
 
   it('can match dangling handle connections', async () => {
@@ -113,10 +113,10 @@ describe('recipe-util', function() {
     let shape = RecipeUtil.makeShape(['A', 'B'], ['h'],
       {'A': {'a': 'h'}, 'B': {'b': 'h'}});
     let results = RecipeUtil.find(recipe, shape);
-    assert(results.length == 1);
-    assert(results[0].score == -1);
-    assert(results[0].match.h.localName == 'h1');
-    assert(results[0].match['A:a'].name == 'a');
-    assert(results[0].match['B:b'].name == 'b');
+    assert.lengthOf(results, 1);
+    assert.equal(results[0].score, -1);
+    assert.equal(results[0].match.h.localName, 'h1');
+    assert.equal(results[0].match['A:a'].name, 'a');
+    assert.equal(results[0].match['B:b'].name, 'b');
   });
 });

@@ -33,12 +33,12 @@ class TestSuggestionComposer extends SuggestionComposer {
 describe('suggestion composer', function() {
   it('sets suggestions', async () => {
     let suggestionComposer = new TestSuggestionComposer();
-    assert.lengthOf(suggestionComposer.suggestions, 0);
+    assert.isEmpty(suggestionComposer.suggestions);
 
     // Sets suggestions
     await suggestionComposer.setSuggestions([1, 2, 3]);
     assert.equal(1, suggestionComposer.updatesCount);
-    assert.lengthOf(suggestionComposer.suggestions, 0);
+    assert.isEmpty(suggestionComposer.suggestions);
     await suggestionComposer.updateDone();
     assert.equal(1, suggestionComposer.updatesCount);
     assert.lengthOf(suggestionComposer.suggestions, 3);
@@ -57,6 +57,6 @@ describe('suggestion composer', function() {
     await suggestionComposer.updateDone();
     await suggestionComposer.updateDone();
     assert.equal(4, suggestionComposer.updatesCount);
-    assert.lengthOf(suggestionComposer.suggestions, 0);
+    assert.isEmpty(suggestionComposer.suggestions);
   });
 });

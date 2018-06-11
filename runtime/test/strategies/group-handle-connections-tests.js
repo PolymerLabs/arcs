@@ -48,9 +48,9 @@ describe('GroupHandleConnections', function() {
     let ghc = new GroupHandleConnections();
 
     let results = await ghc.generate(inputParams);
-    assert.equal(results.length, 1);
+    assert.lengthOf(results, 1);
     let recipe = results[0].result;
-    assert.equal(4, recipe.handles.length);
+    assert.lengthOf(recipe.handles, 4);
     // Verify all connections are bound to handles.
     assert.isUndefined(recipe.handleConnections.find(hc => !hc.handle));
     // Verify all handles have non-empty connections list.
@@ -72,6 +72,6 @@ describe('GroupHandleConnections', function() {
     let ghc = new GroupHandleConnections();
 
     let results = await ghc.generate(inputParams);
-    assert.lengthOf(results, 0);
+    assert.isEmpty(results);
   });
 });

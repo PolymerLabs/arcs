@@ -39,14 +39,14 @@ describe('FallbackFate', function() {
 
     // no resolved search tokens.
     let results = await strategy.generate(inputParams);
-    assert.equal(results.length, 0);
+    assert.isEmpty(results);
 
     // Resolved a search token and rerun strategy.
     recipe.search.resolveToken('DoSomething');
     results = (await strategy.generate(inputParams));
-    assert.equal(results.length, 1);
+    assert.lengthOf(results, 1);
     let plan = results[0].result;
-    assert.equal(plan.handles.length, 2);
+    assert.lengthOf(plan.handles, 2);
     assert.equal('map', plan.handles[0].fate);
     assert.equal('copy', plan.handles[1].fate);
   });
@@ -74,6 +74,6 @@ describe('FallbackFate', function() {
 
     let strategy = new FallbackFate(arc);
     let results = await strategy.generate(inputParams);
-    assert.equal(results.length, 0);
+    assert.isEmpty(results);
   });
 });

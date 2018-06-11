@@ -30,7 +30,7 @@ describe('dom-slot', function() {
 
     // context was null; set none null - initializes DOM context
     slot.setContainer('dummy-container');
-    assert.isTrue(slot.getContext() instanceof MockDomContext);
+    assert.instanceOf(slot.getContext(), MockDomContext);
     let clearCount = 0;
     slot.getContext().clear = () => { clearCount++; };
     assert.equal('dummy-container', slot.getContext().container);

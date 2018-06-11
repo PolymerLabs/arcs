@@ -28,7 +28,7 @@ describe('firebase', function() {
       'firebase://test-firebase-45a3e.firebaseio.com/AIzaSyBLqThan3QCOICj0JZ-nEwk27H4gmnADP8/test');
     await variable.set({id: 'test0:test', value});
     let result = await variable.get();
-    assert(value == result.value);
+    assert.equal(value, result.value);
   });
 
   it('can host a collection', async () => {
@@ -46,9 +46,9 @@ describe('firebase', function() {
     await collection.store({id: 'test0:test0', value: value1});
     await collection.store({id: 'test0:test1', value: value2});
     let result = await collection.get('test0:test0');
-    assert(value1 == result.value);
+    assert.equal(value1, result.value);
     result = await collection.toList();
-    assert(result.length == 2);
+    assert.lengthOf(result, 2);
     assert(result[0].value = value1);
     assert(result[0].id = 'test0:test0');
     assert(result[1].value = value2);

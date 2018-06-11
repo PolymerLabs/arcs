@@ -28,9 +28,9 @@ describe('CreateDescriptionHandle', function() {
     let strategy = new CreateDescriptionHandle();
     let results = (await strategy.generate(inputParams));
 
-    assert.equal(results.length, 1);
+    assert.lengthOf(results, 1);
     let plan = results[0].result;
-    assert.equal(plan.handles.length, 1);
+    assert.lengthOf(plan.handles, 1);
     assert.equal('create', plan.handles[0].fate);
     assert.isTrue(plan.isResolved());
   });

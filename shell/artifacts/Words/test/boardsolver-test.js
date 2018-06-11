@@ -14,7 +14,7 @@ describe('BoardSolver', function() {
         letters += 'Z' + Tile.StyleToNumber[Tile.Style.NORMAL];
       const board = new TileBoard({letters, shuffleAvailableCount: 0});
       const solver = new BoardSolver(dictionary, board);
-      assert.equal(solver.getValidWords().length, 0);
+      assert.isEmpty(solver.getValidWords());
     });
 
     // TODO(wkorman): Move this to a board test utility class.
@@ -42,7 +42,7 @@ describe('BoardSolver', function() {
       });
       const solver = new BoardSolver(dictionary, board);
       const validWords = solver.getValidWords();
-      assert.equal(validWords.length, 1);
+      assert.lengthOf(validWords, 1);
       assert.equal(validWords[0].text, 'CAT');
     });
   });

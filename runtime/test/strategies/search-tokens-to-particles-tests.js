@@ -32,7 +32,7 @@ describe('SearchTokensToParticles', function() {
     let inputParams = {generated: [], terminal: [{result: recipe, score: 1}]};
     let stp = new SearchTokensToParticles(arc);
     let results = await stp.generate(inputParams);
-    assert.equal(results.length, 2);
+    assert.lengthOf(results, 2);
     assert.deepEqual([['GalaxyFlyer', 'Rester', 'SimpleJumper'],
                       ['GalaxyFlyer', 'Rester', 'StarJumper']], results.map(r => r.result.particles.map(p => p.name).sort()));
     assert.deepEqual(['fly', 'jump', 'rester'], results[0].result.search.resolvedTokens);
@@ -62,7 +62,7 @@ describe('SearchTokensToParticles', function() {
     let inputParams = {generated: [], terminal: [{result: recipes[0], score: 1}, {result: recipes[1], score: 1}]};
     let stp = new SearchTokensToParticles(arc);
     let results = await stp.generate(inputParams);
-    assert.equal(results.length, 2);
+    assert.lengthOf(results, 2);
     let result = results[0].result;
     assert.deepEqual(['FlightPreparation', 'GalaxyFlyer', 'SimpleJumper'], result.particles.map(p => p.name).sort());
     assert.deepEqual(['fly', 'jump'], result.search.resolvedTokens);

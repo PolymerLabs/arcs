@@ -116,7 +116,7 @@ export class TestHelper {
     this.plans = await planner.suggest();
     if (options) {
       if (options.expectedNumPlans) {
-        assert.equal(options.expectedNumPlans, this.plans.length);
+        assert.lengthOf(this.plans, options.expectedNumPlans);
       }
       if (options.expectedSuggestions) {
         let suggestions = await Promise.all(this.plans.map(async p => await p.description.getRecipeSuggestion()));
@@ -159,14 +159,14 @@ export class TestHelper {
             });
           });
         }
-        assert.equal(1, plans.length);
+        assert.lengthOf(plans, 1);
         plan = plans[0];
       } else if (options.descriptionText) {
         plan = this.plans.find(p => p.descriptionText == options.descriptionText);
       }
     }
     if (!plan) {
-      assert.equal(1, this.plans.length);
+      assert.lengthOf(this.plans, 1);
       plan = this.plans[0];
     }
     this.log(`Accepting suggestion: '${((str) => str.length > 50 ? str.substring(0, Math.min(str.length, 50)).concat('...') : str)(plan.descriptionText)}'`);
@@ -183,7 +183,7 @@ export class TestHelper {
    * Getter for a single available suggestion plan (fails, if there is more than one).
    */
   get plan() {
-    assert.equal(1, this.plans.length);
+    assert.lengthOf(this.plans, 1);
     return this.plans[0].plan;
   }
 
@@ -232,12 +232,12 @@ export class TestHelper {
   async verifySetSize(particleName, connectionName, expectedSetSize) {
     this.log(`Verifying ${particleName}:${connectionName} size is: ${expectedSetSize}`);
     return this.verifyData(particleName, connectionName, async (handle) => {
-      assert.equal(expectedSetSize, (await handle.toList()).length, `${particleName}:${connectionName} expected size ${expectedSetSize}`);
+      assert.lengthOf((await handle.toList()), expectedSetSize, `${particleName}:${connectionName} expected size ${expectedSetSize}`);
     });
   }
 
   verifySlots(numSlots, verifyHandler) {
-    assert.equal(numSlots, this.slotComposer._slots.length);
+    assert.lengthOf(this.slotComposer._slots, numSlots);
     this.slotComposer._slots.forEach(s => verifyHandler(s.consumeConn.particle.name, s.consumeConn.name, s._content));
   }
 

@@ -20,7 +20,7 @@ describe('InitSearch', async () => {
     let initSearch = new InitSearch(arc);
     let inputParams = {generated: [], generation: 0};
     let results = await initSearch.generate(inputParams);
-    assert.equal(results.length, 1);
+    assert.lengthOf(results, 1);
     assert.equal(results[0].score, 0);
   });
 });
