@@ -20,7 +20,7 @@
 #include <string>
 
 #include "asylo/client.h"
-#include "quickstart/demo.pb.h"
+#include "arcs_enclave/demo.pb.h"
 #include "gflags/gflags.h"
 #include "asylo/util/logging.h"
 
@@ -31,14 +31,14 @@ DEFINE_string(message, "", "Message to encrypt");
 void SetEnclaveUserMessage(asylo::EnclaveInput *enclave_input,
                            const std::string &user_message) {
   guide::asylo::Demo *user_input =
-      enclave_input->MutableExtension(guide::asylo::quickstart_input);
+      enclave_input->MutableExtension(guide::asylo::arcs_enclave_input);
   user_input->set_value(user_message);
 }
 
 // Retrieves encrypted message from |output|. Intended to be used by the reader
 // for completing the exercise.
 const std::string GetEnclaveOutputMessage(const asylo::EnclaveOutput &output) {
-  return output.GetExtension(guide::asylo::quickstart_output).value();
+  return output.GetExtension(guide::asylo::arcs_enclave_output).value();
 }
 
 int main(int argc, char *argv[]) {

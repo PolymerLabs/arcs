@@ -21,7 +21,7 @@
 #include "absl/strings/escaping.h"
 #include "absl/strings/str_cat.h"
 #include "asylo/crypto/aes_gcm_siv.h"
-#include "quickstart/demo.pb.h"
+#include "arcs_enclave/demo.pb.h"
 #include "asylo/trusted_application.h"
 #include "asylo/util/cleansing_types.h"
 #include "asylo/util/statusor.h"
@@ -120,7 +120,7 @@ class EnclaveDemo : public TrustedApplication {
 
   // Retrieves user message from |input|.
   const std::string GetEnclaveUserMessage(const EnclaveInput &input) {
-    return input.GetExtension(guide::asylo::quickstart_input).value();
+    return input.GetExtension(guide::asylo::arcs_enclave_input).value();
   }
 
   // Populates |enclave_output|->value() with |output_message|. Intended to be
@@ -128,7 +128,7 @@ class EnclaveDemo : public TrustedApplication {
   void SetEnclaveOutputMessage(EnclaveOutput *enclave_output,
                                const std::string &output_message) {
     guide::asylo::Demo *output =
-        enclave_output->MutableExtension(guide::asylo::quickstart_output);
+        enclave_output->MutableExtension(guide::asylo::arcs_enclave_output);
     output->set_value(output_message);
   }
 };

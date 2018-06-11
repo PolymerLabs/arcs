@@ -48,7 +48,7 @@ sim_enclave(
 )
 
 enclave_loader(
-    name = "quickstart",
+    name = "arcs_enclave",
     srcs = ["demo_driver.cc"],
     enclaves = {"enclave": ":demo_enclave"},
     loader_args = ["--enclave_path='{enclave}'"],

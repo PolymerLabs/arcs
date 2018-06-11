@@ -1,4 +1,4 @@
-workspace(name = "asylo_examples")
+workspace(name = "arcs_enclave")
 
 # Download and use the Asylo SDK. Uncomment the sha256 line and replace with an
 # appropriate hash to protect the integrity of your toolchain. It is commented
