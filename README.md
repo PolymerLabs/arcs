@@ -307,8 +307,22 @@ like `rm -fr binutils* gcc* newlib*`.)
 Then you can run commands like:
 
 ```
-bazel run --config=enc-sim //quickstart -- --message="Asylo Rocks"
+arcs/asylo> bazel run --config=enc-sim //arcs_enclave -- --message="Asylo Rocks"
+<snip>
+Encrypted message:
+9d82bea89d6f122c22b3135cfad94b8490865083963f35866e78c2583a1422b6d7b7d4071bb42a
 ```
+
+After the first build, you can use
+
+```
+arcs/asylo> bazel-bin/arcs_enclave/arcs_enclave --message foo
+Encrypted message:
+abf84f98765d09ce274257c15412a01cd2c0a697e5380ebf2c90fb64b858a5
+```
+
+Notice how the two messages are different. Asylo (with the current storage
+mechanisms) is stateless, so we must store our state elsewhere.
 
 
 ############################################
