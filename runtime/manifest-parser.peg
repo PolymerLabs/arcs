@@ -351,7 +351,7 @@ ParticleArgumentList
   }
 
 ParticleArgument
-  = direction:ParticleArgumentDirection whiteSpace type:ParticleArgumentType isOptional:'?'? whiteSpace name:lowerIdent
+  = direction:ParticleArgumentDirection whiteSpace type:ParticleArgumentType isOptional:'?'? nametag:NameAndTagList
   {
     return {
       kind: 'particle-argument',
@@ -360,7 +360,8 @@ ParticleArgument
       type: type,
       isOptional: !!isOptional,
       dependentConnections: [],
-      name,
+      name: nametag.name,
+      tags: nametag.tags,
     };
   }
 
@@ -787,6 +788,32 @@ VerbList
 SpaceTagList
   = whiteSpace tags:TagList
   { return tags; }
+
+// Allow for an optional name followed by a TagList
+// - If name is not specified the first tag is used for the name
+// - Syntax error if no name or taglist are provided.
+NameAndTagList
+   = whiteSpace name:lowerIdent whiteSpace tags:TagList
+   {
+     return {
+       name: name,
+       tags: tags
+     }
+   }
+   / whiteSpace name:lowerIdent
+   {
+     return {
+       name: name,
+       tags: []
+     };
+   }
+   / whiteSpace tags:TagList
+   {
+      return {
+        name: tags[0],
+        tags: tags
+      }
+   }
 
 ParticleRef
   = name:upperIdent
