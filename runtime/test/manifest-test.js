@@ -1409,4 +1409,33 @@ resource SomeName
     assert(slotConnection._providedSlots.provideSlot);
     assert.equal(slotConnection._providedSlots.provideSlot.sourceConnection, slotConnection);
   });
+
+  it('can parse particle arguments with tags and optional names', async () => {
+    let manifest = await Manifest.parse(`
+      schema Dog
+      schema Sled
+      schema DogSled
+      particle DogSledMaker in 'thing.js'
+        in Dog #leader
+        in [Dog] team
+        in Sled sled #dogsled
+        out DogSled dogsled #multidog #winter #sled
+    `);
+
+    assert.equal(manifest.particles.length, 1);
+    assert.equal(manifest.particles[0].connections.length, 4);
+
+    let connections = manifest.particles[0].connections;
+    assert.equal(connections[0].name, 'leader');
+    assert.deepEqual(connections[0].tags, ['leader']);
+
+    assert.equal(connections[1].name, 'team');
+    assert.equal(connections[1].tags.length, 0);
+
+    assert.equal(connections[2].name, 'sled');
+    assert.deepEqual(connections[2].tags, ['dogsled']);
+
+    assert.equal(connections[3].name, 'dogsled');
+    assert.deepEqual(connections[3].tags, ['multidog', 'winter', 'sled']);
+  });
 });
