@@ -324,6 +324,15 @@ abf84f98765d09ce274257c15412a01cd2c0a697e5380ebf2c90fb64b858a5
 Notice how the two messages are different. Asylo (with the current storage
 mechanisms) is stateless, so we must store our state elsewhere.
 
+To build our CouchDB docker with support for encryption via Asylo, run
+
+```
+arcs> docker build -t test-with-asylo .
+arcs> docker run -p 5984:5984 -d \
+  -v $(pwd)/asylo/host/storage:/opt/storage \
+  test-with-asylo
+```
+
 
 ############################################
 ###################### OLD FROM HERE ON DOWN
