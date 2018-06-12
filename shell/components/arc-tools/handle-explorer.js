@@ -40,7 +40,7 @@ const template = html`
 `;
 
 const handleTemplate = html`
-  <div>
+  <div style="border-bottom: 1px dashed silver; padding-bottom: 8px; margin-bottom: 8px;">
     <data-explorer style="font-size: 0.8em;" object="{{data}}"></data-explorer>
   </div>
 `;
