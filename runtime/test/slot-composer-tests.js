@@ -30,17 +30,8 @@ class MockSlot extends Slot {
   }
 }
 
-class MockContext {
-  constructor(context) {
-    this.context = context;
-  }
-  isEqual(other) {
-    return this.context == other.context;
-  }
-}
-
 async function initSlotComposer(recipeStr) {
-  let slotComposer = new SlotComposer({affordance: 'mock', rootContext: new MockContext('dummy-context')});
+  let slotComposer = new SlotComposer({affordance: 'mock', rootContainer: 'dummy-container'});
   slotComposer._affordance._slotClass = MockSlot;
 
   let manifest = (await Manifest.parse(recipeStr));
@@ -115,7 +106,7 @@ recipe
 
     // update inner slots
     startRenderParticles.length = 0;
-    rootSlot.getInnerContext = (providedSlotName) => providedSlotName == 'mySlot' ? 'dummy-inner-context' : null;
+    rootSlot.getInnerContainer = (providedSlotName) => providedSlotName == 'mySlot' ? 'dummy-inner-container' : null;
     await slotComposer.updateInnerSlots(rootSlot);
     assert.deepEqual(['B', 'BB'], startRenderParticles);
 

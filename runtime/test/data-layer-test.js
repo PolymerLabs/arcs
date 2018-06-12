@@ -19,7 +19,7 @@ describe('entity', async function() {
   it('can be created, stored, and restored', async () => {
     let schema = new Schema({names: ['TestSchema'], fields: {'value': 'Text'}});
 
-    let arc = new Arc({slotComposer: new SlotComposer({rootContext: 'test', affordance: 'mock'}), id: 'test'});
+    let arc = new Arc({slotComposer: new SlotComposer({rootContainer: 'test', affordance: 'mock'}), id: 'test'});
     let entity = new (schema.entityClass())({value: 'hello world'});
     assert.isDefined(entity);
     let storage = await arc.createStore(Type.newEntity(schema).collectionOf());

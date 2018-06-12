@@ -13,7 +13,7 @@ import {SuggestionComposer} from '../suggestion-composer.js';
 
 class TestSuggestionComposer extends SuggestionComposer {
   constructor() {
-    super({affordance: 'mock', _contextSlots: [{name: 'suggestions', context: {}}]});
+    super({affordance: 'mock', _contextSlots: [{name: 'suggestions', container: {}}]});
     this.suggestions = [];
     this.updatesCount = 0;
     this.updateResolve = null;

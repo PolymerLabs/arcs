@@ -19,20 +19,20 @@ export class DomSetContext {
     this._containerKind = containerKind;
     this._contextClass = contextClass || DomContext;
   }
-  initContext(context) {
-    Object.keys(context).forEach(subId => {
+  initContainer(container) {
+    Object.keys(container).forEach(subId => {
       let subContext = this._contextBySubId[subId];
-      if (!subContext || !subContext.isEqual(context[subId])) {
+      if (!subContext || !subContext.isSameContainer(container[subId])) {
         // Replace the context corresponding to subId with a newly created context,
         // while maintaining the template name.
         subContext = new this._contextClass(null, this._containerKind, subId, subContext ? subContext._templateName : null);
         this._contextBySubId[subId] = subContext;
       }
-      subContext.initContext(context[subId]);
+      subContext.initContainer(container[subId]);
     });
-    // Delete sub-contexts that are not found in the new context.
+    // Delete sub-contexts that don't have a container in the new containers map.
     Object.keys(this._contextBySubId).forEach(subId => {
-      if (!context[subId]) {
+      if (!container[subId]) {
         delete this._contextBySubId[subId];
       }
     });
@@ -40,9 +40,9 @@ export class DomSetContext {
   updateParticleName(slotName, particleName) {
     Object.values(this._contextBySubId).forEach(context => context.updateParticleName(slotName, particleName));
   }
-  isEqual(context) {
-    return Object.keys(this._contextBySubId).length == Object.keys(context).length &&
-           !Object.keys(this._contextBySubId).find(c => this._contextBySubId[c] != context[c]);
+  isSameContainer(container) { // container is an Object {subId, dom-element}
+    return Object.keys(this._contextBySubId).length == Object.keys(container).length &&
+           !Object.keys(this._contextBySubId).find(subId => this._contextBySubId[subId].isSameContainer(container[subId]));
   }
   setTemplate(templatePrefix, templateName, template) {
     let isStringTemplateName = typeof templateName == 'string';
@@ -91,15 +91,15 @@ export class DomSetContext {
   observe(observer) {
     Object.values(this._contextBySubId).forEach(context => context.observe(observer));
   }
-  getInnerContext(innerSlotName) {
-    let innerContexts = {};
+  getInnerContainer(innerSlotName) {
+    let innerContainers = {};
     Object.keys(this._contextBySubId).forEach(subId => {
-      innerContexts[subId] = this._contextBySubId[subId].getInnerContext(innerSlotName);
+      innerContainers[subId] = this._contextBySubId[subId].getInnerContainer(innerSlotName);
     });
-    return innerContexts;
+    return innerContainers;
   }
-  initInnerContexts(slotSpec) {
-    Object.keys(this._contextBySubId).forEach(subId => this._contextBySubId[subId].initInnerContexts(slotSpec, subId));
+  initInnerContainers(slotSpec) {
+    Object.values(this._contextBySubId).forEach(context => context.initInnerContainers(slotSpec));
   }
   isDirectInnerSlot(slot) {
     return Object.values(this._contextBySubId).find(context => context.isDirectInnerSlot(slot)) != null;

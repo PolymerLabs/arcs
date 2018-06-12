@@ -36,7 +36,7 @@ async function setup() {
     Bar: manifest.findSchemaByName('Bar').entityClass(),
   };
 }
-const slotComposer = new SlotComposer({rootContext: 'test', affordance: 'mock'});
+const slotComposer = new SlotComposer({rootContainer: 'test', affordance: 'mock'});
 
 describe('Arc', function() {
   it('idle can safely be called multiple times', async () => {
@@ -120,7 +120,7 @@ describe('Arc', function() {
 
     let recipe = manifest.recipes[0];
 
-    let slotComposer = new SlotComposer({affordance: 'mock', rootContext: 'slotid'});
+    let slotComposer = new SlotComposer({affordance: 'mock', rootContainer: 'slotid'});
 
     let slotComposer_createHostedSlot = slotComposer.createHostedSlot;
 

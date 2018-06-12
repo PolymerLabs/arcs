@@ -34,7 +34,7 @@ export class MockDomSlot extends DomSlot {
       this._content = {};
     }
   }
-  getInnerContext(slotName) {
+  getInnerContainer(slotName) {
     if (this._content.template) {
       let template = typeof this._content.template == 'string' ? this._content.template : Object.values(this._content.template)[0];
       if (template.indexOf(`slotid="${slotName}"`) > 0) {
@@ -60,21 +60,21 @@ export class MockDomSlot extends DomSlot {
 export class MockDomContext extends DomContext {
   observe(observer) {}
   stampTemplate(eventHandler) {}
-  initContext(context) {
-    this._context = context;
+  initContainer(container) {
+    this._container = container;
   }
   createTemplateElement(template) {
     return template;
   }
   _setParticleName(name) {
   }
-  getInnerContext(innerSlotName) {
-    return 'dummy-inner-context';
+  getInnerContainer(innerSlotName) {
+    return 'dummy-inner-container';
   }
   updateModel(model) {
   }
-  isEqual(context) {
-    return this == context;
+  isSameContainer(container) {
+    return this == container;
   }
   clear() {}
 }

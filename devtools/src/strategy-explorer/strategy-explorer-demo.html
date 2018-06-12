@@ -26,7 +26,7 @@ import StrategyExplorerAdapter from '../../../runtime/debug/strategy-explorer-ad
   let a = new Arc({
     id: "test-plan-arc",
     context: manifest,
-    slotComposer: new SlotComposer({rootContext: document.body, affordance: "dom"})
+    slotComposer: new SlotComposer({rootContainer: document.body, affordance: "dom"})
   });
   a._search = 'I want a Chooser and a GiftList and ShowCollection';
   let p = new Planner();

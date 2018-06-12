@@ -15,45 +15,45 @@ import Template from '../shell/components/xen/xen-template.js';
 const templateByName = new Map();
 
 export class DomContext {
-  constructor(context, containerKind, subId, templateName) {
-    this._context = context;
-    this._containerKind = containerKind;
+  constructor(container, containerKind, subId, templateName) {
+    this._container = container; // html node, e.g. <div>
+    this._containerKind = containerKind; // string, e.g 'div'
     // TODO(sjmiles): _liveDom needs new name
     this._liveDom = null;
-    this._innerContextBySlotName = {};
+    this._innerContainerBySlotName = {};
     this._templateName = templateName || null;
     this._subId = subId || null;
   }
   get subId() {return this._subId; }
   set subId(subId) { this._subId = subId; }
-  static clear(context) {
-    context.textContent = '';
+  static clear(container) {
+    container.textContent = '';
   }
-  static createContext(context, content) {
-    let domContext = new DomContext(context);
-    domContext._stampTemplate(domContext.createTemplateElement(content.template), () => {});
-    domContext.updateModel(content.model);
-    return domContext;
+  static createContext(container, content) {
+    let context = new DomContext(container);
+    context._stampTemplate(context.createTemplateElement(content.template), () => {});
+    context.updateModel(content.model);
+    return context;
   }
-  initContext(context) {
-    assert(context);
-    if (!this._context) {
-      this._context = document.createElement(this._containerKind || 'div');
+  initContainer(container) {
+    assert(container);
+    if (!this._container) {
+      this._container = document.createElement(this._containerKind || 'div');
       this._setParticleName('');
-      context.appendChild(this._context);
+      container.appendChild(this._container);
     } else {
-      //assert(this._context.parentNode == context, 'TODO: add support for moving slot to different context');
+      //assert(this._container.parentNode == container, 'TODO: add support for moving slot to different container');
     }
   }
   updateParticleName(slotName, particleName) {
     this._setParticleName(`${slotName}::${particleName}`);
   }
   _setParticleName(name) {
-    this._context.setAttribute('particle-host', name);
+    this._container.setAttribute('particle-host', name);
   }
-  get context() { return this._context; }
-  isEqual(context) {
-    return this._context.parentNode == context;
+  get container() { return this._container; }
+  isSameContainer(container) {
+    return this._container.parentNode == container;
   }
   setTemplate(templatePrefix, templateName, template) {
     this._templateName = [templatePrefix, templateName].filter(s => s).join('::');
@@ -86,7 +86,7 @@ export class DomContext {
       this._liveDom.root.textContent = '';
     }
     this._liveDom = null;
-    this._innerContextBySlotName = {};
+    this._innerContainerBySlotName = {};
   }
   static createTemplateElement(template) {
     return Object.assign(document.createElement('template'), {innerHTML: template});
@@ -104,26 +104,26 @@ export class DomContext {
   _stampTemplate(template, eventHandler) {
     if (!this._liveDom) {
       // TODO(sjmiles): hack to allow subtree elements (e.g. x-list) to marshal events
-      this._context._eventMapper = this._eventMapper.bind(this, eventHandler);
+      this._container._eventMapper = this._eventMapper.bind(this, eventHandler);
       this._liveDom = Template
           .stamp(template)
-          .events(this._context._eventMapper)
-          .appendTo(this._context);
+          .events(this._container._eventMapper)
+          .appendTo(this._container);
     }
   }
   observe(observer) {
-    observer.observe(this._context, {childList: true, subtree: true});
+    observer.observe(this._container, {childList: true, subtree: true});
   }
-  getInnerContext(innerSlotName) {
-    return this._innerContextBySlotName[innerSlotName];
+  getInnerContainer(innerSlotName) {
+    return this._innerContainerBySlotName[innerSlotName];
   }
-  isDirectInnerSlot(slot) {
-    if (slot === this._context) {
+  isDirectInnerSlot(container) {
+    if (container === this._container) {
       return true;
     }
-    let parentNode = slot.parentNode;
+    let parentNode = container.parentNode;
     while (parentNode) {
-      if (parentNode == this._context) {
+      if (parentNode == this._container) {
         return true;
       }
       if (parentNode.getAttribute('slotid')) {
@@ -139,33 +139,33 @@ export class DomContext {
     // TODO(sjmiles): remember that attribute names from HTML are lower-case
     return node[name] || node.getAttribute(name);
   }
-  initInnerContexts(slotSpec) {
-    this._innerContextBySlotName = {};
-    Array.from(this._context.querySelectorAll('[slotid]')).forEach(elem => {
-      if (!this.isDirectInnerSlot(elem)) {
+  initInnerContainers(slotSpec) {
+    this._innerContainerBySlotName = {};
+    Array.from(this._container.querySelectorAll('[slotid]')).forEach(container => {
+      if (!this.isDirectInnerSlot(container)) {
         // Skip inner slots of an inner slot of the given slot.
         return;
       }
-      const slotId = this.getNodeValue(elem, 'slotid');
+      const slotId = this.getNodeValue(container, 'slotid');
       const providedSlotSpec = slotSpec.getProvidedSlotSpec(slotId);
       if (!providedSlotSpec) { // Skip non-declared slots
         console.warn(`Slot ${slotSpec.name} has unexpected inner slot ${slotId}`);
         return;
       }
-      const subId = this.getNodeValue(elem, 'subid');
+      const subId = this.getNodeValue(container, 'subid');
       this._validateSubId(providedSlotSpec, subId);
-      this._initInnerSlotContext(slotId, subId, elem);
+      this._initInnerSlotContainer(slotId, subId, container);
     });
   }
-  _initInnerSlotContext(slotId, subId, elem) {
+  _initInnerSlotContainer(slotId, subId, container) {
     if (subId) {
-      if (!this._innerContextBySlotName[slotId]) {
-        this._innerContextBySlotName[slotId] = {};
+      if (!this._innerContainerBySlotName[slotId]) {
+        this._innerContainerBySlotName[slotId] = {};
       }
-      assert(!this._innerContextBySlotName[slotId][subId], `Multiple ${slotId}:${subId} inner slots cannot be provided`);
-      this._innerContextBySlotName[slotId][subId] = elem;
+      assert(!this._innerContainerBySlotName[slotId][subId], `Multiple ${slotId}:${subId} inner slots cannot be provided`);
+      this._innerContainerBySlotName[slotId][subId] = container;
     } else {
-      this._innerContextBySlotName[slotId] = elem;
+      this._innerContainerBySlotName[slotId] = container;
     }
   }
   _validateSubId(providedSlotSpec, subId) {
@@ -173,15 +173,15 @@ export class DomContext {
     assert(Boolean(this.subId || subId) === providedSlotSpec.isSet,
         `Sub-id ${subId} for provided slot ${providedSlotSpec.name} doesn't match set spec: ${providedSlotSpec.isSet}`);
   }
-  findRootSlots() {
-    let innerSlotById = {};
-    Array.from(this._context.querySelectorAll('[slotid]')).forEach(s => {
-      assert(this.isDirectInnerSlot(s), 'Unexpected inner slot');
-      let slotId = s.getAttribute('slotid');
-      assert(!innerSlotById[slotId], `Duplicate root slot ${slotId}`);
-      innerSlotById[slotId] = s;
+  findRootContainers() {
+    let containerBySlotId = {};
+    Array.from(this._container.querySelectorAll('[slotid]')).forEach(container => {
+      assert(this.isDirectInnerSlot(container), 'Unexpected inner slot');
+      let slotId = container.getAttribute('slotid');
+      assert(!containerBySlotId[slotId], `Duplicate root slot ${slotId}`);
+      containerBySlotId[slotId] = container;
     });
-    return innerSlotById;
+    return containerBySlotId;
   }
   _eventMapper(eventHandler, node, eventName, handlerName) {
     node.addEventListener(eventName, event => {
