@@ -49,7 +49,7 @@ export class Particle {
   setViews(views) {
   }
 
-  /** @method onHandleSync(handle, model, version)
+  /** @method onHandleSync(handle, model)
    * Called for handles that are configured with both keepSynced and notifySync, when they are
    * updated with the full model of their data. This will occur once after setHandles() and any time
    * thereafter if the handle is resynchronized.
@@ -57,12 +57,11 @@ export class Particle {
    * handle: The Handle instance that was updated.
    * model: For Variable-backed Handles, the Entity data or null if the Variable is not set.
    *        For Collection-backed Handles, the Array of Entities, which may be empty.
-   * version: The received version number.
    */
-  onHandleSync(handle, model, version) {
+  onHandleSync(handle, model) {
   }
 
-  /** @method onHandleUpdate(handle, update, version)
+  /** @method onHandleUpdate(handle, update)
    * Called for handles that are configued with notifyUpdate, when change events are received from
    * the backing store. For handles also configured with keepSynced these events will be correctly
    * ordered, with some potential skips if a desync occurs. For handles not configured with
@@ -73,12 +72,11 @@ export class Particle {
    *    data: The full Entity for a Variable-backed Handle.
    *    added: An Array of Entities added to a Collection-backed Handle.
    *    removed: An Array of Entities removed from a Collection-backed Handle.
-   * version: The received version number.
    */
-  onHandleUpdate(handle, update, version) {
+  onHandleUpdate(handle, update) {
   }
 
-  /** @method onHandleDesync(handle, version)
+  /** @method onHandleDesync(handle)
    * Called for handles that are configured with both keepSynced and notifyDesync, when they are
    * detected as being out-of-date against the backing store. For Variables, the event that triggers
    * this will also resync the data and thus this call may usually be ignored. For Collections, the
@@ -86,10 +84,8 @@ export class Particle {
    * onHandleSync will be invoked when that is received.
    *
    * handle: The Handle instance that was desynchronized.
-   * version: The received version number, which will be more than one ahead of the previously
-   *          stored data.
    */
-  onHandleDesync(handle, version) {
+  onHandleDesync(handle) {
   }
 
   constructInnerArc() {

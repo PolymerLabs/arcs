@@ -140,7 +140,7 @@ class Collection extends Handle {
   }
 
   // Called by StorageProxy.
-  _notify(forSync, particle, version, details) {
+  _notify(forSync, particle, details) {
     assert(this.canRead, '_notify should not be called for non-readable handles');
     if (forSync) {
       particle.onHandleSync(this, this._restore(details));
@@ -206,7 +206,7 @@ class Variable extends Handle {
   }
 
   // Called by StorageProxy.
-  _notify(forSync, particle, version, details) {
+  _notify(forSync, particle, details) {
     assert(this.canRead, '_notify should not be called for non-readable handles');
     if (forSync) {
       particle.onHandleSync(this, this._restore(details));

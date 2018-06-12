@@ -85,7 +85,7 @@ export class StorageProxy {
       // model, notify it immediately.
       // TODO: add a unit test to cover this case
       if (handle.options.notifySync && this._synchronized) {
-        handle._notify(true, particle, this._version, this._model);
+        handle._notify(true, particle, this._model);
       }
     }
   }
@@ -116,7 +116,7 @@ export class StorageProxy {
     }
     for (let {handle, particle} of this._observers) {
       if (handle.options.keepSynced && handle.options.notifySync) {
-        handle._notify(true, particle, this._version, this._model, null);
+        handle._notify(true, particle, this._model, null);
       }
     }
     this._processUpdates();
@@ -127,7 +127,7 @@ export class StorageProxy {
     // Immediately notify any handles that are not configured with keepSynced but do want updates.
     for (let {handle, particle} of this._observers) {
       if (!handle.options.keepSynced && handle.options.notifyUpdate) {
-        handle._notify(false, particle, update.version, update);
+        handle._notify(false, particle, update);
       }
     }
 
@@ -179,7 +179,7 @@ export class StorageProxy {
       // notified as updates are received).
       for (let {handle, particle} of this._observers) {
         if (handle.options.keepSynced && handle.options.notifyUpdate) {
-          handle._notify(false, particle, this._version, update);
+          handle._notify(false, particle, update);
         }
       }
     }
