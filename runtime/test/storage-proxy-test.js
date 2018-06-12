@@ -91,11 +91,11 @@ class TestParticle {
     this._report = report;
   }
 
-  onHandleSync(handle, model, version) {
-    this._report(['onHandleSync', handle.name, version, this._toString(model)].join(':'));
+  onHandleSync(handle, model) {
+    this._report(['onHandleSync', handle.name, this._toString(model)].join(':'));
   }
 
-  onHandleUpdate(handle, update, version) {
+  onHandleUpdate(handle, update) {
     let details = '';
     if ('data' in update) {
       details += this._toString(update.data);
@@ -106,11 +106,11 @@ class TestParticle {
     if ('removed' in update) {
       details += '-' + this._toString(update.removed);
     }
-    this._report(['onHandleUpdate', handle.name, version, details].join(':'));
+    this._report(['onHandleUpdate', handle.name, details].join(':'));
   }
 
-  onHandleDesync(handle, version) {
-    this._report(['onHandleDesync', handle.name, version].join(':'));
+  onHandleDesync(handle) {
+    this._report(['onHandleDesync', handle.name].join(':'));
   }
 
   _toString(item) {
@@ -273,15 +273,15 @@ describe('storage-proxy', function() {
     engine.sendSync(barStore);
     engine.verify('InitializeProxy:foo', 'SynchronizeProxy:foo',
                   'InitializeProxy:bar', 'SynchronizeProxy:bar',
-                  'onHandleSync:foo:0:(null)', 'onHandleSync:bar:0:[]');
+                  'onHandleSync:foo:(null)', 'onHandleSync:bar:[]');
 
     engine.sendUpdate(fooStore, fooStore.set(engine.newEntity('oh')));
     engine.sendUpdate(barStore, barStore.store('i1', engine.newEntity('hai')));
-    engine.verify('onHandleUpdate:foo:1:oh', 'onHandleUpdate:bar:1:+[hai]');
+    engine.verify('onHandleUpdate:foo:oh', 'onHandleUpdate:bar:+[hai]');
 
     engine.sendUpdate(fooStore, fooStore.clear());
     engine.sendUpdate(barStore, barStore.remove('i1'));
-    engine.verify('onHandleUpdate:foo:2:(null)', 'onHandleUpdate:bar:2:-[hai]');
+    engine.verify('onHandleUpdate:foo:(null)', 'onHandleUpdate:bar:-[hai]');
   });
 
   it('notifies for updates to initially populated handles', async () => {
@@ -302,15 +302,15 @@ describe('storage-proxy', function() {
     engine.sendSync(barStore);
     engine.verify('InitializeProxy:foo', 'SynchronizeProxy:foo',
                   'InitializeProxy:bar', 'SynchronizeProxy:bar',
-                  'onHandleSync:foo:1:well', 'onHandleSync:bar:2:[hi|there]');
+                  'onHandleSync:foo:well', 'onHandleSync:bar:[hi|there]');
 
     engine.sendUpdate(fooStore, fooStore.set(engine.newEntity('gday')));
     engine.sendUpdate(barStore, barStore.store('i3', engine.newEntity('mate')));
-    engine.verify('onHandleUpdate:foo:2:gday', 'onHandleUpdate:bar:3:+[mate]');
+    engine.verify('onHandleUpdate:foo:gday', 'onHandleUpdate:bar:+[mate]');
 
     engine.sendUpdate(fooStore, fooStore.clear());
     engine.sendUpdate(barStore, barStore.remove('i2'));
-    engine.verify('onHandleUpdate:foo:3:(null)', 'onHandleUpdate:bar:4:-[there]');
+    engine.verify('onHandleUpdate:foo:(null)', 'onHandleUpdate:bar:-[there]');
   });
 
   it('handles dropped updates on a Variable with immediate resync', async function() {
@@ -322,16 +322,16 @@ describe('storage-proxy', function() {
     fooHandle.configure({notifyDesync: true});
     fooProxy.register(particle, fooHandle);
     engine.sendSync(fooStore);
-    engine.verify('InitializeProxy:foo', 'SynchronizeProxy:foo', 'onHandleSync:foo:0:(null)');
+    engine.verify('InitializeProxy:foo', 'SynchronizeProxy:foo', 'onHandleSync:foo:(null)');
 
     // Drop event 2; desync is triggered by v3.
     engine.sendUpdate(fooStore, fooStore.set(engine.newEntity('v1')));
     fooStore.set(engine.newEntity('v2'));
     engine.sendUpdate(fooStore, fooStore.set(engine.newEntity('v3')));
-    engine.verify('onHandleUpdate:foo:1:v1', 'SynchronizeProxy:foo', 'onHandleDesync:foo:3');
+    engine.verify('onHandleUpdate:foo:v1', 'SynchronizeProxy:foo', 'onHandleDesync:foo');
 
     engine.sendSync(fooStore);
-    engine.verify('onHandleSync:foo:3:v3');
+    engine.verify('onHandleSync:foo:v3');
   });
 
   it('handles dropped updates on a Collection with immediate resync', async function() {
@@ -343,16 +343,16 @@ describe('storage-proxy', function() {
     barHandle.configure({notifyDesync: true});
     barProxy.register(particle, barHandle);
     engine.sendSync(barStore);
-    engine.verify('InitializeProxy:bar', 'SynchronizeProxy:bar', 'onHandleSync:bar:0:[]');
+    engine.verify('InitializeProxy:bar', 'SynchronizeProxy:bar', 'onHandleSync:bar:[]');
 
     // Drop event 2; desync is triggered by v3.
     engine.sendUpdate(barStore, barStore.store('i1', engine.newEntity('v1')));
     barStore.store('i2', engine.newEntity('v2'));
     engine.sendUpdate(barStore, barStore.store('i3', engine.newEntity('v3')));
-    engine.verify('onHandleUpdate:bar:1:+[v1]', 'SynchronizeProxy:bar', 'onHandleDesync:bar:3');
+    engine.verify('onHandleUpdate:bar:+[v1]', 'SynchronizeProxy:bar', 'onHandleDesync:bar');
 
     engine.sendSync(barStore);
-    engine.verify('onHandleSync:bar:3:[v1|v2|v3]');
+    engine.verify('onHandleSync:bar:[v1|v2|v3]');
   });
 
   it('handles dropped updates on a Collection with delayed resync', async function() {
@@ -364,13 +364,13 @@ describe('storage-proxy', function() {
     barHandle.configure({notifyDesync: true});
     barProxy.register(particle, barHandle);
     engine.sendSync(barStore);
-    engine.verify('InitializeProxy:bar', 'SynchronizeProxy:bar', 'onHandleSync:bar:0:[]');
+    engine.verify('InitializeProxy:bar', 'SynchronizeProxy:bar', 'onHandleSync:bar:[]');
 
     // Drop event 2; desync is triggered by v3.
     engine.sendUpdate(barStore, barStore.store('i1', engine.newEntity('v1')));
     barStore.store('i2', engine.newEntity('v2'));
     engine.sendUpdate(barStore, barStore.store('i3', engine.newEntity('v3')));
-    engine.verify('onHandleUpdate:bar:1:+[v1]', 'SynchronizeProxy:bar', 'onHandleDesync:bar:3');
+    engine.verify('onHandleUpdate:bar:+[v1]', 'SynchronizeProxy:bar', 'onHandleDesync:bar');
 
     // Delay both the SynchronizeProxy request and response, such that the request arrives
     // when the storage object is at v5 and the response arrives at the proxy after the v6
@@ -382,9 +382,9 @@ describe('storage-proxy', function() {
     engine.sendUpdate(barStore, barStore.store('i6', engine.newEntity('v6')));
     engine.sendUpdate(barStore, barStore.remove('i1'));
     engine.sendSync(barStore, v5Data);
-    engine.verify('onHandleSync:bar:5:[v1|v2|v3|v4|v5]',
-                  'onHandleUpdate:bar:6:+[v6]',
-                  'onHandleUpdate:bar:7:-[v1]');
+    engine.verify('onHandleSync:bar:[v1|v2|v3|v4|v5]',
+                  'onHandleUpdate:bar:+[v6]',
+                  'onHandleUpdate:bar:-[v1]');
   });
 
   it('handles misorded updates on a Collection', async function() {
@@ -396,7 +396,7 @@ describe('storage-proxy', function() {
     barHandle.configure({notifyDesync: true});
     barProxy.register(particle, barHandle);
     engine.sendSync(barStore);
-    engine.verify('InitializeProxy:bar', 'SynchronizeProxy:bar', 'onHandleSync:bar:0:[]');
+    engine.verify('InitializeProxy:bar', 'SynchronizeProxy:bar', 'onHandleSync:bar:[]');
 
     engine.sendUpdate(barStore, barStore.store('i1', engine.newEntity('v1'), 1));
     engine.sendUpdate(barStore, barStore.store('i4', engine.newEntity('v4'), 4));
@@ -407,13 +407,13 @@ describe('storage-proxy', function() {
     // Desync is triggered, but the resync message is ignored because the updates
     // "catch up" before the resync arrives.
     engine.verify(
-      'onHandleUpdate:bar:1:+[v1]',
+      'onHandleUpdate:bar:+[v1]',
       'SynchronizeProxy:bar',
-      'onHandleDesync:bar:4',
-      'onHandleUpdate:bar:2:+[v2]',
-      'onHandleUpdate:bar:3:+[v3]',
-      'onHandleUpdate:bar:4:+[v4]',
-      'onHandleUpdate:bar:5:+[v5]');
+      'onHandleDesync:bar',
+      'onHandleUpdate:bar:+[v2]',
+      'onHandleUpdate:bar:+[v3]',
+      'onHandleUpdate:bar:+[v4]',
+      'onHandleUpdate:bar:+[v5]');
   });
 
   it('sends update notifications with non-synced handles', async function() {
@@ -434,14 +434,14 @@ describe('storage-proxy', function() {
     // Updates are sent.
     engine.sendUpdate(fooStore, fooStore.set(engine.newEntity('v1')));
     engine.sendUpdate(barStore, barStore.store('i1', engine.newEntity('v1')));
-    engine.verify('onHandleUpdate:foo:1:v1', 'onHandleUpdate:bar:1:+[v1]');
+    engine.verify('onHandleUpdate:foo:v1', 'onHandleUpdate:bar:+[v1]');
 
     // Desync events ignored, resync events are just updates.
     fooStore.set(engine.newEntity('v2'));
     barStore.store('i2', engine.newEntity('v2'));
     engine.sendUpdate(fooStore, fooStore.set(engine.newEntity('v3')));
     engine.sendUpdate(barStore, barStore.store('i3', engine.newEntity('v3')));
-    engine.verify('onHandleUpdate:foo:3:v3', 'onHandleUpdate:bar:3:+[v3]');
+    engine.verify('onHandleUpdate:foo:v3', 'onHandleUpdate:bar:+[v3]');
   });
 
   it('non-readable handles are never synced', async function() {
@@ -482,7 +482,7 @@ describe('storage-proxy', function() {
     engine.sendSync(barStore);
     engine.verify('InitializeProxy:foo', 'SynchronizeProxy:foo',
                   'InitializeProxy:bar', 'SynchronizeProxy:bar',
-                  'onHandleSync:foo:0:(null)', 'onHandleSync:bar:0:[]');
+                  'onHandleSync:foo:(null)', 'onHandleSync:bar:[]');
 
     // Reading should return the local copy and not call the backing store.
     fooHandle.get();
@@ -540,7 +540,7 @@ describe('storage-proxy', function() {
     fooStore.set(engine.newEntity('start'));
     fooProxy.register(particle, fooHandle);
     engine.sendSync(fooStore);
-    engine.verify('InitializeProxy:foo', 'SynchronizeProxy:foo', 'onHandleSync:foo:1:start');
+    engine.verify('InitializeProxy:foo', 'SynchronizeProxy:foo', 'onHandleSync:foo:start');
 
     // Reading the inner-pec handle should return the local copy and not call the backing store.
     fooHandle.get();
@@ -557,7 +557,7 @@ describe('storage-proxy', function() {
 
     // Send the delayed update to resync the proxy.
     engine.sendUpdate(fooStore, fooStore.set(changed));
-    engine.verify('onHandleUpdate:foo:2:changed');
+    engine.verify('onHandleUpdate:foo:changed');
 
     // Read the handle one more time; should return the local copy again.
     fooHandle.get();
