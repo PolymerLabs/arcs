@@ -56,9 +56,7 @@ export class TestHelper {
   }
 
   setTimeout(timeout) {
-    this.timeout = setTimeout(function() {
-      this.slotComposer.assertExpectationsCompleted();
-    }, timeout);
+    this.timeout = setTimeout(() => this.slotComposer.assertExpectationsCompleted(), timeout);
   }
 
   clearTimeout() {
