@@ -40,12 +40,9 @@ const template = html`
 `;
 
 const handleTemplate = html`
-  <!--<div style="margin-bottom: 8px;">
-    <span>{{name}}</span>
-    <a href="{{href}}" target="_blank"><i class="material-icons" style="font-size: 0.8em; vertical-align: middle;">open_in_new</i></a>
-  </div>-->
-  <data-explorer style="font-size: 0.8em;" object="{{data}}"></data-explorer>
-  <br>
+  <div style="border-bottom: 1px dashed silver; padding-bottom: 8px; margin-bottom: 8px;">
+    <data-explorer style="font-size: 0.8em;" object="{{data}}"></data-explorer>
+  </div>
 `;
 
 class HandleExplorer extends Xen.Base {
