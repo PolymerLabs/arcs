@@ -92,8 +92,8 @@ export class Scheduler {
     let totalRecords = 0;
     for (let [handle, kinds] of frame.handles.entries()) {
       for (let [kind, records] of kinds.entries()) {
-        let record = records[records.length - 1];
-        record.callback(record.details);
+        for (let record of records)
+          record.callback(record.details);
       }
     }
 

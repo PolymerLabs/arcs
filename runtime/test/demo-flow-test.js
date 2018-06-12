@@ -8,7 +8,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
- 'use strict';
+'use strict';
 
 import {Manifest} from '../manifest.js';
 import {Loader} from '../loader.js';
@@ -22,6 +22,7 @@ describe('demo flow', function() {
   });
 
   it('flows like a demo', async function() {
+
     let helper = await TestHelper.loadManifestAndPlan('./shell/artifacts/Products/Products.recipes', {
       expectedNumPlans: 2,
       verify: async (plans) => {
@@ -34,6 +35,8 @@ describe('demo flow', function() {
       // slotComposerStrict: false,
       // logging: true
     });
+
+    helper.setTimeout(5000);
 
     // 1. Accept "Show ... and choose ... products" suggestion.
     helper.slotComposer
@@ -173,6 +176,8 @@ describe('demo flow', function() {
     await helper.makePlans({expectedNumPlans: 2});
     helper.log('----------------------------------------');
 
+    helper.clearTimeout();
+
     // TODO(mmandlis): Provide methods in helper to verify slot contents (helper.slotComposer._slots[i]._content).
-  }).timeout(5000);
+  }).timeout(10000);
 });
