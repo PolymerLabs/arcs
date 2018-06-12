@@ -109,27 +109,12 @@ export class DomParticle extends XenStateMixin(Particle) {
   async setHandles(handles) {
     this.handles = handles;
     let config = this.config;
-
-    // this.config isn't a static property; not sure how important it is to avoid re-generating
-    // it in the onHandle* functions
-    this._configSnapshot = config;
-    this._modelCount = this._configSnapshot.handles.length;
-
+    this.when([new HandleChanges(handles, config.handles, 'change')], async () => {
+      await this._handlesToProps(handles, config);
+    });
     // make sure we invalidate once, even if there are no incoming handles
     this._invalidate();
   }
-
-  // onHandleSync should replace the afterAllModels logic
-  // onHandleUpdate should replace the .on listener updates
-  async onHandleSync(handle, model, version) {
-    if (--this._modelCount == 0) {
-      await this._handlesToProps(this.handles, this._configSnapshot);
-    }
-  }
-  async onHandleUpdate(handle, update, version) {
-    await this._handlesToProps(this.handles, this._configSnapshot);
-  }
-
   async _handlesToProps(handles, config) {
     // acquire (async) list data from handles
     let data = await Promise.all(
