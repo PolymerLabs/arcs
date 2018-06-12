@@ -179,7 +179,7 @@
   const params = new URL(document.location.href).searchParams;
   let app = params.get('app') || 'web';
   if (app[0] !== '.') {
-    app = `../${app}`;
+    app = `../${app}/index.html`;
   }
   spawnShell(app);
 </script>
