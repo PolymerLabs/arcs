@@ -13,11 +13,11 @@ defineParticle(({Particle}) => {
     setHandles(handles) {
       this.handles = handles;
     }
-    onHandleSync(handle, input, version) {
+    onHandleSync(handle, input) {
       this.updateOutput(input);
     }
 
-    onHandleUpdate(handle, update, version) {
+    onHandleUpdate(handle, update) {
       handle.toList().then(input => this.updateOutput(input));
     }
 
