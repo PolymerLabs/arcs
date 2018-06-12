@@ -69,7 +69,7 @@ const template = html`
   </div>
   <!-- -->
   <icon style="position: fixed; right: 0px; bottom: 0px; z-index: 10000;" on-click="_onToolsClick">assessment</icon>
-  <!-- <div tools open$="{{toolsOpen}}">
+  <div tools open$="{{toolsOpen}}">
     <simple-tabs>
       <div tab="Handle Explorer">
         <handle-explorer arc="{{arc}}"></handle-explorer>
@@ -78,7 +78,7 @@ const template = html`
         <xen-explorer></xen-explorer>
       </div>
     </simple-tabs>
-  </div> -->
+  </div>
 `;
 
 const log = Xen.logFactory('ShellUi', '#ac6066');
