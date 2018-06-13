@@ -62,7 +62,7 @@ describe('particle-shape-loading-with-slots', function() {
 
   it('multiplex recipe with slots', async () => {
     let {fooType, inHandle, slotComposer} = await instantiateRecipe();
-    slotComposer._slots[0].updateContext({});
+    slotComposer._slots[0].updateContainer({});
 
     slotComposer
       .newExpectations()
@@ -108,7 +108,7 @@ describe('particle-shape-loading-with-slots', function() {
         }
       }, 10);
     });
-    slotComposer._slots[0].updateContext({});
+    slotComposer._slots[0].updateContainer({});
 
     slotComposer
       .newExpectations()

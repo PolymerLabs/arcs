@@ -35,7 +35,7 @@ export class MockSlotComposer extends SlotComposer {
    * - strict: whether unexpected render slot requests cause an assert or a warning log (default: true)
    */
   constructor(options) {
-    super({rootContext: 'root-context', affordance: 'mock'});
+    super({rootContainer: 'root-context', affordance: 'mock'});
     this._affordance = {name: 'mock', slotClass: MockDomSlot, contextClass: MockDomContext};
     this.expectQueue = [];
     this.onExpectationsComplete = () => undefined;

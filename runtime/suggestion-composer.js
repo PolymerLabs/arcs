@@ -15,7 +15,7 @@ export class SuggestionComposer {
     assert(slotComposer);
     this._affordance = Affordance.forName(slotComposer.affordance);
     // TODO(mmandlis): find a cleaner way to fetch suggestions context.
-    this._context = slotComposer._contextSlots.find(slot => slot.name == 'suggestions').context;
+    this._context = slotComposer._contextSlots.find(context => context.name == 'suggestions').container;
     assert(this._context);
 
     this._suggestions = [];

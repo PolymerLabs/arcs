@@ -25,25 +25,25 @@ describe('dom-slot', function() {
     assert.isNull(slot._context);
 
     // context was null; set to null - nothing happens.
-    slot.setContext(null);
+    slot.setContainer(null);
     assert.isNull(slot._context);
 
     // context was null; set none null - initializes DOM context
-    slot.setContext('dummy-context');
+    slot.setContainer('dummy-container');
     assert.isTrue(slot.getContext() instanceof MockDomContext);
     let clearCount = 0;
     slot.getContext().clear = () => { clearCount++; };
-    assert.equal('dummy-context', slot.getContext().context);
+    assert.equal('dummy-container', slot.getContext().container);
     assert.equal(0, doRenderCount);
 
     // context was NOT null; set none null - updates DOM context, and calls doRender
-    slot.setContext('other-dummy-context');
+    slot.setContainer('other-dummy-container');
     assert.equal(1, clearCount);
     assert.equal(1, doRenderCount);
-    assert.equal('other-dummy-context', slot.getContext().context);
+    assert.equal('other-dummy-container', slot.getContext().container);
 
-    // set context to NULL.
-    slot.setContext(null);
+    // set container to NULL.
+    slot.setContainer(null);
     assert.equal(1, doRenderCount);
     assert.isNull(slot._context);
   });
@@ -58,18 +58,18 @@ describe('dom-slot', function() {
     slot.populateHandleDescriptions = () => {};
     assert.isNull(slot._model);
 
-    // model and context are null; set content to null - nothing happens.
+    // model and container are null; set content to null - nothing happens.
     await slot.setContent(null);
     assert.isNull(slot._model);
     assert.equal(0, doRenderCount);
 
-    // set content to non-NULL - still nothing happens, because context is null.
+    // set content to non-NULL - still nothing happens, because container is null.
     await slot.setContent({content: 'foo'});
     assert.isNull(slot._model);
     assert.equal(0, doRenderCount);
 
-    // set context to dummy
-    await slot.setContext('dummy-context');
+    // set container to dummy
+    await slot.setContainer('dummy-container');
     let clearCount = 0;
     let stampTemplateCount = 0;
     let updateModelCount = 0;

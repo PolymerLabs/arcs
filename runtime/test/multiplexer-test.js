@@ -40,7 +40,7 @@ describe('Multiplexer', function() {
 
     let barType = manifest.findTypeByName('Bar');
 
-    let slotComposer = new SlotComposer({affordance: 'mock', rootContext: 'slotid'});
+    let slotComposer = new SlotComposer({affordance: 'mock', rootContainer: 'slotid'});
 
     let slotComposer_createHostedSlot = slotComposer.createHostedSlot;
 

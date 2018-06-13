@@ -13,31 +13,31 @@ import {assert} from './chai-web.js';
 import {Slot} from '../slot.js';
 
 describe('slot', function() {
-  it('setting context', async () => {
+  it('setting container', async () => {
     let slot = new Slot('dummy-consumeConn', 'dummy-arc');
     let startRenderCount = 0;
     let stopRenderCount = 0;
     slot.startRenderCallback = () => { ++startRenderCount; };
     slot.stopRenderCallback = () => { ++stopRenderCount; };
 
-    // context was null, set to null: nothing happens.
-    await slot.updateContext(null);
+    // container was null, set to null: nothing happens.
+    await slot.updateContainer(null);
     assert.equal(startRenderCount, 0);
     assert.equal(stopRenderCount, 0);
 
     // context was null, set to non-null: startRender is called.
-    await slot.updateContext('dummy-context');
+    await slot.updateContainer('dummy-container');
     assert.equal(startRenderCount, 1);
     assert.equal(stopRenderCount, 0);
 
     // context was not null, set to another non-null context: nothing happens.
-    assert.isFalse(slot.isSameContext('other-context'));
-    await slot.updateContext('other-context');
+    assert.isFalse(slot.isSameContainer('other-container'));
+    await slot.updateContainer('other-container');
     assert.equal(startRenderCount, 1);
     assert.equal(stopRenderCount, 0);
 
     // context was not null, set to null: stopRender is called.
-    await slot.updateContext(null);
+    await slot.updateContainer(null);
     assert.equal(startRenderCount, 1);
     assert.equal(stopRenderCount, 1);
   });
@@ -65,7 +65,7 @@ describe('slot', function() {
     // Start render hosted slots
     slot.startRenderCallback = ({particle, slotName, contentTypes}) => { startRenderSlotNames.add(slotName); };
     slot.stopRenderCallback = ({particle, slotName}) => { stopRenderSlotNames.add(slotName); };
-    await slot.updateContext('dummy-context');
+    await slot.updateContainer('dummy-container');
     assert.equal(2, startRenderSlotNames.size);
     assert.isTrue(startRenderSlotNames.has(transformationSlotName));
     assert.isTrue(startRenderSlotNames.has(hostedSlotName));
@@ -83,7 +83,7 @@ describe('slot', function() {
     assert.isTrue(startRenderSlotNames.has(otherHostedSlotName));
 
     // Trigger StopRender for both transformation and hosted slots.
-    await slot.updateContext(null);
+    await slot.updateContainer(null);
     assert.equal(3, stopRenderSlotNames.size);
     assert.isTrue(stopRenderSlotNames.has(transformationSlotName));
     assert.isTrue(stopRenderSlotNames.has(hostedSlotName));

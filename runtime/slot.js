@@ -25,19 +25,19 @@ export class Slot {
   get consumeConn() { return this._consumeConn; }
   get arc() { return this._arc; }
   getContext() { return this._context; }
-  setContext(context) { this._context = context; }
-  isSameContext(context) { return this._context == context; }
+  setContainer(container) { this._context = container; }
+  isSameContainer(container) { return this._context == container; }
 
-  updateContext(context) {
-    // do nothing, if context unchanged.
-    if ((!this.getContext() && !context) ||
-        (this.getContext() && context && this.isSameContext(context))) {
+  updateContainer(container) {
+    // do nothing, if container unchanged.
+    if ((!this.getContext() && !container) ||
+        (this.getContext() && container && this.isSameContainer(container))) {
       return;
     }
 
-    // update the context;
+    // update the container;
     let wasNull = !this.getContext();
-    this.setContext(context);
+    this.setContainer(container);
     if (this.getContext()) {
       if (wasNull) {
         this.startRender();
@@ -129,8 +129,8 @@ export class Slot {
 
   // Abstract methods.
   async setContent(content, handler) {}
-  getInnerContext(slotName) {}
+  getInnerContainer(slotName) {}
   constructRenderRequest(hostedSlot) {}
   dispose() {}
-  static findRootSlots(context) {}
+  static findRootContainers(container) {}
 }

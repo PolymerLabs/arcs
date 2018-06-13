@@ -26,18 +26,18 @@ export class DomSlot extends Slot {
     return `${this.consumeConn.particle.name}::${this.consumeConn.name}`;
   }
 
-  setContext(context) {
+  setContainer(container) {
     let wasNull = true;
     if (this.getContext()) {
       this.getContext().clear();
       wasNull = false;
     }
 
-    if (context) {
+    if (container) {
       if (!this.getContext()) {
         this._context = this._createDomContext();
       }
-      this.getContext().initContext(context);
+      this.getContext().initContainer(container);
       if (!wasNull) {
         this._doRender();
       }
@@ -59,7 +59,7 @@ export class DomSlot extends Slot {
       this._observer.disconnect();
       if (this.getContext() && records.some(r => this.getContext().isDirectInnerSlot(r.target))) {
         // Update inner slots.
-        this.getContext().initInnerContexts(this.consumeConn.slotSpec);
+        this.getContext().initInnerContainers(this.consumeConn.slotSpec);
         this.innerSlotsUpdateCallback(this);
         // Reactivate the observer.
         this.getContext().observe(this._observer);
@@ -67,8 +67,8 @@ export class DomSlot extends Slot {
     });
     return observer;
   }
-  isSameContext(context) {
-    return this.getContext().isEqual(context);
+  isSameContainer(container) {
+    return this.getContext().isSameContainer(container);
   }
   // TODO(sjmiles): triggered when innerPEC sends Render message to outerPEC,
   // (usually by request of DomParticle::render())
@@ -109,8 +109,8 @@ export class DomSlot extends Slot {
       this.getContext().updateModel(this._model);
     }
   }
-  getInnerContext(slotName) {
-    return this.getContext() && this.getContext().getInnerContext(slotName);
+  getInnerContainer(slotName) {
+    return this.getContext() && this.getContext().getInnerContainer(slotName);
   }
   constructRenderRequest(hostedSlot) {
     let request = ['model'];
@@ -135,7 +135,7 @@ export class DomSlot extends Slot {
     }
     return content;
   }
-  static findRootSlots(context) {
-    return new DomContext(context, this._containerKind).findRootSlots(context);
+  static findRootContainers(container) {
+    return new DomContext(container, this._containerKind).findRootContainers(container);
   }
 }

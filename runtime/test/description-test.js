@@ -18,7 +18,7 @@ import {Relevance} from '../relevance.js';
 import {SlotComposer} from '../slot-composer.js';
 
 function createTestArc() {
-  const slotComposer = new SlotComposer({rootContext: 'test', affordance: 'mock'});
+  const slotComposer = new SlotComposer({rootContainer: 'test', affordance: 'mock'});
   let arc = new Arc({slotComposer, id: 'test'});
   return arc;
 }

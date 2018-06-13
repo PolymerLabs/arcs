@@ -22,7 +22,7 @@ import {testEntityClass} from '../testing/test-util.js';
 
 let loader = new Loader();
 
-const slotComposer = new SlotComposer({rootContext: 'test', affordance: 'mock'});
+const slotComposer = new SlotComposer({rootContainer: 'test', affordance: 'mock'});
 const Bar = testEntityClass('Bar');
 
 describe('Handle', function() {
