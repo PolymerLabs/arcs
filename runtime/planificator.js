@@ -240,9 +240,10 @@ export class Planificator {
   }
 
   _onPlanInstantiated(plan) {
-    // Check that plan is in this._current.plans;
-    if (!this._current.plans.find(currentPlan => currentPlan.plan == plan)) {
-      assert(false, `The plan being instantiated (${plan.description}) doesn't appear in the current list of plans`);
+    // Check that plan is in this._current.plans
+    if (!this._current.plans.some(currentPlan => currentPlan.plan == plan)) {
+      let hasSamePlan = this._current.plans.some(currentPlan => currentPlan.plan.toString() == plan.toString());
+      assert(false, `The instantiated plan (${plan.toString()}) doesn't appear in the current plans${hasSamePlan ? ', but an identical plan does' : ''}`);
     }
     // Move current to past, and clear current;
     this._past = {plan, plans: this._current.plans, generations: this._current.generations};
