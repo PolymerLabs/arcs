@@ -12,6 +12,18 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Google+Sans:400,700">
   <link rel="stylesheet" href="../common/index.css">
 
+  <script>
+    if ((new URL(document.location)).searchParams.has('nosw')) {
+      navigator.serviceWorker.getRegistrations().then(function(registrations) {
+        for (let registration of registrations) {
+          registration.unregister();
+        }
+      });
+    } else {
+      navigator.serviceWorker.register('../../sw.js');
+    }
+  </script>
+
   <script type="module">
     // global configuration
     import '../common/config.js';
