@@ -18,7 +18,6 @@ import {DomSlot} from '../../runtime/dom-slot.js';
 import {Type} from '../../runtime/type.js';
 import {BrowserLoader} from './browser-loader.js';
 import {Tracing} from '../../tracelib/trace.js';
-import {Scheduler} from '../../runtime/scheduler.js';
 
 //Tracing.enable();
 
@@ -34,7 +33,6 @@ const Arcs = {
   Type,
   BrowserLoader,
   Tracing,
-  Scheduler
 };
 
 // TODO(sjmiles): can't export because WebPack won't make a built version with a module export
