@@ -12,6 +12,20 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Google+Sans:400,700">
   <link rel="stylesheet" href="../common/index.css">
 
+  <script>
+    if (!window.location.search.substr("nosw")) {
+      navigator.serviceWorker.register('../../sw.js')
+      .then(function(reg) {
+        console.log('Cache registration succeeded. Scope is ' + reg.scope);
+        if (reg.active) {
+          window.fetch('../../artifacts/flush.me');
+        }
+      }).catch(function(error) {
+        console.log('Cache registration failed with ' + error);
+      });
+    }
+  </script>
+
   <script type="module">
     // global configuration
     import '../common/config.js';
