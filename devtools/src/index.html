@@ -3,7 +3,11 @@
   <head>
     <meta charset="utf-8">
     <title>Arcs Explorer</title>
-    <link rel="import" href="arcs-devtools-app.html">
+    <script src="../node_modules/vis/dist/vis.min.js"></script>
+    <script src="../node_modules/diff/dist/diff.min.js"></script>
+    <script src="../node_modules/web-animations-js/web-animations-next-lite.min.js"></script>
+    <script src="./standalone-message-passing.js"></script>
+    <script src='./arcs-devtools-app.js' type='module'></script>
     <style>
       body {
         margin: 0;
@@ -13,14 +17,6 @@
         height: -webkit-fill-available;
       }
     </style>
-    <script>
-      // If not in DevTools, run devtools.js script for message passing.
-      if (!chrome || !chrome.devtools) {
-        let script = document.createElement('script');
-        script.setAttribute('src', 'devtools.js');
-        document.getElementsByTagName('head')[0].appendChild(script);
-      }
-    </script>
   </head>
   <body>
     <arcs-devtools-app></arcs-devtools-app>

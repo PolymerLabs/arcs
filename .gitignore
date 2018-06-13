@@ -1,5 +1,4 @@
 **/node_modules
-**/bower_components
 **/*.swp
 **/*.swo
 **/.DS_Store
@@ -12,3 +11,4 @@ manifest-railroad.html
 **/*.code-workspace
 shell/build
 shell/test/errorShots
+devtools/deps

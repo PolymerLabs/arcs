@@ -1,6 +1,7 @@
-<script src="../bower_components/vis/dist/vis.min.js"></script>
+const $_documentContainer = document.createElement('template');
+$_documentContainer.setAttribute('style', 'display: none;');
 
-<dom-module id="shared-styles">
+$_documentContainer.innerHTML = `<dom-module id="shared-styles">
   <template>
     <style>
       :host {
@@ -56,44 +57,40 @@
       .nav-list a iron-icon {
         margin-right: 3px;
       }
-      resizable-panels {
+      vaadin-split-layout {
         height: 100%;
-        --resizable-panels-knob: {
-          background-color: var(--light-gray);
-          border-left: 1px solid var(--mid-gray);
-        };
       }
-      resizable-panels > aside {
+      vaadin-split-layout > aside {
         background-color: var(--light-gray);
         overflow: scroll;
-        width: 200px; /* Initial width before resizing */
       }
-      resizable-panels > aside > * {
+      vaadin-split-layout > aside > * {
         margin: 5px 5px 5px 2px;
       }
     </style>
   </template>
-</dom-module>
+</dom-module>`;
 
-<script>
-  const writeOps = ['set', 'store', 'clear', 'remove'];
+document.head.appendChild($_documentContainer.content);
+const writeOps = ['set', 'store', 'clear', 'remove'];
 
-  function formatTime(timestamp, digits = 0) {
-    let d = new Date(timestamp);
-    let time = [ d.getHours(), d.getMinutes(), d.getSeconds() ].map(x => String(x).padStart(2, '0')).join(':');
-    if (digits > 0) time += (timestamp / 1000 % 1).toFixed(digits).substr(1);
-    return time;
+export function formatTime(timestamp, digits = 0) {
+  let d = new Date(timestamp);
+  let time = [d.getHours(), d.getMinutes(), d.getSeconds()].map(x => String(x).padStart(2, '0')).join(':');
+  if (digits > 0) time += (timestamp / 1000 % 1).toFixed(digits).substr(1);
+  return time;
+}
+
+export function indentPrint(thing) {
+  if (typeof thing === 'string') thing = JSON.parse(thing);
+  return JSON.stringify(thing, null, 2);
+}
+
+/* @polymerMixin */
+const MessageSenderMixin = subclass => class extends subclass {
+  send(message) {
+    this.dispatchEvent(new CustomEvent('message', {detail: message}));
   }
+};
 
-  function indentPrint(thing) {
-    if (typeof thing === "string") thing = JSON.parse(thing)
-    return JSON.stringify(thing, null, 2);
-  }
-
-  /* @polymerMixin */
-  const MessageSenderMixin = subclass => class extends subclass {
-    send(message) {
-      this.dispatchEvent(new CustomEvent('message', {detail: message}));
-    }
-  }
-</script>
+export {MessageSenderMixin, writeOps};

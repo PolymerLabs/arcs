@@ -1,0 +1,38 @@
+{
+  "description": "DevTools Extension for Arcs",
+  "name": "arcs-devtools",
+  "version": "0.0.0",
+  "resolutions": {
+    "inherits": "2.0.3",
+    "samsam": "1.1.3",
+    "supports-color": "3.1.2",
+    "type-detect": "1.0.0",
+    "@webcomponents/webcomponentsjs": "2.0.0-beta.2"
+  },
+  "dependencies": {
+    "@polymer/app-route": "^3.0.0-pre.18",
+    "@polymer/iron-a11y-keys-behavior": "^3.0.0-pre.18",
+    "@polymer/iron-icons": "^3.0.0-pre.18",
+    "@polymer/iron-pages": "^3.0.0-pre.18",
+    "@polymer/iron-selector": "^3.0.0-pre.18",
+    "@polymer/paper-dropdown-menu": "^3.0.0-pre.18",
+    "@polymer/paper-fab": "^3.0.0-pre.18",
+    "@polymer/paper-input": "^3.0.0-pre.18",
+    "@polymer/paper-item": "^3.0.0-pre.18",
+    "@polymer/paper-listbox": "^3.0.0-pre.18",
+    "@polymer/polymer": "^3.0.0",
+    "@vaadin/vaadin-grid": "^5.0.0-pre.5",
+    "@vaadin/vaadin-split-layout": "^4.0.0-pre.3",
+    "@webcomponents/webcomponentsjs": "^2.0.0",
+    "diff": "^3.5.0",
+    "vis": "^4.21.0",
+    "web-animations-js": "^2.3.1"
+  },
+  "devDependencies": {
+    "@0xcda7a/empathy": "0.0.9",
+    "cross-env": "^5.1.3"
+  },
+  "scripts": {
+    "postinstall": "cross-env empathy install -a deps --ignore diff vis web-animations-js && cross-env tools/css-module-wrap ./node_modules/vis/dist/vis-timeline-graph2d.min.css"
+  }
+}

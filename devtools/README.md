@@ -7,18 +7,6 @@ Ensure you have all the node packages installed:
 npm install
 ```
 
-Install bower components of the webapp:
-
-```
-(cd devtools; bower install)
-```
-
-Build the webapp and split JS from the HTML to satisfy CSP restrictions for
-Chrome Extensions:
-```
-./tools/sigh devtools
-```
-
 Open up the Chrome and navigate to `chrome://extensions/`.
 Ensure "Developer Mode" is checked and click the "Load unpacked extension..." button.
 Select `arcs/devtools` directory. `Arcs` tab will be now available in Chrome DevTools.
@@ -38,12 +26,19 @@ files from the repo).
 
 ## Development
 
-Running the tool against NodeJS doesn't require rebuilding, which is quicker for development.
+After making local changes you will need to close and re-open the DevTools panel in Chrome.
 
-To see the changes in the DevTools extension you'll need to rerun:
-```
-./tools/sigh devtools
-```
+If you made changes to the manifest you should click the "Reload" button on
+the `chrome://extensions/` page.
 
-If you made changes to the manifest, or if you're sure your changes are
-not showing up, you should click the "Reload" button on the `chrome://extensions/` page.
+## Notes on tooling
+
+In order to serve this web app without a build step we use [Empathy](https://github.com/PolymerLabs/empathy/tree/initial-implementation).
+It creates the `assets` directory where it rewrites Polymer 3 dependencies
+from `node_modules` to use local paths instead of NPM packages. Someday browsers
+may support it [natively](https://github.com/domenic/package-name-maps), but
+we're not there yet.
+
+There's also a custom script `tools/css-module-wrap` wrapping external CSS file
+into a `dom-module` wrapped inside a ES module. This is needed as Polymer 3
+does not provide any way to import external stylesheets out of the box.

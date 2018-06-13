@@ -1,0 +1,284 @@
+import {PolymerElement} from '../deps/@polymer/polymer/polymer-element.js';
+import '../deps/@polymer/iron-icons/iron-icons.js';
+import '../deps/@polymer/iron-icons/editor-icons.js';
+import '../deps/@polymer/iron-icons/maps-icons.js';
+import '../deps/@polymer/iron-icons/image-icons.js';
+import '../deps/@vaadin/vaadin-split-layout/vaadin-split-layout.js';
+import '../deps/vis/dist/vis-timeline-graph2d.min.js';
+import {formatTime, indentPrint} from './arcs-shared.js';
+
+
+const $_documentContainer = document.createElement('template');
+$_documentContainer.setAttribute('style', 'display: none;');
+
+$_documentContainer.innerHTML = `<dom-module id="arcs-tracing">
+  <template>
+    <style include="shared-styles vis-timeline-graph2d.min.css">
+      :host {
+        display: block;
+      }
+      #timelineContainer {
+        width: 100%;
+        height: 100vh;
+      }
+      aside > div {
+        padding: 5px;
+        border: 1px solid var(--mid-gray);
+        background-color: white;
+      }
+      .controls {
+        text-align: center;
+      }
+      .buttons-panel {
+        display: flex;
+        justify-content: space-evenly;
+        margin-bottom: 5px;
+      }
+      .vis-timeline {
+        border: 0;
+      }
+      .vis-item.vis-background {
+        border: 4px solid transparent;
+        border-right: 4px solid rgba(150, 0, 0, .5);
+        border-left: 4px solid rgba(0, 150, 0, .5);
+      }
+      .vis-custom-time.startup {
+        /* Makes page startup time vertical line not draggable. */
+        pointer-events: none;
+      }
+    </style>
+    <vaadin-split-layout>
+      <div id="timelineContainer" style="flex: .8"></div>
+      <aside style="flex: .2">
+        <div class="controls">
+          <div class="buttons-panel">
+            <iron-icon on-click="_fit" title="Fit to events" icon="maps:zoom-out-map"></iron-icon>
+            <iron-icon on-click="_redraw" title="Redraw timeline if looks weird" icon="image:brush"></iron-icon>
+            <iron-icon id="download" on-click="_download" title="Download for inspection in chrome://tracing" icon="file-download"></iron-icon>
+          </div>
+          zoom-key: ctrl
+        </div>
+        <template is="dom-if" if="{{_selectedItem}}">
+          <div id="details">
+            [[_selectedItem.group]]: [[_selectedItem.content]]
+            <hr>
+            <div>Duration: [[_durationDetail(_selectedItem)]]
+            <div>Start: [[_startTimeDetail(_selectedItem)]]
+            <div>End: [[_endTimeDetail(_selectedItem)]]
+            <hr>
+            Args:
+            <pre>[[_indentPrint(_selectedItem.args)]]</pre>
+          </div>
+        </div></div></div></template>
+      </aside>
+    </vaadin-split-layout>
+  </template>
+
+</dom-module>`;
+
+document.head.appendChild($_documentContainer.content);
+class ArcsTracing extends PolymerElement {
+  static get is() { return 'arcs-tracing'; }
+
+  static get properties() {
+    return {
+      active: {
+        type: Boolean,
+        observer: '_activeChanged',
+        reflectToAttribute: true
+      }
+    };
+  }
+
+  constructor() {
+    super();
+    this._timeline = null;
+    this._items = new vis.DataSet({queue: true});
+    this._groups = new vis.DataSet({queue: true});
+    this._selectedItem = null;
+    this._timeBase = 0;
+  }
+
+  ready() {
+    super.ready();
+    if (!chrome.devtools || !chrome.devtools.inspectedWindow || !chrome.devtools.inspectedWindow.tabId) {
+      // Download only works right now when running Arcs in the browser.
+      this.$.download.style.display = 'none';
+    }
+  }
+
+  onMessageBundle(messages) {
+    let needsRedraw = false;
+    let startEmpty = this._items.length === 0;
+    let flowEventsCache = new Map();
+
+    for (let msg of messages) {
+      switch (msg.messageType) {
+        case 'startup-time':
+          if (this._timeline) {
+            this._timeline.addCustomTime(msg.messageBody, 'startup');
+          } else {
+            this._startupTime = msg.messageBody;
+          }
+          break;
+        case 'trace-time-sync':
+          this._timeBase = msg.messageBody.localTime - msg.messageBody.traceTime / 1000;
+          break;
+        case 'trace': {
+          needsRedraw = true;
+
+          let trace = msg.messageBody;
+          let group = trace.cat;
+
+          this._groups.update({
+            id: group,
+            content: group,
+            visible: this.active
+          });
+
+          let subgroup = trace.name;
+          if (subgroup.endsWith(' (async)')) subgroup = subgroup.slice(0, -8);
+
+          if (trace.ph === 'X') { // Duration event.
+            this._items.update({
+              id: `${trace.cat}_${trace.name}_${trace.ts}`,
+              content: trace.name,
+              title: trace.name,
+              group,
+              subgroup,
+              start: Math.floor(trace.ts / 1000 + this._timeBase),
+              end: Math.ceil((trace.ts + trace.dur) / 1000 + this._timeBase),
+              ts: trace.ts,
+              dur: trace.dur,
+              args: trace.args
+            });
+          } else { // Flow event.
+            // We store updated item in the flowEventsCache, to accumulate
+            // changes from messages in the same bundle, as changes on the
+            // _items dataset are only visible on flush().
+
+            let start, end;
+            start = end = [trace.ts / 1000 + this._timeBase];
+            for (let item of [
+                this._items.get(trace.id),
+                flowEventsCache.get(trace.id)]) {
+              if (item) {
+                start = Math.min(item.start, start);
+                end = Math.max(item.end, end);
+              }
+            }
+
+            let item = {
+              id: trace.id,
+              group,
+              subgroup,
+              type: 'background',
+              start: Math.floor(start),
+              end: Math.ceil(end)
+            };
+
+            flowEventsCache.set(trace.id, item);
+            this._items.update(item);
+          }
+          break;
+        }
+        case 'page-refresh':
+          needsRedraw = true;
+          this._groups.clear();
+          this._items.clear();
+          this._startupTime = null;
+          if (this._timeline) this._timeline.removeCustomTime('startup');
+          return;
+      }
+    }
+
+    if (!needsRedraw) return;
+
+    this._groups.flush();
+    this._items.flush();
+
+    if (!this._timeline && this._items.length > 0) {
+      this._timeline = new vis.Timeline(this.$.timelineContainer, this._items, this._groups, {
+        verticalScroll: true,
+        horizontalScroll: true,
+        zoomKey: 'ctrlKey',
+        width: '100%',
+        height: '100%',
+        stack: false,
+        stackSubgroups: true,
+        showCurrentTime: true,
+        orientation: 'top',
+        zoomMax: 1000 * 60 * 60, // Max zoom-out is 1 hour.
+        end: this._aBitInTheFuture(),
+      });
+      this._timeline.on('itemover', props => {
+        this._selectedItem = this._items.get(props.item);
+      });
+      if (this._startupTime) {
+        this._timeline.addCustomTime(this._startupTime, 'startup');
+      }
+    } else if (this._timeline && startEmpty) {
+      // Refocus on new events after a page refresh.
+      this._timeline.setWindow({
+        start: this._items.min('start').start,
+        end: this._aBitInTheFuture()
+      });
+    }
+  }
+
+  _aBitInTheFuture() {
+    return Date.now() + 2000;
+  }
+
+  _startTimeDetail(item) {
+    return formatTime(item.ts / 1000 + this._timeBase, 6 /* with Micros */);
+  }
+
+  _endTimeDetail(item) {
+    return formatTime((item.ts + item.dur) / 1000 + this._timeBase, 6 /* with Micros */);
+  }
+
+  _durationDetail(item) {
+    if (item.dur < 1000) {
+      return `${item.dur.toFixed(0)}µs`;
+    } else if (item.dur < 1000 * 1000) {
+      return `${(item.dur / 1000).toFixed(3)}ms`;
+    } else if (item.dir < 1000 * 1000 * 60) {
+      return `${(item.dur / (1000 * 1000)).toFixed(6)}s`;
+    }
+  }
+
+  _indentPrint(thing) {
+    return indentPrint(thing); // from arcs-shared
+  }
+
+  _activeChanged(active) {
+    // Avoiding jank by rendering only if it is an active page.
+    this._groups.forEach(g => {
+      this._groups.update({id: g.id, visible: active});
+    });
+    this._groups.flush();
+  }
+
+  _download() {
+    chrome.devtools.inspectedWindow.eval('Arcs.Tracing.download()');
+  }
+
+  _redraw() {
+    if (this._timeline) this._timeline.redraw();
+  }
+
+  _fit() {
+    if (this._timeline && this._items.length > 0) {
+      // There's timeline.fit(), but it doesn't leave margins and looks weird.
+      let start = this._items.min('start').start;
+      let end = this._items.max('end').end;
+      const fraction = (end - start) * .05;
+      start = start - fraction;
+      end = end + fraction;
+      this._timeline.setWindow({start, end});
+    }
+  }
+}
+
+window.customElements.define(ArcsTracing.is, ArcsTracing);
