@@ -29,9 +29,10 @@
     "web-animations-js": "^2.3.1"
   },
   "devDependencies": {
-    "@0xcda7a/empathy": "0.0.9"
+    "@0xcda7a/empathy": "0.0.9",
+    "cross-env": "^5.1.3"
   },
   "scripts": {
-    "postinstall": "empathy install -a deps --ignore diff vis web-animations-js && tools/css-module-wrap ./node_modules/vis/dist/vis-timeline-graph2d.min.css"
+    "postinstall": "cross-env empathy install -a deps --ignore diff vis web-animations-js && cross-env tools/css-module-wrap ./node_modules/vis/dist/vis-timeline-graph2d.min.css"
   }
 }
