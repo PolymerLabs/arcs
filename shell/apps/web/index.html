@@ -13,7 +13,7 @@
   <link rel="stylesheet" href="../common/index.css">
 
   <script>
-    if (!window.location.search.substr("nosw")) {
+    if (!(new URL(document.location)).searchParams.has('nosw')) {
       navigator.serviceWorker.register('../../sw.js')
       .then(function(reg) {
         console.log('Cache registration succeeded. Scope is ' + reg.scope);
