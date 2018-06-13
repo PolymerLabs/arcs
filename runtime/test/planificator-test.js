@@ -99,7 +99,6 @@ describe('Planificator', function() {
   it('creates a planificator', () => {
     let planificator = createPlanificator();
     assert.lengthOf(planificator._arc._instantiatePlanCallbacks, 1);
-    assert.lengthOf(planificator._arc._scheduler._idleCallbacks, 1);
 
     assert.isFalse(planificator.isPlanning);
     assert.equal(0, Object.keys(planificator.getLastActivatedPlan()));
@@ -109,7 +108,6 @@ describe('Planificator', function() {
     planificator._arc.dispose();
     planificator.dispose();
     assert.lengthOf(planificator._arc._instantiatePlanCallbacks, 0);
-    assert.lengthOf(planificator._arc._scheduler._idleCallbacks, 0);
     assert.lengthOf(planificator._stateChangedCallbacks, 0);
     assert.lengthOf(planificator._plansChangedCallbacks, 0);
     assert.lengthOf(planificator._suggestChangedCallbacks, 0);
@@ -139,7 +137,7 @@ describe('Planificator', function() {
     assert.isFalse(planificator.isPlanning);
 
     // Trigger replanning
-    planificator._arc._scheduler._triggerIdleCallback();
+    planificator._arc._onDataChange();
     assert.lengthOf(planificator._dataChangesQueue._changes, 1);
     assert.isNotNull(planificator._dataChangesQueue._replanTimer);
     // setTimeout is needed on data changes replanning is delayed.
@@ -154,7 +152,7 @@ describe('Planificator', function() {
     assert.lengthOf(planificator.getCurrentPlans().plans, 3);
 
     // Trigger replanning again.
-    planificator._arc._scheduler._triggerIdleCallback();
+    planificator._arc._onDataChange();
     await new Promise((resolve, reject) => setTimeout(async () => resolve(), 300));
     assert.isTrue(planificator.isPlanning);
     // Current plans are still available.
@@ -168,11 +166,11 @@ describe('Planificator', function() {
     let planificator = createPlanificator();
 
     // Add 3 data change events with intervals.
-    planificator._arc._scheduler._triggerIdleCallback();
+    planificator._arc._onDataChange();
     await new Promise((resolve, reject) => setTimeout(async () => resolve(), 100));
-    planificator._arc._scheduler._triggerIdleCallback();
+    planificator._arc._onDataChange();
     await new Promise((resolve, reject) => setTimeout(async () => resolve(), 100));
-    planificator._arc._scheduler._triggerIdleCallback();
+    planificator._arc._onDataChange();
     assert.lengthOf(planificator._dataChangesQueue._changes, 3);
     assert.isNotNull(planificator._dataChangesQueue._replanTimer);
     assert.isFalse(planificator.isPlanning);
@@ -186,11 +184,11 @@ describe('Planificator', function() {
     let planificator = createPlanificator({defaultReplanDelayMs: 100, maxNoReplanMs: 110});
 
     // Add 3 data change events with intervals.
-    planificator._arc._scheduler._triggerIdleCallback();
+    planificator._arc._onDataChange();
     await new Promise((resolve, reject) => setTimeout(async () => resolve(), 10));
-    planificator._arc._scheduler._triggerIdleCallback();
+    planificator._arc._onDataChange();
     await new Promise((resolve, reject) => setTimeout(async () => resolve(), 40));
-    planificator._arc._scheduler._triggerIdleCallback(); 
+    planificator._arc._onDataChange(); 
     assert.lengthOf(planificator._dataChangesQueue._changes, 3);
     assert.isNotNull(planificator._dataChangesQueue._replanTimer);
     assert.isFalse(planificator.isPlanning);
@@ -207,8 +205,8 @@ describe('Planificator', function() {
     planificator._setCurrent({plans: [{plan}]});
 
     // Add 2 data change events.
-    planificator._arc._scheduler._triggerIdleCallback();
-    planificator._arc._scheduler._triggerIdleCallback();
+    planificator._arc._onDataChange();
+    planificator._arc._onDataChange();
     assert.lengthOf(planificator._dataChangesQueue._changes, 2);
     assert.isNotNull(planificator._dataChangesQueue._replanTimer);
     assert.isFalse(planificator.isPlanning);
@@ -228,8 +226,8 @@ describe('Planificator', function() {
     assert.isTrue(planificator.isPlanning);
 
     // Add 2 data change events - replanning now scheduled, because planning is in progress.
-    planificator._arc._scheduler._triggerIdleCallback();
-    planificator._arc._scheduler._triggerIdleCallback();
+    planificator._arc._onDataChange();
+    planificator._arc._onDataChange();
     assert.lengthOf(planificator._dataChangesQueue._changes, 2);
     assert.isNull(planificator._dataChangesQueue._replanTimer);
 

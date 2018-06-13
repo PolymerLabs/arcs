@@ -41,6 +41,7 @@ export class Arc {
     this._recipes = [];
     this._loader = loader;
     this._scheduler = scheduler || new Scheduler();
+    this._dataChangeCallbacks = new Map();
 
     // All the stores, mapped by store ID
     this._storesById = new Map();
@@ -114,7 +115,7 @@ export class Arc {
   async _waitForIdle() {
     let messageCount;
     do {
-      await this.scheduler.idle;
+      // await this.scheduler.idle;
       messageCount = this.pec.messageCount;
       await this.pec.idle;
     } while (this.pec.messageCount !== messageCount + 1);
@@ -452,14 +453,31 @@ ${this.activeRecipe.toString()}`;
   }
 
   _registerStore(store, tags) {
+    assert(!this._storesById.has(store.id), `Store already registered '${store.id}'`);
     tags = tags || [];
     tags = Array.isArray(tags) ? tags : [tags];
+
 
     this._storesById.set(store.id, store);
 
     this._storeTags.set(store, new Set(tags));
 
     this._storageKeys[store.id] = store.storageKey;
+    store.on('change', () => this._onDataChange(), this);
+  }
+
+  _onDataChange() {
+    for (let callback of this._dataChangeCallbacks.values()) {
+      callback();
+    }
+  }
+
+  onDataChange(callback, registration) {
+    this._dataChangeCallbacks.set(registration, callback);
+  }
+
+  clearDataChange(registration) {
+    this._dataChangeCallbacks.delete(registration);
   }
 
   // Convert a type to a normalized key that we can use for

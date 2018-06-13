@@ -63,13 +63,13 @@ export class StorageProviderBase {
     // TODO: wire up a target (particle)
     let eventRecords = new Map();
 
+    let callbacks = [];
     for (let [callback, registration] of listenerMap.entries()) {
-      let target = registration.target;
-      if (!eventRecords.has(registration.scheduler))
-        eventRecords.set(registration.scheduler, []);
-      eventRecords.get(registration.scheduler).push({target, callback, kind, details});
+      callbacks.push(callback);
     }
-    eventRecords.forEach((records, scheduler) => scheduler.enqueue(this, records));
+    for (let callback of callbacks) {
+      callback(details);
+    }
     callTrace.end();
   }
 
