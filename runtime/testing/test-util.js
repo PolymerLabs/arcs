@@ -12,10 +12,7 @@
 
 import {assert} from '../test/chai-web.js';
 import {handleFor} from '../handle.js';
-import {Scheduler} from '../scheduler.js';
 import {Schema} from '../schema.js';
-
-const scheduler = new Scheduler();
 
 // Helper class for testing a Collection-based handle that collects messages from a particle.
 // This detects when too few or too many messages are sent in addition to matching the message
@@ -105,7 +102,7 @@ export function assertSingletonWillChangeTo(store, entityClass, expectation) {
         return;
       assert.equal(result.value, expectation);
       resolve();
-    }), {_scheduler: scheduler});
+    }), {/*target*/});
   });
 }
 
@@ -131,7 +128,7 @@ export function assertCollectionWillChangeTo(collection, entityClass, field, exp
           else
             reject(new Error(`expected ${expectations} but got ${result.map(a => a[field])}`));
       }
-    }), {_scheduler: scheduler});
+    }), {/*target*/});
   });
 }
 

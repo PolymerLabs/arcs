@@ -30,7 +30,6 @@ export class Speculator {
     let relevance = new Relevance(arc.getStoresState());
     let relevanceByHash = this._relevanceByHash;
     async function awaitCompletion() {
-      await newArc.scheduler.idle;
       let messageCount = newArc.pec.messageCount;
       relevance.apply(await newArc.pec.idle);
 

@@ -132,7 +132,7 @@ describe('Planificator', function() {
     assert.equal(2, planificator.planCount);
   });
 
-  it('replans triggered by scheduler', async () => {
+  it('replans triggered by data change', async () => {
     let planificator = createPlanificator();
     assert.isFalse(planificator.isPlanning);
 
