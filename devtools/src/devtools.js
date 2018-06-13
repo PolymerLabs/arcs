@@ -19,7 +19,7 @@
     // Add the panel for devtools, and flush the events to it once it's shown.
     chrome.devtools.panels.create('Arcs',
       null,
-      '../build/split-index.html',
+      './src/index.html',
       panel => panel.onShown.addListener(panelWindow => initializeWindow(panelWindow)));
   } else {
     // Fire on a regular window without queueing in the standalone scenario.

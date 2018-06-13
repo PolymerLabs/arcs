@@ -1,18 +1,21 @@
-<!--
+/*
 Copyright (c) 2018 Google Inc. All rights reserved.
 This code may only be used under the BSD style license found at
 http://polymer.github.io/LICENSE.txt
 Code distributed by Google as part of this project is also
 subject to an additional IP rights grant found at
 http://polymer.github.io/PATENTS.txt
--->
-<link rel="import" href="../../bower_components/polymer/polymer.html">
-<link rel="import" href="../arcs-shared.html">
-<link rel="import" href="se-shared.html">
+*/
 
-<dom-module id='se-stats'>
-  <template>
-    <style include='shared-styles se-shared-styles'>
+import '../../deps/@polymer/polymer/polymer-legacy.js';
+import '../arcs-shared.js';
+import {summaryStatsForTemplate, strategySummary} from './se-shared.js';
+import {Polymer} from '../../deps/@polymer/polymer/lib/legacy/polymer-fn.js';
+import {html} from '../../deps/@polymer/polymer/lib/utils/html-tag.js';
+
+Polymer({
+  _template: html`
+    <style include="shared-styles se-shared-styles">
       :host {
         display: block;
         background: white;
@@ -51,62 +54,58 @@ http://polymer.github.io/PATENTS.txt
         color: green;
       }
     </style>
-    <div class='section'>
+    <div class="section">
       <div>Totals Summary</div>
-      <template is='dom-repeat' items='{{summaryStatsForTemplate(results)}}'>
+      <template is="dom-repeat" items="{{summaryStatsForTemplate(results)}}">
         <div class="generated">Generated: Σ{{item.generatedDerivations}}</div>
-        <template is='dom-if' if='{{item.duplicateDerivations}}'>
+        <template is="dom-if" if="{{item.duplicateDerivations}}">
           <div class="duplicate">Duplicate: ={{item.duplicateDerivations}}</div>
         </template>
-        <template is='dom-if' if='{{item.duplicateSameParentDerivations}}'>
+        <template is="dom-if" if="{{item.duplicateSameParentDerivations}}">
           <div class="sameParentDuplicate">Same Parent Duplicate: ≡{{item.duplicateSameParentDerivations}}</div>
         </template>
-        <template is='dom-if' if='{{item.nullDerivations}}'>
+        <template is="dom-if" if="{{item.nullDerivations}}">
           <div class="null">Null: ∅{{item.nullDerivations}}</div>
         </template>
-        <template is='dom-if' if='{{item.invalidDerivations}}'>
+        <template is="dom-if" if="{{item.invalidDerivations}}">
           <div class="invalid">Invalid: ✘{{item.invalidDerivations}}</div>
         </template>
         <div class="surviving">Surviving: ⊕{{item.survivingDerivations}}</div>
         <div class="resolved">Resolved: ✓{{item.resolvedDerivations}}</div>
       </template>
     </div>
-    <template is='dom-repeat' items='{{strategySummary(results)}}'>
-      <div class='section'>
+    <template is="dom-repeat" items="{{strategySummary(results)}}">
+      <div class="section">
         <div>[[item.header]]</div>
-        <template is='dom-repeat' items='{{item.strategies}}'>
+        <template is="dom-repeat" items="{{item.strategies}}">
           <div>
             [[item.strategy]]:
             <span class="generated">Σ[[item.generatedDerivations]]</span>
-            <template is='dom-if' if='{{item.duplicateDerivations}}'>
+            <template is="dom-if" if="{{item.duplicateDerivations}}">
               <span class="duplicate">={{item.duplicateDerivations}}</span>
             </template>
-            <template is='dom-if' if='{{item.duplicateSameParentDerivations}}'>
+            <template is="dom-if" if="{{item.duplicateSameParentDerivations}}">
               <span class="sameParentDuplicate">≡{{item.duplicateSameParentDerivations}}</span>
             </template>
-            <template is='dom-if' if='{{item.nullDerivations}}'>
+            <template is="dom-if" if="{{item.nullDerivations}}">
               <span class="null">∅{{item.nullDerivations}}</span>
             </template>
-            <template is='dom-if' if='{{item.invalidDerivations}}'>
+            <template is="dom-if" if="{{item.invalidDerivations}}">
               <span class="invalid">✘[[item.invalidDerivations]]</span>
             </template>
-            <template is='dom-if' if='{{item.survivingDerivations}}'>
+            <template is="dom-if" if="{{item.survivingDerivations}}">
               <span class="surviving">⊕{{item.survivingDerivations}}</span>
             </template>
-            <template is='dom-if' if='{{item.resolvedDerivations}}'>
+            <template is="dom-if" if="{{item.resolvedDerivations}}">
               <span class="resolved">✓{{item.resolvedDerivations}}</span>
             </template>
           </div>
         </template>
       </div>
     </template>
-  </template>
-  <script>
+`,
 
-    Polymer({is: 'se-stats',
-      // Methods from se-shared for using in DOM
-      summaryStatsForTemplate,
-      strategySummary
-    });
-  </script>
-</dom-module>
+  is: 'se-stats',
+  summaryStatsForTemplate,
+  strategySummary
+});

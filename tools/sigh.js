@@ -35,12 +35,11 @@ const steps = {
   railroad: [railroad],
   test: [peg, railroad, test],
   webpack: [peg, railroad, webpack],
-  devtools: [devtools],
   watch: [watch],
   lint: [lint],
   check: [check],
   clean: [clean],
-  default: [check, peg, railroad, test, devtools, webpack, lint],
+  default: [check, peg, railroad, test, webpack, lint],
 };
 
 // Paths to `watch` for the `watch` step.
@@ -58,10 +57,11 @@ const output = console;
 function* findProjectFiles(dir, predicate) {
   let tests = [];
   for (let entry of fs.readdirSync(dir)) {
-    if (/\b(node_modules|bower_components|build|third_party)\b/.test(entry)
+    if (/\b(node_modules|deps|build|third_party)\b/.test(entry)
        || entry.startsWith('.')) {
       continue;
     }
+
     let fullPath = path.join(dir, entry);
     let stat = fs.statSync(fullPath);
     if (stat.isDirectory()) {
@@ -129,7 +129,7 @@ function clean() {
     }
     fs.rmdirSync(dir);
   };
-  for (let buildDir of [sources.pack.buildDir, 'devtools/build']) {
+  for (let buildDir of [sources.pack.buildDir]) {
     if (fs.existsSync(buildDir)) {
       recursiveDelete(buildDir);
       console.log('Removed', buildDir);
@@ -299,18 +299,6 @@ function saneSpawnWithOutput(cmd, args, opts) {
     return false;
   }
   return {status: result.status == 0, stdout: result.stdout};
-}
-
-async function devtools() {
-  // TODO: To speed up the development we should invoke crisper for each file
-  //       separately without bundling and then watch for updates.
-  // Crisper needed to separate JS and HTML to satisfy CSP restriction for extensions.
-  return saneSpawn('../node_modules/.bin/polymer', ['build'], {stdio: 'inherit', cwd: 'devtools'})
-         &&
-         saneSpawn('../node_modules/.bin/crisper',
-           ['--html=build/split-index.html', '--js=build/bundled/src/split-index.js',
-            'build/bundled/src/index.html'],
-           {stdio: 'inherit', cwd: 'devtools'});
 }
 
 function rot13(str) {
