@@ -138,7 +138,7 @@ describe('Handle', function() {
         };
       }
     }(arc.id);
-    arc.createStore(manifest.schemas.Bar.type, 'foo', 'test1');
+    await arc.createStore(manifest.schemas.Bar.type, 'foo', 'test1');
     let result = await promise;
     assert.equal(result, 'firebase://test-firebase-45a3e.firebaseio.com/AIzaSyBLqThan3QCOICj0JZ-nEwk27H4gmnADP8/handles/test1');
   });
