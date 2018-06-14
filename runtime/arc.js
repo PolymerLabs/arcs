@@ -99,6 +99,7 @@ export class Arc {
 
   dispose() {
     this._instantiatePlanCallbacks = [];
+    // TODO: disconnect all assocated store event handlers
     this.pec.close();
     this.pec.slotComposer && this.pec.slotComposer.dispose();
   }
