@@ -132,7 +132,10 @@ describe('Handle', function() {
     arc._storageProviderFactory = new class extends StorageProviderFactory {
       construct(id, type, keyFragment) {
         resolver(keyFragment);
-        return {type};
+        return {
+          type,
+          on() {},
+        };
       }
     }(arc.id);
     arc.createStore(manifest.schemas.Bar.type, 'foo', 'test1');
