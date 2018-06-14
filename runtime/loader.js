@@ -73,6 +73,7 @@ export class Loader {
   }
 
   async requireParticle(fileName) {
+    if (fileName === null) fileName = '';
     let src = await this.loadResource(fileName);
     // Note. This is not real isolation.
     let script = new vm.Script(src, {filename: fileName, displayErrors: true});
