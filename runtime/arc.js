@@ -353,7 +353,7 @@ ${this.activeRecipe.toString()}`;
   }
 
   async instantiate(recipe, innerArc) {
-    assert(recipe.isResolved(), 'Cannot instantiate an unresolved recipe');
+    assert(recipe.isResolved(), `Cannot instantiate an unresolved recipe: ${recipe.toString({showUnresolved: true})}`);
 
     let currentArc = {activeRecipe: this._activeRecipe, recipes: this._recipes};
     if (innerArc) {

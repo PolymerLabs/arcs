@@ -22,7 +22,7 @@ export class SlotComposer {
   constructor(options) {
     assert(options.affordance, 'Affordance is mandatory');
     // TODO: Support rootContext for backward compatibility, remove when unused.
-    options.rootContainer == options.rootContainer || options.rootContext;
+    options.rootContainer = options.rootContainer || options.rootContext;
     assert(options.rootContainer, 'Root container is mandatory');
 
     this._containerKind = options.containerKind;
@@ -208,7 +208,7 @@ export class SlotComposer {
 
   dispose() {
     this._slots.forEach(slot => slot.dispose());
-    this._slots.forEach(slot => slot.setContext(null));
+    this._slots.forEach(slot => slot.setContainer(null));
     this._affordance.contextClass.dispose();
     this._contextSlots.forEach(contextSlot => this._affordance.contextClass.clear(contextSlot.container));
   }
