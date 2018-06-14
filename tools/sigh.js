@@ -366,13 +366,17 @@ function test(args) {
       ${chainImports.join('\n      ')}
       (async () => {
         ${options.explore ? 'await devtoolsChannel.ready;' : ''}
-        mocha
-          .grep(${JSON.stringify(options.grep || '')})
-          .run(function(failures) {
-            process.on("exit", function() {
-              process.exit(failures > 0 ? 1 : 0);
+        let runner = mocha
+            .grep(${JSON.stringify(options.grep || '')})
+            .run(function(failures) {
+              process.on("exit", function() {
+                process.exit(failures > 0 ? 1 : 0);
+              });
             });
-          });
+        process.on('unhandledRejection', (reason, promise) => {
+          runner.abort();
+          throw reason;
+        });
       })();
     `;
     let runnerFile = path.join(tempDir, 'runner.js');
