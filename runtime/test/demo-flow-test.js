@@ -40,14 +40,23 @@ describe('demo flow', function() {
       .newExpectations()
         .expectRenderSlot('ShowCollection', 'master', {contentTypes: ['template']})
         .expectRenderSlot('ShowCollection', 'master', {contentTypes: ['model'], times: 3})
-        .expectRenderSlot('ShowProduct', 'item', {contentTypes: ['template', 'model'], times: 3})
+        .expectRenderSlot('ShowProduct', 'item', {contentTypes: ['template', 'model']})
+        .expectRenderSlot('ShowProduct', 'item', {contentTypes: ['model'], times: 2})
         .expectRenderSlot('Multiplexer', 'annotation', {contentTypes: ['template', 'model'], hostedParticle: 'ShowProduct'})
         .expectRenderSlot('Multiplexer', 'annotation', {contentTypes: ['model'], hostedParticle: 'ShowProduct', times: 2, isOptional: true})
         .expectRenderSlot('Chooser', 'action', {contentTypes: ['template', 'model']})
-        .expectRenderSlot('AlsoOn', 'annotation', {contentTypes: ['template', 'model'], times: 3})
+        // TODO: investigate why this is called - happens if the first Chooser render happens after
+        // ShowCollection is fully rendered (if Chooser has the opportunity to render before last the ShowCollection.model
+        // it is not called 2nd time).
+        .expectRenderSlot('Chooser', 'action', {contentTypes: ['model'], isOptional: true})
+        .expectRenderSlot('AlsoOn', 'annotation', {contentTypes: ['template', 'model']})
+        .expectRenderSlot('AlsoOn', 'annotation', {contentTypes: ['model'], times: 2})
         .expectRenderSlot('Multiplexer2', 'annotation', {contentTypes: ['template']})
         .expectRenderSlot('Multiplexer2', 'annotation', {verify: helper.slotComposer.expectContentItemsNumber.bind(null, 3)})
-        .expectRenderSlot('AlsoOn', 'annotation', {contentTypes: ['model'], times: 3, isOptional: true});
+        // TODO: the optional Multiplexer2 call only appears if the optional AlsoOn calls happen.
+        // But there is no way to currently express this dependency with the mock-slot-composer.
+        .expectRenderSlot('AlsoOn', 'annotation', {contentTypes: ['model'], times: 3, isOptional: true})
+        .expectRenderSlot('Multiplexer2', 'annotation', {verify: helper.slotComposer.expectContentItemsNumber.bind(null, 3), isOptional: true});
     await helper.acceptSuggestion({particles: ['ShowCollection', 'Multiplexer', 'Chooser', 'Recommend', 'Multiplexer2']});
 
     assert.equal(2, helper.arc.findStoresByType(helper.arc.context.findSchemaByName('Product').entityClass().type.collectionOf()).length);
@@ -107,9 +116,11 @@ describe('demo flow', function() {
     helper.slotComposer
       .newExpectations()
         .expectRenderSlot('GiftList', 'preamble', {contentTypes: ['template', 'model']})
-        .expectRenderSlot('Multiplexer', 'annotation', {contentTypes: ['template'], times: 2})
-        .expectRenderSlot('Multiplexer', 'annotation', {contentTypes: ['model'], times: 7})
-        .expectRenderSlot('Multiplexer', 'annotation', {contentTypes: ['model'], times: 7, isOptional: true})
+        .expectRenderSlot('Multiplexer', 'annotation', {contentTypes: ['template'], times: 1})
+        // TODO: add support in mock-slot-composer for {verify:helper.slotComposer.expectContentItemsNumber.bind(null, N)}
+        // for both multiplexers.
+        .expectRenderSlot('Multiplexer', 'annotation', {contentTypes: ['model'], times: 2})
+        .expectRenderSlot('Multiplexer', 'annotation', {contentTypes: ['model'], times: 7 + 5, isOptional: true})
         .expectRenderSlot('Arrivinator', 'annotation', {contentTypes: ['template', 'templateName', 'model'], times: 4})
         .expectRenderSlot('Arrivinator', 'annotation', {contentTypes: ['template'], times: 3, isOptional: true})
         .expectRenderSlot('Arrivinator', 'annotation', {contentTypes: ['templateName', 'model'], times: 3});
@@ -139,7 +150,7 @@ describe('demo flow', function() {
     helper.slotComposer
       .newExpectations()
         .expectRenderSlot('Multiplexer', 'annotation', {contentTypes: ['template'], hostedParticle: 'ManufacturerInfo'})
-        .expectRenderSlot('Multiplexer', 'annotation', {contentTypes: ['model'], times: 5, hostedParticle: 'ManufacturerInfo'})
+        .expectRenderSlot('Multiplexer', 'annotation', {hostedParticle: 'ManufacturerInfo', verify: helper.slotComposer.expectContentItemsNumber.bind(null, 5)})
         .expectRenderSlot('ManufacturerInfo', 'annotation', {contentTypes: ['template', 'model'], times: 5});
     await helper.acceptSuggestion({particles: ['Multiplexer'], hostedParticles: ['ManufacturerInfo']});
     helper.log('----------------------------------------');
