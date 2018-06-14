@@ -212,16 +212,12 @@ class AppShell extends Xen.Debug(Xen.Base, log) {
     }
   }
   _render({}, state) {
-    const {userid, description, theme, plans} = state;
+    const {userid, description, plans} = state;
     const render = {
       title: description,
       glows: userid && (plans == null)
     };
-    state.shellStyle = theme ? `background-color: ${theme.mainBackground}; color: ${theme.mainColor};` : '';
     return [state, render];
-  }
-  _didRender({}, {shellStyle}) {
-    //this.style.cssText = shellStyle;
   }
   _routeLink(anchor) {
     const url = new URL(anchor.href, document.location);
