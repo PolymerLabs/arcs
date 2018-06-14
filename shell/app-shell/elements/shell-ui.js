@@ -46,26 +46,13 @@ const template = html`
     <div toolbars on-click="_onBarClick">
       <div main toolbar open$="{{mainToolbarOpen}}">
         <a href="{{launcherHref}}" title="Go to Launcher"><icon>apps</icon></a>
-        <!--
-        <div id="openSearch" style="flex:1; flex-direction:row; justify-content: center; display: flex; align-items: center; cursor: pointer;" on-click="_onSearchClick">
-          <icon>search</icon>
-          <div style="margin-left:8px;">Search</div>
-        </div>
-        -->
-        <!-- <icon id="searchButton" on-click="_onResetSearch">search</icon> -->
         <input search placeholder="Search" value="{{search}}" on-focus="_onSearchFocus" on-input="_onSearchChange" on-blur="_onSearchBlur" on-dblclick="_onResetSearch">
         <icon hidden="{{hideMic}}" on-click="_onListen">mic</icon>
         <icon hidden="{{hideClear}}" on-click="_onClearSearch">highlight_off</icon>
-        <!-- <span title="{{title}}">{{title}}</span>
-        <icon on-click="_onSearchClick">search</icon> -->
         <icon on-click="_onSettingsClick">settings</icon>
       </div>
       <div search toolbar open$="{{searchToolbarOpen}}">
         <icon on-click="_onMainClick">arrow_back</icon>
-        <!-- <icon id="searchButton" on-click="_onResetSearch">search</icon>
-        <input placeholder="Search" value="{{search}}" on-input="_onSearchChange" on-blur="_onSearchBlur">
-        <icon hidden="{{hideMic}}" on-click="_onListen">mic</icon>
-        <icon hidden="{{hideClear}}" on-click="_onClearSearch">highlight_off</icon> -->
       </div>
       <div settings toolbar open$="{{settingsToolbarOpen}}">
         <icon on-click="_onMainClick">arrow_back</icon>
@@ -90,9 +77,6 @@ const template = html`
       <div tab="Xen Explorer">
         <xen-explorer></xen-explorer>
       </div>
-      <!-- <div tab="Manifests">
-        <manifest-data manifests="{{manifests}}" exclusions="{{exclusions}}" on-exclusions="_onData"></manifest-data>
-      </div> -->
     </simple-tabs>
   </div>
 `;
