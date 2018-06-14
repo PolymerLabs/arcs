@@ -23,13 +23,13 @@ document.addEventListener('arcs-debug-out', e => {
 chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
   switch (message.messageType) {
     case 'init-debug':
-      log('init-debug message received, injecting run-init-debug script.');
+      log('init-debug message received, injecting run-mark-connected script.');
       if (document.readyState !== 'loading') {
-        addInitDebugScript();
+        addMarkConnectedScript();
       } else {
         document.onreadystatechange = function() {
           if (document.readyState === 'interactive') {
-            addInitDebugScript();
+            addMarkConnectedScript();
           }
         };
       }
@@ -55,6 +55,6 @@ chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
   }
 });
 
-function addInitDebugScript() {
-  document.body.appendChild(Object.assign(document.createElement('script'), {type: 'module', src: chrome.extension.getURL('/src/run-init-debug.js')}));
+function addMarkConnectedScript() {
+  document.body.appendChild(Object.assign(document.createElement('script'), {type: 'module', src: chrome.extension.getURL('/src/run-mark-connected.js')}));
 }

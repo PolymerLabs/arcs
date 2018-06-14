@@ -17,8 +17,8 @@
   ],
   "permissions": ["<all_urls>", "activeTab", "webNavigation"],
   "web_accessible_resources" : [
-    "shared/arc-registry.js",
-    "src/run-init-debug.js",
+    "shared/devtools-broker.js",
+    "src/run-mark-connected.js",
     "img/*.png"
   ],
   "manifest_version": 2

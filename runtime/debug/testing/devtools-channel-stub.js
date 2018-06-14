@@ -10,12 +10,7 @@
 
 export class DevtoolsChannelStub {
   constructor() {
-    this._ready = Promise.resolve();
     this._messages = [];
-  }
-
-  get ready() {
-    return this._ready;
   }
 
   get messages() {

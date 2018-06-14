@@ -8,18 +8,17 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {getDevtoolsChannel} from './devtools-channel-provider.js';
 import {enableTracingAdapter} from './tracing-adapter.js';
 import {ArcPlannerInvoker} from './arc-planner-invoker.js';
 
 export class ArcDebugHandler {
-  constructor(arc) {
-    enableTracingAdapter();
+  constructor(arc, devtoolsChannel) {
+    enableTracingAdapter(devtoolsChannel);
 
     // Message handles go here.
-    new ArcPlannerInvoker(arc);
+    new ArcPlannerInvoker(arc, devtoolsChannel);
 
-    getDevtoolsChannel().send({
+    devtoolsChannel.send({
       messageType: 'arc-available',
       messageBody: {
         id: arc.id.toString(),

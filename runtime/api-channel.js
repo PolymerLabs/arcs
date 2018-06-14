@@ -13,6 +13,7 @@ import {assert} from '../platform/assert-web.js';
 import {ParticleSpec} from './particle-spec.js';
 import {Type} from './type.js';
 import {OuterPortAttachment} from './debug/outer-port-attachment.js';
+import {DevtoolsConnection} from './debug/devtools-connection.js';
 
 class ThingMapper {
   constructor(prefix) {
@@ -236,14 +237,10 @@ class APIPort {
       }
     };
   }
-
-  initDebug(arc) {
-    if (!this._debugAttachment) this._debugAttachment = new OuterPortAttachment(arc);
-  }
 }
 
 export class PECOuterPort extends APIPort {
-  constructor(messagePort) {
+  constructor(messagePort, arc) {
     super(messagePort, 'o');
 
     this.registerCall('Stop', {});
@@ -288,6 +285,9 @@ export class PECOuterPort extends APIPort {
     this.registerHandler('ArcLoadRecipe', {arc: this.LocalMapped, recipe: this.Direct, callback: this.Direct});
 
     this.registerHandler('RaiseSystemException', {exception: this.Direct, methodName: this.Direct, particleId: this.Direct});
+
+    DevtoolsConnection.onceConnected.then(
+      devtoolsChannel => this._debugAttachment = new OuterPortAttachment(arc, devtoolsChannel));
   }
 }
 

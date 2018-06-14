@@ -1,5 +1,5 @@
-import {initDebug} from '../shared/arc-registry.js';
-if (initDebug().preExistingArcs) {
+import {DevtoolsBroker} from '../shared/devtools-broker.js';
+if (DevtoolsBroker.markConnected().preExistingArcs) {
   document.dispatchEvent(new CustomEvent('arcs-debug-out', {
     detail: [{
       messageType: 'Warning',

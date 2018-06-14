@@ -35,6 +35,7 @@ import {ResolveRecipe} from './strategies/resolve-recipe.js';
 import {Speculator} from './speculator.js';
 import {Tracing} from '../tracelib/trace.js';
 import {StrategyExplorerAdapter} from './debug/strategy-explorer-adapter.js';
+import {DevtoolsConnection} from './debug/devtools-connection.js';
 
 export class Planner {
   // TODO: Use context.arc instead of arc
@@ -119,7 +120,7 @@ export class Planner {
   }
   async suggest(timeout, generations, speculator) {
     let trace = Tracing.start({cat: 'planning', name: 'Planner::suggest', overview: true, args: {timeout}});
-    if (!generations && this._arc._debugging) generations = [];
+    if (!generations && DevtoolsConnection.isConnected) generations = [];
     let plans = await trace.wait(this.plan(timeout, generations));
     let suggestions = [];
     speculator = speculator || new Speculator();
@@ -171,8 +172,8 @@ export class Planner {
     })));
     results = [].concat(...results);
 
-    if (this._arc._debugging) {
-      StrategyExplorerAdapter.processGenerations(generations);
+    if (generations && DevtoolsConnection.isConnected) {
+      StrategyExplorerAdapter.processGenerations(generations, DevtoolsConnection.get());
     }
 
     return trace.endWith(results);

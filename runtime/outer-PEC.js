@@ -20,7 +20,7 @@ export class OuterPEC extends ParticleExecutionContext {
   constructor(port, slotComposer, arc) {
     super();
     this._particles = [];
-    this._apiPort = new PECOuterPort(port);
+    this._apiPort = new PECOuterPort(port, arc);
     this.close = () => {
       port.close();
       this._apiPort.close();
@@ -198,8 +198,5 @@ export class OuterPEC extends ParticleExecutionContext {
   }
   innerArcRender(transformationParticle, transformationSlotName, hostedSlotId, content) {
     this._apiPort.InnerArcRender({transformationParticle, transformationSlotName, hostedSlotId, content});
-  }
-  initDebug() {
-    this._apiPort.initDebug(this._arc);
   }
 }

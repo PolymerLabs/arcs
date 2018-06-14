@@ -8,23 +8,21 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {getDevtoolsChannel} from './devtools-channel-provider.js';
 import {Planner} from '../planner.js';
 import {Manifest} from '../manifest.js';
 
 export class ArcPlannerInvoker {
-  constructor(arc) {
+  constructor(arc, devtoolsChannel) {
     this.arc = arc;
     this.planner = new Planner();
     this.planner.init(arc);
-    this.devtoolsChannel = getDevtoolsChannel();
 
-    this.devtoolsChannel.listen(arc, 'fetch-strategies', () => this.devtoolsChannel.send({
+    devtoolsChannel.listen(arc, 'fetch-strategies', () => devtoolsChannel.send({
       messageType: 'planner-strategies',
       messageBody: this.planner.strategizer._strategies.map(a => a.constructor.name)
     }));
 
-    this.devtoolsChannel.listen(arc, 'invoke-planner', async msg => this.devtoolsChannel.send({
+    devtoolsChannel.listen(arc, 'invoke-planner', async msg => devtoolsChannel.send({
       messageType: 'invoke-planner-result',
       messageBody: await this.invokePlanner(msg.messageBody)
     }));

@@ -15,7 +15,6 @@ export class DevtoolsChannel extends AbstractDevtoolsChannel {
   constructor() {
     super();
     document.addEventListener('arcs-debug-in', e => this._handleMessage(e.detail));
-    this._makeReady(); // TODO: Consider readiness if connecting via extension.
   }
 
   _flush(messages) {
