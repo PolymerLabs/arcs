@@ -114,9 +114,9 @@ describe('Handle', function() {
 
     await assert_throws_async(async () => await arc.createStore('not a type'), /isn't a Type/);
 
-    await arc.createStore(Bar.type, 'name', 'id', '#sufficient');
-    await arc.createStore(Bar.type, 'name', 'id', ['#valid']);
-    await arc.createStore(Bar.type, 'name', 'id', ['#valid', '#good']);
+    await arc.createStore(Bar.type, 'name', 'id1', '#sufficient');
+    await arc.createStore(Bar.type, 'name', 'id2', ['#valid']);
+    await arc.createStore(Bar.type, 'name', 'id3', ['#valid', '#good']);
     ['#sufficient', '#valid', '#good'].forEach(tag =>
       assert([...arc._storeTags.values()].find(tags => tags.has(tag)),
         `tags ${arc._tags} should have included ${tag}`));

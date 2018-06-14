@@ -126,9 +126,7 @@ export class Planificator {
     // Currently, just trigger replanning for each event.
     this._arcCallback = this._onPlanInstantiated.bind(this);
     this._arc.registerInstantiatePlanCallback(this._arcCallback);
-
-    this._schedulerCallback = this._onDataChanged.bind(this);
-    this._arc._scheduler.registerIdleCallback(this._schedulerCallback);
+    this._arc.onDataChange(() => this._onDataChange(), this);
 
     if (this._arc.pec.slotComposer) {
       let suggestionComposer = new SuggestionComposer(this._arc.pec.slotComposer);
@@ -139,7 +137,7 @@ export class Planificator {
   dispose() {
     // clear all callbacks the planificator has registered.
     this._arc.unregisterInstantiatePlanCallback(this._arcCallback);
-    this._arc._scheduler.unregisterIdleCallback(this._schedulerCallback);
+    this._arc.clearDataChange(this);
     // clear all planificator's callbacks.
     this._plansChangedCallbacks = [];
     this._suggestChangedCallbacks = [];
@@ -251,7 +249,7 @@ export class Planificator {
   }
 
 
-  _onDataChanged() {
+  _onDataChange() {
     this._dataChangesQueue.addChange();
   }
 

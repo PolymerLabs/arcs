@@ -45,10 +45,8 @@ export class StorageProviderBase {
   // TODO: add 'once' which returns a promise.
   on(kind, callback, target) {
     assert(target !== undefined, 'must provide a target to register a storage event handler');
-    let scheduler = target._scheduler;
-    assert(scheduler !== undefined, 'must provider a scheduler to register a storage event handler');
     let listeners = this._listeners.get(kind) || new Map();
-    listeners.set(callback, {version: -Infinity, target, scheduler});
+    listeners.set(callback, {target});
     this._listeners.set(kind, listeners);
   }
 
@@ -60,16 +58,13 @@ export class StorageProviderBase {
     let callTrace = Tracing.start({cat: 'handle', name: 'StorageProviderBase::_fire', args: {kind, type: this._type.key,
         name: this.name, listeners: listenerMap.size}});
 
-    // TODO: wire up a target (particle)
-    let eventRecords = new Map();
-
-    for (let [callback, registration] of listenerMap.entries()) {
-      let target = registration.target;
-      if (!eventRecords.has(registration.scheduler))
-        eventRecords.set(registration.scheduler, []);
-      eventRecords.get(registration.scheduler).push({target, callback, kind, details});
+    let callbacks = [];
+    for (let [callback] of listenerMap.entries()) {
+      callbacks.push(callback);
     }
-    eventRecords.forEach((records, scheduler) => scheduler.enqueue(this, records));
+    for (let callback of callbacks) {
+      callback(details);
+    }
     callTrace.end();
   }
 

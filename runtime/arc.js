@@ -19,13 +19,12 @@ import {Description} from './description.js';
 import * as util from './recipe/util.js';
 import {FakePecFactory} from './fake-pec-factory.js';
 import {StorageProviderFactory} from './storage/storage-provider-factory.js';
-import {Scheduler} from './scheduler.js';
 import {registerArc} from '../devtools/shared/arc-registry.js';
 import {Id} from './id.js';
 import {ArcDebugHandler} from './debug/arc-debug-handler.js';
 
 export class Arc {
-  constructor({id, context, pecFactory, slotComposer, loader, storageKey, storageProviderFactory, speculative, scheduler}) {
+  constructor({id, context, pecFactory, slotComposer, loader, storageKey, storageProviderFactory, speculative}) {
     // TODO: context should not be optional.
     this._context = context || new Manifest({id});
     // TODO: pecFactory should not be optional. update all callers and fix here.
@@ -40,7 +39,7 @@ export class Arc {
     // TODO: rename: this are just tuples of {particles, handles, slots, pattern} of instantiated recipes merged into active recipe.
     this._recipes = [];
     this._loader = loader;
-    this._scheduler = scheduler || new Scheduler();
+    this._dataChangeCallbacks = new Map();
 
     // All the stores, mapped by store ID
     this._storesById = new Map();
@@ -75,10 +74,6 @@ export class Arc {
     return this._loader;
   }
 
-  get scheduler() {
-    return this._scheduler;
-  }
-
   set search(search) {
     this._search = search ? search.toLowerCase().trim() : null;
   }
@@ -104,7 +99,7 @@ export class Arc {
 
   dispose() {
     this._instantiatePlanCallbacks = [];
-    this._scheduler.unregisterArc(this);
+    // TODO: disconnect all assocated store event handlers
     this.pec.close();
     this.pec.slotComposer && this.pec.slotComposer.dispose();
   }
@@ -114,7 +109,6 @@ export class Arc {
   async _waitForIdle() {
     let messageCount;
     do {
-      await this.scheduler.idle;
       messageCount = this.pec.messageCount;
       await this.pec.idle;
     } while (this.pec.messageCount !== messageCount + 1);
@@ -276,7 +270,6 @@ ${this.activeRecipe.toString()}`;
     assert(handleMap.handles.size >= handleMap.spec.connections.filter(c => !c.isOptional).length,
            `Not all mandatory connections are resolved for {$particle}`);
     this.pec.instantiate(recipeParticle, id, handleMap.spec, handleMap.handles);
-    recipeParticle._scheduler = this.scheduler;
     return id;
   }
 
@@ -452,14 +445,31 @@ ${this.activeRecipe.toString()}`;
   }
 
   _registerStore(store, tags) {
+    assert(!this._storesById.has(store.id), `Store already registered '${store.id}'`);
     tags = tags || [];
     tags = Array.isArray(tags) ? tags : [tags];
+
 
     this._storesById.set(store.id, store);
 
     this._storeTags.set(store, new Set(tags));
 
     this._storageKeys[store.id] = store.storageKey;
+    store.on('change', () => this._onDataChange(), this);
+  }
+
+  _onDataChange() {
+    for (let callback of this._dataChangeCallbacks.values()) {
+      callback();
+    }
+  }
+
+  onDataChange(callback, registration) {
+    this._dataChangeCallbacks.set(registration, callback);
+  }
+
+  clearDataChange(registration) {
+    this._dataChangeCallbacks.delete(registration);
   }
 
   // Convert a type to a normalized key that we can use for

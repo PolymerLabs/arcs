@@ -36,19 +36,18 @@ export class OuterPEC extends ParticleExecutionContext {
     };
 
     this._apiPort.onInitializeProxy = async ({handle, callback}) => {
-      let target = {_scheduler: this._arc.scheduler};
+      let target = {};
       handle.on('change', data => this._apiPort.SimpleCallback({callback, data}), target);
     };
 
     this._apiPort.onSynchronizeProxy = async ({handle, callback}) => {
-      let target = {_scheduler: this._arc.scheduler};
       let data;
       if (handle.toListWithVersion) {
         data = await handle.toListWithVersion();
       } else {
         data = await handle.getWithVersion();
       }
-      this._apiPort.SimpleCallback({callback, data}, target);
+      this._apiPort.SimpleCallback({callback, data});
     };
 
     this._apiPort.onSynchronize = async ({handle, target, callback, modelCallback, type}) => {
