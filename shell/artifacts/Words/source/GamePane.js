@@ -255,7 +255,6 @@ recipe
       let moveTiles = this.moveToTiles(tileBoard, props.move);
       let score = 0;
       if (!state.dictionary || !state.moveSubmitted || !state.renderParticleSpec) {
-        info(`Skipping move submit due to missing requisite data.`);
         return [moveData, moveTiles, score];
       }
       const word = this.tilesToWord(moveTiles);
@@ -490,8 +489,10 @@ recipe
       info(`Shuffling [remaining=${state.tileBoard.shuffleAvailableCount}].`);
       if (state.tileBoard.shuffle()) {
         this.setBoard({
+          gameId: state.tileBoard.gameId,
           letters: state.tileBoard.toString(),
-          shuffleAvailableCount: state.tileBoard.shuffleAvailableCount
+          shuffleAvailableCount: state.tileBoard.shuffleAvailableCount,
+          state: TileBoard.StateToNumber[state.tileBoard.state]
         });
       }
     }
