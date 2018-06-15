@@ -15,14 +15,15 @@ import {Arc} from '../../arc.js';
 import {MessageChannel} from '../../message-channel.js';
 import {InnerPEC} from '../../inner-PEC.js';
 import {StubLoader} from '../../testing/stub-loader.js';
-import {getDevtoolsChannel} from '../../debug/devtools-channel-provider.js';
+import {DevtoolsForTests} from '../../debug/devtools-connection.js';
 import {Random} from '../../random.js';
 import {TestHelper} from '../../testing/test-helper.js';
 
 describe('OuterPortAttachment', function() {
+  before(() => DevtoolsForTests.ensureStub());
+  after(() => DevtoolsForTests.reset());
   it('produces dataflow messages on devtools channel', async () => {
     Random.seedForTests();
-    let devtoolsChannelStub = getDevtoolsChannel({useStub: true});
     const testHelper = new TestHelper({
       loader: new StubLoader({
         'manifest': `
@@ -44,7 +45,6 @@ describe('OuterPortAttachment', function() {
     });
     await testHelper.loadManifest('manifest');
     const arc = testHelper.arc;
-    arc.initDebug();
 
     const Foo = arc._context.findSchemaByName('Foo').entityClass();
     const fooStore = await arc.createStore(Foo.type, undefined, 'fooStore');
@@ -54,7 +54,7 @@ describe('OuterPortAttachment', function() {
     recipe.normalize();
     await arc.instantiate(recipe);
 
-    let instantiateParticleCall = devtoolsChannelStub.messages.find(m =>
+    let instantiateParticleCall = DevtoolsForTests.channel.messages.find(m =>
         m.messageType === 'InstantiateParticle').messageBody;
     // IDs are stable thanks to Random.seedForTests().
     assert.deepEqual(instantiateParticleCall, {
@@ -74,7 +74,7 @@ describe('OuterPortAttachment', function() {
     });
 
     await util.assertSingletonWillChangeTo(fooStore, Foo, 'FooBar');
-    let dateflowSetCall = devtoolsChannelStub.messages.find(m =>
+    let dateflowSetCall = DevtoolsForTests.channel.messages.find(m =>
         m.messageType === 'dataflow' &&
         m.messageBody.operation === 'set').messageBody;
 

@@ -357,15 +357,15 @@ function test(args) {
       return `import '${fixPathForWindows(file)}';`;
     });
     if (options.explore) chainImports.push(`
-      import {getDevtoolsChannel} from '${fixPathForWindows(path.resolve(__dirname, '../runtime/debug/devtools-channel-provider.js'))}';
-      let devtoolsChannel = getDevtoolsChannel();
+      import {DevtoolsConnection} from '${fixPathForWindows(path.resolve(__dirname, '../runtime/debug/devtools-connection.js'))}';
       console.log("Waiting for Arcs Explorer");
+      DevtoolsConnection.ensure();
     `);
     let runner = `
       import {mocha} from '${mochaInstanceFile}';
       ${chainImports.join('\n      ')}
       (async () => {
-        ${options.explore ? 'await devtoolsChannel.ready;' : ''}
+        ${options.explore ? 'await DevtoolsConnection.onceConnected;' : ''}
         let runner = mocha
             .grep(${JSON.stringify(options.grep || '')})
             .run(function(failures) {

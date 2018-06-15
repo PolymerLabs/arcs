@@ -7,11 +7,10 @@
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
-import {getDevtoolsChannel} from './devtools-channel-provider.js';
 
 export class StrategyExplorerAdapter {
-  static processGenerations(generations) {
-    getDevtoolsChannel().send({
+  static processGenerations(generations, devtoolsChannel) {
+    devtoolsChannel.send({
       messageType: 'generations',
       // TODO: Implement simple serialization and move the logic in adapt()
       //       into the Strategy Explorer proper.

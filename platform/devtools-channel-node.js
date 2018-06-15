@@ -10,7 +10,7 @@
 'use strict';
 
 import {AbstractDevtoolsChannel} from '../runtime/debug/abstract-devtools-channel.js';
-import {initDebug} from '../devtools/shared/arc-registry.js';
+import {DevtoolsBroker} from '../devtools/shared/devtools-broker.js';
 import WebSocket from 'ws';
 
 export class DevtoolsChannel extends AbstractDevtoolsChannel {
@@ -21,8 +21,7 @@ export class DevtoolsChannel extends AbstractDevtoolsChannel {
       this.socket = ws;
       this.socket.on('message', msg => {
         if (msg === 'init') {
-          initDebug();
-          this._makeReady();
+          DevtoolsBroker.markConnected();
         } else {
           this._handleMessage(JSON.parse(msg));
         }

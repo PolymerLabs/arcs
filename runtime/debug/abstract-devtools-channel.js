@@ -16,9 +16,6 @@ export class AbstractDevtoolsChannel {
     this.debouncedMessages = [];
     this.debouncing = false;
     this.messageListeners = new Map();
-    this.ready = new Promise((resolve, reject) => {
-      this._makeReady = resolve;
-    });
   }
 
   send(message) {

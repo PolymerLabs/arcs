@@ -19,7 +19,7 @@ import {Description} from './description.js';
 import * as util from './recipe/util.js';
 import {FakePecFactory} from './fake-pec-factory.js';
 import {StorageProviderFactory} from './storage/storage-provider-factory.js';
-import {registerArc} from '../devtools/shared/arc-registry.js';
+import {DevtoolsConnection} from './debug/devtools-connection.js';
 import {Id} from './id.js';
 import {ArcDebugHandler} from './debug/arc-debug-handler.js';
 
@@ -64,9 +64,9 @@ export class Arc {
 
     this._search = null;
     this._description = new Description(this);
-    this._debugging = false;
 
-    registerArc(this);
+    DevtoolsConnection.onceConnected.then(
+        devtoolsChannel => new ArcDebugHandler(this, devtoolsChannel));
 
     this._instantiatePlanCallbacks = [];
   }
@@ -571,11 +571,5 @@ ${this.activeRecipe.toString()}`;
     }
 
     return results.join('\n');
-  }
-
-  initDebug() {
-    new ArcDebugHandler(this);
-    this._debugging = true;
-    this.pec.initDebug();
   }
 }
