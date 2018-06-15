@@ -10,7 +10,7 @@ targeted at Arcs core system developers.
 
 
 A hosted version of Arcs is available in both tagged and bleeding edge forms.
-Neither is stable -= the runtime, database and front-end are all iterating rapidly.
+Neither is stable -- the runtime, database and front-end are all iterating rapidly.
 
 
 Tagged release URLs have the form
