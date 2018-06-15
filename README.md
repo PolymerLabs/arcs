@@ -4,11 +4,13 @@
 
 # arcs
 
-Particle developers should visit our [particle developer website](https://polymerlabs.github.io/arcs-live/shell/docs/) instead of reading this document which is more geared towards Arcs core system developers.
+Particle developers should visit our [particle developer
+website](https://polymerlabs.github.io/arcs-live/shell/docs/). This document is
+targeted at Arcs core system developers.
 
 
-A hosted version of Arcs is available in both tagged & bleeding edge forms.
-Neither is stable - both the db and front-end are iterating rapidly.
+A hosted version of Arcs is available in both tagged and bleeding edge forms.
+Neither is stable -= the runtime, database and front-end are all iterating rapidly.
 
 
 Tagged release URLs have the form
@@ -25,7 +27,14 @@ https://polymerlabs.github.io/arcs-live/shell/apps/web/.
 
 ## Install
 
-Note that you need a **recent** version of Node because we use new ES6 features. v9 is definitely OK.
+Arcs is developed with a recent version of Node (v9.4.0 at the time of this
+writing), in particular as we use new ES6 features. You can check our [Travis
+config](https://github.com/PolymerLabs/arcs/blob/master/.travis.yml) to see what
+version is used for automated build status. More recent versions should work,
+but if for example you see test errors on a version that's a full release later
+(ex. v10+) you may want to try rolling back to an earlier version. We welcome
+patches that will allow more recent versions to operate, ideally without
+requiring an upgrade to our current version.
 
 ```
 $ npm install
