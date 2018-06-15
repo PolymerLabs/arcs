@@ -3,7 +3,7 @@ const runtime = `${arcs}/runtime`;
 const design = `${arcs}/design`;
 
 export default [
-  `${runtime}/inner-PEC.js`,
+  `${runtime}/particle-execution-context.js`,
   `${runtime}/particle.js`,
   `${runtime}/dom-particle.js`,
   `${design}/schemas.md`,

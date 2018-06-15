@@ -18,7 +18,7 @@ import {Planner} from '../planner.js';
 import {Random} from '../random.js';
 import {MockSlotComposer} from '../testing/mock-slot-composer.js';
 import {MessageChannel} from '../message-channel.js';
-import {InnerPEC} from '../inner-PEC.js';
+import {InnerPEC} from '../particle-execution-context.js';
 
 /** @class TestHelper
  * Helper class to recipe instantiation and replanning.

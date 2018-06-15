@@ -8,7 +8,7 @@
 
 'use strict';
 
-import {InnerPEC} from './inner-PEC.js';
+import {InnerPEC} from './particle-execution-context.js';
 import {MessageChannel} from './message-channel.js';
 import {Loader} from './loader.js';
 

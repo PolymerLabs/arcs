@@ -16,7 +16,7 @@ import {Planner} from '../planner.js';
 import {assert} from './chai-web.js';
 import {Manifest} from '../manifest.js';
 import {MessageChannel} from '../message-channel.js';
-import {InnerPEC} from '../inner-PEC.js';
+import {InnerPEC} from '../particle-execution-context.js';
 import {StrategyTestHelper} from './strategies/strategy-test-helper.js';
 let loader = new Loader();
 

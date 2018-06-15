@@ -14,7 +14,7 @@ import * as util from '../testing/test-util.js';
 import {handleFor} from '../handle.js';
 import {Arc} from '../arc.js';
 import {MessageChannel} from '../message-channel.js';
-import {InnerPEC} from '../inner-PEC.js';
+import {InnerPEC} from '../particle-execution-context.js';
 import {Loader} from '../loader.js';
 import {MockSlotComposer} from '../testing/mock-slot-composer.js';
 

@@ -16,7 +16,7 @@ import {SlotComposer} from '../slot-composer.js';
 import {Manifest} from '../manifest.js';
 import {Planner} from '../planner.js';
 import {MessageChannel} from '../message-channel.js';
-import {InnerPEC} from '../inner-PEC.js';
+import {InnerPEC} from '../particle-execution-context.js';
 import {StubLoader} from '../testing/stub-loader.js';
 import * as util from '../testing/test-util.js';
 
