@@ -192,4 +192,15 @@ describe('TypeChecker', () => {
     assert.isFalse(TypeChecker.compareTypes({type: leftType}, {type: rightType}));
     assert.isFalse(TypeChecker.compareTypes({type: rightType}, {type: leftType}));
   });
+  function depth(v, level = 0) {
+    if (v.isVariable && v.data._resolution) return depth(v.data._resolution, level + 1);
+    return level;
+  }
+  it.only('this is weird', () => {
+    let a = Type.newVariable(new TypeVariable('a'));
+    for (let i = 0; i < 100; i++) {
+      assert.equal(i, depth(a));
+      TypeChecker.processTypeList(undefined, [{type: a, direction: 'inout'}]);
+    }
+  });
 });
