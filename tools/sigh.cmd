@@ -1,1 +1,1 @@
-CALL node %~dp0\sigh.js %*
+CALL node %~d0%~sp0\sigh.js %*

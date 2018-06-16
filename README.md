@@ -41,6 +41,23 @@ $ npm install
 $ ./tools/sigh
 ```
 
+### Windows Installation Notes
+
+- [Git for Windows](https://git-scm.com/downloads) is one of many Git options.
+- Consider using [nvm-windows](https://github.com/coreybutler/nvm-windows/)
+  to allow more easily switching between Node versions.
+- As part of `npm install` you'll need to build `fibers` which uses `node-gyp`
+  which in turn requires `windows-build-tools`. Follow the [node-gyp Windows
+  build instructions](https://github.com/nodejs/node-gyp#option-1). If option
+  1 hangs or otherwise hits issues, you can try [option 2](
+    https://github.com/nodejs/node-gyp#option-2). Note the
+  [Microsoft Build Tools 2015](
+    https://www.microsoft.com/en-us/download/details.aspx?id=48159) can be
+  downloaded separately from Visual Studio (and the links in the `node-gyp`
+  documentation are stale), but you'll still need to do the
+  `npm config set msvs_version 2015` bit, and similar for Python if you
+  install that manually per `node-gyp` option 2 instructions.
+
 ## Starting Arcs
 
 After the full build (`npm install && tools/sigh`) run: (note that `npm

@@ -1,1 +1,1 @@
-CALL node %~dp0\css-module-wrap.js %*
+CALL node %~d0%~sp0\css-module-wrap.js %*
