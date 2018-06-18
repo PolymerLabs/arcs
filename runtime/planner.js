@@ -82,95 +82,48 @@ export class Planner {
     return result.some(r => r.score == 0);
   }
 
-  _speculativeThreadCount() {
-    // TODO(wkorman): We'll obviously have to rework the below when we do
-    // speculation in the cloud.
-    const cores = DeviceInfo.hardwareConcurrency();
-    const memory = DeviceInfo.deviceMemory();
-    // For now, allow occupying half of the available cores while constraining
-    // total memory used to at most a quarter of what's available. In the
-    // absence of resource information we just run two in parallel as a
-    // perhaps-low-end-device-oriented balancing act.
-    const minCores = 2;
-    if (!cores || !memory) {
-      return minCores;
-    }
-
-    // A rough estimate of memory used per thread in gigabytes.
-    const memoryPerThread = 0.125;
-    const quarterMemory = memory / 4;
-    const maxThreadsByMemory = quarterMemory / memoryPerThread;
-    const maxThreadsByCores = cores / 2;
-    return Math.max(minCores, Math.min(maxThreadsByMemory, maxThreadsByCores));
-  }
-  _splitToGroups(items, groupCount) {
-    const groups = [];
-    if (!items || items.length == 0) return groups;
-    const groupItemSize = Math.max(1, Math.floor(items.length / groupCount));
-    let startIndex = 0;
-    for (let i = 0; i < groupCount && startIndex < items.length; i++) {
-      groups.push(items.slice(startIndex, startIndex + groupItemSize));
-      startIndex += groupItemSize;
-    }
-    // Add any remaining items to the end of the last group.
-    if (startIndex < items.length) {
-      groups[groups.length - 1].push(...items.slice(startIndex, items.length));
-    }
-    return groups;
-  }
   async suggest(timeout, generations, speculator) {
     let trace = Tracing.start({cat: 'planning', name: 'Planner::suggest', overview: true, args: {timeout}});
     if (!generations && DevtoolsConnection.isConnected) generations = [];
     let plans = await trace.wait(this.plan(timeout, generations));
     let suggestions = [];
     speculator = speculator || new Speculator();
-    // We don't actually know how many threads the VM will decide to use to
-    // handle the parallel speculation, but at least we know we won't kick off
-    // more than this number and so can somewhat limit resource utilization.
-    // TODO(wkorman): Rework this to use a fixed size 'thread' pool for more
-    // efficient work distribution.
-    const threadCount = this._speculativeThreadCount();
-    const planGroups = this._splitToGroups(plans, threadCount);
-    let results = await trace.wait(Promise.all(planGroups.map(async (group, groupIndex) => {
-      let results = [];
-      for (let plan of group) {
-        let hash = ((hash) => { return hash.substring(hash.length - 4);})(await plan.digest());
+    let results = [];
+    await trace.wait(Promise.all(plans.map(async (plan, planIndex) => {
+      let hash = ((hash) => { return hash.substring(hash.length - 4);})(await plan.digest());
 
-        if (this._matchesActiveRecipe(plan)) {
-          this._updateGeneration(generations, hash, (g) => g.active = true);
-          continue;
-        }
-
-        // TODO(wkorman): Look at restoring trace.wait() here, and whether we
-        // should do similar for the async getRecipeSuggestion() below as well?
-        let relevance = await speculator.speculate(this._arc, plan, hash);
-        if (!relevance.isRelevant(plan)) {
-          this._updateGeneration(generations, hash, (g) => g.irrelevant = true);
-          continue;
-        }
-        let rank = relevance.calcRelevanceScore();
-
-        relevance.newArc.description.relevance = relevance;
-        let description = await relevance.newArc.description.getRecipeSuggestion();
-
-        this._updateGeneration(generations, hash, (g) => g.description = description);
-
-        // TODO: Move this logic inside speculate, so that it can stop the arc
-        // before returning.
-        relevance.newArc.stop();
-
-        results.push({
-          plan,
-          rank,
-          description: relevance.newArc.description,
-          descriptionText: description, // TODO(mmandlis): exclude the text description from returned results.
-          hash,
-          groupIndex
-        });
+      if (this._matchesActiveRecipe(plan)) {
+        this._updateGeneration(generations, hash, (g) => g.active = true);
+        return;
       }
-      return results;
+
+      // TODO(wkorman): Look at restoring trace.wait() here, and whether we
+      // should do similar for the async getRecipeSuggestion() below as well?
+      let relevance = await speculator.speculate(this._arc, plan, hash);
+      if (!relevance.isRelevant(plan)) {
+        this._updateGeneration(generations, hash, (g) => g.irrelevant = true);
+        return;
+      }
+      let rank = relevance.calcRelevanceScore();
+
+      relevance.newArc.description.relevance = relevance;
+      let description = await relevance.newArc.description.getRecipeSuggestion();
+
+      this._updateGeneration(generations, hash, (g) => g.description = description);
+
+      // TODO: Move this logic inside speculate, so that it can stop the arc
+      // before returning.
+      relevance.newArc.stop();
+
+      results.push({
+        plan,
+        rank,
+        description: relevance.newArc.description,
+        descriptionText: description, // TODO(mmandlis): exclude the text description from returned results.
+        hash,
+        planIndex
+      });
     })));
-    results = [].concat(...results);
 
     if (generations && DevtoolsConnection.isConnected) {
       StrategyExplorerAdapter.processGenerations(generations, DevtoolsConnection.get());

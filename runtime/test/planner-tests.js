@@ -179,11 +179,9 @@ describe('Planner', function() {
       }
     );
     assert.equal(plans.length, 2);
-    // Make sure the recipes were processed as separate plan groups.
-    // TODO(wkorman): When we move to a thread pool we'll revise this to check
-    // the thread index instead.
-    assert.equal(plans[0].groupIndex, 0);
-    assert.equal(plans[1].groupIndex, 1);
+    // Make sure the recipes were processed as separate async calls.
+    assert.equal(plans[0].planIndex, 0);
+    assert.equal(plans[1].planIndex, 1);
   });
 });
 
