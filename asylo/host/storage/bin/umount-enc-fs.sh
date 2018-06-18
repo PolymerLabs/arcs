@@ -1,6 +1,6 @@
 #!/bin/bash
 
-if [ "1" != "$#" ] || [ ""a == "$1"a ]; then
+if [ "1" != "$#" ] || [ a"" == a"$1" ]; then
 	echo "One argument (the name of the encrypted volume) must be specified"
 	exit 1
 fi

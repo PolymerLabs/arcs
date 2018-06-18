@@ -13,7 +13,7 @@ RUN apt-get install -y curl cryptsetup-bin
 # https://docs.docker.com/compose/install
 
 ###########################
-###### should this be in it's own container?
+###### should this be in it's own container? Probably with the WORKDIR arcs from above?
 #####
 ###### install nvm, then use that to install node & npm
 #####EXPOSE 80

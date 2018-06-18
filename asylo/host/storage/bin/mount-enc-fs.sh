@@ -19,6 +19,7 @@ ENCRYPTED_NAME=$4
 
 if [ ! -e $KEYFILE ]; then
 	echo "Generating a new key..."
+	# TODO(smalls) load this from asylo
 	openssl rand -base64 -out "$KEYFILE" 32
 fi
 
@@ -26,7 +27,8 @@ LOOP_DEVICE=$(losetup -f)
 ENCRYPTED_DEVICE=/dev/mapper/$ENCRYPTED_NAME
 
 if [ ! -e $IMAGE ]; then
-	echo "Creating a new encrypted filesystem in image $IMAGE to $LOOP_DEVICE & $ENCRYPTED_NAME ..."
+	echo "Creating a new encrypted filesystem in image $IMAGE to"
+	echo "loop $LOOP_DEVICE & crypt $ENCRYPTED_NAME ..."
 	dd of=$IMAGE bs=1k seek=102400 count=0
 	losetup $LOOP_DEVICE $IMAGE
 
@@ -35,7 +37,8 @@ if [ ! -e $IMAGE ]; then
 
 	mkfs.ext4 $ENCRYPTED_DEVICE
 else
-	echo "Opening an existing encrypted filesystem from image $IMAGE to $LOOP_DEVICE & $ENCRYPTED_NAME ..."
+	echo "Opening an existing encrypted filesystem from image $IMAGE to"
+	echo "loop $LOOP_DEVICE & crypt $ENCRYPTED_NAME ..."
 	losetup $LOOP_DEVICE $IMAGE
 	cryptsetup --key-file $KEYFILE open $LOOP_DEVICE $ENCRYPTED_NAME
 fi
