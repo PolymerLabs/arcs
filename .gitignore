@@ -16,3 +16,5 @@ host/*
 asylo/bazel-*
 asylo/sdk
 asylo/toolchains
+asylo/host/storage/db.img
+asylo/host/storage/key

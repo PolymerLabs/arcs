@@ -1,10 +1,12 @@
 FROM couchdb:latest
 
 #TODO it's not clear that this image needs all of arcs; just arcs/asylo might be enough
-WORKDIR /arcs
-ADD . /arcs
+#WORKDIR /arcs
+#ADD . /arcs
 
-RUN apt-get install -y curl
+RUN apt-get update
+RUN apt-get -y upgrade
+RUN apt-get install -y curl cryptsetup-bin
 
 # TODO split db & Asylo & node each into their own image;
 # and use compose to orchestrate those with the arcs server
@@ -22,4 +24,4 @@ RUN apt-get install -y curl
 #####
 #####CMD ["/bin/bash", "-c", "source /root/.bashrc; npm start"]
 
-CMD ["/arcs/asylo/bin/start-couchdb.sh"]
+CMD ["/opt/storage/bin/start-couchdb.sh"]

@@ -328,10 +328,18 @@ To build our CouchDB docker with support for encryption via Asylo, run
 
 ```
 arcs> docker build -t test-with-asylo .
-arcs> docker run -p 5984:5984 -d \
+arcs> docker run --privileged -p 5984:5984 -d \
   -v $(pwd)/asylo/host/storage:/opt/storage \
   test-with-asylo
 ```
+
+Note the use of `--privileged`. This isn't ideal, but is currently required to
+give the Docker image access to loopback devices. Another approach might be
+something like `--cap-add SYS_ADMIN  --device /dev/loop0 --device
+/dev/loop-control` (which limits the amount of additional access required).
+I've seen a reference that this may be fixed in a future version of Docker or
+Linux but the evidence is
+[slim](https://groups.google.com/forum/#!topic/docker-user/JmHko2nstWQ).
 
 
 ############################################
