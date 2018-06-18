@@ -55,6 +55,14 @@ export class TestHelper {
     this.logging = options.logging;
   }
 
+  setTimeout(timeout) {
+    this.timeout = setTimeout(() => this.slotComposer.assertExpectationsCompleted(), timeout);
+  }
+
+  clearTimeout() {
+    clearTimeout(this.timeout);
+  }
+
   /** @static @method loadManifestAndPlan(manifestFilename, options)
    * Creates and returns a TestHelper instance, loads a manifest file and makes planning.
    */
