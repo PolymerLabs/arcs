@@ -12,7 +12,7 @@
 import {handleFor} from './handle.js';
 import {assert} from '../platform/assert-web.js';
 import {PECInnerPort} from './api-channel.js';
-import {StorageProxy} from './storage-proxy.js';
+import {StorageProxy, StorageProxyScheduler} from './storage-proxy.js';
 
 export class ParticleExecutionContext {
   constructor(port, idBase, loader) {
@@ -22,6 +22,7 @@ export class ParticleExecutionContext {
     this._nextLocalID = 0;
     this._loader = loader;
     this._pendingLoads = [];
+    this._scheduler = new StorageProxyScheduler();
 
     /*
      * This code ensures that the relevant types are known
@@ -34,11 +35,11 @@ export class ParticleExecutionContext {
      * only keeping type information on the arc side.
      */
     this._apiPort.onDefineHandle = ({type, identifier, name}) => {
-      return new StorageProxy(identifier, type, this._apiPort, this, name);
+      return new StorageProxy(identifier, type, this._apiPort, this, this._scheduler, name);
     };
 
     this._apiPort.onCreateHandleCallback = ({type, id, name, callback}) => {
-      let proxy = new StorageProxy(id, type, this._apiPort, this, name);
+      let proxy = new StorageProxy(id, type, this._apiPort, this, this._scheduler, name);
       return [proxy, () => callback(proxy)];
     };
 
@@ -237,7 +238,7 @@ export class ParticleExecutionContext {
   }
 
   get busy() {
-    if (this._pendingLoads.length > 0)
+    if (this._pendingLoads.length > 0 || this._scheduler.busy)
       return true;
     return false;
   }
@@ -246,6 +247,6 @@ export class ParticleExecutionContext {
     if (!this.busy) {
       return Promise.resolve();
     }
-    return Promise.all(this._pendingLoads.concat(this._particles.map(particle => particle.idle))).then(() => this.idle);
+    return Promise.all([this._scheduler.idle, ...this._pendingLoads]).then(() => this.idle);
   }
 }
