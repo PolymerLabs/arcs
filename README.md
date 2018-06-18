@@ -88,6 +88,11 @@ There are additional targets provided to run subsets of those commands.
   already-running server (assumed to be port 8080).
 - `npm run test-no-web`: run all non-web tests.
 
+To run a specific Selenium test using Mocha's 'grep' capability:
+
+- In one terminal: `npm start`
+- In another: `npm run test-wdio -- --mochaOpts.grep 'regex'`
+
 ### Debugging tests
 
 If you see errors like
