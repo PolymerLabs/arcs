@@ -10,10 +10,15 @@
 
 import {enableTracingAdapter} from './tracing-adapter.js';
 import {ArcPlannerInvoker} from './arc-planner-invoker.js';
+import {DevtoolsConnection} from './devtools-connection.js';
+
+// Arc-independent handlers for devtools logic.
+DevtoolsConnection.onceConnected.then(devtoolsChannel => {
+  enableTracingAdapter(devtoolsChannel);
+});
 
 export class ArcDebugHandler {
   constructor(arc, devtoolsChannel) {
-    enableTracingAdapter(devtoolsChannel);
 
     // Message handles go here.
     new ArcPlannerInvoker(arc, devtoolsChannel);
