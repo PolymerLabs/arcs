@@ -22,9 +22,10 @@ import {StorageProviderFactory} from './storage/storage-provider-factory.js';
 import {DevtoolsConnection} from './debug/devtools-connection.js';
 import {Id} from './id.js';
 import {ArcDebugHandler} from './debug/arc-debug-handler.js';
+import {RecipeIndex} from './recipe-index.js';
 
 export class Arc {
-  constructor({id, context, pecFactory, slotComposer, loader, storageKey, storageProviderFactory, speculative}) {
+  constructor({id, context, pecFactory, slotComposer, loader, storageKey, storageProviderFactory, speculative, scheduler, recipeIndex}) {
     // TODO: context should not be optional.
     this._context = context || new Manifest({id});
     // TODO: pecFactory should not be optional. update all callers and fix here.
@@ -65,10 +66,11 @@ export class Arc {
     this._search = null;
     this._description = new Description(this);
 
+    this._instantiatePlanCallbacks = [];
+    this._recipeIndex = recipeIndex || new RecipeIndex(this._context);
+
     DevtoolsConnection.onceConnected.then(
         devtoolsChannel => new ArcDebugHandler(this, devtoolsChannel));
-
-    this._instantiatePlanCallbacks = [];
   }
   get loader() {
     return this._loader;
@@ -82,7 +84,13 @@ export class Arc {
     return this._search;
   }
 
-  get description() { return this._description; }
+  get description() {
+    return this._description;
+  }
+
+  get recipeIndex() {
+    return this._recipeIndex;
+  }
 
   registerInstantiatePlanCallback(callback) {
     this._instantiatePlanCallbacks.push(callback);
@@ -287,7 +295,7 @@ ${this.activeRecipe.toString()}`;
 
   // Makes a copy of the arc used for speculative execution.
   async cloneForSpeculativeExecution() {
-    let arc = new Arc({id: this.generateID().toString(), pecFactory: this._pecFactory, context: this.context, loader: this._loader, speculative: true});
+    let arc = new Arc({id: this.generateID().toString(), pecFactory: this._pecFactory, context: this.context, loader: this._loader, recipeIndex: this._recipeIndex, speculative: true});
     let handleMap = new Map();
     for (let handle of this._stores) {
       let clone = await arc._storageProviderFactory.construct(handle.id, handle.type, 'in-memory');
