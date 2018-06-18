@@ -9,12 +9,12 @@
  */
 
 export class StrategyExplorerAdapter {
-  static processGenerations(generations, devtoolsChannel) {
+  static processGenerations(generations, devtoolsChannel, options = {}) {
     devtoolsChannel.send({
       messageType: 'generations',
       // TODO: Implement simple serialization and move the logic in adapt()
       //       into the Strategy Explorer proper.
-      messageBody: StrategyExplorerAdapter.adapt(generations)
+      messageBody: {results: StrategyExplorerAdapter.adapt(generations), options}
     });
   }
   static adapt(generations) {
