@@ -89,7 +89,7 @@ export class DomParticle extends XenStateMixin(Particle) {
   get config() {
     // TODO(sjmiles): getter that does work is a bad idea, this is temporary
     return {
-      handles: this.spec.inputs.map(i => i.name),
+      handleNames: this.spec.inputs.map(i => i.name),
       // TODO(mmandlis): this.spec needs to be replaced with a particle-spec loaded from
       // .manifest files, instead of .ptcl ones.
       slotNames: [...this.spec.slots.values()].map(s => s.name)
@@ -108,23 +108,31 @@ export class DomParticle extends XenStateMixin(Particle) {
   }
   async setHandles(handles) {
     this.handles = handles;
-    let config = this.config;
-    this.when([new HandleChanges(handles, config.handles, 'change')], async () => {
-      await this._handlesToProps(handles, config);
-    });
+    this._handlesToSync = new Set(this.config.handleNames);
+
     // make sure we invalidate once, even if there are no incoming handles
     this._invalidate();
   }
-  async _handlesToProps(handles, config) {
+  async onHandleSync(handle, model) {
+    this._handlesToSync.delete(handle.name);
+    if (this._handlesToSync.size == 0) {
+      await this._handlesToProps();
+    }
+  }
+  async onHandleUpdate(handle, update) {
+    await this._handlesToProps();
+  }
+  async _handlesToProps() {
+    let config = this.config;
     // acquire (async) list data from handles
     let data = await Promise.all(
-      config.handles
-      .map(name => handles.get(name))
+      config.handleNames
+      .map(name => this.handles.get(name))
       .map(handle => handle.toList ? handle.toList() : handle.get())
     );
     // convert handle data (array) into props (dictionary)
     let props = Object.create(null);
-    config.handles.forEach((name, i) => {
+    config.handleNames.forEach((name, i) => {
       props[name] = data[i];
     });
     this._setProps(props);

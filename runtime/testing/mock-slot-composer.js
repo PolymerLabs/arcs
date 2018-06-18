@@ -62,7 +62,8 @@ export class MockSlotComposer extends SlotComposer {
    * Allows ignoring unexpected render slot requests.
    */
   ignoreUnexpectedRender() {
-    this.expectQueue.push({type: 'render', ignoreUnexpected: true, isOptional: true});
+    this.expectQueue.push({type: 'render', ignoreUnexpected: true, isOptional: true,
+                           toString: () => `render: ignoreUnexpected optional`});
     return this;
   }
 
@@ -109,6 +110,13 @@ export class MockSlotComposer extends SlotComposer {
     return new Promise((resolve, reject) => this.onExpectationsComplete = resolve);
   }
 
+  assertExpectationsCompleted() {
+    if (this.expectQueue.length == 0 || this.expectQueue.every(e => e.isOptional)) {
+      return true;
+    }
+    assert(false, 'remaining expectations:\n' + this.expectQueue.map(expect => `  ${expect.toString()}`).join('\n'));
+  }
+
   /** @method sendEvent(particleName, slotName, event, data)
    * Sends an event to the given particle and slot.
    */
@@ -126,7 +134,8 @@ export class MockSlotComposer extends SlotComposer {
           && e.isOptional == expectation.isOptional;
     });
     if (!current) {
-      current = {type: 'render', particleName: expectation.particleName, slotName: expectation.slotName, hostedParticle: expectation.hostedParticle, isOptional: expectation.isOptional};
+      current = {type: 'render', particleName: expectation.particleName, slotName: expectation.slotName, hostedParticle: expectation.hostedParticle, isOptional: expectation.isOptional,
+                 toString: () => `render:${expectation.isOptional ? '  optional' : ' '} ${expectation.particleName} ${expectation.slotName} ${expectation.hostedParticle} ${current.contentTypes}`};
       this.expectQueue.push(current);
     }
     if (expectation.verifyComplete) {
