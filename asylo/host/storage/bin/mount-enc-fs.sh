@@ -1,6 +1,5 @@
 #!/bin/bash
 
-set -x
 set -e
 
 # TODO writing (and expecting) that the key is stored in plaintext violates so
@@ -27,7 +26,7 @@ LOOP_DEVICE=$(losetup -f)
 ENCRYPTED_DEVICE=/dev/mapper/$ENCRYPTED_NAME
 
 if [ ! -e $IMAGE ]; then
-	echo "Creating a new encrypted filesystem in image $IMAGE ..."
+	echo "Creating a new encrypted filesystem in image $IMAGE to $LOOP_DEVICE & $ENCRYPTED_NAME ..."
 	dd of=$IMAGE bs=1k seek=102400 count=0
 	losetup $LOOP_DEVICE $IMAGE
 
@@ -36,7 +35,7 @@ if [ ! -e $IMAGE ]; then
 
 	mkfs.ext4 $ENCRYPTED_DEVICE
 else
-	echo "Opening an existing encrypted filesystem from image $IMAGE ..."
+	echo "Opening an existing encrypted filesystem from image $IMAGE to $LOOP_DEVICE & $ENCRYPTED_NAME ..."
 	losetup $LOOP_DEVICE $IMAGE
 	cryptsetup --key-file $KEYFILE open $LOOP_DEVICE $ENCRYPTED_NAME
 fi
@@ -46,6 +45,3 @@ if [ ! -d mount ]; then
 	mkdir -p $MOUNT_POINT
 fi
 mount $ENCRYPTED_DEVICE $MOUNT_POINT
-
-mount
-cryptsetup status $ENCRYPTED_NAME

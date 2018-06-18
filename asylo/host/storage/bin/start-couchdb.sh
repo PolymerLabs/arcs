@@ -7,17 +7,11 @@ ENCRYPTED_NAME=encrypted
 
 # TODO use encrypted storage
 /opt/storage/bin/mount-enc-fs.sh $KEY $IMAGE $SECURE_MOUNT_POINT $ENCRYPTED_NAME
-
-
-echo "***********"
-ls -ald ${SECURE_MOUNT_POINT}
-ls -al ${SECURE_MOUNT_POINT}
-cat ${SECURE_MOUNT_POINT}/foo
-echo "Now create 'foo' ..."
-echo 123 > ${SECURE_MOUNT_POINT}/foo
-ls -al ${SECURE_MOUNT_POINT}
-cat ${SECURE_MOUNT_POINT}/foo
-
+if [ ! -d $SECURE_MOUNT_POINT ]; then
+	echo "No mount found at $SECURE_MOUNT_POINT"
+	mount
+	exit 1
+fi
 
 # add symlinks for couchdb/etc to our storage directory
 # Ideally we'd do the same for /opt/couchdb/data, but that's exposed as a
