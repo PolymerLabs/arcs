@@ -16,7 +16,7 @@ import {Planner} from '../planner.js';
 import {assert} from './chai-web.js';
 import {Manifest} from '../manifest.js';
 import {MessageChannel} from '../message-channel.js';
-import {InnerPEC} from '../particle-execution-context.js';
+import {ParticleExecutionContext} from '../particle-execution-context.js';
 import {StrategyTestHelper} from './strategies/strategy-test-helper.js';
 let loader = new Loader();
 
@@ -64,7 +64,7 @@ const loadTestArcAndRunSpeculation = async (manifest, manifestLoadedCallback) =>
 
   const pecFactory = function(id) {
     const channel = new MessageChannel();
-    new InnerPEC(channel.port1, `${id}:inner`, loader);
+    new ParticleExecutionContext(channel.port1, `${id}:inner`, loader);
     return channel.port2;
   };
   const arc = new Arc({id: 'test-plan-arc', context: loadedManifest, pecFactory, loader});

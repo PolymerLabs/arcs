@@ -13,7 +13,7 @@ import {assert} from './chai-web.js';
 import * as util from '../testing/test-util.js';
 import {Arc} from '../arc.js';
 import {MessageChannel} from '../message-channel.js';
-import {InnerPEC} from '../particle-execution-context.js';
+import {ParticleExecutionContext} from '../particle-execution-context.js';
 import {Loader} from '../loader.js';
 import {StubLoader} from '../testing/stub-loader.js';
 import {Recipe} from '../recipe/recipe.js';
@@ -67,7 +67,7 @@ describe('particle-shape-loading', function() {
 
     let pecFactory = function(id) {
       let channel = new MessageChannel();
-      new InnerPEC(channel.port1, `${id}:inner`, loader);
+      new ParticleExecutionContext(channel.port1, `${id}:inner`, loader);
       return channel.port2;
     };
 
@@ -132,7 +132,7 @@ describe('particle-shape-loading', function() {
 
     let pecFactory = function(id) {
       let channel = new MessageChannel();
-      new InnerPEC(channel.port1, `${id}:inner`, loader);
+      new ParticleExecutionContext(channel.port1, `${id}:inner`, loader);
       return channel.port2;
     };
 

@@ -15,7 +15,7 @@ import {Manifest} from './manifest.js';
 import {RecipeResolver} from './recipe/recipe-resolver.js';
 import {reportSystemException} from './arc-exceptions.js';
 
-export class OuterPEC {
+export class ParticleExecutionHost {
   constructor(port, slotComposer, arc) {
     this._particles = [];
     this._apiPort = new PECOuterPort(port, arc);

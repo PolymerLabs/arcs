@@ -14,7 +14,7 @@ import {assert} from '../platform/assert-web.js';
 import {PECInnerPort} from './api-channel.js';
 import {StorageProxy} from './storage-proxy.js';
 
-export class InnerPEC {
+export class ParticleExecutionContext {
   constructor(port, idBase, loader) {
     this._apiPort = new PECInnerPort(port);
     this._particles = [];

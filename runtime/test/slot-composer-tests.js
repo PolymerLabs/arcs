@@ -16,7 +16,7 @@ import {SlotComposer} from '../slot-composer.js';
 import {Manifest} from '../manifest.js';
 import {Planner} from '../planner.js';
 import {MessageChannel} from '../message-channel.js';
-import {InnerPEC} from '../particle-execution-context.js';
+import {ParticleExecutionContext} from '../particle-execution-context.js';
 import {StubLoader} from '../testing/stub-loader.js';
 import * as util from '../testing/test-util.js';
 
@@ -40,7 +40,7 @@ async function initSlotComposer(recipeStr) {
   });
   const pecFactory = function(id) {
     const channel = new MessageChannel();
-    new InnerPEC(channel.port1, `${id}:inner`, loader);
+    new ParticleExecutionContext(channel.port1, `${id}:inner`, loader);
     return channel.port2;
   };
   let arc = new Arc({
