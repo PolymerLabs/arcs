@@ -231,6 +231,27 @@ store BoxesStore of [Box] 'allboxes' in AllBoxes` : ''}
           err.message, 'Cannot reference duplicate particle \'ShowFoo\' in recipe description.'));
   });
 
+  it('refers to particle description', async () => {
+    let helper = await TestHelper.parseManifestAndPlan(`
+      schema Foo
+      particle HelloFoo
+        in Foo foo
+        description \`hello \${foo}\`
+
+      recipe
+        create as h0
+        HelloFoo
+          foo <- h0
+        description \`do "\${HelloFoo}"\`
+    `);
+    assert.lengthOf(helper.plans, 1);
+
+    assert.equal('Do "hello foo"', await helper.plans[0].description.getRecipeSuggestion());
+    let domDescription = await helper.plans[0].description.getRecipeSuggestion(DescriptionDomFormatter);
+    assert.equal('Do "hello foo"', domDescription.template);
+    assert.isEmpty(domDescription.model);
+  });
+
   it('generates recipe description with duplicate particles', async () => {
     let helper = await TestHelper.parseManifestAndPlan(`
       schema Foo
