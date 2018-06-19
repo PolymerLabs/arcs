@@ -10,6 +10,7 @@ import {Recipe} from '../recipe/recipe.js';
 import {RecipeUtil} from '../recipe/recipe-util.js';
 import {Walker} from '../recipe/walker.js';
 import {Handle} from '../recipe/handle.js';
+import {Type} from '../type.js';
 
 // This strategy coalesces unresolved terminal recipes (i.e. those that cannot
 // be modified by any strategy apart from this one) by finding unresolved
@@ -37,6 +38,7 @@ export class CoalesceRecipes extends Strategy {
   }
 
   async generate(inputParams) {
+    let self = this;
     let applicableHandles = await this._applicableHandles;
     return Recipe.over(this.getResults(inputParams), new class extends Walker {
       onHandle(recipe, handle) {
@@ -58,8 +60,7 @@ export class CoalesceRecipes extends Strategy {
               || new Set([...particleNames, ...otherParticleNames]).size
                   === particleNames.length
               || recipe.particles.length + otherHandle.recipe.particles.length > 10
-              || !Handle.effectiveType(handle._mappedType,
-                  [...handle.connections, ...otherHandle.connections])) {
+              || !self._compatibleConnections(handle, otherHandle)) {
             continue;
           }
 
@@ -86,5 +87,13 @@ export class CoalesceRecipes extends Strategy {
         return results;
       }
     }(Walker.Independent), this);
+  }
+
+  _compatibleConnections(handle, otherHandle) {
+    const allConnections = [...handle.connections, ...otherHandle.connections];
+    return !!Handle.effectiveType(undefined,
+        // Make copies of types to not modify actual recipes.
+        // TODO: Remove this once effectiveType doesn't mutate inputs.
+        allConnections.map(({type, direction}) => ({type: Type.fromLiteral(type.toLiteral()), direction})));
   }
 }
