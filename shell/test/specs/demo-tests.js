@@ -464,6 +464,7 @@ describe('Arcs demos', function() {
     ].forEach(suggestion => {
       waitForStillness();
       openSystemUi();
+      clickElement('input[search]');
       acceptSuggestion(suggestion);
     });
 

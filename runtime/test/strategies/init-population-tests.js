@@ -12,6 +12,7 @@
 import {Arc} from '../../arc.js';
 import {Manifest} from '../../manifest.js';
 import {InitPopulation} from '../../strategies/init-population.js';
+import {StrategyTestHelper} from './strategy-test-helper.js';
 import {assert} from '../chai-web.js';
 
 describe('InitPopulation', async () => {
@@ -31,7 +32,7 @@ describe('InitPopulation', async () => {
     let arc = new Arc({id: 'test-plan-arc', context: manifest});
 
     async function scoreOfInitPopulationOutput() {
-      let results = await new InitPopulation(arc).generate({generation: 0});
+      let results = await new InitPopulation(arc, {contextual: false}).generate({generation: 0});
       assert.lengthOf(results, 1);
       return results[0].score;
     }
@@ -58,8 +59,94 @@ describe('InitPopulation', async () => {
       }
     });
 
-    let results = await new InitPopulation(arc).generate({generation: 0});
+    let results = await new InitPopulation(arc, {contextual: false}).generate({generation: 0});
     assert.lengthOf(results, 1);
     assert.equal(results[0].result.toString(), recipe.toString());
+  });
+
+  it('contextual population has recipes matching arc handles and slots', async () => {
+    let manifest = await Manifest.parse(`
+      schema Burrito
+
+      // Binds to handle Burrito
+      particle EatBurrito
+        in Burrito burrito
+      recipe EatBurrito
+        EatBurrito
+
+      // Binds to slot tortilla
+      particle FillsTortilla
+        consume tortilla
+      recipe FillsTortilla
+        FillsTortilla
+
+      // Provides handle Burrito and slot tortilla
+      particle BurritoRestaurant
+        out Burrito burrito
+        consume root
+          provide tortilla
+      recipe BurritoRestaurant
+        create as burrito
+        BurritoRestaurant
+          burrito -> burrito
+
+      schema Burger
+
+      // Binds to handle Burger
+      particle EatBurger
+        in Burger burger
+      recipe EatBurger
+        EatBurger
+
+      // Binds to slot bun
+      particle FillsBun
+        consume bun
+      recipe FillsBun
+        FillsBun
+
+      // Provides handle Burger and slot bun
+      particle BurgerRestaurant
+        out Burger burger
+        consume root
+          provide bun
+      recipe BurgerRestaurant
+        create as burger
+        BurgerRestaurant
+          burger -> burger
+    `);
+
+    let arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'dom');
+
+    async function openRestaurantWith(foodType) {
+      const restaurant = manifest.recipes.find(recipe => recipe.name === `${foodType}Restaurant`);
+      const FoodEntity = manifest.findSchemaByName(foodType).entityClass();
+      const store = await arc.createStore(FoodEntity.type, undefined, `test:${foodType}`);
+      restaurant.handles[0].mapToStorage(store);
+      restaurant.normalize();
+      restaurant.mergeInto(arc.activeRecipe);
+    }
+
+    let results = await new InitPopulation(arc, {contextual: true}).generate({generation: 0});
+    assert.lengthOf(results, 0, 'Initially nothing is available to eat');
+
+    await openRestaurantWith('Burrito');
+    results = await new InitPopulation(arc, {contextual: true}).generate({generation: 0});
+    assert.deepEqual(results.map(r => r.result.name), [
+      'FillsTortilla',
+      'EatBurrito'
+    ], 'After a Burrito restaurant opened, tortilla wrapped goodness can be consumed');
+
+    await openRestaurantWith('Burger');
+    results = await new InitPopulation(arc, {contextual: true}).generate({generation: 0});
+    assert.lengthOf(results, 4, );
+    assert.deepEqual(results.map(r => r.result.name), [
+      'FillsTortilla',
+      'FillsBun',
+      'EatBurrito',
+      'EatBurger'
+    ], 'Eventually both a burrito and a burger can be enjoyed');
+
+    results = await new InitPopulation(arc, {contextual: true}).generate({generation: 1});
+    assert.lengthOf(results, 0, 'Food is only served once');
   });
 });

@@ -11,6 +11,7 @@
 import {assert} from './chai-web.js';
 import {Arc} from '../arc.js';
 import {Planificator} from '../planificator.js';
+import {InitPopulation} from '../strategies/init-population.js';
 import {Recipe} from '../recipe/recipe.js';
 
 class TestPlanificator extends Planificator {
@@ -39,17 +40,18 @@ class TestPlanificator extends Planificator {
     return Promise.all(this.schedulePromises).then(() => this.schedulePromises = []);
   }
 
-  async _doNextPlans(timeout) {
+  async _doNextPlans(options) {
+    this.plannerOptions = options;
     ++this.planCount;
     return new Promise((resolve, reject) => {
       let plans = this.plannerNextResults.shift();
       if (plans) {
-        resolve({plans, generations: []});
+        resolve(plans);
       } else {
         assert(!this.plannerPromise);
         this.plannerPromise = resolve;
       }
-    }).then((next) => this._next = next);
+    }).then(plans => this._next.plans = plans);
   }
 
   plannerReturnFakeResults(planInfos) {
@@ -71,11 +73,21 @@ class TestPlanificator extends Planificator {
 
   plannerReturnResults(plans) {
     if (this.plannerPromise) {
-      this.plannerPromise({plans, generations: []});
+      this.plannerPromise(plans);
       this.plannerPromise = null;
     } else {
       this.plannerNextResults.push(plans);
     }
+  }
+
+  _onPlanInstantiated(plan) {
+    this._arc.isArcPopulated = true;
+    super._onPlanInstantiated(plan);
+  }
+
+  _isArcPopulated() {
+    // Faking this out to avoid instantiating things for real in this test.
+    return !!this._arc.isArcPopulated;
   }
 }
 
@@ -193,7 +205,7 @@ describe('Planificator', function() {
     await new Promise((resolve, reject) => setTimeout(async () => resolve(), 10));
     planificator._arc._onDataChange();
     await new Promise((resolve, reject) => setTimeout(async () => resolve(), 40));
-    planificator._arc._onDataChange(); 
+    planificator._arc._onDataChange();
     assert.lengthOf(planificator._dataChangesQueue._changes, 3);
     assert.isNotNull(planificator._dataChangesQueue._replanTimer);
     assert.isFalse(planificator.isPlanning);
@@ -411,7 +423,7 @@ describe('Planificator', function() {
     planificator._setCurrent({plans: [newPlan('4'), newPlan('5')], generations: []}, true);
     assert.deepEqual(['3', '4', '5'], planificator._current.plans.map(p => p.hash));
     assert.equal(3, planChanged);
-    
+
     // Appends empty to current plans.
     planificator._setCurrent({plans: [], generations: []}, true);
     assert.deepEqual(['3', '4', '5'], planificator._current.plans.map(p => p.hash));
@@ -442,5 +454,51 @@ describe('Planificator', function() {
     planificator._requestPlanning();
     planificator.setSearch('this is a new search');
     assert.equal(1, cancelCalled);
+  });
+  it('controls contextual planning', async () => {
+    let planificator = createPlanificator();
+
+    // Initial planning for an empty arc is not contextual.
+    planificator._requestPlanning();
+    assert.isTrue(planificator.isPlanning);
+    assert.isFalse(planificator.plannerOptions.strategyArgs.contextual);
+    let plan = newPlan('1');
+    planificator.plannerReturnResults([plan]);
+    await planificator.allPlanningDone();
+
+    // Once a plan is instantiated, planning should be contextual.
+    plan.plan.normalize();
+    await planificator._arc.instantiate(plan.plan);
+    assert.isTrue(planificator.isPlanning);
+    assert.isTrue(planificator.plannerOptions.strategyArgs.contextual);
+    planificator.plannerReturnResults([newPlan('2')]);
+    await planificator.allPlanningDone();
+
+    // Planning should no longer be contextual if we search for everyhing.
+    planificator.setSearch('*');
+    assert.isTrue(planificator.isPlanning);
+    assert.isFalse(planificator.plannerOptions.strategyArgs.contextual,
+      'once search term is entered, planning should again become contextual');
+    assert.isNull(planificator.plannerOptions.strategyArgs.search);
+    assert.include(planificator.plannerOptions.strategyArgs.strategies, InitPopulation);
+    planificator.plannerReturnResults([newPlan('3')]);
+    await planificator.allPlanningDone();
+
+    // Clearing search should not cause planning.
+    planificator.setSearch('');
+    assert.isFalse(planificator.isPlanning);
+
+    // After fetching non contextual suggestions,
+    // InitPopulation is not used for non empty search terms.
+    planificator.setSearch('hello');
+    assert.isTrue(planificator.isPlanning);
+    assert.equal(planificator.plannerOptions.strategyArgs.search, 'hello');
+    assert.notInclude(planificator.plannerOptions.strategyArgs.strategies, InitPopulation);
+    planificator.plannerReturnResults([newPlan('4')]);
+    await planificator.allPlanningDone();
+
+    // Once we gathered non contextual suggestions, '*' no longer causes planning.
+    planificator.setSearch('*');
+    assert.isFalse(planificator.isPlanning);
   });
 });

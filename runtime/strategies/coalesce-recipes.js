@@ -121,12 +121,4 @@ export class CoalesceRecipes extends Strategy {
       }
     }(Walker.Independent), this);
   }
-
-  _compatibleConnections(handle, otherHandle) {
-    const allConnections = [...handle.connections, ...otherHandle.connections];
-    return !!Handle.effectiveType(undefined,
-        // Make copies of types to not modify actual recipes.
-        // TODO: Remove this once effectiveType doesn't mutate inputs.
-        allConnections.map(({type, direction}) => ({type: Type.fromLiteral(type.toLiteral()), direction})));
-  }
 }

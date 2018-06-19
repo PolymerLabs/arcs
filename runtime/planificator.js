@@ -177,18 +177,33 @@ export class Planificator {
       this._suggestChangedCallbacks.forEach(callback => callback(suggestions));
     }
 
-    if (showAll || !search) {
-      // No need to replan: whatever search was before, it was only affecting suggestions filters,
-      // comparing to the current sesarch.
+    let previousSearch = this._search;
+    this._search = search;
+
+    if (!this._current.contextual && (showAll || !search)) {
+      // If we already have all results (i.e. not only contextual) and there is
+      // no search term there is no need to replan: whatever search was before,
+      // it was only affecting suggestions filters.
       return;
     }
 
-    if (this._search !== search) {
+    if (previousSearch !== search && !this._current.contextual) {
+      // If search changed and we already how all plans (i.e. including
+      // non-contextual ones) then it's enough to initialize with InitSearch
+      // with a new search phrase.
       this._search = search;
       this._requestPlanning({
         cancelOngoingPlanning: true,
         strategies: [InitSearch].concat(Planner.ResolutionStrategies),
         append: true
+      });
+    } else if (this._current.contextual) {
+      // Else if we're searching but currently only have contextual plans,
+      // we need get non-contextual plans as well.
+      this._search = search;
+      this._requestPlanning({
+        cancelOngoingPlanning: true,
+        contextual: false
       });
     }
   }
@@ -246,8 +261,8 @@ export class Planificator {
 
     // Move current to past, and clear current;
     this._past = {plan, plans: this._current.plans, generations: this._current.generations};
-    this._setCurrent({plans: [], generations: []});
-    this._requestPlanning({cancelOngoingPlanning: true});
+    this._setCurrent({plans: [], generations: [], contextual: true});
+    this._requestPlanning({cancelOngoingPlanning: true, contextual: this._shouldRequestContextualPlanning()});
   }
 
 
@@ -256,25 +271,27 @@ export class Planificator {
   }
 
   _requestPlanning(options) {
-    options = options || {};
+    options = options || {
+      contextual: this._shouldRequestContextualPlanning()
+    };
     if (options.cancelOngoingPlanning && this.isPlanning) {
       this._cancelPlanning();
     }
 
     // Activate replanning and trigger subscribed callbacks.
-    return this._schedulePlanning(options || {});
+    return this._schedulePlanning(options);
   }
 
   async _schedulePlanning(options) {
     this._valid = false;
     if (!this.isPlanning) {
       this.isPlanning = true;
+      this._next = {generations: [], contextual: options.contextual};
 
       await this._runPlanning(options);
 
       this.isPlanning = false;
-      this._setCurrent({plans: this._next.plans, generations: this._next.generations},
-                       options.append || false);
+      this._setCurrent(Object.assign({}, this._next), options.append || false);
     }
   }
 
@@ -282,7 +299,14 @@ export class Planificator {
     let time = now();
     while (!this._valid) {
       this._valid = true;
-      await this._doNextPlans(options);
+      await this._doNextPlans({
+        strategies: options.strategies,
+        timeout: options.timeout,
+        strategyArgs: {
+          search: this._search,
+          contextual: options.contextual
+        }
+      });
     }
     time = ((now() - time) / 1000).toFixed(2);
     log(`Produced plans [count=${this._next.plans.length}, elapsed=${time}s].`);
@@ -310,14 +334,10 @@ export class Planificator {
         oldPlans.some(oldPlan => !newPlans.find(newPlan => newPlan.hash === oldPlan.hash && newPlan.descriptionText === oldPlan.descriptionText));
   }
 
-  async _doNextPlans(options) {
-    this._next = {generations: []};
+  async _doNextPlans({strategies, strategyArgs, timeout = defaultTimeoutMs}) {
     this._planner = new Planner();
-    this._planner.init(this._arc, {
-      strategies: (options.strategies || null),
-      strategyArgs: {search: this._search}
-    });
-    this._next.plans = await this._planner.suggest(options.timeout || defaultTimeoutMs, this._next.generations, this._speculator);
+    this._planner.init(this._arc, {strategies, strategyArgs});
+    this._next.plans = await this._planner.suggest(timeout, this._next.generations, this._speculator);
     this._planner = null;
   }
 
@@ -344,6 +364,28 @@ export class Planificator {
       if (this._plansDiffer(suggestions, previousSuggestions)) {
         this._suggestChangedCallbacks.forEach(callback => callback(suggestions));
       }
+    } else {
+      this._current.contextual = current.contextual;
     }
+  }
+
+  _shouldRequestContextualPlanning() {
+    // If user is searching, request broad, non-contextual planning.
+    if (this._suggestFilter.showAll || this._suggestFilter.search) return false;
+
+    return this._isArcPopulated();
+  }
+
+  _isArcPopulated() {
+    if (this._arc.recipes.length == 0) return false;
+    if (this._arc.recipes.length == 1) {
+      let [recipe] = this._arc.recipes;
+      if (recipe.particles.length == 0 ||
+          (recipe.particles.length == 1 && recipe.particles[0].name === 'Launcher')) {
+        // TODO: Check for Launcher is hacky, find a better way.
+        return false;
+      }
+    }
+    return true;
   }
 }

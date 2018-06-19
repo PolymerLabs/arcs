@@ -3,7 +3,8 @@
 The planner applies these strategies to produce resolved recipes to be instantiated in the Arc.
 
 ## InitPopulation
-Loads recipes from arc’s context recipes.<br/>
+Loads recipes from arc's recipe index. If contextual planning is requested,
+only recipes that match handles or slots of the active recipe are returned.<br/>
 [init-population.js](https://github.com/PolymerLabs/arcs/blob/master/runtime/strategies/init-population.js)
 
 ## ConvertConstraintsToConnections
