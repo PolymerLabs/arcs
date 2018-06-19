@@ -93,6 +93,8 @@ export class Planificator {
     this._arc = arc;
     this._speculator = new Speculator();
 
+    // The currently running Planner object.
+    this._planner = null;
     // The latest results of a Planner session. These may become 'current', or be disposed as transient,
     // if a new replanning request came in during the Planner execution.
     this._next = {plans: [], generations: []}; // {plans, generations}
@@ -182,7 +184,8 @@ export class Planificator {
 
     if (this._arc.search !== search) {
       this._arc.search = search;
-      this._requestPlanning({}, {
+      this._requestPlanning({
+        cancelOngoingPlanning: true
         // TODO(mmandlis): this excludes InitPopulation from planner strategies and prevents CoalesceRecipes strategy from
         // working properly. Consider reenabling, if possible.
         // // Don't include InitPopulation strategies in replanning.
@@ -246,7 +249,7 @@ export class Planificator {
     // Move current to past, and clear current;
     this._past = {plan, plans: this._current.plans, generations: this._current.generations};
     this._setCurrent({plans: [], generations: []});
-    this._requestPlanning();
+    this._requestPlanning({cancelOngoingPlanning: true});
   }
 
 
@@ -254,14 +257,18 @@ export class Planificator {
     this._dataChangesQueue.addChange();
   }
 
-  _requestPlanning(event, options) {
+  _requestPlanning(options) {
+    options = options || {};
+    if (options.cancelOngoingPlanning && this.isPlanning) {
+      this._cancelPlanning();
+    }
+
     // Activate replanning and trigger subscribed callbacks.
     return this._schedulePlanning(options || {});
   }
 
   async _schedulePlanning(options) {
     this._valid = false;
-    let results;
     if (!this.isPlanning) {
       this.isPlanning = true;
       try {
@@ -285,7 +292,19 @@ export class Planificator {
     log(`Produced plans [count=${this._next.plans.length}, elapsed=${time}s].`);
   }
 
+  _cancelPlanning() {
+    this._planner = null;
+    this._next = {plans: [], generations: []};
+    this.isPlanning = false; // using the setter method to trigger callbacks.
+    this._valid = true;
+    log(`Cancel planning`);
+  }
+
   _plansDiffer(newPlans, oldPlans) {
+    if (!newPlans) {
+      // Ignore change, if new plans were removed by subsequent replanning (avoids race condition).
+      return;
+    }
     return !oldPlans ||
         oldPlans.length !== newPlans.length ||
         oldPlans.some((s, i) => newPlans[i].hash !== s.hash || newPlans[i].descriptionText != s.descriptionText);
@@ -293,9 +312,10 @@ export class Planificator {
 
   async _doNextPlans(options) {
     this._next = {generations: []};
-    let planner = new Planner();
-    planner.init(this._arc, {strategies: (options.strategies || null)});
-    this._next.plans = await planner.suggest(options.timeout || defaultTimeoutMs, this._next.generations, this._speculator);
+    this._planner = new Planner();
+    this._planner.init(this._arc, {strategies: (options.strategies || null)});
+    this._next.plans = await this._planner.suggest(options.timeout || defaultTimeoutMs, this._next.generations, this._speculator);
+    this._planner = null;
   }
 
   _setCurrent(current, append) {

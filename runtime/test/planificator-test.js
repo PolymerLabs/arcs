@@ -417,4 +417,13 @@ describe('Planificator', function() {
     assert.isEmpty(planificator._current.plans);
     assert.equal(4, planChanged);
   });
+  it('cancels planning', function() {
+    let planificator = createPlanificator();
+
+    planificator._requestPlanning();
+    assert.isTrue(planificator.isPlanning);
+
+    planificator._cancelPlanning();
+    assert.isFalse(planificator.isPlanning);
+  });
 });
