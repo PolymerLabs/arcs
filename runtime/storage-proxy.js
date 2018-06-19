@@ -60,7 +60,7 @@ export class StorageProxy {
     return this._type;
   }
 
-  // Called by InnerPEC to associate (potentially multiple) particle/handle pairs with this proxy.
+  // Called by ParticleExecutionContext to associate (potentially multiple) particle/handle pairs with this proxy.
   register(particle, handle) {
     if (!handle.canRead)
       return;

@@ -460,8 +460,9 @@ describe('particle-api', function() {
   // running basic recipe resolution, and `use` ends up in
   // `arc.findStoresByType` which doesn't fall back to considering handles in
   // the arc's context as does, for example, `arc.findStoreById`. We could
-  // potentially address either by including more strategies in the outer-PEC's
-  // strategizer or adding such fallback to `arc.findStoresByType`.
+  // potentially address either by including more strategies in the particle
+  // execution host's strategizer or adding such fallback to
+  // `arc.findStoresByType`.
   it.skip('can load a recipe referencing a tagged handle in manifest', async () => {
     let {manifest, arc} = await loadFilesIntoNewArc({
       manifest: `

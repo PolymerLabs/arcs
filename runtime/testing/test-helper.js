@@ -18,7 +18,7 @@ import {Planner} from '../planner.js';
 import {Random} from '../random.js';
 import {MockSlotComposer} from '../testing/mock-slot-composer.js';
 import {MessageChannel} from '../message-channel.js';
-import {InnerPEC} from '../inner-PEC.js';
+import {ParticleExecutionContext} from '../particle-execution-context.js';
 
 /** @class TestHelper
  * Helper class to recipe instantiation and replanning.
@@ -40,7 +40,7 @@ export class TestHelper {
     this.slotComposer = new MockSlotComposer({strict: options ? options.slotComposerStrict : undefined});
     let pecFactory = function(id) {
       let channel = new MessageChannel();
-      new InnerPEC(channel.port1, `${id}:inner`, loader);
+      new ParticleExecutionContext(channel.port1, `${id}:inner`, loader);
       return channel.port2;
     };
     this.loader = loader;

@@ -12,7 +12,7 @@
 import {assert} from '../platform/assert-web.js';
 import {Type} from './type.js';
 import {handleFor} from './handle.js';
-import {OuterPEC} from './outer-PEC.js';
+import {ParticleExecutionHost} from './particle-execution-host.js';
 import {Recipe} from './recipe/recipe.js';
 import {Manifest} from './manifest.js';
 import {Description} from './description.js';
@@ -52,7 +52,7 @@ export class Arc {
     this.particleHandleMaps = new Map();
     let pecId = this.generateID();
     let innerPecPort = this._pecFactory(pecId);
-    this.pec = new OuterPEC(innerPecPort, slotComposer, this, `${pecId}:outer`);
+    this.pec = new ParticleExecutionHost(innerPecPort, slotComposer, this, `${pecId}:outer`);
     if (slotComposer) {
       slotComposer.arc = this;
     }
@@ -397,7 +397,7 @@ ${this.activeRecipe.toString()}`;
         recipeHandle.id = newStore.id;
         recipeHandle.fate = 'use';
         recipeHandle.storageKey = newStore.storageKey;
-        // TODO: move the call to OuterPEC's DefineHandle to here
+        // TODO: move the call to ParticleExecutionHost's DefineHandle to here
       }
 
       let storageKey = recipeHandle.storageKey;

@@ -8,7 +8,7 @@
 
 'use strict';
 
-import {InnerPEC} from './inner-PEC.js';
+import {ParticleExecutionContext} from './particle-execution-context.js';
 import {MessageChannel} from './message-channel.js';
 import {Loader} from './loader.js';
 
@@ -16,6 +16,6 @@ import {Loader} from './loader.js';
 // separate in-process browser pec-factory.
 export function FakePecFactory(id) {
   let channel = new MessageChannel();
-  new InnerPEC(channel.port1, `${id}:inner`, new Loader());
+  new ParticleExecutionContext(channel.port1, `${id}:inner`, new Loader());
   return channel.port2;
 }
