@@ -293,7 +293,10 @@ export class Planificator {
   }
 
   _cancelPlanning() {
-    this._planner = null;
+    if (this._planner) {
+      this._planner.dispose();
+      this._planner = null;
+    }
     this._next = {plans: [], generations: []};
     this.isPlanning = false; // using the setter method to trigger callbacks.
     this._valid = true;
