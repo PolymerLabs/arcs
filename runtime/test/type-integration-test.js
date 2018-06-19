@@ -30,9 +30,9 @@ describe('type integration', () => {
     let recipe = manifest.recipes[0];
     assert(recipe.normalize());
     assert(recipe.isResolved());
-    assert(recipe.handles.length == 1);
-    assert(recipe.handles[0].type.primitiveType().canReadSubset.entitySchema.name == 'Lego');
-    assert(recipe.handles[0].type.primitiveType().canWriteSuperset.entitySchema.name == 'Product');
+    assert.equal(recipe.handles.length, 1);
+    assert.equal(recipe.handles[0].type.primitiveType().canReadSubset.entitySchema.name, 'Lego');
+    assert.equal(recipe.handles[0].type.primitiveType().canWriteSuperset.entitySchema.name, 'Product');
   });
 
   it('a subtype matches to a supertype that wants to be read when a handle exists', async () => {
@@ -42,8 +42,8 @@ describe('type integration', () => {
     recipe.handles[0].mapToStorage({id: 'test1', type: manifest.findSchemaByName('Product').entityClass().type.collectionOf()});
     assert(recipe.normalize());
     assert(recipe.isResolved());
-    assert(recipe.handles.length == 1);
-    assert(recipe.handles[0].type.primitiveType().entitySchema.name == 'Product');
+    assert.lengthOf(recipe.handles, 1);
+    assert.equal(recipe.handles[0].type.primitiveType().entitySchema.name, 'Product');
   });
 
   it('a subtype matches to a supertype that wants to be read when a handle exists', async () => {
@@ -53,7 +53,7 @@ describe('type integration', () => {
     recipe.handles[0].mapToStorage({id: 'test1', type: manifest.findSchemaByName('Lego').entityClass().type.collectionOf()});
     assert(recipe.normalize());
     assert(recipe.isResolved());
-    assert(recipe.handles.length == 1);
-    assert(recipe.handles[0].type.primitiveType().entitySchema.name == 'Lego');
+    assert.lengthOf(recipe.handles, 1);
+    assert.equal(recipe.handles[0].type.primitiveType().entitySchema.name, 'Lego');
   });
 });

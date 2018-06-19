@@ -33,9 +33,9 @@ describe('CreateHandles', function() {
     let results = await new CreateHandles(arc).generate(inputParams);
 
     if (!expectedToAssignFate) {
-      assert.equal(results.length, 0);
+      assert.isEmpty(results);
     } else {
-      assert.equal(results.length, 1);
+      assert.lengthOf(results, 1);
       assert.isTrue(results[0].result.isResolved());
     }
   };

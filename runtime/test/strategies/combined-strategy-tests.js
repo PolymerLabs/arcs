@@ -39,10 +39,10 @@ describe('CombinedStrategy', function() {
     ]);
 
     let results = await strategy.generate(inputParams);
-    assert.equal(results.length, 1);
+    assert.lengthOf(results, 1);
     let recipe = results[0].result;
-    assert.equal(2, recipe.particles.length);
-    assert.equal(1, recipe.handles.length);
-    assert.equal(2, recipe.handles[0].connections.length);
+    assert.lengthOf(recipe.particles, 2);
+    assert.lengthOf(recipe.handles, 1);
+    assert.lengthOf(recipe.handles[0].connections, 2);
   });
 });

@@ -17,7 +17,7 @@ describe('PageExtractor', function() {
             <span itemprop="name">Chile Verde Burrito</span>
           </div>`;
       return extractEntities(document, window.location).then(function(results) {
-        assert.equal(2, results.length);
+        assert.lengthOf(results, 2);
         assert.deepEqual(
             {'@type': 'http://schema.org/Product', name: 'Chile Verde Burrito'},
             results[0]);

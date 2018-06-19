@@ -46,7 +46,7 @@ describe('SearchTokensToHandles', function() {
     let strategy = new SearchTokensToHandles(arc);
     let results = await strategy.generate({generated: [{result: recipe, score: 1}], terminal: []});
 
-    assert.equal(results.length, 1);
+    assert.lengthOf(results, 1);
     let result = results[0].result;
     assert.isTrue(result.isResolved());
     assert.equal('use', result.handles[0].fate);
@@ -84,10 +84,10 @@ recipe
     let strategy = new SearchTokensToHandles(arc);
     let results = await strategy.generate({generated: [{result: recipe, score: 1}], terminal: []});
 
-    assert.equal(results.length, 1);
+    assert.lengthOf(results, 1);
     let result = results[0].result;
     assert.isTrue(result.isResolved());
-    assert.equal(2, result.handles.length);
+    assert.lengthOf(result.handles, 2);
     assert.equal('map', result.handles[0].fate);
     assert.equal('copy', result.handles[1].fate);
   });

@@ -32,7 +32,7 @@ describe('Handle', function() {
     let barStore = await arc.createStore(Bar.type);
     barStore.set(new Bar({value: 'a Bar'}));
     barStore.clear();
-    assert.equal(await barStore.get(), undefined);
+    assert.isNull(await barStore.get());
   });
 
   it('ignores duplicate stores of the same entity value (variable)', async () => {
@@ -74,7 +74,7 @@ describe('Handle', function() {
     await fooHandle.store(new Foo({value: 'a Foo'}, 'first'));
     await fooHandle.store(new Foo({value: 'another Foo'}, 'second'));
     await fooHandle.store(new Foo({value: 'a Foo, again'}, 'first'));
-    assert.equal((await fooHandle.toList()).length, 2);
+    assert.lengthOf((await fooHandle.toList()), 2);
   });
 
   it('remove entry from store', async () => {
@@ -83,7 +83,7 @@ describe('Handle', function() {
     let bar = new Bar({id: 0, value: 'a Bar'});
     barStore.store(bar);
     barStore.remove(bar.id);
-    assert.equal((await barStore.toList()).length, 0);
+    assert.isEmpty((await barStore.toList()));
   });
 
   it('can store a particle in a shape store', async () => {

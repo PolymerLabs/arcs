@@ -18,7 +18,7 @@ describe('products test', function() {
 
   let verifyFilteredBook = async (handle) => {
     let list = await handle.toList();
-    assert.equal(1, list.length);
+    assert.lengthOf(list, 1);
     assert.equal('Harry Potter', list[0].rawData.name);
   };
 

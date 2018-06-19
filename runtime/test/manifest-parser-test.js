@@ -93,7 +93,7 @@ describe('manifest parser', function() {
           Nonsense()`);
       assert.fail('this parse should have failed, no nonsense!');
     } catch (e) {
-      assert(e.message.includes('Nonsense'),
+      assert.include(e.message, 'Nonsense',
           'bad error: '+e);
     }
   });

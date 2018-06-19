@@ -27,7 +27,7 @@ describe('ConvertConstraintsToConnections', async () => {
     let inputParams = {generated: [{result: recipe, score: 1}]};
     let cctc = new ConvertConstraintsToConnections({pec: {}});
     let results = await cctc.generate(inputParams);
-    assert.equal(1, results.length);
+    assert.lengthOf(results, 1);
     let {result, score} = results[0];
     assert.deepEqual(result.toString(),
 `recipe
@@ -51,7 +51,7 @@ describe('ConvertConstraintsToConnections', async () => {
     let inputParams = {generated: [{result: recipe, score: 1}]};
     let cctc = new ConvertConstraintsToConnections({pec: {}});
     let results = await cctc.generate(inputParams);
-    assert.equal(0, results.length);
+    assert.isEmpty(results);
   });
 
   it('can resolve input only handle connection with a mapped handle', async () => {
@@ -68,7 +68,7 @@ describe('ConvertConstraintsToConnections', async () => {
     let inputParams = {generated: [{result: recipe, score: 1}]};
     let cctc = new ConvertConstraintsToConnections({pec: {}});
     let results = await cctc.generate(inputParams);
-    assert.equal(1, results.length);
+    assert.lengthOf(results, 1);
   });
 
   it('can create handle for input and output handle', async () => {
@@ -89,7 +89,7 @@ describe('ConvertConstraintsToConnections', async () => {
       let inputParams = {generated: [{result: recipe, score: 1}]};
       let cctc = new ConvertConstraintsToConnections({pec: {}});
       let results = await cctc.generate(inputParams);
-      assert.equal(1, results.length, `Failed to resolve ${constraint1} & ${constraint2}`);
+      assert.lengthOf(results, 1, `Failed to resolve ${constraint1} & ${constraint2}`);
     };
     // Test for all possible combination of connection constraints with 3 particles.
     let constraints = [['A.b = C.d', 'C.d = A.b'], ['A.b -> E.f', 'E.f <- A.b'], ['C.d -> E.f', 'E.f <- C.d']];
@@ -119,7 +119,7 @@ describe('ConvertConstraintsToConnections', async () => {
     let inputParams = {generated: [{result: recipe, score: 1}]};
     let cctc = new ConvertConstraintsToConnections({pec: {}});
     let results = await cctc.generate(inputParams);
-    assert.equal(1, results.length);
+    assert.lengthOf(results, 1);
     let {result, score} = results[0];
     assert.deepEqual(result.toString(),
 `recipe
@@ -144,7 +144,7 @@ describe('ConvertConstraintsToConnections', async () => {
     let inputParams = {generated: [{result: recipe, score: 1}]};
     let cctc = new ConvertConstraintsToConnections({pec: {}});
     let results = await cctc.generate(inputParams);
-    assert.equal(1, results.length);
+    assert.lengthOf(results, 1);
     let {result, score} = results[0];
     assert.deepEqual(result.toString(),
 `recipe
@@ -171,7 +171,7 @@ describe('ConvertConstraintsToConnections', async () => {
     let inputParams = {generated: [{result: recipe, score: 1}]};
     let cctc = new ConvertConstraintsToConnections({pec: {}});
     let results = await cctc.generate(inputParams);
-    assert.equal(1, results.length);
+    assert.lengthOf(results, 1);
     let {result, score} = results[0];
     assert.deepEqual(result.toString(),
 `recipe
@@ -199,7 +199,7 @@ describe('ConvertConstraintsToConnections', async () => {
     let inputParams = {generated: [{result: recipe, score: 1}]};
     let cctc = new ConvertConstraintsToConnections({pec: {}});
     let results = await cctc.generate(inputParams);
-    assert.equal(1, results.length);
+    assert.lengthOf(results, 1);
     let {result, score} = results[0];
     assert.deepEqual(result.toString(),
 `recipe
@@ -227,7 +227,7 @@ describe('ConvertConstraintsToConnections', async () => {
     let inputParams = {generated: [{result: recipe, score: 1}]};
     let cctc = new ConvertConstraintsToConnections({pec: {}});
     let results = await cctc.generate(inputParams);
-    assert.equal(1, results.length);
+    assert.lengthOf(results, 1);
     let {result, score} = results[0];
     assert.deepEqual(result.toString(),
 `recipe
@@ -256,7 +256,7 @@ describe('ConvertConstraintsToConnections', async () => {
     let inputParams = {generated: [{result: recipe, score: 1}]};
     let cctc = new ConvertConstraintsToConnections({pec: {}});
     let results = await cctc.generate(inputParams);
-    assert.equal(1, results.length);
+    assert.lengthOf(results, 1);
     let {result, score} = results[0];
     assert.deepEqual(result.toString(), `recipe
   use as handle0 // S {}
@@ -289,7 +289,7 @@ describe('ConvertConstraintsToConnections', async () => {
     let inputParams = {generated: [{result: recipes[0], score: 1}, {result: recipes[1], score: 1}]};
     let cctc = new ConvertConstraintsToConnections({pec: {slotComposer: {affordance: 'voice'}}});
     let results = await cctc.generate(inputParams);
-    assert.equal(results.length, 1);
+    assert.lengthOf(results, 1);
     assert.deepEqual(results[0].result.particles.map(p => p.name), ['A', 'C']);
   });
 
@@ -307,7 +307,7 @@ describe('ConvertConstraintsToConnections', async () => {
     let inputParams = {generated: [{result: recipes[0], score: 1}]};
     let cctc = new ConvertConstraintsToConnections({pec: {}});
     let results = await cctc.generate(inputParams);
-    assert.equal(results.length, 1);
+    assert.lengthOf(results, 1);
     assert.deepEqual(results[0].result.toString(), `recipe
   ? as handle0 // S {}
   A as particle0
@@ -332,7 +332,7 @@ describe('ConvertConstraintsToConnections', async () => {
     let inputParams = {generated: [{result: recipes[0], score: 1}]};
     let cctc = new ConvertConstraintsToConnections({pec: {}});
     let results = await cctc.generate(inputParams);
-    assert.equal(results.length, 1);
+    assert.lengthOf(results, 1);
     assert.deepEqual(results[0].result.toString(), `recipe
   ? as handle0 // S {}
   A as particle0
@@ -358,7 +358,7 @@ describe('ConvertConstraintsToConnections', async () => {
     let inputParams = {generated: [{result: recipes[0], score: 1}]};
     let cctc = new ConvertConstraintsToConnections({pec: {}});
     let results = await cctc.generate(inputParams);
-    assert.equal(results.length, 1);
+    assert.lengthOf(results, 1);
     assert.deepEqual(results[0].result.toString(), `recipe
   ? as handle0 // S {}
   A as particle0
@@ -385,7 +385,7 @@ describe('ConvertConstraintsToConnections', async () => {
     let inputParams = {generated: [{result: recipes[0], score: 1}]};
     let cctc = new ConvertConstraintsToConnections({pec: {}});
     let results = await cctc.generate(inputParams);
-    assert.equal(results.length, 1);
+    assert.lengthOf(results, 1);
     assert.deepEqual(results[0].result.toString(), `recipe
   ? as handle0 // S {}
   ? as handle1 // S {}
@@ -411,7 +411,7 @@ describe('ConvertConstraintsToConnections', async () => {
     let inputParams = {generated: [{result: recipes[0], score: 1}]};
     let cctc = new ConvertConstraintsToConnections({pec: {}});
     let results = await cctc.generate(inputParams);
-    assert.equal(results.length, 1);
+    assert.lengthOf(results, 1);
     assert.deepEqual(results[0].result.toString(), `recipe
   ? #hashtag as handle0 // S {}
   create #trashbag as handle1 // S {}
@@ -437,7 +437,7 @@ describe('ConvertConstraintsToConnections', async () => {
     let inputParams = {generated: [{result: recipes[0], score: 1}]};
     let cctc = new ConvertConstraintsToConnections({pec: {}});
     let results = await cctc.generate(inputParams);
-    assert.equal(results.length, 1);
+    assert.lengthOf(results, 1);
     assert.deepEqual(results[0].result.toString(), `recipe
   ? #hashtag as handle0 // S {}
   create #trashbag as handle1 // S {}
@@ -465,7 +465,7 @@ describe('ConvertConstraintsToConnections', async () => {
     let inputParams = {generated: [{result: recipes[0], score: 1}]};
     let cctc = new ConvertConstraintsToConnections({pec: {}});
     let results = await cctc.generate(inputParams);
-    assert.equal(results.length, 1);
+    assert.lengthOf(results, 1);
     assert.deepEqual(results[0].result.toString(), `recipe
   ? #hashtag as handle0 // S {}
   A as particle0
@@ -486,10 +486,10 @@ describe('ConvertConstraintsToConnections', async () => {
     let inputParams = {generated: [{result: recipes[0], score: 1}]};
     let cctc = new ConvertConstraintsToConnections({pec: {}});
     let results = await cctc.generate(inputParams);
-    assert.equal(results.length, 1);
+    assert.lengthOf(results, 1);
     let recipe = results[0].result;
     assert.deepEqual(recipe.particles.map(p => p.name), ['A', 'B']);
-    assert.equal(recipe.obligations.length, 1);
+    assert.lengthOf(recipe.obligations, 1);
     assert.equal(recipe.obligations[0].from.instance, recipe.particles[0]);
     assert.equal(recipe.obligations[0].to.instance, recipe.particles[1]);
   });
@@ -508,10 +508,10 @@ describe('ConvertConstraintsToConnections', async () => {
     let inputParams = {generated: [{result: recipes[0], score: 1}]};
     let cctc = new ConvertConstraintsToConnections({pec: {}});
     let results = await cctc.generate(inputParams);
-    assert.equal(results.length, 1);
+    assert.lengthOf(results, 1);
     let recipe = results[0].result;
     assert.deepEqual(recipe.particles.map(p => p.name), ['A', 'B']);
-    assert.equal(recipe.obligations.length, 1);
+    assert.lengthOf(recipe.obligations, 1);
     assert.equal(recipe.obligations[0].from.instance, recipe.particles[0]);
     assert.equal(recipe.obligations[0].to.instance, recipe.particles[1]);
   });
@@ -530,10 +530,10 @@ describe('ConvertConstraintsToConnections', async () => {
     let inputParams = {generated: [{result: recipes[0], score: 1}]};
     let cctc = new ConvertConstraintsToConnections({pec: {}});
     let results = await cctc.generate(inputParams);
-    assert.equal(results.length, 1);
+    assert.lengthOf(results, 1);
     let recipe = results[0].result;
     assert.deepEqual(recipe.particles.map(p => p.name), ['A', 'B']);
-    assert.equal(recipe.obligations.length, 1);
+    assert.lengthOf(recipe.obligations, 1);
     assert.equal(recipe.obligations[0].from.instance, recipe.particles[0]);
     assert.equal(recipe.obligations[0].to.instance, recipe.particles[1]);
   });

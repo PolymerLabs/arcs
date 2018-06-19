@@ -61,7 +61,7 @@ describe('demo flow', function() {
         .expectRenderSlot('Multiplexer2', 'annotation', {verify: helper.slotComposer.expectContentItemsNumber.bind(null, 3), isOptional: true});
     await helper.acceptSuggestion({particles: ['ShowCollection', 'Multiplexer', 'Chooser', 'Recommend', 'Multiplexer2']});
 
-    assert.equal(2, helper.arc.findStoresByType(helper.arc.context.findSchemaByName('Product').entityClass().type.collectionOf()).length);
+    assert.lengthOf(helper.arc.findStoresByType(helper.arc.context.findSchemaByName('Product').entityClass().type.collectionOf()), 2);
     await helper.verifySetSize('ShowCollection', 'collection', 3);
     await helper.verifySetSize('Multiplexer', 'list', 3);
     await helper.verifySetSize('Chooser', 'choices', 3);

@@ -54,7 +54,7 @@ async function initSlotComposer(recipeStr) {
   let planner = new Planner();
   planner.init(arc);
   await planner.strategizer.generate();
-  assert.equal(planner.strategizer.population.length, 1);
+  assert.lengthOf(planner.strategizer.population, 1);
   let plan = planner.strategizer.population[0].result;
   return {arc, slotComposer, plan, startRenderParticles};
 }

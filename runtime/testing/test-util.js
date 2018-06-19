@@ -147,7 +147,7 @@ export function assertSingletonEmpty(store) {
   return new Promise((resolve, reject) => {
     let variable = new handle.handleFor(store);
     variable.get().then(result => {
-      assert.equal(result, undefined);
+      assert.isUndefined(result);
       resolve();
     });
   });

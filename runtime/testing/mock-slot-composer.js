@@ -196,7 +196,7 @@ export class MockSlotComposer extends SlotComposer {
 
   async renderSlot(particle, slotName, content) {
     // console.log(`    renderSlot ${particle.name} ${((names) => names.length > 0 ? `(${names.join(',')}) ` : '')(this._getHostedParticleNames(particle))}: ${slotName} - ${Object.keys(content).join(', ')}`);
-    assert(this.expectQueue.length > 0,
+    assert.isAbove(this.expectQueue.length, 0,
       `Got a renderSlot from ${particle.name}:${slotName} (content types: ${Object.keys(content).join(', ')}), but not expecting anything further.`);
 
     let found = this._verifyRenderContent(particle, slotName, content);

@@ -76,7 +76,7 @@ class TestCollection {
 
   remove(id, version) {
     let entry = this._items.get(id);
-    assert(entry !== undefined,
+    assert.notStrictEqual(entry, undefined,
            `Test bug: attempt to remove non-existent id '${id}' from '${this.name}'`);
     this._items.delete(id);
     this._version = (version !== undefined) ? version : this._version + 1;

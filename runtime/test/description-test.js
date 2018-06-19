@@ -75,7 +75,7 @@ recipe
     consume root as slot0`;
   async function prepareRecipeAndArc(manifestStr) {
     let manifest = (await Manifest.parse(manifestStr));
-    assert.equal(1, manifest.recipes.length);
+    assert.lengthOf(manifest.recipes, 1);
     let recipe = manifest.recipes[0];
     let Foo = manifest.findSchemaByName('Foo').entityClass();
     recipe.handles[0].mapToStorage({id: 'test:1', type: Foo.type});
@@ -357,7 +357,7 @@ recipe
     consume root as slot0
     `;
       let manifest = (await Manifest.parse(manifestStr));
-      assert.equal(1, manifest.recipes.length);
+      assert.lengthOf(manifest.recipes, 1);
       let recipe = manifest.recipes[0];
       let Foo = manifest.findSchemaByName('Foo').entityClass();
       recipe.handles[0].mapToStorage({id: 'test:1', type: Foo.type.collectionOf()});
@@ -491,7 +491,7 @@ recipe
            ts = tsHandle
            consume root as slot0`;
         let manifest = (await Manifest.parse(manifestStr));
-        assert.equal(1, manifest.recipes.length);
+        assert.lengthOf(manifest.recipes, 1);
         let recipe = manifest.recipes[0];
         let MyBESTType = manifest.findSchemaByName('MyBESTType').entityClass();
         recipe.handles[0].mapToStorage({id: 'test:1', type: MyBESTType.type});
@@ -564,7 +564,7 @@ recipe
     consume otherslot as slot2
 `;
       let manifest = (await Manifest.parse(manifestStr));
-      assert.equal(1, manifest.recipes.length);
+      assert.lengthOf(manifest.recipes, 1);
       let recipe = manifest.recipes[0];
       recipe.normalize();
       assert.isTrue(recipe.isResolved());
@@ -654,7 +654,7 @@ recipe
     consume root as slot0
 `;
     let manifest = (await Manifest.parse(manifestStr));
-    assert.equal(1, manifest.recipes.length);
+    assert.lengthOf(manifest.recipes, 1);
     let recipe = manifest.recipes[0];
     let Foo = manifest.findSchemaByName('Foo').entityClass();
     let DescriptionType = manifest.findSchemaByName('Description').entityClass();

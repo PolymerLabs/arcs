@@ -103,14 +103,14 @@ describe('Planificator', function() {
     assert.isFalse(planificator.isPlanning);
     assert.equal(0, Object.keys(planificator.getLastActivatedPlan()));
     let {plans} = planificator.getCurrentPlans();
-    assert.lengthOf(plans, 0);
+    assert.isEmpty(plans);
 
     planificator._arc.dispose();
     planificator.dispose();
-    assert.lengthOf(planificator._arc._instantiatePlanCallbacks, 0);
-    assert.lengthOf(planificator._stateChangedCallbacks, 0);
-    assert.lengthOf(planificator._plansChangedCallbacks, 0);
-    assert.lengthOf(planificator._suggestChangedCallbacks, 0);
+    assert.isEmpty(planificator._arc._instantiatePlanCallbacks);
+    assert.isEmpty(planificator._stateChangedCallbacks);
+    assert.isEmpty(planificator._plansChangedCallbacks);
+    assert.isEmpty(planificator._suggestChangedCallbacks);
   });
 
   it('makes replanning requests', async () => {
@@ -144,7 +144,7 @@ describe('Planificator', function() {
     await new Promise((resolve, reject) => setTimeout(async () => resolve(), 300));
 
     assert.isTrue(planificator.isPlanning);
-    assert.lengthOf(planificator.getCurrentPlans().plans, 0);
+    assert.isEmpty(planificator.getCurrentPlans().plans);
 
     planificator.plannerReturnFakeResults([1, 2, 3]);
     await planificator.allPlanningDone();
@@ -159,7 +159,7 @@ describe('Planificator', function() {
     assert.lengthOf(planificator.getCurrentPlans().plans, 3);
     planificator.suggestFilter = {showAll: true};
     assert.lengthOf(planificator.getCurrentSuggestions(), 3);
-    assert.lengthOf(Object.keys(planificator._past), 0);
+    assert.isEmpty(Object.keys(planificator._past));
   });
 
   it('groups data change triggered replanning', async () => {
@@ -214,7 +214,7 @@ describe('Planificator', function() {
     // Plan instantiated, data change events triggered replanning scheduling is canceled.
     await planificator._arc.instantiate(plan);
     assert.isTrue(planificator.isPlanning);
-    assert.lengthOf(planificator._dataChangesQueue._changes, 0);
+    assert.isEmpty(planificator._dataChangesQueue._changes);
     assert.isNull(planificator._dataChangesQueue._replanTimer);
   });
 
@@ -254,7 +254,7 @@ describe('Planificator', function() {
 
     // Planning is triggered and previous suggestions are no long available.
     assert.isTrue(planificator.isPlanning);
-    assert.lengthOf(planificator.getCurrentSuggestions(), 0);
+    assert.isEmpty(planificator.getCurrentSuggestions());
     assert.equal(plan, planificator.getLastActivatedPlan().plan);
     assert.lengthOf(planificator.getLastActivatedPlan().plans, 1);
   });
@@ -356,7 +356,7 @@ describe('Planificator', function() {
 
    // Search for plans that aren't available.
    planificator.setSearch('nosuchplan');
-   assert.lengthOf(planificator.getCurrentSuggestions(), 0);
+   assert.isEmpty(planificator.getCurrentSuggestions());
   });
   it('shows suggestions involving handle from active recipe', async () => {
     let plan0 = newPlan('0', {hasSlot: true, hasRootSlot: true, handlesIds: ['handle0']});
@@ -384,7 +384,7 @@ describe('Planificator', function() {
     planificator.registerPlansChangedCallback(() => { ++planChanged; });
 
     planificator._setCurrent({plans: [], generations: []});
-    assert.lengthOf(planificator._current.plans, 0);
+    assert.isEmpty(planificator._current.plans);
     assert.equal(0, planChanged);
 
     // Sets current plans
@@ -414,7 +414,7 @@ describe('Planificator', function() {
 
     // Override with empty plans.
     planificator._setCurrent({plans: [], generations: []});
-    assert.lengthOf(planificator._current.plans, 0);
+    assert.isEmpty(planificator._current.plans);
     assert.equal(4, planChanged);
   });
 });

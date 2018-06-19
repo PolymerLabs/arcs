@@ -27,13 +27,13 @@ export class StrategyTestHelper {
     return new clazz(arc).generate({generated: [{result: recipe, score: 1}], terminal: []});
   }
   static onlyResult(arc, clazz, recipe) {
-    return StrategyTestHelper.run(arc, clazz, recipe).then(result => { assert.equal(result.length, 1); return result[0].result;});
+    return StrategyTestHelper.run(arc, clazz, recipe).then(result => { assert.lengthOf(result, 1); return result[0].result;});
   }
   static theResults(arc, clazz, recipe) {
     return StrategyTestHelper.run(arc, clazz, recipe).then(results => results.map(result => result.result)); // chicken chicken
   }
 
   static noResult(arc, clazz, recipe) {
-    return StrategyTestHelper.run(arc, clazz, recipe).then(result => { assert.equal(result.length, 0); });
+    return StrategyTestHelper.run(arc, clazz, recipe).then(result => { assert.isEmpty(result); });
   }
 }

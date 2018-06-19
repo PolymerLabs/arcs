@@ -69,7 +69,7 @@ store BoxesStore of [Box] 'allboxes' in AllBoxes` : ''}
 
   async function generateRecipeDescription(options) {
     let helper = await TestHelper.parseManifestAndPlan(createManifestString(options));
-    assert.equal(helper.plans.length, 1);
+    assert.lengthOf(helper.plans, 1);
 
     return helper.plans[0].description.getRecipeSuggestion(options.formatter);
   }
@@ -251,12 +251,12 @@ store BoxesStore of [Box] 'allboxes' in AllBoxes` : ''}
         Dummy
         description \`show \${ShowFoo.foo} with dummy\`
   `);
-    assert.equal(helper.plans.length, 2);
+    assert.lengthOf(helper.plans, 2);
     assert.equal('Show foo.', await helper.plans[0].description.getRecipeSuggestion());
 
     await helper.acceptSuggestion({particles: ['ShowFoo']});
     await helper.makePlans();
-    assert.equal(helper.plans.length, 1);
+    assert.lengthOf(helper.plans, 1);
 
     assert.equal('Show foo with dummy.', await helper.plans[0].description.getRecipeSuggestion());
   });

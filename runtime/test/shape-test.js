@@ -19,14 +19,14 @@ import {Schema} from '../schema.js';
 describe('shape', function() {
   it('finds type variable references in handles', function() {
     let shape = new Shape('Test', [{type: Type.newVariable({name: 'a'})}], []);
-    assert.equal(shape._typeVars.length, 1);
+    assert.lengthOf(shape._typeVars, 1);
     assert.equal(shape._typeVars[0].field, 'type');
     assert.equal(shape._typeVars[0].object[shape._typeVars[0].field].variable.name, 'a');
   });
 
   it('finds type variable references in slots', function() {
     let shape = new Shape('Test', [], [{name: Type.newVariable({name: 'a'})}]);
-    assert.equal(shape._typeVars.length, 1);
+    assert.lengthOf(shape._typeVars, 1);
     assert.equal(shape._typeVars[0].field, 'name');
     assert.equal(shape._typeVars[0].object[shape._typeVars[0].field].variable.name, 'a');
   });
@@ -41,7 +41,7 @@ describe('shape', function() {
       [
         {name: Type.newVariable({name: 'a'})},
       ]);
-    assert.equal(shape._typeVars.length, 4);
+    assert.lengthOf(shape._typeVars, 4);
     let type = Type.newInterface(shape);
     let map = new Map();
     type = type.mergeTypeVariablesByName(map);

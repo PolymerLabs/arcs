@@ -213,7 +213,7 @@ describe('A Strategy Sequence', function() {
 
     recipe = await onlyResult(arc, MatchRecipeByVerb, recipe);
     recipes = await theResults(arc, ConvertConstraintsToConnections, recipe);
-    assert.equal(recipes.length, 2);
+    assert.lengthOf(recipes, 2);
     recipe = await onlyResult(arc, ResolveRecipe, recipes[1]);
   });
 
@@ -256,7 +256,7 @@ describe('A Strategy Sequence', function() {
 
     recipe = await onlyResult(arc, CreateHandleGroup, recipe);
     recipe = await onlyResult(arc, ResolveRecipe, recipe);
-    assert.equal(recipe.obligations.length, 0);
+    assert.isEmpty(recipe.obligations);
   });
 
   it('connects particles together with multiple connections', async () => {

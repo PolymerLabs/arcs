@@ -251,8 +251,8 @@ describe('TileBoard', function() {
   describe('#pickCharWithFrequencies()', function() {
     it('should return a single caps alpha character', function() {
       let result = TileBoard.pickCharWithFrequencies();
-      assert.equal(result.length, 1);
-      assert.isTrue(/[A-Z]/.test(result));
+      assert.lengthOf(result, 1);
+      assert.match(result, /[A-Z]/);
     });
   });
 
