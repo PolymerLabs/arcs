@@ -55,7 +55,7 @@ class SeComparePopulations extends PolymerElement {
       </header>
       <template is="dom-repeat" items="{{library}}">
         <div id="[[item.id]]" class="entry" selected\$="[[item.selected]]">
-          @[[item.time]] : ⊕[[item.surviving]], ✓[[item.resolved]]
+          @[[item.label]] : ⊕[[item.surviving]], ✓[[item.resolved]]
           <iron-icon hidden\$="[[item.selected]]" id="compare" title="Compare" icon="image:exposure"></iron-icon></div>
       </template>
     </div>
@@ -80,6 +80,12 @@ class SeComparePopulations extends PolymerElement {
     this.current = {};
   }
 
+  processOptions(options) {
+    if (options.keep) {
+      this._addCurrent(options);
+    }
+  }
+
   _onResultsUpdated(results) {
     if (results.length === 0 || results.overlapBase
         || [...this.library, this.current].some(p => p.results === results)) {
@@ -99,11 +105,15 @@ class SeComparePopulations extends PolymerElement {
     this._updateSelection();
   }
 
-  _addCurrent() {
+  _addCurrent({label} = {}) {
+    if (label) {
+      let existingIdx = this.library.findIndex(e => e.label === label);
+      if (existingIdx >= 0) this.splice('library', existingIdx, 1);
+    }
     let now = Date.now();
     let entry = Object.assign({}, this.current, {
       id: String(now),
-      time: formatTime(now),
+      label: label || `@${formatTime(now)}`
     });
     this.push('library', entry);
     this.set('current.added', true);
@@ -150,7 +160,7 @@ class SeComparePopulations extends PolymerElement {
     if (maintainSelection) {
       this.results = results;
     } else {
-      document.strategyExplorer.displayResults(results);
+      document.strategyExplorer.displayResults({results});
     }
   }
 

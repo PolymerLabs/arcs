@@ -54,7 +54,8 @@ export class RecipeIndex {
       } while (strategizer.generated.length + strategizer.terminal.length > 0);
 
       if (DevtoolsConnection.isConnected) {
-        StrategyExplorerAdapter.processGenerations(generations, DevtoolsConnection.get());
+        StrategyExplorerAdapter.processGenerations(
+            generations, DevtoolsConnection.get(), {label: 'Index', keep: true});
       }
 
       let population = strategizer.population;

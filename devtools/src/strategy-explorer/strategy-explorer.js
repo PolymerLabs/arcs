@@ -39,7 +39,7 @@ Polymer({
       </div>
       <aside style="flex: .3">
         <se-find id="find" on-find-phrase="onFindPhrase"></se-find>
-        <se-compare-populations results="{{results}}"></se-compare-populations>
+        <se-compare-populations results="{{results}}" id='compare'></se-compare-populations>
         <se-recipe-view></se-recipe-view>
         <!--<se-arc-view></se-arc-view> this is disconnected today, PRs welcome-->
         <se-stats results="{{results}}"></se-stats>
@@ -67,7 +67,7 @@ Polymer({
     this.timeoutId = null;
   },
 
-  displayResults: function(results) {
+  displayResults: function({results, options}) {
     if (JSON.stringify(this.results) === JSON.stringify(results)) return;
     this.reset();
     if (this.timeoutId) {
@@ -76,7 +76,11 @@ Polymer({
       clearTimeout(this.timeoutId);
     }
 
-    this.timeoutId = setTimeout(() => this.set('results', results), 0);
+    this.timeoutId = setTimeout(() => {
+      this.set('results', results);
+      // TODO(piotrs): Make generic once more components need options.
+      if (options) this.$.compare.processOptions(options);
+    }, 0);
   },
 
   onMessageBundle: function(messages) {
