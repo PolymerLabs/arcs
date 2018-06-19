@@ -206,15 +206,6 @@ export class StorageProxy {
     return this._pec.generateIDComponents();
   }
 
-  on(type, callback, target, particleId) {
-    let dataFreeCallback = (d) => callback();
-    this.synchronize(type, dataFreeCallback, dataFreeCallback, target, particleId);
-  }
-
-  synchronize(type, modelCallback, callback, target, particleId) {
-    this._port.Synchronize({handle: this, modelCallback, callback, target, type, particleId});
-  }
-
   // Read ops: if we're synchronized we can just return the local copy of the data.
   // Otherwise, send a request to the backing store.
   // TODO: in synchronized mode, these should integrate with SynchronizeProxy rather than

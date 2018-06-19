@@ -11,15 +11,15 @@
 defineParticle(({Particle}) => {
   return class Recommend extends Particle {
     setHandles(handles) {
-      this.on(handles, 'population', 'change', e => {
-        let populationHandle = handles.get('population');
-        populationHandle.toList().then(data => {
-          for (let i = 0; i < 3 && i < data.length; i++) {
-            handles.get('recommendations').store(data[i]);
-          }
-          this.relevance = 9;
-        });
-      });
+      this._handles = handles;
+    }
+    onHandleSync(handle, model) {
+      if (handle.name === 'population') {
+        for (let i = 0; i < 3 && i < model.length; i++) {
+          this._handles.get('recommendations').store(model[i]);
+        }
+        this.relevance = 9;
+      }
     }
   };
 });

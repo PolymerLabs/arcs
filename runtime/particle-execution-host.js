@@ -48,17 +48,6 @@ export class ParticleExecutionHost {
       this._apiPort.SimpleCallback({callback, data});
     };
 
-    this._apiPort.onSynchronize = async ({handle, target, callback, modelCallback, type}) => {
-      let model;
-      if (handle.toList === undefined) {
-        model = await handle.get();
-      } else {
-        model = await handle.toList();
-      }
-      this._apiPort.SimpleCallback({callback: modelCallback, data: model}, target);
-      handle.on(type, data => this._apiPort.SimpleCallback({callback, data}), target);
-    };
-
     this._apiPort.onHandleGet = async ({handle, callback}) => {
       this._apiPort.SimpleCallback({callback, data: await handle.get()});
     };

@@ -37,11 +37,13 @@ export class OuterPortAttachment {
     }
   }
 
-  onSynchronize({handle, target, callback, modelCallback, type, particleId}) {
-    this._callbackRegistry[callback] = this._describeHandleCall(
-      {operation: `on-${type}`, handle, particleId});
-    this._callbackRegistry[modelCallback] = this._describeHandleCall(
-      {operation: 'sync-model', handle, particleId});
+  // TODO: particle IDs for proxy calls?
+  onInitializeProxy({handle, callback}) {
+    this._callbackRegistry[callback] = this._describeHandleCall({operation: 'on-change', handle});
+  }
+
+  onSynchronizeProxy({handle, callback}) {
+    this._callbackRegistry[callback] = this._describeHandleCall({operation: 'sync-model', handle});
   }
 
   onHandleGet({handle, callback, particleId}) {

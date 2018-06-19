@@ -54,7 +54,7 @@ describe('Arc', function() {
     recipe.handles[1].mapToStorage(barStore);
     assert(recipe.normalize());
     await arc.instantiate(recipe);
-    await util.assertSingletonWillChangeTo(barStore, Bar, 'a Foo1');
+    await util.assertSingletonWillChangeTo(arc, barStore, 'value', 'a Foo1');
   });
 
   it('applies new stores to a particle', async () => {
@@ -67,7 +67,7 @@ describe('Arc', function() {
     await arc.instantiate(recipe);
 
     handleFor(fooStore).set(new Foo({value: 'a Foo'}));
-    await util.assertSingletonWillChangeTo(barStore, Bar, 'a Foo1');
+    await util.assertSingletonWillChangeTo(arc, barStore, 'value', 'a Foo1');
   });
 
   it('deserializing a serialized empty arc produces an empty arc', async () => {
@@ -88,7 +88,7 @@ describe('Arc', function() {
     recipe.handles[1].mapToStorage(barStore);
     recipe.normalize();
     await arc.instantiate(recipe);
-    await util.assertSingletonWillChangeTo(barStore, Bar, 'a Foo1');
+    await util.assertSingletonWillChangeTo(arc, barStore, 'value', 'a Foo1');
     assert.equal(fooStore._version, 1);
     assert.equal(barStore._version, 1);
 

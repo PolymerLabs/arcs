@@ -75,19 +75,6 @@ class Handle {
     }
   }
 
-  /** @method on(kind, callback, target)
-   * Register for callbacks every time the requested kind of event occurs.
-   * Events are grouped into delivery sets by target, which should therefore
-   * be the recieving particle.
-   */
-  on(kind, callback, target) {
-    return this._proxy.on(kind, callback, target, this._particleId);
-  }
-
-  synchronize(kind, modelCallback, callback, target) {
-    return this._proxy.synchronize(kind, modelCallback, callback, target, this._particleId);
-  }
-
   generateID() {
     assert(this._proxy.generateID);
     return this._proxy.generateID();

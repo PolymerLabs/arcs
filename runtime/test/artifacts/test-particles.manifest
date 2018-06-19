@@ -16,11 +16,6 @@ particle TestParticle in 'test-particle.js'
   out Bar bar
   description `test particle`
 
-particle TwoInputTestParticle in 'two-input-test-particle.js'
-  in Foo foo
-  in Bar bar
-  out Far far
-
 shape TestShape
   in Foo foo
   out Bar bar

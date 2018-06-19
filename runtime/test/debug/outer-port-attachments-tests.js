@@ -73,7 +73,7 @@ describe('OuterPortAttachment', function() {
       implFile: 'p.js'
     });
 
-    await util.assertSingletonWillChangeTo(fooStore, Foo, 'FooBar');
+    await util.assertSingletonWillChangeTo(arc, fooStore, 'value', 'FooBar');
     let dateflowSetCall = DevtoolsForTests.channel.messages.find(m =>
         m.messageType === 'dataflow' &&
         m.messageBody.operation === 'set').messageBody;

@@ -257,9 +257,6 @@ export class PECOuterPort extends APIPort {
     this.registerHandler('Render', {particle: this.Mapped, slotName: this.Direct, content: this.Direct});
     this.registerHandler('InitializeProxy', {handle: this.Mapped, callback: this.Direct});
     this.registerHandler('SynchronizeProxy', {handle: this.Mapped, callback: this.Direct});
-    this.registerHandler('Synchronize', {handle: this.Mapped, target: this.Mapped,
-                                    type: this.Direct, callback: this.Direct,
-                                    modelCallback: this.Direct, particleId: this.Direct});
     this.registerHandler('HandleGet', {handle: this.Mapped, callback: this.Direct, particleId: this.Direct});
     this.registerHandler('HandleToList', {handle: this.Mapped, callback: this.Direct, particleId: this.Direct});
     this.registerHandler('HandleSet', {handle: this.Mapped, data: this.Direct, particleId: this.Direct});
@@ -309,9 +306,6 @@ export class PECInnerPort extends APIPort {
     this.registerCall('Render', {particle: this.Mapped, slotName: this.Direct, content: this.Direct});
     this.registerCall('InitializeProxy', {handle: this.Mapped, callback: this.LocalMapped});
     this.registerCall('SynchronizeProxy', {handle: this.Mapped, callback: this.LocalMapped});
-    this.registerCall('Synchronize', {handle: this.Mapped, target: this.Mapped,
-                                 type: this.Direct, callback: this.LocalMapped,
-                                 modelCallback: this.LocalMapped, particleId: this.Direct});
     this.registerCall('HandleGet', {handle: this.Mapped, callback: this.LocalMapped, particleId: this.Direct});
     this.registerCall('HandleToList', {handle: this.Mapped, callback: this.LocalMapped, particleId: this.Direct});
     this.registerCall('HandleSet', {handle: this.Mapped, data: this.Direct, particleId: this.Direct});

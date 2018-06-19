@@ -139,26 +139,6 @@ export class Particle {
     this.stateHandlers.get(state).forEach(f => f(value));
   }
 
-  /** @method on(handles, names, kind, f)
-   * Convenience method for registering a callback on multiple handles at once.
-   *
-   * handles is a map from names to store handles
-   * names indicates the handles which should have a callback installed on them
-   * kind is the kind of event that should be registered for
-   * f is the callback function
-   */
-  on(handles, names, kind, f) {
-    if (typeof names == 'string')
-      names = [names];
-    let trace = Tracing.start({cat: 'particle', names: this.constructor.name + '::on', args: {handle: names, event: kind}});
-    names.forEach(name => handles.get(name).on(kind, Tracing.wrap({cat: 'particle', name: this.constructor.name, args: {handle: name, event: kind}}, f), this));
-    trace.end();
-  }
-
-  when(changes, f) {
-    changes.forEach(change => change.register(this, f));
-  }
-
   fireEvent(slotName, event) {
     // TODO(sjmiles): tests can get here without a `this.slot`, maybe this needs to be fixed in MockSlotManager?
     let slot = this.getSlot(slotName);
@@ -197,42 +177,3 @@ export class Particle {
     return false;
   }
 }
-
-export class HandleChanges {
-  constructor(handles, names, type) {
-    if (typeof names == 'string')
-      names = [names];
-    this.names = names;
-    this.handles = handles;
-    this.type = type;
-  }
-  register(particle, f) {
-    let modelCount = 0;
-    let afterAllModels = () => { if (++modelCount == this.names.length) { f(); } };
-
-    for (let name of this.names) {
-      let handle = this.handles.get(name);
-      handle.synchronize(this.type, afterAllModels, f, particle);
-    }
-  }
-}
-
-export class SlotChanges {
-  constructor() {
-  }
-  register(particle, f) {
-    particle.addSlotHandler(f);
-  }
-}
-
-export class StateChanges {
-  constructor(states) {
-    if (typeof states == 'string')
-      states = [states];
-    this.states = states;
-  }
-  register(particle, f) {
-    particle.addStateHandler(this.states, f);
-  }
-}
-

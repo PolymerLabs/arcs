@@ -11,10 +11,8 @@
  'use strict';
 
 import {assert} from '../test/chai-web.js';
-import {handleFor} from '../handle.js';
-import {Schema} from '../schema.js';
 
-// Helper class for testing a Collection-based handle that collects messages from a particle.
+// Helper class for testing a Collection-based store that collects messages from a particle.
 // This detects when too few or too many messages are sent in addition to matching the message
 // values, and can be used multiple times within the same unit test.
 //
@@ -49,21 +47,21 @@ import {Schema} from '../schema.js';
 //     await inspector.verify('three');
 export class ResultInspector {
   // arc: the arc being tested; used to detect when all messages have been processed
-  // handle: a Collection-based handle that should be connected as an output for the particle
-  // field: the field within handle's contained Entity type that this inspector should observe
-  constructor(arc, handle, field) {
-    assert(handle.type.isCollection, `ResultInspector given non-Collection handle: ${handle}`);
+  // store: a Collection-based store that should be connected as an output for the particle
+  // field: the field within store's contained Entity type that this inspector should observe
+  constructor(arc, store, field) {
+    assert(store.type.isCollection, `ResultInspector given non-Collection store: ${store}`);
     this._arc = arc;
-    this._handle = handle;
+    this._store = store;
     this._field = field;
   }
 
   // Wait for the arc to be idle then verify that exactly the expected messages have been received.
-  // This clears the contents of the observed handle after each call, allowing repeated independent
+  // This clears the contents of the observed store after each call, allowing repeated independent
   // checks in the same test. The order of expectations is not significant.
   async verify(...expectations) {
     await this._arc.idle;
-    let received = await this._handle.toList();
+    let received = await this._store.toList();
     let misses = [];
     for (let item of received.map(r => r.rawData[this._field])) {
       let i = expectations.indexOf(item);
@@ -73,7 +71,7 @@ export class ResultInspector {
         misses.push(item);
       }
     }
-    this._handle.clearItemsForTesting();
+    this._store.clearItemsForTesting();
 
     let errors = [];
     if (expectations.length) {
@@ -93,80 +91,12 @@ export class ResultInspector {
   }
 }
 
-export function assertSingletonWillChangeTo(store, entityClass, expectation) {
-  return new Promise((resolve, reject) => {
-    let variable = handleFor(store);
-    variable.entityClass = entityClass;
-    variable.on('change', () => variable.get().then(result => {
-      if (result == undefined)
-        return;
-      assert.equal(result.value, expectation);
-      resolve();
-    }), {/*target*/});
-  });
+export async function assertSingletonWillChangeTo(arc, store, field, expectation) {
+  await arc.idle;
+  return assertSingletonIs(store, field, expectation);
 }
 
-export function assertSingletonIs(store, entityClass, expectation) {
-  let variable = handleFor(store);
-  variable.entityClass = entityClass;
-  return variable.get().then(result => {
-    assert(result !== undefined);
-    assert.equal(result.value, expectation);
-  });
-}
-
-export function assertCollectionWillChangeTo(collection, entityClass, field, expectations) {
-  return new Promise((resolve, reject) => {
-    let handle = handleFor(collection, true);
-    handle.entityClass = entityClass;
-    handle.on('change', () => handle.toList().then(result => {
-      if (result == undefined)
-        return;
-      if (result.length == expectations.length) {
-          if (result.every(a => expectations.indexOf(a[field]) >= 0))
-            resolve();
-          else
-            reject(new Error(`expected ${expectations} but got ${result.map(a => a[field])}`));
-      }
-    }), {/*target*/});
-  });
-}
-
-export function assertHandleHas(store, entityClass, field, expectations) {
-  return new Promise((resolve, reject) => {
-    handle = handleFor(store, true);
-    handle.entityClass = entityClass;
-    handle.toList().then(result => {
-      assert.deepEqual(result.map(a => a[field]), expectations);
-      resolve();
-    });
-  });
-}
-
-export function assertSingletonEmpty(store) {
-  return new Promise((resolve, reject) => {
-    let variable = new handle.handleFor(store);
-    variable.get().then(result => {
-      assert.isUndefined(result);
-      resolve();
-    });
-  });
-}
-
-export function initParticleSpec(name) {
-  return {
-    spec: {
-      name,
-    },
-  };
-}
-
-export function testEntityClass(type) {
-  return new Schema({
-    names: [type],
-    fields: {
-      id: 'Number',
-      value: 'Text',
-    },
-  }).entityClass();
+export async function assertSingletonIs(store, field, expectation) {
+  let actual = await store.get();
+  assert.equal(actual !== null ? actual.rawData[field] : '(null)', expectation);
 }

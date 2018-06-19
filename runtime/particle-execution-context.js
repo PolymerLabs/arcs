@@ -143,12 +143,15 @@ export class ParticleExecutionContext {
   innerArcHandle(arcId, particleId) {
     let pec = this;
     return {
-      createHandle: function(type, name) {
+      createHandle: function(type, name, hostParticle) {
         return new Promise((resolve, reject) =>
           pec._apiPort.ArcCreateHandle({arc: arcId, type, name, callback: proxy => {
-            let h = handleFor(proxy, proxy.type.isCollection, name, particleId);
-            h.entityClass = (proxy.type.isCollection ? proxy.type.primitiveType() : proxy.type).entitySchema.entityClass();
-            resolve(h);
+            let handle = handleFor(proxy, proxy.type.isCollection, name, particleId);
+            handle.entityClass = (proxy.type.isCollection ? proxy.type.primitiveType() : proxy.type).entitySchema.entityClass();
+            resolve(handle);
+            if (hostParticle) {
+              proxy.register(hostParticle, handle);
+            }
           }}));
       },
       mapHandle: function(handle) {

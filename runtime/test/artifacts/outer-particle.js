@@ -12,36 +12,31 @@
 defineParticle(({Particle}) => {
   return class P extends Particle {
     async setHandles(handles) {
-      let arc = await this.constructInnerArc();
-      let inputHandle = handles.get('input');
-      let outputHandle = handles.get('output');
-      let inHandle = await arc.createHandle(inputHandle.type, 'input');
-      let outHandle = await arc.createHandle(outputHandle.type, 'output');
-      let particle = await handles.get('particle').get();
+      this.arc = await this.constructInnerArc();
+      this.outputHandle = handles.get('output');
+      this.inHandle = await this.arc.createHandle(handles.get('input').type, 'input');
+      this.outHandle = await this.arc.createHandle(this.outputHandle.type, 'output', this);
+    }
+    async onHandleSync(handle, model) {
+      if (handle.name === 'input') {
+        this.inHandle.set(model);
+      }
+      if (handle.name === 'particle') {
+        await this.arc.loadRecipe(Particle.buildManifest`
+          ${model}
 
-      let recipe = Particle.buildManifest`
-        ${particle}
-
-        recipe
-          use ${inHandle} as handle1
-          use ${outHandle} as handle2
-          ${particle.name}
-            foo <- handle1
-            bar -> handle2
-      `;
-
-      try {
-        await arc.loadRecipe(recipe);
-        let input = await inputHandle.get();
-        inHandle.set(input);
-        outHandle.on('change', async () => {
-          let output = await outHandle.get();
-          if (output != null) {
-            outputHandle.set(output);
-          }
-        }, this);
-      } catch (e) {
-        console.log(e);
+          recipe
+            use ${this.inHandle} as handle1
+            use ${this.outHandle} as handle2
+            ${model.name}
+              foo <- handle1
+              bar -> handle2
+        `);
+      }
+    }
+    async onHandleUpdate(handle, update) {
+      if (handle.name === 'output') {
+        this.outputHandle.set(update.data);
       }
     }
   };

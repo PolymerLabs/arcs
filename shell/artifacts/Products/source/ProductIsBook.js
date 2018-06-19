@@ -11,18 +11,18 @@
 defineParticle(({Particle}) => {
   return class ProductIsBook extends Particle {
     setHandles(handles) {
-      this.on(handles, 'product', 'change', e => {
-        let productHandle = handles.get('product');
-        productHandle.get().then(data => {
-          let isBook = productHandle.type.entitySchema.name.toLowerCase().indexOf('book') >= 0 ||
-                       data.category && data.category.toLowerCase().indexOf('book') >= 0 ||
-                       data.name && data.name.toLowerCase().indexOf('book') >= 0;
-          if (isBook) {
-            handles.get('book').set(data);
-            this.relevance = 5;
-          }
-        });
-      });
+      this._handles = handles;
+    }
+    onHandleSync(handle, model) {
+      if (handle.name === 'product') {
+        let isBook = handle.type.entitySchema.name.toLowerCase().indexOf('book') >= 0 ||
+                     model.category && model.category.toLowerCase().indexOf('book') >= 0 ||
+                     model.name && model.name.toLowerCase().indexOf('book') >= 0;
+        if (isBook) {
+          this._handles.get('book').set(model);
+          this.relevance = 5;
+        }
+      }
     }
   };
 });
