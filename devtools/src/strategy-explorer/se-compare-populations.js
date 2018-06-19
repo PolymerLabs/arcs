@@ -11,7 +11,7 @@ import '../../deps/@polymer/polymer/polymer-legacy.js';
 import '../../deps/@polymer/iron-icons/iron-icons.js';
 import '../../deps/@polymer/iron-icons/av-icons.js';
 import '../../deps/@polymer/iron-icons/image-icons.js';
-import '../arcs-shared.js';
+import {formatTime} from '../arcs-shared.js';
 import {summaryStats} from './se-shared.js';
 import {html} from '../../deps/@polymer/polymer/lib/utils/html-tag.js';
 import {PolymerElement} from '../../deps/@polymer/polymer/polymer-element.js';
@@ -55,7 +55,7 @@ class SeComparePopulations extends PolymerElement {
       </header>
       <template is="dom-repeat" items="{{library}}">
         <div id="[[item.id]]" class="entry" selected\$="[[item.selected]]">
-          @[[item.label]] : ⊕[[item.surviving]], ✓[[item.resolved]]
+          [[item.label]] : ⊕[[item.surviving]], ✓[[item.resolved]]
           <iron-icon hidden\$="[[item.selected]]" id="compare" title="Compare" icon="image:exposure"></iron-icon></div>
       </template>
     </div>
