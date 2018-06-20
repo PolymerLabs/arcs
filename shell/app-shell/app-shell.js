@@ -203,7 +203,11 @@ class AppShell extends Xen.Debug(Xen.Base, log) {
       log('instantiating pending launcher suggestion');
       // TODO(sjmiles): need a better way to match the suggestion
       state.suggestion = plans.plans.find(s => s.descriptionText === pendingSuggestion.descriptionText);
-      state.pendingSuggestion = null;
+      if (state.suggestion) {
+        state.pendingSuggestion = null;
+      } else {
+        log('failed to instantiate pending launcher suggestion, will retry');
+      }
     }
   }
   _updateSuggestions(state, oldState) {
