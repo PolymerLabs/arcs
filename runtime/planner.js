@@ -38,6 +38,10 @@ import {StrategyExplorerAdapter} from './debug/strategy-explorer-adapter.js';
 import {DevtoolsConnection} from './debug/devtools-connection.js';
 
 export class Planner {
+  constructor() {
+    this._relevances = [];
+  }
+
   // TODO: Use context.arc instead of arc
   init(arc, {strategies, ruleset} = {}) {
     this._arc = arc;
@@ -100,6 +104,7 @@ export class Planner {
       // TODO(wkorman): Look at restoring trace.wait() here, and whether we
       // should do similar for the async getRecipeSuggestion() below as well?
       let relevance = await speculator.speculate(this._arc, plan, hash);
+      this._relevances.push(relevance);
       if (!relevance.isRelevant(plan)) {
         this._updateGeneration(generations, hash, (g) => g.irrelevant = true);
         return;
@@ -125,6 +130,8 @@ export class Planner {
       });
     })));
 
+    this._relevances = [];
+
     if (generations && DevtoolsConnection.isConnected) {
       StrategyExplorerAdapter.processGenerations(generations, DevtoolsConnection.get());
     }
@@ -141,6 +148,13 @@ export class Planner {
         });
       });
     }
+  }
+  dispose() {
+    // The speculative arc particle execution contexts are are worklets,
+    // so they need to be cleanly shut down, otherwise they would persist,
+    // as an idle eventLoop in a process waiting for messages.
+    this._relevances.forEach(relevance => relevance.newArc.dispose());
+    this._relevances = [];
   }
 }
 
