@@ -45,24 +45,26 @@ export class DescriptionDomFormatter extends DescriptionFormatter {
       let {template, model} = this._retrieveTemplateAndModel(particleDesc, index);
 
       let success = await Promise.all(Object.keys(model).map(async tokenKey => {
-        let token = this._initHandleToken(model[tokenKey], particleDesc);
-        let tokenValue = await this.tokenToString(token);
-
-        if (tokenValue == undefined) {
-          return false;
-        } else if (tokenValue && tokenValue.template && tokenValue.model) {
-          // Dom token.
-          template = template.replace(`{{${tokenKey}}}`, tokenValue.template);
-          delete model[tokenKey];
-          model = Object.assign(model, tokenValue.model);
-        } else { // Text token.
-          // Replace tokenKey, in case multiple selected suggestions use the same key.
-          let newTokenKey = `${tokenKey}${++this._nextID}`;
-          template = template.replace(`{{${tokenKey}}}`, `{{${newTokenKey}}}`);
-          delete model[tokenKey];
-          model[newTokenKey] = tokenValue;
-        }
-        return true;
+        let tokens = this._initSubTokens(model[tokenKey], particleDesc);
+        let token = tokens[0];
+        return (await Promise.all(tokens.map(async token => {
+          let tokenValue = await this.tokenToString(token);
+          if (tokenValue == undefined) {
+            return false;
+          } else if (tokenValue && tokenValue.template && tokenValue.model) {
+            // Dom token.
+            template = template.replace(`{{${tokenKey}}}`, tokenValue.template);
+            delete model[tokenKey];
+            model = Object.assign(model, tokenValue.model);
+          } else { // Text token.
+            // Replace tokenKey, in case multiple selected suggestions use the same key.
+            let newTokenKey = `${tokenKey}${++this._nextID}`;
+            template = template.replace(`{{${tokenKey}}}`, `{{${newTokenKey}}}`);
+            delete model[tokenKey];
+            model[newTokenKey] = tokenValue;
+          }
+          return true;
+        }))).every(t => !!t);
       }));
 
       if (success.every(s => !!s)) {

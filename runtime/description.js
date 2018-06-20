@@ -228,14 +228,14 @@ export class DescriptionFormatter {
       if (nextToken.length > 0)
         results.push({text: nextToken});
       if (firstToken.length > 0) {
-        results.push(this._initHandleToken(firstToken, particleDescription));
+        results = results.concat(this._initSubTokens(firstToken, particleDescription));
       }
       pattern = pattern.substring(tokenIndex + firstToken.length);
     }
     return results;
   }
 
-  _initHandleToken(pattern, particleDescription) {
+  _initSubTokens(pattern, particleDescription) {
     let valueTokens = pattern.match(/\${([a-zA-Z0-9.]+)}(?:\.([_a-zA-Z]+))?/);
     let handleNames = valueTokens[1].split('.');
     let extra = valueTokens.length == 3 ? valueTokens[2] : undefined;
@@ -243,7 +243,6 @@ export class DescriptionFormatter {
 
     // Fetch the particle description by name from the value token - if it wasn't passed, this is a recipe description.
     if (!particleDescription._particle) {
-      assert(handleNames.length > 1, `'${valueTokens[1]}' must contain dot-separated particle and handle connection name.`);
       let particleName = handleNames.shift();
       assert(particleName[0] === particleName[0].toUpperCase(), `Expected particle name, got '${particleName}' instead.`);
       let particleDescriptions = this._particleDescriptions.filter(desc => {
@@ -258,23 +257,34 @@ export class DescriptionFormatter {
     }
     let particle = particleDescription._particle;
 
+    if (handleNames.length == 0) {
+      // Use the full particle description
+      return this._initTokens(particle.spec.pattern || '', particleDescription);
+    }
+
     let handleConn = particle.connections[handleNames[0]];
     if (handleConn) { // handle connection
       assert(handleConn.handle && handleConn.handle.id, 'Missing id???');
-      return {
+      return [{
         fullName: valueTokens[0],
         handleName: handleConn.name,
         properties: handleNames.splice(1),
         extra,
         _handleConn: handleConn,
-        _store: this._arc.findStoreById(handleConn.handle.id)};
+        _store: this._arc.findStoreById(handleConn.handle.id)}];
     }
 
     // slot connection
     assert(handleNames.length == 2, 'slot connections tokens must have 2 names');
     let providedSlotConn = particle.consumedSlotConnections[handleNames[0]].providedSlots[handleNames[1]];
     assert(providedSlotConn, `Could not find handle ${handleNames.join('.')}`);
-    return {fullName: valueTokens[0], consumeSlotName: handleNames[0], provideSlotName: handleNames[1], extra, _providedSlotConn: providedSlotConn};
+    return [{
+      fullName: valueTokens[0],
+      consumeSlotName: handleNames[0],
+      provideSlotName: handleNames[1],
+      extra,
+      _providedSlotConn: providedSlotConn
+    }];
   }
 
   async tokenToString(token) {
