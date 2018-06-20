@@ -394,6 +394,7 @@ addType('Collection', 'type');
 addType('Relation', 'entities');
 addType('Interface', 'shape');
 addType('Tuple', 'fields');
+addType('Slot');
 
 import {Shape} from './shape.js';
 import {Schema} from './schema.js';
