@@ -117,10 +117,21 @@ ${this._slotsToManifestString()}
     return {name: this.name, handles, slots};
   }
 
-  clone() {
-    let handles = this.handles.map(({name, direction, type}) => ({name, direction, type}));
+  clone(variableMap) {
+    // let handles = this.handles.map(({name, direction, type}) => ({name, direction, type}));
+    let handles = this.handles.map(({name, direction, type}) => ({name, direction, type: type ? type.clone(variableMap) : undefined}));
     let slots = this.slots.map(({name, direction, isRequired, isSet}) => ({name, direction, isRequired, isSet}));
     return new Shape(this.name, handles, slots);
+  }
+
+  cloneWithResolutions(variableMap) {
+    return this._cloneWithResolutions(variableMap);
+  }
+
+  _cloneWithResolutions(variableMap) {
+    let handles = this.handles.map(({name, direction, type}) => ({name, direction, type: type ? type._cloneWithResolutions(variableMap) : undefined}));
+    let slots = this.slots.map(({name, direction, isRequired, isSet}) => ({name, direction, isRequired, isSet}));
+    return new Shape(this.name, handles, slots);  
   }
 
   canEnsureResolved() {
@@ -138,6 +149,55 @@ ${this._slotsToManifestString()}
     for (let typeVar of this._typeVars)
       typeVar.object[typeVar.field].maybeEnsureResolved();
     return true;
+  }
+
+  tryMergeTypeVariablesWith(other) {
+    // Type variable enabled slot matching will Just Work when we
+    // unify slots and handles.
+    if (!this._equalItems(other.slots, this.slots, this._equalSlot))
+      return null;
+    if (other.handles.length !== this.handles.length)
+      return null;
+    
+    let handles = new Set(this.handles);
+    let otherHandles = new Set(other.handles);
+    let handleMap = new Map();
+    let sizeCheck = handles.size;
+    while (handles.size > 0) {
+      let handleMatches = [...handles.values()].map(
+        handle => ({handle, match: [...otherHandles.values()].filter(otherHandle =>this._equalHandle(handle, otherHandle))}));
+    
+      for (let handleMatch of handleMatches) {
+        // no match!
+        if (handleMatch.match.length == 0)
+          return null;
+        if (handleMatch.match.length == 1) {
+          handleMap.set(handleMatch.handle, handleMatch.match[0]);
+          otherHandles.delete(handleMatch.match[0]);
+          handles.delete(handleMatch.handle);
+        }
+      }
+      // no progress!
+      if (handles.size == sizeCheck)
+        return null;
+      sizeCheck = handles.size;
+    }
+  
+    handles = [];
+    for (let handle of this.handles) {
+      let otherHandle = handleMap.get(handle);
+      let resultType;
+      if (handle.type.hasVariable || otherHandle.type.hasVariable) {
+        resultType = TypeChecker._tryMergeTypeVariable(handle.type, otherHandle.type)
+        if (!resultType)
+          return null;
+      } else {
+        resultType = handle.type || otherHandle.type;
+      }
+      handles.push({name: handle.name || otherHandle.name, direction: handle.direction || otherHandle.direction, type: resultType}); 
+    }
+    let slots = this.slots.map(({name, direction, isRequired, isSet}) => ({name, direction, isRequired, isSet}));
+    return new Shape(this.name, handles, slots);
   }
 
   resolvedType() {
@@ -184,7 +244,7 @@ ${this._slotsToManifestString()}
   }
 
   _cloneAndUpdate(update) {
-    let copy = this.clone();
+    let copy = this.clone(new Map());
     copy._typeVars.forEach(typeVar => Shape._updateTypeVar(typeVar, update));
     return copy;
   }
@@ -233,12 +293,12 @@ ${this._slotsToManifestString()}
   }
 
   particleMatches(particleSpec) {
-    return this.restrictType(particleSpec) !== false;
+    let shape = this.cloneWithResolutions(new Map());
+    return shape.restrictType(particleSpec) !== false;
   }
 
   restrictType(particleSpec) {
-    let newShape = this.clone();
-    return newShape._restrictThis(particleSpec);
+    return this._restrictThis(particleSpec);
   }
 
   _restrictThis(particleSpec) {
@@ -292,4 +352,5 @@ ${this._slotsToManifestString()}
   }
 }
 
-import {Type} from './type.js';
+import {Type} from './type.js';import { TypeChecker } from './recipe/type-checker.js';
+

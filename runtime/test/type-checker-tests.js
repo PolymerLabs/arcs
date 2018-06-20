@@ -196,11 +196,11 @@ describe('TypeChecker', () => {
     if (v.isVariable && v.data._resolution) return depth(v.data._resolution, level + 1);
     return level;
   }
-  it.only('this is weird', () => {
+  it(`doesn't mutate types provided to effectiveType calls`, () => {
     let a = Type.newVariable(new TypeVariable('a'));
     for (let i = 0; i < 100; i++) {
-      assert.equal(i, depth(a));
-      TypeChecker.processTypeList(undefined, [{type: a, direction: 'inout'}]);
+      assert.equal(0, depth(a));
+      Handle.effectiveType(undefined, [{type: a, direction: 'inout'}]);
     }
   });
 });

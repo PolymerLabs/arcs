@@ -97,6 +97,11 @@ export class TypeChecker {
       // onto variable, base not.
       primitiveOnto.variable.resolution = primitiveBase;
       return onto;
+    } else if (primitiveBase.isInterface && primitiveOnto.isInterface) {
+      let result = primitiveBase.interfaceShape.tryMergeTypeVariablesWith(primitiveOnto.interfaceShape);
+      if (result == null)
+        return null;
+      return Type.newInterface(result);
     } else {
       assert(false, 'tryMergeTypeVariable shouldn\'t be called on two types without any type variables');
     }
@@ -172,16 +177,6 @@ export class TypeChecker {
     if (handleType.canWriteSuperset.isMoreSpecificThan(readType))
       return true;
     return false;
-  }
-
-  // TODO: what is this? Does it still belong here?
-  static restrictType(type, instance) {
-    assert(type.isInterface, `restrictType not implemented for ${type}`);
-
-    let shape = type.interfaceShape.restrictType(instance);
-    if (shape == false)
-      return false;
-    return Type.newInterface(shape);
   }
 
   // Compare two types to see if they could be potentially resolved (in the absence of other
