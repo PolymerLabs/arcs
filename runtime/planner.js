@@ -150,6 +150,9 @@ export class Planner {
     }
   }
   dispose() {
+    // The speculative arc particle execution contexts are are worklets,
+    // so they need to be cleanly shut down, otherwise they would persist,
+    // as an idle eventLoop in a process waiting for messages.
     this._relevances.forEach(relevance => relevance.newArc.dispose());
     this._relevances = [];
   }

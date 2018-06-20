@@ -420,10 +420,22 @@ describe('Planificator', function() {
   it('cancels planning', function() {
     let planificator = createPlanificator();
 
+    // Verify _cancelPlanning stops the planning.
     planificator._requestPlanning();
     assert.isTrue(planificator.isPlanning);
 
     planificator._cancelPlanning();
     assert.isFalse(planificator.isPlanning);
+
+    // Set the search string and verify it calls _cancelPlanning.
+    let cancelCalled = false;
+    let cancelPlanning = planificator._cancelPlanning.bind(planificator);
+    planificator._cancelPlanning = () => {
+      ++cancelCalled;
+      cancelPlanning();
+    };
+    planificator._requestPlanning();
+    planificator.setSearch('this is a new search');
+    assert.equal(1, cancelCalled);
   });
 });
