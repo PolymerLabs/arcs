@@ -45,8 +45,7 @@ class ArcHost extends Xen.Debug(Xen.Base, log) {
   _update({}, state) {
     const {id, pendingSerialization} = state;
     if (id && pendingSerialization != null) {
-      state.pendingSerialization = null;
-      this._consumeSerialization(pendingSerialization);
+      state.pendingSerialization = this._consumeSerialization(pendingSerialization);
     }
   }
   _teardownArc(arc) {
@@ -119,17 +118,6 @@ class ArcHost extends Xen.Debug(Xen.Base, log) {
     const {config, manifest} = this._props;
     const state = this._state;
     //
-    if (serialization) {
-      const badImport = `import './shell.manifest'`;
-      if (serialization.includes(badImport)) {
-        serialization = serialization.replace(badImport, '');
-        log(`serialization contained bad import [${badImport}]`);
-      }
-      groupCollapsed('serialized arc:');
-      log('serialization:', serialization);
-      groupEnd();
-    }
-    //
     // generate new slotComposer
     const slotComposer = this._createSlotComposer(config);
     // collate general params for arc construction
@@ -140,7 +128,19 @@ class ArcHost extends Xen.Debug(Xen.Base, log) {
       context: state.context,
       storageKey: state.storageKey
     };
-    const arc = await this._constructArc(state.id, serialization, params);
+    let arc;
+    try {
+      arc = await this._constructArc(state.id, serialization, params);
+    } catch (x) {
+      warn('failed to deserialize arc, will retry');
+      return serialization;
+    }
+    // notify console
+    if (serialization) {
+      groupCollapsed('deserialized arc:');
+      log('serialization:', serialization);
+      groupEnd();
+    }
     // cache new objects
     this._setState({slotComposer, arc});
     // no suggestions yet
