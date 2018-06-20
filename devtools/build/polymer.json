@@ -1,0 +1,25 @@
+{
+  "entrypoint": "src/index.html",
+  "fragments": [],
+  "sources": [
+    "src/**/*",
+    "src/index.html"
+  ],
+  "extraDependencies": [
+    "bower_components/webcomponentsjs/*.js"
+  ],
+  "builds": [
+    {
+      "name": "bundled",
+      "bundle": {
+        "sourcemaps": true
+      }
+    }
+  ],
+  "lint": {
+    "rules": [
+      "polymer-2"
+    ]
+  },
+  "moduleResolution": "node"
+}

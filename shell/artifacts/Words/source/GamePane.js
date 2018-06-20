@@ -27,55 +27,93 @@ defineParticle(({SimpleParticle, log, resolver}) => {
 
   const styles = `
  <style>
+ @import url('https://fonts.googleapis.com/css?family=Fredoka+One');
    [${host}] {
-     padding: 5px;
+     height: 100%;
+     background-image: linear-gradient(to right top, #5100ff, #ff00a2, #ff003d, #ffaa00, #d6ff00);
+     position: absolute;
+     width: 100%;
+     padding: 0px;
+     -webkit-font-smoothing: antialiased;
    }
    [${host}] .board {
      cursor: pointer;
      user-select: none;
-   }
-   [${host}] .gameInfo {
-     font-size: 1.2em;
-     font-variant-caps: all-small-caps;
-     padding-bottom: 0.5em;
-   }
-   [${host}] .board {
+     left: 50%;
+     top: 50%;
+     -webkit-transform: translate3d(-50%,-50%,0);
      height: 382px;
      width: 357px;
-     position: relative;
+     position: absolute;
      user-select: none;
      margin-left: auto;
      margin-right: auto;
      -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
    }
+   [${host}] .gameInfo {
+     font-family: 'Fredoka One', cursive;
+     padding-bottom: 0.5em;
+     margin: 20px;
+     position: relative;
+     color: white;
+     line-height: 20px;
+   }
+   [${host}] .gameInfo:focus,
+   [${host}] button:focus {
+     border: none;
+     outline: none;
+   }
+   [${host}] .gameInfo button {
+     font-size: 14px;
+     color: rgba(0,0,0,.8);
+     text-transform: uppercase;
+   }
+   [${host}] .gameInfo button[disabled] {
+     opacity: .4;
+   }
+   [${host}] .gameInfo .caption {
+     font-size: 32px;
+     margin-bottom: 12px;
+   }
+   .gameInfo .score,
+   .gameInfo .shuffle {
+     float: left;
+     width: 64px;
+     line-height: 20px;
+     border-left: 1px solid white;
+     padding-left: 8px;
+     padding-top: 6px;
+   }
+
    [${host}] .board .tile {
-     background-color: wheat;
-     border-radius: 3px;
-     color: black;
+     font-family: 'Fredoka One', cursive;
+     border-radius: 16px;
+     color: white;
      display: inline-block;
      text-align: center;
-     font: sans-serif;
-     line-height: 50px;
-     width: 50px;
-     height: 50px;
-     margin: 1px;
+     font-size: 18px;
+     line-height: 30px;
+     width: 28px;
+     height: 28px;
      position: absolute;
    }
    [${host}] .board .points {
      position: absolute;
-     font-size: 0.8em;
+     font-size: 0.5em;
      line-height: normal;
-     top: 0.1em;
-     right: 0.2em;
-     color: #cc6600;
+     top: -4px;
+     right: -4px;
+     color: #000;
+     opacity: .2;
    }
    [${host}] .board .selected {
-     background-color: goldenrod;
      color: white;
+     background: white;
    }
-   [${host}] .board .selected .points {
-     color: white;
+   [${host}] .board .selected span {
+     color: red;
    }
+
    [${host}] .board .fire {
      animation-name: fire;
      animation-duration: 3s;
@@ -94,6 +132,27 @@ defineParticle(({SimpleParticle, log, resolver}) => {
    }
    [${host}] .board .annotation {
      position: absolute;
+     background: #fff;
+     border-radius: 16px;
+     color: #ccc;
+     font-size: 10px;
+     line-height: 28px;
+     text-align: center;
+   }
+   [${host}] .board .annotation .orientation-left {
+     -webkit-transform: scale(-1,1);
+   }
+   [${host}] .board .annotation .orientation-up {
+     -webkit-transform: rotate(-90deg);
+   }
+   [${host}] .board .annotation .orientation-down {
+     -webkit-transform: rotate(90deg);
+   }
+   [${host}] button {
+     font-family: 'Fredoka One', cursive;
+     background: none;
+     border: none;
+     color: black;
    }
    [${host}] .gameOver {
      text-align: center;
@@ -119,6 +178,74 @@ defineParticle(({SimpleParticle, log, resolver}) => {
      50% { background-color: #ff3399; }
      100% { background-color: #ff99ff; }
    }
+   #intro-logo {
+     font-family: 'Fredoka One', cursive;
+     font-size: 24vw;
+     color: white;
+     opacity: .15;
+     position: absolute;
+     left: 50%;
+     top: 50%;
+     -webkit-transform: translate3d(-50%,-68%,0);
+   }
+   #button-start {
+     cursor: pointer;
+     color: white;
+     font-size: 28px;
+     position: absolute;
+     top: 50%;
+     left: 50%;
+     -webkit-transform: translate3d(-50%,180%,0);
+     display: block;
+     z-index: 10000;
+     width: 80%;
+   }
+   #button-start:focus {
+     outline: none;
+   }
+   @media (max-width: 720px) {
+     #intro-logo {
+       font-size: 32vw;
+     }
+     #button-start {
+       -webkit-transform: translate3d(-50%,100%,0);
+     }
+   }
+   #loading-msg {
+     font-family: 'Fredoka One', cursive;
+     color: white;
+     opacity: .7;
+     background: none;
+     font-size: 36px;
+     position: absolute;
+     top: 50%;
+     left: 50%;
+     -webkit-transform: translate3d(-50%,-50%,0);
+     z-index: 10000;
+   }
+   @keyframes blink {
+     0% {
+       opacity: .2;
+     }
+     20% {
+       opacity: 1;
+     }
+     100% {
+       opacity: .2;
+     }
+   }
+   #loading-msg span {
+     animation-name: blink;
+     animation-duration: 1.4s;
+     animation-iteration-count: infinite;
+     animation-fill-mode: both;
+   }
+   #loading-msg span:nth-child(2) {
+     animation-delay: .2s;
+   }
+   #loading-msg span:nth-child(3) {
+     animation-delay: .4s;
+   }
  </style>
    `;
 
@@ -126,18 +253,19 @@ defineParticle(({SimpleParticle, log, resolver}) => {
  ${styles}
  <div ${host}>
    <div hidden="{{hideStartGame}}">
-     <button on-click="onStartGame">Start Game</button>
+     <div id="intro-logo">words</div>
+     <button id="button-start" on-click="onStartGame">➜ Start Game</button>
    </div>
-   <div hidden="{{hideDictionaryLoading}}">
-     Loading dictionary&hellip;
+   <div id="loading-msg" hidden="{{hideDictionaryLoading}}">
+     Loading dictionary<span>.</span><span>.</span><span>.</span>
    </div>
    <div class="gameInfo" hidden="{{hideGameInfo}}" tabindex="-1" on-keypress="onKeyPress">
-     <div class="score">Score: <span>{{score}}</span></div>
-     <div class="move">Move: <span>{{move}}</span></div>
-     <div class="longestWord">Longest word: <span>{{longestWord}}</span></div>
-     <div class="highestScoringWord">Highest scoring word: <span>{{highestScoringWord}}</span></div>
-     <div class="shuffle">Shuffles Remaining: <span>{{shuffleAvailableCount}}</span></div>
-     <div>
+     <div class="score"><div class="caption">{{score}}</div>My Score</div>
+     <div class="shuffle"><div class="caption">{{shuffleAvailableCount}}</div>Shuffles Remaining</div>
+     <div hidden=true class="move">Move: <span>{{move}}</span></div>
+     <div hidden=true class="longestWord">Longest word: <span>{{longestWord}}</span></div>
+     <div hidden=true class="highestScoringWord">Highest scoring word: <span>{{highestScoringWord}}</span></div>
+     <div style="position: absolute; right: 0; top: 0; z-index: 10000;">
        <button disabled="{{submitMoveDisabled}}" on-click="onSubmitMove">Submit Move</button>
        <button disabled="{{shuffleDisabled}}" style%="padding-left: 2em" on-click="onShuffle">Shuffle</button>
        <button hidden="{{hideSolve}}" style%="padding-left: 2em" on-click="onSolve">Solve</button>
@@ -145,7 +273,7 @@ defineParticle(({SimpleParticle, log, resolver}) => {
    </div>
    <div class="board">
      <div class="gameOver" hidden="{{hideGameOver}}">Game Over</div>
-     <span>{{boardCells}}</span><span>{{annotations}}</span>
+     <span style="position:relative;z-index:1000;">{{boardCells}}</span><span>{{annotations}}</span>
    </div>
  </div>
  <template board-cell>
@@ -154,7 +282,7 @@ defineParticle(({SimpleParticle, log, resolver}) => {
    </div>
  </template>
  <template annotation>
-   <div class="annotation" style%="{{style}}">{{content}}</div>
+   <div class="annotation" style%="{{style}}"><div class="{{orientation}}">{{content}}</div></div>
  </template>
       `.trim();
 
@@ -319,43 +447,87 @@ recipe
     tileTransitionToTextAndPosition(fromTile, toTile) {
       // A sad hard-coded pixel positioned hack. Rework to use alignment with
       // the involved tile position.
-      let contentText, positionText;
+      let contentText, positionText, orientation;
       if (toTile.x > fromTile.x) {
-        contentText = '→';
+        // contentText = '→';
+        contentText = '➜'; // right arrow
+        orientation = 'orientation-right';
         const tilesFromRight = BOARD_WIDTH - fromTile.x - 1;
         let topPixel = this.topPixelForHorizontalTransition(fromTile, toTile);
-        positionText = `top: ${topPixel}px; right: ${
-            tilesFromRight * 50 + tilesFromRight - 9}px;`;
+
+        let downard = false;
+        // calculate upward or downard
+        if(fromTile.x%2==0) {
+          if(toTile.y > fromTile.y) {
+            downard = true;
+          }
+        } else {
+          if(toTile.y == fromTile.y) {
+            downard = true;
+          }
+        }
+        if (downard) {
+          positionText = `top: ${topPixel - 18}px; right: ${
+              tilesFromRight * 50 + tilesFromRight - 30}px; width: 83px; height: 29px; -webkit-transform: rotate(27deg);`;
+
+        } else {
+          positionText = `top: ${topPixel - 20}px; right: ${
+              tilesFromRight * 50 + tilesFromRight - 30}px; width: 83px; height: 29px; -webkit-transform: rotate(-27deg);`;
+
+        }
+
       } else if (toTile.x < fromTile.x) {
-        contentText = '←';
+        contentText = '➜';
+        orientation = 'orientation-left';
         let topPixel = this.topPixelForHorizontalTransition(fromTile, toTile);
-        positionText =
-            `top: ${topPixel}px; left: ${fromTile.x * 50 + fromTile.x - 9}px;`;
+
+        let downard = false;
+        // calculate upward or downard
+        if(fromTile.x%2==0) {
+          if(toTile.y > fromTile.y) {
+            downard = true;
+          }
+        } else {
+          if(toTile.y == fromTile.y) {
+            downard = true;
+          }
+        }
+        if (downard) {
+          positionText =
+              `top: ${topPixel - 18.5}px; left: ${fromTile.x * 50 + fromTile.x - 53}px; width: 83px; height: 29px; -webkit-transform: rotate(-27deg);`;
+
+        } else {
+          positionText =
+              `top: ${topPixel - 18.5}px; left: ${fromTile.x * 50 + fromTile.x - 53}px; width: 83px; height: 29px; -webkit-transform: rotate(27deg);`;
+
+        }
       } else if (toTile.y > fromTile.y) {
-        contentText = '↓';
+        contentText = '➜';//'↓';
+        orientation = 'orientation-down';
         let topPixel = (fromTile.y + 1) * 50 - 7 + fromTile.y;
         if (fromTile.isShiftedDown)
           topPixel += 25;
         positionText =
-            `top: ${topPixel}px; left: ${fromTile.x * 50 + fromTile.x + 22}px;`;
+            `top: ${topPixel-43}px; left: ${fromTile.x * 50 + fromTile.x }px; width: 28px; height: 80px; line-height:80px;`;
       } else {
-        contentText = '↑';
+        contentText = '➜';//'↑';
+        orientation = 'orientation-up';
         let topPixel = fromTile.y * 50 - 9 + fromTile.y;
         if (fromTile.isShiftedDown)
           topPixel += 25;
         positionText =
-            `top: ${topPixel}px; left: ${fromTile.x * 50 + fromTile.x + 22}px;`;
+            `top: ${topPixel-43}px; left: ${fromTile.x * 50 + fromTile.x }px; width: 28px; height: 80px; line-height:80px;`;
       }
-      return [contentText, positionText];
+      return [contentText, positionText, orientation];
     }
     selectedTilesToModels(selectedTiles) {
       let models = [];
       if (selectedTiles.length < 2)
         return models;
       for (let i = 0; i < selectedTiles.length - 1; i++) {
-        let [contentText, positionText] = this.tileTransitionToTextAndPosition(
+        let [contentText, positionText, orientation] = this.tileTransitionToTextAndPosition(
             selectedTiles[i], selectedTiles[i + 1]);
-        models.push({style: positionText, content: contentText});
+        models.push({style: positionText, content: contentText, orientation: orientation});
       }
       return models;
     }
@@ -411,9 +583,10 @@ recipe
         move: moveText,
         longestWord: Scoring.longestWordText(props.stats),
         highestScoringWord: Scoring.highestScoringWordText(props.stats),
-        shuffleAvailableCount: state.tileBoard.shuffleAvailableCount,
+        shuffleAvailableCount: `${state.tileBoard.shuffleAvailableCount}`,
         score:
-            `${state.score} (${props.stats ? props.stats.moveCount : 0} moves)`,
+            `${state.score}`,
+            // `${state.score} (${props.stats ? props.stats.moveCount : 0} moves)`,
         submitMoveDisabled: gameOver || !submitMoveEnabled,
         shuffleDisabled: gameOver || state.tileBoard.shuffleAvailableCount <= 0,
         hideSolve: !state.debugMode,

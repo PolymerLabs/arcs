@@ -1,0 +1,150 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
+    <script src="../../webcomponentsjs/webcomponents-lite.js"></script>
+    <script src="../../web-component-tester/browser.js"></script>
+    <link rel="import" href="../../iron-test-helpers/mock-interactions.html">
+    <link rel="import" href="../resizable-panels.html">
+  </head>
+  <body>
+
+    <test-fixture id="default">
+      <template>
+        <resizable-panels>
+          <div>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Voluptate praesentium suscipit aliquid molestias dicta dolore at, voluptatibus quae doloremque eius hic facilis porro quo ratione aliquam laborum. Atque, cum enim.</div>
+          <div>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Voluptate praesentium suscipit aliquid molestias dicta dolore at, voluptatibus quae doloremque eius hic facilis porro quo ratione aliquam laborum. Atque, cum enim.</div>
+          <div>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Voluptate praesentium suscipit aliquid molestias dicta dolore at, voluptatibus quae doloremque eius hic facilis porro quo ratione aliquam laborum. Atque, cum enim.</div>
+        </resizable-panels>
+      </template>
+    </test-fixture>
+
+    <test-fixture id="vertical">
+      <template>
+        <resizable-panels vertical>
+          <div style="height: 140px;">Lorem ipsum dolor sit amet, consectetur adipisicing elit. Voluptate praesentium suscipit aliquid molestias dicta dolore at, voluptatibus quae doloremque eius hic facilis porro quo ratione aliquam laborum. Atque, cum enim.</div>
+          <div style="height: 140px;">Lorem ipsum dolor sit amet, consectetur adipisicing elit. Voluptate praesentium suscipit aliquid molestias dicta dolore at, voluptatibus quae doloremque eius hic facilis porro quo ratione aliquam laborum. Atque, cum enim.</div>
+          <div style="height: 140px;">Lorem ipsum dolor sit amet, consectetur adipisicing elit. Voluptate praesentium suscipit aliquid molestias dicta dolore at, voluptatibus quae doloremque eius hic facilis porro quo ratione aliquam laborum. Atque, cum enim.</div>
+        </resizable-panels>
+      </template>
+    </test-fixture>
+
+    <script>
+      suite('<resizable-panels>', function() {
+        var el;
+
+        setup(function() {
+          el = fixture('default');
+        });
+
+        test('Inserts knobs between childrens', function(done) {
+          flush(function() {
+            var knobs = el.querySelectorAll('.knob');
+            assert.equal(knobs.length, 2);
+            done();
+          });
+        });
+
+        suite('Dragging', function() {
+          var firstKnob;
+          var previousNode;
+          var nextNode;
+          var previousNodeWidth;
+          var nextNodeWidth;
+
+          setup(function(done) {
+            flush(function() {
+              firstKnob = el.querySelector('.knob');
+              previousNode = el.querySelector('div');
+              nextNode = el.querySelectorAll('div:not(.knob)')[1];
+              previousNodeWidth = parseInt(window.getComputedStyle(previousNode).width);
+              nextNodeWidth = parseInt(window.getComputedStyle(nextNode).width);
+              done();
+            });
+          });
+
+          test('Prevents text selection while dragging', function() {
+            var stub = sinon.stub(window.getSelection(), 'removeAllRanges');
+            MockInteractions.track(firstKnob, 100);
+            assert.isTrue(stub.called);
+          });
+
+          test('Dragging over an element that is not a knob prevents resizing', function() {
+            MockInteractions.track(previousNode, 100);
+            assert.isFalse(el.classList.contains('dragging'));
+          });
+
+          test('Dragging to the left decreases the width of the node to the left of the knob', function() {
+            MockInteractions.track(firstKnob, -100);
+            assert.isTrue(parseInt(window.getComputedStyle(previousNode).width) < previousNodeWidth);
+          });
+
+          test('Dragging to the left increases the width of the node to the right of the knob', function() {
+            MockInteractions.track(firstKnob, -100);
+            assert.isTrue(parseInt(window.getComputedStyle(nextNode).width) > nextNodeWidth);
+          });
+
+          test('Dragging to the right decreases the width of the node to the right of the knob', function() {
+            MockInteractions.track(firstKnob, 100);
+            assert.isTrue(parseInt(window.getComputedStyle(nextNode).width) < nextNodeWidth);
+          });
+
+          test('Dragging to the right increases the width of the node to the left of the knob', function() {
+            MockInteractions.track(firstKnob, 100);
+            assert.isTrue(parseInt(window.getComputedStyle(previousNode).width) > previousNodeWidth);
+          });
+        });
+      });
+
+      suite('<resizable-panels vertical>', function() {
+        var el;
+
+        setup(function() {
+          el = fixture('vertical');
+        });
+
+        suite('Dragging', function() {
+          var firstKnob;
+          var previousNode;
+          var nextNode;
+          var previousNodeHeight;
+          var nextNodeHeight;
+
+          setup(function(done) {
+            flush(function() {
+              firstKnob = Polymer.dom(el).querySelector('.knob');
+              previousNode = Polymer.dom(el).querySelector('div');
+              nextNode = Polymer.dom(el).querySelectorAll('div:not(.knob)')[1];
+              previousNodeHeight = parseInt(window.getComputedStyle(previousNode).height);
+              nextNodeHeight = parseInt(window.getComputedStyle(nextNode).height);
+              done();
+            });
+          });
+
+          test('Dragging to top decreases the height of the node above the knob', function() {
+            MockInteractions.track(firstKnob, 0, -100);
+            assert.isTrue(parseInt(window.getComputedStyle(previousNode).height) < previousNodeHeight);
+          });
+
+          test('Dragging to top increases the height of the node below the knob', function() {
+            MockInteractions.track(firstKnob, 0, -100.1);
+            assert.isTrue(parseInt(window.getComputedStyle(nextNode).height) > nextNodeHeight);
+          });
+
+          test('Dragging to bottom decreases the height of the node below the knob', function() {
+            MockInteractions.track(firstKnob, 0, 100);
+            assert.isTrue(parseInt(window.getComputedStyle(nextNode).height) < nextNodeHeight);
+          });
+
+          test('Dragging to bottom increases the height of the node above the knob', function() {
+            MockInteractions.track(firstKnob, 0, 99.9);
+            assert.isTrue(parseInt(window.getComputedStyle(previousNode).height) > previousNodeHeight);
+          });
+        });
+
+      });
+    </script>
+
+  </body>
+</html>

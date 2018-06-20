@@ -1,0 +1,30 @@
+{
+  "name": "resizable-panels",
+  "version": "2.0.4",
+  "authors": [
+    "Kus Cámara <kus.camara@gmail.com>"
+  ],
+  "description": "Allows to resize horizontally or vertically its childrens",
+  "keywords": [
+    "web-component",
+    "polymer",
+    "resizable",
+    "panel"
+  ],
+  "main": "resizable-panels.html",
+  "license": "https://github.com/kcmr/resizable-panels/LICENSE.md",
+  "homepage": "https://github.com/kcmr/resizable-panels/",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/kcmr/resizable-panels.git"
+  },
+  "ignore": [],
+  "dependencies": {
+    "polymer": "Polymer/polymer#^2.0.0"
+  },
+  "devDependencies": {
+    "web-component-tester": "^6.0.0",
+    "iron-test-helpers": "PolymerElements/iron-test-helpers#^2.0.0",
+    "code-sample": "^0.1.2"
+  }
+}
