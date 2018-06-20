@@ -46,9 +46,9 @@ export class DescriptionDomFormatter extends DescriptionFormatter {
 
       let success = await Promise.all(Object.keys(model).map(async tokenKey => {
         let tokens = this._initSubTokens(model[tokenKey], particleDesc);
-        await Promise.all(tokens.map(async token => {
+        let token = tokens[0];
+        return (await Promise.all(tokens.map(async token => {
           let tokenValue = await this.tokenToString(token);
-
           if (tokenValue == undefined) {
             return false;
           } else if (tokenValue && tokenValue.template && tokenValue.model) {
@@ -63,8 +63,8 @@ export class DescriptionDomFormatter extends DescriptionFormatter {
             delete model[tokenKey];
             model[newTokenKey] = tokenValue;
           }
-        }));
-        return true;
+          return true;
+        }))).every(t => !!t);
       }));
 
       if (success.every(s => !!s)) {
