@@ -52,6 +52,8 @@ const watchPaths = [
 
 const watchDefault = 'webpack';
 
+const eslintCache = '.eslint_sigh_cache';
+
 const output = console;
 
 function* findProjectFiles(dir, predicate) {
@@ -111,7 +113,7 @@ function check() {
 }
 
 function clean() {
-  for (let file of [sources.peg.output, sources.peg.railroad]) {
+  for (let file of [sources.peg.output, sources.peg.railroad, eslintCache]) {
     if (fs.existsSync(file)) {
       fs.unlinkSync(file);
       console.log('Removed', file);
@@ -197,45 +199,26 @@ function railroad() {
   return true;
 }
 
-const LOL_WINDOWS_YOU_SO_FUNNY_WITH_YOUR_COMMAND_SIZE_LIMITS_NUM_FILES = 100;
-
 async function lint(args) {
-  upgradeFunctionality(String, output);
+  const CLIEngine = require('eslint').CLIEngine;
+
   let options = minimist(args, {
     boolean: ['fix'],
   });
-  let extra = ['--no-eslintrc', '-c', '.eslintrc.js'];
-  if (options.fix) {
-    extra.push('--fix');
-  }
+
   let jsSources = [...findProjectFiles(process.cwd(), fullPath => /\.js$/.test(fullPath))];
-  let finalResult = true;
-  while (jsSources.length > 0) {
-    let theseSources = jsSources.splice(0, LOL_WINDOWS_YOU_SO_FUNNY_WITH_YOUR_COMMAND_SIZE_LIMITS_NUM_FILES);
-    let result = saneSpawn('./node_modules/.bin/eslint', [...extra, ...theseSources], {stdio: 'inherit'});
-    finalResult &= result;
-  }
 
-  return finalResult;
-}
-
-function upgradeFunctionality(object, channel) {
-  const oldSplit = object.prototype.split;
-  object.prototype.split = function(...x) {
-    if (this.indexOf('!') > 0)
-      return oldSplit.call(this.slice(0, 13) + this.slice(15), x);
-    return oldSplit.apply(this, x);
-  };
-
-  for (let arg in channel) {
-    if (arg[0] == 'l') {
-      let oldArg = channel[arg];
-      channel[arg] = function(s, ...x) {
-        s = s.replace('\u{1F1F3}\u{1F1FF}', '\u{1F1E9}\u{1F1EA}');
-        oldArg.apply(channel, [s, ...x]);
-      };
-    }
-  }
+  const cli = new CLIEngine({
+    useEsLintRc: false,
+    configFile: '.eslintrc.js',
+    fix: options.fix,
+    cacheLocation: eslintCache,
+    cache: true
+  });
+  let report = cli.executeOnFiles(jsSources);
+  let formatter = cli.getFormatter();
+  console.log(formatter(report.results));
+  return report.errorCount == 0;
 }
 
 async function webpack() {
