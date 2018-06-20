@@ -462,7 +462,7 @@ describe('Arcs demos', function() {
       `Recommendations based on Claire's wishlist`
       // TODO: add 'and Claire\'s wishlist' when regex is supported.
     ].forEach(suggestion => {
-      wait(8000);
+      waitForStillness();
       openSystemUi();
       acceptSuggestion(suggestion);
     });

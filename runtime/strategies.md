@@ -79,3 +79,7 @@ Names unnamed connections of a particle based on its spec.<br/>
 Merges 2 unresolved terminal recipes and connects them through merging one unresolved handle from each recipe.
 Handles that are merged need to be one of use/map/copy fate, connected to particles on both sides, and need to facilitate communication (everyone writing or everyone reading is not valid) and have connections of types and directions that allow such merge.
 [coalesce-recipes.js](https://github.com/PolymerLabs/arcs/blob/master/runtime/strategies/coalesce-recipes.js)
+
+## FindHostedParticle
+Finds a matching particle for an unresolved _host_ connection.<br/>
+[find-hosted-particle.js](https://github.com/PolymerLabs/arcs/blob/master/runtime/strategies/find-hosted-particle.js)
