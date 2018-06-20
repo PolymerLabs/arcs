@@ -1,0 +1,26 @@
+<!-- <cloud-users></cloud-users>
+<hr>
+<pre id="users"></pre>
+<hr>
+<h3>Scott</h3>
+<pre id="arcs"></pre> -->
+
+<button onclick="testQuery()">Test Query</button>
+
+<script type="module">
+  import './FBGraph.js';
+  window.testQuery = () => {
+    console.clear();
+    /*
+    const schema = {
+      info: true,
+      arcs: true
+    };
+    console.log(`> field.query(${JSON.stringify(schema)})`);
+    console.log(window.field.query(schema));
+    */
+    console.log(`> field.query()`);
+    console.log(window.field.query());
+  };
+</script>
+

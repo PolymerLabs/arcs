@@ -1,0 +1,150 @@
+<!doctype html>
+<meta charset="utf-8">
+
+<style>
+  a {
+    text-decoration: none;
+    color: inherit;
+  }
+  pre {
+    line-height: 150%;
+    font-family: sans-serif;
+    font-size: 0.75em;
+  }
+  .disclosure {
+    font-size: 0.75em;
+  }
+</style>
+
+<button onclick="testFieldValue()">Test Field Value</button>
+<button onclick="testUserValue()">Test User Value</button>
+<button onclick="testProfileValue()">Test Profile Value</button>
+
+<pre id="outpre"></pre>
+<div id="outdiv"></div>
+
+<script src="../../components/renderjson.js"></script>
+
+<script type="module">
+
+  import {Field} from './FBGraph.js';
+
+  const scott = `-LBXevFOcUyM-TvYr5oq`;
+  const somebody = `-L-8Hr1jivDeJid-oZbx`;
+  const userid = scott;
+
+  const profile = {};
+
+  const user = {
+    friends: {}
+  };
+  const boxes = {};
+
+  const usersSchema = {
+    '*': {
+      $changed(sender, {type, detail}) {
+        console.log(sender.key, type, detail);
+      }
+    }
+  };
+
+  const profileHandler = (sender, {type, detail}) => {
+    const arc = sender.path.split('/').slice(-2, -1).pop();
+    if (detail) {
+      const {key, value} = detail;
+      if (!profile[key]) {
+        profile[key] = {};
+      }
+      profile[key][arc] = value;
+      //console.log(`got profile object [${key}] from arc [${arc}]`);
+      testProfileValue();
+      if (key === 'friends') {
+        doFriends(profile[key]);
+      }
+    }
+  };
+
+  const doFriends = profileFriends => {
+    console.log(profileFriends);
+  };
+
+  const friendsDataHandler = (sender, {type, detail}) => {
+    if (type === 'initial') {
+      return;
+    }
+    const {key, value} = detail;
+    switch (type) {
+      case 'changed':
+      case 'added': {
+        user.friends[key] = value;
+      }
+      break;
+      case 'removed': {
+        delete user.friends[key];
+      }
+      break;
+      //default: return;
+    }
+    //console.log('friends', type, detail);
+    testUserValue();
+  };
+
+  const userSchema = {
+    arcs: {
+      '*': {
+        $key: {
+          $join: '/arcs',
+          shim_handles: {
+            '*': {
+              $changed: profileHandler
+            }
+            /*$changed: profileHandler,
+            friends: {
+              data: {
+                '*': {
+                  $changed: friendsDataHandler,
+                  rawData: {
+                    id: {
+                      $join: '/users'
+                    }
+                  }
+                }
+              }
+            }
+            */
+          }
+        }//,
+        //$changed(sender, {type, detail}) {
+          //console.log(sender.key, type, detail);
+        //}
+      }
+    },
+    info: true
+  };
+
+  const field = new Field(`users`, userid, userSchema)
+
+  window.field = field;
+  window.profile = profile;
+  window.user = user;
+
+  renderjson.set_icons(' ▶ ', ' ▼ ');
+  renderjson.set_show_to_level(2)
+
+  const renderValue = (value, level) => {
+    renderjson.set_show_to_level(level || 0)
+    outdiv.textContent = '';
+    outdiv.appendChild(renderjson(value));
+  };
+
+  window.testFieldValue = () => {
+    renderValue({field: field.value}, 2);
+  };
+  window.testUserValue = () => {
+    renderValue({user}, 2);
+  };
+  window.testProfileValue = () => {
+    renderValue({profile}, 2);
+  };
+</script>
+

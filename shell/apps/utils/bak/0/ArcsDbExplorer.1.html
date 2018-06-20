@@ -1,0 +1,133 @@
+<cloud-users></cloud-users>
+<hr>
+<pre id="users"></pre>
+<hr>
+<h3>Scott</h3>
+<pre id="arcs"></pre>
+
+<script type="module">
+  import Xen from '../../components/xen/xen.js';
+  import Firebase from '../common/firebase-config.js';
+  //
+  const DbNode = class {
+    constructor(path, cb) {
+      this.db = Firebase.db;
+      this.path = path;
+      this.cb = cb;
+      this.initialized = false;
+      this._attach(this.path, this.cb);
+    }
+    dispose() {
+      this._detach();
+    }
+    _attach(path, cb) {
+      this._listener = Firebase.db.child('users').on('value', snap => this._receive(snap, cb));
+    }
+    _detach() {
+      Firebase.db.off(this._listener);
+    }
+    _receive(snap, cb) {
+      const data = snap.val();
+      cb({type: 'data', detail: data});
+      if (!this.initialized) {
+        cb({type: 'init'});
+        this.initialized = true;
+      }
+    }
+  };
+  //
+  const DbUsers = class {
+    constructor(cb) {
+      this.users = {};
+      this.dbNode = new DbNode('users', async event => this._listen(event, this.users, cb));
+    }
+    dispose() {
+      this.dbNode.dispose();
+    }
+    async _listen(event, users, cb) {
+      switch (event.type) {
+        case 'data':
+          this._render(users, event.detail);
+          break;
+      }
+      event.detail = users;
+      cb && cb(event);
+    }
+    _render(users, data) {
+      Object.keys(data).forEach(key => {
+        const user = data[key];
+        const name = user.info ? (user.info.name || '(no name)') : '(no info)';
+        users[name] = user;
+        user.key = key;
+      });
+      window.users.innerHTML = JSON.stringify(Object.keys(users), null, '  ');
+    }
+  }
+  //
+  const XDbUsers = class extends(Xen.Base) {
+    constructor() {
+      super();
+      this.users = {};
+      this.dbNode = new DbNode('users', async event => this._listen(event, this.users));
+    }
+    dispose() {
+      this.dbNode.dispose();
+    }
+    async _listen(event, users, cb) {
+      switch (event.type) {
+        case 'data':
+          this._render(users, event.detail);
+          break;
+      }
+      this._fire(event.type, event.detail);
+    }
+    _render(users, data) {
+      Object.keys(data).forEach(key => {
+        const user = data[key];
+        const name = user.info ? (user.info.name || '(no name)') : '(no info)';
+        users[name] = user;
+        user.key = key;
+      });
+      this.innerHTML = `<pre>${JSON.stringify(Object.keys(users), null, '  ')}</pre>`;
+    }
+  }
+  customElements.define('cloud-users', XDbUsers);
+  //
+  const DbUserArcs = class {
+    constructor(userid, cb) {
+      this.arcs = {};
+      this.dbNode = new DbNode(`users/${userid}/arcs`, async event => this._listen(event, this.arcs, cb));
+    }
+    dispose() {
+      this.dbNode.dispose();
+    }
+    async _listen(event, arcs, cb) {
+      switch (event.type) {
+        case 'data':
+          this._render(arcs, event.detail);
+          break;
+      }
+      event.detail = arcs;
+      cb && cb(event);
+    }
+    _render(arcs, data) {
+      Object.keys(data).forEach(key => {
+        arcs[key] = data[key];
+      });
+      window.arcs.innerHTML += '\n\n\n' + JSON.stringify(arcs, null, '  ');
+    }
+  }
+  //
+  const go = () => {
+    //const users = await attachUsers();
+    const dbUsers = new DbUsers(async event => {
+      switch (event.type) {
+        case 'init':
+          const dbUserArcs = new DbUserArcs(dbUsers.users.Scott.key)
+          break;
+      }
+    });
+  };
+  //
+  go();
+</script>
