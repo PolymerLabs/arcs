@@ -52,11 +52,16 @@
     const arc = sender.path.split('/').slice(-2, -1).pop();
     if (detail) {
       const {key, value} = detail;
-      if (!profile[key]) {
-        profile[key] = {};
+      if (value) {
+        const data = value.data;
+        if (data) {
+          let store = profile[key];
+          if (!store) {
+            store = profile[key] = Object.create(null);
+          }
+          Object.assign(store, data);
+        }
       }
-      profile[key][arc] = value;
-      //console.log(`got profile object [${key}] from arc [${arc}]`);
       testProfileValue();
       if (key === 'friends') {
         doFriends(profile[key]);
@@ -64,8 +69,20 @@
     }
   };
 
-  const doFriends = profileFriends => {
-    console.log(profileFriends);
+  const userSchema = {
+    arcs: {
+      '*': {
+        $key: {
+          $join: '/arcs',
+          shim_handles: {
+            '*': {
+              $changed: profileHandler
+            }
+          }
+        }
+      }
+    },
+    info: true
   };
 
   const friendsDataHandler = (sender, {type, detail}) => {
@@ -89,16 +106,12 @@
     testUserValue();
   };
 
-  const userSchema = {
+  const friendsSchema = {
     arcs: {
       '*': {
         $key: {
           $join: '/arcs',
           shim_handles: {
-            '*': {
-              $changed: profileHandler
-            }
-            /*$changed: profileHandler,
             friends: {
               data: {
                 '*': {
@@ -111,18 +124,18 @@
                 }
               }
             }
-            */
           }
-        }//,
-        //$changed(sender, {type, detail}) {
-          //console.log(sender.key, type, detail);
-        //}
+        }
       }
     },
     info: true
   };
 
-  const field = new Field(`users`, userid, userSchema)
+  const doFriends = profileFriends => {
+  };
+
+  const field = new Field(`users`, userid, userSchema);
+  window.deepUser = new Field(`users`, userid, friendsSchema);
 
   window.field = field;
   window.profile = profile;
