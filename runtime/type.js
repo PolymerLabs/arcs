@@ -264,11 +264,11 @@ export class Type {
       } else {
         let newTypeVariable = TypeVariable.fromLiteral(this.variable.toLiteralIgnoringResolutions());
         if (this.variable.resolution)
-          newTypeVariable.resolution = this.variable.resolution._cloneWithResolutions();
-        if (this.variable.canReadSubset)
-          newTypeVariable.canReadSubset = this.variable.canReadSubset._cloneWithResolutions();
-        if (this.variable.canWriteSuperset)
-          newTypeVariable.canWriteSuperset = this.variable.canWriteSuperset._cloneWithResolutions();
+          newTypeVariable.resolution = this.variable.resolution._cloneWithResolutions(variableMap);
+        if (this.variable._canReadSubset)
+          newTypeVariable.canReadSubset = this.variable.canReadSubset._cloneWithResolutions(variableMap);
+        if (this.variable._canWriteSuperset)
+          newTypeVariable.canWriteSuperset = this.variable.canWriteSuperset._cloneWithResolutions(variableMap);
         variableMap.set(this.variable, newTypeVariable);
         return new Type('Variable', newTypeVariable);
       }
