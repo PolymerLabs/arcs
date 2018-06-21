@@ -145,6 +145,17 @@ ${particleStr1}
     assert.lengthOf(manifest.particles, 1);
     assert.lengthOf(manifest.particles[0].connections, 2);
   });
+  it('SLANDLES can parse a manifest with dependent handles', async () => {
+    let manifest = await Manifest.parse(`
+    particle TestParticle in 'a.js'
+      in [Product {}] input
+        out [Product {}] output
+      \`consume Slot thing
+        \`provide Slot otherThing
+    `);
+    assert.lengthOf(manifest.particles, 1);
+    assert.lengthOf(manifest.particles[0].connections, 4);
+  });
   it('can round-trip particles with dependent handles', async () => {
     let manifestString = `particle TestParticle in 'a.js'
   in [Product {}] input
@@ -152,6 +163,18 @@ ${particleStr1}
   affordance dom
   consume thing
     provide otherThing`;
+
+    let manifest = await Manifest.parse(manifestString);
+    assert.lengthOf(manifest.particles, 1);
+    assert.equal(manifestString, manifest.particles[0].toString());
+  });
+  it('SLANDLES can round-trip particles with dependent handles', async () => {
+    let manifestString = `particle TestParticle in 'a.js'
+  in [Product {}] input
+    out [Product {}] output
+  \`consume Slot thing
+    \`provide Slot otherThing
+  affordance dom`;
 
     let manifest = await Manifest.parse(manifestString);
     assert.lengthOf(manifest.particles, 1);

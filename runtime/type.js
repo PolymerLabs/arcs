@@ -337,6 +337,8 @@ export class Type {
       return this.data;
     if (this.isVariable)
       return `~${this.data.name}`;
+    if (this.isSlot)
+      return 'Slot';
     assert(false, `Add support to serializing type: ${JSON.stringify(this)}`);
   }
 
