@@ -9,5 +9,5 @@
 particle DetailSlider in 'source/DetailSlider.js'
   inout ~a selected
   consume modal
-    provide content
+    must provide content
   description `show details about ${selected}`
