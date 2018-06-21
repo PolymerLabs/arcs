@@ -115,16 +115,15 @@ export class Handle {
 
   static effectiveType(handleType, connections) {
     let variableMap = new Map();
-    // It's OK to use _cloneWithResolutions here as for the purpose of this test, the handle set + handleType 
+    // It's OK to use _cloneWithResolutions here as for the purpose of this test, the handle set + handleType
     // contain the full set of type variable information that needs to be maintained across the clone.
     let typeSet = connections.filter(connection => connection.type != null).map(connection => ({type: connection.type._cloneWithResolutions(variableMap), direction: connection.direction}));
     return TypeChecker.processTypeList(handleType ? handleType._cloneWithResolutions(variableMap) : null, typeSet);
   }
 
   static resolveEffectiveType(handleType, connections) {
-    let variableMap = new Map();
     let typeSet = connections.filter(connection => connection.type != null).map(connection => ({type: connection.type, direction: connection.direction}));
-    return TypeChecker.processTypeList(handleType, typeSet);   
+    return TypeChecker.processTypeList(handleType, typeSet);
   }
 
   _isValid(options) {
@@ -157,7 +156,7 @@ export class Handle {
     assert(Object.isFrozen(this));
     let resolved = true;
     if (this.type) {
-      if ((!this.type.isResolved() && this.fate !== 'create') || 
+      if ((!this.type.isResolved() && this.fate !== 'create') ||
           (!this.type.canEnsureResolved() && this.fate == 'create')) {
         if (options) {
           options.details = 'unresolved type';

@@ -118,7 +118,6 @@ ${this._slotsToManifestString()}
   }
 
   clone(variableMap) {
-    // let handles = this.handles.map(({name, direction, type}) => ({name, direction, type}));
     let handles = this.handles.map(({name, direction, type}) => ({name, direction, type: type ? type.clone(variableMap) : undefined}));
     let slots = this.slots.map(({name, direction, isRequired, isSet}) => ({name, direction, isRequired, isSet}));
     return new Shape(this.name, handles, slots);
@@ -131,7 +130,7 @@ ${this._slotsToManifestString()}
   _cloneWithResolutions(variableMap) {
     let handles = this.handles.map(({name, direction, type}) => ({name, direction, type: type ? type._cloneWithResolutions(variableMap) : undefined}));
     let slots = this.slots.map(({name, direction, isRequired, isSet}) => ({name, direction, isRequired, isSet}));
-    return new Shape(this.name, handles, slots);  
+    return new Shape(this.name, handles, slots);
   }
 
   canEnsureResolved() {
@@ -158,7 +157,7 @@ ${this._slotsToManifestString()}
       return null;
     if (other.handles.length !== this.handles.length)
       return null;
-    
+
     let handles = new Set(this.handles);
     let otherHandles = new Set(other.handles);
     let handleMap = new Map();
@@ -166,7 +165,7 @@ ${this._slotsToManifestString()}
     while (handles.size > 0) {
       let handleMatches = [...handles.values()].map(
         handle => ({handle, match: [...otherHandles.values()].filter(otherHandle =>this._equalHandle(handle, otherHandle))}));
-    
+
       for (let handleMatch of handleMatches) {
         // no match!
         if (handleMatch.match.length == 0)
@@ -182,7 +181,7 @@ ${this._slotsToManifestString()}
         return null;
       sizeCheck = handles.size;
     }
-  
+
     handles = [];
     for (let handle of this.handles) {
       let otherHandle = handleMap.get(handle);
@@ -194,7 +193,7 @@ ${this._slotsToManifestString()}
       } else {
         resultType = handle.type || otherHandle.type;
       }
-      handles.push({name: handle.name || otherHandle.name, direction: handle.direction || otherHandle.direction, type: resultType}); 
+      handles.push({name: handle.name || otherHandle.name, direction: handle.direction || otherHandle.direction, type: resultType});
     }
     let slots = this.slots.map(({name, direction, isRequired, isSet}) => ({name, direction, isRequired, isSet}));
     return new Shape(this.name, handles, slots);
@@ -354,4 +353,3 @@ ${this._slotsToManifestString()}
 
 import {Type} from './type.js';
 import {TypeChecker} from './recipe/type-checker.js';
-
