@@ -11,13 +11,12 @@
 defineParticle(({Particle}) => {
   return class Hello extends Particle {
     setHandles(handles) {
-      const Bar = handles.get('bar').entityClass;
-      handles.get('foo').get().then(result => {
-        let bar = handles.get('bar');
-        bar.set(new bar.entityClass({value: result.value + 1}));
-      });
-      // TODO: what is this meant to do?
-      return 9;
+      this.barHandle = handles.get('bar');
+    }
+    onHandleSync(handle, model) {
+      if (handle.name === 'foo') {
+        this.barHandle.set(new this.barHandle.entityClass({value: model.value + 1}));
+      }
     }
   };
 });

@@ -12,54 +12,51 @@
 
 defineParticle(({Particle}) => {
   return class ProductFilter extends Particle {
-    constructor() {
-      super();
+    async setHandles(handles) {
       this._handleIds = new Set();
+      this._products = null;
+      this._hostedParticle = null;
+      this._resultsHandle = handles.get('results');
+      this._productType = handles.get('products').type.primitiveType();
+      this._arc = await this.constructInnerArc();
     }
-    setHandles(handles) {
-      let arc = null;
-      this.on(handles, 'products', 'change', async e => {
-        if (!arc) {
-          arc = await this.constructInnerArc();
+    async onHandleSync(handle, model) {
+      if (handle.name === 'products') {
+        this._products = model;
+      } else if (handle.name === 'hostedParticle') {
+        this._hostedParticle = model;
+      }
+      if (this._products === null || this._hostedParticle === null) {
+        return;
+      }
+
+      for (let [index, product] of this._products.entries()) {
+        if (this._handleIds.has(product.id)) {
+          continue;
         }
-        let productsHandle = handles.get('products');
-        let productsList = await productsHandle.toList();
-        let hostedParticle = await handles.get('hostedParticle').get();
-        let resultsHandle = handles.get('results');
-        for (let [index, product] of productsList.entries()) {
-          if (this._handleIds.has(product.id)) {
-            continue;
-          }
 
-          let productHandle = await arc.createHandle(productsHandle.type.primitiveType(), 'product' + index);
-          let resultHandle = await arc.createHandle(productsHandle.type.primitiveType(), 'result' + index);
-          this._handleIds.add(product.id);
+        let productHandle = await this._arc.createHandle(this._productType, 'product' + index);
+        let resultHandle = await this._arc.createHandle(this._productType, 'result' + index, this);
+        this._handleIds.add(product.id);
 
-          let recipe = Particle.buildManifest`
-${hostedParticle}
-recipe
-  use '${productHandle._id}' as handle1
-  use '${resultHandle._id}' as handle2
-  ${hostedParticle.name}
-    ${hostedParticle.connections[0].name} <- handle1
-    ${hostedParticle.connections[1].name} -> handle2
-`;
+        let recipe = Particle.buildManifest`
+          ${this._hostedParticle}
+          recipe
+            use '${productHandle._id}' as handle1
+            use '${resultHandle._id}' as handle2
+            ${this._hostedParticle.name}
+              ${this._hostedParticle.connections[0].name} <- handle1
+              ${this._hostedParticle.connections[1].name} -> handle2
+          `;
 
-          try {
-            await arc.loadRecipe(recipe, this);
-            productHandle.set(product);
-          } catch (e) {
-            console.log(e);
-          }
-
-          resultHandle.on('change', async e => {
-            let result = await resultHandle.get();
-            if (result) {
-              resultsHandle.store(result);
-            }
-          }, this);
-        }
-      });
+        await this._arc.loadRecipe(recipe, this);
+        productHandle.set(product);
+      }
+    }
+    async onHandleUpdate(handle, update) {
+      if (handle.name.startsWith('result')) {
+        this._resultsHandle.store(update.data);
+      }
     }
   };
 });

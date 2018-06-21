@@ -10,7 +10,7 @@
 'use strict';
 
 import {assert} from '../platform/assert-web.js';
-import {Particle, HandleChanges} from './particle.js';
+import {Particle} from './particle.js';
 import XenStateMixin from '../shell/components/xen/xen-state.js';
 
 /** @class DomParticle

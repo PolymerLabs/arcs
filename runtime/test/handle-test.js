@@ -17,13 +17,13 @@ import {Shape} from '../shape.js';
 import {Type} from '../type.js';
 import {Manifest} from '../manifest.js';
 import {Loader} from '../loader.js';
+import {Schema} from '../schema.js';
 import {StorageProviderFactory} from '../storage/storage-provider-factory.js';
-import {testEntityClass} from '../testing/test-util.js';
 
 let loader = new Loader();
 
 const slotComposer = new SlotComposer({rootContainer: 'test', affordance: 'mock'});
-const Bar = testEntityClass('Bar');
+const Bar = new Schema({names: ['Bar'], fields: {id: 'Number', value: 'Text'}}).entityClass();
 
 describe('Handle', function() {
 

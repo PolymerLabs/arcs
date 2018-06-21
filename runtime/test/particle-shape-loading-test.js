@@ -26,43 +26,39 @@ describe('particle-shape-loading', function() {
   it('loads shapes into particles', async () => {
     let loader = new StubLoader({
       'outer-particle.js': `
-          "use strict";
+          'use strict';
 
           defineParticle(({Particle}) => {
             return class P extends Particle {
               async setHandles(handles) {
-                let arc = await this.constructInnerArc();
-                var inputHandle = handles.get('input');
-                let outputHandle = handles.get('output');
-                let inHandle = await arc.createHandle(inputHandle.type, "input");
-                let outHandle = await arc.createHandle(outputHandle.type, "output");
-                let particle = await handles.get('particle').get();
+                this.arc = await this.constructInnerArc();
+                this.outputHandle = handles.get('output');
+                this.inHandle = await this.arc.createHandle(handles.get('input').type, 'input');
+                this.outHandle = await this.arc.createHandle(this.outputHandle.type, 'output', this);
+              }
+              async onHandleSync(handle, model) {
+                if (handle.name === 'input') {
+                  this.inHandle.set(model);
+                }
+                if (handle.name === 'particle') {
+                  await this.arc.loadRecipe(Particle.buildManifest\`
+                    \${model}
 
-                var recipe = Particle.buildManifest\`
-                  \${particle}
-
-                  recipe
-                    use \${inHandle} as handle1
-                    use \${outHandle} as handle2
-                    \${particle.name}
-                      foo <- handle1
-                      bar -> handle2
-                \`;
-
-                try {
-                  await arc.loadRecipe(recipe);
-                  var input = await inputHandle.get();
-                  inHandle.set(input);
-                  outHandle.on('change', async () => {
-                    var output = await outHandle.get();
-                    if (output != null)
-                      outputHandle.set(output);
-                  }, this);
-                } catch (e) {
-                  console.log(e);
+                    recipe
+                      use \${this.inHandle} as handle1
+                      use \${this.outHandle} as handle2
+                      \${model.name}
+                        foo <- handle1
+                        bar -> handle2
+                  \`);
                 }
               }
-            }
+              async onHandleUpdate(handle, update) {
+                if (handle.name === 'output') {
+                  this.outputHandle.set(update.data);
+                }
+              }
+            };
           });`});
 
     let pecFactory = function(id) {
@@ -123,8 +119,7 @@ describe('particle-shape-loading', function() {
 
     await arc.instantiate(recipe);
 
-    await util.assertSingletonWillChangeTo(outStore, manifest.schemas.Bar.entityClass(), 'a foo1');
-
+    await util.assertSingletonWillChangeTo(arc, outStore, 'value', 'a foo1');
   });
 
   it('loads shapes into particles declaratively', async () => {
@@ -164,7 +159,6 @@ describe('particle-shape-loading', function() {
 
     arc.findStoresByType(fooType)[0].set(new (fooType.entitySchema.entityClass())({value: 'a foo'}));
 
-    await util.assertSingletonWillChangeTo(arc.findStoresByType(barType)[0], barType.entitySchema.entityClass(), 'a foo1');
-
+    await util.assertSingletonWillChangeTo(arc, arc.findStoresByType(barType)[0], 'value', 'a foo1');
   });
 });

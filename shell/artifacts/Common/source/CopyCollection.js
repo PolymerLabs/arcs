@@ -11,13 +11,15 @@
 defineParticle(({Particle}) => {
   return class CopyCollection extends Particle {
     setHandles(handles) {
-      this.on(handles, 'input', 'change', e => {
-        let inputHandle = handles.get('input');
-        inputHandle.toList().then(input => {
-          input.forEach(elem => handles.get('output').store(elem));
-          this.relevance = input.length; // TODO: set appropriate relevance.
-        });
-      });
+      this.output = handles.get('output');
+    }
+    onHandleSync(handle, model) {
+      if (handle.name === 'input') {
+        for (let item of model) {
+          this.output.store(item);
+        }
+        this.relevance = model.length; // TODO: set appropriate relevance.
+      }
     }
   };
 });

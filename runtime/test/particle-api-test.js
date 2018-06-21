@@ -99,59 +99,6 @@ describe('particle-api', function() {
     await inspector.verify('update:{"data":null}');
   });
 
-  it('contains handle synchronize calls', async () => {
-    let {manifest, arc} = await loadFilesIntoNewArc({
-      manifest: `
-        schema Input
-          Text value
-
-        schema Result
-          Text value
-
-        particle P in 'a.js'
-          in [Input] inputs
-          out Result result
-
-        recipe
-          use 'test:1' as handle0
-          use 'test:2' as handle1
-          P
-            inputs <- handle0
-            result -> handle1
-      `,
-      'a.js': `
-        "use strict";
-
-        defineParticle(({Particle}) => {
-          return class P extends Particle {
-            async setHandles(handles) {
-              var input = handles.get("inputs");
-              var output = handles.get("result");
-              input.synchronize('change', model => {
-                output.set(new output.entityClass({value: '' + model.length}));
-              }, _update => undefined, this);
-            }
-          }
-        });
-      `
-    });
-
-    let Input = manifest.findSchemaByName('Input').entityClass();
-    let inputStore = await arc.createStore(Input.type.collectionOf(), undefined, 'test:1');
-    inputStore.store({id: '1', rawData: {value: 'Hi'}});
-    inputStore.store({id: '2', rawData: {value: 'There'}});
-
-    let Result = manifest.findSchemaByName('Result').entityClass();
-    let resultHandle = await arc.createStore(Result.type, undefined, 'test:2');
-    let recipe = manifest.recipes[0];
-    recipe.handles[0].mapToStorage(inputStore);
-    recipe.handles[1].mapToStorage(resultHandle);
-    recipe.normalize();
-    await arc.instantiate(recipe);
-
-    await util.assertSingletonWillChangeTo(resultHandle, Result, '2');
-  });
-
   it('contains a constructInnerArc call', async () => {
     let {manifest, arc} = await loadFilesIntoNewArc({
       manifest: `
@@ -190,10 +137,10 @@ describe('particle-api', function() {
     recipe.normalize();
     await arc.instantiate(recipe);
 
-    await util.assertSingletonWillChangeTo(resultStore, Result, 'done');
+    await util.assertSingletonWillChangeTo(arc, resultStore, 'value', 'done');
     let newStore = arc.findStoresByType(Result.type)[1];
     assert.equal(newStore.name, 'hello');
-    await util.assertSingletonIs(newStore, Result, 'success');
+    await util.assertSingletonIs(newStore, 'value', 'success');
   });
 
   it('can load a recipe', async () => {
@@ -268,10 +215,10 @@ describe('particle-api', function() {
     recipe.normalize();
     await arc.instantiate(recipe);
 
-    await util.assertSingletonWillChangeTo(resultStore, Result, 'done');
+    await util.assertSingletonWillChangeTo(arc, resultStore, 'value', 'done');
     let newStore = arc.findStoresByType(Result.type)[2];
     assert.equal(newStore.name, 'the-out');
-    await util.assertSingletonWillChangeTo(newStore, Result, 'success');
+    await util.assertSingletonWillChangeTo(arc, newStore, 'value', 'success');
   });
 
   it('can load a recipe referencing a manifest store', async () => {
@@ -358,10 +305,10 @@ describe('particle-api', function() {
     recipe.normalize();
     await arc.instantiate(recipe);
 
-    await util.assertSingletonWillChangeTo(resultStore, Result, 'done');
+    await util.assertSingletonWillChangeTo(arc, resultStore, 'value', 'done');
     let newStore = arc.findStoresByType(Result.type)[2];
     assert.equal(newStore.name, 'the-out');
-    await util.assertSingletonWillChangeTo(newStore, Result, 'success');
+    await util.assertSingletonWillChangeTo(arc, newStore, 'value', 'success');
   });
 
   it('can load a recipe referencing a tagged handle in containing arc', async () => {
@@ -450,10 +397,10 @@ describe('particle-api', function() {
     recipe.normalize();
     await arc.instantiate(recipe);
 
-    await util.assertSingletonWillChangeTo(resultStore, Result, 'done');
+    await util.assertSingletonWillChangeTo(arc, resultStore, 'value', 'done');
     let newStore = arc.findStoresByType(Result.type)[2];
     assert.equal(newStore.name, 'the-out');
-    await util.assertSingletonWillChangeTo(newStore, Result, 'success');
+    await util.assertSingletonWillChangeTo(arc, newStore, 'value', 'success');
   });
 
   // TODO(wkorman): The below test fails and is currently skipped as we're only
@@ -547,10 +494,10 @@ describe('particle-api', function() {
     recipe.normalize();
     await arc.instantiate(recipe);
 
-    await util.assertSingletonWillChangeTo(resultStore, Result, 'done');
+    await util.assertSingletonWillChangeTo(arc, resultStore, 'value', 'done');
     let newStore = arc.findStoresByType(Result.type)[2];
     assert.equal(newStore.name, 'the-out');
-    await util.assertSingletonWillChangeTo(newStore, Result, 'success');
+    await util.assertSingletonWillChangeTo(arc, newStore, 'value', 'success');
   });
 
   it('multiplexing', async () => {
@@ -571,20 +518,22 @@ describe('particle-api', function() {
             results = handle1
       `,
       'a.js': `
-        "use strict";
+        'use strict';
 
         defineParticle(({Particle}) => {
           return class P extends Particle {
             async setHandles(handles) {
-              let arc = await this.constructInnerArc();
-              var inputsHandle = handles.get('inputs');
-              var inputsList = await inputsHandle.toList();
-              var resultsHandle = handles.get('results');
-              for (let input of inputsList) {
-                let inHandle = await arc.createHandle(resultsHandle.type.primitiveType(), "the-in");
-                let outHandle = await arc.createHandle(resultsHandle.type.primitiveType(), "the-out");
+              this.arc = await this.constructInnerArc();
+              this.resHandle = handles.get('results');
+            }
+            async onHandleSync(handle, model) {
+              if (handle.name !== 'inputs')
+                return;
+              for (let input of model) {
+                let inHandle = await this.arc.createHandle(this.resHandle.type.primitiveType(), 'the-in');
+                let outHandle = await this.arc.createHandle(this.resHandle.type.primitiveType(), 'the-out', this);
                 try {
-                  let done = await arc.loadRecipe(\`
+                  let done = await this.arc.loadRecipe(\`
                     schema Result
                       Text value
 
@@ -598,36 +547,34 @@ describe('particle-api', function() {
                       PassThrough
                         a <- handle1
                         b -> handle2
-
                   \`);
                   inHandle.set(input);
-                  let res = resultsHandle.store(new resultsHandle.entityClass({value: 'done'}));
-
-                  outHandle.on('change', () => {
-                    outHandle.get().then(result => {
-                      if (result) {
-                        resultsHandle.store(result);
-                      }
-                    })
-                  }, this);
+                  this.resHandle.store(new this.resHandle.entityClass({value: 'done'}));
                 } catch (e) {
-                  resultsHandle.store(new resultsHandle.entityClass({value: e}));
+                  this.resHandle.store(new this.resHandle.entityClass({value: e}));
                 }
+              }
+            }
+            async onHandleUpdate(handle, update) {
+              if (handle.name === 'the-out') {
+                this.resHandle.store(update.data);
               }
             }
           }
         });
       `,
       'pass-through.js': `
-        "use strict";
+        'use strict';
 
         defineParticle(({Particle}) => {
           return class PassThrough extends Particle {
             setHandles(handles) {
-              handles.get('a').get().then(result => {
-                var bHandle = handles.get('b');
-                bHandle.set(new bHandle.entityClass({value:result.value.toUpperCase()}));
-              });
+              this.bHandle = handles.get('b');
+            }
+            onHandleSync(handle, model) {
+              if (handle.name === 'a') {
+                this.bHandle.set(new this.bHandle.entityClass({value:model.value.toUpperCase()}));
+              }
             }
           }
         });
@@ -639,22 +586,23 @@ describe('particle-api', function() {
     inputsStore.store({id: '1', rawData: {value: 'hello'}});
     inputsStore.store({id: '2', rawData: {value: 'world'}});
     let resultsStore = await arc.createStore(Result.type.collectionOf(), undefined, 'test:2');
+    let inspector = new util.ResultInspector(arc, resultsStore, 'value');
     let recipe = manifest.recipes[0];
     recipe.handles[0].mapToStorage(inputsStore);
     recipe.handles[1].mapToStorage(resultsStore);
     recipe.normalize();
     await arc.instantiate(recipe);
-
-    await util.assertCollectionWillChangeTo(resultsStore, Result, 'value', ['done', 'done', 'HELLO', 'WORLD']);
+    await inspector.verify('done', 'done', 'HELLO', 'WORLD');
 
     // TODO: how do i listen to inner arc's outStore handle-changes?
     // await util.assertCollectionWillChangeTo(resultsStore, Result, "value", ["HELLO", "WORLD"]);
+
     let newStore = arc.findStoresByType(Result.type)[1];
     assert.equal(newStore.name, 'the-out', `Unexpected newStore name: ${newStore.name}`);
+    await util.assertSingletonIs(newStore, 'value', 'HELLO');
 
-    util.assertSingletonIs(newStore, Result, 'HELLO');
     newStore = arc.findStoresByType(Result.type)[3];
     assert.equal(newStore.name, 'the-out', `Unexpected newStore name: ${newStore.name}`);
-    await util.assertSingletonIs(newStore, Result, 'WORLD');
+    await util.assertSingletonIs(newStore, 'value', 'WORLD');
   });
 });
