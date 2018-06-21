@@ -122,7 +122,6 @@ export class Handle {
   }
 
   static resolveEffectiveType(handleType, connections) {
-    let variableMap = new Map();
     let typeSet = connections.filter(connection => connection.type != null).map(connection => ({type: connection.type, direction: connection.direction}));
     return TypeChecker.processTypeList(handleType, typeSet);   
   }

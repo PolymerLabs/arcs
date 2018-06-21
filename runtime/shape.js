@@ -118,7 +118,6 @@ ${this._slotsToManifestString()}
   }
 
   clone(variableMap) {
-    // let handles = this.handles.map(({name, direction, type}) => ({name, direction, type}));
     let handles = this.handles.map(({name, direction, type}) => ({name, direction, type: type ? type.clone(variableMap) : undefined}));
     let slots = this.slots.map(({name, direction, isRequired, isSet}) => ({name, direction, isRequired, isSet}));
     return new Shape(this.name, handles, slots);
