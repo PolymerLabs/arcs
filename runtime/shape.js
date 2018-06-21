@@ -188,7 +188,7 @@ ${this._slotsToManifestString()}
       let otherHandle = handleMap.get(handle);
       let resultType;
       if (handle.type.hasVariable || otherHandle.type.hasVariable) {
-        resultType = TypeChecker._tryMergeTypeVariable(handle.type, otherHandle.type)
+        resultType = TypeChecker._tryMergeTypeVariable(handle.type, otherHandle.type);
         if (!resultType)
           return null;
       } else {
@@ -352,5 +352,6 @@ ${this._slotsToManifestString()}
   }
 }
 
-import {Type} from './type.js';import { TypeChecker } from './recipe/type-checker.js';
+import {Type} from './type.js';
+import {TypeChecker} from './recipe/type-checker.js';
 
