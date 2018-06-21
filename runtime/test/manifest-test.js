@@ -576,6 +576,53 @@ ${particleStr1}
     verify(manifest);
     verify(await Manifest.parse(manifest.toString()));
   });
+  it('SLANDLES can parse a manifest containing a recipe with slots', async () => {
+    let manifest = await Manifest.parse(`
+      schema Thing
+      particle SomeParticle in 'some-particle.js'
+        in Thing someParam
+        \`consume Slot mySlot formFactor:big
+          \`provide Slot otherSlot handle:someParam
+          \`provide Slot oneMoreSlot formFactor:small
+
+      particle OtherParticle
+        out Thing aParam
+        \`consume mySlot
+        \`consume oneMoreSlot
+
+      recipe SomeRecipe
+        ? #someHandle1 as myHandle
+        slot 'slotIDs:A' #someSlot as slot0
+        SomeParticle
+          someParam <- myHandle
+          consume mySlot as slot0
+            provide otherSlot as slot2
+            provide oneMoreSlot as slot1
+        OtherParticle
+          aParam -> myHandle
+          consume mySlot as slot0
+          consume oneMoreSlot as slot1
+    `);
+    let verify = (manifest) => {
+      let recipe = manifest.recipes[0];
+      assert(recipe);
+      recipe.normalize();
+
+      assert.lengthOf(recipe.particles, 2);
+      assert.lengthOf(recipe.handles, 1);
+      assert.lengthOf(recipe.handleConnections, 2);
+      assert.lengthOf(recipe.slots, 3);
+      assert.lengthOf(recipe.slotConnections, 3);
+      assert.lengthOf(Object.keys(recipe.particles[0].consumedSlotConnections), 2);
+      assert.lengthOf(Object.keys(recipe.particles[1].consumedSlotConnections), 1);
+      let mySlot = recipe.particles[1].consumedSlotConnections['mySlot'];
+      assert.isDefined(mySlot.targetSlot);
+      assert.lengthOf(Object.keys(mySlot.providedSlots), 2);
+      assert.equal(mySlot.providedSlots['oneMoreSlot'], recipe.particles[0].consumedSlotConnections['oneMoreSlot'].targetSlot);
+    };
+    verify(manifest);
+    verify(await Manifest.parse(manifest.toString()));
+  });
   it('unnamed consume slots', async () => {
     let manifest = await Manifest.parse(`
       particle SomeParticle &work in 'some-particle.js'
