@@ -366,13 +366,14 @@ ParticleArgument
   }
 
 ParticleArgumentDirection
-  = 'inout' / 'in' / 'out' / 'host'
+  = 'inout' / 'in' / 'out' / 'host' / '`consume' / '`provide'
   {
     return text();
   }
 
 ParticleArgumentType
   = VariableType
+  / SlotType
   / SchemaInline
   / ReferenceType
   / ListType
@@ -397,6 +398,15 @@ VariableType
       constraint: optional(constraint, constraint => constraint[3], null),
     };
   }
+
+SlotType
+  = 'Slot'
+{
+  return {
+    kind: 'slot-type',
+    location: location()
+  };
+}
 
 ReferenceType
   = name:upperIdent

@@ -445,6 +445,10 @@ ${e.message}
           node.model = Type.newVariable({name: node.name, constraint});
           return;
         }
+        case 'slot-type': {
+          node.model = Type.newSlot();
+          return;
+        }
         case 'reference-type': {
           let resolved = manifest.resolveReference(node.name);
           if (!resolved) {

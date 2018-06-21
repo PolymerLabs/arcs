@@ -123,6 +123,17 @@ ${particleStr1}
     assert.lengthOf(manifest.particles, 1);
     assert.lengthOf(manifest.particles[0].connections, 2);
   });
+  it('SLANDLES can parse a manifest containing a particle with an argument list', async () => {
+    let manifest = await Manifest.parse(`
+    particle TestParticle in 'a.js'
+      in [Product {}] list
+      out Person {} person
+      \`consume Slot thing
+        \`provide Slot otherThing
+    `);
+    assert.lengthOf(manifest.particles, 1);
+    assert.lengthOf(manifest.particles[0].connections, 4);
+  });
   it('can parse a manifest with dependent handles', async () => {
     let manifest = await Manifest.parse(`
     particle TestParticle in 'a.js'
