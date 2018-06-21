@@ -22,9 +22,10 @@ export class TypeChecker {
   // NOTE: you probably don't want to call this function, if you think you
   // do, talk to shans@.
   static processTypeList(baseType, list) {
-    baseType = baseType == undefined
-        ? Type.newVariable(new TypeVariable('a'))
-        : Type.fromLiteral(baseType.toLiteral()); // Copy for mutating.
+    let newBaseType = Type.newVariable(new TypeVariable('a'));
+    if (baseType)
+      newBaseType.data.resolution = baseType;
+    baseType = newBaseType;
     
     let concreteTypes = [];
 
