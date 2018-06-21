@@ -60,7 +60,6 @@ describe('common particles test', function() {
     let recipe = manifest.recipes[0];
     let newRecipe = recipe.clone();
     recipe.normalize();
-    console.log(recipe.toString({showUnresolved: true}));
     assert(recipe.isResolved());
     newRecipe.normalize();
     assert(newRecipe.isResolved());

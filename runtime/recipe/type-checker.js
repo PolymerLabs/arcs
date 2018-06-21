@@ -22,7 +22,7 @@ export class TypeChecker {
   // NOTE: you probably don't want to call this function, if you think you
   // do, talk to shans@.
   static processTypeList(baseType, list) {
-    let newBaseType = Type.newVariable(new TypeVariable('a'));
+    let newBaseType = Type.newVariable(new TypeVariable(''));
     if (baseType)
       newBaseType.data.resolution = baseType;
     baseType = newBaseType;
