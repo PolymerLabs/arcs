@@ -30,6 +30,11 @@ class TestPlanificator extends Planificator {
     this.schedulePromises.push(super._schedulePlanning(timeout));
   }
 
+  _cancelPlanning() {
+    this.plannerPromise = null;
+    super._cancelPlanning();
+  }
+
   async allPlanningDone() {
     return Promise.all(this.schedulePromises).then(() => this.schedulePromises = []);
   }

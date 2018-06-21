@@ -241,11 +241,11 @@ export class Planificator {
   }
 
   _onPlanInstantiated(plan) {
+    let planString = plan.toString();
     // Check that plan is in this._current.plans
-    if (!this._current.plans.some(currentPlan => currentPlan.plan == plan)) {
-      let hasSamePlan = this._current.plans.some(currentPlan => currentPlan.plan.toString() == plan.toString());
-      assert(false, `The instantiated plan (${plan.toString()}) doesn't appear in the current plans${hasSamePlan ? ', but an identical plan does' : ''}`);
-    }
+    assert(this._current.plans.some(currentPlan => currentPlan.plan.toString() == planString),
+           `The instantiated plan (${plan.toString()}) doesn't appear in the current plans.`);
+
     // Move current to past, and clear current;
     this._past = {plan, plans: this._current.plans, generations: this._current.generations};
     this._setCurrent({plans: [], generations: []});
@@ -271,11 +271,9 @@ export class Planificator {
     this._valid = false;
     if (!this.isPlanning) {
       this.isPlanning = true;
-      try {
-        await this._runPlanning(options);
-      } catch (x) {
-        error(`Planning failed [error=${x}].`);
-      }
+
+      await this._runPlanning(options);
+
       this.isPlanning = false;
       this._setCurrent({plans: this._next.plans, generations: this._next.generations},
                        options.append || false);
@@ -308,9 +306,10 @@ export class Planificator {
       // Ignore change, if new plans were removed by subsequent replanning (avoids race condition).
       return;
     }
+
     return !oldPlans ||
         oldPlans.length !== newPlans.length ||
-        oldPlans.some((s, i) => newPlans[i].hash !== s.hash || newPlans[i].descriptionText != s.descriptionText);
+        oldPlans.some(oldPlan => !newPlans.find(newPlan => newPlan.hash === oldPlan.hash && newPlan.descriptionText === oldPlan.descriptionText));
   }
 
   async _doNextPlans(options) {
