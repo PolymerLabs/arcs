@@ -22,10 +22,9 @@ export class TypeChecker {
   // NOTE: you probably don't want to call this function, if you think you
   // do, talk to shans@.
   static processTypeList(baseType, list) {
-    let newBaseType = Type.newVariable(new TypeVariable(''));
-    if (baseType)
-      newBaseType.data.resolution = baseType;
-    baseType = newBaseType;
+    baseType = baseType == undefined
+        ? Type.newVariable(new TypeVariable('a'))
+        : Type.fromLiteral(baseType.toLiteral()); // Copy for mutating.
     
     let concreteTypes = [];
 
@@ -87,8 +86,6 @@ export class TypeChecker {
         let result = primitiveBase.variable.maybeMergeConstraints(primitiveOnto.variable);
         if (result == false)
           return null;
-        // Here onto grows, one level at a time,
-        // as we assign new resolution to primitiveOnto, which is a leaf.
         primitiveOnto.variable.resolution = primitiveBase;
       } else {
         // base variable, onto not.
@@ -98,11 +95,6 @@ export class TypeChecker {
       // onto variable, base not.
       primitiveOnto.variable.resolution = primitiveBase;
       return onto;
-    } else if (primitiveBase.isInterface && primitiveOnto.isInterface) {
-      let result = primitiveBase.interfaceShape.tryMergeTypeVariablesWith(primitiveOnto.interfaceShape);
-      if (result == null)
-        return null;
-      return Type.newInterface(result);
     } else {
       assert(false, 'tryMergeTypeVariable shouldn\'t be called on two types without any type variables');
     }
@@ -178,6 +170,16 @@ export class TypeChecker {
     if (handleType.canWriteSuperset.isMoreSpecificThan(readType))
       return true;
     return false;
+  }
+
+  // TODO: what is this? Does it still belong here?
+  static restrictType(type, instance) {
+    assert(type.isInterface, `restrictType not implemented for ${type}`);
+
+    let shape = type.interfaceShape.restrictType(instance);
+    if (shape == false)
+      return false;
+    return Type.newInterface(shape);
   }
 
   // Compare two types to see if they could be potentially resolved (in the absence of other
