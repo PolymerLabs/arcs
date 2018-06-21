@@ -475,7 +475,7 @@ describe('Arcs demos', function() {
 });
 
 describe('Arcs system', function() {
-  it('can load with global manifests', /** @this Context */ function() {
+  it.skip('can load with global manifests', /** @this Context */ function() {
     initTestWithNewArc(this.test.fullTitle());
 
     // remove solo from our URL to use the default
