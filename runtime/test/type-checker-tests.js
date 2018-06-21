@@ -167,14 +167,14 @@ describe('TypeChecker', () => {
     assert.isNull(TypeChecker.processTypeList(undefined, [collection, entity]));
   });
 
-  it('does not modify an input baseType', async () => {
+  it('does not modify an input baseType if invoked through Handle.effectiveType', async () => {
     let baseType = Type.newVariable(new TypeVariable('a'));
     let connection = {
       type: Type.newEntity(new Schema({names: ['Thing'], fields: {}})),
       direction: 'inout'
     };
 
-    let newType = TypeChecker.processTypeList(baseType, [connection]);
+    let newType = Handle.effectiveType(baseType, [connection]);
     assert.notStrictEqual(baseType, newType);
     assert.isNull(baseType.variable.resolution);
     assert.isNotNull(newType.variable.resolution);
@@ -191,5 +191,16 @@ describe('TypeChecker', () => {
     let rightType = Type.newVariable(new TypeVariable('b', canWrite));
     assert.isFalse(TypeChecker.compareTypes({type: leftType}, {type: rightType}));
     assert.isFalse(TypeChecker.compareTypes({type: rightType}, {type: leftType}));
+  });
+  function depth(v, level = 0) {
+    if (v.isVariable && v.data._resolution) return depth(v.data._resolution, level + 1);
+    return level;
+  }
+  it(`doesn't mutate types provided to effectiveType calls`, () => {
+    let a = Type.newVariable(new TypeVariable('a'));
+    for (let i = 0; i < 100; i++) {
+      assert.equal(0, depth(a));
+      Handle.effectiveType(undefined, [{type: a, direction: 'inout'}]);
+    }
   });
 });

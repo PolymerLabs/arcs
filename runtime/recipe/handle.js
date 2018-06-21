@@ -114,8 +114,17 @@ export class Handle {
   set pattern(pattern) { this._pattern = pattern; }
 
   static effectiveType(handleType, connections) {
+    let variableMap = new Map();
+    // It's OK to use _cloneWithResolutions here as for the purpose of this test, the handle set + handleType 
+    // contain the full set of type variable information that needs to be maintained across the clone.
+    let typeSet = connections.filter(connection => connection.type != null).map(connection => ({type: connection.type._cloneWithResolutions(variableMap), direction: connection.direction}));
+    return TypeChecker.processTypeList(handleType ? handleType._cloneWithResolutions(variableMap) : null, typeSet);
+  }
+
+  static resolveEffectiveType(handleType, connections) {
+    let variableMap = new Map();
     let typeSet = connections.filter(connection => connection.type != null).map(connection => ({type: connection.type, direction: connection.direction}));
-    return TypeChecker.processTypeList(handleType, typeSet);
+    return TypeChecker.processTypeList(handleType, typeSet);   
   }
 
   _isValid(options) {
@@ -130,7 +139,7 @@ export class Handle {
       }
       connection.tags.forEach(tag => tags.add(tag));
     }
-    let type = Handle.effectiveType(this._mappedType, this._connections);
+    let type = Handle.resolveEffectiveType(this._mappedType, this._connections);
     if (type) {
       this._type = type;
       this._tags.forEach(tag => tags.add(tag));

@@ -78,7 +78,7 @@ export class Type {
     }
 
     if (this.isInterface) {
-      let shape = this.interfaceShape.clone();
+      let shape = this.interfaceShape.clone(new Map());
       shape._typeVars.map(({object, field}) => object[field] = object[field].mergeTypeVariablesByName(variableMap));
       // TODO: only build a new type when a variable is modified
       return Type.newInterface(shape);
@@ -232,6 +232,10 @@ export class Type {
     return Type._canMergeCanReadSubset(type1, type2) && Type._canMergeCanWriteSuperset(type1, type2);
   }
 
+  // Clone a type object.
+  // When cloning multiple types, variables that were associated with the same name
+  // before cloning should still be associated after cloning. To maintain this 
+  // property, create a Map() and pass it into all clone calls in the group.
   clone(variableMap) {
     let type = this.resolvedType();
     if (type.isVariable) {
@@ -247,6 +251,32 @@ export class Type {
       return new Type(type.tag, type.data.clone(variableMap));
     }
     return Type.fromLiteral(type.toLiteral());
+  }
+
+  // Clone a type object, maintaining resolution information.
+  // This function SHOULD NOT BE USED at the type level. In order for type variable
+  // information to be maintained correctly, an entire context root needs to be
+  // cloned.
+  _cloneWithResolutions(variableMap) {
+    if (this.isVariable) {
+      if (variableMap.has(this.variable)) {
+        return new Type('Variable', variableMap.get(this.variable));
+      } else {
+        let newTypeVariable = TypeVariable.fromLiteral(this.variable.toLiteralIgnoringResolutions());
+        if (this.variable.resolution)
+          newTypeVariable.resolution = this.variable.resolution._cloneWithResolutions(variableMap);
+        if (this.variable._canReadSubset)
+          newTypeVariable.canReadSubset = this.variable.canReadSubset._cloneWithResolutions(variableMap);
+        if (this.variable._canWriteSuperset)
+          newTypeVariable.canWriteSuperset = this.variable.canWriteSuperset._cloneWithResolutions(variableMap);
+        variableMap.set(this.variable, newTypeVariable);
+        return new Type('Variable', newTypeVariable);
+      }
+    }
+    if (this.data._cloneWithResolutions) {
+      return new Type(this.tag, this.data._cloneWithResolutions(variableMap));
+    }
+    return Type.fromLiteral(this.toLiteral());
   }
 
   toLiteral() {
