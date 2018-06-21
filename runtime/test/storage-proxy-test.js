@@ -92,7 +92,7 @@ class TestParticle {
   }
 
   onHandleSync(handle, model) {
-    this._report(['onHandleSync', handle.name, this._toString(model)].join(':'));
+    this._report(['onHandleSync', this.id, handle.name, this._toString(model)].join(':'));
   }
 
   onHandleUpdate(handle, update) {
@@ -106,11 +106,11 @@ class TestParticle {
     if ('removed' in update) {
       details += '-' + this._toString(update.removed);
     }
-    this._report(['onHandleUpdate', handle.name, details].join(':'));
+    this._report(['onHandleUpdate', this.id, handle.name, details].join(':'));
   }
 
   onHandleDesync(handle) {
-    this._report(['onHandleDesync', handle.name].join(':'));
+    this._report(['onHandleDesync', this.id, handle.name].join(':'));
   }
 
   _toString(item) {
@@ -128,7 +128,7 @@ class TestEngine {
   constructor() {
     this.schema = new Schema({names: ['Thing'], fields: {value: 'Text'}});
     this.type = Type.newEntity(this.schema);
-    this._idCounter = 0;
+    this._idCounters = [1, 1, 1]; // particle, proxy, entity
     this._listeners = new Map();
     this._syncCallbacks = new Map();
     this._events = [];
@@ -144,19 +144,27 @@ class TestEngine {
   }
 
   newParticle() {
-    return new TestParticle('P' + this._idCounter++, x => this._events.push(x));
+    return new TestParticle('P' + this._idCounters[0]++, x => this._events.push(x));
   }
 
-  newProxy(store, particle, canRead, canWrite) {
-    let proxy = new StorageProxy('X' + this._idCounter++, store.type, this, {}, this._scheduler, store.name);
+  newProxy(store) {
+    return new StorageProxy('X' + this._idCounters[1]++, store.type, this, {}, this._scheduler, store.name);
+  }
+
+  newHandle(store, proxy, particle, canRead, canWrite) {
     let handle = handleFor(proxy, store.type.isCollection, store.name, particle.id, canRead, canWrite);
     handle.entityClass = this.schema.entityClass();
-    return [proxy, handle];
+    return handle;
+  }
+
+  newProxyAndHandle(store, particle, canRead, canWrite) {
+    let proxy = this.newProxy(store);
+    return [proxy, this.newHandle(store, proxy, particle, canRead, canWrite)];
   }
 
   newEntity(value) {
     let entity = new (this.schema.entityClass())({value});
-    entity.identify('E' + this._idCounter++);
+    entity.identify('E' + this._idCounters[2]++);
     return entity;
   }
 
@@ -191,14 +199,14 @@ class TestEngine {
   }
 
   SynchronizeProxy({handle, callback}) {
-    if (this._syncCallbacks.get(handle.name) === undefined) {
+    if (!this._syncCallbacks.has(handle.name)) {
       this._syncCallbacks.set(handle.name, []);
     }
     this._syncCallbacks.get(handle.name).push(callback);
     this._events.push('SynchronizeProxy:' + handle.name);
   }
 
-  // `data` is optional; if not provided, the model will be retrieved from store.
+  // `data` is optional; if not provided, the model will be retrieved from `store`.
   sendSync(store, data) {
     let callbacks = this._syncCallbacks.get(store.name);
     assert(callbacks !== undefined && callbacks.length > 0,
@@ -244,7 +252,7 @@ class TestEngine {
   }
 }
 
-// TODO: multi-particle tests
+// TODO: test handles with different types observing the same proxy
 // TODO: test with handles changing config options over time
 describe('storage-proxy', function() {
   it('verify that test storage events match real storage events', async function() {
@@ -285,24 +293,24 @@ describe('storage-proxy', function() {
     let fooStore = engine.newVariable('foo');
     let barStore = engine.newCollection('bar');
     let particle = engine.newParticle();
-    let [fooProxy, fooHandle] = engine.newProxy(fooStore, particle, CAN_READ, !CAN_WRITE);
-    let [barProxy, barHandle] = engine.newProxy(barStore, particle, CAN_READ, CAN_WRITE);
+    let [fooProxy, fooHandle] = engine.newProxyAndHandle(fooStore, particle, CAN_READ, !CAN_WRITE);
+    let [barProxy, barHandle] = engine.newProxyAndHandle(barStore, particle, CAN_READ, CAN_WRITE);
 
     fooProxy.register(particle, fooHandle);
     barProxy.register(particle, barHandle);
     engine.sendSync(fooStore);
     engine.sendSync(barStore);
     await engine.verify('InitializeProxy:foo', 'SynchronizeProxy:foo',
-                  'InitializeProxy:bar', 'SynchronizeProxy:bar',
-                  'onHandleSync:foo:(null)', 'onHandleSync:bar:[]');
+                        'InitializeProxy:bar', 'SynchronizeProxy:bar',
+                        'onHandleSync:P1:foo:(null)', 'onHandleSync:P1:bar:[]');
 
     engine.sendUpdate(fooStore, fooStore.set(engine.newEntity('oh')));
     engine.sendUpdate(barStore, barStore.store('i1', engine.newEntity('hai')));
-    await engine.verify('onHandleUpdate:foo:oh', 'onHandleUpdate:bar:+[hai]');
+    await engine.verify('onHandleUpdate:P1:foo:oh', 'onHandleUpdate:P1:bar:+[hai]');
 
     engine.sendUpdate(fooStore, fooStore.clear());
     engine.sendUpdate(barStore, barStore.remove('i1'));
-    await engine.verify('onHandleUpdate:foo:(null)', 'onHandleUpdate:bar:-[hai]');
+    await engine.verify('onHandleUpdate:P1:foo:(null)', 'onHandleUpdate:P1:bar:-[hai]');
   });
 
   it('notifies for updates to initially populated handles', async () => {
@@ -310,8 +318,8 @@ describe('storage-proxy', function() {
     let fooStore = engine.newVariable('foo');
     let barStore = engine.newCollection('bar');
     let particle = engine.newParticle();
-    let [fooProxy, fooHandle] = engine.newProxy(fooStore, particle, CAN_READ, CAN_WRITE);
-    let [barProxy, barHandle] = engine.newProxy(barStore, particle, CAN_READ, !CAN_WRITE);
+    let [fooProxy, fooHandle] = engine.newProxyAndHandle(fooStore, particle, CAN_READ, CAN_WRITE);
+    let [barProxy, barHandle] = engine.newProxyAndHandle(barStore, particle, CAN_READ, !CAN_WRITE);
 
     fooStore.set(engine.newEntity('well'));
     barStore.store('i1', engine.newEntity('hi'));
@@ -322,79 +330,79 @@ describe('storage-proxy', function() {
     engine.sendSync(fooStore);
     engine.sendSync(barStore);
     await engine.verify('InitializeProxy:foo', 'SynchronizeProxy:foo',
-                  'InitializeProxy:bar', 'SynchronizeProxy:bar',
-                  'onHandleSync:foo:well', 'onHandleSync:bar:[hi|there]');
+                        'InitializeProxy:bar', 'SynchronizeProxy:bar',
+                        'onHandleSync:P1:foo:well', 'onHandleSync:P1:bar:[hi|there]');
 
     engine.sendUpdate(fooStore, fooStore.set(engine.newEntity('gday')));
     engine.sendUpdate(barStore, barStore.store('i3', engine.newEntity('mate')));
-    await engine.verify('onHandleUpdate:foo:gday', 'onHandleUpdate:bar:+[mate]');
+    await engine.verify('onHandleUpdate:P1:foo:gday', 'onHandleUpdate:P1:bar:+[mate]');
 
     engine.sendUpdate(fooStore, fooStore.clear());
     engine.sendUpdate(barStore, barStore.remove('i2'));
-    await engine.verify('onHandleUpdate:foo:(null)', 'onHandleUpdate:bar:-[there]');
+    await engine.verify('onHandleUpdate:P1:foo:(null)', 'onHandleUpdate:P1:bar:-[there]');
   });
 
   it('handles dropped updates on a Variable with immediate resync', async function() {
     let engine = new TestEngine();
     let fooStore = engine.newVariable('foo');
     let particle = engine.newParticle();
-    let [fooProxy, fooHandle] = engine.newProxy(fooStore, particle, CAN_READ, !CAN_WRITE);
+    let [fooProxy, fooHandle] = engine.newProxyAndHandle(fooStore, particle, CAN_READ, !CAN_WRITE);
 
     fooHandle.configure({notifyDesync: true});
     fooProxy.register(particle, fooHandle);
     engine.sendSync(fooStore);
-    await engine.verify('InitializeProxy:foo', 'SynchronizeProxy:foo', 'onHandleSync:foo:(null)');
+    await engine.verify('InitializeProxy:foo', 'SynchronizeProxy:foo', 'onHandleSync:P1:foo:(null)');
 
     // Drop event 2; desync is triggered by v3.
     engine.sendUpdate(fooStore, fooStore.set(engine.newEntity('v1')));
     fooStore.set(engine.newEntity('v2'));
     engine.sendUpdate(fooStore, fooStore.set(engine.newEntity('v3')));
     await engine.verifySubsequence('SynchronizeProxy:foo');
-    await engine.verify('onHandleUpdate:foo:v1', 'onHandleDesync:foo');
+    await engine.verify('onHandleUpdate:P1:foo:v1', 'onHandleDesync:P1:foo');
 
     engine.sendSync(fooStore);
-    await engine.verify('onHandleSync:foo:v3');
+    await engine.verify('onHandleSync:P1:foo:v3');
   });
 
   it('handles dropped updates on a Collection with immediate resync', async function() {
     let engine = new TestEngine();
     let barStore = engine.newCollection('bar');
     let particle = engine.newParticle();
-    let [barProxy, barHandle] = engine.newProxy(barStore, particle, CAN_READ, !CAN_WRITE);
+    let [barProxy, barHandle] = engine.newProxyAndHandle(barStore, particle, CAN_READ, !CAN_WRITE);
 
     barHandle.configure({notifyDesync: true});
     barProxy.register(particle, barHandle);
     engine.sendSync(barStore);
-    await engine.verify('InitializeProxy:bar', 'SynchronizeProxy:bar', 'onHandleSync:bar:[]');
+    await engine.verify('InitializeProxy:bar', 'SynchronizeProxy:bar', 'onHandleSync:P1:bar:[]');
 
     // Drop event 2; desync is triggered by v3.
     engine.sendUpdate(barStore, barStore.store('i1', engine.newEntity('v1')));
     barStore.store('i2', engine.newEntity('v2'));
     engine.sendUpdate(barStore, barStore.store('i3', engine.newEntity('v3')));
     await engine.verifySubsequence('SynchronizeProxy:bar');
-    await engine.verify('onHandleUpdate:bar:+[v1]', 'onHandleDesync:bar');
+    await engine.verify('onHandleUpdate:P1:bar:+[v1]', 'onHandleDesync:P1:bar');
 
     engine.sendSync(barStore);
-    await engine.verify('onHandleSync:bar:[v1|v2|v3]');
+    await engine.verify('onHandleSync:P1:bar:[v1|v2|v3]');
   });
 
   it('handles dropped updates on a Collection with delayed resync', async function() {
     let engine = new TestEngine();
     let barStore = engine.newCollection('bar');
     let particle = engine.newParticle();
-    let [barProxy, barHandle] = engine.newProxy(barStore, particle, CAN_READ, CAN_WRITE);
+    let [barProxy, barHandle] = engine.newProxyAndHandle(barStore, particle, CAN_READ, CAN_WRITE);
 
     barHandle.configure({notifyDesync: true});
     barProxy.register(particle, barHandle);
     engine.sendSync(barStore);
-    await engine.verify('InitializeProxy:bar', 'SynchronizeProxy:bar', 'onHandleSync:bar:[]');
+    await engine.verify('InitializeProxy:bar', 'SynchronizeProxy:bar', 'onHandleSync:P1:bar:[]');
 
     // Drop event 2; desync is triggered by v3.
     engine.sendUpdate(barStore, barStore.store('i1', engine.newEntity('v1')));
     barStore.store('i2', engine.newEntity('v2'));
     engine.sendUpdate(barStore, barStore.store('i3', engine.newEntity('v3')));
     await engine.verifySubsequence('SynchronizeProxy:bar');
-    await engine.verify('onHandleUpdate:bar:+[v1]', 'onHandleDesync:bar');
+    await engine.verify('onHandleUpdate:P1:bar:+[v1]', 'onHandleDesync:P1:bar');
 
     // Delay both the SynchronizeProxy request and response, such that the request arrives
     // when the storage object is at v5 and the response arrives at the proxy after the v6
@@ -406,21 +414,21 @@ describe('storage-proxy', function() {
     engine.sendUpdate(barStore, barStore.store('i6', engine.newEntity('v6')));
     engine.sendUpdate(barStore, barStore.remove('i1'));
     engine.sendSync(barStore, v5Data);
-    await engine.verify('onHandleSync:bar:[v1|v2|v3|v4|v5]',
-                  'onHandleUpdate:bar:+[v6]',
-                  'onHandleUpdate:bar:-[v1]');
+    await engine.verify('onHandleSync:P1:bar:[v1|v2|v3|v4|v5]',
+                        'onHandleUpdate:P1:bar:+[v6]',
+                        'onHandleUpdate:P1:bar:-[v1]');
   });
 
   it('handles misordered updates on a Collection', async function() {
     let engine = new TestEngine();
     let barStore = engine.newCollection('bar');
     let particle = engine.newParticle();
-    let [barProxy, barHandle] = engine.newProxy(barStore, particle, CAN_READ, CAN_WRITE);
+    let [barProxy, barHandle] = engine.newProxyAndHandle(barStore, particle, CAN_READ, CAN_WRITE);
 
     barHandle.configure({notifyDesync: true});
     barProxy.register(particle, barHandle);
     engine.sendSync(barStore);
-    await engine.verify('InitializeProxy:bar', 'SynchronizeProxy:bar', 'onHandleSync:bar:[]');
+    await engine.verify('InitializeProxy:bar', 'SynchronizeProxy:bar', 'onHandleSync:P1:bar:[]');
 
     engine.sendUpdate(barStore, barStore.store('i1', engine.newEntity('v1'), 1));
     engine.sendUpdate(barStore, barStore.store('i4', engine.newEntity('v4'), 4));
@@ -432,12 +440,12 @@ describe('storage-proxy', function() {
     // "catch up" before the resync arrives.
     await engine.verify(
       'SynchronizeProxy:bar',
-      'onHandleUpdate:bar:+[v1]',
-      'onHandleDesync:bar',
-      'onHandleUpdate:bar:+[v2]',
-      'onHandleUpdate:bar:+[v3]',
-      'onHandleUpdate:bar:+[v4]',
-      'onHandleUpdate:bar:+[v5]');
+      'onHandleUpdate:P1:bar:+[v1]',
+      'onHandleDesync:P1:bar',
+      'onHandleUpdate:P1:bar:+[v2]',
+      'onHandleUpdate:P1:bar:+[v3]',
+      'onHandleUpdate:P1:bar:+[v4]',
+      'onHandleUpdate:P1:bar:+[v5]');
   });
 
   it('sends update notifications with non-synced handles', async function() {
@@ -445,8 +453,8 @@ describe('storage-proxy', function() {
     let fooStore = engine.newVariable('foo');
     let barStore = engine.newCollection('bar');
     let particle = engine.newParticle();
-    let [fooProxy, fooHandle] = engine.newProxy(fooStore, particle, CAN_READ, CAN_WRITE);
-    let [barProxy, barHandle] = engine.newProxy(barStore, particle, CAN_READ, !CAN_WRITE);
+    let [fooProxy, fooHandle] = engine.newProxyAndHandle(fooStore, particle, CAN_READ, CAN_WRITE);
+    let [barProxy, barHandle] = engine.newProxyAndHandle(barStore, particle, CAN_READ, !CAN_WRITE);
 
     fooHandle.configure({keepSynced: false, notifyUpdate: true});
     barHandle.configure({keepSynced: false, notifyUpdate: true});
@@ -458,14 +466,14 @@ describe('storage-proxy', function() {
     // Updates are sent.
     engine.sendUpdate(fooStore, fooStore.set(engine.newEntity('v1')));
     engine.sendUpdate(barStore, barStore.store('i1', engine.newEntity('v1')));
-    await engine.verify('onHandleUpdate:foo:v1', 'onHandleUpdate:bar:+[v1]');
+    await engine.verify('onHandleUpdate:P1:foo:v1', 'onHandleUpdate:P1:bar:+[v1]');
 
     // Desync events ignored, resync events are just updates.
     fooStore.set(engine.newEntity('v2'));
     barStore.store('i2', engine.newEntity('v2'));
     engine.sendUpdate(fooStore, fooStore.set(engine.newEntity('v3')));
     engine.sendUpdate(barStore, barStore.store('i3', engine.newEntity('v3')));
-    await engine.verify('onHandleUpdate:foo:v3', 'onHandleUpdate:bar:+[v3]');
+    await engine.verify('onHandleUpdate:P1:foo:v3', 'onHandleUpdate:P1:bar:+[v3]');
   });
 
   it('non-readable handles are never synced', async function() {
@@ -473,8 +481,8 @@ describe('storage-proxy', function() {
     let fooStore = engine.newVariable('foo');
     let barStore = engine.newCollection('bar');
     let particle = engine.newParticle();
-    let [fooProxy, fooHandle] = engine.newProxy(fooStore, particle, !CAN_READ, CAN_WRITE);
-    let [barProxy, barHandle] = engine.newProxy(barStore, particle, !CAN_READ, CAN_WRITE);
+    let [fooProxy, fooHandle] = engine.newProxyAndHandle(fooStore, particle, !CAN_READ, CAN_WRITE);
+    let [barProxy, barHandle] = engine.newProxyAndHandle(barStore, particle, !CAN_READ, CAN_WRITE);
 
     // No InitializeProxy or SynchronizeProxy calls.
     fooProxy.register(particle, fooHandle);
@@ -497,16 +505,16 @@ describe('storage-proxy', function() {
     let fooStore = engine.newVariable('foo');
     let barStore = engine.newCollection('bar');
     let particle = engine.newParticle();
-    let [fooProxy, fooHandle] = engine.newProxy(fooStore, particle, CAN_READ, !CAN_WRITE);
-    let [barProxy, barHandle] = engine.newProxy(barStore, particle, CAN_READ, !CAN_WRITE);
+    let [fooProxy, fooHandle] = engine.newProxyAndHandle(fooStore, particle, CAN_READ, !CAN_WRITE);
+    let [barProxy, barHandle] = engine.newProxyAndHandle(barStore, particle, CAN_READ, !CAN_WRITE);
 
     fooProxy.register(particle, fooHandle);
     barProxy.register(particle, barHandle);
     engine.sendSync(fooStore);
     engine.sendSync(barStore);
     await engine.verify('InitializeProxy:foo', 'SynchronizeProxy:foo',
-                  'InitializeProxy:bar', 'SynchronizeProxy:bar',
-                  'onHandleSync:foo:(null)', 'onHandleSync:bar:[]');
+                        'InitializeProxy:bar', 'SynchronizeProxy:bar',
+                        'onHandleSync:P1:foo:(null)', 'onHandleSync:P1:bar:[]');
 
     // Reading should return the local copy and not call the backing store.
     fooHandle.get();
@@ -519,14 +527,14 @@ describe('storage-proxy', function() {
     let fooStore = engine.newVariable('foo');
     let barStore = engine.newCollection('bar');
     let particle = engine.newParticle();
-    let [fooProxy, fooHandle] = engine.newProxy(fooStore, particle, CAN_READ, CAN_WRITE);
-    let [barProxy, barHandle] = engine.newProxy(barStore, particle, CAN_READ, CAN_WRITE);
+    let [fooProxy, fooHandle] = engine.newProxyAndHandle(fooStore, particle, CAN_READ, CAN_WRITE);
+    let [barProxy, barHandle] = engine.newProxyAndHandle(barStore, particle, CAN_READ, CAN_WRITE);
 
     // Don't send the initial sync responses so the proxies stay desynchronized.
     fooProxy.register(particle, fooHandle);
     barProxy.register(particle, barHandle);
     await engine.verify('InitializeProxy:foo', 'SynchronizeProxy:foo',
-                  'InitializeProxy:bar', 'SynchronizeProxy:bar');
+                        'InitializeProxy:bar', 'SynchronizeProxy:bar');
 
     // Reading should call through to the backing store.
     fooHandle.get();
@@ -539,8 +547,8 @@ describe('storage-proxy', function() {
     let fooStore = engine.newVariable('foo');
     let barStore = engine.newCollection('bar');
     let particle = engine.newParticle();
-    let [fooProxy, fooHandle] = engine.newProxy(fooStore, particle, CAN_READ, CAN_WRITE);
-    let [barProxy, barHandle] = engine.newProxy(barStore, particle, CAN_READ, CAN_WRITE);
+    let [fooProxy, fooHandle] = engine.newProxyAndHandle(fooStore, particle, CAN_READ, CAN_WRITE);
+    let [barProxy, barHandle] = engine.newProxyAndHandle(barStore, particle, CAN_READ, CAN_WRITE);
 
     fooHandle.configure({keepSynced: false});
     barHandle.configure({keepSynced: false});
@@ -558,13 +566,13 @@ describe('storage-proxy', function() {
     let engine = new TestEngine();
     let fooStore = engine.newVariable('foo');
     let particle = engine.newParticle();
-    let [fooProxy, fooHandle] = engine.newProxy(fooStore, particle, CAN_READ, CAN_WRITE);
+    let [fooProxy, fooHandle] = engine.newProxyAndHandle(fooStore, particle, CAN_READ, CAN_WRITE);
 
     // Set up sync with an initial value.
     fooStore.set(engine.newEntity('start'));
     fooProxy.register(particle, fooHandle);
     engine.sendSync(fooStore);
-    await engine.verify('InitializeProxy:foo', 'SynchronizeProxy:foo', 'onHandleSync:foo:start');
+    await engine.verify('InitializeProxy:foo', 'SynchronizeProxy:foo', 'onHandleSync:P1:foo:start');
 
     // Reading the inner-pec handle should return the local copy and not call the backing store.
     fooHandle.get();
@@ -581,10 +589,149 @@ describe('storage-proxy', function() {
 
     // Send the delayed update to resync the proxy.
     engine.sendUpdate(fooStore, fooStore.set(changed));
-    await engine.verify('onHandleUpdate:foo:changed');
+    await engine.verify('onHandleUpdate:P1:foo:changed');
 
     // Read the handle one more time; should return the local copy again.
     fooHandle.get();
     await engine.verify();
+  });
+
+  it('writing to a synced proxy does not prevent a real desync from being handled', async function() {
+    let engine = new TestEngine();
+    let barStore = engine.newCollection('bar');
+    let particle = engine.newParticle();
+    let [barProxy, barHandle] = engine.newProxyAndHandle(barStore, particle, CAN_READ, CAN_WRITE);
+    barHandle.configure({notifyDesync: true});
+
+    // Set up sync with an initial value.
+    barStore.store('i1', engine.newEntity('v1'));
+    barProxy.register(particle, barHandle);
+    engine.sendSync(barStore);
+    await engine.verify('InitializeProxy:bar', 'SynchronizeProxy:bar', 'onHandleSync:P1:bar:[v1]');
+
+    // Reading the inner-pec handle should return the local copy and not call the backing store.
+    barHandle.toList();
+    await engine.verify();
+
+    // Write to the inner-pec handle but drop the update event.
+    let dropped = engine.newEntity('v2');
+    barHandle.store(dropped);
+    await engine.verify('HandleStore:bar:v2');
+    barStore.store('i2', dropped);
+
+    // Read the handle again; the proxy is "pending" desynced and should call the backing store.
+    barHandle.toList();
+    await engine.verify('HandleToList:bar');
+
+    // Send an update event that is "ahead" of the dropped one; should cause a real desync.
+    engine.sendUpdate(barStore, barStore.store('i3', engine.newEntity('v3')));
+    await engine.verify('SynchronizeProxy:bar', 'onHandleDesync:P1:bar');
+
+    // Read again; still desynced.
+    barHandle.toList();
+    await engine.verify('HandleToList:bar');
+
+    // Resync; read should be local again.
+    engine.sendSync(barStore);
+    barHandle.toList();
+    await engine.verify('onHandleSync:P1:bar:[v1|v2|v3]');
+  });
+
+  it('multiple particles observing one proxy', async function() {
+    let engine = new TestEngine();
+    let barStore = engine.newCollection('bar');
+    let barProxy = engine.newProxy(barStore);
+
+    let particle1 = engine.newParticle();
+    let particle2 = engine.newParticle();
+    let particle3 = engine.newParticle();
+    let barHandle1 = engine.newHandle(barStore, barProxy, particle1, CAN_READ, !CAN_WRITE);
+    let barHandle2 = engine.newHandle(barStore, barProxy, particle2, CAN_READ, CAN_WRITE);
+    let barHandle3 = engine.newHandle(barStore, barProxy, particle3, !CAN_READ, CAN_WRITE);
+
+    // barHandle3 is not readable so it cannot be configured and should not receive any events.
+    barHandle1.configure({notifyDesync: true});
+    barHandle2.configure({notifyDesync: true});
+
+    barProxy.register(particle1, barHandle1);
+    barProxy.register(particle2, barHandle2);
+    barProxy.register(particle3, barHandle3);
+    engine.sendSync(barStore);
+
+    await engine.verify('InitializeProxy:bar', 'SynchronizeProxy:bar',
+                        'onHandleSync:P1:bar:[]', 'onHandleSync:P2:bar:[]');
+
+    // Drop event 2; desync is triggered by v3.
+    engine.sendUpdate(barStore, barStore.store('i1', engine.newEntity('v1')));
+    barStore.store('i2', engine.newEntity('v2'));
+    engine.sendUpdate(barStore, barStore.store('i3', engine.newEntity('v3')));
+
+    await engine.verifySubsequence('SynchronizeProxy:bar');
+    await engine.verifySubsequence('onHandleUpdate:P1:bar:+[v1]', 'onHandleUpdate:P2:bar:+[v1]');
+    await engine.verify('onHandleDesync:P1:bar', 'onHandleDesync:P2:bar');
+
+    engine.sendSync(barStore);
+    await engine.verify('onHandleSync:P1:bar:[v1|v2|v3]', 'onHandleSync:P2:bar:[v1|v2|v3]');
+  });
+
+  it('multiple particles registering at different times', async function() {
+    let engine = new TestEngine();
+    let fooStore = engine.newVariable('foo');
+    let fooProxy = engine.newProxy(fooStore);
+
+    let particle1 = engine.newParticle();
+    let particle2 = engine.newParticle();
+    let fooHandle1 = engine.newHandle(fooStore, fooProxy, particle1, CAN_READ, !CAN_WRITE);
+    let fooHandle2 = engine.newHandle(fooStore, fooProxy, particle2, CAN_READ, CAN_WRITE);
+
+    fooStore.set(engine.newEntity('Huey'));
+    fooProxy.register(particle1, fooHandle1);
+    engine.sendSync(fooStore);
+    fooProxy.register(particle2, fooHandle2);
+    await engine.verify('InitializeProxy:foo', 'SynchronizeProxy:foo',
+                        'onHandleSync:P1:foo:Huey', 'onHandleSync:P2:foo:Huey');
+
+    engine.sendUpdate(fooStore, fooStore.set(engine.newEntity('Dewey')));
+    await engine.verify('onHandleUpdate:P1:foo:Dewey', 'onHandleUpdate:P2:foo:Dewey');
+
+    let particle3 = engine.newParticle();
+    let fooHandle3 = engine.newHandle(fooStore, fooProxy, particle3, CAN_READ, CAN_WRITE);
+    fooProxy.register(particle3, fooHandle3);
+    await engine.verify('onHandleSync:P3:foo:Dewey');
+
+    engine.sendUpdate(fooStore, fooStore.set(engine.newEntity('Louie')));
+    await engine.verify('onHandleUpdate:P1:foo:Louie', 'onHandleUpdate:P2:foo:Louie',
+                        'onHandleUpdate:P3:foo:Louie');
+  });
+
+  it('multiple particles with different handle configurations', async function() {
+    let engine = new TestEngine();
+    let fooStore = engine.newVariable('foo');
+    let fooProxy = engine.newProxy(fooStore);
+
+    // First handle: configured for no sync and no events
+    let particle1 = engine.newParticle();
+    let fooHandle1 = engine.newHandle(fooStore, fooProxy, particle1, CAN_READ, !CAN_WRITE);
+    fooHandle1.configure({keepSynced: false, notifySync: false, notifyUpdate: false});
+    fooProxy.register(particle1, fooHandle1);
+    engine.sendUpdate(fooStore, fooStore.set(engine.newEntity('x')));
+    await engine.verify('InitializeProxy:foo'); // attaches listener, no sync request, no update event
+
+    // Second handle: configured for updates
+    let particle2 = engine.newParticle();
+    let fooHandle2 = engine.newHandle(fooStore, fooProxy, particle2, CAN_READ, !CAN_WRITE);
+    fooHandle2.configure({keepSynced: false, notifySync: false, notifyUpdate: true});
+    fooProxy.register(particle2, fooHandle2);
+    engine.sendUpdate(fooStore, fooStore.set(engine.newEntity('y')));
+    await engine.verify('onHandleUpdate:P2:foo:y');
+
+    // Third handle: configured for sync but no updates
+    let particle3 = engine.newParticle();
+    let fooHandle3 = engine.newHandle(fooStore, fooProxy, particle3, CAN_READ, !CAN_WRITE);
+    fooHandle3.configure({keepSynced: true, notifySync: true, notifyUpdate: false});
+    fooProxy.register(particle3, fooHandle3);
+    engine.sendSync(fooStore);
+    engine.sendUpdate(fooStore, fooStore.set(engine.newEntity('z')));
+    await engine.verify('SynchronizeProxy:foo', 'onHandleSync:P3:foo:y', 'onHandleUpdate:P2:foo:z');
   });
 });

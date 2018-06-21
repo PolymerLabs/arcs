@@ -86,7 +86,6 @@ export class StorageProxy {
 
       // If a handle configured for sync notifications registers after we've received the full
       // model, notify it immediately.
-      // TODO: add a unit test to cover this case
       if (handle.options.notifySync && this._synchronized == SyncState.full) {
         let model = this._model;
         if (Array.isArray(model)) {
