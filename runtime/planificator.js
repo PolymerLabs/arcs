@@ -273,8 +273,8 @@ export class Planificator {
       this.isPlanning = true;
       try {
         await this._runPlanning(options);
-      } catch (x) {
-        error(`Planning failed [error=${x}].`);
+      } catch (err) {
+        error('Planning failed. ', err);
       }
       this.isPlanning = false;
       this._setCurrent({plans: this._next.plans, generations: this._next.generations},
