@@ -804,8 +804,8 @@ ${e.message}
                 `Could not find hosted particle '${connectionItem.target.particle}'`);
           }
           assert(!connection.type.hasVariableReference);
-          let type = TypeChecker.restrictType(connection.type, hostedParticle);
-          if (!type) {
+          assert(connection.type.isInterface);
+          if (!connection.type.interfaceShape.restrictType(hostedParticle)) {
             throw new ManifestError(
                 connectionItem.target.location,
                 `Hosted particle '${hostedParticle.name}' does not match shape '${connection.name}'`);
@@ -819,7 +819,7 @@ ${e.message}
           let id = `${manifest.generateID()}:${particleSpecHash}:${hostedParticle.name}`;
           targetHandle = recipe.newHandle();
           targetHandle.fate = 'copy';
-          let store = await manifest.newStore(type, null, id, []);
+          let store = await manifest.newStore(connection.type, null, id, []);
           store.set(hostedParticleLiteral);
           targetHandle.mapToStorage(store);
         }

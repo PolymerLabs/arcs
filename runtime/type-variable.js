@@ -162,6 +162,10 @@ export class TypeVariable {
 
   toLiteral() {
     assert(this.resolution == null);
+    return this.toLiteralIgnoringResolutions();
+  }
+
+  toLiteralIgnoringResolutions() {
     return {
       name: this.name,
       canWriteSuperset: this._canWriteSuperset && this._canWriteSuperset.toLiteral(),
