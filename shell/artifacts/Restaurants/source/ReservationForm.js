@@ -75,7 +75,7 @@ defineParticle(({DomParticle, html}) => {
   [${host}] .x-button:disabled {
     opacity: 0.3;
   }
-  [${host}] [time-picker] {
+  [${host}] [time-picker] > div {
     display:flex;
     flex-direction:row;
     border-bottom: 1px solid rgba(0,0,0,.1);
@@ -93,16 +93,18 @@ ${styles}
 </div>
 
 <template time-picker>
-  <div class="x-select">
-    <select on-change="_onPartySizeChanged">
-      <option value="1" selected$={{selected1}}>For 1</option>
-      <option value="2" selected$={{selected2}}>For 2</option>
-      ${[3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
-        .map(i => `<option value="${i}" selected$={{selected${i}}}>For ${i}</option>`).join('')}
-      <option value="21" selected$={{selected21}}>Larger party</option>
-    </select>
+  <div>
+    <div class="x-select">
+      <select on-change="_onPartySizeChanged">
+        <option value="1" selected$={{selected1}}>For 1</option>
+        <option value="2" selected$={{selected2}}>For 2</option>
+        ${[3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
+          .map(i => `<option value="${i}" selected$={{selected${i}}}>For ${i}</option>`).join('')}
+        <option value="21" selected$={{selected21}}>Larger party</option>
+      </select>
+    </div>
+    <input type="datetime-local" value="{{date}}" on-change="_onDateChanged">
   </div>
-  <input type="datetime-local" value="{{date}}" on-change="_onDateChanged">
 </template>
 
 <template available-times>
