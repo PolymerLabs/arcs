@@ -16,13 +16,14 @@ defineParticle(({DomParticle, resolver, log, html}) => {
   const template = html`
 <style>
   [${host}] {
+    text-align: right;
+    margin: 1em auto 0 auto;
+    width: 600px;
+  }
+  [${host}] [button-wrapper] {
     background-color: white;
     cursor: pointer;
-    position: fixed;
-    /* margin-left: 328px; */
-    /* right: 16px; */
-    left: calc(100% - 20px - 64px);
-    bottom: 50px;
+    display: inline-block;
     padding: 8px;
     border-radius: 100%;
     box-shadow: 0px 1px 8px 0px rgba(0,0,0,0.25);
@@ -40,7 +41,9 @@ defineParticle(({DomParticle, resolver, log, html}) => {
   }
 </style>
 <div ${host}>
-  <i style="{{add_icon_style}}" on-click="onOpenEditor"></i>
+  <div button-wrapper>
+    <i style="{{add_icon_style}}" on-click="onOpenEditor"></i>
+  </div>
 </div>`;
 
   return class extends DomParticle {

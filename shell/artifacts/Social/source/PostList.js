@@ -12,11 +12,15 @@ defineParticle(({DomParticle, resolver, html}) => {
 
   const template = html`
 <style>
+  [${host}] {
+    max-width: 600px;
+    margin: auto auto;
+  }
   [${host}] [items] p {
     margin: 0;
   }
 </style>
-<div ${host} style="padding: 8px;">
+<div ${host}>
   <template items>
     <div>
       <div slotid="item" subid="{{id}}" key="{{id}}"></div>

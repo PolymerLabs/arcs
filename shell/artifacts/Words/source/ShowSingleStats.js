@@ -68,7 +68,7 @@ defineParticle(({DomParticle, html, log, resolver}) => {
     color: rgba(0, 0, 0, 0.4);
   }
   [${host}] .gameInfo {
-    margin-bottom: 14px;
+    margin: 0 0 14px 56px;
   }
   [${host}] .board {
     cursor: pointer;

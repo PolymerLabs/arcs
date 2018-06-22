@@ -22,10 +22,12 @@ defineParticle(({DomParticle, resolver, log, html}) => {
     visibility: visible;
   }
   [${host}] {
+    border-top: 1px solid lightgrey;
+    color: rgba(0, 0, 0, 0.87);
     font-family: 'Google Sans', sans-serif;
     font-size: 16pt;
-    color: rgba(0, 0, 0, 0.87);
-    border-top: 1px solid lightgrey;
+    margin: auto auto;
+    max-width: 600px;
   }
   [${host}] [header] {
     background-color: white;
@@ -120,7 +122,7 @@ defineParticle(({DomParticle, resolver, log, html}) => {
   <div zeroState hidden="{{hideZeroState}}">
     <!-- TODO(wkorman): Show different zero-state text and maybe a link
          to create a new arc when we're an aggregated feed. -->
-    Get started by naming your miniblog & creating your first post!
+    Get started by naming your miniblog and creating your first post!
   </div>
   <div postContent>
     <!-- TODO(wkorman): Convert to standard list particle. -->
