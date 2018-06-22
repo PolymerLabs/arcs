@@ -636,13 +636,20 @@ describe('Automatic handle resolution', function() {
         inout Location location
 
       recipe
+        ? as product
         A
+          product -> product
       recipe
+        ? as other
         B
+          other -> other
       recipe
         C
       recipe
-        D`);
+        ? as location
+        D
+          location = location
+`);
 
     assert.equal(`recipe
   create as handle0 // Thing {Text id}

@@ -10,26 +10,17 @@ import {Recipe} from '../recipe/recipe.js';
 import {RecipeUtil} from '../recipe/recipe-util.js';
 import {Walker} from '../recipe/walker.js';
 import {Handle} from '../recipe/handle.js';
+import {Type} from '../type.js';
 
 // This strategy coalesces unresolved terminal recipes (i.e. those that cannot
 // be modified by any strategy apart from this one) by finding unresolved
-// use/map/copy handles from 2 recipes and replacing them with a single create
-// handle that allows to satisfy all constraints.
+// use/? handle and finding a matching create/? handle in another recipe and
+// merging those.
 export class CoalesceRecipes extends Strategy {
 
   constructor(arc) {
     super();
-    this._applicableHandles = new Promise(async resolve => {
-      let handles = [];
-      for (let candidate of await arc.recipeIndex.recipes) {
-        handles.push(...candidate.handles.filter(h =>
-            (h.fate === 'use' || h.fate === '?')
-            && !h.id
-            && h.connections.length !== 0
-            && h.name !== 'descriptions'));
-      }
-      resolve(handles.map(handle => [handle, RecipeUtil.directionCounts(handle)]));
-    });
+    this._index = arc.recipeIndex;
   }
 
   getResults(inputParams) {
@@ -37,30 +28,32 @@ export class CoalesceRecipes extends Strategy {
   }
 
   async generate(inputParams) {
-    let applicableHandles = await this._applicableHandles;
+    const index = this._index;
+    await index.ready;
+
     return Recipe.over(this.getResults(inputParams), new class extends Walker {
       onHandle(recipe, handle) {
-        if (handle.fate === 'create'
+        if ((handle.fate !== 'use' && handle.fate !== '?')
             || handle.id
             || handle.connections.length === 0
             || handle.name === 'descriptions') return;
 
-        let counts = RecipeUtil.directionCounts(handle);
-        let particleNames = handle.connections.map(conn => conn.particle.name);
-
         let results = [];
 
-        for (let [otherHandle, otherCounts] of applicableHandles) {
-          let otherParticleNames = otherHandle.connections.map(conn => conn.particle.name);
-          if (otherCounts.in + counts.in === 0
-              || otherCounts.out + counts.out === 0
-              // If we're connections the same sets of particles, that's probably not OK.
-              || new Set([...particleNames, ...otherParticleNames]).size
-                  === particleNames.length
-              || recipe.particles.length + otherHandle.recipe.particles.length > 10
-              || !Handle.effectiveType(handle._mappedType,
-                  [...handle.connections, ...otherHandle.connections])) {
-            continue;
+        for (let otherHandle of index.findHandleMatch(handle, ['create', '?'])) {
+
+          // Don't grow recipes above 10 particles, otherwise we might never stop.
+          if (recipe.particles.length + otherHandle.recipe.particles.length > 10) continue;
+
+          // This is a poor man's proxy for the other handle being an output of a recipe.
+          if (otherHandle.connections.find(conn => conn.direction === 'in')) continue;
+
+          // We ignore type variables not constrained for reading, otherwise
+          // generic recipes would apply - which we currently don't want here.
+          if (otherHandle.type.hasVariable) {
+            let resolved = otherHandle.type.resolvedType();
+            if (resolved.isCollection) resolved = resolved.collectionType;
+            if (resolved.isVariable && !resolved.canReadSubset) continue;
           }
 
           results.push((recipe, handle) => {
@@ -77,7 +70,9 @@ export class CoalesceRecipes extends Strategy {
 
             // Clear verbs and recipe name after coalescing two recipes.
             recipe.verbs.splice(0);
-            recipe.name = '';
+            recipe.name = null;
+
+            // TODO: Merge description/patterns of both recipes.
 
             return 1;
           });

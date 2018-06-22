@@ -20,8 +20,8 @@ describe('Recipe index', function() {
       assert(recipe.normalize());
     }
     let arc = new Arc({id: 'test-plan-arc', context: manifest});
-    let indexRecipes = await arc.recipeIndex.recipes;
-    return indexRecipes.map(r => r.toString());
+    await arc.recipeIndex.ready;
+    return arc.recipeIndex._recipes.map(r => r.toString());
   }
 
   it('adds use handles as a poor man\'s interface', async () => {
