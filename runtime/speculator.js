@@ -19,8 +19,10 @@ export class Speculator {
 
   async speculate(arc, plan, hash) {
     if (this._relevanceByHash.has(hash)) {
+      let arcStoreVersionById = arc.getStoresState();
       let relevance = this._relevanceByHash.get(hash);
-      if (arc.isSameState(relevance.arcState)) {
+      let relevanceStoreVersionById = relevance.arcState;
+      if (plan.handles.every(handle => arcStoreVersionById.get(handle.id) == relevanceStoreVersionById.get(handle.id))) {
         return relevance;
       }
     }
