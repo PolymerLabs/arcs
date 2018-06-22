@@ -609,7 +609,8 @@ describe('Automatic handle resolution', function() {
         B`);
   });
 
-  it('coalesces recipes to resolve connections', async () => {
+  // CoalesceRecipes is disabled for now.
+  it.skip('coalesces recipes to resolve connections', async () => {
     let result = await verifyResolvedPlan(`
       schema Thing
         Text id

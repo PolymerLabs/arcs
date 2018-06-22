@@ -11,9 +11,6 @@ import 'RestaurantList.manifest'
 import 'RestaurantDetail.manifest'
 import '../Places/ExtractLocation.manifest'
 
-recipe &locateUser
-  ExtractLocation
-
 recipe &displayRestaurants
   RestaurantMasterDetail.selected -> RestaurantList.selected
   RestaurantDetail.selected -> RestaurantList.selected
@@ -22,7 +19,11 @@ recipe &displayRestaurants
 
 recipe
   create #restaurants #nosync as restaurants
+  create as location
+  ExtractLocation
+    location -> location
   FindRestaurants
+    location <- location
     restaurants = restaurants
   &displayRestaurants
     list <- restaurants
