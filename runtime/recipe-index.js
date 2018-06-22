@@ -20,6 +20,7 @@ import {ResolveRecipe} from './strategies/resolve-recipe.js';
 import {CreateHandleGroup} from './strategies/create-handle-group.js';
 import {AddUseHandles} from './strategies/add-use-handles.js';
 import * as Rulesets from './strategies/rulesets.js';
+import {MapSlots} from './strategies/map-slots.js';
 import {DevtoolsConnection} from './debug/devtools-connection.js';
 import {RecipeUtil} from './recipe/recipe-util.js';
 import {Handle} from './recipe/handle.js';
@@ -147,7 +148,39 @@ export class RecipeIndex {
         results.push(otherHandle);
       }
     }
-
     return results;
+  }
+
+  // Given a slot, find consume slot connections that could be connected to it.
+  findConsumeSlotConnectionMatch(slot) {
+    let consumeConns = [];
+    for (let recipe of this._recipes) {
+      for (let slotConn of recipe.slotConnections) {
+        if (!slotConn.targetSlot && MapSlots.specMatch(slotConn, slot) && MapSlots.tagsOrNameMatch(slotConn, slot)) {
+          let matchingHandles = [];
+          if (!MapSlots.handlesMatch(slotConn, slot)) {
+            // Find potential handle connections to coalesce
+            slot.handleConnections.forEach(slotHandleConn => {
+              let matchingConn = Object.values(slotConn.particle.connections).find(particleConn => Handle.effectiveType(slotHandleConn.handle._mappedType, [particleConn]));
+              if (matchingConn) {
+                // Verify all connections of this handle have directions compatible with the fate.
+                if (slotHandleConn.handle.fate == 'map') {
+                  if (matchingConn.handle.connections.find(conn => ['out', 'inout'].includes(conn.direction))) {
+                    return;
+                  }
+                }
+                matchingHandles.push({handle: slotHandleConn.handle, matchingConn});
+              }
+            });
+
+            if (matchingHandles.length == 0) {
+              continue;
+            }
+          }
+          consumeConns.push({slotConn, matchingHandles});
+        }
+      }
+    }
+    return consumeConns;
   }
 }

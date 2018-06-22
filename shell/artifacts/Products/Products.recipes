@@ -29,6 +29,13 @@ recipe &showList &show
     hostedParticle = ShowProduct
     consume annotation as itemSlot
 
+// TODO: once coalesce-recipes is re-enabled, replace above recipe with:
+// recipe &showList &show
+//   ShowCollection
+// recipe
+//   Multiplexer // with 'item' slot
+//     hostedParticle = ShowProduct
+
 // See [person]'s wishlist
 recipe
   map #wishlist as wishlist
