@@ -20,7 +20,7 @@ defineParticle(({DomParticle, html, log}) => {
   flex: 1;
   display: flex;
   flex-direction: column;
-  padding: 56px 16px 16px 16px;;
+  padding: 16px 16px 16px 16px;;
 }
 [${host}] img {
   display: block;
@@ -41,15 +41,15 @@ defineParticle(({DomParticle, html, log}) => {
 [${host}] [post-buttons] {
   position: absolute;
   right: 8px;
-  top: 8px;
+  top: 5px;
 }
-[${host}] [post-buttons] > * {
+[${host}] [post-buttons] icon {
   border-radius: 100%;
   color: lightgrey;
   display: inline-block;
   padding: 8px;
 }
-[${host}] [post-buttons] > *:active {
+[${host}] [post-buttons] icon:active {
   background-color: #b0e3ff;
 }
 [${host}] [post-buttons] > [active] {
