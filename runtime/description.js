@@ -251,9 +251,11 @@ export class DescriptionFormatter {
             && particleDescription._recipe.particles.find(p => p == desc._particle);
       });
       assert(particleDescriptions.length > 0, `Cannot find particles with name ${particleName}.`);
-      assert(particleDescriptions.length == 1,
-             `Cannot reference duplicate particle '${particleName}' in recipe description.`);
-      particleDescription = particleDescriptions[0];
+      // Note: when an arc's active recipes contains several recipes, the last recipe's description
+      // is used as the arc's description. If this last recipe's description has a description pattern
+      // that references a particle that is also used in one of the previous recipes,
+      // there will be a duplicate particle-description.
+      particleDescription = particleDescriptions[particleDescriptions.length - 1];
     }
     let particle = particleDescription._particle;
 
