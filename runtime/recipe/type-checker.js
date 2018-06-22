@@ -86,6 +86,8 @@ export class TypeChecker {
         let result = primitiveBase.variable.maybeMergeConstraints(primitiveOnto.variable);
         if (result == false)
           return null;
+        // Here onto grows, one level at a time,
+        // as we assign new resolution to primitiveOnto, which is a leaf.
         primitiveOnto.variable.resolution = primitiveBase;
       } else {
         // base variable, onto not.
