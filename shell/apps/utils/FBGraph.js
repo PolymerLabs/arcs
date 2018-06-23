@@ -4,8 +4,10 @@ const HANDLER = `$changed`;
 const JOIN = `$join`;
 const KEYJOIN = `$key`;
 
+const systemFieldFilter = key => key[0] !== '$' || key === '$key';
+
 const schemaHasFields = schema => {
-  const keyCount = schema && Object.keys(schema).filter(key => key !== HANDLER && key !== JOIN).length;
+  const keyCount = schema && Object.keys(schema).filter(systemFieldFilter).length;
   return schema && keyCount;
 };
 
@@ -23,7 +25,13 @@ const FieldBase = class extends Eventer {
     return this.getValue();
   }
   getValue(results) {
-    return this._value(results || Object.create(null));
+    if (results && typeof results !== 'object') {
+      console.log(results);
+      results = null;
+    }
+    results = results || Object.create(null);
+    //return this._value(results && (typeof results !== 'object') ? results : Object.create(null));
+    return this._value(results);
   }
   _value(results) {
     console.warn(`FieldBase: don't know how to get value`);
@@ -71,16 +79,11 @@ const FieldValue = class extends FieldBase {
         //console.log(`constructing new join: [${join}/${detail}]`, joinSchema);
         this.field = new Field(join, detail, joinSchema, ({type, detail}) => {
           this._changed(schema, detail);
-          //console.log('JOIN event', detail, this.field.value);
-          //this._handler({type, detail});
           return;
         });
       }
     } else {
       this._changed(schema, detail);
-      // TODO(sjmiles): too many `handler`
-      //handler && handler(this, {type, detail});
-      //this._handler({type, detail});
     }
   }
   _changed(schema, data) {
@@ -100,12 +103,6 @@ const FieldValue = class extends FieldBase {
   }
 };
 
-const FieldSetField = class extends Eventer {
- constructor(path, schema, handler) {
-    super(path, schema, handler);
-  }
- };
-
 const FieldSet = class extends FieldBase {
   constructor(path, schema, handler) {
     super(path, schema, handler);
@@ -119,22 +116,14 @@ const FieldSet = class extends FieldBase {
   }
   _initFields(path, schema) {
     this.fields = Object.create(null);
+    const join = schema[JOIN];
     if (schema['*']) {
       // '*': get all teh things, apply `*.schema` as schema to each record
       this.dbset = new DbSet(path, event => this._setHandler(schema['*'], event));
     } else {
-      const handler = schema[HANDLER];
-      if (handler) {
-        //console.warn(`attached weirdo value listener to handle`, schema);
-        //this.dbvalue = new DbValue(path, event => handler(this, event));
-      }
       // otherwise: get all records matching keys in schema, apply `schema.key` as schema for each record
       // HANDLER, JOIN are not actual schema keys
-      const keys = Object.keys(schema).filter(key => key !== HANDLER && key !== JOIN);
-      const join = schema[JOIN];
-      if (join) {
-        //console.log(path, join);
-      }
+      const keys = Object.keys(schema).filter(systemFieldFilter);
       // construct a Field for each schema key
       keys.forEach(key => {
         let fieldPath = path;
@@ -153,8 +142,6 @@ const FieldSet = class extends FieldBase {
             this._setHandler(schema, event);
           } else {
             const itemKey = event.sender.path.split('/').slice(-2, -1).pop();
-            //this._handler(event);
-            //console.warn(itemKey);
             this._changed(itemKey);
           }
         });
@@ -162,6 +149,12 @@ const FieldSet = class extends FieldBase {
     }
   }
   _setHandler(schema, {type, detail}) {
+    if (typeof schema == 'function') {
+      schema = schema(detail);
+    }
+    if (schema.$dynamic) {
+      schema = schema.$dynamic(detail);
+    }
     const handler = schema[HANDLER];
     if (handler) {
       switch (type) {
@@ -173,6 +166,7 @@ const FieldSet = class extends FieldBase {
           const value = this.dbset.set[detail];
           handler(this, {type, detail: {key: detail, value}});
         }
+        break;
       }
     }
     if (schemaHasFields(schema)) {
@@ -183,8 +177,10 @@ const FieldSet = class extends FieldBase {
           });
           break;
         case 'removed':
-          this.fields[detail].dispose();
-          this.fields[detail] = null;
+          if (this.fields[detail]) {
+            this.fields[detail].dispose();
+            this.fields[detail] = null;
+          }
           break;
       }
     }

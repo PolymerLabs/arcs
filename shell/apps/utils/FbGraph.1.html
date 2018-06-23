@@ -17,7 +17,7 @@
 </style>
 
 <button onclick="testFieldValue()">Test Field Value</button>
-<!-- <button onclick="testUserValue()">Test User Value</button> -->
+<button onclick="testUserValue()">Test User Value</button>
 <button onclick="testProfileValue()">Test Profile Value</button>
 
 <pre id="outpre"></pre>
@@ -53,12 +53,6 @@
     if (detail) {
       const {key, value} = detail;
       if (value) {
-        let store = profile[key];
-        if (!store) {
-          store = profile[key] = Object.create(null);
-        }
-        store[arc] = value;
-        /*
         const data = value.data;
         if (data) {
           let store = profile[key];
@@ -67,50 +61,13 @@
           }
           Object.assign(store, data);
         }
-        */
       }
       testProfileValue();
-    }
-  };
-
-  const friendSchema = {
-    info: true,
-    arcs: {
-      '*': {
-        $key: {
-          $join: '/arcs',
-          shim_handles: {
-            '*': true
-          }
-        }
+      if (key === 'friends') {
+        doFriends(profile[key]);
       }
     }
   };
-
-  window.nop = () => {};
-
-  const arcsHandlesSchema = detail => {
-    if (detail === 'friends') {
-      return {
-        data: {
-          '*': {
-            rawData: {
-              id: {
-                $join: '/users',
-                info: true
-                //'*': friendSchema
-              }
-            }
-          }
-        },
-        $changed: profileHandler
-      };
-    } else {
-      return {
-        $changed: profileHandler
-      };
-    }
-  }
 
   const userSchema = {
     arcs: {
@@ -118,12 +75,83 @@
         $key: {
           $join: '/arcs',
           shim_handles: {
-            '*': arcsHandlesSchema
+            '*': {
+              $dynamic: detail => {
+                if (detail === 'friends') {
+                  return {
+                    data: {
+                      '*': {
+                        //$changed: friendsDataHandler,
+                        rawData: {
+                          id: {
+                            $join: '/users'
+                          }
+                        }
+                      }
+                    },
+                    $changed: profileHandler
+                  };
+                } else {
+                  return {
+                    $changed: profileHandler
+                  };
+                }
+              }
+            }
           }
         }
       }
     },
     info: true
+  };
+
+  const friendsDataHandler = (sender, {type, detail}) => {
+    if (type === 'initial') {
+      return;
+    }
+    const {key, value} = detail;
+    switch (type) {
+      case 'changed':
+      case 'added': {
+        user.friends[key] = value;
+      }
+      break;
+      case 'removed': {
+        delete user.friends[key];
+      }
+      break;
+      //default: return;
+    }
+    //console.log('friends', type, detail);
+    testUserValue();
+  };
+
+  const friendsSchema = {
+    arcs: {
+      '*': {
+        $key: {
+          $join: '/arcs',
+          shim_handles: {
+            friends: {
+              data: {
+                '*': {
+                  $changed: friendsDataHandler,
+                  rawData: {
+                    id: {
+                      $join: '/users'
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    info: true
+  };
+
+  const doFriends = profileFriends => {
   };
 
   const field = new Field(`users`, userid, userSchema);
@@ -143,7 +171,7 @@
   };
 
   window.testFieldValue = () => {
-    renderValue({field: field.value}, 11);
+    renderValue({field: field.value}, 2);
   };
 
   window.testUserValue = () => {

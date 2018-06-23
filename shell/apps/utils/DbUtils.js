@@ -57,9 +57,7 @@ const DbSet = class extends Eventer {
   _attach(db) {
     let started;
     const added = db.on('child_added', (snap, prevKey) => {
-      if (!this.set[snap.key]) {
-        this.set[snap.key] = snap.val();
-      }
+      this.set[snap.key] = snap.val();
       //console.log('child-added', snap.key);
       this._fire('added', snap.key);
     });
