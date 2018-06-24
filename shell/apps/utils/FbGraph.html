@@ -2,6 +2,10 @@
 <meta charset="utf-8">
 
 <style>
+  body, button {
+    font-family: sans-serif;
+    font-size: 10px;
+  }
   a {
     text-decoration: none;
     color: inherit;
@@ -9,149 +13,271 @@
   pre {
     line-height: 150%;
     font-family: sans-serif;
-    font-size: 0.75em;
   }
   .disclosure {
-    font-size: 0.75em;
+  }
+  table {
+    width: 240px;
+    flex-shrink: 0;
+    border-collapse: collapse;
+    margin-right: 16px;
+  }
+  #avatarsTable {
+    width: 200px;
+  }
+  th {
+    background-color: #eeeeee;
+  }
+  td, th {
+    padding: 4px 6px;
+    border: 1px solid #bbbbbb;
+    margin: 0;
+  }
+  [mono] {
+    font-family: Consolas, monospace;
   }
 </style>
 
-<button onclick="testFieldValue()">Test Field Value</button>
-<!-- <button onclick="testUserValue()">Test User Value</button> -->
-<button onclick="testProfileValue()">Test Profile Value</button>
+<div style="display: flex;">
+  <table id="usersTable">
+    <tr>
+      <th colspan="2">Users</th>
+    </tr>
+    <tr>
+      <th>ID</th><th>Name</th>
+    </tr>
+  </table>
 
-<pre id="outpre"></pre>
-<div id="outdiv"></div>
+  <table id="avatarsTable">
+    <tr>
+      <th colspan="1">Avatars</th>
+    </tr>
+    <tr>
+      <th>URL</th>
+    </tr>
+  </table>
+
+  <table id="friendsTable">
+    <tr>
+      <th colspan="2">Friends</th>
+    </tr>
+    <tr>
+      <th>ID</th><th>Name</th>
+    </tr>
+  </table>
+
+  <div style="min-width:400px;">
+    <button onclick="testUsersValue()">Test Users Value</button>
+    <button onclick="testUserValue()">Test User Value</button>
+    <button onclick="testProfileValue()">Test Profile Value</button>
+    <pre id="outpre"></pre>
+    <div id="outdiv"></div>
+  </div>
+</div>
 
 <script src="../../components/renderjson.js"></script>
 
 <script type="module">
-
-  import {Field} from './FBGraph.js';
-
-  const scott = `-LBXevFOcUyM-TvYr5oq`;
-  const somebody = `-L-8Hr1jivDeJid-oZbx`;
-  const userid = scott;
-
-  const profile = {};
-
-  const user = {
-    friends: {}
-  };
-  const boxes = {};
-
-  const usersSchema = {
-    '*': {
-      $changed(sender, {type, detail}) {
-        console.log(sender.key, type, detail);
-      }
-    }
-  };
-
-  const profileHandler = (sender, {type, detail}) => {
-    const arc = sender.path.split('/').slice(-2, -1).pop();
-    if (detail) {
-      const {key, value} = detail;
-      if (value) {
-        let store = profile[key];
-        if (!store) {
-          store = profile[key] = Object.create(null);
-        }
-        store[arc] = value;
-        /*
-        const data = value.data;
-        if (data) {
-          let store = profile[key];
-          if (!store) {
-            store = profile[key] = Object.create(null);
-          }
-          Object.assign(store, data);
-        }
-        */
-      }
-      testProfileValue();
-    }
-  };
-
-  const friendSchema = {
-    info: true,
-    arcs: {
-      '*': {
-        $key: {
-          $join: '/arcs',
-          shim_handles: {
-            '*': true
-          }
-        }
-      }
-    }
-  };
-
-  window.nop = () => {};
-
-  const arcsHandlesSchema = detail => {
-    if (detail === 'friends') {
-      return {
-        data: {
-          '*': {
-            rawData: {
-              id: {
-                $join: '/users',
-                info: true
-                //'*': friendSchema
-              }
-            }
-          }
-        },
-        $changed: profileHandler
-      };
-    } else {
-      return {
-        $changed: profileHandler
-      };
-    }
-  }
-
-  const userSchema = {
-    arcs: {
-      '*': {
-        $key: {
-          $join: '/arcs',
-          shim_handles: {
-            '*': arcsHandlesSchema
-          }
-        }
-      }
-    },
-    info: true
-  };
-
-  const field = new Field(`users`, userid, userSchema);
-  //window.deepUser = new Field(`users`, userid, friendsSchema);
-
-  window.field = field;
-  window.profile = profile;
-  window.user = user;
+  import {DbField} from './FBGraph.js';
+  import Xen from '../../components/xen/xen.js';
 
   renderjson.set_icons(' ▶ ', ' ▼ ');
   renderjson.set_show_to_level(2)
 
   const renderValue = (value, level) => {
-    renderjson.set_show_to_level(level || 0)
+    renderjson.set_show_to_level(level || 1)
     outdiv.textContent = '';
     outdiv.appendChild(renderjson(value));
   };
 
-  window.testFieldValue = () => {
-    renderValue({field: field.value}, 11);
+  const addUser = (field, key) => {
+    const user = field.data[key];
+    const name = user.info && user.info.name || '(Anonymous)';
+    const node = window.usersTable.appendChild(
+      Object.assign(document.createElement('tr'), {
+        onclick: e => selectUser(e.currentTarget, key),
+        innerHTML: `<td mono>${key}</td><td>${name}</id>`
+      })
+    );
+    node.setAttribute('id', key);
   };
 
+  const removeUser = (field, key) => {
+    window.usersTable.querySelector(`[id="${key}"]`).remove();
+  };
+
+  const users = window.users = new DbField(null, '/users', 'users', {
+    $changed(sender, {type, detail}) {
+      switch (type) {
+        case 'added':
+          addUser(sender, detail);
+          break;
+        case 'removed':
+          removeUser(sender, detail);
+          break;
+      }
+    }
+  });
+
+  let user;
+
+  const selectUser = (node, detail) => {
+    if (selectUser.lastNode) {
+      selectUser.lastNode.style.backgroundColor = '';
+    }
+    selectUser.lastNode = node;
+    selectUser.userid = detail;
+    node.style.backgroundColor = '#b3e5fc';
+    //console.log('selected', detail);
+    user = window.user = getUser(detail);
+  };
+
+  let userProfile;
+
+  const addProfileData = (sender, detail) => {
+    const profile = userProfile[detail] || (userProfile[detail] = []);
+    const datum = sender.value[detail];
+    profile.push(datum);
+    //console.log(sender.key, type, detail, datum, profile);
+    if (detail === 'avatar') {
+      const url = datum.data.rawData.url.replace(`https://$cdn/`, `../../`).replace(`https://$shell/`, `../../`);
+      const node = window.avatarsTable.appendChild(
+        Object.assign(document.createElement('tr'), {
+          innerHTML: `<td><img src="${url}"></td>`
+        })
+      );
+    }
+  };
+
+  const removeProfileData = (sender, detail) => {
+    const profile = userProfile[field];
+    const entry = profile.find(entry => JSON.stringify(entry) === JSON.stringify(datum));
+    if (entry) {
+      const index = profile.indexOf(entry);
+      profile.splice(index, 1);
+    }
+  };
+
+  const profileHandleChanged = (sender, {type, detail}) => {
+    switch (type) {
+      case 'added':
+      case 'changed':
+        addProfileData(sender, detail);
+        break;
+      case 'removed':
+        removeProfileData(sender, detail);
+        break;
+    }
+  };
+
+  const arcsHandlesSchema = {
+    '*': {
+      '$key': (parent, field, datum) => ({
+        $join : {
+          path: `/arcs/${parent}`
+        }
+      })
+    }
+  };
+
+  const friendChanged = (sender, {type, detail}) => {
+    const key = detail;
+    switch (type) {
+      case 'added':
+        // TODO(sjmiles): field name `id` is the join point to `users` subtree, so the actual data here is
+        // `id: users[id]` ... this means we've hidden the actual 'id' value
+        let user, userid;
+        try {
+          user = sender.value[key].rawData.id;
+          // TODO(sjmiles): must be a better way
+          userid = sender.fields[key].data.rawData.id;
+        } catch(x) {
+          console.warn(`added friend had incomplete join`);
+          return;
+        }
+        //
+        const name = user.info && user.info.name || '(Anonymous)';
+        const node = window.friendsTable.appendChild(
+          Object.assign(document.createElement('tr'), {
+            onclick: e => selectUser(e.currentTarget, key),
+            innerHTML: `<td mono>${userid}</td><td>${name}</id>`
+          })
+        );
+        node.setAttribute('id', key);
+        break;
+      case 'removed':
+        window.friendsTable.querySelector(`[id="${key}"]`).remove();
+        break;
+    }
+  };
+
+  const friendSchema = {
+    data: {
+      $changed: friendChanged,
+      '*': {
+        rawData: {
+          id: (parent, field, datum) => {
+            return {
+              $join: {
+                path: `/users/${datum}`,
+                schema: {
+                  arcs: arcsHandlesSchema
+                }
+              }
+            };
+          }
+        }
+      }
+    }
+  };
+
+  const userProfileArcReferenceSchema = {
+    '$key': (parent, field, datum) => ({
+      $join : {
+        path: `/arcs/${parent}`,
+        schema: {
+          'shim_handles': {
+            $changed: profileHandleChanged,
+            '*': (parent, field, datum) => {
+              switch (field) {
+                case 'friends':
+                  return friendSchema;
+              }
+              return null;
+            }
+          }
+        }
+      }
+    })
+  };
+
+  const userSchema = {
+    info: true,
+    arcs: {
+      '*': userProfileArcReferenceSchema
+    },
+    $changed: (sender) => {
+      //window._renderDebounce = Xen.debounce(window._renderDebounce, () => {
+        //console.log('rendering user value');
+        renderValue(sender.value, 2);
+      //}, 80);
+    }
+  };
+
+  const getUser = userid => {
+    [...friendsTable.querySelectorAll('tr')].slice(2).forEach(tr => tr.remove());
+    [...avatarsTable.querySelectorAll('tr')].slice(2).forEach(tr => tr.remove());
+    userProfile = Object.create(null);
+    return new DbField(null, `/users/${userid}`, userid, userSchema);
+  };
+
+  window.testUsersValue = () => {
+    renderValue(users.value);
+  }
   window.testUserValue = () => {
-    renderValue({user}, 2);
-  };
-
+    renderValue(user.value, 2);
+  }
   window.testProfileValue = () => {
-    renderValue({profile}, 2);
-  };
+    renderValue(userProfile, 2);
+  }
 </script>
-

@@ -1,212 +1,146 @@
 import {Eventer, DbValue, DbSet} from './DbUtils.js';
 
-const HANDLER = `$changed`;
-const JOIN = `$join`;
-const KEYJOIN = `$key`;
+/*
+  If we watch `arcs` we watch the entire subtree (Firebase protocol).
+  If we want granular change data for `arcs\<key>\shim_handles` we must watch
+  that node specifically.
+  This leads to two mappings for `shim_handles`, one in `field('arcs')[key].shim_handles`
+  and one in field('shim_handles').
+  Duplication seems unavoidable, but we have to make sure we don't duplicate change events,
+  or cause the data objects to diverge.
+*/
 
-const systemFieldFilter = key => key[0] !== '$' || key === '$key';
+const changeDebounceMs = 64;
 
-const schemaHasFields = schema => {
-  const keyCount = schema && Object.keys(schema).filter(systemFieldFilter).length;
-  return schema && keyCount;
+const debounce = (key, action, delay) => {
+  if (key) {
+    window.clearTimeout(key);
+  }
+  if (action && delay) {
+    return window.setTimeout(action, delay);
+  }
 };
 
 const FieldBase = class extends Eventer {
-  constructor(path, schema, listener) {
-    super(listener);
+  constructor(parent, path, key, schema, onevent) {
+    super(onevent);
+    this.parent = parent;
     this.path = path;
+    this.key = key;
     this.schema = schema;
-    this.key = path.split('/').pop();
+    this.fields = {};
+    this._valueObject = Object.create(null);
   }
   dispose() {
-    console.warn(`FieldBase: don't know how to dispose`);
+    // detach things that will not GC otherwise
   }
   get value() {
     return this.getValue();
   }
-  getValue(results) {
-    if (results && typeof results !== 'object') {
-      console.log(results);
-      results = null;
+  removeField(fieldName) {
+    const field = this.fields[fieldName];
+    if (field) {
+      field.dispose();
+      this.fields[fieldName] = null;
     }
-    results = results || Object.create(null);
-    //return this._value(results && (typeof results !== 'object') ? results : Object.create(null));
-    return this._value(results);
   }
-  _value(results) {
-    console.warn(`FieldBase: don't know how to get value`);
-  }
-  _handler({type, detail}) {
-    this._fire(type, detail);
-  }
-  // TODO(sjmiles): this is a lot of jumping about just to remove a field from an object :(
-  _getJoinSchema(schema) {
-    const result = Object.create(null);
-    Object.keys(schema).forEach(key => {
-      if (key !== JOIN) {
-        result[key] = schema[key];
+  addField(fieldName) {
+    if (this.schema && (fieldName === '$key' || fieldName[0] !== '$')) {
+      const datum = this.data[fieldName];
+      let fieldSchema = this.schema[fieldName] || this.schema['*'];
+      if (typeof fieldSchema === 'function') {
+        fieldSchema = fieldSchema(this.key, fieldName, datum);
       }
-    });
-    return result;
-  }
-};
-
-const FieldValue = class extends FieldBase {
-  constructor(path, schema, listener) {
-    super(path, schema, listener);
-    this._initValue(path, schema);
-    //console.log(`FieldValue for ${path}`);
-  }
-  dispose() {
-    this.dbvalue.dispose();
-    this.field && this.field.dispose();
-  }
-  _initValue(path, schema) {
-    this.dbvalue = new DbValue(path, event => this._valueHandler(schema, event));
-  }
-  _valueHandler(schema, {type, detail}) {
-    //const handler = schema[HANDLER];
-    const join = schema[JOIN];
-    if (join) {
-      //console.log('got value building join');
-      if (this.field && this.field.key !== detail) {
-        console.log('disposing old join');
-        this.field.dispose();
-        this.field = null;
+      if (fieldSchema) {
+        this.fields[fieldName] = this._createField(fieldName, fieldSchema, datum);
       }
-      if (!this.field) {
-        const joinSchema = this._getJoinSchema(schema);
-        //console.log(`constructing new join: [${join}/${detail}]`, joinSchema);
-        this.field = new Field(join, detail, joinSchema, ({type, detail}) => {
-          this._changed(schema, detail);
-          return;
-        });
-      }
+    }
+  }
+  _createField(fieldName, fieldSchema, datum) {
+    const fieldPath = `${this.path}/${fieldName}`;
+    const onevent = dbevent => this._onEvent(dbevent);
+    if (fieldSchema.$join) {
+      return new DbField(this, fieldSchema.$join.path, fieldName, fieldSchema.$join.schema, onevent);
+    } else if (fieldSchema.$changed) {
+      return new DbField(this, fieldPath, fieldName, fieldSchema, onevent);
     } else {
-      this._changed(schema, detail);
+      return new Field(datum, this, fieldPath, fieldName, fieldSchema, onevent);
     }
   }
-  _changed(schema, data) {
-    //console.log(`FieldValue changed [${this.path}]`, data);
-    const event = {type: 'change', detail: data};
-    if (schema[HANDLER]) {
-      schema[HANDLER](this, event);
-    }
-    this._handler(event);
-  }
-  _value(results) {
-    const value = this.field ? this.field.value : this.dbvalue.value;
-    if (typeof results === 'object') {
-      return Object.assign(results, value);
-    }
-    return value;
-  }
-};
-
-const FieldSet = class extends FieldBase {
-  constructor(path, schema, handler) {
-    super(path, schema, handler);
-    this._initFields(path, schema);
-  }
-   dispose() {
-     if (this.dbset) {
-       this.dbset.dispose();
-     }
-     Object.values(this.fields).forEach(field => field.dispose());
-  }
-  _initFields(path, schema) {
-    this.fields = Object.create(null);
-    const join = schema[JOIN];
-    if (schema['*']) {
-      // '*': get all teh things, apply `*.schema` as schema to each record
-      this.dbset = new DbSet(path, event => this._setHandler(schema['*'], event));
-    } else {
-      // otherwise: get all records matching keys in schema, apply `schema.key` as schema for each record
-      // HANDLER, JOIN are not actual schema keys
-      const keys = Object.keys(schema).filter(systemFieldFilter);
-      // construct a Field for each schema key
-      keys.forEach(key => {
-        let fieldPath = path;
-        let fieldKey = key;
-        let fieldSchema = schema[key];
-        // TODO(sjmiles): hassle because the join key is not in this record (it's the record's key)
-        // ... fix this in the database!
-        if (key === KEYJOIN) {
-          fieldPath = fieldSchema[JOIN];
-          fieldKey = this.key;
-          fieldSchema = this._getJoinSchema(fieldSchema);
+  getValue() {
+    const results = this._valueObject;
+    if (this.data) {
+      Object.keys(this.data).forEach(
+        key => results[key] = this.fields[key] ? this.fields[key].getValue() : this.data[key]
+      );
+      // TODO(sjmiles): `delete` is bad, use a `Map`?
+      // also: would prefer to avoid this work somehow
+      //   maybe manage set-backed valueObjects via added/removed/changed events
+      //   instead of on-demand
+      Object.keys(results).forEach(key => {
+        if (key !== '$key' && !(key in this.data)) {
+          delete results[key];
         }
-        this.fields[key] = new Field(fieldPath, fieldKey, fieldSchema, event => {
-          if (fieldSchema[JOIN]) {
-            //console.log('JOIN', schema, event);
-            this._setHandler(schema, event);
-          } else {
-            const itemKey = event.sender.path.split('/').slice(-2, -1).pop();
-            this._changed(itemKey);
-          }
-        });
       });
+    } else {
+      Object.keys(results).forEach(key => delete results[key]);
     }
-  }
-  _setHandler(schema, {type, detail}) {
-    if (typeof schema == 'function') {
-      schema = schema(detail);
+    if (this.fields.$key) {
+      results.$key = this.fields.$key.getValue();
     }
-    if (schema.$dynamic) {
-      schema = schema.$dynamic(detail);
-    }
-    const handler = schema[HANDLER];
-    if (handler) {
-      switch (type) {
-        case 'initial':
-          //handler(this, {type, detail});
-          return;
-        case 'added':
-        case 'removed': {
-          const value = this.dbset.set[detail];
-          handler(this, {type, detail: {key: detail, value}});
-        }
-        break;
-      }
-    }
-    if (schemaHasFields(schema)) {
-      switch (type) {
-        case 'added':
-          this.fields[detail] = new Field(this.path, detail, schema, event => {
-            this._changed(detail);
-          });
-          break;
-        case 'removed':
-          if (this.fields[detail]) {
-            this.fields[detail].dispose();
-            this.fields[detail] = null;
-          }
-          break;
-      }
-    }
-    this._changed(detail);
-  }
-  _changed(itemKey) {
-    const data = this.value;
-    //console.log(`FieldSet field changed [${this.path}]:[${itemKey}]`, data);
-    if (this.schema[HANDLER]) {
-      this.schema[HANDLER](this, {type: 'changed', detail: {key: itemKey, value: data}});
-    }
-    this._handler({type: 'changed', detail: data});
-  }
-  _value(results) {
-    if (this.dbset) {
-      Object.assign(results, this.dbset.set);
-    }
-    Object.keys(this.fields).forEach(key => results[key] = this.fields[key].getValue(results[key]));
     return results;
   }
+  _onEvent(dbevent) {
+    const {sender, type, detail} = dbevent;
+    if (this.schema && this.schema.$changed) {
+      this.schema.$changed(this, {type, detail});
+    }
+    this._changeDebounce = debounce(this._changeDebounce, () => {
+      this._fire('changed', detail);
+    }, changeDebounceMs);
+  }
 };
 
-export const Field = class {
-  constructor(root, key, schema, handler) {
-    const path = `${root ? `${root}/` : ''}${key}`;
-    const delegate = schemaHasFields(schema) ? FieldSet : FieldValue;
-    return new delegate(path, schema, handler);
+const Field = class extends FieldBase {
+  constructor(data, parent, path, key, schema, onevent) {
+    super(parent, path, key, schema, onevent);
+    this.data = data;
+    if (data && schema) {
+      // TODO(sjmiles): create pseudo-field `$key` to map the key of this record
+      // into it's data as an affordance for joining against keys.
+      // E.g. `arcs` references are of the form `<arcid>: <>` (instead of `<arcidkey>:<arcid>`)
+      // and we use `$key` to map `<arcid>` into `data` for joining.
+      if (schema.$key) {
+        this.addField('$key');
+      }
+      Object.keys(data).forEach(key => this.addField(key));
+    }
+  }
+};
+
+export const DbField = class extends FieldBase {
+  constructor(parent, path, key, schema, onevent) {
+    super(parent, path, key, schema, onevent);
+    this.data = {};
+    this.dbset = new DbSet(path, dbevent => {
+      this._onEvent(dbevent);
+    }, this.data);
+  }
+  dispose() {
+    this.dbset.dispose();
+    super.dispose();
+  }
+  _onEvent(dbevent) {
+    const {type, detail} = dbevent;
+    switch (type) {
+      case 'added':
+        // TODO(sjmiles): field only created if needed, should it be `maybeAddField`?
+        this.addField(detail);
+        break;
+      case 'removed':
+        this.removeField(detail);
+        break;
+    }
+    super._onEvent(dbevent);
   }
 };

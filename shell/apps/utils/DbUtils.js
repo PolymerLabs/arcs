@@ -42,33 +42,37 @@ const DbValue = class extends Eventer {
 };
 
 const DbSet = class extends Eventer {
-  constructor(path, listener) {
+  constructor(path, listener, set) {
     super(listener);
-    this.set = {};
-    try {
-      this._attach(Firebase.db.child(path));
-    } catch (x) {
-      //
-    }
+    this.path = path;
+    this.set = set;
+    this._tryAttach();
   }
   dispose() {
     this._detach && this._detach();
+  }
+  _tryAttach() {
+    try {
+      this._attach(Firebase.db.child(this.path));
+    } catch (x) {
+      //
+    }
   }
   _attach(db) {
     let started;
     const added = db.on('child_added', (snap, prevKey) => {
       this.set[snap.key] = snap.val();
-      //console.log('child-added', snap.key);
+      //console.log('FireBase: child-added', snap.key);
       this._fire('added', snap.key);
     });
     const changed = db.on('child_changed', (snap, prevKey) => {
       this.set[snap.key] = snap.val();
-      //console.log('child-changed', snap.key);
+      console.log('FireBase: child-changed', snap.key);
       this._fire('changed', snap.key);
     });
     const removed = db.on('child_removed', snap => {
       this.set[snap.key] = null;
-      //console.log('child-removed', snap.key);
+      console.log('FireBase: child-removed', snap.key);
       this._fire('removed', snap.key);
     });
     this._detach = () => {
@@ -78,7 +82,7 @@ const DbSet = class extends Eventer {
     };
     db.once('value', snap => {
       this.initialized = true;
-      this.set = snap.val();
+      Object.assign(this.set, snap.val());
       this._fire('initial', this.set);
     });
   }
