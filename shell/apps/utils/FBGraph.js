@@ -1,25 +1,8 @@
-import {Eventer, DbValue, DbSet} from './DbUtils.js';
-
-/*
-  If we watch `arcs` we watch the entire subtree (Firebase protocol).
-  If we want granular change data for `arcs\<key>\shim_handles` we must watch
-  that node specifically.
-  This leads to two mappings for `shim_handles`, one in `field('arcs')[key].shim_handles`
-  and one in field('shim_handles').
-  Duplication seems unavoidable, but we have to make sure we don't duplicate change events,
-  or cause the data objects to diverge.
-*/
+import {Eventer, DbSet} from './DbUtils.js';
+import Xen from '../../components/xen/xen.js';
 
 const changeDebounceMs = 16;
-
-const debounce = (key, action, delay) => {
-  if (key) {
-    window.clearTimeout(key);
-  }
-  if (action && delay) {
-    return window.setTimeout(action, delay);
-  }
-};
+const debounce = Xen.debounce;
 
 const FieldBase = class extends Eventer {
   constructor(parent, path, key, schema, onevent) {

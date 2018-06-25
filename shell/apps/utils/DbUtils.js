@@ -14,18 +14,18 @@ const Eventer = class {
 const DbValue = class extends Eventer {
   constructor(path, listener) {
     super(listener);
-    // TODO(sjmiles): force Firebase to be async so we can capture the value of this
-    // object before it's starts firing events
-    //setTimeout(() => {
-      try {
-        this._attach(Firebase.db.child(path));
-      } catch (x) {
-        //
-      }
-    //}, 0);
+    this.path = path;
+    this._tryAttach();
   }
   dispose() {
     this._detach && this._detach();
+  }
+  _tryAttach() {
+    try {
+      this._attach(Firebase.db.child(this.path));
+    } catch (x) {
+      //
+    }
   }
   _attach(db) {
     let started;
@@ -42,10 +42,13 @@ const DbValue = class extends Eventer {
 };
 
 const DbSet = class extends Eventer {
-  constructor(path, listener, set) {
+  constructor(path, listener, data) {
     super(listener);
     this.path = path;
-    this.set = set;
+    this.data = data;
+    // TODO(sjmiles): BC, deprecated
+    this.set = data;
+    // remember that firebase can fire events synchronously to listener attachment
     this._tryAttach();
   }
   dispose() {
@@ -57,6 +60,34 @@ const DbSet = class extends Eventer {
     } catch (x) {
       //
     }
+  }
+  _attach(db) {
+    let started;
+    const added = db.on('child_added', (snap, prevKey) => {
+      this._replaceSubFields(this.set, snap.key, snap.val());
+      //console.log('FireBase: child-added', snap.key);
+      this._fire('added', snap.key);
+    });
+    const changed = db.on('child_changed', (snap, prevKey) => {
+      this._replaceSubFields(this.set, snap.key, snap.val());
+      console.log('FireBase: child-changed', snap.key);
+      this._fire('changed', snap.key);
+    });
+    const removed = db.on('child_removed', snap => {
+      this.set[snap.key] = null;
+      console.log('FireBase: child-removed', snap.key);
+      this._fire('removed', snap.key);
+    });
+    this._detach = () => {
+      db.off('child_added', added);
+      db.off('child_changed', changed);
+      db.off('child_removed', removed);
+    };
+    db.once('value', snap => {
+      this.initialized = true;
+      this._replaceFields(this.set, snap.val());
+      this._fire('initial', this.set);
+    });
   }
   _replaceFields(object, neo) {
     for (let field in neo) {
@@ -79,36 +110,6 @@ const DbSet = class extends Eventer {
         object[key] = Object.assign(Object.create(null), neo);
       }
     }
-  }
-  _attach(db) {
-    let started;
-    const added = db.on('child_added', (snap, prevKey) => {
-      this._replaceSubFields(this.set, snap.key, snap.val());
-      //this.set[snap.key] = snap.val();
-      //console.log('FireBase: child-added', snap.key);
-      this._fire('added', snap.key);
-    });
-    const changed = db.on('child_changed', (snap, prevKey) => {
-      this._replaceSubFields(this.set, snap.key, snap.val());
-      //this.set[snap.key] = snap.val();
-      console.log('FireBase: child-changed', snap.key);
-      this._fire('changed', snap.key);
-    });
-    const removed = db.on('child_removed', snap => {
-      this.set[snap.key] = null;
-      console.log('FireBase: child-removed', snap.key);
-      this._fire('removed', snap.key);
-    });
-    this._detach = () => {
-      db.off('child_added', added);
-      db.off('child_changed', changed);
-      db.off('child_removed', removed);
-    };
-    db.once('value', snap => {
-      this.initialized = true;
-      this._replaceFields(this.set, snap.val());
-      this._fire('initial', this.set);
-    });
   }
 };
 

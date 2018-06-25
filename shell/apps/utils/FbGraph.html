@@ -75,10 +75,15 @@
   </div>
 </div>
 
+<fb-users></fb-users>
+<fb-user></fb-user>
+
 <script src="../../components/renderjson.js"></script>
 
 <script type="module">
-  import {DbField} from './FBGraph.js';
+  import {DbField} from './FbGraph.js';
+  import {FbUsers} from './FbUsers.js';
+  import {FbUser} from './FbUser.js';
   import Xen from '../../components/xen/xen.js';
 
   renderjson.set_icons(' ▶ ', ' ▼ ');
@@ -92,38 +97,17 @@
 
   // users
 
-  // const addUser = (field, key) => {
-  //   const user = field.data[key];
-  //   const name = user.info && user.info.name || '(Anonymous)';
-  //   const node = window.usersTable.appendChild(
-  //     Object.assign(document.createElement('tr'), {
-  //       onclick: e => selectUser(e.currentTarget, key),
-  //       innerHTML: `<td mono>${key}</td><td>${name}</id>`
-  //     })
-  //   );
-  //   node.setAttribute('id', key);
-  // };
+  const users = document.querySelector('fb-users');
+  users.addEventListener('changed', ({detail}) => onUserChanged(detail));
+  users.addEventListener('removed', ({detail}) => onUserRemoved(detail));
 
-  const removeUser = key => {
-    const node = window.usersTable.querySelector(`[id="${key}"]`);
+  const onUserRemoved = field => {
+    const node = window.usersTable.querySelector(`[id="${field.key}"]`);
     node && node.remove();
   };
 
-  // const users = window.users = new DbField(null, '/users', 'users', {
-  //   $changed(sender, {type, detail}) {
-  //     switch (type) {
-  //       case 'added':
-  //         addUser(sender, detail);
-  //         break;
-  //       case 'removed':
-  //         removeUser(sender, detail);
-  //         break;
-  //     }
-  //   }
-  // });
-
-  const addUser = field => {
-    removeUser(field.key);
+  const onUserChanged = field => {
+    onUserRemoved(field.key);
     const user = field.value;
     const name = user.info && user.info.name || '(Anonymous)';
     const node = window.usersTable.appendChild(
@@ -135,77 +119,47 @@
     node.setAttribute('id', field.key);
   };
 
-  const users = window.users = new DbField(null, '/users', 'users', {
-    '*': {
-      $changed(sender, {type, detail}) {
-        switch (type) {
-          //case 'added':
-          case 'changed':
-          //case 'initial':
-            addUser(sender);
-            break;
-          case 'removed':
-            //removeUser(sender, detail);
-            break;
-        }
-      }
-    }
-  });
-
-  users.activate();
-
   // user
 
-  let user;
+  const user = document.querySelector('fb-user');
+  user.addEventListener('profile-changed', ({detail}) => onProfileChanged(detail));
+  user.addEventListener('friend-changed', ({detail}) => onFriendChanged(detail));
+
+  let userProfile;
 
   const selectUser = (node, detail) => {
+    //console.log('selected', detail);
     if (selectUser.lastNode) {
       selectUser.lastNode.style.backgroundColor = '';
     }
     selectUser.lastNode = node;
     selectUser.userid = detail;
     node.style.backgroundColor = '#b3e5fc';
-    //console.log('selected', detail);
-    user = window.user = getUser(detail);
-    user.activate();
+    //
+    [...friendsTable.querySelectorAll('tr')].slice(2).forEach(tr => tr.remove());
+    [...avatarsTable.querySelectorAll('tr')].slice(2).forEach(tr => tr.remove());
+    //
+    userProfile = Object.create(null);
+    user.userid = detail;
+    //user = window.user = getUser(detail);
+    //user.activate();
   };
-
-  let userProfile;
 
   const removeAvatar = arcid => {
     const node = window.avatarsTable.querySelector(`[id=${arcid}]`);
     node && node.remove();
   }
 
-  // const addProfileData = (sender, detail) => {
+  // const removeProfileData = (sender, detail) => {
   //   const arcid = sender.path.split('/').slice(2).shift();
-  //   const profile = userProfile[detail] || (userProfile[detail] = Object.create(null));
-  //   const datum = sender.value[detail];
-  //   profile[arcid] = datum;
-  //   //profile.push(datum);
-  //   //console.log(sender.key, type, detail, datum, profile);
+  //   const profile = userProfile[field];
+  //   delete profile[arcid];
   //   if (detail === 'avatar') {
   //     removeAvatar(arcid);
-  //     const url = datum.data.rawData.url.replace(`https://$cdn/`, `../../`).replace(`https://$shell/`, `../../`);
-  //     const node = window.avatarsTable.appendChild(
-  //       Object.assign(document.createElement('tr'), {
-  //         innerHTML: `<td><img src="${url}"></td>`
-  //       })
-  //     );
-  //     node.setAttribute('id', arcid);
   //   }
   // };
 
-  const removeProfileData = (sender, detail) => {
-    const arcid = sender.path.split('/').slice(2).shift();
-    const profile = userProfile[field];
-    delete profile[arcid];
-    if (detail === 'avatar') {
-      removeAvatar(arcid);
-    }
-  };
-
-  const addProfileData = ({path, key, value}) => {
+  const onProfileChanged = ({path, key, value}) => {
     //console.log(path, key, value);
     const arcid = path.split('/').slice(2).shift();
     const profile = userProfile[key] || (userProfile[key] = Object.create(null));
@@ -222,119 +176,151 @@
     }
   };
 
-  const profileHandleChanged = (sender, {type, detail}) => {
-    //console.log('profileHandleChanged', sender, type, detail);
-    //return;
-    switch (type) {
-      //case 'added':
-      case 'changed':
-        addProfileData(sender, detail);
-        break;
-      case 'removed':
-        //removeProfileData(sender, detail);
-        break;
+  const onFriendChanged = ({path, key, value, fields}) => {
+    let user, userid;
+    try {
+      // TODO(sjmiles): field name `id` is the join point to `users` subtree, so the actual data here is
+      // `id: users[id]` ... this means we've hidden the actual 'id' value
+      user = value.rawData.id;
+      // TODO(sjmiles): must be a better way
+      userid = fields.rawData.data.id;
+    } catch(x) {
+      console.warn(`added friend had incomplete join`);
+      return;
     }
-  };
-
-  const arcsHandlesSchema = {
-    '*': {
-      '$key': (parent, field, datum) => ({
-        $join : {
-          path: `/arcs/${parent}`
-        }
+    //
+    const old = window.friendsTable.querySelector(`[id="${key}"]`);
+    old && old.remove();
+    //
+    const name = user.info && user.info.name || '(Anonymous)';
+    const node = window.friendsTable.appendChild(
+      Object.assign(document.createElement('tr'), {
+        onclick: e => selectUser(e.currentTarget, key),
+        innerHTML: `<td mono>${userid}</td><td>${name}</id>`
       })
-    }
-  };
+    );
+    node.setAttribute('id', key);
+  }
 
-  const friendChanged = ({key, value, fields}) => {
-    //switch (type) {
-      //case 'changed':
-        let user, userid;
-        try {
-          // TODO(sjmiles): field name `id` is the join point to `users` subtree, so the actual data here is
-          // `id: users[id]` ... this means we've hidden the actual 'id' value
-          user = value.rawData.id;
-          // TODO(sjmiles): must be a better way
-          userid = fields.rawData.data.id;
-        } catch(x) {
-          console.warn(`added friend had incomplete join`);
-          return;
-        }
-        //
-        const old = window.friendsTable.querySelector(`[id="${key}"]`);
-        old && old.remove();
-        //
-        const name = user.info && user.info.name || '(Anonymous)';
-        const node = window.friendsTable.appendChild(
-          Object.assign(document.createElement('tr'), {
-            onclick: e => selectUser(e.currentTarget, key),
-            innerHTML: `<td mono>${userid}</td><td>${name}</id>`
-          })
-        );
-        node.setAttribute('id', key);
-      //  break;
-      //case 'removed':
-      //  window.friendsTable.querySelector(`[id="${key}"]`).remove();
-      //  break;
-    //}
-  };
+  // const profileHandleChanged = (sender, {type, detail}) => {
+  //   switch (type) {
+  //     case 'changed':
+  //       addProfileData(sender, detail);
+  //       break;
+  //     case 'removed':
+  //       break;
+  //   }
+  // };
 
-  const friendSchema = {
-    data: {
-      '*': {
-        $changed: friendChanged,
-        rawData: {
-          id: (parent, field, datum) => {
-            return {
-              $join: {
-                path: `/users/${datum}`,
-                schema: {
-                  arcs: arcsHandlesSchema
-                }
-              }
-            };
-          }
-        }
-      }
-    }
-  };
+  // const arcsHandlesSchema = {
+  //   '*': {
+  //     '$key': (parent, field, datum) => ({
+  //       $join: {
+  //         path: `/arcs/${parent}`
+  //       }
+  //     })
+  //   }
+  // };
 
-  const userProfileArcReferenceSchema = {
-    '$key': (parent, field, datum) => ({
-      $join : {
-        path: `/arcs/${parent}`,
-        schema: {
-          'shim_handles': {
-            //$changed: profileHandleChanged,
-            '*': (parent, field, datum) => {
-              const schema = {
-                $changed: profileHandleChanged
-              };
-              switch (field) {
-                case 'friends':
-                  return Object.assign(schema, friendSchema);
-              }
-              return schema;
-            }
-          }
-        }
-      }
-    })
-  };
+  // const friendChanged = ({key, value, fields}) => {
+  //   //switch (type) {
+  //     //case 'changed':
+  //       let user, userid;
+  //       try {
+  //         // TODO(sjmiles): field name `id` is the join point to `users` subtree, so the actual data here is
+  //         // `id: users[id]` ... this means we've hidden the actual 'id' value
+  //         user = value.rawData.id;
+  //         // TODO(sjmiles): must be a better way
+  //         userid = fields.rawData.data.id;
+  //       } catch(x) {
+  //         console.warn(`added friend had incomplete join`);
+  //         return;
+  //       }
+  //       //
+  //       const old = window.friendsTable.querySelector(`[id="${key}"]`);
+  //       old && old.remove();
+  //       //
+  //       const name = user.info && user.info.name || '(Anonymous)';
+  //       const node = window.friendsTable.appendChild(
+  //         Object.assign(document.createElement('tr'), {
+  //           onclick: e => selectUser(e.currentTarget, key),
+  //           innerHTML: `<td mono>${userid}</td><td>${name}</id>`
+  //         })
+  //       );
+  //       node.setAttribute('id', key);
+  //     //  break;
+  //     //case 'removed':
+  //     //  window.friendsTable.querySelector(`[id="${key}"]`).remove();
+  //     //  break;
+  //   //}
+  // };
 
-  const userSchema = {
-    info: true,
-    arcs: {
-      '*': userProfileArcReferenceSchema
-    }
-  };
+  // const friendSchema = {
+  //   data: {
+  //     '*': {
+  //       $changed: friendChanged,
+  //       rawData: {
+  //         id: (parent, field, datum) => {
+  //           return {
+  //             $join: {
+  //               path: `/users/${datum}`,
+  //               schema: {
+  //                 arcs: arcsHandlesSchema
+  //               }
+  //             }
+  //           };
+  //         }
+  //       }
+  //     }
+  //   }
+  // };
 
-  const getUser = userid => {
-    [...friendsTable.querySelectorAll('tr')].slice(2).forEach(tr => tr.remove());
-    [...avatarsTable.querySelectorAll('tr')].slice(2).forEach(tr => tr.remove());
-    userProfile = Object.create(null);
-    return new DbField(null, `/users/${userid}`, userid, userSchema);
-  };
+  // const userProfileArcReferenceSchema = {
+  //   '$key': (parent, field, datum) => ({
+  //     $join: {
+  //       path: `/arcs/${parent}`,
+  //       schema: {
+  //         'shim_handles': {
+  //           //$changed: profileHandleChanged,
+  //           '*': (parent, field, datum) => {
+  //             const schema = {
+  //               $changed: profileHandleChanged
+  //             };
+  //             switch (field) {
+  //               case 'friends':
+  //                 return Object.assign(schema, friendSchema);
+  //             }
+  //             return schema;
+  //           }
+  //         }
+  //       }
+  //     }
+  //   })
+  // };
+
+  // const userSchema = {
+  //   info: true,
+  //   arcs: {
+  //     '*': userProfileArcReferenceSchema
+  //   }
+  // };
+
+  // const getUser = userid => {
+  //   [...friendsTable.querySelectorAll('tr')].slice(2).forEach(tr => tr.remove());
+  //   [...avatarsTable.querySelectorAll('tr')].slice(2).forEach(tr => tr.remove());
+
+  //   user = document.querySelector('fb-users');
+  //   user.addEventListener('changed', ({detail}) => addProfileData(detail));
+  //   user.userid = userid;
+  //   //user.addEventListener('remove', ({detail}) => removeUser(detail));
+  //   return user;
+
+  //   // userProfile = Object.create(null);
+  //   // return new DbField(null, `/users/${userid}`, userid, userSchema);
+  // };
+
+  window.user = user;
+  window.users = users;
 
   window.testUsersValue = () => {
     renderValue(users.value);
