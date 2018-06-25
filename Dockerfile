@@ -12,9 +12,7 @@
 #################################################################
 FROM couchdb:latest AS toolchain
 
-# Add build dependencies from Debian.
-# Our base couch image is based on Debian Jessie, which uses gcc-4; however,
-# Asylo requires gcc-5 in later steps. To avoid problems upgrade here as well.
+# Add packages to build the Asylo SGX toolchain
 RUN apt-get update && \
 	apt-get install -y \
 		bison \
@@ -27,11 +25,6 @@ RUN apt-get update && \
 		texinfo \
 		wget \
 		zlib1g-dev
-	#echo "deb http://ftp.us.debian.org/debian unstable main contrib non-free" > \
-	#	/etc/apt/sources.list.d/unstable.list && \
-	#apt-get update && \
-	#apt-get install -y gcc-5 g++-5 && \
-	#echo export CC=/usr/bin/gcc-5 >> ~/.bashrc
 
 # Note that the Asylo version is also specified in WORKSPACE
 ENV ASYLO_VERSION=0.2.1
@@ -61,7 +54,13 @@ COPY --from=toolchain /usr/local/share/asylo/ /usr/local/share/asylo/
 # bring that into the future.
 # - installing a new OCaml (something, probably Asylo, requires 4.02
 #   instead of jessie's 4.01).
-# - install GCC-5 (required by Asylo)
+# - install GCC-5 (minimum required by Asylo)
+# To get this to work, I had to add a `dist-upgrade` line. This ends up
+# upgrading the OS from Jessie to Buster/Sid (?), including installing GCC-7.
+# The explicit install and use of GCC-5 may not be required.
+# TODO - try removing the GCC-5 install. Or, try moving `dist-upgrade` earlier
+# (into it's own build stage?) so it runs faster, or try rebasing Couch's
+# Dockerfile on a Debian Buster image.
 RUN apt-get update && \
 	apt-get install -y curl gnupg && \
 	echo "deb [arch=amd64] http://storage.googleapis.com/bazel-apt stable jdk1.8" | \
@@ -88,15 +87,6 @@ RUN apt-get update && \
 	echo export CC=/usr/bin/gcc-5 >> ~/.bashrc && \
 	opam init -a --comp 4.02.3 && \
 	echo 'eval `opam config env`' >> ~/.bashrc
-
-## cat >> ~/.bashrc << EEOF
-#> eval `opam config env`
-#> export CC=/usr/bin/gcc-5
-#> EEOF
-
-# are these important? who knows!
-	# 	# ocamlbuild \
-	# 	libfl2 \
 
 
 # TODO split db & Asylo & node each into their own image;
