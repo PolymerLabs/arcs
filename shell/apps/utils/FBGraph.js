@@ -10,7 +10,7 @@ import {Eventer, DbValue, DbSet} from './DbUtils.js';
   or cause the data objects to diverge.
 */
 
-const changeDebounceMs = 64;
+const changeDebounceMs = 16;
 
 const debounce = (key, action, delay) => {
   if (key) {
@@ -29,7 +29,6 @@ const FieldBase = class extends Eventer {
     this.key = key;
     this.schema = schema;
     this.fields = {};
-    this._valueObject = Object.create(null);
   }
   dispose() {
     // detach things that will not GC otherwise
@@ -52,38 +51,29 @@ const FieldBase = class extends Eventer {
         fieldSchema = fieldSchema(this.key, fieldName, datum);
       }
       if (fieldSchema) {
-        this.fields[fieldName] = this._createField(fieldName, fieldSchema, datum);
+        (this.fields[fieldName] = this._createField(fieldName, fieldSchema, datum)).activate();
       }
     }
   }
   _createField(fieldName, fieldSchema, datum) {
     const fieldPath = `${this.path}/${fieldName}`;
     const onevent = dbevent => this._onEvent(dbevent);
+    let field;
     if (fieldSchema.$join) {
-      return new DbField(this, fieldSchema.$join.path, fieldName, fieldSchema.$join.schema, onevent);
+      field = new DbField(this, fieldSchema.$join.path, fieldName, fieldSchema.$join.schema, onevent);
     } else if (fieldSchema.$changed) {
-      return new DbField(this, fieldPath, fieldName, fieldSchema, onevent);
+      field = new DbField(this, fieldPath, fieldName, fieldSchema, onevent);
     } else {
-      return new Field(datum, this, fieldPath, fieldName, fieldSchema, onevent);
+      field = new Field(datum, this, fieldPath, fieldName, fieldSchema, onevent);
     }
+    return field;
   }
   getValue() {
-    const results = this._valueObject;
+    const results = Object.create(null);
     if (this.data) {
       Object.keys(this.data).forEach(
         key => results[key] = this.fields[key] ? this.fields[key].getValue() : this.data[key]
       );
-      // TODO(sjmiles): `delete` is bad, use a `Map`?
-      // also: would prefer to avoid this work somehow
-      //   maybe manage set-backed valueObjects via added/removed/changed events
-      //   instead of on-demand
-      Object.keys(results).forEach(key => {
-        if (key !== '$key' && !(key in this.data)) {
-          delete results[key];
-        }
-      });
-    } else {
-      Object.keys(results).forEach(key => delete results[key]);
     }
     if (this.fields.$key) {
       results.$key = this.fields.$key.getValue();
@@ -93,11 +83,13 @@ const FieldBase = class extends Eventer {
   _onEvent(dbevent) {
     const {sender, type, detail} = dbevent;
     if (this.schema && this.schema.$changed) {
-      this.schema.$changed(this, {type, detail});
+      this._changeDebounce = debounce(this._changeDebounce, () => {
+        this.schema.$changed(this, {type, detail});
+      }, changeDebounceMs);
     }
-    this._changeDebounce = debounce(this._changeDebounce, () => {
+    //this._changeDebounce = debounce(this._changeDebounce, () => {
       this._fire('changed', detail);
-    }, changeDebounceMs);
+    //}, changeDebounceMs);
   }
 };
 
@@ -105,15 +97,18 @@ const Field = class extends FieldBase {
   constructor(data, parent, path, key, schema, onevent) {
     super(parent, path, key, schema, onevent);
     this.data = data;
-    if (data && schema) {
+  }
+  activate() {
+    if (this.data && this.schema) {
       // TODO(sjmiles): create pseudo-field `$key` to map the key of this record
       // into it's data as an affordance for joining against keys.
       // E.g. `arcs` references are of the form `<arcid>: <>` (instead of `<arcidkey>:<arcid>`)
       // and we use `$key` to map `<arcid>` into `data` for joining.
-      if (schema.$key) {
+      if (this.schema.$key) {
         this.addField('$key');
       }
-      Object.keys(data).forEach(key => this.addField(key));
+      Object.keys(this.data).forEach(key => this.addField(key));
+      this._fire('changed');
     }
   }
 };
@@ -122,7 +117,9 @@ export const DbField = class extends FieldBase {
   constructor(parent, path, key, schema, onevent) {
     super(parent, path, key, schema, onevent);
     this.data = {};
-    this.dbset = new DbSet(path, dbevent => {
+  }
+  activate() {
+    this.dbset = new DbSet(this.path, dbevent => {
       this._onEvent(dbevent);
     }, this.data);
   }
@@ -141,6 +138,7 @@ export const DbField = class extends FieldBase {
         this.removeField(detail);
         break;
     }
-    super._onEvent(dbevent);
+    super._onEvent({type: 'changed'});
+    //super._onEvent(dbevent);
   }
 };

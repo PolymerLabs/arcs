@@ -58,15 +58,39 @@ const DbSet = class extends Eventer {
       //
     }
   }
+  _replaceFields(object, neo) {
+    for (let field in neo) {
+      this._replaceSubFields(object, field, neo[field]);
+    }
+    for (let field in object) {
+      if (!(field in neo)) {
+        delete object[field];
+      }
+    }
+  }
+  _replaceSubFields(object, key, neo) {
+    if (typeof neo !== 'object') {
+      object[key] = neo;
+    } else {
+      let data = object[key];
+      if (data) {
+        this._replaceFields(data, neo);
+      } else {
+        object[key] = Object.assign(Object.create(null), neo);
+      }
+    }
+  }
   _attach(db) {
     let started;
     const added = db.on('child_added', (snap, prevKey) => {
-      this.set[snap.key] = snap.val();
+      this._replaceSubFields(this.set, snap.key, snap.val());
+      //this.set[snap.key] = snap.val();
       //console.log('FireBase: child-added', snap.key);
       this._fire('added', snap.key);
     });
     const changed = db.on('child_changed', (snap, prevKey) => {
-      this.set[snap.key] = snap.val();
+      this._replaceSubFields(this.set, snap.key, snap.val());
+      //this.set[snap.key] = snap.val();
       console.log('FireBase: child-changed', snap.key);
       this._fire('changed', snap.key);
     });
@@ -82,7 +106,7 @@ const DbSet = class extends Eventer {
     };
     db.once('value', snap => {
       this.initialized = true;
-      Object.assign(this.set, snap.val());
+      this._replaceFields(this.set, snap.val());
       this._fire('initial', this.set);
     });
   }

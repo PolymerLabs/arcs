@@ -90,34 +90,71 @@
     outdiv.appendChild(renderjson(value));
   };
 
-  const addUser = (field, key) => {
-    const user = field.data[key];
+  // users
+
+  // const addUser = (field, key) => {
+  //   const user = field.data[key];
+  //   const name = user.info && user.info.name || '(Anonymous)';
+  //   const node = window.usersTable.appendChild(
+  //     Object.assign(document.createElement('tr'), {
+  //       onclick: e => selectUser(e.currentTarget, key),
+  //       innerHTML: `<td mono>${key}</td><td>${name}</id>`
+  //     })
+  //   );
+  //   node.setAttribute('id', key);
+  // };
+
+  const removeUser = key => {
+    const node = window.usersTable.querySelector(`[id="${key}"]`);
+    node && node.remove();
+  };
+
+  // const users = window.users = new DbField(null, '/users', 'users', {
+  //   $changed(sender, {type, detail}) {
+  //     switch (type) {
+  //       case 'added':
+  //         addUser(sender, detail);
+  //         break;
+  //       case 'removed':
+  //         removeUser(sender, detail);
+  //         break;
+  //     }
+  //   }
+  // });
+
+  const addUser = field => {
+    removeUser(field.key);
+    const user = field.value;
     const name = user.info && user.info.name || '(Anonymous)';
     const node = window.usersTable.appendChild(
       Object.assign(document.createElement('tr'), {
-        onclick: e => selectUser(e.currentTarget, key),
-        innerHTML: `<td mono>${key}</td><td>${name}</id>`
+        onclick: e => selectUser(e.currentTarget, field.key),
+        innerHTML: `<td mono>${field.key}</td><td>${name}</id>`
       })
     );
-    node.setAttribute('id', key);
-  };
-
-  const removeUser = (field, key) => {
-    window.usersTable.querySelector(`[id="${key}"]`).remove();
+    node.setAttribute('id', field.key);
   };
 
   const users = window.users = new DbField(null, '/users', 'users', {
-    $changed(sender, {type, detail}) {
-      switch (type) {
-        case 'added':
-          addUser(sender, detail);
-          break;
-        case 'removed':
-          removeUser(sender, detail);
-          break;
+    '*': {
+      $changed(sender, {type, detail}) {
+        switch (type) {
+          //case 'added':
+          case 'changed':
+          //case 'initial':
+            addUser(sender);
+            break;
+          case 'removed':
+            //removeUser(sender, detail);
+            break;
+        }
       }
     }
   });
+
+  users.activate();
+
+  // user
 
   let user;
 
@@ -130,42 +167,71 @@
     node.style.backgroundColor = '#b3e5fc';
     //console.log('selected', detail);
     user = window.user = getUser(detail);
+    user.activate();
   };
 
   let userProfile;
 
-  const addProfileData = (sender, detail) => {
-    const profile = userProfile[detail] || (userProfile[detail] = []);
-    const datum = sender.value[detail];
-    profile.push(datum);
-    //console.log(sender.key, type, detail, datum, profile);
+  const removeAvatar = arcid => {
+    const node = window.avatarsTable.querySelector(`[id=${arcid}]`);
+    node && node.remove();
+  }
+
+  // const addProfileData = (sender, detail) => {
+  //   const arcid = sender.path.split('/').slice(2).shift();
+  //   const profile = userProfile[detail] || (userProfile[detail] = Object.create(null));
+  //   const datum = sender.value[detail];
+  //   profile[arcid] = datum;
+  //   //profile.push(datum);
+  //   //console.log(sender.key, type, detail, datum, profile);
+  //   if (detail === 'avatar') {
+  //     removeAvatar(arcid);
+  //     const url = datum.data.rawData.url.replace(`https://$cdn/`, `../../`).replace(`https://$shell/`, `../../`);
+  //     const node = window.avatarsTable.appendChild(
+  //       Object.assign(document.createElement('tr'), {
+  //         innerHTML: `<td><img src="${url}"></td>`
+  //       })
+  //     );
+  //     node.setAttribute('id', arcid);
+  //   }
+  // };
+
+  const removeProfileData = (sender, detail) => {
+    const arcid = sender.path.split('/').slice(2).shift();
+    const profile = userProfile[field];
+    delete profile[arcid];
     if (detail === 'avatar') {
-      const url = datum.data.rawData.url.replace(`https://$cdn/`, `../../`).replace(`https://$shell/`, `../../`);
+      removeAvatar(arcid);
+    }
+  };
+
+  const addProfileData = ({path, key, value}) => {
+    //console.log(path, key, value);
+    const arcid = path.split('/').slice(2).shift();
+    const profile = userProfile[key] || (userProfile[key] = Object.create(null));
+    profile[arcid] = value;
+    if (key === 'avatar') {
+      removeAvatar(arcid);
+      const url = value.data.rawData.url.replace(`https://$cdn/`, `../../`).replace(`https://$shell/`, `../../`);
       const node = window.avatarsTable.appendChild(
         Object.assign(document.createElement('tr'), {
           innerHTML: `<td><img src="${url}"></td>`
         })
       );
-    }
-  };
-
-  const removeProfileData = (sender, detail) => {
-    const profile = userProfile[field];
-    const entry = profile.find(entry => JSON.stringify(entry) === JSON.stringify(datum));
-    if (entry) {
-      const index = profile.indexOf(entry);
-      profile.splice(index, 1);
+      node.setAttribute('id', arcid);
     }
   };
 
   const profileHandleChanged = (sender, {type, detail}) => {
+    //console.log('profileHandleChanged', sender, type, detail);
+    //return;
     switch (type) {
-      case 'added':
+      //case 'added':
       case 'changed':
         addProfileData(sender, detail);
         break;
       case 'removed':
-        removeProfileData(sender, detail);
+        //removeProfileData(sender, detail);
         break;
     }
   };
@@ -180,21 +246,23 @@
     }
   };
 
-  const friendChanged = (sender, {type, detail}) => {
-    const key = detail;
-    switch (type) {
-      case 'added':
-        // TODO(sjmiles): field name `id` is the join point to `users` subtree, so the actual data here is
-        // `id: users[id]` ... this means we've hidden the actual 'id' value
+  const friendChanged = ({key, value, fields}) => {
+    //switch (type) {
+      //case 'changed':
         let user, userid;
         try {
-          user = sender.value[key].rawData.id;
+          // TODO(sjmiles): field name `id` is the join point to `users` subtree, so the actual data here is
+          // `id: users[id]` ... this means we've hidden the actual 'id' value
+          user = value.rawData.id;
           // TODO(sjmiles): must be a better way
-          userid = sender.fields[key].data.rawData.id;
+          userid = fields.rawData.data.id;
         } catch(x) {
           console.warn(`added friend had incomplete join`);
           return;
         }
+        //
+        const old = window.friendsTable.querySelector(`[id="${key}"]`);
+        old && old.remove();
         //
         const name = user.info && user.info.name || '(Anonymous)';
         const node = window.friendsTable.appendChild(
@@ -204,17 +272,17 @@
           })
         );
         node.setAttribute('id', key);
-        break;
-      case 'removed':
-        window.friendsTable.querySelector(`[id="${key}"]`).remove();
-        break;
-    }
+      //  break;
+      //case 'removed':
+      //  window.friendsTable.querySelector(`[id="${key}"]`).remove();
+      //  break;
+    //}
   };
 
   const friendSchema = {
     data: {
-      $changed: friendChanged,
       '*': {
+        $changed: friendChanged,
         rawData: {
           id: (parent, field, datum) => {
             return {
@@ -237,13 +305,16 @@
         path: `/arcs/${parent}`,
         schema: {
           'shim_handles': {
-            $changed: profileHandleChanged,
+            //$changed: profileHandleChanged,
             '*': (parent, field, datum) => {
+              const schema = {
+                $changed: profileHandleChanged
+              };
               switch (field) {
                 case 'friends':
-                  return friendSchema;
+                  return Object.assign(schema, friendSchema);
               }
-              return null;
+              return schema;
             }
           }
         }
@@ -255,12 +326,6 @@
     info: true,
     arcs: {
       '*': userProfileArcReferenceSchema
-    },
-    $changed: (sender) => {
-      //window._renderDebounce = Xen.debounce(window._renderDebounce, () => {
-        //console.log('rendering user value');
-        renderValue(sender.value, 2);
-      //}, 80);
     }
   };
 
