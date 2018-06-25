@@ -5,15 +5,99 @@
 # Code distributed by Google as part of the polymer project is also
 # subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
 
-FROM couchdb:latest
+#################################################################
+# Toolchain
+# Build on top of couchdb to include the Asylo SGX toolchain.
+# This takes a looong time so it's isolated in the base image.
+#################################################################
+FROM couchdb:latest AS toolchain
 
-#TODO it's not clear that this image needs all of arcs; just arcs/asylo might be enough
-#WORKDIR /arcs
-#ADD . /arcs
+# Add build dependencies from Debian.
+# Our base couch image is based on Debian Jessie, which uses gcc-4; however,
+# Asylo requires gcc-5 in later steps. To avoid problems upgrade here as well.
+RUN apt-get update && \
+	apt-get install -y \
+		bison \
+		build-essential \
+		flex \
+		libisl-dev \
+		libmpc-dev \
+		libmpfr-dev \
+		rsync \
+		texinfo \
+		wget \
+		zlib1g-dev
+	#echo "deb http://ftp.us.debian.org/debian unstable main contrib non-free" > \
+	#	/etc/apt/sources.list.d/unstable.list && \
+	#apt-get update && \
+	#apt-get install -y gcc-5 g++-5 && \
+	#echo export CC=/usr/bin/gcc-5 >> ~/.bashrc
 
-RUN apt-get update
-RUN apt-get -y upgrade
-RUN apt-get install -y curl cryptsetup-bin
+# Note that the Asylo version is also specified in WORKSPACE
+ENV ASYLO_VERSION=0.2.1
+RUN wget https://github.com/google/asylo/archive/v${ASYLO_VERSION}.tar.gz && \
+	gzip -cd v${ASYLO_VERSION}.tar.gz | tar xvf - && \
+	mkdir -p /opt/asylo && \	
+	mv asylo-${ASYLO_VERSION}/asylo/distrib /opt/asylo/
+
+# Build and install the toolchain.
+RUN /opt/asylo/distrib/sgx_x86_64/install-toolchain \
+	--system \
+	--prefix /opt/asylo/toolchains/sgx_x86_64
+
+
+#################################################################
+# Base
+# Copy out the built toolchain, and iterate on (again) the
+# standard couchdb image to include packages necessary to build
+# against Asylo.
+#################################################################
+FROM couchdb:latest AS base
+
+COPY --from=toolchain /opt/asylo/toolchains/ /opt/asylo/toolchains/
+COPY --from=toolchain /usr/local/share/asylo/ /usr/local/share/asylo/
+
+# Couch is (currently) based on Debian jessie, so we need to do some work to
+# bring that into the future.
+# - installing a new OCaml (something, probably Asylo, requires 4.02
+#   instead of jessie's 4.01).
+# - install GCC-5 (required by Asylo)
+RUN apt-get update && \
+	apt-get install -y curl gnupg && \
+	echo "deb [arch=amd64] http://storage.googleapis.com/bazel-apt stable jdk1.8" | \
+		tee /etc/apt/sources.list.d/bazel.list && \
+	curl https://bazel.build/bazel-release.pub.gpg | apt-key add - && \
+	echo "deb http://ftp.debian.org/debian jessie-backports main" | \
+		tee /etc/apt/sources.list.d/jessie-backports.list && \
+	apt-get update && \
+	apt-get -y upgrade && \
+	apt-get install -y -t jessie-backports openjdk-8-jre-headless ca-certificates-java && \
+	apt-get install -y \
+		bazel \
+		build-essential \
+		cryptsetup-bin \
+		m4 \
+		ocaml-nox \
+		opam \
+		python-jinja2 && \
+	echo "deb http://ftp.us.debian.org/debian unstable main contrib non-free" > \
+		/etc/apt/sources.list.d/unstable.list && \
+	apt-get update && \
+	apt-get install -y gcc-5 g++-5 && \
+	apt-get dist-upgrade -y && \
+	echo export CC=/usr/bin/gcc-5 >> ~/.bashrc && \
+	opam init -a --comp 4.02.3 && \
+	echo 'eval `opam config env`' >> ~/.bashrc
+
+## cat >> ~/.bashrc << EEOF
+#> eval `opam config env`
+#> export CC=/usr/bin/gcc-5
+#> EEOF
+
+# are these important? who knows!
+	# 	# ocamlbuild \
+	# 	libfl2 \
+
 
 # TODO split db & Asylo & node each into their own image;
 # and use compose to orchestrate those with the arcs server
@@ -30,5 +114,10 @@ RUN apt-get install -y curl cryptsetup-bin
 ######RUN npm install -g npm@6.0.1
 #####
 #####CMD ["/bin/bash", "-c", "source /root/.bashrc; npm start"]
+
+FROM base
+
+
+ADD asylo /arcs/asylo
 
 CMD ["/opt/storage/bin/start-couchdb.sh"]
