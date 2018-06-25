@@ -35,7 +35,7 @@ export class Speculator {
       let messageCount = newArc.pec.messageCount;
       relevance.apply(await newArc.pec.idle);
 
-      if (newArc.pec.messageCount !== messageCount + 1)
+      if (newArc.pec.messageCount !== messageCount + 2)
         return awaitCompletion();
       else {
         relevance.newArc = newArc;
