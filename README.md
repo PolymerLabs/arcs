@@ -284,8 +284,53 @@ databases, but to continue a single mainline/unstable database.
   example, `0.3.6-alpha`).  See
   [#1155](https://github.com/PolymerLabs/arcs/pull/1155) for an example.
 
-## Hosted
+## Hosted Enclaves
 
+In order to take advantage of new security measures appearing in PaaS/IaaS
+environments, Arcs will take advantage of the [Asylo](https://asylo.dev)
+framework for developing an enclaved application.
+
+Currently this is a PoC and demonstrates part of the vision, but provides
+**no extra security**. More details:
+- This PoC includes a Docker container with CouchDB and an enclaved
+  application via Asylo. Currently the enclave produces a key that's returned
+  to non-enclaved space and used to encrypt a drive that's used for storage of
+  CouchDB data & configuration. The key is stored in plaintext next to the
+  drive image so it can be remounted.
+
+
+To be done:
+- Encryption keys should never leave enclave space.
+- Integration with specific enclave backends (such as Intel SGX).
+
+
+To build our CouchDB docker with support for encryption via Asylo, run
+
+```
+arcs> docker build -t test-with-asylo .
+arcs> docker run --privileged -p 5984:5984 \
+  -v $(pwd)/asylo/host/storage:/opt/storage \
+  test-with-asylo
+```
+
+Notes:
+- The use of `--privileged` as part of `docker run`. This isn't ideal, but is
+  currently required to give the Docker image access to loopback devices.
+  Another approach might be something like `--cap-add SYS_ADMIN  --device
+  /dev/loop0 --device /dev/loop-control` (which limits the amount of
+  additional access required). This may be fixed in a future version of Docker
+  or Linux but the evidence is
+  [slim](https://groups.google.com/forum/#!topic/docker-user/JmHko2nstWQ).
+- To detach use `-d`.
+- To jump into a command shell, use a command like `docker run -it
+  --entrypoint "/bin/bash" test-with-asylo -i`.
+- The current version uses CouchDB, but it is intended to be easy to change.
+
+
+### Local (Non-Container) Development
+
+To iterate quickly on the enclaved application it may be easier to develop
+locally (rather than in an container).
 
 First, you'll need to build the [Asylo](http://asylo.dev) toolchain. More
 information and directions are available directly from Asylo's
@@ -307,41 +352,12 @@ like `rm -fr binutils* gcc* newlib*`.)
 Then you can run commands like:
 
 ```
-arcs/asylo> bazel run --config=enc-sim //arcs_enclave -- --message="Asylo Rocks"
+arcs/asylo> bazel run --config=enc-sim //arcs_enclave  -- \
+  --output_file /tmp/foo.tmp && cat /tmp/foo.tmp && echo
 <snip>
-Encrypted message:
-9d82bea89d6f122c22b3135cfad94b8490865083963f35866e78c2583a1422b6d7b7d4071bb42a
+Writing output (abc) to /tmp/foo.tmp
+abc
 ```
-
-After the first build, you can use
-
-```
-arcs/asylo> bazel-bin/arcs_enclave/arcs_enclave --message foo
-Encrypted message:
-abf84f98765d09ce274257c15412a01cd2c0a697e5380ebf2c90fb64b858a5
-```
-
-Notice how the two messages are different. Asylo (with the current storage
-mechanisms) is stateless, so we must store our state elsewhere.
-
-To build our CouchDB docker with support for encryption via Asylo, run
-
-```
-arcs> docker build -t test-with-asylo .
-arcs> docker run --privileged -p 5984:5984 \
-  -v $(pwd)/asylo/host/storage:/opt/storage \
-  test-with-asylo
-```
-
-Notes:
-- The use of `--privileged` as part of `docker run`. This isn't ideal, but is
-  currently required to give the Docker image access to loopback devices.
-  Another approach might be something like `--cap-add SYS_ADMIN  --device
-  /dev/loop0 --device /dev/loop-control` (which limits the amount of
-  additional access required). This may be fixed in a future version of Docker
-  or Linux but the evidence is
-  [slim](https://groups.google.com/forum/#!topic/docker-user/JmHko2nstWQ).
-- To detach use `-d`.
 
 
 ############################################
