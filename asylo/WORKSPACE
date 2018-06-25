@@ -1,14 +1,19 @@
 workspace(name = "arcs_enclave")
 
-# Download and use the Asylo SDK. Uncomment the sha256 line and replace with an
-# appropriate hash to protect the integrity of your toolchain. It is commented
-# out because this file is part of the hash computation.
+
+
+# Note that the Asylo version is also specified in Dockerfile.
 http_archive(
     name = "com_google_asylo",
     urls = ["https://github.com/google/asylo/archive/v0.2.1.tar.gz"],
     strip_prefix = "asylo-0.2.1",
-#   sha256 = "<insert hash here>",
+    sha256 = "ba8589b9178846292235997270e13a558843974af0aca1ee908f62651e4f59a7",
 )
+
+# TODO remove? with source files?
+#load("//asdf:include-protobuf.bzl", "include_protobuf")
+#include_protobuf()
+
 load("@com_google_asylo//asylo/bazel:asylo_deps.bzl", "asylo_deps",
      "asylo_testonly_deps")
 asylo_deps()
