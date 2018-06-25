@@ -1,4 +1,4 @@
-import Firebase from '../common/firebase-config.js';
+import Firebase from '../../common/firebase-config.js';
 
 const Eventer = class {
   constructor(listener) {

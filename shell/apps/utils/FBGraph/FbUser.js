@@ -1,5 +1,5 @@
-import {DbField} from './FbGraph.js';
-import Xen from '../../components/xen/xen.js';
+import {DbField} from './FbField.js';
+import Xen from '../../../components/xen/xen.js';
 
 export const FbUser = class extends Xen.Base {
   static get observedAttributes() {
