@@ -18,7 +18,7 @@ Tagged release URLs have the form
 (the list of releases is
 [here](https://github.com/PolymerLabs/arcs-live/releases)). A recent version
 (latest as of this writing) is
-[v0.3.5](https://cdn.rawgit.com/PolymerLabs/arcs-live/v0.3.5/shell/apps/web/index.html).
+[v0.4.1](https://cdn.rawgit.com/PolymerLabs/arcs-live/v0.4.1/shell/apps/web/index.html).
 
 Bleeding edge often works and is available via github pages:
 https://polymerlabs.github.io/arcs-live/shell/apps/web/.
