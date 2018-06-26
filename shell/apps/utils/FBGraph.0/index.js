@@ -25,7 +25,7 @@ const onUserRemoved = field => {
 };
 
 const onUserChanged = field => {
-  onUserRemoved(field.key);
+  onUserRemoved(field);
   const user = field.value;
   const name = user.info && user.info.name || '(Anonymous)';
   const node = window.usersTable.appendChild(
@@ -42,6 +42,7 @@ const onUserChanged = field => {
 const user = document.querySelector('fb-user');
 user.addEventListener('profile-changed', ({detail}) => onProfileChanged(detail));
 user.addEventListener('friend-changed', ({detail}) => onFriendChanged(detail));
+user.addEventListener('friend-removed', ({detail}) => onFriendRemoved(detail));
 
 let userProfile;
 
@@ -91,21 +92,27 @@ const onProfileChanged = ({path, key, value}) => {
   }
 };
 
-const onFriendChanged = ({path, key, value, fields}) => {
+const onFriendRemoved = (field) => {
+  const old = window.friendsTable.querySelector(`[id="${field.key}"]`);
+  old && old.remove();
+};
+
+const onFriendChanged = (field) => {
+  const {path, key, value, fields} = field;
+  //
+  onFriendRemoved(field);
+  //
   let user, userid;
   try {
     // TODO(sjmiles): field name `id` is the join point to `users` subtree, so the actual data here is
     // `id: users[id]` ... this means we've hidden the actual 'id' value
     user = value.rawData.id;
-    // TODO(sjmiles): must be a better way
+    // TODO(sjmiles): a better way?
     userid = fields.rawData.data.id;
   } catch (x) {
     console.warn(`added friend had incomplete join`);
     return;
   }
-  //
-  const old = window.friendsTable.querySelector(`[id="${key}"]`);
-  old && old.remove();
   //
   const name = user.info && user.info.name || '(Anonymous)';
   const node = window.friendsTable.appendChild(

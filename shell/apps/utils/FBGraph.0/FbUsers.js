@@ -17,24 +17,16 @@ export const FbUsers = class extends Xen.Base {
       }
     };
   }
-  _userFieldChanged(sender, {type, detail}) {
+  _userFieldChanged(field, {type}) {
     switch (type) {
-      //case 'added':
       case 'changed':
-      //case 'initial':
-        this._changeUser(sender);
-        break;
       case 'removed':
-        //removeUser(sender, detail);
+        this._fire(type, field);
+        break;
+      default:
+        console.warn('got unexpected event type', type);
         break;
     }
-  }
-  _changeUser(field) {
-    this._removeUser(field.key);
-    this._fire('changed', field);
-  }
-  _removeUser(field) {
-    this._fire('removed', field);
   }
 };
 

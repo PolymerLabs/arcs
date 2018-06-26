@@ -23,7 +23,10 @@
     margin-right: 16px;
   }
   #avatarsTable {
-    width: 200px;
+    width: 108px;
+  }
+  #avatarsTable img {
+    width: 92px;
   }
   th {
     background-color: #eeeeee;
@@ -75,8 +78,30 @@
   </div>
 </div>
 
+<script src="../../../components/renderjson.js"></script>
+<script>
+  renderjson.set_icons(' ▶ ', ' ▼ ');
+  renderjson.set_show_to_level(2);
+
+  const renderValue = (value, level) => {
+    renderjson.set_show_to_level(level || 1);
+    window.outdiv.textContent = '';
+    window.outdiv.appendChild(renderjson(value));
+  };
+
+  const testUsersValue = () => {
+    renderValue(users.value);
+  };
+  const testUserValue = () => {
+    renderValue(user.value, 2);
+  };
+  const testProfileValue = () => {
+    renderValue(userProfile, 3);
+  };
+</script>
+
+<script type="module" src="./index.js"></script>
+
 <fb-users></fb-users>
 <fb-user></fb-user>
 
-<script src="../../../components/renderjson.js"></script>
-<script type="module" src="./FbGraph.js"></script>

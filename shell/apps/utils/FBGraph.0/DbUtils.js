@@ -67,16 +67,18 @@ const DbSet = class extends Eventer {
     let started;
     const added = db.on('child_added', (snap, prevKey) => {
       this._replaceSubProperties(this.set, snap.key, snap.val());
-      //console.log('FireBase: child-added', snap.key);
+      //if (window.nodb) console.log('FireBase: child-added', snap.key);
       this._fire('child-added', snap.key);
     });
     const changed = db.on('child_changed', (snap, prevKey) => {
-      //console.log('FireBase: child-changed', this.path, snap.key, snap.val());
+      console.log('FireBase: child-changed', this.path, snap.key, snap.val());
+      //if (window.nodb) return;
       this._replaceSubProperties(this.set, snap.key, snap.val());
       this._fire('child-changed', snap.key);
     });
     const removed = db.on('child_removed', snap => {
-      //console.warn('FireBase: child-removed', this.path, snap.key);
+      console.warn('FireBase: child-removed', this.path, snap.key);
+      //if (window.nodb) return;
       this.set[snap.key] = null;
       this._fire('child-removed', snap.key);
     });
@@ -86,6 +88,7 @@ const DbSet = class extends Eventer {
       db.off('child_removed', removed);
     };
     // db.once('value', snap => {
+    //   return;
     //   this.initialized = true;
     //   this._replaceProperties(this.set, snap.val());
     //   this._fire('initial', this.set);

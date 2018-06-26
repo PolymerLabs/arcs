@@ -34,7 +34,7 @@ class ArcHandle extends Xen.Debug(Xen.Base, log) {
       if (!state.manifest && options && options.schemas) {
         state.manifest = await Arcs.Manifest.load(options.schemas, arc.loader);
       }
-      if (state.manifest && options) {
+      if (options && (state.manifest || options.schema)) {
         state.handle = await this._createHandle(arc, state.manifest, options);
         state.data = null;
       }
@@ -50,16 +50,22 @@ class ArcHandle extends Xen.Debug(Xen.Base, log) {
       this._updateHandle(state.handle, data, arc);
     }
   }
-  async _createHandle(arc, manifest, {name, tags, type, id, asContext, description}) {
+  async _createHandle(arc, manifest, {name, tags, schema, type, id, asContext, description, storageKey}) {
     let setOf = false;
     if (type[0] == '[') {
       setOf = true;
       type = type.slice(1, -1);
     }
-    const schema = manifest.findSchemaByName(type);
-    const typeOf = setOf ? schema.type.collectionOf() : schema.type;
+    let typeOf;
+    if (schema) {
+      typeOf = Arcs.Type.fromLiteral(schema);
+    } else {
+      typeOf = manifest.findSchemaByName(type).type;
+    }
+    typeOf = setOf ? typeOf.collectionOf() : typeOf;
+    storageKey = storageKey || 'in-memory';
+    //
     tags = tags.concat(['nosync']);
-    const storageKey = 'in-memory';
     id = id || arc.generateID();
     // context-handles are for `map`, `copy`, `?`
     // arc-handles are for `use`, `?`

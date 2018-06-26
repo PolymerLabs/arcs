@@ -6,11 +6,11 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-defineParticle(({DomParticle, resolver}) => {
+defineParticle(({DomParticle, html, resolver}) => {
 
   let host = `friends-picker`;
 
-  let styles = `
+  let styles = html`
 <style>
   [${host}] {
   }
@@ -34,7 +34,7 @@ defineParticle(({DomParticle, resolver}) => {
 </style>
   `;
 
-  let template = `
+  let template = html`
 
 ${styles}
 
@@ -51,7 +51,7 @@ ${styles}
   </div>
 </template>
 
-  `.trim();
+  `;
 
   return class extends DomParticle {
     get template() {

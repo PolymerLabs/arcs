@@ -22,7 +22,8 @@ const template = Xen.html`
   <arc-handle arc="{{arc}}" data="{{arcsHandleData}}" options="{{arcsHandleOptions}}" on-change="_onArcsHandleChange"></arc-handle>
   <!-- ensures #BOXED_avatar exists for resolving recipes, even if there are no avatars to box -->
   <arc-handle arc="{{arc}}" options="{{boxedAvatarHandleOptions}}"></arc-handle>
-
+  <!-- testing out custom storage provider -->
+  <arc-handle arc="{{arc}}" options="{{scottBoxedStoreOptions}}"></arc-handle>
 `;
 
 const log = Xen.logFactory('ShellHandles', '#004f00');
@@ -118,6 +119,16 @@ class ShellHandles extends Xen.Debug(Xen.Base, log) {
         name: 'Avatars',
         tags: [`${Const.HANDLES.boxed}_avatar`],
         id: `${Const.HANDLES.boxed}_avatar`,
+        asContext: true
+      },
+      scottBoxedStoreOptions: {
+        storageKey: 'scott://noid',
+        schema: {tag: 'Entity', data: {names: ['Scottfo'], fields: {scottitude: 'Number'}}},
+        //schemas: `${typesPath}/identity-types.manifest`,
+        type: '[Scottfo]',
+        name: 'Scottfo',
+        tags: [`${Const.HANDLES.boxed}_scottfo`],
+        id: `${Const.HANDLES.boxed}_scottfo`,
         asContext: true
       }
     });

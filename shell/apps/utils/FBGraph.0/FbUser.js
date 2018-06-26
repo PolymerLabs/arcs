@@ -5,20 +5,23 @@ export const FbUser = class extends Xen.Base {
   static get observedAttributes() {
     return ['userid'];
   }
+  get value() {
+    return this._state.field.value;
+  }
   _update(props, state) {
     if (props.userid !== state.userid) {
       state.userid = props.userid;
-      state.user = this._queryUser(props.userid);
+      state.field = this._queryUser(props.userid);
     }
   }
   _queryUser(userid) {
-    let user = null;
+    let field = null;
     if (userid) {
-      user = new DbField(null, `/users/${userid}`, userid, this._userSchema);
-      this._fire('field', user);
-      user.activate();
+      field = new DbField(null, `/users/${userid}`, userid, this._userSchema);
+      this._fire('field', field);
+      field.activate();
     }
-    return user;
+    return field;
   }
   get _userSchema() {
     return {
