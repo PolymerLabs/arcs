@@ -288,20 +288,15 @@ databases, but to continue a single mainline/unstable database.
 
 In order to take advantage of new security measures appearing in PaaS/IaaS
 environments, Arcs will take advantage of the [Asylo](https://asylo.dev)
-framework for developing an enclaved application.
+framework for to store sensitive information in secure enclaves.
 
-Currently this is a PoC and demonstrates part of the vision, but provides
-**no extra security**. More details:
-- This PoC includes a Docker container with CouchDB and an enclaved
-  application via Asylo. Currently the enclave produces a key that's returned
-  to non-enclaved space and used to encrypt a drive that's used for storage of
-  CouchDB data & configuration. The key is stored in plaintext next to the
-  drive image so it can be remounted.
+Currently this is a PoC but provides **no extra security**.
 
-
-To be done:
-- Encryption keys should never leave enclave space.
-- Integration with specific enclave backends (such as Intel SGX).
+More specifically, this PoC includes a Docker container with CouchDB and an
+enclaved application via Asylo. Currently the enclave produces a key that's
+returned to non-enclaved space and used to encrypt a drive that's used for
+storage of CouchDB data & configuration. The key is stored in plaintext next
+to the drive image so it can be remounted.
 
 
 To build our CouchDB docker with support for encryption via Asylo, run
@@ -326,11 +321,17 @@ Notes:
   --entrypoint "/bin/bash" test-with-asylo -i`.
 - The current version uses CouchDB, but it is intended to be easy to change.
 
+Remaining work:
+- Encryption keys should never leave enclave space.
+- Integration with specific enclave backends (such as Intel SGX).
+- We should bundle the Arcs application into it's own Docker image, and bind
+  the Couch port to only talk to that container.
+
 
 ### Local (Non-Container) Development
 
 To iterate quickly on the enclaved application it may be easier to develop
-locally (rather than in an container).
+locally (rather than through the container).
 
 First, you'll need to build the [Asylo](http://asylo.dev) toolchain. More
 information and directions are available directly from Asylo's
@@ -358,71 +359,3 @@ arcs/asylo> bazel run --config=enc-sim //arcs_enclave  -- \
 Writing output (abc) to /tmp/foo.tmp
 abc
 ```
-
-
-############################################
-###################### OLD FROM HERE ON DOWN
-############################################
-
-
-To build an image (no image is currently provided), run
-
-  > docker build -t test-with-asylo .
-
-To start a local version, use:
-
-  > docker run --network host test-with-asylo
-
-To start a local version but jump in for debugging:
-
-  > docker run --network host -it test-with-asylo /bin/bash
-
-
-### Set Up Storage
-
-Storage is encrypted using a key from 
-
-<!---
-
-I'm not sure this is required
-
-### Set Up Asylo
-
- I don't think I need this
-Install the Asylo toolchain. Directions are provided here:
-https://github.com/google/asylo/blob/master/INSTALL.md. This guide assumes
-that your toolchain is installed to `arcs/asylo/toolchains/sgx_x86_64` with
-commands like
-
-```
-arcs/asylo> git clone https://github.com/google/asylo.git sdk
-arcs/asylo> sdk/asylo/distrib/sgx_x86_64/install-toolchain \
-  --user \
-  --prefix `pwd`/toolchains/sgx_x86_64
-
-```
-
--->
-
-
-### Start a CouchDB database
-
-Start by setting up CouchDB. Run
-
-```
-arcs> docker run -p 5984:5984 -d \
-  -v $(pwd)/host/couchdb/data:/opt/couchdb/data \
-  -v $(pwd)/host/couchdb/etc:/opt/couchdb/etc \
-  couchdb
-```
-
-Access the setup screen at (http://127.0.0.1:5984/\_utils#setup). To keep
-things simple choose "Single Node", and set a strong admin password - although
-in these examples we'll assume admin:arcs.
-
-You'll need to add CORS support to CouchDB. An easy approach is to start the
-db with a port available on the host (instructions above), then use the
-[add-cors-to-couchdb](https://github.com/pouchdb/add-cors-to-couchdb)
-command available from npm: `add-cors-to-couchdb -u admin -p arcs`.
-
-docker run -d -v $(pwd)/host/data:/opt/couchdb/data --name arcs-couchdb couchdb

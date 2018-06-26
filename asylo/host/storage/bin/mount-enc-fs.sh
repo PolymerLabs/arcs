@@ -25,9 +25,11 @@ MOUNT_POINT=$3
 ENCRYPTED_NAME=$4
 
 if [ ! -e $KEYFILE ]; then
-	echo "Generating a new key..."
-	# TODO(smalls) load this from asylo
-	openssl rand -base64 -out "$KEYFILE" 32
+	eval `opam config env`
+	echo "Generating a new key $KEYFILE..."
+	cd /arcs/asylo && bazel run --config=enc-sim //arcs_enclave -- --output_file $KEYFILE
+	echo -n "New key: "
+	cat $KEYFILE
 fi
 
 LOOP_DEVICE=$(losetup -f)
