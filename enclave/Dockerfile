@@ -89,8 +89,12 @@ RUN apt-get update && \
 	echo 'eval `opam config env`' >> ~/.bashrc
 
 
+
+#################################################################
+# Copy our code into the base image
+#################################################################
 FROM base
 
-ADD asylo /arcs/asylo
+ADD . /arcs/asylo
 
 CMD ["/opt/storage/bin/start-couchdb.sh"]

@@ -284,11 +284,11 @@ databases, but to continue a single mainline/unstable database.
   example, `0.3.6-alpha`).  See
   [#1155](https://github.com/PolymerLabs/arcs/pull/1155) for an example.
 
-## Hosted Enclaves
+## Enclaves
 
 In order to take advantage of new security measures appearing in PaaS/IaaS
 environments, Arcs will take advantage of the [Asylo](https://asylo.dev)
-framework for to store sensitive information in secure enclaves.
+framework to store sensitive information in secure enclaves.
 
 Currently this is a PoC but provides **no extra security**.
 
@@ -302,9 +302,9 @@ to the drive image so it can be remounted.
 To build our CouchDB docker with support for encryption via Asylo, run
 
 ```
-arcs> docker build -t test-with-asylo .
-arcs> docker run --privileged -p 5984:5984 \
-  -v $(pwd)/asylo/host/storage:/opt/storage \
+arcs/enclave> docker build -t test-with-asylo .
+arcs/enclave> docker run --privileged -p 5984:5984 \
+  -v $(pwd)/host/storage:/opt/storage \
   test-with-asylo
 ```
 
@@ -338,8 +338,8 @@ information and directions are available directly from Asylo's
 [INSTALL.MD](https://github.com/google/asylo/blob/master/INSTALL.md).
 
 ```
-arcs/asylo> git clone https://github.com/google/asylo.git sdk
-arcs/asylo> sdk/asylo/distrib/sgx_x86_64/install-toolchain \
+arcs/enclave> git clone https://github.com/google/asylo.git sdk
+arcs/enclave> sdk/asylo/distrib/sgx_x86_64/install-toolchain \
   --user \
   --prefix `pwd`/toolchains/sgx_x86_64
 
@@ -353,7 +353,7 @@ like `rm -fr binutils* gcc* newlib*`.)
 Then you can run commands like:
 
 ```
-arcs/asylo> bazel run --config=enc-sim //arcs_enclave  -- \
+arcs/enclave> bazel run --config=enc-sim //arcs_enclave  -- \
   --output_file /tmp/foo.tmp && cat /tmp/foo.tmp && echo
 <snip>
 Writing output (abc) to /tmp/foo.tmp
