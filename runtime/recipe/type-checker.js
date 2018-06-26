@@ -26,7 +26,7 @@ export class TypeChecker {
     if (baseType)
       newBaseType.data.resolution = baseType;
     baseType = newBaseType;
-    
+
     let concreteTypes = [];
 
     // baseType might be a variable (and is definitely a variable if no baseType was available).
@@ -104,6 +104,12 @@ export class TypeChecker {
         return null;
       return Type.newInterface(result);
     } else {
+      if ((primitiveBase.isCollection && primitiveBase.hasVariable)
+          || (primitiveOnto.isCollection && primitiveOnto.hasVariable)) {
+        // Cannot merge [~a] with a type that is not a variable and not a collection.
+        return null;
+      }
+
       assert(false, 'tryMergeTypeVariable shouldn\'t be called on two types without any type variables');
     }
 
