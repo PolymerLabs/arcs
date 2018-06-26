@@ -59,6 +59,7 @@ export class Planner {
       let generated = this.strategizer.generated;
       trace.addArgs({
         generated: generated.length,
+        generation: this.strategizer.generation
       });
       if (generations) {
         generations.push({generated, record});
@@ -144,11 +145,19 @@ export class Planner {
           continue;
         }
 
+        let planTrace = Tracing.start({
+          cat: 'speculating',
+          sequence: `speculator_${groupIndex}`,
+          overview: true,
+          args: {groupIndex}
+        });
+
         // TODO(wkorman): Look at restoring trace.wait() here, and whether we
         // should do similar for the async getRecipeSuggestion() below as well?
         let relevance = await speculator.speculate(this._arc, plan, hash);
         if (!relevance.isRelevant(plan)) {
           this._updateGeneration(generations, hash, (g) => g.irrelevant = true);
+          planTrace.end({name: '[Irrelevant suggestion]', hash, groupIndex});
           continue;
         }
         let rank = relevance.calcRelevanceScore();
@@ -170,6 +179,8 @@ export class Planner {
           hash,
           groupIndex
         });
+
+        planTrace.end({name: description, args: {rank, hash, groupIndex}});
       }
       return results;
     })));

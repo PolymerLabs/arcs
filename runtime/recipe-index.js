@@ -33,7 +33,7 @@ const IndexStrategies = [
 
 export class RecipeIndex {
   constructor(context) {
-    let trace = Tracing.start({cat: 'index', name: 'RecipeIndex::constructor', overview: true});
+    let trace = Tracing.start({cat: 'indexing', name: 'RecipeIndex::constructor', overview: true});
     let arcStub = new Arc({
       id: 'index-stub',
       slotComposer: new SlotComposer({affordance: 'mock', noRoot: true}),

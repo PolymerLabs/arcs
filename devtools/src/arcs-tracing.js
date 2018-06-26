@@ -69,7 +69,7 @@ $_documentContainer.innerHTML = `<dom-module id="arcs-tracing">
             [[_selectedItem.group]]: [[_selectedItem.content]]
             <hr>
             <div>Sync duration: [[_syncDurationDetail(_selectedItem)]]</div>
-            <template is="dom-if" if="[[_selectedItem.flowId !== undefined]]">
+            <template is="dom-if" if="[[_isAsyncEvent(_selectedItem)]]">
               <div>Async duration: [[_asyncDurationDetail(_selectedItem)]]</div>
             </template>
             <div>Start: [[_startTimeDetail(_selectedItem)]]</div>
@@ -145,8 +145,13 @@ class ArcsTracing extends PolymerElement {
             visible: this.active
           });
 
-          let subgroup = trace.name;
-          if (subgroup.endsWith(' (async)')) subgroup = subgroup.slice(0, -8);
+          let subgroup;
+          if (trace.seq) {
+            subgroup = trace.seq;
+          } else {
+            subgroup = trace.name;
+            if (subgroup.endsWith(' (async)')) subgroup = subgroup.slice(0, -8);
+          }
 
           if (trace.ph === 'X') { // Duration event.
             let start = Math.floor(trace.ts / 1000 + this._timeBase);
@@ -275,6 +280,10 @@ class ArcsTracing extends PolymerElement {
 
   _syncDurationDetail(item) {
     return this._displayDuration(item.dur);
+  }
+
+  _isAsyncEvent(item) {
+    return item.flowId !== undefined;
   }
 
   _asyncDurationDetail(item) {

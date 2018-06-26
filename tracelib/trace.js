@@ -125,21 +125,24 @@ function init() {
       addArgs: function(extraArgs) {
         args = Object.assign(args || {}, extraArgs);
       },
-      end: function(endInfo, flow) {
-        if (endInfo && endInfo.args) {
+      end: function(endInfo = {}, flow) {
+        endInfo = parseInfo(endInfo);
+        if (endInfo.args) {
           args = Object.assign(args || {}, endInfo.args);
         }
+        endInfo = Object.assign({}, info, endInfo);
         this.endTs = now();
         pushEvent({
           ph: 'X',
           ts: begin,
           dur: this.endTs - begin,
-          cat: info.cat,
-          name: info.name,
-          ov: info.overview,
+          cat: endInfo.cat,
+          name: endInfo.name,
+          ov: endInfo.overview,
           args: args,
           // Arcs Devtools Specific:
-          flowId: flow && flow.id()
+          flowId: flow && flow.id(),
+          seq: endInfo.sequence
         });
       },
       beginTs: begin
@@ -148,7 +151,7 @@ function init() {
   module.exports.start = function(info) {
     let trace = startSyncTrace(info);
     let flow;
-    let baseInfo = {cat: info.cat, name: info.name + ' (async)', overview: info.overview};
+    let baseInfo = {cat: info.cat, name: info.name + ' (async)', overview: info.overview, sequence: info.sequence};
     return {
       async wait(v, info) {
         let flowExisted = !!flow;
@@ -208,6 +211,7 @@ function init() {
           ov: info.overview,
           args: info.args,
           id: id,
+          seq: info.sequence
         });
         return this;
       },
@@ -224,6 +228,7 @@ function init() {
           ov: info.overview,
           args: endInfo && endInfo.args,
           id: id,
+          seq: info.sequence
         });
         return this;
       },
@@ -239,6 +244,7 @@ function init() {
           ov: info.overview,
           args: stepInfo && stepInfo.args,
           id: id,
+          seq: info.sequence
         });
         return this;
       },
