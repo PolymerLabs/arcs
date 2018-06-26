@@ -218,6 +218,11 @@ async function lint(args) {
   let report = cli.executeOnFiles(jsSources);
   let formatter = cli.getFormatter();
   console.log(formatter(report.results));
+
+  if (options.fix) {
+    CLIEngine.outputFixes(report);
+  }
+
   return report.errorCount == 0;
 }
 
