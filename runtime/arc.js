@@ -119,7 +119,8 @@ export class Arc {
     do {
       messageCount = this.pec.messageCount;
       await this.pec.idle;
-    } while (this.pec.messageCount !== messageCount + 1);
+      // We expect two messages here, one requesting the idle status, and one answering it.
+    } while (this.pec.messageCount !== messageCount + 2);
   }
 
   get idle() {

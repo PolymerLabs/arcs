@@ -202,6 +202,7 @@ class APIPort {
   registerCall(name, argumentTypes) {
     this[name] = args => {
       let call = {messageType: name, messageBody: this._processArguments(argumentTypes, args)};
+      this.messageCount++;
       this._port.postMessage(call);
       if (this._debugAttachment && this._debugAttachment[name]) {
         this._debugAttachment[name](args);
@@ -231,6 +232,7 @@ class APIPort {
       let call = {messageType: name, messageBody: this._processArguments(argumentTypes, args)};
       let requestedId = mappingIdArg && args[mappingIdArg];
       call.messageBody.identifier = this._mapper.createMappingForThing(thing, requestedId);
+      this.messageCount++;
       this._port.postMessage(call);
       if (this._debugAttachment && this._debugAttachment[name]) {
         this._debugAttachment[name](thing, args);

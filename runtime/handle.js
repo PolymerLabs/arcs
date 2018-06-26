@@ -127,17 +127,24 @@ class Collection extends Handle {
   }
 
   // Called by StorageProxy.
-  _notify(forSync, particle, details) {
+  _notify(kind, particle, details) {
     assert(this.canRead, '_notify should not be called for non-readable handles');
-    if (forSync) {
-      particle.onHandleSync(this, this._restore(details));
-    } else {
-      let update = {};
-      if ('add' in details)
-        update.added = this._restore(details.add);
-      if ('remove' in details)
-        update.removed = this._restore(details.remove);
-      particle.onHandleUpdate(this, update);
+    switch (kind) {
+      case 'sync':
+        particle.onHandleSync(this, this._restore(details));
+        return;
+      case 'update': {
+        let update = {};
+        if ('add' in details)
+          update.added = this._restore(details.add);
+        if ('remove' in details)
+          update.removed = this._restore(details.remove);
+        particle.onHandleUpdate(this, update);
+        return;
+      }
+      case 'desync':
+        particle.onHandleDesync(this);
+        return;
     }
   }
 
@@ -193,12 +200,19 @@ class Variable extends Handle {
   }
 
   // Called by StorageProxy.
-  _notify(forSync, particle, details) {
+  _notify(kind, particle, details) {
     assert(this.canRead, '_notify should not be called for non-readable handles');
-    if (forSync) {
-      particle.onHandleSync(this, this._restore(details));
-    } else {
-      particle.onHandleUpdate(this, {data: this._restore(details.data)});
+    switch (kind) {
+      case 'sync':
+        particle.onHandleSync(this, this._restore(details));
+        return;
+      case 'update': {
+        particle.onHandleUpdate(this, {data: this._restore(details.data)});
+        return;
+      }
+      case 'desync':
+        particle.onHandleDesync(this);
+        return;
     }
   }
 

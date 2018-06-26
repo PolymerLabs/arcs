@@ -33,11 +33,12 @@ const SyncState = {none: 0, pending: 1, full: 2};
  *   are applied.
  */
 export class StorageProxy {
-  constructor(id, type, port, pec, name) {
+  constructor(id, type, port, pec, scheduler, name) {
     this._id = id;
     this._type = type;
     this._port = port;
     this._pec = pec;
+    this._scheduler = scheduler;
     this.name = name;
 
     // _model is an Entity for Variables or [Entity] for Collections.
@@ -87,7 +88,11 @@ export class StorageProxy {
       // model, notify it immediately.
       // TODO: add a unit test to cover this case
       if (handle.options.notifySync && this._synchronized == SyncState.full) {
-        handle._notify(true, particle, this._model);
+        let model = this._model;
+        if (Array.isArray(model)) {
+          model = [...model];
+        }
+        this._scheduler.enqueue(particle, handle, ['sync', particle, model]);
       }
     }
   }
@@ -118,7 +123,11 @@ export class StorageProxy {
     }
     for (let {handle, particle} of this._observers) {
       if (handle.options.keepSynced && handle.options.notifySync) {
-        handle._notify(true, particle, this._model, null);
+        let model = this._model;
+        if (Array.isArray(model)) {
+          model = [...model];
+        }
+        this._scheduler.enqueue(particle, handle, ['sync', particle, model]);
       }
     }
     this._processUpdates();
@@ -129,7 +138,7 @@ export class StorageProxy {
     // Immediately notify any handles that are not configured with keepSynced but do want updates.
     for (let {handle, particle} of this._observers) {
       if (!handle.options.keepSynced && handle.options.notifyUpdate) {
-        handle._notify(false, particle, update);
+        this._scheduler.enqueue(particle, handle, ['update', particle, update]);
       }
     }
 
@@ -181,7 +190,7 @@ export class StorageProxy {
       // notified as updates are received).
       for (let {handle, particle} of this._observers) {
         if (handle.options.keepSynced && handle.options.notifyUpdate) {
-          handle._notify(false, particle, update);
+          this._scheduler.enqueue(particle, handle, ['update', particle, update]);
         }
       }
     }
@@ -194,7 +203,7 @@ export class StorageProxy {
         this._port.SynchronizeProxy({handle: this, callback: x => this._onSynchronize(x)});
         for (let {handle, particle} of this._observers) {
           if (handle.options.notifyDesync) {
-            particle.onHandleDesync(handle, this._updates[0].version);
+            this._scheduler.enqueue(particle, handle, ['desync', particle]);
           }
         }
       }
@@ -252,5 +261,84 @@ export class StorageProxy {
   clear(particleId) {
     this._port.HandleClear({handle: this, particleId});
     this._synchronized = SyncState.pending;
+  }
+}
+
+export class StorageProxyScheduler {
+  constructor() {
+    this._scheduled = false;
+    // Particle -> {Handle -> [Queue of events]}
+    this._queues = new Map();
+  }
+
+  // TODO: break apart args here, sync events should flush the queue.
+  enqueue(particle, handle, args) {
+    if (!this._queues.has(particle)) {
+      this._queues.set(particle, new Map());
+    }
+    let byHandle = this._queues.get(particle);
+    if (!byHandle.has(handle)) {
+      byHandle.set(handle, []);
+    }
+    let queue = byHandle.get(handle);
+    queue.push(args);
+    this._schedule();
+  }
+
+  get busy() {
+    return this._queues.size > 0;
+  }
+
+  _updateIdle() {
+    if (this._idleResolver && !this.busy) {
+      this._idleResolver();
+      this._idle = null;
+      this._idleResolver = null;
+    }
+  }
+  
+  get idle() {
+    if (!this.busy) {
+      return Promise.resolve();
+    }
+    if (this._idle) {
+      return this._idle;
+    }
+    this._idle = new Promise(resolver => {
+      this._idleResolver = resolver;
+    });
+    return this._idle;
+  }
+
+  _schedule() {
+    if (this._scheduled) {
+      return;
+    }
+    this._scheduled = true;
+    setTimeout(() => {
+      this._scheduled = false;
+      this._dispatch();
+    }, 0);
+  }
+
+  _dispatch() {
+    // TODO: should we process just one particle per task?
+    while (this._queues.size > 0) {
+      let particle = [...this._queues.keys()][0];
+      let byHandle = this._queues.get(particle);
+      this._queues.delete(particle);
+      for (let [handle, queue] of byHandle.entries()) {
+        for (let args of queue) {
+          try {
+            handle._notify(...args);
+          } catch (e) {
+            // TODO: report it via channel?
+            // console.error(e);
+          }
+        }
+      }
+    }
+
+    this._updateIdle();
   }
 }
