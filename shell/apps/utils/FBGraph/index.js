@@ -1,8 +1,5 @@
-import {FbGraph} from './FbField.js';
+import {Field} from './Field.js';
 import Xen from '../../../components/xen/xen.js';
-import Firebase from '../../common/firebase-config.js';
-
-const {Field} = FbGraph(Firebase.db);
 
 // users
 

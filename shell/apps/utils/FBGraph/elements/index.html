@@ -1,0 +1,212 @@
+<!doctype html>
+<meta charset="utf-8">
+
+<style>
+  body, button {
+    font-family: sans-serif;
+    font-size: 10px;
+  }
+  a {
+    text-decoration: none;
+    color: inherit;
+  }
+  pre {
+    line-height: 150%;
+    font-family: sans-serif;
+  }
+  .disclosure {
+  }
+  table {
+    width: 240px;
+    flex-shrink: 0;
+    border-collapse: collapse;
+    margin-right: 16px;
+  }
+  #avatarsTable td {
+    text-align: center;
+  }
+  #avatarsTable img {
+    width: 92px;
+  }
+  th {
+    background-color: #eeeeee;
+  }
+  td, th {
+    padding: 4px 6px;
+    border: 1px solid #bbbbbb;
+    margin: 0;
+  }
+  [mono] {
+    font-family: Consolas, monospace;
+  }
+</style>
+
+<div style="display: flex;">
+  <table id="usersTable">
+    <tr>
+      <th colspan="2">Users</th>
+    </tr>
+    <tr>
+      <th>ID</th><th>Name</th>
+    </tr>
+  </table>
+
+  <div>
+    <table id="avatarsTable">
+      <tr>
+        <th colspan="1">Avatars</th>
+      </tr>
+      <tr>
+        <th>URL</th>
+      </tr>
+    </table>
+    <br>
+    <table id="friendsTable">
+      <tr>
+        <th colspan="2">Friends</th>
+      </tr>
+      <tr>
+        <th>ID</th><th>Name</th>
+      </tr>
+    </table>
+    <br>
+    <table id="shareTable">
+      <tr>
+        <th colspan="2">Shared By Friends</th>
+      </tr>
+      <tr>
+        <th>Friend</th><th>Shared</th>
+      </tr>
+    </table>
+    <br>
+    <div id="outprofile"></div>
+  </div>
+
+  <div style="min-width:400px;">
+    <button onclick="testUsersValue()">Test Users Value</button>
+    <button onclick="testUserValue()">Test User Value</button>
+    <button onclick="testProfileValue()">Test Profile Value</button>
+    <pre id="outpre"></pre>
+    <div id="outdiv"></div>
+  </div>
+</div>
+
+<script src="../../../../components/renderjson.js"></script>
+<script>
+  renderjson.set_icons(' ▶ ', ' ▼ ');
+  renderjson.set_show_to_level(2);
+
+  const renderValue = window.renderValue = (value, level, node) => {
+    renderjson.set_show_to_level(level || 1);
+    node = node || window.outdiv;
+    node.textContent = '';
+    node.appendChild(renderjson(value));
+  };
+  const testUsersValue = () => {
+    renderValue(users.value);
+  };
+  const testUserValue = () => {
+    renderValue(user.value, 2);
+  };
+  const testProfileValue = () => {
+    renderValue(userProfile, 3);
+  };
+</script>
+
+<fb-users></fb-users>
+<fb-user></fb-user>
+
+<script type="module">
+  import './FbUsersElement.js';
+  import './FbUserElement.js';
+
+  const users = document.querySelector('fb-users');
+  users.addEventListener('user-changed', ({detail}) => onUser(detail));
+
+  const removeUser = field => {
+    const node = window.usersTable.querySelector(`[id="${field.key}"]`);
+    node && node.remove();
+  };
+
+  const addUser = field => {
+    const user = field.value;
+    const name = user.info && user.info.name || '(Anonymous)';
+    const node = window.usersTable.appendChild(
+      Object.assign(document.createElement('tr'), {
+        onclick: e => selectUser(e.currentTarget, field.key),
+        innerHTML: `<td mono>${field.key}</td><td>${name}</id>`
+      })
+    );
+    node.setAttribute('id', field.key);
+  };
+
+  const onUser = field => {
+    removeUser(field);
+    if (!field.disposed) {
+      addUser(field);
+    }
+  };
+
+  const selectUser = (node, userid) => {
+    if (selectUser.lastNode) {
+      selectUser.lastNode.style.backgroundColor = '';
+    }
+    selectUser.lastNode = node;
+    selectUser.userid = userid;
+    node.style.backgroundColor = '#b3e5fc';
+    //
+    [...window.friendsTable.querySelectorAll('tr')].slice(2).forEach(tr => tr.remove());
+    [...window.avatarsTable.querySelectorAll('tr')].slice(2).forEach(tr => tr.remove());
+    //
+    user.userid = userid;
+  };
+
+  const user = document.querySelector('fb-user');
+  user.addEventListener('friend-changed', ({detail}) => onFriendChanged(detail));
+  user.addEventListener('profile-changed', ({detail}) => onProfileChanged(detail));
+
+  const removeFriend = (field) => {
+    const old = window.friendsTable.querySelector(`[id="${field.key}"]`);
+    old && old.remove();
+  };
+
+  const addFriend = (field) => {
+    const {path, key, value, fields} = field;
+    //
+    let user, userid;
+    try {
+      // TODO(sjmiles): field name `id` is the join point to `users` subtree, so the actual data here is
+      // `id: users[id]` ... this means we've hidden the actual 'id' value
+      user = value.rawData.id;
+      // TODO(sjmiles): a better way?
+      userid = fields.rawData.data.id;
+    } catch (x) {
+      console.warn(`added friend had incomplete join`);
+      return;
+    }
+    //
+    const name = user.info && user.info.name || '(Anonymous)';
+    let node = window.friendsTable.querySelector(`[id="${key}"]`);
+    if (!node) {
+      node = window.friendsTable.appendChild(document.createElement('tr'));
+    }
+    Object.assign(node, {
+      onclick: e => selectUser(e.currentTarget, key),
+      innerHTML: `<td mono>${userid}</td><td>${name}</id>`
+    });
+    node.setAttribute('id', key);
+  };
+
+  const onFriendChanged = field => {
+    if (field.disposed) {
+      removeFriend(field);
+    } else {
+      addFriend(field);
+    }
+  };
+
+  const onProfileChanged = field => {
+
+  };
+</script>
+
