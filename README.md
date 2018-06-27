@@ -346,7 +346,7 @@ arcs/enclave> sdk/asylo/distrib/sgx_x86_64/install-toolchain \
 ```
 
 After this completes it'll leave some temporary files and directories in the
-current directory, probably `arcs/asylo`. Those can be removed with a command
+current directory, probably `arcs/enclave`. Those can be removed with a command
 like `rm -fr binutils* gcc* newlib*`.)
 
 
