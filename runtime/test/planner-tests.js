@@ -76,39 +76,6 @@ const loadTestArcAndRunSpeculation = async (manifest, manifestLoadedCallback) =>
 };
 
 describe('Planner', function() {
-  it('can generate things', async () => {
-    let manifest = await Manifest.load('./runtime/test/artifacts/giftlist.manifest', loader);
-    let testSteps = async planner => {
-      await planner.strategizer.generate();
-      await planner.strategizer.generate();
-      await planner.strategizer.generate();
-      return planner.strategizer.population.length;
-    };
-    let results = await planFromManifest(manifest, {testSteps});
-    assert.equal(results, 5);
-  });
-
-  // TODO: rewrite or remove this, it doesn't test anything more than the above test?
-  it('can make a plan with handles', async () => {
-    let manifest = await Manifest.load('./runtime/test/artifacts/giftlist.manifest', loader);
-    let arcFactory = async manifest => {
-      let arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'dom');
-      let Person = manifest.findSchemaByName('Person').entityClass();
-      let Product = manifest.findSchemaByName('Product').entityClass();
-      let personStore = await arc.createStore(Person.type.collectionOf(), 'aperson');
-      let productStore = await arc.createStore(Product.type.collectionOf(), 'products');
-      return arc;
-    };
-    let testSteps = async planner => {
-      await planner.strategizer.generate();
-      await planner.strategizer.generate();
-      await planner.strategizer.generate();
-      return planner.strategizer.population.length;
-    };
-    let results = await planFromManifest(manifest, {arcFactory, testSteps});
-    assert.equal(results, 5);
-  });
-
   it('can map remote handles structurally', async () => {
     let results = await planFromManifest(`
       store AStore of * {Text text, Text moreText} in './shell/artifacts/Things/empty.json'
