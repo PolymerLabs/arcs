@@ -297,7 +297,10 @@ class ArcsDataflow extends PolymerElement {
 
   _listUnique(extract) {
     let bag = {};
-    this.selectedArcLog.map(event => bag[extract(event).id] = extract(event));
+    this.selectedArcLog.forEach(event => {
+      let extracted = extract(event);
+      if (extracted) bag[extracted.id] = extracted;
+    });
     return Object.values(bag).sort((x, y) => this._compareIds(x.id, y.id));
   }
 
