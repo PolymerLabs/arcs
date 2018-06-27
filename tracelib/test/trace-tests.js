@@ -142,6 +142,10 @@ describe('Tracing', function() {
     assertFlowEnclosedInComplete(flowStartEvent, completeEvents[0]);
     assertFlowEnclosedInComplete(flowStepEvent, completeEvents[1]);
     assertFlowEnclosedInComplete(flowEndEvent, completeEvents[2]);
+
+    let flowId = flowStartEvent.id;
+    assert.isTrue([flowStepEvent, flowEndEvent].every(event => event.id === flowId));
+    assert.isTrue(completeEvents.every(event => event.flowId === flowId));
   });
 
   it('traces an asynchronous event with endWith', async () => {
