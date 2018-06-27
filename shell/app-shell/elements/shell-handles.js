@@ -19,7 +19,7 @@ const template = Xen.html`
   <arc-handle arc="{{arc}}" data="{{themeData}}" options="{{themeHandleOptions}}" on-change="_onShellThemeChange"></arc-handle>
   <arc-handle arc="{{arc}}" data="{{usersHandleData}}" options="{{usersHandleOptions}}"></arc-handle>
   <arc-handle arc="{{arc}}" data="{{userHandleData}}" options="{{userHandleOptions}}"></arc-handle>
-  <arc-handle arc="{{arc}}" data="{{arcsHandleData}}" options="{{arcsHandleOptions}}" on-change="_onArcsHandleChange"></arc-handle>
+  <!-- <arc-handle arc="{{arc}}" data="{{arcsHandleData}}" options="{{arcsHandleOptions}}" on-change="_onArcsHandleChange"></arc-handle> -->
   <!-- ensures #BOXED_avatar exists for resolving recipes, even if there are no avatars to box -->
   <arc-handle arc="{{arc}}" options="{{boxedAvatarHandleOptions}}"></arc-handle>
   <!-- testing out custom storage provider -->

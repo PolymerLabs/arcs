@@ -1,4 +1,4 @@
-import {Field} from '../Field.js';
+import {Field} from './Field.js';
 
 export const FbUser = class {
   constructor(listener) {
@@ -8,13 +8,14 @@ export const FbUser = class {
     let field = null;
     if (userid) {
       field = new Field(null, `/users/${userid}`, userid, this._userSchema);
-      this._fire('field', field);
-      field.activate();
     }
     return field;
   }
   get _userSchema() {
     return {
+      info: {
+        $changed: field => this._fire('info-changed', field)
+      },
       arcs: {
         '*': {
           $changed: field => this._onArcChanged(field),

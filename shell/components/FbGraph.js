@@ -1,4 +1,4 @@
-import Xen from '../../../components/xen/xen.js';
+import Xen from './xen/xen.js';
 
 const debounce = Xen.debounce;
 const changeDebounceMs = 16;
@@ -50,7 +50,7 @@ export const FbGraph = Firedb => {
       });
       const removed = db.on('child_removed', snap => {
         //console.warn('FireBase: child-removed', this.path, snap.key);
-        this.data[snap.key] = null;
+        delete this.data[snap.key];
         this._fire('child-removed', snap.key);
       });
       this._detach = () => {
@@ -90,8 +90,9 @@ export const FbGraph = Firedb => {
     }
   };
 
-  const Field = class {
-    constructor(parent, path, key, schema) {
+  const Field = class extends Eventer {
+    constructor(parent, path, key, schema, onevent) {
+      super(onevent);
       this.parent = parent;
       this.path = path;
       this.key = key;
@@ -108,13 +109,13 @@ export const FbGraph = Firedb => {
       if (this.schema && this.schema.$key) {
         this._addField('$key');
       }
-      this.dbset = new FbSet(this.path, this.data, event => this._onSetEvent(event));
+      this.fbset = new FbSet(this.path, this.data, event => this._onSetEvent(event));
       // ... after init
       this._notifySchema();
     }
     dispose() {
       this.disposed = true;
-      this.dbset && this.dbset.dispose();
+      this.fbset && this.fbset.dispose();
       Object.values(this.fields).forEach(field => field.dispose());
       this._notifySchema();
     }
@@ -150,11 +151,19 @@ export const FbGraph = Firedb => {
           this._removeField(detail);
           break;
       }
-      // if we are $fromJoin, there is no parent to see a 'child-changed' on us,
-      // so we simulate that here
+      // if we are $fromJoin:
+      // 1. there is no parent to see a 'child-changed' on us
+      // 2. there is no notification to the parent that it's `value` has changed
+      // we simulate those effects here
       if (this.schema && this.schema.$fromJoin) {
         this._notifySchema();
+        this._fire('change');
       }
+    }
+    _onEvent(event) {
+      // only event is 'change', propagate all the way up
+      this._notifySchema();
+      this._fire(event);
     }
     _addField(fieldName) {
       if (this.schema && (fieldName === '$key' || fieldName[0] !== '$')) {
@@ -164,7 +173,8 @@ export const FbGraph = Firedb => {
           fieldSchema = fieldSchema(this.key, fieldName, datum, this);
         }
         if (fieldSchema) {
-          const field = this.fields[fieldName] = this._createField(fieldName, fieldSchema, datum);
+          const field = this._createField(fieldName, fieldSchema, datum);
+          this.fields[fieldName] = field;
           field.activate();
         }
       }
@@ -185,7 +195,7 @@ export const FbGraph = Firedb => {
           fieldSchema.$fromJoin = true;
         }
       }
-      return new Field(this, fieldPath, fieldName, fieldSchema);
+      return new Field(this, fieldPath, fieldName, fieldSchema, event => this._onEvent(event));
     }
   };
 

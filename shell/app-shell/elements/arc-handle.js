@@ -37,6 +37,7 @@ class ArcHandle extends Xen.Debug(Xen.Base, log) {
       if (options && (state.manifest || options.schema)) {
         state.handle = await this._createHandle(arc, state.manifest, options);
         state.data = null;
+        this._fire('store', state.handle);
       }
       state.working = false;
       if (state.invalid) {

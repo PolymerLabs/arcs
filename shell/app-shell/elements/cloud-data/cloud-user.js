@@ -42,10 +42,10 @@ class CloudUser extends Xen.Debug(Xen.Base, log) {
         path: `users/${userid}/info`,
         handler: snap => this._userInfoChanged(userid, snap)
       }];
-      state.userArcsWatch.watches = [{
-        path: `users/${userid}/arcs`,
-        handler: snap => this._userArcsChanged(userid, snap)
-      }];
+      // state.userArcsWatch.watches = [{
+      //   path: `users/${userid}/arcs`,
+      //   handler: snap => this._userArcsChanged(userid, snap)
+      // }];
     }
     if (user && (user.id === userid)) {
       if (arcs && state.arcs && arcs !== state.arcs) {
@@ -86,47 +86,47 @@ class CloudUser extends Xen.Debug(Xen.Base, log) {
     };
     this._fire('user', user);
   }
-  _userArcsChanged(userid, snap) {
-    const arcs = snap.val() || {};
-    log(`[users/${userid}/arcs] node fired a change event`, arcs);
-    this._state.arcs = arcs;
-    this._watchArcs(arcs);
-  }
-  _watchArcs(arcs) {
-    log(`watching user's arcs`);
-    const keys = Object.keys(arcs);
-    this._state.arcsWatch.watches = keys.map(key => ({
-      path: `arcs/${key}/metadata`,
-      handler: snap => this._arcMetadataChanged(key, snap)
-    }));
-  }
-  _arcMetadataChanged(key, snap) {
-    const {user} = this._props;
-    let {arcs} = this._state;
-    const metadata = snap.val();
-    log(`[arcs/${key}/metadata] node fired a change event`, metadata);
-    arcs[key].metadata = metadata;
-    arcs = this._state.arcs = Xen.clone(arcs);
-    this._fire('arcs', arcs);
-  }
-  _localArcsChanged(db, arcs) {
-    log(`applying arcs list changes to Firebase:`, arcs);
-    const {user} = this._props;
-    Object.keys(arcs).forEach(key => {
-      const path = `users/${user.id}/arcs/${key}`;
-      const arc = Xen.clone(arcs[key]);
-      delete arc.metadata;
-      if (arc.deleted) {
-        log(`removing [${path}]`);
-        db.child(`${path}`).remove();
-      } else {
-        // TODO(sjmiles): don't have to do this most of the time, consider
-        // dirty checking, or replacing input `arcs` with deltas only
-        log(`setting [${path}] to`, arc);
-        db.child(`${path}`).set(arc);
-      }
-    });
-  }
+  // _userArcsChanged(userid, snap) {
+  //   const arcs = snap.val() || {};
+  //   log(`[users/${userid}/arcs] node fired a change event`, arcs);
+  //   this._state.arcs = arcs;
+  //   this._watchArcs(arcs);
+  // }
+  // _watchArcs(arcs) {
+  //   log(`watching user's arcs`);
+  //   const keys = Object.keys(arcs);
+  //   this._state.arcsWatch.watches = keys.map(key => ({
+  //     path: `arcs/${key}/metadata`,
+  //     handler: snap => this._arcMetadataChanged(key, snap)
+  //   }));
+  // }
+  // _arcMetadataChanged(key, snap) {
+  //   const {user} = this._props;
+  //   let {arcs} = this._state;
+  //   const metadata = snap.val();
+  //   log(`[arcs/${key}/metadata] node fired a change event`, metadata);
+  //   arcs[key].metadata = metadata;
+  //   arcs = this._state.arcs = Xen.clone(arcs);
+  //   this._fire('arcs', arcs);
+  // }
+  // _localArcsChanged(db, arcs) {
+  //   log(`applying arcs list changes to Firebase:`, arcs);
+  //   const {user} = this._props;
+  //   Object.keys(arcs).forEach(key => {
+  //     const path = `users/${user.id}/arcs/${key}`;
+  //     const arc = Xen.clone(arcs[key]);
+  //     delete arc.metadata;
+  //     if (arc.deleted) {
+  //       log(`removing [${path}]`);
+  //       db.child(`${path}`).remove();
+  //     } else {
+  //       // TODO(sjmiles): don't have to do this most of the time, consider
+  //       // dirty checking, or replacing input `arcs` with deltas only
+  //       log(`setting [${path}] to`, arc);
+  //       db.child(`${path}`).set(arc);
+  //     }
+  //   });
+  // }
   _createUser(user) {
     log('CREATING user', user);
     const userid = Firebase.db.newUser(user);

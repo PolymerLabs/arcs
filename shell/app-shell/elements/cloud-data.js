@@ -14,30 +14,40 @@ import ArcsUtils from '../lib/arcs-utils.js';
 
 // elements
 import './cloud-data/cloud-users.js';
-import './cloud-data/cloud-user.js';
+//import './cloud-data/cloud-user.js';
 import './cloud-data/cloud-arc.js';
 import './cloud-data/cloud-steps.js';
 import './cloud-data/cloud-handles.js';
 import './cloud-data/cloud-profile-handles.js';
 import './cloud-data/cloud-shared-handles.js';
+import './fb-data/fb-users.js';
+import './fb-data/fb-user.js';
 
 // templates
 const html = Xen.Template.html;
 const template = html`
 
+  <fb-users></fb-users>
+  <fb-user
+    config="{{config}}"
+    arc="{{arc}}"
+    userid="{{userid}}"
+    on-user="_onForward"
+  ></fb-user>
+
   <cloud-users
     on-users="_onForward"
   ></cloud-users>
 
-  <cloud-user
+  <!-- <cloud-user
     userid="{{userid}}"
     user="{{user}}"
-    arcs="{{arcs}}"
     key="{{key}}"
+    arcs="{{arcs}}"
     on-user="_onForward"
     on-arcs="_onForward"
     on-userid="_onForward"
-  ></cloud-user>
+  ></cloud-user> -->
 
   <cloud-arc
     config="{{config}}"
@@ -86,7 +96,8 @@ const log = Xen.logFactory('CloudData', '#004f00');
 
 class CloudData extends Xen.Debug(Xen.Base, log) {
   static get observedAttributes() {
-    return ['config', 'users', 'userid', 'user', 'profile', 'arcs', 'key', 'metadata', 'description', 'share', 'plans', 'plan', 'arc'];
+    return ['config', 'users', 'userid', 'user', 'profile', 'arcs', 'key',
+      'metadata', 'description', 'share', 'plans', 'plan', 'arc'];
   }
   get template() {
     return template;
