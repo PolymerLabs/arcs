@@ -25,6 +25,11 @@ class TestVariable {
     this.name = name;
     this._stored = null;
     this._version = 0;
+    this._listeners = [];
+  }
+
+  attachListener(callback) {
+    this._listeners.push(callback);
   }
 
   get() {
@@ -35,16 +40,21 @@ class TestVariable {
     return {data: this._stored, version: this._version};
   }
 
-  // `version` is optional; if not provided, current version is incremented.
-  // Returns the event that would usually be sent to any attached listeners.
-  set(entity, version) {
+  // For both set and clear:
+  //  sendEvent: if true, send an update event to attached listeners.
+  //  version: optionally override the current version being incremented.
+
+  set(entity, {sendEvent = true, version} = {}) {
     this._stored = entity;
     this._version = (version !== undefined) ? version : this._version + 1;
-    return {data: this._stored, version: this._version};
+    if (sendEvent) {
+      let event = {data: this._stored, version: this._version};
+      this._listeners.forEach(cb => cb(event));
+    }
   }
 
-  clear(version) {
-    return this.set(null, version);
+  clear({sendEvent = true, version} = {}) {
+    this.set(null, {sendEvent, version});
   }
 }
 
@@ -55,6 +65,11 @@ class TestCollection {
     this.name = name;
     this._items = new Map();
     this._version = 0;
+    this._listeners = [];
+  }
+
+  attachListener(callback) {
+    this._listeners.push(callback);
   }
 
   toList() {
@@ -65,22 +80,30 @@ class TestCollection {
     return {list: [...this._items.values()], version: this._version};
   }
 
-  // `version` is optional; if not provided, current version is incremented.
-  // Returns the event that would usually be sent to any attached listeners.
-  store(id, entity, version) {
+  // For both store and remove:
+  //  sendEvent: if true, send an update event to attached listeners.
+  //  version: optionally override the current version being incremented.
+
+  store(id, entity, {sendEvent = true, version} = {}) {
     let entry = {id, rawData: entity.rawData};
     this._items.set(id, entry);
     this._version = (version !== undefined) ? version : this._version + 1;
-    return {add: [entry], version: this._version};
+    if (sendEvent) {
+      let event = {add: [entry], version: this._version};
+      this._listeners.forEach(cb => cb(event));
+    }
   }
 
-  remove(id, version) {
+  remove(id, {sendEvent = true, version} = {}) {
     let entry = this._items.get(id);
     assert.notStrictEqual(entry, undefined,
            `Test bug: attempt to remove non-existent id '${id}' from '${this.name}'`);
     this._items.delete(id);
     this._version = (version !== undefined) ? version : this._version + 1;
-    return {remove: [entry], version: this._version};
+    if (sendEvent) {
+      let event = {remove: [entry], version: this._version};
+      this._listeners.forEach(cb => cb(event));
+    }
   }
 }
 
@@ -129,18 +152,22 @@ class TestEngine {
     this.schema = new Schema({names: ['Thing'], fields: {value: 'Text'}});
     this.type = Type.newEntity(this.schema);
     this._idCounters = [1, 1, 1]; // particle, proxy, entity
-    this._listeners = new Map();
+    this._stores = new Map();
     this._syncCallbacks = new Map();
     this._events = [];
     this._scheduler = new StorageProxyScheduler();
   }
 
   newVariable(name) {
-    return new TestVariable(this.type, name);
+    let store = new TestVariable(this.type, name);
+    this._stores.set(name, store);
+    return store;
   }
 
   newCollection(name) {
-    return new TestCollection(this.type.collectionOf(), name);
+    let store = new TestCollection(this.type.collectionOf(), name);
+    this._stores.set(name, store);
+    return store;
   }
 
   newParticle() {
@@ -194,7 +221,9 @@ class TestEngine {
   }
 
   InitializeProxy({handle, callback}) {
-    this._listeners.set(handle.name, callback);
+    let store = this._stores.get(handle.name);
+    assert.isDefined(store);
+    store.attachListener(callback);
     this._events.push('InitializeProxy:' + handle.name);
   }
 
@@ -219,12 +248,6 @@ class TestEngine {
       }
     }
     callbacks.shift()(data);
-  }
-
-  sendUpdate(store, update) {
-    let callback = this._listeners.get(store.name);
-    assert.isDefined(callback);
-    callback(update);
   }
 
   HandleGet({handle, callback}) {
@@ -255,37 +278,45 @@ class TestEngine {
 // TODO: test handles with different types observing the same proxy
 // TODO: test with handles changing config options over time
 describe('storage-proxy', function() {
-  it('verify that test storage events match real storage events', async function() {
+  it('verify that the test storage API matches the real storage', async function() {
     // If this fails, most likely the InMemoryStorage classes have been changed
     // and TestVariable/TestCollection will need to be updated to match.
     let engine = new TestEngine();
     let entity = engine.newEntity('abc');
     let realStorage = new InMemoryStorage('arc-id');
-    let testDetails, realDetails;
+    let testEvent, realEvent;
 
     let testVariable = engine.newVariable('v');
     let realVariable = await realStorage.construct('vid', engine.type, 'in-memory');
-    realVariable._fire = (kind, details) => realDetails = details;
+    testVariable.attachListener(event => testEvent = event);
+    realVariable._fire = (kind, event) => realEvent = event;
 
-    testDetails = testVariable.set(entity, 1);
+    testVariable.set(entity, 1);
     await realVariable.set(entity);
-    assert.equal(JSON.stringify(testDetails), JSON.stringify(realDetails));
+    assert.deepEqual(testEvent, realEvent);
 
-    testDetails = testVariable.clear(2);
+    assert.deepEqual(testVariable.get(), await realVariable.get());
+    assert.deepEqual(testVariable.getWithVersion(), await realVariable.getWithVersion());
+
+    testVariable.clear(2);
     await realVariable.clear();
-    assert.equal(JSON.stringify(testDetails), JSON.stringify(realDetails));
+    assert.deepEqual(testEvent, realEvent);
 
     let testCollection = engine.newCollection('c');
     let realCollection = await realStorage.construct('cid', engine.type.collectionOf(), 'in-memory');
-    realCollection._fire = (kind, details) => realDetails = details;
+    testCollection.attachListener(event => testEvent = event);
+    realCollection._fire = (kind, event) => realEvent = event;
 
-    testDetails = testCollection.store('id1', entity, 1);
+    testCollection.store('id1', entity, 1);
     await realCollection.store({id: 'id1', rawData: {value: 'abc'}});
-    assert.equal(JSON.stringify(testDetails), JSON.stringify(realDetails));
+    assert.deepEqual(testEvent, realEvent);
 
-    testDetails = testCollection.remove('id1', 2);
+    assert.deepEqual(testCollection.toList(), await realCollection.toList());
+    assert.deepEqual(testCollection.toListWithVersion(), await realCollection.toListWithVersion());
+
+    testCollection.remove('id1', 2);
     await realCollection.remove('id1');
-    assert.equal(JSON.stringify(testDetails), JSON.stringify(realDetails));
+    assert.deepEqual(testEvent, realEvent);
   });
 
   it('notifies for updates to initially empty handles', async function() {
@@ -304,12 +335,12 @@ describe('storage-proxy', function() {
                         'InitializeProxy:bar', 'SynchronizeProxy:bar',
                         'onHandleSync:P1:foo:(null)', 'onHandleSync:P1:bar:[]');
 
-    engine.sendUpdate(fooStore, fooStore.set(engine.newEntity('oh')));
-    engine.sendUpdate(barStore, barStore.store('i1', engine.newEntity('hai')));
+    fooStore.set(engine.newEntity('oh'));
+    barStore.store('i1', engine.newEntity('hai'));
     await engine.verify('onHandleUpdate:P1:foo:oh', 'onHandleUpdate:P1:bar:+[hai]');
 
-    engine.sendUpdate(fooStore, fooStore.clear());
-    engine.sendUpdate(barStore, barStore.remove('i1'));
+    fooStore.clear();
+    barStore.remove('i1');
     await engine.verify('onHandleUpdate:P1:foo:(null)', 'onHandleUpdate:P1:bar:-[hai]');
   });
 
@@ -333,12 +364,12 @@ describe('storage-proxy', function() {
                         'InitializeProxy:bar', 'SynchronizeProxy:bar',
                         'onHandleSync:P1:foo:well', 'onHandleSync:P1:bar:[hi|there]');
 
-    engine.sendUpdate(fooStore, fooStore.set(engine.newEntity('gday')));
-    engine.sendUpdate(barStore, barStore.store('i3', engine.newEntity('mate')));
+    fooStore.set(engine.newEntity('gday'));
+    barStore.store('i3', engine.newEntity('mate'));
     await engine.verify('onHandleUpdate:P1:foo:gday', 'onHandleUpdate:P1:bar:+[mate]');
 
-    engine.sendUpdate(fooStore, fooStore.clear());
-    engine.sendUpdate(barStore, barStore.remove('i2'));
+    fooStore.clear();
+    barStore.remove('i2');
     await engine.verify('onHandleUpdate:P1:foo:(null)', 'onHandleUpdate:P1:bar:-[there]');
   });
 
@@ -354,9 +385,9 @@ describe('storage-proxy', function() {
     await engine.verify('InitializeProxy:foo', 'SynchronizeProxy:foo', 'onHandleSync:P1:foo:(null)');
 
     // Drop event 2; desync is triggered by v3.
-    engine.sendUpdate(fooStore, fooStore.set(engine.newEntity('v1')));
-    fooStore.set(engine.newEntity('v2'));
-    engine.sendUpdate(fooStore, fooStore.set(engine.newEntity('v3')));
+    fooStore.set(engine.newEntity('v1'));
+    fooStore.set(engine.newEntity('v2'), {sendEvent: false});
+    fooStore.set(engine.newEntity('v3'));
     await engine.verifySubsequence('SynchronizeProxy:foo');
     await engine.verify('onHandleUpdate:P1:foo:v1', 'onHandleDesync:P1:foo');
 
@@ -376,9 +407,9 @@ describe('storage-proxy', function() {
     await engine.verify('InitializeProxy:bar', 'SynchronizeProxy:bar', 'onHandleSync:P1:bar:[]');
 
     // Drop event 2; desync is triggered by v3.
-    engine.sendUpdate(barStore, barStore.store('i1', engine.newEntity('v1')));
-    barStore.store('i2', engine.newEntity('v2'));
-    engine.sendUpdate(barStore, barStore.store('i3', engine.newEntity('v3')));
+    barStore.store('i1', engine.newEntity('v1'));
+    barStore.store('i2', engine.newEntity('v2'), {sendEvent: false});
+    barStore.store('i3', engine.newEntity('v3'));
     await engine.verifySubsequence('SynchronizeProxy:bar');
     await engine.verify('onHandleUpdate:P1:bar:+[v1]', 'onHandleDesync:P1:bar');
 
@@ -398,9 +429,9 @@ describe('storage-proxy', function() {
     await engine.verify('InitializeProxy:bar', 'SynchronizeProxy:bar', 'onHandleSync:P1:bar:[]');
 
     // Drop event 2; desync is triggered by v3.
-    engine.sendUpdate(barStore, barStore.store('i1', engine.newEntity('v1')));
-    barStore.store('i2', engine.newEntity('v2'));
-    engine.sendUpdate(barStore, barStore.store('i3', engine.newEntity('v3')));
+    barStore.store('i1', engine.newEntity('v1'));
+    barStore.store('i2', engine.newEntity('v2'), {sendEvent: false});
+    barStore.store('i3', engine.newEntity('v3'));
     await engine.verifySubsequence('SynchronizeProxy:bar');
     await engine.verify('onHandleUpdate:P1:bar:+[v1]', 'onHandleDesync:P1:bar');
 
@@ -408,11 +439,11 @@ describe('storage-proxy', function() {
     // when the storage object is at v5 and the response arrives at the proxy after the v6
     // and v7 updates have been sent:
     //   v1 (v2) v3 <desync> v4 v5 <resync-request> v6 v7 <resync-response>
-    engine.sendUpdate(barStore, barStore.store('i4', engine.newEntity('v4')));
-    engine.sendUpdate(barStore, barStore.store('i5', engine.newEntity('v5')));
+    barStore.store('i4', engine.newEntity('v4'));
+    barStore.store('i5', engine.newEntity('v5'));
     let v5Data = barStore.toListWithVersion();
-    engine.sendUpdate(barStore, barStore.store('i6', engine.newEntity('v6')));
-    engine.sendUpdate(barStore, barStore.remove('i1'));
+    barStore.store('i6', engine.newEntity('v6'));
+    barStore.remove('i1');
     engine.sendSync(barStore, v5Data);
     await engine.verify('onHandleSync:P1:bar:[v1|v2|v3|v4|v5]',
                         'onHandleUpdate:P1:bar:+[v6]',
@@ -430,11 +461,11 @@ describe('storage-proxy', function() {
     engine.sendSync(barStore);
     await engine.verify('InitializeProxy:bar', 'SynchronizeProxy:bar', 'onHandleSync:P1:bar:[]');
 
-    engine.sendUpdate(barStore, barStore.store('i1', engine.newEntity('v1'), 1));
-    engine.sendUpdate(barStore, barStore.store('i4', engine.newEntity('v4'), 4));
-    engine.sendUpdate(barStore, barStore.store('i3', engine.newEntity('v3'), 3));
-    engine.sendUpdate(barStore, barStore.store('i2', engine.newEntity('v2'), 2));
-    engine.sendUpdate(barStore, barStore.store('i5', engine.newEntity('v5'), 5));
+    barStore.store('i1', engine.newEntity('v1'), {version: 1});
+    barStore.store('i4', engine.newEntity('v4'), {version: 4});
+    barStore.store('i3', engine.newEntity('v3'), {version: 3});
+    barStore.store('i2', engine.newEntity('v2'), {version: 2});
+    barStore.store('i5', engine.newEntity('v5'), {version: 5});
 
     // Desync is triggered, but the resync message is ignored because the updates
     // "catch up" before the resync arrives.
@@ -464,15 +495,15 @@ describe('storage-proxy', function() {
     await engine.verify('InitializeProxy:foo', 'InitializeProxy:bar');
 
     // Updates are sent.
-    engine.sendUpdate(fooStore, fooStore.set(engine.newEntity('v1')));
-    engine.sendUpdate(barStore, barStore.store('i1', engine.newEntity('v1')));
+    fooStore.set(engine.newEntity('v1'));
+    barStore.store('i1', engine.newEntity('v1'));
     await engine.verify('onHandleUpdate:P1:foo:v1', 'onHandleUpdate:P1:bar:+[v1]');
 
     // Desync events ignored, resync events are just updates.
-    fooStore.set(engine.newEntity('v2'));
-    barStore.store('i2', engine.newEntity('v2'));
-    engine.sendUpdate(fooStore, fooStore.set(engine.newEntity('v3')));
-    engine.sendUpdate(barStore, barStore.store('i3', engine.newEntity('v3')));
+    fooStore.set(engine.newEntity('v2'), {sendEvent: false});
+    fooStore.set(engine.newEntity('v3'));
+    barStore.store('i2', engine.newEntity('v2'), {sendEvent: false});
+    barStore.store('i3', engine.newEntity('v3'));
     await engine.verify('onHandleUpdate:P1:foo:v3', 'onHandleUpdate:P1:bar:+[v3]');
   });
 
@@ -578,7 +609,7 @@ describe('storage-proxy', function() {
     fooHandle.get();
     await engine.verify();
 
-    // Write to the inner-pec handle but delay sending the update event.
+    // Write to the inner-pec handle but delay the write to the backing store.
     let changed = engine.newEntity('changed');
     fooHandle.set(changed);
     await engine.verify('HandleSet:foo:changed');
@@ -587,8 +618,8 @@ describe('storage-proxy', function() {
     fooHandle.get();
     await engine.verify('HandleGet:foo');
 
-    // Send the delayed update to resync the proxy.
-    engine.sendUpdate(fooStore, fooStore.set(changed));
+    // Update the backing store, which will send the delayed update to resync the proxy.
+    fooStore.set(changed);
     await engine.verify('onHandleUpdate:P1:foo:changed');
 
     // Read the handle one more time; should return the local copy again.
@@ -617,14 +648,14 @@ describe('storage-proxy', function() {
     let dropped = engine.newEntity('v2');
     barHandle.store(dropped);
     await engine.verify('HandleStore:bar:v2');
-    barStore.store('i2', dropped);
+    barStore.store('i2', dropped, {sendEvent: false});
 
     // Read the handle again; the proxy is "pending" desynced and should call the backing store.
     barHandle.toList();
     await engine.verify('HandleToList:bar');
 
     // Send an update event that is "ahead" of the dropped one; should cause a real desync.
-    engine.sendUpdate(barStore, barStore.store('i3', engine.newEntity('v3')));
+    barStore.store('i3', engine.newEntity('v3'));
     await engine.verify('SynchronizeProxy:bar', 'onHandleDesync:P1:bar');
 
     // Read again; still desynced.
@@ -662,9 +693,9 @@ describe('storage-proxy', function() {
                         'onHandleSync:P1:bar:[]', 'onHandleSync:P2:bar:[]');
 
     // Drop event 2; desync is triggered by v3.
-    engine.sendUpdate(barStore, barStore.store('i1', engine.newEntity('v1')));
-    barStore.store('i2', engine.newEntity('v2'));
-    engine.sendUpdate(barStore, barStore.store('i3', engine.newEntity('v3')));
+    barStore.store('i1', engine.newEntity('v1'));
+    barStore.store('i2', engine.newEntity('v2'), {sendEvent: false});
+    barStore.store('i3', engine.newEntity('v3'));
 
     await engine.verifySubsequence('SynchronizeProxy:bar');
     await engine.verifySubsequence('onHandleUpdate:P1:bar:+[v1]', 'onHandleUpdate:P2:bar:+[v1]');
@@ -691,7 +722,7 @@ describe('storage-proxy', function() {
     await engine.verify('InitializeProxy:foo', 'SynchronizeProxy:foo',
                         'onHandleSync:P1:foo:Huey', 'onHandleSync:P2:foo:Huey');
 
-    engine.sendUpdate(fooStore, fooStore.set(engine.newEntity('Dewey')));
+    fooStore.set(engine.newEntity('Dewey'));
     await engine.verify('onHandleUpdate:P1:foo:Dewey', 'onHandleUpdate:P2:foo:Dewey');
 
     let particle3 = engine.newParticle();
@@ -699,7 +730,7 @@ describe('storage-proxy', function() {
     fooProxy.register(particle3, fooHandle3);
     await engine.verify('onHandleSync:P3:foo:Dewey');
 
-    engine.sendUpdate(fooStore, fooStore.set(engine.newEntity('Louie')));
+    fooStore.set(engine.newEntity('Louie'));
     await engine.verify('onHandleUpdate:P1:foo:Louie', 'onHandleUpdate:P2:foo:Louie',
                         'onHandleUpdate:P3:foo:Louie');
   });
@@ -714,7 +745,7 @@ describe('storage-proxy', function() {
     let fooHandle1 = engine.newHandle(fooStore, fooProxy, particle1, CAN_READ, !CAN_WRITE);
     fooHandle1.configure({keepSynced: false, notifySync: false, notifyUpdate: false});
     fooProxy.register(particle1, fooHandle1);
-    engine.sendUpdate(fooStore, fooStore.set(engine.newEntity('x')));
+    fooStore.set(engine.newEntity('x'));
     await engine.verify('InitializeProxy:foo'); // attaches listener, no sync request, no update event
 
     // Second handle: configured for updates
@@ -722,7 +753,7 @@ describe('storage-proxy', function() {
     let fooHandle2 = engine.newHandle(fooStore, fooProxy, particle2, CAN_READ, !CAN_WRITE);
     fooHandle2.configure({keepSynced: false, notifySync: false, notifyUpdate: true});
     fooProxy.register(particle2, fooHandle2);
-    engine.sendUpdate(fooStore, fooStore.set(engine.newEntity('y')));
+    fooStore.set(engine.newEntity('y'));
     await engine.verify('onHandleUpdate:P2:foo:y');
 
     // Third handle: configured for sync but no updates
@@ -731,7 +762,7 @@ describe('storage-proxy', function() {
     fooHandle3.configure({keepSynced: true, notifySync: true, notifyUpdate: false});
     fooProxy.register(particle3, fooHandle3);
     engine.sendSync(fooStore);
-    engine.sendUpdate(fooStore, fooStore.set(engine.newEntity('z')));
+    fooStore.set(engine.newEntity('z'));
     await engine.verify('SynchronizeProxy:foo', 'onHandleSync:P3:foo:y', 'onHandleUpdate:P2:foo:z');
   });
 });
