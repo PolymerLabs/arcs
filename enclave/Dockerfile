@@ -52,42 +52,40 @@ COPY --from=toolchain /usr/local/share/asylo/ /usr/local/share/asylo/
 
 # Couch is (currently) based on Debian jessie, so we need to do some work to
 # bring that into the future.
-# - installing a new OCaml (something, probably Asylo, requires 4.02
-#   instead of jessie's 4.01).
-# - install GCC-5 (minimum required by Asylo)
-# To get this to work, I had to add a `dist-upgrade` line. This ends up
-# upgrading the OS from Jessie to Buster/Sid (?), including installing GCC-7.
-# The explicit install and use of GCC-5 may not be required.
-# TODO - try removing the GCC-5 install. Or, try moving `dist-upgrade` earlier
-# (into it's own build stage?) so it runs faster, or try rebasing Couch's
-# Dockerfile on a Debian Buster image.
-RUN apt-get update && \
-	apt-get install -y curl gnupg && \
+# Mostly, Asylo needs a more modern GCC (G++) and OCaml. To get this to work,
+# though, I ended up adding an unstable Debian channel and running
+# `dist-upgrade` which seems to upgrade from Jessie to Buster/Sid.
+# This is working (yay!) but perhaps not production-level.
+# TODO future options might be:
+# - Fork Couch's Dockerfile, and base it on a newer stable Debian
+# - Install Asylo & Couch on top of a newer Debian image (without using
+#   Couch's Dockerfile)
+# - Using something else instead of Couch (which may change this question
+#   somewhat fundamentally)
+RUN \
+	apt-get update && \
+	apt-get install -y \
+		curl \
+		gnupg && \
+	echo "deb http://ftp.us.debian.org/debian unstable main contrib non-free" > \
+		/etc/apt/sources.list.d/unstable.list && \
 	echo "deb [arch=amd64] http://storage.googleapis.com/bazel-apt stable jdk1.8" | \
 		tee /etc/apt/sources.list.d/bazel.list && \
 	curl https://bazel.build/bazel-release.pub.gpg | apt-key add - && \
-	echo "deb http://ftp.debian.org/debian jessie-backports main" | \
-		tee /etc/apt/sources.list.d/jessie-backports.list && \
 	apt-get update && \
 	apt-get -y upgrade && \
-	apt-get install -y -t jessie-backports openjdk-8-jre-headless ca-certificates-java && \
-	apt-get install -y \
+	apt-get -y dist-upgrade && \
+	apt-get -y install \
 		bazel \
 		build-essential \
+		ca-certificates-java \
 		cryptsetup-bin \
 		m4 \
+		ocamlbuild \
 		ocaml-nox \
 		opam \
-		python-jinja2 && \
-	echo "deb http://ftp.us.debian.org/debian unstable main contrib non-free" > \
-		/etc/apt/sources.list.d/unstable.list && \
-	apt-get update && \
-	apt-get install -y gcc-5 g++-5 && \
-	apt-get dist-upgrade -y && \
-	echo export CC=/usr/bin/gcc-5 >> ~/.bashrc && \
-	opam init -a --comp 4.02.3 && \
-	echo 'eval `opam config env`' >> ~/.bashrc
-
+		openjdk-8-jre-headless \
+		python-jinja2
 
 
 #################################################################
