@@ -1,6 +1,8 @@
 import {PolymerElement} from '../deps/@polymer/polymer/polymer-element.js';
 import '../deps/@vaadin/vaadin-split-layout/vaadin-split-layout.js';
 import {MessengerMixin} from './arcs-shared.js';
+import '../deps/@vaadin/vaadin-split-layout/vaadin-split-layout.js';
+import './arcs-stores.js';
 import {html} from '../deps/@polymer/polymer/lib/utils/html-tag.js';
 
 class ArcsOverview extends MessengerMixin(PolymerElement) {
@@ -10,6 +12,8 @@ class ArcsOverview extends MessengerMixin(PolymerElement) {
       :host {
         display: block;
         padding: 0;
+      }
+      #graphContainer {
         position: relative;
       }
       .legend {
@@ -49,21 +53,28 @@ class ArcsOverview extends MessengerMixin(PolymerElement) {
         background-color: var(--light-gray);
       }
     </style>
-    <div class="legend">
-      <div><span node="" style="background: var(--highlight-blue)"></span> Particle</div>
-      <div><span node="" style="background: var(--light-gray)"></span> Handle</div>
-      <div><span edge="" style="background: var(--dark-green)"></span> Read</div>
-      <div><span edge="" style="background: var(--dark-red)"></span> Write</div>
-      <div><span edge="" style="background: var(--highlight-blue)"></span> Read-Write</div>
-      <div><span edge="" style="background: var(--dark-gray)"></span> Hosted</div>
-    </div>
-    <div id="popup">
-      <pre id="popupText"></pre>
-      <div class="nav-list">
-        <a id="dataflowLink" href=""><iron-icon icon="swap-horiz"></iron-icon>Show in Dataflow</a>
+    <vaadin-split-layout>
+      <div id="graphContainer" style="flex: .5">
+        <div class="legend">
+          <div><span node="" style="background: var(--highlight-blue)"></span> Particle</div>
+          <div><span node="" style="background: var(--light-gray)"></span> Handle</div>
+          <div><span edge="" style="background: var(--dark-green)"></span> Read</div>
+          <div><span edge="" style="background: var(--dark-red)"></span> Write</div>
+          <div><span edge="" style="background: var(--highlight-blue)"></span> Read-Write</div>
+          <div><span edge="" style="background: var(--dark-gray)"></span> Hosted</div>
+        </div>
+        <div id="popup">
+          <pre id="popupText"></pre>
+          <div class="nav-list">
+            <a id="dataflowLink" href=""><iron-icon icon="swap-horiz"></iron-icon>Show in Dataflow</a>
+          </div>
+        </div>
+        <div id="graph"></div>
       </div>
-    </div>
-    <div id="graph"></div>
+      <aside style="flex: .5">
+        <arcs-stores></arcs-stores>
+      </aside>
+    </vaadin-split-layout>
 `;
   }
 
@@ -82,7 +93,7 @@ class ArcsOverview extends MessengerMixin(PolymerElement) {
       let {height, width} = rects[0].contentRect;
       this.$.graph.style.width = `${width}px`;
       this.$.graph.style.height = `${height}px`;
-    }).observe(this);
+    }).observe(this.$.graphContainer);
     this.$.popup.addEventListener('mouseleave', e => {
       this.$.popup.style.display = 'none';
     });

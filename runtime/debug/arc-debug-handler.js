@@ -10,6 +10,7 @@
 
 import {enableTracingAdapter} from './tracing-adapter.js';
 import {ArcPlannerInvoker} from './arc-planner-invoker.js';
+import {ArcStoresFetcher} from './arc-stores-fetcher.js';
 import {DevtoolsConnection} from './devtools-connection.js';
 
 // Arc-independent handlers for devtools logic.
@@ -21,7 +22,10 @@ export class ArcDebugHandler {
   constructor(arc, devtoolsChannel) {
 
     // Message handles go here.
-    new ArcPlannerInvoker(arc, devtoolsChannel);
+    if (!arc.isSpeculative) {
+      new ArcPlannerInvoker(arc, devtoolsChannel);
+      new ArcStoresFetcher(arc, devtoolsChannel);
+    }
 
     // TODO: Disconnect when arc is disposed?
 

@@ -14,6 +14,10 @@ $_documentContainer.innerHTML = `<dom-module id="shared-styles">
         --highlight-blue: #3879d9;
         --dark-red: #b71c1c;
         --dark-green: #09ba12;
+
+        --devtools-purple: rgb(136, 19, 145);
+        --devtools-blue: rgb(13, 34, 170);
+        --devtools-red: rgb(196, 26, 22);
       }
       .devtools-icon {
         display: inline-block;
@@ -24,6 +28,16 @@ $_documentContainer.innerHTML = `<dom-module id="shared-styles">
             url(../img/devtools_icons_2x.png) 2x);
         background-color: rgb(110, 110, 110);
       }
+      .devtools-small-icon {
+        display: inline-block;
+        width: 10px;
+        height: 10px;
+        min-width: 10px;
+        -webkit-mask-image: -webkit-image-set(
+            url(../img/devtools_icons_color_1x.png) 1x,
+            url(../img/devtools_icons_color_2x.png) 2x);
+        background-color: rgb(110, 110, 110);
+      }
       .devtools-icon-color {
         display: inline-block;
         background-image: -webkit-image-set(
@@ -31,6 +45,14 @@ $_documentContainer.innerHTML = `<dom-module id="shared-styles">
             url(../img/devtools_icons_color_2x.png) 2x);
         width: 10px;
         height: 10px;
+      }
+      .triangle {
+        -webkit-mask-position: 0px 10px;
+        margin: 0 5px;
+        zoom: .8;
+      }
+      [expanded].triangle {
+        -webkit-mask-position: -80px 30px;
       }
       .nav-list {
         margin: 10px 0;
@@ -64,7 +86,7 @@ $_documentContainer.innerHTML = `<dom-module id="shared-styles">
         background-color: var(--light-gray);
         overflow: scroll;
       }
-      vaadin-split-layout > aside > * {
+      vaadin-split-layout > aside.paddedBlocks > * {
         margin: 5px 5px 5px 2px;
       }
     </style>
