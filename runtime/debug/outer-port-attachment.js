@@ -37,13 +37,14 @@ export class OuterPortAttachment {
     }
   }
 
-  // TODO: particle IDs for proxy calls?
   onInitializeProxy({handle, callback}) {
-    this._callbackRegistry[callback] = this._describeHandleCall({operation: 'on-change', handle});
+    this._callbackRegistry[callback] = this._describeHandleCall(
+      {operation: 'on-change', handle});
   }
 
   onSynchronizeProxy({handle, callback}) {
-    this._callbackRegistry[callback] = this._describeHandleCall({operation: 'sync-model', handle});
+    this._callbackRegistry[callback] = this._describeHandleCall(
+      {operation: 'sync-model', handle});
   }
 
   onHandleGet({handle, callback, particleId}) {
@@ -83,11 +84,12 @@ export class OuterPortAttachment {
   }
 
   _describeHandleCall({operation, handle, particleId}) {
-    return Object.assign(this._arcMetadata(), {
+    let metadata = Object.assign(this._arcMetadata(), {
       operation,
-      particle: this._describeParticle(particleId),
       handle: this._describeHandle(handle)
     });
+    if (particleId) metadata.particle = this._describeParticle(particleId);
+    return metadata;
   }
 
   _arcMetadata() {
