@@ -30,15 +30,21 @@ export class SlotComposer {
     this._affordance = Affordance.forName(options.affordance);
     assert(this._affordance.slotClass);
 
+    // TODO: refactor and rename _contextSlots: regular slots hold a context, that holds a container.
+    // These are pseudo slots and hold the container directly. Should instead mimic the regular slots.
+    this._contextSlots = [];
+    this._slots = [];
+
+    if (options.noRoot) {
+      return;
+    }
+
     let containerByName = this._affordance.slotClass.findRootContainers(options.rootContainer) || {};
-    if (Object.keys(containerByName).length == 0 && options.rootContainer) {
+    if (Object.keys(containerByName).length == 0) {
       // fallback to single 'root' slot using the rootContainer.
       containerByName['root'] = options.rootContainer;
     }
 
-    // TODO: refactor and rename _contextSlots: regular slots hold a context, that holds a container.
-    // These are pseudo slots and hold the container directly. Should instead mimic the regular slots.
-    this._contextSlots = [];
     Object.keys(containerByName).forEach(slotName => {
       this._contextSlots.push({
         id: `rootslotid-${slotName}`,
@@ -49,8 +55,6 @@ export class SlotComposer {
         handles: 0,
         getProvidedSlotSpec: () => { return {isSet: false}; }});
     });
-
-    this._slots = [];
   }
 
   get affordance() { return this._affordance.name; }

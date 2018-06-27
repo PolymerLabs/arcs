@@ -28,13 +28,38 @@ describe('InitPopulation', async () => {
           product <- handle1`);
     let recipe = manifest.recipes[0];
     assert(recipe.normalize());
-    let arc = new Arc({id: 'test-plan-arc', context: {recipes: [recipe]}});
-    await arc.instantiate(recipe);
-    let ip = new InitPopulation(arc);
+    let arc = new Arc({id: 'test-plan-arc', context: manifest});
 
-    let inputParams = {generated: [], generation: 0};
-    let results = await ip.generate(inputParams);
+    async function scoreOfInitPopulationOutput() {
+      let results = await new InitPopulation(arc).generate({generation: 0});
+      assert.lengthOf(results, 1);
+      return results[0].score;
+    }
+
+    assert.equal(await scoreOfInitPopulationOutput(), 1);
+    await arc.instantiate(recipe);
+    assert.equal(await scoreOfInitPopulationOutput(), 0);
+  });
+
+  it('reads from RecipeIndex', async () => {
+    let manifest = await Manifest.parse(`
+      particle A
+      recipe
+        A`);
+
+    let [recipe] = manifest.recipes;
+    assert(recipe.normalize());
+
+    let arc = new Arc({
+      id: 'test-plan-arc',
+      context: new Manifest({id: 'test'}),
+      recipeIndex: {
+        recipes: manifest.recipes
+      }
+    });
+
+    let results = await new InitPopulation(arc).generate({generation: 0});
     assert.lengthOf(results, 1);
-    assert.equal(results[0].score, 0);
+    assert.equal(results[0].result.toString(), recipe.toString());
   });
 });
