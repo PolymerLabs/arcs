@@ -26,13 +26,13 @@ describe('particle-shape-loading-with-slots', function() {
       new ParticleExecutionContext(channel.port1, `${id}:inner`, loader);
       return channel.port2;
     };
-    let slotComposer = new MockSlotComposer();
+    let slotComposer = new MockSlotComposer({rootContainer: {'slotid-0': 'dummy-container'}});
     let manifest = await Manifest.parse(`
       import './runtime/test/artifacts/transformations/test-slots-particles.manifest'
 
       recipe
         create as handle0
-        slot 'slotid-0' as slot0
+        slot 'rootslotid-slotid-0' as slot0
         MultiplexSlotsParticle
           particle = SingleSlotParticle
           foos <- handle0
@@ -62,7 +62,7 @@ describe('particle-shape-loading-with-slots', function() {
 
   it('multiplex recipe with slots', async () => {
     let {fooType, inHandle, slotComposer} = await instantiateRecipe();
-    slotComposer._slots[0].updateContainer({});
+    slotComposer._slots[0].onContainerUpdate({});
 
     slotComposer
       .newExpectations()
@@ -108,7 +108,7 @@ describe('particle-shape-loading-with-slots', function() {
         }
       }, 10);
     });
-    slotComposer._slots[0].updateContainer({});
+    slotComposer._slots[0].onContainerUpdate({});
 
     slotComposer
       .newExpectations()

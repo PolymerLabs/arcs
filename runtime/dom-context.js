@@ -27,7 +27,9 @@ export class DomContext {
   get subId() {return this._subId; }
   set subId(subId) { this._subId = subId; }
   static clear(container) {
-    container.textContent = '';
+    if (container) {
+      container.textContent = '';
+    }
   }
   static createContext(container, content) {
     let context = new DomContext(container);

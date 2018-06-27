@@ -9,7 +9,7 @@
  */
 'use strict';
 
-import {assert} from '../test/chai-web.js';
+import {assert} from '../../platform/assert-web.js';
 import {DomSlot} from '../dom-slot.js';
 import {DomContext} from '../dom-context.js';
 import {DomSetContext} from '../dom-set-context.js';
@@ -52,6 +52,9 @@ export class MockDomSlot extends DomSlot {
   }
   _createDomContext() {
     return this.consumeConn.slotSpec.isSet ? new DomSetContext(null, MockDomContext) : new MockDomContext();
+  }
+  static findRootContainers(container) {
+    return container;
   }
   _initMutationObserver() {}
   async populateHandleDescriptions() {}

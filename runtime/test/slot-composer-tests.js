@@ -31,7 +31,7 @@ class MockSlot extends Slot {
 }
 
 async function initSlotComposer(recipeStr) {
-  let slotComposer = new SlotComposer({affordance: 'mock', rootContainer: 'dummy-container'});
+  let slotComposer = new SlotComposer({affordance: 'mock', rootContainer: {'root': 'dummy-container'}});
   slotComposer._affordance._slotClass = MockSlot;
 
   let manifest = (await Manifest.parse(recipeStr));
@@ -110,6 +110,6 @@ recipe
     await slotComposer.updateInnerSlots(rootSlot);
     assert.deepEqual(['B', 'BB'], startRenderParticles);
 
-    assert.deepEqual(['mySlot', 'otherSlot', 'root'], slotComposer.getAvailableSlots().map(s => s.name));
+    assert.deepEqual(['mySlot', 'otherSlot', 'root'], slotComposer.getAvailableSlots().map(s => s.name).sort());
   });
 });

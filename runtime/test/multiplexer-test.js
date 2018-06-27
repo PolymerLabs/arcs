@@ -27,7 +27,7 @@ describe('Multiplexer', function() {
       import 'runtime/test/artifacts/test-particles.manifest'
 
       recipe
-        slot 'slotid' as slot0
+        slot 'rootslotid-slotid' as slot0
         use 'test:1' as handle0
         Multiplexer
           hostedParticle = ConsumerParticle
@@ -40,7 +40,7 @@ describe('Multiplexer', function() {
 
     let barType = manifest.findTypeByName('Bar');
 
-    let slotComposer = new SlotComposer({affordance: 'mock', rootContainer: 'slotid'});
+    let slotComposer = new SlotComposer({affordance: 'mock', rootContainer: {'slotid': 'dummy-container'}});
 
     let slotComposer_createHostedSlot = slotComposer.createHostedSlot;
 
