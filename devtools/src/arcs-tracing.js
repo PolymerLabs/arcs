@@ -39,8 +39,14 @@ $_documentContainer.innerHTML = `<dom-module id="arcs-tracing">
       }
       .vis-item.vis-background {
         border: 4px solid transparent;
-        border-right: 4px solid rgba(150, 0, 0, .5);
         border-left: 4px solid rgba(0, 150, 0, .5);
+      }
+      .vis-item.vis-background.final {
+        border-right: 4px solid rgba(150, 0, 0, .5);
+      }
+      .vis-item.vis-background:not(.final) {
+        background: linear-gradient(to right, rgba(213, 221, 246, .4) 50%, transparent);
+        border-right: 0;
       }
       .vis-custom-time.startup {
         /* Makes page startup time vertical line not draggable. */
@@ -62,9 +68,12 @@ $_documentContainer.innerHTML = `<dom-module id="arcs-tracing">
           <div id="details">
             [[_selectedItem.group]]: [[_selectedItem.content]]
             <hr>
-            <div>Duration: [[_durationDetail(_selectedItem)]]
-            <div>Start: [[_startTimeDetail(_selectedItem)]]
-            <div>End: [[_endTimeDetail(_selectedItem)]]
+            <div>Sync duration: [[_syncDurationDetail(_selectedItem)]]</div>
+            <template is="dom-if" if="[[_selectedItem.flowId !== undefined]]">
+              <div>Async duration: [[_asyncDurationDetail(_selectedItem)]]</div>
+            </template>
+            <div>Start: [[_startTimeDetail(_selectedItem)]]</div>
+            <div>End: [[_endTimeDetail(_selectedItem)]]</div>
             <hr>
             Args:
             <pre>[[_indentPrint(_selectedItem.args)]]</pre>
@@ -140,19 +149,43 @@ class ArcsTracing extends PolymerElement {
           if (subgroup.endsWith(' (async)')) subgroup = subgroup.slice(0, -8);
 
           if (trace.ph === 'X') { // Duration event.
+            let start = Math.floor(trace.ts / 1000 + this._timeBase);
+            let end = Math.ceil((trace.ts + trace.dur) / 1000 + this._timeBase);
+
             this._items.update({
               id: `${trace.cat}_${trace.name}_${trace.ts}`,
               content: trace.name,
               title: trace.name,
               group,
               subgroup,
-              start: Math.floor(trace.ts / 1000 + this._timeBase),
-              end: Math.ceil((trace.ts + trace.dur) / 1000 + this._timeBase),
+              start,
+              end,
               ts: trace.ts,
               dur: trace.dur,
-              args: trace.args
+              args: trace.args,
+              flowId: trace.flowId
             });
-          } else { // Flow event.
+
+            // Flow events (types 's', 't', 'f') have timestamps such that
+            // the flow begins with the end of the first duration event and
+            // ends at the beginning of the last duration event. This doesn't
+            // visualize nicely with out 'background' method, so here we're
+            // expanding the flow to encapsulate all duration events.
+            if (trace.flowId) {
+              // See comment about flowEventsCache below.
+              // Updates to _items are only visible after flush() below.
+              let flowItem = flowEventsCache.get(trace.flowId)
+                  || this._items.get(trace.flowId)
+                  || {start, end};
+              let item = {
+                id: trace.flowId,
+                start: Math.min(flowItem.start, start),
+                end: Math.max(flowItem.end, end),
+              };
+              this._items.update(item);
+              flowEventsCache.set(trace.flowId, item);
+            }
+          } else { // Flow event, trace.ph one of ['s', 't', 'f'].
             // We store updated item in the flowEventsCache, to accumulate
             // changes from messages in the same bundle, as changes on the
             // _items dataset are only visible on flush().
@@ -161,7 +194,8 @@ class ArcsTracing extends PolymerElement {
             start = end = [trace.ts / 1000 + this._timeBase];
             for (let item of [
                 this._items.get(trace.id),
-                flowEventsCache.get(trace.id)]) {
+                flowEventsCache.get(trace.id),
+                ...this._items.get({filter: elem => elem.flowId === trace.id})]) {
               if (item) {
                 start = Math.min(item.start, start);
                 end = Math.max(item.end, end);
@@ -174,7 +208,8 @@ class ArcsTracing extends PolymerElement {
               subgroup,
               type: 'background',
               start: Math.floor(start),
-              end: Math.ceil(end)
+              end: Math.ceil(end),
+              className: trace.ph === 'f' ? 'final' : ''
             };
 
             flowEventsCache.set(trace.id, item);
@@ -238,13 +273,27 @@ class ArcsTracing extends PolymerElement {
     return formatTime((item.ts + item.dur) / 1000 + this._timeBase, 6 /* with Micros */);
   }
 
-  _durationDetail(item) {
-    if (item.dur < 1000) {
-      return `${item.dur.toFixed(0)}µs`;
-    } else if (item.dur < 1000 * 1000) {
-      return `${(item.dur / 1000).toFixed(3)}ms`;
-    } else if (item.dir < 1000 * 1000 * 60) {
-      return `${(item.dur / (1000 * 1000)).toFixed(6)}s`;
+  _syncDurationDetail(item) {
+    return this._displayDuration(item.dur);
+  }
+
+  _asyncDurationDetail(item) {
+    let start = item.ts;
+    let end = item.ts + item.dur;
+    this._items.forEach(elem => {
+      start = Math.min(start, elem.ts);
+      end = Math.max(end, elem.ts + elem.dur);
+    }, {filter: elem => elem.flowId === item.flowId});
+    return this._displayDuration(end - start);
+  }
+
+  _displayDuration(duration) {
+    if (duration < 1000) {
+      return `${duration.toFixed(0)}µs`;
+    } else if (duration < 1000 * 1000) {
+      return `${(duration / 1000).toFixed(3)}ms`;
+    } else {
+      return `${(duration / (1000 * 1000)).toFixed(3)}s`;
     }
   }
 
