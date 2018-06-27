@@ -41,20 +41,20 @@ class TestVariable {
   }
 
   // For both set and clear:
-  //  blockEvent: if true, do not send an update event to attached listeners.
+  //  sendEvent: if true, send an update event to attached listeners.
   //  version: optionally override the current version being incremented.
 
-  set(entity, {blockEvent, version}={}) {
+  set(entity, {sendEvent = true, version} = {}) {
     this._stored = entity;
     this._version = (version !== undefined) ? version : this._version + 1;
-    if (!blockEvent) {
+    if (sendEvent) {
       let event = {data: this._stored, version: this._version};
       this._listeners.forEach(cb => cb(event));
     }
   }
 
-  clear({blockEvent, version}={}) {
-    this.set(null, {blockEvent, version});
+  clear({sendEvent = true, version} = {}) {
+    this.set(null, {sendEvent, version});
   }
 }
 
@@ -81,26 +81,26 @@ class TestCollection {
   }
 
   // For both store and remove:
-  //  blockEvent: if true, do not send an update event to attached listeners.
+  //  sendEvent: if true, send an update event to attached listeners.
   //  version: optionally override the current version being incremented.
 
-  store(id, entity, {blockEvent, version}={}) {
+  store(id, entity, {sendEvent = true, version} = {}) {
     let entry = {id, rawData: entity.rawData};
     this._items.set(id, entry);
     this._version = (version !== undefined) ? version : this._version + 1;
-    if (!blockEvent) {
+    if (sendEvent) {
       let event = {add: [entry], version: this._version};
       this._listeners.forEach(cb => cb(event));
     }
   }
 
-  remove(id, {blockEvent, version}={}) {
+  remove(id, {sendEvent = true, version} = {}) {
     let entry = this._items.get(id);
     assert.notStrictEqual(entry, undefined,
            `Test bug: attempt to remove non-existent id '${id}' from '${this.name}'`);
     this._items.delete(id);
     this._version = (version !== undefined) ? version : this._version + 1;
-    if (!blockEvent) {
+    if (sendEvent) {
       let event = {remove: [entry], version: this._version};
       this._listeners.forEach(cb => cb(event));
     }
@@ -386,7 +386,7 @@ describe('storage-proxy', function() {
 
     // Drop event 2; desync is triggered by v3.
     fooStore.set(engine.newEntity('v1'));
-    fooStore.set(engine.newEntity('v2'), {blockEvent: true});
+    fooStore.set(engine.newEntity('v2'), {sendEvent: false});
     fooStore.set(engine.newEntity('v3'));
     await engine.verifySubsequence('SynchronizeProxy:foo');
     await engine.verify('onHandleUpdate:P1:foo:v1', 'onHandleDesync:P1:foo');
@@ -408,7 +408,7 @@ describe('storage-proxy', function() {
 
     // Drop event 2; desync is triggered by v3.
     barStore.store('i1', engine.newEntity('v1'));
-    barStore.store('i2', engine.newEntity('v2'), {blockEvent: true});
+    barStore.store('i2', engine.newEntity('v2'), {sendEvent: false});
     barStore.store('i3', engine.newEntity('v3'));
     await engine.verifySubsequence('SynchronizeProxy:bar');
     await engine.verify('onHandleUpdate:P1:bar:+[v1]', 'onHandleDesync:P1:bar');
@@ -430,7 +430,7 @@ describe('storage-proxy', function() {
 
     // Drop event 2; desync is triggered by v3.
     barStore.store('i1', engine.newEntity('v1'));
-    barStore.store('i2', engine.newEntity('v2'), {blockEvent: true});
+    barStore.store('i2', engine.newEntity('v2'), {sendEvent: false});
     barStore.store('i3', engine.newEntity('v3'));
     await engine.verifySubsequence('SynchronizeProxy:bar');
     await engine.verify('onHandleUpdate:P1:bar:+[v1]', 'onHandleDesync:P1:bar');
@@ -500,9 +500,9 @@ describe('storage-proxy', function() {
     await engine.verify('onHandleUpdate:P1:foo:v1', 'onHandleUpdate:P1:bar:+[v1]');
 
     // Desync events ignored, resync events are just updates.
-    fooStore.set(engine.newEntity('v2'), {blockEvent: true});
+    fooStore.set(engine.newEntity('v2'), {sendEvent: false});
     fooStore.set(engine.newEntity('v3'));
-    barStore.store('i2', engine.newEntity('v2'), {blockEvent: true});
+    barStore.store('i2', engine.newEntity('v2'), {sendEvent: false});
     barStore.store('i3', engine.newEntity('v3'));
     await engine.verify('onHandleUpdate:P1:foo:v3', 'onHandleUpdate:P1:bar:+[v3]');
   });
@@ -648,7 +648,7 @@ describe('storage-proxy', function() {
     let dropped = engine.newEntity('v2');
     barHandle.store(dropped);
     await engine.verify('HandleStore:bar:v2');
-    barStore.store('i2', dropped, {blockEvent: true});
+    barStore.store('i2', dropped, {sendEvent: false});
 
     // Read the handle again; the proxy is "pending" desynced and should call the backing store.
     barHandle.toList();
@@ -694,7 +694,7 @@ describe('storage-proxy', function() {
 
     // Drop event 2; desync is triggered by v3.
     barStore.store('i1', engine.newEntity('v1'));
-    barStore.store('i2', engine.newEntity('v2'), {blockEvent: true});
+    barStore.store('i2', engine.newEntity('v2'), {sendEvent: false});
     barStore.store('i3', engine.newEntity('v3'));
 
     await engine.verifySubsequence('SynchronizeProxy:bar');
