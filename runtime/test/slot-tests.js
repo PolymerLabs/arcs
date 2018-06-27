@@ -21,23 +21,23 @@ describe('slot', function() {
     slot.stopRenderCallback = () => { ++stopRenderCount; };
 
     // container was null, set to null: nothing happens.
-    await slot.updateContainer(null);
+    slot.onContainerUpdate(null);
     assert.equal(startRenderCount, 0);
     assert.equal(stopRenderCount, 0);
 
     // context was null, set to non-null: startRender is called.
-    await slot.updateContainer('dummy-container');
+    slot.onContainerUpdate('dummy-container', null);
     assert.equal(startRenderCount, 1);
     assert.equal(stopRenderCount, 0);
 
     // context was not null, set to another non-null context: nothing happens.
     assert.isFalse(slot.isSameContainer('other-container'));
-    await slot.updateContainer('other-container');
+    slot.onContainerUpdate('other-container', 'dummy-container');
     assert.equal(startRenderCount, 1);
     assert.equal(stopRenderCount, 0);
 
     // context was not null, set to null: stopRender is called.
-    await slot.updateContainer(null);
+    slot.onContainerUpdate(null, 'other-container');
     assert.equal(startRenderCount, 1);
     assert.equal(stopRenderCount, 1);
   });
@@ -65,7 +65,7 @@ describe('slot', function() {
     // Start render hosted slots
     slot.startRenderCallback = ({particle, slotName, contentTypes}) => { startRenderSlotNames.add(slotName); };
     slot.stopRenderCallback = ({particle, slotName}) => { stopRenderSlotNames.add(slotName); };
-    await slot.updateContainer('dummy-container');
+    slot.onContainerUpdate('dummy-container', null);
     assert.equal(2, startRenderSlotNames.size);
     assert.isTrue(startRenderSlotNames.has(transformationSlotName));
     assert.isTrue(startRenderSlotNames.has(hostedSlotName));
@@ -83,7 +83,7 @@ describe('slot', function() {
     assert.isTrue(startRenderSlotNames.has(otherHostedSlotName));
 
     // Trigger StopRender for both transformation and hosted slots.
-    await slot.updateContainer(null);
+    slot.onContainerUpdate(null, 'dummy-container');
     assert.equal(3, stopRenderSlotNames.size);
     assert.isTrue(stopRenderSlotNames.has(transformationSlotName));
     assert.isTrue(stopRenderSlotNames.has(hostedSlotName));

@@ -35,9 +35,7 @@ describe('RecipeResolver', function() {
             tags: ['#root'],
             handles: [],
             handleConnections: [],
-            getProvidedSlotSpec: () => {
-              return {isSet: false};
-            }
+            spec: {isSet: false}
           }];
         })
       }

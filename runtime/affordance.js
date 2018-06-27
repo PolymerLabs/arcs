@@ -12,6 +12,7 @@ import {Slot} from './slot.js';
 import {DomSlot} from './dom-slot.js';
 import {DomContext} from './dom-context.js';
 import {DescriptionDomFormatter} from './description-dom-formatter.js';
+import {MockDomSlot} from './testing/mock-dom-slot.js';
 
 export class Affordance {
   constructor(options) {
@@ -34,5 +35,5 @@ let _affordances = {};
   {name: 'dom', slotClass: DomSlot, contextClass: DomContext, descriptionFormatter: DescriptionDomFormatter},
   {name: 'dom-touch', slotClass: DomSlot, contextClass: DomContext, descriptionFormatter: DescriptionDomFormatter},
   {name: 'vr', slotClass: DomSlot, contextClass: DomContext, descriptionFormatter: DescriptionDomFormatter},
-  {name: 'mock', slotClass: Slot}
+  {name: 'mock', slotClass: MockDomSlot}
 ].forEach(options => _affordances[options.name] = new Affordance(options));

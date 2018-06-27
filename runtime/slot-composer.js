@@ -10,6 +10,7 @@
 
 import {assert} from '../platform/assert-web.js';
 import {Affordance} from './affordance.js';
+import {SlotContext} from './slot/slot-context.js';
 
 export class SlotComposer {
   /**
@@ -30,10 +31,8 @@ export class SlotComposer {
     this._affordance = Affordance.forName(options.affordance);
     assert(this._affordance.slotClass);
 
-    // TODO: refactor and rename _contextSlots: regular slots hold a context, that holds a container.
-    // These are pseudo slots and hold the container directly. Should instead mimic the regular slots.
-    this._contextSlots = [];
     this._slots = [];
+    this._contexts = [];
 
     if (options.noRoot) {
       return;
@@ -46,14 +45,8 @@ export class SlotComposer {
     }
 
     Object.keys(containerByName).forEach(slotName => {
-      this._contextSlots.push({
-        id: `rootslotid-${slotName}`,
-        name: slotName,
-        tags: [`${slotName}`],
-        container: containerByName[slotName],
-        handleConnections: [],
-        handles: 0,
-        getProvidedSlotSpec: () => { return {isSet: false}; }});
+      this._contexts.push(SlotContext.createContextForContainer(
+        `rootslotid-${slotName}`, slotName, containerByName[slotName], [`${slotName}`]));
     });
   }
 
@@ -63,10 +56,21 @@ export class SlotComposer {
     return this._slots.find(s => s.consumeConn.particle == particle && s.consumeConn.name == slotName);
   }
 
+  findContainerByName(name) {
+    let contexts = this._contexts.filter(context => context.name === name);
+    if (contexts.length == 0) {
+      assert(`No containers for '${name}'`);
+    } else if (contexts.length == 1) {
+      return contexts[0].container;
+    } else {
+      assert(`Ambiguous containers for '${name}'`);
+    }
+  }
+
   _findContainer(slotId) {
-    let contextSlot = this._contextSlots.find(slot => slot.id == slotId);
-    if (contextSlot) {
-      return contextSlot.container;
+    let context = this._contexts.find(context => context.id == slotId);
+    if (context) {
+      return context.container;
     }
   }
 
@@ -79,6 +83,7 @@ export class SlotComposer {
     transformationSlot.addHostedSlot(hostedSlotId, hostedParticleName, hostedSlotName);
     return hostedSlotId;
   }
+
   _findSlotByHostedSlotId(hostedSlotId) {
     for (let slot of this._slots) {
       let hostedSlot = slot.getHostedSlot(hostedSlotId);
@@ -87,6 +92,7 @@ export class SlotComposer {
       }
     }
   }
+
   findHostedSlot(hostedParticle, hostedSlotName) {
     for (let slot of this._slots) {
       let hostedSlot = slot.findHostedSlot(hostedParticle, hostedSlotName);
@@ -116,6 +122,10 @@ export class SlotComposer {
         slot.stopRenderCallback = this.arc.pec.stopRender.bind(this.arc.pec);
         slot.innerSlotsUpdateCallback = this.updateInnerSlots.bind(this);
         newSlots.push(slot);
+
+        cs.slotSpec.providedSlots.forEach(providedSpec => {
+          this._contexts.push(SlotContext.createContextForSourceSlot(providedSpec, slot));
+        });
       });
     });
 
@@ -123,22 +133,11 @@ export class SlotComposer {
     newSlots.forEach(s => {
       assert(!s.getContext(), `Unexpected context in new slot`);
 
-      let container = null;
-      let sourceConnection = s.consumeConn.targetSlot && s.consumeConn.targetSlot.sourceConnection;
-      if (sourceConnection) {
-        let sourceConnSlot = this.getSlot(sourceConnection.particle, sourceConnection.name);
-        if (sourceConnSlot) {
-          container = sourceConnSlot.getInnerContainer(s.consumeConn.name);
-        }
-      } else { // External slots provided at SlotComposer ctor (eg 'root')
-        container = this._findContainer(s.consumeConn.targetSlot.id);
-      }
-
       this._slots.push(s);
 
-      if (container) {
-        s.updateContainer(container);
-      }
+      let context = this._contexts.find(context => context.id == s.consumeConn.targetSlot.id);
+      assert(context, `No context found for ${s.consumeConn.particle.name}::${s.consumeConn.name}`);
+      context.addSlot(s);
     });
   }
 
@@ -187,34 +186,20 @@ export class SlotComposer {
     // Update provided slot contexts.
     Object.keys(slot.consumeConn.providedSlots).forEach(providedSlotName => {
       let providedContainer = slot.getInnerContainer(providedSlotName);
-      let providedSlot = slot.consumeConn.providedSlots[providedSlotName];
-      providedSlot.consumeConnections.forEach(cc => {
-        // This will trigger 'start' or 'stop' render, if applicable.
-        let innerSlot = this.getSlot(cc.particle, cc.name);
-        // Note: slot may not exist yet, if providing particle's context was updated after arc's
-        // active recipe was updated, but before slot-composer initialized the new recipe.
-        if (innerSlot) {
-          innerSlot.updateContainer(providedContainer);
-        }
-      });
+      let context = this._contexts.find(context => context.sourceSlot == slot && context.spec.name == providedSlotName);
+      assert(context, `No context for ${providedSlotName} inside ${slot.consumeConn.particle.name}::${slot.consumeConn.name}`);
+      context.container = providedContainer;
     });
   }
 
   getAvailableSlots() {
-    let availableSlots = this.arc.activeRecipe.slots.slice();
-
-    this._contextSlots.forEach(contextSlot => {
-      if (!availableSlots.find(s => s.id == contextSlot.id)) {
-        availableSlots.push(contextSlot);
-      }
-    });
-    return availableSlots;
+     return this._contexts;
   }
 
   dispose() {
     this._slots.forEach(slot => slot.dispose());
     this._slots.forEach(slot => slot.setContainer(null));
     this._affordance.contextClass.dispose();
-    this._contextSlots.forEach(contextSlot => this._affordance.contextClass.clear(contextSlot.container));
+    this._contexts.forEach(context => this._affordance.contextClass.clear(context.container));
   }
 }

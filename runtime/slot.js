@@ -17,7 +17,7 @@ export class Slot {
     assert(arc);
     this._consumeConn = consumeConn;
     this._arc = arc;
-    this._context = null;
+    this._context = null; // TODO: replace with new context implementation.
     this.startRenderCallback = null;
     this.stopRenderCallback = null;
     this._hostedSlotById = new Map();
@@ -28,24 +28,17 @@ export class Slot {
   setContainer(container) { this._context = container; }
   isSameContainer(container) { return this._context == container; }
 
-  updateContainer(container) {
-    // do nothing, if container unchanged.
-    if ((!this.getContext() && !container) ||
-        (this.getContext() && container && this.isSameContainer(container))) {
-      return;
-    }
-
-    // update the container;
-    let wasNull = !this.getContext();
+  onContainerUpdate(container, originalContainer) {
     this.setContainer(container);
-    if (this.getContext()) {
-      if (wasNull) {
+    if (Boolean(container) != Boolean(originalContainer)) {
+      if (container) {
         this.startRender();
+      } else {
+        this.stopRender();
       }
-    } else {
-      this.stopRender();
     }
   }
+
   startRender() {
     if (this.startRenderCallback) {
       const slotName = this.consumeConn.name;
