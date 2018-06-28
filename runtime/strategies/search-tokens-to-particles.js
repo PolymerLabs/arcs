@@ -14,23 +14,13 @@ export class SearchTokensToParticles extends Strategy {
   constructor(arc) {
     super();
 
-    this._particleByToken = {};
-    this._particleByPhrase = {};
-    this._recipeByToken = {};
-    this._recipeByPhrase = {};
-    for (let particle of arc.context.particles) {
-      this._addThing(particle.name, particle, this._particleByToken, this._particleByPhrase);
-      this._addThing(particle.primaryVerb, particle, this._particleByToken, this._particleByPhrase);
+    let thingByToken = {};
+    let thingByPhrase = {};
+    for (let [thing, packaged] of [...arc.context.particles.map(p => [p, {spec: p}]),
+                                   ...arc.context.recipes.map(r => [r, {innerRecipe: r}])]) {
+      this._addThing(thing.name, packaged, thingByToken, thingByPhrase);
+      thing.verbs.forEach(verb => this._addThing(verb, packaged, thingByToken, thingByPhrase));
     }
-    for (let recipe of arc.context.recipes) {
-      this._addThing(recipe.name, recipe, this._recipeByToken, this._recipeByPhrase);
-      recipe.verbs.forEach(verb => this._addThing(verb, recipe, this._recipeByToken, this._recipeByPhrase));
-    }
-
-    let findParticles = token => this._particleByToken[token] || [];
-    let findRecipes = token => this._recipeByToken[token] || [];
-    let particleByPhrase = this._particleByPhrase;
-    let recipeByPhrase = this._recipeByPhrase;
 
     class SearchWalker extends Walker {
       onRecipe(recipe) {
@@ -40,47 +30,28 @@ export class SearchTokensToParticles extends Strategy {
 
         let byToken = {};
         let resolvedTokens = new Set();
+        let _addThingsByToken = (token, things) => {
+          things.forEach(thing => {
+            byToken[token] = byToken[token] || [];
+            byToken[token].push(thing);
+            token.split(' ').forEach(t => resolvedTokens.add(t));
+          });
+        };
 
-        Object.keys(particleByPhrase).forEach(phrase => {
+        for (let [phrase, things] of Object.entries(thingByPhrase)) {
           let tokens = phrase.split(' ');
           if (tokens.every(token => recipe.search.unresolvedTokens.find(unresolved => unresolved == token)) &&
               recipe.search.phrase.includes(phrase)) {
-            for (let spec of particleByPhrase[phrase]) {
-              byToken[phrase] = byToken[phrase] || [];
-              byToken[phrase].push({spec});
-              tokens.forEach(token => resolvedTokens.add(token));
-            }
+            _addThingsByToken(phrase, things);
           }
-        });
-
-        Object.keys(recipeByPhrase).forEach(phrase => {
-          let tokens = phrase.split(' ');
-          if (tokens.every(token => recipe.search.unresolvedTokens.find(unresolved => unresolved == token)) &&
-              recipe.search.phrase.includes(phrase)) {
-            for (let innerRecipe of recipeByPhrase[phrase]) {
-              byToken[phrase] = byToken[phrase] || [];
-              byToken[phrase].push({innerRecipe});
-              tokens.forEach(token => resolvedTokens.add(token));
-            }
-          }
-        });
+        }
 
         for (let token of recipe.search.unresolvedTokens) {
           if (resolvedTokens.has(token)) {
             continue;
           }
-          for (let spec of findParticles(token)) {
-            // TODO: Skip particles that are already in the active recipe?
-            byToken[token] = byToken[token] || [];
-            byToken[token].push({spec});
-            resolvedTokens.add(token);
-          }
-          for (let innerRecipe of findRecipes(token)) {
-            // TODO: Skip recipes with particles that are already in the active recipe?
-            byToken[token] = byToken[token] || [];
-            byToken[token].push({innerRecipe});
-            resolvedTokens.add(token);
-          }
+          let things = thingByToken[token];
+          things && _addThingsByToken(token, things);
         }
 
         if (resolvedTokens.size == 0) {
@@ -131,12 +102,10 @@ export class SearchTokensToParticles extends Strategy {
     }
     this._addThingByToken(token.toLowerCase(), thing, thingByToken);
 
-    if (thingByPhrase) {
-      // split DoSomething into "do something" and add the phrase
-      let phrase = token.replace(/([^A-Z])([A-Z])/g, '$1 $2').replace(/([A-Z][^A-Z])/g, ' $1').replace(/[\s]+/g, ' ').trim();
-      if (phrase != token) {
-        this._addThingByToken(phrase.toLowerCase(), thing, thingByPhrase);
-      }
+    // split DoSomething into "do something" and add the phrase
+    let phrase = token.replace(/([^A-Z])([A-Z])/g, '$1 $2').replace(/([A-Z][^A-Z])/g, ' $1').replace(/[\s]+/g, ' ').trim();
+    if (phrase != token) {
+      this._addThingByToken(phrase.toLowerCase(), thing, thingByPhrase);
     }
   }
   _addThingByToken(key, thing, thingByKey) {
