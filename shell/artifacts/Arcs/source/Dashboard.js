@@ -16,26 +16,40 @@ defineParticle(({DomParticle, html, log, resolver}) => {
     padding: 16px;
     font-size: 0.75em;
   }
-  [${host}] [section] {
-    padding: 8px;
+  [${host}] [head] {
+    background-color: #eeeeee;
   }
-  [${host}] [item] {
-    cursor: pointer;
+  [${host}] #friendstable {
+    border: 1px solid silver;
+    border-right: none;
+    border-bottom: none;
+  }
+  [${host}] #friendstable [row] {
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid silver;
+  }
+  [${host}] #friendstable span {
+    flex: 1;
+    flex-shrink: 0;
+    border-right: 1px solid silver;
+    padding: 8px 12px;
   }
 </style>
 
 <div ${host}>
-  <h2>My Friends</h2>
 
-  <ul>{{friends}}</ul>
+  <h2>Dashboard</h2>
+
+  <div id="friendstable">
+    <div row head><span>Friends</span></div>
+    <div>{{friends}}</div>
+  </div>
 
   <template friend>
-    <li>
-      <div>{{name}}</div>
-      <ul>{{avatars}}</ul>
-      <h4>Friends of <span>{{name}}</span></h4>
-      <ul>{{friends}}</ul>
-    </li>
+    <div row on-click="_onSelect" key="{{index}}">
+      <span>{{name}}</span>
+    </div>
   </template>
 
   <template friendsfriend>

@@ -4,7 +4,15 @@
 // Code distributed by Google as part of this project is also
 // subject to an additional IP rights grant found at
 
-import 'Login.recipe'
-import 'Launcher.recipe'
-import 'Dashboard.recipe'
+import 'ArcMetadata.schema'
+
+particle Launcher in 'source/Launcher.js'
+  inout [ArcMetadata] arcs
+  consume root
+  description `arcs launcher`
+
+recipe Launcher
+  use #arcmetadata as arcs
+  Launcher
+    arcs = arcs
 

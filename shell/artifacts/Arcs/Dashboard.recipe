@@ -5,26 +5,30 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import 'Person.schema'
-import 'Avatar.schema'
+schema Person
+  Text id
+
+schema Avatar
+  URL url
+  Text owner
 
 schema User
   Text id
   Text name
   URL avatar
 
-particle Friends in 'source/Friends.js'
+particle Dashboard in 'source/Dashboard.js'
   in [User] friends
   in [Person] people
   in [Avatar] avatars
   consume root
 
-recipe Friends
+recipe Dashboard
   map #friends as friends
   map #BOXED_avatar as avatars
   map #BOXED_friends as people
-  Friends
+  Dashboard
     friends = friends
     people = people
     avatars = avatars
-  description `see information about friends`
+  description `see dashboard`
