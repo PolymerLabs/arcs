@@ -27,7 +27,6 @@ export class Speculator {
       }
     }
 
-    let trace = Tracing.start({cat: 'speculator', name: 'Speculator::speculate'});
     let newArc = await arc.cloneForSpeculativeExecution();
     let relevance = new Relevance(arc.getStoresState());
     let relevanceByHash = this._relevanceByHash;
@@ -45,6 +44,6 @@ export class Speculator {
       }
     }
 
-    return trace.endWith(newArc.instantiate(plan).then(a => awaitCompletion()));
+    return newArc.instantiate(plan).then(a => awaitCompletion());
   }
 }

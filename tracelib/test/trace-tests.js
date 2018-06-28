@@ -80,6 +80,23 @@ describe('Tracing', function() {
     );
   });
 
+  it('sync event with endInfo', async () => {
+    Tracing.enable();
+    Tracing.__clearForTests();
+
+    let trace = Tracing.start({cat: 'Stuff'});
+    const sum = 2 + 2; // Doing some work.
+    trace.end({name: 'Thingy::thing', args: {content: 'yay'}});
+
+    const events = Tracing.save().traceEvents;
+    assert.lengthOf(events, 1);
+    const [event] = events;
+    assert.equal(event.ph, 'X');
+    assert.equal(event.cat, 'Stuff');
+    assert.equal(event.name, 'Thingy::thing');
+    assert.deepEqual(event.args, {content: 'yay'});
+  });
+
   it('traces an asynchronous event', async () => {
     // Trace waits twice for an async operation. Visualizes as:
     // |---| → |---| → |---|
@@ -88,7 +105,7 @@ describe('Tracing', function() {
     Tracing.__clearForTests();
 
     const beginMicros = Tracing.now();
-    const trace = Tracing.start({cat: 'Stuff', name: 'Thingy::thing'});
+    const trace = Tracing.start({cat: 'Stuff', name: 'Thingy::thing', sequence: 'stream_1'});
     const insideFirstSync = Tracing.now();
     let promise = trace.wait(waitABit());
     const betweenFirstAndSecond = Tracing.now();
@@ -105,6 +122,7 @@ describe('Tracing', function() {
     assert.lengthOf(events, 6);
     for (let event of events) {
       assert.equal(event.cat, 'Stuff');
+      assert.equal(event.seq, 'stream_1');
       assert.isUndefined(event.args);
     }
 
