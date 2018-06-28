@@ -155,7 +155,7 @@ export const FbGraph = Firedb => {
       // 1. there is no parent to see a 'child-changed' on us
       // 2. there is no notification to the parent that it's `value` has changed
       // we simulate those effects here
-      if (this.schema && this.schema.$fromJoin) {
+      if (this.$fromJoin) {
         this._notifySchema();
         this._fire('change');
       }
@@ -188,14 +188,15 @@ export const FbGraph = Firedb => {
     }
     _createField(fieldName, fieldSchema) {
       let fieldPath = `${this.path}/${fieldName}`;
+      let fromJoin = false;
       if (fieldSchema.$join) {
         fieldPath = fieldSchema.$join.path;
         fieldSchema = fieldSchema.$join.schema;
-        if (fieldSchema) {
-          fieldSchema.$fromJoin = true;
-        }
+        fromJoin = true;
       }
-      return new Field(this, fieldPath, fieldName, fieldSchema, event => this._onEvent(event));
+      const field = new Field(this, fieldPath, fieldName, fieldSchema, event => this._onEvent(event));
+      field.$fromJoin = fromJoin;
+      return field;
     }
   };
 
