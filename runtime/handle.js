@@ -139,6 +139,7 @@ class Collection extends Handle {
           update.added = this._restore(details.add);
         if ('remove' in details)
           update.removed = this._restore(details.remove);
+        update.originator = details.originatorId == this._particleId;
         particle.onHandleUpdate(this, update);
         return;
       }

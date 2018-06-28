@@ -44,17 +44,17 @@ class TestVariable {
   //  sendEvent: if true, send an update event to attached listeners.
   //  version: optionally override the current version being incremented.
 
-  set(entity, {sendEvent = true, version} = {}) {
+  set(entity, {sendEvent = true, version, originatorId} = {}) {
     this._stored = entity;
     this._version = (version !== undefined) ? version : this._version + 1;
     if (sendEvent) {
-      let event = {data: this._stored, version: this._version};
+      let event = {data: this._stored, version: this._version, originatorId};
       this._listeners.forEach(cb => cb(event));
     }
   }
 
-  clear({sendEvent = true, version} = {}) {
-    this.set(null, {sendEvent, version});
+  clear({sendEvent = true, version, originatorId} = {}) {
+    this.set(null, {sendEvent, version, originatorId});
   }
 }
 
@@ -84,24 +84,24 @@ class TestCollection {
   //  sendEvent: if true, send an update event to attached listeners.
   //  version: optionally override the current version being incremented.
 
-  store(id, entity, {sendEvent = true, version} = {}) {
+  store(id, entity, {sendEvent = true, version, originatorId} = {}) {
     let entry = {id, rawData: entity.rawData};
     this._items.set(id, entry);
     this._version = (version !== undefined) ? version : this._version + 1;
     if (sendEvent) {
-      let event = {add: [entry], version: this._version};
+      let event = {add: [entry], version: this._version, originatorId};
       this._listeners.forEach(cb => cb(event));
     }
   }
 
-  remove(id, {sendEvent = true, version} = {}) {
+  remove(id, {sendEvent = true, version, originatorId} = {}) {
     let entry = this._items.get(id);
     assert.notStrictEqual(entry, undefined,
            `Test bug: attempt to remove non-existent id '${id}' from '${this.name}'`);
     this._items.delete(id);
     this._version = (version !== undefined) ? version : this._version + 1;
     if (sendEvent) {
-      let event = {remove: [entry], version: this._version};
+      let event = {remove: [entry], version: this._version, originatorId};
       this._listeners.forEach(cb => cb(event));
     }
   }
@@ -128,6 +128,9 @@ class TestParticle {
     }
     if ('removed' in update) {
       details += '-' + this._toString(update.removed);
+    }
+    if (update.originator) {
+      details += '(originator)';
     }
     this._report(['onHandleUpdate', this.id, handle.name, details].join(':'));
   }
@@ -764,5 +767,35 @@ describe('storage-proxy', function() {
     engine.sendSync(fooStore);
     fooStore.set(engine.newEntity('z'));
     await engine.verify('SynchronizeProxy:foo', 'onHandleSync:P3:foo:y', 'onHandleUpdate:P2:foo:z');
+  });
+
+  it('delivers the originator status to the originating particle', async () => {
+    let engine = new TestEngine();
+    let barStore = engine.newCollection('bar');
+    let barProxy = engine.newProxy(barStore);
+
+    let particle1 = engine.newParticle();
+    let particle2 = engine.newParticle();
+    let barHandle1 = engine.newHandle(barStore, barProxy, particle1, CAN_READ, CAN_WRITE);
+    let barHandle2 = engine.newHandle(barStore, barProxy, particle2, CAN_READ, CAN_WRITE);
+
+    barProxy.register(particle1, barHandle1);
+    barProxy.register(particle2, barHandle2);
+    engine.sendSync(barStore);
+
+    await engine.verify('InitializeProxy:bar', 'SynchronizeProxy:bar',
+                        'onHandleSync:P1:bar:[]', 'onHandleSync:P2:bar:[]');
+
+    barStore.store('i1', engine.newEntity('v1'), {originatorId: particle1.id});
+
+    await engine.verifySubsequence('onHandleUpdate:P1:bar:+[v1](originator)');
+    await engine.verifySubsequence('onHandleUpdate:P2:bar:+[v1]');
+    await engine.verify();
+
+    barStore.store('i2', engine.newEntity('v2'), {originatorId: particle2.id});
+
+    await engine.verifySubsequence('onHandleUpdate:P1:bar:+[v2]');
+    await engine.verifySubsequence('onHandleUpdate:P2:bar:+[v2](originator)');
+    await engine.verify();
   });
 });
