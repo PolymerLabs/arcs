@@ -22,7 +22,8 @@ describe('demo flow', function() {
   });
 
   it('flows like a demo', async function() {
-    let helper = await TestHelper.loadManifestAndPlan('./shell/artifacts/Products/Products.recipes', {
+    let helper = await TestHelper.createAndPlan({
+      manifestFilename: './shell/artifacts/Products/Products.recipes',
       expectedNumPlans: 2,
       verify: async (plans) => {
         let descriptions = await Promise.all(plans.map(plan => plan.description.getRecipeSuggestion()));

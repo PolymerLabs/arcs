@@ -24,17 +24,17 @@ describe('OuterPortAttachment', function() {
   after(() => DevtoolsForTests.reset());
   it('produces dataflow messages on devtools channel', async () => {
     Random.seedForTests();
-    const testHelper = new TestHelper({
+    const testHelper = await TestHelper.create({
+      manifestString: `
+        schema Foo
+          Text value
+        particle P in 'p.js'
+          inout Foo foo
+        recipe
+          use as foo
+          P
+            foo = foo`,
       loader: new StubLoader({
-        'manifest': `
-          schema Foo
-            Text value
-          particle P in 'p.js'
-            inout Foo foo
-          recipe
-            use as foo
-            P
-              foo = foo`,
         'p.js': `defineParticle(({Particle}) => class P extends Particle {
           async setHandles(handles) {
             let foo = handles.get('foo');
@@ -43,7 +43,6 @@ describe('OuterPortAttachment', function() {
         });`
       })
     });
-    await testHelper.loadManifest('manifest');
     const arc = testHelper.arc;
 
     const Foo = arc._context.findSchemaByName('Foo').entityClass();

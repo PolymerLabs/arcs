@@ -71,8 +71,9 @@ describe('Multiplexer', function() {
   });
 
   it('renders polymorphic multiplexed slots', async function() {
-    let helper = new TestHelper();
-    await helper.loadManifest('./runtime/test/particles/artifacts/polymorphic-muxing.recipes');
+    let helper = await TestHelper.create({
+      manifestFilename: './runtime/test/particles/artifacts/polymorphic-muxing.recipes'
+    });
     let context = helper.arc._context;
 
     let showOneParticle = context.particles.find(p => p.name == 'ShowOne');

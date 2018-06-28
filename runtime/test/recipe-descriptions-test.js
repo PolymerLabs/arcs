@@ -13,8 +13,12 @@
 import {assert} from './chai-web.js';
 import {TestHelper} from '../testing/test-helper.js';
 import {DescriptionDomFormatter} from '../description-dom-formatter.js';
+import {StubLoader} from '../testing/stub-loader.js';
 
 describe('recipe descriptions test', function() {
+  let loader = new StubLoader({
+    '*': `defineParticle(({Particle}) => { return class P extends Particle {} });`
+  });
   function createManifestString(options) {
     options = options || {};
     return `
@@ -68,7 +72,9 @@ store BoxesStore of [Box] 'allboxes' in AllBoxes` : ''}
   }
 
   async function generateRecipeDescription(options) {
-    let helper = await TestHelper.parseManifestAndPlan(createManifestString(options));
+    let helper = await TestHelper.createAndPlan({
+      manifestString: createManifestString(options), loader
+    });
     assert.lengthOf(helper.plans, 1);
 
     return helper.plans[0].description.getRecipeSuggestion(options.formatter);
@@ -215,7 +221,7 @@ store BoxesStore of [Box] 'allboxes' in AllBoxes` : ''}
   });
 
   it('fails generating recipe description with duplicate particles', async () => {
-    await TestHelper.parseManifestAndPlan(`
+    await TestHelper.createAndPlan({manifestString: `
       schema Foo
       particle ShowFoo
         out Foo foo
@@ -226,13 +232,13 @@ store BoxesStore of [Box] 'allboxes' in AllBoxes` : ''}
         ShowFoo
           foo -> fooHandle
         description \`cannot show duplicate \${ShowFoo.foo}\`
-    `).then(() => assert('expected exception for duplicate particles'))
+    `, loader}).then(() => assert('expected exception for duplicate particles'))
       .catch((err) => assert.equal(
           err.message, 'Cannot reference duplicate particle \'ShowFoo\' in recipe description.'));
   });
 
   it('refers to particle description', async () => {
-    let helper = await TestHelper.parseManifestAndPlan(`
+    let helper = await TestHelper.createAndPlan({manifestString: `
       schema Foo
       particle HelloFoo
         in Foo foo
@@ -243,7 +249,7 @@ store BoxesStore of [Box] 'allboxes' in AllBoxes` : ''}
         HelloFoo
           foo <- h0
         description \`do "\${HelloFoo}"\`
-    `);
+    `, loader});
     assert.lengthOf(helper.plans, 1);
 
     assert.equal('Do "hello foo"', await helper.plans[0].description.getRecipeSuggestion());
@@ -253,7 +259,7 @@ store BoxesStore of [Box] 'allboxes' in AllBoxes` : ''}
   });
 
   it('generates recipe description with duplicate particles', async () => {
-    let helper = await TestHelper.parseManifestAndPlan(`
+    let helper = await TestHelper.createAndPlan({manifestString: `
       schema Foo
       particle ShowFoo
         out Foo foo
@@ -271,7 +277,7 @@ store BoxesStore of [Box] 'allboxes' in AllBoxes` : ''}
           foo -> fooHandle
         Dummy
         description \`show \${ShowFoo.foo} with dummy\`
-  `);
+    `, loader});
     assert.lengthOf(helper.plans, 2);
     assert.equal('Show foo.', await helper.plans[0].description.getRecipeSuggestion());
 

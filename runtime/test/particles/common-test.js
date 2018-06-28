@@ -38,7 +38,7 @@ describe('common particles test', function() {
     CopyCollection
       input <- smallthings
       output -> things
-  
+
   resource BigThings
     start
     [
@@ -46,7 +46,7 @@ describe('common particles test', function() {
       {"name": "car"}
     ]
   store Store0 of [Thing] 'bigthings' in BigThings
-  
+
   resource SmallThings
     start
     [
@@ -56,7 +56,7 @@ describe('common particles test', function() {
     ]
   store Store1 of [Thing] 'smallthings' in SmallThings
     `);
-  
+
     let recipe = manifest.recipes[0];
     let newRecipe = recipe.clone();
     recipe.normalize();
@@ -67,9 +67,11 @@ describe('common particles test', function() {
 
 
   it('copy handle test', async () => {
-    let helper = await TestHelper.loadManifestAndPlan(
-        './runtime/test/particles/artifacts/copy-collection-test.recipes',
-        {expectedNumPlans: 1, expectedSuggestions: ['Copy all things!']});
+    let helper = await TestHelper.createAndPlan({
+      manifestFilename: './runtime/test/particles/artifacts/copy-collection-test.recipes',
+      expectedNumPlans: 1,
+      expectedSuggestions: ['Copy all things!']
+    });
     assert.isEmpty(helper.arc._stores);
 
     await helper.acceptSuggestion({particles: ['CopyCollection', 'CopyCollection']});

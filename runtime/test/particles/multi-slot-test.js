@@ -15,16 +15,16 @@ import {TestHelper} from '../../testing/test-helper.js';
 
 describe('multi-slot test', function() {
   async function init() {
-    return await TestHelper.loadManifestAndPlan(
-      './runtime/test/particles/artifacts/multi-slot-test.manifest', {
-        expectedNumPlans: 4,
-        expectedSuggestions: ['Show question.', 'Show answer.', 'Show question and answer.', 'Show question and hints.']
+    return await TestHelper.createAndPlan({
+      manifestFilename: './runtime/test/particles/artifacts/multi-slot-test.manifest',
+      expectedNumPlans: 4,
+      expectedSuggestions: ['Show question.', 'Show answer.', 'Show question and answer.', 'Show question and hints.']
     });
   }
 
   let verifyHandler = (expectedSlotNames, particleName, slotName, content) => {
     assert.isTrue(expectedSlotNames.includes(slotName), `Unexpected slot ${slotName}`);
- 
+
     assert.isTrue(content.template.includes(`{{${slotName}}}`));
     let exclude = slotName == 'question' ? 'answer' : 'question';
     assert.isFalse(content.template.includes(`{{${exclude}}}`));
