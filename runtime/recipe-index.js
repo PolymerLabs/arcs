@@ -161,16 +161,20 @@ export class RecipeIndex {
           if (!MapSlots.handlesMatch(slotConn, slot)) {
             // Find potential handle connections to coalesce
             slot.handleConnections.forEach(slotHandleConn => {
-              let matchingConn = Object.values(slotConn.particle.connections).find(particleConn => Handle.effectiveType(slotHandleConn.handle._mappedType, [particleConn]));
-              if (matchingConn) {
+              let matchingConns = Object.values(slotConn.particle.connections).filter(particleConn => {
+                return (!particleConn.handle || !particleConn.handle.id || particleConn.handle.id == slotHandleConn.handle.id) &&
+                       Handle.effectiveType(slotHandleConn.handle._mappedType, [particleConn]);
+              });
+              matchingConns.forEach(matchingConn => {
+                let allMatchingHandleConns = [matchingConn].concat(matchingConn.handle ? matchingConn.handle.connections : []);
                 // Verify all connections of this handle have directions compatible with the fate.
                 if (slotHandleConn.handle.fate == 'map') {
-                  if (matchingConn.handle.connections.find(conn => ['out', 'inout'].includes(conn.direction))) {
+                  if (allMatchingHandleConns.find(conn => ['out', 'inout'].includes(conn.direction))) {
                     return;
                   }
                 }
                 matchingHandles.push({handle: slotHandleConn.handle, matchingConn});
-              }
+              });
             });
 
             if (matchingHandles.length == 0) {

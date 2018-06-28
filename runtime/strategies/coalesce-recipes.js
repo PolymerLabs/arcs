@@ -49,7 +49,7 @@ export class CoalesceRecipes extends Strategy {
             mergedSlotConn.connectToSlot(slot);
             matchingHandles.forEach(({handle, matchingConn}) => {
               // matchingConn in the mergedSlotConnection's recipe should be connected to `handle` in the slot's recipe.
-              let mergedMatchingConn = cloneMap.get(matchingHandles[0].matchingConn);
+              let mergedMatchingConn = cloneMap.get(matchingConn);
               let disconnectedHandle = mergedMatchingConn.handle;
 
               mergedMatchingConn.disconnectHandle();
