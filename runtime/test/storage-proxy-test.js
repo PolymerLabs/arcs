@@ -44,17 +44,17 @@ class TestVariable {
   //  sendEvent: if true, send an update event to attached listeners.
   //  version: optionally override the current version being incremented.
 
-  set(entity, {sendEvent = true, version, originator} = {}) {
+  set(entity, {sendEvent = true, version, originatorId} = {}) {
     this._stored = entity;
     this._version = (version !== undefined) ? version : this._version + 1;
     if (sendEvent) {
-      let event = {data: this._stored, version: this._version, originator};
+      let event = {data: this._stored, version: this._version, originatorId};
       this._listeners.forEach(cb => cb(event));
     }
   }
 
-  clear({sendEvent = true, version, originator} = {}) {
-    this.set(null, {sendEvent, version, originator});
+  clear({sendEvent = true, version, originatorId} = {}) {
+    this.set(null, {sendEvent, version, originatorId});
   }
 }
 
@@ -84,24 +84,24 @@ class TestCollection {
   //  sendEvent: if true, send an update event to attached listeners.
   //  version: optionally override the current version being incremented.
 
-  store(id, entity, {sendEvent = true, version, originator} = {}) {
+  store(id, entity, {sendEvent = true, version, originatorId} = {}) {
     let entry = {id, rawData: entity.rawData};
     this._items.set(id, entry);
     this._version = (version !== undefined) ? version : this._version + 1;
     if (sendEvent) {
-      let event = {add: [entry], version: this._version, originator};
+      let event = {add: [entry], version: this._version, originatorId};
       this._listeners.forEach(cb => cb(event));
     }
   }
 
-  remove(id, {sendEvent = true, version, originator} = {}) {
+  remove(id, {sendEvent = true, version, originatorId} = {}) {
     let entry = this._items.get(id);
     assert.notStrictEqual(entry, undefined,
            `Test bug: attempt to remove non-existent id '${id}' from '${this.name}'`);
     this._items.delete(id);
     this._version = (version !== undefined) ? version : this._version + 1;
     if (sendEvent) {
-      let event = {remove: [entry], version: this._version, originator};
+      let event = {remove: [entry], version: this._version, originatorId};
       this._listeners.forEach(cb => cb(event));
     }
   }
@@ -786,13 +786,13 @@ describe('storage-proxy', function() {
     await engine.verify('InitializeProxy:bar', 'SynchronizeProxy:bar',
                         'onHandleSync:P1:bar:[]', 'onHandleSync:P2:bar:[]');
 
-    barStore.store('i1', engine.newEntity('v1'), {originator: particle1.id});
+    barStore.store('i1', engine.newEntity('v1'), {originatorId: particle1.id});
 
     await engine.verifySubsequence('onHandleUpdate:P1:bar:+[v1](originator)');
     await engine.verifySubsequence('onHandleUpdate:P2:bar:+[v1]');
     await engine.verify();
 
-    barStore.store('i2', engine.newEntity('v2'), {originator: particle2.id});
+    barStore.store('i2', engine.newEntity('v2'), {originatorId: particle2.id});
 
     await engine.verifySubsequence('onHandleUpdate:P1:bar:+[v2]');
     await engine.verifySubsequence('onHandleUpdate:P2:bar:+[v2](originator)');
