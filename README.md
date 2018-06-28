@@ -320,6 +320,9 @@ arcs/enclave> docker run --privileged -p 5984:5984 \
 - To jump into a command shell, use a command like `docker run -it
   --entrypoint "/bin/bash" test-with-asylo -i`.
 - The current version uses CouchDB, but it is intended to be easy to change.
+- A Docker that supports [multi-stage
+  builds](https://docs.docker.com/develop/develop-images/multistage-build/) is
+  required (Docker >= 17.05).
 
 Remaining work:
 - Encryption keys should never leave enclave space.

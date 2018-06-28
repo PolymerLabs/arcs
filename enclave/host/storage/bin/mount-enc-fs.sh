@@ -26,7 +26,7 @@ ENCRYPTED_NAME=$4
 
 if [ ! -e $KEYFILE ]; then
 	echo "Generating a new key $KEYFILE..."
-	cd /arcs/asylo && bazel run --config=enc-sim //arcs_enclave -- --output_file $KEYFILE
+	cd /arcs/enclave && bazel run --config=enc-sim //arcs_enclave -- --output_file $KEYFILE
 	echo -n "New key: "
 	cat $KEYFILE
 fi

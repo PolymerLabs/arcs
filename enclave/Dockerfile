@@ -45,7 +45,7 @@ RUN /opt/asylo/distrib/sgx_x86_64/install-toolchain \
 # standard couchdb image to include packages necessary to build
 # against Asylo.
 #################################################################
-FROM couchdb:latest AS base
+FROM couchdb:latest
 
 COPY --from=toolchain /opt/asylo/toolchains/ /opt/asylo/toolchains/
 COPY --from=toolchain /usr/local/share/asylo/ /usr/local/share/asylo/
@@ -87,12 +87,6 @@ RUN \
 		openjdk-8-jre-headless \
 		python-jinja2
 
-
-#################################################################
-# Copy our code into the base image
-#################################################################
-FROM base
-
-ADD . /arcs/asylo
-
 CMD ["/opt/storage/bin/start-couchdb.sh"]
+
+ADD . /arcs/enclave
