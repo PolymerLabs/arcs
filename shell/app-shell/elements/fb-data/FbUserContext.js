@@ -19,10 +19,7 @@ export const FbUserContext = class {
             $join: {
               path: `/arcs/${parent}`,
               schema: {
-                $changed: field => {
-                  console.log(field);
-                  this._onShareChanged(field);
-                },
+                $changed: field => this._onShareChanged(field),
                 shim_handles: this._userShimHandlesSchema
               }
             }
@@ -34,7 +31,6 @@ export const FbUserContext = class {
   get _userShimHandlesSchema() {
     return {
       '*': (parent, key, datum) => {
-        //console.log(parent, key, datum);
         switch (key) {
           case 'avatar':
             return this._avatarSchema;

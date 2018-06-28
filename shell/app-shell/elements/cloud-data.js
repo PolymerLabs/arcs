@@ -8,11 +8,7 @@ Code distributed by Google as part of the polymer project is also
 subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
 */
 
-// code
 import Xen from '../../components/xen/xen.js';
-//import ArcsUtils from '../lib/arcs-utils.js';
-
-// elements
 
 import './cloud-data/cloud-arc.js';
 import './cloud-data/cloud-steps.js';
@@ -22,8 +18,8 @@ import './fb-data/fb-users.js';
 import './fb-data/fb-user.js';
 import './fb-data/fb-user-context.js';
 
-// templates
 const html = Xen.Template.html;
+
 const template = html`
 
   <fb-users
@@ -84,20 +80,12 @@ class CloudData extends Xen.Debug(Xen.Base, log) {
   get template() {
     return template;
   }
-  _getInitialState() {
-    return {
-      userProfile: {}
-    };
-  }
   _render(props, state, oldProps) {
     return [props, state];
   }
   _onForward(e, data) {
     this._fire(e.type, data);
   }
-  _onShared(e, info) {
-    // no op
-  }
-
 }
+
 customElements.define('cloud-data', CloudData);
