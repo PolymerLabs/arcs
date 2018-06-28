@@ -308,7 +308,7 @@ arcs/enclave> docker run --privileged -p 5984:5984 \
   test-with-asylo
 ```
 
-Notes:
+<a name="enclave_notes">Notes</a>:
 - The use of `--privileged` as part of `docker run`. This isn't ideal, but is
   currently required to give the Docker image access to loopback devices.
   Another approach might be something like `--cap-add SYS_ADMIN  --device
