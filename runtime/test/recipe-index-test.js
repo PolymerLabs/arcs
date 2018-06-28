@@ -12,6 +12,7 @@ import {RecipeIndex} from '../recipe-index.js';
 import {Manifest} from '../manifest.js';
 import {Arc} from '../arc.js';
 import {assert} from './chai-web.js';
+import {MockSlotComposer} from '../testing/mock-slot-composer.js';
 
 describe('Recipe index', function() {
   async function extractIndexRecipeStrings(manifestContent) {
@@ -19,12 +20,16 @@ describe('Recipe index', function() {
     for (let recipe of manifest.recipes) {
       assert(recipe.normalize());
     }
-    let arc = new Arc({id: 'test-plan-arc', context: manifest});
+    let arc = new Arc({
+      id: 'test-plan-arc',
+      context: manifest,
+      slotComposer: new MockSlotComposer()
+    });
     await arc.recipeIndex.ready;
     return arc.recipeIndex._recipes.map(r => r.toString());
   }
 
-  it('adds use handles as a poor man\'s interface', async () => {
+  it('adds use handles', async () => {
     assert.sameMembers(await extractIndexRecipeStrings(`
       schema Person
       schema Lumberjack

@@ -67,7 +67,7 @@ export class Arc {
     this._description = new Description(this);
 
     this._instantiatePlanCallbacks = [];
-    this._recipeIndex = recipeIndex || new RecipeIndex(this._context);
+    this._recipeIndex = recipeIndex || new RecipeIndex(this._context, slotComposer && slotComposer.affordance);
 
     DevtoolsConnection.onceConnected.then(
         devtoolsChannel => new ArcDebugHandler(this, devtoolsChannel));

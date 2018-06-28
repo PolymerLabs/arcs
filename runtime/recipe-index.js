@@ -12,38 +12,79 @@ import {Loader} from './loader.js';
 import {Manifest} from './manifest.js';
 import {Arc} from './arc.js';
 import {SlotComposer} from './slot-composer.js';
-import {Strategizer} from '../strategizer/strategizer.js';
+import {Strategizer, Strategy} from '../strategizer/strategizer.js';
 import {StrategyExplorerAdapter} from './debug/strategy-explorer-adapter.js';
 import {Tracing} from '../tracelib/trace.js';
 import {ConvertConstraintsToConnections} from './strategies/convert-constraints-to-connections.js';
 import {ResolveRecipe} from './strategies/resolve-recipe.js';
-import {InitPopulation} from './strategies/init-population.js';
+import {CreateHandleGroup} from './strategies/create-handle-group.js';
 import {AddUseHandles} from './strategies/add-use-handles.js';
 import * as Rulesets from './strategies/rulesets.js';
 import {DevtoolsConnection} from './debug/devtools-connection.js';
 import {RecipeUtil} from './recipe/recipe-util.js';
 import {Handle} from './recipe/handle.js';
 
+class RelevantContextRecipes extends Strategy {
+  constructor(context, affordance) {
+    super();
+    this._recipes = [];
+    for (let recipe of context.recipes) {
+      if (affordance && recipe.particles.find(p => p.spec && !p.spec.matchAffordance(affordance)) !== undefined) {
+        continue;
+      }
+
+      recipe = recipe.clone();
+      let options = {errors: new Map()};
+      if (recipe.normalize(options)) {
+        this._recipes.push(recipe);
+      } else {
+        console.warn(`could not normalize a context recipe: ${[...options.errors.values()].join('\n')}.\n${recipe.toString()}`);
+      }
+    }
+  }
+
+  async generate({generation}) {
+    if (generation != 0) {
+      return [];
+    }
+
+    return this._recipes.map(recipe => ({
+      result: recipe,
+      score: 1,
+      derivation: [{strategy: this, parent: undefined}],
+      hash: recipe.digest(),
+      valid: Object.isFrozen(recipe),
+    }));
+  }
+}
+
 const IndexStrategies = [
-  InitPopulation,
   ConvertConstraintsToConnections,
   AddUseHandles,
   ResolveRecipe,
+  // This one is not in-line with 'transparent' interfaces, but it operates on
+  // recipes without looking at the context and cannot run after AddUseHandles.
+  // We will revisit this list when we take a stab at recipe interfaces.
+  CreateHandleGroup
 ];
 
 export class RecipeIndex {
-  constructor(context) {
+  constructor(context, affordance) {
     let trace = Tracing.start({cat: 'indexing', name: 'RecipeIndex::constructor', overview: true});
     let arcStub = new Arc({
       id: 'index-stub',
-      slotComposer: new SlotComposer({affordance: 'mock', noRoot: true}),
-      context,
-      recipeIndex: {
-        findHandleMatch: () => []
-      },
+      context: new Manifest({id: 'empty-context'}),
+      slotComposer: affordance ? new SlotComposer({affordance, noRoot: true}) : null,
+      recipeIndex: {},
     });
     let strategizer = new Strategizer(
-        IndexStrategies.map(S => new S(arcStub)), [], Rulesets.Empty);
+      [
+        new RelevantContextRecipes(context, affordance),
+        ...IndexStrategies.map(S => new S(arcStub))
+      ],
+      [],
+      Rulesets.Empty
+    );
     this.ready = trace.endWith(new Promise(async resolve => {
       let generations = [];
 
@@ -68,6 +109,11 @@ export class RecipeIndex {
       this._isReady = true;
       resolve(true);
     }));
+  }
+
+  get recipes() {
+    if (!this._isReady) throw Error('await on recipeIndex.ready before accessing');
+    return this._recipes;
   }
 
   // Given provided handle and requested fates, finds handles with
