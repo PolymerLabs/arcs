@@ -20,7 +20,7 @@ defineParticle(({DomParticle, html, log}) => {
   flex: 1;
   display: flex;
   flex-direction: column;
-  padding: 16px 16px 16px 16px;;
+  padding: 16px;
 }
 [${host}] img {
   display: block;
@@ -41,7 +41,8 @@ defineParticle(({DomParticle, html, log}) => {
 [${host}] [post-buttons] {
   position: absolute;
   right: 8px;
-  top: 5px;
+  top: 8px;
+  display: flex;
 }
 [${host}] [post-buttons] icon {
   border-radius: 100%;
