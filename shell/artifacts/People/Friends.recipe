@@ -1,0 +1,23 @@
+import 'Person.schema'
+import 'Avatar.schema'
+
+schema User
+  Text id
+  Text name
+  URL avatar
+
+particle Friends in 'source/Friends.js'
+  in [User] friends
+  in [Person] people
+  in [Avatar] avatars
+  consume root
+
+recipe Friends
+  map #friends as friends
+  map #BOXED_avatar as avatars
+  map #BOXED_friends as people
+  Friends
+    friends = friends
+    people = people
+    avatars = avatars
+  description `see information about friends`

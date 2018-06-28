@@ -97,7 +97,9 @@ class HandleExplorer extends Xen.Base {
         let values = `(don't know how to dereference)`;
         if (handle.toList) {
           const list = await handle.toList();
-          values = list.map(item => item.rawData);
+          values = {};
+          list.forEach(item => values[item.id] = item.rawData);
+          //values = list.map(item => item.rawData);
         } else if (handle.get) {
           values = await handle.get();
         } else {
@@ -116,7 +118,9 @@ class HandleExplorer extends Xen.Base {
           data.description = handle.description;
         }
         let moniker = handle.id.split(':').pop();
-        result.push({tags: data.tags, data, name: handle.name || data.tags || moniker});
+        if (!handle.type || handle.type.tag !== 'Interface') {
+          result.push({tags: data.tags, data, name: handle.name || data.tags || moniker});
+        }
       }
     }
     return result;

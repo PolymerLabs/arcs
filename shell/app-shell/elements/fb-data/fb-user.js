@@ -9,57 +9,65 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 */
 
 import {FbUser} from './FbUser.js';
-import Firebase from '../cloud-data/firebase.js';
+import {FbStore} from './FbStore.js';
 import Xen from '../../../components/xen/xen.js';
+import Firebase from '../cloud-data/firebase.js';
 
 const log = Xen.logFactory('fb-user', '#aa00ff');
 
 class FbUserElement extends Xen.Base {
    static get observedAttributes() {
-    return ['config', 'userid', 'arc'];
+    return ['config', 'userid', 'context', 'arc'];
   }
   _getInitialState() {
     return {
-      fbuser: new FbUser((type, detail) => this._onEvent(type, detail)),
-      cache: Object.create(null)
+      fbuser: new FbUser((type, detail) => this._onEvent(type, detail))
     };
   }
-  _update(props, state) {
+  async _update(props, state) {
     if (props.arc !== state.arc) {
       state.arc = props.arc;
       state.arcstore = null;
-    }
-    if (!state.arcstore && props.config && props.arc) {
-      state.arcstore = this._createArcStore(props.config, props.arc);
-      state.arcstore.addEventListener('store', e => {
-        state.store = e.detail;
-        state.store.on('change', (info) => this._onStoreChange(info), props.arc);
-        const arcs = state.field.fields.arcs.fields;
-        Object.values(arcs).forEach(field => this._arcChanged(field));
-      });
+      state.arcstoreinit = false;
+      state.userid = null;
+      // TODO(sjmiles): arcstore.store.on('change') handler should be unlinked, but there is no `off`
+      // presumably the arc that owns store has been disposed, taking the store with it
     }
     if (props.userid !== state.userid) {
-      log('querying `user`');
       state.userid = props.userid;
-      state.field && state.field.dispose();
-      state.field = state.fbuser.queryUser(props.userid);
-      state.field.activate();
+      this._queryUser(props, state);
+    }
+    if (!state.arcstoreinit && props.config && props.arc) {
+      state.arcstoreinit = true;
+      this._initStore(props, state);
     }
   }
   get value() {
     return this._state.field.value;
   }
-  _createArcStore(config, arc) {
-    const store = document.createElement('arc-handle');
+  _queryUser({userid}, state) {
+    log('querying `user`');
+    if (state.field) {
+      state.field.dispose();
+    }
+    state.field = state.fbuser.queryUser(userid);
+    state.field.activate();
+  }
+  async _initStore({config, arc}, state) {
+    state.arcstore = await this._createArcStore(config, arc);
+    state.arcstore.store.on('change', change => this._onStoreChange(change), arc);
+    const arcs = state.field.fields.arcs.fields;
+    Object.values(arcs).forEach(field => this._arcChanged(field));
+  }
+  async _createArcStore(config, arc) {
     const typesPath = `${config.root}/app-shell/artifacts`;
-    store.options ={
+    const options = {
       schemas: `${typesPath}/arc-types.manifest`,
       type: '[ArcMetadata]',
       name: 'ArcMetadata',
       tags: ['arcmetadata']
     };
-    store.arc = arc;
-    return store;
+    return FbStore.createArcStore(arc, options);
   }
   _onStoreChange(change) {
     //log('_onStoreChange: ', change);
@@ -86,9 +94,6 @@ class FbUserElement extends Xen.Base {
       });
     }
   }
-  _debounce(key, func, delay) {
-    this._state[key] = Xen.debounce(this._state[key], func, delay != null ? delay : 16);
-  }
   _onEvent(type, field) {
     switch (type) {
       case 'info-changed':
@@ -107,12 +112,11 @@ class FbUserElement extends Xen.Base {
     this._fire('user', user);
   }
   _arcChanged(field) {
-    //log('arc-changed', field.key);
-    const store = this._state.store;
-    if (store) {
-      store.remove(field.key);
+    const {arcstore} = this._state;
+    if (arcstore) {
+      arcstore.remove(field.key);
       if (!field.disposed) {
-        store.store(this._arcFieldToEntity(field));
+        arcstore.add(this._arcFieldToEntity(field));
       }
     }
   }

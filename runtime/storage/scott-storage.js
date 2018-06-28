@@ -118,7 +118,15 @@ class ScottCollection extends ScottStorageProvider {
   async _require() {
     if (!this._initialized) {
       this._initialized = true;
-      this._items.set('key0', new this._entityClass({scottitude: 100}));
+      //const entity = new this._entityClass({scottitude: 100});
+      //this.store(entity);
+      this.store({
+        id: 0,
+        rawData: {
+          scottitude: 100
+        }
+      });
+      //this._items.set('key0', new this._entityClass({scottitude: 100}));
     }
     return true;
   }

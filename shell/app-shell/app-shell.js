@@ -53,6 +53,7 @@ const template = html`
     suggestion="{{suggestion}}"
     serialization="{{serialization}}"
     on-arc="_onStateData"
+    on-context="_onStateData"
     on-suggestions="_onStateData"
   ></arc-host>
 
@@ -83,6 +84,7 @@ const template = html`
     users="{{users}}"
     profile="{{profile}}"
     userid="{{userid}}"
+    context="{{context}}"
     user="{{user}}"
     arcs="{{arcs}}"
     key="{{key}}"

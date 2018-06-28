@@ -17,7 +17,8 @@ const log = Xen.logFactory('fb-users', '#883997');
 class FbUsersElement extends Xen.Base {
   _getInitialState() {
     return {
-      fbusers: new FbUsers((type, detail) => this._onEvent(type, detail))
+      fbusers: new FbUsers((type, detail) => this._onEvent(type, detail)),
+      users: {}
     };
   }
   _update(props, state) {
@@ -27,17 +28,20 @@ class FbUsersElement extends Xen.Base {
       state.field.activate();
     }
   }
-  get value() {
-    return this._state.field.value;
-  }
-  _debounce(key, func, delay) {
-    this._state[key] = Xen.debounce(this._state[key], func, delay != null ? delay : 16);
-  }
-  _onEvent(type, detail) {
+  _onEvent(type, field) {
+    const {users} = this._state;
+    const userid = field.path.split('/')[2];
+    if (field.dipsosed) {
+      delete users[userid];
+    } else {
+      users[userid] = field.value;
+      users[userid].id = userid;
+    }
     //console.log(type, detail);
-    this._state._debounce = Xen.debounce(this._state._debounce, () => {
-      log(this.value);
-    }, 8);
+    this._debounce('users', () => {
+      this._fire('users', users);
+      //log(users);
+    });
   }
 }
 customElements.define('fb-users', FbUsersElement);

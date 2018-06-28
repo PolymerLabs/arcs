@@ -17,11 +17,13 @@ import './arc-handle.js';
 const template = Xen.html`
 
   <arc-handle arc="{{arc}}" data="{{themeData}}" options="{{themeHandleOptions}}" on-change="_onShellThemeChange"></arc-handle>
-  <arc-handle arc="{{arc}}" data="{{usersHandleData}}" options="{{usersHandleOptions}}"></arc-handle>
-  <arc-handle arc="{{arc}}" data="{{userHandleData}}" options="{{userHandleOptions}}"></arc-handle>
+  <!-- <arc-handle arc="{{arc}}" data="{{usersHandleData}}" options="{{usersHandleOptions}}"></arc-handle>
+  <arc-handle arc="{{arc}}" data="{{userHandleData}}" options="{{userHandleOptions}}"></arc-handle> -->
   <!-- <arc-handle arc="{{arc}}" data="{{arcsHandleData}}" options="{{arcsHandleOptions}}" on-change="_onArcsHandleChange"></arc-handle> -->
   <!-- ensures #BOXED_avatar exists for resolving recipes, even if there are no avatars to box -->
   <arc-handle arc="{{arc}}" options="{{boxedAvatarHandleOptions}}"></arc-handle>
+  <!-- <arc-handle arc="{{arc}}" options="{{neoboxAvatarHandleOptions}}"></arc-handle>
+  <arc-handle arc="{{arc}}" options="{{neoboxFriendsHandleOptions}}"></arc-handle> -->
   <!-- testing out custom storage provider -->
   <arc-handle arc="{{arc}}" options="{{scottBoxedStoreOptions}}"></arc-handle>
 `;
@@ -72,15 +74,15 @@ class ShellHandles extends Xen.Debug(Xen.Base, log) {
       if (key && (key !== oldProps.key)) {
         state.themeData = Object.assign({key}, state.defaultThemeData);
       }
-      if (user && (user !== oldProps.user || geoCoords !== oldState.geoCoords)) {
-        state.userHandleData = this._renderUser(user, geoCoords);
-      }
-      if (users && (users !== oldProps.users || !state.usersHandleData)) {
-        state.usersHandleData = this._renderUsers(users);
-      }
-      if (arcs !== oldProps.arcs) {
-        state.arcsHandleData = this._renderArcs(user, arcs);
-      }
+      // if (user && (user !== oldProps.user || geoCoords !== oldState.geoCoords)) {
+      //   state.userHandleData = this._renderUser(user, geoCoords);
+      // }
+      // if (users && (users !== oldProps.users || !state.usersHandleData)) {
+      //   state.usersHandleData = this._renderUsers(users);
+      // }
+      // if (arcs !== oldProps.arcs) {
+      //   state.arcsHandleData = this._renderArcs(user, arcs);
+      // }
     }
   }
   _render(props, state) {
@@ -121,6 +123,22 @@ class ShellHandles extends Xen.Debug(Xen.Base, log) {
         id: `${Const.HANDLES.boxed}_avatar`,
         asContext: true
       },
+      // neoboxAvatarHandleOptions: {
+      //   schemas: `${typesPath}/identity-types.manifest`,
+      //   type: '[Avatar]',
+      //   name: 'NEOBOX_avatar',
+      //   tags: [`NEOBOX_avatar`],
+      //   id: `NEOBOX_avatar`,
+      //   asContext: true
+      // },
+      // neoboxFriendsHandleOptions: {
+      //   schemas: `${typesPath}/identity-types.manifest`,
+      //   type: '[Person]',
+      //   name: 'NEOBOX_friends',
+      //   tags: [`NEOBOX_friends`],
+      //   id: `NEOBOX_friends`,
+      //   asContext: true
+      // },
       scottBoxedStoreOptions: {
         storageKey: 'scott://noid',
         schema: {tag: 'Entity', data: {names: ['Scottfo'], fields: {scottitude: 'Number'}}},

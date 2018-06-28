@@ -25,16 +25,19 @@ class ArcHost extends Xen.Debug(Xen.Base, log) {
   }
   _willReceiveProps(props, state, oldProps) {
     const changed = name => props[name] !== oldProps[name];
-    const {key, manifest, config, suggestion, serialization} = props;
+    const {key, manifest, config, serialization} = props;
+    if (config && manifest && !state.context) {
+      this._prepareContext(config, manifest);
+    }
     // dispose arc if key has changed, but we don't have a new key yet
     if (key === '*' && changed('key')) {
       this._teardownArc(state.arc);
     }
     // rebuild arc if we have all the parts, but one of them has changed
-    if (config && manifest && key && (key !== '*') && (changed('config') || changed('key') || changed('manifest'))) {
+    if (state.context && config && manifest && key && (key !== '*') && (changed('config') || changed('key') || changed('manifest'))) {
       state.id = null;
       this._teardownArc(state.arc);
-      this._prepareArc(config, manifest, key);
+      this._prepareArc(config, key);
     }
     // TODO(sjmiles): absence of serialization is null/undefined, as opposed to an
     // empty serialization which is ''
@@ -42,31 +45,15 @@ class ArcHost extends Xen.Debug(Xen.Base, log) {
       state.pendingSerialization = serialization;
     }
   }
-  _update({}, state) {
-    const {id, pendingSerialization} = state;
-    if (id && pendingSerialization != null) {
-      state.pendingSerialization = this._consumeSerialization(pendingSerialization);
+  async _update({}, state) {
+    const {id, context, pendingSerialization} = state;
+    if (id && context && pendingSerialization != null) {
+      state.pendingSerialization = null;
+      state.pendingSerialization = await this._consumeSerialization(pendingSerialization);
     }
   }
-  _teardownArc(arc) {
-    if (arc) {
-      log('------------');
-      log('arc teardown');
-      log('------------');
-      arc.dispose();
-      // clean out DOM nodes
-      Array.from(document.querySelectorAll('[slotid]')).forEach(n => n.textContent = '');
-      // old arc is no more
-      this._setState({arc: null});
-      this._fire('arc', null);
-    }
-  }
-  async _prepareArc(config, manifest, key) {
-    log('---------------');
-    log('arc preparation');
-    log('---------------');
-    // make an id
-    const id = 'app-shell-' + ArcsUtils.randomId();
+  async _prepareContext(config, manifest) {
+    log('context preparation');
     // create a system loader
     const loader = this._createLoader(config);
     // load manifest
@@ -75,10 +62,10 @@ class ArcHost extends Xen.Debug(Xen.Base, log) {
     const urlMap = loader._urlMap;
     // pec factory
     const pecFactory = ArcsUtils.createPecFactory(urlMap);
-    // construct storageKey
-    const storageKey = config.useStorage ? `${Firebase.storageKey}/arcs/${key}` : null;
     // capture composer (so we can push suggestions there), loader, etc.
-    this._setState({id, loader, context, pecFactory, /*, slotComposer*/urlMap, storageKey});
+    this._setState({loader, context, pecFactory, urlMap});
+    // share context
+    this._fire('context', context);
   }
   _createLoader(config) {
     // create default URL map
@@ -94,9 +81,9 @@ class ArcHost extends Xen.Debug(Xen.Base, log) {
     return loader;
   }
   async _createContext(loader, content) {
-    // TODO(sjmiles): do we need to be able to `config` this value?
-    const manifestFileName = './shell.manifest';
     let context;
+    // TODO(sjmiles): do we need to be able to `config` this value?
+    const manifestFileName = './fake-file-name.manifest';
     try {
       context = await ArcsUtils.parseManifest(manifestFileName, content, loader);
     } catch (x) {
@@ -104,6 +91,30 @@ class ArcHost extends Xen.Debug(Xen.Base, log) {
       context = ArcsUtils.parseManifest(manifestFileName, '', loader);
     }
     return context;
+  }
+  _teardownArc(arc) {
+    if (arc) {
+      log('------------');
+      log('arc teardown');
+      log('------------');
+      arc.dispose();
+      // clean out DOM nodes
+      Array.from(document.querySelectorAll('[slotid]')).forEach(n => n.textContent = '');
+      // old arc is no more
+      this._setState({arc: null});
+      this._fire('arc', null);
+    }
+  }
+  async _prepareArc(config, key) {
+    log('---------------');
+    log('arc preparation');
+    log('---------------');
+    // make an id
+    const id = 'app-shell-' + ArcsUtils.randomId();
+    // construct storageKey
+    const storageKey = config.useStorage ? `${Firebase.storageKey}/arcs/${key}` : null;
+    // capture composer (so we can push suggestions there), loader, etc.
+    this._setState({id, storageKey});
   }
   _createSlotComposer(config) {
     return new Arcs.SlotComposer({
@@ -128,6 +139,7 @@ class ArcHost extends Xen.Debug(Xen.Base, log) {
       context: state.context,
       storageKey: state.storageKey
     };
+    // attempt to construct arc
     let arc;
     try {
       arc = await this._constructArc(state.id, serialization, params);
@@ -155,7 +167,11 @@ class ArcHost extends Xen.Debug(Xen.Base, log) {
         fileName: './serialized.manifest'
       });
       // generate new arc via deserialization
-      return await Arcs.Arc.deserialize(params);
+      try {
+        return await Arcs.Arc.deserialize(params);
+      } catch (x) {
+        return null;
+      }
     } else {
       Object.assign(params, {
         id: id

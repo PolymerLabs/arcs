@@ -121,16 +121,6 @@ const _logFactory = (preamble, color, log='log') => console[log].bind(console, `
 const logFactory = (preamble, color, log) => (Debug.level > 0) ? _logFactory(preamble, color, log) : () => {};
 const clone = obj => typeof obj === 'object' ? Object.assign(Object.create(null), obj) : {};
 
-// usage: this._debouncer = debounce(this._debouncer, task, 100);
-const debounce = (key, action, delay) => {
-  if (key) {
-    window.clearTimeout(key);
-  }
-  if (action && delay) {
-    return window.setTimeout(action, delay);
-  }
-};
-
 const Xen = {
   State: XenStateMixin,
   Template,

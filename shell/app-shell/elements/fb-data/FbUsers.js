@@ -10,7 +10,9 @@ export const FbUsers = class {
   get _usersSchema() {
     return {
       '*': {
-        $changed: field => this._fire('user-changed', field)
+        info: {
+          $changed: field => this._fire('info-changed', field)
+        }
       }
     };
   }
