@@ -11,7 +11,7 @@ import './elements/arc-manifest.js';
 import './elements/arc-host.js';
 import './elements/arc-planner.js';
 import './elements/shell-ui.js';
-import './elements/shell-handles.js';
+import './elements/shell-stores.js';
 import './elements/cloud-data.js';
 
 // templates
@@ -68,7 +68,7 @@ const template = html`
     on-search="_onStateData"
   ></arc-planner>
 
-  <shell-handles
+  <shell-stores
     config="{{config}}"
     arc="{{arc}}"
     users="{{users}}"
@@ -77,7 +77,7 @@ const template = html`
     arcs="{{arcs}}"
     on-theme="_onStateData"
     on-arcs="_onStateData"
-  ></shell-handles>
+  ></shell-stores>
 
   <cloud-data
     config="{{config}}"

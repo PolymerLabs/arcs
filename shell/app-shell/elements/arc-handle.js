@@ -66,7 +66,9 @@ class ArcHandle extends Xen.Debug(Xen.Base, log) {
     typeOf = setOf ? typeOf.collectionOf() : typeOf;
     storageKey = storageKey || 'in-memory';
     //
-    tags = tags.concat(['nosync']);
+    if (!asContext) {
+      tags = tags.concat(['nosync']);
+    }
     id = id || arc.generateID();
     // context-handles are for `map`, `copy`, `?`
     // arc-handles are for `use`, `?`
@@ -89,7 +91,7 @@ class ArcHandle extends Xen.Debug(Xen.Base, log) {
     } else {
       data = {id: arc.generateID(), rawData: data};
     }
-    ArcsUtils.setHandleData(handle, data);
+    ArcsUtils.setStoreData(handle, data);
   }
   _handleChanged(handle) {
     handle.debouncer = ArcsUtils.debounce(handle.debouncer, () => this._fire('change', handle), 500);

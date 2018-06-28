@@ -132,10 +132,10 @@ const ArcsUtils = {
   typeFromMetaType(metaType) {
     return Arcs.Type.fromLiteral(JSON.parse(metaType));
   },
-  async getHandleData(handle) {
+  async getStoreData(handle) {
     return handle.type.isCollection ? await handle.toList() : await handle.get();
   },
-  setHandleData(handle, data) {
+  setStoreData(handle, data) {
     this.clearHandle(handle);
     this.addHandleData(handle, data);
   },
@@ -143,7 +143,7 @@ const ArcsUtils = {
     if (handle.toList) {
       // TODO(sjmiles): if we go async here, we have nasty re-entry issues, so
       // hacking handle API to fix for now. Probably we need low-level support
-      // for 'setHandleData' above.
+      // for 'setStoreData' above.
       const entities = [...handle._items.values()];
       //const entities = await handle.toList();
       entities.forEach(e => handle.remove(e.id));
