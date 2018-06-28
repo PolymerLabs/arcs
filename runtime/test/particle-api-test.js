@@ -16,8 +16,10 @@ import {StubLoader} from '../testing/stub-loader.js';
 import {TestHelper} from '../testing/test-helper.js';
 
 async function loadFilesIntoNewArc(fileMap) {
-  const testHelper = new TestHelper({loader: new StubLoader(fileMap)});
-  await testHelper.loadManifest('manifest');
+  const testHelper = await TestHelper.create({
+    manifestString: fileMap.manifest,
+    loader: new StubLoader(fileMap)
+  });
   return {
     arc: testHelper.arc,
     manifest: testHelper.arc._context

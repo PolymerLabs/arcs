@@ -14,7 +14,7 @@ import {assert} from '../chai-web.js';
 import {TestHelper} from '../../testing/test-helper.js';
 
 describe('products test', function() {
-  let testProductsManifestFile = './runtime/test/particles/artifacts/products-test.recipes';
+  let manifestFilename = './runtime/test/particles/artifacts/products-test.recipes';
 
   let verifyFilteredBook = async (handle) => {
     let list = await handle.toList();
@@ -23,7 +23,7 @@ describe('products test', function() {
   };
 
   it('filters', async function() {
-    let helper = await TestHelper.loadManifestAndPlan(testProductsManifestFile);
+    let helper = await TestHelper.createAndPlan({manifestFilename});
 
     await helper.acceptSuggestion({particles: ['ProductFilter']});
 
@@ -31,7 +31,7 @@ describe('products test', function() {
   });
 
   it('filters and displays', async function() {
-    let helper = await TestHelper.loadManifestAndPlan(testProductsManifestFile);
+    let helper = await TestHelper.createAndPlan({manifestFilename});
 
     helper.slotComposer
         .newExpectations()

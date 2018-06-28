@@ -13,7 +13,6 @@ import {assert} from '../test/chai-web.js';
 import {Arc} from '../arc.js';
 import {Manifest} from '../manifest.js';
 import {Loader} from '../loader.js';
-import {StubLoader} from '../testing/stub-loader.js';
 import {Planner} from '../planner.js';
 import {Random} from '../random.js';
 import {MockSlotComposer} from '../testing/mock-slot-composer.js';
@@ -23,36 +22,62 @@ import {ParticleExecutionContext} from '../particle-execution-context.js';
 /** @class TestHelper
  * Helper class to recipe instantiation and replanning.
  * Usage example:
- *   let helper = await TestHelper.loadManifestAndPlan('my.manifest');
+ *   let helper = await TestHelper.createAndPlan({manifestFilename: 'my.manifest'});
  *   await helper.acceptSuggestion({particles: ['MyParticle1', 'MyParticle2']});
  *   await helper.verifyData('MyParticle1', 'myHandle1', async (handle) => { ... });
  */
 export class TestHelper {
+
   /**
    * Initializes a single arc using a mock slot composer.
    * |options| may contain:
    *   - slotComposerStrict: whether mock slot composer will be executing in strict mode.
    *   - logging: whether to log execution progress (default: false).
+   *   - loader: file loader to use.
+   *   - context: Manifest object.
+   *   - manifestFilename: filename of the manifest file to load as the context.
+   *   - manifestString: a string with content of the manifest to load as the context.
    */
-  constructor(options) {
-    options = options || {};
+  static async create(options = {}) {
     let loader = options.loader || new Loader();
-    this.slotComposer = new MockSlotComposer({strict: options ? options.slotComposerStrict : undefined});
+    if (options.manifestFilename) {
+      assert(!options.context, 'context should not be provided if manifestFilename is given');
+      options.context = await Manifest.load(options.manifestFilename, loader);
+    }
+    if (options.manifestString) {
+      assert(!options.context, 'context should not be provided if manifestString is given');
+      options.context = await Manifest.parse(options.manifestString, loader);
+    }
+
+    // Explicitly not using a constructor to force using this factory method.
+    let helper = new TestHelper();
+    helper.slotComposer = new MockSlotComposer({strict: options ? options.slotComposerStrict : undefined});
     let pecFactory = function(id) {
       let channel = new MessageChannel();
       new ParticleExecutionContext(channel.port1, `${id}:inner`, loader);
       return channel.port2;
     };
-    this.loader = loader;
-
-    this.arc = new Arc({
+    helper.loader = loader;
+    helper.arc = new Arc({
       id: 'demo',
       pecFactory,
-      slotComposer: this.slotComposer,
-      loader: this.loader
+      slotComposer: helper.slotComposer,
+      loader: helper.loader,
+      context: options.context
     });
-    this.slotComposer.pec = this.arc.pec;
-    this.logging = options.logging;
+    helper.slotComposer.pec = helper.arc.pec;
+    helper.logging = options.logging;
+
+    return helper;
+  }
+
+  /**
+   * Creates a Test Helper instances and triggers planning .
+   */
+  static async createAndPlan(options) {
+    let helper = await TestHelper.create(options);
+    await helper.makePlans(options);
+    return helper;
   }
 
   setTimeout(timeout) {
@@ -61,46 +86,6 @@ export class TestHelper {
 
   clearTimeout() {
     clearTimeout(this.timeout);
-  }
-
-  /** @static @method loadManifestAndPlan(manifestFilename, options)
-   * Creates and returns a TestHelper instance, loads a manifest file and makes planning.
-   */
-  static async loadManifestAndPlan(manifestFilename, options) {
-    let helper = new TestHelper(options);
-    await helper.loadManifest(manifestFilename);
-    await helper.makePlans(options);
-    return helper;
-  }
-
-  /** @static @method parseManifestAndPlan(manifestFilename, options)
-   * Creates and returns a TestHelper instance, parses a manifest string and makes planning.
-   */
-  static async parseManifestAndPlan(manifestString, options) {
-    options = options || {};
-    options.loader = options.loader || new StubLoader({
-      '*': `defineParticle(({Particle}) => { return class P extends Particle {} });`
-    });
-    let helper = new TestHelper(options);
-    await helper.parseManifest(manifestString);
-    await helper.makePlans(options);
-    return helper;
-  }
-
-  /** @method loadManifest(manifestFilename)
-   * Loads a manifest file into the arc's context.
-   */
-  async loadManifest(manifestFilename) {
-    this.arc._context = await Manifest.load(manifestFilename, this.loader);
-    return this;
-  }
-
-  /** @method parseManifest(manifestString)
-   * Parses a manifest string into the arc's context.
-   */
-  async parseManifest(manifestString) {
-    this.arc._context = await Manifest.parse(manifestString, this.loader);
-    return this;
   }
 
   /** @method makePlans(options)
