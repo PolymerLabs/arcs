@@ -141,7 +141,6 @@ export class MultiplexerDomParticle extends TransformationDomParticle {
           {name: hostedSlotName, id: slotId},
           {connections: otherConnections, handles: otherMappedHandles}
         );
-        console.log(recipe);
         await arc.loadRecipe(recipe, this);
         itemHandle.set(item);
       } catch (e) {
