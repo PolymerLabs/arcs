@@ -49,10 +49,10 @@ describe('Scoring', function() {
 
   describe('#longestWordText()', function() {
     it('should report none for empty stats or word', function() {
-      assert.equal(Scoring.longestWordText(undefined), '(none yet)');
+      assert.equal(Scoring.longestWordText(undefined), '--');
       assert.equal(
-          Scoring.longestWordText({longestWord: undefined}), '(none yet)');
-      assert.equal(Scoring.longestWordText({longestWord: ''}), '(none yet)');
+          Scoring.longestWordText({longestWord: undefined}), '--');
+      assert.equal(Scoring.longestWordText({longestWord: ''}), '--');
     });
 
     it('should report formatted text when values present', function() {
@@ -64,13 +64,13 @@ describe('Scoring', function() {
 
   describe('#highestScoringWordText()', function() {
     it('should report none for empty stats or word', function() {
-      assert.equal(Scoring.highestScoringWordText(undefined), '(none yet)');
+      assert.equal(Scoring.highestScoringWordText(undefined), '--');
       assert.equal(
           Scoring.highestScoringWordText({highestScoringWord: undefined}),
-          '(none yet)');
+          '--');
       assert.equal(
           Scoring.highestScoringWordText({highestScoringWord: ''}),
-          '(none yet)');
+          '--');
     });
 
     it('should report formatted text when values present', function() {
