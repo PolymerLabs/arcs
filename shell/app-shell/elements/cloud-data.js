@@ -30,6 +30,7 @@ const template = html`
     config="{{config}}"
     userid="{{userid}}"
     context="{{context}}"
+    key="{{key}}"
     arc="{{arc}}"
     on-user="_onForward"
   ></fb-user>
