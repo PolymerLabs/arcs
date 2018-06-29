@@ -8,10 +8,10 @@
 
 'use strict';
 
-defineParticle(({DomParticle, resolver}) => {
+defineParticle(({DomParticle, html, resolver}) => {
   let host = `show-collection`;
 
-  let styles = `
+  let styles = html`
   <style>
   [${host}] {
     padding: 16px;
@@ -49,9 +49,10 @@ defineParticle(({DomParticle, resolver}) => {
   </style>
   `;
 
-  let template = `
-  ${styles}
+  let template = html`
 <div ${host}>
+  ${styles}
+  
   <div head>
     <span>Your shortlist</span>
   </div>
@@ -60,17 +61,20 @@ defineParticle(({DomParticle, resolver}) => {
 
   <div empty hidden="{{hasItems}}">List is empty</div>
 
-  <template items>
-    <div slotid="item" subid="{{id}}" style="background: white;box-shadow: 0 0 2px rgba(0,0,0,.2); padding: 16px; "></div>
-    <div slotid="annotation" subid="{{id}}"></div>
-  </template>
   <div items>{{items}}</div>
+  <template items>
+    <div>
+      <div slotid="item" subid="{{id}}" style="background: white;box-shadow: 0 0 2px rgba(0,0,0,.2); padding: 16px; "></div>
+      <div slotid="annotation" subid="{{id}}"></div>
+    </div>
+  </template>
 
   <div slotid="action"></div>
 
   <div slotid="postamble"></div>
 </div>
-    `.trim();
+  `;
+
   return class extends DomParticle {
     get template() {
       return template;
