@@ -71,7 +71,6 @@ class FbUserContextElement extends Xen.Base {
   }
   // below here is all `friend` stuff, factor out; abstraction?
   async _initFriendStore({context}, state) {
-    //const typesPath = `${config.root}/app-shell/artifacts`;
     const options = {
       schema: {tag: 'Entity', data: {names: ['User'], fields: {id: 'Text', name: 'Text', avatar: 'URL'}}},
       type: '[User]',
@@ -84,26 +83,27 @@ class FbUserContextElement extends Xen.Base {
     state.pendingFriends = [];
   }
   _friendChanged(field) {
+    const key = field.path.split('/')[2];
     const {friendstore, pendingFriends} = this._state;
     if (!friendstore) {
       pendingFriends.push(field);
     }
     else {
-      friendstore.remove(field.key);
+      friendstore.remove(key);
       if (!field.disposed) {
-        friendstore.store(this._friendFieldToEntity(field));
+        friendstore.store(this._friendFieldToEntity(key, field));
       }
     }
   }
-  _friendFieldToEntity(field) {
-    const key = field.path.split('/')[2];
+  _friendFieldToEntity(key, field) {
     const value = field.value;
+    const info = value.info || Object;
     return {
       id: key,
       rawData: {
         id: key,
-        name: value.name || '(n/a)',
-        avatar: value.avatar
+        name: info.name || '(n/a)',
+        avatar: info.avatar
       }
     };
   }

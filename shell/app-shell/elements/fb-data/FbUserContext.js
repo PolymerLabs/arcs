@@ -62,10 +62,8 @@ export const FbUserContext = class {
               $join: {
                 path: `/users/${value}`,
                 schema: {
+                  $changed: field => this._onFriendChanged(field),
                   arcs: this._friendsArcsSchema,
-                  info: {
-                    $changed: field => this._onFriendChanged(field)
-                  }
                 }
               }
             })
