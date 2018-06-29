@@ -74,8 +74,8 @@ class FbUserContextElement extends Xen.Base {
     const options = {
       schema: {tag: 'Entity', data: {names: ['User'], fields: {id: 'Text', name: 'Text', avatar: 'URL'}}},
       type: '[User]',
+      name: 'Friends',
       id: 'friends',
-      name: 'friends',
       tags: ['friends']
     };
     state.friendstore = await FbStore.createContextStore(context, options);
@@ -201,7 +201,18 @@ class FbUserContextElement extends Xen.Base {
         const store = context.findStoreById(storeid);
         if (store) {
           log(`removing [${key}] share ${shareid}`);
-          const removeFromBox = datum => store.remove(`${shareid}|${datum.id}`);
+          // TODO(sjmiles): if we are replacing, `datum` we have is likely to have a different
+          // version number than the one in the store.
+          // Find a record that differs only by version number.
+          // Often this record will not exist, and this is a huge waste of time.
+          // Maybe we can build a separate index.
+          const removeFromBox = datum => {
+            const noversionId = `${shareid}|${datum.id.split(':').slice(0, -1).join(':')}`;
+            const key = [...store._items.keys()].find(id => id.split(':').slice(0, -1).join(':') === noversionId);
+            if (key) {
+              store.remove(key);
+            }
+          };
           if (store._boxType.isCollection) {
             Object.values(data).forEach(datum => removeFromBox(datum));
           } else {
