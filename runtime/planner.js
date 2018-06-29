@@ -42,9 +42,10 @@ export class Planner {
   }
 
   // TODO: Use context.arc instead of arc
-  init(arc, {strategies, ruleset} = {}) {
+  init(arc, {strategies, ruleset, strategyArgs = {}} = {}) {
+    strategyArgs = Object.freeze(Object.assign({}, strategyArgs));
     this._arc = arc;
-    strategies = strategies || Planner.AllStrategies.map(strategy => new strategy(arc));
+    strategies = (strategies || Planner.AllStrategies).map(strategy => new strategy(arc, strategyArgs));
     this.strategizer = new Strategizer(strategies, [], ruleset || Rulesets.Empty);
   }
 

@@ -18,15 +18,15 @@ import {assert} from '../chai-web.js';
 import {Walker} from '../../recipe/walker.js';
 
 class InitPopulation extends Strategy {
-  constructor(manifest) {
+  constructor(arc) {
     super();
-    this.manifest = manifest;
+    this._context = arc.context;
   }
 
   async generate({generation}) {
     if (generation != 0) return [];
 
-    let recipe = (await Manifest.parse(this.manifest)).recipes[0];
+    let recipe = this._context.recipes[0];
     recipe.normalize();
 
     return [{
@@ -98,7 +98,7 @@ describe('Rulesets', () => {
   });
 
   const planAndComputeStats = async options => {
-    let arc = StrategyTestHelper.createTestArc('test-plan-arc', null, 'dom');
+    let arc = StrategyTestHelper.createTestArc('test-plan-arc', options.context, 'mock');
     let planner = new Planner();
     planner.init(arc, options);
     let generations = [];
@@ -114,18 +114,17 @@ describe('Rulesets', () => {
   };
 
   it('respects ordering rules in a small example', async () => {
-    const strategies = [
-      new InitPopulation(`
-        recipe
-          ? 'id1' as handle1
-          ? 'id2' as handle2`),
-      new AssignFateA(),
-      new AssignFateB()
-    ];
+    const strategies = [InitPopulation, AssignFateA, AssignFateB];
+    const context = await Manifest.parse(`
+      recipe
+        ? 'id1' as handle1
+        ? 'id2' as handle2`);
     const statsNoRules = await planAndComputeStats({
+      context,
       strategies
     });
     const statsLinear = await planAndComputeStats({
+      context,
       strategies,
       ruleset: new Ruleset.Builder()
         .order(AssignFateA, AssignFateB)
@@ -158,26 +157,26 @@ describe('Rulesets', () => {
 
   it('respects ordering rules in a big example', async () => {
     const strategies = [
-      new InitPopulation(`
-        recipe
-          ? 'id1' as handle1
-          ? 'id2' as handle2
-          ? 'id3' as handle3`),
-      new AssignFateA(),
-      new AssignFateB(),
-      new AssignFateC(),
-      new Resolve()
+      InitPopulation, AssignFateA, AssignFateB, AssignFateC, Resolve
     ];
+    const context = await Manifest.parse(`
+      recipe
+        ? 'id1' as handle1
+        ? 'id2' as handle2
+        ? 'id3' as handle3`);
     const statsNoRules = await planAndComputeStats({
+      context,
       strategies
     });
     const statsPhased = await planAndComputeStats({
+      context,
       strategies,
       ruleset: new Ruleset.Builder()
         .order([AssignFateA, AssignFateB, AssignFateC], Resolve)
         .build()
     });
     const statsLinear = await planAndComputeStats({
+      context,
       strategies,
       ruleset: new Ruleset.Builder()
         .order(AssignFateA, AssignFateB, AssignFateC, Resolve)

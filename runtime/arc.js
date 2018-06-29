@@ -63,7 +63,6 @@ export class Arc {
     // Map from each store to its description (originating in the manifest).
     this._storeDescriptions = new Map();
 
-    this._search = null;
     this._description = new Description(this);
 
     this._instantiatePlanCallbacks = [];
@@ -74,14 +73,6 @@ export class Arc {
   }
   get loader() {
     return this._loader;
-  }
-
-  set search(search) {
-    this._search = search ? search.toLowerCase().trim() : null;
-  }
-
-  get search() {
-    return this._search;
   }
 
   get description() {

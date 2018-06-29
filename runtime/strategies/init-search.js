@@ -10,10 +10,9 @@ import {Recipe} from '../recipe/recipe.js';
 import {assert} from '../../platform/assert-web.js';
 
 export class InitSearch extends Strategy {
-  constructor(arc) {
+  constructor(arc, {search}) {
     super();
-    // TODO: Figure out where this should really come from.
-    this._search = arc.search;
+    this._search = search;
   }
   async generate({generation}) {
     if (this._search == null || generation != 0) {
