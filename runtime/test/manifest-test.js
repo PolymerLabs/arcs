@@ -889,22 +889,6 @@ Expected " ", "&", "//", "\\n", "\\r", [ ], or [A-Z] but "?" found.
     }
   });
 
-  it('errors when the manifest references a nonexistent local name', async () => {
-    let manifest = `
-        schema S
-        particle A
-          in S s
-        recipe
-          A
-            s = noSuchHandle`;
-    try {
-      await Manifest.parse(manifest);
-      assert.fail();
-    } catch (e) {
-      assert.match(e.message, /Could not find handle 'noSuchHandle'/);
-    }
-  });
-
   it('errors when the manifest references a missing consumed slot', async () => {
     let manifest = `
         particle TestParticle in 'tp.js'
@@ -1438,4 +1422,22 @@ resource SomeName
     assert.equal(connections[3].name, 'dogsled');
     assert.deepEqual(connections[3].tags, ['multidog', 'winter', 'sled']);
   });
+
+  it('can parse recipes with an implicit create handle', async () => {
+    let manifest = await Manifest.parse(`
+      particle A
+        out S {} a
+      particle B
+        in S {} b
+      
+      recipe
+        A
+          a -> h0
+        B
+          b <- h0
+    `);
+
+    let recipe = manifest.recipes[0];
+    assert.equal(recipe.particles[0].connections.a.handle, recipe.particles[1].connections.b.handle);
+ });
 });

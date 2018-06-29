@@ -782,9 +782,14 @@ ${e.message}
         if (connectionItem.target && connectionItem.target.name) {
           let entry = items.byName.get(connectionItem.target.name);
           if (!entry) {
-            throw new ManifestError(
-                connectionItem.location,
-                `Could not find handle '${connectionItem.target.name}'`);
+            let handle = recipe.newHandle();
+            handle.tags = [];
+            handle.localName = connectionItem.target.name;
+            handle.fate = 'create';
+            handle.item = {kind: 'handle'};
+            entry = {item: handle.item, handle};
+            items.byName.set(handle.localName, entry);
+            items.byHandle.set(handle, handle.item);
           }
           if (entry.item.kind == 'handle') {
             targetHandle = entry.handle;
