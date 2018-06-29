@@ -8,34 +8,31 @@
 
 'use strict';
 
-defineParticle(({DomParticle}) => {
+defineParticle(({DomParticle, html}) => {
+
   const host = `compose-message`;
 
-  const template = `
+  const template = html`
+
 <style>
   [${host}] {
     display: flex;
     flex-direction: column;
     font-family: sans-serif;
+    padding: 8px 0;
   }
-  /*[${host}] [compose] div {
-    padding-bottom: 4px;
-  }*/
-  [${host}] [compose] input {
+  [${host}] input {
     padding: 8px 12px;
-    margin: 8px;
     box-sizing: border-box;
     width: calc(100% - 20px);
   }
 </style>
 
 <div ${host}>
-  <div compose>
-    <!--<div><b>{{name}}</b> says</div>-->
-    <input on-change="onMessageChange" placholder="{{placeholder}}" value="{{message}}">
-  </div>
+  <input on-change="onMessageChange" placholder="{{placeholder}}" value="{{message}}">
 </div>
-  `.trim();
+
+  `;
 
   return class extends DomParticle {
     get template() {

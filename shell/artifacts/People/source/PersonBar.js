@@ -52,13 +52,12 @@ defineParticle(({DomParticle, resolver, html, log}) => {
       if (avatars && people) {
         const count = people.length;
         people = people.map((person, i) => {
-          const avatar = this.lookupBoxedDataForUser(avatars, person.$id)[0];
+          const avatar = this.lookupUser(avatars, person.$id)[0];
           return {
             index: i,
             name: person.name,
             avatar: resolver(avatar && avatar.url || 'https://$shell/assets/avatars/user.jpg'),
-            //avatar: avatar ? resolver(`https://$cdn/assets/avatars/${avatar.url} || 'user.jpg'}`),
-            //active: Boolean(person.active) //Math.random()<0.3
+            //active: Boolean(person.active)
             active: Math.random()<0.9,
             order: `z-index: ${count - i}`
           };
@@ -66,9 +65,6 @@ defineParticle(({DomParticle, resolver, html, log}) => {
         this._setState({people});
         //setInterval(() => this.willReceiveProps(this._props), 60000);
       }
-    }
-    lookupBoxedDataForUser(box, userid) {
-      return box.filter(item => userid === item.$id.split('|')[0]);
     }
     render(props, state) {
       return {
