@@ -6,9 +6,22 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import '../People/Person.schema'
+import 'Avatar.schema'
+
+schema User
+  Text id
+  Text name
+  URL avatar
 
 particle PersonBar in 'source/PersonBar.js'
-  PersonBar(in [Person] people)
+  in [User] people
+  in [Avatar] avatars
   consume toproot
   description `show arc sharing activity`
+
+recipe
+  map #friends as friends
+  map #BOXED_avatar as avatars
+  PersonBar
+    people = friends
+    avatars = avatars
