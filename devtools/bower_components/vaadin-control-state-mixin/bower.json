@@ -1,0 +1,41 @@
+{
+  "name": "vaadin-control-state-mixin",
+  "homepage": "https://vaadin.com/elements",
+  "authors": [
+    "Vaadin Ltd"
+  ],
+  "description": "vaadin-control-state-mixin",
+  "main": "vaadin-control-state-mixin.html",
+  "keywords": [
+    "Vaadin",
+    "vaadin-control-state-mixin",
+    "web-components",
+    "web-component",
+    "polymer"
+  ],
+  "license": "Apache-2.0",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "gulpfile.js",
+    "package.json",
+    "wct.conf.js"
+  ],
+  "devDependencies": {
+    "iron-test-helpers": "^2.0.0",
+    "web-component-tester": "^6.1.5",
+    "webcomponentsjs": "^1.0.0",
+    "vaadin-text-field": "^1.2.0",
+    "vaadin-button": "^1.0.5",
+    "vaadin-checkbox": "^1.0.3",
+    "vaadin-combo-box": "^3.0.2"
+  },
+  "dependencies": {
+    "polymer": "^2.0.0"
+  },
+  "resolutions": {
+    "vaadin-text-field": "master"
+  }
+}

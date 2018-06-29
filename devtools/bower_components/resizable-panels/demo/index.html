@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
+    <title>resizable-panels Demo</title>
+    <script src="../../webcomponentsjs/webcomponents-lite.js"></script>
+    <link rel="import" href="../../code-sample/themes/one-dark.html">
+    <link rel="import" href="../../code-sample/code-sample.html">
+    <link rel="import" href="../resizable-panels.html">
+    <link href="https://fonts.googleapis.com/css?family=Roboto+Mono|Roboto+Condensed:300,400" rel="stylesheet">
+    <style>
+      body {
+        margin: 0;
+        font-family: Roboto Condensed, sans-serif;
+        font-size: 14px;
+        background-color: #f0f0f0;
+        line-height: 1.4;
+      }
+
+      .no-selection { -webkit-user-select: none;-moz-user-select: none;-ms-user-select: none;user-select: none; }
+
+      h1 {
+        margin-top: 0;
+        font-weight: 300;
+      }
+
+      button {
+        font: inherit;
+        background-color: #EAEDED;
+        border: 0;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.25);
+        height: 40px;
+        padding: 0 20px;
+        border-radius: 3px;
+      }
+
+      button:active {
+        background-color: #D7DBDD;
+      }
+
+      .demo {
+        max-width: 800px;
+        margin: 30px auto;
+        background-color: #fff;
+        padding: 20px;
+      }
+
+      .title-button {
+        display: flex;
+        justify-content: space-between;
+      }
+
+      .main {
+        padding: 10px;
+        background-color: #2196F3;
+        color: #fff;
+      }
+
+      .sidebar {
+        padding: 10px;
+        background-color: #FFC107;
+      }
+
+      .panel {
+        padding: 20px;
+        color: #fff;
+      }
+
+      .w60 { width: 60%; background-color: #CDDC39; color: #827717; }
+      .w40 { width: 40%; background-color: #01579B; color: #fff; }
+
+      .p1 { background-color: #673AB7; }
+      .p2 { background-color: #E91E63; }
+      .p3 { background-color: #00BCD4; }
+      .p4 { background-color: #FB8C00; }
+      .p5 { background-color: #607D8B; }
+      .p6 { background-color: #4CAF50; }
+
+      resizable-panels[vertical] .panel {
+        height: 120px;
+      }
+
+      code-sample { margin: 4px 0 0; }
+      resizable-panels code-sample {
+        width: 50%;
+        background-color: #282c34;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="demo">
+      <div class="title-button">
+        <h1>Two horizontal panels</h1>
+        <button class="btn-toggle-layout" data-target="#rp-1">Change layout</button>
+      </div>
+      <resizable-panels id="rp-1">
+        <div class="main">Lorem ipsum dolor sit amet, consectetur adipisicing elit. Reiciendis sapiente explicabo nemo cupiditate, consectetur distinctio? Quia aperiam sint, ex id quibusdam mollitia. Autem animi reprehenderit quam, dolorum hic, ratione sed.</div>
+        <div class="sidebar">
+          Lorem ipsum dolor sit amet, consectetur adipisicing elit. Aliquam perferendis cupiditate consequuntur veritatis labore neque, maxime ea voluptatem dolorum provident, aut ipsa sed enim sit necessitatibus, tempore nisi non animi?
+          Lorem ipsum dolor sit amet, consectetur adipisicing elit. Aliquam perferendis cupiditate consequuntur veritatis labore neque, maxime ea voluptatem dolorum provident, aut ipsa sed enim sit necessitatibus, tempore nisi non animi?
+        </div>
+      </resizable-panels>
+
+      <code-sample type="html">
+        <template>
+          <resizable-panels>
+            <div class="main">Lorem...</div>
+            <div class="sidebar">Lorem ipsum...</div>
+          </resizable-panels>
+        </template>
+      </code-sample>
+    </div>
+
+    <div class="demo">
+      <div class="title-button">
+        <h1>Two horizontal panels with initial <code>width</code></h1>
+        <button class="btn-toggle-layout" data-target="#rp-2">Change layout</button>
+      </div>
+      <resizable-panels id="rp-2">
+        <div class="main w60">Lorem ipsum dolor sit amet, consectetur adipisicing elit. Reiciendis sapiente explicabo nemo cupiditate, consectetur distinctio? Quia aperiam sint, ex id quibusdam mollitia. Autem animi reprehenderit quam, dolorum hic, ratione sed.</div>
+        <div class="sidebar w40">
+          Lorem ipsum dolor sit amet, consectetur adipisicing elit. Aliquam perferendis cupiditate consequuntur veritatis labore neque, maxime ea voluptatem dolorum provident, aut ipsa sed enim sit necessitatibus, tempore nisi non animi?
+          Lorem ipsum dolor sit amet, consectetur adipisicing elit. Aliquam perferendis cupiditate consequuntur veritatis labore neque, maxime ea voluptatem dolorum provident, aut ipsa sed enim sit necessitatibus, tempore nisi non animi?
+        </div>
+      </resizable-panels>
+      <resizable-panels class="code">
+        <code-sample type="html">
+          <template>
+            <resizable-panels>
+              <div class="main w60">Lorem...</div>
+              <div class="sidebar w40">Lorem ipsum...</div>
+            </resizable-panels>
+          </template>
+        </code-sample>
+        <code-sample type="css">
+          <template>
+            .w60 { width: 60%; }
+            .w40 { width: 40%; }
+          </template>
+        </code-sample>
+      </resizable-panels>
+    </div>
+
+    <div class="demo">
+      <div class="title-button">
+        <h1>Three horizontal panels</h1>
+        <button class="btn-toggle-layout" data-target="#rp-3">Change layout</button>
+      </div>
+      <resizable-panels id="rp-3">
+        <div class="panel p1">Lorem ipsum dolor sit amet, consectetur adipisicing elit. Sed sapiente, veniam sint amet excepturi temporibus impedit praesentium fugit perspiciatis pariatur ab provident totam sequi nemo, corporis, placeat doloremque, accusamus?</div>
+        <div class="panel p2">Lorem ipsum dolor sit amet, consectetur adipisicing elit. Sed sapiente, veniam sint amet excepturi temporibus impedit praesentium fugit perspiciatis pariatur ab provident totam sequi nemo, corporis, placeat doloremque, accusamus?</div>
+        <div class="panel p3">Lorem ipsum dolor sit amet, consectetur adipisicing elit. Sed sapiente, veniam sint amet excepturi temporibus impedit praesentium fugit perspiciatis pariatur ab provident totam sequi nemo, corporis, placeat doloremque, accusamus?</div>
+      </resizable-panels>
+      <code-sample type="html">
+        <template>
+          <resizable-panels>
+            <div class="panel p1">Lorem...</div>
+            <div class="panel p2">Lorem...</div>
+            <div class="panel p3">Lorem...</div>
+          </resizable-panels>
+        </template>
+      </code-sample>
+    </div>
+
+    <div class="demo">
+      <div class="title-button">
+        <h1>Three vertical panels with initial <code>height</code></h1>
+        <button class="btn-toggle-layout" data-target="#rp-4">Change layout</button>
+      </div>
+      <resizable-panels vertical id="rp-4">
+        <div class="panel p4">Lorem ipsum dolor sit amet, consectetur adipisicing elit. Sed sapiente, veniam sint amet excepturi temporibus impedit praesentium fugit perspiciatis pariatur ab provident totam sequi nemo, corporis, placeat doloremque, accusamus?</div>
+        <div class="panel p5">Lorem ipsum dolor sit amet, consectetur adipisicing elit. Sed sapiente, veniam sint amet excepturi temporibus impedit praesentium fugit perspiciatis pariatur ab provident totam sequi nemo, corporis, placeat doloremque, accusamus?</div>
+        <div class="panel p6">
+          <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Sed sapiente, veniam sint amet excepturi temporibus impedit praesentium fugit perspiciatis pariatur ab provident totam sequi nemo, corporis, placeat doloremque, accusamus?</p>
+          <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Molestias magnam magni modi illum, ab! Repellat ipsa, iure accusantium delectus numquam animi saepe, aut nemo, mollitia odio minus. Et, architecto ut!</p>
+        </div>
+      </resizable-panels>
+      <resizable-panels class="code">
+        <code-sample type="html">
+          <template>
+            <resizable-panels vertical>
+              <div class="panel p4">Lorem...</div>
+              <div class="panel p5">Lorem...</div>
+              <div class="panel p6">Lorem...</div>
+            </resizable-panels>
+          </template>
+        </code-sample>
+        <code-sample type="css">
+          <template>
+            resizable-panels[vertical] .panel {
+              height: 120px;
+            }
+          </template>
+        </code-sample>
+      </resizable-panels>
+    </div>
+
+    <script>
+      (function() {
+        [].forEach.call(document.querySelectorAll('resizable-panels'), elem => {
+          elem.addEventListener('resizing', e => {
+            document.body.classList.toggle('no-selection', e.detail.state === 'start');
+          });
+        });
+
+        [].forEach.call(document.querySelectorAll('.btn-toggle-layout'), btn => {
+          btn.addEventListener('click', changeLayout.bind(null, document.querySelector(btn.dataset.target)));
+        });
+
+        function changeLayout(target) {
+          target.vertical = !target.vertical;
+        }
+      }());
+    </script>
+  </body>
+</html>
