@@ -31,7 +31,7 @@ function addType(name, arg) {
 export class Type {
   constructor(tag, data) {
     assert(typeof tag == 'string');
-    assert(data || tag == 'Slot');
+    assert(data);
     if (tag == 'Entity') {
       assert(data instanceof Schema);
     }

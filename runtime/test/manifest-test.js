@@ -581,27 +581,27 @@ ${particleStr1}
       schema Thing
       particle SomeParticle in 'some-particle.js'
         in Thing someParam
-        \`consume Slot mySlot formFactor:big
-          \`provide Slot otherSlot handle:someParam
-          \`provide Slot oneMoreSlot formFactor:small
+        \`consume Slot {formFactor: big} mySlot
+          \`provide Slot {handle: someParam} otherSlot
+          \`provide Slot {formFactor: small} oneMoreSlot
 
       particle OtherParticle
         out Thing aParam
-        \`consume mySlot
-        \`consume oneMoreSlot
+        \`consume Slot mySlot
+        \`consume Slot oneMoreSlot
 
       recipe SomeRecipe
         ? #someHandle1 as myHandle
-        slot 'slotIDs:A' #someSlot as slot0
+        use 'slotIDs:A' #someSlot as slot0
+        create as slot1
         SomeParticle
           someParam <- myHandle
-          consume mySlot as slot0
-            provide otherSlot as slot2
-            provide oneMoreSlot as slot1
+          mySlot <- slot0
+          oneMoreSlot -> slot1
         OtherParticle
           aParam -> myHandle
-          consume mySlot as slot0
-          consume oneMoreSlot as slot1
+          mySlot <- slot0
+          oneMoreSlot <- slot1
     `);
     let verify = (manifest) => {
       let recipe = manifest.recipes[0];
@@ -609,16 +609,11 @@ ${particleStr1}
       recipe.normalize();
 
       assert.lengthOf(recipe.particles, 2);
-      assert.lengthOf(recipe.handles, 1);
-      assert.lengthOf(recipe.handleConnections, 2);
-      assert.lengthOf(recipe.slots, 3);
-      assert.lengthOf(recipe.slotConnections, 3);
-      assert.lengthOf(Object.keys(recipe.particles[0].consumedSlotConnections), 2);
-      assert.lengthOf(Object.keys(recipe.particles[1].consumedSlotConnections), 1);
-      let mySlot = recipe.particles[1].consumedSlotConnections['mySlot'];
-      assert.isDefined(mySlot.targetSlot);
-      assert.lengthOf(Object.keys(mySlot.providedSlots), 2);
-      assert.equal(mySlot.providedSlots['oneMoreSlot'], recipe.particles[0].consumedSlotConnections['oneMoreSlot'].targetSlot);
+      assert.lengthOf(recipe.handles, 3);
+      assert.lengthOf(recipe.handleConnections, 7);
+      let mySlot = recipe.particles[1].connections['mySlot'].handle;
+      assert.lengthOf(mySlot.connections, 2);
+      assert.equal(mySlot.connections[0], recipe.particles[0].connections['mySlot']);
     };
     verify(manifest);
     verify(await Manifest.parse(manifest.toString()));

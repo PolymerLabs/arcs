@@ -400,12 +400,29 @@ VariableType
   }
 
 SlotType
-  = 'Slot'
+  = 'Slot' fields:(whiteSpace '{' (SlotField (',' whiteSpace SlotField)*)? '}')?
 {
+  fields = optional(fields, fields => {
+    let data = fields[2];
+    return [data[0], data[1].map(tail => tail[2])];
+  }, []);
+
   return {
     kind: 'slot-type',
-    location: location()
+    location: location(),
+    fields
   };
+}
+
+SlotField 
+  = name:lowerIdent whiteSpace? ':' whiteSpace? value:lowerIdent
+{
+  return {
+    kind: 'slot-field',
+    location: location(),
+    name,
+    value
+  }
 }
 
 ReferenceType
