@@ -32,12 +32,14 @@ class Scoring {
   static longestWordText(stats) {
     return stats && stats.longestWord ?
         `${stats.longestWord} (${stats.longestWordScore})` :
-        '(none yet)';
+        '--';
+        // '(none yet)';
   }
   static highestScoringWordText(stats) {
     return stats && stats.highestScoringWord ?
         `${stats.highestScoringWord} (${stats.highestScoringWordScore})` :
-        '(none yet)';
+        '--';
+        // '(none yet)';
   }
   static scoreToMessage(stats) {
     return `Words Puzzle Game Stats -- Highest scoring word: ${
