@@ -12,6 +12,16 @@
 #################################################################
 FROM couchdb:latest AS toolchain
 
+# To make sure that we compile using the right GCC and link against the
+# correct library versions, run the same system-upgrading steps as in the main
+# image (see more information below)
+RUN \
+	echo "deb http://ftp.us.debian.org/debian unstable main contrib non-free" > \
+		/etc/apt/sources.list.d/unstable.list && \
+	apt-get update && \
+	apt-get -y upgrade && \
+	apt-get -y dist-upgrade
+
 # Add packages to build the Asylo SGX toolchain
 RUN apt-get update && \
 	apt-get install -y \
@@ -52,10 +62,14 @@ COPY --from=toolchain /usr/local/share/asylo/ /usr/local/share/asylo/
 
 # Couch is (currently) based on Debian jessie, so we need to do some work to
 # bring that into the future.
+#
 # Mostly, Asylo needs a more modern GCC (G++) and OCaml. To get this to work,
 # though, I ended up adding an unstable Debian channel and running
 # `dist-upgrade` which seems to upgrade from Jessie to Buster/Sid.
-# This is working (yay!) but perhaps not production-level.
+#
+# This is working (yay!) but perhaps not production-level, and makes the build
+# very slow (45 minutes for my last `docker build`).
+#
 # TODO future options might be:
 # - Fork Couch's Dockerfile, and base it on a newer stable Debian
 # - Install Asylo & Couch on top of a newer Debian image (without using
@@ -80,6 +94,7 @@ RUN \
 		build-essential \
 		ca-certificates-java \
 		cryptsetup-bin \
+		flex \
 		m4 \
 		ocamlbuild \
 		ocaml-nox \
