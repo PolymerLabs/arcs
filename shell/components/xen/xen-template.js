@@ -290,14 +290,17 @@ const _renderSubtemplates = function(container, controller, template, models) {
   if (template && models) {
     models && models.forEach((model, i)=>{
       next = child && child.nextElementSibling;
-      let dom;
       // use existing node if possible
       if (!child) {
-        dom = stamp(template).events(controller);
+        const dom = stamp(template).events(controller);
         child = dom.root.firstElementChild;
         if (child) {
           child._subtreeDom = dom;
-          container.appendChild(dom.root);
+          container.appendChild(child);
+          if (!template._shapeWarning && child.nextSibling) {
+            template._shapeWarning = true;
+            console.warn(`xen-template: subtemplate has multiple root nodes: only the first is used.`, template);
+          }
         }
       }
       if (child) {

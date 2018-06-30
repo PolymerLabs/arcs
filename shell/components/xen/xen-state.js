@@ -10,7 +10,16 @@
 
 const nob = () => Object.create(null);
 
-export default Base => class extends Base {
+const debounce = (key, action, delay) => {
+  if (key) {
+    window.clearTimeout(key);
+  }
+  if (action && delay) {
+    return window.setTimeout(action, delay);
+  }
+};
+
+const XenStateMixin = Base => class extends Base {
   constructor() {
     super();
     this._pendingProps = nob();
@@ -140,4 +149,10 @@ export default Base => class extends Base {
   }
   _didUpdate() {
   }
+  _debounce(key, func, delay) {
+    key = `_debounce_${key}`;
+    this._state[key] = debounce(this._state[key], func, delay != null ? delay : 16);
+  }
 };
+
+export {XenStateMixin, nob, debounce};

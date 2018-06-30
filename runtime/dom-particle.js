@@ -9,7 +9,7 @@
  */
 'use strict';
 
-import XenStateMixin from '../shell/components/xen/xen-state.js';
+import {XenStateMixin} from '../shell/components/xen/xen-state.js';
 import {DomParticleBase} from './dom-particle-base.js';
 
 /** @class DomParticle
