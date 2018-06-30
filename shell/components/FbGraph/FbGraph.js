@@ -1,4 +1,4 @@
-import Xen from './xen/xen.js';
+import Xen from '../xen/xen.js';
 
 const debounce = Xen.debounce;
 const changeDebounceMs = 16;

@@ -1,4 +1,4 @@
-import {FbGraph} from '../../../components/FbGraph.js';
+import {FbGraph} from '../../../components/FbGraph/FbGraph.js';
 import Firebase from '../cloud-data/firebase.js';
 
 const {Field} = FbGraph(Firebase.db);
