@@ -9,16 +9,11 @@
 
 import {InMemoryStorage} from './in-memory-storage.js';
 import {FirebaseStorage} from './firebase-storage.js';
-import {ScottStorage} from './scott-storage.js';
 
 export class StorageProviderFactory {
   constructor(arcId) {
     this._arcId = arcId;
-    this._storageInstances = {
-      'in-memory': new InMemoryStorage(arcId),
-      'firebase': new FirebaseStorage(arcId),
-      'scott': new ScottStorage(arcId)
-    };
+    this._storageInstances = {'in-memory': new InMemoryStorage(arcId), 'firebase': new FirebaseStorage(arcId)};
   }
 
   _storageForKey(key) {
@@ -39,5 +34,6 @@ export class StorageProviderFactory {
   }
 
   newKey(id, associatedKeyFragment) {
+
   }
 }
