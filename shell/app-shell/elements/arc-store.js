@@ -12,17 +12,17 @@ import Xen from '../../components/xen/xen.js';
 import Arcs from '../lib/arcs.js';
 import ArcsUtils from '../lib/arcs-utils.js';
 
-const log = Xen.logFactory('ArcHandle', '#c6a700');
+const log = Xen.logFactory('ArcStore', '#c6a700');
 
-class ArcHandle extends Xen.Debug(Xen.Base, log) {
+class ArcStore extends Xen.Debug(Xen.Base, log) {
   static get observedAttributes() { return ['arc', 'options', 'data']; }
   async _update(props, state, oldProps) {
     let {arc, options, data} = props;
     if (oldProps.arc && oldProps.arc !== arc) {
-      // drop stale handle on the floor (will it GC?)
-      state.handle = null;
+      // drop stale store on the floor (will it GC?)
+      state.store = null;
     }
-    if (arc && !state.handle) {
+    if (arc && !state.store) {
       if (state.working) {
         state.invalid = true;
         return;
@@ -35,9 +35,9 @@ class ArcHandle extends Xen.Debug(Xen.Base, log) {
         state.manifest = await Arcs.Manifest.load(options.schemas, arc.loader);
       }
       if (options && (state.manifest || options.schema)) {
-        state.handle = await this._createHandle(arc, state.manifest, options);
+        state.store = await this._createStore(arc, state.manifest, options);
         state.data = null;
-        this._fire('store', state.handle);
+        this._fire('store', state.store);
       }
       state.working = false;
       if (state.invalid) {
@@ -45,13 +45,13 @@ class ArcHandle extends Xen.Debug(Xen.Base, log) {
         state.invalid = false;
       }
     }
-    if (arc && state.handle && data != state.data) {
+    if (arc && state.store && data != state.data) {
       state.data = data;
       // (re)populate
-      this._updateHandle(state.handle, data, arc);
+      this._updateStore(state.store, data, arc);
     }
   }
-  async _createHandle(arc, manifest, {name, tags, schema, type, id, asContext, description, storageKey}) {
+  async _createStore(arc, manifest, {name, tags, schema, type, id, asContext, description, storageKey}) {
     let setOf = false;
     if (type[0] == '[') {
       setOf = true;
@@ -70,31 +70,31 @@ class ArcHandle extends Xen.Debug(Xen.Base, log) {
       tags = tags.concat(['nosync']);
     }
     id = id || arc.generateID();
-    // context-handles are for `map`, `copy`, `?`
-    // arc-handles are for `use`, `?`
+    // context-stores are for `map`, `copy`, `?`
+    // arc-stores are for `use`, `?`
     const owner = asContext ? arc.context : arc;
-    const handle = await owner.createStore(typeOf, name, id, tags, storageKey);
+    const store = await owner.createStore(typeOf, name, id, tags, storageKey);
     if (description) {
-      handle.description = description;
+      store.description = description;
     }
-    // observe handle
-    handle.on('change', () => this._handleChanged(handle), arc);
-    log('created handle', name, tags);
-    return handle;
+    // observe store
+    store.on('change', () => this._storeChanged(store), arc);
+    log('created store', name, tags);
+    return store;
   }
-  _updateHandle(handle, data, arc) {
-    log('updating handle', handle.name, data);
-    if (handle.toList) {
+  _updateStore(store, data, arc) {
+    log('updating store', store.name, data);
+    if (store.toList) {
       data = Object.keys(data).map(key => {
         return {id: arc.generateID(), rawData: data[key]};
       });
     } else {
       data = {id: arc.generateID(), rawData: data};
     }
-    ArcsUtils.setStoreData(handle, data);
+    ArcsUtils.setStoreData(store, data);
   }
-  _handleChanged(handle) {
-    handle.debouncer = ArcsUtils.debounce(handle.debouncer, () => this._fire('change', handle), 500);
+  _storeChanged(store) {
+    store.debouncer = Xen.debounce(store.debouncer, () => this._fire('change', store), 500);
   }
 }
-customElements.define('arc-handle', ArcHandle);
+customElements.define('arc-store', ArcStore);
