@@ -121,7 +121,7 @@ const ArcsUtils = {
   async _requireHandle(arc, type, name, id, tags) {
     let store = arc.context.findStoreById(id);
     if (!store) {
-      store = await arc.context.newStore(type, name, id, tags);
+      store = await arc.context.createStore(type, name, id, tags);
       log('synthesized handle', id, tags);
     }
     return store;

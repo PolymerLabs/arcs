@@ -151,7 +151,7 @@ export class Manifest {
   }
   // TODO: newParticle, Schema, etc.
   // TODO: simplify() / isValid().
-  async newStore(type, name, id, tags) {
+  async createStore(type, name, id, tags) {
     assert(!type.hasVariableReference, `stores can't have variable references`);
     let store = await this.storageProviderFactory.construct(id, type, `in-memory://${this.id}`);
     assert(store._version !== null);
@@ -819,7 +819,7 @@ ${e.message}
           let id = `${manifest.generateID()}:${particleSpecHash}:${hostedParticle.name}`;
           targetHandle = recipe.newHandle();
           targetHandle.fate = 'copy';
-          let store = await manifest.newStore(connection.type, null, id, []);
+          let store = await manifest.createStore(connection.type, null, id, []);
           store.set(hostedParticleLiteral);
           targetHandle.mapToStorage(store);
         }
@@ -985,7 +985,7 @@ ${e.message}
     }
   }
   static async _createStore(manifest, type, name, id, tags, item) {
-    let store = await manifest.newStore(type, name, id, tags);
+    let store = await manifest.createStore(type, name, id, tags);
     store.source = item.source;
     store.description = item.description;
     return store;

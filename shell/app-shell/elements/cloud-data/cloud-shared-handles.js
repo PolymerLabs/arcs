@@ -190,7 +190,7 @@ class CloudSharedHandles extends Xen.Debug(Xen.Base, log) {
   }
   // low-level
   async _requireHandle(arc, id, type, name, tags) {
-    return arc.context.findStoreById(id) || await arc.context.newStore(type, name, id, tags);
+    return arc.context.findStoreById(id) || await arc.context.createStore(type, name, id, tags);
   }
   _addWatch(path, kind, handler) {
     const {watches} = this._state;
