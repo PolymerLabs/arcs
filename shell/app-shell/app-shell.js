@@ -73,6 +73,7 @@ const template = html`
     users="{{users}}"
     user="{{user}}"
     key="{{key}}"
+    arc="{{arc}}"
     on-theme="_onStateData"
   ></shell-stores>
 

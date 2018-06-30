@@ -10,7 +10,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
 import Xen from '../../components/xen/xen.js';
 import ArcsUtils from '../lib/arcs-utils.js';
-import Const from '../constants.js';
 import './arc-store.js';
 
 // templates
@@ -24,7 +23,7 @@ const log = Xen.logFactory('ShellStores', '#004f00');
 
 class ShellStores extends Xen.Debug(Xen.Base, log) {
   static get observedAttributes() {
-    return ['key', 'config', 'users', 'user'];
+    return ['key', 'config', 'users', 'user', 'arc'];
   }
   get template() {
     return template;
