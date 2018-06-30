@@ -9,38 +9,19 @@
  */
 'use strict';
 
-import {assert} from '../platform/assert-web.js';
-import {Particle} from './particle.js';
 import XenStateMixin from '../shell/components/xen/xen-state.js';
+import {DomParticleBase} from './dom-particle-base.js';
 
 /** @class DomParticle
- * Particle that does stuff with DOM.
+ * Particle that interoperates with DOM and uses a simple state system
+ * to handle updates.
  */
-export class DomParticle extends XenStateMixin(Particle) {
+export class DomParticle extends XenStateMixin(DomParticleBase) {
   constructor() {
     super();
+    // alias properties to remove `_`
     this.state = this._state;
     this.props = this._props;
-  }
-  /** @method get template()
-   * Override to return a String defining primary markup.
-   */
-  get template() {
-    return '';
-  }
-  /** @method getTemplate(slotName)
-   * Override to return a String defining primary markup for the given slot name.
-   */
-  getTemplate(slotName) {
-    // TODO: only supports a single template for now. add multiple templates support.
-    return this.template;
-  }
-  /** @method getTemplateName(slotName)
-   * Override to return a String defining the name of the template for the given slot name.
-   */
-  getTemplateName(slotName) {
-    // TODO: only supports a single template for now. add multiple templates support.
-    return `default`;
   }
   /** @method willReceiveProps(props, state, oldProps, oldState)
    * Override if necessary, to do things when props change.
@@ -65,6 +46,10 @@ export class DomParticle extends XenStateMixin(Particle) {
   render() {
     return {};
   }
+  /** @method setState(state)
+   * Copy values from `state` into the particle's internal state,
+   * triggering an update cycle unless currently updating.
+   */
   setState(state) {
     return this._setState(state);
   }
@@ -72,16 +57,6 @@ export class DomParticle extends XenStateMixin(Particle) {
   setIfDirty(state) {
     console.warn('DomParticle: `setIfDirty` is deprecated, please use `setState` instead');
     return this._setState(state);
-  }
-  _willReceiveProps(...args) {
-    this.willReceiveProps(...args);
-  }
-  _update(...args) {
-    this.update(...args);
-    if (this.shouldRender(...args)) { // TODO: should shouldRender be slot specific?
-      this.relevance = 1; // TODO: improve relevance signal.
-    }
-    this.config.slotNames.forEach(s => this.renderSlot(s, ['model']));
   }
   /** @method get config()
    * Override if necessary, to modify superclass config.
@@ -95,9 +70,19 @@ export class DomParticle extends XenStateMixin(Particle) {
       slotNames: [...this.spec.slots.values()].map(s => s.name)
     };
   }
-  _info() {
-    return `---------- DomParticle::[${this.spec.name}]`;
+  // affordances for aliasing methods to remove `_`
+  _willReceiveProps(...args) {
+    this.willReceiveProps(...args);
   }
+  _update(...args) {
+    this.update(...args);
+    if (this.shouldRender(...args)) { // TODO: should shouldRender be slot specific?
+      this.relevance = 1; // TODO: improve relevance signal.
+    }
+    this.config.slotNames.forEach(s => this.renderSlot(s, ['model']));
+  }
+  //
+  // deprecated
   get _views() {
     console.warn(`Particle ${this.spec.name} uses deprecated _views getter.`);
     return this.handles;
@@ -106,10 +91,11 @@ export class DomParticle extends XenStateMixin(Particle) {
     console.warn(`Particle ${this.spec.name} uses deprecated setViews method.`);
     return this.setHandles(views);
   }
+  // end deprecated
+  //
   async setHandles(handles) {
     this.handles = handles;
     this._handlesToSync = new Set(this.config.handleNames);
-
     // make sure we invalidate once, even if there are no incoming handles
     this._invalidate();
   }
@@ -137,75 +123,10 @@ export class DomParticle extends XenStateMixin(Particle) {
     });
     this._setProps(props);
   }
-  renderSlot(slotName, contentTypes) {
-    const stateArgs = this._getStateArgs();
-    let slot = this.getSlot(slotName);
-    if (!slot) {
-      return; // didn't receive StartRender.
-    }
-
-    // Set this to support multiple slots consumed by a particle, without needing
-    // to pass slotName to particle's render method, where it useless in most cases.
-    this.currentSlotName = slotName;
-
-    contentTypes.forEach(ct => slot._requestedContentTypes.add(ct));
-    // TODO(sjmiles): redundant, same answer for every slot
-    if (this.shouldRender(...stateArgs)) {
-      let content = {};
-      if (slot._requestedContentTypes.has('template')) {
-        content.template = this.getTemplate(slot.slotName);
-      }
-      if (slot._requestedContentTypes.has('model')) {
-        content.model = this.render(...stateArgs);
-      }
-      content.templateName = this.getTemplateName(slot.slotName);
-
-      slot.render(content);
-    } else if (slot.isRendered) {
-      // Send empty object, to clear rendered slot contents.
-      slot.render({});
-    }
-
-    this.currentSlotName = undefined;
-  }
-  forceRenderTemplate(slotName) {
-    this._slotByName.forEach((slot, name) => {
-      if (!slotName || (name == slotName)) {
-        slot._requestedContentTypes.add('template');
-      }
-    });
-  }
-
   fireEvent(slotName, {handler, data}) {
     if (this[handler]) {
       // TODO(sjmiles): remove `this._state` parameter
       this[handler]({data}, this._state);
     }
-  }
-  setParticleDescription(pattern) {
-    if (typeof pattern === 'string') {
-      return super.setParticleDescription(pattern);
-    }
-    assert(!!pattern.template && !!pattern.model, 'Description pattern must either be string or have template and model');
-    super.setDescriptionPattern('_template_', pattern.template);
-    super.setDescriptionPattern('_model_', JSON.stringify(pattern.model));
-  }
-  updateVariable(handleName, record) {
-    const handle = this.handles.get(handleName);
-    const newRecord = new (handle.entityClass)(record);
-    handle.set(newRecord);
-    return newRecord;
-  }
-  updateSet(handleName, record) {
-    // Set the record into the right place in the set. If we find it
-    // already present replace it, otherwise, add it.
-    // TODO(dstockwell): Replace this with happy entity mutation approach.
-    const handle = this.handles.get(handleName);
-    const records = this._props[handleName];
-    const target = records.find(r => r.id === record.id);
-    if (target) {
-      handle.remove(target);
-    }
-    handle.store(record);
   }
 }
