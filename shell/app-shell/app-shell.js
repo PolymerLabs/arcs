@@ -70,13 +70,10 @@ const template = html`
 
   <shell-stores
     config="{{config}}"
-    arc="{{arc}}"
     users="{{users}}"
     user="{{user}}"
     key="{{key}}"
-    arcs="{{arcs}}"
     on-theme="_onStateData"
-    on-arcs="_onStateData"
   ></shell-stores>
 
   <cloud-data
@@ -86,7 +83,6 @@ const template = html`
     userid="{{userid}}"
     context="{{context}}"
     user="{{user}}"
-    arcs="{{arcs}}"
     key="{{key}}"
     arc="{{arc}}"
     metadata="{{metadata}}"
@@ -98,7 +94,6 @@ const template = html`
     on-user="_onStateData"
     on-profile="_onProfile"
     on-users="_onStateData"
-    on-arcs="_onStateData"
     on-key="_onStateData"
     on-metadata="_onStateData"
     on-share="_onStateData"

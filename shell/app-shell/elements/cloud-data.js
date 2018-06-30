@@ -75,7 +75,7 @@ const log = Xen.logFactory('CloudData', '#004f00');
 
 class CloudData extends Xen.Debug(Xen.Base, log) {
   static get observedAttributes() {
-    return ['config', 'users', 'userid', 'context', 'user', 'profile', 'arcs', 'key',
+    return ['config', 'users', 'userid', 'context', 'user', 'profile', 'key',
       'metadata', 'description', 'share', 'plans', 'plan', 'arc'];
   }
   get template() {

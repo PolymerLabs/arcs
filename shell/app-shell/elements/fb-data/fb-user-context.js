@@ -118,7 +118,6 @@ class FbUserContextElement extends Xen.Base {
     if (data) {
       const {context} = this._props;
       const id = `${Const.HANDLES.profile}_${field.key}`;
-      //const id = `NEO_${field.key}`;
       const store = await this._requireStore(context, id, id /*field.key*/, field.value);
       if (store._boxType.isCollection) {
         Object.values(data).forEach(datum => store.remove(datum.id));
@@ -178,7 +177,6 @@ class FbUserContextElement extends Xen.Base {
       if (metadata && data) {
         log(`[${key}] share ${shareid}`);
         const storeid = `${Const.HANDLES.boxed}_${key}`;
-        //const storeid = `NEOBOX_${key}`;
         const store = await this._requireStore(context, storeid, storeid, {metadata});
         const addToBox = datum => store.store({
           id: `${shareid}|${datum.id}`,
@@ -197,7 +195,6 @@ class FbUserContextElement extends Xen.Base {
       const {metadata, data} = stores[key];
       if (metadata && data) {
         const storeid = `${Const.HANDLES.boxed}_${key}`;
-        //const storeid = `NEOBOX_${key}`;
         const store = context.findStoreById(storeid);
         if (store) {
           log(`removing [${key}] share ${shareid}`);
