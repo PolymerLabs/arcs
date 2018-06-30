@@ -149,9 +149,8 @@ class ShellUi extends Xen.Debug(Xen.Base, log) {
       renderModel.avatar_title = user.info.name;
       const avatar = profile && profile.avatar && profile.avatar.url || '';
       // TODO(sjmiles): bad way to surface the resolver
-      const url = arc._loader._resolve(avatar);
-      const avatar_style = avatar ? `background-image: url("${url}");` : '';
-      renderModel.avatar_style = avatar_style;
+      const url = arc._loader._resolve(avatar || `https://$shell/assets/avatars/user (0).png`);
+      renderModel.avatar_style = url ? `background-image: url("${url}");` : '';
     }
     return [props, state, renderModel];
   }
