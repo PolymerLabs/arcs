@@ -1,8 +1,8 @@
-import XenState from './xen-state.js';
-import XenElement from './xen-element.js';
+import {XenStateMixin} from './xen-state.js';
+import XenElementMixin from './xen-element.js';
 import XenTemplate from './xen-template.js';
 
-class XenBase extends XenElement(XenState(HTMLElement)) {
+class XenBase extends XenElementMixin(XenStateMixin(HTMLElement)) {
   get template() {
     // TODO(sjmiles): null check module?
     const module = this.constructor.module;

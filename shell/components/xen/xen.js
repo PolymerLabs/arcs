@@ -1,5 +1,5 @@
 import Template from './xen-template.js';
-import State from './xen-state.js';
+import {XenStateMixin, debounce, nob} from './xen-state.js';
 import Element from './xen-element.js';
 import Base from './xen-base.js';
 
@@ -120,10 +120,9 @@ window.walker = walker;
 const _logFactory = (preamble, color, log='log') => console[log].bind(console, `%c${preamble}`, `background: ${color}; color: white; padding: 1px 6px 2px 7px; border-radius: 6px;`);
 const logFactory = (preamble, color, log) => (Debug.level > 0) ? _logFactory(preamble, color, log) : () => {};
 const clone = obj => typeof obj === 'object' ? Object.assign(Object.create(null), obj) : {};
-const nob = () => Object.create(null);
 
 const Xen = {
-  State,
+  State: XenStateMixin,
   Template,
   Element,
   Base,
@@ -133,7 +132,8 @@ const Xen = {
   walker,
   logFactory,
   clone,
-  nob
+  nob,
+  debounce
 };
 
 window.Xen = Xen;
