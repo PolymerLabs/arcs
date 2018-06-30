@@ -80,14 +80,6 @@ export class DomParticle extends XenStateMixin(DomParticleBase) {
       this.relevance = 1; // TODO: improve relevance signal.
     }
     this.config.slotNames.forEach(s => this.renderSlot(s, ['model']));
-<<<<<<< HEAD
-=======
-  }
-  //
-  // deprecated
-  _info() {
-    return `---------- DomParticle::[${this.spec.name}]`;
->>>>>>> factor DomParticle into Xen-less base class (DomRenderParticle) and an Xen-ful subclass (DomParticle)
   }
   //
   // deprecated
