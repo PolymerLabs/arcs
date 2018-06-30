@@ -149,9 +149,6 @@ export class Manifest {
       assert(section.name == this._meta.name || section.name == undefined, `can't change manifest ID after storage is constructed`);
     this._meta.apply(section);
   }
-  async newStore(type, name, id, tags, storageKey) {
-    return this.createStore(type, name, id, tags, storageKey);
-  }
   // TODO: newParticle, Schema, etc.
   // TODO: simplify() / isValid().
   async createStore(type, name, id, tags, storageKey) {
