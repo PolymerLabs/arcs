@@ -151,9 +151,9 @@ export class Manifest {
   }
   // TODO: newParticle, Schema, etc.
   // TODO: simplify() / isValid().
-  async createStore(type, name, id, tags) {
+  async createStore(type, name, id, tags, storageKey) {
     assert(!type.hasVariableReference, `stores can't have variable references`);
-    let store = await this.storageProviderFactory.construct(id, type, `in-memory://${this.id}`);
+    let store = await this.storageProviderFactory.construct(id, type, storageKey || `in-memory://${this.id}`);
     assert(store._version !== null);
     store.name = name;
     this._storeManifestUrls.set(store.id, this.fileName);
