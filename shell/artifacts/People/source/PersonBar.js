@@ -52,7 +52,7 @@ defineParticle(({DomParticle, resolver, html, log}) => {
       if (avatars && people) {
         const count = people.length;
         people = people.map((person, i) => {
-          const avatar = this.lookupUser(avatars, person.$id)[0];
+          const avatar = this.boxQuery(avatars, person.$id)[0];
           return {
             index: i,
             name: person.name,

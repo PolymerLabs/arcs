@@ -100,7 +100,7 @@ defineParticle(({DomParticle, resolver, html}) => {
     }
     renderMessages(messages, user, avatars) {
       return messages.map((m, i) => {
-        const avatar = this.lookupUser(avatars, m.userid)[0];
+        const avatar = this.boxQuery(avatars, m.userid)[0];
         const src = avatar && avatar.url || 'https://$shell/assets/avatars/user.jpg';
         return {
           iscustom: Boolean(m.type && m.type.length),
