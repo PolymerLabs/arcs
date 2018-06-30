@@ -11,24 +11,26 @@ defineParticle(({DomParticle, resolver, html}) => {
   let host = `show-post-list`;
 
   const template = html`
-<style>
-  [${host}] {
-    max-width: 600px;
-    margin: auto auto;
-  }
-  [${host}] [items] p {
-    margin: 0;
-  }
-</style>
+
 <div ${host}>
+  <style>
+    [${host}] {
+      max-width: 600px;
+      margin: auto auto;
+    }
+    [${host}] [items] p {
+      margin: 0;
+    }
+  </style>
+  <div items>{{items}}</div>
   <template items>
     <div>
       <div slotid="item" subid="{{id}}" key="{{id}}"></div>
       <div slotid="action" subid="{{id}}"></div>
     </div>
   </template>
-  <div items>{{items}}</div>
 </div>
+
     `;
 
   return class extends DomParticle {
@@ -43,11 +45,7 @@ defineParticle(({DomParticle, resolver, html}) => {
       return {
         items: {
           $template: 'items',
-          models: items.map(item => {
-            return {
-              id: item.id
-            };
-          })
+          models: items.map(item => ({id: item.id}))
         }
       };
     }

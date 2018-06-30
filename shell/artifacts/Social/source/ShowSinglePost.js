@@ -86,7 +86,7 @@ defineParticle(({DomParticle, html, log, resolver}) => {
       const {arcKey, author, createdTimestamp, id, image, imageHeight, imageWidth, message} = props.post;
       const {clampedWidth, clampedHeight} =
           this.clampSize(imageWidth, imageHeight);
-      const avatar = props.avatars.find(a => a.owner == author);
+      const avatar = this.boxQuery(props.avatars, author)[0];
       const owner = props.people.find(p => p.id === author);
       return {
         id,
