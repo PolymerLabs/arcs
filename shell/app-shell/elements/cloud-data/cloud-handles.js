@@ -138,15 +138,21 @@ class CloudHandles extends Xen.Debug(Xen.Base, log) {
   }
   _localSetChange(handle, path, change, remoteValue) {
     log('localSetChange', change);
+    // TODO(sjmiles): we cannot have '.' or '/' in FB key names, and some of these ids contain
+    // relative filepaths.
+    // This is an asymmetric (lossy) solution that simply removes those characters.
+    // Maybe we could encode these strings and decode them on other side (e.g. `btoa/atob`), but it's problematic
+    // for existing unencoded data.
+    const cleanKey = key => key.replace(/[./]/g, '%');
     if (change.add) {
       change.add.forEach(record => {
         log('trigger: local add', record);
-        Firebase.db.child(`${path}/data/${record.id}`).set(ArcsUtils.removeUndefined(record));
+        Firebase.db.child(`${path}/data/${cleanKey(record.id)}`).set(ArcsUtils.removeUndefined(record));
       });
     } else if (change.remove) {
       change.remove.forEach(record => {
         log('trigger: local remove', record);
-        Firebase.db.child(`${path}/data/${record.id}`).remove();
+        Firebase.db.child(`${path}/data/${cleanKey(record.id)}`).remove();
       });
     } else {
       warn('Unsupported "handle.change" event', change);
