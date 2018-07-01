@@ -593,10 +593,10 @@ ${particleStr1}
       recipe SomeRecipe
         ? #someHandle1 as myHandle
         use 'slotIDs:A' #someSlot as slot0
-        create as slot1
         SomeParticle
           someParam <- myHandle
           mySlot <- slot0
+          otherSlot -> slot2
           oneMoreSlot -> slot1
         OtherParticle
           aParam -> myHandle
@@ -609,7 +609,7 @@ ${particleStr1}
       recipe.normalize();
 
       assert.lengthOf(recipe.particles, 2);
-      assert.lengthOf(recipe.handles, 3);
+      assert.lengthOf(recipe.handles, 4);
       assert.lengthOf(recipe.handleConnections, 7);
       let mySlot = recipe.particles[1].connections['mySlot'].handle;
       assert.lengthOf(mySlot.connections, 2);
