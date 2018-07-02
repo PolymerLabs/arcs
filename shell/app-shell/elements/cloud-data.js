@@ -40,6 +40,7 @@ const template = html`
     userid="{{userid}}"
     context="{{context}}"
     arc="{{arc}}"
+    on-friends="_onForward"
   ></fb-user-context>
 
   <cloud-arc

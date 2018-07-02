@@ -3,7 +3,6 @@ import Xen from '../components/xen/xen.js';
 import ArcsUtils from './lib/arcs-utils.js';
 import LinkJack from './lib/link-jack.js';
 import Const from './constants.js';
-import Arcs from './lib/arcs.js';
 
 // elements
 import './elements/arc-config.js';
@@ -80,7 +79,6 @@ const template = html`
   <cloud-data
     config="{{config}}"
     users="{{users}}"
-    profile="{{profile}}"
     userid="{{userid}}"
     context="{{context}}"
     user="{{user}}"
@@ -93,8 +91,8 @@ const template = html`
     plan="{{plan}}"
     on-userid="_onStateData"
     on-user="_onStateData"
-    on-profile="_onProfile"
     on-users="_onStateData"
+    on-friends="_onStateData"
     on-key="_onStateData"
     on-metadata="_onStateData"
     on-share="_onStateData"
@@ -109,7 +107,7 @@ const template = html`
     showhint="{{showhint}}"
     users="{{users}}"
     user="{{user}}"
-    profile="{{profile}}"
+    friends="{{friends}}"
     share="{{share}}"
     search="{{search}}"
     glows="{{glows}}"
@@ -243,22 +241,6 @@ class AppShell extends Xen.Debug(Xen.Base, log) {
   }
   _onSelectUser(e, userid) {
     this._setState({userid});
-  }
-  _onProfile(e, data) {
-    this._onStateData(e, data);
-    if (window.top !== window) {
-      const {user, arc} = this._state;
-      if (data && user && user.info) {
-        data.name = user.info.name;
-      }
-      if (data.avatar && data.avatar.url) {
-        data.avatar.url = arc._loader._resolve(data.avatar.url);
-        //console.log(data.avatar);
-      }
-      //console.log('sending profile');
-      // for enclosure, e.g. multiapp
-      this._fire('profile', {profile: data, source: window}, window.top);
-    }
   }
 }
 

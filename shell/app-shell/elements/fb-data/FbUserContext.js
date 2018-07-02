@@ -37,9 +37,7 @@ export const FbUserContext = class {
           case 'friends':
             return this._friendSchema;
           default:
-            return {
-              $changed: field => this._onProfileHandleChanged(field)
-            };
+            return {};
         }
       }
     };
@@ -47,14 +45,12 @@ export const FbUserContext = class {
   get _avatarSchema() {
     return {
       $changed: field => {
-        this._onProfileHandleChanged(field);
         this._onAvatarHandleChanged(field);
       }
     };
   }
   get _friendSchema() {
     return {
-      $changed: field => this._onProfileHandleChanged(field),
       data: {
         '*': {
           rawData: {
@@ -63,7 +59,7 @@ export const FbUserContext = class {
                 path: `/users/${value}`,
                 schema: {
                   $changed: field => this._onFriendChanged(field),
-                  arcs: this._friendsArcsSchema,
+                  arcs: this._friendsArcsSchema
                 }
               }
             })
@@ -79,7 +75,17 @@ export const FbUserContext = class {
           $join: {
             path: `/arcs/${parent}`,
             schema: {
-              $changed: field => this._onShareChanged(field)
+              $changed: field => this._onShareChanged(field),
+              shim_handles: {
+                '*': (parent, key, datum) => {
+                  switch (key) {
+                    case 'avatar':
+                      return this._avatarSchema;
+                    default:
+                      return {};
+                  }
+                }
+              }
             }
           }
         })
@@ -88,9 +94,6 @@ export const FbUserContext = class {
   }
   _onFriendChanged(field) {
     this._fire('friend-changed', field);
-  }
-  _onProfileHandleChanged(field) {
-    this._fire('profile-changed', field);
   }
   _onAvatarHandleChanged(field) {
     this._fire('avatar-changed', field);

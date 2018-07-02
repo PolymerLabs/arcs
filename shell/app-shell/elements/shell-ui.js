@@ -64,7 +64,7 @@ const template = html`
       <div suggestions content open$="{{suggestionsContentOpen}}">
         <slot name="suggestions" slot="suggestions" on-plan-choose="_onChooseSuggestion"></slot>
       </div>
-      <settings-panel settings content open$="{{settingsContentOpen}}" key="{{key}}" arc="{{arc}}" users="{{users}}" user="{{user}}" profile="{{profile}}" share="{{share}}" user_picker_open="{{userPickerOpen}}" on-user="_onSelectUser" on-share="_onShare"></settings-panel>
+      <settings-panel settings content open$="{{settingsContentOpen}}" key="{{key}}" arc="{{arc}}" users="{{users}}" user="{{user}}" friends="{{friends}}" share="{{share}}" user_picker_open="{{userPickerOpen}}" on-user="_onSelectUser" on-share="_onShare"></settings-panel>
     </div>
   </div>
   <!-- -->
@@ -85,7 +85,7 @@ const log = Xen.logFactory('ShellUi', '#ac6066');
 
 class ShellUi extends Xen.Debug(Xen.Base, log) {
   static get observedAttributes() {
-    return ['users', 'user', 'profile', 'key', 'arc', 'title', 'share', 'search', 'glows', 'showhint'];
+    return ['users', 'user', 'friends', 'key', 'arc', 'title', 'share', 'search', 'glows', 'showhint'];
   }
   get template() {
     return template;
@@ -144,10 +144,10 @@ class ShellUi extends Xen.Debug(Xen.Base, log) {
     if (state.userPickerOpen && state.userPickerOpen !== oldState.userPickerOpen) {
       renderModel.contentsScrollTop = 0;
     }
-    const {user, profile, arc} = props;
+    const {user, arc} = props;
     if (user && user.info && arc) {
       renderModel.avatar_title = user.info.name;
-      const avatar = profile && profile.avatar && profile.avatar.url || '';
+      const avatar = user.info.avatar || '';
       // TODO(sjmiles): bad way to surface the resolver
       const url = arc._loader._resolve(avatar || `https://$shell/assets/avatars/user (0).png`);
       renderModel.avatar_style = url ? `background-image: url("${url}");` : '';

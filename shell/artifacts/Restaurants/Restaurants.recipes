@@ -50,7 +50,7 @@ recipe
 import 'FavoriteFoodAnnotation.manifest'
 
 recipe
-  map #PROFILE_favorite as food
+  map #favorite as food
   use as restaurants
   FavoriteFoodAnnotation
     restaurants <- restaurants

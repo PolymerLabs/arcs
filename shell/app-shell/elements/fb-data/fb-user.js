@@ -98,7 +98,6 @@ class FbUserElement extends Xen.Base {
     return FbStore.createContextStore(arc, options);
   }
   _onStoreChange(change) {
-    //log('_onStoreChange: ', change);
     const {userid} = this._state;
     if (change.add) {
       change.add.forEach(entity => {

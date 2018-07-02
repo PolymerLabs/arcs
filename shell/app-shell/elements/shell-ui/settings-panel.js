@@ -74,7 +74,7 @@ const template = html`
 </style>
 
 <section user open$="{{user_picker_open}}">
-  <user-picker users="{{users}}" on-selected="_onSelectUser"></user-picker>
+  <user-picker users="{{users}}" friends="{{friends}}" on-selected="_onSelectUser"></user-picker>
 </section>
 <section bar disabled>
   <span>Star this arc</span>
@@ -98,12 +98,12 @@ const template = html`
 </section>
 <section friends>
   <span>Friends</span><br>
-  <div style="padding-top: 8px;">{{friends}}</div>
+  <div style="padding-top: 8px;">{{friendsList}}</div>
 </section>
 `;
 
 const userTemplate = html`
-  <user-item selected$="{{selected}}" on-click="_onSelect" key="{{key}}">
+  <user-item on-click="_onSelect" key="{{key}}">
     <a href="{{href}}" target="_blank"><avatar style="{{style}}"></avatar> <name>{{name}}</name></a>
   </user-item>
 `;
@@ -112,19 +112,19 @@ const log = Xen.logFactory('SettingsPanel', '#bb4d00');
 
 class SettingsPanel extends Xen.Debug(Xen.Base, log) {
   static get observedAttributes() {
-    return ['key', 'arc', 'users', 'user', 'profile', 'share', 'user_picker_open'];
+    return ['key', 'arc', 'users', 'user', 'avatars', 'friends', 'share', 'user_picker_open'];
   }
   get template() {
     return template;
   }
-  _willReceiveProps({user_picker_open, share}, state, oldProps) {
+  _willReceiveProps({share}, state, oldProps) {
     if (oldProps.share !== share) {
       this._setState(this._shareStateToFlags(share));
     }
   }
-  _render(props, state, oldProps) {
-    const {key, users, user, profile, avatars} = props;
-    const {selected, isProfile, isShared} = state;
+  _render(props, state) {
+    const {user, friends, key, arc} = props;
+    const {isProfile, isShared} = state;
     const render = {
       name: user && user.name,
       profileIcon: isProfile ? 'check' : 'check_box_outline_blank',
@@ -133,37 +133,24 @@ class SettingsPanel extends Xen.Debug(Xen.Base, log) {
       shareStyle: isShared ? 'color: #1A73E8' : '',
       nopersist: Boolean(Const.SHELLKEYS[key])
     };
-    if (profile && profile.friends) {
-      render.friends = this._renderUsers(selected, profile.friends, users);
+    if (arc && friends) {
+      render.friendsList = this._renderFriends(friends, url => arc._loader._resolve(url));
     }
     return [props, render];
   }
-  _renderUsers(selected, friends, users) {
-    const models = [];
-    friends.forEach((friend, i) => {
-      const user = users[friend.id];
-      if (user) {
-        models.push(this._renderUser(selected, user, i));
-      }
-    });
+  _renderFriends(friends, resolver) {
     return {
       template: userTemplate,
-      models
-    };
-  }
-  _renderUser(selected, user, i) {
-    const url = new URL(document.location.href);
-    url.searchParams.set('user', user.id);
-    let avatar = user.info && user.info.avatar;
-    if (!avatar) {
-      avatar = ``; //`${this._props.config.root}/assets/avatars/user (0).png`;
-    }
-    return {
-      key: user.id,
-      name: user.info && user.info.name || '',
-      style: `background-image: url("${avatar}");`,
-      selected: user.id === selected,
-      href: url.href
+      models: Object.values(friends).map(friend => ({
+        key: friend.id,
+        name: friend.name || '',
+        style: `background-image: url("${resolver(friend.avatar)}");`,
+        href: (() => {
+          const url = new URL(document.location.href);
+          url.searchParams.set('user', friend.id);
+          return url.href;
+        })()
+      }))
     };
   }
   _onSelectUser(e, user) {
