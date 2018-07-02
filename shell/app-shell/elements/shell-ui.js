@@ -16,7 +16,7 @@ import './shell-ui/voice-driver.js';
 
 // components
 import '../../components/simple-tabs.js';
-import '../../components/arc-tools/handle-explorer.js';
+import '../../components/arc-tools/store-explorer.js';
 import '../../components/xen-tools/xen-explorer.js';
 
 // libs
@@ -71,8 +71,8 @@ const template = html`
   <icon style="position: fixed; right: 0px; bottom: 0px; z-index: 10000;" on-click="_onToolsClick">assessment</icon>
   <div tools open$="{{toolsOpen}}">
     <simple-tabs>
-      <div tab="Handle Explorer">
-        <handle-explorer arc="{{arc}}"></handle-explorer>
+      <div tab="Store Explorer">
+        <store-explorer arc="{{arc}}" context="{{context}}"></store-explorer>
       </div>
       <div tab="Xen Explorer">
         <xen-explorer></xen-explorer>
@@ -85,7 +85,7 @@ const log = Xen.logFactory('ShellUi', '#ac6066');
 
 class ShellUi extends Xen.Debug(Xen.Base, log) {
   static get observedAttributes() {
-    return ['users', 'user', 'friends', 'key', 'arc', 'title', 'share', 'search', 'glows', 'showhint'];
+    return ['users', 'user', 'context', 'friends', 'key', 'arc', 'title', 'share', 'search', 'glows', 'showhint'];
   }
   get template() {
     return template;

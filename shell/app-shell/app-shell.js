@@ -107,6 +107,7 @@ const template = html`
     showhint="{{showhint}}"
     users="{{users}}"
     user="{{user}}"
+    context="{{context}}"
     friends="{{friends}}"
     share="{{share}}"
     search="{{search}}"

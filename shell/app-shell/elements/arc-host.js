@@ -126,9 +126,15 @@ class ArcHost extends Xen.Debug(Xen.Base, log) {
     });
   }
   async _consumeSerialization(serialization) {
-    const {config, manifest} = this._props;
+    const {config} = this._props;
     const state = this._state;
     //
+    // TODO(sjmiles): detect bogus attempt to import context manifest ...
+    const contextManifest = `import './in-memory.manifest'`;
+    if (serialization.includes(contextManifest)) {
+      serialization = serialization.replace(`import './in-memory.manifest'`, '');
+      warn(`removing context import (${contextManifest}) from serialization`);
+    }
     // generate new slotComposer
     const slotComposer = this._createSlotComposer(config);
     // collate general params for arc construction
@@ -145,6 +151,7 @@ class ArcHost extends Xen.Debug(Xen.Base, log) {
       arc = await this._constructArc(state.id, serialization, params);
     } catch (x) {
       warn('failed to deserialize arc, will retry');
+      warn(x);
       return serialization;
     }
     // notify console
@@ -167,11 +174,7 @@ class ArcHost extends Xen.Debug(Xen.Base, log) {
         fileName: './serialized.manifest'
       });
       // generate new arc via deserialization
-      try {
-        return await Arcs.Arc.deserialize(params);
-      } catch (x) {
-        return null;
-      }
+      return await Arcs.Arc.deserialize(params);
     } else {
       Object.assign(params, {
         id: id

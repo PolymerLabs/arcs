@@ -297,7 +297,7 @@ const _renderSubtemplates = function(container, controller, template, models) {
         if (child) {
           child._subtreeDom = dom;
           container.appendChild(child);
-          if (!template._shapeWarning && child.nextSibling) {
+          if (!template._shapeWarning && dom.root.firstElementChild) {
             template._shapeWarning = true;
             console.warn(`xen-template: subtemplate has multiple root nodes: only the first is used.`, template);
           }
