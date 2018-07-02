@@ -281,11 +281,11 @@ class VariableProxy extends StorageProxyBase {
     assert('data' in update);
     // If we have set a barrier, suppress updates until after
     // we have seen the barrier return via an update.
-    if (this._barrier && update.barrier != this._barrier) {
+    if (this._barrier != null && update.barrier != this._barrier) {
       return false;
     }
     this._model = update.data;
-    if (this._barrier) {
+    if (this._barrier != null) {
       this._barrier = null;
       return false;
     }
