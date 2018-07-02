@@ -1,8 +1,8 @@
 import {PolymerElement} from '../deps/@polymer/polymer/polymer-element.js';
-import './arcs-shared.js';
+import {MessengerMixin} from './arcs-shared.js';
 import {html} from '../deps/@polymer/polymer/lib/utils/html-tag.js';
 
-class ArcsNotifications extends PolymerElement {
+class ArcsNotifications extends MessengerMixin(PolymerElement) {
   static get template() {
     return html`
     <style include="shared-styles">

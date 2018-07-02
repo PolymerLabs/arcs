@@ -3,10 +3,10 @@ import '../deps/@polymer/paper-dropdown-menu/paper-dropdown-menu.js';
 import '../deps/@polymer/paper-item/paper-item.js';
 import '../deps/@polymer/paper-fab/paper-fab.js';
 import '../deps/@polymer/paper-input/paper-textarea.js';
-import {MessageSenderMixin} from './arcs-shared.js';
+import {MessengerMixin} from './arcs-shared.js';
 import {html} from '../deps/@polymer/polymer/lib/utils/html-tag.js';
 
-class ArcsStrategyRunner extends MessageSenderMixin(PolymerElement) {
+class ArcsStrategyRunner extends MessengerMixin(PolymerElement) {
   static get template() {
     return html`
     <style include="shared-styles">
@@ -104,7 +104,7 @@ class ArcsStrategyRunner extends MessageSenderMixin(PolymerElement) {
           });
         }
         break;
-      case 'planner-strategies':
+      case 'fetch-strategies-result':
         this.set('strategies', msg.messageBody);
         break;
       case 'invoke-planner-result':
