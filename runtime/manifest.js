@@ -445,6 +445,13 @@ ${e.message}
           node.model = Type.newVariable({name: node.name, constraint});
           return;
         }
+        case 'slot-type': {
+          let slotInfo = {};
+          for (let field of node.fields)
+            slotInfo[field.name] = field.value;
+          node.model = Type.newSlot(slotInfo);
+          return;
+        }
         case 'reference-type': {
           let resolved = manifest.resolveReference(node.name);
           if (!resolved) {
@@ -762,7 +769,12 @@ ${e.message}
         connection.tags = connectionItem.target ? connectionItem.target.tags : [];
         let direction = {'->': 'out', '<-': 'in', '=': 'inout'}[connectionItem.dir];
         if (connection.direction) {
-          if (connection.direction != direction && direction != 'inout' && !(connection.direction == 'host' && direction == 'in')) {
+          if (connection.direction != direction && 
+              direction != 'inout' && 
+              !(connection.direction == 'host' && direction == 'in') &&
+              !(connection.direction == '`consume' && direction == 'in') &&
+              !(connection.direction == '`provide' && direction == 'out')
+            ) {
             throw new ManifestError(
                 connectionItem.location,
                 `'${connectionItem.dir}' not compatible with '${connection.direction}' param of '${particle.name}'`);
@@ -791,6 +803,7 @@ ${e.message}
             items.byName.set(handle.localName, entry);
             items.byHandle.set(handle, handle.item);
           }
+
           if (entry.item.kind == 'handle') {
             targetHandle = entry.handle;
           } else if (entry.item.kind == 'particle') {

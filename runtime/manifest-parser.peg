@@ -366,13 +366,14 @@ ParticleArgument
   }
 
 ParticleArgumentDirection
-  = 'inout' / 'in' / 'out' / 'host'
+  = 'inout' / 'in' / 'out' / 'host' / '`consume' / '`provide'
   {
     return text();
   }
 
 ParticleArgumentType
   = VariableType
+  / SlotType
   / SchemaInline
   / ReferenceType
   / ListType
@@ -397,6 +398,32 @@ VariableType
       constraint: optional(constraint, constraint => constraint[3], null),
     };
   }
+
+SlotType
+  = 'Slot' fields:(whiteSpace '{' (SlotField (',' whiteSpace SlotField)*)? '}')?
+{
+  fields = optional(fields, fields => {
+    let data = fields[2];
+    return [data[0], data[1].map(tail => tail[2])];
+  }, []);
+
+  return {
+    kind: 'slot-type',
+    location: location(),
+    fields
+  };
+}
+
+SlotField 
+  = name:lowerIdent whiteSpace? ':' whiteSpace? value:lowerIdent
+{
+  return {
+    kind: 'slot-field',
+    location: location(),
+    name,
+    value
+  }
+}
 
 ReferenceType
   = name:upperIdent
@@ -759,7 +786,7 @@ ConnectionTargetHandleComponents
   }
 
 RecipeHandle
-  = type:('?' / 'use' / 'map' / 'create' / 'copy') ref:(whiteSpace HandleOrSlotRef)? name:(whiteSpace LocalName)? eolWhiteSpace
+  = type:('?' / 'use' / 'map' / 'create' / 'copy' / '`slot') ref:(whiteSpace HandleOrSlotRef)? name:(whiteSpace LocalName)? eolWhiteSpace
   {
     return {
       kind: 'handle',

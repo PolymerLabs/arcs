@@ -123,6 +123,17 @@ ${particleStr1}
     assert.lengthOf(manifest.particles, 1);
     assert.lengthOf(manifest.particles[0].connections, 2);
   });
+  it('SLANDLES can parse a manifest containing a particle with an argument list', async () => {
+    let manifest = await Manifest.parse(`
+    particle TestParticle in 'a.js'
+      in [Product {}] list
+      out Person {} person
+      \`consume Slot thing
+        \`provide Slot otherThing
+    `);
+    assert.lengthOf(manifest.particles, 1);
+    assert.lengthOf(manifest.particles[0].connections, 4);
+  });
   it('can parse a manifest with dependent handles', async () => {
     let manifest = await Manifest.parse(`
     particle TestParticle in 'a.js'
@@ -134,6 +145,17 @@ ${particleStr1}
     assert.lengthOf(manifest.particles, 1);
     assert.lengthOf(manifest.particles[0].connections, 2);
   });
+  it('SLANDLES can parse a manifest with dependent handles', async () => {
+    let manifest = await Manifest.parse(`
+    particle TestParticle in 'a.js'
+      in [Product {}] input
+        out [Product {}] output
+      \`consume Slot thing
+        \`provide Slot otherThing
+    `);
+    assert.lengthOf(manifest.particles, 1);
+    assert.lengthOf(manifest.particles[0].connections, 4);
+  });
   it('can round-trip particles with dependent handles', async () => {
     let manifestString = `particle TestParticle in 'a.js'
   in [Product {}] input
@@ -141,6 +163,18 @@ ${particleStr1}
   affordance dom
   consume thing
     provide otherThing`;
+
+    let manifest = await Manifest.parse(manifestString);
+    assert.lengthOf(manifest.particles, 1);
+    assert.equal(manifestString, manifest.particles[0].toString());
+  });
+  it('SLANDLES can round-trip particles with dependent handles', async () => {
+    let manifestString = `particle TestParticle in 'a.js'
+  in [Product {}] input
+    out [Product {}] output
+  \`consume Slot thing
+    \`provide Slot otherThing
+  affordance dom`;
 
     let manifest = await Manifest.parse(manifestString);
     assert.lengthOf(manifest.particles, 1);
@@ -538,6 +572,48 @@ ${particleStr1}
       assert.isDefined(mySlot.targetSlot);
       assert.lengthOf(Object.keys(mySlot.providedSlots), 2);
       assert.equal(mySlot.providedSlots['oneMoreSlot'], recipe.particles[0].consumedSlotConnections['oneMoreSlot'].targetSlot);
+    };
+    verify(manifest);
+    verify(await Manifest.parse(manifest.toString()));
+  });
+  it('SLANDLES can parse a manifest containing a recipe with slots', async () => {
+    let manifest = await Manifest.parse(`
+      schema Thing
+      particle SomeParticle in 'some-particle.js'
+        in Thing someParam
+        \`consume Slot {formFactor: big} mySlot
+          \`provide Slot {handle: someParam} otherSlot
+          \`provide Slot {formFactor: small} oneMoreSlot
+
+      particle OtherParticle
+        out Thing aParam
+        \`consume Slot mySlot
+        \`consume Slot oneMoreSlot
+
+      recipe SomeRecipe
+        ? #someHandle1 as myHandle
+        \`slot 'slotIDs:A' #someSlot as slot0
+        SomeParticle
+          someParam <- myHandle
+          mySlot <- slot0
+          otherSlot -> slot2
+          oneMoreSlot -> slot1
+        OtherParticle
+          aParam -> myHandle
+          mySlot <- slot0
+          oneMoreSlot <- slot1
+    `);
+    let verify = (manifest) => {
+      let recipe = manifest.recipes[0];
+      assert(recipe);
+      recipe.normalize();
+
+      assert.lengthOf(recipe.particles, 2);
+      assert.lengthOf(recipe.handles, 4);
+      assert.lengthOf(recipe.handleConnections, 7);
+      let mySlot = recipe.particles[1].connections['mySlot'].handle;
+      assert.lengthOf(mySlot.connections, 2);
+      assert.equal(mySlot.connections[0], recipe.particles[0].connections['mySlot']);
     };
     verify(manifest);
     verify(await Manifest.parse(manifest.toString()));
