@@ -92,6 +92,7 @@ export class Planificator {
   constructor(arc, options) {
     this._arc = arc;
     this._speculator = new Speculator();
+    this._search = null;
 
     // The currently running Planner object.
     this._planner = null;
@@ -182,11 +183,11 @@ export class Planificator {
       return;
     }
 
-    if (this._arc.search !== search) {
-      this._arc.search = search;
+    if (this._search !== search) {
+      this._search = search;
       this._requestPlanning({
         cancelOngoingPlanning: true,
-        strategies: [InitSearch].concat(Planner.ResolutionStrategies).map(strategy => new strategy(this._arc)),
+        strategies: [InitSearch].concat(Planner.ResolutionStrategies),
         append: true
       });
     }
@@ -312,7 +313,10 @@ export class Planificator {
   async _doNextPlans(options) {
     this._next = {generations: []};
     this._planner = new Planner();
-    this._planner.init(this._arc, {strategies: (options.strategies || null)});
+    this._planner.init(this._arc, {
+      strategies: (options.strategies || null),
+      strategyArgs: {search: this._search}
+    });
     this._next.plans = await this._planner.suggest(options.timeout || defaultTimeoutMs, this._next.generations, this._speculator);
     this._planner = null;
   }

@@ -9,16 +9,12 @@
  */
 'use strict';
 
-import {Arc} from '../../arc.js';
 import {InitSearch} from '../../strategies/init-search.js';
-import {Manifest} from '../../manifest.js';
 import {assert} from '../chai-web.js';
 
 describe('InitSearch', async () => {
   it('initializes the search recipe', async () => {
-    let arc = new Arc({id: 'test-plan-arc', context: new Manifest({id: 'test'})});
-    arc._search = 'search';
-    let initSearch = new InitSearch(arc);
+    let initSearch = new InitSearch(null, {search: 'search'});
     let inputParams = {generated: [], generation: 0};
     let results = await initSearch.generate(inputParams);
     assert.lengthOf(results, 1);
