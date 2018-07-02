@@ -34,7 +34,7 @@ class ArcHost extends Xen.Debug(Xen.Base, log) {
       this._teardownArc(state.arc);
     }
     // rebuild arc if we have all the parts, but one of them has changed
-    if (state.context && config && manifest && key && (key !== '*') && (changed('config') || changed('key') || changed('manifest'))) {
+    if (state.context && config && key && (key !== '*') && (changed('config') || changed('key'))) {
       state.id = null;
       this._teardownArc(state.arc);
       this._prepareArc(config, key);
