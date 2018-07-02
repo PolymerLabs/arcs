@@ -203,7 +203,7 @@ class InMemoryVariable extends InMemoryStorageProvider {
   async set(entity, originatorId, barrier) {
     // If there's a barrier set, then the originating storage-proxy is expecting
     // a result so we cannot suppress the event here.
-    if (JSON.stringify(this._stored) == JSON.stringify(entity) && barrier != null)
+    if (JSON.stringify(this._stored) == JSON.stringify(entity) && barrier == null)
       return;
     this._stored = entity;
     this._version++;
