@@ -186,7 +186,7 @@ export class TestHelper {
    * Awaits particle execution context idleness and mock slot composer expectations completeness.
    */
   async idle() {
-    await this.arc.pec.idle;
+    await this.arc.idle;
     await this.slotComposer.expectationsCompleted();
   }
 
