@@ -75,20 +75,10 @@ class Handle {
     }
   }
 
-  generateID() {
-    assert(this._proxy.generateID);
-    return this._proxy.generateID();
-  }
-
-  generateIDComponents() {
-    assert(this._proxy.generateIDComponents);
-    return this._proxy.generateIDComponents();
-  }
-
   _serialize(entity) {
     assert(entity, 'can\'t serialize a null entity');
     if (!entity.isIdentified())
-      entity.createIdentity(this.generateIDComponents());
+      entity.createIdentity(this._proxy.generateIDComponents());
     let id = entity[Symbols.identifier];
     let rawData = entity.dataClone();
     return {
