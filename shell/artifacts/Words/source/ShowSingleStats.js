@@ -84,18 +84,6 @@ defineParticle(({DomParticle, html, log, resolver}) => {
     -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
     transform: scale(0.76);
   }
-  [${host}] .board .tile {
-    background-color: wheat;
-    border-radius: 3px;
-    color: black;
-    display: inline-block;
-    text-align: center;
-    line-height: 50px;
-    width: 50px;
-    height: 50px;
-    margin: 1px;
-    position: absolute;
-  }
   [${host}] .board .points {
     position: absolute;
     font-size: 0.8em;
@@ -151,15 +139,104 @@ defineParticle(({DomParticle, html, log, resolver}) => {
     50% { background-color: #ff3399; }
     100% { background-color: #ff99ff; }
   }
+
+  [${host}] .gameInfo {
+    font-family: 'Fredoka One', cursive;
+    padding-bottom: 0.5em;
+    margin: 20px;
+    position: relative;
+    /* color: white; */
+    line-height: 20px;
+  }
+  [${host}] .gameInfo:focus {
+    border: none;
+    outline: none;
+  }
+  [${host}] .gameInfo .caption {
+    font-size: 32px;
+    margin-bottom: 12px;
+  }
+  [${host}] .gameInfo .score,
+  [${host}] .gameInfo .shuffle {
+    float: left;
+    width: 64px;
+    line-height: 20px;
+    border-left: 1px solid #222;
+    padding-left: 8px;
+    padding-top: 6px;
+  }
+  [${host}] .board .tile {
+    font-family: 'Fredoka One', cursive;
+    border-radius: 16px;
+    /* color: white; */
+    display: inline-block;
+    text-align: center;
+    font-size: 18px;
+    line-height: 30px;
+    width: 28px;
+    height: 28px;
+    position: absolute;
+  }
+  [${host}] .board .points {
+    position: absolute;
+    font-size: 0.5em;
+    line-height: normal;
+    top: -4px;
+    right: -4px;
+    color: #000;
+    opacity: .2;
+  }
+  [${host}] .board .selected {
+    color: white;
+    background: white;
+  }
+  [${host}] .board .selected span {
+    color: red;
+  }
+  [${host}] .board .fire {
+    animation-name: fire;
+    animation-duration: 3s;
+    animation-iteration-count: infinite;
+    background-color: #ff9999;
+    color: white;
+  }
+  [${host}] .board .fire.selected {
+    animation-name: fireSelected;
+    animation-duration: 3s;
+    animation-iteration-count: infinite;
+    background-color: #ff99ff;
+  }
+  [${host}] .board .fire .points {
+    color: white;
+  }
+  [${host}] .board .annotation {
+    position: absolute;
+    background: #fff;
+    border-radius: 16px;
+    color: #ccc;
+    font-size: 10px;
+    line-height: 28px;
+    text-align: center;
+  }
+  [${host}] .board .annotation .orientation-left {
+    -webkit-transform: scale(-1,1);
+  }
+  [${host}] .board .annotation .orientation-up {
+    -webkit-transform: rotate(-90deg);
+  }
+  [${host}] .board .annotation .orientation-down {
+    -webkit-transform: rotate(90deg);
+  }
 </style>
 <a ${host} href="{{gameHref}}" value="{{id}}">
   <div title>
     <span avatar style='{{avatarStyle}}'></span><span owner>{{owner}}</span><span when>{{time}}</span>
   </div>
   <div class="gameInfo">
-    <div class="score">Score: <span>{{score}}</span></div>
-    <div class="longestWord">Longest word: <span>{{longestWord}}</span></div>
-    <div class="highestScoringWord">Highest scoring word: <span>{{highestScoringWord}}</span></div>
+    <div class="score"><div class="caption">{{score}}</div>My Score</div>
+
+    <div hidden=true class="longestWord">Longest word: <span>{{longestWord}}</span></div>
+    <div hidden=true class="highestScoringWord">Highest scoring word: <span>{{highestScoringWord}}</span></div>
   </div>
   <div class="board">
     <div class="gameOver" hidden="{{hideGameOver}}">Game Over</div>
@@ -233,7 +310,8 @@ defineParticle(({DomParticle, html, log, resolver}) => {
         highestScoringWord: Scoring.highestScoringWordText(stats),
         longestWord: Scoring.longestWordText(stats),
         owner: people.find(p => p.id == author).name,
-        score: `${stats.score} (${stats.moveCount} moves)`,
+        score: `${stats.score}`,
+        // score: `${stats.score} (${stats.moveCount} moves)`,
         time: new Date(createdTimestamp).toLocaleDateString('en-US', {
           'month': 'short',
           'day': 'numeric'
