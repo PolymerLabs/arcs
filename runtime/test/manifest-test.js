@@ -592,7 +592,7 @@ ${particleStr1}
 
       recipe SomeRecipe
         ? #someHandle1 as myHandle
-        use 'slotIDs:A' #someSlot as slot0
+        \`slot 'slotIDs:A' #someSlot as slot0
         SomeParticle
           someParam <- myHandle
           mySlot <- slot0

@@ -786,7 +786,7 @@ ConnectionTargetHandleComponents
   }
 
 RecipeHandle
-  = type:('?' / 'use' / 'map' / 'create' / 'copy') ref:(whiteSpace HandleOrSlotRef)? name:(whiteSpace LocalName)? eolWhiteSpace
+  = type:('?' / 'use' / 'map' / 'create' / 'copy' / '`slot') ref:(whiteSpace HandleOrSlotRef)? name:(whiteSpace LocalName)? eolWhiteSpace
   {
     return {
       kind: 'handle',
