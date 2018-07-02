@@ -310,10 +310,10 @@ export class PECInnerPort extends APIPort {
     this.registerCall('SynchronizeProxy', {handle: this.Mapped, callback: this.LocalMapped});
     this.registerCall('HandleGet', {handle: this.Mapped, callback: this.LocalMapped, particleId: this.Direct});
     this.registerCall('HandleToList', {handle: this.Mapped, callback: this.LocalMapped, particleId: this.Direct});
-    this.registerCall('HandleSet', {handle: this.Mapped, data: this.Direct, particleId: this.Direct});
+    this.registerCall('HandleSet', {handle: this.Mapped, data: this.Direct, particleId: this.Direct, barrier: this.Direct});
     this.registerCall('HandleStore', {handle: this.Mapped, data: this.Direct, particleId: this.Direct});
     this.registerCall('HandleRemove', {handle: this.Mapped, data: this.Direct});
-    this.registerCall('HandleClear', {handle: this.Mapped, particleId: this.Direct});
+    this.registerCall('HandleClear', {handle: this.Mapped, particleId: this.Direct, barrier: this.Direct});
     this.registerCall('Idle', {version: this.Direct, relevance: this.Map(this.Mapped, this.Direct)});
 
     this.registerCall('ConstructInnerArc', {callback: this.LocalMapped, particle: this.Mapped});

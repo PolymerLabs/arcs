@@ -158,21 +158,27 @@ class StorageProxyBase {
     this._processUpdates();
   }
 
+  _notify(kind, update, predicate=() => true) {
+    for (let {handle, particle} of this._observers) {
+      if (predicate(handle.options)) {
+        this._scheduler.enqueue(particle, handle, [kind, particle, update]);
+      }
+    }
+  }
+
   _processUpdates() {
     // Consume all queued updates whose versions are monotonically increasing from our stored one.
     while (this._updates.length > 0 && this._updates[0].version === this._version + 1) {
       let update = this._updates.shift();
 
       // Fold the update into our stored model.
-      this._updateModel(update);
+      let notify = this._updateModel(update);
       this._version = update.version;
 
       // Notify handles configured with keepSynced and notifyUpdates (non-keepSynced handles are
       // notified as updates are received).
-      for (let {handle, particle} of this._observers) {
-        if (handle.options.keepSynced && handle.options.notifyUpdate) {
-          this._scheduler.enqueue(particle, handle, ['update', particle, update]);
-        }
+      if (notify) {
+        this._notify('update', update, options => options.keepSynced && options.notifyUpdate);
       }
     }
 
@@ -227,6 +233,7 @@ class CollectionProxy extends StorageProxyBase {
     } else {
       assert(false, `StorageProxy received invalid update event: ${JSON.stringify(update)}`);
     }
+    return true;
   }
   // Read ops: if we're synchronized we can just return the local copy of the data.
   // Otherwise, send a request to the backing store.
@@ -255,10 +262,16 @@ class CollectionProxy extends StorageProxyBase {
   }
 }
 
+// Variables are synchronized in a 'last-writer-wins' scheme. When the
+// VariableProxy mutates the model, it sets a barrier and expects to 
+// receive the barrier value echoed back in a subsequent update event.
+// Between those two points in time updates are not applied or
+// notified about as these reflect concurrent writes that did not 'win'.
 class VariableProxy extends StorageProxyBase {
   constructor(...args) {
     super(...args);
     this._model = null;
+    this._barrier = null;
   }
   _synchronizeModel(model) {
     assert('data' in model);
@@ -266,7 +279,16 @@ class VariableProxy extends StorageProxyBase {
   }
   _updateModel(update) {
     assert('data' in update);
+    // If we have set a barrier, suppress updates until after
+    // we have seen the barrier return via an update.
+    if (this._barrier != null) {
+      if (update.barrier == this._barrier) {
+        this._barrier = null;
+      }
+      return false;
+    }
     this._model = update.data;
+    return true;
   }
   // Read ops: if we're synchronized we can just return the local copy of the data.
   // Otherwise, send a request to the backing store.
@@ -274,24 +296,41 @@ class VariableProxy extends StorageProxyBase {
   //       sending a parallel request
   get(particleId) {
     if (this._synchronized == SyncState.full) {
-      return new Promise((resolve, reject) => resolve(this._model));
+      return Promise.resolve(this._model);
     } else {
       return new Promise((resolve, reject) =>
-        this._port.HandleGet({callback: r => resolve(r), handle: this, particleId}));
+        this._port.HandleGet({callback: resolve, handle: this, particleId}));
     }
   }
-  // Write ops: in synchronized mode, any write operation will desynchronize the proxy, so
-  // subsequent reads will call to the backing store until resync is established via the update
-  // event triggered by the write.
-  // TODO: handle concurrent writes from other parties to the backing store
   set(entity, particleId) {
-    this._port.HandleSet({data: entity, handle: this, particleId});
-    this._synchronized = SyncState.pending;
+    if (JSON.stringify(this._model) == JSON.stringify(entity)) {
+      return;
+    }
+    let barrier = this._pec.generateID();
+    // TODO: is this already a clone?
+    this._model = JSON.parse(JSON.stringify(entity));
+    this._barrier = barrier;
+    this._port.HandleSet({data: entity, handle: this, particleId, barrier});
+    let update = {
+      originatorId: particleId,
+      data: entity,
+    };
+    this._notify('update', update, options => options.notifyUpdate);
   }
 
   clear(particleId) {
-    this._port.HandleClear({handle: this, particleId});
-    this._synchronized = SyncState.pending;
+    if (this._model == null) {
+      return;
+    }
+    let barrier = this._pec.generateID();
+    this._model = null;
+    this._barrier = barrier;
+    this._port.HandleClear({handle: this, particleId, barrier});
+    let update = {
+      originatorId: particleId,
+      data: null,
+    };
+    this._notify('update', update, options => options.notifyUpdate);
   }
 }
 

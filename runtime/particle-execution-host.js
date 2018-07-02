@@ -56,9 +56,9 @@ export class ParticleExecutionHost {
       this._apiPort.SimpleCallback({callback, data: await handle.toList()});
     };
 
-    this._apiPort.onHandleSet = ({handle, data, particleId}) => handle.set(data, particleId);
+    this._apiPort.onHandleSet = ({handle, data, particleId, barrier}) => handle.set(data, particleId, barrier);
     this._apiPort.onHandleStore = ({handle, data, particleId}) => handle.store(data, particleId);
-    this._apiPort.onHandleClear = ({handle, particleId}) => handle.clear(particleId);
+    this._apiPort.onHandleClear = ({handle, particleId, barrier}) => handle.clear(particleId, barrier);
     this._apiPort.onHandleRemove = ({handle, data, particleId}) => handle.remove(data, particleId);
 
     this._apiPort.onIdle = ({version, relevance}) => {

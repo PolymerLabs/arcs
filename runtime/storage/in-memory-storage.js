@@ -200,16 +200,18 @@ class InMemoryVariable extends InMemoryStorageProvider {
     return {data: this._stored, version: this._version};
   }
 
-  async set(entity, originatorId) {
-    if (JSON.stringify(this._stored) == JSON.stringify(entity))
+  async set(entity, originatorId, barrier) {
+    // If there's a barrier set, then the originating storage-proxy is expecting
+    // a result so we cannot suppress the event here.
+    if (JSON.stringify(this._stored) == JSON.stringify(entity) && barrier == null)
       return;
     this._stored = entity;
     this._version++;
-    this._fire('change', {data: this._stored, version: this._version, originatorId});
+    this._fire('change', {data: this._stored, version: this._version, originatorId, barrier});
   }
 
-  async clear(originatorId) {
-    this.set(null, originatorId);
+  async clear(originatorId, barrier) {
+    this.set(null, originatorId, barrier);
   }
 
   serializedData() {

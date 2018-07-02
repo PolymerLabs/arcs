@@ -44,11 +44,11 @@ class TestVariable {
   //  sendEvent: if true, send an update event to attached listeners.
   //  version: optionally override the current version being incremented.
 
-  set(entity, {sendEvent = true, version, originatorId} = {}) {
+  set(entity, {sendEvent = true, version, originatorId, barrier} = {}) {
     this._stored = entity;
     this._version = (version !== undefined) ? version : this._version + 1;
     if (sendEvent) {
-      let event = {data: this._stored, version: this._version, originatorId};
+      let event = {data: this._stored, version: this._version, originatorId, barrier};
       this._listeners.forEach(cb => cb(event));
     }
   }
@@ -178,7 +178,11 @@ class TestEngine {
   }
 
   newProxy(store) {
-    return new StorageProxy('X' + this._idCounters[1]++, store.type, this, {}, this._scheduler, store.name);
+    let id = 0;
+    let pec = {
+      generateID() { return `${id++}`; }
+    };
+    return new StorageProxy('X' + this._idCounters[1]++, store.type, this, pec, this._scheduler, store.name);
   }
 
   newHandle(store, proxy, particle, canRead, canWrite) {
@@ -596,38 +600,44 @@ describe('storage-proxy', function() {
     await engine.verify('HandleGet:foo', 'HandleToList:bar');
   });
 
-  it('writing to a synced proxy desyncs it until the update is received', async function() {
+  it('does not desync on a write when synchronized', async function() {
     let engine = new TestEngine();
     let fooStore = engine.newVariable('foo');
     let particle = engine.newParticle();
     let [fooProxy, fooHandle] = engine.newProxyAndHandle(fooStore, particle, CAN_READ, CAN_WRITE);
-
+  
     // Set up sync with an initial value.
     fooStore.set(engine.newEntity('start'));
     fooProxy.register(particle, fooHandle);
     engine.sendSync(fooStore);
     await engine.verify('InitializeProxy:foo', 'SynchronizeProxy:foo', 'onHandleSync:P1:foo:start');
-
+  
     // Reading the inner-pec handle should return the local copy and not call the backing store.
     fooHandle.get();
     await engine.verify();
-
-    // Write to the inner-pec handle but delay the write to the backing store.
+  
+    // Write to handle modifies the model directly, dispatches update and store write.
     let changed = engine.newEntity('changed');
     fooHandle.set(changed);
+    await engine.verifySubsequence('onHandleUpdate:P1:foo:changed');
     await engine.verify('HandleSet:foo:changed');
 
-    // Read the handle again; this time the proxy is desynced and should call the backing store.
-    fooHandle.get();
-    await engine.verify('HandleGet:foo');
-
-    // Update the backing store, which will send the delayed update to resync the proxy.
-    fooStore.set(changed);
-    await engine.verify('onHandleUpdate:P1:foo:changed');
-
-    // Read the handle one more time; should return the local copy again.
+    // Read the handle again; the read should still be able to complete locally.
     fooHandle.get();
     await engine.verify();
+
+    // Update the backing store with a concurrent write. This should not surface 
+    // in the handle.
+    fooStore.set(engine.newEntity('concurrent'));
+    await engine.verify();
+
+    // Commit the change to the backing store, and reflect the barrier.
+    fooStore.set(changed, {barrier: fooProxy._barrier});
+    await engine.verify();
+
+    // Subsequent updates should be visible in the handle.
+    fooStore.set(engine.newEntity('subsequent'));
+    await engine.verify('onHandleUpdate:P1:foo:subsequent');
   });
 
   it('writing to a synced proxy does not prevent a real desync from being handled', async function() {
