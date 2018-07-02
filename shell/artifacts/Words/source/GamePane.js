@@ -75,8 +75,8 @@ defineParticle(({SimpleParticle, log, resolver}) => {
      font-size: 32px;
      margin-bottom: 12px;
    }
-   .gameInfo .score,
-   .gameInfo .shuffle {
+   [${host}] .gameInfo .score,
+   [${host}] .gameInfo .shuffle {
      float: left;
      width: 64px;
      line-height: 20px;
@@ -539,13 +539,14 @@ recipe
           hideGameOver: true
         };
       }
-      if (!state.dictionary)
+      if (!state.dictionary) {
         return {
           hideStartGame: true,
           hideDictionaryLoading: false,
           hideGameInfo: true,
           hideGameOver: true
         };
+      }
 
       let {board} = props;
       if (!board) {
