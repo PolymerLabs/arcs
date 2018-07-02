@@ -21,15 +21,13 @@ export const FbGraph = Firedb => {
       super(listener);
       this.path = path;
       this.data = data;
-      // remember that firebase can fire events synchronously to listener attachment
+      // remember that firebase can fire events synchronously on listener attachment
       this._tryAttach();
     }
     dispose() {
-      //console.warn(`FbSet: detaching from [${this.path}]`);
       this._detach && this._detach();
     }
     _tryAttach() {
-      //console.log(`FbSet: attaching to [${this.path}]`);
       try {
         this._attach(Firedb.child(this.path));
       } catch (x) {
@@ -39,8 +37,8 @@ export const FbGraph = Firedb => {
     _attach(db) {
       let started;
       const added = db.on('child_added', (snap, prevKey) => {
-        this._replaceSubProperties(this.data, snap.key, snap.val());
         //console.log('FireBase: child-added', snap.key);
+        this._replaceSubProperties(this.data, snap.key, snap.val());
         this._fire('child-added', snap.key);
       });
       const changed = db.on('child_changed', (snap, prevKey) => {
@@ -110,7 +108,7 @@ export const FbGraph = Firedb => {
         this._addField('$key');
       }
       this.fbset = new FbSet(this.path, this.data, event => this._onSetEvent(event));
-      // ... after init
+      // TODO(sjmiles): after init?
       this._notifySchema();
     }
     dispose() {
