@@ -34,6 +34,14 @@ const SyncState = {none: 0, pending: 1, full: 2};
  */
 export class StorageProxy {
   constructor(id, type, port, pec, scheduler, name) {
+    return type.isCollection
+        ? new CollectionProxy(id, type, port, pec, scheduler, name)
+        : new VariableProxy(id, type, port, pec, scheduler, name);
+  }
+}
+
+class StorageProxyBase {
+  constructor(id, type, port, pec, scheduler, name) {
     this._id = id;
     this._type = type;
     this._port = port;
@@ -41,8 +49,6 @@ export class StorageProxy {
     this._scheduler = scheduler;
     this.name = name;
 
-    // _model is an Entity for Variables or [Entity] for Collections.
-    this._model = undefined;
     this._version = undefined;
     this._listenerAttached = false;
     this._keepSynced = false;
@@ -112,14 +118,9 @@ export class StorageProxy {
     }
 
     // Replace the stored data with the new one and notify handles that are configured for it.
+    this._synchronizeModel(model);
     this._version = model.version;
-    if ('data' in model) {
-      this._model = model.data;
-    } else if ('list' in model) {
-      this._model = model.list;
-    } else {
-      assert(false, `StorageProxy received invalid synchronize event: ${JSON.stringify(received)}`);
-    }
+
     for (let {handle, particle} of this._observers) {
       if (handle.options.keepSynced && handle.options.notifySync) {
         let model = this._model;
@@ -163,27 +164,8 @@ export class StorageProxy {
       let update = this._updates.shift();
 
       // Fold the update into our stored model.
+      this._updateModel(update);
       this._version = update.version;
-      if ('data' in update) {
-        this._model = update.data;
-      } else if ('add' in update) {
-        this._model.push(...update.add);
-      } else if ('remove' in update) {
-        let keep = [];
-        for (let held of this._model) {
-          keep.push(held);
-          // TODO: avoid revisiting removed items? (eg. use a set of ids, prune as they are matched)
-          for (let item of update.remove) {
-            if (held.id === item.id) {
-              keep.pop();
-              break;
-            }
-          }
-        }
-        this._model = keep;
-      } else {
-        assert(false, `StorageProxy received invalid update event: ${JSON.stringify(update)}`);
-      }
 
       // Notify handles configured with keepSynced and notifyUpdates (non-keepSynced handles are
       // notified as updates are received).
@@ -215,7 +197,77 @@ export class StorageProxy {
   generateIDComponents() {
     return this._pec.generateIDComponents();
   }
+}
 
+class CollectionProxy extends StorageProxyBase {
+  constructor(...args) {
+    super(...args);
+    this._model = null;
+  }
+  _synchronizeModel(model) {
+    assert('list' in model);
+    this._model = model.list;
+  }
+  _updateModel(update) {
+    if ('add' in update) {
+      this._model.push(...update.add);
+    } else if ('remove' in update) {
+      let keep = [];
+      for (let held of this._model) {
+        keep.push(held);
+        // TODO: avoid revisiting removed items? (eg. use a set of ids, prune as they are matched)
+        for (let item of update.remove) {
+          if (held.id === item.id) {
+            keep.pop();
+            break;
+          }
+        }
+      }
+      this._model = keep;
+    } else {
+      assert(false, `StorageProxy received invalid update event: ${JSON.stringify(update)}`);
+    }
+  }
+  // Read ops: if we're synchronized we can just return the local copy of the data.
+  // Otherwise, send a request to the backing store.
+  // TODO: in synchronized mode, these should integrate with SynchronizeProxy rather than
+  //       sending a parallel request
+  toList(particleId) {
+    if (this._synchronized == SyncState.full) {
+      return new Promise((resolve, reject) => resolve(this._model));
+    } else {
+      return new Promise((resolve, reject) =>
+        this._port.HandleToList({callback: r => resolve(r), handle: this, particleId}));
+    }
+  }
+  // Write ops: in synchronized mode, any write operation will desynchronize the proxy, so
+  // subsequent reads will call to the backing store until resync is established via the update
+  // event triggered by the write.
+  // TODO: handle concurrent writes from other parties to the backing store
+  store(entity, particleId) {
+    this._port.HandleStore({data: entity, handle: this, particleId});
+    this._synchronized = SyncState.pending;
+  }
+
+  remove(entityId, particleId) {
+    this._port.HandleRemove({data: entityId, handle: this, particleId});
+    this._synchronized = SyncState.pending;
+  }
+}
+
+class VariableProxy extends StorageProxyBase {
+  constructor(...args) {
+    super(...args);
+    this._model = null;
+  }
+  _synchronizeModel(model) {
+    assert('data' in model);
+    this._model = model.data;
+  }
+  _updateModel(update) {
+    assert('data' in update);
+    this._model = update.data;
+  }
   // Read ops: if we're synchronized we can just return the local copy of the data.
   // Otherwise, send a request to the backing store.
   // TODO: in synchronized mode, these should integrate with SynchronizeProxy rather than
@@ -228,32 +280,12 @@ export class StorageProxy {
         this._port.HandleGet({callback: r => resolve(r), handle: this, particleId}));
     }
   }
-
-  toList(particleId) {
-    if (this._synchronized == SyncState.full) {
-      return new Promise((resolve, reject) => resolve(this._model));
-    } else {
-      return new Promise((resolve, reject) =>
-        this._port.HandleToList({callback: r => resolve(r), handle: this, particleId}));
-    }
-  }
-
   // Write ops: in synchronized mode, any write operation will desynchronize the proxy, so
   // subsequent reads will call to the backing store until resync is established via the update
   // event triggered by the write.
   // TODO: handle concurrent writes from other parties to the backing store
   set(entity, particleId) {
     this._port.HandleSet({data: entity, handle: this, particleId});
-    this._synchronized = SyncState.pending;
-  }
-
-  store(entity, particleId) {
-    this._port.HandleStore({data: entity, handle: this, particleId});
-    this._synchronized = SyncState.pending;
-  }
-
-  remove(entityId, particleId) {
-    this._port.HandleRemove({data: entityId, handle: this, particleId});
     this._synchronized = SyncState.pending;
   }
 
