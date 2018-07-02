@@ -1,7 +1,23 @@
-import Xen from '../xen/xen.js';
+/*
+@license
+Copyright (c) 2018 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+*/
 
-const debounce = Xen.debounce;
 const changeDebounceMs = 16;
+
+const debounce = (key, action, delay) => {
+  if (key) {
+    window.clearTimeout(key);
+  }
+  if (action && delay) {
+    return window.setTimeout(action, delay);
+  }
+};
 
 export const FbGraph = Firedb => {
 
