@@ -299,14 +299,14 @@ storage of CouchDB data & configuration. The key is stored in plaintext next
 to the drive image so it can be remounted.
 
 
-To build our CouchDB docker with support for encryption via Asylo, run
+All you'll need to do is:
 
 ```
-arcs/enclave> docker build -t test-with-asylo .
-arcs/enclave> docker run --privileged -p 5984:5984 \
-  -v $(pwd)/host/storage:/opt/storage \
-  test-with-asylo
+arcs/enclave> ./start-couch.sh
 ```
+
+This will use the Asylo docker image to generate a key (if one doesn't already
+exist), build the CouchDB image and start it. Use `^C` to exit.
 
 <a name="enclave_notes">Notes</a>:
 - The use of `--privileged` as part of `docker run`. This isn't ideal, but is
@@ -316,6 +316,10 @@ arcs/enclave> docker run --privileged -p 5984:5984 \
   additional access required). This may be fixed in a future version of Docker
   or Linux but the evidence is
   [slim](https://groups.google.com/forum/#!topic/docker-user/JmHko2nstWQ).
+- Error `Device encrypted already exists.` may mean that an image failed to
+  shut down. These are (unfortunately) shared between the host & docker. Check
+  on the host with `sudo cryptsetup status encrypted` and if there's status
+  shut it down `sudo cryptsetup close encrypted`.
 - To detach use `-d`.
 - To jump into a command shell, use a command like `docker run -it
   --entrypoint "/bin/bash" test-with-asylo -i`.
