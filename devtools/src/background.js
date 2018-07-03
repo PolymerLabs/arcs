@@ -1,5 +1,7 @@
 // Tab ID to port of a DevTools page, background script is a singleton.
 let connections = {};
+// Tab ID to `true` if given tab already pinged us.
+let tabsReady = {};
 
 // DevTools page connecting.
 chrome.runtime.onConnect.addListener(function(port) {
@@ -8,9 +10,13 @@ chrome.runtime.onConnect.addListener(function(port) {
     console.log(`Received "${message.name}" message from DevTools page for tab.${message.tabId}.`);
     switch (message.name) {
       case 'init':
-        console.log(`Establishing connection for tab.${message.tabId}.`);
         connections[message.tabId] = port;
-        chrome.tabs.sendMessage(message.tabId, {messageType: 'init-debug'});
+        if (message.tabId in tabsReady) {
+          console.log(`Establishing connection for tab.${message.tabId}, tab is ready.`);
+          chrome.tabs.sendMessage(message.tabId, {messageType: 'init-debug'});
+        } else {
+          console.log(`Establishing connection for tab.${message.tabId}, tab not yet ready.`);
+        }
         break;
       case 'command':
         chrome.tabs.sendMessage(message.tabId, message.msg);
@@ -33,6 +39,17 @@ chrome.runtime.onConnect.addListener(function(port) {
 // Message from the content script.
 chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
   let tabId = sender.tab.id;
+  if (message === 'content-script-ready') {
+    tabsReady[tabId] = true;
+    if (tabId in connections) { // If devtools ready, reply to start debugging.
+      console.log(`Received 'content-script-ready' for tab.${tabId}, devtools is ready.`);
+      chrome.tabs.sendMessage(tabId, {messageType: 'init-debug'});
+    } else { // If devtools not ready we'll wait for devtools to be opened.
+      console.log(`Received 'content-script-ready' for tab.${tabId}, waiting for devtools.`);
+    }
+    return;
+  }
+
   if (tabId in connections) {
     connections[tabId].postMessage(message);
     console.log(`Forwarded ${message.length} messages from tab.${tabId} to its DevTools page`);
@@ -50,6 +67,6 @@ chrome.webNavigation.onCommitted.addListener(function(details) {
   if (tabId in connections) {
     console.log(`Registered page refresh for tab.${tabId}.`);
     connections[tabId].postMessage([{messageType: 'page-refresh'}]);
-    chrome.tabs.sendMessage(tabId, {messageType: 'init-debug'});
+    delete tabsReady[tabId];
   }
 });

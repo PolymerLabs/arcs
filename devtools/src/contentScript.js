@@ -20,10 +20,13 @@ document.addEventListener('arcs-debug-out', e => {
   }
 });
 
+let initialized = false;
 chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
   switch (message.messageType) {
     case 'init-debug':
-      log('init-debug message received, injecting run-mark-connected script.');
+      if (initialized) return;
+      initialized = true;
+      log('Connected.');
       if (document.readyState !== 'loading') {
         addMarkConnectedScript();
       } else {
@@ -58,3 +61,6 @@ chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
 function addMarkConnectedScript() {
   document.body.appendChild(Object.assign(document.createElement('script'), {type: 'module', src: chrome.extension.getURL('/src/run-mark-connected.js')}));
 }
+
+// Initial ping to background.js.
+chrome.runtime.sendMessage('content-script-ready');
