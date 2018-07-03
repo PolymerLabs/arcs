@@ -47,6 +47,7 @@ class FbUserContextElement extends Xen.Base {
       state.shellFriends = {};
       state.userid = userid;
       this._queryUser(props, state);
+      this._fire('friends', state.shellFriends);
     }
   }
   async _createFriendsStore(context) {

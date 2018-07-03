@@ -34,6 +34,7 @@ const template = html`
   }
   section[friends] {
     padding: 16px;
+    cursor: default;
   }
   avatar {
     display: inline-block;

@@ -31,7 +31,6 @@ class ArcHost extends Xen.Debug(Xen.Base, log) {
     // dispose arc if key has changed, but we don't have a new key yet
     if (key === '*' && key !== state.key) {
       state.key = key;
-      state.serialization = null;
       this._teardownArc(state.arc);
     }
     // TODO(sjmiles): absence of serialization is null/undefined, as opposed to an
@@ -103,7 +102,7 @@ class ArcHost extends Xen.Debug(Xen.Base, log) {
       // clean out DOM nodes
       Array.from(document.querySelectorAll('[slotid]')).forEach(n => n.textContent = '');
       // old arc is no more
-      this._setState({id: null, arc: null});
+      this._setState({id: null, arc: null, serialization: null});
       this._fire('arc', null);
     }
   }

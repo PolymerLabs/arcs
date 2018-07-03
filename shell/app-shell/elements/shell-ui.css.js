@@ -247,6 +247,7 @@ const StyleSheet = Xen.html`
     border: 1px solid whitesmoke;
     background: gray center no-repeat;
     background-size: cover;
+    cursor: pointer;
   }
   @keyframes animateGlow {
     0%  {
