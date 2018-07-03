@@ -55,7 +55,7 @@ $_documentContainer.innerHTML = `<dom-module id="arcs-tracing">
     </style>
     <vaadin-split-layout>
       <div id="timelineContainer" style="flex: .8"></div>
-      <aside style="flex: .2">
+      <aside style="flex: .2" class="paddedBlocks">
         <div class="controls">
           <div class="buttons-panel">
             <iron-icon on-click="_fit" title="Fit to events" icon="maps:zoom-out-map"></iron-icon>

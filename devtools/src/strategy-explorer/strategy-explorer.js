@@ -38,7 +38,7 @@ class StrategyExplorer extends MessengerMixin(PolymerElement) {
       <div style="flex: .7" class="se-explorer-container" find-backlit\$="[[findBacklit]]">
         <se-explorer results="{{results}}"></se-explorer>
       </div>
-      <aside style="flex: .3">
+      <aside style="flex: .3" class="paddedBlocks">
         <se-find id="find" on-find-phrase="onFindPhrase"></se-find>
         <se-compare-populations results="{{results}}" id='compare'></se-compare-populations>
         <se-recipe-view></se-recipe-view>
