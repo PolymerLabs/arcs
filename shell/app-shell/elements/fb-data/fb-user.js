@@ -53,24 +53,38 @@ class FbUserElement extends Xen.Base {
     const path = `users/${userid}/arcs/${key}/touched`;
     log(`writing to [${path}]`);
     Firebase.db.child(path).set(Firebase.firebase.database.ServerValue.TIMESTAMP);
-   }
-  _queryUser({userid}, state) {
-    log('querying `user`');
-    if (state.field) {
-      state.field.dispose();
-    }
-    state.field = state.fbuser.queryUser(userid);
-    state.field.activate();
   }
-  async _initStore({config, arc}, state) {
-    state.arcstore = await this._createArcStore(config, arc);
+  async _queryUser({userid}, state) {
+    if (await this._verifyUser(userid)) {
+      log('querying `user`');
+      if (state.field) {
+        state.field.dispose();
+      }
+      state.field = state.fbuser.queryUser(userid);
+      state.field.activate();
+    }
+  }
+  async _verifyUser(userid) {
+    // TODO(sjmiles): user assignation is intentionally simplified right now, to avoid
+    // any appearance of being secure. A side-effect is that it's easy to end up in a
+    // no-user or bad-user state. This code forces an unknown user to be one of the
+    // original test users ('Barney' as of this note) by hardcoding the id.
+    const snap = await Firebase.db.child(`users/${userid}`).once('value');
+    if (snap.val() === null) {
+      this._fire('userid', '-L8ZV0oJ3btRhU9wj7Le');
+      return false;
+    }
+    return true;
+  }
+  async _initStore({arc}, state) {
+    state.arcstore = await this._createArcStore(arc);
     state.arcstore.on('change', change => this._onStoreChange(change), arc);
     const arcs = state.field.fields.arcs;
     if (arcs) {
       Object.values(arcs.fields).forEach(field => this._arcChanged(field));
     }
   }
-  async _createArcStore(config, arc) {
+  async _createArcStore(arc) {
     const options = {
       schema: {
         tag: 'Entity',
