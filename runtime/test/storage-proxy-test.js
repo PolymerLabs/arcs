@@ -89,7 +89,8 @@ class TestCollection {
     this._items.set(id, entry);
     this._version = (version !== undefined) ? version : this._version + 1;
     if (sendEvent) {
-      let event = {add: [entry], version: this._version, originatorId};
+      let item = {value: entry, effective: true, keys: [undefined]};
+      let event = {add: [item], version: this._version, originatorId};
       this._listeners.forEach(cb => cb(event));
     }
   }
@@ -101,7 +102,8 @@ class TestCollection {
     this._items.delete(id);
     this._version = (version !== undefined) ? version : this._version + 1;
     if (sendEvent) {
-      let event = {remove: [entry], version: this._version, originatorId};
+      let item = {value: entry, effective: true, keys: [undefined]};
+      let event = {remove: [item], version: this._version, originatorId};
       this._listeners.forEach(cb => cb(event));
     }
   }

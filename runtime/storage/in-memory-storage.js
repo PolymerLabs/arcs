@@ -11,6 +11,7 @@ import {assert} from '../../platform/assert-web.js';
 import {Tracing} from '../../tracelib/trace.js';
 import {StorageProviderBase} from './storage-provider-base.js';
 import {KeyBase} from './key-base.js';
+import {CrdtCollectionModel} from './crdt-collection-model.js';
 
 class InMemoryKey extends KeyBase {
   constructor(key) {
@@ -92,7 +93,7 @@ class InMemoryStorageProvider extends StorageProviderBase {
 class InMemoryCollection extends InMemoryStorageProvider {
   constructor(type, arcId, name, id, key) {
     super(type, arcId, name, id, key);
-    this._items = new Map();
+    this._model = new CrdtCollectionModel();
     assert(this._version !== null);
   }
 
@@ -110,52 +111,48 @@ class InMemoryCollection extends InMemoryStorageProvider {
 
   async _fromListWithVersion(list, version) {
     this._version = version;
-    list.forEach(item => this._items.set(item.id, item));
+    this._model = new CrdtCollectionModel();
+    for (let value of list) {
+      this._model.add(value.id, value, [undefined]);
+    }
   }
 
-  async get(id) {
-    return this._items.get(id);
-  }
   traceInfo() {
-    return {items: this._items.size};
+    return {items: this._model.size};
   }
   // HACK: replace this with some kind of iterator thing?
   async toList() {
-    return [...this._items.values()];
+    return this._model.toList();
   }
 
   async toListWithVersion() {
-    return {list: [...this._items.values()], version: this._version};
+    let list = this._model.toList();
+    return {list, version: this._version};
   }
 
-  async store(entity, originatorId) {
+  // FIXME: reorder arguments to make originatorID optional and membershipKey required
+  async store(value, originatorId=undefined, membershipKey=undefined) {
     let trace = Tracing.start({cat: 'handle', name: 'InMemoryCollection::store', args: {name: this.name}});
-    let entityWasPresent = this._items.has(entity.id);
-    if (entityWasPresent && (JSON.stringify(this._items.get(entity.id)) == JSON.stringify(entity))) {
-      trace.end({args: {entity}});
-      return;
-    }
-    this._items.set(entity.id, entity);
+    let effective = this._model.add(value.id, value, [membershipKey]);
     this._version++;
-    if (!entityWasPresent)
-      this._fire('change', {add: [entity], version: this._version, originatorId});
-    trace.end({args: {entity}});
+    this._fire('change', {add: [{value, keys: [membershipKey], effective}], version: this._version, originatorId});
+    trace.end({args: {value}});
   }
 
-  async remove(id, originatorId) {
+  async remove(id, originatorId=undefined, membershipKeys=undefined) {
     let trace = Tracing.start({cat: 'handle', name: 'InMemoryCollection::remove', args: {name: this.name}});
-    if (!this._items.has(id)) {
-      return;
+    if (!membershipKeys) {
+      membershipKeys = this._model.getKeys(id);
     }
-    let entity = this._items.get(id);
-    assert(this._items.delete(id));
+    let value = this._model.getValue(id);
+    let effective = this._model.remove(id, membershipKeys);
     this._version++;
-    this._fire('change', {remove: [entity], version: this._version, originatorId});
-    trace.end({args: {entity}});
+    this._fire('change', {remove: [{value, keys: membershipKeys, effective}], version: this._version, originatorId});
+    trace.end({args: {entity: value}});
   }
 
   clearItemsForTesting() {
-    this._items.clear();
+    this._model = new CrdtCollectionModel();
   }
 
   // TODO: Something about iterators??
