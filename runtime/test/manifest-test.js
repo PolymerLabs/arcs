@@ -595,13 +595,13 @@ ${particleStr1}
         \`slot 'slotIDs:A' #someSlot as slot0
         SomeParticle
           someParam <- myHandle
-          mySlot <- slot0
-          otherSlot -> slot2
-          oneMoreSlot -> slot1
+          mySlot consume slot0
+          otherSlot provide slot2
+          oneMoreSlot provide slot1
         OtherParticle
           aParam -> myHandle
-          mySlot <- slot0
-          oneMoreSlot <- slot1
+          mySlot consume slot0
+          oneMoreSlot consume slot1
     `);
     let verify = (manifest) => {
       let recipe = manifest.recipes[0];
