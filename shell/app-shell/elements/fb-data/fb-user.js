@@ -65,6 +65,10 @@ class FbUserElement extends Xen.Base {
     }
   }
   async _verifyUser(userid) {
+    // TODO(sjmiles): user assignation is intentionally simplified right now, to avoid
+    // any appearance of being secure. A side-effect is that it's easy to end up in a
+    // no-user or bad-user state. This code forces an unknown user to be one of the
+    // original test users ('Barney' as of this note) by hardcoding the id.
     const snap = await Firebase.db.child(`users/${userid}`).once('value');
     if (snap.val() === null) {
       this._fire('userid', '-L8ZV0oJ3btRhU9wj7Le');
