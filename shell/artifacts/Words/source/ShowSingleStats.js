@@ -68,7 +68,8 @@ defineParticle(({DomParticle, html, log, resolver}) => {
     color: rgba(0, 0, 0, 0.4);
   }
   [${host}] .gameInfo {
-    margin: 0 0 14px 56px;
+    margin: 0 0 20px 56px;
+    font-size: 16px;
   }
   [${host}] .board {
     cursor: pointer;
@@ -143,26 +144,26 @@ defineParticle(({DomParticle, html, log, resolver}) => {
   [${host}] .gameInfo {
     font-family: 'Fredoka One', cursive;
     padding-bottom: 0.5em;
-    margin: 20px;
+    margin: 20px 20px 40px 20px;
     position: relative;
-    /* color: white; */
     line-height: 20px;
+    font-size: 14px;
   }
   [${host}] .gameInfo:focus {
     border: none;
     outline: none;
   }
   [${host}] .gameInfo .caption {
-    font-size: 32px;
-    margin-bottom: 12px;
+    font-size: 20px;
+    margin-bottom: 8px;
   }
-  [${host}] .gameInfo .score,
-  [${host}] .gameInfo .shuffle {
+  [${host}] .gameInfo > div {
     float: left;
-    width: 64px;
+    /* width: 64px; */
+    padding-right: 24px;
     line-height: 20px;
     border-left: 1px solid #222;
-    padding-left: 8px;
+    padding-left: 10px;
     padding-top: 6px;
   }
   [${host}] .board .tile {
@@ -234,9 +235,8 @@ defineParticle(({DomParticle, html, log, resolver}) => {
   </div>
   <div class="gameInfo">
     <div class="score"><div class="caption">{{score}}</div>My Score</div>
-
-    <div hidden=true class="longestWord">Longest word: <span>{{longestWord}}</span></div>
-    <div hidden=true class="highestScoringWord">Highest scoring word: <span>{{highestScoringWord}}</span></div>
+    <div class="longestWord"><div class="caption">{{longestWord}}</div>Longest word</div>
+    <div class="highestScoringWord"><div class="caption">{{highestScoringWord}}</div>Highest scoring word</div>
   </div>
   <div class="board">
     <div class="gameOver" hidden="{{hideGameOver}}">Game Over</div>
@@ -311,8 +311,7 @@ defineParticle(({DomParticle, html, log, resolver}) => {
         highestScoringWord: Scoring.highestScoringWordText(stats),
         longestWord: Scoring.longestWordText(stats),
         owner: owner ? owner.name : '(n/a)',
-        score: `${stats.score}`,
-        // score: `${stats.score} (${stats.moveCount} moves)`,
+        score: `${stats.score} (${stats.moveCount} moves)`,
         time: new Date(createdTimestamp).toLocaleDateString('en-US', {
           'month': 'short',
           'day': 'numeric'
