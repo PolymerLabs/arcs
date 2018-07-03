@@ -3,6 +3,7 @@ import Xen from '../components/xen/xen.js';
 import ArcsUtils from './lib/arcs-utils.js';
 import LinkJack from './lib/link-jack.js';
 import Const from './constants.js';
+import Firebase from './elements/cloud-data/firebase.js';
 
 // elements
 import './elements/arc-config.js';
@@ -151,6 +152,15 @@ class AppShell extends Xen.Debug(Xen.Base, log) {
     if (config !== oldState.config) {
       state.search = config.search;
       state.userid = config.userid;
+      this._updateTestUser(state);
+    }
+  }
+  _updateTestUser(state) {
+    // TODO(sjmiles): special handling for test user
+    if (state.userid[0] === '*') {
+      const user = state.userid.slice(1);
+      log('CREATING user', user);
+      state.userid = Firebase.db.newUser(user);
     }
   }
   _updateKey(state, oldState) {
