@@ -32,6 +32,7 @@ const template = html`
     context="{{context}}"
     key="{{key}}"
     arc="{{arc}}"
+    on-userid="_onForward"
     on-user="_onForward"
   ></fb-user>
 
