@@ -24,28 +24,30 @@ class ArcHost extends Xen.Debug(Xen.Base, log) {
     return ['config', 'key', 'manifest', 'serialization'];
   }
   _willReceiveProps(props, state, oldProps) {
-    const changed = name => props[name] !== oldProps[name];
-    const {key, manifest, config, serialization} = props;
+    const {config, manifest, key, serialization} = props;
     if (config && manifest && !state.context) {
       this._prepareContext(config, manifest);
     }
     // dispose arc if key has changed, but we don't have a new key yet
-    if (key === '*' && changed('key')) {
+    if (key === '*' && key !== state.key) {
+      state.key = key;
+      state.serialization = null;
       this._teardownArc(state.arc);
-    }
-    // rebuild arc if we have all the parts, but one of them has changed
-    if (state.context && config && key && (key !== '*') && (changed('config') || changed('key'))) {
-      state.id = null;
-      this._teardownArc(state.arc);
-      this._prepareArc(config, key);
     }
     // TODO(sjmiles): absence of serialization is null/undefined, as opposed to an
     // empty serialization which is ''
-    if (serialization != null && changed('serialization')) {
+    if (serialization != null && serialization !== state.serialization) {
+      state.serialization = serialization;
       state.pendingSerialization = serialization;
     }
   }
-  async _update({}, state) {
+  async _update({config, key}, state) {
+    // rebuild arc if we have all the parts, but one of them has changed
+    if (state.context && config && key && (key !== '*') && (key !== state.key)) {
+      state.key = key;
+      this._teardownArc(state.arc);
+      this._prepareArc(config, key);
+    }
     const {id, context, pendingSerialization} = state;
     if (id && context && pendingSerialization != null) {
       state.pendingSerialization = null;
@@ -101,7 +103,7 @@ class ArcHost extends Xen.Debug(Xen.Base, log) {
       // clean out DOM nodes
       Array.from(document.querySelectorAll('[slotid]')).forEach(n => n.textContent = '');
       // old arc is no more
-      this._setState({arc: null});
+      this._setState({id: null, arc: null});
       this._fire('arc', null);
     }
   }

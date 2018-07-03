@@ -65,8 +65,10 @@ class FbUserElement extends Xen.Base {
   async _initStore({config, arc}, state) {
     state.arcstore = await this._createArcStore(config, arc);
     state.arcstore.on('change', change => this._onStoreChange(change), arc);
-    const arcs = state.field.fields.arcs.fields;
-    Object.values(arcs).forEach(field => this._arcChanged(field));
+    const arcs = state.field.fields.arcs;
+    if (arcs) {
+      Object.values(arcs.fields).forEach(field => this._arcChanged(field));
+    }
   }
   async _createArcStore(config, arc) {
     const options = {

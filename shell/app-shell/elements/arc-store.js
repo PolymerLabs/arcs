@@ -17,16 +17,17 @@ const log = Xen.logFactory('ArcStore', '#c6a700');
 class ArcStore extends Xen.Debug(Xen.Base, log) {
   static get observedAttributes() { return ['arc', 'options', 'data']; }
   async _update(props, state, oldProps) {
+    if (state.working) {
+      state.invalid = true;
+      return;
+    }
     let {arc, options, data} = props;
-    if (oldProps.arc && oldProps.arc !== arc) {
+    if (arc && state.arc !== arc) {
+      state.arc = arc;
       // drop stale store on the floor (will it GC?)
       state.store = null;
     }
     if (arc && !state.store) {
-      if (state.working) {
-        state.invalid = true;
-        return;
-      }
       state.working = true;
       if (options && options.manifest) {
         state.manifest = options.manifest;
