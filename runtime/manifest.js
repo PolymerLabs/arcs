@@ -767,7 +767,7 @@ ${e.message}
           // TODO: else, merge tags? merge directions?
         }
         connection.tags = connectionItem.target ? connectionItem.target.tags : [];
-        let direction = {'->': 'out', '<-': 'in', '=': 'inout'}[connectionItem.dir];
+        let direction = {'->': 'out', '<-': 'in', '=': 'inout', 'consume': '`consume', 'provide': '`provide'}[connectionItem.dir];
         if (connection.direction) {
           if (connection.direction != direction && 
               direction != 'inout' && 

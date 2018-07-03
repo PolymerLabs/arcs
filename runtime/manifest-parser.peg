@@ -719,7 +719,7 @@ RecipeSearch
   }
 
 Direction
-  = dir:('<-' / '->' / '=')
+  = dir:('<-' / '->' / '=' / 'consume' / 'provide')
 
 ConnectionTarget
   = VerbConnectionTarget / TagConnectionTarget / NameConnectionTarget / ParticleConnectionTarget
