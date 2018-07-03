@@ -6,60 +6,65 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-defineParticle(({DomParticle, resolver}) => {
+defineParticle(({DomParticle, resolver, html, log}) => {
 
   let host = 'person-bar';
 
-  let template = `
-<style>
-  [${host}] {
-    background-color: #fbfbfb;
-  }
-  [${host}] div {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    text-align: right;
-    padding: 8px 8px 4px 8px;
-    cursor: pointer;
-  }
-  [${host}] img {
-    width: 24px;
-    height: 24px;
-    border-radius: 100%;
-    /*border: 1px solid silver;*/
-    box-sizing: border-box;
-  }
-  [${host}] img:not([active]) {
-    opacity: 0.2;
-    /*border: 1px solid transparent;*/
-  }
-</style>
-
+  let template = html`
 <div ${host}>
+  <style>
+    [${host}] {
+      background-color: #fbfbfb;
+    }
+    [${host}] div {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      text-align: right;
+      padding: 8px 16px;
+      cursor: pointer;
+    }
+    [${host}] img {
+      width: 32px;
+      height: 32px;
+      box-sizing: content-box;
+      border-radius: 50%;
+      margin-right: -8px;
+      position: relative;
+    }
+    [${host}] img:not([active]) {
+      opacity: 0.8;
+    }
+  </style>
   <div>{{people}}</div>
   <template people>
-    <img src="{{avatar}}" title="{{name}}" active$="{{active}}">
+    <img style="{{order}}" src="{{avatar}}" title="{{name}}" active$="{{active}}">
   </template>
 </div>
-    `.trim();
+
+  `;
 
   return class extends DomParticle {
     get template() {
       return template;
     }
-    willReceiveProps(props) {
-      // TODO(sjmiles): best way to translate entity data into POJO?
-      let people = props.people.map((person, i) => {
-        return {
-          index: i,
-          name: person.name,
-          avatar: resolver(`https://$cdn/assets/avatars/${person.avatar || 'user.jpg'}`),
-          active: Boolean(person.active) //Math.random()<0.3
-        };
-      });
-      this._setState({people});
-      setInterval(() => this.willReceiveProps(this._props), 60000);
+    willReceiveProps({avatars, people}) {
+      if (avatars && people) {
+        const count = people.length;
+        people = people.map((person, i) => {
+          const avatar = this.boxQuery(avatars, person.$id)[0];
+          return {
+            index: i,
+            name: person.name,
+            avatar: resolver(avatar && avatar.url || 'https://$shell/assets/avatars/user.jpg'),
+            //active: Boolean(person.active)
+            active: Math.random()<0.9,
+            order: `z-index: ${count - i}`
+          };
+        });
+        this._setState({people});
+        //setInterval(() => this.willReceiveProps(this._props), 60000);
+      }
     }
     render(props, state) {
       return {

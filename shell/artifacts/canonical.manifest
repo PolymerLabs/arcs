@@ -13,6 +13,7 @@
 import 'Events/Events.recipes'
 import 'Messages/Messages.recipes'
 import 'Products/Products.recipes'
+import 'People/People.recipes'
 import 'Profile/Profile.recipes'
 import 'Restaurants/Restaurants.recipes'
 import 'Social/Social.recipes'

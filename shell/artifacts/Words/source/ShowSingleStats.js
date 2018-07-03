@@ -301,7 +301,8 @@ defineParticle(({DomParticle, html, log, resolver}) => {
       const tileBoard = new TileBoard(board);
       let boardModels = this.boardToModels(tileBoard, move ? move.coordinates : '');
       const {arcKey, author, createdTimestamp} = post;
-      const avatar = avatars.find(a => a.owner == author);
+      const avatar = this.boxQuery(avatars, author)[0];
+      const owner = people.find(p => p.id == author);
       return {
         avatarStyle: avatar ? this.avatarToStyle(resolver(avatar.url)) : '',
         boardCells: {$template: 'board-cell', models: boardModels},
@@ -309,7 +310,7 @@ defineParticle(({DomParticle, html, log, resolver}) => {
         hideGameOver: true, // TODO(wkorman): Fix this.
         highestScoringWord: Scoring.highestScoringWordText(stats),
         longestWord: Scoring.longestWordText(stats),
-        owner: people.find(p => p.id == author).name,
+        owner: owner ? owner.name : '(n/a)',
         score: `${stats.score}`,
         // score: `${stats.score} (${stats.moveCount} moves)`,
         time: new Date(createdTimestamp).toLocaleDateString('en-US', {

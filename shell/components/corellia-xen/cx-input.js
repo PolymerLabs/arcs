@@ -26,7 +26,7 @@ const template = html`
   [name=input]::slotted(input) {
     font-size: 1em;
     font-weight: 300;
-    color: var(--app-primary-color, black);
+    color: var(--app-primary-color, #212121);
     border: none;
     padding: 8px 0;
     width: 100%;
@@ -79,7 +79,7 @@ const template = html`
   /* Error message */
   .decorator::after {
     position: absolute;
-    top: 0;
+    top: 8px;
     left: 0;
     right: 0;
     font-size: 0.65em;
@@ -119,7 +119,7 @@ const template = html`
   }
 </style>
 <slot name="input"></slot>
-<div id="decorator" class$="{{decoratorClass}}" class="decorator" aria-hidden="true" error-messsage="{{error}}">
+<div id="decorator" class="{{decoratorClass}}" error-message$="{{error}}" aria-hidden="true">
   <slot name="label" class="{{labelClass}}"></slot>
   <div class$="{{underlineClass}}" class="underline"></div>
 </div>
@@ -131,12 +131,18 @@ class CorelliaXenInput extends Xen.Base {
   static get observedAttributes() {
     return ['error', 'value'];
   }
-  get template() { return template; }
+  get template() {
+    return template;
+  }
   _render({error, value}, state) {
     let input = this.querySelector('input');
     if (state.input !== input) {
       state.input = input;
-      input.onblur = input.onfocus = input.onchange = () => this._invalidate();
+      input.onblur = () => {
+        state.wasBlurred = true;
+        this._invalidate();
+      };
+      input.onfocus = input.oninput = () => this._invalidate();
       if (!input.placeholder) {
         input.placeholder = ' ';
       }
@@ -150,7 +156,7 @@ class CorelliaXenInput extends Xen.Base {
       invalid = input.matches(':invalid');
       placeholderShown = input.matches(':placeholder-shown');
     }
-    let invalidClass = !focused && !placeholderShown && invalid ? 'invalid' : '';
+    let invalidClass = (state.wasBlurred || !focused && !placeholderShown) && invalid ? 'invalid' : '';
     return {
       error,
       underlineClass: focused ? 'underline underline-focus' : 'underline',

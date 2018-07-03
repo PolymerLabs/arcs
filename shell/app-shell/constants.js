@@ -23,6 +23,12 @@ export default {
   },
   HANDLES: {
     boxed: 'BOXED',
-    profile: 'PROFILE'
+    profile: 'PROFILE',
+    shared: 'SHARED'
+  },
+  STORES: {
+    boxed: 'BOXED',
+    my: 'PROFILE',
+    shared: 'FRIEND'
   }
 };

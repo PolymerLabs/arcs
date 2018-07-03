@@ -132,30 +132,30 @@ const ArcsUtils = {
   typeFromMetaType(metaType) {
     return Arcs.Type.fromLiteral(JSON.parse(metaType));
   },
-  async getHandleData(handle) {
+  async getStoreData(handle) {
     return handle.type.isCollection ? await handle.toList() : await handle.get();
   },
-  setHandleData(handle, data) {
-    this.clearHandle(handle);
-    this.addHandleData(handle, data);
+  setStoreData(store, data) {
+    this.clearStore(store);
+    this.addStoreData(store, data);
   },
-  clearHandle(handle) {
-    if (handle.toList) {
+  clearStore(store) {
+    if (store.toList) {
       // TODO(sjmiles): if we go async here, we have nasty re-entry issues, so
-      // hacking handle API to fix for now. Probably we need low-level support
-      // for 'setHandleData' above.
-      const entities = [...handle._items.values()];
-      //const entities = await handle.toList();
-      entities.forEach(e => handle.remove(e.id));
+      // hacking store API to fix for now. Probably we need low-level support
+      // for 'setStoreData' above.
+      const entities = [...store._items.values()];
+      //const entities = await store.toList();
+      entities.forEach(e => store.remove(e.id));
     } else {
-      handle.clear();
+      store.clear();
     }
   },
-  addHandleData(handle, data) {
-    if (handle.type.isCollection) {
-      data && Object.values(data).forEach(e => handle.store(e));
+  addStoreData(store, data) {
+    if (store.type.isCollection) {
+      data && Object.values(data).forEach(e => store.store(e));
     } else {
-      data && handle.set(data);
+      data && store.set(data);
     }
   },
   // usage: this._debouncer = debounce(this._debouncer, task, 100);

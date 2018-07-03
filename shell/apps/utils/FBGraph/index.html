@@ -1,0 +1,360 @@
+<!doctype html>
+<meta charset="utf-8">
+
+<style>
+  body, button {
+    font-family: sans-serif;
+    font-size: 10px;
+  }
+  a {
+    text-decoration: none;
+    color: inherit;
+  }
+  pre {
+    line-height: 150%;
+    font-family: sans-serif;
+  }
+  .disclosure {
+  }
+  table {
+    width: 320px;
+    flex-shrink: 0;
+    border-collapse: collapse;
+    margin-right: 16px;
+  }
+  #arcsTable td:first-child {
+    white-space: nowrap;
+  }
+  #avatarsTable td {
+    text-align: center;
+  }
+  #avatarsTable img {
+    width: 92px;
+  }
+  th {
+    background-color: #eeeeee;
+  }
+  td, th {
+    padding: 4px 8px;
+    border: 1px solid #bbbbbb;
+    margin: 0;
+  }
+  [mono] {
+    font-family: Consolas, monospace;
+  }
+  #outprofile {
+  }
+</style>
+
+<div style="display: flex;">
+  <table id="usersTable">
+    <tr>
+      <th colspan="2">Users</th>
+    </tr>
+    <tr>
+      <th>ID</th><th>Name</th>
+    </tr>
+  </table>
+
+  <div>
+    <table id="avatarsTable">
+      <tr>
+        <th colspan="1">Avatars</th>
+      </tr>
+      <tr>
+        <th>URL</th>
+      </tr>
+    </table>
+    <br>
+
+    <table id="arcsTable">
+      <tr>
+        <th colspan="2">Arcs</th>
+      </tr>
+      <tr>
+        <th>Id</th>
+        <th>Description</th>
+      </tr>
+    </table>
+    <br>
+
+    <table id="friendsTable">
+      <tr>
+        <th colspan="2">Friends</th>
+      </tr>
+      <tr>
+        <th>ID</th><th>Name</th>
+      </tr>
+    </table>
+    <br>
+
+    <table id="shareTable">
+      <tr>
+        <th colspan="2">Shared By Friends</th>
+      </tr>
+      <tr>
+        <th>Friend</th><th>Shared</th>
+      </tr>
+    </table>
+    <br>
+
+    <table>
+      <tr><th>Profile Tree</th></tr>
+      <tr><td><div id="outprofile"></div></td></tr>
+    </table>
+  </div>
+
+  <!-- <div style="min-width:400px;">
+    <button onclick="testUsersValue()">Test Users Value</button>
+    <button onclick="testUserValue()">Test User Value</button>
+    <button onclick="testProfileValue()">Test Profile Value</button>
+    <pre id="outpre"></pre>
+    <div id="outdiv"></div>
+  </div> -->
+
+</div>
+
+<script src="../../../components/third-party/renderjson.js"></script>
+<script>
+  renderjson.set_icons(' ▶ ', ' ▼ ');
+  renderjson.set_show_to_level(2);
+
+  const renderValue = window.renderValue = (value, level, node) => {
+    renderjson.set_show_to_level(level || 1);
+    node = node || window.outdiv;
+    node.textContent = '';
+    node.appendChild(renderjson(value));
+  };
+  const testUsersValue = () => {
+    renderValue(users.value);
+  };
+  const testUserValue = () => {
+    renderValue(user.value, 2);
+  };
+  const testProfileValue = () => {
+    renderValue(userProfile, 3);
+  };
+</script>
+
+<fb-users></fb-users>
+<fb-user></fb-user>
+
+<script type="module">
+  import './elements/FbUsersElement.js';
+  import './elements/FbUserElement.js';
+
+  const users = window.users = document.querySelector('fb-users');
+  users.addEventListener('user-changed', ({detail}) => onUser(detail));
+
+  const removeUser = field => {
+    const node = window.usersTable.querySelector(`[id="${field.key}"]`);
+    node && node.remove();
+  };
+
+  const addUser = field => {
+    const user = field.value;
+    const name = user.info && user.info.name || '(Anonymous)';
+    let node = window.usersTable.querySelector(`[id="${field.key}"]`);
+    if (!node) {
+      node = window.usersTable.appendChild(document.createElement('tr'));
+    }
+    Object.assign(node, {
+      onclick: e => selectUser(e.currentTarget, field.key),
+      innerHTML: `<td mono>${field.key}</td><td>${name}</id>`
+    });
+    node.setAttribute('id', field.key);
+  };
+
+  const onUser = field => {
+    if (field.disposed) {
+      removeUser(field);
+    } else {
+      addUser(field);
+    }
+  };
+
+  const selectUser = (node, userid) => {
+    if (selectUser.lastNode) {
+      selectUser.lastNode.style.backgroundColor = '';
+    }
+    selectUser.lastNode = node;
+    selectUser.userid = userid;
+    node.style.backgroundColor = '#b3e5fc';
+    //
+    [...window.friendsTable.querySelectorAll('tr')].slice(2).forEach(tr => tr.remove());
+    [...window.avatarsTable.querySelectorAll('tr')].slice(2).forEach(tr => tr.remove());
+    //
+    window.userProfile = userProfile = Object.create(null);
+    user.userid = userid;
+  };
+
+  const user = window.user = document.querySelector('fb-user');
+  user.addEventListener('arc-changed', ({detail}) => onArcChanged(detail));
+  user.addEventListener('friend-changed', ({detail}) => onFriendChanged(detail));
+  user.addEventListener('profile-changed', ({detail}) => onProfileChanged(detail));
+  user.addEventListener('avatar-changed', ({detail}) => onAvatarHandleChanged(detail));
+  user.addEventListener('share-changed', ({detail}) => onShareChanged(detail));
+
+  const onArcChanged = field => {
+    if (field.disposed) {
+      removeArc(field);
+    } else {
+      addArc(field);
+    }
+  };
+
+  const removeArc = field => {
+    const old = window.arcsTable.querySelector(`[id="${field.key}"]`);
+    old && old.remove();
+  };
+
+  const addArc = field => {
+    let description = 'n/a';
+    try {
+      description = field.value.$key.metadata.description;
+    } catch(x) {
+    }
+    let node = window.arcsTable.querySelector(`[id="${field.key}"]`);
+    if (!node) {
+      node = window.arcsTable.appendChild(document.createElement('tr'));
+    }
+    Object.assign(node, {
+      onclick: e => selectUser(e.currentTarget, field.key),
+      innerHTML: `<td mono>${field.key}</td><td>${description}</id>`
+    });
+    node.setAttribute('id', field.key);
+  };
+
+  const onFriendChanged = field => {
+    if (field.disposed) {
+      removeFriend(field);
+    } else {
+      addFriend(field);
+    }
+  };
+
+  const removeFriend = field => {
+    const old = window.friendsTable.querySelector(`[id="${field.key}"]`);
+    old && old.remove();
+  };
+
+  const addFriend = field => {
+    const {path, key, value, fields} = field;
+    //
+    let user, userid;
+    try {
+      // TODO(sjmiles): field name `id` is the join point to `users` subtree, so the actual data here is
+      // `id: users[id]` ... this means we've hidden the actual 'id' value
+      user = value.rawData.id;
+      // TODO(sjmiles): a better way?
+      userid = fields.rawData.data.id;
+    } catch (x) {
+      console.warn(`added friend had incomplete join`);
+      return;
+    }
+    //
+    const name = user.info && user.info.name || '(Anonymous)';
+    let node = window.friendsTable.querySelector(`[id="${key}"]`);
+    if (!node) {
+      node = window.friendsTable.appendChild(document.createElement('tr'));
+    }
+    Object.assign(node, {
+      onclick: e => selectUser(e.currentTarget, key),
+      innerHTML: `<td mono>${userid}</td><td>${name}</id>`
+    });
+    node.setAttribute('id', key);
+  };
+
+  let profDeb, userProfile;
+
+  const onProfileChanged = field => {
+    //console.log(`profile: `, field.key, field.value);
+    const {path, key, value} = field;
+    const profile = userProfile[key] || (userProfile[key] = Object.create(null));
+    const arcid = path.split('/').slice(2).shift();
+    profile[arcid] = value;
+    //
+    window.outprofile.textContent = '';
+    profDeb = Xen.debounce(profDeb, () => {
+      window.renderValue(userProfile, 3, window.outprofile);
+    }, 300);
+  };
+
+  const removeAvatar = arcid => {
+    const node = window.avatarsTable.querySelector(`[id=${arcid}]`);
+    node && node.remove();
+  };
+
+  const addAvatar = (arcid, {path, key, value}) => {
+    const url = value.data.rawData.url.replace(`https://$cdn/`, `../../../`).replace(`https://$shell/`, `../../../`);
+    const node = window.avatarsTable.appendChild(
+      Object.assign(document.createElement('tr'), {
+        innerHTML: `<td><img src="${url}"></td>`
+      })
+    );
+    node.setAttribute('id', arcid);
+  };
+
+  const onAvatarHandleChanged = field => {
+    const arcid = field.path.split('/').slice(2).shift();
+    removeAvatar(arcid);
+    if (!field.disposed) {
+      addAvatar(arcid, field);
+    }
+  };
+
+const shares = {};
+
+const removeShare = field => {
+  const arcid = field.path.split('/')[2];
+  delete shares[arcid];
+  //
+  const old = window.shareTable.querySelector(`[id="${arcid}"]`);
+  old && old.remove();
+};
+
+const addShare = field => {
+  const arcid = field.path.split('/')[2];
+  shares[arcid] = field;
+  //
+  const friendid = field.parent.path.split('/')[2];
+  const user = users.value[friendid];
+  const name = user.info && user.info.name || '(Anonymous)';
+  const meta = field.data.metadata;
+  let node = window.shareTable.querySelector(`[id="${arcid}"]`);
+  if (!node) {
+    node = window.shareTable.appendChild(document.createElement('tr'));
+  }
+  Object.assign(node, {
+    onclick: e => selectUser(e.currentTarget, arcid),
+    innerHTML: `<td mono>${name}</td><td>${meta.description}</id>`
+  });
+  node.setAttribute('id', arcid);
+  //
+  const value = field.value.shim_handles;
+  Object.keys(value).forEach(key => {
+    const boxed = {
+      key: key,
+      owner: {
+        id: friendid,
+        name: name
+      },
+      store: value[key]
+    };
+    console.log(`BOX[${key}]:`, boxed);
+  });
+};
+
+const onShareChanged = field => {
+  if (field.disposed) {
+    removeShare(field);
+  } else {
+    const meta = field.data.metadata;
+    if (meta && meta.share > 2) {
+      addShare(field);
+    }
+  }
+};
+
+</script>
+

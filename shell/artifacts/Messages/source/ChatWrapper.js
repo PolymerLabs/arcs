@@ -8,75 +8,71 @@
 
 'use strict';
 
-defineParticle(({DomParticle, resolver}) => {
+defineParticle(({DomParticle, resolver, html}) => {
+
   const host = `chat-wrapper`;
 
-  const template = `
-
-<style>
-  [${host}] {
-    border-bottom: 1px solid silver;
-  }
-  [${host}] > [header] {
-    display: flex;
-    align-items: center;
-  }
-  [${host}] > [header] i {
-    padding: 11px 8px 8px 8px;
-    vertical-align: middle;
-    user-select: none;
-  }
-  [${host}] .material-icons {
-    font-family: 'Material Icons';
-    font-size: 24px;
-    font-style: normal;
-    -webkit-font-feature-settings: 'liga';
-    -webkit-font-smoothing: antialiased;
-    vertical-align: middle;
-    cursor: pointer;
-  }
-  [${host}] > [header] [message] {
-    flex: 1;
-    transform: translate3d(100vw, 0, 0);
-    transition: transform 800ms ease-out;
-  }
-  [${host}] > [header] [message][show] {
-    transform: translate3d(0, 0, 0);
-  }
-  [${host}] > [header] [message] {
-    background-color: lightblue;
-    box-sizing: border-box;
-    padding: 6px 12px;
-    margin: 0 16px;
-    border-radius: 16px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-  [${host}] > [header] img {
-    height: 32px;
-    border-radius: 100%;
-    vertical-align: middle;
-    margin-left: 16px;
-    opacity: 0;
-    transition: opacity 800ms ease-out;
-  }
-  [${host}] > [header] img[show] {
-    opacity: 1;
-  }
-  /*
-  [${host}] > [chat] {
-    overflow-x: hidden;
-    overflow-y: auto;
-    max-height: 400px;
-  }
-  */
-  [${host}] > [chat]:not([open]) {
-    display: none;
-  }
-</style>
+  const template = html`
 
 <div ${host}>
+
+  <style>
+    [${host}] {
+      border-bottom: 1px solid silver;
+      padding: 16px 24px;
+    }
+    [${host}] > [header] {
+      display: flex;
+      align-items: center;
+    }
+    [${host}] > [header] i {
+      padding: 11px 8px 8px 8px;
+      vertical-align: middle;
+      user-select: none;
+    }
+    [${host}] .material-icons {
+      font-family: 'Material Icons';
+      font-size: 24px;
+      font-style: normal;
+      -webkit-font-feature-settings: 'liga';
+      -webkit-font-smoothing: antialiased;
+      vertical-align: middle;
+      cursor: pointer;
+    }
+    [${host}] > [header] [message] {
+      flex: 1;
+      transform: translate3d(100vw, 0, 0);
+      transition: transform 800ms ease-out;
+    }
+    [${host}] > [header] [message][show] {
+      transform: translate3d(0, 0, 0);
+    }
+    [${host}] > [header] [message] {
+      background-color: lightblue;
+      box-sizing: border-box;
+      padding: 6px 12px;
+      margin: 0 16px;
+      border-radius: 16px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    [${host}] > [header] img {
+      height: 32px;
+      border-radius: 100%;
+      vertical-align: middle;
+      margin-left: 16px;
+      opacity: 0;
+      transition: opacity 800ms ease-out;
+    }
+    [${host}] > [header] img[show] {
+      opacity: 1;
+    }
+    [${host}] > [chat]:not([open]) {
+      display: none;
+    }
+  </style>
+
   <div header on-click="_onOpenClick">
     <icon>chat</icon>
     <span>{{messageCount}}</span>
@@ -89,7 +85,7 @@ defineParticle(({DomParticle, resolver}) => {
   <div slotid="compose"></div>
 </div>
 
-  `.trim();
+  `;
 
   const chatPre = [
     `%cChatWrapper`,

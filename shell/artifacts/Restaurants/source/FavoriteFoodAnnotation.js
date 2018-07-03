@@ -6,38 +6,44 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-defineParticle(({DomParticle}) => {
+defineParticle(({DomParticle, html}) => {
 
-  let host = `favorite-food`;
-  let template = `
+  const host = `favorite-food`;
 
-<style>
-  [${host}] {
-    padding: 0 16px;
-  }
-  [${host}] > * {
-    vertical-align: middle;
-  }
-  [${host}] [icon-favorite] {
-    color: #1A73E8;
-    font-size: 14px;
-  }
-  [${host}] [label] {
-    color: #1A73E8;
-    font-family: 'Google Sans';
-    font-size: 14px;
-    margin-left: 8px;
-  }
-</style>
+  const template = html`
 
-<div ${host} id={{subId}}>{{haveFavoriteFood}}</div>
+<div ${host} id="{{subId}}">
+  <style>
+    [${host}] {
+      padding: 0 16px;
+    }
+    [${host}] > * {
+      vertical-align: middle;
+    }
+    [${host}] [icon-favorite] {
+      color: #1A73E8;
+      font-size: 14px;
+    }
+    [${host}] [label] {
+      color: #1A73E8;
+      font-family: 'Google Sans';
+      font-size: 14px;
+      margin-left: 8px;
+    }
+  </style>
 
-<template have-favorite-food>
-  <icon icon-favorite>favorite</icon>
-  <span label>They have your favorite food <b>{{food}}</b>!</span>
-</template>
+  <div>{{haveFavoriteFood}}</div>
 
-    `.trim();
+  <template have-favorite-food>
+    <div>
+      <icon icon-favorite>favorite</icon>
+      <span label>They have your favorite food <b>{{food}}</b>!</span>
+    </div>
+  </template>
+
+</div>
+
+    `;
 
   return class extends DomParticle {
     get template() {

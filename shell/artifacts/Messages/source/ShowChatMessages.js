@@ -8,64 +8,65 @@
 
 'use strict';
 
-defineParticle(({DomParticle, resolver}) => {
+defineParticle(({DomParticle, resolver, html}) => {
   const host = `show-chat-messages`;
 
-  const template = `
-<style>
-  [${host}] {
-    display: flex;
-    flex-direction: column;
-    font-family: sans-serif;
-    font-size: 16px;
-    padding: 0 20px;
-    max-height: 400px;
-    overflow-x: hidden;
-    overflow-y: auto;
-  }
-  [${host}] [list] {
-    flex: 1;
-  }
-  [${host}] [avatar] img {
-    height: 32px;
-    border-radius: 100%;
-    vertical-align: middle;
-    margin: 0 8px;
-  }
-  [${host}] [message] {
-    padding-bottom: 8px;
-    text-align: right;
-  }
-  [${host}] [message][isme] {
-    text-align: left;
-  }
-  [${host}] [name] {
-    padding: 8px;
-    font-size: 0.7em;
-    min-height: 18px;
-  }
-  [${host}] [isme] [avatar] {
-    /*display: none;*/
-  }
-  [${host}] [content] {
-    display: inline-block;
-    font-size: 0.9em;
-    line-height: 1.4em;
-    text-align: justify;
-    background-color: #eeeeee;
-    border-radius: 16px;
-    padding: 4px 16px;
-  }
-  [${host}] [isme] [content] {
-    color: #f8f8f8;
-    background-color: #1873cd;
-  }
-  [${host}] [iscustom] {
-    display: none;
-  }
-</style>
+  const template = html`
 
 <div ${host} scrolltop="{{scrollTop:scrollTop}}">
+  <style>
+    [${host}] {
+      display: flex;
+      flex-direction: column;
+      font-family: sans-serif;
+      font-size: 16px;
+      padding: 0 20px;
+      max-width: 400px;
+      /*max-height: 400px;*/
+      overflow-x: hidden;
+      overflow-y: auto;
+    }
+    [${host}] [list] {
+      flex: 1;
+    }
+    [${host}] [avatar] img {
+      height: 32px;
+      border-radius: 100%;
+      vertical-align: middle;
+      margin: 0 8px;
+    }
+    [${host}] [message] {
+      padding-bottom: 8px;
+      text-align: right;
+    }
+    [${host}] [message][isme] {
+      text-align: left;
+    }
+    [${host}] [name] {
+      padding: 8px;
+      font-size: 0.7em;
+      min-height: 18px;
+    }
+    [${host}] [isme] [avatar] {
+      /*display: none;*/
+    }
+    [${host}] [content] {
+      display: inline-block;
+      font-size: 0.9em;
+      line-height: 1.4em;
+      text-align: justify;
+      background-color: #eeeeee;
+      border-radius: 16px;
+      padding: 4px 16px;
+    }
+    [${host}] [isme] [content] {
+      color: #f8f8f8;
+      background-color: #1873cd;
+    }
+    [${host}] [iscustom] {
+      display: none;
+    }
+  </style>
   <template chat-message>
     <div message isme$="{{isme}}">
       <div name><span avatar><b>{{name}}</b><img src="{{src}}" title="{{name}}" alt="{{name}}"></span><i>{{blurb}}</i></div>
@@ -75,7 +76,8 @@ defineParticle(({DomParticle, resolver}) => {
   </template>
   <div list>{{messages}}</div>
 </div>
-  `.trim();
+
+  `;
 
   return class extends DomParticle {
     get template() {
@@ -98,8 +100,8 @@ defineParticle(({DomParticle, resolver}) => {
     }
     renderMessages(messages, user, avatars) {
       return messages.map((m, i) => {
-        let avatar = avatars.find(a => a.owner == m.userid);
-        let src = avatar ? avatar.url : `https://$cdn/assets/avatars/user.jpg`;
+        const avatar = this.boxQuery(avatars, m.userid)[0];
+        const src = avatar && avatar.url || 'https://$shell/assets/avatars/user.jpg';
         return {
           iscustom: Boolean(m.type && m.type.length),
           content: m.content,

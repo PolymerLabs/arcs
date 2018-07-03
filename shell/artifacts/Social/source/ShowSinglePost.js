@@ -68,8 +68,7 @@ defineParticle(({DomParticle, html, log, resolver}) => {
       return template;
     }
     avatarToStyle(url) {
-      return `background: url('${
-          url}') center no-repeat; background-size: cover;`;
+      return `background: url('${url}') center no-repeat; background-size: cover;`;
     }
     clampSize(width, height) {
       if (!width || !height) {
@@ -87,16 +86,17 @@ defineParticle(({DomParticle, html, log, resolver}) => {
       const {arcKey, author, createdTimestamp, id, image, imageHeight, imageWidth, message} = props.post;
       const {clampedWidth, clampedHeight} =
           this.clampSize(imageWidth, imageHeight);
-      const avatar = props.avatars.find(a => a.owner == author);
+      const avatar = this.boxQuery(props.avatars, author)[0];
+      const owner = props.people.find(p => p.id === author);
       return {
+        id,
         avatarStyle: avatar ? this.avatarToStyle(resolver(avatar.url)) : '',
         blogHref: `?arc=${arcKey}&user=${props.user.id}`,
-        id,
         image: image || '',
         imageWidth: clampedWidth,
         imageHeight: clampedHeight,
         message,
-        owner: props.people.find(p => p.id == author).name,
+        owner: owner && owner.name,
         time: new Date(createdTimestamp).toLocaleDateString('en-US', {
           'month': 'short',
           'day': 'numeric'

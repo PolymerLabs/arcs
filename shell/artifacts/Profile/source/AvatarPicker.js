@@ -6,11 +6,11 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-defineParticle(({DomParticle, resolver}) => {
+defineParticle(({DomParticle, html, resolver}) => {
 
   let host = `avatar-picker`;
 
-  let styles = `
+  let styles = html`
 <style>
   [${host}] [item] {
     display: inline-block;
@@ -25,14 +25,15 @@ defineParticle(({DomParticle, resolver}) => {
     box-sizing: border-box;
     border-radius: 100%;
     width: 80px;
+    /*border: 10px solid transparent;*/
   }
-  [${host}] [item] [selected] {
+  [${host}] [item] img[selected] {
     border: 10px solid red;
   }
 </style>
   `;
 
-  let template = `
+  let template = html`
 
 ${styles}
 
@@ -56,7 +57,7 @@ ${styles}
     render(props, state) {
       let avatar = props.avatar || 0;
       let avatars = [];
-      for (let i=0; i<23; i++) {
+      for (let i=0; i<30; i++) {
         let url = `https://$cdn/assets/avatars/user (${i+1}).png`;
         avatars.push({
           index: i,

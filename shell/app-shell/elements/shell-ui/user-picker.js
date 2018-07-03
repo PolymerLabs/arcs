@@ -52,39 +52,39 @@ const User = html`
 const log = Xen.logFactory('UserPicker', '#bb4d00');
 
 class UserPicker extends Xen.Base {
-  static get observedAttributes() { return ['users']; }
+  static get observedAttributes() {
+    return ['users', 'friends'];
+  }
   get template() {
     return Main;
   }
   _getInitialState() {
-    const avatars = [];
-    for (let i=0; i<27; i++) {
-      avatars[i] = {
-        url: `${shellPath}/assets/avatars/user (${i}).png`
-      };
-    }
     return {
-      avatars,
       selected: 0
     };
   }
-  _render({users}, {selected, avatars}) {
+  _render({users, friends}, {selected}) {
     const render = {
+      users: users && friends && this._renderUsers(users, friends, selected)
     };
-    if (users) {
-      render.users = {
-        template: User,
-        models: Object.values(users).map((user, i) => this._renderUser(selected, user, i))
-      };
-    }
     return render;
   }
-  _renderUser(selected, user, i) {
-    const url = user.info.avatar || `${shellPath}/assets/avatars/user (0).png`;
+  _renderUsers(users, friends, selected) {
+    return {
+      template: User,
+      models: Object.values(users).map((user, i) => this._renderUser(selected, user, i, friends))
+    };
+  }
+  _renderUser(selected, user, i, friends) {
+    let url = user.avatar
+      || (friends[user.id] && friends[user.id].avatar)
+      || `https://$shell/assets/avatars/user (0).png`
+      ;
+    url = url.replace(`https://$shell`, window.shellPath).replace(`https://$cdn`, window.shellPath);
     return {
       user: user,
       key: user.id,
-      name: user.info.name,
+      name: user.name,
       style: `background-image: url("${url}");`,
       selected: user.id === selected
     };

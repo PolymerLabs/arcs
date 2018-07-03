@@ -32,21 +32,21 @@ const template = html`
 
   <div><button on-click="_onUpdate">Update</button></div>
 
-  <div banner>Arc Handles</div>
-  <div style="padding: 8px;">{{arcHandles}}</div>
+  <div banner>Arc Stores</div>
+  <div style="padding: 8px;">{{arcStores}}</div>
 
-  <div banner>Context Handles</div>
-  <div style="padding: 8px;">{{contextHandles}}</div>
+  <div banner>Context Stores</div>
+  <div style="padding: 8px;">{{contextStores}}</div>
 `;
 
-const handleTemplate = html`
+const storeTemplate = html`
   <div style="border-bottom: 1px dashed silver; padding-bottom: 8px; margin-bottom: 8px;">
     <data-explorer style="font-size: 0.8em;" object="{{data}}"></data-explorer>
   </div>
 `;
 
-class HandleExplorer extends Xen.Base {
-  static get observedAttributes() { return ['arc']; }
+class StoreExplorer extends Xen.Base {
+  static get observedAttributes() { return ['arc', 'context']; }
   get template() {
     return template;
   }
@@ -56,27 +56,31 @@ class HandleExplorer extends Xen.Base {
   _willReceiveProps(props, state) {
     state.needsQuery = true;
   }
-  _update(props, state) {
-    if (props.arc && state.needsQuery) {
-      state.needsQuery = false;
-      //this._setState({arcHandles: null, contextHandles: null});
-      this._queryHandles(props.arc);
+  _update({arc, context}, state) {
+    if (state.needsQuery) {
+      if (arc) {
+        state.needsQuery = false;
+        this._queryArcStores(arc);
+      }
+      if (context) {
+        state.needsQuery = false;
+        this._queryContextStores(context);
+      }
     }
   }
   _render(props, state) {
     return {
-      arcHandles: {
-        template: handleTemplate,
-        models: state.arcHandles
+      arcStores: {
+        template: storeTemplate,
+        models: state.arcStores
       },
-      contextHandles: {
-        template: handleTemplate,
-        models: state.contextHandles
+      contextStores: {
+        template: storeTemplate,
+        models: state.contextStores
       }
     };
   }
-  async _queryHandles(arc) {
-    const arcHandles = await this._digestHandles(arc._storeTags);
+  async _queryContextStores(context) {
     const find = manifest => {
       let tags = [...manifest._storeTags];
       if (manifest.imports) {
@@ -84,39 +88,47 @@ class HandleExplorer extends Xen.Base {
       }
       return tags;
     };
-    const contextHandles = await this._digestHandles(find(arc.context));
-    this._setState({arcHandles, contextHandles});
+    const contextStores = await this._digestStores(find(context));
+    this._setState({contextStores});
   }
-  async _digestHandles(handles) {
+  async _queryArcStores(arc) {
+    const arcStores = await this._digestStores(arc._storeTags);
+    this._setState({arcStores});
+  }
+  async _digestStores(stores) {
     const result = [];
-    if (handles) {
-      for (let [handle, tags] of handles) {
-        //if (handle.name === null) {
+    if (stores) {
+      for (let [store, tags] of stores) {
+        //if (store.name === null) {
         //  continue;
         //}
         let values = `(don't know how to dereference)`;
-        if (handle.toList) {
-          const list = await handle.toList();
-          values = list.map(item => item.rawData);
-        } else if (handle.get) {
-          values = await handle.get();
+        if (store.toList) {
+          const list = await store.toList();
+          values = {};
+          list.forEach(item => values[item.id] = item.rawData);
+          //values = list.map(item => item.rawData);
+        } else if (store.get) {
+          values = await store.get();
         } else {
           // lint?
         }
         const data = {
-          name: handle.name,
+          name: store.name,
           tags: tags ? [...tags].join(', ') : '',
-          id: handle.id,
-          storage: handle.storageKey,
-          type: handle.type,
-          //values: JSON.stringify(handle.toList ? await handle.toList() : `await handle.get()`, null, '  ')
+          id: store.id,
+          storage: store.storageKey,
+          type: store.type,
+          //values: JSON.stringify(store.toList ? await store.toList() : `await store.get()`, null, '  ')
           values
         };
-        if (handle.description) {
-          data.description = handle.description;
+        if (store.description) {
+          data.description = store.description;
         }
-        let moniker = handle.id.split(':').pop();
-        result.push({tags: data.tags, data, name: handle.name || data.tags || moniker});
+        let moniker = store.id.split(':').pop();
+        if (!store.type || store.type.tag !== 'Interface') {
+          result.push({tags: data.tags, data, name: store.name || data.tags || moniker});
+        }
       }
     }
     return result;
@@ -125,4 +137,4 @@ class HandleExplorer extends Xen.Base {
     this._setState({needsQuery: true});
   }
 }
-customElements.define('handle-explorer', HandleExplorer);
+customElements.define('store-explorer', StoreExplorer);
