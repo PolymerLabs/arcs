@@ -28,11 +28,27 @@
 
   function initializeWindow(w) {
     if (windowForEvents) return;
-    windowForEvents = w;
     w.document.addEventListener('command', e => sendMessage(e.detail));
-    for (let msg of msgQueue) fire(msg);
-    msgQueue.length = 0;
-    w.document.dispatchEvent(new Event('arcs-communication-channel-ready'));
+
+    const setWindowForEventsAndEmptyMsgQueue = () => {
+      windowForEvents = w;
+      for (let msg of msgQueue) fire(msg);
+      msgQueue.length = 0;
+    };
+    
+    if (w._msgRaceConditionGuard) {
+      // arcs-communication-channel.js loaded first (likely in extension mode),
+      // let's let it know we are ready to receive events.
+      w.document.dispatchEvent(new Event('arcs-communication-channel-ready'));
+      setWindowForEventsAndEmptyMsgQueue();
+    } else {
+      w._msgRaceConditionGuard = 'devtools-script-loaded';
+      // We loaded first (likely in standalone mode),
+      // let's wait for arcs-communication-channel.js before sending it stuff.
+      w.document.addEventListener('arcs-communication-channel-ready', e => {
+        setWindowForEventsAndEmptyMsgQueue();
+      });
+    }
   }
 
   function connectViaExtensionApi() {

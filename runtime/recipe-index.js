@@ -76,6 +76,8 @@ export class RecipeIndex {
       context: new Manifest({id: 'empty-context'}),
       slotComposer: affordance ? new SlotComposer({affordance, noRoot: true}) : null,
       recipeIndex: {},
+      // TODO: Not speculative really, figure out how to mark it so DevTools doesn't pick it up.
+      speculative: true
     });
     let strategizer = new Strategizer(
       [

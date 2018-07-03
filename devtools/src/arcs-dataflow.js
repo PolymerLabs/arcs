@@ -3,10 +3,10 @@ import '../deps/@polymer/paper-item/paper-item.js';
 import '../deps/@vaadin/vaadin-grid/vaadin-grid.js';
 import '../deps/@vaadin/vaadin-grid/vaadin-grid-sorter.js';
 import {PolymerElement} from '../deps/@polymer/polymer/polymer-element.js';
-import {formatTime, writeOps, indentPrint} from './arcs-shared.js';
+import {formatTime, writeOps, indentPrint, MessengerMixin} from './arcs-shared.js';
 import {html} from '../deps/@polymer/polymer/lib/utils/html-tag.js';
 
-class ArcsDataflow extends PolymerElement {
+class ArcsDataflow extends MessengerMixin(PolymerElement) {
   static get template() {
     return html`
     <style include="shared-styles">

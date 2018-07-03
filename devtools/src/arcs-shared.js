@@ -87,10 +87,26 @@ export function indentPrint(thing) {
 }
 
 /* @polymerMixin */
-const MessageSenderMixin = subclass => class extends subclass {
+const MessengerMixin = subclass => class extends subclass {
+
+  constructor() {
+    super();
+    if (this.onMessageBundle || this.onMessage) {
+      document.addEventListener('messages', ({detail}) => {
+        if (this.onMessageBundle) {
+          this.onMessageBundle(detail);
+        } else {
+          for (let msg of detail) {
+            this.onMessage(msg);
+          }
+        }
+      });
+    }
+  }
+
   send(message) {
-    this.dispatchEvent(new CustomEvent('message', {detail: message}));
+    document.dispatchEvent(new CustomEvent('send-message', {detail: message}));
   }
 };
 
-export {MessageSenderMixin, writeOps};
+export {MessengerMixin, writeOps};

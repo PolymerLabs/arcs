@@ -12,14 +12,14 @@ import {PolymerElement} from '../deps/@polymer/polymer/polymer-element.js';
 import './arcs-overview.js';
 import './arcs-dataflow.js';
 import './arcs-communication-channel.js';
-import './arcs-shared.js';
+import {MessengerMixin} from './arcs-shared.js';
 import './arcs-notifications.js';
 import './arcs-tracing.js';
 import './strategy-explorer/strategy-explorer.js';
 import './arcs-strategy-runner.js';
 import {html} from '../deps/@polymer/polymer/lib/utils/html-tag.js';
 
-class ArcsDevtoolsApp extends PolymerElement {
+class ArcsDevtoolsApp extends MessengerMixin(PolymerElement) {
   static get template() {
     return html`
     <style include="shared-styles">
@@ -83,7 +83,7 @@ class ArcsDevtoolsApp extends PolymerElement {
       }
     </style>
     <div id="container" nav-narrow="">
-      <arcs-communication-channel id="channel" on-messages="onMessageBundle"></arcs-communication-channel>
+      <arcs-communication-channel></arcs-communication-channel>
       <app-location route="{{route}}" query-params="{{queryParams}}" use-hash-as-path="">
       </app-location>
       <app-route route="{{route}}" pattern=":page" data="{{routeData}}" tail="{{tail}}">
@@ -109,18 +109,13 @@ class ArcsDevtoolsApp extends PolymerElement {
         <arcs-tracing name="traces"></arcs-tracing>
         <arcs-dataflow id="dataflow" name="dataflow" query-params="{{queryParams}}"></arcs-dataflow>
         <strategy-explorer name="strategyExplorer"></strategy-explorer>
-        <arcs-strategy-runner name="strategyRunner" on-message="sendMessage"></arcs-strategy-runner>
+        <arcs-strategy-runner name="strategyRunner"></arcs-strategy-runner>
       </iron-pages>
     </div>
 `;
   }
 
   static get is() { return 'arcs-devtools-app'; }
-
-  constructor() {
-    super();
-    this._messageReceivers = [];
-  }
 
   ready() {
     super.ready();
@@ -130,25 +125,6 @@ class ArcsDevtoolsApp extends PolymerElement {
     }
     if (!this.routeData.page) {
       this.set('routeData.page', 'strategyExplorer');
-    }
-    this._messageReceivers.push(this.$.notifications);
-    this.$.pages.childNodes.forEach(page => {
-      if (page.onMessage || page.onMessageBundle) this._messageReceivers.push(page);
-    });
-  }
-
-
-  onMessageBundle(e) {
-    for (let receiver of this._messageReceivers) {
-      Promise.resolve().then(() => {
-        if (receiver.onMessage) {
-          for (let msg of e.detail) {
-            receiver.onMessage(msg);
-          }
-        } else {
-          receiver.onMessageBundle(e.detail);
-        }
-      });
     }
   }
 
@@ -163,15 +139,11 @@ class ArcsDevtoolsApp extends PolymerElement {
   toggleIlluminate() {
     if (this.$.illuminateToggle.hasAttribute('active')) {
       this.$.illuminateToggle.removeAttribute('active');
-      this.$.channel.send('illuminate', 'off');
+      this.send({messageType: 'illuminate', messageBody: 'off'});
     } else {
       this.$.illuminateToggle.setAttribute('active', '');
-      this.$.channel.send('illuminate', 'on');
+      this.send({messageType: 'illuminate', messageBody: 'on'});
     }
-  }
-
-  sendMessage(e) {
-    this.$.channel.send(e.detail.messageType, e.detail.messageBody, e.detail.arcId);
   }
 }
 

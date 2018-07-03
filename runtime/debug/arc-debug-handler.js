@@ -23,6 +23,8 @@ export class ArcDebugHandler {
     // Message handles go here.
     new ArcPlannerInvoker(arc, devtoolsChannel);
 
+    // TODO: Disconnect when arc is disposed?
+
     devtoolsChannel.send({
       messageType: 'arc-available',
       messageBody: {

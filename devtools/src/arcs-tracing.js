@@ -5,7 +5,7 @@ import '../deps/@polymer/iron-icons/maps-icons.js';
 import '../deps/@polymer/iron-icons/image-icons.js';
 import '../deps/@vaadin/vaadin-split-layout/vaadin-split-layout.js';
 import '../deps/vis/dist/vis-timeline-graph2d.min.js';
-import {formatTime, indentPrint} from './arcs-shared.js';
+import {formatTime, indentPrint, MessengerMixin} from './arcs-shared.js';
 
 
 const $_documentContainer = document.createElement('template');
@@ -86,7 +86,7 @@ $_documentContainer.innerHTML = `<dom-module id="arcs-tracing">
 </dom-module>`;
 
 document.head.appendChild($_documentContainer.content);
-class ArcsTracing extends PolymerElement {
+class ArcsTracing extends MessengerMixin(PolymerElement) {
   static get is() { return 'arcs-tracing'; }
 
   static get properties() {

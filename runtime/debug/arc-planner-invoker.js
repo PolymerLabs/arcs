@@ -18,7 +18,7 @@ export class ArcPlannerInvoker {
     this.planner.init(arc);
 
     devtoolsChannel.listen(arc, 'fetch-strategies', () => devtoolsChannel.send({
-      messageType: 'planner-strategies',
+      messageType: 'fetch-strategies-result',
       messageBody: this.planner.strategizer._strategies.map(a => a.constructor.name)
     }));
 

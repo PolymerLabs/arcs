@@ -41,7 +41,7 @@ export class AbstractDevtoolsChannel {
   }
 
   _handleMessage(msg) {
-    let listeners = this.messageListeners.get(`${msg.targetArcId}/${msg.messageType}`);
+    let listeners = this.messageListeners.get(`${msg.arcId}/${msg.messageType}`);
     if (!listeners) {
       console.warn(`No one is listening to ${msg.messageType} message`);
     } else {
