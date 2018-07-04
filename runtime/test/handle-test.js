@@ -86,6 +86,7 @@ describe('Handle', function() {
   });
 
   it('allows updates with same user-provided ids but different value (collection)', async () => {
+    let slotComposer = createSlotComposer();
     let arc = new Arc({slotComposer, id: 'test'});
 
     let manifest = await Manifest.load('./runtime/test/artifacts/test-particles.manifest', loader);
@@ -100,6 +101,7 @@ describe('Handle', function() {
   });
 
   it('allows updates with same user-provided ids but different value (variable)', async () => {
+    let slotComposer = createSlotComposer();
     let arc = new Arc({slotComposer, id: 'test'});
 
     let manifest = await Manifest.load('./runtime/test/artifacts/test-particles.manifest', loader);

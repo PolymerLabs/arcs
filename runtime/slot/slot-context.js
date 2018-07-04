@@ -24,14 +24,16 @@ export class SlotContext {
     this._name = name;
     this._tags = tags || [];
 
-    // eg div element.
-    this._container = container;
+    this._container = container; // eg div element.
 
     // The context's accompanying ProvidedSlotSpec (see particle-spec.js).
     // Initialized to a default spec, if the container is one of the shell provided top root-contexts.
     this._spec = spec || new ProvidedSlotSpec(name);
     // The slot (ie runtime/slot.js) providing this container (eg div)
     this._sourceSlot = sourceSlot;
+    if (this.sourceSlot) {
+      this.sourceSlot._providedSlotContexts.push(this);
+    }
     // The slots (runtime/slot.js) rendered into this context.
     this._slots = [];
   }
@@ -51,8 +53,23 @@ export class SlotContext {
     return new SlotContext(sourceSlot.consumeConn.providedSlots[spec.name].id, spec.name, tags, null, spec, sourceSlot);
   }
 
+  isSameContainer(container) {
+    if (this.spec.isSet) {
+      if (Boolean(this.container) != Boolean(container)) {
+        return false;
+      }
+      if (!this.container) {
+        return true;
+      }
+      return Object.keys(this.container).length == Object.keys(container).length &&
+             Object.values(this.container).every(
+                currentContainer => Object.values(container).find(newContainer => newContainer == currentContainer));
+    }
+    return this.container == container;
+  }
+
   set container(container) {
-    if (this.container == container) {
+    if (this.isSameContainer(container)) {
       return;
     }
     let originalContainer = this.container;
@@ -67,6 +84,10 @@ export class SlotContext {
     if (this.container) {
       slot.onContainerUpdate(this.container, null);
     }
+  }
+
+  clearSlots() {
+    this._slots = [];
   }
 
   // This method is for backward compabitility with SlotComposer::getAvailableSlots

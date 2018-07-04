@@ -10,9 +10,8 @@
 'use strict';
 
 import {assert} from '../test/chai-web.js';
-import {DomContext} from '../dom-context.js';
-import {MockDomSlot, MockDomContext} from '../testing/mock-dom-slot.js';
 import {SlotComposer} from '../slot-composer.js';
+import {SlotDomRenderer} from '../slot/slot-dom-renderer.js';
 
 let logging = false;
 let log = (!logging || global.logging === false) ? () => {} : console.log.bind(console, '---------- MockSlotComposer::');
@@ -35,14 +34,14 @@ export class MockSlotComposer extends SlotComposer {
    * - strict: whether unexpected render slot requests cause an assert or a warning log (default: true)
    */
   constructor(options) {
+    options = options || {};
     super({rootContainer: options.rootContainer || {'root': 'root-context'}, affordance: 'mock'});
-    this._affordance = {name: 'mock', slotClass: MockDomSlot, contextClass: MockDomContext};
     this.expectQueue = [];
     this.onExpectationsComplete = () => undefined;
-    this.strict = options && options.strict != undefined ? options.strict : true;
+    this.strict = options.strict != undefined ? options.strict : true;
 
     // Clear all cached templates
-    DomContext.dispose();
+    SlotDomRenderer.dispose();
   }
 
   /** @method newExpectations()
@@ -195,9 +194,15 @@ export class MockSlotComposer extends SlotComposer {
   }
 
   async renderSlot(particle, slotName, content) {
-    // console.log(`    renderSlot ${particle.name} ${((names) => names.length > 0 ? `(${names.join(',')}) ` : '')(this._getHostedParticleNames(particle))}: ${slotName} - ${Object.keys(content).join(', ')}`);
+    if (this.foo)
+    console.log(`    ${this.foo} --- renderSlot ${particle.name} ${((names) => names.length > 0 ? `(${names.join(',')}) ` : '')(this._getHostedParticleNames(particle))}: ${slotName} - ${Object.keys(content).join(', ')}`);
     assert.isAbove(this.expectQueue.length, 0,
       `Got a renderSlot from ${particle.name}:${slotName} (content types: ${Object.keys(content).join(', ')}), but not expecting anything further.`);
+
+    // renderSlot must happen before _verifyRenderContent, because the latter removes this call from expectations,
+    // and potentially making mock-slot-composer idle before the renderSlot has actualy complete.
+    // TODO: split _verifyRenderContent to separate method for checking and then resolving expectations.
+    await super.renderSlot(particle, slotName, content);
 
     let found = this._verifyRenderContent(particle, slotName, content);
     if (!found) {
@@ -210,13 +215,13 @@ export class MockSlotComposer extends SlotComposer {
 
     this._expectationsMet();
 
-    await super.renderSlot(particle, slotName, content);
     let slot = this.getSlot(particle, slotName);
     if (slot) {
-      await super.updateInnerSlots(slot);
+      slot.updateProvidedContexts();
     } else {
       // Slots of particles hosted in transformation particles.
     }
+
     // this.detailedLogDebug();
   }
 

@@ -8,11 +8,9 @@
  * http://polymer.github.io/PATENTS.txt
  */
 import {assert} from '../platform/assert-web.js';
-import {Slot} from './slot.js';
-import {DomSlot} from './dom-slot.js';
-import {DomContext} from './dom-context.js';
+import {SlotDomRenderer} from './slot/slot-dom-renderer.js';
+import {MockSlotDomRenderer} from './testing/mock-slot-dom-renderer.js';
 import {DescriptionDomFormatter} from './description-dom-formatter.js';
-import {MockDomSlot} from './testing/mock-dom-slot.js';
 
 export class Affordance {
   constructor(options) {
@@ -32,8 +30,8 @@ export class Affordance {
 
 let _affordances = {};
 [
-  {name: 'dom', slotClass: DomSlot, contextClass: DomContext, descriptionFormatter: DescriptionDomFormatter},
-  {name: 'dom-touch', slotClass: DomSlot, contextClass: DomContext, descriptionFormatter: DescriptionDomFormatter},
-  {name: 'vr', slotClass: DomSlot, contextClass: DomContext, descriptionFormatter: DescriptionDomFormatter},
-  {name: 'mock', slotClass: MockDomSlot}
+  {name: 'dom', slotRendererClass: SlotDomRenderer, descriptionFormatter: DescriptionDomFormatter},
+  {name: 'dom-touch', slotRendererClass: SlotDomRenderer, descriptionFormatter: DescriptionDomFormatter},
+  {name: 'vr', slotRendererClass: SlotDomRenderer, descriptionFormatter: DescriptionDomFormatter},
+  {name: 'mock', slotRendererClass: MockSlotDomRenderer}
 ].forEach(options => _affordances[options.name] = new Affordance(options));
