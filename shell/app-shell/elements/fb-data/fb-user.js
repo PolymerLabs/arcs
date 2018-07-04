@@ -152,8 +152,13 @@ class FbUserElement extends Xen.Base {
       id: this._state.userid,
       info: field.value || {name: 'Anonymous'}
     };
-    this._fire('user', user);
-  }
+    // TODO(sjmiles): buy some time for the fb-context to construct itself
+    // ... this is a hack and should be replaced by fb-context init mechanism
+    // IFF we really need such a signal
+    setTimeout(() => {
+      this._fire('user', user);
+    }, 1000);
+}
   _arcChanged(field) {
     const {arcstore} = this._state;
     if (arcstore) {

@@ -146,6 +146,7 @@ class ArcHost extends Xen.Debug(Xen.Base, log) {
       context: state.context,
       storageKey: state.storageKey
     };
+    log('about to construct an arc; # context stores:', state.context.stores.length);
     // attempt to construct arc
     let arc;
     try {

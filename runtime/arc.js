@@ -445,6 +445,7 @@ ${this.activeRecipe.toString()}`;
   }
 
   _registerStore(store, tags) {
+    if (this._storesById.has(store.id)) return;
     assert(!this._storesById.has(store.id), `Store already registered '${store.id}'`);
     tags = tags || [];
     tags = Array.isArray(tags) ? tags : [tags];
