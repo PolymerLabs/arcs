@@ -13,29 +13,15 @@ import {Walker} from '../recipe/walker.js';
 export class SearchTokensToParticles extends Strategy {
   constructor(arc) {
     super();
-    // TODO: Recipes. Handles?
-    this._particleByToken = {};
-    this._recipeByToken = {};
-    for (let particle of arc.context.particles) {
-      let name = particle.name.toLowerCase();
-      this._addParticle(name, particle);
 
-      let verb = particle.primaryVerb;
-      if (verb != name) {
-        this._addParticle(verb, particle);
-      }
-    }
-    for (let recipe of arc.context.recipes) {
-      if (recipe.name) {
-        this._addRecipe(recipe.name.toLowerCase(), recipe);
-      }
-      recipe.verbs.forEach(verb => {
-        this._addRecipe(verb, recipe);
-      });
+    let thingByToken = {};
+    let thingByPhrase = {};
+    for (let [thing, packaged] of [...arc.context.particles.map(p => [p, {spec: p}]),
+                                   ...arc.context.recipes.map(r => [r, {innerRecipe: r}])]) {
+      this._addThing(thing.name, packaged, thingByToken, thingByPhrase);
+      thing.verbs.forEach(verb => this._addThing(verb, packaged, thingByToken, thingByPhrase));
     }
 
-    let findParticles = token => this._particleByToken[token] || [];
-    let findRecipes = token => this._recipeByToken[token] || [];
     class SearchWalker extends Walker {
       onRecipe(recipe) {
         if (!recipe.search || !recipe.search.unresolvedTokens.length) {
@@ -43,20 +29,32 @@ export class SearchTokensToParticles extends Strategy {
         }
 
         let byToken = {};
-        for (let token of recipe.search.unresolvedTokens) {
-          for (let spec of findParticles(token)) {
-            // TODO: Skip particles that are already in the active recipe?
+        let resolvedTokens = new Set();
+        let _addThingsByToken = (token, things) => {
+          things.forEach(thing => {
             byToken[token] = byToken[token] || [];
-            byToken[token].push({spec});
-          }
-          for (let innerRecipe of findRecipes(token)) {
-            // TODO: Skip recipes with particles that are already in the active recipe?
-            byToken[token] = byToken[token] || [];
-            byToken[token].push({innerRecipe});
+            byToken[token].push(thing);
+            token.split(' ').forEach(t => resolvedTokens.add(t));
+          });
+        };
+
+        for (let [phrase, things] of Object.entries(thingByPhrase)) {
+          let tokens = phrase.split(' ');
+          if (tokens.every(token => recipe.search.unresolvedTokens.find(unresolved => unresolved == token)) &&
+              recipe.search.phrase.includes(phrase)) {
+            _addThingsByToken(phrase, things);
           }
         }
-        let resolvedTokens = Object.keys(byToken);
-        if (resolvedTokens.length == 0) {
+
+        for (let token of recipe.search.unresolvedTokens) {
+          if (resolvedTokens.has(token)) {
+            continue;
+          }
+          let things = thingByToken[token];
+          things && _addThingsByToken(token, things);
+        }
+
+        if (resolvedTokens.size == 0) {
           return;
         }
 
@@ -98,14 +96,26 @@ export class SearchTokensToParticles extends Strategy {
     return [...generated, ...terminal];
   }
 
-  _addParticle(token, particle) {
-    this._particleByToken[token] = this._particleByToken[token] || [];
-    this._particleByToken[token].push(particle);
+  _addThing(token, thing, thingByToken, thingByPhrase) {
+    if (!token) {
+      return;
+    }
+    this._addThingByToken(token.toLowerCase(), thing, thingByToken);
+
+    // split DoSomething into "do something" and add the phrase
+    let phrase = token.replace(/([^A-Z])([A-Z])/g, '$1 $2').replace(/([A-Z][^A-Z])/g, ' $1').replace(/[\s]+/g, ' ').trim();
+    if (phrase != token) {
+      this._addThingByToken(phrase.toLowerCase(), thing, thingByPhrase);
+    }
   }
-  _addRecipe(token, recipe) {
-    this._recipeByToken[token] = this._recipeByToken[token] || [];
-    this._recipeByToken[token].push(recipe);
+  _addThingByToken(key, thing, thingByKey) {
+    assert(key == key.toLowerCase());
+    thingByKey[key] = thingByKey[key] || [];
+    if (!thingByKey[key].find(t => t == thing)) {
+      thingByKey[key].push(thing);
+    }
   }
+
   async generate(inputParams) {
     return Recipe.over(this.getResults(inputParams), this.walker, this);
   }
