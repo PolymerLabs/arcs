@@ -16,7 +16,7 @@ import {FbUserContext} from './FbUserContext.js';
 
 const log = Xen.logFactory('fb-user-context', '#bb22ee');
 
-class FbUserContextElement extends Xen.Base {
+class FbUserContextElement extends Xen.Debug(Xen.Base, log) {
    static get observedAttributes() {
     return ['config', 'userid', 'context'];
   }
@@ -47,7 +47,6 @@ class FbUserContextElement extends Xen.Base {
       state.shellFriends = {};
       state.userid = userid;
       this._queryUser(props, state);
-      this._fire('friends', state.shellFriends);
     }
   }
   async _createFriendsStore(context) {
@@ -84,19 +83,10 @@ class FbUserContextElement extends Xen.Base {
     const user = field.parent.parent.parent;
     const userid = user.path.split('/')[2];
     const avatar = field.data.data;
-    if (avatar) {
-      log(userid, avatar.rawData.url);
+    if (avatar && userid !== this._props.userid) {
+      //log(userid, avatar.rawData.url);
       this._updateShellFriend(userid, {avatar: avatar.rawData.url});
     }
-  }
-  async _updateShellFriend(id, data) {
-    const {shellFriends} = this._state;
-    shellFriends[id] = Object.assign(
-      {avatar: `https://$shell/assets/avatars/user (0).png`},
-      shellFriends[id] || Object,
-      data
-    );
-    this._fire('friends', Xen.clone(shellFriends));
   }
   async _friendChanged(field) {
     // `friendStore` is for particles
@@ -107,6 +97,17 @@ class FbUserContextElement extends Xen.Base {
     friendsStore.store(entity);
     // `shellFriends` is for shell
     this._updateShellFriend(id, {id, name: entity.rawData.name});
+  }
+  async _updateShellFriend(id, data) {
+    const {shellFriends} = this._state;
+    shellFriends[id] = Object.assign({
+      avatar: `https://$shell/assets/avatars/user (0).png`},
+      shellFriends[id] || Object,
+      data
+    );
+    this._state._notify = Xen.debounce(this._state._notify, () => {
+      this._fire('friends', Xen.clone(shellFriends));
+    }, 1000);
   }
   _friendFieldToEntity(id, field) {
     const {info} = field.value;

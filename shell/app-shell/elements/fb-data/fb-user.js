@@ -16,7 +16,7 @@ import Xen from '../../../components/xen/xen.js';
 
 const log = Xen.logFactory('fb-user', '#aa00ff');
 
-class FbUserElement extends Xen.Base {
+class FbUserElement extends Xen.Debug(Xen.Base, log) {
    static get observedAttributes() {
     return ['config', 'userid', 'key', 'arc'];
   }

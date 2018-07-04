@@ -14,7 +14,7 @@ import Xen from '../../../components/xen/xen.js';
 
 const log = Xen.logFactory('fb-users', '#883997');
 
-class FbUsersElement extends Xen.Base {
+class FbUsersElement extends Xen.Debug(Xen.Base, log) {
   _getInitialState() {
     return {
       fbusers: new FbUsers((type, detail) => this._onEvent(type, detail)),
