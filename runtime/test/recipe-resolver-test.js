@@ -28,7 +28,7 @@ describe('RecipeResolver', function() {
       id: 'test',
       slotComposer: {
         affordance: 'dom',
-        getAvailableSlots: (() => {
+        getAvailableContexts: (() => {
           return [{
             name: 'root',
             id: 'r0',

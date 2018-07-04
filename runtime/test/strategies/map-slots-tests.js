@@ -152,7 +152,7 @@ describe('MapSlots', function() {
     // Arc has both a 'root' and an 'action' slot.
     let arc = new Arc({id: 'test-plan-arc', slotComposer: {
       affordance: 'dom',
-      getAvailableSlots: (() => [
+      getAvailableContexts: (() => [
         {name: 'root', id: 'r0', tags: ['#root'], handles: [], handleConnections: [], spec: {isSet: false}},
         {name: 'action', id: 'r1', tags: ['#remote'], handles: [], handleConnections: [], spec: {isSet: false}},
       ])

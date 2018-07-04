@@ -51,7 +51,7 @@ export class TestHelper {
 
     // Explicitly not using a constructor to force using this factory method.
     let helper = new TestHelper();
-    helper.slotComposer = new MockSlotComposer({strict: options ? options.slotComposerStrict : undefined});
+    helper.slotComposer = options.slotComposer || new MockSlotComposer({strict: options ? options.slotComposerStrict : undefined});
     let pecFactory = function(id) {
       let channel = new MessageChannel();
       new ParticleExecutionContext(channel.port1, `${id}:inner`, loader);
@@ -187,7 +187,9 @@ export class TestHelper {
    */
   async idle() {
     await this.arc.idle;
-    await this.slotComposer.expectationsCompleted();
+    if (this.slotComposer.expectationsCompleted) {
+      await this.slotComposer.expectationsCompleted();
+    }
   }
 
   /** @method verifyData(particleName, connectionName, expectationHandler)
@@ -221,9 +223,9 @@ export class TestHelper {
     });
   }
 
-  verifySlots(numSlots, verifyHandler) {
-    assert.lengthOf(this.slotComposer._slots, numSlots);
-    this.slotComposer._slots.forEach(s => verifyHandler(s.consumeConn.particle.name, s.consumeConn.name, s._content));
+  verifySlots(numConsumers, verifyHandler) {
+    assert.lengthOf(this.slotComposer.consumers, numConsumers);
+    this.slotComposer.consumers.forEach(consumer => verifyHandler(consumer.consumeConn.particle.name, consumer.consumeConn.name, consumer._content));
   }
 
   // TODO: add more helper methods to verify data and slots.

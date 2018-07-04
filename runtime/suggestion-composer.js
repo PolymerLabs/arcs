@@ -14,7 +14,6 @@ export class SuggestionComposer {
   constructor(slotComposer) {
     assert(slotComposer);
     this._affordance = Affordance.forName(slotComposer.affordance);
-    // TODO(mmandlis): find a cleaner way to fetch suggestions container.
     this._container = slotComposer.findContainerByName('suggestions');
     assert(this._container);
 
@@ -38,14 +37,15 @@ export class SuggestionComposer {
   }
 
   async _updateSuggestions(suggestions) {
-    this._affordance.contextClass.clear(this._container);
+    this._affordance.slotConsumerClass.clear(this._container);
     let sortedSuggestions = suggestions.sort((s1, s2) => s2.rank - s1.rank);
     for (let suggestion of sortedSuggestions) {
       let suggestionContent =
         await suggestion.description.getRecipeSuggestion(this._affordance.descriptionFormatter);
       assert(suggestionContent, 'No suggestion content available');
-      this._affordance.contextClass.createContext(
+      this._affordance.slotConsumerClass.render(
           this.createSuggestionElement(this._container, suggestion), suggestionContent);
+
     }
   }
 

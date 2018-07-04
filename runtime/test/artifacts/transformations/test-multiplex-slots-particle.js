@@ -17,6 +17,7 @@ defineParticle(({TransformationDomParticle}) => {
       if (content.template) {
         this._setState({template: content.template});
       }
+      this._setState({templateName: content.templateName});
     }
 
     async setHandles(handles) {

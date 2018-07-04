@@ -79,7 +79,7 @@ export class MapSlots extends Strategy {
       // If this slot is internal to the recipe, it has the sourceConnection set to the providing connection
       // (and hence the consuming connection is considered connected already). Otherwise, this may only be a remote slot.
       local: !slotConnection.targetSlot ? MapSlots._findSlotCandidates(slotConnection, slotConnection.recipe.slots) : [],
-      remote: MapSlots._findSlotCandidates(slotConnection, arc.pec.slotComposer.getAvailableSlots())
+      remote: MapSlots._findSlotCandidates(slotConnection, arc.pec.slotComposer.getAvailableContexts())
     };
   }
 
