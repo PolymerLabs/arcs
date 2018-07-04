@@ -172,4 +172,78 @@ describe('resolve recipe', function() {
     plan.normalize();
     assert.isTrue(plan.isResolved());
   });
+
+  it(`maps 'map' handles specified by id to storage`, async () => {
+    let context = await Manifest.parse(`
+      schema Car
+        Number doors
+
+      store TestStore of Car 'batmobile' in EmptyListJson
+      resource EmptyListJson
+        start
+        []
+    `);
+    let arc = StrategyTestHelper.createTestArc('test-plan-arc', context, 'mock');
+
+    // Separating context from the recipe as otherwise
+    // manifest parser maps to storage all by itself itself.
+    let recipe = (await Manifest.parse(`
+      schema Car
+        Number doors
+
+      particle P in 'p.js'
+        in Car param
+
+      recipe
+        map 'batmobile' as handle
+        P
+          param <- handle
+    `)).recipes[0];
+
+    recipe.normalize();
+    assert.isUndefined(recipe.handles[0].storageKey);
+
+    let strategy = new ResolveRecipe(arc);
+    let results = await strategy.generate({generated: [{result: recipe, score: 1}]});
+    assert.lengthOf(results, 1);
+
+    let plan = results[0].result;
+    plan.normalize();
+    assert.isDefined(plan.handles[0].storageKey);
+    assert.isTrue(plan.isResolved());
+  });
+
+  it(`maps 'use' handles specified by id to storage`, async () => {
+    let manifest = await Manifest.parse(`
+      schema Car
+        Number doors
+
+      particle P in 'p.js'
+        in Car param
+
+      recipe
+        use 'batmobile' as handle
+        P
+          param <- handle
+    `);
+
+    let arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'mock');
+
+    let Car = manifest.findSchemaByName('Car').entityClass();
+    await arc.createStore(Car.type, /* name= */ null, 'batmobile');
+
+    let recipe = manifest.recipes[0];
+
+    recipe.normalize();
+    assert.isUndefined(recipe.handles[0].storageKey);
+
+    let strategy = new ResolveRecipe(arc);
+    let results = await strategy.generate({generated: [{result: recipe, score: 1}]});
+    assert.lengthOf(results, 1);
+
+    let plan = results[0].result;
+    plan.normalize();
+    assert.isDefined(plan.handles[0].storageKey);
+    assert.isTrue(plan.isResolved());
+  });
 });

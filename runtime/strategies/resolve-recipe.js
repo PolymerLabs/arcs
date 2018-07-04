@@ -22,32 +22,53 @@ export class ResolveRecipe extends Strategy {
     let arc = this._arc;
     return Recipe.over(this.getResults(inputParams), new class extends Walker {
       onHandle(recipe, handle) {
-        if (handle.connections.length == 0 || handle.id || (!handle.type) || (!handle.fate))
+        if (handle.connections.length == 0 || (handle.id && handle.storageKey) || (!handle.type) || (!handle.fate))
           return;
-
-        const counts = RecipeUtil.directionCounts(handle);
 
         let mappable;
 
-        switch (handle.fate) {
-          case 'use':
-            mappable = arc.findStoresByType(handle.type, {tags: handle.tags, subtype: counts.out == 0});
-            break;
-          case 'map':
-          case 'copy':
-            mappable = arc.context.findStoreByType(handle.type, {tags: handle.tags, subtype: true});
-            break;
-          case 'create':
-          case '?':
-            mappable = [];
-            break;
-          default:
-            assert(false, `unexpected fate ${handle.fate}`);
+        if (!handle.id) {
+          // Handle doesn't have an ID, finding by type and tags.
+          const counts = RecipeUtil.directionCounts(handle);
+          switch (handle.fate) {
+            case 'use':
+              mappable = arc.findStoresByType(handle.type, {tags: handle.tags, subtype: counts.out == 0});
+              break;
+            case 'map':
+            case 'copy':
+              mappable = arc.context.findStoreByType(handle.type, {tags: handle.tags, subtype: true});
+              break;
+            case 'create':
+            case '?':
+              mappable = [];
+              break;
+            default:
+              assert(false, `unexpected fate ${handle.fate}`);
+          }
+        } else if (!handle.storageKey) {
+          // Handle specified by the ID, but not yet mapped to storage.
+          let storeById;
+          switch (handle.fate) {
+            case 'use':
+              storeById = arc.findStoreById(handle.id);
+              break;
+            case 'map':
+            case 'copy':
+              storeById = arc.context.findStoreById(handle.id);
+              break;
+            case 'create':
+            case '?':
+              break;
+            default:
+              assert(false, `unexpected fate ${handle.fate}`);
+          }
+          mappable = storeById ? [storeById] : [];
         }
 
         mappable = mappable.filter(incomingHandle => {
           for (let existingHandle of recipe.handles)
-            if (incomingHandle.id == existingHandle.id)
+            if (incomingHandle.id == existingHandle.id
+                && existingHandle !== handle)
               return false;
           return true;
         });
