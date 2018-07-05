@@ -14,6 +14,7 @@ import Xen from '../../../components/xen/xen.js';
 
 const log = Xen.logFactory('CloudHandles', '#aa00c7');
 const warn = Xen.logFactory('CloudHandles', '#aa00c7', 'warn');
+const originatorId = 'cloud-handles';
 
 class CloudHandles extends Xen.Debug(Xen.Base, log) {
   static get observedAttributes() {
@@ -93,17 +94,16 @@ class CloudHandles extends Xen.Debug(Xen.Base, log) {
         initialized = true;
         handle.on('change', change => this._localVariableChange(handle, path, change, remoteValue), arc);
       }
-      handle.set(remoteValue);
+      handle.set(remoteValue, originatorId);
     };
   }
   _localVariableChange(handle, path, change, remoteValue) {
-    if (change.data !== remoteValue) {
-      log(`local handle change [${path}]`, change.data);
-      const node = Firebase.db.child(`${path}/data`);
-      node.set(change.data ? ArcsUtils.removeUndefined(change.data) : null);
-    } else {
-      //log('ignoring local change');
+    if (change.originatorId == originatorId) {
+      return;
     }
+    log(`local handle change [${path}]`, change.data);
+    const node = Firebase.db.child(`${path}/data`);
+    node.set(change.data ? ArcsUtils.removeUndefined(change.data) : null);
   }
   // sets
   _unwatchSet(path) {
@@ -125,17 +125,20 @@ class CloudHandles extends Xen.Debug(Xen.Base, log) {
     const entity = snap.val();
     log('trigger: remote add', entity);
     // doesn't trigger an `add` event if `entity` is already in `handle`
-    handle.store(entity);
+    handle.store(entity, originatorId);
     log('remote add result', await handle.toList());
   }
   async _remoteSetChildRemoved(snap, arc, path, handle) {
     const entity = snap.val();
     log('trigger: remote remove', entity);
     // doesn't trigger a `remove` event if `entity` is not part of `handle`
-    handle.remove(entity);
+    handle.remove(entity, originatorId);
     log('remote remove result', await handle.toList());
   }
   _localSetChange(handle, path, change, remoteValue) {
+    if (change.originatorId == originatorId) {
+      return;
+    }
     log('localSetChange', change);
     // TODO(sjmiles): we cannot have '.' or '/' in FB key names, and some of these ids contain
     // relative filepaths.
