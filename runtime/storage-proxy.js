@@ -117,7 +117,6 @@ class StorageProxyBase {
 
     // Replace the stored data with the new one and notify handles that are configured for it.
     this._synchronizeModel(model);
-    this._version = model.version;
 
     let syncModel = this._getModelForSync();
     this._notify('sync', syncModel, options => options.keepSynced && options.notifySync);
@@ -206,13 +205,9 @@ class CollectionProxy extends StorageProxyBase {
   _getModelForSync() {
     return this._model.toList();
   }
-  _synchronizeModel(model) {
-    assert('list' in model);
-    this._model = new CrdtCollectionModel();
-    for (let value of model.list) {
-      // TODO: the model should be synchronized with real keys
-      this._model.add(value.id, value, [undefined]);
-    }
+  _synchronizeModel({version, model}) {
+    this._version = version;
+    this._model = new CrdtCollectionModel(model);
   }
   _processUpdate(update, apply=true) {
     let added = [];
@@ -282,9 +277,10 @@ class VariableProxy extends StorageProxyBase {
   _getModelForSync() {
     return this._model;
   }
-  _synchronizeModel(model) {
-    assert('data' in model);
-    this._model = model.data;
+  _synchronizeModel({version, model}) {
+    this._version = version;
+    this._model = model.length == 0 ? null : model[0].value;
+    assert(this._model !== undefined);
   }
   _processUpdate(update, apply=true) {
     assert('data' in update);
@@ -313,6 +309,7 @@ class VariableProxy extends StorageProxyBase {
     }
   }
   set(entity, particleId) {
+    assert(entity !== undefined);
     if (JSON.stringify(this._model) == JSON.stringify(entity)) {
       return;
     }

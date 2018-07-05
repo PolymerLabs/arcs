@@ -104,30 +104,28 @@ class InMemoryCollection extends InMemoryStorageProvider {
   }
 
   async cloneFrom(handle) {
-    let {list, version} = await handle.toListWithVersion();
-    assert(version !== null);
-    await this._fromListWithVersion(list, version);
+    this.fromLiteral(await handle.toLiteral());
   }
 
-  async _fromListWithVersion(list, version) {
+  // Returns {version, model: [{id, value, keys: []}]}
+  toLiteral() {
+    return {
+      version: this._version,
+      model: this._model.toLiteral(),
+    };
+  }
+
+  fromLiteral({version, model}) {
     this._version = version;
-    this._model = new CrdtCollectionModel();
-    for (let value of list) {
-      this._model.add(value.id, value, [undefined]);
-    }
+    this._model = new CrdtCollectionModel(model);
+  }
+
+  toList() {
+    return this.toLiteral().model.map(item => item.value);
   }
 
   traceInfo() {
     return {items: this._model.size};
-  }
-  // HACK: replace this with some kind of iterator thing?
-  async toList() {
-    return this._model.toList();
-  }
-
-  async toListWithVersion() {
-    let list = this._model.toList();
-    return {list, version: this._version};
   }
 
   // FIXME: reorder arguments to make originatorID optional and membershipKey required
@@ -154,13 +152,6 @@ class InMemoryCollection extends InMemoryStorageProvider {
   clearItemsForTesting() {
     this._model = new CrdtCollectionModel();
   }
-
-  // TODO: Something about iterators??
-  // TODO: Something about changing order?
-
-  serializedData() {
-    return this.toList();
-  }
 }
 
 class InMemoryVariable extends InMemoryStorageProvider {
@@ -176,12 +167,30 @@ class InMemoryVariable extends InMemoryStorageProvider {
   }
 
   async cloneFrom(handle) {
-    let {data, version} = await handle.getWithVersion();
-    await this._setWithVersion(data, version);
+    let literal = await handle.toLiteral();
+    await this.fromLiteral(literal);
   }
 
-  async _setWithVersion(data, version) {
-    this._stored = data;
+  // Returns {version, model: [{id, value}]}
+  async toLiteral() {
+    let value = this._stored;
+    let model = [];
+    if (value != null) {
+      model = [{
+        id: value.id,
+        value,
+      }];
+    }
+    return {
+      version: this._version,
+      model,
+    };
+  }
+
+  fromLiteral({version, model}) {
+    let value = model.length == 0 ? null : model[0].value;
+    assert(value !== undefined);
+    this._stored = value;
     this._version = version;
   }
 
@@ -193,25 +202,18 @@ class InMemoryVariable extends InMemoryStorageProvider {
     return this._stored;
   }
 
-  async getWithVersion() {
-    return {data: this._stored, version: this._version};
-  }
-
-  async set(entity, originatorId, barrier) {
+  async set(value, originatorId, barrier) {
+    assert(value !== undefined);
     // If there's a barrier set, then the originating storage-proxy is expecting
     // a result so we cannot suppress the event here.
-    if (JSON.stringify(this._stored) == JSON.stringify(entity) && barrier == null)
+    if (JSON.stringify(this._stored) == JSON.stringify(value) && barrier == null)
       return;
-    this._stored = entity;
+    this._stored = value;
     this._version++;
     this._fire('change', {data: this._stored, version: this._version, originatorId, barrier});
   }
 
   async clear(originatorId, barrier) {
     this.set(null, originatorId, barrier);
-  }
-
-  serializedData() {
-    return [this._stored];
   }
 }

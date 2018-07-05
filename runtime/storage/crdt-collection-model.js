@@ -17,9 +17,17 @@ import {assert} from '../../platform/assert-web.js';
 // Note: This implementation does not guard against the case of the
 // same membership key being added more than once. Don't do that.
 export class CrdtCollectionModel {
-  constructor() {
+  constructor(model) {
     // id => {value, Set[keys]}
     this._items = new Map();
+    if (model) {
+      for (let {id, value, keys} of model) {
+        if (!keys) {
+          keys = [];
+        }
+        this._items.set(id, {value, keys: new Set(keys)});
+      }
+    }
   }
   // Adds membership, `keys`, of `value` indexed by `id` to this collection.
   // Returns whether the change is effective (`id` is new to the collection,
@@ -60,6 +68,14 @@ export class CrdtCollectionModel {
       this._items.delete(id);
     }
     return effective;
+  }
+  // [{id, value, keys: []}]
+  toLiteral() {
+    let result = [];
+    for (let [id, {value, keys}] of this._items.entries()) {
+      result.push({id, value, keys: [...keys]});
+    }
+    return result;
   }
   toList() {
     return [...this._items.values()].map(item => item.value);

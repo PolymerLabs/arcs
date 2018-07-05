@@ -167,18 +167,19 @@ export class Arc {
           let indent = '  ';
           resources += indent + 'start\n';
 
-          let serializedData = (await handle.serializedData()).map(a => {
-            if (a == null)
+          let serializedData = (await handle.toLiteral()).model.map(({id, value}) => {
+            if (value == null)
               return null;
-            if (a.rawData) {
+            if (value.rawData) {
               let result = {};
-              result.$id = a.id;
-              for (let field in a.rawData) {
-                result[field] = a.rawData[field];
+              for (let field in value.rawData) {
+                result[field] = value.rawData[field];
               }
+              result.$id = id;
               return result;
+            } else {
+              return value;
             }
-            return a;
           });
           let data = JSON.stringify(serializedData);
           resources += data.split('\n').map(line => indent + line).join('\n');

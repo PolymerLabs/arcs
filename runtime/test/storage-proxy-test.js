@@ -37,8 +37,12 @@ class TestVariable {
     return this._stored;
   }
 
-  getWithVersion() {
-    return {data: this._stored, version: this._version};
+  toLiteral() {
+    let model = [];
+    if (this._stored) {
+      model = [{id: this._stored.id, value: this._stored}];
+    }
+    return {model, version: this._version};
   }
 
   // For both set and clear:
@@ -77,8 +81,8 @@ class TestCollection {
     return this._model.toList();
   }
 
-  toListWithVersion() {
-    return {list: this._model.toList(), version: this._version};
+  toLiteral() {
+    return {model: this._model.toLiteral(), version: this._version};
   }
 
   // For both store and remove:
@@ -253,11 +257,7 @@ class TestEngine {
     assert(callbacks !== undefined && callbacks.length > 0,
            `Test bug: attempt to send sync response with no sync request for '${store.name}'`);
     if (data === undefined) {
-      if (store.toListWithVersion) {
-        data = store.toListWithVersion();
-      } else {
-        data = store.getWithVersion();
-      }
+      data = store.toLiteral();
     }
     callbacks.shift()(data);
   }
@@ -308,7 +308,7 @@ describe('storage-proxy', function() {
     assert.deepEqual(testEvent, realEvent);
 
     assert.deepEqual(testVariable.get(), await realVariable.get());
-    assert.deepEqual(testVariable.getWithVersion(), await realVariable.getWithVersion());
+    assert.deepEqual(testVariable.toLiteral(), await realVariable.toLiteral());
 
     testVariable.clear(2);
     await realVariable.clear();
@@ -324,7 +324,7 @@ describe('storage-proxy', function() {
     assert.deepEqual(testEvent, realEvent);
 
     assert.deepEqual(testCollection.toList(), await realCollection.toList());
-    assert.deepEqual(testCollection.toListWithVersion(), await realCollection.toListWithVersion());
+    assert.deepEqual(testCollection.toLiteral(), await realCollection.toLiteral());
 
     testCollection.remove('id1', 2);
     await realCollection.remove('id1');
@@ -453,7 +453,7 @@ describe('storage-proxy', function() {
     //   v1 (v2) v3 <desync> v4 v5 <resync-request> v6 v7 <resync-response>
     barStore.store('i4', engine.newEntity('v4'));
     barStore.store('i5', engine.newEntity('v5'));
-    let v5Data = barStore.toListWithVersion();
+    let v5Data = barStore.toLiteral();
     barStore.store('i6', engine.newEntity('v6'));
     barStore.remove('i1');
     engine.sendSync(barStore, v5Data);
