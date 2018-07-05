@@ -41,7 +41,6 @@ export class CoalesceRecipes extends Strategy {
         }
 
         let results = [];
-
         index.findConsumeSlotConnectionMatch(slot).forEach(({slotConn, matchingHandles}) => {
           results.push((recipe, slot) => {
             let {cloneMap} = slotConn.recipe.mergeInto(slot.recipe);
@@ -51,16 +50,16 @@ export class CoalesceRecipes extends Strategy {
               // matchingConn in the mergedSlotConnection's recipe should be connected to `handle` in the slot's recipe.
               let mergedMatchingConn = cloneMap.get(matchingConn);
               let disconnectedHandle = mergedMatchingConn.handle;
-
-              mergedMatchingConn.disconnectHandle();
               let clonedHandle = slot.handleConnections.find(handleConn => handleConn.handle && handleConn.handle.id == handle.id).handle;
-              mergedMatchingConn.connectToHandle(clonedHandle);
+              if (disconnectedHandle == clonedHandle) {
+                return; // this handle was already reconnected
+              }
 
-              // reconnect all other connections of the disconnected handle to the new one.
-              disconnectedHandle.connections.forEach(conn => {
+              while (disconnectedHandle.connections.length > 0) {
+                let conn = disconnectedHandle.connections[0];
                 conn.disconnectHandle();
                 conn.connectToHandle(clonedHandle);
-              });
+              }
               recipe.removeHandle(disconnectedHandle);
             });
             return 1;

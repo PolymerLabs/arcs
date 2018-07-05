@@ -166,14 +166,9 @@ export class RecipeIndex {
                        Handle.effectiveType(slotHandleConn.handle._mappedType, [particleConn]);
               });
               matchingConns.forEach(matchingConn => {
-                let allMatchingHandleConns = [matchingConn].concat(matchingConn.handle ? matchingConn.handle.connections : []);
-                // Verify all connections of this handle have directions compatible with the fate.
-                if (slotHandleConn.handle.fate == 'map') {
-                  if (allMatchingHandleConns.find(conn => ['out', 'inout'].includes(conn.direction))) {
-                    return;
-                  }
+                if (this._fatesAndDirectionsMatch(slotHandleConn, matchingConn)) {
+                  matchingHandles.push({handle: slotHandleConn.handle, matchingConn});
                 }
-                matchingHandles.push({handle: slotHandleConn.handle, matchingConn});
               });
             });
 
@@ -186,5 +181,34 @@ export class RecipeIndex {
       }
     }
     return consumeConns;
+  }
+  // Helper function that determines whether handle connections in a provided slot
+  // and a potential consuming slot connection could be match, considering their fates and directions.
+  // `handleConn` is a handle connection restricting the provided slot.
+  // `matchingHandleConn` - a handle connection of a particle, whose slot connection is explored
+  // as a potential match to a slot above.
+  _fatesAndDirectionsMatch(slotHandleConn, matchingHandleConn) {
+    let matchingHandle = matchingHandleConn.handle;
+    let allMatchingHandleConns = matchingHandle ? matchingHandle.connections : [matchingHandleConn];
+    let matchingHandleConnsHasOutput = allMatchingHandleConns.find(conn => ['out', 'inout'].includes(conn.direction));
+    switch (slotHandleConn.handle.fate) {
+      case 'create':
+        // matching handle not defined or its fate is 'create' or '?'.
+        return !matchingHandle || ['create', 'use', '?'].includes(matchingHandle.fate);
+      case 'use':
+        // matching handle is not defined or its fate is either 'use' or '?'.
+        return !matchingHandle || ['use', '?'].includes(matchingHandle.fate);
+      case 'copy':
+        // Any handle fate, except explicit 'create'.
+        return !matchingHandle || matchingHandle.fate != 'create';
+      case 'map':
+        // matching connections don't have output direction and matching handle's fate isn't copy.
+        return !matchingHandleConnsHasOutput && (!matchingHandle || matchingHandle.fate != 'copy');
+      case '?':
+        assert(false, `Unexpected '?' fate in terminal recipe`);
+        break;
+      default:
+        assert(false, `Unexpected fate ${slotHandleConn.handle.fate}`);
+    }
   }
 }
