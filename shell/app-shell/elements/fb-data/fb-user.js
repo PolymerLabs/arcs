@@ -116,7 +116,10 @@ class FbUserElement extends Xen.Debug(Xen.Base, log) {
   _onStoreChange(change) {
     const {userid} = this._state;
     if (change.add) {
-      change.add.forEach(entity => {
+      change.add.forEach(({effective, value: entity}) => {
+        if (!effective) {
+          return;
+        }
         const record = entity.rawData;
         const cache = this.value.arcs[record.key];
         let path, value;

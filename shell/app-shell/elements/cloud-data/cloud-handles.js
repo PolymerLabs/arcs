@@ -147,12 +147,14 @@ class CloudHandles extends Xen.Debug(Xen.Base, log) {
     // for existing unencoded data.
     const cleanKey = key => key.replace(/[./]/g, '%');
     if (change.add) {
-      change.add.forEach(record => {
+      change.add.forEach(({effective, value: record}) => {
+        if (!effective) return;
         log('trigger: local add', record);
         Firebase.db.child(`${path}/data/${cleanKey(record.id)}`).set(ArcsUtils.removeUndefined(record));
       });
     } else if (change.remove) {
-      change.remove.forEach(record => {
+      change.remove.forEach(({effective, value: record}) => {
+        if (!effective) return;
         log('trigger: local remove', record);
         Firebase.db.child(`${path}/data/${cleanKey(record.id)}`).remove();
       });
