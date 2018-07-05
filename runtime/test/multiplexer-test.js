@@ -61,9 +61,9 @@ describe('Multiplexer', function() {
 
     await arc.idle;
 
-    await barStore.store({id: 'a', rawData: {value: 'one'}});
-    await barStore.store({id: 'b', rawData: {value: 'two'}});
-    await barStore.store({id: 'c', rawData: {value: 'three'}});
+    await barStore.store({id: 'a', rawData: {value: 'one'}}, ['key1']);
+    await barStore.store({id: 'b', rawData: {value: 'two'}}, ['key2']);
+    await barStore.store({id: 'c', rawData: {value: 'three'}}, ['key3']);
 
     await arc.idle;
 
@@ -83,9 +83,9 @@ describe('Multiplexer', function() {
     let postsStore = context.stores[0];
     let recipeOne = `${showOneParticle.toString()}\nrecipe\n  use '{{item_id}}' as v1\n  slot '{{slot_id}}' as s1\n  ShowOne\n    post <- v1\n    consume item as s1`;
     let recipeTwo = `${showTwoParticle.toString()}\nrecipe\n  use '{{item_id}}' as v1\n  slot '{{slot_id}}' as s1\n  ShowTwo\n    post <- v1\n    consume item as s1`;
-    await postsStore.store({id: '1', rawData: {message: 'x', renderRecipe: recipeOne, renderParticleSpec: showOneSpec}});
-    await postsStore.store({id: '2', rawData: {message: 'y', renderRecipe: recipeTwo, renderParticleSpec: showTwoSpec}});
-    await postsStore.store({id: '3', rawData: {message: 'z', renderRecipe: recipeOne, renderParticleSpec: showOneSpec}});
+    await postsStore.store({id: '1', rawData: {message: 'x', renderRecipe: recipeOne, renderParticleSpec: showOneSpec}}, ['key1']);
+    await postsStore.store({id: '2', rawData: {message: 'y', renderRecipe: recipeTwo, renderParticleSpec: showTwoSpec}}, ['key2']);
+    await postsStore.store({id: '3', rawData: {message: 'z', renderRecipe: recipeOne, renderParticleSpec: showOneSpec}}, ['key3']);
     await helper.makePlans();
 
     // Render 3 posts
@@ -105,7 +105,7 @@ describe('Multiplexer', function() {
         .expectRenderSlot('PostMuxer', 'item', {contentTypes: ['templateName', 'model']})
         .expectRenderSlot('ShowOne', 'item', {contentTypes: ['templateName', 'model']})
         .expectRenderSlot('PostMuxer', 'item', {contentTypes: ['templateName', 'model']});
-    await postsStore.store({id: '4', rawData: {message: 'w', renderRecipe: recipeOne, renderParticleSpec: showOneSpec}});
+    await postsStore.store({id: '4', rawData: {message: 'w', renderRecipe: recipeOne, renderParticleSpec: showOneSpec}}, ['key1']);
     await helper.idle();
     assert.lengthOf(helper.slotComposer._slots, 2);
     let itemSlot = helper.slotComposer._slots.find(s => s.consumeConn.name == 'item');

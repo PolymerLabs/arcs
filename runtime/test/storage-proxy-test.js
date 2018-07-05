@@ -49,7 +49,7 @@ class TestVariable {
   //  sendEvent: if true, send an update event to attached listeners.
   //  version: optionally override the current version being incremented.
 
-  set(entity, {sendEvent = true, version, originatorId, barrier} = {}) {
+  set(entity, {sendEvent = true, version, originatorId=null, barrier=null} = {}) {
     this._stored = entity;
     this._version = (version !== undefined) ? version : this._version + 1;
     if (sendEvent) {
@@ -71,6 +71,7 @@ class TestCollection {
     this._model = new CrdtCollectionModel();
     this._version = 0;
     this._listeners = [];
+    this._nextKey = 0;
   }
 
   attachListener(callback) {
@@ -89,9 +90,11 @@ class TestCollection {
   //  sendEvent: if true, send an update event to attached listeners.
   //  version: optionally override the current version being incremented.
 
-  store(id, entity, {sendEvent = true, version, originatorId} = {}) {
+  store(id, entity, {sendEvent = true, version, originatorId=null, keys} = {}) {
     let entry = {id, rawData: entity.rawData};
-    let keys = [];
+    if (keys == null) {
+      keys = [`key${this._nextKey++}`];
+    }
     let effective = this._model.add(id, entry, keys);
     this._version = (version !== undefined) ? version : this._version + 1;
     if (sendEvent) {
@@ -101,11 +104,13 @@ class TestCollection {
     }
   }
 
-  remove(id, {sendEvent = true, version, originatorId} = {}) {
+  remove(id, {sendEvent = true, version, originatorId=null, keys=[]} = {}) {
     let entry = this._model.getValue(id);
     assert.notStrictEqual(entry, undefined,
            `Test bug: attempt to remove non-existent id '${id}' from '${this.name}'`);
-    let keys = [];
+    if (keys.length == 0) {
+      keys = this._model.getKeys(id);
+    }
     let effective = this._model.remove(id, keys);
     this._version = (version !== undefined) ? version : this._version + 1;
     if (sendEvent) {
@@ -275,7 +280,7 @@ class TestEngine {
   }
 
   HandleStore({handle, data}) {
-    this._events.push('HandleStore:' + handle.name + ':' + data.rawData.value);
+    this._events.push('HandleStore:' + handle.name + ':' + data.value.rawData.value);
   }
 
   HandleClear({handle}) {
@@ -283,16 +288,16 @@ class TestEngine {
   }
 
   HandleRemove({handle, data}) {
-    this._events.push('HandleRemove:' + handle.name + ':' + data); // data = id
+    this._events.push('HandleRemove:' + handle.name + ':' + data.id);
   }
 }
 
 // TODO: test handles with different types observing the same proxy
 // TODO: test with handles changing config options over time
 describe('storage-proxy', function() {
-  it('verify that the test storage API matches the real storage', async function() {
+  it('verify that the test storage API matches the real storage (variable)', async function() {
     // If this fails, most likely the InMemoryStorage classes have been changed
-    // and TestVariable/TestCollection will need to be updated to match.
+    // and TestVariable will need to be updated to match.
     let engine = new TestEngine();
     let entity = engine.newEntity('abc');
     let realStorage = new InMemoryStorage('arc-id');
@@ -313,20 +318,29 @@ describe('storage-proxy', function() {
     testVariable.clear(2);
     await realVariable.clear();
     assert.deepEqual(testEvent, realEvent);
+  });
+
+  it('verify that the test storage API matches the real storage (collection)', async function() {
+    // If this fails, most likely the InMemoryStorage classes have been changed
+    // and TestCollection will need to be updated to match.
+    let engine = new TestEngine();
+    let entity = engine.newEntity('abc');
+    let realStorage = new InMemoryStorage('arc-id');
+    let testEvent, realEvent;
 
     let testCollection = engine.newCollection('c');
     let realCollection = await realStorage.construct('cid', engine.type.collectionOf(), 'in-memory');
     testCollection.attachListener(event => testEvent = event);
     realCollection._fire = (kind, event) => realEvent = event;
 
-    testCollection.store('id1', entity, 1);
-    await realCollection.store({id: 'id1', rawData: {value: 'abc'}});
+    testCollection.store('id1', entity, {keys: ['key1']});
+    await realCollection.store({id: 'id1', rawData: {value: 'abc'}}, ['key1']);
     assert.deepEqual(testEvent, realEvent);
 
     assert.deepEqual(testCollection.toList(), await realCollection.toList());
     assert.deepEqual(testCollection.toLiteral(), await realCollection.toLiteral());
 
-    testCollection.remove('id1', 2);
+    testCollection.remove('id1');
     await realCollection.remove('id1');
     assert.deepEqual(testEvent, realEvent);
   });
@@ -605,7 +619,35 @@ describe('storage-proxy', function() {
     await engine.verify('HandleGet:foo', 'HandleToList:bar');
   });
 
-  it('does not desync on a write when synchronized', async function() {
+  it('does not notify about redundant concurrent operations (collection)', async function() {
+    let engine = new TestEngine();
+    let barStore = engine.newCollection('bar');
+    let particle = engine.newParticle();
+    let [barProxy, barHandle] = engine.newProxyAndHandle(barStore, particle, CAN_READ, CAN_WRITE);
+    barProxy.register(particle, barHandle);
+    engine.sendSync(barStore);
+    await engine.verify(
+        'InitializeProxy:bar',
+        'SynchronizeProxy:bar',
+        'onHandleSync:P1:bar:[]');
+
+    let v1 = engine.newEntity('v1');
+    barStore.store(v1.id, v1, {keys: ['0']});
+    barStore.store(v1.id, v1, {keys: ['1']});
+
+    // Although we sent two adds, there is only one notfication.
+    await engine.verify('onHandleUpdate:P1:bar:+[v1]');
+
+    // Removing key '0' leaves '1'.
+    barStore.remove(v1.id, {keys: ['0']});
+    await engine.verify();
+
+    // Removing the last key will cause a notify to the particle
+    barStore.remove(v1.id, {keys: ['1']});
+    await engine.verify('onHandleUpdate:P1:bar:-[v1]');
+  });
+
+  it('does not desync on a write when synchronized (variable)', async function() {
     let engine = new TestEngine();
     let fooStore = engine.newVariable('foo');
     let particle = engine.newParticle();
@@ -643,47 +685,6 @@ describe('storage-proxy', function() {
     // Subsequent updates should be visible in the handle.
     fooStore.set(engine.newEntity('subsequent'));
     await engine.verify('onHandleUpdate:P1:foo:subsequent');
-  });
-
-  it('writing to a synced proxy does not prevent a real desync from being handled', async function() {
-    let engine = new TestEngine();
-    let barStore = engine.newCollection('bar');
-    let particle = engine.newParticle();
-    let [barProxy, barHandle] = engine.newProxyAndHandle(barStore, particle, CAN_READ, CAN_WRITE);
-    barHandle.configure({notifyDesync: true});
-
-    // Set up sync with an initial value.
-    barStore.store('i1', engine.newEntity('v1'));
-    barProxy.register(particle, barHandle);
-    engine.sendSync(barStore);
-    await engine.verify('InitializeProxy:bar', 'SynchronizeProxy:bar', 'onHandleSync:P1:bar:[v1]');
-
-    // Reading the inner-pec handle should return the local copy and not call the backing store.
-    barHandle.toList();
-    await engine.verify();
-
-    // Write to the inner-pec handle but drop the update event.
-    let dropped = engine.newEntity('v2');
-    barHandle.store(dropped);
-    await engine.verify('HandleStore:bar:v2');
-    barStore.store('i2', dropped, {sendEvent: false});
-
-    // Read the handle again; the proxy is "pending" desynced and should call the backing store.
-    barHandle.toList();
-    await engine.verify('HandleToList:bar');
-
-    // Send an update event that is "ahead" of the dropped one; should cause a real desync.
-    barStore.store('i3', engine.newEntity('v3'));
-    await engine.verify('SynchronizeProxy:bar', 'onHandleDesync:P1:bar');
-
-    // Read again; still desynced.
-    barHandle.toList();
-    await engine.verify('HandleToList:bar');
-
-    // Resync; read should be local again.
-    engine.sendSync(barStore);
-    barHandle.toList();
-    await engine.verify('onHandleSync:P1:bar:[v1|v2|v3]');
   });
 
   it('multiple particles observing one proxy', async function() {
@@ -801,16 +802,18 @@ describe('storage-proxy', function() {
     await engine.verify('InitializeProxy:bar', 'SynchronizeProxy:bar',
                         'onHandleSync:P1:bar:[]', 'onHandleSync:P2:bar:[]');
 
-    barStore.store('i1', engine.newEntity('v1'), {originatorId: particle1.id});
+    let v1 = engine.newEntity('v1');
+    barHandle1.store(v1);
 
     await engine.verifySubsequence('onHandleUpdate:P1:bar:+[v1](originator)');
     await engine.verifySubsequence('onHandleUpdate:P2:bar:+[v1]');
-    await engine.verify();
+    await engine.verify('HandleStore:bar:v1');
 
-    barStore.store('i2', engine.newEntity('v2'), {originatorId: particle2.id});
+    let v2 = engine.newEntity('v2');
+    barHandle2.store(v2);
 
     await engine.verifySubsequence('onHandleUpdate:P1:bar:+[v2]');
     await engine.verifySubsequence('onHandleUpdate:P2:bar:+[v2](originator)');
-    await engine.verify();
+    await engine.verify('HandleStore:bar:v2');
   });
 });

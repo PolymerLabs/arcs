@@ -129,27 +129,24 @@ class InMemoryCollection extends InMemoryStorageProvider {
   }
 
   // FIXME: reorder arguments to make originatorID optional and membershipKey required
-  async store(value, originatorId=undefined, membershipKey=undefined) {
+  async store(value, keys, originatorId=null) {
+    assert(keys != null && keys.length > 0, 'keys required');
     let trace = Tracing.start({cat: 'handle', name: 'InMemoryCollection::store', args: {name: this.name}});
-    let keys = [];
-    if (membershipKey != null) {
-      keys.push(membershipKey);
-    }
     let effective = this._model.add(value.id, value, keys);
     this._version++;
     this._fire('change', {add: [{value, keys, effective}], version: this._version, originatorId});
     trace.end({args: {value}});
   }
 
-  async remove(id, originatorId=undefined, membershipKeys=undefined) {
+  async remove(id, keys=[], originatorId=null) {
     let trace = Tracing.start({cat: 'handle', name: 'InMemoryCollection::remove', args: {name: this.name}});
-    if (!membershipKeys) {
-      membershipKeys = this._model.getKeys(id);
+    if (keys.length == 0) {
+      keys = this._model.getKeys(id);
     }
     let value = this._model.getValue(id);
-    let effective = this._model.remove(id, membershipKeys);
+    let effective = this._model.remove(id, keys);
     this._version++;
-    this._fire('change', {remove: [{value, keys: membershipKeys, effective}], version: this._version, originatorId});
+    this._fire('change', {remove: [{value, keys, effective}], version: this._version, originatorId});
     trace.end({args: {entity: value}});
   }
 
@@ -206,7 +203,7 @@ class InMemoryVariable extends InMemoryStorageProvider {
     return this._stored;
   }
 
-  async set(value, originatorId, barrier) {
+  async set(value, originatorId=null, barrier=null) {
     assert(value !== undefined);
     // If there's a barrier set, then the originating storage-proxy is expecting
     // a result so we cannot suppress the event here.
@@ -217,7 +214,7 @@ class InMemoryVariable extends InMemoryStorageProvider {
     this._fire('change', {data: this._stored, version: this._version, originatorId, barrier});
   }
 
-  async clear(originatorId, barrier) {
+  async clear(originatorId=null, barrier=null) {
     this.set(null, originatorId, barrier);
   }
 }

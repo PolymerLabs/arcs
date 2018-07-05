@@ -149,7 +149,7 @@ describe('Arc', function() {
     let newArc = await Arc.deserialize({serialization, loader, slotComposer, fileName: './manifest.manifest'});
     await newArc.idle;
     store = newArc._storesById.get(store.id);
-    await store.store({id: 'a', rawData: {value: 'one'}});
+    await store.store({id: 'a', rawData: {value: 'one'}}, ['somekey']);
 
     await newArc.idle;
     assert.equal(slotsCreated, 1);

@@ -33,6 +33,7 @@ export class CrdtCollectionModel {
   // Returns whether the change is effective (`id` is new to the collection,
   // or `value` is different to the value previously stored).
   add(id, value, keys) {
+    assert(keys.length > 0, 'add requires keys');
     let item = this._items.get(id);
     let effective = false;
     if (!item) {
@@ -40,10 +41,15 @@ export class CrdtCollectionModel {
       this._items.set(id, item);
       effective = true;
     } else {
+      let newKeys = false;
       for (let key of keys) {
+        if (!item.keys.has(key)) {
+          newKeys = true;
+        }
         item.keys.add(key);
       }
       if (JSON.stringify(item.value) != JSON.stringify(value)) {
+        assert(newKeys, 'cannot add without new keys');
         item.value = value;
         effective = true;
       }

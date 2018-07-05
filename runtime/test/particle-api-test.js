@@ -585,8 +585,8 @@ describe('particle-api', function() {
 
     let Result = manifest.findSchemaByName('Result').entityClass();
     let inputsStore = await arc.createStore(Result.type.collectionOf(), undefined, 'test:1');
-    inputsStore.store({id: '1', rawData: {value: 'hello'}});
-    inputsStore.store({id: '2', rawData: {value: 'world'}});
+    inputsStore.store({id: '1', rawData: {value: 'hello'}}, ['key1']);
+    inputsStore.store({id: '2', rawData: {value: 'world'}}, ['key2']);
     let resultsStore = await arc.createStore(Result.type.collectionOf(), undefined, 'test:2');
     let inspector = new util.ResultInspector(arc, resultsStore, 'value');
     let recipe = manifest.recipes[0];

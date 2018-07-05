@@ -57,13 +57,13 @@ describe('Handle', function() {
     barStore.on('change', ({add: [{effective}]}) => {if (effective) version++;}, {});
     assert.equal(barStore._version, 0);
     let bar1 = {id: 'an id', value: 'a Bar'};
-    await barStore.store(bar1);
+    await barStore.store(bar1, ['key1']);
     assert.equal(version, 1);
-    await barStore.store(bar1);
+    await barStore.store(bar1, ['key2']);
     assert.equal(version, 1);
-    await barStore.store({value: 'a Bar'});
+    await barStore.store({value: 'a Bar'}, ['key3']);
     assert.equal(version, 2);
-    await barStore.store(bar1);
+    await barStore.store(bar1, ['key4']);
     assert.equal(version, 2);
   });
 
@@ -113,7 +113,7 @@ describe('Handle', function() {
     let arc = new Arc({slotComposer, id: 'test'});
     let barStore = await arc.createStore(Bar.type.collectionOf());
     let bar = new Bar({id: 0, value: 'a Bar'});
-    barStore.store(bar);
+    barStore.store(bar, ['key1']);
     barStore.remove(bar.id);
     assert.isEmpty((await barStore.toList()));
   });
