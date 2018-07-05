@@ -15,6 +15,7 @@ import {Type} from '../type.js';
 import {StorageProxy, StorageProxyScheduler} from '../storage-proxy.js';
 import {handleFor} from '../handle.js';
 import {InMemoryStorage} from '../storage/in-memory-storage.js';
+import {CrdtCollectionModel} from '../storage/crdt-collection-model.js';
 
 const CAN_READ = true, CAN_WRITE = true;
 
@@ -63,7 +64,7 @@ class TestCollection {
   constructor(type, name) {
     this.type = type;
     this.name = name;
-    this._items = new Map();
+    this._model = new CrdtCollectionModel();
     this._version = 0;
     this._listeners = [];
   }
@@ -73,11 +74,11 @@ class TestCollection {
   }
 
   toList() {
-    return [...this._items.values()];
+    return this._model.toList();
   }
 
   toListWithVersion() {
-    return {list: [...this._items.values()], version: this._version};
+    return {list: this._model.toList(), version: this._version};
   }
 
   // For both store and remove:
@@ -86,23 +87,25 @@ class TestCollection {
 
   store(id, entity, {sendEvent = true, version, originatorId} = {}) {
     let entry = {id, rawData: entity.rawData};
-    this._items.set(id, entry);
+    let keys = [undefined];
+    let effective = this._model.add(id, entry, keys);
     this._version = (version !== undefined) ? version : this._version + 1;
     if (sendEvent) {
-      let item = {value: entry, effective: true, keys: [undefined]};
+      let item = {value: entry, effective, keys};
       let event = {add: [item], version: this._version, originatorId};
       this._listeners.forEach(cb => cb(event));
     }
   }
 
   remove(id, {sendEvent = true, version, originatorId} = {}) {
-    let entry = this._items.get(id);
+    let entry = this._model.getValue(id);
     assert.notStrictEqual(entry, undefined,
            `Test bug: attempt to remove non-existent id '${id}' from '${this.name}'`);
-    this._items.delete(id);
+    let keys = [undefined];
+    let effective = this._model.remove(id, keys);
     this._version = (version !== undefined) ? version : this._version + 1;
     if (sendEvent) {
-      let item = {value: entry, effective: true, keys: [undefined]};
+      let item = {value: entry, effective, keys};
       let event = {remove: [item], version: this._version, originatorId};
       this._listeners.forEach(cb => cb(event));
     }
