@@ -95,37 +95,42 @@ export class MapSlots extends Strategy {
 
   // Returns true, if the given slot is a viable candidate for the slotConnection.
   static _filterSlot(slotConnection, slot) {
-    // if there's no slotSpec, this is just a slot constraint on a verb
-    if (!slotConnection.slotSpec)
-      return false;
-
-    if (slotConnection.slotSpec.isSet != slot.getProvidedSlotSpec().isSet) {
+    if (!MapSlots.specMatch(slotConnection, slot)) {
       return false;
     }
 
-    // Match by tag on slot name.
-    if (!MapSlots._tagsMatch(slotConnection, slot)) {
-      // For backward compatibility support explicit slot names matching.
-      if (slotConnection.name !== slot.name) {
-        return false;
-      }
+    if (!MapSlots.tagsOrNameMatch(slotConnection, slot)) {
+      return false;
     }
 
     // Match handles of the provided slot with the slot-connection particle's handles.
-    if (!MapSlots._handlesMatch(slotConnection.particle, slot.handleConnections.map(connection => connection.handle).filter(a => a !== undefined))) {
+    if (!MapSlots.handlesMatch(slotConnection, slot)) {
       return false;
     }
-
     return true;
+  }
+
+  static specMatch(slotConnection, slot) {
+    return slotConnection.slotSpec && // if there's no slotSpec, this is just a slot constraint on a verb
+          slotConnection.slotSpec.isSet == slot.getProvidedSlotSpec().isSet;
   }
 
   // Returns true, if the slot connection's tags intersection with slot's tags is nonempty.
   // TODO: replace with generic tag matcher
-  static _tagsMatch(slotConnection, slot) {
+  static tagsOrNameMatch(slotConnection, slot) {
     let consumeConnTags = [].concat(slotConnection.slotSpec.tags || [], slotConnection.tags);
-    let slotTags = new Set([].concat(slot.tags, slot.getProvidedSlotSpec().tags || []));
+    let slotTags = new Set([].concat(slot.tags, slot.getProvidedSlotSpec().tags || [], [slot.name]));
     // Consume connection tags aren't empty and intersection with the slot isn't empty.
-    return consumeConnTags.length > 0 && consumeConnTags.filter(t => slotTags.has(t)).length > 0;
+    if (consumeConnTags.length > 0 && consumeConnTags.some(t => slotTags.has(t))) {
+      return true;
+    }
+    // For backward compatibility support explicit slot names matching.
+    return (slotConnection.name === slot.name);
+  }
+
+  static handlesMatch(slotConnection, slot) {
+    return MapSlots._handlesMatch(slotConnection.particle,
+                                  slot.handleConnections.map(connection => connection.handle).filter(a => a !== undefined));
   }
 
   // Returns true, if the providing slot handle restrictions are satisfied by the consuming slot connection.

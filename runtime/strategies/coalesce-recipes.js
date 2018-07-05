@@ -17,7 +17,6 @@ import {Type} from '../type.js';
 // use/? handle and finding a matching create/? handle in another recipe and
 // merging those.
 export class CoalesceRecipes extends Strategy {
-
   constructor(arc) {
     super();
     this._index = arc.recipeIndex;
@@ -32,6 +31,46 @@ export class CoalesceRecipes extends Strategy {
     await index.ready;
 
     return Recipe.over(this.getResults(inputParams), new class extends Walker {
+      onSlot(recipe, slot) {
+        // Find slots that according to their provided-spec must be consumed, but have no consume connection.
+        if (slot.consumeConnections.length > 0) {
+          return; // slot has consume connections.
+        }
+        if (!slot.sourceConnection || !slot.sourceConnection.slotSpec.getProvidedSlotSpec(slot.name).isRequired) {
+          return; // either a remote slot (no source connection), or a not required one.
+        }
+
+        let results = [];
+        for (let {slotConn, matchingHandles} of index.findConsumeSlotConnectionMatch(slot)) {
+          results.push((recipe, slot) => {
+            let {cloneMap} = slotConn.recipe.mergeInto(slot.recipe);
+            let mergedSlotConn = cloneMap.get(slotConn);
+            mergedSlotConn.connectToSlot(slot);
+            for (let {handle, matchingConn} of matchingHandles) {
+              // matchingConn in the mergedSlotConnection's recipe should be connected to `handle` in the slot's recipe.
+              let mergedMatchingConn = cloneMap.get(matchingConn);
+              let disconnectedHandle = mergedMatchingConn.handle;
+              let clonedHandle = slot.handleConnections.find(handleConn => handleConn.handle && handleConn.handle.id == handle.id).handle;
+              if (disconnectedHandle == clonedHandle) {
+                continue; // this handle was already reconnected
+              }
+
+              while (disconnectedHandle.connections.length > 0) {
+                let conn = disconnectedHandle.connections[0];
+                conn.disconnectHandle();
+                conn.connectToHandle(clonedHandle);
+              }
+              recipe.removeHandle(disconnectedHandle);
+            }
+            return 1;
+          });
+        }
+
+        if (results.length > 0) {
+          return results;
+        }
+      }
+
       onHandle(recipe, handle) {
         if ((handle.fate !== 'use' && handle.fate !== '?')
             || handle.id

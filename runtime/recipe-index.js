@@ -20,9 +20,11 @@ import {ResolveRecipe} from './strategies/resolve-recipe.js';
 import {CreateHandleGroup} from './strategies/create-handle-group.js';
 import {AddUseHandles} from './strategies/add-use-handles.js';
 import * as Rulesets from './strategies/rulesets.js';
+import {MapSlots} from './strategies/map-slots.js';
 import {DevtoolsConnection} from './debug/devtools-connection.js';
 import {RecipeUtil} from './recipe/recipe-util.js';
 import {Handle} from './recipe/handle.js';
+import {assert} from '../platform/assert-web.js';
 
 class RelevantContextRecipes extends Strategy {
   constructor(context, affordance) {
@@ -118,10 +120,14 @@ export class RecipeIndex {
     return this._recipes;
   }
 
+  ensureReady() {
+    assert(this._isReady, 'await on recipeIndex.ready before accessing');
+  }
+
   // Given provided handle and requested fates, finds handles with
   // matching type and requested fate.
   findHandleMatch(handle, requestedFates) {
-    if (!this._isReady) throw Error('await on recipeIndex.ready before accessing');
+    this.ensureReady();
 
     let counts = RecipeUtil.directionCounts(handle);
     let particleNames = handle.connections.map(conn => conn.particle.name);
@@ -147,7 +153,70 @@ export class RecipeIndex {
         results.push(otherHandle);
       }
     }
-
     return results;
+  }
+
+  // Given a slot, find consume slot connections that could be connected to it.
+  findConsumeSlotConnectionMatch(slot) {
+    this.ensureReady();
+
+    let consumeConns = [];
+    for (let recipe of this._recipes) {
+      for (let slotConn of recipe.slotConnections) {
+        if (!slotConn.targetSlot && MapSlots.specMatch(slotConn, slot) && MapSlots.tagsOrNameMatch(slotConn, slot)) {
+          let matchingHandles = [];
+          if (!MapSlots.handlesMatch(slotConn, slot)) {
+            // Find potential handle connections to coalesce
+            slot.handleConnections.forEach(slotHandleConn => {
+              let matchingConns = Object.values(slotConn.particle.connections).filter(particleConn => {
+                return (!particleConn.handle || !particleConn.handle.id || particleConn.handle.id == slotHandleConn.handle.id) &&
+                       Handle.effectiveType(slotHandleConn.handle._mappedType, [particleConn]);
+              });
+              matchingConns.forEach(matchingConn => {
+                if (this._fatesAndDirectionsMatch(slotHandleConn, matchingConn)) {
+                  matchingHandles.push({handle: slotHandleConn.handle, matchingConn});
+                }
+              });
+            });
+
+            if (matchingHandles.length == 0) {
+              continue;
+            }
+          }
+          consumeConns.push({slotConn, matchingHandles});
+        }
+      }
+    }
+    return consumeConns;
+  }
+
+  // Helper function that determines whether handle connections in a provided slot
+  // and a potential consuming slot connection could be match, considering their fates and directions.
+  // `slotHandleConn` is a handle connection restricting the provided slot.
+  // `matchingHandleConn` - a handle connection of a particle, whose slot connection is explored
+  // as a potential match to a slot above.
+  _fatesAndDirectionsMatch(slotHandleConn, matchingHandleConn) {
+    let matchingHandle = matchingHandleConn.handle;
+    let allMatchingHandleConns = matchingHandle ? matchingHandle.connections : [matchingHandleConn];
+    let matchingHandleConnsHasOutput = allMatchingHandleConns.find(conn => ['out', 'inout'].includes(conn.direction));
+    switch (slotHandleConn.handle.fate) {
+      case 'create':
+        // matching handle not defined or its fate is 'create' or '?'.
+        return !matchingHandle || ['use', '?'].includes(matchingHandle.fate);
+      case 'use':
+        // matching handle is not defined or its fate is either 'use' or '?'.
+        return !matchingHandle || ['use', '?'].includes(matchingHandle.fate);
+      case 'copy':
+        // Any handle fate, except explicit 'create'.
+        return !matchingHandle || matchingHandle.fate != 'create';
+      case 'map':
+        // matching connections don't have output direction and matching handle's fate isn't copy.
+        return !matchingHandleConnsHasOutput && (!matchingHandle || matchingHandle.fate != 'copy');
+      case '?':
+        assert(false, `Unexpected '?' fate in terminal recipe`);
+        break;
+      default:
+        assert(false, `Unexpected fate ${slotHandleConn.handle.fate}`);
+    }
   }
 }
