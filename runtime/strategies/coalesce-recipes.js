@@ -41,18 +41,18 @@ export class CoalesceRecipes extends Strategy {
         }
 
         let results = [];
-        index.findConsumeSlotConnectionMatch(slot).forEach(({slotConn, matchingHandles}) => {
+        for (let {slotConn, matchingHandles} of index.findConsumeSlotConnectionMatch(slot)) {
           results.push((recipe, slot) => {
             let {cloneMap} = slotConn.recipe.mergeInto(slot.recipe);
             let mergedSlotConn = cloneMap.get(slotConn);
             mergedSlotConn.connectToSlot(slot);
-            matchingHandles.forEach(({handle, matchingConn}) => {
+            for (let {handle, matchingConn} of matchingHandles) {
               // matchingConn in the mergedSlotConnection's recipe should be connected to `handle` in the slot's recipe.
               let mergedMatchingConn = cloneMap.get(matchingConn);
               let disconnectedHandle = mergedMatchingConn.handle;
               let clonedHandle = slot.handleConnections.find(handleConn => handleConn.handle && handleConn.handle.id == handle.id).handle;
               if (disconnectedHandle == clonedHandle) {
-                return; // this handle was already reconnected
+                continue; // this handle was already reconnected
               }
 
               while (disconnectedHandle.connections.length > 0) {
@@ -61,10 +61,10 @@ export class CoalesceRecipes extends Strategy {
                 conn.connectToHandle(clonedHandle);
               }
               recipe.removeHandle(disconnectedHandle);
-            });
+            }
             return 1;
           });
-        });
+        }
 
         if (results.length > 0) {
           return results;

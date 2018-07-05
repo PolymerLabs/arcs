@@ -22,7 +22,7 @@ async function tryCoalesceRecipes(manifestStr) {
     assert.isFalse(recipe.isResolved());
   });
   let arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'dom');
-  let inputParams = {generated: [], terminal: [{result: recipes[0], score: 1}, {result: recipes[1], score: 1}]};
+  let inputParams = {generated: [], terminal: recipes.map(recipe => ({result: recipe, score: 1}))};
   let strategy = new CoalesceRecipes(arc);
   return await strategy.generate(inputParams);
 }
@@ -103,6 +103,28 @@ describe('CoalesceRecipes', function() {
     assert.lengthOf(recipe.particles, 3);
     assert.lengthOf(recipe.slots, 2);
   });
+
+  it('does not coalesce required slots if handle constraint is not met', async () => {
+    await doNotCoalesceRecipes(`
+      schema Thing
+      particle P1
+        inout Thing thing
+        consume root
+          must provide foo
+            handle thing
+      particle P2
+        consume foo
+      recipe
+        slot 'id0' as slot0
+        create as thingHandle
+        P1
+          thing = thingHandle
+          consume root as slot0
+      recipe
+        P2
+    `);
+  });
+
   it('evaluates fates of handles of required slot in coalesced recipes', async () => {
     let parseManifest = async (options) => {
       return `
@@ -156,9 +178,9 @@ describe('CoalesceRecipes', function() {
 
     await doCoalesceRecipes(await parseManifest({fateA: 'create'}));
     await doCoalesceRecipes(await parseManifest({fateA: 'create', fateB: '?'}));
-    await doCoalesceRecipes(await parseManifest({fateA: 'create', fateB: 'create'}));
-    await doCoalesceRecipes(await parseManifest({fateA: 'create', fateB: 'create', outThingB: true}));
     await doCoalesceRecipes(await parseManifest({fateA: 'create', fateB: 'use'}));
+    await doCoalesceRecipes(await parseManifest({fateA: 'create', fateB: 'use', outThingB: true}));
+    await doNotCoalesceRecipes(await parseManifest({fateA: 'create', fateB: 'create'}));
     await doNotCoalesceRecipes(await parseManifest({fateA: 'create', fateB: 'map'}));
     await doNotCoalesceRecipes(await parseManifest({fateA: 'create', fateB: 'copy'}));
   });

@@ -121,7 +121,7 @@ export class MapSlots extends Strategy {
     let consumeConnTags = [].concat(slotConnection.slotSpec.tags || [], slotConnection.tags);
     let slotTags = new Set([].concat(slot.tags, slot.getProvidedSlotSpec().tags || [], [slot.name]));
     // Consume connection tags aren't empty and intersection with the slot isn't empty.
-    if (consumeConnTags.length > 0 && consumeConnTags.filter(t => slotTags.has(t)).length > 0) {
+    if (consumeConnTags.length > 0 && consumeConnTags.some(t => slotTags.has(t))) {
       return true;
     }
     // For backward compatibility support explicit slot names matching.

@@ -24,6 +24,7 @@ import {MapSlots} from './strategies/map-slots.js';
 import {DevtoolsConnection} from './debug/devtools-connection.js';
 import {RecipeUtil} from './recipe/recipe-util.js';
 import {Handle} from './recipe/handle.js';
+import {assert} from '../platform/assert-web.js';
 
 class RelevantContextRecipes extends Strategy {
   constructor(context, affordance) {
@@ -119,10 +120,14 @@ export class RecipeIndex {
     return this._recipes;
   }
 
+  ensureReady() {
+    assert(this._isReady, 'await on recipeIndex.ready before accessing');
+  }
+
   // Given provided handle and requested fates, finds handles with
   // matching type and requested fate.
   findHandleMatch(handle, requestedFates) {
-    if (!this._isReady) throw Error('await on recipeIndex.ready before accessing');
+    this.ensureReady();
 
     let counts = RecipeUtil.directionCounts(handle);
     let particleNames = handle.connections.map(conn => conn.particle.name);
@@ -153,6 +158,8 @@ export class RecipeIndex {
 
   // Given a slot, find consume slot connections that could be connected to it.
   findConsumeSlotConnectionMatch(slot) {
+    this.ensureReady();
+
     let consumeConns = [];
     for (let recipe of this._recipes) {
       for (let slotConn of recipe.slotConnections) {
@@ -182,9 +189,10 @@ export class RecipeIndex {
     }
     return consumeConns;
   }
+
   // Helper function that determines whether handle connections in a provided slot
   // and a potential consuming slot connection could be match, considering their fates and directions.
-  // `handleConn` is a handle connection restricting the provided slot.
+  // `slotHandleConn` is a handle connection restricting the provided slot.
   // `matchingHandleConn` - a handle connection of a particle, whose slot connection is explored
   // as a potential match to a slot above.
   _fatesAndDirectionsMatch(slotHandleConn, matchingHandleConn) {
@@ -194,7 +202,7 @@ export class RecipeIndex {
     switch (slotHandleConn.handle.fate) {
       case 'create':
         // matching handle not defined or its fate is 'create' or '?'.
-        return !matchingHandle || ['create', 'use', '?'].includes(matchingHandle.fate);
+        return !matchingHandle || ['use', '?'].includes(matchingHandle.fate);
       case 'use':
         // matching handle is not defined or its fate is either 'use' or '?'.
         return !matchingHandle || ['use', '?'].includes(matchingHandle.fate);
