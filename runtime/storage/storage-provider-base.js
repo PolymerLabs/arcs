@@ -50,7 +50,7 @@ export class StorageProviderBase {
     this._listeners.set(kind, listeners);
   }
 
-  _fire(kind, details) {
+  async _fire(kind, details) {
     let listenerMap = this._listeners.get(kind);
     if (!listenerMap || listenerMap.size == 0)
       return;
@@ -62,9 +62,12 @@ export class StorageProviderBase {
     for (let [callback] of listenerMap.entries()) {
       callbacks.push(callback);
     }
+    // Yield so that event firing is not re-entrant with mutation.
+    await 0;
     for (let callback of callbacks) {
       callback(details);
     }
+    // FIXME
     callTrace.end();
   }
 

@@ -153,7 +153,8 @@ const ArcsUtils = {
   },
   addStoreData(store, data) {
     if (store.type.isCollection) {
-      data && Object.values(data).forEach(e => store.store(e));
+      // FIXME: store.generateID may not be safe (session scoped)?
+      data && Object.values(data).forEach(e => store.store(e, [store.generateID()]));
     } else {
       data && store.set(data);
     }

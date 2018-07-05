@@ -163,11 +163,11 @@ class FbUserElement extends Xen.Debug(Xen.Base, log) {
     }, 1000);
 }
   _arcChanged(field) {
-    const {arcstore} = this._state;
+    const {arcstore, arc} = this._state;
     if (arcstore) {
       arcstore.remove(field.key);
       if (!field.disposed) {
-        arcstore.store(this._arcFieldToEntity(field));
+        arcstore.store(this._arcFieldToEntity(field), [arc.generateID('key')]);
       }
     }
   }
