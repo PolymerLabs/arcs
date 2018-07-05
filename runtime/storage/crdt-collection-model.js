@@ -33,7 +33,6 @@ export class CrdtCollectionModel {
   // Returns whether the change is effective (`id` is new to the collection,
   // or `value` is different to the value previously stored).
   add(id, value, keys) {
-    assert(keys.length > 0);
     let item = this._items.get(id);
     let effective = false;
     if (!item) {
@@ -55,7 +54,6 @@ export class CrdtCollectionModel {
   // Returns whether the change is effective (the value is no longer present
   // in the collection because all of the keys have been removed).
   remove(id, keys) {
-    assert(keys.length > 0);
     let item = this._items.get(id);
     if (!item) {
       return false;

@@ -91,7 +91,7 @@ class TestCollection {
 
   store(id, entity, {sendEvent = true, version, originatorId} = {}) {
     let entry = {id, rawData: entity.rawData};
-    let keys = [undefined];
+    let keys = [];
     let effective = this._model.add(id, entry, keys);
     this._version = (version !== undefined) ? version : this._version + 1;
     if (sendEvent) {
@@ -105,7 +105,7 @@ class TestCollection {
     let entry = this._model.getValue(id);
     assert.notStrictEqual(entry, undefined,
            `Test bug: attempt to remove non-existent id '${id}' from '${this.name}'`);
-    let keys = [undefined];
+    let keys = [];
     let effective = this._model.remove(id, keys);
     this._version = (version !== undefined) ? version : this._version + 1;
     if (sendEvent) {

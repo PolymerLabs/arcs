@@ -73,4 +73,26 @@ describe('crdt-collection-model', () => {
     assert.isTrue(effective);
     assert.equal(model.getValue('id'), 'value2');
   });
+
+  // TODO: break this test when we stop using dummy keys
+  it('(should not) allow a value to be added without keys', async () => {
+    let model = new CrdtCollectionModel();
+    let effective = model.add('id', 'value', []); 
+    assert.isTrue(effective);
+    assert(model.size, 1);
+  });
+
+  it('allows keys to be initialized empty', async () => {
+    let model = new CrdtCollectionModel([
+      {id: 'nokeys', 'value': 'value'},
+      {id: 'keys', 'value': 'value', keys: ['key1']},
+    ]);
+    assert.equal(model.size, 2);
+    assert.isEmpty(model.getKeys('nokeys'));
+    assert.sameMembers(model.getKeys('keys'), ['key1']);
+
+    let effective = model.remove('nokeys', []);
+    assert.isTrue(effective);
+    assert(model.size, 1);
+  });
 });

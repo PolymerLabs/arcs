@@ -131,9 +131,13 @@ class InMemoryCollection extends InMemoryStorageProvider {
   // FIXME: reorder arguments to make originatorID optional and membershipKey required
   async store(value, originatorId=undefined, membershipKey=undefined) {
     let trace = Tracing.start({cat: 'handle', name: 'InMemoryCollection::store', args: {name: this.name}});
-    let effective = this._model.add(value.id, value, [membershipKey]);
+    let keys = [];
+    if (membershipKey != null) {
+      keys.push(membershipKey);
+    }
+    let effective = this._model.add(value.id, value, keys);
     this._version++;
-    this._fire('change', {add: [{value, keys: [membershipKey], effective}], version: this._version, originatorId});
+    this._fire('change', {add: [{value, keys, effective}], version: this._version, originatorId});
     trace.end({args: {value}});
   }
 
