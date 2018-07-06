@@ -45,13 +45,14 @@ export class Particle {
   }
 
   _cloneConnectionRawTypes() {
+    // TODO(shans): evaluate whether this is the appropriate context root for cloneWithResolution
     let map = new Map();
     for (let connection of Object.values(this._connections))
       if (connection._rawType)
-        connection._rawType = connection._rawType.clone(map);
+        connection._rawType = connection._rawType._cloneWithResolutions(map);
     for (let connection of this._unnamedConnections)
       if (connection._rawType)
-        connection._rawType = connection._rawType.clone(map);
+        connection._rawType = connection._rawType._cloneWithResolutions(map);
   }
 
   _startNormalize() {
