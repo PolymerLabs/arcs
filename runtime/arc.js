@@ -158,7 +158,9 @@ export class Arc {
       }
       let key = this._storageProviderFactory.parseStringAsKey(handle.storageKey);
       let handleTags = [...this._storeTags.get(handle)].map(a => `#${a}`).join(' ');
+      // TODO(sjmiles): decouple this bit into protocol classes?
       switch (key.protocol) {
+        case 'system':
         case 'firebase':
           handles += `store Store${id++} of ${handle.type.toString()} '${handle.id}' @${handle._version} ${handleTags} at '${handle.storageKey}'\n`;
           break;
@@ -166,7 +168,6 @@ export class Arc {
           resources += `resource Store${id}Resource\n`;
           let indent = '  ';
           resources += indent + 'start\n';
-
           let serializedData = (await handle.serializedData()).map(a => {
             if (a == null)
               return null;
@@ -437,7 +438,7 @@ ${this.activeRecipe.toString()}`;
       storageKey = 'in-memory';
 
     let store = await this._storageProviderFactory.construct(id, type, storageKey);
-    assert(store, 'stopre with id ${id} already exists');
+    assert(store, 'store with id ${id} already exists');
     store.name = name;
 
     this._registerStore(store, tags);
@@ -445,6 +446,7 @@ ${this.activeRecipe.toString()}`;
   }
 
   _registerStore(store, tags) {
+    if (this._storesById.has(store.id)) return;
     assert(!this._storesById.has(store.id), `Store already registered '${store.id}'`);
     tags = tags || [];
     tags = Array.isArray(tags) ? tags : [tags];

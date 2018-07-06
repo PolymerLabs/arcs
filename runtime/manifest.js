@@ -769,8 +769,8 @@ ${e.message}
         connection.tags = connectionItem.target ? connectionItem.target.tags : [];
         let direction = {'->': 'out', '<-': 'in', '=': 'inout', 'consume': '`consume', 'provide': '`provide'}[connectionItem.dir];
         if (connection.direction) {
-          if (connection.direction != direction && 
-              direction != 'inout' && 
+          if (connection.direction != direction &&
+              direction != 'inout' &&
               !(connection.direction == 'host' && direction == 'in') &&
               !(connection.direction == '`consume' && direction == 'in') &&
               !(connection.direction == '`provide' && direction == 'out')
@@ -938,10 +938,12 @@ ${e.message}
 
     // Instead of creating links to remote firebase during manifest parsing,
     // we generate storage stubs that contain the relevant information.
-    if (item.origin == 'storage') {
-      manifest.newStorageStub(type, name, id, item.source, tags);
+     if (item.origin == 'storage') {
+      await Manifest._createStore(manifest, type, name, id, tags, item);
+      //manifest._addStore(await Manifest._createStore(manifest, type, name, id, tags, item), tags);
+      //manifest.newStorageStub(type, name, id, item.source, tags);
       return;
-    }
+     }
 
     let json;
     let source;
@@ -1003,7 +1005,7 @@ ${e.message}
     }
   }
   static async _createStore(manifest, type, name, id, tags, item) {
-    let store = await manifest.createStore(type, name, id, tags);
+    let store = await manifest.createStore(type, name, id, tags, item.source);
     store.source = item.source;
     store.description = item.description;
     return store;
