@@ -14,10 +14,13 @@ FROM couchdb:latest AS toolchain
 
 
 ##
-## Commented out is an alternate approach, to combine both our Ayslo-enclaved
-## code and Couch into a single image. This is eventually probably the correct
-## approach, but I ran into several problems (I believe mostly related to
-## different Debian versions) that made this cumbersome.
+### Commented out is an alternate approach, to combine both our Ayslo-enclaved
+### code and Couch into a single image. This is eventually probably the correct
+### approach, but I ran into several problems (I believe mostly related to
+### different Debian versions) that made this cumbersome.
+##
+### To try this approach again, remove the `##` prefix from these lines and
+### the asylo-specific `docker run` from `start-couch.sh`.
 ##
 ##
 ### Couch is based off an old version of Debian, so let's upgrade to Buster

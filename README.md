@@ -86,6 +86,10 @@ See [extension](extension/README.md).
 
 See [devtools](devtools/README.md).
 
+### Enclaves
+
+See [enclave](enclave/README.md).
+
 ## Testing
 
 The simplest way to run tests is to let the targets do all the work. These
@@ -283,86 +287,3 @@ databases, but to continue a single mainline/unstable database.
   new mainline development version (perhaps using the `-alpha` suffix; in our
   example, `0.3.6-alpha`).  See
   [#1155](https://github.com/PolymerLabs/arcs/pull/1155) for an example.
-
-## Enclaves
-
-In order to take advantage of new security measures appearing in PaaS/IaaS
-environments, Arcs will take advantage of the [Asylo](https://asylo.dev)
-framework to store sensitive information in secure enclaves.
-
-Currently this is a PoC but provides **no extra security**.
-
-More specifically, this PoC includes a Docker container with CouchDB and an
-enclaved application via Asylo. Currently the enclave produces a key that's
-returned to non-enclaved space and used to encrypt a drive that's used for
-storage of CouchDB data & configuration. The key is stored in plaintext next
-to the drive image so it can be remounted.
-
-
-All you'll need to do is:
-
-```
-arcs/enclave> ./start-couch.sh
-```
-
-This will use the Asylo docker image to generate a key (if one doesn't already
-exist), build the CouchDB image and start it. Use `^C` to exit.
-
-<a name="enclave_notes">Notes</a>:
-- The use of `--privileged` as part of `docker run`. This isn't ideal, but is
-  currently required to give the Docker image access to loopback devices.
-  Another approach might be something like `--cap-add SYS_ADMIN  --device
-  /dev/loop0 --device /dev/loop-control` (which limits the amount of
-  additional access required). This may be fixed in a future version of Docker
-  or Linux but the evidence is
-  [slim](https://groups.google.com/forum/#!topic/docker-user/JmHko2nstWQ).
-- Error `Device encrypted already exists.` may mean that an image failed to
-  shut down. These are (unfortunately) shared between the host & docker. Check
-  on the host with `sudo cryptsetup status encrypted` and if there's status
-  shut it down `sudo cryptsetup close encrypted`.
-- To detach use `-d`.
-- To jump into a command shell, use a command like `docker run -it
-  --entrypoint "/bin/bash" test-with-asylo -i`.
-- The current version uses CouchDB, but it is intended to be easy to change.
-- A Docker that supports [multi-stage
-  builds](https://docs.docker.com/develop/develop-images/multistage-build/) is
-  required (Docker >= 17.05).
-
-Remaining work:
-- Encryption keys should never leave enclave space.
-- Integration with specific enclave backends (such as Intel SGX).
-- We should bundle the Arcs application into it's own Docker image, and bind
-  the Couch port to only talk to that container.
-
-
-### Local (Non-Container) Development
-
-To iterate quickly on the enclaved application it may be easier to develop
-locally (rather than through the container).
-
-First, you'll need to build the [Asylo](http://asylo.dev) toolchain. More
-information and directions are available directly from Asylo's
-[INSTALL.MD](https://github.com/google/asylo/blob/master/INSTALL.md).
-
-```
-arcs/enclave> git clone https://github.com/google/asylo.git sdk
-arcs/enclave> sdk/asylo/distrib/sgx_x86_64/install-toolchain \
-  --user \
-  --prefix `pwd`/toolchains/sgx_x86_64
-
-```
-
-After this completes it'll leave some temporary files and directories in the
-current directory, probably `arcs/enclave`. Those can be removed with a command
-like `rm -fr binutils* gcc* newlib*`.)
-
-
-Then you can run commands like:
-
-```
-arcs/enclave> bazel run --config=enc-sim //arcs_enclave  -- \
-  --output_file /tmp/foo.tmp && cat /tmp/foo.tmp && echo
-<snip>
-Writing output (abc) to /tmp/foo.tmp
-abc
-```
