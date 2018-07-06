@@ -24,7 +24,8 @@ export class AddUseHandles extends Strategy {
 
         // TODO: "description" handles are always created, and in the future they need to be "optional" (blocked by optional handles
         // not being properly supported in arc instantiation). For now just hardcode skiping them.
-        let disconnectedConnections = recipe.handleConnections.filter(hc => hc.handle == null && !hc.isOptional && hc.name != 'descriptions');
+        let disconnectedConnections = recipe.handleConnections.filter(
+            hc => hc.handle == null && !hc.isOptional && hc.name != 'descriptions' && hc.direction !== 'host');
         if (disconnectedConnections.length == 0) {
           return;
         }

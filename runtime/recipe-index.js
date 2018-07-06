@@ -169,8 +169,9 @@ export class RecipeIndex {
             // Find potential handle connections to coalesce
             slot.handleConnections.forEach(slotHandleConn => {
               let matchingConns = Object.values(slotConn.particle.connections).filter(particleConn => {
-                return (!particleConn.handle || !particleConn.handle.id || particleConn.handle.id == slotHandleConn.handle.id) &&
-                       Handle.effectiveType(slotHandleConn.handle._mappedType, [particleConn]);
+                return particleConn.direction !== 'host'
+                    && (!particleConn.handle || !particleConn.handle.id || particleConn.handle.id == slotHandleConn.handle.id)
+                    && Handle.effectiveType(slotHandleConn.handle._mappedType, [particleConn]);
               });
               matchingConns.forEach(matchingConn => {
                 if (this._fatesAndDirectionsMatch(slotHandleConn, matchingConn)) {
