@@ -16,4 +16,4 @@ enclave/bazel-*
 enclave/sdk
 enclave/toolchains
 enclave/host/storage/db.img
-envlave/host/storage/key
+enclave/host/storage/key

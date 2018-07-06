@@ -14,7 +14,7 @@ SECURE_MOUNT_POINT=/opt/secure
 ENCRYPTED_NAME=encrypted
 
 # TODO use encrypted storage
-/opt/storage/bin/mount-enc-fs.sh $KEY $IMAGE $SECURE_MOUNT_POINT $ENCRYPTED_NAME
+/arcs/enclave/bin/mount-enc-fs.sh $KEY $IMAGE $SECURE_MOUNT_POINT $ENCRYPTED_NAME
 if [ ! -d $SECURE_MOUNT_POINT ]; then
 	echo "No mount found at $SECURE_MOUNT_POINT"
 	mount
@@ -48,7 +48,7 @@ cleanup()
 		echo 'waiting for couch to shutdown..'
 		sleep 1s
 	done
-	/opt/storage/bin/umount-enc-fs.sh $ENCRYPTED_NAME
+	/arcs/enclave/bin/umount-enc-fs.sh $ENCRYPTED_NAME
 }
 trap cleanup INT TERM
 # TODO(smalls) docker container kill isn't triggering the trap

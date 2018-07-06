@@ -39,6 +39,10 @@ exist), build the CouchDB image and start it. Use `^C` to exit.
 - A Docker that supports [multi-stage
   builds](https://docs.docker.com/develop/develop-images/multistage-build/) is
   required (Docker >= 17.05).
+- It's sometimes faster to iterate on code without re-building the docker
+  image. To do that, move the code in question to one of the mounted
+  directories (in our case, `host/storage`) and run it in the docker container
+  from the mapped directory (`/opt/storage`).
 
 Remaining work:
 - Encryption keys should never leave the enclave. One starting point is to

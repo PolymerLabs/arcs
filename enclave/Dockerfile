@@ -88,6 +88,6 @@ RUN apt-get update && \
 	apt-get install -y \
 		cryptsetup-bin
 
-CMD ["/opt/storage/bin/start-couchdb.sh"]
+CMD ["/arcs/enclave/bin/start-couchdb.sh"]
 
 ADD . /arcs/enclave
