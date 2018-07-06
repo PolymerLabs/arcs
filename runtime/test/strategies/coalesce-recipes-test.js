@@ -92,7 +92,7 @@ describe('CoalesceRecipes', function() {
           other = otherHandle
         P3
           thing = thingHandle
-      
+
       resource MyThing
           start
           []
@@ -102,6 +102,44 @@ describe('CoalesceRecipes', function() {
     assert.isTrue(recipe.isResolved());
     assert.lengthOf(recipe.particles, 3);
     assert.lengthOf(recipe.slots, 2);
+  });
+
+  it('host connections are ignored for handle requirements', async () => {
+    let recipe = await doCoalesceRecipes(`
+      schema Thing
+      particle P1
+        inout Thing thing
+        consume root
+          must provide foo
+            handle thing
+
+      shape HostedShape
+        in ~a *
+      particle P2
+        host HostedShape hostedParticle
+        in Thing thing
+        consume foo
+
+      recipe
+        slot 'id0' as slot0
+        copy as thingHandle
+        P1
+          thing = thingHandle
+          consume root as slot0
+
+      recipe
+        use as thingHandle
+        P2
+          thing = thingHandle
+    `);
+
+    assert.isTrue(Object.isFrozen(recipe), 'recipe should be valid');
+    assert.lengthOf(recipe.particles, 2);
+    assert.lengthOf(recipe.slots, 2);
+
+    // hostedParticle connection should not be affected.
+    const p2 = recipe.particles.find(p => p.name === 'P2');
+    assert.isUndefined(p2.connections['hostedParticle'].handle);
   });
 
   it('does not coalesce required slots if handle constraint is not met', async () => {
