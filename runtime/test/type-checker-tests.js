@@ -14,6 +14,7 @@ import {assert} from './chai-web.js';
 
 import {Schema} from '../schema.js';
 import {Type} from '../type.js';
+import {SlotInfo} from '../slot-info.js';
 import {TypeChecker} from '../recipe/type-checker.js';
 import {TypeVariable} from '../type-variable.js';
 import {Manifest} from '../manifest.js';
@@ -203,5 +204,13 @@ describe('TypeChecker', () => {
     assert.isNull(a.data._resolution);
     Handle.effectiveType(undefined, [{type: a, direction: 'inout'}]);
     assert.isNull(a.data._resolution);
+  });
+  it('resolves a single Slot type', () => {
+    let a = Type.newSlot(new SlotInfo({}));
+    let result = TypeChecker.processTypeList(null, [{type: a, direction: '`consume'}]);
+    assert(result.canEnsureResolved());
+    result.maybeEnsureResolved();
+    assert(result.isResolved());
+    assert(result.resolvedType().isSlot);
   });
 });

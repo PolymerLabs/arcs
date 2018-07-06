@@ -135,14 +135,14 @@ export class TypeChecker {
         primitiveConnectionType = unwrap[1];
       }
 
-      if (direction == 'out' || direction == 'inout') {
+      if (direction == 'out' || direction == 'inout' || direction == '`provide') {
         // the canReadSubset of the handle represents the maximal type that can be read from the
         // handle, so we need to intersect out any type that is more specific than the maximal type
         // that could be written.
         if (!primitiveHandleType.variable.maybeMergeCanReadSubset(primitiveConnectionType.canWriteSuperset))
           return false;
       }
-      if (direction == 'in' || direction == 'inout') {
+      if (direction == 'in' || direction == 'inout' || direction == '`consume') {
         // the canWriteSuperset of the handle represents the maximum lower-bound type that is read from the handle,
         // so we need to union it with the type that wants to be read here.
         if (!primitiveHandleType.variable.maybeMergeCanWriteSuperset(primitiveConnectionType.canReadSubset))
@@ -210,9 +210,17 @@ export class TypeChecker {
       return Type.canMergeConstraints(leftType, rightType);
     }
 
-    if (leftType.type != rightType.type) {
+    if ((leftType == undefined) !== (rightType == undefined))
+      return false;
+    if (leftType == rightType)
+      return true;
+
+    if (leftType.tag != rightType.tag) {
       return false;
     }
+
+    if (leftType.isSlot)
+      return true;
 
     // TODO: we need a generic way to evaluate type compatibility
     //       shapes + entities + etc

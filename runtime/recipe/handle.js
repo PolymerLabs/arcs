@@ -156,8 +156,10 @@ export class Handle {
     assert(Object.isFrozen(this));
     let resolved = true;
     if (this.type) {
-      if ((!this.type.isResolved() && this.fate !== 'create') || 
-          (!this.type.canEnsureResolved() && this.fate == 'create')) {
+      let mustBeResolved = true;
+      if (this.fate == 'create' || this.fate == '`slot')
+        mustBeResolved = false;
+      if ((mustBeResolved && !this.type.isResolved()) || !this.type.canEnsureResolved()) {
         if (options) {
           options.details = 'unresolved type';
         }
@@ -187,6 +189,7 @@ export class Handle {
         resolved = resolved && (this.id !== null);
         break;
       }
+      case '`slot':
       case 'create':
         break;
       default: {

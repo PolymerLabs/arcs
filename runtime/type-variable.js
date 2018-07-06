@@ -44,6 +44,11 @@ export class TypeVariable {
       return true;
     }
 
+    if (this.canReadSubset.isSlot && constraint.isSlot) {
+      // TODO: formFactor compatibility, etc.
+      return true;
+    }
+
     let mergedSchema = Schema.intersect(this.canReadSubset.entitySchema, constraint.entitySchema);
     if (!mergedSchema)
       return false;
@@ -60,6 +65,11 @@ export class TypeVariable {
 
     if (this.canWriteSuperset == null) {
       this.canWriteSuperset = constraint;
+      return true;
+    }
+
+    if (this.canWriteSuperset.isSlot && constraint.isSlot) {
+      // TODO: formFactor compatibility, etc.
       return true;
     }
 
