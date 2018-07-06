@@ -20,6 +20,17 @@ arcs/enclave> ./start-couch.sh
 This will use the Asylo docker image to generate a key (if one doesn't already
 exist), build the CouchDB image and start it. Use `^C` to exit.
 
+To test within the Arcs system visit
+http://localhost:8080/shell/apps/couchdb-test/ and reload to see changes. If
+you see errors on the console about the "Access-Control-Allow-Origin" header,
+you'll need to enable CORS. One option is to use the
+[add-cors-to-couchdb](https://github.com/pouchdb/add-cors-to-couchdb):
+
+```
+> npm install -g add-cors-to-couchdb
+> add-cors-to-couchdb
+```
+
 <a name="enclave_notes">Notes</a>:
 - The use of `--privileged` as part of `docker run`. This isn't ideal, but is
   currently required to give the Docker image access to loopback devices.
