@@ -136,6 +136,8 @@ class ArcHost extends Xen.Debug(Xen.Base, log) {
       serialization = serialization.replace(`import './in-memory.manifest'`, '');
       warn(`removing context import (${contextManifest}) from serialization`);
     }
+    // TODO(sjmiles): temporarily elide search info, it seems to choke the deserializer
+    serialization = serialization.replace(/search `[^`]*`/, '').replace(/tokens \/\/ `[^`]*`/, '');
     // generate new slotComposer
     const slotComposer = this._createSlotComposer(config);
     // collate general params for arc construction
