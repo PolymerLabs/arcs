@@ -104,7 +104,7 @@ describe('CoalesceRecipes', function() {
     assert.lengthOf(recipe.slots, 2);
   });
 
-  it.only('host connections are ignored for handle requirements', async () => {
+  it('host connections are ignored for handle requirements', async () => {
     let recipe = await doCoalesceRecipes(`
       schema Thing
       particle P1
