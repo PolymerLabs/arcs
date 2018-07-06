@@ -33,10 +33,6 @@ export class Entity {
     assert(!!this.isIdentified());
     return this[Symbols.identifier];
   }
-  get $id() {
-    assert(!!this.isIdentified());
-    return this[Symbols.identifier];
-  }
   identify(identifier) {
     assert(!this.isIdentified());
     this[Symbols.identifier] = identifier;

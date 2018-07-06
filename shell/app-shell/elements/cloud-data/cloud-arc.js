@@ -26,7 +26,8 @@ class CloudArc extends Xen.Debug(Xen.Base, log) {
       db: Firebase.db.child('arcs')
     };
   }
-  _willReceiveProps({config, key, arc, metadata, description, share, plan}, state, oldProps) {
+  async _willReceiveProps(props, state, oldProps) {
+    const {key, arc, metadata, description, share, plan} = props;
     if (key === '*') {
       if (key !== oldProps.key) {
         this._fire('serialization', null);
@@ -45,9 +46,14 @@ class CloudArc extends Xen.Debug(Xen.Base, log) {
           {path: `arcs/${key}/serialization`, handler: snap => this._serializationReceived(snap, key)}
         ];
       }
-      if (plan && plan !== oldProps.plan && !Const.SHELLKEYS[key]) {
+      if (plan && plan.plan && plan !== oldProps.plan && !Const.SHELLKEYS[key]) {
         log('plan changed, good time to serialize?');
-        this._serialize(state.db, key, arc);
+        const serialization = await arc.serialize();
+        // on return from asynchrony, validate serialization
+        if (plan === props.plan && arc === props.arc && serialization !== state.serialization) {
+          state.serialization = serialization;
+          this._storeSerialization(state.db, key, serialization);
+        }
       }
       if (metadata && share && share !== oldProps.share && metadata.share !== share) {
         metadata.share = share;
@@ -63,26 +69,21 @@ class CloudArc extends Xen.Debug(Xen.Base, log) {
       }
     }
   }
-  async _serialize(db, key, arc) {
-    log('awaiting arc.serialize');
-    const serialization = await arc.serialize();
-    log('finished arc serialize');
-    // on return from asynchrony, validate arc
-    if (arc === this._props.arc && serialization !== this._state.serialization) {
-      // must cache first, Firebase update can fire callback synchronously
-      this._state.serialization = serialization;
-      const node = db.child(`${key}/serialization`);
-      groupCollapsed('writing arc serialization', String(node));
-      log('serialization:', serialization);
-      groupEnd();
-      node.set(serialization);
-    }
+  async _storeSerialization(db, key, serialization) {
+    const node = db.child(`${key}/serialization`);
+    groupCollapsed('writing arc serialization', String(node));
+    log('serialization:', serialization);
+    groupEnd();
+    node.set(serialization);
   }
   _serializationReceived(snap, key) {
     log('watch triggered on arc serialization', `${key}/serialization`);
-    const serialization = this._props.config.useSerialization ? (snap.val() || '') : '';
+    let serialization = snap.val() || '';
     if (serialization !== this._state.serialization) {
       this._state.serialization = serialization;
+      if (!this._props.config.useSerialization) {
+        serialization = '';
+      }
       this._fire('serialization', serialization);
     }
   }

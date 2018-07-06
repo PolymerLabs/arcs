@@ -33,9 +33,7 @@ class ArcHost extends Xen.Debug(Xen.Base, log) {
       state.key = key;
       this._teardownArc(state.arc);
     }
-    // TODO(sjmiles): absence of serialization is null/undefined, as opposed to an
-    // empty serialization which is ''
-    if (serialization != null && serialization !== state.serialization) {
+    if (serialization !== state.serialization) {
       state.serialization = serialization;
       state.pendingSerialization = serialization;
     }
@@ -48,6 +46,8 @@ class ArcHost extends Xen.Debug(Xen.Base, log) {
       this._prepareArc(config, key);
     }
     const {id, context, pendingSerialization} = state;
+    // TODO(sjmiles): absence of serialization is null/undefined, as opposed to an
+    // empty serialization which is ''
     if (id && context && pendingSerialization != null) {
       state.pendingSerialization = null;
       state.pendingSerialization = await this._consumeSerialization(pendingSerialization);
@@ -136,6 +136,8 @@ class ArcHost extends Xen.Debug(Xen.Base, log) {
       serialization = serialization.replace(`import './in-memory.manifest'`, '');
       warn(`removing context import (${contextManifest}) from serialization`);
     }
+    // TODO(sjmiles): temporarily elide search info, it seems to choke the deserializer
+    serialization = serialization.replace(/search `[^`]*`/, '').replace(/tokens \/\/ `[^`]*`/, '');
     // generate new slotComposer
     const slotComposer = this._createSlotComposer(config);
     // collate general params for arc construction
@@ -146,6 +148,7 @@ class ArcHost extends Xen.Debug(Xen.Base, log) {
       context: state.context,
       storageKey: state.storageKey
     };
+    log('about to construct an arc; # context stores:', state.context.stores.length);
     // attempt to construct arc
     let arc;
     try {

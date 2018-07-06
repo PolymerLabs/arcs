@@ -26,7 +26,7 @@ defineParticle(({DomParticle, html, log, resolver}) => {
   }
   [${host}] #friendstable [row] {
     display: flex;
-    align-items: center;
+    align-items: stretch;
     border-bottom: 1px solid silver;
   }
   [${host}] #friendstable span {
@@ -34,6 +34,8 @@ defineParticle(({DomParticle, html, log, resolver}) => {
     flex-shrink: 0;
     border-right: 1px solid silver;
     padding: 8px 12px;
+    display: flex;
+    align-items: center;
   }
 </style>
 
@@ -48,7 +50,8 @@ defineParticle(({DomParticle, html, log, resolver}) => {
 
   <template friend>
     <div row on-click="_onSelect" key="{{index}}">
-      <span>{{name}}</span>
+      <span>{{avatars}}</span>
+      <span style="flex: 3;">{{name}}</span>
     </div>
   </template>
 
@@ -57,7 +60,7 @@ defineParticle(({DomParticle, html, log, resolver}) => {
   </template>
 
   <template avatar>
-    <li><img style="vertical-align: middle; height: 64px; border-radius: 50%;" src="{{url}}"></li>
+    <img style="vertical-align: middle; height: 32px; border-radius: 50%;" src="{{url}}">
   </template>
 </div>
     `;
@@ -80,12 +83,8 @@ defineParticle(({DomParticle, html, log, resolver}) => {
     }
     friendToModel(friend) {
       const {people, avatars} = this._props;
-      const ofFriend = person => {
-        const ownerid = person.$id.split('|')[0];
-        return ownerid == friend.id;
-      };
-      const friendsOfFriend = people.filter(ofFriend);
-      const avatarsOfFriend = avatars.filter(ofFriend);
+      const friendsOfFriend = this.boxQuery(people, friend.id);
+      const avatarsOfFriend = this.boxQuery(avatars, friend.id);
       return {
         name: friend.name,
         avatars: {

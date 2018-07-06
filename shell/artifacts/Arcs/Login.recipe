@@ -11,7 +11,8 @@ schema User
   URL avatar
 
 particle Login in 'source/Login.js'
-  consume modal
+  // consume modal
+  consume root
 
 recipe Login
   Login

@@ -16,7 +16,7 @@ import {FbUserContext} from './FbUserContext.js';
 
 const log = Xen.logFactory('fb-user-context', '#bb22ee');
 
-class FbUserContextElement extends Xen.Base {
+class FbUserContextElement extends Xen.Debug(Xen.Base, log) {
    static get observedAttributes() {
     return ['config', 'userid', 'context'];
   }
@@ -47,7 +47,6 @@ class FbUserContextElement extends Xen.Base {
       state.shellFriends = {};
       state.userid = userid;
       this._queryUser(props, state);
-      this._fire('friends', state.shellFriends);
     }
   }
   async _createFriendsStore(context) {
@@ -84,19 +83,10 @@ class FbUserContextElement extends Xen.Base {
     const user = field.parent.parent.parent;
     const userid = user.path.split('/')[2];
     const avatar = field.data.data;
-    if (avatar) {
-      log(userid, avatar.rawData.url);
+    if (avatar && userid !== this._props.userid) {
+      //log(userid, avatar.rawData.url);
       this._updateShellFriend(userid, {avatar: avatar.rawData.url});
     }
-  }
-  async _updateShellFriend(id, data) {
-    const {shellFriends} = this._state;
-    shellFriends[id] = Object.assign(
-      {avatar: `https://$shell/assets/avatars/user (0).png`},
-      shellFriends[id] || Object,
-      data
-    );
-    this._fire('friends', Xen.clone(shellFriends));
   }
   async _friendChanged(field) {
     // `friendStore` is for particles
@@ -107,6 +97,17 @@ class FbUserContextElement extends Xen.Base {
     friendsStore.store(entity);
     // `shellFriends` is for shell
     this._updateShellFriend(id, {id, name: entity.rawData.name});
+  }
+  async _updateShellFriend(id, data) {
+    const {shellFriends} = this._state;
+    shellFriends[id] = Object.assign({
+      avatar: `https://$shell/assets/avatars/user (0).png`},
+      shellFriends[id] || Object,
+      data
+    );
+    this._state._notify = Xen.debounce(this._state._notify, () => {
+      this._fire('friends', Xen.clone(shellFriends));
+    }, 1000);
   }
   _friendFieldToEntity(id, field) {
     const {info} = field.value;
@@ -138,20 +139,20 @@ class FbUserContextElement extends Xen.Base {
     const ownerid = user.path.split('/')[2];
     const isProfile = ownerid === userid;
     const sharing = arc.data.metadata.share;
-    const shareable = !field.disposed && (sharing > 2 || (isProfile && sharing > 1));
+    const shareable = !field.disposed && field.data.data && (sharing > 2 || (isProfile && sharing > 1));
     this._updateBoxedShare(context, ownerid, arcid, field.key, field.data, shareable);
-    const ownername = user.data.info && user.data.info.name || `(n/a)`;
+    const ownername = isProfile ? 'my' : (user.data.info && user.data.info.name || `(n/a)`);
     const storename = `${Const.STORES[isProfile ? 'my' : 'shared']}_${field.key}`;
     const storeid = `${field.key}|from|${ownerid}|${arcid}`;
-    this._updateSimpleShare(context, ownername, storename, storeid, shareable, field);
+    this._updateSimpleShare(context, ownerid, ownername, storename, storeid, shareable, field);
   }
-  async _updateSimpleShare(context, ownername, storename, storeid, shareable, field) {
+  async _updateSimpleShare(context, ownerid, ownername, storename, storeid, shareable, field) {
     // discard old data
     await this._removeShare(context, storeid);
     // if the field is to be shared
     if (shareable) {
       // then install the data into a store
-      const store = await this._addShare(context, storename, storeid, field.key, field.data);
+      const store = await this._addShare(context, storename, storeid, ownerid, field.key, field.data);
       if (store) {
         // compute description
         const typeName = store.type.toPrettyString().toLowerCase();
@@ -165,13 +166,13 @@ class FbUserContextElement extends Xen.Base {
       ArcsUtils.clearStore(store);
     }
   }
-  async _addShare(context, name, id, tag, {metadata, data}) {
-    let store = await context.findStoreById(id);
+  async _addShare(context, name, storeid, ownerid, tag, {metadata, data}) {
+    let store = await context.findStoreById(storeid);
     if (!store) {
       const type = ArcsUtils.typeFromMetaType(metadata.type);
-      store = await context.createStore(type, name, id, [tag]);
+      store = await context.createStore(type, name, storeid, [tag]);
     }
-    ArcsUtils.addStoreData(store, data);
+    this.storeEntitiesWithUid(store, data, ownerid);
     return store;
   }
   async _updateBoxedShare(context, ownerid, arcid, key, {metadata, data}, shareable) {
@@ -193,21 +194,28 @@ class FbUserContextElement extends Xen.Base {
       if (!store) {
         const type = ArcsUtils.typeFromMetaType(metadata.type);
         const collectionType = type.isCollection ? type : type.collectionOf();
-        store = await context.createStore(collectionType, name, storeid, [storeid]);
+        store = await context.createStore(collectionType, storeid, storeid, [storeid]);
       }
+      // add items with additional UID
+      const storedIds = this.storeEntitiesWithUid(store, data, dataid);
       // (write) id cache for items added to the box from this share
-      const boxed = this._state.boxed[boxid] = [];
-      const add = ({id, rawData}) => {
-        const decoratedId = `${dataid}|${id}`;
-        store.store({id: decoratedId, rawData});
-        boxed.push(decoratedId);
-      };
-      if (data.id) {
-        add(data);
-      } else {
-        Object.values(data).forEach(entity => add(entity));
-      }
+      const boxed = this._state.boxed;
+      boxed[boxid] = (boxed[boxid] || []).concat(storedIds);
     }
+  }
+  storeEntitiesWithUid(store, data, uid) {
+    const ids = [];
+    const storeDecoratedEntity = ({id, rawData}, uid) => {
+      const decoratedId = `${id}:uid:${uid}`;
+      ids.push(decoratedId);
+      store[store.type.isCollection ? 'store' : 'set']({id: decoratedId, rawData});
+    };
+    if (data.id) {
+      storeDecoratedEntity(data, uid);
+    } else {
+      Object.values(data).forEach(entity => storeDecoratedEntity(entity, uid));
+    }
+    return ids;
   }
 }
 customElements.define('fb-user-context', FbUserContextElement);

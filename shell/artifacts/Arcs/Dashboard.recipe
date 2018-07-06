@@ -32,3 +32,4 @@ recipe Dashboard
     people = people
     avatars = avatars
   description `see dashboard`
+
