@@ -167,4 +167,63 @@ describe('shape', function() {
     assert.isTrue(constrainedType1.isResolved());
     assert.isTrue(constrainedType2.isResolved());
   });
+
+  it('restricted type constraints type variables in the recipe', async () => {
+    let manifest = await Manifest.parse(`
+      particle Transformer
+        in [~a] input
+        out [~a] output
+
+      shape HostedShape
+        in ~a *
+
+      particle Multiplexer
+        host HostedShape hostedParticle
+        in [~a] items
+
+      recipe
+        use as items
+        create as transformed
+        Transformer
+          input = items
+          output = transformed
+        Multiplexer
+          items = transformed
+
+        schema Burrito
+        particle BurritoDisplayer
+          in Burrito burrito
+    `);
+
+    let recipe = manifest.recipes[0];
+
+    recipe.normalize();
+
+    let burritoDisplayer = manifest.findParticleByName('BurritoDisplayer');
+    let multiplexer = recipe.particles.find(p => p.name === 'Multiplexer');
+
+    // Initially handle type are unresolvable type variables.
+    assert.lengthOf(recipe.handles, 2);
+    for (let handle of recipe.handles) {
+      const collectionType = handle.type.collectionType;
+      const resolved = collectionType.resolvedType();
+      assert.isTrue(resolved.isVariable);
+      assert.isFalse(resolved.canEnsureResolved());
+    }
+
+    let hostedParticleType = multiplexer.connections['hostedParticle'].type;
+    assert.isTrue(!!hostedParticleType.interfaceShape.restrictType(burritoDisplayer));
+
+    // After restricting the shape, handle types are constrainted to a Burrito.
+    assert.lengthOf(recipe.handles, 2);
+    for (let handle of recipe.handles) {
+      const collectionType = handle.type.collectionType;
+      const resolved = collectionType.resolvedType();
+      assert.isTrue(collectionType.isVariable);
+      assert.isTrue(resolved.canEnsureResolved());
+      let canWriteSuperset = resolved.canWriteSuperset;
+      assert.isTrue(canWriteSuperset.isEntity);
+      assert.equal(canWriteSuperset.entitySchema.name, 'Burrito');
+    }
+  });
 });
