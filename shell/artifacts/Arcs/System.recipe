@@ -6,9 +6,7 @@
 // http://polymer.github.io/PATENTS.txt
 
 schema SystemSchema
-  Text id
   Text name
-  URL avatar
 
 store MySystem of SystemSchema at 'system://my-system-key/with/details'
 
@@ -17,7 +15,7 @@ particle System in 'source/System.js'
   consume root
 
 recipe System
-  map MySystem as system
+  use MySystem as system
   System
     system = system
   description `system test`

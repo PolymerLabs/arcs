@@ -939,9 +939,9 @@ ${e.message}
     // Instead of creating links to remote firebase during manifest parsing,
     // we generate storage stubs that contain the relevant information.
      if (item.origin == 'storage') {
-      await Manifest._createStore(manifest, type, name, id, tags, item);
+      //await Manifest._createStore(manifest, type, name, id, tags, item);
       //manifest._addStore(await Manifest._createStore(manifest, type, name, id, tags, item), tags);
-      //manifest.newStorageStub(type, name, id, item.source, tags);
+      manifest.newStorageStub(type, name, id, item.source, tags);
       return;
      }
 
