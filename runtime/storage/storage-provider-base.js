@@ -55,7 +55,7 @@ export class StorageProviderBase {
     if (!listenerMap || listenerMap.size == 0)
       return;
 
-    let callTrace = Tracing.start({cat: 'handle', name: 'StorageProviderBase::_fire', args: {kind, type: this._type.key,
+    let trace = Tracing.start({cat: 'handle', name: 'StorageProviderBase::_fire', args: {kind, type: this._type.key,
         name: this.name, listeners: listenerMap.size}});
 
     let callbacks = [];
@@ -63,12 +63,11 @@ export class StorageProviderBase {
       callbacks.push(callback);
     }
     // Yield so that event firing is not re-entrant with mutation.
-    await 0;
+    await trace.wait(0);
     for (let callback of callbacks) {
       callback(details);
     }
-    // FIXME
-    callTrace.end();
+    trace.end();
   }
 
   _compareTo(other) {

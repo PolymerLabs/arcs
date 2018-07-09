@@ -267,7 +267,7 @@ class CollectionProxy extends StorageProxyBase {
   // Otherwise, send a request to the backing store.
   toList(particleId) {
     if (this._synchronized == SyncState.full) {
-      return new Promise((resolve, reject) => resolve(this._model.toList()));
+      return Promise.resolve(this._model.toList());
     } else {
       // TODO: in synchronized mode, this should integrate with SynchronizeProxy rather than
       //       sending a parallel request

@@ -128,13 +128,13 @@ class InMemoryCollection extends InMemoryStorageProvider {
     return {items: this._model.size};
   }
 
-  // FIXME: reorder arguments to make originatorID optional and membershipKey required
   async store(value, keys, originatorId=null) {
     assert(keys != null && keys.length > 0, 'keys required');
     let trace = Tracing.start({cat: 'handle', name: 'InMemoryCollection::store', args: {name: this.name}});
     let effective = this._model.add(value.id, value, keys);
     this._version++;
-    this._fire('change', {add: [{value, keys, effective}], version: this._version, originatorId});
+    await trace.wait(
+        this._fire('change', {add: [{value, keys, effective}], version: this._version, originatorId}));
     trace.end({args: {value}});
   }
 
@@ -146,7 +146,8 @@ class InMemoryCollection extends InMemoryStorageProvider {
     let value = this._model.getValue(id);
     let effective = this._model.remove(id, keys);
     this._version++;
-    this._fire('change', {remove: [{value, keys, effective}], version: this._version, originatorId});
+    await trace.wait(
+        this._fire('change', {remove: [{value, keys, effective}], version: this._version, originatorId}));
     trace.end({args: {entity: value}});
   }
 
@@ -211,7 +212,7 @@ class InMemoryVariable extends InMemoryStorageProvider {
       return;
     this._stored = value;
     this._version++;
-    this._fire('change', {data: this._stored, version: this._version, originatorId, barrier});
+    await this._fire('change', {data: this._stored, version: this._version, originatorId, barrier});
   }
 
   async clear(originatorId=null, barrier=null) {
