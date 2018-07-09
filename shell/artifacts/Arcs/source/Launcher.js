@@ -134,7 +134,7 @@ ${style}
     render(props, {items, shared, starred, recent, selected}) {
       const columns = [[], []];
       const chosen = [items, recent, starred, shared][selected || 0];
-      chosen.sort((a, b) => a.key > b.key ? 1 : a.key < b.key ? -1 : 0);
+      chosen.sort((a, b) => a.touched > b.touched ? -1 : a.touched < b.touched ? 1 : 0);
       log(chosen);
       chosen.forEach((item, i) => {
         columns[i % 2].push(item);
@@ -206,7 +206,8 @@ ${style}
         starred: arc.starred ? 'star' : 'star_border',
         chipStyle,
         self: Boolean(arc.share >= 2),
-        friends: Boolean(arc.share >= 3)
+        friends: Boolean(arc.share >= 3),
+        touched: arc.touched
       };
     }
     _onTabSelect(e) {
