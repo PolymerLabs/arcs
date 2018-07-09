@@ -12,7 +12,7 @@ import {StorageProviderFactory} from '../storage/storage-provider-factory.js';
 import {Arc} from '../arc.js';
 import {Manifest} from '../manifest.js';
 import {Type} from '../type.js';
-import {assert} from '../../platform/assert-web.js';
+import {assert} from '../test/chai-web.js';
 
 describe('firebase', function() {
   it('can host a variable', async () => {
@@ -29,7 +29,7 @@ describe('firebase', function() {
     await variable.set({id: 'test0:test', value});
     let result = await variable.get();
     assert.equal(value, result.value);
-  });
+  }).timeout(10000);
 
   it('can host a collection', async () => {
     let manifest = await Manifest.parse(`
@@ -43,8 +43,8 @@ describe('firebase', function() {
     let value2 = 'Goodbye' + Math.random();
     let collection = await storage.connect('test1', BarType.collectionOf(), 
       'firebase://test-firebase-45a3e.firebaseio.com/AIzaSyBLqThan3QCOICj0JZ-nEwk27H4gmnADP8/collection/test');
-    await collection.store({id: 'test0:test0', value: value1});
-    await collection.store({id: 'test0:test1', value: value2});
+    await collection.store({id: 'test0:test0', value: value1}, ['key7']);
+    await collection.store({id: 'test0:test1', value: value2}, ['key8']);
     let result = await collection.get('test0:test0');
     assert.equal(value1, result.value);
     result = await collection.toList();

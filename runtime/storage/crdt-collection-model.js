@@ -84,6 +84,9 @@ export class CrdtCollectionModel {
   toList() {
     return [...this._items.values()].map(item => item.value);
   }
+  has(id) {
+    return this._items.has(id);
+  }
   getKeys(id) {
     let item = this._items.get(id);
     return item ? [...item.keys] : [];

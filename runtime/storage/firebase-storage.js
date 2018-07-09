@@ -11,6 +11,7 @@ import {firebase} from '../../platform/firebase-web.js';
 import {assert} from '../../platform/assert-web.js';
 import {KeyBase} from './key-base.js';
 import {btoa} from '../../platform/btoa-web.js';
+import {CrdtCollectionModel} from './crdt-collection-model.js';
 
 class FirebaseKey extends KeyBase {
   constructor(key) {
@@ -48,7 +49,7 @@ class FirebaseKey extends KeyBase {
   }
 }
 
-async function realTransaction(reference, transactionFunction) {
+async function realTransaction(reference, transactionFunction, completeFunction=undefined) {
   let realData = undefined;
   await reference.once('value', data => {realData = data.val(); });
   return reference.transaction(data => {
@@ -57,7 +58,7 @@ async function realTransaction(reference, transactionFunction) {
     let result = transactionFunction(data);
     assert(result);
     return result;
-  }, undefined, false);
+  }, completeFunction, false);
 }
 
 let _nextAppNameSuffix = 0;
@@ -143,149 +144,463 @@ class FirebaseStorageProvider extends StorageProviderBase {
     key = key.replace(/\*/g, '/');
     return atob(key);
   }
+
+  get _hasLocalChanges() {
+    assert(false, 'subclass should implement _hasLocalChanges');
+  }
+  
+  async _persistChangesImpl() {
+    assert(false, 'subclass should implement _persistChangesImpl');
+  }
+
+  async _persistChanges() {
+    if (!this._hasLocalChanges) {
+      return;
+    }
+    if (this._persisting) {
+      return this._persisting;
+    }
+    // Ensure we only have one persist process running at a time.
+    this._persisting = this._persistChangesImpl();
+    await this._persisting;
+    assert(!this._hasLocalChanges);
+    this._persisting = null;
+  }
 }
 
+// Models a Varaible that is persisted to firebase in a
+// last-writer-wins scheme.
+//
+// Initialization: After construct/connect the variable is
+// not fully initialized, calls to `get` and `toLiteral`
+// will not complete until either:
+//  * The initial value is supplied via the firebase `.on`
+//    subscription.
+//  * A value is written to the store by a call to `set`.
+//
+// Updates from firebase: Each time an update is received
+// from firebase we update the local version and value,
+// unless there is a pending local modification (see below).
+//
+//
+// Local modifications: When a local modification is applied
+// by a call to `set` we increment the version number,
+// mark this variable as locally modified, and start a
+// process to atomically persist the change to firebase.
+// Until this process has completed we suppress incoming
+// changes from firebase. The version that we have chosen
+// (by incrementing) may not match the final state that is
+// written to firebase (if there are concurrent changes in
+// firebase, or if we have queued up multiple local
+// modiciations), but the result will always be
+// monotonically increasing.
 class FirebaseVariable extends FirebaseStorageProvider {
   constructor(type, arcId, id, reference, firebaseKey) {
     super(type, arcId, id, reference, firebaseKey);
-    this.dataSnapshot = undefined;
-    this._pendingGets = [];
-    this._version = 0;
-    this.reference.on('value', dataSnapshot => {
-      this.dataSnapshot = dataSnapshot;
-      let data = dataSnapshot.val();
-      this._pendingGets.forEach(_get => _get(data));
-      this._pendingGets = [];
-      this._version = data.version;
-      this._fire('change', {data: data.data, version: data.version});
+
+    // Monotonic vesion, initialized via response from firebase,
+    // or a call to `set` (as 0). Updated on changes from firebase
+    // or during local modifications.
+    this._value = null;
+    // Current value stored in this variable. Reflects either a
+    // value that was stored in firebase, or a value that was
+    // written locally.
+    this._version = null;
+
+    // Whether `this._value` is affected by a local modification.
+    // When this is true we are still in the process of writing
+    // the value to the remote store and will suppress any
+    // incoming changes from firebase.
+    this._localModified = false;
+    
+    // Resolved when data is first available. The earlier of
+    // * the initial value is supplied via firebase `reference.on`
+    // * a value is written to the varaible by a call to `set`.
+    this._initialized = new Promise(resolve => {
+      this._resolveInitialized = resolve;
     });
+
+    // Resolved when local modifications complete being persisted
+    // to firebase.
+    this._persisted = null;
+
+    this.reference.on('value', dataSnapshot => this._remoteValueChanged(dataSnapshot));
   }
 
-  async cloneFrom(store) {
-    let {data, version} = await store.getWithVersion();
-    await this._setWithVersion(data, version);
+  _remoteValueChanged(dataSnapshot) {
+    if (this._localModified) {
+      return;
+    }
+    if (dataSnapshot.version <= this._version) {
+      return;
+    }
+
+    let data = dataSnapshot.val();
+    this._value = data.value;
+    this._version = data.version;
+
+    this._resolveInitialized();
+    this._fire('change', {data: data.value, version: this._version});
+  }
+
+  get _hasLocalChanges() {
+    return this._localModified;
+  }
+  
+  async _persistChangesImpl() {
+    assert(this._localModified);
+    // Guard the specific version that we're writing. If we receive another
+    // local mutation, these versions will be different when the transaction
+    // completes indicating that we need to continue the process of sending
+    // local modifications.
+    let version = this._version;
+    let value = this._value;
+    let result = await realTransaction(this.reference, data => {
+      assert(this._version >= version);
+      return {
+        version: Math.max(data.version + 1, version),
+        value: value,
+      };
+    });
+    assert(result.committed, 'uncommited transaction (offline?) not supported yet');
+    let data = result.snapshot.val();
+    assert(data.version >= this._version);
+    if (this._version != version) {
+      // A new local modification happened while we were writing the previous one.
+      return this._persistChangesImpl();
+    }
+
+    this._localModified = false;
+    this._version = data.version;
+    this._value = data.value;
   }
 
   async get() {
-    return this.dataSnapshot.val().data;
+    await this._initialized;
+    return this._value;
   }
 
-  async getWithVersion() {
-    if (this.dataSnapshot == undefined) {
-      return new Promise((resolve, reject) => {
-        this._pendingGets.push(resolve);
-      });
+  async set(value, originatorId=null, barrier=null) {
+    if (this._version == null) {
+      assert(!this._localModified);
+      // If the first modification happens before init, this becomes
+      // init. We pick the initial version which will be updaetd by the
+      // transaction in _persistChanges.
+      this._version = 0;
+      this._resolveInitialized();
+    } else {
+      if (JSON.stringify(this._value) == JSON.stringify(value))
+         return;
+      this._version++;
     }
-    return this.dataSnapshot.val();
+    this._value = value;
+    this._fire('change', {data: this._value, version: this._version, originatorId, barrier});
+    await this._persistChanges();
   }
 
-  async _setWithVersion(data, version) {
-    await realTransaction(this.reference, _ => ({data, version}));
+  async clear(originatorId=null, barrier=null) {
+    return this.set(null, originatorId, barrier);
   }
 
-  async set(value) {
-    return realTransaction(this.reference, data => {
-      if (JSON.stringify(data.data) == JSON.stringify(value))
-        return data;
-      return {data: value, version: data.version + 1};
-    });
+  async cloneFrom(handle) {
+    let literal = await handle.toLiteral();
+    await this.fromLiteral(literal);
   }
 
-  async clear() {
-    return this.set(null);
+  // Returns {version, model: [{id, value}]}
+  async toLiteral() {
+    await this._initialized;
+    // fixme: think about if there are local mutations...
+    let value = this._value;
+    let model = [];
+    if (value != null) {
+      model = [{
+        id: value.id,
+        value,
+      }];
+    }
+    return {
+      version: this._version,
+      model,
+    };
+  }
+
+  fromLiteral({version, model}) {
+    let value = model.length == 0 ? null : model[0].value;
+    assert(value !== undefined);
+    this._value = value;
+    this._version = version;
   }
 }
 
+
+function setDiff(from, to) {
+  let add = [];
+  let remove = [];
+  let items = new Set([...from, ...to]);
+  from = new Set(from);
+  to = new Set(to);
+  for (let item of items) {
+    if (from.has(item)) {
+      if (to.has(item)) {
+        continue;
+      }
+      remove.push(item);
+      continue;
+    }
+    assert(to.has(item));
+    add.push(item);
+  }
+  return {remove, add};
+}
+
+// TODO: rewrite this to reflect new API and use CRDTCollectionModel.
 class FirebaseCollection extends FirebaseStorageProvider {
   constructor(type, arcId, id, reference, firebaseKey) {
     super(type, arcId, id, reference, firebaseKey);
-    this.dataSnapshot = undefined;
-    this._pendingGets = [];
-    this.reference.on('value', dataSnapshot => {
-      this.dataSnapshot = dataSnapshot;
-      let data = dataSnapshot.val();
-      this._pendingGets.forEach(_get => _get(data));
-      this._pendingGets = [];
-      this._fire('change', {list: this._setToList(data.data), version: data.version});
+    // id => {keys: Set[key], barrierVersion}
+    this._addSuppressions = new Map(); 
+
+    // id => {add: [key], remove: [key]}
+    this._localChanges = new Map();
+
+    this._model = new CrdtCollectionModel();
+    this._version = null;
+
+    // {items: id => {value, keys: {[key]: null}}}
+    this._remoteState = {items: {}};
+    this._initialized = new Promise(resolve => this._resolveInitialized = resolve);
+
+    this.reference.on('value', dataSnapshot => this._remoteStateChange(dataSnapshot));
+  }
+
+  _remoteStateChange(dataSnapshot) {
+    let newRemoteState = dataSnapshot.val();
+    if (!newRemoteState.items) {
+      // This is the inital remote state, where we have only {version: 0}
+      // fixme: assert this.
+      newRemoteState.items = {};
+    }
+
+    // [{id, value, keys}]
+    let add = [];
+    // [{id, keys}]
+    let remove = [];
+
+    let ids = new Set([
+      ...Object.keys(newRemoteState.items),
+      ...Object.keys(this._remoteState.items),
+    ]);
+
+    // Diff the old state (this._remoteState) with the new state (newRemoteState) to determine
+    // which keys have been added/removed.
+    for (let id of ids) {
+      let suppression = this._addSuppressions.get(id);
+      if (id in newRemoteState.items) {
+        let {keys, value} = newRemoteState.items[id];
+        keys = Object.keys(keys);
+        if (id in this._remoteState.items) {
+          // 1. possibly updated remotely.
+          let oldkeys = Object.keys(this._remoteState.items[id].keys);
+          let {add: addKeys, remove: removeKeys} = setDiff(oldkeys, keys);
+          if (suppression) {
+            addKeys = addKeys.filter(key => !suppression.keys.has(key));
+          }
+          if (addKeys.length) {
+            // If there's a local add for this id, retain the existing value,
+            // to preserve the legacy behavior of updating in place.
+            if (this._localChanges.has(id) && this._localChanges.get(id).add.length > 0 && this._model.has(id)) {
+              value = this._model.getValue(id);
+            }
+            let effective = this._model.add(id, value, addKeys);
+            add.push({value, keys: addKeys, effective});
+          }
+          if (removeKeys.length) {
+            let value = this._model.getValue(id);
+            let effective = this._model.remove(id, removeKeys);
+            remove.push({value, keys: removeKeys, effective});
+          }
+        } else {
+          // 2. added remotely.
+          let addKeys = keys;
+          if (suppression) {
+            addKeys = addKeys.filter(key => !suppression.keys.has(key));
+          }
+          if (addKeys.length) {
+            // If there's a local add for this id, retain the existing value,
+            // to preserve the legacy behavior of updating in place.
+            if (this._localChanges.has(id) && this._localChanges.get(id).add.length > 0 && this._model.has(id)) {
+              value = this._model.getValue(id);
+            }
+            let effective = this._model.add(id, value, keys);
+            add.push({value, keys, effective});
+          }
+        }
+      } else {
+        // 3. Removed remotely.
+        let {keys, value} = this._remoteState.items[id];
+        keys = Object.keys(keys);
+        let effective = this._model.remove(id, keys);
+        remove.push({value, keys: keys, effective});
+      }
+    }
+
+    // Clean up any suppressions that have reached the barrier version.
+    for (let [id, {barrierVersion}] of this._addSuppressions.entries()) {
+      if (newRemoteState.version >= barrierVersion) {
+        this._addSuppressions.delete(id);
+      }
+    }
+
+    this._version = Math.max(this._version + 1, newRemoteState.version);
+    this._remoteState = newRemoteState;
+    this._resolveInitialized();
+
+    if (add.length == 0 && remove.length == 0) {
+      // The update had no effect.
+      return;
+    }
+
+    this._fire('change', {
+      originatorId: null,
+      version: this._version,
+      add,
+      remove,
     });
   }
 
   async get(id) {
-    let set = this.dataSnapshot.val().data;
-    let encId = FirebaseStorageProvider.encodeKey(id);
-    if (set)
-      return set[encId];
-    return undefined;
+    await this._initialized;
+    return this._model.getValue(id);
   }
 
-  async remove(id) {
-    return realTransaction(this.reference, data => {
-      if (!data.data)
-        data.data = {};
-      let encId = FirebaseStorageProvider.encodeKey(id);
-      data.data[encId] = null;
-      data.version += 1;
-      return data;
-    });
+  async remove(id, keys=[], originatorId=null) {
+    if (keys.length == 0) {
+      keys = this._model.getKeys(id);
+    }
+
+    // 1. Apply the change to the local model.
+    let value = this._model.getValue(id);
+    // TODO: These keys might already have been removed (concurrently).
+    // We should exit early in that case.
+    let effective = this._model.remove(id, keys);
+    this._version++;
+
+    // 2. Notify listeners.
+    this._fire('change', {remove: [{value, keys, effective}], version: this._version, originatorId});
+
+    // 3. Add this modification to the set of local changes that need to be persisted.
+    if (!this._localChanges.has(id)) {
+      this._localChanges.set(id, {add: [], remove: []});
+    }
+    let localChange = this._localChanges.get(id);
+    for (let key of keys) {
+      localChange.remove.push(key);
+    }
+
+    // 4. Wait for the changes to persist.
+    await this._persistChanges();
   }
 
-  async store(entity) {
-    return realTransaction(this.reference, data => {
-      if (!data.data)
-        data.data = {};
-      let encId = FirebaseStorageProvider.encodeKey(entity.id);
-      if (data.data[encId] && JSON.stringify(data.data[encId]) == JSON.stringify(entity))
+  async store(value, keys, originatorId=null) {
+    assert(keys != null && keys.length > 0, 'keys required');
+    // fixme: should we wait for the inital state before storing a new value?
+
+    // 1. Apply the change to the local model.
+    let id = value.id;
+    let effective = this._model.add(value.id, value, keys);
+    this._version++;
+
+    // 2. Notify listeners.
+    this._fire('change', {add: [{value, keys, effective}], version: this._version, originatorId});
+
+    // 3. Add this modification to the set of local changes that need to be persisted.
+    if (!this._localChanges.has(id)) {
+      this._localChanges.set(id, {add: [], remove: []});
+    }
+    let localChange = this._localChanges.get(id);
+    for (let key of keys) {
+      localChange.add.push(key);
+    }
+
+    // 4. Wait for persistence to complete.
+    await this._persistChanges();
+  }
+
+  get _hasLocalChanges() {
+    return this._localChanges.size > 0;
+  }
+
+  async _persistChangesImpl() {
+    while (this._localChanges.size > 0) {
+      let changesPersisted;
+      let result = await realTransaction(this.reference, data => {
+        // Updating the inital state with no items.
+        if (!data.items) {
+          // fixme: assert version is 0?
+          data.items = {};
+        }
+        data.version = Math.max(data.version + 1, this._version);
+        // Record the changes that we're attempting to write. We'll remove
+        // these from this._localChanges if this transaction commits.
+        changesPersisted = new Map();
+        for (let [id, {add, remove}] of this._localChanges.entries()) {
+          changesPersisted.set(id, {add: [...add], remove: [...remove]});
+          // Don't add keys that we have also removed.
+          add = add.filter(key => !(remove.indexOf(key) >= 0));
+          let item = data.items[id] || {value: null, keys: {}};
+          for (let key of add) {
+            item.keys[key] = data.version;
+          }
+          for (let key of remove) {
+            delete item.keys[key];
+          }
+          if (add.length > 0) {
+            assert(this._model.has(id));
+            item.value = this._model.getValue(id);
+          }
+          let keys = Object.keys(item.keys);
+          if (keys.length > 0) {
+            data.items[id] = item;
+          } else {
+            delete data.items[id];
+          }
+        }
         return data;
-      data.data[encId] = entity;
-      data.version += 1;
-      return data;
-    });
-  }
-
-  async cloneFrom(store) {
-    let {list, version} = await store.toListWithVersion();
-    await this._fromListWithVersion(list, version);
-  }
-
-  async _fromListWithVersion(list, version) {
-    return realTransaction(this.reference, data => {
-      if (!data.data)
-        data.data = {};
-      list.forEach(item => {
-        let encId = FirebaseStorageProvider.encodeKey(item.id);
-        data.data[encId] = item;
       });
-      data.version = version;
-      return data;
-    });
+
+      // We're assuming that firebase won't deliver updates between the
+      // transaction committing and the result promise resolving :/
+
+      assert(result.committed);
+      let data = result.snapshot.val();
+      for (let [id, {add, remove}] of changesPersisted.entries()) {
+        add = new Set(add);
+        remove = new Set(remove);
+        let localChange = this._localChanges.get(id);
+        localChange.add = localChange.add.filter(key => !add.has(key));
+        localChange.remove = localChange.remove.filter(key => !remove.has(key));
+        if (localChange.add.length == 0 && localChange.remove.length == 0) {
+          this._localChanges.delete(id);
+        }
+        if (this._addSuppressions.has(id)) {
+          let suppression = this._addSuppressions.get(id);
+          for (let key of add) {
+            suppression.keys.add(key);
+          }
+          suppression.barrierVersion = data.version;
+        } else {
+          this._addSuppressions.set(id, {
+            keys: add,
+            barrierVersion: data.version,
+          });
+        }
+      }
+    }
   }
 
   async toList() {
-    if (this.dataSnapshot == undefined) {
-      return new Promise((resolve, reject) => {
-        this._pendingGets.push(resolve);
-      }).then(data => this._setToList(data.data));
-    }
-    return this._setToList(this.dataSnapshot.val().data);
-  }
-
-  async toListWithVersion() {
-    if (this.dataSnapshot == undefined) {
-      return new Promise((resolve, reject) => {
-        this._pendingGets.push(resolve);
-      }).then(data => ({list: this._setToList(data.data), version: data.version}));
-    }
-    let data = this.dataSnapshot.val();
-    return {list: this._setToList(data.data), version: data.version};
-  }
-
-  _setToList(set) {
-    let list = [];
-    if (set) {
-      for (let key in set) {
-        list.push(set[key]);
-      }
-    }
-    return list;
+    await this._initialized;
+    return this._model.toList();
   }
 }
