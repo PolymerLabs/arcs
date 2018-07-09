@@ -349,10 +349,10 @@ ${this._slotsToManifestString()}
       } else if (constraint.var.variable.resolution.isVariable) {
         // TODO(shans): revisit how this should be done,
         // consider reusing tryMergeTypeVariablesWith(other).
-        assert(TypeChecker._tryMergeConstraints(constraint.var, {
-          type: constraint.value, direction: constraint.direction}));
+        if (!TypeChecker.processTypeList(constraint.var, [{
+            type: constraint.value, direction: constraint.direction}])) return false;
       } else {
-        assert(constraint.var.variable.resolution.equals(constraint.value));
+        if (!constraint.var.variable.resolution.equals(constraint.value)) return false;
       }
     }
 
