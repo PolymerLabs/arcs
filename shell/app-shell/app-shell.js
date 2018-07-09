@@ -1,6 +1,6 @@
 // libs
 import Xen from '../components/xen/xen.js';
-import ArcsUtils from './lib/arcs-utils.js';
+import Arcs from './lib/arcs.js';
 import LinkJack from './lib/link-jack.js';
 import Const from './constants.js';
 import Firebase from './elements/cloud-data/firebase.js';
@@ -206,14 +206,14 @@ class AppShell extends Xen.Debug(Xen.Base, log) {
         this._setKey('*');
       }
     }
-    if (key && !Const.SHELLKEYS[key] && plans && pendingSuggestion) {
-      log('instantiating pending launcher suggestion');
+    if (pendingSuggestion && key && !Const.SHELLKEYS[key] && plans && plans.plans.length) {
+      log('matching pending launcher suggestion');
       // TODO(sjmiles): need a better way to match the suggestion
       state.suggestion = plans.plans.find(s => s.descriptionText === pendingSuggestion.descriptionText);
       if (state.suggestion) {
         state.pendingSuggestion = null;
       } else {
-        log('failed to instantiate pending launcher suggestion, will retry');
+        log('failed to match pending launcher suggestion against plans, will retry');
       }
     }
   }
@@ -244,8 +244,9 @@ class AppShell extends Xen.Debug(Xen.Base, log) {
     log('registered new key, begin arc rebuild procedure');
     this._setState({arc: null, key});
   }
-  async _describeArc(arc, description) {
-    this._setState({description: await ArcsUtils.describeArc(arc) || description});
+  async _describeArc(arc, fallback) {
+    const description = (await new Arcs.Description(arc).getArcDescription()) || fallback;
+    this._setState({description});
   }
   _onStateData(e, data) {
     this._setState({[e.type]: data});

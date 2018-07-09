@@ -82,16 +82,14 @@ class ArcHost extends Xen.Debug(Xen.Base, log) {
     return loader;
   }
   async _createContext(loader, content) {
-    let context;
     // TODO(sjmiles): do we need to be able to `config` this value?
-    const manifestFileName = './in-memory.manifest';
+    const fileName = './in-memory.manifest';
     try {
-      context = await ArcsUtils.parseManifest(manifestFileName, content, loader);
+      return await Arcs.Manifest.parse(content, {loader, fileName});
     } catch (x) {
       warn(x);
-      context = ArcsUtils.parseManifest(manifestFileName, '', loader);
+      return await Arcs.Manifest.parse('', {loader, fileName});
     }
-    return context;
   }
   _teardownArc(arc) {
     if (arc) {

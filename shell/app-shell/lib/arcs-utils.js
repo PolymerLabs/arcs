@@ -60,11 +60,6 @@ const ArcsUtils = {
       'worker-entry.js': `${shellRoot}/${lib}/worker-entry.js`
     };
   },
-  async parseManifest(fileName, content, loader) {
-    return await Arcs.Manifest.parse(content, {loader, fileName});
-    //return await Arcs.Manifest.parse(content,
-    //  {id: null, fileName, loader, registry: null, position: {line: 1, column: 0}});
-  },
   getUrlParam(name) {
     // TODO(sjmiles): memoize url
     const url = new URL(document.location.href);
@@ -89,42 +84,6 @@ const ArcsUtils = {
     const nouns = ['ninja', 'chair', 'pancake', 'statue', 'unicorn', 'rainbows', 'laser', 'senor', 'bunny', 'captain', 'nibblets', 'cupcake', 'carrot', 'gnomes', 'glitter', 'potato', 'salad', 'marjoram', 'curtains', 'beets', 'toiletries', 'exorcism', 'stick figures', 'mermaid eggs', 'sea barnacles', 'dragons', 'jellybeans', 'snakes', 'dolls', 'bushes', 'cookies', 'apples', 'ice cream', 'ukulele', 'kazoo', 'banjo', 'opera singer', 'circus', 'trampoline', 'carousel', 'carnival', 'locomotive', 'hot air balloon', 'praying mantis', 'animator', 'artisan', 'artist', 'colorist', 'inker', 'coppersmith', 'director', 'designer', 'flatter', 'stylist', 'leadman', 'limner', 'make-up artist', 'model', 'musician', 'penciller', 'producer', 'stenographer', 'set decorator', 'silversmith', 'teacher', 'auto mechanic', 'beader', 'bobbin boy', 'clerk of the chapel', 'filling station attendant', 'foreman', 'maintenance engineering', 'mechanic', 'miller', 'moldmaker', 'panel beater', 'patternmaker', 'plant operator', 'plumber', 'sawfiler', 'shop foreman', 'soaper', 'stationary engineer', 'wheelwright', 'woodworkers'];
     let rl = list => list[Math.floor(Math.random()*list.length)];
     return `${rl(adjectives)}-${rl(nouns)}`.replace(/ /g, '-');
-  },
-  async describeArc(arc) {
-    const combinedSuggestion = await new Arcs.Description(arc).getArcDescription();
-    return combinedSuggestion || '';
-  },
-  removeUndefined(object) {
-    return JSON.parse(JSON.stringify(object));
-  },
-  // Returns the context handle id for the given params.
-  getContextHandleId(type, tags, prefix) {
-    return ''
-      + (prefix ? `${prefix}_` : '')
-      // TODO(sjmiles): formats for these ids and tags are worthy of bikeshedding,
-      // so I'm leaving this here as it's an unsettled question.
-      // For now, remove the type information from the id string, because it doesn't
-      // seem worth the ROI and it's less human-readable.
-      //+ (`${type.toString().replace(' ', '-')}_`).replace(/[\[\]]/g, '!')
-      + ((tags && [...tags].length) ? `${[...tags].sort().join('-').replace(/#/g, '')}` : '')
-      ;
-  },
-  _getHandleDescription(name, tags, user, owner) {
-    let proper = (user === owner) ? 'my' : `${owner}'s`;
-    if (tags && tags.length) {
-      return `${proper} ${tags[0]}`;
-    }
-    if (name) {
-      return `${proper} ${name}`;
-    }
-  },
-  async _requireHandle(arc, type, name, id, tags) {
-    let store = arc.context.findStoreById(id);
-    if (!store) {
-      store = await arc.context.createStore(type, name, id, tags);
-      log('synthesized handle', id, tags);
-    }
-    return store;
   },
   metaTypeFromType(type) {
     return JSON.stringify(type ? type.toLiteral() : null);
@@ -157,18 +116,6 @@ const ArcsUtils = {
     } else {
       data && store.set(data);
     }
-  },
-  // usage: this._debouncer = debounce(this._debouncer, task, 100);
-  debounce(key, action, delay) {
-    if (key) {
-      clearTimeout(key);
-    }
-    if (action && delay) {
-      return setTimeout(action, delay);
-    }
-  },
-  html(strings, ...values) {
-    return (strings[0] + values.map((v, i) => v + strings[i + 1]).join('')).trim();
   }
 };
 

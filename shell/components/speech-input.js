@@ -59,24 +59,25 @@ class SpeechInput extends Xen.Base {
     this._setState({recognition});
   }
   start() {
-    const {recognition, recognizing, finalTranscript} = this._state;
-    if (recognition) {
+    const {recognition, wontStart} = this._state;
+    if (recognition && !wontStart) {
       this._start();
     } // else complain
   }
   _start() {
-    const {recognition, recognizing, duration, finalTranscript} = this._state;
+    const {recognition, recognizing, duration} = this._state;
     if (recognizing) {
       recognition.stop();
-      return;
+    } else {
+      try {
+        recognition.start();
+        this._setState({finalTranscript: '', ignoreOnEnd: false});
+        this._fire('start');
+        setTimeout(() => recognition.stop(), duration*1000);
+      } catch (x) {
+        this._setState({wontStart: x});
+      }
     }
-    recognition.start();
-    this._setState({
-      finalTranscript: '',
-      ignoreOnEnd: false
-    });
-    this._fire('start');
-    setTimeout(() => recognition.stop(), duration*1000);
   }
   _onStartClick() {
     this.start();

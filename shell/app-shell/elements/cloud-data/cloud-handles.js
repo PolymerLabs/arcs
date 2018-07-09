@@ -7,10 +7,10 @@ The complete set of contributors may be found at http://polymer.github.io/CONTRI
 Code distributed by Google as part of the polymer project is also
 subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
 */
-import Firebase from './firebase.js';
-import Const from '../../constants.js';
-import ArcsUtils from '../../lib/arcs-utils.js';
 import Xen from '../../../components/xen/xen.js';
+import ArcsUtils from '../../lib/arcs-utils.js';
+import Const from '../../constants.js';
+import Firebase from './firebase.js';
 
 const log = Xen.logFactory('CloudHandles', '#aa00c7');
 const warn = Xen.logFactory('CloudHandles', '#aa00c7', 'warn');
@@ -36,15 +36,29 @@ class CloudHandles extends Xen.Debug(Xen.Base, log) {
   }
   _scanHandles(key, arc, roots) {
     const paths = {};
-    [...arc._storeTags].forEach(tagEntry => this._handleToPath(paths, key, tagEntry));
+    [...arc._storeTags].forEach(tagEntry => this._handleToPaths(paths, key, tagEntry));
     this._updateWatches(arc, roots, paths);
   }
-  _handleToPath(paths, key, [localHandle, tags]) {
-    if (tags && tags.size > 0 && !tags.has('nosync')) {
-      const contextId = ArcsUtils.getContextHandleId(localHandle.type, tags);
-      const path = `arcs/${key}/${Const.DBLABELS.handles}/${contextId}`;
-      paths[path] = localHandle;
-    }
+  _handleToPaths(paths, key, [localHandle, tags]) {
+    const {type} = localHandle;
+    if (type.isCollection || type.isEntity) {
+      // TODO(sjmiles): the contextId has to be unique for this arc, but also persistent
+      // across subsequent (step-driven) Arc reloads. I haven't found a way to produce
+      // such an id without relying on tags
+      if (tags && tags.size > 0 && !tags.has('nosync')) {
+        const contextId = this._computeContextHandleId(type, tags);
+        const path = `arcs/${key}/${Const.DBLABELS.handles}/${contextId}`;
+        paths[path] = localHandle;
+        log('choosing to watch ', path, localHandle.id);
+      }
+     }
+   }
+  _computeContextHandleId(type, tags, prefix) {
+    return ''
+      + (prefix ? `${prefix}-` : '')
+      //+ (`${type.toPrettyString()}`.replace(/ /g, '_'))
+      + ((tags && [...tags].length) ? `${[...tags].sort().join('-').replace(/#/g, '')}` : '')
+      ;
   }
   _updateWatches(arc, roots, paths) {
     // remove paths that are already watched and remove watches that are not paths
@@ -103,7 +117,7 @@ class CloudHandles extends Xen.Debug(Xen.Base, log) {
     }
     log(`local handle change [${path}]`, change.data);
     const node = Firebase.db.child(`${path}/data`);
-    node.set(change.data ? ArcsUtils.removeUndefined(change.data) : null);
+    node.set(change.data ? this._removeUndefined(change.data) : null);
   }
   // sets
   _unwatchSet(path) {
@@ -142,14 +156,14 @@ class CloudHandles extends Xen.Debug(Xen.Base, log) {
     log('localSetChange', change);
     // TODO(sjmiles): we cannot have '.' or '/' in FB key names, and some of these ids contain
     // relative filepaths.
-    // This is an asymmetric (lossy) solution that simply removes those characters.
+    // This is an asymmetric (lossy) solution that simply removes/alters those characters.
     // Maybe we could encode these strings and decode them on other side (e.g. `btoa/atob`), but it's problematic
-    // for existing unencoded data.
-    const cleanKey = key => key.replace(/[./]/g, '%');
+    // for existing unencoded data (as opposed to this solution which only affects keys that have bad characters).
+    const cleanKey = key => key.replace(/[./]/g, '');
     if (change.add) {
       change.add.forEach(record => {
         log('trigger: local add', record);
-        Firebase.db.child(`${path}/data/${cleanKey(record.id)}`).set(ArcsUtils.removeUndefined(record));
+        Firebase.db.child(`${path}/data/${cleanKey(record.id)}`).set(this._removeUndefined(record));
       });
     } else if (change.remove) {
       change.remove.forEach(record => {
@@ -161,6 +175,9 @@ class CloudHandles extends Xen.Debug(Xen.Base, log) {
     }
   }
   // low-level
+  _removeUndefined(object) {
+    return JSON.parse(JSON.stringify(object));
+  }
   _addWatch(path, kind, handler) {
     const id = `${path}::${kind}`;
     const {watches} = this._state;

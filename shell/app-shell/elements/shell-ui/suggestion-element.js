@@ -37,11 +37,10 @@ const template = html`
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: var(--suggestion-wrap);
-      /*white-space: normal;*/
     }
   </style>
 
-  <div on-click="_onClick">
+  <div>
     <slot on-mouseover="_onMouseover" on-mouseout="_onMouseout"></slot>
   </div>
 `;
@@ -59,7 +58,9 @@ class SuggestionElement extends Xen.Base {
     }
   }
   _didRender() {
-    this.setAttribute('title', this.textContent);
+    this.setAttribute('title', this.innerText);
+    // observe clicks at the host
+    this.onclick = () => this._onClick();
   }
   _onClick() {
     const {plan} = this._props;

@@ -156,8 +156,17 @@ class FbUserContextElement extends Xen.Debug(Xen.Base, log) {
       if (store) {
         // compute description
         const typeName = store.type.toPrettyString().toLowerCase();
-        store.description = ArcsUtils._getHandleDescription(typeName, store.tags, 'my', ownername);
+        store.description = this._getStoreDescription(typeName, store.tags, 'my', ownername);
       }
+    }
+  }
+  _getStoreDescription(name, tags, user, owner) {
+    let proper = (user === owner) ? 'my' : `${owner}'s`;
+    if (tags && tags.length) {
+      return `${proper} ${tags[0]}`;
+    }
+    if (name) {
+      return `${proper} ${name}`;
     }
   }
   async _removeShare(context, id) {

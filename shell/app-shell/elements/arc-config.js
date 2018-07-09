@@ -10,7 +10,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
 import Xen from '../../components/xen/xen.js';
 import Const from '../constants.js';
-import Utils from '../lib/arcs-utils.js';
+import ArcUtils from '../lib/arcs-utils.js';
 
 class ArcConfig extends Xen.Base {
   static get observedAttributes() {
@@ -26,16 +26,16 @@ class ArcConfig extends Xen.Base {
       this._fire('config', state.config);
     }
     // TODO(sjmiles): persisting user makes it hard to share by copying URL
-    Utils.setUrlParam('user', null);
+    ArcUtils.setUrlParam('user', null);
     if (userid && userid !== oldProps.userid) {
       localStorage.setItem(Const.LOCALSTORAGE.user, userid);
     }
     if (key && key !== oldProps.key) {
-      Utils.setUrlParam('arc', !Const.SHELLKEYS[key] ? key : '');
+      ArcUtils.setUrlParam('arc', !Const.SHELLKEYS[key] ? key : '');
     }
     // TODO(sjmiles): persisting search term is confusing in practice, avoid for now
     // if (search && search !== oldProps.search) {
-    //   Utils.setUrlParam('search', search);
+    //   ArcUtils.setUrlParam('search', search);
     // }
   }
   _configure() {

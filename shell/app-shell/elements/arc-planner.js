@@ -40,9 +40,12 @@ class ArcPlanner extends Xen.Debug(Xen.Base, log) {
     }
     if (arc) {
       let {planificator} = state;
-      if (planificator && changed('arc')) {
-        planificator.dispose();
-        planificator = null;
+      if (changed('arc')) {
+        state.pendingPlans = [];
+        if (planificator) {
+          planificator.dispose();
+          planificator = null;
+        }
       }
       if (!planificator) {
         planificator = this._createPlanificator(arc);
