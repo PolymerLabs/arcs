@@ -236,8 +236,10 @@ class ShellUi extends Xen.Debug(Xen.Base, log) {
   _onChooseSuggestion(e, suggestion) {
     e.stopPropagation();
     this._setState({barState: 'peek'});
-    // TODO(sjmiles): wait for animation to complete to reduce jank
-    setTimeout(() => this._fire('suggestion', suggestion), 300);
+    // TODO(sjmiles): if we go async here, we have a tendency to send
+    // stale suggestions to the listener, so we use a sync fire
+    // ... watch out for jank in the animation caused by the sync work
+    this._fire('suggestion', suggestion);
   }
   _onSelectUser(e, user) {
     this._fire('select-user', user.id);
@@ -263,7 +265,7 @@ class ShellUi extends Xen.Debug(Xen.Base, log) {
     // don't re-plan until typing has stopped for this length of time
     const delay = 500;
     const commit = () => this._commitSearch(search);
-    this._searchDebounce = ArcsUtils.debounce(this._searchDebounce, commit, delay);
+    this._searchDebounce = Xen.debounce(this._searchDebounce, commit, delay);
   }
   _onClearSearch(e) {
     this._commitSearch('');
