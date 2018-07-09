@@ -1,6 +1,6 @@
 // libs
 import Xen from '../components/xen/xen.js';
-import ArcsUtils from './lib/arcs-utils.js';
+import Arcs from './lib/arcs.js';
 import LinkJack from './lib/link-jack.js';
 import Const from './constants.js';
 import Firebase from './elements/cloud-data/firebase.js';
@@ -244,8 +244,9 @@ class AppShell extends Xen.Debug(Xen.Base, log) {
     log('registered new key, begin arc rebuild procedure');
     this._setState({arc: null, key});
   }
-  async _describeArc(arc, description) {
-    this._setState({description: await ArcsUtils.describeArc(arc) || description});
+  async _describeArc(arc, fallback) {
+    const description = (await new Arcs.Description(arc).getArcDescription()) || fallback;
+    this._setState({description});
   }
   _onStateData(e, data) {
     this._setState({[e.type]: data});

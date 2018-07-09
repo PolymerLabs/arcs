@@ -117,7 +117,7 @@ class CloudHandles extends Xen.Debug(Xen.Base, log) {
     }
     log(`local handle change [${path}]`, change.data);
     const node = Firebase.db.child(`${path}/data`);
-    node.set(change.data ? ArcsUtils.removeUndefined(change.data) : null);
+    node.set(change.data ? this._removeUndefined(change.data) : null);
   }
   // sets
   _unwatchSet(path) {
@@ -163,7 +163,7 @@ class CloudHandles extends Xen.Debug(Xen.Base, log) {
     if (change.add) {
       change.add.forEach(record => {
         log('trigger: local add', record);
-        Firebase.db.child(`${path}/data/${cleanKey(record.id)}`).set(ArcsUtils.removeUndefined(record));
+        Firebase.db.child(`${path}/data/${cleanKey(record.id)}`).set(this._removeUndefined(record));
       });
     } else if (change.remove) {
       change.remove.forEach(record => {
@@ -175,6 +175,9 @@ class CloudHandles extends Xen.Debug(Xen.Base, log) {
     }
   }
   // low-level
+  _removeUndefined(object) {
+    return JSON.parse(JSON.stringify(object));
+  }
   _addWatch(path, kind, handler) {
     const id = `${path}::${kind}`;
     const {watches} = this._state;
