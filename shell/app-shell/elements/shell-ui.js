@@ -21,10 +21,8 @@ import '../../components/xen-tools/xen-explorer.js';
 
 // libs
 import Xen from '../../components/xen/xen.js';
-import ArcsUtils from '../lib/arcs-utils.js';
 
 // strings
-import AppIcon from '../../apps/common/icon.svg.js';
 import {StyleSheet} from './shell-ui.css.js';
 
 // templates
@@ -92,6 +90,7 @@ class ShellUi extends Xen.Debug(Xen.Base, log) {
   }
   _getInitialState() {
     return {
+      showHintFor: 3500,
       intent: 'start',
       barState: 'over',
       toolState: 'main',
@@ -109,6 +108,14 @@ class ShellUi extends Xen.Debug(Xen.Base, log) {
     if (intent === 'start') {
       if (state.barState !== 'open') {
         state.barState = props.showhint ? 'hint' : 'over';
+      }
+      if (state.barState === 'hint') {
+        // only leave hint open for a short time, then hide it automagically
+        this._hintDebounce = Xen.debounce(this._hintDebounce, () => {
+          if (state.barState === 'hint') {
+            this._setState({barState: 'peek', intent: 'auto'});
+          }
+        }, state.showHintFor);
       }
     }
     // `auto` intent means minimziation vs hint is a calculation
@@ -156,7 +163,6 @@ class ShellUi extends Xen.Debug(Xen.Base, log) {
   }
   _didRender(props, {barState, toolState}, oldProps, oldState) {
     if (barState === 'hint' && oldState.barState !== 'hint') {
-    //if (toolState === 'search' && oldState.toolState !== 'search') {
       const input = this.host.querySelector('input');
       // TODO(sjmiles): without timeout, rendering gets destroyed (Blink bug?)
       setTimeout(() => {
@@ -169,7 +175,6 @@ class ShellUi extends Xen.Debug(Xen.Base, log) {
     if (this._state.toolsOpen) {
       this._setState({toolsOpen: false});
     } else {
-      //this._fire('showhint', false);
       this._setState({barState: 'peek', intent: 'auto'});
     }
   }
@@ -183,6 +188,8 @@ class ShellUi extends Xen.Debug(Xen.Base, log) {
     this._setState({barState: wasAnchorClick ? 'peek' : 'open'});
   }
   _onBarEnter(e) {
+    // stop waiting to autohide the hint
+    Xen.debounce(this._hintDebounce);
     if (this._state.barState === 'peek') {
       let barState = 'over';
       if (this._props.showhint && this._state.toolState === 'main') {
