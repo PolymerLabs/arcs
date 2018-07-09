@@ -206,14 +206,14 @@ class AppShell extends Xen.Debug(Xen.Base, log) {
         this._setKey('*');
       }
     }
-    if (key && !Const.SHELLKEYS[key] && plans && pendingSuggestion) {
-      log('instantiating pending launcher suggestion');
+    if (pendingSuggestion && key && !Const.SHELLKEYS[key] && plans && plans.plans.length) {
+      log('matching pending launcher suggestion');
       // TODO(sjmiles): need a better way to match the suggestion
       state.suggestion = plans.plans.find(s => s.descriptionText === pendingSuggestion.descriptionText);
       if (state.suggestion) {
         state.pendingSuggestion = null;
       } else {
-        log('failed to instantiate pending launcher suggestion, will retry');
+        log('failed to match pending launcher suggestion against plans, will retry');
       }
     }
   }
