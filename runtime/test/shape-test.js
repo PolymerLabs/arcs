@@ -226,4 +226,74 @@ describe('shape', function() {
       assert.equal(canWriteSuperset.entitySchema.name, 'Burrito');
     }
   });
+
+  it('allows checking whether particle matches a shape', async () => {
+    let manifest = await Manifest.parse(`
+      schema Thing
+      schema Instrument extends Thing
+      schema Guitar extends Instrument
+      schema Gibson extends Guitar
+      schema LesPaul extends Gibson
+
+      particle Lower
+        in Instrument input
+
+      particle Upper
+        out Gibson output
+
+      shape HostedShape
+        inout ~a *
+      particle Host
+        host HostedShape hosted
+        inout ~a item
+
+      recipe
+        create as item
+        Lower
+          input = item
+        Upper
+          output = item
+        Host
+          item = item
+
+      particle ThingCandidate
+        inout Thing thingy
+      particle InstrumentCandidate
+        inout Instrument instrument
+      particle GuitarCandidate
+        inout Guitar guitar
+      particle GibsonCandidate
+        inout Gibson gibson
+      particle LesPaulCandidate
+        inout LesPaul lp
+    `);
+
+    let recipe = manifest.recipes[0];
+    recipe.normalize();
+
+    let hostParticle = recipe.particles.find(p => p.name === 'Host');
+    let hostedShape = hostParticle.connections['hosted'].type.interfaceShape;
+
+    let check = name => hostedShape.particleMatches(manifest.findParticleByName(name));
+
+    // inout Thing is not be compatible with in Instrument input
+    // inout LesPaul is not be compatible with out Gibson output
+    // Remaining 3 candidates are compatible with Lower and Upper particles.
+    assert.isFalse(check('ThingCandidate'));
+    assert.isTrue(check('InstrumentCandidate'));
+    assert.isTrue(check('GuitarCandidate'));
+    assert.isTrue(check('GibsonCandidate'));
+    assert.isFalse(check('LesPaulCandidate'));
+
+    assert.isTrue(!!hostedShape.restrictType(
+        manifest.findParticleByName('GuitarCandidate')));
+
+    // After restricting the type with inout Guitar,
+    // inout Instrument and inout Gibson are no longer viable matches.
+    assert.isFalse(check('ThingCandidate'));
+    assert.isFalse(check('InstrumentCandidate'));
+    assert.isTrue(check('GuitarCandidate'));
+    assert.isFalse(check('GibsonCandidate'));
+    assert.isFalse(check('LesPaulCandidate'));
+  });
 });
