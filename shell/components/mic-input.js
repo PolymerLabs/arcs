@@ -22,11 +22,13 @@ class MicInput extends Xen.Base {
     }
   }
   _update(props, state) {
-    if (state.active && !state.recognizing) {
-      this._start();
+    if (state.active && !state.started) {
+      state.started = true;
+      this.start();
     }
     if (!state.active && state.recognizing) {
-      this._stop();
+      this.stop();
+      state.started = false;
     }
   }
   _render(props, state) {
@@ -46,24 +48,21 @@ class MicInput extends Xen.Base {
     this._setState({recognition});
   }
   start() {
-    const {recognition, recognizing, finalTranscript} = this._state;
+    const {recognition, recognizing} = this._state;
     if (recognition) {
-      this._start();
-    } // else complain
-  }
-  _start() {
-    const {recognition, recognizing, duration, finalTranscript} = this._state;
-    if (recognizing) {
-      recognition.stop();
-    } else {
-      recognition.start();
-      this._setState({
-        finalTranscript: '',
-        ignoreOnEnd: false
-      });
+      if (recognizing) {
+        recognition.stop();
+      } else {
+        try {
+          recognition.start();
+          this._setState({finalTranscript: '', ignoreOnEnd: false});
+        } catch (x) {
+          this._setState({wontStart: x});
+        }
+      }
     }
   }
-  _stop() {
+  stop() {
     const {recognition, recognizing, duration, finalTranscript} = this._state;
     if (recognizing) {
       recognition.stop();
