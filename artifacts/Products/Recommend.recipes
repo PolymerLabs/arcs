@@ -37,7 +37,7 @@ recipe &addFromWishlist
   create as choices
   Recommend
     population = wishlist
-    known = shortlist
+    known = shoplist
     recommendations = choices
   Chooser
     choices = choices
@@ -47,8 +47,4 @@ recipe &addFromWishlist
     others = choices
     hostedParticle = AlsoOn
     consume annotation as annotationSlot
-  //description `TEMP: addFromWishlist`
 
-//recipe
-//  &showList
-//  &addFromWishlist

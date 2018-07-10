@@ -1,3 +1,4 @@
+// @license
 // Copyright (c) 2017 Google Inc. All rights reserved.
 // This code may only be used under the BSD style license found at
 // http://polymer.github.io/LICENSE.txt
@@ -5,5 +6,10 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import '../../../artifacts/People/Person.schema'
-import '../../../artifacts/People/Avatar.schema'
+particle Chooser in 'source/Chooser.js'
+  in [~a] choices
+  inout [~a] resultList
+  consume action
+    provide set of annotation
+      handle choices
+  description `choose from ${choices}`

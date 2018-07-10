@@ -6,7 +6,11 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-particle VrSphere in 'source/VrSphere.js'
-  consume root
-    provide action
-  description `Create Sphere`
+import 'Product.schema'
+
+particle Recommend in 'source/Recommend.js'
+  in [Product] known
+  in [Product] population
+  out [Product] recommendations
+  description `recommend products from ${known} and ${population}`
+    recommendations `products recommended based on ${known}._name_ and ${population}._name_`

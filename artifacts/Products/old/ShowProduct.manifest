@@ -1,0 +1,18 @@
+// @license
+// Copyright (c) 2017 Google Inc. All rights reserved.
+// This code may only be used under the BSD style license found at
+// http://polymer.github.io/LICENSE.txt
+// Code distributed by Google as part of this project is also
+// subject to an additional IP rights grant found at
+// http://polymer.github.io/PATENTS.txt
+
+import 'Product.schema'
+
+particle ShowProduct in 'source/ShowProduct.js'
+  in Product product
+  affordance dom
+  affordance dom-touch
+  consume item
+  // TODO: uncomment when 'Show products ... and Choose products' recipe can use the nested 'showList'
+  // recipe and its description, instead of ShowCollection+Multiplexer explicit combination.
+  // description `show product`

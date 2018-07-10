@@ -43,7 +43,7 @@ const ArcsUtils = {
     worker.postMessage({id: `${id}:inner`, base: map}, [channel.port1]);
     return channel.port2;
   },
-  createUrlMap(shellRoot) {
+  createUrlMap(arcsRoot) {
     // Module import not available in workers yet, we have to use the build for now
     //const lib = document.URL.includes('debug') ? 'source' : 'build';
     const lib = 'build';
@@ -52,12 +52,14 @@ const ArcsUtils = {
       // side with fully-qualified URL when loading from worker context
       '/': '/',
       './': './',
-      'assets': `${shellRoot}/assets`,
-      'https://$shell': `${shellRoot}`,
-      // BC
-      'https://$cdn': `${shellRoot}`,
+      'assets': `${arcsRoot}/shell/assets`,
+      'https://$shell': `${arcsRoot}`,
       // TODO(sjmiles): map must always contain (explicitly, no prefixing) a mapping for `worker-entry-cdn.js`
-      'worker-entry.js': `${shellRoot}/${lib}/worker-entry.js`
+      'worker-entry.js': `${arcsRoot}/shell/${lib}/worker-entry.js`,
+      // BC
+      'https://$cdn': `${arcsRoot}`,
+      'https://$cdn/assets': `${arcsRoot}/shell/assets`,
+      'https://$shell/assets': `${arcsRoot}/shell/assets`
     };
   },
   getUrlParam(name) {

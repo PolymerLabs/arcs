@@ -42,7 +42,7 @@ class ArcConfig extends Xen.Base {
     const params = (new URL(document.location)).searchParams;
     return {
       affordance: 'dom',
-      root: params.get('root') || window.shellPath,
+      root: params.get('root') || window.arcsPath,
       manifestPath: params.get('manifest'),
       solo: params.get('solo'),
       defaultManifest: window.defaultManifest,

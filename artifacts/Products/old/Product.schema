@@ -6,6 +6,12 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-particle VrOtherFlower in 'source/VrOtherFlower.js'
-  consume soil2
-  description `Create Other Flower`
+import '../Things/Thing.schema'
+
+schema Product extends Thing
+  Text category
+  Text seller
+  Text price
+  Number shipDays
+  description `product`
+    plural `products`

@@ -135,7 +135,8 @@ class SettingsPanel extends Xen.Debug(Xen.Base, log) {
       nopersist: Boolean(Const.SHELLKEYS[key])
     };
     if (arc && friends) {
-      render.friendsList = this._renderFriends(friends, url => arc._loader._resolve(url));
+      const resolver = url => arc._loader._resolve(url);
+      render.friendsList = this._renderFriends(friends, resolver);
     }
     return [props, render];
   }

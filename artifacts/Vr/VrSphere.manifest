@@ -6,6 +6,7 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-particle VrFlower in 'source/VrFlower.js'
-  consume soil
-  description `Create Flower`
+particle VrSphere in 'source/VrSphere.js'
+  consume root
+    provide action
+  description `Create VR Sphere`
