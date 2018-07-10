@@ -8,7 +8,7 @@
 
 import 'Restaurant.schema'
 import '../Events/Event.schema'
-import '../Arcs/Description.schema'
+import '../Common/Description.schema'
 
 particle ReservationForm in 'source/ReservationForm.js'
   in Restaurant selected

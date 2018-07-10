@@ -6,11 +6,16 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
+import '../People/Person.schema'
 import 'Product.schema'
 
-particle Recommend in 'source/Recommend.js'
-  in [Product] known
-  in [Product] population
-  out [Product] recommendations
-  description `recommend products from ${known} and ${population}`
-    recommendations `products recommended based on ${known}._name_ and ${population}._name_`
+particle Interests in 'source/Interests.js'
+  in [Product] list
+  consume postamble
+  description `find out about Claire's interests`
+
+// Recommendations based on Claire's interest in field hockey.
+recipe
+  map #wishlist as wishlist
+  Interests
+    list <- wishlist

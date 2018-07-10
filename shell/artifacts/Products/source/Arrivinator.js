@@ -10,13 +10,13 @@
 
 'use strict';
 
-defineParticle(({DomParticle}) => {
+defineParticle(({DomParticle, html}) => {
 
-  let template = `
-    <div style%="{{style}}"><span>{{arrival}}</span></div>
-    `.trim();
+  const template = html`
+    <div style="padding: 4px 0;" style%="{{style}}"><span>{{arrival}}</span></div>
+  `;
 
-  let daysToMs = 24*60*60*1000;
+  const daysToMs = 24*60*60*1000;
 
   return class extends DomParticle {
     get template() {
@@ -36,12 +36,13 @@ defineParticle(({DomParticle}) => {
         // create a Date-only Date (with a time of 00:00:00etc)
         const estimated = new Date(new Date().toDateString());
         estimated.setDate(estimated.getDate() + product.shipDays);
+        arrival = `Arrives ${estimated.toDateString()}`;
         if (estimated > needed) {
-          style = {color: 'orange', fontWeight: 'bold', fontStyle: 'normal'};
+          arrival += ` which may be too late.`;
+          style = {color: 'darkred', /*fontWeight: 'bold',*/ fontStyle: 'normal'};
         } else {
           style = {color: 'green'};
         }
-        arrival = `Arrives ${estimated.toDateString()}`;
       } else {
         arrival = `No shipping info.`;
       }

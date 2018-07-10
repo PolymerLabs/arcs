@@ -8,26 +8,25 @@
 
 'use strict';
 
-defineParticle(({DomParticle}) => {
+defineParticle(({DomParticle, html}) => {
 
-  let template = `
-<style>
-  [gift-list] {
-    padding: 8px 0;
-    border-bottom: 2px solid #eeeeee;
-  }
-  [gift-list] input {
-    color: #666666;
-    font-size: 1.1em;
-    font-family: inherit;
-    border: none;
-  }
-</style>
-
+  const template = html`
 <div gift-list>
+  <style>
+    [gift-list] {
+      padding: 4px 0;
+      border-bottom: 2px solid #eeeeee;
+    }
+    [gift-list] input {
+      color: #666666;
+      font-size: 1.1em;
+      font-family: inherit;
+      border: none;
+    }
+  </style>
   for <span>{{person}}</span>'s <span title="{{occasionDate}}">{{occasion}}</span> • <input type="date" value="{{date}}">
 </div>
-    `.trim();
+  `;
 
   return class extends DomParticle {
     get template() {

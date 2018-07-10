@@ -10,25 +10,27 @@
 
 'use strict';
 
-defineParticle(({DomParticle}) => {
-  let template = `
-    <div hidden="{{notAlsoOn}}">
-      <span>Also on:</span> <span unsafe-html="{{choices.description}}"></span>
-    </div>
-    `.trim();
+defineParticle(({DomParticle, html}) => {
+
+  const template = html`
+
+<div hidden="{{notAlsoOn}}" style="padding: 4px 0;">
+  <span>Also on:</span> <span unsafe-html="{{choices.description}}"></span>
+</div>
+
+  `.trim();
 
   return class extends DomParticle {
     get template() {
       return template;
     }
     shouldRender(props) {
-      return !!props && !!props.choices;
+      return Boolean(props.choices);
     }
-    render(props) {
-      let {product} = props;
-      let notAlsoOn = !product || !props.choices.find(c => c.name === product.name);
+    render({product, choices}) {
+      let notAlsoOn = !product || !choices.find(c => c.name === product.name);
       return {
-        notAlsoOn,
+        notAlsoOn
       };
     }
   };

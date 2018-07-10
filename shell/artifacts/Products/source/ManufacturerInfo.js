@@ -10,34 +10,26 @@
 
 'use strict';
 
-defineParticle(({DomParticle}) => {
+defineParticle(({DomParticle, html}) => {
 
-  let template = `
-    <div style="/*font-size: 0.85em;*/ /*font-weight: bold;*/ font-style: italic">{{msg}}</div>
-    `.trim();
+  const template = html`
+    <div style="padding: 4px 0;">{{message}}</div>
+  `;
 
   return class extends DomParticle {
     get template() {
       return template;
     }
     shouldRender(props) {
-      return !!props && !!props.product;
+      return Boolean(props && props.product);
     }
-    render(props) {
-      let {product} = props;
-      let msg = '';
-      switch (product.name) {
-        case 'Power Tool Set':
-          msg = `Newer version available: ${product.name} v2.`;
-          break;
-        case 'Guardian of the Galaxy Figure':
-          msg = `Manufacturer recommends a more appropriate gift for a 13yo.`;
-          break;
-        case 'Book: How to Draw':
-          msg = `Award-winning book!`;
-          break;
-      }
-      return {msg};
+    render({product}) {
+      const messages = {
+        'Power Tool Set': `Newer version available: ${product.name} v2.`,
+        'Guardian of the Galaxy Figure': `Manufacturer recommends a more appropriate gift for a 13yo.`,
+        'Book: How to Draw': `Award-winning book!`
+      };
+      return {message: messages[product.name]};
     }
   };
 });

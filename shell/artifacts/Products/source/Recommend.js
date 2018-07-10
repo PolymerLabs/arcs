@@ -11,12 +11,13 @@
 defineParticle(({Particle}) => {
   return class Recommend extends Particle {
     setHandles(handles) {
-      this._handles = handles;
+      this.handles = handles;
     }
     onHandleSync(handle, model) {
       if (handle.name === 'population') {
+        const output = this.handles.get('recommendations');
         for (let i = 0; i < 3 && i < model.length; i++) {
-          this._handles.get('recommendations').store(model[i]);
+          output.store(model[i]);
         }
         this.relevance = 9;
       }

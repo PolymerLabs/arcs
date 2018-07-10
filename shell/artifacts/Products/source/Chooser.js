@@ -10,11 +10,11 @@
 
 'use strict';
 
-defineParticle(({DomParticle, resolver}) => {
+defineParticle(({DomParticle, html, resolver, log}) => {
 
   const host = `[chooser]`;
 
-  const productStyles = `
+  const productStyles = html`
     <style>
       ${host} > x-list [row] {
         display: flex;
@@ -42,10 +42,6 @@ defineParticle(({DomParticle, resolver}) => {
       ${host} > x-list [col1] > img {
         max-width: 64px;
         max-height: 64px;
-
-      }
-      ${host} > x-list [name] {
-
       }
       ${host} > x-list [category] {
         color: #cccccc;
@@ -62,7 +58,7 @@ defineParticle(({DomParticle, resolver}) => {
     </style>
       `;
 
-    let styles = `
+    let styles = html`
 <style>
   ${host} {
     padding: 0 16px;
@@ -76,8 +72,6 @@ defineParticle(({DomParticle, resolver}) => {
     height: 0;
   }
   ${host} [head] {
-    /*display: flex;
-    align-items: center;*/
     padding: 16px 0;
     color: #555555;
     font-size: 0.8em;
@@ -98,15 +92,13 @@ defineParticle(({DomParticle, resolver}) => {
 </style>
   `;
 
-  let productTemplate = `
+  let productTemplate = html`
 <template>
   <div item>
     <div row>
       <div col0>
         <div name title="{{name}}">{{name}}</div>
-
         <div> <span price>{{price}}</span><span seller>{{seller}}</span></div>
-
         <div><button events key="{{index}}" on-click="_onChooseValue">Add</button></div>
       </div>
       <div col1>
@@ -118,38 +110,34 @@ defineParticle(({DomParticle, resolver}) => {
 </template>
   `;
 
-  let template = `
+  let template = html`
+<div chooser>
 ${styles}
 ${productStyles}
-<div chooser>
   <div chevron>▲</div>
   <div head>{{choices.description}}</div>
   <x-list items="{{items}}">
     ${productTemplate}
   </x-list>
 </div>
-    `.trim();
+  `;
 
   return class Chooser extends DomParticle {
     get template() {
       return template;
     }
-    willReceiveProps(props) {
-      let result = [...difference(props.choices, props.resultList)];
+    shouldRender({choices, resultList}) {
+      return Boolean(choices && resultList);
+    }
+    render({choices, resultList}, state) {
+      let result = [...difference(choices, resultList)];
       if (result.length > 0) {
         this.relevance = 10;
       }
-      this._setState({
-        values: result
-      });
-    }
-    shouldRender(props, state) {
-      return Boolean(state.values && state.values.length);
-    }
-    render(props, state) {
+      state.values = result;
       return {
-        items: state.values.map(({rawData, id}, index) => {
-          return Object.assign(Object.assign({}, rawData), {
+        items: result.map(({rawData, id}, index) => {
+          return Object.assign({}, rawData, {
             subId: id,
             image: resolver ? resolver(rawData.image) : rawData.image,
             index

@@ -11,21 +11,47 @@ defineParticle(({DomParticle, resolver, html}) => {
   let host = `show-list`;
 
   const template = html`
-<style>
-  [${host}] [items] p {
-    margin: 0;
-  }
-</style>
+
 <div ${host} style="padding: 8px;">
+  <style>
+    [${host}] {
+      max-width: 400px;
+      margin: 0 auto;
+    }
+    [${host}] > [items] {
+      background-color: white;
+    }
+    [${host}] > [items] > [item] {
+      padding: 16px 0;
+      border-top: 1px solid #eeeeee;
+    }
+    [${host}] > [items] > [item]:last-child {
+      border-bottom: 1px solid #eeeeee;
+    }
+    [${host}] div[slotid="annotation"] {
+      font-size: 0.75em;
+    }
+    [${host}] > [items] p {
+      margin: 0;
+    }
+  </style>
+
+  <div slotid="preamble"></div>
+  <div items>{{items}}</div>
+  <div slotid="action"></div>
+  <div slotid="postamble"></div>
+
   <template items>
-    <div>
+    <div item>
       <div slotid="item" subid="{{id}}" key="{{id}}" on-click="_onSelect"></div>
-      <div slotid="action" subid="{{id}}"></div>
+      <!-- <div slotid="action" subid="{{id}}"></div> -->
+      <div slotid="annotation" subid="{{id}}"></div>
     </div>
   </template>
-  <div items>{{items}}</div>
+
 </div>
-    `.trim();
+
+  `;
 
   return class extends DomParticle {
     get template() {

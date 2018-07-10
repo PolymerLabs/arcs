@@ -20,24 +20,42 @@ particle ItemMultiplexer in 'source/Multiplexer.js'
 particle List in 'source/List.js'
   in [~a] items
   consume root
+    provide preamble
     must provide set of item
-    provide set of action
-  description `list that can contain ${items}`
-
-particle ContentList in 'source/List.js'
-  in [~a] items
-  consume content
-    must provide set of item
-    provide set of action
+      handle items
+    provide set of annotation
+      handle items
+    provide action
+      handle items
+    provide postamble
   description `list that can contain ${items}`
 
 particle SelectableList in 'source/List.js'
   inout [~a] items
   inout ~a selected
   consume root
+    provide preamble
     must provide set of item
-    provide set of action
+      handle items
+    provide set of annotation
+      handle items
+    provide action
+      handle items
+    provide postamble
   description `list that can contain ${items} with selection`
+
+particle ContentList in 'source/List.js'
+  in [~a] items
+  consume content
+    provide preamble
+    must provide set of item
+      handle items
+    provide set of annotation
+      handle items
+    provide action
+      handle items
+    provide postamble
+  description `list that can contain ${items}`
 
 // tile lists
 

@@ -10,38 +10,44 @@
 
 'use strict';
 
-defineParticle(({DomParticle}) => {
+defineParticle(({DomParticle, html}) => {
 
-  let template = `
-<x-list items="{{items}}">
-  <template>
-    <div unsafe-html="{{caption}}"></div>
-  </template>
-</x-list>
-    `.trim();
+  const template = html`
+
+<style>
+  [interests] hr {
+    border: 1px none #eeeeee;
+    border-top-style: solid;
+  }
+</style>
+
+<div interests>
+  <x-list items="{{items}}">
+    <template>
+      <div unsafe-html="{{caption}}"></div>
+    </template>
+  </x-list>
+</div>
+
+  `;
 
   return class extends DomParticle {
     get template() {
       return template;
     }
-    willReceiveProps(props) {
-      if (props.list) {
-        let items = [];
-        props.list.forEach(item => {
-          switch (item.name) {
-            case 'Field Hockey Stick':
-              items.push({caption: '<br><br><hr><h2>Field Hockey</h2><i>... is a sport played on a field.</i><hr><br><br>'});
-              break;
-          }
-        });
-        this._setState({items});
-      }
+    shouldRender({list}) {
+      return Boolean(list);
     }
-    shouldRender(props, state) {
-      return Boolean(state.items);
-    }
-    render(props, state) {
-      return {items: state.items};
+    render({list}) {
+      let items = [];
+      list.forEach(item => {
+        switch (item.name) {
+          case 'Field Hockey Stick':
+            items.push({caption: '<br><br>Claire`s Interests<hr><h2>Field Hockey</h2><i>... is hockey played on a field. You may require a stick.</i><hr><br><br>'});
+            break;
+        }
+      });
+      return {items};
     }
   };
 

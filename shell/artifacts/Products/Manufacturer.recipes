@@ -6,10 +6,20 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import 'Product.schema'
-import '../Things/Thing.schema'
+import '../Common/Multiplexer.manifest'
 
-particle AlsoOn in 'source/AlsoOn.js'
-  in Thing product
-  in [Thing] choices
+import 'Product.schema'
+
+particle ManufacturerInfo in 'source/ManufacturerInfo.js'
+  in Product product
   consume annotation
+  description `check manufacturer information`
+
+// Check manufacturer information for products.
+recipe ManufacturerInfo
+  use #shoplist as shoplist
+  Multiplexer
+    list = shoplist
+    hostedParticle = ManufacturerInfo
+
+

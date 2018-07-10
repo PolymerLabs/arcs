@@ -6,14 +6,12 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import '../Arcs/Description.schema'
+import 'Description.schema'
 
 particle ShowCollection in 'source/ShowCollection.js'
   in [~a] collection
   out [Description] descriptions
-  affordance dom
-  affordance dom-touch
-  consume master #root
+  consume root
     provide action
       handle collection
     provide preamble

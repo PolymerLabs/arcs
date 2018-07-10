@@ -12,9 +12,9 @@
 
 defineParticle(({DomParticle, html}) => {
 
-  let template = html`
-    <div hidden="{{hidden}}">Alternate stores that can ship to you in time: <span>{{alternatives}}</span></div>
-    `;
+  const template = html`
+    <div hidden="{{hidden}}" style="padding: 4px 0;">Alternate stores that can ship to you in time: <span>{{alternatives}}</span></div>
+  `;
 
   return class extends DomParticle {
     get template() {
@@ -32,14 +32,10 @@ defineParticle(({DomParticle, html}) => {
       if (props.product.shipDays) {
         // create a date-only Date (with a time of 00:00:00etc)
         const estimated = new Date(new Date().toDateString());
-
         estimated.setDate(estimated.getDate() + product.shipDays);
-
         hidden = estimated <= needed;
       }
-
       const alternatives = ['<not yet implemented>'].join(', ');
-
       return {
         alternatives,
         hidden
