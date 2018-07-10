@@ -36,7 +36,6 @@ class SystemKey extends KeyBase {
 }
 
 let __storageCache = {};
-let highlander;
 
 export class SystemStorage {
   constructor(arcId) {
@@ -60,7 +59,6 @@ export class SystemStorage {
       return null;
     this._memoryMap[key.toString()] = provider;
     console.log(`system-storage: created a system-provider : arcId:[${this._arcId}], key:[${key.toString()}]`, provider);
-    highlander = provider;
     return provider;
   }
   async connect(id, type, keyString) {
@@ -118,15 +116,12 @@ class SystemCollection extends SystemStorageProvider {
   async _require() {
     if (!this._initialized) {
       this._initialized = true;
-      //const entity = new this._entityClass({systemitude: 100});
-      //this.store(entity);
       this.store({
         id: 0,
         rawData: {
           name: 'Live from System Storage!'
         }
       });
-      //this._items.set('key0', new this._entityClass({systemitude: 100}));
     }
     return true;
   }
@@ -183,7 +178,6 @@ class SystemVariable extends SystemStorageProvider {
   constructor(type, arcId, name, id, key) {
     super(type, arcId, name, id, key);
     this._stored = null;
-    this._require();
   }
   clone() {
     let variable = new SystemVariable(this._type, this._arcId, this.name, this.id);
