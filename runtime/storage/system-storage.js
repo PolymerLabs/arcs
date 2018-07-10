@@ -36,6 +36,7 @@ class SystemKey extends KeyBase {
 }
 
 let __storageCache = {};
+let highlander;
 
 export class SystemStorage {
   constructor(arcId) {
@@ -59,23 +60,26 @@ export class SystemStorage {
       return null;
     this._memoryMap[key.toString()] = provider;
     console.log(`system-storage: created a system-provider : arcId:[${this._arcId}], key:[${key.toString()}]`, provider);
+    highlander = provider;
     return provider;
   }
   async connect(id, type, keyString) {
-    //let key = new SystemKey(keyString);
-    //let arcId = key.arcId;
-    let truncatedId = `${id.split(':').slice(0, -1).join(':')}:`;
-    console.log(`system-storage: attempting to connect: id:[${id}], keyString:[${keyString}]`, truncatedId);
-    let arcId = truncatedId;
-    if (arcId !== this._arcId.toString()) {
-      if (__storageCache[arcId] == undefined)
-        return null;
-      return __storageCache[arcId].connect(id, type, keyString);
-    }
-    if (this._memoryMap[keyString] == undefined)
-      return null;
-    // TODO assert types match?
-    return this._memoryMap[keyString];
+    return this.construct(id, type, keyString);
+    // return highlander;
+    // //let key = new SystemKey(keyString);
+    // //let arcId = key.arcId;
+    // let truncatedId = `${id.split(':').slice(0, -1).join(':')}:`;
+    // console.log(`system-storage: attempting to connect: id:[${id}], keyString:[${keyString}]`, truncatedId);
+    // let arcId = truncatedId;
+    // if (arcId !== this._arcId.toString()) {
+    //   if (__storageCache[arcId] == undefined)
+    //     return null;
+    //   return __storageCache[arcId].connect(id, type, keyString);
+    // }
+    // if (this._memoryMap[keyString] == undefined)
+    //   return null;
+    // // TODO assert types match?
+    // return this._memoryMap[keyString];
   }
   parseStringAsKey(string) {
     return new SystemKey(string);
