@@ -119,7 +119,7 @@ ${style}
     get template() {
       return template;
     }
-    getInitialState() {
+    _getInitialState() {
       return {
         selected: 1
       };
@@ -136,8 +136,14 @@ ${style}
       const chosen = [items, recent, starred, shared][selected || 0];
       chosen.sort((a, b) => a.touched > b.touched ? -1 : a.touched < b.touched ? 1 : 0);
       log(chosen);
+      // method 1: left-to-right, top-to-bottom
+      // chosen.forEach((item, i) => {
+      //   columns[i % 2].push(item);
+      // });
+      // method 2: top-to-bottom, left-to-right
+      const pivot = chosen.length / 2;
       chosen.forEach((item, i) => {
-        columns[i % 2].push(item);
+        columns[i >= pivot ? 1 : 0].push(item);
       });
       return {
         columnA: {
@@ -157,8 +163,8 @@ ${style}
         starred: [],
         recent: [],
       };
-      let firstTouch = Infinity;
-      arcs.forEach((a, i) => {
+      const byTime = arcs.slice().sort((a, b) => a.touched > b.touched ? -1 : a.touched < b.touched ? 1 : 0);
+      byTime.forEach((a, i) => {
         if (!a.deleted) {
           let model = this._renderArc(a);
           result.items.push(model);
@@ -168,18 +174,8 @@ ${style}
           if (a.share > 1) {
             result.shared.push(model);
           }
-          if (a.touched) {
-            firstTouch = Math.min(firstTouch, a.touched);
-          }
-        }
-      });
-      // times in ms
-      const hours = 60 * 60 * 1000;
-      const recent = 1 * hours;
-      arcs.forEach((a, i) => {
-        if (!a.deleted) {
-          if (a.touched && a.touched - firstTouch < recent) {
-            result.recent.push(this._renderArc(a));
+          if (result.recent.length < 6) {
+            result.recent.push(model);
           }
         }
       });
