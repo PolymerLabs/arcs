@@ -311,6 +311,9 @@ function test(args) {
     // now we skip including shell tests in the normal sigh test flow and intend
     // to instead run them via a separate 'npm test' command.
     if (fullPath.startsWith(path.normalize(`${dir}/shell/`))) return false;
+    // TODO(sjmiles): `artifacts` was moved from `arcs\shell\` to `arcs`, added
+    // this statement to match the above filter.
+    if (fullPath.startsWith(path.normalize(`${dir}/artifacts/`))) return false;
     const isSelectedTest = options.manual == fullPath.includes('manual_test');
     return /-tests?.js$/.test(fullPath) && isSelectedTest;
   });

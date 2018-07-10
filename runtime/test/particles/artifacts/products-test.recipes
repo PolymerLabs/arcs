@@ -6,11 +6,11 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import '../../../../shell/artifacts/Common/ShowCollection.manifest'
-import '../../../../shell/artifacts/Common/Multiplexer.manifest'
-import '../../../../shell/artifacts/Products/ProductFilter.manifest'
-import '../../../../shell/artifacts/Products/ProductIsBook.manifest'
-import '../../../../shell/artifacts/Products/ShowProduct.manifest'
+import '../../../../artifacts/Common/ShowCollection.manifest'
+import '../../../../artifacts/Common/Multiplexer.manifest'
+import '../../../../artifacts/Products/test/ProductFilter.manifest'
+import '../../../../artifacts/Products/test/ProductIsBook.manifest'
+import '../../../../artifacts/Products/test/ShowProduct.manifest'
 
 // Filter books and display them.
 recipe
@@ -19,7 +19,7 @@ recipe
   map 'mylist' as mylist
   create as books
   ShowCollection
-    consume master
+    consume root
       provide item as itemSlot
   Multiplexer
     hostedParticle = ShowProduct

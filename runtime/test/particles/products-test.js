@@ -35,8 +35,8 @@ describe('products test', function() {
 
     helper.slotComposer
         .newExpectations()
-          .expectRenderSlot('ShowCollection', 'master', {contentTypes: ['template']})
-          .expectRenderSlot('ShowCollection', 'master', {contentTypes: ['model'], verify: (content) => {
+          .expectRenderSlot('ShowCollection', 'root', {contentTypes: ['template']})
+          .expectRenderSlot('ShowCollection', 'root', {contentTypes: ['model'], verify: (content) => {
             let verified = content.model && content.model.hasItems
                 && content.model.items['$template'].length > 0
                 && 1 == content.model.items.models.length;

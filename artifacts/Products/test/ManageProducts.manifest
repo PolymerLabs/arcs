@@ -6,7 +6,7 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import 'Product.schema'
+import '../Product.schema'
 
 particle ManageProducts in 'source/ManageProducts.js'
   ManageProducts(inout [Product] list)

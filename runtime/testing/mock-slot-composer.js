@@ -94,7 +94,8 @@ export class MockSlotComposer extends SlotComposer {
         contentTypes: options.contentTypes,
         isOptional: options.isOptional,
         hostedParticle: options.hostedParticle,
-        verifyComplete: options.verify
+        verifyComplete: options.verify,
+        ignoreUnexpected: options.ignoreUnexpected
       });
     }
     return this;
@@ -134,7 +135,7 @@ export class MockSlotComposer extends SlotComposer {
           && e.isOptional == expectation.isOptional;
     });
     if (!current) {
-      current = {type: 'render', particleName: expectation.particleName, slotName: expectation.slotName, hostedParticle: expectation.hostedParticle, isOptional: expectation.isOptional,
+      current = {type: 'render', particleName: expectation.particleName, slotName: expectation.slotName, hostedParticle: expectation.hostedParticle, isOptional: expectation.isOptional, ignoreUnexpected: expectation.ignoreUnexpected,
                  toString: () => `render:${expectation.isOptional ? '  optional' : ' '} ${expectation.particleName} ${expectation.slotName} ${expectation.hostedParticle} ${current.contentTypes}`};
       this.expectQueue.push(current);
     }
@@ -195,7 +196,7 @@ export class MockSlotComposer extends SlotComposer {
   }
 
   async renderSlot(particle, slotName, content) {
-    // console.log(`    renderSlot ${particle.name} ${((names) => names.length > 0 ? `(${names.join(',')}) ` : '')(this._getHostedParticleNames(particle))}: ${slotName} - ${Object.keys(content).join(', ')}`);
+    //console.log(`    renderSlot ${particle.name} ${((names) => names.length > 0 ? `(${names.join(',')}) ` : '')(this._getHostedParticleNames(particle))}: ${slotName} - ${Object.keys(content).join(', ')}`);
     assert.isAbove(this.expectQueue.length, 0,
       `Got a renderSlot from ${particle.name}:${slotName} (content types: ${Object.keys(content).join(', ')}), but not expecting anything further.`);
 

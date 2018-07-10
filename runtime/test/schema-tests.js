@@ -16,7 +16,7 @@ import {Schema} from '../schema.js';
 describe('schema', function() {
   let loader = new StubLoader({
     'Product.schema': `
-        import './shell/artifacts/Things/Thing.schema'
+        import './artifacts/Things/Thing.schema'
         schema Product extends Thing
           Text category
           Text seller

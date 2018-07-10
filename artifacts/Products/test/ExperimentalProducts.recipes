@@ -7,7 +7,7 @@
 // http://polymer.github.io/PATENTS.txt
 
 ////////////////////////////////////////////
-particle List in '../Common/source/List.js'
+particle List in '../../Common/source/List.js'
   List(in [~a] items)
   consume root
     provide set of item
@@ -18,7 +18,7 @@ shape MuxerShape
   HostedParticleShape(in ~a)
   consume item
 
-particle Muxer in '../Common/source/Multiplexer.js'
+particle Muxer in '../../Common/source/Multiplexer.js'
   Muxer(host MuxerShape hostedParticle, in [~a] list)
   consume set of item
   description `${hostedParticle} for ${list}`
