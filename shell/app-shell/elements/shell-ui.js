@@ -209,11 +209,7 @@ class ShellUi extends Xen.Debug(Xen.Base, log) {
     }
   }
   _collapseBar() {
-    let barState = 'peek';
-    if (this._props.showhint) {
-      barState = 'hint';
-    }
-    this._setState({barState, intent: 'auto'});
+    this._setState({barState: 'peek', intent: 'auto'});
   }
   _onSearchClick(e) {
     e.stopPropagation();
