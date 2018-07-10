@@ -8,14 +8,14 @@
 schema SystemSchema
   Text name
 
-store MySystem of SystemSchema at 'system://my-system-key/with/details'
+store MySystem of SystemSchema 'system-store-id' at 'system://my-system-key/with/details'
 
 particle System in 'source/System.js'
   in SystemSchema system
   consume root
 
 recipe System
-  use MySystem as system
+  map 'system-store-id' as system
   System
     system = system
   description `system test`
