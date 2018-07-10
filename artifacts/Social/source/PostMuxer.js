@@ -22,6 +22,9 @@ defineParticle(({MultiplexerDomParticle, log}) => {
       value =
           value.replace('{{other_connections}}', other.connections.join('\n    '));
       // log(`PostMuxer interpolated recipe: `, value);
+      // TODO(sjmiles): artifacts folder moved up one level, use this replace
+      // for backward-compatibility with old stores
+      value = value.replace(/\.\/\.\.\/\.\.\/artifacts/g, './../../../artifacts');
       return value;
     }
 
