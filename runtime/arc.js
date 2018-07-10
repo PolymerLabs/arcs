@@ -230,7 +230,7 @@ ${this.activeRecipe.toString()}`;
       context
     });
     manifest.stores.forEach(store => {
-      if (store.constructor.name == 'StorageStub')
+      if (store.constructor.name === 'StorageStub')
         store = store.inflate();
       arc._registerStore(store, manifest._storeTags.get(store));
     });
@@ -252,7 +252,7 @@ ${this.activeRecipe.toString()}`;
     return [...this.particleHandleMaps.values()].map(({spec}) => spec);
   }
 
-  _instantiateParticle(recipeParticle) {
+  async _instantiateParticle(recipeParticle) {
     let id = this.generateID('particle');
     let handleMap = {spec: recipeParticle.spec, handles: new Map()};
     this.particleHandleMaps.set(id, handleMap);
@@ -264,6 +264,9 @@ ${this.activeRecipe.toString()}`;
       }
       let handle = this.findStoreById(connection.handle.id);
       assert(handle, `can't find handle of id ${connection.handle.id}`);
+      if (handle.constructor.name === 'StorageStub') {
+        handle = await handle.inflate();
+      }
       this._connectParticleToHandle(id, recipeParticle, name, handle);
     }
 
@@ -401,7 +404,7 @@ ${this.activeRecipe.toString()}`;
       assert(store, `store '${recipeHandle.id}' was not found`);
     }
 
-    particles.forEach(recipeParticle => this._instantiateParticle(recipeParticle));
+    await Promise.all(particles.map(recipeParticle => this._instantiateParticle(recipeParticle)));
 
     if (this.pec.slotComposer) {
       // TODO: pass slot-connections instead
