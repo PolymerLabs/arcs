@@ -17,8 +17,8 @@ const log = Xen.logFactory('ArcPlanner', '#104a91');
 const error = Xen.logFactory('ArcPlanner', '#104a91', 'error');
 
 // proposed:
-// plans -> map of plans, generations
-// plan -> map of plans, generations, (simple-)plan
+// metaplans -> map of plans, generations
+// metaplan -> map of plans, generations, plan
 // suggestions -> filtered array of (simple-)plans
 // suggestion -> (simple-)plan
 
@@ -67,9 +67,9 @@ class ArcPlanner extends Xen.Debug(Xen.Base, log) {
     planificator.registerSuggestChangedCallback(suggestions => this._suggestionsChanged(suggestions));
     return planificator;
   }
-  _plansChanged(context, plan) {
-    this._fire('plans', context);
-    this._fire('plan', plan);
+  _plansChanged(metaplans, metaplan) {
+    this._fire('metaplans', metaplans);
+    this._fire('metaplan', metaplan);
   }
   _suggestionsChanged(suggestions) {
     this._fire('suggestions', suggestions);

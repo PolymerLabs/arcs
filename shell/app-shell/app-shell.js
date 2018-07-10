@@ -62,9 +62,9 @@ const template = html`
     arc="{{arc}}"
     search="{{search}}"
     suggestion="{{suggestion}}"
-    on-plans="_onStateData"
+    on-metaplans="_onStateData"
+    on-metaplan="_onStateData"
     on-suggestions="_onStateData"
-    on-plan="_onStateData"
     on-search="_onStateData"
   ></arc-planner>
 
@@ -88,8 +88,8 @@ const template = html`
     metadata="{{metadata}}"
     share="{{share}}"
     description="{{description}}"
-    plans="{{plans}}"
-    plan="{{plan}}"
+    plans="{{metaplans}}"
+    plan="{{metaplan}}"
     on-userid="_onStateData"
     on-user="_onStateData"
     on-users="_onStateData"
@@ -139,7 +139,7 @@ class AppShell extends Xen.Debug(Xen.Base, log) {
     this._updateDebugGlobals(state);
     this._updateConfig(state, oldState);
     this._updateKey(state, oldState);
-    this._updateDescription(state, oldState);
+    this._updateDescription(state);
     this._updateSuggestions(state, oldState);
     this._updateLauncher(state, oldState);
   }
@@ -177,27 +177,29 @@ class AppShell extends Xen.Debug(Xen.Base, log) {
           key,
           description: null,
           serialization: null,
-          plans: null,
+          metaplans: null,
           suggestions: null,
           suggestion: null,
-          plan: null
+          metaplan: null
         });
       }
     }
   }
-  _updateDescription(state, oldState) {
-    let {arc, description, plan} = state;
-    if (arc && plan && plan !== oldState.plan) {
+  _updateDescription(state) {
+    let {arc, description, metaplan, describedPlan} = state;
+    if (arc && metaplan && metaplan.plan && metaplan !== describedPlan) {
+      // remember we already described for this metaplan
+      state.describedPlan = metaplan;
       // arc has instantiated a plan so generate new description
       this._describeArc(arc, description);
     }
   }
   _updateLauncher(state, oldState) {
-    const {key, arc, plan, plans, suggestion, pendingSuggestion} = state;
+    const {key, metaplan, metaplans, suggestion, pendingSuggestion} = state;
     if (key === Const.SHELLKEYS.launcher) {
-      if (!suggestion && (!plan || !plan.plan) && plans && plans.plans.length) {
+      if (!suggestion && (!metaplan || !metaplan.plan) && metaplans && metaplans.plans && metaplans.plans.length) {
         // TODO(sjmiles): need a better way to find the launcher suggestion
-        state.suggestion = plans.plans.find(s => s.descriptionText === 'Arcs launcher.');
+        state.suggestion = metaplans.plans.find(s => s.descriptionText === 'Arcs launcher.');
       }
       else if (suggestion && suggestion !== oldState.suggestion) {
         log('suggestion registered from launcher, generate new arc (set key to *)');
@@ -206,10 +208,10 @@ class AppShell extends Xen.Debug(Xen.Base, log) {
         this._setKey('*');
       }
     }
-    if (pendingSuggestion && key && !Const.SHELLKEYS[key] && plans && plans.plans.length) {
+    if (pendingSuggestion && key && !Const.SHELLKEYS[key] && metaplans && metaplans.plans.length) {
       log('matching pending launcher suggestion');
       // TODO(sjmiles): need a better way to match the suggestion
-      state.suggestion = plans.plans.find(s => s.descriptionText === pendingSuggestion.descriptionText);
+      state.suggestion = metaplans.plans.find(s => s.descriptionText === pendingSuggestion.descriptionText);
       if (state.suggestion) {
         state.pendingSuggestion = null;
       } else {
@@ -223,10 +225,10 @@ class AppShell extends Xen.Debug(Xen.Base, log) {
     }
   }
   _render({}, state) {
-    const {userid, description, plans} = state;
+    const {userid, description, metaplans} = state;
     const render = {
       title: description,
-      glows: userid && (plans == null)
+      glows: userid && (metaplans == null)
     };
     return [state, render];
   }
