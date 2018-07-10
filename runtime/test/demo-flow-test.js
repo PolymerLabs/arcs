@@ -60,7 +60,8 @@ describe('demo flow', function() {
         // TODO: the optional Multiplexer2 call only appears if the optional AlsoOn calls happen.
         // But there is no way to currently express this dependency with the mock-slot-composer.
         //.expectRenderSlot('AlsoOn', 'annotation', {contentTypes: ['model'], times: 3, isOptional: true})
-        //.expectRenderSlot('Multiplexer2', 'annotation', {verify: helper.slotComposer.expectContentItemsNumber.bind(null, 3), isOptional: true});
+        //.expectRenderSlot('Multiplexer2', 'annotation', {verify: helper.slotComposer.expectContentItemsNumber.bind(null, 3), isOptional: true})
+        ;
     //await helper.acceptSuggestion({particles: ['ShowCollection', 'Multiplexer', 'Chooser', 'Recommend', 'Multiplexer2']});
     await helper.acceptSuggestion({particles: ['List', 'ItemMultiplexer']});
 
