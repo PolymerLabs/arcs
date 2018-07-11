@@ -158,7 +158,9 @@ export class Arc {
       }
       let key = this._storageProviderFactory.parseStringAsKey(handle.storageKey);
       let handleTags = [...this._storeTags.get(handle)].map(a => `#${a}`).join(' ');
+      // TODO(sjmiles): decouple this bit into protocol classes?
       switch (key.protocol) {
+        case 'system':
         case 'firebase':
           handles += `store Store${id++} of ${handle.type.toString()} '${handle.id}' @${handle._version} ${handleTags} at '${handle.storageKey}'\n`;
           break;
@@ -166,7 +168,6 @@ export class Arc {
           resources += `resource Store${id}Resource\n`;
           let indent = '  ';
           resources += indent + 'start\n';
-
           let serializedData = (await handle.serializedData()).map(a => {
             if (a == null)
               return null;
@@ -229,7 +230,7 @@ ${this.activeRecipe.toString()}`;
       context
     });
     manifest.stores.forEach(store => {
-      if (store.constructor.name == 'StorageStub')
+      if (store.constructor.name === 'StorageStub')
         store = store.inflate();
       arc._registerStore(store, manifest._storeTags.get(store));
     });
@@ -251,7 +252,7 @@ ${this.activeRecipe.toString()}`;
     return [...this.particleHandleMaps.values()].map(({spec}) => spec);
   }
 
-  _instantiateParticle(recipeParticle) {
+  async _instantiateParticle(recipeParticle) {
     let id = this.generateID('particle');
     let handleMap = {spec: recipeParticle.spec, handles: new Map()};
     this.particleHandleMaps.set(id, handleMap);
@@ -263,6 +264,9 @@ ${this.activeRecipe.toString()}`;
       }
       let handle = this.findStoreById(connection.handle.id);
       assert(handle, `can't find handle of id ${connection.handle.id}`);
+      if (handle.constructor.name === 'StorageStub') {
+        handle = await handle.inflate();
+      }
       this._connectParticleToHandle(id, recipeParticle, name, handle);
     }
 
@@ -407,7 +411,7 @@ ${this.activeRecipe.toString()}`;
       assert(store, `store '${recipeHandle.id}' was not found`);
     }
 
-    particles.forEach(recipeParticle => this._instantiateParticle(recipeParticle));
+    await Promise.all(particles.map(recipeParticle => this._instantiateParticle(recipeParticle)));
 
     if (this.pec.slotComposer) {
       // TODO: pass slot-connections instead
@@ -444,7 +448,7 @@ ${this.activeRecipe.toString()}`;
       storageKey = 'in-memory';
 
     let store = await this._storageProviderFactory.construct(id, type, storageKey);
-    assert(store, 'stopre with id ${id} already exists');
+    assert(store, 'store with id ${id} already exists');
     store.name = name;
 
     this._registerStore(store, tags);
@@ -452,6 +456,7 @@ ${this.activeRecipe.toString()}`;
   }
 
   _registerStore(store, tags) {
+    //if (this._storesById.has(store.id)) return;
     assert(!this._storesById.has(store.id), `Store already registered '${store.id}'`);
     tags = tags || [];
     tags = Array.isArray(tags) ? tags : [tags];

@@ -11,7 +11,7 @@ import './elements/arc-manifest.js';
 import './elements/arc-host.js';
 import './elements/arc-planner.js';
 import './elements/shell-ui.js';
-import './elements/shell-stores.js';
+//import './elements/shell-stores.js';
 import './elements/cloud-data.js';
 
 // templates

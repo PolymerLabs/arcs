@@ -36,11 +36,11 @@ class StorageStub {
     this.id = id;
     this.name = name;
     this.storageKey = storageKey;
-    this.storageProviderFactory;
+    this.storageProviderFactory = storageProviderFactory;
   }
 
-  inflate() {
-    return this.storageProviderFactory.connect(this.id, this.type, this.storageKey);
+  async inflate() {
+    return await this.storageProviderFactory.connect(this.id, this.type, this.storageKey);
   }
 }
 
@@ -769,8 +769,8 @@ ${e.message}
         connection.tags = connectionItem.target ? connectionItem.target.tags : [];
         let direction = {'->': 'out', '<-': 'in', '=': 'inout', 'consume': '`consume', 'provide': '`provide'}[connectionItem.dir];
         if (connection.direction) {
-          if (connection.direction != direction && 
-              direction != 'inout' && 
+          if (connection.direction != direction &&
+              direction != 'inout' &&
               !(connection.direction == 'host' && direction == 'in') &&
               !(connection.direction == '`consume' && direction == 'in') &&
               !(connection.direction == '`provide' && direction == 'out')
@@ -1003,7 +1003,7 @@ ${e.message}
     }
   }
   static async _createStore(manifest, type, name, id, tags, item) {
-    let store = await manifest.createStore(type, name, id, tags);
+    let store = await manifest.createStore(type, name, id, tags, item.source);
     store.source = item.source;
     store.description = item.description;
     return store;
