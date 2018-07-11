@@ -11,74 +11,58 @@
 
 import {assert} from '../platform/assert-web.js';
 
+// TODO: rename to SlotConsumer and move to slot/
 export class Slot {
-  constructor(consumeConn, arc) {
-    assert(consumeConn);
+  constructor(arc, consumeConn) {
     assert(arc);
-    this._consumeConn = consumeConn;
     this._arc = arc;
-    this._context = null;
+    this._consumeConn = consumeConn;
+    this._renderer = null; // SlotRenderer
+    this._providedSlotContexts = []; // SlotContext[]
+
     this.startRenderCallback = null;
     this.stopRenderCallback = null;
-    this._hostedSlotById = new Map();
   }
   get consumeConn() { return this._consumeConn; }
   get arc() { return this._arc; }
-  getContext() { return this._context; }
-  setContainer(container) { this._context = container; }
-  isSameContainer(container) { return this._context == container; }
+  get renderer() { return this._renderer; }
+  set renderer(renderer) { this._renderer = renderer; }
 
-  updateContainer(container) {
-    // do nothing, if container unchanged.
-    if ((!this.getContext() && !container) ||
-        (this.getContext() && container && this.isSameContainer(container))) {
-      return;
-    }
-
-    // update the container;
-    let wasNull = !this.getContext();
-    this.setContainer(container);
-    if (this.getContext()) {
-      if (wasNull) {
+  onContainerUpdate(container, originalContainer) {
+    if (Boolean(container) != Boolean(originalContainer)) {
+      if (container) {
         this.startRender();
+      } else {
+        this.stopRender();
       }
-    } else {
-      this.stopRender();
+    }
+    if (container != originalContainer) {
+      //assert(this._renderer, 'no renderer :(');
+      if (this.renderer) {
+        this.renderer.onContextContainerUpdate();
+      }
     }
   }
-  startRender() {
-    if (this.startRenderCallback) {
-      const slotName = this.consumeConn.name;
-      const particle = this.consumeConn.particle;
-      const context = this.getContext();
-      if (context.updateParticleName) {
-        context.updateParticleName(slotName, particle.name);
-      }
-      this.startRenderCallback({particle, slotName, contentTypes: this.constructRenderRequest()});
 
-      for (let hostedSlot of this._hostedSlotById.values()) {
-        if (hostedSlot.particle) {
-          // Note: hosted particle may still not be set, if the hosted slot was already created, but the inner recipe wasn't instantiate yet.
-          this.startRenderCallback({
-              particle: hostedSlot.particle,
-              slotName: hostedSlot.slotName,
-              // TODO(mmandlis): Only one of each type of hosted particles need to send the particle template.
-              // The problem is with rendering content arriving out of order - currently can't track all slots using the same
-              // template and render them after the template is uploaded.
-              contentTypes: this.constructRenderRequest(hostedSlot)
-          });
-        }
-      }
+  updateProvidedContexts() {
+    this._providedSlotContexts.forEach(providedContext => {
+      providedContext.container = this.renderer.getProvidedContainer(providedContext.name);
+    });
+  }
+
+  startRender() {
+    if (this.consumeConn && this.startRenderCallback) {
+      this.startRenderCallback({
+        particle: this.consumeConn.particle,
+        slotName: this.consumeConn.name,
+        contentTypes: this.constructRenderRequest()
+      });
     }
   }
 
   stopRender() {
-    if (this.stopRenderCallback) {
+    if (this.consumeConn && this.stopRenderCallback) {
       this.stopRenderCallback({particle: this.consumeConn.particle, slotName: this.consumeConn.name});
-
-      for (let hostedSlot of this._hostedSlotById.values()) {
-        this.stopRenderCallback({particle: hostedSlot.particle, slotName: hostedSlot.slotName});
-      }
     }
   }
 
@@ -92,45 +76,18 @@ export class Slot {
     return descriptions;
   }
 
-  addHostedSlot(hostedSlotId, hostedParticleName, hostedSlotName) {
-    assert(hostedSlotId, `Hosted slot ID must be provided`);
-    assert(!this._hostedSlotById.has(hostedSlotId), `Hosted slot ${hostedSlotId} already exists`);
-    this._hostedSlotById.set(hostedSlotId, {slotId: hostedSlotId, particleName: hostedParticleName, slotName: hostedSlotName});
-    return hostedSlotId;
-  }
-  getHostedSlot(hostedSlotId) {
-    return this._hostedSlotById.get(hostedSlotId);
-  }
-  findHostedSlot(hostedParticle, hostedSlotName) {
-    for (let hostedSlot of this._hostedSlotById.values()) {
-      if (hostedSlot.particle == hostedParticle && hostedSlot.slotName == hostedSlotName) {
-        return hostedSlot;
-      }
+  async setContent(content, handler) {
+    if (content && Object.keys(content).length > 0) {
+      content.descriptions = await this.populateHandleDescriptions();
     }
+    this.renderer.setContent(content, handler);
   }
-  initHostedSlot(hostedSlotId, hostedParticle) {
-    let hostedSlot = this.getHostedSlot(hostedSlotId);
-    assert(hostedSlot, `Hosted slot ${hostedSlotId} doesn't exist`);
-    assert(hostedSlot.particleName == hostedParticle.name,
-           `Unexpected particle name ${hostedParticle.name} for slot ${hostedSlotId}; expected: ${hostedSlot.particleName}`);
-    hostedSlot.particle = hostedParticle;
-    if (this.getContext() && this.startRenderCallback) {
-      this.startRenderCallback({
-          particle: hostedSlot.particle,
-          slotName: hostedSlot.slotName,
-          // TODO(mmandlis): Only one of each type of hosted particles need to send the particle template.
-          // The problem is with rendering content arriving out of order - currently can't track all slots using the same
-          // template and render them after the template is uploaded.
-          contentTypes: this.constructRenderRequest(hostedSlot)
-      });
-    }
-  }
-  formatHostedContent(hostedSlot, content) { return content; }
 
-  // Abstract methods.
-  async setContent(content, handler) {}
-  getInnerContainer(slotName) {}
-  constructRenderRequest(hostedSlot) {}
-  dispose() {}
-  static findRootContainers(container) {}
+  constructRenderRequest() {
+    return this.renderer.constructRenderRequest();
+  }
+
+  dispose() {
+    this.renderer && this.renderer.dispose();
+  }
 }

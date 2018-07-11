@@ -22,12 +22,13 @@ import {StorageProviderFactory} from '../storage/storage-provider-factory.js';
 
 let loader = new Loader();
 
-const slotComposer = new SlotComposer({rootContainer: 'test', affordance: 'mock'});
+const createSlotComposer = () => new SlotComposer({rootContainer: 'test', affordance: 'mock'});
 const Bar = new Schema({names: ['Bar'], fields: {id: 'Number', value: 'Text'}}).entityClass();
 
 describe('Handle', function() {
 
   it('clear singleton store', async () => {
+    let slotComposer = createSlotComposer();
     let arc = new Arc({slotComposer, id: 'test'});
     let barStore = await arc.createStore(Bar.type);
     barStore.set(new Bar({value: 'a Bar'}));
@@ -36,6 +37,7 @@ describe('Handle', function() {
   });
 
   it('ignores duplicate stores of the same entity value (variable)', async () => {
+    let slotComposer = createSlotComposer();
     let arc = new Arc({slotComposer, id: 'test'});
     let store = await arc.createStore(Bar.type);
     let version = 0;
@@ -51,6 +53,7 @@ describe('Handle', function() {
   });
 
   it('ignores duplicate stores of the same entity value (collection)', async () => {
+    let slotComposer = createSlotComposer();
     let arc = new Arc({slotComposer, id: 'test'});
     let barStore = await arc.createStore(Bar.type.collectionOf());
     let version = 0;
@@ -68,6 +71,7 @@ describe('Handle', function() {
   });
 
   it('dedupes common user-provided ids', async () => {
+    let slotComposer = createSlotComposer();
     let arc = new Arc({slotComposer, id: 'test'});
 
     let manifest = await Manifest.load('./runtime/test/artifacts/test-particles.manifest', loader);
@@ -82,6 +86,7 @@ describe('Handle', function() {
   });
 
   it('allows updates with same user-provided ids but different value (collection)', async () => {
+    let slotComposer = createSlotComposer();
     let arc = new Arc({slotComposer, id: 'test'});
 
     let manifest = await Manifest.load('./runtime/test/artifacts/test-particles.manifest', loader);
@@ -96,6 +101,7 @@ describe('Handle', function() {
   });
 
   it('allows updates with same user-provided ids but different value (variable)', async () => {
+    let slotComposer = createSlotComposer();
     let arc = new Arc({slotComposer, id: 'test'});
 
     let manifest = await Manifest.load('./runtime/test/artifacts/test-particles.manifest', loader);
@@ -110,6 +116,7 @@ describe('Handle', function() {
   });
 
   it('remove entry from store', async () => {
+    let slotComposer = createSlotComposer();
     let arc = new Arc({slotComposer, id: 'test'});
     let barStore = await arc.createStore(Bar.type.collectionOf());
     let bar = new Bar({id: 0, value: 'a Bar'});
@@ -119,6 +126,7 @@ describe('Handle', function() {
   });
 
   it('can store a particle in a shape store', async () => {
+    let slotComposer = createSlotComposer();
     let arc = new Arc({slotComposer, id: 'test'});
     let manifest = await Manifest.load('./runtime/test/artifacts/test-particles.manifest', loader);
 
@@ -132,6 +140,7 @@ describe('Handle', function() {
   });
 
   it('createHandle only allows valid tags & types in stores', async () => {
+    let slotComposer = createSlotComposer();
     let arc = new Arc({slotComposer, id: 'test'});
     let manifest = await Manifest.load('./runtime/test/artifacts/test-particles.manifest', loader);
 

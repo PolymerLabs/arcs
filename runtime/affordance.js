@@ -9,9 +9,10 @@
  */
 import {assert} from '../platform/assert-web.js';
 import {Slot} from './slot.js';
-import {DomSlot} from './dom-slot.js';
-import {DomContext} from './dom-context.js';
 import {DescriptionDomFormatter} from './description-dom-formatter.js';
+import {SlotDomRenderer} from './slot/slot-dom-renderer.js';
+import {MockSlotDomRenderer} from './testing/mock-slot-dom-renderer.js';
+import {SlotRenderer} from './slot/slot-renderer.js';
 
 export class Affordance {
   constructor(options) {
@@ -31,8 +32,8 @@ export class Affordance {
 
 let _affordances = {};
 [
-  {name: 'dom', slotClass: DomSlot, contextClass: DomContext, descriptionFormatter: DescriptionDomFormatter},
-  {name: 'dom-touch', slotClass: DomSlot, contextClass: DomContext, descriptionFormatter: DescriptionDomFormatter},
-  {name: 'vr', slotClass: DomSlot, contextClass: DomContext, descriptionFormatter: DescriptionDomFormatter},
-  {name: 'mock', slotClass: Slot}
+  {name: 'dom', slotRendererClass: SlotDomRenderer, descriptionFormatter: DescriptionDomFormatter},
+  {name: 'dom-touch', slotRendererClass: SlotDomRenderer, descriptionFormatter: DescriptionDomFormatter},
+  {name: 'vr', slotRendererClass: SlotDomRenderer, descriptionFormatter: DescriptionDomFormatter},
+  {name: 'mock', slotRendererClass: MockSlotDomRenderer}
 ].forEach(options => _affordances[options.name] = new Affordance(options));
