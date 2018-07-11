@@ -199,7 +199,7 @@ class StorageProxyBase {
 }
 
 
-// Collections are synchronized in a CRDT Observed/Removed scheme. 
+// Collections are synchronized in a CRDT Observed/Removed scheme.
 // Each value is identified by an ID and a set of membership keys.
 // Concurrent adds of the same value will specify the same ID but different
 // keys. A value is removed by removing all of the observed keys. A value
@@ -310,7 +310,7 @@ class CollectionProxy extends StorageProxyBase {
       keys = this._model.getKeys(id);
     }
     let data = {
-      id,
+      value: id,
       keys,
     };
     this._port.HandleRemove({data, handle: this, particleId});
@@ -327,7 +327,7 @@ class CollectionProxy extends StorageProxyBase {
 }
 
 // Variables are synchronized in a 'last-writer-wins' scheme. When the
-// VariableProxy mutates the model, it sets a barrier and expects to 
+// VariableProxy mutates the model, it sets a barrier and expects to
 // receive the barrier value echoed back in a subsequent update event.
 // Between those two points in time updates are not applied or
 // notified about as these reflect concurrent writes that did not 'win'.
@@ -436,7 +436,7 @@ export class StorageProxyScheduler {
       this._idleResolver = null;
     }
   }
-  
+
   get idle() {
     if (!this.busy) {
       return Promise.resolve();
