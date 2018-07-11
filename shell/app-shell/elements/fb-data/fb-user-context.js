@@ -94,7 +94,8 @@ class FbUserContextElement extends Xen.Debug(Xen.Base, log) {
     const id = field.path.split('/')[2];
     friendsStore.remove(id);
     const entity = this._friendFieldToEntity(id, field);
-    friendsStore.store(entity);
+    // FIXME: store.generateID may not be safe (session scoped)?
+    friendsStore.store(entity, [friendsStore.generateID()]);
     // `shellFriends` is for shell
     this._updateShellFriend(id, {id, name: entity.rawData.name});
   }
@@ -217,7 +218,12 @@ class FbUserContextElement extends Xen.Debug(Xen.Base, log) {
     const storeDecoratedEntity = ({id, rawData}, uid) => {
       const decoratedId = `${id}:uid:${uid}`;
       ids.push(decoratedId);
-      store[store.type.isCollection ? 'store' : 'set']({id: decoratedId, rawData});
+      if (store.type.isCollection) {
+        // FIXME: store.generateID may not be safe (session scoped)?
+        store.store({id: decoratedId, rawData}, [store.generateID()]);
+      } else {
+        store.set({id: decoratedId, rawData});
+      }
     };
     if (data.id) {
       storeDecoratedEntity(data, uid);

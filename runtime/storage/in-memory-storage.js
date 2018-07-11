@@ -11,6 +11,7 @@ import {assert} from '../../platform/assert-web.js';
 import {Tracing} from '../../tracelib/trace.js';
 import {StorageProviderBase} from './storage-provider-base.js';
 import {KeyBase} from './key-base.js';
+import {CrdtCollectionModel} from './crdt-collection-model.js';
 
 class InMemoryKey extends KeyBase {
   constructor(key) {
@@ -92,7 +93,7 @@ class InMemoryStorageProvider extends StorageProviderBase {
 class InMemoryCollection extends InMemoryStorageProvider {
   constructor(type, arcId, name, id, key) {
     super(type, arcId, name, id, key);
-    this._items = new Map();
+    this._model = new CrdtCollectionModel();
     assert(this._version !== null);
   }
 
@@ -103,66 +104,55 @@ class InMemoryCollection extends InMemoryStorageProvider {
   }
 
   async cloneFrom(handle) {
-    let {list, version} = await handle.toListWithVersion();
-    assert(version !== null);
-    await this._fromListWithVersion(list, version);
+    this.fromLiteral(await handle.toLiteral());
   }
 
-  async _fromListWithVersion(list, version) {
+  // Returns {version, model: [{id, value, keys: []}]}
+  toLiteral() {
+    return {
+      version: this._version,
+      model: this._model.toLiteral(),
+    };
+  }
+
+  fromLiteral({version, model}) {
     this._version = version;
-    list.forEach(item => this._items.set(item.id, item));
+    this._model = new CrdtCollectionModel(model);
   }
 
-  async get(id) {
-    return this._items.get(id);
+  toList() {
+    return this.toLiteral().model.map(item => item.value);
   }
+
   traceInfo() {
-    return {items: this._items.size};
-  }
-  // HACK: replace this with some kind of iterator thing?
-  async toList() {
-    return [...this._items.values()];
+    return {items: this._model.size};
   }
 
-  async toListWithVersion() {
-    return {list: [...this._items.values()], version: this._version};
-  }
-
-  async store(entity, originatorId) {
+  async store(value, keys, originatorId=null) {
+    assert(keys != null && keys.length > 0, 'keys required');
     let trace = Tracing.start({cat: 'handle', name: 'InMemoryCollection::store', args: {name: this.name}});
-    let entityWasPresent = this._items.has(entity.id);
-    if (entityWasPresent && (JSON.stringify(this._items.get(entity.id)) == JSON.stringify(entity))) {
-      trace.end({args: {entity}});
-      return;
-    }
-    this._items.set(entity.id, entity);
+    let effective = this._model.add(value.id, value, keys);
     this._version++;
-    if (!entityWasPresent)
-      this._fire('change', {add: [entity], version: this._version, originatorId});
-    trace.end({args: {entity}});
+    await trace.wait(
+        this._fire('change', {add: [{value, keys, effective}], version: this._version, originatorId}));
+    trace.end({args: {value}});
   }
 
-  async remove(id, originatorId) {
+  async remove(id, keys=[], originatorId=null) {
     let trace = Tracing.start({cat: 'handle', name: 'InMemoryCollection::remove', args: {name: this.name}});
-    if (!this._items.has(id)) {
-      return;
+    if (keys.length == 0) {
+      keys = this._model.getKeys(id);
     }
-    let entity = this._items.get(id);
-    assert(this._items.delete(id));
+    let value = this._model.getValue(id);
+    let effective = this._model.remove(id, keys);
     this._version++;
-    this._fire('change', {remove: [entity], version: this._version, originatorId});
-    trace.end({args: {entity}});
+    await trace.wait(
+        this._fire('change', {remove: [{value, keys, effective}], version: this._version, originatorId}));
+    trace.end({args: {entity: value}});
   }
 
   clearItemsForTesting() {
-    this._items.clear();
-  }
-
-  // TODO: Something about iterators??
-  // TODO: Something about changing order?
-
-  serializedData() {
-    return this.toList();
+    this._model = new CrdtCollectionModel();
   }
 }
 
@@ -179,12 +169,30 @@ class InMemoryVariable extends InMemoryStorageProvider {
   }
 
   async cloneFrom(handle) {
-    let {data, version} = await handle.getWithVersion();
-    await this._setWithVersion(data, version);
+    let literal = await handle.toLiteral();
+    await this.fromLiteral(literal);
   }
 
-  async _setWithVersion(data, version) {
-    this._stored = data;
+  // Returns {version, model: [{id, value}]}
+  async toLiteral() {
+    let value = this._stored;
+    let model = [];
+    if (value != null) {
+      model = [{
+        id: value.id,
+        value,
+      }];
+    }
+    return {
+      version: this._version,
+      model,
+    };
+  }
+
+  fromLiteral({version, model}) {
+    let value = model.length == 0 ? null : model[0].value;
+    assert(value !== undefined);
+    this._stored = value;
     this._version = version;
   }
 
@@ -196,25 +204,18 @@ class InMemoryVariable extends InMemoryStorageProvider {
     return this._stored;
   }
 
-  async getWithVersion() {
-    return {data: this._stored, version: this._version};
-  }
-
-  async set(entity, originatorId, barrier) {
+  async set(value, originatorId=null, barrier=null) {
+    assert(value !== undefined);
     // If there's a barrier set, then the originating storage-proxy is expecting
     // a result so we cannot suppress the event here.
-    if (JSON.stringify(this._stored) == JSON.stringify(entity) && barrier == null)
+    if (JSON.stringify(this._stored) == JSON.stringify(value) && barrier == null)
       return;
-    this._stored = entity;
+    this._stored = value;
     this._version++;
-    this._fire('change', {data: this._stored, version: this._version, originatorId, barrier});
+    await this._fire('change', {data: this._stored, version: this._version, originatorId, barrier});
   }
 
-  async clear(originatorId, barrier) {
+  async clear(originatorId=null, barrier=null) {
     this.set(null, originatorId, barrier);
-  }
-
-  serializedData() {
-    return [this._stored];
   }
 }

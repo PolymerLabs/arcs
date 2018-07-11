@@ -164,7 +164,8 @@ class Collection extends Handle {
     if (!this.canWrite)
       throw new Error('Handle not writeable');
     let serialization = this._serialize(entity);
-    return this._proxy.store(serialization, this._particleId);
+    let keys = [this._proxy.generateID('key')];
+    return this._proxy.store(serialization, keys, this._particleId);
   }
 
   /** @method remove(entity)
@@ -176,7 +177,9 @@ class Collection extends Handle {
     if (!this.canWrite)
       throw new Error('Handle not writeable');
     let serialization = this._serialize(entity);
-    return this._proxy.remove(serialization.id, this._particleId);
+    // Remove the keys that exist at storage/proxy.
+    let keys = [];
+    return this._proxy.remove(serialization.id, keys, this._particleId);
   }
 }
 

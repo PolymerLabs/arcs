@@ -116,7 +116,10 @@ class FbUserElement extends Xen.Debug(Xen.Base, log) {
   _onStoreChange(change) {
     const {userid} = this._state;
     if (change.add) {
-      change.add.forEach(entity => {
+      change.add.forEach(({effective, value: entity}) => {
+        if (!effective) {
+          return;
+        }
         const record = entity.rawData;
         const cache = this.value.arcs[record.key];
         let path, value;
@@ -160,11 +163,11 @@ class FbUserElement extends Xen.Debug(Xen.Base, log) {
     }, 1000);
 }
   _arcChanged(field) {
-    const {arcstore} = this._state;
+    const {arcstore, arc} = this._state;
     if (arcstore) {
       arcstore.remove(field.key);
       if (!field.disposed) {
-        arcstore.store(this._arcFieldToEntity(field));
+        arcstore.store(this._arcFieldToEntity(field), [arc.generateID('key')]);
       }
     }
   }

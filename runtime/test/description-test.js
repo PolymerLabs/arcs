@@ -120,14 +120,14 @@ ${recipeManifest}
       assert.equal('foo list', await description.getHandleDescription(ofoosHandle));
 
       // Add values to a collection handle.
-      foosStore.store({id: 2, rawData: {name: 'foo-1', fooValue: 'foo-value-1'}});
-      foosStore.store({id: 3, rawData: {name: 'foo-2', fooValue: 'foo-value-2'}});
+      foosStore.store({id: 2, rawData: {name: 'foo-1', fooValue: 'foo-value-1'}}, ['key2']);
+      foosStore.store({id: 3, rawData: {name: 'foo-2', fooValue: 'foo-value-2'}}, ['key3']);
       await test.verifySuggestion('Read from foo-name and populate foo list (foo-1, foo-2).', description);
       assert.equal('foo', await description.getHandleDescription(ifooHandle));
       assert.equal('foo list', await description.getHandleDescription(ofoosHandle));
 
       // Add more values to the collection handle.
-      foosStore.store({id: 4, rawData: {name: 'foo-name', fooValue: 'foo-3'}});
+      foosStore.store({id: 4, rawData: {name: 'foo-name', fooValue: 'foo-3'}}, ['key4']);
       await test.verifySuggestion('Read from foo-name and populate foo list (foo-1 plus 2 other items).', description);
     });
   });
@@ -154,12 +154,12 @@ ${recipeManifest}
       await test.verifySuggestion('Read from my-in-foo (foo-name) and populate my-out-foos.', description);
 
       // Add values to a collection handle.
-      foosStore.store({id: 2, rawData: {name: 'foo-1', fooValue: 'foo-value-1'}});
-      foosStore.store({id: 3, rawData: {name: 'foo-2', fooValue: 'foo-value-2'}});
+      foosStore.store({id: 2, rawData: {name: 'foo-1', fooValue: 'foo-value-1'}}, ['key2']);
+      foosStore.store({id: 3, rawData: {name: 'foo-2', fooValue: 'foo-value-2'}}, ['key3']);
       await test.verifySuggestion('Read from my-in-foo (foo-name) and populate my-out-foos (foo-1, foo-2).', description);
 
       // Add more values to the collection handle.
-      foosStore.store({id: 4, rawData: {name: 'foo-name', fooValue: 'foo-3'}});
+      foosStore.store({id: 4, rawData: {name: 'foo-name', fooValue: 'foo-3'}}, ['key4']);
       await test.verifySuggestion('Read from my-in-foo (foo-name) and populate my-out-foos (foo-1 plus 2 other items).',
                                   description);
       assert.equal('my-in-foo', await description.getHandleDescription(ifooHandle));
@@ -185,8 +185,8 @@ ${recipeManifest}
       assert.equal('The Foos from my-in-foo', await description.getHandleDescription(ofoosHandle));
 
       fooStore.set({id: 1, rawData: {name: 'foo-name', fooValue: 'the-FOO'}});
-      foosStore.store({id: 2, rawData: {name: 'foo-1', fooValue: 'foo-value-1'}});
-      foosStore.store({id: 3, rawData: {name: 'foo-2', fooValue: 'foo-value-2'}});
+      foosStore.store({id: 2, rawData: {name: 'foo-1', fooValue: 'foo-value-1'}}, ['key2']);
+      foosStore.store({id: 3, rawData: {name: 'foo-2', fooValue: 'foo-value-2'}}, ['key3']);
       await test.verifySuggestion('Read from my-in-foo (foo-name) and populate The Foos from my-in-foo (foo-1, foo-2).',
                             description);
       assert.equal('my-in-foo', await description.getHandleDescription(ifooHandle));
@@ -211,8 +211,8 @@ ${recipeManifest}
       assert.equal('The Foos from foo', await description.getHandleDescription(ofoosHandle));
 
       fooStore.set({id: 1, rawData: {name: 'foo-name', fooValue: 'the-FOO'}});
-      foosStore.store({id: 2, rawData: {name: 'foo-1', fooValue: 'foo-value-1'}});
-      foosStore.store({id: 3, rawData: {name: 'foo-2', fooValue: 'foo-value-2'}});
+      foosStore.store({id: 2, rawData: {name: 'foo-1', fooValue: 'foo-value-1'}}, ['key2']);
+      foosStore.store({id: 3, rawData: {name: 'foo-2', fooValue: 'foo-value-2'}}, ['key3']);
       await test.verifySuggestion(
           'Read from foo-name and populate The Foos from foo-name (foo-1, foo-2).', description);
       assert.equal('foo', await description.getHandleDescription(ifooHandle));
@@ -234,8 +234,8 @@ ${recipeManifest}
       let description = new Description(arc);
 
       fooStore.set({id: 1, rawData: {name: 'foo-name', fooValue: 'the-FOO'}});
-      foosStore.store({id: 2, rawData: {name: 'foo-1', fooValue: 'foo-value-1'}});
-      foosStore.store({id: 3, rawData: {name: 'foo-2', fooValue: 'foo-value-2'}});
+      foosStore.store({id: 2, rawData: {name: 'foo-1', fooValue: 'foo-value-1'}}, ['key2']);
+      foosStore.store({id: 3, rawData: {name: 'foo-2', fooValue: 'foo-value-2'}}, ['key3']);
 
       await test.verifySuggestion('Read from [fooValue: the-FOO] (foo-name) and populate [A list of foo with values: foo-1, foo-2].',
                             description);
@@ -270,8 +270,8 @@ ${recipeManifest}
       assert.equal('my-foos', await description.getHandleDescription(ofoosHandle));
 
       fooStore.set({id: 1, rawData: {name: 'foo-name', fooValue: 'the-FOO'}});
-      foosStore.store({id: 2, rawData: {name: 'foo-1', fooValue: 'foo-value-1'}});
-      foosStore.store({id: 3, rawData: {name: 'foo-2', fooValue: 'foo-value-2'}});
+      foosStore.store({id: 2, rawData: {name: 'foo-1', fooValue: 'foo-value-1'}}, ['key2']);
+      foosStore.store({id: 3, rawData: {name: 'foo-2', fooValue: 'foo-value-2'}}, ['key3']);
       await test.verifySuggestion('Read from best-new-foo (foo-name) and populate my-foos (foo-1, foo-2).',
                             description);
       assert.equal('best-new-foo', await description.getHandleDescription(ifooHandle));
@@ -376,15 +376,15 @@ recipe
       assert.equal('X-foo', await description.getHandleDescription(recipe.handles[1]));
 
       // Add values to the second handle.
-      fooStore2.store({id: 1, rawData: {name: 'foo-1', fooValue: 'foo-value-1'}});
-      fooStore2.store({id: 2, rawData: {name: 'foo-2', fooValue: 'foo-value-2'}});
+      fooStore2.store({id: 1, rawData: {name: 'foo-1', fooValue: 'foo-value-1'}}, ['key1']);
+      fooStore2.store({id: 2, rawData: {name: 'foo-2', fooValue: 'foo-value-2'}}, ['key2']);
       await test.verifySuggestion('Write to X-foo and write to X-foo (foo-1, foo-2).', description);
       assert.equal('X-foo', await description.getHandleDescription(recipe.handles[0]));
       assert.equal('X-foo', await description.getHandleDescription(recipe.handles[1]));
 
       // Add values to the first handle also.
-      fooStore1.store({id: 3, rawData: {name: 'foo-3', fooValue: 'foo-value-3'}});
-      fooStore1.store({id: 4, rawData: {name: 'foo-4', fooValue: 'foo-value-4'}});
+      fooStore1.store({id: 3, rawData: {name: 'foo-3', fooValue: 'foo-value-3'}}, ['key3']);
+      fooStore1.store({id: 4, rawData: {name: 'foo-4', fooValue: 'foo-value-4'}}, ['key4']);
       await test.verifySuggestion('Write to X-foo (foo-3, foo-4) and write to X-foo (foo-1, foo-2).', description);
       assert.equal('X-foo', await description.getHandleDescription(recipe.handles[0]));
       assert.equal('X-foo', await description.getHandleDescription(recipe.handles[1]));
@@ -513,11 +513,11 @@ recipe
 
         // Add values to handles.
         tStore.set({id: 1, rawData: {property: 'value1'}});
-        tsStore.store({id: 2, rawData: {property: 'value2'}});
+        tsStore.store({id: 2, rawData: {property: 'value2'}}, ['key2']);
         await test.verifySuggestion('Make my best type list (1 items) from my best type.', description);
 
-        tsStore.store({id: 3, rawData: {property: 'value3'}});
-        tsStore.store({id: 4, rawData: {property: 'value4'}});
+        tsStore.store({id: 3, rawData: {property: 'value3'}}, ['key3']);
+        tsStore.store({id: 4, rawData: {property: 'value4'}}, ['key4']);
         await test.verifySuggestion('Make my best type list (3 items) from my best type.', description);
     });
   });

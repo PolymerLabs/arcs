@@ -38,29 +38,33 @@ describe('Handle', function() {
   it('ignores duplicate stores of the same entity value (variable)', async () => {
     let arc = new Arc({slotComposer, id: 'test'});
     let store = await arc.createStore(Bar.type);
-    assert.equal(store._version, 0);
+    let version = 0;
+    store.on('change', () => version++, {});
+    assert.equal(version, 0);
     let bar1 = {id: 'an id', value: 'a Bar'};
     await store.set(bar1);
-    assert.equal(store._version, 1);
+    assert.equal(version, 1);
     await store.set(bar1);
-    assert.equal(store._version, 1);
+    assert.equal(version, 1);
     await store.set({value: 'a Bar'});
-    assert.equal(store._version, 2);
+    assert.equal(version, 2);
   });
 
   it('ignores duplicate stores of the same entity value (collection)', async () => {
     let arc = new Arc({slotComposer, id: 'test'});
     let barStore = await arc.createStore(Bar.type.collectionOf());
+    let version = 0;
+    barStore.on('change', ({add: [{effective}]}) => {if (effective) version++;}, {});
     assert.equal(barStore._version, 0);
     let bar1 = {id: 'an id', value: 'a Bar'};
-    await barStore.store(bar1);
-    assert.equal(barStore._version, 1);
-    await barStore.store(bar1);
-    assert.equal(barStore._version, 1);
-    await barStore.store({value: 'a Bar'});
-    assert.equal(barStore._version, 2);
-    await barStore.store(bar1);
-    assert.equal(barStore._version, 2);
+    await barStore.store(bar1, ['key1']);
+    assert.equal(version, 1);
+    await barStore.store(bar1, ['key2']);
+    assert.equal(version, 1);
+    await barStore.store({value: 'a Bar'}, ['key3']);
+    assert.equal(version, 2);
+    await barStore.store(bar1, ['key4']);
+    assert.equal(version, 2);
   });
 
   it('dedupes common user-provided ids', async () => {
@@ -77,11 +81,39 @@ describe('Handle', function() {
     assert.lengthOf((await fooHandle.toList()), 2);
   });
 
+  it('allows updates with same user-provided ids but different value (collection)', async () => {
+    let arc = new Arc({slotComposer, id: 'test'});
+
+    let manifest = await Manifest.load('./runtime/test/artifacts/test-particles.manifest', loader);
+    let Foo = manifest.schemas.Foo.entityClass();
+    let fooHandle = handleFor(await arc.createStore(Foo.type.collectionOf()));
+    fooHandle.entityClass = Foo;
+
+    await fooHandle.store(new Foo({value: '1'}, 'id1'));
+    await fooHandle.store(new Foo({value: '2'}, 'id1'));
+    let stored = (await fooHandle.toList())[0];
+    assert.equal(stored.value, '2');
+  });
+
+  it('allows updates with same user-provided ids but different value (variable)', async () => {
+    let arc = new Arc({slotComposer, id: 'test'});
+
+    let manifest = await Manifest.load('./runtime/test/artifacts/test-particles.manifest', loader);
+    let Foo = manifest.schemas.Foo.entityClass();
+    let fooHandle = handleFor(await arc.createStore(Foo.type));
+    fooHandle.entityClass = Foo;
+
+    await fooHandle.set(new Foo({value: '1'}, 'id1'));
+    await fooHandle.set(new Foo({value: '2'}, 'id1'));
+    let stored = await fooHandle.get();
+    assert.equal(stored.value, '2');
+  });
+
   it('remove entry from store', async () => {
     let arc = new Arc({slotComposer, id: 'test'});
     let barStore = await arc.createStore(Bar.type.collectionOf());
     let bar = new Bar({id: 0, value: 'a Bar'});
-    barStore.store(bar);
+    barStore.store(bar, ['key1']);
     barStore.remove(bar.id);
     assert.isEmpty((await barStore.toList()));
   });

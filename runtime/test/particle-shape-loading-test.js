@@ -93,7 +93,7 @@ describe('particle-shape-loading', function() {
     let outStore = await arc.createStore(barType);
     let inStore = await arc.createStore(fooType);
     let Foo = manifest.schemas.Foo.entityClass();
-    inStore.set(new Foo({value: 'a foo'}));
+    inStore.set({id: 'id', rawData: {value: 'a foo'}});
 
     let recipe = new Recipe();
     let particle = recipe.newParticle('outerParticle');
@@ -157,7 +157,7 @@ describe('particle-shape-loading', function() {
 
     await arc.instantiate(recipe);
 
-    arc.findStoresByType(fooType)[0].set(new (fooType.entitySchema.entityClass())({value: 'a foo'}));
+    arc.findStoresByType(fooType)[0].set({id: 'id', rawData: {value: 'a foo'}});
 
     await util.assertSingletonWillChangeTo(arc, arc.findStoresByType(barType)[0], 'value', 'a foo1');
   });

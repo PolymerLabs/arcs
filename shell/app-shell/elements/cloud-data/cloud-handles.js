@@ -138,15 +138,18 @@ class CloudHandles extends Xen.Debug(Xen.Base, log) {
   async _remoteSetChildAdded(snap, arc, path, handle) {
     const entity = snap.val();
     log('trigger: remote add', entity);
+    let keys = [arc.generateID('key')];
     // doesn't trigger an `add` event if `entity` is already in `handle`
-    handle.store(entity, originatorId);
+    handle.store(entity, originatorId, keys);
     log('remote add result', await handle.toList());
   }
   async _remoteSetChildRemoved(snap, arc, path, handle) {
     const entity = snap.val();
     log('trigger: remote remove', entity);
+    // Use any existing keys.
+    let keys = [];
     // doesn't trigger a `remove` event if `entity` is not part of `handle`
-    handle.remove(entity, originatorId);
+    handle.remove(entity.id, originatorId, keys);
     log('remote remove result', await handle.toList());
   }
   _localSetChange(handle, path, change, remoteValue) {
@@ -161,12 +164,14 @@ class CloudHandles extends Xen.Debug(Xen.Base, log) {
     // for existing unencoded data (as opposed to this solution which only affects keys that have bad characters).
     const cleanKey = key => key.replace(/[./]/g, '');
     if (change.add) {
-      change.add.forEach(record => {
+      change.add.forEach(({effective, value: record}) => {
+        if (!effective) return;
         log('trigger: local add', record);
         Firebase.db.child(`${path}/data/${cleanKey(record.id)}`).set(this._removeUndefined(record));
       });
     } else if (change.remove) {
-      change.remove.forEach(record => {
+      change.remove.forEach(({effective, value: record}) => {
+        if (!effective) return;
         log('trigger: local remove', record);
         Firebase.db.child(`${path}/data/${cleanKey(record.id)}`).remove();
       });

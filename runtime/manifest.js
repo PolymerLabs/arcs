@@ -977,8 +977,11 @@ ${e.message}
     if (unitType.isEntity) {
       let hasSerializedId = false;
       entities = entities.map(entity => {
-        if (entity == null)
+        if (entity == null) {
+          // FIXME: perhaps this happens when we have an empty variable?
+          // we should just generate an empty list in that case.
           return null;
+        }
         hasSerializedId = hasSerializedId || entity.$id;
         let id = entity.$id || manifest.generateID();
         delete entity.$id;
@@ -994,13 +997,11 @@ ${e.message}
     }
 
     let version = item.version || 0;
-
     let store = await Manifest._createStore(manifest, type, name, id, tags, item);
-    if (type.isCollection) {
-      store._fromListWithVersion(entities, version);
-    } else {
-      store._setWithVersion(entities[0], version);
-    }
+    store.fromLiteral({
+      version,
+      model: entities.map(value => ({id: value.id, value})),
+    });
   }
   static async _createStore(manifest, type, name, id, tags, item) {
     let store = await manifest.createStore(type, name, id, tags);

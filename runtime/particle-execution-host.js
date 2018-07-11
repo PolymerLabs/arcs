@@ -39,12 +39,7 @@ export class ParticleExecutionHost {
     };
 
     this._apiPort.onSynchronizeProxy = async ({handle, callback}) => {
-      let data;
-      if (handle.toListWithVersion) {
-        data = await handle.toListWithVersion();
-      } else {
-        data = await handle.getWithVersion();
-      }
+      let data = await handle.toLiteral();
       this._apiPort.SimpleCallback({callback, data});
     };
 
@@ -57,9 +52,9 @@ export class ParticleExecutionHost {
     };
 
     this._apiPort.onHandleSet = ({handle, data, particleId, barrier}) => handle.set(data, particleId, barrier);
-    this._apiPort.onHandleStore = ({handle, data, particleId}) => handle.store(data, particleId);
     this._apiPort.onHandleClear = ({handle, particleId, barrier}) => handle.clear(particleId, barrier);
-    this._apiPort.onHandleRemove = ({handle, data, particleId}) => handle.remove(data, particleId);
+    this._apiPort.onHandleStore = ({handle, data: {value, keys}, particleId}) => handle.store(value, keys, particleId);
+    this._apiPort.onHandleRemove = ({handle, data: {value, keys}, particleId}) => handle.remove(value, keys, particleId);
 
     this._apiPort.onIdle = ({version, relevance}) => {
       if (version == this._idleVersion) {

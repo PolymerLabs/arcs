@@ -103,16 +103,17 @@ const ArcsUtils = {
       // TODO(sjmiles): if we go async here, we have nasty re-entry issues, so
       // hacking store API to fix for now. Probably we need low-level support
       // for 'setStoreData' above.
-      const entities = [...store._items.values()];
+      const ids = [...store._model._items.keys()];
       //const entities = await store.toList();
-      entities.forEach(e => store.remove(e.id));
+      ids.forEach(id => store.remove(id));
     } else {
       store.clear();
     }
   },
   addStoreData(store, data) {
     if (store.type.isCollection) {
-      data && Object.values(data).forEach(e => store.store(e));
+      // FIXME: store.generateID may not be safe (session scoped)?
+      data && Object.values(data).forEach(e => store.store(e, [store.generateID()]));
     } else {
       data && store.set(data);
     }
