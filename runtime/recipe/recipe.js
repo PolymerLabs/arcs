@@ -29,7 +29,7 @@ export class Recipe {
     this._connectionConstraints = [];
 
     // Obligations are like connection constraints in that they describe
-    // required connections between particles/verbs. However, where 
+    // required connections between particles/verbs. However, where
     // connection constraints can be acted upon in order to create these
     // connections, obligations can't be. Instead, they describe requirements
     // that must be discharged before a recipe can be considered to be
@@ -55,7 +55,7 @@ export class Recipe {
     this._obligations.push(result);
     return result;
   }
-  
+
   removeObligation(obligation) {
     let idx = this._obligations.indexOf(obligation);
     assert(idx > -1);
@@ -231,6 +231,10 @@ export class Recipe {
   }
 
   async digest() {
+    return this._cachedDigest ? this._cachedDigest : this._internalDigest();
+  }
+
+  async _internalDigest() {
     return digest(this.toString());
   }
 
@@ -346,6 +350,18 @@ export class Recipe {
     Object.freeze(this._handles);
     Object.freeze(this._slots);
     Object.freeze(this._connectionConstraints);
+    // Once a recipe is frozen the digest should remain the same, so cache to
+    // save on future processing overhead. Recipe digests are referenced heavily
+    // as part of strategizing.
+    //
+    // We could instead cache the digest lazily on demand and avoid having to
+    // compute it up front for every recipe here, but since the object will be
+    // frozen at that point we'd have to use a side cache which would then need
+    // to be maintained manually to track the associated recipe object lifespan.
+    //
+    // Since currently all recipes end up in consideration and thus digestion by
+    // the strategizer, doing it up front seems not untoward.
+    this._cachedDigest = this._internalDigest();
     Object.freeze(this);
 
     return true;
