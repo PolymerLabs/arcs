@@ -68,10 +68,15 @@ class SeComparePopulations extends PolymerElement {
     return {
       results: {
         type: Array,
-        notify: true,
-        observer: '_onResultsUpdated'
+        notify: true
       }
     };
+  }
+
+  static get observers() {
+    return [
+      '_onResultsUpdated(results.*)'
+    ];
   }
 
   constructor() {
@@ -86,9 +91,9 @@ class SeComparePopulations extends PolymerElement {
     }
   }
 
-  _onResultsUpdated(results) {
-    if (results.length === 0 || results.overlapBase
-        || [...this.library, this.current].some(p => p.results === results)) {
+  _onResultsUpdated() {
+    if (this.results.length === 0 || this.results.overlapBase
+        || [...this.library, this.current].some(p => p.results === this.results)) {
       this._updateSelection();
       return;
     }
@@ -99,7 +104,7 @@ class SeComparePopulations extends PolymerElement {
       surviving: stats.survivingDerivations,
       resolved: stats.resolvedDerivations,
       selected: true,
-      results
+      results: this.results
     };
 
     this._updateSelection();
@@ -126,7 +131,7 @@ class SeComparePopulations extends PolymerElement {
       let overlapOther = this.library.find(p => p.id === e.path[1].id).results;
       if (this.results.overlapOther === overlapOther) {
         // Clicking on diff again deselects it.
-        this._displayResults(this.results.overlapBase, true);
+        this._displayResults(this.results.overlapBase);
         return;
       }
       this._overlap(this.results.overlapBase || this.results, overlapOther);
@@ -134,7 +139,7 @@ class SeComparePopulations extends PolymerElement {
     }
 
     let selected = [this.current, ...this.library].find(p => p.id === e.srcElement.id);
-    this._displayResults(selected.results, selected.results === this.results.overlapBase);
+    this._displayResults(selected.results);
     this._updateSelection();
   }
 
@@ -154,14 +159,8 @@ class SeComparePopulations extends PolymerElement {
     }
   }
 
-  _displayResults(results, maintainSelection) {
-    // When diffing between results we keep user selection
-    // through swapping without reseting.
-    if (maintainSelection) {
-      this.results = results;
-    } else {
-      document.strategyExplorer.displayResults({results});
-    }
+  _displayResults(results) {
+    document.strategyExplorer.displayResults({results}, true);
   }
 
   _overlap(base, other) {
@@ -179,7 +178,7 @@ class SeComparePopulations extends PolymerElement {
         this._overlapGeneration(base[i].population, other[i].population);
       }
     }
-    this._displayResults(base, true);
+    this._displayResults(base);
   }
 
   _overlapGeneration(base, other) {

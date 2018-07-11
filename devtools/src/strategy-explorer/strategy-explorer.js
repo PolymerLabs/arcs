@@ -53,7 +53,10 @@ class StrategyExplorer extends MessengerMixin(PolymerElement) {
 
   static get properties() {
     return {
-      results: Array,
+      results: {
+        type: Array,
+        value: []
+      },
       findBacklit: Boolean
     };
   }
@@ -68,23 +71,13 @@ class StrategyExplorer extends MessengerMixin(PolymerElement) {
     super.ready();
     document.strategyExplorer = this;
     this.reset();
-    this.timeoutId = null;
   }
 
-  displayResults({results, options}) {
-    if (JSON.stringify(this.results) === JSON.stringify(results)) return;
+  displayResults({results, options}, force = false) {
+    if (JSON.stringify(this.results) === JSON.stringify(results) && !force) return;
     this.reset();
-    if (this.timeoutId) {
-      // Clear previous timeout if it hasn't fired yet. Prevents
-      // race conditions between multiple reset() and setting results.
-      clearTimeout(this.timeoutId);
-    }
-
-    this.timeoutId = setTimeout(() => {
-      this.set('results', results);
-      // TODO(piotrs): Make generic once more components need options.
-      if (options) this.$.compare.processOptions(options);
-    }, 0);
+    this.set('results', results);
+    if (options) this.$.compare.processOptions(options);
   }
 
   onMessageBundle(messages) {
