@@ -43,6 +43,6 @@ recipe
     list = shoplist
     hostedParticle = AlternateShipping
     consume annotation as annotationSlot
-  description `buy gifts for ${GiftList.person}'s ${GiftList.person.occasion} on ${GiftList.person.date}`
+  description `check shipping for ${GiftList.person}'s ${GiftList.person.occasion} on ${GiftList.person.date}`
 
 

@@ -76,7 +76,7 @@ describe('demo flow', function() {
 
     // Replanning.
     let expectedSuggestions = [
-      `Buy gifts for Claire (Claire)'s Birthday on 2017-08-04.`,
+      `Check shipping for Claire (Claire)'s Birthday on 2019-08-04.`,
       `Add items from Claire's wishlist (Book: How to Draw plus 2 other items).`,
       'Check manufacturer information for products from your browsing context ' +
         '(Minecraft Book plus 2 other items).',
