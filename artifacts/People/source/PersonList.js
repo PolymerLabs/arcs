@@ -6,28 +6,27 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-defineParticle(({DomParticle}) => {
+defineParticle(({DomParticle, html}) => {
 
   let host = 'person-list';
 
-  let template = `
-<style>
-  [${host}] [section] {
-    padding: 8px;
-  }
-  [${host}] [item] {
-    border-bottom: 1px dotted silver;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-  }
-  [${host}] [balance] {
-    font-size: 1.4em;
-    color: green;
-  }
-</style>
-
+  let template = html`
 <div ${host}>
+  <style>
+    [${host}] [section] {
+      padding: 8px;
+    }
+    [${host}] [item] {
+      border-bottom: 1px dotted silver;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+    }
+    [${host}] [balance] {
+      font-size: 1.4em;
+      color: green;
+    }
+  </style>
   <div>{{people}}</div>
   <template people>
     <div item section on-click="_onSelect" key="{{index}}">
@@ -35,7 +34,7 @@ defineParticle(({DomParticle}) => {
     </div>
   </template>
 </div>
-    `.trim();
+  `;
 
   return class extends DomParticle {
     get template() {
