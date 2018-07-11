@@ -49,20 +49,23 @@ Polymer({
     findHighlight: {
       type: Boolean,
       reflectToAttribute: true
-    }
+    },
+    recipe: Object
   },
 
-  attached: function() {
-    let recipeView = document.strategyExplorer.shadowRoot.querySelector('se-recipe-view');
-    this.$['recipe-box'].addEventListener('mouseenter', e => {
-      recipeView.over = this;
-      recipeView.recipe = this.recipe;
-    });
-    this.$['recipe-box'].addEventListener('mouseleave', e => {
-      recipeView.resetToPinned();
-    });
+  observers: [
+    '_recipeChanged(recipe)',
+  ],
+
+  _recipeChanged: function(recipe) {
     // Maintain find-highlight after results are reloaded.
     this.setFindPhrase(document.strategyExplorer.$.find.phrase);
+
+    this.selected = false;
+    this.selectedParent = false;
+    this.selectedAncestor = false;
+    this.selectedChild = false;
+    this.selectedDescendant = false;
 
     this.ancestors = new Set();
     this.childrens = new Set();
@@ -119,11 +122,22 @@ Polymer({
     });
     this.shortHash = this.recipe.hash.substring(this.recipe.hash.length - 4);
 
-
     if (document.strategyExplorer.pendingActions.has(this.recipe.id)) {
       document.strategyExplorer.pendingActions.get(this.recipe.id).forEach(action => action(this));
     }
+  },
+
+  attached: function() {
+    let recipeView = document.strategyExplorer.shadowRoot.querySelector('se-recipe-view');
+    this.$['recipe-box'].addEventListener('mouseenter', e => {
+      recipeView.over = this;
+      recipeView.recipe = this.recipe;
+    });
+    this.$['recipe-box'].addEventListener('mouseleave', e => {
+      recipeView.resetToPinned();
+    });
     this.$['recipe-box'].addEventListener('click', e => {
+      if (this.recipe._diff === 'remove') return;
       if (document._selectedBox !== undefined) {
         document._selectedBox.selected = false;
         document._selectedBox.parents.forEach(parent => parent.selectedParent = false);
