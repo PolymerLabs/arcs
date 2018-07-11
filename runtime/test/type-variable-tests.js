@@ -12,6 +12,7 @@
 import {assert} from './chai-web.js';
 
 import {Type} from '../type.js';
+import {Schema} from '../schema.js';
 import {TypeVariable} from '../type-variable.js';
 
 describe('TypeVariable', () => {
@@ -53,5 +54,21 @@ describe('TypeVariable', () => {
     b.variable.resolution = a.collectionOf();
     assert.throws(() => a.variable.resolution = b,
         'variable cannot resolve to collection of itself');
+  });
+  it(`maybeEnsureResolved clears canReadSubset and canWriteSuperset`, () => {
+    let a = new TypeVariable('x');
+    let b = Type.newEntity(new Schema({names: ['Thing'], fields: {}}));
+
+    a.maybeMergeCanWriteSuperset(b);
+
+    assert.equal(a.canWriteSuperset, b);
+    assert.notExists(a.canReadSubset);
+    assert.notExists(a.resolution);
+
+    a.maybeEnsureResolved();
+
+    assert.notExists(a.canWriteSuperset);
+    assert.notExists(a.canReadSubset);
+    assert.equal(a.resolution, b);
   });
 });
