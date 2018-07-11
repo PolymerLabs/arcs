@@ -128,7 +128,7 @@ class StorageProxyBase {
     // Immediately notify any handles that are not configured with keepSynced but do want updates.
     if (this._observers.find(({handle}) => !handle.options.keepSynced && handle.options.notifyUpdate)) {
       let handleUpdate = this._processUpdate(update, false);
-      this._notify('update', handleUpdate, options => !options.keepSynced && options.notifyUpdate )
+      this._notify('update', handleUpdate, options => !options.keepSynced && options.notifyUpdate);
     }
 
     // Bail if we're not in synchronized mode or this is a stale event.
