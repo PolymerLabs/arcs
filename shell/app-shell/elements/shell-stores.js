@@ -53,7 +53,7 @@ class ShellStores extends Xen.Debug(Xen.Base, log) {
     }
   }
   _configState(config) {
-    const typesPath = `${config.root}/app-shell/artifacts`;
+    const typesPath = `${config.root}/shell/app-shell/artifacts`;
     this._setState({
       themeStoreOptions: {
         schemas: `${typesPath}/arc-types.manifest`,

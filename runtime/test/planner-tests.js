@@ -78,7 +78,7 @@ const loadTestArcAndRunSpeculation = async (manifest, manifestLoadedCallback) =>
 describe('Planner', function() {
   it('can map remote handles structurally', async () => {
     let results = await planFromManifest(`
-      store AStore of * {Text text, Text moreText} in './shell/artifacts/Things/empty.json'
+      store AStore of * {Text text, Text moreText} in './artifacts/Things/empty.json'
       particle P1 in './some-particle.js'
         in * {Text text} text
       recipe
@@ -91,7 +91,7 @@ describe('Planner', function() {
 
   it('can copy remote handles structurally', async () => {
     let results = await planFromManifest(`
-      store AStore of * {Text text, Text moreText} in './shell/artifacts/Things/empty.json'
+      store AStore of * {Text text, Text moreText} in './artifacts/Things/empty.json'
       particle P1 in './some-particle.js'
         in * {Text text} text
       recipe

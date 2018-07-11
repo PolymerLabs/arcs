@@ -5,5 +5,5 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import '../../artifacts/People/Person.schema'
-import '../../artifacts/People/Avatar.schema'
+import '../../../artifacts/People/Person.schema'
+import '../../../artifacts/People/Avatar.schema'

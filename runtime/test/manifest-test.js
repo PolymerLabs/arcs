@@ -796,7 +796,7 @@ ${particleStr1}
       return count;
     };
 
-    let shellParticlesPath = './shell/artifacts/';
+    let shellParticlesPath = './artifacts/';
     let shellParticleNames = [];
     fs.readdirSync(shellParticlesPath).forEach(name => {
       let manifestFolderName = path.join(shellParticlesPath, name);
@@ -1505,7 +1505,7 @@ resource SomeName
         out S {} a
       particle B
         in S {} b
-      
+
       recipe
         A
           a -> h0
