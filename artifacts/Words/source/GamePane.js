@@ -36,15 +36,16 @@ defineParticle(({SimpleParticle, log, resolver}) => {
      padding: 0px;
      -webkit-font-smoothing: antialiased;
    }
+   [${host}] button:enabled {
+     cursor: pointer;
+   }
    [${host}] .board {
      cursor: pointer;
      user-select: none;
-     left: 50%;
-     top: 50%;
-     -webkit-transform: translate3d(-50%,-50%,0);
      height: 382px;
+     margin-top: 2em;
+     position: relative;
      width: 357px;
-     position: absolute;
      user-select: none;
      margin-left: auto;
      margin-right: auto;
@@ -76,15 +77,26 @@ defineParticle(({SimpleParticle, log, resolver}) => {
      margin-bottom: 12px;
    }
    [${host}] .gameInfo .score,
-   [${host}] .gameInfo .shuffle {
+   [${host}] .gameInfo .shuffle,
+   [${host}] .gameInfo .longestWord,
+   [${host}] .gameInfo .highestScoringWord {
      float: left;
-     width: 64px;
      line-height: 20px;
      border-left: 1px solid white;
      padding-left: 8px;
      padding-top: 6px;
    }
-
+   [${host}] .gameInfo .shuffle,
+   [${host}] .gameInfo .highestScoringWord {
+     margin-left: 8px;
+   }
+   [${host}] .gameInfo .longestWord {
+     clear: left;
+   }
+   [${host}] .gameInfo .longestWord,
+   [${host}] .gameInfo .highestScoringWord {
+     margin-top: 0.5em;
+   }
    [${host}] .board .tile {
      font-family: 'Fredoka One', cursive;
      border-radius: 16px;
@@ -260,16 +272,16 @@ defineParticle(({SimpleParticle, log, resolver}) => {
      Loading dictionary<span>.</span><span>.</span><span>.</span>
    </div>
    <div class="gameInfo" hidden="{{hideGameInfo}}" tabindex="-1" on-keypress="onKeyPress">
-     <div class="score"><div class="caption">{{score}}</div>My Score</div>
-     <div class="shuffle"><div class="caption">{{shuffleAvailableCount}}</div>Shuffles Remaining</div>
-     <div hidden=true class="move">Move: <span>{{move}}</span></div>
-     <div hidden=true class="longestWord">Longest word: <span>{{longestWord}}</span></div>
-     <div hidden=true class="highestScoringWord">Highest scoring word: <span>{{highestScoringWord}}</span></div>
+     <div class="score"><div class="caption"><span>{{score}}</span> (<span>{{move}}</span> moves)</div>Score</div>
+     <div class="shuffle"><div class="caption">{{shuffleAvailableCount}}</div>Shuffles</div>
+     <div class="longestWord"><div class="caption">{{longestWord}}</div>Longest</div>
+     <div class="highestScoringWord"><div class="caption">{{highestScoringWord}}</div>Highest score</div>
      <div style="position: absolute; right: 0; top: 0; z-index: 10000;">
        <button disabled="{{submitMoveDisabled}}" on-click="onSubmitMove">Submit Move</button>
-       <button disabled="{{shuffleDisabled}}" style%="padding-left: 2em" on-click="onShuffle">Shuffle</button>
-       <button hidden="{{hideSolve}}" style%="padding-left: 2em" on-click="onSolve">Solve</button>
+       <button disabled="{{shuffleDisabled}}" style="padding-left: 2em" on-click="onShuffle">Shuffle</button>
+       <button hidden="{{hideSolve}}" style="padding-left: 2em" on-click="onSolve">Solve</button>
      </div>
+     <div style="clear: both;"></div>
    </div>
    <div class="board">
      <div class="gameOver" hidden="{{hideGameOver}}">Game Over</div>
@@ -572,7 +584,6 @@ recipe
           state.tileBoard, state.move ? state.move.coordinates : '');
       let annotationModels = this.selectedTilesToModels(state.selectedTiles);
       const word = this.tilesToWord(state.selectedTiles);
-      const moveText = `${word} (${Scoring.wordScore(state.selectedTiles)})`;
       const submitMoveEnabled =
           Scoring.isMinimumWordLength(state.selectedTiles.length) &&
           state.dictionary.contains(word);
@@ -580,13 +591,11 @@ recipe
       return {
         annotations: {$template: 'annotation', models: annotationModels},
         boardCells: {$template: 'board-cell', models: boardModels},
-        move: moveText,
+        move: `${state.moveCount || 0}`,
         longestWord: Scoring.longestWordText(props.stats),
         highestScoringWord: Scoring.highestScoringWordText(props.stats),
-        shuffleAvailableCount: state.tileBoard.shuffleAvailableCount,
-        score:
-            `${state.score}`,
-            // `${state.score} (${props.stats ? props.stats.moveCount : 0} moves)`,
+        shuffleAvailableCount: `${state.tileBoard.shuffleAvailableCount}`,
+        score: `${state.score}`,
         submitMoveDisabled: gameOver || !submitMoveEnabled,
         shuffleDisabled: gameOver || state.tileBoard.shuffleAvailableCount <= 0,
         hideSolve: !state.debugMode,

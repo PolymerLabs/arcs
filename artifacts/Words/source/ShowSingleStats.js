@@ -157,12 +157,13 @@ defineParticle(({DomParticle, html, log, resolver}) => {
     margin-bottom: 12px;
   }
   [${host}] .gameInfo .score,
-  [${host}] .gameInfo .shuffle {
+  [${host}] .gameInfo .longestWord,
+  [${host}] .gameInfo .highestScoringWord {
     float: left;
-    width: 64px;
     line-height: 20px;
     border-left: 1px solid #222;
     padding-left: 8px;
+    padding-right: 8px;
     padding-top: 6px;
   }
   [${host}] .board .tile {
@@ -233,10 +234,10 @@ defineParticle(({DomParticle, html, log, resolver}) => {
     <span avatar style='{{avatarStyle}}'></span><span owner>{{owner}}</span><span when>{{time}}</span>
   </div>
   <div class="gameInfo">
-    <div class="score"><div class="caption">{{score}}</div>My Score</div>
-
-    <div hidden=true class="longestWord">Longest word: <span>{{longestWord}}</span></div>
-    <div hidden=true class="highestScoringWord">Highest scoring word: <span>{{highestScoringWord}}</span></div>
+    <div class="score"><div class="caption"><span>{{score}}</span> (<span>{{move}}</span> moves)</div>Score</div>
+    <div class="longestWord"><div class="caption">{{longestWord}}</div>Longest</div>
+    <div class="highestScoringWord"><div class="caption">{{highestScoringWord}}</div>Highest score</div>
+    <div style="clear: both;"></div>
   </div>
   <div class="board">
     <div class="gameOver" hidden="{{hideGameOver}}">Game Over</div>
@@ -310,9 +311,9 @@ defineParticle(({DomParticle, html, log, resolver}) => {
         hideGameOver: true, // TODO(wkorman): Fix this.
         highestScoringWord: Scoring.highestScoringWordText(stats),
         longestWord: Scoring.longestWordText(stats),
+        move: `${stats.moveCount || 0}`,
         owner: owner ? owner.name : '(n/a)',
         score: `${stats.score}`,
-        // score: `${stats.score} (${stats.moveCount} moves)`,
         time: new Date(createdTimestamp).toLocaleDateString('en-US', {
           'month': 'short',
           'day': 'numeric'
