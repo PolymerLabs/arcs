@@ -16,6 +16,7 @@ import {Strategizer, Strategy} from '../strategizer/strategizer.js';
 import {StrategyExplorerAdapter} from './debug/strategy-explorer-adapter.js';
 import {Tracing} from '../tracelib/trace.js';
 import {ConvertConstraintsToConnections} from './strategies/convert-constraints-to-connections.js';
+import {MatchFreeHandlesToConnections} from './strategies/match-free-handles-to-connections.js';
 import {ResolveRecipe} from './strategies/resolve-recipe.js';
 import {CreateHandleGroup} from './strategies/create-handle-group.js';
 import {AddUseHandles} from './strategies/add-use-handles.js';
@@ -64,6 +65,7 @@ const IndexStrategies = [
   ConvertConstraintsToConnections,
   AddUseHandles,
   ResolveRecipe,
+  MatchFreeHandlesToConnections,
   // This one is not in-line with 'transparent' interfaces, but it operates on
   // recipes without looking at the context and cannot run after AddUseHandles.
   // We will revisit this list when we take a stab at recipe interfaces.
@@ -135,20 +137,38 @@ export class RecipeIndex {
     let results = [];
     for (let recipe of this._recipes) {
       for (let otherHandle of recipe.handles) {
-        if (!requestedFates.includes(otherHandle.fate)
+        if (requestedFates && !(requestedFates.includes(otherHandle.fate))
             || otherHandle.connections.length === 0
             || otherHandle.name === 'descriptions') continue;
-        let otherCounts = RecipeUtil.directionCounts(otherHandle);
-        let otherParticleNames = otherHandle.connections.map(conn => conn.particle.name);
 
-        if (otherCounts.in + counts.in === 0 // Someone has to read.
-            || otherCounts.out + counts.out === 0 // Someone has to write.
-            // If we're connecting the same sets of particles, that's probably not OK.
-            // This is a poor workaround for connecting the exact same recipes together :(
-            || new Set([...particleNames, ...otherParticleNames]).size
-                === particleNames.length
-            || !Handle.effectiveType(handle._mappedType,
-                [...handle.connections, ...otherHandle.connections])) continue;
+        // If we're connecting only create/use/? handles, we require communication.
+        // We don't do that if at least one handle is map/copy, as in such case
+        // everyone can be a reader.
+        // We inspect both fate and originalFate as copy ends up as use in an
+        // active recipe, and ? could end up as anything.
+        let fates = [handle.originalFate, handle.fate, otherHandle.originalFate, otherHandle.fate];
+        if (!fates.includes('copy') && !fates.includes('map')) {
+          let otherCounts = RecipeUtil.directionCounts(otherHandle);
+          // Someone has to read and someone has to write.
+          if (otherCounts.in + counts.in === 0
+              || otherCounts.out + counts.out === 0) continue;
+        }
+
+        // If one or the handles have tags, we need to have overlap.
+        if (handle.tags.length > 0 || otherHandle.tags.length > 0) {
+          if (!handle.tags.some(t => otherHandle.tags.includes(t))) continue;
+        }
+
+        // If types don't match.
+        if (!Handle.effectiveType(handle._mappedType,
+            [...handle.connections, ...otherHandle.connections])) continue;
+
+        // If we're connecting the same sets of particles, that's probably not OK.
+        // This is a poor workaround for connecting the exact same recipes together, to be improved.
+        const otherParticleNames = otherHandle.connections.map(conn => conn.particle.name);
+        const connectedParticles = new Set([...particleNames, ...otherParticleNames]);
+        if (connectedParticles.size == particleNames.length
+            && particleNames.length == otherParticleNames.length) continue;
 
         results.push(otherHandle);
       }
