@@ -377,7 +377,14 @@ ${this.activeRecipe.toString()}`;
         assert(type.isResolved(), `Can't create handle for unresolved type ${type}`);
 
         let newStore = await this.createStore(type, /* name= */ null, this.generateID(), recipeHandle.tags);
-        if (recipeHandle.fate === 'copy') {
+        if (recipeHandle.id && recipeHandle.type.isInterface
+            && recipeHandle.id.includes(':particle-literal:')) {
+          // 'particle-literal' handles are created by the FindHostedParticle strategy.
+          let particleName = recipeHandle.id.match(/:particle-literal:([a-zA-Z]+)$/)[1];
+          let particle = this.context.findParticleByName(particleName);
+          assert(recipeHandle.type.interfaceShape.particleMatches(particle));
+          newStore.set(particle.clone().toLiteral());
+        } else if (recipeHandle.fate === 'copy') {
           let copiedStore = this.findStoreById(recipeHandle.id);
           assert(copiedStore._version !== null);
           await newStore.cloneFrom(copiedStore);

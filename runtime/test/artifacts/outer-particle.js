@@ -18,7 +18,7 @@ defineParticle(({Particle}) => {
       this.outHandle = await this.arc.createHandle(this.outputHandle.type, 'output', this);
     }
     async onHandleSync(handle, model) {
-      if (handle.name === 'input') {
+      if (handle.name === 'input' && model) {
         this.inHandle.set(model);
       }
       if (handle.name === 'particle') {
