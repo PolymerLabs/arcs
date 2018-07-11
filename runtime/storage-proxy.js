@@ -126,11 +126,9 @@ class StorageProxyBase {
   // `update` contains 'version' and one of 'data', 'add' or 'remove'.
   _onUpdate(update) {
     // Immediately notify any handles that are not configured with keepSynced but do want updates.
-    for (let {handle, particle} of this._observers) {
-      if (!handle.options.keepSynced && handle.options.notifyUpdate) {
-        let handleUpdate = this._processUpdate(update, false);
-        this._scheduler.enqueue(particle, handle, ['update', particle, handleUpdate]);
-      }
+    if (this._observers.find(({handle}) => !handle.options.keepSynced && handle.options.notifyUpdate)) {
+      let handleUpdate = this._processUpdate(update, false);
+      this._notify('update', handleUpdate, options => !options.keepSynced && options.notifyUpdate )
     }
 
     // Bail if we're not in synchronized mode or this is a stale event.
