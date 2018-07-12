@@ -525,7 +525,7 @@ describe('Description', async () => {
   });
 });
 
-describe('Automatic handle resolution', function() {
+describe('Automatic resolution', function() {
   let loadAndPlan = async (manifestStr, arcCreatedCallback) => {
     return planFromManifest(manifestStr, {
       arcFactory: async manifest => {
@@ -535,15 +535,18 @@ describe('Automatic handle resolution', function() {
       }
     });
   };
-  let verifyResolvedPlan = async (manifestStr, arcCreatedCallback) => {
+  let verifyResolvedPlans = async (manifestStr, arcCreatedCallback) => {
     let plans = await loadAndPlan(manifestStr, arcCreatedCallback);
+    for (let plan of plans) {
+      plan.normalize();
+      assert.isTrue(plan.isResolved());
+    }
+    return plans;
+  };
+  let verifyResolvedPlan = async (manifestStr, arcCreatedCallback) => {
+    let plans = await verifyResolvedPlans(manifestStr, arcCreatedCallback);
     assert.lengthOf(plans, 1);
-
-    let recipe = plans[0];
-    recipe.normalize();
-    assert.isTrue(recipe.isResolved());
-
-    return recipe;
+    return plans[0];
   };
   let verifyUnresolvedPlan = async (manifestStr, arcCreatedCallback) => {
     let plans = await loadAndPlan(manifestStr, arcCreatedCallback);
@@ -653,5 +656,82 @@ describe('Automatic handle resolution', function() {
     let [handle] = recipe.handles;
     assert.equal('use', handle.fate);
     assert.equal('test:1', handle.id);
+  });
+  it('composes recipe rendering a list of items from a recipe', async () => {
+    let arc = null;
+    let recipes = await verifyResolvedPlans(`
+      import 'artifacts/Common/List.manifest'
+      schema Thing
+
+      particle ThingProducer
+        out [Thing] things
+
+      particle ThingRenderer
+        in Thing thing
+        consume item
+
+      recipe ProducingRecipe
+        create as things
+        ThingProducer`, arcRef => arc = arcRef);
+
+    assert.lengthOf(recipes, 2);
+    const composedRecipes = recipes.filter(r => r.name !== 'ProducingRecipe');
+    assert.lengthOf(composedRecipes, 1);
+
+    assert.equal(composedRecipes[0].toString(), `recipe
+  create as handle0 // [Thing {}]
+  create #selected as handle1 // Thing {}
+  copy '${arc.id}:particle-literal:ThingRenderer' as handle2 // HostedParticleShape
+  slot 'r0' #root as slot1
+  ItemMultiplexer as particle0
+    hostedParticle = handle2
+    list <- handle0
+    consume item as slot0
+  SelectableList as particle1
+    items = handle0
+    selected = handle1
+    consume root as slot1
+      provide action as slot2
+      provide annotation as slot3
+      provide item as slot0
+      provide postamble as slot4
+      provide preamble as slot5
+  ThingProducer as particle2
+    things -> handle0`);
+  });
+  it('composes recipe rendering a list of items from the current arc', async () => {
+    let arc = null;
+    let recipes = await verifyResolvedPlans(`
+        import 'artifacts/Common/List.manifest'
+        schema Thing
+
+        particle ThingRenderer
+          in Thing thing
+          consume item`,
+        async (arcRef, manifest) => {
+          arc = arcRef;
+          let Thing = manifest.findSchemaByName('Thing').entityClass();
+          await arc.createStore(Thing.type.collectionOf(), undefined, 'test-store');
+        });
+
+    assert.lengthOf(recipes, 1);
+    assert.equal(recipes[0].toString(), `recipe
+  use 'test-store' as handle0 // [Thing {}]
+  create #selected as handle1 // Thing {}
+  copy '${arc.id}:particle-literal:ThingRenderer' as handle2 // HostedParticleShape
+  slot 'r0' #root as slot1
+  ItemMultiplexer as particle0
+    hostedParticle = handle2
+    list <- handle0
+    consume item as slot0
+  SelectableList as particle1
+    items = handle0
+    selected = handle1
+    consume root as slot1
+      provide action as slot2
+      provide annotation as slot3
+      provide item as slot0
+      provide postamble as slot4
+      provide preamble as slot5`);
   });
 });

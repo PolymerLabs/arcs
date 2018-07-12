@@ -80,7 +80,8 @@ describe('demo flow', function() {
       `Add items from Claire's wishlist (Book: How to Draw plus 2 other items).`,
       'Check manufacturer information for products from your browsing context ' +
         '(Minecraft Book plus 2 other items).',
-      `Find out about Claire's interests.`
+      `Find out about Claire's interests.`,
+      `List of products from your browsing context (Minecraft Book plus 2 other items) with selection.`
       /*
       'Buy gifts for Claire\'s Birthday on 2017-08-04, estimate arrival date for ' +
         'products from your browsing context (Minecraft Book plus 2 other items), and estimate ' +
@@ -96,7 +97,7 @@ describe('demo flow', function() {
       // 'Show products from your browsing context (Minecraft Book plus 2 other items).',
       // 'Show products recommended based on products from your browsing context and Claire\'s wishlist (Book: How to Draw plus 2 other items).'
     ];
-    await helper.makePlans({expectedNumPlans: 4, expectedSuggestions});
+    await helper.makePlans({expectedNumPlans: 5, expectedSuggestions});
     helper.log('----------------------------------------');
 /*
     // 1.5 Select 'Add items from...'
