@@ -13,3 +13,8 @@ manifest-railroad.html
 shell/build
 shell/test/errorShots
 devtools/deps
+enclave/bazel-*
+enclave/sdk
+enclave/toolchains
+enclave/host/storage/db.img
+enclave/host/storage/key
