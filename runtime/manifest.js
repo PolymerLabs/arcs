@@ -12,6 +12,7 @@ import {assert} from '../platform/assert-web.js';
 import {digest} from '../platform/digest-web.js';
 import {parser} from './build/manifest-parser.js';
 import {Recipe} from './recipe/recipe.js';
+import {Handle} from './recipe/handle.js';
 import {ParticleSpec} from './particle-spec.js';
 import {Schema} from './schema.js';
 import {Search} from './recipe/search.js';
@@ -237,7 +238,13 @@ export class Manifest {
     function tagPredicate(manifest, handle) {
       return tags.filter(tag => !manifest._storeTags.get(handle).includes(tag)).length == 0;
     }
-    return [...this._findAll(manifest => manifest._stores.filter(store => typePredicate(store) && tagPredicate(manifest, store)))];
+
+    let stores = [...this._findAll(manifest => manifest._stores.filter(store => typePredicate(store) && tagPredicate(manifest, store)))];
+
+    // Quick check that a new handle can fulfill the type contract.
+    // Rewrite of this method tracked by https://github.com/PolymerLabs/arcs/issues/1636.
+    return stores.filter(s => !!Handle.effectiveType(
+      type, [{type: s.type, direction: s.type.isInterface ? 'host' : 'inout'}]));
   }
   findShapeByName(name) {
     return this._find(manifest => manifest._shapes.find(shape => shape.name == name));

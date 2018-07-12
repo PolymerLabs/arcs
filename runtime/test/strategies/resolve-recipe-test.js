@@ -12,7 +12,7 @@ import {Manifest} from '../../manifest.js';
 import {ResolveRecipe} from '../../strategies/resolve-recipe.js';
 import {StrategyTestHelper} from './strategy-test-helper.js';
 
-let {createTestArc, onlyResult, theResults} = StrategyTestHelper;
+let {createTestArc, onlyResult, theResults, noResult} = StrategyTestHelper;
 
 describe('resolve recipe', function() {
   it('does not resolve a mapping of a handle with an invalid type', async () => {
@@ -40,8 +40,7 @@ describe('resolve recipe', function() {
     let [recipe] = manifest.recipes;
     assert.isTrue(recipe.normalize());
 
-    recipe = await onlyResult(arc, ResolveRecipe, recipe);
-    assert.isFalse(recipe.normalize());
+    await noResult(arc, ResolveRecipe, recipe);
   });
 
   it('resolves a mapping of a handle with a less specific entity type', async () => {
