@@ -65,7 +65,7 @@ function searchElementsForText(elements, textQuery) {
 
   const matches = textToId.reduce((accumulator, currentValue) => {
     const found =
-        currentValue.text.toLowerCase().includes(textQuery.toLowerCase()) ?
+        currentValue.text.match(new RegExp(textQuery, 'i')) ?
         currentValue :
         null;
     if (accumulator && found) {
@@ -426,11 +426,11 @@ describe('Arcs demos', function() {
     // restaurant.
     const restaurantSelectors = particleSelectors('root', ['#webtest-title']);
     waitForVisible(restaurantSelectors);
-    waitForSuggestion('Make a reservation');
+    waitForSuggestion('Make a reservation[^\0]{0,10}$');
     let restaurantNodes = pierceShadows(restaurantSelectors);
     console.log(`click: restaurantSelectors`);
     browser.elementIdClick(restaurantNodes.value[0].ELEMENT);
-    acceptSuggestion('Table for 2');
+    acceptSuggestion('table for 2 available[^\0]{0,30}$');
     acceptSuggestion('from your calendar');
     testAroundRefresh();
 
@@ -449,17 +449,17 @@ describe('Arcs demos', function() {
     initTestWithNewArc(this.test.fullTitle(), true);
     allSuggestions();
     acceptSuggestion(
-        `Show products from your browsing context (Minecraft Book plus 2 other items).`);
+        `Show products from your browsing context \\(Minecraft Book plus 2 other items\\)\\.`);
     //browser.waitForVisible('[slotid="action"]');
     //browser.waitForVisible('[slotid="annotation"]');
     // TODO: click the 'Add' buttons to move products from recommended to shortlist and
     // (1) verify product was moved,
     // (2) verify 'action' slot is not visible after all products were moved.
     [
-      `Check shipping for Claire (Claire)'s Birthday on 2019-08-04.`,
+      `Check shipping for Claire \\(Claire\\)'s Birthday on 2019-08-04.`,
       'Check manufacturer information for products from your browsing context',
-      `Add items from Claire's wishlist (Book: How to Draw plus 2 other items).`,
-      `Find out about Claire's interests.`
+      `Add items from Claire's wishlist \\(Book: How to Draw plus 2 other items\\)\\.`,
+      `Find out about Claire's interests\\.`
     ].forEach(suggestion => {
       waitForStillness();
       openSystemUi();
