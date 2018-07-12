@@ -259,6 +259,36 @@ describe('RecipeIndex', function() {
         index.findHandleMatch(handle).map(h => h.recipe.name));
   });
 
+  it('finds tagged handles if selecting handle is not tagged', async () => {
+    let index = await createIndex(`
+      schema Thing
+
+      particle Consumer
+        in Thing thing
+      particle Producer
+        out Thing thing
+
+      recipe TakeMe1
+        create #loved as thing
+        Producer
+
+      recipe TakeMe2
+        create #hated as thing
+        Producer
+
+      recipe Selector
+        use as thing
+        Consumer
+    `);
+
+    let recipe = index.recipes.find(r => r.name === 'Selector');
+    let handle = recipe.handles[0];
+
+    assert.deepEqual(
+        ['TakeMe1', 'TakeMe2'],
+        index.findHandleMatch(handle).map(h => h.recipe.name));
+  });
+
   it('matching use/create handle pairs require communication', async () => {
     let index = await createIndex(`
       schema Thing
