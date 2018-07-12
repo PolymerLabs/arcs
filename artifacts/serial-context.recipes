@@ -1,0 +1,16 @@
+schema FavoriteFood
+  Text food
+
+particle SerialContext in 'SerialContext.js'
+  in FavoriteFood food
+  consume root
+
+recipe SerialContext
+  //map 'favorite|from|-L8ZV2_gCxnL4SSz-16-|-LH4k7Ai27t49lWgsQ_Y' as food
+  map #favorite as food
+  slot 'rootslotid-root' as slot0
+  // slot #root as slot0
+  SerialContext
+    food <- food
+    consume root as slot0
+  description `experiment with serializing context: ${SerialContext.food}`
