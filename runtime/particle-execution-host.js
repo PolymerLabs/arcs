@@ -54,7 +54,7 @@ export class ParticleExecutionHost {
     this._apiPort.onHandleSet = ({handle, data, particleId, barrier}) => handle.set(data, particleId, barrier);
     this._apiPort.onHandleClear = ({handle, particleId, barrier}) => handle.clear(particleId, barrier);
     this._apiPort.onHandleStore = ({handle, data: {value, keys}, particleId}) => handle.store(value, keys, particleId);
-    this._apiPort.onHandleRemove = ({handle, data: {value, keys}, particleId}) => handle.remove(value, keys, particleId);
+    this._apiPort.onHandleRemove = ({handle, data: {id, keys}, particleId}) => handle.remove(id, keys, particleId);
 
     this._apiPort.onIdle = ({version, relevance}) => {
       if (version == this._idleVersion) {
