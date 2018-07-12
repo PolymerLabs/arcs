@@ -119,7 +119,7 @@ describe('particle-api', function() {
         defineParticle(({Particle}) => {
           return class P extends Particle {
             onHandleSync(handle, model) {
-              var result = handle; //handles.get('result');
+              let result = handle;
               result.store(new result.entityClass({value: 'one'}));
               result.store(new result.entityClass({value: 'two'}));
             }
