@@ -101,6 +101,50 @@ describe('particle-api', function() {
     await inspector.verify('update:{"data":null}');
   });
 
+  it('can sync/update and store/remove with collections', async () => {
+    let {manifest, arc} = await loadFilesIntoNewArc({
+      manifest: `
+        schema Result
+          Text value
+
+        particle P in 'a.js'
+          inout [Result] result
+
+        recipe
+          use 'result-handle' as handle0
+          P
+            result = handle0
+      `,
+      'a.js': `
+        defineParticle(({Particle}) => {
+          return class P extends Particle {
+            onHandleSync(handle, model) {
+              let result = handle;
+              result.store(new result.entityClass({value: 'one'}));
+              result.store(new result.entityClass({value: 'two'}));
+            }
+            async onHandleUpdate(handle) {
+              for (let entity of await handle.toList()) {
+                if (entity.value == 'one') {
+                  handle.remove(entity);
+                }
+              }
+            }
+          }
+        });
+      `
+    });
+
+    let Result = manifest.findSchemaByName('Result').entityClass();
+    let resultStore = await arc.createStore(Result.type.collectionOf(), undefined, 'result-handle');
+    let recipe = manifest.recipes[0];
+    recipe.normalize();
+    await arc.instantiate(recipe);
+    await arc.idle;
+    let values = (await resultStore.toList()).map(item => item.rawData.value);
+    assert.deepEqual(values, ['two']);
+  });
+
   it('contains a constructInnerArc call', async () => {
     let {manifest, arc} = await loadFilesIntoNewArc({
       manifest: `
