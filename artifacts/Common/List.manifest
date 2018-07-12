@@ -28,7 +28,7 @@ particle List in 'source/List.js'
     provide action
       handle items
     provide postamble
-  description `list that can contain ${items}`
+  description `list of ${items}`
 
 particle SelectableList in 'source/List.js'
   inout [~a] items
@@ -42,7 +42,7 @@ particle SelectableList in 'source/List.js'
     provide action
       handle items
     provide postamble
-  description `list that can contain ${items} with selection`
+  description `list of ${items} with selection`
 
 particle ContentList in 'source/List.js'
   in [~a] items
@@ -55,7 +55,16 @@ particle ContentList in 'source/List.js'
     provide action
       handle items
     provide postamble
-  description `list that can contain ${items}`
+  description `list of ${items}`
+
+recipe
+  use as items
+  create #selected as selected
+  SelectableList
+    items = items
+    selected = selected
+  ItemMultiplexer
+    list = items
 
 // tile lists
 
@@ -73,7 +82,7 @@ particle TileList in 'source/TileList.js'
   consume root
     must provide set of tile
     provide set of action
-  description `tiling that can contain ${items}`
+  description `tiling of ${items}`
 
 particle SelectableTileList in 'source/TileList.js'
   inout [~a] items
@@ -81,4 +90,13 @@ particle SelectableTileList in 'source/TileList.js'
   consume root
     must provide set of tile
     provide set of action
-  description `tiling that can contain ${items} with selection`
+  description `tiling of ${items} with selection`
+
+recipe
+  use as items
+  create #selected as selected
+  SelectableTileList
+    items = items
+    selected = selected
+  TileMultiplexer
+    list = items
