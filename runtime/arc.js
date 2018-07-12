@@ -13,6 +13,7 @@ import {assert} from '../platform/assert-web.js';
 import {Type} from './type.js';
 import {handleFor} from './handle.js';
 import {ParticleExecutionHost} from './particle-execution-host.js';
+import {Handle} from './recipe/handle.js';
 import {Recipe} from './recipe/recipe.js';
 import {Manifest} from './manifest.js';
 import {Description} from './description.js';
@@ -504,7 +505,6 @@ ${this.activeRecipe.toString()}`;
   }
 
   findStoresByType(type, options) {
-    // TODO: dstockwell to rewrite this to use constraints and more
     let typeKey = Arc._typeToKey(type);
     let stores = [...this._storesById.values()].filter(handle => {
       if (typeKey) {
@@ -525,7 +525,11 @@ ${this.activeRecipe.toString()}`;
     if (options && options.tags && options.tags.length > 0) {
       stores = stores.filter(store => options.tags.filter(tag => !this._storeTags.get(store).has(tag)).length == 0);
     }
-    return stores;
+
+    // Quick check that a new handle can fulfill the type contract.
+    // Rewrite of this method tracked by https://github.com/PolymerLabs/arcs/issues/1636.
+    return stores.filter(s => !!Handle.effectiveType(
+      type, [{type: s.type, direction: s.type.isInterface ? 'host' : 'inout'}]));
   }
 
   findStoreById(id) {
