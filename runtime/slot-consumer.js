@@ -35,7 +35,7 @@ export class SlotConsumer {
   get renderings() { return [...this._renderingBySubId.entries()]; }
 
   onContainerUpdate(container, originalContainer) {
-    if (Boolean(container) != Boolean(originalContainer)) {
+    if (Boolean(container) !== Boolean(originalContainer)) {
       if (container) {
         this.startRender();
       } else {

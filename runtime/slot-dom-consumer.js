@@ -46,7 +46,7 @@ export class SlotDomConsumer extends SlotConsumer {
   createNewContainer(contextContainer, subId) {
     let newContainer = document.createElement(this._containerKind || 'div');
     let consumeConn = this.consumeConn;
-    newContainer.setAttribute('particle-host', consumeConn.toPrettyString());
+    newContainer.setAttribute('particle-host', consumeConn.getQualifiedName());
     contextContainer.appendChild(newContainer);
     return newContainer;
   }
@@ -157,7 +157,7 @@ export class SlotDomConsumer extends SlotConsumer {
   }
 
   get templatePrefix() {
-    return this.consumeConn.toPrettyString();
+    return this.consumeConn.getQualifiedName();
   }
 
   _setTemplate(rendering, templatePrefix, templateName, template) {

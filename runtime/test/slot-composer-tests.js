@@ -85,7 +85,7 @@ recipe
       assert.isNotNull(context);
       assert.equal(expected.sourceSlotName, context.sourceSlotConsumer ? context.sourceSlotConsumer.consumeConn.name : undefined);
       assert.equal(expected.hasContainer, Boolean(context.container));
-      assert.deepEqual(expected.consumeConnNames || [], context.slotConsumers.map(slot => slot.consumeConn.toPrettyString()));
+      assert.deepEqual(expected.consumeConnNames || [], context.slotConsumers.map(slot => slot.consumeConn.getQualifiedName()));
     };
     verifyContext('root', {hasContainer: true});
 
@@ -128,12 +128,12 @@ recipe
     });
 
     let verifySlot = (fullName) => {
-      let slot = slotComposer.consumers.find(s => fullName == s.consumeConn.toPrettyString());
+      let slot = slotComposer.consumers.find(s => fullName == s.consumeConn.getQualifiedName());
       assert.equal(MockSlotDomConsumer, slot.constructor);
       assert.isTrue(Boolean(slotComposer._contexts.find(context => context == slot.slotContext)));
     };
     let verifyHostedSlot = (fullName) => {
-      let slot = slotComposer.consumers.find(s => fullName == s.consumeConn.toPrettyString());
+      let slot = slotComposer.consumers.find(s => fullName == s.consumeConn.getQualifiedName());
       assert.equal(HostedSlotConsumer, slot.constructor);
       assert.equal(MockSlotDomConsumer, slotComposer.consumers.find(s => s == slot.transformationSlotConsumer).constructor);
     };

@@ -70,7 +70,7 @@ export class SlotComposer {
   }
 
   _findContextById(slotId) {
-    return this._contexts.find(context => context.id == slotId);
+    return this._contexts.find(({id}) => id == slotId);
   }
 
   createHostedSlot(transformationParticle, transformationSlotName, hostedParticleName, hostedSlotName) {
@@ -124,7 +124,7 @@ export class SlotComposer {
     newConsumers.forEach(consumer => {
       this._addSlotConsumer(consumer);
       let context = this._findContextById(consumer.consumeConn.targetSlot.id);
-      assert(context, `No context found for ${consumer.consumeConn.toPrettyString()}`);
+      assert(context, `No context found for ${consumer.consumeConn.getQualifiedName()}`);
       context.addSlotConsumer(consumer);
     });
   }
