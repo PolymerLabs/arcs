@@ -30,6 +30,7 @@ export class SlotConnection {
   get recipe() { return this._recipe; }
   get particle() { return this._particle; }
   get name() { return this._name; }
+  getQualifiedName() { return `${this.particle.name}::${this.name}`; }
   get slotSpec() { return this._slotSpec; }
   get targetSlot() { return this._targetSlot; }
   get providedSlots() { return this._providedSlots; }

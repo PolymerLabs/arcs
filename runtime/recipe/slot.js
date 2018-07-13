@@ -39,7 +39,7 @@ export class Slot {
   get sourceConnection() { return this._sourceConnection; }
   set sourceConnection(sourceConnection) { this._sourceConnection = sourceConnection; }
   get consumeConnections() { return this._consumeConnections; }
-  getProvidedSlotSpec() {
+  get spec() {
     // TODO: should this return something that indicates this isn't available yet instead of 
     // the constructed {isSet: false, tags: []}?
     return (this.sourceConnection && this.sourceConnection.slotSpec) ? this.sourceConnection.slotSpec.getProvidedSlotSpec(this.name) : {isSet: false, tags: []};

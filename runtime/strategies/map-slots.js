@@ -79,7 +79,7 @@ export class MapSlots extends Strategy {
       // If this slot is internal to the recipe, it has the sourceConnection set to the providing connection
       // (and hence the consuming connection is considered connected already). Otherwise, this may only be a remote slot.
       local: !slotConnection.targetSlot ? MapSlots._findSlotCandidates(slotConnection, slotConnection.recipe.slots) : [],
-      remote: MapSlots._findSlotCandidates(slotConnection, arc.pec.slotComposer.getAvailableSlots())
+      remote: MapSlots._findSlotCandidates(slotConnection, arc.pec.slotComposer.getAvailableContexts())
     };
   }
 
@@ -112,14 +112,14 @@ export class MapSlots extends Strategy {
 
   static specMatch(slotConnection, slot) {
     return slotConnection.slotSpec && // if there's no slotSpec, this is just a slot constraint on a verb
-          slotConnection.slotSpec.isSet == slot.getProvidedSlotSpec().isSet;
+          slotConnection.slotSpec.isSet == slot.spec.isSet;
   }
 
   // Returns true, if the slot connection's tags intersection with slot's tags is nonempty.
   // TODO: replace with generic tag matcher
   static tagsOrNameMatch(slotConnection, slot) {
     let consumeConnTags = [].concat(slotConnection.slotSpec.tags || [], slotConnection.tags);
-    let slotTags = new Set([].concat(slot.tags, slot.getProvidedSlotSpec().tags || [], [slot.name]));
+    let slotTags = new Set([].concat(slot.tags, slot.spec.tags || [], [slot.name]));
     // Consume connection tags aren't empty and intersection with the slot isn't empty.
     if (consumeConnTags.length > 0 && consumeConnTags.some(t => slotTags.has(t))) {
       return true;

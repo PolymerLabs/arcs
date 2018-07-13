@@ -26,11 +26,19 @@ defineParticle(({DomParticle, html}) => {
 `;
       } else if (slotName == 'hints') {
         let templates = {};
-        ['A', 'B', 'C', 'D', 'E'].forEach(subid => templates[subid] = `<span>Hint ${subid}</span>`);
+        ['A', 'B', 'C', 'D', 'E'].forEach(subid => templates[`default${subid}`] = `<span>Hint ${subid}</span>`);
         return templates;
       }
 
       console.error(`Unsupported slot ${slotName}`);
+    }
+    getTemplateName(slotName) {
+      if (slotName == 'hints') {
+        let templateNames = {};
+        ['A', 'B', 'C', 'D', 'E'].forEach(subid => templateNames[subid] = `default${subid}`);
+        return templateNames;
+      }
+      return super.getTemplateName(slotName);
     }
     shouldRender(props) {
       return !!props.thing;

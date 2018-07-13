@@ -132,7 +132,7 @@ export class Handle {
       // A remote handle cannot be connected to an output param.
       if (this.fate == 'map' && ['out', 'inout'].includes(connection.direction)) {
         if (options && options.errors) {
-          options.errors.set(this, `Invalid fate '${this.fate}' for handle '${this}'; it is used for '${connection.direction}' ${connection.particle.name}::${connection.name} connection`);
+          options.errors.set(this, `Invalid fate '${this.fate}' for handle '${this}'; it is used for '${connection.direction}' ${connection.getQualifiedName()} connection`);
         }
         return false;
       }

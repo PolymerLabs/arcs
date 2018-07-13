@@ -19,6 +19,7 @@ import {Loader} from '../loader.js';
 let loader = new Loader();
 
 async function setup() {
+  let slotComposer = createSlotComposer();
   let arc = new Arc({slotComposer, loader, id: 'test'});
   let manifest = await Manifest.parse(`
     import 'runtime/test/artifacts/test-particles.manifest'
@@ -36,10 +37,11 @@ async function setup() {
     Bar: manifest.findSchemaByName('Bar').entityClass(),
   };
 }
-const slotComposer = new SlotComposer({rootContainer: 'test', affordance: 'mock'});
+function createSlotComposer() { return new SlotComposer({rootContainer: {'root': 'test'}, affordance: 'mock'}); }
 
 describe('Arc', function() {
   it('idle can safely be called multiple times', async () => {
+    let slotComposer = createSlotComposer();
     const arc = new Arc({slotComposer, loader, id: 'test'});
     const f = async () => { await arc.idle; };
     await Promise.all([f(), f()]);
@@ -71,6 +73,7 @@ describe('Arc', function() {
   });
 
   it('deserializing a serialized empty arc produces an empty arc', async () => {
+    let slotComposer = createSlotComposer();
     let arc = new Arc({slotComposer, loader, id: 'test'});
     let serialization = await arc.serialize();
     let newArc = await Arc.deserialize({serialization, loader, slotComposer});
@@ -95,6 +98,7 @@ describe('Arc', function() {
     let serialization = await arc.serialize();
     arc.stop();
 
+    let slotComposer = createSlotComposer();
     let newArc = await Arc.deserialize({serialization, loader, slotComposer});
     fooStore = newArc.findStoreById(fooStore.id);
     barStore = newArc.findStoreById(barStore.id);
@@ -109,7 +113,7 @@ describe('Arc', function() {
       import 'runtime/test/artifacts/test-particles.manifest'
 
       recipe
-        slot 'slotid' as slot0
+        slot 'rootslotid-slotid' as slot0
         use as handle0
         Multiplexer
           hostedParticle = ConsumerParticle
@@ -120,7 +124,7 @@ describe('Arc', function() {
 
     let recipe = manifest.recipes[0];
 
-    let slotComposer = new SlotComposer({affordance: 'mock', rootContainer: 'slotid'});
+    let slotComposer = new SlotComposer({affordance: 'mock', rootContainer: {'slotid': 'dummy-container'}});
 
     let slotComposer_createHostedSlot = slotComposer.createHostedSlot;
 

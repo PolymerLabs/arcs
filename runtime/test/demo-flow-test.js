@@ -87,7 +87,7 @@ describe('demo flow', function() {
     // Accept "Add items from Claire's wishlist (...)" suggestion.
     helper.slotComposer
       .newExpectations()
-        .expectRenderSlot('Chooser', 'action', {contentTypes: ['template']}) //, 'model']})
+        .expectRenderSlot('Chooser', 'action', {contentTypes: ['template']})
         .expectRenderSlot('Chooser', 'action', {verify: helper.slotComposer.expectContentItemsNumber.bind(null, 3)})
         .expectRenderSlot('AlsoOn', 'annotation', {contentTypes: ['template']})
         .expectRenderSlot('AlsoOn', 'annotation', {contentTypes: ['model'], times: 3})
@@ -155,6 +155,6 @@ describe('demo flow', function() {
     helper.log('----------------------------------------');
     helper.clearTimeout();
 
-    // TODO(mmandlis): Provide methods in helper to verify slot contents (helper.slotComposer._slots[i]._content).
+    // TODO(mmandlis): Provide methods in helper to verify slot contents (helper.slotComposer.consumers[i]._content).
   }).timeout(10000);
 });

@@ -19,7 +19,7 @@ export class StrategyTestHelper {
       context,
       slotComposer: {
         affordance,
-        getAvailableSlots: (() => { return [{name: 'root', id: 'r0', tags: ['root'], handles: [], handleConnections: [], getProvidedSlotSpec: () => { return {isSet: false}; }}]; })
+        getAvailableContexts: (() => { return [{name: 'root', id: 'r0', tags: ['root'], handles: [], handleConnections: [], spec: {isSet: false}}]; })
       }
     });
   }

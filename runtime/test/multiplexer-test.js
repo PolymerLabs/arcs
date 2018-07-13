@@ -8,15 +8,17 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {assert} from '../../runtime/test/chai-web.js';
+import {assert} from '../test/chai-web.js';
 
-import {Arc} from '../../runtime/arc.js';
-import {DomSlot} from '../../runtime/dom-slot.js';
-import {Loader} from '../../runtime/loader.js';
-import {Manifest} from '../../runtime/manifest.js';
-import {MockDomSlot, MockDomContext} from '../../runtime/testing/mock-dom-slot.js';
-import {SlotComposer} from '../../runtime/slot-composer.js';
-import {TestHelper} from '../../runtime/testing/test-helper.js';
+import {Arc} from '../arc.js';
+import {Loader} from '../loader.js';
+import {Manifest} from '../manifest.js';
+import {SlotConsumer} from '../slot-consumer.js';
+import {SlotComposer} from '../slot-composer.js';
+import {SlotDomConsumer} from '../slot-dom-consumer.js';
+import {MockSlotDomConsumer} from '../testing/mock-slot-dom-consumer.js';
+import {HostedSlotConsumer} from '../hosted-slot-consumer.js';
+import {TestHelper} from '../testing/test-helper.js';
 
 let loader = new Loader();
 
@@ -27,7 +29,7 @@ describe('Multiplexer', function() {
       import 'runtime/test/artifacts/test-particles.manifest'
 
       recipe
-        slot 'slotid' as slot0
+        slot 'rootslotid-slotid' as slot0
         use 'test:1' as handle0
         Multiplexer
           hostedParticle = ConsumerParticle
@@ -40,7 +42,7 @@ describe('Multiplexer', function() {
 
     let barType = manifest.findTypeByName('Bar');
 
-    let slotComposer = new SlotComposer({affordance: 'mock', rootContainer: 'slotid'});
+    let slotComposer = new SlotComposer({affordance: 'mock', rootContainer: {'slotid': 'dummy-container'}});
 
     let slotComposer_createHostedSlot = slotComposer.createHostedSlot;
 
@@ -107,35 +109,32 @@ describe('Multiplexer', function() {
         .expectRenderSlot('PostMuxer', 'item', {contentTypes: ['templateName', 'model']});
     await postsStore.store({id: '4', rawData: {message: 'w', renderRecipe: recipeOne, renderParticleSpec: showOneSpec}}, ['key1']);
     await helper.idle();
-    assert.lengthOf(helper.slotComposer._slots, 2);
-    let itemSlot = helper.slotComposer._slots.find(s => s.consumeConn.name == 'item');
+    assert.lengthOf(helper.slotComposer.consumers.filter(s => s.constructor === MockSlotDomConsumer), 2);
+    assert.lengthOf(helper.slotComposer.consumers.filter(s => s.constructor === HostedSlotConsumer), 4);
+    let itemSlot = helper.slotComposer.consumers.find(s => s.consumeConn.name == 'item');
     assert(itemSlot);
-
-    // verify hosted slots
-    assert.equal(4, itemSlot._hostedSlotById.size);
+    let items = itemSlot.renderings.map(([subId, item]) => item);
 
     // verify model
-    assert.lengthOf(itemSlot._model.items, 4);
+    assert.lengthOf(items, 4);
     [{subId: '1', message: 'x'}, {subId: '2', message: 'y'}, {subId: '3', message: 'z'}, {subId: '4', message: 'w'}].forEach(expected => {
-        assert(itemSlot._model.items.find(item => item.subId == expected.subId && item.message == expected.message),
+        assert(items.find(item => item.model.subId == expected.subId && item.model.message == expected.message),
               `Cannot find item {subId: '${expected.subId}', message: '${expected.message}'`);
     });
 
-    // verify context
-    let itemContext = itemSlot._context;
-    assert.deepEqual(['1', '2', '3', '4'], Object.keys(itemContext._contextBySubId).sort());
-    Object.values(itemContext._contextBySubId).forEach(context => {
-      if (context._subId == '2') {
-        assert.equal('PostMuxer::item::ShowTwo::item::default', context._templateName);
+    // verify template names
+    for (let item of items) {
+      if (item.model.subId == '2') {
+        assert.equal('PostMuxer::item::ShowTwo::item::default', item.templateName);
       } else {
-        assert.equal('PostMuxer::item::ShowOne::item::default', context._templateName);
+        assert.equal('PostMuxer::item::ShowOne::item::default', item.templateName);
       }
-    });
+    }
 
     // verify template cache
-    MockDomContext.hasTemplate('PostMuxer::item::ShowOne::item::default');
-    MockDomContext.hasTemplate('PostMuxer::item::ShowTwo::item::default');
-    MockDomContext.hasTemplate('PostMuxer::item::default');
-    MockDomContext.hasTemplate('Root  ::item::ShowOne::item::default');
+    SlotDomConsumer.hasTemplate('PostMuxer::item::ShowOne::item::default');
+    SlotDomConsumer.hasTemplate('PostMuxer::item::ShowTwo::item::default');
+    SlotDomConsumer.hasTemplate('PostMuxer::item::default');
+    SlotDomConsumer.hasTemplate('Root::item::ShowOne::item::default');
   });
 });
