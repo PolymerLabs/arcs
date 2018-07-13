@@ -17,7 +17,19 @@ recipe &displayRestaurants
   RestaurantMasterDetail.list -> RestaurantList.list
   RestaurantList
 
-recipe
+recipe &findLocation
+  create as location
+  ExtractLocation
+    location -> location
+
+recipe &showRestaurants
+  create #restaurants #nosync as restaurants
+  FindRestaurants
+    restaurants = restaurants
+  &displayRestaurants
+    list <- restaurants
+
+recipe &nearbyRestaurants
   create #restaurants #nosync as restaurants
   create as location
   ExtractLocation
