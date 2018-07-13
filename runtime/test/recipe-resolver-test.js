@@ -28,16 +28,14 @@ describe('RecipeResolver', function() {
       id: 'test',
       slotComposer: {
         affordance: 'dom',
-        getAvailableSlots: (() => {
+        getAvailableContexts: (() => {
           return [{
             name: 'root',
             id: 'r0',
             tags: ['#root'],
             handles: [],
             handleConnections: [],
-            getProvidedSlotSpec: () => {
-              return {isSet: false};
-            }
+            spec: {isSet: false}
           }];
         })
       }

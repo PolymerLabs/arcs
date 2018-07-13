@@ -63,6 +63,7 @@ export class HandleConnection {
 
   get recipe() { return this._recipe; }
   get name() { return this._name; } // Parameter name?
+  getQualifiedName() { return `${this.particle.name}::${this.name}`; }
   get tags() { return this._tags; }
   get type() {
     if (this._type)
@@ -109,7 +110,7 @@ export class HandleConnection {
   _isValid(options) {
     if (this.direction && !['in', 'out', 'inout', 'host'].includes(this.direction)) {
       if (options && options.errors) {
-        options.errors.set(this, `Invalid direction '${this.direction}' for handle connection '${this.particle.name}::${this.name}'`);
+        options.errors.set(this, `Invalid direction '${this.direction}' for handle connection '${this.getQualifiedName()}'`);
       }
       return false;
     }
@@ -117,13 +118,13 @@ export class HandleConnection {
       let connectionSpec = this.spec;
       if (!connectionSpec.isCompatibleType(this.rawType)) {
         if (options && options.errors) {
-          options.errors.set(this, `Type '${this.rawType} for handle connection '${this.particle.name}::${this.name}' doesn't match particle spec's type '${connectionSpec.type}'`);
+          options.errors.set(this, `Type '${this.rawType} for handle connection '${this.getQualifiedName()}' doesn't match particle spec's type '${connectionSpec.type}'`);
         }
         return false;
       }
       if (this.direction != connectionSpec.direction) {
         if (options && options.errors) {
-          options.errors.set(this, `Direction '${this.direction}' for handle connection '${this.particle.name}::${this.name}' doesn't match particle spec's direction '${connectionSpec.direction}'`);
+          options.errors.set(this, `Direction '${this.direction}' for handle connection '${this.getQualifiedName()}' doesn't match particle spec's direction '${connectionSpec.direction}'`);
         }
         return false;
       }

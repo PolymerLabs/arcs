@@ -155,6 +155,6 @@ describe('demo flow', function() {
     helper.log('----------------------------------------');
     helper.clearTimeout();
 
-    // TODO(mmandlis): Provide methods in helper to verify slot contents (helper.slotComposer._slots[i]._content).
+    // TODO(mmandlis): Provide methods in helper to verify slot contents (helper.slotComposer.consumers[i]._content).
   }).timeout(10000);
 });

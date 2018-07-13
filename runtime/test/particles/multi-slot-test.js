@@ -62,7 +62,7 @@ describe('multi-slot test', function() {
       .expectRenderSlot('ShowHints', 'root', {isOptional: true, verify: (content) => Object.keys(content).length == 0})
       .expectRenderSlot('AskAndAnswer', 'question', {contentTypes: ['template', 'model']})
       .expectRenderSlot('AskAndAnswer', 'hints', {contentTypes: ['template', 'model'], verify: (content) => {
-        assert.deepEqual(['A', 'B', 'C', 'D', 'E'], Object.keys(content.template));
+        assert.deepEqual(['defaultA', 'defaultB', 'defaultC', 'defaultD', 'defaultE'], Object.keys(content.template));
         return true;
       }});
 

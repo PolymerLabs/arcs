@@ -11,28 +11,20 @@
 
 import {Arc} from '../arc.js';
 import {assert} from './chai-web.js';
-import {Slot} from '../slot.js';
+// import {SlotConsumer} from '../slot-consumer.js';
 import {SlotComposer} from '../slot-composer.js';
+import {MockSlotDomConsumer} from '../testing/mock-slot-dom-consumer.js';
+import {HostedSlotConsumer} from '../hosted-slot-consumer.js';
 import {Manifest} from '../manifest.js';
 import {Planner} from '../planner.js';
 import {MessageChannel} from '../message-channel.js';
 import {ParticleExecutionContext} from '../particle-execution-context.js';
 import {StubLoader} from '../testing/stub-loader.js';
 import * as util from '../testing/test-util.js';
-
-class MockSlot extends Slot {
-  constructor(consumeConn, arc) {
-    super(consumeConn, arc);
-    this.content = null;
-  }
-  setContent(content, handler) {
-    this.content = content;
-  }
-}
+import {TestHelper} from '../testing/test-helper.js';
 
 async function initSlotComposer(recipeStr) {
-  let slotComposer = new SlotComposer({affordance: 'mock', rootContainer: 'dummy-container'});
-  slotComposer._affordance._slotClass = MockSlot;
+  let slotComposer = new SlotComposer({affordance: 'mock', rootContainer: {'root': 'dummy-container'}});
 
   let manifest = (await Manifest.parse(recipeStr));
   let loader = new StubLoader({
@@ -86,10 +78,18 @@ recipe
     consume otherSlot as slot2
         `;
     let {arc, slotComposer, plan, startRenderParticles} = await initSlotComposer(manifestStr);
-    plan = plan.clone();
+    assert.lengthOf(slotComposer.getAvailableContexts(), 1);
 
-    // "root" slot is always available
-    assert.deepEqual(['root'], slotComposer.getAvailableSlots().map(s => s.name));
+    let verifyContext = (name, expected) => {
+      let context = slotComposer._contexts.find(c => c.name == name);
+      assert.isNotNull(context);
+      assert.equal(expected.sourceSlotName, context.sourceSlotConsumer ? context.sourceSlotConsumer.consumeConn.name : undefined);
+      assert.equal(expected.hasContainer, Boolean(context.container));
+      assert.deepEqual(expected.consumeConnNames || [], context.slotConsumers.map(slot => slot.consumeConn.getQualifiedName()));
+    };
+    verifyContext('root', {hasContainer: true});
+
+    plan = plan.clone();
 
     // instantiate the recipe
     plan.normalize();
@@ -97,19 +97,50 @@ recipe
     assert.equal(arc.pec.slotComposer, slotComposer);
     await arc.instantiate(plan);
     assert.deepEqual(['A'], startRenderParticles);
+    assert.lengthOf(slotComposer.getAvailableContexts(), 3);
+    verifyContext('root', {hasContainer: true, consumeConnNames: ['A::root']});
+    verifyContext('mySlot', {hasContainer: false, sourceSlotName: 'root', consumeConnNames: ['B::mySlot', 'BB::mySlot']});
+    verifyContext('otherSlot', {hasContainer: false, sourceSlotName: 'root', consumeConnNames: ['C::otherSlot']});
 
     // render root slot
     let particle = arc.activeRecipe.particles[0];
-    slotComposer.renderSlot(particle, 'root', 'dummy-content');
-    let rootSlot = slotComposer.getSlot(particle, 'root');
-    assert.equal('dummy-content', rootSlot.content);
+    await slotComposer.renderSlot(particle, 'root', {model: {'foo': 'bar'}});
+    let rootSlot = slotComposer.getSlotConsumer(particle, 'root');
+    assert.deepEqual({foo: 'bar'}, rootSlot.getRendering().model);
 
     // update inner slots
     startRenderParticles.length = 0;
     rootSlot.getInnerContainer = (providedSlotName) => providedSlotName == 'mySlot' ? 'dummy-inner-container' : null;
-    await slotComposer.updateInnerSlots(rootSlot);
+    rootSlot.updateProvidedContexts();
     assert.deepEqual(['B', 'BB'], startRenderParticles);
 
-    assert.deepEqual(['mySlot', 'otherSlot', 'root'], slotComposer.getAvailableSlots().map(s => s.name));
+    assert.lengthOf(slotComposer.getAvailableContexts(), 3);
+    verifyContext('root', {hasContainer: true, consumeConnNames: ['A::root']});
+    verifyContext('mySlot', {hasContainer: true, sourceSlotName: 'root', consumeConnNames: ['B::mySlot', 'BB::mySlot']});
+    verifyContext('otherSlot', {hasContainer: false, sourceSlotName: 'root', consumeConnNames: ['C::otherSlot']});
+  });
+
+  it('initialize recipe and render hosted slots', async () => {
+    let slotComposer = new SlotComposer({affordance: 'mock', rootContainer: {'root': 'dummy-container'}});
+    let helper = await TestHelper.createAndPlan({
+      manifestFilename: './runtime/test/particles/artifacts/products-test.recipes',
+      slotComposer
+    });
+
+    let verifySlot = (fullName) => {
+      let slot = slotComposer.consumers.find(s => fullName == s.consumeConn.getQualifiedName());
+      assert.equal(MockSlotDomConsumer, slot.constructor);
+      assert.isTrue(Boolean(slotComposer._contexts.find(context => context == slot.slotContext)));
+    };
+    let verifyHostedSlot = (fullName) => {
+      let slot = slotComposer.consumers.find(s => fullName == s.consumeConn.getQualifiedName());
+      assert.equal(HostedSlotConsumer, slot.constructor);
+      assert.equal(MockSlotDomConsumer, slotComposer.consumers.find(s => s == slot.transformationSlotConsumer).constructor);
+    };
+    await helper.acceptSuggestion({particles: ['ShowCollection', 'Multiplexer', 'ProductFilter']});
+    assert.lengthOf(slotComposer.consumers, 3);
+    verifySlot('ShowCollection::root');
+    verifySlot('Multiplexer::annotation');
+    verifyHostedSlot('ShowProduct::item');
   });
 });

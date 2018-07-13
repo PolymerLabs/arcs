@@ -17,22 +17,25 @@ import {MessageChannel} from '../message-channel.js';
 import {ParticleExecutionContext} from '../particle-execution-context.js';
 import {Loader} from '../loader.js';
 import {MockSlotComposer} from '../testing/mock-slot-composer.js';
+import {SlotDomConsumer} from '../slot-dom-consumer.js';
+import {MockSlotDomConsumer} from '../testing/mock-slot-dom-consumer.js';
+import {HostedSlotConsumer} from '../hosted-slot-consumer.js';
 
 describe('particle-shape-loading-with-slots', function() {
-  async function instantiateRecipe() {
+  async function instantiateRecipe(contextContainer) {
     let loader = new Loader();
     let pecFactory = function(id) {
       let channel = new MessageChannel();
       new ParticleExecutionContext(channel.port1, `${id}:inner`, loader);
       return channel.port2;
     };
-    let slotComposer = new MockSlotComposer();
+    let slotComposer = new MockSlotComposer({rootContainer: {'set-slotid-0': contextContainer || {}}});
     let manifest = await Manifest.parse(`
       import './runtime/test/artifacts/transformations/test-slots-particles.manifest'
 
       recipe
         create as handle0
-        slot 'slotid-0' as slot0
+        slot 'rootslotid-set-slotid-0' as slot0
         MultiplexSlotsParticle
           particle = SingleSlotParticle
           foos <- handle0
@@ -48,21 +51,28 @@ describe('particle-shape-loading-with-slots', function() {
     await arc.instantiate(recipe);
 
     let fooType = manifest.findTypeByName('Foo');
-    let inHandle = handleFor(arc.findStoresByType(fooType.collectionOf())[0]);
-    inHandle.store(new (fooType.entitySchema.entityClass())({value: 'foo1'}));
-    inHandle.store(new (fooType.entitySchema.entityClass())({value: 'foo2'}));
-
-    return {fooType, inHandle, slotComposer};
+    let inStore = arc.findStoresByType(fooType.collectionOf())[0];
+    return {inStore, slotComposer};
   }
 
-  function verifyFooItems(items, expectedValues) {
-    assert.lengthOf(items, expectedValues.length);
-    expectedValues.forEach(value => assert(items.find(item => item.value == value), `Cannot find item '${value}' in model`));
+  let expectedTemplateName = 'MultiplexSlotsParticle::annotationsSet::SingleSlotParticle::annotation::default';
+
+  function verifyFooItems(slotConsumer, expectedValues) {
+    let renderings = slotConsumer.renderings.filter(([subId, {model}]) => Boolean(model));
+    assert.equal(renderings.length, Object.keys(expectedValues).length);
+    for (let [subId, {model, templateName}] of renderings) {
+      assert.equal(expectedValues[subId], model.value);
+      assert.equal(expectedTemplateName, templateName);
+      assert.isTrue(!!SlotDomConsumer.hasTemplate(expectedTemplateName));
+    }
   }
 
-  it('multiplex recipe with slots', async () => {
-    let {fooType, inHandle, slotComposer} = await instantiateRecipe();
-    slotComposer._slots[0].updateContainer({});
+  it('multiplex recipe with slots - immediate', async () => {
+    let {inStore, slotComposer} = await instantiateRecipe({
+      'subid-1': 'dummy-container1', 'subid-2': 'dummy-container2', 'subid-3': 'dummy-container3'
+    });
+    await inStore.store({id: 'subid-1', rawData: {value: 'foo1'}}, ['key1']);
+    await inStore.store({id: 'subid-2', rawData: {value: 'foo2'}}, ['key2']);
 
     slotComposer
       .newExpectations()
@@ -73,13 +83,15 @@ describe('particle-shape-loading-with-slots', function() {
     await slotComposer.expectationsCompleted();
 
     // Verify slot template and models.
-    assert.lengthOf(slotComposer._slots, 1);
-    let slot = slotComposer._slots[0];
-    assert.isAbove(slot._content.template.length, 0);
-    verifyFooItems(slot._content.model.items, ['foo1', 'foo2']);
+    assert.lengthOf(slotComposer.consumers, 3);
+    assert.isTrue(slotComposer.consumers[0] instanceof SlotDomConsumer);
+    assert.isTrue(slotComposer.consumers[1] instanceof HostedSlotConsumer);
+    assert.isTrue(slotComposer.consumers[2] instanceof HostedSlotConsumer);
+    let slot = slotComposer.consumers[0];
+    verifyFooItems(slot, {'subid-1': 'foo1', 'subid-2': 'foo2'});
 
     // Add one more element.
-    inHandle.store(new (fooType.entitySchema.entityClass())({value: 'foo3'}));
+    await inStore.store({id: 'subid-3', rawData: {value: 'foo3'}}, ['key3']);
     slotComposer
       .newExpectations()
       .expectRenderSlot('SingleSlotParticle', 'annotation', {contentTypes: ['model']})
@@ -88,45 +100,45 @@ describe('particle-shape-loading-with-slots', function() {
     await slotComposer.arc.pec.idle;
     await slotComposer.expectationsCompleted();
 
-    // Verify slot template and models.
-    assert.lengthOf(slotComposer._slots, 1);
-    assert.isAbove(slot._content.template.length, 0);
-    verifyFooItems(slot._content.model.items, ['foo1', 'foo2', 'foo3']);
+    verifyFooItems(slot, {'subid-1': 'foo1', 'subid-2': 'foo2', 'subid-3': 'foo3'});
   });
 
-  it('multiplex recipe with slots (init context later)', async () => {
+  it('multiplex recipe with slots - init context later', async () => {
     // This test is different from the one above because it initializes the transformation particle context
     // after the hosted particles are also instantiated.
     // This verifies a different start-render call in slot-composer.
-    let {fooType, inHandle, slotComposer} = await instantiateRecipe();
+    let {inStore, slotComposer} = await instantiateRecipe();
+    slotComposer._contexts[0]._container = null;
+    await inStore.store({id: 'subid-1', rawData: {value: 'foo1'}}, ['key1']);
+    await inStore.store({id: 'subid-2', rawData: {value: 'foo2'}}, ['key2']);
+
     // Wait for the hosted slots to be initialized in slot-composer.
     await new Promise((resolve, reject) => {
       let myInterval = setInterval(function() {
-        if (slotComposer._slots[0]._hostedSlotById.size == 2) {
+        if (slotComposer.consumers.length == 3) { // last 2 are hosted slots
           resolve();
           clearInterval(myInterval);
         }
       }, 10);
     });
-    slotComposer._slots[0].updateContainer({});
+    slotComposer._contexts[0].container = {'subid-1': 'dummy-container1', 'subid-2': 'dummy-container2', 'subid-3': 'dummy-container3'};
 
     slotComposer
       .newExpectations()
       .expectRenderSlot('SingleSlotParticle', 'annotation', {contentTypes: ['template', 'model'], times: 2})
       .expectRenderSlot('MultiplexSlotsParticle', 'annotationsSet', {contentTypes: ['template', 'model']})
       .expectRenderSlot('MultiplexSlotsParticle', 'annotationsSet', {contentTypes: ['model'], times: 2, isOptional: true});
+    slotComposer.consumers[0].onContainerUpdate({});
     await slotComposer.arc.pec.idle;
     await slotComposer.expectationsCompleted();
 
     // Verify slot template and models.
-    assert.lengthOf(slotComposer._slots, 1);
-    let slot = slotComposer._slots[0];
-    assert.isAbove(slot._content.template.length, 0);
-    verifyFooItems(slot._content.model.items, ['foo1', 'foo2']);
+    assert.lengthOf(slotComposer.consumers, 3);
+    let slot = slotComposer.consumers[0];
+    verifyFooItems(slot, {'subid-1': 'foo1', 'subid-2': 'foo2'});
 
     // Add one more element.
-    inHandle.store(new (fooType.entitySchema.entityClass())({value: 'foo3'}));
-
+    inStore.store({id: 'subid-3', rawData: {value: 'foo3'}}, ['key3']);
     slotComposer
       .newExpectations()
       .expectRenderSlot('SingleSlotParticle', 'annotation', {contentTypes: ['model']})
@@ -136,8 +148,6 @@ describe('particle-shape-loading-with-slots', function() {
     await slotComposer.expectationsCompleted();
 
     // Verify slot template and models.
-    assert.lengthOf(slotComposer._slots, 1);
-    assert.isAbove(slot._content.template.length, 0);
-    verifyFooItems(slot._content.model.items, ['foo1', 'foo2', 'foo3']);
+    verifyFooItems(slot, {'subid-1': 'foo1', 'subid-2': 'foo2', 'subid-3': 'foo3'});
   });
 });

@@ -1,0 +1,310 @@
+/**
+ * @license
+ * Copyright (c) 2018 Google Inc. All rights reserved.
+ * This code may only be used under the BSD style license found at
+ * http://polymer.github.io/LICENSE.txt
+ * Code distributed by Google as part of this project is also
+ * subject to an additional IP rights grant found at
+ * http://polymer.github.io/PATENTS.txt
+ */
+'use strict';
+
+import {assert} from '../platform/assert-web.js';
+import {SlotConsumer} from './slot-consumer.js';
+import Template from '../shell/components/xen/xen-template.js';
+
+const templateByName = new Map();
+
+export class SlotDomConsumer extends SlotConsumer {
+  constructor(consumeConn, containerKind) {
+    super(consumeConn, containerKind);
+
+    this._observer = this._initMutationObserver();
+  }
+
+  constructRenderRequest(hostedSlotConsumer) { 
+    let request = ['model'];
+    let prefixes = [this.templatePrefix];
+    if (hostedSlotConsumer) {
+      prefixes.push(hostedSlotConsumer.consumeConn.particle.name);
+      prefixes.push(hostedSlotConsumer.consumeConn.name);
+    }
+    if (!SlotDomConsumer.hasTemplate(prefixes.join('::'))) {
+      request.push('template');
+    }
+    return request;
+  }
+
+  static hasTemplate(templatePrefix) {
+    return [...templateByName.keys()].find(key => key.startsWith(templatePrefix));
+  }
+
+  isSameContainer(container, contextContainer) {
+    return container.parentNode == contextContainer;
+  }
+
+  createNewContainer(contextContainer, subId) {
+    let newContainer = document.createElement(this._containerKind || 'div');
+    let consumeConn = this.consumeConn;
+    newContainer.setAttribute('particle-host', consumeConn.getQualifiedName());
+    contextContainer.appendChild(newContainer);
+    return newContainer;
+  }
+
+  deleteContainer(container) {
+    if (container.parentNode) {
+      container.parentNode.removeChild(container);
+    }
+  }
+
+  formatContent(content, subId) {
+    let newContent = {};
+
+    // Format model.
+    if (Object.keys(content).indexOf('model') >= 0) {
+      if (content.model) {
+        // Merge descriptions into model.
+        newContent.model = Object.assign({}, content.model, content.descriptions);
+
+        // Replace items list by an single item corresponding to the given subId.
+        if (subId && content.model.items) {
+          assert(this.consumeConn.slotSpec.isSet);
+          let item = content.model.items.find(item => item.subId == subId);
+          if (item) {
+            newContent.model = Object.assign({}, newContent.model, item);
+            delete newContent.model.items;
+          } else {
+            newContent.model = undefined;
+          }
+        }
+      } else {
+        newContent.model = undefined;
+      }
+    }
+
+    // Format template name and template.
+    if (content.templateName) {
+      newContent.templateName = typeof content.templateName === 'string' ? content.templateName : content.templateName[subId];
+      if (content.template) {
+        newContent.template = typeof content.template === 'string' ? content.template : content.template[newContent.templateName];
+      }
+    }
+
+    return newContent;
+  }
+
+  setContainerContent(rendering, content, subId) {
+    if (!rendering.container)
+      return;
+
+    if (Object.keys(content).length == 0) {
+      this.clearContainer(rendering);
+      return;
+    }
+
+    this._setTemplate(rendering, this.templatePrefix, content.templateName, content.template);
+    rendering.model = content.model;
+
+    this._onUpdate(rendering);
+  }
+
+  clearContainer(rendering) {
+    if (rendering.liveDom) {
+      rendering.liveDom.root.textContent = '';
+    }
+    rendering.liveDom = null;
+  }
+
+  dispose() {
+    this._observer && this._observer.disconnect();
+
+    this.container && this.deleteContainer(this.container);
+    this.renderings.forEach(([subId, {container}]) => this.deleteContainer(container));
+  }
+
+  static render(container, content) {
+    let consumer = new SlotDomConsumer();
+    let rendering = {container, model: content.model};
+    consumer._renderingBySubId.set(undefined, rendering);
+    consumer._eventHandler = () => {};
+    consumer._stampTemplate(rendering, consumer.createTemplateElement(content.template));
+    consumer._onUpdate(rendering);
+    return consumer;
+  }
+
+  static clear(container) {
+    container.textContent = '';
+  }
+
+  static dispose() {
+    // empty template cache
+    templateByName.clear();
+  }
+
+  static findRootContainers(topContainer) {
+    let containerBySlotId = {};
+    Array.from(topContainer.querySelectorAll('[slotid]')).forEach(container => {
+      //assert(this.isDirectInnerSlot(container), 'Unexpected inner slot');
+      let slotId = container.getAttribute('slotid');
+      assert(!containerBySlotId[slotId], `Duplicate root slot ${slotId}`);
+      containerBySlotId[slotId] = container;
+    });
+    return containerBySlotId;
+  }
+
+  createTemplateElement(template) {
+    return Object.assign(document.createElement('template'), {innerHTML: template});
+  }
+
+  get templatePrefix() {
+    return this.consumeConn.getQualifiedName();
+  }
+
+  _setTemplate(rendering, templatePrefix, templateName, template) {
+    if (templateName) {
+      rendering.templateName = [templatePrefix, templateName].filter(s => s).join('::');
+      if (template) {
+        if (templateByName.has(rendering.templateName)) {
+          // TODO: check whether the new template is different from the one that was previously used.
+          // Template is being replaced.
+          this.clearContainer(rendering);
+        }
+        templateByName.set(rendering.templateName, this.createTemplateElement(template));
+      }
+    }
+  }
+
+  _onUpdate(rendering) {
+    this._observe(rendering.container);
+
+    if (rendering.templateName) {
+      let template = templateByName.get(rendering.templateName);
+      assert(template, `No template for ${rendering.templateName}`);
+      this._stampTemplate(rendering, template);
+    }
+
+    this._updateModel(rendering);
+  }
+
+  _observe(container) {
+    assert(container, 'Cannot observe without a container');
+    this._observer && this._observer.observe(container, {childList: true, subtree: true});
+  }
+
+  _stampTemplate(rendering, template) {
+    if (!rendering.liveDom) {
+      // TODO(sjmiles): hack to allow subtree elements (e.g. x-list) to marshal events
+      rendering.container._eventMapper = this._eventMapper.bind(this, this._eventHandler);
+      rendering.liveDom = Template
+          .stamp(template)
+          .events(rendering.container._eventMapper)
+          .appendTo(rendering.container);
+    }
+  }
+
+  _updateModel(rendering) {
+    let liveDom = rendering.liveDom;
+    if (liveDom) {
+      liveDom.set(rendering.model);
+    }
+  }
+
+  initInnerContainers(container) {
+    Array.from(container.querySelectorAll('[slotid]')).filter(innerContainer => {
+      if (!this.isDirectInnerSlot(container, innerContainer)) {
+        // Skip inner slots of an inner slot of the given slot.
+        return false;
+      }
+      const slotId = this.getNodeValue(innerContainer, 'slotid');
+      const providedSlotSpec = this.consumeConn.slotSpec.getProvidedSlotSpec(slotId);
+      if (!providedSlotSpec) { // Skip non-declared slots
+        console.warn(`Slot ${this.consumeConn.slotSpec.name} has unexpected inner slot ${slotId}`);
+        return;
+      }
+      const subId = this.getNodeValue(innerContainer, 'subid');
+      this._validateSubId(providedSlotSpec, subId);
+      this._initInnerSlotContainer(slotId, subId, innerContainer);
+    });
+  }
+
+  // get a value from node that could be an attribute, if not a property
+  getNodeValue(node, name) {
+    // TODO(sjmiles): remember that attribute names from HTML are lower-case
+    return node[name] || node.getAttribute(name);
+  }  
+
+  _validateSubId(providedSlotSpec, subId) {
+    assert(!this.subId || !subId || this.subId == subId, `Unexpected sub-id ${subId}, expecting ${this.subId}`);
+    assert(Boolean(this.subId || subId) === providedSlotSpec.isSet,
+        `Sub-id ${subId} for provided slot ${providedSlotSpec.name} doesn't match set spec: ${providedSlotSpec.isSet}`);
+  }
+
+  isDirectInnerSlot(container, innerContainer) {
+    if (innerContainer === container) {
+      return true;
+    }
+    let parentNode = innerContainer.parentNode;
+    while (parentNode) {
+      if (parentNode == container) {
+        return true;
+      }
+      if (parentNode.getAttribute('slotid')) {
+        // this is an inner slot of an inner slot.
+        return false;
+      }
+      parentNode = parentNode.parentNode;
+    }
+    assert(false);
+  }
+
+  _initMutationObserver() {
+    if (this.consumeConn) {
+      return new MutationObserver(async (records) => {
+        this._observer.disconnect();
+        let containers = this.renderings.map(([subId, {container}]) => container)
+          .filter(container => records.some(r => this.isDirectInnerSlot(container, r.target)));
+        if (containers.length > 0) {
+          this._innerContainerBySlotName = {};
+          containers.forEach(container => this.initInnerContainers(container));
+          this.updateProvidedContexts();
+
+          // Reactivate the observer.
+          containers.forEach(container => this._observe(container));
+        }
+      });
+    }
+  }
+
+  _eventMapper(eventHandler, node, eventName, handlerName) {
+    node.addEventListener(eventName, event => {
+      // TODO(sjmiles): we have an extremely minimalist approach to events here, this is useful IMO for
+      // finding the smallest set of features that we are going to need.
+      // First problem: click event firing multiple times as it bubbles up the tree, minimalist solution
+      // is to enforce a 'first listener' rule by executing `stopPropagation`.
+      event.stopPropagation();
+      // propagate keyboard information
+      const {altKey, ctrlKey, metaKey, shiftKey, code, key, repeat} = event;
+      eventHandler({
+        handler: handlerName,
+        data: {
+          // TODO(sjmiles): this is a data-key (as in key-value pair), may be confusing vs `keys`
+          key: node.key,
+          value: node.value,
+          keys: {altKey, ctrlKey, metaKey, shiftKey, code, key, repeat}
+        }
+      });
+    });
+  }
+
+  formatHostedContent(hostedSlot, content) {
+    if (content.templateName) {
+      if (typeof content.templateName == 'string') {
+        content.templateName = `${hostedSlot.consumeConn.particle.name}::${hostedSlot.consumeConn.name}::${content.templateName}`;
+      } else {
+        // TODO(mmandlis): add support for hosted particle rendering set slot.
+        assert(false, 'TODO: Implement this!');
+      }
+    }
+    return content;
+  }
+}
