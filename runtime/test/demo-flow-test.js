@@ -39,7 +39,7 @@ describe('demo flow', function() {
 
     helper.setTimeout(500);
 
-    // 1. Accept "Show ... and choose ... products" suggestion.
+    // 1. Accept "Show products from your browsing context (...)."" suggestion
     helper.slotComposer
       .newExpectations()
         .expectRenderSlot('List', 'root', {contentTypes: ['template']})
@@ -48,30 +48,13 @@ describe('demo flow', function() {
         .expectRenderSlot('ShowProduct', 'item', {contentTypes: ['model'], times: 2})
         .expectRenderSlot('ItemMultiplexer', 'item', {contentTypes: ['template', 'model'], hostedParticle: 'ShowProduct'})
         .expectRenderSlot('ItemMultiplexer', 'item', {contentTypes: ['model'], hostedParticle: 'ShowProduct', times: 2, isOptional: true})
-        //.expectRenderSlot('Chooser', 'action', {contentTypes: ['template', 'model']})
-        // TODO: investigate why this is called - happens if the first Chooser render happens after
-        // ShowCollection is fully rendered (if Chooser has the opportunity to render before last the ShowCollection.model
-        // it is not called 2nd time).
-        //.expectRenderSlot('Chooser', 'action', {contentTypes: ['model'], isOptional: true})
-        //.expectRenderSlot('AlsoOn', 'annotation', {contentTypes: ['template', 'model']})
-        //.expectRenderSlot('AlsoOn', 'annotation', {contentTypes: ['model'], times: 2})
-        //.expectRenderSlot('Multiplexer2', 'annotation', {contentTypes: ['template']})
-        //.expectRenderSlot('Multiplexer2', 'annotation', {verify: helper.slotComposer.expectContentItemsNumber.bind(null, 3)})
-        // TODO: the optional Multiplexer2 call only appears if the optional AlsoOn calls happen.
-        // But there is no way to currently express this dependency with the mock-slot-composer.
-        //.expectRenderSlot('AlsoOn', 'annotation', {contentTypes: ['model'], times: 3, isOptional: true})
-        //.expectRenderSlot('Multiplexer2', 'annotation', {verify: helper.slotComposer.expectContentItemsNumber.bind(null, 3), isOptional: true})
         ;
-    //await helper.acceptSuggestion({particles: ['ShowCollection', 'Multiplexer', 'Chooser', 'Recommend', 'Multiplexer2']});
     await helper.acceptSuggestion({particles: ['List', 'ItemMultiplexer']});
 
     assert.lengthOf(helper.arc.findStoresByType(helper.arc.context.findSchemaByName('Product').entityClass().type.collectionOf()), 1);
 
     await helper.verifySetSize('List', 'items', 3);
     await helper.verifySetSize('ItemMultiplexer', 'list', 3);
-    //await helper.verifySetSize('ShowCollection', 'collection', 3);
-    //await helper.verifySetSize('Multiplexer', 'list', 3);
-    //await helper.verifySetSize('Chooser', 'choices', 3);
     helper.log('----------------------------------------');
 
     // Replanning.
@@ -82,176 +65,95 @@ describe('demo flow', function() {
         '(Minecraft Book plus 2 other items).',
       `Find out about Claire's interests.`,
       `List of products from your browsing context (Minecraft Book plus 2 other items) with selection.`
-      /*
-      'Buy gifts for Claire\'s Birthday on 2017-08-04, estimate arrival date for ' +
-        'products from your browsing context (Minecraft Book plus 2 other items), and estimate ' +
-        'arrival date for products recommended based on products from your ' +
-        'browsing context and Claire\'s wishlist (Book: How to Draw plus 2 other items).',
-      'Recommendations based on Claire\'s wishlist (Book: How to Draw plus 2 other items).',
-      'Check manufacturer information for products from your browsing context ' +
-        '(Minecraft Book plus 2 other items).',
-      'Show Claire\'s wishlist (Book: How to Draw plus 2 other items).',
-      'Find alternate shipping for products which won\'t make it on time for products from your browsing context (Minecraft Book plus 2 other items).',
-      */
-      // TODO: consider whether the 'showList' recipe should resolve to these suggestions?
-      // 'Show products from your browsing context (Minecraft Book plus 2 other items).',
-      // 'Show products recommended based on products from your browsing context and Claire\'s wishlist (Book: How to Draw plus 2 other items).'
     ];
     await helper.makePlans({expectedNumPlans: 5, expectedSuggestions});
     helper.log('----------------------------------------');
-/*
-    // 1.5 Select 'Add items from...'
+
+    // Accept "Check shipping for Claire (Claire)'s Birthday on..." suggestion.
     helper.slotComposer
       .newExpectations()
-        .expectRenderSlot('Chooser', 'action', {contentTypes: ['template', 'model']})
-        .expectRenderSlot('AlsoOn', 'annotation', {contentTypes: ['template', 'model']})
-        .expectRenderSlot('AlsoOn', 'annotation', {contentTypes: ['template', 'model']})
-        .expectRenderSlot('AlsoOn', 'annotation', {contentTypes: ['template', 'model']})
-        .expectRenderSlot('Multiplexer2', 'annotation', {contentTypes: ['template', 'model']})
-        .expectRenderSlot('Chooser', 'action', {contentTypes: ['model']})
-        .expectRenderSlot('Multiplexer2', 'annotation', {contentTypes: ['model'], isOptional: true})
-        .expectRenderSlot('AlsoOn', 'annotation', {contentTypes: ['model'], isOptional: true})
-        .expectRenderSlot('AlsoOn', 'annotation', {contentTypes: ['template', 'model'], isOptional: true})
-        .expectRenderSlot('AlsoOn', 'annotation', {contentTypes: ['template', 'model'], isOptional: true})
-        .expectRenderSlot('Multiplexer2', 'annotation', {contentTypes: ['template', 'model'], isOptional: true})
-        .expectRenderSlot('ItemMultiplexer', 'item', {contentTypes: ['model'], isOptional: true})
-        .expectRenderSlot('List', 'root', {contentTypes: ['model'], isOptional: true})
-        .expectRenderSlot('Chooser', 'action', {contentTypes: ['model'], isOptional: true})
-        .expectRenderSlot('Multiplexer2', 'annotation', {contentTypes: ['model'], isOptional: true})
-        .expectRenderSlot('AlsoOn', 'annotation', {contentTypes: ['model'], isOptional: true})
-        .expectRenderSlot('ShowProduct', 'item', {contentTypes: ['model'], isOptional: true})
-        .expectRenderSlot('Multiplexer2', 'annotation', {contentTypes: ['model'], isOptional: true})
-        .expectRenderSlot('ItemMultiplexer', 'item', {contentTypes: ['model'], isOptional: true, ignoreUnexpected: true})
+        .expectRenderSlot('GiftList', 'preamble', {contentTypes: ['template', 'model']})
+        .expectRenderSlot('Arrivinator', 'annotation', {contentTypes: ['template', 'model'], times: 3})
+        .expectRenderSlot('AlternateShipping', 'annotation', {contentTypes: ['template', 'model'], times: 3})
+        .expectRenderSlot('Multiplexer', 'annotation', {hostedParticle: 'Arrivinator', contentTypes: ['template']})
+        .expectRenderSlot('Multiplexer', 'annotation', {hostedParticle: 'Arrivinator', verify: helper.slotComposer.expectContentItemsNumber.bind(null, 3)})
+        .expectRenderSlot('Multiplexer', 'annotation', {hostedParticle: 'AlternateShipping', contentTypes: ['template']})
+        .expectRenderSlot('Multiplexer', 'annotation', {hostedParticle: 'AlternateShipping', verify: helper.slotComposer.expectContentItemsNumber.bind(null, 3)});
 
-        //.expectRenderSlot('AlsoOn', 'annotation', {contentTypes: ['template', 'model'], times: 2})
-        //.expectRenderSlot('Multiplexer2', 'annotation', {contentTypes: ['template', 'model']})
-        //.expectRenderSlot('ItemMultiplexer', 'item', {contentTypes: ['model']})
-        //.expectRenderSlot('List', 'root', {contentTypes: ['model']})
-        //.expectRenderSlot('Multiplexer2', 'annotation', {contentTypes: ['model']})
-        //.expectRenderSlot('Chooser', 'action', {contentTypes: ['model']})
-
-        // TODO: investigate why this is called - happens if the first Chooser render happens after
-        // ShowCollection is fully rendered (if Chooser has the opportunity to render before last the ShowCollection.model
-        // it is not called 2nd time).
-
-        //.expectRenderSlot('Chooser', 'action', {contentTypes: ['model'], isOptional: true})
-        //.expectRenderSlot('AlsoOn', 'annotation', {contentTypes: ['template', 'model']})
-        //.expectRenderSlot('AlsoOn', 'annotation', {contentTypes: ['model'], times: 2})
-        //.expectRenderSlot('Multiplexer2', 'annotation', {contentTypes: ['template']})
-        //.expectRenderSlot('Multiplexer2', 'annotation', {verify: helper.slotComposer.expectContentItemsNumber.bind(null, 3)})
-
-        // TODO: the optional Multiplexer2 call only appears if the optional AlsoOn calls happen.
-        // But there is no way to currently express this dependency with the mock-slot-composer.
-
-        //.expectRenderSlot('AlsoOn', 'annotation', {contentTypes: ['model'], times: 3, isOptional: true})
-        //.expectRenderSlot('Multiplexer2', 'annotation', {verify: helper.slotComposer.expectContentItemsNumber.bind(null, 3), isOptional: true});
-        ;
-    await helper.acceptSuggestion({particles: ['Recommend', 'Chooser', 'Multiplexer2']});
+    await helper.acceptSuggestion({particles: ['GiftList', 'Multiplexer', 'Multiplexer']});
     await helper.idle();
     helper.log('----------------------------------------');
 
-    // 2. Move an element from recommended list to shortlist.
+    // Accept "Add items from Claire's wishlist (...)" suggestion.
+    helper.slotComposer
+      .newExpectations()
+        .expectRenderSlot('Chooser', 'action', {contentTypes: ['template']}) //, 'model']})
+        .expectRenderSlot('Chooser', 'action', {verify: helper.slotComposer.expectContentItemsNumber.bind(null, 3)})
+        .expectRenderSlot('AlsoOn', 'annotation', {contentTypes: ['template']})
+        .expectRenderSlot('AlsoOn', 'annotation', {contentTypes: ['model'], times: 3})
+        .expectRenderSlot('Multiplexer2', 'annotation', {contentTypes: ['template']})
+        .expectRenderSlot('Multiplexer2', 'annotation', {verify: helper.slotComposer.expectContentItemsNumber.bind(null, 3)});
+    await helper.acceptSuggestion({particles: ['Chooser', 'Multiplexer2', 'Recommend']});
+    await helper.idle();
+    helper.log('----------------------------------------');    
+    
+    // Move an element from recommended list to shortlist.
     let verifyShowCollection = (num, content) => {
       assert(content.model, `Content doesn't have model`);
       assert(content.model.items, `Content model doesn't have items, but expected ${num}.`);
       return content.model.items.length == num && content.model.items.every(i => !!i.resolvedImage);
     };
-    helper.slotComposer
-      .newExpectations()
-        .expectRenderSlot('ShowCollection', 'master', {contentTypes: ['model']})
-        .expectRenderSlot('Multiplexer', 'annotation', {verify: verifyShowCollection.bind(null, 4), hostedParticle: 'ShowProduct'})
-        .expectRenderSlot('ShowProduct', 'item', {contentTypes: ['model']})
-        .expectRenderSlot('Chooser', 'action', {verify: helper.slotComposer.expectContentItemsNumber.bind(null, 2)})
-        .expectRenderSlot('AlsoOn', 'annotation', {contentTypes: ['model']})
-        .expectRenderSlot('Multiplexer2', 'annotation', {verify: helper.slotComposer.expectContentItemsNumber.bind(null, 4)});
-    await helper.sendSlotEvent('Chooser', 'action', '_onChooseValue', {key: '1'});
-    await helper.verifySetSize('ShowCollection', 'collection', 4);
-    await helper.verifySetSize('Multiplexer', 'list', 4);
-    await helper.verifySetSize('Chooser', 'choices', 3);
+    let verifyElementMove = async (key, num, muxerHostedParticles) => {
+        helper.slotComposer
+          .newExpectations()
+            .expectRenderSlot('List', 'root', {contentTypes: ['model']})
+            .expectRenderSlot('ItemMultiplexer', 'item', {verify: verifyShowCollection.bind(null, num), hostedParticle: 'ShowProduct'})
+            .expectRenderSlot('ShowProduct', 'item', {contentTypes: ['model']})
+            .expectRenderSlot('Chooser', 'action', {verify: helper.slotComposer.expectContentItemsNumber.bind(null, (6-num))})
+            .expectRenderSlot('AlsoOn', 'annotation', {contentTypes: ['model']})
+            .expectRenderSlot('Multiplexer2', 'annotation', {verify: helper.slotComposer.expectContentItemsNumber.bind(null, num)});
+        for (let hostedParticle of muxerHostedParticles) {
+          helper.slotComposer
+            .expectRenderSlot(hostedParticle, 'annotation', {contentTypes: ['model']})
+            .expectRenderSlot('Multiplexer', 'annotation', {hostedParticle: hostedParticle, verify: helper.slotComposer.expectContentItemsNumber.bind(null, num)});
+        }
+        await helper.sendSlotEvent('Chooser', 'action', '_onChooseValue', {key});
+        await helper.verifySetSize('List', 'items', num);
+        await helper.verifySetSize('Multiplexer', 'list', num);
+        await helper.verifySetSize('Chooser', 'choices', 3);
+    };
+    await verifyElementMove(/* key= */ 0, /* num= */ 4, ['Arrivinator', 'AlternateShipping']);
     helper.log('----------------------------------------');
 
-    // Replanning.
-    await helper.makePlans({
-      expectedNumPlans: 5,
-      expectedSuggestions: expectedSuggestions.map(suggestion => {
-        return suggestion.replace('Minecraft Book plus 2 other items', 'Minecraft Book plus 3 other items');
-      })
-    });
-    helper.log('----------------------------------------');
 
-    // 3. Select "Buy gift ... and estimate arrival dates ..." suggestion
-    helper.slotComposer
-      .newExpectations()
-        .expectRenderSlot('GiftList', 'preamble', {contentTypes: ['template', 'model']})
-        .expectRenderSlot('Multiplexer', 'annotation', {contentTypes: ['template'], times: 1})
-        // TODO: add support in mock-slot-composer for {verify:helper.slotComposer.expectContentItemsNumber.bind(null, N)}
-        // for both multiplexers.
-        .expectRenderSlot('Multiplexer', 'annotation', {contentTypes: ['model'], times: 2})
-        .expectRenderSlot('Multiplexer', 'annotation', {contentTypes: ['model'], times: 7 + 5, isOptional: true})
-        .expectRenderSlot('Arrivinator', 'annotation', {contentTypes: ['template', 'templateName', 'model'], times: 4})
-        .expectRenderSlot('Arrivinator', 'annotation', {contentTypes: ['template'], times: 3, isOptional: true})
-        .expectRenderSlot('Arrivinator', 'annotation', {contentTypes: ['templateName', 'model'], times: 3});
-    await helper.acceptSuggestion({particles: ['GiftList', 'Multiplexer', 'Multiplexer']});
-    await helper.idle();
-    helper.log('----------------------------------------');
-
-    // 4. Move another element from recommended list to shortlist.
-    helper.slotComposer
-      .newExpectations()
-        .expectRenderSlot('ShowCollection', 'master', {contentTypes: ['model']})
-        .expectRenderSlot('Multiplexer', 'annotation', {hostedParticle: 'ShowProduct', verify: verifyShowCollection.bind(null, 5)})
-        .expectRenderSlot('ShowProduct', 'item', {contentTypes: ['model']})
-        .expectRenderSlot('Chooser', 'action', {verify: helper.slotComposer.expectContentItemsNumber.bind(null, 1)})
-        .expectRenderSlot('AlsoOn', 'annotation', {contentTypes: ['model']})
-        .expectRenderSlot('Multiplexer2', 'annotation', {verify: helper.slotComposer.expectContentItemsNumber.bind(null, 5)})
-        .expectRenderSlot('Multiplexer', 'annotation', {contentTypes: ['model'], times: 2, hostedParticle: 'Arrivinator'})
-        .expectRenderSlot('Arrivinator', 'annotation', {contentTypes: ['model']});
-    await helper.sendSlotEvent('Chooser', 'action', '_onChooseValue', {key: '1'});
-    await helper.verifySetSize('ShowCollection', 'collection', 5);
-    await helper.verifySetSize('Multiplexer', 'list', 5);
-    await helper.verifySetSize('Chooser', 'choices', 3);
-    helper.log('----------------------------------------');
-
-    // 5. Select "Check manufacturer information..." suggestion
+    // Accept "Check manufacturer information for products from your browsing context (...)." suggestion
     await helper.makePlans({expectedNumPlans: 4});
     helper.slotComposer
       .newExpectations()
         .expectRenderSlot('Multiplexer', 'annotation', {contentTypes: ['template'], hostedParticle: 'ManufacturerInfo'})
-        .expectRenderSlot('Multiplexer', 'annotation', {hostedParticle: 'ManufacturerInfo', verify: helper.slotComposer.expectContentItemsNumber.bind(null, 5)})
-        .expectRenderSlot('ManufacturerInfo', 'annotation', {contentTypes: ['template', 'model'], times: 5});
+        .expectRenderSlot('Multiplexer', 'annotation', {hostedParticle: 'ManufacturerInfo', verify: helper.slotComposer.expectContentItemsNumber.bind(null, 4)})
+        .expectRenderSlot('ManufacturerInfo', 'annotation', {contentTypes: ['template', 'model'], times: 4});
     await helper.acceptSuggestion({particles: ['Multiplexer'], hostedParticles: ['ManufacturerInfo']});
     helper.log('----------------------------------------');
 
-    // 6. Move the last element to shortlist.
+
+    // Move another element from recommended list to shortlist.
+    await verifyElementMove(/* key= */ 1, /* num= */ 5, ['Arrivinator', 'AlternateShipping', 'ManufacturerInfo']);
+
+    // Accept "Find out about Claire's interests." suggestion
     helper.slotComposer
       .newExpectations()
-        .expectRenderSlot('ShowCollection', 'master', {contentTypes: ['model']})
-        .expectRenderSlot('Multiplexer', 'annotation', {verify: verifyShowCollection.bind(null, 6), hostedParticle: 'ShowProduct'})
-        .expectRenderSlot('ShowProduct', 'item', {contentTypes: ['model']})
-        .expectRenderSlot('Chooser', 'action', {verify: (content) => !content.model})
-        .expectRenderSlot('Multiplexer2', 'annotation', {verify: helper.slotComposer.expectContentItemsNumber.bind(null, 6)})
-        .expectRenderSlot('AlsoOn', 'annotation', {contentTypes: ['model']})
-        .expectRenderSlot('Multiplexer', 'annotation', {contentTypes: ['model'], times: 2, hostedParticle: 'Arrivinator'})
-        .expectRenderSlot('Arrivinator', 'annotation', {contentTypes: ['model']})
-        .expectRenderSlot('Multiplexer', 'annotation', {contentTypes: ['model'], times: 2, hostedParticle: 'ManufacturerInfo'})
-        .expectRenderSlot('ManufacturerInfo', 'annotation', {contentTypes: ['model']});
-    await helper.sendSlotEvent('Chooser', 'action', '_onChooseValue', {key: '0'});
-    await helper.verifySetSize('ShowCollection', 'collection', 6);
-    await helper.verifySetSize('Multiplexer', 'list', 6);
-    await helper.verifySetSize('Chooser', 'choices', 3);
+        .expectRenderSlot('Interests', 'postamble', {contentTypes: ['template', 'model']});
+    await helper.acceptSuggestion({particles: ['Interests']});
     helper.log('----------------------------------------');
 
-    // 7. Accept 'Recommendations based on...' suggestion
-    await helper.makePlans({expectedNumPlans: 3});
+    // Move the last element from recommended list to shortlist.
+    await verifyElementMove(/* key= */ 0, /* num= */ 6, ['Arrivinator', 'AlternateShipping', 'ManufacturerInfo']);
+    helper.log('----------------------------------------');
 
-    helper.slotComposer
-      .newExpectations()
-      .expectRenderSlot('Interests', 'postamble', {contentTypes: ['template', 'model']});
-    await helper.acceptSuggestion({particles: ['Interests']});
     await helper.makePlans({expectedNumPlans: 2});
     helper.log('----------------------------------------');
-*/
-   helper.clearTimeout();
+    helper.clearTimeout();
 
     // TODO(mmandlis): Provide methods in helper to verify slot contents (helper.slotComposer._slots[i]._content).
   }).timeout(10000);
