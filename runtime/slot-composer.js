@@ -69,7 +69,7 @@ export class SlotComposer {
     }
   }
 
-  _findContextById(slotId) {
+  findContextById(slotId) {
     return this._contexts.find(({id}) => id == slotId);
   }
 
@@ -84,7 +84,7 @@ export class SlotComposer {
     hostedSlot.renderCallback = this.arc.pec.innerArcRender.bind(this.arc.pec);
     this._addSlotConsumer(hostedSlot);
 
-    let context = this._findContextById(transformationSlotConsumer.consumeConn.targetSlot.id);
+    let context = this.findContextById(transformationSlotConsumer.consumeConn.targetSlot.id);
     context.addSlotConsumer(hostedSlot);
 
     return hostedSlotId;
@@ -123,7 +123,7 @@ export class SlotComposer {
     // Set context for each of the slots.
     newConsumers.forEach(consumer => {
       this._addSlotConsumer(consumer);
-      let context = this._findContextById(consumer.consumeConn.targetSlot.id);
+      let context = this.findContextById(consumer.consumeConn.targetSlot.id);
       assert(context, `No context found for ${consumer.consumeConn.getQualifiedName()}`);
       context.addSlotConsumer(consumer);
     });

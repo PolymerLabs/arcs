@@ -42,8 +42,30 @@ export class SlotConsumer {
         this.stopRender();
       }
     }
+
     if (container != originalContainer) {
-      this.onContextContainerUpdate();
+      let contextContainerBySubId = new Map();
+      if (this.consumeConn && this.consumeConn.slotSpec.isSet) {
+        Object.keys(this.slotContext.container || {}).forEach(subId => contextContainerBySubId.set(subId, this.slotContext.container[subId]));
+      } else {
+        contextContainerBySubId.set(undefined, this.slotContext.container);
+      }
+
+      for (let [subId, container] of contextContainerBySubId) {
+        if (!this._renderingBySubId.has(subId)) {
+          this._renderingBySubId.set(subId, {});
+        }
+        let rendering = this.getRendering(subId);
+        if (!rendering.container || this.isSameContainer(rendering.container, container)) {
+          rendering.container = this.createNewContainer(container, subId);
+        }
+      }
+      for (let [subId, rendering] of this.renderings) {
+        if (!contextContainerBySubId.has(subId)) {
+          this.deleteContainer(rendering.container);
+          this._renderingBySubId.delete(subId);
+        }
+      }
     }
   }
 
@@ -89,31 +111,6 @@ export class SlotConsumer {
       }
     }));
     return descriptions;
-  }
-
-  onContextContainerUpdate() {
-    let contextContainerBySubId = new Map();
-    if (this.consumeConn && this.consumeConn.slotSpec.isSet) {
-      Object.keys(this.slotContext.container || {}).forEach(subId => contextContainerBySubId.set(subId, this.slotContext.container[subId]));
-    } else {
-      contextContainerBySubId.set(undefined, this.slotContext.container);
-    }
-
-    for (let [subId, container] of contextContainerBySubId) {
-      if (!this._renderingBySubId.has(subId)) {
-        this._renderingBySubId.set(subId, {});
-      }
-      let rendering = this.getRendering(subId);
-      if (!rendering.container || this.isSameContainer(rendering.container, container)) {
-        rendering.container = this.createNewContainer(container, subId);
-      }
-    }
-    for (let [subId, rendering] of this.renderings) {
-      if (!contextContainerBySubId.has(subId)) {
-        this.deleteContainer(rendering.container);
-        this._renderingBySubId.delete(subId);
-      }
-    }
   }
 
   getInnerContainer(providedSlotName) {

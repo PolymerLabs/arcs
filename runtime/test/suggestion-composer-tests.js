@@ -10,6 +10,8 @@
 
 import {assert} from './chai-web.js';
 import {SuggestionComposer} from '../suggestion-composer.js';
+import {SlotComposer} from '../slot-composer.js';
+import {TestHelper} from '../testing/test-helper.js';
 
 class TestSuggestionComposer extends SuggestionComposer {
   constructor() {
@@ -59,4 +61,39 @@ describe('suggestion composer', function() {
     assert.equal(4, suggestionComposer.updatesCount);
     assert.isEmpty(suggestionComposer.suggestions);
   });
+
+  it('singleton suggestion slots', async () => {
+    let slotComposer = new SlotComposer({affordance: 'mock', rootContainer: {'root': 'dummy-container'}});
+    let helper = await TestHelper.createAndPlan({
+      manifestFilename: './runtime/test/artifacts/suggestions/Cakes.recipes',
+      slotComposer
+    });
+    let suggestionComposer = new SuggestionComposer(slotComposer);
+    await suggestionComposer._updateSuggestions(helper.plans);
+    assert.lengthOf(helper.plans, 1);
+    assert.isEmpty(suggestionComposer._suggestConsumers);
+
+    // Accept suggestion and replan: a suggestion consumer is created, but its content is empty.
+    await helper.acceptSuggestion({particles: ['MakeCake']});
+    await helper.makePlans();
+    assert.lengthOf(helper.plans, 1);
+    await suggestionComposer._updateSuggestions(helper.plans);
+    assert.lengthOf(suggestionComposer._suggestConsumers, 1);
+    let suggestConsumer = suggestionComposer._suggestConsumers[0];
+    assert.isEmpty(suggestConsumer._content);
+
+    // set the container of the suggestion context, resulting in the suggestion being rendered.
+    let suggestContext = slotComposer._contexts.find(context => context._slotConsumers.find(consumer => consumer == suggestConsumer));
+    assert.isNull(suggestContext.container);
+    suggestContext.container = 'dummy-container';
+    await suggestConsumer._setContentPromise;
+    assert.isTrue(suggestConsumer._content.template.includes('Light candles on Tiramisu cake'));
+
+    await helper.acceptSuggestion({particles: ['LightCandles']});
+    await helper.makePlans();
+    assert.isEmpty(helper.plans);
+    await suggestionComposer._updateSuggestions(helper.plans);
+    assert.isEmpty(suggestionComposer._suggestConsumers);
+  });
+
 });

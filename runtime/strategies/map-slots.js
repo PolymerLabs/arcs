@@ -118,7 +118,7 @@ export class MapSlots extends Strategy {
   // Returns true, if the slot connection's tags intersection with slot's tags is nonempty.
   // TODO: replace with generic tag matcher
   static tagsOrNameMatch(slotConnection, slot) {
-    let consumeConnTags = [].concat(slotConnection.slotSpec.tags || [], slotConnection.tags);
+    let consumeConnTags = [].concat(slotConnection.slotSpec.tags || [], slotConnection.tags, slotConnection.targetSlot ? slotConnection.targetSlot.tags : []);
     let slotTags = new Set([].concat(slot.tags, slot.spec.tags || [], [slot.name]));
     // Consume connection tags aren't empty and intersection with the slot isn't empty.
     if (consumeConnTags.length > 0 && consumeConnTags.some(t => slotTags.has(t))) {
