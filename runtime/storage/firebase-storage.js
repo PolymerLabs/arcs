@@ -293,6 +293,10 @@ class FirebaseVariable extends FirebaseStorageProvider {
     this._value = data.value;
   }
 
+  get versionForTesting() {
+    return this._version;
+  }
+
   async get() {
     await this._initialized;
     return this._value;
@@ -486,6 +490,10 @@ class FirebaseCollection extends FirebaseStorageProvider {
       add,
       remove,
     });
+  }
+
+  get versionForTesting() {
+    return this._version;
   }
 
   async get(id) {
