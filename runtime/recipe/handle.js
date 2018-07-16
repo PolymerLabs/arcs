@@ -216,12 +216,14 @@ export class Handle {
       result.push('//');
       if (this.type.isResolved()) {
         result.push(this.type.resolvedType().toString());
-      } else if (this.type.canEnsureResolved()) {
-        let type = Type.fromLiteral(this.type.toLiteral());
-        type.maybeEnsureResolved();
-        result.push(type.resolvedType().toString());
       } else {
         result.push(this.type.toString());
+        if (options && options.showUnresolved && this.type.canEnsureResolved()) {
+          let type = Type.fromLiteral(this.type.toLiteral());
+          type.maybeEnsureResolved();
+          result.push('//');
+          result.push(type.resolvedType().toString());
+        }
       }
     }
     if (options && options.showUnresolved) {

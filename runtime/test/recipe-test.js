@@ -319,4 +319,40 @@ describe('recipe', function() {
     assert.isFalse(manifest.recipes[3].isResolved());
     assert.isTrue(manifest.recipes[4].isResolved());
   });
+  it('considers type resolution as recipe update', async () => {
+    let manifest = await Manifest.parse(`
+      schema Thing
+      particle Generic
+        in ~a any
+      particle Specific
+        in Thing thing
+      recipe
+        map as thingHandle
+        Generic
+          any <- thingHandle
+        Specific
+          thing <- thingHandle
+      store MyThings of Thing 'my-things' in ThingsJson
+      resource ThingsJson
+        start
+        [{}]
+    `);
+    assert.lengthOf(manifest.recipes, 1);
+    let recipe = manifest.recipes[0];
+    recipe.handles[0].id = 'my-things';
+    recipe.normalize();
+    assert.isFalse(recipe.isResolved());
+    let hash = await recipe.digest();
+
+    let recipeClone = recipe.clone();
+    let hashClone = await recipeClone.digest();
+    assert.equal(hash, hashClone);
+
+    let store = manifest.findStoreByName('MyThings');
+    recipeClone.handles[0].mapToStorage(store);
+    recipeClone.normalize();
+    assert.isTrue(recipeClone.isResolved());
+    let hashResolvedClone = await recipeClone.digest();
+    assert.notEqual(hash, hashResolvedClone);
+  });
 });
