@@ -49,7 +49,7 @@ class FirebaseKey extends KeyBase {
   }
 }
 
-async function realTransaction(reference, transactionFunction, completeFunction=undefined) {
+async function realTransaction(reference, transactionFunction) {
   let realData = undefined;
   await reference.once('value', data => {realData = data.val(); });
   return reference.transaction(data => {
@@ -58,7 +58,7 @@ async function realTransaction(reference, transactionFunction, completeFunction=
     let result = transactionFunction(data);
     assert(result);
     return result;
-  }, completeFunction, false);
+  }, undefined, false);
 }
 
 let _nextAppNameSuffix = 0;
@@ -128,6 +128,11 @@ class FirebaseStorageProvider extends StorageProviderBase {
     super(type, arcId, undefined, id, key.toString());
     this.firebaseKey = key;
     this.reference = reference;
+
+    // Resolved when local modifications complete being persisted
+    // to firebase. Null when not persisting.
+    this._persisting = null;
+
   }
 
   static newProvider(type, arcId, id, reference, key) {
@@ -168,7 +173,7 @@ class FirebaseStorageProvider extends StorageProviderBase {
   }
 }
 
-// Models a Varaible that is persisted to firebase in a
+// Models a Variable that is persisted to firebase in a
 // last-writer-wins scheme.
 //
 // Initialization: After construct/connect the variable is
@@ -198,13 +203,14 @@ class FirebaseVariable extends FirebaseStorageProvider {
   constructor(type, arcId, id, reference, firebaseKey) {
     super(type, arcId, id, reference, firebaseKey);
 
-    // Monotonic vesion, initialized via response from firebase,
-    // or a call to `set` (as 0). Updated on changes from firebase
-    // or during local modifications.
-    this._value = null;
     // Current value stored in this variable. Reflects either a
     // value that was stored in firebase, or a value that was
     // written locally.
+    this._value = null;
+
+    // Monotonic vesion, initialized via response from firebase,
+    // or a call to `set` (as 0). Updated on changes from firebase
+    // or during local modifications.
     this._version = null;
 
     // Whether `this._value` is affected by a local modification.
@@ -215,14 +221,10 @@ class FirebaseVariable extends FirebaseStorageProvider {
     
     // Resolved when data is first available. The earlier of
     // * the initial value is supplied via firebase `reference.on`
-    // * a value is written to the varaible by a call to `set`.
+    // * a value is written to the variable by a call to `set`.
     this._initialized = new Promise(resolve => {
       this._resolveInitialized = resolve;
     });
-
-    // Resolved when local modifications complete being persisted
-    // to firebase.
-    this._persisted = null;
 
     this.reference.on('value', dataSnapshot => this._remoteValueChanged(dataSnapshot));
   }
@@ -231,9 +233,7 @@ class FirebaseVariable extends FirebaseStorageProvider {
     if (this._localModified) {
       return;
     }
-    if (dataSnapshot.version <= this._version) {
-      return;
-    }
+    assert(this._version == null || dataSnapshot.version > this._version);
 
     let data = dataSnapshot.val();
     this._value = data.value;
@@ -284,7 +284,7 @@ class FirebaseVariable extends FirebaseStorageProvider {
     if (this._version == null) {
       assert(!this._localModified);
       // If the first modification happens before init, this becomes
-      // init. We pick the initial version which will be updaetd by the
+      // init. We pick the initial version which will be updated by the
       // transaction in _persistChanges.
       this._version = 0;
       this._resolveInitialized();
