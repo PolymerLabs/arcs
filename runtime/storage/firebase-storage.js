@@ -205,7 +205,6 @@ class FirebaseStorageProvider extends StorageProviderBase {
 // from firebase we update the local version and value,
 // unless there is a pending local modification (see below).
 //
-//
 // Local modifications: When a local modification is applied
 // by a call to `set` we increment the version number,
 // mark this variable as locally modified, and start a
@@ -377,21 +376,71 @@ function setDiff(from, to) {
   return {remove, add};
 }
 
-// TODO: rewrite this to reflect new API and use CRDTCollectionModel.
+// Models a Collection that is persisted to firebase in scheme similar
+// to the CRDT OR-set. We don't model sets of both observed
+// and removed keys but instead we maintain a list of current keys and
+// add/remove as the corresponding operations are received. We're
+// able to do this as we only ever synchronize between the same two points
+// (the client & firebase).
+//
+// Initialization: The collection is not initialized and calls to read
+// and mutate the collection will not complete until the initial state
+// is received via the firebase `.on` subscription.
+// Note, this is different to FirebaseVariable as mutations do not cause
+// the collection to become initialized (since we do not have enough state
+// to generate events).
+//
+// Updates from firebase: Each time an update is received from firebase
+// we compare the new remote state with the previous remote state. We are
+// able to detect which entries (and the corresponding keys) that have been
+// added and removed remotely. These are filtered by a set of suppressions
+// for adds that we have previously issued and then applied to our local
+// model. Each time we receive an update from firebase, we update our local
+// version number. We align it whith the remote version when possible.
+//
+// Local modifications: Additions and removal of entries (and membership
+// keys) are tracked in a local structure, `_localChanges`, and a process
+// is started to persist remotely. These changes are applied to the remote
+// state and committed atomically. Any added keys are added to sets in
+// `_addSuppressions` to prevent applying our own writes when they
+// are received back in a subsequent update from firebase. Each time we
+// receive a local modification we increment our local version number.
+// When we persist our changes to firebase we align it with the remote
+// version.
 class FirebaseCollection extends FirebaseStorageProvider {
   constructor(type, arcId, id, reference, firebaseKey) {
     super(type, arcId, id, reference, firebaseKey);
-    // id => {keys: Set[key], barrierVersion}
-    this._addSuppressions = new Map(); 
 
+    // Lists mapped by id containing membership keys that have been
+    // added or removed by local modifications. Entries in this
+    // structure are still pending persistance remotely. Empty
+    // when there are no pending local modifications.
     // id => {add: [key], remove: [key]}
     this._localChanges = new Map();
 
+    // Sets mapped by id containing keys that were added locally
+    // and have been persisted to firebase. Entries here must be
+    // suppressed when they are echoed back as updates from firebase.
+    // They can be removed once the state received from firebase
+    // reaches `barrierVersion`.
+    // id => {keys: Set[key], barrierVersion}
+    this._addSuppressions = new Map(); 
+
+    // Local model of entries stored in this collection. Updated
+    // by local modifications and when we receive remote updates
+    // from firebase.
     this._model = new CrdtCollectionModel();
+
+    // Monotonic version. Updated each time we receive an update
+    // from firebase, or when a local modification is applied.
     this._version = null;
 
+    // The last copy of the serialized state received from firebase.
     // {items: id => {value, keys: {[key]: null}}}
     this._remoteState = {items: {}};
+
+    // Whether our model has been initialized after receiving the first
+    // copy of state from firebase.
     this._initialized = new Promise(resolve => this._resolveInitialized = resolve);
 
     this.reference.on('value', dataSnapshot => this._remoteStateChange(dataSnapshot));
@@ -447,6 +496,7 @@ class FirebaseCollection extends FirebaseStorageProvider {
           // 2. added remotely.
           let addKeys = keys;
           if (suppression) {
+            // Remove any keys that *we* added previously.
             addKeys = addKeys.filter(key => !suppression.keys.has(key));
           }
           if (addKeys.length) {
@@ -475,6 +525,10 @@ class FirebaseCollection extends FirebaseStorageProvider {
       }
     }
 
+    // Bump version monotonically. Ideally we would use the remote
+    // version, but we might not be able to if there have been local
+    // modifications in the meantime. We'll recover the remote version
+    // once we persist those.
     this._version = Math.max(this._version + 1, newRemoteState.version);
     this._remoteState = newRemoteState;
     this._resolveInitialized();
@@ -502,6 +556,7 @@ class FirebaseCollection extends FirebaseStorageProvider {
   }
 
   async remove(id, keys=[], originatorId=null) {
+    await this._initialized;
     if (keys.length == 0) {
       keys = this._model.getKeys(id);
     }
@@ -531,7 +586,7 @@ class FirebaseCollection extends FirebaseStorageProvider {
 
   async store(value, keys, originatorId=null) {
     assert(keys != null && keys.length > 0, 'keys required');
-    // fixme: should we wait for the inital state before storing a new value?
+    await this._initialized;
 
     // 1. Apply the change to the local model.
     let id = value.id;
@@ -560,11 +615,13 @@ class FirebaseCollection extends FirebaseStorageProvider {
 
   async _persistChangesImpl() {
     while (this._localChanges.size > 0) {
+      // Record the changes that are persisted by the transaction.
       let changesPersisted;
       let result = await realTransaction(this.reference, data => {
         // Updating the inital state with no items.
         if (!data.items) {
-          // fixme: assert version is 0?
+          // Ideally we would be able to assert that version is 0 here.
+          // However it seems firebase will remove an empty object.
           data.items = {};
         }
         data.version = Math.max(data.version + 1, this._version);
@@ -576,12 +633,15 @@ class FirebaseCollection extends FirebaseStorageProvider {
           // Don't add keys that we have also removed.
           add = add.filter(key => !(remove.indexOf(key) >= 0));
           let item = data.items[id] || {value: null, keys: {}};
+          // Propagate keys added locally.
           for (let key of add) {
             item.keys[key] = data.version;
           }
+          // Remove keys removed locally.
           for (let key of remove) {
             delete item.keys[key];
           }
+          // If we've added a key, also propagate the value. (legacy mutation).
           if (add.length > 0) {
             assert(this._model.has(id));
             item.value = this._model.getValue(id);
@@ -590,6 +650,7 @@ class FirebaseCollection extends FirebaseStorageProvider {
           if (keys.length > 0) {
             data.items[id] = item;
           } else {
+            // Remove the entry entirely if there are no keys left.
             delete data.items[id];
           }
         }
@@ -601,6 +662,10 @@ class FirebaseCollection extends FirebaseStorageProvider {
 
       assert(result.committed);
       let data = result.snapshot.val();
+
+      // While we were persisting changes, we may have received new ones.
+      // We remove any changes that were just persisted, `changesPersisted`
+      // from `this._localChanges`.
       for (let [id, {add, remove}] of changesPersisted.entries()) {
         add = new Set(add);
         remove = new Set(remove);
@@ -610,7 +675,11 @@ class FirebaseCollection extends FirebaseStorageProvider {
         if (localChange.add.length == 0 && localChange.remove.length == 0) {
           this._localChanges.delete(id);
         }
+        // Record details about keys added, so that we can suppress them
+        // when echoed back in an update from firebase.
         if (this._addSuppressions.has(id)) {
+          // If we already have a suppression, we augment it and bump the
+          // barrier version.
           let suppression = this._addSuppressions.get(id);
           for (let key of add) {
             suppression.keys.add(key);
