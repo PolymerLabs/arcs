@@ -13,6 +13,20 @@ import {KeyBase} from './key-base.js';
 import {btoa} from '../../platform/btoa-web.js';
 import {CrdtCollectionModel} from './crdt-collection-model.js';
 
+export async function resetStorageForTesting(key) {
+  key = new FirebaseKey(key);
+  let app = firebase.initializeApp({
+    apiKey: key.apiKey,
+    databaseURL: key.databaseUrl
+  });
+
+  let reference = firebase.database(app).ref(key.location);
+  await new Promise(resolve => {
+    reference.remove(resolve);
+  });
+  app.delete();
+}
+
 class FirebaseKey extends KeyBase {
   constructor(key) {
     super();
@@ -66,6 +80,10 @@ let _nextAppNameSuffix = 0;
 export class FirebaseStorage {
   constructor(arcId) {
     this._arcId = arcId;
+    // TODO: We need a mechanism to shut call `app.delete()` in tests,
+    // otherwise the test process will not exit. Perhaps each store should
+    // have a `close` function, and once all the stores for a given app
+    // are closed, the app is deleted.
     this._apps = {};
   }
 
@@ -233,9 +251,9 @@ class FirebaseVariable extends FirebaseStorageProvider {
     if (this._localModified) {
       return;
     }
-    assert(this._version == null || dataSnapshot.version > this._version);
-
     let data = dataSnapshot.val();
+    assert(this._version == null || data.version > this._version);
+
     this._value = data.value;
     this._version = data.version;
 
@@ -293,6 +311,7 @@ class FirebaseVariable extends FirebaseStorageProvider {
          return;
       this._version++;
     }
+    this._localModified = true;
     this._value = value;
     this._fire('change', {data: this._value, version: this._version, originatorId, barrier});
     await this._persistChanges();
