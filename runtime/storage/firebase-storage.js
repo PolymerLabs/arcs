@@ -699,4 +699,25 @@ class FirebaseCollection extends FirebaseStorageProvider {
     await this._initialized;
     return this._model.toList();
   }
+
+  async cloneFrom(handle) {
+    this.fromLiteral(await handle.toLiteral());
+  }
+
+  // Returns {version, model: [{id, value, keys: []}]}
+  async toLiteral() {
+    await this._initialized;
+    // TODO: think about what to do here, do we really need toLiteral for a firebase store?
+    // if yes, how should it represent local modifications?
+    await this._persisting;
+    return {
+      version: this._version,
+      model: this._model.toLiteral(),
+    };
+  }
+
+  fromLiteral({version, model}) {
+    this._version = version;
+    this._model = new CrdtCollectionModel(model);
+  }
 }
