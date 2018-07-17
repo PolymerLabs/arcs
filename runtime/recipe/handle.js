@@ -217,6 +217,7 @@ export class Handle {
       if (this.type.isResolved()) {
         result.push(this.type.resolvedType().toString());
       } else {
+        // TODO: include the unresolved constraints in toString (ie in the hash).
         result.push(this.type.toString());
         if (options && options.showUnresolved && this.type.canEnsureResolved()) {
           let type = Type.fromLiteral(this.type.toLiteral());

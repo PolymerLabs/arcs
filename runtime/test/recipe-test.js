@@ -342,6 +342,18 @@ describe('recipe', function() {
     recipe.handles[0].id = 'my-things';
     recipe.normalize();
     assert.isFalse(recipe.isResolved());
+    assert.equal(`recipe
+  map 'my-things' as handle0 // ~
+  Generic as particle0
+    any <- handle0
+  Specific as particle1
+    thing <- handle0`, recipe.toString());
+    assert.equal(`recipe
+  map 'my-things' as handle0 // ~ // Thing {}  // unresolved handle: unresolved type
+  Generic as particle0
+    any <- handle0
+  Specific as particle1
+    thing <- handle0`, recipe.toString({showUnresolved: true}));
     let hash = await recipe.digest();
 
     let recipeClone = recipe.clone();
@@ -353,6 +365,13 @@ describe('recipe', function() {
     recipeClone.normalize();
     assert.isTrue(recipeClone.isResolved());
     let hashResolvedClone = await recipeClone.digest();
+    assert.equal(`recipe
+  map 'my-things' as handle0 // Thing {}
+  Generic as particle0
+    any <- handle0
+  Specific as particle1
+    thing <- handle0`, recipeClone.toString());
+    assert.equal(recipeClone.toString(), recipeClone.toString({showUnresolved: true}));
     assert.notEqual(hash, hashResolvedClone);
   });
 });

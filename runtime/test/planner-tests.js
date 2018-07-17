@@ -621,8 +621,8 @@ describe('Automatic resolution', function() {
 `);
 
     assert.equal(`recipe
-  create as handle0 // Thing {Text id}
-  create as handle1 //  {Number count}
+  create as handle0 // ~
+  create as handle1 // ~
   create as handle2 // Location {Number lat, Number lng}
   A as particle0
     product -> handle0
