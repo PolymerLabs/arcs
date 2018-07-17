@@ -8,7 +8,7 @@
 
 defineParticle(({DomParticle, resolver, html}) => {
 
-  let host = `show-list`;
+  const host = `show-list`;
 
   const template = html`
 
@@ -22,11 +22,14 @@ defineParticle(({DomParticle, resolver, html}) => {
       background-color: white;
     }
     [${host}] > [items] > [item] {
-      padding: 16px 0;
+      /* no padding/margin/etc so the item can use full bleed */
       border-top: 1px solid #eeeeee;
     }
     [${host}] > [items] > [item]:last-child {
       border-bottom: 1px solid #eeeeee;
+    }
+    [${host}] > [items] > [item][selected] {
+      background-color: whitesmoke;
     }
     [${host}] div[slotid="annotation"] {
       font-size: 0.75em;
@@ -50,13 +53,11 @@ defineParticle(({DomParticle, resolver, html}) => {
   <div slotid="postamble"></div>
 
   <template items>
-    <div item>
+    <div item selected$="{{selected}}">
       <div slotid="item" subid="{{id}}" key="{{id}}" on-click="_onSelect"></div>
-      <!-- <div slotid="action" subid="{{id}}"></div> -->
       <div slotid="annotation" subid="{{id}}"></div>
     </div>
   </template>
-
 </div>
 
   `;
@@ -68,16 +69,16 @@ defineParticle(({DomParticle, resolver, html}) => {
     shouldRender(props) {
       return Boolean(props.items);
     }
-    render({items}) {
+    render({items, selected}) {
+      const selectedId = selected && selected.id;
       return {
         hasItems: items.length > 0,
         items: {
           $template: 'items',
-          models: items.map(item => {
-            return {
-              id: item.id
-            };
-          })
+          models: items.map(item => ({
+            id: item.id,
+            selected: selectedId === item.id
+          }))
         }
       };
     }

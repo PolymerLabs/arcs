@@ -220,15 +220,18 @@ class AppShell extends Xen.Debug(Xen.Base, log) {
     }
   }
   _updateSuggestions(state, oldState) {
+    if (state.metaplans && state.suggestions === null) {
+      state.suggestions = [];
+    }
     if (state.suggestions !== oldState.suggestions) {
       state.showhint = Boolean(state.suggestions && state.suggestions.length > 0);
     }
   }
   _render({}, state) {
-    const {userid, description, metaplans} = state;
+    const {userid, description, suggestions} = state;
     const render = {
       title: description,
-      glows: userid && (metaplans == null)
+      glows: userid && (suggestions == null)
     };
     return [state, render];
   }

@@ -64,7 +64,7 @@ describe('demo flow', function() {
       'Check manufacturer information for products from your browsing context ' +
         '(Minecraft Book plus 2 other items).',
       `Find out about Claire's interests.`,
-      `List of products from your browsing context (Minecraft Book plus 2 other items) with selection.`
+      `Show products from your browsing context (Minecraft Book plus 2 other items).`
     ];
     await helper.makePlans({expectedNumPlans: 5, expectedSuggestions});
     helper.log('----------------------------------------');
@@ -95,8 +95,8 @@ describe('demo flow', function() {
         .expectRenderSlot('Multiplexer2', 'annotation', {verify: helper.slotComposer.expectContentItemsNumber.bind(null, 3)});
     await helper.acceptSuggestion({particles: ['Chooser', 'Multiplexer2', 'Recommend']});
     await helper.idle();
-    helper.log('----------------------------------------');    
-    
+    helper.log('----------------------------------------');
+
     // Move an element from recommended list to shortlist.
     let verifyContents = (num, content) => {
       assert(content.model, `Content doesn't have model`);

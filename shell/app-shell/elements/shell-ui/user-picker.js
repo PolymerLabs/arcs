@@ -65,21 +65,22 @@ class UserPicker extends Xen.Base {
   }
   _render({users, friends}, {selected}) {
     const render = {
-      users: users && friends && this._renderUsers(users, friends, selected)
+      users: users && this._renderUsers(users, friends, selected)
     };
     return render;
   }
   _renderUsers(users, friends, selected) {
     return {
       template: User,
-      models: Object.values(users).map((user, i) => this._renderUser(selected, user, i, friends))
+      models: Object.values(users).map((user) => this._renderUser(selected, user, friends))
     };
   }
-  _renderUser(selected, user, i, friends) {
-    let url = user.avatar
-      || (friends[user.id] && friends[user.id].avatar)
-      || `https://$shell/assets/avatars/user (0).png`
-      ;
+  _renderUser(selected, user, friends) {
+    let url = user.avatar;
+    if (!url && friends) {
+      url = friends[user.id] && friends[user.id].avatar;
+    }
+    url = url || `https://$shell/assets/avatars/user (0).png`;
     url = url.replace(`https://$shell`, window.shellPath).replace(`https://$cdn`, window.shellPath);
     return {
       user: user,

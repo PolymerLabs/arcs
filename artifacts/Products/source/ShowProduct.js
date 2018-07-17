@@ -14,11 +14,9 @@ defineParticle(({DomParticle, resolver, html}) => {
 
   const styles = html`
   <style>
-    /* ${host} [item] {
-      padding: 4px 8px;
-      background-color: white;
-      border-bottom: 1px solid #eeeeee;
-    } */
+    ${host} {
+      padding: 16px 0;
+    }
     ${host} div[slotid="annotation"] {
       font-size: 0.7em;
     }

@@ -43,7 +43,7 @@ defineParticle(({DomParticle, html}) => {
       list.forEach(item => {
         switch (item.name) {
           case 'Field Hockey Stick':
-            items.push({caption: '<br><br>Claire`s Interests<hr><h2>Field Hockey</h2><i>... is hockey played on a field. Playerss generally require a stick.</i><hr><br><br>'});
+            items.push({caption: '<br><br>Claire`s Interests<hr><h2>Field Hockey</h2><i>... is hockey played on a field. Players generally require a stick.</i><hr><br><br>'});
             break;
         }
       });

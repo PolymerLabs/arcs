@@ -10,8 +10,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
 import Xen from '../../components/xen/xen.js';
 import Arcs from '../lib/arcs.js';
-import ArcsUtils from '../lib/arcs-utils.js';
-import Firebase from './cloud-data/firebase.js';
 
 const log = Xen.logFactory('ArcPlanner', '#104a91');
 const error = Xen.logFactory('ArcPlanner', '#104a91', 'error');
