@@ -46,6 +46,17 @@ export class MockSlotComposer extends SlotComposer {
     SlotDomConsumer.dispose();
   }
 
+   // Overriding this method to investigate AppVeyor failures.
+   // TODO: get rid of it once the problem is fixed.
+  _addSlotConsumer(slot) {
+    super._addSlotConsumer(slot);
+    let startCallback = slot.startRenderCallback;
+    slot.startRenderCallback = ({particle, slotName, contentTypes}) => {
+      this._addDebugMessages(`  StartRender: ${slot.consumeConn.getQualifiedName()}`);
+      startCallback({particle, slotName, contentTypes});
+    };
+  }
+
   /** @method newExpectations()
    * Reinitializes expectations queue.
    */
