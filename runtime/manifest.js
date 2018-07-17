@@ -279,7 +279,8 @@ export class Manifest {
 
   static async parse(content, options) {
     options = options || {};
-    let {id, fileName, position, loader, registry} = options;
+    // TODO(sjmiles): allow `context` for including an existing manifest in the import list
+    let {id, fileName, position, loader, registry, context} = options;
     registry = registry || {};
     position = position || {line: 1, column: 0};
     id = `manifest:${fileName}:`;
@@ -341,6 +342,9 @@ ${e.message}
     }
     let manifest = new Manifest({id});
     manifest._fileName = fileName;
+
+    // TODO(sjmiles): optionally include pre-existing context
+    context && manifest._imports.push(context);
 
     try {
       // Loading of imported manifests is triggered in parallel to avoid a serial loading
@@ -776,8 +780,8 @@ ${e.message}
         connection.tags = connectionItem.target ? connectionItem.target.tags : [];
         let direction = {'->': 'out', '<-': 'in', '=': 'inout', 'consume': '`consume', 'provide': '`provide'}[connectionItem.dir];
         if (connection.direction) {
-          if (connection.direction != direction && 
-              direction != 'inout' && 
+          if (connection.direction != direction &&
+              direction != 'inout' &&
               !(connection.direction == 'host' && direction == 'in') &&
               !(connection.direction == '`consume' && direction == 'in') &&
               !(connection.direction == '`provide' && direction == 'out')
