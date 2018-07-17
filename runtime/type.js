@@ -178,7 +178,7 @@ export class Type {
   get canWriteSuperset() {
     if (this.isVariable)
       return this.variable.canWriteSuperset;
-    if (this.isEntity)
+    if (this.isEntity || this.isSlot)
       return this;
     if (this.isInterface)
       return Type.newInterface(this.interfaceShape.canWriteSuperset);
@@ -188,7 +188,7 @@ export class Type {
   get canReadSubset() {
     if (this.isVariable)
       return this.variable.canReadSubset;
-    if (this.isEntity)
+    if (this.isEntity || this.isSlot)
       return this;
     if (this.isInterface)
       return Type.newInterface(this.interfaceShape.canReadSubset);
@@ -202,6 +202,10 @@ export class Type {
       return this.entitySchema.isMoreSpecificThan(type.entitySchema);
     if (this.isInterface)
       return this.interfaceShape.isMoreSpecificThan(type.interfaceShape);
+    if (this.isSlot) {
+      // TODO: formFactor checking, etc.
+      return true;
+    }
     assert(false, `contains not implemented for ${this}`);
   }
 

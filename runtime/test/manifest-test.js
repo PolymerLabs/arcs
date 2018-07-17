@@ -635,6 +635,23 @@ ${particleStr1}
     assert.lengthOf(recipe.slotConnections, 2);
     assert.isEmpty(recipe.slots);
   });
+  it('SLANDLES unnamed consume slots', async () => {
+    let manifest = await Manifest.parse(`
+      particle SomeParticle &work in 'some-particle.js'
+        \`consume Slot slotA
+      particle SomeParticle1 &rest in 'some-particle.js'
+        \`consume Slot slotC
+
+      recipe
+        SomeParticle
+          slotA consume
+        SomeParticle1
+          slotC consume
+    `);
+    let recipe = manifest.recipes[0];
+    assert.lengthOf(recipe.handleConnections, 2);
+    assert.isEmpty(recipe.handles);
+  });
   it('multiple consumed slots', async () => {
     let parseRecipe = async (args) => {
       let recipe = (await Manifest.parse(`
@@ -646,6 +663,26 @@ ${particleStr1}
           slot 'slota-0' as s0
           SomeParticle
             consume slotA as s0
+      `)).recipes[0];
+      recipe.normalize();
+      assert.equal(args.expectedIsResolved, recipe.isResolved());
+    };
+    await parseRecipe({isRequiredSlotA: false, isRequiredSlotB: false, expectedIsResolved: true});
+    await parseRecipe({isRequiredSlotA: true, isRequiredSlotB: false, expectedIsResolved: true});
+    await parseRecipe({isRequiredSlotA: false, isRequiredSlotB: true, expectedIsResolved: false});
+    await parseRecipe({isRequiredSlotA: true, isRequiredSlotB: true, expectedIsResolved: false});
+  });
+  it('SLANDLES multiple consumed slots', async () => {
+    let parseRecipe = async (args) => {
+      let recipe = (await Manifest.parse(`
+        particle SomeParticle in 'some-particle.js'
+          \`consume Slot${args.isRequiredSlotA ? '' : '?'} slotA
+          \`consume Slot${args.isRequiredSlotB ? '' : '?'} slotB
+
+        recipe
+          \`slot 'slota-0' as s0
+          SomeParticle
+            slotA consume s0
       `)).recipes[0];
       recipe.normalize();
       assert.equal(args.expectedIsResolved, recipe.isResolved());

@@ -108,7 +108,7 @@ export class HandleConnection {
   }
 
   _isValid(options) {
-    if (this.direction && !['in', 'out', 'inout', 'host'].includes(this.direction)) {
+    if (this.direction && !['in', 'out', 'inout', 'host', '`consume', '`provide'].includes(this.direction)) {
       if (options && options.errors) {
         options.errors.set(this, `Invalid direction '${this.direction}' for handle connection '${this.getQualifiedName()}'`);
       }
