@@ -34,9 +34,17 @@ defineParticle(({DomParticle, resolver, html}) => {
     [${host}] > [items] p {
       margin: 0;
     }
+    [${host}] [empty] {
+      color: #aaaaaa;
+      font-size: 14px;
+      font-style: italic;
+      padding: 10px 0;
+    }
+
   </style>
 
   <div slotid="preamble"></div>
+  <div empty hidden="{{hasItems}}">List is empty</div>
   <div items>{{items}}</div>
   <div slotid="action"></div>
   <div slotid="postamble"></div>
@@ -62,6 +70,7 @@ defineParticle(({DomParticle, resolver, html}) => {
     }
     render({items}) {
       return {
+        hasItems: items.length > 0,
         items: {
           $template: 'items',
           models: items.map(item => {

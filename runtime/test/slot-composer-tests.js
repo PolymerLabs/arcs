@@ -137,9 +137,9 @@ recipe
       assert.equal(HostedSlotConsumer, slot.constructor);
       assert.equal(MockSlotDomConsumer, slotComposer.consumers.find(s => s == slot.transformationSlotConsumer).constructor);
     };
-    await helper.acceptSuggestion({particles: ['ShowCollection', 'Multiplexer', 'ProductFilter']});
+    await helper.acceptSuggestion({particles: ['List', 'Multiplexer', 'ProductFilter']});
     assert.lengthOf(slotComposer.consumers, 3);
-    verifySlot('ShowCollection::root');
+    verifySlot('List::root');
     verifySlot('Multiplexer::annotation');
     verifyHostedSlot('ShowProduct::item');
   });

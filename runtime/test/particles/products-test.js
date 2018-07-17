@@ -35,8 +35,8 @@ describe('products test', function() {
 
     helper.slotComposer
         .newExpectations()
-          .expectRenderSlot('ShowCollection', 'root', {contentTypes: ['template']})
-          .expectRenderSlot('ShowCollection', 'root', {contentTypes: ['model'], verify: (content) => {
+          .expectRenderSlot('List', 'root', {contentTypes: ['template']})
+          .expectRenderSlot('List', 'root', {contentTypes: ['model'], verify: (content) => {
             let verified = content.model && content.model.hasItems
                 && content.model.items['$template'].length > 0
                 && 1 == content.model.items.models.length;
@@ -52,7 +52,7 @@ describe('products test', function() {
                 && 'Harry Potter' === content.model.items[0].name;
           }});
 
-    await helper.acceptSuggestion({particles: ['ShowCollection', 'Multiplexer', 'ProductFilter']});
+    await helper.acceptSuggestion({particles: ['List', 'Multiplexer', 'ProductFilter']});
 
     await helper.verifyData('ProductFilter', 'results', verifyFilteredBook);
   });

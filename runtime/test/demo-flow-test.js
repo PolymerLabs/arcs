@@ -98,7 +98,7 @@ describe('demo flow', function() {
     helper.log('----------------------------------------');    
     
     // Move an element from recommended list to shortlist.
-    let verifyShowCollection = (num, content) => {
+    let verifyContents = (num, content) => {
       assert(content.model, `Content doesn't have model`);
       assert(content.model.items, `Content model doesn't have items, but expected ${num}.`);
       return content.model.items.length == num && content.model.items.every(i => !!i.resolvedImage);
@@ -107,7 +107,7 @@ describe('demo flow', function() {
         helper.slotComposer
           .newExpectations('Move and element from recommended list to shortlist')
             .expectRenderSlot('List', 'root', {contentTypes: ['model']})
-            .expectRenderSlot('ItemMultiplexer', 'item', {verify: verifyShowCollection.bind(null, num), hostedParticle: 'ShowProduct'})
+            .expectRenderSlot('ItemMultiplexer', 'item', {verify: verifyContents.bind(null, num), hostedParticle: 'ShowProduct'})
             .expectRenderSlot('ShowProduct', 'item', {contentTypes: ['model']})
             .expectRenderSlot('Chooser', 'action', {verify: helper.slotComposer.expectContentItemsNumber.bind(null, (6-num))})
             .expectRenderSlot('AlsoOn', 'annotation', {contentTypes: ['model']})
