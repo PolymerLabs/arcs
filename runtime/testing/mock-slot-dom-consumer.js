@@ -63,6 +63,7 @@ export class MockSlotDomConsumer extends SlotDomConsumer {
     return container;
   }
 
+  static clear(container) {}
   _onUpdate(rendering) {}
   _stampTemplate(template) {}
   _initMutationObserver() {}

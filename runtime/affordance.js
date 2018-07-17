@@ -9,7 +9,9 @@
  */
 import {assert} from '../platform/assert-web.js';
 import {SlotDomConsumer} from './slot-dom-consumer.js';
+import {SuggestDomConsumer} from './suggest-dom-consumer.js';
 import {MockSlotDomConsumer} from './testing/mock-slot-dom-consumer.js';
+import {MockSuggestDomConsumer} from './testing/mock-suggest-dom-consumer.js';
 import {DescriptionDomFormatter} from './description-dom-formatter.js';
 
 export class Affordance {
@@ -30,8 +32,8 @@ export class Affordance {
 
 let _affordances = {};
 [
-  {name: 'dom', slotConsumerClass: SlotDomConsumer, descriptionFormatter: DescriptionDomFormatter},
-  {name: 'dom-touch', slotConsumerClass: SlotDomConsumer, descriptionFormatter: DescriptionDomFormatter},
-  {name: 'vr', slotConsumerClass: SlotDomConsumer, descriptionFormatter: DescriptionDomFormatter},
-  {name: 'mock', slotConsumerClass: MockSlotDomConsumer}
+  {name: 'dom', slotConsumerClass: SlotDomConsumer, suggestionConsumerClass: SuggestDomConsumer, descriptionFormatter: DescriptionDomFormatter},
+  {name: 'dom-touch', slotConsumerClass: SlotDomConsumer, suggestionConsumerClass: SuggestDomConsumer, descriptionFormatter: DescriptionDomFormatter},
+  {name: 'vr', slotConsumerClass: SlotDomConsumer, suggestionConsumerClass: SuggestDomConsumer, descriptionFormatter: DescriptionDomFormatter},
+  {name: 'mock', slotConsumerClass: MockSlotDomConsumer, suggestionConsumerClass: MockSuggestDomConsumer}
 ].forEach(options => _affordances[options.name] = new Affordance(options));
