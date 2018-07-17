@@ -39,6 +39,8 @@ export class MockSlotComposer extends SlotComposer {
     this.expectQueue = [];
     this.onExpectationsComplete = () => undefined;
     this.strict = options.strict != undefined ? options.strict : true;
+    this.logging = options.logging;
+    this.debugMessages = [];
 
     // Clear all cached templates
     SlotDomConsumer.dispose();
@@ -47,13 +49,14 @@ export class MockSlotComposer extends SlotComposer {
   /** @method newExpectations()
    * Reinitializes expectations queue.
    */
-  newExpectations() {
+  newExpectations(name) {
     assert(this.expectQueue.every(e => e.isOptional));
     this.expectQueue = [];
 
     if (!this.strict) {
       this.ignoreUnexpectedRender();
     }
+    this.debugMessages.push({name: name || `debug${Object.keys(this.debugMessages).length}`, messages: []});
     return this;
   }
 
@@ -114,7 +117,7 @@ export class MockSlotComposer extends SlotComposer {
     if (this.expectQueue.length == 0 || this.expectQueue.every(e => e.isOptional)) {
       return true;
     }
-    assert(false, 'remaining expectations:\n' + this.expectQueue.map(expect => `  ${expect.toString()}`).join('\n'));
+    assert(false, `${this.debugMessagesToString()}\nremaining expectations:\n ${this.expectQueue.map(expect => `  ${expect.toString()}`).join('\n')}`);
   }
 
   /** @method sendEvent(particleName, slotName, event, data)
@@ -195,7 +198,7 @@ export class MockSlotComposer extends SlotComposer {
   }
 
   async renderSlot(particle, slotName, content) {
-    //console.log(`    renderSlot ${particle.name} ${((names) => names.length > 0 ? `(${names.join(',')}) ` : '')(this._getHostedParticleNames(particle))}: ${slotName} - ${Object.keys(content).join(', ')}`);
+    this._addDebugMessages(`    renderSlot ${particle.name} ${((names) => names.length > 0 ? `(${names.join(',')}) ` : '')(this._getHostedParticleNames(particle))}: ${slotName} - ${Object.keys(content).join(', ')}`);
     assert.isAbove(this.expectQueue.length, 0,
       `Got a renderSlot from ${particle.name}:${slotName} (content types: ${Object.keys(content).join(', ')}), but not expecting anything further.`);
 
@@ -222,7 +225,7 @@ export class MockSlotComposer extends SlotComposer {
       // Slots of particles hosted in transformation particles.
     }
 
-    // this.detailedLogDebug();
+    this.detailedLogDebug();
   }
 
   _expectationsMet() {
@@ -245,9 +248,27 @@ export class MockSlotComposer extends SlotComposer {
         expectationsByParticle[e.particleName][key]++;
       });
     });
-    console.log(`${this.expectQueue.length} expectations : {${Object.keys(expectationsByParticle).map(p => {
+    this._addDebugMessages(`${this.expectQueue.length} expectations : {${Object.keys(expectationsByParticle).map(p => {
       return `${p}: (${Object.keys(expectationsByParticle[p]).map(key => `${key}=${expectationsByParticle[p][key]}`).join('; ')})`;
     }).join(', ')}}`);
     return this;
+  }
+
+  _addDebugMessages(message) {
+    assert(this.debugMessages.length > 0);
+    this.debugMessages[this.debugMessages.length - 1].messages.push(message);
+    if (this.logging) {
+      console.log(message);
+    }
+  }
+  debugMessagesToString() {
+    let result = [];
+    result.push('--------------------------------------------');
+    this.debugMessages.forEach(debug => {
+      result.push(`${debug.name} : `);
+      debug.messages.forEach(message => result.push(message));
+      result.push('----------------------');
+    });
+    return result.join('\n');
   }
 }
