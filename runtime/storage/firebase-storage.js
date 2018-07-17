@@ -225,7 +225,7 @@ class FirebaseVariable extends FirebaseStorageProvider {
     // written locally.
     this._value = null;
 
-    // Monotonic vesion, initialized via response from firebase,
+    // Monotonic version, initialized via response from firebase,
     // or a call to `set` (as 0). Updated on changes from firebase
     // or during local modifications.
     this._version = null;
@@ -396,7 +396,7 @@ function setDiff(from, to) {
 // added and removed remotely. These are filtered by a set of suppressions
 // for adds that we have previously issued and then applied to our local
 // model. Each time we receive an update from firebase, we update our local
-// version number. We align it whith the remote version when possible.
+// version number. We align it with the remote version when possible.
 //
 // Local modifications: Additions and removal of entries (and membership
 // keys) are tracked in a local structure, `_localChanges`, and a process
