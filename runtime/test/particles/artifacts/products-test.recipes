@@ -6,7 +6,7 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import '../../../../artifacts/Common/ShowCollection.manifest'
+import '../../../../artifacts/Common/List.manifest'
 import '../../../../artifacts/Common/Multiplexer.manifest'
 import '../../../../artifacts/Products/test/ProductFilter.manifest'
 import '../../../../artifacts/Products/test/ProductIsBook.manifest'
@@ -14,11 +14,11 @@ import '../../../../artifacts/Products/test/ShowProduct.manifest'
 
 // Filter books and display them.
 recipe
-  ShowCollection.collection <- ProductFilter.results
-  Multiplexer.list -> ShowCollection.collection
+  List.items <- ProductFilter.results
+  Multiplexer.list -> List.items
   map 'mylist' as mylist
   create as books
-  ShowCollection
+  List
     consume root
       provide item as itemSlot
   Multiplexer
