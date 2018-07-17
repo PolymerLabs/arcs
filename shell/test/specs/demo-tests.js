@@ -281,6 +281,13 @@ function allSuggestions() {
   //clickElement('#searchButton');
 }
 
+function searchSuggestions(search) {
+  waitForStillness();
+  openSystemUi();
+  clickElement('input[search]');
+  browser.keys(search);
+}
+
 function getAtLeastOneSuggestion() {
   const allSuggestions = pierceShadows(['[slotid="suggestions"]', 'suggestion-element']);
   if (!allSuggestions.value) {
@@ -447,7 +454,9 @@ describe('Arcs demos', function() {
 
   it('can buy gifts', /** @this Context */ function() {
     initTestWithNewArc(this.test.fullTitle(), true);
-    allSuggestions();
+    // TODO(sjmiles): suggestions must be visible to be clicked .. allSuggestions results
+    // in too long of a list, so we use a targetted search string
+    searchSuggestions('browsing');
     acceptSuggestion(
         `Show products from your browsing context \\(Minecraft Book plus 2 other items\\)\\.`);
     //browser.waitForVisible('[slotid="action"]');
