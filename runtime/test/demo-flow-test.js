@@ -43,7 +43,7 @@ describe('demo flow', function() {
     helper.slotComposer
       .newExpectations('Show products from your browsing context (...)')
         .expectRenderSlot('List', 'root', {contentTypes: ['template']})
-        .expectRenderSlot('List', 'root', {contentTypes: ['model'], times: 1})
+        .expectRenderSlot('List', 'root', {contentTypes: ['model']})
         .expectRenderSlot('ShowProduct', 'item', {contentTypes: ['template', 'model']})
         .expectRenderSlot('ShowProduct', 'item', {contentTypes: ['model'], times: 2})
         .expectRenderSlot('ItemMultiplexer', 'item', {contentTypes: ['template', 'model'], hostedParticle: 'ShowProduct'})

@@ -22,7 +22,7 @@ import {MockSlotDomConsumer} from '../testing/mock-slot-dom-consumer.js';
 import {HostedSlotConsumer} from '../hosted-slot-consumer.js';
 
 describe('particle-shape-loading-with-slots', function() {
-  async function instantiateRecipe(contextContainer) {
+  async function initializeManifestAndArc(contextContainer) {
     let loader = new Loader();
     let pecFactory = function(id) {
       let channel = new MessageChannel();
@@ -48,11 +48,14 @@ describe('particle-shape-loading-with-slots', function() {
     assert(recipe.normalize(), 'can\'t normalize recipe');
     assert(recipe.isResolved(), 'recipe isn\'t resolved');
 
+    return {manifest, recipe, slotComposer, arc};
+  }
+  async function instantiateRecipeAndStore(arc, recipe, manifest) {
     await arc.instantiate(recipe);
-
-    let fooType = manifest.findTypeByName('Foo');
-    let inStore = arc.findStoresByType(fooType.collectionOf())[0];
-    return {inStore, slotComposer};
+    let inStore = arc.findStoresByType(manifest.findTypeByName('Foo').collectionOf())[0];
+    await inStore.store({id: 'subid-1', rawData: {value: 'foo1'}}, ['key1']);
+    await inStore.store({id: 'subid-2', rawData: {value: 'foo2'}}, ['key2']);
+    return inStore;
   }
 
   let expectedTemplateName = 'MultiplexSlotsParticle::annotationsSet::SingleSlotParticle::annotation::default';
@@ -68,17 +71,17 @@ describe('particle-shape-loading-with-slots', function() {
   }
 
   it('multiplex recipe with slots - immediate', async () => {
-    let {inStore, slotComposer} = await instantiateRecipe({
+    let {manifest, recipe, slotComposer, arc} = await initializeManifestAndArc({
       'subid-1': 'dummy-container1', 'subid-2': 'dummy-container2', 'subid-3': 'dummy-container3'
     });
-    await inStore.store({id: 'subid-1', rawData: {value: 'foo1'}}, ['key1']);
-    await inStore.store({id: 'subid-2', rawData: {value: 'foo2'}}, ['key2']);
 
     slotComposer
       .newExpectations()
       .expectRenderSlot('SingleSlotParticle', 'annotation', {contentTypes: ['template', 'model'], times: 2})
       .expectRenderSlot('MultiplexSlotsParticle', 'annotationsSet', {contentTypes: ['template', 'model']})
       .expectRenderSlot('MultiplexSlotsParticle', 'annotationsSet', {contentTypes: ['model'], times: 2, isOptional: true});
+
+    let inStore = await instantiateRecipeAndStore(arc, recipe, manifest);
     await slotComposer.arc.pec.idle;
     await slotComposer.expectationsCompleted();
 
@@ -107,10 +110,9 @@ describe('particle-shape-loading-with-slots', function() {
     // This test is different from the one above because it initializes the transformation particle context
     // after the hosted particles are also instantiated.
     // This verifies a different start-render call in slot-composer.
-    let {inStore, slotComposer} = await instantiateRecipe();
+    let {manifest, recipe, slotComposer, arc} = await initializeManifestAndArc();
     slotComposer._contexts[0]._container = null;
-    await inStore.store({id: 'subid-1', rawData: {value: 'foo1'}}, ['key1']);
-    await inStore.store({id: 'subid-2', rawData: {value: 'foo2'}}, ['key2']);
+    let inStore = await instantiateRecipeAndStore(arc, recipe, manifest);
 
     // Wait for the hosted slots to be initialized in slot-composer.
     await new Promise((resolve, reject) => {
@@ -121,14 +123,16 @@ describe('particle-shape-loading-with-slots', function() {
         }
       }, 10);
     });
-    slotComposer._contexts[0].container = {'subid-1': 'dummy-container1', 'subid-2': 'dummy-container2', 'subid-3': 'dummy-container3'};
 
     slotComposer
       .newExpectations()
       .expectRenderSlot('SingleSlotParticle', 'annotation', {contentTypes: ['template', 'model'], times: 2})
       .expectRenderSlot('MultiplexSlotsParticle', 'annotationsSet', {contentTypes: ['template', 'model']})
       .expectRenderSlot('MultiplexSlotsParticle', 'annotationsSet', {contentTypes: ['model'], times: 2, isOptional: true});
+
+    slotComposer._contexts[0].container = {'subid-1': 'dummy-container1', 'subid-2': 'dummy-container2', 'subid-3': 'dummy-container3'};
     slotComposer.consumers[0].onContainerUpdate({});
+
     await slotComposer.arc.pec.idle;
     await slotComposer.expectationsCompleted();
 
