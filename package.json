@@ -8,7 +8,7 @@
   },
   "scripts": {
     "prepare": "cross-env tools/sigh check && cd devtools && npm install",
-    "start": "cross-env http-server -a ${npm_package_config_host} -p ${npm_package_config_port}",
+    "start": "cross-env http-server --silent -a ${npm_package_config_host} -p ${npm_package_config_port}",
     "test-with-start": "run-p --print-name --race start test",
     "test": "run-s --print-name --continue-on-error test-no-web test-wdio",
     "test-no-web": "run-s --print-name --continue-on-error test-sigh test-mocha test-mocha-words test-extension",
