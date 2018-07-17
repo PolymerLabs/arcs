@@ -59,6 +59,8 @@ export class Planner {
     let start = now();
     do {
       let record = await trace.wait(this.strategizer.generate());
+      console.log('\n generated recipes: \n',
+          this.strategizer.generated.map(g => g.result.toString({showUnresolved: true})).join('\n----------------\n'));
       let generated = this.strategizer.generated;
       trace.addArgs({
         generated: generated.length,
@@ -71,6 +73,8 @@ export class Planner {
       let resolved = this.strategizer.generated
           .map(individual => individual.result)
           .filter(recipe => recipe.isResolved());
+
+      console.log('resolved plans (in this generation): ', resolved.length);
 
       allResolved.push(...resolved);
       const elapsed = now() - start;
@@ -129,6 +133,7 @@ export class Planner {
     let trace = Tracing.start({cat: 'planning', name: 'Planner::suggest', overview: true, args: {timeout}});
     if (!generations && DevtoolsConnection.isConnected) generations = [];
     let plans = await trace.wait(this.plan(timeout, generations));
+    console.log('\n\n\n Strategizer created plans: ', plans.length);
     let suggestions = [];
     speculator = speculator || new Speculator();
     // We don't actually know how many threads the VM will decide to use to
@@ -145,6 +150,7 @@ export class Planner {
 
         if (this._matchesActiveRecipe(plan)) {
           this._updateGeneration(generations, hash, (g) => g.active = true);
+          console.log('The plan is alread active');
           continue;
         }
 
@@ -161,6 +167,7 @@ export class Planner {
         if (!relevance.isRelevant(plan)) {
           this._updateGeneration(generations, hash, (g) => g.irrelevant = true);
           planTrace.end({name: '[Irrelevant suggestion]', hash, groupIndex});
+          console.log('The plan is irrelevant');
           continue;
         }
         let rank = relevance.calcRelevanceScore();
