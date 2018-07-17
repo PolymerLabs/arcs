@@ -220,7 +220,7 @@ ${this.activeRecipe.toString()}`;
   }
 
   static async deserialize({serialization, pecFactory, slotComposer, loader, fileName, context}) {
-    let manifest = await Manifest.parse(serialization, {loader, fileName});
+    let manifest = await Manifest.parse(serialization, {loader, fileName, context});
     let arc = new Arc({
       id: manifest.meta.name,
       storageKey: manifest.meta.storageKey,
