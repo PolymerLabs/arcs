@@ -50,6 +50,7 @@ export class StorageProviderBase {
     this._listeners.set(kind, listeners);
   }
 
+  // TODO: rename to _fireAsync so it's clear that callers are not re-entrant.
   async _fire(kind, details) {
     let listenerMap = this._listeners.get(kind);
     if (!listenerMap || listenerMap.size == 0)
