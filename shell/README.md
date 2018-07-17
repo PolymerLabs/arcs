@@ -24,7 +24,7 @@ https://polymerlabs.github.io/arcs-live/shell/apps/utils/FBGraph/
 
 ### URL Parameters
 
-`user=<userid>`
+* `user=<userid>`
   * Force a particular user.
   * Most recent user is persisted in _localStorage_
   * Shell will remove this parameter from the URL after setting the user
