@@ -39,9 +39,9 @@ describe('demo flow', function() {
 
     helper.setTimeout(500);
 
-    // 1. Accept "Show products from your browsing context (...)."" suggestion
+    // 1. Accept "Show products from your browsing context (...)." suggestion
     helper.slotComposer
-      .newExpectations()
+      .newExpectations('Show products from your browsing context (...)')
         .expectRenderSlot('List', 'root', {contentTypes: ['template']})
         .expectRenderSlot('List', 'root', {contentTypes: ['model'], times: 1})
         .expectRenderSlot('ShowProduct', 'item', {contentTypes: ['template', 'model']})
@@ -71,7 +71,7 @@ describe('demo flow', function() {
 
     // Accept "Check shipping for Claire (Claire)'s Birthday on..." suggestion.
     helper.slotComposer
-      .newExpectations()
+      .newExpectations('Check shipping for Claire (Claire)\'s Birthday on...')
         .expectRenderSlot('GiftList', 'preamble', {contentTypes: ['template', 'model']})
         .expectRenderSlot('Arrivinator', 'annotation', {contentTypes: ['template', 'model'], times: 3})
         .expectRenderSlot('AlternateShipping', 'annotation', {contentTypes: ['template', 'model'], times: 3})
@@ -86,7 +86,7 @@ describe('demo flow', function() {
 
     // Accept "Add items from Claire's wishlist (...)" suggestion.
     helper.slotComposer
-      .newExpectations()
+      .newExpectations('Add items from Claire\'s wishlist (...)')
         .expectRenderSlot('Chooser', 'action', {contentTypes: ['template']})
         .expectRenderSlot('Chooser', 'action', {verify: helper.slotComposer.expectContentItemsNumber.bind(null, 3)})
         .expectRenderSlot('AlsoOn', 'annotation', {contentTypes: ['template']})
@@ -105,7 +105,7 @@ describe('demo flow', function() {
     };
     let verifyElementMove = async (key, num, muxerHostedParticles) => {
         helper.slotComposer
-          .newExpectations()
+          .newExpectations('Move and element from recommended list to shortlist')
             .expectRenderSlot('List', 'root', {contentTypes: ['model']})
             .expectRenderSlot('ItemMultiplexer', 'item', {verify: verifyShowCollection.bind(null, num), hostedParticle: 'ShowProduct'})
             .expectRenderSlot('ShowProduct', 'item', {contentTypes: ['model']})
@@ -129,7 +129,7 @@ describe('demo flow', function() {
     // Accept "Check manufacturer information for products from your browsing context (...)." suggestion
     await helper.makePlans({expectedNumPlans: 4});
     helper.slotComposer
-      .newExpectations()
+      .newExpectations('Check manufacturer information for products from your browsing context (...)')
         .expectRenderSlot('Multiplexer', 'annotation', {contentTypes: ['template'], hostedParticle: 'ManufacturerInfo'})
         .expectRenderSlot('Multiplexer', 'annotation', {hostedParticle: 'ManufacturerInfo', verify: helper.slotComposer.expectContentItemsNumber.bind(null, 4)})
         .expectRenderSlot('ManufacturerInfo', 'annotation', {contentTypes: ['template', 'model'], times: 4});
@@ -142,7 +142,7 @@ describe('demo flow', function() {
 
     // Accept "Find out about Claire's interests." suggestion
     helper.slotComposer
-      .newExpectations()
+      .newExpectations('Find out about Claire\'s interests')
         .expectRenderSlot('Interests', 'postamble', {contentTypes: ['template', 'model']});
     await helper.acceptSuggestion({particles: ['Interests']});
     helper.log('----------------------------------------');
