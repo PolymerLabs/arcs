@@ -4,21 +4,21 @@
 
 ### Web
 
-https://polymerlabs.github.io/arcs-live/apps/web/
+https://polymerlabs.github.io/arcs-live/shell/apps/web/
 
 ### VR
 
-https://polymerlabs.github.io/arcs-live/apps/vr/
+https://polymerlabs.github.io/arcs-live/shell/apps/vr/
 
 ### ChromeCast
 
-https://polymerlabs.github.io/arcs-live/apps/chromecast/
+https://polymerlabs.github.io/arcs-live/shell/apps/chromecast/
 
 ## Utility applications
 
 ### User Context Browser (useful in particular for extracting user ids)
 
-https://polymerlabs.github.io/arcs-live/apps/utils/FBGraph/
+https://polymerlabs.github.io/arcs-live/shell/apps/utils/FBGraph/
 
 ## Notes
 
