@@ -309,7 +309,12 @@ export class Planificator {
       });
     }
     time = ((now() - time) / 1000).toFixed(2);
-    log(`Produced plans [count=${this._next.plans.length}, elapsed=${time}s].`);
+
+    if (this._next.plans) {
+      // Can be null, if a new planning has already been scheduled.
+      // TODO: this is a race condition, proper fix is part of #1620.
+      log(`Produced plans [count=${this._next.plans.length}, elapsed=${time}s].`);
+    }
   }
 
   _cancelPlanning() {
