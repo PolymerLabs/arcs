@@ -17,6 +17,8 @@ const template = Xen.html`
   <arc-store arc="{{arc}}" data="{{themeData}}" options="{{themeStoreOptions}}" on-change="_onShellThemeChange"></arc-store>
   <arc-store arc="{{arc}}" data="{{userStoreData}}" options="{{userStoreOptions}}"></arc-store>
   <arc-store arc="{{arc}}" data="{{usersStoreData}}" options="{{usersStoreOptions}}"></arc-store>
+  <!-- we require BOXED_avatar a-priori -->
+  <arc-store arc="{{arc}}" options="{{boxedAvatarOptions}}"></arc-store>
 `;
 
 const log = Xen.logFactory('ShellStores', '#004f00');
@@ -72,6 +74,14 @@ class ShellStores extends Xen.Debug(Xen.Base, log) {
         type: '[Person]',
         name: 'Users',
         tags: ['identities']
+      },
+      boxedAvatarOptions: {
+        schema: {tag: 'Entity', data: {names: ['Avatar'], fields: {url: 'URL', owner: 'Text'}}},
+        type: '[Avatar]',
+        name: 'BOXED_avatar',
+        id: 'BOXED_avatar',
+        tags: ['BOXED_avatar'],
+        asContext: true
       }
     });
   }
