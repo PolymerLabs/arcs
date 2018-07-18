@@ -36,7 +36,7 @@ class ArcStore extends Xen.Debug(Xen.Base, log) {
         state.manifest = await Arcs.Manifest.load(options.schemas, arc.loader);
       }
       if (options && (state.manifest || options.schema)) {
-        state.store = await this._createStore(arc, state.manifest, options);
+        state.store = await this._attachStore(arc, state.manifest, options);
         state.data = null;
         this._fire('store', state.store);
       }
@@ -52,7 +52,28 @@ class ArcStore extends Xen.Debug(Xen.Base, log) {
       this._updateStore(state.store, data, arc);
     }
   }
-  async _createStore(arc, manifest, {name, tags, schema, type, id, asContext, description, storageKey}) {
+  async _attachStore(arc, manifest, options) {
+    let store;
+    const {id, description, asContext} = options;
+    // context-stores are for `map`, `copy`, `?`
+    // arc-stores are for `use`, `?`
+    const owner = asContext ? arc.context : arc;
+    if (id) {
+      store = owner.findStoreById(id);
+    }
+    if (!store) {
+      store = await this._createStore(arc, manifest, options);
+    }
+    // observe store
+    store.on('change', () => this._storeChanged(store), arc);
+    if (description) {
+      store.description = description;
+    }
+    return store;
+  }
+  async _createStore(arc, manifest, {name, tags, schema, type, id, asContext, storageKey}) {
+    const owner = asContext ? arc.context : arc;
+    // work out typeOf
     let setOf = false;
     if (type[0] == '[') {
       setOf = true;
@@ -65,22 +86,17 @@ class ArcStore extends Xen.Debug(Xen.Base, log) {
       typeOf = manifest.findSchemaByName(type).type;
     }
     typeOf = setOf ? typeOf.collectionOf() : typeOf;
+    // work out storageKey
     storageKey = storageKey || 'in-memory';
-    //
+    // work out tags
     if (!asContext) {
       tags = tags.concat(['nosync']);
     }
+    // work out id
     id = id || arc.generateID();
-    // context-stores are for `map`, `copy`, `?`
-    // arc-stores are for `use`, `?`
-    const owner = asContext ? arc.context : arc;
+    // create store
     const store = await owner.createStore(typeOf, name, id, tags, storageKey);
-    if (description) {
-      store.description = description;
-    }
-    // observe store
-    store.on('change', () => this._storeChanged(store), arc);
-    log('created store', name, tags);
+    log('created store', name, tags, store);
     return store;
   }
   _updateStore(store, data, arc) {

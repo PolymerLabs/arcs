@@ -21,6 +21,9 @@ defineParticle(({DomParticle, resolver, log, html}) => {
     width: 600px;
   }
   [${host}] [button-wrapper] {
+    position: fixed;
+    right: 48px;
+    bottom: 48px;
     background-color: white;
     cursor: pointer;
     display: inline-block;

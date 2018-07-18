@@ -11,7 +11,7 @@
 
 /* global defineParticle, importScripts */
 
-defineParticle(({SimpleParticle, log, resolver}) => {
+defineParticle(({SimpleParticle, html, log, resolver}) => {
   function importLibrary(filename) {
     importScripts(resolver(`GamePane/${filename}`));
   }
@@ -25,7 +25,7 @@ defineParticle(({SimpleParticle, log, resolver}) => {
 
   const host = `move-picker`;
 
-  const styles = `
+  const styles = html`
  <style>
  @import url('https://fonts.googleapis.com/css?family=Fredoka+One');
    [${host}] {
@@ -261,7 +261,7 @@ defineParticle(({SimpleParticle, log, resolver}) => {
  </style>
    `;
 
-  const template = `
+  const template = html`
  ${styles}
  <div ${host}>
    <div hidden="{{hideStartGame}}">
@@ -296,7 +296,7 @@ defineParticle(({SimpleParticle, log, resolver}) => {
  <template annotation>
    <div class="annotation" style%="{{style}}"><div class="{{orientation}}">{{content}}</div></div>
  </template>
-      `.trim();
+      `;
 
   const DICTIONARY_URL =
       'https://raw.githubusercontent.com/shaper/shaper.github.io/master/resources/words-dictionary.txt';
@@ -350,7 +350,10 @@ defineParticle(({SimpleParticle, log, resolver}) => {
     tilesToWord(tiles) {
       return tiles.map(t => t.letter).join('');
     }
-    willReceiveProps({renderParticle, post, posts}, state) {
+    willReceiveProps({renderParticle, board}, state) {
+      if (!state.gameStarted && board && board.letters) {
+        this.onStartGame();
+      }
       if (renderParticle && !state.renderParticleSpec) {
         const renderParticleSpec = JSON.stringify(renderParticle.toLiteral());
         this.setState({renderParticleSpec});
