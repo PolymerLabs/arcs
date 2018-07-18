@@ -10,20 +10,26 @@
 
 import {assert} from '../platform/assert-web.js';
 import {SlotConsumer} from './slot-consumer.js';
+import {HostedSlotContext} from './hosted-slot-context.js';
 
 export class HostedSlotConsumer extends SlotConsumer {
-  constructor(transformationSlotConsumer, hostedParticleName, hostedSlotName, hostedSlotId) {
+  constructor(transformationSlotConsumer, hostedParticleName, hostedSlotName, hostedSlotId, storeId, arc) {
     super();
     this._transformationSlotConsumer = transformationSlotConsumer;
     this._hostedParticleName = hostedParticleName;
     this._hostedSlotName = hostedSlotName, 
     this._hostedSlotId = hostedSlotId;
+    // TODO: should this be a list?
+    this._storeId = storeId;
+    this._arc = arc;
   }
 
   get transformationSlotConsumer() { return this._transformationSlotConsumer; }
   get hostedParticleName() { return this._hostedParticleName; }
   get hostedSlotName() { return this._hostedSlotName; }
   get hostedSlotId() { return this._hostedSlotId; }
+  get storeId() { return this._storeId; }
+  get arc() { return this._arc; }
 
   get consumeConn() { return this._consumeConn; }
   set consumeConn(consumeConn) {
@@ -50,5 +56,23 @@ export class HostedSlotConsumer extends SlotConsumer {
 
   constructRenderRequest() {
     return this.transformationSlotConsumer.constructRenderRequest(this);
+  }
+
+  getInnerContainer(name) {
+    if (this.storeId) {
+      let subId = this.arc.findStoreById(this.storeId)._stored.id;
+      return this.transformationSlotConsumer.getInnerContainer(name)[subId];
+    }
+  }
+
+  createProvidedContexts() {
+    assert(this.consumeConn, `Cannot create provided context without consume connection for hosted slot ${this.hostedSlotId}`);
+    return this.consumeConn.slotSpec.providedSlots.map(providedSpec => {
+      return new HostedSlotContext(this.arc.generateID(), providedSpec, this);
+    });
+  }
+
+  updateProvidedContexts() {
+    // The hosted context provided by hosted slots is updated as part of the transformation.
   }
 }

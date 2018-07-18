@@ -161,9 +161,9 @@ export class ParticleExecutionContext {
             resolve(id);
           }}));
       },
-      createSlot: function(transformationParticle, transformationSlotName, hostedParticleName, hostedSlotName) {
+      createSlot: function(transformationParticle, transformationSlotName, hostedParticleName, hostedSlotName, storeId) {
         return new Promise((resolve, reject) =>
-          pec._apiPort.ArcCreateSlot({arc: arcId, transformationParticle, transformationSlotName, hostedParticleName, hostedSlotName, callback: hostedSlotId => {
+          pec._apiPort.ArcCreateSlot({arc: arcId, transformationParticle, transformationSlotName, hostedParticleName, hostedSlotName, storeId, callback: hostedSlotId => {
             resolve(hostedSlotId);
           }}));
       },

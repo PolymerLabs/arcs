@@ -44,6 +44,9 @@ export class Slot {
     // the constructed {isSet: false, tags: []}?
     return (this.sourceConnection && this.sourceConnection.slotSpec) ? this.sourceConnection.slotSpec.getProvidedSlotSpec(this.name) : {isSet: false, tags: []};
   }
+  get handles() {
+    return this.handleConnections.map(connection => connection.handle).filter(a => a !== undefined);
+  }
 
   _copyInto(recipe, cloneMap) {
     let slot = undefined;

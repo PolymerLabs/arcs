@@ -69,12 +69,14 @@ export class SuggestionComposer {
       return;
     }
     let remoteSlot = remoteSlots[0];
-    if (remoteSlot.consumeConnections.length == 0 || remoteSlot.consumeConnections[0].slotSpec.isSet) {
-      return; // Not supported for set-slots yet.
-    }
 
     let context = this._slotComposer.findContextById(remoteSlot.id);
     assert(context);
+
+    if (context.spec.isSet) {
+      // TODO: Inline suggestion in a set slot is not supported yet. Implement!
+      return;
+    }
 
     // Don't put suggestions in context that either (1) is a root context, (2) doesn't have
     // an actual container or (3) is not restricted to specific handles.

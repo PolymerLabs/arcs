@@ -6,36 +6,58 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-schema Cake
-  Text name
-  Text occasion
+// These particles and recipes are used to test inline suggestion slots.
 
-particle MakeCake in 'source/MakeCake.js'
-  in Cake cake
+import './Cake.manifest'
+
+particle List in '../../../../artifacts/Common/source/List.js'
+  in [~a] items
+  consume root
+    must provide set of item
+      handle items
+  description `show ${items}`
+
+shape MakeCakeShape
+  in Cake *
   consume item
-    provide annotation
-      handle cake
-  description `Make a ${cake} cake`
+  provide special
 
-recipe
-  map #cake as cakeHandle
-  slot #root as rootSlot
-  MakeCake
-    cake <- cakeHandle
-    consume item as rootSlot
+particle CakeMuxer in '../../../../artifacts/Common/source/Multiplexer.js'
+  host MakeCakeShape hostedParticle
+  in [Cake] list
+  consume set of item
+    provide set of special
 
-particle LightCandles in 'source/LightCandles.js'
-  in Cake birthdayCake
+recipe &makeCakes
+  map #cakes as cakesHandle
+  List
+    items = cakesHandle
+  CakeMuxer
+    list = cakesHandle
+    hostedParticle = MakeCake
+  description `show ${List.items}`
+
+shape LightCandleShape
+  in Cake *
   consume candles
-  description `Light candles on ${birthdayCake} cake`
+
+particle CandleMuxer in '../../../../artifacts/Common/source/Multiplexer.js'
+  host LightCandleShape hostedParticle
+  in [Cake] list
+  consume set of candles
+
+
+// TODO: this suggestion uses collection handle and should be inlined in the set-slot.
+// recipe &lightCakes
+//   map #cakes as cakesHandle
+//   slot #special as candlesSlot
+//   CandleMuxer
+//     list = cakesHandle
+//     hostedParticle = LightCandles
+//     consume candles as candlesSlot
+//   description `light candles for ${CandleMuxer.list}`
 
 recipe
-  map #cake as cakeHandle
-  slot #annotation as annotationSlot
   LightCandles
-    birthdayCake <- cakeHandle
-    consume candles as annotationSlot
-
-store ACake of Cake #cake in 'cakes.json'
 
 store AllCakes of [Cake] #cakes in 'cakes.json'

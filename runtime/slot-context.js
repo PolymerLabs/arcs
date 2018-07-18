@@ -34,6 +34,11 @@ export class SlotContext {
     if (this.sourceSlotConsumer) {
       this.sourceSlotConsumer._providedSlotContexts.push(this);
     }
+    // The list of handles this context is restricted to.
+    this._handles = this.spec && this.sourceSlotConsumer
+      ? this.spec.handles.map(handle => this.sourceSlotConsumer.consumeConn.particle.connections[handle].handle).filter(a => a !== undefined)
+      : [];
+
     // The slots consumers rendered into this context.
     this._slotConsumers = []; // SlotConsumer[]
   }
@@ -43,20 +48,11 @@ export class SlotContext {
   get spec() { return this._spec; }
   get container() { return this._container; }
   get sourceSlotConsumer() { return this._sourceSlotConsumer; }
+  get handles() { return this._handles; }
   get slotConsumers() { return this._slotConsumers; }
 
   static createContextForContainer(id, name, container, tags) {
     return new SlotContext(id, name, tags, container);
-  }
-
-  static createContextForSourceSlotConsumer(spec, sourceSlotConsumer, tags) {
-    return new SlotContext(
-        sourceSlotConsumer.consumeConn.providedSlots[spec.name].id,
-        spec.name,
-        tags,
-        null, // container
-        spec,
-        sourceSlotConsumer);
   }
 
   isSameContainer(container) {
@@ -96,14 +92,6 @@ export class SlotContext {
   clearSlotConsumers() {
     this._slotConsumers.forEach(slotConsumer => slotConsumer.slotContext = null);
     this._slotConsumers = [];
-  }
-
-  // This method is for backward compabitility with SlotComposer::getAvailableContexts
-  // TODO(mmandlis): Get rid of it, when possible.
-  get handleConnections() {
-    if (this.spec) {
-      return this.spec.handles.map(handle => this.sourceSlotConsumer.consumeConn.particle.connections[handle]);
-    }
   }
 }
 

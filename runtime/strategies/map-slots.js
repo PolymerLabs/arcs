@@ -128,20 +128,15 @@ export class MapSlots extends Strategy {
     return (slotConnection.name === slot.name);
   }
 
-  static handlesMatch(slotConnection, slot) {
-    return MapSlots._handlesMatch(slotConnection.particle,
-                                  slot.handleConnections.map(connection => connection.handle).filter(a => a !== undefined));
-  }
-
   // Returns true, if the providing slot handle restrictions are satisfied by the consuming slot connection.
-      // TODO: should we move some of this logic to the recipe? Or type matching?
-  static _handlesMatch(consumingParticle, providingSlotHandles) {
-    if (providingSlotHandles.length == 0) {
+  // TODO: should we move some of this logic to the recipe? Or type matching?
+  static handlesMatch(slotConnection, slot) {
+    if (slot.handles.length == 0) {
       return true; // slot is not limited to specific handles
     }
-    return Object.values(consumingParticle.connections).find(handleConn => {
-      return providingSlotHandles.includes(handleConn.handle) ||
-              (handleConn.handle && handleConn.handle.id && providingSlotHandles.map(sh => sh.id).includes(handleConn.handle.id));
+    return Object.values(slotConnection.particle.connections).find(handleConn => {
+      return slot.handles.includes(handleConn.handle) ||
+              (handleConn.handle && handleConn.handle.id && slot.handles.map(sh => sh.id).includes(handleConn.handle.id));
     });
   }
 }
