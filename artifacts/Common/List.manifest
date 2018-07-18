@@ -42,10 +42,29 @@ particle SelectableList in 'source/List.js'
     provide action
       handle items
     provide postamble
+//  consume content
+//    provide preamble
+//    must provide set of item
+//      handle items
+//    provide set of annotation
+//      handle items
+//    provide action
+//      handle items
+//    provide postamble
   description `show ${items}`
 
-particle ContentList in 'source/List.js'
+recipe SelectableList
+  use as items
+  create #selected as selected
+  SelectableList
+    items = items
+    selected = selected
+  ItemMultiplexer
+    list = items
+
+particle SelectableContentList in 'source/List.js'
   in [~a] items
+  inout ~a selected
   consume content
     provide preamble
     must provide set of item
@@ -55,12 +74,12 @@ particle ContentList in 'source/List.js'
     provide action
       handle items
     provide postamble
-  description `list of ${items}`
+  description `show ${items} content`
 
-recipe
+recipe SelectableContentList
   use as items
   create #selected as selected
-  SelectableList
+  SelectableContentList
     items = items
     selected = selected
   ItemMultiplexer
