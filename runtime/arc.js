@@ -167,8 +167,9 @@ export class Arc {
           resources += `resource Store${id}Resource\n`;
           let indent = '  ';
           resources += indent + 'start\n';
-
-          let serializedData = (await handle.toLiteral()).model.map(({id, value}) => {
+          // TODO(sjmiles): emit empty data for stores marked `nosync`: shell will supply data
+          const nosync = handleTags.includes('nosync');
+          let serializedData = nosync ? [] : (await handle.toLiteral()).model.map(({id, value}) => {
             if (value == null)
               return null;
             if (value.rawData) {
