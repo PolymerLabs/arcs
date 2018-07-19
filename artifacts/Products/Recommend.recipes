@@ -37,7 +37,7 @@ particle Chooser in 'source/Chooser.js'
   consume action
     provide set of annotation
       handle choices
-  description `add items from ${choices}`
+  description `add items from ${person.name}'s ${choices}`
 
 particle AlsoOn in 'source/AlsoOn.js'
   in Thing product
@@ -45,8 +45,11 @@ particle AlsoOn in 'source/AlsoOn.js'
   consume annotation
 
 recipe &addFromWishlist
-  use as shoplist
+  // TODO(sjmiles): chooser won't render if `person.name !== 'Claire'`, but that's
+  // not enough to prevent non-Claire suggestions from appearing (ask, file ticket).
+  // I cannot tag the person (ask), nor copy tags via `copy` fate (ask, file ticket).
   use as person
+  use as shoplist
   map #wishlist as wishlist
   create as choices
   Recommend
