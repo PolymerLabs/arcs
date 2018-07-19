@@ -30,9 +30,9 @@ particle AlternateShipping in 'source/AlternateShipping.js'
   description `find alternate shipping for products which won't make it on time`
 
 // Buying for [person]'s [occasion] in [timeframe]? Product [X] arrives too late.
-recipe
+recipe MakeIntoGiftList
   use #shoplist as shoplist
-  map as person
+  copy as person
   GiftList
     person = person
   Multiplexer

@@ -11,11 +11,14 @@ import 'Product.schema'
 
 particle Interests in 'source/Interests.js'
   in [Product] list
+  in Person person
   consume postamble
-  description `find out about Claire's interests`
+  description `find out about ${person.name}'s interests`
 
 // Recommendations based on Claire's interest in field hockey.
-recipe
+recipe InterestRecipe
   map #wishlist as wishlist
+  use as person
   Interests
-    list <- wishlist
+    list = wishlist
+    person = person
