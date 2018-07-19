@@ -213,6 +213,9 @@ export class Manifest {
   findStoreById(id) {
     return this._find(manifest => manifest._stores.find(store => store.id == id));
   }
+  findStoreTags(store) {
+    return this._find(manifest => manifest._storeTags.get(store));
+  }
   findManifestUrlForHandleId(id) {
     return this._find(manifest => manifest._storeManifestUrls.get(id));
   }

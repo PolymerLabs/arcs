@@ -391,6 +391,7 @@ ${this.activeRecipe.toString()}`;
           let copiedStore = this.findStoreById(recipeHandle.id);
           assert(copiedStore._version !== null);
           await newStore.cloneFrom(copiedStore);
+          this._tagStore(newStore, this.findStoreTags(copiedStore));
           let copiedStoreDesc = this.getStoreDescription(copiedStore);
           if (copiedStoreDesc) {
             this._storeDescriptions.set(newStore, copiedStoreDesc);
@@ -468,6 +469,12 @@ ${this.activeRecipe.toString()}`;
     store.on('change', () => this._onDataChange(), this);
   }
 
+  _tagStore(store, tags) {
+    assert(this._storesById.has(store.id) && this._storeTags.has(store), `Store not registered '${store.id}'`);
+    let storeTags = this._storeTags.get(store);
+    (tags || []).forEach(tag => storeTags.add(tag));
+  }
+
   _onDataChange() {
     for (let callback of this._dataChangeCallbacks.values()) {
       callback();
@@ -539,6 +546,13 @@ ${this.activeRecipe.toString()}`;
       store = this._context.findStoreById(id);
     }
     return store;
+  }
+
+  findStoreTags(store) {
+    if (this._storeTags.has(store)) {
+      return this._storeTags.get(store);
+    }
+    return this._context.findStoreTags(store);
   }
 
   getStoreDescription(store) {
