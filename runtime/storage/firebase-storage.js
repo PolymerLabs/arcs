@@ -69,10 +69,6 @@ let _nextAppNameSuffix = 0;
 export class FirebaseStorage {
   constructor(arcId) {
     this._arcId = arcId;
-    // TODO: We need a mechanism to shut call `app.delete()` in tests,
-    // otherwise the test process will not exit. Perhaps each store should
-    // have a `close` function, and once all the stores for a given app
-    // are closed, the app is deleted.
     this._apps = {};
   }
 
@@ -82,6 +78,11 @@ export class FirebaseStorage {
 
   async connect(id, type, key) {
     return this._join(id, type, key, true);
+  }
+
+  // Unit tests should call this in an 'after' block.
+  async shutdown() {
+    return Promise.all(Object.keys(this._apps).map(k => this._apps[k].delete()));
   }
 
   parseStringAsKey(string) {
@@ -131,6 +132,16 @@ export class FirebaseStorage {
 
     return FirebaseStorageProvider.newProvider(type, this._arcId, id, reference, key);
   }
+
+  static encodeKey(key) {
+    key = btoa(key);
+    return key.replace(/\//g, '*');
+  }
+
+  static decodeKey(key) {
+    key = key.replace(/\*/g, '/');
+    return atob(key);
+  }
 }
 
 class FirebaseStorageProvider extends StorageProviderBase {
@@ -145,18 +156,14 @@ class FirebaseStorageProvider extends StorageProviderBase {
   }
 
   static newProvider(type, arcId, id, reference, key) {
-    if (type.isCollection)
-      return new FirebaseCollection(type, arcId, id, reference, key);
+    if (type.isCollection) {
+      // FIXME: implement a mechanism for specifying BigCollections in manifests
+      if (id.startsWith('~big~'))
+        return new FirebaseBigCollection(type, arcId, id, reference, key);
+      else
+        return new FirebaseCollection(type, arcId, id, reference, key);
+    }
     return new FirebaseVariable(type, arcId, id, reference, key);
-  }
-
-  static encodeKey(key) {
-    key = btoa(key);
-    return key.replace(/\//g, '*');
-  }
-  static decodeKey(key) {
-    key = key.replace(/\*/g, '/');
-    return atob(key);
   }
 
   async _transaction(transactionFunction) {
@@ -483,7 +490,7 @@ class FirebaseCollection extends FirebaseStorageProvider {
     // Diff the old state (this._remoteState) with the new state (newRemoteState) to determine
     // which keys have been added/removed.
     for (let encId of encIds) {
-      let id = FirebaseStorageProvider.decodeKey(encId);
+      let id = FirebaseStorage.decodeKey(encId);
       let suppression = this._addSuppressions.get(id);
       if (encId in newRemoteState.items) {
         let {keys: encKeys, value} = newRemoteState.items[encId];
@@ -492,8 +499,8 @@ class FirebaseCollection extends FirebaseStorageProvider {
           // 1. possibly updated remotely.
           let encOldkeys = Object.keys(this._remoteState.items[encId].keys);
           let {add: encAddKeys, remove: encRemoveKeys} = setDiff(encOldkeys, encKeys);
-          let addKeys = encAddKeys.map(FirebaseStorageProvider.decodeKey);
-          let removeKeys = encRemoveKeys.map(FirebaseStorageProvider.decodeKey);
+          let addKeys = encAddKeys.map(FirebaseStorage.decodeKey);
+          let removeKeys = encRemoveKeys.map(FirebaseStorage.decodeKey);
           if (suppression) {
             addKeys = addKeys.filter(key => !suppression.keys.has(key));
           }
@@ -513,7 +520,7 @@ class FirebaseCollection extends FirebaseStorageProvider {
           }
         } else {
           // 2. added remotely.
-          let addKeys = encKeys.map(FirebaseStorageProvider.decodeKey);
+          let addKeys = encKeys.map(FirebaseStorage.decodeKey);
           if (suppression) {
             // Remove any keys that *we* added previously.
             addKeys = addKeys.filter(key => !suppression.keys.has(key));
@@ -524,7 +531,7 @@ class FirebaseCollection extends FirebaseStorageProvider {
             if (this._localChanges.has(id) && this._localChanges.get(id).add.length > 0 && this._model.has(id)) {
               value = this._model.getValue(id);
             }
-            let keys = encKeys.map(FirebaseStorageProvider.decodeKey);
+            let keys = encKeys.map(FirebaseStorage.decodeKey);
             let effective = this._model.add(id, value, keys);
             add.push({value, keys, effective});
           }
@@ -533,7 +540,7 @@ class FirebaseCollection extends FirebaseStorageProvider {
         // 3. Removed remotely.
         let {keys: encKeys, value} = this._remoteState.items[encId];
         encKeys = Object.keys(encKeys);
-        let keys = encKeys.map(FirebaseStorageProvider.decodeKey);
+        let keys = encKeys.map(FirebaseStorage.decodeKey);
         let effective = this._model.remove(id, keys);
         remove.push({value, keys: keys, effective});
       }
@@ -653,19 +660,19 @@ class FirebaseCollection extends FirebaseStorageProvider {
         // these from this._localChanges if this transaction commits.
         changesPersisted = new Map();
         for (let [id, {add, remove}] of this._localChanges.entries()) {
-          let encId = FirebaseStorageProvider.encodeKey(id);
+          let encId = FirebaseStorage.encodeKey(id);
           changesPersisted.set(id, {add: [...add], remove: [...remove]});
           // Don't add keys that we have also removed.
           add = add.filter(key => !(remove.indexOf(key) >= 0));
           let item = data.items[encId] || {value: null, keys: {}};
           // Propagate keys added locally.
           for (let key of add) {
-            let encKey = FirebaseStorageProvider.encodeKey(key);
+            let encKey = FirebaseStorage.encodeKey(key);
             item.keys[encKey] = data.version;
           }
           // Remove keys removed locally.
           for (let key of remove) {
-            let encKey = FirebaseStorageProvider.encodeKey(key);
+            let encKey = FirebaseStorage.encodeKey(key);
             delete item.keys[encKey];
           }
           // If we've added a key, also propagate the value. (legacy mutation).
@@ -755,4 +762,211 @@ class FirebaseCollection extends FirebaseStorageProvider {
     this._version = version;
     this._model = new CrdtCollectionModel(model);
   }
+}
+
+const CursorState = {new: 0, init: 1, stream: 2, removed: 3, done: 4};
+
+// Cursor provides paginated reads over the contents of a BigCollection, locked to the version
+// of the collection at which the cursor was created.
+//
+// This class technically conforms to the iterator protocol but is not marked as iterable because
+// next() is async, which is currently not supported by implicit iteration in Javascript.
+class Cursor {
+  constructor(reference, pageSize) {
+    assert(!isNaN(pageSize) && pageSize > 0);
+    this._orderByIndex = reference.child('items').orderByChild('index');
+    this._pageSize = pageSize;
+    this._state = CursorState.new;
+    this._removed = [];
+    this._baseQuery = null;
+    this._nextStart = null;
+    this._end = null;
+    this._removedFn = null;
+  }
+
+  // This must be called exactly once after construction and before any other methods are called.
+  async _init() {
+    assert(this._state === CursorState.new);
+
+    // Retrieve the current last item to establish our streaming version.
+    await this._orderByIndex.limitToLast(1).once('value', snapshot => snapshot.forEach(entry => {
+      this._end = entry.val().index;
+    }));
+
+    // Read one past the page size each time to establish the starting index for the next page.
+    this._baseQuery = this._orderByIndex.endAt(this._end).limitToFirst(this._pageSize + 1);
+
+    // Attach a listener for removed items and capture any that occur ahead of our streaming
+    // frame. These will be returned after the cursor reaches the item at this._end.
+    this._removedFn = snapshot => {
+      if (snapshot.val().index <= this._end &&
+          (this._nextStart === null || snapshot.val().index >= this._nextStart)) {
+        this._removed.push(snapshot.val());
+      }
+    };
+    await this._orderByIndex.on('child_removed', this._removedFn);
+    this._state = CursorState.init;
+  }
+
+  // Returns the BigCollection version at which this cursor is reading.
+  get version() {
+    return this._end;
+  }
+
+  // Returns {value: [items], done: false} while there are items still available, or {done: true}
+  // when the cursor has completed reading the collection.
+  async next() {
+    assert(this._state !== CursorState.new);
+
+    if (this._state === CursorState.done) {
+      return {done: true};
+    }
+
+    let query;
+    if (this._state === CursorState.init) {
+      query = this._baseQuery;
+      this._state = CursorState.stream;
+    } else if (this._state === CursorState.stream) {
+      assert(this._nextStart !== null);
+      query = this._baseQuery.startAt(this._nextStart);
+    }
+
+    let value = [];
+    if (this._state === CursorState.stream) {
+      this._nextStart = null;
+      await query.once('value', snapshot => snapshot.forEach(entry => {
+        if (value.length < this._pageSize) {
+          value.push(entry.val());
+        } else {
+          this._nextStart = entry.val().index;
+        }
+      }));
+      if (this._nextStart === null) {
+        await this._detach();
+        this._state = CursorState.removed;
+      }
+    }
+
+    if (this._state === CursorState.removed) {
+      while (this._removed.length && value.length < this._pageSize) {
+        value.push(this._removed.pop());
+      }
+      if (this._removed.length === 0) {
+        this._state = CursorState.done;
+      }
+    }
+    assert(value.length > 0);
+    return {value, done: false};
+  }
+
+  // This must be called if a cursor is no longer needed but has not yet completed streaming
+  // (i.e. next() hasn't returned {done: true}).
+  async close() {
+    await this._detach();
+    this._state = CursorState.done;
+  }
+
+  async _detach() {
+    if (this._removedFn) {
+      await this._orderByIndex.off('child_removed', this._removedFn);
+      this._removedFn = null;
+    }
+  }
+}
+
+// Provides access to large collections without pulling the entire contents locally.
+//
+// get(), store() and remove() all call immediately through to the backing Firebase collection.
+// There is currently no option for bulk instantiations of these methods.
+//
+// The full collection can be read via a paginated Cursor returned by stream(). This views a
+// snapshot of the collection, locked to the version at which the cursor is created.
+//
+// To get pagination working, we need to add an index field to items as they are stored, and that
+// field must be marked for indexing in the Firebase rules:
+//    "rules": {
+//      "<storage-root>": {
+//        "$collection": {
+//          "items": {
+//            ".indexOn": ["index"]
+//          }
+//        }
+//      }
+//    }
+class FirebaseBigCollection extends FirebaseStorageProvider {
+  constructor(type, arcId, id, reference, firebaseKey) {
+    super(type, arcId, id, reference, firebaseKey);
+  }
+
+  async get(id) {
+    let value;
+    let encId = FirebaseStorage.encodeKey(id);
+    await this._reference.child('items/' + encId).once('value', snapshot => {
+      value = (snapshot.val() !== null) ? snapshot.val().value : null;
+    });
+    return value;
+  }
+
+  async store(value, keys) {
+    // Technically we don't really need keys here; Firebase provides the central replicated storage
+    // protocol and the mutating ops here are all pass-through (so no local CRDT management is
+    // required). This may change in the future - we may well move to full CRDT support in the
+    // backing stores - so it's best to keep the API in line with regular Collections.
+    assert(keys != null && keys.length > 0, 'keys required');
+
+    // Fireabse does not support multi-location transactions. To modify both 'version' and a child
+    // of 'items', we'd need to transact directly on this._reference, which would pull the entire
+    // collection contents locally, avoiding which is the explicit intent of this class. So we have
+    // to double-step the operation, leaving a small window where another reader could see the new
+    // version but not the added/updated item, which actually isn't much of a problem. Concurrent
+    // store ops from different clients will work fine thanks to transaction(); both will correctly
+    // increment the version regardless of the order in which they occur.
+    let version;
+    await this._reference.child('version').transaction(data => {
+      version = (data || 0) + 1;
+      return version;
+    }, undefined, false);
+
+    let encId = FirebaseStorage.encodeKey(value.id);
+    return this._reference.child('items/' + encId).transaction(data => {
+      if (data === null) {
+        data = {value, keys: {}};
+      } else {
+        // Allow legacy mutation for now.
+        data.value = value;
+      }
+      for (let key of keys) {
+        let encKey = FirebaseStorage.encodeKey(key);
+        data.keys[encKey] = version;
+      }
+      
+      // If we ever have bulk additions for BigCollection, the index will need to be changed to an
+      // encoded string with version as the 'major' component and an index within the bulk add as
+      // the 'minor' component:
+      //   width = Math.ceil(Math.log(batchSize) / Math.log(36))
+      //   version.toString(36).padStart(6, '0') + '.' + itemIndex.toString(36).padStart(width, '0')
+      data.index = version;
+      return data;
+    }, undefined, false);
+  }
+
+  async remove(id) {
+    await this._reference.child('version').transaction(data => {
+      return (data || 0) + 1;
+    }, undefined, false);
+
+    let encId = FirebaseStorage.encodeKey(id);
+    return this._reference.child('items/' + encId).remove();
+  }
+
+  // Returns a Cursor for paginated reads of the current version of this BigCollection.
+  async stream(pageSize) {
+    let cursor = new Cursor(this._reference, pageSize);
+    await cursor._init();
+    return cursor;
+  }
+
+  // TODO: cloneFrom, toLiteral, fromLiteral ?
+  // A cloned instance will probably need to reference the same Firebase URL but collect all
+  // modifications locally for speculative execution.
 }

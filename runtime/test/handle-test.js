@@ -167,7 +167,7 @@ describe('Handle', function() {
     schema Bar
       Text value
     `);
-    let arc = new Arc({id: 'test', storageKey: 'firebase://test-firebase-45a3e.firebaseio.com/AIzaSyBLqThan3QCOICj0JZ-nEwk27H4gmnADP8/'});
+    let arc = new Arc({id: 'test', storageKey: 'firebase://xxx.firebaseio.com/yyy/'});
     let resolver;
     let promise = new Promise((resolve, reject) => {resolver = resolve;});
     arc._storageProviderFactory = new class extends StorageProviderFactory {
@@ -181,6 +181,6 @@ describe('Handle', function() {
     }(arc.id);
     await arc.createStore(manifest.schemas.Bar.type, 'foo', 'test1');
     let result = await promise;
-    assert.equal(result, 'firebase://test-firebase-45a3e.firebaseio.com/AIzaSyBLqThan3QCOICj0JZ-nEwk27H4gmnADP8/handles/test1');
+    assert.equal(result, 'firebase://xxx.firebaseio.com/yyy/handles/test1');
   });
 });

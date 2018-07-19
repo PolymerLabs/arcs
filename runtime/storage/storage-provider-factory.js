@@ -40,4 +40,9 @@ export class StorageProviderFactory {
   newKey(id, associatedKeyFragment) {
 
   }
+
+  // For testing
+  async shutdown() {
+    await Promise.all(Object.values(this._storageInstances).map(s => s.shutdown()));
+  }
 }
