@@ -117,26 +117,26 @@ class FbUserElement extends Xen.Debug(Xen.Base, log) {
     const {userid} = this._state;
     if (change.add) {
       change.add.forEach(({effective, value: entity}) => {
-        if (!effective) {
-          return;
+        if (effective) {
+          const record = entity.rawData;
+          const cache = this.value.arcs[record.key];
+          let path, value;
+          if (record.deleted) {
+            // remove arc reference
+            path = `users/${userid}/arcs/${record.key}`;
+            value = null;
+          }
+          else if (record.starred !== cache.starred) {
+            // update starred
+            path = `users/${userid}/arcs/${record.key}/starred`;
+            value = Boolean(record.starred);
+          } else {
+            // not our business
+            return;
+          }
+          log(`writing to [${path}]: `, value);
+          Firebase.db.child(path).set(value);
         }
-        const record = entity.rawData;
-        const cache = this.value.arcs[record.key];
-        let path, value;
-        if (record.deleted) {
-          // remove arc reference
-          path = `users/${userid}/arcs/${record.key}`;
-          value = null;
-        }
-        else if (record.starred !== cache.starred) {
-          // update starred
-          path = `users/${userid}/arcs/${record.key}/starred`;
-          value = Boolean(record.starred);
-        } else {
-          return;
-        }
-        log(`writing to [${path}]: `, value);
-        Firebase.db.child(path).set(value);
       });
     }
   }
