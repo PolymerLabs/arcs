@@ -91,9 +91,10 @@ ${styles}
     <div col1>
       <!-- TODO(sjmiles): why is there a 'src' attribute here? -->
       <div thumb style="{{styleBackground}}" src="{{resolvedImage}}" >
+      </div>
     </div>
   </div>
-  </div>
+  <div slotid="annotation"></div>
 </div>
   `;
 

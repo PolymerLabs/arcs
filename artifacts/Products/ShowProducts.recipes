@@ -6,12 +6,37 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-import '../Common/List.manifest'
+// import '../Common/List.manifest'
 import 'Product.schema'
 
 particle ShowProduct in 'source/ShowProduct.js'
   in Product product
   consume item
+    provide annotation
+
+// Copied from Common/List.manifest and tweaked
+particle List in '../Common/source/List.js'
+  in [~a] items
+  consume root
+    provide preamble
+    must provide set of item // <<< does NOT provide annotation
+      handle items
+    provide action
+      handle items
+    provide postamble
+  description `show ${items}`
+
+shape HostedParticleShape
+  in ~a *
+  consume item
+  provide annotation // <<< This is new
+
+particle ItemMultiplexer in '../Common/source/Multiplexer.js'
+  host HostedParticleShape hostedParticle
+  in [~a] list
+  consume set of item
+    provide set of annotation // <<< This is new
+
 
 recipe ProductList &showShopList
   copy #shoplist as newlist

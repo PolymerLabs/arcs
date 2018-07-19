@@ -175,6 +175,8 @@ export class MultiplexerDomParticle extends TransformationDomParticle {
 
     if (content.template) {
       let template = content.template;
+      // Append subid={{subid}} attribute to all provided slots, to make it usable for the transformation particle.
+      template = template.replace(new RegExp('slotid="[a-z]+"', 'g'), '$& subid="{{subId}}"');
       // Replace hosted particle connection in template with the corresponding particle connection names.
       // TODO: make this generic!
       this._connByHostedConn.forEach((conn, hostedConn) => {
