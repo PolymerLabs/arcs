@@ -44,5 +44,6 @@ recipe ProductList &showShopList
 
 // Show [person]'s wishlist
 recipe
+  use #claire as person
   map #wishlist as wishlist
   &showShopList

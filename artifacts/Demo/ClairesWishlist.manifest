@@ -5,7 +5,7 @@ store PageProducts of [Product] #shoplist in 'products.json'
   description `products from your browsing context`
 
 store ClairesWishlist of [Product] #wishlist in 'wishlist.json'
-  description `Claire's wishlist`
+  description `wishlist`
 
-store Claire of Person in 'people.json'
+store Claire of Person #claire in 'people.json'
   description `Claire`

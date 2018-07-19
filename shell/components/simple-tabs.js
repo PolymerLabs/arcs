@@ -10,8 +10,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
 import Xen from './xen/xen.js';
 
-const template = Xen.Template.createTemplate(
-  `<style>
+const template = Xen.Template.html`
+  <style>
     :host [crumbs] {
       background-color: #f2f2f2;
       font-family: inherit;
@@ -33,12 +33,12 @@ const template = Xen.Template.createTemplate(
     }
   </style>
   <div crumbs>{{crumbs}}</div>
-  <slot></slot>`
-);
+  <slot></slot>
+`;
 
-const crumb = Xen.Template.createTemplate(
-  `<a selected$="{{selected}}" tab="{{tab}}" on-click="_onCrumbClick">{{crumb}}</a>`
-);
+const crumb = Xen.Template.html`
+  <a selected$="{{selected}}" tab="{{tab}}" on-click="_onCrumbClick">{{crumb}}</a>
+`;
 
 class SimpleTabs extends HTMLElement {
   get template() {
@@ -46,11 +46,12 @@ class SimpleTabs extends HTMLElement {
   }
   connectedCallback() {
     if (!this._mounted) {
-      this._pages = [];
       this._mounted = true;
+      this._pages = [];
       this._root = this.attachShadow({mode: 'open'});
-      this._root.addEventListener('slotchange', this.onSlotChange.bind(this));
       this._dom = Xen.Template.stamp(this.template).events(this).appendTo(this._root);
+      this._root.addEventListener('slotchange', this.onSlotChange.bind(this));
+      // has side-effects
       this.tab = 0;
     }
   }
@@ -73,10 +74,6 @@ class SimpleTabs extends HTMLElement {
   }
   set tab(tab) {
     this._tab = tab;
-    let pages = this.pages;
-    pages.forEach((page, i) => {
-      page.style.display = (i !== tab) ? 'none' : '';
-    });
     this._render();
   }
   onSlotChange(e) {
@@ -84,6 +81,9 @@ class SimpleTabs extends HTMLElement {
   }
   _render() {
     let pages = this.pages;
+    pages.forEach((page, i) => {
+      page.style.display = (i !== this.tab) ? 'none' : '';
+    });
     let crumbs = {
       template: crumb,
       models: pages.map((p, i) => {

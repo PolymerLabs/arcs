@@ -35,8 +35,12 @@ defineParticle(({DomParticle, html}) => {
     get template() {
       return template;
     }
-    shouldRender({list}) {
-      return Boolean(list);
+    shouldRender({list, person}) {
+      if (list && person) {
+        // TODO(sjmiles): simulate data fetch that only resolves for someone with Interest data
+        return (person.name === 'Claire');
+      }
+      return false;
     }
     render({list}) {
       let items = [];

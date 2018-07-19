@@ -25,8 +25,6 @@ defineParticle(({DomParticle, html, resolver, log}) => {
         overflow: hidden;
         line-height: 115%;
       }
-      ${host} > x-list [col0] > * {
-      }
       ${host} > x-list [col1] {
         display: flex;
         align-items: center;
@@ -126,8 +124,12 @@ ${productStyles}
     get template() {
       return template;
     }
-    shouldRender({choices, resultList}) {
-      return Boolean(choices && resultList);
+    shouldRender({choices, resultList, person}) {
+      if (choices && resultList && person) {
+        // TODO(sjmiles): simulate data fetch that only resolves for someone with wishlist data
+        return (person.name === 'Claire');
+      }
+      return false;
     }
     render({choices, resultList}, state) {
       let result = [...difference(choices, resultList)];

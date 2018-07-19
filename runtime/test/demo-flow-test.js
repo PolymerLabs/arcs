@@ -58,15 +58,14 @@ describe('demo flow', function() {
     helper.log('----------------------------------------');
 
     // Replanning.
-    let expectedSuggestions = [
-      `Check shipping for Claire (Claire)'s Birthday on 2019-08-04.`,
-      `Add items from Claire's wishlist (Book: How to Draw plus 2 other items).`,
-      'Check manufacturer information for products from your browsing context ' +
-        '(Minecraft Book plus 2 other items).',
-      `Find out about Claire's interests.`,
-      `Show products from your browsing context (Minecraft Book plus 2 other items).`
-    ];
-    await helper.makePlans({expectedNumPlans: 5, expectedSuggestions});
+    await helper.makePlans({
+      expectedNumPlans: 2,
+      expectedSuggestions: [
+        `Check shipping for Claire (Claire)'s Birthday on 2019-08-04.`,
+        'Check manufacturer information for products from your browsing context ' +
+        '(Minecraft Book plus 2 other items).'
+      ]
+    });
     helper.log('----------------------------------------');
 
     // Accept "Check shipping for Claire (Claire)'s Birthday on..." suggestion.
@@ -83,6 +82,16 @@ describe('demo flow', function() {
     await helper.acceptSuggestion({particles: ['GiftList', 'Multiplexer', 'Multiplexer']});
     await helper.idle();
     helper.log('----------------------------------------');
+
+    // Replanning.
+    await helper.makePlans({
+      expectedNumPlans: 3,
+      expectedSuggestions: [
+        'Find out about Claire\'s interests.',
+        'Add items from Claire\'s wishlist (Book: How to Draw plus 2 other items).',
+        'Check manufacturer information for products from your browsing context (Minecraft Book plus 2 other items).'
+      ]
+    });
 
     // Accept "Add items from Claire's wishlist (...)" suggestion.
     helper.slotComposer
@@ -125,9 +134,14 @@ describe('demo flow', function() {
     await verifyElementMove(/* key= */ 0, /* num= */ 4, ['Arrivinator', 'AlternateShipping']);
     helper.log('----------------------------------------');
 
-
     // Accept "Check manufacturer information for products from your browsing context (...)." suggestion
-    await helper.makePlans({expectedNumPlans: 4});
+    await helper.makePlans({
+      expectedNumPlans: 2,
+      expectedSuggestions: [
+        'Find out about Claire\'s interests.',
+        'Check manufacturer information for products from your browsing context (Minecraft Book plus 3 other items).'
+      ]
+    });
     helper.slotComposer
       .newExpectations('Check manufacturer information for products from your browsing context (...)')
         .expectRenderSlot('Multiplexer', 'annotation', {contentTypes: ['template'], hostedParticle: 'ManufacturerInfo'})
@@ -151,7 +165,7 @@ describe('demo flow', function() {
     await verifyElementMove(/* key= */ 0, /* num= */ 6, ['Arrivinator', 'AlternateShipping', 'ManufacturerInfo']);
     helper.log('----------------------------------------');
 
-    await helper.makePlans({expectedNumPlans: 2});
+    await helper.makePlans({expectedNumPlans: 0});
     helper.log('----------------------------------------');
     helper.clearTimeout();
 
