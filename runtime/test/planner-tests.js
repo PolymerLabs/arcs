@@ -27,7 +27,7 @@ async function planFromManifest(manifest, {arcFactory, testSteps}={}) {
   }
 
   arcFactory = arcFactory || ((manifest) => StrategyTestHelper.createTestArc('test', manifest, 'dom'));
-  testSteps = testSteps || ((planner) => planner.plan(Infinity));
+  testSteps = testSteps || ((planner) => planner.plan(Infinity, []));
 
   let arc = await arcFactory(manifest);
   let planner = new Planner();
@@ -633,7 +633,7 @@ describe('Automatic resolution', function() {
     location <- handle2
     something <- handle1
   D as particle3
-    location = handle2`, result.toString());
+    location = handle2`, result.toString({hideFields: false}));
   });
 
   it('uses existing handle from the arc', async () => {
@@ -657,6 +657,7 @@ describe('Automatic resolution', function() {
     assert.equal('use', handle.fate);
     assert.equal('test:1', handle.id);
   });
+
   it('composes recipe rendering a list of items from a recipe', async () => {
     let arc = null;
     let recipes = await verifyResolvedPlans(`
@@ -733,5 +734,37 @@ describe('Automatic resolution', function() {
       provide item as slot0
       provide postamble as slot4
       provide preamble as slot5`);
+  });
+
+  it('searches and coalesces restaurants recipes by recipe name', async () => {
+    let recipes = await verifyResolvedPlans(`
+      import 'artifacts/Restaurants/Restaurants.recipes'
+      import 'artifacts/People/Person.schema'
+
+      store User of Person 'User' in './artifacts/Things/empty.json'
+
+      recipe
+        search \`nearby restaurants\`
+    `, () => {});
+    assert.lengthOf(recipes, 1);
+    assert.deepEqual(recipes[0].particles.map(p => p.name).sort(),
+      ['FindRestaurants', 'ExtractLocation', 'RestaurantList', 'RestaurantMasterDetail', 'RestaurantDetail'].sort());
+  });
+
+  // TODO: FindRestaurants particle, found by search term never tries 'create' handle as part of strategizing.
+  it.skip('searches and coalesces restaurants recipes by particle name', async () => {
+    let recipes = await verifyResolvedPlans(`
+      import 'artifacts/Restaurants/Restaurants.recipes'
+      import 'artifacts/People/Person.schema'
+
+      store User of Person 'User' in './artifacts/Things/empty.json'
+
+      recipe
+        search \`find restaurants\`
+    `, () => {});
+
+    assert.lengthOf(recipes, 1);
+    assert.deepEqual(recipes[0].particles.map(p => p.name).sort(),
+      ['FindRestaurants', 'ExtractLocation', 'RestaurantList', 'RestaurantMasterDetail', 'RestaurantDetail'].sort());
   });
 });

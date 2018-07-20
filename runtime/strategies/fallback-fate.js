@@ -14,15 +14,13 @@ import {Walker} from '../recipe/walker.js';
 export class FallbackFate extends Strategy {
   getResults(inputParams) {
     assert(inputParams);
-    let generated = inputParams.generated.filter(result => !result.result.isResolved());
-    let terminal = inputParams.terminal;
-    return [...generated, ...terminal];
+    return inputParams.terminal.filter(result => !result.result.isResolved());
   }
 
   async generate(inputParams) {
     return Recipe.over(this.getResults(inputParams), new class extends Walker {
       onHandle(recipe, handle) {
-        // Only apply this strategy only to user query based recipes with resolved tokens.
+        // Only apply this strategy to user query based recipes with resolved tokens.
         if (!recipe.search || (recipe.search.resolvedTokens.length == 0)) {
           return;
         }

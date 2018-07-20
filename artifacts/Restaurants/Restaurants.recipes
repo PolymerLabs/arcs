@@ -12,33 +12,22 @@ import 'RestaurantDetail.manifest'
 import '../Places/ExtractLocation.manifest'
 
 recipe &displayRestaurants
+  ? as list
   RestaurantMasterDetail.selected -> RestaurantList.selected
   RestaurantDetail.selected -> RestaurantList.selected
   RestaurantMasterDetail.list -> RestaurantList.list
   RestaurantList
+    list <- list
 
-recipe &findLocation
+recipe
   create as location
   ExtractLocation
     location -> location
-
-recipe &showRestaurants
-  create #restaurants #nosync as restaurants
-  FindRestaurants
-    restaurants = restaurants
-  &displayRestaurants
-    list <- restaurants
 
 recipe &nearbyRestaurants
   create #restaurants #nosync as restaurants
-  create as location
-  ExtractLocation
-    location -> location
   FindRestaurants
-    location <- location
     restaurants = restaurants
-  &displayRestaurants
-    list <- restaurants
 
 import '../Events/Event.schema'
 import '../Events/PartySize.manifest'

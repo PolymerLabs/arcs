@@ -295,10 +295,10 @@ export class Schema {
     return clazz;
   }
 
-  toInlineSchemaString() {
+  toInlineSchemaString(options) {
     let names = (this.names || ['*']).join(' ');
     let fields = Object.entries(this.fields).map(([name, type]) => `${Schema._typeString(type)} ${name}`).join(', ');
-    return `${names} {${fields}}`;
+    return `${names} {${fields.length > 0 && options && options.hideFields ? '...' : fields}}`;
   }
 
   toManifestString() {

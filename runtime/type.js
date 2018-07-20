@@ -326,15 +326,15 @@ export class Type {
     return false;
   }
 
-  toString() {
+  toString(options) {
     if (this.isCollection)
-      return `[${this.primitiveType().toString()}]`;
+      return `[${this.primitiveType().toString(options)}]`;
     if (this.isEntity)
-      return this.entitySchema.toInlineSchemaString();
+      return this.entitySchema.toInlineSchemaString(options);
     if (this.isInterface)
       return this.interfaceShape.name;
     if (this.isTuple)
-      return this.tupleFields.toString();
+      return this.tupleFields.toString(options);
     if (this.isVariableReference)
       return `~${this.data}`;
     if (this.isManifestReference)

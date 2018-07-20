@@ -83,12 +83,6 @@ export class Planner {
     return allResolved;
   }
 
-  _matchesActiveRecipe(plan) {
-    let planShape = RecipeUtil.recipeToShape(plan);
-    let result = RecipeUtil.find(this._arc._activeRecipe, planShape);
-    return result.some(r => r.score == 0);
-  }
-
   _speculativeThreadCount() {
     // TODO(wkorman): We'll obviously have to rework the below when we do
     // speculation in the cloud.
@@ -143,7 +137,7 @@ export class Planner {
       for (let plan of group) {
         let hash = ((hash) => { return hash.substring(hash.length - 4);})(await plan.digest());
 
-        if (this._matchesActiveRecipe(plan)) {
+        if (RecipeUtil.matchesRecipe(this._arc._activeRecipe, plan)) {
           this._updateGeneration(generations, hash, (g) => g.active = true);
           continue;
         }

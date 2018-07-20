@@ -42,6 +42,11 @@ export class CoalesceRecipes extends Strategy {
 
         let results = [];
         for (let {slotConn, matchingHandles} of index.findConsumeSlotConnectionMatch(slot)) {
+          if (RecipeUtil.matchesRecipe(recipe, slotConn.recipe)) {
+            // skip candidate recipe, if matches the shape of the current recipe
+            continue;
+          }
+
           results.push((recipe, slot) => {
             let {cloneMap} = slotConn.recipe.mergeInto(slot.recipe);
             let mergedSlotConn = cloneMap.get(slotConn);
@@ -62,6 +67,14 @@ export class CoalesceRecipes extends Strategy {
               }
               recipe.removeHandle(disconnectedHandle);
             }
+
+            // Clear verbs and recipe name after coalescing two recipes.
+            recipe.verbs.splice(0);
+            recipe.name = null;
+
+            // TODO: Merge description/patterns of both recipes.
+            // TODO: Unify common code in slot and handle recipe coalescing.
+
             return 1;
           });
         }
@@ -80,7 +93,6 @@ export class CoalesceRecipes extends Strategy {
         let results = [];
 
         for (let otherHandle of index.findHandleMatch(handle, ['create', '?'])) {
-
           // Don't grow recipes above 10 particles, otherwise we might never stop.
           if (recipe.particles.length + otherHandle.recipe.particles.length > 10) continue;
 
@@ -95,6 +107,11 @@ export class CoalesceRecipes extends Strategy {
             if (resolved.isVariable && !resolved.canReadSubset) continue;
           }
 
+          if (RecipeUtil.matchesRecipe(recipe, otherHandle.recipe)) {
+            // skip candidate recipe, if matches the shape of the current recipe
+            continue;
+          }
+
           results.push((recipe, handle) => {
             let {cloneMap} = otherHandle.recipe.mergeInto(recipe);
             let mergedOtherHandle = cloneMap.get(otherHandle);
@@ -104,6 +121,7 @@ export class CoalesceRecipes extends Strategy {
               connection.disconnectHandle();
               connection.connectToHandle(handle);
             }
+            handle.tags = handle.tags.concat(otherHandle.tags);
             recipe.removeHandle(mergedOtherHandle);
             handle.fate = 'create';
 
