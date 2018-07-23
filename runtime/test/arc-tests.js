@@ -15,6 +15,8 @@ import * as util from '../testing/test-util.js';
 import {handleFor} from '../handle.js';
 import {Manifest} from '../manifest.js';
 import {Loader} from '../loader.js';
+import {TestHelper} from '../testing/test-helper.js';
+import {StubLoader} from '../testing/stub-loader.js';
 
 let loader = new Loader();
 
@@ -157,5 +159,41 @@ describe('Arc', function() {
 
     await newArc.idle;
     assert.equal(slotsCreated, 1);
+  });
+  it('copies store tags', async () => {
+    let helper = await TestHelper.createAndPlan({
+      manifestString: `
+      schema Thing
+        Text name
+      particle P in 'p.js'
+        inout Thing thing
+      recipe
+        copy 'mything' as thingHandle
+        P
+          thing = thingHandle
+      resource ThingResource
+        start
+        [
+          {"name": "mything"}
+        ]
+      store ThingStore of Thing 'mything' #best in ThingResource
+      `,
+      loader: new StubLoader({
+        'p.js': `defineParticle(({Particle}) => class P extends Particle {
+          async setHandles(handles) {
+          }
+        });`
+      }),
+      expectedNumPlans: 1
+    });
+
+    assert.isEmpty(helper.arc._storesById);
+    assert.isEmpty(helper.arc._storeTags);
+
+    await helper.acceptSuggestion({particles: ['P']});
+
+    assert.equal(1, helper.arc._storesById.size);
+    assert.equal(1, helper.arc._storeTags.size);
+    assert.deepEqual(['best'], [...helper.arc._storeTags.get([...helper.arc._storesById.values()][0])]);
   });
 });
