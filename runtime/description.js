@@ -346,6 +346,9 @@ export class DescriptionFormatter {
   }
 
   _combineDescriptionAndValue(token, description, storeValue) {
+    if (description == storeValue) {
+      return description;
+    }
     return `${description} (${storeValue})`;
   }
 
