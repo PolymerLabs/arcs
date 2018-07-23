@@ -206,6 +206,10 @@ class InMemoryVariable extends InMemoryStorageProvider {
 
   async set(value, originatorId=null, barrier=null) {
     assert(value !== undefined);
+    if (this.type && this.type.toString().includes('Person')) {
+      console.error('>>>> setting person: ', value, ' current value: ', this._stored);
+      console.trace();
+    }
     // If there's a barrier set, then the originating storage-proxy is expecting
     // a result so we cannot suppress the event here.
     if (JSON.stringify(this._stored) == JSON.stringify(value) && barrier == null)
