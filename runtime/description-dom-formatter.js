@@ -37,12 +37,12 @@ export class DescriptionDomFormatter extends DescriptionFormatter {
 
   async _combineSelectedDescriptions(selectedDescriptions) {
     let suggestionByParticleDesc = new Map();
-    await Promise.all(selectedDescriptions.map(async (particleDesc, index) => {
+    for (let particleDesc of selectedDescriptions) {
       if (this.seenParticles.has(particleDesc._particle)) {
-        return;
+        continue;
       }
 
-      let {template, model} = this._retrieveTemplateAndModel(particleDesc, index);
+      let {template, model} = this._retrieveTemplateAndModel(particleDesc, suggestionByParticleDesc.size);
 
       let success = await Promise.all(Object.keys(model).map(async tokenKey => {
         let tokens = this._initSubTokens(model[tokenKey], particleDesc);
@@ -70,7 +70,7 @@ export class DescriptionDomFormatter extends DescriptionFormatter {
       if (success.every(s => !!s)) {
         suggestionByParticleDesc.set(particleDesc, {template, model});
       }
-    }));
+    }
 
     // Populate suggestions list while maintaining original particles order.
     let suggestions = [];
