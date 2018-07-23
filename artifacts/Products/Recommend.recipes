@@ -37,7 +37,7 @@ particle Chooser in 'source/Chooser.js'
   consume action
     provide set of annotation
       handle choices
-  description `add items from ${person.name}'s ${choices}`
+  description `add items from ${person}'s ${choices}`
 
 particle AlsoOn in 'source/AlsoOn.js'
   in Thing product
