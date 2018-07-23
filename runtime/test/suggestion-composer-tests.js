@@ -65,7 +65,7 @@ describe('suggestion composer', function() {
   it('singleton suggestion slots', async () => {
     let slotComposer = new SlotComposer({affordance: 'mock', rootContainer: {'root': 'dummy-container'}});
     let helper = await TestHelper.createAndPlan({
-      manifestFilename: './runtime/test/artifacts/suggestions/Cakes.recipes',
+      manifestFilename: './runtime/test/artifacts/suggestions/Cake.recipes',
       slotComposer
     });
     let suggestionComposer = new SuggestionComposer(slotComposer);
@@ -96,4 +96,31 @@ describe('suggestion composer', function() {
     assert.isEmpty(suggestionComposer._suggestConsumers);
   });
 
+  it('suggestion set-slots', async () => {
+    let slotComposer = new SlotComposer({affordance: 'mock', rootContainer: {'root': 'dummy-container'}});
+    let helper = await TestHelper.createAndPlan({
+      manifestFilename: './runtime/test/artifacts/suggestions/Cakes.recipes',
+      slotComposer
+    });
+    let suggestionComposer = new SuggestionComposer(slotComposer);
+    await suggestionComposer._updateSuggestions(helper.plans);
+    assert.lengthOf(helper.plans, 1);
+    assert.isEmpty(suggestionComposer._suggestConsumers);
+
+    await helper.acceptSuggestion({particles: ['List', 'CakeMuxer']});
+    await helper.makePlans();
+    assert.lengthOf(helper.plans, 1);
+    let suggestContext = suggestionComposer._slotComposer._contexts.find(h => h.id == helper.plans[0].plan.slots[0].id);
+    suggestContext.sourceSlotConsumer.getInnerContainer = (name) => 'dummy-container';
+    await suggestionComposer._updateSuggestions(helper.plans);
+    assert.lengthOf(suggestionComposer._suggestConsumers, 1);
+    let suggestConsumer = suggestionComposer._suggestConsumers[0];
+    assert.isTrue(suggestConsumer._content.template.includes('Light candles on Tiramisu cake'));
+
+    await helper.acceptSuggestion({particles: ['LightCandles']});
+    await helper.makePlans();
+    assert.isEmpty(helper.plans);
+    await suggestionComposer._updateSuggestions(helper.plans);
+    assert.isEmpty(suggestionComposer._suggestConsumers);
+  });
 });

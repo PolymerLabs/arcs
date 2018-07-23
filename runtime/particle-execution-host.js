@@ -79,10 +79,10 @@ export class ParticleExecutionHost {
       this._apiPort.MapHandleCallback({}, {callback, id: handle.id});
     };
 
-    this._apiPort.onArcCreateSlot = ({callback, arc, transformationParticle, transformationSlotName, hostedParticleName, hostedSlotName}) => {
+    this._apiPort.onArcCreateSlot = ({callback, arc, transformationParticle, transformationSlotName, hostedParticleName, hostedSlotName, handleId}) => {
       let hostedSlotId;
       if (this.slotComposer) {
-        hostedSlotId = this.slotComposer.createHostedSlot(transformationParticle, transformationSlotName, hostedParticleName, hostedSlotName);
+        hostedSlotId = this.slotComposer.createHostedSlot(transformationParticle, transformationSlotName, hostedParticleName, hostedSlotName, handleId);
       }
       this._apiPort.CreateSlotCallback({}, {callback, hostedSlotId});
     };

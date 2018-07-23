@@ -125,7 +125,7 @@ export class MultiplexerDomParticle extends TransformationDomParticle {
       let hostedSlotName = [...resolvedHostedParticle.slots.keys()][0];
       let slotName = [...this.spec.slots.values()][0].name;
       let slotId = await arc.createSlot(
-          this, slotName, resolvedHostedParticle.name, hostedSlotName);
+          this, slotName, resolvedHostedParticle.name, hostedSlotName, itemHandle._id);
 
       if (!slotId) {
         continue;
@@ -175,6 +175,9 @@ export class MultiplexerDomParticle extends TransformationDomParticle {
 
     if (content.template) {
       let template = content.template;
+      // Append subid={{subid}} attribute to all provided slots, to make it usable for the transformation particle.
+      template = template.replace(new RegExp('slotid="[a-z]+"', 'g'), '$& subid="{{subId}}"');
+
       // Replace hosted particle connection in template with the corresponding particle connection names.
       // TODO: make this generic!
       this._connByHostedConn.forEach((conn, hostedConn) => {

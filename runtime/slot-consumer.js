@@ -10,6 +10,7 @@
 'use strict';
 
 import {assert} from '../platform/assert-web.js';
+import {SlotContext} from './slot-context.js';
 
 export class SlotConsumer {
   constructor(consumeConn, containerKind) {
@@ -67,6 +68,11 @@ export class SlotConsumer {
         }
       }
     }
+  }
+
+  createProvidedContexts() {
+    return this.consumeConn.slotSpec.providedSlots.map(
+      spec => new SlotContext(this.consumeConn.providedSlots[spec.name].id, spec.name, /* tags=*/ [], /* container= */ null, spec, this));
   }
 
   updateProvidedContexts() {

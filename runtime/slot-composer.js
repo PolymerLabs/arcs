@@ -73,19 +73,19 @@ export class SlotComposer {
     return this._contexts.find(({id}) => id == slotId);
   }
 
-  createHostedSlot(transformationParticle, transformationSlotName, hostedParticleName, hostedSlotName) {
+  createHostedSlot(transformationParticle, transformationSlotName, hostedParticleName, hostedSlotName, storeId) {
     let hostedSlotId = this.arc.generateID();
 
     let transformationSlotConsumer = this.getSlotConsumer(transformationParticle, transformationSlotName);
     assert(transformationSlotConsumer,
            `Unexpected transformation slot particle ${transformationParticle.name}:${transformationSlotName}, hosted particle ${hostedParticleName}, slot name ${hostedSlotName}`);
 
-    let hostedSlot = new HostedSlotConsumer(transformationSlotConsumer, hostedParticleName, hostedSlotName, hostedSlotId);
-    hostedSlot.renderCallback = this.arc.pec.innerArcRender.bind(this.arc.pec);
-    this._addSlotConsumer(hostedSlot);
+    let hostedSlotConsumer = new HostedSlotConsumer(transformationSlotConsumer, hostedParticleName, hostedSlotName, hostedSlotId, storeId, this.arc);
+    hostedSlotConsumer.renderCallback = this.arc.pec.innerArcRender.bind(this.arc.pec);
+    this._addSlotConsumer(hostedSlotConsumer);
 
     let context = this.findContextById(transformationSlotConsumer.consumeConn.targetSlot.id);
-    context.addSlotConsumer(hostedSlot);
+    context.addSlotConsumer(hostedSlotConsumer);
 
     return hostedSlotId;
   }
@@ -108,15 +108,14 @@ export class SlotComposer {
 
         let slotConsumer = this.consumers.find(slot => slot.hostedSlotId == cs.targetSlot.id);
         if (slotConsumer) {
+          assert(!slotConsumer.consumeConn);
           slotConsumer.consumeConn = cs;
         } else {
           slotConsumer = new this._affordance.slotConsumerClass(cs, this._containerKind);
           newConsumers.push(slotConsumer);
-
-          cs.slotSpec.providedSlots.forEach(providedSpec => {
-            this._contexts.push(SlotContext.createContextForSourceSlotConsumer(providedSpec, slotConsumer));
-          });
         }
+
+        this._contexts = this._contexts.concat(slotConsumer.createProvidedContexts());
       });
     });
 
@@ -139,7 +138,7 @@ export class SlotComposer {
   }
 
   getAvailableContexts() {
-     return this._contexts;
+    return this._contexts;
   }
 
   dispose() {

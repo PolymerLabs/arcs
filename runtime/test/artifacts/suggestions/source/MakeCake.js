@@ -16,8 +16,8 @@ defineParticle(({DomParticle, html}) => {
     get template() {
       return html`
       <div>
-        <span>{{occasion}}</span> <span>{{name}}</span> cake.
-        <div slotid="annotation"></div>
+        <span hidden="{{notSpecial}}" style="font-weight:bold">{{occasion}}</span> <span>{{name}}</span> cake
+        <div hidden="{{notSpecial}}"><div slotid="special"></div></div>
       </div>
     `;
     }
@@ -28,6 +28,7 @@ defineParticle(({DomParticle, html}) => {
     render({cake}) {
       return {
         name: cake.name,
+        notSpecial: !cake.occasion,
         occasion: cake.occasion
       };
     }
