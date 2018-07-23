@@ -10,30 +10,34 @@ import {assert} from '../../platform/assert-web.js';
 export class Search {
   constructor(phrase, unresolvedTokens) {
     assert(phrase);
+    this._phrase = phrase;
 
-    this._phrase = '';
+    let tokens = this.phrase.toLowerCase().split(/[^a-z0-9]/g);
+    // If unresolvedTokens not passed, consider all tokens unresolved.
     this._unresolvedTokens = [];
-    this._resolvedTokens = [];
+    (unresolvedTokens || tokens).forEach(token => this._unresolvedTokens.push(token));
 
-    this.appendPhrase(phrase, unresolvedTokens);
+    // compute the resolved tokens
+    this._resolvedTokens = tokens.slice();
+    for (let token of this.unresolvedTokens) {
+      let index = this._resolvedTokens.indexOf(token);
+      if (index >= 0) {
+        this._resolvedTokens.splice(index, 1);
+      }
+    }
+    assert(tokens.length == this.unresolvedTokens.length + this.resolvedTokens.length);
   }
-  appendPhrase(phrase, unresolvedTokens) {
+
+  _append(phrase, unresolvedTokens, resolvedTokens) {
     // concat phrase
     if (this._phrase.length > 0) {
       this._phrase = this.phrase.concat(' ');
     }
     this._phrase = this._phrase.concat(phrase);
-
-    // update tokens
-    let newTokens = phrase.toLowerCase().split(/[^a-z0-9]/g);
-    newTokens.forEach(t => {
-      if (!unresolvedTokens || unresolvedTokens.indexOf(t) >= 0) {
-        this._unresolvedTokens.push(t);
-      } else {
-        this._resolvedTokens.push(t);
-      }
-    });
+    resolvedTokens.forEach(t => this._resolvedTokens.push(t));
+    unresolvedTokens.forEach(t => this._unresolvedTokens.push(t));
   }
+
   get phrase() { return this._phrase; }
   get unresolvedTokens() { return this._unresolvedTokens; }
   get resolvedTokens() { return this._resolvedTokens; }
@@ -64,10 +68,11 @@ export class Search {
 
   _copyInto(recipe) {
     if (recipe.search) {
-      recipe.search.appendPhrase(this.phrase, this.unresolvedTokens);
+      recipe.search._append(this.phrase, this.unresolvedTokens, this.resolvedTokens);
     } else {
-      recipe.search = new Search(this.phrase, this.unresolvedTokens);
-      assert(recipe.search.resolvedTokens.length == this.resolvedTokens.length);
+      recipe.search = new Search(this.phrase, this.unresolvedTokens, this.resolvedTokens);
+      assert(recipe.search.resolvedTokens.length == this.resolvedTokens.length,
+             `${recipe.search.resolvedTokens} is not same as ${this.resolvedTokens}`);
     }
     assert(this.resolvedTokens.every(rt => recipe.search.resolvedTokens.indexOf(rt) >= 0) &&
            this.unresolvedTokens.every(rt => recipe.search.unresolvedTokens.indexOf(rt) >= 0));

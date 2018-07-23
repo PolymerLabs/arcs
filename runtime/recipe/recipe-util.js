@@ -307,4 +307,11 @@ export class RecipeUtil {
     counts.out += counts.inout;
     return counts;
   }
+
+  // Returns true if `otherRecipe` matches the shape of recipe.
+  static matchesRecipe(recipe, otherRecipe) {
+    let shape = RecipeUtil.recipeToShape(otherRecipe);
+    let result = RecipeUtil.find(recipe, shape);
+    return result.some(r => r.score == 0);
+  }
 }

@@ -34,7 +34,7 @@ describe('FallbackFate', function() {
     recipe.handles.forEach(v => v._originalFate = '?');
     assert(recipe.normalize());
     let arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'dom');
-    let inputParams = {generated: [{result: manifest.recipes[0], score: 1}], terminal: []};
+    let inputParams = {terminal: [{result: manifest.recipes[0], score: 1}], generated: []};
     let strategy = new FallbackFate(arc);
 
     // no resolved search tokens.

@@ -20,7 +20,7 @@ export class Recipe {
     this._particles = [];
     this._handles = [];
     this._slots = [];
-    this.name = name;
+    this._name = name;
 
     // TODO: Recipes should be collections of records that are tagged
     // with a type. Strategies should register the record types they
@@ -154,6 +154,8 @@ export class Recipe {
         && (!this.search || this.search.isValid(options));
   }
 
+  get name() { return this._name; }
+  set name(name) { this._name = name; }
   get localName() { return this._localName; }
   set localName(name) { this._localName = name; }
   get particles() { return this._particles; } // Particle*
@@ -388,6 +390,8 @@ export class Recipe {
       cloneMap.set(object, clonedObject);
     }
 
+    recipe._name = this.name;
+    recipe._verbs = this._verbs.slice();
     this._handles.forEach(cloneTheThing);
     this._particles.forEach(cloneTheThing);
     this._slots.forEach(cloneTheThing);

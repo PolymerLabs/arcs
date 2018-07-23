@@ -161,13 +161,13 @@ export class Handle {
         mustBeResolved = false;
       if ((mustBeResolved && !this.type.isResolved()) || !this.type.canEnsureResolved()) {
         if (options) {
-          options.details = 'unresolved type';
+          options.details.push('unresolved type');
         }
         resolved = false;
       }
     } else {
       if (options) {
-        options.details = 'missing type';
+        options.details.push('missing type');
       }
       resolved = false;
     }
@@ -175,7 +175,7 @@ export class Handle {
     switch (this.fate) {
       case '?': {
         if (options) {
-          options.details += 'missing fate';
+          options.details.push('missing fate');
         }
         resolved = false;
         break;
@@ -184,7 +184,7 @@ export class Handle {
       case 'map':
       case 'use': {
         if (options && this.id === null) {
-          options.details += 'missing id';
+          options.details.push('missing id');
         }
         resolved = resolved && (this.id !== null);
         break;
@@ -194,7 +194,7 @@ export class Handle {
         break;
       default: {
         if (options) {
-          options.details += `invalid fate ${this.fate}`;
+          options.details.push(`invalid fate ${this.fate}`);
         }
         assert(false, `Unexpected fate: ${this.fate}`);
         resolved = false;
@@ -204,6 +204,7 @@ export class Handle {
   }
 
   toString(nameMap, options) {
+    options = options || {};
     // TODO: type? maybe output in a comment
     let result = [];
     result.push(this.fate);
@@ -215,22 +216,22 @@ export class Handle {
     if (this.type) {
       result.push('//');
       if (this.type.isResolved()) {
-        result.push(this.type.resolvedType().toString());
+        result.push(this.type.resolvedType().toString({hideFields: options.hideFields == undefined ? true: options.hideFields}));
       } else {
         // TODO: include the unresolved constraints in toString (ie in the hash).
         result.push(this.type.toString());
-        if (options && options.showUnresolved && this.type.canEnsureResolved()) {
+        if (options.showUnresolved && this.type.canEnsureResolved()) {
           let type = Type.fromLiteral(this.type.toLiteral());
           type.maybeEnsureResolved();
           result.push('//');
-          result.push(type.resolvedType().toString());
+          result.push(type.resolvedType().toString({hideFields: options.hideFields == undefined ? true: options.hideFields}));
         }
       }
     }
-    if (options && options.showUnresolved) {
-      let options = {};
-      if (!this.isResolved(options)) {
-        result.push(` // unresolved handle: ${options.details}`);
+    if (options.showUnresolved) {
+      let unresolvedOptions = {details: []};
+      if (!this.isResolved(unresolvedOptions)) {
+        result.push(` // unresolved handle: ${unresolvedOptions.details.join(', ')}`);
       }
     }
 
