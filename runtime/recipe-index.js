@@ -210,6 +210,22 @@ export class RecipeIndex {
     return consumeConns;
   }
 
+  findProvidedSlot(slotConn) {
+    this.ensureReady();
+
+    let providedSlots = [];
+    for (let recipe of this._recipes) {
+      for (let consumeConn of recipe.slotConnections) {
+        for (let providedSlot of Object.values(consumeConn.providedSlots)) {
+          if (MapSlots.slotMatches(slotConn, providedSlot)) {
+            providedSlots.push(providedSlot);
+          }
+        }
+      }
+    }
+    return providedSlots;
+  }
+
   // Helper function that determines whether handle connections in a provided slot
   // and a potential consuming slot connection could be match, considering their fates and directions.
   // `slotHandleConn` is a handle connection restricting the provided slot.
