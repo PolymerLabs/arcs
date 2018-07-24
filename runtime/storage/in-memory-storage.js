@@ -144,10 +144,12 @@ class InMemoryCollection extends InMemoryStorageProvider {
       keys = this._model.getKeys(id);
     }
     let value = this._model.getValue(id);
-    let effective = this._model.remove(id, keys);
-    this._version++;
-    await trace.wait(
-        this._fire('change', {remove: [{value, keys, effective}], version: this._version, originatorId}));
+    if (value !== null) {
+      let effective = this._model.remove(id, keys);
+      this._version++;
+      await trace.wait(
+          this._fire('change', {remove: [{value, keys, effective}], version: this._version, originatorId}));
+    }
     trace.end({args: {entity: value}});
   }
 
