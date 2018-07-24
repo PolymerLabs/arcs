@@ -25,3 +25,8 @@ export function removeSystemExceptionHandler(handler) {
   if (idx > -1)
     systemHandlers.splice(idx, 1);
 }
+
+registerSystemExceptionHandler((exception, methodName, particle) => {
+  console.log(methodName, particle);
+  throw exception;
+});
