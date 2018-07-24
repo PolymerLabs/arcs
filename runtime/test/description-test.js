@@ -599,6 +599,42 @@ recipe
     });
   });
 
+  tests.forEach((test) => {
+    it('capitalizes when some particles do not have descriptions ' + test.name, async () => {
+      let manifest = (await Manifest.parse(`
+shape DummyShape
+particle NoDescription
+particle NoDescMuxer
+  host DummyShape hostedParticle
+  consume root
+    provide myslot
+  description \`\${hostedParticle} description\`
+particle HasDescription
+  consume myslot
+  description \`start with capital letter\`
+recipe
+  slot 'rootslotid-root' as slot0
+  copy 'hosted-particle-handle' as hostedParticleHandle
+  NoDescMuxer
+    hostedParticle = hostedParticleHandle
+    consume root as slot0
+      provide myslot as slot1
+  HasDescription
+    consume myslot as slot1
+      `));
+      let recipe = manifest.recipes[0];
+      let arc = createTestArc();
+      arc._activeRecipe = recipe;
+      let hostedParticle = manifest.findParticleByName('NoDescription');
+      let hostedType = manifest.findParticleByName('NoDescMuxer').connections[0].type;
+      let newStore = await arc.createStore(hostedType, /* name= */ null, 'hosted-particle-handle');
+      newStore.set(hostedParticle.clone().toLiteral());
+
+      let description = new Description(arc);
+      await test.verifySuggestion('Start with capital letter.', description);
+    });
+  });
+
   it('has no particles description', async () => {
     let verify = async (manifestStr, expectedDescription) => {
       let recipe = (await Manifest.parse(manifestStr)).recipes[0];
