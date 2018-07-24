@@ -15,7 +15,6 @@ particle ShowProduct in 'source/ShowProduct.js'
 
 recipe MuxedProductItem &muxProduct
   ItemMultiplexer
-    hostedParticle = ShowProduct
 
 recipe ProductListVerbs &showShopListVerbs
   copy #shoplist as newlist
