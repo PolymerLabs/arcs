@@ -568,12 +568,15 @@ class FirebaseCollection extends FirebaseStorageProvider {
 
   async remove(id, keys=[], originatorId=null) {
     await this._initialized;
+
+    // 1. Apply the change to the local model.
+    let value = this._model.getValue(id);
+    if (value === null)
+      return;
     if (keys.length == 0) {
       keys = this._model.getKeys(id);
     }
 
-    // 1. Apply the change to the local model.
-    let value = this._model.getValue(id);
     // TODO: These keys might already have been removed (concurrently).
     // We should exit early in that case.
     let effective = this._model.remove(id, keys);
