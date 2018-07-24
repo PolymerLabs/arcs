@@ -6,17 +6,6 @@
 // subject to an additional IP rights grant found at
 // http://polymer.github.io/PATENTS.txt
 
-// TODO(sjmiles):
-// Generally we want to drive the association of Claire in the product recipes
-// against a Person of interest.
-// In particular `wishlist` implies a person (it's "Claire's Wishlist").
-// In some way the 'wishlist' should be produced relative to a person, but today it's
-// just static data.
-// I need a spot to bind a Person record to make the Suggestions appear correct,
-// even if the particles aren't using that record. This is why there is
-// `in Person person` in the `Chooser` particle (it's just convenient for now).
-// Note that the `addFromWishlist` recipe requires an active user with `use as person`
-// (i.e. it will not pull from context).
 
 import 'Product.schema'
 import '../People/Person.schema'
@@ -45,11 +34,8 @@ particle AlsoOn in 'source/AlsoOn.js'
   consume annotation
 
 recipe &addFromWishlist
-  // TODO(sjmiles): chooser won't render if `person.name !== 'Claire'`, but that's
-  // not enough to prevent non-Claire suggestions from appearing (ask, file ticket).
-  // I cannot tag the person (ask), nor copy tags via `copy` fate (ask, file ticket).
-  use as person
   use as shoplist
+  use #claire as person
   map #wishlist as wishlist
   create as choices
   Recommend
