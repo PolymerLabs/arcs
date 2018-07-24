@@ -242,4 +242,24 @@ describe('CoalesceRecipes', function() {
     assert.isTrue(recipe.isResolved());
     assert.equal('input thing and output thing', recipe.pattern);
   });
+
+  it('coalesces for unresolved consume slots', async () => {
+    await doCoalesceRecipes(`
+      schema Thing
+      particle P1
+        out Thing outThing
+        must consume foo
+      recipe
+        create as outHandle
+        P1
+          outThing -> outHandle
+      particle P2
+        consume root
+          provide foo
+      recipe
+        slot 'root-slot' as rootSlot
+        P2
+          consume root as rootSlot
+    `);
+  });
 });

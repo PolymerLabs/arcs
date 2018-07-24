@@ -31,6 +31,36 @@ export class CoalesceRecipes extends Strategy {
     await index.ready;
 
     return Recipe.over(this.getResults(inputParams), new class extends Walker {
+      onSlotConnection(recipe, slotConnection) {
+        if (slotConnection.isResolved()) {
+          return;
+        }
+        if (!slotConnection.name || !slotConnection.particle) {
+          return;
+        }
+
+        // TODO: also support a consume slot connection that is NOT required,
+        // but no other connections are resolved.
+
+        let results = [];
+        for (let providedSlot of index.findProvidedSlot(slotConnection)) {
+          results.push((recipe, slotConnection) => {
+            let {cloneMap} = providedSlot.recipe.mergeInto(slotConnection.recipe);
+            let mergedSlot = cloneMap.get(providedSlot);
+            slotConnection.connectToSlot(mergedSlot);
+
+            // Clear verbs and recipe name after coalescing two recipes.
+            recipe.verbs.splice(0);
+            recipe.name = null;
+            return 1;
+          });
+        }
+
+        if (results.length > 0) {
+          return results;
+        }
+      }
+
       onSlot(recipe, slot) {
         // Find slots that according to their provided-spec must be consumed, but have no consume connection.
         if (slot.consumeConnections.length > 0) {

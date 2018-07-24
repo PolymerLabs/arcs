@@ -85,7 +85,7 @@ export class MapSlots extends Strategy {
 
   // Returns the given slot candidates, sorted by "quality".
   static _findSlotCandidates(slotConnection, slots) {
-    let possibleSlots = slots.filter(s => this._filterSlot(slotConnection, s));
+    let possibleSlots = slots.filter(s => this.slotMatches(slotConnection, s));
     possibleSlots.sort((slot1, slot2) => {
         // TODO: implement.
         return slot1.name < slot2.name;
@@ -94,7 +94,7 @@ export class MapSlots extends Strategy {
   }
 
   // Returns true, if the given slot is a viable candidate for the slotConnection.
-  static _filterSlot(slotConnection, slot) {
+  static slotMatches(slotConnection, slot) {
     if (!MapSlots.specMatch(slotConnection, slot)) {
       return false;
     }
