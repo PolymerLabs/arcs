@@ -46,13 +46,13 @@ describe('products test', function() {
             return verified;
           }})
           .expectRenderSlot('ShowProduct', 'item', {contentTypes: ['template', 'model']})
-          .expectRenderSlot('Multiplexer', 'annotation', {hostedParticle: 'ShowProduct', verify: (content) => {
+          .expectRenderSlot('ItemMultiplexer', 'item', {hostedParticle: 'ShowProduct', verify: (content) => {
             return content.model
                 && 1 == content.model.items.length
                 && 'Harry Potter' === content.model.items[0].name;
           }});
 
-    await helper.acceptSuggestion({particles: ['List', 'Multiplexer', 'ProductFilter']});
+    await helper.acceptSuggestion({particles: ['ItemMultiplexer', 'List', 'ProductFilter']});
 
     await helper.verifyData('ProductFilter', 'results', verifyFilteredBook);
   });

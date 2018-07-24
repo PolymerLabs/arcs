@@ -137,10 +137,10 @@ recipe
       assert.equal(HostedSlotConsumer, slot.constructor);
       assert.equal(MockSlotDomConsumer, slotComposer.consumers.find(s => s == slot.transformationSlotConsumer).constructor);
     };
-    await helper.acceptSuggestion({particles: ['List', 'Multiplexer', 'ProductFilter']});
+    await helper.acceptSuggestion({particles: ['ItemMultiplexer', 'List', 'ProductFilter']});
     assert.lengthOf(slotComposer.consumers, 3);
     verifySlot('List::root');
-    verifySlot('Multiplexer::annotation');
+    verifySlot('ItemMultiplexer::item');
     verifyHostedSlot('ShowProduct::item');
   });
 });
