@@ -12,5 +12,6 @@ import 'Manufacturer.recipes'
 import 'Gifts.recipes'
 import 'Interests.recipes'
 
+import '../Demo/Browse.manifest'
 import '../Demo/ClairesWishlist.manifest'
 
