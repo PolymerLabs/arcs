@@ -17,10 +17,8 @@ import {assert} from '../chai-web.js';
 async function tryCoalesceRecipes(manifestStr) {
   let manifest = await Manifest.parse(manifestStr);
   let recipes = manifest.recipes;
-  recipes.forEach(recipe => {
-    recipe.normalize();
-    assert.isFalse(recipe.isResolved());
-  });
+  assert.isTrue(recipes.every(recipe => recipe.normalize()));
+  assert.isFalse(recipes.every(recipe => recipe.isResolved()));
   let arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'dom');
   let inputParams = {generated: [], terminal: recipes.map(recipe => ({result: recipe, score: 1}))};
   let strategy = new CoalesceRecipes(arc);
@@ -221,5 +219,27 @@ describe('CoalesceRecipes', function() {
     await doNotCoalesceRecipes(await parseManifest({fateA: 'create', fateB: 'create'}));
     await doNotCoalesceRecipes(await parseManifest({fateA: 'create', fateB: 'map'}));
     await doNotCoalesceRecipes(await parseManifest({fateA: 'create', fateB: 'copy'}));
+  });
+
+  it('coalesces recipe descriptions', async () => {
+    let recipe = await doCoalesceRecipes(`
+      schema Thing
+      particle P1
+        in Thing inThing
+      recipe
+        ? as inHandle
+        P1
+          inThing <- inHandle
+        description \`input thing\`
+      particle P2
+        out Thing outThing
+      recipe
+        create as outHandle
+        P2
+          outThing -> outHandle
+        description \`output thing\`
+    `);
+    assert.isTrue(recipe.isResolved());
+    assert.equal('input thing and output thing', recipe.pattern);
   });
 });

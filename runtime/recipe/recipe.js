@@ -403,7 +403,9 @@ export class Recipe {
     }
     if (this.pattern) {
       if (recipe.pattern) {
-        // TODO(mmandlis): Join |this.pattern| with the pattern already existing in the recipe.
+        // TODO(mmandlis): Support multiple patterns in a recipe.
+        // TODO(mmandlis): Join all patterns of the copied recipe's particles into a recipe pattern.
+        recipe.pattern += ` and ${this.pattern}`;
       } else {
         recipe.pattern = this.pattern;
       }
