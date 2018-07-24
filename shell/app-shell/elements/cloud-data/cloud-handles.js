@@ -56,7 +56,7 @@ class CloudHandles extends Xen.Debug(Xen.Base, log) {
   _computeContextHandleId(type, tags, prefix) {
     return ''
       + (prefix ? `${prefix}-` : '')
-      //+ (`${type.toPrettyString()}`.replace(/ /g, '_'))
+      + (`${type.toPrettyString()}-`.replace(/ /g, '_'))
       + ((tags && [...tags].length) ? `${[...tags].sort().join('-').replace(/#/g, '')}` : '')
       ;
   }
