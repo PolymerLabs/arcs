@@ -8,7 +8,7 @@
 
 'use strict';
 
-defineParticle(({DomParticle, resolver, html}) => {
+defineParticle(({DomParticle, resolver, html, log}) => {
 
   const host = `chat-wrapper`;
 
@@ -108,7 +108,7 @@ defineParticle(({DomParticle, resolver, html}) => {
       // Last points to the last non-custom message.
       // TODO(noelutz): expose a custom slot to render the last message properly even
       // if it's a custom message.
-      let last = count && messages.reverse().find(m => !m.type);
+      let last = count && messages.slice().reverse().find(m => !m.type);
       if (state.open) {
         state.animations = [];
         state.showing = null;
@@ -120,7 +120,7 @@ defineParticle(({DomParticle, resolver, html}) => {
           state.count = count;
           // we need to animate this message
           state.animations.push(last);
-          console.log(...chatPre, `count changed`);
+          log(`count changed`);
         }
         // if we aren't showing something now
         if (!state.showing) {
@@ -128,8 +128,7 @@ defineParticle(({DomParticle, resolver, html}) => {
           state.showing = state.animations.shift();
           if (state.showing) {
             state.content = state.showing.content;
-            console.log(
-                ...chatPre, `show new message, dismiss in a few seconds`);
+            log(`show new message, dismiss in a few seconds`);
             // make it go away in a bit
             clearTimeout(state.timeout);
             state.timeout = setTimeout(() => this._invalidate(), 4000);
@@ -138,30 +137,24 @@ defineParticle(({DomParticle, resolver, html}) => {
         // else, if we have old message showing
         else {
           // make it go away now
-          console.log(...chatPre, `dismissing old message`);
+          log(`dismissing old message`);
           state.showing = null;
           clearTimeout(state.timeout);
           if (state.animations.length) {
-            console.log(...chatPre, `show next message in 0.8s`);
+            log(`show next message in 0.8s`);
             // go again after the dismiss animation is complete
             state.timeout = setTimeout(() => this._invalidate(), 800);
           }
         }
       }
-      let avatar;
-      if (state.showing) {
-        avatar = avatars.find(a => a.owner === state.showing.userid);
-      }
-      if (!state.avatar || avatar) {
-        state.avatar = resolver(
-            avatar ? avatar.url : `https://$cdn/assets/avatars/user.jpg`);
-      }
+      const avatarEntity = state.showing && this.boxQuery(avatars, state.showing.userid)[0];
+      const avatar = !avatarEntity ? '' : resolver(avatarEntity.url || 'https://$shell/assets/avatars/user.jpg');
       return {
         open: Boolean(state.open),
         messageCount: `(${count})`,
         show: !state.open && Boolean(state.showing),
         message: state.content || '',
-        avatar: state.avatar
+        avatar
       };
     }
     _onOpenClick(e, state) {
