@@ -64,13 +64,13 @@ class ShellStores extends Xen.Debug(Xen.Base, log) {
         name: 'ShellTheme',
         tags: ['shelltheme']
       },
-      userStoreOptions: {
-        schemas: `${typesPath}/identity-types.manifest`,
-        type: 'Person',
-        id: 'User',
-        name: 'User',
-        tags: ['user']
-      },
+      // userStoreOptions: {
+      //   schemas: `${typesPath}/identity-types.manifest`,
+      //   type: 'Person',
+      //   id: 'User',
+      //   name: 'User',
+      //   tags: ['user']
+      // },
       usersStoreOptions: {
         schemas: `${typesPath}/identity-types.manifest`,
         type: '[Person]',
