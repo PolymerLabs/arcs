@@ -125,11 +125,7 @@ ${productStyles}
       return template;
     }
     shouldRender({choices, resultList, person}) {
-      if (choices && resultList && person) {
-        // TODO(sjmiles): simulate data fetch that only resolves for someone with wishlist data
-        return (person.name === 'Claire');
-      }
-      return false;
+      return Boolean(choices && resultList && person);
     }
     render({choices, resultList}, state) {
       let result = [...difference(choices, resultList)];

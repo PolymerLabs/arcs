@@ -56,7 +56,7 @@ class CloudHandles extends Xen.Debug(Xen.Base, log) {
   _computeContextHandleId(type, tags, prefix) {
     return ''
       + (prefix ? `${prefix}-` : '')
-      //+ (`${type.toPrettyString()}`.replace(/ /g, '_'))
+      + (`${type.toPrettyString()}-`.replace(/ /g, '_'))
       + ((tags && [...tags].length) ? `${[...tags].sort().join('-').replace(/#/g, '')}` : '')
       ;
   }
@@ -89,9 +89,6 @@ class CloudHandles extends Xen.Debug(Xen.Base, log) {
     this._removeWatch(`${path}/data`, 'value');
   }
   _watchVariable(arc, path, handle) {
-    Firebase.db.child(`${path}/metadata`).set({
-      type: ArcsUtils.metaTypeFromType(handle.type)
-    });
     const handler = this._remoteVariableChange(arc, path, handle);
     this._addWatch(`${path}/data`, 'value', handler);
   }
@@ -99,14 +96,21 @@ class CloudHandles extends Xen.Debug(Xen.Base, log) {
     // Ensure we get at least one response from Firebase before
     // we start writing back.
     let initialized = false;
-    let remoteValue;
     // actual handler is here
-    return snap => {
+    return async snap => {
       log(`remote handle change [${path}]`);
-      remoteValue = snap.val();
+      const remoteValue = snap.val();
       if (!initialized) {
         initialized = true;
         handle.on('change', change => this._localVariableChange(handle, path, change, remoteValue), arc);
+        // if the first callback has no data...
+        if (remoteValue === null) {
+          // ... avoiding setting `null` locally if there is no metadata
+          const metaSnap = await snap.ref.parent.child('metadata').once('value');
+          if (!metaSnap.exists()) {
+            return;
+          }
+        }
       }
       handle.set(remoteValue, originatorId);
     };
@@ -116,6 +120,9 @@ class CloudHandles extends Xen.Debug(Xen.Base, log) {
       return;
     }
     log(`local handle change [${path}]`, change.data);
+    Firebase.db.child(`${path}/metadata`).set({
+      type: ArcsUtils.metaTypeFromType(handle.type)
+    });
     const node = Firebase.db.child(`${path}/data`);
     node.set(change.data ? this._removeUndefined(change.data) : null);
   }
@@ -137,7 +144,7 @@ class CloudHandles extends Xen.Debug(Xen.Base, log) {
   }
   async _remoteSetChildAdded(snap, arc, path, handle) {
     const entity = snap.val();
-    log('trigger: remote add', entity);
+    log('trigger: remote add', handle.id, entity);
     let keys = [arc.generateID('key')];
     // doesn't trigger an `add` event if `entity` is already in `handle`
     handle.store(entity, originatorId, keys);
@@ -145,7 +152,7 @@ class CloudHandles extends Xen.Debug(Xen.Base, log) {
   }
   async _remoteSetChildRemoved(snap, arc, path, handle) {
     const entity = snap.val();
-    log('trigger: remote remove', entity);
+    log('trigger: remote remove', handle.id, entity);
     // Use any existing keys.
     let keys = [];
     // doesn't trigger a `remove` event if `entity` is not part of `handle`

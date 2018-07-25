@@ -1,9 +1,6 @@
 import '../Products/Product.schema'
 import '../People/Person.schema'
 
-store PageProducts of [Product] #shoplist in 'products.json'
-  description `products from your browsing context`
-
 store ClairesWishlist of [Product] #wishlist in 'wishlist.json'
   description `wishlist`
 
