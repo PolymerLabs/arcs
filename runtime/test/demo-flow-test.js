@@ -96,66 +96,65 @@ describe('demo flow', function() {
       ]
     });
 
-    // // Accept "Add items from Claire's wishlist (...)" suggestion.
-    // helper.slotComposer
-    //   .newExpectations('Add items from Claire\'s wishlist (...)')
-    //     .expectRenderSlot('Chooser', 'action', {contentTypes: ['template'], verify: helper.slotComposer.expectContentItemsNumber.bind(null, 3)})
-    //     .expectRenderSlot('AlsoOn', 'annotation', {contentTypes: ['template']})
-    //     .expectRenderSlot('AlsoOn', 'annotation', {contentTypes: ['model'], times: 3})
-    //     .expectRenderSlot('Multiplexer2', 'annotation', {contentTypes: ['template'], verify: helper.slotComposer.expectContentItemsNumber.bind(null, 3)});
-    // await helper.acceptSuggestion({particles: ['Chooser', 'Multiplexer2', 'Recommend']});
-    // await helper.idle();
-    // helper.log('----------------------------------------');
+    // Accept "Add items from Claire's wishlist (...)" suggestion.
+    helper.slotComposer
+      .newExpectations('Add items from Claire\'s wishlist (...)')
+        .expectRenderSlot('Chooser', 'action', {contentTypes: ['template'], verify: helper.slotComposer.expectContentItemsNumber.bind(null, 3)})
+        .expectRenderSlot('AlsoOn', 'annotation', {contentTypes: ['template']})
+        .expectRenderSlot('AlsoOn', 'annotation', {contentTypes: ['model'], times: 3})
+        .expectRenderSlot('Multiplexer2', 'annotation', {contentTypes: ['template'], verify: helper.slotComposer.expectContentItemsNumber.bind(null, 3)});
+    await helper.acceptSuggestion({particles: ['Chooser', 'Multiplexer2', 'Recommend']});
+    await helper.idle();
+    helper.log('----------------------------------------');
 
-    // // Move an element from recommended list to shortlist.
-    // let verifyContents = (num, content) => {
-    //   assert(content.model, `Content doesn't have model`);
-    //   assert(content.model.items, `Content model doesn't have items, but expected ${num}.`);
-    //   return content.model.items.length == num && content.model.items.every(i => !!i.resolvedImage);
-    // };
-    // let verifyElementMove = async (key, num, muxerHostedParticles) => {
-    //     helper.slotComposer
-    //       .newExpectations('Move and element from recommended list to shortlist')
-    //         .expectRenderSlot('List', 'root', {contentTypes: ['model']})
-    //         .expectRenderSlot('ItemMultiplexer', 'item', {verify: verifyContents.bind(null, num), hostedParticle: 'ShowProduct'})
-    //         .expectRenderSlot('ShowProduct', 'item', {contentTypes: ['model']})
-    //         .expectRenderSlot('Chooser', 'action', {verify: helper.slotComposer.expectContentItemsNumber.bind(null, (6-num))})
-    //         .expectRenderSlot('AlsoOn', 'annotation', {contentTypes: ['model']})
-    //         .expectRenderSlot('Multiplexer2', 'annotation', {verify: helper.slotComposer.expectContentItemsNumber.bind(null, num)});
-    //     for (let hostedParticle of muxerHostedParticles) {
-    //       helper.slotComposer
-    //         .expectRenderSlot(hostedParticle, 'annotation', {contentTypes: ['model']})
-    //         .expectRenderSlot('Multiplexer', 'annotation', {hostedParticle: hostedParticle, verify: helper.slotComposer.expectContentItemsNumber.bind(null, num)});
-    //     }
-    //     await helper.sendSlotEvent('Chooser', 'action', '_onChooseValue', {key});
-    //     await helper.verifySetSize('List', 'items', num);
-    //     await helper.verifySetSize('Multiplexer', 'list', num);
-    //     await helper.verifySetSize('Chooser', 'choices', 3);
-    // };
-    // await verifyElementMove(/* key= */ 0, /* num= */ 4, ['Arrivinator', 'AlternateShipping']);
-    // helper.log('----------------------------------------');
+    // Move an element from recommended list to shortlist.
+    let verifyContents = (num, content) => {
+      assert(content.model, `Content doesn't have model`);
+      assert(content.model.items, `Content model doesn't have items, but expected ${num}.`);
+      return content.model.items.length == num && content.model.items.every(i => !!i.resolvedImage);
+    };
+    let verifyElementMove = async (key, num, muxerHostedParticles) => {
+        helper.slotComposer
+          .newExpectations('Move and element from recommended list to shortlist')
+            .expectRenderSlot('List', 'root', {contentTypes: ['model']})
+            .expectRenderSlot('ItemMultiplexer', 'item', {verify: verifyContents.bind(null, num), hostedParticle: 'ShowProduct'})
+            .expectRenderSlot('ShowProduct', 'item', {contentTypes: ['model']})
+            .expectRenderSlot('Chooser', 'action', {verify: helper.slotComposer.expectContentItemsNumber.bind(null, (6-num))})
+            .expectRenderSlot('AlsoOn', 'annotation', {contentTypes: ['model']})
+            .expectRenderSlot('Multiplexer2', 'annotation', {verify: helper.slotComposer.expectContentItemsNumber.bind(null, num)});
+        for (let hostedParticle of muxerHostedParticles) {
+          helper.slotComposer
+            .expectRenderSlot(hostedParticle, 'annotation', {contentTypes: ['model']})
+            .expectRenderSlot('Multiplexer', 'annotation', {hostedParticle: hostedParticle, verify: helper.slotComposer.expectContentItemsNumber.bind(null, num)});
+        }
+        await helper.sendSlotEvent('Chooser', 'action', '_onChooseValue', {key});
+        await helper.verifySetSize('List', 'items', num);
+        await helper.verifySetSize('Multiplexer', 'list', num);
+        await helper.verifySetSize('Chooser', 'choices', 3);
+    };
+    await verifyElementMove(/* key= */ 0, /* num= */ 4, ['Arrivinator', 'AlternateShipping']);
+    helper.log('----------------------------------------');
 
     // Accept "Check manufacturer information for products from your browsing context (...)." suggestion
     await helper.makePlans({
-      // TODO: fix tests and uncomment below.
-      // expectedNumPlans: 2,
-      // expectedSuggestions: [
-      //   'Find out about Claire\'s interests.',
-      //   'Check manufacturer information for products from your browsing context (Minecraft Book plus 3 other items).'
-      // ]
+      expectedNumPlans: 2,
+      expectedSuggestions: [
+        'Find out about Claire\'s interests.',
+        'Check manufacturer information for products from your browsing context (Minecraft Book plus 3 other items).'
+      ]
     });
-    // helper.slotComposer
-    //   .newExpectations('Check manufacturer information for products from your browsing context (...)')
-    //     .expectRenderSlot('Multiplexer', 'annotation', {
-    //       hostedParticle: 'ManufacturerInfo',
-    //       contentTypes: ['template'],
-    //       verify: helper.slotComposer.expectContentItemsNumber.bind(null, 3)}) // 4)})
-    //     .expectRenderSlot('ManufacturerInfo', 'annotation', {contentTypes: ['template', 'model'], times: 3}); // 4});
-    // await helper.acceptSuggestion({particles: ['Multiplexer'], hostedParticles: ['ManufacturerInfo']});
-    // helper.log('----------------------------------------');
+    helper.slotComposer
+      .newExpectations('Check manufacturer information for products from your browsing context (...)')
+        .expectRenderSlot('Multiplexer', 'annotation', {
+          hostedParticle: 'ManufacturerInfo',
+          contentTypes: ['template'],
+          verify: helper.slotComposer.expectContentItemsNumber.bind(null, 4)})
+        .expectRenderSlot('ManufacturerInfo', 'annotation', {contentTypes: ['template', 'model'], times: 4});
+    await helper.acceptSuggestion({particles: ['Multiplexer'], hostedParticles: ['ManufacturerInfo']});
+    helper.log('----------------------------------------');
 
-    // // Move another element from recommended list to shortlist.
-    // await verifyElementMove(/* key= */ 1, /* num= */ 5, ['Arrivinator', 'AlternateShipping', 'ManufacturerInfo']);
+    // Move another element from recommended list to shortlist.
+    await verifyElementMove(/* key= */ 1, /* num= */ 5, ['Arrivinator', 'AlternateShipping', 'ManufacturerInfo']);
 
     // Accept "Find out about Claire's interests." suggestion
     helper.slotComposer
@@ -164,12 +163,12 @@ describe('demo flow', function() {
     await helper.acceptSuggestion({particles: ['Interests']});
     helper.log('----------------------------------------');
 
-    // // Move the last element from recommended list to shortlist.
-    // await verifyElementMove(/* key= */ 0, /* num= */ 6, ['Arrivinator', 'AlternateShipping', 'ManufacturerInfo']);
-    // helper.log('----------------------------------------');
+    // Move the last element from recommended list to shortlist.
+    await verifyElementMove(/* key= */ 0, /* num= */ 6, ['Arrivinator', 'AlternateShipping', 'ManufacturerInfo']);
+    helper.log('----------------------------------------');
 
-    // await helper.makePlans({expectedNumPlans: 0});
-    // helper.log('----------------------------------------');
+    await helper.makePlans({expectedNumPlans: 0});
+    helper.log('----------------------------------------');
 
     helper.clearTimeout();
 
