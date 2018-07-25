@@ -131,6 +131,7 @@ export class RecipeUtil {
 
         // clone forward and reverse mappings and establish new components.
         let newMatch = {forward: new Map(forward), reverse: new Map(reverse), score};
+        assert(!newMatch.reverse.has(recipeHC.particle) || newMatch.reverse.get(recipeHC.particle) == shapeHC.particle);
         assert(!newMatch.forward.has(shapeHC.particle) || newMatch.forward.get(shapeHC.particle) == recipeHC.particle);
         newMatch.forward.set(shapeHC.particle, recipeHC.particle);
         newMatch.reverse.set(recipeHC.particle, shapeHC.particle);
@@ -152,6 +153,12 @@ export class RecipeUtil {
       }
 
       if (matchFound == false) {
+        // Non-null particle in the `forward` map means that some of the particle
+        // handle connections were successful matches, but some couldn't be matched.
+        // It means that this match in invalid.
+        if (match.forward.get(shapeHC.particle)) {
+          return;
+        }
         // The current handle connection from the shape doesn't match anything
         // in the recipe. Find (or create) a particle for it.
         let newMatches = [];
@@ -196,6 +203,8 @@ export class RecipeUtil {
           continue;
 
         let newMatch = {forward: new Map(forward), reverse: new Map(reverse), score};
+        assert(!newMatch.forward.has(shapeParticle) || newMatch.forward.get(shapeParticle) == recipeParticle);
+        assert(!newMatch.reverse.has(recipeParticle) || newMatch.reverse.get(recipeParticle) == shapeParticle);
         newMatch.forward.set(shapeParticle, recipeParticle);
         newMatch.reverse.set(recipeParticle, shapeParticle);
         newMatches.push(newMatch);
@@ -203,8 +212,14 @@ export class RecipeUtil {
       }
       if (matchFound == false) {
         let newMatch = {forward: new Map(), reverse: new Map(), score: 0};
-        forward.forEach((value, key) => newMatch.forward.set(key, value));
-        reverse.forEach((value, key) => newMatch.reverse.set(key, value));
+        forward.forEach((value, key) => {
+          assert(!newMatch.forward.has(key) || newMatch.forward.get(key) == value);
+          newMatch.forward.set(key, value);
+        });
+        reverse.forEach((value, key) => {
+          assert(!newMatch.reverse.has(key) || newMatch.reverse.get(key) == value);
+          newMatch.reverse.set(key, value);
+        });
         if (!newMatch.forward.has(shapeParticle)) {
           newMatch.forward.set(shapeParticle, null);
           newMatch.score = match.score - 1;
