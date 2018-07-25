@@ -154,7 +154,7 @@ export class RecipeUtil {
 
       if (matchFound == false) {
         // Non-null particle in the `forward` map means that some of the particle
-        // handle connections were successfully matches, but some couldn't be matched.
+        // handle connections were successful matches, but some couldn't be matched.
         // It means that this match in invalid.
         if (match.forward.get(shapeHC.particle)) {
           return;
