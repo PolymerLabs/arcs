@@ -467,9 +467,8 @@ describe('Arcs demos', function() {
     [
       `Check shipping for Claire \\(Claire\\)'s Birthday on 2019-08-04.`,
       'Check manufacturer information for products from your browsing context',
-      // `Add items from Claire's wishlist \\(Book: How to Draw plus 2 other items\\)\\.`,
-      // TODO: fix and uncomment.
-      // `Find out about Claire's interests\\.`
+      `Add items from Claire \\(Claire\\)'s wishlist \\(Book: How to Draw plus 2 other items\\)\\.`,
+      `Find out about Claire's interests\\.`
     ].forEach(suggestion => {
       waitForStillness();
       openSystemUi();
@@ -479,9 +478,7 @@ describe('Arcs demos', function() {
 
     // Verify each product has non empty annotation text.
     let annotations = browser.getText('[slotid="annotation"]');
-    assert.equal(3, annotations.length);
-    // TODO: fix "Add items from Claire's wishlist" and uncomment.
-    // assert.equal(6, annotations.length);
+    assert.equal(6, annotations.length);
     //assert.ok(annotations.length > 0 && annotations.every(a => a.length > 0), 'missing annotations');
   });
 });
