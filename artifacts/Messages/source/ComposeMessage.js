@@ -29,7 +29,7 @@ defineParticle(({DomParticle, html}) => {
 </style>
 
 <div ${host}>
-  <input on-change="onMessageChange" placholder="{{placeholder}}" value="{{message}}">
+  <input on-keypress="onKeypress" placholder="{{placeholder}}" value="{{message}}">
 </div>
 
   `;
@@ -38,32 +38,43 @@ defineParticle(({DomParticle, html}) => {
     get template() {
       return template;
     }
-    render(props) {
-      let {messages, user} = props;
+    render({messages, user}, state) {
       if (messages && user) {
-        return {
+        const model = {
           placeholder: `${user.name} says`,
-          message: '',
           name: user.name,
           userid: user.id
         };
+        if (state.committed) {
+          state.committed = false;
+          model.message = '';
+        }
+        return model;
       }
     }
     addMessage(msg) {
       const Message = this.handles.get('messages').entityClass;
       this.handles.get('messages').store(new Message(msg));
     }
-    onMessageChange(e) {
-      let user = this._props.user;
-      if (e.data.value && user) {
+    commit(value) {
+      const {user} = this._props;
+      if (value && user) {
         this.addMessage({
-          content: e.data.value,
+          content: value,
           name: user.name,
           userid: user.id,
           time: new Date().toLocaleTimeString()
         });
-        this._setState({message: ''});
+        this._setState({committed: true});
       }
+    }
+    onKeypress(e) {
+      if (e.data.keys.key === 'Enter') {
+        this.commit(e.data.value);
+      }
+    }
+    onMessageChange(e) {
+      //this.commit(e.data.value);
     }
     onClearChat() {
     }
