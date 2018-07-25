@@ -119,4 +119,33 @@ describe('recipe-util', function() {
     assert.equal(results[0].match['A:a'].name, 'a');
     assert.equal(results[0].match['B:b'].name, 'b');
   });
+
+  it('matches duplicate particles', async () => {
+    let manifest = await Manifest.parse(`
+      schema S
+      schema T
+      particle A
+        inout S s
+        inout T t
+
+      recipe Recipe0
+        use 'id-s1' as h0
+        use 'id-t0' as h1
+        use 'id-t1' as h2
+        A
+          s = h0
+          t = h1
+        A
+          s = h0
+          t = h1
+
+      recipe Recipe1
+        use 'id-s2' as h0
+        use 'id-t1' as h1
+        A
+          s = h0
+          t = h1
+    `);
+    assert.isFalse(RecipeUtil.matchesRecipe(manifest.recipes[0], manifest.recipes[1]));
+  });
 });
