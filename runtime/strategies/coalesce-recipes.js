@@ -39,6 +39,10 @@ export class CoalesceRecipes extends Strategy {
           return;
         }
 
+        if (slotConnection.targetSlot) {
+          return;
+        }
+
         // TODO: also support a consume slot connection that is NOT required,
         // but no other connections are resolved.
 

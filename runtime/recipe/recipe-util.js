@@ -238,7 +238,7 @@ export class RecipeUtil {
       let matches = _assignHandlesToEmptyPosition(match, emptyHandles, nullHandles);
       let newMatches = [];
       for (let match of matches) {
-        let nullHandles = Object.values(shape.handle).filter(handle => match.forward.get(handle) == null);
+        let nullHandles = [...shape.handles.values()].filter(handle => match.forward.get(handle) == null);
         if (nullHandles.length > 0)
           newMatches = newMatches.concat(_assignHandlesToEmptyPosition(match, [thisHandle], nullHandles));
         else

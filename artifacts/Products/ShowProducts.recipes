@@ -13,23 +13,14 @@ particle ShowProduct in 'source/ShowProduct.js'
   in Product product
   consume item
 
+recipe MuxedProductItem &muxProduct
+  ItemMultiplexer
+
 recipe ProductList &showShopList
   copy #shoplist as newlist
   List
     items = newlist
-  ItemMultiplexer
-    list = newlist
   description `show ${List.items}`
-
-// TODO(mmandlis): this only works as solo-recipe. fix!
-// recipe MuxedProductItem &muxProduct
-//   ItemMultiplexer
-
-// recipe ProductListVerbs &showShopListVerbs
-//   copy #shoplist as newlist
-//   List
-//     items = newlist
-//   description `show ${List.items}`
 
 // Show [person]'s wishlist
 recipe
