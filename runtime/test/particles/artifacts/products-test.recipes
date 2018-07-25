@@ -7,23 +7,16 @@
 // http://polymer.github.io/PATENTS.txt
 
 import '../../../../artifacts/Common/List.manifest'
-import '../../../../artifacts/Common/Multiplexer.manifest'
 import '../../../../artifacts/Products/test/ProductFilter.manifest'
 import '../../../../artifacts/Products/test/ProductIsBook.manifest'
-import '../../../../artifacts/Products/test/ShowProduct.manifest'
+import '../../../../artifacts/Products/ShowProducts.recipes'
 
 // Filter books and display them.
 recipe
   List.items <- ProductFilter.results
-  Multiplexer.list -> List.items
+  ItemMultiplexer.list -> List.items
   map 'mylist' as mylist
   create as books
-  List
-    consume root
-      provide item as itemSlot
-  Multiplexer
-    hostedParticle = ShowProduct
-    consume annotation as itemSlot
   ProductFilter
     products <- mylist
     hostedParticle = ProductIsBook

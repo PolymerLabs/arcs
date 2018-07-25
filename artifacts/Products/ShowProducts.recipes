@@ -19,28 +19,17 @@ recipe ProductList &showShopList
     items = newlist
   ItemMultiplexer
     list = newlist
-    hostedParticle = ShowProduct
   description `show ${List.items}`
 
-// TODO(sjmiles): find out why this doesn't work
-//recipe MuxedProductItem &muxProduct
-//  use #shoplist as items
-//  ItemMultiplexer
-//    list = items
-//    hostedParticle = ShowProduct
-//recipe ProductListVerbs &showShopListVerbs
-//  copy #shoplist as newlist
-//  List
-//    items = newlist
-//  &muxProduct
-//  description `show ${List.items}`
+// TODO(mmandlis): this only works as solo-recipe. fix!
+// recipe MuxedProductItem &muxProduct
+//   ItemMultiplexer
 
-// TODO(mmandlis|piotr): once coalesce-recipes is re-enabled, replace above recipe with:
-// recipe &showList &show
+// recipe ProductListVerbs &showShopListVerbs
+//   copy #shoplist as newlist
 //   List
-// recipe
-//   Multiplexer // with 'item' slot
-//     hostedParticle = ShowProduct
+//     items = newlist
+//   description `show ${List.items}`
 
 // Show [person]'s wishlist
 recipe
