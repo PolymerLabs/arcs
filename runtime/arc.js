@@ -231,11 +231,11 @@ ${this.activeRecipe.toString()}`;
       storageProviderFactory: manifest._storageProviderFactory,
       context
     });
-    manifest.stores.forEach(store => {
+    await Promise.all(manifest.stores.map(async store => {
       if (store.constructor.name == 'StorageStub')
-        store = store.inflate();
+        store = await store.inflate();
       arc._registerStore(store, manifest._storeTags.get(store));
-    });
+    }));
     let recipe = manifest.activeRecipe.clone();
     let options = {errors: new Map()};
     assert(recipe.normalize(options), `Couldn't normalize recipe ${recipe.toString()}:\n${[...options.errors.values()].join('\n')}`);

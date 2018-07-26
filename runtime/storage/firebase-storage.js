@@ -169,7 +169,9 @@ class FirebaseStorageProvider extends StorageProviderBase {
         // we never actually commit it.
         return 0;
       }
-      return transactionFunction(data);
+      const newData = transactionFunction(data);
+      // TODO(sjmiles): remove `undefined` values from the object tree
+      return JSON.parse(JSON.stringify(newData));
     }, undefined, false);
     if (result.committed) {
       assert(result.snapshot.val() !== 0);
@@ -181,7 +183,7 @@ class FirebaseStorageProvider extends StorageProviderBase {
   get _hasLocalChanges() {
     assert(false, 'subclass should implement _hasLocalChanges');
   }
-  
+
   async _persistChangesImpl() {
     assert(false, 'subclass should implement _persistChangesImpl');
   }
@@ -245,7 +247,7 @@ class FirebaseVariable extends FirebaseStorageProvider {
     // the value to the remote store and will suppress any
     // incoming changes from firebase.
     this._localModified = false;
-    
+
     // Resolved when data is first available. The earlier of
     // * the initial value is supplied via firebase `reference.on`
     // * a value is written to the variable by a call to `set`.
@@ -273,7 +275,7 @@ class FirebaseVariable extends FirebaseStorageProvider {
   get _hasLocalChanges() {
     return this._localModified;
   }
-  
+
   async _persistChangesImpl() {
     assert(this._localModified);
     // Guard the specific version that we're writing. If we receive another
@@ -435,7 +437,7 @@ class FirebaseCollection extends FirebaseStorageProvider {
     // They can be removed once the state received from firebase
     // reaches `barrierVersion`.
     // id => {keys: Set[key], barrierVersion}
-    this._addSuppressions = new Map(); 
+    this._addSuppressions = new Map();
 
     // Local model of entries stored in this collection. Updated
     // by local modifications and when we receive remote updates

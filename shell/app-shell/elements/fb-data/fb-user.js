@@ -109,7 +109,8 @@ class FbUserElement extends Xen.Debug(Xen.Base, log) {
       },
       type: '[ArcMetadata]',
       name: 'ArcMetadata',
-      tags: ['arcmetadata', 'nosync']
+      tags: ['arcmetadata', 'nosync'],
+      storageKey: 'in-memory'
     };
     return FbStore.createContextStore(arc, options);
   }

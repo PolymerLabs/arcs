@@ -150,9 +150,10 @@ export class ParticleSpec {
 
   static fromLiteral(literal) {
     let {args, name, verbs, description, implFile, affordance, slots} = literal;
-    let connectionFromLiteral = ({type, direction, name, isOptional, dependentConnections}) => ({type: Type.fromLiteral(type), direction, name, isOptional, dependentConnections: dependentConnections.map(connectionFromLiteral)}); 
+    let connectionFromLiteral = ({type, direction, name, isOptional, dependentConnections}) =>
+      ({type: Type.fromLiteral(type), direction, name, isOptional, dependentConnections: dependentConnections ? dependentConnections.map(connectionFromLiteral) : []});
     args = args.map(connectionFromLiteral);
-    return new ParticleSpec({args, name, verbs, description, implFile, affordance, slots});
+    return new ParticleSpec({args, name, verbs: verbs || [], description, implFile, affordance, slots});
   }
 
   clone() {

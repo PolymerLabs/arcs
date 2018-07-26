@@ -67,6 +67,7 @@ const template = html`
   ></cloud-steps>
 
   <cloud-handles
+    config="{{config}}"
     key="{{key}}"
     arc="{{arc}}"
     plans="{{plans}}"
