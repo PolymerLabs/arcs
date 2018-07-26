@@ -465,9 +465,9 @@ describe('Arcs demos', function() {
     // (1) verify product was moved,
     // (2) verify 'action' slot is not visible after all products were moved.
     [
-      `Check shipping for Claire \\(Claire\\)'s Birthday on 2019-08-04.`,
+      `Check shipping for Claire's Birthday on 2019-08-04.`,
       'Check manufacturer information for products from your browsing context',
-      `Add items from Claire \\(Claire\\)'s wishlist \\(Book: How to Draw plus 2 other items\\)\\.`,
+      `Add items from Claire's wishlist \\(Book: How to Draw plus 2 other items\\)\\.`,
       `Find out about Claire's interests\\.`
     ].forEach(suggestion => {
       waitForStillness();

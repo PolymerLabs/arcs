@@ -67,7 +67,7 @@ describe('demo flow', function() {
     });
     helper.log('----------------------------------------');
 
-    // Accept "Check shipping for Claire (Claire)'s Birthday on..." suggestion.
+    // Accept "Check shipping for Claire's Birthday on..." suggestion.
     helper.slotComposer
       .newExpectations('Check shipping for Claire\'s Birthday on...')
         .expectRenderSlot('GiftList', 'preamble', {contentTypes: ['template', 'model']})
