@@ -115,6 +115,8 @@ describe('suggestion composer', function() {
     await suggestionComposer._updateSuggestions(helper.plans);
     assert.lengthOf(suggestionComposer._suggestConsumers, 1);
     let suggestConsumer = suggestionComposer._suggestConsumers[0];
+    await suggestConsumer._setContentPromise;
+
     assert.isTrue(suggestConsumer._content.template.includes('Light candles on Tiramisu cake'));
 
     await helper.acceptSuggestion({particles: ['LightCandles']});
