@@ -37,7 +37,7 @@ class StorageStub {
     this.id = id;
     this.name = name;
     this.storageKey = storageKey;
-    this.storageProviderFactory;
+    this.storageProviderFactory = storageProviderFactory;
   }
 
   inflate() {
