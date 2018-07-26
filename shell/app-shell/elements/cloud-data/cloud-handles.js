@@ -18,7 +18,7 @@ const originatorId = 'cloud-handles';
 
 class CloudHandles extends Xen.Debug(Xen.Base, log) {
   static get observedAttributes() {
-    return ['key', 'arc', 'plans'];
+    return ['config', 'key', 'arc', 'plans'];
   }
   _getInitialState() {
     return {
@@ -26,7 +26,11 @@ class CloudHandles extends Xen.Debug(Xen.Base, log) {
       watches: {}
     };
   }
-  _willReceiveProps({key, arc}, {roots, watches}, oldProps, oldState) {
+  _willReceiveProps({config, key, arc}, {roots, watches}, oldProps) {
+    if (config.useStorage) {
+      // use runtime storage instead of this code
+      return;
+    }
     if (oldProps.key && key !== oldProps.key) {
       this._disposeWatches(watches);
     }
