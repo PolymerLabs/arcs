@@ -37,7 +37,7 @@ describe('demo flow', function() {
       // logging: true
     });
 
-    helper.setTimeout(500);
+    helper.setTimeout(5000);
 
     // 1. Accept "Show products from your browsing context (...)." suggestion
     helper.slotComposer
