@@ -59,10 +59,12 @@ export class HostedSlotConsumer extends SlotConsumer {
   }
 
   getInnerContainer(name) {
-    if (this.storeId) {
+    let innerContainer = this.transformationSlotConsumer.getInnerContainer(name);
+    if (innerContainer && this.storeId) {
       let subId = this.arc.findStoreById(this.storeId)._stored.id;
-      return this.transformationSlotConsumer.getInnerContainer(name)[subId];
+      return innerContainer[subId];
     }
+    return innerContainer;
   }
 
   createProvidedContexts() {
