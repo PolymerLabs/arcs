@@ -35,16 +35,16 @@ export class SlotConsumer {
   getRendering(subId) { return this._renderingBySubId.get(subId); } 
   get renderings() { return [...this._renderingBySubId.entries()]; }
 
-  onContainerUpdate(container, originalContainer) {
-    if (Boolean(container) !== Boolean(originalContainer)) {
-      if (container) {
+  onContainerUpdate(newContainer, originalContainer) {
+    if (Boolean(newContainer) !== Boolean(originalContainer)) {
+      if (newContainer) {
         this.startRender();
       } else {
         this.stopRender();
       }
     }
 
-    if (container != originalContainer) {
+    if (newContainer != originalContainer) {
       let contextContainerBySubId = new Map();
       if (this.consumeConn && this.consumeConn.slotSpec.isSet) {
         Object.keys(this.slotContext.container || {}).forEach(subId => contextContainerBySubId.set(subId, this.slotContext.container[subId]));
@@ -58,6 +58,10 @@ export class SlotConsumer {
         }
         let rendering = this.getRendering(subId);
         if (!rendering.container || !this.isSameContainer(rendering.container, container)) {
+          if (rendering.container) {
+            // The rendering already had a container, but it's changed. The original container needs to be cleared.
+            this.clearContainer(rendering);
+          }
           rendering.container = this.createNewContainer(container, subId);
         }
       }
