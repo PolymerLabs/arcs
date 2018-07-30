@@ -42,6 +42,7 @@
     "webpack": "^2.6.1"
   },
   "dependencies": {
+    "atob": "^1.1.3",
     "btoa": "^1.2.1",
     "firebase": "^4.13.1",
     "node-fetch": "^1.7.2",

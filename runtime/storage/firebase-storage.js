@@ -10,6 +10,7 @@ import {StorageProviderBase} from './storage-provider-base.js';
 import {firebase} from '../../platform/firebase-web.js';
 import {assert} from '../../platform/assert-web.js';
 import {KeyBase} from './key-base.js';
+import {atob} from '../../platform/atob-web.js';
 import {btoa} from '../../platform/btoa-web.js';
 import {CrdtCollectionModel} from './crdt-collection-model.js';
 
@@ -472,22 +473,26 @@ class FirebaseCollection extends FirebaseStorageProvider {
     // [{id, keys}]
     let remove = [];
 
-    let ids = new Set([
+    let encIds = new Set([
       ...Object.keys(newRemoteState.items),
       ...Object.keys(this._remoteState.items),
     ]);
 
+
     // Diff the old state (this._remoteState) with the new state (newRemoteState) to determine
     // which keys have been added/removed.
-    for (let id of ids) {
+    for (let encId of encIds) {
+      let id = FirebaseStorageProvider.decodeKey(encId);
       let suppression = this._addSuppressions.get(id);
-      if (id in newRemoteState.items) {
-        let {keys, value} = newRemoteState.items[id];
-        keys = Object.keys(keys);
-        if (id in this._remoteState.items) {
+      if (encId in newRemoteState.items) {
+        let {keys: encKeys, value} = newRemoteState.items[encId];
+        encKeys = Object.keys(encKeys);
+        if (encId in this._remoteState.items) {
           // 1. possibly updated remotely.
-          let oldkeys = Object.keys(this._remoteState.items[id].keys);
-          let {add: addKeys, remove: removeKeys} = setDiff(oldkeys, keys);
+          let encOldkeys = Object.keys(this._remoteState.items[encId].keys);
+          let {add: encAddKeys, remove: encRemoveKeys} = setDiff(encOldkeys, encKeys);
+          let addKeys = encAddKeys.map(FirebaseStorageProvider.decodeKey);
+          let removeKeys = encRemoveKeys.map(FirebaseStorageProvider.decodeKey);
           if (suppression) {
             addKeys = addKeys.filter(key => !suppression.keys.has(key));
           }
@@ -507,7 +512,7 @@ class FirebaseCollection extends FirebaseStorageProvider {
           }
         } else {
           // 2. added remotely.
-          let addKeys = keys;
+          let addKeys = encKeys.map(FirebaseStorageProvider.decodeKey);
           if (suppression) {
             // Remove any keys that *we* added previously.
             addKeys = addKeys.filter(key => !suppression.keys.has(key));
@@ -518,14 +523,16 @@ class FirebaseCollection extends FirebaseStorageProvider {
             if (this._localChanges.has(id) && this._localChanges.get(id).add.length > 0 && this._model.has(id)) {
               value = this._model.getValue(id);
             }
+            let keys = encKeys.map(FirebaseStorageProvider.decodeKey);
             let effective = this._model.add(id, value, keys);
             add.push({value, keys, effective});
           }
         }
       } else {
         // 3. Removed remotely.
-        let {keys, value} = this._remoteState.items[id];
-        keys = Object.keys(keys);
+        let {keys: encKeys, value} = this._remoteState.items[encId];
+        encKeys = Object.keys(encKeys);
+        let keys = encKeys.map(FirebaseStorageProvider.decodeKey);
         let effective = this._model.remove(id, keys);
         remove.push({value, keys: keys, effective});
       }
@@ -645,17 +652,20 @@ class FirebaseCollection extends FirebaseStorageProvider {
         // these from this._localChanges if this transaction commits.
         changesPersisted = new Map();
         for (let [id, {add, remove}] of this._localChanges.entries()) {
+          let encId = FirebaseStorageProvider.encodeKey(id);
           changesPersisted.set(id, {add: [...add], remove: [...remove]});
           // Don't add keys that we have also removed.
           add = add.filter(key => !(remove.indexOf(key) >= 0));
-          let item = data.items[id] || {value: null, keys: {}};
+          let item = data.items[encId] || {value: null, keys: {}};
           // Propagate keys added locally.
           for (let key of add) {
-            item.keys[key] = data.version;
+            let encKey = FirebaseStorageProvider.encodeKey(key);
+            item.keys[encKey] = data.version;
           }
           // Remove keys removed locally.
           for (let key of remove) {
-            delete item.keys[key];
+            let encKey = FirebaseStorageProvider.encodeKey(key);
+            delete item.keys[encKey];
           }
           // If we've added a key, also propagate the value. (legacy mutation).
           if (add.length > 0) {
@@ -664,10 +674,10 @@ class FirebaseCollection extends FirebaseStorageProvider {
           }
           let keys = Object.keys(item.keys);
           if (keys.length > 0) {
-            data.items[id] = item;
+            data.items[encId] = item;
           } else {
             // Remove the entry entirely if there are no keys left.
-            delete data.items[id];
+            delete data.items[encId];
           }
         }
         return data;
@@ -718,6 +728,14 @@ class FirebaseCollection extends FirebaseStorageProvider {
 
   async cloneFrom(handle) {
     this.fromLiteral(await handle.toLiteral());
+    // Don't notify about the contents that have just been cloned.
+    // However, do record local changes for persistence.
+    for (let item of this._model._items.values()) {
+      assert(item.value.id !== undefined);
+      this._localChanges.set(item.value.id, {add: [...item.keys], remove: []});
+    }
+
+    await this._persistChanges();
   }
 
   // Returns {version, model: [{id, value, keys: []}]}
