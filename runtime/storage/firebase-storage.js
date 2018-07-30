@@ -732,7 +732,6 @@ class FirebaseCollection extends FirebaseStorageProvider {
     // However, do record local changes for persistence.
     for (let item of this._model._items.values()) {
       assert(item.value.id !== undefined);
-      console.log(item.value, item.keys);
       this._localChanges.set(item.value.id, {add: [...item.keys], remove: []});
     }
 
