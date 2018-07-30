@@ -221,7 +221,8 @@ Planner.ResolutionStrategies = [
   SearchTokensToHandles,
   GroupHandleConnections,
   FallbackFate,
-  CreateHandles,
+  // #1671: requiring 'create' fate to be explicit.
+  // CreateHandles,
   CreateHandleGroup,
   AssignHandlesByTagAndType,
   ConvertConstraintsToConnections,

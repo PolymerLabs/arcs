@@ -41,8 +41,8 @@ particle DisplayBox in 'test.js'
   in Box biggest
   description \`ignore this description too\`
 recipe
-  ${options.includeAllStore ? `use 'allboxes'` : `?`} as handle0
-  ${options.includeStore ? `use 'mybox'` : `?`} as handle1
+  ${options.includeAllStore ? `use 'allboxes'` : `create`} as handle0
+  ${options.includeStore ? `use 'mybox'` : `create`} as handle1
   ProvideBoxes
     boxes -> handle0
   CompareBoxes
