@@ -157,7 +157,8 @@ export class CoalesceRecipes extends Strategy {
             }
             handle.tags = handle.tags.concat(otherHandle.tags);
             recipe.removeHandle(mergedOtherHandle);
-            handle.fate = 'create';
+            // If both handles' fates were `use` keep their fate, otherwise set to `create`.
+            handle.fate = handle.fate == 'use' && otherHandle.fate == 'use' ? 'use' : 'create';
 
             // Clear verbs and recipe name after coalescing two recipes.
             recipe.verbs.splice(0);
