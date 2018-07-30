@@ -129,10 +129,10 @@ export class TestHelper {
    * suggestion to accept. Otherwise, fallback to a single generated suggestion, if appropriate.
    */
   async acceptSuggestion(options) {
-    let plan;
+    let plans = this.plans.slice();
     if (options) {
       if (options.particles) {
-        let plans = this.plans.filter(p => {
+        plans = plans.filter(p => {
           let planParticles = p.plan.particles.map(particle => particle.name);
           return planParticles.length == options.particles.length && planParticles.every(p => options.particles.includes(p));
         });
@@ -144,12 +144,14 @@ export class TestHelper {
             });
           });
         }
-        assert.lengthOf(plans, 1);
-        plan = plans[0];
-      } else if (options.descriptionText) {
-        plan = this.plans.find(p => p.descriptionText == options.descriptionText);
+      }
+      if (options.descriptionText) {
+        plans = this.plans.filter(p => p.descriptionText == options.descriptionText);
       }
     }
+    assert.lengthOf(plans, 1);
+    let plan = plans[0];
+
     if (!plan) {
       assert.lengthOf(this.plans, 1);
       plan = this.plans[0];

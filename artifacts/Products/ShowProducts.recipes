@@ -13,17 +13,25 @@ particle ShowProduct in 'source/ShowProduct.js'
   in Product product
   consume item
 
-recipe MuxedProductItem &muxProduct
+recipe MuxedItem &muxItem
   ItemMultiplexer
 
+// TODO(mmandlis): List + &muxItem should be a generic recipe used by both -
+// show products and show wishlist recipes. 
 recipe ProductList &showShopList
-  copy #shoplist as newlist
+  copy #shoplist as shoplist
   List
-    items = newlist
+    items <- shoplist
+  &muxItem
+    * <- shoplist
   description `show ${List.items}`
 
 // Show [person]'s wishlist
 recipe
-  use #claire as person
+  // use #claire as person
   map #wishlist as wishlist
-  &showShopList
+  List
+    items <- wishlist
+  &muxItem
+    * <- wishlist
+  description `show ${List.items}`

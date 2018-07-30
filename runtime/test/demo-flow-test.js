@@ -24,13 +24,10 @@ describe('demo flow', function() {
   it('flows like a demo', async function() {
     let helper = await TestHelper.createAndPlan({
       manifestFilename: './artifacts/Products/Products.recipes',
-      expectedNumPlans: 1,
+      expectedNumPlans: 2,
       verify: async plans => {
         let descriptions = await Promise.all(plans.map(plan => plan.description.getRecipeSuggestion()));
         assert.include(descriptions, `Show products from your browsing context (Minecraft Book plus 2 other items).`);
-                    //   'Show products from your browsing context (Minecraft Book plus 2 other items) ' +
-                    //  'and choose from products recommended based on products from your browsing context ' +
-                    //  'and Claire\'s wishlist (Book: How to Draw plus 2 other items).');
       },
       // Note: options below are useful to debug a failing demo-flow-test.
       // slotComposerStrict: false,
@@ -48,7 +45,10 @@ describe('demo flow', function() {
         .expectRenderSlot('ItemMultiplexer', 'item', {contentTypes: ['template', 'model'], hostedParticle: 'ShowProduct'})
         .expectRenderSlot('ItemMultiplexer', 'item', {contentTypes: ['model'], hostedParticle: 'ShowProduct', times: 2, isOptional: true})
         ;
-    await helper.acceptSuggestion({particles: ['List', 'ItemMultiplexer']});
+    await helper.acceptSuggestion({
+      particles: ['List', 'ItemMultiplexer'],
+      descriptionText: `Show products from your browsing context (Minecraft Book plus 2 other items).`
+    });
 
     assert.lengthOf(helper.arc.findStoresByType(helper.arc.context.findSchemaByName('Product').entityClass().type.collectionOf()), 1);
 
@@ -58,11 +58,12 @@ describe('demo flow', function() {
 
     // Replanning.
     await helper.makePlans({
-      expectedNumPlans: 2,
+      expectedNumPlans: 3,
       expectedSuggestions: [
         `Check shipping for Claire's Birthday on 2019-08-04.`,
         'Check manufacturer information for products from your browsing context ' +
-        '(Minecraft Book plus 2 other items).'
+        '(Minecraft Book plus 2 other items).',
+        'Show wishlist (Book: How to Draw plus 2 other items).'
       ]
     });
     helper.log('----------------------------------------');
@@ -88,11 +89,12 @@ describe('demo flow', function() {
 
     // Replanning.
     await helper.makePlans({
-      expectedNumPlans: 3,
+      expectedNumPlans: 4,
       expectedSuggestions: [
         'Find out about Claire\'s interests.',
         'Add items from Claire\'s wishlist (Book: How to Draw plus 2 other items).',
-        'Check manufacturer information for products from your browsing context (Minecraft Book plus 2 other items).'
+        'Check manufacturer information for products from your browsing context (Minecraft Book plus 2 other items).',
+        'Show wishlist (Book: How to Draw plus 2 other items).'
       ]
     });
 
@@ -137,10 +139,11 @@ describe('demo flow', function() {
 
     // Accept "Check manufacturer information for products from your browsing context (...)." suggestion
     await helper.makePlans({
-      expectedNumPlans: 2,
+      expectedNumPlans: 3,
       expectedSuggestions: [
         'Find out about Claire\'s interests.',
-        'Check manufacturer information for products from your browsing context (Minecraft Book plus 3 other items).'
+        'Check manufacturer information for products from your browsing context (Minecraft Book plus 3 other items).',
+        'Show wishlist (Book: How to Draw plus 2 other items).'
       ]
     });
     helper.slotComposer
@@ -167,7 +170,7 @@ describe('demo flow', function() {
     await verifyElementMove(/* key= */ 0, /* num= */ 6, ['Arrivinator', 'AlternateShipping', 'ManufacturerInfo']);
     helper.log('----------------------------------------');
 
-    await helper.makePlans({expectedNumPlans: 0});
+    await helper.makePlans({expectedNumPlans: 1});
     helper.log('----------------------------------------');
 
     helper.clearTimeout();
