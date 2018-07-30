@@ -1012,9 +1012,12 @@ ${e.message}
 
     let version = item.version || 0;
     let store = await Manifest._createStore(manifest, type, name, id, tags, item);
+    
+    // For this store to be able to be treated as a CRDT, each item needs a key.
+    // Using id as key seems safe, nothing else should do this.
     store.fromLiteral({
       version,
-      model: entities.map(value => ({id: value.id, value})),
+      model: entities.map(value => ({id: value.id, value, keys: new Set([value.id])})),
     });
   }
   static async _createStore(manifest, type, name, id, tags, item) {
