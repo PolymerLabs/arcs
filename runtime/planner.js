@@ -27,7 +27,6 @@ import {SearchTokensToParticles} from './strategies/search-tokens-to-particles.j
 import {FallbackFate} from './strategies/fallback-fate.js';
 import {GroupHandleConnections} from './strategies/group-handle-connections.js';
 import {MatchFreeHandlesToConnections} from './strategies/match-free-handles-to-connections.js';
-import {CreateHandles} from './strategies/create-handles.js';
 import {CreateHandleGroup} from './strategies/create-handle-group.js';
 import {CombinedStrategy} from './strategies/combined-strategy.js';
 import {FindHostedParticle} from './strategies/find-hosted-particle.js';
@@ -221,7 +220,6 @@ Planner.ResolutionStrategies = [
   SearchTokensToHandles,
   GroupHandleConnections,
   FallbackFate,
-  CreateHandles,
   CreateHandleGroup,
   AssignHandlesByTagAndType,
   ConvertConstraintsToConnections,

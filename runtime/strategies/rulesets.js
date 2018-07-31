@@ -21,7 +21,6 @@ import {SearchTokensToParticles} from './search-tokens-to-particles.js';
 import {FallbackFate} from './fallback-fate.js';
 import {GroupHandleConnections} from './group-handle-connections.js';
 import {MatchFreeHandlesToConnections} from './match-free-handles-to-connections.js';
-import {CreateHandles} from './create-handles.js';
 import {ResolveRecipe} from './resolve-recipe.js';
 
 export const Empty = new Ruleset.Builder().build();
@@ -39,7 +38,6 @@ export const ExperimentalPhased = new Ruleset.Builder().order(
   ConvertConstraintsToConnections,
   GroupHandleConnections,
   [
-    CreateHandles,
     AddUseHandles,
     AssignRemoteHandles,
     CopyRemoteHandles,
@@ -61,7 +59,6 @@ export const ExperimentalLinear = new Ruleset.Builder().order(
   ConvertConstraintsToConnections,
   GroupHandleConnections,
   MatchFreeHandlesToConnections,
-  CreateHandles,
   AddUseHandles,
   FallbackFate,
   AssignRemoteHandles,

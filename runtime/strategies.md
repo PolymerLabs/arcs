@@ -29,11 +29,6 @@ Creates a new recipe handle with a “use” fate for each handle connection tha
 The strategy is not executed on recipes with outstanding constraints or with free handles (ie handle with no corresponding handle connections).<br/>
 [add-use-handles.js](https://github.com/PolymerLabs/arcs/blob/master/runtime/strategies/add-use-handles.js)
 
-## CreateHandles
-Sets handle’s fate to “create”, if its fate was unknown and ID was undefined.
-Requires that there are at least 2 particles connected, at least one reading and one writing.<br/>
-[create-handles.js](https://github.com/PolymerLabs/arcs/blob/master/runtime/strategies/create-handles.js)
-
 ## CreateHandleGroup
 Creates a new 'create' handle connecting a broadest possible set of unresolved connections.
 Will never connect 2 connections from the same particle and requires at least one writing and one reading particle.<br/>
