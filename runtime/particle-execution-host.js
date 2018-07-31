@@ -69,7 +69,11 @@ export class ParticleExecutionHost {
     };
 
     this._apiPort.onArcCreateHandle = async ({callback, arc, type, name}) => {
-      let store = await this._arc.createStore(type, name);
+      // At the moment, inner arcs are not persisted like their containers, but are instead
+      // recreated when an arc is deserialized. As a consequence of this, dynamically 
+      // created handles for inner arcs must always be in-memory to prevent storage 
+      // in firebase.
+      let store = await this._arc.createStore(type, name, null, [], 'in-memory');
       this._apiPort.CreateHandleCallback(store, {type, name, callback, id: store.id});
     };
 
