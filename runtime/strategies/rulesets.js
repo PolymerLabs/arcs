@@ -21,54 +21,50 @@ import {SearchTokensToParticles} from './search-tokens-to-particles.js';
 import {FallbackFate} from './fallback-fate.js';
 import {GroupHandleConnections} from './group-handle-connections.js';
 import {MatchFreeHandlesToConnections} from './match-free-handles-to-connections.js';
-import {CreateHandles} from './create-handles.js';
 import {ResolveRecipe} from './resolve-recipe.js';
 
 export const Empty = new Ruleset.Builder().build();
 
-// Note: rulesets below are not used yet. Will uncomment on demand.
-// export const ExperimentalPhased = new Ruleset.Builder().order(
-//   [
-//     InitPopulation,
-//     InitSearch
-//   ],
-//   SearchTokensToParticles,
-//   [
-//     MatchRecipeByVerb,
-//     MatchParticleByVerb
-//   ],
-//   ConvertConstraintsToConnections,
-//   GroupHandleConnections,
-//   [
-//     CreateHandles,
-//     AddUseHandles,
-//     AssignRemoteHandles,
-//     CopyRemoteHandles,
-//     AssignHandlesByTagAndType,
-//     MatchFreeHandlesToConnections,
-//     FallbackFate,
-//   ],
-//   MapSlots,
-//   CreateDescriptionHandle,
-//   ResolveRecipe
-// ).build();
+export const ExperimentalPhased = new Ruleset.Builder().order(
+  [
+    InitPopulation,
+    InitSearch
+  ],
+  SearchTokensToParticles,
+  [
+    MatchRecipeByVerb,
+    MatchParticleByVerb
+  ],
+  ConvertConstraintsToConnections,
+  GroupHandleConnections,
+  [
+    AddUseHandles,
+    AssignRemoteHandles,
+    CopyRemoteHandles,
+    AssignHandlesByTagAndType,
+    MatchFreeHandlesToConnections,
+    FallbackFate,
+  ],
+  MapSlots,
+  CreateDescriptionHandle,
+  ResolveRecipe
+).build();
 
-// export const ExperimentalLinear = new Ruleset.Builder().order(
-//   InitPopulation,
-//   InitSearch,
-//   SearchTokensToParticles,
-//   MatchRecipeByVerb,
-//   MatchParticleByVerb,
-//   ConvertConstraintsToConnections,
-//   GroupHandleConnections,
-//   MatchFreeHandlesToConnections,
-//   CreateHandles,
-//   AddUseHandles,
-//   FallbackFate,
-//   AssignRemoteHandles,
-//   CopyRemoteHandles,
-//   AssignHandlesByTagAndType,
-//   MapSlots,
-//   CreateDescriptionHandle,
-//   ResolveRecipe
-// ).build();
+export const ExperimentalLinear = new Ruleset.Builder().order(
+  InitPopulation,
+  InitSearch,
+  SearchTokensToParticles,
+  MatchRecipeByVerb,
+  MatchParticleByVerb,
+  ConvertConstraintsToConnections,
+  GroupHandleConnections,
+  MatchFreeHandlesToConnections,
+  AddUseHandles,
+  FallbackFate,
+  AssignRemoteHandles,
+  CopyRemoteHandles,
+  AssignHandlesByTagAndType,
+  MapSlots,
+  CreateDescriptionHandle,
+  ResolveRecipe
+).build();

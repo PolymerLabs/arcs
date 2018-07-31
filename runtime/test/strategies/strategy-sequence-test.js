@@ -14,7 +14,6 @@ import {GroupHandleConnections} from '../../strategies/group-handle-connections.
 import {ResolveRecipe} from '../../strategies/resolve-recipe.js';
 import {MatchRecipeByVerb} from '../../strategies/match-recipe-by-verb.js';
 import {StrategyTestHelper} from './strategy-test-helper.js';
-import {CreateHandles} from '../../strategies/create-handles.js';
 import {CreateHandleGroup} from '../../strategies/create-handle-group.js';
 
 let {createTestArc, onlyResult, noResult, theResults} = StrategyTestHelper;
