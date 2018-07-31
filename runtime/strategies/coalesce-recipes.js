@@ -29,6 +29,7 @@ export class CoalesceRecipes extends Strategy {
   async generate(inputParams) {
     const index = this._index;
     await index.ready;
+    const coalescableFates = ['create', 'use', '?'];
 
     return Recipe.over(this.getResults(inputParams), new class extends Walker {
       onSlotConnection(recipe, slotConnection) {
@@ -119,14 +120,13 @@ export class CoalesceRecipes extends Strategy {
       }
 
       onHandle(recipe, handle) {
-        if ((handle.fate !== 'use' && handle.fate !== '?')
+        if (!coalescableFates.includes(handle.fate)
             || handle.id
             || handle.connections.length === 0
             || handle.name === 'descriptions') return;
-
         let results = [];
 
-        for (let otherHandle of index.findHandleMatch(handle, ['create', '?'])) {
+        for (let otherHandle of index.findHandleMatch(handle, coalescableFates)) {
           // Don't grow recipes above 10 particles, otherwise we might never stop.
           if (recipe.particles.length + otherHandle.recipe.particles.length > 10) continue;
 
@@ -157,7 +157,8 @@ export class CoalesceRecipes extends Strategy {
             }
             handle.tags = handle.tags.concat(otherHandle.tags);
             recipe.removeHandle(mergedOtherHandle);
-            handle.fate = 'create';
+            // If both handles' fates were `use` keep their fate, otherwise set to `create`.
+            handle.fate = handle.fate == 'use' && otherHandle.fate == 'use' ? 'use' : 'create';
 
             // Clear verbs and recipe name after coalescing two recipes.
             recipe.verbs.splice(0);

@@ -136,6 +136,11 @@ export class RecipeIndex {
 
     let results = [];
     for (let recipe of this._recipes) {
+      if (recipe.particles.some(particle => !particle.name)) {
+        // Skip recipes where not all verbs are resolved to specific particles
+        // to avoid trying to coalesce a recipe with itself.
+        continue;
+      }
       for (let otherHandle of recipe.handles) {
         if (requestedFates && !(requestedFates.includes(otherHandle.fate))
             || otherHandle.connections.length === 0
@@ -181,6 +186,11 @@ export class RecipeIndex {
 
     let consumeConns = [];
     for (let recipe of this._recipes) {
+      if (recipe.particles.some(particle => !particle.name)) {
+        // Skip recipes where not all verbs are resolved to specific particles
+        // to avoid trying to coalesce a recipe with itself.
+        continue;
+      }
       for (let slotConn of recipe.slotConnections) {
         if (!slotConn.targetSlot && MapSlots.specMatch(slotConn, slot) && MapSlots.tagsOrNameMatch(slotConn, slot)) {
           let matchingHandles = [];
@@ -215,6 +225,11 @@ export class RecipeIndex {
 
     let providedSlots = [];
     for (let recipe of this._recipes) {
+      if (recipe.particles.some(particle => !particle.name)) {
+        // Skip recipes where not all verbs are resolved to specific particles
+        // to avoid trying to coalesce a recipe with itself.
+        continue;
+      }
       for (let consumeConn of recipe.slotConnections) {
         for (let providedSlot of Object.values(consumeConn.providedSlots)) {
           if (MapSlots.slotMatches(slotConn, providedSlot)) {
