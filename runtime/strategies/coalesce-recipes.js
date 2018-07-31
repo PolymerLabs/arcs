@@ -11,6 +11,7 @@ import {RecipeUtil} from '../recipe/recipe-util.js';
 import {Walker} from '../recipe/walker.js';
 import {Handle} from '../recipe/handle.js';
 import {Type} from '../type.js';
+import {assert} from '../../platform/assert-web.js';
 
 // This strategy coalesces unresolved terminal recipes (i.e. those that cannot
 // be modified by any strategy apart from this one) by finding unresolved
@@ -32,6 +33,7 @@ export class CoalesceRecipes extends Strategy {
     const coalescableFates = ['create', 'use', '?'];
 
     return Recipe.over(this.getResults(inputParams), new class extends Walker {
+      // Find a provided slot for unfulfilled consume connection.
       onSlotConnection(recipe, slotConnection) {
         if (slotConnection.isResolved()) {
           return;
@@ -48,11 +50,17 @@ export class CoalesceRecipes extends Strategy {
         // but no other connections are resolved.
 
         let results = [];
+        // TODO: It is possible that provided-slot wasn't matched due to different handles, but actually
+        // these handles are coalescable? Add support for this.
         for (let providedSlot of index.findProvidedSlot(slotConnection)) {
           results.push((recipe, slotConnection) => {
+            let otherToHandle = this._findCoalescableHandles(recipe, providedSlot.recipe);
+
             let {cloneMap} = providedSlot.recipe.mergeInto(slotConnection.recipe);
             let mergedSlot = cloneMap.get(providedSlot);
             slotConnection.connectToSlot(mergedSlot);
+
+            this._connectOtherHandles(otherToHandle, cloneMap);
 
             // Clear verbs and recipe name after coalescing two recipes.
             recipe.verbs.splice(0);
@@ -83,6 +91,10 @@ export class CoalesceRecipes extends Strategy {
           }
 
           results.push((recipe, slot) => {
+            // Find other handles that may be merged, as recipes are being coalesced.
+            let otherToHandle = this._findCoalescableHandles(recipe, slotConn.recipe,
+              new Set(slot.handleConnections.map(hc => hc.handle).concat(matchingHandles.map(({handle, matchingConn}) => matchingConn.handle))));
+
             let {cloneMap} = slotConn.recipe.mergeInto(slot.recipe);
             let mergedSlotConn = cloneMap.get(slotConn);
             mergedSlotConn.connectToSlot(slot);
@@ -102,6 +114,8 @@ export class CoalesceRecipes extends Strategy {
               }
               recipe.removeHandle(disconnectedHandle);
             }
+
+            this._connectOtherHandles(otherToHandle, cloneMap);
 
             // Clear verbs and recipe name after coalescing two recipes.
             recipe.verbs.splice(0);
@@ -147,18 +161,16 @@ export class CoalesceRecipes extends Strategy {
           }
 
           results.push((recipe, handle) => {
-            let {cloneMap} = otherHandle.recipe.mergeInto(recipe);
-            let mergedOtherHandle = cloneMap.get(otherHandle);
-            if (!mergedOtherHandle) return null;
-            while (mergedOtherHandle.connections.length > 0) {
-              let [connection] = mergedOtherHandle.connections;
-              connection.disconnectHandle();
-              connection.connectToHandle(handle);
-            }
-            handle.tags = handle.tags.concat(otherHandle.tags);
-            recipe.removeHandle(mergedOtherHandle);
-            // If both handles' fates were `use` keep their fate, otherwise set to `create`.
-            handle.fate = handle.fate == 'use' && otherHandle.fate == 'use' ? 'use' : 'create';
+            // Find other handles in the original recipe that could be coalesced with handles in otherHandle's recipe.
+            let otherToHandle = this._findCoalescableHandles(recipe, otherHandle.recipe, new Set([handle, otherHandle]));
+
+            let {cloneMap} = otherHandle.recipe.mergeInto(handle.recipe);
+
+            // Connect the handle that the recipes are being coalesced on.
+            this._connectOtherHandleToHandle(handle, cloneMap.get(otherHandle));
+
+            // Connect all other connectable handles.
+            this._connectOtherHandles(otherToHandle, cloneMap);
 
             // Clear verbs and recipe name after coalescing two recipes.
             recipe.verbs.splice(0);
@@ -171,6 +183,47 @@ export class CoalesceRecipes extends Strategy {
         }
 
         return results;
+      }
+
+      _findCoalescableHandles(recipe, otherRecipe, usedHandles) {
+        assert(recipe != otherRecipe, 'Cannot coalesce handles in the same recipe');
+        let otherToHandle = new Map();
+        usedHandles = usedHandles || new Set();
+        for (let handle of recipe.handles) {
+          if (usedHandles.has(handle) || !coalescableFates.includes(handle.fate)) {
+            continue;
+          }
+          for (let otherHandle of otherRecipe.handles) {
+            if (usedHandles.has(otherHandle) || !coalescableFates.includes(otherHandle.fate)) {
+              continue;
+            }
+            if (index.doesHandleMatch(handle, otherHandle)) {
+              otherToHandle.set(handle, otherHandle);
+              usedHandles.add(handle);
+              usedHandles.add(otherHandle);
+            }
+          }
+        }
+        return otherToHandle;
+      }
+
+      _connectOtherHandles(otherToHandle, cloneMap) {
+        otherToHandle.forEach((otherHandle, handle) => {
+          this._connectOtherHandleToHandle(handle, cloneMap.get(otherHandle));
+        });
+      }
+
+      _connectOtherHandleToHandle(handle, mergedOtherHandle) {
+        if (!mergedOtherHandle) return null;
+        while (mergedOtherHandle.connections.length > 0) {
+          let [connection] = mergedOtherHandle.connections;
+          connection.disconnectHandle();
+          connection.connectToHandle(handle);
+        }
+        handle.tags = handle.tags.concat(mergedOtherHandle.tags);
+        handle.recipe.removeHandle(mergedOtherHandle);
+        // If both handles' fates were `use` keep their fate, otherwise set to `create`.
+        handle.fate = handle.fate == 'use' && mergedOtherHandle.fate == 'use' ? 'use' : 'create';
       }
     }(Walker.Independent), this);
   }

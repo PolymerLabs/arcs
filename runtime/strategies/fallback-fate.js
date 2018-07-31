@@ -25,13 +25,14 @@ export class FallbackFate extends Strategy {
           return;
         }
 
-        // Only apply to handles whose fate is set, but wasn't explicitly defined in the recipe.
-        if (handle.isResolved() || handle.fate == '?' || handle.originalFate != '?') {
+        // Only apply to handles whose fate is set, but was explicitly defined as ? in the recipe.
+        if (handle.isResolved() || handle.fate == '?' || !handle.originalFate || handle.originalFate != '?') {
           return;
         }
 
         let hasOutConns = handle.connections.some(hc => hc.isOutput);
         let newFate = hasOutConns ? 'copy' : 'map';
+
         if (handle.fate == newFate) {
           return;
         }

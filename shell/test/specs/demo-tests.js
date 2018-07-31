@@ -271,6 +271,11 @@ function openSystemUi() {
   wait(200);
 }
 
+function waitForStillnessAndOpenSystemUi() {
+  waitForStillness();
+  openSystemUi();
+}
+
 function allSuggestions() {
   waitForStillness();
   openSystemUi();
@@ -427,7 +432,7 @@ describe('Arcs demos', function() {
   it('can book a restaurant', /** @this Context */ function() {
     initTestWithNewArc(this.test.fullTitle(), true);
     allSuggestions();
-    acceptSuggestion('Find restaurants');
+    acceptSuggestion('Find restaurants[^\0]{0,30}$');
     // Our location is relative to where you are now, so this list is dynamic.
     // Rather than trying to mock this out let's just grab the first
     // restaurant.
@@ -437,7 +442,12 @@ describe('Arcs demos', function() {
     let restaurantNodes = pierceShadows(restaurantSelectors);
     console.log(`click: restaurantSelectors`);
     browser.elementIdClick(restaurantNodes.value[0].ELEMENT);
+    // TODO: figure out why waitForStillnessAndOpenSystemUi is needed here -
+    // the suggestion is visible, 'found suggestion' log appears,
+    // but it is not clickable and hence cannot be accepted.
+    waitForStillnessAndOpenSystemUi();
     acceptSuggestion('table for 2 available[^\0]{0,30}$');
+    waitForStillnessAndOpenSystemUi();
     acceptSuggestion('from your calendar');
     testAroundRefresh();
 

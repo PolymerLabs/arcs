@@ -736,7 +736,7 @@ describe('Automatic resolution', function() {
       provide preamble as slot5`);
   });
 
-  it('searches and coalesces restaurants recipes by recipe name', async () => {
+  it('searches and coalesces nearby restaurants by recipe name', async () => {
     let recipes = await verifyResolvedPlans(`
       import 'artifacts/Restaurants/Restaurants.recipes'
       import 'artifacts/People/Person.schema'
@@ -749,6 +749,35 @@ describe('Automatic resolution', function() {
     assert.lengthOf(recipes, 1);
     assert.deepEqual(recipes[0].particles.map(p => p.name).sort(),
       ['FindRestaurants', 'ExtractLocation', 'RestaurantList', 'RestaurantMasterDetail', 'RestaurantDetail'].sort());
+    assert.lengthOf(recipes[0].handles, 4);
+  });
+
+  it('searches and coalesces make reservation by recipe name', async () => {
+    let recipes = await verifyResolvedPlans(`
+      import 'artifacts/Restaurants/Restaurants.recipes'
+      import 'artifacts/People/Person.schema'
+
+      store User of Person 'User' in './artifacts/Things/empty.json'
+
+      recipe
+        search \`make reservation\`
+    `, () => {});
+    assert.lengthOf(recipes, 1);
+    let recipe = recipes[0];
+    assert.deepEqual(recipe.particles.map(p => p.name).sort(),
+      ['FindRestaurants', 'ExtractLocation', 'PartySize', 'ReservationAnnotation', 'ReservationForm', 'RestaurantList', 'RestaurantMasterDetail', 'RestaurantDetail'].sort());
+
+    // Verify handles.
+    assert.lengthOf(recipe.handles, 6);
+    // Only descriptions and person handle have one handle connection.
+    assert.isTrue(recipe.handles.every(h => h.connections.length > 1 || ['descriptions', 'person'].includes(h.connections[0].name)));
+    // Only person handle has fate other than `create`
+    assert.isTrue(recipe.handles.every(h => h.fate == 'create' || 'person' == h.connections[0].name));
+    // Naive verification that a specific connection name only binds to the same handle.
+    recipe.handles.forEach(handle => handle.connections.every(conn => {
+      assert.isTrue(recipe.handles.every(otherHandle => handle == otherHandle || !otherHandle.connections.some(otherConn => otherConn.name == conn.name)),
+                    `Connection name ${conn.name} is bound to multiple handles.`);
+    }));
   });
 
   // TODO: FindRestaurants particle, found by search term never tries 'create' handle as part of strategizing.
