@@ -129,6 +129,12 @@ export class SlotComposer {
   }
 
   async renderSlot(particle, slotName, content) {
+    let contentDebug = content.model && content.model.items
+        ? (content.model.items.models ? content.model.items.models.map(m => m.id) : content.model.items.map(i => i.subId))
+        : null;
+    if (contentDebug) {
+      console.log(`>>> render slot: ${particle.name}::${slotName} [${contentDebug.join(', ')}]`);
+    }
     let slotConsumer = this.getSlotConsumer(particle, slotName);
     assert(slotConsumer, `Cannot find slot (or hosted slot) ${slotName} for particle ${particle.name}`);
 
