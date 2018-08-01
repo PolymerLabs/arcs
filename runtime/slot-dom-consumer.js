@@ -245,7 +245,9 @@ export class SlotDomConsumer extends SlotConsumer {
       }
       parentNode = parentNode.parentNode;
     }
-    assert(false);
+    // innerContainer won't be a child node of container if the method is triggered
+    // by mutation observer record and innerContainer was removed.
+    return false;
   }
 
   _initMutationObserver() {
