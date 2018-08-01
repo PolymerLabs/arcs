@@ -1,0 +1,62 @@
+// @license
+// Copyright (c) 2017 Google Inc. All rights reserved.
+// This code may only be used under the BSD style license found at
+// http://polymer.github.io/LICENSE.txt
+// Code distributed by Google as part of this project is also
+// subject to an additional IP rights grant found at
+// http://polymer.github.io/PATENTS.txt
+
+import 'PlaidAccounts.schema'
+import '../Common/List.manifest'
+import 'PlaidData.manifest' // from Demo.manifest
+
+particle PlaidAccountItem in 'source/PlaidAccountItem.js'
+  in PlaidAccount account
+  consume item
+
+particle PlaidTransactionItem in 'source/PlaidTransactionItem.js'
+  in PlaidTransaction transaction
+  consume item
+
+particle PlaidTransactionFilter in 'source/PlaidTransactionFilter.js'
+  in PlaidAccount account
+  in [PlaidTransaction] transactions
+  inout [PlaidTransaction] accountTransactions
+  description `Transactions by Account`
+
+recipe PlaidTransacationsByAccount
+  create #xactions #items as accountTransactions
+  use #selected as account
+  map as transactions
+  PlaidTransactionFilter
+    account = account
+    transactions = transactions
+    accountTransactions = accountTransactions
+
+recipe AccountsAndTransactions
+  copy #accounts as accounts
+  create #xactions #items as accountTransactions
+  create as selected
+  map as transactions
+  SelectableList
+    items = accounts
+    selected = selected
+    consume root as root
+      provide item as accountsItem
+      provide action as action
+  ItemMultiplexer
+    list = accounts
+    hostedParticle = PlaidAccountItem
+    consume item as accountsItem
+  PlaidTransactionFilter
+    account = selected
+    transactions = transactions
+    accountTransactions = accountTransactions
+  List
+    items = accountTransactions
+    consume root as action
+      provide item as xItem
+  ItemMultiplexer
+    list = accountTransactions
+    hostedParticle = PlaidTransactionItem
+    consume item as xItem

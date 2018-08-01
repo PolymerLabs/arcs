@@ -245,16 +245,18 @@ export class SlotDomConsumer extends SlotConsumer {
       }
       parentNode = parentNode.parentNode;
     }
-    assert(false);
+    return false;
   }
 
   _initMutationObserver() {
     if (this.consumeConn) {
       return new MutationObserver(async (records) => {
+        console.log('....... observed record ', this.consumeConn.getQualifiedName());
         this._observer.disconnect();
         let containers = this.renderings.map(([subId, {container}]) => container)
           .filter(container => records.some(r => this.isDirectInnerSlot(container, r.target)));
         if (containers.length > 0) {
+          console.log('>>>>> Observed inner containers change in ', this.consumeConn.getQualifiedName());
           this._innerContainerBySlotName = {};
           containers.forEach(container => this.initInnerContainers(container));
           this.updateProvidedContexts();

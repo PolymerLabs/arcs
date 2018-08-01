@@ -1,0 +1,41 @@
+[
+  {
+    "id": "account1",
+    "item": "KdDjmojBERUKx3JkDd9RuxA5EvejA4SENO4AA",
+    "user": "eJXpMzpR65FP4RYno6rzuA7OZjd9n3Hna0RYa",
+    "balanceAvailable": 1203.42,
+    "balanceCurrent": 1274.93,
+    "institution_type": "citi",
+    "name": "Account 1",
+    "metaName": "Account 1",
+    "metaNumber": "9606",
+    "subtype": "savings",
+    "type": "depository"
+  },
+  {
+    "id": "account2",
+    "item": "KdDjmojBERUKx3JkDd9RuxA5EvejA4SENO4AA",
+    "user": "eJXpMzpR65FP4RYno6rzuA7OZjd9n3Hna0RYa",
+    "balanceAvailable": 1081.78,
+    "balanceCurrent": 1253.32,
+    "institution_type": "citi",
+    "name": "Account 2",
+    "metaName": "Account 2",
+    "metaNumber": "1702",
+    "subtype": "checking",
+    "type": "depository"
+  },
+  {
+    "id": "account3",
+    "item": "KdDjmojBERUKx3JkDd9RuxA5EvejA4SENO4AA",
+    "user": "eJXpMzpR65FP4RYno6rzuA7OZjd9n3Hna0RYa",
+    "balanceAvailable": 7205.23,
+    "balanceCurrent": 7255.23,
+    "institution_type": "citi",
+    "name": "Account 3",
+    "metaName": "Account 3",
+    "metaNumber": "5204",
+    "subtype": "checking",
+    "type": "depository"
+  }
+]
