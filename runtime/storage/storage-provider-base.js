@@ -11,12 +11,11 @@ import {Tracing} from '../../tracelib/trace.js';
 import * as util from '../recipe/util.js';
 
 export class StorageProviderBase {
-  constructor(type, arcId, name, id, key) {
+  constructor(type, name, id, key) {
     assert(id, 'id must be provided when constructing StorageProviders');
     assert(!type.hasUnresolvedVariable, 'Storage types must be concrete');
     let trace = Tracing.start({cat: 'handle', name: 'StorageProviderBase::constructor', args: {type: type.key, name: name}});
     this._type = type;
-    this._arcId = arcId;
     this._listeners = new Map();
     this.name = name;
     this._version = 0;

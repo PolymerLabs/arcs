@@ -401,6 +401,7 @@ addType('Relation', 'entities');
 addType('Interface', 'shape');
 addType('Tuple', 'fields');
 addType('Slot');
+addType('Pointer', 'dereference');
 
 import {Shape} from './shape.js';
 import {Schema} from './schema.js';
