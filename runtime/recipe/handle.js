@@ -53,6 +53,28 @@ export class Handle {
     return handle;
   }
 
+  // Merges `this` recipe handle into `handle`
+  mergeInto(handle) {
+    assert(this.recipe == handle.recipe, 'Cannot merge handles from different recipes.');
+    while (this.connections.length > 0) {
+      let [connection] = this.connections;
+      connection.disconnectHandle();
+      connection.connectToHandle(handle);
+    }
+    handle.tags = handle.tags.concat(this.tags);
+    handle.recipe.removeHandle(this);
+    handle.fate = this._mergedFate([this.fate, handle.fate]);
+  }
+
+  _mergedFate(fates) {
+    assert(fates.length > 0, `Cannot merge empty fates list`);
+    // Merging handles only used in coalesce-recipe strategy, which is only done for use/create/? fates.
+    assert(!fates.includes('map') && !fates.includes('copy'), `Merging map/copy not supported yet`);
+
+    // If all fates were `use` keep their fate, otherwise set to `create`.
+    return fates.every(fate => fate == 'use') ? 'use' : 'create';
+  }
+
   _startNormalize() {
     this._localName = null;
     this._tags.sort();
