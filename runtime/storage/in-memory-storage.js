@@ -105,7 +105,7 @@ class InMemoryCollection extends InMemoryStorageProvider {
   }
 
   clone() {
-    let handle = new InMemoryCollection(this._type, this.storageEngine, this.name, this.id);
+    let handle = new InMemoryCollection(this._type, this._storageEngine, this.name, this.id);
     handle.cloneFrom(this);
     return handle;
   }
