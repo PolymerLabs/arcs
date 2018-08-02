@@ -13,6 +13,11 @@ import {StorageProviderBase} from './storage-provider-base.js';
 import {KeyBase} from './key-base.js';
 import {CrdtCollectionModel} from './crdt-collection-model.js';
 
+export function resetInMemoryStorageForTesting() {
+  for (let key in __storageCache)
+    __storageCache[key]._memoryMap = {};
+}
+
 class InMemoryKey extends KeyBase {
   constructor(key) {
     super();
@@ -57,7 +62,8 @@ export class InMemoryStorage {
       key.arcId = this._arcId;
     if (key.location == undefined)
       key.location = 'in-memory-' + this.localIDBase++;
-    let provider = InMemoryStorageProvider.newProvider(type, this._arcId, undefined, id, key.toString());
+    // TODO(shanestephens): should pass in factory, not 'this' here.
+    let provider = InMemoryStorageProvider.newProvider(type, this, undefined, id, key.toString());
     if (this._memoryMap[key.toString()] !== undefined)
       return null;
     this._memoryMap[key.toString()] = provider;
@@ -83,22 +89,23 @@ export class InMemoryStorage {
 }
 
 class InMemoryStorageProvider extends StorageProviderBase {
-  static newProvider(type, arcId, name, id, key) {
+  static newProvider(type, storageEngine, name, id, key) {
     if (type.isCollection)
-      return new InMemoryCollection(type, arcId, name, id, key);
-    return new InMemoryVariable(type, arcId, name, id, key);
+      return new InMemoryCollection(type, storageEngine, name, id, key);
+    return new InMemoryVariable(type, storageEngine, name, id, key);
   }
 }
 
 class InMemoryCollection extends InMemoryStorageProvider {
-  constructor(type, arcId, name, id, key) {
-    super(type, arcId, name, id, key);
+  constructor(type, storageEngine, name, id, key) {
+    super(type, name, id, key);
     this._model = new CrdtCollectionModel();
+    this._storageEngine = storageEngine;
     assert(this._version !== null);
   }
 
   clone() {
-    let handle = new InMemoryCollection(this._type, this._arcId, this.name, this.id);
+    let handle = new InMemoryCollection(this._type, this._storageEngine, this.name, this.id);
     handle.cloneFrom(this);
     return handle;
   }
@@ -159,13 +166,14 @@ class InMemoryCollection extends InMemoryStorageProvider {
 }
 
 class InMemoryVariable extends InMemoryStorageProvider {
-  constructor(type, arcId, name, id, key) {
-    super(type, arcId, name, id, key);
+  constructor(type, storageEngine, name, id, key) {
+    super(type, name, id, key);
+    this._storageEngine = storageEngine;
     this._stored = null;
   }
 
   clone() {
-    let variable = new InMemoryVariable(this._type, this._arcId, this.name, this.id);
+    let variable = new InMemoryVariable(this._type, this._storageEngine, this.name, this.id);
     variable.cloneFrom(this);
     return variable;
   }
@@ -203,6 +211,14 @@ class InMemoryVariable extends InMemoryStorageProvider {
   }
 
   async get() {
+    if (this.type.isPointer) {
+      let value = this._stored;
+      let pointedType = this.type.pointerDereference;
+      // TODO: string version of dereferenced type as ID?
+      let store = await this._storageEngine.connect(pointedType.toString(), pointedType, value.storageKey);
+      let result = await store.get();
+      return result;
+    }
     return this._stored;
   }
 
