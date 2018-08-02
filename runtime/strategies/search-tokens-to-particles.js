@@ -23,6 +23,11 @@ export class SearchTokensToParticles extends Strategy {
     }
 
     class SearchWalker extends Walker {
+      constructor(tactic, arc) {
+        super(tactic);
+        this.index = arc.recipeIndex;
+      }
+
       onRecipe(recipe) {
         if (!recipe.search || !recipe.search.unresolvedTokens.length) {
           return;
@@ -73,8 +78,10 @@ export class SearchTokensToParticles extends Strategy {
                 let particle = recipe.newParticle(spec.name);
                 particle.spec = spec;
               } else {
+                let otherToHandle = this.index.findCoalescableHandles(recipe, innerRecipe);
                 assert(innerRecipe);
-                innerRecipe.mergeInto(recipe);
+                let {cloneMap} = innerRecipe.mergeInto(recipe);
+                otherToHandle.forEach((otherHandle, handle) => cloneMap.get(otherHandle).mergeInto(handle));
               }
             });
             return resolvedTokens.size;
@@ -82,7 +89,7 @@ export class SearchTokensToParticles extends Strategy {
         });
       }
     }
-    this._walker = new SearchWalker(Walker.Permuted);
+    this._walker = new SearchWalker(Walker.Permuted, arc);
   }
 
   get walker() {
@@ -117,6 +124,7 @@ export class SearchTokensToParticles extends Strategy {
   }
 
   async generate(inputParams) {
+    await this.walker.index.ready;
     return Recipe.over(this.getResults(inputParams), this.walker, this);
   }
 }

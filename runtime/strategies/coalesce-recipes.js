@@ -20,17 +20,19 @@ import {assert} from '../../platform/assert-web.js';
 export class CoalesceRecipes extends Strategy {
   constructor(arc) {
     super();
-    this._index = arc.recipeIndex;
+    this._arc = arc;
   }
+
+  get arc() { return this._arc; }
 
   getResults(inputParams) {
     return inputParams.terminal.filter(result => !result.result.isResolved());
   }
 
   async generate(inputParams) {
-    const index = this._index;
+    const arc = this.arc;
+    const index = this.arc.recipeIndex;
     await index.ready;
-    const coalescableFates = ['create', 'use', '?'];
 
     return Recipe.over(this.getResults(inputParams), new class extends Walker {
       // Find a provided slot for unfulfilled consume connection.
@@ -53,8 +55,16 @@ export class CoalesceRecipes extends Strategy {
         // TODO: It is possible that provided-slot wasn't matched due to different handles, but actually
         // these handles are coalescable? Add support for this.
         for (let providedSlot of index.findProvidedSlot(slotConnection)) {
+          // Don't grow recipes above 10 particles, otherwise we might never stop.
+          if (recipe.particles.length + providedSlot.recipe.particles.length > 10) continue;
+
+          if (RecipeUtil.matchesRecipe(arc.activeRecipe, providedSlot.recipe)) {
+            // skip candidate recipe, if matches the shape of the arc's active recipe
+            continue;
+          }
+
           results.push((recipe, slotConnection) => {
-            let otherToHandle = this._findCoalescableHandles(recipe, providedSlot.recipe);
+            let otherToHandle = index.findCoalescableHandles(recipe, providedSlot.recipe);
 
             let {cloneMap} = providedSlot.recipe.mergeInto(slotConnection.recipe);
             let mergedSlot = cloneMap.get(providedSlot);
@@ -85,14 +95,22 @@ export class CoalesceRecipes extends Strategy {
 
         let results = [];
         for (let {slotConn, matchingHandles} of index.findConsumeSlotConnectionMatch(slot)) {
+          // Don't grow recipes above 10 particles, otherwise we might never stop.
+          if (recipe.particles.length + slotConn.recipe.particles.length > 10) continue;
+
+          if (RecipeUtil.matchesRecipe(arc.activeRecipe, slotConn.recipe)) {
+            // skip candidate recipe, if matches the shape of the arc's active recipe
+            continue;
+          }
+
           if (RecipeUtil.matchesRecipe(recipe, slotConn.recipe)) {
-            // skip candidate recipe, if matches the shape of the current recipe
+            // skip candidate recipe, if matches the shape of the currently explored recipe
             continue;
           }
 
           results.push((recipe, slot) => {
             // Find other handles that may be merged, as recipes are being coalesced.
-            let otherToHandle = this._findCoalescableHandles(recipe, slotConn.recipe,
+            let otherToHandle = index.findCoalescableHandles(recipe, slotConn.recipe,
               new Set(slot.handleConnections.map(hc => hc.handle).concat(matchingHandles.map(({handle, matchingConn}) => matchingConn.handle))));
 
             let {cloneMap} = slotConn.recipe.mergeInto(slot.recipe);
@@ -134,13 +152,13 @@ export class CoalesceRecipes extends Strategy {
       }
 
       onHandle(recipe, handle) {
-        if (!coalescableFates.includes(handle.fate)
+        if (!index.coalescableFates.includes(handle.fate)
             || handle.id
             || handle.connections.length === 0
             || handle.name === 'descriptions') return;
         let results = [];
 
-        for (let otherHandle of index.findHandleMatch(handle, coalescableFates)) {
+        for (let otherHandle of index.findHandleMatch(handle, index.coalescableFates)) {
           // Don't grow recipes above 10 particles, otherwise we might never stop.
           if (recipe.particles.length + otherHandle.recipe.particles.length > 10) continue;
 
@@ -155,19 +173,24 @@ export class CoalesceRecipes extends Strategy {
             if (resolved.isVariable && !resolved.canReadSubset) continue;
           }
 
+          if (RecipeUtil.matchesRecipe(arc.activeRecipe, otherHandle.recipe)) {
+            // skip candidate recipe, if matches the shape of the arc's active recipe
+            continue;
+          }
+
           if (RecipeUtil.matchesRecipe(recipe, otherHandle.recipe)) {
-            // skip candidate recipe, if matches the shape of the current recipe
+            // skip candidate recipe, if matches the shape of the currently explored recipe
             continue;
           }
 
           results.push((recipe, handle) => {
             // Find other handles in the original recipe that could be coalesced with handles in otherHandle's recipe.
-            let otherToHandle = this._findCoalescableHandles(recipe, otherHandle.recipe, new Set([handle, otherHandle]));
+            let otherToHandle = index.findCoalescableHandles(recipe, otherHandle.recipe, new Set([handle, otherHandle]));
 
             let {cloneMap} = otherHandle.recipe.mergeInto(handle.recipe);
 
             // Connect the handle that the recipes are being coalesced on.
-            this._connectOtherHandleToHandle(handle, cloneMap.get(otherHandle));
+            cloneMap.get(otherHandle).mergeInto(handle);
 
             // Connect all other connectable handles.
             this._connectOtherHandles(otherToHandle, cloneMap);
@@ -185,45 +208,8 @@ export class CoalesceRecipes extends Strategy {
         return results;
       }
 
-      _findCoalescableHandles(recipe, otherRecipe, usedHandles) {
-        assert(recipe != otherRecipe, 'Cannot coalesce handles in the same recipe');
-        let otherToHandle = new Map();
-        usedHandles = usedHandles || new Set();
-        for (let handle of recipe.handles) {
-          if (usedHandles.has(handle) || !coalescableFates.includes(handle.fate)) {
-            continue;
-          }
-          for (let otherHandle of otherRecipe.handles) {
-            if (usedHandles.has(otherHandle) || !coalescableFates.includes(otherHandle.fate)) {
-              continue;
-            }
-            if (index.doesHandleMatch(handle, otherHandle)) {
-              otherToHandle.set(handle, otherHandle);
-              usedHandles.add(handle);
-              usedHandles.add(otherHandle);
-            }
-          }
-        }
-        return otherToHandle;
-      }
-
       _connectOtherHandles(otherToHandle, cloneMap) {
-        otherToHandle.forEach((otherHandle, handle) => {
-          this._connectOtherHandleToHandle(handle, cloneMap.get(otherHandle));
-        });
-      }
-
-      _connectOtherHandleToHandle(handle, mergedOtherHandle) {
-        if (!mergedOtherHandle) return null;
-        while (mergedOtherHandle.connections.length > 0) {
-          let [connection] = mergedOtherHandle.connections;
-          connection.disconnectHandle();
-          connection.connectToHandle(handle);
-        }
-        handle.tags = handle.tags.concat(mergedOtherHandle.tags);
-        handle.recipe.removeHandle(mergedOtherHandle);
-        // If both handles' fates were `use` keep their fate, otherwise set to `create`.
-        handle.fate = handle.fate == 'use' && mergedOtherHandle.fate == 'use' ? 'use' : 'create';
+        otherToHandle.forEach((otherHandle, handle) => cloneMap.get(otherHandle).mergeInto(handle));
       }
     }(Walker.Independent), this);
   }

@@ -289,4 +289,28 @@ export class RecipeIndex {
         assert(false, `Unexpected fate ${slotHandleConn.handle.fate}`);
     }
   }
+
+  get coalescableFates() { return ['create', 'use', '?']; }
+
+  findCoalescableHandles(recipe, otherRecipe, usedHandles) {
+    assert(recipe != otherRecipe, 'Cannot coalesce handles in the same recipe');
+    let otherToHandle = new Map();
+    usedHandles = usedHandles || new Set();
+    for (let handle of recipe.handles) {
+      if (usedHandles.has(handle) || !this.coalescableFates.includes(handle.fate)) {
+        continue;
+      }
+      for (let otherHandle of otherRecipe.handles) {
+        if (usedHandles.has(otherHandle) || !this.coalescableFates.includes(otherHandle.fate)) {
+          continue;
+        }
+        if (this.doesHandleMatch(handle, otherHandle)) {
+          otherToHandle.set(handle, otherHandle);
+          usedHandles.add(handle);
+          usedHandles.add(otherHandle);
+        }
+      }
+    }
+    return otherToHandle;
+  }
 }
