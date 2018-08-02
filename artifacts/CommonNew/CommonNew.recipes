@@ -1,0 +1,85 @@
+// @license
+// Copyright (c) 2018 Google Inc. All rights reserved.
+// This code may only be used under the BSD style license found at
+// http://polymer.github.io/LICENSE.txt
+// Code distributed by Google as part of this project is also
+// subject to an additional IP rights grant found at
+// http://polymer.github.io/PATENTS.txt
+
+particle VerticalLayout in './source/VerticalLayout.js'
+  consume root
+    provide header
+    must provide main
+    provide action
+    provide footer
+
+recipe &vertical
+  VerticalLayout
+
+shape ItemShape
+  in ~a *
+  consume item
+  // provide ?
+
+particle MuxedList in './source/MuxedList.js'
+  in [~a] list
+  host ItemShape hostedParticle
+  consume main
+    must provide set of item
+      handle list
+  must consume set of item
+    provide set of annotation
+      handle list
+
+particle MuxedSelectList in './source/MuxedList.js'
+  in [~a] list
+  inout ~a selected
+  host ItemShape hostedParticle
+  consume main
+    must provide set of item
+      handle list
+  must consume set of item
+    provide set of annotation
+      handle list
+
+// GIFT SHOPPING DEMO RECIPES & PARTICLES
+recipe
+  copy #shoplist as shoplist
+  create #selected as selected
+  MuxedSelectList
+    selected = selected
+    list = shoplist
+  description `show and select ${MuxedSelectList.list}!`
+
+recipe
+  copy #shoplist as shoplist
+  MuxedList
+    list = shoplist
+  description `show ${MuxedList.list}!`
+
+particle Muxer in './source/MuxedList.js'
+  in [~a] list
+  host AnnotationShape hostedParticle
+  must consume set of annotation
+
+shape AnnotationShape
+  in ~a *
+  consume annotation
+
+recipe
+  use #shoplist as shoplist
+  Muxer
+    hostedParticle = Arrivinator
+
+// GIFT SHOPPING DEMO DATA
+import '../Products/Product.schema'
+
+store PageProducts of [Product] #shoplist in '../Demo/products.json'
+
+particle ShowProduct in '../Products/source/ShowProduct.js'
+  in Product product
+  consume item
+
+particle Arrivinator in '../Products/source/Arrivinator.js'
+  in Product product
+  consume annotation

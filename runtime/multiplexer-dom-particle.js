@@ -40,9 +40,10 @@ export class MultiplexerDomParticle extends TransformationDomParticle {
       otherMappedHandles.push(
           `map '${await arc.mapHandle(otherHandle._proxy)}' as v${index}`);
       let hostedOtherConnection = hostedParticle.connections.find(
-          conn => conn.isCompatibleType(otherHandle.type));
+          conn => conn != hostedParticle.connections[0] && conn.isCompatibleType(otherHandle.type));
       if (hostedOtherConnection) {
         otherConnections.push(`${hostedOtherConnection.name} <- v${index++}`);
+
         // TODO(wkorman): For items with embedded recipes where we may have a
         // different particle rendering each item, we need to track
         // |connByHostedConn| keyed on the particle type.
