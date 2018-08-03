@@ -254,10 +254,16 @@ export class SlotDomConsumer extends SlotConsumer {
     if (this.consumeConn) {
       return new MutationObserver(async (records) => {
         this._observer.disconnect();
-        let containers = this.renderings.map(([subId, {container}]) => container)
-          .filter(container => records.some(r => this.isDirectInnerSlot(container, r.target)));
+
+        let updateContainersBySubId = new Map();
+        for (let [subId, {container}] of this.renderings) {
+          if (records.some(r => this.isDirectInnerSlot(container, r.target))) {
+            updateContainersBySubId.set(subId, container);
+          }
+        }
+        let containers = [...updateContainersBySubId.values()];
         if (containers.length > 0) {
-          this._innerContainerBySlotName = {};
+          this._clearInnerSlotContainers([...updateContainersBySubId.keys()]);
           containers.forEach(container => this.initInnerContainers(container));
           this.updateProvidedContexts();
 
