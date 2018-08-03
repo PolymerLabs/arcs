@@ -181,7 +181,7 @@ export class RecipeIndex {
       let counts = RecipeUtil.directionCounts(handle);
       let otherCounts = RecipeUtil.directionCounts(otherHandle);
       // Someone has to read and someone has to write.
-      if (otherCounts.in + counts.in === 0 || otherCounts.out + counts.out === 0) {
+      if (otherCounts.in + counts.in === 0) { // || otherCounts.out + counts.out === 0) {
         return false;
       }
     }

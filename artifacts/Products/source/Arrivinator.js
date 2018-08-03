@@ -13,7 +13,10 @@
 defineParticle(({DomParticle, html}) => {
 
   const template = html`
-    <div style="padding: 4px 0;" style%="{{style}}"><span>{{arrival}}</span></div>
+    <div style="padding: 4px 0;" style%="{{style}}">
+      <span>{{arrival}}</span>
+      <div slotid="tooLate"></div>
+    </div>
   `;
 
   const daysToMs = 24*60*60*1000;

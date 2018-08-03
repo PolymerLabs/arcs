@@ -21,24 +21,25 @@ defineParticle(({DomParticle, html}) => {
       return template;
     }
     shouldRender(props) {
-      return Boolean(props && props.product);
+      return Boolean(props && props.product && !this._isHidden(props.product));
     }
-    render(props) {
-      const {product} = props;
+    _isHidden(product) {
       const needed = new Date();
       needed.setDate(needed.getDate() + 12);
 
-      let hidden = true;
-      if (props.product.shipDays) {
+      if (product.shipDays) {
         // create a date-only Date (with a time of 00:00:00etc)
         const estimated = new Date(new Date().toDateString());
         estimated.setDate(estimated.getDate() + product.shipDays);
-        hidden = estimated <= needed;
+        return estimated <= needed;
       }
+      return true;
+    }
+    render({product}) {
       const alternatives = ['<not yet implemented>'].join(', ');
       return {
         alternatives,
-        hidden
+        hidden: this._isHidden(product)
       };
     }
   };
