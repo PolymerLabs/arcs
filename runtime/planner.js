@@ -11,20 +11,17 @@ import * as Rulesets from './strategies/rulesets.js';
 import {DeviceInfo} from '../platform/deviceinfo-web.js';
 import {RecipeUtil} from './recipe/recipe-util.js';
 import {ConvertConstraintsToConnections} from './strategies/convert-constraints-to-connections.js';
-import {AssignRemoteHandles} from './strategies/assign-remote-handles.js';
-import {CopyRemoteHandles} from './strategies/copy-remote-handles.js';
-import {AssignHandlesByTagAndType} from './strategies/assign-handles-by-tag-and-type.js';
+import {AssignHandles} from './strategies/assign-handles.js';
 import {InitPopulation} from './strategies/init-population.js';
 import {MapSlots} from './strategies/map-slots.js';
 import {MatchParticleByVerb} from './strategies/match-particle-by-verb.js';
 import {MatchRecipeByVerb} from './strategies/match-recipe-by-verb.js';
 import {NameUnnamedConnections} from './strategies/name-unnamed-connections.js';
-import {AddUseHandles} from './strategies/add-use-handles.js';
+import {AddMissingHandles} from './strategies/add-missing-handles.js';
 import {CreateDescriptionHandle} from './strategies/create-description-handle.js';
 import {InitSearch} from './strategies/init-search.js';
 import {SearchTokensToHandles} from './strategies/search-tokens-to-handles.js';
 import {SearchTokensToParticles} from './strategies/search-tokens-to-particles.js';
-import {FallbackFate} from './strategies/fallback-fate.js';
 import {GroupHandleConnections} from './strategies/group-handle-connections.js';
 import {MatchFreeHandlesToConnections} from './strategies/match-free-handles-to-connections.js';
 import {CreateHandleGroup} from './strategies/create-handle-group.js';
@@ -219,17 +216,14 @@ Planner.ResolutionStrategies = [
   SearchTokensToParticles,
   SearchTokensToHandles,
   GroupHandleConnections,
-  FallbackFate,
   CreateHandleGroup,
-  AssignHandlesByTagAndType,
   ConvertConstraintsToConnections,
   MapSlots,
-  AssignRemoteHandles,
-  CopyRemoteHandles,
+  AssignHandles,
   MatchParticleByVerb,
   MatchRecipeByVerb,
   NameUnnamedConnections,
-  AddUseHandles,
+  AddMissingHandles,
   CreateDescriptionHandle,
   MatchFreeHandlesToConnections,
   ResolveRecipe,

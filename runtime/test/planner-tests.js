@@ -155,39 +155,39 @@ describe('Planner', function() {
 });
 
 describe('AssignOrCopyRemoteHandles', function() {
-  it('finds tagged remote handles', async () => {
-    let particlesSpec = `
-    schema Foo
+  let particlesSpec = `
+  schema Foo
 
-    particle A in 'A.js'
-      in [Foo] list
-      consume root
+  particle A in 'A.js'
+    in [Foo] list
+    consume root
 
-    particle B in 'A.js'
-      inout [Foo] list
-      consume root
-    `;
-    let testManifest = async (recipeManifest, expectedResults) => {
-      let manifest = (await Manifest.parse(`
-        ${particlesSpec}
+  particle B in 'A.js'
+    inout [Foo] list
+    consume root
+  `;
+  let testManifest = async (recipeManifest, expectedResults) => {
+    let manifest = (await Manifest.parse(`
+      ${particlesSpec}
 
-        ${recipeManifest}
-      `));
+      ${recipeManifest}
+    `));
 
-      let schema = manifest.findSchemaByName('Foo');
-      manifest.createStore(schema.type.collectionOf(), 'Test1', 'test-1', ['tag1']);
-      manifest.createStore(schema.type.collectionOf(), 'Test2', 'test-2', ['tag2']);
-      manifest.createStore(schema.type.collectionOf(), 'Test2', 'test-3', []);
+    let schema = manifest.findSchemaByName('Foo');
+    manifest.createStore(schema.type.collectionOf(), 'Test1', 'test-1', ['tag1']);
+    manifest.createStore(schema.type.collectionOf(), 'Test2', 'test-2', ['tag2']);
+    manifest.createStore(schema.type.collectionOf(), 'Test2', 'test-3', []);
 
-      let arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'dom');
+    let arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'dom');
 
-      let planner = new Planner();
-      planner.init(arc);
-      let plans = await planner.plan(1000);
+    let planner = new Planner();
+    planner.init(arc);
+    let plans = await planner.plan(1000);
 
-      assert.lengthOf(plans, expectedResults, recipeManifest);
-    };
-
+    assert.lengthOf(plans, expectedResults, recipeManifest);
+    return plans;
+  };
+  it('maps tagged remote handle', async () => {
     // map one
     await testManifest(`
       recipe
@@ -207,13 +207,16 @@ describe('AssignOrCopyRemoteHandles', function() {
         A as particle0
           list <- list
     `, 0);
+  });
+  it('maps untagged remote handle', async () => { 
     await testManifest(`
       recipe
         map as list
         A as particle0
           list <- list
     `, 3);
-
+  });
+  it('copies tagged remote handle', async () => { 
     // copy one
     await testManifest(`
       recipe
@@ -233,13 +236,52 @@ describe('AssignOrCopyRemoteHandles', function() {
         A as particle0
           list <- list
     `, 0);
+  });
+  it('copies untagged remote handle', async () => { 
     await testManifest(`
       recipe
         copy as list
         A as particle0
           list <- list
     `, 3);
+  });
+  it('finds remote untagged handles with unknown fate', async () => {
+    let plansA = await testManifest(`
+      recipe
+        ? as list
+        A as particle0
+          list <- list
+    `, 3);
+    assert.isTrue(plansA.every(plan => plan.handles.length == 1 && plan.handles.every(handle => handle.fate == 'map')));
 
+    let plansB = await testManifest(`
+      recipe
+        ? as list
+        B as particle0
+          list = list
+    `, 3);
+    assert.isTrue(plansB.every(plan => plan.handles.length == 1 && plan.handles.every(handle => handle.fate == 'copy')));
+  });
+  it('finds remote tagged handles with unknown fate', async () => {
+    let plansA = await testManifest(`
+      recipe
+        ? #tag1 as list
+        A as particle0
+          list <- list
+    `, 1);
+    assert.lengthOf(plansA[0].handles, 1);
+    assert.equal('map', plansA[0].handles[0].fate);
+
+    let plansB = await testManifest(`
+      recipe
+        ? #tag2 as list
+        B as particle0
+          list = list
+    `, 1);
+    assert.lengthOf(plansB[0].handles, 1);
+    assert.equal('copy', plansB[0].handles[0].fate);
+  });
+  it('finds multiple remote handles', async () => { 
     // both at once
     await testManifest(`
       recipe
@@ -290,7 +332,6 @@ describe('AssignOrCopyRemoteHandles', function() {
         B as particle1
           list = list2
     `, 6);
-
   });
 });
 
@@ -746,6 +787,8 @@ describe('Automatic resolution', function() {
       recipe
         search \`${searchStr}\`
     `, () => {});
+
+    recipes = recipes.filter(recipe => recipe.search);
     assert.lengthOf(recipes, 1);
     return recipes[0];
   };

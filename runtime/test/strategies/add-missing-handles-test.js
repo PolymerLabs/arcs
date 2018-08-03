@@ -11,7 +11,7 @@
 
 import {Manifest} from '../../manifest.js';
 import {StrategyTestHelper} from './strategy-test-helper.js';
-import {AddUseHandles} from '../../strategies/add-use-handles.js';
+import {AddMissingHandles} from '../../strategies/add-missing-handles.js';
 import {assert} from '../chai-web.js';
 
 async function runStrategy(manifestStr) {
@@ -20,11 +20,11 @@ async function runStrategy(manifestStr) {
   recipes.forEach(recipe => recipe.normalize());
   let arc = StrategyTestHelper.createTestArc('test-plan-arc', manifest, 'dom');
   let inputParams = {generated: recipes.map(recipe => ({result: recipe, score: 1}))};
-  let strategy = new AddUseHandles(arc);
+  let strategy = new AddMissingHandles(arc);
   return (await strategy.generate(inputParams)).map(r => r.result);
 }
 
-describe('AddUseHandles', function() {
+describe('AddMissingHandles', function() {
   it(`doesn't add handles if there are constraints`, async () => {
     assert.isEmpty(await runStrategy(`
       schema Thing
@@ -67,7 +67,7 @@ describe('AddUseHandles', function() {
     assert.lengthOf(results, 1);
     let recipe = results[0];
     assert.lengthOf(recipe.handles, 3);
-    assert.isTrue(recipe.handles.every(h => h.fate === 'use'));
+    assert.isTrue(recipe.handles.every(h => h.fate === '?'));
   });
   it(`doesn't add handles to host connections`, async () => {
     let results = await runStrategy(`

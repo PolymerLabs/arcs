@@ -9,7 +9,7 @@ import {Strategy} from '../../strategizer/strategizer.js';
 import {Recipe} from '../recipe/recipe.js';
 import {Walker} from '../recipe/walker.js';
 
-export class AddUseHandles extends Strategy {
+export class AddMissingHandles extends Strategy {
   // TODO: move generation to use an async generator.
   async generate(inputParams) {
     return Recipe.over(this.getResults(inputParams), new class extends Walker {
@@ -34,7 +34,7 @@ export class AddUseHandles extends Strategy {
           disconnectedConnections.forEach(hc => {
             let clonedHC = recipe.updateToClone({hc}).hc;
             let handle = recipe.newHandle();
-            handle.fate = 'use';
+            handle.fate = '?';
             clonedHC.connectToHandle(handle);
           });
           return 0;

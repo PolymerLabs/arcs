@@ -46,8 +46,8 @@ describe('RecipeIndex', function() {
         Transform
     `), [
 `recipe
-  use as handle0 // ~
-  use as handle1 // ~
+  ? as handle0 // ~
+  ? as handle1 // ~
   Transform as particle0
     lumberjack -> handle0
     person <- handle1`
@@ -110,9 +110,9 @@ describe('RecipeIndex', function() {
         Transform.b -> TransformAgain.b
     `), [
 `recipe
-  use as handle0 // ~
+  ? as handle0 // ~
   create as handle1 // B {}
-  use as handle2 // ~
+  ? as handle2 // ~
   Transform as particle0
     a <- handle0
     b -> handle1

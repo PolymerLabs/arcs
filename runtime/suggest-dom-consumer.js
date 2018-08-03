@@ -43,8 +43,7 @@ export class SuggestDomConsumer extends SlotDomConsumer {
   static render(container, plan, content) {
     let consumer = new SlotDomConsumer();
     let suggestionContainer = Object.assign(document.createElement('suggestion-element'), {plan});
-    // TODO(sjmiles): LIFO is weird, iterate top-down elsewhere?
-    container.insertBefore(suggestionContainer, container.firstElementChild);
+    container.appendChild(suggestionContainer, container.firstElementChild);
     let rendering = {container: suggestionContainer, model: content.model};
     consumer._renderingBySubId.set(undefined, rendering);
     consumer._eventHandler = (() => {});

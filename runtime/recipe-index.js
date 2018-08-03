@@ -19,7 +19,7 @@ import {ConvertConstraintsToConnections} from './strategies/convert-constraints-
 import {MatchFreeHandlesToConnections} from './strategies/match-free-handles-to-connections.js';
 import {ResolveRecipe} from './strategies/resolve-recipe.js';
 import {CreateHandleGroup} from './strategies/create-handle-group.js';
-import {AddUseHandles} from './strategies/add-use-handles.js';
+import {AddMissingHandles} from './strategies/add-missing-handles.js';
 import * as Rulesets from './strategies/rulesets.js';
 import {MapSlots} from './strategies/map-slots.js';
 import {DevtoolsConnection} from './debug/devtools-connection.js';
@@ -63,7 +63,7 @@ class RelevantContextRecipes extends Strategy {
 
 const IndexStrategies = [
   ConvertConstraintsToConnections,
-  AddUseHandles,
+  AddMissingHandles,
   ResolveRecipe,
   MatchFreeHandlesToConnections,
   // This one is not in-line with 'transparent' interfaces, but it operates on
@@ -283,8 +283,7 @@ export class RecipeIndex {
         // matching connections don't have output direction and matching handle's fate isn't copy.
         return !matchingHandleConnsHasOutput && (!matchingHandle || matchingHandle.fate != 'copy');
       case '?':
-        assert(false, `Unexpected '?' fate in terminal recipe`);
-        break;
+        return false;
       default:
         assert(false, `Unexpected fate ${slotHandleConn.handle.fate}`);
     }
