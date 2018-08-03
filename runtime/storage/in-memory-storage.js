@@ -128,15 +128,15 @@ class InMemoryCollection extends InMemoryStorageProvider {
   }
 
   async toList() {
-    if (this.type.primitiveType().isPointer) {
+    if (this.type.primitiveType().isReference) {
       let items = this.toLiteral().model;
-      let pointedType = this.type.primitiveType().pointerDereference;
+      let referredType = this.type.primitiveType().referenceReferredType;
 
       // TODO: batch by store.
       let retrieveItem = async item => {
         let ref = item.value;
-        let store = await this._storageEngine.connect(pointedType.toString(), pointedType, ref.rawData.storageKey);
-        return await store.get(ref.rawData.id);
+        let store = await this._storageEngine.connect(referredType.toString(), referredType, ref.storageKey);
+        return await store.get(ref.id);
       };
 
       return await Promise.all(items.map(retrieveItem));
@@ -145,11 +145,13 @@ class InMemoryCollection extends InMemoryStorageProvider {
   }
 
   async get(id) {
-    if (this.type.primitiveType().isPointer) {
+    if (this.type.primitiveType().isReference) {
       let ref = this._model.getValue(id);
-      let pointedType = this.type.primitiveType().pointerDereference;
-      let store = await this._storageEngine.connect(pointedType.toString(), pointedType, ref.rawData.storageKey);
-      let result = await store.get(ref.rawData.id);
+      if (ref == null)
+        return null;
+      let referredType = this.type.primitiveType().referenceReferredType;
+      let store = await this._storageEngine.connect(referredType.toString(), referredType, ref.storageKey);
+      let result = await store.get(ref.id);
       return result;
     }
     return this._model.getValue(id);
@@ -235,12 +237,12 @@ class InMemoryVariable extends InMemoryStorageProvider {
   }
 
   async get() {
-    if (this.type.isPointer) {
+    if (this.type.isReference) {
       let value = this._stored;
-      let pointedType = this.type.pointerDereference;
-      // TODO: string version of dereferenced type as ID?
+      let referredType = this.type.referenceReferredType;
+      // TODO: string version of ReferredTyped as ID?
       // TODO: remember to use/check the ID of the reference too.
-      let store = await this._storageEngine.connect(pointedType.toString(), pointedType, value.rawData.storageKey);
+      let store = await this._storageEngine.connect(referredType.toString(), referredType, value.storageKey);
       let result = await store.get();
       return result;
     }
