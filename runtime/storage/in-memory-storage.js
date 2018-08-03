@@ -137,7 +137,7 @@ class InMemoryCollection extends InMemoryStorageProvider {
         let ref = item.value;
         let store = await this._storageEngine.connect(pointedType.toString(), pointedType, ref.rawData.storageKey);
         return await store.get(ref.rawData.id);
-      }
+      };
 
       return await Promise.all(items.map(retrieveItem));
     }
