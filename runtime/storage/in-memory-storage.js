@@ -127,8 +127,32 @@ class InMemoryCollection extends InMemoryStorageProvider {
     this._model = new CrdtCollectionModel(model);
   }
 
-  toList() {
+  async toList() {
+    if (this.type.primitiveType().isPointer) {
+      let items = this.toLiteral().model;
+      let pointedType = this.type.primitiveType().pointerDereference;
+
+      // TODO: batch by store.
+      let retrieveItem = async item => {
+        let ref = item.value;
+        let store = await this._storageEngine.connect(pointedType.toString(), pointedType, ref.rawData.storageKey);
+        return await store.get(ref.rawData.id);
+      };
+
+      return await Promise.all(items.map(retrieveItem));
+    }
     return this.toLiteral().model.map(item => item.value);
+  }
+
+  async get(id) {
+    if (this.type.primitiveType().isPointer) {
+      let ref = this._model.getValue(id);
+      let pointedType = this.type.primitiveType().pointerDereference;
+      let store = await this._storageEngine.connect(pointedType.toString(), pointedType, ref.rawData.storageKey);
+      let result = await store.get(ref.rawData.id);
+      return result;
+    }
+    return this._model.getValue(id);
   }
 
   traceInfo() {
@@ -215,7 +239,8 @@ class InMemoryVariable extends InMemoryStorageProvider {
       let value = this._stored;
       let pointedType = this.type.pointerDereference;
       // TODO: string version of dereferenced type as ID?
-      let store = await this._storageEngine.connect(pointedType.toString(), pointedType, value.storageKey);
+      // TODO: remember to use/check the ID of the reference too.
+      let store = await this._storageEngine.connect(pointedType.toString(), pointedType, value.rawData.storageKey);
       let result = await store.get();
       return result;
     }
