@@ -138,6 +138,15 @@ export class SlotConsumer {
       this._innerContainerBySlotName[slotId] = container;
     }
   }
+  _clearInnerSlotContainers(subIds) {
+    subIds.forEach(subId => {
+      if (subId) {
+        Object.values(this._innerContainerBySlotName).forEach(inner => delete inner[subId]);
+      } else {
+        this._innerContainerBySlotName = {};
+      }
+    });
+  }
 
   isSameContainer(container, contextContainer) { return container == contextContainer; }
 
