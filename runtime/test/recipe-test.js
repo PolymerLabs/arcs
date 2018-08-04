@@ -319,6 +319,28 @@ describe('recipe', function() {
     assert.isFalse(manifest.recipes[3].isResolved());
     assert.isTrue(manifest.recipes[4].isResolved());
   });
+  it('verifies required consume connection is provided by a fullfilled slot', async () => {
+    let manifest = await Manifest.parse(`
+      particle A
+        consume slot1
+          must provide slot2
+        consume slot3
+      particle B
+        must consume slot2
+      recipe
+        slot 'id-0' as remoteSlot0
+        A
+          consume slot1
+            provide slot2 as slot2 // provided by an unfulfilled slot connection
+          consume slot3 as remoteSlot0
+        B
+          consume slot2 as slot2
+    `);
+    assert.lengthOf(manifest.recipes, 1);
+    let recipe = manifest.recipes[0];
+    assert(recipe.normalize());
+    assert.isFalse(recipe.isResolved());
+  });
   it('considers type resolution as recipe update', async () => {
     let manifest = await Manifest.parse(`
       schema Thing

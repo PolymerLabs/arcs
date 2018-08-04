@@ -132,13 +132,18 @@ export class SlotConnection {
       }
       return false;
     }
-    if (!this.targetSlot) {
-      if (this.slotSpec.isRequired) {
+
+    if (this.slotSpec.isRequired) {
+      if (!this.targetSlot || !(this.targetSlot.id || this.targetSlot.sourceConnection.isConnected())) {
+        // The required connection has no target slot
+        // or its target slot it not resolved (has no ID or source connection).
         if (options) {
           options.details = 'missing target-slot';
         }
         return false;
       }
+    }
+    if (!this.targetSlot) {
       return true;
     }
 
