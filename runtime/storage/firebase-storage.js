@@ -135,7 +135,7 @@ export class FirebaseStorage {
 
 class FirebaseStorageProvider extends StorageProviderBase {
   constructor(type, arcId, id, reference, key) {
-    super(type, arcId, undefined, id, key.toString());
+    super(type, undefined, id, key.toString());
     this._firebaseKey = key;
     this._reference = reference;
 
