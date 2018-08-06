@@ -21,6 +21,10 @@ export class StorageProviderFactory {
     return this._storageInstances[protocol];
   }
 
+  async share(id, type, key) {
+    return this._storageForKey(key).share(id, type, keyFragment);
+  }
+
   async construct(id, type, keyFragment) {
     return this._storageForKey(keyFragment).construct(id, type, keyFragment);
   }

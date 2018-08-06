@@ -81,15 +81,19 @@ describe('in-memory', function() {
       let storage = new StorageProviderFactory(arc.id);
       let BarType = Type.newEntity(manifest.schemas.Bar);
       let key1 = newStoreKey('variablePointer');
-      let key2 = newStoreKey('variableBase');
 
       let var1 = await storage.construct('test0', Type.newReference(BarType), key1);
-      let var2 = await storage.construct('test1', BarType, key2);
-      var1.set({id: 'id1', storageKey: var2.storageKey});
-      var2.set({id: 'id1', value: 'underlying'});
+      await var1.set({id: 'id1', value: 'underlying'});
       
       let result = await var1.get();
       assert.equal('underlying', result.value);
+
+      let underlyingValue = await storage._storageInstances['in-memory']._typeMap.get(BarType).get('id1');
+      assert.equal('underlying', underlyingValue.value);
+
+      // force variable to reconnect to underlying storage
+      var1._backingStore = null;
+      assert.equal('underlying', (await var1.get()).value);
     });
   });
 
@@ -178,23 +182,26 @@ describe('in-memory', function() {
       let storage = new StorageProviderFactory(arc.id);
       let BarType = Type.newEntity(manifest.schemas.Bar);
       let key1 = newStoreKey('variablePointer');
-      let key2 = newStoreKey('variableBase');
   
       let collection1 = await storage.construct('test0', Type.newReference(BarType).collectionOf(), key1);
-      let collection2 = await storage.construct('test1', BarType.collectionOf(), key2);
   
-      await collection1.store({id: 'id1', storageKey: collection2.storageKey}, ['key1']);
-      await collection1.store({id: 'id2', storageKey: collection2.storageKey}, ['key2']);
-  
-      await collection2.store({id: 'id1', value: 'value1'}, ['key1']);
-      await collection2.store({id: 'id2', value: 'value2'}, ['key2']);
+      await collection1.store({id: 'id1', value: 'value1'}, ['key1']);
+      await collection1.store({id: 'id2', value: 'value2'}, ['key2']);
       
       let result = await collection1.get('id1');
       assert.equal('value1', result.value);
       result = await collection1.get('id2');
       assert.equal('value2', result.value);
+
       result = await collection1.toList();
-      assert.sameDeepMembers(result, await collection2.toList());
+      let underlyingValues = await storage._storageInstances['in-memory']._typeMap.get(BarType);
+      assert.sameDeepMembers(result, await underlyingValues.toList());
+
+      // force collection to reconnect to Entity storage
+      collection1._backingStore = null;
+
+      result = await collection1.toList();
+      assert.sameDeepMembers(result, await underlyingValues.toList());
     }); 
   });
 });
