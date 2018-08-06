@@ -8,13 +8,13 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Arc} from '../../runtime/arc.js';
-import {Description} from '../../runtime/description.js';
-import {Manifest} from '../../runtime/manifest.js';
-import {Planificator} from '../../runtime/planificator.js';
-import {Planner} from '../../runtime/planner.js';
-import {SlotComposer} from '../../runtime/slot-composer.js';
-import {Type} from '../../runtime/type.js';
+import {Arc} from '../../intermediate/runtime/arc.js';
+import {Description} from '../../intermediate/runtime/description.js';
+import {Manifest} from '../../intermediate/runtime/manifest.js';
+import {Planificator} from '../../intermediate/runtime/planificator.js';
+import {Planner} from '../../intermediate/runtime/planner.js';
+import {SlotComposer} from '../../intermediate/runtime/slot-composer.js';
+import {Type} from '../../intermediate/runtime/type.js';
 import {BrowserLoader} from './browser-loader.js';
 import {Tracing} from '../../tracelib/trace.js';
 

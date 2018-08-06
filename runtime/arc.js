@@ -11,7 +11,6 @@
 
 import {assert} from '../platform/assert-web.js';
 import {Type} from './type.js';
-import {handleFor} from './handle.js';
 import {ParticleExecutionHost} from './particle-execution-host.js';
 import {Handle} from './recipe/handle.js';
 import {Recipe} from './recipe/recipe.js';

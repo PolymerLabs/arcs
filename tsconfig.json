@@ -1,0 +1,11 @@
+{
+  "compilerOptions": {
+    "outDir": "intermediate",
+    "allowJs": true,
+    "target": "es6"
+  },
+  "include": [
+    "runtime/**/*",
+    "platform/**/*"
+  ]
+}
