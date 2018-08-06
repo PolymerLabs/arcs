@@ -150,11 +150,18 @@ class InMemoryCollection extends InMemoryStorageProvider {
       let items = this.toLiteral().model;
       let referredType = this.type.primitiveType().referenceReferredType;
 
-      // TODO: batch by store.
+      let refSet = new Set();
+
+      items.forEach(item => refSet.add(item.value.storageKey));
+      assert(refSet.size == 1);
+      let ref = refSet.values().next().value;
+
+      if (this._backingStore == null)
+        this._backingStore = await this._storageEngine.share(referredType.toString(), referredType, ref);
+
       let retrieveItem = async item => {
         let ref = item.value;
-        let store = await this._storageEngine.share(referredType.toString(), referredType, ref.storageKey);
-        return await store.get(ref.id);
+        return this._backingStore.get(ref.id);
       };
 
       return await Promise.all(items.map(retrieveItem));
