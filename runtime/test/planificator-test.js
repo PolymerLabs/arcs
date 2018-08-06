@@ -444,8 +444,8 @@ describe('Planificator', function() {
     planificator._cancelPlanning();
     assert.isFalse(planificator.isPlanning);
 
-    // Set the search string and verify it calls _cancelPlanning.
-    let cancelCalled = false;
+    // Set the search string and verify it calls _cancelPlanning, if appropriate.
+    let cancelCalled = 0;
     let cancelPlanning = planificator._cancelPlanning.bind(planificator);
     planificator._cancelPlanning = () => {
       ++cancelCalled;
@@ -453,6 +453,12 @@ describe('Planificator', function() {
     };
     planificator._requestPlanning();
     planificator.setSearch('this is a new search');
+    // Planning isn't canceled, if search is updated while current plans are un-initialized.
+    assert.equal(0, cancelCalled);
+
+    planificator._setCurrent({plans: [newPlan()], generations: []});
+    planificator.setSearch('this is another new search');
+    // Planning is canceled.
     assert.equal(1, cancelCalled);
   });
   it('controls contextual planning', async () => {
