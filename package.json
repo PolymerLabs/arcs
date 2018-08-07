@@ -20,7 +20,7 @@
   },
   "devDependencies": {
     "chai": "^4.1.2",
-    "chokidar": "^1.7.0",
+    "chokidar": "^2.0.4",
     "chromedriver": "^2.38.2",
     "clang-format": "^1.2.3",
     "cross-env": "^5.1.3",
