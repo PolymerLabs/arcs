@@ -42,7 +42,8 @@ class XList extends Xen.State(Xen.Element(HTMLElement)) {
       p = p.parentElement;
     }
     //console.log('XList::_renderList:', props);
-    let child = container.firstElementChild, next;
+    let child = container.firstElementChild;
+    let next;
     props.items && props.items.forEach((item, i)=>{
       // use existing node if possible
       next = child && child.nextElementSibling;

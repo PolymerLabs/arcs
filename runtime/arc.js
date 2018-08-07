@@ -309,7 +309,10 @@ ${this.activeRecipe.toString()}`;
     });
 
    let {particles, handles, slots} = this._activeRecipe.mergeInto(arc._activeRecipe);
-   let particleIndex = 0, handleIndex = 0, slotIndex = 0;
+   let particleIndex = 0;
+   let handleIndex = 0;
+   let slotIndex = 0;
+    
    this._recipes.forEach(recipe => {
      let arcRecipe = {particles: [], handles: [], slots: [], innerArcs: new Map(), pattern: recipe.pattern};
      recipe.particles.forEach(p => {

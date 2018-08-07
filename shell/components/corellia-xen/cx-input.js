@@ -150,7 +150,10 @@ class CorelliaXenInput extends Xen.Base {
     if (value && value !== input.value) {
       input.value = value;
     }
-    let focused, invalid, placeholderShown;
+    let focused;
+    let invalid;
+    let placeholderShown;
+
     if (input) {
       focused = input.matches(':focus');
       invalid = input.matches(':invalid');

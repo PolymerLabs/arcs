@@ -11,7 +11,6 @@ module.exports = {
     // Things we do, but probably shouldn't.
     "no-console": "off",
     "no-throw-literal": "off",
-    "one-var": "off",
     "brace-style": "off",
     "camelcase": "off",
     "no-unused-vars": "off",

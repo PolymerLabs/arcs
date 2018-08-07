@@ -55,7 +55,8 @@ export class StrategyExplorerAdapter {
 
       population.forEach(item => {
         item.derivation = item.derivation.map(derivItem => {
-          let parent, strategy;
+          let parent;
+          let strategy;
           if (derivItem.parent)
             parent = idMap.get(derivItem.parent);
           if (derivItem.strategy)

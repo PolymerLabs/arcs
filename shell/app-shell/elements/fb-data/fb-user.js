@@ -121,7 +121,8 @@ class FbUserElement extends Xen.Debug(Xen.Base, log) {
         if (effective) {
           const record = entity.rawData;
           const cache = this.value.arcs[record.key];
-          let path, value;
+          let path;
+          let value;
           if (record.deleted) {
             // remove arc reference
             path = `users/${userid}/arcs/${record.key}`;

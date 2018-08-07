@@ -195,7 +195,8 @@ class ArcsTracing extends MessengerMixin(PolymerElement) {
             // changes from messages in the same bundle, as changes on the
             // _items dataset are only visible on flush().
 
-            let start, end;
+            let start;
+            let end;
             start = end = [trace.ts / 1000 + this._timeBase];
             for (let item of [
                 this._items.get(trace.id),
