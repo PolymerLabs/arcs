@@ -59,6 +59,7 @@ defineParticle(({DomParticle}) => {
       } else if (this.config.slotNames.find(m => m == 'topofhead')) {
         return 'chat';
       }
+      return undefined;
     }
     willReceiveProps(props) {
       if (props.participants && props.participants.length && props.messages && props.messages.length) {

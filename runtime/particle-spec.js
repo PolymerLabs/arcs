@@ -132,9 +132,7 @@ export class ParticleSpec {
   }
 
   get primaryVerb() {
-    if (this.verbs.length > 0) {
-      return this.verbs[0];
-    }
+    return (this.verbs.length > 0) ? this.verbs[0] : undefined;
   }
 
   matchAffordance(affordance) {
