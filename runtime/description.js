@@ -517,7 +517,8 @@ export class DescriptionFormatter {
     }
 
     // Sort by number of singleton slots.
-    let p1Slots = 0, p2Slots = 0;
+    let p1Slots = 0;
+    let p2Slots = 0;
     p1._particle.spec.slots.forEach((slotSpec) => { if (!slotSpec.isSet) ++p1Slots; });
     p2._particle.spec.slots.forEach((slotSpec) => { if (!slotSpec.isSet) ++p2Slots; });
     return p2Slots - p1Slots;

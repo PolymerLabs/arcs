@@ -17,7 +17,8 @@ import {handleFor} from '../handle.js';
 import {InMemoryStorage} from '../storage/in-memory-storage.js';
 import {CrdtCollectionModel} from '../storage/crdt-collection-model.js';
 
-const CAN_READ = true, CAN_WRITE = true;
+const CAN_READ = true;
+const CAN_WRITE = true;
 
 // Test version of InMemoryVariable.
 class TestVariable {
@@ -301,7 +302,8 @@ describe('storage-proxy', function() {
     let engine = new TestEngine();
     let entity = engine.newEntity('abc');
     let realStorage = new InMemoryStorage('arc-id');
-    let testEvent, realEvent;
+    let testEvent;
+    let realEvent;
 
     let testVariable = engine.newVariable('v');
     let realVariable = await realStorage.construct('vid', engine.type, 'in-memory');
@@ -326,7 +328,8 @@ describe('storage-proxy', function() {
     let engine = new TestEngine();
     let entity = engine.newEntity('abc');
     let realStorage = new InMemoryStorage('arc-id');
-    let testEvent, realEvent;
+    let testEvent;
+    let realEvent;
 
     let testCollection = engine.newCollection('c');
     let realCollection = await realStorage.construct('cid', engine.type.collectionOf(), 'in-memory');

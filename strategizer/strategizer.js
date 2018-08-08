@@ -293,7 +293,8 @@ Ruleset.Builder = class {
    */
   order(...strategiesOrGroups) {
     for (let i = 0; i < strategiesOrGroups.length - 1; i++) {
-      let current = strategiesOrGroups[i], next = strategiesOrGroups[i + 1];
+      let current = strategiesOrGroups[i];
+      let next = strategiesOrGroups[i + 1];
       for (let strategy of Array.isArray(current) ? current : [current]) {
         let set = this._orderingRules.get(strategy);
         if (!set) {

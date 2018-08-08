@@ -461,7 +461,9 @@ recipe
     tileTransitionToTextAndPosition(fromTile, toTile) {
       // A sad hard-coded pixel positioned hack. Rework to use alignment with
       // the involved tile position.
-      let contentText, positionText, orientation;
+      let contentText;
+      let positionText;
+      let orientation;
       if (toTile.x > fromTile.x) {
         // contentText = '→';
         contentText = '➜'; // right arrow

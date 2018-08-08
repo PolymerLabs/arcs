@@ -359,7 +359,8 @@ class ArcsDataflow extends MessengerMixin(PolymerElement) {
     let ids1 = idString1.split(':');
     let ids2 = idString2.split(':');
     for (let i = 0; i < Math.min(ids1.length, ids2.length); i++) {
-      let n1 = Number(ids1[i]), n2 = Number(ids2[i]);
+      let n1 = Number(ids1[i]);
+      let n2 = Number(ids2[i]);
       let lexComp;
       if ((!n1 || !n2) && (lexComp = ids1[i].localeCompare(ids2[i])) !== 0)
           return lexComp;

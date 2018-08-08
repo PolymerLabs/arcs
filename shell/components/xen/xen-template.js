@@ -286,7 +286,8 @@ const _setSubTemplate = function(node, value, controller) {
 
 const _renderSubtemplates = function(container, controller, template, models) {
   //console.log('XList::_renderList:', props);
-  let next, child = container.firstElementChild;
+  let child = container.firstElementChild;
+  let next;
   if (template && models) {
     models && models.forEach((model, i)=>{
       next = child && child.nextElementSibling;

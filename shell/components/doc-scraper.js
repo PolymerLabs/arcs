@@ -56,7 +56,8 @@ class DocScraper {
       let code = lines.join('\n').trim();
 
       pragmas.forEach(function(m) {
-        let pragma = m[1], content = m[2];
+        let pragma = m[1];
+        let content = m[2];
         switch (pragma) {
 
           case 'class':

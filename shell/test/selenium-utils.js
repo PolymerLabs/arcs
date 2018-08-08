@@ -41,8 +41,8 @@ function pierceShadowsSingle(querySelectors) {
 
 function _nodelistToArray(nl) {
   if (!nl) return [];
-  let l = nl.length,
-    r = new Array(l);
+  let l = nl.length;
+  let r = new Array(l);
   while (l--) {
     r[l] = nl[l];
   }
