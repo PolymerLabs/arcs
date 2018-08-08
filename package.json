@@ -48,5 +48,19 @@
     "node-fetch": "^1.7.2",
     "pouchdb": "^6.4.3",
     "ws": "^4.1.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/PolymerLabs/arcs.git"
+  },
+  "author": "The Polymer Project Authors",
+  "license": "BSD-3-Clause",
+  "homepage": "https://github.com/PolymerLabs/arcs",
+  "bugs": {
+    "url": "https://github.com/PolymerLabs/arcs/issues"
+  },
+  "engines": {
+    "node": ">= 9.4.0",
+    "npm": ">= 5.7.1"
   }
 }
