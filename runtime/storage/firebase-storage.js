@@ -25,6 +25,12 @@ export async function resetStorageForTesting(key) {
   await new Promise(resolve => {
     reference.remove(resolve);
   });
+
+  reference = firebase.database(app).ref('backingStore');
+  await new Promise(resolve => {
+    reference.remove(resolve);
+  });
+
   app.delete();
 }
 
@@ -70,6 +76,8 @@ export class FirebaseStorage {
   constructor(arcId) {
     this._arcId = arcId;
     this._apps = {};
+    this._sharedStores = {};
+    this._baseStores = new Map();
   }
 
   async construct(id, type, keyFragment) {
@@ -84,12 +92,30 @@ export class FirebaseStorage {
   async shutdown() {
     return Promise.all(Object.keys(this._apps).map(k => this._apps[k].delete()));
   }
+  
+  async share(id, type, key) {
+    if (!this._sharedStores[id])
+      this._sharedStores[id] = await this._join(id, type, key, true);
+    return this._sharedStores[id];
+  }
+
+  async baseStorageFor(type, key) {
+    key = new FirebaseKey(key);
+    key.location = `backingStores/${type.toString()}`;
+    
+    if (!this._baseStores.has(type)) {
+      this._baseStores.set(type, await this._join(type.toString(), type.collectionOf(), key.toString(), "unknown"))
+    }
+
+    return this._baseStores.get(type);
+  }
 
   parseStringAsKey(string) {
     return new FirebaseKey(string);
   }
 
   async _join(id, type, key, shouldExist) {
+    assert(typeof id == 'string');
     key = new FirebaseKey(key);
     // TODO: is it ever going to be possible to autoconstruct new firebase datastores?
     if (key.databaseUrl == undefined || key.apiKey == undefined)
@@ -115,11 +141,11 @@ export class FirebaseStorage {
 
     let currentSnapshot;
     await reference.once('value', snapshot => currentSnapshot = snapshot);
-    if (shouldExist != currentSnapshot.exists()) {
+    if (shouldExist !== 'unknown' && shouldExist !== currentSnapshot.exists()) {
       return null;
     }
 
-    if (!shouldExist) {
+    if (shouldExist == false || (shouldExist == "unknown" && currentSnapshot.exists() == false)) {
       let result = await reference.transaction(data => {
         if (data != null)
           return undefined;
@@ -130,7 +156,7 @@ export class FirebaseStorage {
         return null;
     }
 
-    return FirebaseStorageProvider.newProvider(type, this._arcId, id, reference, key);
+    return FirebaseStorageProvider.newProvider(type, this, id, reference, key);
   }
 
   static encodeKey(key) {
@@ -145,25 +171,27 @@ export class FirebaseStorage {
 }
 
 class FirebaseStorageProvider extends StorageProviderBase {
-  constructor(type, arcId, id, reference, key) {
+  constructor(type, storageEngine, id, reference, key) {
     super(type, undefined, id, key.toString());
+    this._storageEngine = storageEngine;
     this._firebaseKey = key;
     this._reference = reference;
+    this._backingStore = null;
 
     // Resolved when local modifications complete being persisted
     // to firebase. Null when not persisting.
     this._persisting = null;
   }
 
-  static newProvider(type, arcId, id, reference, key) {
+  static newProvider(type, storageEngine, id, reference, key) {
     if (type.isCollection) {
       // FIXME: implement a mechanism for specifying BigCollections in manifests
       if (id.startsWith('~big~'))
-        return new FirebaseBigCollection(type, arcId, id, reference, key);
+        return new FirebaseBigCollection(type, storagEngine, id, reference, key);
       else
-        return new FirebaseCollection(type, arcId, id, reference, key);
+        return new FirebaseCollection(type, storageEngine, id, reference, key);
     }
-    return new FirebaseVariable(type, arcId, id, reference, key);
+    return new FirebaseVariable(type, storageEngine, id, reference, key);
   }
 
   async _transaction(transactionFunction) {
@@ -238,8 +266,8 @@ class FirebaseStorageProvider extends StorageProviderBase {
 // modiciations), but the result will always be
 // monotonically increasing.
 class FirebaseVariable extends FirebaseStorageProvider {
-  constructor(type, arcId, id, reference, firebaseKey) {
-    super(type, arcId, id, reference, firebaseKey);
+  constructor(type, storageEngine, id, reference, firebaseKey) {
+    super(type, storageEngine, id, reference, firebaseKey);
 
     // Current value stored in this variable. Reflects either a
     // value that was stored in firebase, or a value that was
@@ -320,10 +348,17 @@ class FirebaseVariable extends FirebaseStorageProvider {
 
   async get() {
     await this._initialized;
+    if (this.type.isReference) {
+      let referredType = this.type.referenceReferredType;
+      if (this._backingStore == null)
+        this._backingStore = await this._storageEngine.share(referredType.toString(), referredType.collectionOf(), this._value.storageKey);
+      return await this._backingStore.get(this._value.id);  
+    }
     return this._value;
   }
 
   async set(value, originatorId=null, barrier=null) {
+    console.log('set', this._version, this._storageKey);
     if (this._version == null) {
       assert(!this._localModified);
       // If the first modification happens before init, this becomes
@@ -337,6 +372,16 @@ class FirebaseVariable extends FirebaseStorageProvider {
       this._version++;
     }
     this._localModified = true;
+    if (this.type.isReference) {
+      let referredType = this.type.referenceReferredType;
+
+      if (this._backingStore == null)
+        this._backingStore = await this._storageEngine.baseStorageFor(referredType, this.storageKey);
+
+      this._backingStore.store(value, [this.storageKey]);
+      value = {id: value.id, storageKey: this._backingStore.storageKey};
+
+    }
     this._value = value;
     this._fire('change', {data: this._value, version: this._version, originatorId, barrier});
     await this._persistChanges();
