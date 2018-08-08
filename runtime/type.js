@@ -183,6 +183,7 @@ export class Type {
     if (this.isInterface)
       return Type.newInterface(this.interfaceShape.canWriteSuperset);
     assert(false, `canWriteSuperset not implemented for ${this}`);
+    return undefined;
   }
 
   get canReadSubset() {
@@ -193,6 +194,7 @@ export class Type {
     if (this.isInterface)
       return Type.newInterface(this.interfaceShape.canReadSubset);
     assert(false, `canReadSubset not implemented for ${this}`);
+    return undefined;
   }
 
   isMoreSpecificThan(type) {
