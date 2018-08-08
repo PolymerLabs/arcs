@@ -183,6 +183,7 @@ class FirebaseStorageProvider extends StorageProviderBase {
 
   get _hasLocalChanges() {
     assert(false, 'subclass should implement _hasLocalChanges');
+    return undefined;
   }
 
   async _persistChangesImpl() {

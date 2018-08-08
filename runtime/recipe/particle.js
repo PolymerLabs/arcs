@@ -145,7 +145,7 @@ export class Particle {
   get connections() { return this._connections; } // {parameter -> HandleConnection}
   get unnamedConnections() { return this._unnamedConnections; } // HandleConnection*
   get consumedSlotConnections() { return this._consumedSlotConnections; }
-  get primaryVerb() { if (this._verbs.length > 0) return this._verbs[0]; }
+  get primaryVerb() { return (this._verbs.length > 0) ? this._verbs[0] : undefined; }
   set verbs(verbs) { this._verbs = verbs; }
 
   set spec(spec) {
