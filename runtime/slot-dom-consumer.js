@@ -95,8 +95,9 @@ export class SlotDomConsumer extends SlotConsumer {
   }
 
   setContainerContent(rendering, content, subId) {
-    if (!rendering.container)
+    if (!rendering.container) {
       return;
+    }
 
     if (Object.keys(content).length == 0) {
       this.clearContainer(rendering);

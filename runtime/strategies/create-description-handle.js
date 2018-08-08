@@ -13,10 +13,12 @@ export class CreateDescriptionHandle extends Strategy {
   async generate(inputParams) {
     return Recipe.over(this.getResults(inputParams), new class extends Walker {
       onHandleConnection(recipe, handleConnection) {
-        if (handleConnection.handle)
+        if (handleConnection.handle) {
           return;
-        if (handleConnection.name != 'descriptions')
+        }
+        if (handleConnection.name != 'descriptions') {
           return;
+        }
 
         return (recipe, handleConnection) => {
           let handle = recipe.newHandle();

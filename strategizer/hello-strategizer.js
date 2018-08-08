@@ -15,8 +15,9 @@ class Seed extends Strategy {
 
 class Grow extends Strategy {
   async generate({population, outputLimit}) {
-    if (population.length == 0)
+    if (population.length == 0) {
       return [];
+    }
     const alphabet = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ.,! ';
     let results = [];
     for (let i = 0; outputLimit < n; i++) {

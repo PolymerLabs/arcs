@@ -66,8 +66,9 @@ export class HandleConnection {
   getQualifiedName() { return `${this.particle.name}::${this.name}`; }
   get tags() { return this._tags; }
   get type() {
-    if (this._type)
+    if (this._type) {
       return this._type;
+    }
     return this._rawType;
   }
   get rawType() {
@@ -96,14 +97,16 @@ export class HandleConnection {
   }
 
   get spec() {
-    if (this.particle.spec == null)
+    if (this.particle.spec == null) {
       return null;
+    }
     return this.particle.spec.connectionMap.get(this.name);
   }
 
   get isOptional() {
-    if (this.spec == null)
+    if (this.spec == null) {
       return false;
+    }
     return this.spec.isOptional;
   }
 
@@ -140,8 +143,9 @@ export class HandleConnection {
     }
 
     let parent;
-    if (this.spec && this.spec.parentConnection)
+    if (this.spec && this.spec.parentConnection) {
       parent = this.particle.connections[this.spec.parentConnection.name];
+    }
 
     // TODO: This should use this._type, or possibly not consider type at all.
     if (!this.type) {
@@ -157,8 +161,9 @@ export class HandleConnection {
       return false;
     }
     if (!this.handle) {
-      if (parent && parent.isOptional && !parent.handle)
+      if (parent && parent.isOptional && !parent.handle) {
         return true;
+      }
       if (options) {
         options.details = 'missing handle';
       }
@@ -175,8 +180,9 @@ export class HandleConnection {
   }
 
   _resetHandleType() {
-    if (this._handle)
+    if (this._handle) {
       this._handle._type = undefined;
+    }
   }
 
   connectToHandle(handle) {

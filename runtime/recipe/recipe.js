@@ -82,8 +82,10 @@ export class Recipe {
     let idx = this._particles.indexOf(particle);
     assert(idx > -1);
     this._particles.splice(idx, 1);
-    for (let slotConnection of Object.values(particle._consumedSlotConnections))
+    for (let slotConnection of Object.values(
+             particle._consumedSlotConnections)) {
       slotConnection.remove();
+    }
   }
 
   newHandle() {
@@ -114,8 +116,9 @@ export class Recipe {
 
   isResolved() {
     assert(Object.isFrozen(this), 'Recipe must be normalized to be resolved.');
-    if (this._obligations.length > 0)
+    if (this._obligations.length > 0) {
       return false;
+    }
     return this._connectionConstraints.length == 0
         && (this._search === null || this._search.isResolved())
         && this._handles.every(handle => handle.isResolved())
@@ -205,15 +208,17 @@ export class Recipe {
 
   findHandle(id) {
     for (let handle of this.handles) {
-      if (handle.id == id)
+      if (handle.id == id) {
         return handle;
+      }
     }
   }
 
   findSlot(id) {
     for (let slot of this.slots) {
-      if (slot.id == id)
+      if (slot.id == id) {
         return slot;
+      }
     }
   }
   get pattern() { return this._pattern; }
@@ -358,8 +363,9 @@ export class Recipe {
 
     let recipe = new Recipe(this.name);
 
-    if (cloneMap == undefined)
+    if (cloneMap == undefined) {
       cloneMap = new Map();
+    }
 
     this._copyInto(recipe, cloneMap);
 

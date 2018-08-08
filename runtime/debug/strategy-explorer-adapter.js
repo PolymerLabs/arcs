@@ -57,18 +57,21 @@ export class StrategyExplorerAdapter {
         item.derivation = item.derivation.map(derivItem => {
           let parent;
           let strategy;
-          if (derivItem.parent)
+          if (derivItem.parent) {
             parent = idMap.get(derivItem.parent);
-          if (derivItem.strategy)
+          }
+          if (derivItem.strategy) {
             strategy = derivItem.strategy.constructor.name;
+          }
           return {parent, strategy};
         });
         item.resolved = item.result.isResolved();
         if (item.resolved) {
           record.resolvedDerivations++;
           let strategy = item.derivation[0].strategy;
-          if (record.resolvedDerivationsByStrategy[strategy] === undefined)
+          if (record.resolvedDerivationsByStrategy[strategy] === undefined) {
             record.resolvedDerivationsByStrategy[strategy] = 0;
+          }
           record.resolvedDerivationsByStrategy[strategy]++;
         }
         let options = {showUnresolved: true, showInvalid: false, details: ''};
@@ -76,8 +79,9 @@ export class StrategyExplorerAdapter {
       });
       let populationMap = {};
       population.forEach(item => {
-        if (populationMap[item.derivation[0].strategy] == undefined)
+        if (populationMap[item.derivation[0].strategy] == undefined) {
           populationMap[item.derivation[0].strategy] = [];
+        }
         populationMap[item.derivation[0].strategy].push(item);
       });
       let result = {population: [], record};

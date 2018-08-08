@@ -172,8 +172,11 @@ export class SlotConnection {
     let consumeRes = [];
     consumeRes.push('consume');
     consumeRes.push(`${this.name}`);
-    if (this.targetSlot)
-      consumeRes.push(`as ${(nameMap && nameMap.get(this.targetSlot)) || this.targetSlot.localName}`);
+    if (this.targetSlot) {
+      consumeRes.push(`as ${
+          (nameMap && nameMap.get(this.targetSlot)) ||
+          this.targetSlot.localName}`);
+    }
 
     if (options && options.showUnresolved) {
       if (!this.isResolved(options)) {

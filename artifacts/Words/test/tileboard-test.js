@@ -12,14 +12,16 @@ describe('TileBoard', function() {
       (letters) => {
         let lettersWithStyle = '';
         const normalStyle = Tile.StyleToNumber[Tile.Style.NORMAL];
-        for (let i = 0; i < letters.length; i++)
+        for (let i = 0; i < letters.length; i++) {
           lettersWithStyle += `${letters.charAt(i)}${normalStyle}`;
+        }
         return lettersWithStyle;
       };
 
   function createDefaultBoard(shuffleCount) {
-    if (shuffleCount == undefined)
+    if (shuffleCount == undefined) {
       shuffleCount = 1;
+    }
     const letters = 'ABCDEFG' +
         'HIJKLMN' +
         'OPQRSTU' +

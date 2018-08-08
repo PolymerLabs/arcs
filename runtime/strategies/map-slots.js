@@ -23,8 +23,9 @@ export class MapSlots extends Strategy {
         // don't try to connect verb constraints
         // TODO: is this right? Should constraints be connectible, in order to precompute the
         // recipe side once the verb is substituted?
-        if (slotConnection.slotSpec == undefined)
+        if (slotConnection.slotSpec == undefined) {
           return;
+        }
 
         if (slotConnection.isConnected()) {
           return;

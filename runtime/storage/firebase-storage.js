@@ -51,15 +51,18 @@ class FirebaseKey extends KeyBase {
 
   childKeyForHandle(id) {
     let location = '';
-    if (this.location != undefined && this.location.length > 0)
+    if (this.location != undefined && this.location.length > 0) {
       location = this.location + '/';
+    }
     location += `handles/${id}`;
     return new FirebaseKey(`${this.protocol}://${this.databaseUrl}/${this.apiKey}/${location}`);
   }
 
   toString() {
-    if (this.databaseUrl && this.apiKey)
-      return `${this.protocol}://${this.databaseUrl}/${this.apiKey}/${this.location}`;
+    if (this.databaseUrl && this.apiKey) {
+      return `${this.protocol}://${this.databaseUrl}/${this.apiKey}/${
+          this.location}`;
+    }
     return `${this.protocol}://`;
   }
 }
@@ -91,8 +94,9 @@ export class FirebaseStorage {
   async _join(id, type, key, shouldExist) {
     key = new FirebaseKey(key);
     // TODO: is it ever going to be possible to autoconstruct new firebase datastores?
-    if (key.databaseUrl == undefined || key.apiKey == undefined)
+    if (key.databaseUrl == undefined || key.apiKey == undefined) {
       throw new Error('Can\'t complete partial firebase keys');
+    }
 
     if (this._apps[key.projectId] == undefined) {
       for (let app of firebase.apps) {
@@ -120,13 +124,15 @@ export class FirebaseStorage {
 
     if (!shouldExist) {
       let result = await reference.transaction(data => {
-        if (data != null)
+        if (data != null) {
           return undefined;
+        }
         return {version: 0};
       }, undefined, false);
 
-      if (!result.committed)
+      if (!result.committed) {
         return null;
+      }
     }
 
     return FirebaseStorageProvider.newProvider(type, this._arcId, id, reference, key);
@@ -145,8 +151,9 @@ class FirebaseStorageProvider extends StorageProviderBase {
   }
 
   static newProvider(type, arcId, id, reference, key) {
-    if (type.isCollection)
+    if (type.isCollection) {
       return new FirebaseCollection(type, arcId, id, reference, key);
+    }
     return new FirebaseVariable(type, arcId, id, reference, key);
   }
 
@@ -325,8 +332,9 @@ class FirebaseVariable extends FirebaseStorageProvider {
       this._version = 0;
       this._resolveInitialized();
     } else {
-      if (JSON.stringify(this._value) == JSON.stringify(value))
-         return;
+      if (JSON.stringify(this._value) == JSON.stringify(value)) {
+        return;
+      }
       this._version++;
     }
     this._localModified = true;
@@ -581,8 +589,9 @@ class FirebaseCollection extends FirebaseStorageProvider {
 
     // 1. Apply the change to the local model.
     let value = this._model.getValue(id);
-    if (value === null)
+    if (value === null) {
       return;
+    }
     if (keys.length == 0) {
       keys = this._model.getKeys(id);
     }

@@ -55,8 +55,9 @@ class SlotSpec {
     this.tags = slotModel.tags || [];
     this.formFactor = slotModel.formFactor; // TODO: deprecate form factors?
     this.providedSlots = [];
-    if (!slotModel.providedSlots)
+    if (!slotModel.providedSlots) {
       return;
+    }
     slotModel.providedSlots.forEach(ps => {
       this.providedSlots.push(new ProvidedSlotSpec(ps));
     });
@@ -102,8 +103,9 @@ export class ParticleSpec {
     this.implFile = model.implFile;
     this.affordance = model.affordance;
     this.slots = new Map();
-    if (model.slots)
+    if (model.slots) {
       model.slots.forEach(s => this.slots.set(s.name, new SlotSpec(s)));
+    }
     // Verify provided slots use valid handle connection names.
     this.slots.forEach(slot => {
       slot.providedSlots.forEach(ps => {
@@ -183,8 +185,9 @@ export class ParticleSpec {
   toString() {
     let results = [];
     let verbs = '';
-    if (this.verbs.length > 0)
+    if (this.verbs.length > 0) {
       verbs = ' ' + this.verbs.map(verb => `&${verb}`).join(' ');
+    }
     results.push(`particle ${this.name}${verbs} in '${this.implFile}'`.trim());
     let indent = '  ';
     let writeConnection = (connection, indent) => {
@@ -195,8 +198,9 @@ export class ParticleSpec {
     };
 
     for (let connection of this.connections) {
-      if (connection.parentConnection)
+      if (connection.parentConnection) {
         continue;
+      }
       writeConnection(connection, indent);
     }
 

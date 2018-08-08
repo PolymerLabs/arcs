@@ -171,13 +171,17 @@ export class ParticleExecutionContext {
       },
       loadRecipe: function(recipe) {
         // TODO: do we want to return a promise on completion?
-        return new Promise((resolve, reject) =>
-          pec._apiPort.ArcLoadRecipe({arc: arcId, recipe, callback: a => {
-            if (a == undefined)
+        return new Promise((resolve, reject) => pec._apiPort.ArcLoadRecipe({
+          arc: arcId,
+          recipe,
+          callback: a => {
+            if (a == undefined) {
               resolve();
-            else
+            } else {
               reject(a);
-          }}));
+            }
+          }
+        }));
       }
     };
   }
@@ -231,8 +235,9 @@ export class ParticleExecutionContext {
   get relevance() {
     let rMap = new Map();
     this._particles.forEach(p => {
-      if (p.relevances.length == 0)
+      if (p.relevances.length == 0) {
         return;
+      }
       rMap.set(p, p.relevances);
       p.relevances = [];
     });
@@ -240,8 +245,9 @@ export class ParticleExecutionContext {
   }
 
   get busy() {
-    if (this._pendingLoads.length > 0 || this._scheduler.busy)
+    if (this._pendingLoads.length > 0 || this._scheduler.busy) {
       return true;
+    }
     return false;
   }
 

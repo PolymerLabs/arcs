@@ -35,9 +35,9 @@ export class Speculator {
       relevance.apply(await newArc.pec.idle);
 
       // We expect two messages here, one requesting the idle status, and one answering it.
-      if (newArc.pec.messageCount !== messageCount + 2)
+      if (newArc.pec.messageCount !== messageCount + 2) {
         return awaitCompletion();
-      else {
+      } else {
         relevance.newArc = newArc;
         relevanceByHash.set(hash, relevance);
         return relevance;

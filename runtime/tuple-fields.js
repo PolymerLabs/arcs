@@ -28,11 +28,13 @@ export class TupleFields {
   }
 
   equals(other) {
-    if (this.fieldList.length !== other.fieldList.length)
+    if (this.fieldList.length !== other.fieldList.length) {
       return false;
+    }
     for (let i = 0; i < this.fieldList.length; i++) {
-      if (!this.fieldList[i].equals(other.fieldList[i]))
+      if (!this.fieldList[i].equals(other.fieldList[i])) {
         return false;
+      }
     }
     return true;
   }

@@ -140,20 +140,24 @@ export class Arc {
     let importSet = new Set();
     let handleSet = new Set();
     for (let handle of this._activeRecipe.handles) {
-      if (handle.fate == 'map')
+      if (handle.fate == 'map') {
         importSet.add(this.context.findManifestUrlForHandleId(handle.id));
-      else
+      } else {
         handleSet.add(handle.id);
+      }
     }
-    for (let url of importSet.values())
+    for (let url of importSet.values()) {
       resources += `import '${url}'\n`;
+    }
 
     for (let handle of this._stores) {
-      if (!handleSet.has(handle.id))
+      if (!handleSet.has(handle.id)) {
         continue;
+      }
       let type = handle.type;
-      if (type.isCollection)
+      if (type.isCollection) {
         type = type.primitiveType();
+      }
       if (type.isInterface) {
         interfaces += type.interfaceShape.toString() + '\n';
       }
@@ -169,20 +173,23 @@ export class Arc {
           resources += indent + 'start\n';
           // TODO(sjmiles): emit empty data for stores marked `nosync`: shell will supply data
           const nosync = handleTags.includes('nosync');
-          let serializedData = nosync ? [] : (await handle.toLiteral()).model.map(({id, value}) => {
-            if (value == null)
-              return null;
-            if (value.rawData) {
-              let result = {};
-              for (let field in value.rawData) {
-                result[field] = value.rawData[field];
-              }
-              result.$id = id;
-              return result;
-            } else {
-              return value;
-            }
-          });
+          let serializedData = nosync ?
+              [] :
+              (await handle.toLiteral()).model.map(({id, value}) => {
+                if (value == null) {
+                  return null;
+                }
+                if (value.rawData) {
+                  let result = {};
+                  for (let field in value.rawData) {
+                    result[field] = value.rawData[field];
+                  }
+                  result.$id = id;
+                  return result;
+                } else {
+                  return value;
+                }
+              });
           let data = JSON.stringify(serializedData);
           resources += data.split('\n').map(line => indent + line).join('\n');
           resources += '\n';
@@ -200,8 +207,9 @@ export class Arc {
   }
 
   _serializeStorageKey() {
-    if (this._storageKey)
+    if (this._storageKey) {
       return `storageKey: '${this._storageKey}'\n`;
+    }
     return '';
   }
 
@@ -232,8 +240,9 @@ ${this.activeRecipe.toString()}`;
       context
     });
     await Promise.all(manifest.stores.map(async store => {
-      if (store.constructor.name == 'StorageStub')
+      if (store.constructor.name == 'StorageStub') {
         store = await store.inflate();
+      }
       arc._registerStore(store, manifest._storeTags.get(store));
     }));
     let recipe = manifest.activeRecipe.clone();
@@ -376,8 +385,11 @@ ${this.activeRecipe.toString()}`;
     for (let recipeHandle of handles) {
       if (['copy', 'create'].includes(recipeHandle.fate)) {
         let type = recipeHandle.type;
-        if (recipeHandle.fate == 'create')
-          assert(type.maybeEnsureResolved(), `Can't assign resolved type to ${type}`);
+        if (recipeHandle.fate == 'create') {
+          assert(
+              type.maybeEnsureResolved(),
+              `Can't assign resolved type to ${type}`);
+        }
 
         type = type.resolvedType();
         assert(type.isResolved(), `Can't create handle for unresolved type ${type}`);
@@ -407,8 +419,9 @@ ${this.activeRecipe.toString()}`;
       }
 
       let storageKey = recipeHandle.storageKey;
-      if (!storageKey)
+      if (!storageKey) {
         storageKey = this.keyForId(recipeHandle.id);
+      }
       assert(storageKey, `couldn't find storage key for handle '${recipeHandle}'`);
       let store = await this._storageProviderFactory.connect(recipeHandle.id, recipeHandle.type, storageKey);
       assert(store, `store '${recipeHandle.id}' was not found`);
@@ -441,14 +454,20 @@ ${this.activeRecipe.toString()}`;
       type = Type.newCollection(type);
     }
 
-    if (id == undefined)
+    if (id == undefined) {
       id = this.generateID();
+    }
 
-    if (storageKey == undefined && this._storageKey)
-      storageKey = this._storageProviderFactory.parseStringAsKey(this._storageKey).childKeyForHandle(id).toString();
+    if (storageKey == undefined && this._storageKey) {
+      storageKey =
+          this._storageProviderFactory.parseStringAsKey(this._storageKey)
+              .childKeyForHandle(id)
+              .toString();
+    }
 
-    if (storageKey == undefined)
+    if (storageKey == undefined) {
       storageKey = 'in-memory';
+    }
 
     let store = await this._storageProviderFactory.construct(id, type, storageKey);
     assert(store, 'stopre with id ${id} already exists');

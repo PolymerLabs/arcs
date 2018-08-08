@@ -37,16 +37,18 @@ export class Entity {
     assert(!this.isIdentified());
     this[Symbols.identifier] = identifier;
     let components = identifier.split(':');
-    if (components[components.length - 2] == 'uid')
+    if (components[components.length - 2] == 'uid') {
       this._userIDComponent = components[components.length - 1];
+    }
   }
   createIdentity(components) {
     assert(!this.isIdentified());
     let id;
-    if (this._userIDComponent)
+    if (this._userIDComponent) {
       id = `${components.base}:uid:${this._userIDComponent}`;
-    else
+    } else {
       id = `${components.base}:${components.component()}`;
+    }
     this[Symbols.identifier] = id;
   }
   toLiteral() {

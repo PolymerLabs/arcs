@@ -147,8 +147,9 @@ export class Schema {
       fields[name] = type;
     }
     for (let [name, type] of Object.entries(otherSchema.fields)) {
-      if (fields[name] == undefined)
+      if (fields[name] == undefined) {
         return false;
+      }
       if (!Schema.typesEqual(fields[name], type)) {
         return false;
       }
@@ -265,8 +266,9 @@ export class Schema {
       dataClone() {
         let clone = {};
         for (let name of Object.keys(schema.fields)) {
-          if (this.rawData[name] !== undefined)
+          if (this.rawData[name] !== undefined) {
             clone[name] = this.rawData[name];
+          }
         }
         return clone;
       }

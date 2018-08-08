@@ -54,14 +54,16 @@ export class CreateHandleGroup extends Strategy {
           }
         }
 
-        if (maximalGroup) return recipe => {
-          let newHandle = recipe.newHandle();
-          newHandle.fate = 'create';
-          for (let conn of maximalGroup) {
-            let cloneConn = recipe.updateToClone({conn}).conn;
-            cloneConn.connectToHandle(newHandle);
-          }
-        };
+        if (maximalGroup) {
+          return recipe => {
+            let newHandle = recipe.newHandle();
+            newHandle.fate = 'create';
+            for (let conn of maximalGroup) {
+              let cloneConn = recipe.updateToClone({conn}).conn;
+              cloneConn.connectToHandle(newHandle);
+            }
+          };
+        }
       }
     }(Walker.Independent), this);
   }

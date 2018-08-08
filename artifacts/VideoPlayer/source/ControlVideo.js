@@ -61,8 +61,9 @@ defineParticle(({DomParticle, html}) => {
     }
     _updateState(newMode) {
       let {position, mode, ts} = this._state;
-      if (mode == newMode)
+      if (mode == newMode) {
         return;
+      }
       let newTs = Date.now();
       if (newMode == Pause) {
         // Compute the new position. Mode used to be play.

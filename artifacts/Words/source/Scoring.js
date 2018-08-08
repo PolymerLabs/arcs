@@ -12,8 +12,9 @@
 class Scoring {
   static _wordLengthMultiplier(wordLength) {
     for (let i = 0; i < Scoring.WORD_LENGTH_MULTIPLIERS.length; i++) {
-      if (wordLength <= Scoring.WORD_LENGTH_MULTIPLIERS[i][0])
+      if (wordLength <= Scoring.WORD_LENGTH_MULTIPLIERS[i][0]) {
         return Scoring.WORD_LENGTH_MULTIPLIERS[i][1];
+      }
     }
     return Scoring.WORD_LENGTH_MULTIPLIERS[Scoring.WORD_LENGTH_MULTIPLIERS.length - 1][1];
   }

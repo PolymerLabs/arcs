@@ -14,8 +14,9 @@ import {KeyBase} from './key-base.js';
 import {CrdtCollectionModel} from './crdt-collection-model.js';
 
 export function resetInMemoryStorageForTesting() {
-  for (let key in __storageCache)
+  for (let key in __storageCache) {
     __storageCache[key]._memoryMap = {};
+  }
 }
 
 class InMemoryKey extends KeyBase {
@@ -35,10 +36,12 @@ class InMemoryKey extends KeyBase {
   }
 
   toString() {
-    if (this.location !== undefined && this.arcId !== undefined)
+    if (this.location !== undefined && this.arcId !== undefined) {
       return `${this.protocol}://${this.arcId}^^${this.location}`;
-    if (this.arcId !== undefined)
+    }
+    if (this.arcId !== undefined) {
       return `${this.protocol}://${this.arcId}`;
+    }
     return `${this.protocol}`;
   }
 }
@@ -59,14 +62,17 @@ export class InMemoryStorage {
 
   async construct(id, type, keyFragment) {
     let key = new InMemoryKey(keyFragment);
-    if (key.arcId == undefined)
+    if (key.arcId == undefined) {
       key.arcId = this._arcId;
-    if (key.location == undefined)
+    }
+    if (key.location == undefined) {
       key.location = 'in-memory-' + this.localIDBase++;
+    }
     // TODO(shanestephens): should pass in factory, not 'this' here.
     let provider = InMemoryStorageProvider.newProvider(type, this, undefined, id, key.toString());
-    if (this._memoryMap[key.toString()] !== undefined)
+    if (this._memoryMap[key.toString()] !== undefined) {
       return null;
+    }
     this._memoryMap[key.toString()] = provider;
     return provider;
   }
@@ -74,12 +80,14 @@ export class InMemoryStorage {
   async connect(id, type, keyString) {
     let key = new InMemoryKey(keyString);
     if (key.arcId !== this._arcId.toString()) {
-      if (__storageCache[key.arcId] == undefined)
+      if (__storageCache[key.arcId] == undefined) {
         return null;
+      }
       return __storageCache[key.arcId].connect(id, type, keyString);
     }
-    if (this._memoryMap[keyString] == undefined)
+    if (this._memoryMap[keyString] == undefined) {
       return null;
+    }
     // TODO assert types match?
     return this._memoryMap[keyString];
   }
@@ -87,14 +95,16 @@ export class InMemoryStorage {
   async share(id, type, keyString) {
     let key = new InMemoryKey(keyString);
     assert(key.arcId == this._arcId.toString());
-    if (this._memoryMap[keyString] == undefined)
+    if (this._memoryMap[keyString] == undefined) {
       return this.construct(id, type, keyString);
+    }
     return this._memoryMap[keyString];
   }
 
   async baseStorageFor(type) {
-    if (this._typeMap.has(type))
+    if (this._typeMap.has(type)) {
       return this._typeMap.get(type);
+    }
     let storage = await this.construct(type.toString(), type.collectionOf(), 'in-memory');
     this._typeMap.set(type, storage);
     return storage;
@@ -107,8 +117,9 @@ export class InMemoryStorage {
 
 class InMemoryStorageProvider extends StorageProviderBase {
   static newProvider(type, storageEngine, name, id, key) {
-    if (type.isCollection)
+    if (type.isCollection) {
       return new InMemoryCollection(type, storageEngine, name, id, key);
+    }
     return new InMemoryVariable(type, storageEngine, name, id, key);
   }
 }
@@ -156,8 +167,10 @@ class InMemoryCollection extends InMemoryStorageProvider {
       assert(refSet.size == 1);
       let ref = refSet.values().next().value;
 
-      if (this._backingStore == null)
-        this._backingStore = await this._storageEngine.share(referredType.toString(), referredType, ref);
+      if (this._backingStore == null) {
+        this._backingStore = await this._storageEngine.share(
+            referredType.toString(), referredType, ref);
+      }
 
       let retrieveItem = async item => {
         let ref = item.value;
@@ -172,11 +185,16 @@ class InMemoryCollection extends InMemoryStorageProvider {
   async get(id) {
     if (this.type.primitiveType().isReference) {
       let ref = this._model.getValue(id);
-      if (ref == null)
+      if (ref == null) {
         return null;
+      }
       let referredType = this.type.primitiveType().referenceReferredType;
-      if (this._backingStore == null)
-        this._backingStore = await this._storageEngine.share(referredType.toString(), referredType.collectionOf(), ref.storageKey);
+      if (this._backingStore == null) {
+        this._backingStore = await this._storageEngine.share(
+            referredType.toString(),
+            referredType.collectionOf(),
+            ref.storageKey);
+      }
       let result = await this._backingStore.get(ref.id);
       return result;
     }
@@ -193,8 +211,10 @@ class InMemoryCollection extends InMemoryStorageProvider {
 
     if (this.type.primitiveType().isReference) {
       let referredType = this.type.primitiveType().referenceReferredType;
-      if (this._backingStore == null)
-        this._backingStore = await this._storageEngine.baseStorageFor(referredType);
+      if (this._backingStore == null) {
+        this._backingStore =
+            await this._storageEngine.baseStorageFor(referredType);
+      }
       this._backingStore.store(value, [this.storageKey]);
       value = {id: value.id, storageKey: this._backingStore.storageKey};
     }
@@ -277,8 +297,12 @@ class InMemoryVariable extends InMemoryStorageProvider {
       let value = this._stored;
       let referredType = this.type.referenceReferredType;
       // TODO: string version of ReferredTyped as ID?
-      if (this._backingStore == null)
-        this._backingStore = await this._storageEngine.share(referredType.toString(), referredType.collectionOf(), value.storageKey);
+      if (this._backingStore == null) {
+        this._backingStore = await this._storageEngine.share(
+            referredType.toString(),
+            referredType.collectionOf(),
+            value.storageKey);
+      }
       let result = await this._backingStore.get(value.id);
       return result;
     }
@@ -290,19 +314,24 @@ class InMemoryVariable extends InMemoryStorageProvider {
     if (this.type.isReference) {
       // If there's a barrier set, then the originating storage-proxy is expecting
       // a result so we cannot suppress the event here.
-      if (this.__stored && this.__stored.id == value.id && barrier == null)
+      if (this.__stored && this.__stored.id == value.id && barrier == null) {
         return;
-      
+      }
+
       let referredType = this.type.referenceReferredType;
-      if (this._backingStore == null)
-        this._backingStore = await this._storageEngine.baseStorageFor(referredType);
+      if (this._backingStore == null) {
+        this._backingStore =
+            await this._storageEngine.baseStorageFor(referredType);
+      }
       this._backingStore.store(value, [this.storageKey]);
       this._stored = {id: value.id, storageKey: this._backingStore.storageKey};
     } else {
       // If there's a barrier set, then the originating storage-proxy is expecting
       // a result so we cannot suppress the event here.
-      if (JSON.stringify(this._stored) == JSON.stringify(value) && barrier == null)
+      if (JSON.stringify(this._stored) == JSON.stringify(value) &&
+          barrier == null) {
         return;
+      }
       this._stored = value;
     }
     this._version++;

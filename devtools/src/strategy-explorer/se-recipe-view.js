@@ -88,18 +88,21 @@ Polymer({
           ? JsDiff.diffWords(right, left)
           : JsDiff.diffWords(left, right);
       diff = diff.map(entry => {
-        if (entry.added)
+        if (entry.added) {
           return `<span class='added'>${entry.value}</span>`;
-        if (entry.removed)
+        }
+        if (entry.removed) {
           return `<span class='removed'>${entry.value}</span>`;
+        }
         return entry.value;
       });
       this.set('shownRecipe.result', diff.join(''));
       let strategies = this.to.strategyMap.get(this.over) || this.over.strategyMap.get(this.to);
-      if (strategies)
+      if (strategies) {
         this.strategyString = 'Strategies: [' + strategies.join(']\n[') + ']\n';
-      else
+      } else {
         this.strategyString = '';
+      }
       this.set('shownRecipe.hash', `<span class='added'>${this.pinnedHash}</span> <span class='removed'>${this.recipe.hash}</span>`);
     }
   },
