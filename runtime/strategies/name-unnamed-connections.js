@@ -14,12 +14,14 @@ export class NameUnnamedConnections extends Strategy {
     return Recipe.over(this.getResults(inputParams), new class extends Walker {
       onHandleConnection(recipe, handleConnection) {
         if (handleConnection.name) {
+          // it is already named.
           return;
-        }  // it is already named.
+        }
 
         if (!handleConnection.particle.spec) {
+          // the particle doesn't have spec yet.
           return;
-        }  // the particle doesn't have spec yet.
+        }
 
         let possibleSpecConns = handleConnection.particle.spec.connections.filter(specConn => {
           // filter specs with matching types that don't have handles bound to the corresponding handle connection.

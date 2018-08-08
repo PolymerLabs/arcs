@@ -148,8 +148,9 @@ ${this._slotsToManifestString()}
 
   canEnsureResolved() {
     for (let typeVar of this._typeVars) {
-      if (!typeVar.object[typeVar.field].canEnsureResolved())
+      if (!typeVar.object[typeVar.field].canEnsureResolved()) {
         return false;
+      }
     }
     return true;
   }
