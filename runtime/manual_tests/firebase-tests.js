@@ -86,6 +86,30 @@ describe('firebase', function() {
       await synchronized(var1, var2);
       assert.deepEqual(await var1.get(), await var2.get());
     });
+    it('supports pointer dereferences', async () => {
+      let manifest = await Manifest.parse(`
+        schema Bar
+          Text value
+      `);
+
+      let arc = new Arc({id: 'test'});
+      let storage = createStorage(arc.id);
+      let BarType = Type.newEntity(manifest.schemas.Bar);
+      let key1 = newStoreKey('varPtr');
+
+      let var1 = await storage.construct('test0', Type.newReference(BarType), key1);
+      await var1.set({id: 'id1', value: 'underlying'});
+
+      let result = await var1.get();
+      assert.equal('underlying', result.value);
+
+      let underlyingValue = await storage._storageInstances['firebase']._baseStores.get(BarType).get('id1');
+      assert.equal('underlying', underlyingValue.value);
+
+      // force variable to reconnect to underlying storage
+      var1._backingStore = null;
+      assert.equal('underlying', (await var1.get()).value);
+    });
   });
 
   describe('collection', () => {
@@ -163,6 +187,38 @@ describe('firebase', function() {
       assert.lengthOf(await collection1.toList(), 2);
       assert.sameDeepMembers(await collection1.toList(), await collection2.toList());
     });
+    it('supports pointer dereferences', async () => {
+      let manifest = await Manifest.parse(`
+        schema Bar
+          Text value
+      `);
+  
+      let arc = new Arc({id: 'test'});
+      let storage = createStorage(arc.id);
+      let BarType = Type.newEntity(manifest.schemas.Bar);
+      let key1 = newStoreKey('colPtr');
+  
+      let collection1 = await storage.construct('test0', Type.newReference(BarType).collectionOf(), key1);
+  
+      await collection1.store({id: 'id1', value: 'value1'}, ['key1']);
+      await collection1.store({id: 'id2', value: 'value2'}, ['key2']);
+      
+      let result = await collection1.get('id1');
+      assert.equal('value1', result.value);
+      result = await collection1.get('id2');
+      assert.equal('value2', result.value);
+      
+      result = await collection1.toList();
+      let underlyingValues = await storage._storageInstances['firebase']._baseStores.get(BarType);
+
+      assert.sameDeepMembers(result, await underlyingValues.toList());
+
+      // force collection to reconnect to Entity storage
+      collection1._backingStore = null;
+
+      result = await collection1.toList();
+      assert.sameDeepMembers(result, await underlyingValues.toList());
+    }); 
   });
 
   // For these tests, the following index rule should be manually set up in the console at
