@@ -219,7 +219,6 @@ describe('firebase', function() {
       result = await collection1.toList();
       assert.sameDeepMembers(result, await underlyingValues.toList());
     }); 
-    }); 
   });
 
   // For these tests, the following index rule should be manually set up in the console at
