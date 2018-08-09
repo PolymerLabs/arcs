@@ -12,7 +12,7 @@ import {Tracing} from '../../tracelib/trace.js';
 import {StorageProviderBase} from './storage-provider-base.js';
 import {KeyBase} from './key-base.js';
 import {CrdtCollectionModel} from './crdt-collection-model.js';
-import { Type } from '../type.js';
+import {Type} from '../type';
 
 export function resetInMemoryStorageForTesting() {
   for (let key in __storageCache)
