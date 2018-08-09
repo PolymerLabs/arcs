@@ -37,13 +37,13 @@ const sources = {
 const steps = {
   peg: [peg, railroad],
   railroad: [railroad],
-  test: [peg, railroad, test],
-  webpack: [peg, railroad, webpack],
+  test: [peg, railroad, tsc, test],
+  webpack: [peg, railroad, tsc, webpack],
   watch: [watch],
   lint: [lint],
   check: [check],
   clean: [clean],
-  default: [check, peg, railroad, test, webpack, lint],
+  default: [check, peg, railroad, tsc, test, webpack, lint],
 };
 
 // Paths to `watch` for the `watch` step.
@@ -208,6 +208,10 @@ function railroad() {
   return true;
 }
 
+async function tsc() {
+  return saneSpawn('tsc', [], {});
+}
+
 async function lint(args) {
   const CLIEngine = require('eslint').CLIEngine;
 
@@ -215,8 +219,12 @@ async function lint(args) {
     boolean: ['fix'],
   });
 
-  let jsSources =
-      [...findProjectFiles(process.cwd(), fullPath => /\.js$/.test(fullPath))];
+  let jsSources = [...findProjectFiles(process.cwd(), fullPath => {
+    if (/intermediate/.test(fullPath)) {
+      return false;
+    }
+    return /\.js$/.test(fullPath);
+  })];
 
   const cli = new CLIEngine({
     useEsLintRc: false,
@@ -321,6 +329,8 @@ function test(args) {
   });
 
   const testsInDir = dir => findProjectFiles(dir, fullPath => {
+    // runtime tests are compiled into intermediate/
+    if (fullPath.startsWith(path.normalize(`${dir}/runtime/`))) return false;
     // TODO(wkorman): Integrate shell testing more deeply into sigh testing. For
     // now we skip including shell tests in the normal sigh test flow and intend
     // to instead run them via a separate 'npm test' command.

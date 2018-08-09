@@ -9,12 +9,8 @@
 
 import {assert} from '../platform/assert-web.js';
 
-function addType(name, arg) {
+function addType(name, arg=undefined) {
   let lowerName = name[0].toLowerCase() + name.substring(1);
-  Object.defineProperty(Type, `new${name}`, {
-    value: function(arg) {
-      return new Type(name, arg);
-    }});
   let upperArg = arg ? arg[0].toUpperCase() + arg.substring(1) : '';
   Object.defineProperty(Type.prototype, `${lowerName}${upperArg}`, {
     get: function() {
@@ -32,7 +28,27 @@ function addType(name, arg) {
     }});
 }
 
+export interface Type {
+  isEntity: Boolean;
+  isVariable: Boolean;
+  isCollection: Boolean;
+  isRelation: Boolean;
+  isInterface: Boolean;
+  isSlot: Boolean;
+  isReference: Boolean;
+
+  entitySchema: Schema;
+  variable: TypeVariable;
+  collectionType: Type;
+  relationEntities: [Type];
+  interfaceShape: Shape;
+  slot: SlotInfo;
+  referenceReferredType: Type;
+}
+
 export class Type {
+  tag: 'Entity' | 'Variable' | 'Collection' | 'Relation' | 'Interface' | 'Slot' | 'Reference';
+  data: Schema | TypeVariable | Type | [Type] | Shape | SlotInfo;
   constructor(tag, data) {
     assert(typeof tag == 'string');
     assert(data);
@@ -53,7 +69,30 @@ export class Type {
     this.data = data;
   }
 
-  mergeTypeVariablesByName(variableMap) {
+  static newEntity(entity : Schema) {
+    return new Type('Entity', entity);
+  }
+  static newVariable(variable : TypeVariable) {
+    return new Type('Variable', variable);
+  }
+  static newCollection(collection : Type) {
+    return new Type('Collection', collection);
+  }
+  static newRelation(relation : [Type]) {
+    return new Type('Relation', relation);
+  }
+  static newInterface(iface : Shape) {
+    return new Type('Interface', iface);
+  }
+  static newSlot(slot : SlotInfo) {
+    return new Type('Slot', slot);
+  }
+  static newReference(reference : Type) {
+    return new Type('Reference', reference);
+  }
+
+
+  mergeTypeVariablesByName(variableMap: Map<String, Type>) {
     if (this.isVariable) {
       let name = this.variable.name;
       let variable = variableMap.get(name);
@@ -61,12 +100,11 @@ export class Type {
         variable = this;
         variableMap.set(name, this);
       } else {
-        if (variable.variable.constraint || this.variable.constraint) {
-          let mergedConstraint = TypeVariable.maybeMergeConstraints(variable.variable, this.variable);
+        if (variable.variable.hasConstraint || this.variable.hasConstraint) {
+          let mergedConstraint = variable.variable.maybeMergeConstraints(this.variable);
           if (!mergedConstraint) {
             throw new Error('could not merge type variables');
           }
-          variable.variable.constraint = mergedConstraint;
         }
       }
       return variable;
@@ -110,9 +148,8 @@ export class Type {
   _applyExistenceTypeTest(test) {
     if (this.isCollection) {
       return this.primitiveType()._applyExistenceTypeTest(test);
-    }
     if (this.isInterface) {
-      return this.data._applyExistenceTypeTest(test);
+      return this.interfaceShape._applyExistenceTypeTest(test);
     }
     return test(this);
   }
@@ -151,7 +188,7 @@ export class Type {
       }
     }
     if (this.isInterface) {
-      return Type.newInterface(this.data.resolvedType());
+      return Type.newInterface(this.interfaceShape.resolvedType());
     }
     return this;
   }
@@ -316,7 +353,8 @@ export class Type {
         return new Type('Variable', newTypeVariable);
       }
     }
-    if (this.data._cloneWithResolutions) {
+
+    if (this.data instanceof Shape || this.data instanceof Type) {
       return new Type(this.tag, this.data._cloneWithResolutions(variableMap));
     }
     return Type.fromLiteral(this.toLiteral());
@@ -326,7 +364,12 @@ export class Type {
     if (this.isVariable && this.variable.resolution) {
       return this.variable.resolution.toLiteral();
     }
+<<<<<<< HEAD:runtime/type.js
     if (this.data.toLiteral) {
+=======
+    if (this.data instanceof Type || this.data instanceof Shape || this.data instanceof Schema || 
+        this.data instanceof TypeVariable)
+>>>>>>> 1d47c52dd682a80379a690b69239595d3ccc5191:runtime/type.ts
       return {tag: this.tag, data: this.data.toLiteral()};
     }
     return this;
@@ -377,6 +420,7 @@ export class Type {
     }
     if (this.isInterface) {
       return this.interfaceShape.name;
+<<<<<<< HEAD:runtime/type.js
     }
     if (this.isTuple) {
       return this.tupleFields.toString(options);
@@ -391,6 +435,11 @@ export class Type {
       return `~${this.data.name}`;
     }
     if (this.isSlot) {
+=======
+    if (this.isVariable)
+      return `~${this.variable.name}`;
+    if (this.isSlot)
+>>>>>>> 1d47c52dd682a80379a690b69239595d3ccc5191:runtime/type.ts
       return 'Slot';
     }
     assert(false, `Add support to serializing type: ${JSON.stringify(this)}`);
@@ -428,10 +477,15 @@ export class Type {
     if (this.isCollection) {
       return `${this.primitiveType().toPrettyString()} List`;
     }
+<<<<<<< HEAD:runtime/type.js
     if (this.isVariable) {
       return this.variable.isResolved() ? this.resolvedType().toPrettyString() :
                                           `[~${this.name}]`;
     }
+=======
+    if (this.isVariable)
+      return this.variable.isResolved() ? this.resolvedType().toPrettyString() : `[~${this.variable.name}]`;
+>>>>>>> 1d47c52dd682a80379a690b69239595d3ccc5191:runtime/type.ts
     if (this.isEntity) {
       // Spit MyTypeFOO to My Type FOO
       if (this.entitySchema.name) {
@@ -439,10 +493,14 @@ export class Type {
       }
       return JSON.stringify(this.entitySchema._model);
     }
+<<<<<<< HEAD:runtime/type.js
     if (this.isTuple) {
       return this.tupleFields.toString();
     }
     if (this.isInterface) {
+=======
+    if (this.isInterface)
+>>>>>>> 1d47c52dd682a80379a690b69239595d3ccc5191:runtime/type.ts
       return this.interfaceShape.toPrettyString();
     }
   }
@@ -453,7 +511,6 @@ addType('Variable');
 addType('Collection', 'type');
 addType('Relation', 'entities');
 addType('Interface', 'shape');
-addType('Tuple', 'fields');
 addType('Slot');
 addType('Reference', 'referredType');
 
@@ -462,3 +519,4 @@ import {Schema} from './schema.js';
 import {TypeVariable} from './type-variable.js';
 import {TupleFields} from './tuple-fields.js';
 import {TypeChecker} from './recipe/type-checker.js';
+import {SlotInfo} from './slot-info.js';

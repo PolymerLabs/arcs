@@ -18,3 +18,4 @@ enclave/sdk
 enclave/toolchains
 enclave/host/storage/db.img
 enclave/host/storage/key
+intermediate
