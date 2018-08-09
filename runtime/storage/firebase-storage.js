@@ -26,7 +26,7 @@ export async function resetStorageForTesting(key) {
     reference.remove(resolve);
   });
 
-  reference = firebase.database(app).ref('backingStore');
+  reference = firebase.database(app).ref('backingStores');
   await new Promise(resolve => {
     reference.remove(resolve);
   });
@@ -358,7 +358,15 @@ class FirebaseVariable extends FirebaseStorageProvider {
   }
 
   async set(value, originatorId=null, barrier=null) {
-    console.log('set', this._version, this._storageKey);
+    let referredType;  
+    // the await required for fetching baseStorage can cause initialization/localModified
+    // flag reordering if done inline below. So we resolve backingStore if necessary
+    // first, before looking at anything else. 
+    if (this.type.isReference && this._backingStore == null) {
+      referredType = this.type.referenceReferredType;    
+      this._backingStore = await this._storageEngine.baseStorageFor(referredType, this.storageKey);
+    }
+
     if (this._version == null) {
       assert(!this._localModified);
       // If the first modification happens before init, this becomes
@@ -371,17 +379,12 @@ class FirebaseVariable extends FirebaseStorageProvider {
          return;
       this._version++;
     }
-    this._localModified = true;
     if (this.type.isReference) {
-      let referredType = this.type.referenceReferredType;
-
-      if (this._backingStore == null)
-        this._backingStore = await this._storageEngine.baseStorageFor(referredType, this.storageKey);
-
-      this._backingStore.store(value, [this.storageKey]);
+      await this._backingStore.store(value, [this.storageKey]);
       value = {id: value.id, storageKey: this._backingStore.storageKey};
-
     }
+
+    this._localModified = true;
     this._value = value;
     this._fire('change', {data: this._value, version: this._version, originatorId, barrier});
     await this._persistChanges();
@@ -625,6 +628,16 @@ class FirebaseCollection extends FirebaseStorageProvider {
 
   async get(id) {
     await this._initialized;
+    if (this.type.primitiveType().isReference) {
+      let ref = this._model.getValue(id);
+      if (ref == null)
+        return null;
+      let referredType = this.type.primitiveType().referenceReferredType;
+      if (this._backingStore == null)
+        this._backingStore = await this._storageEngine.share(referredType.toString(), referredType.collectionOf(), ref.storageKey);
+      let result = await this._backingStore.get(ref.id);
+      return result;
+    }
     return this._model.getValue(id);
   }
 
@@ -665,6 +678,13 @@ class FirebaseCollection extends FirebaseStorageProvider {
     await this._initialized;
 
     // 1. Apply the change to the local model.
+    if (this.type.primitiveType().isReference) {
+      let referredType = this.type.primitiveType().referenceReferredType;
+      if (this._backingStore == null)
+        this._backingStore = await this._storageEngine.baseStorageFor(referredType, this.storageKey);
+      await this._backingStore.store(value, [this.storageKey]);
+      value = {id: value.id, storageKey: this._backingStore.storageKey};
+    }
     let id = value.id;
     let effective = this._model.add(value.id, value, keys);
     this._version++;
@@ -776,6 +796,25 @@ class FirebaseCollection extends FirebaseStorageProvider {
 
   async toList() {
     await this._initialized;
+    if (this.type.primitiveType().isReference) {
+      let items = this._model.toList();
+      let referredType = this.type.primitiveType().referenceReferredType;
+
+      let refSet = new Set();
+
+      items.forEach(item => refSet.add(item.storageKey));
+      assert(refSet.size == 1);
+      let ref = refSet.values().next().value;
+
+      if (this._backingStore == null)
+        this._backingStore = await this._storageEngine.share(referredType.toString(), referredType.collectionOf(), ref);
+      
+      let retrieveItem = async item => {
+        return this._backingStore.get(item.id);
+      }
+
+      return await Promise.all(items.map(retrieveItem));
+    }
     return this._model.toList();
   }
 

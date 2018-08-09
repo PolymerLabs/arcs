@@ -95,7 +95,7 @@ describe('firebase', function() {
       let arc = new Arc({id: 'test'});
       let storage = createStorage(arc.id);
       let BarType = Type.newEntity(manifest.schemas.Bar);
-      let key1 = newStoreKey('variablePointer');
+      let key1 = newStoreKey('varPtr');
 
       let var1 = await storage.construct('test0', Type.newReference(BarType), key1);
       await var1.set({id: 'id1', value: 'underlying'});
@@ -207,14 +207,18 @@ describe('firebase', function() {
       assert.equal('value1', result.value);
       result = await collection1.get('id2');
       assert.equal('value2', result.value);
+      
       result = await collection1.toList();
-      console.log(storage._storageInstances['firebase']);
       let underlyingValues = await storage._storageInstances['firebase']._baseStores.get(BarType);
-       assert.sameDeepMembers(result, await underlyingValues.toList());
-       // force collection to reconnect to Entity storage
-      collection1._backingStore = null;
-       result = await collection1.toList();
+
       assert.sameDeepMembers(result, await underlyingValues.toList());
+
+      // force collection to reconnect to Entity storage
+      collection1._backingStore = null;
+
+      result = await collection1.toList();
+      assert.sameDeepMembers(result, await underlyingValues.toList());
+    }); 
     }); 
   });
 
