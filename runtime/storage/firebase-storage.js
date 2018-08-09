@@ -104,7 +104,7 @@ export class FirebaseStorage {
     key.location = `backingStores/${type.toString()}`;
     
     if (!this._baseStores.has(type)) {
-      this._baseStores.set(type, await this._join(type.toString(), type.collectionOf(), key.toString(), "unknown"))
+      this._baseStores.set(type, await this._join(type.toString(), type.collectionOf(), key.toString(), 'unknown'));
     }
 
     return this._baseStores.get(type);
@@ -145,7 +145,7 @@ export class FirebaseStorage {
       return null;
     }
 
-    if (shouldExist == false || (shouldExist == "unknown" && currentSnapshot.exists() == false)) {
+    if (shouldExist == false || (shouldExist == 'unknown' && currentSnapshot.exists() == false)) {
       let result = await reference.transaction(data => {
         if (data != null)
           return undefined;
@@ -811,7 +811,7 @@ class FirebaseCollection extends FirebaseStorageProvider {
       
       let retrieveItem = async item => {
         return this._backingStore.get(item.id);
-      }
+      };
 
       return await Promise.all(items.map(retrieveItem));
     }
