@@ -12,6 +12,7 @@ import {Tracing} from '../../tracelib/trace.js';
 import {StorageProviderBase} from './storage-provider-base.js';
 import {KeyBase} from './key-base.js';
 import {CrdtCollectionModel} from './crdt-collection-model.js';
+import {Type} from '../type';
 
 export function resetInMemoryStorageForTesting() {
   for (let key in __storageCache)
@@ -19,6 +20,9 @@ export function resetInMemoryStorageForTesting() {
 }
 
 class InMemoryKey extends KeyBase {
+  protocol: string;
+  arcId: string;
+  location: string;
   constructor(key) {
     super();
     let parts = key.split('://');
@@ -46,6 +50,10 @@ class InMemoryKey extends KeyBase {
 let __storageCache = {};
 
 export class InMemoryStorage {
+  _arcId: string;
+  _memoryMap: { [index: string]: InMemoryStorageProvider};
+  _typeMap: Map<Type, InMemoryCollection>;
+  localIDBase: number;
   constructor(arcId) {
       assert(arcId !== undefined, 'Arcs with storage must have ids');
       this._arcId = arcId;
@@ -95,7 +103,7 @@ export class InMemoryStorage {
   async baseStorageFor(type) {
     if (this._typeMap.has(type))
       return this._typeMap.get(type);
-    let storage = await this.construct(type.toString(), type.collectionOf(), 'in-memory');
+    let storage = await this.construct(type.toString(), type.collectionOf(), 'in-memory') as InMemoryCollection;
     this._typeMap.set(type, storage);
     return storage;
   }
@@ -118,6 +126,9 @@ class InMemoryStorageProvider extends StorageProviderBase {
 }
 
 class InMemoryCollection extends InMemoryStorageProvider {
+  _model: CrdtCollectionModel;
+  _storageEngine: InMemoryStorage;
+  _backingStore: InMemoryCollection;
   constructor(type, storageEngine, name, id, key) {
     super(type, name, id, key);
     this._model = new CrdtCollectionModel();
@@ -127,7 +138,7 @@ class InMemoryCollection extends InMemoryStorageProvider {
   }
 
   clone() {
-    let handle = new InMemoryCollection(this._type, this._storageEngine, this.name, this.id);
+    let handle = new InMemoryCollection(this._type, this._storageEngine, this.name, this.id, null);
     handle.cloneFrom(this);
     return handle;
   }
@@ -161,7 +172,7 @@ class InMemoryCollection extends InMemoryStorageProvider {
       let ref = refSet.values().next().value;
 
       if (this._backingStore == null)
-        this._backingStore = await this._storageEngine.share(referredType.toString(), referredType, ref);
+        this._backingStore = await this._storageEngine.share(referredType.toString(), referredType, ref) as InMemoryCollection;
 
       let retrieveItem = async item => {
         let ref = item.value;
@@ -180,7 +191,7 @@ class InMemoryCollection extends InMemoryStorageProvider {
         return null;
       let referredType = this.type.primitiveType().referenceReferredType;
       if (this._backingStore == null)
-        this._backingStore = await this._storageEngine.share(referredType.toString(), referredType.collectionOf(), ref.storageKey);
+        this._backingStore = await this._storageEngine.share(referredType.toString(), referredType.collectionOf(), ref.storageKey) as InMemoryCollection;
       let result = await this._backingStore.get(ref.id);
       return result;
     }
@@ -231,6 +242,9 @@ class InMemoryCollection extends InMemoryStorageProvider {
 }
 
 class InMemoryVariable extends InMemoryStorageProvider {
+  _storageEngine: InMemoryStorage;
+  _stored: {id: string};
+  _backingStore: InMemoryCollection;
   constructor(type, storageEngine, name, id, key) {
     super(type, name, id, key);
     this._storageEngine = storageEngine;
@@ -239,7 +253,7 @@ class InMemoryVariable extends InMemoryStorageProvider {
   }
 
   clone() {
-    let variable = new InMemoryVariable(this._type, this._storageEngine, this.name, this.id);
+    let variable = new InMemoryVariable(this._type, this._storageEngine, this.name, this.id, null);
     variable.cloneFrom(this);
     return variable;
   }
@@ -278,30 +292,31 @@ class InMemoryVariable extends InMemoryStorageProvider {
 
   async get() {
     if (this.type.isReference) {
-      let value = this._stored;
+      let value = this._stored as {id: string, storageKey: string};
       let referredType = this.type.referenceReferredType;
       // TODO: string version of ReferredTyped as ID?
       if (this._backingStore == null)
-        this._backingStore = await this._storageEngine.share(referredType.toString(), referredType.collectionOf(), value.storageKey);
+        this._backingStore = await this._storageEngine.share(referredType.toString(), referredType.collectionOf(), value.storageKey) as InMemoryCollection;
       let result = await this._backingStore.get(value.id);
       return result;
     }
     return this._stored;
   }
 
-  async set(value, originatorId=null, barrier=null) {
+  async set(value : {id: string}, originatorId=null, barrier=null) {
     assert(value !== undefined);
     if (this.type.isReference) {
       // If there's a barrier set, then the originating storage-proxy is expecting
       // a result so we cannot suppress the event here.
-      if (this.__stored && this.__stored.id == value.id && barrier == null)
+      // TODO(shans): Make sure this is tested.
+      if (this._stored && this._stored.id == value.id && barrier == null)
         return;
       
       let referredType = this.type.referenceReferredType;
       if (this._backingStore == null)
         this._backingStore = await this._storageEngine.baseStorageFor(referredType);
       this._backingStore.store(value, [this.storageKey]);
-      this._stored = {id: value.id, storageKey: this._backingStore.storageKey};
+      this._stored = {id: value.id, storageKey: this._backingStore.storageKey} as {id: string};
     } else {
       // If there's a barrier set, then the originating storage-proxy is expecting
       // a result so we cannot suppress the event here.

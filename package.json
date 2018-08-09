@@ -47,6 +47,7 @@
     "firebase": "^4.13.1",
     "node-fetch": "^1.7.2",
     "pouchdb": "^6.4.3",
+    "typescript": "^3.0.1",
     "ws": "^4.1.0"
   },
   "repository": {

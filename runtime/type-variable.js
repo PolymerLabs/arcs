@@ -154,6 +154,10 @@ export class TypeVariable {
     this._canReadSubset = value;
   }
 
+  get hasConstraint() {
+    return this._canReadSubset !== null || this._canWriteSuperset !== null;
+  }
+
   canEnsureResolved() {
     if (this._resolution)
       return this._resolution.canEnsureResolved();
