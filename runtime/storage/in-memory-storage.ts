@@ -308,6 +308,7 @@ class InMemoryVariable extends InMemoryStorageProvider {
     if (this.type.isReference) {
       // If there's a barrier set, then the originating storage-proxy is expecting
       // a result so we cannot suppress the event here.
+      // TODO(shans): Make sure this is tested.
       if (this._stored && this._stored.id == value.id && barrier == null)
         return;
       

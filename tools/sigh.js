@@ -211,7 +211,12 @@ async function lint(args) {
     boolean: ['fix'],
   });
 
-  let jsSources = [...findProjectFiles(process.cwd(), fullPath => /\.js$/.test(fullPath))];
+  let jsSources = [...findProjectFiles(process.cwd(), fullPath => {
+    if (/intermediate/.test(fullPath)) {
+      return false;
+    }
+    return /\.js$/.test(fullPath);
+  })];
 
   const cli = new CLIEngine({
     useEsLintRc: false,
