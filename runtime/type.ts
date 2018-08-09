@@ -148,6 +148,7 @@ export class Type {
   _applyExistenceTypeTest(test) {
     if (this.isCollection) {
       return this.primitiveType()._applyExistenceTypeTest(test);
+    }
     if (this.isInterface) {
       return this.interfaceShape._applyExistenceTypeTest(test);
     }
@@ -364,12 +365,8 @@ export class Type {
     if (this.isVariable && this.variable.resolution) {
       return this.variable.resolution.toLiteral();
     }
-<<<<<<< HEAD:runtime/type.js
-    if (this.data.toLiteral) {
-=======
     if (this.data instanceof Type || this.data instanceof Shape || this.data instanceof Schema || 
-        this.data instanceof TypeVariable)
->>>>>>> 1d47c52dd682a80379a690b69239595d3ccc5191:runtime/type.ts
+        this.data instanceof TypeVariable) {
       return {tag: this.tag, data: this.data.toLiteral()};
     }
     return this;
@@ -420,26 +417,11 @@ export class Type {
     }
     if (this.isInterface) {
       return this.interfaceShape.name;
-<<<<<<< HEAD:runtime/type.js
-    }
-    if (this.isTuple) {
-      return this.tupleFields.toString(options);
-    }
-    if (this.isVariableReference) {
-      return `~${this.data}`;
-    }
-    if (this.isManifestReference) {
-      return this.data;
     }
     if (this.isVariable) {
-      return `~${this.data.name}`;
+      return `~${this.variable.name}`;
     }
     if (this.isSlot) {
-=======
-    if (this.isVariable)
-      return `~${this.variable.name}`;
-    if (this.isSlot)
->>>>>>> 1d47c52dd682a80379a690b69239595d3ccc5191:runtime/type.ts
       return 'Slot';
     }
     assert(false, `Add support to serializing type: ${JSON.stringify(this)}`);
@@ -477,15 +459,9 @@ export class Type {
     if (this.isCollection) {
       return `${this.primitiveType().toPrettyString()} List`;
     }
-<<<<<<< HEAD:runtime/type.js
     if (this.isVariable) {
-      return this.variable.isResolved() ? this.resolvedType().toPrettyString() :
-                                          `[~${this.name}]`;
-    }
-=======
-    if (this.isVariable)
       return this.variable.isResolved() ? this.resolvedType().toPrettyString() : `[~${this.variable.name}]`;
->>>>>>> 1d47c52dd682a80379a690b69239595d3ccc5191:runtime/type.ts
+    }
     if (this.isEntity) {
       // Spit MyTypeFOO to My Type FOO
       if (this.entitySchema.name) {
@@ -493,14 +469,7 @@ export class Type {
       }
       return JSON.stringify(this.entitySchema._model);
     }
-<<<<<<< HEAD:runtime/type.js
-    if (this.isTuple) {
-      return this.tupleFields.toString();
-    }
     if (this.isInterface) {
-=======
-    if (this.isInterface)
->>>>>>> 1d47c52dd682a80379a690b69239595d3ccc5191:runtime/type.ts
       return this.interfaceShape.toPrettyString();
     }
   }

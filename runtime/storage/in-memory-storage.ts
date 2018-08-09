@@ -182,15 +182,9 @@ class InMemoryCollection extends InMemoryStorageProvider {
       assert(refSet.size == 1);
       let ref = refSet.values().next().value;
 
-<<<<<<< HEAD:runtime/storage/in-memory-storage.js
       if (this._backingStore == null) {
-        this._backingStore = await this._storageEngine.share(
-            referredType.toString(), referredType, ref);
-      }
-=======
-      if (this._backingStore == null)
         this._backingStore = await this._storageEngine.share(referredType.toString(), referredType, ref) as InMemoryCollection;
->>>>>>> 1d47c52dd682a80379a690b69239595d3ccc5191:runtime/storage/in-memory-storage.ts
+      }
 
       let retrieveItem = async item => {
         let ref = item.value;
@@ -209,17 +203,9 @@ class InMemoryCollection extends InMemoryStorageProvider {
         return null;
       }
       let referredType = this.type.primitiveType().referenceReferredType;
-<<<<<<< HEAD:runtime/storage/in-memory-storage.js
       if (this._backingStore == null) {
-        this._backingStore = await this._storageEngine.share(
-            referredType.toString(),
-            referredType.collectionOf(),
-            ref.storageKey);
-      }
-=======
-      if (this._backingStore == null)
         this._backingStore = await this._storageEngine.share(referredType.toString(), referredType.collectionOf(), ref.storageKey) as InMemoryCollection;
->>>>>>> 1d47c52dd682a80379a690b69239595d3ccc5191:runtime/storage/in-memory-storage.ts
+      }
       let result = await this._backingStore.get(ref.id);
       return result;
     }
@@ -325,17 +311,9 @@ class InMemoryVariable extends InMemoryStorageProvider {
       let value = this._stored as {id: string, storageKey: string};
       let referredType = this.type.referenceReferredType;
       // TODO: string version of ReferredTyped as ID?
-<<<<<<< HEAD:runtime/storage/in-memory-storage.js
       if (this._backingStore == null) {
-        this._backingStore = await this._storageEngine.share(
-            referredType.toString(),
-            referredType.collectionOf(),
-            value.storageKey);
-      }
-=======
-      if (this._backingStore == null)
         this._backingStore = await this._storageEngine.share(referredType.toString(), referredType.collectionOf(), value.storageKey) as InMemoryCollection;
->>>>>>> 1d47c52dd682a80379a690b69239595d3ccc5191:runtime/storage/in-memory-storage.ts
+      }
       let result = await this._backingStore.get(value.id);
       return result;
     }
@@ -347,12 +325,8 @@ class InMemoryVariable extends InMemoryStorageProvider {
     if (this.type.isReference) {
       // If there's a barrier set, then the originating storage-proxy is expecting
       // a result so we cannot suppress the event here.
-<<<<<<< HEAD:runtime/storage/in-memory-storage.js
-      if (this.__stored && this.__stored.id == value.id && barrier == null) {
-=======
       // TODO(shans): Make sure this is tested.
-      if (this._stored && this._stored.id == value.id && barrier == null)
->>>>>>> 1d47c52dd682a80379a690b69239595d3ccc5191:runtime/storage/in-memory-storage.ts
+      if (this._stored && this._stored.id == value.id && barrier == null) {
         return;
       }
 

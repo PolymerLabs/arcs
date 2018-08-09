@@ -90,8 +90,7 @@ function targetIsUpToDate(relativeTarget, relativeDeps) {
 
   let targetTime = fs.statSync(target).mtimeMs;
   for (let relativePath of relativeDeps) {
-    if (fs.statSync(path.resolve(projectRoot, relativePath)).mtimeMs >=
-        targetTime) {
+    if (fs.statSync(path.resolve(projectRoot, relativePath)).mtimeMs >= targetTime) {
       return false;
     }
   }
@@ -106,15 +105,13 @@ function check() {
   const npmRequiredVersion = require('../package.json').engines.npm;
 
   if (!semver.satisfies(process.version, nodeRequiredVersion)) {
-    throw new Error(`at least node ${
-        nodeRequiredVersion} is required, you have ${process.version}`);
+    throw new Error(`at least node ${nodeRequiredVersion} is required, you have ${process.version}`);
   }
 
   const npmCmd = saneSpawnWithOutput('npm', ['-v']);
   const npmVersion = String(npmCmd.stdout);
   if (!semver.satisfies(npmVersion, npmRequiredVersion)) {
-    throw new Error(`at least npm ${npmRequiredVersion} is required, you have ${
-        npmVersion}`);
+    throw new Error(`at least npm ${npmRequiredVersion} is required, you have ${npmVersion}`);
   }
 
   return true;
@@ -202,14 +199,13 @@ function railroad() {
     grammars: grammars
   };
   let template = handlebars.compile(readProjectFile(baseTemplate));
-  fs.writeFileSync(
-      path.resolve(projectRoot, sources.peg.railroad), template(data));
+  fs.writeFileSync(path.resolve(projectRoot, sources.peg.railroad), template(data));
 
   return true;
 }
 
 async function tsc() {
-  return saneSpawn('tsc', [], {});
+  return saneSpawnWithOutput('tsc', [], {});
 }
 
 async function lint(args) {
@@ -313,8 +309,7 @@ function saneSpawnWithOutput(cmd, args, opts) {
 function rot13(str) {
   let input = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'.split('');
   let output = 'NOPQRSTUVWXYZABCDEFGHIJKLMnopqrstuvwxyzabcdefghijklm'.split('');
-  let lookup =
-      input.reduce((m, k, i) => Object.assign(m, {[k]: output[i]}), {});
+  let lookup = input.reduce((m, k, i) => Object.assign(m, {[k]: output[i]}), {});
   return str.split('').map(x => lookup[x] || x).join('');
 }
 
@@ -350,15 +345,13 @@ function test(args) {
     if (path[0] == '/') {
       return path;
     }
-    return '/' +
-        path.replace(new RegExp(String.fromCharCode(92, 92), 'g'), '/');
+    return '/' + path.replace(new RegExp(String.fromCharCode(92, 92), 'g'), '/');
   }
 
   function buildTestRunner() {
     let tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'sigh-'));
     let chain = [];
-    let mochaInstanceFile =
-        fixPathForWindows(path.resolve(__dirname, '../platform/mocha-node.js'));
+    let mochaInstanceFile = fixPathForWindows(path.resolve(__dirname, '../platform/mocha-node.js'));
     for (let test of testsInDir(process.cwd())) {
       chain.push(`
         import {mocha} from '${mochaInstanceFile}';
@@ -380,9 +373,7 @@ function test(args) {
     });
     if (options.explore) {
       chainImports.push(`
-      import {DevtoolsConnection} from '${
-          fixPathForWindows(path.resolve(
-              __dirname, '../runtime/debug/devtools-connection.js'))}';
+      import {DevtoolsConnection} from '${fixPathForWindows(path.resolve(__dirname, '../runtime/debug/devtools-connection.js'))}';
       console.log("Waiting for Arcs Explorer");
       DevtoolsConnection.ensure();
     `);
@@ -436,10 +427,11 @@ function test(args) {
 // Watches `watchPaths` for changes, then runs the `arg` steps.
 async function watch([arg, ...moreArgs]) {
   let funs = steps[arg || watchDefault];
-  let funsAndArgs =
-      funs.map(fun => [fun, fun == funs[funs.length - 1] ? moreArgs : []]);
-  let watcher = chokidar.watch(
-      '.', {ignored: /(node_modules|\/build\/|\.git)/, persistent: true});
+  let funsAndArgs = funs.map(fun => [fun, fun == funs[funs.length - 1] ? moreArgs : []]);
+  let watcher = chokidar.watch('.', {
+    ignored: /(node_modules|\/build\/|\.git)/,
+    persistent: true
+  });
   let version = 0;
   let task = Promise.resolve(true);
   let changes = new Set();
@@ -448,8 +440,7 @@ async function watch([arg, ...moreArgs]) {
     changes.add(path);
     await task;
     if (current <= version) {
-      console.log(
-          `\nRebuilding due to changes to:\n  ${[...changes].join('  \n')}`);
+      console.log(`\nRebuilding due to changes to:\n  ${[...changes].join('  \n')}`);
       changes.clear();
       task = run(funsAndArgs);
     }
@@ -497,8 +488,7 @@ async function run(funsAndArgs) {
   }
 
   // To avoid confusion, only the last step gets args.
-  let funsAndArgs = funs.map(
-      fun => [fun, fun == funs[funs.length - 1] ? process.argv.slice(3) : []]);
+  let funsAndArgs = funs.map(fun => [fun, fun == funs[funs.length - 1] ? process.argv.slice(3) : []]);
   let result = await run(funsAndArgs);
   process.on('exit', function() {
     process.exit(result ? 0 : 1);

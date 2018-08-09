@@ -66,8 +66,7 @@ class FirebaseKey extends KeyBase {
 
   toString() {
     if (this.databaseUrl && this.apiKey) {
-      return `${this.protocol}://${this.databaseUrl}/${this.apiKey}/${
-          this.location}`;
+      return `${this.protocol}://${this.databaseUrl}/${this.apiKey}/${this.location}`;
     }
     return `${this.protocol}://`;
   }
