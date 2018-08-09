@@ -914,7 +914,7 @@ class FirebaseBigCollection extends FirebaseStorageProvider {
     // backing stores - so it's best to keep the API in line with regular Collections.
     assert(keys != null && keys.length > 0, 'keys required');
 
-    // Fireabse does not support multi-location transactions. To modify both 'version' and a child
+    // Firebase does not support multi-location transactions. To modify both 'version' and a child
     // of 'items', we'd need to transact directly on this._reference, which would pull the entire
     // collection contents locally, avoiding which is the explicit intent of this class. So we have
     // to double-step the operation, leaving a small window where another reader could see the new

@@ -230,7 +230,8 @@ describe('firebase', function() {
         let promises = [];
         for (let id of ids) {
           let n = Number(id.slice(1));
-          let data = 'v' + (n * 37 % 100), key = 'k' + (n * 73 % 100);
+          let data = 'v' + (n * 37 % 100);
+          let key = 'k' + (n * 73 % 100);
           promises.push(collection.store({id, data}, [key]));
           items.set(id, {data, key});
         }
