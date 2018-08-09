@@ -103,6 +103,10 @@ export class InMemoryStorage {
   parseStringAsKey(string) {
     return new InMemoryKey(string);
   }
+
+  shutdown() {
+    // No-op
+  }
 }
 
 class InMemoryStorageProvider extends StorageProviderBase {
