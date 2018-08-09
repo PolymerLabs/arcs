@@ -8,11 +8,11 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {Loader} from '../../runtime/loader.js';
-import {Particle} from '../../runtime/particle.js';
-import {DomParticle} from '../../runtime/dom-particle.js';
-import {MultiplexerDomParticle} from '../../runtime/multiplexer-dom-particle.js';
-import {TransformationDomParticle} from '../../runtime/transformation-dom-particle.js';
+import {Loader} from '../../intermediate/runtime/loader.js';
+import {Particle} from '../../intermediate/runtime/particle.js';
+import {DomParticle} from '../../intermediate/runtime/dom-particle.js';
+import {MultiplexerDomParticle} from '../../intermediate/runtime/multiplexer-dom-particle.js';
+import {TransformationDomParticle} from '../../intermediate/runtime/transformation-dom-particle.js';
 
 const logFactory = (preamble, color, log='log') => console[log].bind(console, `%c${preamble} [Particle]`, `background: ${color}; color: white; padding: 1px 6px 2px 7px; border-radius: 4px;`);
 const html = (strings, ...values) => (strings[0] + values.map((v, i) => v + strings[i + 1]).join('')).trim();
