@@ -278,8 +278,8 @@ function saneSpawn(cmd, args, opts) {
   opts.shell = true;
   // it's OK, I know what I'm doing
   let result = _DO_NOT_USE_spawn(cmd, args, opts);
-  if (result.error) {
-    console.warn(result.error);
+  if (result.error || result.status != 0) {
+    console.warn(result.error || result.stderr.toString());
     return false;
   }
   return result.status == 0;
@@ -292,8 +292,8 @@ function saneSpawnWithOutput(cmd, args, opts) {
   opts.shell = true;
   // it's OK, I know what I'm doing
   let result = _DO_NOT_USE_spawn(cmd, args, opts);
-  if (result.error) {
-    console.warn(result.error);
+  if (result.error || result.status != 0) {
+    console.warn(result.error || result.stderr.toString());
     return false;
   }
   return {status: result.status == 0, stdout: result.stdout};
