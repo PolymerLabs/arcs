@@ -201,7 +201,7 @@ function railroad() {
 }
 
 async function tsc() {
-  return saneSpawn('tsc', [], {});
+  return saneSpawn('node_modules/.bin/tsc', [], {});
 }
 
 async function lint(args) {
