@@ -16,8 +16,9 @@ export class ConstraintWalker extends WalkerBase {
     recipe._connectionConstraints.forEach(constraint => {
       if (this.onConstraint) {
         let result = this.onConstraint(recipe, constraint);
-        if (result)
+        if (result) {
           updateList.push({continuation: result, context: constraint});
+        }
       }
     });
 

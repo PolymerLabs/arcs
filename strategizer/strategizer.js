@@ -83,18 +83,22 @@ export class Strategizer {
         if (existingResult) {
           if (result.derivation[0].parent == existingResult) {
             record.nullDerivations += 1;
-            if (record.nullDerivationsByStrategy[strategy] == undefined)
+            if (record.nullDerivationsByStrategy[strategy] == undefined) {
               record.nullDerivationsByStrategy[strategy] = 0;
+            }
             record.nullDerivationsByStrategy[strategy]++;
           } else if (existingResult.derivation.map(a => a.parent).indexOf(result.derivation[0].parent) != -1) {
             record.duplicateSameParentDerivations += 1;
-            if (record.duplicateSameParentDerivationsByStrategy[strategy] == undefined)
+            if (record.duplicateSameParentDerivationsByStrategy[strategy] ==
+                undefined) {
               record.duplicateSameParentDerivationsByStrategy[strategy] = 0;
+            }
             record.duplicateSameParentDerivationsByStrategy[strategy]++;
           } else {
             record.duplicateDerivations += 1;
-            if (record.duplicateDerivationsByStrategy[strategy] == undefined)
+            if (record.duplicateDerivationsByStrategy[strategy] == undefined) {
               record.duplicateDerivationsByStrategy[strategy] = 0;
+            }
             record.duplicateDerivationsByStrategy[strategy]++;
             this.populationHash.get(result.hash).derivation.push(result.derivation[0]);
           }
@@ -127,10 +131,12 @@ export class Strategizer {
     record.survivingDerivations = generated.length;
 
     generated.sort((a, b) => {
-      if (a.score > b.score)
+      if (a.score > b.score) {
         return -1;
-      if (a.score < b.score)
+      }
+      if (a.score < b.score) {
         return 1;
+      }
       return 0;
     });
 
@@ -213,8 +219,9 @@ class Walker {
   createDescendant(result, score, hash, valid) {
     assert(this.currentResult, 'no current result');
     assert(this.currentStrategy, 'no current strategy');
-    if (this.currentResult.score)
+    if (this.currentResult.score) {
       score += this.currentResult.score;
+    }
     this.descendants.push({
       result,
       score,

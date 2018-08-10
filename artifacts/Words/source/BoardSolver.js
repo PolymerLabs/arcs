@@ -51,26 +51,30 @@ class BoardSolver {
   }
   _walkTileRecursive(x, y, wordBase, validWords, touchedBase) {
     // Not to go out-of-bounds.
-    if (x < 0 || y < 0 || x > BOARD_WIDTH - 1 || y > BOARD_HEIGHT - 1)
+    if (x < 0 || y < 0 || x > BOARD_WIDTH - 1 || y > BOARD_HEIGHT - 1) {
       return;
+    }
 
     const word = this._buildNextWord(wordBase, x, y);
     const currentTile = word.lastTile;
     // Don't consider a board position more than once for a single starting tile
     // recursion.
-    if (touchedBase.has(currentTile.charIndex))
+    if (touchedBase.has(currentTile.charIndex)) {
       return;
+    }
     const isMinimumWordLength = Scoring.isMinimumWordLength(word.text.length);
     const isInDictionary = this._dictionary.contains(word.text);
-    if (isMinimumWordLength && !isInDictionary)
+    if (isMinimumWordLength && !isInDictionary) {
       return;
+    }
 
     const touched = new Set(touchedBase);
     touched.add(currentTile.charIndex);
 
     // If the word is long enough, add it to the collection.
-    if (isMinimumWordLength && isInDictionary)
+    if (isMinimumWordLength && isInDictionary) {
       validWords.push(word);
+    }
 
     // Recurse through all connected tiles looking for more valid words.
 
@@ -81,18 +85,22 @@ class BoardSolver {
     // Left.
     this._walkTileRecursive(x - 1, y, word, validWords, touched);
     // Left and offset above.
-    if (!currentTile.isShiftedDown)
+    if (!currentTile.isShiftedDown) {
       this._walkTileRecursive(x - 1, y - 1, word, validWords, touched);
+    }
     // Left and offset below.
-    if (currentTile.isShiftedDown)
+    if (currentTile.isShiftedDown) {
       this._walkTileRecursive(x - 1, y + 1, word, validWords, touched);
+    }
     // Right.
     this._walkTileRecursive(x + 1, y, word, validWords, touched);
     // Right and offset below.
-    if (currentTile.isShiftedDown)
+    if (currentTile.isShiftedDown) {
       this._walkTileRecursive(x + 1, y + 1, word, validWords, touched);
+    }
     // Right and offset above.
-    if (!currentTile.isShiftedDown)
+    if (!currentTile.isShiftedDown) {
       this._walkTileRecursive(x + 1, y - 1, word, validWords, touched);
+    }
   }
 }

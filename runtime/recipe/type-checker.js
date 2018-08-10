@@ -23,8 +23,9 @@ export class TypeChecker {
   // do, talk to shans@.
   static processTypeList(baseType, list) {
     let newBaseType = Type.newVariable(new TypeVariable(''));
-    if (baseType)
+    if (baseType) {
       newBaseType.data.resolution = baseType;
+    }
     baseType = newBaseType;
 
     let concreteTypes = [];
@@ -39,8 +40,9 @@ export class TypeChecker {
     for (let item of list) {
       if (item.type.resolvedType().hasVariable) {
         baseType = TypeChecker._tryMergeTypeVariable(baseType, item.type);
-        if (baseType == null)
+        if (baseType == null) {
           return null;
+        }
       } else {
         concreteTypes.push(item);
       }
@@ -48,18 +50,24 @@ export class TypeChecker {
 
     for (let item of concreteTypes) {
       let success = TypeChecker._tryMergeConstraints(baseType, item);
-      if (!success)
+      if (!success) {
         return null;
+      }
     }
 
     let getResolution = candidate => {
-      if (candidate.isVariable == false)
+      if (candidate.isVariable == false) {
         return candidate;
-      if (candidate.canReadSubset == null || candidate.canWriteSuperset == null)
+      }
+      if (candidate.canReadSubset == null ||
+          candidate.canWriteSuperset == null) {
         return candidate;
+      }
       if (candidate.canReadSubset.isMoreSpecificThan(candidate.canWriteSuperset)) {
-        if (candidate.canWriteSuperset.isMoreSpecificThan(candidate.canReadSubset))
+        if (candidate.canWriteSuperset.isMoreSpecificThan(
+                candidate.canReadSubset)) {
           candidate.variable.resolution = candidate.canReadSubset;
+        }
         return candidate;
       }
       return null;
@@ -70,8 +78,9 @@ export class TypeChecker {
     if (candidate.isCollection) {
       candidate = candidate.primitiveType();
       let resolution = getResolution(candidate);
-      if (resolution == null)
+      if (resolution == null) {
         return null;
+      }
       return resolution.collectionOf();
     }
 
@@ -85,8 +94,9 @@ export class TypeChecker {
       if (primitiveOnto.isVariable) {
         // base, onto both variables.
         let result = primitiveBase.variable.maybeMergeConstraints(primitiveOnto.variable);
-        if (result == false)
+        if (result == false) {
           return null;
+        }
         // Here onto grows, one level at a time,
         // as we assign new resolution to primitiveOnto, which is a leaf.
         primitiveOnto.variable.resolution = primitiveBase;
@@ -100,8 +110,9 @@ export class TypeChecker {
       return onto;
     } else if (primitiveBase.isInterface && primitiveOnto.isInterface) {
       let result = primitiveBase.interfaceShape.tryMergeTypeVariablesWith(primitiveOnto.interfaceShape);
-      if (result == null)
+      if (result == null) {
         return null;
+      }
       return Type.newInterface(result);
     } else {
       if ((primitiveBase.isCollection && primitiveBase.hasVariable)
@@ -139,24 +150,34 @@ export class TypeChecker {
         // the canReadSubset of the handle represents the maximal type that can be read from the
         // handle, so we need to intersect out any type that is more specific than the maximal type
         // that could be written.
-        if (!primitiveHandleType.variable.maybeMergeCanReadSubset(primitiveConnectionType.canWriteSuperset))
+        if (!primitiveHandleType.variable.maybeMergeCanReadSubset(
+                primitiveConnectionType.canWriteSuperset)) {
           return false;
+        }
       }
       if (direction == 'in' || direction == 'inout' || direction == '`consume') {
         // the canWriteSuperset of the handle represents the maximum lower-bound type that is read from the handle,
         // so we need to union it with the type that wants to be read here.
-        if (!primitiveHandleType.variable.maybeMergeCanWriteSuperset(primitiveConnectionType.canReadSubset))
+        if (!primitiveHandleType.variable.maybeMergeCanWriteSuperset(
+                primitiveConnectionType.canReadSubset)) {
           return false;
+        }
       }
     } else {
       if (primitiveConnectionType.tag !== primitiveHandleType.tag) return false;
 
-      if (direction == 'out' || direction == 'inout')
-        if (!TypeChecker._writeConstraintsApply(primitiveHandleType, primitiveConnectionType))
+      if (direction == 'out' || direction == 'inout') {
+        if (!TypeChecker._writeConstraintsApply(
+                primitiveHandleType, primitiveConnectionType)) {
           return false;
-      if (direction == 'in' || direction == 'inout')
-        if (!TypeChecker._readConstraintsApply(primitiveHandleType, primitiveConnectionType))
+        }
+      }
+      if (direction == 'in' || direction == 'inout') {
+        if (!TypeChecker._readConstraintsApply(
+                primitiveHandleType, primitiveConnectionType)) {
           return false;
+        }
+      }
     }
 
     return true;
@@ -167,10 +188,12 @@ export class TypeChecker {
     // more specific than the canReadSubset then it isn't violating the maximal type
     // that can be read.
     let writtenType = connectionType.canWriteSuperset;
-    if (writtenType == null || handleType.canReadSubset == null)
+    if (writtenType == null || handleType.canReadSubset == null) {
       return true;
-    if (writtenType.isMoreSpecificThan(handleType.canReadSubset))
+    }
+    if (writtenType.isMoreSpecificThan(handleType.canReadSubset)) {
       return true;
+    }
     return false;
   }
 
@@ -179,10 +202,12 @@ export class TypeChecker {
     // is less specific than the canWriteSuperset, then it isn't violating
     // the maximum lower-bound read type.
     let readType = connectionType.canReadSubset;
-    if (readType == null|| handleType.canWriteSuperset == null)
+    if (readType == null || handleType.canWriteSuperset == null) {
       return true;
-    if (handleType.canWriteSuperset.isMoreSpecificThan(readType))
+    }
+    if (handleType.canWriteSuperset.isMoreSpecificThan(readType)) {
       return true;
+    }
     return false;
   }
 
@@ -199,10 +224,16 @@ export class TypeChecker {
     let [leftType, rightType] = Type.unwrapPair(resolvedLeft, resolvedRight);
 
     // a variable is compatible with a set only if it is unconstrained.
-    if (leftType.isVariable && rightType.isCollection)
-      return !(leftType.variable.canReadSubset || leftType.variable.canWriteSuperset);
-    if (rightType.isVariable && leftType.isCollection)
-      return !(rightType.variable.canReadSubset || rightType.variable.canWriteSuperset);
+    if (leftType.isVariable && rightType.isCollection) {
+      return !(
+          leftType.variable.canReadSubset ||
+          leftType.variable.canWriteSuperset);
+    }
+    if (rightType.isVariable && leftType.isCollection) {
+      return !(
+          rightType.variable.canReadSubset ||
+          rightType.variable.canWriteSuperset);
+    }
 
     if (leftType.isVariable || rightType.isVariable) {
       // TODO: everything should use this, eventually. Need to implement the
@@ -210,17 +241,20 @@ export class TypeChecker {
       return Type.canMergeConstraints(leftType, rightType);
     }
 
-    if ((leftType == undefined) !== (rightType == undefined))
+    if ((leftType == undefined) !== (rightType == undefined)) {
       return false;
-    if (leftType == rightType)
+    }
+    if (leftType == rightType) {
       return true;
+    }
 
     if (leftType.tag != rightType.tag) {
       return false;
     }
 
-    if (leftType.isSlot)
+    if (leftType.isSlot) {
       return true;
+    }
 
     // TODO: we need a generic way to evaluate type compatibility
     //       shapes + entities + etc

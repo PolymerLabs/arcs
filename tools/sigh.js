@@ -25,7 +25,11 @@ const sources = {
     railroad: 'manifest-railroad.html',
   },
   pack: {
-    inputs: ['shell/source/worker-entry.js', 'shell/source/ArcsLib.js', 'shell/source/Tracelib.js'],
+    inputs: [
+      'shell/source/worker-entry.js',
+      'shell/source/ArcsLib.js',
+      'shell/source/Tracelib.js'
+    ],
     buildDir: 'shell/build',
   }
 };
@@ -59,8 +63,8 @@ const output = console;
 function* findProjectFiles(dir, predicate) {
   let tests = [];
   for (let entry of fs.readdirSync(dir)) {
-    if (/\b(node_modules|deps|build|third_party)\b/.test(entry)
-       || entry.startsWith('.')) {
+    if (/\b(node_modules|deps|build|third_party)\b/.test(entry) ||
+        entry.startsWith('.')) {
       continue;
     }
 
@@ -201,7 +205,7 @@ function railroad() {
 }
 
 async function tsc() {
-  return saneSpawn('tsc', [], {});
+  return saneSpawnWithOutput('tsc', [], {});
 }
 
 async function lint(args) {
@@ -252,20 +256,23 @@ async function webpack() {
 
   for (let file of sources.pack.inputs) {
     await new Promise((resolve, reject) => {
-      webpack({
-        entry: path.resolve(projectRoot, file),
-        output: {
-          filename: `${sources.pack.buildDir}/${path.basename(file)}`,
-        },
-        node,
-        devtool: 'sourcemap',
-      }, (err, stats) => {
-        if (err) {
-          reject(err);
-        }
-        console.log(stats.toString({colors: true, verbose: false, chunks: false}));
-        resolve();
-      });
+      webpack(
+          {
+            entry: path.resolve(projectRoot, file),
+            output: {
+              filename: `${sources.pack.buildDir}/${path.basename(file)}`,
+            },
+            node,
+            devtool: 'sourcemap',
+          },
+          (err, stats) => {
+            if (err) {
+              reject(err);
+            }
+            console.log(
+                stats.toString({colors: true, verbose: false, chunks: false}));
+            resolve();
+          });
     });
   }
   return true;
@@ -322,17 +329,22 @@ function test(args) {
     // TODO(wkorman): Integrate shell testing more deeply into sigh testing. For
     // now we skip including shell tests in the normal sigh test flow and intend
     // to instead run them via a separate 'npm test' command.
-    if (fullPath.startsWith(path.normalize(`${dir}/shell/`))) return false;
+    if (fullPath.startsWith(path.normalize(`${dir}/shell/`))) {
+      return false;
+    }
     // TODO(sjmiles): `artifacts` was moved from `arcs\shell\` to `arcs`, added
     // this statement to match the above filter.
-    if (fullPath.startsWith(path.normalize(`${dir}/artifacts/`))) return false;
+    if (fullPath.startsWith(path.normalize(`${dir}/artifacts/`))) {
+      return false;
+    }
     const isSelectedTest = options.manual == fullPath.includes('manual_test');
     return /-tests?.js$/.test(fullPath) && isSelectedTest;
   });
 
   function fixPathForWindows(path) {
-    if (path[0] == '/')
+    if (path[0] == '/') {
       return path;
+    }
     return '/' + path.replace(new RegExp(String.fromCharCode(92, 92), 'g'), '/');
   }
 
@@ -359,11 +371,13 @@ function test(args) {
       fs.writeFileSync(file, entry);
       return `import '${fixPathForWindows(file)}';`;
     });
-    if (options.explore) chainImports.push(`
+    if (options.explore) {
+      chainImports.push(`
       import {DevtoolsConnection} from '${fixPathForWindows(path.resolve(__dirname, '../runtime/debug/devtools-connection.js'))}';
       console.log("Waiting for Arcs Explorer");
       DevtoolsConnection.ensure();
     `);
+    }
     let runner = `
       import {mocha} from '${mochaInstanceFile}';
       ${chainImports.join('\n      ')}
@@ -396,13 +410,17 @@ function test(args) {
   }
 
   let runner = buildTestRunner();
-  return saneSpawn('node', [
-    '--experimental-modules',
-    '--trace-warnings',
-    ...extraFlags,
-    '--loader', fixPathForWindows(path.join(__dirname, 'custom-loader.mjs')),
-    runner
-  ], {stdio: 'inherit'});
+  return saneSpawn(
+      'node',
+      [
+        '--experimental-modules',
+        '--trace-warnings',
+        ...extraFlags,
+        '--loader',
+        fixPathForWindows(path.join(__dirname, 'custom-loader.mjs')),
+        runner
+      ],
+      {stdio: 'inherit'});
 }
 
 

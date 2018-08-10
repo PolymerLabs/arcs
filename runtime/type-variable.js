@@ -28,16 +28,18 @@ export class TypeVariable {
   maybeMergeConstraints(variable) {
     assert(variable instanceof TypeVariable);
 
-    if (!this.maybeMergeCanReadSubset(variable.canReadSubset))
+    if (!this.maybeMergeCanReadSubset(variable.canReadSubset)) {
       return false;
+    }
     return this.maybeMergeCanWriteSuperset(variable.canWriteSuperset);
   }
 
   // merge a type variable's read subset (upper bound) constraints into this variable.
   // This is used to accumulate read constraints when resolving a handle's type.
   maybeMergeCanReadSubset(constraint) {
-    if (constraint == null)
+    if (constraint == null) {
       return true;
+    }
 
     if (this.canReadSubset == null) {
       this.canReadSubset = constraint;
@@ -50,8 +52,9 @@ export class TypeVariable {
     }
 
     let mergedSchema = Schema.intersect(this.canReadSubset.entitySchema, constraint.entitySchema);
-    if (!mergedSchema)
+    if (!mergedSchema) {
       return false;
+    }
 
     this.canReadSubset = Type.newEntity(mergedSchema);
     return true;
@@ -60,8 +63,9 @@ export class TypeVariable {
   // merge a type variable's write superset (lower bound) constraints into this variable.
   // This is used to accumulate write constraints when resolving a handle's type.
   maybeMergeCanWriteSuperset(constraint) {
-    if (constraint == null)
+    if (constraint == null) {
       return true;
+    }
 
     if (this.canWriteSuperset == null) {
       this.canWriteSuperset = constraint;
@@ -74,8 +78,9 @@ export class TypeVariable {
     }
 
     let mergedSchema = Schema.union(this.canWriteSuperset.entitySchema, constraint.entitySchema);
-    if (!mergedSchema)
+    if (!mergedSchema) {
       return false;
+    }
 
     this.canWriteSuperset = Type.newEntity(mergedSchema);
     return true;
@@ -110,10 +115,12 @@ export class TypeVariable {
 
     let probe = value;
     while (probe) {
-      if (!probe.isVariable)
+      if (!probe.isVariable) {
         break;
-      if (probe.variable == this)
+      }
+      if (probe.variable == this) {
         return;
+      }
       probe = probe.variable.resolution;
     }
 
@@ -159,16 +166,19 @@ export class TypeVariable {
   }
 
   canEnsureResolved() {
-    if (this._resolution)
+    if (this._resolution) {
       return this._resolution.canEnsureResolved();
-    if (this._canWriteSuperset || this._canReadSubset)
+    }
+    if (this._canWriteSuperset || this._canReadSubset) {
       return true;
+    }
     return false;
   }
 
   maybeEnsureResolved() {
-    if (this._resolution)
+    if (this._resolution) {
       return this._resolution.maybeEnsureResolved();
+    }
     if (this._canWriteSuperset) {
       this.resolution = this._canWriteSuperset;
       return true;

@@ -81,8 +81,9 @@ defineParticle(({DomParticle, html, log, resolver}) => {
       return {clampedWidth, clampedHeight};
     }
     render(props, state) {
-      if (!props.post || !props.user)
+      if (!props.post || !props.user) {
         return {};
+      }
       const {arcKey, author, createdTimestamp, id, image, imageHeight, imageWidth, message} = props.post;
       const {clampedWidth, clampedHeight} =
           this.clampSize(imageWidth, imageHeight);

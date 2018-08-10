@@ -44,8 +44,9 @@ class Tile {
         this.style.toString()}, x=${this.x}, y=${this.y}]`;
   }
   static numberToStyle(value) {
-    if (value > Tile.NumberToStyle.length)
+    if (value > Tile.NumberToStyle.length) {
       throw new Error('Unknown tile style.');
+    }
     return Tile.NumberToStyle[value];
   }
 }

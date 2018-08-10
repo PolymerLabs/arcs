@@ -104,13 +104,15 @@ export class Manifest {
     this._warnings = [];
   }
   get id() {
-    if (this._meta.name)
+    if (this._meta.name) {
       return this._meta.name;
+    }
     return this._id;
   }
   get storageProviderFactory() {
-    if (this._storageProviderFactory == undefined)
+    if (this._storageProviderFactory == undefined) {
       this._storageProviderFactory = new StorageProviderFactory(this.id);
+    }
     return this._storageProviderFactory;
   }
   get recipes() {
@@ -146,8 +148,11 @@ export class Manifest {
     return this._resources;
   }
   applyMeta(section) {
-    if (this._storageProviderFactory !== undefined)
-      assert(section.name == this._meta.name || section.name == undefined, `can't change manifest ID after storage is constructed`);
+    if (this._storageProviderFactory !== undefined) {
+      assert(
+          section.name == this._meta.name || section.name == undefined,
+          `can't change manifest ID after storage is constructed`);
+    }
     this._meta.apply(section);
   }
   // TODO: newParticle, Schema, etc.
@@ -194,11 +199,13 @@ export class Manifest {
   }
   findTypeByName(name) {
     let schema = this.findSchemaByName(name);
-    if (schema)
+    if (schema) {
       return Type.newEntity(schema);
+    }
     let shape = this.findShapeByName(name);
-    if (shape)
+    if (shape) {
       return Type.newInterface(shape);
+    }
     return null;
   }
   findParticleByName(name) {
@@ -294,8 +301,9 @@ export class Manifest {
         //       be a responsibility of the caller.
         // TODO: figure out how to have node print the correct message and stack trace
         if (warning.key) {
-          if (globalWarningKeys.has(warning.key))
+          if (globalWarningKeys.has(warning.key)) {
             continue;
+          }
           globalWarningKeys.add(warning.key);
         }
         console.warn(processError(warning).message);
@@ -323,17 +331,19 @@ export class Manifest {
         highlight += '^';
       }
       let preamble;
-      if (parseError)
+      if (parseError) {
         preamble = 'Parse error in';
-      else
+      } else {
         preamble = 'Post-parse processing error caused by';
+      }
       let message = `${preamble} '${fileName}' line ${e.location.start.line}.
 ${e.message}
   ${line}
   ${highlight}`;
       let err = new Error(message);
-      if (!parseError)
+      if (!parseError) {
         err.stack = e.stack;
+      }
       return err;
     }
 
@@ -461,8 +471,9 @@ ${e.message}
         }
         case 'slot-type': {
           let slotInfo = {};
-          for (let field of node.fields)
+          for (let field of node.fields) {
             slotInfo[field.name] = field.value;
+          }
           node.model = Type.newSlot(slotInfo);
           return;
         }
@@ -646,8 +657,9 @@ ${e.message}
       if (ref.id) {
         handle.id = ref.id;
         let targetStore = manifest.findStoreById(handle.id);
-        if (targetStore)
+        if (targetStore) {
           handle.mapToStorage(targetStore);
+        }
       } else if (ref.name) {
         let targetStore = manifest.findStoreByName(ref.name);
         // TODO: Error handling.
@@ -668,17 +680,28 @@ ${e.message}
       switch (info.targetType) {
         case 'particle': {
           let particle = manifest.findParticleByName(info.particle);
-          if (!particle)
-            throw new ManifestError(connection.location, `could not find particle '${info.particle}'`);
-          if (info.param !== null && !particle.connectionMap.has(info.param))
-            throw new ManifestError(connection.location, `param '${info.param}' is not defined by '${info.particle}'`);
+          if (!particle) {
+            throw new ManifestError(
+                connection.location,
+                `could not find particle '${info.particle}'`);
+          }
+          if (info.param !== null && !particle.connectionMap.has(info.param)) {
+            throw new ManifestError(
+                connection.location,
+                `param '${info.param}' is not defined by '${info.particle}'`);
+          }
           return new ParticleEndPoint(particle, info.param);
         }
         case 'localName': {
-          if (!items.byName.has(info.name))
-            throw new ManifestError(connection.location, `local name '${info.name}' does not exist in recipe`);
-          if (info.param == null && info.tags.length == 0 && items.byName.get(info.name).handle)
+          if (!items.byName.has(info.name)) {
+            throw new ManifestError(
+                connection.location,
+                `local name '${info.name}' does not exist in recipe`);
+          }
+          if (info.param == null && info.tags.length == 0 &&
+              items.byName.get(info.name).handle) {
             return new HandleEndPoint(items.byName.get(info.name).handle);
+          }
           throw new ManifestError(connection.location, `references to particles by local name not yet supported`);
         }
         case 'tag': {
@@ -749,8 +772,9 @@ ${e.message}
               items.byName.set(ps.name, providedSlot);
             }
             items.bySlot.set(providedSlot, ps);
-          } else
+          } else {
             providedSlot = items.byName.get(ps.name);
+          }
           if (!providedSlot) {
             providedSlot = recipe.newSlot(ps.param);
             providedSlot.localName = ps.name;
@@ -913,8 +937,9 @@ ${e.message}
         } else if (slotConnectionItem.name) {
           targetSlot = recipe.newSlot(slotConnectionItem.param);
           targetSlot.localName = slotConnectionItem.name;
-          if (slotConnectionItem.name)
+          if (slotConnectionItem.name) {
             items.byName.set(slotConnectionItem.name, targetSlot);
+          }
           items.bySlot.set(targetSlot, slotConnectionItem);
         }
         if (targetSlot) {
@@ -946,8 +971,9 @@ ${e.message}
       id = `${manifest._id}store${manifest._stores.length}`;
     }
     let tags = item.tags;
-    if (tags == null)
+    if (tags == null) {
       tags = [];
+    }
 
 
     // Instead of creating links to remote firebase during manifest parsing,
@@ -966,8 +992,10 @@ ${e.message}
     } else if (item.origin == 'resource') {
       source = item.source;
       json = manifest.resources[source];
-      if (json == undefined)
-        throw new Error(`Resource '${source}' referenced by store '${id}' is not defined in this manifest`);
+      if (json == undefined) {
+        throw new Error(`Resource '${source}' referenced by store '${
+            id}' is not defined in this manifest`);
+      }
     }
     let entities;
     try {

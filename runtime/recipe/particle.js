@@ -47,12 +47,16 @@ export class Particle {
   _cloneConnectionRawTypes() {
     // TODO(shans): evaluate whether this is the appropriate context root for cloneWithResolution
     let map = new Map();
-    for (let connection of Object.values(this._connections))
-      if (connection._rawType)
+    for (let connection of Object.values(this._connections)) {
+      if (connection._rawType) {
         connection._rawType = connection._rawType._cloneWithResolutions(map);
-    for (let connection of this._unnamedConnections)
-      if (connection._rawType)
+      }
+    }
+    for (let connection of this._unnamedConnections) {
+      if (connection._rawType) {
         connection._rawType = connection._rawType._cloneWithResolutions(map);
+      }
+    }
   }
 
   _startNormalize() {
@@ -162,8 +166,9 @@ export class Particle {
       connection.direction = speccedConnection.direction;
     }
     spec.slots.forEach(slotSpec => {
-      if (this._consumedSlotConnections[slotSpec.name] == undefined)
+      if (this._consumedSlotConnections[slotSpec.name] == undefined) {
         this.addSlotConnection(slotSpec.name);
+      }
       this._consumedSlotConnections[slotSpec.name].slotSpec = slotSpec;
     });
   }

@@ -10,8 +10,9 @@ describe('BoardSolver', function() {
     it('should return empty list with no valid words', function() {
       const dictionary = new Dictionary('cat');
       let letters = '';
-      for (let i = 0; i < TILE_COUNT; i++)
+      for (let i = 0; i < TILE_COUNT; i++) {
         letters += 'Z' + Tile.StyleToNumber[Tile.Style.NORMAL];
+      }
       const board = new TileBoard({letters, shuffleAvailableCount: 0});
       const solver = new BoardSolver(dictionary, board);
       assert.isEmpty(solver.getValidWords());
@@ -22,8 +23,9 @@ describe('BoardSolver', function() {
         (letters) => {
           let lettersWithStyle = '';
           const normalStyle = Tile.StyleToNumber[Tile.Style.NORMAL];
-          for (let i = 0; i < letters.length; i++)
+          for (let i = 0; i < letters.length; i++) {
             lettersWithStyle += `${letters.charAt(i)}${normalStyle}`;
+          }
           return lettersWithStyle;
         };
 

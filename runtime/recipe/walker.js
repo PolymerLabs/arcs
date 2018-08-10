@@ -18,49 +18,56 @@ export class Walker extends WalkerBase {
 
     if (this.onRecipe) {
       result = this.onRecipe(recipe, result);
-      if (!this.isEmptyResult(result))
+      if (!this.isEmptyResult(result)) {
         updateList.push({continuation: result});
+      }
     }
     for (let particle of recipe.particles) {
       if (this.onParticle) {
         let result = this.onParticle(recipe, particle);
-        if (!this.isEmptyResult(result))
+        if (!this.isEmptyResult(result)) {
           updateList.push({continuation: result, context: particle});
+        }
       }
     }
     for (let handleConnection of recipe.handleConnections) {
       if (this.onHandleConnection) {
         let result = this.onHandleConnection(recipe, handleConnection);
-        if (!this.isEmptyResult(result))
+        if (!this.isEmptyResult(result)) {
           updateList.push({continuation: result, context: handleConnection});
+        }
       }
     }
     for (let handle of recipe.handles) {
       if (this.onHandle) {
         let result = this.onHandle(recipe, handle);
-        if (!this.isEmptyResult(result))
+        if (!this.isEmptyResult(result)) {
           updateList.push({continuation: result, context: handle});
+        }
       }
     }
     for (let slotConnection of recipe.slotConnections) {
       if (this.onSlotConnection) {
         let result = this.onSlotConnection(recipe, slotConnection);
-        if (!this.isEmptyResult(result))
+        if (!this.isEmptyResult(result)) {
           updateList.push({continuation: result, context: slotConnection});
+        }
       }
     }
     for (let slot of recipe.slots) {
       if (this.onSlot) {
         let result = this.onSlot(recipe, slot);
-        if (!this.isEmptyResult(result))
+        if (!this.isEmptyResult(result)) {
           updateList.push({continuation: result, context: slot});
+        }
       }
     }
     for (let obligation of recipe.obligations) {
       if (this.onObligation) {
         let result = this.onObligation(recipe, obligation);
-        if (!this.isEmptyResult(result))
+        if (!this.isEmptyResult(result)) {
           updateList.push({continuation: result, context: obligation});
+        }
       }
     }
 

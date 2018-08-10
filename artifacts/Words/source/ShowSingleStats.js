@@ -20,8 +20,10 @@ defineParticle(({DomParticle, html, log, resolver}) => {
     // force loading of our shared code from the right place. This is thus
     // fairly lo-fi. and we should eventually explore a cleaner way for embedded
     // recipe particle code to load known-to-be-associated library code.
-    if (clazzType === 'undefined')
-      importScripts(resolver(`https://$cdn/artifacts/Words/source/${filename}`));
+    if (clazzType === 'undefined') {
+      importScripts(
+          resolver(`https://$cdn/artifacts/Words/source/${filename}`));
+    }
   }
   importLibrary(typeof Scoring, 'Scoring.js');
   importLibrary(typeof Tile, 'Tile.js');
@@ -267,12 +269,15 @@ defineParticle(({DomParticle, html, log, resolver}) => {
         const tile = tileBoard.tileAtIndex(i);
         const letterClasses = ['tile'];
         let yPixels = tile.y * 50 + tile.y;
-        if (tile.isShiftedDown)
+        if (tile.isShiftedDown) {
           yPixels += 25;
-        if (coordinates.indexOf(`(${tile.x},${tile.y})`) != -1)
+        }
+        if (coordinates.indexOf(`(${tile.x},${tile.y})`) != -1) {
           letterClasses.push('selected');
-        if (tile.style == Tile.Style.FIRE)
+        }
+        if (tile.style == Tile.Style.FIRE) {
           letterClasses.push('fire');
+        }
         models.push({
           letter: tile.letter,
           points: Scoring.pointsForLetter(tile.letter),

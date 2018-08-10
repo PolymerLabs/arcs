@@ -30,28 +30,32 @@ export class Loader {
   }
 
   join(prefix, path) {
-    if (/^https?:\/\//.test(path))
+    if (/^https?:\/\//.test(path)) {
       return path;
+    }
     // TODO: replace this with something that isn't hacky
-    if (path[0] == '/' || path[1] == ':')
+    if (path[0] == '/' || path[1] == ':') {
       return path;
+    }
     prefix = this.path(prefix);
     return prefix + path;
   }
 
   loadResource(file) {
-    if (/^https?:\/\//.test(file))
+    if (/^https?:\/\//.test(file)) {
       return this._loadURL(file);
+    }
     return this._loadFile(file);
   }
 
   _loadFile(file) {
     return new Promise((resolve, reject) => {
       fs.readFile(file, (err, data) => {
-        if (err)
+        if (err) {
           reject(err);
-        else
+        } else {
           resolve(data.toString('utf-8'));
+        }
       });
     });
   }
