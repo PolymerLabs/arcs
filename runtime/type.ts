@@ -408,7 +408,7 @@ export class Type {
     return false;
   }
 
-  toString(options) {
+  toString(options = undefined) {
     if (this.isCollection) {
       return `[${this.primitiveType().toString(options)}]`;
     }

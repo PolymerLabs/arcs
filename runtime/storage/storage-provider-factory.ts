@@ -7,10 +7,12 @@
 // http://polymer.github.io/PATENTS.txt
 'use strict';
 
-import {InMemoryStorage} from './in-memory-storage.js';
-import {FirebaseStorage} from './firebase-storage.js';
+import {InMemoryStorage} from './in-memory-storage';
+import {FirebaseStorage} from './firebase-storage';
 
 export class StorageProviderFactory {
+  _storageInstances: {[index: string]: InMemoryStorage | FirebaseStorage};
+  _arcId: string;
   constructor(arcId) {
     this._arcId = arcId;
     this._storageInstances = {'in-memory': new InMemoryStorage(arcId), 'firebase': new FirebaseStorage(arcId)};
@@ -22,7 +24,7 @@ export class StorageProviderFactory {
   }
 
   async share(id, type, key) {
-    return this._storageForKey(key).share(id, type, keyFragment);
+    return this._storageForKey(key).share(id, type, key);
   }
 
   async construct(id, type, keyFragment) {
@@ -43,6 +45,6 @@ export class StorageProviderFactory {
 
   // For testing
   async shutdown() {
-    await Promise.all(Object.values(this._storageInstances).map(s => s.shutdown()));
+    await Promise.all(Object.keys(this._storageInstances).map(k => this._storageInstances[k].shutdown()));
   }
 }
