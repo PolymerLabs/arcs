@@ -9,6 +9,13 @@ export function resolve(specifier, parent, resolve) {
     return result;
   }
   if (!/\.(js|mjs)$/.test(specifier)) {
+    if (/intermediate/.test(parent)) {
+      const resolved = new url.URL(specifier, parent || 'file:///');
+      return {
+        url: resolved.href + '.js',
+        format: 'esm'
+      };
+    }
     const resolved = new url.URL(specifier, parent);
     return {
       url: resolved.href,
